@@ -1,0 +1,103 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  ~ Copyright 2012-2018 the original author or authors.
+  ~
+  ~ Licensed under the Apache License, Version 2.0 (the "License");
+  ~ you may not use this file except in compliance with the License.
+  ~ You may obtain a copy of the License at
+  ~
+  ~       http://www.apache.org/licenses/LICENSE-2.0
+  ~
+  ~ Unless required by applicable law or agreed to in writing, software
+  ~ distributed under the License is distributed on an "AS IS" BASIS,
+  ~ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+  ~ See the License for the specific language governing permissions and
+  ~ limitations under the License.
+  ~
+  -->
+
+<!DOCTYPE log4j:configuration SYSTEM "log4j.dtd">
+<log4j:configuration xmlns:log4j="http://jakarta.apache.org/log4j/">
+
+	<!-- Timestamp: we use %d, which is the same as %d{ISO8601}, since it is way faster than using -->
+	<!-- our own format. It uses "yyyy-MM-dd HH:mm:ss,SSS", e.g. "1999-11-27 15:49:37,459"         -->
+
+
+	<!-- ========================================= -->
+	<!-- console-based logger                      -->
+	<!-- ========================================= -->
+	<appender name="console" class="org.apache.log4j.ConsoleAppender">
+		<layout class="org.apache.log4j.PatternLayout">
+			<param name="ConversionPattern" value="%d|%X{test.name}|%m%n"/>
+		</layout>
+	</appender>
+
+	<!-- ==================== -->
+	<!-- 3rd-party categories -->
+	<!-- ==================== -->
+	<category name="org" additivity="false">
+		<level value="WARN"/>
+		<appender-ref ref="console"/>
+	</category>
+	<category name="org.apache.http" additivity="false">
+		<level value="INFO"/>
+		<appender-ref ref="console"/>
+	</category>
+	<category name="org.apache.http.wire" additivity="false">
+		<level value="INFO"/>
+		<appender-ref ref="console"/>
+	</category>
+	<category name="org.apache.http.headers" additivity="false">
+		<level value="WARN"/>
+		<appender-ref ref="console"/>
+	</category>
+	<category name="org.apache.http.impl" additivity="false">
+		<level value="WARN"/>
+		<appender-ref ref="console"/>
+	</category>
+	<category name="org.apache.commons.beanutils" additivity="false">
+		<level value="INFO"/>
+		<appender-ref ref="console"/>
+	</category>
+	<category name="org.springframework" additivity="false">
+		<level value="INFO"/>
+		<appender-ref ref="console"/>
+	</category>
+	<category name="org.springframework.jdbc.core.JdbcTemplate" additivity="false">
+		<level value="DEBUG"/>
+		<appender-ref ref="console"/>
+	</category>
+	<category name="org.springframework.aop.framework" additivity="false">
+		<level value="ERROR"/>
+		<appender-ref ref="console"/>
+	</category>
+	<category name="com.ibm" additivity="false">
+		<level value="WARN"/>
+		<appender-ref ref="console"/>
+	</category>
+	<category name="oracle" additivity="false">
+		<level value="WARN"/>
+		<appender-ref ref="console"/>
+	</category>
+
+	<!-- ============================= -->
+	<!-- nexial categories  -->
+	<!-- ============================= -->
+	<category name="org.nexial.core" additivity="false">
+		<level value="DEBUG"/>
+		<appender-ref ref="console"/>
+	</category>
+	<category name="org.nexial.core.compare.OpenPropertyPlaceholderConfigurer" additivity="false">
+		<level value="INFO"/>
+		<appender-ref ref="console"/>
+	</category>
+
+	<!-- ==================== -->
+	<!-- default / catch-all  -->
+	<!-- ==================== -->
+	<root>
+		<priority value="INFO"/>
+		<appender-ref ref="console"/>
+	</root>
+
+</log4j:configuration>

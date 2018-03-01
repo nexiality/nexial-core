@@ -1,0 +1,61 @@
+@echo off
+REM --------------------------------------------------------------------------------
+REM environment variable guide
+REM --------------------------------------------------------------------------------
+REM JAVA_HOME           - home directory of a valid JDK installation (1.6 or above)
+REM PROJECT_HOME        - home directory of your project.
+REM NEXIAL_OUT          - the output directory
+REM FIREFOX_BIN         - the full path of firefox.exe
+REM NEXIAL_RUNMODE      - determine screen capture image strategy (local or server)
+REM --------------------------------------------------------------------------------
+
+setlocal enableextensions enabledelayedexpansion
+call :init
+if NOT ERRORLEVEL 0 goto :exit
+
+call :title "nexial xpath updater"
+if NOT ERRORLEVEL 0 goto :exit
+
+call :checkJava
+if NOT ERRORLEVEL 0 goto :exit
+
+call :resolveEnv
+if NOT ERRORLEVEL 0 goto :exit
+
+REM run nexial now
+REM echo Runtime Option: %JAVA_OPT%
+echo.
+
+REM run now
+%JAVA% -classpath %NEXIAL_CLASSES%;%NEXIAL_LIB%\nexial*.jar;%NEXIAL_LIB%\* %JAVA_OPT% org.nexial.core.tools.DesktopXpathUpdater %*
+endlocal
+exit /b 0
+goto :eof
+
+:init
+	.commons.cmd %*
+
+:checkJava
+	.commons.cmd %*
+
+:title
+	.commons.cmd %*
+
+:resolveEnv
+	.commons.cmd %*
+
+:reportBadInputAndExit
+	echo.
+	echo ERROR: Required input not found.
+	echo USAGE: %0 [project name] [optional: testcase id, testcase id, ...]
+	echo.
+	echo.
+	goto :exit
+
+:exit
+	endlocal
+	exit /b 1
+
+
+
+

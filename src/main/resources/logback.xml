@@ -1,0 +1,306 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  ~ Copyright 2012-2018 the original author or authors.
+  ~
+  ~ Licensed under the Apache License, Version 2.0 (the "License");
+  ~ you may not use this file except in compliance with the License.
+  ~ You may obtain a copy of the License at
+  ~
+  ~       http://www.apache.org/licenses/LICENSE-2.0
+  ~
+  ~ Unless required by applicable law or agreed to in writing, software
+  ~ distributed under the License is distributed on an "AS IS" BASIS,
+  ~ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+  ~ See the License for the specific language governing permissions and
+  ~ limitations under the License.
+  ~
+  -->
+
+<configuration debug="false">
+	<conversionRule conversionWord="color" converterClass="org.springframework.boot.logging.logback.ColorConverter"/>
+
+	<statusListener class="ch.qos.logback.core.status.NopStatusListener"/>
+
+	<appender name="console" class="ch.qos.logback.core.ConsoleAppender">
+		<encoder>
+			<pattern>%d|%.-1p|%t|%m%n</pattern>
+		</encoder>
+	</appender>
+	<appender name="console-catchall" class="ch.qos.logback.core.ConsoleAppender">
+		<encoder>
+			<pattern>[OTH] %d|%1p|%t|%-25c{3}|%m%n</pattern>
+		</encoder>
+	</appender>
+	<appender name="console-webcontainer" class="ch.qos.logback.core.ConsoleAppender">
+		<encoder>
+			<pattern>[NXL] %color(%d|%-5p|%t|%-25c|%m){yellow}%n</pattern>
+		</encoder>
+	</appender>
+	<appender name="console-execution" class="ch.qos.logback.core.ConsoleAppender">
+		<encoder>
+			<pattern>%color(%d|%.-1p|%t|%m){green}%n</pattern>
+		</encoder>
+	</appender>
+	<appender name="console-tools" class="ch.qos.logback.core.ConsoleAppender">
+		<encoder>
+			<pattern>%color(%d|%m){faint}%n</pattern>
+		</encoder>
+	</appender>
+	<appender name="console-tools-error" class="ch.qos.logback.core.ConsoleAppender">
+		<filter class="ch.qos.logback.classic.filter.LevelFilter">
+			<level>ERROR</level>
+			<onMatch>ACCEPT</onMatch>
+			<onMismatch>DENY</onMismatch>
+		</filter>
+		<encoder>
+			<pattern>%color(%d|[%X{script.file}][%X{script.scenario}][%X{script.position}]|%m){red}%n</pattern>
+		</encoder>
+	</appender>
+	<appender name="console-execution-fail" class="ch.qos.logback.core.ConsoleAppender">
+		<filter class="ch.qos.logback.classic.filter.ThresholdFilter">
+			<level>ERROR</level>
+		</filter>
+		<encoder>
+			<pattern>%color(%d|%.-1p|%t|%m){red}%n</pattern>
+		</encoder>
+	</appender>
+
+	<!-- file appenders -->
+	<appender name="file-testexecution" class="ch.qos.logback.core.FileAppender">
+		<file>${nexial.logpath:-.}/nexial-${nexial.runID:-test}.log</file>
+		<append>true</append>
+		<prudent>true</prudent>
+		<encoder>
+			<pattern>%d|%.-1p|%t|%m%n</pattern>
+		</encoder>
+	</appender>
+	<appender name="file-3rdparty" class="ch.qos.logback.core.FileAppender">
+		<file>${nexial.3rdparty.logpath:-logs}/nexial-3rdparty.log</file>
+		<append>true</append>
+		<prudent>true</prudent>
+		<encoder>
+			<pattern>%d|%.-1p|%t|%c|${PID:- }|%X{requestId:- }|%m%n</pattern>
+		</encoder>
+	</appender>
+	<appender name="file-tools-error" class="ch.qos.logback.core.rolling.RollingFileAppender">
+		<filter class="ch.qos.logback.classic.filter.LevelFilter">
+			<level>ERROR</level>
+			<onMatch>ACCEPT</onMatch>
+			<onMismatch>DENY</onMismatch>
+		</filter>
+		<file>${config.home:-.}/logs/nexial-tools.log</file>
+		<rollingPolicy class="ch.qos.logback.core.rolling.TimeBasedRollingPolicy">
+			<!-- daily rollover -->
+			<fileNamePattern>${config.home:-.}/logs/nexial-tools.%d{yyyy-MM-dd}.log</fileNamePattern>
+
+			<!-- no we don't want to keep old errors -->
+			<maxHistory>0</maxHistory>
+
+			<cleanHistoryOnStart>true</cleanHistoryOnStart>
+		</rollingPolicy>
+		<encoder>
+			<pattern>%d|[%X{script.file}][%X{script.scenario}][%X{script.position}]|%m%n</pattern>
+		</encoder>
+	</appender>
+
+	<!-- mongo appenders -->
+	<!--<appender name="usage" class="UsageLogAppender">-->
+	<!--<levelFilter>TRACE,ERROR,FATAL</levelFilter>-->
+	<!--<mongoUrl><![CDATA[${mongo.url:-mongodb://localhost:27017/appevents}]]></mongoUrl>-->
+	<!--<redisUrl>${redis.url}</redisUrl>-->
+	<!--<fallbackDir>${usageFallbackDir:-/data/usage}</fallbackDir>-->
+	<!--</appender>-->
+
+	<!-- smtp appenders -->
+	<!--
+		<appender name="smtp-error" class="ch.qos.logback.classic.net.SMTPAppender">
+			<smtpHost>${spring.mail.host}</smtpHost>
+			<to>${smtp-fatal.recipients:-default_receipient@company.com}</to>
+			<from>${hostname:-localhost}-${nexial@company.com}</from>
+			<subject>[nexial-${env}@${hostname:-localhost}, pid ${PID}, %t] Fatal Error at %c</subject>
+			<includeCallerData>true</includeCallerData>
+			<layout class="ch.qos.logback.classic.PatternLayout">
+				<pattern>%date %-5level %logger{35} - %message%n</pattern>
+			</layout>
+			<cyclicBufferTracker class="ch.qos.logback.core.spi.CyclicBufferTracker">
+				<maxNumberOfBuffers>16</maxNumberOfBuffers>
+			</cyclicBufferTracker>
+		</appender>
+	-->
+
+	<!-- web container logger -->
+	<logger name="org.apache.catalina.core.ContainerBase.[Tomcat].[localhost].[/]" level="INFO" additivity="false">
+		<appender-ref ref="console-webcontainer"/>
+		<appender-ref ref="file-3rdparty"/>
+	</logger>
+
+	<!-- logback log appenders -->
+	<logger name="ch.qos.logback" additivity="false" level="WARN">
+		<appender-ref ref="console-catchall"/>
+		<appender-ref ref="file-3rdparty"/>
+	</logger>
+	<logger name="ch.qos.logback.classic.LoggerContext" additivity="false" level="WARN">
+		<appender-ref ref="console-catchall"/>
+		<appender-ref ref="file-3rdparty"/>
+	</logger>
+	<logger name="ch.qos.logback.core" additivity="false" level="WARN">
+		<appender-ref ref="console-catchall"/>
+		<appender-ref ref="file-3rdparty"/>
+	</logger>
+
+	<!-- Oracle log appenders -->
+	<logger name="oracle" additivity="false" level="WARN">
+		<appender-ref ref="console-catchall"/>
+		<appender-ref ref="file-3rdparty"/>
+	</logger>
+
+	<!-- amazon -->
+	<logger name="com.amazonaws.http.AmazonHttpClient" additivity="false" level="ERROR">
+		<appender-ref ref="console-catchall"/>
+		<appender-ref ref="file-3rdparty"/>
+	</logger>
+
+	<!-- generic log appenders for open-source libraries -->
+	<logger name="org" level="WARN">
+		<appender-ref ref="console-catchall"/>
+		<appender-ref ref="file-3rdparty"/>
+	</logger>
+
+	<logger name="org.apache.http" level="WARN">
+		<appender-ref ref="console-catchall"/>
+		<appender-ref ref="file-testexecution"/>
+	</logger>
+
+	<logger name="org.apache.http.impl.execchain.RetryExec" level="WARN">
+		<appender-ref ref="console-catchall"/>
+		<appender-ref ref="file-testexecution"/>
+	</logger>
+
+	<!-- tika / pdfbox specific; suppress warning about font loading errors -->
+	<logger name="org.apache.fontbox" level="ERROR">
+		<appender-ref ref="console-catchall"/>
+		<appender-ref ref="file-3rdparty"/>
+	</logger>
+	<logger name="org.apache.pdfbox.font" level="ERROR">
+		<appender-ref ref="console-catchall"/>
+		<appender-ref ref="file-3rdparty"/>
+	</logger>
+	<logger name="org.apache.pdfbox.util" level="ERROR">
+		<appender-ref ref="console-catchall"/>
+		<appender-ref ref="file-3rdparty"/>
+	</logger>
+	<logger name="org.apache.pdfbox.util.operator" level="ERROR">
+		<appender-ref ref="console-catchall"/>
+		<appender-ref ref="file-3rdparty"/>
+	</logger>
+	<logger name="org.apache.pdfbox.pdmodel.font" level="ERROR">
+		<appender-ref ref="console-catchall"/>
+		<appender-ref ref="file-3rdparty"/>
+	</logger>
+
+	<!-- selenium -->
+	<logger name="org.openqa.selenium" additivity="false" level="DEBUG">
+		<appender-ref ref="console-catchall"/>
+		<appender-ref ref="file-testexecution"/>
+	</logger>
+
+	<!-- spring log appenders -->
+	<logger name="org.springframework" additivity="false" level="WARN">
+		<appender-ref ref="console-catchall"/>
+		<appender-ref ref="file-3rdparty"/>
+	</logger>
+	<logger name="org.springframework.aop.framework" additivity="false" level="ERROR">
+		<appender-ref ref="console-catchall"/>
+		<appender-ref ref="file-3rdparty"/>
+	</logger>
+	<logger name="org.springframework.beans.factory.config" additivity="false" level="DEBUG">
+		<appender-ref ref="console-catchall"/>
+		<appender-ref ref="file-3rdparty"/>
+	</logger>
+	<logger name="org.springframework.cloud" additivity="false" level="TRACE">
+		<appender-ref ref="console-catchall"/>
+		<appender-ref ref="file-3rdparty"/>
+	</logger>
+	<logger name="org.springframework.cloud.config" additivity="false" level="TRACE">
+		<appender-ref ref="console-catchall"/>
+		<appender-ref ref="file-3rdparty"/>
+	</logger>
+	<logger name="org.springframework.cloud.config.server" additivity="false" level="TRACE">
+		<appender-ref ref="console-catchall"/>
+		<appender-ref ref="file-3rdparty"/>
+	</logger>
+	<logger name="org.springframework.core.io.support.PropertiesLoaderSupport" additivity="false" level="DEBUG">
+		<appender-ref ref="console-catchall"/>
+		<appender-ref ref="file-3rdparty"/>
+	</logger>
+	<logger name="org.springframework.jdbc.core.JdbcTemplate" additivity="false" level="DEBUG">
+		<appender-ref ref="console-catchall"/>
+		<appender-ref ref="file-testexecution"/>
+	</logger>
+	<logger name="org.springframework.web.servlet.mvc.method.annotation" additivity="false" level="INFO">
+		<appender-ref ref="console-catchall"/>
+		<appender-ref ref="file-3rdparty"/>
+	</logger>
+
+	<!-- Apache-Commons log appenders -->
+	<logger name="org.apache.commons.beanutils" additivity="false" level="INFO">
+		<appender-ref ref="console-catchall"/>
+		<appender-ref ref="file-3rdparty"/>
+	</logger>
+
+	<!-- generic commericial library log appenders -->
+	<logger name="com" level="WARN">
+		<appender-ref ref="console-catchall"/>
+		<appender-ref ref="file-3rdparty"/>
+	</logger>
+
+	<!-- seeknow -->
+	<logger name="org.uptospeed.seeknow" additivity="false" level="DEBUG">
+		<appender-ref ref="console"/>
+		<appender-ref ref="file-testexecution"/>
+	</logger>
+
+	<!-- ============================= -->
+	<!-- nexial categories  -->
+	<!-- ============================= -->
+	<logger name="org.nexial.core" additivity="false" level="INFO">
+		<appender-ref ref="console"/>
+		<appender-ref ref="file-testexecution"/>
+	</logger>
+	<logger name="org.nexial.core.plugins.ws.NaiveConnectionSocketFactory" additivity="false" level="WARN">
+		<appender-ref ref="console"/>
+		<appender-ref ref="file-3rdparty"/>
+	</logger>
+	<logger name="org.nexial.core.compare.OpenPropertyPlaceholderConfigurer" additivity="false" level="INFO">
+		<appender-ref ref="console"/>
+	</logger>
+	<logger name="org.nexial.core.aws.S3Support" additivity="false" level="WARN">
+		<appender-ref ref="console-execution"/>
+		<appender-ref ref="file-testexecution"/>
+	</logger>
+	<logger name="org.nexial.core.tools.TestScriptUpdater" additivity="false" level="INFO">
+		<appender-ref ref="console-tools"/>
+		<!--<appender-ref ref="console-tools-error"/>-->
+		<appender-ref ref="file-tools-error"/>
+	</logger>
+	<logger name="org.nexial.core.utils.ConsoleUtils" additivity="false" level="INFO">
+		<!-- no need for console since ConsoleUtils already prints to console -->
+		<!--<appender-ref ref="console-execution"/>-->
+		<appender-ref ref="file-testexecution"/>
+	</logger>
+	<logger name="org.nexial.core.utils.ExecutionLogger" additivity="false" level="INFO">
+		<appender-ref ref="console-execution"/>
+		<appender-ref ref="file-testexecution"/>
+	</logger>
+	<logger name="org.nexial.core.model.ExecutionContext" additivity="false" level="INFO">
+		<appender-ref ref="console-execution"/>
+		<appender-ref ref="file-testexecution"/>
+	</logger>
+
+	<!-- catch-all -->
+	<root level="INFO">
+		<appender-ref ref="console-catchall"/>
+		<appender-ref ref="file-3rdparty"/>
+	</root>
+
+</configuration>

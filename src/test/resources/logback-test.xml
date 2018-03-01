@@ -1,0 +1,102 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  ~ Copyright 2012-2018 the original author or authors.
+  ~
+  ~ Licensed under the Apache License, Version 2.0 (the "License");
+  ~ you may not use this file except in compliance with the License.
+  ~ You may obtain a copy of the License at
+  ~
+  ~       http://www.apache.org/licenses/LICENSE-2.0
+  ~
+  ~ Unless required by applicable law or agreed to in writing, software
+  ~ distributed under the License is distributed on an "AS IS" BASIS,
+  ~ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+  ~ See the License for the specific language governing permissions and
+  ~ limitations under the License.
+  ~
+  -->
+
+<configuration threshold="debug">
+	<conversionRule conversionWord="color" converterClass="org.springframework.boot.logging.logback.ColorConverter"/>
+
+	<appender name="console" class="ch.qos.logback.core.ConsoleAppender">
+		<encoder>
+			<pattern>[NXL] %d|%-5p|%t|%color(%-25c{0}){green}|%m%n</pattern>
+		</encoder>
+	</appender>
+
+	<!-- web container logger -->
+	<logger name="org.apache.catalina.core.ContainerBase.[Tomcat].[localhost].[/]" level="INFO" additivity="false">
+		<appender-ref ref="console"/>
+	</logger>
+
+	<!-- logback log appenders -->
+	<logger name="ch.qos.logback" additivity="true" level="WARN">
+		<appender-ref ref="console"/>
+	</logger>
+
+	<!-- Oracle log appenders -->
+	<logger name="oracle" additivity="false" level="WARN">
+		<appender-ref ref="console"/>
+	</logger>
+
+	<!-- generic log appenders for open-source libraries -->
+	<logger name="org" level="WARN">
+		<appender-ref ref="console"/>
+	</logger>
+
+	<!-- spring log appenders -->
+	<logger name="org.springframework" additivity="false" level="WARN">
+		<appender-ref ref="console"/>
+	</logger>
+	<logger name="org.springframework.aop.framework" additivity="false" level="ERROR">
+		<appender-ref ref="console"/>
+	</logger>
+	<logger name="org.springframework.beans.factory.config" additivity="false" level="DEBUG">
+		<appender-ref ref="console"/>
+	</logger>
+	<logger name="org.springframework.core.io.support.PropertiesLoaderSupport" additivity="false" level="DEBUG">
+		<appender-ref ref="console"/>
+	</logger>
+	<logger name="org.springframework.jdbc.core.JdbcTemplate" additivity="false" level="DEBUG">
+		<appender-ref ref="console"/>
+	</logger>
+	<logger name="org.springframework.web.servlet.mvc.method.annotation" additivity="false" level="INFO">
+		<appender-ref ref="console"/>
+	</logger>
+
+	<!-- Apache-Commons log appenders -->
+	<logger name="org.apache.http" level="INFO">
+		<appender-ref ref="console"/>
+	</logger>
+	<logger name="org.apache.http.impl.execchain.RetryExec" level="WARN">
+		<appender-ref ref="console"/>
+	</logger>
+	<logger name="org.apache.commons.beanutils" additivity="false" level="INFO">
+		<appender-ref ref="console"/>
+	</logger>
+
+	<!-- generic commericial library log appenders -->
+	<logger name="com" level="WARN">
+		<appender-ref ref="console"/>
+	</logger>
+
+	<!-- ============================= -->
+	<!-- nexial categories  -->
+	<!-- ============================= -->
+	<logger name="org.nexial.core" additivity="false" level="DEBUG">
+		<appender-ref ref="console"/>
+	</logger>
+	<logger name="org.nexial.core.utils.ConsoleUtils" additivity="false" level="WARN">
+		<appender-ref ref="console"/>
+	</logger>
+	<logger name="org.nexial.core.compare.OpenPropertyPlaceholderConfigurer" additivity="false" level="INFO">
+		<appender-ref ref="console"/>
+	</logger>
+
+	<!-- catch-all -->
+	<root level="INFO">
+		<appender-ref ref="console"/>
+	</root>
+
+</configuration>
