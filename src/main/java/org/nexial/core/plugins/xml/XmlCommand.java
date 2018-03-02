@@ -39,23 +39,22 @@ import org.jdom2.JDOMException;
 import org.jdom2.input.SAXBuilder;
 import org.jdom2.input.sax.XMLReaderJDOMFactory;
 import org.jdom2.input.sax.XMLReaderXSDFactory;
-import org.nexial.core.model.StepResult;
-import org.nexial.core.utils.OutputFileUtils;
-import org.xml.sax.ErrorHandler;
-import org.xml.sax.SAXParseException;
-
 import org.nexial.commons.utils.CollectionUtil;
 import org.nexial.commons.utils.TextUtils;
 import org.nexial.commons.utils.XmlUtils;
+import org.nexial.core.model.StepResult;
 import org.nexial.core.plugins.base.BaseCommand;
 import org.nexial.core.utils.ConsoleUtils;
+import org.nexial.core.utils.OutputFileUtils;
 import org.nexial.core.variable.Syspath;
+import org.xml.sax.ErrorHandler;
+import org.xml.sax.SAXParseException;
 
+import static java.io.File.separator;
+import static org.jdom2.input.sax.XMLReaders.XSDVALIDATING;
 import static org.nexial.core.NexialConst.DEF_FILE_ENCODING;
 import static org.nexial.core.utils.CheckUtils.requires;
 import static org.nexial.core.utils.CheckUtils.requiresNotBlank;
-import static java.io.File.separator;
-import static org.jdom2.input.sax.XMLReaders.XSDVALIDATING;
 
 public class XmlCommand extends BaseCommand {
     public static final String PROLOG_START = "<?xml version=\"";
@@ -148,7 +147,7 @@ public class XmlCommand extends BaseCommand {
             }
 
             return assertEqual(expected, value);
-        } catch (JDOMException e) {
+        } catch (Exception e) {
             return StepResult.fail("Error while filtering XML via xpath '" + xpath + "': " + e.getMessage());
         }
     }
@@ -167,7 +166,7 @@ public class XmlCommand extends BaseCommand {
             }
 
             return assertArrayEqual(array, values, exactOrder);
-        } catch (JDOMException e) {
+        } catch (Exception e) {
             return StepResult.fail("Error while filtering XML via xpath '" + xpath + "': " + e.getMessage());
         }
     }
@@ -191,7 +190,7 @@ public class XmlCommand extends BaseCommand {
 
             context.setData(var, value);
             return StepResult.success("XML matches saved to '" + var + "'");
-        } catch (JDOMException e) {
+        } catch (Exception e) {
             return StepResult.fail("Error while filtering XML via xpath '" + xpath + "': " + e.getMessage());
         }
     }
@@ -207,7 +206,7 @@ public class XmlCommand extends BaseCommand {
 
             context.setData(var, values);
             return StepResult.success("XML matches saved to '" + var + "'");
-        } catch (JDOMException e) {
+        } catch (Exception e) {
             return StepResult.fail("Error while filtering XML via xpath '" + xpath + "': " + e.getMessage());
         }
     }
@@ -282,7 +281,7 @@ public class XmlCommand extends BaseCommand {
                StepResult.success("xml validated as well-formed");
     }
 
-    public String getValuesByXPath(String xml, String xpath) throws JDOMException {
+    public String getValuesByXPath(String xml, String xpath) {
         List<String> buffer = getValuesListByXPath(xml, xpath);
         if (buffer == null) { return null; }
 
@@ -310,7 +309,7 @@ public class XmlCommand extends BaseCommand {
         return buffer;
     }
 
-    public String getValueByXPath(String xml, String xpath) throws JDOMException {
+    public String getValueByXPath(String xml, String xpath) {
         return getValueByXPath(resolveDoc(xml, xpath), xpath);
     }
 

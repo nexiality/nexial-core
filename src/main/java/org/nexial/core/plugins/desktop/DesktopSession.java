@@ -672,7 +672,7 @@ public class DesktopSession {
             String appVersion = XmlCommand.getValueByXPath(doc, XPATH_APP_VER);
             this.applicationVersion = appVersion;
             ConsoleUtils.log("application is running as version " + appVersion);
-        } catch (IOException | JDOMException e) {
+        } catch (IOException e) {
             ConsoleUtils.error("Unable to parse AUT donet config file (" + dotNetConfigFile + "): " + e.getMessage());
         }
     }
