@@ -178,38 +178,39 @@ public class DataVariableUpdaterTest {
         updater.replaceProperties();
 
         String projectProps = StringUtils.appendIfMissing(searchFrom, separator) + DEF_REL_PROJECT_PROPS;
-        File projectPropFile = new File(projectProps);
-        String projectPropContent = FileUtils.readFileToString(projectPropFile, DEF_FILE_ENCODING);
-        Assert.assertEquals("CENTREE.compare.lenient=${CENTREE.web.alwaysWait}\n" +
-                            "CENTREE.runID.prefix=MyOneAndOnlyTest-Part2\n" +
-                            "CENTREE.web.alwaysWait=true\n" +
-                            "CENTREE.ws.digest.user=User1\n" +
-                            "\n" +
-                            "CENTREE.browserstack.browser=chrome\n" +
-                            "CENTREE.browser=${CENTREE.browserstack.browser}\n" +
-                            "CENTREE.iteration.fallbackToPrevious=${CENTREE.compare.lenient}\n" +
-                            "\n" +
-                            "mifdb.type=hsqldb\n" +
-                            "mifdb.url=mem:\n" +
-                            "mifdb.treatNullAs=[NULL]\n" +
-                            "\n" +
-                            "His Data=yourData\n" +
-                            "Her Data=Theirs\n" +
-                            "riddle=and king's men\n" +
-                            "\n" +
-                            "\n" +
-                            "rhyme2=Humpty Dumpty together again\n" +
-                            "\n" +
-                            "\n" +
-                            "break=\n" +
-                            "gone=\n" +
-                            "taken=\n" +
-                            "\n" +
-                            "john.williams.color=black\n" +
-                            "john.williams.fruit=apple\n" +
-                            "john.williams.phone=Apple\n" +
-                            "\n" +
-                            "\n",
+        String projectPropContent = FileUtils.readFileToString(new File(projectProps), DEF_FILE_ENCODING);
+        String sep = StringUtils.contains(projectPropContent, "\r\n") ? "\r\n" : "\n";
+
+        Assert.assertEquals("CENTREE.compare.lenient=${CENTREE.web.alwaysWait}" + sep +
+                            "CENTREE.runID.prefix=MyOneAndOnlyTest-Part2" + sep +
+                            "CENTREE.web.alwaysWait=true" + sep +
+                            "CENTREE.ws.digest.user=User1" + sep +
+                            sep +
+                            "CENTREE.browserstack.browser=chrome" + sep +
+                            "CENTREE.browser=${CENTREE.browserstack.browser}" + sep +
+                            "CENTREE.iteration.fallbackToPrevious=${CENTREE.compare.lenient}" + sep +
+                            sep +
+                            "mifdb.type=hsqldb" + sep +
+                            "mifdb.url=mem:" + sep +
+                            "mifdb.treatNullAs=[NULL]" + sep +
+                             sep +
+                            "His Data=yourData" + sep +
+                            "Her Data=Theirs" + sep +
+                            "riddle=and king's men" + sep +
+                            "" + sep +
+                            "" + sep +
+                            "rhyme2=Humpty Dumpty together again" + sep +
+                            "" + sep +
+                            "" + sep +
+                            "break=" + sep +
+                            "gone=" + sep +
+                            "taken=" + sep +
+                            "" + sep +
+                            "john.williams.color=black" + sep +
+                            "john.williams.fruit=apple" + sep +
+                            "john.williams.phone=Apple" + sep +
+                            sep +
+                            sep,
                             projectPropContent);
 
         Map<String, String> props = TextUtils.loadProperties(projectProps);

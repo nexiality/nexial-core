@@ -62,7 +62,6 @@ import static org.nexial.core.tools.CliUtils.newArgOption;
  * Utility to rename the variables in the data files, scripts, properties files and sql files within a project.
  */
 final public class DataVariableUpdater {
-
     private static final String OPT_PROJECT_PATH = "f";
     private static final String OPT_VARIABLES_LIST = "v";
     private static final String DATA_FILE_SUFFIX = "data.xlsx";
@@ -81,6 +80,7 @@ final public class DataVariableUpdater {
     private List<UpdateLog> updated = new ArrayList<>();
 
     // todo: still need to handle SQL file
+    // todo: still need to handle other text files (json, ml, etc.)
     // todo: need to handle prefix-only search/replacement
     // todo: refactor code to reuse wht's available in `Excel`
     // todo: need to handle variables set up for different iteration
@@ -455,9 +455,11 @@ final public class DataVariableUpdater {
 
         try {
             String content = FileUtils.readFileToString(file, DEF_CHARSET);
+            String sep = StringUtils.contains(content, "\r\n") ? "\r\n" : "\n";
+
             StringBuilder replaced = new StringBuilder();
 
-            String[] lines = StringUtils.splitPreserveAllTokens(content, "\n");
+            String[] lines = StringUtils.splitPreserveAllTokens(content, sep);
             for (int i = 0; i < lines.length; i++) {
                 String line = lines[i];
                 UpdateLog updateLog = new UpdateLog(file).setPosition(StringUtils.leftPad(i + "", 3));
@@ -493,10 +495,10 @@ final public class DataVariableUpdater {
                     }
                 }
 
-                replaced.append(line).append("\n");
+                replaced.append(line).append(sep);
             }
 
-            FileUtils.writeStringToFile(file, StringUtils.removeEnd(replaced.toString(), "\n"), DEF_CHARSET);
+            FileUtils.writeStringToFile(file, StringUtils.removeEnd(replaced.toString(), sep), DEF_CHARSET);
             log("processed", file);
         } catch (IOException e) {
             System.err.println("Unable to process " + file + " successfully: " + e.getMessage());
