@@ -116,7 +116,7 @@ public class XmlCommand extends BaseCommand {
                 return StepResult.fail("XML does not contain structure as defined by '" + xpath + "'");
             }
             return StepResult.success("XML matches to '" + xpath + "'");
-        } catch (JDOMException e) {
+        } catch (Exception e) {
             return StepResult.fail("Error while filtering XML via xpath '" + xpath + "': " + e.getMessage());
         }
     }
@@ -130,7 +130,7 @@ public class XmlCommand extends BaseCommand {
                 return StepResult.success("XML does not match '" + xpath + "' as EXPECTED");
             }
             return StepResult.fail("XML matches to '" + xpath + "', which is UNEXPECTED");
-        } catch (JDOMException e) {
+        } catch (Exception e) {
             return StepResult.fail("Error while filtering XML via xpath '" + xpath + "': " + e.getMessage());
         }
     }
@@ -291,7 +291,7 @@ public class XmlCommand extends BaseCommand {
         return CollectionUtil.toString(buffer, delim);
     }
 
-    public List<String> getValuesListByXPath(String xml, String xpath) throws JDOMException {
+    public List<String> getValuesListByXPath(String xml, String xpath) {
         Document doc = resolveDoc(xml, xpath);
         List matches = XmlUtils.findNodes(doc, xpath);
         if (CollectionUtils.isEmpty(matches)) { return null; }
@@ -314,7 +314,7 @@ public class XmlCommand extends BaseCommand {
         return getValueByXPath(resolveDoc(xml, xpath), xpath);
     }
 
-    public static String getValueByXPath(Document doc, String xpath) throws JDOMException {
+    public static String getValueByXPath(Document doc, String xpath) {
         Object match = XmlUtils.findNode(doc, xpath);
         if (match == null) { return null; }
 

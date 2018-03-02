@@ -58,7 +58,7 @@ public class DesktopNotification {
 			                                          "/d", autoDismissMs + "",
 			                                          "/t", level == null ? info.name() : level.name()),
 			                            null);
-		} catch (IOException | InterruptedException e) {
+		} catch (IOException e) {
 			ConsoleUtils.error("Unable to send desktop notification: " + message + ". " + e.getMessage());
 		}
 	}
@@ -76,7 +76,7 @@ public class DesktopNotification {
 			                                          "/d", "0",
 			                                          "/t", level == null ? info.name() : level.name()),
 			                            null);
-		} catch (IOException | InterruptedException e) {
+		} catch (IOException e) {
 			ConsoleUtils.error("Unable to send desktop notification: " + message + ". " + e.getMessage());
 		}
 

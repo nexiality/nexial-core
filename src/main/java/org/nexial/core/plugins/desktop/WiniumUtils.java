@@ -363,7 +363,7 @@ public final class WiniumUtils {
                                                       "taskkill", "/pid", processId + "", "/T", "/F"),
                                         null);
             return true;
-        } catch (IOException | InterruptedException e) {
+        } catch (IOException e) {
             ConsoleUtils.error("Unable to terminate process with process id " + processId + ": " + e.getMessage());
             return false;
         }
@@ -443,11 +443,7 @@ public final class WiniumUtils {
         if (StringUtils.isBlank(exeName)) { return; }
 
         String fullpath = exePath + separator + exeName;
-        try {
-            ProcessInvoker.invokeNoWait(fullpath, args, env);
-        } catch (InterruptedException e) {
-            throw new IOException("Unable to start new app: " + e.getMessage(), e);
-        }
+        ProcessInvoker.invokeNoWait(fullpath, args, env);
     }
 
     protected static void shutdownDriverService(WiniumDriverService service) {

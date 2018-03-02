@@ -90,7 +90,7 @@ public class XmlTransformer extends Transformer<XmlDataType> {
                 return new ListDataType(TextUtils.toString(list, ","), ",");
             }
 
-        } catch (JDOMException | TypeConversionException e) {
+        } catch (TypeConversionException e) {
             throw new IllegalArgumentException("Unable to process XML: " + e.getMessage(), e);
         }
     }
