@@ -1,0 +1,38 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans"
+       xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+       xmlns:util="http://www.springframework.org/schema/util"
+       xsi:schemaLocation="http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans.xsd http://www.springframework.org/schema/util http://www.springframework.org/schema/util/spring-util.xsd"
+       default-lazy-init="false">
+
+	<!-- default mailer -->
+	<bean class="org.springframework.beans.factory.config.MethodInvokingFactoryBean">
+		<property name="targetObject">
+			<!-- System.getProperties() -->
+			<bean class="org.springframework.beans.factory.config.MethodInvokingFactoryBean">
+				<property name="targetClass" value="java.lang.System"/>
+				<property name="targetMethod" value="getProperties"/>
+			</bean>
+		</property>
+		<property name="targetMethod" value="putAll"/>
+		<property name="arguments">
+			<!-- The new Properties -->
+			<util:properties>
+				<prop key="webdriver.enable.native.events">true</prop>
+				<prop key="webdriver.reap_profile">true</prop>
+				<prop key="webdriver.accept.untrusted.certs">true</prop>
+				<prop key="webdriver.assume.untrusted.issue">true</prop>
+
+				<prop key="nexial.scope.executionMode">local</prop>
+				<prop key="nexial.delayBrowser">true</prop>
+				<prop key="nexial.browser">chrome.headless</prop>
+				<prop key="nexial.failFast">true</prop>
+				<prop key="nexial.openResult">on</prop>
+				<prop key="nexial.outputToCloud">false</prop>
+
+				<!--<prop key=""></prop>-->
+			</util:properties>
+		</property>
+	</bean>
+
+</beans>

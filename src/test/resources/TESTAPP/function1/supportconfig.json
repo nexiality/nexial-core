@@ -1,0 +1,9 @@
+{
+	"email":  "mailto:somebody.import@littleshop.fl?subject=Inquiry About Our Product",
+	"labels": [
+		{ "title": "Support" },
+		{ "dept": "Customer Communications" },
+		{ "email": "communications@littleshop.com" },
+		{ "hotline": "Toll Free: 800-123-4567" }
+	]
+}

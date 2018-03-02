@@ -17,14 +17,14 @@
 
 package org.nexial.core.service
 
+import org.apache.commons.io.FileUtils
+import org.apache.commons.lang3.StringUtils
 import org.nexial.core.NexialConst.Data.THIRD_PARTY_LOG_PATH
 import org.nexial.core.NexialConst.Project.resolveStandardPaths
 import org.nexial.core.NexialConst.SUBDIR_LOGS
 import org.nexial.core.model.ExecutionContext
 import org.nexial.core.model.ExecutionDefinition
 import org.nexial.core.model.TestProject
-import org.apache.commons.io.FileUtils
-import org.apache.commons.lang3.StringUtils
 import org.nexial.core.utils.ExecUtil
 import org.springframework.boot.ExitCodeGenerator
 import org.springframework.boot.SpringApplication
@@ -47,7 +47,7 @@ import java.util.*
     JacksonAutoConfiguration::class,
     DataSourceAutoConfiguration::class,
     DataSourceTransactionManagerAutoConfiguration::class])
-@ComponentScan(basePackages = ["org.nexiality.nexial.service"])
+@ComponentScan(basePackages = ["org.nexial.core.service"])
 @Configuration
 open class ServiceLauncher : SpringBootServletInitializer() {
     companion object {

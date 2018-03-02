@@ -122,9 +122,7 @@ public class JsonHelperTest {
 		try {
 			JSONObject json = JsonHelper.retrieveJSONObject(JsonHelper.class, fixture4);
 			Assert.assertNotNull(json);
-		} catch (IOException e) {
-			Assert.fail("retrieve " + fixture4 + " failed with " + e);
-		} catch (JSONException e) {
+		} catch (IOException | JSONException e) {
 			Assert.fail("retrieve " + fixture4 + " failed with " + e);
 		}
 	}
@@ -146,15 +144,15 @@ public class JsonHelperTest {
 		Assert.assertEquals("5", JsonHelper.fetchString(json, "c"));
 		Assert.assertEquals("{\"b\":\"1234\"}", JsonHelper.fetchString(json, "a"));
 		Assert.assertEquals("1234", JsonHelper.fetchString(json, "a.b"));
-		Assert.assertEquals(null, JsonHelper.fetchString(json, "e"));
-		Assert.assertEquals(null, JsonHelper.fetchString(json, "f"));
-		Assert.assertEquals(null, JsonHelper.fetchString(json, "f[0]"));
-		Assert.assertEquals(null, JsonHelper.fetchString(json, "f[1]"));
+		Assert.assertNull(JsonHelper.fetchString(json, "e"));
+		Assert.assertNull(JsonHelper.fetchString(json, "f"));
+		Assert.assertNull(JsonHelper.fetchString(json, "f[0]"));
+		Assert.assertNull(JsonHelper.fetchString(json, "f[1]"));
 		Assert.assertEquals("[\"cat\",\"dog\",\"mouse\"]", JsonHelper.fetchString(json, "g"));
 		Assert.assertEquals("cat", JsonHelper.fetchString(json, "g[0]"));
 		Assert.assertEquals("dog", JsonHelper.fetchString(json, "g[1]"));
 		Assert.assertEquals("mouse", JsonHelper.fetchString(json, "g[2]"));
-		Assert.assertEquals(null, JsonHelper.fetchString(json, "g[3]"));
+		Assert.assertNull(JsonHelper.fetchString(json, "g[3]"));
 		Assert.assertEquals("{\"i.j\":\"yoyoma\"}", JsonHelper.fetchString(json, "h"));
 		Assert.assertEquals("yoyoma", JsonHelper.fetchString(json, "h[\"i.j\"]"));
 		Assert.assertEquals("yoyoma", JsonHelper.fetchString(json, "h['i.j']"));
@@ -299,7 +297,7 @@ public class JsonHelperTest {
 		Assert.assertEquals("Acme Inc.", company.getName());
 		Assert.assertEquals(" 1 Busy Street, Trouble Town", company.getAddress());
 		Assert.assertEquals("Import/Export", company.getIndustry());
-		Assert.assertEquals(false, company.isPublicallyTraded());
+		Assert.assertFalse(company.isPublicallyTraded());
 
 		Assert.assertNotNull(subject.getFriends());
 		Assert.assertEquals(2, subject.getFriends().length);

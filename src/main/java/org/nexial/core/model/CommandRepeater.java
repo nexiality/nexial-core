@@ -23,16 +23,15 @@ import java.util.List;
 
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.builder.ToStringBuilder;
-
 import org.nexial.core.utils.FlowControlUtils;
 
-import static org.nexial.core.NexialConst.OPT_LAST_OUTCOME;
 import static org.apache.commons.lang3.builder.ToStringStyle.SIMPLE_STYLE;
+import static org.nexial.core.NexialConst.OPT_LAST_OUTCOME;
 
 public class CommandRepeater {
     private TestStep initialTestStep;
     private List<TestStep> steps = new ArrayList<>();
-    private long maxWaitMs = -1;
+    private long maxWaitMs;
 
     public CommandRepeater(TestStep testStep, long maxWait) {
         this.initialTestStep = testStep;
@@ -78,26 +77,29 @@ public class CommandRepeater {
                         // evaluate if this is TRULY a failure, using result.failed() is not accurate
                         // if (result.failed()) {
                         if (!result.isSuccess() && !result.isSkipped() && !result.isWarn()) {
-                            if (context.isFailFast() || context.isFailFastCommand(testStep)) {
-                                context.logCurrentStep("test stopping due to failure on fail-fast command: " +
-                                                       testStep.getCommandFQN());
-                                // we are done, can't pretend everything's fine
-                                return result;
-                            }
+                            // we are done, can't pretend everything's fine
+                            if (shouldFailFast(context, testStep)) { return result; }
                             // else , fail-fast not in effect, so we push on
                         }
                         // else, continues on
                     }
                 } catch (InvocationTargetException e) {
                     // first command is assertion.. failure means we need to keep going..
-                    if (e.getCause() != null && e.getCause() instanceof AssertionError && i == 0) { continue; }
+                    if (i == 0) {
+                        boolean isAssertError =
+                            (e.getCause() != null && e.getCause() instanceof AssertionError) ||
+                            (e.getTargetException() != null && e.getTargetException() instanceof AssertionError);
+                        if (isAssertError) { continue; }
+                    }
 
-                    return StepResult.fail(resolveRootCause(e));
+                    if (shouldFailFast(context, testStep)) { return StepResult.fail(resolveRootCause(e)); }
+                    // else, fail-fast not in effect, so we push on
                 } catch (AssertionError e) {
                     // first command is assertion.. failure means we need to keep going..
                     if (i == 0) { continue; }
 
-                    return StepResult.fail(resolveRootCause(e));
+                    if (shouldFailFast(context, testStep)) { return StepResult.fail(resolveRootCause(e)); }
+                    // else, fail-fast not in effect, so we push on
                 } catch (Throwable e) {
                     return StepResult.fail(resolveRootCause(e));
                 } finally {
@@ -122,6 +124,14 @@ public class CommandRepeater {
                    .append("steps", steps)
                    .append("maxWaitMs", maxWaitMs)
                    .toString();
+    }
+
+    protected boolean shouldFailFast(ExecutionContext context, TestStep testStep) {
+        boolean shouldFailFast = context.isFailFast() || context.isFailFastCommand(testStep);
+        if (shouldFailFast) {
+            context.logCurrentStep("test stopping due to failure on fail-fast command: " + testStep.getCommandFQN());
+        }
+        return shouldFailFast;
     }
 
     protected String resolveRootCause(Throwable e) {

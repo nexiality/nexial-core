@@ -17,12 +17,12 @@
 
 package org.nexial.core.service
 
-import org.nexial.commons.utils.FileUtil
-import org.nexial.core.excel.Excel
 import com.google.gson.JsonObject
 import org.apache.commons.io.FileUtils
 import org.apache.commons.lang3.StringUtils
 import org.nexial.commons.spring.SpringUtils
+import org.nexial.commons.utils.FileUtil
+import org.nexial.core.excel.Excel
 import org.slf4j.LoggerFactory
 import org.springframework.web.bind.annotation.RequestBody
 import org.springframework.web.bind.annotation.RequestMapping
@@ -45,7 +45,7 @@ import kotlin.collections.ArrayList
 @ResponseBody
 open class ArtifactService {
     private val logger = LoggerFactory.getLogger(this.javaClass)
-    private val MIN_EXCEL_FILE_SIZE: Long = 5 * 1024
+    private val minExcelFileSize: Long = 5 * 1024
 
     @PostConstruct
     fun startup() {
@@ -73,7 +73,7 @@ open class ArtifactService {
         }
 
         if (request.showSheets) {
-            if (!FileUtil.isFileReadable(path, MIN_EXCEL_FILE_SIZE)) {
+            if (!FileUtil.isFileReadable(path, minExcelFileSize)) {
                 throw FileNotFoundException("path '$path' is not a readable file")
             }
 
@@ -91,7 +91,7 @@ open class ArtifactService {
         val request = toRequest(payload)
         val path = request.path
 
-        if (!FileUtil.isFileReadable(path, MIN_EXCEL_FILE_SIZE)) {
+        if (!FileUtil.isFileReadable(path, minExcelFileSize)) {
             throw FileNotFoundException("path '$path' is not a readable file")
         }
 
