@@ -1,0 +1,6 @@
+<a>
+	<b>
+		<c>${sentry.browser}</c>
+	</b>
+	<d e="${sentry.failFast}">${sentry.textDelim}</d>
+</a>

@@ -88,12 +88,47 @@ public class RegexUtilsTest {
     @Test
     public void testSplits() {
         String key = "@include(dataDriver.xlsx, #data, LANDSCAPE)";
-        List<String> splits = RegexUtils.collectGroups(key,
-                                                       "\\@include\\(\\s*(.+)\\s*\\,\\s*(.+)\\s*\\,\\s*(LANDSCAPE|PORTRAIT)\\)");
+        List<String> splits = RegexUtils.collectGroups(
+            key,
+            "\\@include\\(\\s*(.+)\\s*\\,\\s*(.+)\\s*\\,\\s*(LANDSCAPE|PORTRAIT)\\)");
         Assert.assertEquals(3, splits.size());
         Assert.assertEquals("dataDriver.xlsx", splits.get(0));
         Assert.assertEquals("#data", splits.get(1));
         Assert.assertEquals("LANDSCAPE", splits.get(2));
+    }
+
+    @Test
+    public void testReplaceRetainNewLines() {
+        Assert.assertEquals("this is a test. \n\n\nDo not be alarmed.",
+                            RegexUtils.replace("this is a test. \n\n\nDo not be alarmed.", "[0-9]", " "));
+
+        String sqls = "-- sentry:insert_new_support_rep\n" +
+                      "INSERT INTO EMPLOYEES (LASTNAME, FIRSTNAME, TITLE, REPORTSTO, BIRTHDATE, HIREDATE, ADDRESS, CITY, STATE, COUNTRY, POSTALCODE, PHONE, FAX, EMAIL)\n" +
+                      "VALUES ('Brown', 'James', 'Funk Master', 'Nobody', '1963-09-30', NULL, '101 Beat Street', 'Funky Town', 'MI', 'USA', '20931', NULL, NULL, 'funky@tac.com');\n" +
+                      "\n" +
+                      "-- sentry:support_rep\n" +
+                      "SELECT EMPLOYEEID AS \"EmployeeId\"\n" +
+                      "FROM EMPLOYEES WHERE LASTNAME = 'Brown' AND FIRSTNAME = 'James';\n" +
+                      "\n" +
+                      "-- sentry:insert_new_customer\n" +
+                      "INSERT INTO CUSTOMERS (FIRSTNAME, LASTNAME, COMPANY, ADDRESS, CITY, STATE, COUNTRY, POSTALCODE, PHONE, FAX, EMAIL, SUPPORTREPID)\n" +
+                      "VALUES ('John', 'Smith', 'Acme', '123 Elm Street', 'Fullerton', 'PA', 'USA', '10491', '702-541-2213', NULL, 'john.smith@acme.com', ${support_rep}.data[0].EmployeeId);\n" +
+                      "\n" +
+                      "\n";
+        Assert.assertEquals("-- nexial:insert_new_support_rep\n" +
+                            "INSERT INTO EMPLOYEES (LASTNAME, FIRSTNAME, TITLE, REPORTSTO, BIRTHDATE, HIREDATE, ADDRESS, CITY, STATE, COUNTRY, POSTALCODE, PHONE, FAX, EMAIL)\n" +
+                            "VALUES ('Brown', 'James', 'Funk Master', 'Nobody', '1963-09-30', NULL, '101 Beat Street', 'Funky Town', 'MI', 'USA', '20931', NULL, NULL, 'funky@tac.com');\n" +
+                            "\n" +
+                            "-- nexial:support_rep\n" +
+                            "SELECT EMPLOYEEID AS \"EmployeeId\"\n" +
+                            "FROM EMPLOYEES WHERE LASTNAME = 'Brown' AND FIRSTNAME = 'James';\n" +
+                            "\n" +
+                            "-- nexial:insert_new_customer\n" +
+                            "INSERT INTO CUSTOMERS (FIRSTNAME, LASTNAME, COMPANY, ADDRESS, CITY, STATE, COUNTRY, POSTALCODE, PHONE, FAX, EMAIL, SUPPORTREPID)\n" +
+                            "VALUES ('John', 'Smith', 'Acme', '123 Elm Street', 'Fullerton', 'PA', 'USA', '10491', '702-541-2213', NULL, 'john.smith@acme.com', ${support_rep}.data[0].EmployeeId);\n" +
+                            "\n" +
+                            "\n",
+                            RegexUtils.replace(sqls, "-- sentry:", "-- nexial:"));
 
     }
 }

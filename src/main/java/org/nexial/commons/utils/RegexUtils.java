@@ -44,7 +44,7 @@ public final class RegexUtils {
         Pattern p = Pattern.compile(regex);
 
         StringBuilder sb = new StringBuilder();
-        String[] lines = StringUtils.split(text, '\n');
+        String[] lines = StringUtils.splitPreserveAllTokens(text, '\n');
         for (String line : lines) {
             if (sb.length() > 0) { sb.append('\n'); }
             Matcher matcher = p.matcher(line);

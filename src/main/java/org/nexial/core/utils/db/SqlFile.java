@@ -44,6 +44,7 @@ import static org.nexial.core.NexialConst.DEF_CHARSET;
 public final class SqlFile {
 	public static final String STATEMENT_DELIMITER = ";";
 	public static final String COMMENT = "--";
+
 	private File file;
 	private List<String> statements = new ArrayList<>();
 

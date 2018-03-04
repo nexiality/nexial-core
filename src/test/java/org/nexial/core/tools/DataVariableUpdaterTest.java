@@ -36,6 +36,7 @@ import org.nexial.commons.utils.TextUtils;
 import org.nexial.core.excel.Excel;
 import org.nexial.core.excel.Excel.Worksheet;
 import org.nexial.core.excel.ExcelAddress;
+import org.nexial.core.tools.DataVariableUpdater.UpdateLog;
 
 import static java.io.File.separator;
 import static org.nexial.core.NexialConst.DEF_FILE_ENCODING;
@@ -193,7 +194,7 @@ public class DataVariableUpdaterTest {
                             "mifdb.type=hsqldb" + sep +
                             "mifdb.url=mem:" + sep +
                             "mifdb.treatNullAs=[NULL]" + sep +
-                             sep +
+                            sep +
                             "His Data=yourData" + sep +
                             "Her Data=Theirs" + sep +
                             "riddle=and king's men" + sep +
@@ -235,5 +236,154 @@ public class DataVariableUpdaterTest {
         Assert.assertEquals("black", props.get("john.williams.color"));
         Assert.assertEquals("apple", props.get("john.williams.fruit"));
         Assert.assertEquals("Apple", props.get("john.williams.phone"));
+    }
+
+    @Test
+    public void replaceTextFiles() throws Exception {
+        updater.replaceTextFiles();
+
+        // validate sql file
+        String sqlFile = StringUtils.appendIfMissing(searchFrom, separator) +
+                         "artifact" + separator + "data" + separator + "test.sql";
+        String sqlContent = FileUtils.readFileToString(new File(sqlFile), DEF_FILE_ENCODING);
+        String sep = StringUtils.contains(sqlContent, "\r\n") ? "\r\n" : "\n";
+
+        Assert.assertEquals(
+            "-- this is a test fixture to validate the search/replace functionality of DataVariableUpdater" + sep +
+            "-- here's a comment" + sep +
+            "-- here's another" + sep +
+            sep +
+            "-- nexial:variable1" + sep +
+            "SELECT * FROM WHATEVER_TABLE WHERE NOBODY_CARE = \"that's right\";" + sep +
+            sep +
+            "-- nexial:variable2" + sep +
+            "UPDATE TABLE1 SET COL1 = 2, COL2 = 3;" + sep +
+            sep +
+            "-- good bye",
+            sqlContent);
+
+        // validate xml file
+        String xmlFile = StringUtils.appendIfMissing(searchFrom, separator) +
+                         "artifact" + separator + "data" + separator + "test.xml";
+        String xmlContent = FileUtils.readFileToString(new File(xmlFile), DEF_FILE_ENCODING);
+        sep = StringUtils.contains(xmlContent, "\r\n") ? "\r\n" : "\n";
+
+        Assert.assertEquals(
+            "<a>" + sep +
+            "\t<b>" + sep +
+            "\t\t<c>${CENTREE.browser}</c>" + sep +
+            "\t</b>" + sep +
+            "\t<d e=\"${CENTREE.failFast}\">${CENTREE.textDelim}</d>" + sep +
+            "</a>",
+            xmlContent);
+
+        // validate xml file
+        String jsonFile = StringUtils.appendIfMissing(searchFrom, separator) +
+                          "artifact" + separator + "data" + separator + "test.json";
+        String jsonContent = FileUtils.readFileToString(new File(jsonFile), DEF_FILE_ENCODING);
+        sep = StringUtils.contains(jsonContent, "\r\n") ? "\r\n" : "\n";
+
+        Assert.assertEquals(
+            "{" + sep +
+            "    \"a\": {" + sep +
+            "        \"b\": \"${CENTREE.failFast}\"," + sep +
+            "\"${CENTREE.textDelim}\": [ \"${CENTREE.browser}\", \"${CENTREE.browser}\", \"${CENTREE.verbose}\"]" +
+            sep +
+            "    }" + sep +
+            "}",
+            jsonContent);
+    }
+
+    @Test
+    public void replaceVarsInKeywordWrapper() throws Exception {
+        UpdateLog updateLog = updater.new UpdateLog("file1").setPosition("line1");
+
+        // unmatched cases
+        Assert.assertNull(updater.replaceVarsInKeywordWrapper("", updateLog));
+        Assert.assertNull(updater.replaceVarsInKeywordWrapper("No variable here", updateLog));
+        Assert.assertNull(updater.replaceVarsInKeywordWrapper("CENTREE.browser", updateLog));
+        Assert.assertNull(updater.replaceVarsInKeywordWrapper("store(CENTREE.browser", updateLog));
+        Assert.assertNull(updater.replaceVarsInKeywordWrapper("store CENTREE.browser)", updateLog));
+        Assert.assertNull(updater.replaceVarsInKeywordWrapper("store(CENTREE.browser)", updateLog));
+
+        // matched cases
+        Assert.assertEquals("store(CENTREE.browser)",
+                            updater.replaceVarsInKeywordWrapper("store(sentry.browser)", updateLog));
+        Assert.assertEquals(1, updater.updated.size());
+        Assert.assertEquals("file1 [line1]: sentry.browser => CENTREE.browser",
+                            updater.updated.get(0).toString().trim());
+        updater.updated.clear();
+
+        Assert.assertEquals("I'm gonna store(CENTREE.browser) as ${sentry.browser}",
+                            updater.replaceVarsInKeywordWrapper("I'm gonna store(sentry.browser) as ${sentry.browser}",
+                                                                updateLog));
+        Assert.assertEquals(1, updater.updated.size());
+        Assert.assertEquals("file1 [line1]: sentry.browser => CENTREE.browser",
+                            updater.updated.get(0).toString().trim());
+        updater.updated.clear();
+
+        Assert.assertEquals("I'll \n store(CENTREE.browser)\n as ${sentry.browser}",
+                            updater.replaceVarsInKeywordWrapper("I'll \n store(sentry.browser)\n as ${sentry.browser}",
+                                                                updateLog));
+        Assert.assertEquals(1, updater.updated.size());
+        Assert.assertEquals("file1 [line1]: sentry.browser => CENTREE.browser",
+                            updater.updated.get(0).toString().trim());
+        updater.updated.clear();
+
+        Assert.assertEquals(
+            "I'll \n store(CENTREE.browser)\n as ${sentry.browser}, and then again store(CENTREE.browser)",
+            updater.replaceVarsInKeywordWrapper(
+                "I'll \n store(sentry.browser)\n as ${sentry.browser}, and then again store(sentry.browser)",
+                updateLog));
+        Assert.assertEquals(1, updater.updated.size());
+        Assert.assertEquals("file1 [line1]: sentry.browser => CENTREE.browser",
+                            updater.updated.get(0).toString().trim());
+        updater.updated.clear();
+    }
+
+    @Test
+    public void replaceVarTokens() throws Exception {
+        UpdateLog updateLog = updater.new UpdateLog("file1").setPosition("line1");
+
+        // unmatched cases
+        Assert.assertNull(updater.replaceVarTokens("", updateLog));
+        Assert.assertNull(updater.replaceVarTokens("No variable here", updateLog));
+        Assert.assertNull(updater.replaceVarTokens("CENTREE.browser", updateLog));
+        Assert.assertNull(updater.replaceVarTokens("${CENTREE.browser", updateLog));
+        Assert.assertNull(updater.replaceVarTokens("$ CENTREE.browser}", updateLog));
+        Assert.assertNull(updater.replaceVarTokens("${CENTREE.browser}", updateLog));
+
+        // matched cases
+        Assert.assertEquals("${CENTREE.browser}", updater.replaceVarTokens("${sentry.browser}", updateLog));
+        Assert.assertEquals(1, updater.updated.size());
+        Assert.assertEquals("file1 [line1]: ${sentry.browser} => ${CENTREE.browser}",
+                            updater.updated.get(0).toString().trim());
+        updater.updated.clear();
+
+        Assert.assertEquals("I'm gonna store(sentry.browser) as ${CENTREE.browser}",
+                            updater.replaceVarTokens("I'm gonna store(sentry.browser) as ${sentry.browser}",
+                                                     updateLog));
+        Assert.assertEquals(1, updater.updated.size());
+        Assert.assertEquals("file1 [line1]: ${sentry.browser} => ${CENTREE.browser}",
+                            updater.updated.get(0).toString().trim());
+        updater.updated.clear();
+
+        Assert.assertEquals("I'll \n store(sentry.browser)\n as ${CENTREE.browser}",
+                            updater.replaceVarTokens("I'll \n store(sentry.browser)\n as ${sentry.browser}",
+                                                     updateLog));
+        Assert.assertEquals(1, updater.updated.size());
+        Assert.assertEquals("file1 [line1]: ${sentry.browser} => ${CENTREE.browser}",
+                            updater.updated.get(0).toString().trim());
+        updater.updated.clear();
+
+        Assert.assertEquals(
+            "I'll \n store(sentry.browser)\n as ${CENTREE.browser}, and then use it as ${CENTREE.browser}",
+            updater.replaceVarTokens(
+                "I'll \n store(sentry.browser)\n as ${sentry.browser}, and then use it ${sentry.browser}",
+                updateLog));
+        Assert.assertEquals(1, updater.updated.size());
+        Assert.assertEquals("file1 [line1]: ${sentry.browser} => ${CENTREE.browser}",
+                            updater.updated.get(0).toString().trim());
+        updater.updated.clear();
     }
 }
