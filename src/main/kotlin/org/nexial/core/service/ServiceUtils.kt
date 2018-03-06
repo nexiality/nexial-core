@@ -42,24 +42,19 @@ sealed class ServiceUtils {
                 gson.fromJson(payload, type)
             }
 
-        fun toJSONObject(obj: Any): JSONObject = JSONObject(
-            gson.toJson(obj))
+        fun toJSONObject(obj: Any): JSONObject = JSONObject(gson.toJson(obj))
 
-        fun toSuccessReponse(message: String) = toJSONObject(
-            SuccessResponse(message = message))
+        fun toSuccessReponse(message: String) = toJSONObject(SuccessResponse(message = message))
 
-        fun toErrorReponse(message: String) = toJSONObject(
-            ServiceRequestError(message = message))
+        fun toErrorReponse(message: String) = toJSONObject(ServiceRequestError(message = message))
 
         fun toErrorReponse(status: HttpStatus, message: String) =
-            toJSONObject(
-                ServiceRequestError(status = status, message = message))
+            toJSONObject(ServiceRequestError(status = status, message = message))
 
         fun toErrorReponse(status: HttpStatus, ex: Throwable) = toJSONObject(
             ServiceRequestError(status = status,
-                                                        message = ex.message!!,
-                                                        debugMessage = ArrayUtils.toString(
-                                                            ExceptionUtils.getRootCauseStackTrace(ex))))
+                                message = ex.message!!,
+                                debugMessage = ArrayUtils.toString(ExceptionUtils.getRootCauseStackTrace(ex))))
     }
 }
 

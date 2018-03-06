@@ -31,10 +31,8 @@ import org.springframework.web.bind.annotation.ResponseBody
 import org.springframework.web.bind.annotation.RestController
 import java.io.File
 import java.io.FileNotFoundException
-import java.util.*
 import javax.annotation.PostConstruct
 import javax.annotation.PreDestroy
-import kotlin.collections.ArrayList
 
 @RestController("ArtifactService")
 @RequestMapping(name = "ArtifactService",
@@ -82,7 +80,7 @@ open class ArtifactService {
             }
         }
 
-        Collections.sort(returnList)
+        returnList.sort()
         return returnList
     }
 

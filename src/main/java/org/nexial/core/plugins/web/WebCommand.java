@@ -1490,11 +1490,15 @@ public class WebCommand extends BaseCommand implements CanTakeScreenshot, CanLog
     protected StepResult clickInternal(String locator) {
 
         WebElement element;
-        if (shouldWait()) {
-            element = findElement(locator);
-        } else {
-            List<WebElement> matches = findElements(locator);
-            element = CollectionUtils.isEmpty(matches) ? null : matches.get(0);
+        try {
+            if (shouldWait()) {
+                element = findElement(locator);
+            } else {
+                List<WebElement> matches = findElements(locator);
+                element = CollectionUtils.isEmpty(matches) ? null : matches.get(0);
+            }
+        } catch (TimeoutException e) {
+            return StepResult.fail("Unable to find element via locator '" + locator + "' within alloted time");
         }
 
         if (element == null) { return StepResult.fail("No element via locator '" + locator + "'"); }

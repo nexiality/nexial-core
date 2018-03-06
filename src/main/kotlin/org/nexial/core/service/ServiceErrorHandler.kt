@@ -37,11 +37,10 @@ class ServiceErrorHandler : ResponseEntityExceptionHandler() {
                                          headers: HttpHeaders?,
                                          status: HttpStatus,
                                          request: WebRequest?): ResponseEntity<Any> {
+        val errorThrown = ArrayUtils.toString(ExceptionUtils.getRootCause(ex))
+        val message = body?.toString() ?: errorThrown
         return ResponseEntity(
-            ServiceRequestError(status = status,
-                                                        message = body.toString(),
-                                                        debugMessage = ArrayUtils.toString(
-                                                            ExceptionUtils.getRootCause(ex))),
+            ServiceRequestError(status = status, message = message, debugMessage = errorThrown),
             status)
     }
 }
