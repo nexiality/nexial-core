@@ -19,6 +19,7 @@ package org.nexial.core.plugins.desktop;
 
 import java.io.File;
 import java.io.IOException;
+import java.math.BigDecimal;
 import java.util.*;
 
 import org.apache.commons.collections4.CollectionUtils;
@@ -2076,9 +2077,15 @@ public class DesktopElement {
 
         try {
             if (NumberUtils.isCreatable(currentValue)) {
-                Number actualValue = NumberUtils.createNumber(currentValue);
-                Number expectedValue = NumberUtils.createNumber(text);
+                if (currentValue.contains(".")) {
+                    BigDecimal actualValue = NumberUtils.createBigDecimal(currentValue);
+                    BigDecimal expectedValue = NumberUtils.createBigDecimal(text);
+                    return actualValue.equals(expectedValue);
+                } else {
+                    Long actualValue = NumberUtils.createLong(currentValue);
+                    Long expectedValue = NumberUtils.createLong(text);
                 return actualValue.equals(expectedValue);
+            }
             }
         } catch (NumberFormatException e) {
             ConsoleUtils.log("Invalid number format.. trying other way");
