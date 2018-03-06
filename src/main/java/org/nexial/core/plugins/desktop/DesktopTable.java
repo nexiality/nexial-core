@@ -271,15 +271,18 @@ public class DesktopTable extends DesktopElement {
         sanityCheck(row, null);
 
         List<WebElement> dataElements = element.findElements(By.xpath(LOCATOR_TABLE_DATA));
-        int rowCount = 0;
+        List<WebElement> rows;
         if (CollectionUtils.isEmpty(dataElements)) {
-            ConsoleUtils.log("No rows found for data grid " + element);
+            ConsoleUtils.log("No rows found for data grid " + element + "; Trying other approach...");
+            // try to find elements by loosing current focus
+            looseCurrentFocus();
+            rows = getRowElements();
         } else {
-            List<WebElement> rows = new ArrayList<>();
+            rows = new ArrayList<>();
             dataElements.forEach(elem -> { if (elem != null) { rows.add(elem); } });
-            rowCount = CollectionUtils.size(rows);
         }
 
+        int rowCount = CollectionUtils.size(rows);
         boolean newRow = false;
         ConsoleUtils.log("current row count: " + rowCount);
         if (row >= rowCount) {
@@ -388,6 +391,7 @@ public class DesktopTable extends DesktopElement {
         boolean clickExplorerbar = false;
         for (Map.Entry<String, String> nameValue : nameValues.entrySet()) {
 
+            //todo: support function keys along with [CLICK]? and [CHECK]
             if (context.getBooleanData(DESKTOP_DIALOG_LOOKUP, DEF_DESKTOP_DIALOG_LOOKUP)) {
                 // fail if any modal dialog present
                 WebElement modal = DesktopCommand.getModalDialog(getCurrentSession().getApp().getElement());
@@ -761,6 +765,14 @@ public class DesktopTable extends DesktopElement {
         } else { cellElement.sendKeys(value); }
     }
 
+    private List<WebElement> getRowElements() {
+        List<WebElement> rows = new ArrayList<>();
+        List<WebElement> dataElements = element.findElements(By.xpath(LOCATOR_TABLE_DATA));
+        if (CollectionUtils.isNotEmpty(dataElements)) {
+            dataElements.forEach(elem -> { if (elem != null) { rows.add(elem); } });
+        }
+        return rows;
+    }
     private void looseCurrentFocus() {
 
         DesktopSession session = getCurrentSession();
