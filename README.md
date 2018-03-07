@@ -9,6 +9,7 @@ _It's still a little messy around here.  Please be patient, we'll get to all the
 enough_
 
 [Documentation](https://nexiality.github.io/documentation/)
+
 [Tutorials](https://nexiality.github.io/tutorials/)
 
 ---
