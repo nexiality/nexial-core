@@ -63,8 +63,8 @@ public class TestScenarioTest {
 		                    meta.getDescription());
 		Assert.assertEquals("NGP", meta.getProject());
 		Assert.assertEquals("2016Q3", meta.getRelease());
-		Assert.assertEquals("NG-614", meta.getJira());
-		Assert.assertEquals("NG-1597", meta.getZephyr());
+		Assert.assertEquals("NG-614", meta.getFeatureRef());
+		Assert.assertEquals("NG-1597", meta.getTestRef());
 		Assert.assertEquals("John Smith", meta.getAuthor());
 
 		List<TestCase> testCases = scenario.getTestCases();

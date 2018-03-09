@@ -363,6 +363,10 @@ public class TestScriptUpdater extends S3BoundCLI {
                          .setCellValue(HEADER_COMMAND_TYPE);
                 updated[0] = true;
             }
+
+            // if (InputFileUtils.isV2Script(worksheet)) {
+            //     worksheet.firstCell(ADDR_SCENARIO_EXEC_SUMMARY_HEADER)
+            // }
         }
 
         excel.save();

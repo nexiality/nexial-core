@@ -41,8 +41,8 @@ public class TestPlanMeta {
 	private Worksheet worksheet;
 	private String summary;
 	private String author;
-	private String jira;
-	private String zephyr;
+	private String featureRef;
+	private String testRef;
 	private List<String> notifications;
 
 	private TestPlanMeta(Worksheet worksheet) {
@@ -60,13 +60,13 @@ public class TestPlanMeta {
 
 	public void setAuthor(String author) { this.author = author; }
 
-	public String getJira() { return jira; }
+	public String getFeatureRef() { return featureRef; }
 
-	public void setJira(String jira) { this.jira = jira; }
+	public void setFeatureRef(String featureRef) { this.featureRef = featureRef; }
 
-	public String getZephyr() { return zephyr; }
+	public String getTestRef() { return testRef; }
 
-	public void setZephyr(String zephyr) { this.zephyr = zephyr; }
+	public void setTestRef(String testRef) { this.testRef = testRef; }
 
 	public List<String> getNotifications() { return notifications; }
 
@@ -80,10 +80,10 @@ public class TestPlanMeta {
 		if (cell != null) { cell.setCellValue(author); }
 
 		cell = worksheet.cell(ADDR_JIRA);
-		if (cell != null) { cell.setCellValue(jira); }
+		if (cell != null) { cell.setCellValue(featureRef); }
 
 		cell = worksheet.cell(ADDR_ZEPHYR);
-		if (cell != null) { cell.setCellValue(zephyr); }
+		if (cell != null) { cell.setCellValue(testRef); }
 
 		cell = worksheet.cell(ADDR_NOTIFICATION);
 		if (cell != null) {
@@ -103,10 +103,10 @@ public class TestPlanMeta {
 		if (cell != null) { author = cell.getStringCellValue(); }
 
 		cell = worksheet.cell(ADDR_JIRA);
-		if (cell != null) { jira = cell.getStringCellValue(); }
+		if (cell != null) { featureRef = cell.getStringCellValue(); }
 
 		cell = worksheet.cell(ADDR_ZEPHYR);
-		if (cell != null) { zephyr = cell.getStringCellValue(); }
+		if (cell != null) { testRef = cell.getStringCellValue(); }
 
 		cell = worksheet.cell(ADDR_NOTIFICATION);
 		if (cell != null) {

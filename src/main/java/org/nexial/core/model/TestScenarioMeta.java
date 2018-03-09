@@ -38,8 +38,8 @@ public class TestScenarioMeta {
     private String description;
     private String project;
     private String release;
-    private String jira;
-    private String zephyr;
+    private String featureRef;
+    private String testRef;
     private String author;
 
     private TestScenarioMeta(Worksheet worksheet) {
@@ -61,13 +61,13 @@ public class TestScenarioMeta {
 
     public void setRelease(String release) { this.release = release; }
 
-    public String getJira() { return jira; }
+    public String getFeatureRef() { return featureRef; }
 
-    public void setJira(String jira) { this.jira = jira; }
+    public void setFeatureRef(String featureRef) { this.featureRef = featureRef; }
 
-    public String getZephyr() { return zephyr; }
+    public String getTestRef() { return testRef; }
 
-    public void setZephyr(String zephyr) { this.zephyr = zephyr; }
+    public void setTestRef(String testRef) { this.testRef = testRef; }
 
     public String getAuthor() { return author; }
 
@@ -84,10 +84,10 @@ public class TestScenarioMeta {
         if (cell != null) { cell.setCellValue(release); }
 
         cell = worksheet.cell(ADDR_JIRA);
-        if (cell != null) { cell.setCellValue(jira); }
+        if (cell != null) { cell.setCellValue(featureRef); }
 
         cell = worksheet.cell(ADDR_ZEPHYR);
-        if (cell != null) { cell.setCellValue(zephyr); }
+        if (cell != null) { cell.setCellValue(testRef); }
 
         cell = worksheet.cell(ADDR_AUTHOR);
         if (cell != null) { cell.setCellValue(author); }
@@ -106,10 +106,10 @@ public class TestScenarioMeta {
         if (cell != null) { release = readCellValueAsString(cell); }
 
         cell = worksheet.cell(ADDR_JIRA);
-        if (cell != null) { jira = readCellValueAsString(cell); }
+        if (cell != null) { featureRef = readCellValueAsString(cell); }
 
         cell = worksheet.cell(ADDR_ZEPHYR);
-        if (cell != null) { zephyr = readCellValueAsString(cell); }
+        if (cell != null) { testRef = readCellValueAsString(cell); }
 
         cell = worksheet.cell(ADDR_AUTHOR);
         if (cell != null) { author = readCellValueAsString(cell); }

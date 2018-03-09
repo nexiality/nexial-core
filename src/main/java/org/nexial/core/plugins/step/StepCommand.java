@@ -20,7 +20,6 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
-import org.apache.commons.lang3.ArrayUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.nexial.core.model.StepResult;
 import org.nexial.core.plugins.base.BaseCommand;
@@ -31,9 +30,7 @@ import static org.nexial.core.utils.CheckUtils.requiresNotBlank;
 public class StepCommand extends BaseCommand {
 
     @Override
-    public String getTarget() {
-        return "step";
-    }
+    public String getTarget() { return "step"; }
 
     public StepResult perform(String instructions) {
         requiresNotBlank(instructions, "Invalid instruction(s)", instructions);
@@ -53,15 +50,12 @@ public class StepCommand extends BaseCommand {
             }
         }
 
-        String delim = context.getTextDelim();
-        List<String> possiblePasses = new ArrayList<>(Arrays.asList(StringUtils.split(passResponses, delim)));
+        List<String> possiblePasses = new ArrayList<>(Arrays.asList(StringUtils.split(passResponses,
+                                                                                      context.getTextDelim())));
 
         boolean pass = possiblePasses.contains(response);
-
-        String message = "Response '" + response + "' considered as " + (pass ? "PASS" : "FAILED");
-
-        log(message);
-        return new StepResult(pass, message, null);
+        log("Response received: " + response + " " + (pass ? "PASSED" : "FAILED"));
+        return new StepResult(pass, "Response '" + response + "' considered as " + (pass ? "PASS" : "FAILED"), null);
     }
 
     public StepResult observe(String prompt) {
@@ -69,10 +63,7 @@ public class StepCommand extends BaseCommand {
 
         String response = ConsoleUtils.pauseForInput(context, prompt);
 
-        String message = "Response received as '" + response + "'";
-        log(message);
-
-        StepResult result = StepResult.success(message);
+        StepResult result = StepResult.success("Response received as '" + response + "'");
         result.setParamValues(new Object[]{prompt, response});
         return result;
     }

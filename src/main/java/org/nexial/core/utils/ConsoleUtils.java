@@ -23,7 +23,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Scanner;
 
-import org.apache.commons.lang3.ArrayUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.nexial.commons.utils.DateUtility;
 import org.nexial.core.model.ExecutionContext;

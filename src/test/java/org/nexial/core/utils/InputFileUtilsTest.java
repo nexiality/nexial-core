@@ -25,37 +25,42 @@ import org.springframework.util.ResourceUtils;
 import org.springframework.util.StringUtils;
 
 public class InputFileUtilsTest {
-	@Test
-	public void isValidScript() throws Exception {
+    @Test
+    public void isValidScript() throws Exception {
 
-		Assert.assertFalse(InputFileUtils.isValidScript(getPath("script_not_xlsx.xlsx")));
-		Assert.assertFalse(InputFileUtils.isValidScript(getPath("script_blank.xlsx")));
-		Assert.assertFalse(InputFileUtils.isValidScript(getPath("script_no_system.xlsx")));
-		Assert.assertFalse(InputFileUtils.isValidScript(getPath("script_no_system2.xlsx")));
-		Assert.assertFalse(InputFileUtils.isValidScript(getPath("script_no_system_bad_format.xlsx")));
-		Assert.assertFalse(InputFileUtils.isValidScript(getPath("script_no_system_no_commands.xlsx")));
-		Assert.assertFalse(InputFileUtils.isValidScript(getPath("script_no_system_mismatch_commands.xlsx")));
-		Assert.assertFalse(InputFileUtils.isValidScript(getPath("script_bad_format.xlsx")));
-		Assert.assertTrue(InputFileUtils.isValidScript(getPath("script_good.xlsx")));
-		Assert.assertTrue(InputFileUtils.isValidScript(getPath("script_good_2_scenarios.xlsx")));
+        Assert.assertFalse(InputFileUtils.isValidScript(getPath("script_not_xlsx.xlsx")));
+        Assert.assertFalse(InputFileUtils.isValidScript(getPath("script_blank.xlsx")));
+        Assert.assertFalse(InputFileUtils.isValidScript(getPath("script_no_system.xlsx")));
+        Assert.assertFalse(InputFileUtils.isValidScript(getPath("script_no_system2.xlsx")));
+        Assert.assertFalse(InputFileUtils.isValidScript(getPath("script_no_system_bad_format.xlsx")));
+        Assert.assertFalse(InputFileUtils.isValidScript(getPath("script_no_system_no_commands.xlsx")));
+        Assert.assertFalse(InputFileUtils.isValidScript(getPath("script_no_system_mismatch_commands.xlsx")));
+        Assert.assertFalse(InputFileUtils.isValidScript(getPath("script_bad_format.xlsx")));
+        Assert.assertTrue(InputFileUtils.isValidScript(getPath("script_good.xlsx")));
+        Assert.assertTrue(InputFileUtils.isValidScript(getPath("script_good_2_scenarios.xlsx")));
 
-	}
+    }
 
-	@Test
-	public void isValidDataFile() throws Exception {
+    @Test
+    public void isValidDataFile() throws Exception {
 
-		Assert.assertFalse(InputFileUtils.isValidDataFile(getPath("data_not_excel_2007.xls")));
-		Assert.assertFalse(InputFileUtils.isValidDataFile(getPath("data_bad_format.xlsx")));
-		Assert.assertFalse(InputFileUtils.isValidDataFile(getPath("data_blank.xlsx")));
-		Assert.assertTrue(InputFileUtils.isValidDataFile(getPath("data_good.xlsx")));
-		Assert.assertTrue(InputFileUtils.isValidDataFile(getPath("data_good_2_sheets.xlsx")));
+        Assert.assertFalse(InputFileUtils.isValidDataFile(getPath("data_not_excel_2007.xls")));
+        Assert.assertFalse(InputFileUtils.isValidDataFile(getPath("data_bad_format.xlsx")));
+        Assert.assertFalse(InputFileUtils.isValidDataFile(getPath("data_blank.xlsx")));
+        Assert.assertTrue(InputFileUtils.isValidDataFile(getPath("data_good.xlsx")));
+        Assert.assertTrue(InputFileUtils.isValidDataFile(getPath("data_good_2_sheets.xlsx")));
 
-	}
+    }
 
-	public String getPath(String filename) throws FileNotFoundException {
-		return ResourceUtils.getFile("classpath:"
-		                             + StringUtils.replace(this.getClass().getPackage().getName(), ".", "/")
-		                             + "/" + filename).getAbsolutePath();
-	}
+    @Test
+    public void isValidV2Script() throws Exception {
+
+    }
+
+    public String getPath(String filename) throws FileNotFoundException {
+        return ResourceUtils.getFile("classpath:"
+                                     + StringUtils.replace(this.getClass().getPackage().getName(), ".", "/")
+                                     + "/" + filename).getAbsolutePath();
+    }
 
 }
