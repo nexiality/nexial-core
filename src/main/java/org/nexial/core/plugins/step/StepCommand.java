@@ -31,7 +31,9 @@ import static org.nexial.core.utils.CheckUtils.requiresNotBlank;
 public class StepCommand extends BaseCommand {
 
     @Override
-    public String getTarget() { return "step"; }
+    public String getTarget() {
+        return "step";
+    }
 
     public StepResult perform(String instructions) {
         requiresNotBlank(instructions, "Invalid instruction(s)", instructions);
@@ -52,17 +54,14 @@ public class StepCommand extends BaseCommand {
         }
 
         String delim = context.getTextDelim();
-        List<String> possiblePasses = new ArrayList<>();
-        if (!StringUtils.contains(passResponses, delim)) {
-            // default behavior: each character is one possible response
-            Arrays.stream(ArrayUtils.toObject(response.toCharArray()))
-                  .forEach(ch -> possiblePasses.add(ch.toString()));
-        } else {
-            possiblePasses.addAll(Arrays.asList(StringUtils.split(passResponses, delim)));
-        }
+        List<String> possiblePasses = new ArrayList<>(Arrays.asList(StringUtils.split(passResponses, delim)));
 
-        boolean pass = passResponses.contains(response);
-        return new StepResult(pass, "Response '" + response + "' considered as " + (pass ? "PASS" : "FAILED"), null);
+        boolean pass = possiblePasses.contains(response);
+
+        String message = "Response '" + response + "' considered as " + (pass ? "PASS" : "FAILED");
+
+        log(message);
+        return new StepResult(pass, message, null);
     }
 
     public StepResult observe(String prompt) {
@@ -70,7 +69,10 @@ public class StepCommand extends BaseCommand {
 
         String response = ConsoleUtils.pauseForInput(context, prompt);
 
-        StepResult result = StepResult.success("Response received as '" + response + "'");
+        String message = "Response received as '" + response + "'";
+        log(message);
+
+        StepResult result = StepResult.success(message);
         result.setParamValues(new Object[]{prompt, response});
         return result;
     }

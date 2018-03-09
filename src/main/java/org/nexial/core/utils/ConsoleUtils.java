@@ -40,18 +40,25 @@ import static org.nexial.core.NexialConst.Jenkins.*;
 public final class ConsoleUtils {
     private static final Logger LOGGER = LoggerFactory.getLogger(ConsoleUtils.class);
 
-    private ConsoleUtils() {}
+    private ConsoleUtils() {
+    }
 
     @SuppressWarnings("PMD.SystemPrintln")
     public static void log(String msg) {
-        if (System.out == null) { throw new RuntimeException("System.out is null!"); }
+        if (System.out == null) {
+            throw new RuntimeException("System.out is null!");
+        }
         System.out.println(DateUtility.getCurrentTimestampForLogging() + " >> " + msg);
-        if (LOGGER.isInfoEnabled()) { LOGGER.info(msg); }
+        if (LOGGER.isInfoEnabled()) {
+            LOGGER.info(msg);
+        }
     }
 
     @SuppressWarnings("PMD.SystemPrintln")
     public static void error(String msg) {
-        if (System.err == null) { throw new RuntimeException("System.err is null!"); }
+        if (System.err == null) {
+            throw new RuntimeException("System.err is null!");
+        }
         System.err.println(DateUtility.getCurrentTimestampForLogging() + " >> " + msg);
         LOGGER.error(msg);
     }
@@ -70,7 +77,7 @@ public final class ConsoleUtils {
             System.out.println("|" + centerPrompt("INSPECT ON PAUSE", 78) + "|");
             System.out.println("\\------------------------------------------------------------------------------/");
             System.out.println("> Enter statement to inspect.  Press ENTER or " + RESUME_FROM_PAUSE + " to resume " +
-                               "execution\n");
+                    "execution\n");
             System.out.print("inspect-> ");
             Scanner in = new Scanner(System.in);
             String input = in.nextLine();
@@ -102,7 +109,7 @@ public final class ConsoleUtils {
         System.out.println("> Instruction(s) from " + context.getCurrentTestStep().getMessageId());
 
         Arrays.stream(StringUtils.split(instructions, "\n"))
-              .forEach(step -> System.out.println(" | " + StringUtils.removeEnd(step, "\r")));
+                .forEach(step -> System.out.println(" | " + StringUtils.removeEnd(step, "\r")));
 
         System.out.println("> When complete, press ENTER to continue ");
 
@@ -124,21 +131,14 @@ public final class ConsoleUtils {
         System.out.println("> Validation(s) from " + context.getCurrentTestStep().getMessageId());
 
         Arrays.stream(StringUtils.split(instructions, "\n"))
-              .forEach(step -> System.out.println(" | " + StringUtils.removeEnd(step, "\r")));
+                .forEach(step -> System.out.println(" | " + StringUtils.removeEnd(step, "\r")));
 
         List<String> responses = new ArrayList<>();
         if (StringUtils.isBlank(possibleResponses)) {
             responses.add("Y");
             responses.add("N");
         } else {
-            String delim = context.getTextDelim();
-            if (!StringUtils.contains(possibleResponses, delim)) {
-                // default behavior: each character is one possible response
-                Arrays.stream(ArrayUtils.toObject(possibleResponses.toCharArray()))
-                      .forEach(ch -> responses.add(ch.toString()));
-            } else {
-                responses.addAll(Arrays.asList(StringUtils.split(possibleResponses, delim)));
-            }
+            responses.addAll(Arrays.asList(StringUtils.split(possibleResponses, context.getTextDelim())));
         }
 
         System.out.printf(" > %s: ", responses);
@@ -161,7 +161,7 @@ public final class ConsoleUtils {
         System.out.println("> Prompt from " + context.getCurrentTestStep().getMessageId());
 
         Arrays.stream(StringUtils.split(prompt, "\n"))
-              .forEach(step -> System.out.println(" | " + StringUtils.removeEnd(step, "\r")));
+                .forEach(step -> System.out.println(" | " + StringUtils.removeEnd(step, "\r")));
 
         System.out.print("> ");
 
@@ -172,15 +172,21 @@ public final class ConsoleUtils {
     @SuppressWarnings("PMD.SystemPrintln")
     public static void log(String id, String msg) {
         assert StringUtils.isNotBlank(id);
-        if (System.out == null) { throw new RuntimeException("System.out is null!"); }
+        if (System.out == null) {
+            throw new RuntimeException("System.out is null!");
+        }
         System.out.println(DateUtility.getCurrentTimestampForLogging() + " >> [" + id + "] " + msg);
-        if (LOGGER.isInfoEnabled()) { LOGGER.info("[" + id + "] " + msg); }
+        if (LOGGER.isInfoEnabled()) {
+            LOGGER.info("[" + id + "] " + msg);
+        }
     }
 
     @SuppressWarnings("PMD.SystemPrintln")
     public static void error(String id, String msg) {
         assert StringUtils.isNotBlank(id);
-        if (System.err == null) { throw new RuntimeException("System.err is null!"); }
+        if (System.err == null) {
+            throw new RuntimeException("System.err is null!");
+        }
         System.err.println(DateUtility.getCurrentTimestampForLogging() + " >> [" + id + "] " + msg);
         LOGGER.error("[" + id + "] " + msg);
     }
@@ -196,18 +202,24 @@ public final class ConsoleUtils {
     protected static boolean isRunningInCi() {
         Map<String, String> environments = System.getenv();
         return StringUtils.isNotBlank(environments.get(OPT_JENKINS_URL)) &&
-               StringUtils.isNotBlank(environments.get(OPT_JENKINS_HOME)) &&
-               StringUtils.isNotBlank(environments.get(OPT_BUILD_ID)) &&
-               StringUtils.isNotBlank(environments.get(OPT_BUILD_URL));
+                StringUtils.isNotBlank(environments.get(OPT_JENKINS_HOME)) &&
+                StringUtils.isNotBlank(environments.get(OPT_BUILD_ID)) &&
+                StringUtils.isNotBlank(environments.get(OPT_BUILD_URL));
     }
 
     private static String centerPrompt(String prompt, int width) {
-        if (StringUtils.isBlank(prompt)) { return StringUtils.repeat(" ", width); }
+        if (StringUtils.isBlank(prompt)) {
+            return StringUtils.repeat(" ", width);
+        }
 
-        String paddingSpaces = StringUtils.repeat(" ", width - prompt.length());
+        String paddingSpaces = StringUtils.repeat(" ", (width - prompt.length()) / 2);
         String newPrompt = paddingSpaces + prompt + paddingSpaces;
-        if (newPrompt.length() > width) { newPrompt = StringUtils.removeEnd(newPrompt, " "); }
-        if (newPrompt.length() < width) { newPrompt += " "; }
+        if (newPrompt.length() > width) {
+            newPrompt = StringUtils.removeEnd(newPrompt, " ");
+        }
+        if (newPrompt.length() < width) {
+            newPrompt += " ";
+        }
         return newPrompt;
     }
 }
