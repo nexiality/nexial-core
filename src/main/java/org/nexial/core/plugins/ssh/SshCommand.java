@@ -549,6 +549,7 @@ public class SshCommand extends BaseCommand {
         return session;
     }
 
+    // todo: should be protected / move test class to same package
     public static StepResult preRemoteActionChecks(RemoteFileActionOutcome outcome) {
         TransferAction action = outcome.getAction();
         String logPrefix = outcome.getProtocol() + ":" + action + " - ";

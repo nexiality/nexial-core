@@ -35,12 +35,11 @@ import org.apache.commons.lang3.ArrayUtils;
 import org.apache.commons.lang3.BooleanUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.math.NumberUtils;
-
 import org.nexial.commons.utils.JRegexUtils;
 import org.nexial.commons.utils.RegexUtils;
 import org.nexial.commons.utils.TextUtils;
-import org.nexial.core.NexialConst.Data;
 import org.nexial.core.ExecutionThread;
+import org.nexial.core.NexialConst.Data;
 import org.nexial.core.excel.ext.CellTextReader;
 import org.nexial.core.model.CommandRepeater;
 import org.nexial.core.model.ExecutionContext;
@@ -52,6 +51,10 @@ import org.nexial.core.tools.CommandDiscovery;
 import org.nexial.core.utils.CheckUtils;
 import org.nexial.core.utils.ConsoleUtils;
 
+import static java.lang.Boolean.FALSE;
+import static java.lang.Boolean.TRUE;
+import static java.lang.System.lineSeparator;
+import static java.util.regex.Pattern.CASE_INSENSITIVE;
 import static org.nexial.core.NexialConst.MSG_FAIL;
 import static org.nexial.core.NexialConst.OPT_EASY_STRING_COMPARE;
 import static org.nexial.core.excel.ExcelConfig.MSG_PASS;
@@ -59,10 +62,6 @@ import static org.nexial.core.excel.ext.CipherHelper.CRYPT_IND;
 import static org.nexial.core.plugins.base.IncrementStrategy.ALPHANUM;
 import static org.nexial.core.utils.CheckUtils.*;
 import static org.nexial.core.utils.OutputFileUtils.CASE_INSENSIVE_SORT;
-import static java.lang.Boolean.FALSE;
-import static java.lang.Boolean.TRUE;
-import static java.lang.System.lineSeparator;
-import static java.util.regex.Pattern.CASE_INSENSITIVE;
 
 public class BaseCommand implements NexialCommand {
     public static final List<String> PARAM_AUTO_FILL_COMMANDS = Arrays.asList("desktop.typeTextBox",
@@ -868,9 +867,10 @@ public class BaseCommand implements NexialCommand {
 
         Method[] allMethods = this.getClass().getDeclaredMethods();
         Arrays.stream(allMethods).forEach(m -> {
-            if (Modifier.isPublic(m.getModifiers())
-                && StepResult.class.isAssignableFrom(m.getReturnType())
-                && !StringUtils.equals(m.getName(), "execute")) {
+            if (Modifier.isPublic(m.getModifiers()) &&
+                !Modifier.isStatic(m.getModifiers()) &&
+                StepResult.class.isAssignableFrom(m.getReturnType()) &&
+                !StringUtils.equals(m.getName(), "execute")) {
 
                 commandMethods.put(m.getName(), m);
 
@@ -880,25 +880,21 @@ public class BaseCommand implements NexialCommand {
                     Parameter[] parameters = m.getParameters();
                     for (Parameter param : parameters) { command += param.getName() + ","; }
 
-                    command = StringUtils.removeEnd(command, ",") + ")";
-                    String target = getTarget();
-                    discovery.addCommand(target, command);
+                    discovery.addCommand(getTarget(), StringUtils.removeEnd(command, ",") + ")");
                 }
             }
         });
     }
 
     protected static Boolean handleRegex(String prefix, String expectedPattern, String actual, int flags) {
-        if (expectedPattern.startsWith(prefix)) {
-            String expectedRegEx = expectedPattern.replaceFirst(prefix, ".*") + ".*";
-            Pattern p = Pattern.compile(expectedRegEx, flags);
-            if (!p.matcher(actual).matches()) {
-                ConsoleUtils.log("expected " + actual + " to match regexp " + expectedPattern);
-                return FALSE;
-            }
-            return TRUE;
-        }
-        return null;
+        if (!expectedPattern.startsWith(prefix)) { return null; }
+
+        String expectedRegEx = expectedPattern.replaceFirst(prefix, ".*") + ".*";
+        Pattern p = Pattern.compile(expectedRegEx, flags);
+        if (p.matcher(actual).matches()) { return TRUE; }
+
+        ConsoleUtils.log("expected " + actual + " to match regexp " + expectedPattern);
+        return FALSE;
     }
 
     protected static boolean assertEqualsInternal(String expected, String actual) {

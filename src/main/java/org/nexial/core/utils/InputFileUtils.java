@@ -42,6 +42,22 @@ import static org.nexial.core.excel.ExcelConfig.*;
 
 public final class InputFileUtils {
     private static final Logger LOGGER = LoggerFactory.getLogger(InputFileUtils.class);
+    private static final ExcelAddress FIRST_TEST_STEP = new ExcelAddress("" + COL_TEST_CASE +
+                                                                         ADDR_COMMAND_START.getRowStartIndex());
+    private static final String MSG_V1_HEADER_FOUND = "Outdated 'header' format found at " +
+                                                      ArrayUtils.toString(ADDR_HEADER_SCENARIO_INFO1) + "," +
+                                                      ArrayUtils.toString(ADDR_HEADER_SCENARIO_INFO2) + "," +
+                                                      ArrayUtils.toString(ADDR_HEADER_TEST_STEP) + "; please run " +
+                                                      "bin/nexial-script-update.cmd to update your test script";
+    private static final String MSG_HEADER_NOT_FOUND = "required script header NOT found at " +
+                                                       ArrayUtils.toString(ADDR_HEADER_SCENARIO_INFO1) + "," +
+                                                       ArrayUtils.toString(ADDR_HEADER_SCENARIO_INFO2);
+    private static final String MSG_V1_SCRIPT_HEADER = "Outdated format found at " +
+                                                       ArrayUtils.toString(ADDR_HEADER_TEST_STEP) + "; please run " +
+                                                       "bin/nexial-script-update.cmd to update your test script";
+    private static final String MSG_SCRIPT_HEADER_NOT_FOUND = "required script header not found at " +
+                                                              ArrayUtils.toString(ADDR_HEADER_TEST_STEP);
+    private static final String MSG_MISSING_TEST_ACTIVITIY = "First test step must be accompanied by a test activity";
 
     private InputFileUtils() {}
 
@@ -177,17 +193,20 @@ public final class InputFileUtils {
 
     public static boolean isValidScript(String file) {
         Excel excel = toExcel(file);
-        if (excel == null) { return false; }
+        return excel != null && isValidScript(excel);
+    }
 
-        if (!hasValidSystemSheet(excel)) { return false; }
-
-        List<Worksheet> validScenarios = retrieveValidTestScenarios(excel);
-        return !CollectionUtils.isEmpty(validScenarios);
+    public static boolean isValidScript(Excel excel) {
+        return hasValidSystemSheet(excel) && CollectionUtils.isNotEmpty(retrieveValidTestScenarios(excel));
     }
 
     public static boolean isValidMacro(String file) {
         Excel excel = toExcel(file);
-        return excel != null && hasValidSystemSheet(excel) && !CollectionUtils.isEmpty(retrieveValidMacros(excel));
+        return excel != null && isValidMacro(excel);
+    }
+
+    public static boolean isValidMacro(Excel excel) {
+        return hasValidSystemSheet(excel) && CollectionUtils.isNotEmpty(retrieveValidMacros(excel));
     }
 
     /**
@@ -210,18 +229,7 @@ public final class InputFileUtils {
 
             String errPrefix1 = errPrefix + "worksheet (" + sheetName + ") ";
 
-            // check summary header
-            if (!Excel.isRowTextFound(sheet,
-                                      HEADER_SCENARIO_INFO,
-                                      ADDR_HEADER_SCENARIO_INFO1,
-                                      ADDR_HEADER_SCENARIO_INFO2)) {
-                LOGGER.info(errPrefix1 + "required script header not found at " +
-                            ArrayUtils.toString(ADDR_HEADER_SCENARIO_INFO1) + "," +
-                            ArrayUtils.toString(ADDR_HEADER_SCENARIO_INFO2) + "; ignoring this worksheet...");
-                return false;
-            }
-
-            // check execution summary
+            // CHECK 1: check execution summary
             if (!Excel.isRowTextFound(sheet,
                                       Collections.singletonList(HEADER_EXEC_SUMMARY),
                                       ADDR_SCENARIO_EXEC_SUMMARY_HEADER)) {
@@ -230,31 +238,58 @@ public final class InputFileUtils {
                 return false;
             }
 
-            // check test script header
-            if (isV1Script(sheet)) {
-                // outdated format... need to run update script
-                LOGGER.warn(errPrefix1 + "Outdated format found at " + ArrayUtils.toString(ADDR_HEADER_TEST_STEP) +
-                            "; please run bin/nexial-script-update.cmd to update your test script");
-                // todo: can't we just update it silently?
+            // CHECK 2: check that all valid scenario sheet has at least 1 command
+            int lastRowIndex = sheet.findLastDataRow(ADDR_COMMAND_START);
+
+            // disabled since we don't need actual test step to quality a valid script
+            // if (lastRowIndex - ADDR_COMMAND_START.getRowStartIndex() <= 0) {
+            //     if (LOGGER.isInfoEnabled()) { LOGGER.info(errPrefix1 + "does not contain any tests"); }
+            //     return false;
+            // }
+
+            // CHECK 3: make sure that the first command row also specifies test case
+            if (lastRowIndex - ADDR_COMMAND_START.getRowStartIndex() > 0) {
+                XSSFCell cellTestCase = sheet.cell(FIRST_TEST_STEP);
+                if (StringUtils.isBlank(Excel.getCellValue(cellTestCase))) {
+                    if (LOGGER.isInfoEnabled()) { LOGGER.info(errPrefix1 + MSG_MISSING_TEST_ACTIVITIY); }
+                }
+            }
+
+            // CHECK 4: check summary header is either V1 or V2
+            if (Excel.isRowTextFound(sheet,
+                                     HEADER_SCENARIO_INFO_V1,
+                                     ADDR_HEADER_SCENARIO_INFO1,
+                                     ADDR_HEADER_SCENARIO_INFO2)) {
+                // found V1 header
+                LOGGER.warn(errPrefix1 + MSG_V1_HEADER_FOUND);
+                // accepted, but WARN
             } else {
-                if (!Excel.isRowTextFound(sheet, HEADER_TEST_STEP_LIST_V2, ADDR_HEADER_TEST_STEP)) {
-                    LOGGER.info(errPrefix1 + "required script header not found at " +
-                                ArrayUtils.toString(ADDR_HEADER_TEST_STEP) + "; ignoring this worksheet...");
+                if (!Excel.isRowTextFound(sheet,
+                                          HEADER_SCENARIO_INFO,
+                                          ADDR_HEADER_SCENARIO_INFO1,
+                                          ADDR_HEADER_SCENARIO_INFO2)) {
+                    // found no V1 nor V2 header
+                    LOGGER.info(errPrefix1 + MSG_HEADER_NOT_FOUND + "; ignoring this worksheet...");
                     return false;
                 }
             }
 
-            // check that all valid scenario sheet has at least 1 command
-            int lastRowIndex = sheet.findLastDataRow(ADDR_COMMAND_START);
-            if (lastRowIndex - ADDR_COMMAND_START.getRowStartIndex() <= 0) {
-                if (LOGGER.isInfoEnabled()) { LOGGER.info(errPrefix1 + "does not contain any test steps"); }
-                return false;
+            // CHECK 5: check test script header
+            if (isV1Script(sheet)) {
+                // outdated format... need to run update script
+                LOGGER.warn(errPrefix1 + MSG_V1_SCRIPT_HEADER);
+            } else if (isV15Script(sheet)) {
+                // outdated format... need to run update script
+                LOGGER.warn(errPrefix1 + MSG_V1_SCRIPT_HEADER);
+            } else {
+                if (!Excel.isRowTextFound(sheet, HEADER_TEST_STEP_LIST_V2, ADDR_HEADER_TEST_STEP)) {
+                    // found no V1, V1.5 nor V2 header
+                    LOGGER.info(errPrefix1 + MSG_SCRIPT_HEADER_NOT_FOUND + "; ignoring this worksheet...");
+                    return false;
+                }
             }
 
-            // make sure that the first command row also specifies test case
-            XSSFCell cellTestCase = sheet.cell(new ExcelAddress("" + COL_TEST_CASE +
-                                                                ADDR_COMMAND_START.getRowStartIndex()));
-            return !(cellTestCase == null || StringUtils.isBlank(cellTestCase.getStringCellValue()));
+            return true;
         }).collect(Collectors.toList());
 
         // check that all valid scenario sheet do not have result (output file)
@@ -307,11 +342,16 @@ public final class InputFileUtils {
         return Excel.isRowTextFound(sheet, HEADER_TEST_STEP_LIST_V1, ADDR_HEADER_TEST_STEP);
     }
 
+    public static boolean isV15Script(Worksheet sheet) {
+        return Excel.isRowTextFound(sheet, HEADER_TEST_STEP_LIST_V15, ADDR_HEADER_TEST_STEP);
+    }
+
     public static boolean isV2Script(Worksheet worksheet) {
         return Excel.isRowTextFound(worksheet,
                                     HEADER_SCENARIO_INFO_V1,
                                     ADDR_HEADER_SCENARIO_INFO1,
-                                    ADDR_HEADER_SCENARIO_INFO2);
+                                    ADDR_HEADER_SCENARIO_INFO2) &&
+               Excel.isRowTextFound(worksheet, HEADER_TEST_STEP_LIST_V2, ADDR_HEADER_TEST_STEP);
     }
 
     public static boolean hasValidSystemSheet(Excel excel) {

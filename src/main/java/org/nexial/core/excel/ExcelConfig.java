@@ -124,12 +124,17 @@ public class ExcelConfig {
                                                                           HEADER_SCENARIO_INFO_FEATURE,
                                                                           HEADER_SCENARIO_INFO_TESTREF,
                                                                           HEADER_SCENARIO_INFO_AUTHOR);
-    public static final List<String> HEADER_SCENARIO_INFO_V1 =
-        Arrays.asList("description","project","release","jira","zephyr","author","execution summary");
 
     public static final ExcelAddress ADDR_SCENARIO_EXEC_SUMMARY_HEADER = new ExcelAddress("L1");
     public static final ExcelAddress ADDR_SCENARIO_EXEC_SUMMARY = new ExcelAddress("L2");
     public static final String HEADER_EXEC_SUMMARY = "execution summary";
+
+    public static final List<String> HEADER_SCENARIO_INFO_V1 = Arrays.asList(HEADER_SCENARIO_INFO_DESCRIPTION,
+                                                                             HEADER_SCENARIO_INFO_PROJECT,
+                                                                             HEADER_SCENARIO_INFO_RELEASE,
+                                                                             "jira",
+                                                                             "zephyr",
+                                                                             HEADER_SCENARIO_INFO_AUTHOR);
 
     public static final ExcelAddress ADDR_HEADER_TEST_STEP = new ExcelAddress("A4:O4");
 
@@ -164,6 +169,21 @@ public class ExcelConfig {
                                                                               HEADER_TEST_STEP_ELAPSED_MS,
                                                                               HEADER_TEST_STEP_RESULT,
                                                                               HEADER_TEST_STEP_REASON);
+    public static final List<String> HEADER_TEST_STEP_LIST_V15 = Arrays.asList(HEADER_TEST_STEP_TESTCASE,
+                                                                               HEADER_TEST_STEP_DESCRIPTION,
+                                                                               HEADER_TEST_STEP_TARGET,
+                                                                               HEADER_TEST_STEP_COMMAND,
+                                                                               HEADER_TEST_STEP_PARAM1,
+                                                                               HEADER_TEST_STEP_PARAM2,
+                                                                               HEADER_TEST_STEP_PARAM3,
+                                                                               HEADER_TEST_STEP_PARAM4,
+                                                                               HEADER_TEST_STEP_PARAM5,
+                                                                               "notes",
+                                                                               "",
+                                                                               HEADER_TEST_STEP_SCREENSHOT,
+                                                                               HEADER_TEST_STEP_ELAPSED_MS,
+                                                                               HEADER_TEST_STEP_RESULT,
+                                                                               HEADER_TEST_STEP_REASON);
     public static final String HEADER_ACTIVITY = "activity";
     public static final String HEADER_COMMAND_TYPE = "cmd type";
     public static final List<String> HEADER_TEST_STEP_LIST_V2 = Arrays.asList(HEADER_ACTIVITY,

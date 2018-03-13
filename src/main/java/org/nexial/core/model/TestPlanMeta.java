@@ -34,8 +34,8 @@ import static java.lang.System.lineSeparator;
 public class TestPlanMeta {
 	private static final ExcelAddress ADDR_SUMMARY = new ExcelAddress("A2");
 	private static final ExcelAddress ADDR_AUTHOR = new ExcelAddress("F2");
-	private static final ExcelAddress ADDR_JIRA = new ExcelAddress("G2");
-	private static final ExcelAddress ADDR_ZEPHYR = new ExcelAddress("H2");
+	private static final ExcelAddress ADDR_FEATURE = new ExcelAddress("G2");
+	private static final ExcelAddress ADDR_TESTID = new ExcelAddress("H2");
 	private static final ExcelAddress ADDR_NOTIFICATION = new ExcelAddress("I2");
 
 	private Worksheet worksheet;
@@ -79,10 +79,10 @@ public class TestPlanMeta {
 		cell = worksheet.cell(ADDR_AUTHOR);
 		if (cell != null) { cell.setCellValue(author); }
 
-		cell = worksheet.cell(ADDR_JIRA);
+		cell = worksheet.cell(ADDR_FEATURE);
 		if (cell != null) { cell.setCellValue(featureRef); }
 
-		cell = worksheet.cell(ADDR_ZEPHYR);
+		cell = worksheet.cell(ADDR_TESTID);
 		if (cell != null) { cell.setCellValue(testRef); }
 
 		cell = worksheet.cell(ADDR_NOTIFICATION);
@@ -102,10 +102,10 @@ public class TestPlanMeta {
 		cell = worksheet.cell(ADDR_AUTHOR);
 		if (cell != null) { author = cell.getStringCellValue(); }
 
-		cell = worksheet.cell(ADDR_JIRA);
+		cell = worksheet.cell(ADDR_FEATURE);
 		if (cell != null) { featureRef = cell.getStringCellValue(); }
 
-		cell = worksheet.cell(ADDR_ZEPHYR);
+		cell = worksheet.cell(ADDR_TESTID);
 		if (cell != null) { testRef = cell.getStringCellValue(); }
 
 		cell = worksheet.cell(ADDR_NOTIFICATION);

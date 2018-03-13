@@ -17,50 +17,50 @@
 
 package org.nexial.core.utils;
 
-import java.io.FileNotFoundException;
+import java.io.File;
 
 import org.junit.Assert;
 import org.junit.Test;
-import org.springframework.util.ResourceUtils;
-import org.springframework.util.StringUtils;
+import org.nexial.core.excel.Excel;
+import org.nexial.core.excel.Excel.Worksheet;
+
+import static org.nexial.core.NexialTestUtils.getResourcePath;
 
 public class InputFileUtilsTest {
+    private final Class CLAZZ = InputFileUtilsTest.class;
+
     @Test
     public void isValidScript() throws Exception {
-
-        Assert.assertFalse(InputFileUtils.isValidScript(getPath("script_not_xlsx.xlsx")));
-        Assert.assertFalse(InputFileUtils.isValidScript(getPath("script_blank.xlsx")));
-        Assert.assertFalse(InputFileUtils.isValidScript(getPath("script_no_system.xlsx")));
-        Assert.assertFalse(InputFileUtils.isValidScript(getPath("script_no_system2.xlsx")));
-        Assert.assertFalse(InputFileUtils.isValidScript(getPath("script_no_system_bad_format.xlsx")));
-        Assert.assertFalse(InputFileUtils.isValidScript(getPath("script_no_system_no_commands.xlsx")));
-        Assert.assertFalse(InputFileUtils.isValidScript(getPath("script_no_system_mismatch_commands.xlsx")));
-        Assert.assertFalse(InputFileUtils.isValidScript(getPath("script_bad_format.xlsx")));
-        Assert.assertTrue(InputFileUtils.isValidScript(getPath("script_good.xlsx")));
-        Assert.assertTrue(InputFileUtils.isValidScript(getPath("script_good_2_scenarios.xlsx")));
-
+        Assert.assertFalse(InputFileUtils.isValidScript(getResourcePath(CLAZZ, "script_not_xlsx.xlsx")));
+        Assert.assertFalse(InputFileUtils.isValidScript(getResourcePath(CLAZZ, "script_blank.xlsx")));
+        Assert.assertFalse(InputFileUtils.isValidScript(getResourcePath(CLAZZ, "script_no_system.xlsx")));
+        Assert.assertFalse(InputFileUtils.isValidScript(getResourcePath(CLAZZ, "script_no_system2.xlsx")));
+        Assert.assertFalse(InputFileUtils.isValidScript(getResourcePath(CLAZZ, "script_no_system_bad_format.xlsx")));
+        Assert.assertFalse(InputFileUtils.isValidScript(getResourcePath(CLAZZ, "script_no_system_no_commands.xlsx")));
+        Assert.assertFalse(InputFileUtils.isValidScript(getResourcePath(CLAZZ,
+                                                                        "script_no_system_mismatch_commands.xlsx")));
+        Assert.assertFalse(InputFileUtils.isValidScript(getResourcePath(CLAZZ, "script_bad_format.xlsx")));
+        Assert.assertTrue(InputFileUtils.isValidScript(getResourcePath(CLAZZ, "script_good.xlsx")));
+        Assert.assertTrue(InputFileUtils.isValidScript(getResourcePath(CLAZZ, "script_good_2_scenarios.xlsx")));
     }
 
     @Test
     public void isValidDataFile() throws Exception {
-
-        Assert.assertFalse(InputFileUtils.isValidDataFile(getPath("data_not_excel_2007.xls")));
-        Assert.assertFalse(InputFileUtils.isValidDataFile(getPath("data_bad_format.xlsx")));
-        Assert.assertFalse(InputFileUtils.isValidDataFile(getPath("data_blank.xlsx")));
-        Assert.assertTrue(InputFileUtils.isValidDataFile(getPath("data_good.xlsx")));
-        Assert.assertTrue(InputFileUtils.isValidDataFile(getPath("data_good_2_sheets.xlsx")));
-
+        Assert.assertFalse(InputFileUtils.isValidDataFile(getResourcePath(CLAZZ, "data_not_excel_2007.xls")));
+        Assert.assertFalse(InputFileUtils.isValidDataFile(getResourcePath(CLAZZ, "data_bad_format.xlsx")));
+        Assert.assertFalse(InputFileUtils.isValidDataFile(getResourcePath(CLAZZ, "data_blank.xlsx")));
+        Assert.assertTrue(InputFileUtils.isValidDataFile(getResourcePath(CLAZZ, "data_good.xlsx")));
+        Assert.assertTrue(InputFileUtils.isValidDataFile(getResourcePath(CLAZZ, "data_good_2_sheets.xlsx")));
     }
 
     @Test
     public void isValidV2Script() throws Exception {
+        Excel excel = new Excel(new File(getResourcePath(CLAZZ, "script_good_v2.xlsx")));
 
+        Worksheet worksheet1 = excel.worksheet("Test Scenario");
+        Assert.assertTrue(InputFileUtils.isV2Script(worksheet1));
+
+        Worksheet worksheet2 = excel.worksheet("Local Testing");
+        Assert.assertTrue(InputFileUtils.isV2Script(worksheet2));
     }
-
-    public String getPath(String filename) throws FileNotFoundException {
-        return ResourceUtils.getFile("classpath:"
-                                     + StringUtils.replace(this.getClass().getPackage().getName(), ".", "/")
-                                     + "/" + filename).getAbsolutePath();
-    }
-
 }

@@ -497,12 +497,8 @@ public final class NexialConst {
 
         public static String appendOutput(String dir) { return appendSep(dir) + DEF_REL_LOC_OUTPUT; }
 
-        public static String appendCommands(String dir) { return appendSep(dir) + "support" + separator + "commands"; }
-
-        public static String appendCommandTargets(String dir) { return appendCommands(dir) + separator + "targets.txt";}
-
-        public static String appendCommandText(String dir, String target) {
-            return appendCommands(dir) + separator + target + ".commands.txt";
+        public static String appendCommandJson(String homePath) {
+            return appendSep(homePath) + "template" + separator + "nexial.script.metadata.json";
         }
 
         public static TestProject resolveStandardPaths(TestProject project) {
@@ -609,9 +605,6 @@ public final class NexialConst {
 
         public static final String COMMAND_DISCOVERY_MODE = NAMESPACE + "commandDiscovery";
         public static final String DEF_COMMAND_DISCOVERY_MODE = "false";
-
-        public static final String COMMAND_DISCOVERY_WRITE_TO_FILE = NAMESPACE + "commandDiscoveryWriteToFile";
-        public static final String DEF_COMMAND_DISCOVERY_WRITE_TO_FILE = "false";
 
         // overly eager Nexial that opens up completed/failed excel output
         public static final String THIRD_PARTY_LOG_PATH = NAMESPACE + "3rdparty.logpath";
@@ -834,6 +827,7 @@ public final class NexialConst {
         public static final int RC_WARNING_FOUND = -12;
         public static final int RC_BAD_CLI_ARGS = -16;
         public static final int RC_EXCEL_IN_USE = -17;
+        public static final int RC_FILE_GEN_FAILED = -18;
 
         private ExitStatus() { }
     }

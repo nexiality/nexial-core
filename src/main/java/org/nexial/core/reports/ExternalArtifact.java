@@ -21,63 +21,66 @@ import java.io.Serializable;
 
 import org.apache.commons.lang3.builder.EqualsBuilder;
 import org.apache.commons.lang3.builder.HashCodeBuilder;
+import org.jetbrains.annotations.NotNull;
+
+import static org.nexial.core.reports.ExternalArtifact.TestCaseType.*;
 
 public class ExternalArtifact implements Serializable {
-	private String id;
-	private TestCaseType type;
-	// analogous to testset or testsuite
-	private ExternalArtifact parent;
+    private String id;
+    private TestCaseType type;
+    // analogous to testset or testsuite
+    private ExternalArtifact parent;
 
-	/** different type (aka repository) of test case management systems. */
-	public enum TestCaseType {
-		Rally, Zephyr, Unknown
-	}
+    /** different type (aka repository) of test case management systems. */
+    public enum TestCaseType {
+        Rally, Zephyr, Jira, Unknown
+    }
 
-	public static ExternalArtifact newRallyTestCase(String testcaseId) {
-		ExternalArtifact tc = new ExternalArtifact();
-		tc.setId(testcaseId);
-		tc.setType(TestCaseType.Rally);
-		return tc;
-	}
+    public static ExternalArtifact newRallyTestCase(String testcaseId) { return newTestCase(testcaseId, Rally); }
 
-	public static ExternalArtifact newZephyrTestCase(String testcaseId) {
-		ExternalArtifact tc = new ExternalArtifact();
-		tc.setId(testcaseId);
-		tc.setType(TestCaseType.Zephyr);
-		return tc;
-	}
+    public static ExternalArtifact newZephyrTestCase(String testcaseId) { return newTestCase(testcaseId, Zephyr); }
 
-	public static ExternalArtifact newUnknownTestCase() {
-		ExternalArtifact tc = new ExternalArtifact();
-		tc.setType(TestCaseType.Unknown);
-		return tc;
-	}
+    public static ExternalArtifact newJiraTestCase(String testcaseId) { return newTestCase(testcaseId, Jira); }
 
-	public String getId() { return id; }
+    public static ExternalArtifact newUnknownTestCase() {
+        ExternalArtifact tc = new ExternalArtifact();
+        tc.setType(Unknown);
+        return tc;
+    }
 
-	public void setId(String id) { this.id = id; }
+    public String getId() { return id; }
 
-	public TestCaseType getType() { return type; }
+    public void setId(String id) { this.id = id; }
 
-	public void setType(TestCaseType type) { this.type = type; }
+    public TestCaseType getType() { return type; }
 
-	public ExternalArtifact getParent() { return parent; }
+    public void setType(TestCaseType type) { this.type = type; }
 
-	public void setParent(ExternalArtifact parent) { this.parent = parent; }
+    public ExternalArtifact getParent() { return parent; }
 
-	@Override
-	public int hashCode() { return new HashCodeBuilder().append(this.id).append(this.type).toHashCode(); }
+    public void setParent(ExternalArtifact parent) { this.parent = parent; }
 
-	@Override
-	public boolean equals(Object obj) {
-		if (obj == null) {return false;}
-		if (getClass() != obj.getClass()) {return false;}
-		final ExternalArtifact other = (ExternalArtifact) obj;
-		return new EqualsBuilder().append(this.id, other.id).append(this.type, other.type).isEquals();
-	}
+    @Override
+    public int hashCode() { return new HashCodeBuilder().append(this.id).append(this.type).toHashCode(); }
 
-	public boolean isTypeUnknown() { return type == TestCaseType.Unknown; }
+    @Override
+    public boolean equals(Object obj) {
+        if (obj == null) {return false;}
+        if (getClass() != obj.getClass()) {return false;}
+        final ExternalArtifact other = (ExternalArtifact) obj;
+        return new EqualsBuilder().append(this.id, other.id).append(this.type, other.type).isEquals();
+    }
 
-	@Override
-	public String toString() { return "ExternalArtifact{id='" + id + "', type=" + type + "}"; }
+    @Override
+    public String toString() { return "ExternalArtifact{id='" + id + "', type=" + type + "}"; }
+
+    public boolean isTypeUnknown() { return type == Unknown; }
+
+    @NotNull
+    protected static ExternalArtifact newTestCase(String testcaseId, TestCaseType testcaseType) {
+        ExternalArtifact tc = new ExternalArtifact();
+        tc.setId(testcaseId);
+        tc.setType(testcaseType);
+        return tc;
+    }
 }

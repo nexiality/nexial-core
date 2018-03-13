@@ -21,13 +21,10 @@ import java.util.HashMap;
 import java.util.Map;
 
 import org.apache.commons.collections4.MapUtils;
-
 import org.nexial.core.model.ExecutionContext;
 import org.nexial.core.plugins.NexialCommand;
 import org.nexial.core.plugins.RequireBrowser;
 import org.nexial.core.plugins.web.Browser;
-import org.nexial.core.tools.CommandDiscovery;
-import org.nexial.core.utils.ConsoleUtils;
 
 public class PluginManager {
     protected ExecutionContext context;
@@ -39,17 +36,6 @@ public class PluginManager {
     public void init() {
         assert context != null;
         assert MapUtils.isNotEmpty(plugins);
-
-        if (CommandDiscovery.isInDiscoveryMode()) {
-            ConsoleUtils.log("WARNING: printing out discovered commands and exit");
-            CommandDiscovery discovery = CommandDiscovery.getInstance();
-            if (CommandDiscovery.shouldSaveDiscoveredCommands()) {
-                discovery.persistDiscoveredCommands();
-            } else {
-                discovery.printDiscoveredCommands();
-            }
-            System.exit(0);
-        }
     }
 
     public void setContext(ExecutionContext context) {

@@ -58,12 +58,16 @@ import static org.nexial.core.tools.CliUtils.newArgOption;
  * Utility to rename the variables in the data files, scripts, properties files and sql files within a project.
  */
 final public class DataVariableUpdater {
-    private static final String OPT_PROJECT_PATH = "f";
-    private static final String OPT_VARIABLES_LIST = "v";
+    private static final String OPT_PROJECT_PATH = "t";
+    private static final String OPT_VARIABLES_LIST = "d";
+    private static final String OPT_VERBOSE = "v";
+
     private static final String DATA_FILE_SUFFIX = "data.xlsx";
     private static final String SCRIPT_FILE_SUFFIX = "xlsx";
+
     private static final String KEY_VALUE_SEPARATOR = "=";
     private static final String VARIABLE_SEPARATOR = ";";
+
     private static final List<String> KEYWORDS_VAR_PARAM = Arrays.asList("var", "saveVar", "profile", "config", "db");
     private static final List<String> VAR_WRAPPERS = Arrays.asList("store", "CONFIG", "CSV", "DATE", "EXCEL", "INI",
                                                                    "JSON", "LIST", "NUMBER", "SQL", "TEXT", "XML");
@@ -149,9 +153,10 @@ final public class DataVariableUpdater {
      */
     public static void main(String[] args) {
         Options cmdOptions = new Options();
-        cmdOptions.addOption(newArgOption(OPT_PROJECT_PATH, "from", "Starting location of update data variable."));
-        cmdOptions.addOption(newArgOption(OPT_VARIABLES_LIST, "variables", "Data variables to replace, in the form " +
-                                                                           "old_var=new_var;old_var2=new_var2"));
+        cmdOptions.addOption("v", "verbose", false, "Turn on verbose logging.");
+        cmdOptions.addOption(newArgOption(OPT_PROJECT_PATH, "target", "Starting location of update data variable."));
+        cmdOptions.addOption(newArgOption(OPT_VARIABLES_LIST, "data", "Data variables to replace, in the form " +
+                                                                      "old_var=new_var;old_var2=new_var2"));
 
         final CommandLine cmd = getCommandLine(DataVariableUpdater.class.getName(), args, cmdOptions);
         if (cmd == null) {
@@ -176,7 +181,11 @@ final public class DataVariableUpdater {
 
     public void setSearchFrom(String searchFrom) {
         if (!FileUtil.isDirectoryReadable(searchFrom)) {
-            throw new IllegalArgumentException("'" + searchFrom + "' is not a readable directory");
+            if (FileUtil.isFileReadable(searchFrom)) {
+                searchFrom = new File(searchFrom).getParentFile().getAbsolutePath();
+            } else {
+                throw new IllegalArgumentException("'" + searchFrom + "' is not a readable directory");
+            }
         }
 
         log("project artifacts from " + searchFrom);

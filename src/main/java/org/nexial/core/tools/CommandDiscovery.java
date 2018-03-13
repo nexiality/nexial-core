@@ -28,12 +28,24 @@ import java.util.Map;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang3.BooleanUtils;
 import org.apache.commons.lang3.StringUtils;
+import org.jetbrains.annotations.NotNull;
+import org.nexial.commons.utils.CollectionUtil;
+import org.nexial.core.tools.ScriptMetadata.Commands;
+import org.nexial.core.tools.ScriptMetadata.NamedRange;
 
-import static org.nexial.core.NexialConst.DEF_CHARSET;
+import com.google.gson.Gson;
+import com.google.gson.GsonBuilder;
+
+import static org.nexial.core.NexialConst.DEF_FILE_ENCODING;
 import static org.nexial.core.NexialConst.Data.*;
-import static org.nexial.core.NexialConst.Project.*;
+import static org.nexial.core.NexialConst.Project.NEXIAL_HOME;
+import static org.nexial.core.NexialConst.Project.appendCommandJson;
 
 public final class CommandDiscovery {
+    public static final Gson GSON = new GsonBuilder().setPrettyPrinting()
+                                                     .disableInnerClassSerialization()
+                                                     .setLenient().create();
+
     private static CommandDiscovery instance;
     private Map<String, List<String>> discoveredCommands;
 
@@ -42,16 +54,12 @@ public final class CommandDiscovery {
             instance = new CommandDiscovery();
             instance.discoveredCommands = new HashMap<>();
         }
+
         return instance;
     }
 
     public static boolean isInDiscoveryMode() {
         return BooleanUtils.toBoolean(System.getProperty(COMMAND_DISCOVERY_MODE, DEF_COMMAND_DISCOVERY_MODE));
-    }
-
-    public static boolean shouldSaveDiscoveredCommands() {
-        return BooleanUtils.toBoolean(System.getProperty(COMMAND_DISCOVERY_WRITE_TO_FILE,
-                                                         DEF_COMMAND_DISCOVERY_WRITE_TO_FILE));
     }
 
     public void addCommand(String target, String commandSignature) {
@@ -66,69 +74,47 @@ public final class CommandDiscovery {
         signatures.add(commandSignature);
     }
 
-    public void printDiscoveredCommands() {
-        StringBuilder buffer = new StringBuilder();
+    public String printDiscoveredCommands() { return GSON.toJson(toScriptMetadata()); }
 
-        buffer.append("targets.txt\n");
-        discoveredCommands.keySet().forEach(target -> buffer.append(target).append("\n"));
-
-        discoveredCommands.keySet().forEach(target -> {
-            buffer.append("\n").append(target).append(".commands.txt\n");
-            printCommandDiscovery(target, buffer);
-        });
-
-        buffer.append("\n");
-
-        System.out.println(buffer);
-    }
-
-    public void persistDiscoveredCommands() {
+    public File persistDiscoveredCommands() throws IOException {
         String nexialHome = System.getProperty(NEXIAL_HOME);
         if (StringUtils.isBlank(nexialHome)) {
-            System.err.println("Unable to save discovered commands - System property " + NEXIAL_HOME + " not defined");
-            return;
+            throw new IOException("Unable to persist commands: System property " + NEXIAL_HOME + " not defined");
         }
 
-        // ensure base directory is available
-        File baseDir = new File(appendCommands(nexialHome));
-        try {
-            FileUtils.forceMkdir(baseDir);
-        } catch (IOException e) {
-            System.err.println("Unable to create directory " + baseDir + ": " + e.getMessage());
-            e.printStackTrace();
-            return;
-        }
-
-        // create target.txt
-        StringBuilder buffer = new StringBuilder();
-        discoveredCommands.keySet().forEach(target -> buffer.append(target).append("\n"));
-        File targetFile = new File(appendCommandTargets(nexialHome));
-        try {
-            FileUtils.writeStringToFile(targetFile, buffer.toString(), DEF_CHARSET);
-        } catch (IOException e) {
-            System.err.println("Unable to write to " + targetFile + ": " + e.getMessage());
-            e.printStackTrace();
-            return;
-        }
-
-        // create command files
-        discoveredCommands.keySet().forEach(target -> {
-            StringBuilder cmdBuffer = new StringBuilder();
-            printCommandDiscovery(target, cmdBuffer);
-
-            File commandFile = new File(appendCommandText(nexialHome, target));
-            try {
-                FileUtils.writeStringToFile(commandFile, cmdBuffer.toString(), DEF_CHARSET);
-            } catch (IOException e) {
-                System.err.println("Unable to write to " + commandFile + ": " + e.getMessage());
-                e.printStackTrace();
-            }
-        });
+        File commandJsonFile = new File(appendCommandJson(nexialHome));
+        FileUtils.write(commandJsonFile, GSON.toJson(toScriptMetadata()), DEF_FILE_ENCODING);
+        return commandJsonFile;
     }
 
-    protected void printCommandDiscovery(String target, StringBuilder output) {
-        List<String> commands = discoveredCommands.get(target);
-        Collections.sort(commands);
-        commands.forEach(command -> output.append(command).append("\n"));
+    @NotNull
+    protected ScriptMetadata toScriptMetadata() {
+        // prepare metadata object
+        String referencePrefix = "'" + SHEET_SYSTEM + "'!$";
+
+        List<String> targets = CollectionUtil.toList(discoveredCommands.keySet());
+        Collections.sort(targets);
+
+        ScriptMetadata metadata = new ScriptMetadata();
+        metadata.setTargets(targets);
+        metadata.addName(new NamedRange("target", referencePrefix + "A$2:$A$" + (targets.size() + 1)));
+
+        for (int i = 0; i < targets.size(); i++) {
+            String commandType = targets.get(i);
+
+            List<String> commands = discoveredCommands.get(commandType);
+            Collections.sort(commands);
+
+            // add a new command set (type+commands)
+            metadata.addCommands(new Commands(commandType, commands));
+
+            // resolve [excel] named range based on command list size
+            int commandSize = commands.size();
+            char columnName = (char) ('B' + i);
+            String reference = referencePrefix + columnName + "$2:$" + columnName + "$" + (commandSize + 1);
+            metadata.addName(new NamedRange(commandType, reference));
+        }
+
+        return metadata;
     }
 }
