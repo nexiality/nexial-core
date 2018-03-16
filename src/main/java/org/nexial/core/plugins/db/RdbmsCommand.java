@@ -58,7 +58,9 @@ public class RdbmsCommand extends BaseCommand {
         requiresNotBlank(sql, "invalid sql", sql);
 
         String query = StringUtils.trim(sql);
-        requires(dataAccess.validSQL(query), "invalid sql", sql);
+        // we want to support ALL types of SQL, including those vendor-specific
+        // so for that reason, we are no longer insisting on the use of standard ANSI sql
+        // requires(dataAccess.validSQL(query), "invalid sql", sql);
 
         SimpleExtractionDao dao = resolveDao(db);
 
@@ -200,7 +202,9 @@ public class RdbmsCommand extends BaseCommand {
         if (!StringUtils.endsWithIgnoreCase(output, ".csv")) { output += ".csv"; }
 
         String query = StringUtils.trim(sql);
-        requires(dataAccess.validSQL(query), "invalid sql", sql);
+        // we want to support ALL types of SQL, including those vendor-specific
+        // so for that reason, we are no longer insisting on the use of standard ANSI sql
+        // requires(dataAccess.validSQL(query), "invalid sql", sql);
 
         SimpleExtractionDao dao = resolveDao(db);
 

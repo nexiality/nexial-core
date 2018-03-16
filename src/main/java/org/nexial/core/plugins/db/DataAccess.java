@@ -26,21 +26,21 @@ import org.apache.commons.collections4.MapUtils;
 import org.apache.commons.dbcp2.BasicDataSource;
 import org.apache.commons.lang3.ArrayUtils;
 import org.apache.commons.lang3.StringUtils;
+import org.nexial.commons.utils.TextUtils;
+import org.nexial.core.model.ExecutionContext;
 import org.springframework.beans.BeansException;
 import org.springframework.context.ApplicationContext;
 import org.springframework.context.ApplicationContextAware;
 
 import com.Connx.jdbc.TCJdbc.TCJdbcConnectionPoolDataSource;
-import org.nexial.commons.utils.TextUtils;
-import org.nexial.core.model.ExecutionContext;
 
+import static java.sql.Connection.TRANSACTION_SERIALIZABLE;
 import static org.nexial.core.NexialConst.*;
 import static org.nexial.core.utils.CheckUtils.requiresNotBlank;
 import static org.nexial.core.utils.CheckUtils.requiresNotNull;
-import static java.sql.Connection.TRANSACTION_SERIALIZABLE;
 
 public class DataAccess implements ApplicationContextAware {
-    protected List<String> validSQLStartWords;
+    // protected List<String> validSQLStartWords;
     protected Map<String, Class> dbTypes;
     protected ApplicationContext spring;
     protected ExecutionContext context;
@@ -48,7 +48,9 @@ public class DataAccess implements ApplicationContextAware {
     @Override
     public void setApplicationContext(ApplicationContext ctx) throws BeansException { spring = ctx; }
 
-    public void setValidSQLStartWords(List<String> validSQLStartWords) { this.validSQLStartWords = validSQLStartWords; }
+    // we want to support ALL types of SQL, including those vendor-specific
+    // so for that reason, we are no longer insisting on the use of standard ANSI sql
+    // public void setValidSQLStartWords(List<String> validSQLStartWords) { this.validSQLStartWords = validSQLStartWords; }
 
     public void setContext(ExecutionContext context) { this.context = context; }
 
@@ -78,7 +80,9 @@ public class DataAccess implements ApplicationContextAware {
         return true;
     }
 
-    protected boolean validSQL(String query) { return validSQLStartWords.contains(fetchStartKeyword(query)); }
+    // we want to support ALL types of SQL, including those vendor-specific
+    // so for that reason, we are no longer insisting on the use of standard ANSI sql
+    // protected boolean validSQL(String query) { return validSQLStartWords.contains(fetchStartKeyword(query)); }
 
     protected String fetchStartKeyword(String query) {
         return
