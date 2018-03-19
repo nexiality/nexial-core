@@ -86,13 +86,13 @@ public final class URLEncodingUtils {
         params.keySet().forEach(name -> {
             String value = params.get(name);
             try {
-                value = StringUtils.replace(URLEncoder.encode(value, DEF_CHAR_ENCODING), TMP_AMPERSAND, "&amp;");
+                value = StringUtils.replace(URLEncoder.encode(value, DEF_CHAR_ENCODING), TMP_AMPERSAND, "%26");
             } catch (UnsupportedEncodingException e) {
                 System.err.println("Unable to encode query string value '" + value + "': " + e.getMessage());
             }
 
             try {
-                name = StringUtils.replace(URLEncoder.encode(name, DEF_CHAR_ENCODING), TMP_AMPERSAND, "&amp;");
+                name = StringUtils.replace(URLEncoder.encode(name, DEF_CHAR_ENCODING), TMP_AMPERSAND, "%26");
             } catch (UnsupportedEncodingException e) {
                 System.err.println("Unable to encode query string name '" + value + "': " + e.getMessage());
             }

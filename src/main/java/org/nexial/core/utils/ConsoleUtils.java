@@ -76,7 +76,7 @@ public final class ConsoleUtils {
             System.out.println("|" + centerPrompt("INSPECT ON PAUSE", 78) + "|");
             System.out.println("\\------------------------------------------------------------------------------/");
             System.out.println("> Enter statement to inspect.  Press ENTER or " + RESUME_FROM_PAUSE + " to resume " +
-                    "execution\n");
+                               "execution\n");
             System.out.print("inspect-> ");
             Scanner in = new Scanner(System.in);
             String input = in.nextLine();
@@ -108,7 +108,7 @@ public final class ConsoleUtils {
         System.out.println("> Instruction(s) from " + context.getCurrentTestStep().getMessageId());
 
         Arrays.stream(StringUtils.split(instructions, "\n"))
-                .forEach(step -> System.out.println(" | " + StringUtils.removeEnd(step, "\r")));
+              .forEach(step -> System.out.println(" | " + StringUtils.removeEnd(step, "\r")));
 
         System.out.println("> When complete, press ENTER to continue ");
 
@@ -130,7 +130,7 @@ public final class ConsoleUtils {
         System.out.println("> Validation(s) from " + context.getCurrentTestStep().getMessageId());
 
         Arrays.stream(StringUtils.split(instructions, "\n"))
-                .forEach(step -> System.out.println(" | " + StringUtils.removeEnd(step, "\r")));
+              .forEach(step -> System.out.println(" | " + StringUtils.removeEnd(step, "\r")));
 
         List<String> responses = new ArrayList<>();
         if (StringUtils.isBlank(possibleResponses)) {
@@ -160,7 +160,7 @@ public final class ConsoleUtils {
         System.out.println("> Prompt from " + context.getCurrentTestStep().getMessageId());
 
         Arrays.stream(StringUtils.split(prompt, "\n"))
-                .forEach(step -> System.out.println(" | " + StringUtils.removeEnd(step, "\r")));
+              .forEach(step -> System.out.println(" | " + StringUtils.removeEnd(step, "\r")));
 
         System.out.print("> ");
 
@@ -198,12 +198,23 @@ public final class ConsoleUtils {
         LOGGER.error("[" + id + "] " + msg, e);
     }
 
+    public static void showMissingLibraryError(String message) {
+        System.out.println("\n");
+        System.out.println("\n");
+        System.out.println("/!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!\\");
+        System.out.println(" ! ERROR:");
+        System.out.println(" !   " + StringUtils.replace(message, "\n", "\n !   "));
+        System.out.println("\\!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!/");
+        System.out.println("\n");
+        System.out.println("\n");
+    }
+
     protected static boolean isRunningInCi() {
         Map<String, String> environments = System.getenv();
         return StringUtils.isNotBlank(environments.get(OPT_JENKINS_URL)) &&
-                StringUtils.isNotBlank(environments.get(OPT_JENKINS_HOME)) &&
-                StringUtils.isNotBlank(environments.get(OPT_BUILD_ID)) &&
-                StringUtils.isNotBlank(environments.get(OPT_BUILD_URL));
+               StringUtils.isNotBlank(environments.get(OPT_JENKINS_HOME)) &&
+               StringUtils.isNotBlank(environments.get(OPT_BUILD_ID)) &&
+               StringUtils.isNotBlank(environments.get(OPT_BUILD_URL));
     }
 
     private static String centerPrompt(String prompt, int width) {

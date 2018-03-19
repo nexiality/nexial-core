@@ -42,8 +42,6 @@ import org.springframework.jdbc.core.ResultSetExtractor;
 import org.springframework.jdbc.core.StatementCallback;
 import org.springframework.jdbc.core.support.JdbcDaoSupport;
 
-import com.Connx.jdbc.TCJdbc.TCJdbcStatement;
-
 import static org.nexial.core.NexialConst.*;
 
 /**
@@ -94,7 +92,7 @@ public class SimpleExtractionDao extends JdbcDaoSupport {
                 result.setError("Unable to retrieve query result.  Statement is null");
                 return result;
             }
-            if (!(stmt instanceof TCJdbcStatement) && stmt.isClosed()) {
+            if (!StringUtils.equals(stmt.getClass().getSimpleName(), "TCJdbcStatement") && stmt.isClosed()) {
                 result.setError("Unable to retrieve query result since Statement is closed");
                 return result;
             }

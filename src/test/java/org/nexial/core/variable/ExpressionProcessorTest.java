@@ -2128,14 +2128,11 @@ public class ExpressionProcessorTest {
     }
 
     private DataAccess initDataAccess() {
+        Map<String, String> dbTypes = new HashMap<>();
+        dbTypes.put("sqlite", "org.sqlite.JDBC");
+
         DataAccess da = new DataAccess();
-        try {
-            Map<String, Class> dbTypes = new HashMap<>();
-            dbTypes.put("sqlite", Class.forName("org.sqlite.JDBC"));
-            da.setDbTypes(dbTypes);
-            return da;
-        } catch (ClassNotFoundException e) {
-            throw new RuntimeException(e.getMessage(), e);
-        }
+        da.setDbTypes(dbTypes);
+        return da;
     }
 }

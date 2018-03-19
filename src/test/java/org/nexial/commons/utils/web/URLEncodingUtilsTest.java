@@ -34,15 +34,15 @@ public class URLEncodingUtilsTest {
 
     @Test
     public void encodeQueryString() {
-        Assert.assertEquals(null, URLEncodingUtils.encodeQueryString(null));
+        Assert.assertNull(URLEncodingUtils.encodeQueryString(null));
         Assert.assertEquals("", URLEncodingUtils.encodeQueryString(""));
         Assert.assertEquals("Hello", URLEncodingUtils.encodeQueryString("Hello"));
         Assert.assertEquals("a=b&c=d&e=f", URLEncodingUtils.encodeQueryString("a=b&c=d&e=f"));
-        Assert.assertEquals("Who=Me&Who+Else=&amp;+all+my+friends",
+        Assert.assertEquals("Who=Me&Who+Else=%26+all+my+friends",
                             URLEncodingUtils.encodeQueryString("Who=Me&Who Else=&amp; all my friends"));
         Assert.assertEquals("Name=John+Doe&" +
                             "Favorite=Everything+warm+and+caffinated%21&" +
-                            "Music=Jazz+&amp;+Blues",
+                            "Music=Jazz+%26+Blues",
                             URLEncodingUtils.encodeQueryString("Name=John Doe&" +
                                                                "Favorite=Everything warm and caffinated!&" +
                                                                "Music=Jazz &amp; Blues"));
