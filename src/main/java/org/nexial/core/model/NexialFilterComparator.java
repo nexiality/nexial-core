@@ -23,145 +23,146 @@ import java.util.Map;
 
 import org.apache.commons.lang3.ArrayUtils;
 import org.apache.commons.lang3.StringUtils;
-
 import org.nexial.commons.utils.TextUtils;
 import org.nexial.core.utils.ConsoleUtils;
 
 import static org.nexial.core.NexialConst.FlowControls.IS_CLOSE_TAG;
 import static org.nexial.core.NexialConst.FlowControls.IS_OPEN_TAG;
+import static org.nexial.core.model.NexialFilter.ITEM_SEP;
 
 /** all possible ways to evaluate a filter */
 public enum NexialFilterComparator {
-	Equal("="),
-	NotEqual("!="),
+    Equal("="),
+    NotEqual("!="),
 
-	Greater(">"),
-	GreaterOrEqual(">="),
-	Lesser("<"),
-	LesserOrEqual("<="),
+    Greater(">"),
+    GreaterOrEqual(">="),
+    Lesser("<"),
+    LesserOrEqual("<="),
 
-	Is("is"),
-	IsNot("is not"),
-	NotIn("not in"),
-	In("in"),
+    Is("is"),
+    IsNot("is not"),
+    NotIn("not in"),
+    In("in"),
 
-	Between("between"),
-	Contains("contain"),
-	StartsWith("start with"),
-	EndsWith("end with"),
-	Match("match"),
+    Between("between"),
+    Contains("contain"),
+    StartsWith("start with"),
+    EndsWith("end with"),
+    Match("match"),
 
-	Any(null);
+    Any(null);
 
-	// todo: "is empty", "is not found", "with length of.."
+    // todo: "is empty", "is not found", "with length of.."
 
-	private String symbol;
+    private static final String REGEX_CONTROLS = "(\".+?\"|.+?)";
+    private static final String REGEX_FILTER = initRegexFilter();
+    private String symbol;
 
-	private static final String REGEX_CONTROLS = "(\".+?\"|.+?)";
-	private static final String REGEX_FILTER = initRegexFilter();
+    interface InternalMappings {
+        Map<String, NexialFilterComparator> COMPARATOR_MAP = new HashMap<>();
 
-	interface InternalMappings {
-		Map<String, NexialFilterComparator> COMPARATOR_MAP = new HashMap<>();
+    }
 
-	}
+    NexialFilterComparator(String symbol) {
+        this.symbol = symbol;
+        if (symbol != null) { InternalMappings.COMPARATOR_MAP.put(symbol, this); }
+    }
 
-	NexialFilterComparator(String symbol) {
-		this.symbol = symbol;
-		if (symbol != null) { InternalMappings.COMPARATOR_MAP.put(symbol, this); }
-	}
+    public String getSymbol() { return symbol; }
 
-	public String getSymbol() { return symbol; }
+    public static NexialFilterComparator findComparator(String symbol) {
+        return symbol == null ? Any : InternalMappings.COMPARATOR_MAP.get(symbol);
+    }
 
-	public static NexialFilterComparator findComparator(String symbol) {
-		return symbol == null ? Any : InternalMappings.COMPARATOR_MAP.get(symbol);
-	}
+    public static String getRegexFilter() { return REGEX_FILTER; }
 
-	public static String getRegexFilter() { return REGEX_FILTER; }
+    /**
+     * determine if the string presentation of {@code controls} is meaningful/usable for a given operator.
+     */
+    public boolean isValidControlValues(String controls) {
+        // any - don't care
+        if (symbol == null) { return true; }
 
-	private static String initRegexFilter() {
-		try {
-			Class.forName(NexialFilterComparator.class.getName());
-		} catch (ClassNotFoundException e) {
-			throw new IllegalArgumentException("Unable to load NexialFilterComparator!", e);
-		}
+        switch (this) {
+            case Equal:
+            case NotEqual:
+            case Match: {
+                return StringUtils.isNotBlank(controls);
+            }
 
-		Map<Object, Object> replacements = new HashMap<>();
-		replacements.put("!", "\\!");
-		replacements.put("=", "\\=");
-		replacements.put("<", "\\<");
-		replacements.put(">", "\\>");
+            case Greater:
+            case GreaterOrEqual:
+            case Lesser:
+            case LesserOrEqual: {
+                return NexialFilter.canBeNumber(controls);
+            }
 
-		StringBuilder regexOperator = new StringBuilder("(");
-		Arrays.stream(NexialFilterComparator.values()).forEach(operator ->
-			                                                       regexOperator.append(TextUtils.replace(operator.getSymbol(),
-			                                                                                              replacements))
-			                                                                    .append("|"));
-		String regexOps = StringUtils.removeEnd(regexOperator.toString(), "|") + ")";
-		// hack: order is important. "is" must come after "is not"
-		regexOps = StringUtils.replace(regexOps, "is|is not", "is not|is");
+            case StartsWith:
+            case EndsWith:
+            case Contains: {
+                // supports both single value or list
+                // either enclosed in [...] or not, cannot have dangling bracket
+                return StringUtils.isNotBlank(controls) &&
+                       StringUtils.startsWith(controls, IS_OPEN_TAG) ==
+                       StringUtils.endsWith(controls, IS_CLOSE_TAG);
+            }
 
-		// narrative:
-		// - start with any spaces
-		// - capture "subject"
-		// - at least 1 space
-		// - capure "operator"
-		// - at least 1 space
-		// - capture "controls"
-		// - end with any space
-		return "^\\s*" + REGEX_CONTROLS + "\\s+" + regexOps + "\\s+" + REGEX_CONTROLS + "\\s*$";
-	}
+            case Is:
+            case In:
+            case IsNot:
+            case NotIn: {
+                return TextUtils.isBetween(controls, IS_OPEN_TAG, IS_CLOSE_TAG);
+            }
 
-	/**
-	 * determine if the string presentation of {@code controls} is meaningful/usable for a given operator.
-	 */
-	public boolean isValidControlValues(String controls) {
-		// any - don't care
-		if (symbol == null) { return true; }
+            case Between: {
+                if (!TextUtils.isBetween(controls, IS_OPEN_TAG, IS_CLOSE_TAG)) { return false; }
 
-		switch (this) {
-			case Equal:
-			case NotEqual:
-			case Match: {
-				return StringUtils.isNotBlank(controls);
-			}
+                controls = StringUtils.substringBetween(controls, IS_OPEN_TAG, IS_CLOSE_TAG);
+                String[] parts = StringUtils.split(controls, ITEM_SEP);
+                return ArrayUtils.getLength(parts) == 2 &&
+                       NexialFilter.canBeNumber(parts[0]) &&
+                       NexialFilter.canBeNumber(parts[1]);
+            }
 
-			case Greater:
-			case GreaterOrEqual:
-			case Lesser:
-			case LesserOrEqual: {
-				return NexialFilter.canBeNumber(controls);
-			}
+            default: {
+                ConsoleUtils.error("Invalid/unknown operator: " + this);
+                return false;
+            }
+        }
+    }
 
-			case StartsWith:
-			case EndsWith:
-			case Contains: {
-				// supports both single value or list
-				// either enclosed in [...] or not, cannot have dangling bracket
-				return StringUtils.isNotBlank(controls) &&
-				       StringUtils.startsWith(controls, IS_OPEN_TAG) ==
-				       StringUtils.endsWith(controls, IS_CLOSE_TAG);
-			}
+    private static String initRegexFilter() {
+        try {
+            Class.forName(NexialFilterComparator.class.getName());
+        } catch (ClassNotFoundException e) {
+            throw new IllegalArgumentException("Unable to load NexialFilterComparator!", e);
+        }
 
-			case Is:
-			case In:
-			case IsNot:
-			case NotIn: {
-				return TextUtils.isBetween(controls, IS_OPEN_TAG, IS_CLOSE_TAG);
-			}
+        Map<Object, Object> replacements = new HashMap<>();
+        replacements.put("!", "\\!");
+        replacements.put("=", "\\=");
+        replacements.put("<", "\\<");
+        replacements.put(">", "\\>");
 
-			case Between: {
-				if (!TextUtils.isBetween(controls, IS_OPEN_TAG, IS_CLOSE_TAG)) { return false; }
+        StringBuilder regexOperator = new StringBuilder("(");
+        Arrays.stream(NexialFilterComparator.values()).forEach(operator ->
+                                                                   regexOperator
+                                                                       .append(TextUtils.replace(operator.getSymbol(),
+                                                                                                 replacements))
+                                                                       .append("|"));
+        String regexOps = StringUtils.removeEnd(regexOperator.toString(), "|") + ")";
+        // hack: order is important. "is" must come after "is not"
+        regexOps = StringUtils.replace(regexOps, "is|is not", "is not|is");
 
-				controls = StringUtils.substringBetween(controls, IS_OPEN_TAG, IS_CLOSE_TAG);
-				String[] parts = StringUtils.split(controls, ",");
-				return ArrayUtils.getLength(parts) == 2 && NexialFilter.canBeNumber(parts[0]) && NexialFilter
-					                                                                                 .canBeNumber(parts[1]);
-			}
-
-			default: {
-				ConsoleUtils.error("Invalid/unknown operator: " + this);
-				return false;
-			}
-		}
-	}
+        // narrative:
+        // - start with any spaces
+        // - capture "subject"
+        // - at least 1 space
+        // - capure "operator"
+        // - at least 1 space
+        // - capture "controls"
+        // - end with any space
+        return "^\\s*" + REGEX_CONTROLS + "\\s+" + regexOps + "\\s+" + REGEX_CONTROLS + "\\s*$";
+    }
 }

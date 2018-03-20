@@ -32,102 +32,108 @@ import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.builder.EqualsBuilder;
 import org.apache.commons.lang3.builder.HashCodeBuilder;
 import org.apache.commons.lang3.builder.ToStringBuilder;
+import org.nexial.core.plugins.ThirdPartyDriverInfo;
 
 import static org.apache.commons.lang3.builder.ToStringStyle.SIMPLE_STYLE;
 
 public abstract class JmsClientConfig implements Serializable {
 
-	protected String provider;
-	protected String url;
-	protected String username;
-	protected String password;
-	protected String destination;
-	protected boolean isTopic;
+    protected String provider;
+    protected String url;
+    protected String username;
+    protected String password;
+    protected String destination;
+    protected boolean isTopic;
+    protected ThirdPartyDriverInfo driverInfo;
 
-	public String getUrl() { return url;}
+    public String getUrl() { return url;}
 
-	public void setUrl(String url) { this.url = url;}
+    public void setUrl(String url) { this.url = url;}
 
-	public String getDestination() { return destination;}
+    public String getDestination() { return destination;}
 
-	public void setDestination(String destination) { this.destination = destination;}
+    public void setDestination(String destination) { this.destination = destination;}
 
-	public String getUsername() { return username;}
+    public String getUsername() { return username;}
 
-	public void setUsername(String username) { this.username = username;}
+    public void setUsername(String username) { this.username = username;}
 
-	public String getPassword() { return password;}
+    public String getPassword() { return password;}
 
-	public void setPassword(String password) { this.password = password;}
+    public void setPassword(String password) { this.password = password;}
 
-	public String getProvider() { return provider;}
+    public String getProvider() { return provider;}
 
-	public void setProvider(String provider) { this.provider = provider;}
+    public void setProvider(String provider) { this.provider = provider;}
 
-	public boolean isTopic() { return isTopic;}
+    public boolean isTopic() { return isTopic;}
 
-	public void setTopic(boolean topic) { isTopic = topic;}
+    public void setTopic(boolean topic) { isTopic = topic;}
 
-	@Override
-	public String toString() {
-		return new ToStringBuilder(this, SIMPLE_STYLE)
-			       .append("url", url)
-			       .append("username", username)
-			       .append("password", password)
-			       .append("destination", destination)
-			       .append("provider", provider)
-			       .toString();
-	}
+    public ThirdPartyDriverInfo getDriverInfo() { return driverInfo; }
 
-	@Override
-	public boolean equals(Object o) {
-		if (this == o) { return true; }
-		if (o == null || getClass() != o.getClass()) { return false; }
+    public void setDriverInfo(ThirdPartyDriverInfo driverInfo) { this.driverInfo = driverInfo; }
 
-		JmsClientConfig jmsClientConfig = (JmsClientConfig) o;
-		return new EqualsBuilder().append(url, jmsClientConfig.url)
-		                          .append(destination, jmsClientConfig.destination)
-		                          .isEquals();
-	}
+    @Override
+    public int hashCode() {
+        return new HashCodeBuilder(17, 37).append(url).append(destination).toHashCode();
+    }
 
-	@Override
-	public int hashCode() {
-		return new HashCodeBuilder(17, 37).append(url).append(destination).toHashCode();
-	}
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) { return true; }
+        if (o == null || getClass() != o.getClass()) { return false; }
 
-	public void init(Map<String, String> config) {
-		if (MapUtils.isEmpty(config)) { throw new IllegalArgumentException("No JMS settings specified");}
+        JmsClientConfig jmsClientConfig = (JmsClientConfig) o;
+        return new EqualsBuilder().append(url, jmsClientConfig.url)
+                                  .append(destination, jmsClientConfig.destination)
+                                  .isEquals();
+    }
 
-		provider = config.get("provider");
+    @Override
+    public String toString() {
+        return new ToStringBuilder(this, SIMPLE_STYLE)
+                   .append("url", url)
+                   .append("username", username)
+                   .append("password", password)
+                   .append("destination", destination)
+                   .append("provider", provider)
+                   .toString();
+    }
 
-		url = config.get("url");
-		if (StringUtils.isBlank(url)) { throw new IllegalArgumentException("JMS url not specified"); }
+    public void init(Map<String, String> config) {
+        if (MapUtils.isEmpty(config)) { throw new IllegalArgumentException("No JMS settings specified");}
 
-		destination = config.get("destination");
-		if (StringUtils.isBlank(destination)) { throw new IllegalArgumentException("JMS destination not specified"); }
+        provider = config.get("provider");
 
-		username = config.get("username");
-		password = config.get("password");
-		isTopic = BooleanUtils.toBoolean(config.get("isTopic"));
-	}
+        url = config.get("url");
+        if (StringUtils.isBlank(url)) { throw new IllegalArgumentException("JMS url not specified"); }
 
-	public abstract Connection createConnection() throws JMSException;
+        destination = config.get("destination");
+        if (StringUtils.isBlank(destination)) { throw new IllegalArgumentException("JMS destination not specified"); }
 
-	public abstract Destination resolveDestination(Session session) throws JMSException;
+        username = config.get("username");
+        password = config.get("password");
+        isTopic = BooleanUtils.toBoolean(config.get("isTopic"));
+    }
 
-	protected Connection createConnection(ConnectionFactory connFactory) throws JMSException {
-		Connection connection;
-		if (StringUtils.isNotBlank(username)) {
-			if (StringUtils.isNotBlank(password)) {
-				connection = connFactory.createConnection(username, password);
-			} else {
-				connection = connFactory.createConnection(username, null);
-			}
-		} else {
-			connection = connFactory.createConnection();
-		}
+    public abstract Connection createConnection() throws JMSException;
 
-		connection.start();
-		return connection;
-	}
+    public abstract Destination resolveDestination(Session session) throws JMSException;
+
+    protected Connection createConnection(ConnectionFactory connFactory) throws JMSException {
+        Connection connection;
+        if (StringUtils.isNotBlank(username)) {
+            if (StringUtils.isNotBlank(password)) {
+                connection = connFactory.createConnection(username, password);
+            } else {
+                connection = connFactory.createConnection(username, null);
+            }
+        } else {
+            connection = connFactory.createConnection();
+        }
+
+        connection.start();
+        return connection;
+    }
 }

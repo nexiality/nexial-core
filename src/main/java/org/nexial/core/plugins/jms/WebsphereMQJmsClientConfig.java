@@ -17,58 +17,93 @@
 
 package org.nexial.core.plugins.jms;
 
+import java.lang.reflect.InvocationTargetException;
 import java.util.Map;
 
 import javax.jms.Connection;
+import javax.jms.ConnectionFactory;
 import javax.jms.Destination;
 import javax.jms.JMSException;
 import javax.jms.Session;
 
+import org.apache.commons.beanutils.BeanUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.math.NumberUtils;
-
+import org.nexial.core.ExecutionThread;
+import org.nexial.core.model.ExecutionContext;
 import org.nexial.core.utils.ConsoleUtils;
-import com.ibm.mq.jms.MQConnectionFactory;
-
-import static com.ibm.msg.client.wmq.common.CommonConstants.WMQ_CM_CLIENT;
 
 public class WebsphereMQJmsClientConfig extends JmsClientConfig {
-	private String channel;
-	private String queueManager;
+    private String channel;
+    private String queueManager;
 
-	@Override
-	public void init(Map<String, String> config) {
-		super.init(config);
-		this.channel = config.get("channel");
-		this.queueManager = config.get("queueManager");
-	}
+    @Override
+    public void init(Map<String, String> config) {
+        super.init(config);
+        this.channel = config.get("channel");
+        this.queueManager = config.get("queueManager");
+    }
 
-	@Override
-	public Connection createConnection() throws JMSException {
-		MQConnectionFactory cf = new MQConnectionFactory();
+    @Override
+    public Connection createConnection() throws JMSException {
+        // MQConnectionFactory cf = new MQConnectionFactory();
+        // cf.setTransportType(WMQ_CM_CLIENT);
+        //
+        // if (StringUtils.contains(url, ",")) {
+        //     cf.setConnectionNameList(url);
+        // } else {
+        //     if (StringUtils.contains(url, ":")) {
+        //         String host = StringUtils.substringBefore(url, ":");
+        //         String port = StringUtils.substringAfter(url, ":");
+        //         ConsoleUtils.log("Using host '" + host + "' and port '" + port + "' to connect to WebSphere MQ");
+        //         cf.setHostName(host);
+        //         cf.setPort(NumberUtils.toInt(port));
+        //     }
+        // }
+        //
+        // cf.setChannel(channel);
+        // cf.setQueueManager(queueManager);
 
-		cf.setTransportType(WMQ_CM_CLIENT);
+        ConnectionFactory cf;
+        try {
+            cf = (ConnectionFactory) Class.forName("com.ibm.mq.jms.MQConnectionFactory").newInstance();
+        } catch (InstantiationException | IllegalAccessException | ClassCastException | ClassNotFoundException e) {
+            String message = driverInfo != null ?
+                             driverInfo.toString() :
+                             "Fail to load the request JMS driver.  Make sure the appropriate jar is added to lib/.";
+            ConsoleUtils.showMissingLibraryError(message);
+            ExecutionContext context = ExecutionThread.get();
+            if (context != null) { context.setFailImmediate(true); }
+            throw new RuntimeException(message);
+        }
 
-		if (StringUtils.contains(url, ",")) {
-			cf.setConnectionNameList(url);
-		} else {
-			if (StringUtils.contains(url, ":")) {
-				String host = StringUtils.substringBefore(url, ":");
-				String port = StringUtils.substringAfter(url, ":");
-				ConsoleUtils.log("Using host '" + host + "' and port '" + port + "' to connect to WebSphere MQ");
-				cf.setHostName(host);
-				cf.setPort(NumberUtils.toInt(port));
-			}
-		}
+        try {
+            // com.ibm.msg.client.wmq.common.CommonConstants.WMQ_CM_CLIENT
+            BeanUtils.setProperty(cf, "transportType", 1);
 
-		cf.setChannel(channel);
-		cf.setQueueManager(queueManager);
+            if (StringUtils.contains(url, ",")) {
+                BeanUtils.setProperty(cf, "connectionNameList", url);
+            } else {
+                if (StringUtils.contains(url, ":")) {
+                    String host = StringUtils.substringBefore(url, ":");
+                    String port = StringUtils.substringAfter(url, ":");
+                    ConsoleUtils.log("Using host '" + host + "' and port '" + port + "' to connect to WebSphere MQ");
+                    BeanUtils.setProperty(cf, "hostName", host);
+                    BeanUtils.setProperty(cf, "port", NumberUtils.toInt(port));
+                }
+            }
 
-		return createConnection(cf);
-	}
+            BeanUtils.setProperty(cf, "channel", channel);
+            BeanUtils.setProperty(cf, "queueManager", queueManager);
+        } catch (IllegalAccessException | InvocationTargetException e) {
+            throw new JMSException("Unable to configure connection: " + e.getMessage());
+        }
 
-	@Override
-	public Destination resolveDestination(Session session) throws JMSException {
-		return isTopic ? session.createTopic(destination) : session.createQueue(destination);
-	}
+        return createConnection(cf);
+    }
+
+    @Override
+    public Destination resolveDestination(Session session) throws JMSException {
+        return isTopic ? session.createTopic(destination) : session.createQueue(destination);
+    }
 }

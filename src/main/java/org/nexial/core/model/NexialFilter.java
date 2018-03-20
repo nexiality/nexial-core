@@ -43,6 +43,8 @@ import static org.nexial.core.model.NexialFilterComparator.Any;
  * portions of CSV content.
  */
 public class NexialFilter implements Serializable {
+    static final String ITEM_SEP = "|";
+
     private String subject;
     private NexialFilterComparator comparator;
     private String controls;
@@ -191,7 +193,7 @@ public class NexialFilter implements Serializable {
 
     protected Pair<Double, Double> toNumericRange(String controls) {
         controls = StringUtils.trim(StringUtils.substringBetween(controls, IS_OPEN_TAG, IS_CLOSE_TAG));
-        String[] array = StringUtils.split(controls, ",");
+        String[] array = StringUtils.split(controls, ITEM_SEP);
         if (ArrayUtils.getLength(array) != 2) {
             throw new IllegalArgumentException("range controls must be exactly 2 value (low, high): " + controls);
         }
@@ -203,7 +205,7 @@ public class NexialFilter implements Serializable {
 
     protected Stream<String> toControlStream(String controls) {
         controls = StringUtils.trim(StringUtils.substringBetween(controls, IS_OPEN_TAG, IS_CLOSE_TAG));
-        return Arrays.stream(StringUtils.split(controls, ","))
+        return Arrays.stream(StringUtils.split(controls, ITEM_SEP))
                      .map(StringUtils::trim)
                      .map(NexialFilter::normalizeCondition);
     }

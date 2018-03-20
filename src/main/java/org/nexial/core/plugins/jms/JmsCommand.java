@@ -22,10 +22,10 @@ import java.util.Map;
 import org.apache.commons.collections4.MapUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.math.NumberUtils;
-
 import org.nexial.commons.utils.TextUtils;
 import org.nexial.core.model.ExecutionContext;
 import org.nexial.core.model.StepResult;
+import org.nexial.core.plugins.ThirdPartyDriverInfo;
 import org.nexial.core.plugins.base.BaseCommand;
 
 import static org.nexial.core.NexialConst.MS_UNDEFINED;
@@ -34,6 +34,7 @@ import static org.nexial.core.utils.CheckUtils.*;
 public class JmsCommand extends BaseCommand {
     private JmsClient jmsClient;
     private Map<String, String> jmsClientConfigs;
+    private Map<String, ThirdPartyDriverInfo> jmsJarInfo;
 
     @Override
     public void init(ExecutionContext context) {
@@ -47,6 +48,8 @@ public class JmsCommand extends BaseCommand {
     public void setJmsClient(JmsClient jmsClient) { this.jmsClient = jmsClient;}
 
     public void setJmsClientConfigs(Map<String, String> jmsClientConfigs) { this.jmsClientConfigs = jmsClientConfigs; }
+
+    public void setJmsJarInfo(Map<String, ThirdPartyDriverInfo> jmsJarInfo) {this.jmsJarInfo = jmsJarInfo; }
 
     public StepResult sendText(String config, String id, String payload) {
         requiresNotBlank(config, "Invalid config", config);
@@ -110,9 +113,11 @@ public class JmsCommand extends BaseCommand {
         String configClass = null;
         try {
             configClass = jmsClientConfigs.get(provider);
+
             Object configObject = Class.forName(configClass).newInstance();
             if (configObject instanceof JmsClientConfig) {
                 JmsClientConfig configInstance = (JmsClientConfig) configObject;
+                configInstance.setDriverInfo(jmsJarInfo.get(provider));
                 configInstance.init(configData);
                 return configInstance;
             }

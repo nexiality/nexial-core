@@ -14,16 +14,16 @@
  * limitations under the License.
  */
 
-package org.nexial.core.plugins.db;
+package org.nexial.core.plugins;
 
 import java.io.Serializable;
 
-public class DbDriverInfo implements Serializable {
+public class ThirdPartyDriverInfo implements Serializable {
     private String jarFilePattern;
     private String minDriverVersion;
     private String url;
 
-    public DbDriverInfo(String jarFilePattern, String minVersion, String url) {
+    public ThirdPartyDriverInfo(String jarFilePattern, String minVersion, String url) {
         this.jarFilePattern = jarFilePattern;
         this.minDriverVersion = minVersion;
         this.url = url;
@@ -37,7 +37,7 @@ public class DbDriverInfo implements Serializable {
 
     @Override
     public String toString() {
-        return "Unable to load the required database driver. \n" +
+        return "Unable to load the required driver/3rd-party library. \n" +
                "Make sure " + jarFilePattern + " (at least " + minDriverVersion + ") is added to lib/ directory.  \n" +
                "For more information, visit " + url;
     }

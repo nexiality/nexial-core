@@ -29,6 +29,7 @@ import org.apache.commons.dbcp2.BasicDataSource;
 import org.apache.commons.lang3.StringUtils;
 import org.nexial.commons.utils.TextUtils;
 import org.nexial.core.model.ExecutionContext;
+import org.nexial.core.plugins.ThirdPartyDriverInfo;
 import org.nexial.core.utils.ConsoleUtils;
 import org.springframework.beans.BeansException;
 import org.springframework.context.ApplicationContext;
@@ -45,7 +46,7 @@ public class DataAccess implements ApplicationContextAware {
     protected Map<String, String> dbTypes;
     protected ApplicationContext spring;
     protected ExecutionContext context;
-    private Map<String, DbDriverInfo> dbJarInfo;
+    private Map<String, ThirdPartyDriverInfo> dbJarInfo;
 
     @Override
     public void setApplicationContext(ApplicationContext ctx) throws BeansException { spring = ctx; }
@@ -60,7 +61,7 @@ public class DataAccess implements ApplicationContextAware {
 
     public void setDbTypes(Map<String, String> dbTypes) { this.dbTypes = dbTypes; }
 
-    public void setDbJarInfo(Map<String, DbDriverInfo> dbJarInfo) { this.dbJarInfo = dbJarInfo; }
+    public void setDbJarInfo(Map<String, ThirdPartyDriverInfo> dbJarInfo) { this.dbJarInfo = dbJarInfo; }
 
     public JdbcResult execute(String query, SimpleExtractionDao dao) { return execute(query, dao, null); }
 
@@ -105,7 +106,7 @@ public class DataAccess implements ApplicationContextAware {
             Class.forName(className).newInstance();
         } catch (InstantiationException | IllegalAccessException | ClassNotFoundException e) {
             String message;
-            DbDriverInfo driverInfo = dbJarInfo.get(dbType);
+            ThirdPartyDriverInfo driverInfo = dbJarInfo.get(dbType);
             if (driverInfo != null) {
                 message = driverInfo.toString();
             } else {
