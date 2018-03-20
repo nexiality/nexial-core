@@ -39,13 +39,6 @@ import org.apache.commons.lang3.ObjectUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.math.NumberUtils;
 import org.apache.poi.xssf.usermodel.XSSFCell;
-import org.nexial.core.plugins.NexialCommand;
-import org.nexial.core.utils.OutputFileUtils;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-import org.slf4j.MDC;
-import org.springframework.context.support.ClassPathXmlApplicationContext;
-
 import org.nexial.commons.javamail.MailObjectSupport;
 import org.nexial.commons.utils.EnvUtils;
 import org.nexial.commons.utils.RegexUtils;
@@ -58,23 +51,29 @@ import org.nexial.core.excel.Excel;
 import org.nexial.core.excel.Excel.Worksheet;
 import org.nexial.core.excel.ExcelAddress;
 import org.nexial.core.excel.ext.CellTextReader;
+import org.nexial.core.plugins.NexialCommand;
 import org.nexial.core.plugins.pdf.CommonKeyValueIdentStrategies;
 import org.nexial.core.reports.JenkinsVariables;
 import org.nexial.core.utils.ConsoleUtils;
 import org.nexial.core.utils.ExecutionLogger;
+import org.nexial.core.utils.OutputFileUtils;
 import org.nexial.core.variable.ExpressionException;
 import org.nexial.core.variable.ExpressionProcessor;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.slf4j.MDC;
+import org.springframework.context.support.ClassPathXmlApplicationContext;
 
+import static java.io.File.separator;
+import static java.lang.System.lineSeparator;
+import static org.apache.commons.lang3.SystemUtils.IS_OS_WINDOWS;
+import static org.apache.commons.lang3.SystemUtils.USER_NAME;
 import static org.nexial.commons.utils.EnvUtils.enforceUnixEOL;
 import static org.nexial.core.NexialConst.*;
 import static org.nexial.core.NexialConst.Data.*;
 import static org.nexial.core.NexialConst.FlowControls.OPT_STEP_BY_STEP;
 import static org.nexial.core.NexialConst.Project.NEXIAL_HOME;
 import static org.nexial.core.excel.ext.CipherHelper.CRYPT_IND;
-import static java.io.File.separator;
-import static java.lang.System.lineSeparator;
-import static org.apache.commons.lang3.SystemUtils.IS_OS_WINDOWS;
-import static org.apache.commons.lang3.SystemUtils.USER_NAME;
 
 /**
  * represent the state of an test execution.  Differ from {@link ExecutionDefinition}, it contains the derived
@@ -810,7 +809,9 @@ public class ExecutionContext {
     public void setEndImmediate(boolean endImmediate) { data.put(END_IMMEDIATE, endImmediate); }
 
     // support flow control - EndLoopIf()
-    public boolean isBreakCurrentIteration() { return getBooleanData(BREAK_CURRENT_ITERATION, false); }
+    public boolean isBreakCurrentIteration() {
+        return getBooleanData(BREAK_CURRENT_ITERATION, false) || isFailImmediate();
+    }
 
     public void setBreakCurrentIteration(boolean breakLoop) { setData(BREAK_CURRENT_ITERATION, breakLoop); }
 

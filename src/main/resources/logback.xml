@@ -154,6 +154,12 @@
 		<appender-ref ref="file-3rdparty"/>
 	</logger>
 
+	<!-- websphere -->
+	<logger name="com.ibm.mq" additivity="false" level="ERROR">
+		<appender-ref ref="console-catchall"/>
+		<appender-ref ref="file-3rdparty"/>
+	</logger>
+
 	<!-- amazon -->
 	<logger name="com.amazonaws.http.AmazonHttpClient" additivity="false" level="ERROR">
 		<appender-ref ref="console-catchall"/>

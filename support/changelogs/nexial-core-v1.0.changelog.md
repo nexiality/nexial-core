@@ -1,5 +1,9 @@
 # Release 1.0
 
+[jms]
+- missing client connection jar logic so we can provide instruction for missing client jars
+- remove vendor-specific code (use Java reflection instead)
+
 [rdbms]
 - missing database driver logic so we can provide instruction for missing database driver
 - remove driver-specific code (use Java reflection instead)
