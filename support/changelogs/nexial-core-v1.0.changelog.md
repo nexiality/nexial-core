@@ -8,6 +8,19 @@
 - missing database driver logic so we can provide instruction for missing database driver
 - remove driver-specific code (use Java reflection instead)
 
+[redis]
+- basic redis support added. Initial support include:
+  - url based connection (ie. `redis://...`)
+  - `append(profile,key,value)`: append value to existing key
+  - `assertKeyExists(profile,key)`: assert if specified key exists
+  - `delete(profile,key)`: delete a key and the associated value
+  - `flushAll(profile)`:  flush all data of the connected redis server
+  - `flushDb(profile)`: flush all the data of the connected redis database
+  - `rename(profile,current,new)`: rename key name
+  - `set(profile,key,value)`: add/overwrite value of a key
+  - `store(var,profile,key)`: store the current value of a key in redis to nexial context
+  - `storeKeys(var,profile,keyPattern)`: store all matching keys - based on `keyPattern` - to nexial context
+
 [web]
 - shipped with [chromedriver v2.37](https://chromedriver.storage.googleapis.com/2.37/notes.txt), this includes
 	- Supports Chrome v63-65

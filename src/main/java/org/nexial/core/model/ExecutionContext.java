@@ -26,6 +26,9 @@ import java.net.URLEncoder;
 import java.net.UnknownHostException;
 import java.util.*;
 
+import javax.annotation.Nullable;
+import javax.validation.constraints.NotNull;
+
 import org.apache.commons.beanutils.BeanUtils;
 import org.apache.commons.beanutils.MethodUtils;
 import org.apache.commons.beanutils.PropertyUtils;
@@ -417,6 +420,7 @@ public class ExecutionContext {
 
     public boolean hasData(String name) { return getObjectData(name) != null; }
 
+    @Nullable
     public Object getObjectData(String name) {
         if (StringUtils.isBlank(name)) { return null; }
         String sysProp = System.getProperty(name);
@@ -518,6 +522,7 @@ public class ExecutionContext {
         return props;
     }
 
+    @NotNull
     public Map<String, Object> getObjectByPrefix(String prefix) {
         // data.keySet()
         //     .stream()
@@ -530,6 +535,7 @@ public class ExecutionContext {
         return props;
     }
 
+    @NotNull
     public static Map<String, String> getSysPropsByPrefix(String prefix) {
         Map<String, String> props = new LinkedHashMap<>();
         System.getProperties().forEach((key, value) -> {

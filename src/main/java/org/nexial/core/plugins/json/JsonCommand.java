@@ -72,7 +72,7 @@ public class JsonCommand extends BaseCommand {
 	}
 
 	public StepResult storeValue(String json, String jsonpath, String var) {
-		requires(StringUtils.isNotBlank(var), "invalid variable", var);
+		requiresNotBlank(var, "invalid variable", var);
 		String match = find(json, jsonpath);
 		if (match == null) { return StepResult.fail("EXPECTED match against '" + jsonpath + "' was not found"); }
 
@@ -86,7 +86,7 @@ public class JsonCommand extends BaseCommand {
 	}
 
 	public StepResult storeCount(String json, String jsonpath, String var) {
-		requires(StringUtils.isNotBlank(var), "invalid variable", var);
+		requiresNotBlank(var, "invalid variable", var);
 		context.setData(var, count(json, jsonpath));
 		return StepResult.success("match count stored to ${" + var + "}");
 	}

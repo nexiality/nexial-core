@@ -70,7 +70,7 @@ public class WebsphereMQJmsClientConfig extends JmsClientConfig {
         } catch (InstantiationException | IllegalAccessException | ClassCastException | ClassNotFoundException e) {
             String message = driverInfo != null ?
                              driverInfo.toString() :
-                             "Fail to load the request JMS driver.  Make sure the appropriate jar is added to lib/.";
+                             "Fail to load requested JMS connector.  Make sure the appropriate jar is added to lib/.";
             ConsoleUtils.showMissingLibraryError(message);
             ExecutionContext context = ExecutionThread.get();
             if (context != null) { context.setFailImmediate(true); }

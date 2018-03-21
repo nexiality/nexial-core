@@ -878,7 +878,11 @@ public class BaseCommand implements NexialCommand {
                     String command = m.getName() + "(";
 
                     Parameter[] parameters = m.getParameters();
-                    for (Parameter param : parameters) { command += param.getName() + ","; }
+                    for (Parameter param : parameters) {
+                        // workaround for kotlin (var is reserved in kotlin)
+                        String paramName = StringUtils.equals(param.getName(), "Var") ? "var" : param.getName();
+                        command += paramName + ",";
+                    }
 
                     discovery.addCommand(getTarget(), StringUtils.removeEnd(command, ",") + ")");
                 }
