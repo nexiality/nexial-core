@@ -279,6 +279,12 @@ task sourcesJar(type: Jar) {
 	from sourceSets.main.allSource
 }
 
+task testJar(type:  Jar) {
+	classifier = 'tests'
+	from sourceSets.test.output
+	include ('**/*.class')
+}
+
 artifacts {
 	archives jar
 	archives sourcesJar

@@ -118,7 +118,7 @@ public class JsonHelperTest {
 			Assert.fail("Should have failed with IOException " + fixture3 + " does not exists");
 		}
 
-		String fixture4 = "/TESTAPP/function1/supportconfig.json";
+		String fixture4 = "/org/nexial/core/utils/supportconfig.json";
 		try {
 			JSONObject json = JsonHelper.retrieveJSONObject(JsonHelper.class, fixture4);
 			Assert.assertNotNull(json);

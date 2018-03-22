@@ -41,9 +41,9 @@ import static java.io.File.separator;
 
 public abstract class ExcelBasedTests {
     protected String projectBase;
-    protected String resourcePath = "showcase/artifact/script/";
-    protected String dataResourcePath = "showcase/artifact/data/";
-    protected String planResourcePath = "showcase/artifact/plan/";
+    protected String resourcePath = "unittesting/artifact/script/";
+    protected String dataResourcePath = "unittesting/artifact/data/";
+    protected String planResourcePath = "unittesting/artifact/plan/";
 
     public static class TestOutcomeStats {
         private static final TestOutcomeStats ALL_PASSED = new TestOutcomeStats(0, -1);
