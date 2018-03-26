@@ -208,7 +208,7 @@ public class PdfCommand extends BaseCommand {
             String content = extractText(pdf);
             int count = StringUtils.countMatches(content, text);
             context.setData(var, count);
-            return StepResult.success("occurence of '" + text + "' in '" + pdf + "' saved to '" + var + "'");
+            return StepResult.success("occurrence of '" + text + "' in '" + pdf + "' saved to '" + var + "'");
         } catch (IOException e) {
             return StepResult.fail("unable to extract content from " + pdf, e);
         }

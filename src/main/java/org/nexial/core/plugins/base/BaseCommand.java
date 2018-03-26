@@ -167,7 +167,7 @@ public class BaseCommand implements NexialCommand {
 
     // todo: reconsider command name.  this is not intuitive
     public StepResult incrementChar(String var, String amount, String config) {
-        requires(StringUtils.isNotBlank(var) && !StringUtils.startsWith(var, "${"), "invalid variable", var);
+        requiresValidVariableName(var);
         int amountInt = toInt(amount, "amount");
 
         String current = StringUtils.defaultString(context.getStringData(var));
@@ -177,14 +177,12 @@ public class BaseCommand implements NexialCommand {
         if (StringUtils.isNotBlank(config)) {
             try {
                 strategy = IncrementStrategy.valueOf(config);
-                if (strategy == null) { strategy = STRATEGY_DEFAULT; }
             } catch (IllegalArgumentException e) {
-                strategy = STRATEGY_DEFAULT;
+                // don't worry.. we'll just ue default strategy
             }
         }
 
         String newVal = strategy.increment(current, amountInt);
-
         context.setData(var, newVal);
 
         return StepResult.success("incremented ${" + var + "} by " + amountInt + " to " + newVal);

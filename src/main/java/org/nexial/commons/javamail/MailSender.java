@@ -19,6 +19,7 @@ package org.nexial.commons.javamail;
 
 import java.io.File;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.Date;
 import java.util.List;
 
@@ -26,7 +27,6 @@ import javax.activation.DataHandler;
 import javax.activation.DataSource;
 import javax.activation.FileDataSource;
 import javax.mail.Message;
-import javax.mail.Message.RecipientType;
 import javax.mail.MessagingException;
 import javax.mail.Multipart;
 import javax.mail.Session;
@@ -37,104 +37,102 @@ import javax.mail.internet.MimeMultipart;
 
 import com.sun.mail.smtp.SMTPTransport;
 
+import static javax.mail.Message.RecipientType.*;
+
 /**
  * @author Mike Liu
  */
 public final class MailSender {
-	private MailObjectSupport mail;
+    private MailObjectSupport mail;
 
-	private MailSender() {}
+    private MailSender() {}
 
-	public static MailSender newInstance(MailObjectSupport mail) {
-		MailSender _this = new MailSender();
-		_this.mail = mail;
-		return _this;
-	}
+    public static MailSender newInstance(MailObjectSupport mail) {
+        MailSender _this = new MailSender();
+        _this.mail = mail;
+        return _this;
+    }
 
-	public void sendMail(String to, String from, String subject, String content) throws MessagingException {
-		sendMail(Arrays.asList(to), null, null, from, subject, content);
-	}
+    public void sendMail(String to, String from, String subject, String content) throws MessagingException {
+        sendMail(Collections.singletonList(to), null, null, from, subject, content);
+    }
 
-	public void sendMail(String[] to, String from, String subject, String content) throws MessagingException {
-		sendMail(Arrays.asList(to), null, null, from, subject, content);
-	}
+    public void sendMail(String[] to, String from, String subject, String content) throws MessagingException {
+        sendMail(Arrays.asList(to), null, null, from, subject, content);
+    }
 
-	public void sendMail(String[] to, String from, String subject, String content, File... files)
-		throws MessagingException {
-		sendMail(Arrays.asList(to), null, null, from, subject, content, files);
-	}
+    public void sendMail(String[] to, String from, String subject, String content, File... files)
+        throws MessagingException {
+        sendMail(Arrays.asList(to), null, null, from, subject, content, files);
+    }
 
-	public void sendMail(String to, String cc, String from, String subject, String content) throws MessagingException {
-		sendMail(Arrays.asList(to), Arrays.asList(cc), null, from, subject, content);
-	}
+    public void sendMail(String to, String cc, String from, String subject, String content) throws MessagingException {
+        sendMail(Collections.singletonList(to), Collections.singletonList(cc), null, from, subject, content);
+    }
 
-	public void sendMail(String[] to, String[] cc, String from, String subject, String content)
-		throws MessagingException {
-		sendMail(Arrays.asList(to), Arrays.asList(cc), null, from, subject, content);
-	}
+    public void sendMail(String[] to, String[] cc, String from, String subject, String content)
+        throws MessagingException {
+        sendMail(Arrays.asList(to), Arrays.asList(cc), null, from, subject, content);
+    }
 
-	public void sendMail(String[] to, String[] cc, String from, String subject, String content, File... files)
-		throws MessagingException {
-		sendMail(Arrays.asList(to), Arrays.asList(cc), null, from, subject, content, files);
-	}
+    public void sendMail(String[] to, String[] cc, String from, String subject, String content, File... files)
+        throws MessagingException {
+        sendMail(Arrays.asList(to), Arrays.asList(cc), null, from, subject, content, files);
+    }
 
-	public void sendMail(List<String> to,
-	                     List<String> cc,
-	                     List<String> bcc,
-	                     String from,
-	                     String subject,
-	                     String content,
-	                     File... attachments) throws MessagingException {
+    public void sendMail(List<String> to,
+                         List<String> cc,
+                         List<String> bcc,
+                         String from,
+                         String subject,
+                         String content,
+                         File... attachments) throws MessagingException {
 
-		if (mail == null) { throw new RuntimeException("Mail instance not set/found"); }
+        if (mail == null) { throw new RuntimeException("Mail instance not set/found"); }
 
-		Session session = mail.getSession();
-		SMTPTransport transport = mail.createTransport(session);
-		String contentType = mail.getConfiguredProperty("mail.smtp.contentType");
+        Session session = mail.getSession();
+        SMTPTransport transport = mail.createTransport(session);
+        String contentType = mail.getConfiguredProperty("mail.smtp.contentType");
 
-		Message msg = new MimeMessage(session);
+        Message msg = new MimeMessage(session);
 
-		try {
-			// to, cc, bcc, from
-			for (String addr : to) { msg.addRecipient(RecipientType.TO, new InternetAddress(addr)); }
-			if (cc != null) {
-				for (String addr : cc) { msg.addRecipient(RecipientType.CC, new InternetAddress(addr)); }
-			}
-			if (bcc != null) {
-				for (String addr : bcc) { msg.addRecipient(RecipientType.BCC, new InternetAddress(addr)); }
-			}
-			msg.setFrom(new InternetAddress(from));
+        try {
+            // to, cc, bcc, from
+            for (String addr : to) { msg.addRecipient(TO, new InternetAddress(addr)); }
+            if (cc != null) { for (String addr : cc) { msg.addRecipient(CC, new InternetAddress(addr)); } }
+            if (bcc != null) { for (String addr : bcc) { msg.addRecipient(BCC, new InternetAddress(addr)); } }
+            msg.setFrom(new InternetAddress(from));
 
-			// subject
-			msg.setSubject(subject);
+            // subject
+            msg.setSubject(subject);
 
-			Multipart mp = new MimeMultipart();
+            Multipart mp = new MimeMultipart();
 
-			// content
-			MimeBodyPart part = new MimeBodyPart();
-			part.setContent(content, contentType);
-			mp.addBodyPart(part);
+            // content
+            MimeBodyPart part = new MimeBodyPart();
+            part.setContent(content, contentType);
+            mp.addBodyPart(part);
 
-			// attachments
-			if (attachments != null) {
-				for (File attachment : attachments) {
-					MimeBodyPart messageBodyPart = new MimeBodyPart();
-					DataSource source = new FileDataSource(attachment);
-					messageBodyPart.setDataHandler(new DataHandler(source));
-					messageBodyPart.setFileName(attachment.getName());
-					mp.addBodyPart(messageBodyPart);
-				}
-			}
+            // attachments
+            if (attachments != null) {
+                for (File attachment : attachments) {
+                    MimeBodyPart messageBodyPart = new MimeBodyPart();
+                    DataSource source = new FileDataSource(attachment);
+                    messageBodyPart.setDataHandler(new DataHandler(source));
+                    messageBodyPart.setFileName(attachment.getName());
+                    mp.addBodyPart(messageBodyPart);
+                }
+            }
 
-			// final steps
-			msg.setContent(mp);
-			msg.setSentDate(new Date());
-			msg.saveChanges();
+            // final steps
+            msg.setContent(mp);
+            msg.setSentDate(new Date());
+            msg.saveChanges();
 
-			// send it!
-			transport.sendMessage(msg, msg.getAllRecipients());
-		} finally {
-			transport.close();
-		}
-	}
+            // send it!
+            transport.sendMessage(msg, msg.getAllRecipients());
+        } finally {
+            transport.close();
+        }
+    }
 }
