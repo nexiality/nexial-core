@@ -18,13 +18,13 @@
 package org.nexial.core.variable;
 
 import java.lang.reflect.Method;
+import java.math.BigDecimal;
 import java.text.DecimalFormat;
 import java.util.Map;
 
 import org.apache.commons.lang3.ArrayUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.math.NumberUtils;
-
 import org.nexial.commons.utils.RegexUtils;
 import org.nexial.core.utils.ConsoleUtils;
 
@@ -113,7 +113,8 @@ public class NumberTransformer<T extends NumberDataType> extends Transformer {
         for (String number : numbers) {
             number = StringUtils.trim(number);
             if (isDecimal(number) || numberObject instanceof Double || numberObject instanceof Float) {
-                data.setValue(numberObject.doubleValue() + NumberUtils.toDouble(number));
+                data.setValue(BigDecimal.valueOf(numberObject.doubleValue())
+                                        .add(BigDecimal.valueOf(NumberUtils.toDouble(number))).doubleValue());
             } else {
                 data.setValue(numberObject.longValue() + NumberUtils.toLong(number));
             }
@@ -137,7 +138,8 @@ public class NumberTransformer<T extends NumberDataType> extends Transformer {
         for (String number : numbers) {
             number = StringUtils.trim(number);
             if (isDecimal(number) || numberObject instanceof Double || numberObject instanceof Float) {
-                data.setValue(numberObject.doubleValue() - NumberUtils.toDouble(number));
+                data.setValue(BigDecimal.valueOf(numberObject.doubleValue())
+                                        .subtract(BigDecimal.valueOf(NumberUtils.toDouble(number))).doubleValue());
             } else {
                 data.setValue(numberObject.longValue() - NumberUtils.toLong(number));
             }
@@ -161,7 +163,8 @@ public class NumberTransformer<T extends NumberDataType> extends Transformer {
         for (String number : numbers) {
             number = StringUtils.trim(number);
             if (isDecimal(number) || numberObject instanceof Double || numberObject instanceof Float) {
-                data.setValue(numberObject.doubleValue() * NumberUtils.toDouble(number));
+                data.setValue(BigDecimal.valueOf(numberObject.doubleValue())
+                                        .multiply(BigDecimal.valueOf(NumberUtils.toDouble(number))).doubleValue());
             } else {
                 data.setValue(numberObject.longValue() * NumberUtils.toLong(number));
             }
@@ -185,7 +188,8 @@ public class NumberTransformer<T extends NumberDataType> extends Transformer {
         for (String number : numbers) {
             number = StringUtils.trim(number);
             if (isDecimal(number) || numberObject instanceof Double || numberObject instanceof Float) {
-                data.setValue(numberObject.doubleValue() / NumberUtils.toDouble(number));
+                data.setValue(BigDecimal.valueOf(numberObject.doubleValue())
+                                        .divide(BigDecimal.valueOf(NumberUtils.toDouble(number))).doubleValue());
             } else {
                 data.setValue(numberObject.longValue() / NumberUtils.toLong(number));
             }

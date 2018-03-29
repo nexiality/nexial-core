@@ -202,6 +202,8 @@ public class CsvTransformer<T extends CsvDataType> extends Transformer {
     public T removeRows(T data, String matches) {
         if (data == null || data.getValue() == null || StringUtils.isBlank(matches)) { return data; }
 
+        // todo: support filter by column index (e.g. #2 != 02)
+
         ListItemConverter<NexialFilter> converter = NexialFilter::newInstance;
         List<NexialFilter> filters = TextUtils.toList(matches, PAIR_DELIM, converter);
         if (CollectionUtils.isEmpty(filters)) { return data; }

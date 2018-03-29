@@ -78,13 +78,7 @@ public class AlertCommand extends BaseCommand implements RequireBrowser {
                 alert.dismiss();
                 return StepResult.success("dismissed alert '" + msg + "'");
             }
-
-            //log("dismiss() - " + error);
-            //return StepResult.success(error);
         } catch (NoAlertPresentException e) {
-            //return StepResult.fail(e.getMessage());
-            //return StepResult.success(e.getMessage());
-
             try {
                 String msg = getAlertText();
                 if (StringUtils.isNotBlank(msg)) {
@@ -103,7 +97,6 @@ public class AlertCommand extends BaseCommand implements RequireBrowser {
             // this means that there was a alert text harvested, but the dialog is gone now
             return StepResult.success("dismissed alert '" + msg + "'");
         } else {
-
             log("alert - exception: " + error);
             return StepResult.fail(error);
         }

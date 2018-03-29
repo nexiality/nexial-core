@@ -65,9 +65,7 @@ public class NumberDataType extends ExpressionDataType<Number> {
         if (StringUtils.startsWithIgnoreCase(text, ".")) { text = "0" + text; }
         if (isNegative) { text = "-" + text; }
 
-        Number number = NumberUtils.createNumber(text);
-        if (number == null) { throw new TypeConversionException(getName(), text, "Can't convert " + textValue); }
-
+        Number number = StringUtils.contains(text, ".") ? NumberUtils.createDouble(text) : NumberUtils.createLong(text);
         setValue(number);
         setTextValue(number.toString());
     }
