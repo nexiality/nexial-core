@@ -1,0 +1,84 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  ~ Copyright 2012-2018 the original author or authors.
+  ~
+  ~ Licensed under the Apache License, Version 2.0 (the "License");
+  ~ you may not use this file except in compliance with the License.
+  ~ You may obtain a copy of the License at
+  ~
+  ~       http://www.apache.org/licenses/LICENSE-2.0
+  ~
+  ~ Unless required by applicable law or agreed to in writing, software
+  ~ distributed under the License is distributed on an "AS IS" BASIS,
+  ~ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+  ~ See the License for the specific language governing permissions and
+  ~ limitations under the License.
+  ~
+  -->
+
+<beans xmlns="http://www.springframework.org/schema/beans"
+       xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+       xmlns:p="http://www.springframework.org/schema/p"
+       xmlns:util="http://www.springframework.org/schema/util"
+       xsi:schemaLocation="
+        http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans.xsd
+        http://www.springframework.org/schema/util http://www.springframework.org/schema/util/spring-util-2.0.xsd"
+       default-lazy-init="true">
+
+	<import resource="nexial-aws.xml"/>
+
+	<!-- ##################################### -->
+	<!-- ### ENVIRONMENT VARIABLES         ### -->
+	<!-- ##################################### -->
+	<!--
+		mail.smtp.host         = the SMTP host for nexial
+		mail.smtp.port         = the SMTP port for nexial
+		mail.smtp.username     = auth user for SMTP host
+		mail.smtp.password     = auth credential for SMTP host
+		mail.smtp.starttls.enable
+							   = determine if TTLS is enable for SMTP
+		mail.smtp.localhost    = determine if SMTP service is locally available
+		mail.smtp.from         = the sender of mail sent via nexial
+
+		mail.header.xmail      = xmail header for mail service
+		mail.transport.protocol= smtp or imap; default is smtp
+		mail.smtp.auth         = whether authentication is required to send mail; default is false
+		mail.smtp.bufferSize   = buffer size for smtp packet; default to system default
+		mail.smtp.contentType  = smtp MIME type to use; default is 'text/html'
+		mail.smtp.debug        = whether debug mode should be turned on during mail send; default is false
+	-->
+	<!-- selectively exposing spring properties as system properties -->
+	<util:properties id="nexialSysProps">
+		<prop key="mail.header.xmail">nexial-mailer</prop>
+		<prop key="mail.transport.protocol">smtp</prop>
+		<prop key="mail.smtp.bufferSize">512</prop>
+		<prop key="mail.smtp.contentType">text/html</prop>
+		<prop key="mail.smtp.debug">false</prop>
+		<!--<prop key="mail.smtp.auth">${mail.smtp.auth}</prop>-->
+		<!--<prop key="mail.smtp.host">${mail.smtp.host}</prop>-->
+		<!--<prop key="mail.smtp.port">${mail.smtp.port}</prop>-->
+		<!--<prop key="mail.smtp.from">${mail.smtp.from}</prop>-->
+		<!--<prop key="mail.smtp.username">${mail.smtp.username}</prop>-->
+		<!--<prop key="mail.smtp.password">${mail.smtp.password}</prop>-->
+		<!--<prop key="mail.smtp.starttls.enable">${mail.smtp.starttls.enable}</prop>-->
+		<!--<prop key="mail.smtp.localhost">${mail.smtp.localhost}</prop>-->
+
+		<!-- needed for jdbc beans -->
+		<prop key="jdbc.maxTotal">5</prop>
+		<prop key="jdbc.maxIdle">1</prop>
+		<prop key="jdbc.maxOpenPreparedStatements">300</prop>
+		<prop key="jdbc.poolPreparedStatements">true</prop>
+		<prop key="jdbc.defaultAutoCommit">true</prop>
+		<prop key="jdbc.accessToUnderlyingConnectionAllowed">true</prop>
+	</util:properties>
+
+	<bean id="setsysenv" class="org.springframework.beans.factory.config.MethodInvokingFactoryBean"
+	      lazy-init="false" p:targetMethod="putAll">
+		<property name="targetObject">
+			<bean class="org.springframework.beans.factory.config.MethodInvokingFactoryBean"
+			      p:targetClass="java.lang.System" p:targetMethod="getProperties"/>
+		</property>
+		<property name="arguments" ref="nexialSysProps"/>
+	</bean>
+
+</beans>

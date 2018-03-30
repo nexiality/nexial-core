@@ -27,7 +27,6 @@ import org.apache.commons.lang3.StringUtils;
 import org.nexial.core.aws.AwsS3Helper.PutOption;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.context.support.ClassPathXmlApplicationContext;
 
 import com.amazonaws.regions.Regions;
 import com.amazonaws.services.s3.model.ObjectMetadata;
@@ -36,26 +35,15 @@ import com.amazonaws.services.s3.model.PutObjectResult;
 import static com.amazonaws.regions.Regions.DEFAULT_REGION;
 import static org.nexial.core.NexialConst.S3_PATH_SEPARATOR;
 import static org.nexial.core.NexialConst.S3_PUBLIC_URL;
-import static org.nexial.core.NexialConst.SecretBeanNames.ACCESS_KEY_BEAN;
-import static org.nexial.core.NexialConst.SecretBeanNames.SECRET_KEY_BEAN;
 
 public abstract class S3Support {
     protected Logger logger = LoggerFactory.getLogger(getClass());
-    // todo: remove
-    protected ClassPathXmlApplicationContext springContext;
     protected String encoding;
     protected boolean verbose;
     protected String accessKey;
     protected String secretKey;
     protected Regions region;
     protected boolean s3PathStyleAccessEnabled;
-
-    public S3Support() {
-        springContext = new ClassPathXmlApplicationContext("classpath:/nexial-aws.xml");
-        accessKey = springContext.getBean(ACCESS_KEY_BEAN, String.class);
-        secretKey = springContext.getBean(SECRET_KEY_BEAN, String.class);
-        s3PathStyleAccessEnabled = springContext.getBean("s3PathStyleAccessEnabled", Boolean.class);
-    }
 
     public void setEncoding(String encoding) { this.encoding = encoding; }
 
@@ -114,7 +102,7 @@ public abstract class S3Support {
     /**
      * @param to S3 bucket + folder
      */
-    protected PutObjectResult copyToS3(File from, String to) throws IOException {
+    protected PutObjectResult copyToS3(File from, String to) {
         PutOption option = new PutOption();
         option.setPublicableReadable(true);
         option.setReducedRedundancy(true);
@@ -140,7 +128,6 @@ public abstract class S3Support {
         return newAWSS3Helper(fromPath).copyFromS3(targetFile);
     }
 
-    // todo: load from spring context
     protected AwsS3Helper newAWSS3Helper(String s3path) {
         AwsS3Helper s3 = new AwsS3Helper();
         if (StringUtils.isNotBlank(accessKey)) { s3.setAccessKey(accessKey); }

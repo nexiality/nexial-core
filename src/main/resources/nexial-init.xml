@@ -19,9 +19,29 @@
 <beans xmlns="http://www.springframework.org/schema/beans"
        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
        xmlns:p="http://www.springframework.org/schema/p"
-       xsi:schemaLocation="http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans.xsd"
+       xmlns:context="http://www.springframework.org/schema/context"
+       xmlns:util="http://www.springframework.org/schema/util"
+       xsi:schemaLocation="
+        http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans.xsd
+        http://www.springframework.org/schema/context http://www.springframework.org/schema/context/spring-context.xsd
+        http://www.springframework.org/schema/util http://www.springframework.org/schema/util/spring-util.xsd"
        default-lazy-init="false">
 
+	<context:property-placeholder location="classpath*:/nexial*.properties"
+	                              ignore-resource-not-found="true"
+	                              ignore-unresolvable="true"/>
+
 	<bean id="secret" class="org.nexial.commons.utils.SecretBeanGenerator" factory-method="getSecretClass" primary="true"/>
+
+	<bean id="site-system-props" class="org.springframework.beans.factory.config.MethodInvokingFactoryBean"
+	      lazy-init="false" p:targetMethod="putAll">
+		<property name="targetObject">
+			<bean class="org.springframework.beans.factory.config.MethodInvokingFactoryBean"
+			      p:targetClass="java.lang.System" p:targetMethod="getProperties"/>
+		</property>
+		<property name="arguments">
+			<util:properties id="site-properties" location="classpath*:/nexial*.properties"/>
+		</property>
+	</bean>
 
 </beans>

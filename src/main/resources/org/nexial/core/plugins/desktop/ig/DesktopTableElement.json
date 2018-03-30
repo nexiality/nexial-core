@@ -1,0 +1,8 @@
+{
+	"xpath": {
+		"columnHeaders": "*[substring(@Name, string-length(@Name) - string-length('row 1') + 1) = 'row 1']/*[@Name!='Column Headers']",
+		"tableData": "*[contains(@Name, 'row ')]",
+		"cells": "*[contains(@Name, 'row {rowIndex}')][1]/*[@Name!='Column Headers']",
+		"row": "*[contains(@Name, 'row {rowIndex}')][1]"
+	}
+}

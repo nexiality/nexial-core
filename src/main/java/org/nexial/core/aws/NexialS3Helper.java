@@ -62,6 +62,9 @@ public class NexialS3Helper extends S3Support {
         return importToS3(source, resolveOutputDir(), removeLocal);
     }
 
+    protected void init() {
+    }
+
     protected String resolveCaptureDir() { return resolveOutputDir() + S3_PATH_SEPARATOR + SUBDIR_CAPTURES; }
 
     protected String resolveLogDir() { return resolveOutputDir() + S3_PATH_SEPARATOR + SUBDIR_LOGS; }

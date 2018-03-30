@@ -52,8 +52,8 @@ import org.nexial.core.excel.Excel.Worksheet;
 import org.nexial.core.model.ExecutionDefinition;
 import org.nexial.core.model.ExecutionSummary;
 import org.nexial.core.model.TestProject;
-import org.nexial.core.reports.MailNotifier;
 import org.nexial.core.reports.ExecutionNotifier;
+import org.nexial.core.reports.MailNotifier;
 import org.nexial.core.service.ServiceLauncher;
 import org.nexial.core.utils.ConsoleUtils;
 import org.nexial.core.utils.ExecUtil;
@@ -136,7 +136,6 @@ import static org.nexial.core.model.ExecutionSummary.ExecutionLevel.EXECUTION;
  * </ol>
  *
  * <p>
- * <b>TO BE CONTINUED...</b>
  * This class will do the following:
  * <ol>
  * <li>

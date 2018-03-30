@@ -17,13 +17,6 @@
 
 package org.nexial.commons.utils;
 
-import org.apache.commons.codec.DecoderException;
-import org.apache.commons.io.IOUtils;
-import org.apache.commons.lang3.StringUtils;
-
-import javax.crypto.Cipher;
-import javax.crypto.spec.SecretKeySpec;
-import javax.validation.constraints.NotNull;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
@@ -33,16 +26,20 @@ import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
 
-import static org.nexial.core.NexialConst.*;
-import static org.nexial.core.excel.ext.CipherHelper.CRYPT_IND;
+import javax.crypto.Cipher;
+import javax.crypto.spec.SecretKeySpec;
+import javax.validation.constraints.NotNull;
+
+import org.apache.commons.codec.DecoderException;
+import org.apache.commons.io.IOUtils;
+import org.apache.commons.lang3.StringUtils;
+
 import static java.io.File.separator;
 import static javax.crypto.Cipher.DECRYPT_MODE;
 import static org.apache.commons.codec.binary.Hex.decodeHex;
-import static org.apache.commons.lang.StringUtils.EMPTY;
-import static org.apache.commons.lang.StringUtils.substringBeforeLast;
-import static org.apache.commons.lang3.StringUtils.join;
-import static org.apache.commons.lang3.StringUtils.substringAfter;
-import static org.apache.commons.lang3.StringUtils.substringBefore;
+import static org.apache.commons.lang3.StringUtils.*;
+import static org.nexial.core.NexialConst.*;
+import static org.nexial.core.excel.ext.CipherHelper.CRYPT_IND;
 
 /**
  * Contains utility methods for dealing with Encryption.
@@ -55,17 +52,14 @@ public class EncryptionUtility {
      * Retrieves the secrets from the encryptedFile specified by decrypting the content.
      *
      * @return {@link Map} of secrets encrypted.
-     * @throws {@link IOException}
-     * @throws {@link DecoderException}
-     * @throws {@link GeneralSecurityException}
      */
-    public static Map<String, String> retrieveEncryptedSecrets(final String fileContent) throws IOException,
-            DecoderException, GeneralSecurityException {
+    public static Map<String, String> retrieveEncryptedSecrets(final String fileContent)
+        throws IOException, DecoderException, GeneralSecurityException {
 
         final String secretKeyEncrypted = substringAfter(fileContent, SECRET_CONTENT_SEPARATOR).trim();
 
         InputStream secretKeyInputStream =
-                EncryptionUtility.class.getClassLoader().getResourceAsStream(SECRET_KEY_FILE);
+            EncryptionUtility.class.getClassLoader().getResourceAsStream(SECRET_KEY_FILE);
         final byte[] publicKeyBytes = IOUtils.toByteArray(secretKeyInputStream);
 
         Key secret = new SecretKeySpec(publicKeyBytes, ENCRYPTION_ALGORITHM);
@@ -93,13 +87,35 @@ public class EncryptionUtility {
     }
 
     /**
+     * This method checks for the location of the secret files and the corresponding keys. Initially it checks in the
+     * current folder passed in. If it is not available it keeps checking recursively in the parent directories till it
+     * reaches the home folder. In case the files are not available till this point, it checks in the operating system
+     * user directory. The folder path where the files are found is returned as the result. In case it is found no where
+     * {@link StringUtils#EMPTY} is passed as the output.
+     *
+     * @param projectLocation the location of the project which is currently run.
+     * @return path of the folder where files are found else {@link StringUtils#EMPTY}.
+     */
+    public static String getSecretLocation(@NotNull String projectLocation) {
+        if (projectLocation == null) { return EMPTY; }
+
+        try {
+            if (secretFilesExists(projectLocation)) { return projectLocation; }
+            if (projectLocation.contains(separator)) {
+                return getSecretLocation(substringBeforeLast(projectLocation, separator));
+            }
+        } catch (SecurityException se) {
+            // Indication that the folder has readonly access.
+        }
+        return getDefaultPath();
+    }
+
+    /**
      * Decrypts the encrypted content with the {@link Cipher} passed in.
      *
      * @param encrypted encrypted content.
      * @param cipher    {@link Cipher}
      * @return decrypted text.
-     * @throws {@link GeneralSecurityException}
-     * @throws {@link DecoderException}
      */
     private static String decrypt(String encrypted, Cipher cipher) throws GeneralSecurityException, DecoderException {
         if (StringUtils.isBlank(encrypted) || !StringUtils.startsWith(encrypted, CRYPT_IND)) {
@@ -116,39 +132,12 @@ public class EncryptionUtility {
 
         // sift out spice
         String leftSpice = StringUtils.substring(decrypted, 0, RAND_SEED_SIZE);
-        String rightSpice = StringUtils.substring(decrypted,
-                decrypted.length() - RAND_SEED_SIZE, decrypted.length());
+        String rightSpice = StringUtils.substring(decrypted, decrypted.length() - RAND_SEED_SIZE, decrypted.length());
         if (!StringUtils.equals(leftSpice, StringUtils.reverse(rightSpice))) {
             throw new DecoderException("Invalid encrypted text: " + encrypted + "; crypt key mismatched");
         }
 
         return StringUtils.substring(decrypted, RAND_SEED_SIZE, decrypted.length() - RAND_SEED_SIZE);
-    }
-
-    /**
-     * This method checks for the location of the secret files and the corresponding keys. Initially it checks in the
-     * current folder passed in. If it is not available it keeps checking recursively in the parent directories till it
-     * reaches the home folder. In case the files are not available till this point, it checks in the operating system
-     * user directory. The folder path where the files are found is returned as the result. In case it is found no where
-     * {@link StringUtils#EMPTY} is passed as the output.
-     *
-     * @param projectLocation the location of the project which is currently run.
-     * @return path of the folder where files are found else {@link StringUtils#EMPTY}.
-     */
-    public static String getSecretLocation(@NotNull String projectLocation) {
-        if (projectLocation == null) {
-            return EMPTY;
-        }
-
-        try {
-            if (secretFilesExists(projectLocation)) return projectLocation;
-            else if (projectLocation.contains(separator)) {
-                return getSecretLocation(substringBeforeLast(projectLocation, separator));
-            }
-        } catch (SecurityException se) {
-            // Indication that the folder has readonly access.
-        }
-        return getDefaultPath();
     }
 
     /**
@@ -168,7 +157,6 @@ public class EncryptionUtility {
      *
      * @param currentLocation path of the folder where the files are checked.
      * @return true or false based on files exist in the currentLocation or not.
-     * @throws {@link SecurityException}.
      */
     private static boolean secretFilesExists(@NotNull final String currentLocation) throws SecurityException {
         return new File(join(currentLocation, separator, SECRET_FILE)).exists();

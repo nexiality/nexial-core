@@ -17,21 +17,9 @@
 
 package org.nexial.commons.utils;
 
-import org.nexial.core.NexialConst;
-import org.nexial.core.model.TestProject;
-import org.apache.commons.codec.DecoderException;
-import org.apache.commons.io.IOUtils;
-import org.apache.commons.lang3.StringUtils;
-import org.springframework.beans.BeansException;
-import org.springframework.beans.FatalBeanException;
-import org.springframework.beans.factory.BeanFactory;
-import org.springframework.beans.factory.BeanFactoryAware;
-import org.springframework.beans.factory.config.ConfigurableBeanFactory;
-
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
-import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -39,12 +27,24 @@ import java.security.GeneralSecurityException;
 import java.util.Map;
 import java.util.Set;
 
-import static org.nexial.core.NexialConst.OPT_PROJECT_BASE;
-import static org.nexial.core.NexialConst.SECRET_FILE;
+import org.apache.commons.codec.DecoderException;
+import org.apache.commons.io.IOUtils;
+import org.apache.commons.lang3.StringUtils;
+import org.nexial.core.NexialConst;
+import org.nexial.core.model.TestProject;
+import org.springframework.beans.BeansException;
+import org.springframework.beans.FatalBeanException;
+import org.springframework.beans.factory.BeanFactory;
+import org.springframework.beans.factory.BeanFactoryAware;
+import org.springframework.beans.factory.config.ConfigurableBeanFactory;
+
 import static java.io.File.separator;
+import static java.nio.charset.StandardCharsets.UTF_8;
 import static org.apache.commons.lang.StringUtils.EMPTY;
 import static org.apache.commons.lang3.StringUtils.isNotEmpty;
 import static org.apache.commons.lang3.StringUtils.join;
+import static org.nexial.core.NexialConst.OPT_PROJECT_BASE;
+import static org.nexial.core.NexialConst.SECRET_FILE;
 
 /**
  * Class to generate secret beans.
@@ -52,19 +52,18 @@ import static org.apache.commons.lang3.StringUtils.join;
 public class SecretBeanGenerator implements BeanFactoryAware {
     private static final SecretBeanGenerator secretClass = new SecretBeanGenerator();
 
-    private SecretBeanGenerator() {
-    }
+    private SecretBeanGenerator() { }
 
-    public static SecretBeanGenerator getSecretClass() {
-        return secretClass;
-    }
+    public static SecretBeanGenerator getSecretClass() { return secretClass; }
 
     @Override
     public void setBeanFactory(BeanFactory beanFactory) throws BeansException {
         try {
             final String projectHome = System.getProperty(OPT_PROJECT_BASE);
             final String secretLocation =
-                    projectHome != null ? EncryptionUtility.getSecretLocation(new File(projectHome).getAbsolutePath()) : EMPTY;
+                projectHome != null ?
+                EncryptionUtility.getSecretLocation(new File(projectHome).getAbsolutePath()) :
+                EMPTY;
 
             String fileContent;
             if (isNotEmpty(secretLocation)) {
@@ -77,6 +76,8 @@ public class SecretBeanGenerator implements BeanFactoryAware {
             } else {
                 fileContent = getDefaultFileContent();
             }
+
+            if (StringUtils.isBlank(fileContent)) { return; }
 
             final Map<String, String> secrets = EncryptionUtility.retrieveEncryptedSecrets(fileContent);
 
@@ -109,12 +110,12 @@ public class SecretBeanGenerator implements BeanFactoryAware {
 
     /**
      * Retrieves the file content of the file stored in the {@link NexialConst#SECRET_FILE}.
+     *
      * @return content of the file {@link NexialConst#SECRET_FILE}.
-     * @throws IOException
      */
     private String getDefaultFileContent() throws IOException {
-        InputStream inputStream =
-                getClass().getClassLoader().getResourceAsStream(SECRET_FILE);
-        return IOUtils.toString(inputStream, StandardCharsets.UTF_8);
+        InputStream inputStream = getClass().getClassLoader().getResourceAsStream(SECRET_FILE);
+        if (inputStream == null) { return null; }
+        return IOUtils.toString(inputStream, UTF_8);
     }
 }

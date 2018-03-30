@@ -310,3 +310,5 @@ support/sync-src-vm.sh
 
 /.archive/
 /bin/selenium2sentry.cmd
+/build
+/logs

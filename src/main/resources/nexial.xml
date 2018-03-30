@@ -474,7 +474,7 @@
 		<entry key="nexial.enableEmail" value="false"/>
 		<entry key="nexial.assistantMode" value="off"/>
 		<entry key="nexial.outputToCloud" value="false"/>
-		<entry key="nexial.outputCloudBase" value-ref="defaultS3Location"/>
+		<entry key="nexial.outputCloudBase" value="${nexial.outputCloudBase:}"/>
 		<entry key="nexial.generateReport" value="false"/>
 		<!--<entry key="nexial.screenRecorder" value="avi"/>-->
 		<entry key="nexial.screenRecorder" value="mp4"/>
