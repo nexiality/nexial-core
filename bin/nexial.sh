@@ -5,9 +5,6 @@
 # --------------------------------------------------------------------------------
 # JAVA_HOME           - home directory of a valid JDK installation (1.6 or above)
 # PROJECT_HOME        - home directory of your project.
-# NEXIAL_OUT          - the output directory
-# FIREFOX_BIN         - the full path of firefox.exe
-# NEXIAL_RUNMODE      - determine screen capture image strategy (local or server)
 # --------------------------------------------------------------------------------
 
 NEXIAL_HOME=$(cd `dirname $0`/..; pwd -P)
