@@ -140,8 +140,10 @@ public class TestScriptUpdater {
         targetFiles.forEach(file -> {
             try {
                 Excel excel = new Excel(file);
+                String filePath = excel.getFile().getAbsolutePath();
+
                 if (InputFileUtils.isValidScript(excel)) {
-                    if (verbose) { System.out.println("processing " + excel.getFile().getAbsolutePath()); }
+                    if (verbose) { System.out.println("processing " + filePath); }
 
                     if (updateTemplate(excel) && verbose) { System.out.println("\tscript updated to latest template"); }
 
@@ -155,9 +157,8 @@ public class TestScriptUpdater {
                     excel.getWorksheetsStartWith("").forEach(worksheet -> {
                         if (!StringUtils.equals(worksheet.getName(), SHEET_SYSTEM)) {
                             XSSFSheet sheet = worksheet.getSheet();
-                            System.out.println("[" +
-                                               worksheet.getName() +
-                                               "] setting starting position as A5 and reset zoom to 100%");
+                            System.out.println("[" + worksheet.getName() + "] " +
+                                               "setting starting position as A5 and reset zoom to 100%");
                             sheet.setActiveCell(new CellAddress("A5"));
                             sheet.setZoom(100);
                         }
@@ -168,7 +169,7 @@ public class TestScriptUpdater {
                     excel.save();
 
                 } else if (InputFileUtils.isValidMacro(excel)) {
-                    if (verbose) { System.out.println("processing " + excel.getFile().getAbsolutePath()); }
+                    if (verbose) { System.out.println("processing " + filePath); }
 
                     handleMacroSystemSheet(excel, metadata);
                     if (verbose) { System.out.println("\tupdated commands"); }
@@ -194,6 +195,27 @@ public class TestScriptUpdater {
                                 break;
                             }
                         }
+                    }
+
+                    // could be a plan of old (v2) format...
+                    List<Worksheet> v2Plans = InputFileUtils.retrieveV2Plan(excel);
+                    if (CollectionUtils.isEmpty(v2Plans)) {
+                        if (verbose) { System.out.println("UNRECOGNIZED SPREADSHEET FOUND/IGNORED: " + filePath); }
+                    } else {
+                        if (verbose) { System.out.println("processing " + filePath); }
+
+                        v2Plans.forEach(plan -> {
+                            if (!updateV2Plan(plan)) {
+                                System.out.println("UNABLE TO UPDATE TEST PLAN " + plan.getName() +
+                                                   " in " + filePath + "; CHECK TEST PLAN FOR ERRORS");
+                            }
+                        });
+
+                        XSSFWorkbook workbook = excel.getWorkbook();
+                        workbook.setActiveSheet(0);
+                        workbook.setFirstVisibleTab(0);
+                        workbook.setSelectedTab(0);
+                        excel.save();
                     }
                 }
             } catch (Exception e) {
@@ -244,6 +266,20 @@ public class TestScriptUpdater {
         if (updated[0]) { excel.save(); }
 
         return updated[0];
+    }
+
+    protected boolean updateV2Plan(Worksheet plan) {
+        XSSFSheet sheet = plan.getSheet();
+        String sheetName = sheet.getSheetName();
+        if (verbose) { System.out.println("\tupdating test plan " + sheetName); }
+
+        plan.setColumnValues(ADD_PLAN_HEADER_FEATURE_AND_TEST,
+                             Arrays.asList(PLAN_HEADER_FEATURE_OVERRIDE, PLAN_HEADER_TESTREF_OVERRIDE));
+
+        System.out.println("[" + sheetName + "] setting starting position as A5 and reset zoom to 100%");
+        sheet.setActiveCell(new CellAddress("A5"));
+        sheet.setZoom(100);
+        return true;
     }
 
     private static void initOptions() {
@@ -397,6 +433,10 @@ public class TestScriptUpdater {
                 }
 
                 // todo: correct scripts with outdated commands
+                // todo: desktop.scanTable --> desktop.useTable
+                // todo: desktop.useTableRow --> MESSAGE NOT NEED, CHANGE TO USE desktop.editTableCell
+                // todo: desktop.editCurrentRow --> MESSAGE NOT NEED, CHANGE TO USE desktop.editTableCell
+                // todo: desktop.get*** --> desktop.save***
             }
         }
     }

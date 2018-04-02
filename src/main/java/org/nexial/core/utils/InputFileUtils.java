@@ -346,6 +346,9 @@ public final class InputFileUtils {
         return Excel.isRowTextFound(sheet, HEADER_TEST_STEP_LIST_V15, ADDR_HEADER_TEST_STEP);
     }
 
+    /**
+     * V2 script header looks like "description | project | release | jira | zephyr | author"
+     */
     public static boolean isV2Script(Worksheet worksheet) {
         return Excel.isRowTextFound(worksheet,
                                     HEADER_SCENARIO_INFO_V1,
@@ -410,7 +413,7 @@ public final class InputFileUtils {
         // check for at least 1 test scenario
         List<Worksheet> allSheets = excel.getWorksheetsStartWith("");
         if (CollectionUtils.isEmpty(allSheets)) {
-            if (LOGGER.isInfoEnabled()) { LOGGER.info(errPrefix + "is missing test scenarios."); }
+            if (LOGGER.isInfoEnabled()) { LOGGER.info(errPrefix + "is missing test plans."); }
             return null;
         }
 
@@ -459,5 +462,48 @@ public final class InputFileUtils {
         }).collect(Collectors.toList());
 
         // check that all valid scenario sheet do not have result (output file)
+    }
+
+    /**
+     * V2 plan header looks like "summary | author | jira override | zephyr override | notification override"
+     */
+    public static boolean isV2Plan(Worksheet worksheet) {
+        return Excel.isRowTextFound(worksheet,
+                                    HEADER_SCENARIO_INFO_V1,
+                                    ADDR_HEADER_SCENARIO_INFO1,
+                                    ADDR_HEADER_SCENARIO_INFO2) &&
+               Excel.isRowTextFound(worksheet, HEADER_TEST_STEP_LIST_V2, ADDR_HEADER_TEST_STEP);
+    }
+
+    public static List<Worksheet> retrieveV2Plan(Excel excel) {
+        String errPrefix = "File (" + excel.getFile() + ") ";
+
+        // check for at least 1 test scenario
+        List<Worksheet> allSheets = excel.getWorksheetsStartWith("");
+        if (CollectionUtils.isEmpty(allSheets)) {
+            if (LOGGER.isInfoEnabled()) { LOGGER.info(errPrefix + "contains no worksheet."); }
+            return null;
+        }
+
+        // check that every test scenario is of right format (warn only if format is wrong)
+        return allSheets.stream().filter(sheet -> {
+            // check summary header (v2) and execution summary and execution header
+            if (Excel.isRowTextFound(sheet,
+                                     PLAN_HEADER_SEQUENCE_V2,
+                                     ADDR_PLAN_HEADER_SEQUENCE1,
+                                     ADDR_PLAN_HEADER_SEQUENCE2) &&
+                Excel.isRowTextFound(sheet,
+                                     Collections.singletonList(HEADER_EXEC_SUMMARY),
+                                     ADDR_PLAN_HEADER_EXEC_SUMMARY_HEADER) &&
+                Excel.isRowTextFound(sheet, PLAN_HEADER_EXECUTION, ADDR_PLAN_HEADER_EXECUTION)) {
+                // could be V2
+
+                // check that all valid scenario sheet has at least 1 command
+                int lastRowIndex = sheet.findLastDataRow(ADDR_PLAN_EXECUTION_START);
+                return lastRowIndex - ADDR_PLAN_EXECUTION_START.getRowStartIndex() > 0;
+            } else {
+                return false;
+            }
+        }).collect(Collectors.toList());
     }
 }

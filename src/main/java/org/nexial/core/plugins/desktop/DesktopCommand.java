@@ -29,7 +29,24 @@ import org.apache.commons.lang3.ArrayUtils;
 import org.apache.commons.lang3.BooleanUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.math.NumberUtils;
+import org.nexial.commons.utils.TextUtils;
+import org.nexial.core.ShutdownAdvisor;
+import org.nexial.core.excel.Excel.Worksheet;
+import org.nexial.core.model.ExecutionContext;
 import org.nexial.core.model.StepResult;
+import org.nexial.core.model.TestStep;
+import org.nexial.core.plugins.CanLogExternally;
+import org.nexial.core.plugins.CanTakeScreenshot;
+import org.nexial.core.plugins.ForcefulTerminate;
+import org.nexial.core.plugins.RequireWinium;
+import org.nexial.core.plugins.base.BaseCommand;
+import org.nexial.core.plugins.base.NumberCommand;
+import org.nexial.core.plugins.base.ScreenshotUtils;
+import org.nexial.core.plugins.desktop.DesktopTable.TableMetaData;
+import org.nexial.core.plugins.desktop.ig.IgExplorerBar;
+import org.nexial.core.plugins.desktop.ig.IgRibbon;
+import org.nexial.core.utils.CheckUtils;
+import org.nexial.core.utils.ConsoleUtils;
 import org.nexial.core.utils.OutputFileUtils;
 import org.openqa.selenium.By;
 import org.openqa.selenium.By.ByClassName;
@@ -45,33 +62,15 @@ import org.openqa.selenium.support.ui.WebDriverWait;
 import org.openqa.selenium.winium.WiniumDriver;
 import org.uptospeed.seeknow.SeeknowData;
 
-import org.nexial.commons.utils.TextUtils;
-import org.nexial.core.ShutdownAdvisor;
-import org.nexial.core.excel.Excel.Worksheet;
-import org.nexial.core.model.ExecutionContext;
-import org.nexial.core.model.TestStep;
-import org.nexial.core.plugins.CanLogExternally;
-import org.nexial.core.plugins.CanTakeScreenshot;
-import org.nexial.core.plugins.ForcefulTerminate;
-import org.nexial.core.plugins.RequireWinium;
-import org.nexial.core.plugins.base.BaseCommand;
-import org.nexial.core.plugins.base.NumberCommand;
-import org.nexial.core.plugins.base.ScreenshotUtils;
-import org.nexial.core.plugins.desktop.DesktopTable.TableMetaData;
-import org.nexial.core.plugins.desktop.ig.IgExplorerBar;
-import org.nexial.core.plugins.desktop.ig.IgRibbon;
-import org.nexial.core.utils.CheckUtils;
-import org.nexial.core.utils.ConsoleUtils;
-
+import static java.io.File.separator;
+import static java.lang.Integer.MAX_VALUE;
+import static java.lang.System.lineSeparator;
 import static org.nexial.core.NexialConst.Data.*;
 import static org.nexial.core.plugins.desktop.DesktopConst.*;
 import static org.nexial.core.plugins.desktop.DesktopNotification.NotificationLevel.info;
 import static org.nexial.core.plugins.desktop.DesktopUtils.*;
 import static org.nexial.core.plugins.desktop.ElementType.*;
 import static org.nexial.core.utils.CheckUtils.*;
-import static java.io.File.separator;
-import static java.lang.Integer.MAX_VALUE;
-import static java.lang.System.lineSeparator;
 
 public class DesktopCommand extends BaseCommand
     implements RequireWinium, ForcefulTerminate, CanTakeScreenshot, CanLogExternally {
@@ -943,7 +942,7 @@ public class DesktopCommand extends BaseCommand
         setTableFocus(table);
         boolean found = table.containsRowData(NumberUtils.toInt(row), criterion);
         return new StepResult(found,
-                                "Table row '" + row + "'" + (found ? "" : " DOES NOT ") + "contains '" + contains + "'",
+                              "Table row '" + row + "'" + (found ? "" : " DOES NOT ") + "contains '" + contains + "'",
                               null);
     }
 
@@ -960,8 +959,8 @@ public class DesktopCommand extends BaseCommand
         setTableFocus(table);
         boolean found = table.containsColumnData(column, criterion);
         return new StepResult(found,
-                                "Table column '" + column + "'" + (found ? "" : " DOES NOT ") + "contains '" +
-                                contains + "'",
+                              "Table column '" + column + "'" + (found ? "" : " DOES NOT ") + "contains '" +
+                              contains + "'",
                               null);
     }
 
@@ -1144,21 +1143,23 @@ public class DesktopCommand extends BaseCommand
         return tableRow.getTable().editCells(tableRow, nameValuesToMap(nameValues));
     }
 
-    public StepResult getTableRows(String var, String beginRow, String endRow) {
+    public StepResult saveTableRowsRange(String var, String beginRow, String endRow) {
         requiresValidVariableName(var);
-        assert StringUtils.isNotBlank(beginRow);
-        assert StringUtils.isNotBlank(endRow);
+        requiresPositiveNumber(beginRow, "Invalid beginRow", beginRow);
+        requiresPositiveNumber(endRow, "Invalid beginRow", endRow);
+
+        int beginRowNum = NumberUtils.toInt(beginRow);
+        int endRowNum = NumberUtils.toInt(endRow);
+        tableRowsRangeCheck(beginRowNum, endRowNum);
+
         DesktopTable table = getCurrentTable();
         if (table == null) {
             throw new IllegalArgumentException("ERROR: no Table object found. Make sure to run useTable() first");
         }
         setTableFocus(table);
-        int beginRowNum = NumberUtils.toInt(beginRow);
-        int endRowNum = NumberUtils.toInt(endRow);
-        tableRowsRangeCheck(beginRowNum, endRowNum);
-        setTableFocus(table);
 
         context.setData(var, table.fetch(beginRowNum, endRowNum));
+
         return StepResult.success("Table row data is saved to var " + var);
     }
 
@@ -1173,16 +1174,16 @@ public class DesktopCommand extends BaseCommand
         return StepResult.success("Table row count is saved to var " + var);
     }
 
-    public StepResult getTableRowsAll(String var) {
-        requiresValidVariableName(var);
-        DesktopTable table = getCurrentTable();
-        setTableFocus(table);
-        if (table == null) {
-            throw new IllegalArgumentException("ERROR: no Table object found. Make sure to run useTable() first");
-        }
-        context.setData(var, table.fetchAll());
-        return StepResult.success();
-    }
+    // public StepResult getTableRowsAll(String var) {
+    //     requiresValidVariableName(var);
+    //     DesktopTable table = getCurrentTable();
+    //     setTableFocus(table);
+    //     if (table == null) {
+    //         throw new IllegalArgumentException("ERROR: no Table object found. Make sure to run useTable() first");
+    //     }
+    //     context.setData(var, table.fetchAll());
+    //     return StepResult.success();
+    // }
 
     public StepResult useHierTable(String var, String name) { return saveHierTableMetaData(var, name); }
 

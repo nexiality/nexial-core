@@ -45,29 +45,22 @@ import static org.apache.poi.xssf.usermodel.extensions.XSSFCellBorder.BorderSide
 public class ExcelConfig {
 
     // plan
-    // public static final ExcelAddress ADDR_PLAN_HEADER_SUMMARY = new ExcelAddress("A1:A1");
-    // public static final ExcelAddress ADDR_PLAN_HEADER_AUTHOR = new ExcelAddress("F1:F1");
-    // public static final ExcelAddress ADDR_PLAN_HEADER_JIRA_OVERRIDE = new ExcelAddress("G1:G1");
-    // public static final ExcelAddress ADDR_PLAN_HEADER_ZEPHYR_OVERRIDE = new ExcelAddress("H1:H1");
-    // public static final ExcelAddress ADDR_PLAN_HEADER_NOTIFICATION_OVERRIDE = new ExcelAddress("I1:I1");
     public static final ExcelAddress ADDR_PLAN_HEADER_EXEC_SUMMARY_HEADER = new ExcelAddress("K1");
-    // public static final ExcelAddress ADDR_PLAN_SUMMARY = new ExcelAddress("A2:A2");
-    // public static final ExcelAddress ADDR_PLAN_AUTHOR = new ExcelAddress("F2:F2");
-    // public static final ExcelAddress ADDR_PLAN_JIRA_OVERRIDE = new ExcelAddress("G2:G2");
-    // public static final ExcelAddress ADDR_PLAN_ZEPHYR_OVERRIDE = new ExcelAddress("H2:H2");
-    // public static final ExcelAddress ADDR_PLAN_NOTIFICATION_OVERRIDE = new ExcelAddress("I2:I2");
     public static final ExcelAddress ADDR_PLAN_HEADER_SEQUENCE1 = new ExcelAddress("A1:A1");
     public static final ExcelAddress ADDR_PLAN_HEADER_SEQUENCE2 = new ExcelAddress("F1:H1");
-    // public static final ExcelAddress ADDR_PLAN_EXEC_SUMMARY = new ExcelAddress("K2");
+    public static final ExcelAddress ADD_PLAN_HEADER_FEATURE_AND_TEST = new ExcelAddress("G1:H1");
     public static final String PLAN_HEADER_SUMMARY = "summary";
     public static final String PLAN_HEADER_AUTHOR = "author";
     public static final String PLAN_HEADER_FEATURE_OVERRIDE = "story / feature";
     public static final String PLAN_HEADER_TESTREF_OVERRIDE = "test id";
-    // public static final String PLAN_HEADER_NOTIFICATION_OVERRIDE = "notification override";
     public static final List<String> PLAN_HEADER_SEQUENCE = Arrays.asList(PLAN_HEADER_SUMMARY,
                                                                           PLAN_HEADER_AUTHOR,
                                                                           PLAN_HEADER_FEATURE_OVERRIDE,
                                                                           PLAN_HEADER_TESTREF_OVERRIDE);
+    public static final List<String> PLAN_HEADER_SEQUENCE_V2 = Arrays.asList(PLAN_HEADER_SUMMARY,
+                                                                             PLAN_HEADER_AUTHOR,
+                                                                             "jira override",
+                                                                             "zephyr override");
 
     public static final ExcelAddress ADDR_PLAN_HEADER_EXECUTION = new ExcelAddress("A4:M4");
     public static final String PLAN_HEADER_DESCRIPTION = "description";
