@@ -180,6 +180,7 @@ public class DataVariableUpdaterTest {
 
         String projectProps = StringUtils.appendIfMissing(searchFrom, separator) + DEF_REL_PROJECT_PROPS;
         String projectPropContent = FileUtils.readFileToString(new File(projectProps), DEF_FILE_ENCODING);
+        System.out.println("projectPropContent = \n" + projectPropContent);
         String sep = StringUtils.contains(projectPropContent, "\r\n") ? "\r\n" : "\n";
 
         Assert.assertEquals("CENTREE.compare.lenient=${CENTREE.web.alwaysWait}" + sep +
@@ -216,6 +217,7 @@ public class DataVariableUpdaterTest {
 
         Map<String, String> props = TextUtils.loadProperties(projectProps);
 
+        Assert.assertNotNull(props);
         Assert.assertEquals("${CENTREE.web.alwaysWait}", props.get("CENTREE.compare.lenient"));
         Assert.assertEquals("MyOneAndOnlyTest-Part2", props.get("CENTREE.runID.prefix"));
         Assert.assertEquals("true", props.get("CENTREE.web.alwaysWait"));
@@ -379,7 +381,7 @@ public class DataVariableUpdaterTest {
         Assert.assertEquals(
             "I'll \n store(sentry.browser)\n as ${CENTREE.browser}, and then use it as ${CENTREE.browser}",
             updater.replaceVarTokens(
-                "I'll \n store(sentry.browser)\n as ${sentry.browser}, and then use it ${sentry.browser}",
+                "I'll \n store(sentry.browser)\n as ${sentry.browser}, and then use it as ${sentry.browser}",
                 updateLog));
         Assert.assertEquals(1, updater.updated.size());
         Assert.assertEquals("file1 [line1]: ${sentry.browser} => ${CENTREE.browser}",
