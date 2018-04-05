@@ -925,6 +925,7 @@ public class DesktopCommand extends BaseCommand
         return result;
     }
 
+    // todo: deprecated; removal candidate for v1.1
     public StepResult scanTable(String var, String name) { return useTable(var, name); }
 
     public StepResult assertTableRowContains(String row, String contains) {
@@ -1163,7 +1164,10 @@ public class DesktopCommand extends BaseCommand
         return StepResult.success("Table row data is saved to var " + var);
     }
 
-    public StepResult getRowCount(String var) {
+    // todo: deprecated; removal candidate for v1.1
+    public StepResult getRowCount(String var) { return saveRowCount(var); }
+
+    public StepResult saveRowCount(String var) {
         requiresValidVariableName(var);
         DesktopTable table = getCurrentTable();
         setTableFocus(table);

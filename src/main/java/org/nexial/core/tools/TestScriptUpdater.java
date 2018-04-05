@@ -22,6 +22,7 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
@@ -66,6 +67,18 @@ import static org.nexial.core.tools.CommandDiscovery.GSON;
  */
 public class TestScriptUpdater {
     private static final List<String> NON_MACRO_COMMANDS = Arrays.asList("macro(file,sheet,name)");
+    private static final Map<String, String> REPLACED_COMMANDS = TextUtils.toMap(
+        "number.assertBetween(num,lower,upper)=number.assertBetween(num,min,max);" +
+        "desktop.scanTable(var,name)=desktop.useTable(var,name);" +
+        "desktop.getRowCount(var)=desktop.saveRowCount(var);",
+        ";",
+        "=");
+    private static final Map<String, String> COMMAND_SUGGESTIONS = TextUtils.toMap(
+        "desktop.useTable(var,name)=This command is deprecated and will soon be removed. " +
+        "Consider using desktop » editTableCells(row,nameValues) instead;" +
+        "desktop.editCurrentRow(nameValues)=This command is deprecated and will soon be removed. " +
+        "Consider using desktop » editTableCells(row,nameValues) instead;",
+        ";", "=");
     private static final Options cmdOptions = new Options();
 
     private boolean verbose;
@@ -352,6 +365,8 @@ public class TestScriptUpdater {
             allCommands.get(j).getCommands().forEach(cmd -> targetCommands.add(target + "." + cmd));
         }
 
+        boolean excelUpdated = false;
+
         // find all existing worksheet (minus system sheet)
         XSSFWorkbook workbook = excel.getWorkbook();
         int sheetCount = workbook.getNumberOfSheets();
@@ -395,8 +410,40 @@ public class TestScriptUpdater {
                 }
 
                 String targetCommand = target + "." + command;
+
+                // check for auto-substitution
+                if (REPLACED_COMMANDS.containsKey(targetCommand)) {
+                    // found old command, let's replace it with new one
+                    String newCommand = REPLACED_COMMANDS.get(targetCommand);
+                    if (cellTarget != null) {
+                        cellTarget.setCellValue(StringUtils.substringBefore(newCommand, "."));
+                    }
+                    if (cellCommand != null) {
+                        cellCommand.setCellValue(StringUtils.substringAfter(newCommand, "."));
+                    }
+
+                    targetCommand = newCommand;
+                    excelUpdated = true;
+                }
+
+                // todo: correct scripts with outdated commands
+                // todo: desktop.scanTable --> desktop.useTable
+                // todo: desktop.useTableRow --> MESSAGE NOT NEED, CHANGE TO USE desktop.editTableCell
+                // todo: desktop.editCurrentRow --> MESSAGE NOT NEED, CHANGE TO USE desktop.editTableCell
+                // todo: desktop.get*** --> desktop.save***
+
+                // check for warning/suggest
+                if (COMMAND_SUGGESTIONS.containsKey(targetCommand)) {
+                    String suggestion = COMMAND_SUGGESTIONS.get(targetCommand);
+                    System.err.println("\t!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!");
+                    System.err.println("\tRow " + rowIndex + ": " + target + " » " + command);
+                    System.err.println("\t" + suggestion);
+                    System.err.println("\t!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!");
+                }
+
+                String commandSignature = targetCommand;
                 Optional<String> matchedCommand = targetCommands.stream()
-                                                                .filter(s -> s.startsWith(targetCommand))
+                                                                .filter(s -> s.startsWith(commandSignature))
                                                                 .findFirst();
                 if (!matchedCommand.isPresent()) {
                     // for every unknown command, spit out an error
@@ -431,12 +478,6 @@ public class TestScriptUpdater {
                                            "'");
                     }
                 }
-
-                // todo: correct scripts with outdated commands
-                // todo: desktop.scanTable --> desktop.useTable
-                // todo: desktop.useTableRow --> MESSAGE NOT NEED, CHANGE TO USE desktop.editTableCell
-                // todo: desktop.editCurrentRow --> MESSAGE NOT NEED, CHANGE TO USE desktop.editTableCell
-                // todo: desktop.get*** --> desktop.save***
             }
         }
     }

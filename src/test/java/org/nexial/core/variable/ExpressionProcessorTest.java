@@ -372,6 +372,31 @@ public class ExpressionProcessorTest {
     }
 
     @Test
+    public void processNumber2() throws Exception {
+        ExpressionProcessor subject = new ExpressionProcessor(context);
+
+        String expected = "-1770.2978788893238";
+
+        // tight argument list
+        String fixture = "[NUMBER(92) =>" +
+                         " add(44,92,71.23,801.23,-1092)" +
+                         " minus(11,44.002)" +
+                         " multiply(15.01,0.902)" +
+                         " divide(5.0190,0.07092)]";
+        String result = subject.process(fixture);
+        Assert.assertEquals(expected, result);
+
+        // space much!?
+        fixture = "[NUMBER(92) =>" +
+                         " add(44,   92,   71.23  ,   801.23,   -1092   )" +
+                         " minus(11    ,44.002)" +
+                         " multiply(15.01,      0.902)" +
+                         " divide( 5.0190 , 0.07092  )]";
+        result = subject.process(fixture);
+        Assert.assertEquals(expected, result);
+    }
+
+    @Test
     public void processDate() throws Exception {
         ExpressionProcessor subject = new ExpressionProcessor(context);
 

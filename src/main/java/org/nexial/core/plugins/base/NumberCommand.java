@@ -77,16 +77,16 @@ public class NumberCommand extends BaseCommand {
                               null);
     }
 
-    public StepResult assertBetween(String num, String lower, String upper) {
+    public StepResult assertBetween(String num, String min, String max) {
         double actual = toDouble(num, "num");
-        double lowerNum = toDouble(lower, "lower");
-        double upperNum = toDouble(upper, "upper");
+        double lowerNum = toDouble(min, "min");
+        double upperNum = toDouble(max, "max");
         boolean asExpected = lowerNum < upperNum ?
                              (actual >= lowerNum && actual <= upperNum) :
                              (actual >= upperNum && actual <= lowerNum);
         return new StepResult(asExpected,
                                 num + " is" + (asExpected ? "" : " NOT") + " between " +
-                                lower + " and " + upper, null);
+                                min + " and " + max, null);
     }
 
     public StepResult average(String var, String array) {
