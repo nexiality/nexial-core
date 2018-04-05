@@ -84,34 +84,34 @@ public class SysdateManualTest {
 	@Test
 	public void testFirstDOW() {
 		// manual update needed
-		Assert.assertEquals("018", sysdate.firstDOW("ddd"));
+		Assert.assertEquals("001", sysdate.firstDOW("ddd"));
 	}
 
 	@Test
 	public void testLastDOW() {
 		// manual update needed
-		Assert.assertEquals("24", sysdate.lastDOW("dd"));
+		Assert.assertEquals("07", sysdate.lastDOW("dd"));
 	}
 
 	@Test
 	public void testLastQtr() {
-		Assert.assertEquals("2017-4", sysdate.lastQtr("yyyy-q"));
-		Assert.assertEquals("2017-4", sysdate.lastQtr("yyyy-qqq"));
-		Assert.assertEquals("4", sysdate.lastQtr("qqq"));
+		Assert.assertEquals("2018-1", sysdate.lastQtr("yyyy-q"));
+		Assert.assertEquals("2018-1", sysdate.lastQtr("yyyy-qqq"));
+		Assert.assertEquals("1", sysdate.lastQtr("qqq"));
 	}
 
 	@Test
 	public void testCurrentQtr() {
-		Assert.assertEquals("2018-1", sysdate.currentQtr("yyyy-q"));
-		Assert.assertEquals("2018-1", sysdate.currentQtr("yyyy-qqq"));
-		Assert.assertEquals("1", sysdate.currentQtr("qqq"));
+		Assert.assertEquals("2018-2", sysdate.currentQtr("yyyy-q"));
+		Assert.assertEquals("2018-2", sysdate.currentQtr("yyyy-qqq"));
+		Assert.assertEquals("2", sysdate.currentQtr("qqq"));
 	}
 
 	@Test
 	public void testNextQtr() {
-		Assert.assertEquals("2018-2", sysdate.nextQtr("yyyy-q"));
-		Assert.assertEquals("2018-2", sysdate.nextQtr("yyyy-qqq"));
-		Assert.assertEquals("2", sysdate.nextQtr("qqq"));
+		Assert.assertEquals("2018-3", sysdate.nextQtr("yyyy-q"));
+		Assert.assertEquals("2018-3", sysdate.nextQtr("yyyy-qqq"));
+		Assert.assertEquals("3", sysdate.nextQtr("qqq"));
 	}
 
 	@Test

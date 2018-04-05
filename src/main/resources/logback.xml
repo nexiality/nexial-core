@@ -219,27 +219,27 @@
 		<appender-ref ref="console-catchall"/>
 		<appender-ref ref="file-3rdparty"/>
 	</logger>
-	<logger name="org.springframework.beans.factory.config" additivity="false" level="DEBUG">
+	<logger name="org.springframework.beans.factory.config" additivity="false" level="WARN">
 		<appender-ref ref="console-catchall"/>
 		<appender-ref ref="file-3rdparty"/>
 	</logger>
-	<logger name="org.springframework.cloud" additivity="false" level="TRACE">
+	<logger name="org.springframework.cloud" additivity="false" level="WARN">
 		<appender-ref ref="console-catchall"/>
 		<appender-ref ref="file-3rdparty"/>
 	</logger>
-	<logger name="org.springframework.cloud.config" additivity="false" level="TRACE">
+	<logger name="org.springframework.cloud.config" additivity="false" level="WARN">
 		<appender-ref ref="console-catchall"/>
 		<appender-ref ref="file-3rdparty"/>
 	</logger>
-	<logger name="org.springframework.cloud.config.server" additivity="false" level="TRACE">
+	<logger name="org.springframework.cloud.config.server" additivity="false" level="WARN">
 		<appender-ref ref="console-catchall"/>
 		<appender-ref ref="file-3rdparty"/>
 	</logger>
-	<logger name="org.springframework.core.io.support.PropertiesLoaderSupport" additivity="false" level="DEBUG">
+	<logger name="org.springframework.core.io.support.PropertiesLoaderSupport" additivity="false" level="WARN">
 		<appender-ref ref="console-catchall"/>
 		<appender-ref ref="file-3rdparty"/>
 	</logger>
-	<logger name="org.springframework.jdbc.core.JdbcTemplate" additivity="false" level="DEBUG">
+	<logger name="org.springframework.jdbc.core.JdbcTemplate" additivity="false" level="WARN">
 		<appender-ref ref="console-catchall"/>
 		<appender-ref ref="file-testexecution"/>
 	</logger>

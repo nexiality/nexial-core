@@ -4,7 +4,7 @@ cd ..
 
 gradle clean testJar installDist
 
-cp -Rf support build/install/nexial-core/
+cp -Rf support/nexial*.* build/install/nexial-core/
 
 # generate the latest command listing
 cd build/install/nexial-core/support

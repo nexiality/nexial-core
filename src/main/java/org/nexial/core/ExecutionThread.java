@@ -304,21 +304,26 @@ public final class ExecutionThread extends Thread {
 
         StringBuilder cloudOutputBuffer = new StringBuilder();
         if (context.isOutputToCloud()) {
-            NexialS3Helper s3Helper = context.getS3Helper();
-            // when saving test output to cloud, we might want to remove it locally - esp. when assistant-mode is on
-            boolean removeLocal = !isAutoOpenResult();
+            try {
+                NexialS3Helper s3Helper = context.getS3Helper();
 
-            summary.getNestedExecutions().forEach(nested -> {
-                File testScript = nested.getTestScript();
-                try {
-                    String testScriptUrl = s3Helper.importFile(testScript, removeLocal);
-                    nested.setTestScriptLink(testScriptUrl);
-                    cloudOutputBuffer.append("» Iteration ").append(nested.getName()).append(": ").append(testScriptUrl)
-                                     .append("\n");
-                } catch (IOException e) {
-                    ConsoleUtils.error("Unable to save " + testScript + " to cloud storage due to " + e.getMessage());
-                }
-            });
+                // when saving test output to cloud, we might NOT want to remove it locally - esp. when assistant-mode is on
+                boolean removeLocal = !isAutoOpenResult();
+
+                summary.getNestedExecutions().forEach(nested -> {
+                    File testScript = nested.getTestScript();
+                    try {
+                        String testScriptUrl = s3Helper.importFile(testScript, removeLocal);
+                        nested.setTestScriptLink(testScriptUrl);
+                        cloudOutputBuffer.append("» Iteration ").append(nested.getName()).append(": ").append(testScriptUrl)
+                                         .append("\n");
+                    } catch (IOException e) {
+                        ConsoleUtils.error("Unable to save " + testScript + " to cloud storage due to " + e.getMessage());
+                    }
+                });
+            } catch (IOException e) {
+                ConsoleUtils.error("Unable to save test output to cloud storage due to " + e.getMessage());
+            }
         }
         String cloudOutput = cloudOutputBuffer.toString();
 

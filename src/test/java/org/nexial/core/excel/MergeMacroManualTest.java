@@ -261,7 +261,7 @@ public class MergeMacroManualTest {
                 Assert.assertEquals(testStepData.get(2).toString(),
                                     "[, login as a username, desktop, login(username,password), ${username}, ${password}, , , , , , x, , , ]");
                 Assert.assertEquals(testStepData.get(3).toString(),
-                                    "[search office, next, let's search AZ office, base, verbose(text), search office, , , , , , , , , , ]");
+                                    "[search office, next, let's search, base, verbose(text), search office, , , , , , , , , , ]");
                 Assert.assertEquals(testStepData.get(4).toString(),
                                     "[, but first, add a new dynamic macro, excel, write(file,worksheet,startCell,var), MacroLibrary.xlsx, macros, A7, tell_time,tell the time,base,verbose(text),The time now is $(sysdate|now|MM/dd/yyyy HH:mm:ss.S)., , , , , , , ]");
                 Assert.assertEquals(testStepData.get(5).toString(),

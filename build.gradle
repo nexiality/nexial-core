@@ -16,7 +16,7 @@
  */
 
 buildscript {
-	ext.kotlin_version = '1.2.30'
+	ext.kotlin_version = '1.2.31'
 	repositories {
 		mavenLocal()
 		mavenCentral()
@@ -29,7 +29,7 @@ buildscript {
 }
 
 plugins {
-	id "org.jetbrains.kotlin.jvm" version "1.2.30"
+	id "org.jetbrains.kotlin.jvm" version "1.2.31"
 }
 
 apply plugin: 'kotlin'
@@ -133,6 +133,7 @@ dependencies {
 	compile("ch.qos.logback.contrib:logback-mongodb-core:+")
 
 	// support: aws
+	compile("com.amazonaws:aws-java-sdk-core:+")
 	compile("com.amazonaws:aws-java-sdk-s3:+")
 
 	// support: browsermob

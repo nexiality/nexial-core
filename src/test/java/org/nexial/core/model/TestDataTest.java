@@ -42,9 +42,9 @@ public class TestDataTest {
         Assert.assertEquals(testData.getIteration(), 3);
         Assert.assertEquals(testData.getMailTo(), "mliu@ep.com");
 
-        Assert.assertEquals(testData.getIntValue(1, "nexial.commandDelayMs"), 1200);
-        Assert.assertTrue(testData.getBooleanValue(1, "nexial.isFailFast"));
-        Assert.assertTrue(testData.getBooleanValue(1, "nexial.isVerbose"));
+        Assert.assertEquals(testData.getIntValue(1, "nexial.delayBetweenStepsMs"), 1200);
+        Assert.assertTrue(testData.getBooleanValue(1, "nexial.failFast"));
+        Assert.assertTrue(testData.getBooleanValue(1, "nexial.verbose"));
         Assert.assertEquals(testData.getIntValue(1, "nexial.pollWaitMs"), 800);
         Assert.assertArrayEquals(testData.getAllValue("nexial.textDelim").toArray(new String[3]),
                                  new String[]{",", "", "|"});
@@ -66,11 +66,11 @@ public class TestDataTest {
                                  new String[]{"false", "", "true"});
         Assert.assertArrayEquals(testData.getAllValue("years.of.service").toArray(new String[3]),
                                  new String[]{"4", "4.2", "5"});
-        Assert.assertEquals(testData.getValue(1, "nexial.db.myDB.conn"), "jdbc:odbc:myDB");
-        Assert.assertEquals(testData.getValue(1, "nexial.db.myDB.user"), "user1");
-        Assert.assertEquals(testData.getValue(1, "nexial.db.myDB.password"), "password");
+        Assert.assertEquals(testData.getValue(1, "db.myDB.conn"), "jdbc:odbc:myDB");
+        Assert.assertEquals(testData.getValue(1, "db.myDB.user"), "user1");
+        Assert.assertEquals(testData.getValue(1, "db.myDB.password"), "password");
 
-        Assert.assertEquals(testData.getIntValue(3, "nexial.commandDelayMs"), 1200);
+        Assert.assertEquals(testData.getIntValue(3, "nexial.delayBetweenStepsMs"), 1200);
         Assert.assertEquals(testData.getValue(1, "nexial.textDelim"), ",");
         Assert.assertEquals(testData.getValue(2, "nexial.textDelim"), ",");
         Assert.assertEquals(testData.getValue(3, "nexial.textDelim"), "|");
@@ -99,11 +99,11 @@ public class TestDataTest {
         // overridden from new_test2
         Assert.assertEquals(testData.getMailTo(), "johnny@bgood.com");
 
-        Assert.assertEquals(testData.getIntValue(1, "nexial.commandDelayMs"), 1201);
-        Assert.assertTrue(testData.getBooleanValue(1, "nexial.isFailFast"));
-        Assert.assertTrue(testData.getBooleanValue(1, "nexial.isVerbose"));
+        Assert.assertEquals(testData.getIntValue(1, "nexial.delayBetweenStepsMs"), 1201);
+        Assert.assertTrue(testData.getBooleanValue(1, "nexial.failFast"));
+        Assert.assertTrue(testData.getBooleanValue(1, "nexial.verbose"));
         Assert.assertEquals(testData.getIntValue(1, "nexial.pollWaitMs"), 800);
-        Assert.assertArrayEquals(testData.getAllValue("nexial.commandDelayMs").toArray(new String[3]),
+        Assert.assertArrayEquals(testData.getAllValue("nexial.delayBetweenStepsMs").toArray(new String[3]),
                                  new String[]{"1201", "", "1202"});
         Assert.assertArrayEquals(testData.getAllValue("nexial.textDelim").toArray(new String[3]),
                                  new String[]{",", "", "|"});
@@ -125,18 +125,18 @@ public class TestDataTest {
                                  new String[]{"4", "4.2", "5"});
         Assert.assertArrayEquals(testData.getAllValue("newData").toArray(new String[3]),
                                  new String[]{"12345", "", "abc"});
-        Assert.assertEquals(testData.getValue(1, "nexial.db.myDB.conn"), "jdbc:odbc:myDB");
-        Assert.assertEquals(testData.getValue(1, "nexial.db.myDB.user"), "user1");
-        Assert.assertEquals(testData.getValue(1, "nexial.db.myDB.password"), "password");
+        Assert.assertEquals(testData.getValue(1, "db.myDB.conn"), "jdbc:odbc:myDB");
+        Assert.assertEquals(testData.getValue(1, "db.myDB.user"), "user1");
+        Assert.assertEquals(testData.getValue(1, "db.myDB.password"), "password");
 
         // new data defined in new_test2
         Assert.assertEquals(testData.getValue(1, "newData"), "12345");
         Assert.assertEquals(testData.getValue(2, "newData"), "12345");
         Assert.assertEquals(testData.getValue(3, "newData"), "abc");
 
-        Assert.assertEquals(testData.getIntValue(1, "nexial.commandDelayMs"), 1201);
-        Assert.assertEquals(testData.getIntValue(2, "nexial.commandDelayMs"), 1201);
-        Assert.assertEquals(testData.getIntValue(3, "nexial.commandDelayMs"), 1202);
+        Assert.assertEquals(testData.getIntValue(1, "nexial.delayBetweenStepsMs"), 1201);
+        Assert.assertEquals(testData.getIntValue(2, "nexial.delayBetweenStepsMs"), 1201);
+        Assert.assertEquals(testData.getIntValue(3, "nexial.delayBetweenStepsMs"), 1202);
         Assert.assertEquals(testData.getValue(1, "nexial.textDelim"), ",");
         Assert.assertEquals(testData.getValue(2, "nexial.textDelim"), ",");
         Assert.assertEquals(testData.getValue(3, "nexial.textDelim"), "|");

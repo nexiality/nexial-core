@@ -160,6 +160,12 @@ public class BaseCommand implements NexialCommand {
             screenRecorder.stop();
             screenRecorder = null;
             return StepResult.success("previous recording stopped");
+        } catch (IOException e) {
+            String error = "Unable to stop and/or save screen recording" +
+                           (context.isOutputToCloud() ? ", possible due to cloud integration": "") +
+                           ": " + e.getMessage();
+            log(error);
+            return StepResult.fail(error);
         } catch (Throwable e) {
             return StepResult.fail("Unable to stop previous recording: " + e.getMessage());
         }

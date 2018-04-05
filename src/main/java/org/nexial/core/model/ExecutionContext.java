@@ -329,7 +329,13 @@ public class ExecutionContext {
 
     public MailObjectSupport getMailer() { return mailer; }
 
-    public NexialS3Helper getS3Helper() { return s3Helper; }
+    public NexialS3Helper getS3Helper() throws IOException {
+        // check that the required properties are set
+        if (s3Helper == null || !s3Helper.isReadyForUse()) {
+            throw new IOException("Nexial S3 helper not probably configured. Please contact support for more details.");
+        }
+        return s3Helper;
+    }
 
     public NexialCommand findPlugin(String target) { return plugins.getPlugin(target); }
 

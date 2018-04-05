@@ -21,6 +21,11 @@ import org.nexial.core.ExcelBasedTests;
 import org.nexial.core.model.ExecutionSummary;
 
 public class HeadlessExpressionTests extends ExcelBasedTests {
+    // static {
+    //     System.setProperty(OUTPUT_TO_CLOUD, "false");
+    //     System.setProperty(OPT_RUN_ID_PREFIX, "unitTest_expression");
+    //     System.setProperty(OPT_OPEN_RESULT, "off");
+    // }
 
     @Test
     public void numbers() throws Exception {

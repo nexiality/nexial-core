@@ -20,6 +20,7 @@ package org.nexial.core.aws;
 import java.io.File;
 import java.io.IOException;
 
+import org.apache.commons.lang3.StringUtils;
 import org.nexial.core.ExecutionThread;
 import org.nexial.core.model.ExecutionContext;
 
@@ -47,6 +48,9 @@ public class NexialS3Helper extends S3Support {
                context.getProject().getName() + S3_PATH_SEPARATOR +
                context.getRunId();
     }
+
+    @Override
+    public boolean isReadyForUse() { return super.isReadyForUse() && StringUtils.isNotBlank(outputBase); }
 
     public String importMedia(File media) throws IOException {
         checkContext();

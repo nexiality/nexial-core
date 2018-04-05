@@ -19,6 +19,7 @@ package org.nexial.core.variable;
 
 import java.lang.reflect.Method;
 import java.math.BigDecimal;
+import java.math.RoundingMode;
 import java.text.DecimalFormat;
 import java.util.Map;
 
@@ -28,6 +29,7 @@ import org.apache.commons.lang3.math.NumberUtils;
 import org.nexial.commons.utils.RegexUtils;
 import org.nexial.core.utils.ConsoleUtils;
 
+import static java.math.RoundingMode.UP;
 import static org.nexial.core.variable.ExpressionConst.REGEX_DEC_NUM;
 
 public class NumberTransformer<T extends NumberDataType> extends Transformer {
@@ -35,6 +37,8 @@ public class NumberTransformer<T extends NumberDataType> extends Transformer {
     private static final Map<String, Method> FUNCTIONS =
         toFunctionMap(FUNCTION_TO_PARAM_LIST, NumberTransformer.class, NumberDataType.class);
     private static final Random randomHelper = new Random();
+    static final int DEC_SCALE = 25;
+    static final RoundingMode ROUND = UP;
 
     public TextDataType text(T data) { return super.text(data); }
 
@@ -189,9 +193,17 @@ public class NumberTransformer<T extends NumberDataType> extends Transformer {
             number = StringUtils.trim(number);
             if (isDecimal(number) || numberObject instanceof Double || numberObject instanceof Float) {
                 data.setValue(BigDecimal.valueOf(numberObject.doubleValue())
-                                        .divide(BigDecimal.valueOf(NumberUtils.toDouble(number))).doubleValue());
+                                        .divide(BigDecimal.valueOf(NumberUtils.toDouble(number)), DEC_SCALE, ROUND)
+                                        .doubleValue());
             } else {
-                data.setValue(numberObject.longValue() / NumberUtils.toLong(number));
+                BigDecimal result = BigDecimal.valueOf(numberObject.longValue())
+                                              .divide(BigDecimal.valueOf(NumberUtils.toLong(number)), DEC_SCALE, ROUND);
+                if (result.doubleValue() == result.longValue()) {
+                    // maintain current "whole number" representation
+                    data.setValue(result.longValue());
+                } else {
+                    data.setValue(result.doubleValue());
+                }
             }
             numberObject = data.getValue();
         }

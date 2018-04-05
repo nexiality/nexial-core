@@ -59,6 +59,10 @@ public abstract class S3Support {
 
     public void setRegion(Regions region) { this.region = region;}
 
+    public boolean isReadyForUse() {
+        return StringUtils.isNotBlank(accessKey) && StringUtils.isNotBlank(secretKey) && region != null;
+    }
+
     public String importToS3(File source, String targetPath, boolean removeLocal) throws IOException {
         PutObjectResult result = copyToS3(source, targetPath);
 

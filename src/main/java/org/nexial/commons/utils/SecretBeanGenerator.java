@@ -40,7 +40,7 @@ import org.springframework.beans.factory.config.ConfigurableBeanFactory;
 
 import static java.io.File.separator;
 import static java.nio.charset.StandardCharsets.UTF_8;
-import static org.apache.commons.lang.StringUtils.EMPTY;
+import static org.apache.commons.lang3.StringUtils.EMPTY;
 import static org.apache.commons.lang3.StringUtils.isNotEmpty;
 import static org.apache.commons.lang3.StringUtils.join;
 import static org.nexial.core.NexialConst.OPT_PROJECT_BASE;

@@ -283,7 +283,7 @@ public class ExpressionProcessorTest {
 
         fixture = "[NUMBER(5) => divide(3,4.0,11)]";
         result = subject.process(fixture);
-        Assert.assertEquals("0.022727272727272728", result);
+        Assert.assertEquals("0.03787878787878788", result);
 
         fixture = "[NUMBER(0) => add(7,6) minus(2) multiply(11,51.2251) divide(17.04) round]";
         result = subject.process(fixture);

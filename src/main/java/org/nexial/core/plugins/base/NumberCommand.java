@@ -48,6 +48,7 @@ public class NumberCommand extends BaseCommand {
         actual = StringUtils.equals(actual, nullValue) ?
                  null : NumberFormatHelper.newInstance(actual).getNormalFormat();
         assertEquals(expected, actual);
+
         return StepResult.success("validated " + StringUtils.defaultString(expected, nullValue) +
                                   "=" + StringUtils.defaultString(actual, nullValue));
     }
@@ -60,7 +61,8 @@ public class NumberCommand extends BaseCommand {
     public StepResult assertGreaterOrEqual(String num1, String num2) {
         boolean asExpected = toDouble(num1, "num1") >= toDouble(num2, "num2");
         return new StepResult(asExpected,
-                                num1 + " is " + (asExpected ? "" : "NOT") + "  greater or equal to " + num2, null);
+                              num1 + " is " + (asExpected ? "" : "NOT") + " greater or equal to " + num2,
+                              null);
     }
 
     public StepResult assertLesser(String num1, String num2) {
@@ -71,7 +73,8 @@ public class NumberCommand extends BaseCommand {
     public StepResult assertLesserOrEqual(String num1, String num2) {
         boolean asExpected = toDouble(num1, "num1") <= toDouble(num2, "num2");
         return new StepResult(asExpected,
-                                num1 + " is " + (asExpected ? "" : "NOT") + " less or equal to " + num2, null);
+                              num1 + " is" + (asExpected ? "" : " NOT ") + "less or equal to " + num2,
+                              null);
     }
 
     public StepResult assertBetween(String num, String lower, String upper) {

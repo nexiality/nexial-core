@@ -18,6 +18,7 @@
 package org.nexial.core.variable;
 
 import java.lang.reflect.Method;
+import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
@@ -32,7 +33,6 @@ import org.apache.commons.collections4.set.ListOrderedSet;
 import org.apache.commons.lang3.ArrayUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.math.NumberUtils;
-
 import org.nexial.commons.utils.RegexUtils;
 import org.nexial.core.ExecutionThread;
 import org.nexial.core.model.ExecutionContext;
@@ -41,7 +41,8 @@ import static org.nexial.core.NexialConst.Data.DEF_TEXT_DELIM;
 import static org.nexial.core.NexialConst.Data.treatCommonValueShorthand;
 import static org.nexial.core.variable.ExpressionConst.ALIAS_EMPTY;
 import static org.nexial.core.variable.ExpressionUtils.fixControlChars;
-import static org.apache.commons.lang.math.NumberUtils.isNumber;
+import static org.nexial.core.variable.NumberTransformer.DEC_SCALE;
+import static org.nexial.core.variable.NumberTransformer.ROUND;
 
 public class ListTransformer<T extends ListDataType> extends Transformer {
     private static final Map<String, Integer> FUNCTION_TO_PARAM = discoverFunctions(ListTransformer.class);
@@ -126,18 +127,19 @@ public class ListTransformer<T extends ListDataType> extends Transformer {
         if (data == null || data.getValue() == null) { return newData; }
 
         String[] array = data.getValue();
-        double[] sum = new double[]{0};
+        BigDecimal sum = new BigDecimal(0);
         int count = 0;
         for (String item : array) {
-            if (isNumber(StringUtils.trim(item))) {
-                sum[0] += NumberUtils.toDouble(item, 0);
+            item = StringUtils.trim(item);
+            if (NumberUtils.isCreatable(StringUtils.trim(item))) {
+                sum = sum.add(new BigDecimal(item));
                 count++;
             }
         }
 
         if (count == 0) { return newData; }
 
-        double average = sum[0] / count;
+        double average = sum.divide(BigDecimal.valueOf(count), DEC_SCALE, ROUND).doubleValue();
         if (average == 0) { return newData; }
 
         newData.setTextValue(average + "");

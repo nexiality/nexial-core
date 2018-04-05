@@ -26,9 +26,9 @@ import javax.jms.Destination;
 import javax.jms.JMSException;
 import javax.jms.Session;
 
-import org.apache.commons.beanutils.BeanUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.math.NumberUtils;
+import org.apache.commons.lang3.reflect.MethodUtils;
 import org.nexial.core.ExecutionThread;
 import org.nexial.core.model.ExecutionContext;
 import org.nexial.core.utils.ConsoleUtils;
@@ -64,10 +64,16 @@ public class WebsphereMQJmsClientConfig extends JmsClientConfig {
         // cf.setChannel(channel);
         // cf.setQueueManager(queueManager);
 
+        // before configuring connection, let's make sure we have the right libraries in CLASSPATH
+        Class connectionClass;
         ConnectionFactory cf;
+        Object transportType;
         try {
-            cf = (ConnectionFactory) Class.forName("com.ibm.mq.jms.MQConnectionFactory").newInstance();
-        } catch (InstantiationException | IllegalAccessException | ClassCastException | ClassNotFoundException e) {
+            connectionClass = Class.forName("com.ibm.mq.jms.MQConnectionFactory");
+            cf = (ConnectionFactory) connectionClass.newInstance();
+            transportType = Class.forName("com.ibm.msg.client.wmq.common.CommonConstants")
+                                 .getField("WMQ_CM_CLIENT").get(null);
+        } catch (InstantiationException | IllegalAccessException | ClassCastException | ClassNotFoundException | NoSuchFieldException e) {
             String message = driverInfo != null ?
                              driverInfo.toString() :
                              "Fail to load requested JMS connector.  Make sure the appropriate jar is added to lib/.";
@@ -78,24 +84,26 @@ public class WebsphereMQJmsClientConfig extends JmsClientConfig {
         }
 
         try {
-            // com.ibm.msg.client.wmq.common.CommonConstants.WMQ_CM_CLIENT
-            BeanUtils.setProperty(cf, "transportType", 1);
+            // com.ibm.msg.client.wmq.common.CommonConstants.WMQ_CM_CLIENT = 1
+            // cannot use MethodUtils or BeanUtils because of the primitive argument
+            connectionClass.getMethod("setTransportType", int.class).invoke(cf, (int) transportType);
 
             if (StringUtils.contains(url, ",")) {
-                BeanUtils.setProperty(cf, "connectionNameList", url);
+                MethodUtils.invokeExactMethod(cf, "setConnectionNameList", url);
             } else {
                 if (StringUtils.contains(url, ":")) {
                     String host = StringUtils.substringBefore(url, ":");
                     String port = StringUtils.substringAfter(url, ":");
                     ConsoleUtils.log("Using host '" + host + "' and port '" + port + "' to connect to WebSphere MQ");
-                    BeanUtils.setProperty(cf, "hostName", host);
-                    BeanUtils.setProperty(cf, "port", NumberUtils.toInt(port));
+                    MethodUtils.invokeExactMethod(cf, "setHostName", host);
+                    MethodUtils.invokeExactMethod(cf, "setPort", NumberUtils.toInt(port));
                 }
             }
 
-            BeanUtils.setProperty(cf, "channel", channel);
-            BeanUtils.setProperty(cf, "queueManager", queueManager);
-        } catch (IllegalAccessException | InvocationTargetException e) {
+            MethodUtils.invokeExactMethod(cf, "setChannel", channel);
+            MethodUtils.invokeExactMethod(cf, "setQueueManager", queueManager);
+
+        } catch (IllegalAccessException | NoSuchMethodException | InvocationTargetException e) {
             throw new JMSException("Unable to configure connection: " + e.getMessage());
         }
 

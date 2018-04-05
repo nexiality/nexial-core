@@ -17,7 +17,6 @@
 
 package org.nexial.core.variable;
 
-import java.io.IOException;
 import java.lang.reflect.Method;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -30,7 +29,6 @@ import org.apache.commons.lang3.ArrayUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.math.NumberUtils;
 import org.apache.commons.text.WordUtils;
-
 import org.nexial.commons.utils.RegexUtils;
 import org.nexial.commons.utils.TextUtils;
 import org.nexial.core.ExecutionThread;
@@ -39,7 +37,6 @@ import org.nexial.core.model.ExecutionContext;
 import static org.nexial.core.NexialConst.Data.DEF_TEXT_DELIM;
 import static org.nexial.core.utils.CheckUtils.requiresPositiveNumber;
 import static org.nexial.core.variable.ExpressionUtils.fixControlChars;
-import static org.apache.commons.lang.math.NumberUtils.isNumber;
 
 public class TextTransformer<T extends TextDataType> extends Transformer {
     private static final Map<String, Integer> FUNCTION_TO_PARAM_LIST = discoverFunctions(TextTransformer.class);
@@ -151,7 +148,7 @@ public class TextTransformer<T extends TextDataType> extends Transformer {
     }
 
     public NumberDataType number(T data) {
-        if (data == null || StringUtils.isBlank(data.getValue()) || !isNumber(data.getValue())) {
+        if (data == null || StringUtils.isBlank(data.getValue()) || !NumberUtils.isCreatable(data.getValue())) {
             return null;
         }
 
