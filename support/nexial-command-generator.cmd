@@ -14,19 +14,19 @@ if NOT ERRORLEVEL 0 goto :exit
 call :resolveEnv
 if NOT ERRORLEVEL 0 goto :exit
 
-%JAVA% -classpath %NEXIAL_CLASSES%;%NEXIAL_LIB%\* %JAVA_OPT% org.nexial.core.tools.CommandMetaGenerator -v
+%JAVA% -classpath %NEXIAL_CLASSES%;%NEXIAL_LIB%\* %JAVA_OPT% org.nexial.core.tools.CommandMetaGenerator
 
 :init
-	.commons.cmd %*
+	..\bin\.commons.cmd %*
 
 :checkJava
-	.commons.cmd %*
+	..\bin\.commons.cmd %*
 
 :title
-	.commons.cmd %*
+	..\bin\.commons.cmd %*
 
 :resolveEnv
-	.commons.cmd %*
+	..\bin\.commons.cmd %*
 
 :exit
 	endlocal
