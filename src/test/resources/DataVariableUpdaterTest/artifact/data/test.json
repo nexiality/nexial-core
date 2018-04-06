@@ -1,6 +1,6 @@
 {
     "a": {
-        "b": "${sentry.failFast}",
-"${sentry.textDelim}": [ "${sentry.browser}", "${sentry.browser}", "${sentry.verbose}"]
+        "b": "${nexial.failFast}",
+"${nexial.textDelim}": [ "${nexial.browser}", "${nexial.browser}", "${nexial.verbose}"]
     }
 }

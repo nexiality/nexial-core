@@ -65,6 +65,26 @@ public class FlowControlUtilsTest {
     public void checkPauseAfter() {
     }
 
+    // @Test
+    // public void checkSkipIf_NexialFilter() {
+    //     Map<String, Condition> conditions = new HashMap<>();
+    //     conditions.put("${condition1}", NexialFilter.newInstance() new Condition(Equal, Collections.singletonList("banana")));
+    //     FlowControl flowControl = new FlowControl(SkipIf, conditions);
+    //     TestStep fixture = new DummyTestStep(SkipIf, flowControl);
+    //
+    //     StepResult result = FlowControlUtils.checkSkipIf(context, fixture);
+    //     Assert.assertNotNull(result);
+    //     Assert.assertTrue(result.isSkipped());
+    //
+    //     conditions = new HashMap<>();
+    //     conditions.put("${condition1}", new Condition(Equal, Collections.singletonList("apple")));
+    //     flowControl = new FlowControl(SkipIf, conditions);
+    //     fixture = new DummyTestStep(SkipIf, flowControl);
+    //
+    //     result = FlowControlUtils.checkSkipIf(context, fixture);
+    //     Assert.assertNull(result);
+    // }
+
     @Test
     public void checkSkipIf() {
         Map<String, Condition> conditions = new HashMap<>();
@@ -87,7 +107,7 @@ public class FlowControlUtilsTest {
 
     @Test
     public void checkProceedIf() {
-        Map<Directive, FlowControl> flowControls = FlowControl.parseToMap("ProceedIf(${condition1} != \"red\")");
+        Map<Directive, FlowControl> flowControls = FlowControl.parse("ProceedIf(${condition1} != \"red\")");
         Assert.assertNotNull(flowControls);
         Assert.assertEquals(1, flowControls.size());
 
@@ -98,6 +118,7 @@ public class FlowControlUtilsTest {
         Assert.assertNotNull(conditions);
         Assert.assertEquals(1, conditions.size());
 
+        System.out.println("conditions = " + conditions);
         Condition condition = conditions.get("${condition1}");
         Assert.assertNotNull(condition);
         Assert.assertEquals(NotEqual, condition.getOperator());

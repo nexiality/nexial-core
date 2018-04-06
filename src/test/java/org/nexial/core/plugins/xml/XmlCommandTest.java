@@ -250,7 +250,7 @@ public class XmlCommandTest {
 		String resourcePath = StringUtils.replace(getClass().getPackage().getName(), ".", "/");
 
 		// test case #1
-		String xml = ResourceUtils.loadResource(resourcePath + "/nextgen_config.xml");
+		String xml = ResourceUtils.loadResource(resourcePath + "/XmlCommandTest1.xml");
 		Assert.assertTrue(StringUtils.isNotBlank(xml));
 
 		String value = subject.getValueByXPath(xml, xpath);
@@ -258,7 +258,7 @@ public class XmlCommandTest {
 		Assert.assertEquals("1.9.19-14596", value);
 
 		// test case #2
-		xml = ResourceUtils.loadResource(resourcePath + "/nextgen_config2.xml");
+		xml = ResourceUtils.loadResource(resourcePath + "/XmlCommandTest2.xml");
 		Assert.assertTrue(StringUtils.isNotBlank(xml));
 
 		value = subject.getValueByXPath(xml, xpath);
@@ -266,7 +266,7 @@ public class XmlCommandTest {
 		Assert.assertEquals("1.6.4.10264", value);
 
 		// test case #3
-		xml = StringUtils.trim(ResourceUtils.loadResource(resourcePath + "/nextgen_config3.xml"));
+		xml = StringUtils.trim(ResourceUtils.loadResource(resourcePath + "/XmlCommandTest3.xml"));
 		xml = "<?xml version=\"1.0\" encoding=\"utf-8\"?>" + StringUtils.substringAfter(xml, "<?xml version=\"1.0\" encoding=\"utf-8\"?>");
 		Assert.assertTrue(StringUtils.isNotBlank(xml));
 

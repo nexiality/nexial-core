@@ -1,6 +1,6 @@
 <a>
 	<b>
-		<c>${sentry.browser}</c>
+		<c>${nexial.browser}</c>
 	</b>
-	<d e="${sentry.failFast}">${sentry.textDelim}</d>
+	<d e="${nexial.failFast}">${nexial.textDelim}</d>
 </a>

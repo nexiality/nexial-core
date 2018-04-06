@@ -93,7 +93,7 @@ public class NexialFilterTest {
 
     @Test
     public void normalizeCondition() {
-        Assert.assertEquals(null, NexialFilter.normalizeCondition(null));
+        Assert.assertNull(NexialFilter.normalizeCondition(null));
         Assert.assertEquals("", NexialFilter.normalizeCondition(""));
         Assert.assertEquals("", NexialFilter.normalizeCondition(" "));
         Assert.assertEquals("hello", NexialFilter.normalizeCondition("hello"));
@@ -115,6 +115,9 @@ public class NexialFilterTest {
         Assert.assertTrue(NexialFilter.newInstance("x != \"a\"").isMatch("A "));
         Assert.assertTrue(NexialFilter.newInstance("x != a").isMatch(" "));
         Assert.assertTrue(NexialFilter.newInstance("x != 'a'").isMatch(" "));
+        Assert.assertFalse(NexialFilter.newInstance("x != a").isMatch("a"));
+        Assert.assertFalse(NexialFilter.newInstance("x != \"a\"").isMatch("a"));
+        Assert.assertFalse(NexialFilter.newInstance("x != 'a'").isMatch("'a'"));
 
         // todo: deal with dates for greater/lesser comparison
 

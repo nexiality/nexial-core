@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="utf-8"?>
+<configuration>
+	<ExceptionMapping configSource="ExceptionMapping.config"/>
+	<!-- Turning off security will cause error when deployed since service is expecting security on-->
+	<!-- for debug purposes only -->
+	<appSettings>
+		<!-- NG-2636: New key to add extra caption value -->
+		<add key="ExtraCaption" value=""/>
+		<add key="ShowReportDebugInfo" value="false"/>
+		<add key="useAgent" value="true"/>
+		<add key="securityLevel" value="1"/>
+		<add key="securityProvider" value="ClientUserNameCertificate"/>
+		<add key="ProductID" value="EB85B25D-E624-4EA5-B2C5-2B25A7D78C9E"/>
+		<add key="AppVersionMarker" value="1.6.4.10264"/>
+		<add key="ObjectRecycleSecond" value="300" />
+		<add key="ObjectForcedRecoverSecond" value="600" />
+		<add key="MaxPoolObjects" value="10" />
+	</appSettings>
+	<log4net configSource="log4net.config"/>
+	<system.web>
+		<compilation defaultLanguage="c#" debug="true"/>
+	</system.web>
+	<startup><supportedRuntime version="v4.0.30319"/></startup>
+</configuration>

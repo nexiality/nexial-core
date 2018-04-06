@@ -1,0 +1,26 @@
+<?xml version="1.0" encoding="utf-8"?>
+<configuration>
+	<configSections>
+		<section name="enterpriseLibrary.ConfigurationSource" type="Microsoft.Practices.EnterpriseLibrary.Common.Configuration.ConfigurationSourceSection, Microsoft.Practices.EnterpriseLibrary.Common, Version=4.1.0.0, Culture=neutral" />
+		<section name="log4net" type="log4net.Config.Log4NetConfigurationSectionHandler" />
+	</configSections>
+	<ExceptionMapping configSource="ExceptionMapping.config" />
+	<LocalAppSetting configSource="LocalAppSetting.config" />
+	<appSettings>
+		<add key="ClientSettingsProvider.ServiceUri" value="" />
+		<add key="ShowReportDebugInfo" value="false" />
+		<add key="useAgent" value="true" />
+		<add key="securityLevel" value="1" />
+		<add key="SecurityProvider" value="ClientUserNameCertificate" />
+		<add key="AppVersionMarker" value="1.9.19-14596" />
+	</appSettings>
+	<log4net configSource="log4net.config" />
+	<!--<system.net>
+	<settings>
+	  <servicePointManager expect100Continue="false" />
+	</settings>
+	</system.net>-->
+	<startup>
+		<supportedRuntime version="v2.0.50727" />
+	</startup>
+</configuration>

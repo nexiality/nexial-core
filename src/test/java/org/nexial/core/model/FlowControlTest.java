@@ -20,9 +20,9 @@ package org.nexial.core.model;
 import java.util.Arrays;
 import java.util.Map;
 
+import org.apache.commons.lang3.StringUtils;
 import org.junit.Assert;
 import org.junit.Test;
-
 import org.nexial.core.model.FlowControl.Condition;
 import org.nexial.core.model.FlowControl.Directive;
 
@@ -31,7 +31,7 @@ import static org.nexial.core.model.FlowControl.Directive.*;
 public class FlowControlTest {
     @Test
     public void parseToMap_simple() {
-        Map<Directive, FlowControl> subjects = FlowControl.parseToMap("SkipIf(var1=\"a\")");
+        Map<Directive, FlowControl> subjects = FlowControl.parse("SkipIf(var1=\"a\")");
         Assert.assertNotNull(subjects);
         Assert.assertEquals(1, subjects.size());
 
@@ -47,7 +47,7 @@ public class FlowControlTest {
 
     @Test
     public void parseToMap_ProceedIf() {
-        Map<Directive, FlowControl> subjects = FlowControl.parseToMap("ProceedIf(var1 =\"a\")");
+        Map<Directive, FlowControl> subjects = FlowControl.parse("ProceedIf(var1 =\"a\")");
         Assert.assertNotNull(subjects);
         Assert.assertEquals(1, subjects.size());
 
@@ -60,7 +60,7 @@ public class FlowControlTest {
         Assert.assertEquals(1, conditions.size());
         Assert.assertEquals("= a", conditions.get("var1").toString());
 
-        subjects = FlowControl.parseToMap("ProceedIf(var1 =\"a\" & ${var2} = ${var1})");
+        subjects = FlowControl.parse("ProceedIf(var1 =\"a\" & ${var2} = ${var1})");
         Assert.assertNotNull(subjects);
         Assert.assertEquals(1, subjects.size());
 
@@ -78,7 +78,7 @@ public class FlowControlTest {
     @Test
     public void parseToMap_2conditions() {
 
-        Map<Directive, FlowControl> subjects = FlowControl.parseToMap("PauseBefore(var1=\"a\" & var2=95)");
+        Map<Directive, FlowControl> subjects = FlowControl.parse("PauseBefore(var1=\"a\" & var2=95)");
         Assert.assertNotNull(subjects);
         Assert.assertEquals(1, subjects.size());
 
@@ -98,11 +98,16 @@ public class FlowControlTest {
 
         String fixture = "PauseBefore (var1=\"a\" &var2  =    95)  \n" +
                          "EndIf \t \t (var3 is [\"chicken\", 47, true ] )  \n" +
-                         "\t\t \t SkipIf (var3 is [\"Nacho\", var2, stuff] & var4=\"password\" & var4 != \"PassWord\" )   ";
+                         "\t\t \t SkipIf (var3 is [\"Nacho\", var2, stuff] & var4=\"password\" & var4 != \"PassWord\" )  \n " +
+                         "  ProceedIf ( var5 start with \"Hello World\" )";
 
-        Map<Directive, FlowControl> subjects = FlowControl.parseToMap(fixture);
+        Map<Directive, FlowControl> subjects = FlowControl.parse(fixture);
         Assert.assertNotNull(subjects);
-        Assert.assertEquals(3, subjects.size());
+        Assert.assertEquals(4, subjects.size());
+
+        subjects.forEach((directive, flowControl) -> {
+            System.out.println(StringUtils.rightPad(directive + "", 25) + " = " + flowControl);
+        });
 
         FlowControl subject = subjects.get(PauseBefore);
         Assert.assertNotNull(subject);
@@ -128,6 +133,7 @@ public class FlowControlTest {
         Assert.assertEquals(SkipIf, subject.getDirective());
 
         conditions = subject.getConditions();
+        System.out.println("conditions = " + conditions);
         Assert.assertNotNull(conditions);
         Assert.assertEquals(2, conditions.size());
         Assert.assertEquals("is [Nacho, var2, stuff]", conditions.get("var3").toString());
@@ -139,7 +145,7 @@ public class FlowControlTest {
     public void parseToMap_inConditions() {
         String fixture = "EndIf(var1 is [\"yes\", \"no\", \"maybe\"])";
 
-        Map<Directive, FlowControl> subjects = FlowControl.parseToMap(fixture);
+        Map<Directive, FlowControl> subjects = FlowControl.parse(fixture);
         Assert.assertNotNull(subjects);
         Assert.assertEquals(1, subjects.size());
 

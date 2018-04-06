@@ -1,0 +1,42 @@
+{
+	"$schema":              "http://json-schema.org/draft-04/schema#",
+	"id":                   "http://sentry.qa.ep.com/sentry-sample#",
+	"type":                 "object",
+	"additionalProperties": false,
+	"properties":           {
+		"address":     {
+			"type":                 "object",
+			"additionalProperties": false,
+			"properties":           {
+				"streetAddress": {
+					"type":                 "string",
+					"additionalProperties": false
+				},
+				"city":          {
+					"type":                 "string",
+					"additionalProperties": false
+				}
+			},
+			"required":             [ "streetAddress" ]
+		},
+		"phoneNumber": {
+			"type":                 "array",
+			"additionalProperties": false,
+			"items":                {
+				"type":                 "object",
+				"additionalProperties": false,
+				"properties":           {
+					"location": {
+						"type":                 "string",
+						"additionalProperties": false
+					},
+					"number":   {
+						"type":                 "string",
+						"additionalProperties": false
+					}
+				},
+				"required":             [ "location", "number" ]
+			}
+		}
+	}
+}

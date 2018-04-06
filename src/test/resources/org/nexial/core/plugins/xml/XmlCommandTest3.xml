@@ -1,0 +1,81 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+
+<configuration>
+
+  <configSections>
+
+    <section name="enterpriseLibrary.ConfigurationSource" type="Microsoft.Practices.EnterpriseLibrary.Common.Configuration.ConfigurationSourceSection, Microsoft.Practices.EnterpriseLibrary.Common, Version=4.1.0.0, Culture=neutral" />
+
+    <section name="log4net" type="log4net.Config.Log4NetConfigurationSectionHandler" />
+
+  </configSections>
+
+  <ExceptionMapping configSource="ExceptionMapping.config" />
+
+  <LocalAppSetting configSource="LocalAppSetting.config" />
+
+  <appSettings>
+
+    <add key="ShowReportDebugInfo" value="false" />
+
+    <add key="useAgent" value="true" />
+
+    <add key="securityLevel" value="1" />
+
+    <add key="SecurityProvider" value="ClientUserNameCertificate" />
+
+    <add key="DefaultToContinuousNewMode" value="true" />
+
+    <add key="ConnectionTimeout" value="1500000" />
+
+    <add key="EnableDevTools" value="false" />
+
+    <add key="CheckForUpdates" value="true" />
+
+    <add key="AppVersionMarker" value="1.9.19-14596" />
+
+  </appSettings>
+
+  <log4net configSource="log4net.config" />
+
+  <enterpriseLibrary.ConfigurationSource selectedSource="File Configuration Source">
+
+    <sources>
+
+      <add name="File Configuration Source" type="Microsoft.Practices.EnterpriseLibrary.Common.Configuration.FileConfigurationSource, Microsoft.Practices.EnterpriseLibrary.Common, Version=4.1.0.0, Culture=neutral" filePath="entlib.config" />
+
+    </sources>
+
+  </enterpriseLibrary.ConfigurationSource>
+
+  <system.web>
+
+    <roleManager defaultProvider="ClientRoleProvider" enabled="true">
+
+      <providers>
+
+        <add name="ClientRoleProvider" type="System.Web.ClientServices.Providers.ClientRoleProvider, System.Web.Extensions, Version=3.5.0.0, Culture=neutral, PublicKeyToken=31bf3856ad364e35" serviceUri="" cacheTimeout="86400" />
+
+      </providers>
+
+    </roleManager>
+
+  </system.web>
+
+  <!--<system.net>
+
+  <settings>
+
+    <servicePointManager expect100Continue="false" />
+
+  </settings>
+
+  </system.net>-->
+
+  <startup>
+
+    <supportedRuntime version="v2.0.50727" />
+
+  </startup>
+
+</configuration>

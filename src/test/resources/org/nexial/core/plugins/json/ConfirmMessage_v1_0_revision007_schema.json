@@ -1,0 +1,1051 @@
+{
+	"confirmMessage": {
+		"description": "The ConfirmMessage contains the processing results for the corresponding request.  A request may have its processing reported as: succeeded, partially failed, or failed.",
+		"type":        "object",
+		"id":          "confirmMessage",
+		"properties":  {
+			"confirmMessageID":       {
+				"description": "An identifier for the instance of the confirm message.",
+				"type":        "object",
+				"optional":    true,
+				"properties":  {
+					"idValue":          {
+						"description": "An ID.",
+						"type":        "string",
+						"optional":    true
+					},
+					"schemeName":       {
+						"description": "The type of ID.",
+						"type":        "string",
+						"optional":    true
+					},
+					"schemeAgencyName": {
+						"description": "The agency that issues the ID.",
+						"type":        "string",
+						"optional":    true
+					}
+				}
+			},
+			"createDateTime":         {
+				"description": "The date & time that the message instance was generated.; follows the ISO-8601:2000 format: 2008-05-11T15:30:00-06:00.",
+				"type":        "string",
+				"format":      "date-time",
+				"optional":    false
+			},
+			"requestReceiptDateTime": {
+				"description": "The date & time that the request submitted by the client was received. Note, this timestamp may not be the same as the time the client actually submitted the request if there is a queuing mechanism between the client and server processing the request; it follows the ISO-8601:2000 format: 2008-05-11T15:30:00-06:00.",
+				"type":        "string",
+				"format":      "date-time",
+				"optional":    false
+			},
+			"protocolStatusCode":     {
+				"description": "Protocol-specific response status code.",
+				"id":          "protocolStatusCode",
+				"type":        "object",
+				"optional":    true,
+				"properties":  {
+					"codeValue": {
+						"type": "string"
+					},
+					"shortName": {
+						"description": "A short name or description for the associated code.",
+						"type":        "string",
+						"optional":    true
+					},
+					"longName":  {
+						"description": "A long name or description for the associated code.",
+						"type":        "string",
+						"optional":    true
+					}
+				}
+			},
+			"protocolCode":           {
+				"description": "Code that identifies the protocol used for the request.",
+				"type":        "object",
+				"optional":    true,
+				"properties":  {
+					"codeValue": {
+						"description": "The code for the related entity.",
+						"type":        "string",
+						"optional":    true
+					},
+					"shortName": {
+						"description": "A short name or description for the associated code.",
+						"type":        "string",
+						"optional":    true
+					},
+					"longName":  {
+						"description": "A long name or description for the associated code.",
+						"type":        "string",
+						"optional":    true
+					}
+				}
+			},
+			"requestID":              {
+				"description": "The identifier of the request that generated this response.",
+				"type":        "object",
+				"optional":    true,
+				"properties":  {
+					"idValue":          {
+						"description": "An ID.",
+						"type":        "string",
+						"optional":    true
+					},
+					"schemeName":       {
+						"description": "The type of ID.",
+						"type":        "string",
+						"optional":    true
+					},
+					"schemeAgencyName": {
+						"description": "The agency that issues the ID.",
+						"type":        "string",
+						"optional":    true
+					}
+				}
+			},
+			"requestStatusCode":      {
+				"description": "The process results status code for the request.",
+				"type":        "object",
+				"optional":    true,
+				"properties":  {
+					"codeValue": {
+						"description": "The code for the related entity.",
+						"type":        "string",
+						"optional":    true,
+						"enum":        [ "succeeded", "partiallyFailed", "failed" ]
+					},
+					"shortName": {
+						"description": "A short name or description for the associated code.",
+						"type":        "string",
+						"optional":    true
+					},
+					"longName":  {
+						"description": "A long name or description for the associated code.",
+						"type":        "string",
+						"optional":    true
+					}
+				}
+			},
+			"requestMethodCode":      {
+				"description": "The method that was used on the request corresponding to this message instance.",
+				"type":        "object",
+				"optional":    true,
+				"properties":  {
+					"codeValue": {
+						"description": "The code for the related entity.",
+						"type":        "string",
+						"optional":    true,
+						"enum":        [ "GET", "PUT", "POST", "PATCH", "DELETE" ]
+					},
+					"longName":  {
+						"description": "A long name or description for the associated code.",
+						"type":        "string",
+						"optional":    true
+					},
+					"shortName": {
+						"description": "A short name or description for the associated code.",
+						"type":        "string",
+						"optional":    true
+					}
+				}
+			},
+			"sessionID":              {
+				"description": "A session identifier if one is available.",
+				"type":        "object",
+				"optional":    true,
+				"properties":  {
+					"idValue":          {
+						"description": "An ID.",
+						"type":        "string",
+						"optional":    true
+					},
+					"schemeName":       {
+						"description": "The type of ID.",
+						"type":        "string",
+						"optional":    true
+					},
+					"schemeAgencyName": {
+						"description": "The agency that issues the ID.",
+						"type":        "string",
+						"optional":    true
+					}
+				}
+			},
+			"requestETag":            {
+				"description": "The entity tag of the entity in the request.",
+				"type":        "string",
+				"optional":    true
+			},
+			"requestLink":            {
+				"description": "The link of the request that generated this response.",
+				"id":          "requestResourceUri",
+				"type":        "object",
+				"properties":  {
+					"href":         {
+						"description": " The value of the href link description property is a template used to determine the target URI of the related resource.  The value of the instance property SHOULD be resolved as a URI-Reference per RFC 3986 [RFC3986] and MAY be a relative reference to a URI.",
+						"type":        "string",
+						"format":      "uri"
+					},
+					"rel":          {
+						"description": "Indicates the nature of the relationship of the related resource to the resource that generated this representation",
+						"type":        "string",
+						"enum":        [
+							"create", "describedby", "full", "root", "self", "up", "/adp/invoke", "related"
+						]
+					},
+					"title":        {
+						"description": "Defines a title for the link.  The value must be a string. User agents MAY use this title when presenting the link to the user.",
+						"type":        "string",
+						"optional":    true
+					},
+					"targetSchema": {
+						"description": "A schema that defines the expected structure of the JSON representation of the target of the link, if the target of the link is returned using JSON representation.",
+						"type":        "string",
+						"optional":    true
+					},
+					"mediaType":    {
+						"description": "The media type that the linked resource will return (Response)",
+						"type":        "string",
+						"optional":    true,
+						"default":     "application/json",
+						"enum":        [ "application/json", "text/html", "application/pdf", "image/jpeg", "image/gif" ]
+					},
+					"method":       {
+						"description": "Defines which method can be used to access the target resource.",
+						"type":        "string",
+						"optional":    true,
+						"enum":        [ "GET", "POST", "DELETE", "PUT" ]
+					},
+					"encType":      {
+						"description": "Indicates a query media type format that the server supports for querying or posting to the collection of instances at the target resource.  The query can be suffixed to the target URI to query the collection with property-based constraints on the resources that SHOULD be returned from the server or used to post data to the resource (depending on the method). (Request)",
+						"type":        "string",
+						"optional":    true,
+						"default":     "application/json",
+						"enum":        [ "application/json", "application/x-www-form-urlencoded" ]
+					},
+					"schema":       {
+						"description": "Contatins a schema which defines the acceptable structure of the submitted request.  For a GET request, this schema would define the properties for the query string and for a POST request, this would define the body.",
+						"type":        "string",
+						"optional":    true
+					}
+				}
+			},
+			"processingStatusCode":   {
+				"description": "Processing status of the related request message.",
+				"type":        "object",
+				"optional":    true,
+				"properties":  {
+					"codeValue": {
+						"description": "The code for the related entity.",
+						"type":        "string",
+						"optional":    true,
+						"enum":        [ "received", "validated", "completed" ]
+					},
+					"shortName": {
+						"description": "A short name or description for the associated code.",
+						"type":        "string",
+						"optional":    true
+					},
+					"longName":  {
+						"description": "A long name or description for the associated code.",
+						"type":        "string",
+						"optional":    true
+					}
+				}
+			},
+			"processMessages":        {
+				"description": "processMessage is optional and contains processing information for either the request (at the ConfirmMessage level) or a resource being managed in the request (at the ResourceMessage level).  Most often there will be a single instance for an associated request or resource, but this structure allows for more than one if needed, for example, if multiple errors exist for a single resource. ",
+				"type":        "array",
+				"optional":    true,
+				"items":       {
+					"description": "Each object contains processing information for either the request (at the ConfirmMessage level) or a resource being managed in the request (at the ResourceMessage level).",
+					"type":        "object",
+					"optional":    true,
+					"properties":  {
+						"processMessageID":         {
+							"description": "An identifier for the instance of the process message.",
+							"type":        "object",
+							"optional":    true,
+							"properties":  {
+								"idValue":          {
+									"description": "An ID.",
+									"type":        "string",
+									"optional":    true
+								},
+								"schemeName":       {
+									"description": "The type of ID.",
+									"type":        "string",
+									"optional":    true
+								},
+								"schemeAgencyName": {
+									"description": "The agency that issues the ID.",
+									"type":        "string",
+									"optional":    true
+								}
+							}
+						},
+						"messageTypeCode":          {
+							"description": "Process Message instances may be of type: success, warning, error, or info.",
+							"type":        "object",
+							"optional":    true,
+							"properties":  {
+								"codeValue": {
+									"description": "The code for the related entity.",
+									"type":        "string",
+									"optional":    true,
+									"enum":        [ "success", "warning", "error", "info" ]
+								},
+								"shortName": {
+									"description": "A short name or description for the associated code.",
+									"type":        "string",
+									"optional":    true
+								},
+								"longName":  {
+									"description": "A long name or description for the associated code.",
+									"type":        "string",
+									"optional":    true
+								}
+							}
+						},
+						"sourceLocationExpression": {
+							"description": "Expression that provides the location (or source) of content in a message instance that is associated with a process message. Examples of expression languages include: XPath, XQuery, JSON Pointer.",
+							"type":        "string",
+							"optional":    true
+						},
+						"expressionLanguageCode":   {
+							"description": "Identifies the language used for expressions communicated in this message.",
+							"type":        "object",
+							"optional":    true,
+							"properties":  {
+								"codeValue": {
+									"description": "The code for the related entity.",
+									"type":        "string",
+									"optional":    true,
+									"enum":        [ "jPath" ]
+								},
+								"shortName": {
+									"description": "A short name or description for the associated code.",
+									"type":        "string",
+									"optional":    true
+								},
+								"longName":  {
+									"description": "A long name or description for the associated code.",
+									"type":        "string",
+									"optional":    true
+								}
+							}
+						},
+						"links":                    {
+							"description": "A link description object is used to describe link relations.  In the context of a schema, it defines the link relations of the instances of the schema, and can be parameterized by the instance values.  The link description format can be used on its own in regular (non-schema documents), and use of this format can be declared by referencing the normative link description schema as the the schema for the data structure that uses the links.",
+							"type":        "array",
+							"optional":    true,
+							"items":       {
+								"type":       "object",
+								"properties": {
+									"href":         {
+										"description": " The value of the href link description property is a template used to determine the target URI of the related resource.  The value of the instance property SHOULD be resolved as a URI-Reference per RFC 3986 [RFC3986] and MAY be a relative reference to a URI.",
+										"type":        "string",
+										"format":      "uri"
+									},
+									"rel":          {
+										"description": "Indicates the nature of the relationship of the related resource to the resource that generated this representation",
+										"type":        "string",
+										"enum":        [
+											"create", "describedby", "full", "root", "self", "up", "/adp/invoke",
+											"related"
+										]
+									},
+									"title":        {
+										"description": "Defines a title for the link.  The value must be a string. User agents MAY use this title when presenting the link to the user.",
+										"type":        "string",
+										"optional":    true
+									},
+									"targetSchema": {
+										"description": "A schema that defines the expected structure of the JSON representation of the target of the link, if the target of the link is returned using JSON representation.",
+										"type":        "string",
+										"optional":    true
+									},
+									"mediaType":    {
+										"description": "The media type that the linked resource will return (Response)",
+										"type":        "string",
+										"optional":    true,
+										"default":     "application/json",
+										"enum":        [
+											"application/json", "text/html", "application/pdf", "image/jpeg",
+											"image/gif"
+										]
+									},
+									"method":       {
+										"description": "Defines which method can be used to access the target resource.",
+										"type":        "string",
+										"optional":    true,
+										"enum":        [ "GET", "POST", "DELETE", "PUT" ]
+									},
+									"encType":      {
+										"description": "Indicates a query media type format that the server supports for querying or posting to the collection of instances at the target resource.  The query can be suffixed to the target URI to query the collection with property-based constraints on the resources that SHOULD be returned from the server or used to post data to the resource (depending on the method). (Request)",
+										"type":        "string",
+										"optional":    true,
+										"default":     "application/json",
+										"enum":        [ "application/json", "application/x-www-form-urlencoded" ]
+									},
+									"schema":       {
+										"description": "Contatins a schema which defines the acceptable structure of the submitted request.  For a GET request, this schema would define the properties for the query string and for a POST request, this would define the body.",
+										"type":        "string",
+										"optional":    true
+									}
+								}
+							}
+						},
+						"userMessage":              {
+							"description": "Message returned to the user",
+							"type":        "object",
+							"optional":    true,
+							"properties":  {
+								"codeValue":  {
+									"description": "The code associated with the message description.",
+									"type":        "string",
+									"optional":    true
+								},
+								"title":      {
+									"description": "Title of the message description.",
+									"type":        "string",
+									"optional":    true
+								},
+								"messageTxt": {
+									"description": "The value/content of the message description.",
+									"type":        "string",
+									"optional":    true
+								},
+								"links":      {
+									"description": "A link description object is used to describe link relations.  In the context of a schema, it defines the link relations of the instances of the schema, and can be parameterized by the instance values.  The link description format can be used on its own in regular (non-schema documents), and use of this format can be declared by referencing the normative link description schema as the the schema for the data structure that uses the links.",
+									"type":        "array",
+									"optional":    true,
+									"items":       {
+										"type":       "object",
+										"properties": {
+											"href":         {
+												"description": " The value of the href link description property is a template used to determine the target URI of the related resource.  The value of the instance property SHOULD be resolved as a URI-Reference per RFC 3986 [RFC3986] and MAY be a relative reference to a URI.",
+												"type":        "string",
+												"format":      "uri"
+											},
+											"rel":          {
+												"description": "Indicates the nature of the relationship of the related resource to the resource that generated this representation",
+												"type":        "string",
+												"enum":        [
+													"create", "describedby", "full", "root", "self", "up",
+													"/adp/invoke", "related"
+												]
+											},
+											"title":        {
+												"description": "Defines a title for the link.  The value must be a string. User agents MAY use this title when presenting the link to the user.",
+												"type":        "string",
+												"optional":    true
+											},
+											"targetSchema": {
+												"description": "A schema that defines the expected structure of the JSON representation of the target of the link, if the target of the link is returned using JSON representation.",
+												"type":        "string",
+												"optional":    true
+											},
+											"mediaType":    {
+												"description": "The media type that the linked resource will return (Response)",
+												"type":        "string",
+												"optional":    true,
+												"default":     "application/json",
+												"enum":        [
+													"application/json", "text/html", "application/pdf", "image/jpeg",
+													"image/gif"
+												]
+											},
+											"method":       {
+												"description": "Defines which method can be used to access the target resource.",
+												"type":        "string",
+												"optional":    true,
+												"enum":        [ "GET", "POST", "DELETE", "PUT" ]
+											},
+											"encType":      {
+												"description": "Indicates a query media type format that the server supports for querying or posting to the collection of instances at the target resource.  The query can be suffixed to the target URI to query the collection with property-based constraints on the resources that SHOULD be returned from the server or used to post data to the resource (depending on the method). (Request)",
+												"type":        "string",
+												"optional":    true,
+												"default":     "application/json",
+												"enum":        [
+													"application/json", "application/x-www-form-urlencoded"
+												]
+											},
+											"schema":       {
+												"description": "Contatins a schema which defines the acceptable structure of the submitted request.  For a GET request, this schema would define the properties for the query string and for a POST request, this would define the body.",
+												"type":        "string",
+												"optional":    true
+											}
+										}
+									}
+								}
+							}
+						},
+						"developerMessage":         {
+							"description": "Message returned to the user",
+							"type":        "object",
+							"optional":    true,
+							"properties":  {
+								"codeValue":  {
+									"description": "The code associated with the message description.",
+									"type":        "string",
+									"optional":    true
+								},
+								"title":      {
+									"description": "Title of the message description.",
+									"type":        "string",
+									"optional":    true
+								},
+								"messageTxt": {
+									"description": "The value/content of the message description.",
+									"type":        "string",
+									"optional":    true
+								},
+								"links":      {
+									"description": "A link description object is used to describe link relations.  In the context of a schema, it defines the link relations of the instances of the schema, and can be parameterized by the instance values.  The link description format can be used on its own in regular (non-schema documents), and use of this format can be declared by referencing the normative link description schema as the the schema for the data structure that uses the links.",
+									"type":        "array",
+									"optional":    true,
+									"items":       {
+										"type":       "object",
+										"properties": {
+											"href":         {
+												"description": " The value of the href link description property is a template used to determine the target URI of the related resource.  The value of the instance property SHOULD be resolved as a URI-Reference per RFC 3986 [RFC3986] and MAY be a relative reference to a URI.",
+												"type":        "string",
+												"format":      "uri"
+											},
+											"rel":          {
+												"description": "Indicates the nature of the relationship of the related resource to the resource that generated this representation",
+												"type":        "string",
+												"enum":        [
+													"create", "describedby", "full", "root", "self", "up",
+													"/adp/invoke", "related"
+												]
+											},
+											"title":        {
+												"description": "Defines a title for the link.  The value must be a string. User agents MAY use this title when presenting the link to the user.",
+												"type":        "string",
+												"optional":    true
+											},
+											"targetSchema": {
+												"description": "A schema that defines the expected structure of the JSON representation of the target of the link, if the target of the link is returned using JSON representation.",
+												"type":        "string",
+												"optional":    true
+											},
+											"mediaType":    {
+												"description": "The media type that the linked resource will return (Response)",
+												"type":        "string",
+												"optional":    true,
+												"default":     "application/json",
+												"enum":        [
+													"application/json", "text/html", "application/pdf", "image/jpeg",
+													"image/gif"
+												]
+											},
+											"method":       {
+												"description": "Defines which method can be used to access the target resource.",
+												"type":        "string",
+												"optional":    true,
+												"enum":        [ "GET", "POST", "DELETE", "PUT" ]
+											},
+											"encType":      {
+												"description": "Indicates a query media type format that the server supports for querying or posting to the collection of instances at the target resource.  The query can be suffixed to the target URI to query the collection with property-based constraints on the resources that SHOULD be returned from the server or used to post data to the resource (depending on the method). (Request)",
+												"type":        "string",
+												"optional":    true,
+												"default":     "application/json",
+												"enum":        [
+													"application/json", "application/x-www-form-urlencoded"
+												]
+											},
+											"schema":       {
+												"description": "Contatins a schema which defines the acceptable structure of the submitted request.  For a GET request, this schema would define the properties for the query string and for a POST request, this would define the body.",
+												"type":        "string",
+												"optional":    true
+											}
+										}
+									}
+								}
+							}
+						}
+					}
+				}
+			},
+			"resourceMessages":       {
+				"description": "resource Message contains the resource-specific processing results for resources being managed in the request.  A resource may have its processing reported as:  succeeded or failed.  It must be used to represent resource-specific messages.  In the case of a request managing multiple resources and resource-specific messages are to be returned, then this array will contain one object for each such resource of the request.",
+				"type":        "array",
+				"optional":    true,
+				"items":       {
+					"description": "Each object contains detailed information for a resource referenced in the original request.",
+					"type":        "object",
+					"optional":    false,
+					"properties":  {
+						"resourceMessageID":  {
+							"description": "An identifier for the instance of the resource message.",
+							"type":        "object",
+							"optional":    true,
+							"properties":  {
+								"idValue":          {
+									"description": "An ID.",
+									"type":        "string",
+									"optional":    true
+								},
+								"schemeName":       {
+									"description": "The type of ID.",
+									"type":        "string",
+									"optional":    true
+								},
+								"schemeAgencyName": {
+									"description": "The agency that issues the ID.",
+									"type":        "string",
+									"optional":    true
+								}
+							}
+						},
+						"resourceStatusCode": {
+							"description": "The processing results status code of the resource of the request.",
+							"type":        "object",
+							"optional":    true,
+							"properties":  {
+								"codeValue": {
+									"description": "The code for the related entity.",
+									"type":        "string",
+									"optional":    true,
+									"enum":        [ "succeeded", "failed", "warning" ]
+								},
+								"shortName": {
+									"description": "A short name or description for the associated code.",
+									"type":        "string",
+									"optional":    true
+								},
+								"longName":  {
+									"description": "A long name or description for the associated code.",
+									"type":        "string",
+									"optional":    true
+								}
+							}
+						},
+						"resourceLink":       {
+							"description": "The link of the request that generated this response.",
+							"id":          "requestResourceUri",
+							"type":        "object",
+							"optional":    true,
+							"properties":  {
+								"href":         {
+									"description": " The value of the href link description property is a template used to determine the target URI of the related resource.  The value of the instance property SHOULD be resolved as a URI-Reference per RFC 3986 [RFC3986] and MAY be a relative reference to a URI.",
+									"type":        "string",
+									"format":      "uri"
+								},
+								"rel":          {
+									"description": "Indicates the nature of the relationship of the related resource to the resource that generated this representation",
+									"type":        "string",
+									"enum":        [
+										"create", "describedby", "full", "root", "self", "up", "/adp/invoke", "related"
+									]
+								},
+								"title":        {
+									"description": "Defines a title for the link.  The value must be a string. User agents MAY use this title when presenting the link to the user.",
+									"type":        "string",
+									"optional":    true
+								},
+								"targetSchema": {
+									"description": "A schema that defines the expected structure of the JSON representation of the target of the link, if the target of the link is returned using JSON representation.",
+									"type":        "string",
+									"optional":    true
+								},
+								"mediaType":    {
+									"description": "The media type that the linked resource will return (Response)",
+									"type":        "string",
+									"optional":    true,
+									"default":     "application/json",
+									"enum":        [
+										"application/json", "text/html", "application/pdf", "image/jpeg", "image/gif"
+									]
+								},
+								"method":       {
+									"description": "Defines which method can be used to access the target resource.",
+									"type":        "string",
+									"optional":    true,
+									"enum":        [ "GET", "POST", "DELETE", "PUT" ]
+								},
+								"encType":      {
+									"description": "Indicates a query media type format that the server supports for querying or posting to the collection of instances at the target resource.  The query can be suffixed to the target URI to query the collection with property-based constraints on the resources that SHOULD be returned from the server or used to post data to the resource (depending on the method). (Request)",
+									"type":        "string",
+									"optional":    true,
+									"default":     "application/json",
+									"enum":        [ "application/json", "application/x-www-form-urlencoded" ]
+								},
+								"schema":       {
+									"description": "Contatins a schema which defines the acceptable structure of the submitted request.  For a GET request, this schema would define the properties for the query string and for a POST request, this would define the body.",
+									"type":        "string",
+									"optional":    true
+								}
+							}
+						},
+						"processMessages":    {
+							"description": "ProcessMessage is optional and contains processing information for either the request (at the ConfirmMessage level) or a resource being managed in the request (at the ResourceMessage level).  Most often there will be a single instance for an associated request or resource, but this structure allows for more than one if needed, for example, if multiple errors exist for a single resource. ",
+							"type":        "array",
+							"optional":    true,
+							"items":       {
+								"description": "Each object contains processing information for either the request (at the ConfirmMessage level) or a resource being managed in the request (at the ResourceMessage level).",
+								"type":        "object",
+								"optional":    false,
+								"properties":  {
+									"resourceMessageID":        {
+										"description": "DEPRECATED - Use processMessageID instead.  An identifier for the instance of the resource message.",
+										"type":        "object",
+										"optional":    true,
+										"properties":  {
+											"idValue":          {
+												"description": "An ID.",
+												"type":        "string",
+												"optional":    true
+											},
+											"schemeName":       {
+												"description": "The type of ID.",
+												"type":        "string",
+												"optional":    true
+											},
+											"schemeAgencyName": {
+												"description": "The agency that issues the ID.",
+												"type":        "string",
+												"optional":    true
+											}
+										}
+									},
+									"resourceStatusCode":       {
+										"description": "DEPRECATED - Use messageTypeCode instead. The processing results status code of the resource of the request.",
+										"type":        "object",
+										"optional":    true,
+										"properties":  {
+											"codeValue": {
+												"description": "The code for the related entity.",
+												"type":        "string",
+												"optional":    true,
+												"enum":        [ "succeeded", "failed", "warning" ]
+											},
+											"shortName": {
+												"description": "A short name or description for the associated code.",
+												"type":        "string",
+												"optional":    true
+											},
+											"longName":  {
+												"description": "A long name or description for the associated code.",
+												"type":        "string",
+												"optional":    true
+											}
+										}
+									},
+									"processMessageID":         {
+										"description": "An identifier for the instance of the process message.",
+										"type":        "object",
+										"optional":    true,
+										"properties":  {
+											"idValue":          {
+												"description": "An ID.",
+												"type":        "string",
+												"optional":    true
+											},
+											"schemeName":       {
+												"description": "The type of ID.",
+												"type":        "string",
+												"optional":    true
+											},
+											"schemeAgencyName": {
+												"description": "The agency that issues the ID.",
+												"type":        "string",
+												"optional":    true
+											}
+										}
+									},
+									"messageTypeCode":          {
+										"description": "Process Message instances may be of type: success, warning, error, or info.",
+										"type":        "object",
+										"optional":    true,
+										"properties":  {
+											"codeValue": {
+												"description": "The code for the related entity.",
+												"type":        "string",
+												"optional":    true,
+												"enum":        [ "success", "warning", "error", "info" ]
+											},
+											"shortName": {
+												"description": "A short name or description for the associated code.",
+												"type":        "string",
+												"optional":    true
+											},
+											"longName":  {
+												"description": "A long name or description for the associated code.",
+												"type":        "string",
+												"optional":    true
+											}
+										}
+									},
+									"sourceLocationExpression": {
+										"description": "Expression that provides the location (or source) of content in a message instance that is associated with a process message. Examples of expression languages include: XPath, XQuery, JSON Pointer.",
+										"type":        "string",
+										"optional":    true
+									},
+									"expressionLanguageCode":   {
+										"description": "Identifies the language used for expressions communicated in this message.",
+										"type":        "object",
+										"optional":    true,
+										"properties":  {
+											"codeValue": {
+												"description": "The code for the related entity.",
+												"type":        "string",
+												"optional":    true,
+												"enum":        [ "jPath" ]
+											},
+											"shortName": {
+												"description": "A short name or description for the associated code.",
+												"type":        "string",
+												"optional":    true
+											},
+											"longName":  {
+												"description": "A long name or description for the associated code.",
+												"type":        "string",
+												"optional":    true
+											}
+										}
+									},
+									"links":                    {
+										"description": "A link description object is used to describe link relations.  In the context of a schema, it defines the link relations of the instances of the schema, and can be parameterized by the instance values.  The link description format can be used on its own in regular (non-schema documents), and use of this format can be declared by referencing the normative link description schema as the the schema for the data structure that uses the links.",
+										"type":        "array",
+										"optional":    true,
+										"items":       {
+											"type":       "object",
+											"properties": {
+												"href":         {
+													"description": " The value of the href link description property is a template used to determine the target URI of the related resource.  The value of the instance property SHOULD be resolved as a URI-Reference per RFC 3986 [RFC3986] and MAY be a relative reference to a URI.",
+													"type":        "string",
+													"format":      "uri"
+												},
+												"rel":          {
+													"description": "Indicates the nature of the relationship of the related resource to the resource that generated this representation",
+													"type":        "string",
+													"enum":        [
+														"create", "describedby", "full", "root", "self", "up",
+														"/adp/invoke", "related"
+													]
+												},
+												"title":        {
+													"description": "Defines a title for the link.  The value must be a string. User agents MAY use this title when presenting the link to the user.",
+													"type":        "string",
+													"optional":    true
+												},
+												"targetSchema": {
+													"description": "A schema that defines the expected structure of the JSON representation of the target of the link, if the target of the link is returned using JSON representation.",
+													"type":        "string",
+													"optional":    true
+												},
+												"mediaType":    {
+													"description": "The media type that the linked resource will return (Response)",
+													"type":        "string",
+													"optional":    true,
+													"default":     "application/json",
+													"enum":        [
+														"application/json", "text/html", "application/pdf",
+														"image/jpeg", "image/gif"
+													]
+												},
+												"method":       {
+													"description": "Defines which method can be used to access the target resource.",
+													"type":        "string",
+													"optional":    true,
+													"enum":        [ "GET", "POST", "DELETE", "PUT" ]
+												},
+												"encType":      {
+													"description": "Indicates a query media type format that the server supports for querying or posting to the collection of instances at the target resource.  The query can be suffixed to the target URI to query the collection with property-based constraints on the resources that SHOULD be returned from the server or used to post data to the resource (depending on the method). (Request)",
+													"type":        "string",
+													"optional":    true,
+													"default":     "application/json",
+													"enum":        [
+														"application/json", "application/x-www-form-urlencoded"
+													]
+												},
+												"schema":       {
+													"description": "Contatins a schema which defines the acceptable structure of the submitted request.  For a GET request, this schema would define the properties for the query string and for a POST request, this would define the body.",
+													"type":        "string",
+													"optional":    true
+												}
+											}
+										}
+									},
+									"userMessage":              {
+										"description": "Message returned to the user",
+										"type":        "object",
+										"optional":    true,
+										"properties":  {
+											"codeValue":  {
+												"description": "The code associated with the message description.",
+												"type":        "string",
+												"optional":    true
+											},
+											"title":      {
+												"description": "Title of the message description.",
+												"type":        "string",
+												"optional":    true
+											},
+											"messageTxt": {
+												"description": "The value/content of the message description.",
+												"type":        "string",
+												"optional":    true
+											},
+											"links":      {
+												"description": "A link description object is used to describe link relations.  In the context of a schema, it defines the link relations of the instances of the schema, and can be parameterized by the instance values.  The link description format can be used on its own in regular (non-schema documents), and use of this format can be declared by referencing the normative link description schema as the the schema for the data structure that uses the links.",
+												"type":        "array",
+												"optional":    true,
+												"items":       {
+													"type":       "object",
+													"properties": {
+														"href":         {
+															"description": " The value of the href link description property is a template used to determine the target URI of the related resource.  The value of the instance property SHOULD be resolved as a URI-Reference per RFC 3986 [RFC3986] and MAY be a relative reference to a URI.",
+															"type":        "string",
+															"format":      "uri"
+														},
+														"rel":          {
+															"description": "Indicates the nature of the relationship of the related resource to the resource that generated this representation",
+															"type":        "string",
+															"enum":        [
+																"create", "describedby", "full", "root", "self", "up",
+																"/adp/invoke", "related"
+															]
+														},
+														"title":        {
+															"description": "Defines a title for the link.  The value must be a string. User agents MAY use this title when presenting the link to the user.",
+															"type":        "string",
+															"optional":    true
+														},
+														"targetSchema": {
+															"description": "A schema that defines the expected structure of the JSON representation of the target of the link, if the target of the link is returned using JSON representation.",
+															"type":        "string",
+															"optional":    true
+														},
+														"mediaType":    {
+															"description": "The media type that the linked resource will return (Response)",
+															"type":        "string",
+															"optional":    true,
+															"default":     "application/json",
+															"enum":        [
+																"application/json", "text/html", "application/pdf",
+																"image/jpeg", "image/gif"
+															]
+														},
+														"method":       {
+															"description": "Defines which method can be used to access the target resource.",
+															"type":        "string",
+															"optional":    true,
+															"enum":        [ "GET", "POST", "DELETE", "PUT" ]
+														},
+														"encType":      {
+															"description": "Indicates a query media type format that the server supports for querying or posting to the collection of instances at the target resource.  The query can be suffixed to the target URI to query the collection with property-based constraints on the resources that SHOULD be returned from the server or used to post data to the resource (depending on the method). (Request)",
+															"type":        "string",
+															"optional":    true,
+															"default":     "application/json",
+															"enum":        [
+																"application/json", "application/x-www-form-urlencoded"
+															]
+														},
+														"schema":       {
+															"description": "Contatins a schema which defines the acceptable structure of the submitted request.  For a GET request, this schema would define the properties for the query string and for a POST request, this would define the body.",
+															"type":        "string",
+															"optional":    true
+														}
+													}
+												}
+											}
+										}
+									},
+									"developerMessage":         {
+										"description": "Message returned to the user",
+										"type":        "object",
+										"optional":    true,
+										"properties":  {
+											"codeValue":  {
+												"description": "The code associated with the message description.",
+												"type":        "string",
+												"optional":    true
+											},
+											"title":      {
+												"description": "Title of the message description.",
+												"type":        "string",
+												"optional":    true
+											},
+											"messageTxt": {
+												"description": "The value/content of the message description.",
+												"type":        "string",
+												"optional":    true
+											},
+											"links":      {
+												"description": "A link description object is used to describe link relations.  In the context of a schema, it defines the link relations of the instances of the schema, and can be parameterized by the instance values.  The link description format can be used on its own in regular (non-schema documents), and use of this format can be declared by referencing the normative link description schema as the the schema for the data structure that uses the links.",
+												"type":        "array",
+												"optional":    true,
+												"items":       {
+													"type":       "object",
+													"properties": {
+														"href":         {
+															"description": " The value of the href link description property is a template used to determine the target URI of the related resource.  The value of the instance property SHOULD be resolved as a URI-Reference per RFC 3986 [RFC3986] and MAY be a relative reference to a URI.",
+															"type":        "string",
+															"format":      "uri"
+														},
+														"rel":          {
+															"description": "Indicates the nature of the relationship of the related resource to the resource that generated this representation",
+															"type":        "string",
+															"enum":        [
+																"create", "describedby", "full", "root", "self", "up",
+																"/adp/invoke", "related"
+															]
+														},
+														"title":        {
+															"description": "Defines a title for the link.  The value must be a string. User agents MAY use this title when presenting the link to the user.",
+															"type":        "string",
+															"optional":    true
+														},
+														"targetSchema": {
+															"description": "A schema that defines the expected structure of the JSON representation of the target of the link, if the target of the link is returned using JSON representation.",
+															"type":        "string",
+															"optional":    true
+														},
+														"mediaType":    {
+															"description": "The media type that the linked resource will return (Response)",
+															"type":        "string",
+															"optional":    true,
+															"default":     "application/json",
+															"enum":        [
+																"application/json", "text/html", "application/pdf",
+																"image/jpeg", "image/gif"
+															]
+														},
+														"method":       {
+															"description": "Defines which method can be used to access the target resource.",
+															"type":        "string",
+															"optional":    true,
+															"enum":        [ "GET", "POST", "DELETE", "PUT" ]
+														},
+														"encType":      {
+															"description": "Indicates a query media type format that the server supports for querying or posting to the collection of instances at the target resource.  The query can be suffixed to the target URI to query the collection with property-based constraints on the resources that SHOULD be returned from the server or used to post data to the resource (depending on the method). (Request)",
+															"type":        "string",
+															"optional":    true,
+															"default":     "application/json",
+															"enum":        [
+																"application/json", "application/x-www-form-urlencoded"
+															]
+														},
+														"schema":       {
+															"description": "Contatins a schema which defines the acceptable structure of the submitted request.  For a GET request, this schema would define the properties for the query string and for a POST request, this would define the body.",
+															"type":        "string",
+															"optional":    true
+														}
+													}
+												}
+											}
+										}
+									}
+								}
+							}
+						}
+					}
+				}
+			}
+		}
+	}
+}
