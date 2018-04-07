@@ -42,7 +42,7 @@ import static org.nexial.core.NexialConst.*;
 import static org.nexial.core.excel.ext.CipherHelper.CRYPT_IND;
 
 /**
- * Contains utility methods for dealing with Encryption.
+ * Contain utility methods for dealing with Encryption.
  */
 public class EncryptionUtility {
     private static final String NEW_LINE_SEPARATOR = "\n";

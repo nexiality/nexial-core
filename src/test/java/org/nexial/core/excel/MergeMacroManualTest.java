@@ -25,6 +25,7 @@ import java.util.List;
 import java.util.Map;
 
 import org.apache.commons.collections4.CollectionUtils;
+import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.poi.xssf.usermodel.XSSFCell;
 import org.apache.poi.xssf.usermodel.XSSFRow;
@@ -49,7 +50,7 @@ public class MergeMacroManualTest {
         "" + COL_TEST_CASE + (ADDR_COMMAND_START.getRowStartIndex() + 1) + ":" + COL_REASON;
     private static final String TEST_COMMAND_MACRO = "base.macro(file,sheet,name)";
 
-    private File testSheetFile = new File(ResourceUtils.getResourceFilePath("/org/nexial/core/excel/MacroTest.xlsx"));
+    private File testSheetFile;
 
     class MacroMerger {
         private Map<String, List<List<String>>> parsedMacroSteps = new HashMap<>();
@@ -80,7 +81,8 @@ public class MergeMacroManualTest {
         }
 
         protected void scanTestSteps(Worksheet sheet, List<List<String>> allTestSteps) throws IOException {
-            for (int i = 0; i < allTestSteps.size(); i++) {
+            int totalSteps = allTestSteps.size();
+            for (int i = 0; i < totalSteps; i++) {
                 List<String> row = allTestSteps.get(i);
                 String activityName = row.get(COL_IDX_TESTCASE);
                 String cellTarget = row.get(COL_IDX_TARGET);
@@ -112,7 +114,8 @@ public class MergeMacroManualTest {
                             macroStep.add(0, j == 0 ? activityName : "");
                             allTestSteps.add(i + j, macroStep);
                         }
-                        i += macroSteps.size();
+                        i += macroSteps.size() - 1;
+                        totalSteps = allTestSteps.size();
                     }
                 }
             }
@@ -224,6 +227,10 @@ public class MergeMacroManualTest {
     @Before
     public void init() throws Exception {
         //NexialTestUtils.cleanupPastRemant(MergeMacroManualTest.class, );
+
+        File origTestFile = new File(ResourceUtils.getResourceFilePath("/org/nexial/core/excel/MacroTest.xlsx"));
+        testSheetFile = new File(StringUtils.replace(origTestFile.getAbsolutePath(), "MacroTest", "MacroTest2"));
+        FileUtils.copyFile(origTestFile, testSheetFile);
     }
 
     @Test

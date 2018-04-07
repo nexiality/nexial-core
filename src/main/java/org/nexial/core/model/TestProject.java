@@ -24,12 +24,11 @@ import java.util.Set;
 
 import org.apache.commons.collections4.MapUtils;
 import org.apache.commons.lang3.StringUtils;
-
 import org.nexial.commons.utils.TextUtils;
 
+import static java.io.File.separator;
 import static org.nexial.core.NexialConst.OPT_PROJECT_BASE;
 import static org.nexial.core.NexialConst.Project.*;
-import static java.io.File.separator;
 
 /**
  * object representation of the standard Nexial project structure.
@@ -49,13 +48,6 @@ public class TestProject {
     private String projectProps;
 
     public TestProject() { nexialHome = new File(System.getProperty(NEXIAL_HOME)); }
-
-    // public static TestProject newInstanceViaPlan(File planFile) {
-    //     return newInstance(planFile, DEF_REL_LOC_TEST_PLAN);
-    // }
-    // public static TestProject newInstance(File inputFile) {
-    //     return newInstance(inputFile, DEF_REL_LOC_TEST_SCRIPT);
-    // }
 
     public static TestProject newInstance(File inputFile, String relativePath) {
         String inputFullPath = inputFile.getAbsolutePath();

@@ -77,22 +77,22 @@ public class SecretBeanGenerator implements BeanFactoryAware {
                 fileContent = getDefaultFileContent();
             }
 
-            if (StringUtils.isBlank(fileContent)) { return; }
+            if (StringUtils.isNotBlank(fileContent)) {
+                final Map<String, String> secrets = EncryptionUtility.retrieveEncryptedSecrets(fileContent);
 
-            final Map<String, String> secrets = EncryptionUtility.retrieveEncryptedSecrets(fileContent);
+                // preference of properties is given in the following order: -D parameters, secret beans, properties in
+                // the project.properties file and finally properties in the data file.
 
-            // preference of properties is given in the following order: -D parameters, secret beans, properties in
-            // the project.properties file and finally properties in the data file.
-
-            Set<String> keys = secrets.keySet();
-            if (!keys.isEmpty()) {
-                final ConfigurableBeanFactory configurableBeanFactory = (ConfigurableBeanFactory) beanFactory;
-                keys.forEach(property -> {
-                    configurableBeanFactory.registerSingleton(property, secrets.get(property));
-                    if (StringUtils.isBlank(System.getProperty(property))) {
-                        System.setProperty(property, secrets.get(property));
-                    }
-                });
+                Set<String> keys = secrets.keySet();
+                if (!keys.isEmpty()) {
+                    final ConfigurableBeanFactory configurableBeanFactory = (ConfigurableBeanFactory) beanFactory;
+                    keys.forEach(property -> {
+                        configurableBeanFactory.registerSingleton(property, secrets.get(property));
+                        if (StringUtils.isBlank(System.getProperty(property))) {
+                            System.setProperty(property, secrets.get(property));
+                        }
+                    });
+                }
             }
 
             Set<String> projectPropertyKeys = TestProject.listProjectPropertyKeys();

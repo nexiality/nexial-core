@@ -111,4 +111,10 @@ public class CheckUtils {
         if (!NumberUtils.isDigits(number)) { fail(message + ": " + ArrayUtils.toString(params)); }
         return true;
     }
+
+    public static boolean isInRange(double num, double lowerRange, double upperRange) {
+        return lowerRange < upperRange ?
+               (num >= lowerRange && num <= upperRange) :
+               (num >= upperRange && num <= lowerRange);
+    }
 }

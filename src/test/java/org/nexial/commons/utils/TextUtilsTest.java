@@ -30,8 +30,8 @@ import org.apache.commons.lang3.SystemUtils;
 import org.junit.Assert;
 import org.junit.Test;
 
-import static org.nexial.core.NexialConst.DEF_FILE_ENCODING;
 import static java.io.File.separator;
+import static org.nexial.core.NexialConst.DEF_FILE_ENCODING;
 
 public class TextUtilsTest {
 
@@ -92,8 +92,13 @@ public class TextUtilsTest {
         Assert.assertEquals(actual.get(1), "b");
         Assert.assertEquals(actual.get(2), "c");
         Assert.assertEquals(actual.get(3), "d");
+    }
 
-        actual = TextUtils.toListPreserveTokens(fixture, ",", false);
+    @Test
+    public void toListPreserveTokens() {
+        String fixture = "a,,b,,c,d";
+
+        List<String> actual = TextUtils.toListPreserveTokens(fixture, ",", false);
         Assert.assertEquals(actual.size(), 6);
         Assert.assertEquals(actual.get(0), "a");
         Assert.assertEquals(actual.get(1), "");
@@ -101,6 +106,19 @@ public class TextUtilsTest {
         Assert.assertEquals(actual.get(3), "");
         Assert.assertEquals(actual.get(4), "c");
         Assert.assertEquals(actual.get(5), "d");
+    }
+
+    @Test
+    public void toListPreserveTokens_long_delim() {
+        String fixture = "Every~=~Time~=~You~=~Leave~=~Me";
+
+        List<String> actual = TextUtils.toListPreserveTokens(fixture, "~=~", false);
+        Assert.assertEquals(5, actual.size());
+        Assert.assertEquals("Every", actual.get(0));
+        Assert.assertEquals("Time", actual.get(1));
+        Assert.assertEquals("You", actual.get(2));
+        Assert.assertEquals("Leave", actual.get(3));
+        Assert.assertEquals("Me", actual.get(4));
     }
 
     @Test
@@ -382,12 +400,24 @@ public class TextUtilsTest {
         List<List<String>> twoDlist = TextUtils.to2dList(fixture, rowSeparator, delim);
         System.out.println("twoDlist = " + twoDlist);
         Assert.assertNotNull(twoDlist);
-        Assert.assertEquals("[VendorId, VendorCategory, VendorTypeCode, VendorStatus, VendorCode, VendorCompositeName, VendorPayee, VendorCompanyOrLastName, VendorFirstName, VendorAddressLine1, VendorAddressLine2, VendorCity, VendorState, VendorCountry, VendorPostalCode, VendorPhone1, VendorPhone2, VendorCell, VendorEmail, VendorSSN, VendorFEIN, VendorAddressLines1and2, VendorCityStateCountryZip, TinCompositeName, TinLastName, TinFirstName, TinAddressLine1, TinAddressLine2, TinCity, TinState, TinCountry, TinPostalCode, TinAddressLines1and2, TinCityStateCountryZip, TaxYear, TransMasterId, TransTypeCode, ProjectCode, GlProductionCode, TaxLocationCode, DocumentNumber, TransDetailDescription, EpisodeCode, LocationCode, AccountNumber, CostAccount, SetCode, FreeCode1, FreeCode2, FreeCode3, FreeCode4, Code1099, Code1099Desc, ConvertedTransDetailAmount]", twoDlist.get(0).toString());
-        Assert.assertEquals("[303, TIN Entity, LLCP, Complete For 1099 Processing, 303, 330 N. WABASH AVENUE LLC, 330 N. WABASH AVENUE LLC, 330 N. WABASH AVENUE LLC, , 330 N. WABASH STE 2325, , CHICAGO, IL, , 60611, 312-621-8553, , , , , 36-4243298, 330 N. WABASH STE 2325\\,, CHICAGO\\, IL  60611, 330 N WABASH AVENUE LLC, 330 N WABASH AVENUE LLC, , , , , , , , , , 2016, 1476, AP, OCP, , IL, CKREQ032916, 4.4 LOCATION FEE-DRESS PLAZA:STATE ST BRIDGE, , 02, 3836, 3836, 001, IE, , , , 01, Rents, 3\\,000.00]", twoDlist.get(1).toString());
-        Assert.assertEquals("[552, TIN Entity, LLCP, Complete For 1099 Processing, 552, A&M COLD STORAGE LLC, A&M COLD STORAGE LLC, A&M COLD STORAGE LLC, , PO BOX 1176, , SUWANEE, GA, , 30024, 404-276-2884, , , , , 20-8626653, PO BOX 1176\\,, SUWANEE\\, GA  30024, A&M COLD STORAGE LLC, A&M COLD STORAGE LLC, , , , , , , , , , 2016, 3348, AP, OCP, , GA, 6408, 0502-0531 FREEZER TRUCK RNTL, , 01, 2335, 2335, 145, GE, 12, , , 01, Rents, 1\\,579.00]", twoDlist.get(2).toString());
-        Assert.assertEquals("[407, TIN Entity, LLCSC, Complete For 1099 Processing, 407, ALL ABOUT PROPS LLC, ALL ABOUT PROPS LLC, ALL ABOUT PROPS LLC, , 4820 HAMMERMILL RD, SUITE H, TUCKER, GA, , 30084, , , , , , 06-1743580, 4820 HAMMERMILL RD\\, SUITE H, TUCKER\\, GA  30084, MORROW\\, TED, MORROW, TED, , , , , , , , , 2016, 4926, AP, OCP, , GA, 25851, 0411-0530 MAIL CART RNTL x2, , 01, 2335, 2335, 145, GE, 12, , , 01, Rents, 288.90]", twoDlist.get(3).toString());
-        Assert.assertEquals("[708, Individual, IND, Complete For 1099 Processing, 708, AMBARUS-HINSHAW\\, INGRID-AIDA, INGRID AIDA AMBARUS-HINSHAW, AMBARUS-HINSHAW, INGRID-AIDA, 1028 SANDERS AVE SE, , ATLANTA, GA, USA, 30316, 404-309-2166, , , , xxx-xx-1496, , 1028 SANDERS AVE SE\\,, ATLANTA\\, GA  30316  USA, AMBARUS-HINSHAW\\, INGRID AIDA, AMBARUS-HINSHAW, INGRID AIDA, , , , , , , , , 2016, 7238, AP, OCP, , GA, 1003-2016, 10/02 CLEANING OF THEATRE FOR PHOTO SHOOT, , 01, 0529, 0529, 002, , , , , 07, Nonemployee Compensation, 450.00]", twoDlist.get(4).toString());
-        Assert.assertEquals("[598, Individual, IND, Complete For 1099 Processing, 598, AMBURGEY\\, JILLIAN, JILLIAN AMBURGEY, AMBURGEY, JILLIAN, 765 ST. CHARLES AVE.\\, APT. #4, , ATLANTA, GA, , 30306, 407.701.8658, , , , xxx-xx-4950, , 765 ST. CHARLES AVE.\\, APT. #4\\,, ATLANTA\\, GA  30306, AMBURGEY\\, JILLIAN, AMBURGEY, JILLIAN, , , , , , , , , 2016, 5184, AP, OCP, , GA, 051816, 0510 SCRIPT TIMING SERVICES:YELLOW REVISION, , 01, 2013, 2013, , GE, 13, , , 07, Nonemployee Compensation, 750.00]", twoDlist.get(5).toString());
+        Assert.assertEquals(
+            "[VendorId, VendorCategory, VendorTypeCode, VendorStatus, VendorCode, VendorCompositeName, VendorPayee, VendorCompanyOrLastName, VendorFirstName, VendorAddressLine1, VendorAddressLine2, VendorCity, VendorState, VendorCountry, VendorPostalCode, VendorPhone1, VendorPhone2, VendorCell, VendorEmail, VendorSSN, VendorFEIN, VendorAddressLines1and2, VendorCityStateCountryZip, TinCompositeName, TinLastName, TinFirstName, TinAddressLine1, TinAddressLine2, TinCity, TinState, TinCountry, TinPostalCode, TinAddressLines1and2, TinCityStateCountryZip, TaxYear, TransMasterId, TransTypeCode, ProjectCode, GlProductionCode, TaxLocationCode, DocumentNumber, TransDetailDescription, EpisodeCode, LocationCode, AccountNumber, CostAccount, SetCode, FreeCode1, FreeCode2, FreeCode3, FreeCode4, Code1099, Code1099Desc, ConvertedTransDetailAmount]",
+            twoDlist.get(0).toString());
+        Assert.assertEquals(
+            "[303, TIN Entity, LLCP, Complete For 1099 Processing, 303, 330 N. WABASH AVENUE LLC, 330 N. WABASH AVENUE LLC, 330 N. WABASH AVENUE LLC, , 330 N. WABASH STE 2325, , CHICAGO, IL, , 60611, 312-621-8553, , , , , 36-4243298, 330 N. WABASH STE 2325\\,, CHICAGO\\, IL  60611, 330 N WABASH AVENUE LLC, 330 N WABASH AVENUE LLC, , , , , , , , , , 2016, 1476, AP, OCP, , IL, CKREQ032916, 4.4 LOCATION FEE-DRESS PLAZA:STATE ST BRIDGE, , 02, 3836, 3836, 001, IE, , , , 01, Rents, 3\\,000.00]",
+            twoDlist.get(1).toString());
+        Assert.assertEquals(
+            "[552, TIN Entity, LLCP, Complete For 1099 Processing, 552, A&M COLD STORAGE LLC, A&M COLD STORAGE LLC, A&M COLD STORAGE LLC, , PO BOX 1176, , SUWANEE, GA, , 30024, 404-276-2884, , , , , 20-8626653, PO BOX 1176\\,, SUWANEE\\, GA  30024, A&M COLD STORAGE LLC, A&M COLD STORAGE LLC, , , , , , , , , , 2016, 3348, AP, OCP, , GA, 6408, 0502-0531 FREEZER TRUCK RNTL, , 01, 2335, 2335, 145, GE, 12, , , 01, Rents, 1\\,579.00]",
+            twoDlist.get(2).toString());
+        Assert.assertEquals(
+            "[407, TIN Entity, LLCSC, Complete For 1099 Processing, 407, ALL ABOUT PROPS LLC, ALL ABOUT PROPS LLC, ALL ABOUT PROPS LLC, , 4820 HAMMERMILL RD, SUITE H, TUCKER, GA, , 30084, , , , , , 06-1743580, 4820 HAMMERMILL RD\\, SUITE H, TUCKER\\, GA  30084, MORROW\\, TED, MORROW, TED, , , , , , , , , 2016, 4926, AP, OCP, , GA, 25851, 0411-0530 MAIL CART RNTL x2, , 01, 2335, 2335, 145, GE, 12, , , 01, Rents, 288.90]",
+            twoDlist.get(3).toString());
+        Assert.assertEquals(
+            "[708, Individual, IND, Complete For 1099 Processing, 708, AMBARUS-HINSHAW\\, INGRID-AIDA, INGRID AIDA AMBARUS-HINSHAW, AMBARUS-HINSHAW, INGRID-AIDA, 1028 SANDERS AVE SE, , ATLANTA, GA, USA, 30316, 404-309-2166, , , , xxx-xx-1496, , 1028 SANDERS AVE SE\\,, ATLANTA\\, GA  30316  USA, AMBARUS-HINSHAW\\, INGRID AIDA, AMBARUS-HINSHAW, INGRID AIDA, , , , , , , , , 2016, 7238, AP, OCP, , GA, 1003-2016, 10/02 CLEANING OF THEATRE FOR PHOTO SHOOT, , 01, 0529, 0529, 002, , , , , 07, Nonemployee Compensation, 450.00]",
+            twoDlist.get(4).toString());
+        Assert.assertEquals(
+            "[598, Individual, IND, Complete For 1099 Processing, 598, AMBURGEY\\, JILLIAN, JILLIAN AMBURGEY, AMBURGEY, JILLIAN, 765 ST. CHARLES AVE.\\, APT. #4, , ATLANTA, GA, , 30306, 407.701.8658, , , , xxx-xx-4950, , 765 ST. CHARLES AVE.\\, APT. #4\\,, ATLANTA\\, GA  30306, AMBURGEY\\, JILLIAN, AMBURGEY, JILLIAN, , , , , , , , , 2016, 5184, AP, OCP, , GA, 051816, 0510 SCRIPT TIMING SERVICES:YELLOW REVISION, , 01, 2013, 2013, , GE, 13, , , 07, Nonemployee Compensation, 750.00]",
+            twoDlist.get(5).toString());
     }
 
     @Test
@@ -401,7 +431,8 @@ public class TextUtilsTest {
         List<List<String>> twoDlist = TextUtils.to2dList(fixture, rowSeparator, delim);
         System.out.println("twoDlist = " + twoDlist);
         Assert.assertNotNull(twoDlist);
-        Assert.assertEquals("[This, is, another, way, to, write, my, code\\,, albeit, it, sucks]", twoDlist.get(0).toString());
+        Assert.assertEquals("[This, is, another, way, to, write, my, code\\,, albeit, it, sucks]",
+                            twoDlist.get(0).toString());
         Assert.assertEquals("[Although, for, some, folks\\,, this, ain't, bad]", twoDlist.get(1).toString());
         Assert.assertEquals("[, or, wrong]", twoDlist.get(2).toString());
 
@@ -443,5 +474,20 @@ public class TextUtilsTest {
         Assert.assertEquals("", propMap.get("gotten"));
         Assert.assertEquals("${nexial.web.alwaysWait}", propMap.get("nexial.lenientStringCompare"));
 
+    }
+
+    @Test
+    public void removeExcessWhitespaces() throws Exception {
+        Assert.assertEquals("", TextUtils.removeExcessWhitespaces(null));
+        Assert.assertEquals("", TextUtils.removeExcessWhitespaces(""));
+        Assert.assertEquals(" ", TextUtils.removeExcessWhitespaces(" "));
+        Assert.assertEquals(" ", TextUtils.removeExcessWhitespaces("  "));
+        Assert.assertEquals(" ", TextUtils.removeExcessWhitespaces(" \t "));
+        Assert.assertEquals(" ", TextUtils.removeExcessWhitespaces(" \n \t  "));
+        Assert.assertEquals(" ", TextUtils.removeExcessWhitespaces("    \n\n     \t      \r     \r \n \t\r\t  "));
+        Assert.assertEquals(" This is a test ",
+                            TextUtils.removeExcessWhitespaces(" This is  \n   \r \r    a \t\t\t test         "));
+        Assert.assertEquals("This is a test ",
+                            TextUtils.removeExcessWhitespaces("This\nis\ra\ttest\n\n\n"));
     }
 }

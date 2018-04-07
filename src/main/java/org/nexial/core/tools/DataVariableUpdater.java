@@ -470,7 +470,7 @@ final public class DataVariableUpdater {
 
             StringBuilder replaced = new StringBuilder();
 
-            String[] lines = StringUtils.splitPreserveAllTokens(content, sep);
+            String[] lines = StringUtils.splitByWholeSeparatorPreserveAllTokens(content, sep);
             for (int i = 0; i < lines.length; i++) {
                 String line = lines[i];
                 UpdateLog updateLog = new UpdateLog(file).setPosition(StringUtils.leftPad(i + "", 3));
@@ -525,7 +525,7 @@ final public class DataVariableUpdater {
 
                 StringBuilder replaced = new StringBuilder();
 
-                String[] lines = StringUtils.splitPreserveAllTokens(content, sep);
+                String[] lines = StringUtils.splitByWholeSeparatorPreserveAllTokens(content, sep);
                 for (int i = 0; i < lines.length; i++) {
                     String line = lines[i];
                     UpdateLog updateLog = new UpdateLog(file).setPosition(StringUtils.leftPad(i + "", 3));

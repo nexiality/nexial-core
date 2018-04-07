@@ -30,13 +30,12 @@ import org.apache.commons.collections4.MapUtils;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang3.ArrayUtils;
 import org.apache.commons.lang3.StringUtils;
-
 import org.nexial.core.utils.ConsoleUtils;
 
-import static org.nexial.core.NexialConst.DEF_FILE_ENCODING;
 import static java.awt.event.KeyEvent.*;
 import static java.lang.Character.UnicodeBlock.SPECIALS;
 import static java.lang.System.lineSeparator;
+import static org.nexial.core.NexialConst.DEF_FILE_ENCODING;
 
 /**
  * @author Mike Liu
@@ -336,7 +335,7 @@ public final class TextUtils {
 
         List<String> list = new ArrayList<>();
 
-        String[] items = StringUtils.splitPreserveAllTokens(text, delim);
+        String[] items = StringUtils.splitByWholeSeparatorPreserveAllTokens(text, delim);
         for (String item : items) {
             if (trim) { item = StringUtils.trim(item); }
             list.add(item);
@@ -619,6 +618,23 @@ public final class TextUtils {
         if (start < 0) { return text; }
 
         return StringUtils.substring(text, 0, start) + StringUtils.substring(text, start + remove.length());
+    }
+
+    /**
+     * remove all extraneous whitespaces, including space, tab, newline, carriage return so that {@link text} would
+     * contain NO CONTIGUOUS whitespace.
+     *
+     * Note that this method will convert all whitespaces (non-printable) to space (ASCII 20), and remove space dups.
+     */
+    @NotNull
+    public static String removeExcessWhitespaces(String text) {
+        if (StringUtils.isEmpty(text)) { return ""; }
+        if (StringUtils.isBlank(text)) { return " "; }
+
+        text = StringUtils.replaceAll(text, "\\s+", " ");
+        text = StringUtils.replaceAll(text, "  ", " ");
+
+        return text;
     }
 
     public static String xpathFriendlyQuotes(String name) {

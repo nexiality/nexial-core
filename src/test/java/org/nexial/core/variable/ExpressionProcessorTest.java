@@ -388,10 +388,10 @@ public class ExpressionProcessorTest {
 
         // space much!?
         fixture = "[NUMBER(92) =>" +
-                         " add(44,   92,   71.23  ,   801.23,   -1092   )" +
-                         " minus(11    ,44.002)" +
-                         " multiply(15.01,      0.902)" +
-                         " divide( 5.0190 , 0.07092  )]";
+                  " add(44,   92,   71.23  ,   801.23,   -1092   )" +
+                  " minus(11    ,44.002)" +
+                  " multiply(15.01,      0.902)" +
+                  " divide( 5.0190 , 0.07092  )]";
         result = subject.process(fixture);
         Assert.assertEquals(expected, result);
     }
@@ -678,47 +678,51 @@ public class ExpressionProcessorTest {
     @Test
     public void processINI() throws Exception {
         ExpressionProcessor subject = new ExpressionProcessor(context);
-        String iniFile = ResourceUtils.getResourceFilePath(resourcePath + this.getClass().getSimpleName() + "5.ini");
 
-        String fixture = "[INI(" + iniFile + ") =>" +
+        // to avoid forceful recompile between tests, let's copy `iniFile` to another as test subject
+        String iniFile = ResourceUtils.getResourceFilePath(resourcePath + this.getClass().getSimpleName() + "5.ini");
+        String testFile = iniFile + "COPY";
+        FileUtils.copyFile(new File(iniFile), new File(testFile));
+
+        String fixture = "[INI(" + testFile + ") =>" +
                          " set(COMPANY_NAME,SERVER_NAME,server94a)" +
-                         " save(" + iniFile + ")" +
+                         " save(" + testFile + ")" +
                          " value(COMPANY_NAME,SERVER_NAME)" +
                          "]";
         Assert.assertEquals("server94a", subject.process(fixture));
 
-        Assert.assertEquals("mapi32.dll", subject.process("[INI(" + iniFile + ") => value(Mail,CMCDLLNAME32)]"));
+        Assert.assertEquals("mapi32.dll", subject.process("[INI(" + testFile + ") => value(Mail,CMCDLLNAME32)]"));
 
-        Assert.assertNotNull(subject.process("[INI(" + iniFile + ") => text]"));
+        Assert.assertNotNull(subject.process("[INI(" + testFile + ") => text]"));
 
-        System.out.println(subject.process("[INI(" + iniFile + ") => values(COMPANY_NAME)]"));
-        Assert.assertEquals("7", subject.process("[INI(" + iniFile + ") => values(COMPANY_NAME) length]"));
+        System.out.println(subject.process("[INI(" + testFile + ") => values(COMPANY_NAME)]"));
+        Assert.assertEquals("7", subject.process("[INI(" + testFile + ") => values(COMPANY_NAME) length]"));
 
-        fixture = "[INI(" + iniFile + ") => remove(PRODUCT_2345,*) save(" + iniFile + ")]";
+        fixture = "[INI(" + testFile + ") => remove(PRODUCT_2345,*) save(" + testFile + ")]";
         Assert.assertTrue(!subject.process(fixture).contains("PRODUCT_2345"));
 
         String newFile = ResourceUtils.getResourceFilePath(resourcePath + this.getClass().getSimpleName() + "6.ini");
-        fixture = "[INI(" + iniFile + ") => merge(" + newFile + ") save(" + iniFile + ")]";
+        fixture = "[INI(" + testFile + ") => merge(" + newFile + ") save(" + testFile + ")]";
         Assert.assertTrue(subject.process(fixture).contains("PRODUCT_2345"));
 
-        fixture = "[INI(" + iniFile + ") => merge([COMPANY_NAME]\n TEST=1234) save(" + iniFile + ")]";
+        fixture = "[INI(" + testFile + ") => merge([COMPANY_NAME]\n TEST=1234) save(" + testFile + ")]";
         Assert.assertTrue(subject.process(fixture).contains("TEST"));
 
-        fixture = "[INI(" + iniFile + ") => remove(PRODUCT_2345,*) save(" + iniFile + ")]";
+        fixture = "[INI(" + testFile + ") => remove(PRODUCT_2345,*) save(" + testFile + ")]";
         Assert.assertTrue(!subject.process(fixture).contains("PRODUCT_2345="));
 
-        fixture = "[INI(" + iniFile + ") => remove(COMPANY_NAME,NAME)" +
-                  "                         save(" + iniFile + ")" +
+        fixture = "[INI(" + testFile + ") => remove(COMPANY_NAME,NAME)" +
+                  "                         save(" + testFile + ")" +
                   "                         value(COMPANY_NAME,PROJECT)]";
         Assert.assertEquals("PROJECT_1234", subject.process(fixture));
 
-        fixture = "[INI(" + iniFile + ") => remove(COMPANY_NAME,TEST) save(" + iniFile + ")]";
+        fixture = "[INI(" + testFile + ") => remove(COMPANY_NAME,TEST) save(" + testFile + ")]";
         Assert.assertNotNull(subject.process(fixture));
 
-        fixture = "[INI(" + iniFile + ") => remove(COMPANY_NAME,PROJECT) save(" + iniFile + ")]";
+        fixture = "[INI(" + testFile + ") => remove(COMPANY_NAME,PROJECT) save(" + testFile + ")]";
         Assert.assertNotNull(subject.process(fixture));
 
-        fixture = "[INI(" + iniFile + ") => newComment(Adding new comment here) save (" + iniFile + ") comment]";
+        fixture = "[INI(" + testFile + ") => newComment(Adding new comment here) save (" + testFile + ") comment]";
         Assert.assertTrue(subject.process(fixture).contains("Adding new comment here"));
 
         Assert.assertEquals("1234", subject.process("[INI([COMPANY_NAME]\n TEST=1234) => value(COMPANY_NAME,TEST)]"));

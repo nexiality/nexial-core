@@ -44,18 +44,18 @@ import static org.nexial.core.NexialConst.Project.*;
 
 public class DataVariableUpdaterTest {
     private String searchFrom = ResourceUtils.getResourceFilePath("/DataVariableUpdaterTest/");
-    private String searchReplace = "sentry.browser=CENTREE.browser;" +
-                                   "sentry.browserstack.browser=CENTREE.browserstack.browser;" +
-                                   "sentry.failFast=CENTREE.failFast;" +
-                                   "sentry.lenientStringCompare=CENTREE.compare.lenient;" +
-                                   "sentry.pollWaitMs=CENTREE.pollWaitMs;" +
-                                   "sentry.runID.prefix=CENTREE.runID.prefix;" +
-                                   "sentry.scope.fallbackToPrevious=CENTREE.iteration.fallbackToPrevious;" +
-                                   "sentry.scope.iteration=CENTREE.iteration;" +
-                                   "sentry.textDelim=CENTREE.textDelim;" +
-                                   "sentry.verbose=CENTREE.verbose;" +
-                                   "sentry.web.alwaysWait=CENTREE.web.alwaysWait;" +
-                                   "sentry.ws.digest.user=CENTREE.ws.digest.user;" +
+    private String searchReplace = "nexial.browser=CENTREE.browser;" +
+                                   "nexial.browserstack.browser=CENTREE.browserstack.browser;" +
+                                   "nexial.failFast=CENTREE.failFast;" +
+                                   "nexial.lenientStringCompare=CENTREE.compare.lenient;" +
+                                   "nexial.pollWaitMs=CENTREE.pollWaitMs;" +
+                                   "nexial.runID.prefix=CENTREE.runID.prefix;" +
+                                   "nexial.scope.fallbackToPrevious=CENTREE.iteration.fallbackToPrevious;" +
+                                   "nexial.scope.iteration=CENTREE.iteration;" +
+                                   "nexial.textDelim=CENTREE.textDelim;" +
+                                   "nexial.verbose=CENTREE.verbose;" +
+                                   "nexial.web.alwaysWait=CENTREE.web.alwaysWait;" +
+                                   "nexial.ws.digest.user=CENTREE.ws.digest.user;" +
 
                                    "mydata=mifdb;" +
                                    "mydata.treatNullAs=mifdb.treatNullAs;" +
@@ -310,35 +310,35 @@ public class DataVariableUpdaterTest {
 
         // matched cases
         Assert.assertEquals("store(CENTREE.browser)",
-                            updater.replaceVarsInKeywordWrapper("store(sentry.browser)", updateLog));
+                            updater.replaceVarsInKeywordWrapper("store(nexial.browser)", updateLog));
         Assert.assertEquals(1, updater.updated.size());
-        Assert.assertEquals("file1 [line1]: sentry.browser => CENTREE.browser",
+        Assert.assertEquals("file1 [line1]: nexial.browser => CENTREE.browser",
                             updater.updated.get(0).toString().trim());
         updater.updated.clear();
 
-        Assert.assertEquals("I'm gonna store(CENTREE.browser) as ${sentry.browser}",
-                            updater.replaceVarsInKeywordWrapper("I'm gonna store(sentry.browser) as ${sentry.browser}",
+        Assert.assertEquals("I'm gonna store(CENTREE.browser) as ${nexial.browser}",
+                            updater.replaceVarsInKeywordWrapper("I'm gonna store(nexial.browser) as ${nexial.browser}",
                                                                 updateLog));
         Assert.assertEquals(1, updater.updated.size());
-        Assert.assertEquals("file1 [line1]: sentry.browser => CENTREE.browser",
+        Assert.assertEquals("file1 [line1]: nexial.browser => CENTREE.browser",
                             updater.updated.get(0).toString().trim());
         updater.updated.clear();
 
-        Assert.assertEquals("I'll \n store(CENTREE.browser)\n as ${sentry.browser}",
-                            updater.replaceVarsInKeywordWrapper("I'll \n store(sentry.browser)\n as ${sentry.browser}",
+        Assert.assertEquals("I'll \n store(CENTREE.browser)\n as ${nexial.browser}",
+                            updater.replaceVarsInKeywordWrapper("I'll \n store(nexial.browser)\n as ${nexial.browser}",
                                                                 updateLog));
         Assert.assertEquals(1, updater.updated.size());
-        Assert.assertEquals("file1 [line1]: sentry.browser => CENTREE.browser",
+        Assert.assertEquals("file1 [line1]: nexial.browser => CENTREE.browser",
                             updater.updated.get(0).toString().trim());
         updater.updated.clear();
 
         Assert.assertEquals(
-            "I'll \n store(CENTREE.browser)\n as ${sentry.browser}, and then again store(CENTREE.browser)",
+            "I'll \n store(CENTREE.browser)\n as ${nexial.browser}, and then again store(CENTREE.browser)",
             updater.replaceVarsInKeywordWrapper(
-                "I'll \n store(sentry.browser)\n as ${sentry.browser}, and then again store(sentry.browser)",
+                "I'll \n store(nexial.browser)\n as ${nexial.browser}, and then again store(nexial.browser)",
                 updateLog));
         Assert.assertEquals(1, updater.updated.size());
-        Assert.assertEquals("file1 [line1]: sentry.browser => CENTREE.browser",
+        Assert.assertEquals("file1 [line1]: nexial.browser => CENTREE.browser",
                             updater.updated.get(0).toString().trim());
         updater.updated.clear();
     }
@@ -356,35 +356,35 @@ public class DataVariableUpdaterTest {
         Assert.assertNull(updater.replaceVarTokens("${CENTREE.browser}", updateLog));
 
         // matched cases
-        Assert.assertEquals("${CENTREE.browser}", updater.replaceVarTokens("${sentry.browser}", updateLog));
+        Assert.assertEquals("${CENTREE.browser}", updater.replaceVarTokens("${nexial.browser}", updateLog));
         Assert.assertEquals(1, updater.updated.size());
-        Assert.assertEquals("file1 [line1]: ${sentry.browser} => ${CENTREE.browser}",
+        Assert.assertEquals("file1 [line1]: ${nexial.browser} => ${CENTREE.browser}",
                             updater.updated.get(0).toString().trim());
         updater.updated.clear();
 
-        Assert.assertEquals("I'm gonna store(sentry.browser) as ${CENTREE.browser}",
-                            updater.replaceVarTokens("I'm gonna store(sentry.browser) as ${sentry.browser}",
+        Assert.assertEquals("I'm gonna store(nexial.browser) as ${CENTREE.browser}",
+                            updater.replaceVarTokens("I'm gonna store(nexial.browser) as ${nexial.browser}",
                                                      updateLog));
         Assert.assertEquals(1, updater.updated.size());
-        Assert.assertEquals("file1 [line1]: ${sentry.browser} => ${CENTREE.browser}",
+        Assert.assertEquals("file1 [line1]: ${nexial.browser} => ${CENTREE.browser}",
                             updater.updated.get(0).toString().trim());
         updater.updated.clear();
 
-        Assert.assertEquals("I'll \n store(sentry.browser)\n as ${CENTREE.browser}",
-                            updater.replaceVarTokens("I'll \n store(sentry.browser)\n as ${sentry.browser}",
+        Assert.assertEquals("I'll \n store(nexial.browser)\n as ${CENTREE.browser}",
+                            updater.replaceVarTokens("I'll \n store(nexial.browser)\n as ${nexial.browser}",
                                                      updateLog));
         Assert.assertEquals(1, updater.updated.size());
-        Assert.assertEquals("file1 [line1]: ${sentry.browser} => ${CENTREE.browser}",
+        Assert.assertEquals("file1 [line1]: ${nexial.browser} => ${CENTREE.browser}",
                             updater.updated.get(0).toString().trim());
         updater.updated.clear();
 
         Assert.assertEquals(
-            "I'll \n store(sentry.browser)\n as ${CENTREE.browser}, and then use it as ${CENTREE.browser}",
+            "I'll \n store(nexial.browser)\n as ${CENTREE.browser}, and then use it as ${CENTREE.browser}",
             updater.replaceVarTokens(
-                "I'll \n store(sentry.browser)\n as ${sentry.browser}, and then use it as ${sentry.browser}",
+                "I'll \n store(nexial.browser)\n as ${nexial.browser}, and then use it as ${nexial.browser}",
                 updateLog));
         Assert.assertEquals(1, updater.updated.size());
-        Assert.assertEquals("file1 [line1]: ${sentry.browser} => ${CENTREE.browser}",
+        Assert.assertEquals("file1 [line1]: ${nexial.browser} => ${CENTREE.browser}",
                             updater.updated.get(0).toString().trim());
         updater.updated.clear();
     }
