@@ -22,72 +22,72 @@ import org.junit.Test;
 import org.nexial.commons.utils.RegexUtils;
 
 public class NexialFilterTest {
+
     @Test
     public void regexParsing() {
         String regex = NexialFilterComparator.getRegexFilter();
         System.out.println("regex = " + regex);
 
-        Assert.assertEquals("[a, =, \"a\"]", RegexUtils.collectGroups("a = \"a\"", regex) + "");
-        Assert.assertEquals("[a, =, \"a\"]", RegexUtils.collectGroups("a = \"a\"", regex) + "");
-        Assert.assertEquals("[a, =, \"a\"]", RegexUtils.collectGroups("a   = \t\"a\"", regex) + "");
-        Assert.assertEquals("[yadf, =, \"a\"]", RegexUtils.collectGroups("yadf   = \t\"a\"", regex) + "");
-        Assert.assertEquals("[${my data}, =, \"a\"]",
-                            RegexUtils.collectGroups("${my data}   = \t\"a\"", regex) + "");
+        Assert.assertEquals("[a,  = , \"a\"]", RegexUtils.collectGroups("a = \"a\"", regex) + "");
+        Assert.assertEquals("[a,  = , \"a\"]", RegexUtils.collectGroups("a = \"a\"", regex) + "");
+        Assert.assertEquals("[a,  = , \"a\"]", RegexUtils.collectGroups("a   = \t\"a\"", regex) + "");
+        Assert.assertEquals("[yadf,  = , \"a\"]", RegexUtils.collectGroups("yadf   = \t\"a\"", regex) + "");
+        Assert.assertEquals("[${my data},  = , \"a\"]", RegexUtils.collectGroups("${my data}   = \t\"a\"", regex) + "");
 
-        Assert.assertEquals("[a, !=, \"a\"]", RegexUtils.collectGroups("a != \"a\"", regex) + "");
-        Assert.assertEquals("[a, !=, \"a\"]", RegexUtils.collectGroups("a !=  \"a\"", regex) + "");
+        Assert.assertEquals("[a,  != , \"a\"]", RegexUtils.collectGroups("a != \"a\"", regex) + "");
+        Assert.assertEquals("[a,  != , \"a\"]", RegexUtils.collectGroups("a !=  \"a\"", regex) + "");
 
-        Assert.assertEquals("[a, >, \"a\"]", RegexUtils.collectGroups("a > \"a\"", regex) + "");
-        Assert.assertEquals("[abc, >, \"a\"]", RegexUtils.collectGroups("abc > \"a\"", regex) + "");
+        Assert.assertEquals("[a,  > , \"a\"]", RegexUtils.collectGroups("a > \"a\"", regex) + "");
+        Assert.assertEquals("[abc,  > , \"a\"]", RegexUtils.collectGroups("abc > \"a\"", regex) + "");
 
-        Assert.assertEquals("[a, >=, \"a\"]", RegexUtils.collectGroups("a >= \"a\"", regex) + "");
-        Assert.assertEquals("[a, <, \"a\"]", RegexUtils.collectGroups("a < \"a\"", regex) + "");
+        Assert.assertEquals("[a,  >= , \"a\"]", RegexUtils.collectGroups("a >= \"a\"", regex) + "");
+        Assert.assertEquals("[a,  < , \"a\"]", RegexUtils.collectGroups("a < \"a\"", regex) + "");
 
-        Assert.assertEquals("[a, <=, \"a\"]", RegexUtils.collectGroups("a <= \"a\"", regex) + "");
+        Assert.assertEquals("[a,  <= , \"a\"]", RegexUtils.collectGroups("a <= \"a\"", regex) + "");
         // input a < = "a" is wrong since "< =" is not "<="
-        Assert.assertEquals("[a, <, = \"a\"]", RegexUtils.collectGroups("a < = \"a\"", regex) + ""); // wrong input
+        Assert.assertEquals("[a,  < , = \"a\"]", RegexUtils.collectGroups("a < = \"a\"", regex) + ""); // wrong input
 
-        Assert.assertEquals("[a, is, \"a\"]", RegexUtils.collectGroups("a is \"a\"", regex) + "");
-        Assert.assertEquals("[a, is, \"a\"]", RegexUtils.collectGroups("a is \"a\"", regex) + "");
-        Assert.assertEquals("[is, is, \"a\"]", RegexUtils.collectGroups("is is \"a\"", regex) + "");
-        Assert.assertEquals("[is not, is, \"a\"]", RegexUtils.collectGroups("is not is \"a\"", regex) + "");
-        Assert.assertEquals("[contain, is, match]", RegexUtils.collectGroups("contain is match", regex) + "");
+        Assert.assertEquals("[a,  is , \"a\"]", RegexUtils.collectGroups("a is \"a\"", regex) + "");
+        Assert.assertEquals("[a,  is , \"a\"]", RegexUtils.collectGroups("a is \"a\"", regex) + "");
+        Assert.assertEquals("[is,  is , \"a\"]", RegexUtils.collectGroups("is is \"a\"", regex) + "");
+        Assert.assertEquals("[is not,  is , \"a\"]", RegexUtils.collectGroups("is not is \"a\"", regex) + "");
+        Assert.assertEquals("[contain,  is , match]", RegexUtils.collectGroups("contain is match", regex) + "");
 
-        Assert.assertEquals("[he, is not, me]", RegexUtils.collectGroups("he is not me", regex) + "");
-        Assert.assertEquals("[x, is not, [a,b,c]]", RegexUtils.collectGroups("x is not [a,b,c]", regex) + "");
+        Assert.assertEquals("[he,  is not , me]", RegexUtils.collectGroups("he is not me", regex) + "");
+        Assert.assertEquals("[x,  is not , [a,b,c]]", RegexUtils.collectGroups("x is not [a,b,c]", regex) + "");
 
-        Assert.assertEquals("[<abc>, in, [a,b]]", RegexUtils.collectGroups("<abc> in [a,b]", regex) + "");
+        Assert.assertEquals("[<abc>,  in , [a,b]]", RegexUtils.collectGroups("<abc> in [a,b]", regex) + "");
 
-        Assert.assertEquals("[c, not in, [a,b]]", RegexUtils.collectGroups("c not in [a,b]", regex) + "");
-        Assert.assertEquals("[in or, not in, [a,b]]", RegexUtils.collectGroups("in or not in [a,b]", regex) + "");
+        Assert.assertEquals("[c,  not in , [a,b]]", RegexUtils.collectGroups("c not in [a,b]", regex) + "");
+        Assert.assertEquals("[in or,  not in , [a,b]]", RegexUtils.collectGroups("in or not in [a,b]", regex) + "");
 
         // input: a in or not in [a,b] is wrong/confusing. parser can't figure out which of "in" or "not in" to use
         // workaround is to wrap "subject" with double quotes: "a in or" not in [a,b]
         // eg: can't be done
-        Assert.assertEquals("[a, in, or not in [a,b]]", RegexUtils.collectGroups("a in or not in [a,b]", regex) + "");
+        Assert.assertEquals("[a,  in , or not in [a,b]]", RegexUtils.collectGroups("a in or not in [a,b]", regex) + "");
         // eg: alternate
-        Assert.assertEquals("[\"a in or\", not in, [a,b]]",
+        Assert.assertEquals("[\"a in or\",  not in , [a,b]]",
                             RegexUtils.collectGroups("\"a in or\" not in [a,b]", regex) + "");
 
-        Assert.assertEquals("[8, between, [5,15]]", RegexUtils.collectGroups("8 between [5,15]", regex) + "");
+        Assert.assertEquals("[8,  between , [5,15]]", RegexUtils.collectGroups("8 between [5,15]", regex) + "");
         // wrong controls, but Filter class will handle it after parser
-        Assert.assertEquals("[a, between, [5,15,20]]", RegexUtils.collectGroups("a between [5,15,20]", regex) + "");
+        Assert.assertEquals("[a,  between , [5,15,20]]", RegexUtils.collectGroups("a between [5,15,20]", regex) + "");
 
-        Assert.assertEquals("[does my list, contain, data?]",
+        Assert.assertEquals("[does my list,  contain , data?]",
                             RegexUtils.collectGroups("does my list contain data?", regex) + "");
-        Assert.assertEquals("[${does my list}, contain, data?]",
+        Assert.assertEquals("[${does my list},  contain , data?]",
                             RegexUtils.collectGroups("${does my list} contain data?", regex) + "");
 
-        Assert.assertEquals("[I can, start with, this task]",
+        Assert.assertEquals("[I can,  start with , this task]",
                             RegexUtils.collectGroups("I can start with this task", regex) + "");
-        Assert.assertEquals("[abc, start with, ab]", RegexUtils.collectGroups("abc start with ab", regex) + "");
+        Assert.assertEquals("[abc,  start with , ab]", RegexUtils.collectGroups("abc start with ab", regex) + "");
 
         // between|contain|start with|end with|match)
-        Assert.assertEquals("[a, end with, a]", RegexUtils.collectGroups("a end with a", regex) + "");
-        Assert.assertEquals("[chopper, end with, per]", RegexUtils.collectGroups("chopper end with per", regex) + "");
+        Assert.assertEquals("[a,  end with , a]", RegexUtils.collectGroups("a end with a", regex) + "");
+        Assert.assertEquals("[chopper,  end with , per]", RegexUtils.collectGroups("chopper end with per", regex) + "");
 
-        Assert.assertEquals("[chopper, match, .+]", RegexUtils.collectGroups("chopper match .+", regex) + "");
-        Assert.assertEquals("[match maker, match, .*match.+r]",
+        Assert.assertEquals("[chopper,  match , .+]", RegexUtils.collectGroups("chopper match .+", regex) + "");
+        Assert.assertEquals("[match maker,  match , .*match.+r]",
                             RegexUtils.collectGroups("match maker match .*match.+r", regex) + "");
     }
 
@@ -200,7 +200,7 @@ public class NexialFilterTest {
             // expected
         }
 
-        // Contains("contain")
+        // Contain("contain")
         Assert.assertTrue(NexialFilter.newInstance("x contain  the time").isMatch("now is the time"));
         Assert.assertTrue(NexialFilter.newInstance("x contain the time").isMatch("now is the time"));
         Assert.assertTrue(NexialFilter.newInstance("x contain the time     ").isMatch("now is the time"));
@@ -225,4 +225,15 @@ public class NexialFilterTest {
         Assert.assertTrue(NexialFilter.newInstance("a match   ca.*o+.*rao.* ").isMatch("carpool karaoke"));
     }
 
+    @Test
+    public void parseChainedFilter() {
+
+        // Equal("="),
+        NexialFilter subject = NexialFilter.newInstance("x = \"a\" & y = x");
+        Assert.assertNotNull(subject);
+        // Assert.assertEquals(subject.getSubject());
+        // Assert.assertTrue(.isMatch("a"));
+
+
+    }
 }

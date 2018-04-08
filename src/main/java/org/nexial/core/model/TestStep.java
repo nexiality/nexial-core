@@ -373,7 +373,7 @@ public class TestStep extends TestStepManifest {
 
     protected void readFlowControlsCell(List<XSSFCell> row) {
         XSSFCell cell = row.get(COL_IDX_FLOW_CONTROLS);
-        setFlowControls(FlowControl.parseToMap(cell != null ? StringUtils.defaultString(cell.toString(), "") : ""));
+        setFlowControls(FlowControl.parse(cell != null ? StringUtils.defaultString(cell.toString(), "") : ""));
     }
 
     protected void readCaptureScreenCell(List<XSSFCell> row) {

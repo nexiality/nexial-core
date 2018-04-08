@@ -17,9 +17,6 @@
 
 package org.nexial.core.utils;
 
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.Map;
 
@@ -27,13 +24,10 @@ import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
-
 import org.nexial.core.model.*;
-import org.nexial.core.model.FlowControl.Condition;
 import org.nexial.core.model.FlowControl.Directive;
 
 import static org.nexial.core.model.FlowControl.Directive.*;
-import static org.nexial.core.model.NexialFilterComparator.Equal;
 import static org.nexial.core.model.NexialFilterComparator.NotEqual;
 
 public class FlowControlUtilsTest {
@@ -87,18 +81,14 @@ public class FlowControlUtilsTest {
 
     @Test
     public void checkSkipIf() {
-        Map<String, Condition> conditions = new HashMap<>();
-        conditions.put("${condition1}", new Condition(Equal, Collections.singletonList("banana")));
-        FlowControl flowControl = new FlowControl(SkipIf, conditions);
+        FlowControl flowControl = new FlowControl(SkipIf, new NexialFilterList("${condition1} = banana"));
         TestStep fixture = new DummyTestStep(SkipIf, flowControl);
 
         StepResult result = FlowControlUtils.checkSkipIf(context, fixture);
         Assert.assertNotNull(result);
         Assert.assertTrue(result.isSkipped());
 
-        conditions = new HashMap<>();
-        conditions.put("${condition1}", new Condition(Equal, Collections.singletonList("apple")));
-        flowControl = new FlowControl(SkipIf, conditions);
+        flowControl = new FlowControl(SkipIf, new NexialFilterList("${condition1} = apple"));
         fixture = new DummyTestStep(SkipIf, flowControl);
 
         result = FlowControlUtils.checkSkipIf(context, fixture);
@@ -114,14 +104,14 @@ public class FlowControlUtilsTest {
         FlowControl flowControl = flowControls.get(ProceedIf);
         Assert.assertNotNull(flowControl);
 
-        Map<String, Condition> conditions = flowControl.getConditions();
+        NexialFilterList conditions = flowControl.getConditions();
         Assert.assertNotNull(conditions);
         Assert.assertEquals(1, conditions.size());
 
         System.out.println("conditions = " + conditions);
-        Condition condition = conditions.get("${condition1}");
+        NexialFilter condition = conditions.get(0);
         Assert.assertNotNull(condition);
-        Assert.assertEquals(NotEqual, condition.getOperator());
+        Assert.assertEquals(NotEqual, condition.getComparator());
 
         TestStep fixture = new DummyTestStep(ProceedIf, flowControl);
 
@@ -129,9 +119,7 @@ public class FlowControlUtilsTest {
         Assert.assertNotNull(result);
         Assert.assertTrue(result.isSuccess());
 
-        conditions = new HashMap<>();
-        conditions.put("${condition1}", new Condition(Equal, Collections.singletonList("apple")));
-        flowControl = new FlowControl(ProceedIf, conditions);
+        flowControl = new FlowControl(ProceedIf, new NexialFilterList("${condition1} = apple"));
         fixture = new DummyTestStep(ProceedIf, flowControl);
 
         result = FlowControlUtils.checkProceedIf(context, fixture);
@@ -141,18 +129,13 @@ public class FlowControlUtilsTest {
 
     @Test
     public void checkFailIf() {
-        Map<String, Condition> conditions = new HashMap<>();
-        conditions.put("${condition2}",
-                       new Condition(Equal, Collections.singletonList("black")));
-        FlowControl flowControl = new FlowControl(FailIf, conditions);
+        FlowControl flowControl = new FlowControl(FailIf, new NexialFilterList("${condition2} start with black"));
         TestStep fixture = new DummyTestStep(FailIf, flowControl);
 
         StepResult result = FlowControlUtils.checkFailIf(context, fixture);
         Assert.assertNull(result);
 
-        conditions = new HashMap<>();
-        conditions.put("${condition2}", new Condition(Equal, Collections.singletonList("red")));
-        flowControl = new FlowControl(FailIf, conditions);
+        flowControl = new FlowControl(FailIf, new NexialFilterList("${condition2} end with red"));
         fixture = new DummyTestStep(FailIf, flowControl);
 
         result = FlowControlUtils.checkFailIf(context, fixture);
@@ -162,19 +145,14 @@ public class FlowControlUtilsTest {
 
     @Test
     public void checkEndIf() {
-        Map<String, Condition> conditions = new HashMap<>();
-        conditions.put("${condition3}", new Condition(NexialFilterComparator.Is, Arrays.asList("black", "coffee")));
-        FlowControl flowControl = new FlowControl(EndIf, conditions);
+        FlowControl flowControl = new FlowControl(EndIf, new NexialFilterList("${condition3} in [black|coffee]"));
         TestStep fixture = new DummyTestStep(EndIf, flowControl);
 
         StepResult result = FlowControlUtils.checkEndIf(context, fixture);
         Assert.assertNotNull(result);
         Assert.assertTrue(result.isSuccess());
 
-        conditions = new HashMap<>();
-        conditions.put("${condition2}", new Condition(Equal, Collections.singletonList("red")));
-        conditions.put("${condition3}", new Condition(Equal, Collections.singletonList("coffee")));
-        flowControl = new FlowControl(EndIf, conditions);
+        flowControl = new FlowControl(EndIf, new NexialFilterList("${condition2} = red & ${condition3} = coffee"));
         fixture = new DummyTestStep(EndIf, flowControl);
 
         result = FlowControlUtils.checkEndIf(context, fixture);

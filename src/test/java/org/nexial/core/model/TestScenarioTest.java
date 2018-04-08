@@ -19,6 +19,7 @@ package org.nexial.core.model;
 
 import java.io.File;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 
@@ -29,7 +30,6 @@ import org.junit.Test;
 import org.nexial.core.NexialTestUtils;
 import org.nexial.core.excel.Excel;
 import org.nexial.core.excel.Excel.Worksheet;
-import org.nexial.core.model.FlowControl.Condition;
 import org.nexial.core.model.FlowControl.Directive;
 
 import static org.nexial.core.model.FlowControl.Directive.EndIf;
@@ -96,7 +96,7 @@ public class TestScenarioTest {
         flowControls = testStep.getFlowControls();
         Assert.assertNotNull(flowControls);
         Assert.assertEquals(1, flowControls.size());
-        Assert.assertEquals("= yes", flowControls.get(SkipIf).getConditions().get("var1").toString());
+        Assert.assertEquals("var1 = yes", flowControls.get(SkipIf).getConditions().get(0).toString());
 
         testStep = testSteps.get(1);
         Assert.assertEquals("I say, I'm working! No more description!", testStep.getDescription());
@@ -123,15 +123,15 @@ public class TestScenarioTest {
         Assert.assertEquals("Here's what I'm doing: I'm running a test!", testStep.getDescription());
         Assert.assertEquals("base", testStep.getTarget());
         Assert.assertEquals("increment(var,amount)", testStep.getCommand());
-        Assert.assertEquals(Arrays.asList("${path3}"), testStep.getParams());
+        Assert.assertEquals(Collections.singletonList("${path3}"), testStep.getParams());
         Assert.assertFalse(testStep.isCaptureScreen());
 
         flowControls = testStep.getFlowControls();
         Assert.assertNotNull(flowControls);
         Assert.assertEquals(1, flowControls.size());
-        Map<String, Condition> conditions = flowControls.get(EndIf).getConditions();
-        Condition var1Condition = conditions.get("var1");
-        Assert.assertEquals("is [yes, no, maybe]", var1Condition.toString());
+        NexialFilterList conditions = flowControls.get(EndIf).getConditions();
+        NexialFilter var1Condition = conditions.get(0);
+        Assert.assertEquals("var1 is [yes|no|maybe]", var1Condition.toString());
 
         testStep = testSteps.get(2);
         Assert.assertEquals("And now, guess what: I'm running another test!", testStep.getDescription());

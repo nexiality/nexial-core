@@ -17,59 +17,83 @@
 
 package org.nexial.core.model;
 
-import java.util.Arrays;
-import java.util.HashMap;
-import java.util.Map;
+import java.util.*;
 
 import org.apache.commons.lang3.ArrayUtils;
 import org.apache.commons.lang3.StringUtils;
+import org.apache.commons.lang3.tuple.ImmutablePair;
+import org.apache.commons.lang3.tuple.Pair;
 import org.nexial.commons.utils.TextUtils;
-import org.nexial.core.utils.ConsoleUtils;
 
 import static org.nexial.core.NexialConst.FlowControls.IS_CLOSE_TAG;
 import static org.nexial.core.NexialConst.FlowControls.IS_OPEN_TAG;
 import static org.nexial.core.model.NexialFilter.ITEM_SEP;
+import static org.nexial.core.model.NexialFilterComparator.InternalMappings.COMPARATOR_ORDER;
 
 /** all possible ways to evaluate a filter */
 public enum NexialFilterComparator {
-    Equal("="),
-    NotEqual("!="),
+    GreaterOrEqual(" >= ", 1, Number.class, 1),
+    GreaterOrEqual_2(">=", 1, Number.class, 1.1),
+    Greater(" > ", 1, Number.class, 1.2),
+    Greater_2(">", 1, Number.class, 1.3),
+    LesserOrEqual(" <= ", 1, Number.class, 1.4),
+    LesserOrEqual_2("<=", 1, Number.class, 1.5),
+    Lesser(" < ", 1, Number.class, 1.6),
+    Lesser_2("<", 1, Number.class, 1.7),
+    NotEqual(" != ", 1, String.class, 1.8),
+    NotEqual_2("!=", 1, String.class, 1.9),
+    Equal(" = ", 1, String.class, 1.10),
+    Equal_2("=", 1, String.class, 1.11),
 
-    Greater(">"),
-    GreaterOrEqual(">="),
-    Lesser("<"),
-    LesserOrEqual("<="),
+    In(" in ", -1, String.class, 2),
+    NotIn(" not in ", -1, String.class, 2.1),
+    IsEmpty(" is empty", 0, null, 2.2),
+    IsNotEmpty(" is not empty", 0, null, 2.3),
+    IsNot(" is not ", -1, String.class, 2.4),
+    IsDefined(" is defined", 0, null, 2.5),
+    IsUndefined(" is undefined", 0, null, 2.6),
+    Is(" is ", -1, String.class, 2.7),
 
-    Is("is"),
-    IsNot("is not"),
-    NotIn("not in"),
-    In("in"),
+    Between(" between ", 2, Number.class, 3),
+    Contain(" contain ", -1, String.class, 3.1),
+    StartsWith(" start with ", 1, String.class, 3.2),
+    EndsWith(" end with ", 1, String.class, 3.3),
+    Match(" match ", 1, String.class, 3.4),
+    HasLengthOf(" has length of ", 1, Number.class, 3.5),
 
-    Between("between"),
-    Contains("contain"),
-    StartsWith("start with"),
-    EndsWith("end with"),
-    Match("match"),
+    Any(null, 0, null, 10);
 
-    Any(null);
-
-    // todo: "is empty", "is not found", "with length of.."
-
-    private static final String REGEX_CONTROLS = "(\".+?\"|.+?)";
+    private static final String REGEX_CONTROLS = "(\".+?\"|.+?)?";
     private static final String REGEX_FILTER = initRegexFilter();
+
     private String symbol;
+    private int expectedControlSize;
+    private Class expectedType;
+    private double order;
 
     interface InternalMappings {
         Map<String, NexialFilterComparator> COMPARATOR_MAP = new HashMap<>();
-
+        Map<Double, NexialFilterComparator> COMPARATOR_ORDER = new TreeMap<>();
     }
 
-    NexialFilterComparator(String symbol) {
+    NexialFilterComparator(String symbol, int expectedControlSize, Class expectedType, double order) {
         this.symbol = symbol;
-        if (symbol != null) { InternalMappings.COMPARATOR_MAP.put(symbol, this); }
+        this.expectedControlSize = expectedControlSize;
+        this.expectedType = expectedType;
+        this.order = order;
+        if (symbol != null) {
+            InternalMappings.COMPARATOR_MAP.put(symbol, this);
+            COMPARATOR_ORDER.put(order, this);
+        }
     }
 
     public String getSymbol() { return symbol; }
+
+    public int getExpectedControlSize() { return expectedControlSize; }
+
+    public Class getExpectedType() { return expectedType; }
+
+    public double getOrder() { return order; }
 
     public static NexialFilterComparator findComparator(String symbol) {
         return symbol == null ? Any : InternalMappings.COMPARATOR_MAP.get(symbol);
@@ -77,59 +101,59 @@ public enum NexialFilterComparator {
 
     public static String getRegexFilter() { return REGEX_FILTER; }
 
-    /**
-     * determine if the string presentation of {@code controls} is meaningful/usable for a given operator.
-     */
-    public boolean isValidControlValues(String controls) {
-        // any - don't care
-        if (symbol == null) { return true; }
+    public Pair<String, List<String>> formatControlValues(String controlText) throws IllegalArgumentException {
+        String errPrefix = "Invalid -  '" + this + "' on '" + controlText + "': ";
 
-        switch (this) {
-            case Equal:
-            case NotEqual:
-            case Match: {
-                return StringUtils.isNotBlank(controls);
-            }
+        int controlSize = this.getExpectedControlSize();
 
-            case Greater:
-            case GreaterOrEqual:
-            case Lesser:
-            case LesserOrEqual: {
-                return NexialFilter.canBeNumber(controls);
-            }
-
-            case StartsWith:
-            case EndsWith:
-            case Contains: {
-                // supports both single value or list
-                // either enclosed in [...] or not, cannot have dangling bracket
-                return StringUtils.isNotBlank(controls) &&
-                       StringUtils.startsWith(controls, IS_OPEN_TAG) ==
-                       StringUtils.endsWith(controls, IS_CLOSE_TAG);
-            }
-
-            case Is:
-            case In:
-            case IsNot:
-            case NotIn: {
-                return TextUtils.isBetween(controls, IS_OPEN_TAG, IS_CLOSE_TAG);
-            }
-
-            case Between: {
-                if (!TextUtils.isBetween(controls, IS_OPEN_TAG, IS_CLOSE_TAG)) { return false; }
-
-                controls = StringUtils.substringBetween(controls, IS_OPEN_TAG, IS_CLOSE_TAG);
-                String[] parts = StringUtils.split(controls, ITEM_SEP);
-                return ArrayUtils.getLength(parts) == 2 &&
-                       NexialFilter.canBeNumber(parts[0]) &&
-                       NexialFilter.canBeNumber(parts[1]);
-            }
-
-            default: {
-                ConsoleUtils.error("Invalid/unknown operator: " + this);
-                return false;
-            }
+        if (StringUtils.isBlank(controlText)) {
+            if (controlSize != 0) {throw new IllegalArgumentException(errPrefix + "empty/blank controls NOT expected");}
+            return new ImmutablePair<>("", new ArrayList<>());
         }
+
+        List<String> controlList = new ArrayList<>();
+
+        // could be 1
+        if (controlSize == 1) {
+            // we should check for type compatibility at this time since data variable might be in reference
+            // controlText = checkTypeCompatiblity(NexialFilter.normalizeCondition(controlText));
+            controlText = NexialFilter.normalizeCondition(controlText);
+            return new ImmutablePair<>(controlText, Collections.singletonList(controlText));
+        }
+
+        // could be 2 or -1 (any)
+        controlText = StringUtils.trim(controlText);
+        if (!TextUtils.isBetween(controlText, IS_OPEN_TAG, IS_CLOSE_TAG)) {
+            controlText = IS_OPEN_TAG + NexialFilter.normalizeCondition(controlText) + IS_CLOSE_TAG;
+        }
+
+        // parse into individual control
+        String[] controls =
+            StringUtils.split(StringUtils.substringBetween(controlText, IS_OPEN_TAG, IS_CLOSE_TAG), ITEM_SEP);
+        if (ArrayUtils.isEmpty(controls)) {
+            throw new IllegalArgumentException(errPrefix + "expects " + controlSize + " control(s)");
+        }
+
+        int parsedCount = controls.length;
+        if (controlSize == 2 && parsedCount != 2) {
+            throw new IllegalArgumentException(errPrefix + "expects " + controlSize + " control(s)");
+        }
+        // if controlSize == -1 then 1 or more is expected (1 is ok)
+
+        StringBuilder buffer = new StringBuilder(IS_OPEN_TAG);
+        Arrays.stream(controls).forEach(control -> {
+            // we should check for type compatibility at this time since data variable might be in reference
+            // String formatted = StringUtils.equals(StringUtils.trim(control), "\"\"") ?
+            //                    "\"\"" : checkTypeCompatiblity(NexialFilter.normalizeCondition(control));
+            String formatted = StringUtils.equals(StringUtils.trim(control), "\"\"") ?
+                               "\"\"" : NexialFilter.normalizeCondition(control);
+
+            // reformat control text to standard form
+            buffer.append(formatted).append(ITEM_SEP);
+            controlList.add(formatted);
+        });
+
+        return new ImmutablePair<>(StringUtils.removeEnd(buffer.toString(), ITEM_SEP) + IS_CLOSE_TAG, controlList);
     }
 
     private static String initRegexFilter() {
@@ -146,14 +170,15 @@ public enum NexialFilterComparator {
         replacements.put(">", "\\>");
 
         StringBuilder regexOperator = new StringBuilder("(");
-        Arrays.stream(NexialFilterComparator.values()).forEach(operator ->
-                                                                   regexOperator
-                                                                       .append(TextUtils.replace(operator.getSymbol(),
-                                                                                                 replacements))
-                                                                       .append("|"));
+        COMPARATOR_ORDER.values()
+                        .forEach(operator -> regexOperator.append(TextUtils.replace(operator.getSymbol(), replacements))
+                                                          .append("|"));
+
         String regexOps = StringUtils.removeEnd(regexOperator.toString(), "|") + ")";
         // hack: order is important. "is" must come after "is not"
-        regexOps = StringUtils.replace(regexOps, "is|is not", "is not|is");
+        regexOps = StringUtils.replace(regexOps,
+                                       Is.getSymbol() + "|" + IsNot.getSymbol(),
+                                       IsNot.getSymbol() + "|" + Is.getSymbol());
 
         // narrative:
         // - start with any spaces
@@ -163,6 +188,16 @@ public enum NexialFilterComparator {
         // - at least 1 space
         // - capture "controls"
         // - end with any space
-        return "^\\s*" + REGEX_CONTROLS + "\\s+" + regexOps + "\\s+" + REGEX_CONTROLS + "\\s*$";
+        return "^\\s*" + REGEX_CONTROLS + "\\s*" + regexOps + "\\s*" + REGEX_CONTROLS + "\\s*$";
+    }
+
+    private String checkTypeCompatiblity(String control) {
+        if (expectedType == Number.class) {
+            if (!NexialFilter.canBeNumber(control)) {
+                throw new IllegalArgumentException("Invalid -  '" + this + "' on '" + control + "': EXPECTS numeric");
+            }
+        }
+
+        return control;
     }
 }

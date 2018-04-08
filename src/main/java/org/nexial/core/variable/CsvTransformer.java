@@ -31,20 +31,20 @@ import org.apache.commons.lang3.BooleanUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.math.NumberUtils;
 import org.jdom2.Element;
-
 import org.nexial.commons.utils.TextUtils;
 import org.nexial.commons.utils.TextUtils.ListItemConverter;
 import org.nexial.core.ExecutionThread;
 import org.nexial.core.model.ExecutionContext;
 import org.nexial.core.model.NexialFilter;
 import org.nexial.core.utils.ConsoleUtils;
+
 import com.google.gson.JsonArray;
 import com.google.gson.JsonObject;
 import com.univocity.parsers.common.record.Record;
 
+import static java.lang.System.lineSeparator;
 import static org.nexial.core.model.NexialFilterComparator.Equal;
 import static org.nexial.core.variable.ExpressionUtils.fixControlChars;
-import static java.lang.System.lineSeparator;
 
 public class CsvTransformer<T extends CsvDataType> extends Transformer {
     private static final Map<String, Integer> FUNCTION_TO_PARAM = discoverFunctions(CsvTransformer.class);
@@ -236,16 +236,22 @@ public class CsvTransformer<T extends CsvDataType> extends Transformer {
         return data;
     }
 
-    public T removeColumns(T data, String columnNamesOrIndices) {
-        if (data == null || data.getValue() == null || StringUtils.isBlank(columnNamesOrIndices)) { return data; }
+    /**
+     * columnNamesOrIndices can be vararg, where each can be a pipe-delimited list.
+     */
+    public T removeColumns(T data, String... columnNamesOrIndices) {
+        if (data == null || data.getValue() == null || ArrayUtils.isEmpty(columnNamesOrIndices)) { return data; }
+
+        // treat varargs and pipe-delimited list evenly.
+        String[] toRemove = StringUtils.split(TextUtils.toString(columnNamesOrIndices, PAIR_DELIM, "", ""), PAIR_DELIM);
+        if (ArrayUtils.isEmpty(toRemove)) { return data; }
 
         List<Record> csvRecords = data.getValue();
 
-        String[] columnsToRemove = StringUtils.split(columnNamesOrIndices, PAIR_DELIM);
         Set<Integer> indicesToRemove = new TreeSet<>();
         int maxColumnIndex = data.getColumnCount() - 1;
 
-        Arrays.stream(columnsToRemove).forEach(column -> {
+        Arrays.stream(toRemove).forEach(column -> {
             if (NumberUtils.isDigits(column)) {
                 // expects numeric indices (zero-based)
                 if (!NumberUtils.isDigits(column)) {
@@ -868,11 +874,11 @@ public class CsvTransformer<T extends CsvDataType> extends Transformer {
     }
 
     protected static ListDataType recordToList(@NotNull Record record) {
-        return toListDataType(new ArrayList<>(Arrays.asList(record.getValues())), PAIR_DELIM);
+        return toListDataType(Arrays.asList(record.getValues()), PAIR_DELIM);
     }
 
     private static ListDataType toListDataType(@NotNull List<String> values, String delim) {
-        String[] array = values.toArray(new String[values.size()]);
+        String[] array = values.toArray(new String[0]);
         return new ListDataType(TextUtils.toString(array, delim, "", ""), delim);
     }
 

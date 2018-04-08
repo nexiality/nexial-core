@@ -81,9 +81,7 @@ public class NumberCommand extends BaseCommand {
         double actual = toDouble(num, "num");
         double lowerNum = toDouble(min, "min");
         double upperNum = toDouble(max, "max");
-        boolean asExpected = lowerNum < upperNum ?
-                             (actual >= lowerNum && actual <= upperNum) :
-                             (actual >= upperNum && actual <= lowerNum);
+        boolean asExpected = isInRange(actual, lowerNum, upperNum);
         return new StepResult(asExpected,
                                 num + " is" + (asExpected ? "" : " NOT") + " between " +
                                 min + " and " + max, null);

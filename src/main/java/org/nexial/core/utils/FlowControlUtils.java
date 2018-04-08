@@ -17,33 +17,21 @@
 
 package org.nexial.core.utils;
 
-import java.util.ArrayList;
-import java.util.List;
 import java.util.Map;
-import java.util.Map.Entry;
-import java.util.Set;
 
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.collections4.MapUtils;
 import org.apache.commons.lang3.StringUtils;
-import org.nexial.core.model.NexialFilterComparator;
-import org.nexial.core.model.StepResult;
+import org.nexial.core.model.*;
+import org.nexial.core.model.FlowControl.Directive;
+import org.nexial.core.plugins.desktop.DesktopNotification;
+import org.nexial.core.reports.JenkinsVariables;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import org.nexial.commons.utils.TextUtils;
-import org.nexial.core.model.ExecutionContext;
-import org.nexial.core.model.FlowControl;
-import org.nexial.core.model.FlowControl.Condition;
-import org.nexial.core.model.FlowControl.Directive;
-import org.nexial.core.model.TestStep;
-import org.nexial.core.plugins.desktop.DesktopNotification;
-import org.nexial.core.reports.JenkinsVariables;
-
-import static org.nexial.core.model.FlowControl.Condition.ANY;
+import static org.apache.commons.lang3.SystemUtils.IS_OS_WINDOWS;
 import static org.nexial.core.model.FlowControl.Directive.*;
 import static org.nexial.core.plugins.desktop.DesktopNotification.NotificationLevel.warn;
-import static org.apache.commons.lang3.SystemUtils.IS_OS_WINDOWS;
 
 public final class FlowControlUtils {
     private static final Logger LOGGER = LoggerFactory.getLogger(FlowControlUtils.class);
@@ -60,10 +48,7 @@ public final class FlowControlUtils {
             return;
         }
 
-        Map<Directive, FlowControl> flowControls = testStep.getFlowControls();
-        if (MapUtils.isEmpty(flowControls)) { return; }
-        FlowControl flowControl = flowControls.get(PauseBefore);
-        if (!isMatched(context, flowControl)) { return; }
+        if (!shouldPause(context, testStep, PauseBefore)) { return; }
 
         if (IS_OS_WINDOWS) {
             DesktopNotification.notifyNoAutoDismiss(warn,
@@ -71,16 +56,14 @@ public final class FlowControlUtils {
                                                     + "PRESS ENTER ON CONSOLE TO CONTINUE EXECUTION");
         }
 
-        ConsoleUtils.pause(context, msgPrefix + ", conditions: " + serializeDirectives(flowControl));
+        ConsoleUtils.pause(context, msgPrefix + ", conditions: " +
+                                    serializeDirectives(testStep.getFlowControls().get(PauseBefore)));
     }
 
     public static void checkPauseAfter(ExecutionContext context, TestStep testStep) {
         if (mustNotPause(context, testStep)) { return; }
 
-        Map<Directive, FlowControl> flowControls = testStep.getFlowControls();
-        if (MapUtils.isEmpty(flowControls)) { return; }
-        FlowControl flowControl = flowControls.get(PauseAfter);
-        if (!isMatched(context, flowControl)) { return; }
+        if (!shouldPause(context, testStep, PauseAfter)) { return; }
 
         if (IS_OS_WINDOWS) {
             DesktopNotification.notifyNoAutoDismiss(warn,
@@ -89,7 +72,16 @@ public final class FlowControlUtils {
         }
 
         ConsoleUtils.pause(context, "PAUSE AFTER EXECUTION - row " + (testStep.getRow().get(0).getRowIndex() + 1) +
-                                    ", conditions: " + serializeDirectives(flowControl));
+                                    ", conditions: " + serializeDirectives(testStep.getFlowControls().get(PauseAfter)));
+    }
+
+    public static boolean shouldPause(ExecutionContext context, TestStep testStep, Directive directive) {
+        if (testStep == null) { return false; }
+        Map<Directive, FlowControl> flowControls = testStep.getFlowControls();
+        if (MapUtils.isEmpty(flowControls)) { return false; }
+
+        FlowControl flowControl = flowControls.get(directive);
+        return isMatched(context, flowControl);
     }
 
     public static StepResult checkSkipIf(ExecutionContext context, TestStep testStep) {
@@ -120,7 +112,7 @@ public final class FlowControlUtils {
 
         FlowControl flowControl = flowControls.get(directive);
         if (directive == ProceedIf) {
-            if (flowControl == null || MapUtils.isEmpty(flowControl.getConditions())) { return null; }
+            if (flowControl == null || flowControl.hasNoCondition()) { return null; }
             return isMatched(context, flowControl) ?
                    StepResult.success("current step proceeds on") :
                    StepResult.skipped("current step skipped: " + serializeDirectives(flowControl));
@@ -159,24 +151,7 @@ public final class FlowControlUtils {
 
     private static String serializeDirectives(FlowControl flowControl) {
         StringBuilder buffer = new StringBuilder();
-        Map<String, Condition> conditions = flowControl.getConditions();
-        for (Entry<String, Condition> entry : conditions.entrySet()) {
-            buffer.append(TextUtils.wrapIfMissing(entry.getKey(), "\"", "\""));
-
-            Condition value = entry.getValue();
-            if (value == ANY) {
-                buffer.append(" MATCH ANY ");
-            } else {
-                buffer.append(" ").append(value.getOperator().getSymbol()).append(" ");
-                List<String> matchTo = value.getValues();
-                buffer.append(CollectionUtils.isEmpty(matchTo) ? " <EMPTY> " :
-                              CollectionUtils.size(matchTo) == 1 ?
-                              TextUtils.wrapIfMissing(matchTo.get(0), "\"", "\"") : matchTo.toString());
-            }
-
-            buffer.append(" & ");
-        }
-
+        flowControl.getConditions().forEach(filter -> buffer.append(filter.toString()).append(" & "));
         return StringUtils.removeEnd(buffer.toString(), " & ");
     }
 
@@ -188,68 +163,26 @@ public final class FlowControlUtils {
     }
 
     private static boolean isMatched(ExecutionContext context, FlowControl flowControl) {
-        if (context == null || flowControl == null || MapUtils.isEmpty(flowControl.getConditions())) {
+        if (context == null || flowControl == null || CollectionUtils.isEmpty(flowControl.getConditions())) {
             return false;
         }
 
-        Map<String, Condition> conditions = flowControl.getConditions();
+        Directive directive = flowControl.getDirective();
+        String msgPrefix = "evaluating flow control:\t" + directive;
 
-        // * condition means ALWAYS MATCHED --> meaning always pause
-        if (conditions.get("*") == ANY) { return true; }
+        NexialFilterList conditions = flowControl.getConditions();
 
-        Set<String> names = conditions.keySet();
-        for (String name : names) {
-            if (StringUtils.isBlank(name)) { continue; }
+        // * condition means ALWAYS MATCHED --> meaning always match
+        if (conditions.containsAny()) {
+            ConsoleUtils.log(msgPrefix + " found ANY - ALWAYS MATCH");
+            return true;
+        }
 
-            String actual = TextUtils.wrapIfMissing(context.replaceTokens(name), "\"", "\"");
-
-            Condition condition = conditions.get(name);
-            if (condition == null) {
-                ConsoleUtils.log("Invalid flow control specified: INVALID CONDITION");
-                return false;
-            }
-
-            NexialFilterComparator operator = condition.getOperator();
-
-            // for Is operator, we will defer the double-quote-wrap until isAtLeastOneMatched()
-            String expected = condition.getValues() == null ?
-                              "" :
-                              TextUtils.wrapIfMissing(context.replaceTokens(condition.getValues().get(0)), "\"", "\"");
-            ConsoleUtils.log("evaluating flow control:\t" + flowControl.getDirective().name() +
-                             "([" + actual + "] " + operator + "? [" + expected + "])");
-
-            switch (operator) {
-                case Any: {
-                    // always good
-                    return true;
-                }
-                case Is: {
-                    if (!isAtLeastOneMatched(actual, condition, context)) { return false; }
-                    break;
-                }
-                case Equal: {
-                    if (!StringUtils.equals(actual, expected)) { return false; }
-                    break;
-                }
-                case NotEqual: {
-                    if (StringUtils.equals(actual, expected)) { return false; }
-                    break;
-                }
-                default: {
-                    LOGGER.warn("Unsupport operator: " + operator);
-                    return false;
-                }
-            }
+        for (NexialFilter filter : conditions) {
+            String subject = filter.getSubject();
+            if (!StringUtils.isBlank(subject) && !filter.isMatch(context, msgPrefix)) { return false; }
         }
 
         return true;
-    }
-
-    private static boolean isAtLeastOneMatched(String actual, Condition condition, ExecutionContext context) {
-        List<String> matches = condition.getValues();
-        List<String> expected = new ArrayList<>();
-        matches.forEach(match -> expected.add(TextUtils.wrapIfMissing(context.replaceTokens(match), "\"", "\"")));
-
-        return StringUtils.isEmpty(actual) && expected.contains("\"\"") || expected.contains(actual);
     }
 }

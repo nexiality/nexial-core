@@ -17,23 +17,19 @@
 
 package org.nexial.core.model;
 
-import java.util.ArrayList;
-import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import org.apache.commons.collections4.CollectionUtils;
-import org.apache.commons.collections4.MapUtils;
-import org.apache.commons.lang3.StringUtils;
-import org.apache.commons.lang3.builder.ToStringBuilder;
+import javax.validation.constraints.NotNull;
 
+import org.apache.commons.collections4.CollectionUtils;
+import org.apache.commons.lang3.StringUtils;
 import org.nexial.commons.utils.RegexUtils;
 import org.nexial.core.utils.ConsoleUtils;
 
-import static org.nexial.core.NexialConst.FlowControls.*;
-import static org.nexial.core.model.FlowControl.Condition.ANY;
-import static org.nexial.core.model.NexialFilterComparator.*;
+import static org.nexial.core.NexialConst.FlowControls.REGEX_ARGS;
+import static org.nexial.core.model.NexialFilterComparator.Any;
 
 /**
  * Additional control over the associate test step.  Such control can be any of the following:
@@ -60,8 +56,9 @@ import static org.nexial.core.model.NexialFilterComparator.*;
  */
 public class FlowControl {
     public static final String REGEX_POSSIBLE_FLOW_CONTROLS = "(\\w+\\s*\\((?:.*?)\\))";
+
     private Directive directive;
-    private Map<String, Condition> conditions;
+    private NexialFilterList conditions;
 
     /**
      * list of all possition directive -- the control support by nexial over each test step.
@@ -82,38 +79,23 @@ public class FlowControl {
         public boolean isConditionRequired() { return conditionRequired; }
     }
 
-    public static class Condition {
-        public static final Condition ANY = new Condition(Any, null);
-        private NexialFilterComparator operator;
-        private List<String> values;
-
-        public Condition(NexialFilterComparator operator, List<String> values) {
-            this.operator = operator;
-            this.values = values;
-        }
-
-        public NexialFilterComparator getOperator() { return operator; }
-
-        public List<String> getValues() { return values; }
-
-        @Override
-        public String toString() {
-            return StringUtils.defaultString(operator.getSymbol(), "none")
-                   + (CollectionUtils.isEmpty(values) ?
-                      "" : " " + (CollectionUtils.size(values) == 1 ? values.get(0) : values.toString()));
-        }
-    }
-
-    public FlowControl(Directive directive, Map<String, Condition> conditions) {
+    /**
+     * it's like saying "create a flow control of specific kind (directrive) that is activated when all
+     * the conditions ({@link NexialFilterList}) are met".
+     */
+    public FlowControl(Directive directive, NexialFilterList conditions) {
         this.directive = directive;
         this.conditions = conditions;
     }
 
     public Directive getDirective() { return directive; }
 
-    public Map<String, Condition> getConditions() { return conditions; }
+    public NexialFilterList getConditions() { return conditions; }
 
-    public static Map<Directive, FlowControl> parseToMap(String flowControlText) {
+    public boolean hasNoCondition() { return CollectionUtils.isEmpty(conditions); }
+
+    @NotNull
+    public static Map<Directive, FlowControl> parse(String flowControlText) {
         if (StringUtils.isBlank(flowControlText)) { return null; }
 
         flowControlText = StringUtils.remove(StringUtils.trim(flowControlText), "\n");
@@ -124,111 +106,58 @@ public class FlowControl {
         if (StringUtils.isBlank(flowControlText)) { return map; }
 
         // otherwise let's make a prediction on how many flow controls there would be
-        List<String> flowControlGroups = RegexUtils.collectGroups(flowControlText, REGEX_POSSIBLE_FLOW_CONTROLS);
+        List<String> flowControlGroups =
+            RegexUtils.eagerCollectGroups(flowControlText, REGEX_POSSIBLE_FLOW_CONTROLS, false, false);
         if (CollectionUtils.isEmpty(flowControlGroups)) {
-            ConsoleUtils.error("Invalid flow controls found: " + flowControlText);
+            ConsoleUtils.error("Invalid flow controls found (and IGNORED): " + flowControlText);
             return map;
         }
 
         int expectedFlowControlGroup = flowControlGroups.size();
 
+        // only supports 1 instance of a directive per flow control cell
+        // if multiple condition per directive is needed, use `&` to chain conditions
         for (Directive d : Directive.values()) {
-            Map<String, Condition> conditions = parseFlowControl(flowControlText, d);
-            if (MapUtils.isEmpty(conditions)) { continue; }
+            NexialFilterList conditions = parseFlowControl(flowControlText, d);
+            if (CollectionUtils.isEmpty(conditions)) { continue; }
 
             map.put(d, new FlowControl(d, conditions));
         }
 
         if (expectedFlowControlGroup != map.size()) {
-            ConsoleUtils.error("Possibly invalid flow control found: " + flowControlText);
+            ConsoleUtils.error("Possibly invalid flow control found (and IGNORED): " + flowControlText);
         }
 
         return map;
     }
 
     @Override
-    public String toString() {
-        return new ToStringBuilder(this).append("directive", directive).append("conditions", conditions).toString();
-    }
+    public String toString() { return directive + " -> " + conditions; }
 
-    private static Map<String, Condition> parseFlowControl(String flowControls, Directive directive) {
+    @NotNull
+    private static NexialFilterList parseFlowControl(String flowControls, Directive directive) {
         // e.g. SkipIf ( blah... ) or PauseBefore()
-        String regex = ".*(" + directive.name() + REGEX_ARGS + ").*";
+        String regex = ".*(" + directive + REGEX_ARGS + ").*";
 
         // if there's no match, then returns empty map
-        if (!RegexUtils.isExact(flowControls, regex)) { return new HashMap<>(); }
+        if (!RegexUtils.isExact(flowControls, regex)) { return new NexialFilterList(); }
 
-        // .*(PauseBefore\s*\((.+?)\)).*
+        // e.g. .*(PauseBefore\s*\((.+?)\)).*
         String flowControl = RegexUtils.replace(flowControls, regex, "$1");
         String conditions = StringUtils.trim(RegexUtils.replace(flowControl, directive + REGEX_ARGS, "$1"));
 
-        Map<String, Condition> map = new HashMap<>();
-
         // if there's no condition, then returns empty map
         if (StringUtils.isBlank(conditions)) {
+            NexialFilterList filters = new NexialFilterList();
+
             // no condition specified means ALWAYS TRUE for Pause* directives
-            if (!directive.isConditionRequired()) { map.put("*", ANY); }
-            return map;
-        }
-
-        String[] pairs = StringUtils.split(conditions, DELIM_ARGS);
-        for (String pair : pairs) {
-            if (StringUtils.contains(pair, NotEqual.getSymbol())) {
-                addEqualityCondition(map, pair, NotEqual);
-            } else if (StringUtils.contains(pair, Equal.getSymbol())) {
-                addEqualityCondition(map, pair, Equal);
-            } else if (StringUtils.contains(pair, OPERATOR_IS_SYNTAX) ||
-                       StringUtils.contains(pair, OPERATOR_IS_SYNTAX2)) {
-                addInCondition(map, pair);
-            } else {
-                ConsoleUtils.error("Possibly incomplete/incorrect flow control found: " + pair);
-                map.put(pair, null);
+            if (!directive.isConditionRequired()) {
+                filters.add(new NexialFilter("*", Any, "*"));
             }
+
+            return filters;
         }
 
-        return map;
-    }
-
-    private static void addEqualityCondition(Map<String, Condition> map, String pair, NexialFilterComparator operator) {
-        String key = StringUtils.trim(StringUtils.substringBefore(pair, operator.getSymbol()));
-
-        // trim before store to compensate for lousy typist
-        String value = StringUtils.trim(StringUtils.substringAfter(pair, operator.getSymbol()));
-        List<String> values = Collections.singletonList(
-            StringUtils.defaultString(NexialFilter.normalizeCondition(value)));
-        map.put(key, new Condition(operator, values));
-    }
-
-    private static void addInCondition(Map<String, Condition> map, String pair) {
-        String key;
-        String value;
-        if (StringUtils.contains(pair, OPERATOR_IS_SYNTAX)) {
-            key = StringUtils.trim(StringUtils.substringBefore(pair, OPERATOR_IS_SYNTAX));
-            value = StringUtils.trim(StringUtils.substringAfter(pair, OPERATOR_IS + " "));
-        } else if (StringUtils.contains(pair, OPERATOR_IS_SYNTAX2)) {
-            key = StringUtils.trim(StringUtils.substringBefore(pair, OPERATOR_IS_SYNTAX2));
-            value = StringUtils.trim(StringUtils.substringAfter(pair, OPERATOR_IS));
-        } else {
-            ConsoleUtils.error("Unknown directive found/ignored: " + pair);
-            return;
-        }
-
-        // trim before store to compensate for lousy typist
-        value = StringUtils.trim(StringUtils.substringBetween(value, IS_OPEN_TAG, IS_CLOSE_TAG));
-
-        // temp. substitute for escaped double quotes
-        value = StringUtils.replace(value, "\\\"", "`");
-
-        // get substring between double quotes
-        List<String> conditionValues = new ArrayList<>();
-        String[] values = StringUtils.split(value, ",");
-        for (String v : values) {
-            // empty or spaces must be enclosed within quotes; any empty spaces between comma are ignored
-            if (StringUtils.isBlank(v)) { continue; }
-
-            conditionValues.add(NexialFilter.normalizeCondition(StringUtils.trim(v)));
-        }
-
-        map.put(key, new Condition(Is, conditionValues));
+        return new NexialFilterList(conditions);
     }
 }
