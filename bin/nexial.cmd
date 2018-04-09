@@ -5,8 +5,6 @@ REM ----------------------------------------------------------------------------
 REM JAVA_HOME           - home directory of a valid JDK installation (1.6 or above)
 REM PROJECT_HOME        - home directory of your project.
 REM NEXIAL_OUT          - the output directory
-REM FIREFOX_BIN         - the full path of firefox.exe
-REM NEXIAL_RUNMODE      - determine screen capture image strategy (local or server)
 REM --------------------------------------------------------------------------------
 
 REM setlocal enableextensions enabledelayedexpansion

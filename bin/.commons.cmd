@@ -6,7 +6,7 @@
 
 
 :init
-	REM # utilities to be invokved by other frontend scripts
+	REM # utilities to be invoked by other frontend scripts
 	set PROJECT_BASE=%SystemDrive%\projects
 	set NEXIAL_HOME=%~dp0..
 	set NEXIAL_LIB=%NEXIAL_HOME%\lib

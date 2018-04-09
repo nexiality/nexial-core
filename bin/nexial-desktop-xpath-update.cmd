@@ -10,6 +10,9 @@ REM NEXIAL_RUNMODE      - determine screen capture image strategy (local or serv
 REM --------------------------------------------------------------------------------
 
 setlocal enableextensions enabledelayedexpansion
+
+set NEXIAL_BIN=%~dp0
+
 call :init
 if NOT ERRORLEVEL 0 goto :exit
 
@@ -33,16 +36,16 @@ exit /b 0
 goto :eof
 
 :init
-	.commons.cmd %*
+	%NEXIAL_BIN%.commons.cmd %*
 
 :checkJava
-	.commons.cmd %*
+	%NEXIAL_BIN%.commons.cmd %*
 
 :title
-	.commons.cmd %*
+	%NEXIAL_BIN%.commons.cmd %*
 
 :resolveEnv
-	.commons.cmd %*
+	%NEXIAL_BIN%.commons.cmd %*
 
 :reportBadInputAndExit
 	echo.

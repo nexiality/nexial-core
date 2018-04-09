@@ -110,19 +110,19 @@ function title() {
 
 
 function resolveEnv() {
-	JAVA_VERSION=`echo "$(${JAVA} -version 2>&1)" | grep "java version" | awk '{ print substr($3, 2, length($3)-2); }'`
+		JAVA_VERSION=`echo "$(${JAVA} -version 2>&1)" | grep "java version" | awk '{ print substr($3, 2, length($3)-2); }'`
 
-	echo "» ENVIRONMENT: "
-	echo "  CURRENT TIME:   `date \"+%Y-%m-%d %H:%M%:%S\"`"
-	echo "  CURRENT USER:   ${USER}"
-	echo "  CURRENT HOST:   `hostname`"
-	echo "  JAVA:           ${JAVA}"
-	echo "  JAVA VERSION:   ${JAVA_VERSION}"
-	echo "  NEXIAL_HOME:    ${NEXIAL_HOME}"
-	echo "  NEXIAL_LIB:     ${NEXIAL_LIB}"
-	echo "  NEXIAL_CLASSES: ${NEXIAL_CLASSES}"
-	echo "  PROJECT_BASE:   ${PROJECT_BASE}"
-	if [ "${PROJECT_HOME}" != "" ]; then
-		echo "  PROJECT_HOME:   ${PROJECT_HOME}"
-	fi
+		echo "» ENVIRONMENT: "
+		echo "  CURRENT TIME:   `date \"+%Y-%m-%d %H:%M%:%S\"`"
+		echo "  CURRENT USER:   ${USER}"
+		echo "  CURRENT HOST:   `hostname`"
+		echo "  JAVA:           ${JAVA}"
+		echo "  JAVA VERSION:   ${JAVA_VERSION}"
+		echo "  NEXIAL_HOME:    ${NEXIAL_HOME}"
+		echo "  NEXIAL_LIB:     ${NEXIAL_LIB}"
+		echo "  NEXIAL_CLASSES: ${NEXIAL_CLASSES}"
+		echo "  PROJECT_BASE:   ${PROJECT_BASE}"
+		if [ "${PROJECT_HOME}" != "" ]; then
+				echo "  PROJECT_HOME:   ${PROJECT_HOME}"
+  fi
 }

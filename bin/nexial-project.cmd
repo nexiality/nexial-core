@@ -2,6 +2,8 @@
 
 setlocal enableextensions enabledelayedexpansion
 
+set NEXIAL_BIN=%~dp0
+
 call :init
 if NOT ERRORLEVEL 0 goto :exit
 
@@ -17,44 +19,58 @@ if NOT ERRORLEVEL 0 goto :exit
 if "%1"=="" goto :reportBadInputAndExit
 
 :createDir
-	set PROJECT_HOME=%PROJECT_BASE%\%1
+	if exist %1 (
+		set PROJECT_HOME=%1
+	) else (
+		set PROJECT_HOME=%PROJECT_BASE%\%1
+	)
 	echo   PROJECT_HOME:   %PROJECT_HOME%
 	echo.
-	echo creating project home at %PROJECT_HOME%
+
+	echo » creating project home at %PROJECT_HOME%
 	mkdir %PROJECT_HOME%\artifact\script >NUL
 	mkdir %PROJECT_HOME%\artifact\data >NUL
 	mkdir %PROJECT_HOME%\artifact\\plan >NUL
 	mkdir %PROJECT_HOME%\output >NUL
 
-	copy %NEXIAL_HOME%\template\nexial-testplan.xlsx %PROJECT_HOME%\artifact\plan\%1.xlsx >NUL
+	set script_name=%~n1
+	copy %NEXIAL_HOME%\template\nexial-testplan.xlsx %PROJECT_HOME%\artifact\plan\%script_name%-plan.xlsx >NUL
 
 :copyTemplate
-	echo create test script for %1
-	copy %NEXIAL_HOME%\template\nexial-script.xlsx %PROJECT_HOME%\artifact\script\%1.xlsx >NUL
-	copy %NEXIAL_HOME%\template\nexial-data.xlsx %PROJECT_HOME%\artifact\data\%1.data.xlsx >NUL
+	echo » create test script for %script_name%
+	copy %NEXIAL_HOME%\template\nexial-script.xlsx %PROJECT_HOME%\artifact\script\%script_name%.xlsx >NUL
+	copy %NEXIAL_HOME%\template\nexial-data.xlsx %PROJECT_HOME%\artifact\data\%script_name%.data.xlsx >NUL
 	shift
 	if "%1"=="" goto doneCopy
+	set script_name=%~n1
 	goto copyTemplate
 
 :doneCopy
-	nexial-script-update.cmd -v -t %PROJECT_HOME%
-
 	cd %PROJECT_HOME%
 	echo.
-	echo DONE
+	echo » DONE - nexial automation project created as follows:
+	echo.
+
+	cd %PROJECT_HOME%
+	cd
+	dir /s /b
+
+	echo.
+	echo.
+
 	goto :eof
 
 :init
-	.commons.cmd %*
+	%NEXIAL_BIN%.commons.cmd %*
 
 :checkJava
-	.commons.cmd %*
+	%NEXIAL_BIN%.commons.cmd %*
 
 :title
-	.commons.cmd %*
+	%NEXIAL_BIN%.commons.cmd %*
 
 :resolveEnv
-	.commons.cmd %*
+	%NEXIAL_BIN%.commons.cmd %*
 
 :reportBadInputAndExit
 	echo.
@@ -64,3 +80,4 @@ if "%1"=="" goto :reportBadInputAndExit
 	echo.
 	exit /b -1
 	goto :eof
+
