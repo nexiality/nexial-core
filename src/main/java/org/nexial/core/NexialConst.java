@@ -792,6 +792,7 @@ public final class NexialConst {
         }
 
         public static boolean isAutoOpenResult() {
+            // todo: need to support data file
             return BooleanUtils.toBoolean(System.getProperty(OPT_OPEN_RESULT, DEF_OPEN_RESULT)) ||
                    BooleanUtils.toBoolean(System.getProperty(ASSISTANT_MODE, DEF_OPEN_RESULT));
         }

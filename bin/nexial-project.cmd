@@ -27,7 +27,7 @@ if "%1"=="" goto :reportBadInputAndExit
 	echo   PROJECT_HOME:   %PROJECT_HOME%
 	echo.
 
-	echo » creating project home at %PROJECT_HOME%
+	echo creating project home at %PROJECT_HOME%
 	mkdir %PROJECT_HOME%\artifact\script >NUL
 	mkdir %PROJECT_HOME%\artifact\data >NUL
 	mkdir %PROJECT_HOME%\artifact\\plan >NUL
@@ -37,7 +37,7 @@ if "%1"=="" goto :reportBadInputAndExit
 	copy %NEXIAL_HOME%\template\nexial-testplan.xlsx %PROJECT_HOME%\artifact\plan\%script_name%-plan.xlsx >NUL
 
 :copyTemplate
-	echo » create test script for %script_name%
+	echo create test script for %script_name%
 	copy %NEXIAL_HOME%\template\nexial-script.xlsx %PROJECT_HOME%\artifact\script\%script_name%.xlsx >NUL
 	copy %NEXIAL_HOME%\template\nexial-data.xlsx %PROJECT_HOME%\artifact\data\%script_name%.data.xlsx >NUL
 	shift
@@ -48,7 +48,7 @@ if "%1"=="" goto :reportBadInputAndExit
 :doneCopy
 	cd %PROJECT_HOME%
 	echo.
-	echo » DONE - nexial automation project created as follows:
+	echo DONE - nexial automation project created as follows:
 	echo.
 
 	cd %PROJECT_HOME%

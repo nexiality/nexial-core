@@ -213,7 +213,7 @@ public class TestScriptUpdater {
                     // could be a plan of old (v2) format...
                     List<Worksheet> v2Plans = InputFileUtils.retrieveV2Plan(excel);
                     if (CollectionUtils.isEmpty(v2Plans)) {
-                        if (verbose) { System.out.println("UNRECOGNIZED SPREADSHEET FOUND/IGNORED: " + filePath); }
+                        if (verbose) { System.out.println("not recognized as nexial script: " + filePath); }
                     } else {
                         if (verbose) { System.out.println("processing " + filePath); }
 
