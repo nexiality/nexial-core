@@ -125,7 +125,7 @@ class ExecutionInputPrep {
         // 6. now copy tmp to final location
         ConsoleUtils.log(runId, "copying tmp file to output file " + outputFile);
         FileUtils.copyFile(tmpFile, outputFile);
-        FileUtils.deleteQuietly(tmpFile);
+        FileUtils.deleteQuietly(tmpFile.getParentFile());
 
         return outputFile;
     }

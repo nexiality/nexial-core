@@ -215,7 +215,9 @@ public class TestScenario {
             XSSFCell cellCommand = row.getCell(COL_IDX_COMMAND);
             String command = (cellTarget == null ? "" : cellTarget.getStringCellValue()) + "." +
                              (cellCommand == null ? "" : cellCommand.getStringCellValue());
-            if (MERGE_OUTPUTS.contains(command)) { mergeOutput(excelSheet, row, i); }
+            if (MERGE_OUTPUTS.contains(command)) {
+                mergeOutput(excelSheet, row, i);
+            }
         }
 
         executionSummary.aggregatedNestedExecutions(context);
@@ -283,8 +285,8 @@ public class TestScenario {
         // 2. find last command
         int lastCommandRow = worksheet.findLastDataRow(ADDR_COMMAND_START);
         area = new ExcelArea(worksheet,
-                             new ExcelAddress("" + COL_TEST_CASE + (ADDR_COMMAND_START.getRowStartIndex() + 1)
-                                              + ":" + COL_REASON + lastCommandRow),
+                             new ExcelAddress("" + COL_TEST_CASE + (ADDR_COMMAND_START.getRowStartIndex() + 1) +
+                                              ":" + COL_REASON + lastCommandRow),
                              false);
         testCases = new ArrayList<>();
         testCaseMap = new HashMap<>();

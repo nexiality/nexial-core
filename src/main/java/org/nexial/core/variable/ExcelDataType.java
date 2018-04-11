@@ -34,10 +34,9 @@ import org.nexial.core.excel.ExcelAddress;
 
 import static java.lang.System.lineSeparator;
 import static org.apache.poi.ss.usermodel.Row.MissingCellPolicy.CREATE_NULL_AS_BLANK;
+import static org.nexial.core.excel.Excel.MIN_EXCEL_FILE_SIZE;
 
 public class ExcelDataType extends ExpressionDataType<Excel> {
-    private static final int MAX_EXCEL_FIL_SIZE = 5 * 1024;
-
     private ExcelTransformer transformer = new ExcelTransformer();
     private String filePath;
     private List<String> worksheetNames;
@@ -83,10 +82,10 @@ public class ExcelDataType extends ExpressionDataType<Excel> {
         }
 
         try {
-            if (!FileUtil.isFileReadable(textValue, MAX_EXCEL_FIL_SIZE)) {
+            if (!FileUtil.isFileReadable(textValue, MIN_EXCEL_FILE_SIZE)) {
                 value = Excel.newExcel(new File(textValue));
             } else {
-                value = new Excel(new File(textValue), true);
+                value = new Excel(new File(textValue), false);
             }
 
             filePath = textValue;

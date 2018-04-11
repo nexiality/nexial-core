@@ -17,18 +17,17 @@
 
 package org.nexial.core.utils;
 
-import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.ArrayUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.poi.xssf.usermodel.XSSFCell;
-import org.nexial.commons.utils.FileUtil;
 import org.nexial.core.excel.Excel;
 import org.nexial.core.excel.Excel.Worksheet;
 import org.nexial.core.excel.ExcelAddress;
@@ -36,7 +35,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import static org.apache.poi.ss.usermodel.CellType.STRING;
-import static org.nexial.core.NexialConst.Data.DEF_OPEN_EXCEL_AS_DUP;
 import static org.nexial.core.NexialConst.Data.SHEET_SYSTEM;
 import static org.nexial.core.excel.ExcelConfig.*;
 
@@ -61,72 +59,48 @@ public final class InputFileUtils {
 
     private InputFileUtils() {}
 
-    public static Excel toExcel(String file) {
+    public static List<Worksheet> findMatchingSheets(String file, Function<Excel, List<Worksheet>> matcher) {
+        Excel excel = toExcel(file, false);
+        return excel == null ? new ArrayList<>() : matcher.apply(excel);
+    }
+
+    public static int countMatchingSheets(String file, Function<Excel, Integer> matcher) {
+        Excel excel = toExcel(file, false);
+        return excel == null ? 0 : matcher.apply(excel);
+    }
+
+    public static boolean hasMatchingSheets(String file, Function<Excel, Boolean> matcher) {
+        Excel excel = toExcel(file, false);
+        return excel == null ? false : matcher.apply(excel);
+    }
+
+    public static Excel toExcel(String file, boolean openAsDup) {
         if (StringUtils.isBlank(file)) {
             if (LOGGER.isInfoEnabled()) { LOGGER.info("filename is blank"); }
             return null;
         }
 
-        String errPrefix = "File (" + file + ") ";
-
-        if (!FileUtil.isFileReadable(file, 5 * 1024)) {
-            if (LOGGER.isInfoEnabled()) {
-                File f = new File(file);
-                LOGGER.info(errPrefix + "is not readable or accessible. "
-                            + " exists? " + f.exists() + ","
-                            + " is file? " + f.isFile() + ","
-                            + " can read? " + f.canRead() + ","
-                            + " file size=" + f.length());
-            }
-            return null;
-        }
-
-        // check that file is in Excel 2007 or above format
-        if (!Excel.isXlsxVersion(file)) {
-            if (LOGGER.isInfoEnabled()) {
-                LOGGER.info("\n\n\n"
-                            + StringUtils.repeat("!", 80) + "\n"
-                            + errPrefix + "\n"
-                            + "is either unreadable, not of version Excel 2007 or above, or is currently open.\n"
-                            + "If this file is currently open, please close it before retrying again.\n"
-                            + StringUtils.repeat("!", 80) + "\n"
-                            + "\n\n");
-            }
-            return null;
-        }
-
         try {
-            return new Excel(new File(file), DEF_OPEN_EXCEL_AS_DUP);
+            // check that file is in Excel 2007 or above format
+            return Excel.asXlsxExcel(file, openAsDup);
         } catch (IOException e) {
-            if (LOGGER.isInfoEnabled()) { LOGGER.info(errPrefix + "cannot be loaded: " + e.getMessage()); }
+            if (LOGGER.isInfoEnabled()) { LOGGER.info("File (" + file + ") cannot be loaded: " + e.getMessage()); }
             return null;
         }
     }
 
     public static boolean isValidDataFile(String file) {
-        Excel excel = toExcel(file);
-        if (excel == null) { return false; }
-
-        // at least 1 data sheet
-        List<Worksheet> dataSheets = filterValidDataSheets(excel);
-        if (CollectionUtils.isEmpty(dataSheets)) {
-            if (LOGGER.isInfoEnabled()) { LOGGER.info("File (" + file + ") contains no valid data sheet"); }
-            return false;
-        }
-
-        return CollectionUtils.size(dataSheets) > 0;
+        return hasMatchingSheets(file, excel -> {
+            List<Worksheet> allSheets = excel.getWorksheetsStartWith("");
+            if (CollectionUtils.isEmpty(allSheets)) { return false; }
+            return allSheets.stream().anyMatch(InputFileUtils::isValidDataSheet);
+        });
     }
 
     public static List<Worksheet> filterValidDataSheets(Excel excel) {
         List<Worksheet> allSheets = excel.getWorksheetsStartWith("");
         if (CollectionUtils.isEmpty(allSheets)) { return new ArrayList<>(); }
         return allSheets.stream().filter(InputFileUtils::isValidDataSheet).collect(Collectors.toList());
-    }
-
-    public static Worksheet getValidDataSheet(Excel excel, String sheetName) {
-        if (excel == null || StringUtils.isBlank(sheetName)) { return null; }
-        Worksheet sheet = excel.worksheet(sheetName);
-        return sheet != null && isValidDataSheet(sheet) ? sheet : null;
     }
 
     public static boolean isValidDataSheet(Worksheet sheet) {
@@ -191,19 +165,13 @@ public final class InputFileUtils {
         return true;
     }
 
-    public static boolean isValidScript(String file) {
-        Excel excel = toExcel(file);
-        return excel != null && isValidScript(excel);
-    }
+    public static boolean isValidScript(String file) { return hasMatchingSheets(file, InputFileUtils::isValidScript); }
 
     public static boolean isValidScript(Excel excel) {
         return hasValidSystemSheet(excel) && CollectionUtils.isNotEmpty(retrieveValidTestScenarios(excel));
     }
 
-    public static boolean isValidMacro(String file) {
-        Excel excel = toExcel(file);
-        return excel != null && isValidMacro(excel);
-    }
+    public static boolean isValidMacro(String file) { return hasMatchingSheets(file, InputFileUtils::isValidMacro); }
 
     public static boolean isValidMacro(Excel excel) {
         return hasValidSystemSheet(excel) && CollectionUtils.isNotEmpty(retrieveValidMacros(excel));
@@ -400,66 +368,30 @@ public final class InputFileUtils {
     }
 
     public static boolean isValidPlanFile(String file) {
-        Excel excel = toExcel(file);
-        if (excel == null) { return false; }
+        return hasMatchingSheets(file, excel -> {
+            // check for at least 1 test scenario
+            List<Worksheet> allSheets = excel.getWorksheetsStartWith("");
+            if (CollectionUtils.isEmpty(allSheets)) {
+                if (LOGGER.isInfoEnabled()) { LOGGER.info("File (" + excel.getFile() + ") is missing test plans."); }
+                return false;
+            }
 
-        List<Worksheet> validPlanSheets = retrieveValidPlanSequence(excel);
-        return !CollectionUtils.isEmpty(validPlanSheets);
+            // check that every test scenario is of right format (warn only if format is wrong)
+            return allSheets.stream().allMatch(InputFileUtils::isValidPlan);
+        });
     }
 
     public static List<Worksheet> retrieveValidPlanSequence(Excel excel) {
-        String errPrefix = "File (" + excel.getFile() + ") ";
 
         // check for at least 1 test scenario
         List<Worksheet> allSheets = excel.getWorksheetsStartWith("");
         if (CollectionUtils.isEmpty(allSheets)) {
-            if (LOGGER.isInfoEnabled()) { LOGGER.info(errPrefix + "is missing test plans."); }
+            if (LOGGER.isInfoEnabled()) { LOGGER.info("File (" + excel.getFile() + ") is missing test plans."); }
             return null;
         }
 
         // check that every test scenario is of right format (warn only if format is wrong)
-        return allSheets.stream().filter(sheet -> {
-            String sheetName = sheet.getName();
-
-            String errPrefix1 = errPrefix + "worksheet (" + sheetName + ") ";
-
-            // check summary header
-            if (!Excel.isRowTextFound(sheet,
-                                      PLAN_HEADER_SEQUENCE,
-                                      ADDR_PLAN_HEADER_SEQUENCE1,
-                                      ADDR_PLAN_HEADER_SEQUENCE2)) {
-                LOGGER.info(errPrefix1 + "required plan header not found at " +
-                            ArrayUtils.toString(ADDR_PLAN_HEADER_SEQUENCE1) + "," +
-                            ArrayUtils.toString(ADDR_PLAN_HEADER_SEQUENCE2) + "; ignoring this worksheet...");
-                return false;
-            }
-
-            // check execution summary
-            if (!Excel.isRowTextFound(sheet,
-                                      Collections.singletonList(HEADER_EXEC_SUMMARY),
-                                      ADDR_PLAN_HEADER_EXEC_SUMMARY_HEADER)) {
-                LOGGER.info(errPrefix1 + "required plan header not found at " +
-                            ArrayUtils.toString(ADDR_PLAN_HEADER_SEQUENCE1) + "," +
-                            ArrayUtils.toString(ADDR_PLAN_HEADER_SEQUENCE2) + "; ignoring this worksheet...");
-                return false;
-            }
-
-            // check execution header
-            if (!Excel.isRowTextFound(sheet, PLAN_HEADER_EXECUTION, ADDR_PLAN_HEADER_EXECUTION)) {
-                LOGGER.info(errPrefix1 + "required plan header not found at " +
-                            ArrayUtils.toString(ADDR_PLAN_HEADER_EXECUTION) + "; ignoring this worksheet...");
-                return false;
-            }
-
-            // check that all valid scenario sheet has at least 1 command
-            int lastRowIndex = sheet.findLastDataRow(ADDR_PLAN_EXECUTION_START);
-            if (lastRowIndex - ADDR_PLAN_EXECUTION_START.getRowStartIndex() <= 0) {
-                if (LOGGER.isInfoEnabled()) { LOGGER.info(errPrefix1 + "does not contain any test steps"); }
-                return false;
-            }
-
-            return true;
-        }).collect(Collectors.toList());
+        return allSheets.stream().filter(InputFileUtils::isValidPlan).collect(Collectors.toList());
 
         // check that all valid scenario sheet do not have result (output file)
     }
@@ -505,5 +437,48 @@ public final class InputFileUtils {
                 return false;
             }
         }).collect(Collectors.toList());
+    }
+
+    protected static boolean isValidPlan(Worksheet sheet) {
+        String sheetName = sheet.getName();
+
+        String errPrefix1 = "File (" + sheet.getFile() + ") worksheet (" + sheetName + ") ";
+
+        // check summary header
+        if (!Excel.isRowTextFound(sheet,
+                                  PLAN_HEADER_SEQUENCE,
+                                  ADDR_PLAN_HEADER_SEQUENCE1,
+                                  ADDR_PLAN_HEADER_SEQUENCE2)) {
+            LOGGER.info(errPrefix1 + "required plan header not found at " +
+                        ArrayUtils.toString(ADDR_PLAN_HEADER_SEQUENCE1) + "," +
+                        ArrayUtils.toString(ADDR_PLAN_HEADER_SEQUENCE2) + "; ignoring this worksheet...");
+            return false;
+        }
+
+        // check execution summary
+        if (!Excel.isRowTextFound(sheet,
+                                  Collections.singletonList(HEADER_EXEC_SUMMARY),
+                                  ADDR_PLAN_HEADER_EXEC_SUMMARY_HEADER)) {
+            LOGGER.info(errPrefix1 + "required plan header not found at " +
+                        ArrayUtils.toString(ADDR_PLAN_HEADER_SEQUENCE1) + "," +
+                        ArrayUtils.toString(ADDR_PLAN_HEADER_SEQUENCE2) + "; ignoring this worksheet...");
+            return false;
+        }
+
+        // check execution header
+        if (!Excel.isRowTextFound(sheet, PLAN_HEADER_EXECUTION, ADDR_PLAN_HEADER_EXECUTION)) {
+            LOGGER.info(errPrefix1 + "required plan header not found at " +
+                        ArrayUtils.toString(ADDR_PLAN_HEADER_EXECUTION) + "; ignoring this worksheet...");
+            return false;
+        }
+
+        // check that all valid scenario sheet has at least 1 command
+        int lastRowIndex = sheet.findLastDataRow(ADDR_PLAN_EXECUTION_START);
+        if (lastRowIndex - ADDR_PLAN_EXECUTION_START.getRowStartIndex() <= 0) {
+            if (LOGGER.isInfoEnabled()) { LOGGER.info(errPrefix1 + "does not contain any test steps"); }
+            return false;
+        }
+
+        return true;
     }
 }

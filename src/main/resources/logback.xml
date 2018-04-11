@@ -67,7 +67,7 @@
 
 	<!-- file appenders -->
 	<appender name="file-testexecution" class="ch.qos.logback.core.FileAppender">
-		<file>${nexial.logpath:-.}/nexial-${nexial.runID:-test}.log</file>
+		<file>${nexial.logpath:-${java.io.tmpdir}}/nexial-${nexial.runID:-test}.log</file>
 		<append>true</append>
 		<prudent>true</prudent>
 		<encoder>
@@ -75,7 +75,7 @@
 		</encoder>
 	</appender>
 	<appender name="file-3rdparty" class="ch.qos.logback.core.FileAppender">
-		<file>${nexial.3rdparty.logpath:-logs}/nexial-3rdparty.log</file>
+		<file>${nexial.3rdparty.logpath:-${java.io.tmpdir}}/nexial-3rdparty.log</file>
 		<append>true</append>
 		<prudent>true</prudent>
 		<encoder>
@@ -88,7 +88,7 @@
 			<onMatch>ACCEPT</onMatch>
 			<onMismatch>DENY</onMismatch>
 		</filter>
-		<file>${config.home:-.}/logs/nexial-tools.log</file>
+		<file>${config.home:-${java.io.tmpdir}}/logs/nexial-tools.log</file>
 		<rollingPolicy class="ch.qos.logback.core.rolling.TimeBasedRollingPolicy">
 			<!-- daily rollover -->
 			<fileNamePattern>${config.home:-.}/logs/nexial-tools.%d{yyyy-MM-dd}.log</fileNamePattern>

@@ -29,8 +29,6 @@ import org.apache.commons.lang3.builder.ToStringBuilder;
 import org.apache.commons.lang3.time.StopWatch;
 import org.apache.poi.ss.usermodel.Comment;
 import org.apache.poi.xssf.usermodel.XSSFCell;
-import org.openqa.selenium.NoSuchElementException;
-
 import org.nexial.commons.utils.FileUtil;
 import org.nexial.commons.utils.TextUtils;
 import org.nexial.core.excel.Excel;
@@ -42,15 +40,16 @@ import org.nexial.core.utils.ConsoleUtils;
 import org.nexial.core.utils.ExecutionLogger;
 import org.nexial.core.utils.FlowControlUtils;
 import org.nexial.core.utils.MessageUtils;
+import org.openqa.selenium.NoSuchElementException;
 
+import static java.lang.System.lineSeparator;
+import static org.apache.commons.lang3.builder.ToStringStyle.SIMPLE_STYLE;
 import static org.nexial.commons.utils.EnvUtils.platformSpecificEOL;
 import static org.nexial.core.NexialConst.*;
 import static org.nexial.core.NexialConst.Data.CMD_COMMAND_REPEATER;
 import static org.nexial.core.NexialConst.Data.treatCommonValueShorthand;
 import static org.nexial.core.excel.ExcelConfig.*;
 import static org.nexial.core.excel.ext.CipherHelper.CRYPT_IND;
-import static java.lang.System.lineSeparator;
-import static org.apache.commons.lang3.builder.ToStringStyle.SIMPLE_STYLE;
 
 public class TestStep extends TestStepManifest {
     protected ExecutionContext context;
@@ -336,7 +335,7 @@ public class TestStep extends TestStepManifest {
         context.setData(OPT_LAST_OUTCOME, result.isSuccess());
         if (result.isSuccess()) {
             summary.incrementPass();
-            log(MessageUtils.renderAsPass(result.getMessage()));
+            log(MessageUtils.renderAsPass(StringUtils.equals(getCommandFQN(), CMD_VERBOSE) ? "" : result.getMessage()));
         } else {
             summary.incrementFail();
             context.incrementAndEvaluateFail();
@@ -444,6 +443,7 @@ public class TestStep extends TestStepManifest {
                         message = StringUtils.truncate(message, MAX_VERBOSE_CHAR) + "…";
                     }
                     paramCell.setCellValue(platformSpecificEOL(message));
+                    paramCell.setCellComment(toSystemComment(paramCell, origParamValue));
                 }
                 continue;
             }

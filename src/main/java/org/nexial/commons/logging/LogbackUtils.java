@@ -31,7 +31,11 @@ import static org.nexial.core.NexialConst.Data.THIRD_PARTY_LOG_PATH;
 import static org.slf4j.LoggerFactory.getILoggerFactory;
 
 public final class LogbackUtils {
+    private static final String[] EXEC_LOG_PATH = new String[]{""};
+
     public LogbackUtils() { }
+
+    public static boolean isExecLoggingReady() { return StringUtils.isNotBlank(EXEC_LOG_PATH[0]); }
 
     /**
      * setup env variable for logback configuration so that logs are going to the right file/path.
@@ -42,6 +46,7 @@ public final class LogbackUtils {
 
         String newLogDirectory = path.getAbsolutePath();
         String currentLogDirectory = System.getProperty(TEST_LOG_PATH);
+        EXEC_LOG_PATH[0] = newLogDirectory;
         if (!StringUtils.equals(currentLogDirectory, newLogDirectory)) {
             System.setProperty(TEST_LOG_PATH, newLogDirectory);
             if (StringUtils.isBlank(System.getProperty(THIRD_PARTY_LOG_PATH))) {

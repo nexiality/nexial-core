@@ -40,7 +40,6 @@ import org.apache.commons.lang3.math.NumberUtils;
 import org.apache.commons.mail.EmailException;
 import org.apache.poi.xssf.usermodel.XSSFCell;
 import org.apache.poi.xssf.usermodel.XSSFRow;
-import org.nexial.commons.logging.LogbackUtils;
 import org.nexial.commons.utils.DateUtility;
 import org.nexial.commons.utils.EnvUtils;
 import org.nexial.commons.utils.FileUtil;
@@ -292,49 +291,54 @@ public class Nexial {
 
         // 2. parse plan file to determine number of executions (1 row per execution)
         List<ExecutionDefinition> executions = new ArrayList<>();
-        InputFileUtils.retrieveValidPlanSequence(new Excel(testPlanFile, DEF_OPEN_EXCEL_AS_DUP)).forEach(
-            testPlan -> {
-                int rowStartIndex = ADDR_PLAN_EXECUTION_START.getRowStartIndex();
-                int lastExecutionRow = testPlan.findLastDataRow(ADDR_PLAN_EXECUTION_START);
+        Excel excel = new Excel(testPlanFile, DEF_OPEN_EXCEL_AS_DUP);
+        List<Worksheet> plans = InputFileUtils.retrieveValidPlanSequence(excel);
+        if (CollectionUtils.isEmpty(plans)) { return executions; }
 
-                for (int i = rowStartIndex; i < lastExecutionRow; i++) {
-                    XSSFRow row = testPlan.getSheet().getRow(i);
+        plans.forEach(testPlan -> {
+            int rowStartIndex = ADDR_PLAN_EXECUTION_START.getRowStartIndex();
+            int lastExecutionRow = testPlan.findLastDataRow(ADDR_PLAN_EXECUTION_START);
 
-                    File testScript = deriveScriptFromPlan(row, project, testPlanPath);
-                    List<String> scenarios = deriveScenarioFromPlan(row, testScript);
-                    File dataFile = deriveDataFileFromPlan(row, project, testPlanFile, testScript);
-                    List<String> dataSheets = deriveDataSheetsFromPlan(row, scenarios);
+            for (int i = rowStartIndex; i < lastExecutionRow; i++) {
+                XSSFRow row = testPlan.getSheet().getRow(i);
 
-                    // create new definition instance, based on various input and derived values
-                    ExecutionDefinition exec = new ExecutionDefinition();
-                    exec.setPlanFilename(StringUtils.substringBeforeLast(testPlanFile.getName(), "."));
-                    exec.setPlanName(testPlan.getName());
-                    exec.setPlanSequnce((i - rowStartIndex + 1));
-                    exec.setDescription(StringUtils.trim(readCellValue(row, COL_IDX_PLAN_DESCRIPTION)));
-                    exec.setTestScript(testScript.getAbsolutePath());
-                    exec.setScenarios(scenarios);
-                    exec.setDataFile(dataFile.getAbsolutePath());
-                    exec.setDataSheets(dataSheets);
-                    exec.setProject(project);
+                File testScript = deriveScriptFromPlan(row, project, testPlanPath);
+                List<String> scenarios = deriveScenarioFromPlan(row, testScript);
+                File dataFile = deriveDataFileFromPlan(row, project, testPlanFile, testScript);
+                List<String> dataSheets = deriveDataSheetsFromPlan(row, scenarios);
 
-                    // 2.1 mark option for parallel run and fail fast
-                    exec.setFailFast(BooleanUtils.toBoolean(
-                        StringUtils.defaultIfBlank(readCellValue(row, COL_IDX_PLAN_FAIL_FAST), DEF_PLAN_FAIL_FAST)));
-                    exec.setSerialMode(BooleanUtils.toBoolean(
-                        StringUtils.defaultIfBlank(readCellValue(row, COL_IDX_PLAN_WAIT), DEF_PLAN_SERIAL_MODE)));
-                    exec.setLoadTestMode(BooleanUtils.toBoolean(readCellValue(row, COL_IDX_PLAN_LOAD_TEST)));
-                    if (exec.isLoadTestMode()) { fail("Sorry... load testing mode not yet ready for use."); }
+                // create new definition instance, based on various input and derived values
+                ExecutionDefinition exec = new ExecutionDefinition();
+                exec.setPlanFilename(StringUtils.substringBeforeLast(testPlanFile.getName(), "."));
+                exec.setPlanName(testPlan.getName());
+                exec.setPlanSequnce((i - rowStartIndex + 1));
+                exec.setDescription(StringUtils.trim(readCellValue(row, COL_IDX_PLAN_DESCRIPTION)));
+                exec.setTestScript(testScript.getAbsolutePath());
+                exec.setScenarios(scenarios);
+                exec.setDataFile(dataFile.getAbsolutePath());
+                exec.setDataSheets(dataSheets);
+                exec.setProject(project);
 
-                    try {
-                        // 3. for each row, parse script (and scenario) and data (and datasheet)
-                        exec.parse();
-                        executions.add(exec);
-                    } catch (IOException e) {
-                        fail("Unable to parse successfully for the test plan specified in ROW " +
-                             (row.getRowNum() + 1) + " of " + testPlanFile);
-                    }
+                // 2.1 mark option for parallel run and fail fast
+                exec.setFailFast(BooleanUtils.toBoolean(
+                    StringUtils.defaultIfBlank(readCellValue(row, COL_IDX_PLAN_FAIL_FAST), DEF_PLAN_FAIL_FAST)));
+                exec.setSerialMode(BooleanUtils.toBoolean(
+                    StringUtils.defaultIfBlank(readCellValue(row, COL_IDX_PLAN_WAIT), DEF_PLAN_SERIAL_MODE)));
+                exec.setLoadTestMode(BooleanUtils.toBoolean(readCellValue(row, COL_IDX_PLAN_LOAD_TEST)));
+                if (exec.isLoadTestMode()) { fail("Sorry... load testing mode not yet ready for use."); }
+
+                try {
+                    // 3. for each row, parse script (and scenario) and data (and datasheet)
+                    exec.parse();
+                    executions.add(exec);
+                } catch (IOException e) {
+                    fail("Unable to parse successfully for the test plan specified in ROW " +
+                         (row.getRowNum() + 1) + " of " + testPlanFile);
                 }
-            });
+            }
+        });
+
+        if (DEF_OPEN_EXCEL_AS_DUP) { FileUtils.deleteQuietly(excel.getFile().getParentFile()); }
 
         // 4. return a list of scripts mixin data
         return executions;
@@ -375,13 +379,14 @@ public class Nexial {
     }
 
     protected List<String> deriveScenarioFromPlan(XSSFRow row, File testScript) {
-        String planScenarios = readCellValue(row, COL_IDX_PLAN_SCENARIOS);
-        List<String> scenarios = TextUtils.toList(planScenarios, ",", true);
+        List<String> scenarios = TextUtils.toList(readCellValue(row, COL_IDX_PLAN_SCENARIOS), ",", true);
         if (CollectionUtils.isNotEmpty(scenarios)) { return scenarios; }
 
+        Excel excel = null;
+
         try {
-            List<Worksheet> validScenarios =
-                InputFileUtils.retrieveValidTestScenarios(new Excel(testScript, DEF_OPEN_EXCEL_AS_DUP));
+            excel = new Excel(testScript, DEF_OPEN_EXCEL_AS_DUP);
+            List<Worksheet> validScenarios = InputFileUtils.retrieveValidTestScenarios(excel);
             if (CollectionUtils.isEmpty(validScenarios)) {
                 fail("No valid scenario found in script " + testScript);
             } else {
@@ -390,7 +395,10 @@ public class Nexial {
             }
         } catch (IOException e) {
             fail("Unable to collect scenarios from " + testScript);
+        } finally {
+            if (DEF_OPEN_EXCEL_AS_DUP && excel != null) { FileUtils.deleteQuietly(excel.getFile().getParentFile()); }
         }
+
         return scenarios;
     }
 
@@ -474,6 +482,8 @@ public class Nexial {
             } else {
                 fail("Unable to derive any valid test script from " + testScriptPath);
             }
+
+            if (DEF_OPEN_EXCEL_AS_DUP) { FileUtils.deleteQuietly(excel.getFile().getParentFile()); }
         }
 
         // command line option - data. could be fully qualified or relative to script
@@ -571,7 +581,6 @@ public class Nexial {
         try {
             for (ExecutionDefinition exec : executions) {
                 exec.setRunId(runId);
-                LogbackUtils.registerLogDirectory(appendLog(exec));
 
                 String msgPrefix = "[" + exec.getTestScript() + "] ";
                 ConsoleUtils.log(runId, msgPrefix + "resolve RUN ID as " + runId);

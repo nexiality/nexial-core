@@ -39,7 +39,6 @@ import org.apache.poi.ss.usermodel.*;
 import org.apache.poi.ss.util.CellRangeAddress;
 import org.apache.poi.ss.util.WorkbookUtil;
 import org.apache.poi.xssf.usermodel.*;
-
 import org.nexial.commons.proc.ProcessInvoker;
 import org.nexial.commons.proc.ProcessOutcome;
 import org.nexial.commons.utils.FileUtil;
@@ -47,9 +46,6 @@ import org.nexial.core.excel.ExcelConfig.*;
 import org.nexial.core.excel.ext.CellTextReader;
 import org.nexial.core.utils.ConsoleUtils;
 
-import static org.nexial.core.NexialConst.Data.*;
-import static org.nexial.core.excel.ExcelConfig.*;
-import static org.nexial.core.excel.ExcelConfig.StyleConfig.*;
 import static java.io.File.separator;
 import static org.apache.commons.lang3.SystemUtils.*;
 import static org.apache.poi.ss.SpreadsheetVersion.EXCEL2007;
@@ -58,12 +54,16 @@ import static org.apache.poi.ss.usermodel.CellType.ERROR;
 import static org.apache.poi.ss.usermodel.CellType.STRING;
 import static org.apache.poi.ss.usermodel.Row.MissingCellPolicy.CREATE_NULL_AS_BLANK;
 import static org.apache.poi.ss.usermodel.Row.MissingCellPolicy.RETURN_BLANK_AS_NULL;
+import static org.nexial.core.NexialConst.Data.*;
+import static org.nexial.core.excel.ExcelConfig.*;
+import static org.nexial.core.excel.ExcelConfig.StyleConfig.*;
 
 /**
  * Wrapper for managing Excel documents.
  */
 public class Excel {
-    private static final int MIN_EXCEL_FILE_SIZE = 5 * 1024;
+    public static final int MIN_EXCEL_FILE_SIZE = 5 * 1024;
+
     // var to support spring-injected value
     float _cellSpacing = 4.8f;
 
@@ -738,6 +738,40 @@ public class Excel {
         }
     }
 
+    public static Excel asXlsxExcel(String file, boolean dupThenOpen) throws IOException {
+        if (StringUtils.isBlank(file) || !FileUtil.isFileReadable(file, MIN_EXCEL_FILE_SIZE)) { return null; }
+
+        Workbook workbook = null;
+        try {
+            File excelFile = new File(file);
+            workbook = WorkbookFactory.create(excelFile);
+            if (workbook != null && workbook.getSpreadsheetVersion() == EXCEL2007) {
+                return new Excel(new File(file), dupThenOpen);
+            }
+
+            // not excel-2007 or above
+            ConsoleUtils.error("\n\n\n" +
+                               StringUtils.repeat("!", 80) + "\n" +
+                               "File (" + excelFile + ")\n" +
+                               "is either unreadable, not of version Excel 2007 or above, or is currently open.\n" +
+                               "If this file is currently open, please close it before retrying again.\n" +
+                               StringUtils.repeat("!", 80) + "\n" +
+                               "\n\n");
+            return null;
+        } catch (InvalidFormatException e) {
+            ConsoleUtils.error("Unable to open workbook (" + file + "): " + e.getMessage());
+            return null;
+        } finally {
+            if (workbook != null) {
+                try {
+                    workbook.close();
+                } catch (IOException e) {
+                    ConsoleUtils.error("Unable to close workbook (" + file + "): " + e.getMessage());
+                }
+            }
+        }
+    }
+
     public static boolean isXlsxVersion(String file) {
         if (StringUtils.isBlank(file)) { return false; }
 
@@ -763,6 +797,8 @@ public class Excel {
                     ConsoleUtils.error("Unable to close workbook (" + file + "): " + e.getMessage());
                 }
             }
+
+            if (DEF_OPEN_EXCEL_AS_DUP && excelFile != null) { FileUtils.deleteQuietly(excelFile.getParentFile()); }
         }
     }
 

@@ -29,7 +29,6 @@ import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang3.ArrayUtils;
 import org.apache.commons.lang3.StringUtils;
-
 import org.nexial.commons.utils.CollectionUtil;
 import org.nexial.commons.utils.FileUtil;
 import org.nexial.commons.utils.TextUtils;
@@ -138,13 +137,11 @@ public class ExcelTransformer<T extends ExcelDataType> extends Transformer {
             FileUtils.forceMkdirParent(new File(file));
         }
 
-        File targetFile = new File(file);
-        Excel targetExcel;
-        if (targetFile.canRead() && Excel.isXlsxVersion(file)) {
-            // existing file is already a XLSX
-            targetExcel = new Excel(targetFile);
-        } else {
-            // file not exists or not a XLSX. Either way, we'll create new file and thus effectively overwrite existing.
+        Excel targetExcel = Excel.asXlsxExcel(file, false);
+        if (targetExcel == null) {
+            // file doesn't exists, can't be opened, or not compatible with Excel 2007
+            // if file not exists or not a XLSX, creating a new file will effectively overwrite the existing.
+            File targetFile = new File(file);
             targetExcel = Excel.createExcel(targetFile, sheet);
         }
 

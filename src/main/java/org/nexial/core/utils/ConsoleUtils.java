@@ -23,14 +23,21 @@ import java.util.List;
 import java.util.Map;
 import java.util.Scanner;
 
+import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
+import org.apache.commons.lang3.tuple.ImmutablePair;
+import org.apache.commons.lang3.tuple.Pair;
+import org.nexial.commons.logging.LogbackUtils;
 import org.nexial.commons.utils.DateUtility;
 import org.nexial.core.model.ExecutionContext;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.slf4j.event.Level;
 
 import static org.nexial.core.NexialConst.FlowControls.*;
 import static org.nexial.core.NexialConst.Jenkins.*;
+import static org.slf4j.event.Level.ERROR;
+import static org.slf4j.event.Level.INFO;
 
 /**
  * helper class to log to console.
@@ -38,34 +45,28 @@ import static org.nexial.core.NexialConst.Jenkins.*;
 @SuppressWarnings("PMD.SystemPrintln")
 public final class ConsoleUtils {
     private static final Logger LOGGER = LoggerFactory.getLogger(ConsoleUtils.class);
+    private static final List<Pair<Level, String>> PRE_EXEC_READY_BUFFER = new ArrayList<>();
 
-    private ConsoleUtils() {
-    }
+    private ConsoleUtils() { }
 
     @SuppressWarnings("PMD.SystemPrintln")
     public static void log(String msg) {
-        if (System.out == null) {
-            throw new RuntimeException("System.out is null!");
-        }
+        if (System.out == null) { throw new RuntimeException("System.out is null!"); }
         System.out.println(DateUtility.getCurrentTimestampForLogging() + " >> " + msg);
-        if (LOGGER.isInfoEnabled()) {
-            LOGGER.info(msg);
-        }
+        logAs(INFO, msg);
     }
 
     @SuppressWarnings("PMD.SystemPrintln")
     public static void error(String msg) {
-        if (System.err == null) {
-            throw new RuntimeException("System.err is null!");
-        }
+        if (System.err == null) { throw new RuntimeException("System.err is null!"); }
         System.err.println(DateUtility.getCurrentTimestampForLogging() + " >> " + msg);
-        LOGGER.error(msg);
+        logAs(ERROR, msg);
     }
 
     public static void pause(ExecutionContext context, String msg) {
         // not applicable when running in Jenkins environment
         if (isRunningInCi()) {
-            LOGGER.info("SKIPPING pause since we are running in CI");
+            log("SKIPPING pause since we are running in CI");
             return;
         }
 
@@ -97,7 +98,7 @@ public final class ConsoleUtils {
     public static void pauseForStep(ExecutionContext context, String instructions) {
         // not applicable when running in Jenkins environment
         if (isRunningInCi()) {
-            LOGGER.info("SKIPPING pause-for-step since we are running in CI");
+            log("SKIPPING pause-for-step since we are running in CI");
             return;
         }
 
@@ -119,7 +120,7 @@ public final class ConsoleUtils {
     public static String pauseToValidate(ExecutionContext context, String instructions, String possibleResponses) {
         // not applicable when running in Jenkins environment
         if (isRunningInCi()) {
-            LOGGER.info("SKIPPING pause-to-validate since we are running in CI");
+            log("SKIPPING pause-to-validate since we are running in CI");
             return null;
         }
 
@@ -149,7 +150,7 @@ public final class ConsoleUtils {
     public static String pauseForInput(ExecutionContext context, String prompt) {
         // not applicable when running in Jenkins environment
         if (isRunningInCi()) {
-            LOGGER.info("SKIPPING pause-to-input since we are running in CI");
+            log("SKIPPING pause-to-input since we are running in CI");
             return null;
         }
 
@@ -171,23 +172,17 @@ public final class ConsoleUtils {
     @SuppressWarnings("PMD.SystemPrintln")
     public static void log(String id, String msg) {
         assert StringUtils.isNotBlank(id);
-        if (System.out == null) {
-            throw new RuntimeException("System.out is null!");
-        }
+        if (System.out == null) { throw new RuntimeException("System.out is null!"); }
         System.out.println(DateUtility.getCurrentTimestampForLogging() + " >> [" + id + "] " + msg);
-        if (LOGGER.isInfoEnabled()) {
-            LOGGER.info("[" + id + "] " + msg);
-        }
+        logAs(INFO, "[" + id + "] " + msg);
     }
 
     @SuppressWarnings("PMD.SystemPrintln")
     public static void error(String id, String msg) {
         assert StringUtils.isNotBlank(id);
-        if (System.err == null) {
-            throw new RuntimeException("System.err is null!");
-        }
+        if (System.err == null) { throw new RuntimeException("System.err is null!"); }
         System.err.println(DateUtility.getCurrentTimestampForLogging() + " >> [" + id + "] " + msg);
-        LOGGER.error("[" + id + "] " + msg);
+        logAs(ERROR, "[" + id + "] " + msg);
     }
 
     @SuppressWarnings("PMD.SystemPrintln")
@@ -195,7 +190,7 @@ public final class ConsoleUtils {
         error(id, msg);
         e.printStackTrace(System.err);
         System.err.print("\n\n");
-        LOGGER.error("[" + id + "] " + msg, e);
+        logAs(ERROR, "[" + id + "] " + msg + e.getMessage());
     }
 
     public static void showMissingLibraryError(String message) {
@@ -217,19 +212,53 @@ public final class ConsoleUtils {
                StringUtils.isNotBlank(environments.get(OPT_BUILD_URL));
     }
 
-    private static String centerPrompt(String prompt, int width) {
-        if (StringUtils.isBlank(prompt)) {
-            return StringUtils.repeat(" ", width);
+    private static void logAs(Level logLevel, String message) {
+        if (!LogbackUtils.isExecLoggingReady()) {
+            PRE_EXEC_READY_BUFFER.add(new ImmutablePair<>(logLevel, message));
+            return;
         }
+
+        flushPreExecReadyBuffer();
+        sendToLogger(logLevel, message);
+    }
+
+    private static void flushPreExecReadyBuffer() {
+        if (CollectionUtils.isEmpty(PRE_EXEC_READY_BUFFER)) { return; }
+        synchronized (PRE_EXEC_READY_BUFFER) {
+            PRE_EXEC_READY_BUFFER.forEach(logPair -> sendToLogger(logPair.getKey(), "(DELAYED) " + logPair.getValue()));
+            PRE_EXEC_READY_BUFFER.clear();
+        }
+    }
+
+    private static void sendToLogger(Level logLevel, String message) {
+        switch (logLevel) {
+            case TRACE:
+                if (LOGGER.isTraceEnabled()) { LOGGER.trace(message); }
+                return;
+            case DEBUG:
+                if (LOGGER.isDebugEnabled()) { LOGGER.debug(message); }
+                return;
+            case INFO:
+                if (LOGGER.isInfoEnabled()) { LOGGER.info(message); }
+                return;
+            case WARN:
+                LOGGER.warn(message);
+                return;
+            case ERROR:
+                LOGGER.error(message);
+                return;
+            default:
+                if (LOGGER.isDebugEnabled()) { LOGGER.debug(message); }
+        }
+    }
+
+    private static String centerPrompt(String prompt, int width) {
+        if (StringUtils.isBlank(prompt)) { return StringUtils.repeat(" ", width); }
 
         String paddingSpaces = StringUtils.repeat(" ", (width - prompt.length()) / 2);
         String newPrompt = paddingSpaces + prompt + paddingSpaces;
-        if (newPrompt.length() > width) {
-            newPrompt = StringUtils.removeEnd(newPrompt, " ");
-        }
-        if (newPrompt.length() < width) {
-            newPrompt += " ";
-        }
+        if (newPrompt.length() > width) { newPrompt = StringUtils.removeEnd(newPrompt, " "); }
+        if (newPrompt.length() < width) { newPrompt += " "; }
         return newPrompt;
     }
 }
