@@ -17,6 +17,8 @@
 
 package org.nexial.core.utils;
 
+import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.Method;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -64,11 +66,7 @@ public final class ConsoleUtils {
     }
 
     public static void pause(ExecutionContext context, String msg) {
-        // not applicable when running in Jenkins environment
-        if (isRunningInCi()) {
-            log("SKIPPING pause since we are running in CI");
-            return;
-        }
+        if (!isPauseReady()) { return; }
 
         if (context != null && context.getBooleanData(OPT_INSPECT_ON_PAUSE, DEF_INSPECT_ON_PAUSE)) {
             // inspect mode
@@ -97,10 +95,7 @@ public final class ConsoleUtils {
 
     public static void pauseForStep(ExecutionContext context, String instructions) {
         // not applicable when running in Jenkins environment
-        if (isRunningInCi()) {
-            log("SKIPPING pause-for-step since we are running in CI");
-            return;
-        }
+        if (!isPauseReady()) { return; }
 
         System.out.println("\n");
         System.out.println("/------------------------------------------------------------------------------\\");
@@ -119,10 +114,7 @@ public final class ConsoleUtils {
 
     public static String pauseToValidate(ExecutionContext context, String instructions, String possibleResponses) {
         // not applicable when running in Jenkins environment
-        if (isRunningInCi()) {
-            log("SKIPPING pause-to-validate since we are running in CI");
-            return null;
-        }
+        if (!isPauseReady()) { return null; }
 
         System.out.println("\n");
         System.out.println("/------------------------------------------------------------------------------\\");
@@ -149,10 +141,7 @@ public final class ConsoleUtils {
 
     public static String pauseForInput(ExecutionContext context, String prompt) {
         // not applicable when running in Jenkins environment
-        if (isRunningInCi()) {
-            log("SKIPPING pause-to-input since we are running in CI");
-            return null;
-        }
+        if (!isPauseReady()) { return null; }
 
         System.out.println("\n");
         System.out.println("/------------------------------------------------------------------------------\\");
@@ -204,12 +193,41 @@ public final class ConsoleUtils {
         System.out.println("\n");
     }
 
+    protected static boolean isPauseReady() {
+        if (isRunningInCi()) {
+            log("SKIPPING pause-for-step since we are running in CI");
+            return false;
+        }
+
+        if (isRunningInJUnit()) {
+            log("SKIPPING pause-for-step since we are running in JUnit");
+            return false;
+        }
+
+        return true;
+    }
+
     protected static boolean isRunningInCi() {
         Map<String, String> environments = System.getenv();
         return StringUtils.isNotBlank(environments.get(OPT_JENKINS_URL)) &&
                StringUtils.isNotBlank(environments.get(OPT_JENKINS_HOME)) &&
                StringUtils.isNotBlank(environments.get(OPT_BUILD_ID)) &&
                StringUtils.isNotBlank(environments.get(OPT_BUILD_URL));
+    }
+
+    protected static boolean isRunningInJUnit() {
+        // am i running via junit?
+        ClassLoader cl = ClassLoader.getSystemClassLoader();
+        try {
+            Method m = ClassLoader.class.getDeclaredMethod("findLoadedClass", String.class);
+            m.setAccessible(true);
+            Object loaded = m.invoke(cl, "org.junit.runner.JUnitCore");
+            if (loaded != null) { return true; }
+        } catch (NoSuchMethodException | IllegalAccessException | InvocationTargetException e) {
+            // probably not loaded... ignore error; it's probably not critical...
+        }
+
+        return false;
     }
 
     private static void logAs(Level logLevel, String message) {

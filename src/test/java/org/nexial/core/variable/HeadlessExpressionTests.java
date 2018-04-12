@@ -29,14 +29,15 @@ public class HeadlessExpressionTests extends ExcelBasedTests {
 
     @Test
     public void number() throws Exception {
-        ExecutionSummary executionSummary = testViaExcel("unitTest_expressions.xlsx");
+        ExecutionSummary executionSummary = testViaExcel("unitTest_expressions.xlsx", "NUMBER");
         assertPassFail(executionSummary, "NUMBER", TestOutcomeStats.allPassed());
     }
 
     @Test
     public void excel() throws Exception {
         System.setProperty("nexial.openResult", "true");
-        ExecutionSummary executionSummary = testViaExcel("unitTest_expressions.xlsx");
+        System.setProperty("nexial.inspectOnPause", "true");
+        ExecutionSummary executionSummary = testViaExcel("unitTest_expressions.xlsx", "EXCEL");
         assertPassFail(executionSummary, "EXCEL", TestOutcomeStats.allPassed());
     }
 }

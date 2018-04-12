@@ -394,7 +394,7 @@ public class Excel {
                 XSSFRow row = sheet.getRow(i);
                 if (row == null) { continue; }
 
-                for (int j = startColIndex; j < endColIndex; j++) {
+                for (int j = startColIndex; j <= endColIndex; j++) {
                     XSSFCell cell = row.getCell(j, RETURN_BLANK_AS_NULL);
                     if (cell != null) { row.removeCell(cell); }
                 }
