@@ -60,17 +60,17 @@ public final class InputFileUtils {
     private InputFileUtils() {}
 
     public static List<Worksheet> findMatchingSheets(String file, Function<Excel, List<Worksheet>> matcher) {
-        Excel excel = toExcel(file, false);
+        Excel excel = toExcel(file, true);
         return excel == null ? new ArrayList<>() : matcher.apply(excel);
     }
 
     public static int countMatchingSheets(String file, Function<Excel, Integer> matcher) {
-        Excel excel = toExcel(file, false);
+        Excel excel = toExcel(file, true);
         return excel == null ? 0 : matcher.apply(excel);
     }
 
     public static boolean hasMatchingSheets(String file, Function<Excel, Boolean> matcher) {
-        Excel excel = toExcel(file, false);
+        Excel excel = toExcel(file, true);
         return excel == null ? false : matcher.apply(excel);
     }
 

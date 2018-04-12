@@ -741,13 +741,18 @@ public class Excel {
     public static Excel asXlsxExcel(String file, boolean dupThenOpen) throws IOException {
         if (StringUtils.isBlank(file) || !FileUtil.isFileReadable(file, MIN_EXCEL_FILE_SIZE)) { return null; }
 
-        Workbook workbook = null;
-        try {
+        // Workbook workbook = null;
+        // try {
             File excelFile = new File(file);
-            workbook = WorkbookFactory.create(excelFile);
-            if (workbook != null && workbook.getSpreadsheetVersion() == EXCEL2007) {
-                return new Excel(new File(file), dupThenOpen);
+            Excel excel = new Excel(new File(file), dupThenOpen);
+            if (excel.workbook.getSpreadsheetVersion() == EXCEL2007) {
+                return excel;
             }
+
+            // workbook = WorkbookFactory.create(excelFile);
+            // if (workbook != null && workbook.getSpreadsheetVersion() == EXCEL2007) {
+            //     return new Excel(new File(file), dupThenOpen);
+            // }
 
             // not excel-2007 or above
             ConsoleUtils.error("\n\n\n" +
@@ -758,18 +763,18 @@ public class Excel {
                                StringUtils.repeat("!", 80) + "\n" +
                                "\n\n");
             return null;
-        } catch (InvalidFormatException e) {
-            ConsoleUtils.error("Unable to open workbook (" + file + "): " + e.getMessage());
-            return null;
-        } finally {
-            if (workbook != null) {
-                try {
-                    workbook.close();
-                } catch (IOException e) {
-                    ConsoleUtils.error("Unable to close workbook (" + file + "): " + e.getMessage());
-                }
-            }
-        }
+        // } catch (InvalidFormatException e) {
+        //     ConsoleUtils.error("Unable to open workbook (" + file + "): " + e.getMessage());
+        //     return null;
+        // } finally {
+        //     if (workbook != null) {
+        //         try {
+        //             workbook.close();
+        //         } catch (IOException e) {
+        //             ConsoleUtils.error("Unable to close workbook (" + file + "): " + e.getMessage());
+        //         }
+        //     }
+        // }
     }
 
     public static boolean isXlsxVersion(String file) {
