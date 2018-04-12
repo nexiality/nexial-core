@@ -30,7 +30,6 @@ import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang3.BooleanUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.math.NumberUtils;
-
 import org.nexial.commons.utils.TextUtils;
 import org.nexial.commons.utils.web.URLEncodingUtils;
 import org.nexial.core.model.ExecutionContext;
@@ -41,16 +40,17 @@ import org.nexial.core.utils.OutputFileUtils;
 
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
+import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import io.jsonwebtoken.*;
 
-import static org.nexial.core.NexialConst.*;
-import static org.nexial.core.utils.CheckUtils.*;
 import static io.jsonwebtoken.SignatureAlgorithm.HS256;
 import static io.jsonwebtoken.impl.TextCodec.BASE64URL;
 import static org.apache.http.HttpHeaders.AUTHORIZATION;
 import static org.apache.http.HttpHeaders.CONTENT_TYPE;
+import static org.nexial.core.NexialConst.*;
+import static org.nexial.core.utils.CheckUtils.*;
 
 public class WsCommand extends BaseCommand {
     private static final Gson GSON = new GsonBuilder().disableHtmlEscaping().setLenient().create();
@@ -105,11 +105,9 @@ public class WsCommand extends BaseCommand {
     public StepResult head(String url, String var) { return requestNoBody(url, null, var, "head"); }
 
     public StepResult delete(String url, String body, String var) {
-        if (StringUtils.isNotEmpty(body)) {
-            return requestWithBody(url, body, var, "delete");
-        } else {
-            return requestNoBody(url, "", var, "delete");
-        }
+        return StringUtils.isNotEmpty(body) ?
+               requestWithBody(url, body, var, "delete") :
+               requestNoBody(url, "", var, "delete");
     }
 
     public StepResult assertReturnCode(String var, String returnCode) {
@@ -257,6 +255,7 @@ public class WsCommand extends BaseCommand {
      * </ul>
      *
      * Each of the above details are to be specified in name=value form, and each pair in separate lines.
+     * However in some cases, the value could be expressed as JSON array or JSON object.
      *
      * With all proper parameters properly specified, the target {@code url} would return back, among other things, a
      * one-use, time-bound access_token.  This token can be subsequently used as a header parameter
@@ -319,7 +318,21 @@ public class WsCommand extends BaseCommand {
 
         // save response to var
         Map<String, String> oauthResponse = new HashMap<>();
-        jsonProps.forEach(entry -> oauthResponse.put(entry.getKey(), entry.getValue().getAsString()));
+        jsonProps.forEach(entry -> {
+            String key = entry.getKey();
+            JsonElement value = entry.getValue();
+            // accomodate situation where json response contains multi-element array
+            if (value.isJsonArray()) {
+                JsonArray arrayValue = value.getAsJsonArray();
+                if (arrayValue.size() == 1) {
+                    oauthResponse.put(key, arrayValue.get(0).toString());
+                } else {
+                    oauthResponse.put(key, arrayValue.toString());
+                }
+            } else {
+                oauthResponse.put(key, value.getAsString());
+            }
+        });
         context.setData(var, oauthResponse);
 
         String tokenType = oauthResponse.get(OAUTH_TOKEN_TYPE);
@@ -340,7 +353,6 @@ public class WsCommand extends BaseCommand {
 
         // not yet supported
         // if (StringUtils.equalsIgnoreCase(tokenType, OAUTH_TOKEN_TYPE_MAC)) {
-        //
         // }
 
         return StepResult.fail(failPrefix + "unknown/unsupported " + OAUTH_TOKEN_TYPE + "found: " + tokenType);

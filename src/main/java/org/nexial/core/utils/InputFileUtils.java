@@ -25,6 +25,7 @@ import java.util.function.Function;
 import java.util.stream.Collectors;
 
 import org.apache.commons.collections4.CollectionUtils;
+import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang3.ArrayUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.poi.xssf.usermodel.XSSFCell;
@@ -35,6 +36,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import static org.apache.poi.ss.usermodel.CellType.STRING;
+import static org.nexial.core.NexialConst.Data.DEF_OPEN_EXCEL_AS_DUP;
 import static org.nexial.core.NexialConst.Data.SHEET_SYSTEM;
 import static org.nexial.core.excel.ExcelConfig.*;
 
@@ -60,18 +62,33 @@ public final class InputFileUtils {
     private InputFileUtils() {}
 
     public static List<Worksheet> findMatchingSheets(String file, Function<Excel, List<Worksheet>> matcher) {
-        Excel excel = toExcel(file, true);
-        return excel == null ? new ArrayList<>() : matcher.apply(excel);
+        Excel excel = null;
+        try {
+            excel = toExcel(file, DEF_OPEN_EXCEL_AS_DUP);
+            return excel == null ? new ArrayList<>() : matcher.apply(excel);
+        } finally {
+            if (DEF_OPEN_EXCEL_AS_DUP && excel != null) { FileUtils.deleteQuietly(excel.getFile().getParentFile()); }
+        }
     }
 
     public static int countMatchingSheets(String file, Function<Excel, Integer> matcher) {
-        Excel excel = toExcel(file, true);
-        return excel == null ? 0 : matcher.apply(excel);
+        Excel excel = null;
+        try {
+            excel = toExcel(file, DEF_OPEN_EXCEL_AS_DUP);
+            return excel == null ? 0 : matcher.apply(excel);
+        } finally {
+            if (DEF_OPEN_EXCEL_AS_DUP && excel != null) { FileUtils.deleteQuietly(excel.getFile().getParentFile()); }
+        }
     }
 
     public static boolean hasMatchingSheets(String file, Function<Excel, Boolean> matcher) {
-        Excel excel = toExcel(file, true);
-        return excel == null ? false : matcher.apply(excel);
+        Excel excel = null;
+        try {
+            excel = toExcel(file, DEF_OPEN_EXCEL_AS_DUP);
+            return excel == null ? false : matcher.apply(excel);
+        } finally {
+            if (DEF_OPEN_EXCEL_AS_DUP && excel != null) { FileUtils.deleteQuietly(excel.getFile().getParentFile()); }
+        }
     }
 
     public static Excel toExcel(String file, boolean openAsDup) {

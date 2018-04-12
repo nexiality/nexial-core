@@ -36,8 +36,16 @@ public class HeadlessExpressionTests extends ExcelBasedTests {
     @Test
     public void excel() throws Exception {
         System.setProperty("nexial.openResult", "true");
+        // won't work.. just place here for to test (and make sure) that it won't work for unit test
         System.setProperty("nexial.inspectOnPause", "true");
         ExecutionSummary executionSummary = testViaExcel("unitTest_expressions.xlsx", "EXCEL");
         assertPassFail(executionSummary, "EXCEL", TestOutcomeStats.allPassed());
+    }
+
+    @Test
+    public void macro() throws Exception {
+        System.setProperty("nexial.openResult", "true");
+        ExecutionSummary executionSummary = testViaExcel("unitTest_base_macro2.xlsx", "ImportMacro");
+        assertPassFail(executionSummary, "ImportMacro", TestOutcomeStats.allPassed());
     }
 }

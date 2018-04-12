@@ -2,7 +2,11 @@
 
 cd ..
 
-gradle clean testJar installDist
+if [[ "$1" = "-t" ]]; then
+	gradle clean test testJar installDist
+else
+	gradle clean testJar installDist
+fi
 
 mkdir -p build/install/nexial-core/support
 cp -Rvf support/nexial*.* build/install/nexial-core/support

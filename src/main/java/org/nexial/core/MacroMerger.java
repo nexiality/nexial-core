@@ -47,8 +47,8 @@ public class MacroMerger {
     private static final String TEST_STEPS_PREFIX =
         "" + COL_TEST_CASE + (ADDR_COMMAND_START.getRowStartIndex() + 1) + ":" + COL_REASON;
     private static final String TEST_COMMAND_MACRO = "base.macro(file,sheet,name)";
-
     private static final Map<String, List<List<String>>> MACRO_CACHE = new HashMap<>();
+
     private Excel excel;
     private TestProject project;
 
@@ -67,8 +67,6 @@ public class MacroMerger {
         for (Worksheet sheet : testSheets) {
             // collect all test steps (also clear existing test steps in sheet)
             List<List<String>> allTestSteps = harvestAllTestSteps(sheet);
-
-            //ConsoleUtils.log("sheet " + sheet.getName() + " - original test steps:\n\t\t" + TextUtils.toString(allTestSteps, "\n\t\t"));
 
             // scan through all test steps
             if (expandTestSteps(allTestSteps)) {
@@ -97,8 +95,6 @@ public class MacroMerger {
 
             // look for base.macro(file,sheet,name) - open macro library as excel
             if (StringUtils.equals(testCommand, TEST_COMMAND_MACRO)) {
-                //ConsoleUtils.log(sheet.getName() + ": macro reference found - " + cellTarget + " - " + testCommand);
-
                 String paramFile = row.get(COL_IDX_PARAMS_START);
                 String paramSheet = row.get(COL_IDX_PARAMS_START + 1);
                 String paramMacro = row.get(COL_IDX_PARAMS_START + 2);
@@ -114,10 +110,14 @@ public class MacroMerger {
                     for (int j = 0; j < macroSteps.size(); j++) {
                         List<String> macroStep = new ArrayList<>(macroSteps.get(j));
                         macroStep.add(COL_IDX_TESTCASE, j == 0 ? activityName : "");
+                        // todo needs to change to support base.section()
                         macroStep.add(COL_IDX_FLOW_CONTROLS, flowControls);
+                        if (StringUtils.isNotEmpty(macroStep.get(COL_IDX_FLOW_CONTROLS + 1))) {
+                            macroStep.set(COL_IDX_FLOW_CONTROLS + 1, "");
+                        }
                         allTestSteps.add(i + j, macroStep);
                     }
-//                    i += macroSteps.size();
+                    // i += macroSteps.size();
                     macroExpanded = true;
                 }
             }
@@ -127,8 +127,6 @@ public class MacroMerger {
     }
 
     protected void refillExpandedTestSteps(Worksheet sheet, List<List<String>> allTestSteps) {
-        //ConsoleUtils.log(sheet.getName() + " - expanded test steps:\n\t\t" + TextUtils.toString(allTestSteps, "\n\t\t"));
-
         XSSFSheet excelSheet = sheet.getSheet();
 
         // remove existing rows
@@ -158,11 +156,9 @@ public class MacroMerger {
         List<List<String>> testStepData = new ArrayList<>();
         if (CollectionUtils.isEmpty(testStepArea)) { return testStepData; }
 
-        //XSSFSheet excelSheet = sheet.getSheet();
         testStepArea.forEach(row -> {
             List<String> testStepRow = new ArrayList<>();
             row.forEach(cell -> testStepRow.add(Excel.getCellValue(cell)));
-            //excelSheet.removeRow(excelSheet.getRow(row.get(0).getRowIndex()));
             testStepData.add(testStepRow);
         });
 
