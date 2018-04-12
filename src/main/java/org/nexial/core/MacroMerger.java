@@ -92,6 +92,7 @@ public class MacroMerger {
             String activityName = row.get(COL_IDX_TESTCASE);
             String cellTarget = row.get(COL_IDX_TARGET);
             String cellCommand = row.get(COL_IDX_COMMAND);
+            String flowControls = row.get(COL_IDX_FLOW_CONTROLS);
             String testCommand = cellTarget + "." + cellCommand;
 
             // look for base.macro(file,sheet,name) - open macro library as excel
@@ -112,10 +113,11 @@ public class MacroMerger {
                     allTestSteps.remove(i);
                     for (int j = 0; j < macroSteps.size(); j++) {
                         List<String> macroStep = new ArrayList<>(macroSteps.get(j));
-                        macroStep.add(0, j == 0 ? activityName : "");
+                        macroStep.add(COL_IDX_TESTCASE, j == 0 ? activityName : "");
+                        macroStep.add(COL_IDX_FLOW_CONTROLS, flowControls);
                         allTestSteps.add(i + j, macroStep);
                     }
-                    i += macroSteps.size();
+//                    i += macroSteps.size();
                     macroExpanded = true;
                 }
             }
