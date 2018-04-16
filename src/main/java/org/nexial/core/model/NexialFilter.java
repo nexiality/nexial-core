@@ -253,9 +253,7 @@ public class NexialFilter implements Serializable {
 
     @Override
     public String toString() {
-        return subject +
-               (comparator == Any ? " MATCH ANY " : comparator.getSymbol()) +
-               StringUtils.defaultString(controls);
+        return subject + (comparator == Any ? " MATCH ANY " : comparator) + StringUtils.defaultString(controls);
     }
 
     /**

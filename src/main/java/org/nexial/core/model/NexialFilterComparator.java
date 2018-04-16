@@ -63,6 +63,7 @@ public enum NexialFilterComparator {
 
     Any(null, 0, null, 10);
 
+    private static final List<String> REQUIRED_WRAP_SPACE = Arrays.asList(">", ">=", "<", "<=", "=", "!=");
     private static final String REGEX_CONTROLS = "(\".+?\"|.+?)?";
     private static final String REGEX_FILTER = initRegexFilter();
 
@@ -116,7 +117,7 @@ public enum NexialFilterComparator {
         // could be 1
         if (controlSize == 1) {
             // we should check for type compatibility at this time since data variable might be in reference
-            // controlText = checkTypeCompatiblity(NexialFilter.normalizeCondition(controlText));
+            // controlText = checkTypeCompatibility(NexialFilter.normalizeCondition(controlText));
             controlText = NexialFilter.normalizeCondition(controlText);
             return new ImmutablePair<>(controlText, Collections.singletonList(controlText));
         }
@@ -144,7 +145,7 @@ public enum NexialFilterComparator {
         Arrays.stream(controls).forEach(control -> {
             // we should check for type compatibility at this time since data variable might be in reference
             // String formatted = StringUtils.equals(StringUtils.trim(control), "\"\"") ?
-            //                    "\"\"" : checkTypeCompatiblity(NexialFilter.normalizeCondition(control));
+            //                    "\"\"" : checkTypeCompatibility(NexialFilter.normalizeCondition(control));
             String formatted = StringUtils.equals(StringUtils.trim(control), "\"\"") ?
                                "\"\"" : NexialFilter.normalizeCondition(control);
 
@@ -154,6 +155,11 @@ public enum NexialFilterComparator {
         });
 
         return new ImmutablePair<>(StringUtils.removeEnd(buffer.toString(), ITEM_SEP) + IS_CLOSE_TAG, controlList);
+    }
+
+    @Override
+    public String toString() {
+        return REQUIRED_WRAP_SPACE.contains(symbol) ? StringUtils.wrapIfMissing(symbol, " ") : symbol;
     }
 
     private static String initRegexFilter() {
@@ -191,7 +197,7 @@ public enum NexialFilterComparator {
         return "^\\s*" + REGEX_CONTROLS + "\\s*" + regexOps + "\\s*" + REGEX_CONTROLS + "\\s*$";
     }
 
-    private String checkTypeCompatiblity(String control) {
+    private String checkTypeCompatibility(String control) {
         if (expectedType == Number.class) {
             if (!NexialFilter.canBeNumber(control)) {
                 throw new IllegalArgumentException("Invalid -  '" + this + "' on '" + control + "': EXPECTS numeric");
