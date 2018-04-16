@@ -460,7 +460,9 @@ public class TestStep extends TestStepManifest {
                 boolean tainted = !StringUtils.equals(origParamValue, taintedValue);
                 if (tainted) {
                     paramCell.setCellValue(StringUtils.truncate(taintedValue, MAX_VERBOSE_CHAR));
-                    paramCell.setCellComment(toSystemComment(paramCell, origParamValue));
+                    if (StringUtils.isNotEmpty(origParamValue)) {
+                        paramCell.setCellComment(toSystemComment(paramCell, origParamValue));
+                    }
                     paramCell.setCellStyle(worksheet.getStyle(STYLE_TAINTED_PARAM));
                 } else {
                     paramCell.setCellStyle(worksheet.getStyle(STYLE_PARAM));

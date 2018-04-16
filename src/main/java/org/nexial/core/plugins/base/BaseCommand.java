@@ -39,7 +39,6 @@ import org.nexial.commons.utils.JRegexUtils;
 import org.nexial.commons.utils.RegexUtils;
 import org.nexial.commons.utils.TextUtils;
 import org.nexial.core.ExecutionThread;
-import org.nexial.core.NexialConst.Data;
 import org.nexial.core.excel.ext.CellTextReader;
 import org.nexial.core.model.CommandRepeater;
 import org.nexial.core.model.ExecutionContext;
@@ -55,6 +54,7 @@ import static java.lang.Boolean.FALSE;
 import static java.lang.Boolean.TRUE;
 import static java.lang.System.lineSeparator;
 import static java.util.regex.Pattern.CASE_INSENSITIVE;
+import static org.nexial.core.NexialConst.Data.NULL;
 import static org.nexial.core.NexialConst.MSG_FAIL;
 import static org.nexial.core.NexialConst.OPT_EASY_STRING_COMPARE;
 import static org.nexial.core.excel.ExcelConfig.MSG_PASS;
@@ -68,6 +68,9 @@ public class BaseCommand implements NexialCommand {
                                                                               "desktop.typeAppendTextBox",
                                                                               "desktop.typeAppendTextArea",
                                                                               "desktop.typeTextArea");
+    // "self-derived" means that the command will figure out the appropriate param values for display
+    public static final List<String> PARAM_DERIVED_COMMANDS = Collections.singletonList("step.observe");
+
     protected static final IncrementStrategy STRATEGY_DEFAULT = ALPHANUM;
 
     protected transient Map<String, Method> commandMethods = new HashMap<>();
@@ -117,14 +120,15 @@ public class BaseCommand implements NexialCommand {
         if (context.isVerbose() && (this instanceof CanLogExternally)) {
             String displayValues = "";
             for (Object value : values) {
-                displayValues += (value == null ? Data.NULL : CellTextReader.readValue(value.toString())) + ",";
+                displayValues += (value == null ? NULL : CellTextReader.readValue(value.toString())) + ",";
             }
             displayValues = StringUtils.removeEnd(displayValues, ",");
             ((CanLogExternally) this).logExternally(context.getCurrentTestStep(), command + " (" + displayValues + ")");
         }
 
         StepResult result = (StepResult) m.invoke(this, values);
-        result.setParamValues(values);
+        String methodName = StringUtils.substringBefore(StringUtils.substringBefore(command, "("), ".");
+        if (!PARAM_DERIVED_COMMANDS.contains(getTarget() + "." + methodName)) { result.setParamValues(values); }
         return result;
     }
 
@@ -162,7 +166,7 @@ public class BaseCommand implements NexialCommand {
             return StepResult.success("previous recording stopped");
         } catch (IOException e) {
             String error = "Unable to stop and/or save screen recording" +
-                           (context.isOutputToCloud() ? ", possible due to cloud integration": "") +
+                           (context.isOutputToCloud() ? ", possible due to cloud integration" : "") +
                            ": " + e.getMessage();
             log(error);
             return StepResult.fail(error);
@@ -807,7 +811,6 @@ public class BaseCommand implements NexialCommand {
     protected List<String> findTextMatches(String text, String regex) {
         requiresNotBlank(text, "invalid text", text);
         requires(StringUtils.isNotBlank(regex), "invalid regular expression", regex);
-        // return JRegexUtils.collectGroups(text, regex);
         return RegexUtils.eagerCollectGroups(text, regex, true, true);
     }
 
