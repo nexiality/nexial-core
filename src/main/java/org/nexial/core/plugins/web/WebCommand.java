@@ -67,9 +67,9 @@ import org.openqa.selenium.support.ui.FluentWait;
 import org.openqa.selenium.support.ui.Select;
 import org.openqa.selenium.support.ui.WebDriverWait;
 
-import net.lightbody.bmp.proxy.jetty.http.HttpMessage;
 import net.lightbody.bmp.proxy.ProxyServer;
 import net.lightbody.bmp.proxy.http.RequestInterceptor;
+import net.lightbody.bmp.proxy.jetty.http.HttpMessage;
 import net.lightbody.bmp.proxy.jetty.http.HttpRequest;
 
 import static java.io.File.separator;
@@ -112,9 +112,9 @@ public class WebCommand extends BaseCommand implements CanTakeScreenshot, CanLog
         // todo: revisit to handle proxy
         if (context.getBooleanData(OPT_PROXY_ENABLE, false)) {
             ProxyHandler proxy = new ProxyHandler();
-        	proxy.setContext(context);
-        	proxy.startProxy();
-        	browser.setProxy(proxy);
+            proxy.setContext(context);
+            proxy.startProxy();
+            browser.setProxy(proxy);
         }
 
         if (!context.getBooleanData(OPT_DELAY_BROWSER, false)) { initWebDriver(); }
@@ -576,8 +576,8 @@ public class WebCommand extends BaseCommand implements CanTakeScreenshot, CanLog
             if (actual == null) {
                 boolean expectsNull = context.isNullValue(value);
                 return new StepResult(expectsNull,
-                                        "Attribute '" + attrName + "' of element '" + locator + "' is null/missing " +
-                                        (expectsNull ? "as EXPECTED" : " but EXPECTS " + value), null);
+                                      "Attribute '" + attrName + "' of element '" + locator + "' is null/missing " +
+                                      (expectsNull ? "as EXPECTED" : " but EXPECTS " + value), null);
             }
 
             return assertEqual(value, actual);
@@ -856,8 +856,6 @@ public class WebCommand extends BaseCommand implements CanTakeScreenshot, CanLog
         ensureReady();
 
         url = validateUrl(url);
-        registerStartURL(url);
-
         driver.get(url);
         waitForBrowserStability(toPositiveLong(waitMs, "waitMs"));
 
@@ -1383,8 +1381,8 @@ public class WebCommand extends BaseCommand implements CanTakeScreenshot, CanLog
             String actual = getAttributeValue(locator, attrName);
             boolean success = expectsFound ? StringUtils.isNotEmpty(actual) : StringUtils.isEmpty(actual);
             return new StepResult(success,
-                                    "Attribute '" + attrName + "' of element '" + locator + "' is " +
-                                    (success ? "found as EXPECTED" : " NOT FOUND"), null);
+                                  "Attribute '" + attrName + "' of element '" + locator + "' is " +
+                                  (success ? "found as EXPECTED" : " NOT FOUND"), null);
         } catch (NoSuchElementException e) {
             return StepResult.fail(e.getMessage());
         }
@@ -1433,11 +1431,6 @@ public class WebCommand extends BaseCommand implements CanTakeScreenshot, CanLog
         } catch (NoSuchElementException e) {
             return StepResult.fail(e.getMessage());
         }
-    }
-
-    protected void registerStartURL(String url) {
-        if (StringUtils.isBlank(url) || context.hasData(OPT_START_URL)) { return; }
-        context.setData(OPT_START_URL, url);
     }
 
     protected StepResult trySelectWindow(String winId, String waitMs) {

@@ -115,7 +115,7 @@ public final class FlowControlUtils {
             if (flowControl == null || flowControl.hasNoCondition()) { return null; }
             return isMatched(context, flowControl) ?
                    StepResult.success("current step proceeds on") :
-                   StepResult.skipped("current step skipped: " + serializeDirectives(flowControl));
+                   StepResult.skipped("current step skipped: NOT TRUE(" + serializeDirectives(flowControl) + ")");
         }
 
         if (!isMatched(context, flowControl)) { return null; }

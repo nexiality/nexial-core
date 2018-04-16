@@ -60,6 +60,8 @@ public class JdbcOutcome extends ArrayList<JdbcResult> {
 
     public int getRowsAffected() { return rowsAffected; }
 
+    public int getRowCount() { return getRowsAffected(); }
+
     public boolean addOutcome(String variable, JdbcResult result) {
         if (result == null) { return false; }
         if (result.getRowCount() != -1) { rowsAffected += result.getRowCount(); }

@@ -584,11 +584,26 @@ public class CsvTransformer<T extends CsvDataType> extends Transformer {
         TextDataType ascii = new TextDataType("");
 
         if (data == null) { return ascii; }
-        if (CollectionUtils.isEmpty(data.getValue())) { return ascii; }
 
-        ascii.setTextValue(TextUtils.createAsciiTable(data.getHeaders(), data.getValue(), Record::getString));
+        List<Record> records = data.getValue();
+        if (CollectionUtils.isEmpty(records)) { return ascii; }
+
+        ascii.setTextValue(TextUtils.createAsciiTable(data.getHeaders(), records, Record::getString));
         ascii.setValue(ascii.getTextValue());
         return ascii;
+    }
+
+    public TextDataType htmlTable(T data) throws TypeConversionException {
+        TextDataType html = new TextDataType("");
+
+        if (data == null) { return html; }
+
+        List<Record> records = data.getValue();
+        if (CollectionUtils.isEmpty(records)) { return html; }
+
+        html.setTextValue(TextUtils.createHtmlTable(data.getHeaders(), records, Record::getString, null));
+        html.setValue(html.getTextValue());
+        return html;
     }
 
     /**

@@ -466,6 +466,8 @@ public class BaseCommand implements NexialCommand {
         return StepResult.success();
     }
 
+    // todo: repeatForList(String varList, String maxWaitMs)
+
     public StepResult repeatUntil(String steps, String maxWaitMs) {
         requiresPositiveNumber(steps, "Invalid step count", steps);
         int stepCount = NumberUtils.toInt(steps);

@@ -680,48 +680,134 @@ public final class TextUtils {
      * create ASCII table (aka ascii art) based on a {@link List} of objects, which can varied in types.  The extraction
      * of cell-level value would be differed to {@link ExtractCellByPosition} implementation
      */
+    @NotNull
     public static <T> String createAsciiTable(List<String> headers,
                                               List<T> records,
                                               ExtractCellByPosition<T> extractor) {
         // figure out the right width to apply
-        Map<Integer, Integer> columnWidths = new HashMap<>();
+        Map<Integer, Integer> widths = new HashMap<>();
         if (CollectionUtils.isNotEmpty(headers)) {
-            for (int i = 0; i < headers.size(); i++) { columnWidths.put(i, StringUtils.length(headers.get(i)) + 1); }
+            for (int i = 0; i < headers.size(); i++) { widths.put(i, StringUtils.length(headers.get(i)) + 1); }
         }
 
-        records.forEach(
-            row -> columnWidths.forEach(
-                (index, currentWidth) ->
-                    columnWidths.put(index,
-                                     Math.max(currentWidth, StringUtils.length(extractor.getCell(row, index)) + 1))));
+        if (CollectionUtils.isNotEmpty(records)) {
+            records.forEach(
+                row -> widths.forEach(
+                    (index, currentWidth) -> {
+                        int width = Math.max(currentWidth, StringUtils.length(extractor.getCell(row, index)) + 1);
+                        widths.put(index, width);
+                    }));
+        }
 
         int[] totalWidth = new int[]{1};
-        columnWidths.forEach((index, width) -> totalWidth[0] += width + 1);
+        widths.forEach((index, width) -> totalWidth[0] += width + 1);
 
-        String lineAcross = StringUtils.repeat("-", totalWidth[0]) + lineSeparator();
+        String linSep = lineSeparator();
+        String lineAcross = StringUtils.repeat("-", totalWidth[0]) + linSep;
 
         // ready to draw
         StringBuilder tableContent = new StringBuilder();
-        tableContent.append(lineAcross);
 
         if (CollectionUtils.isNotEmpty(headers)) {
+            tableContent.append(lineAcross);
             tableContent.append("|");
             for (int i = 0; i < headers.size(); i++) {
-                tableContent.append(StringUtils.rightPad(headers.get(i), columnWidths.get(i))).append("|");
+                tableContent.append(StringUtils.rightPad(headers.get(i), widths.get(i))).append("|");
             }
-            tableContent.append(lineSeparator()).append(lineAcross);
+            tableContent.append(linSep).append(lineAcross);
         }
 
-        records.forEach(row -> {
-            tableContent.append("|");
-            columnWidths.forEach(
-                (position, width) -> tableContent.append(StringUtils.rightPad(extractor.getCell(row, position),
-                                                                              columnWidths.get(position)))
-                                                 .append("|"));
-            tableContent.append(lineSeparator()).append(lineAcross);
-        });
+        if (CollectionUtils.isNotEmpty(records)) {
+            records.forEach(row -> {
+                tableContent.append("|");
+                widths.forEach(
+                    (position, width) -> {
+                        String cell = StringUtils.rightPad(extractor.getCell(row, position), widths.get(position));
+                        tableContent.append(cell).append("|");
+                    });
+                tableContent.append(linSep).append(lineAcross);
+            });
+        }
 
         return tableContent.toString();
+    }
+
+    /**
+     * create HTML table with optional {@code tableStyleClass}.
+     *
+     * This implementation requires the same size of {@code headers} and {@code records}.  {@code headers} is thus
+     * expected to <b>NOT TO BE EMPTY</b>, or no table HTML would be generated.
+     */
+    @NotNull
+    public static <T> String createHtmlTable(List<String> headers,
+                                             List<T> records,
+                                             ExtractCellByPosition<T> extractor,
+                                             String tableStyleClass) {
+        int bufferSize = Math.max(20 * CollectionUtils.size(headers) * CollectionUtils.size(records), 100);
+        StringBuilder buffer = new StringBuilder(bufferSize);
+
+        String lineSep = lineSeparator();
+
+        if (StringUtils.isNotBlank(tableStyleClass)) {
+            buffer.append("<table class=\"").append(tableStyleClass).append("\">");
+        } else {
+            buffer.append("<table>");
+        }
+        buffer.append(lineSep);
+
+        // header
+        int columnCount = CollectionUtils.size(headers);
+        if (CollectionUtils.isNotEmpty(headers)) {
+            buffer.append("<thead><tr>");
+            headers.forEach(header -> buffer.append("<th>").append(header).append("</th>"));
+            buffer.append("</tr></thead>").append(lineSep);
+        }
+
+        // body
+        if (CollectionUtils.isNotEmpty(records)) {
+            buffer.append("<tbody>").append(lineSep);
+            records.forEach(row -> {
+                buffer.append("<tr>");
+                for (int i = 0; i < columnCount; i++) {
+                    buffer.append("<td>").append(extractor.getCell(row, i)).append("</td>");
+                }
+                buffer.append("</tr>").append(lineSep);
+            });
+            buffer.append("</tbody>").append(lineSep);
+        }
+
+        buffer.append("</table>").append(lineSep);
+
+        return buffer.toString();
+    }
+
+    @NotNull
+    public static String createHtmlTable(List<String> headers,
+                                         List<List<String>> data,
+                                         String tableStyleClass) {
+        return createHtmlTable(headers, data, List::get, tableStyleClass);
+    }
+
+    @NotNull
+    public static String createCsv(List<String> headers,
+                                   List<List<String>> data,
+                                   String recordSep,
+                                   String fieldSep,
+                                   String wrapChar) {
+        int bufferSize = Math.max(20 * CollectionUtils.size(headers) * CollectionUtils.size(data), 100);
+        StringBuilder buffer = new StringBuilder(bufferSize);
+
+        // header
+        if (CollectionUtils.isNotEmpty(headers)) {
+            buffer.append(TextUtils.toString(headers, fieldSep)).append(recordSep);
+        }
+
+        // content
+        if (CollectionUtils.isNotEmpty(data)) {
+            data.forEach(row -> buffer.append(TextUtils.toString(row, fieldSep, wrapChar, wrapChar)).append(recordSep));
+        }
+
+        return buffer.toString();
     }
 
     /**

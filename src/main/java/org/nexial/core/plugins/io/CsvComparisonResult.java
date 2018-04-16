@@ -25,11 +25,11 @@ import java.util.Set;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 
+import org.jetbrains.annotations.NotNull;
 import org.nexial.commons.utils.TextUtils;
 import org.nexial.core.plugins.io.CsvExtendedComparison.ReportFormat;
 
 import static org.nexial.core.plugins.io.CsvExtendedComparison.ReportFormat.*;
-import static java.lang.System.lineSeparator;
 
 public class CsvComparisonResult {
     private List<String> expectedHeaders;
@@ -154,55 +154,24 @@ public class CsvComparisonResult {
     }
 
     protected String toPlain() {
+        return TextUtils.createAsciiTable(resolveDisplyableHeaders(), discrepancies, List::get);
+    }
+
+    protected String toCSV(boolean wrapValueWithDoubleQuote) {
+        return TextUtils.createCsv(resolveDisplyableHeaders(), discrepancies, "\r\n", ",", wrapValueWithDoubleQuote ? "\"" : "");
+    }
+
+    protected String toHTML() {
+        return TextUtils.createHtmlTable(resolveDisplyableHeaders(), discrepancies, "compare-extended-result-table");
+    }
+
+    @NotNull
+    private List<String> resolveDisplyableHeaders() {
         List<String> headers = new ArrayList<>(displayFields);
         headers.add(mismatchedField);
         headers.add(expectedField);
         headers.add(actualField);
-        return TextUtils.createAsciiTable(headers, discrepancies, List::get);
-    }
-
-    protected String toCSV(boolean wrapValueWithDoubleQuote) {
-        StringBuilder buffer = new StringBuilder();
-
-        // header
-        buffer.append(TextUtils.toString(displayFields, ",")).append(",")
-              .append(mismatchedField).append(",")
-              .append(expectedField).append(",")
-              .append(actualField)
-              .append("\r\n");
-
-        // content
-        String wrapChar = wrapValueWithDoubleQuote ? "\"" : "";
-        discrepancies.forEach(discrepancy -> buffer.append(TextUtils.toString(discrepancy, ",", wrapChar, wrapChar))
-                                                   .append("\r\n"));
-        return buffer.toString();
-    }
-
-    protected String toHTML() {
-        StringBuilder buffer = new StringBuilder();
-
-        // header
-        buffer.append("<table class=\"compare-extended-result-table\">").append(lineSeparator());
-
-        buffer.append("<thead><tr>");
-        displayFields.forEach(display -> buffer.append("<th>").append(display).append("</th>"));
-        buffer.append("<th>").append(mismatchedField).append("</th>")
-              .append("<th>").append(expectedField).append("</th>")
-              .append("<th>").append(actualField).append("</th>");
-        buffer.append("</tr></thead>").append(lineSeparator());
-
-        // content
-        buffer.append("<tbody>").append(lineSeparator());
-        discrepancies.forEach(discrepancy -> {
-            buffer.append("<tr>");
-            discrepancy.forEach(value -> buffer.append("<td>").append(value).append("</td>"));
-            buffer.append("</tr>").append(lineSeparator());
-        });
-        buffer.append("</tbody>").append(lineSeparator());
-
-        buffer.append("</table>").append(lineSeparator());
-
-        return buffer.toString();
+        return headers;
     }
 
     private List<String> newDiscrepancy(String[] record, String field, String expected, String actual) {

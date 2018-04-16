@@ -28,6 +28,7 @@ import org.apache.commons.lang3.BooleanUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.nexial.commons.utils.TextUtils;
 import org.nexial.core.excel.ExcelConfig;
+import org.nexial.core.model.ExecutionContext;
 import org.nexial.core.model.ExecutionDefinition;
 import org.nexial.core.model.TestProject;
 
@@ -137,8 +138,6 @@ public final class NexialConst {
     public static final int PROXY_PORT = 19850;
 
     public static final String OPT_IMAGE_TOLERANCE = NAMESPACE + "imageTolerance";
-
-    public static final String OPT_START_URL = NAMESPACE + "startBaseUrl";
 
     // derived from System property ONLY -- should be set to each automation server
     public static final String OPT_REPORT_SERVER_URL = NAMESPACE + "reportServerUrl";
@@ -792,9 +791,14 @@ public final class NexialConst {
         }
 
         public static boolean isAutoOpenResult() {
-            // todo: need to support data file
-            return BooleanUtils.toBoolean(System.getProperty(OPT_OPEN_RESULT, DEF_OPEN_RESULT)) ||
-                   BooleanUtils.toBoolean(System.getProperty(ASSISTANT_MODE, DEF_OPEN_RESULT));
+            ExecutionContext context = ExecutionThread.get();
+            if (context == null) {
+                return BooleanUtils.toBoolean(System.getProperty(OPT_OPEN_RESULT, DEF_OPEN_RESULT)) ||
+                       BooleanUtils.toBoolean(System.getProperty(ASSISTANT_MODE, DEF_OPEN_RESULT));
+            } else {
+                return context.getBooleanData(OPT_OPEN_RESULT, BooleanUtils.toBoolean(DEF_OPEN_RESULT)) ||
+                       context.getBooleanData(ASSISTANT_MODE, BooleanUtils.toBoolean(DEF_OPEN_RESULT));
+            }
         }
 
         public static String treatCommonValueShorthand(String text) {
@@ -848,8 +852,6 @@ public final class NexialConst {
         public static final String OPERATOR_IS = " is";
         public static final String IS_OPEN_TAG = "[";
         public static final String IS_CLOSE_TAG = "]";
-        public static final String OPERATOR_IS_SYNTAX = OPERATOR_IS + " " + IS_OPEN_TAG;
-        public static final String OPERATOR_IS_SYNTAX2 = OPERATOR_IS + IS_OPEN_TAG;
         public static final String ANY_FIELD = "[ANY FIELD]";
 
         private FlowControls() {}
