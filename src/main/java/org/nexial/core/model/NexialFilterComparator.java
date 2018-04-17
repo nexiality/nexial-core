@@ -32,7 +32,7 @@ import static org.nexial.core.model.NexialFilterComparator.InternalMappings.COMP
 
 /** all possible ways to evaluate a filter */
 public enum NexialFilterComparator {
-    GreaterOrEqual(" >= ", 1, Number.class, 1),
+    GreaterOrEqual(" >= ", 1, Number.class, 1.0),
     GreaterOrEqual_2(">=", 1, Number.class, 1.1),
     Greater(" > ", 1, Number.class, 1.2),
     Greater_2(">", 1, Number.class, 1.3),
@@ -42,13 +42,13 @@ public enum NexialFilterComparator {
     Lesser_2("<", 1, Number.class, 1.7),
     NotEqual(" != ", 1, String.class, 1.8),
     NotEqual_2("!=", 1, String.class, 1.9),
-    Equal(" = ", 1, String.class, 1.10),
-    Equal_2("=", 1, String.class, 1.11),
+    Equal(" = ", 1, String.class, 1.91),
+    Equal_2("=", 1, String.class, 1.92),
 
-    In(" in ", -1, String.class, 2),
-    NotIn(" not in ", -1, String.class, 2.1),
-    IsEmpty(" is empty", 0, null, 2.2),
-    IsNotEmpty(" is not empty", 0, null, 2.3),
+    NotIn(" not in ", -1, String.class, 2.0),
+    In(" in ", -1, String.class, 2.1),
+    IsNotEmpty(" is not empty", 0, null, 2.2),
+    IsEmpty(" is empty", 0, null, 2.3),
     IsNot(" is not ", -1, String.class, 2.4),
     IsDefined(" is defined", 0, null, 2.5),
     IsUndefined(" is undefined", 0, null, 2.6),

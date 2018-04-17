@@ -15,28 +15,29 @@
  *
  */
 
-package org.nexial.core.plugins.json;
+package org.nexial.core.plugins.io;
 
+import org.junit.Assert;
 import org.junit.Test;
 import org.nexial.core.ExcelBasedTests;
 import org.nexial.core.model.ExecutionSummary;
 
 import static org.nexial.core.NexialConst.Data.OPT_OPEN_RESULT;
 
-public class HeadlessJsonTests extends ExcelBasedTests {
+public class HeadlessIOTests extends ExcelBasedTests {
+    @Test
+    public void alltests() throws Exception {
+        // System.setProperty(OUTPUT_TO_CLOUD, "false");
+        // System.setProperty(OPT_RUN_ID_PREFIX, "unitTest_io");
+        // System.setProperty(OPT_OPEN_RESULT, "off");
+
+        ExecutionSummary executionSummary = testViaExcel("unitTest_io.xlsx", "filter");
+        assertPassFail(executionSummary, "filter", TestOutcomeStats.allPassed());
+        Assert.assertEquals(0, executionSummary.getFailCount());
+    }
+
     static {
         System.setProperty(OPT_OPEN_RESULT, "off");
     }
 
-    @Test
-    public void jsonCommandTests() throws Exception {
-        // System.setProperty(OUTPUT_TO_CLOUD, "false");
-        // System.setProperty(OPT_RUN_ID_PREFIX, "unitTest_json");
-        // System.setProperty(OPT_OPEN_RESULT, "off");
-
-        ExecutionSummary executionSummary = testViaExcel("unitTest_json.xlsx");
-        System.out.println("executionSummary = " + executionSummary);
-        assertPassFail(executionSummary, "jsonpath1", TestOutcomeStats.allPassed());
-        assertPassFail(executionSummary, "bad_jsonpath", TestOutcomeStats.allPassed());
-    }
 }

@@ -35,6 +35,7 @@ import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.SystemUtils;
 import org.apache.commons.lang3.tuple.Pair;
 import org.apache.poi.openxml4j.exceptions.InvalidFormatException;
+import org.apache.poi.openxml4j.exceptions.OLE2NotOfficeXmlFileException;
 import org.apache.poi.ss.usermodel.*;
 import org.apache.poi.ss.util.CellRangeAddress;
 import org.apache.poi.ss.util.WorkbookUtil;
@@ -763,7 +764,7 @@ public class Excel {
                                StringUtils.repeat("!", 80) + "\n" +
                                "\n\n");
             return null;
-        } catch (InvalidFormatException e) {
+        } catch (InvalidFormatException | OLE2NotOfficeXmlFileException e) {
             ConsoleUtils.error("Unable to open workbook (" + file + "): " + e.getMessage());
             return null;
         } finally {

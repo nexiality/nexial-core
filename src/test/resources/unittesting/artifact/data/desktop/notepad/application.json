@@ -1,0 +1,67 @@
+{
+	"aut": {
+		"path": "C:\\windows\\system32",
+		"exe": "notepad.exe",
+		"args": "",
+		"dotnetConfig": "",
+		"terminateExisting": true
+	},
+
+	"defaultWaitMs": 800,
+	"appStartupWaitMs": 1000,
+
+	"app": {
+		"xpath": "/*[@ClassName='Notepad' and @ControlType='ControlType.Window']",
+
+		"components": {
+			"TitleBar": {
+				"notes": "cache saved as part of [appId]-commons.json",
+				"xpath": "/*[@ClassName='Notepad' and @ControlType='ControlType.Window']/*[@ControlType='ControlType.TitleBar' and @AutomationId='TitleBar']"
+			},
+
+			"MenuBar": {
+				"notes": "cache saved as part of [appId]-commons.json",
+				"xpath": "/*[@ClassName='Notepad' and @ControlType='ControlType.Window']/*[@ControlType='ControlType.MenuBar' and @AutomationId='MenuBar']"
+			},
+
+			"Dialog": {
+				"notes": "cache saved as part of [appId]-commons.json",
+				"components": {
+					"Open": {
+						"xpath": "/*[@ClassName='Notepad' and @ControlType='ControlType.Window']/*[@ControlType='ControlType.Window' and @Name='Open']",
+						"components": {
+							"File name": {
+								"xpath": "/*[@ClassName='Notepad' and @ControlType='ControlType.Window']/*[@ControlType='ControlType.Window' and @Name='Open']/*[@ClassName='DUIViewWndClassName' and @ControlType='ControlType.Pane']/*[@ControlType='ControlType.ComboBox' and @AutomationId='FileNameControlHost']/*[@ControlType='ControlType.Edit' and @Name='File name:']"
+							},
+							"Open": {
+								"xpath": "/*[@ClassName='Notepad' and @ControlType='ControlType.Window']/*[@ControlType='ControlType.Window' and @Name='Open']/*[@ControlType='ControlType.Button' and @Name='Open']"
+							}
+						}
+					},
+
+					"Save As": {
+						"xpath": "/*[@ClassName='Notepad' and @ControlType='ControlType.Window']/*[@ControlType='ControlType.Window' and @Name='Save As']",
+
+						"components": {
+							"File name": {
+								"xpath": "/*[@ClassName='Notepad' and @ControlType='ControlType.Window']/*[@ControlType='ControlType.Window' and @Name='Save As']/*[@ClassName='DUIViewWndClassName' and @ControlType='ControlType.Pane']/*[@ControlType='ControlType.ComboBox' and @AutomationId='FileNameControlHost']/*[@ControlType='ControlType.Edit' and @Name='File name:']"
+							},
+							"Open": {
+								"xpath": "/*[@ClassName='Notepad' and @ControlType='ControlType.Window']/*[@ControlType='ControlType.Window' and @Name='Save As']/*[@ControlType='ControlType.Button' and @Name='Save']"
+							}
+						}
+					},
+
+					"About Notepad": {
+						"xpath": "/*[@ClassName='Notepad' and @ControlType='ControlType.Window']/*[@ControlType='ControlType.Window' and @Name='About Notepad']"
+					}
+				}
+			},
+
+			"document": {
+				"notes": "cache saved as part of [appId]-[form-name].json",
+				"xpath": "/*[@ClassName='Notepad' and @ControlType='ControlType.Window']/*[@ControlType='ControlType.Document']"
+			}
+		}
+	}
+}

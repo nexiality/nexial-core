@@ -375,11 +375,11 @@ public class NexialFilter implements Serializable {
     }
 
     protected boolean isAtLeastOneMatched(String actual, ExecutionContext context) {
-        return toSubsitutedControlList(context).contains(actual);
+        return toSubstitutedControlList(context).contains(actual);
     }
 
     protected boolean isNoneMatched(String actual, ExecutionContext context) {
-        return !toSubsitutedControlList(context).contains(actual);
+        return !toSubstitutedControlList(context).contains(actual);
     }
 
     protected boolean isNumericMatch(String actual, ExecutionContext context, String msgPrefix) {
@@ -422,7 +422,7 @@ public class NexialFilter implements Serializable {
     }
 
     @NotNull
-    private List<String> toSubsitutedControlList(ExecutionContext context) {
+    private List<String> toSubstitutedControlList(ExecutionContext context) {
         List<String> matchList = new ArrayList<>();
         controlList.forEach(control -> matchList.add(context.replaceTokens(control)));
         return matchList;

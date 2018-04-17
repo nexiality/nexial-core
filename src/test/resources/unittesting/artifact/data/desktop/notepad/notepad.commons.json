@@ -1,0 +1,467 @@
+{
+	"appId": "notepad",
+	"aut": {
+		"path": "C:\\windows\\system32",
+		"exe": "notepad.exe",
+		"dotnetConfig": "",
+		"args": "",
+		"terminateExisting": true
+	},
+	"defaultWaitMs": 800,
+	"appStartupWaitMs": 1000,
+	"resourceBaseLocation": "C:\\projects\\junk1\\artifact\\data\\desktop\\notepad",
+	"fileBasedResource": true,
+	"app": {
+		"type": "DesktopElement",
+		"xpath": "/*[@ClassName='Notepad' and @ControlType='ControlType.Window']",
+		"controlType": "ControlType.Window",
+		"editable": false,
+		"name": "Untitled - Notepad",
+		"elementType": "Window",
+		"label": "app",
+		"extra": {},
+		"components": {
+			"TitleBar": {
+				"type": "DesktopElement",
+				"xpath": "/*[@ClassName='Notepad' and @ControlType='ControlType.Window']/*[@ControlType='ControlType.TitleBar' and @AutomationId='TitleBar']",
+				"controlType": "ControlType.TitleBar",
+				"editable": false,
+				"name": "Untitled - Notepad",
+				"automationId": "TitleBar",
+				"elementType": "TitleBar",
+				"label": "TitleBar",
+				"extra": {},
+				"components": {
+					"Minimize": {
+						"type": "DesktopElement",
+						"xpath": "/*[@ClassName='Notepad' and @ControlType='ControlType.Window']/*[@ControlType='ControlType.TitleBar' and @AutomationId='TitleBar']/*[@AutomationId='Minimize' and @Name='Minimize' and @ControlType='ControlType.Button']",
+						"controlType": "ControlType.Button",
+						"editable": false,
+						"name": "Minimize",
+						"automationId": "Minimize",
+						"elementType": "Button",
+						"label": "Minimize",
+						"extra": {},
+						"components": {}
+					},
+					"Maximize": {
+						"type": "DesktopElement",
+						"xpath": "/*[@ClassName='Notepad' and @ControlType='ControlType.Window']/*[@ControlType='ControlType.TitleBar' and @AutomationId='TitleBar']/*[@AutomationId='Maximize' and @Name='Maximize' and @ControlType='ControlType.Button']",
+						"controlType": "ControlType.Button",
+						"editable": false,
+						"name": "Maximize",
+						"automationId": "Maximize",
+						"elementType": "Button",
+						"label": "Maximize",
+						"extra": {},
+						"components": {}
+					},
+					"Close": {
+						"type": "DesktopElement",
+						"xpath": "/*[@ClassName='Notepad' and @ControlType='ControlType.Window']/*[@ControlType='ControlType.TitleBar' and @AutomationId='TitleBar']/*[@AutomationId='Close' and @Name='Close' and @ControlType='ControlType.Button']",
+						"controlType": "ControlType.Button",
+						"editable": false,
+						"name": "Close",
+						"automationId": "Close",
+						"elementType": "Button",
+						"label": "Close",
+						"extra": {},
+						"components": {}
+					}
+				}
+			},
+			"MenuBar": {
+				"type": "DesktopMenuBar",
+				"xpath": "/*[@ClassName='Notepad' and @ControlType='ControlType.Window']/*[@ControlType='ControlType.MenuBar' and @AutomationId='MenuBar']",
+				"controlType": "ControlType.MenuBar",
+				"editable": false,
+				"name": "Application",
+				"automationId": "MenuBar",
+				"elementType": "MenuBar",
+				"label": "MenuBar",
+				"extra": {},
+				"components": {
+					"File": {
+						"type": "DesktopElement",
+						"xpath": "/*[@ClassName='Notepad' and @ControlType='ControlType.Window']/*[@ControlType='ControlType.MenuBar' and @AutomationId='MenuBar']/*[@Name='File' and @ControlType='ControlType.MenuItem']",
+						"controlType": "ControlType.MenuItem",
+						"editable": false,
+						"name": "File",
+						"elementType": "MenuItem",
+						"label": "File",
+						"extra": {},
+						"components": {
+							"New": {
+								"type": "DesktopElement",
+								"xpath": "/*[@ClassName='Notepad' and @ControlType='ControlType.Window']/*[@ControlType='ControlType.MenuBar' and @AutomationId='MenuBar']/*[@Name='File' and @ControlType='ControlType.MenuItem']/*[@ControlType='ControlType.Menu']/*[@Name='New' and @ControlType='ControlType.MenuItem']",
+								"controlType": "ControlType.MenuItem",
+								"editable": false,
+								"name": "New",
+								"elementType": "MenuItem",
+								"label": "New",
+								"extra": {},
+								"components": {}
+							},
+							"Open...": {
+								"type": "DesktopElement",
+								"xpath": "/*[@ClassName='Notepad' and @ControlType='ControlType.Window']/*[@ControlType='ControlType.MenuBar' and @AutomationId='MenuBar']/*[@Name='File' and @ControlType='ControlType.MenuItem']/*[@ControlType='ControlType.Menu']/*[@Name='Open...' and @ControlType='ControlType.MenuItem']",
+								"controlType": "ControlType.MenuItem",
+								"editable": false,
+								"name": "Open...",
+								"elementType": "MenuItem",
+								"label": "Open...",
+								"extra": {},
+								"components": {}
+							},
+							"Save": {
+								"type": "DesktopElement",
+								"xpath": "/*[@ClassName='Notepad' and @ControlType='ControlType.Window']/*[@ControlType='ControlType.MenuBar' and @AutomationId='MenuBar']/*[@Name='File' and @ControlType='ControlType.MenuItem']/*[@ControlType='ControlType.Menu']/*[@Name='Save' and @ControlType='ControlType.MenuItem']",
+								"controlType": "ControlType.MenuItem",
+								"editable": false,
+								"name": "Save",
+								"elementType": "MenuItem",
+								"label": "Save",
+								"extra": {},
+								"components": {}
+							},
+							"Save As...": {
+								"type": "DesktopElement",
+								"xpath": "/*[@ClassName='Notepad' and @ControlType='ControlType.Window']/*[@ControlType='ControlType.MenuBar' and @AutomationId='MenuBar']/*[@Name='File' and @ControlType='ControlType.MenuItem']/*[@ControlType='ControlType.Menu']/*[@Name='Save As...' and @ControlType='ControlType.MenuItem']",
+								"controlType": "ControlType.MenuItem",
+								"editable": false,
+								"name": "Save As...",
+								"elementType": "MenuItem",
+								"label": "Save As...",
+								"extra": {},
+								"components": {}
+							},
+							"Page Setup...": {
+								"type": "DesktopElement",
+								"xpath": "/*[@ClassName='Notepad' and @ControlType='ControlType.Window']/*[@ControlType='ControlType.MenuBar' and @AutomationId='MenuBar']/*[@Name='File' and @ControlType='ControlType.MenuItem']/*[@ControlType='ControlType.Menu']/*[@Name='Page Setup...' and @ControlType='ControlType.MenuItem']",
+								"controlType": "ControlType.MenuItem",
+								"editable": false,
+								"name": "Page Setup...",
+								"elementType": "MenuItem",
+								"label": "Page Setup...",
+								"extra": {},
+								"components": {}
+							},
+							"Print...": {
+								"type": "DesktopElement",
+								"xpath": "/*[@ClassName='Notepad' and @ControlType='ControlType.Window']/*[@ControlType='ControlType.MenuBar' and @AutomationId='MenuBar']/*[@Name='File' and @ControlType='ControlType.MenuItem']/*[@ControlType='ControlType.Menu']/*[@Name='Print...' and @ControlType='ControlType.MenuItem']",
+								"controlType": "ControlType.MenuItem",
+								"editable": false,
+								"name": "Print...",
+								"elementType": "MenuItem",
+								"label": "Print...",
+								"extra": {},
+								"components": {}
+							},
+							"Exit": {
+								"type": "DesktopElement",
+								"xpath": "/*[@ClassName='Notepad' and @ControlType='ControlType.Window']/*[@ControlType='ControlType.MenuBar' and @AutomationId='MenuBar']/*[@Name='File' and @ControlType='ControlType.MenuItem']/*[@ControlType='ControlType.Menu']/*[@Name='Exit' and @ControlType='ControlType.MenuItem']",
+								"controlType": "ControlType.MenuItem",
+								"editable": false,
+								"name": "Exit",
+								"elementType": "MenuItem",
+								"label": "Exit",
+								"extra": {},
+								"components": {}
+							}
+						}
+					},
+					"Edit": {
+						"type": "DesktopElement",
+						"xpath": "/*[@ClassName='Notepad' and @ControlType='ControlType.Window']/*[@ControlType='ControlType.MenuBar' and @AutomationId='MenuBar']/*[@Name='Edit' and @ControlType='ControlType.MenuItem']",
+						"controlType": "ControlType.MenuItem",
+						"editable": false,
+						"name": "Edit",
+						"elementType": "MenuItem",
+						"label": "Edit",
+						"extra": {},
+						"components": {
+							"Undo": {
+								"type": "DesktopElement",
+								"xpath": "/*[@ClassName='Notepad' and @ControlType='ControlType.Window']/*[@ControlType='ControlType.MenuBar' and @AutomationId='MenuBar']/*[@Name='Edit' and @ControlType='ControlType.MenuItem']/*[@ControlType='ControlType.Menu']/*[@Name='Undo' and @ControlType='ControlType.MenuItem']",
+								"controlType": "ControlType.MenuItem",
+								"editable": false,
+								"name": "Undo",
+								"elementType": "MenuItem",
+								"label": "Undo",
+								"extra": {},
+								"components": {}
+							},
+							"Cut": {
+								"type": "DesktopElement",
+								"xpath": "/*[@ClassName='Notepad' and @ControlType='ControlType.Window']/*[@ControlType='ControlType.MenuBar' and @AutomationId='MenuBar']/*[@Name='Edit' and @ControlType='ControlType.MenuItem']/*[@ControlType='ControlType.Menu']/*[@Name='Cut' and @ControlType='ControlType.MenuItem']",
+								"controlType": "ControlType.MenuItem",
+								"editable": false,
+								"name": "Cut",
+								"elementType": "MenuItem",
+								"label": "Cut",
+								"extra": {},
+								"components": {}
+							},
+							"Copy": {
+								"type": "DesktopElement",
+								"xpath": "/*[@ClassName='Notepad' and @ControlType='ControlType.Window']/*[@ControlType='ControlType.MenuBar' and @AutomationId='MenuBar']/*[@Name='Edit' and @ControlType='ControlType.MenuItem']/*[@ControlType='ControlType.Menu']/*[@Name='Copy' and @ControlType='ControlType.MenuItem']",
+								"controlType": "ControlType.MenuItem",
+								"editable": false,
+								"name": "Copy",
+								"elementType": "MenuItem",
+								"label": "Copy",
+								"extra": {},
+								"components": {}
+							},
+							"Paste": {
+								"type": "DesktopElement",
+								"xpath": "/*[@ClassName='Notepad' and @ControlType='ControlType.Window']/*[@ControlType='ControlType.MenuBar' and @AutomationId='MenuBar']/*[@Name='Edit' and @ControlType='ControlType.MenuItem']/*[@ControlType='ControlType.Menu']/*[@Name='Paste' and @ControlType='ControlType.MenuItem']",
+								"controlType": "ControlType.MenuItem",
+								"editable": false,
+								"name": "Paste",
+								"elementType": "MenuItem",
+								"label": "Paste",
+								"extra": {},
+								"components": {}
+							},
+							"Delete": {
+								"type": "DesktopElement",
+								"xpath": "/*[@ClassName='Notepad' and @ControlType='ControlType.Window']/*[@ControlType='ControlType.MenuBar' and @AutomationId='MenuBar']/*[@Name='Edit' and @ControlType='ControlType.MenuItem']/*[@ControlType='ControlType.Menu']/*[@Name='Delete' and @ControlType='ControlType.MenuItem']",
+								"controlType": "ControlType.MenuItem",
+								"editable": false,
+								"name": "Delete",
+								"elementType": "MenuItem",
+								"label": "Delete",
+								"extra": {},
+								"components": {}
+							},
+							"Find...": {
+								"type": "DesktopElement",
+								"xpath": "/*[@ClassName='Notepad' and @ControlType='ControlType.Window']/*[@ControlType='ControlType.MenuBar' and @AutomationId='MenuBar']/*[@Name='Edit' and @ControlType='ControlType.MenuItem']/*[@ControlType='ControlType.Menu']/*[@Name='Find...' and @ControlType='ControlType.MenuItem']",
+								"controlType": "ControlType.MenuItem",
+								"editable": false,
+								"name": "Find...",
+								"elementType": "MenuItem",
+								"label": "Find...",
+								"extra": {},
+								"components": {}
+							},
+							"Find Next": {
+								"type": "DesktopElement",
+								"xpath": "/*[@ClassName='Notepad' and @ControlType='ControlType.Window']/*[@ControlType='ControlType.MenuBar' and @AutomationId='MenuBar']/*[@Name='Edit' and @ControlType='ControlType.MenuItem']/*[@ControlType='ControlType.Menu']/*[@Name='Find Next' and @ControlType='ControlType.MenuItem']",
+								"controlType": "ControlType.MenuItem",
+								"editable": false,
+								"name": "Find Next",
+								"elementType": "MenuItem",
+								"label": "Find Next",
+								"extra": {},
+								"components": {}
+							},
+							"Replace...": {
+								"type": "DesktopElement",
+								"xpath": "/*[@ClassName='Notepad' and @ControlType='ControlType.Window']/*[@ControlType='ControlType.MenuBar' and @AutomationId='MenuBar']/*[@Name='Edit' and @ControlType='ControlType.MenuItem']/*[@ControlType='ControlType.Menu']/*[@Name='Replace...' and @ControlType='ControlType.MenuItem']",
+								"controlType": "ControlType.MenuItem",
+								"editable": false,
+								"name": "Replace...",
+								"elementType": "MenuItem",
+								"label": "Replace...",
+								"extra": {},
+								"components": {}
+							},
+							"Go To...": {
+								"type": "DesktopElement",
+								"xpath": "/*[@ClassName='Notepad' and @ControlType='ControlType.Window']/*[@ControlType='ControlType.MenuBar' and @AutomationId='MenuBar']/*[@Name='Edit' and @ControlType='ControlType.MenuItem']/*[@ControlType='ControlType.Menu']/*[@Name='Go To...' and @ControlType='ControlType.MenuItem']",
+								"controlType": "ControlType.MenuItem",
+								"editable": false,
+								"name": "Go To...",
+								"elementType": "MenuItem",
+								"label": "Go To...",
+								"extra": {},
+								"components": {}
+							},
+							"Select All": {
+								"type": "DesktopElement",
+								"xpath": "/*[@ClassName='Notepad' and @ControlType='ControlType.Window']/*[@ControlType='ControlType.MenuBar' and @AutomationId='MenuBar']/*[@Name='Edit' and @ControlType='ControlType.MenuItem']/*[@ControlType='ControlType.Menu']/*[@Name='Select All' and @ControlType='ControlType.MenuItem']",
+								"controlType": "ControlType.MenuItem",
+								"editable": false,
+								"name": "Select All",
+								"elementType": "MenuItem",
+								"label": "Select All",
+								"extra": {},
+								"components": {}
+							},
+							"Time/Date": {
+								"type": "DesktopElement",
+								"xpath": "/*[@ClassName='Notepad' and @ControlType='ControlType.Window']/*[@ControlType='ControlType.MenuBar' and @AutomationId='MenuBar']/*[@Name='Edit' and @ControlType='ControlType.MenuItem']/*[@ControlType='ControlType.Menu']/*[@Name='Time/Date' and @ControlType='ControlType.MenuItem']",
+								"controlType": "ControlType.MenuItem",
+								"editable": false,
+								"name": "Time/Date",
+								"elementType": "MenuItem",
+								"label": "Time/Date",
+								"extra": {},
+								"components": {}
+							}
+						}
+					},
+					"Format": {
+						"type": "DesktopElement",
+						"xpath": "/*[@ClassName='Notepad' and @ControlType='ControlType.Window']/*[@ControlType='ControlType.MenuBar' and @AutomationId='MenuBar']/*[@Name='Format' and @ControlType='ControlType.MenuItem']",
+						"controlType": "ControlType.MenuItem",
+						"editable": false,
+						"name": "Format",
+						"elementType": "MenuItem",
+						"label": "Format",
+						"extra": {},
+						"components": {
+							"Word Wrap": {
+								"type": "DesktopElement",
+								"xpath": "/*[@ClassName='Notepad' and @ControlType='ControlType.Window']/*[@ControlType='ControlType.MenuBar' and @AutomationId='MenuBar']/*[@Name='Format' and @ControlType='ControlType.MenuItem']/*[@ControlType='ControlType.Menu']/*[@Name='Word Wrap' and @ControlType='ControlType.MenuItem']",
+								"controlType": "ControlType.MenuItem",
+								"editable": false,
+								"name": "Word Wrap",
+								"elementType": "MenuItem",
+								"label": "Word Wrap",
+								"extra": {},
+								"components": {}
+							},
+							"Font...": {
+								"type": "DesktopElement",
+								"xpath": "/*[@ClassName='Notepad' and @ControlType='ControlType.Window']/*[@ControlType='ControlType.MenuBar' and @AutomationId='MenuBar']/*[@Name='Format' and @ControlType='ControlType.MenuItem']/*[@ControlType='ControlType.Menu']/*[@Name='Font...' and @ControlType='ControlType.MenuItem']",
+								"controlType": "ControlType.MenuItem",
+								"editable": false,
+								"name": "Font...",
+								"elementType": "MenuItem",
+								"label": "Font...",
+								"extra": {},
+								"components": {}
+							}
+						}
+					},
+					"View": {
+						"type": "DesktopElement",
+						"xpath": "/*[@ClassName='Notepad' and @ControlType='ControlType.Window']/*[@ControlType='ControlType.MenuBar' and @AutomationId='MenuBar']/*[@Name='View' and @ControlType='ControlType.MenuItem']",
+						"controlType": "ControlType.MenuItem",
+						"editable": false,
+						"name": "View",
+						"elementType": "MenuItem",
+						"label": "View",
+						"extra": {},
+						"components": {
+							"Status Bar": {
+								"type": "DesktopElement",
+								"xpath": "/*[@ClassName='Notepad' and @ControlType='ControlType.Window']/*[@ControlType='ControlType.MenuBar' and @AutomationId='MenuBar']/*[@Name='View' and @ControlType='ControlType.MenuItem']/*[@ControlType='ControlType.Menu']/*[@Name='Status Bar' and @ControlType='ControlType.MenuItem']",
+								"controlType": "ControlType.MenuItem",
+								"editable": false,
+								"name": "Status Bar",
+								"elementType": "MenuItem",
+								"label": "Status Bar",
+								"extra": {},
+								"components": {}
+							}
+						}
+					},
+					"Help": {
+						"type": "DesktopElement",
+						"xpath": "/*[@ClassName='Notepad' and @ControlType='ControlType.Window']/*[@ControlType='ControlType.MenuBar' and @AutomationId='MenuBar']/*[@Name='Help' and @ControlType='ControlType.MenuItem']",
+						"controlType": "ControlType.MenuItem",
+						"editable": false,
+						"name": "Help",
+						"elementType": "MenuItem",
+						"label": "Help",
+						"extra": {},
+						"components": {
+							"View Help": {
+								"type": "DesktopElement",
+								"xpath": "/*[@ClassName='Notepad' and @ControlType='ControlType.Window']/*[@ControlType='ControlType.MenuBar' and @AutomationId='MenuBar']/*[@Name='Help' and @ControlType='ControlType.MenuItem']/*[@ControlType='ControlType.Menu']/*[@Name='View Help' and @ControlType='ControlType.MenuItem']",
+								"controlType": "ControlType.MenuItem",
+								"editable": false,
+								"name": "View Help",
+								"elementType": "MenuItem",
+								"label": "View Help",
+								"extra": {},
+								"components": {}
+							},
+							"About Notepad": {
+								"type": "DesktopElement",
+								"xpath": "/*[@ClassName='Notepad' and @ControlType='ControlType.Window']/*[@ControlType='ControlType.MenuBar' and @AutomationId='MenuBar']/*[@Name='Help' and @ControlType='ControlType.MenuItem']/*[@ControlType='ControlType.Menu']/*[@Name='About Notepad' and @ControlType='ControlType.MenuItem']",
+								"controlType": "ControlType.MenuItem",
+								"editable": false,
+								"name": "About Notepad",
+								"elementType": "MenuItem",
+								"label": "About Notepad",
+								"extra": {},
+								"components": {}
+							}
+						}
+					}
+				}
+			},
+			"Dialog": {
+				"type": "DesktopElement",
+				"editable": false,
+				"label": "Dialog",
+				"extra": {},
+				"components": {
+					"Open": {
+						"type": "DesktopElement",
+						"xpath": "/*[@ClassName='Notepad' and @ControlType='ControlType.Window']/*[@ControlType='ControlType.Window' and @Name='Open']",
+						"editable": false,
+						"label": "Open",
+						"extra": {},
+						"components": {
+							"File name": {
+								"type": "DesktopElement",
+								"xpath": "/*[@ClassName='Notepad' and @ControlType='ControlType.Window']/*[@ControlType='ControlType.Window' and @Name='Open']/*[@ClassName='DUIViewWndClassName' and @ControlType='ControlType.Pane']/*[@ControlType='ControlType.ComboBox' and @AutomationId='FileNameControlHost']/*[@ControlType='ControlType.Edit' and @Name='File name:']",
+								"editable": false,
+								"label": "File name",
+								"extra": {},
+								"components": {}
+							},
+							"Open": {
+								"type": "DesktopElement",
+								"xpath": "/*[@ClassName='Notepad' and @ControlType='ControlType.Window']/*[@ControlType='ControlType.Window' and @Name='Open']/*[@ControlType='ControlType.Button' and @Name='Open']",
+								"editable": false,
+								"label": "Open",
+								"extra": {},
+								"components": {}
+							}
+						}
+					},
+					"Save As": {
+						"type": "DesktopElement",
+						"xpath": "/*[@ClassName='Notepad' and @ControlType='ControlType.Window']/*[@ControlType='ControlType.Window' and @Name='Save As']",
+						"editable": false,
+						"label": "Save As",
+						"extra": {},
+						"components": {
+							"File name": {
+								"type": "DesktopElement",
+								"xpath": "/*[@ClassName='Notepad' and @ControlType='ControlType.Window']/*[@ControlType='ControlType.Window' and @Name='Save As']/*[@ClassName='DUIViewWndClassName' and @ControlType='ControlType.Pane']/*[@ControlType='ControlType.ComboBox' and @AutomationId='FileNameControlHost']/*[@ControlType='ControlType.Edit' and @Name='File name:']",
+								"editable": false,
+								"label": "File name",
+								"extra": {},
+								"components": {}
+							},
+							"Open": {
+								"type": "DesktopElement",
+								"xpath": "/*[@ClassName='Notepad' and @ControlType='ControlType.Window']/*[@ControlType='ControlType.Window' and @Name='Save As']/*[@ControlType='ControlType.Button' and @Name='Save']",
+								"editable": false,
+								"label": "Open",
+								"extra": {},
+								"components": {}
+							}
+						}
+					},
+					"About Notepad": {
+						"type": "DesktopElement",
+						"xpath": "/*[@ClassName='Notepad' and @ControlType='ControlType.Window']/*[@ControlType='ControlType.Window' and @Name='About Notepad']",
+						"editable": false,
+						"label": "About Notepad",
+						"extra": {},
+						"components": {}
+					}
+				}
+			}
+		}
+	}
+}

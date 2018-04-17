@@ -111,7 +111,7 @@ public class FlowControlUtilsTest {
         System.out.println("conditions = " + conditions);
         NexialFilter condition = conditions.get(0);
         Assert.assertNotNull(condition);
-        Assert.assertEquals(NotEqual, condition.getComparator());
+        Assert.assertEquals(NotEqual.toString(), condition.getComparator().toString());
 
         TestStep fixture = new DummyTestStep(ProceedIf, flowControl);
 

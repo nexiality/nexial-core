@@ -1,0 +1,12 @@
+{
+	"type": "DesktopElement",
+	"xpath": "/*[@ClassName='Notepad' and @ControlType='ControlType.Window']/*[@ControlType='ControlType.Document']",
+	"controlType": "ControlType.Document",
+	"editable": true,
+	"name": "",
+	"automationId": "15",
+	"elementType": "TextArea",
+	"label": "document",
+	"extra": {},
+	"components": {}
+}

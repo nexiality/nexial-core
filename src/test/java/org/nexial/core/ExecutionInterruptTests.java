@@ -26,6 +26,7 @@ import org.junit.Before;
 import org.junit.Test;
 import org.nexial.core.model.ExecutionSummary;
 
+import static org.nexial.core.NexialConst.Data.OPT_OPEN_RESULT;
 import static org.nexial.core.NexialConst.OPT_RUN_ID;
 
 public class ExecutionInterruptTests extends ExcelBasedTests {
@@ -38,7 +39,7 @@ public class ExecutionInterruptTests extends ExcelBasedTests {
         // System.setProperty(OUTPUT_TO_CLOUD, "true");
         // System.setProperty(OUTPUT_TO_CLOUD, "false");
         // System.setProperty(OPT_RUN_ID_PREFIX, "unitTest_ExecIntrpt");
-        // System.setProperty(OPT_OPEN_RESULT, "off");
+        System.setProperty(OPT_OPEN_RESULT, "off");
 
         System.out.println();
     }

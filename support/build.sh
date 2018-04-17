@@ -8,13 +8,19 @@ else
 	gradle clean testJar installDist
 fi
 
-mkdir -p build/install/nexial-core/support
-cp -Rvf support/nexial*.* build/install/nexial-core/support
+build_ret=$?
 
-# generate the latest command listing
-cd build/install/nexial-core/support
-chmod -fR 755 *.sh
-./nexial-command-generator.sh
+if [[ ${build_ret} = 0 ]] ; then
+	mkdir -p build/install/nexial-core/support
+	cp -Rvf support/nexial*.* build/install/nexial-core/support
 
-cd ..
-rm -frv support
+	# generate the latest command listing
+	cd build/install/nexial-core/support
+	chmod -fR 755 *.sh
+	./nexial-command-generator.sh
+
+	cd ..
+	rm -frv support
+else
+	echo gradle build failed!
+fi

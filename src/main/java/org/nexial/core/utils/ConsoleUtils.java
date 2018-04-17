@@ -48,6 +48,8 @@ import static org.slf4j.event.Level.INFO;
 public final class ConsoleUtils {
     private static final Logger LOGGER = LoggerFactory.getLogger(ConsoleUtils.class);
     private static final List<Pair<Level, String>> PRE_EXEC_READY_BUFFER = new ArrayList<>();
+    private static final List<String> JUNIT_CLASSES = Arrays.asList("org.junit.runner.JUnitCore",
+                                                                    "org.junit.runners.ParentRunner");
 
     private ConsoleUtils() { }
 
@@ -216,15 +218,18 @@ public final class ConsoleUtils {
     }
 
     protected static boolean isRunningInJUnit() {
-        // am i running via junit?
         ClassLoader cl = ClassLoader.getSystemClassLoader();
-        try {
-            Method m = ClassLoader.class.getDeclaredMethod("findLoadedClass", String.class);
-            m.setAccessible(true);
-            Object loaded = m.invoke(cl, "org.junit.runner.JUnitCore");
-            if (loaded != null) { return true; }
-        } catch (NoSuchMethodException | IllegalAccessException | InvocationTargetException e) {
-            // probably not loaded... ignore error; it's probably not critical...
+
+        // am i running via junit?
+        for (String junitClass : JUNIT_CLASSES) {
+            try {
+                Method m = ClassLoader.class.getDeclaredMethod("findLoadedClass", String.class);
+                m.setAccessible(true);
+                Object loaded = m.invoke(cl, junitClass);
+                if (loaded != null) { return true; }
+            } catch (NoSuchMethodException | IllegalAccessException | InvocationTargetException e) {
+                // probably not loaded... ignore error; it's probably not critical...
+            }
         }
 
         return false;
