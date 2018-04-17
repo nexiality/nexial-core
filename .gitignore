@@ -295,16 +295,8 @@ classes/
 logs/
 /nexial-core_main.iml
 /nexial-core_test.iml
-src/main/java/com/ep/qa/sentry/mongo/
-src/main/resources/com/ep/qa/sentry/mongo/
-src/main/resources/com/ep/qa/sentry/plugins/remote/request_template.json
-src/main/resources/com/ep/qa/sentry/plugins/sentry_plugin_v1_0_schema.json
-src/main/resources/com/ep/qa/sentry/utils/config.properties
-src/main/resources/desktop/ngp/application-BAK.json
-src/test/resources/showcase/artifact/data/output-test.data.xlsx
-src/test/resources/showcase/artifact/script/iam-provisioning1.xlsx
-src/test/resources/showcase/artifact/script/output-test.xlsx
 src/test/resources/showcase/output/
+src/test/resources/unittesting/output/
 support/mongodb-start.sh
 support/sync-src-vm.sh
 

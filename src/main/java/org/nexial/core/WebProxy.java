@@ -45,7 +45,7 @@ import static org.openqa.selenium.Proxy.ProxyType.DIRECT;
  * TODO: FIXME: CURRENT NOT WORKING... BE PATIENT
  */
 public final class WebProxy implements ForcefulTerminate {
-	private static final String PROP = "com/ep/qa/nexial/utils/config.properties";
+	private static final String PROP = "org/nexial/core/utils/config.properties";
 	private static final WebProxy THIS = new WebProxy();
 
 	private Properties config = readConfig(PROP);
