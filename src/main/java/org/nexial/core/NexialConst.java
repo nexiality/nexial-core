@@ -145,6 +145,7 @@ public final class NexialConst {
     public static final String OPT_SCREENSHOT_ON_ERROR = NAMESPACE + "screenshotOnError";
     public static final String OPT_LAST_SCREENSHOT_NAME = NAMESPACE + "lastScreenshot";
     public static final String OPT_LAST_OUTCOME = NAMESPACE + "lastOutcome";
+    public static final String OPT_LAST_NESTED_OUTPUT = NAMESPACE +"lastCommandOutput";
 
     // control verbosity of multi-step commands
     public static final String OPT_ELAPSED_TIME_SLA = NAMESPACE + "elapsedTimeSLA";
@@ -154,6 +155,10 @@ public final class NexialConst {
     // the format of YYYY-MM-DD_hh-mm-ss
     public static final String OPT_RUN_ID = NAMESPACE + "runID";
     public static final String OPT_RUN_ID_PREFIX = OPT_RUN_ID + ".prefix";
+
+    // plugin:external
+    // store the file name of the output resulted from a `external.runProgram` command
+    public static final String OPT_RUN_PROGRAM_OUTPUT = NAMESPACE + "external.output";
 
     // plugin:rdbms
     public static final String DAO_PREFIX = NAMESPACE + "dao.";

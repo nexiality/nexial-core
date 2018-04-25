@@ -57,6 +57,7 @@ import static java.util.regex.Pattern.CASE_INSENSITIVE;
 import static org.nexial.core.NexialConst.Data.NULL;
 import static org.nexial.core.NexialConst.MSG_FAIL;
 import static org.nexial.core.NexialConst.OPT_EASY_STRING_COMPARE;
+import static org.nexial.core.NexialConst.OPT_LAST_OUTCOME;
 import static org.nexial.core.excel.ExcelConfig.MSG_PASS;
 import static org.nexial.core.excel.ext.CipherHelper.CRYPT_IND;
 import static org.nexial.core.plugins.base.IncrementStrategy.ALPHANUM;
@@ -966,6 +967,7 @@ public class BaseCommand implements NexialCommand {
             TestStep testStep = context.getCurrentTestStep();
             if (testStep != null && testStep.getWorksheet() != null) {
                 // test step undefined could mean that we are in interactive mode, or we are running unit testing
+                context.setData(OPT_LAST_OUTCOME, link);
                 testStep.addNestedScreenCapture(link, message, label);
             }
         }

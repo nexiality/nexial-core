@@ -190,82 +190,6 @@ public class ExecutionContext {
         defaultContextProps = springContext.getBean("defaultContextProps", new HashMap<String, String>().getClass());
     }
 
-    /* todo: can't do this now... until execution interrupt clean up is done
-    public void useTestScript(Excel testScript) throws IOException {
-        if (testScript == null) { throw new IOException("test script is null!"); }
-
-        this.testScript = testScript.getFile();
-        setData(OPT_INPUT_EXCEL_FILE, this.testScript.getAbsoluteFile());
-
-        MDC.put(TEST_SUITE_NAME, getRunId());
-        MDC.put(TEST_NAME, getId());
-        if (logger.isInfoEnabled()) { logger.info("STARTS"); }
-
-        executionLogger = new ExecutionLogger(getRunId());
-
-        // parse merged test script
-
-        // 1. make range for data
-        Worksheet dataSheet = testScript.worksheet(SHEET_MERGED_DATA);
-
-        ExcelAddress addr = new ExcelAddress("A1");
-        XSSFCell firstCell = dataSheet.cell(addr);
-        if (firstCell == null || StringUtils.isBlank(firstCell.getStringCellValue())) {
-            throw new IllegalArgumentException("File (" + testScript + "), Worksheet (" + dataSheet.getName() +
-                                               "): no test data defined");
-        }
-
-        // 2. retrieve all data in range
-        int endRowIndex = dataSheet.findLastDataRow(addr) + 1;
-        for (int i = 1; i < endRowIndex; i++) {
-            ExcelAddress addrRow = new ExcelAddress("A" + i + ":B" + i);
-            List<XSSFCell> row = dataSheet.cells(addrRow).get(0);
-            String name = row.get(0).getStringCellValue();
-            String value = row.get(1).getStringCellValue();
-            if (StringUtils.isNotBlank(value)) { data.put(name, value); }
-        }
-
-        // 3. parse test scenarios
-        testScenarios = new ArrayList<>();
-        for (int i = 0; i < execDef.getScenarios().size(); i++) {
-            String scenario = execDef.getScenarios().get(i);
-            Worksheet worksheet = testScript.worksheet(scenario);
-            if (worksheet == null) {
-                throw new IOException("Specified scenario '" + scenario + "' not found");
-            } else {
-                testScenarios.add(new TestScenario(this, worksheet));
-            }
-        }
-
-        // 4. pdf specific parsing for custom key-value extraction strategy
-        CommonKeyValueIdentStrategies.harvestStrategy(this);
-
-        // 5. fill in to sys prop, if not defined - only for critical sys prop
-        Map<String, String> criticalProps =
-            TextUtils.toMap(ENABLE_EMAIL + "=" + DEF_ENABLE_EMAIL + "|" +
-                            ASSISTANT_MODE + "=" + DEF_OPEN_RESULT + "|" +
-                            OUTPUT_TO_CLOUD + "=" + DEF_OUTPUT_TO_CLOUD + "|" +
-                            OPT_CLOUD_OUTPUT_BASE + "=" + DEF_NEXIAL_OUTPUT_S3_BUCKET + "|" +
-                            GENERATE_EXEC_REPORT + "=" + DEF_GENERATE_EXEC_REPORT,
-                            "|", "=");
-        criticalProps.forEach((name, def) -> {
-            if (StringUtils.isBlank(System.getProperty(name))) {
-                String value = hasData(name) ? getStringData(name) : def;
-                if (StringUtils.isNotEmpty(value)) { System.setProperty(name, value); }
-            }
-        });
-
-        // support dynamic resolution of WPS executable path
-        String spreadsheetProgram = getSystemThenContextStringData(SPREADSHEET_PROGRAM, this, DEF_SPREADSHEET);
-        if (StringUtils.equals(spreadsheetProgram, SPREADSHEET_PROGRAM_WPS)) {
-            spreadsheetProgram = Excel.resolveWpsExecutablePath();
-        }
-
-        // DO NOT SET BROWSER TYPE TO SYSTEM PROPS, SINCE THIS WILL PREVENT ITERATION-LEVEL OVERRIDES
-        // System.setProperty(SPREADSHEET_PROGRAM, spreadsheetProgram);
-    }
-    */
-
     public void useTestScript(File testScript) throws IOException {
         this.testScript = testScript;
         setData(OPT_INPUT_EXCEL_FILE, testScript.getAbsoluteFile());
@@ -562,9 +486,7 @@ public class ExecutionContext {
         return StringUtils.isEmpty(removed) ? removedFromSys : removed;
     }
 
-    public void setData(String name, String value) {
-        setData(name, value, false);
-    }
+    public void setData(String name, String value) { setData(name, value, false); }
 
     public void setData(String name, String value, boolean updateSysProps) {
         if (data.containsKey(name)) { CellTextReader.unsetValue(value); }
@@ -1265,7 +1187,7 @@ public class ExecutionContext {
                 String replacedBy = MapUtils.getString(data, var);
                 value = StringUtils.replace(value, searchFor, replacedBy);
             } else {
-                // mark the unreplaceable token so we can put things back later
+                // mark the irreplaceable token so we can put things back later
                 value = StringUtils.replace(value, searchFor, "~[[" + var + "]]~");
             }
 

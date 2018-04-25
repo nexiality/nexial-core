@@ -37,6 +37,7 @@ import org.nexial.core.plugins.base.BaseCommand;
 import org.nexial.core.variable.Syspath;
 
 import static org.nexial.core.NexialConst.DEF_CHARSET;
+import static org.nexial.core.NexialConst.OPT_RUN_PROGRAM_OUTPUT;
 import static org.nexial.core.utils.CheckUtils.requires;
 import static org.nexial.core.utils.CheckUtils.requiresNotBlank;
 import static java.io.File.separator;
@@ -108,8 +109,9 @@ public class ExternalCommand extends BaseCommand {
 
             //attach link to results
             TestStep currentTestStep = context.getCurrentTestStep();
-            String fileName = new Syspath().out("fullpath") + separator +
-                              "runProgram_" + currentTestStep.getRow().get(0).getReference() + ".log";
+            String outputFileName = "runProgram_" + currentTestStep.getRow().get(0).getReference() + ".log";
+            context.setData(OPT_RUN_PROGRAM_OUTPUT, outputFileName);
+            String fileName = new Syspath().out("fullpath") + separator + outputFileName;
             FileUtils.write(new File(fileName), output, DEF_CHARSET, false);
 
             addLinkRef("Follow the link to view the output", "output", fileName);
