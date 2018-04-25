@@ -23,6 +23,7 @@ import java.io.StringReader;
 import java.util.List;
 import java.util.Map;
 
+import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.collections4.MapUtils;
 import org.apache.commons.lang3.BooleanUtils;
 import org.apache.commons.lang3.StringUtils;
@@ -87,24 +88,32 @@ public class CsvCommand extends IoCommand {
         requiresNotBlank(actualContent, "No content found for actual", actual);
 
         String configKey = profile + ".compareExt.";
+        String textDelim = context.getTextDelim();
 
         CsvExtendedComparison comparison = new CsvExtendedComparison();
+
         comparison.setExpectedContent(expectedContent);
-        String textDelim = context.getTextDelim();
+        comparison.setActualContent(actualContent);
+
+        // identity column(s) is used to identity the records on both expected and actual CSV file
+        // this means that even if the content aren't matching line by line, we can use the identity column(s)
+        // to "line them up".. good feature when the expected and actual content aren't sorted the same way.
         comparison.setExpectedIdentityColumns(
             TextUtils.toList(context.getStringData(configKey + "expected.identity"), textDelim, true));
-
-        comparison.setActualContent(actualContent);
         comparison.setActualIdentityColumns(
             TextUtils.toList(context.getStringData(configKey + "actual.identity"), textDelim, true));
 
+        // define what fields to display in case mismatches are found.  The display fields provide additional
+        // context to the mismatch event so that reader can correctly and easily associate the mismatched records.
         comparison.setDisplayFields(
             TextUtils.toList(context.getStringData(configKey + "output.display"), textDelim, true));
 
+        // labls of the mismatched information
         comparison.setMismatchedField(context.getStringData(configKey + "output.MISMATCHED"));
         comparison.setExpectedField(context.getStringData(configKey + "output.EXPECTED"));
         comparison.setActualField(context.getStringData(configKey + "output.ACTUAL"));
 
+        // defines which field(s) to match on.  If none specified, then match on all fields.
         Map<String, String> mapping = context.getDataByPrefix(configKey + "match.");
         if (MapUtils.isEmpty(mapping)) {
             ConsoleUtils.log("No mapping found; ASSUME THE EXACT SAME COLUMNS FOR EXPECTED AND ACTUAL");
@@ -112,6 +121,16 @@ public class CsvCommand extends IoCommand {
             comparison.setFieldMapping(mapping);
         }
 
+        // define the fields is ignore
+        // this can be helpful when there are many fields to map between expected and actual -
+        // instead of declaring the mapping of each and every field between expected and actual CSV file, one can
+        // define just the few fields that are to be ignored.
+        // the 'ignore' fields are assumed to be found on expected CSV.
+        List<String> ignoreFields = TextUtils.toList(context.getStringData(configKey + "ignore"), textDelim, true);
+        if (CollectionUtils.isNotEmpty(ignoreFields)) { comparison.setIgnoreFields(ignoreFields); }
+
+        // specifies the delimiter used for identity fields for BOTH the expected and actual CSV files
+        // if not specified, then '^' is assumed.
         if (context.hasData(configKey + "identity.delim")) {
             comparison.setIdentSeparator(context.getStringData(configKey + "identity.delim"));
         }
