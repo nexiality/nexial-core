@@ -207,7 +207,7 @@ public class PdfTableExtractor {
 
 	/**
 	 * only meaningful to keyInHeaderRowOnly mode where we want to continue collecting parsed values into existing
-	 * map - effectively joining previously parsed values with new ones.
+	 * fileHeaderMap - effectively joining previously parsed values with new ones.
 	 */
 	public void setExistingFormValues(Map<String, Object> existingFormValues) {
 		this.existingFormValues = existingFormValues;

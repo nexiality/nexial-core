@@ -139,14 +139,14 @@ public class FlowControl {
         // e.g. SkipIf ( blah... ) or PauseBefore()
         String regex = ".*(" + directive + REGEX_ARGS + ").*";
 
-        // if there's no match, then returns empty map
+        // if there's no match, then returns empty fileHeaderMap
         if (!RegexUtils.isExact(flowControls, regex)) { return new NexialFilterList(); }
 
         // e.g. .*(PauseBefore\s*\((.+?)\)).*
         String flowControl = RegexUtils.replace(flowControls, regex, "$1");
         String conditions = StringUtils.trim(RegexUtils.replace(flowControl, directive + REGEX_ARGS, "$1"));
 
-        // if there's no condition, then returns empty map
+        // if there's no condition, then returns empty fileHeaderMap
         if (StringUtils.isBlank(conditions)) {
             NexialFilterList filters = new NexialFilterList();
 

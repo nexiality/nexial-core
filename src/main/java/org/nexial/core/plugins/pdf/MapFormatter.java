@@ -53,7 +53,7 @@ class MapFormatter extends TableFormatter<Map<String, Object>> {
         if (idStrategy.isKeyValueAlternatingCell()) { return formatKeyValueAlternatingCell(table); }
         if (idStrategy.isKeyValueShareCell()) { return formatKeyValueSharedCell(table); }
 
-        throw new IllegalArgumentException("Invalid key-value identification strategy; unable to format table to map");
+        throw new IllegalArgumentException("Invalid key-value identification strategy; unable to format table to fileHeaderMap");
     }
 
     public MapFormatter setExistingFormValues(Map<String, Object> existingFormValues) {

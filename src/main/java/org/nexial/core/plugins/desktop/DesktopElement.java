@@ -1240,7 +1240,7 @@ public class DesktopElement {
     }
 
     /**
-     * in order to map a label to one or more elements, we need to sift out inner container from element
+     * in order to fileHeaderMap a label to one or more elements, we need to sift out inner container from element
      * element or element input.  For every inner container found, we will recurse the same inspection
      * logic so that element elements are appropriately arranged by their immediate container.
      */

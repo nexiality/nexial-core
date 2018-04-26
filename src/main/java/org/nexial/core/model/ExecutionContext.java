@@ -143,7 +143,7 @@ public class ExecutionContext {
             throw new RuntimeException("Unable to determine host name of current host: " + e.getMessage());
         }
 
-        // init data map... something just doesn't make sense not to exist from the get-go
+        // init data fileHeaderMap... something just doesn't make sense not to exist from the get-go
         data.put(OPT_LAST_OUTCOME, true);
 
         if (MapUtils.isNotEmpty(intraExecutionData)) {
@@ -598,7 +598,7 @@ public class ExecutionContext {
             text = replaceCollectionTokens(text, collectionValues, complexValues);
         }
 
-        // fourth pass: map and complex object type
+        // fourth pass: fileHeaderMap and complex object type
         if (MapUtils.isNotEmpty(complexValues)) { text = replaceComplexTokens(text, complexValues); }
 
         // fifth pass: nexial expression
@@ -1400,7 +1400,7 @@ public class ExecutionContext {
         if (CollectionUtils.isEmpty(value)) { return null; }
 
         // it's possible that we are looking for a "object.prop" replacement. We should check if "value" is a
-        // "Collection of map" or just a "collection with props" instance.
+        // "Collection of fileHeaderMap" or just a "collection with props" instance.
         Object testObject = IterableUtils.get(value, 0);
         boolean isMapType = Map.class.isAssignableFrom(testObject.getClass());
         if (isMapType) {

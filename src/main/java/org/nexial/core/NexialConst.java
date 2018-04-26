@@ -752,7 +752,7 @@ public final class NexialConst {
             MAIL_TO + "=\n",
             "\n", "=");
 
-        // todo: find a way so that it is easy to manage this map and to publish this as part of standard documentation
+        // todo: find a way so that it is easy to manage this fileHeaderMap and to publish this as part of standard documentation
         public static final Map<String, String> DEFAULTS = TextUtils.toMap(
             DELAY_BETWEEN_STEPS_MS + "=" + DEF_DELAY_BETWEEN_STEPS_MS + "\n" +
             FAIL_FAST + "=" + DEF_FAIL_FAST + "\n" +
