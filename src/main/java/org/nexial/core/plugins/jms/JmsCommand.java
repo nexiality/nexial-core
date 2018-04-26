@@ -63,7 +63,7 @@ public class JmsCommand extends BaseCommand {
         requiresNotBlank(id, "Invalid message ID", id);
         requiresNotBlank(payload, "Invalid payload", payload);
         if (!StringUtils.contains(payload, "=")) {
-            fail("Invalid payload for map message; payload must be in name=value form");
+            fail("Invalid payload for fileHeaderMap message; payload must be in name=value form");
         }
 
         String delim = context.getTextDelim();

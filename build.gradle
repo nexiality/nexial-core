@@ -223,6 +223,7 @@ dependencies {
 	testCompile("junit:junit")
 	testCompile("org.jetbrains.kotlin:kotlin-test")
 	testCompile("org.jetbrains.kotlin:kotlin-test-junit")
+//	compile "org.jetbrains.kotlin:kotlin-reflect:1.2.31-release-95 (1.2.31)"
 }
 
 jar {

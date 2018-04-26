@@ -98,7 +98,7 @@ public class JsonMappingConfig {
         @SerializedName("record-spec")
         private List<RecordspecBean> recordspec;
         private List<ValidationsBean> validations;
-        @SerializedName("map-functions")
+        @SerializedName("fileHeaderMap-functions")
         private List<MapfunctionsBean> mapfunctions;
 
         public String getRecordidfield() { return recordidfield;}
@@ -141,7 +141,7 @@ public class JsonMappingConfig {
         @SerializedName("record-spec")
         private List<RecordspecBean> recordspec;
         private List<ValidationsBean> validations;
-        @SerializedName("map-functions")
+        @SerializedName("fileHeaderMap-functions")
         private List<MapfunctionsBean> mapfunctions;
 
         public String getRecordidfield() { return recordidfield;}
@@ -193,7 +193,7 @@ public class JsonMappingConfig {
             @SerializedName("record-spec")
             private List<RecordspecBean> recordspec;
             private List<ValidationsBean> validations;
-            @SerializedName("map-functions")
+            @SerializedName("fileHeaderMap-functions")
             private List<MapfunctionsBean> mapfunctions;
 
             public String getFieldSeparator() {
@@ -236,7 +236,7 @@ public class JsonMappingConfig {
             @SerializedName("record-spec")
             private List<RecordspecBean> recordspec;
             private List<ValidationsBean> validations;
-            @SerializedName("map-functions")
+            @SerializedName("fileHeaderMap-functions")
             private List<MapfunctionsBean> mapfunctions;
 
             public String getFieldSeparator() {
@@ -279,7 +279,7 @@ public class JsonMappingConfig {
             @SerializedName("record-spec")
             private List<RecordspecBean> recordspec;
             private List<ValidationsBean> validations;
-            @SerializedName("map-functions")
+            @SerializedName("fileHeaderMap-functions")
             private List<MapfunctionsBean> mapfunctions;
 
             public String getFieldSeparator() {

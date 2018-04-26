@@ -49,7 +49,6 @@ class CsvExtendedComparison implements Serializable {
     private List<String[]> actualRecords;
     private List<String> actualHeaders;
     private Map<String, String> fieldMapping;
-    private List<String> ignoreFields;
     private List<String> displayFields;
     private ReportFormat reportFormat;
     private String mismatchedField = "MISMATCHED FIELD";
@@ -86,10 +85,6 @@ class CsvExtendedComparison implements Serializable {
     public Map<String, String> getFieldMapping() { return fieldMapping; }
 
     public void setFieldMapping(Map<String, String> fieldMapping) { this.fieldMapping = fieldMapping; }
-
-    public List<String> getIgnoreFields() { return ignoreFields; }
-
-    public void setIgnoreFields(List<String> ignoreFields) { this.ignoreFields = ignoreFields; }
 
     public List<String> getExpectedIdentityColumns() { return expectedIdentityColumns; }
 
@@ -227,6 +222,7 @@ class CsvExtendedComparison implements Serializable {
 
     private void validateHeaders() throws IntegrationConfigException {
         // check mapping
+        // System.out.println("fieldMapping = " + fieldMapping);
         for (String field : fieldMapping.keySet()) {
             if (!expectedHeaders.contains(field)) {
                 throw new IntegrationConfigException("Invalid field name found for expected: " + field);
@@ -248,10 +244,6 @@ class CsvExtendedComparison implements Serializable {
             fieldMapping = new ListOrderedMap<>();
             expectedHeaders.forEach(header -> fieldMapping.put(header, header));
         }
-
-        if (CollectionUtils.isNotEmpty(ignoreFields)) {
-            ignoreFields.forEach(ignore -> fieldMapping.remove(ignore));
-        }
     }
 
     private void parseActual() throws IOException {
@@ -266,9 +258,18 @@ class CsvExtendedComparison implements Serializable {
                                         final List<String> identityColumns)
         throws IOException {
 
+        // CSVParser csvParser = null;
+        // try {
+        // csvParser = csvFormat.parse(new StringReader(content));
+        // List<CSVRecord> csvRecords = csvParser.getRecords();
+        // if (CollectionUtils.isEmpty(csvRecords)) { throw new IOException("No record parsed from content"); }
         List<String[]> records = parser.parseAll(new StringReader(content));
         if (CollectionUtils.isEmpty(records)) { throw new IOException("No record parsed from content"); }
 
+        // gather header list, in the order show on file
+        // new LinkedList(csvParser.getHeaderMap().entrySet()).stream()
+        //                                                    .sorted(Comparator.comparing(Entry::getValue))
+        //                                                    .forEach(order -> fileHeaders.add(order.getKey()));
         if (parser.getRecordMetadata() != null) {
             fileHeaders.addAll(Arrays.asList(parser.getRecordMetadata().headers()));
         }
@@ -291,9 +292,32 @@ class CsvExtendedComparison implements Serializable {
             records.set(i, ArrayUtils.insert(0, record, identity));
         }
 
+        // extract parsed records
+        // List<String[]> records = new ArrayList<>();
+        // for (CSVRecord csvRecord : csvRecords) {
+        //     // +1 so that we can add identify value as first field
+        //     String[] record = new String[fileHeaders.size() + 1];
+        //
+        //     record[0] = identityColumns.stream()
+        //                                .fileHeaderMap(column -> csvRecord.get(fileHeaders.indexOf(column)))
+        //                                .collect(Collectors.joining(identSeparator));
+        //     if (StringUtils.isBlank(record[0])) {
+        //         throw new IOException("Unable to derive identity value for record " + csvRecord.toString());
+        //     }
+        //
+        //     for (int i = 0; i < csvRecord.size(); i++) {
+        //         record[i + 1] = i < csvRecord.size() ? csvRecord.get(i) : "";
+        //     }
+        //     records.add(record);
+        // }
+
         // position 0 is the identity value
         records.sort(Comparator.comparing(row -> row[0]));
         return records;
+
+        // } finally {
+        //     if (csvParser != null) { csvParser.close(); }
+        // }
     }
 
     private void sanityChecks() throws IntegrationConfigException {
@@ -314,8 +338,20 @@ class CsvExtendedComparison implements Serializable {
         }
 
         if (expectedParser == null) { expectedParser = CsvCommand.newCsvParser(null, null, null, true); }
+        // if (expectedFormat == null) {
+        //     expectedFormat = EXCEL.withFirstRecordAsHeader();
+        // } else if (!expectedFormat.getSkipHeaderRecord()) {
+        //     // header is required for the comparison to work
+        //     throw new IntegrationConfigException("Header is required for expected");
+        // }
 
         if (actualParser == null) { actualParser = CsvCommand.newCsvParser(null, null, null, true); }
+        // if (actualFormat == null) {
+        //     actualFormat = EXCEL.withFirstRecordAsHeader();
+        // } else if (!actualFormat.getSkipHeaderRecord()) {
+        //     header is required for the comparison to work
+        // throw new IntegrationConfigException("Header is required for actual");
+        // }
 
         if (reportFormat == null) { reportFormat = CSV; }
     }
