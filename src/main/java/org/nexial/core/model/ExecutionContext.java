@@ -481,7 +481,8 @@ public class ExecutionContext {
      * remove data variable both from context and system
      */
     public String removeData(String name) {
-        String removed = Objects.toString(data.remove(name));
+        Object removedObj = data.remove(name);
+        String removed = removedObj == null ? null : Objects.toString(removedObj);
         String removedFromSys = System.clearProperty(name);
         return StringUtils.isEmpty(removed) ? removedFromSys : removed;
     }

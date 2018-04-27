@@ -21,6 +21,9 @@ if [[ ${build_ret} = 0 ]] ; then
 
 	cd ..
 	rm -frv support
+
+	cd bin
+	./nexial-script-update.sh -v -t ../template
 else
 	echo gradle build failed!
 fi
