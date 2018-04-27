@@ -25,8 +25,11 @@ To see Nexial in action, watch this short demo showcasing how Nexial
 5. finally, performs a few simple data analytical queries and reports (database automation, Nexial expression). 
 
 [Nexial in Action](https://www.youtube.com/watch?v=b372XikN1YU)
+<iframe width="560" height="555" src="https://www.youtube-nocookie.com/embed/b372XikN1YU?cc_lang_pref=en&cc_load_policy=1" frameborder="0" allow="autoplay; encrypted-media" allowfullscreen></iframe>
+<br/>
+<br/>
 
-Wanna try? Have at it!
+**Wanna try? Have at it!**
 1. Download [Nexial distro](https://github.com/nexiality/nexial-core/releases)
 2. Follow the [installation guide](https://nexiality.github.io/documentation/userguide/InstallingNexial) (most steps are one-time work)
 3. Download the ["nexial-in-action" project](https://nexiality.github.io/documentation/nexial-in-action.zip) and unzip to local directory
