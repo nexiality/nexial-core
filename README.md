@@ -26,7 +26,8 @@ To see Nexial in action, watch this short demo showcasing how Nexial
 
 [Nexial in Action](https://www.youtube.com/watch?v=b372XikN1YU)
 
-<iframe width="560" height="555" src="https://www.youtube-nocookie.com/embed/b372XikN1YU?cc_lang_pref=en&cc_load_policy=1" frameborder="0" allow="autoplay; encrypted-media" allowfullscreen></iframe>
+[![Nexial in Action](https://nexiality.github.io/documentation/image/nexial-in-action-youtube-preview.png)](https://www.youtube.com/watch?v=b372XikN1YU)
+
 <br/>
 <br/>
 
