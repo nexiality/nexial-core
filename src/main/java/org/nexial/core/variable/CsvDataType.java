@@ -111,30 +111,6 @@ public class CsvDataType extends ExpressionDataType<List<Record>> {
         ConsoleUtils.log("updating textValue due to record removal");
         resetTextValue();
 
-        // String recordDelim = csvFormat.getRecordSeparator();
-        // String delim = csvFormat.getDelimiter() + "";
-        // String recordDelim = parser.getDetectedFormat().getLineSeparatorString();
-        // int recordDelimLength = recordDelim.length();
-        // String delim = parser.getDetectedFormat().getDelimiter() + "";
-
-        // int posStart = textValue.indexOf(value);
-        // if (headers.contains(column) && posStart != -1) {
-        //     posStart = textValue.indexOf(delim + value) + delim.length();
-        //     for (int i = posStart; i >= recordDelimLength - 1; i--) {
-        //         int startFrom = i - recordDelimLength;
-        //         if (textValue.substring(startFrom, startFrom + recordDelimLength).equals(recordDelim)) {
-        //             posStart = startFrom + 1;
-        //             break;
-        //         }
-        //     }
-        // }
-        //
-        // if (posStart != -1) {
-        //     int posEnd = textValue.indexOf(recordDelim, posStart + 1);
-        //     textValue = textValue.substring(0, posStart - recordDelimLength) + textValue.substring(posEnd);
-        //     ConsoleUtils.log("updated textValue due to record removal");
-        // }
-
         return matched;
     }
 
