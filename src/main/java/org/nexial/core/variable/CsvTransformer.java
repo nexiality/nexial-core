@@ -43,6 +43,8 @@ import com.google.gson.JsonObject;
 import com.univocity.parsers.common.record.Record;
 
 import static java.lang.System.lineSeparator;
+import static org.nexial.core.NexialConst.CSV_FIELD_DEIM;
+import static org.nexial.core.NexialConst.CSV_ROW_SEP;
 import static org.nexial.core.model.NexialFilterComparator.Equal;
 import static org.nexial.core.variable.ExpressionUtils.fixControlChars;
 
@@ -644,6 +646,76 @@ public class CsvTransformer<T extends CsvDataType> extends Transformer {
         return mergeWithHeader(data, mergeFrom, refColumn);
     }
 
+    public T groupCount(T data, String... columns) throws TypeConversionException {
+        if (data == null || data.getValue() == null || ArrayUtils.isEmpty(columns)) { return data; }
+
+        assertValidColumns(data, columns);
+
+        Map<String, Integer> counts = new TreeMap<>();
+        data.getValue().forEach(record -> {
+
+            String value = "";
+            for (String column : columns) {
+                value += (StringUtils.isNotEmpty(value) ? CSV_FIELD_DEIM : "") + record.getString(column);
+                counts.put(value, counts.containsKey(value) ? counts.get(value) + 1 : 1);
+            }
+        });
+
+        StringBuilder groupCsv = new StringBuilder(TextUtils.toString(columns, CSV_FIELD_DEIM, "", "") +
+                                                   CSV_FIELD_DEIM + "Count" + CSV_ROW_SEP);
+        counts.forEach((value, count) -> {
+            int numMissingDelim = columns.length - StringUtils.countMatches(value, CSV_FIELD_DEIM) - 1;
+            groupCsv.append(value).append(StringUtils.repeat(CSV_FIELD_DEIM, numMissingDelim)).append(CSV_FIELD_DEIM)
+                    .append(count).append(CSV_ROW_SEP);
+        });
+
+        return (T) new CsvDataType(StringUtils.removeEnd(groupCsv.toString(), CSV_ROW_SEP));
+    }
+
+    public T groupSum(T data, String... columns) throws TypeConversionException {
+        if (data == null || data.getValue() == null || ArrayUtils.isEmpty(columns)) { return data; }
+
+        assertValidColumns(data, columns);
+        if (columns.length < 2) {
+            throw new TypeConversionException("CSV", ArrayUtils.toString(columns), "Too few columns specified");
+        }
+
+        String sumColumn = columns[columns.length - 1];
+        String[] groupColumns = ArrayUtils.remove(columns, columns.length - 1);
+
+        Map<String, Number> sums = new TreeMap<>();
+        data.getValue().forEach(record -> {
+            Number sumValue = NumberUtils.createNumber(
+                StringUtils.trim(StringUtils.replaceChars(record.getString(sumColumn), "\"'$,", "")));
+
+            String value = "";
+            for (String column : groupColumns) {
+                value += (StringUtils.isNotEmpty(value) ? CSV_FIELD_DEIM : "") + record.getString(column);
+                if (sums.containsKey(value)) {
+                    Number currentSum = sums.get(value);
+                    if (currentSum instanceof Integer && sumValue instanceof Integer) {
+                        sums.put(value, sumValue.intValue() + currentSum.intValue());
+                    } else {
+                        sums.put(value, sumValue.doubleValue() + currentSum.doubleValue());
+                    }
+                } else {
+                    sums.put(value, sumValue);
+                }
+            }
+        });
+
+        StringBuilder groupCsv = new StringBuilder(TextUtils.toString(groupColumns, CSV_FIELD_DEIM, "", "") +
+                                                   CSV_FIELD_DEIM + "Sum" + CSV_ROW_SEP);
+        sums.forEach((value, sum) -> {
+            int numMissingDelim = groupColumns.length - StringUtils.countMatches(value, CSV_FIELD_DEIM) - 1;
+            String sumString = sum + "";
+            groupCsv.append(value).append(StringUtils.repeat(CSV_FIELD_DEIM, numMissingDelim)).append(CSV_FIELD_DEIM)
+                    .append(sumString).append(CSV_ROW_SEP);
+        });
+
+        return (T) new CsvDataType(StringUtils.removeEnd(groupCsv.toString(), CSV_ROW_SEP));
+    }
+
     /**
      * turn a data variable into an instance of CsvDataType, if possible
      */
@@ -710,6 +782,14 @@ public class CsvTransformer<T extends CsvDataType> extends Transformer {
 
     @Override
     Map<String, Method> listSupportedMethods() { return FUNCTIONS; }
+
+    protected void assertValidColumns(T data, String[] columns) throws TypeConversionException {
+        Object[] invalidColumns = Arrays.stream(columns).filter(column -> !data.hasHeader(column)).toArray();
+        boolean columnNotFound = ArrayUtils.isNotEmpty(invalidColumns);
+        if (columnNotFound) {
+            throw new TypeConversionException("CSV", Arrays.toString(invalidColumns), "Invalid column(s) specified");
+        }
+    }
 
     protected T mergeWithoutHeaders(T data, CsvDataType mergeFrom) {
         StringBuilder toBuffer = new StringBuilder();

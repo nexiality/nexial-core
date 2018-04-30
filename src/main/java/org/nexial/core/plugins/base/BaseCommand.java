@@ -54,10 +54,9 @@ import static java.lang.Boolean.FALSE;
 import static java.lang.Boolean.TRUE;
 import static java.lang.System.lineSeparator;
 import static java.util.regex.Pattern.CASE_INSENSITIVE;
-import static org.nexial.core.NexialConst.Data.NULL;
-import static org.nexial.core.NexialConst.MSG_FAIL;
-import static org.nexial.core.NexialConst.OPT_EASY_STRING_COMPARE;
-import static org.nexial.core.NexialConst.OPT_LAST_OUTCOME;
+import static org.nexial.core.NexialConst.BrowserStack.*;
+import static org.nexial.core.NexialConst.Data.*;
+import static org.nexial.core.NexialConst.*;
 import static org.nexial.core.excel.ExcelConfig.MSG_PASS;
 import static org.nexial.core.excel.ext.CipherHelper.CRYPT_IND;
 import static org.nexial.core.plugins.base.IncrementStrategy.ALPHANUM;
@@ -71,6 +70,16 @@ public class BaseCommand implements NexialCommand {
                                                                               "desktop.typeTextArea");
     // "self-derived" means that the command will figure out the appropriate param values for display
     public static final List<String> PARAM_DERIVED_COMMANDS = Collections.singletonList("step.observe");
+    public static final List<String> READ_ONLY_VARS = Arrays.asList(
+        OPT_RUN_ID, OPT_RUN_ID_PREFIX, SPREADSHEET_PROGRAM, OPT_LAST_SCREENSHOT_NAME, OPT_LAST_OUTCOME,
+        MIN_EXEC_SUCCESS_RATE, RECORDER_TYPE, ITERATION, FALLBACK_TO_PREVIOUS, CURR_ITERATION, LAST_ITERATION,
+        OPT_RUN_PROGRAM_OUTPUT, BROWSER_WINDOW_SIZE, OPT_DELAY_BROWSER, BROWSER_IE_REQUIRE_WINDOW_FOCUS,
+        OPT_LAST_ALERT_TEXT, OPT_ALERT_IGNORE_FLAG, OPT_LAST_ALERT_TEXT, BROWER_INCOGNITO, KEY_AUTOMATEKEY,
+        KEY_USERNAME, KEY_BROWSER, KEY_BROWSER_VER, KEY_DEBUG, KEY_RESOLUTION, KEY_BUILD_NUM, KEY_ENABLE_LOCAL,
+        KEY_OS, KEY_OS_VER, SAFARI_CLEAN_SESSION, SAFARI_USE_TECH_PREVIEW, OPT_FORCE_IE_32, SELENIUM_IE_DRIVER,
+        SELENIUM_IE_LOG_LEVEL, SELENIUM_IE_LOG_LOGFILE, SELENIUM_IE_SILENT, "file.separator", "java.home",
+        "java.io.tmpdir", "java.version", "line.separator", "os.arch", "os.name", "os.version", "user.country",
+        "user.dir", "user.home", "user.language", "user.name", "user.timezone");
 
     protected static final IncrementStrategy STRATEGY_DEFAULT = ALPHANUM;
 
@@ -203,6 +212,28 @@ public class BaseCommand implements NexialCommand {
         requiresValidVariableName(var);
         context.setData(var, value);
         return StepResult.success("stored '" + CellTextReader.readValue(value) + "' as ${" + var + "}");
+    }
+
+    /**
+     * clear data variables by name
+     */
+    public StepResult clear(String vars) {
+        requiresNotBlank(vars, "invalid variable(s)", vars);
+
+        StringBuilder ignored = new StringBuilder("The following data variable(s) are READ ONLY and ignored: ");
+        StringBuilder message =
+            new StringBuilder("The following data variable(s) are found and removed from execution: ");
+        TextUtils.toList(vars, context.getTextDelim(), true).forEach(var -> {
+            if (READ_ONLY_VARS.contains(var) || StringUtils.startsWith(var, "java.")) {
+                ignored.append(var).append(", ");
+            } else {
+                String removed = context.removeData(var);
+                if (StringUtils.isNotEmpty(removed)) { message.append(var).append(", "); }
+            }
+        });
+
+        return StepResult.success(StringUtils.removeEnd(message.toString(), ", ") + ". " +
+                                  StringUtils.removeEnd(ignored.toString(), ", "));
     }
 
     public StepResult substringAfter(String text, String delim, String saveVar) {

@@ -1579,6 +1579,412 @@ public class ExpressionProcessorTest {
     }
 
     @Test
+    public void processCSV_group() throws Exception {
+        String fixtureBase = resourcePath + this.getClass().getSimpleName();
+        String file = ResourceUtils.getResourceFilePath(fixtureBase + "17.csv");
+
+        ExpressionProcessor subject = new ExpressionProcessor(context);
+
+        Assert.assertEquals("Country,Count\n" +
+                            "Argentina,1\n" +
+                            "Australia,38\n" +
+                            "Austria,7\n" +
+                            "Bahrain,1\n" +
+                            "Belgium,8\n" +
+                            "Bermuda,1\n" +
+                            "Brazil,5\n" +
+                            "Bulgaria,1\n" +
+                            "Canada,76\n" +
+                            "Cayman Isls,1\n" +
+                            "China,1\n" +
+                            "Costa Rica,1\n" +
+                            "Czech Republic,3\n" +
+                            "Denmark,15\n" +
+                            "Dominican Republic,1\n" +
+                            "Finland,2\n" +
+                            "France,27\n" +
+                            "Germany,25\n" +
+                            "Greece,1\n" +
+                            "Guatemala,1\n" +
+                            "Hong Kong,1\n" +
+                            "Hungary,3\n" +
+                            "Iceland,1\n" +
+                            "India,2\n" +
+                            "Ireland,49\n" +
+                            "Israel,1\n" +
+                            "Italy,15\n" +
+                            "Japan,2\n" +
+                            "Jersey,1\n" +
+                            "Kuwait,1\n" +
+                            "Latvia,1\n" +
+                            "Luxembourg,1\n" +
+                            "Malaysia,1\n" +
+                            "Malta,2\n" +
+                            "Mauritius,1\n" +
+                            "Moldova,1\n" +
+                            "Monaco,2\n" +
+                            "Netherlands,22\n" +
+                            "New Zealand,6\n" +
+                            "Norway,16\n" +
+                            "Philippines,2\n" +
+                            "Poland,2\n" +
+                            "Romania,1\n" +
+                            "Russia,1\n" +
+                            "South Africa,5\n" +
+                            "South Korea,1\n" +
+                            "Spain,12\n" +
+                            "Sweden,13\n" +
+                            "Switzerland,36\n" +
+                            "Thailand,2\n" +
+                            "The Bahamas,2\n" +
+                            "Turkey,6\n" +
+                            "Ukraine,1\n" +
+                            "United Arab Emirates,6\n" +
+                            "United Kingdom,100\n" +
+                            "United States,463",
+                            subject.process("[CSV(" + file + ") => parse(header=true) group-count(Country) text]")
+                           );
+
+        Assert.assertEquals("Country,State,Count\n" +
+                            "Argentina,,1\n" +
+                            "Argentina,Buenos Aires,1\n" +
+                            "Australia,,38\n" +
+                            "Australia,New South Wales,11\n" +
+                            "Australia,Queensland,10\n" +
+                            "Australia,South Australia,1\n" +
+                            "Australia,Tasmania,1\n" +
+                            "Australia,Victoria,9\n" +
+                            "Australia,Western Australia,6\n" +
+                            "Austria,,7\n" +
+                            "Austria,Lower Austria,2\n" +
+                            "Austria,Tyrol,1\n" +
+                            "Austria,Vienna,4\n" +
+                            "Bahrain,,1\n" +
+                            "Bahrain,Al Manamah,1\n" +
+                            "Belgium,,8\n" +
+                            "Belgium,Antwerpen,1\n" +
+                            "Belgium,Brussels (Bruxelles),6\n" +
+                            "Belgium,Hainaut,1\n" +
+                            "Bermuda,,1\n" +
+                            "Bermuda,Hamilton,1\n" +
+                            "Brazil,,5\n" +
+                            "Brazil,Ceara,1\n" +
+                            "Brazil,Minas Gerais,1\n" +
+                            "Brazil,Rio Grande do Sul,1\n" +
+                            "Brazil,Santa Catarina,1\n" +
+                            "Brazil,Sao Paulo,1\n" +
+                            "Bulgaria,,1\n" +
+                            "Bulgaria,Stara Zagora,1\n" +
+                            "Canada,,76\n" +
+                            "Canada,Alberta,18\n" +
+                            "Canada,British Columbia,18\n" +
+                            "Canada,Manitoba,1\n" +
+                            "Canada,Northwest Territories,1\n" +
+                            "Canada,Ontario,27\n" +
+                            "Canada,Quebec,8\n" +
+                            "Canada,Saskatchewan,2\n" +
+                            "Canada,Yukon Territory,1\n" +
+                            "Cayman Isls,,1\n" +
+                            "Cayman Isls,,1\n" +
+                            "China,,1\n" +
+                            "China,Guangdong,1\n" +
+                            "Costa Rica,,1\n" +
+                            "Costa Rica,Heredia,1\n" +
+                            "Czech Republic,,3\n" +
+                            "Czech Republic,Central Bohemia,1\n" +
+                            "Czech Republic,East Bohemia,1\n" +
+                            "Czech Republic,Prague,1\n" +
+                            "Denmark,,15\n" +
+                            "Denmark,Arhus,1\n" +
+                            "Denmark,Frederiksborg,3\n" +
+                            "Denmark,Kobenhavn,7\n" +
+                            "Denmark,Staden Kobenhavn,1\n" +
+                            "Denmark,Storstrom,2\n" +
+                            "Denmark,Vestsjalland,1\n" +
+                            "Dominican Republic,,1\n" +
+                            "Dominican Republic,Distrito Nacional,1\n" +
+                            "Finland,,2\n" +
+                            "Finland,Etela-Suomen Laani,1\n" +
+                            "Finland,Ita-Suomen Laani,1\n" +
+                            "France,,27\n" +
+                            "France,Alsace,1\n" +
+                            "France,Brittany,2\n" +
+                            "France,Franche-Comte,2\n" +
+                            "France,Ile-de-France,8\n" +
+                            "France,Lorraine,1\n" +
+                            "France,Pays de la Loire,1\n" +
+                            "France,Provence-Alpes-Cote d'Azur,4\n" +
+                            "France,Rhone-Alpes,7\n" +
+                            "France,Upper Normandy,1\n" +
+                            "Germany,,25\n" +
+                            "Germany,Baden-Wurttemberg,5\n" +
+                            "Germany,Bayern,4\n" +
+                            "Germany,Berlin,1\n" +
+                            "Germany,Hamburg,1\n" +
+                            "Germany,Hessen,2\n" +
+                            "Germany,Lower Saxony,3\n" +
+                            "Germany,Nordrhein-Westfalen,2\n" +
+                            "Germany,Rhineland-Palatinate,3\n" +
+                            "Germany,Saarland,1\n" +
+                            "Germany,Saxony,1\n" +
+                            "Germany,Thuringia,2\n" +
+                            "Greece,,1\n" +
+                            "Greece,Attiki,1\n" +
+                            "Guatemala,,1\n" +
+                            "Guatemala,Guatemala,1\n" +
+                            "Hong Kong,,1\n" +
+                            "Hong Kong,,1\n" +
+                            "Hungary,,3\n" +
+                            "Hungary,Bacs-Kiskun,1\n" +
+                            "Hungary,Budapest,1\n" +
+                            "Hungary,Pest,1\n" +
+                            "Iceland,,1\n" +
+                            "Iceland,,1\n" +
+                            "India,,2\n" +
+                            "India,Andhra Pradesh,1\n" +
+                            "India,Haryana,1\n" +
+                            "Ireland,,49\n" +
+                            "Ireland,Cork,10\n" +
+                            "Ireland,Dublin,22\n" +
+                            "Ireland,Kerry,1\n" +
+                            "Ireland,Kilkenny,1\n" +
+                            "Ireland,Limerick,2\n" +
+                            "Ireland,Louth,1\n" +
+                            "Ireland,Mayo,1\n" +
+                            "Ireland,Meath,4\n" +
+                            "Ireland,Tipperary,2\n" +
+                            "Ireland,Waterford,2\n" +
+                            "Ireland,Westmeath,1\n" +
+                            "Ireland,Wicklow,2\n" +
+                            "Israel,,1\n" +
+                            "Israel,Tel Aviv,1\n" +
+                            "Italy,,15\n" +
+                            "Italy,Lazio,1\n" +
+                            "Italy,Lombardy,4\n" +
+                            "Italy,Sardinia,1\n" +
+                            "Italy,Sicilia,3\n" +
+                            "Italy,Tuscany,4\n" +
+                            "Italy,Veneto,2\n" +
+                            "Japan,,2\n" +
+                            "Japan,Tokyo,2\n" +
+                            "Jersey,,1\n" +
+                            "Jersey,,1\n" +
+                            "Kuwait,,1\n" +
+                            "Kuwait,,1\n" +
+                            "Latvia,,1\n" +
+                            "Latvia,Riga,1\n" +
+                            "Luxembourg,,1\n" +
+                            "Luxembourg,Luxembourg,1\n" +
+                            "Malaysia,,1\n" +
+                            "Malaysia,Kuala Lumpur,1\n" +
+                            "Malta,,2\n" +
+                            "Malta,,2\n" +
+                            "Mauritius,,1\n" +
+                            "Mauritius,Black River,1\n" +
+                            "Moldova,,1\n" +
+                            "Moldova,Chisinau,1\n" +
+                            "Monaco,,2\n" +
+                            "Monaco,,2\n" +
+                            "Netherlands,,22\n" +
+                            "Netherlands,Gelderland,1\n" +
+                            "Netherlands,Groningen,2\n" +
+                            "Netherlands,Noord-Brabant,1\n" +
+                            "Netherlands,Noord-Holland,7\n" +
+                            "Netherlands,Utrecht,1\n" +
+                            "Netherlands,Zuid-Holland,10\n" +
+                            "New Zealand,,6\n" +
+                            "New Zealand,Auckland,4\n" +
+                            "New Zealand,Taranaki,2\n" +
+                            "Norway,,16\n" +
+                            "Norway,Buskerud,1\n" +
+                            "Norway,Hordaland,2\n" +
+                            "Norway,Oslo,6\n" +
+                            "Norway,Rogaland,4\n" +
+                            "Norway,Sogn og Fjordane,1\n" +
+                            "Norway,Vestfold,2\n" +
+                            "Philippines,,2\n" +
+                            "Philippines,Bohol,1\n" +
+                            "Philippines,General Santos,1\n" +
+                            "Poland,,2\n" +
+                            "Poland,Mazowieckie,1\n" +
+                            "Poland,Pomorskie,1\n" +
+                            "Romania,,1\n" +
+                            "Romania,Bucuresti,1\n" +
+                            "Russia,,1\n" +
+                            "Russia,Moscow City,1\n" +
+                            "South Africa,,5\n" +
+                            "South Africa,Gauteng,3\n" +
+                            "South Africa,KwaZulu-Natal,2\n" +
+                            "South Korea,,1\n" +
+                            "South Korea,Soul-t'ukpyolsi,1\n" +
+                            "Spain,,12\n" +
+                            "Spain,Andalucia,1\n" +
+                            "Spain,Catalonia,3\n" +
+                            "Spain,Madrid,5\n" +
+                            "Spain,Murcia,2\n" +
+                            "Spain,Pais Vasco,1\n" +
+                            "Sweden,,13\n" +
+                            "Sweden,Ostergotland,1\n" +
+                            "Sweden,Skane,1\n" +
+                            "Sweden,Stockholm,9\n" +
+                            "Sweden,Uppsala,1\n" +
+                            "Sweden,Vasterbotten,1\n" +
+                            "Switzerland,,36\n" +
+                            "Switzerland,Aargau,2\n" +
+                            "Switzerland,Basel-Country,2\n" +
+                            "Switzerland,Basel-Town,1\n" +
+                            "Switzerland,Bern,1\n" +
+                            "Switzerland,Geneve,7\n" +
+                            "Switzerland,Neuchatel,1\n" +
+                            "Switzerland,Schwyz,1\n" +
+                            "Switzerland,St Gallen,1\n" +
+                            "Switzerland,Ticino,2\n" +
+                            "Switzerland,Vaud,8\n" +
+                            "Switzerland,Zug,2\n" +
+                            "Switzerland,Zurich,8\n" +
+                            "Thailand,,2\n" +
+                            "Thailand,Krung Thep,1\n" +
+                            "Thailand,Phuket,1\n" +
+                            "The Bahamas,,2\n" +
+                            "The Bahamas,Freeport,1\n" +
+                            "The Bahamas,New Providence,1\n" +
+                            "Turkey,,6\n" +
+                            "Turkey,Istanbul,5\n" +
+                            "Turkey,Izmir,1\n" +
+                            "Ukraine,,1\n" +
+                            "Ukraine,Kiev,1\n" +
+                            "United Arab Emirates,,6\n" +
+                            "United Arab Emirates,Abu Zaby,1\n" +
+                            "United Arab Emirates,Dubayy,5\n" +
+                            "United Kingdom,,100\n" +
+                            "United Kingdom,England,86\n" +
+                            "United Kingdom,Northern Ireland,3\n" +
+                            "United Kingdom,Scotland,9\n" +
+                            "United Kingdom,Wales,2\n" +
+                            "United States,,463\n" +
+                            "United States,AK,5\n" +
+                            "United States,AL,1\n" +
+                            "United States,AR,3\n" +
+                            "United States,AZ,10\n" +
+                            "United States,CA,66\n" +
+                            "United States,CO,11\n" +
+                            "United States,CT,9\n" +
+                            "United States,DC,3\n" +
+                            "United States,DE,1\n" +
+                            "United States,FL,29\n" +
+                            "United States,GA,21\n" +
+                            "United States,Georgia,1\n" +
+                            "United States,HI,9\n" +
+                            "United States,IA,3\n" +
+                            "United States,ID,2\n" +
+                            "United States,IL,16\n" +
+                            "United States,IN,2\n" +
+                            "United States,KS,2\n" +
+                            "United States,KY,2\n" +
+                            "United States,LA,2\n" +
+                            "United States,MA,13\n" +
+                            "United States,MD,15\n" +
+                            "United States,ME,2\n" +
+                            "United States,MI,11\n" +
+                            "United States,MN,10\n" +
+                            "United States,MO,1\n" +
+                            "United States,MS,2\n" +
+                            "United States,MT,2\n" +
+                            "United States,Michigan,1\n" +
+                            "United States,NC,7\n" +
+                            "United States,NE,1\n" +
+                            "United States,NH,1\n" +
+                            "United States,NJ,19\n" +
+                            "United States,NM,1\n" +
+                            "United States,NV,5\n" +
+                            "United States,NY,41\n" +
+                            "United States,OH,7\n" +
+                            "United States,OR,2\n" +
+                            "United States,PA,11\n" +
+                            "United States,RI,3\n" +
+                            "United States,SC,4\n" +
+                            "United States,TN,11\n" +
+                            "United States,TX,37\n" +
+                            "United States,UT,5\n" +
+                            "United States,VA,30\n" +
+                            "United States,VI,1\n" +
+                            "United States,VT,2\n" +
+                            "United States,Virginia,1\n" +
+                            "United States,WA,14\n" +
+                            "United States,WI,5",
+                            subject.process("[CSV(" + file + ") => parse(header=true) group-count(Country,State) text]")
+                           );
+    }
+
+    @Test
+    public void processCSV_sum() throws Exception {
+        String fixtureBase = resourcePath + this.getClass().getSimpleName();
+        String file = ResourceUtils.getResourceFilePath(fixtureBase + "17.csv");
+
+        ExpressionProcessor subject = new ExpressionProcessor(context);
+
+        Assert.assertEquals("Country,Sum\n" +
+                            "Argentina,1200\n" +
+                            "Australia,64800\n" +
+                            "Austria,10800\n" +
+                            "Bahrain,1200\n" +
+                            "Belgium,12000\n" +
+                            "Bermuda,1200\n" +
+                            "Brazil,12300\n" +
+                            "Bulgaria,1200\n" +
+                            "Canada,124800\n" +
+                            "Cayman Isls,1200\n" +
+                            "China,1200\n" +
+                            "Costa Rica,1200\n" +
+                            "Czech Republic,6000\n" +
+                            "Denmark,18000\n" +
+                            "Dominican Republic,1200\n" +
+                            "Finland,2400\n" +
+                            "France,53100\n" +
+                            "Germany,42000\n" +
+                            "Greece,1200\n" +
+                            "Guatemala,1200\n" +
+                            "Hong Kong,1200\n" +
+                            "Hungary,3600\n" +
+                            "Iceland,1200\n" +
+                            "India,2400\n" +
+                            "Ireland,69900\n" +
+                            "Israel,1200\n" +
+                            "Italy,37800\n" +
+                            "Japan,2400\n" +
+                            "Jersey,1200\n" +
+                            "Kuwait,1200\n" +
+                            "Latvia,1200\n" +
+                            "Luxembourg,1200\n" +
+                            "Malaysia,1200\n" +
+                            "Malta,4800\n" +
+                            "Mauritius,3600\n" +
+                            "Moldova,1200\n" +
+                            "Monaco,2400\n" +
+                            "Netherlands,44700\n" +
+                            "New Zealand,7200\n" +
+                            "Norway,21600\n" +
+                            "Philippines,2400\n" +
+                            "Poland,2400\n" +
+                            "Romania,1200\n" +
+                            "Russia,3600\n" +
+                            "South Africa,12300\n" +
+                            "South Korea,1200\n" +
+                            "Spain,16800\n" +
+                            "Sweden,22800\n" +
+                            "Switzerland,76800\n" +
+                            "Thailand,4800\n" +
+                            "The Bahamas,2400\n" +
+                            "Turkey,7200\n" +
+                            "Ukraine,1200\n" +
+                            "United Arab Emirates,12000\n" +
+                            "United Kingdom,144000\n" +
+                            "United States,750000",
+                            subject.process("[CSV(" + file + ") => parse(header=true) groupSum(Country,Price) text]")
+                           );
+    }
+
+    @Test
     public void processExcel() throws Exception {
         String fixtureBase = resourcePath + this.getClass().getSimpleName();
         String file = ResourceUtils.getResourceFilePath(fixtureBase + "9.xlsx");
