@@ -17,51 +17,51 @@
 
 package org.nexial.core.plugins.mail;
 
+import java.io.IOException;
+
 import javax.mail.MessagingException;
 
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.validator.routines.EmailValidator;
-
+import org.nexial.commons.javamail.MailObjectSupport;
 import org.nexial.commons.javamail.MailSender;
-import org.nexial.core.model.ExecutionContext;
 import org.nexial.core.model.StepResult;
 import org.nexial.core.plugins.base.BaseCommand;
+import org.nexial.core.utils.OutputFileUtils;
 
 import static org.nexial.core.utils.CheckUtils.requiresNotBlank;
+import static org.nexial.core.utils.CheckUtils.requiresNotNull;
 
-/**
- *
- */
 public class MailCommand extends BaseCommand {
 
-	private MailSender sender;
+    @Override
+    public String getTarget() { return "mail"; }
 
-	@Override
-	public String getTarget() { return "mail"; }
+    public StepResult send(String profile, String to, String subject, String body) {
+        requiresNotBlank(profile, "Invalid profile", profile);
+        requiresNotBlank(to, "Invalid recipient", to);
+        requiresNotBlank(subject, "Invalid subject", subject);
+        requiresNotBlank(body, "Invalid email body", body);
 
-	@Override
-	public void init(ExecutionContext context) {
-		super.init(context);
-		sender = MailSender.newInstance(context.getMailer());
-	}
+        MailProfile settings = MailProfile.newInstance(profile);
+        requiresNotNull(settings, "Unable to derive email connectivity from profile '" + profile + "'");
 
-	public StepResult send(String to, String subject, String body) {
-		requiresNotBlank(to, "Invalid recipient", to);
-		requiresNotBlank(subject, "Invalid subject", subject);
-		requiresNotBlank(body, "Invalid email body", body);
+        MailObjectSupport mailer = new MailObjectSupport();
+        mailer.setMailProps(settings.toProperties());
+        MailSender sender = MailSender.newInstance(mailer);
+        String from = settings.getFrom();
+        String[] recipients = StringUtils.split(StringUtils.replace(to, ";", ","), ",");
 
-		String from = System.getProperty("mail.smtp.from");
-		String[] recipients = StringUtils.split(StringUtils.replace(to, ";", ","), ",");
+        try {
+            body = OutputFileUtils.resolveContent(body, context, false, true);
+            sender.sendMail(recipients, from, subject, body);
+            return StepResult.success("email successfully sent");
+        } catch (MessagingException | IOException e) {
+            return StepResult.fail("email unsuccessful to be sent: " + e.getMessage());
+        }
+    }
 
-		try {
-			sender.sendMail(recipients, from, subject, body);
-			return StepResult.success("email successfully sent");
-		} catch (MessagingException e) {
-			return StepResult.fail("email unsuccessful to be sent: " + e.getMessage());
-		}
-	}
-
-	protected boolean isValidEmail(String address) {
-		return StringUtils.isNotBlank(address) && EmailValidator.getInstance().isValid(address.trim());
-	}
+    protected boolean isValidEmail(String address) {
+        return StringUtils.isNotBlank(address) && EmailValidator.getInstance().isValid(address.trim());
+    }
 }

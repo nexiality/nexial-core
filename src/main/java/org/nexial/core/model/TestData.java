@@ -108,10 +108,6 @@ public class TestData {
         }));
     }
 
-    public boolean isLocalExecution() { return StringUtils.equals(getSetting(EXECUTION_MODE), EXECUTION_MODE_LOCAL); }
-
-    public boolean isRemoteExecution() { return StringUtils.equals(getSetting(EXECUTION_MODE), EXECUTION_MODE_REMOTE); }
-
     public String getMailTo() { return getSetting(MAIL_TO); }
 
     public int getIteration() { return getSettingAsInt(ITERATION); }

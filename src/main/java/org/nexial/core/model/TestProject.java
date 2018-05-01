@@ -89,6 +89,8 @@ public class TestProject {
 
     public void setProjectHome(String projectHome) {
         this.projectHome = projectHome;
+
+        // note that this setter is called PRIOR to spring.
         projectProps = StringUtils.appendIfMissing(this.projectHome, separator) + DEF_REL_PROJECT_PROPS;
         loadProjectProperties();
         PROJECT_PROPERTIES.put(OPT_PROJECT_BASE, this.projectHome);

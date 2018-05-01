@@ -21,7 +21,6 @@ import org.junit.After;
 import org.junit.Assert;
 import org.junit.Test;
 
-import static org.nexial.core.NexialConst.Data.EXECUTION_MODE;
 import static org.nexial.core.NexialConst.Data.START_URL;
 import static org.nexial.core.NexialConst.*;
 
@@ -40,9 +39,7 @@ public class RunModeManualTest {
 		System.setProperty("log4j.configuration", "log4j.xml");
 		System.setProperty(SELENIUM_FIREFOX_BIN, "C:\\Program Files\\Mozilla Firefox\\firefox.exe");
 
-		System.setProperty(EXECUTION_MODE, "remote");
 		context = new MockExecutionContext();
-		context.setData(EXECUTION_MODE, "remote");
 		context.setData(START_URL, "http://localhost");
 		context.setData(OPT_REPORT_SERVER_URL, SERVER_URL);
 		context.setData(OPT_REPORT_SERVER_BASEDIR, SERVER_BASEDIR);
@@ -86,7 +83,6 @@ public class RunModeManualTest {
 		context.setData(OPT_REPORT_SERVER_URL, SERVER_URL);
 		context.setData(OPT_REPORT_SERVER_BASEDIR, SERVER_BASEDIR);
 		context.setData(START_URL, "http://localhost");
-		context.setData(EXECUTION_MODE, "local");
 
 		String testSubject = context.resolveRunModeSpecificUrl("c:\\project\\" + SERVER_BASEDIR + "\\changnesia");
 		Assert.assertNotNull(testSubject);

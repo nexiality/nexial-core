@@ -171,7 +171,6 @@ public class ExecutionContext {
 
         // some data can be overridden by System property
         overrideIfSysPropFound(NEXIAL_HOME);
-        overrideIfSysPropFound(EXECUTION_MODE);
         overrideIfSysPropFound(ENABLE_EMAIL);
         overrideIfSysPropFound(OPT_OPEN_RESULT);
         overrideIfSysPropFound(ASSISTANT_MODE);
@@ -266,14 +265,6 @@ public class ExecutionContext {
     public File getTestScript() { return testScript; }
 
     public List<TestScenario> getTestScenarios() { return testScenarios; }
-
-    public boolean isLocalExecution() {
-        return StringUtils.equals(getStringData(EXECUTION_MODE), EXECUTION_MODE_LOCAL);
-    }
-
-    public boolean isRemoteExecution() {
-        return StringUtils.equals(getStringData(EXECUTION_MODE), EXECUTION_MODE_REMOTE);
-    }
 
     public boolean isScreenshotOnError() { return getBooleanData(OPT_SCREENSHOT_ON_ERROR, false); }
 
@@ -666,6 +657,10 @@ public class ExecutionContext {
     }
 
     public String resolveRunModeSpecificUrl(String filename) {
+        return filename;
+
+        // following logic no longer needed
+        /*
         if (StringUtils.isBlank(filename)) { return filename; }
 
         if (StringUtils.startsWithIgnoreCase(filename, "https://") ||
@@ -681,6 +676,7 @@ public class ExecutionContext {
         // make sure serverUri DOES NOT starts with /
         serverUri = StringUtils.removeStart(StringUtils.replace(serverUri, "\\", "/"), "/");
         return serverUrl + serverUri;
+        */
     }
 
     public TestProject getProject() { return project; }

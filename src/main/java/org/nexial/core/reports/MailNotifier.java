@@ -17,7 +17,6 @@
 
 package org.nexial.core.reports;
 
-import java.io.IOException;
 import java.util.HashSet;
 import java.util.Set;
 
@@ -26,12 +25,10 @@ import javax.mail.MessagingException;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.ArrayUtils;
 import org.apache.commons.lang3.StringUtils;
-import org.apache.commons.mail.EmailException;
-import org.thymeleaf.TemplateEngine;
-import org.thymeleaf.context.Context;
-
 import org.nexial.core.model.ExecutionSummary;
 import org.nexial.core.utils.ConsoleUtils;
+import org.thymeleaf.TemplateEngine;
+import org.thymeleaf.context.Context;
 
 public class MailNotifier implements ExecutionNotifier {
 	private Mailer mailer = new Mailer();
@@ -47,8 +44,7 @@ public class MailNotifier implements ExecutionNotifier {
 	public void setMailTemplate(String mailTemplate) { this.mailTemplate = mailTemplate; }
 
 	@Override
-	public void notify(String[] recipients, ExecutionSummary summary)
-        throws EmailException, MessagingException {
+	public void notify(String[] recipients, ExecutionSummary summary) throws MessagingException {
 
 		if (ArrayUtils.isEmpty(recipients)) {
 			ConsoleUtils.log("No email to send since no address provided.");

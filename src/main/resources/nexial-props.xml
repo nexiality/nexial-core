@@ -54,14 +54,15 @@
 		<prop key="mail.smtp.bufferSize">512</prop>
 		<prop key="mail.smtp.contentType">text/html</prop>
 		<prop key="mail.smtp.debug">false</prop>
-		<!--<prop key="mail.smtp.auth">${mail.smtp.auth}</prop>-->
-		<!--<prop key="mail.smtp.host">${mail.smtp.host}</prop>-->
-		<!--<prop key="mail.smtp.port">${mail.smtp.port}</prop>-->
-		<!--<prop key="mail.smtp.from">${mail.smtp.from}</prop>-->
-		<!--<prop key="mail.smtp.username">${mail.smtp.username}</prop>-->
-		<!--<prop key="mail.smtp.password">${mail.smtp.password}</prop>-->
-		<!--<prop key="mail.smtp.starttls.enable">${mail.smtp.starttls.enable}</prop>-->
-		<!--<prop key="mail.smtp.localhost">${mail.smtp.localhost}</prop>-->
+		<!-- ${nexial.outputCloudBase:} -->
+		<prop key="mail.smtp.auth">${mail.smtp.auth:false}</prop>
+		<prop key="mail.smtp.host">${mail.smtp.host:}</prop>
+		<prop key="mail.smtp.port">${mail.smtp.port:25}</prop>
+		<prop key="mail.smtp.from">${mail.smtp.from:nexial-noreply@ep.com}</prop>
+		<prop key="mail.smtp.username">${mail.smtp.username:}</prop>
+		<prop key="mail.smtp.password">${mail.smtp.password:}</prop>
+		<prop key="mail.smtp.starttls.enable">${mail.smtp.starttls.enable:}</prop>
+		<prop key="mail.smtp.localhost">${mail.smtp.localhost:}</prop>
 
 		<!-- needed for jdbc beans -->
 		<prop key="jdbc.maxTotal">5</prop>
