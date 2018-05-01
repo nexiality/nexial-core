@@ -28,21 +28,19 @@ import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang3.RandomStringUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.SystemUtils;
-import org.nexial.core.plugins.NexialCommand;
-import org.springframework.context.support.ClassPathXmlApplicationContext;
-
 import org.nexial.commons.utils.DateUtility;
 import org.nexial.commons.utils.EnvUtils;
 import org.nexial.core.ExecutionThread;
 import org.nexial.core.aws.NexialS3Helper;
+import org.nexial.core.plugins.NexialCommand;
 import org.nexial.core.utils.ExecutionLogger;
 import org.nexial.core.variable.ExpressionProcessor;
+import org.springframework.context.support.ClassPathXmlApplicationContext;
 
+import static java.io.File.separator;
 import static org.nexial.core.NexialConst.DEF_CHARSET;
-import static org.nexial.core.NexialConst.Data.EXECUTION_MODE;
 import static org.nexial.core.NexialConst.Project.DEF_REL_LOC_TEST_SCRIPT;
 import static org.nexial.core.NexialConst.Project.NEXIAL_HOME;
-import static java.io.File.separator;
 
 public class MockExecutionContext extends ExecutionContext {
     protected String runId;
@@ -118,7 +116,5 @@ public class MockExecutionContext extends ExecutionContext {
 
     public void cleanProject() {
         if (projectHome != null) { FileUtils.deleteQuietly(new File(projectHome)); }
-        System.clearProperty(EXECUTION_MODE);
-        this.removeData(EXECUTION_MODE);
     }
 }

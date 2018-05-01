@@ -37,7 +37,6 @@ public class TestDataTest {
         Excel excel = new Excel(new File(excelFile));
         TestData testData = new TestData(excel, Collections.singletonList("new_test1"));
 
-        Assert.assertTrue(testData.isLocalExecution());
         Assert.assertTrue(testData.isFallbackToPrevious());
         Assert.assertEquals(testData.getIteration(), 3);
         Assert.assertEquals(testData.getMailTo(), "mliu@ep.com");
@@ -92,7 +91,6 @@ public class TestDataTest {
         TestData testData = new TestData(excel, Arrays.asList("new_test1", "new_test2"));
 
         // inherit from new_test1
-        Assert.assertTrue(testData.isLocalExecution());
         Assert.assertTrue(testData.isFallbackToPrevious());
         Assert.assertEquals(testData.getIteration(), 3);
 

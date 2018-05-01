@@ -23,7 +23,9 @@ import java.io.IOException;
 import org.apache.commons.lang3.StringUtils;
 import org.nexial.core.ExecutionThread;
 import org.nexial.core.model.ExecutionContext;
+import org.nexial.core.utils.ConsoleUtils;
 
+import static com.amazonaws.regions.Regions.DEFAULT_REGION;
 import static org.nexial.core.NexialConst.*;
 
 /**
@@ -67,6 +69,10 @@ public class NexialS3Helper extends S3Support {
     }
 
     protected void init() {
+        if (StringUtils.isBlank(outputBase)) { ConsoleUtils.log("outputBase not set; output-to-cloud WILL NOT WORK!"); }
+        if (StringUtils.isBlank(accessKey)) { ConsoleUtils.log("accessKey not set; output-to-cloud WILL NOT WORK!"); }
+        if (StringUtils.isBlank(secretKey)) { ConsoleUtils.log("secretKey not set; output-to-cloud WILL NOT WORK!"); }
+        if (region == null) { ConsoleUtils.log("region not set; default to " + DEFAULT_REGION); }
     }
 
     protected String resolveCaptureDir() { return resolveOutputDir() + S3_PATH_SEPARATOR + SUBDIR_CAPTURES; }

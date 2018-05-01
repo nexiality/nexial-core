@@ -64,10 +64,6 @@ public final class NexialConst {
 
     public static final String OPT_SPRING_XML = "nexial.spring.config";
     public static final String DEF_SPRING_XML = "/nexial.xml";
-    public static final String DELIM_EMAIL = ";";
-
-    // public static final int MAX_COLUMNS = EXCEL2007.getMaxColumns();
-    // public static final int MAX_ROWS = EXCEL2007.getMaxRows();
 
     // predefined variables/switches
     public static final String NAMESPACE = "nexial.";
@@ -77,11 +73,6 @@ public final class NexialConst {
     public static final String OPT_SCRIPT_DIR = NAMESPACE + "scriptBase";
     public static final String OPT_PROJECT_BASE = NAMESPACE + "projectBase";
     public static final String OPT_PROJECT_NAME = NAMESPACE + "project";
-
-    //public static final String OPT_CURRENT = NAMESPACE + "current.";
-    //public static final String OPT_CURRENT_DATA_FILE = OPT_CURRENT + "dataFile";
-    //public static final String OPT_CURRENT_TEST_SCRIPT = OPT_CURRENT + "testScript";
-    //public static final String OPT_CURRENT_TEST_PLAN = OPT_CURRENT + "testPlan";
 
     // testcase specific
     public static final String TEST_START_TS = "testsuite.startTs";
@@ -94,7 +85,6 @@ public final class NexialConst {
     public static final String OPT_LAST_TEST_SCENARIO = NAMESPACE + "lastTestScenario";
     public static final String OPT_LAST_TEST_STEP = NAMESPACE + "lastTestStep";
     public static final String OPT_SUITE_PROP = NAMESPACE + "suite";
-    public static final String OPT_MAILTO = NAMESPACE + "mailTo";
 
     // selenium specific
     public static final String SELENIUM_IE_DRIVER = "webdriver.ie.driver";
@@ -145,7 +135,7 @@ public final class NexialConst {
     public static final String OPT_SCREENSHOT_ON_ERROR = NAMESPACE + "screenshotOnError";
     public static final String OPT_LAST_SCREENSHOT_NAME = NAMESPACE + "lastScreenshot";
     public static final String OPT_LAST_OUTCOME = NAMESPACE + "lastOutcome";
-    public static final String OPT_LAST_NESTED_OUTPUT = NAMESPACE +"lastCommandOutput";
+    public static final String OPT_LAST_NESTED_OUTPUT = NAMESPACE + "lastCommandOutput";
 
     // control verbosity of multi-step commands
     public static final String OPT_ELAPSED_TIME_SLA = NAMESPACE + "elapsedTimeSLA";
@@ -271,7 +261,6 @@ public final class NexialConst {
     public static final String OPT_MAIL_CC = "mail.smtp.cc";
     public static final String OPT_MAIL_BCC = "mail.smtp.bcc";
     public static final String OPT_MAIL_XMAILER = "mail.header.xmail";
-    public static final String OPT_MAIL_CONTENT_TYPE = "mail.smtp.contentType";
 
     public static final String OPT_EXCEL_VER = NAMESPACE + "excelVer";
     public static final String OPT_INTERACTIVE = NAMESPACE + "interactive";
@@ -561,10 +550,6 @@ public final class NexialConst {
     public static final class Data {
         public static final String SCOPE = NAMESPACE + "scope.";
 
-        public static final String EXECUTION_MODE = SCOPE + "executionMode";
-        public static final String EXECUTION_MODE_LOCAL = "local";
-        public static final String EXECUTION_MODE_REMOTE = "remote";
-
         // iteration
         // predefined variable to define the iteration to use
         public static final String ITERATION = SCOPE + "iteration";
@@ -762,7 +747,6 @@ public final class NexialConst {
         public static final boolean DEF_RECORDING_ENABLED = true;
 
         public static final Map<String, String> SCOPE_SETTING_DEFAULTS = TextUtils.toMap(
-            EXECUTION_MODE + "=" + EXECUTION_MODE_LOCAL + "\n" +
             ITERATION + "=1\n" +
             FALLBACK_TO_PREVIOUS + "=true\n" +
             MAIL_TO + "=\n",
@@ -912,16 +896,6 @@ public final class NexialConst {
         public static final String DESCRIPTION = "Description";
 
         private PdfMeta() {}
-    }
-
-    public static class SecretBeanNames {
-        public static final String ACCESS_KEY_BEAN = "secret.s3.accessKey";
-        public static final String SECRET_KEY_BEAN = "secret.s3.secretKey";
-        public static final String JIRA_USERNAME_BEAN = "secret.jira.username";
-        public static final String JIRA_PASSWORD_BEAN = "secret.jira.password";
-
-        private SecretBeanNames() {}
-
     }
 
     private NexialConst() { }
