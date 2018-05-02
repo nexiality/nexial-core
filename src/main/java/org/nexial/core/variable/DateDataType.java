@@ -38,8 +38,6 @@ public class DateDataType extends ExpressionDataType<Date> {
 
 	public String getFormat() { return format; }
 
-	public void setFormat(String format) { this.format = format; }
-
 	@Override
 	public String getName() { return "DATE"; }
 

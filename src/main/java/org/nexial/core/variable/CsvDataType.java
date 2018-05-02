@@ -103,7 +103,7 @@ public class CsvDataType extends ExpressionDataType<List<Record>> {
 
     public Record remove(String column, String value) {
         Record matched = retrieveFromCache(column, value);
-        if (matched == null) { return matched; }
+        if (matched == null) { return null; }
 
         ConsoleUtils.log("removing matched record");
         if (this.value.remove(matched)) { this.rowCount--; }
@@ -217,39 +217,6 @@ public class CsvDataType extends ExpressionDataType<List<Record>> {
         if (StringUtils.isEmpty(recordDelim)) { recordDelim = detectedFormat.getLineSeparatorString(); }
 
         resetTextValue();
-
-        // default config:
-        //  delimiter           = ,
-        //  quote               = "
-        //  recordDelim         = \r\n
-        //  ignoreEmptyLines    = false
-        //  allowMissingColumnNames = true
-        // csvFormat = EXCEL.withEscape('\\');
-        // textValue = enforceWindowsEOL(textValue);
-
-        // config override:
-        // csvFormat = header ? csvFormat.withFirstRecordAsHeader() : csvFormat.withSkipHeaderRecord(false);
-        // csvFormat = StringUtils.isNotEmpty(quote) ?
-        //             csvFormat.withQuote(quote.charAt(0)) : csvFormat.withQuote(null);
-        // if (StringUtils.isNotEmpty(delim)) { csvFormat = csvFormat.withDelimiter(delim.charAt(0)); }
-        // if (StringUtils.isNotEmpty(recordDelim)) {
-        //     csvFormat = csvFormat.withRecordSeparator(recordDelim);
-        //     if (StringUtils.equals(recordDelim, "\n")) { textValue = enforceUnixEOL(textValue); }
-        // }
-
-        // special treatment for end of line crap
-        // if (StringUtils.equals(csvFormat.getRecordSeparator(), "\r\n") && !StringUtils.contains(textValue, "\r\n")) {
-        //     we need to split by \r\n but none of such can be found in textValue.. so let's make it happen
-        // textValue = StringUtils.replace(textValue, "\n", "\r\n");
-        // } else if (StringUtils.equals(csvFormat.getRecordSeparator(), "\n") &&
-        //            StringUtils.contains(textValue, "\r\n")) {
-        //     we need to split by \n but textValue has \r\n... so we need to fool the system to think \r\n as \n
-        // textValue = StringUtils.replace(textValue, "\r\n", "\n");
-        // }
-
-        // parser = csvFormat.parse(new StringReader(textValue));
-        // headers = parser.getHeaderMap();
-        // value = parser.getRecords();
 
         if (CollectionUtils.isNotEmpty(indices) && CollectionUtils.isNotEmpty(headers)) {
             flyweight = new HashMap<>();

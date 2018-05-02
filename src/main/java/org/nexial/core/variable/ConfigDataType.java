@@ -35,23 +35,15 @@ public class ConfigDataType extends ExpressionDataType<Properties> {
 	private Transformer transformer = new ConfigTransformer();
 	private String eol;
 
-	public ConfigDataType(String textValue) throws TypeConversionException {
-		super(textValue);
-	}
+	public ConfigDataType(String textValue) throws TypeConversionException { super(textValue); }
 
-	private ConfigDataType() {
-		super();
-	}
+	private ConfigDataType() { super(); }
 
 	@Override
-	public String getName() {
-		return "CONFIG";
-	}
+	public String getName() { return "CONFIG"; }
 
 	@Override
-	Transformer getTransformer() {
-		return transformer;
-	}
+	Transformer getTransformer() { return transformer; }
 
 	@Override
 	ConfigDataType snapshot() {
@@ -89,18 +81,14 @@ public class ConfigDataType extends ExpressionDataType<Properties> {
 			throw new TypeConversionException(getName(), getTextValue(), "Error when converting " + textValue);
 		} finally {
 			try {
-				if (reader != null) {
-					reader.close();
-				}
+				if (reader != null) { reader.close(); }
 			} catch (IOException e) {
 				ConsoleUtils.log("Unable to close the Reader source");
 			}
 		}
 	}
 
-	public String getEol() {
-		return eol;
-	}
+	public String getEol() { return eol; }
 
 	protected void reset() {
 		StringBuilder text = new StringBuilder();
