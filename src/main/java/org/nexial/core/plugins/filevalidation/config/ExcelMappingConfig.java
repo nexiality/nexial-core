@@ -35,7 +35,7 @@ public class ExcelMappingConfig {
     public static class MappingconfigBean {
 
         private String strategy;
-        @SerializedName("fileHeaderMap-value-to-column")
+        @SerializedName("map-value-to-column")
         private String mapvaluetocolumn;
         @SerializedName("data-type-def-column")
         private String datatypedefcolumn;
@@ -102,7 +102,7 @@ public class ExcelMappingConfig {
         @SerializedName("field-separator")
         private String fieldseparator;
         private List<ValidationsBean> validations;
-        @SerializedName("fileHeaderMap-functions")
+        @SerializedName("map-functions")
         private List<MapfunctionsBean> mapfunctions;
 
         public String getRecordid() {
@@ -177,7 +177,7 @@ public class ExcelMappingConfig {
         @SerializedName("field-separator")
         private String fieldseparator;
         private List<ValidationsBean> validations;
-        @SerializedName("fileHeaderMap-functions")
+        @SerializedName("map-functions")
         private List<MapfunctionsBean> mapfunctions;
 
         public String getRecordid() {
@@ -330,7 +330,7 @@ public class ExcelMappingConfig {
             private String fieldseparator;
             @SerializedName("validations")
             private List<ValidationsBean> validations;
-            @SerializedName("fileHeaderMap-functions")
+            @SerializedName("map-functions")
             private List<MapfunctionsBean> mapfunctions;
 
             public String getRecordid() {
@@ -406,7 +406,7 @@ public class ExcelMappingConfig {
             private String fieldseparator;
             @SerializedName("validations")
             private List<ValidationsBean> validations;
-            @SerializedName("fileHeaderMap-functions")
+            @SerializedName("map-functions")
             private List<MapfunctionsBean> mapfunctions;
 
             public String getRecordid() {
@@ -478,7 +478,7 @@ public class ExcelMappingConfig {
             private String fieldseparator;
             @SerializedName("validations")
             private List<ValidationsBean> validations;
-            @SerializedName("fileHeaderMap-functions")
+            @SerializedName("map-functions")
             private List<MapfunctionsBean> mapfunctions;
 
             public String getRecordid() {

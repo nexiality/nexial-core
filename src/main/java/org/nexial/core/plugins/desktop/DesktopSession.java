@@ -440,7 +440,7 @@ public class DesktopSession {
         File cacheFile = writeToCache(GSON2.toJson(config), "commons");
         if (cacheFile == null) { return; }
 
-        // swich back to the full components fileHeaderMap
+        // swich back to the full components map
         configApp.components = configComponents;
 
         ConsoleUtils.log("persisted cache for config to " + cacheFile);

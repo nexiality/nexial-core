@@ -313,7 +313,7 @@ public final class TextUtils {
         return list;
     }
 
-    /** convert {@code fileHeaderMap} to a list (of string) */
+    /** convert {@code map} to a list (of string) */
     public static List<String> toList(Map map, String delim) {
         if (MapUtils.isEmpty(map)) { return null; }
         if (StringUtils.isEmpty(delim)) { throw new IllegalArgumentException("delim is missing"); }
