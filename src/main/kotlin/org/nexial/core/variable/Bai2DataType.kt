@@ -26,6 +26,7 @@ class Bai2DataType : ExpressionDataType<BaiModel> {
         snapshot.transformer = transformer
         snapshot.value = value
         snapshot.textValue = textValue
+
         return snapshot
     }
 
