@@ -3,7 +3,6 @@ package org.nexial.core.variable
 import org.apache.commons.lang3.StringUtils
 import org.nexial.core.ExecutionThread
 import org.nexial.core.NexialConst.Data.TEXT_DELIM
-import org.nexial.core.plugins.bai2.BaiError
 import org.nexial.core.plugins.bai2.BaiModel
 import java.lang.reflect.Method
 
@@ -31,9 +30,9 @@ class Bai2Transformer : Transformer<Bai2DataType>() {
         return super.save(data, path)
     }
 
-    fun errors(data: Bai2DataType): ListDataType{
+    fun errors(data: Bai2DataType): ListDataType {
 
-        val errors: List<String>? = data.getValue().errors()
+        val errors: List<String>? = data.getValue().errors
         return ListDataType(errors.toString())
     }
 
@@ -67,14 +66,8 @@ class Bai2Transformer : Transformer<Bai2DataType>() {
             return data
         }
 
-//        var clazz = Class.forName("org.nexial.core.plugins.bai2.BaiGroup")
-//        val baiFileInstance = (clazz.newInstance() as BaiModel)
-//        println("type ${baiFileInstance.javaClass.name}")
-//        baiFileInstance.data = data.getValue()
-
-
         val baiFileInstance = data.getValue()
-        val newBiaData: BaiModel = baiFileInstance.filter(recordType, condition)!!
+        val newBiaData: BaiModel = baiFileInstance.filter(recordType, condition)
         data.setTextValue(newBiaData.toString())
         data.setValue(newBiaData)
 

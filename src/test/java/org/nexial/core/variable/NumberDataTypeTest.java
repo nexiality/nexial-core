@@ -54,5 +54,7 @@ public class NumberDataTypeTest {
         Assert.assertEquals("-0.01", new NumberDataType("-0000.01000").getValue() + "");
         Assert.assertEquals("-102040.01", new NumberDataType("-0000102040.01000").getValue() + "");
         Assert.assertEquals("-0.01", new NumberDataType("-.01000").getValue() + "");
+        Assert.assertEquals("3.17261524E8", new NumberDataType("003.17261524E8").getValue() + "");
+        Assert.assertEquals("317261524", new NumberDataType("3.17261524E8").getTextValue());
     }
 }
