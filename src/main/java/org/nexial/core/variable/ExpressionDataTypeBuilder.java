@@ -66,7 +66,7 @@ final class ExpressionDataTypeBuilder {
             throw new TypeConversionException(dataType, value, ex.getMessage(), ex);
         }
     }
-    static Bai2DataType newBai2DataType(String value) throws TypeConversionException {
+    Bai2DataType newBai2DataType(String value) throws TypeConversionException {
         Bai2DataType data = resumeExpression(value, Bai2DataType.class);
         return data != null ? data : new Bai2DataType(handleExternal("BAI2", value));
     }
