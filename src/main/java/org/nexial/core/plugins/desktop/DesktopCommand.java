@@ -1178,17 +1178,6 @@ public class DesktopCommand extends BaseCommand
         return StepResult.success("Table row count is saved to var " + var);
     }
 
-    // public StepResult getTableRowsAll(String var) {
-    //     requiresValidVariableName(var);
-    //     DesktopTable table = getCurrentTable();
-    //     setTableFocus(table);
-    //     if (table == null) {
-    //         throw new IllegalArgumentException("ERROR: no Table object found. Make sure to run useTable() first");
-    //     }
-    //     context.setData(var, table.fetchAll());
-    //     return StepResult.success();
-    // }
-
     public StepResult useHierTable(String var, String name) { return saveHierTableMetaData(var, name); }
 
     public StepResult collapseHierTable() {

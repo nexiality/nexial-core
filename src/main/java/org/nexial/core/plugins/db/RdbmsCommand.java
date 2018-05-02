@@ -150,7 +150,7 @@ public class RdbmsCommand extends BaseCommand {
         // variable could be:
         // (1) exception text           --> error occurred when running stored procedure
         // (2) number                   --> rows affected by previous SQL
-        // (3) List<Map<String,String>> --> "rows of fileHeaderMap of name and value" by previous SELECT sql
+        // (3) List<Map<String,String>> --> "rows of map of name and value" by previous SELECT sql
 
         if (resultObj instanceof String) {
             if (StringUtils.isEmpty((String) resultObj)) {

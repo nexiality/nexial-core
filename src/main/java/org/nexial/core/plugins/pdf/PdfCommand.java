@@ -265,7 +265,7 @@ public class PdfCommand extends BaseCommand {
             if (joinKeyInHeaderRowMapping) {
                 formValues = extracted;
             } else {
-                // internally save to variable of type fileHeaderMap
+                // internally save to variable of type map
                 MapFormatter.resolveUmatchedList(extracted).addAll(MapFormatter.resolveUmatchedList(formValues));
 
                 // `extracted` may contain name/value already exists in `formValues`

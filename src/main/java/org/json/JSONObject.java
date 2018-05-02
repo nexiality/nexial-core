@@ -93,7 +93,7 @@ public class JSONObject {
     public static final Object NULL = new Null();
 
     /**
-     * The fileHeaderMap where the JSONObject's properties are kept.
+     * The map where the JSONObject's properties are kept.
      */
     private final Map<String, Object> map;
 
@@ -249,7 +249,7 @@ public class JSONObject {
     /**
      * Construct a JSONObject from a Map.
      *
-     * @param m A fileHeaderMap object that can be used to initialize the contents of
+     * @param m A map object that can be used to initialize the contents of
      *          the JSONObject.
      */
     public JSONObject(Map<?, ?> m) {
@@ -372,11 +372,11 @@ public class JSONObject {
     }
 
     /**
-     * Constructor to specify an initial capacity of the internal fileHeaderMap. Useful for library
+     * Constructor to specify an initial capacity of the internal map. Useful for library
      * internal calls where we know, or at least can best guess, how big this JSONObject
      * will be.
      *
-     * @param initialCapacity initial capacity of the internal fileHeaderMap.
+     * @param initialCapacity initial capacity of the internal map.
      */
     protected JSONObject(int initialCapacity) {
         this.map = new HashMap<>(initialCapacity);
@@ -1827,7 +1827,7 @@ public class JSONObject {
     /**
      * Wrap an object, if necessary. If the object is null, return the NULL
      * object. If it is an array or collection, wrap it in a JSONArray. If it is
-     * a fileHeaderMap, wrap it in a JSONObject. If it is a standard property (Double,
+     * a map, wrap it in a JSONObject. If it is a standard property (Double,
      * String, et al) then it is already wrapped. Otherwise, if it comes from
      * one of the java packages, turn it into a string. And if it doesn't, try
      * to wrap it in a JSONObject. If the wrapping fails, then null is returned.
@@ -2174,7 +2174,7 @@ public class JSONObject {
     }
 
     /**
-     * Populates the internal fileHeaderMap of the JSONObject with the bean properties.
+     * Populates the internal map of the JSONObject with the bean properties.
      * The bean can not be recursive.
      *
      * @param bean the bean

@@ -169,7 +169,7 @@ public class ErrorReport {
 
             summarySheet.createRow(n + 1).createCell(0).setCellValue("Note: ");
             String msg1 =
-                "Skipped records may cause evaluating incorrect fileHeaderMap functions. Review target file and config for these differences.";
+                "Skipped records may cause evaluating incorrect map functions. Review target file and config for these differences.";
             summarySheet.getRow(n + 1).createCell(1).setCellValue(msg1);
         }
 

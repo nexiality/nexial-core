@@ -112,7 +112,7 @@ public abstract class Transformer<T extends ExpressionDataType> {
 	/**
 	 * a list of functions supported by this transformer, and the number of expected number of parameters per function.
 	 *
-	 * @return a fileHeaderMap of function name (key) and the expected number of parameters (value)
+	 * @return a map of function name (key) and the expected number of parameters (value)
 	 */
 	abstract Map<String, Integer> listSupportedFunctions();
 
