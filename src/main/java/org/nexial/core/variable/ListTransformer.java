@@ -65,7 +65,7 @@ public class ListTransformer<T extends ListDataType> extends Transformer {
         String[] array = data.getValue();
         Arrays.stream(array).forEach(item -> sum[0] += NumberUtils.toDouble(item, 0));
 
-        newData.setTextValue(sum[0] + "");
+        newData.setTextValue(BigDecimal.valueOf(sum[0]).toPlainString());
         newData.setValue(sum[0]);
         return newData;
     }
@@ -142,7 +142,7 @@ public class ListTransformer<T extends ListDataType> extends Transformer {
         double average = sum.divide(BigDecimal.valueOf(count), DEC_SCALE, ROUND).doubleValue();
         if (average == 0) { return newData; }
 
-        newData.setTextValue(average + "");
+        newData.setTextValue(BigDecimal.valueOf(average).toPlainString());
         newData.setValue(average);
         return newData;
     }

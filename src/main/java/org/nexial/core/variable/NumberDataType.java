@@ -17,6 +17,8 @@
 
 package org.nexial.core.variable;
 
+import java.math.BigDecimal;
+
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.math.NumberUtils;
 
@@ -71,7 +73,7 @@ public class NumberDataType extends ExpressionDataType<Number> {
             setValue(NumberUtils.createLong(text));
         }
 
-        setTextValue(value.toString());
+        setTextValue(BigDecimal.valueOf(value.doubleValue()).toPlainString());
     }
 
     private void setToZero() {
