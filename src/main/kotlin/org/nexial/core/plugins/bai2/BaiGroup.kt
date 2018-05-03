@@ -22,14 +22,6 @@ import kotlin.collections.ArrayList
 
 class BaiGroup : BaiModel {
 
-//    override var errors: ArrayList<String>
-//        get() = super.errors
-//        set(value) {}
-
-//    override var header: Header? = null
-//    override var records: MutableList<BaiModel> = ArrayList()
-//    override var trailer: Trailer? = null
-
     private var queue: Queue<String> = LinkedList<String>()
 
     constructor()
@@ -76,7 +68,7 @@ class BaiGroup : BaiModel {
     }
 
 
-    override fun filter(recordType: String, condition: String): BaiModel {
+    override fun filter(recordType: String, condition: String): BaiModel? {
 
         if (recordType == GROUP) {
             val options = condition.split("=")
@@ -86,7 +78,7 @@ class BaiGroup : BaiModel {
             return if (fieldValue == value) {
                 ConsoleUtils.log("matched group found")
                 this
-            } else BaiGroup()
+            } else null
         } else {
             val baiAccount = BaiAccount()
             val matchedAccounts: MutableList<BaiModel> = ArrayList()
@@ -113,7 +105,7 @@ class BaiGroup : BaiModel {
                 val builder = StringBuilder()
                 var value: String
                 records.forEach({ baiAccount ->
-                    value = (baiAccount as BaiAccount).field(recordType, name).textValue
+                    value = baiAccount.field(recordType, name).textValue
                     builder.append(value).append(",")
                 })
                 val newValue = builder.toString().removeSuffix(",")
@@ -138,7 +130,7 @@ data class BaiGroupHeader(private val nextRecord: String) : Header() {
         val values: Array<String> = splitByWholeSeparatorPreserveAllTokens(StringUtils.removeEnd(nextRecord, recordDelim).trim(), fieldDelim)
         if (groupHeaders.size == values.size) {
             headers = groupHeaders.zip(values).toMap()
-        }// else fail
+        }// todo: lookup for continuation of the record
 
     }
 
@@ -191,7 +183,7 @@ data class BaiGroupTrailer(private var nextRecord: String) : Trailer() {
         val values: Array<String> = splitByWholeSeparatorPreserveAllTokens(StringUtils.removeEnd(nextRecord, recordDelim).trim(), fieldDelim)
         if (groupTrailerFields.size == values.size) {
             groupTrailerMap = groupTrailerFields.zip(values).toMap()
-        }// else fail
+        }// todo: lookup for continuation of the record
 
     }
 

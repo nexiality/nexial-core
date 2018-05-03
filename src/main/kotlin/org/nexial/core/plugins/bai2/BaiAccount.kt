@@ -29,7 +29,7 @@ class BaiAccount : BaiModel {
                 val builder = StringBuilder()
                 var value: String
                 records.forEach({ transaction ->
-                    value = (transaction as BaiTransaction).field(recordType, name).textValue
+                    value = transaction.field(recordType, name).textValue
                     builder.append(value).append(",")
                 })
                 val newValue = builder.toString().removeSuffix(",")
@@ -38,16 +38,10 @@ class BaiAccount : BaiModel {
         }
     }
 
-
-    //    override var errors: ArrayList<String>
-//        get() = super.errors
-//        set(value) {}
     private var queue: Queue<String> = ArrayDeque<String>()
-//    override var header: Header? = null
-//    override var records: MutableList<BaiModel> = ArrayList()
-//    override var trailer: Trailer? = null
 
     constructor()
+
     constructor(queue: Queue<String>) {
         this.queue = queue
         parse()
@@ -93,7 +87,7 @@ class BaiAccount : BaiModel {
         }
     }
 
-    override fun filter(recordType: String, condition: String): BaiModel {
+    override fun filter(recordType: String, condition: String): BaiModel? {
         if (recordType == ACCOUNT) {
             val options = condition.split("=")
             val fieldName: String = options[0].trim()
@@ -102,13 +96,15 @@ class BaiAccount : BaiModel {
             return if (fieldValue == value) {
                 ConsoleUtils.log("matched account found")
                 this
-            } else BaiAccount()
-        } else {
+            } else null
+        }else {
             val matchedTransactions: MutableList<BaiModel> = ArrayList()
             val baiAccount = BaiAccount()
             records.forEach({ transaction ->
                 val newTransaction = transaction.filter(recordType = recordType, condition = condition)
-                matchedTransactions.add(newTransaction)
+                if (newTransaction != null) {
+                    matchedTransactions.add(newTransaction)
+                }
             })
 
             if (CollectionUtils.isNotEmpty(matchedTransactions)) {
@@ -145,7 +141,7 @@ data class BaiAccountIdentifier(private val nextRecord: String) : Header() {
         // todo: implement 88 Continuation lookup
         if (accountHeaders.size == values.size) {
             accountHeaderMap = accountHeaders.zip(values).toMap()
-        }// else fail
+        }
 
     }
 
@@ -195,7 +191,7 @@ data class BaiAccountTrailer(var nextRecord: String) : Trailer() {
 
         if (accountTrailerFields.size == values.size) {
             accountTrailerMap = accountTrailerFields.zip(values).toMap()
-        }// else fail
+        }// todo: lookup for continuation of the record
 
     }
 
@@ -256,15 +252,10 @@ class BaiTransaction : BaiModel {
         if (transactionFields.size == values.size) {
             transactionRecordMap = transactionFields.zip(values).toMap()
             this.errors.addAll(validate() as ArrayList<String>)
-        }// else fail?
-
+        }
         return this
     }
 
-
-//    override var errors: ArrayList<String>
-//        get() = super.errors
-//        set(value) {}
 
     private var transactionRecordMap: Map<String, String> = mutableMapOf()
 
@@ -308,7 +299,7 @@ class BaiTransaction : BaiModel {
     }
 
 
-    override fun filter(recordType: String, condition: String): BaiModel {
+    override fun filter(recordType: String, condition: String): BaiModel? {
 
         if (recordType == TRANSACTION) {
             val options = condition.split("=")

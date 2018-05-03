@@ -9,7 +9,7 @@ abstract class BaiModel {
     open var trailer: Trailer? = null
 
     abstract fun parse(): BaiModel
-    abstract fun filter(recordType: String, condition: String): BaiModel
+    abstract fun filter(recordType: String, condition: String): BaiModel?
     abstract fun field(recordType: String, name: String): TextDataType
 
     open var errors = ArrayList<String>()

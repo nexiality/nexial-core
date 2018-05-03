@@ -67,7 +67,7 @@ class Bai2Transformer : Transformer<Bai2DataType>() {
         }
 
         val baiFileInstance = data.getValue()
-        val newBiaData: BaiModel = baiFileInstance.filter(recordType, condition)
+        val newBiaData: BaiModel? = baiFileInstance.filter(recordType, condition)
         data.setTextValue(newBiaData.toString())
         data.setValue(newBiaData)
 

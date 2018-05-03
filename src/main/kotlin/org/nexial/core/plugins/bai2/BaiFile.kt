@@ -78,7 +78,7 @@ class BaiFile : BaiModel {
 
     }
 
-    override fun filter(recordType: String, condition: String): BaiModel {
+    override fun filter(recordType: String, condition: String): BaiModel? {
 
 //        todo: implement Nexial Filter
         val groupRecords: MutableList<BaiModel> = ArrayList()
@@ -113,7 +113,7 @@ class BaiFile : BaiModel {
                 val builder = StringBuilder()
                 var value: String
                 records.forEach({ baiGroup ->
-                    value = (baiGroup as BaiGroup).field(recordType, name).textValue
+                    value = baiGroup.field(recordType, name).textValue
                     builder.append(value).append(",")
                 })
 
@@ -154,7 +154,7 @@ data class BaiFileHeader(private var nextRecord: String) : Header() {
                 StringUtils.removeEnd(nextRecord, recordDelim).trim(), fieldDelim)
         if (fileHeaders.size == values.size) {
             fileHeaderMap = fileHeaders.zip(values).toMap()
-        }// else fail
+        }// todo: lookup for continuation of the record
 
     }
 
@@ -197,7 +197,7 @@ data class BaiFileHeader(private var nextRecord: String) : Header() {
 }
 
 data class BaiFileTrailer(private val nextRecord: String) : Trailer() {
-    var fileTrailerMap: Map<String, String> = mutableMapOf()
+    private var fileTrailerMap: Map<String, String> = mutableMapOf()
 
     override fun get(fieldName: String) = fileTrailerMap.getValue(fieldName)
 
@@ -205,7 +205,7 @@ data class BaiFileTrailer(private val nextRecord: String) : Trailer() {
         val values: Array<String> = StringUtils.splitByWholeSeparatorPreserveAllTokens(StringUtils.removeEnd(nextRecord, recordDelim).trim(), fieldDelim)
         if (fileTrailerFields.size == values.size) {
             fileTrailerMap = fileTrailerFields.zip(values).toMap()
-        }// else fail
+        }// todo: lookup for continuation of the record
 
     }
 
