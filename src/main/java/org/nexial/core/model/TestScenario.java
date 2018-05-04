@@ -177,6 +177,7 @@ public class TestScenario {
         executionSummary.setFailedFast(shouldFailFast);
 
         XSSFSheet excelSheet = worksheet.getSheet();
+        excelSheet.getWorkbook().setMissingCellPolicy(CREATE_NULL_AS_BLANK);
 
         Map<TestStepManifest, List<NestedMessage>> nestMessages = executionSummary.getNestMessages();
         int lastRow = worksheet.findLastDataRow(ADDR_COMMAND_START);
@@ -192,7 +193,6 @@ public class TestScenario {
                 if (messageCount < 1) { continue; }
 
                 int currentRow = step.getRowIndex() + 1 + forwardRowsBy;
-                excelSheet.getWorkbook().setMissingCellPolicy(CREATE_NULL_AS_BLANK);
                 // +1 if lastRow is the same as currentRow.  Otherwise shiftRow on a single row block causes problem for createRow (later on).
                 worksheet.shiftRows(currentRow, lastRow + (currentRow == lastRow ? 1 : 0), messageCount);
 
@@ -215,9 +215,7 @@ public class TestScenario {
             XSSFCell cellCommand = row.getCell(COL_IDX_COMMAND);
             String command = (cellTarget == null ? "" : cellTarget.getStringCellValue()) + "." +
                              (cellCommand == null ? "" : cellCommand.getStringCellValue());
-            if (MERGE_OUTPUTS.contains(command)) {
-                mergeOutput(excelSheet, row, i);
-            }
+            if (MERGE_OUTPUTS.contains(command)) { mergeOutput(excelSheet, row, i); }
         }
 
         executionSummary.aggregatedNestedExecutions(context);

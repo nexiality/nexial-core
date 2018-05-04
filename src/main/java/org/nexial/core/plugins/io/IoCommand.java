@@ -401,16 +401,14 @@ public class IoCommand extends BaseCommand {
         recordData.setExcelFile(excelMappingFilePath);
         context.setData(var, recordData);
 
-        String caption = "Total " +
-                         recordData.totalRecordsFailed() +
-                         " records failed out of " +
-                         recordData.getTotalRecordsProcessed();
-        caption.concat(" (click link on the right for details)");
+        String caption = "Total " + recordData.totalRecordsFailed() +
+                         " records failed out of " + recordData.getTotalRecordsProcessed() +
+                         " (click link on the right for details)";
 
         String type = context.getStringData(profile + REPORT_TYPE);
 
         File results = ErrorReport.create(type, recordData);
-        addLinkToOutputFile(results, type, caption);
+        addLinkToOutputFile(results, type + " report", caption);
         if (recordData.isHasError()) {
             return StepResult.fail("Error in file validation ");
         } else { return StepResult.success(); }

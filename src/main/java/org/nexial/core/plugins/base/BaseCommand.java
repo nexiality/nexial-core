@@ -1004,36 +1004,28 @@ public class BaseCommand implements NexialCommand {
         }
     }
 
-    protected void addLinkToOutputFile(File outputFile, String type, String linkCaption) {
+    protected void addLinkToOutputFile(File outputFile, String label, String linkCaption) {
         String outFile = outputFile.getPath();
         if (context.isOutputToCloud()) {
-
             try {
                 outFile = context.getS3Helper().importMedia(outputFile);
             } catch (IOException e) {
                 log("Unable to save " + outFile + " to cloud storage due to " + e.getMessage());
             }
         }
-        addLinkRef(linkCaption, type + " report", outFile);
 
+        addLinkRef(linkCaption, label, outFile);
     }
 
     protected void error(String message) { error(message, null); }
 
     protected void error(String message, Throwable e) {
-        if (StringUtils.isBlank(message)) { return; }
-        context.getLogger().error(this, message, e);
+        if (StringUtils.isNotBlank(message)) { context.getLogger().error(this, message, e); }
     }
 
     private Object[] resolveParamValues(Method m, String... params) {
         int numOfParamSpecified = ArrayUtils.getLength(params);
         int numOfParamExpected = ArrayUtils.getLength(m.getParameterTypes());
-
-        // if (numOfParamExpected != numOfParamSpecified) {
-        // 	ConsoleUtils.log(context.getCurrentTestStep().showPosition(),
-        // 	                 "WARNING: EXPECTS " + numOfParamExpected + " parameters but received " +
-        // 	                 numOfParamSpecified + ". Missing parameters will be filled with empty string.");
-        // }
 
         Object[] args = new Object[numOfParamExpected];
         for (int i = 0; i < args.length; i++) {

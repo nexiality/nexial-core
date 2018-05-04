@@ -437,19 +437,65 @@ public class Excel {
         }
 
         public void shiftRows(int startRow, int endRow, int shiftBy) {
-            if (startRow < 0 || endRow < 0 || shiftBy < 0) { return; }
+            if (startRow < 0 || endRow < 0 || shiftBy == 0) { return; }
 
-            sheet.shiftRows(startRow, endRow, shiftBy);
+            // due to https://bz.apache.org/bugzilla/show_bug.cgi?id=57423
+            // we currently CANNOT directly shift rows via 1 method call.  POI 3.17 can only
+            // shift rows with increment equal or less than the number of rows being shifted.
 
-            List<CellRangeAddress> mergedRegions = sheet.getMergedRegions();
-            if (CollectionUtils.isNotEmpty(mergedRegions)) {
-                for (CellRangeAddress merged : mergedRegions) {
-                    int initialMergedRow = merged.getFirstRow();
-                    if (initialMergedRow >= startRow) {
-                        int newMergedRow = initialMergedRow + shiftBy;
-                        sheet.addMergedRegion(
-                            new CellRangeAddress(newMergedRow, newMergedRow,
-                                                 COL_IDX_MERGE_RESULT_START, COL_IDX_PARAMS_END));
+            // sheet.shiftRows(startRow, endRow, shiftBy);
+
+            int shiftInterval = endRow - startRow + 1;
+            int rowsToShift = shiftBy;
+            int currentStartRow = startRow;
+            int currentEndRow = endRow;
+
+            if (shiftBy > 0) {
+                while (rowsToShift > 0) {
+                    int shifts = rowsToShift < shiftInterval ? rowsToShift : shiftInterval;
+                    rowsToShift -= shiftInterval;
+
+                    sheet.shiftRows(currentStartRow, currentEndRow, shifts);
+
+                    currentStartRow += rowsToShift;
+                    currentEndRow += rowsToShift;
+                }
+
+                List<CellRangeAddress> mergedRegions = sheet.getMergedRegions();
+                if (CollectionUtils.isNotEmpty(mergedRegions)) {
+                    for (CellRangeAddress merged : mergedRegions) {
+                        int initialMergedRow = merged.getFirstRow();
+                        if (initialMergedRow >= startRow) {
+                            int newMergedRow = initialMergedRow + shiftBy;
+                            sheet.addMergedRegion(
+                                new CellRangeAddress(newMergedRow, newMergedRow,
+                                                     COL_IDX_MERGE_RESULT_START, COL_IDX_PARAMS_END));
+                        }
+                    }
+                }
+            }
+
+            if (shiftBy < 0) {
+                while (rowsToShift < 0) {
+                    int shifts = rowsToShift > shiftInterval ? rowsToShift : shiftInterval;
+                    rowsToShift += shiftInterval;
+
+                    sheet.shiftRows(currentStartRow, currentEndRow, shifts);
+
+                    currentStartRow -= rowsToShift;
+                    currentEndRow -= rowsToShift;
+                }
+
+                List<CellRangeAddress> mergedRegions = sheet.getMergedRegions();
+                if (CollectionUtils.isNotEmpty(mergedRegions)) {
+                    for (CellRangeAddress merged : mergedRegions) {
+                        int initialMergedRow = merged.getFirstRow();
+                        if (initialMergedRow < startRow) {
+                            int newMergedRow = initialMergedRow - shiftBy;
+                            sheet.addMergedRegion(
+                                new CellRangeAddress(newMergedRow, newMergedRow,
+                                                     COL_IDX_MERGE_RESULT_START, COL_IDX_PARAMS_END));
+                        }
                     }
                 }
             }
