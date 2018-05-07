@@ -69,11 +69,12 @@ public class NumberDataType extends ExpressionDataType<Number> {
 
         if (StringUtils.contains(text, ".")) {
             setValue(NumberUtils.createDouble(text));
+            setTextValue(BigDecimal.valueOf(value.doubleValue()).toPlainString());
         } else {
             setValue(NumberUtils.createLong(text));
+            setTextValue(text);
         }
 
-        setTextValue(BigDecimal.valueOf(value.doubleValue()).toPlainString());
     }
 
     private void setToZero() {

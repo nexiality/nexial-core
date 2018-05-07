@@ -33,7 +33,7 @@ final class ExpressionConst {
 	static final String REGEX_FUNCTION = "(\\s*[A-Za-z_\\-]{3,})(\\s*\\([^)]+\\)\\s*)?";
 
 	static final String REGEX_VALID_TYPE_PREFIX = ".*\\[(";
-	static final String REGEX_VALID_TYPE_SUFFIX = ")(\\(.+\\))( \\=\\> )(.+)\\].*";
+	static final String REGEX_VALID_TYPE_SUFFIX = ")(\\(.+\\))(\\s+\\=\\>\\s+)(.+)\\].*";
 
 	static final Map<String, String> FUNCTION_PARAM_SUBSTITUTIONS = TextUtils.toMap("\\(=~~9~~|" +
 	                                                                                "\\)=~~0~~|" +
