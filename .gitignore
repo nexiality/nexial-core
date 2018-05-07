@@ -301,6 +301,5 @@ support/mongodb-start.sh
 support/sync-src-vm.sh
 
 /.archive/
-/bin/selenium2sentry.cmd
 /build
 /logs

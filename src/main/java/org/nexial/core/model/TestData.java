@@ -338,9 +338,7 @@ public class TestData {
      * since this {@code dataKey} is found in a non-default data sheet (not #default), we should not track such
      * data as part of the {@link #defaultDataMap}.
      */
-    protected void eliminateFromDefaultDataMap(String dataKey) {
-        defaultDataMap.remove(dataKey);
-    }
+    protected void eliminateFromDefaultDataMap(String dataKey) { defaultDataMap.remove(dataKey); }
 
     protected void infuseIntraExecutionData(Map<String, Object> intraExecutionData) {
         if (MapUtils.isEmpty(intraExecutionData)) { return; }

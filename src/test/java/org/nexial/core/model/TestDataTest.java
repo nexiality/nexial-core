@@ -39,7 +39,7 @@ public class TestDataTest {
 
         Assert.assertTrue(testData.isFallbackToPrevious());
         Assert.assertEquals(testData.getIteration(), 3);
-        Assert.assertEquals(testData.getMailTo(), "mliu@ep.com");
+        Assert.assertEquals(testData.getMailTo(), "nobody@nowhere.com");
 
         Assert.assertEquals(testData.getIntValue(1, "nexial.delayBetweenStepsMs"), 1200);
         Assert.assertTrue(testData.getBooleanValue(1, "nexial.failFast"));

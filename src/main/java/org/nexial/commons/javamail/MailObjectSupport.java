@@ -33,6 +33,7 @@ import org.apache.commons.collections4.MapUtils;
 import org.apache.commons.lang3.BooleanUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.nexial.commons.utils.EnvUtils;
+import org.nexial.core.reports.ExecutionMailConfig;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -62,11 +63,24 @@ public final class MailObjectSupport {
     private Session session;
     private SMTPTransport transport;
 
-    public Properties getMailProps() { return mailProps; }
-
     public void setMailProps(Properties mailProps) { this.mailProps = mailProps; }
 
     public void setJndiEnv(Hashtable jndiEnv) { this.jndiEnv = jndiEnv; }
+
+    /**
+     * configure this instance with currently configured {@link ExecutionMailConfig}.  Also create mail session
+     */
+    public void configure() {
+        ExecutionMailConfig mailConfig = ExecutionMailConfig.get();
+
+        Properties mailProps = mailConfig.toMailProperties();
+        if (MapUtils.isNotEmpty(mailProps)) { this.mailProps = mailProps; }
+
+        Hashtable jndiEnv = mailConfig.toJndiEnv();
+        if (MapUtils.isNotEmpty(jndiEnv)) { this.jndiEnv = jndiEnv; }
+
+        createSession();
+    }
 
     public void init() {
         try {

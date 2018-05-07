@@ -42,7 +42,6 @@ import org.apache.commons.lang3.ObjectUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.math.NumberUtils;
 import org.apache.poi.xssf.usermodel.XSSFCell;
-import org.nexial.commons.javamail.MailObjectSupport;
 import org.nexial.commons.utils.EnvUtils;
 import org.nexial.commons.utils.RegexUtils;
 import org.nexial.commons.utils.TextUtils;
@@ -115,12 +114,10 @@ public class ExecutionContext {
     protected Map<String, Object> builtinFunctions;
     protected List<String> failfastCommands = new ArrayList<>();
     protected ExecutionLogger executionLogger;
-    protected MailObjectSupport mailer;
     protected NexialS3Helper s3Helper;
     protected Map<String, String> defaultContextProps;
 
     protected ClassPathXmlApplicationContext springContext;
-    // protected WiniumDriver winiumDriver;
     protected PluginManager plugins;
     protected Map<String, Object> data = new ListOrderedMap<>();
     protected ExpressionProcessor expression;
@@ -179,8 +176,6 @@ public class ExecutionContext {
         overrideIfSysPropFound(FAIL_FAST);
         overrideIfSysPropFound(VERBOSE);
         overrideIfSysPropFound(TEXT_DELIM);
-
-        if (isEmailEnabled()) { mailer = springContext.getBean("mailer", MailObjectSupport.class); }
 
         s3Helper = springContext.getBean("nexialS3Helper", NexialS3Helper.class);
         s3Helper.setContext(this);
@@ -250,8 +245,6 @@ public class ExecutionContext {
 
     public long getEndTimestamp() { return endTimestamp; }
 
-    public MailObjectSupport getMailer() { return mailer; }
-
     public NexialS3Helper getS3Helper() throws IOException {
         // check that the required properties are set
         if (s3Helper == null || !s3Helper.isReadyForUse()) {
@@ -317,8 +310,6 @@ public class ExecutionContext {
     public boolean isProxyRequired() { return getBooleanData(OPT_PROXY_REQUIRED, false); }
 
     public boolean isOutputToCloud() { return getBooleanData(OUTPUT_TO_CLOUD, DEF_OUTPUT_TO_CLOUD); }
-
-    public String getMailTo() { return getStringData(MAIL_TO); }
 
     public String getTextDelim() { return getStringData(TEXT_DELIM, ","); }
 
@@ -423,11 +414,6 @@ public class ExecutionContext {
     public Map<String, String> getDataByPrefix(String prefix) {
         Map<String, String> props = new LinkedHashMap<>();
 
-        // data.keySet()
-        //     .stream()
-        //     .filter(key -> StringUtils.startsWith(key, prefix))
-        //     .forEach(key -> props.put(StringUtils.substringAfter(key, prefix),
-        //                               replaceTokens(MapUtils.getString(data, key))));
         System.getProperties().forEach((key, value) -> {
             String sKey = key.toString();
             if (StringUtils.startsWith(sKey, prefix)) {
@@ -445,10 +431,6 @@ public class ExecutionContext {
 
     @NotNull
     public Map<String, Object> getObjectByPrefix(String prefix) {
-        // data.keySet()
-        //     .stream()
-        //     .filter(key -> StringUtils.startsWith(key, prefix))
-        //     .forEach(key -> props.put(key, data.get(key)));
         Map<String, Object> props = new LinkedHashMap<>(getSysPropsByPrefix(prefix));
         data.forEach((key, value) -> {
             if (StringUtils.startsWith(key, prefix)) { props.put(StringUtils.substringAfter(key, prefix), value); }
