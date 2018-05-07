@@ -29,7 +29,7 @@
 		set DEFAULT_FIREFOX_BIN="%ProgramFiles(x86)%\Mozilla Firefox\firefox.exe"
 	)
 
-	REM # setting Java runtissme options and classpath
+	REM # setting Java runtime options and classpath
 	set JAVA_OPT=%JAVA_OPT% -Xms256m
 	set JAVA_OPT=%JAVA_OPT% -Xmx1024m
 	set JAVA_OPT=%JAVA_OPT% -ea

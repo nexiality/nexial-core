@@ -24,26 +24,27 @@ import java.util.Map;
 import org.nexial.commons.utils.TextUtils;
 
 final class ExpressionConst {
-	static final String DATATYPE_START = "(";
-	static final String DATATYPE_END = ")";
+    static final String DATATYPE_START = "(";
+    static final String DATATYPE_END = ")";
 
-	static final String REGEX_DEC_NUM = "^-?[0-9]*\\.[0-9]+$";
+    static final String REGEX_DEC_NUM = "^-?[0-9]*\\.[0-9]+$";
 
-	// e.g   max( ${listOfNumbers}   )
-	static final String REGEX_FUNCTION = "(\\s*[A-Za-z_\\-]{3,})(\\s*\\([^)]+\\)\\s*)?";
+    // e.g   max( ${listOfNumbers}   )
+    // min function name (aka operation) is 3 character
+    static final String REGEX_FUNCTION = "(\\s*[A-Za-z_\\-]{3,})(\\s*\\([^)]+\\)\\s*)?";
 
-	static final String REGEX_VALID_TYPE_PREFIX = ".*\\[(";
-	static final String REGEX_VALID_TYPE_SUFFIX = ")(\\(.+\\))(\\s+\\=\\>\\s+)(.+)\\].*";
+    static final String REGEX_VALID_TYPE_PREFIX = ".*\\[(";
+    static final String REGEX_VALID_TYPE_SUFFIX = ")(\\(.+\\))(\\s*\\=\\>\\s*)(.+)\\].*";
 
-	static final Map<String, String> FUNCTION_PARAM_SUBSTITUTIONS = TextUtils.toMap("\\(=~~9~~|" +
-	                                                                                "\\)=~~0~~|" +
-	                                                                                "\\,=~~<~~|",
-	                                                                                "|", "=");
+    static final Map<String, String> FUNCTION_PARAM_SUBSTITUTIONS = TextUtils.toMap("\\(=~~9~~|" +
+                                                                                    "\\)=~~0~~|" +
+                                                                                    "\\,=~~<~~|",
+                                                                                    "|", "=");
 
-	static final String DEF_DATE_FORMAT = "MM/dd/yyyy HH:mm:ss";
-	static final String EPOCH_DATE_FORMAT = "epoch";
-	static final List<String> ALIAS_NOW = Arrays.asList("now", "right now", "today", "rightnow");
-	static final List<String> ALIAS_EMPTY = Arrays.asList("", "\"\"", "''");
+    static final String DEF_DATE_FORMAT = "MM/dd/yyyy HH:mm:ss";
+    static final String EPOCH_DATE_FORMAT = "epoch";
+    static final List<String> ALIAS_NOW = Arrays.asList("now", "right now", "today", "rightnow");
+    static final List<String> ALIAS_EMPTY = Arrays.asList("", "\"\"", "''");
 
-	private ExpressionConst() { }
+    private ExpressionConst() { }
 }

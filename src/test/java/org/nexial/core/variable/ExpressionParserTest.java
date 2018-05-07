@@ -23,49 +23,93 @@ import org.apache.commons.collections4.CollectionUtils;
 import org.junit.After;
 import org.junit.Assert;
 import org.junit.Test;
-
 import org.nexial.core.model.ExecutionContext;
 import org.nexial.core.model.MockExecutionContext;
 import org.nexial.core.variable.Expression.ExpressionFunction;
 
 public class ExpressionParserTest {
-	ExecutionContext context = new MockExecutionContext();
+    ExecutionContext context = new MockExecutionContext();
 
-	@After
-	public void tearDown() {
-		if (context != null) { ((MockExecutionContext) context).cleanProject(); }
-	}
+    @After
+    public void tearDown() {
+        if (context != null) { ((MockExecutionContext) context).cleanProject(); }
+    }
 
-	@Test
-	public void parse() throws Exception {
+    @Test
+    public void parse() throws Exception {
 
-		ExpressionParser subject = new ExpressionParser(context);
+        ExpressionParser subject = new ExpressionParser(context);
 
-		// null test
-		Assert.assertNull(subject.parse(null));
-		Assert.assertNull(subject.parse(""));
-		Assert.assertNull(subject.parse(" "));
-		Assert.assertNull(subject.parse(" \t \t \n  \t \r     \t\t"));
-		Assert.assertNull(subject.parse("this is a test, and there's nothing to do here"));
-		Assert.assertNull(subject.parse("you know, JSON's my favorite son!"));
-		Assert.assertNull(subject.parse("Everyone's list include ['JSON', 'TEXT', 'CSV']"));
-		Assert.assertNull(subject.parse("Where the [JSON of a ...] is that?"));
-		Assert.assertNull(subject.parse("blah blah blah [TEXT(yada yada)] not valid"));
+        // null test
+        Assert.assertNull(subject.parse(null));
+        Assert.assertNull(subject.parse(""));
+        Assert.assertNull(subject.parse(" "));
+        Assert.assertNull(subject.parse(" \t \t \n  \t \r     \t\t"));
+        Assert.assertNull(subject.parse("this is a test, and there's nothing to do here"));
+        Assert.assertNull(subject.parse("you know, JSON's my favorite son!"));
+        Assert.assertNull(subject.parse("Everyone's list include ['JSON', 'TEXT', 'CSV']"));
+        Assert.assertNull(subject.parse("Where the [JSON of a ...] is that?"));
+        Assert.assertNull(subject.parse("blah blah blah [TEXT(yada yada)] not valid"));
 
-		// simple test
-		String fixture = "[TEXT(hello world) => upper unique length]";
-		Expression expr = subject.parse(fixture);
-		Assert.assertNotNull(expr);
-		Assert.assertEquals("TEXT", expr.getDataType().getName());
-		Assert.assertEquals("hello world", expr.getDataType().getTextValue());
+        // simple test
+        String fixture = "[TEXT(hello world) => upper unique length]";
+        Expression expr = subject.parse(fixture);
+        Assert.assertNotNull(expr);
+        Assert.assertEquals("TEXT", expr.getDataType().getName());
+        Assert.assertEquals("hello world", expr.getDataType().getTextValue());
 
-		List<ExpressionFunction> functions = expr.getFunctions();
-		Assert.assertEquals(3, CollectionUtils.size(functions));
-		Assert.assertEquals("upper", functions.get(0).getFunctionName());
-		Assert.assertEquals("unique", functions.get(1).getFunctionName());
-		Assert.assertEquals("length", functions.get(2).getFunctionName());
+        List<ExpressionFunction> functions = expr.getFunctions();
+        Assert.assertEquals(3, CollectionUtils.size(functions));
+        Assert.assertEquals("upper", functions.get(0).getFunctionName());
+        Assert.assertEquals("unique", functions.get(1).getFunctionName());
+        Assert.assertEquals("length", functions.get(2).getFunctionName());
 
-		Assert.assertEquals(fixture, expr.getOriginalExpression());
-	}
+        Assert.assertEquals(fixture, expr.getOriginalExpression());
+    }
 
+    @Test
+    public void parse_tight_space() throws Exception {
+        ExpressionParser subject = new ExpressionParser(context);
+        assertSimpleExpression(subject.parse("[TEXT(hello world)=>upper unique length]"));
+        assertSimpleExpression(subject.parse("[TEXT(hello world)=>upper()unique()length]"));
+        assertSimpleExpression(subject.parse("[TEXT(hello world)\t=>\tupper()\nunique()      \n \t   \n\n\r\nlength]"));
+        assertSimpleExpression(subject.parse("[TEXT(hello world)\t=>\n\n\nupper()\r\n\t\tunique()   \n\n\r\nlength]"));
+    }
+
+    @Test
+    public void parse_tight_space_with_params() throws Exception {
+        ExpressionParser subject = new ExpressionParser(context);
+        assertSimpleExpression2(subject.parse("[LIST(hello,world,what's,up?!)=>" +
+                                              " insert(2,and) join(good,to,meet,you)]      "));
+        assertSimpleExpression2(subject.parse("[LIST(hello,world,what's,up?!)=>insert(2,and)join(good,to,meet,you)]"));
+        assertSimpleExpression2(subject.parse("[LIST(hello,world,what's,up?!)=>insert(2,and)join(good,to,meet,you) ]"));
+    }
+
+    private static void assertSimpleExpression(Expression expr) {
+        List<ExpressionFunction> functions;
+        functions = expr.getFunctions();
+        Assert.assertNotNull(expr);
+        Assert.assertEquals("TEXT", expr.getDataType().getName());
+        Assert.assertEquals("hello world", expr.getDataType().getTextValue());
+        Assert.assertEquals(3, functions.size());
+        Assert.assertEquals("upper", functions.get(0).getFunctionName());
+        Assert.assertTrue(functions.get(0).getParams().isEmpty());
+        Assert.assertEquals("unique", functions.get(1).getFunctionName());
+        Assert.assertTrue(functions.get(1).getParams().isEmpty());
+        Assert.assertEquals("length", functions.get(2).getFunctionName());
+        Assert.assertTrue(functions.get(2).getParams().isEmpty());
+    }
+
+    private static void assertSimpleExpression2(Expression expr) {
+        List<ExpressionFunction> functions;
+        functions = expr.getFunctions();
+        Assert.assertNotNull(expr);
+        Assert.assertEquals("LIST", expr.getDataType().getName());
+        Assert.assertEquals("hello,world,what's,up?!", expr.getDataType().getTextValue());
+        Assert.assertEquals(2, functions.size());
+        Assert.assertEquals("insert", functions.get(0).getFunctionName());
+        Assert.assertEquals("[2,and]", functions.get(0).getParams().toString());
+        Assert.assertEquals("join", functions.get(1).getFunctionName());
+        Assert.assertEquals("[good,to,meet,you]", functions.get(1).getParams().toString());
+    }
 }
