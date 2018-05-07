@@ -108,8 +108,8 @@ public class ExpressionParserTest {
         Assert.assertEquals("hello,world,what's,up?!", expr.getDataType().getTextValue());
         Assert.assertEquals(2, functions.size());
         Assert.assertEquals("insert", functions.get(0).getFunctionName());
-        Assert.assertEquals("[2,and]", functions.get(0).getParams().toString());
+        Assert.assertEquals("[2, and]", functions.get(0).getParams().toString());
         Assert.assertEquals("join", functions.get(1).getFunctionName());
-        Assert.assertEquals("[good,to,meet,you]", functions.get(1).getParams().toString());
+        Assert.assertEquals("[good, to, meet, you]", functions.get(1).getParams().toString());
     }
 }

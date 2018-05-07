@@ -42,6 +42,6 @@ public class ExpressionDataTypeBuilderTest {
 
         List<String> groups = builder.parseExpressionGroups("[TEXT(Hello, there)=>length multiply(19)]");
         Assert.assertNotNull(groups);
-        Assert.assertEquals(3, groups.size());
+        Assert.assertEquals(4, groups.size());
     }
 }
