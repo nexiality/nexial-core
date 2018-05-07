@@ -31,7 +31,7 @@
 	                              ignore-resource-not-found="true"
 	                              ignore-unresolvable="true"/>
 
-	<bean id="secret" class="org.nexial.commons.utils.SecretBeanGenerator" factory-method="getSecretClass" primary="true"/>
+	<bean id="secret" class="org.nexial.commons.utils.SecretBeanGenerator" primary="true"/>
 
 	<bean id="site-system-props" class="org.springframework.beans.factory.config.MethodInvokingFactoryBean"
 	      lazy-init="false" p:targetMethod="putAll">
