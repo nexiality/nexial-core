@@ -17,6 +17,8 @@
 
 package org.nexial.commons.utils;
 
+import java.util.Set;
+
 import org.apache.commons.lang3.StringUtils;
 import org.nexial.core.model.TestProject;
 import org.nexial.core.utils.ConsoleUtils;
@@ -24,21 +26,18 @@ import org.springframework.beans.BeansException;
 import org.springframework.beans.factory.BeanFactory;
 import org.springframework.beans.factory.BeanFactoryAware;
 
-import java.util.Set;
-
 /**
  * Class to set up the configuration settings.
  */
-class SecretBeanGenerator implements BeanFactoryAware {
-    private SecretBeanGenerator() {
-    }
+class SetupBeanFactory implements BeanFactoryAware {
+    private SetupBeanFactory() { }
 
     @Override
     public void setBeanFactory(BeanFactory beanFactory) throws BeansException {
         try {
             Class.forName("org.nexial.config.Setup");
         } catch (ClassNotFoundException e) {
-            ConsoleUtils.log("No pre defined configurations set.");
+            ConsoleUtils.log("No predefined configurations found");
         } catch (Exception e) {
             ConsoleUtils.log("Exception is " + e.getMessage());
         }

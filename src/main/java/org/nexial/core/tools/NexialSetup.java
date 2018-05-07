@@ -17,21 +17,11 @@
 
 package org.nexial.core.tools;
 
-import org.apache.commons.cli.CommandLine;
-import org.apache.commons.cli.CommandLineParser;
-import org.apache.commons.cli.DefaultParser;
-import org.apache.commons.cli.Options;
-import org.apache.commons.io.FileUtils;
-import org.apache.commons.lang3.StringUtils;
-import org.nexial.commons.utils.FileUtil;
-
-import javax.tools.JavaCompiler;
-import javax.tools.JavaCompiler.CompilationTask;
-import javax.tools.JavaFileObject;
-import javax.tools.StandardJavaFileManager;
-import javax.tools.ToolProvider;
-import javax.validation.constraints.NotNull;
-import java.io.*;
+import java.io.BufferedInputStream;
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileOutputStream;
+import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.util.ArrayList;
@@ -42,6 +32,21 @@ import java.util.jar.JarEntry;
 import java.util.jar.JarOutputStream;
 import java.util.jar.Manifest;
 
+import javax.tools.JavaCompiler;
+import javax.tools.JavaCompiler.CompilationTask;
+import javax.tools.JavaFileObject;
+import javax.tools.StandardJavaFileManager;
+import javax.tools.ToolProvider;
+import javax.validation.constraints.NotNull;
+
+import org.apache.commons.cli.CommandLine;
+import org.apache.commons.cli.CommandLineParser;
+import org.apache.commons.cli.DefaultParser;
+import org.apache.commons.cli.Options;
+import org.apache.commons.io.FileUtils;
+import org.apache.commons.lang3.StringUtils;
+import org.nexial.commons.utils.FileUtil;
+
 /**
  * This class is a utility for encrypting the setup/data file with the given key file passed as options
  * through command line.
@@ -51,26 +56,26 @@ public final class NexialSetup {
     private static final String OPT_SETUP_KEY = "k";
 
     private static final String SETUP_CLASS_TEMPLATE =
-            "package org.nexial.core.config;\n" +
-            "\n" +
-            "import java.util.Map;\n" +
-            "import org.nexial.core.tools.EncryptionUtility;\n" +
-            "import org.apache.commons.codec.binary.Hex;\n" +
-            "\n" +
-            "class Setup {\n" +
-            "    static {\n" +
-            "\t    try {\n" +
-            "%s\n\n" +
-            "%s\n" +
-            "\t\t\tMap<String, String> properties = " +
-            "EncryptionUtility.retrieveEncryptedSecrets(new String(encArr), " +
-            "new Hex().encode(keyArr));\n" +
-            "\t\t\tproperties.keySet().forEach(property -> System.setProperty(property, properties.get(property)));\n" +
-            "\t\t} catch(Exception e) {\n" +
-            "\t\t\t System.err.println(\"Error is \" + e.getMessage());" +
-            "\t\t}\n" +
-            "    }\n" +
-            "}";
+        "package org.nexial.core.config;\n" +
+        "\n" +
+        "import java.util.Map;\n" +
+        "import org.nexial.core.tools.EncryptionUtility;\n" +
+        "import org.apache.commons.codec.binary.Hex;\n" +
+        "\n" +
+        "class Setup {\n" +
+        "    static {\n" +
+        "\t    try {\n" +
+        "%s\n\n" +
+        "%s\n" +
+        "\t\t\tMap<String, String> properties = " +
+        "EncryptionUtility.retrieveEncryptedSecrets(new String(encArr), " +
+        "new Hex().encode(keyArr));\n" +
+        "\t\t\tproperties.keySet().forEach(property -> System.setProperty(property, properties.get(property)));\n" +
+        "\t\t} catch(Exception e) {\n" +
+        "\t\t\t System.err.println(\"Error is \" + e.getMessage());" +
+        "\t\t}\n" +
+        "    }\n" +
+        "}";
 
     private static final String SETUP_FOLDER = "org";
     private static final String SETUP_FILE_PATH = SETUP_FOLDER + "/nexial/core/config/";
@@ -97,9 +102,9 @@ public final class NexialSetup {
     public static void main(String[] args) {
         Options cmdOptions = new Options();
         cmdOptions.addOption(CliUtils.newArgOption(OPT_DATA_FILE, "file",
-                "The file containing key/value pairs."));
+                                                   "The file containing key/value pairs."));
         cmdOptions.addOption(CliUtils.newArgOption(OPT_SETUP_KEY, "key",
-                "The key to encrypt data."));
+                                                   "The key to encrypt data."));
 
         CommandLineParser parser = new DefaultParser();
         try {
@@ -123,8 +128,8 @@ public final class NexialSetup {
 
             for (char keyChar : encryptedSecrets.toCharArray()) {
                 byteLogic.append("\t\t\tencArr[")
-                        .append(counter).append("] = ").append("'")
-                        .append(keyChar).append("'").append(";\n");
+                         .append(counter).append("] = ").append("'")
+                         .append(keyChar).append("'").append(";\n");
                 ++counter;
             }
 
@@ -140,8 +145,8 @@ public final class NexialSetup {
 
                 for (char keyChar : secretKeyValue.toCharArray()) {
                     byteLogic.append("\t\t\tkeyArr[")
-                            .append(counter).append("] = (byte)").append("'")
-                            .append(String.valueOf(keyChar)).append("'").append(";\n");
+                             .append(counter).append("] = (byte)").append("'")
+                             .append(String.valueOf(keyChar)).append("'").append(";\n");
                     ++counter;
                 }
 
@@ -156,9 +161,9 @@ public final class NexialSetup {
 
                 FileUtils.moveFile(jarSource, jarDestination);
 
-                System.out.println("WARNING: Setup complete. It is now safe to delete " +  dataFilePath +
-                        " to keep it out of prying eyes. You can zip up " + System.getenv(ENV_NEXIAL_HOME) +
-                        " and distribute it with your team.");
+                System.out.println("WARNING: Setup complete. It is now safe to delete " + dataFilePath +
+                                   " to keep it out of prying eyes. You can zip up " + System.getenv(ENV_NEXIAL_HOME) +
+                                   " and distribute it with your team.");
             } else {
                 System.err.println("Failed to create folder structure " + SETUP_FILE_PATH);
             }
@@ -183,8 +188,12 @@ public final class NexialSetup {
         sourceFileList.add(new File(setupFile));
 
         Iterable<? extends JavaFileObject> compilationUnits = fileManager.getJavaFileObjectsFromFiles(sourceFileList);
-        CompilationTask task = compiler.getTask(null, fileManager, null,
-                Arrays.asList("-classpath", System.getProperty("java.class.path")), null, compilationUnits);
+        CompilationTask task = compiler.getTask(null,
+                                                fileManager,
+                                                null,
+                                                Arrays.asList("-classpath", System.getProperty("java.class.path")),
+                                                null,
+                                                compilationUnits);
 
         Boolean result = task.call();
         if (!result) {
@@ -215,9 +224,7 @@ public final class NexialSetup {
         String setupJarPath = TEMP + SETUP_JAR;
         File jarFile = new File(setupJarPath);
 
-        if (jarFile.exists()) {
-            jarFile.delete();
-        }
+        if (jarFile.exists()) { jarFile.delete(); }
 
         Manifest manifest = new Manifest();
         manifest.getMainAttributes().put(Attributes.Name.MANIFEST_VERSION, "1.0");
@@ -244,20 +251,14 @@ public final class NexialSetup {
             }
 
             if (source.isDirectory()) {
-                String name = source.getPath().replace("\\", "/");
-
-                if (!name.endsWith("/")) {
-                    name += "/";
-                }
+                String name = StringUtils.appendIfMissing(source.getPath().replace("\\", "/"), "/");
 
                 JarEntry entry = new JarEntry(name);
                 entry.setTime(source.lastModified());
                 target.putNextEntry(entry);
                 target.closeEntry();
 
-                for (File nestedFile : source.listFiles()) {
-                    add(nestedFile, target);
-                }
+                for (File nestedFile : source.listFiles()) { add(nestedFile, target); }
                 return;
             }
 
@@ -269,15 +270,13 @@ public final class NexialSetup {
             byte[] buffer = new byte[1024];
             while (true) {
                 int count = in.read(buffer);
-                if (count == -1)
-                    break;
+                if (count == -1) { break; }
                 target.write(buffer, 0, count);
             }
 
             target.closeEntry();
         } finally {
-            if (in != null)
-                in.close();
+            if (in != null) { in.close(); }
         }
     }
 
@@ -320,7 +319,7 @@ public final class NexialSetup {
     private static void checkValidFilePath(@NotNull final String filePath) {
         if (!FileUtil.isFileReadable(filePath)) {
             System.err.println("File " + filePath + " is not appropriate." +
-                    " Please check if the file is valid and has appropriate permissions");
+                               " Please check if the file is valid and has appropriate permissions");
             System.exit(-1);
         }
     }

@@ -17,17 +17,6 @@
 
 package org.nexial.core.tools;
 
-import org.apache.commons.codec.DecoderException;
-import org.apache.commons.codec.binary.Hex;
-import org.apache.commons.lang3.RandomStringUtils;
-import org.apache.commons.lang3.StringUtils;
-
-import javax.crypto.BadPaddingException;
-import javax.crypto.Cipher;
-import javax.crypto.IllegalBlockSizeException;
-import javax.crypto.NoSuchPaddingException;
-import javax.crypto.spec.SecretKeySpec;
-import javax.validation.constraints.NotNull;
 import java.io.IOException;
 import java.io.StringReader;
 import java.security.GeneralSecurityException;
@@ -37,6 +26,18 @@ import java.security.NoSuchAlgorithmException;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Properties;
+
+import javax.crypto.BadPaddingException;
+import javax.crypto.Cipher;
+import javax.crypto.IllegalBlockSizeException;
+import javax.crypto.NoSuchPaddingException;
+import javax.crypto.spec.SecretKeySpec;
+import javax.validation.constraints.NotNull;
+
+import org.apache.commons.codec.DecoderException;
+import org.apache.commons.codec.binary.Hex;
+import org.apache.commons.lang3.RandomStringUtils;
+import org.apache.commons.lang3.StringUtils;
 
 import static javax.crypto.Cipher.DECRYPT_MODE;
 import static javax.crypto.Cipher.ENCRYPT_MODE;
@@ -54,7 +55,7 @@ public class EncryptionUtility {
      * @return {@link Map} of secrets encrypted.
      */
     public static Map<String, String> retrieveEncryptedSecrets(final String encryptedContent, final byte[] key)
-            throws DecoderException, GeneralSecurityException, IOException {
+        throws DecoderException, GeneralSecurityException, IOException {
 
         String keyStr = new String(key);
         byte[] keyDecoded = Hex.decodeHex(keyStr.toCharArray());
@@ -69,9 +70,31 @@ public class EncryptionUtility {
         final Properties p = new Properties();
         p.load(new StringReader(configuration));
 
-        p.forEach((x , y) -> secrets.put(x.toString(), y.toString()));
+        p.forEach((x, y) -> secrets.put(x.toString(), y.toString()));
 
         return secrets;
+    }
+
+    /**
+     * Encrypts the given content using the secret key.
+     *
+     * @param content        content to be encrypted.
+     * @param secretKeyValue key with which files needs to be encrypted.
+     * @return encrypted content.
+     */
+    public static String encryptContent(@NotNull String content,
+                                        @NotNull final byte[] secretKeyValue)
+        throws NoSuchAlgorithmException, NoSuchPaddingException, InvalidKeyException,
+               IllegalBlockSizeException, BadPaddingException {
+        Key secretKey = new SecretKeySpec(secretKeyValue, ENCRYPTION_ALGORITHM);
+        Cipher cipher = Cipher.getInstance(ENCRYPTION_ALGORITHM);
+        cipher.init(ENCRYPT_MODE, secretKey);
+
+        final String randomSeed = RandomStringUtils.randomAlphanumeric(RAND_SEED_SIZE);
+        content = randomSeed.concat(content).concat(StringUtils.reverse(randomSeed));
+
+        byte[] encrypted = cipher.doFinal(content.getBytes());
+        return CRYPT_IND + StringUtils.reverse(Hex.encodeHexString(encrypted));
     }
 
     /**
@@ -81,6 +104,7 @@ public class EncryptionUtility {
      * @param cipher    {@link Cipher}
      * @return decrypted text.
      */
+    // todo: direct copy from CipherHelper; why can't we reuse what we already have!?
     private static String decrypt(String encrypted, Cipher cipher) throws GeneralSecurityException, DecoderException {
         if (StringUtils.isBlank(encrypted) || !StringUtils.startsWith(encrypted, CRYPT_IND)) {
             return encrypted;
@@ -102,27 +126,5 @@ public class EncryptionUtility {
         }
 
         return StringUtils.substring(decrypted, RAND_SEED_SIZE, decrypted.length() - RAND_SEED_SIZE);
-    }
-
-    /**
-     * Encrypts the given content using the secret key.
-     *
-     * @param content content to be encrypted.
-     * @param secretKeyValue key with which files needs to be encrypted.
-     * @return encrypted content.
-     */
-    public static String encryptContent(@NotNull String content,
-                                        @NotNull final byte[] secretKeyValue)
-            throws NoSuchAlgorithmException, NoSuchPaddingException, InvalidKeyException,
-            IllegalBlockSizeException, BadPaddingException {
-        Key secretKey = new SecretKeySpec(secretKeyValue, ENCRYPTION_ALGORITHM);
-        Cipher cipher = Cipher.getInstance(ENCRYPTION_ALGORITHM);
-        cipher.init(ENCRYPT_MODE, secretKey);
-
-        final String randomSeed = RandomStringUtils.randomAlphanumeric(RAND_SEED_SIZE);
-        content = randomSeed.concat(content).concat(StringUtils.reverse(randomSeed));
-
-        byte[] encrypted = cipher.doFinal(content.getBytes());
-        return CRYPT_IND + StringUtils.reverse(Hex.encodeHexString(encrypted));
     }
 }

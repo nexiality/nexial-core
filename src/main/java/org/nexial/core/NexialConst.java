@@ -339,7 +339,6 @@ public final class NexialConst {
 
     public static final String USER_OS_HOME = "user.home";
     public static final String ENCRYPTION_ALGORITHM = "AES";
-    public static final String SECRET_FILE = "config.data";
     public static final String SECRET_KEY_FILE = "config.key";
     public static final String SECRET_CONTENT_SEPARATOR = "########";
     public static final int RAND_SEED_SIZE = 5;
