@@ -31,49 +31,49 @@ import org.thymeleaf.TemplateEngine;
 import org.thymeleaf.context.Context;
 
 public class MailNotifier implements ExecutionNotifier {
-	private Mailer mailer = new Mailer();
-	private TemplateEngine mailTemplateEngine;
-	private String mailTemplate;
+    private Mailer mailer = new Mailer();
+    private TemplateEngine mailTemplateEngine;
+    private String mailTemplate;
 
-	public void setMailer(Mailer mailer) { this.mailer = mailer; }
+    public void setMailer(Mailer mailer) { this.mailer = mailer; }
 
-	public void setMailTemplateEngine(TemplateEngine mailTemplateEngine) {
-		this.mailTemplateEngine = mailTemplateEngine;
-	}
+    public void setMailTemplateEngine(TemplateEngine mailTemplateEngine) {
+        this.mailTemplateEngine = mailTemplateEngine;
+    }
 
-	public void setMailTemplate(String mailTemplate) { this.mailTemplate = mailTemplate; }
+    public void setMailTemplate(String mailTemplate) { this.mailTemplate = mailTemplate; }
 
-	@Override
-	public void notify(String[] recipients, ExecutionSummary summary) throws MessagingException {
+    @Override
+    public void notify(String[] recipients, ExecutionSummary summary) throws MessagingException {
+        if (ArrayUtils.isEmpty(recipients)) {
+            ConsoleUtils.log("No email to send since no address provided.");
+            return;
+        }
 
-		if (ArrayUtils.isEmpty(recipients)) {
-			ConsoleUtils.log("No email to send since no address provided.");
-			return;
-		}
+        if (summary == null) {
+            ConsoleUtils.log("No execution summary found.. skipping mail notification");
+            return;
+        }
 
-		if (summary == null) {
-			ConsoleUtils.log("No execution summary found.. skipping mail notification");
-			return;
-		}
+        if (CollectionUtils.isEmpty(summary.getNestedExecutions())) {
+            ConsoleUtils.log("No result files found... skipping mail notification");
+            return;
+        }
 
-		if (CollectionUtils.isEmpty(summary.getNestedExecutions())) {
-			ConsoleUtils.log("No result files found... skipping mail notification");
-			return;
-		}
+        // print to console - last SOS attempt
+        if (summary.getError() != null) { summary.getError().printStackTrace(); }
 
-		// print to console - last SOS attempt
-		if (summary.getError() != null) { summary.getError().printStackTrace(); }
+        StringBuilder subject = new StringBuilder("Execution Result for ");
+        Set<String> nestedNames = new HashSet<>();
+        summary.getNestedExecutions().forEach(nested -> nestedNames.add(nested.getName()));
+        nestedNames.forEach(name -> subject.append(name).append(", "));
 
-		StringBuilder subject = new StringBuilder("Execution Result for ");
-		Set<String> nestedNames = new HashSet<>();
-		summary.getNestedExecutions().forEach(nested -> nestedNames.add(nested.getName()));
-		nestedNames.forEach(name -> subject.append(name).append(", "));
+        // off we go
+        ConsoleUtils.log("Preparing email for " + ArrayUtils.toString(recipients));
+        Context engineContext = new Context();
+        engineContext.setVariable("summary", summary);
+        String content = mailTemplateEngine.process(mailTemplate, engineContext);
 
-		// off we go
-		ConsoleUtils.log("Preparing email for " + ArrayUtils.toString(recipients));
-		Context engineContext = new Context();
-		engineContext.setVariable("summary", summary);
-		String content = mailTemplateEngine.process(mailTemplate, engineContext);
-		mailer.sendResult(recipients, content, StringUtils.removeEnd(subject.toString(), ", "));
-	}
+        mailer.sendResult(recipients, content, StringUtils.removeEnd(subject.toString(), ", "));
+    }
 }

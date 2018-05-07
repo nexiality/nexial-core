@@ -609,6 +609,7 @@ public final class NexialConst {
 
         // system-wide enable/disable email notification
         public static final String MAIL_TO = SCOPE + "mailTo";
+        public static final String MAIL_TO2 = NAMESPACE + "mailTo";
         public static final String ENABLE_EMAIL = NAMESPACE + "enableEmail";
         public static final String DEF_ENABLE_EMAIL = "false";
 

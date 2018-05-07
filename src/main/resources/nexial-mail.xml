@@ -31,21 +31,8 @@
 		</property>
 	</bean>
 
-	<bean id="mailer" class="org.nexial.commons.javamail.MailObjectSupport"
-	      lazy-init="true"
-	      init-method="init"
-	      scope="prototype">
-		<property name="mailProps" ref="nexialSysProps"/>
-	</bean>
-
-	<bean id="reportMailer" class="org.nexial.core.reports.Mailer"
-	      lazy-init="true"
-	      scope="prototype"
-	      p:mailer-ref="mailer"/>
-
 	<bean id="mailNotifier" class="org.nexial.core.reports.MailNotifier"
 	      lazy-init="true"
-	      p:mailer-ref="reportMailer"
 	      p:mailTemplateEngine-ref="mailTemplateEngine"
 	      p:mailTemplate="email_notification"/>
 </beans>

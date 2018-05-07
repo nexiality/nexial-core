@@ -22,10 +22,11 @@ import java.io.IOException;
 import javax.mail.MessagingException;
 
 import org.apache.commons.mail.EmailException;
-
 import org.nexial.core.model.ExecutionSummary;
 
 public interface ExecutionNotifier {
 
-	void notify(String[] recipients, ExecutionSummary summary) throws IOException, EmailException, MessagingException;
+    void notify(String[] recipients, ExecutionSummary summary) throws IOException, EmailException, MessagingException;
+
+    void setMailer(Mailer mailer);
 }

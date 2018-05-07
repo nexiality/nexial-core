@@ -36,6 +36,7 @@ import org.nexial.commons.logging.LogbackUtils;
 import org.nexial.core.aws.NexialS3Helper;
 import org.nexial.core.excel.Excel;
 import org.nexial.core.model.*;
+import org.nexial.core.reports.ExecutionMailConfig;
 import org.nexial.core.utils.ConsoleUtils;
 import org.nexial.core.utils.ExecutionLogger;
 
@@ -178,6 +179,7 @@ public final class ExecutionThread extends Thread {
                 }
 
                 collectIntraExecutionData(context, currIteration);
+                ExecutionMailConfig.configure(context);
                 context.endIteration();
 
                 if (testScript != null) { MemManager.recordMemoryChanges(testScript.getName() + " completed"); }
@@ -338,8 +340,7 @@ public final class ExecutionThread extends Thread {
                          "» Passed:         " + summary.getPassCount() + "\n" +
                          "» Error(s):       " + summary.getFailCount() + "\n" +
                          //"» Warnings:       " + summary.getWarnCount() + "\n" +
-                         (StringUtils.isNotBlank(cloudOutput) ? cloudOutput : "") +
-                         "\n\n");
+                         StringUtils.defaultIfBlank(cloudOutput, "") + "\n\n");
         MemManager.gc(execDef);
     }
 

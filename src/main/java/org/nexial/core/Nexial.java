@@ -34,12 +34,14 @@ import org.apache.commons.cli.ParseException;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.collections4.MapUtils;
 import org.apache.commons.io.FileUtils;
+import org.apache.commons.lang3.ArrayUtils;
 import org.apache.commons.lang3.BooleanUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.math.NumberUtils;
 import org.apache.commons.mail.EmailException;
 import org.apache.poi.xssf.usermodel.XSSFCell;
 import org.apache.poi.xssf.usermodel.XSSFRow;
+import org.nexial.commons.javamail.MailObjectSupport;
 import org.nexial.commons.utils.DateUtility;
 import org.nexial.commons.utils.EnvUtils;
 import org.nexial.commons.utils.FileUtil;
@@ -51,8 +53,10 @@ import org.nexial.core.excel.Excel.Worksheet;
 import org.nexial.core.model.ExecutionDefinition;
 import org.nexial.core.model.ExecutionSummary;
 import org.nexial.core.model.TestProject;
+import org.nexial.core.reports.ExecutionMailConfig;
 import org.nexial.core.reports.ExecutionNotifier;
 import org.nexial.core.reports.MailNotifier;
+import org.nexial.core.reports.Mailer;
 import org.nexial.core.service.ServiceLauncher;
 import org.nexial.core.utils.ConsoleUtils;
 import org.nexial.core.utils.ExecUtil;
@@ -569,7 +573,6 @@ public class Nexial {
         // start of test suite (one per test plan in execution)
         String runId = ExecUtil.deriveRunId();
 
-        String notificationList = null;
         ExecutionSummary summary = new ExecutionSummary();
         summary.setName(runId);
         summary.setExecutionLevel(EXECUTION);
@@ -584,8 +587,6 @@ public class Nexial {
 
                 String msgPrefix = "[" + exec.getTestScript() + "] ";
                 ConsoleUtils.log(runId, msgPrefix + "resolve RUN ID as " + runId);
-
-                notificationList = exec.getTestData().getMailTo();
 
                 ExecutionThread launcherThread = ExecutionThread.newInstance(exec);
                 if (MapUtils.isNotEmpty(intraExecution)) { launcherThread.setIntraExecutionData(intraExecution); }
@@ -640,7 +641,7 @@ public class Nexial {
             e.printStackTrace();
             summary.setError(e);
         } finally {
-            onExecutionComplete(runId, summary, notificationList);
+            onExecutionComplete(runId, summary);
         }
 
         return summary;
@@ -649,7 +650,7 @@ public class Nexial {
     /**
      * this represents the end of an entire Nexial run, including all iterations and plan steps.
      */
-    protected void onExecutionComplete(String runId, ExecutionSummary summary, String notificationList) {
+    protected void onExecutionComplete(String runId, ExecutionSummary summary) {
         // todo: THINK!!! WE MIGHT NEED A GLOBAL TEARDOWN() ROUTINE TO MATCH WHAT WAS DONE IN GLOBAL INIT().
         //NexialLauncher.tearDown();
 
@@ -702,9 +703,12 @@ public class Nexial {
             }
         }
 
-        if (StringUtils.isNotBlank(notificationList) && isEmailEnabled() && springContext != null) {
+        ExecutionMailConfig mailConfig = ExecutionMailConfig.get();
+        if (mailConfig.isReady() && springContext != null) {
             ExecutionNotifier notifier = springContext.getBean("mailNotifier", ExecutionNotifier.class);
-            notifyCompletion(notifier, notificationList, summary);
+            notifyCompletion(notifier, summary);
+        } else {
+            ConsoleUtils.log("skipped email notification as configured");
         }
     }
 
@@ -851,18 +855,27 @@ public class Nexial {
         return cell == null ? "" : StringUtils.trim(cell.getStringCellValue());
     }
 
-    private void notifyCompletion(ExecutionNotifier notifier, String recipients, ExecutionSummary summary) {
+    private void notifyCompletion(ExecutionNotifier notifier, ExecutionSummary summary) {
         if (notifier == null) {
             ConsoleUtils.log("No email to send since email notification is disabled or not configured.");
             return;
         }
-        if (recipients == null) {
+
+        // setup
+        ExecutionMailConfig mailConfig = ExecutionMailConfig.get();
+        String[] recipientList = mailConfig.getRecipients();
+        if (ArrayUtils.isEmpty(recipientList)) {
             ConsoleUtils.log("No email to send since no recipient is specified.");
             return;
         }
 
-        // todo this is ok until we start impl. plan.  With plan we need to use ONLY override email notification
-        String[] recipientList = StringUtils.split(StringUtils.replace(recipients, ";", ","), ",");
+        MailObjectSupport mailObjectSupport = new MailObjectSupport();
+        mailObjectSupport.configure();
+
+        Mailer mailer = new Mailer();
+        mailer.setMailer(mailObjectSupport);
+
+        notifier.setMailer(mailer);
 
         try {
             notifier.notify(recipientList, summary);
