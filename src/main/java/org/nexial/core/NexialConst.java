@@ -135,7 +135,6 @@ public final class NexialConst {
     public static final String OPT_SCREENSHOT_ON_ERROR = NAMESPACE + "screenshotOnError";
     public static final String OPT_LAST_SCREENSHOT_NAME = NAMESPACE + "lastScreenshot";
     public static final String OPT_LAST_OUTCOME = NAMESPACE + "lastOutcome";
-    public static final String OPT_LAST_NESTED_OUTPUT = NAMESPACE + "lastCommandOutput";
 
     // control verbosity of multi-step commands
     public static final String OPT_ELAPSED_TIME_SLA = NAMESPACE + "elapsedTimeSLA";
@@ -336,12 +335,6 @@ public final class NexialConst {
 
     public static final String OPT_MANAGE_MEM = NAMESPACE + "manageMemory";
     public static final String DEF_MANAGE_MEM = "false";
-
-    public static final String USER_OS_HOME = "user.home";
-    public static final String ENCRYPTION_ALGORITHM = "AES";
-    public static final String SECRET_KEY_FILE = "config.key";
-    public static final String SECRET_CONTENT_SEPARATOR = "########";
-    public static final int RAND_SEED_SIZE = 5;
 
     public static final Gson GSON = new GsonBuilder().setPrettyPrinting()
                                                      .disableHtmlEscaping()
@@ -687,6 +680,10 @@ public final class NexialConst {
         // command repeater
         public static final String CMD_COMMAND_REPEATER = "base.repeatUntil(steps,maxWaitMs)";
 
+        // section
+        public static final String CMD_COMMAND_SECTION = "base.section(steps)";
+        public static final String CMD_SECTION_STEP_SEPARATOR = "►";
+
         // io
         public static final String COMPARE_LOG_PLAIN = "log";
         public static final String COMPARE_LOG_JSON = "json";
@@ -745,6 +742,13 @@ public final class NexialConst {
         public static final String RECORDER_TYPE_AVI = "avi";
         public static final String RECORDING_ENABLED = NAMESPACE + "recordingEnabled";
         public static final boolean DEF_RECORDING_ENABLED = true;
+
+        // sound
+        public static final String SOUND_ON = NAMESPACE + "soundOn";
+        public static final String SOUND_ON_START = SOUND_ON + "Start";
+        public static final String SOUND_ON_ERROR = SOUND_ON + "Error";
+        public static final String SOUND_ON_PAUSE = SOUND_ON + "Pause";
+        public static final String SOUND_ON_COMPLETE = SOUND_ON + "Complete";
 
         public static final Map<String, String> SCOPE_SETTING_DEFAULTS = TextUtils.toMap(
             ITERATION + "=1\n" +
@@ -815,13 +819,14 @@ public final class NexialConst {
 
     // nexial main exit status
     public static final class ExitStatus {
-        public static final int RC_EXECUTION_SUMMARY_MISSING = -15;
-        public static final int RC_FAILURE_FOUND = -14;
-        public static final int RC_NOT_PERFECT_SUCCESS_RATE = -13;
         public static final int RC_WARNING_FOUND = -12;
+        public static final int RC_NOT_PERFECT_SUCCESS_RATE = -13;
+        public static final int RC_FAILURE_FOUND = -14;
+        public static final int RC_EXECUTION_SUMMARY_MISSING = -15;
         public static final int RC_BAD_CLI_ARGS = -16;
         public static final int RC_EXCEL_IN_USE = -17;
         public static final int RC_FILE_GEN_FAILED = -18;
+        public static final int RC_FILE_NOT_FOUND = -19;
 
         private ExitStatus() { }
     }

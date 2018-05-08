@@ -35,7 +35,7 @@ class SetupBeanFactory implements BeanFactoryAware {
     @Override
     public void setBeanFactory(BeanFactory beanFactory) throws BeansException {
         try {
-            Class.forName("org.nexial.config.Setup");
+            Class.forName("org.nexial.core.config.Setup");
         } catch (ClassNotFoundException e) {
             ConsoleUtils.log("No predefined configurations found");
         } catch (Exception e) {

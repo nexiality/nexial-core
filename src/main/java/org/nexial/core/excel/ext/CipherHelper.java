@@ -17,7 +17,6 @@
 
 package org.nexial.core.excel.ext;
 
-import java.io.IOException;
 import java.security.GeneralSecurityException;
 
 import javax.crypto.Cipher;
@@ -35,63 +34,72 @@ import static javax.crypto.Cipher.DECRYPT_MODE;
 import static javax.crypto.Cipher.ENCRYPT_MODE;
 
 public final class CipherHelper {
-	public static final String CRYPT_IND = "crypt:";
-	private static final byte[] IV = ("Se" + "ntr" + "y#1").getBytes();
-	private static final IvParameterSpec SPEC = new IvParameterSpec(IV);
-	private static final byte[] SECRET = ("Se" + "nt" + "ryWil" + "lRoc" + "kYo" + "urWo" + "rld!").getBytes();
-	private static final String ALGORITHM = "DESede";
-	private static final String ALGORITHM_SCHEME = ALGORITHM + "/CBC/PKCS5Padding";
-	private static final int RAND_SEED_SIZE = 5;
-	private Cipher encryptor;
-	private Cipher decryptor;
+    public static final String CRYPT_IND = "crypt:";
 
-	public CipherHelper() {
-		try {
-			SecretKeyFactory keyFactory = SecretKeyFactory.getInstance(ALGORITHM);
-			SecretKey key = keyFactory.generateSecret(new DESedeKeySpec(SECRET));
+    private static final byte[] IV = ("Se" + "ntr" + "y#1").getBytes();
+    private static final IvParameterSpec SPEC = new IvParameterSpec(IV);
+    private static final byte[] SECRET = ("Se" + "nt" + "ryWil" + "lRoc" + "kYo" + "urWo" + "rld!").getBytes();
+    private static final String DEF_ALGORITHM = "DESede";
+    private static final String DEF_ALGORITHM_SCHEME = DEF_ALGORITHM + "/CBC/PKCS5Padding";
+    private static final int RAND_SEED_SIZE = 5;
 
-			encryptor = Cipher.getInstance(ALGORITHM_SCHEME);
-			encryptor.init(ENCRYPT_MODE, key, SPEC);
+    private Cipher encryptor;
+    private Cipher decryptor;
 
-			decryptor = Cipher.getInstance(ALGORITHM_SCHEME);
-			decryptor.init(DECRYPT_MODE, key, SPEC);
-		} catch (Exception e) {
-			String error = e.getCause() != null ? e.getCause().getMessage() : e.getMessage();
-			throw new RuntimeException("Error initializing application: " + error);
-		}
-	}
+    public CipherHelper() {
+        try {
+            SecretKeyFactory keyFactory = SecretKeyFactory.getInstance(DEF_ALGORITHM);
+            SecretKey key = keyFactory.generateSecret(new DESedeKeySpec(SECRET));
 
-	public String encrypt(String plainText) throws GeneralSecurityException {
-		if (StringUtils.isBlank(plainText)) { return plainText; }
+            encryptor = Cipher.getInstance(DEF_ALGORITHM_SCHEME);
+            encryptor.init(ENCRYPT_MODE, key, SPEC);
 
-		// spice it up
-		String randomSeed = getRandomAlphaNumber(RAND_SEED_SIZE);
-		plainText = randomSeed + plainText + StringUtils.reverse(randomSeed);
+            decryptor = Cipher.getInstance(DEF_ALGORITHM_SCHEME);
+            decryptor.init(DECRYPT_MODE, key, SPEC);
+        } catch (Exception e) {
+            String error = e.getCause() != null ? e.getCause().getMessage() : e.getMessage();
+            throw new RuntimeException("Error initializing application: " + error);
+        }
+    }
 
-		byte[] encrypted = encryptor.doFinal(plainText.getBytes());
-		return CRYPT_IND + StringUtils.reverse(Hex.encodeHexString(encrypted));
-	}
+    public String encrypt(String plainText) throws GeneralSecurityException { return encrypt(plainText, encryptor); }
 
-	String decrypt(String encrypted) throws GeneralSecurityException, DecoderException {
-		if (StringUtils.isBlank(encrypted) || !StringUtils.startsWith(encrypted, CRYPT_IND)) { return encrypted; }
+    public String encrypt(String plainText, Cipher cipher) throws GeneralSecurityException {
+        if (StringUtils.isBlank(plainText)) { return plainText; }
 
-		String encryptByteString = StringUtils.reverse(StringUtils.substringAfter(encrypted, CRYPT_IND));
-		byte[] encryptedBytes = Hex.decodeHex(encryptByteString.toCharArray());
+        // spice it up
+        String randomSeed = getRandomAlphaNumber(RAND_SEED_SIZE);
+        plainText = randomSeed + plainText + StringUtils.reverse(randomSeed);
 
-		String decrypted = new String(decryptor.doFinal(encryptedBytes));
-		if (StringUtils.length(decrypted) < (RAND_SEED_SIZE * 2 + 1)) {
-			throw new DecoderException("Invalid encrypted text: " + encrypted + "; invalid length");
-		}
+        byte[] encrypted = cipher.doFinal(plainText.getBytes());
+        return CRYPT_IND + StringUtils.reverse(Hex.encodeHexString(encrypted));
+    }
 
-		// sift out spice
-		String leftSpice = StringUtils.substring(decrypted, 0, RAND_SEED_SIZE);
-		String rightSpice = StringUtils.substring(decrypted, decrypted.length() - RAND_SEED_SIZE, decrypted.length());
-		if (!StringUtils.equals(leftSpice, StringUtils.reverse(rightSpice))) {
-			throw new DecoderException("Invalid encrypted text: " + encrypted + "; crypt key mismatched");
-		}
+    public String decrypt(String encrypted, Cipher cipher)
+        throws GeneralSecurityException, DecoderException {
+        if (StringUtils.isBlank(encrypted) || !StringUtils.startsWith(encrypted, CRYPT_IND)) { return encrypted; }
 
-		return StringUtils.substring(decrypted, RAND_SEED_SIZE, decrypted.length() - RAND_SEED_SIZE);
-	}
+        String encryptByteString = StringUtils.reverse(StringUtils.substringAfter(encrypted, CRYPT_IND));
+        byte[] encryptedBytes = Hex.decodeHex(encryptByteString.toCharArray());
 
-	private String getRandomAlphaNumber(int length) { return RandomStringUtils.randomAlphanumeric(length); }
+        String decrypted = new String(cipher.doFinal(encryptedBytes));
+        if (StringUtils.length(decrypted) < (RAND_SEED_SIZE * 2 + 1)) {
+            throw new DecoderException("Invalid encrypted text: " + encrypted + "; invalid length");
+        }
+
+        // sift out spice
+        String leftSpice = StringUtils.substring(decrypted, 0, RAND_SEED_SIZE);
+        String rightSpice = StringUtils.substring(decrypted, decrypted.length() - RAND_SEED_SIZE, decrypted.length());
+        if (!StringUtils.equals(leftSpice, StringUtils.reverse(rightSpice))) {
+            throw new DecoderException("Invalid encrypted text: " + encrypted + "; crypt key mismatched");
+        }
+
+        return StringUtils.substring(decrypted, RAND_SEED_SIZE, decrypted.length() - RAND_SEED_SIZE);
+    }
+
+    String decrypt(String encrypted) throws GeneralSecurityException, DecoderException {
+        return decrypt(encrypted, decryptor);
+    }
+
+    private String getRandomAlphaNumber(int length) { return RandomStringUtils.randomAlphanumeric(length); }
 }

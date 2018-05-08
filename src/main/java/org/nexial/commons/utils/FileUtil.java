@@ -240,6 +240,13 @@ public final class FileUtil {
         return dir.exists() && dir.isDirectory() && dir.canRead();
     }
 
+    /** return true if {@code path} is a valid directory and read/writable by the current run user. */
+    public static boolean isDirectoryReadWritable(String path) {
+        if (StringUtils.isBlank(path)) { return false; }
+        File dir = new File(path);
+        return dir.exists() && dir.isDirectory() && dir.canRead() && dir.canWrite();
+    }
+
     /**
      * return true if {@code file} is readable and larger than {@code minFileSize} bytes.  If {@code minFileSize}
      * is -1, then it's ignored.

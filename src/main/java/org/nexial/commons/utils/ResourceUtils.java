@@ -43,7 +43,6 @@ public final class ResourceUtils {
 	public static InputStream getInputStream(String resource) {
 		if (StringUtils.isBlank(resource)) { return null; }
 		if (!StringUtils.startsWith(resource, "/")) { resource = "/" + resource; }
-
 		return ResourceUtils.class.getResourceAsStream(resource);
 	}
 

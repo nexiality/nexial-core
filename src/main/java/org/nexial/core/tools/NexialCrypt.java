@@ -17,47 +17,44 @@
 
 package org.nexial.core.tools;
 
-import java.io.IOException;
 import java.security.GeneralSecurityException;
 import java.util.Scanner;
 
 import org.apache.commons.lang3.ArrayUtils;
 import org.apache.commons.lang3.StringUtils;
-
 import org.nexial.core.excel.ext.CipherHelper;
 
 /**
  * provide basic utility for nexial user to scramble sensitive information such as password
  */
 final class NexialCrypt {
-	private NexialCrypt() { }
+    private NexialCrypt() { }
 
-	public static void main(String[] args) throws Exception {
-		NexialCrypt jarvisCrypt = new NexialCrypt();
-		if (ArrayUtils.isEmpty(args)) {
-			jarvisCrypt.doInteractive();
-		} else {
-			jarvisCrypt.processInput(args[0]);
-		}
-	}
+    public static void main(String[] args) throws Exception {
+        NexialCrypt crypt = new NexialCrypt();
+        if (ArrayUtils.isEmpty(args)) {
+            crypt.doInteractive();
+        } else {
+            crypt.processInput(args[0]);
+        }
+    }
 
-	@SuppressWarnings("PMD.SystemPrintln")
-	protected void doInteractive() throws GeneralSecurityException, IOException {
-		Scanner consoleInput = new Scanner(System.in);
-		System.out.print("enter plain text    > ");
-		processInput(consoleInput.nextLine());
-	}
+    @SuppressWarnings("PMD.SystemPrintln")
+    protected void doInteractive() throws GeneralSecurityException {
+        Scanner consoleInput = new Scanner(System.in);
+        System.out.print("enter plain text    > ");
+        processInput(consoleInput.nextLine());
+    }
 
-	@SuppressWarnings("PMD.SystemPrintln")
-	protected void processInput(String plainText) throws GeneralSecurityException, IOException {
-		if (StringUtils.isBlank(plainText)) {
-			System.err.println("!!! ERROR !!! No input found.");
-			System.exit(-1);
-			return;
-		}
+    @SuppressWarnings("PMD.SystemPrintln")
+    protected void processInput(String plainText) throws GeneralSecurityException {
+        if (StringUtils.isBlank(plainText)) {
+            System.err.println("!!! ERROR !!! No input found.");
+            System.exit(-1);
+            return;
+        }
 
-		CipherHelper helper = new CipherHelper();
-		System.out.print(helper.encrypt(plainText));
-	}
+        System.out.print(new CipherHelper().encrypt(plainText));
+    }
 
 }
