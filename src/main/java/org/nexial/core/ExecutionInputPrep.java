@@ -99,7 +99,11 @@ class ExecutionInputPrep {
         // merge macros
         // todo: better instantiation so that we can reuse in-class cache (inside MacroMerger)
         MacroMerger macroMerger = new MacroMerger();
-        macroMerger.mergeMacro(new Excel(tmpFile), execDef.getProject());
+        macroMerger.setCurrentIteration(counter);
+        macroMerger.setExecDef(execDef);
+        macroMerger.setProject(execDef.getProject());
+        macroMerger.setExcel(new Excel(tmpFile));
+        macroMerger.mergeMacro();
 
         // 4. merge expanded test data to output file
         // this is necessary since the output directory (and final output file) could be remote

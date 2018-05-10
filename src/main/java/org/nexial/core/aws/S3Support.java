@@ -25,10 +25,7 @@ import javax.validation.constraints.NotNull;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.nexial.core.aws.AwsS3Helper.PutOption;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
-import com.amazonaws.regions.Regions;
 import com.amazonaws.services.s3.model.ObjectMetadata;
 import com.amazonaws.services.s3.model.PutObjectResult;
 
@@ -36,31 +33,14 @@ import static com.amazonaws.regions.Regions.DEFAULT_REGION;
 import static org.nexial.core.NexialConst.S3_PATH_SEPARATOR;
 import static org.nexial.core.NexialConst.S3_PUBLIC_URL;
 
-public abstract class S3Support {
-    protected Logger logger = LoggerFactory.getLogger(getClass());
+public abstract class S3Support extends AwsSupport {
     protected String encoding;
-    protected boolean verbose;
-    protected String accessKey;
-    protected String secretKey;
-    protected Regions region;
     protected boolean s3PathStyleAccessEnabled;
 
     public void setEncoding(String encoding) { this.encoding = encoding; }
 
-    public void setVerbose(boolean verbose) { this.verbose = verbose;}
-
-    public void setAccessKey(String accessKey) { this.accessKey = accessKey;}
-
-    public void setSecretKey(String secretKey) { this.secretKey = secretKey;}
-
     public void setS3PathStyleAccessEnabled(boolean s3PathStyleAccessEnabled) {
         this.s3PathStyleAccessEnabled = s3PathStyleAccessEnabled;
-    }
-
-    public void setRegion(Regions region) { this.region = region;}
-
-    public boolean isReadyForUse() {
-        return StringUtils.isNotBlank(accessKey) && StringUtils.isNotBlank(secretKey) && region != null;
     }
 
     public String importToS3(File source, String targetPath, boolean removeLocal) throws IOException {

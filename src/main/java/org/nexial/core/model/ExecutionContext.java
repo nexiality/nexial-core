@@ -45,16 +45,19 @@ import org.apache.poi.xssf.usermodel.XSSFCell;
 import org.nexial.commons.utils.EnvUtils;
 import org.nexial.commons.utils.RegexUtils;
 import org.nexial.commons.utils.TextUtils;
+import org.nexial.core.ExecutionEventListener;
 import org.nexial.core.MemManager;
 import org.nexial.core.PluginManager;
 import org.nexial.core.TokenReplacementException;
 import org.nexial.core.aws.NexialS3Helper;
+import org.nexial.core.aws.TtsHelper;
 import org.nexial.core.excel.Excel;
 import org.nexial.core.excel.Excel.Worksheet;
 import org.nexial.core.excel.ExcelAddress;
 import org.nexial.core.excel.ext.CellTextReader;
 import org.nexial.core.plugins.NexialCommand;
 import org.nexial.core.plugins.pdf.CommonKeyValueIdentStrategies;
+import org.nexial.core.plugins.sound.SoundMachine;
 import org.nexial.core.reports.JenkinsVariables;
 import org.nexial.core.utils.ConsoleUtils;
 import org.nexial.core.utils.ExecutionLogger;
@@ -71,6 +74,7 @@ import static java.lang.System.lineSeparator;
 import static org.apache.commons.lang3.SystemUtils.IS_OS_WINDOWS;
 import static org.apache.commons.lang3.SystemUtils.USER_NAME;
 import static org.nexial.commons.utils.EnvUtils.enforceUnixEOL;
+import static org.nexial.core.NexialConst.BrowserStack.*;
 import static org.nexial.core.NexialConst.*;
 import static org.nexial.core.NexialConst.Data.*;
 import static org.nexial.core.NexialConst.FlowControls.OPT_STEP_BY_STEP;
@@ -83,6 +87,17 @@ import static org.nexial.core.excel.ext.CipherHelper.CRYPT_IND;
  * maintained.
  */
 public class ExecutionContext {
+    // data variables that are READ-ONLY and cannot be removed/altered
+    public static final List<String> READ_ONLY_VARS = Arrays.asList(
+        OPT_RUN_ID, OPT_RUN_ID_PREFIX, SPREADSHEET_PROGRAM, OPT_LAST_SCREENSHOT_NAME, OPT_LAST_OUTCOME,
+        MIN_EXEC_SUCCESS_RATE, RECORDER_TYPE, ITERATION, FALLBACK_TO_PREVIOUS, CURR_ITERATION, LAST_ITERATION,
+        OPT_RUN_PROGRAM_OUTPUT, BROWSER_WINDOW_SIZE, OPT_DELAY_BROWSER, BROWSER_IE_REQUIRE_WINDOW_FOCUS,
+        OPT_LAST_ALERT_TEXT, OPT_ALERT_IGNORE_FLAG, OPT_LAST_ALERT_TEXT, BROWER_INCOGNITO, KEY_AUTOMATEKEY,
+        KEY_USERNAME, KEY_BROWSER, KEY_BROWSER_VER, KEY_DEBUG, KEY_RESOLUTION, KEY_BUILD_NUM, KEY_ENABLE_LOCAL,
+        KEY_OS, KEY_OS_VER, SAFARI_CLEAN_SESSION, SAFARI_USE_TECH_PREVIEW, OPT_FORCE_IE_32, SELENIUM_IE_DRIVER,
+        SELENIUM_IE_LOG_LEVEL, SELENIUM_IE_LOG_LOGFILE, SELENIUM_IE_SILENT, "file.separator", "java.home",
+        "java.io.tmpdir", "java.version", "line.separator", "os.arch", "os.name", "os.version", "user.country",
+        "user.dir", "user.home", "user.language", "user.name", "user.timezone");
     private static final List<Class> SIMPLE_VALUES = Arrays.asList(Boolean.class, Byte.class, Short.class,
                                                                    Character.class, Integer.class, Long.class,
                                                                    Float.class, Double.class, String.class);
@@ -114,13 +129,18 @@ public class ExecutionContext {
     protected Map<String, Object> builtinFunctions;
     protected List<String> failfastCommands = new ArrayList<>();
     protected ExecutionLogger executionLogger;
-    protected NexialS3Helper s3Helper;
+    // output-to-cloud (otc) via AWS S3
+    protected NexialS3Helper otc;
+    protected SoundMachine dj;
+    // text-to-speech (tts) via AWS Polly
+    protected TtsHelper tts;
     protected Map<String, String> defaultContextProps;
 
     protected ClassPathXmlApplicationContext springContext;
     protected PluginManager plugins;
     protected Map<String, Object> data = new ListOrderedMap<>();
     protected ExpressionProcessor expression;
+    protected ExecutionEventListener executionEventListener;
 
     static final String KEY_COMPLEX = "__lAIxEn__";
     static final String DOT_LITERAL_REPLACER = "__53n7ry_4h34d__";
@@ -177,11 +197,22 @@ public class ExecutionContext {
         overrideIfSysPropFound(VERBOSE);
         overrideIfSysPropFound(TEXT_DELIM);
 
-        s3Helper = springContext.getBean("nexialS3Helper", NexialS3Helper.class);
-        s3Helper.setContext(this);
+        // otc=output-to-cloud
+        otc = springContext.getBean("otc", NexialS3Helper.class);
+        otc.setContext(this);
+
+        tts = springContext.getBean("tts", TtsHelper.class);
+        dj = new SoundMachine();
+        if (tts.isReadyForUse()) {
+            tts.init();
+            dj.setTts(tts);
+        }
+
         expression = new ExpressionProcessor(this);
 
         defaultContextProps = springContext.getBean("defaultContextProps", new HashMap<String, String>().getClass());
+
+        executionEventListener = new ExecutionEventListener(this);
     }
 
     public void useTestScript(File testScript) throws IOException {
@@ -245,19 +276,23 @@ public class ExecutionContext {
 
     public long getEndTimestamp() { return endTimestamp; }
 
-    public NexialS3Helper getS3Helper() throws IOException {
+    public NexialS3Helper getOtc() throws IOException {
         // check that the required properties are set
-        if (s3Helper == null || !s3Helper.isReadyForUse()) {
+        if (otc == null || !otc.isReadyForUse()) {
             throw new IOException("Nexial S3 helper not probably configured. Please contact support for more details.");
         }
-        return s3Helper;
+        return otc;
     }
+
+    public SoundMachine getDj() { return dj; }
 
     public NexialCommand findPlugin(String target) { return plugins.getPlugin(target); }
 
     public File getTestScript() { return testScript; }
 
     public List<TestScenario> getTestScenarios() { return testScenarios; }
+
+    public ExecutionEventListener getExecutionEventListener() { return executionEventListener; }
 
     public boolean isScreenshotOnError() { return getBooleanData(OPT_SCREENSHOT_ON_ERROR, false); }
 
@@ -291,6 +326,8 @@ public class ExecutionContext {
                                "), setting fail-immediate to true");
             setFailImmediate(true);
         }
+
+        executionEventListener.onError();
     }
 
     public int getFailAfter() { return getIntData(FAIL_AFTER, DEF_FAIL_AFTER); }
@@ -450,12 +487,26 @@ public class ExecutionContext {
         return props;
     }
 
+    public boolean isReadOnlyData(String var) {
+        return StringUtils.isBlank(var) || READ_ONLY_VARS.contains(var) || StringUtils.startsWith(var, "java.");
+    }
+
     /**
      * remove data variable both from context and system
      */
     public String removeData(String name) {
+        if (isReadOnlyData(name)) { return null; }
+
         Object removedObj = data.remove(name);
-        String removed = removedObj == null ? null : Objects.toString(removedObj);
+        String removed;
+        if (removedObj == null) {
+            removed = null;
+        } else {
+            removed = Objects.toString(removedObj);
+            // keep GC happy
+            removedObj = null;
+        }
+
         String removedFromSys = System.clearProperty(name);
         return StringUtils.isEmpty(removed) ? removedFromSys : removed;
     }

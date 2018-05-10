@@ -35,7 +35,7 @@ To see Nexial in action, watch this short demo showcasing how Nexial
 1. Download [Nexial distro](https://github.com/nexiality/nexial-core/releases)
 2. Follow the [installation guide](https://nexiality.github.io/documentation/userguide/InstallingNexial) (most steps are one-time work)
 3. Download the ["nexial-in-action" project](https://nexiality.github.io/documentation/nexial-in-action.zip) and unzip to local directory
-4. Run it:
+4. Run it:<br/>
    Mac/Linux:
 	```
 	cd <NEXIAL_HOME>/bin

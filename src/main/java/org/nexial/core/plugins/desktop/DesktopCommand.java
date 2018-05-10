@@ -168,7 +168,7 @@ public class DesktopCommand extends BaseCommand
 
         if (context.isOutputToCloud()) {
             try {
-                return context.getS3Helper().importMedia(file);
+                return context.getOtc().importMedia(file);
             } catch (IOException e) {
                 log("Unable to save " + file + " to cloud storage due to " + e.getMessage());
             }

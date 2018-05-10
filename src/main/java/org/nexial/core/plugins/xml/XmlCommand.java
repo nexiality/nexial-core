@@ -360,7 +360,7 @@ public class XmlCommand extends BaseCommand {
                 FileUtils.writeStringToFile(outputFile, output, DEF_FILE_ENCODING);
                 if (context.isOutputToCloud()) {
                     try {
-                        outFile = context.getS3Helper().importMedia(outputFile);
+                        outFile = context.getOtc().importMedia(outputFile);
                     } catch (IOException e) {
                         log("Unable to save " + outFile + " to cloud storage due to " + e.getMessage());
                     }

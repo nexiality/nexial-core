@@ -86,7 +86,7 @@ public class ContextScreenRecorder {
 
         if (videoFile != null && context != null) {
             String outputUrl = context.isOutputToCloud() ?
-                               context.getS3Helper().importMedia(new File(videoFile)) :
+                               context.getOtc().importMedia(new File(videoFile)) :
                                context.resolveRunModeSpecificUrl(videoFile);
             TestStep currentTestStep = context.getCurrentTestStep();
             if (currentTestStep != null) {

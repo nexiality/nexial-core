@@ -93,9 +93,11 @@
 	<bean id="sysdate" class="org.nexial.core.variable.Sysdate" init-method="init"/>
 	<bean id="syspath" class="org.nexial.core.variable.Syspath" init-method="init"/>
 	<bean id="array" class="org.nexial.core.variable.Array" init-method="init"/>
+	<bean id="execution" class="org.nexial.core.variable.Execution" init-method="init"/>
 	<util:map id="builtinFunctions" key-type="java.lang.String" value-type="java.lang.Object">
 		<entry key="count" value-ref="count"/>
 		<entry key="date" value-ref="date"/>
+		<entry key="execution" value-ref="execution"/>
 		<entry key="format" value-ref="format"/>
 		<entry key="projectfile" value-ref="projectfile"/>
 		<entry key="random" value-ref="random"/>
@@ -260,6 +262,9 @@
 		</entry>
 		<entry key="redis">
 			<bean class="org.nexial.core.plugins.redis.RedisCommand"/>
+		</entry>
+		<entry key="sound">
+			<bean class="org.nexial.core.plugins.sound.SoundCommand"/>
 		</entry>
 		<entry key="step">
 			<bean class="org.nexial.core.plugins.step.StepCommand"/>

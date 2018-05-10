@@ -30,16 +30,30 @@
 	<bean id="gsonBuilder" class="com.google.gson.GsonBuilder" init-method="setPrettyPrinting"/>
 	<bean id="gson" factory-bean="gsonBuilder" factory-method="create"/>
 
-	<bean id="nexialS3Helper" class="org.nexial.core.aws.NexialS3Helper" init-method="init"
+	<bean id="otc" class="org.nexial.core.aws.NexialS3Helper" init-method="init"
 	      p:encoding="UTF-8"
 	      p:outputBase="${nexial.outputCloudBase:}"
-	      p:accessKey="${nexialS3Helper.accessKey:}"
-	      p:secretKey="${nexialS3Helper.secretKey:}"
-	      p:s3PathStyleAccessEnabled="${nexialS3Helper.s3PathStyleAccessEnabled:true}"
+	      p:accessKey="${otc.accessKey:}"
+	      p:secretKey="${otc.secretKey:}"
+	      p:s3PathStyleAccessEnabled="${otc.s3PathStyleAccessEnabled:true}"
 	      p:verbose="false">
 		<property name="region">
 			<bean class="com.amazonaws.regions.Regions" factory-method="fromName">
-				<constructor-arg value="${nexialS3Helper.region:us-west-2}"/>
+				<constructor-arg value="${otc.region:us-east-1}"/>
+			</bean>
+		</property>
+	</bean>
+
+	<bean id="tts" class="org.nexial.core.aws.TtsHelper" scope="prototype"
+	      p:accessKey="${tts.accessKey:}"
+	      p:secretKey="${tts.secretKey:}"
+	      p:language="${tts.language:en-US}"
+	      p:sampleRate="${tts.sampleRate:22050}"
+	      p:voiceGenderString="${tts.voiceGender:Female}"
+	      p:verbose="false">
+		<property name="region">
+			<bean class="com.amazonaws.regions.Regions" factory-method="fromName">
+				<constructor-arg value="${tts.region:us-east-1}"/>
 			</bean>
 		</property>
 	</bean>

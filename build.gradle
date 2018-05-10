@@ -135,6 +135,7 @@ dependencies {
 	// support: aws
 	compile("com.amazonaws:aws-java-sdk-core:+")
 	compile("com.amazonaws:aws-java-sdk-s3:+")
+	compile("com.amazonaws:aws-java-sdk-polly:+")
 
 	// support: browsermob
 	compile("net.lightbody.bmp:browsermob-proxy:+")
@@ -213,6 +214,8 @@ dependencies {
 	compile("com.jcraft:jsch:+")
 
 	compile "org.jetbrains.kotlin:kotlin-stdlib-jdk8:$kotlin_version"
+
+	compile("com.googlecode.soundlibs:jlayer:1.0.1.4")
 
 	//	non-distributable libs
 	compile fileTree(dir: 'lib', include: '*.jar')

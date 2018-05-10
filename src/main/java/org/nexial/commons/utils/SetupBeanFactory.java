@@ -37,7 +37,7 @@ class SetupBeanFactory implements BeanFactoryAware {
         try {
             Class.forName("org.nexial.core.config.Setup");
         } catch (ClassNotFoundException e) {
-            ConsoleUtils.log("No predefined configurations found");
+            ConsoleUtils.log("No predefined nexial-setup found");
         } catch (Exception e) {
             ConsoleUtils.log("Exception is " + e.getMessage());
         }

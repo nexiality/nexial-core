@@ -167,11 +167,10 @@ public class TestScenario {
             //if (i == testScenarios.size() - 1 || failFast) { forceStopVideoRecording(); }
         }
 
-        if (interativeMode) {
-            // todo probably not in the right place.  Interactive mode would negate multiple test scenarios
-            doInteractive(context);
-            return allPass;
-        }
+        // if (interativeMode) {
+            // doInteractive(context);
+            // return allPass;
+        // }
 
         executionSummary.setEndTime(System.currentTimeMillis());
         executionSummary.setFailedFast(shouldFailFast);
@@ -267,14 +266,15 @@ public class TestScenario {
         if (lineCount == 1) { cellMerge.getRow().setHeightInPoints(20); }
     }
 
-    protected void doInteractive(ExecutionContext context) {
-        context.setData(OPT_EXCEL_FILE, context.getStringData(OPT_LAST_TEST_SCENARIO));
-        context.setData(OPT_EXCEL_WORKSHEET, context.getStringData(OPT_LAST_TEST_STEP));
+    // protected void doInteractive(ExecutionContext context) {
+        // todo probably not in the right place.  Interactive mode would negate multiple test scenarios
+        // context.setData(OPT_EXCEL_FILE, context.getStringData(OPT_LAST_TEST_SCENARIO));
+        // context.setData(OPT_EXCEL_WORKSHEET, context.getStringData(OPT_LAST_TEST_STEP));
         // todo: need to fix soon
         //InteractiveDispatcher dispatcher = execution.newInteractiveDispatcher();
         //dispatcher.setExecutor(this);
         //dispatcher.doPrompt();
-    }
+    // }
 
     protected void parse() {
         // 1. parse meta

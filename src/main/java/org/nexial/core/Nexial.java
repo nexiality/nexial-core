@@ -682,15 +682,15 @@ public class Nexial {
                 // summary.generateHtmlReport(htmlReport);
 
                 if (outputToCloud) {
-                    NexialS3Helper s3Helper = springContext.getBean("nexialS3Helper", NexialS3Helper.class);
-                    // can't use s3Helper.resolveOutputDir() since we are out of context at this point in time
+                    NexialS3Helper otc = springContext.getBean("otc", NexialS3Helper.class);
+                    // can't use otc.resolveOutputDir() since we are out of context at this point in time
                     String outputDir =
                         System.getProperty(OPT_CLOUD_OUTPUT_BASE) + "/" + project.getName() + "/" + runId;
 
                     try {
-                        s3Helper.importToS3(new File(jsonSummaryReport), outputDir, true);
-                        s3Helper.importToS3(new File(jsonDetailedReport), outputDir, true);
-                        // s3Helper.importToS3(new File(htmlReport), outputDir, true);
+                        otc.importToS3(new File(jsonSummaryReport), outputDir, true);
+                        otc.importToS3(new File(jsonDetailedReport), outputDir, true);
+                        // otc.importToS3(new File(htmlReport), outputDir, true);
                     } catch (IOException e) {
                         ConsoleUtils.error("Unable to save to cloud storage due to " + e.getMessage());
                     }

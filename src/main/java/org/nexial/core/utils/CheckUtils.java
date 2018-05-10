@@ -19,16 +19,25 @@ package org.nexial.core.utils;
 
 import java.io.File;
 import java.io.IOException;
+import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.Method;
+import java.util.Arrays;
+import java.util.List;
+import java.util.Map;
 
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang3.ArrayUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.math.NumberUtils;
-
 import org.nexial.commons.utils.FileUtil;
 import org.nexial.commons.utils.TextUtils;
 
+import static org.nexial.core.NexialConst.Jenkins.*;
+
 public class CheckUtils {
+    public static final List<String> JUNIT_CLASSES = Arrays.asList("org.junit.runner.JUnitCore",
+                                                                   "org.junit.runners.ParentRunner");
+
     public static boolean isValidVariable(String var) {
         return !StringUtils.isBlank(var) &&
                !TextUtils.isBetween(var, "${", "}") &&
@@ -116,5 +125,33 @@ public class CheckUtils {
         return lowerRange < upperRange ?
                (num >= lowerRange && num <= upperRange) :
                (num >= upperRange && num <= lowerRange);
+    }
+
+    /** determine if we are running under CI (Jenkins) using current system properties */
+    public static boolean isRunningInCi() {
+        Map<String, String> environments = System.getenv();
+        return StringUtils.isNotBlank(environments.get(OPT_JENKINS_URL)) &&
+               StringUtils.isNotBlank(environments.get(OPT_JENKINS_HOME)) &&
+               StringUtils.isNotBlank(environments.get(OPT_BUILD_ID)) &&
+               StringUtils.isNotBlank(environments.get(OPT_BUILD_URL));
+    }
+
+    /** determine if we are running under JUnit framework */
+    public static boolean isRunningInJUnit() {
+        ClassLoader cl = ClassLoader.getSystemClassLoader();
+
+        // am i running via junit?
+        for (String junitClass : JUNIT_CLASSES) {
+            try {
+                Method m = ClassLoader.class.getDeclaredMethod("findLoadedClass", String.class);
+                m.setAccessible(true);
+                Object loaded = m.invoke(cl, junitClass);
+                if (loaded != null) { return true; }
+            } catch (NoSuchMethodException | IllegalAccessException | InvocationTargetException e) {
+                // probably not loaded... ignore error; it's probably not critical...
+            }
+        }
+
+        return false;
     }
 }

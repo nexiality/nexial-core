@@ -82,8 +82,6 @@ public final class NexialConst {
     public static final String OPT_EXCEL_FILE = NAMESPACE + "excel";
     public static final String OPT_EXCEL_WORKSHEET = NAMESPACE + "worksheet";
     public static final String OPT_INPUT_EXCEL_FILE = NAMESPACE + "inputExcel";
-    public static final String OPT_LAST_TEST_SCENARIO = NAMESPACE + "lastTestScenario";
-    public static final String OPT_LAST_TEST_STEP = NAMESPACE + "lastTestStep";
     public static final String OPT_SUITE_PROP = NAMESPACE + "suite";
 
     // selenium specific
@@ -749,6 +747,7 @@ public final class NexialConst {
         public static final String SOUND_ON_ERROR = SOUND_ON + "Error";
         public static final String SOUND_ON_PAUSE = SOUND_ON + "Pause";
         public static final String SOUND_ON_COMPLETE = SOUND_ON + "Complete";
+        public static final String TTS_PREFIX = "tts:";
 
         public static final Map<String, String> SCOPE_SETTING_DEFAULTS = TextUtils.toMap(
             ITERATION + "=1\n" +

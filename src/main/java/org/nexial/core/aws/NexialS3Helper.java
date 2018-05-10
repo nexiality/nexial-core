@@ -69,9 +69,9 @@ public class NexialS3Helper extends S3Support {
     }
 
     protected void init() {
-        if (StringUtils.isBlank(outputBase)) { ConsoleUtils.log("outputBase not set; output-to-cloud WILL NOT WORK!"); }
-        if (StringUtils.isBlank(accessKey)) { ConsoleUtils.log("accessKey not set; output-to-cloud WILL NOT WORK!"); }
-        if (StringUtils.isBlank(secretKey)) { ConsoleUtils.log("secretKey not set; output-to-cloud WILL NOT WORK!"); }
+        if (StringUtils.isBlank(outputBase)) { ConsoleUtils.log("outputBase not set; output-to-cloud DISABLED!"); }
+        if (StringUtils.isBlank(accessKey)) { ConsoleUtils.log("accessKey not set; output-to-cloud DISABLED!"); }
+        if (StringUtils.isBlank(secretKey)) { ConsoleUtils.log("secretKey not set; output-to-cloud DISABLED!"); }
         if (region == null) { ConsoleUtils.log("region not set; default to " + DEFAULT_REGION); }
     }
 

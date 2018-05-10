@@ -36,8 +36,10 @@ import org.junit.Test;
 import org.nexial.commons.utils.FileUtil;
 import org.nexial.commons.utils.ResourceUtils;
 import org.nexial.commons.utils.TextUtils;
+import org.nexial.core.ExecutionThread;
 import org.nexial.core.NexialTestUtils;
 import org.nexial.core.excel.Excel.Worksheet;
+import org.nexial.core.model.ExecutionContext;
 import org.nexial.core.utils.InputFileUtils;
 
 import static java.io.File.separator;
@@ -159,6 +161,13 @@ public class MergeMacroManualTest {
 
         protected List<List<String>> harvestMacroSteps(String paramFile, String paramSheet, String paramMacro)
             throws IOException {
+
+            ExecutionContext context = ExecutionThread.get();
+            if (context != null) {
+                paramFile = context.replaceTokens(paramFile);
+                paramSheet = context.replaceTokens(paramSheet);
+                paramMacro = context.replaceTokens(paramMacro);
+            }
 
             File macroFile;
             if (FileUtil.isFileReadable(paramFile, 5000)) {

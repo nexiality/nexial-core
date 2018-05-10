@@ -31,7 +31,6 @@ import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.time.StopWatch;
 import org.junit.runner.Result;
 import org.junit.runner.notification.Failure;
-
 import org.nexial.commons.logging.LogbackUtils;
 import org.nexial.core.aws.NexialS3Helper;
 import org.nexial.core.excel.Excel;
@@ -154,6 +153,8 @@ public final class ExecutionThread extends Thread {
                 iterSummary.setTestScript(testScript);
                 context.useTestScript(testScript);
                 context.setData(CURR_ITERATION, currIteration);
+
+                if (currIteration == 1) { context.getExecutionEventListener().onScriptStart(); }
 
                 ExecutionLogger logger = context.getLogger();
                 logger.log(context, "executing iteration #" + currIteration +
@@ -307,7 +308,7 @@ public final class ExecutionThread extends Thread {
         StringBuilder cloudOutputBuffer = new StringBuilder();
         if (context.isOutputToCloud()) {
             try {
-                NexialS3Helper s3Helper = context.getS3Helper();
+                NexialS3Helper otc = context.getOtc();
 
                 // when saving test output to cloud, we might NOT want to remove it locally - esp. when assistant-mode is on
                 boolean removeLocal = !isAutoOpenResult();
@@ -315,12 +316,13 @@ public final class ExecutionThread extends Thread {
                 summary.getNestedExecutions().forEach(nested -> {
                     File testScript = nested.getTestScript();
                     try {
-                        String testScriptUrl = s3Helper.importFile(testScript, removeLocal);
+                        String testScriptUrl = otc.importFile(testScript, removeLocal);
                         nested.setTestScriptLink(testScriptUrl);
-                        cloudOutputBuffer.append("» Iteration ").append(nested.getName()).append(": ").append(testScriptUrl)
-                                         .append("\n");
+                        cloudOutputBuffer.append("» Iteration ").append(nested.getName()).append(": ")
+                                         .append(testScriptUrl).append("\n");
                     } catch (IOException e) {
-                        ConsoleUtils.error("Unable to save " + testScript + " to cloud storage due to " + e.getMessage());
+                        ConsoleUtils.error("Unable to save " + testScript + " to cloud storage due to " +
+                                           e.getMessage());
                     }
                 });
             } catch (IOException e) {
@@ -341,6 +343,9 @@ public final class ExecutionThread extends Thread {
                          "» Error(s):       " + summary.getFailCount() + "\n" +
                          //"» Warnings:       " + summary.getWarnCount() + "\n" +
                          StringUtils.defaultIfBlank(cloudOutput, "") + "\n\n");
+
+        context.getExecutionEventListener().onScriptComplete();
+
         MemManager.gc(execDef);
     }
 

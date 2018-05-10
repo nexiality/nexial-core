@@ -47,9 +47,7 @@ public class MockExecutionContext extends ExecutionContext {
     protected Map<String, NexialCommand> plugins = new HashMap<>();
     protected String projectHome;
 
-    public MockExecutionContext() {
-        this(false);
-    }
+    public MockExecutionContext() { this(false); }
 
     public MockExecutionContext(boolean withSpring) {
         super();
@@ -67,7 +65,7 @@ public class MockExecutionContext extends ExecutionContext {
             this.springContext = new ClassPathXmlApplicationContext("classpath:/nexial.xml");
             this.failfastCommands = springContext.getBean("failfastCommands", new ArrayList<String>().getClass());
             this.builtinFunctions = springContext.getBean("builtinFunctions", new HashMap<String, Object>().getClass());
-            this.s3Helper = springContext.getBean("nexialS3Helper", NexialS3Helper.class);
+            this.otc = springContext.getBean("otc", NexialS3Helper.class);
         }
 
         expression = new ExpressionProcessor(this);

@@ -275,7 +275,7 @@ public class ExecutionSummary {
 
             if (!context.isOutputToCloud()) { return; }
             try {
-                executionLog = context.getS3Helper().importLog(new File(executionLog), false);
+                executionLog = context.getOtc().importLog(new File(executionLog), false);
             } catch (IOException e) {
                 ConsoleUtils.error("Unable to save " + executionLog + " to cloud storage due to " + e.getMessage());
             }

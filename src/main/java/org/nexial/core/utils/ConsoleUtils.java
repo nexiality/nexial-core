@@ -17,12 +17,9 @@
 
 package org.nexial.core.utils;
 
-import java.lang.reflect.InvocationTargetException;
-import java.lang.reflect.Method;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
-import java.util.Map;
 import java.util.Scanner;
 
 import org.apache.commons.collections4.CollectionUtils;
@@ -31,13 +28,13 @@ import org.apache.commons.lang3.tuple.ImmutablePair;
 import org.apache.commons.lang3.tuple.Pair;
 import org.nexial.commons.logging.LogbackUtils;
 import org.nexial.commons.utils.DateUtility;
+import org.nexial.core.ExecutionEventListener;
 import org.nexial.core.model.ExecutionContext;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.slf4j.event.Level;
 
 import static org.nexial.core.NexialConst.FlowControls.*;
-import static org.nexial.core.NexialConst.Jenkins.*;
 import static org.slf4j.event.Level.ERROR;
 import static org.slf4j.event.Level.INFO;
 
@@ -48,8 +45,6 @@ import static org.slf4j.event.Level.INFO;
 public final class ConsoleUtils {
     private static final Logger LOGGER = LoggerFactory.getLogger(ConsoleUtils.class);
     private static final List<Pair<Level, String>> PRE_EXEC_READY_BUFFER = new ArrayList<>();
-    private static final List<String> JUNIT_CLASSES = Arrays.asList("org.junit.runner.JUnitCore",
-                                                                    "org.junit.runners.ParentRunner");
 
     private ConsoleUtils() { }
 
@@ -69,6 +64,9 @@ public final class ConsoleUtils {
 
     public static void pause(ExecutionContext context, String msg) {
         if (!isPauseReady()) { return; }
+
+        ExecutionEventListener listener = context.getExecutionEventListener();
+        listener.onPause();
 
         if (context != null && context.getBooleanData(OPT_INSPECT_ON_PAUSE, DEF_INSPECT_ON_PAUSE)) {
             // inspect mode
@@ -93,11 +91,16 @@ public final class ConsoleUtils {
             Scanner in = new Scanner(System.in);
             in.nextLine();
         }
+
+        listener.afterPause();
     }
 
     public static void pauseForStep(ExecutionContext context, String instructions) {
         // not applicable when running in Jenkins environment
         if (!isPauseReady()) { return; }
+
+        ExecutionEventListener listener = context.getExecutionEventListener();
+        listener.onPause();
 
         System.out.println("\n");
         System.out.println("/------------------------------------------------------------------------------\\");
@@ -112,11 +115,16 @@ public final class ConsoleUtils {
 
         Scanner in = new Scanner(System.in);
         in.nextLine();
+
+        listener.afterPause();
     }
 
     public static String pauseToValidate(ExecutionContext context, String instructions, String possibleResponses) {
         // not applicable when running in Jenkins environment
         if (!isPauseReady()) { return null; }
+
+        ExecutionEventListener listener = context.getExecutionEventListener();
+        listener.onPause();
 
         System.out.println("\n");
         System.out.println("/------------------------------------------------------------------------------\\");
@@ -138,12 +146,19 @@ public final class ConsoleUtils {
         System.out.printf(" > %s: ", responses);
 
         Scanner in = new Scanner(System.in);
-        return in.nextLine();
+        String input = in.nextLine();
+
+        listener.afterPause();
+
+        return input;
     }
 
     public static String pauseForInput(ExecutionContext context, String prompt) {
         // not applicable when running in Jenkins environment
         if (!isPauseReady()) { return null; }
+
+        ExecutionEventListener listener = context.getExecutionEventListener();
+        listener.onPause();
 
         System.out.println("\n");
         System.out.println("/------------------------------------------------------------------------------\\");
@@ -157,7 +172,11 @@ public final class ConsoleUtils {
         System.out.print("> ");
 
         Scanner in = new Scanner(System.in);
-        return in.nextLine();
+        String input = in.nextLine();
+
+        listener.afterPause();
+
+        return input;
     }
 
     @SuppressWarnings("PMD.SystemPrintln")
@@ -196,43 +215,17 @@ public final class ConsoleUtils {
     }
 
     protected static boolean isPauseReady() {
-        if (isRunningInCi()) {
+        if (CheckUtils.isRunningInCi()) {
             log("SKIPPING pause-for-step since we are running in CI");
             return false;
         }
 
-        if (isRunningInJUnit()) {
+        if (CheckUtils.isRunningInJUnit()) {
             log("SKIPPING pause-for-step since we are running in JUnit");
             return false;
         }
 
         return true;
-    }
-
-    protected static boolean isRunningInCi() {
-        Map<String, String> environments = System.getenv();
-        return StringUtils.isNotBlank(environments.get(OPT_JENKINS_URL)) &&
-               StringUtils.isNotBlank(environments.get(OPT_JENKINS_HOME)) &&
-               StringUtils.isNotBlank(environments.get(OPT_BUILD_ID)) &&
-               StringUtils.isNotBlank(environments.get(OPT_BUILD_URL));
-    }
-
-    protected static boolean isRunningInJUnit() {
-        ClassLoader cl = ClassLoader.getSystemClassLoader();
-
-        // am i running via junit?
-        for (String junitClass : JUNIT_CLASSES) {
-            try {
-                Method m = ClassLoader.class.getDeclaredMethod("findLoadedClass", String.class);
-                m.setAccessible(true);
-                Object loaded = m.invoke(cl, junitClass);
-                if (loaded != null) { return true; }
-            } catch (NoSuchMethodException | IllegalAccessException | InvocationTargetException e) {
-                // probably not loaded... ignore error; it's probably not critical...
-            }
-        }
-
-        return false;
     }
 
     private static void logAs(Level logLevel, String message) {

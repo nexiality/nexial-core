@@ -1188,7 +1188,7 @@ public class WebCommand extends BaseCommand implements CanTakeScreenshot, CanLog
 
         if (context.isOutputToCloud()) {
             try {
-                return context.getS3Helper().importMedia(screenshotFile);
+                return context.getOtc().importMedia(screenshotFile);
             } catch (IOException e) {
                 log("Unable to save " + screenshotFile + " to cloud storage due to " + e.getMessage());
             }

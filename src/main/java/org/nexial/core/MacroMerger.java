@@ -34,6 +34,8 @@ import org.nexial.core.excel.Excel;
 import org.nexial.core.excel.Excel.Worksheet;
 import org.nexial.core.excel.ExcelAddress;
 import org.nexial.core.excel.ExcelArea;
+import org.nexial.core.model.ExecutionContext;
+import org.nexial.core.model.ExecutionDefinition;
 import org.nexial.core.model.TestProject;
 import org.nexial.core.utils.ConsoleUtils;
 import org.nexial.core.utils.InputFileUtils;
@@ -50,12 +52,19 @@ public class MacroMerger {
     private static final Map<String, List<List<String>>> MACRO_CACHE = new HashMap<>();
 
     private Excel excel;
+    private ExecutionDefinition execDef;
     private TestProject project;
+    private int currentIteration;
 
-    protected void mergeMacro(Excel excel, TestProject project) throws IOException {
-        this.excel = excel;
-        this.project = project;
+    public void setExecDef(ExecutionDefinition execDef) { this.execDef = execDef; }
 
+    public void setProject(TestProject project) { this.project = project; }
+
+    public void setCurrentIteration(int currentIteration) { this.currentIteration = currentIteration; }
+
+    public void setExcel(Excel excel) { this.excel = excel; }
+
+    protected void mergeMacro() throws IOException {
         excel.getWorkbook().setMissingCellPolicy(CREATE_NULL_AS_BLANK);
 
         // find all scenario sheets
@@ -143,8 +152,7 @@ public class MacroMerger {
             int targetRowIdx = ADDR_COMMAND_START.getRowStartIndex() + i;
             XSSFRow excelRow = excelSheet.createRow(targetRowIdx);
             for (int j = 0; j < testStepRow.size(); j++) {
-                String cellValue = testStepRow.get(j);
-                excelRow.createCell(j, STRING).setCellValue(cellValue);
+                excelRow.createCell(j, STRING).setCellValue(testStepRow.get(j));
             }
         }
     }
@@ -168,12 +176,22 @@ public class MacroMerger {
     protected List<List<String>> harvestMacroSteps(String paramFile, String paramSheet, String paramMacro)
         throws IOException {
 
+        ExecutionContext context = ExecutionThread.get();
+        if (context != null) {
+            Map<String, String> iterationData = execDef.getTestData().getAllValue(currentIteration);
+            iterationData.forEach(context::setData);
+            paramFile = context.replaceTokens(paramFile);
+            paramSheet = context.replaceTokens(paramSheet);
+            paramMacro = context.replaceTokens(paramMacro);
+        }
+
         // macro library can be specified as full path or relative path
         File macroFile;
         if (FileUtil.isFileReadable(paramFile, 5000)) {
             macroFile = new File(paramFile);
         } else {
-            String macroFilePath = StringUtils.appendIfMissing(project.getScriptPath(), separator) + paramFile;
+            String macroFilePath = StringUtils.appendIfMissing(
+                StringUtils.appendIfMissing(project.getScriptPath(), separator) + paramFile, ".xlsx");
             macroFile = new File(macroFilePath);
         }
 
