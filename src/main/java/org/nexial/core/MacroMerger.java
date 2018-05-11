@@ -150,6 +150,11 @@ public class MacroMerger {
         for (int i = 0; i < allTestSteps.size(); i++) {
             List<String> testStepRow = allTestSteps.get(i);
             int targetRowIdx = ADDR_COMMAND_START.getRowStartIndex() + i;
+
+            // if (excelSheet.getRow(targetRowIdx) != null) {
+            //     excelSheet.shiftRows(targetRowIdx, targetRowIdx, 1, true, false);
+            // }
+
             XSSFRow excelRow = excelSheet.createRow(targetRowIdx);
             for (int j = 0; j < testStepRow.size(); j++) {
                 excelRow.createCell(j, STRING).setCellValue(testStepRow.get(j));
@@ -192,6 +197,9 @@ public class MacroMerger {
         } else {
             String macroFilePath = StringUtils.appendIfMissing(
                 StringUtils.appendIfMissing(project.getScriptPath(), separator) + paramFile, ".xlsx");
+            if (!FileUtil.isFileReadable(macroFilePath, 5000)) {
+                throw new IOException("Unable to read macro file '" + macroFilePath + "'");
+            }
             macroFile = new File(macroFilePath);
         }
 
@@ -234,6 +242,8 @@ public class MacroMerger {
         }
 
         if (macroFound && !macroSteps.isEmpty()) { MACRO_CACHE.put(macroKey, macroSteps); }
+
+        if (!MACRO_CACHE.containsKey(macroKey)) { ConsoleUtils.error("Unable to resolve macro via " + macroKey); }
 
         return MACRO_CACHE.get(macroKey);
     }

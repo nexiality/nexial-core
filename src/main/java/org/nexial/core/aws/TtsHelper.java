@@ -33,8 +33,6 @@ import com.amazonaws.services.polly.model.*;
 import javazoom.jl.decoder.JavaLayerException;
 import javazoom.jl.player.FactoryRegistry;
 import javazoom.jl.player.advanced.AdvancedPlayer;
-import javazoom.jl.player.advanced.PlaybackEvent;
-import javazoom.jl.player.advanced.PlaybackListener;
 
 import static com.amazonaws.services.polly.model.TextType.Ssml;
 
@@ -93,6 +91,7 @@ public class TtsHelper extends AwsSupport {
             // for EN-GR, this would be Emma
             // for EU-US, this would be Salli
             voice = describeVoicesResult.getVoices().get(0);
+            // todo: not yet implemented... need to convert to voice id
             voice.setGender(voiceGender);
         }
     }
@@ -103,18 +102,19 @@ public class TtsHelper extends AwsSupport {
         //get the audio stream and create an MP3 player
         AdvancedPlayer player =
             new AdvancedPlayer(synthesize(text), FactoryRegistry.systemRegistry().createAudioDevice());
-        player.setPlayBackListener(new PlaybackListener() {
-            @Override
-            public void playbackStarted(PlaybackEvent evt) {
-                System.out.println("Playback started");
-                System.out.println(text);
-            }
-
-            @Override
-            public void playbackFinished(PlaybackEvent evt) {
-                System.out.println("Playback finished");
-            }
-        });
+        // todo: need better strategy
+        // player.setPlayBackListener(new PlaybackListener() {
+        //     @Override
+        //     public void playbackStarted(PlaybackEvent evt) {
+        //         System.out.println("Playback started");
+        //         System.out.println(text);
+        //     }
+        //
+        //     @Override
+        //     public void playbackFinished(PlaybackEvent evt) {
+        //         System.out.println("Playback finished");
+        //     }
+        // });
 
         if (wait) {
             player.play();
