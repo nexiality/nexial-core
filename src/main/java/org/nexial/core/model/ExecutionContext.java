@@ -132,8 +132,6 @@ public class ExecutionContext {
     // output-to-cloud (otc) via AWS S3
     protected NexialS3Helper otc;
     protected SoundMachine dj;
-    // text-to-speech (tts) via AWS Polly
-    protected TtsHelper tts;
     protected Map<String, String> defaultContextProps;
 
     protected ClassPathXmlApplicationContext springContext;
@@ -197,11 +195,12 @@ public class ExecutionContext {
         overrideIfSysPropFound(VERBOSE);
         overrideIfSysPropFound(TEXT_DELIM);
 
-        // otc=output-to-cloud
+        // otc=output-to-cloud (S3)
         otc = springContext.getBean("otc", NexialS3Helper.class);
         otc.setContext(this);
 
-        tts = springContext.getBean("tts", TtsHelper.class);
+        // text-to-speech (tts) via AWS Polly
+        TtsHelper tts = springContext.getBean("tts", TtsHelper.class);
         dj = new SoundMachine();
         if (tts.isReadyForUse()) {
             tts.init();
@@ -319,7 +318,7 @@ public class ExecutionContext {
         int execFailCount = getIntData(EXECUTION_FAIL_COUNT, 0) + 1;
         setData(EXECUTION_FAIL_COUNT, execFailCount);
 
-        // determine if fail-immediate is emminent
+        // determine if fail-immediate is eminent
         int failAfter = getFailAfter();
         if (failAfter != -1 && execFailCount >= failAfter) {
             ConsoleUtils.error("execution fail count (" + execFailCount + ") exceeds fail-after limit (" + failAfter +
@@ -1108,20 +1107,20 @@ public class ExecutionContext {
     }
 
     protected String invokeFunction(String token) {
-        if (StringUtils.countMatches(token, "|") < 1) {
+        if (StringUtils.countMatches(token, FUNCTION_PARAM_SEP) < 1) {
             throw new IllegalArgumentException("reference to a built-in function NOT shown via the $(...|...) format");
         }
 
         String errorPrefix = "Invalid built-in function " + TOKEN_FUNCTION_START + token + TOKEN_FUNCTION_END;
 
-        String beanName = StringUtils.substringBefore(token, "|");
-        token = StringUtils.substringAfter(token, "|");
+        String beanName = StringUtils.substringBefore(token, FUNCTION_PARAM_SEP);
+        token = StringUtils.substringAfter(token, FUNCTION_PARAM_SEP);
 
-        String methodName = StringUtils.substringBefore(token, "|");
-        token = StringUtils.substringAfter(token, "|");
+        String methodName = StringUtils.substringBefore(token, FUNCTION_PARAM_SEP);
+        token = StringUtils.substringAfter(token, FUNCTION_PARAM_SEP);
 
         token = replaceTokens(token);
-        String[] params = StringUtils.split(token, "|");
+        String[] params = StringUtils.split(token, FUNCTION_PARAM_SEP);
 
         errorPrefix += " with " + ArrayUtils.getLength(params) + " parameters - ";
 
@@ -1155,7 +1154,6 @@ public class ExecutionContext {
         if (!StringUtils.contains(tokenStart, TOKEN_FUNCTION_END)) { return null; }
 
         String token = StringUtils.substringBefore(tokenStart, TOKEN_FUNCTION_END);
-        // String token = StringUtils.substringBetween(StringUtils.substring(text, startsFrom), TOKEN_FUNCTION_START, TOKEN_FUNCTION_END);
 
         if (StringUtils.isBlank(token)) { return null; }
         if (isFunction(token)) { return token; }

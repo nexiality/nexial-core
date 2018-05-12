@@ -35,6 +35,7 @@ import javazoom.jl.player.FactoryRegistry;
 import javazoom.jl.player.advanced.AdvancedPlayer;
 
 import static com.amazonaws.services.polly.model.TextType.Ssml;
+import static org.nexial.core.NexialConst.Data.MAX_TTS_LENGTH;
 
 /**
  * proxy class to interact with AWS Polly (Text-to-Speech)
@@ -98,6 +99,11 @@ public class TtsHelper extends AwsSupport {
 
     public void speak(String text, boolean wait) throws JavaLayerException {
         if (StringUtils.isBlank(text)) { throw new IllegalArgumentException("No text is found; tts aborted"); }
+
+        if (StringUtils.length(text) > MAX_TTS_LENGTH) {
+            ConsoleUtils.log("truncating TTS text to " + MAX_TTS_LENGTH + " characters");
+            text = StringUtils.truncate(text, MAX_TTS_LENGTH);
+        }
 
         //get the audio stream and create an MP3 player
         AdvancedPlayer player =

@@ -19,9 +19,11 @@ package org.nexial.core.variable;
 import java.io.File;
 
 import org.apache.commons.lang3.StringUtils;
+import org.jetbrains.annotations.NotNull;
 import org.nexial.core.ExecutionThread;
 import org.nexial.core.NexialConst.Data;
 import org.nexial.core.model.ExecutionContext;
+import org.nexial.core.model.ExecutionDefinition;
 import org.nexial.core.model.TestCase;
 import org.nexial.core.model.TestScenario;
 import org.nexial.core.model.TestStep;
@@ -67,14 +69,7 @@ public class Execution {
         ExecutionContext context = ExecutionThread.get();
         if (context == null) { return null; }
 
-        String testScriptName =
-            StringUtils.removeEndIgnoreCase(new File(context.getExecDef().getTestScript()).getName(), ".xlsx");
-
-        File testScript = new File(context.getStringData(OPT_INPUT_EXCEL_FILE));
-
         TestStep currentStep = context.getCurrentTestStep();
-        TestCase activity = currentStep == null ? null : currentStep.getTestCase();
-        TestScenario scenario = activity == null ? null : activity.getTestScenario();
 
         String error = "Invalid function: $(execution|" + scope + "|" + metadata + ")";
 
@@ -106,9 +101,9 @@ public class Execution {
                     case index:
                         return currentStep.getRowIndex() + "";
                     case name:
-                        return "[" + testScriptName + "]" +
-                               "[" + scenario.getName() + "]" +
-                               "[" + activity.getName() + "]" +
+                        return "[" + resolveScriptName(context) + "]" +
+                               "[" + resolveScenario(currentStep) + "]" +
+                               "[" + resolveActivity(currentStep) + "]" +
                                "[ROW " + currentStep.getRowIndex() + "]";
                     case fullpath:
                     default:
@@ -118,14 +113,15 @@ public class Execution {
             }
 
             case activity: {
-                if (activity == null) {
+                String activityName = resolveActivity(currentStep);
+                if (StringUtils.isBlank(activityName)) {
                     ConsoleUtils.error(error + " current activity cannot be determined");
                     return "";
                 }
 
                 switch (metadata) {
                     case name:
-                        return activity.getName();
+                        return activityName;
                     case fullpath:
                     case index:
                     default:
@@ -135,14 +131,15 @@ public class Execution {
             }
 
             case scenario: {
-                if (scenario == null) {
+                String scenarioNam = resolveScenario(currentStep);
+                if (StringUtils.isBlank(scenarioNam)) {
                     ConsoleUtils.error(error + " current scenario cannot be determined");
                     return "";
                 }
 
                 switch (metadata) {
                     case name:
-                        return scenario.getName();
+                        return resolveScenario(currentStep);
                     case fullpath:
                     case index:
                     default:
@@ -166,9 +163,12 @@ public class Execution {
             case script: {
                 switch (metadata) {
                     case name:
-                        return testScriptName;
-                    case fullpath:
-                        return testScript.getAbsolutePath();
+                        return resolveScriptName(context);
+                    case fullpath: {
+                        String excelFile = context.getStringData(OPT_INPUT_EXCEL_FILE);
+                        if (StringUtils.isNotEmpty(excelFile)) { return new File(excelFile).getAbsolutePath(); }
+
+                    }
                     case index:
                     default:
                         ConsoleUtils.error(error);
@@ -178,5 +178,37 @@ public class Execution {
         }
 
         return null;
+    }
+
+    @NotNull
+    private String resolveScriptName(ExecutionContext context) {
+        ExecutionDefinition execDef = context.getExecDef();
+        if (execDef == null) { return ""; }
+
+        String testScript = execDef.getTestScript();
+        if (testScript == null) { return ""; }
+
+        return StringUtils.removeEndIgnoreCase(new File(testScript).getName(), ".xlsx");
+    }
+
+    @NotNull
+    private String resolveScenario(TestStep step) {
+        if (step == null) { return "";}
+
+        TestCase activity = step.getTestCase();
+        if (activity == null) { return ""; }
+
+        TestScenario scenario = activity.getTestScenario();
+        return scenario == null ? "" : scenario.getName();
+    }
+
+    @NotNull
+    private String resolveActivity(TestStep currentStep) {
+        if (currentStep == null) { return ""; }
+
+        TestCase activity = currentStep.getTestCase();
+        if (activity == null) { return ""; }
+
+        return activity.getName();
     }
 }

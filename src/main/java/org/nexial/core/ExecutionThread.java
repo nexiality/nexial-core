@@ -187,8 +187,8 @@ public final class ExecutionThread extends Thread {
             }
         }
 
-        ExecutionThread.unset();
         onScriptComplete(context, executionSummary, iterationManager, ticktock);
+        ExecutionThread.unset();
         MemManager.recordMemoryChanges(scriptName + " completed");
     }
 

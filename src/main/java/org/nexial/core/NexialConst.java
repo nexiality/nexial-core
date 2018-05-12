@@ -294,11 +294,10 @@ public final class NexialConst {
     public static final String DEFERED_TOKEN_END = "}";
     public static final String CTRL_KEY_START = "{";
     public static final String CTRL_KEY_END = "}";
-    // public static final String TEST_STEP_PREFIX = "test.";
-    // public static final String REGEX_SCRIPT_WITH_STEPNAME = "(.*\\.xlsx)(\\" + TOKEN_ARRAY_START + ".+\\" + TOKEN_ARRAY_END + ")";
 
     // regex for built-in function
     public static final String REGEX_DYNAMIC_VARIABLE_VALUE = "([\\w]+)\\|([\\w]+)(\\|(.+)+)*";
+    public static final String FUNCTION_PARAM_SEP = "|";
 
     public static final String REGEX_VALID_WEB_PROTOCOL = "(http|https|ftp|file|about)\\:.+";
     public static final String CMD_VERBOSE = "base.verbose(text)";
@@ -748,6 +747,7 @@ public final class NexialConst {
         public static final String SOUND_ON_PAUSE = SOUND_ON + "Pause";
         public static final String SOUND_ON_COMPLETE = SOUND_ON + "Complete";
         public static final String TTS_PREFIX = "tts:";
+        public static final int MAX_TTS_LENGTH = 500;
 
         public static final Map<String, String> SCOPE_SETTING_DEFAULTS = TextUtils.toMap(
             ITERATION + "=1\n" +
