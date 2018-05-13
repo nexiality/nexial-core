@@ -284,10 +284,6 @@ public final class NexialConst {
     // token specific
     public static final String TOKEN_START = "${";
     public static final String TOKEN_END = "}";
-    public static final String TOKEN_FUNCTION_START = "$(";
-    public static final String TOKEN_FUNCTION_END = ")";
-    public static final String TOKEN_DEFUNC_START = "~!~5En7ryR0cks![[";
-    public static final String TOKEN_DEFUNC_END = "]]~!~";
     public static final String TOKEN_ARRAY_START = "[";
     public static final String TOKEN_ARRAY_END = "]";
     public static final String DEFERED_TOKEN_START = "${";
@@ -296,8 +292,14 @@ public final class NexialConst {
     public static final String CTRL_KEY_END = "}";
 
     // regex for built-in function
-    public static final String REGEX_DYNAMIC_VARIABLE_VALUE = "([\\w]+)\\|([\\w]+)(\\|(.+)+)*";
-    public static final String FUNCTION_PARAM_SEP = "|";
+    public static final String TOKEN_FUNCTION_START = "$(";
+    public static final String TOKEN_FUNCTION_END = ")";
+    public static final String TOKEN_DEFUNC_START = "~!~n3x!4LR0cks![[";
+    public static final String TOKEN_DEFUNC_END = "]]~!~";
+    public static final String TOKEN_PARAM_SEP = "|";
+    public static final String REGEX_FUNCTION = "([\\w]+)\\" + TOKEN_PARAM_SEP +
+                                                "([\\w]+)(\\" + TOKEN_PARAM_SEP + "(.+)+)*";
+    public static final String TOKEN_TEMP_DELIM = "~!@1I4n3x@!~";
 
     public static final String REGEX_VALID_WEB_PROTOCOL = "(http|https|ftp|file|about)\\:.+";
     public static final String CMD_VERBOSE = "base.verbose(text)";

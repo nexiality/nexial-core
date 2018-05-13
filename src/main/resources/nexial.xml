@@ -95,6 +95,7 @@
 	<bean id="array" class="org.nexial.core.variable.Array" init-method="init"/>
 	<bean id="execution" class="org.nexial.core.variable.Execution" init-method="init"/>
 	<util:map id="builtinFunctions" key-type="java.lang.String" value-type="java.lang.Object">
+		<entry key="array" value-ref="array"/>
 		<entry key="count" value-ref="count"/>
 		<entry key="date" value-ref="date"/>
 		<entry key="execution" value-ref="execution"/>
@@ -103,7 +104,6 @@
 		<entry key="random" value-ref="random"/>
 		<entry key="sysdate" value-ref="sysdate"/>
 		<entry key="syspath" value-ref="syspath"/>
-		<entry key="array" value-ref="array"/>
 	</util:map>
 
 

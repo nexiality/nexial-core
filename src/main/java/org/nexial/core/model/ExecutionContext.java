@@ -143,6 +143,56 @@ public class ExecutionContext {
     static final String KEY_COMPLEX = "__lAIxEn__";
     static final String DOT_LITERAL_REPLACER = "__53n7ry_4h34d__";
 
+    class Function {
+        String functionName;
+        Object function;
+        String operation;
+        String[] parameters;
+
+        void parse(String token) {
+            // function object
+            functionName = StringUtils.substringBefore(token, TOKEN_PARAM_SEP);
+            Object functionObj = builtinFunctions.get(functionName);
+            if (functionObj == null) {
+                throw new IllegalArgumentException(functionName + " does not resolved to a function");
+            }
+
+            function = functionObj;
+
+            // operation
+            token = StringUtils.substringAfter(token, TOKEN_PARAM_SEP);
+            operation = StringUtils.substringBefore(token, TOKEN_PARAM_SEP);
+
+            // parameters
+            // could be 1 or more.
+            // e.g. a,b,c,d         => 1 param
+            // e.g. a,b,c,d|2       => 2 params
+            // e.g. a\|b\|\c|d|2|3  => 3 params, using pipe as nexial.textDelim
+
+            // get the rest of token after the first pipe.  this should represent the entirety of all params
+            token = replaceTokens(StringUtils.substringAfter(token, TOKEN_PARAM_SEP));
+
+            // compensate the use of TOKEN_PARAM_SEP as delimiter
+            String delim = getTextDelim();
+            if (StringUtils.equals(delim, TOKEN_PARAM_SEP)) { delim = "\\" + delim; }
+
+            // replace delim with magic delim (not found in token)
+            token = StringUtils.replace(token, delim, TOKEN_TEMP_DELIM);
+
+            List<String> paramList = TextUtils.toList(token, TOKEN_PARAM_SEP, false);
+            if (CollectionUtils.isEmpty(paramList)) {
+                throw new IllegalArgumentException("No or insufficient parameters found");
+            }
+
+            parameters = new String[paramList.size()];
+            for (int i = 0; i < paramList.size(); i++) {
+                String param = paramList.get(i);
+                // return the magic
+                parameters[i] = StringUtils.replace(param, TOKEN_TEMP_DELIM, delim);
+            }
+        }
+    }
+
     // support unit test and mocking
     protected ExecutionContext() { }
 
@@ -302,14 +352,12 @@ public class ExecutionContext {
 
     public boolean isFailFast() { return getBooleanData(FAIL_FAST, DEF_FAIL_FAST); }
 
-    /***
-     * Evaluate Page Source Stability Required
-     */
+    /** Evaluate Page Source Stability Required */
     public boolean isPageSourceStabilityEnforced() {
         return getBooleanData(ENFORCE_PAGE_SOURCE_STABILITY, DEF_ENFORCE_PAGE_SOURCE_STABILITY);
     }
 
-    /***
+    /**
      * increment current failure count and evaluate if execution failure should be declared since we've passed the
      * failAfter threshold
      */
@@ -1101,45 +1149,41 @@ public class ExecutionContext {
      * built-in function support; search for pattern of "blah|yada|stuff"
      */
     protected boolean isFunction(String token) {
-        List<String> groups = RegexUtils.collectGroups(token, REGEX_DYNAMIC_VARIABLE_VALUE);
-        boolean varMatch = CollectionUtils.isNotEmpty(groups) && StringUtils.isNotBlank(groups.get(0));
-        return varMatch && builtinFunctions.containsKey(groups.get(0));
+        if (StringUtils.isBlank(token)) { return false; }
+        List<String> groups = RegexUtils.collectGroups(token, REGEX_FUNCTION);
+        boolean match = CollectionUtils.isNotEmpty(groups) && StringUtils.isNotBlank(groups.get(0));
+        return match && builtinFunctions.containsKey(groups.get(0));
     }
 
     protected String invokeFunction(String token) {
-        if (StringUtils.countMatches(token, FUNCTION_PARAM_SEP) < 1) {
+        if (StringUtils.countMatches(token, TOKEN_PARAM_SEP) < 1) {
             throw new IllegalArgumentException("reference to a built-in function NOT shown via the $(...|...) format");
         }
 
         String errorPrefix = "Invalid built-in function " + TOKEN_FUNCTION_START + token + TOKEN_FUNCTION_END;
 
-        String beanName = StringUtils.substringBefore(token, FUNCTION_PARAM_SEP);
-        token = StringUtils.substringAfter(token, FUNCTION_PARAM_SEP);
-
-        String methodName = StringUtils.substringBefore(token, FUNCTION_PARAM_SEP);
-        token = StringUtils.substringAfter(token, FUNCTION_PARAM_SEP);
-
-        token = replaceTokens(token);
-        String[] params = StringUtils.split(token, FUNCTION_PARAM_SEP);
-
-        errorPrefix += " with " + ArrayUtils.getLength(params) + " parameters - ";
-
-        Object dynVarBean = builtinFunctions.get(beanName);
-        if (dynVarBean == null) { throw new IllegalArgumentException(errorPrefix + "cannot resolved."); }
+        Function f = null;
 
         try {
-            Object value = MethodUtils.invokeExactMethod(dynVarBean, methodName, params);
+            f = new Function();
+            f.parse(token);
+
+            errorPrefix += " with " + ArrayUtils.getLength(f.parameters) + " parameters - ";
+
+            Object value = MethodUtils.invokeExactMethod(f.function, f.operation, f.parameters);
             return Objects.toString(value, "");
+        } catch (IllegalArgumentException e) {
+            throw new RuntimeException(errorPrefix + "cannot be resolved", e);
         } catch (NoSuchMethodException e) {
-            throw new RuntimeException(errorPrefix + "invalid: '" + methodName + "'", e);
+            throw new RuntimeException(errorPrefix + "invalid: '" + f.operation + "'", e);
         } catch (IllegalAccessException e) {
-            throw new RuntimeException(errorPrefix + "inaccessible: '" + methodName + "'", e);
+            throw new RuntimeException(errorPrefix + "inaccessible: '" + f.operation + "'", e);
         } catch (InvocationTargetException e) {
             Throwable cause = e.getCause();
             if (cause != null) {
-                throw new RuntimeException(errorPrefix + "error on '" + methodName + "': " + cause.getMessage(), e);
+                throw new RuntimeException(errorPrefix + "error on '" + f.operation + "': " + cause.getMessage(), e);
             } else {
-                throw new RuntimeException(errorPrefix + "error on '" + methodName + "': " + e.getMessage(), e);
+                throw new RuntimeException(errorPrefix + "error on '" + f.operation + "': " + e.getMessage(), e);
             }
         }
     }

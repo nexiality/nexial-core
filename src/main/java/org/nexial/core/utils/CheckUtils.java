@@ -154,4 +154,11 @@ public class CheckUtils {
 
         return false;
     }
+
+    public static boolean isSameType(Class[] types, Class required) {
+        if (ArrayUtils.isEmpty(types)) { return false; }
+
+        for (Class type : types) { if (type != required) { return false;} }
+        return true;
+    }
 }
