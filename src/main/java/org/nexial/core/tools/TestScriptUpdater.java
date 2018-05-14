@@ -53,6 +53,7 @@ import org.slf4j.MDC;
 import static java.io.File.separator;
 import static org.nexial.core.NexialConst.DEF_FILE_ENCODING;
 import static org.nexial.core.NexialConst.Data.SHEET_SYSTEM;
+import static org.nexial.core.NexialConst.ExitStatus.RC_BAD_CLI_ARGS;
 import static org.nexial.core.NexialConst.Project.NEXIAL_HOME;
 import static org.nexial.core.NexialConst.Project.appendCommandJson;
 import static org.nexial.core.excel.ExcelConfig.*;
@@ -88,7 +89,7 @@ public class TestScriptUpdater {
         initOptions();
 
         TestScriptUpdater updater = newInstance(args);
-        if (updater == null) { System.exit(-1); }
+        if (updater == null) { System.exit(RC_BAD_CLI_ARGS); }
 
         updater.update(updater.retrieveMetadata());
     }

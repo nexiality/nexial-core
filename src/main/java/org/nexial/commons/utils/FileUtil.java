@@ -268,6 +268,10 @@ public final class FileUtil {
         return f.exists() && f.isFile() && f.canRead() && f.canExecute();
     }
 
+    public static boolean isFileReadWritable(String file, int minFileSize) {
+        return FileUtil.isFileReadable(file, minFileSize) && new File(file).canWrite();
+    }
+
     public static List<File> unzip(File zip, File target) throws IOException {
 
         // int unzipCount = 0;
@@ -443,4 +447,5 @@ public final class FileUtil {
         if (StringUtils.isBlank(path)) { return ""; }
         return StringUtils.substringAfterLast(StringUtils.replace(path, "\\", "/"), "/");
     }
+
 }

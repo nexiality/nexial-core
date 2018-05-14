@@ -53,7 +53,7 @@ import org.nexial.core.excel.ext.CipherHelper;
 import static java.io.File.separator;
 import static java.util.jar.Attributes.Name.MANIFEST_VERSION;
 import static javax.crypto.Cipher.ENCRYPT_MODE;
-import static org.nexial.core.NexialConst.DEF_CHARSET;
+import static org.nexial.core.NexialConst.*;
 import static org.nexial.core.NexialConst.ExitStatus.*;
 
 /**
@@ -91,8 +91,6 @@ public final class NexialSetup {
     private static final String SETUP_FILE = "Setup.java";
     private static final String CLASS_FOLDER = TEMP + "nexial-setup-class/";
     private static final String SETUP_JAR = "setup.jar";
-    private static final String ENV_NEXIAL_LIB = "NEXIAL_LIB";
-    private static final String ENV_NEXIAL_HOME = "NEXIAL_HOME";
     private static final String ENCRYPTION_ALGORITHM = "AES";
 
     private static final String MSG_MISSING_ENV = "Missing environment details. Please be sure to run via " +

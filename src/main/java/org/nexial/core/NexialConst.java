@@ -65,6 +65,9 @@ public final class NexialConst {
     public static final String OPT_SPRING_XML = "nexial.spring.config";
     public static final String DEF_SPRING_XML = "/nexial.xml";
 
+    public static final String ENV_NEXIAL_LIB = "NEXIAL_LIB";
+    public static final String ENV_NEXIAL_HOME = "NEXIAL_HOME";
+
     // predefined variables/switches
     public static final String NAMESPACE = "nexial.";
     public static final String OPT_OUT_DIR = NAMESPACE + "outBase";
@@ -681,7 +684,7 @@ public final class NexialConst {
 
         // section
         public static final String CMD_COMMAND_SECTION = "base.section(steps)";
-        public static final String CMD_SECTION_STEP_SEPARATOR = "►";
+        public static final String CMD_SECTION_STEP_SEP = " ► ";
 
         // io
         public static final String COMPARE_LOG_PLAIN = "log";

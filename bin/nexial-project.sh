@@ -30,21 +30,25 @@ echo "  PROJECT_HOME:   ${PROJECT_HOME}"
 
 
 echo
-echo "» creating project home at ${PROJECT_HOME}"
+echo "» (re)creating project home at ${PROJECT_HOME}"
 mkdir -p ${PROJECT_HOME}/artifact/script > /dev/null 2>&1
 mkdir -p ${PROJECT_HOME}/artifact/data > /dev/null 2>&1
 mkdir -p ${PROJECT_HOME}/artifact/plan > /dev/null 2>&1
 mkdir -p ${PROJECT_HOME}/output > /dev/null 2>&1
 
-cp ${NEXIAL_HOME}/template/nexial-testplan.xlsx ${PROJECT_HOME}/artifact/plan/`basename $1`-plan.xlsx
-
-while [ "$1" != "" ] ; do
-	 script_name=`basename $1`
+if [[ $# -eq 1 ]] ; then
+	cp ${NEXIAL_HOME}/template/nexial-testplan.xlsx ${PROJECT_HOME}/artifact/plan/`basename $1`-plan.xlsx
+	cp ${NEXIAL_HOME}/template/nexial-script.xlsx   ${PROJECT_HOME}/artifact/script/`basename $1`.xlsx
+	cp ${NEXIAL_HOME}/template/nexial-data.xlsx     ${PROJECT_HOME}/artifact/data/`basename $1`.data.xlsx
+else
+	while [ "$1" != "" ] ; do
+        script_name=`basename $1`
 		echo "» create test script and data file for '${script_name}'"
 		cp ${NEXIAL_HOME}/template/nexial-script.xlsx ${PROJECT_HOME}/artifact/script/${script_name}.xlsx
-		cp ${NEXIAL_HOME}/template/nexial-data.xlsx ${PROJECT_HOME}/artifact/data/${script_name}.data.xlsx
+		cp ${NEXIAL_HOME}/template/nexial-data.xlsx   ${PROJECT_HOME}/artifact/data/${script_name}.data.xlsx
 		shift
-done
+	done
+fi
 
 echo "» DONE - nexial automation project created as follows:"
 echo
