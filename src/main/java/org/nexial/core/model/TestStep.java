@@ -92,7 +92,7 @@ public class TestStep extends TestStepManifest {
         nestedTestResults = new ArrayList<>();
         setExternalProgram(StringUtils.containsAny(target, "external", "junit"));
         setLogToTestScript(isExternalProgram);
-        isCommandRepeater = StringUtils.equals(target + "." + command, CMD_COMMAND_REPEATER);
+        isCommandRepeater = StringUtils.equals(target + "." + command, CMD_REPEAT_UNTIL);
     }
 
     public Worksheet getWorksheet() { return worksheet; }
@@ -414,6 +414,7 @@ public class TestStep extends TestStepManifest {
         if (StringUtils.isNotBlank(cellTestCase.getRawValue()) &&
             StringUtils.isNotBlank(Excel.getCellValue(cellTestCase))) {
             cellTestCase.setCellStyle(worksheet.getStyle(STYLE_TEST_CASE));
+            fixActivityCellWidth(worksheet.getSheet(), cellTestCase);
         }
 
         XSSFCell cellTarget = row.get(COL_IDX_TARGET);
@@ -423,12 +424,12 @@ public class TestStep extends TestStepManifest {
 
         // description
         XSSFCell cellDescription = row.get(COL_IDX_DESCRIPTION);
-        if (StringUtils.equals(commandFQN, CMD_COMMAND_REPEATER)) {
+        if (StringUtils.equals(commandFQN, CMD_REPEAT_UNTIL)) {
             cellDescription.setCellStyle(worksheet.getStyle(STYLE_REPEAT_UNTIL_DESCRIPTION));
         } else {
             String descriptionValue = Excel.getCellValue(cellDescription);
             if (StringUtils.startsWith(descriptionValue, SECTION_DESCRIPTION_PREFIX) ||
-                StringUtils.equals(commandFQN, CMD_COMMAND_SECTION)) {
+                StringUtils.equals(commandFQN, CMD_SECTION)) {
                 cellDescription.setCellStyle(worksheet.getStyle(STYLE_SECTION_DESCRIPTION));
             } else {
                 cellDescription.setCellStyle(worksheet.getStyle(STYLE_DESCRIPTION));

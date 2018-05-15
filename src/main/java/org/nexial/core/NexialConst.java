@@ -38,6 +38,7 @@ import com.google.gson.GsonBuilder;
 import static java.awt.image.BufferedImage.*;
 import static java.io.File.separator;
 import static org.apache.commons.lang3.SystemUtils.IS_OS_WINDOWS;
+import static org.nexial.core.NexialConst.Data.CMD_VERBOSE;
 
 /**
  * constants
@@ -305,7 +306,6 @@ public final class NexialConst {
     public static final String TOKEN_TEMP_DELIM = "~!@1I4n3x@!~";
 
     public static final String REGEX_VALID_WEB_PROTOCOL = "(http|https|ftp|file|about)\\:.+";
-    public static final String CMD_VERBOSE = "base.verbose(text)";
     public static final List<String> MERGE_OUTPUTS = Arrays.asList(".", CMD_VERBOSE);
     public static final int MAX_VERBOSE_CHAR = 2000;
 
@@ -679,11 +679,13 @@ public final class NexialConst {
         public static final String SHEET_DEFAULT_DATA = "#default";
         public static final boolean DEF_OPEN_EXCEL_AS_DUP = IS_OS_WINDOWS;
 
-        // command repeater
-        public static final String CMD_COMMAND_REPEATER = "base.repeatUntil(steps,maxWaitMs)";
+        // common commands
+        public static final String CMD_VERBOSE = "base.verbose(text)";
+        public static final String CMD_MACRO = "base.macro(file,sheet,name)";
+        public static final String CMD_REPEAT_UNTIL = "base.repeatUntil(steps,maxWaitMs)";
+        public static final String CMD_SECTION = "base.section(steps)";
 
         // section
-        public static final String CMD_COMMAND_SECTION = "base.section(steps)";
         public static final String SECTION_DESCRIPTION_PREFIX = "► ";
         public static final String REPEAT_CHECK_DESCRIPTION_PREFIX = "✔ ";
         public static final String REPEAT_DESCRIPTION_PREFIX = "▼ ";

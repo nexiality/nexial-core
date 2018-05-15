@@ -43,14 +43,14 @@ import org.nexial.core.utils.InputFileUtils;
 import static java.io.File.separator;
 import static org.apache.poi.ss.usermodel.CellType.STRING;
 import static org.apache.poi.ss.usermodel.Row.MissingCellPolicy.CREATE_NULL_AS_BLANK;
-import static org.nexial.core.NexialConst.Data.CMD_COMMAND_SECTION;
+import static org.nexial.core.NexialConst.Data.CMD_MACRO;
+import static org.nexial.core.NexialConst.Data.CMD_SECTION;
 import static org.nexial.core.NexialConst.Data.SECTION_DESCRIPTION_PREFIX;
 import static org.nexial.core.excel.ExcelConfig.*;
 
 public class MacroMerger {
     private static final String TEST_STEPS_PREFIX =
         "" + COL_TEST_CASE + (ADDR_COMMAND_START.getRowStartIndex() + 1) + ":" + COL_REASON;
-    private static final String TEST_COMMAND_MACRO = "base.macro(file,sheet,name)";
     private static final Map<String, List<List<String>>> MACRO_CACHE = new HashMap<>();
 
     private Excel excel;
@@ -103,13 +103,13 @@ public class MacroMerger {
             String testCommand = cellTarget + "." + cellCommand;
 
             // add special character in description for section steps.
-            if (StringUtils.equals(testCommand, CMD_COMMAND_SECTION)) {
+            if (StringUtils.equals(testCommand, CMD_SECTION)) {
                 int steps = Integer.parseInt(row.get(COL_IDX_PARAMS_START));
                 for (int j = 0; j < steps; j++) { decorateMacroStep(allTestSteps.get(i + j + 1)); }
             }
 
             // look for base.macro(file,sheet,name) - open macro library as excel
-            if (StringUtils.equals(testCommand, TEST_COMMAND_MACRO)) {
+            if (StringUtils.equals(testCommand, CMD_MACRO)) {
                 String paramFile = row.get(COL_IDX_PARAMS_START);
                 String paramSheet = row.get(COL_IDX_PARAMS_START + 1);
                 String paramMacro = row.get(COL_IDX_PARAMS_START + 2);
@@ -121,7 +121,7 @@ public class MacroMerger {
                     int stepSize = macroSteps.size();
 
                     // replace existing macro() command to section() command
-                    String[] commandParts = StringUtils.split(CMD_COMMAND_SECTION, ".");
+                    String[] commandParts = StringUtils.split(CMD_SECTION, ".");
                     row.set(COL_IDX_TARGET, commandParts[0]);
                     row.set(COL_IDX_COMMAND, commandParts[1]);
                     row.set(COL_IDX_PARAMS_START, stepSize + "");

@@ -41,8 +41,8 @@ import org.nexial.core.utils.ExecutionLogger;
 
 import static org.apache.poi.ss.usermodel.CellType.STRING;
 import static org.apache.poi.ss.usermodel.Row.MissingCellPolicy.CREATE_NULL_AS_BLANK;
-import static org.nexial.core.NexialConst.CMD_VERBOSE;
-import static org.nexial.core.NexialConst.Data.CMD_COMMAND_REPEATER;
+import static org.nexial.core.NexialConst.Data.CMD_REPEAT_UNTIL;
+import static org.nexial.core.NexialConst.Data.CMD_VERBOSE;
 import static org.nexial.core.NexialConst.MERGE_OUTPUTS;
 import static org.nexial.core.excel.ExcelConfig.*;
 import static org.nexial.core.excel.ExcelConfig.StyleConfig.MSG;
@@ -328,7 +328,7 @@ public class TestScenario {
         // expectation: first parameter is the number of test steps for the repeats
         // expectation: second parameter is the max. wait time in ms
         String errMsg = "[ROW " + (startFrom + ADDR_COMMAND_START.getRowStartIndex()) + "]" +
-                        " wrong parameters specified for " + CMD_COMMAND_REPEATER + ": " + testStep.getParams();
+                        " wrong parameters specified for " + CMD_REPEAT_UNTIL + ": " + testStep.getParams();
         if (CollectionUtils.size(testStep.getParams()) != 2) {
             ConsoleUtils.log(errMsg);
             throw new RuntimeException(errMsg);

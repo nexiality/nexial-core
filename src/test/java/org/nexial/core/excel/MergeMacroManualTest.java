@@ -45,12 +45,12 @@ import org.nexial.core.utils.InputFileUtils;
 import static java.io.File.separator;
 import static org.apache.poi.ss.usermodel.CellType.STRING;
 import static org.apache.poi.ss.usermodel.Row.MissingCellPolicy.CREATE_NULL_AS_BLANK;
+import static org.nexial.core.NexialConst.Data.CMD_MACRO;
 import static org.nexial.core.excel.ExcelConfig.*;
 
 public class MergeMacroManualTest {
     private static final String TEST_STEPS_PREFIX =
         "" + COL_TEST_CASE + (ADDR_COMMAND_START.getRowStartIndex() + 1) + ":" + COL_REASON;
-    private static final String TEST_COMMAND_MACRO = "base.macro(file,sheet,name)";
 
     private File testSheetFile;
 
@@ -92,7 +92,7 @@ public class MergeMacroManualTest {
                 String testCommand = cellTarget + "." + cellCommand;
 
                 // look for base.macro(file,sheet,name) - open macro library as excel
-                if (StringUtils.equals(testCommand, TEST_COMMAND_MACRO)) {
+                if (StringUtils.equals(testCommand, CMD_MACRO)) {
                     System.out.println(sheet.getName() + ": " + cellTarget + " - " + testCommand);
 
                     String paramFile = row.get(COL_IDX_PARAMS_START);

@@ -104,7 +104,7 @@ public class CommandRepeater {
                     }
 
                     // special case for base.section()
-                    if (result.isSkipped() && StringUtils.equals(testStep.getCommandFQN(), CMD_COMMAND_SECTION)) {
+                    if (result.isSkipped() && StringUtils.equals(testStep.getCommandFQN(), CMD_SECTION)) {
                         // add the steps specified for the section command
                         i += Integer.parseInt(testStep.getParams().get(0));
                     }

@@ -274,7 +274,8 @@ public class ExcelConfig {
     public static final XSSFColor RED = new XSSFColor(new Color(255, 0, 0));
 
     public static final double DEF_CHAR_WIDTH = 24.7;
-    public static final int DEF_CHAR_WIDTH_FACTOR_TAHOMA = 265;
+    public static final int DEF_CHAR_WIDTH_FACTOR_TAHOMA = 278;
+    public static final int DEF_CHAR_WIDTH_FACTOR_TAHOMA_BOLD = 305;
     public static final int DEF_CHAR_WIDTH_FACTOR_CONSOLAS = 273;
 
     public static class StyleConfig {
@@ -989,12 +990,16 @@ public class ExcelConfig {
         }
     }
 
-    public static void fixCommandCellWidth(XSSFSheet sheet, XSSFCell cell) {
-        fixCellWidth(sheet, cell, COL_IDX_COMMAND, DEF_CHAR_WIDTH_FACTOR_CONSOLAS);
+    public static void fixActivityCellWidth(XSSFSheet sheet, XSSFCell cell) {
+        fixCellWidth(sheet, cell, COL_IDX_DESCRIPTION, DEF_CHAR_WIDTH_FACTOR_TAHOMA_BOLD);
     }
 
     public static void fixDescriptionCellWidth(XSSFSheet sheet, XSSFCell cell) {
         fixCellWidth(sheet, cell, COL_IDX_DESCRIPTION, DEF_CHAR_WIDTH_FACTOR_TAHOMA);
+    }
+
+    public static void fixCommandCellWidth(XSSFSheet sheet, XSSFCell cell) {
+        fixCellWidth(sheet, cell, COL_IDX_COMMAND, DEF_CHAR_WIDTH_FACTOR_CONSOLAS);
     }
 
     public static void fixFlowControlCellWidth(XSSFSheet sheet, XSSFCell cell) {
