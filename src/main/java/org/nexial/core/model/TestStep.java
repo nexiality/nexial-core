@@ -26,9 +26,11 @@ import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.ArrayUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.builder.ToStringBuilder;
+import org.apache.commons.lang3.math.NumberUtils;
 import org.apache.commons.lang3.time.StopWatch;
 import org.apache.poi.ss.usermodel.Comment;
 import org.apache.poi.xssf.usermodel.XSSFCell;
+import org.apache.poi.xssf.usermodel.XSSFSheet;
 import org.nexial.commons.utils.FileUtil;
 import org.nexial.commons.utils.TextUtils;
 import org.nexial.core.excel.Excel;
@@ -46,8 +48,7 @@ import static java.lang.System.lineSeparator;
 import static org.apache.commons.lang3.builder.ToStringStyle.SIMPLE_STYLE;
 import static org.nexial.commons.utils.EnvUtils.platformSpecificEOL;
 import static org.nexial.core.NexialConst.*;
-import static org.nexial.core.NexialConst.Data.CMD_COMMAND_REPEATER;
-import static org.nexial.core.NexialConst.Data.treatCommonValueShorthand;
+import static org.nexial.core.NexialConst.Data.*;
 import static org.nexial.core.excel.ExcelConfig.*;
 import static org.nexial.core.excel.ext.CipherHelper.CRYPT_IND;
 
@@ -57,7 +58,6 @@ public class TestStep extends TestStepManifest {
     protected List<XSSFCell> row;
     protected TestCase testCase;
     protected List<NestedMessage> nestedTestResults;
-
     protected boolean isCommandRepeater;
     protected CommandRepeater commandRepeater;
 
@@ -137,7 +137,7 @@ public class TestStep extends TestStepManifest {
      * commands are executed in a custom test class, some of the Nexial command will provide detailed logging where
      * the auto-discovery (via nexial.runClassAutoResult) excel logging is no longer necessary for the same command
      * executed. In such case, we want to skip the auto-discovery excel logging.  By marking a message as "logged",
-     * the immediate subsequent mesage can then be skipped.  However, whether a message is skipped or not, the "logged"
+     * the immediate subsequent message can then be skipped.  However, whether a message is skipped or not, the "logged"
      * flag will always be reset.
      */
     public void addNestedTestResult(String message) {
@@ -411,21 +411,39 @@ public class TestStep extends TestStepManifest {
 
         // test case
         XSSFCell cellTestCase = row.get(COL_IDX_TESTCASE);
-        if (StringUtils.isNotBlank(cellTestCase.getRawValue())) {
+        if (StringUtils.isNotBlank(cellTestCase.getRawValue()) &&
+            StringUtils.isNotBlank(Excel.getCellValue(cellTestCase))) {
             cellTestCase.setCellStyle(worksheet.getStyle(STYLE_TEST_CASE));
         }
 
+        XSSFCell cellTarget = row.get(COL_IDX_TARGET);
+        XSSFCell cellCommand = row.get(COL_IDX_COMMAND);
+        XSSFSheet sheet = cellCommand.getSheet();
+        String commandFQN = Excel.getCellValue(cellTarget) + "." + Excel.getCellValue(cellCommand);
+
         // description
         XSSFCell cellDescription = row.get(COL_IDX_DESCRIPTION);
-        if (StringUtils.isNotBlank(cellDescription.getRawValue())) {
-            cellDescription.setCellStyle(worksheet.getStyle(STYLE_DESCRIPTION));
+        if (StringUtils.equals(commandFQN, CMD_COMMAND_REPEATER)) {
+            cellDescription.setCellStyle(worksheet.getStyle(STYLE_REPEAT_UNTIL_DESCRIPTION));
+        } else {
+            String descriptionValue = Excel.getCellValue(cellDescription);
+            if (StringUtils.startsWith(descriptionValue, SECTION_DESCRIPTION_PREFIX) ||
+                StringUtils.equals(commandFQN, CMD_COMMAND_SECTION)) {
+                cellDescription.setCellStyle(worksheet.getStyle(STYLE_SECTION_DESCRIPTION));
+            } else {
+                cellDescription.setCellStyle(worksheet.getStyle(STYLE_DESCRIPTION));
+            }
         }
+
+        // command
+        fixCommandCellWidth(sheet, cellCommand);
 
         Object[] paramValues = result.getParamValues();
 
         // handle linkable params (first priority), verbose (second priority) and params (last)
         for (int i = COL_IDX_PARAMS_START; i < COL_IDX_PARAMS_END; i++) {
             int paramIdx = i - COL_IDX_PARAMS_START;
+
             String link = CollectionUtils.size(linkableParams) > paramIdx ? linkableParams.get(paramIdx) : null;
             XSSFCell paramCell = row.get(i);
             if (StringUtils.isNotBlank(link)) {
@@ -470,6 +488,11 @@ public class TestStep extends TestStepManifest {
             }
         }
 
+        // flow control
+        XSSFCell cellFlowControl = row.get(COL_IDX_FLOW_CONTROLS);
+        cellFlowControl.setCellStyle(worksheet.getStyle(STYLE_COMMAND));
+        fixFlowControlCellWidth(sheet, cellFlowControl);
+
         // screenshot
         String screenshotLink = handleScreenshot(result);
         if (StringUtils.isNotBlank(screenshotLink)) {
@@ -503,6 +526,13 @@ public class TestStep extends TestStepManifest {
             cellReason.setCellValue(error);
             cellReason.setCellStyle(worksheet.getStyle(STYLE_MESSAGE));
         }
+
+        int numOfLines = NumberUtils.max(
+            StringUtils.countMatches(Excel.getCellValue(cellTestCase), '\n'),
+            StringUtils.countMatches(Excel.getCellValue(cellDescription), '\n'),
+            StringUtils.countMatches(Excel.getCellValue(row.get(COL_IDX_PARAMS_START)), '\n'),
+            StringUtils.countMatches(Excel.getCellValue(cellFlowControl), '\n')) + 1;
+        worksheet.setMinHeight(cellDescription, numOfLines);
 
         if (CollectionUtils.isNotEmpty(nestedTestResults)) {
             TestStepManifest testStep = this.toTestStepManifest();

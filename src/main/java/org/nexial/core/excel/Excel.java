@@ -66,7 +66,7 @@ public class Excel {
     public static final int MIN_EXCEL_FILE_SIZE = 5 * 1024;
 
     // var to support spring-injected value
-    float _cellSpacing = 4.8f;
+    float _cellSpacing = 5.2f;
 
     private File file;
     private XSSFWorkbook workbook;
@@ -275,6 +275,23 @@ public class Excel {
             XSSFRichTextString richText = new XSSFRichTextString(text);
             richText.applyFont(style.font);
             cell.setCellValue(richText);
+            return cell;
+        }
+
+        /**
+         * ensure the parent row of {@code cell} has enough height to display the number of lines as denoted by
+         * {@code linesToShow}.  If the row in question already does, then its height will not be modified.
+         */
+        public XSSFCell setMinHeight(XSSFCell cell, int linesToShow) {
+            if (cell != null) {
+                float newHeight = linesToShow == 1 ?
+                                  21 :
+                                  (cell.getCellStyle().getFont().getFontHeightInPoints() + _cellSpacing) * linesToShow;
+
+                XSSFRow row = cell.getRow();
+                float actualHeight = row.getHeightInPoints();
+                if (actualHeight < newHeight) { row.setHeightInPoints(newHeight); }
+            }
             return cell;
         }
 
@@ -1022,6 +1039,9 @@ public class Excel {
         //commonStyles.put(STYLE_JENKINS_REF_PARAM, StyleDecorator.generate(workbook, JENKINS_REF_PARAM));
         commonStyles.put(STYLE_TEST_CASE, StyleDecorator.generate(workbook, TESTCASE));
         commonStyles.put(STYLE_DESCRIPTION, StyleDecorator.generate(workbook, DESCRIPTION));
+        commonStyles.put(STYLE_SECTION_DESCRIPTION, StyleDecorator.generate(workbook, SECTION_DESCRIPTION));
+        commonStyles.put(STYLE_REPEAT_UNTIL_DESCRIPTION, StyleDecorator.generate(workbook, REPEAT_UNTIL_DESCRIPTION));
+        commonStyles.put(STYLE_TARGET, StyleDecorator.generate(workbook, TARGET));
         commonStyles.put(STYLE_MESSAGE, StyleDecorator.generate(workbook, MSG));
         commonStyles.put(STYLE_COMMAND, StyleDecorator.generate(workbook, COMMAND));
         commonStyles.put(STYLE_PARAM, StyleDecorator.generate(workbook, PARAM));

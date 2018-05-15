@@ -26,10 +26,7 @@ import org.apache.poi.ss.usermodel.BorderStyle;
 import org.apache.poi.ss.usermodel.FillPatternType;
 import org.apache.poi.ss.usermodel.HorizontalAlignment;
 import org.apache.poi.ss.usermodel.VerticalAlignment;
-import org.apache.poi.xssf.usermodel.XSSFCellStyle;
-import org.apache.poi.xssf.usermodel.XSSFColor;
-import org.apache.poi.xssf.usermodel.XSSFFont;
-import org.apache.poi.xssf.usermodel.XSSFWorkbook;
+import org.apache.poi.xssf.usermodel.*;
 import org.nexial.core.excel.Excel.Worksheet;
 
 import static org.apache.poi.ss.usermodel.BorderStyle.MEDIUM;
@@ -233,29 +230,10 @@ public class ExcelConfig {
     public static final ExcelAddress ADDR_COMMAND_START = new ExcelAddress("C5:D5");
     public static final ExcelAddress ADDR_PARAMS_START = new ExcelAddress("E5:I5");
 
-    //
-    // legacy stuff below
-    //
-
-    //public static final String AGENDA_CMD_COL = "C";
-    //public static final String AGENDA_END_COL = "O";
-
-    public static final ExcelAddress RESULT_SUMMARY_ADDR = new ExcelAddress("L2");
-    public static final ExcelAddress META_ADDR = new ExcelAddress("A1:E4");
-
     // agenda
     public static final int ALPHABET_COUNT = 'Z' - 'A' + 1;
     public static final short CELL_HEIGHT_DEPRECATED = 440;
-
-    // included data driver
-    //public static final String CMD_INCL = "@include(";
-    //public static final String CMD_INCL_SET = "@includeSet(";
-
-    // test data
-    //public static final String DATA_WORKSHEET_NAME = "#data";
-    //public static final String INCL_SET_START_ADDR = "A2";
-    //public static final String INCL_SET_START_HEADER = "A1";
-    public static final int LOG_START_ROW = 2;
+    public static final short CELL_HEIGHT_DEFAULT = 480;
 
     // agenda metadata
     public static final String MSG_DEPRECATED = "DEPRECATED ";
@@ -264,37 +242,23 @@ public class ExcelConfig {
     public static final String MSG_SCREENCAPTURE = "Click here";
     public static final String MSG_SKIPPED = "SKIPPED ";
     public static final String MSG_WARN = "WARN ";
-    public static final String REGEX_INCL = "\\@include\\(\\s*(.+)\\s*\\,\\s*(.+)\\s*\\)";
-    public static final String REGEX_INCL_SET = "\\@includeSet\\(\\s*(.+)\\s*\\,\\s*(.+)\\s*\\)";
 
     public static final String STYLE_TEST_CASE = "TEST_CASE";
-    public static final String TESTDATA_END_COL = "B";
-    public static final String TESTDATA_FILENAME = "filename";
-    public static final String TESTDATA_HOSTNAME = "hostname";
-    public static final String TESTDATA_OSNAME = "osname";
-    public static final String TESTDATA_PROJECT = "project";
-    public static final String TESTDATA_REGEX_FILEPATH = "\\w\\:[\\\\\\/][\\w]+[\\\\\\/]([\\w]+)[\\\\\\/].*";
-    public static final String TESTDATA_START_COL = "A";
-    public static final int TESTDATA_START_ROW = 2;
-    public static final String TESTDATA_TESTSUITE = "testsuite";
-
-    // test data
-    public static final int TESTHEADER_START_ROW = 1;
 
     // style names
     public static final String STYLE_COMMAND = "COMMAND";
+    public static final String STYLE_TARGET = "TARGET";
     public static final String STYLE_DESCRIPTION = "DESCRIPTION";
+    public static final String STYLE_SECTION_DESCRIPTION = "SECTION_DESCRIPTION";
+    public static final String STYLE_REPEAT_UNTIL_DESCRIPTION = "REPEAT_UNTIL_DESCRIPTION";
     public static final String STYLE_ELAPSED_MS = "ELAPSED_MS";
     public static final String STYLE_ELAPSED_MS_BAD_SLA = "ELAPSED_MS_BAD_SLA";
     public static final String STYLE_FAILED_RESULT = "FAILED_RESULT";
-    public static final String STYLE_JENKINS_REF_LABEL = "JENKINS_REF_LABEL";
-    public static final String STYLE_JENKINS_REF_LINK = "JENKINS_REF_LINK";
-    public static final String STYLE_JENKINS_REF_PARAM = "JENKINS_REF_PARAM";
     public static final String STYLE_MESSAGE = "MESSAGE_STYLE";
     public static final String STYLE_PARAM = "PARAM";
     public static final String STYLE_TAINTED_PARAM = "TAINTED_PARAM";
     public static final String STYLE_SCREENSHOT = "SCREENSHOT";
-    public static final String STYLE_LINK = "LINK";
+    // public static final String STYLE_LINK = "LINK";
     public static final String STYLE_SKIPPED_RESULT = "SKIPPED_STYLE";
     public static final String STYLE_SUCCESS_RESULT = "SUCCESS_RESULT";
 
@@ -308,12 +272,12 @@ public class ExcelConfig {
     public static final XSSFColor ORANGE = new XSSFColor(new Color(255, 128, 0));
     public static final XSSFColor PURPLE = new XSSFColor(new Color(255, 0, 255));
     public static final XSSFColor RED = new XSSFColor(new Color(255, 0, 0));
+
     public static final double DEF_CHAR_WIDTH = 24.7;
+    public static final int DEF_CHAR_WIDTH_FACTOR_TAHOMA = 265;
+    public static final int DEF_CHAR_WIDTH_FACTOR_CONSOLAS = 273;
 
     public static class StyleConfig {
-        //public static final XSSFColor FG_NORMAL = new XSSFColor(new Color(10, 10, 10));
-        //public static final XSSFColor BORDERCOLOR_DEFAULT = new XSSFColor(new Color(195, 195, 195));
-
         public static final String FONT_NAME_DEFAULT = "Tahoma";
         public static final String FONT_NAME_FIXED_DEFAULT = "Consolas";
 
@@ -325,7 +289,9 @@ public class ExcelConfig {
         public static final StyleConfig ELAPSED_MS_BAD_SLA = newElapsedMsBadSlaStyle();
         public static final StyleConfig FAILED = newFailedStyle();
         public static final StyleConfig TESTCASE = newTestCaseStyle();
-        public static final StyleConfig DESCRIPTION = newDescriptionStyl();
+        public static final StyleConfig DESCRIPTION = newDescriptionStyle();
+        public static final StyleConfig SECTION_DESCRIPTION = newSectionDescriptionStyle();
+        public static final StyleConfig REPEAT_UNTIL_DESCRIPTION = newRepeatUntilDescriptionStyle();
         public static final StyleConfig SCREENSHOT = newScreenshotStyle();
         public static final StyleConfig ELAPSED_MS = newElapsedMsStyle();
         public static final StyleConfig SUCCESS = newSuccessStyle();
@@ -334,14 +300,12 @@ public class ExcelConfig {
         public static final StyleConfig RESULT = newResultStyle();
         public static final StyleConfig SKIPPED = newSkippedStyle();
         public static final StyleConfig LINK = newLinkStyle();
+        public static final StyleConfig TARGET = newTargetStyle();
         public static final StyleConfig COMMAND = newCommandStyle();
         public static final StyleConfig PARAM = newParamStyle();
         public static final StyleConfig TAINTED_PARAM = newTaintedParamStyle();
         public static final StyleConfig MSG = newMsgStyle();
         public static final StyleConfig DEPRECATED = newDeprecatedStyle();
-        public static final StyleConfig JENKINS_REF_LABEL = newJenkinsRefLabelStyle();
-        public static final StyleConfig JENKINS_REF_LINK = newJenkinsRefLinkStyle();
-        public static final StyleConfig JENKINS_REF_PARAM = newJenkinsRefParamStyle();
 
         public static final StyleConfig SETTING_NAME = newSettingNameStyle();
         public static final StyleConfig SETTING_VALUE = newSettingValueStyle();
@@ -482,7 +446,6 @@ public class ExcelConfig {
 
         private static StyleConfig newTestDataValueStyle() {
             StyleConfig config = new StyleConfig();
-            //config.backgroundColor = new XSSFColor(new Color(255, 255, 255));
             config.fontHeight = FONT_HEIGHT_DEFAULT;
             config.fontName = FONT_NAME_FIXED_DEFAULT;
             config.fontColor = new XSSFColor(new Color(0, 0, 0));
@@ -492,13 +455,20 @@ public class ExcelConfig {
 
         private static StyleConfig newCommandStyle() {
             StyleConfig config = new StyleConfig();
-            //config.backgroundColor = new XSSFColor(new Color(221, 232, 247));
-            //config.borderColor = new XSSFColor(new Color(40, 40, 40));
-            //config.borderColor = new XSSFColor(new Color(220, 220, 220));
             config.fontName = FONT_NAME_FIXED_DEFAULT;
             config.fontHeight = FONT_HEIGHT_DEFAULT;
             config.fontColor = new XSSFColor(new Color(18, 40, 74));
             config.verticalAlignment = CENTER;
+            return config;
+        }
+
+        private static StyleConfig newTargetStyle() {
+            StyleConfig config = new StyleConfig();
+            config.fontName = FONT_NAME_FIXED_DEFAULT;
+            config.fontHeight = FONT_HEIGHT_DEFAULT;
+            config.fontColor = new XSSFColor(new Color(5, 5, 5));
+            config.verticalAlignment = CENTER;
+            config.horizontalAlignment = HorizontalAlignment.RIGHT;
             return config;
         }
 
@@ -512,12 +482,34 @@ public class ExcelConfig {
             return config;
         }
 
-        private static StyleConfig newDescriptionStyl() {
+        private static StyleConfig newDescriptionStyle() {
             StyleConfig config = new StyleConfig();
-            //config.backgroundColor = new XSSFColor(new Color(230, 244, 248));
-            //config.borderColor = new XSSFColor(new Color(40, 40, 40));
             config.fontHeight = FONT_HEIGHT_DEFAULT;
             config.fontColor = new XSSFColor(new Color(40, 115, 137));
+            config.wrapText = true;
+            config.verticalAlignment = CENTER;
+            return config;
+        }
+
+        private static StyleConfig newSectionDescriptionStyle() {
+            StyleConfig config = new StyleConfig();
+            config.backgroundColor = new XSSFColor(new Color(220, 225, 230));
+            config.borderColor = new XSSFColor(new Color(190, 200, 205));
+            config.fontHeight = FONT_HEIGHT_DEFAULT;
+            config.fontColor = new XSSFColor(new Color(40, 115, 137));
+            config.indention = (short) 1;
+            config.wrapText = true;
+            config.verticalAlignment = CENTER;
+            return config;
+        }
+
+        private static StyleConfig newRepeatUntilDescriptionStyle() {
+            StyleConfig config = new StyleConfig();
+            config.backgroundColor = new XSSFColor(new Color(230, 215, 215));
+            config.borderColor = new XSSFColor(new Color(205, 195, 195));
+            config.fontHeight = FONT_HEIGHT_DEFAULT;
+            config.fontColor = new XSSFColor(new Color(130, 60, 60));
+            config.indention = (short) 1;
             config.wrapText = true;
             config.verticalAlignment = CENTER;
             return config;
@@ -604,8 +596,6 @@ public class ExcelConfig {
 
         private static StyleConfig newSkippedStyle() {
             StyleConfig config = new StyleConfig();
-            //config.backgroundColor = new XSSFColor(new Color(227, 227, 227));
-            //config.indention = 1;
             config.fontName = FONT_NAME_DEFAULT;
             config.fontHeight = (short) 10;
             config.fontColor = new XSSFColor(new Color(128, 128, 128));
@@ -979,4 +969,35 @@ public class ExcelConfig {
     }
 
     private ExcelConfig() {}
+
+    public static void fixCellWidth(XSSFSheet sheet, XSSFCell cell, int columnIndex, int charWidthFactor) {
+        int actualCommandCellWidth = sheet.getColumnWidth(columnIndex);
+
+        String cellValue = Excel.getCellValue(cell);
+        int commandLength = StringUtils.length(cellValue);
+        if (StringUtils.contains(cellValue, "\n")) {
+            commandLength = Arrays.stream(StringUtils.split(cellValue, "\n"))
+                                  .map(String::length)
+                                  .sorted()
+                                  .max(Integer::compareTo)
+                                  .orElse(commandLength);
+        }
+        int expectedCommandCellWidth = commandLength * charWidthFactor;
+
+        if (actualCommandCellWidth < expectedCommandCellWidth) {
+            sheet.setColumnWidth(columnIndex, expectedCommandCellWidth);
+        }
+    }
+
+    public static void fixCommandCellWidth(XSSFSheet sheet, XSSFCell cell) {
+        fixCellWidth(sheet, cell, COL_IDX_COMMAND, DEF_CHAR_WIDTH_FACTOR_CONSOLAS);
+    }
+
+    public static void fixDescriptionCellWidth(XSSFSheet sheet, XSSFCell cell) {
+        fixCellWidth(sheet, cell, COL_IDX_DESCRIPTION, DEF_CHAR_WIDTH_FACTOR_TAHOMA);
+    }
+
+    public static void fixFlowControlCellWidth(XSSFSheet sheet, XSSFCell cell) {
+        fixCellWidth(sheet, cell, COL_IDX_FLOW_CONTROLS, DEF_CHAR_WIDTH_FACTOR_CONSOLAS);
+    }
 }

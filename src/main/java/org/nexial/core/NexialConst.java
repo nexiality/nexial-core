@@ -684,7 +684,9 @@ public final class NexialConst {
 
         // section
         public static final String CMD_COMMAND_SECTION = "base.section(steps)";
-        public static final String CMD_SECTION_STEP_SEP = " ► ";
+        public static final String SECTION_DESCRIPTION_PREFIX = "► ";
+        public static final String REPEAT_CHECK_DESCRIPTION_PREFIX = "✔ ";
+        public static final String REPEAT_DESCRIPTION_PREFIX = "▼ ";
 
         // io
         public static final String COMPARE_LOG_PLAIN = "log";

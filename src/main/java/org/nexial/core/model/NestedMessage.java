@@ -23,7 +23,6 @@ import org.apache.poi.xssf.usermodel.XSSFCell;
 import org.apache.poi.xssf.usermodel.XSSFCellStyle;
 import org.apache.poi.xssf.usermodel.XSSFFont;
 import org.apache.poi.xssf.usermodel.XSSFRow;
-
 import org.nexial.core.excel.Excel.Worksheet;
 import org.nexial.core.excel.ExcelConfig.*;
 import org.nexial.core.utils.MessageUtils;
@@ -37,89 +36,92 @@ import static org.nexial.core.excel.ExcelConfig.StyleConfig.*;
  * render one line below the associated test step.
  */
 public class NestedMessage {
-	private String message;
-	private boolean isPass;
-	private String resultMessage;
-	private XSSFFont font;
-	private XSSFCellStyle style;
-	private XSSFCellStyle resultStyle;
+    private String message;
+    private boolean isPass;
+    private String resultMessage;
+    private XSSFFont font;
+    private XSSFCellStyle style;
+    private XSSFCellStyle resultStyle;
 
-	public NestedMessage(Worksheet worksheet, String message) {
-		style = worksheet.getStyle(STYLE_MESSAGE);
-		font = worksheet.createFont();
-		resultStyle = StyleDecorator.generate(worksheet, RESULT);
+    public NestedMessage(Worksheet worksheet, String message) {
+        style = worksheet.getStyle(STYLE_MESSAGE);
+        font = worksheet.createFont();
+        resultStyle = StyleDecorator.generate(worksheet, RESULT);
 
-		this.message = StringUtils.defaultString(message, "");
-		processMessage();
-	}
+        this.message = StringUtils.defaultString(message, "");
+        processMessage();
+    }
 
-	public String getMessage() { return message; }
+    public String getMessage() { return message; }
 
-	public void setMessage(String message) { this.message = message; }
+    public void setMessage(String message) { this.message = message; }
 
-	public boolean isPass() { return isPass; }
+    public boolean isPass() { return isPass; }
 
-	public String getResultMessage() { return resultMessage; }
+    public String getResultMessage() { return resultMessage; }
 
-	public CellStyle getStyle() { return style; }
+    public CellStyle getStyle() { return style; }
 
-	public void markAsSkipped() { style = StyleDecorator.decorate(style, font, SKIPPED); }
+    public void markAsSkipped() { style = StyleDecorator.decorate(style, font, SKIPPED); }
 
-	public void markAsFailure() { style = StyleDecorator.decorate(style, font, FAILED); }
+    public void markAsFailure() { style = StyleDecorator.decorate(style, font, FAILED); }
 
-	public void markAsDeprecated() { style = StyleDecorator.decorate(style, font, DEPRECATED); }
+    public void markAsDeprecated() { style = StyleDecorator.decorate(style, font, DEPRECATED); }
 
-	public void markAsSuccess() { style = StyleDecorator.decorate(style, font, SUCCESS); }
+    public void markAsSuccess() { style = StyleDecorator.decorate(style, font, SUCCESS); }
 
-	public void printTo(XSSFRow row) {
-		XSSFCell cell = row.createCell(COL_IDX_MERGE_RESULT_START);
-		cell.setCellValue(message);
-		cell.setCellStyle(style);
+    public void printTo(XSSFRow row) {
+        XSSFCell cell = row.createCell(COL_IDX_MERGE_RESULT_START);
+        cell.setCellValue(message);
+        cell.setCellStyle(style);
 
-		if (StringUtils.equals(resultMessage, MSG_DEPRECATED)) {
-			row.setHeight(CELL_HEIGHT_DEPRECATED);
-		} else {
-			if (StringUtils.isNotBlank(resultMessage)) {
-				cell = row.createCell(COL_IDX_RESULT);
-				cell.setCellValue(getResultMessage());
-				cell.setCellStyle(resultStyle);
-			}
-		}
-	}
+        if (StringUtils.equals(resultMessage, MSG_DEPRECATED)) {
+            row.setHeight(CELL_HEIGHT_DEPRECATED);
+        } else {
+            short actualHeight = row.getHeight();
+            if (actualHeight < CELL_HEIGHT_DEFAULT) { row.setHeight(CELL_HEIGHT_DEFAULT); }
 
-	private void processMessage() {
-		if (MessageUtils.isSkipped(message)) {
-			isPass = false;
-			resultMessage = MSG_SKIPPED;
-			//markAsSkipped();
-			return;
-		}
+            if (StringUtils.isNotBlank(resultMessage)) {
+                cell = row.createCell(COL_IDX_RESULT);
+                cell.setCellValue(getResultMessage());
+                cell.setCellStyle(resultStyle);
+            }
+        }
+    }
 
-		if (MessageUtils.isTestResult(message)) {
-			if (MessageUtils.isPass(message)) {
-				isPass = true;
-				resultMessage = MSG_PASS;
-				//markAsSuccess();
-				return;
-			}
+    private void processMessage() {
+        if (MessageUtils.isSkipped(message)) {
+            isPass = false;
+            resultMessage = MSG_SKIPPED;
+            //markAsSkipped();
+            return;
+        }
 
-			if (MessageUtils.isFail(message)) {
-				resultMessage = MSG_FAIL;
-				//markAsFailure();
-				return;
-			}
+        if (MessageUtils.isTestResult(message)) {
+            if (MessageUtils.isPass(message)) {
+                isPass = true;
+                resultMessage = MSG_PASS;
+                //markAsSuccess();
+                return;
+            }
 
-			if (MessageUtils.isWarn(message)) {
-				resultMessage = MSG_WARN;
-				//markAsFailure();
-				return;
-			}
-		}
+            if (MessageUtils.isFail(message)) {
+                resultMessage = MSG_FAIL;
+                //markAsFailure();
+                return;
+            }
 
-		if (MessageUtils.isDeprecated(message)) {
-			resultMessage = MSG_DEPRECATED;
-			markAsDeprecated();
-			return;
-		}
-	}
+            if (MessageUtils.isWarn(message)) {
+                resultMessage = MSG_WARN;
+                //markAsFailure();
+                return;
+            }
+        }
+
+        if (MessageUtils.isDeprecated(message)) {
+            resultMessage = MSG_DEPRECATED;
+            markAsDeprecated();
+            return;
+        }
+    }
 }

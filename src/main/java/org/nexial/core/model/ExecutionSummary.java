@@ -654,7 +654,7 @@ public class ExecutionSummary {
             // lineCount should always be at least 1. otherwise this row will not be rendered with height 0
             if (lineCount < 1) { lineCount = 1; }
 
-            worksheet.setHeight(cellMerge, lineCount);
+            worksheet.setMinHeight(cellMerge, lineCount);
         }
 
         return cellMerge;

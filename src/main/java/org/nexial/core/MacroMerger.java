@@ -43,6 +43,8 @@ import org.nexial.core.utils.InputFileUtils;
 import static java.io.File.separator;
 import static org.apache.poi.ss.usermodel.CellType.STRING;
 import static org.apache.poi.ss.usermodel.Row.MissingCellPolicy.CREATE_NULL_AS_BLANK;
+import static org.nexial.core.NexialConst.Data.CMD_COMMAND_SECTION;
+import static org.nexial.core.NexialConst.Data.SECTION_DESCRIPTION_PREFIX;
 import static org.nexial.core.excel.ExcelConfig.*;
 
 public class MacroMerger {
@@ -96,11 +98,15 @@ public class MacroMerger {
 
         for (int i = 0; i < allTestSteps.size(); i++) {
             List<String> row = allTestSteps.get(i);
-            String activityName = row.get(COL_IDX_TESTCASE);
             String cellTarget = row.get(COL_IDX_TARGET);
             String cellCommand = row.get(COL_IDX_COMMAND);
-            String flowControls = row.get(COL_IDX_FLOW_CONTROLS);
             String testCommand = cellTarget + "." + cellCommand;
+
+            // add special character in description for section steps.
+            if (StringUtils.equals(testCommand, CMD_COMMAND_SECTION)) {
+                int steps = Integer.parseInt(row.get(COL_IDX_PARAMS_START));
+                for (int j = 0; j < steps; j++) { decorateMacroStep(allTestSteps.get(i + j + 1)); }
+            }
 
             // look for base.macro(file,sheet,name) - open macro library as excel
             if (StringUtils.equals(testCommand, TEST_COMMAND_MACRO)) {
@@ -112,27 +118,50 @@ public class MacroMerger {
                 // expand macro test steps, add them to cache
                 List<List<String>> macroSteps = harvestMacroSteps(paramFile, paramSheet, paramMacro);
                 if (CollectionUtils.isNotEmpty(macroSteps)) {
-                    //ConsoleUtils.log("found macro steps:\n\t\t" + TextUtils.toString(macroSteps, "\n\t\t"));
+                    int stepSize = macroSteps.size();
 
-                    // 9. replace macro invocation step with expanded macro test steps
-                    allTestSteps.remove(i);
-                    for (int j = 0; j < macroSteps.size(); j++) {
+                    // replace existing macro() command to section() command
+                    String[] commandParts = StringUtils.split(CMD_COMMAND_SECTION, ".");
+                    row.set(COL_IDX_TARGET, commandParts[0]);
+                    row.set(COL_IDX_COMMAND, commandParts[1]);
+                    row.set(COL_IDX_PARAMS_START, stepSize + "");
+                    row.set(COL_IDX_PARAMS_START + 1, "");
+                    row.set(COL_IDX_PARAMS_START + 2, "");
+
+                    // allTestSteps.remove(i);
+
+                    // replace macro invocation step with expanded macro test steps
+                    for (int j = 0; j < stepSize; j++) {
                         List<String> macroStep = new ArrayList<>(macroSteps.get(j));
-                        macroStep.add(COL_IDX_TESTCASE, j == 0 ? activityName : "");
-                        // todo needs to change to support base.section()
-                        macroStep.add(COL_IDX_FLOW_CONTROLS, flowControls);
-                        if (StringUtils.isNotEmpty(macroStep.get(COL_IDX_FLOW_CONTROLS + 1))) {
-                            macroStep.set(COL_IDX_FLOW_CONTROLS + 1, "");
-                        }
-                        allTestSteps.add(i + j, macroStep);
+
+                        // since section command will be preceding all macro steps, we no longer need to be concerned
+                        // with the activity information from macro
+                        // macroStep.add(COL_IDX_TESTCASE, j == 0 ? activityName : "");
+                        macroStep.add(COL_IDX_TESTCASE, "");
+
+                        // add special character in macro steps description
+                        allTestSteps.add(i + j + 1, decorateMacroStep(macroStep));
+
+                        // with macro->step, the flow control is no longer propagated downwards
+                        // macroStep.add(COL_IDX_FLOW_CONTROLS, flowControls);
+                        // if (StringUtils.isNotEmpty(macroStep.get(COL_IDX_FLOW_CONTROLS + 1))) {
+                        //     macroStep.set(COL_IDX_FLOW_CONTROLS + 1, "");
+                        // }
+                        // allTestSteps.add(i + j, macroStep);
                     }
-                    // i += macroSteps.size();
+
+                    i += macroSteps.size();
                     macroExpanded = true;
                 }
             }
         }
 
         return macroExpanded;
+    }
+
+    protected List<String> decorateMacroStep(List<String> macroStep) {
+        macroStep.set(COL_IDX_DESCRIPTION, SECTION_DESCRIPTION_PREFIX + macroStep.get(COL_IDX_DESCRIPTION));
+        return macroStep;
     }
 
     protected void refillExpandedTestSteps(Worksheet sheet, List<List<String>> allTestSteps) {
@@ -146,18 +175,22 @@ public class MacroMerger {
             testStepArea.forEach(row -> excelSheet.removeRow(excelSheet.getRow(row.get(0).getRowIndex())));
         }
 
-        // push expaneded test steps back to scenario sheet
+        // push expanded test steps back to scenario sheet
         for (int i = 0; i < allTestSteps.size(); i++) {
             List<String> testStepRow = allTestSteps.get(i);
             int targetRowIdx = ADDR_COMMAND_START.getRowStartIndex() + i;
 
-            // if (excelSheet.getRow(targetRowIdx) != null) {
-            //     excelSheet.shiftRows(targetRowIdx, targetRowIdx, 1, true, false);
-            // }
-
             XSSFRow excelRow = excelSheet.createRow(targetRowIdx);
             for (int j = 0; j < testStepRow.size(); j++) {
-                excelRow.createCell(j, STRING).setCellValue(testStepRow.get(j));
+                String cellValue = testStepRow.get(j);
+                if (j == COL_IDX_REASON && StringUtils.isEmpty(cellValue)) { break; }
+
+                XSSFCell cell = excelRow.createCell(j, STRING);
+                cell.setCellValue(cellValue);
+
+                // set style for CMD_TYPE and command column
+                if (j == COL_IDX_TARGET) { cell.setCellStyle(sheet.getStyle(STYLE_TARGET)); }
+                if (j == COL_IDX_COMMAND) { cell.setCellStyle(sheet.getStyle(STYLE_COMMAND)); }
             }
         }
     }

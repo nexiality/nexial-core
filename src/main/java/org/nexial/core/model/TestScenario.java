@@ -33,20 +33,20 @@ import org.apache.poi.ss.util.CellRangeAddress;
 import org.apache.poi.xssf.usermodel.XSSFCell;
 import org.apache.poi.xssf.usermodel.XSSFRow;
 import org.apache.poi.xssf.usermodel.XSSFSheet;
-
 import org.nexial.core.excel.Excel.Worksheet;
 import org.nexial.core.excel.ExcelAddress;
 import org.nexial.core.excel.ExcelArea;
 import org.nexial.core.utils.ConsoleUtils;
 import org.nexial.core.utils.ExecutionLogger;
 
-import static org.nexial.core.NexialConst.*;
+import static org.apache.poi.ss.usermodel.CellType.STRING;
+import static org.apache.poi.ss.usermodel.Row.MissingCellPolicy.CREATE_NULL_AS_BLANK;
+import static org.nexial.core.NexialConst.CMD_VERBOSE;
 import static org.nexial.core.NexialConst.Data.CMD_COMMAND_REPEATER;
+import static org.nexial.core.NexialConst.MERGE_OUTPUTS;
 import static org.nexial.core.excel.ExcelConfig.*;
 import static org.nexial.core.excel.ExcelConfig.StyleConfig.MSG;
 import static org.nexial.core.model.ExecutionSummary.ExecutionLevel.SCENARIO;
-import static org.apache.poi.ss.usermodel.CellType.STRING;
-import static org.apache.poi.ss.usermodel.Row.MissingCellPolicy.CREATE_NULL_AS_BLANK;
 
 public class TestScenario {
     private ExecutionContext context;
@@ -168,8 +168,8 @@ public class TestScenario {
         }
 
         // if (interativeMode) {
-            // doInteractive(context);
-            // return allPass;
+        // doInteractive(context);
+        // return allPass;
         // }
 
         executionSummary.setEndTime(System.currentTimeMillis());
@@ -262,18 +262,17 @@ public class TestScenario {
         // lineCount should always be at least 1. otherwise this row will not be rendered with height 0
         if (lineCount < 1) { lineCount = 1; }
 
-        worksheet.setHeight(cellMerge, lineCount);
-        if (lineCount == 1) { cellMerge.getRow().setHeightInPoints(20); }
+        worksheet.setMinHeight(cellMerge, lineCount);
     }
 
     // protected void doInteractive(ExecutionContext context) {
-        // todo probably not in the right place.  Interactive mode would negate multiple test scenarios
-        // context.setData(OPT_EXCEL_FILE, context.getStringData(OPT_LAST_TEST_SCENARIO));
-        // context.setData(OPT_EXCEL_WORKSHEET, context.getStringData(OPT_LAST_TEST_STEP));
-        // todo: need to fix soon
-        //InteractiveDispatcher dispatcher = execution.newInteractiveDispatcher();
-        //dispatcher.setExecutor(this);
-        //dispatcher.doPrompt();
+    // todo probably not in the right place.  Interactive mode would negate multiple test scenarios
+    // context.setData(OPT_EXCEL_FILE, context.getStringData(OPT_LAST_TEST_SCENARIO));
+    // context.setData(OPT_EXCEL_WORKSHEET, context.getStringData(OPT_LAST_TEST_STEP));
+    // todo: need to fix soon
+    //InteractiveDispatcher dispatcher = execution.newInteractiveDispatcher();
+    //dispatcher.setExecutor(this);
+    //dispatcher.doPrompt();
     // }
 
     protected void parse() {
@@ -283,8 +282,8 @@ public class TestScenario {
         // 2. find last command
         int lastCommandRow = worksheet.findLastDataRow(ADDR_COMMAND_START);
         area = new ExcelArea(worksheet,
-                             new ExcelAddress("" + COL_TEST_CASE + (ADDR_COMMAND_START.getRowStartIndex() + 1) +
-                                              ":" + COL_REASON + lastCommandRow),
+                             new ExcelAddress("" + COL_TEST_CASE + (ADDR_COMMAND_START.getRowStartIndex() + 1) + ":" +
+                                              COL_REASON + lastCommandRow),
                              false);
         testCases = new ArrayList<>();
         testCaseMap = new HashMap<>();

@@ -21,17 +21,21 @@ import java.util.ArrayList;
 import java.util.List;
 
 import org.apache.commons.collections4.CollectionUtils;
+import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.builder.ToStringBuilder;
-
 import org.nexial.core.excel.Excel.Worksheet;
 import org.nexial.core.utils.ExecutionLogger;
 
+import static org.nexial.core.NexialConst.Data.CMD_COMMAND_SECTION;
 import static org.nexial.core.model.ExecutionSummary.ExecutionLevel.ACTIVITY;
 
 /**
  * aka test activity
  */
 public class TestCase {
+    private static final String NESTED_SECTION_STEP_SKIPPED =
+        "current step skipped due to the enclosed section command being skipped";
+
     private String name;
     private TestScenario testScenario;
     private List<TestStep> testSteps = new ArrayList<>();
@@ -79,7 +83,8 @@ public class TestCase {
 
         logger.log(this, "executing test case");
 
-        for (TestStep testStep : testSteps) {
+        for (int i = 0; i < testSteps.size(); i++) {
+            TestStep testStep = testSteps.get(i);
             StepResult result = testStep.execute();
 
             if (context.isEndImmediate()) {
@@ -89,6 +94,15 @@ public class TestCase {
 
             if (result.isSkipped()) {
                 executionSummary.adjustTotalSteps(-1);
+                if (StringUtils.equals(testStep.getCommandFQN(), CMD_COMMAND_SECTION)) {
+                    int steps = Integer.parseInt(testStep.getParams().get(0));
+                    for (int j = 0; j < steps; j++) {
+                        testSteps.get(i + j + 1).postExecCommand(StepResult.skipped(NESTED_SECTION_STEP_SKIPPED), 0);
+                    }
+                    i += steps;
+                    executionSummary.adjustTotalSteps(-steps);
+                }
+
                 if (context.isBreakCurrentIteration()) {
                     break;
                 } else {

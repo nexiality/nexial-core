@@ -526,6 +526,19 @@ public class BaseCommand implements NexialCommand {
         return failImmediate("Runtime error: Macro reference (" + file + "," + sheet + "," + name + ") not expanded");
     }
 
+    /**
+     * identify a set of test steps considered as section which includes number of test steps {@code steps}
+     *
+     * @param steps the number test steps to be included in the section
+     * @return pass
+     */
+    public StepResult section(String steps) {
+        requiresPositiveNumber(steps, "Invalid step count", steps);
+        int stepCount = NumberUtils.toInt(steps);
+        requires(stepCount > 0, "At least 1 step is required", steps);
+        return StepResult.success();
+    }
+
     /** Like JUnit's Assert.assertEquals, but handles "regexp:" strings like HTML Selenese */
     public void assertEquals(String expected, String actual) {
         String expectedDisplay = expected == null ? null : "\"" + expected + "\"";
