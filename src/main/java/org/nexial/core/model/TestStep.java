@@ -530,7 +530,7 @@ public class TestStep extends TestStepManifest {
         int numOfLines = NumberUtils.max(
             StringUtils.countMatches(Excel.getCellValue(cellTestCase), '\n'),
             StringUtils.countMatches(Excel.getCellValue(cellDescription), '\n'),
-            StringUtils.countMatches(Excel.getCellValue(row.get(COL_IDX_PARAMS_START)), '\n'),
+            ArrayUtils.isNotEmpty(paramValues) ? StringUtils.countMatches(Objects.toString(paramValues[0]), '\n') : 0,
             StringUtils.countMatches(Excel.getCellValue(cellFlowControl), '\n')) + 1;
         worksheet.setMinHeight(cellDescription, numOfLines);
 
