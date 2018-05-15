@@ -21,179 +21,22 @@ import java.awt.*;
 import java.io.IOException;
 import java.util.*;
 import java.util.List;
-import java.util.regex.Pattern;
 
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.collections4.MapUtils;
-import org.apache.commons.lang3.ArrayUtils;
 import org.apache.commons.lang3.BooleanUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.math.NumberUtils;
-import org.uptospeed.seeknow.*;
-
 import org.nexial.commons.utils.TextUtils;
 import org.nexial.core.utils.ConsoleUtils;
+import org.nexial.seeknow.*;
+import org.nexial.seeknow.processor.*;
 
 import static org.nexial.core.plugins.desktop.DesktopConst.*;
 
 public final class SeeknowHelper {
     private static final Map<String, Seeknow> INSTANCES = new HashMap<>();
 
-    public static class CriteriaBasedProcessor extends AcceptAllProcessor {
-        private SeeknowCriteria criteria;
-
-        public CriteriaBasedProcessor(SeeknowCriteria criteria) {
-            this.criteria = criteria;
-            this.stopOnEmptyText = criteria.isStopOnEmptyText();
-        }
-
-        @Override
-        public boolean processMatch(SeeknowData match) {
-            // match 'stopOnEmptyText'
-            if (match == null) { return !this.stopOnEmptyText; }
-
-            String matchText = match.getText();
-            if (StringUtils.isBlank(matchText)) { return !this.stopOnEmptyText; }
-
-            // match 'rows'
-            int lineNumber = match.getLineNumber();
-            boolean isLastRow = criteria.isLastRow(lineNumber);
-            if (!criteria.isValidRow(lineNumber)) { return !isLastRow; }
-
-            // match 'color'
-            if (criteria.getColor() != null) {
-                boolean colorFound = match.getColors().contains(criteria.getColor());
-
-                // don't want this line, but we don't need to stop either
-                if (!colorFound) { return !isLastRow; }
-            }
-
-            // match 'regex' or match 'contains'
-            String regex = criteria.getRegex();
-            if (StringUtils.isNotBlank(regex)) {
-                if (criteria.matchByRegex(matchText)) {
-                    this.data.add(match);
-                    return !criteria.isStopOnMatch() && !isLastRow;
-                } else {
-                    return !isLastRow;
-                }
-            }
-
-            String contains = criteria.getContains();
-            if (StringUtils.isNotBlank(contains)) {
-                if (StringUtils.contains(matchText, contains)) {
-                    this.data.add(match);
-                    return !criteria.isStopOnMatch() && !isLastRow;
-                } else {
-                    return !isLastRow;
-                }
-            }
-
-            this.data.add(match);
-            return !isLastRow;
-        }
-    }
-
-    public static class SeeknowCriteria {
-        /** if true, stop scanning when first match is found */
-        private boolean stopOnMatch;
-
-        /** specify the "substring" to match by */
-        private String contains;
-
-        /** if true, then only match the characters specified in contains.  DOES NOT WORK WHEN REGEX IS SPECIFIED */
-        private boolean limitMatch;
-
-        /** specify the regex to match by; takes precedence over "contains" match */
-        private String regex;
-        private Pattern pattern;
-
-        /** if true, seeknow stops upon finding a "blank" row (rows with only white color) */
-        private boolean stopOnEmptyText;
-
-        /** only scanned the specified rows, which are specified as zero-based, single numer or range */
-        private String limitRows;
-        private Set<Integer> rows;
-
-        /** match only when a row contains the specified color */
-        private SeeknowColor color;
-
-        public boolean isStopOnMatch() { return stopOnMatch;}
-
-        public void setStopOnMatch(boolean stopOnMatch) { this.stopOnMatch = stopOnMatch;}
-
-        public String getContains() { return contains;}
-
-        public void setContains(String contains) { this.contains = contains;}
-
-        public String getRegex() { return regex;}
-
-        public void setRegex(String regex) {
-            this.regex = regex;
-            this.pattern = Pattern.compile(regex);
-        }
-
-        public boolean matchByRegex(String text) {
-            return !StringUtils.isEmpty(regex) && !StringUtils.isBlank(text) && this.pattern.matcher(text).find();
-        }
-
-        public boolean isStopOnEmptyText() { return stopOnEmptyText;}
-
-        public void setStopOnEmptyText(boolean stopOnEmptyText) { this.stopOnEmptyText = stopOnEmptyText;}
-
-        public String getLimitRows() { return limitRows;}
-
-        public void setLimitRows(String limitRows) {
-            this.limitRows = StringUtils.trim(limitRows);
-
-            rows = new TreeSet<>();
-            if (StringUtils.equals(this.limitRows, "*")) { return; }
-            if (NumberUtils.isDigits(this.limitRows)) {
-                rows.add(NumberUtils.toInt(limitRows));
-                return;
-            }
-
-            String[] rowsArray = StringUtils.split(this.limitRows, ",");
-            if (ArrayUtils.isEmpty(rowsArray)) { return; }
-
-            Arrays.stream(rowsArray).forEach(r -> {
-                r = StringUtils.trim(r);
-                if (NumberUtils.isDigits(r)) {
-                    rows.add(NumberUtils.toInt(r));
-                } else {
-                    throw new IllegalArgumentException("Invalid row index specified: " + r);
-                }
-            });
-        }
-
-        public boolean isValidRow(int rowIndex) { return CollectionUtils.isEmpty(rows) || rows.contains(rowIndex); }
-
-        public boolean isLastRow(int rowIndex) {
-            if (CollectionUtils.isEmpty(rows)) { return false; }
-
-            Integer[] rowIndices = rows.toArray(new Integer[rows.size()]);
-            int lastRow = rowIndices[rowIndices.length - 1];
-            return rowIndex >= lastRow;
-        }
-
-        public boolean isLimitMatch() { return limitMatch; }
-
-        public void setLimitMatch(boolean limitMatch) { this.limitMatch = limitMatch; }
-
-        public SeeknowColor getColor() { return color;}
-
-        public void setColor(SeeknowColor color) { this.color = color;}
-
-        @Override
-        public String toString() {
-            return "contains=" + contains +
-                   "regex=" + regex +
-                   "stopOnEmptyText=" + stopOnEmptyText +
-                   "limitRows=" + limitRows +
-                   "limitMatch=" + limitMatch +
-                   "color=" + color;
-        }
-    }
 
     private SeeknowHelper() { }
 

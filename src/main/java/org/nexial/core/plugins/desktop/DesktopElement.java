@@ -30,6 +30,7 @@ import org.apache.commons.lang3.BooleanUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.math.NumberUtils;
 import org.nexial.core.model.StepResult;
+import org.nexial.seeknow.SeeknowData;
 import org.openqa.selenium.By;
 import org.openqa.selenium.InvalidElementStateException;
 import org.openqa.selenium.WebDriverException;
@@ -37,8 +38,6 @@ import org.openqa.selenium.WebElement;
 import org.openqa.selenium.interactions.Actions;
 import org.openqa.selenium.remote.RemoteWebElement;
 import org.openqa.selenium.winium.WiniumDriver;
-import org.uptospeed.seeknow.SeeknowData;
-
 import org.nexial.commons.utils.CollectionUtil;
 import org.nexial.commons.utils.RegexUtils;
 import org.nexial.commons.utils.TextUtils;

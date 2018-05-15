@@ -261,7 +261,7 @@
 	</logger>
 
 	<!-- seeknow -->
-	<logger name="org.uptospeed.seeknow" additivity="false" level="DEBUG">
+	<logger name="org.nexial.seeknow" additivity="false" level="DEBUG">
 		<appender-ref ref="console"/>
 		<appender-ref ref="file-testexecution"/>
 	</logger>

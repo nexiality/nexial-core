@@ -48,6 +48,7 @@ import org.nexial.core.plugins.desktop.ig.IgRibbon;
 import org.nexial.core.utils.CheckUtils;
 import org.nexial.core.utils.ConsoleUtils;
 import org.nexial.core.utils.OutputFileUtils;
+import org.nexial.seeknow.SeeknowData;
 import org.openqa.selenium.By;
 import org.openqa.selenium.By.ByClassName;
 import org.openqa.selenium.By.ById;
@@ -60,8 +61,6 @@ import org.openqa.selenium.WebElement;
 import org.openqa.selenium.interactions.Actions;
 import org.openqa.selenium.support.ui.WebDriverWait;
 import org.openqa.selenium.winium.WiniumDriver;
-import org.uptospeed.seeknow.SeeknowData;
-
 import static java.io.File.separator;
 import static java.lang.Integer.MAX_VALUE;
 import static java.lang.System.lineSeparator;
