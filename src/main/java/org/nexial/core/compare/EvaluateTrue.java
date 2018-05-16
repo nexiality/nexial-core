@@ -21,13 +21,13 @@ package org.nexial.core.compare;
  *
  */
 public class EvaluateTrue extends EvaluatorBase {
-	@Override
-	protected boolean evaluate(double lhs, double rhs) throws IncompatibleTypeException {
-		throw new IncompatibleTypeException(lhs + "", "", "is true");
-	}
+    @Override
+    protected boolean evaluate(double lhs, double rhs) throws IncompatibleTypeException {
+        throw new IncompatibleTypeException(lhs + "", "", "is true");
+    }
 
-	@Override
-	protected boolean evaluate(String lhs, String rhs) throws IncompatibleTypeException {
-		return Boolean.parseBoolean(lhs);
-	}
+    @Override
+    protected boolean evaluate(String lhs, String rhs) throws IncompatibleTypeException {
+        return Boolean.parseBoolean(lhs);
+    }
 }

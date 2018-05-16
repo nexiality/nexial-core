@@ -41,8 +41,6 @@ public class JsonMappingConfig {
         public void setStrategy(String strategy) { this.strategy = strategy;}
     }
 
-
-
     public static class RecordspecBean {
 
         @SerializedName("field-name")

@@ -23,48 +23,48 @@ import org.nexial.core.plugins.pdf.Table.Cell;
 import org.nexial.core.plugins.pdf.Table.Row;
 
 class CsvFormatter extends TableFormatter<String> {
-	private String delimiter;
-	private String lineSeparator;
+    private String delimiter;
+    private String lineSeparator;
 
-	public String getDelimiter() { return delimiter; }
+    public String getDelimiter() { return delimiter; }
 
-	public void setDelimiter(String delimiter) { this.delimiter = delimiter; }
+    public void setDelimiter(String delimiter) { this.delimiter = delimiter; }
 
-	public String getLineSeparator() { return lineSeparator; }
+    public String getLineSeparator() { return lineSeparator; }
 
-	public void setLineSeparator(String lineSeparator) { this.lineSeparator = lineSeparator; }
+    public void setLineSeparator(String lineSeparator) { this.lineSeparator = lineSeparator; }
 
-	public String format(Table table) {
-		StringBuilder buffer = new StringBuilder();
+    public String format(Table table) {
+        StringBuilder buffer = new StringBuilder();
 
-		int columnsCount = table.getColumnsCount();
-		List<Row> rows = table.getRows();
-		for (Row row : rows) {
-			buffer.append(lineSeparator);
+        int columnsCount = table.getColumnsCount();
+        List<Row> rows = table.getRows();
+        for (Row row : rows) {
+            buffer.append(lineSeparator);
 
-			int cellIdx = 0;    //pointer of row.cells
-			int columnIdx = 0;  //pointer of columns
-			while (columnIdx < columnsCount) {
-				if (cellIdx < row.getCells().size()) {
-					Cell cell = row.getCells().get(cellIdx);
-					if (cell.getIdx() == columnIdx) {
-						if (cell.getIdx() != 0) { buffer.append(delimiter); }
-						buffer.append(cell.getContent());
-						cellIdx++;
-						columnIdx++;
-					} else if (columnIdx < cellIdx) {
-						if (columnIdx != 0) { buffer.append(delimiter); }
-						columnIdx++;
-					} else {
-						throw new RuntimeException("Invalid state");
-					}
-				} else {
-					if (columnIdx != 0) { buffer.append(delimiter); }
-					columnIdx++;
-				}
-			}
-		}
+            int cellIdx = 0;    //pointer of row.cells
+            int columnIdx = 0;  //pointer of columns
+            while (columnIdx < columnsCount) {
+                if (cellIdx < row.getCells().size()) {
+                    Cell cell = row.getCells().get(cellIdx);
+                    if (cell.getIdx() == columnIdx) {
+                        if (cell.getIdx() != 0) { buffer.append(delimiter); }
+                        buffer.append(cell.getContent());
+                        cellIdx++;
+                        columnIdx++;
+                    } else if (columnIdx < cellIdx) {
+                        if (columnIdx != 0) { buffer.append(delimiter); }
+                        columnIdx++;
+                    } else {
+                        throw new RuntimeException("Invalid state");
+                    }
+                } else {
+                    if (columnIdx != 0) { buffer.append(delimiter); }
+                    columnIdx++;
+                }
+            }
+        }
 
-		return buffer.toString();
-	}
+        return buffer.toString();
+    }
 }

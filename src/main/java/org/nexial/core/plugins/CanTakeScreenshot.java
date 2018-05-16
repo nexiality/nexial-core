@@ -24,7 +24,7 @@ import org.nexial.core.model.TestStep;
  */
 public interface CanTakeScreenshot {
 
-	String takeScreenshot(TestStep testStep);
+    String takeScreenshot(TestStep testStep);
 
-	String generateScreenshotFilename(TestStep testStep);
+    String generateScreenshotFilename(TestStep testStep);
 }

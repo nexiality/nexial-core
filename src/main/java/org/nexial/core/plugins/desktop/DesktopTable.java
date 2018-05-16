@@ -35,18 +35,17 @@ import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.math.NumberUtils;
 import org.json.JSONException;
 import org.json.JSONObject;
+import org.nexial.commons.utils.TextUtils;
+import org.nexial.core.ExecutionThread;
+import org.nexial.core.model.ExecutionContext;
 import org.nexial.core.model.StepResult;
+import org.nexial.core.plugins.desktop.ig.IgExplorerBar;
+import org.nexial.core.utils.ConsoleUtils;
+import org.nexial.core.utils.JsonUtils;
 import org.openqa.selenium.By;
 import org.openqa.selenium.NoSuchElementException;
 import org.openqa.selenium.WebElement;
 import org.openqa.selenium.interactions.Actions;
-
-import org.nexial.commons.utils.TextUtils;
-import org.nexial.core.ExecutionThread;
-import org.nexial.core.model.ExecutionContext;
-import org.nexial.core.plugins.desktop.ig.IgExplorerBar;
-import org.nexial.core.utils.ConsoleUtils;
-import org.nexial.core.utils.JsonUtils;
 
 import static org.nexial.core.plugins.desktop.DesktopConst.*;
 import static org.nexial.core.plugins.desktop.DesktopUtils.*;
@@ -753,7 +752,8 @@ public class DesktopTable extends DesktopElement {
 
     protected void typeValue(WebElement cellElement, String value, boolean isFormattedText) {
         if (isFormattedText) {
-            ConsoleUtils.log("clear content and send keys on formatted textbox '" + treatColumnHeader(cellElement.getAttribute("Name") + "'"));
+            ConsoleUtils.log("clear content and send keys on formatted textbox '" +
+                             treatColumnHeader(cellElement.getAttribute("Name") + "'"));
             setValue(cellElement, "");
             // formatted text box needs special treatment (using both set value and send keys)
             String[] chars = value.split("");
@@ -773,6 +773,7 @@ public class DesktopTable extends DesktopElement {
         }
         return rows;
     }
+
     private void looseCurrentFocus() {
 
         DesktopSession session = getCurrentSession();

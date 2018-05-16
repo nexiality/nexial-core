@@ -85,22 +85,22 @@ public class DefaultSocketFactory /*implements ProtocolSocketFactory {
 	}
 
 	*//**
-	 * Attempts to get a new socket connection to the given host within the given time limit.
-	 * <p>
-	 * To circumvent the limitations of older JREs that do not support connect timeout a
-	 * controller thread is executed. The controller thread attempts to create a new socket
-	 * within the given limit of time. If socket constructor does not return until the
-	 * timeout expires, the controller terminates and throws an {@link IOException}
-	 * </p>
-	 *
-	 * @param host         the host name/IP
-	 * @param port         the port on the host
-	 * @param localAddress the local host name/IP to bind the socket to
-	 * @param localPort    the port on the local machine
-	 * @param params       {@link HttpConnectionParams Http connection parameters}
-	 * @return Socket a new socket
-	 * @throws IOException if an I/O error occurs while creating the socket
-	 *//*
+ * Attempts to get a new socket connection to the given host within the given time limit.
+ * <p>
+ * To circumvent the limitations of older JREs that do not support connect timeout a
+ * controller thread is executed. The controller thread attempts to create a new socket
+ * within the given limit of time. If socket constructor does not return until the
+ * timeout expires, the controller terminates and throws an {@link IOException}
+ * </p>
+ *
+ * @param host         the host name/IP
+ * @param port         the port on the host
+ * @param localAddress the local host name/IP to bind the socket to
+ * @param localPort    the port on the local machine
+ * @param params       {@link HttpConnectionParams Http connection parameters}
+ * @return Socket a new socket
+ * @throws IOException if an I/O error occurs while creating the socket
+ *//*
 	public Socket createSocket(final String host,
 	                           final int port,
 	                           final InetAddress localAddress,
@@ -128,5 +128,4 @@ public class DefaultSocketFactory /*implements ProtocolSocketFactory {
 
 	@Override
 	public int hashCode() { return DefaultSocketFactory.class.hashCode(); }
-}*/
-{}
+}*/ { }

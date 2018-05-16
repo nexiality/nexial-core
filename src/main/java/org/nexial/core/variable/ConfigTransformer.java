@@ -30,7 +30,6 @@ import java.util.TreeSet;
 
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang3.StringUtils;
-
 import org.nexial.commons.utils.EnvUtils;
 import org.nexial.core.utils.ConsoleUtils;
 
@@ -40,127 +39,127 @@ import static org.nexial.core.NexialConst.DEF_FILE_ENCODING;
  * Created by nv092106 on 7/16/2017.
  */
 public class ConfigTransformer<T extends ConfigDataType> extends Transformer {
-	private static final Map<String, Integer> FUNCTION_TO_PARAM_LIST = discoverFunctions(ConfigTransformer.class);
-	private static final Map<String, Method> FUNCTIONS =
-		toFunctionMap(FUNCTION_TO_PARAM_LIST, ConfigTransformer.class, ConfigDataType.class);
+    private static final Map<String, Integer> FUNCTION_TO_PARAM_LIST = discoverFunctions(ConfigTransformer.class);
+    private static final Map<String, Method> FUNCTIONS =
+        toFunctionMap(FUNCTION_TO_PARAM_LIST, ConfigTransformer.class, ConfigDataType.class);
 
-	public TextDataType text(T data) { return super.text(data); }
+    public TextDataType text(T data) { return super.text(data); }
 
-	public ListDataType keys(T data) throws TypeConversionException {
-		if (data == null || data.getValue() == null) { return null; }
+    public ListDataType keys(T data) throws TypeConversionException {
+        if (data == null || data.getValue() == null) { return null; }
 
-		Properties value = data.getValue();
-		try {
-			return new ListDataType(value.keySet().toString());
-		} catch (TypeConversionException e) {
-			throw new TypeConversionException(data.getName(), data.getTextValue(),
-			                                  "Error converting to ListDataType: " + e.getMessage(), e);
-		}
-	}
+        Properties value = data.getValue();
+        try {
+            return new ListDataType(value.keySet().toString());
+        } catch (TypeConversionException e) {
+            throw new TypeConversionException(data.getName(), data.getTextValue(),
+                                              "Error converting to ListDataType: " + e.getMessage(), e);
+        }
+    }
 
-	public TextDataType value(T data, String key) throws TypeConversionException {
-		if (data == null || data.getValue() == null || StringUtils.isBlank(key)) { return null; }
+    public TextDataType value(T data, String key) throws TypeConversionException {
+        if (data == null || data.getValue() == null || StringUtils.isBlank(key)) { return null; }
 
-		try {
-			return new TextDataType(data.getValue().getProperty(key));
-		} catch (TypeConversionException e) {
-			throw new TypeConversionException(data.getName(), data.getTextValue(),
-			                                  "Error converting to TextDataType: " + e.getMessage(), e);
-		}
-	}
+        try {
+            return new TextDataType(data.getValue().getProperty(key));
+        } catch (TypeConversionException e) {
+            throw new TypeConversionException(data.getName(), data.getTextValue(),
+                                              "Error converting to TextDataType: " + e.getMessage(), e);
+        }
+    }
 
-	public T set(T data, String key, String value) {
-		if (data == null || data.getValue() == null || StringUtils.isBlank(key)) { return null; }
+    public T set(T data, String key, String value) {
+        if (data == null || data.getValue() == null || StringUtils.isBlank(key)) { return null; }
 
-		data.getValue().put(key, value);
-		data.reset();
-		return data;
-	}
+        data.getValue().put(key, value);
+        data.reset();
+        return data;
+    }
 
-	public T remove(T data, String key) {
-		if (data == null || data.getValue() == null || StringUtils.isBlank(key)) { return null; }
+    public T remove(T data, String key) {
+        if (data == null || data.getValue() == null || StringUtils.isBlank(key)) { return null; }
 
-		data.getValue().remove(key);
-		data.reset();
-		return data;
-	}
+        data.getValue().remove(key);
+        data.reset();
+        return data;
+    }
 
-	public T save(T data, String filepath) {
-		if (data == null || data.getValue() == null || StringUtils.isBlank(filepath)) { return null; }
+    public T save(T data, String filepath) {
+        if (data == null || data.getValue() == null || StringUtils.isBlank(filepath)) { return null; }
 
-		File file = new File(filepath);
-		if (!file.isFile() && !file.canRead()) {
-			throw new IllegalArgumentException("Save cannot be performed as given file " + filepath +
-			                                   " is not a valid file");
-		}
+        File file = new File(filepath);
+        if (!file.isFile() && !file.canRead()) {
+            throw new IllegalArgumentException("Save cannot be performed as given file " + filepath +
+                                               " is not a valid file");
+        }
 
-		Writer writer = null;
-		Properties properties = data.getValue();
-		try {
-			writer = new FileWriter(file);
-			properties.store(writer, "Saving test data");
-		} catch (IOException e) {
-			throw new IllegalArgumentException("Error while saving data to file: " + filepath);
-		} finally {
-			try {
-				if (writer != null) { writer.close(); }
-			} catch (IOException e) {
-				ConsoleUtils.log("Error closing file resource");
-			}
-		}
+        Writer writer = null;
+        Properties properties = data.getValue();
+        try {
+            writer = new FileWriter(file);
+            properties.store(writer, "Saving test data");
+        } catch (IOException e) {
+            throw new IllegalArgumentException("Error while saving data to file: " + filepath);
+        } finally {
+            try {
+                if (writer != null) { writer.close(); }
+            } catch (IOException e) {
+                ConsoleUtils.log("Error closing file resource");
+            }
+        }
 
-		try {
-			// Properties.store() uses OS-specific EOF, now let's change it back to what the input file has instead
-			String saved = FileUtils.readFileToString(file, DEF_FILE_ENCODING);
-			if (StringUtils.equals(data.getEol(), "\r\n")) {
-				saved = EnvUtils.enforceWindowsEOL(saved);
-			} else {
-				saved = EnvUtils.enforceUnixEOL(saved);
-			}
+        try {
+            // Properties.store() uses OS-specific EOF, now let's change it back to what the input file has instead
+            String saved = FileUtils.readFileToString(file, DEF_FILE_ENCODING);
+            if (StringUtils.equals(data.getEol(), "\r\n")) {
+                saved = EnvUtils.enforceWindowsEOL(saved);
+            } else {
+                saved = EnvUtils.enforceUnixEOL(saved);
+            }
 
-			FileUtils.writeStringToFile(file, saved, "UTF-8");
-			data.setTextValue(saved);
-			data.init();
-			return data;
-		} catch (TypeConversionException | IOException e) {
-			ConsoleUtils.error("Unable to save CONFIG data to '" + filepath + "': " + e.getMessage());
-			throw new IllegalArgumentException("Unable to save CONFIG data to '" + filepath + "'", e);
-		}
-	}
+            FileUtils.writeStringToFile(file, saved, "UTF-8");
+            data.setTextValue(saved);
+            data.init();
+            return data;
+        } catch (TypeConversionException | IOException e) {
+            ConsoleUtils.error("Unable to save CONFIG data to '" + filepath + "': " + e.getMessage());
+            throw new IllegalArgumentException("Unable to save CONFIG data to '" + filepath + "'", e);
+        }
+    }
 
-	public T store(T data, String var) {
-		snapshot(var, data);
-		return data;
-	}
+    public T store(T data, String var) {
+        snapshot(var, data);
+        return data;
+    }
 
-	public T descending(T data) throws TypeConversionException {
-		return resortKeys(data, new TreeSet<>(Comparator.reverseOrder()));
-	}
+    public T descending(T data) throws TypeConversionException {
+        return resortKeys(data, new TreeSet<>(Comparator.reverseOrder()));
+    }
 
-	public T ascending(T data) throws TypeConversionException { return resortKeys(data, new TreeSet<>()); }
+    public T ascending(T data) throws TypeConversionException { return resortKeys(data, new TreeSet<>()); }
 
-	@Override
-	Map<String, Integer> listSupportedFunctions() { return FUNCTION_TO_PARAM_LIST; }
+    @Override
+    Map<String, Integer> listSupportedFunctions() { return FUNCTION_TO_PARAM_LIST; }
 
-	@Override
-	Map<String, Method> listSupportedMethods() { return FUNCTIONS; }
+    @Override
+    Map<String, Method> listSupportedMethods() { return FUNCTIONS; }
 
-	protected T resortKeys(T data, SortedSet<String> sortedKeys) throws TypeConversionException {
-		if (data == null || data.getValue() == null || data.getValue().isEmpty()) {
-			return data;
-		}
+    protected T resortKeys(T data, SortedSet<String> sortedKeys) throws TypeConversionException {
+        if (data == null || data.getValue() == null || data.getValue().isEmpty()) {
+            return data;
+        }
 
-		Properties props = data.getValue();
-		sortedKeys.addAll(props.stringPropertyNames());
+        Properties props = data.getValue();
+        sortedKeys.addAll(props.stringPropertyNames());
 
-		String eol = data.getEol();
-		ConsoleUtils.log("resort keys using " + (StringUtils.equals(eol, "\r\n") ? "CRLF" : "LF") + " as end-of-line");
+        String eol = data.getEol();
+        ConsoleUtils.log("resort keys using " + (StringUtils.equals(eol, "\r\n") ? "CRLF" : "LF") + " as end-of-line");
 
-		StringBuilder text = new StringBuilder();
-		sortedKeys.forEach(key -> text.append(key).append("=").append(props.getProperty(key)).append(eol));
+        StringBuilder text = new StringBuilder();
+        sortedKeys.forEach(key -> text.append(key).append("=").append(props.getProperty(key)).append(eol));
 
-		data.setTextValue(text.toString());
-		data.init();
-		return data;
-	}
+        data.setTextValue(text.toString());
+        data.init();
+        return data;
+    }
 }

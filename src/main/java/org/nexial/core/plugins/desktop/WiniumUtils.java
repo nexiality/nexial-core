@@ -28,6 +28,13 @@ import org.apache.commons.lang3.ArrayUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.math.NumberUtils;
 import org.apache.commons.lang3.tuple.MutablePair;
+import org.nexial.commons.proc.ProcessInvoker;
+import org.nexial.commons.proc.ProcessOutcome;
+import org.nexial.commons.utils.FileUtil;
+import org.nexial.commons.utils.TextUtils;
+import org.nexial.core.ExecutionThread;
+import org.nexial.core.model.ExecutionContext;
+import org.nexial.core.utils.ConsoleUtils;
 import org.openqa.selenium.Keys;
 import org.openqa.selenium.WebElement;
 import org.openqa.selenium.interactions.Actions;
@@ -36,24 +43,17 @@ import org.openqa.selenium.winium.DesktopOptions;
 import org.openqa.selenium.winium.WiniumDriver;
 import org.openqa.selenium.winium.WiniumDriverService;
 
-import org.nexial.commons.proc.ProcessInvoker;
-import org.nexial.commons.proc.ProcessOutcome;
-import org.nexial.commons.utils.FileUtil;
-import org.nexial.commons.utils.TextUtils;
-import org.nexial.core.ExecutionThread;
-import org.nexial.core.model.ExecutionContext;
-import org.nexial.core.utils.ConsoleUtils;
 import com.google.common.collect.ImmutableList;
 
+import static java.io.File.separator;
+import static java.lang.System.lineSeparator;
+import static org.apache.commons.lang3.SystemUtils.IS_OS_WINDOWS;
 import static org.nexial.commons.proc.ProcessInvoker.WORKING_DIRECTORY;
 import static org.nexial.core.NexialConst.*;
 import static org.nexial.core.NexialConst.Data.*;
 import static org.nexial.core.NexialConst.Project.NEXIAL_HOME;
 import static org.nexial.core.NexialConst.Project.NEXIAL_WINDOWS_BIN_REL_PATH;
 import static org.nexial.core.utils.WebDriverUtils.*;
-import static java.io.File.separator;
-import static java.lang.System.lineSeparator;
-import static org.apache.commons.lang3.SystemUtils.IS_OS_WINDOWS;
 import static org.openqa.selenium.winium.WiniumDriverService.*;
 
 public final class WiniumUtils {

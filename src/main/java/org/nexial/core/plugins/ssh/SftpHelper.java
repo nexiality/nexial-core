@@ -22,8 +22,8 @@ import java.util.List;
 import org.nexial.commons.utils.FilePathFilter;
 
 public final class SftpHelper implements FilePathFilter {
-	@Override
-	public List<String> filterFiles(String filePathPattern) {
-		throw new RuntimeException("NOT YET IMPLEMENTED");
-	}
+    @Override
+    public List<String> filterFiles(String filePathPattern) {
+        throw new RuntimeException("NOT YET IMPLEMENTED");
+    }
 }

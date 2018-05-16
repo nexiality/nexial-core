@@ -39,7 +39,6 @@ import org.apache.commons.lang3.time.StopWatch;
 import org.apache.commons.lang3.tuple.ImmutablePair;
 import org.apache.commons.lang3.tuple.Pair;
 import org.apache.commons.text.similarity.LevenshteinDetailedDistance;
-
 import org.nexial.commons.utils.DateUtility;
 import org.nexial.commons.utils.FileUtil;
 import org.nexial.commons.utils.IOFilePathFilter;
@@ -55,6 +54,9 @@ import org.nexial.core.utils.ConsoleUtils;
 import org.nexial.core.utils.OutputFileUtils;
 import org.nexial.core.variable.Syspath;
 
+import static java.io.File.separator;
+import static java.io.File.separatorChar;
+import static java.lang.System.lineSeparator;
 import static org.nexial.core.NexialConst.*;
 import static org.nexial.core.NexialConst.Data.*;
 import static org.nexial.core.plugins.io.ComparisonResult.*;
@@ -63,9 +65,6 @@ import static org.nexial.core.plugins.io.IoAction.move;
 import static org.nexial.core.plugins.io.IoCommand.CompareMode.*;
 import static org.nexial.core.plugins.io.IoCommand.CompareMode.FAIL_FAST;
 import static org.nexial.core.utils.CheckUtils.*;
-import static java.io.File.separator;
-import static java.io.File.separatorChar;
-import static java.lang.System.lineSeparator;
 
 public class IoCommand extends BaseCommand {
     protected static final LevenshteinDetailedDistance levenshtein = LevenshteinDetailedDistance.getDefaultInstance();
@@ -298,11 +297,11 @@ public class IoCommand extends BaseCommand {
         }
 
         return new StepResult(passed,
-                                "File (" + file + ") is " +
-                                (passed ?
-                                 "readable and meet size requirement" :
-                                 "NOT readable or less than specified size"
-                                ),
+                              "File (" + file + ") is " +
+                              (passed ?
+                               "readable and meet size requirement" :
+                               "NOT readable or less than specified size"
+                              ),
                               null);
     }
 

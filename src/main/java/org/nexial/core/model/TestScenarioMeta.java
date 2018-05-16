@@ -20,7 +20,6 @@ package org.nexial.core.model;
 import java.io.IOException;
 
 import org.apache.poi.xssf.usermodel.XSSFCell;
-
 import org.nexial.core.excel.Excel.Worksheet;
 import org.nexial.core.excel.ExcelAddress;
 

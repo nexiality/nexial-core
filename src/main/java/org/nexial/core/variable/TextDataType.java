@@ -18,41 +18,41 @@
 package org.nexial.core.variable;
 
 public class TextDataType extends ExpressionDataType<String> {
-	private Transformer transformer = new TextTransformer();
+    private Transformer transformer = new TextTransformer();
 
-	public TextDataType(String textValue) throws TypeConversionException { super(textValue); }
+    public TextDataType(String textValue) throws TypeConversionException { super(textValue); }
 
-	private TextDataType() { super(); }
+    private TextDataType() { super(); }
 
-	public static TextDataType newEmptyInstance() {
-		try {
-			return new TextDataType("");
-		} catch (TypeConversionException e) {
-			// really unlikely...
-			throw new IllegalArgumentException("Unable to create empty text data: " + e.getMessage(), e);
-		}
-	}
+    public static TextDataType newEmptyInstance() {
+        try {
+            return new TextDataType("");
+        } catch (TypeConversionException e) {
+            // really unlikely...
+            throw new IllegalArgumentException("Unable to create empty text data: " + e.getMessage(), e);
+        }
+    }
 
-	@Override
-	public String getName() { return "TEXT"; }
+    @Override
+    public String getName() { return "TEXT"; }
 
-	@Override
-	public void setValue(String value) {
-		super.setValue(value);
-		setTextValue(value);
-	}
+    @Override
+    public void setValue(String value) {
+        super.setValue(value);
+        setTextValue(value);
+    }
 
-	@Override
-	TextDataType snapshot() {
-		TextDataType snapshot = new TextDataType();
-		snapshot.transformer = transformer;
-		snapshot.value = value;
-		snapshot.textValue = textValue;
-		return snapshot;
-	}
+    @Override
+    TextDataType snapshot() {
+        TextDataType snapshot = new TextDataType();
+        snapshot.transformer = transformer;
+        snapshot.value = value;
+        snapshot.textValue = textValue;
+        return snapshot;
+    }
 
-	@Override
-	Transformer getTransformer() { return transformer; }
+    @Override
+    Transformer getTransformer() { return transformer; }
 
-	protected void init() { this.value = textValue; }
+    protected void init() { this.value = textValue; }
 }

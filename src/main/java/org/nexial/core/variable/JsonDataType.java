@@ -23,77 +23,77 @@ import org.apache.commons.lang3.StringUtils;
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
-
 import org.nexial.core.utils.ConsoleUtils;
+
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 
-import static org.nexial.core.NexialConst.DEF_CHARSET;
 import static java.lang.System.lineSeparator;
+import static org.nexial.core.NexialConst.DEF_CHARSET;
 
 public class JsonDataType extends ExpressionDataType<JsonElement> {
-	static final Gson GSON = new GsonBuilder().setPrettyPrinting()
-	                                          .disableHtmlEscaping()
-	                                          .disableInnerClassSerialization()
-	                                          .setLenient()
-	                                          .create();
-	private Transformer transformer = new JsonTransformer();
+    static final Gson GSON = new GsonBuilder().setPrettyPrinting()
+                                              .disableHtmlEscaping()
+                                              .disableInnerClassSerialization()
+                                              .setLenient()
+                                              .create();
+    private Transformer transformer = new JsonTransformer();
 
-	public JsonDataType(String textValue) throws TypeConversionException { super(textValue); }
+    public JsonDataType(String textValue) throws TypeConversionException { super(textValue); }
 
-	private JsonDataType() { super(); }
+    private JsonDataType() { super(); }
 
-	@Override
-	public String getName() { return "JSON"; }
+    @Override
+    public String getName() { return "JSON"; }
 
-	@Override
-	public String toString() { return getName() + "(" + lineSeparator() + getTextValue() + lineSeparator() + ")"; }
+    @Override
+    public String toString() { return getName() + "(" + lineSeparator() + getTextValue() + lineSeparator() + ")"; }
 
-	@Override
-	Transformer getTransformer() { return transformer; }
+    public JSONObject toJSONObject() throws JSONException {
+        if (value instanceof JsonObject) { return new JSONObject(value.toString()); }
+        throw new ClassCastException("Mismatched data type found: Unable to convert " +
+                                     value.getClass().getSimpleName() + " to JSON document");
+    }
 
-	@Override
-	JsonDataType snapshot() {
-		JsonDataType snapshot = new JsonDataType();
-		snapshot.transformer = transformer;
-		snapshot.value = value;
-		snapshot.textValue = textValue;
-		return snapshot;
-	}
+    public JSONArray toJSONArray() throws JSONException {
+        if (value instanceof JsonArray) { return new JSONArray(value.toString()); }
+        throw new ClassCastException("Mismatched data type found: Unable to convert " +
+                                     value.getClass().getSimpleName() + " to JSON Array");
+    }
 
-	@Override
-	protected void init() throws TypeConversionException {
-		textValue = escapeUnicode(this.textValue);
-		this.value = GSON.fromJson(textValue, JsonElement.class);
-		if (value == null) {
-			throw new TypeConversionException(getName(), this.textValue, "Cannot convert to JSON: " + this.textValue);
-		}
-	}
+    @Override
+    Transformer getTransformer() { return transformer; }
 
-	public JSONObject toJSONObject() throws JSONException {
-		if (value instanceof JsonObject) { return new JSONObject(value.toString()); }
-		throw new ClassCastException("Mismatched data type found: Unable to convert " +
-		                             value.getClass().getSimpleName() + " to JSON document");
-	}
+    @Override
+    JsonDataType snapshot() {
+        JsonDataType snapshot = new JsonDataType();
+        snapshot.transformer = transformer;
+        snapshot.value = value;
+        snapshot.textValue = textValue;
+        return snapshot;
+    }
 
-	public JSONArray toJSONArray() throws JSONException {
-		if (value instanceof JsonArray) { return new JSONArray(value.toString()); }
-		throw new ClassCastException("Mismatched data type found: Unable to convert " +
-		                             value.getClass().getSimpleName() + " to JSON Array");
-	}
+    @Override
+    protected void init() throws TypeConversionException {
+        textValue = escapeUnicode(this.textValue);
+        this.value = GSON.fromJson(textValue, JsonElement.class);
+        if (value == null) {
+            throw new TypeConversionException(getName(), this.textValue, "Cannot convert to JSON: " + this.textValue);
+        }
+    }
 
-	protected static String escapeUnicode(String textValue) {
-		if (StringUtils.isBlank(textValue)) { return textValue; }
-		try {
-			return new String(StringUtils.trim(textValue).getBytes(DEF_CHARSET), DEF_CHARSET);
-		} catch (UnsupportedEncodingException e) {
-			ConsoleUtils.error(JsonDataType.class.getSimpleName(),
-			                   "Unable to convert unicode sequence to ASCII equivalent",
-			                   e);
-			return textValue;
-		}
-	}
+    protected static String escapeUnicode(String textValue) {
+        if (StringUtils.isBlank(textValue)) { return textValue; }
+        try {
+            return new String(StringUtils.trim(textValue).getBytes(DEF_CHARSET), DEF_CHARSET);
+        } catch (UnsupportedEncodingException e) {
+            ConsoleUtils.error(JsonDataType.class.getSimpleName(),
+                               "Unable to convert unicode sequence to ASCII equivalent",
+                               e);
+            return textValue;
+        }
+    }
 }

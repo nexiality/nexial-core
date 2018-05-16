@@ -35,7 +35,6 @@ import org.apache.poi.ss.usermodel.Workbook;
 import org.apache.poi.ss.util.CellReference;
 import org.apache.poi.ss.util.CellUtil;
 import org.apache.poi.xssf.usermodel.XSSFWorkbook;
-
 import org.nexial.core.plugins.filevalidation.config.ExcelMappingConfig;
 import org.nexial.core.plugins.filevalidation.config.ExcelMappingConfig.FilefooterrecordBean;
 import org.nexial.core.plugins.filevalidation.config.ExcelMappingConfig.FileheaderrecordBean;
@@ -49,12 +48,13 @@ import org.nexial.core.plugins.filevalidation.config.MasterConfig;
 import org.nexial.core.plugins.filevalidation.config.RecordConfig;
 import org.nexial.core.plugins.filevalidation.config.SectionConfig;
 import org.nexial.core.utils.CheckUtils;
+
 import com.google.gson.JsonElement;
 import com.google.gson.JsonParser;
 
+import static org.apache.poi.ss.usermodel.CellType.BLANK;
 import static org.nexial.core.NexialConst.GSON;
 import static org.nexial.core.excel.ExcelConfig.ALPHABET_COUNT;
-import static org.apache.poi.ss.usermodel.CellType.BLANK;
 
 public class ExcelSpecFileParser extends RecordSpecFileParser {
     DataFormatter dataFormatter = new DataFormatter();

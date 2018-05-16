@@ -23,8 +23,8 @@ import java.util.List;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.builder.ToStringBuilder;
-import org.apache.commons.lang3.math.NumberUtils;
 import org.nexial.core.excel.Excel.Worksheet;
+import org.nexial.core.excel.ExcelConfig;
 import org.nexial.core.utils.ExecutionLogger;
 
 import static org.nexial.core.NexialConst.Data.CMD_REPEAT_UNTIL;
@@ -97,18 +97,23 @@ public class TestCase {
             if (result.isSkipped()) {
                 executionSummary.adjustTotalSteps(-1);
                 if (StringUtils.equals(testStep.getCommandFQN(), CMD_SECTION)) {
+                    testStep = ExcelConfig.formatSectionDescription(testStep);
+
                     int steps = Integer.parseInt(testStep.getParams().get(0));
-
-                    // compensate for repeat until..
-                    for (TestStep step : testSteps) {
-                        if (StringUtils.equals(step.getCommandFQN(), CMD_REPEAT_UNTIL)) {
-                            steps -= CollectionUtils.isNotEmpty(step.getParams()) ?
-                                     NumberUtils.toInt(step.getParams().get(0)) : 0;
-                        }
-                    }
-
                     for (int j = 0; j < steps; j++) {
-                        testSteps.get(i + j + 1).postExecCommand(StepResult.skipped(NESTED_SECTION_STEP_SKIPPED), 0);
+                        TestStep sectionStep = testSteps.get(i + j + 1);
+
+                        // compensate for repeat until..
+                        if (StringUtils.equals(sectionStep.getCommandFQN(), CMD_REPEAT_UNTIL) &&
+                            sectionStep.getCommandRepeater() != null) {
+                            sectionStep = ExcelConfig.formatRepeatUntilDescription(sectionStep, "");
+                            sectionStep.getCommandRepeater().formatSteps();
+                            steps -= sectionStep.getCommandRepeater().getStepCount();
+                        } else {
+                            sectionStep = ExcelConfig.formatSectionDescription(sectionStep);
+                        }
+
+                        sectionStep.postExecCommand(StepResult.skipped(NESTED_SECTION_STEP_SKIPPED), 0);
                     }
 
                     i += steps;

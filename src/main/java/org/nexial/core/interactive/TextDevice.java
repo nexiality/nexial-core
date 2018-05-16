@@ -25,15 +25,15 @@ import java.io.Reader;
  * Abstraction representing a text input/output device.
  */
 public abstract class TextDevice {
-	public abstract TextDevice printf(String fmt, Object... params);
+    public abstract TextDevice printf(String fmt, Object... params);
 
-	public abstract String readLine() throws IOException;
+    public abstract String readLine() throws IOException;
 
-	public abstract char readChar() throws IOException;
+    public abstract char readChar() throws IOException;
 
-	public abstract char[] readPassword() throws IOException;
+    public abstract char[] readPassword() throws IOException;
 
-	public abstract Reader reader();
+    public abstract Reader reader();
 
-	public abstract PrintWriter writer();
+    public abstract PrintWriter writer();
 }

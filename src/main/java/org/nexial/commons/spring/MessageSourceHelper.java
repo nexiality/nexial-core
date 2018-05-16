@@ -21,34 +21,33 @@ import org.springframework.context.MessageSource;
 
 /**
  * @author Mike Liu
-
  */
 public class MessageSourceHelper {
-	private MessageSource messages;
+    private MessageSource messages;
 
-	public void setMessages(MessageSource messages) { this.messages = messages; }
+    public MessageSource getMessages() { return messages; }
 
-	public MessageSource getMessages() { return messages; }
+    public void setMessages(MessageSource messages) { this.messages = messages; }
 
-	/**
-	 * "instance" version of {@link #getMessage(MessageSource, String, Object...)}
-	 *
-	 * @see #getMessage(MessageSource, String, Object...)
-	 */
-	public String getMessage(String code, Object... args) {
-		return MessageSourceHelper.getMessage(messages, code, args);
-	}
+    /**
+     * "instance" version of {@link #getMessage(MessageSource, String, Object...)}
+     *
+     * @see #getMessage(MessageSource, String, Object...)
+     */
+    public String getMessage(String code, Object... args) {
+        return MessageSourceHelper.getMessage(messages, code, args);
+    }
 
-	/**
-	 * assemble the appropriate message text based on {@code code} and {@code args}.
-	 * <p/>
-	 * If {@code message} is null, just the {@code code} parameter is returned.  If {@code code} is null, then a
-	 * standard "unknown message" is returned.
-	 */
-	public static String getMessage(MessageSource source, String code, Object... args) {
-		if (code == null) { return "Unknown message; null code provided"; }
-		if (source == null) { return code; }
-		if (args == null || args.length < 1) { return source.getMessage(code, null, null); }
-		return source.getMessage(code, args, null);
-	}
+    /**
+     * assemble the appropriate message text based on {@code code} and {@code args}.
+     * <p/>
+     * If {@code message} is null, just the {@code code} parameter is returned.  If {@code code} is null, then a
+     * standard "unknown message" is returned.
+     */
+    public static String getMessage(MessageSource source, String code, Object... args) {
+        if (code == null) { return "Unknown message; null code provided"; }
+        if (source == null) { return code; }
+        if (args == null || args.length < 1) { return source.getMessage(code, null, null); }
+        return source.getMessage(code, args, null);
+    }
 }

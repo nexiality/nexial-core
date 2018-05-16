@@ -21,11 +21,11 @@ import java.util.Map;
 
 import org.apache.commons.collections4.MapUtils;
 import org.apache.commons.lang3.StringUtils;
-
-import com.amazonaws.regions.Regions;
 import org.nexial.core.IntegrationConfigException;
 import org.nexial.core.model.ExecutionContext;
 import org.nexial.core.utils.ConsoleUtils;
+
+import com.amazonaws.regions.Regions;
 
 import static com.amazonaws.regions.Regions.DEFAULT_REGION;
 import static org.nexial.core.NexialConst.AwsSettings.*;

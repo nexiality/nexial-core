@@ -31,6 +31,10 @@ import org.apache.commons.lang3.StringUtils;
 import org.apache.http.client.fluent.Request;
 import org.jdom2.Document;
 import org.jdom2.JDOMException;
+import org.nexial.commons.utils.FileUtil;
+import org.nexial.commons.utils.XmlUtils;
+import org.nexial.core.plugins.xml.XmlCommand;
+import org.nexial.core.utils.ConsoleUtils;
 import org.openqa.selenium.By;
 import org.openqa.selenium.NoSuchElementException;
 import org.openqa.selenium.WebDriverException;
@@ -39,16 +43,11 @@ import org.openqa.selenium.support.ui.WebDriverWait;
 import org.openqa.selenium.winium.WiniumDriver;
 import org.openqa.selenium.winium.WiniumDriverCommandExecutor;
 
-import org.nexial.commons.utils.FileUtil;
-import org.nexial.commons.utils.XmlUtils;
-import org.nexial.core.plugins.xml.XmlCommand;
-import org.nexial.core.utils.ConsoleUtils;
-
+import static java.io.File.separator;
+import static java.lang.System.lineSeparator;
 import static org.nexial.core.NexialConst.DEF_CHARSET;
 import static org.nexial.core.plugins.desktop.DesktopConst.*;
 import static org.nexial.core.plugins.desktop.ElementType.WINDOW;
-import static java.io.File.separator;
-import static java.lang.System.lineSeparator;
 
 /**
  * The ephemeral data structure to track current state of a desktop application, particularly when navigating between

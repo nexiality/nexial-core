@@ -25,22 +25,21 @@ import org.apache.commons.fileupload.disk.DiskFileItem;
 
 /**
  * @author Original : plosson on 05-janv.-2006 10:46:33 - Last modified  by $Author$
-
  */
 public class MonitoredDiskFileItem extends DiskFileItem {
-	private transient MonitoredOutputStream mos = null;
-	private transient OutputStreamListener listener;
+    private transient MonitoredOutputStream mos = null;
+    private transient OutputStreamListener listener;
 
-	public MonitoredDiskFileItem(String fieldName, String contentType, boolean isFormField, String fileName,
-	                             int sizeThreshold, File repository, OutputStreamListener listener) {
-		super(fieldName, contentType, isFormField, fileName, sizeThreshold, repository);
-		this.listener = listener;
-	}
+    public MonitoredDiskFileItem(String fieldName, String contentType, boolean isFormField, String fileName,
+                                 int sizeThreshold, File repository, OutputStreamListener listener) {
+        super(fieldName, contentType, isFormField, fileName, sizeThreshold, repository);
+        this.listener = listener;
+    }
 
-	public OutputStream getOutputStream() throws IOException {
-		if (mos == null) {
-			mos = new MonitoredOutputStream(super.getOutputStream(), listener);
-		}
-		return mos;
-	}
+    public OutputStream getOutputStream() throws IOException {
+        if (mos == null) {
+            mos = new MonitoredOutputStream(super.getOutputStream(), listener);
+        }
+        return mos;
+    }
 }

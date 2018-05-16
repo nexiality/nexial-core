@@ -28,7 +28,6 @@ import org.apache.commons.lang3.StringUtils;
 import org.junit.runner.JUnitCore;
 import org.junit.runner.Result;
 import org.junit.runner.notification.Failure;
-
 import org.nexial.commons.utils.TextUtils;
 import org.nexial.core.model.ExecutionSummary;
 import org.nexial.core.model.StepResult;
@@ -36,12 +35,12 @@ import org.nexial.core.model.TestStep;
 import org.nexial.core.plugins.base.BaseCommand;
 import org.nexial.core.variable.Syspath;
 
+import static java.io.File.separator;
+import static java.lang.System.lineSeparator;
 import static org.nexial.core.NexialConst.DEF_CHARSET;
 import static org.nexial.core.NexialConst.OPT_RUN_PROGRAM_OUTPUT;
 import static org.nexial.core.utils.CheckUtils.requires;
 import static org.nexial.core.utils.CheckUtils.requiresNotBlank;
-import static java.io.File.separator;
-import static java.lang.System.lineSeparator;
 
 public class ExternalCommand extends BaseCommand {
     protected Properties prop;

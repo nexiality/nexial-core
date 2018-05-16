@@ -20,13 +20,12 @@ package org.nexial.core.plugins.web;
 import java.util.Set;
 
 import org.apache.commons.lang3.StringUtils;
-import org.nexial.core.model.StepResult;
-import org.openqa.selenium.Cookie;
-import org.openqa.selenium.WebDriver;
-
 import org.nexial.core.model.ExecutionContext;
+import org.nexial.core.model.StepResult;
 import org.nexial.core.plugins.RequireBrowser;
 import org.nexial.core.plugins.base.BaseCommand;
+import org.openqa.selenium.Cookie;
+import org.openqa.selenium.WebDriver;
 
 import static org.nexial.core.utils.CheckUtils.requires;
 
@@ -34,101 +33,101 @@ import static org.nexial.core.utils.CheckUtils.requires;
  *
  */
 public class CookieCommand extends BaseCommand implements RequireBrowser {
-	protected Browser browser;
-	protected WebDriver driver;
+    protected Browser browser;
+    protected WebDriver driver;
 
-	@Override
-	public String getTarget() { return "webcookie"; }
+    @Override
+    public String getTarget() { return "webcookie"; }
 
-	@Override
-	public Browser getBrowser() { return browser; }
+    @Override
+    public Browser getBrowser() { return browser; }
 
-	@Override
-	public void setBrowser(Browser browser) { this.browser = browser; }
+    @Override
+    public void setBrowser(Browser browser) { this.browser = browser; }
 
-	@Override
-	public void init(ExecutionContext context) {
-		super.init(context);
-		driver = null;
-		ensureWebDriver();
-	}
+    @Override
+    public void init(ExecutionContext context) {
+        super.init(context);
+        driver = null;
+        ensureWebDriver();
+    }
 
-	public StepResult assertValue(String name, String value) {
-		Cookie cookie = getCookie(name);
-		if (StringUtils.isBlank(value) && cookie == null) { return StepResult.success(); }
+    public StepResult assertValue(String name, String value) {
+        Cookie cookie = getCookie(name);
+        if (StringUtils.isBlank(value) && cookie == null) { return StepResult.success(); }
 
-		return assertEqual(StringUtils.trim(value), StringUtils.trim(cookie.getValue()));
-	}
+        return assertEqual(StringUtils.trim(value), StringUtils.trim(cookie.getValue()));
+    }
 
-	public StepResult assertNotPresent(String name) {
-		requires(StringUtils.isNotBlank(name), "invalid cookie name", name);
-		boolean isPresent = deriveCookieStore().getCookieNamed(name) != null;
-		return new StepResult(!isPresent,
-		                        "UNEXPECTED cookie '" + name + "' " + (isPresent ? "FOUND" : "not found"),
+    public StepResult assertNotPresent(String name) {
+        requires(StringUtils.isNotBlank(name), "invalid cookie name", name);
+        boolean isPresent = deriveCookieStore().getCookieNamed(name) != null;
+        return new StepResult(!isPresent,
+                              "UNEXPECTED cookie '" + name + "' " + (isPresent ? "FOUND" : "not found"),
                               null);
-	}
+    }
 
-	public StepResult assertPresent(String name) {
-		requires(StringUtils.isNotBlank(name), "invalid cookie name", name);
-		boolean isPresent = deriveCookieStore().getCookieNamed(name) != null;
-		return new StepResult(isPresent,
-		                        "EXPECTED cookie '" + name + "' " + (isPresent ? "found" : "NOT found"),
+    public StepResult assertPresent(String name) {
+        requires(StringUtils.isNotBlank(name), "invalid cookie name", name);
+        boolean isPresent = deriveCookieStore().getCookieNamed(name) != null;
+        return new StepResult(isPresent,
+                              "EXPECTED cookie '" + name + "' " + (isPresent ? "found" : "NOT found"),
                               null);
-	}
+    }
 
-	public StepResult save(String var, String name) {
-		requires(StringUtils.isNotBlank(var), "invalid variable name", var);
-		Cookie cookie = getCookie(name);
-		if (cookie != null) { context.setData(var, cookie); }
-		return StepResult.success("bound cookie named '" + name + "' saved as '" + var + "'");
-	}
+    public StepResult save(String var, String name) {
+        requires(StringUtils.isNotBlank(var), "invalid variable name", var);
+        Cookie cookie = getCookie(name);
+        if (cookie != null) { context.setData(var, cookie); }
+        return StepResult.success("bound cookie named '" + name + "' saved as '" + var + "'");
+    }
 
-	public StepResult saveAll(String var) {
-		requires(StringUtils.isNotBlank(var), "invalid variable name", var);
-		Set<Cookie> cookies = deriveCookieStore().getCookies();
-		context.setData(var, cookies);
-		return StepResult.success("all bound cookies saved to " + var);
-	}
+    public StepResult saveAll(String var) {
+        requires(StringUtils.isNotBlank(var), "invalid variable name", var);
+        Set<Cookie> cookies = deriveCookieStore().getCookies();
+        context.setData(var, cookies);
+        return StepResult.success("all bound cookies saved to " + var);
+    }
 
-	public StepResult delete(String name) {
-		requires(StringUtils.isNotBlank(name), "invalid cookie name", name);
-		deriveCookieStore().deleteCookieNamed(name);
-		return StepResult.success("bound cookie named '" + name + "' deleted");
-	}
+    public StepResult delete(String name) {
+        requires(StringUtils.isNotBlank(name), "invalid cookie name", name);
+        deriveCookieStore().deleteCookieNamed(name);
+        return StepResult.success("bound cookie named '" + name + "' deleted");
+    }
 
-	public StepResult deleteAll() {
-		deriveCookieStore().deleteAllCookies();
-		return StepResult.success("all bound cookies deleted");
-	}
+    public StepResult deleteAll() {
+        deriveCookieStore().deleteAllCookies();
+        return StepResult.success("all bound cookies deleted");
+    }
 
-	public Cookie getCookie(String name) {
-		requires(StringUtils.isNotBlank(name), "invalid cookie name", name);
-		return deriveCookieStore().getCookieNamed(name);
-	}
+    public Cookie getCookie(String name) {
+        requires(StringUtils.isNotBlank(name), "invalid cookie name", name);
+        return deriveCookieStore().getCookieNamed(name);
+    }
 
-	protected WebDriver.Options deriveCookieStore() {
-		//if (context.getBrowser().isRunIE()) {
-		//	// IE-specific support... since IE driver can't focus on window by name
-		//	TargetLocator targetLocator = driver.switchTo();
-		//	Set<String> winHandles = driver.getWindowHandles();
-		//	for (String handle : winHandles) {
-		//		try {
-		//			return targetLocator.window(handle).manage();
-		//		} catch (Throwable e) {
-		//			// keep trying...
-		//			log("Unable to switch to window '" + handle + "': " + e.getMessage());
-		//			log("keep trying...");
-		//		}
-		//	}
-		//
-		//	throw new RuntimeException("Unable to swtich to an active window to retrieve cookies");
-		//}
+    protected WebDriver.Options deriveCookieStore() {
+        //if (context.getBrowser().isRunIE()) {
+        //	// IE-specific support... since IE driver can't focus on window by name
+        //	TargetLocator targetLocator = driver.switchTo();
+        //	Set<String> winHandles = driver.getWindowHandles();
+        //	for (String handle : winHandles) {
+        //		try {
+        //			return targetLocator.window(handle).manage();
+        //		} catch (Throwable e) {
+        //			// keep trying...
+        //			log("Unable to switch to window '" + handle + "': " + e.getMessage());
+        //			log("keep trying...");
+        //		}
+        //	}
+        //
+        //	throw new RuntimeException("Unable to swtich to an active window to retrieve cookies");
+        //}
 
-		ensureWebDriver();
-		return driver.manage();
-	}
+        ensureWebDriver();
+        return driver.manage();
+    }
 
-	private void ensureWebDriver() {
-		if (driver == null && browser != null) { driver = browser.ensureWebDriverReady(); }
-	}
+    private void ensureWebDriver() {
+        if (driver == null && browser != null) { driver = browser.ensureWebDriverReady(); }
+    }
 }

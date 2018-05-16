@@ -18,21 +18,21 @@
 package org.nexial.core.plugins.pdf;
 
 public abstract class TableFormatter<T> {
-	public static CsvFormatter newCvsFormatter(String delimiter, String lineSeparator) {
-		CsvFormatter formatter = new CsvFormatter();
-		formatter.setDelimiter(delimiter);
-		formatter.setLineSeparator(lineSeparator);
-		return formatter;
-	}
+    public static CsvFormatter newCvsFormatter(String delimiter, String lineSeparator) {
+        CsvFormatter formatter = new CsvFormatter();
+        formatter.setDelimiter(delimiter);
+        formatter.setLineSeparator(lineSeparator);
+        return formatter;
+    }
 
-	public static HtmlFormatter newHtmlFormatter() { return new HtmlFormatter(); }
+    public static HtmlFormatter newHtmlFormatter() { return new HtmlFormatter(); }
 
-	public static MapFormatter newMapFormatter(KeyValueIdentStrategy keyValueIdentStrategy) {
-		MapFormatter formatter = new MapFormatter();
-		formatter.setIdStrategy(keyValueIdentStrategy);
-		return formatter;
-	}
+    public static MapFormatter newMapFormatter(KeyValueIdentStrategy keyValueIdentStrategy) {
+        MapFormatter formatter = new MapFormatter();
+        formatter.setIdStrategy(keyValueIdentStrategy);
+        return formatter;
+    }
 
-	abstract T format(Table table);
+    abstract T format(Table table);
 
 }

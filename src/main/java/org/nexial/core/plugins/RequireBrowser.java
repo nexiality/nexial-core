@@ -20,7 +20,7 @@ package org.nexial.core.plugins;
 import org.nexial.core.plugins.web.Browser;
 
 public interface RequireBrowser {
-	Browser getBrowser();
+    Browser getBrowser();
 
-	void setBrowser(Browser browser);
+    void setBrowser(Browser browser);
 }

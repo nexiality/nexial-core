@@ -24,23 +24,23 @@ import javax.servlet.http.HttpServletRequest;
 
  */
 public class BrowserUtils {
-	private BrowserUtils() {}
+    private BrowserUtils() {}
 
-	/** not an ideal solution but for now */
-	public static boolean isIE7(HttpServletRequest request) {
-		String userAgent = request.getHeader("User-Agent");
+    /** not an ideal solution but for now */
+    public static boolean isIE7(HttpServletRequest request) {
+        String userAgent = request.getHeader("User-Agent");
 
-		/**
-		 * notes:
-		 * Compatibility View: http://blogs.msdn.com/b/ie/archive/2008/08/27/introducing-compatibility-view.aspx.
-		 * IE9's User Agent String: http://blogs.msdn.com/b/ie/archive/2010/03/23/introducing-ie9-s-user-agent-string.aspx.
-		 */
-		if (!userAgent.contains("MSIE 7.0")) {
-			return false;
-		} else {
-			return !(userAgent.contains("Trident/5.0") ||
-			         userAgent.contains("Trident/4.0") ||
-			         userAgent.contains("Mozilla/5.0 (compatible; MSIE 7.0; Windows NT 5.0;"));
-		}
-	}
+        /**
+         * notes:
+         * Compatibility View: http://blogs.msdn.com/b/ie/archive/2008/08/27/introducing-compatibility-view.aspx.
+         * IE9's User Agent String: http://blogs.msdn.com/b/ie/archive/2010/03/23/introducing-ie9-s-user-agent-string.aspx.
+         */
+        if (!userAgent.contains("MSIE 7.0")) {
+            return false;
+        } else {
+            return !(userAgent.contains("Trident/5.0") ||
+                     userAgent.contains("Trident/4.0") ||
+                     userAgent.contains("Mozilla/5.0 (compatible; MSIE 7.0; Windows NT 5.0;"));
+        }
+    }
 }

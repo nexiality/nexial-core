@@ -20,7 +20,6 @@ package org.nexial.core.variable;
 import java.io.IOException;
 import java.lang.reflect.Method;
 import java.util.*;
-
 import javax.validation.constraints.NotNull;
 
 import org.apache.commons.collections4.CollectionUtils;

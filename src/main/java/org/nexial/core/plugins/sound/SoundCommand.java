@@ -17,7 +17,6 @@
 package org.nexial.core.plugins.sound;
 
 import java.io.IOException;
-
 import javax.sound.sampled.AudioFormat;
 import javax.sound.sampled.AudioSystem;
 import javax.sound.sampled.LineUnavailableException;
@@ -133,7 +132,7 @@ public class SoundCommand extends BaseCommand {
     public StepResult play(String audio)
         throws IOException, UnsupportedAudioFileException, LineUnavailableException, JavaLayerException {
         SoundMachine dj = context.getDj();
-        if (dj == null){ return StepResult.skipped("sound is not properly configured"); }
+        if (dj == null) { return StepResult.skipped("sound is not properly configured"); }
         return dj.playAudio(audio) ? StepResult.success() : StepResult.skipped("Current running in CI environment");
     }
 

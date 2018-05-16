@@ -29,14 +29,13 @@ import org.apache.commons.lang3.tuple.Pair;
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
+import org.nexial.commons.utils.TextUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import org.nexial.commons.utils.TextUtils;
-
+import static org.json.JSONObject.NULL;
 import static org.nexial.core.utils.JSONPath.Option.*;
 import static org.nexial.core.utils.JsonUtils.isSimpleType;
-import static org.json.JSONObject.NULL;
 
 /**
  * Javascript-like support for extracting JSON fragment via a descriptive path.  For example, assume the following

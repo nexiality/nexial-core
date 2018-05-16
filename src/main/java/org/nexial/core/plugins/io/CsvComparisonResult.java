@@ -24,7 +24,6 @@ import java.util.Set;
 
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
-
 import org.jetbrains.annotations.NotNull;
 import org.nexial.commons.utils.TextUtils;
 import org.nexial.core.plugins.io.CsvExtendedComparison.ReportFormat;
@@ -158,7 +157,11 @@ public class CsvComparisonResult {
     }
 
     protected String toCSV(boolean wrapValueWithDoubleQuote) {
-        return TextUtils.createCsv(resolveDisplyableHeaders(), discrepancies, "\r\n", ",", wrapValueWithDoubleQuote ? "\"" : "");
+        return TextUtils.createCsv(resolveDisplyableHeaders(),
+                                   discrepancies,
+                                   "\r\n",
+                                   ",",
+                                   wrapValueWithDoubleQuote ? "\"" : "");
     }
 
     protected String toHTML() {

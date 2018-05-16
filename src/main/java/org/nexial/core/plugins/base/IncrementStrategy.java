@@ -23,45 +23,45 @@ import org.apache.commons.lang3.StringUtils;
  *
  */
 public enum IncrementStrategy {
-	ALPHANUM("0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz"),
-	UPPER("ABCDEFGHIJKLMNOPQRSTUVWXYZ"),
-	LOWER("abcdefghijklmnopqrstuvwxyz");
+    ALPHANUM("0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz"),
+    UPPER("ABCDEFGHIJKLMNOPQRSTUVWXYZ"),
+    LOWER("abcdefghijklmnopqrstuvwxyz");
 
-	private String range;
+    private String range;
 
-	IncrementStrategy(String range) { this.range = range; }
+    IncrementStrategy(String range) { this.range = range; }
 
-	public String increment(String startVal, int amount) {
-		return increment(startVal, 1, amount);
-	}
+    public String increment(String startVal, int amount) {
+        return increment(startVal, 1, amount);
+    }
 
-	public String increment(String base, int rightMostPos, int nextIndex) {
-		if (nextIndex == 0) { return base; }
+    public String increment(String base, int rightMostPos, int nextIndex) {
+        if (nextIndex == 0) { return base; }
 
-		String leftMost = StringUtils.substring(base, 0, base.length() - rightMostPos);
-		String currentChar = StringUtils.substring(base,
-		                                           base.length() - rightMostPos,
-		                                           base.length() - rightMostPos + 1);
-		String rightMost = StringUtils.substring(base, base.length() - rightMostPos + 1);
+        String leftMost = StringUtils.substring(base, 0, base.length() - rightMostPos);
+        String currentChar = StringUtils.substring(base,
+                                                   base.length() - rightMostPos,
+                                                   base.length() - rightMostPos + 1);
+        String rightMost = StringUtils.substring(base, base.length() - rightMostPos + 1);
 
-		int matchingPos = StringUtils.indexOf(range, currentChar);
-		if (matchingPos != -1) { nextIndex += matchingPos; }
+        int matchingPos = StringUtils.indexOf(range, currentChar);
+        if (matchingPos != -1) { nextIndex += matchingPos; }
 
-		if (nextIndex < range.length()) {
-			return leftMost + StringUtils.substring(range, nextIndex, nextIndex + 1) + rightMost;
-		}
+        if (nextIndex < range.length()) {
+            return leftMost + StringUtils.substring(range, nextIndex, nextIndex + 1) + rightMost;
+        }
 
-		int currentIndex = nextIndex % range.length();
-		nextIndex = nextIndex / range.length() - 1;
+        int currentIndex = nextIndex % range.length();
+        nextIndex = nextIndex / range.length() - 1;
 
-		String defaultNewBase = StringUtils.left(range, 1);
+        String defaultNewBase = StringUtils.left(range, 1);
 
-		// special case
-		if (currentIndex == 0 && nextIndex == 0 && StringUtils.isNotEmpty(leftMost)) { leftMost = defaultNewBase; }
+        // special case
+        if (currentIndex == 0 && nextIndex == 0 && StringUtils.isNotEmpty(leftMost)) { leftMost = defaultNewBase; }
 
-		return increment(StringUtils.defaultIfEmpty(leftMost, defaultNewBase), 1, nextIndex) +
-		       StringUtils.substring(range, currentIndex, currentIndex + 1) +
-		       rightMost;
+        return increment(StringUtils.defaultIfEmpty(leftMost, defaultNewBase), 1, nextIndex) +
+               StringUtils.substring(range, currentIndex, currentIndex + 1) +
+               rightMost;
 
-	}
+    }
 }

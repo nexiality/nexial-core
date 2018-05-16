@@ -30,7 +30,6 @@ import org.apache.poi.xssf.usermodel.XSSFCellStyle;
 import org.apache.poi.xssf.usermodel.XSSFRow;
 import org.apache.poi.xssf.usermodel.XSSFSheet;
 import org.apache.poi.xssf.usermodel.XSSFWorkbook;
-
 import org.nexial.core.excel.Excel;
 import org.nexial.core.excel.ExcelConfig.StyleDecorator;
 import org.nexial.core.excel.ext.CellTextReader;
@@ -39,14 +38,14 @@ import org.nexial.core.model.TestData;
 import org.nexial.core.utils.ConsoleUtils;
 import org.nexial.core.utils.OutputFileUtils;
 
+import static java.io.File.separator;
+import static org.apache.poi.ss.usermodel.Row.MissingCellPolicy.CREATE_NULL_AS_BLANK;
 import static org.nexial.core.NexialConst.Data.SHEET_MERGED_DATA;
 import static org.nexial.core.NexialConst.Data.SHEET_SYSTEM;
-import static org.nexial.core.NexialConst.*;
+import static org.nexial.core.NexialConst.NAMESPACE;
 import static org.nexial.core.NexialConst.Project.appendCapture;
 import static org.nexial.core.NexialConst.Project.appendLog;
 import static org.nexial.core.excel.ExcelConfig.StyleConfig.*;
-import static java.io.File.separator;
-import static org.apache.poi.ss.usermodel.Row.MissingCellPolicy.CREATE_NULL_AS_BLANK;
 
 /**
  * This class serves 2 purposes:

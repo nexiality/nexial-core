@@ -19,7 +19,6 @@ package org.nexial.commons.utils;
 
 import java.io.File;
 import java.io.IOException;
-
 import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
 import javax.xml.parsers.ParserConfigurationException;
@@ -39,42 +38,42 @@ import static javax.xml.xpath.XPathConstants.NODESET;
  * $
  */
 public final class XPathUtils {
-	private static final DocumentBuilderFactory DOCUMENT_BUILDER_FACTORY = DocumentBuilderFactory.newInstance();
-	private static final XPathFactory XPATH_FACTORY = XPathFactory.newInstance();
+    private static final DocumentBuilderFactory DOCUMENT_BUILDER_FACTORY = DocumentBuilderFactory.newInstance();
+    private static final XPathFactory XPATH_FACTORY = XPathFactory.newInstance();
 
-	private XPathUtils() { }
+    private XPathUtils() { }
 
-	public static NodeList parse(File xmlFile, String xpath) throws IOException, XPathExpressionException {
-		if (xmlFile == null) { throw new IOException("xmlFile is null"); }
-		if (!xmlFile.canRead()) { throw new IOException("file '" + xmlFile + "' cannot be read/accessed."); }
+    public static NodeList parse(File xmlFile, String xpath) throws IOException, XPathExpressionException {
+        if (xmlFile == null) { throw new IOException("xmlFile is null"); }
+        if (!xmlFile.canRead()) { throw new IOException("file '" + xmlFile + "' cannot be read/accessed."); }
 
-		if (StringUtils.isBlank(xpath)) { throw new IOException("valid xpath not specified."); }
+        if (StringUtils.isBlank(xpath)) { throw new IOException("valid xpath not specified."); }
 
-		// never forget this!
-		//DOCUMENT_BUILDER_FACTORY.setNamespaceAware(false);
-		DOCUMENT_BUILDER_FACTORY.setValidating(false);
-		//DOCUMENT_BUILDER_FACTORY.setExpandEntityReferences(false);
-		//DOCUMENT_BUILDER_FACTORY.setCoalescing(false);
-		//DOCUMENT_BUILDER_FACTORY.setXIncludeAware(false);
+        // never forget this!
+        //DOCUMENT_BUILDER_FACTORY.setNamespaceAware(false);
+        DOCUMENT_BUILDER_FACTORY.setValidating(false);
+        //DOCUMENT_BUILDER_FACTORY.setExpandEntityReferences(false);
+        //DOCUMENT_BUILDER_FACTORY.setCoalescing(false);
+        //DOCUMENT_BUILDER_FACTORY.setXIncludeAware(false);
 
-		DocumentBuilder builder;
-		try {
-			DOCUMENT_BUILDER_FACTORY.setFeature("http://apache.org/xml/features/nonvalidating/load-external-dtd",
-			                                    false);
-			builder = DOCUMENT_BUILDER_FACTORY.newDocumentBuilder();
-		} catch (ParserConfigurationException e) {
-			throw new IOException("Unable to obtain new document builder: " + e.getMessage(), e);
-		}
+        DocumentBuilder builder;
+        try {
+            DOCUMENT_BUILDER_FACTORY.setFeature("http://apache.org/xml/features/nonvalidating/load-external-dtd",
+                                                false);
+            builder = DOCUMENT_BUILDER_FACTORY.newDocumentBuilder();
+        } catch (ParserConfigurationException e) {
+            throw new IOException("Unable to obtain new document builder: " + e.getMessage(), e);
+        }
 
-		Document doc;
-		try {
-			doc = builder.parse(xmlFile);
-		} catch (SAXException e) {
-			throw new IOException("Unable to parse file '" + xmlFile + "': " + e.getMessage(), e);
-		}
+        Document doc;
+        try {
+            doc = builder.parse(xmlFile);
+        } catch (SAXException e) {
+            throw new IOException("Unable to parse file '" + xmlFile + "': " + e.getMessage(), e);
+        }
 
-		XPath xp = XPATH_FACTORY.newXPath();
-		XPathExpression expr = xp.compile(xpath);
-		return (NodeList) expr.evaluate(doc, NODESET);
-	}
+        XPath xp = XPATH_FACTORY.newXPath();
+        XPathExpression expr = xp.compile(xpath);
+        return (NodeList) expr.evaluate(doc, NODESET);
+    }
 }

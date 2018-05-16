@@ -20,17 +20,16 @@ package org.nexial.core.plugins.filevalidation.parser;
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.FileReader;
-
 import javax.annotation.Nullable;
 
 import org.apache.commons.lang3.StringUtils;
 import org.json.JSONObject;
-
 import org.nexial.core.plugins.filevalidation.validators.DelimitedFileValidator;
 import org.nexial.core.plugins.filevalidation.validators.FixedLengthFileValidator;
 import org.nexial.core.plugins.filevalidation.validators.MasterFileValidator;
 import org.nexial.core.utils.CheckUtils;
 import org.nexial.core.utils.JSONPath;
+
 import com.google.gson.JsonElement;
 import com.google.gson.JsonParseException;
 import com.google.gson.JsonParser;

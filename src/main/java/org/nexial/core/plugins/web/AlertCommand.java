@@ -18,17 +18,16 @@
 package org.nexial.core.plugins.web;
 
 import org.apache.commons.lang3.StringUtils;
+import org.nexial.core.model.ExecutionContext;
 import org.nexial.core.model.StepResult;
+import org.nexial.core.plugins.RequireBrowser;
+import org.nexial.core.plugins.base.BaseCommand;
+import org.nexial.core.utils.ConsoleUtils;
 import org.openqa.selenium.Alert;
 import org.openqa.selenium.NoAlertPresentException;
 import org.openqa.selenium.UnhandledAlertException;
 import org.openqa.selenium.WebDriver;
 import org.openqa.selenium.remote.UnreachableBrowserException;
-
-import org.nexial.core.model.ExecutionContext;
-import org.nexial.core.plugins.RequireBrowser;
-import org.nexial.core.plugins.base.BaseCommand;
-import org.nexial.core.utils.ConsoleUtils;
 
 import static org.nexial.core.NexialConst.*;
 import static org.nexial.core.utils.CheckUtils.requires;

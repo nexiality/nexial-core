@@ -21,19 +21,19 @@ package org.nexial.core.plugins.desktop;
  * application object, to be kept in session, during test automation.
  */
 public class DesktopApplication {
-	protected String processId;
-	protected String applicationVersion;
-	protected DesktopElement activeContainer;
+    protected String processId;
+    protected String applicationVersion;
+    protected DesktopElement activeContainer;
 
-	public String getProcessId() { return processId; }
+    public String getProcessId() { return processId; }
 
-	public void setProcessId(String processId) { this.processId = processId; }
+    public void setProcessId(String processId) { this.processId = processId; }
 
-	public String getApplicationVersion() { return applicationVersion; }
+    public String getApplicationVersion() { return applicationVersion; }
 
-	public void setApplicationVersion(String applicationVersion) { this.applicationVersion = applicationVersion; }
+    public void setApplicationVersion(String applicationVersion) { this.applicationVersion = applicationVersion; }
 
-	public DesktopElement getActiveContainer() { return activeContainer; }
+    public DesktopElement getActiveContainer() { return activeContainer; }
 
-	public void setActiveContainer(DesktopElement activeContainer) { this.activeContainer = activeContainer; }
+    public void setActiveContainer(DesktopElement activeContainer) { this.activeContainer = activeContainer; }
 }

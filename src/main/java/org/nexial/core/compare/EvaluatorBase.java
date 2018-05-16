@@ -19,7 +19,6 @@ package org.nexial.core.compare;
 
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.math.NumberUtils;
-
 import org.nexial.core.ExecutionThread;
 import org.nexial.core.model.ExecutionContext;
 
@@ -29,23 +28,23 @@ import static org.nexial.core.NexialConst.OPT_EASY_STRING_COMPARE;
  *
  */
 public abstract class EvaluatorBase implements Evaluator {
-	@Override
-	public boolean proceed(String lhs, String rhs) throws IncompatibleTypeException {
-		if (NumberUtils.isCreatable(lhs) && NumberUtils.isCreatable(rhs)) {
-			return evaluate(NumberUtils.toDouble(lhs), NumberUtils.toDouble(rhs));
-		} else {
-			boolean lenientStringCompare = isLenientStringCompare();
-			return evaluate(lenientStringCompare ? StringUtils.trim(lhs) : lhs,
-			                lenientStringCompare ? StringUtils.trim(rhs) : rhs);
-		}
-	}
+    @Override
+    public boolean proceed(String lhs, String rhs) throws IncompatibleTypeException {
+        if (NumberUtils.isCreatable(lhs) && NumberUtils.isCreatable(rhs)) {
+            return evaluate(NumberUtils.toDouble(lhs), NumberUtils.toDouble(rhs));
+        } else {
+            boolean lenientStringCompare = isLenientStringCompare();
+            return evaluate(lenientStringCompare ? StringUtils.trim(lhs) : lhs,
+                            lenientStringCompare ? StringUtils.trim(rhs) : rhs);
+        }
+    }
 
-	protected boolean isLenientStringCompare() {
-		ExecutionContext context = ExecutionThread.get();
-		return context != null && context.getBooleanData(OPT_EASY_STRING_COMPARE, false);
-	}
+    protected boolean isLenientStringCompare() {
+        ExecutionContext context = ExecutionThread.get();
+        return context != null && context.getBooleanData(OPT_EASY_STRING_COMPARE, false);
+    }
 
-	protected abstract boolean evaluate(double lhs, double rhs) throws IncompatibleTypeException;
+    protected abstract boolean evaluate(double lhs, double rhs) throws IncompatibleTypeException;
 
-	protected abstract boolean evaluate(String lhs, String rhs) throws IncompatibleTypeException;
+    protected abstract boolean evaluate(String lhs, String rhs) throws IncompatibleTypeException;
 }

@@ -22,7 +22,6 @@ import org.apache.commons.lang3.RandomStringUtils;
 import org.apache.commons.lang3.RandomUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.math.NumberUtils;
-
 import org.nexial.core.utils.ConsoleUtils;
 
 /**
@@ -30,65 +29,65 @@ import org.nexial.core.utils.ConsoleUtils;
 
  */
 public class Random {
-	public String integer(String length) {
-		if (isValidLength("random.integer()", length)) { return ""; }
-		int len = NumberUtils.toInt(length);
-		if (len == 0) { return ""; }
-		if (len == 1) { return RandomStringUtils.randomNumeric(len); }
-		return RandomStringUtils.random(1, "123456789") + RandomStringUtils.randomNumeric(len - 1);
-	}
+    public String integer(String length) {
+        if (isValidLength("random.integer()", length)) { return ""; }
+        int len = NumberUtils.toInt(length);
+        if (len == 0) { return ""; }
+        if (len == 1) { return RandomStringUtils.randomNumeric(len); }
+        return RandomStringUtils.random(1, "123456789") + RandomStringUtils.randomNumeric(len - 1);
+    }
 
-	public String decimal(String wholeAndFraction) {
-		String[] sizes = StringUtils.split(wholeAndFraction, ",");
-		if (ArrayUtils.isEmpty(sizes)) {
-			ConsoleUtils.error("Error at random.decimal() - wholeAndFraction " + wholeAndFraction + " is not valid");
-			return "";
-		}
+    public String decimal(String wholeAndFraction) {
+        String[] sizes = StringUtils.split(wholeAndFraction, ",");
+        if (ArrayUtils.isEmpty(sizes)) {
+            ConsoleUtils.error("Error at random.decimal() - wholeAndFraction " + wholeAndFraction + " is not valid");
+            return "";
+        }
 
-		String whole = integer(sizes[0]);
-		if (sizes.length < 2) { return whole; }
+        String whole = integer(sizes[0]);
+        if (sizes.length < 2) { return whole; }
 
-		String decimal = integer(sizes[1]);
-		if (StringUtils.isNotBlank(decimal)) {
-			return whole + "." + decimal;
-		} else {
-			return whole;
-		}
-	}
+        String decimal = integer(sizes[1]);
+        if (StringUtils.isNotBlank(decimal)) {
+            return whole + "." + decimal;
+        } else {
+            return whole;
+        }
+    }
 
-	public String letter(String length) {
-		if (isValidLength("random.letter()", length)) { return ""; }
-		return RandomStringUtils.randomAlphabetic(NumberUtils.toInt(length));
-	}
+    public String letter(String length) {
+        if (isValidLength("random.letter()", length)) { return ""; }
+        return RandomStringUtils.randomAlphabetic(NumberUtils.toInt(length));
+    }
 
-	public String alphanumeric(String length) {
-		if (isValidLength("random.alphanumeric()", length)) { return ""; }
-		return RandomStringUtils.randomAlphanumeric(NumberUtils.toInt(length));
-	}
+    public String alphanumeric(String length) {
+        if (isValidLength("random.alphanumeric()", length)) { return ""; }
+        return RandomStringUtils.randomAlphanumeric(NumberUtils.toInt(length));
+    }
 
-	public String any(String length) {
-		if (isValidLength("random.any()", length)) { return ""; }
-		return RandomStringUtils.randomAscii(NumberUtils.toInt(length));
-	}
+    public String any(String length) {
+        if (isValidLength("random.any()", length)) { return ""; }
+        return RandomStringUtils.randomAscii(NumberUtils.toInt(length));
+    }
 
-	public String characters(String characters, String length) {
-		if (isValidLength("random.characters()", length)) { return ""; }
-		return RandomStringUtils.random(NumberUtils.toInt(length), characters.toCharArray());
-	}
+    public String characters(String characters, String length) {
+        if (isValidLength("random.characters()", length)) { return ""; }
+        return RandomStringUtils.random(NumberUtils.toInt(length), characters.toCharArray());
+    }
 
-	public String numeric(String from, String to) {
-		if (isValidLength("random.numeric()", from)) { return ""; }
-		if (isValidLength("random.numeric()", to)) { return ""; }
-		return RandomUtils.nextInt(NumberUtils.toInt(from), NumberUtils.toInt(to)) + "";
-	}
+    public String numeric(String from, String to) {
+        if (isValidLength("random.numeric()", from)) { return ""; }
+        if (isValidLength("random.numeric()", to)) { return ""; }
+        return RandomUtils.nextInt(NumberUtils.toInt(from), NumberUtils.toInt(to)) + "";
+    }
 
-	protected void init() { }
+    protected void init() { }
 
-	private boolean isValidLength(String funcName, String length) {
-		if (!NumberUtils.isDigits(length)) {
-			ConsoleUtils.error("Error at " + funcName + " - length " + length + " is not a number");
-			return true;
-		}
-		return false;
-	}
+    private boolean isValidLength(String funcName, String length) {
+        if (!NumberUtils.isDigits(length)) {
+            ConsoleUtils.error("Error at " + funcName + " - length " + length + " is not a number");
+            return true;
+        }
+        return false;
+    }
 }

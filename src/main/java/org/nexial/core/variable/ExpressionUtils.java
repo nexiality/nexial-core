@@ -20,7 +20,6 @@ package org.nexial.core.variable;
 import java.io.IOException;
 
 import org.apache.commons.lang3.StringUtils;
-
 import org.nexial.core.ExecutionThread;
 import org.nexial.core.model.ExecutionContext;
 import org.nexial.core.utils.CheckUtils;

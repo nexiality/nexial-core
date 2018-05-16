@@ -31,37 +31,37 @@ import static org.apache.commons.lang3.SystemUtils.OS_ARCH;
  */
 public final class EnvUtils {
 
-	private EnvUtils() {}
+    private EnvUtils() {}
 
-	/**
-	 * return the hostname of current host.  If no host can be found, IP address will be returned instead.
-	 *
-	 * @throws UnknownHostException if no host or IP can be found for this host.
-	 */
-	public static String getHostName() throws UnknownHostException {
-		InetAddress localhost = InetAddress.getLocalHost();
-		return StringUtils.defaultIfBlank(localhost.getHostName(), localhost.getHostAddress());
-	}
+    /**
+     * return the hostname of current host.  If no host can be found, IP address will be returned instead.
+     *
+     * @throws UnknownHostException if no host or IP can be found for this host.
+     */
+    public static String getHostName() throws UnknownHostException {
+        InetAddress localhost = InetAddress.getLocalHost();
+        return StringUtils.defaultIfBlank(localhost.getHostName(), localhost.getHostAddress());
+    }
 
-	public static boolean isRunningWindows64bit() {
-		return IS_OS_WINDOWS &&
-		       (StringUtils.contains(OS_ARCH, "64") || StringUtils.isNotBlank(System.getenv("ProgramFiles(x86)")));
-	}
+    public static boolean isRunningWindows64bit() {
+        return IS_OS_WINDOWS &&
+               (StringUtils.contains(OS_ARCH, "64") || StringUtils.isNotBlank(System.getenv("ProgramFiles(x86)")));
+    }
 
-	public static String platformSpecificEOL(String text) {
-		if (lineSeparator().equals("\n")) { return enforceUnixEOL(text); }
-		if (lineSeparator().equals("\r\n")) { return enforceWindowsEOL(text); }
-		return text;
-	}
+    public static String platformSpecificEOL(String text) {
+        if (lineSeparator().equals("\n")) { return enforceUnixEOL(text); }
+        if (lineSeparator().equals("\r\n")) { return enforceWindowsEOL(text); }
+        return text;
+    }
 
-	public static String enforceUnixEOL(String text) {
-		text = StringUtils.replace(text, "\r\n", "\n");
-		return StringUtils.replace(text, "\r", "\n");
-	}
+    public static String enforceUnixEOL(String text) {
+        text = StringUtils.replace(text, "\r\n", "\n");
+        return StringUtils.replace(text, "\r", "\n");
+    }
 
-	public static String enforceWindowsEOL(String text) {
-		text = StringUtils.replace(text, "\r\n", "\n");
-		text = StringUtils.replace(text, "\r", "\n");
-		return StringUtils.replace(text, "\n", "\r\n");
-	}
+    public static String enforceWindowsEOL(String text) {
+        text = StringUtils.replace(text, "\r\n", "\n");
+        text = StringUtils.replace(text, "\r", "\n");
+        return StringUtils.replace(text, "\n", "\r\n");
+    }
 }

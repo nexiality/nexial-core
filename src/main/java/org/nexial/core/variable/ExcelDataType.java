@@ -25,7 +25,6 @@ import java.util.List;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.poi.xssf.usermodel.XSSFCell;
-
 import org.nexial.commons.utils.FileUtil;
 import org.nexial.commons.utils.TextUtils;
 import org.nexial.core.excel.Excel;
@@ -57,6 +56,30 @@ public class ExcelDataType extends ExpressionDataType<Excel> {
     public String toString() {
         return getName() + "(" + lineSeparator() + getTextValue() + lineSeparator() + ")";
     }
+
+    public String getFilePath() { return filePath; }
+
+    public List<List<String>> getCapturedValues() { return capturedValues; }
+
+    public void setCapturedValues(List<List<String>> capturedValues) {
+        this.capturedValues = capturedValues;
+        textValue = "";
+        if (!CollectionUtils.isNotEmpty(capturedValues)) { return; }
+
+        char delim = ',';
+        String recordDelim = "\r\n";
+        capturedValues.forEach(row -> textValue += TextUtils.toString(row, delim + "") + recordDelim);
+        textValue = StringUtils.removeEnd(textValue, recordDelim);
+        if (StringUtils.isBlank(textValue)) { textValue = ""; }
+    }
+
+    public Worksheet getCurrentSheet() { return currentSheet; }
+
+    public void setCurrentSheet(Worksheet currentSheet) { this.currentSheet = currentSheet; }
+
+    public ExcelAddress getCurrentRange() { return currentRange; }
+
+    public void setCurrentRange(ExcelAddress currentRange) { this.currentRange = currentRange; }
 
     @Override
     Transformer getTransformer() { return transformer; }
@@ -101,30 +124,6 @@ public class ExcelDataType extends ExpressionDataType<Excel> {
                                               e);
         }
     }
-
-    public String getFilePath() { return filePath; }
-
-    public List<List<String>> getCapturedValues() { return capturedValues; }
-
-    public void setCapturedValues(List<List<String>> capturedValues) {
-        this.capturedValues = capturedValues;
-        textValue = "";
-        if (!CollectionUtils.isNotEmpty(capturedValues)) { return; }
-
-        char delim = ',';
-        String recordDelim = "\r\n";
-        capturedValues.forEach(row -> textValue += TextUtils.toString(row, delim + "") + recordDelim);
-        textValue = StringUtils.removeEnd(textValue, recordDelim);
-        if (StringUtils.isBlank(textValue)) { textValue = ""; }
-    }
-
-    public Worksheet getCurrentSheet() { return currentSheet; }
-
-    public void setCurrentSheet(Worksheet currentSheet) { this.currentSheet = currentSheet; }
-
-    public ExcelAddress getCurrentRange() { return currentRange; }
-
-    public void setCurrentRange(ExcelAddress currentRange) { this.currentRange = currentRange; }
 
     protected void read(Worksheet worksheet, ExcelAddress range) {
         worksheet.getSheet().getWorkbook().setMissingCellPolicy(CREATE_NULL_AS_BLANK);

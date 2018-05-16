@@ -27,7 +27,6 @@ import java.util.Map;
 import org.apache.commons.collections4.map.ListOrderedMap;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang3.StringUtils;
-
 import org.nexial.core.plugins.filevalidation.FieldBean;
 import org.nexial.core.plugins.filevalidation.RecordBean;
 import org.nexial.core.plugins.filevalidation.RecordData;
@@ -89,7 +88,7 @@ public class FixedLengthFileValidator implements MasterFileValidator {
                             String msg = "Record ID: " +
                                          expectedRecordId +
                                          " - Skipped Validation; Expected record length: " +
-                                         expectedLength+". But Actual length found: "+targetLine.length();
+                                         expectedLength + ". But Actual length found: " + targetLine.length();
                             skippedRecords.put(i, msg);
                             continue;
                         }
@@ -126,7 +125,6 @@ public class FixedLengthFileValidator implements MasterFileValidator {
         validationsExecutor.executeValidations(recordData);
         return recordData;
     }
-
 
 
 }

@@ -19,7 +19,6 @@ package org.nexial.core.plugins.jms;
 
 import java.lang.reflect.InvocationTargetException;
 import java.util.Map;
-
 import javax.jms.Connection;
 import javax.jms.ConnectionFactory;
 import javax.jms.Destination;

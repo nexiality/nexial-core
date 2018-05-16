@@ -23,7 +23,6 @@ import java.io.StringReader;
 import java.util.Properties;
 
 import org.apache.commons.lang3.StringUtils;
-
 import org.nexial.core.utils.ConsoleUtils;
 
 import static java.lang.System.lineSeparator;
@@ -32,68 +31,69 @@ import static java.lang.System.lineSeparator;
  * Created by nv092106 on 7/16/2017.
  */
 public class ConfigDataType extends ExpressionDataType<Properties> {
-	private Transformer transformer = new ConfigTransformer();
-	private String eol;
+    private Transformer transformer = new ConfigTransformer();
+    private String eol;
 
-	public ConfigDataType(String textValue) throws TypeConversionException { super(textValue); }
+    public ConfigDataType(String textValue) throws TypeConversionException { super(textValue); }
 
-	private ConfigDataType() { super(); }
+    private ConfigDataType() { super(); }
 
-	@Override
-	public String getName() { return "CONFIG"; }
+    @Override
+    public String getName() { return "CONFIG"; }
 
-	@Override
-	Transformer getTransformer() { return transformer; }
+    public String getEol() { return eol; }
 
-	@Override
-	ConfigDataType snapshot() {
-		ConfigDataType snapshot = new ConfigDataType();
-		snapshot.transformer = transformer;
-		snapshot.value = value;
-		snapshot.textValue = textValue;
-		snapshot.eol = eol;
-		return snapshot;
-	}
+    @Override
+    Transformer getTransformer() { return transformer; }
 
-	@Override
-	protected void init() throws TypeConversionException {
-		Reader reader = null;
-		try {
-			this.value = new Properties();
+    @Override
+    ConfigDataType snapshot() {
+        ConfigDataType snapshot = new ConfigDataType();
+        snapshot.transformer = transformer;
+        snapshot.value = value;
+        snapshot.textValue = textValue;
+        snapshot.eol = eol;
+        return snapshot;
+    }
 
-			if (StringUtils.isNotBlank(textValue)) {
-				if (StringUtils.contains(textValue, "\r\n")) {
-					ConsoleUtils.log("determined current CONFIG content uses CRLF as end-of-line character");
-					eol = "\r\n";
-				} else if (StringUtils.contains(textValue, "\n")) {
-					ConsoleUtils.log("determined current CONFIG content uses LF as end-of-line character");
-					eol = "\n";
-				} else {
-					ConsoleUtils.log("determined current CONFIG content uses OS default as end-of-line character");
-					eol = lineSeparator();
-				}
+    @Override
+    protected void init() throws TypeConversionException {
+        Reader reader = null;
+        try {
+            this.value = new Properties();
 
-				reader = new StringReader(textValue);
-				value.load(reader);
-			}
+            if (StringUtils.isNotBlank(textValue)) {
+                if (StringUtils.contains(textValue, "\r\n")) {
+                    ConsoleUtils.log("determined current CONFIG content uses CRLF as end-of-line character");
+                    eol = "\r\n";
+                } else if (StringUtils.contains(textValue, "\n")) {
+                    ConsoleUtils.log("determined current CONFIG content uses LF as end-of-line character");
+                    eol = "\n";
+                } else {
+                    ConsoleUtils.log("determined current CONFIG content uses OS default as end-of-line character");
+                    eol = lineSeparator();
+                }
 
-		} catch (IOException ioException) {
-			throw new TypeConversionException(getName(), getTextValue(), "Error when converting " + textValue);
-		} finally {
-			try {
-				if (reader != null) { reader.close(); }
-			} catch (IOException e) {
-				ConsoleUtils.log("Unable to close the Reader source");
-			}
-		}
-	}
+                reader = new StringReader(textValue);
+                value.load(reader);
+            }
 
-	public String getEol() { return eol; }
+        } catch (IOException ioException) {
+            throw new TypeConversionException(getName(), getTextValue(), "Error when converting " + textValue);
+        } finally {
+            try {
+                if (reader != null) { reader.close(); }
+            } catch (IOException e) {
+                ConsoleUtils.log("Unable to close the Reader source");
+            }
+        }
+    }
 
-	protected void reset() {
-		StringBuilder text = new StringBuilder();
-		value.stringPropertyNames().forEach(key ->
-			                                    text.append(key).append("=").append(value.getProperty(key)).append(eol));
-		textValue = text.toString();
-	}
+    protected void reset() {
+        StringBuilder text = new StringBuilder();
+        value.stringPropertyNames().forEach(key ->
+                                                text.append(key).append("=").append(value.getProperty(key))
+                                                    .append(eol));
+        textValue = text.toString();
+    }
 }

@@ -28,7 +28,6 @@ import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang3.ArrayUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.math.NumberUtils;
-
 import org.nexial.commons.utils.FileUtil;
 import org.nexial.commons.utils.RegexUtils;
 import org.nexial.core.NexialConst.*;
@@ -37,8 +36,8 @@ import org.nexial.core.model.ExecutionDefinition;
 import org.nexial.core.model.TestStep;
 import org.nexial.core.plugins.web.Browser;
 
-import static org.nexial.core.NexialConst.*;
 import static java.io.File.separator;
+import static org.nexial.core.NexialConst.*;
 
 /**
  * dedicated as an utility to decorate Nexial excel files with additional runtime information.

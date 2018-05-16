@@ -39,65 +39,65 @@ import net.lightbody.bmp.proxy.http.RequestInterceptor;
 import static org.nexial.core.NexialConst.OPT_PROXY_LOCALHOST;
 
 public class NexialBrowserMobHttpClient extends BrowserMobHttpClient {
-	private ProxyHandler proxyHandler;
-	private boolean requestCaptured = false;
+    private ProxyHandler proxyHandler;
+    private boolean requestCaptured = false;
 
-	public NexialBrowserMobHttpClient(StreamManager streamManager, AtomicInteger requestCounter) {
-		super(streamManager, requestCounter);
-	}
+    public NexialBrowserMobHttpClient(StreamManager streamManager, AtomicInteger requestCounter) {
+        super(streamManager, requestCounter);
+    }
 
-	public void setProxyHandler(ProxyHandler proxyHandler) { this.proxyHandler = proxyHandler; }
+    public void setProxyHandler(ProxyHandler proxyHandler) { this.proxyHandler = proxyHandler; }
 
-	@Override
-	public BrowserMobHttpResponse execute(BrowserMobHttpRequest req) {
-		try {
-			if (proxyHandler.isInvokeInterceptor()) {
-				if (requestCaptured) {
-					req.getProxyRequest().destroy();
-				} else {
-					List<RequestInterceptor> ri = (List<RequestInterceptor>) getReflectiveField("requestInterceptors");
-					for (RequestInterceptor interceptor : ri) {
-						interceptor.process(req, getHar());
-					}
-					if (req.getMethod().toString().contains("POST")) {
-						requestCaptured = true;
-						if (req.getProxyRequest().getURI() == null) { return null; }
+    @Override
+    public BrowserMobHttpResponse execute(BrowserMobHttpRequest req) {
+        try {
+            if (proxyHandler.isInvokeInterceptor()) {
+                if (requestCaptured) {
+                    req.getProxyRequest().destroy();
+                } else {
+                    List<RequestInterceptor> ri = (List<RequestInterceptor>) getReflectiveField("requestInterceptors");
+                    for (RequestInterceptor interceptor : ri) {
+                        interceptor.process(req, getHar());
+                    }
+                    if (req.getMethod().toString().contains("POST")) {
+                        requestCaptured = true;
+                        if (req.getProxyRequest().getURI() == null) { return null; }
 
-						HttpRequestBase method = req.getMethod();
-						String url = method.getURI().toString();
+                        HttpRequestBase method = req.getMethod();
+                        String url = method.getURI().toString();
 
-						DefaultHttpClient httpClient = (DefaultHttpClient) getReflectiveField("httpClient");
-						BasicHttpContext ctx = new BasicHttpContext();
-						httpClient.execute(new HttpHost(OPT_PROXY_LOCALHOST), method, ctx);
+                        DefaultHttpClient httpClient = (DefaultHttpClient) getReflectiveField("httpClient");
+                        BasicHttpContext ctx = new BasicHttpContext();
+                        httpClient.execute(new HttpHost(OPT_PROXY_LOCALHOST), method, ctx);
 
-						String harPageRef = (String) getReflectiveField("harPageRef");
-						HarEntry myEntry = new HarEntry(harPageRef);
-						myEntry.setRequest(new HarRequest(method.getMethod(),
-						                                  url,
-						                                  method.getProtocolVersion().getProtocol()));
-						HarPostData data = new HarPostData();
-						data.setText(new String(req.getCopy().toByteArray()));
-						myEntry.getRequest().setPostData(data);
-						super.getHar().getLog().addEntry(myEntry);
-						req.getProxyRequest().destroy();
-					}
-				}
-			} else {
-				requestCaptured = false;
-				super.execute(req);
-			}
-		} catch (Exception e) {
-			ConsoleUtils.error("Error occurred while executing " +
-			                   (req != null ? req.getMethod().getURI() : "unknown URI") +
-			                   ": " + e.getMessage());
-		}
+                        String harPageRef = (String) getReflectiveField("harPageRef");
+                        HarEntry myEntry = new HarEntry(harPageRef);
+                        myEntry.setRequest(new HarRequest(method.getMethod(),
+                                                          url,
+                                                          method.getProtocolVersion().getProtocol()));
+                        HarPostData data = new HarPostData();
+                        data.setText(new String(req.getCopy().toByteArray()));
+                        myEntry.getRequest().setPostData(data);
+                        super.getHar().getLog().addEntry(myEntry);
+                        req.getProxyRequest().destroy();
+                    }
+                }
+            } else {
+                requestCaptured = false;
+                super.execute(req);
+            }
+        } catch (Exception e) {
+            ConsoleUtils.error("Error occurred while executing " +
+                               (req != null ? req.getMethod().getURI() : "unknown URI") +
+                               ": " + e.getMessage());
+        }
 
-		return null;
-	}
+        return null;
+    }
 
-	private Object getReflectiveField(String fieldName) throws IllegalAccessException, NoSuchFieldException {
-		Field field = this.getClass().getSuperclass().getDeclaredField(fieldName);
-		field.setAccessible(true);
-		return field.get(this);
-	}
+    private Object getReflectiveField(String fieldName) throws IllegalAccessException, NoSuchFieldException {
+        Field field = this.getClass().getSuperclass().getDeclaredField(fieldName);
+        field.setAccessible(true);
+        return field.get(this);
+    }
 }

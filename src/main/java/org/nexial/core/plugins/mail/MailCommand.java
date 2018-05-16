@@ -18,7 +18,6 @@
 package org.nexial.core.plugins.mail;
 
 import java.io.IOException;
-
 import javax.mail.MessagingException;
 
 import org.apache.commons.lang3.StringUtils;

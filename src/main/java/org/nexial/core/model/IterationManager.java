@@ -26,7 +26,6 @@ import org.apache.commons.collections4.IterableUtils;
 import org.apache.commons.lang3.ArrayUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.math.NumberUtils;
-
 import org.nexial.core.excel.ExcelAddress;
 import org.nexial.core.utils.ConsoleUtils;
 
@@ -34,109 +33,109 @@ import static org.nexial.core.NexialConst.Data.ITERATION_RANGE_SEP;
 import static org.nexial.core.NexialConst.Data.ITERATION_SEP;
 
 public final class IterationManager {
-	private String iterationString;
-	private List<Integer> iterations = new ArrayList<>();
-	private int lowest;
-	private int highest;
-	private int first;
-	private int last;
+    private String iterationString;
+    private List<Integer> iterations = new ArrayList<>();
+    private int lowest;
+    private int highest;
+    private int first;
+    private int last;
 
-	private IterationManager() { }
+    private IterationManager() { }
 
-	public static IterationManager newInstance(String iteration) {
-		if (StringUtils.isBlank(iteration)) { iteration = "1"; }
+    public static IterationManager newInstance(String iteration) {
+        if (StringUtils.isBlank(iteration)) { iteration = "1"; }
 
-		String[] parts = StringUtils.split(iteration, ITERATION_SEP);
-		if (ArrayUtils.isEmpty(parts)) { parts = new String[]{"1"}; }
+        String[] parts = StringUtils.split(iteration, ITERATION_SEP);
+        if (ArrayUtils.isEmpty(parts)) { parts = new String[]{"1"}; }
 
-		IterationManager instance = new IterationManager();
+        IterationManager instance = new IterationManager();
 
-		for (String part : parts) {
-			// if it's a number, then it's gotta be 1 or greater
-			// if it's a number, then it's gotta be integer
-			// if it's not number, then it's gotta be ALPHABETs only (represent column)
-			if (StringUtils.contains(part, ITERATION_RANGE_SEP)) {
-				// internally convert all zero or less to 1. Doesn't make sense to consider a "zero" or "negative one" loop.
-				int startNum = toIterationRef(StringUtils.trim(StringUtils.substringBefore(part, ITERATION_RANGE_SEP)));
-				if (startNum < 1) {
-					ConsoleUtils.error("Invalid iteration reference: " + part + "; ignored...");
-					continue;
-				}
+        for (String part : parts) {
+            // if it's a number, then it's gotta be 1 or greater
+            // if it's a number, then it's gotta be integer
+            // if it's not number, then it's gotta be ALPHABETs only (represent column)
+            if (StringUtils.contains(part, ITERATION_RANGE_SEP)) {
+                // internally convert all zero or less to 1. Doesn't make sense to consider a "zero" or "negative one" loop.
+                int startNum = toIterationRef(StringUtils.trim(StringUtils.substringBefore(part, ITERATION_RANGE_SEP)));
+                if (startNum < 1) {
+                    ConsoleUtils.error("Invalid iteration reference: " + part + "; ignored...");
+                    continue;
+                }
 
-				int endNum = toIterationRef(StringUtils.trim(StringUtils.substringAfter(part, ITERATION_RANGE_SEP)));
-				if (endNum < 1) {
-					ConsoleUtils.error("Invalid iteration reference: " + part + "; ignored...");
-					continue;
-				}
+                int endNum = toIterationRef(StringUtils.trim(StringUtils.substringAfter(part, ITERATION_RANGE_SEP)));
+                if (endNum < 1) {
+                    ConsoleUtils.error("Invalid iteration reference: " + part + "; ignored...");
+                    continue;
+                }
 
-				// if start is greater than end
-				if (endNum < startNum) {
-					for (int i = startNum; i >= endNum; i--) { instance.iterations.add(i); }
-				} else {
-					for (int i = startNum; i <= endNum; i++) { instance.iterations.add(i); }
-				}
-			} else {
-				int iterationNum = toIterationRef(StringUtils.trim(part));
-				if (iterationNum < 1) {
-					ConsoleUtils.error("Invalid iteration reference: " + part + "; ignored...");
-					continue;
-				}
-				instance.iterations.add(iterationNum);
-			}
-		}
+                // if start is greater than end
+                if (endNum < startNum) {
+                    for (int i = startNum; i >= endNum; i--) { instance.iterations.add(i); }
+                } else {
+                    for (int i = startNum; i <= endNum; i++) { instance.iterations.add(i); }
+                }
+            } else {
+                int iterationNum = toIterationRef(StringUtils.trim(part));
+                if (iterationNum < 1) {
+                    ConsoleUtils.error("Invalid iteration reference: " + part + "; ignored...");
+                    continue;
+                }
+                instance.iterations.add(iterationNum);
+            }
+        }
 
-		if (CollectionUtils.isEmpty(instance.iterations)) { instance.iterations.add(1); }
+        if (CollectionUtils.isEmpty(instance.iterations)) { instance.iterations.add(1); }
 
-		List<Integer> tmp = new ArrayList<>(instance.iterations);
-		instance.first = tmp.get(0);
-		instance.last = tmp.get(tmp.size() - 1);
-		Collections.sort(tmp);
-		instance.lowest = tmp.get(0);
-		instance.highest = tmp.get(tmp.size() - 1);
+        List<Integer> tmp = new ArrayList<>(instance.iterations);
+        instance.first = tmp.get(0);
+        instance.last = tmp.get(tmp.size() - 1);
+        Collections.sort(tmp);
+        instance.lowest = tmp.get(0);
+        instance.highest = tmp.get(tmp.size() - 1);
 
-		// reformat for display consistency
-		instance.iterationString = "";
-		for (int num : instance.iterations) { instance.iterationString += num + ITERATION_SEP; }
-		instance.iterationString = StringUtils.removeEnd(instance.iterationString, ITERATION_SEP);
+        // reformat for display consistency
+        instance.iterationString = "";
+        for (int num : instance.iterations) { instance.iterationString += num + ITERATION_SEP; }
+        instance.iterationString = StringUtils.removeEnd(instance.iterationString, ITERATION_SEP);
 
-		return instance;
-	}
+        return instance;
+    }
 
-	/**
-	 * note that {@code iterationIndex} is zero-based, whilst {@link IterationManager#iterations} is one-based.
-	 * The difference will be resolved internally within this method.
-	 */
-	public boolean skip(int iterationIndex) {
-		return !iterations.isEmpty() && !iterations.contains(iterationIndex + 1);
-	}
+    /**
+     * note that {@code iterationIndex} is zero-based, whilst {@link IterationManager#iterations} is one-based.
+     * The difference will be resolved internally within this method.
+     */
+    public boolean skip(int iterationIndex) {
+        return !iterations.isEmpty() && !iterations.contains(iterationIndex + 1);
+    }
 
-	public int getLowestIteration() { return lowest; }
+    public int getLowestIteration() { return lowest; }
 
-	public int getHighestIteration() { return highest; }
+    public int getHighestIteration() { return highest; }
 
-	public int getFirstIteration() { return first; }
+    public int getFirstIteration() { return first; }
 
-	public int getLastIteration() { return last; }
+    public int getLastIteration() { return last; }
 
-	public int getIterationCount() { return iterations.isEmpty() ? 1 : iterations.size(); }
+    public int getIterationCount() { return iterations.isEmpty() ? 1 : iterations.size(); }
 
-	@Override
-	public String toString() { return "[" + iterationString + "] total " + getIterationCount(); }
+    @Override
+    public String toString() { return "[" + iterationString + "] total " + getIterationCount(); }
 
-	public int getIterationRef(int index) {
-		if (index < 0 || index >= iterations.size()) { return -1; }
-		try {
-			return IterableUtils.get(iterations, index);
-		} catch (IndexOutOfBoundsException e) {
-			// invalid index
-			return -1;
-		}
-	}
+    public int getIterationRef(int index) {
+        if (index < 0 || index >= iterations.size()) { return -1; }
+        try {
+            return IterableUtils.get(iterations, index);
+        } catch (IndexOutOfBoundsException e) {
+            // invalid index
+            return -1;
+        }
+    }
 
-	protected static int toIterationRef(String iteration) {
-		int startNum = -1;
-		if (StringUtils.isNumeric(iteration)) { startNum = NumberUtils.toInt(iteration); }
-		if (StringUtils.isAlpha(iteration)) { startNum = ExcelAddress.fromColumnLettersToOrdinalNumber(iteration) - 1; }
-		return startNum;
-	}
+    protected static int toIterationRef(String iteration) {
+        int startNum = -1;
+        if (StringUtils.isNumeric(iteration)) { startNum = NumberUtils.toInt(iteration); }
+        if (StringUtils.isAlpha(iteration)) { startNum = ExcelAddress.fromColumnLettersToOrdinalNumber(iteration) - 1; }
+        return startNum;
+    }
 }

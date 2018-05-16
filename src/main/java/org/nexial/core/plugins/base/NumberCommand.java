@@ -23,7 +23,6 @@ import java.util.List;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.math.NumberUtils;
-
 import org.nexial.commons.utils.TextUtils;
 import org.nexial.core.model.ExecutionContext;
 import org.nexial.core.model.StepResult;
@@ -83,8 +82,8 @@ public class NumberCommand extends BaseCommand {
         double upperNum = toDouble(max, "max");
         boolean asExpected = isInRange(actual, lowerNum, upperNum);
         return new StepResult(asExpected,
-                                num + " is" + (asExpected ? "" : " NOT") + " between " +
-                                min + " and " + max, null);
+                              num + " is" + (asExpected ? "" : " NOT") + " between " +
+                              min + " and " + max, null);
     }
 
     public StepResult average(String var, String array) {

@@ -27,7 +27,6 @@ import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.tuple.ImmutablePair;
 import org.apache.commons.lang3.tuple.Pair;
-
 import org.nexial.commons.utils.FileUtil;
 import org.nexial.core.IntegrationConfigException;
 import org.nexial.core.model.StepResult;
@@ -35,14 +34,15 @@ import org.nexial.core.plugins.RemoteFileActionOutcome;
 import org.nexial.core.plugins.RemoteFileActionOutcome.TransferAction;
 import org.nexial.core.plugins.base.BaseCommand;
 import org.nexial.core.utils.ConsoleUtils;
+
 import com.jcraft.jsch.*;
 import com.jcraft.jsch.ChannelSftp.*;
 
+import static com.jcraft.jsch.ChannelSftp.*;
 import static org.nexial.core.plugins.RemoteFileActionOutcome.TransferAction.*;
 import static org.nexial.core.plugins.RemoteFileActionOutcome.TransferProtocol.SCP;
 import static org.nexial.core.plugins.RemoteFileActionOutcome.TransferProtocol.SFTP;
 import static org.nexial.core.utils.CheckUtils.*;
-import static com.jcraft.jsch.ChannelSftp.*;
 
 public class SshCommand extends BaseCommand {
 
@@ -383,6 +383,68 @@ public class SshCommand extends BaseCommand {
         }
     }
 
+    // todo: should be protected / move test class to same package
+    public static StepResult preRemoteActionChecks(RemoteFileActionOutcome outcome) {
+        TransferAction action = outcome.getAction();
+        String logPrefix = outcome.getProtocol() + ":" + action + " - ";
+
+        String localPath = outcome.getLocalPath();
+        boolean localFileReadable = FileUtil.isFileReadable(localPath);
+        boolean localDirectory = FileUtil.isDirectoryReadable(localPath);
+
+        String remotePath = outcome.getRemotePath();
+
+        StepResult result;
+        if (action == COPY_FROM || action == MOVE_FROM) {
+            // so we are copying from remote to local
+            if ((result = requireValidRemotePath(remotePath, false, false)) != null) { return result; }
+
+            if ((result = requireValidLocalPath(localPath, true, false)) != null) { return result; }
+
+            if (localDirectory) {
+                String filename = FileUtil.extractFilename(remotePath);
+                if (StringUtils.isBlank(filename)) {
+                    // uh uh.. we don't support directory copy yet!
+                    return StepResult.fail("remote path " + remotePath +
+                                           " is a directory, but directory copy/move is currently UNSUPPORTED");
+                }
+
+                outcome.setLocalPath(StringUtils.appendIfMissing(localPath, "/") + filename);
+            } else if (localFileReadable) {
+                // if not, we'd assume this as file
+                ConsoleUtils.log(logPrefix + "local file " + localPath + " will be OVERWRITTEN");
+            }
+
+            return null;
+        }
+
+        if (action == COPY_TO || action == MOVE_TO) {
+            // so we are copy from local to remote
+            if ((result = requireValidRemotePath(remotePath, true, false)) != null) { return result; }
+
+            if ((result = requireValidLocalPath(localPath, false, false)) != null) { return result; }
+
+            if (!localFileReadable) { return StepResult.fail("local path " + localPath + " is not readable"); }
+
+            if (StringUtils.endsWithAny(remotePath, "\\", "/")) {
+                String filename = FileUtil.extractFilename(localPath);
+                outcome.setRemotePath(StringUtils.appendIfMissing(remotePath, "/") + filename);
+            } else {
+                ConsoleUtils.log(logPrefix + "remote file " + remotePath + " will be OVERWRITTEN");
+            }
+
+            return null;
+        }
+
+        if (action == LIST || action == DELETE) {
+            if ((result = requireValidRemotePath(remotePath, true, true)) != null) { return result; }
+            outcome.setLocalPath(null);
+            return null;
+        }
+
+        return null;
+    }
+
     protected ChannelSftp openSftpChannel(Session session) throws JSchException {
         if (session == null || !session.isConnected()) { throw new JSchException("session is invalid or disconnected");}
 
@@ -547,68 +609,6 @@ public class SshCommand extends BaseCommand {
         session.connect();
 
         return session;
-    }
-
-    // todo: should be protected / move test class to same package
-    public static StepResult preRemoteActionChecks(RemoteFileActionOutcome outcome) {
-        TransferAction action = outcome.getAction();
-        String logPrefix = outcome.getProtocol() + ":" + action + " - ";
-
-        String localPath = outcome.getLocalPath();
-        boolean localFileReadable = FileUtil.isFileReadable(localPath);
-        boolean localDirectory = FileUtil.isDirectoryReadable(localPath);
-
-        String remotePath = outcome.getRemotePath();
-
-        StepResult result;
-        if (action == COPY_FROM || action == MOVE_FROM) {
-            // so we are copying from remote to local
-            if ((result = requireValidRemotePath(remotePath, false, false)) != null) { return result; }
-
-            if ((result = requireValidLocalPath(localPath, true, false)) != null) { return result; }
-
-            if (localDirectory) {
-                String filename = FileUtil.extractFilename(remotePath);
-                if (StringUtils.isBlank(filename)) {
-                    // uh uh.. we don't support directory copy yet!
-                    return StepResult.fail("remote path " + remotePath +
-                                           " is a directory, but directory copy/move is currently UNSUPPORTED");
-                }
-
-                outcome.setLocalPath(StringUtils.appendIfMissing(localPath, "/") + filename);
-            } else if (localFileReadable) {
-                // if not, we'd assume this as file
-                ConsoleUtils.log(logPrefix + "local file " + localPath + " will be OVERWRITTEN");
-            }
-
-            return null;
-        }
-
-        if (action == COPY_TO || action == MOVE_TO) {
-            // so we are copy from local to remote
-            if ((result = requireValidRemotePath(remotePath, true, false)) != null) { return result; }
-
-            if ((result = requireValidLocalPath(localPath, false, false)) != null) { return result; }
-
-            if (!localFileReadable) { return StepResult.fail("local path " + localPath + " is not readable"); }
-
-            if (StringUtils.endsWithAny(remotePath, "\\", "/")) {
-                String filename = FileUtil.extractFilename(localPath);
-                outcome.setRemotePath(StringUtils.appendIfMissing(remotePath, "/") + filename);
-            } else {
-                ConsoleUtils.log(logPrefix + "remote file " + remotePath + " will be OVERWRITTEN");
-            }
-
-            return null;
-        }
-
-        if (action == LIST || action == DELETE) {
-            if ((result = requireValidRemotePath(remotePath, true, true)) != null) { return result; }
-            outcome.setLocalPath(null);
-            return null;
-        }
-
-        return null;
     }
 
     protected static StepResult requireValidRemotePath(String remotePath, boolean dirOK, boolean wildcardOK) {

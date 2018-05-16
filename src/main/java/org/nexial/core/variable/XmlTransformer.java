@@ -29,7 +29,6 @@ import org.jdom2.Content;
 import org.jdom2.Element;
 import org.jdom2.JDOMException;
 import org.jdom2.output.XMLOutputter;
-
 import org.nexial.commons.utils.TextUtils;
 import org.nexial.commons.utils.XmlUtils;
 

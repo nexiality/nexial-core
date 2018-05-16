@@ -23,45 +23,44 @@ import java.util.List;
 import java.util.Map;
 
 import org.apache.commons.lang3.StringUtils;
-
 import org.nexial.core.plugins.desktop.ig.IgExplorerBar;
 import org.nexial.core.plugins.desktop.ig.IgRibbon;
 
 public final class ComponentScanStrategy {
-	private static final Map<String, Class> STRATEGY_MAPPING = initStrategies();
-	private static final List<String> ONLY_ALLOW_ONE = initOnlyAllowOne();
+    private static final Map<String, Class> STRATEGY_MAPPING = initStrategies();
+    private static final List<String> ONLY_ALLOW_ONE = initOnlyAllowOne();
 
-	public static Class findMatchingClass(String hint) {
-		if (StringUtils.isBlank(hint)) { return null; }
-		return STRATEGY_MAPPING.get(hint);
-	}
+    public static Class findMatchingClass(String hint) {
+        if (StringUtils.isBlank(hint)) { return null; }
+        return STRATEGY_MAPPING.get(hint);
+    }
 
-	public static boolean isOnlySingleInstanceAllowed(String hint) {
-		return !StringUtils.isBlank(hint) && ONLY_ALLOW_ONE.contains(hint);
-	}
+    public static boolean isOnlySingleInstanceAllowed(String hint) {
+        return !StringUtils.isBlank(hint) && ONLY_ALLOW_ONE.contains(hint);
+    }
 
-	private static Map<String, Class> initStrategies() {
-		Map<String, Class> strategies = new HashMap<>();
+    private static Map<String, Class> initStrategies() {
+        Map<String, Class> strategies = new HashMap<>();
 
-		strategies.put("IgExplorerBar", IgExplorerBar.class);
-		strategies.put("ExplorerBar", IgExplorerBar.class);
+        strategies.put("IgExplorerBar", IgExplorerBar.class);
+        strategies.put("ExplorerBar", IgExplorerBar.class);
 
-		strategies.put("IgRibbon", IgRibbon.class);
-		strategies.put("Ribbon", IgRibbon.class);
+        strategies.put("IgRibbon", IgRibbon.class);
+        strategies.put("Ribbon", IgRibbon.class);
 
-		strategies.put("Table", DesktopTable.class);
+        strategies.put("Table", DesktopTable.class);
 
-		strategies.put("NextGenLoginForm", DesktopLoginForm.class);
-		strategies.put("DesktopLoginForm", DesktopLoginForm.class);
-		strategies.put("LoginForm", DesktopLoginForm.class);
+        strategies.put("NextGenLoginForm", DesktopLoginForm.class);
+        strategies.put("DesktopLoginForm", DesktopLoginForm.class);
+        strategies.put("LoginForm", DesktopLoginForm.class);
 
-		strategies.put("DEFAULT", DesktopElement.class);
-		return strategies;
-	}
+        strategies.put("DEFAULT", DesktopElement.class);
+        return strategies;
+    }
 
-	private static List<String> initOnlyAllowOne() {
-		return Arrays.asList("IgExplorerBar", "ExplorerBar",
-		                     "IgRibbon", "Ribbon",
-		                     "NextGenLoginForm", "DesktopLoginForm", "LoginForm");
-	}
+    private static List<String> initOnlyAllowOne() {
+        return Arrays.asList("IgExplorerBar", "ExplorerBar",
+                             "IgRibbon", "Ribbon",
+                             "NextGenLoginForm", "DesktopLoginForm", "LoginForm");
+    }
 }

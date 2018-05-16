@@ -20,7 +20,6 @@ package org.nexial.core.model;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-
 import javax.validation.constraints.NotNull;
 
 import org.apache.commons.collections4.CollectionUtils;

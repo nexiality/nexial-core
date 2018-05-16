@@ -37,136 +37,135 @@ import org.apache.poi.xssf.usermodel.XSSFCell;
 import org.apache.poi.xssf.usermodel.XSSFRow;
 import org.apache.poi.xssf.usermodel.XSSFSheet;
 import org.apache.poi.xssf.usermodel.XSSFWorkbook;
-
 import org.nexial.core.model.ExecutionContext;
 import org.nexial.core.model.StepResult;
 import org.nexial.core.utils.ConsoleUtils;
 
-import static org.nexial.core.NexialConst.DEF_CHARSET;
 import static java.lang.System.lineSeparator;
 import static org.apache.poi.ss.usermodel.Cell.*;
+import static org.nexial.core.NexialConst.DEF_CHARSET;
 
 public class ExcelHelper {
-	private static final DateFormat DEF_EXCEL_DATE_FORMAT = new SimpleDateFormat("MM/dd/yyyy");
-	private ExecutionContext context;
+    private static final DateFormat DEF_EXCEL_DATE_FORMAT = new SimpleDateFormat("MM/dd/yyyy");
+    private ExecutionContext context;
 
-	public ExcelHelper(ExecutionContext context) { this.context = context; }
+    public ExcelHelper(ExecutionContext context) { this.context = context; }
 
-	public StepResult saveCsvToFile(File excelFile, String worksheet, String csvFile) {
-		String excel = excelFile.getAbsolutePath();
-		boolean newerFormat = StringUtils.endsWith(excel, ".xlsx");
-		try {
-			StringBuilder csv = newerFormat ? xlsx2csv(excelFile, worksheet) : xls2csv(excelFile, worksheet);
-			return saveCSVContentToFile(csvFile, csv);
-		} catch (IOException e) {
-			return StepResult.fail("Unable to read excel file '" + excel + "': " + e.getMessage());
-		}
-	}
+    public StepResult saveCsvToFile(File excelFile, String worksheet, String csvFile) {
+        String excel = excelFile.getAbsolutePath();
+        boolean newerFormat = StringUtils.endsWith(excel, ".xlsx");
+        try {
+            StringBuilder csv = newerFormat ? xlsx2csv(excelFile, worksheet) : xls2csv(excelFile, worksheet);
+            return saveCSVContentToFile(csvFile, csv);
+        } catch (IOException e) {
+            return StepResult.fail("Unable to read excel file '" + excel + "': " + e.getMessage());
+        }
+    }
 
-	protected StringBuilder xlsx2csv(File excelFile, String worksheet) throws IOException {
-		XSSFWorkbook workBook = new XSSFWorkbook(new FileInputStream(excelFile));
-		XSSFSheet excelSheet = workBook.getSheet(worksheet);
-		Iterator rowIterator = excelSheet.rowIterator();
-		StringBuilder csv = new StringBuilder();
+    protected StringBuilder xlsx2csv(File excelFile, String worksheet) throws IOException {
+        XSSFWorkbook workBook = new XSSFWorkbook(new FileInputStream(excelFile));
+        XSSFSheet excelSheet = workBook.getSheet(worksheet);
+        Iterator rowIterator = excelSheet.rowIterator();
+        StringBuilder csv = new StringBuilder();
 
-		while (rowIterator.hasNext()) {
-			XSSFRow row = (XSSFRow) rowIterator.next();
+        while (rowIterator.hasNext()) {
+            XSSFRow row = (XSSFRow) rowIterator.next();
 
-			String oneRow = "";
-			String value;
-			for (int i = 0; i < row.getLastCellNum(); i++) {
-				value = returnCellValue(row.getCell(i));
-				if (StringUtils.isEmpty(value)) { continue; }
-				oneRow += value + ",";
-			}
+            String oneRow = "";
+            String value;
+            for (int i = 0; i < row.getLastCellNum(); i++) {
+                value = returnCellValue(row.getCell(i));
+                if (StringUtils.isEmpty(value)) { continue; }
+                oneRow += value + ",";
+            }
 
-			oneRow = StringUtils.trim(StringUtils.removeEnd(oneRow, ","));
-			if (!oneRow.isEmpty()) { csv.append(oneRow).append(lineSeparator()); }
-		}
+            oneRow = StringUtils.trim(StringUtils.removeEnd(oneRow, ","));
+            if (!oneRow.isEmpty()) { csv.append(oneRow).append(lineSeparator()); }
+        }
 
-		return csv;
-	}
+        return csv;
+    }
 
-	protected StringBuilder xls2csv(File excelFile, String worksheet) throws IOException {
-		HSSFWorkbook workBook = new HSSFWorkbook(new POIFSFileSystem(new FileInputStream(excelFile)));
-		HSSFSheet excelSheet = workBook.getSheet(worksheet);
-		Iterator rowIterator = excelSheet.rowIterator();
-		StringBuilder csv = new StringBuilder();
+    protected StringBuilder xls2csv(File excelFile, String worksheet) throws IOException {
+        HSSFWorkbook workBook = new HSSFWorkbook(new POIFSFileSystem(new FileInputStream(excelFile)));
+        HSSFSheet excelSheet = workBook.getSheet(worksheet);
+        Iterator rowIterator = excelSheet.rowIterator();
+        StringBuilder csv = new StringBuilder();
 
-		while (rowIterator.hasNext()) {
-			HSSFRow row = (HSSFRow) rowIterator.next();
+        while (rowIterator.hasNext()) {
+            HSSFRow row = (HSSFRow) rowIterator.next();
 
-			String oneRow = "";
-			String value;
-			for (int i = 0; i < row.getLastCellNum(); i++) {
-				HSSFCell cell = row.getCell(i);
-				value = returnCellValue(cell);
-				if (StringUtils.isEmpty(value)) { continue; }
+            String oneRow = "";
+            String value;
+            for (int i = 0; i < row.getLastCellNum(); i++) {
+                HSSFCell cell = row.getCell(i);
+                value = returnCellValue(cell);
+                if (StringUtils.isEmpty(value)) { continue; }
 
-				oneRow += value + ",";
-			}
+                oneRow += value + ",";
+            }
 
-			oneRow = StringUtils.trim(StringUtils.removeEnd(oneRow, ","));
-			if (!oneRow.isEmpty()) { csv.append(oneRow).append(lineSeparator()); }
-		}
+            oneRow = StringUtils.trim(StringUtils.removeEnd(oneRow, ","));
+            if (!oneRow.isEmpty()) { csv.append(oneRow).append(lineSeparator()); }
+        }
 
-		return csv;
-	}
+        return csv;
+    }
 
-	protected StepResult saveCSVContentToFile(String file, StringBuilder csv) {
-		String content = csv.toString();
-		if (context.isVerbose()) {
-			context.getLogger().log(context, "writing " + StringUtils.countMatches(content, "\n")
-			                                 + " row(s) to '" + file + "'");
-		}
+    protected StepResult saveCSVContentToFile(String file, StringBuilder csv) {
+        String content = csv.toString();
+        if (context.isVerbose()) {
+            context.getLogger().log(context, "writing " + StringUtils.countMatches(content, "\n")
+                                             + " row(s) to '" + file + "'");
+        }
 
-		File target = new File(file);
-		try {
-			FileUtils.forceMkdir(target.getParentFile());
-			FileUtils.write(target, content, DEF_CHARSET);
-			return StepResult.success("File converted to CSV");
-		} catch (IOException e) {
-			String error = "Error writing CSV content to '" + file + "': " + e.getMessage();
-			ConsoleUtils.log(error);
-			FileUtils.deleteQuietly(target);
-			return StepResult.fail(error);
-		}
-	}
+        File target = new File(file);
+        try {
+            FileUtils.forceMkdir(target.getParentFile());
+            FileUtils.write(target, content, DEF_CHARSET);
+            return StepResult.success("File converted to CSV");
+        } catch (IOException e) {
+            String error = "Error writing CSV content to '" + file + "': " + e.getMessage();
+            ConsoleUtils.log(error);
+            FileUtils.deleteQuietly(target);
+            return StepResult.fail(error);
+        }
+    }
 
-	protected String returnCellValue(HSSFCell cell) { return returnCellValue(((Cell) cell)); }
+    protected String returnCellValue(HSSFCell cell) { return returnCellValue(((Cell) cell)); }
 
-	protected String returnCellValue(XSSFCell cell) { return returnCellValue(((Cell) cell)); }
+    protected String returnCellValue(XSSFCell cell) { return returnCellValue(((Cell) cell)); }
 
-	protected String returnCellValue(Cell cell) {
-		try {
-			switch (cell.getCellType()) {
-				case CELL_TYPE_STRING:
-				case CELL_TYPE_BOOLEAN:
-					return cell.getRichStringCellValue().toString();
-				case CELL_TYPE_NUMERIC:
-					return formattedCellToString(cell);
-				case CELL_TYPE_FORMULA:
-					int resultType = cell.getCachedFormulaResultType();
-					if (resultType == CELL_TYPE_STRING) {
-						return cell.getRichStringCellValue().toString();
-					} else if (resultType == CELL_TYPE_NUMERIC) {
-						return formattedCellToString(cell);
-					} else {
-						return cell.getStringCellValue();
-					}
-				default:
-					return cell.getStringCellValue();
-			}
-		} catch (Exception e) {
-			return null;
-		}
-	}
+    protected String returnCellValue(Cell cell) {
+        try {
+            switch (cell.getCellType()) {
+                case CELL_TYPE_STRING:
+                case CELL_TYPE_BOOLEAN:
+                    return cell.getRichStringCellValue().toString();
+                case CELL_TYPE_NUMERIC:
+                    return formattedCellToString(cell);
+                case CELL_TYPE_FORMULA:
+                    int resultType = cell.getCachedFormulaResultType();
+                    if (resultType == CELL_TYPE_STRING) {
+                        return cell.getRichStringCellValue().toString();
+                    } else if (resultType == CELL_TYPE_NUMERIC) {
+                        return formattedCellToString(cell);
+                    } else {
+                        return cell.getStringCellValue();
+                    }
+                default:
+                    return cell.getStringCellValue();
+            }
+        } catch (Exception e) {
+            return null;
+        }
+    }
 
-	protected String formattedCellToString(Cell cell) {
-		if (HSSFDateUtil.isCellDateFormatted(cell)) {
-			return DEF_EXCEL_DATE_FORMAT.format(cell.getDateCellValue());
-		} else {
-			return String.valueOf(cell.getNumericCellValue());
-		}
-	}
+    protected String formattedCellToString(Cell cell) {
+        if (HSSFDateUtil.isCellDateFormatted(cell)) {
+            return DEF_EXCEL_DATE_FORMAT.format(cell.getDateCellValue());
+        } else {
+            return String.valueOf(cell.getNumericCellValue());
+        }
+    }
 }

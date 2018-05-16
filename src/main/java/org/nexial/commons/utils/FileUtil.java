@@ -36,12 +36,10 @@ import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.filefilter.DirectoryFileFilter;
 import org.apache.commons.io.filefilter.IOFileFilter;
 import org.apache.commons.lang3.StringUtils;
+import org.nexial.core.utils.ConsoleUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import org.nexial.core.utils.ConsoleUtils;
-
-import static org.nexial.core.NexialConst.DEF_CHARSET;
 import static java.io.File.separator;
 import static org.apache.commons.io.comparator.LastModifiedFileComparator.LASTMODIFIED_COMPARATOR;
 import static org.apache.commons.io.comparator.LastModifiedFileComparator.LASTMODIFIED_REVERSE;
@@ -49,6 +47,7 @@ import static org.apache.commons.io.comparator.NameFileComparator.NAME_COMPARATO
 import static org.apache.commons.io.comparator.NameFileComparator.NAME_REVERSE;
 import static org.apache.commons.io.comparator.PathFileComparator.PATH_COMPARATOR;
 import static org.apache.commons.io.comparator.PathFileComparator.PATH_REVERSE;
+import static org.nexial.core.NexialConst.DEF_CHARSET;
 
 /**
  *

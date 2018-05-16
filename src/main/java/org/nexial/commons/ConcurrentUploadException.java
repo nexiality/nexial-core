@@ -22,11 +22,11 @@ package org.nexial.commons;
 
  */
 public class ConcurrentUploadException extends RuntimeException {
-	public ConcurrentUploadException() { }
+    public ConcurrentUploadException() { }
 
-	public ConcurrentUploadException(String message) { super(message); }
+    public ConcurrentUploadException(String message) { super(message); }
 
-	public ConcurrentUploadException(String message, Throwable cause) { super(message, cause); }
+    public ConcurrentUploadException(String message, Throwable cause) { super(message, cause); }
 
-	public ConcurrentUploadException(Throwable cause) { super(cause); }
+    public ConcurrentUploadException(Throwable cause) { super(cause); }
 }

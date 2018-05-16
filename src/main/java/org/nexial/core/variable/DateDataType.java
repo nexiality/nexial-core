@@ -21,66 +21,65 @@ import java.util.Date;
 
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.math.NumberUtils;
-
 import org.nexial.commons.utils.DateUtility;
 import org.nexial.commons.utils.RegexUtils;
 
 import static org.nexial.core.variable.ExpressionConst.*;
 
 public class DateDataType extends ExpressionDataType<Date> {
-	private Transformer transformer = new DateTransformer();
+    private Transformer transformer = new DateTransformer();
 
-	private String format;
+    private String format;
 
-	public DateDataType(String textValue) throws TypeConversionException { super(textValue); }
+    public DateDataType(String textValue) throws TypeConversionException { super(textValue); }
 
-	private DateDataType() { super(); }
+    private DateDataType() { super(); }
 
-	public String getFormat() { return format; }
+    public String getFormat() { return format; }
 
-	@Override
-	public String getName() { return "DATE"; }
+    @Override
+    public String getName() { return "DATE"; }
 
-	@Override
-	Transformer getTransformer() { return transformer; }
+    @Override
+    Transformer getTransformer() { return transformer; }
 
-	@Override
-	DateDataType snapshot() {
-		DateDataType snapshot = new DateDataType();
-		snapshot.transformer = transformer;
-		snapshot.value = value;
-		snapshot.textValue = textValue;
-		return snapshot;
-	}
+    @Override
+    DateDataType snapshot() {
+        DateDataType snapshot = new DateDataType();
+        snapshot.transformer = transformer;
+        snapshot.value = value;
+        snapshot.textValue = textValue;
+        return snapshot;
+    }
 
-	@Override
-	protected void init() { parse(); }
+    @Override
+    protected void init() { parse(); }
 
-	protected void parse() {
-		// expects textValue to be either empty/blank or date,format
-		if (StringUtils.isBlank(textValue) || ALIAS_NOW.contains(StringUtils.lowerCase(textValue))) {
-			// blank means use current date/time and default date format
-			value = new Date();
-			format = DEF_DATE_FORMAT;
-			textValue = DateUtility.format(value.getTime(), format);
-		} else if (NumberUtils.isDigits(textValue)) {
-			// epoch
-			format = EPOCH_DATE_FORMAT;
-			value = new Date(NumberUtils.toLong(textValue));
-		} else {
-			// assuming default date format
-			format = DEF_DATE_FORMAT;
-			if (RegexUtils.isExact(textValue, "^.+\\,.+$")) {
-				// use specified date and date format
-				format = StringUtils.substringAfter(textValue, ",");
-				textValue = StringUtils.substringBefore(textValue, ",");
-			} else {
-				// use specified date and default date format
-				textValue = StringUtils.substringBefore(textValue, ",");
-			}
+    protected void parse() {
+        // expects textValue to be either empty/blank or date,format
+        if (StringUtils.isBlank(textValue) || ALIAS_NOW.contains(StringUtils.lowerCase(textValue))) {
+            // blank means use current date/time and default date format
+            value = new Date();
+            format = DEF_DATE_FORMAT;
+            textValue = DateUtility.format(value.getTime(), format);
+        } else if (NumberUtils.isDigits(textValue)) {
+            // epoch
+            format = EPOCH_DATE_FORMAT;
+            value = new Date(NumberUtils.toLong(textValue));
+        } else {
+            // assuming default date format
+            format = DEF_DATE_FORMAT;
+            if (RegexUtils.isExact(textValue, "^.+\\,.+$")) {
+                // use specified date and date format
+                format = StringUtils.substringAfter(textValue, ",");
+                textValue = StringUtils.substringBefore(textValue, ",");
+            } else {
+                // use specified date and default date format
+                textValue = StringUtils.substringBefore(textValue, ",");
+            }
 
-			value = StringUtils.equals(format, "epoch") ?
-			        new Date(NumberUtils.toLong(textValue)) : new Date(DateUtility.formatTo(textValue, format));
-		}
-	}
+            value = StringUtils.equals(format, "epoch") ?
+                    new Date(NumberUtils.toLong(textValue)) : new Date(DateUtility.formatTo(textValue, format));
+        }
+    }
 }

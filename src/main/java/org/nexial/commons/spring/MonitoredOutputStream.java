@@ -25,45 +25,45 @@ import java.io.OutputStream;
 
  */
 public class MonitoredOutputStream extends OutputStream {
-	private OutputStream target;
-	private OutputStreamListener listener;
+    private OutputStream target;
+    private OutputStreamListener listener;
 
-	public MonitoredOutputStream(OutputStream target, OutputStreamListener listener) {
-		this.target = target;
-		this.listener = listener;
-		this.listener.start();
-	}
+    public MonitoredOutputStream(OutputStream target, OutputStreamListener listener) {
+        this.target = target;
+        this.listener = listener;
+        this.listener.start();
+    }
 
-	public void write(byte[] b, int off, int len) throws IOException {
-		throwCancelException();
-		target.write(b, off, len);
-		listener.bytesRead(len - off);
-	}
+    public void write(byte[] b, int off, int len) throws IOException {
+        throwCancelException();
+        target.write(b, off, len);
+        listener.bytesRead(len - off);
+    }
 
-	public void write(byte[] b) throws IOException {
-		throwCancelException();
-		target.write(b);
-		listener.bytesRead(b.length);
-	}
+    public void write(byte[] b) throws IOException {
+        throwCancelException();
+        target.write(b);
+        listener.bytesRead(b.length);
+    }
 
-	public void write(int b) throws IOException {
-		throwCancelException();
-		target.write(b);
-		listener.bytesRead(1);
-	}
+    public void write(int b) throws IOException {
+        throwCancelException();
+        target.write(b);
+        listener.bytesRead(1);
+    }
 
-	public void close() throws IOException {
-		target.close();
-		listener.done();
-	}
+    public void close() throws IOException {
+        target.close();
+        listener.done();
+    }
 
-	public void flush() throws IOException {
-		target.flush();
-	}
+    public void flush() throws IOException {
+        target.flush();
+    }
 
-	private void throwCancelException() {
-		if (listener.isCancelled()) {
-			//throw new IOException("User canceled upload");
-		}
-	}
+    private void throwCancelException() {
+        if (listener.isCancelled()) {
+            //throw new IOException("User canceled upload");
+        }
+    }
 }

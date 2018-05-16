@@ -30,51 +30,51 @@ import jregex.Replacer;
  *
  */
 public final class JRegexUtils {
-	private JRegexUtils() {}
+    private JRegexUtils() {}
 
-	/**
-	 * general utility to search on <code >text</code> based on <code >regex</code> and substitute the matches with
-	 * <code >replace</code>.  The added feature is the multiline consideration for <code >text</code>.
-	 * <code >replace</code> can be expressed with regex group.
-	 */
-	public static String replace(String text, String regex, String replace) {
-		if (StringUtils.isEmpty(text)) { return text; }
-		if (StringUtils.isEmpty(regex)) { return text; }
+    /**
+     * general utility to search on <code >text</code> based on <code >regex</code> and substitute the matches with
+     * <code >replace</code>.  The added feature is the multiline consideration for <code >text</code>.
+     * <code >replace</code> can be expressed with regex group.
+     */
+    public static String replace(String text, String regex, String replace) {
+        if (StringUtils.isEmpty(text)) { return text; }
+        if (StringUtils.isEmpty(regex)) { return text; }
 
-		Pattern p = new Pattern(regex);
+        Pattern p = new Pattern(regex);
 
-		StringBuilder sb = new StringBuilder();
-		String[] lines = StringUtils.split(text, '\n');
-		for (String line : lines) {
-			if (sb.length() > 0) { sb.append('\n'); }
-			Matcher matcher = p.matcher(line);
-			if (matcher.find()) {
-				Replacer r = p.replacer(replace);
-				sb.append(r.replace(line));
-			} else {
-				sb.append(line);
-			}
-		}
+        StringBuilder sb = new StringBuilder();
+        String[] lines = StringUtils.split(text, '\n');
+        for (String line : lines) {
+            if (sb.length() > 0) { sb.append('\n'); }
+            Matcher matcher = p.matcher(line);
+            if (matcher.find()) {
+                Replacer r = p.replacer(replace);
+                sb.append(r.replace(line));
+            } else {
+                sb.append(line);
+            }
+        }
 
-		return sb.toString();
-	}
+        return sb.toString();
+    }
 
-	public static List<String> collectGroups(String text, String regex) {
-		List<String> list = new ArrayList<>();
-		if (StringUtils.isBlank(text)) { return list; }
-		if (StringUtils.isBlank(regex)) { return list; }
+    public static List<String> collectGroups(String text, String regex) {
+        List<String> list = new ArrayList<>();
+        if (StringUtils.isBlank(text)) { return list; }
+        if (StringUtils.isBlank(regex)) { return list; }
 
-		Pattern p = new Pattern(regex);
-		Matcher m = p.matcher(text);
+        Pattern p = new Pattern(regex);
+        Matcher m = p.matcher(text);
 
-		// some regex would produce matches and groups
-		if (m.matches() && m.groupCount() > 0) {
-			for (int i = 1; i < m.groupCount(); i++) { list.add(m.group(i)); }
-			return list;
-		}
+        // some regex would produce matches and groups
+        if (m.matches() && m.groupCount() > 0) {
+            for (int i = 1; i < m.groupCount(); i++) { list.add(m.group(i)); }
+            return list;
+        }
 
-		// some regex (Perl-style) would produce repeating finds
-		while (m.find()) { list.add(m.toString()); }
-		return list;
-	}
+        // some regex (Perl-style) would produce repeating finds
+        while (m.find()) { list.add(m.toString()); }
+        return list;
+    }
 }

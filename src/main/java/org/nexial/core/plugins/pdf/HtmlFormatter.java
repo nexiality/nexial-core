@@ -24,46 +24,46 @@ import org.nexial.core.plugins.pdf.Table.Row;
 
 class HtmlFormatter extends TableFormatter<String> {
 
-	public String format(Table table) {
-		int columnsCount = table.getColumnsCount();
-		List<Row> rows = table.getRows();
+    public String format(Table table) {
+        int columnsCount = table.getColumnsCount();
+        List<Row> rows = table.getRows();
 
-		StringBuilder buffer = new StringBuilder();
-		buffer.append("<!DOCTYPE html><html><head><meta charset='utf-8'></head>")
-		      .append("<body>")
-		      .append("<table border='1'>");
+        StringBuilder buffer = new StringBuilder();
+        buffer.append("<!DOCTYPE html><html><head><meta charset='utf-8'></head>")
+              .append("<body>")
+              .append("<table border='1'>");
 
-		for (Row row : rows) {
-			buffer.append("<tr>");
+        for (Row row : rows) {
+            buffer.append("<tr>");
 
-			int cellIdx = 0;    //pointer of row.cells
-			int columnIdx = 0;  //pointer of columns
-			while (columnIdx < columnsCount) {
-				if (cellIdx < row.getCells().size()) {
-					Cell cell = row.getCells().get(cellIdx);
-					if (cell.getIdx() == columnIdx) {
-						buffer.append("<td>").append(cell.getContent()).append("</td>");
-						cellIdx++;
-						columnIdx++;
-					} else if (columnIdx < cellIdx) {
-						buffer.append("<td></td>");
-						columnIdx++;
-					} else {
-						throw new RuntimeException("Invalid state");
-					}
-				} else {
-					buffer.append("<td></td>");
-					columnIdx++;
-				}
-			}
+            int cellIdx = 0;    //pointer of row.cells
+            int columnIdx = 0;  //pointer of columns
+            while (columnIdx < columnsCount) {
+                if (cellIdx < row.getCells().size()) {
+                    Cell cell = row.getCells().get(cellIdx);
+                    if (cell.getIdx() == columnIdx) {
+                        buffer.append("<td>").append(cell.getContent()).append("</td>");
+                        cellIdx++;
+                        columnIdx++;
+                    } else if (columnIdx < cellIdx) {
+                        buffer.append("<td></td>");
+                        columnIdx++;
+                    } else {
+                        throw new RuntimeException("Invalid state");
+                    }
+                } else {
+                    buffer.append("<td></td>");
+                    columnIdx++;
+                }
+            }
 
-			buffer.append("</tr>");
-		}
+            buffer.append("</tr>");
+        }
 
-		buffer.append("</table>")
-		      .append("</body>")
-		      .append("</html>");
+        buffer.append("</table>")
+              .append("</body>")
+              .append("</html>");
 
-		return buffer.toString();
-	}
+        return buffer.toString();
+    }
 }

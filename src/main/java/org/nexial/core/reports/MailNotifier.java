@@ -19,7 +19,6 @@ package org.nexial.core.reports;
 
 import java.util.HashSet;
 import java.util.Set;
-
 import javax.mail.MessagingException;
 
 import org.apache.commons.collections4.CollectionUtils;

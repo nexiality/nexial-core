@@ -29,7 +29,14 @@ import org.apache.commons.lang3.ArrayUtils;
 import org.apache.commons.lang3.BooleanUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.math.NumberUtils;
+import org.nexial.commons.utils.CollectionUtil;
+import org.nexial.commons.utils.RegexUtils;
+import org.nexial.commons.utils.TextUtils;
+import org.nexial.core.ExecutionThread;
+import org.nexial.core.model.ExecutionContext;
 import org.nexial.core.model.StepResult;
+import org.nexial.core.utils.CheckUtils;
+import org.nexial.core.utils.ConsoleUtils;
 import org.nexial.seeknow.SeeknowData;
 import org.openqa.selenium.By;
 import org.openqa.selenium.InvalidElementStateException;
@@ -38,13 +45,7 @@ import org.openqa.selenium.WebElement;
 import org.openqa.selenium.interactions.Actions;
 import org.openqa.selenium.remote.RemoteWebElement;
 import org.openqa.selenium.winium.WiniumDriver;
-import org.nexial.commons.utils.CollectionUtil;
-import org.nexial.commons.utils.RegexUtils;
-import org.nexial.commons.utils.TextUtils;
-import org.nexial.core.ExecutionThread;
-import org.nexial.core.model.ExecutionContext;
-import org.nexial.core.utils.CheckUtils;
-import org.nexial.core.utils.ConsoleUtils;
+
 import winium.elements.desktop.ComboBox;
 
 import static org.nexial.core.plugins.desktop.DesktopConst.*;
@@ -2083,8 +2084,8 @@ public class DesktopElement {
                 } else {
                     Long actualValue = NumberUtils.createLong(currentValue);
                     Long expectedValue = NumberUtils.createLong(text);
-                return actualValue.equals(expectedValue);
-            }
+                    return actualValue.equals(expectedValue);
+                }
             }
         } catch (NumberFormatException e) {
             ConsoleUtils.log("Invalid number format.. trying other way");

@@ -36,124 +36,124 @@ import static org.nexial.core.NexialConst.DEF_CHARSET;
  * utility for resources located in classpath
  */
 public final class ResourceUtils {
-	private static final int BUFFER_SIZE = 8192;
+    private static final int BUFFER_SIZE = 8192;
 
-	private ResourceUtils() { }
+    private ResourceUtils() { }
 
-	public static InputStream getInputStream(String resource) {
-		if (StringUtils.isBlank(resource)) { return null; }
-		if (!StringUtils.startsWith(resource, "/")) { resource = "/" + resource; }
-		return ResourceUtils.class.getResourceAsStream(resource);
-	}
+    public static InputStream getInputStream(String resource) {
+        if (StringUtils.isBlank(resource)) { return null; }
+        if (!StringUtils.startsWith(resource, "/")) { resource = "/" + resource; }
+        return ResourceUtils.class.getResourceAsStream(resource);
+    }
 
-	public static String getResourceFilePath(String resource) {
-		if (StringUtils.isBlank(resource)) { return null; }
-		if (!StringUtils.startsWith(resource, "/")) { resource = "/" + resource; }
+    public static String getResourceFilePath(String resource) {
+        if (StringUtils.isBlank(resource)) { return null; }
+        if (!StringUtils.startsWith(resource, "/")) { resource = "/" + resource; }
 
-		URL url = ResourceUtils.class.getResource(resource);
-		if (url != null && StringUtils.isNotBlank(url.getFile())) { return url.getFile(); }
-		return null;
-	}
+        URL url = ResourceUtils.class.getResource(resource);
+        if (url != null && StringUtils.isNotBlank(url.getFile())) { return url.getFile(); }
+        return null;
+    }
 
-	/** load a {@link Properties} object based on {@code resource}, which is assumed to be in classpath. */
-	public static Properties loadProperties(String resource) throws IOException {
-		if (StringUtils.isBlank(resource)) { return null; }
-		InputStream inputStream = getInputStream(resource);
-		if (inputStream == null) { return null; }
+    /** load a {@link Properties} object based on {@code resource}, which is assumed to be in classpath. */
+    public static Properties loadProperties(String resource) throws IOException {
+        if (StringUtils.isBlank(resource)) { return null; }
+        InputStream inputStream = getInputStream(resource);
+        if (inputStream == null) { return null; }
 
-		Properties prop = new Properties();
-		try {
-			prop.load(inputStream);
-		} finally {
-			inputStream.close();
-		}
+        Properties prop = new Properties();
+        try {
+            prop.load(inputStream);
+        } finally {
+            inputStream.close();
+        }
 
-		return prop;
-	}
+        return prop;
+    }
 
-	/** load a {@link Properties} object based on {@code resource}, which is assumed to be in classpath. */
-	public static Properties loadProperties(File file) throws IOException {
-		if (file == null) { return null; }
+    /** load a {@link Properties} object based on {@code resource}, which is assumed to be in classpath. */
+    public static Properties loadProperties(File file) throws IOException {
+        if (file == null) { return null; }
 
-		InputStream fis = new FileInputStream(file);
-		Properties prop = new Properties();
-		try {
-			prop.load(fis);
-		} finally {
-			if (fis != null) { fis.close(); }
-		}
+        InputStream fis = new FileInputStream(file);
+        Properties prop = new Properties();
+        try {
+            prop.load(fis);
+        } finally {
+            if (fis != null) { fis.close(); }
+        }
 
-		return prop;
-	}
+        return prop;
+    }
 
-	/** return the file content as <code >String</code> from the provided {@code resource}. */
-	public static String loadResource(URL resource) throws IOException, JSONException {
-		if (resource == null) { throw new IOException("resource is null"); }
+    /** return the file content as <code >String</code> from the provided {@code resource}. */
+    public static String loadResource(URL resource) throws IOException, JSONException {
+        if (resource == null) { throw new IOException("resource is null"); }
 
-		String msg = "Classpath resource '" + resource.getFile() + "' ";
+        String msg = "Classpath resource '" + resource.getFile() + "' ";
 
-		String fullpath = resource.getFile();
-		if (StringUtils.isBlank(fullpath)) { throw new IOException(msg + "did not resolve to proper path."); }
-		if (StringUtils.contains(fullpath, ".jar!") || StringUtils.contains(fullpath, ".zip!")) {
-			// resource found in a jar/zip in the classpath... redirect to a more appropriate method
-			return loadClasspathResource(resource);
-		}
+        String fullpath = resource.getFile();
+        if (StringUtils.isBlank(fullpath)) { throw new IOException(msg + "did not resolve to proper path."); }
+        if (StringUtils.contains(fullpath, ".jar!") || StringUtils.contains(fullpath, ".zip!")) {
+            // resource found in a jar/zip in the classpath... redirect to a more appropriate method
+            return loadClasspathResource(resource);
+        }
 
-		File file = new File(URLDecoder.decode(fullpath, "UTF-8"));
-		msg += "resolve to '" + fullpath + "' ";
-		if (!file.exists()) { throw new IOException(msg + "but does not exists."); }
-		if (!file.canRead()) { throw new IOException(msg + "but cannot be read."); }
+        File file = new File(URLDecoder.decode(fullpath, "UTF-8"));
+        msg += "resolve to '" + fullpath + "' ";
+        if (!file.exists()) { throw new IOException(msg + "but does not exists."); }
+        if (!file.canRead()) { throw new IOException(msg + "but cannot be read."); }
 
-		String content = FileUtils.readFileToString(file, DEF_CHARSET);
-		if (StringUtils.isBlank(content)) { throw new JSONException(msg + "but has no content"); }
-		return content;
-	}
+        String content = FileUtils.readFileToString(file, DEF_CHARSET);
+        if (StringUtils.isBlank(content)) { throw new JSONException(msg + "but has no content"); }
+        return content;
+    }
 
-	/**
-	 * load resource content as {@link String}.
-	 */
-	public static String loadClasspathResource(URL resource) throws IOException {
-		if (resource == null) { throw new IOException("resource is null"); }
+    /**
+     * load resource content as {@link String}.
+     */
+    public static String loadClasspathResource(URL resource) throws IOException {
+        if (resource == null) { throw new IOException("resource is null"); }
 
-		boolean fromClasspath = false;
-		String resourcePath = resource.toString();
-		if (StringUtils.contains(resourcePath, ".jar!")) {
-			fromClasspath = true;
-			resourcePath = StringUtils.substringAfter(resourcePath, ".jar!");
-		}
+        boolean fromClasspath = false;
+        String resourcePath = resource.toString();
+        if (StringUtils.contains(resourcePath, ".jar!")) {
+            fromClasspath = true;
+            resourcePath = StringUtils.substringAfter(resourcePath, ".jar!");
+        }
 
-		if (StringUtils.contains(resourcePath, ".zip!")) {
-			fromClasspath = true;
-			resourcePath = StringUtils.substringAfter(resourcePath, ".zip!");
-		}
+        if (StringUtils.contains(resourcePath, ".zip!")) {
+            fromClasspath = true;
+            resourcePath = StringUtils.substringAfter(resourcePath, ".zip!");
+        }
 
-		if (fromClasspath && StringUtils.startsWithAny(resourcePath, "\\", "/")) {
-			resourcePath = StringUtils.substring(resourcePath, 1);
-		}
+        if (fromClasspath && StringUtils.startsWithAny(resourcePath, "\\", "/")) {
+            resourcePath = StringUtils.substring(resourcePath, 1);
+        }
 
-		return loadContent(ResourceUtils.class.getClassLoader().getResourceAsStream(resourcePath));
-	}
+        return loadContent(ResourceUtils.class.getClassLoader().getResourceAsStream(resourcePath));
+    }
 
-	public static String loadResource(String resource) throws IOException {
-		if (StringUtils.isBlank(resource)) { return null; }
-		InputStream inputStream = getInputStream(resource);
-		if (inputStream == null) { return null; }
-		return loadContent(inputStream);
-	}
+    public static String loadResource(String resource) throws IOException {
+        if (StringUtils.isBlank(resource)) { return null; }
+        InputStream inputStream = getInputStream(resource);
+        if (inputStream == null) { return null; }
+        return loadContent(inputStream);
+    }
 
-	protected static String loadContent(InputStream rs) throws IOException {
-		BufferedInputStream bis = new BufferedInputStream(rs);
+    protected static String loadContent(InputStream rs) throws IOException {
+        BufferedInputStream bis = new BufferedInputStream(rs);
 
-		StringBuilder sb = new StringBuilder();
-		byte[] buffer = new byte[BUFFER_SIZE];
-		do {
-			int read = bis.read(buffer);
-			if (read == -1) { break; }
+        StringBuilder sb = new StringBuilder();
+        byte[] buffer = new byte[BUFFER_SIZE];
+        do {
+            int read = bis.read(buffer);
+            if (read == -1) { break; }
 
-			sb.append(new String(buffer, 0, read, "UTF-8"));
-			buffer = new byte[BUFFER_SIZE];
-		} while (true);
+            sb.append(new String(buffer, 0, read, "UTF-8"));
+            buffer = new byte[BUFFER_SIZE];
+        } while (true);
 
-		return sb.toString();
-	}
+        return sb.toString();
+    }
 }

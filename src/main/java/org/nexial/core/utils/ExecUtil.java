@@ -27,9 +27,7 @@ import org.apache.commons.lang3.StringUtils;
 import org.nexial.commons.utils.DateUtility;
 import org.nexial.core.Nexial;
 
-import static org.nexial.core.NexialConst.OPT_RUN_ID;
-import static org.nexial.core.NexialConst.OPT_RUN_ID_PREFIX;
-import static org.nexial.core.NexialConst.TEST_START_TS;
+import static org.nexial.core.NexialConst.*;
 
 public final class ExecUtil {
     public static final String PRODUCT = "nexial";

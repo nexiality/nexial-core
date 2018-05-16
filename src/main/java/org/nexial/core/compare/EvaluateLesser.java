@@ -21,11 +21,11 @@ package org.nexial.core.compare;
  *
  */
 public class EvaluateLesser extends EvaluatorBase {
-	@Override
-	protected boolean evaluate(double lhs, double rhs) throws IncompatibleTypeException { return lhs < rhs; }
+    @Override
+    protected boolean evaluate(double lhs, double rhs) throws IncompatibleTypeException { return lhs < rhs; }
 
-	@Override
-	protected boolean evaluate(String lhs, String rhs) throws IncompatibleTypeException {
-		throw new IncompatibleTypeException(lhs, rhs, "<");
-	}
+    @Override
+    protected boolean evaluate(String lhs, String rhs) throws IncompatibleTypeException {
+        throw new IncompatibleTypeException(lhs, rhs, "<");
+    }
 }

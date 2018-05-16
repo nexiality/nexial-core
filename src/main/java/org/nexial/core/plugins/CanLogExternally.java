@@ -20,5 +20,5 @@ package org.nexial.core.plugins;
 import org.nexial.core.model.TestStep;
 
 public interface CanLogExternally {
-	void logExternally(TestStep testStep, String message);
+    void logExternally(TestStep testStep, String message);
 }

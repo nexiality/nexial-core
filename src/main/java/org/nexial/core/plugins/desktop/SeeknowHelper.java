@@ -29,14 +29,18 @@ import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.math.NumberUtils;
 import org.nexial.commons.utils.TextUtils;
 import org.nexial.core.utils.ConsoleUtils;
-import org.nexial.seeknow.*;
-import org.nexial.seeknow.processor.*;
+import org.nexial.seeknow.Glyph;
+import org.nexial.seeknow.Seeknow;
+import org.nexial.seeknow.SeeknowColor;
+import org.nexial.seeknow.SeeknowData;
+import org.nexial.seeknow.SeeknowFactory;
+import org.nexial.seeknow.processor.CriteriaBasedProcessor;
+import org.nexial.seeknow.processor.SeeknowCriteria;
 
 import static org.nexial.core.plugins.desktop.DesktopConst.*;
 
 public final class SeeknowHelper {
     private static final Map<String, Seeknow> INSTANCES = new HashMap<>();
-
 
     private SeeknowHelper() { }
 

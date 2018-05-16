@@ -26,71 +26,70 @@ import java.util.stream.IntStream;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.collections4.MapUtils;
 import org.apache.commons.lang3.StringUtils;
-
 import org.nexial.core.plugins.db.JdbcOutcome;
 import org.nexial.core.plugins.db.JdbcResult;
 import org.nexial.core.plugins.db.SqlComponent;
 
 public class SqlDataType extends ExpressionDataType<JdbcResult> {
-	private SqlTransformer transformer = new SqlTransformer();
-	private String db;
-	private List<SqlComponent> sqlStatements;
-	private JdbcOutcome executionOutcome;
-	private Map<String, JdbcResult> executionOutcomeMapping = new HashMap<>();
+    private SqlTransformer transformer = new SqlTransformer();
+    private String db;
+    private List<SqlComponent> sqlStatements;
+    private JdbcOutcome executionOutcome;
+    private Map<String, JdbcResult> executionOutcomeMapping = new HashMap<>();
 
-	private SqlDataType() {}
+    private SqlDataType() {}
 
-	public SqlDataType(String textValue) throws TypeConversionException { super(textValue); }
+    public SqlDataType(String textValue) throws TypeConversionException { super(textValue); }
 
-	@Override
-	public String getName() { return "SQL"; }
+    @Override
+    public String getName() { return "SQL"; }
 
-	@Override
-	Transformer getTransformer() { return transformer; }
+    public String getDb() { return db; }
 
-	@Override
-	ExpressionDataType<JdbcResult> snapshot() {
-		SqlDataType snapshot = new SqlDataType();
-		snapshot.db = db;
-		snapshot.transformer = transformer;
-		snapshot.textValue = textValue;
-		snapshot.value = value;
-		snapshot.sqlStatements = new ArrayList<>(sqlStatements);
-		snapshot.executionOutcome = executionOutcome;
-		snapshot.executionOutcomeMapping = executionOutcomeMapping;
-		return snapshot;
-	}
+    public List<SqlComponent> getSqlStatements() { return sqlStatements; }
 
-	@Override
-	protected void init() {
-		if (StringUtils.isBlank(textValue)) { throw new IllegalArgumentException("No SQL statements provided"); }
+    public JdbcOutcome getExecutionOutcome() { return executionOutcome; }
 
-		sqlStatements = SqlComponent.toList(textValue);
-		if (CollectionUtils.isEmpty(sqlStatements)) {
-			throw new IllegalArgumentException("No SQL statements found via expression input");
-		}
-	}
+    protected void setExecutionOutcome(JdbcOutcome executionOutcome) {
+        this.executionOutcome = executionOutcome;
+        executionOutcomeMapping = new HashMap<>();
+        if (MapUtils.isNotEmpty(executionOutcome.getNamedOutcome())) {
+            executionOutcome.getNamedOutcome().forEach(executionOutcomeMapping::put);
+        }
+        if (CollectionUtils.isNotEmpty(executionOutcome)) {
+            IntStream.range(0, executionOutcome.size())
+                     .forEach(i -> executionOutcomeMapping.put(i + "", executionOutcome.get(i)));
+        }
+    }
 
-	public String getDb() { return db; }
+    public JdbcResult getResult(String name) {
+        return executionOutcomeMapping == null || !executionOutcomeMapping.containsKey(name) ?
+               null : executionOutcomeMapping.get(name);
+    }
 
-	public List<SqlComponent> getSqlStatements() { return sqlStatements; }
+    @Override
+    Transformer getTransformer() { return transformer; }
 
-	public JdbcOutcome getExecutionOutcome() { return executionOutcome; }
+    @Override
+    ExpressionDataType<JdbcResult> snapshot() {
+        SqlDataType snapshot = new SqlDataType();
+        snapshot.db = db;
+        snapshot.transformer = transformer;
+        snapshot.textValue = textValue;
+        snapshot.value = value;
+        snapshot.sqlStatements = new ArrayList<>(sqlStatements);
+        snapshot.executionOutcome = executionOutcome;
+        snapshot.executionOutcomeMapping = executionOutcomeMapping;
+        return snapshot;
+    }
 
-	protected void setExecutionOutcome(JdbcOutcome executionOutcome) {
-		this.executionOutcome = executionOutcome;
-		executionOutcomeMapping = new HashMap<>();
-		if (MapUtils.isNotEmpty(executionOutcome.getNamedOutcome())) {
-			executionOutcome.getNamedOutcome().forEach(executionOutcomeMapping::put);
-		}
-		if (CollectionUtils.isNotEmpty(executionOutcome)) {
-			IntStream.range(0, executionOutcome.size())
-			         .forEach(i -> executionOutcomeMapping.put(i + "", executionOutcome.get(i)));
-		}
-	}
+    @Override
+    protected void init() {
+        if (StringUtils.isBlank(textValue)) { throw new IllegalArgumentException("No SQL statements provided"); }
 
-	public JdbcResult getResult(String name) {
-		return executionOutcomeMapping == null || !executionOutcomeMapping.containsKey(name) ?
-		       null : executionOutcomeMapping.get(name);
-	}
+        sqlStatements = SqlComponent.toList(textValue);
+        if (CollectionUtils.isEmpty(sqlStatements)) {
+            throw new IllegalArgumentException("No SQL statements found via expression input");
+        }
+    }
 }

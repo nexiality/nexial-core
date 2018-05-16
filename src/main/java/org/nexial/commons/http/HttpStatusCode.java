@@ -21,33 +21,33 @@ package org.nexial.commons.http;
  *
  */
 public enum HttpStatusCode {
-	OK(200, false),
-	NOT_CONTENT(204, false),
-	PERMANENTLY_MOVED(301, true),
-	NOT_MODIFIED(304, false),
-	BAD_REQUEST(400, true),
-	UNAUTHORIZED(401, true),
-	NOT_FOUND(404, true),
-	NOT_ACCEPTABLE(406, true),
-	REQUEST_TIMEOUT(408, true),
-	CONFLICT(409, true),
-	GONE(410, true),
-	PRECONDITION_FAILED(412, true),
-	REQUEST_ENTITY_TOO_LARGE(413, true),
-	REQUEST_URI_TOO_LONG(414, true),
-	INTERNAL_SERVER_ERROR(500, true),
-	NOT_IMPLEMENTED(501, true),
-	SERVICE_UNAVAILABLE(503, true);
+    OK(200, false),
+    NOT_CONTENT(204, false),
+    PERMANENTLY_MOVED(301, true),
+    NOT_MODIFIED(304, false),
+    BAD_REQUEST(400, true),
+    UNAUTHORIZED(401, true),
+    NOT_FOUND(404, true),
+    NOT_ACCEPTABLE(406, true),
+    REQUEST_TIMEOUT(408, true),
+    CONFLICT(409, true),
+    GONE(410, true),
+    PRECONDITION_FAILED(412, true),
+    REQUEST_ENTITY_TOO_LARGE(413, true),
+    REQUEST_URI_TOO_LONG(414, true),
+    INTERNAL_SERVER_ERROR(500, true),
+    NOT_IMPLEMENTED(501, true),
+    SERVICE_UNAVAILABLE(503, true);
 
-	private int statusCode;
-	private boolean noMoreResponse;
+    private int statusCode;
+    private boolean noMoreResponse;
 
-	HttpStatusCode(int statusCode, boolean noMoreResponse) {
-		this.statusCode = statusCode;
-		this.noMoreResponse = noMoreResponse;
-	}
+    HttpStatusCode(int statusCode, boolean noMoreResponse) {
+        this.statusCode = statusCode;
+        this.noMoreResponse = noMoreResponse;
+    }
 
-	public int getStatusCode() { return statusCode; }
+    public int getStatusCode() { return statusCode; }
 
-	public boolean isNoMoreResponse() { return noMoreResponse; }
+    public boolean isNoMoreResponse() { return noMoreResponse; }
 }

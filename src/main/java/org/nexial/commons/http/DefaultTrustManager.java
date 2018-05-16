@@ -23,7 +23,6 @@ import java.security.NoSuchAlgorithmException;
 import java.security.cert.CertificateException;
 import java.security.cert.CertificateExpiredException;
 import java.security.cert.X509Certificate;
-
 import javax.net.ssl.TrustManager;
 import javax.net.ssl.TrustManagerFactory;
 import javax.net.ssl.X509TrustManager;
@@ -38,60 +37,60 @@ import org.slf4j.LoggerFactory;
  * @author Mike Liu
  */
 public class DefaultTrustManager implements X509TrustManager {
-	private static final Logger LOGGER = LoggerFactory.getLogger(DefaultTrustManager.class);
-	private X509TrustManager standardTrustManager;
+    private static final Logger LOGGER = LoggerFactory.getLogger(DefaultTrustManager.class);
+    private X509TrustManager standardTrustManager;
 
-	public DefaultTrustManager(KeyStore keystore) throws NoSuchAlgorithmException, KeyStoreException {
-		super();
-		TrustManagerFactory factory = TrustManagerFactory.getInstance(TrustManagerFactory.getDefaultAlgorithm());
-		factory.init(keystore);
+    public DefaultTrustManager(KeyStore keystore) throws NoSuchAlgorithmException, KeyStoreException {
+        super();
+        TrustManagerFactory factory = TrustManagerFactory.getInstance(TrustManagerFactory.getDefaultAlgorithm());
+        factory.init(keystore);
 
-		TrustManager[] trustmanagers = factory.getTrustManagers();
-		if (trustmanagers.length == 0) { throw new NoSuchAlgorithmException("no trust manager found"); }
-		this.standardTrustManager = (X509TrustManager) trustmanagers[0];
-	}
+        TrustManager[] trustmanagers = factory.getTrustManagers();
+        if (trustmanagers.length == 0) { throw new NoSuchAlgorithmException("no trust manager found"); }
+        this.standardTrustManager = (X509TrustManager) trustmanagers[0];
+    }
 
-	/** @see X509TrustManager#checkClientTrusted(X509Certificate[], String authType) */
-	public void checkClientTrusted(X509Certificate[] certificates, String authType) throws CertificateException {
-		standardTrustManager.checkClientTrusted(certificates, authType);
-	}
+    /** @see X509TrustManager#checkClientTrusted(X509Certificate[], String authType) */
+    public void checkClientTrusted(X509Certificate[] certificates, String authType) throws CertificateException {
+        standardTrustManager.checkClientTrusted(certificates, authType);
+    }
 
-	/** @see X509TrustManager#checkServerTrusted(X509Certificate[], String authType) */
-	public void checkServerTrusted(X509Certificate[] certificates, String authType) throws CertificateException {
-		if (certificates != null && LOGGER.isDebugEnabled()) {
-			LOGGER.debug("Server certificate chain:");
-			for (int i = 0; i < certificates.length; i++) {
-				LOGGER.debug("X509Certificate[" + i + "]=" + certificates[i].getSubjectDN());
-			}
-		}
+    /** @see X509TrustManager#checkServerTrusted(X509Certificate[], String authType) */
+    public void checkServerTrusted(X509Certificate[] certificates, String authType) throws CertificateException {
+        if (certificates != null && LOGGER.isDebugEnabled()) {
+            LOGGER.debug("Server certificate chain:");
+            for (int i = 0; i < certificates.length; i++) {
+                LOGGER.debug("X509Certificate[" + i + "]=" + certificates[i].getSubjectDN());
+            }
+        }
 
-		if (certificates != null && certificates.length > 0) {
-			// some env (e.g. staging) has more than 1 certificate per server.  Since we don't
-			// know which one is the right (or "best") one, we'll need to try them until a
-			// successful validation is reached.
-			for (int i = 0; i < certificates.length; i++) {
-				X509Certificate cert = certificates[i];
-				try {
-					// keep trying until we get a good one
-					cert.checkValidity();
-					if (LOGGER.isInfoEnabled()) { LOGGER.info("validated certificate " + cert); }
-					return;
-				} catch (CertificateExpiredException e) {
-					// don't fail-fast... complain and keep trying
-					if (i < certificates.length - 1) {
-						LOGGER.error("Unable to validate certificate " + cert +
-						             " due to " + e + ". Trying next certication...");
-					} else {
-						// last attempt... die
-						throw e;
-					}
-				}
-			}
-		} else {
-			standardTrustManager.checkServerTrusted(certificates, authType);
-		}
-	}
+        if (certificates != null && certificates.length > 0) {
+            // some env (e.g. staging) has more than 1 certificate per server.  Since we don't
+            // know which one is the right (or "best") one, we'll need to try them until a
+            // successful validation is reached.
+            for (int i = 0; i < certificates.length; i++) {
+                X509Certificate cert = certificates[i];
+                try {
+                    // keep trying until we get a good one
+                    cert.checkValidity();
+                    if (LOGGER.isInfoEnabled()) { LOGGER.info("validated certificate " + cert); }
+                    return;
+                } catch (CertificateExpiredException e) {
+                    // don't fail-fast... complain and keep trying
+                    if (i < certificates.length - 1) {
+                        LOGGER.error("Unable to validate certificate " + cert +
+                                     " due to " + e + ". Trying next certication...");
+                    } else {
+                        // last attempt... die
+                        throw e;
+                    }
+                }
+            }
+        } else {
+            standardTrustManager.checkServerTrusted(certificates, authType);
+        }
+    }
 
-	/** @see X509TrustManager#getAcceptedIssuers() */
-	public X509Certificate[] getAcceptedIssuers() { return this.standardTrustManager.getAcceptedIssuers(); }
+    /** @see X509TrustManager#getAcceptedIssuers() */
+    public X509Certificate[] getAcceptedIssuers() { return this.standardTrustManager.getAcceptedIssuers(); }
 }

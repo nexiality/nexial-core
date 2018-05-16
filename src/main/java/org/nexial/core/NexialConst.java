@@ -695,11 +695,9 @@ public final class NexialConst {
         public static final String COMPARE_LOG_JSON = "json";
         public static final String GEN_COMPARE_LOG = NAMESPACE + "compare.textReport";
         public static final String GEN_COMPARE_JSON = NAMESPACE + "compare.jsonReport";
-        // public static final String IO_VALIDATE_PREFIX = NAMESPACE + "io.validate";
         public static final String MAPPING_EXCEL = ".mappingExcel";
         public static final String CONFIG_JSON = ".configJson";
         public static final String REPORT_TYPE = ".reportType";
-        // public static final String COMPARE_TOLERANCE = NAMESPACE + "compare.tolerance";
         public static final String LOG_MATCH = NAMESPACE + "compare.reportMatch";
         public static final boolean DEF_GEN_COMPARE_LOG = true;
         public static final boolean DEF_GEN_COMPARE_JSON = false;

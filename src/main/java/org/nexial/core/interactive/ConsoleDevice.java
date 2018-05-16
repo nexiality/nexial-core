@@ -26,28 +26,28 @@ import java.io.Reader;
  * {@link TextDevice} implementation wrapping a {@link Console}.
  */
 class ConsoleDevice extends TextDevice {
-	private final Console console;
+    private final Console console;
 
-	public ConsoleDevice(Console console) { this.console = console; }
+    public ConsoleDevice(Console console) { this.console = console; }
 
-	@Override
-	public TextDevice printf(String fmt, Object... params) {
-		console.format(fmt, params);
-		return this;
-	}
+    @Override
+    public TextDevice printf(String fmt, Object... params) {
+        console.format(fmt, params);
+        return this;
+    }
 
-	@Override
-	public Reader reader() { return console.reader(); }
+    @Override
+    public Reader reader() { return console.reader(); }
 
-	@Override
-	public char readChar() throws IOException { return (char) console.reader().read(); }
+    @Override
+    public char readChar() throws IOException { return (char) console.reader().read(); }
 
-	@Override
-	public String readLine() { return console.readLine(); }
+    @Override
+    public String readLine() { return console.readLine(); }
 
-	@Override
-	public char[] readPassword() { return console.readPassword(); }
+    @Override
+    public char[] readPassword() { return console.readPassword(); }
 
-	@Override
-	public PrintWriter writer() { return console.writer(); }
+    @Override
+    public PrintWriter writer() { return console.writer(); }
 }

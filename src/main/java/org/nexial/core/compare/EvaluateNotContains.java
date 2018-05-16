@@ -25,13 +25,13 @@ import org.apache.commons.lang3.StringUtils;
  *
  */
 public class EvaluateNotContains extends EvaluatorBase {
-	@Override
-	protected boolean evaluate(double lhs, double rhs) throws IncompatibleTypeException {
-		throw new IncompatibleTypeException(lhs + "", rhs + "", "not in");
-	}
+    @Override
+    protected boolean evaluate(double lhs, double rhs) throws IncompatibleTypeException {
+        throw new IncompatibleTypeException(lhs + "", rhs + "", "not in");
+    }
 
-	@Override
-	protected boolean evaluate(String lhs, String rhs) throws IncompatibleTypeException {
-		return !Arrays.asList(StringUtils.split(rhs, ",")).contains(lhs);
-	}
+    @Override
+    protected boolean evaluate(String lhs, String rhs) throws IncompatibleTypeException {
+        return !Arrays.asList(StringUtils.split(rhs, ",")).contains(lhs);
+    }
 }

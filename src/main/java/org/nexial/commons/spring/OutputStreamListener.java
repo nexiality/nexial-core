@@ -22,13 +22,13 @@ package org.nexial.commons.spring;
 
  */
 public interface OutputStreamListener {
-	void start();
+    void start();
 
-	void bytesRead(int bytesRead);
+    void bytesRead(int bytesRead);
 
-	void error(String message);
+    void error(String message);
 
-	void done();
+    void done();
 
-	boolean isCancelled();
+    boolean isCancelled();
 }

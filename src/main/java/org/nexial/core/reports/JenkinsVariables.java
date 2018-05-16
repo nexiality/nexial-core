@@ -18,7 +18,6 @@
 package org.nexial.core.reports;
 
 import org.apache.commons.lang3.StringUtils;
-
 import org.nexial.core.model.ExecutionContext;
 
 import static org.nexial.core.NexialConst.Jenkins.*;

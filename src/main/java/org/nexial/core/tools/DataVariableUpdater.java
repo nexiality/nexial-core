@@ -24,7 +24,6 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicBoolean;
-
 import javax.validation.constraints.NotNull;
 
 import org.apache.commons.cli.CommandLine;

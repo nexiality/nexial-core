@@ -20,7 +20,6 @@ package org.nexial.commons.javamail;
 import java.net.UnknownHostException;
 import java.util.Hashtable;
 import java.util.Properties;
-
 import javax.mail.Authenticator;
 import javax.mail.MessagingException;
 import javax.mail.NoSuchProviderException;

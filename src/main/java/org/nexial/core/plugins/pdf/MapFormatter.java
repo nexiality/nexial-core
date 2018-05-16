@@ -22,7 +22,6 @@ import java.util.*;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.collections4.MapUtils;
 import org.apache.commons.lang3.StringUtils;
-
 import org.nexial.commons.utils.RegexUtils;
 import org.nexial.core.plugins.pdf.CommonKeyValueIdentStrategies.STRATEGY;
 import org.nexial.core.plugins.pdf.Table.Cell;

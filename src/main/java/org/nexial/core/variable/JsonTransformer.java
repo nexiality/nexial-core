@@ -24,18 +24,18 @@ import org.apache.commons.lang3.StringUtils;
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
-
 import org.nexial.commons.utils.TextUtils;
 import org.nexial.core.utils.ConsoleUtils;
 import org.nexial.core.utils.JSONPath;
+
 import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonNull;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonPrimitive;
 
-import static org.nexial.core.variable.JsonDataType.GSON;
 import static org.json.JSONObject.NULL;
+import static org.nexial.core.variable.JsonDataType.GSON;
 
 public class JsonTransformer<T extends JsonDataType> extends Transformer {
     private static final Map<String, Integer> FUNCTION_TO_PARAM_LIST = discoverFunctions(JsonTransformer.class);

@@ -28,26 +28,26 @@ import org.apache.activemq.command.ActiveMQTopic;
 import org.apache.commons.lang3.StringUtils;
 
 public class ActiveMQJmsClientConfig extends JmsClientConfig {
-	@Override
-	public Connection createConnection() throws JMSException {
-		ActiveMQConnectionFactory connectionFactory;
-		if (StringUtils.isNotBlank(username)) {
-			if (StringUtils.isNotBlank(password)) {
-				connectionFactory = new ActiveMQConnectionFactory(username, password, url);
-			} else {
-				connectionFactory = new ActiveMQConnectionFactory(username, null, url);
-			}
-		} else {
-			connectionFactory = new ActiveMQConnectionFactory(url);
-		}
+    @Override
+    public Connection createConnection() throws JMSException {
+        ActiveMQConnectionFactory connectionFactory;
+        if (StringUtils.isNotBlank(username)) {
+            if (StringUtils.isNotBlank(password)) {
+                connectionFactory = new ActiveMQConnectionFactory(username, password, url);
+            } else {
+                connectionFactory = new ActiveMQConnectionFactory(username, null, url);
+            }
+        } else {
+            connectionFactory = new ActiveMQConnectionFactory(url);
+        }
 
-		Connection connection = connectionFactory.createConnection();
-		connection.start();
-		return connection;
-	}
+        Connection connection = connectionFactory.createConnection();
+        connection.start();
+        return connection;
+    }
 
-	@Override
-	public Destination resolveDestination(Session session) {
-		return isTopic ? new ActiveMQTopic(destination) : new ActiveMQQueue(destination);
-	}
+    @Override
+    public Destination resolveDestination(Session session) {
+        return isTopic ? new ActiveMQTopic(destination) : new ActiveMQQueue(destination);
+    }
 }

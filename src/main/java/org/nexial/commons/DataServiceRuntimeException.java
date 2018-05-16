@@ -19,37 +19,36 @@ package org.nexial.commons;
 
 /**
  * @author $Author: lium $
-
  */
 public class DataServiceRuntimeException extends RuntimeException {
-	private static final long serialVersionUID = 1018609467367298390L;
-	private Object offense;
-	private String detailMessage;
+    private static final long serialVersionUID = 1018609467367298390L;
+    private Object offense;
+    private String detailMessage;
 
-	public DataServiceRuntimeException(Object offense) {
-		detailMessage = "target: " + offense.getClass();
-		this.offense = offense;
-	}
+    public DataServiceRuntimeException(Object offense) {
+        detailMessage = "target: " + offense.getClass();
+        this.offense = offense;
+    }
 
-	public DataServiceRuntimeException(String message, Object offense) {
-		super(message);
-		detailMessage = message + ", target: " + offense.getClass();
-		this.offense = offense;
-	}
+    public DataServiceRuntimeException(String message, Object offense) {
+        super(message);
+        detailMessage = message + ", target: " + offense.getClass();
+        this.offense = offense;
+    }
 
-	public DataServiceRuntimeException(String message, Throwable cause, Object offense) {
-		super(message, cause);
-		detailMessage = message + "; target: " + offense.getClass();
-		this.offense = offense;
-	}
+    public DataServiceRuntimeException(String message, Throwable cause, Object offense) {
+        super(message, cause);
+        detailMessage = message + "; target: " + offense.getClass();
+        this.offense = offense;
+    }
 
-	public DataServiceRuntimeException(Throwable cause, Object offense) {
-		super(cause);
-		detailMessage = "target: " + offense.getClass();
-		this.offense = offense;
-	}
+    public DataServiceRuntimeException(Throwable cause, Object offense) {
+        super(cause);
+        detailMessage = "target: " + offense.getClass();
+        this.offense = offense;
+    }
 
-	public Object getOffense() { return offense; }
+    public Object getOffense() { return offense; }
 
-	public String getDetailMessage() { return detailMessage; }
+    public String getDetailMessage() { return detailMessage; }
 }

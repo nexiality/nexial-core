@@ -23,16 +23,15 @@ import java.io.IOException;
 
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang3.StringUtils;
-
 import org.nexial.core.model.ExecutionContext;
 import org.nexial.core.model.TestStep;
 import org.nexial.core.utils.ConsoleUtils;
 import org.nexial.core.utils.OutputFileUtils;
 import org.nexial.core.variable.Syspath;
 
+import static java.io.File.separator;
 import static org.nexial.core.NexialConst.Data.*;
 import static org.nexial.core.NexialConst.Project.appendCapture;
-import static java.io.File.separator;
 
 /**
  * main delegate for various screen recording strategies

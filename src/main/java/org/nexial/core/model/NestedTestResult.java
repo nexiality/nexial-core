@@ -25,11 +25,11 @@ import org.nexial.core.utils.MessageUtils;
  */
 public class NestedTestResult extends NestedMessage {
 
-	public NestedTestResult(Worksheet worksheet, String message) {
-		super(worksheet, message);
-	}
+    public NestedTestResult(Worksheet worksheet, String message) {
+        super(worksheet, message);
+    }
 
-	public NestedTestResult(Worksheet worksheet, String message, boolean isPass) {
-		this(worksheet, MessageUtils.markResult(message, isPass));
-	}
+    public NestedTestResult(Worksheet worksheet, String message, boolean isPass) {
+        this(worksheet, MessageUtils.markResult(message, isPass));
+    }
 }

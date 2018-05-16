@@ -21,9 +21,9 @@ import java.util.Arrays;
 import java.util.List;
 
 import org.apache.commons.lang3.StringUtils;
+import org.nexial.core.utils.ConsoleUtils;
 import org.openqa.selenium.WebElement;
 
-import org.nexial.core.utils.ConsoleUtils;
 import com.google.gson.ExclusionStrategy;
 import com.google.gson.FieldAttributes;
 import com.google.gson.Gson;

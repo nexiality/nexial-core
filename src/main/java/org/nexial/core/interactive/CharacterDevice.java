@@ -26,36 +26,36 @@ import java.io.Reader;
  * {@link TextDevice} implementation wrapping character streams.
  */
 class CharacterDevice extends TextDevice {
-	private final BufferedReader reader;
-	private final PrintWriter writer;
+    private final BufferedReader reader;
+    private final PrintWriter writer;
 
-	public CharacterDevice(BufferedReader reader, PrintWriter writer) {
-		this.reader = reader;
-		this.writer = writer;
-	}
+    public CharacterDevice(BufferedReader reader, PrintWriter writer) {
+        this.reader = reader;
+        this.writer = writer;
+    }
 
-	@Override
-	public CharacterDevice printf(String fmt, Object... params) {
-		writer.printf(fmt, params);
-		return this;
-	}
+    @Override
+    public CharacterDevice printf(String fmt, Object... params) {
+        writer.printf(fmt, params);
+        return this;
+    }
 
-	@Override
-	public String readLine() throws IOException { return reader.readLine(); }
+    @Override
+    public String readLine() throws IOException { return reader.readLine(); }
 
-	@Override
-	public char readChar() throws IOException { return (char) reader.read(); }
+    @Override
+    public char readChar() throws IOException { return (char) reader.read(); }
 
-	@Override
-	public char[] readPassword() throws IOException {
-		writer.print("(UNMASKED) ");
-		writer.flush();
-		return readLine().toCharArray();
-	}
+    @Override
+    public char[] readPassword() throws IOException {
+        writer.print("(UNMASKED) ");
+        writer.flush();
+        return readLine().toCharArray();
+    }
 
-	@Override
-	public Reader reader() { return reader; }
+    @Override
+    public Reader reader() { return reader; }
 
-	@Override
-	public PrintWriter writer() { return writer; }
+    @Override
+    public PrintWriter writer() { return writer; }
 }

@@ -22,11 +22,11 @@ package org.nexial.core;
 
  */
 public class TokenReplacementException extends IllegalArgumentException {
-	public TokenReplacementException() { }
+    public TokenReplacementException() { }
 
-	public TokenReplacementException(String s) { super(s); }
+    public TokenReplacementException(String s) { super(s); }
 
-	public TokenReplacementException(String message, Throwable cause) { super(message, cause); }
+    public TokenReplacementException(String message, Throwable cause) { super(message, cause); }
 
-	public TokenReplacementException(Throwable cause) { super(cause); }
+    public TokenReplacementException(Throwable cause) { super(cause); }
 }

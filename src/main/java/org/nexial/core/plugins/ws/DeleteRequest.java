@@ -17,13 +17,10 @@
 
 package org.nexial.core.plugins.ws;
 
-import java.io.UnsupportedEncodingException;
-
 import org.apache.commons.lang3.StringUtils;
 import org.apache.http.client.config.RequestConfig;
 import org.apache.http.client.methods.HttpDelete;
 import org.apache.http.client.methods.HttpUriRequest;
-
 import org.nexial.core.model.ExecutionContext;
 
 /**
@@ -31,22 +28,22 @@ import org.nexial.core.model.ExecutionContext;
  */
 public class DeleteRequest extends GetRequest {
 
-	DeleteRequest(ExecutionContext context) {
-		super(context);
-		method = "DELETE";
-	}
+    DeleteRequest(ExecutionContext context) {
+        super(context);
+        method = "DELETE";
+    }
 
-	@Override
-	protected HttpUriRequest prepRequest(RequestConfig requestConfig) {
-		if (StringUtils.isNotBlank(getQueryString())) { url += "?" + getQueryString(); }
+    @Override
+    protected HttpUriRequest prepRequest(RequestConfig requestConfig) {
+        if (StringUtils.isNotBlank(getQueryString())) { url += "?" + getQueryString(); }
 
-		HttpDelete http = new HttpDelete(url);
-		http.setConfig(requestConfig);
+        HttpDelete http = new HttpDelete(url);
+        http.setConfig(requestConfig);
 
-		setRequestHeaders(http);
+        setRequestHeaders(http);
 
-		return http;
-	}
+        return http;
+    }
 
 
 }

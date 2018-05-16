@@ -20,19 +20,17 @@ package org.nexial.core.plugins.jms;
 import java.util.Enumeration;
 import java.util.HashMap;
 import java.util.Map;
-
 import javax.jms.*;
 
 import org.apache.commons.lang3.StringUtils;
+import org.nexial.core.model.ExecutionContext;
 import org.springframework.beans.BeansException;
 import org.springframework.context.ApplicationContext;
 import org.springframework.context.ApplicationContextAware;
 
-import org.nexial.core.model.ExecutionContext;
-
-import static org.nexial.core.NexialConst.MS_UNDEFINED;
 import static javax.jms.DeliveryMode.NON_PERSISTENT;
 import static javax.jms.Session.AUTO_ACKNOWLEDGE;
+import static org.nexial.core.NexialConst.MS_UNDEFINED;
 
 public class JmsClient implements ApplicationContextAware {
     protected ApplicationContext spring;

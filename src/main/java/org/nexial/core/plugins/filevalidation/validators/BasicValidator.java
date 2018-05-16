@@ -23,7 +23,6 @@ import java.util.ArrayList;
 import java.util.EnumSet;
 
 import org.apache.commons.lang3.StringUtils;
-
 import org.nexial.core.plugins.filevalidation.FieldBean;
 import org.nexial.core.plugins.filevalidation.config.FieldConfig;
 import org.nexial.core.plugins.filevalidation.validators.Error.ErrorBuilder;

@@ -24,6 +24,7 @@ import org.nexial.core.plugins.filevalidation.FieldBean;
 import org.nexial.core.plugins.filevalidation.config.ValidationConfig;
 import org.nexial.core.plugins.filevalidation.validators.ValidationsExecutor.Severity;
 import org.nexial.core.plugins.filevalidation.validators.ValidationsExecutor.ValidationType;
+
 import com.google.gson.Gson;
 import com.google.gson.JsonArray;
 

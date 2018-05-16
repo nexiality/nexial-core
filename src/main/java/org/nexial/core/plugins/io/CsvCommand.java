@@ -27,13 +27,13 @@ import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.collections4.MapUtils;
 import org.apache.commons.lang3.BooleanUtils;
 import org.apache.commons.lang3.StringUtils;
-
 import org.nexial.commons.utils.TextUtils;
 import org.nexial.core.IntegrationConfigException;
 import org.nexial.core.model.ExecutionContext;
 import org.nexial.core.model.StepResult;
 import org.nexial.core.utils.ConsoleUtils;
 import org.nexial.core.utils.OutputFileUtils;
+
 import com.univocity.parsers.csv.CsvParser;
 import com.univocity.parsers.csv.CsvParserSettings;
 

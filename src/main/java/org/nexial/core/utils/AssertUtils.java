@@ -18,7 +18,6 @@
 package org.nexial.core.utils;
 
 import org.apache.commons.lang3.ArrayUtils;
-
 import org.nexial.commons.DataServiceRuntimeException;
 import org.nexial.commons.InvalidInputRuntimeException;
 
@@ -27,27 +26,27 @@ import org.nexial.commons.InvalidInputRuntimeException;
  */
 public final class AssertUtils {
 
-	private AssertUtils() {}
+    private AssertUtils() {}
 
-	/** basic check on a condition.. throws runtime exception ({@link InvalidInputRuntimeException} if condition fails */
-	public static boolean requires(boolean condition, String message, Object... params) {
-		if (!condition) { throw new InvalidInputRuntimeException(message + ": " + ArrayUtils.toString(params)); }
-		return condition;
-	}
+    /** basic check on a condition.. throws runtime exception ({@link InvalidInputRuntimeException} if condition fails */
+    public static boolean requires(boolean condition, String message, Object... params) {
+        if (!condition) { throw new InvalidInputRuntimeException(message + ": " + ArrayUtils.toString(params)); }
+        return condition;
+    }
 
-	public static boolean requiresRowsAffected(int rowsAffected, int mustBe) {
-		if (rowsAffected != mustBe) {
-			throw new DataServiceRuntimeException("Expected " + mustBe + " row(s) to be affected, " +
-			                                      "but found " + rowsAffected + " row(s) instead.");
-		}
-		return true;
-	}
+    public static boolean requiresRowsAffected(int rowsAffected, int mustBe) {
+        if (rowsAffected != mustBe) {
+            throw new DataServiceRuntimeException("Expected " + mustBe + " row(s) to be affected, " +
+                                                  "but found " + rowsAffected + " row(s) instead.");
+        }
+        return true;
+    }
 
-	public static boolean requiresRowsAffected(int rowsAffected, int atLeast, int atMost) {
-		if (rowsAffected < atLeast || rowsAffected > atMost) {
-			throw new DataServiceRuntimeException("Expected " + atLeast + " to " + atMost + " row(s) to be affected, " +
-			                                      "but found " + rowsAffected + " row(s) instead.");
-		}
-		return true;
-	}
+    public static boolean requiresRowsAffected(int rowsAffected, int atLeast, int atMost) {
+        if (rowsAffected < atLeast || rowsAffected > atMost) {
+            throw new DataServiceRuntimeException("Expected " + atLeast + " to " + atMost + " row(s) to be affected, " +
+                                                  "but found " + rowsAffected + " row(s) instead.");
+        }
+        return true;
+    }
 }

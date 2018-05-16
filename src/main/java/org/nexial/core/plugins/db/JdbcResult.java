@@ -24,14 +24,13 @@ import java.util.Map;
 
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
-
 import org.nexial.commons.utils.CollectionUtil;
 import org.nexial.commons.utils.DateUtility;
 import org.nexial.core.plugins.db.SqlComponent.Type;
 import org.nexial.core.utils.ConsoleUtils;
 
-import static org.nexial.core.NexialConst.DATE_FORMAT_NOW;
 import static org.apache.commons.lang3.StringUtils.rightPad;
+import static org.nexial.core.NexialConst.DATE_FORMAT_NOW;
 
 public class JdbcResult implements Serializable {
     protected static final int TO_STRING_KEY_LENGTH = 12;

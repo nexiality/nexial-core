@@ -22,44 +22,44 @@ import org.apache.commons.lang3.StringUtils;
 import static org.nexial.core.plugins.desktop.DesktopConst.*;
 
 public class FormLayout {
-	public static final int LAYOUT_LEFT_TO_RIGHT = 1;
-	public static final int LAYOUT_TWO_LINES = 2;
+    public static final int LAYOUT_LEFT_TO_RIGHT = 1;
+    public static final int LAYOUT_TWO_LINES = 2;
 
-	private int layoutType;
-	private int labelToInputTolerance;
+    private int layoutType;
+    private int labelToInputTolerance;
 
-	public static FormLayout newLeftToRightLayout(int labelToInputTolerance) {
-		FormLayout layout = new FormLayout();
-		layout.layoutType = LAYOUT_LEFT_TO_RIGHT;
-		layout.labelToInputTolerance = labelToInputTolerance;
-		return layout;
-	}
+    public static FormLayout newLeftToRightLayout(int labelToInputTolerance) {
+        FormLayout layout = new FormLayout();
+        layout.layoutType = LAYOUT_LEFT_TO_RIGHT;
+        layout.labelToInputTolerance = labelToInputTolerance;
+        return layout;
+    }
 
-	public static FormLayout newTwoLineLayout(int labelToInputTolerance) {
-		FormLayout layout = new FormLayout();
-		layout.layoutType = LAYOUT_TWO_LINES;
-		layout.labelToInputTolerance = labelToInputTolerance;
-		return layout;
-	}
+    public static FormLayout newTwoLineLayout(int labelToInputTolerance) {
+        FormLayout layout = new FormLayout();
+        layout.layoutType = LAYOUT_TWO_LINES;
+        layout.labelToInputTolerance = labelToInputTolerance;
+        return layout;
+    }
 
-	public boolean isLeftToRight() { return layoutType == LAYOUT_LEFT_TO_RIGHT; }
+    public boolean isLeftToRight() { return layoutType == LAYOUT_LEFT_TO_RIGHT; }
 
-	public boolean isTwoLines() { return layoutType == LAYOUT_TWO_LINES; }
+    public boolean isTwoLines() { return layoutType == LAYOUT_TWO_LINES; }
 
-	public static FormLayout toLayout(String hint) {
-		if (StringUtils.equals(hint, DesktopConst.LAYOUT_LEFT_2_RIGHT)) {
-			return newLeftToRightLayout(BOUND_GROUP_TOLERANCE);
-		}
-		if (StringUtils.equals(hint, LAYOUT_2LINES)) {
-			return newTwoLineLayout(BOUND_GROUP_TOLERANCE);
-		}
-		throw new IllegalArgumentException("Unknown layout hint: " + hint);
-	}
+    public static FormLayout toLayout(String hint) {
+        if (StringUtils.equals(hint, DesktopConst.LAYOUT_LEFT_2_RIGHT)) {
+            return newLeftToRightLayout(BOUND_GROUP_TOLERANCE);
+        }
+        if (StringUtils.equals(hint, LAYOUT_2LINES)) {
+            return newTwoLineLayout(BOUND_GROUP_TOLERANCE);
+        }
+        throw new IllegalArgumentException("Unknown layout hint: " + hint);
+    }
 
-	public int getLabelToInputTolerance() { return labelToInputTolerance; }
+    public int getLabelToInputTolerance() { return labelToInputTolerance; }
 
-	@Override
-	public String toString() {
-		return isLeftToRight() ? LAYOUT_LEFT_2_RIGHT : isTwoLines() ? LAYOUT_2LINES : "UNKNOWN";
-	}
+    @Override
+    public String toString() {
+        return isLeftToRight() ? LAYOUT_LEFT_2_RIGHT : isTwoLines() ? LAYOUT_2LINES : "UNKNOWN";
+    }
 }

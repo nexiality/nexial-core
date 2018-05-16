@@ -24,9 +24,9 @@ import com.itextpdf.text.DocumentException;
 
  */
 public class InvalidTiffContentException extends DocumentException {
-	public InvalidTiffContentException() { }
+    public InvalidTiffContentException() { }
 
-	public InvalidTiffContentException(Exception ex) { super(ex); }
+    public InvalidTiffContentException(Exception ex) { super(ex); }
 
-	public InvalidTiffContentException(String message) { super(message); }
+    public InvalidTiffContentException(String message) { super(message); }
 }

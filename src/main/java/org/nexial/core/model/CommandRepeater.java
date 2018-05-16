@@ -24,17 +24,12 @@ import java.util.List;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.builder.ToStringBuilder;
-import org.apache.poi.xssf.usermodel.XSSFCell;
-import org.apache.poi.xssf.usermodel.XSSFCellStyle;
-import org.nexial.core.excel.Excel;
 import org.nexial.core.excel.ExcelConfig;
 import org.nexial.core.utils.FlowControlUtils;
 
 import static org.apache.commons.lang3.builder.ToStringStyle.SIMPLE_STYLE;
 import static org.nexial.core.NexialConst.Data.*;
 import static org.nexial.core.NexialConst.OPT_LAST_OUTCOME;
-import static org.nexial.core.excel.ExcelConfig.COL_IDX_DESCRIPTION;
-import static org.nexial.core.excel.ExcelConfig.STYLE_REPEAT_UNTIL_DESCRIPTION;
 
 public class CommandRepeater {
     private TestStep initialTestStep;
@@ -50,24 +45,31 @@ public class CommandRepeater {
 
     public void addStep(TestStep nextStep) { steps.add(nextStep);}
 
+    public int getStepCount() { return steps.size(); }
+
+    public void formatSteps() {
+        initialTestStep = ExcelConfig.formatRepeatUntilDescription(initialTestStep, "");
+
+        if (CollectionUtils.isEmpty(steps)) { return; }
+
+        // one loop through to fix all the styles for loop steps
+        for (int i = 0; i < steps.size(); i++) {
+            TestStep step = steps.get(i);
+            ExcelConfig.formatRepeatUntilDescription(step,
+                                                                  i == 0 ?
+                                                                  REPEAT_CHECK_DESCRIPTION_PREFIX :
+                                                                  REPEAT_DESCRIPTION_PREFIX);
+            ExcelConfig.formatParams(step);
+        }
+    }
+
     public StepResult start() {
         if (CollectionUtils.isEmpty(steps)) { return StepResult.fail("No steps to repeat/execute"); }
 
         long startTime = System.currentTimeMillis();
         long maxEndTime = maxWaitMs == -1 ? -1 : startTime + maxWaitMs;
 
-        XSSFCellStyle styleDescription = initialTestStep.getWorksheet().getStyle(STYLE_REPEAT_UNTIL_DESCRIPTION);
-        initialTestStep.getRow().get(COL_IDX_DESCRIPTION).setCellStyle(styleDescription);
-
-        // one loop through to fix all the styles for loop steps
-        for (int i = 0; i < steps.size(); i++) {
-            TestStep testStep = steps.get(i);
-            XSSFCell cellDescription = testStep.row.get(COL_IDX_DESCRIPTION);
-            cellDescription.setCellValue((i == 0 ? REPEAT_CHECK_DESCRIPTION_PREFIX : REPEAT_DESCRIPTION_PREFIX) +
-                                         Excel.getCellValue(cellDescription));
-            cellDescription.setCellStyle(styleDescription);
-            ExcelConfig.fixDescriptionCellWidth(cellDescription.getSheet(), cellDescription);
-        }
+        formatSteps();
 
         long rightNow = startTime;
         while (maxEndTime == -1 || rightNow < maxEndTime) {

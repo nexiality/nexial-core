@@ -47,8 +47,8 @@ import org.openqa.selenium.NoSuchElementException;
 import static java.lang.System.lineSeparator;
 import static org.apache.commons.lang3.builder.ToStringStyle.SIMPLE_STYLE;
 import static org.nexial.commons.utils.EnvUtils.platformSpecificEOL;
-import static org.nexial.core.NexialConst.*;
 import static org.nexial.core.NexialConst.Data.*;
+import static org.nexial.core.NexialConst.*;
 import static org.nexial.core.excel.ExcelConfig.*;
 import static org.nexial.core.excel.ext.CipherHelper.CRYPT_IND;
 

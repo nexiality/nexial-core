@@ -23,5 +23,5 @@ import org.nexial.core.model.StepResult;
  * desktop UI to handle the interaction of logging into an application via its form.
  */
 public abstract class LoginForm extends ThirdPartyComponent {
-	public abstract StepResult login(String username, String password);
+    public abstract StepResult login(String username, String password);
 }

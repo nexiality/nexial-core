@@ -22,7 +22,6 @@ import java.util.List;
 import java.util.Map;
 
 import org.apache.commons.lang3.StringUtils;
-
 import org.nexial.core.plugins.filevalidation.FieldBean;
 import org.nexial.core.plugins.filevalidation.config.ValidationConfig;
 import org.nexial.core.plugins.filevalidation.validators.ValidationsExecutor.Severity;

@@ -21,7 +21,6 @@ import java.io.File;
 
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.SystemUtils;
-
 import org.nexial.core.ExecutionThread;
 import org.nexial.core.model.ExecutionContext;
 import org.nexial.core.utils.ConsoleUtils;
@@ -31,63 +30,63 @@ import static org.nexial.core.NexialConst.Project.appendCapture;
 import static org.nexial.core.NexialConst.Project.appendLog;
 
 public class Syspath {
-	enum Scope {name, fullpath, base}
+    enum Scope {name, fullpath, base}
 
-	public String out(String scope) { return evaluateExecutionScope(scope, OPT_OUT_DIR); }
+    public String out(String scope) { return evaluateExecutionScope(scope, OPT_OUT_DIR); }
 
-	public String script(String scope) { return evaluateScope(scope, getExecutionData(OPT_INPUT_EXCEL_FILE)); }
+    public String script(String scope) { return evaluateScope(scope, getExecutionData(OPT_INPUT_EXCEL_FILE)); }
 
-	public String data(String scope) { return evaluateScope(scope, getExecutionData(OPT_DATA_DIR)); }
+    public String data(String scope) { return evaluateScope(scope, getExecutionData(OPT_DATA_DIR)); }
 
-	public String screenshot(String scope) {
-		return evaluateScope(scope, appendCapture(getExecutionData(OPT_OUT_DIR)));
-	}
+    public String screenshot(String scope) {
+        return evaluateScope(scope, appendCapture(getExecutionData(OPT_OUT_DIR)));
+    }
 
-	public String log(String scope) { return evaluateScope(scope, appendLog(getExecutionData(OPT_OUT_DIR))); }
+    public String log(String scope) { return evaluateScope(scope, appendLog(getExecutionData(OPT_OUT_DIR))); }
 
-	// todo: still needed?
-	public String suite(String scope) { return evaluateExecutionScope(scope, OPT_SUITE_PROP); }
+    // todo: still needed?
+    public String suite(String scope) { return evaluateExecutionScope(scope, OPT_SUITE_PROP); }
 
-	public String temp(String scope) { return evaluateScope(scope, SystemUtils.getJavaIoTmpDir().getAbsolutePath()); }
+    public String temp(String scope) { return evaluateScope(scope, SystemUtils.getJavaIoTmpDir().getAbsolutePath()); }
 
-	public String project(String scope) { return evaluateScope(scope, getExecutionData(OPT_PROJECT_BASE)); }
+    public String project(String scope) { return evaluateScope(scope, getExecutionData(OPT_PROJECT_BASE)); }
 
-	static String getExecutionData(String varName) {
-		if (StringUtils.isBlank(varName)) { return null; }
+    static String getExecutionData(String varName) {
+        if (StringUtils.isBlank(varName)) { return null; }
 
-		String value = System.getProperty(varName);
-		if (StringUtils.isNotBlank(value)) { return value; }
+        String value = System.getProperty(varName);
+        if (StringUtils.isNotBlank(value)) { return value; }
 
-		ExecutionContext context = ExecutionThread.get();
-		if (context == null) { return null; }
+        ExecutionContext context = ExecutionThread.get();
+        if (context == null) { return null; }
 
-		return context.getStringData(varName);
-	}
+        return context.getStringData(varName);
+    }
 
-	protected void init() { }
+    protected void init() { }
 
-	private String evaluateExecutionScope(String scope, String varName) {
-		return evaluateScope(scope, getExecutionData(varName));
-	}
+    private String evaluateExecutionScope(String scope, String varName) {
+        return evaluateScope(scope, getExecutionData(varName));
+    }
 
-	private String evaluateScope(String scope, String fullpath) {
-		if (StringUtils.isBlank(fullpath)) { return null; }
+    private String evaluateScope(String scope, String fullpath) {
+        if (StringUtils.isBlank(fullpath)) { return null; }
 
-		try {
-			Scope s = Scope.valueOf(scope);
-			File path = new File(fullpath);
-			switch (s) {
-				case name:
-					return path.getName();
-				case base:
-					return path.getParent();
-				default:
-					return path.getAbsolutePath();
-			}
-		} catch (IllegalArgumentException e) {
-			ConsoleUtils.error("'" + scope + "' is not valid or support for " +
-			                   TOKEN_FUNCTION_START + "syspath" + TOKEN_FUNCTION_END);
-			return evaluateScope(Scope.fullpath.name(), fullpath);
-		}
-	}
+        try {
+            Scope s = Scope.valueOf(scope);
+            File path = new File(fullpath);
+            switch (s) {
+                case name:
+                    return path.getName();
+                case base:
+                    return path.getParent();
+                default:
+                    return path.getAbsolutePath();
+            }
+        } catch (IllegalArgumentException e) {
+            ConsoleUtils.error("'" + scope + "' is not valid or support for " +
+                               TOKEN_FUNCTION_START + "syspath" + TOKEN_FUNCTION_END);
+            return evaluateScope(Scope.fullpath.name(), fullpath);
+        }
+    }
 }

@@ -25,67 +25,65 @@ import org.openqa.selenium.WebElement;
  * object representation of the coordinates and dimension of a {@link DesktopElement}.
  */
 public class BoundingRectangle {
-	private int x;
-	private int y;
-	private int width;
-	private int height;
-	private WebElement element;
-	private DesktopElement desktopElement;
+    private int x;
+    private int y;
+    private int width;
+    private int height;
+    private WebElement element;
+    private DesktopElement desktopElement;
 
-	private BoundingRectangle() { }
+    private BoundingRectangle() { }
 
+    public static BoundingRectangle newInstance(DesktopElement desktopElement) {
+        if (desktopElement == null) { return null; }
 
-	public static BoundingRectangle newInstance(DesktopElement desktopElement) {
-		if (desktopElement == null) { return null; }
+        WebElement element = desktopElement.element;
+        BoundingRectangle instance = newInstance(element);
+        if (instance == null) { return null; }
 
-		WebElement element = desktopElement.element;
-		BoundingRectangle instance = newInstance(element);
-		if (instance == null) { return null; }
+        instance.desktopElement = desktopElement;
+        return instance;
+    }
 
-		instance.desktopElement = desktopElement;
-		return instance;
-	}
+    public static BoundingRectangle newInstance(WebElement element) {
+        if (element == null) { return null; }
 
-	public static BoundingRectangle newInstance(WebElement element) {
-		if (element == null) { return null; }
+        String bounds = element.getAttribute("BoundingRectangle");
+        if (StringUtils.isBlank(bounds) || StringUtils.countMatches(bounds, ",") != 3) { return null; }
 
-		String bounds = element.getAttribute("BoundingRectangle");
-		if (StringUtils.isBlank(bounds) || StringUtils.countMatches(bounds, ",") != 3) { return null; }
+        String[] boundArray = StringUtils.split(bounds, ",");
 
-		String[] boundArray = StringUtils.split(bounds, ",");
+        BoundingRectangle instance = new BoundingRectangle();
+        instance.x = NumberUtils.toInt(boundArray[0]);
+        instance.y = NumberUtils.toInt(boundArray[1]);
+        instance.width = NumberUtils.toInt(boundArray[2]);
+        instance.height = NumberUtils.toInt(boundArray[3]);
+        instance.element = element;
+        return instance;
+    }
 
-		BoundingRectangle instance = new BoundingRectangle();
-		instance.x = NumberUtils.toInt(boundArray[0]);
-		instance.y = NumberUtils.toInt(boundArray[1]);
-		instance.width = NumberUtils.toInt(boundArray[2]);
-		instance.height = NumberUtils.toInt(boundArray[3]);
-		instance.element = element;
-		return instance;
-	}
+    public int getX() { return x; }
 
-	public int getX() { return x; }
+    public int getY() { return y; }
 
-	public int getY() { return y; }
+    public int getWidth() { return width; }
 
-	public int getWidth() { return width; }
+    public int getHeight() { return height; }
 
-	public int getHeight() { return height; }
+    public void adjust(int x, int y, int width, int height) {
+        this.x += x;
+        this.y += y;
+        this.width += width;
+        this.height += height;
+    }
 
-	public void adjust(int x, int y, int width, int height) {
-		this.x += x;
-		this.y += y;
-		this.width += width;
-		this.height += height;
-	}
+    public WebElement getElement() { return element; }
 
-	public WebElement getElement() { return element; }
+    public DesktopElement getDesktopElement() { return desktopElement; }
 
-
-	public DesktopElement getDesktopElement() { return desktopElement; }
-
-	@Override
-	public String toString() {
-		return "(" + x + "," + y + "," + width + "," + height + ") of " +
-		       (desktopElement);
-	}
+    @Override
+    public String toString() {
+        return "(" + x + "," + y + "," + width + "," + height + ") of " +
+               (desktopElement);
+    }
 }

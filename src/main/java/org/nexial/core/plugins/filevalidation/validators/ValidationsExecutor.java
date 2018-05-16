@@ -28,7 +28,6 @@ import java.util.Map.Entry;
 import org.apache.commons.collections4.map.HashedMap;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.math.NumberUtils;
-
 import org.nexial.core.plugins.filevalidation.FieldBean;
 import org.nexial.core.plugins.filevalidation.RecordBean;
 import org.nexial.core.plugins.filevalidation.RecordData;
@@ -288,7 +287,8 @@ public class ValidationsExecutor {
             for (FieldBean field : fields) {
                 List<ValidationConfig> validationConfigs = field.getConfig().getValidationConfigs();
                 if (validationConfigs != null || !validationConfigs.isEmpty()) {
-                    startValidator.validateField(field); }
+                    startValidator.validateField(field);
+                }
             }
 
         }

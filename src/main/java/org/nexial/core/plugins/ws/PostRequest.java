@@ -27,56 +27,55 @@ import org.apache.http.client.methods.HttpEntityEnclosingRequestBase;
 import org.apache.http.client.methods.HttpPost;
 import org.apache.http.client.methods.HttpUriRequest;
 import org.apache.http.entity.StringEntity;
-
 import org.nexial.core.model.ExecutionContext;
 
 import static org.nexial.core.NexialConst.WS_CONTENT_LENGTH;
 import static org.nexial.core.NexialConst.WS_CONTENT_TYPE;
 
 public class PostRequest extends Request implements Serializable {
-	protected String payload;
+    protected String payload;
 
-	PostRequest(ExecutionContext context) {
-		super(context);
-		method = "POST";
-	}
+    PostRequest(ExecutionContext context) {
+        super(context);
+        method = "POST";
+    }
 
-	public String getPayload() { return payload; }
+    public String getPayload() { return payload; }
 
-	public void setPayload(String payload) { this.payload = payload; }
+    public void setPayload(String payload) { this.payload = payload; }
 
-	@Override
-	public String toString() {
-		return super.toString() + "; " + this.getClass().getSimpleName() + "{payload='" + payload + "'}";
-	}
+    @Override
+    public String toString() {
+        return super.toString() + "; " + this.getClass().getSimpleName() + "{payload='" + payload + "'}";
+    }
 
-	@Override
-	protected HttpUriRequest prepRequest(RequestConfig requestConfig) throws UnsupportedEncodingException {
-		HttpPost http = new HttpPost(url);
-		prepPostRequest(requestConfig, http);
-		return http;
-	}
+    @Override
+    protected HttpUriRequest prepRequest(RequestConfig requestConfig) throws UnsupportedEncodingException {
+        HttpPost http = new HttpPost(url);
+        prepPostRequest(requestConfig, http);
+        return http;
+    }
 
-	protected void prepPostRequest(RequestConfig requestConfig, HttpEntityEnclosingRequestBase http)
-		throws UnsupportedEncodingException {
-		http.setConfig(requestConfig);
+    protected void prepPostRequest(RequestConfig requestConfig, HttpEntityEnclosingRequestBase http)
+        throws UnsupportedEncodingException {
+        http.setConfig(requestConfig);
 
-		String charset = (String) getHeaders().get(WS_CONTENT_TYPE);
-		if (StringUtils.contains(charset, "charset=")) {
-			charset = StringUtils.substringAfter(charset, "charset=");
-		} else if (StringUtils.contains(charset, "/")) {
-			charset = null;
-		}
+        String charset = (String) getHeaders().get(WS_CONTENT_TYPE);
+        if (StringUtils.contains(charset, "charset=")) {
+            charset = StringUtils.substringAfter(charset, "charset=");
+        } else if (StringUtils.contains(charset, "/")) {
+            charset = null;
+        }
 
-		http.setEntity(StringUtils.isNotBlank(charset) ?
-		               new StringEntity(getPayload(), charset) : new StringEntity(getPayload()));
+        http.setEntity(StringUtils.isNotBlank(charset) ?
+                       new StringEntity(getPayload(), charset) : new StringEntity(getPayload()));
 
-		setRequestHeaders(http);
-	}
+        setRequestHeaders(http);
+    }
 
-	@Override
-	protected void setRequestHeaders(HttpRequest http) {
-		super.setRequestHeaders(http);
-		if (StringUtils.isNotBlank(payload)) { addHeaderIfNotSpecified(WS_CONTENT_LENGTH, payload.length() + ""); }
-	}
+    @Override
+    protected void setRequestHeaders(HttpRequest http) {
+        super.setRequestHeaders(http);
+        if (StringUtils.isNotBlank(payload)) { addHeaderIfNotSpecified(WS_CONTENT_LENGTH, payload.length() + ""); }
+    }
 }

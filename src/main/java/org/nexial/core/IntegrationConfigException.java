@@ -23,26 +23,26 @@ package org.nexial.core;
  * (config) is not available, this exception would be thrown.
  */
 public class IntegrationConfigException extends Exception {
-	public IntegrationConfigException() {}
+    public IntegrationConfigException() {}
 
-	public IntegrationConfigException(String message) { super(message); }
+    public IntegrationConfigException(String message) { super(message); }
 
-	public IntegrationConfigException(String message, Throwable cause) { super(message, cause); }
+    public IntegrationConfigException(String message, Throwable cause) { super(message, cause); }
 
-	public IntegrationConfigException(Throwable cause) { super(cause); }
+    public IntegrationConfigException(Throwable cause) { super(cause); }
 
-	public IntegrationConfigException(String message,
-	                                  Throwable cause,
-	                                  boolean enableSuppression,
-	                                  boolean writableStackTrace) {
-		super(message, cause, enableSuppression, writableStackTrace);
-	}
+    public IntegrationConfigException(String message,
+                                      Throwable cause,
+                                      boolean enableSuppression,
+                                      boolean writableStackTrace) {
+        super(message, cause, enableSuppression, writableStackTrace);
+    }
 
-	public static IntegrationConfigException missingConfig(String required) {
-		return new IntegrationConfigException("The REQUIRED configuration is missing: " + required);
-	}
+    public static IntegrationConfigException missingConfig(String required) {
+        return new IntegrationConfigException("The REQUIRED configuration is missing: " + required);
+    }
 
-	public static IntegrationConfigException badConfig(String key, String value) {
-		return new IntegrationConfigException("Inappropriate data found for [" + key + "]: '" + value + "'");
-	}
+    public static IntegrationConfigException badConfig(String key, String value) {
+        return new IntegrationConfigException("Inappropriate data found for [" + key + "]: '" + value + "'");
+    }
 }

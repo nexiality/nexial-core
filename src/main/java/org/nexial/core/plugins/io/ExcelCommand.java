@@ -30,7 +30,6 @@ import org.apache.commons.text.StrTokenizer;
 import org.apache.poi.xssf.usermodel.XSSFCell;
 import org.apache.poi.xssf.usermodel.XSSFRow;
 import org.apache.poi.xssf.usermodel.XSSFSheet;
-
 import org.nexial.commons.utils.TextUtils;
 import org.nexial.core.excel.Excel;
 import org.nexial.core.excel.Excel.Worksheet;
@@ -38,8 +37,8 @@ import org.nexial.core.excel.ExcelAddress;
 import org.nexial.core.model.StepResult;
 import org.nexial.core.plugins.base.BaseCommand;
 
-import static org.nexial.core.utils.CheckUtils.*;
 import static org.apache.poi.ss.usermodel.Row.MissingCellPolicy.CREATE_NULL_AS_BLANK;
+import static org.nexial.core.utils.CheckUtils.*;
 
 public class ExcelCommand extends BaseCommand {
     @Override

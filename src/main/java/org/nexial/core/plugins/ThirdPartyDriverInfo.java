@@ -38,7 +38,12 @@ public class ThirdPartyDriverInfo implements Serializable {
     @Override
     public String toString() {
         return "Unable to load the required driver/3rd-party library.\n" +
-               "Make sure " + jarFilePattern + " (at least " + minDriverVersion + ") is/are added to lib/ directory.\n" +
-               "For more information, visit " + url;
+               "Make sure " +
+               jarFilePattern +
+               " (at least " +
+               minDriverVersion +
+               ") is/are added to lib/ directory.\n" +
+               "For more information, visit " +
+               url;
     }
 }

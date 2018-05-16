@@ -22,20 +22,19 @@ import java.io.UnsupportedEncodingException;
 import org.apache.http.client.config.RequestConfig;
 import org.apache.http.client.methods.HttpPut;
 import org.apache.http.client.methods.HttpUriRequest;
-
 import org.nexial.core.model.ExecutionContext;
 
 public class PutRequest extends PostRequest {
 
-	PutRequest(ExecutionContext context) {
-		super(context);
-		method = "PUT";
-	}
+    PutRequest(ExecutionContext context) {
+        super(context);
+        method = "PUT";
+    }
 
-	@Override
-	protected HttpUriRequest prepRequest(RequestConfig requestConfig) throws UnsupportedEncodingException {
-		HttpPut http = new HttpPut(url);
-		prepPostRequest(requestConfig, http);
-		return http;
-	}
+    @Override
+    protected HttpUriRequest prepRequest(RequestConfig requestConfig) throws UnsupportedEncodingException {
+        HttpPut http = new HttpPut(url);
+        prepPostRequest(requestConfig, http);
+        return http;
+    }
 }

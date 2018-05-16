@@ -19,7 +19,6 @@ package org.nexial.core.plugins.jms;
 
 import java.util.Map;
 import java.util.Properties;
-
 import javax.jms.Connection;
 import javax.jms.ConnectionFactory;
 import javax.jms.Destination;

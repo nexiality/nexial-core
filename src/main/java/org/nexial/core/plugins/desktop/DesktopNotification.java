@@ -21,7 +21,6 @@ import java.io.IOException;
 import java.util.Arrays;
 
 import org.apache.commons.lang3.StringUtils;
-
 import org.nexial.commons.proc.ProcessInvoker;
 import org.nexial.commons.utils.EnvUtils;
 import org.nexial.commons.utils.FileUtil;
@@ -30,92 +29,92 @@ import org.nexial.core.model.ExecutionContext;
 import org.nexial.core.model.TestProject;
 import org.nexial.core.utils.ConsoleUtils;
 
+import static java.io.File.separator;
 import static org.nexial.core.NexialConst.Project.NEXIAL_WINDOWS_BIN_REL_PATH;
 import static org.nexial.core.plugins.desktop.DesktopNotification.NotificationLevel.info;
-import static java.io.File.separator;
 
 public class DesktopNotification {
-	private static final String CALLSIGN = "nexial notifier";
-	private static final long DEF_AUTO_DISMISS_MS = 5000;
+    private static final String CALLSIGN = "nexial notifier";
+    private static final long DEF_AUTO_DISMISS_MS = 5000;
 
-	private static String notifierPath;
+    private static String notifierPath;
 
-	public enum NotificationLevel {info, warn, error}
+    public enum NotificationLevel {info, warn, error}
 
-	private DesktopNotification() { }
+    private DesktopNotification() { }
 
-	public static void notify(NotificationLevel level, String message, long autoDismissMs) {
-		if (StringUtils.isBlank(message)) { return; }
-		if (autoDismissMs < 500) { autoDismissMs = DEF_AUTO_DISMISS_MS; }
+    public static void notify(NotificationLevel level, String message, long autoDismissMs) {
+        if (StringUtils.isBlank(message)) { return; }
+        if (autoDismissMs < 500) { autoDismissMs = DEF_AUTO_DISMISS_MS; }
 
-		init();
-		if (StringUtils.isBlank(notifierPath)) { return; }
+        init();
+        if (StringUtils.isBlank(notifierPath)) { return; }
 
-		try {
-			ProcessInvoker.invokeNoWait(notifierPath,
-			                            Arrays.asList("/p", CALLSIGN,
-			                                          "/m", resolveMessage(message),
-			                                          "/d", autoDismissMs + "",
-			                                          "/t", level == null ? info.name() : level.name()),
-			                            null);
-		} catch (IOException e) {
-			ConsoleUtils.error("Unable to send desktop notification: " + message + ". " + e.getMessage());
-		}
-	}
+        try {
+            ProcessInvoker.invokeNoWait(notifierPath,
+                                        Arrays.asList("/p", CALLSIGN,
+                                                      "/m", resolveMessage(message),
+                                                      "/d", autoDismissMs + "",
+                                                      "/t", level == null ? info.name() : level.name()),
+                                        null);
+        } catch (IOException e) {
+            ConsoleUtils.error("Unable to send desktop notification: " + message + ". " + e.getMessage());
+        }
+    }
 
-	public static void notifyNoAutoDismiss(NotificationLevel level, String message) {
-		if (StringUtils.isBlank(message)) { return; }
+    public static void notifyNoAutoDismiss(NotificationLevel level, String message) {
+        if (StringUtils.isBlank(message)) { return; }
 
-		init();
-		if (StringUtils.isBlank(notifierPath)) { return; }
+        init();
+        if (StringUtils.isBlank(notifierPath)) { return; }
 
-		try {
-			ProcessInvoker.invokeNoWait(notifierPath,
-			                            Arrays.asList("/p", CALLSIGN,
-			                                          "/m", resolveMessage(message),
-			                                          "/d", "0",
-			                                          "/t", level == null ? info.name() : level.name()),
-			                            null);
-		} catch (IOException e) {
-			ConsoleUtils.error("Unable to send desktop notification: " + message + ". " + e.getMessage());
-		}
+        try {
+            ProcessInvoker.invokeNoWait(notifierPath,
+                                        Arrays.asList("/p", CALLSIGN,
+                                                      "/m", resolveMessage(message),
+                                                      "/d", "0",
+                                                      "/t", level == null ? info.name() : level.name()),
+                                        null);
+        } catch (IOException e) {
+            ConsoleUtils.error("Unable to send desktop notification: " + message + ". " + e.getMessage());
+        }
 
-	}
+    }
 
-	private static String resolveMessage(String message) {
-		return "\"" + StringUtils.replace(message, "\"", "\\\"") + "\"";
-	}
+    private static String resolveMessage(String message) {
+        return "\"" + StringUtils.replace(message, "\"", "\\\"") + "\"";
+    }
 
-	private static void init() {
-		if (StringUtils.isNotBlank(DesktopNotification.notifierPath)) { return; }
+    private static void init() {
+        if (StringUtils.isNotBlank(DesktopNotification.notifierPath)) { return; }
 
-		String msgPrefix = "Unable to determine notifier path since ";
+        String msgPrefix = "Unable to determine notifier path since ";
 
-		ExecutionContext context = ExecutionThread.get();
-		if (context == null) {
-			ConsoleUtils.error(msgPrefix + "execution context is not reachable");
-			return;
-		}
+        ExecutionContext context = ExecutionThread.get();
+        if (context == null) {
+            ConsoleUtils.error(msgPrefix + "execution context is not reachable");
+            return;
+        }
 
-		TestProject project = context.getProject();
-		if (project == null) {
-			ConsoleUtils.error(msgPrefix + "test project is not found in current execution context");
-			return;
-		}
+        TestProject project = context.getProject();
+        if (project == null) {
+            ConsoleUtils.error(msgPrefix + "test project is not found in current execution context");
+            return;
+        }
 
-		String nexialHome = project.getNexialHome();
-		if (StringUtils.isBlank(nexialHome)) {
-			ConsoleUtils.error(msgPrefix + "'nexial.home' is not found in current execution context");
-			return;
-		}
+        String nexialHome = project.getNexialHome();
+        if (StringUtils.isBlank(nexialHome)) {
+            ConsoleUtils.error(msgPrefix + "'nexial.home' is not found in current execution context");
+            return;
+        }
 
-		String notifierPath = StringUtils.appendIfMissing(nexialHome, separator) + NEXIAL_WINDOWS_BIN_REL_PATH +
+        String notifierPath = StringUtils.appendIfMissing(nexialHome, separator) + NEXIAL_WINDOWS_BIN_REL_PATH +
                               "notifu" + (EnvUtils.isRunningWindows64bit() ? "64" : "") + ".exe";
-		if (!FileUtil.isFileExecutable(notifierPath)) {
-			ConsoleUtils.error(msgPrefix + "the resolved notifier path is invalid: " + notifierPath);
-			return;
-		}
+        if (!FileUtil.isFileExecutable(notifierPath)) {
+            ConsoleUtils.error(msgPrefix + "the resolved notifier path is invalid: " + notifierPath);
+            return;
+        }
 
-		DesktopNotification.notifierPath = notifierPath;
-	}
+        DesktopNotification.notifierPath = notifierPath;
+    }
 }

@@ -25,7 +25,6 @@ import java.util.Map;
 
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
-
 import org.nexial.commons.utils.DateUtility;
 import org.nexial.core.plugins.io.ComparisonResult.ResultType;
 import org.nexial.core.utils.ExecUtil;

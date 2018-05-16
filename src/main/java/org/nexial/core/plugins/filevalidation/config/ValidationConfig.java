@@ -21,6 +21,7 @@ import java.util.List;
 
 import org.nexial.core.plugins.filevalidation.config.ValidationsBean.ValidationmethodsBean;
 import org.nexial.core.plugins.filevalidation.config.ValidationsBean.ValidationmethodsBean.ConditionBean;
+
 import com.google.gson.JsonElement;
 
 public class ValidationConfig {

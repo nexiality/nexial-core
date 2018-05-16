@@ -28,9 +28,9 @@ import org.apache.commons.collections4.MapUtils;
 import org.apache.commons.collections4.map.ListOrderedMap;
 import org.apache.commons.lang3.ArrayUtils;
 import org.apache.commons.lang3.StringUtils;
-
 import org.nexial.core.IntegrationConfigException;
 import org.nexial.core.utils.ConsoleUtils;
+
 import com.univocity.parsers.csv.CsvParser;
 
 import static org.nexial.core.plugins.io.CsvExtendedComparison.ReportFormat.CSV;

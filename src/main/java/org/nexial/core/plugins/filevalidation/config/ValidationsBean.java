@@ -59,7 +59,6 @@ public class ValidationsBean {
 
         }
 
-
         public List<ConditionBean> getConditionBeans() {
             return conditionBeans;
         }

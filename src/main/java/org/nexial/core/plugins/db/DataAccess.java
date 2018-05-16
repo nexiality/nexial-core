@@ -20,7 +20,6 @@ package org.nexial.core.plugins.db;
 import java.io.File;
 import java.lang.reflect.InvocationTargetException;
 import java.util.Map;
-
 import javax.sql.DataSource;
 
 import org.apache.commons.beanutils.BeanUtils;

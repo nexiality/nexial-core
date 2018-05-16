@@ -18,27 +18,27 @@
 package org.nexial.core.variable;
 
 public class ExpressionFunctionException extends ExpressionException {
-	private String dataType;
-	private String functionName;
+    private String dataType;
+    private String functionName;
 
-	public ExpressionFunctionException(String dataType, String functionName) {
-		this.dataType = dataType;
-		this.functionName = functionName;
-	}
+    public ExpressionFunctionException(String dataType, String functionName) {
+        this.dataType = dataType;
+        this.functionName = functionName;
+    }
 
-	public ExpressionFunctionException(String dataType, String functionName, String message) {
-		super(message);
-		this.dataType = dataType;
-		this.functionName = functionName;
-	}
+    public ExpressionFunctionException(String dataType, String functionName, String message) {
+        super(message);
+        this.dataType = dataType;
+        this.functionName = functionName;
+    }
 
-	public ExpressionFunctionException(String dataType, String functionName, String message, Throwable cause) {
-		super(message, cause);
-		this.dataType = dataType;
-		this.functionName = functionName;
-	}
+    public ExpressionFunctionException(String dataType, String functionName, String message, Throwable cause) {
+        super(message, cause);
+        this.dataType = dataType;
+        this.functionName = functionName;
+    }
 
-	public String getDataType() { return dataType; }
+    public String getDataType() { return dataType; }
 
-	public String getFunctionName() { return functionName; }
+    public String getFunctionName() { return functionName; }
 }

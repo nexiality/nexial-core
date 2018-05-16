@@ -19,7 +19,6 @@ package org.nexial.core.aws;
 
 import java.io.File;
 import java.io.IOException;
-
 import javax.validation.constraints.NotNull;
 
 import org.apache.commons.io.FileUtils;

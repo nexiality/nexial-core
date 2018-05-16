@@ -33,7 +33,6 @@ import org.apache.commons.lang3.exception.ExceptionUtils;
 import org.apache.commons.lang3.math.NumberUtils;
 import org.apache.poi.ss.util.CellRangeAddress;
 import org.apache.poi.xssf.usermodel.*;
-
 import org.nexial.commons.utils.CollectionUtil;
 import org.nexial.commons.utils.DateUtility;
 import org.nexial.commons.utils.EnvUtils;
@@ -51,17 +50,17 @@ import org.nexial.core.utils.ExecUtil;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 
+import static java.io.File.separator;
+import static java.lang.System.lineSeparator;
+import static java.util.Locale.US;
+import static org.apache.commons.lang3.SystemUtils.*;
+import static org.apache.poi.ss.usermodel.Row.MissingCellPolicy.CREATE_NULL_AS_BLANK;
 import static org.nexial.core.NexialConst.*;
 import static org.nexial.core.NexialConst.Data.*;
 import static org.nexial.core.excel.ExcelConfig.DEF_CHAR_WIDTH;
 import static org.nexial.core.excel.ExcelConfig.StyleConfig.*;
 import static org.nexial.core.model.ExecutionSummary.ExecutionLevel.*;
 import static org.nexial.core.model.ExecutionSummary.ExecutionLevel.ITERATION;
-import static java.io.File.separator;
-import static java.lang.System.lineSeparator;
-import static java.util.Locale.US;
-import static org.apache.commons.lang3.SystemUtils.*;
-import static org.apache.poi.ss.usermodel.Row.MissingCellPolicy.CREATE_NULL_AS_BLANK;
 
 /**
  * serves as the summary of a test execution, which can be scoped into:

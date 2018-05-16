@@ -22,60 +22,61 @@ import java.io.IOException;
 import org.jdom2.Document;
 import org.jdom2.Element;
 import org.jdom2.JDOMException;
-
 import org.nexial.commons.utils.XmlUtils;
+import org.nexial.core.utils.ConsoleUtils;
 
 import static java.lang.System.lineSeparator;
 
 public class XmlDataType extends ExpressionDataType<Element> {
-	private XmlTransformer transformer = new XmlTransformer();
+    private XmlTransformer transformer = new XmlTransformer();
 
-	private Document document;
+    private Document document;
 
-	public XmlDataType(String textValue) throws TypeConversionException { super(textValue); }
+    public XmlDataType(String textValue) throws TypeConversionException { super(textValue); }
 
-	private XmlDataType() { super(); }
+    private XmlDataType() { super(); }
 
-	@Override
-	public String getName() { return "XML"; }
+    @Override
+    public String getName() { return "XML"; }
 
-	public void reset(Element newXmlNode) throws IOException {
-		this.document = newXmlNode.getDocument();
-		this.value = newXmlNode;
-		this.textValue = XmlUtils.toPrettyXml(newXmlNode);
-	}
+    public void reset(Element newXmlNode) throws IOException {
+        this.document = newXmlNode.getDocument();
+        this.value = newXmlNode;
+        this.textValue = XmlUtils.toPrettyXml(newXmlNode);
+    }
 
-	public Document getDocument() { return document; }
+    public Document getDocument() { return document; }
 
-	@Override
-	public String toString() { return getName() + "(" + lineSeparator() + getTextValue() + lineSeparator() + ")"; }
+    @Override
+    public String toString() { return getName() + "(" + lineSeparator() + getTextValue() + lineSeparator() + ")"; }
 
-	@Override
-	Transformer getTransformer() { return transformer; }
+    @Override
+    Transformer getTransformer() { return transformer; }
 
-	@Override
-	XmlDataType snapshot() {
-		XmlDataType snapshot = new XmlDataType();
-		snapshot.transformer = transformer;
-		snapshot.value = value;
-		snapshot.textValue = textValue;
-		snapshot.document = document;
-		return snapshot;
-	}
+    @Override
+    XmlDataType snapshot() {
+        XmlDataType snapshot = new XmlDataType();
+        snapshot.transformer = transformer;
+        snapshot.value = value;
+        snapshot.textValue = textValue;
+        snapshot.document = document;
+        return snapshot;
+    }
 
-	@Override
-	protected void init() throws TypeConversionException { parse(); }
+    @Override
+    protected void init() throws TypeConversionException { parse(); }
 
-	protected void parse() throws TypeConversionException {
-		try {
-			document = XmlUtils.parse(textValue);
-			if (document == null) {
-				throw new TypeConversionException(getName(), getTextValue(), "Invalid XML: " + textValue);
-			}
+    protected void parse() throws TypeConversionException {
+        try {
+            document = XmlUtils.parse(textValue);
+            if (document == null) {
+                throw new TypeConversionException(getName(), getTextValue(), "Invalid XML: " + textValue);
+            }
 
-			value = document.getRootElement();
-		} catch (JDOMException | IOException e) {
-			throw new TypeConversionException(getName(), getTextValue(), "Error when converting " + textValue);
-		}
-	}
+            value = document.getRootElement();
+        } catch (JDOMException | IOException e) {
+            ConsoleUtils.error(getName(), e.getMessage(), e);
+            throw new TypeConversionException(getName(), getTextValue(), "Error when converting " + textValue);
+        }
+    }
 }

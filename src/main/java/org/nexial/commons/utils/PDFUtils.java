@@ -27,11 +27,11 @@ import com.itextpdf.text.pdf.PdfReader;
  */
 public final class PDFUtils {
 
-	private PDFUtils() {}
+    private PDFUtils() {}
 
-	public static PdfReader toPdfReader(byte[] content) throws IOException {
-		PdfReader reader = new PdfReader(content);
-		reader.close();
-		return reader;
-	}
+    public static PdfReader toPdfReader(byte[] content) throws IOException {
+        PdfReader reader = new PdfReader(content);
+        reader.close();
+        return reader;
+    }
 }

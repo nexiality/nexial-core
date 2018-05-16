@@ -25,22 +25,22 @@ import java.util.concurrent.ScheduledExecutorService;
 import org.apache.commons.lang3.RandomStringUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.SystemUtils;
-
 import org.nexial.core.NexialConst.Project;
 import org.nexial.core.utils.ConsoleUtils;
+
 import com.xuggle.mediatool.IMediaWriter;
 import com.xuggle.mediatool.MediaToolAdapter;
 import com.xuggle.mediatool.ToolFactory;
 import com.xuggle.xuggler.IMetaData;
 import com.xuggle.xuggler.IRational;
 
-import static org.nexial.core.NexialConst.Data.RECORDER_TYPE_MP4;
-import static org.nexial.core.NexialConst.OPT_OUT_DIR;
-import static org.nexial.core.plugins.base.Mp4ScreenRecorder.Quality.HIGH;
 import static com.xuggle.xuggler.ICodec.ID.CODEC_ID_H264;
 import static java.awt.image.BufferedImage.*;
 import static java.io.File.separator;
 import static java.util.concurrent.TimeUnit.*;
+import static org.nexial.core.NexialConst.Data.RECORDER_TYPE_MP4;
+import static org.nexial.core.NexialConst.OPT_OUT_DIR;
+import static org.nexial.core.plugins.base.Mp4ScreenRecorder.Quality.HIGH;
 
 public class Mp4ScreenRecorder extends MediaToolAdapter implements Runnable, ScreenRecorder {
     private static final String TITLE = "title";
@@ -123,7 +123,7 @@ public class Mp4ScreenRecorder extends MediaToolAdapter implements Runnable, Scr
     @Override
     public void forcefulTerminate() {
         // try {
-            stop();
+        stop();
         // } catch (IOException e) {
         //     System.err.println("Unable to forcefully terminate screen recording: " + e.getMessage());
         //     e.printStackTrace();

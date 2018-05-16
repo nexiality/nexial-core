@@ -19,9 +19,7 @@ package org.nexial.core.plugins.ws;
 
 import java.security.KeyManagementException;
 import java.security.NoSuchAlgorithmException;
-import java.security.cert.CertificateException;
 import java.security.cert.X509Certificate;
-
 import javax.net.ssl.HostnameVerifier;
 import javax.net.ssl.SSLContext;
 import javax.net.ssl.TrustManager;
@@ -31,31 +29,31 @@ import org.apache.http.conn.ssl.NoopHostnameVerifier;
 import org.apache.http.conn.ssl.SSLConnectionSocketFactory;
 
 public class NaiveConnectionSocketFactory extends SSLConnectionSocketFactory {
-	private static final SSLContext I_TRUST_EVERYONE = initNaiveContext();
-	private static final HostnameVerifier NOOP_HOST_VERIFIER = initNoopHostVerifier();
+    private static final SSLContext I_TRUST_EVERYONE = initNaiveContext();
+    private static final HostnameVerifier NOOP_HOST_VERIFIER = initNoopHostVerifier();
 
-	public NaiveConnectionSocketFactory() { super(I_TRUST_EVERYONE, NOOP_HOST_VERIFIER); }
+    public NaiveConnectionSocketFactory() { super(I_TRUST_EVERYONE, NOOP_HOST_VERIFIER); }
 
-	private static HostnameVerifier initNoopHostVerifier() { return new NoopHostnameVerifier(); }
+    private static HostnameVerifier initNoopHostVerifier() { return new NoopHostnameVerifier(); }
 
-	private static SSLContext initNaiveContext() {
-		SSLContext sslContext;
-		try {
-			sslContext = SSLContext.getInstance("TLS");
+    private static SSLContext initNaiveContext() {
+        SSLContext sslContext;
+        try {
+            sslContext = SSLContext.getInstance("TLS");
 
-			TrustManager tm = new X509TrustManager() {
-				public void checkClientTrusted(X509Certificate[] chain, String authType) { }
+            TrustManager tm = new X509TrustManager() {
+                public void checkClientTrusted(X509Certificate[] chain, String authType) { }
 
-				public void checkServerTrusted(X509Certificate[] chain, String authType) { }
+                public void checkServerTrusted(X509Certificate[] chain, String authType) { }
 
-				public X509Certificate[] getAcceptedIssuers() { return new X509Certificate[0]; }
-			};
+                public X509Certificate[] getAcceptedIssuers() { return new X509Certificate[0]; }
+            };
 
-			sslContext.init(null, new TrustManager[]{tm}, null);
-		} catch (NoSuchAlgorithmException | KeyManagementException e) {
-			throw new RuntimeException("Unable to initialize NaiveConnectionSocketFactory:" + e.getMessage());
-		}
+            sslContext.init(null, new TrustManager[]{tm}, null);
+        } catch (NoSuchAlgorithmException | KeyManagementException e) {
+            throw new RuntimeException("Unable to initialize NaiveConnectionSocketFactory:" + e.getMessage());
+        }
 
-		return sslContext;
-	}
+        return sslContext;
+    }
 }

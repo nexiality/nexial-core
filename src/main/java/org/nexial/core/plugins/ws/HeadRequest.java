@@ -17,13 +17,10 @@
 
 package org.nexial.core.plugins.ws;
 
-import java.io.UnsupportedEncodingException;
-
 import org.apache.commons.lang3.StringUtils;
 import org.apache.http.client.config.RequestConfig;
 import org.apache.http.client.methods.HttpHead;
 import org.apache.http.client.methods.HttpUriRequest;
-
 import org.nexial.core.model.ExecutionContext;
 
 /**
@@ -31,21 +28,21 @@ import org.nexial.core.model.ExecutionContext;
  */
 public class HeadRequest extends GetRequest {
 
-	HeadRequest(ExecutionContext context) {
-		super(context);
-		method = "HEAD";
-	}
+    HeadRequest(ExecutionContext context) {
+        super(context);
+        method = "HEAD";
+    }
 
-	@Override
-	protected HttpUriRequest prepRequest(RequestConfig requestConfig) {
-		if (StringUtils.isNotBlank(getQueryString())) { url += "?" + getQueryString(); }
+    @Override
+    protected HttpUriRequest prepRequest(RequestConfig requestConfig) {
+        if (StringUtils.isNotBlank(getQueryString())) { url += "?" + getQueryString(); }
 
-		HttpHead http = new HttpHead(url);
-		http.setConfig(requestConfig);
+        HttpHead http = new HttpHead(url);
+        http.setConfig(requestConfig);
 
-		setRequestHeaders(http);
+        setRequestHeaders(http);
 
-		return http;
-	}
+        return http;
+    }
 
 }

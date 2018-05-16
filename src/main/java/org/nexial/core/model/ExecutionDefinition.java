@@ -26,122 +26,122 @@ import org.nexial.core.excel.Excel;
 import org.nexial.core.utils.ConsoleUtils;
 
 public class ExecutionDefinition {
-	private String description;
-	private String testScript;
-	private List<String> scenarios;
-	private String dataFile;
-	private List<String> dataSheets;
-	private boolean failFast = true;
-	private boolean serialMode = true;
-	private boolean loadTestMode = false;
-	private int minimumLoad;
-	private int maximumLoad;
-	private int rampUpSec;
-	private int holdForSec;
+    private String description;
+    private String testScript;
+    private List<String> scenarios;
+    private String dataFile;
+    private List<String> dataSheets;
+    private boolean failFast = true;
+    private boolean serialMode = true;
+    private boolean loadTestMode = false;
+    private int minimumLoad;
+    private int maximumLoad;
+    private int rampUpSec;
+    private int holdForSec;
 
-	private TestProject project;
-	private String runId;
-	private TestData testData;
+    private TestProject project;
+    private String runId;
+    private TestData testData;
 
-	private String planFilename;
-	private String planName;
-	private int planSequnce;
+    private String planFilename;
+    private String planName;
+    private int planSequnce;
 
-	public ExecutionDefinition() { }
+    public ExecutionDefinition() { }
 
-	public String getDescription() { return description; }
+    public String getDescription() { return description; }
 
-	public void setDescription(String description) { this.description = description; }
+    public void setDescription(String description) { this.description = description; }
 
-	public String getTestScript() { return testScript; }
+    public String getTestScript() { return testScript; }
 
-	public void setTestScript(String testScript) { this.testScript = testScript; }
+    public void setTestScript(String testScript) { this.testScript = testScript; }
 
-	public List<String> getScenarios() { return scenarios; }
+    public List<String> getScenarios() { return scenarios; }
 
-	public void setScenarios(List<String> scenarios) { this.scenarios = scenarios; }
+    public void setScenarios(List<String> scenarios) { this.scenarios = scenarios; }
 
-	public String getDataFile() { return dataFile; }
+    public String getDataFile() { return dataFile; }
 
-	public void setDataFile(String dataFile) { this.dataFile = dataFile; }
+    public void setDataFile(String dataFile) { this.dataFile = dataFile; }
 
-	public List<String> getDataSheets() { return dataSheets; }
+    public List<String> getDataSheets() { return dataSheets; }
 
-	public void setDataSheets(List<String> dataSheets) { this.dataSheets = dataSheets; }
+    public void setDataSheets(List<String> dataSheets) { this.dataSheets = dataSheets; }
 
-	public boolean isFailFast() { return failFast; }
+    public boolean isFailFast() { return failFast; }
 
-	public void setFailFast(boolean failFast) { this.failFast = failFast; }
+    public void setFailFast(boolean failFast) { this.failFast = failFast; }
 
-	public boolean isSerialMode() { return serialMode; }
+    public boolean isSerialMode() { return serialMode; }
 
-	public void setSerialMode(boolean serialMode) { this.serialMode = serialMode; }
+    public void setSerialMode(boolean serialMode) { this.serialMode = serialMode; }
 
-	public boolean isLoadTestMode() { return loadTestMode; }
+    public boolean isLoadTestMode() { return loadTestMode; }
 
-	public void setLoadTestMode(boolean loadTestMode) { this.loadTestMode = loadTestMode; }
+    public void setLoadTestMode(boolean loadTestMode) { this.loadTestMode = loadTestMode; }
 
-	public int getMinimumLoad() { return minimumLoad; }
+    public int getMinimumLoad() { return minimumLoad; }
 
-	public void setMinimumLoad(int minimumLoad) { this.minimumLoad = minimumLoad; }
+    public void setMinimumLoad(int minimumLoad) { this.minimumLoad = minimumLoad; }
 
-	public int getMaximumLoad() { return maximumLoad; }
+    public int getMaximumLoad() { return maximumLoad; }
 
-	public void setMaximumLoad(int maximumLoad) { this.maximumLoad = maximumLoad; }
+    public void setMaximumLoad(int maximumLoad) { this.maximumLoad = maximumLoad; }
 
-	public int getRampUpSec() { return rampUpSec; }
+    public int getRampUpSec() { return rampUpSec; }
 
-	public void setRampUpSec(int rampUpSec) { this.rampUpSec = rampUpSec; }
+    public void setRampUpSec(int rampUpSec) { this.rampUpSec = rampUpSec; }
 
-	public int getHoldForSec() { return holdForSec; }
+    public int getHoldForSec() { return holdForSec; }
 
-	public void setHoldForSec(int holdForSec) { this.holdForSec = holdForSec; }
+    public void setHoldForSec(int holdForSec) { this.holdForSec = holdForSec; }
 
-	public TestProject getProject() { return project; }
+    public TestProject getProject() { return project; }
 
-	public void setProject(TestProject project) { this.project = project; }
+    public void setProject(TestProject project) { this.project = project; }
 
-	public String getOutPath() { return project.getOutPath(); }
+    public String getOutPath() { return project.getOutPath(); }
 
-	public TestData getTestData(boolean refetch) {
-		if (refetch) {
-			try {
-				parse();
-			} catch (IOException e) {
-				String error = "Unable to successfully read/parse data file " + dataFile + ": " + e.getMessage();
-				ConsoleUtils.error(error);
-				throw new RuntimeException(error, e);
-			}
-		}
+    public TestData getTestData(boolean refetch) {
+        if (refetch) {
+            try {
+                parse();
+            } catch (IOException e) {
+                String error = "Unable to successfully read/parse data file " + dataFile + ": " + e.getMessage();
+                ConsoleUtils.error(error);
+                throw new RuntimeException(error, e);
+            }
+        }
 
-		return testData;
-	}
+        return testData;
+    }
 
-	public TestData getTestData() { return testData; }
+    public TestData getTestData() { return testData; }
 
-	public String getRunId() { return runId; }
+    public String getRunId() { return runId; }
 
-	public void setRunId(String runId) { this.runId = runId; }
+    public void setRunId(String runId) { this.runId = runId; }
 
-	public String getPlanFilename() { return planFilename; }
+    public String getPlanFilename() { return planFilename; }
 
-	public void setPlanFilename(String planFilename) { this.planFilename = planFilename; }
+    public void setPlanFilename(String planFilename) { this.planFilename = planFilename; }
 
-	public String getPlanName() { return planName; }
+    public String getPlanName() { return planName; }
 
-	public void setPlanName(String planName) { this.planName = planName; }
+    public void setPlanName(String planName) { this.planName = planName; }
 
-	public int getPlanSequnce() { return planSequnce; }
+    public int getPlanSequnce() { return planSequnce; }
 
-	public void setPlanSequnce(int planSequnce) { this.planSequnce = planSequnce; }
+    public void setPlanSequnce(int planSequnce) { this.planSequnce = planSequnce; }
 
-	public void parse() throws IOException {
-		// parse and collect all relevant test data so we can merge then into iteration-bound test script
-		testData = new TestData(new Excel(new File(dataFile)), dataSheets);
-	}
+    public void parse() throws IOException {
+        // parse and collect all relevant test data so we can merge then into iteration-bound test script
+        testData = new TestData(new Excel(new File(dataFile)), dataSheets);
+    }
 
-	public void infuseIntraExecutionData(Map<String, Object> intraExecutionData) {
-		testData.infuseIntraExecutionData(intraExecutionData);
-	}
+    public void infuseIntraExecutionData(Map<String, Object> intraExecutionData) {
+        testData.infuseIntraExecutionData(intraExecutionData);
+    }
 
 }

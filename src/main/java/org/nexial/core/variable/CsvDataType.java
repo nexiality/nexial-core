@@ -25,10 +25,10 @@ import org.apache.commons.collections4.MapUtils;
 import org.apache.commons.collections4.list.TreeList;
 import org.apache.commons.lang3.ArrayUtils;
 import org.apache.commons.lang3.StringUtils;
-
 import org.nexial.commons.utils.TextUtils;
 import org.nexial.core.plugins.io.CsvCommand;
 import org.nexial.core.utils.ConsoleUtils;
+
 import com.univocity.parsers.common.record.Record;
 import com.univocity.parsers.csv.CsvFormat;
 import com.univocity.parsers.csv.CsvParser;
@@ -58,32 +58,6 @@ public class CsvDataType extends ExpressionDataType<List<Record>> {
 
     @Override
     public String toString() { return getName() + "(" + lineSeparator() + getTextValue() + lineSeparator() + ")"; }
-
-    @Override
-    Transformer getTransformer() { return transformer; }
-
-    @Override
-    CsvDataType snapshot() {
-        CsvDataType snapshot = new CsvDataType();
-        snapshot.transformer = transformer;
-        snapshot.delim = delim;
-        snapshot.quote = quote;
-        snapshot.recordDelim = recordDelim;
-        snapshot.header = header;
-        snapshot.parser = parser;
-        if (CollectionUtils.isNotEmpty(headers)) { snapshot.headers = new ArrayList<>(headers); }
-        snapshot.rowCount = rowCount;
-        snapshot.columnCount = columnCount;
-        snapshot.indices = indices;
-        snapshot.flyweight = flyweight;
-        snapshot.readyToParse = readyToParse;
-        snapshot.textValue = textValue;
-        snapshot.value = value;
-        return snapshot;
-    }
-
-    @Override
-    protected void init() { parse(); }
 
     public List<String> getIndices() { return indices; }
 
@@ -177,6 +151,32 @@ public class CsvDataType extends ExpressionDataType<List<Record>> {
         value.sort((o1, o2) -> o2.getString(column).compareTo(o1.getString(column)));
         resetTextValue();
     }
+
+    @Override
+    Transformer getTransformer() { return transformer; }
+
+    @Override
+    CsvDataType snapshot() {
+        CsvDataType snapshot = new CsvDataType();
+        snapshot.transformer = transformer;
+        snapshot.delim = delim;
+        snapshot.quote = quote;
+        snapshot.recordDelim = recordDelim;
+        snapshot.header = header;
+        snapshot.parser = parser;
+        if (CollectionUtils.isNotEmpty(headers)) { snapshot.headers = new ArrayList<>(headers); }
+        snapshot.rowCount = rowCount;
+        snapshot.columnCount = columnCount;
+        snapshot.indices = indices;
+        snapshot.flyweight = flyweight;
+        snapshot.readyToParse = readyToParse;
+        snapshot.textValue = textValue;
+        snapshot.value = value;
+        return snapshot;
+    }
+
+    @Override
+    protected void init() { parse(); }
 
     protected void resetTextValue() {
         StringBuilder output = new StringBuilder();

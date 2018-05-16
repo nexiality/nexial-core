@@ -21,7 +21,6 @@ import org.apache.commons.lang3.StringUtils;
 import org.apache.poi.xssf.usermodel.XSSFCell;
 import org.apache.poi.xssf.usermodel.XSSFCellStyle;
 import org.apache.poi.xssf.usermodel.XSSFRow;
-
 import org.nexial.core.excel.Excel;
 import org.nexial.core.excel.Excel.Worksheet;
 import org.nexial.core.excel.ExcelConfig.StyleDecorator;
@@ -36,30 +35,30 @@ import static org.nexial.core.excel.ExcelConfig.StyleConfig.SCREENSHOT;
  * @see NestedMessage
  */
 public class NestedScreenCapture extends NestedMessage {
-	private XSSFCellStyle cellStyle;
-	private String link;
-	private String label = MSG_SCREENCAPTURE;
+    private XSSFCellStyle cellStyle;
+    private String link;
+    private String label = MSG_SCREENCAPTURE;
 
-	public NestedScreenCapture(Worksheet worksheet, String message, String link) {
-		super(worksheet, message);
-		// cell style must be associated with specific worksheet... CANNOT BE STATIC
-		cellStyle = StyleDecorator.generate(worksheet, SCREENSHOT);
-		this.link = link;
-	}
+    public NestedScreenCapture(Worksheet worksheet, String message, String link) {
+        super(worksheet, message);
+        // cell style must be associated with specific worksheet... CANNOT BE STATIC
+        cellStyle = StyleDecorator.generate(worksheet, SCREENSHOT);
+        this.link = link;
+    }
 
-	public NestedScreenCapture(Worksheet worksheet, String message, String link, String label) {
-		this(worksheet, message, link);
-		this.label = label;
-	}
+    public NestedScreenCapture(Worksheet worksheet, String message, String link, String label) {
+        this(worksheet, message, link);
+        this.label = label;
+    }
 
-	public String getLink() { return link; }
+    public String getLink() { return link; }
 
-	@Override
-	public void printTo(XSSFRow row) {
-		super.printTo(row);
-		if (StringUtils.isNotBlank(link)) {
-			XSSFCell cell = Excel.setHyperlink(row.createCell(COL_IDX_CAPTURE_SCREEN), link, label);
-			cell.setCellStyle(cellStyle);
-		}
-	}
+    @Override
+    public void printTo(XSSFRow row) {
+        super.printTo(row);
+        if (StringUtils.isNotBlank(link)) {
+            XSSFCell cell = Excel.setHyperlink(row.createCell(COL_IDX_CAPTURE_SCREEN), link, label);
+            cell.setCellStyle(cellStyle);
+        }
+    }
 }

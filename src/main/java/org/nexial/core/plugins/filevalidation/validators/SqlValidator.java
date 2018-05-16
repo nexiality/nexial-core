@@ -21,18 +21,18 @@ import java.util.ArrayList;
 import java.util.List;
 
 import org.apache.commons.lang3.StringUtils;
-
 import org.nexial.core.ExecutionThread;
 import org.nexial.core.model.ExecutionContext;
 import org.nexial.core.plugins.NexialCommand;
-import org.nexial.core.plugins.db.RdbmsCommand;
 import org.nexial.core.plugins.db.JdbcResult;
+import org.nexial.core.plugins.db.RdbmsCommand;
 import org.nexial.core.plugins.filevalidation.FieldBean;
 import org.nexial.core.plugins.filevalidation.RecordBean;
 import org.nexial.core.plugins.filevalidation.config.ValidationConfig;
 import org.nexial.core.plugins.filevalidation.config.ValidationsBean.ValidationmethodsBean.ConditionBean;
 import org.nexial.core.plugins.filevalidation.validators.ValidationsExecutor.Severity;
 import org.nexial.core.plugins.filevalidation.validators.ValidationsExecutor.ValidationType;
+
 import com.google.gson.Gson;
 import com.google.gson.JsonArray;
 
@@ -81,10 +81,11 @@ public class SqlValidator implements FieldValidator {
                 JdbcResult result = ((JdbcResult) context.getObjectData(resultVar));
 
                 if (result.getRowCount() < 1) {
-                    String msg = " No matched row(s) found. Executed query in " + result.getElapsedTime() + " ms with " +
-                                 (result.hasError() ?
-                                  "ERROR " + result.getError() :
-                                  result.getRowCount() +" row(s)");
+                    String msg =
+                        " No matched row(s) found. Executed query in " + result.getElapsedTime() + " ms with " +
+                        (result.hasError() ?
+                         "ERROR " + result.getError() :
+                         result.getRowCount() + " row(s)");
                     logErrorMessage(field, msg, actual);
                 }
             }

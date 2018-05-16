@@ -22,11 +22,11 @@ package org.nexial.commons;
 
  */
 public class UploadCancelException extends RuntimeException {
-	public UploadCancelException() { }
+    public UploadCancelException() { }
 
-	public UploadCancelException(String message) { super(message); }
+    public UploadCancelException(String message) { super(message); }
 
-	public UploadCancelException(String message, Throwable cause) { super(message, cause); }
+    public UploadCancelException(String message, Throwable cause) { super(message, cause); }
 
-	public UploadCancelException(Throwable cause) { super(cause); }
+    public UploadCancelException(Throwable cause) { super(cause); }
 }

@@ -21,5 +21,5 @@ package org.nexial.core.compare;
  * definition of a evaluator, which is used to evaluate a condition.
  */
 public interface Evaluator {
-	boolean proceed(String lhs, String rhs) throws IncompatibleTypeException;
+    boolean proceed(String lhs, String rhs) throws IncompatibleTypeException;
 }

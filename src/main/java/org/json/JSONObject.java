@@ -127,6 +127,16 @@ public class JSONObject {
         }
 
         /**
+         * Get the "null" string value.
+         *
+         * @return The string "null".
+         */
+        @Override
+        public String toString() {
+            return "null";
+        }
+
+        /**
          * There is only intended to be a single instance of the NULL object,
          * so the clone method returns itself.
          *
@@ -135,16 +145,6 @@ public class JSONObject {
         @Override
         protected final Object clone() {
             return this;
-        }
-
-        /**
-         * Get the "null" string value.
-         *
-         * @return The string "null".
-         */
-        @Override
-        public String toString() {
-            return "null";
         }
     }
 
@@ -1993,6 +1993,28 @@ public class JSONObject {
         return results;
     }
 
+    /**
+     * Make a JSON text of this JSONObject. For compactness, no whitespace is
+     * added. If this would not result in a syntactically correct JSON text,
+     * then null will be returned instead.
+     * <p><b>
+     * Warning: This method assumes that the data structure is acyclical.
+     * </b>
+     *
+     * @return a printable, displayable, portable, transmittable representation
+     * of the object, beginning with <code>{</code>&nbsp;<small>(left
+     * brace)</small> and ending with <code>}</code>&nbsp;<small>(right
+     * brace)</small>.
+     */
+    @Override
+    public String toString() {
+        try {
+            return this.toString(0);
+        } catch (Exception e) {
+            return null;
+        }
+    }
+
     static Writer writeValue(Writer writer, Object value,
                              int indentFactor, int indent) throws JSONException, IOException {
         if (value == null || value.equals(null)) {
@@ -2151,26 +2173,6 @@ public class JSONObject {
             return bi;
         }
         throw new NumberFormatException("val [" + val + "] is not a valid number.");
-    }    /**
-     * Make a JSON text of this JSONObject. For compactness, no whitespace is
-     * added. If this would not result in a syntactically correct JSON text,
-     * then null will be returned instead.
-     * <p><b>
-     * Warning: This method assumes that the data structure is acyclical.
-     * </b>
-     *
-     * @return a printable, displayable, portable, transmittable representation
-     * of the object, beginning with <code>{</code>&nbsp;<small>(left
-     * brace)</small> and ending with <code>}</code>&nbsp;<small>(right
-     * brace)</small>.
-     */
-    @Override
-    public String toString() {
-        try {
-            return this.toString(0);
-        } catch (Exception e) {
-            return null;
-        }
     }
 
     /**
@@ -2235,8 +2237,6 @@ public class JSONObject {
             }
         }
     }
-
-
 
 
 }

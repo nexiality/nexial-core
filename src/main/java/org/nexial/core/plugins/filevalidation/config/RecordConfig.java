@@ -27,28 +27,6 @@ public class RecordConfig {
     private String recordIdFiled;
     private String recordId;
 
-    private RecordConfig() {}
-
-    public List<FieldConfig> getFieldConfigList() {
-        return fieldConfigList;
-    }
-
-    public List<MapFunctionConfig> getMapFunctionConfigs() {
-        return mapFunctionConfigs;
-    }
-
-    public String getFieldSeparator() {
-        return fieldSeparator;
-    }
-
-    public String getRecordIdFiled() {
-        return recordIdFiled;
-    }
-
-    public String getRecordId() {
-        return recordId;
-    }
-
     public static class RecordConfigBuilder {
         private List<FieldConfig> fieldConfigList;
         private List<MapFunctionConfig> mapFunctionConfigs;
@@ -93,6 +71,28 @@ public class RecordConfig {
         }
 
 
+    }
+
+    private RecordConfig() {}
+
+    public List<FieldConfig> getFieldConfigList() {
+        return fieldConfigList;
+    }
+
+    public List<MapFunctionConfig> getMapFunctionConfigs() {
+        return mapFunctionConfigs;
+    }
+
+    public String getFieldSeparator() {
+        return fieldSeparator;
+    }
+
+    public String getRecordIdFiled() {
+        return recordIdFiled;
+    }
+
+    public String getRecordId() {
+        return recordId;
     }
 
     @Override

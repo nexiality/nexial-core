@@ -308,8 +308,8 @@ public class TextTransformer<T extends TextDataType> extends Transformer {
             StringBuilder record = new StringBuilder();
             int lastPos = 0;
             for (int pos : positionNums) {
-                record.append(StringUtils.substring(line, lastPos, pos-1)).append(delim);
-                lastPos = pos-1;
+                record.append(StringUtils.substring(line, lastPos, pos - 1)).append(delim);
+                lastPos = pos - 1;
             }
             record.append(StringUtils.substring(line, lastPos));
             csvContent.append(record.toString()).append("\n");

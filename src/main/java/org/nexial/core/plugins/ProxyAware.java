@@ -18,5 +18,5 @@
 package org.nexial.core.plugins;
 
 public interface ProxyAware {
-	// todo: need to resume when proxy code is ready to use
+    // todo: need to resume when proxy code is ready to use
 }

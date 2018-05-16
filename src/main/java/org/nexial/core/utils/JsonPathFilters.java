@@ -26,7 +26,6 @@ import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.json.JSONArray;
 import org.json.JSONObject;
-
 import org.nexial.commons.utils.RegexUtils;
 import org.nexial.core.utils.JSONPath.Option;
 
@@ -193,6 +192,9 @@ class JsonPathFilters {
 
         throw new IllegalArgumentException("Unknown/unsupported type: " + candidate.getClass().getSimpleName());
     }
+
+    @Override
+    public String toString() { return original; }
 
     protected void find(JSONArray array, JSONArray matched) {
         if (array.length() < 1) { return; }
@@ -405,7 +407,4 @@ class JsonPathFilters {
 
         return foundMatchingProp;
     }
-
-    @Override
-    public String toString() { return original; }
 }

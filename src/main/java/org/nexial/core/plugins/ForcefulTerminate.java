@@ -23,7 +23,7 @@ package org.nexial.core.plugins;
  * condition where external/dependent processes/threads cannot be timely terminated.
  */
 public interface ForcefulTerminate {
-	boolean mustForcefullyTerminate();
+    boolean mustForcefullyTerminate();
 
-	void forcefulTerminate();
+    void forcefulTerminate();
 }

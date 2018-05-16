@@ -26,7 +26,6 @@ import java.util.Map;
 
 import org.apache.commons.lang3.BooleanUtils;
 import org.apache.commons.lang3.StringUtils;
-
 import org.nexial.commons.proc.RuntimeUtils;
 import org.nexial.commons.utils.DateUtility;
 import org.nexial.core.model.ExecutionContext;

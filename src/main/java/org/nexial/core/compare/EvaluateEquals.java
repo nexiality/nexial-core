@@ -23,11 +23,11 @@ import org.apache.commons.lang3.StringUtils;
  *
  */
 public class EvaluateEquals extends EvaluatorBase {
-	@Override
-	protected boolean evaluate(double lhs, double rhs) throws IncompatibleTypeException { return lhs == rhs; }
+    @Override
+    protected boolean evaluate(double lhs, double rhs) throws IncompatibleTypeException { return lhs == rhs; }
 
-	@Override
-	protected boolean evaluate(String lhs, String rhs) throws IncompatibleTypeException {
-		return StringUtils.equals(lhs, rhs);
-	}
+    @Override
+    protected boolean evaluate(String lhs, String rhs) throws IncompatibleTypeException {
+        return StringUtils.equals(lhs, rhs);
+    }
 }

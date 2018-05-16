@@ -22,7 +22,6 @@ import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
-
 import javax.validation.constraints.NotNull;
 
 /**
@@ -65,17 +64,17 @@ public interface FilePathFilter {
         }
 
         final Set<Character> nonAlphaNumericAndStar = uniqueChars.stream()
-                .filter(x -> !Character.isLetter(x)
-                        && !Character.isDigit(x)
-                        && !new HashSet<Character>() {{
-                    add('*');
-                    add('^');
-                }}.contains(x))
-                .collect(Collectors.toSet());
+                                                                 .filter(x -> !Character.isLetter(x)
+                                                                              && !Character.isDigit(x)
+                                                                              && !new HashSet<Character>() {{
+                                                                     add('*');
+                                                                     add('^');
+                                                                 }}.contains(x))
+                                                                 .collect(Collectors.toSet());
 
         for (final Character x : nonAlphaNumericAndStar) {
             filePattern = filePattern.replace(String.valueOf(x),
-                    String.format((x == '[' || x == ']') ? "[\\%s]{1}" : "[%s]{1}", x));
+                                              String.format((x == '[' || x == ']') ? "[\\%s]{1}" : "[%s]{1}", x));
         }
 
         filePattern = filePattern.replace("^", String.format("[%s]{1}", "\\^"));

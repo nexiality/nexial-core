@@ -18,34 +18,34 @@
 package org.nexial.commons;
 
 public class InvalidInputRuntimeException extends RuntimeException {
-	private static final long serialVersionUID = -1135240741709126073L;
-	private Object offense;
-	private String detailMessage;
+    private static final long serialVersionUID = -1135240741709126073L;
+    private Object offense;
+    private String detailMessage;
 
-	public InvalidInputRuntimeException(String message) {
-		super(message);
-		detailMessage = message;
-	}
+    public InvalidInputRuntimeException(String message) {
+        super(message);
+        detailMessage = message;
+    }
 
-	public InvalidInputRuntimeException(String message, Object offense) {
-		super(message);
-		detailMessage = message + ", target: " + offense.getClass();
-		this.offense = offense;
-	}
+    public InvalidInputRuntimeException(String message, Object offense) {
+        super(message);
+        detailMessage = message + ", target: " + offense.getClass();
+        this.offense = offense;
+    }
 
-	public InvalidInputRuntimeException(String message, Throwable cause, Object offense) {
-		super(message, cause);
-		detailMessage = message + "; target: " + offense.getClass();
-		this.offense = offense;
-	}
+    public InvalidInputRuntimeException(String message, Throwable cause, Object offense) {
+        super(message, cause);
+        detailMessage = message + "; target: " + offense.getClass();
+        this.offense = offense;
+    }
 
-	public InvalidInputRuntimeException(Throwable cause, Object offense) {
-		super(cause);
-		detailMessage = "target: " + offense.getClass();
-		this.offense = offense;
-	}
+    public InvalidInputRuntimeException(Throwable cause, Object offense) {
+        super(cause);
+        detailMessage = "target: " + offense.getClass();
+        this.offense = offense;
+    }
 
-	public Object getOffense() { return offense; }
+    public Object getOffense() { return offense; }
 
-	public String getDetailMessage() { return detailMessage; }
+    public String getDetailMessage() { return detailMessage; }
 }

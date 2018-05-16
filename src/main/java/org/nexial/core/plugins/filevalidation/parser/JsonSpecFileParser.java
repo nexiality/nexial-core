@@ -32,6 +32,7 @@ import org.nexial.core.plugins.filevalidation.config.JsonMappingConfig.Filesecti
 import org.nexial.core.plugins.filevalidation.config.JsonMappingConfig.FilesectionsBean.HeaderrecordBean;
 import org.nexial.core.plugins.filevalidation.config.JsonMappingConfig.RecordspecBean;
 import org.nexial.core.utils.CheckUtils;
+
 import com.google.gson.JsonElement;
 import com.google.gson.JsonParser;
 

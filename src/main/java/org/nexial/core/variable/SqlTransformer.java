@@ -21,7 +21,6 @@ import java.lang.reflect.Method;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
-
 import javax.validation.constraints.NotNull;
 
 import org.apache.commons.collections4.CollectionUtils;
@@ -29,14 +28,13 @@ import org.apache.commons.collections4.MapUtils;
 import org.apache.commons.lang3.BooleanUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.math.NumberUtils;
-
 import org.nexial.commons.utils.TextUtils;
 import org.nexial.core.ExecutionThread;
 import org.nexial.core.model.ExecutionContext;
 import org.nexial.core.plugins.NexialCommand;
-import org.nexial.core.plugins.db.RdbmsCommand;
 import org.nexial.core.plugins.db.JdbcOutcome;
 import org.nexial.core.plugins.db.JdbcResult;
+import org.nexial.core.plugins.db.RdbmsCommand;
 
 import static org.nexial.core.NexialConst.CSV_FIELD_DEIM;
 import static org.nexial.core.NexialConst.CSV_ROW_SEP;

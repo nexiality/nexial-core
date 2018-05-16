@@ -32,16 +32,15 @@ import org.apache.poi.ss.usermodel.Row;
 import org.apache.poi.ss.usermodel.Sheet;
 import org.apache.poi.ss.usermodel.Workbook;
 import org.apache.poi.xssf.usermodel.XSSFWorkbook;
-
 import org.nexial.core.ExecutionThread;
 import org.nexial.core.model.ExecutionContext;
 import org.nexial.core.plugins.filevalidation.RecordData;
 import org.nexial.core.utils.OutputFileUtils;
 import org.nexial.core.variable.Syspath;
 
+import static java.io.File.separator;
 import static org.nexial.core.NexialConst.DEF_FILE_ENCODING;
 import static org.nexial.core.NexialConst.GSON;
-import static java.io.File.separator;
 
 public class ErrorReport {
     private static ExecutionContext context = ExecutionThread.get();
@@ -134,7 +133,7 @@ public class ErrorReport {
         summarySheet = setSummaryData(summarySheet, 2, "Process Time", recordData.getProcessTime());
         summarySheet = setSummaryData(summarySheet, 3, "Total Processed",
                                       String.valueOf(recordData.getTotalRecordsProcessed()));
-        summarySheet = setSummaryData(summarySheet, 4,"Total Skipped",
+        summarySheet = setSummaryData(summarySheet, 4, "Total Skipped",
                                       String.valueOf(recordData.getSkippedRecords().keySet().size()));
         summarySheet = setSummaryData(summarySheet, 5, "Total Passed", String.valueOf(recordData.totalRecordsPassed()));
         summarySheet = setSummaryData(summarySheet, 6, "Total Errors", String.valueOf(recordData.totalRecordsFailed()));

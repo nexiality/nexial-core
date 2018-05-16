@@ -26,139 +26,139 @@ import org.apache.log4j.Priority;
  *
  */
 public final class PrintStreamLogProxy {
-	public static final class ProxyPrintStream extends PrintStream {
-		private Logger logger;
-		private Priority priority;
-		private PrintStream ps;
+    public static final class ProxyPrintStream extends PrintStream {
+        private Logger logger;
+        private Priority priority;
+        private PrintStream ps;
 
-		public ProxyPrintStream(PrintStream ps, Logger logger, Priority priority) {
-			super(ps);
-			this.ps = ps;
-			this.logger = logger;
-			this.priority = priority;
-		}
+        public ProxyPrintStream(PrintStream ps, Logger logger, Priority priority) {
+            super(ps);
+            this.ps = ps;
+            this.logger = logger;
+            this.priority = priority;
+        }
 
-		@Override
-		public void print(boolean b) {
-			ps.print(b);
-			logger.log(priority, b);
-		}
+        @Override
+        public void print(boolean b) {
+            ps.print(b);
+            logger.log(priority, b);
+        }
 
-		@Override
-		public void print(char b) {
-			ps.print(b);
-			logger.log(priority, b);
-		}
+        @Override
+        public void print(char b) {
+            ps.print(b);
+            logger.log(priority, b);
+        }
 
-		@Override
-		public void print(int b) {
-			ps.print(b);
-			logger.log(priority, b);
-		}
+        @Override
+        public void print(int b) {
+            ps.print(b);
+            logger.log(priority, b);
+        }
 
-		@Override
-		public void print(long b) {
-			ps.print(b);
-			logger.log(priority, b);
-		}
+        @Override
+        public void print(long b) {
+            ps.print(b);
+            logger.log(priority, b);
+        }
 
-		@Override
-		public void print(float b) {
-			ps.print(b);
-			logger.log(priority, b);
-		}
+        @Override
+        public void print(float b) {
+            ps.print(b);
+            logger.log(priority, b);
+        }
 
-		@Override
-		public void print(double b) {
-			ps.print(b);
-			logger.log(priority, b);
-		}
+        @Override
+        public void print(double b) {
+            ps.print(b);
+            logger.log(priority, b);
+        }
 
-		@Override
-		public void print(char[] b) {
-			ps.print(b);
-			logger.log(priority, String.valueOf(b));
-		}
+        @Override
+        public void print(char[] b) {
+            ps.print(b);
+            logger.log(priority, String.valueOf(b));
+        }
 
-		@Override
-		public void print(String b) {
-			ps.print(b);
-			logger.log(priority, b);
-		}
+        @Override
+        public void print(String b) {
+            ps.print(b);
+            logger.log(priority, b);
+        }
 
-		@Override
-		public void print(Object b) {
-			ps.print(b);
-			logger.log(priority, b);
-		}
+        @Override
+        public void print(Object b) {
+            ps.print(b);
+            logger.log(priority, b);
+        }
 
-		@Override
-		public void println() {
-			ps.println();
-			logger.log(priority, "");
-		}
+        @Override
+        public void println() {
+            ps.println();
+            logger.log(priority, "");
+        }
 
-		@Override
-		public void println(boolean b) {
-			ps.println(b);
-			logger.log(priority, b);
-		}
+        @Override
+        public void println(boolean b) {
+            ps.println(b);
+            logger.log(priority, b);
+        }
 
-		@Override
-		public void println(char b) {
-			ps.println(b);
-			logger.log(priority, b);
-		}
+        @Override
+        public void println(char b) {
+            ps.println(b);
+            logger.log(priority, b);
+        }
 
-		@Override
-		public void println(int b) {
-			ps.println(b);
-			logger.log(priority, b);
-		}
+        @Override
+        public void println(int b) {
+            ps.println(b);
+            logger.log(priority, b);
+        }
 
-		@Override
-		public void println(long b) {
-			ps.println(b);
-			logger.log(priority, b);
-		}
+        @Override
+        public void println(long b) {
+            ps.println(b);
+            logger.log(priority, b);
+        }
 
-		@Override
-		public void println(float b) {
-			ps.println(b);
-			logger.log(priority, b);
-		}
+        @Override
+        public void println(float b) {
+            ps.println(b);
+            logger.log(priority, b);
+        }
 
-		@Override
-		public void println(double b) {
-			ps.println(b);
-			logger.log(priority, b);
-		}
+        @Override
+        public void println(double b) {
+            ps.println(b);
+            logger.log(priority, b);
+        }
 
-		@Override
-		public void println(char[] b) {
-			ps.println(b);
-			logger.log(priority, String.valueOf(b));
-		}
+        @Override
+        public void println(char[] b) {
+            ps.println(b);
+            logger.log(priority, String.valueOf(b));
+        }
 
-		@Override
-		public void println(String b) {
-			ps.println(b);
-			logger.log(priority, b);
-		}
+        @Override
+        public void println(String b) {
+            ps.println(b);
+            logger.log(priority, b);
+        }
 
-		@Override
-		public void println(Object b) {
-			ps.println(b);
-			logger.log(priority, b);
-		}
-	}
+        @Override
+        public void println(Object b) {
+            ps.println(b);
+            logger.log(priority, b);
+        }
+    }
 
-	private PrintStreamLogProxy() {}
+    private PrintStreamLogProxy() {}
 
-	public static PrintStream createLoggingProxy(final PrintStream ps, final Logger logger, final Priority priority) {
-		if (ps == null) { throw new RuntimeException("underlying print stream cannot be null!"); }
-		if (logger == null) { throw new RuntimeException("underlying logger cannot be null!"); }
-		if (priority == null) { throw new RuntimeException("priority must be explicitly defined!"); }
-		return new ProxyPrintStream(ps, logger, priority);
-	}
+    public static PrintStream createLoggingProxy(final PrintStream ps, final Logger logger, final Priority priority) {
+        if (ps == null) { throw new RuntimeException("underlying print stream cannot be null!"); }
+        if (logger == null) { throw new RuntimeException("underlying logger cannot be null!"); }
+        if (priority == null) { throw new RuntimeException("priority must be explicitly defined!"); }
+        return new ProxyPrintStream(ps, logger, priority);
+    }
 }

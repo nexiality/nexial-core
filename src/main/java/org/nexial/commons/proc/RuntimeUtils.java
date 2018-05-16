@@ -18,10 +18,10 @@
 package org.nexial.commons.proc;
 
 public final class RuntimeUtils {
-	private RuntimeUtils() { }
+    private RuntimeUtils() { }
 
-	public static long memUsed() { return Runtime.getRuntime().totalMemory() - Runtime.getRuntime().freeMemory(); }
+    public static long memUsed() { return Runtime.getRuntime().totalMemory() - Runtime.getRuntime().freeMemory(); }
 
-	public static void gc() { Runtime.getRuntime().gc(); }
+    public static void gc() { Runtime.getRuntime().gc(); }
 
 }

@@ -23,51 +23,51 @@ import java.io.Serializable;
  * aka Application Under Test.
  */
 class Aut implements Serializable {
-	private String path;
-	private String exe;
-	private String dotnetConfig;
-	private String args;
-	private boolean terminateExisting;
-	private String workingDirectory;
-	private boolean runFromWorkingDirectory;
+    private String path;
+    private String exe;
+    private String dotnetConfig;
+    private String args;
+    private boolean terminateExisting;
+    private String workingDirectory;
+    private boolean runFromWorkingDirectory;
 
-	public String getPath() { return path; }
+    public String getPath() { return path; }
 
-	public void setPath(String path) { this.path = path; }
+    public void setPath(String path) { this.path = path; }
 
-	public String getExe() { return exe; }
+    public String getExe() { return exe; }
 
-	public void setExe(String exe) { this.exe = exe; }
+    public void setExe(String exe) { this.exe = exe; }
 
-	public String getDotnetConfig() { return dotnetConfig; }
+    public String getDotnetConfig() { return dotnetConfig; }
 
-	public void setDotnetConfig(String dotnetConfig) { this.dotnetConfig = dotnetConfig; }
+    public void setDotnetConfig(String dotnetConfig) { this.dotnetConfig = dotnetConfig; }
 
-	public String getArgs() { return args; }
+    public String getArgs() { return args; }
 
-	public void setArgs(String args) { this.args = args; }
+    public void setArgs(String args) { this.args = args; }
 
-	public boolean isTerminateExisting() { return terminateExisting; }
+    public boolean isTerminateExisting() { return terminateExisting; }
 
-	public void setTerminateExisting(boolean terminateExisting) { this.terminateExisting = terminateExisting; }
+    public void setTerminateExisting(boolean terminateExisting) { this.terminateExisting = terminateExisting; }
 
-	public String getWorkingDirectory() { return workingDirectory; }
+    public String getWorkingDirectory() { return workingDirectory; }
 
-	public void setWorkingDirectory(String workingDirectory) { this.workingDirectory = workingDirectory; }
+    public void setWorkingDirectory(String workingDirectory) { this.workingDirectory = workingDirectory; }
 
-	public boolean isRunFromWorkingDirectory() { return runFromWorkingDirectory; }
+    public boolean isRunFromWorkingDirectory() { return runFromWorkingDirectory; }
 
-	public void setRunFromWorkingDirectory(boolean runFromWorkingDirectory) {
-		this.runFromWorkingDirectory = runFromWorkingDirectory;
-	}
+    public void setRunFromWorkingDirectory(boolean runFromWorkingDirectory) {
+        this.runFromWorkingDirectory = runFromWorkingDirectory;
+    }
 
-	@Override
-	public String toString() {
-		return "path='" + path + "', \n" +
-		       "exe='" + exe + "', \n" +
-		       "dotnetConfig='" + dotnetConfig + "', \n" +
-		       "args='" + args + "', \n" +
-		       "terminateExisting=" + terminateExisting + ", \n" +
-		       "runFromWorkingDirectory=" + runFromWorkingDirectory;
-	}
+    @Override
+    public String toString() {
+        return "path='" + path + "', \n" +
+               "exe='" + exe + "', \n" +
+               "dotnetConfig='" + dotnetConfig + "', \n" +
+               "args='" + args + "', \n" +
+               "terminateExisting=" + terminateExisting + ", \n" +
+               "runFromWorkingDirectory=" + runFromWorkingDirectory;
+    }
 }

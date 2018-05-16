@@ -18,28 +18,28 @@
 package org.nexial.core.variable;
 
 public class TypeConversionException extends ExpressionException {
-	private String dataType;
-	private String dataValue;
+    private String dataType;
+    private String dataValue;
 
-	public TypeConversionException(String dataType, String dataValue) {
-		super("Error when converting as '" + dataType + "': " + dataValue);
-		this.dataType = dataType;
-		this.dataValue = dataValue;
-	}
+    public TypeConversionException(String dataType, String dataValue) {
+        super("Error when converting as '" + dataType + "': " + dataValue);
+        this.dataType = dataType;
+        this.dataValue = dataValue;
+    }
 
-	public TypeConversionException(String dataType, String dataValue, String message) {
-		super(message);
-		this.dataType = dataType;
-		this.dataValue = dataValue;
-	}
+    public TypeConversionException(String dataType, String dataValue, String message) {
+        super(message);
+        this.dataType = dataType;
+        this.dataValue = dataValue;
+    }
 
-	public TypeConversionException(String dataType, String dataValue, String message, Throwable cause) {
-		super(message, cause);
-		this.dataType = dataType;
-		this.dataValue = dataValue;
-	}
+    public TypeConversionException(String dataType, String dataValue, String message, Throwable cause) {
+        super(message, cause);
+        this.dataType = dataType;
+        this.dataValue = dataValue;
+    }
 
-	public String getDataType() { return dataType; }
+    public String getDataType() { return dataType; }
 
-	public String getDataValue() { return dataValue; }
+    public String getDataValue() { return dataValue; }
 }

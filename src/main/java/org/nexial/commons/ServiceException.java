@@ -22,13 +22,13 @@ package org.nexial.commons;
 
  */
 public class ServiceException extends AppException {
-	private static final long serialVersionUID = -9047901766636337810L;
+    private static final long serialVersionUID = -9047901766636337810L;
 
-	public ServiceException() { }
+    public ServiceException() { }
 
-	public ServiceException(String message) { super(message); }
+    public ServiceException(String message) { super(message); }
 
-	public ServiceException(String message, Throwable cause) { super(message, cause); }
+    public ServiceException(String message, Throwable cause) { super(message, cause); }
 
-	public ServiceException(String errorCode, String errorMsg, Throwable cause) { super(errorCode, errorMsg, cause); }
+    public ServiceException(String errorCode, String errorMsg, Throwable cause) { super(errorCode, errorMsg, cause); }
 }

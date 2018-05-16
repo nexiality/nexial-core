@@ -20,13 +20,11 @@ package org.nexial.core.plugins.aws;
 import java.io.File;
 import java.util.Collections;
 import java.util.List;
-
 import javax.validation.constraints.NotNull;
 
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang3.StringUtils;
-
 import org.nexial.commons.utils.IOFilePathFilter;
 import org.nexial.commons.utils.TextUtils;
 import org.nexial.core.IntegrationConfigException;
@@ -38,11 +36,11 @@ import org.nexial.core.plugins.RemoteFileActionOutcome;
 import org.nexial.core.plugins.base.BaseCommand;
 import org.nexial.core.utils.ConsoleUtils;
 
+import static java.io.File.separator;
 import static org.nexial.core.NexialConst.S3_PATH_SEPARATOR;
 import static org.nexial.core.plugins.RemoteFileActionOutcome.TransferAction.*;
 import static org.nexial.core.plugins.RemoteFileActionOutcome.TransferProtocol.AWS;
 import static org.nexial.core.utils.CheckUtils.*;
-import static java.io.File.separator;
 
 /**
  * This is a class which provides various AWS S3 commands to perform various operations over S3 bucket through Nexial.
@@ -409,7 +407,7 @@ public class S3Command extends BaseCommand {
         }
 
         return StepResult.success(String.format("The file(s) are %s to the target path '%s': %s.",
-                                                  removeLocal ? "moved" : "copied",
+                                                removeLocal ? "moved" : "copied",
                                                 s3Path,
                                                 TextUtils.toString(outcome.getAffected(), "\n")));
     }

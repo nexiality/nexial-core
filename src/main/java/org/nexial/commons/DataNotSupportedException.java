@@ -19,12 +19,11 @@ package org.nexial.commons;
 
 /**
  * @author $Author: lium $
-
  */
 public class DataNotSupportedException extends AppException {
 
-	public DataNotSupportedException(Object unsupported) {
-		super((unsupported == null ? "Null data " : "Data type '" + unsupported.getClass() + "'") +
-		      "is not supported by this service.");
-	}
+    public DataNotSupportedException(Object unsupported) {
+        super((unsupported == null ? "Null data " : "Data type '" + unsupported.getClass() + "'") +
+              "is not supported by this service.");
+    }
 }

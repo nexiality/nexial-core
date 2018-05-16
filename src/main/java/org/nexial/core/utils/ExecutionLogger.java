@@ -23,10 +23,6 @@ import java.util.List;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.poi.xssf.usermodel.XSSFCell;
-import org.nexial.core.plugins.NexialCommand;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
 import org.nexial.core.ExecutionThread;
 import org.nexial.core.excel.Excel.Worksheet;
 import org.nexial.core.model.ExecutionContext;
@@ -34,6 +30,9 @@ import org.nexial.core.model.TestCase;
 import org.nexial.core.model.TestScenario;
 import org.nexial.core.model.TestStep;
 import org.nexial.core.plugins.CanLogExternally;
+import org.nexial.core.plugins.NexialCommand;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public class ExecutionLogger {
     private String runId;

@@ -42,49 +42,49 @@ import static org.nexial.core.NexialConst.DEF_CHARSET;
  * $
  */
 public final class SqlFile {
-	public static final String STATEMENT_DELIMITER = ";";
-	public static final String COMMENT = "--";
+    public static final String STATEMENT_DELIMITER = ";";
+    public static final String COMMENT = "--";
 
-	private File file;
-	private List<String> statements = new ArrayList<>();
+    private File file;
+    private List<String> statements = new ArrayList<>();
 
-	private SqlFile() { }
+    private SqlFile() { }
 
-	public static SqlFile newInstance(File file) throws IOException {
-		if (!file.exists() || !file.canRead()) {
-			throw new IOException("Cannot read/access SQL file '" + file.getAbsolutePath() + "'.");
-		}
+    public static SqlFile newInstance(File file) throws IOException {
+        if (!file.exists() || !file.canRead()) {
+            throw new IOException("Cannot read/access SQL file '" + file.getAbsolutePath() + "'.");
+        }
 
-		SqlFile f = new SqlFile();
-		f.parse(file);
-		return f;
-	}
+        SqlFile f = new SqlFile();
+        f.parse(file);
+        return f;
+    }
 
-	public List<String> getStatements() { return statements; }
+    public List<String> getStatements() { return statements; }
 
-	public File getFile() { return file; }
+    public File getFile() { return file; }
 
-	private void parse(File file) throws IOException {
-		this.file = file;
+    private void parse(File file) throws IOException {
+        this.file = file;
 
-		List<String> lines = FileUtils.readLines(file, DEF_CHARSET);
-		if (CollectionUtils.isEmpty(lines)) { return; }
+        List<String> lines = FileUtils.readLines(file, DEF_CHARSET);
+        if (CollectionUtils.isEmpty(lines)) { return; }
 
-		String statement = "";
-		for (String line : lines) {
-			line = StringUtils.trim(line);
-			if (line.startsWith(COMMENT)) { continue; }
+        String statement = "";
+        for (String line : lines) {
+            line = StringUtils.trim(line);
+            if (line.startsWith(COMMENT)) { continue; }
 
-			// too complicated to figure out if delimiter is part of the SQL query or not.. we r taking the ez way out
-			if (StringUtils.endsWith(line, STATEMENT_DELIMITER)) {
-				statement += StringUtils.trim(StringUtils.substringBefore(line, STATEMENT_DELIMITER)) + " ";
-				statements.add(StringUtils.trim(statement));
-				statement = "";
-			} else {
-				statement += line + " ";
-			}
-		}
+            // too complicated to figure out if delimiter is part of the SQL query or not.. we r taking the ez way out
+            if (StringUtils.endsWith(line, STATEMENT_DELIMITER)) {
+                statement += StringUtils.trim(StringUtils.substringBefore(line, STATEMENT_DELIMITER)) + " ";
+                statements.add(StringUtils.trim(statement));
+                statement = "";
+            } else {
+                statement += line + " ";
+            }
+        }
 
-		if (StringUtils.isNotBlank(statement)) { statements.add(statement); }
-	}
+        if (StringUtils.isNotBlank(statement)) { statements.add(statement); }
+    }
 }

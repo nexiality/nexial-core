@@ -18,34 +18,34 @@
 package org.nexial.core.variable;
 
 public abstract class ExpressionDataType<T> {
-	protected String textValue;
-	protected T value;
+    protected String textValue;
+    protected T value;
 
-	protected ExpressionDataType() { }
+    protected ExpressionDataType() { }
 
-	public ExpressionDataType(String textValue) throws TypeConversionException {
-		this.textValue = textValue;
-		init();
-	}
+    public ExpressionDataType(String textValue) throws TypeConversionException {
+        this.textValue = textValue;
+        init();
+    }
 
-	public String getTextValue() { return textValue; }
+    public String getTextValue() { return textValue; }
 
-	public void setTextValue(String textValue) { this.textValue = textValue; }
+    public void setTextValue(String textValue) { this.textValue = textValue; }
 
-	public T getValue() { return value; }
+    public T getValue() { return value; }
 
-	public void setValue(T value) { this.value = value; }
+    public void setValue(T value) { this.value = value; }
 
-	public abstract String getName();
+    public abstract String getName();
 
-	public String stringify() { return textValue; }
+    public String stringify() { return textValue; }
 
-	@Override
-	public String toString() { return getName() + "(" + getTextValue() + ")"; }
+    @Override
+    public String toString() { return getName() + "(" + getTextValue() + ")"; }
 
-	abstract Transformer getTransformer();
+    abstract Transformer getTransformer();
 
-	abstract ExpressionDataType<T> snapshot();
+    abstract ExpressionDataType<T> snapshot();
 
-	protected abstract void init() throws TypeConversionException;
+    protected abstract void init() throws TypeConversionException;
 }

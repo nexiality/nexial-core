@@ -26,18 +26,18 @@ import org.springframework.context.ApplicationContextAware;
  * @author Mike Liu
  */
 public class ApplicationContextUtils implements ApplicationContextAware {
-	private static ApplicationContext ctx;
+    private static ApplicationContext ctx;
 
-	@Override
-	public void setApplicationContext(ApplicationContext ctx) throws BeansException {
-		ApplicationContextUtils.ctx = ctx;
-	}
+    @Override
+    public void setApplicationContext(ApplicationContext ctx) throws BeansException {
+        ApplicationContextUtils.ctx = ctx;
+    }
 
-	public static ApplicationContext getContext() { return ctx; }
+    public static ApplicationContext getContext() { return ctx; }
 
-	public static <T> Object getBean(String beanName, Class<T> beanClass) throws BeansException {
-		if (StringUtils.isBlank(beanName)) { throw new IllegalArgumentException("beanName cannot be blank!"); }
-		if (beanClass == null) { throw new IllegalArgumentException("beanClass cannot be null!"); }
-		return ctx.getBean(beanName, beanClass);
-	}
+    public static <T> Object getBean(String beanName, Class<T> beanClass) throws BeansException {
+        if (StringUtils.isBlank(beanName)) { throw new IllegalArgumentException("beanName cannot be blank!"); }
+        if (beanClass == null) { throw new IllegalArgumentException("beanClass cannot be null!"); }
+        return ctx.getBean(beanName, beanClass);
+    }
 }

@@ -55,7 +55,6 @@ import org.apache.http.impl.client.HttpClientBuilder;
 import org.apache.http.impl.client.HttpClients;
 import org.apache.http.impl.conn.DefaultProxyRoutePlanner;
 import org.apache.http.protocol.HttpContext;
-
 import org.nexial.core.ExecutionThread;
 import org.nexial.core.WebProxy;
 import org.nexial.core.model.ExecutionContext;

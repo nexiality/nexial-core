@@ -31,7 +31,6 @@ import java.util.List;
 import java.util.jar.JarEntry;
 import java.util.jar.JarOutputStream;
 import java.util.jar.Manifest;
-
 import javax.crypto.Cipher;
 import javax.crypto.spec.SecretKeySpec;
 import javax.tools.JavaCompiler;

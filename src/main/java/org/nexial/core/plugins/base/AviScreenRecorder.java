@@ -24,7 +24,6 @@ import java.io.IOException;
 import org.apache.commons.lang3.StringUtils;
 import org.monte.media.Format;
 import org.monte.media.math.Rational;
-
 import org.nexial.core.ShutdownAdvisor;
 
 import static org.monte.media.FormatKeys.EncodingKey;
@@ -90,6 +89,15 @@ class AviScreenRecorder extends org.monte.screenrecorder.ScreenRecorder implemen
         }
     }
 
+    @Override
+    public void start() throws IOException {
+        targetVideoFile = null;
+        super.start();
+    }
+
+    @Override
+    public void stop() throws IOException { super.stop(); }
+
     /**
      * Create movie file for recorder screen cast. Screen cast will be stored
      * to file specified within proceeding start() method invocation
@@ -102,15 +110,6 @@ class AviScreenRecorder extends org.monte.screenrecorder.ScreenRecorder implemen
         if (targetFile.exists()) { targetFile.delete(); }
         return targetFile;
     }
-
-    @Override
-    public void start() throws IOException {
-        targetVideoFile = null;
-        super.start();
-    }
-
-    @Override
-    public void stop() throws IOException { super.stop(); }
 
     // private void resolveFileExt(Format fileFormat) { ext = '.' + Registry.getInstance().getExtension(fileFormat);}
 }

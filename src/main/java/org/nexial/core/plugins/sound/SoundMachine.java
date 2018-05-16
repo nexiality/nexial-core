@@ -18,7 +18,6 @@ package org.nexial.core.plugins.sound;
 
 import java.io.*;
 import java.util.Map;
-
 import javax.sound.sampled.*;
 
 import org.apache.commons.lang3.StringUtils;

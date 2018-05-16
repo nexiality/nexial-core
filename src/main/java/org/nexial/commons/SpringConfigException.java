@@ -19,14 +19,13 @@ package org.nexial.commons;
 
 /**
  * @author Mike Liu
-
  */
 public class SpringConfigException extends RuntimeException {
-	public SpringConfigException() { }
+    public SpringConfigException() { }
 
-	public SpringConfigException(String message) { super(message); }
+    public SpringConfigException(String message) { super(message); }
 
-	public SpringConfigException(String message, Throwable cause) { super(message, cause); }
+    public SpringConfigException(String message, Throwable cause) { super(message, cause); }
 
-	public SpringConfigException(Throwable cause) { super(cause); }
+    public SpringConfigException(Throwable cause) { super(cause); }
 }

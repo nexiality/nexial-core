@@ -21,9 +21,9 @@ package org.nexial.core.compare;
  * designated to expose user error when specifying a unresolvable condition.
  */
 public class IncompatibleTypeException extends Exception {
-	public IncompatibleTypeException(String lhs, String rhs, String compareBy) {
-		super(lhs + " " + compareBy + " " + rhs + " is invalid");
-	}
+    public IncompatibleTypeException(String lhs, String rhs, String compareBy) {
+        super(lhs + " " + compareBy + " " + rhs + " is invalid");
+    }
 
-	public IncompatibleTypeException(String message) { super(message); }
+    public IncompatibleTypeException(String message) { super(message); }
 }

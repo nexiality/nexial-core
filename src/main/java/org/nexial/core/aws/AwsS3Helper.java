@@ -27,7 +27,6 @@ import java.util.List;
 import java.util.Set;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
-
 import javax.validation.constraints.NotNull;
 
 import org.apache.commons.io.FileUtils;
@@ -249,6 +248,21 @@ public class AwsS3Helper {
         return getFileKeys(toPattern(path));
     }
 
+    public static String toPattern(String path) {
+        if (StringUtils.isEmpty(path)) { return StringUtils.defaultString(path); }
+
+        String delim = (StringUtils.startsWith(path, REGEX_PREFIX)) ? REGEX_PREFIX : (S3_PATH_SEPARATOR + REGEX_PREFIX);
+        int delimLength = delim.length();
+
+        int regexStartPos = StringUtils.indexOf(path, delim);
+        if (regexStartPos != -1) {
+            return (regexStartPos > 0 ? toSimplePattern(StringUtils.substring(path, 0, regexStartPos + 1)) : "") +
+                   StringUtils.substring(path, regexStartPos + delimLength);
+        }
+
+        return toSimplePattern(path);
+    }
+
     /**
      * added to circumvent MITM cert injection (possibly instrumented by corporate infosec/firewall team)
      */
@@ -322,21 +336,6 @@ public class AwsS3Helper {
         for (char ch : REGEX_ESCAPE_CHARS) { regex = StringUtils.replace(regex, ch + "", "\\" + ch); }
         regex = StringUtils.replace(regex, "*", ".+");
         return regex;
-    }
-
-    public static String toPattern(String path) {
-        if (StringUtils.isEmpty(path)) { return StringUtils.defaultString(path); }
-
-        String delim = (StringUtils.startsWith(path, REGEX_PREFIX)) ? REGEX_PREFIX : (S3_PATH_SEPARATOR + REGEX_PREFIX);
-        int delimLength = delim.length();
-
-        int regexStartPos = StringUtils.indexOf(path, delim);
-        if (regexStartPos != -1) {
-            return (regexStartPos > 0 ? toSimplePattern(StringUtils.substring(path, 0, regexStartPos + 1)) : "") +
-                   StringUtils.substring(path, regexStartPos + delimLength);
-        }
-
-        return toSimplePattern(path);
     }
 
     private AmazonS3 newS3Client() { return newS3Client(DEFAULT_REGION); }

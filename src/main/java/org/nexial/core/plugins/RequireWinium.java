@@ -17,10 +17,9 @@
 
 package org.nexial.core.plugins;
 
+import org.nexial.core.model.ExecutionContext;
 import org.openqa.selenium.winium.WiniumDriver;
 
-import org.nexial.core.model.ExecutionContext;
-
 public interface RequireWinium {
-	WiniumDriver initWinium(ExecutionContext context);
+    WiniumDriver initWinium(ExecutionContext context);
 }

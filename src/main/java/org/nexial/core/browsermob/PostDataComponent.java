@@ -22,31 +22,31 @@ import java.util.List;
 
 public class PostDataComponent {
 
-	private int postRequestSequence;
-	private String url;
-	private List<String> postDataNames = new ArrayList<>();
+    private int postRequestSequence;
+    private String url;
+    private List<String> postDataNames = new ArrayList<>();
 
-	public int getPostRequestSequence() {
-		return postRequestSequence;
-	}
+    public int getPostRequestSequence() {
+        return postRequestSequence;
+    }
 
-	public void setPostRequestSequence(int postRequestSequence) {
-		this.postRequestSequence = postRequestSequence;
-	}
+    public void setPostRequestSequence(int postRequestSequence) {
+        this.postRequestSequence = postRequestSequence;
+    }
 
-	public String getUrl() {
-		return url;
-	}
+    public String getUrl() {
+        return url;
+    }
 
-	public void setUrl(String url) {
-		this.url = url;
-	}
+    public void setUrl(String url) {
+        this.url = url;
+    }
 
-	public List<String> getPostDataNames() {
-		return postDataNames;
-	}
+    public List<String> getPostDataNames() {
+        return postDataNames;
+    }
 
-	public void addPostDataName(String name) {
-		this.postDataNames.add(name);
-	}
+    public void addPostDataName(String name) {
+        this.postDataNames.add(name);
+    }
 }

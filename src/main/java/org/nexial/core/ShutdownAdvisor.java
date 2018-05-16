@@ -29,27 +29,27 @@ import org.nexial.core.utils.ConsoleUtils;
 
  */
 public final class ShutdownAdvisor {
-	private static final List<ForcefulTerminate> ADVISORS = new ArrayList<>();
+    private static final List<ForcefulTerminate> ADVISORS = new ArrayList<>();
 
-	private ShutdownAdvisor() {}
+    private ShutdownAdvisor() {}
 
-	public static void addAdvisor(ForcefulTerminate advisor) {
-		if (advisor == null || ADVISORS.contains(advisor)) { return; }
-		ADVISORS.add(advisor);
-	}
+    public static void addAdvisor(ForcefulTerminate advisor) {
+        if (advisor == null || ADVISORS.contains(advisor)) { return; }
+        ADVISORS.add(advisor);
+    }
 
-	public static boolean mustForcefullyTerminate() {
-		if (ADVISORS.isEmpty()) { return false; }
-		for (ForcefulTerminate advisor : ADVISORS) {
-			if (advisor != null && advisor.mustForcefullyTerminate()) { return true; }
-		}
-		return false;
-	}
+    public static boolean mustForcefullyTerminate() {
+        if (ADVISORS.isEmpty()) { return false; }
+        for (ForcefulTerminate advisor : ADVISORS) {
+            if (advisor != null && advisor.mustForcefullyTerminate()) { return true; }
+        }
+        return false;
+    }
 
-	public static void forcefullyTerminate() {
-		if (ADVISORS.isEmpty()) { return; }
-		ConsoleUtils.log("shutdown starts...");
-		ADVISORS.stream().filter(Objects::nonNull).forEach(ForcefulTerminate::forcefulTerminate);
-		ConsoleUtils.log("shutdown ends...");
-	}
+    public static void forcefullyTerminate() {
+        if (ADVISORS.isEmpty()) { return; }
+        ConsoleUtils.log("shutdown starts...");
+        ADVISORS.stream().filter(Objects::nonNull).forEach(ForcefulTerminate::forcefulTerminate);
+        ConsoleUtils.log("shutdown ends...");
+    }
 }

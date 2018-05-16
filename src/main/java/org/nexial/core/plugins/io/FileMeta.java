@@ -26,56 +26,56 @@ import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang3.StringUtils;
 
 public class FileMeta implements Serializable {
-	private File fileObject;
-	private byte[] rawContent;
+    private File fileObject;
+    private byte[] rawContent;
 
-	protected FileMeta() { }
+    protected FileMeta() { }
 
-	public FileMeta(File f) throws IOException {
-		if (f == null) { throw new FileNotFoundException("cannot evaluate null as file object"); }
-		if (!f.exists()) {
-			throw new FileNotFoundException("cannot evaluate non-existent file: " + f.getAbsolutePath());
-		}
+    public FileMeta(File f) throws IOException {
+        if (f == null) { throw new FileNotFoundException("cannot evaluate null as file object"); }
+        if (!f.exists()) {
+            throw new FileNotFoundException("cannot evaluate non-existent file: " + f.getAbsolutePath());
+        }
 
-		this.fileObject = f;
-		rawContent = FileUtils.readFileToByteArray(f);
-	}
+        this.fileObject = f;
+        rawContent = FileUtils.readFileToByteArray(f);
+    }
 
-	public String getFullpath() { return fileObject.getAbsolutePath(); }
+    public String getFullpath() { return fileObject.getAbsolutePath(); }
 
-	public String getName() { return fileObject.getName(); }
+    public String getName() { return fileObject.getName(); }
 
-	public long getLastmod() { return fileObject.lastModified(); }
+    public long getLastmod() { return fileObject.lastModified(); }
 
-	public long getSize() { return fileObject.length(); }
+    public long getSize() { return fileObject.length(); }
 
-	public boolean isDir() { return fileObject.isDirectory(); }
+    public boolean isDir() { return fileObject.isDirectory(); }
 
-	public boolean canRead() { return fileObject.canRead(); }
+    public boolean canRead() { return fileObject.canRead(); }
 
-	public boolean isReadable() { return canRead(); }
+    public boolean isReadable() { return canRead(); }
 
-	public boolean canWrite() { return fileObject.canWrite(); }
+    public boolean canWrite() { return fileObject.canWrite(); }
 
-	public boolean isWritable() { return canWrite(); }
+    public boolean isWritable() { return canWrite(); }
 
-	public boolean executable() { return fileObject.canExecute(); }
+    public boolean executable() { return fileObject.canExecute(); }
 
-	public boolean isExecutable() { return executable(); }
+    public boolean isExecutable() { return executable(); }
 
-	public String getPerm() { return canRead() + "," + canWrite() + "," + executable(); }
+    public String getPerm() { return canRead() + "," + canWrite() + "," + executable(); }
 
-	public byte[] getBytes() { return rawContent; }
+    public byte[] getBytes() { return rawContent; }
 
-	public String getText() { return new String(rawContent); }
+    public String getText() { return new String(rawContent); }
 
-	@Override
-	public String toString() {
-		return "fullpath='" + getFullpath() + "', \n" +
-		       "isDir=" + isDir() + ", \n" +
-		       "size=" + getSize() + ", \n" +
-		       "lastmod=" + getLastmod() + ", \n" +
-		       "perm(rwe)=" + getPerm() + "\n" +
-		       "text=" + (StringUtils.isEmpty(getText()) ? "<EMPTY>" : StringUtils.left(getText(), 500) + "...\n");
-	}
+    @Override
+    public String toString() {
+        return "fullpath='" + getFullpath() + "', \n" +
+               "isDir=" + isDir() + ", \n" +
+               "size=" + getSize() + ", \n" +
+               "lastmod=" + getLastmod() + ", \n" +
+               "perm(rwe)=" + getPerm() + "\n" +
+               "text=" + (StringUtils.isEmpty(getText()) ? "<EMPTY>" : StringUtils.left(getText(), 500) + "...\n");
+    }
 }

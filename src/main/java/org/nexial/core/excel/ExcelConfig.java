@@ -27,7 +27,9 @@ import org.apache.poi.ss.usermodel.FillPatternType;
 import org.apache.poi.ss.usermodel.HorizontalAlignment;
 import org.apache.poi.ss.usermodel.VerticalAlignment;
 import org.apache.poi.xssf.usermodel.*;
+import org.jetbrains.annotations.NotNull;
 import org.nexial.core.excel.Excel.Worksheet;
+import org.nexial.core.model.TestStep;
 
 import static org.apache.poi.ss.usermodel.BorderStyle.MEDIUM;
 import static org.apache.poi.ss.usermodel.BorderStyle.THIN;
@@ -35,6 +37,7 @@ import static org.apache.poi.ss.usermodel.FillPatternType.NO_FILL;
 import static org.apache.poi.ss.usermodel.FillPatternType.SOLID_FOREGROUND;
 import static org.apache.poi.ss.usermodel.VerticalAlignment.CENTER;
 import static org.apache.poi.xssf.usermodel.extensions.XSSFCellBorder.BorderSide.*;
+import static org.nexial.core.NexialConst.Data.SECTION_DESCRIPTION_PREFIX;
 
 /**
  *
@@ -1004,5 +1007,29 @@ public class ExcelConfig {
 
     public static void fixFlowControlCellWidth(XSSFSheet sheet, XSSFCell cell) {
         fixCellWidth(sheet, cell, COL_IDX_FLOW_CONTROLS, DEF_CHAR_WIDTH_FACTOR_CONSOLAS);
+    }
+
+    public static TestStep formatSectionDescription(TestStep testStep) {
+        return formatDescriptionCell(testStep, STYLE_SECTION_DESCRIPTION, SECTION_DESCRIPTION_PREFIX);
+    }
+
+    public static TestStep formatRepeatUntilDescription(TestStep testStep, String prefix) {
+        return formatDescriptionCell(testStep, STYLE_REPEAT_UNTIL_DESCRIPTION, prefix);
+    }
+
+    public static TestStep formatParams(TestStep testStep) {
+        XSSFCellStyle style = testStep.getWorksheet().getStyle(STYLE_PARAM);
+        for (int i = COL_IDX_PARAMS_START; i < COL_IDX_PARAMS_END; i++) { testStep.getRow().get(i).setCellStyle(style);}
+        return testStep;
+    }
+
+    @NotNull
+    private static TestStep formatDescriptionCell(TestStep testStep, String styleName, String prefix) {
+        XSSFCell description = testStep.getRow().get(COL_IDX_DESCRIPTION);
+        description.setCellStyle(testStep.getWorksheet().getStyle(styleName));
+        if (StringUtils.isNotBlank(prefix)) { description.setCellValue(prefix + Excel.getCellValue(description)); }
+        fixDescriptionCellWidth(description.getSheet(), description);
+        testStep.getRow().set(COL_IDX_DESCRIPTION, description);
+        return testStep;
     }
 }
