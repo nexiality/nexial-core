@@ -38,6 +38,7 @@ import static org.apache.poi.ss.usermodel.FillPatternType.SOLID_FOREGROUND;
 import static org.apache.poi.ss.usermodel.VerticalAlignment.CENTER;
 import static org.apache.poi.xssf.usermodel.extensions.XSSFCellBorder.BorderSide.*;
 import static org.nexial.core.NexialConst.Data.SECTION_DESCRIPTION_PREFIX;
+import static org.nexial.core.excel.ExcelConfig.StyleConfig.FONT_NAME_FIXED_DEFAULT;
 
 /**
  *
@@ -261,7 +262,6 @@ public class ExcelConfig {
     public static final String STYLE_PARAM = "PARAM";
     public static final String STYLE_TAINTED_PARAM = "TAINTED_PARAM";
     public static final String STYLE_SCREENSHOT = "SCREENSHOT";
-    // public static final String STYLE_LINK = "LINK";
     public static final String STYLE_SKIPPED_RESULT = "SKIPPED_STYLE";
     public static final String STYLE_SUCCESS_RESULT = "SUCCESS_RESULT";
 
@@ -277,9 +277,10 @@ public class ExcelConfig {
     public static final XSSFColor RED = new XSSFColor(new Color(255, 0, 0));
 
     public static final double DEF_CHAR_WIDTH = 24.7;
-    public static final int DEF_CHAR_WIDTH_FACTOR_TAHOMA = 278;
-    public static final int DEF_CHAR_WIDTH_FACTOR_TAHOMA_BOLD = 305;
+    public static final int DEF_CHAR_WIDTH_FACTOR_TAHOMA = 238;
+    public static final int DEF_CHAR_WIDTH_FACTOR_TAHOMA_BOLD = 324;
     public static final int DEF_CHAR_WIDTH_FACTOR_CONSOLAS = 273;
+    public static final short INDENT_1 = (short) 1;
 
     public static class StyleConfig {
         public static final String FONT_NAME_DEFAULT = "Tahoma";
@@ -288,8 +289,7 @@ public class ExcelConfig {
         public static final short FONT_HEIGHT_DEFAULT = (short) 11;
         public static final XSSFColor FG_FAIL = new XSSFColor(new Color(156, 0, 6));
 
-        //public static final StyleConfig LOG_LINK = newLogLinkStyle();
-        public static final StyleConfig UNSUPPORTED_COMMAND = newUnsupportedCommandStyle();
+        // public static final StyleConfig UNSUPPORTED_COMMAND = newUnsupportedCommandStyle();
         public static final StyleConfig ELAPSED_MS_BAD_SLA = newElapsedMsBadSlaStyle();
         public static final StyleConfig FAILED = newFailedStyle();
         public static final StyleConfig TESTCASE = newTestCaseStyle();
@@ -299,8 +299,6 @@ public class ExcelConfig {
         public static final StyleConfig SCREENSHOT = newScreenshotStyle();
         public static final StyleConfig ELAPSED_MS = newElapsedMsStyle();
         public static final StyleConfig SUCCESS = newSuccessStyle();
-        // public static final StyleConfig LINK = newLogLinkStyle();
-        //public static final StyleConfig LOG_LABEL = newLogLabelStyle();
         public static final StyleConfig RESULT = newResultStyle();
         public static final StyleConfig SKIPPED = newSkippedStyle();
         public static final StyleConfig LINK = newLinkStyle();
@@ -311,8 +309,8 @@ public class ExcelConfig {
         public static final StyleConfig MSG = newMsgStyle();
         public static final StyleConfig DEPRECATED = newDeprecatedStyle();
 
-        public static final StyleConfig SETTING_NAME = newSettingNameStyle();
-        public static final StyleConfig SETTING_VALUE = newSettingValueStyle();
+        // public static final StyleConfig SETTING_NAME = newSettingNameStyle();
+        // public static final StyleConfig SETTING_VALUE = newSettingValueStyle();
         public static final StyleConfig PREDEF_TEST_DATA_NAME = newPredefTestDataNameStyle();
         public static final StyleConfig TEST_DATA_NAME = newTestDataNameStyle();
         public static final StyleConfig TEST_DATA_VALUE = newTestDataValueStyle();
@@ -501,7 +499,7 @@ public class ExcelConfig {
             config.borderColor = new XSSFColor(new Color(190, 200, 205));
             config.fontHeight = FONT_HEIGHT_DEFAULT;
             config.fontColor = new XSSFColor(new Color(40, 115, 137));
-            config.indention = (short) 1;
+            config.indention = INDENT_1;
             config.wrapText = true;
             config.verticalAlignment = CENTER;
             return config;
@@ -513,7 +511,7 @@ public class ExcelConfig {
             config.borderColor = new XSSFColor(new Color(205, 195, 195));
             config.fontHeight = FONT_HEIGHT_DEFAULT;
             config.fontColor = new XSSFColor(new Color(130, 60, 60));
-            config.indention = (short) 1;
+            config.indention = INDENT_1;
             config.wrapText = true;
             config.verticalAlignment = CENTER;
             return config;
@@ -951,7 +949,7 @@ public class ExcelConfig {
 
         public static XSSFFont newDefaultFont(XSSFWorkbook workbook) {
             XSSFFont font = workbook.createFont();
-            font.setFontName("Consolas");
+            font.setFontName(FONT_NAME_FIXED_DEFAULT);
             font.setFontHeight(9);
             return font;
         }
@@ -993,43 +991,74 @@ public class ExcelConfig {
         }
     }
 
-    public static void fixActivityCellWidth(XSSFSheet sheet, XSSFCell cell) {
-        fixCellWidth(sheet, cell, COL_IDX_DESCRIPTION, DEF_CHAR_WIDTH_FACTOR_TAHOMA_BOLD);
+    public static void formatActivityCell(Worksheet worksheet, XSSFCell cell) {
+        cell.setCellStyle(worksheet.getStyle(STYLE_TEST_CASE));
+        fixCellWidth(worksheet.getSheet(), cell, COL_IDX_TESTCASE, DEF_CHAR_WIDTH_FACTOR_TAHOMA_BOLD);
     }
 
-    public static void fixDescriptionCellWidth(XSSFSheet sheet, XSSFCell cell) {
-        fixCellWidth(sheet, cell, COL_IDX_DESCRIPTION, DEF_CHAR_WIDTH_FACTOR_TAHOMA);
+    public static void formatDescription(Worksheet worksheet, XSSFCell cell) {
+        cell.setCellStyle(worksheet.getStyle(STYLE_DESCRIPTION));
+        fixCellWidth(cell.getSheet(), cell, COL_IDX_DESCRIPTION, DEF_CHAR_WIDTH_FACTOR_TAHOMA);
     }
 
-    public static void fixCommandCellWidth(XSSFSheet sheet, XSSFCell cell) {
-        fixCellWidth(sheet, cell, COL_IDX_COMMAND, DEF_CHAR_WIDTH_FACTOR_CONSOLAS);
-    }
-
-    public static void fixFlowControlCellWidth(XSSFSheet sheet, XSSFCell cell) {
-        fixCellWidth(sheet, cell, COL_IDX_FLOW_CONTROLS, DEF_CHAR_WIDTH_FACTOR_CONSOLAS);
+    public static void formatSectionDescription(Worksheet worksheet, XSSFCell cell) {
+        cell.setCellStyle(worksheet.getStyle(STYLE_SECTION_DESCRIPTION));
+        fixCellWidth(cell.getSheet(), cell, COL_IDX_DESCRIPTION, DEF_CHAR_WIDTH_FACTOR_TAHOMA);
     }
 
     public static TestStep formatSectionDescription(TestStep testStep) {
         return formatDescriptionCell(testStep, STYLE_SECTION_DESCRIPTION, SECTION_DESCRIPTION_PREFIX);
     }
 
+    public static void formatRepeatUntilDescription(Worksheet worksheet, XSSFCell cell) {
+        cell.setCellStyle(worksheet.getStyle(STYLE_REPEAT_UNTIL_DESCRIPTION));
+        fixCellWidth(cell.getSheet(), cell, COL_IDX_DESCRIPTION, DEF_CHAR_WIDTH_FACTOR_TAHOMA);
+    }
+
     public static TestStep formatRepeatUntilDescription(TestStep testStep, String prefix) {
         return formatDescriptionCell(testStep, STYLE_REPEAT_UNTIL_DESCRIPTION, prefix);
     }
 
+    public static void formatTargetCell(Worksheet worksheet, XSSFCell cell) {
+        cell.setCellStyle(worksheet.getStyle(STYLE_TARGET));
+        fixCellWidth(worksheet.getSheet(), cell, COL_IDX_TARGET, DEF_CHAR_WIDTH_FACTOR_CONSOLAS);
+    }
+
+    public static void formatCommandCell(Worksheet worksheet, XSSFCell cell) {
+        cell.setCellStyle(worksheet.getStyle(STYLE_COMMAND));
+        fixCellWidth(worksheet.getSheet(), cell, COL_IDX_COMMAND, DEF_CHAR_WIDTH_FACTOR_CONSOLAS);
+    }
+
     public static TestStep formatParams(TestStep testStep) {
         XSSFCellStyle style = testStep.getWorksheet().getStyle(STYLE_PARAM);
-        for (int i = COL_IDX_PARAMS_START; i < COL_IDX_PARAMS_END; i++) { testStep.getRow().get(i).setCellStyle(style);}
+        List<XSSFCell> row = testStep.getRow();
+        for (int i = COL_IDX_PARAMS_START; i < COL_IDX_PARAMS_END; i++) {
+            row.get(i).setCellStyle(style);
+        }
         return testStep;
+    }
+
+    public static void formatFlowControlCell(Worksheet worksheet, XSSFCell cell) {
+        if (cell == null) { return; }
+        String cellValue = Excel.getCellValue(cell);
+        if (StringUtils.isNotBlank(cellValue)) {
+            cell.setCellStyle(worksheet.getStyle(STYLE_PARAM));
+            fixCellWidth(worksheet.getSheet(), cell, COL_IDX_FLOW_CONTROLS, DEF_CHAR_WIDTH_FACTOR_CONSOLAS);
+        }
     }
 
     @NotNull
     private static TestStep formatDescriptionCell(TestStep testStep, String styleName, String prefix) {
-        XSSFCell description = testStep.getRow().get(COL_IDX_DESCRIPTION);
-        description.setCellStyle(testStep.getWorksheet().getStyle(styleName));
-        if (StringUtils.isNotBlank(prefix)) { description.setCellValue(prefix + Excel.getCellValue(description)); }
-        fixDescriptionCellWidth(description.getSheet(), description);
-        testStep.getRow().set(COL_IDX_DESCRIPTION, description);
+        XSSFCell cell = testStep.getRow().get(COL_IDX_DESCRIPTION);
+        String descriptionText = Excel.getCellValue(cell);
+        if (StringUtils.isNotBlank(prefix) && !StringUtils.startsWith(descriptionText, prefix)) {
+            cell.setCellValue(prefix + descriptionText);
+        }
+
+        Worksheet worksheet = testStep.getWorksheet();
+        cell.setCellStyle(worksheet.getStyle(styleName));
+        fixCellWidth(cell.getSheet(), cell, COL_IDX_DESCRIPTION, DEF_CHAR_WIDTH_FACTOR_TAHOMA);
+
         return testStep;
     }
 }

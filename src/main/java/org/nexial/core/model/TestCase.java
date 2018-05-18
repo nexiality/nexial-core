@@ -101,19 +101,7 @@ public class TestCase {
 
                     int steps = Integer.parseInt(testStep.getParams().get(0));
                     for (int j = 0; j < steps; j++) {
-                        TestStep sectionStep = testSteps.get(i + j + 1);
-
-                        // compensate for repeat until..
-                        if (StringUtils.equals(sectionStep.getCommandFQN(), CMD_REPEAT_UNTIL) &&
-                            sectionStep.getCommandRepeater() != null) {
-                            sectionStep = ExcelConfig.formatRepeatUntilDescription(sectionStep, "");
-                            sectionStep.getCommandRepeater().formatSteps();
-                            steps -= sectionStep.getCommandRepeater().getStepCount();
-                        } else {
-                            sectionStep = ExcelConfig.formatSectionDescription(sectionStep);
-                        }
-
-                        sectionStep.postExecCommand(StepResult.skipped(NESTED_SECTION_STEP_SKIPPED), 0);
+                        testSteps.get(i + j + 1).postExecCommand(StepResult.skipped(NESTED_SECTION_STEP_SKIPPED), 0);
                     }
 
                     i += steps;
@@ -155,10 +143,44 @@ public class TestCase {
             }
         }
 
+        formatTestCase(testSteps);
+
         executionSummary.setEndTime(System.currentTimeMillis());
         executionSummary.setFailedFast(!context.isInterativeMode() && context.isFailFast());
         executionSummary.aggregatedNestedExecutions(context);
         return allPassed;
+    }
+
+    private void formatTestCase(List<TestStep> testSteps) {
+        if (CollectionUtils.isEmpty(testSteps)) { return; }
+
+        // compensate for macro/section
+        for (int i = 0; i < testSteps.size(); i++) {
+            TestStep testStep = testSteps.get(i);
+            if (StringUtils.equals(testStep.getCommandFQN(), CMD_SECTION)) {
+                ExcelConfig.formatSectionDescription(testStep);
+                int sectionStepCount = Integer.parseInt(testStep.getParams().get(0));
+                for (int j = 1; j < sectionStepCount; j++) {
+                    TestStep sectionStep = testSteps.get(i + j);
+                    ExcelConfig.formatSectionDescription(sectionStep);
+                }
+            }
+        }
+
+        // compensate for repeat-until
+        for (int i = 0; i < testSteps.size(); i++) {
+            TestStep testStep = testSteps.get(i);
+            if (StringUtils.equals(testStep.getCommandFQN(), CMD_REPEAT_UNTIL) &&
+                testStep.getCommandRepeater() != null) {
+                testStep = ExcelConfig.formatRepeatUntilDescription(testStep, "");
+                testStep.getCommandRepeater().formatSteps();
+            }
+        }
+
+        // for (int i = 0; i < testSteps.size(); i++) {
+        //     TestStep testStep = testSteps.get(i);
+            // ExcelConfig.formatParams(testStep);
+        // }
     }
 
 }

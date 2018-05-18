@@ -58,6 +58,37 @@ import static org.nexial.core.excel.ExcelConfig.StyleConfig.*;
  * </ol>
  */
 class ExecutionInputPrep {
+    public static Excel updateOutputDataSheet(File outputFile) throws IOException {
+
+        ExecutionContext context = ExecutionThread.get();
+        Excel excel = new Excel(outputFile);
+        XSSFSheet dataSheet = excel.getWorkbook().getSheet(SHEET_MERGED_DATA);
+
+        XSSFWorkbook workbook = dataSheet.getWorkbook();
+        XSSFCellStyle styleTestDataValue = StyleDecorator.generate(workbook, TEST_DATA_VALUE);
+
+        final int[] currentRowIndex = {0};
+
+        dataSheet.forEach(datarow -> {
+            XSSFRow row = dataSheet.getRow(currentRowIndex[0]++);
+            if (row == null) { return; }
+
+            XSSFCell cellName = row.getCell(0, CREATE_NULL_AS_BLANK);
+            String name = cellName.getStringCellValue();
+
+            XSSFCell cellValue = row.getCell(1, CREATE_NULL_AS_BLANK);
+            if (context.hasData(name)) {
+                cellValue.setCellValue(CellTextReader.readValue(context.getStringData(name)));
+                cellValue.setCellStyle(styleTestDataValue);
+            }
+        });
+
+        // save output file with updated data
+        excel.save();
+
+        return excel;
+    }
+
     /** called from {@link ExecutionThread} for each iteration. */
     static File prep(String runId, ExecutionDefinition execDef, int iteration, int counter) throws IOException {
         assert StringUtils.isNotBlank(runId);
@@ -145,9 +176,9 @@ class ExecutionInputPrep {
         XSSFCellStyle styleTestDataName = StyleDecorator.generate(workbook, TEST_DATA_NAME);
         XSSFCellStyle styleTestDataValue = StyleDecorator.generate(workbook, TEST_DATA_VALUE);
 
-        final int[] currentRowIndex = {0};
+        testData.getAllSettings().forEach(data::put);
 
-        testData.getAllSettings().forEach((name, value) -> data.put(name, value));
+        final int[] currentRowIndex = {0};
         data.forEach((name, value) -> {
             XSSFRow row = dataSheet.getRow(currentRowIndex[0]++);
             if (row == null) { row = dataSheet.createRow(currentRowIndex[0] - 1); }
@@ -164,37 +195,6 @@ class ExecutionInputPrep {
         });
 
         // save output file with expanded data
-        excel.save();
-
-        return excel;
-    }
-
-    public static Excel updateOutputDataSheet(File outputFile) throws IOException {
-
-        ExecutionContext context = ExecutionThread.get();
-        Excel excel = new Excel(outputFile);
-        XSSFSheet dataSheet = excel.getWorkbook().getSheet(SHEET_MERGED_DATA);
-
-        XSSFWorkbook workbook = dataSheet.getWorkbook();
-        XSSFCellStyle styleTestDataValue = StyleDecorator.generate(workbook, TEST_DATA_VALUE);
-
-        final int[] currentRowIndex = {0};
-
-        dataSheet.forEach(datarow -> {
-            XSSFRow row = dataSheet.getRow(currentRowIndex[0]++);
-
-            if (row == null) { return; }
-            XSSFCell cellName = row.getCell(0, CREATE_NULL_AS_BLANK);
-            String name = cellName.getStringCellValue();
-
-            XSSFCell cellValue = row.getCell(1, CREATE_NULL_AS_BLANK);
-            if (context.hasData(name)) {
-                cellValue.setCellValue(CellTextReader.readValue(context.getStringData(name)));
-                cellValue.setCellStyle(styleTestDataValue);
-            }
-        });
-
-        // save output file with updated data
         excel.save();
 
         return excel;

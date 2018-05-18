@@ -30,11 +30,12 @@ import org.apache.commons.lang3.math.NumberUtils;
 import org.apache.commons.lang3.time.StopWatch;
 import org.apache.poi.ss.usermodel.Comment;
 import org.apache.poi.xssf.usermodel.XSSFCell;
-import org.apache.poi.xssf.usermodel.XSSFSheet;
+import org.apache.poi.xssf.usermodel.XSSFCellStyle;
 import org.nexial.commons.utils.FileUtil;
 import org.nexial.commons.utils.TextUtils;
 import org.nexial.core.excel.Excel;
 import org.nexial.core.excel.Excel.Worksheet;
+import org.nexial.core.excel.ExcelConfig;
 import org.nexial.core.excel.ext.CellTextReader;
 import org.nexial.core.plugins.CanTakeScreenshot;
 import org.nexial.core.plugins.NexialCommand;
@@ -411,33 +412,29 @@ public class TestStep extends TestStepManifest {
 
         // test case
         XSSFCell cellTestCase = row.get(COL_IDX_TESTCASE);
-        if (StringUtils.isNotBlank(cellTestCase.getRawValue()) &&
-            StringUtils.isNotBlank(Excel.getCellValue(cellTestCase))) {
-            cellTestCase.setCellStyle(worksheet.getStyle(STYLE_TEST_CASE));
-            fixActivityCellWidth(worksheet.getSheet(), cellTestCase);
+        if (StringUtils.isNotBlank(Excel.getCellValue(cellTestCase))) {
+            ExcelConfig.formatActivityCell(worksheet, cellTestCase);
         }
 
         XSSFCell cellTarget = row.get(COL_IDX_TARGET);
+        ExcelConfig.formatTargetCell(worksheet, cellTarget);
+
         XSSFCell cellCommand = row.get(COL_IDX_COMMAND);
-        XSSFSheet sheet = cellCommand.getSheet();
-        String commandFQN = Excel.getCellValue(cellTarget) + "." + Excel.getCellValue(cellCommand);
+        ExcelConfig.formatCommandCell(worksheet, cellCommand);
 
         // description
         XSSFCell cellDescription = row.get(COL_IDX_DESCRIPTION);
-        if (StringUtils.equals(commandFQN, CMD_REPEAT_UNTIL)) {
-            cellDescription.setCellStyle(worksheet.getStyle(STYLE_REPEAT_UNTIL_DESCRIPTION));
+        String description = Excel.getCellValue(cellDescription);
+        if (StringUtils.startsWith(description, SECTION_DESCRIPTION_PREFIX)) {
+            ExcelConfig.formatSectionDescription(worksheet, cellDescription);
+        } else if (StringUtils.contains(description, REPEAT_DESCRIPTION_PREFIX)) {
+            ExcelConfig.formatRepeatUntilDescription(worksheet, cellDescription);
         } else {
-            String descriptionValue = Excel.getCellValue(cellDescription);
-            if (StringUtils.startsWith(descriptionValue, SECTION_DESCRIPTION_PREFIX) ||
-                StringUtils.equals(commandFQN, CMD_SECTION)) {
-                cellDescription.setCellStyle(worksheet.getStyle(STYLE_SECTION_DESCRIPTION));
-            } else {
-                cellDescription.setCellStyle(worksheet.getStyle(STYLE_DESCRIPTION));
-            }
+            cellDescription.setCellStyle(worksheet.getStyle(STYLE_DESCRIPTION));
         }
 
-        // command
-        fixCommandCellWidth(sheet, cellCommand);
+        XSSFCellStyle styleTaintedParam = worksheet.getStyle(STYLE_TAINTED_PARAM);
+        XSSFCellStyle styleParam = worksheet.getStyle(STYLE_PARAM);
 
         Object[] paramValues = result.getParamValues();
 
@@ -482,17 +479,16 @@ public class TestStep extends TestStepManifest {
                     if (StringUtils.isNotEmpty(origParamValue)) {
                         paramCell.setCellComment(toSystemComment(paramCell, origParamValue));
                     }
-                    paramCell.setCellStyle(worksheet.getStyle(STYLE_TAINTED_PARAM));
+                    paramCell.setCellStyle(styleTaintedParam);
                 } else {
-                    paramCell.setCellStyle(worksheet.getStyle(STYLE_PARAM));
+                    paramCell.setCellStyle(styleParam);
                 }
             }
         }
 
         // flow control
         XSSFCell cellFlowControl = row.get(COL_IDX_FLOW_CONTROLS);
-        cellFlowControl.setCellStyle(worksheet.getStyle(STYLE_COMMAND));
-        fixFlowControlCellWidth(sheet, cellFlowControl);
+        formatFlowControlCell(worksheet, cellFlowControl);
 
         // screenshot
         String screenshotLink = handleScreenshot(result);

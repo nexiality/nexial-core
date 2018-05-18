@@ -24,12 +24,15 @@ import java.util.List;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.builder.ToStringBuilder;
+import org.nexial.core.excel.Excel.Worksheet;
 import org.nexial.core.excel.ExcelConfig;
 import org.nexial.core.utils.FlowControlUtils;
 
 import static org.apache.commons.lang3.builder.ToStringStyle.SIMPLE_STYLE;
 import static org.nexial.core.NexialConst.Data.*;
 import static org.nexial.core.NexialConst.OPT_LAST_OUTCOME;
+import static org.nexial.core.excel.ExcelConfig.COL_IDX_COMMAND;
+import static org.nexial.core.excel.ExcelConfig.COL_IDX_TARGET;
 
 public class CommandRepeater {
     private TestStep initialTestStep;
@@ -52,13 +55,17 @@ public class CommandRepeater {
 
         if (CollectionUtils.isEmpty(steps)) { return; }
 
+        Worksheet worksheet = initialTestStep.getWorksheet();
+
         // one loop through to fix all the styles for loop steps
         for (int i = 0; i < steps.size(); i++) {
             TestStep step = steps.get(i);
             ExcelConfig.formatRepeatUntilDescription(step,
-                                                                  i == 0 ?
-                                                                  REPEAT_CHECK_DESCRIPTION_PREFIX :
-                                                                  REPEAT_DESCRIPTION_PREFIX);
+                                                     i == 0 ?
+                                                     REPEAT_CHECK_DESCRIPTION_PREFIX :
+                                                     REPEAT_DESCRIPTION_PREFIX);
+            ExcelConfig.formatTargetCell(worksheet, step.getRow().get(COL_IDX_TARGET));
+            ExcelConfig.formatCommandCell(worksheet, step.getRow().get(COL_IDX_COMMAND));
             ExcelConfig.formatParams(step);
         }
     }
@@ -68,8 +75,6 @@ public class CommandRepeater {
 
         long startTime = System.currentTimeMillis();
         long maxEndTime = maxWaitMs == -1 ? -1 : startTime + maxWaitMs;
-
-        formatSteps();
 
         long rightNow = startTime;
         while (maxEndTime == -1 || rightNow < maxEndTime) {
