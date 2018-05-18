@@ -167,6 +167,15 @@ public final class ExecutionThread extends Thread {
                 onIterationException(context, iterSummary, currIteration, e);
                 if (shouldStopNow(context, allPass)) { break; }
             } finally {
+
+                try {
+                    // sync #data sheet with context
+                    ExecutionInputPrep.updateOutputDataSheet(testScript);
+                } catch (IOException e) {
+                    ConsoleUtils.error("unable to sync up values in #data sheet of output file from the context. " +
+                                       e.getMessage());
+                }
+
                 // now the execution for this iteration is done. We'll add new execution summary page to its output.
                 iterSummary.setFailedFast(context.isFailFast());
                 iterSummary.setEndTime(System.currentTimeMillis());
