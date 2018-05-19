@@ -277,8 +277,8 @@ public class ExcelConfig {
     public static final XSSFColor RED = new XSSFColor(new Color(255, 0, 0));
 
     public static final double DEF_CHAR_WIDTH = 24.7;
-    public static final int DEF_CHAR_WIDTH_FACTOR_TAHOMA = 238;
-    public static final int DEF_CHAR_WIDTH_FACTOR_TAHOMA_BOLD = 324;
+    public static final int DEF_CHAR_WIDTH_FACTOR_TAHOMA = 247;
+    public static final int DEF_CHAR_WIDTH_FACTOR_TAHOMA_BOLD = 337;
     public static final int DEF_CHAR_WIDTH_FACTOR_CONSOLAS = 273;
     public static final short INDENT_1 = (short) 1;
 
@@ -1006,8 +1006,8 @@ public class ExcelConfig {
         fixCellWidth(cell.getSheet(), cell, COL_IDX_DESCRIPTION, DEF_CHAR_WIDTH_FACTOR_TAHOMA);
     }
 
-    public static TestStep formatSectionDescription(TestStep testStep) {
-        return formatDescriptionCell(testStep, STYLE_SECTION_DESCRIPTION, SECTION_DESCRIPTION_PREFIX);
+    public static TestStep formatSectionDescription(TestStep testStep, boolean prefix) {
+        return formatDescriptionCell(testStep, STYLE_SECTION_DESCRIPTION, prefix ? SECTION_DESCRIPTION_PREFIX : "");
     }
 
     public static void formatRepeatUntilDescription(Worksheet worksheet, XSSFCell cell) {
@@ -1050,9 +1050,9 @@ public class ExcelConfig {
     @NotNull
     private static TestStep formatDescriptionCell(TestStep testStep, String styleName, String prefix) {
         XSSFCell cell = testStep.getRow().get(COL_IDX_DESCRIPTION);
-        String descriptionText = Excel.getCellValue(cell);
-        if (StringUtils.isNotBlank(prefix) && !StringUtils.startsWith(descriptionText, prefix)) {
-            cell.setCellValue(prefix + descriptionText);
+        if (StringUtils.isNotBlank(prefix)) {
+            String descriptionText = Excel.getCellValue(cell);
+            if (!StringUtils.startsWith(descriptionText, prefix)) { cell.setCellValue(prefix + descriptionText); }
         }
 
         Worksheet worksheet = testStep.getWorksheet();

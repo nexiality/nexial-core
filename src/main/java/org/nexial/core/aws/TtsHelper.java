@@ -163,7 +163,6 @@ public class TtsHelper extends AwsSupport {
         speechBuffer.append(text)
                     .append("</speak>");
 
-        System.out.println(speechBuffer.toString());
         return speechBuffer.toString();
     }
 }

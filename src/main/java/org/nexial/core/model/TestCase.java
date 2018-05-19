@@ -27,7 +27,6 @@ import org.nexial.core.excel.Excel.Worksheet;
 import org.nexial.core.excel.ExcelConfig;
 import org.nexial.core.utils.ExecutionLogger;
 
-import static org.nexial.core.NexialConst.Data.CMD_REPEAT_UNTIL;
 import static org.nexial.core.NexialConst.Data.CMD_SECTION;
 import static org.nexial.core.model.ExecutionSummary.ExecutionLevel.ACTIVITY;
 
@@ -97,11 +96,19 @@ public class TestCase {
             if (result.isSkipped()) {
                 executionSummary.adjustTotalSteps(-1);
                 if (StringUtils.equals(testStep.getCommandFQN(), CMD_SECTION)) {
-                    testStep = ExcelConfig.formatSectionDescription(testStep);
+                    ExcelConfig.formatSectionDescription(testStep, false);
 
+                    // `testStep.getParams().get(0)` represents the number of steps of this `section`
                     int steps = Integer.parseInt(testStep.getParams().get(0));
                     for (int j = 0; j < steps; j++) {
-                        testSteps.get(i + j + 1).postExecCommand(StepResult.skipped(NESTED_SECTION_STEP_SKIPPED), 0);
+                        int sectionStepIndex = i + j + 1;
+                        if (testSteps.size() > sectionStepIndex) {
+                            testSteps.get(sectionStepIndex)
+                                     .postExecCommand(StepResult.skipped(NESTED_SECTION_STEP_SKIPPED), 0);
+                        } else {
+                            steps = j - 1;
+                            break;
+                        }
                     }
 
                     i += steps;
@@ -155,32 +162,37 @@ public class TestCase {
         if (CollectionUtils.isEmpty(testSteps)) { return; }
 
         // compensate for macro/section
-        for (int i = 0; i < testSteps.size(); i++) {
+        int totalSteps = testSteps.size();
+        for (int i = 0; i < totalSteps; i++) {
             TestStep testStep = testSteps.get(i);
-            if (StringUtils.equals(testStep.getCommandFQN(), CMD_SECTION)) {
-                ExcelConfig.formatSectionDescription(testStep);
-                int sectionStepCount = Integer.parseInt(testStep.getParams().get(0));
-                for (int j = 1; j < sectionStepCount; j++) {
-                    TestStep sectionStep = testSteps.get(i + j);
-                    ExcelConfig.formatSectionDescription(sectionStep);
-                }
-            }
-        }
 
-        // compensate for repeat-until
-        for (int i = 0; i < testSteps.size(); i++) {
-            TestStep testStep = testSteps.get(i);
-            if (StringUtils.equals(testStep.getCommandFQN(), CMD_REPEAT_UNTIL) &&
-                testStep.getCommandRepeater() != null) {
+            if (testStep.isCommandRepeater() && testStep.getCommandRepeater() != null) {
                 testStep = ExcelConfig.formatRepeatUntilDescription(testStep, "");
                 testStep.getCommandRepeater().formatSteps();
             }
-        }
 
-        // for (int i = 0; i < testSteps.size(); i++) {
-        //     TestStep testStep = testSteps.get(i);
-            // ExcelConfig.formatParams(testStep);
-        // }
+            if (StringUtils.equals(testStep.getCommandFQN(), CMD_SECTION)) {
+                ExcelConfig.formatSectionDescription(testStep, false);
+
+                int adjustedStepCount = i + Integer.parseInt(testStep.getParams().get(0));
+                for (int j = i + 1; j <= adjustedStepCount; j++) {
+                    if (totalSteps > j) {
+                        TestStep sectionStep = testSteps.get(j);
+                        ExcelConfig.formatSectionDescription(sectionStep, true);
+
+                        if (sectionStep.isCommandRepeater()) {
+                            ExcelConfig.formatRepeatUntilDescription(sectionStep, "");
+                            sectionStep.getCommandRepeater().formatSteps();
+                            adjustedStepCount -= sectionStep.getCommandRepeater().getStepCount();
+                        }
+                    } else {
+                        break;
+                    }
+                }
+
+                i += adjustedStepCount - 1;
+            }
+        }
     }
 
 }
