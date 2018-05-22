@@ -107,11 +107,16 @@ public class NexialFilterTest {
     @Test
     public void isMatch() {
         // Equal("="),
+        Assert.assertTrue(NexialFilter.newInstance("x = \"20.0\"").isMatch("+20"));
+        Assert.assertTrue(NexialFilter.newInstance("x = \"19.01\"").isMatch("$19.01"));
+        Assert.assertTrue(NexialFilter.newInstance("x = \"-22\"").isMatch("-22.00"));
+        Assert.assertTrue(NexialFilter.newInstance("x = \"20\"").isMatch("  20.0 \n"));
         Assert.assertTrue(NexialFilter.newInstance("x = \"a\"").isMatch("a"));
         Assert.assertTrue(NexialFilter.newInstance("x = \"a\"").isMatch(" a "));
         Assert.assertTrue(NexialFilter.newInstance("x = \"a\"").isMatch(" a\t  "));
 
         // NotEqual("!="),
+        Assert.assertTrue(NexialFilter.newInstance("x != \"99\"").isMatch("99a"));
         Assert.assertTrue(NexialFilter.newInstance("x != \"a\"").isMatch("A"));
         Assert.assertTrue(NexialFilter.newInstance("x != \"a\"").isMatch("A "));
         Assert.assertTrue(NexialFilter.newInstance("x != a").isMatch(" "));

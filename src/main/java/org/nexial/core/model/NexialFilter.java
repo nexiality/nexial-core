@@ -116,11 +116,11 @@ public class NexialFilter implements Serializable {
 
             case Equal:
             case Equal_2:
-                return StringUtils.equals(actual, expected);
+                return isEqualsTextOrNumeric(actual, expected);
 
             case NotEqual:
             case NotEqual_2:
-                return !StringUtils.equals(actual, expected);
+                return !isEqualsTextOrNumeric(actual, expected);
 
             case Greater:
             case Greater_2:
@@ -182,10 +182,10 @@ public class NexialFilter implements Serializable {
         switch (comparator) {
             case Equal:
             case Equal_2:
-                return StringUtils.equals(data, normalizeCondition(controls));
+                return isEqualsTextOrNumeric(data, normalizeCondition(controls));
             case NotEqual:
             case NotEqual_2:
-                return !StringUtils.equals(data, normalizeCondition(controls));
+                return !isEqualsTextOrNumeric(data, normalizeCondition(controls));
 
             case Greater:
             case Greater_2:
@@ -249,6 +249,14 @@ public class NexialFilter implements Serializable {
             default:
                 throw new IllegalArgumentException("Invalid/unknown comparator: " + comparator.getSymbol());
         }
+    }
+
+    public static boolean isEqualsTextOrNumeric(String expected, String actual) {
+        if (StringUtils.equals(expected, actual)) { return true; }
+
+        return NumberUtils.isCreatable(numericReady(expected)) &&
+               NumberUtils.isCreatable(numericReady(actual)) &&
+               toDouble(expected) == toDouble(actual);
     }
 
     @Override
