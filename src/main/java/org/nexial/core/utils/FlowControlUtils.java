@@ -22,8 +22,11 @@ import java.util.Map;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.collections4.MapUtils;
 import org.apache.commons.lang3.StringUtils;
-import org.nexial.core.model.*;
+import org.nexial.core.model.ExecutionContext;
+import org.nexial.core.model.FlowControl;
 import org.nexial.core.model.FlowControl.Directive;
+import org.nexial.core.model.StepResult;
+import org.nexial.core.model.TestStep;
 import org.nexial.core.plugins.desktop.DesktopNotification;
 import org.nexial.core.reports.JenkinsVariables;
 import org.slf4j.Logger;
@@ -168,21 +171,7 @@ public final class FlowControlUtils {
         }
 
         Directive directive = flowControl.getDirective();
-        String msgPrefix = "evaluating flow control:\t" + directive;
-
-        NexialFilterList conditions = flowControl.getConditions();
-
-        // * condition means ALWAYS MATCHED --> meaning always match
-        if (conditions.containsAny()) {
-            ConsoleUtils.log(msgPrefix + " found ANY - ALWAYS MATCH");
-            return true;
-        }
-
-        for (NexialFilter filter : conditions) {
-            String subject = filter.getSubject();
-            if (!StringUtils.isBlank(subject) && !filter.isMatch(context, msgPrefix)) { return false; }
-        }
-
-        return true;
+        return flowControl.getConditions().isMatched(context, "evaluating flow control:\t" + directive);
     }
+
 }

@@ -23,6 +23,7 @@ import java.util.Collection;
 import org.apache.commons.lang3.ArrayUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.nexial.commons.utils.TextUtils;
+import org.nexial.core.utils.ConsoleUtils;
 
 import static org.nexial.core.model.NexialFilterComparator.Any;
 
@@ -74,5 +75,20 @@ public class NexialFilterList extends ArrayList<NexialFilter> {
     public boolean addAll(int index, Collection<? extends NexialFilter> c) {
         c.forEach(filter -> { if (filter != null && filter.getComparator() == Any) { containsAny = true; }});
         return super.addAll(index, c);
+    }
+
+    public  boolean isMatched(ExecutionContext context, String msgPrefix) {
+        // * condition means ALWAYS MATCHED --> meaning always match
+        if (containsAny()) {
+            ConsoleUtils.log(msgPrefix + " found ANY - ALWAYS MATCH");
+            return true;
+        }
+
+        for (NexialFilter filter : this) {
+            String subject = filter.getSubject();
+            if (!StringUtils.isBlank(subject) && !filter.isMatch(context, msgPrefix)) { return false; }
+        }
+
+        return true;
     }
 }
