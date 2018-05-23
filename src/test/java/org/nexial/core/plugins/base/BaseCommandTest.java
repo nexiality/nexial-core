@@ -26,7 +26,7 @@ import org.nexial.core.model.MockExecutionContext;
 import org.nexial.core.model.StepResult;
 
 public class BaseCommandTest {
-    private ExecutionContext context = new MockExecutionContext();
+    private ExecutionContext context = new MockExecutionContext(true);
 
     static {
         System.setProperty("clear_var2", "I repeat, this is a test.");

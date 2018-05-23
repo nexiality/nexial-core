@@ -66,6 +66,7 @@ public class MockExecutionContext extends ExecutionContext {
             this.failfastCommands = springContext.getBean("failfastCommands", new ArrayList<String>().getClass());
             this.builtinFunctions = springContext.getBean("builtinFunctions", new HashMap<String, Object>().getClass());
             this.otc = springContext.getBean("otc", NexialS3Helper.class);
+            this.readOnlyVars = springContext.getBean("readOnlyVars", new ArrayList<String>().getClass());
         }
 
         expression = new ExpressionProcessor(this);

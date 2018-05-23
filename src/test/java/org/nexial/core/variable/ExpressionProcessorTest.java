@@ -50,7 +50,7 @@ import static org.nexial.core.NexialConst.FlowControls.ANY_FIELD;
 
 public class ExpressionProcessorTest {
     private DataAccess da = initDataAccess();
-    private ExecutionContext context = new MockExecutionContext() {
+    private ExecutionContext context = new MockExecutionContext(true) {
 
         @Override
         public NexialCommand findPlugin(String target) {

@@ -26,7 +26,7 @@ import org.nexial.core.model.ExecutionContext;
 import org.nexial.core.model.MockExecutionContext;
 
 public class NumberCommandTest {
-	ExecutionContext context = new MockExecutionContext();
+	ExecutionContext context = new MockExecutionContext(true);
 
 	@After
 	public void tearDown() {
