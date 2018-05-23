@@ -858,6 +858,106 @@ public final class TextUtils {
         return properties;
     }
 
+    /**
+     * sanitize phone number so that:<ol>
+     * <li>It starts with '+' symbol, follow by country code (i.e. '1' for US)</li>
+     * <li>All letters are converted to number, according to traditional phone number dial pad</li>
+     * </ol>
+     *
+     * In addition, it checks that {@literal phoneNumber} must be 10 characters or more.
+     */
+    @NotNull
+    public static String sanitizePhoneNumber(String phoneNumber) {
+        if (StringUtils.isBlank(phoneNumber)) { throw new IllegalArgumentException("phone number cannot be empty"); }
+        if (StringUtils.length(phoneNumber) < 10) {
+            throw new IllegalArgumentException("invalid phone number: " + phoneNumber);
+        }
+
+        StringBuilder phone = new StringBuilder();
+
+        char[] phoneChars = phoneNumber.toCharArray();
+        for (int i = 0; i < phoneChars.length; i++) {
+            char ch = phoneChars[i];
+
+            if (i == 0 && ch == '+') { phone.append(ch); }
+
+            if (Character.isDigit(ch)) {
+                phone.append(ch);
+                continue;
+            }
+
+            if (Character.isLetter(ch)) {
+                ch = Character.toUpperCase(ch);
+                switch (ch) {
+                    case 'A':
+                    case 'B':
+                    case 'C': {
+                        phone.append('2');
+                        break;
+                    }
+                    case 'D':
+                    case 'E':
+                    case 'F': {
+                        phone.append('3');
+                        break;
+                    }
+                    case 'G':
+                    case 'H':
+                    case 'I': {
+                        phone.append('4');
+                        break;
+                    }
+                    case 'J':
+                    case 'K':
+                    case 'L': {
+                        phone.append('5');
+                        break;
+                    }
+                    case 'M':
+                    case 'N':
+                    case 'O': {
+                        phone.append('6');
+                        break;
+                    }
+                    case 'P':
+                    case 'Q':
+                    case 'R':
+                    case 'S': {
+                        phone.append('7');
+                        break;
+                    }
+                    case 'T':
+                    case 'U':
+                    case 'V': {
+                        phone.append('8');
+                        break;
+                    }
+                    case 'W':
+                    case 'X':
+                    case 'Y':
+                    case 'Z': {
+                        phone.append('9');
+                        break;
+                    }
+                    default: {
+                        break;
+                    }
+                }
+                continue;
+            }
+
+            if (ch == '*' || ch == '#') {
+                phone.append(ch);
+            }
+        }
+
+        phoneNumber = phone.toString();
+        if (!StringUtils.startsWith(phoneNumber, "+")) { phoneNumber = "+" + phoneNumber; }
+        if (StringUtils.length(phoneNumber) < 12) { phoneNumber = "+1" + StringUtils.substring(phoneNumber, 1); }
+
+        return phoneNumber;
+    }
+
     private static Map<String, String> initDefaultEscapeHtmlMapping() {
         Map<String, String> searchReplace = new HashMap<>();
         searchReplace.put("<", "&lt;");

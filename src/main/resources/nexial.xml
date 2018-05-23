@@ -19,472 +19,529 @@
 <beans xmlns="http://www.springframework.org/schema/beans"
        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
        xmlns:util="http://www.springframework.org/schema/util"
+       xmlns:p="http://www.springframework.org/schema/p"
        xsi:schemaLocation="
         http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans.xsd
         http://www.springframework.org/schema/util http://www.springframework.org/schema/util/spring-util-2.0.xsd"
        default-lazy-init="true">
 
-	<import resource="nexial-main.xml"/>
-	<!--<import resource="nexial-props.xml"/>-->
+    <import resource="nexial-main.xml"/>
+    <!--<import resource="nexial-props.xml"/>-->
 
 
-	<util:list id="failfastCommands" list-class="java.util.ArrayList" value-type="java.lang.String">
-		<value>web.open</value>
-		<value>web.openAndWait</value>
-		<value>web.close</value>
-		<value>base.failImmediate</value>
-	</util:list>
+    <util:list id="failfastCommands" list-class="java.util.ArrayList" value-type="java.lang.String">
+        <value>web.open</value>
+        <value>web.openAndWait</value>
+        <value>web.close</value>
+        <value>base.failImmediate</value>
+    </util:list>
 
 
-	<!-- ##################################### -->
-	<!-- ### evaluator framework           ### -->
-	<!-- ##################################### -->
-	<bean id="evaluatorTemplate" class="org.nexial.core.compare.EvaluatorBase" abstract="true"/>
-	<bean id="evaluatorEquals" class="org.nexial.core.compare.EvaluateEquals" parent="evaluatorTemplate"/>
-	<bean id="evaluatorNotEquals" class="org.nexial.core.compare.EvaluateNotEquals"
-	      parent="evaluatorTemplate"/>
-	<bean id="evaluatorGreater" class="org.nexial.core.compare.EvaluateGreater" parent="evaluatorTemplate"/>
-	<bean id="evaluatorLesser" class="org.nexial.core.compare.EvaluateLesser" parent="evaluatorTemplate"/>
-	<bean id="evaluatorGreaterOrEqual" class="org.nexial.core.compare.EvaluateGreaterOrEqual"
-	      parent="evaluatorTemplate"/>
-	<bean id="evaluatorLesserOrEqual" class="org.nexial.core.compare.EvaluateLesserOrEqual"
-	      parent="evaluatorTemplate"/>
-	<bean id="evaluatorContains" class="org.nexial.core.compare.EvaluateContains" parent="evaluatorTemplate"/>
-	<bean id="evaluatorNotContains" class="org.nexial.core.compare.EvaluateNotContains"
-	      parent="evaluatorTemplate"/>
-	<bean id="evaluatorTrue" class="org.nexial.core.compare.EvaluateTrue" parent="evaluatorTemplate"/>
-	<bean id="evaluatorFalse" class="org.nexial.core.compare.EvaluateFalse" parent="evaluatorTemplate"/>
-	<util:map id="evaluators" key-type="java.lang.String" value-type="org.nexial.core.compare.Evaluator">
-		<entry key="=" value-ref="evaluatorEquals"/>
-		<entry key="=" value-ref="evaluatorEquals"/>
-		<entry key="==" value-ref="evaluatorEquals"/>
-		<entry key="is" value-ref="evaluatorEquals"/>
-		<entry key="!=" value-ref="evaluatorNotEquals"/>
-		<entry key="is not" value-ref="evaluatorNotEquals"/>
-		<entry key=">" value-ref="evaluatorGreater"/>
-		<entry key="&lt;" value-ref="evaluatorLesser"/>
-		<entry key=">=" value-ref="evaluatorGreaterOrEqual"/>
-		<entry key="&lt;=" value-ref="evaluatorLesserOrEqual"/>
-		<entry key="in" value-ref="evaluatorContains"/>
-		<entry key="not in" value-ref="evaluatorNotContains"/>
-		<entry key="is true" value-ref="evaluatorTrue"/>
-		<entry key="is false" value-ref="evaluatorFalse"/>
-	</util:map>
-	<bean id="evaluate" class="org.nexial.core.compare.Evaluate">
-		<property name="evaluators" ref="evaluators"/>
-		<property name="regexes">
-			<array>
-				<value><![CDATA[(.+)\ *(\=\=|\!\=|is not|\>\=|\<\=|not in)\ *(.+)]]></value>
-				<value><![CDATA[(.+)\ *(\=|is|\>|\<|in)\ *(.+)]]></value>
-				<value><![CDATA[(.+)\ *(is true|is false).*]]></value>
-			</array>
-		</property>
-	</bean>
+    <!-- ##################################### -->
+    <!-- ### evaluator framework           ### -->
+    <!-- ##################################### -->
+    <bean id="evaluatorTemplate" class="org.nexial.core.compare.EvaluatorBase" abstract="true"/>
+    <bean id="evaluatorEquals" class="org.nexial.core.compare.EvaluateEquals" parent="evaluatorTemplate"/>
+    <bean id="evaluatorNotEquals" class="org.nexial.core.compare.EvaluateNotEquals"
+          parent="evaluatorTemplate"/>
+    <bean id="evaluatorGreater" class="org.nexial.core.compare.EvaluateGreater" parent="evaluatorTemplate"/>
+    <bean id="evaluatorLesser" class="org.nexial.core.compare.EvaluateLesser" parent="evaluatorTemplate"/>
+    <bean id="evaluatorGreaterOrEqual" class="org.nexial.core.compare.EvaluateGreaterOrEqual"
+          parent="evaluatorTemplate"/>
+    <bean id="evaluatorLesserOrEqual" class="org.nexial.core.compare.EvaluateLesserOrEqual"
+          parent="evaluatorTemplate"/>
+    <bean id="evaluatorContains" class="org.nexial.core.compare.EvaluateContains" parent="evaluatorTemplate"/>
+    <bean id="evaluatorNotContains" class="org.nexial.core.compare.EvaluateNotContains"
+          parent="evaluatorTemplate"/>
+    <bean id="evaluatorTrue" class="org.nexial.core.compare.EvaluateTrue" parent="evaluatorTemplate"/>
+    <bean id="evaluatorFalse" class="org.nexial.core.compare.EvaluateFalse" parent="evaluatorTemplate"/>
+    <util:map id="evaluators" key-type="java.lang.String" value-type="org.nexial.core.compare.Evaluator">
+        <entry key="=" value-ref="evaluatorEquals"/>
+        <entry key="=" value-ref="evaluatorEquals"/>
+        <entry key="==" value-ref="evaluatorEquals"/>
+        <entry key="is" value-ref="evaluatorEquals"/>
+        <entry key="!=" value-ref="evaluatorNotEquals"/>
+        <entry key="is not" value-ref="evaluatorNotEquals"/>
+        <entry key=">" value-ref="evaluatorGreater"/>
+        <entry key="&lt;" value-ref="evaluatorLesser"/>
+        <entry key=">=" value-ref="evaluatorGreaterOrEqual"/>
+        <entry key="&lt;=" value-ref="evaluatorLesserOrEqual"/>
+        <entry key="in" value-ref="evaluatorContains"/>
+        <entry key="not in" value-ref="evaluatorNotContains"/>
+        <entry key="is true" value-ref="evaluatorTrue"/>
+        <entry key="is false" value-ref="evaluatorFalse"/>
+    </util:map>
+    <bean id="evaluate" class="org.nexial.core.compare.Evaluate">
+        <property name="evaluators" ref="evaluators"/>
+        <property name="regexes">
+            <array>
+                <value><![CDATA[(.+)\ *(\=\=|\!\=|is not|\>\=|\<\=|not in)\ *(.+)]]></value>
+                <value><![CDATA[(.+)\ *(\=|is|\>|\<|in)\ *(.+)]]></value>
+                <value><![CDATA[(.+)\ *(is true|is false).*]]></value>
+            </array>
+        </property>
+    </bean>
 
 
-	<!-- ####################################### -->
-	<!-- ### nexial built-in functions       ### -->
-	<!-- ####################################### -->
-	<bean id="count" class="org.nexial.core.variable.Count" init-method="init"/>
-	<bean id="date" class="org.nexial.core.variable.Date" init-method="init"/>
-	<bean id="format" class="org.nexial.core.variable.Format" init-method="init"/>
-	<bean id="projectfile" class="org.nexial.core.variable.ProjectFile" init-method="init"/>
-	<bean id="random" class="org.nexial.core.variable.Random" init-method="init"/>
-	<bean id="sysdate" class="org.nexial.core.variable.Sysdate" init-method="init"/>
-	<bean id="syspath" class="org.nexial.core.variable.Syspath" init-method="init"/>
-	<bean id="array" class="org.nexial.core.variable.Array" init-method="init"/>
-	<bean id="execution" class="org.nexial.core.variable.Execution" init-method="init"/>
-	<util:map id="builtinFunctions" key-type="java.lang.String" value-type="java.lang.Object">
-		<entry key="array" value-ref="array"/>
-		<entry key="count" value-ref="count"/>
-		<entry key="date" value-ref="date"/>
-		<entry key="execution" value-ref="execution"/>
-		<entry key="format" value-ref="format"/>
-		<entry key="projectfile" value-ref="projectfile"/>
-		<entry key="random" value-ref="random"/>
-		<entry key="sysdate" value-ref="sysdate"/>
-		<entry key="syspath" value-ref="syspath"/>
-	</util:map>
+    <!-- ####################################### -->
+    <!-- ### nexial built-in functions       ### -->
+    <!-- ####################################### -->
+    <bean id="array" class="org.nexial.core.variable.Array" init-method="init"/>
+    <bean id="count" class="org.nexial.core.variable.Count" init-method="init"/>
+    <bean id="date" class="org.nexial.core.variable.Date" init-method="init"/>
+    <bean id="execution" class="org.nexial.core.variable.Execution" init-method="init"/>
+    <bean id="format" class="org.nexial.core.variable.Format" init-method="init"/>
+    <bean id="projectfile" class="org.nexial.core.variable.ProjectFile" init-method="init"/>
+    <bean id="random" class="org.nexial.core.variable.Random" init-method="init"/>
+    <bean id="sysdate" class="org.nexial.core.variable.Sysdate" init-method="init"/>
+    <bean id="syspath" class="org.nexial.core.variable.Syspath" init-method="init"/>
+    <util:map id="builtinFunctions" key-type="java.lang.String" value-type="java.lang.Object">
+        <entry key="array" value-ref="array"/>
+        <entry key="count" value-ref="count"/>
+        <entry key="date" value-ref="date"/>
+        <entry key="execution" value-ref="execution"/>
+        <entry key="format" value-ref="format"/>
+        <entry key="projectfile" value-ref="projectfile"/>
+        <entry key="random" value-ref="random"/>
+        <entry key="sysdate" value-ref="sysdate"/>
+        <entry key="syspath" value-ref="syspath"/>
+    </util:map>
 
 
-	<!-- ##################################### -->
-	<!-- ### RDBMS beans                   ### -->
-	<!-- ##################################### -->
-	<bean id="template:dataSource" class="org.apache.commons.dbcp2.BasicDataSource" destroy-method="close" abstract="true" scope="prototype">
-		<property name="maxTotal" value="${jdbc.maxTotal}"/>
-		<property name="maxIdle" value="${jdbc.maxIdle}"/>
-		<property name="maxOpenPreparedStatements" value="${jdbc.maxOpenPreparedStatements}"/>
-		<property name="poolPreparedStatements" value="${jdbc.poolPreparedStatements}"/>
-		<property name="defaultAutoCommit" value="${jdbc.defaultAutoCommit}"/>
-		<property name="accessToUnderlyingConnectionAllowed" value="${jdbc.accessToUnderlyingConnectionAllowed}"/>
-		<!--<property name="driverClassName" value="${XYZ.db.driverClass}"/>-->
-		<!--<property name="url" value="${url}"/>-->
-		<!--<property name="username" value="${username}"/>-->
-		<!--<property name="password" value="${password}"/>-->
-	</bean>
+    <!-- ##################################### -->
+    <!-- ### RDBMS beans                   ### -->
+    <!-- ##################################### -->
+    <bean id="template:dataSource" class="org.apache.commons.dbcp2.BasicDataSource" destroy-method="close" abstract="true" scope="prototype">
+        <property name="maxTotal" value="${jdbc.maxTotal}"/>
+        <property name="maxIdle" value="${jdbc.maxIdle}"/>
+        <property name="maxOpenPreparedStatements" value="${jdbc.maxOpenPreparedStatements}"/>
+        <property name="poolPreparedStatements" value="${jdbc.poolPreparedStatements}"/>
+        <property name="defaultAutoCommit" value="${jdbc.defaultAutoCommit}"/>
+        <property name="accessToUnderlyingConnectionAllowed" value="${jdbc.accessToUnderlyingConnectionAllowed}"/>
+        <!--<property name="driverClassName" value="${XYZ.db.driverClass}"/>-->
+        <!--<property name="url" value="${url}"/>-->
+        <!--<property name="username" value="${username}"/>-->
+        <!--<property name="password" value="${password}"/>-->
+    </bean>
 
 
-	<!-- ##################################### -->
-	<!-- ### all plugins                   ### -->
-	<!-- ##################################### -->
-	<util:map id="plugins" key-type="java.lang.String" value-type="org.nexial.core.plugins.NexialCommand">
-		<entry key="aws.s3">
-			<bean class="org.nexial.core.plugins.aws.S3Command"/>
-		</entry>
-		<entry key="base">
-			<bean class="org.nexial.core.plugins.base.BaseCommand"/>
-		</entry>
-		<entry key="csv">
-			<bean class="org.nexial.core.plugins.io.CsvCommand"/>
-		</entry>
-		<entry key="desktop">
-			<bean class="org.nexial.core.plugins.desktop.DesktopCommand"/>
-		</entry>
-		<entry key="excel">
-			<bean class="org.nexial.core.plugins.io.ExcelCommand"/>
-		</entry>
-		<entry key="external">
-			<bean class="org.nexial.core.plugins.external.ExternalCommand"/>
-		</entry>
-		<entry key="image">
-			<bean class="org.nexial.core.plugins.image.ImageCommand"/>
-		</entry>
-		<entry key="io">
-			<bean class="org.nexial.core.plugins.io.IoCommand"/>
-		</entry>
-		<entry key="jms">
-			<bean class="org.nexial.core.plugins.jms.JmsCommand">
-				<property name="jmsClient">
-					<bean class="org.nexial.core.plugins.jms.JmsClient"/>
-				</property>
-				<property name="jmsClientConfigs">
-					<map key-type="java.lang.String" value-type="java.lang.String">
-						<entry key="activemq" value="org.nexial.core.plugins.jms.ActiveMQJmsClientConfig"/>
-						<entry key="webspheremq" value="org.nexial.core.plugins.jms.WebsphereMQJmsClientConfig"/>
-						<entry key="rabbitmq" value="org.nexial.core.plugins.jms.RabbitMQJmsClientConfig"/>
-						<entry key="jndi" value="org.nexial.core.plugins.jms.JmsJndiClientConfig"/>
-					</map>
-				</property>
-				<property name="jmsJarInfo">
-					<map key-type="java.lang.String" value-type="org.nexial.core.plugins.ThirdPartyDriverInfo">
-						<entry key="webspheremq">
-							<bean class="org.nexial.core.plugins.ThirdPartyDriverInfo">
-								<constructor-arg name="jarFilePattern" value="com.ibm.mq.commonservices.jar, com.ibm.mq.headers.jar, com.ibm.mq.jar, com.ibm.mq.jmqi.jar, com.ibm.mq.jms.admin.jar, com.ibm.mq.jms.Nojndi.jar, com.ibm.mq.pcf.jar, com.ibm.mqjms.jar, com.ibm.msg.client.commonservices.wmq.jar, dhbcore.jar"/>
-								<constructor-arg name="minVersion" value="7.5.0.0"/>
-								<constructor-arg name="url" value="http://www-01.ibm.com/support/docview.wss?uid=swg21376217"/>
-							</bean>
-						</entry>
-					</map>
-				</property>
-			</bean>
-		</entry>
-		<entry key="json">
-			<bean class="org.nexial.core.plugins.json.JsonCommand"/>
-		</entry>
-		<entry key="number">
-			<bean class="org.nexial.core.plugins.base.NumberCommand"/>
-		</entry>
-		<entry key="mail">
-			<bean class="org.nexial.core.plugins.mail.MailCommand"/>
-		</entry>
-		<entry key="pdf">
-			<bean class="org.nexial.core.plugins.pdf.PdfCommand"/>
-		</entry>
-		<entry key="rdbms">
-			<bean class="org.nexial.core.plugins.db.RdbmsCommand">
-				<property name="dataAccess">
-					<bean class="org.nexial.core.plugins.db.DataAccess">
-						<!--
-						we want to support ALL types of SQL, including those vendor-specific
-						so for that reason, we are no longer insisting on the use of standard ANSI sql
-						-->
-						<!--<property name="validSQLStartWords">-->
-						<!--<list value-type="java.lang.String">-->
-						<!--<value><![CDATA[SELECT ]]></value>-->
-						<!--<value><![CDATA[WITH ]]></value>-->
-						<!--<value><![CDATA[INSERT ]]></value>-->
-						<!--<value><![CDATA[UPDATE ]]></value>-->
-						<!--<value><![CDATA[DELETE ]]></value>-->
-						<!--<value><![CDATA[{CALL ]]></value>-->
-						<!--<value><![CDATA[CALL ]]></value>-->
-						<!--<value><![CDATA[COMMIT]]></value>-->
-						<!--<value><![CDATA[ROLLBACK]]></value>-->
-						<!--</list>-->
-						<!--</property>-->
-						<property name="dbTypes">
-							<map key-type="java.lang.String" value-type="java.lang.String">
-								<entry key="connx" value="com.Connx.jdbc.TCJdbc.TCJdbcDriver"/>
-								<entry key="db2" value="com.ibm.db2.jcc.DB2Driver"/>
-								<entry key="isam" value="com.Connx.jdbc.TCJdbc.TCJdbcDriver"/>
-								<entry key="mssql" value="com.microsoft.sqlserver.jdbc.SQLServerDriver"/>
-								<entry key="mysql" value="com.mysql.cj.jdbc.Driver"/>
-								<entry key="oracle" value="oracle.jdbc.driver.OracleDriver"/>
-								<entry key="postgresql" value="org.postgresql.Driver"/>
-								<entry key="sqlite" value="org.sqlite.JDBC"/>
-								<entry key="hsqldb" value="org.hsqldb.jdbc.JDBCDriver"/>
-							</map>
-						</property>
-						<property name="dbJarInfo">
-							<map key-type="java.lang.String" value-type="org.nexial.core.plugins.ThirdPartyDriverInfo">
-								<entry key="connx">
-									<bean class="org.nexial.core.plugins.ThirdPartyDriverInfo">
-										<constructor-arg name="jarFilePattern" value="connxjdbc-xxx.jar"/>
-										<constructor-arg name="minVersion" value="4.6"/>
-										<constructor-arg name="url" value="https://www.connx.com/databases/cisam-db.php"/>
-									</bean>
-								</entry>
-								<entry key="isam">
-									<bean class="org.nexial.core.plugins.ThirdPartyDriverInfo">
-										<constructor-arg name="jarFilePattern" value="connxjdbc-xxx.jar"/>
-										<constructor-arg name="minVersion" value="4.6"/>
-										<constructor-arg name="url" value="https://www.connx.com/databases/cisam-db.php"/>
-									</bean>
-								</entry>
-								<entry key="db2">
-									<bean class="org.nexial.core.plugins.ThirdPartyDriverInfo">
-										<constructor-arg name="jarFilePattern" value="db2jcc4.jar, db2jcc_license*.jar"/>
-										<constructor-arg name="minVersion" value="4.8.87"/>
-										<constructor-arg name="url" value="http://www-01.ibm.com/support/docview.wss?uid=swg21363866"/>
-									</bean>
-								</entry>
-								<entry key="oracle">
-									<bean class="org.nexial.core.plugins.ThirdPartyDriverInfo">
-										<constructor-arg name="jarFilePattern" value="ojdbc*.jar"/>
-										<constructor-arg name="minVersion" value="11.2.0.2.0"/>
-										<constructor-arg name="url" value="http://www.oracle.com/technetwork/database/features/jdbc/jdbc-drivers-12c-download-1958347.html"/>
-									</bean>
-								</entry>
-							</map>
-						</property>
-					</bean>
-				</property>
-			</bean>
-		</entry>
-		<entry key="redis">
-			<bean class="org.nexial.core.plugins.redis.RedisCommand"/>
-		</entry>
-		<entry key="sound">
-			<bean class="org.nexial.core.plugins.sound.SoundCommand"/>
-		</entry>
-		<entry key="step">
-			<bean class="org.nexial.core.plugins.step.StepCommand"/>
-		</entry>
-		<entry key="ssh">
-			<bean class="org.nexial.core.plugins.ssh.SshCommand"/>
-		</entry>
-		<entry key="web">
-			<bean class="org.nexial.core.plugins.web.WebCommand"/>
-		</entry>
-		<entry key="webalert">
-			<bean class="org.nexial.core.plugins.web.AlertCommand"/>
-		</entry>
-		<entry key="webcookie">
-			<bean class="org.nexial.core.plugins.web.CookieCommand"/>
-		</entry>
-		<entry key="ws">
-			<bean class="org.nexial.core.plugins.ws.WsCommand"/>
-		</entry>
-		<entry key="xml">
-			<bean class="org.nexial.core.plugins.xml.XmlCommand"/>
-		</entry>
-	</util:map>
+    <!-- ##################################### -->
+    <!-- ### all plugins                   ### -->
+    <!-- ##################################### -->
+    <util:map id="plugins" key-type="java.lang.String" value-type="org.nexial.core.plugins.NexialCommand">
+        <entry key="aws.s3">
+            <bean class="org.nexial.core.plugins.aws.S3Command"/>
+        </entry>
+        <entry key="base">
+            <bean class="org.nexial.core.plugins.base.BaseCommand"/>
+        </entry>
+        <entry key="csv">
+            <bean class="org.nexial.core.plugins.io.CsvCommand"/>
+        </entry>
+        <entry key="desktop">
+            <bean class="org.nexial.core.plugins.desktop.DesktopCommand"/>
+        </entry>
+        <entry key="excel">
+            <bean class="org.nexial.core.plugins.io.ExcelCommand"/>
+        </entry>
+        <entry key="external">
+            <bean class="org.nexial.core.plugins.external.ExternalCommand"/>
+        </entry>
+        <entry key="image">
+            <bean class="org.nexial.core.plugins.image.ImageCommand"/>
+        </entry>
+        <entry key="io">
+            <bean class="org.nexial.core.plugins.io.IoCommand"/>
+        </entry>
+        <entry key="jms">
+            <bean class="org.nexial.core.plugins.jms.JmsCommand">
+                <property name="jmsClient">
+                    <bean class="org.nexial.core.plugins.jms.JmsClient"/>
+                </property>
+                <property name="jmsClientConfigs">
+                    <map key-type="java.lang.String" value-type="java.lang.String">
+                        <entry key="activemq" value="org.nexial.core.plugins.jms.ActiveMQJmsClientConfig"/>
+                        <entry key="webspheremq" value="org.nexial.core.plugins.jms.WebsphereMQJmsClientConfig"/>
+                        <entry key="rabbitmq" value="org.nexial.core.plugins.jms.RabbitMQJmsClientConfig"/>
+                        <entry key="jndi" value="org.nexial.core.plugins.jms.JmsJndiClientConfig"/>
+                    </map>
+                </property>
+                <property name="jmsJarInfo">
+                    <map key-type="java.lang.String" value-type="org.nexial.core.plugins.ThirdPartyDriverInfo">
+                        <entry key="webspheremq">
+                            <bean class="org.nexial.core.plugins.ThirdPartyDriverInfo">
+                                <constructor-arg name="jarFilePattern" value="com.ibm.mq.commonservices.jar, com.ibm.mq.headers.jar, com.ibm.mq.jar, com.ibm.mq.jmqi.jar, com.ibm.mq.jms.admin.jar, com.ibm.mq.jms.Nojndi.jar, com.ibm.mq.pcf.jar, com.ibm.mqjms.jar, com.ibm.msg.client.commonservices.wmq.jar, dhbcore.jar"/>
+                                <constructor-arg name="minVersion" value="7.5.0.0"/>
+                                <constructor-arg name="url" value="http://www-01.ibm.com/support/docview.wss?uid=swg21376217"/>
+                            </bean>
+                        </entry>
+                    </map>
+                </property>
+            </bean>
+        </entry>
+        <entry key="json">
+            <bean class="org.nexial.core.plugins.json.JsonCommand"/>
+        </entry>
+        <entry key="number">
+            <bean class="org.nexial.core.plugins.base.NumberCommand"/>
+        </entry>
+        <entry key="mail">
+            <bean class="org.nexial.core.plugins.mail.MailCommand"/>
+        </entry>
+        <entry key="pdf">
+            <bean class="org.nexial.core.plugins.pdf.PdfCommand"/>
+        </entry>
+        <entry key="rdbms">
+            <bean class="org.nexial.core.plugins.db.RdbmsCommand">
+                <property name="dataAccess">
+                    <bean class="org.nexial.core.plugins.db.DataAccess">
+                        <!--
+                        we want to support ALL types of SQL, including those vendor-specific
+                        so for that reason, we are no longer insisting on the use of standard ANSI sql
+                        -->
+                        <!--<property name="validSQLStartWords">-->
+                        <!--<list value-type="java.lang.String">-->
+                        <!--<value><![CDATA[SELECT ]]></value>-->
+                        <!--<value><![CDATA[WITH ]]></value>-->
+                        <!--<value><![CDATA[INSERT ]]></value>-->
+                        <!--<value><![CDATA[UPDATE ]]></value>-->
+                        <!--<value><![CDATA[DELETE ]]></value>-->
+                        <!--<value><![CDATA[{CALL ]]></value>-->
+                        <!--<value><![CDATA[CALL ]]></value>-->
+                        <!--<value><![CDATA[COMMIT]]></value>-->
+                        <!--<value><![CDATA[ROLLBACK]]></value>-->
+                        <!--</list>-->
+                        <!--</property>-->
+                        <property name="dbTypes">
+                            <map key-type="java.lang.String" value-type="java.lang.String">
+                                <entry key="connx" value="com.Connx.jdbc.TCJdbc.TCJdbcDriver"/>
+                                <entry key="db2" value="com.ibm.db2.jcc.DB2Driver"/>
+                                <entry key="isam" value="com.Connx.jdbc.TCJdbc.TCJdbcDriver"/>
+                                <entry key="mssql" value="com.microsoft.sqlserver.jdbc.SQLServerDriver"/>
+                                <entry key="mysql" value="com.mysql.cj.jdbc.Driver"/>
+                                <entry key="oracle" value="oracle.jdbc.driver.OracleDriver"/>
+                                <entry key="postgresql" value="org.postgresql.Driver"/>
+                                <entry key="sqlite" value="org.sqlite.JDBC"/>
+                                <entry key="hsqldb" value="org.hsqldb.jdbc.JDBCDriver"/>
+                            </map>
+                        </property>
+                        <property name="dbJarInfo">
+                            <map key-type="java.lang.String" value-type="org.nexial.core.plugins.ThirdPartyDriverInfo">
+                                <entry key="connx">
+                                    <bean class="org.nexial.core.plugins.ThirdPartyDriverInfo">
+                                        <constructor-arg name="jarFilePattern" value="connxjdbc-xxx.jar"/>
+                                        <constructor-arg name="minVersion" value="4.6"/>
+                                        <constructor-arg name="url" value="https://www.connx.com/databases/cisam-db.php"/>
+                                    </bean>
+                                </entry>
+                                <entry key="isam">
+                                    <bean class="org.nexial.core.plugins.ThirdPartyDriverInfo">
+                                        <constructor-arg name="jarFilePattern" value="connxjdbc-xxx.jar"/>
+                                        <constructor-arg name="minVersion" value="4.6"/>
+                                        <constructor-arg name="url" value="https://www.connx.com/databases/cisam-db.php"/>
+                                    </bean>
+                                </entry>
+                                <entry key="db2">
+                                    <bean class="org.nexial.core.plugins.ThirdPartyDriverInfo">
+                                        <constructor-arg name="jarFilePattern" value="db2jcc4.jar, db2jcc_license*.jar"/>
+                                        <constructor-arg name="minVersion" value="4.8.87"/>
+                                        <constructor-arg name="url" value="http://www-01.ibm.com/support/docview.wss?uid=swg21363866"/>
+                                    </bean>
+                                </entry>
+                                <entry key="oracle">
+                                    <bean class="org.nexial.core.plugins.ThirdPartyDriverInfo">
+                                        <constructor-arg name="jarFilePattern" value="ojdbc*.jar"/>
+                                        <constructor-arg name="minVersion" value="11.2.0.2.0"/>
+                                        <constructor-arg name="url" value="http://www.oracle.com/technetwork/database/features/jdbc/jdbc-drivers-12c-download-1958347.html"/>
+                                    </bean>
+                                </entry>
+                            </map>
+                        </property>
+                    </bean>
+                </property>
+            </bean>
+        </entry>
+        <entry key="redis">
+            <bean class="org.nexial.core.plugins.redis.RedisCommand"/>
+        </entry>
+        <entry key="sms">
+            <bean class="org.nexial.core.plugins.sms.SmsCommand" p:smsNotReadyMessage-ref="smsNotReadyMessage"/>
+        </entry>
+        <entry key="sound">
+            <bean class="org.nexial.core.plugins.sound.SoundCommand"/>
+        </entry>
+        <entry key="step">
+            <bean class="org.nexial.core.plugins.step.StepCommand"/>
+        </entry>
+        <entry key="ssh">
+            <bean class="org.nexial.core.plugins.ssh.SshCommand"/>
+        </entry>
+        <entry key="web">
+            <bean class="org.nexial.core.plugins.web.WebCommand"/>
+        </entry>
+        <entry key="webalert">
+            <bean class="org.nexial.core.plugins.web.AlertCommand"/>
+        </entry>
+        <entry key="webcookie">
+            <bean class="org.nexial.core.plugins.web.CookieCommand"/>
+        </entry>
+        <entry key="ws">
+            <bean class="org.nexial.core.plugins.ws.WsCommand"/>
+        </entry>
+        <entry key="xml">
+            <bean class="org.nexial.core.plugins.xml.XmlCommand"/>
+        </entry>
+    </util:map>
 
 
-	<!-- ####################################### -->
-	<!-- ### command targets / plugins       ### -->
-	<!-- ####################################### -->
-	<bean id="pluginManager" class="org.nexial.core.PluginManager">
-		<property name="plugins" ref="plugins"/>
-		<property name="browser">
-			<bean class="org.nexial.core.plugins.web.Browser">
-				<property name="chromeOptions">
-					<!-- http://peter.sh/experiments/chromium-command-line-switches/ -->
-					<array>
-						<value>disable-background-mode</value>
-						<!--<value>disable-breakpad</value>-->
-						<value>disable-component-update</value>
-						<value>disable-default-apps</value>
-						<value>disable-login-animations</value>
-						<value>disable-popup-blocking</value>
-						<value>disable-prompt-on-repost</value>
-						<value>disable-smooth-scrolling</value>
-						<value>disable-sync</value>
-						<value>disable-restore-background-contents</value>
-						<value>disable-restore-session-state</value>
-						<!--<value>disable-translate</value>-->
-						<value>homepage</value>
+    <!-- ####################################### -->
+    <!-- ### command targets / plugins       ### -->
+    <!-- ####################################### -->
+    <bean id="pluginManager" class="org.nexial.core.PluginManager">
+        <property name="plugins" ref="plugins"/>
+        <property name="browser">
+            <bean class="org.nexial.core.plugins.web.Browser">
+                <property name="chromeOptions">
+                    <!-- http://peter.sh/experiments/chromium-command-line-switches/ -->
+                    <array>
+                        <value>disable-background-mode</value>
+                        <!--<value>disable-breakpad</value>-->
+                        <value>disable-component-update</value>
+                        <value>disable-default-apps</value>
+                        <value>disable-login-animations</value>
+                        <value>disable-popup-blocking</value>
+                        <value>disable-prompt-on-repost</value>
+                        <value>disable-smooth-scrolling</value>
+                        <value>disable-sync</value>
+                        <value>disable-restore-background-contents</value>
+                        <value>disable-restore-session-state</value>
+                        <!--<value>disable-translate</value>-->
+                        <value>homepage</value>
 
-						<value>disable-application-cache</value>
-						<value>disable-cache</value>
-						<!--<value>disable-web-security</value>-->
+                        <value>disable-application-cache</value>
+                        <value>disable-cache</value>
+                        <!--<value>disable-web-security</value>-->
 
-						<!-- enable the WebKit page cache -->
-						<value>enable-fastback</value>
-						<value>disable-extensions-file-access-check</value>
-						<value>no-default-browser-check</value>
-						<value>enable-precache</value>
-						<value>enable-preparsed-js-caching</value>
-						<value>noerrdialogs</value>
+                        <!-- enable the WebKit page cache -->
+                        <value>enable-fastback</value>
+                        <value>disable-extensions-file-access-check</value>
+                        <value>no-default-browser-check</value>
+                        <value>enable-precache</value>
+                        <value>enable-preparsed-js-caching</value>
+                        <value>noerrdialogs</value>
 
-						<value>ignore-certificate-errors</value>
+                        <value>ignore-certificate-errors</value>
 
-						<!--<value>safebrowsing-disable-download-protection</value>-->
-						<value>disable-prompt-on-repost</value>
-						<value>mute-audio</value>
-						<value>disable-resize-lock</value>
-						<value>disable-print-preview</value>
-						<value>enable-automation</value>
-						<!--<value>start-maximized</value>-->
-					</array>
-				</property>
+                        <!--<value>safebrowsing-disable-download-protection</value>-->
+                        <value>disable-prompt-on-repost</value>
+                        <value>mute-audio</value>
+                        <value>disable-resize-lock</value>
+                        <value>disable-print-preview</value>
+                        <value>enable-automation</value>
+                        <!--<value>start-maximized</value>-->
+                    </array>
+                </property>
 
-				<property name="firefoxBinArgs">
-					<list value-type="java.lang.String">
-						<value>-purgecaches</value>
-						<value>-foreground</value>
-					</list>
-				</property>
+                <property name="firefoxBinArgs">
+                    <list value-type="java.lang.String">
+                        <value>-purgecaches</value>
+                        <value>-foreground</value>
+                    </list>
+                </property>
 
-				<property name="firefoxBooleanPrefs">
-					<map key-type="java.lang.String" value-type="java.lang.Boolean">
-						<entry key="browser.dom.window.dump.enabled" value="false"/>
+                <property name="firefoxBooleanPrefs">
+                    <map key-type="java.lang.String" value-type="java.lang.Boolean">
+                        <entry key="browser.dom.window.dump.enabled" value="false"/>
 
-						<!-- enable outdated flash-->
-						<entry key="extensions.blocklist.enabled" value="false"/>
+                        <!-- enable outdated flash-->
+                        <entry key="extensions.blocklist.enabled" value="false"/>
 
-						<!--
-						disable ALL updates
-						// firefoxProfile.setPreference("app.update.auto", false);
-						// firefoxProfile.setPreference("app.update.enabled", false);
-						-->
-						<entry key="app.update.service.enabled" value="false"/>
+                        <!--
+                        disable ALL updates
+                        // firefoxProfile.setPreference("app.update.auto", false);
+                        // firefoxProfile.setPreference("app.update.enabled", false);
+                        -->
+                        <entry key="app.update.service.enabled" value="false"/>
 
-						<!-- firefoxProfile.setPreference("browser.search.update", false);-->
-						<entry key="extensions.update.enabled" value="false"/>
-						<entry key="extensions.update.autoUpdateDefault" value="false"/>
+                        <!-- firefoxProfile.setPreference("browser.search.update", false);-->
+                        <entry key="extensions.update.enabled" value="false"/>
+                        <entry key="extensions.update.autoUpdateDefault" value="false"/>
 
-						<!-- disable smooth scroll (faster)-->
-						<entry key="general.smoothScroll" value="false"/>
-						<entry key="general.autoScroll" value="true"/>
+                        <!-- disable smooth scroll (faster)-->
+                        <entry key="general.smoothScroll" value="false"/>
+                        <entry key="general.autoScroll" value="true"/>
 
-						<!--
-						forces download to ask for Save As
-						reference: http://kb.mozillazine.org/Firefox_:_FAQs_:_About:config_Entries
-						-->
-						<entry key="browser.download.manager.showWhenStarting" value="false"/>
-						<entry key="browser.download.manager.closeWhenDone" value="true"/>
-						<entry key="browser.download.manager.showAlertOnComplete" value="false"/>
+                        <!--
+                        forces download to ask for Save As
+                        reference: http://kb.mozillazine.org/Firefox_:_FAQs_:_About:config_Entries
+                        -->
+                        <entry key="browser.download.manager.showWhenStarting" value="false"/>
+                        <entry key="browser.download.manager.closeWhenDone" value="true"/>
+                        <entry key="browser.download.manager.showAlertOnComplete" value="false"/>
 
-						<!--
-						A boolean value that indicates whether or not the user's preference is to automatically save files
-						into the download directory. If this value is false, the user is asked what to do.
-						-->
-						<entry key="browser.download.useDownloadDir" value="false"/>
+                        <!--
+                        A boolean value that indicates whether or not the user's preference is to automatically save files
+                        into the download directory. If this value is false, the user is asked what to do.
+                        -->
+                        <entry key="browser.download.useDownloadDir" value="false"/>
 
-						<!--
-						True (default): In the Download Actions dialog, display actions and filetypes associated with installed plugins.
-						False: Opposite of the above.
-						-->
-						<entry key="browser.download.show_plugins_in_list" value="false"/>
+                        <!--
+                        True (default): In the Download Actions dialog, display actions and filetypes associated with installed plugins.
+                        False: Opposite of the above.
+                        -->
+                        <entry key="browser.download.show_plugins_in_list" value="false"/>
 
-						<!--
-						True: Always ask what to do with an unknown MIME type, and disable option to remember what to open it with
-						False (default): Opposite of above
-						-->
-						<entry key="browser.helperApps.alwaysAsk.force" value="true"/>
+                        <!--
+                        True: Always ask what to do with an unknown MIME type, and disable option to remember what to open it with
+                        False (default): Opposite of above
+                        -->
+                        <entry key="browser.helperApps.alwaysAsk.force" value="true"/>
 
-						<!--
-						https://www.ghacks.net/2015/08/18/a-comprehensive-list-of-firefox-privacy-and-security-settings/
-						// firefoxProfile.setPreference("browser.shell.checkDefaultBrowser", false"/>
-						-->
-						<entry key="security.ssl.errorReporting.automatic" value="false"/>
-						<entry key="security.ssl.errorReporting.enabled" value="false"/>
+                        <!--
+                        https://www.ghacks.net/2015/08/18/a-comprehensive-list-of-firefox-privacy-and-security-settings/
+                        // firefoxProfile.setPreference("browser.shell.checkDefaultBrowser", false"/>
+                        -->
+                        <entry key="security.ssl.errorReporting.automatic" value="false"/>
+                        <entry key="security.ssl.errorReporting.enabled" value="false"/>
 
-						<!--
-						// firefoxProfile.setPreference("security.tls.unrestricted_rc4_fallback", true);
-						// firefoxProfile.setPreference("security.ssl.treat_unsafe_negotiation_as_broken", false);
-						// firefoxProfile.setPreference("browser.tabs.warnOnClose", false);
-						// firefoxProfile.setPreference("browser.tabs.warnOnCloseOtherTabs", false);
-						-->
-						<entry key="security.csp.enable" value="false"/>
-						<entry key="security.ssl.enable_ocsp_stapling" value="false"/>
-						<entry key="services.sync.prefs.sync.security.OCSP.enabled" value="false"/>
-						<entry key="services.sync.prefs.sync.security.OCSP.require" value="false"/>
-						<entry key="security.ssl.enable_ocsp_must_staple" value="false"/>
+                        <!--
+                        // firefoxProfile.setPreference("security.tls.unrestricted_rc4_fallback", true);
+                        // firefoxProfile.setPreference("security.ssl.treat_unsafe_negotiation_as_broken", false);
+                        // firefoxProfile.setPreference("browser.tabs.warnOnClose", false);
+                        // firefoxProfile.setPreference("browser.tabs.warnOnCloseOtherTabs", false);
+                        -->
+                        <entry key="security.csp.enable" value="false"/>
+                        <entry key="security.ssl.enable_ocsp_stapling" value="false"/>
+                        <entry key="services.sync.prefs.sync.security.OCSP.enabled" value="false"/>
+                        <entry key="services.sync.prefs.sync.security.OCSP.require" value="false"/>
+                        <entry key="security.ssl.enable_ocsp_must_staple" value="false"/>
 
-						<entry key="webdriver_accept_untrusted_certs" value="true"/>
-						<entry key="webdriver_assume_untrusted_issuer" value="false"/>
+                        <entry key="webdriver_accept_untrusted_certs" value="true"/>
+                        <entry key="webdriver_assume_untrusted_issuer" value="false"/>
 
-						<entry key="datareporting.healthreport.uploadEnabled" value="false"/>
-						<entry key="datareporting.healthreport.service.enabled" value="false"/>
-						<entry key="breakpad.reportURL" value="false"/>
-						<entry key="browser.search.suggest.enabled" value="false"/>
-						<entry key="browser.tabs.crashReporting.sendReport" value="false"/>
+                        <entry key="datareporting.healthreport.uploadEnabled" value="false"/>
+                        <entry key="datareporting.healthreport.service.enabled" value="false"/>
+                        <entry key="breakpad.reportURL" value="false"/>
+                        <entry key="browser.search.suggest.enabled" value="false"/>
+                        <entry key="browser.tabs.crashReporting.sendReport" value="false"/>
 
-						<!-- nightly firefox -->
-						<entry key="dom.vr.enabled" value="false"/>
-						<entry key="dom.vr.oculus.enabled" value="false"/>
-						<entry key="dom.vr.openvr.enabled" value="false"/>
-						<entry key="dom.vr.osvr.enabled" value="false"/>
-						<entry key="dom.vr.poseprediction.enabled" value="false"/>
-					</map>
-				</property>
-				<property name="firefoxStringPrefs">
-					<map key-type="java.lang.String" value-type="java.lang.String">
-						<entry key="extensions.firebug.allPagesActivation" value="on"/>
+                        <!-- nightly firefox -->
+                        <entry key="dom.vr.enabled" value="false"/>
+                        <entry key="dom.vr.oculus.enabled" value="false"/>
+                        <entry key="dom.vr.openvr.enabled" value="false"/>
+                        <entry key="dom.vr.osvr.enabled" value="false"/>
+                        <entry key="dom.vr.poseprediction.enabled" value="false"/>
+                    </map>
+                </property>
+                <property name="firefoxStringPrefs">
+                    <map key-type="java.lang.String" value-type="java.lang.String">
+                        <entry key="extensions.firebug.allPagesActivation" value="on"/>
 
-						<!--
-						A local folder the user may have selected for downloaded files to be saved. Migration of other browser
-						settings may also set this path. This folder is enabled when browser.download.folderList equals 2.
-						-->
-						<entry key="browser.download.dir" value=""/>
+                        <!--
+                        A local folder the user may have selected for downloaded files to be saved. Migration of other browser
+                        settings may also set this path. This folder is enabled when browser.download.folderList equals 2.
+                        -->
+                        <entry key="browser.download.dir" value=""/>
 
-						<!--
-						A comma-separated list of MIME types to save to disk without asking what to use to open the file.
-						Default value is an empty string
-						-->
-						<entry key="browser.helperApps.neverAsk.saveToDisk"
-						       value="text/xml,text/csv,text/plain,text/log,application/zlib,application/x-gzip,application/gzip,application/x-compressed,application/x-gtar,multipart/x-gzip,application/tgz,application/gnutar,application/x-tar"/>
+                        <!--
+                        A comma-separated list of MIME types to save to disk without asking what to use to open the file.
+                        Default value is an empty string
+                        -->
+                        <entry key="browser.helperApps.neverAsk.saveToDisk"
+                               value="text/xml,text/csv,text/plain,text/log,application/zlib,application/x-gzip,application/gzip,application/x-compressed,application/x-gtar,multipart/x-gzip,application/tgz,application/gnutar,application/x-tar"/>
 
-						<entry key="security.ssl.errorReporting.url" value=""/>
+                        <entry key="security.ssl.errorReporting.url" value=""/>
 
-						<entry key="marionette.log.level" value="off"/>
-						<entry key="marionette.logging" value="off"/>
-					</map>
-				</property>
-				<property name="firefoxIntPrefs">
-					<map key-type="java.lang.String" value-type="java.lang.Integer">
-						<!-- new window instead of tab -->
-						<!--<entry key="browser.link.open_newwindow" value="2"/>-->
-						<!--<entry key="browser.link.open_newwindow.override.external" value="2"/>-->
-						<!--<entry key="browser.link.open_newwindow.restriction" value="2"/>-->
+                        <entry key="marionette.log.level" value="off"/>
+                        <entry key="marionette.logging" value="off"/>
+                    </map>
+                </property>
+                <property name="firefoxIntPrefs">
+                    <map key-type="java.lang.String" value-type="java.lang.Integer">
+                        <!-- new window instead of tab -->
+                        <!--<entry key="browser.link.open_newwindow" value="2"/>-->
+                        <!--<entry key="browser.link.open_newwindow.override.external" value="2"/>-->
+                        <!--<entry key="browser.link.open_newwindow.restriction" value="2"/>-->
 
-						<!--
-						indicates the default folder to download a file to. 0 indicates the Desktop; 1 indicates the systems
-						default downloads location; 2 indicates a custom (see: browser.download.dir) folder.
-						-->
-						<entry key="browser.download.folderList" value="2"/>
+                        <!--
+                        indicates the default folder to download a file to. 0 indicates the Desktop; 1 indicates the systems
+                        default downloads location; 2 indicates a custom (see: browser.download.dir) folder.
+                        -->
+                        <entry key="browser.download.folderList" value="2"/>
 
-						<entry key="security.cert_pinning.enforcement_level" value="0"/>
-						<entry key="security.OCSP.enabled" value="0"/>
-					</map>
-				</property>
-			</bean>
-		</property>
-	</bean>
+                        <entry key="security.cert_pinning.enforcement_level" value="0"/>
+                        <entry key="security.OCSP.enabled" value="0"/>
+                    </map>
+                </property>
+            </bean>
+        </property>
+    </bean>
 
-	<bean id="expressionProcessor" class="org.nexial.core.variable.ExpressionProcessor"/>
+    <bean id="expressionProcessor" class="org.nexial.core.variable.ExpressionProcessor"/>
 
-	<util:map id="defaultContextProps" key-type="java.lang.String" value-type="java.lang.String">
-		<entry key="nexial.enableEmail" value="false"/>
-		<entry key="nexial.assistantMode" value="off"/>
-		<entry key="nexial.outputToCloud" value="false"/>
-		<entry key="nexial.outputCloudBase" value="${nexial.outputCloudBase:}"/>
-		<entry key="nexial.generateReport" value="false"/>
-		<!--<entry key="nexial.screenRecorder" value="avi"/>-->
-		<entry key="nexial.screenRecorder" value="mp4"/>
-		<entry key="nexial.browser.defaultWindowSize" value="1280x960"/>
-		<!--<entry key="" value=""/>-->
-	</util:map>
+    <util:map id="defaultContextProps" key-type="java.lang.String" value-type="java.lang.String">
+        <entry key="nexial.enableEmail" value="false"/>
+        <entry key="nexial.assistantMode" value="off"/>
+        <entry key="nexial.outputToCloud" value="false"/>
+        <entry key="nexial.outputCloudBase" value="${nexial.outputCloudBase:}"/>
+        <entry key="nexial.generateReport" value="false"/>
+        <!--<entry key="nexial.screenRecorder" value="avi"/>-->
+        <entry key="nexial.screenRecorder" value="mp4"/>
+        <entry key="nexial.browser.defaultWindowSize" value="1280x960"/>
+        <!--<entry key="" value=""/>-->
+    </util:map>
+
+    <util:list id="readOnlyVars" list-class="java.util.ArrayList">
+        <value>nexial.runID</value>
+        <value>nexial.runID.prefix</value>
+        <value>nexial.spreadsheet.program</value>
+        <value>nexial.lastScreenshot</value>
+        <value>nexial.lastOutcome</value>
+        <value>nexial.minExecSuccessRate</value>
+        <value>nexial.screenRecorder</value>
+        <value>nexial.scope.iteration</value>
+        <value>nexial.scope.fallbackToPrevious</value>
+        <value>nexial.scope.currentIteration</value>
+        <value>nexial.scope.lastIteration</value>
+        <value>nexial.external.output</value>
+        <value>nexial.browser.windowSize</value>
+        <value>nexial.delayBrowser</value>
+        <value>nexial.browser.ie.requireWindowFocus</value>
+        <value>nexial.lastAlertText</value>
+        <value>nexial.ignoreBrowserAlert</value>
+        <value>nexial.lastAlertText</value>
+        <value>nexial.browser.incognito</value>
+        <value>nexial.browserstack.automatekey</value>
+        <value>nexial.browserstack.username</value>
+        <value>nexial.browserstack.browser</value>
+        <value>nexial.browserstack.browser.version</value>
+        <value>nexial.browserstack.debug</value>
+        <value>nexial.browserstack.resolution</value>
+        <value>nexial.browserstack.app.buildnumber</value>
+        <value>nexial.browserstack.enablelocal</value>
+        <value>nexial.browserstack.os</value>
+        <value>nexial.browserstack.os.version</value>
+        <value>nexial.browser.safari.cleanSession</value>
+        <value>nexial.browser.safari.useTechPreview</value>
+        <value>nexial.forceIE32</value>
+        <value>webdriver.ie.driver</value>
+        <value>webdriver.ie.driver.loglevel</value>
+        <value>webdriver.ie.driver.logfile</value>
+        <value>webdriver.ie.driver.silent</value>
+        <value>file.separator</value>
+        <value>java.home</value>
+        <value>java.io.tmpdir</value>
+        <value>java.version</value>
+        <value>line.separator</value>
+        <value>os.arch</value>
+        <value>os.name</value>
+        <value>os.version</value>
+        <value>user.country</value>
+        <value>user.dir</value>
+        <value>user.home</value>
+        <value>user.language</value>
+        <value>user.name</value>
+        <value>user.timezone</value>
+    </util:list>
 
 </beans>

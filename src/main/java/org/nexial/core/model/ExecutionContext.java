@@ -49,7 +49,7 @@ import org.nexial.core.MemManager;
 import org.nexial.core.PluginManager;
 import org.nexial.core.TokenReplacementException;
 import org.nexial.core.aws.NexialS3Helper;
-import org.nexial.core.aws.TtsHelper;
+import org.nexial.core.aws.SmsHelper;
 import org.nexial.core.excel.Excel;
 import org.nexial.core.excel.Excel.Worksheet;
 import org.nexial.core.excel.ExcelAddress;
@@ -58,6 +58,7 @@ import org.nexial.core.plugins.NexialCommand;
 import org.nexial.core.plugins.pdf.CommonKeyValueIdentStrategies;
 import org.nexial.core.plugins.sound.SoundMachine;
 import org.nexial.core.reports.JenkinsVariables;
+import org.nexial.core.reports.MailNotifier;
 import org.nexial.core.utils.ConsoleUtils;
 import org.nexial.core.utils.ExecutionLogger;
 import org.nexial.core.utils.OutputFileUtils;
@@ -73,7 +74,6 @@ import static java.lang.System.lineSeparator;
 import static org.apache.commons.lang3.SystemUtils.IS_OS_WINDOWS;
 import static org.apache.commons.lang3.SystemUtils.USER_NAME;
 import static org.nexial.commons.utils.EnvUtils.enforceUnixEOL;
-import static org.nexial.core.NexialConst.BrowserStack.*;
 import static org.nexial.core.NexialConst.*;
 import static org.nexial.core.NexialConst.Data.*;
 import static org.nexial.core.NexialConst.FlowControls.OPT_STEP_BY_STEP;
@@ -87,16 +87,6 @@ import static org.nexial.core.excel.ext.CipherHelper.CRYPT_IND;
  */
 public class ExecutionContext {
     // data variables that are READ-ONLY and cannot be removed/altered
-    public static final List<String> READ_ONLY_VARS = Arrays.asList(
-        OPT_RUN_ID, OPT_RUN_ID_PREFIX, SPREADSHEET_PROGRAM, OPT_LAST_SCREENSHOT_NAME, OPT_LAST_OUTCOME,
-        MIN_EXEC_SUCCESS_RATE, RECORDER_TYPE, ITERATION, FALLBACK_TO_PREVIOUS, CURR_ITERATION, LAST_ITERATION,
-        OPT_RUN_PROGRAM_OUTPUT, BROWSER_WINDOW_SIZE, OPT_DELAY_BROWSER, BROWSER_IE_REQUIRE_WINDOW_FOCUS,
-        OPT_LAST_ALERT_TEXT, OPT_ALERT_IGNORE_FLAG, OPT_LAST_ALERT_TEXT, BROWER_INCOGNITO, KEY_AUTOMATEKEY,
-        KEY_USERNAME, KEY_BROWSER, KEY_BROWSER_VER, KEY_DEBUG, KEY_RESOLUTION, KEY_BUILD_NUM, KEY_ENABLE_LOCAL,
-        KEY_OS, KEY_OS_VER, SAFARI_CLEAN_SESSION, SAFARI_USE_TECH_PREVIEW, OPT_FORCE_IE_32, SELENIUM_IE_DRIVER,
-        SELENIUM_IE_LOG_LEVEL, SELENIUM_IE_LOG_LOGFILE, SELENIUM_IE_SILENT, "file.separator", "java.home",
-        "java.io.tmpdir", "java.version", "line.separator", "os.arch", "os.name", "os.version", "user.country",
-        "user.dir", "user.home", "user.language", "user.name", "user.timezone");
     private static final List<Class> SIMPLE_VALUES = Arrays.asList(Boolean.class, Byte.class, Short.class,
                                                                    Character.class, Integer.class, Long.class,
                                                                    Float.class, Double.class, String.class);
@@ -130,7 +120,10 @@ public class ExecutionContext {
     protected ExecutionLogger executionLogger;
     // output-to-cloud (otc) via AWS S3
     protected NexialS3Helper otc;
+    protected String otcNotReadyMessage;
     protected SoundMachine dj;
+    protected SmsHelper smsHelper;
+    protected MailNotifier mailNotifier;
     protected Map<String, String> defaultContextProps;
 
     protected ClassPathXmlApplicationContext springContext;
@@ -138,6 +131,7 @@ public class ExecutionContext {
     protected Map<String, Object> data = new ListOrderedMap<>();
     protected ExpressionProcessor expression;
     protected ExecutionEventListener executionEventListener;
+    protected List<String> readOnlyVars;
 
     static final String KEY_COMPLEX = "__lAIxEn__";
     static final String DOT_LITERAL_REPLACER = "__53n7ry_4h34d__";
@@ -228,6 +222,7 @@ public class ExecutionContext {
             plugins.init();
         }
 
+        readOnlyVars = springContext.getBean("readOnlyVars", new ArrayList<String>().getClass());
         failfastCommands = springContext.getBean("failfastCommands", new ArrayList<String>().getClass());
 
         // init built-in variables
@@ -247,20 +242,24 @@ public class ExecutionContext {
         // otc=output-to-cloud (S3)
         otc = springContext.getBean("otc", NexialS3Helper.class);
         otc.setContext(this);
+        otcNotReadyMessage = springContext.getBean("otcNotReadyMessage", String.class);
 
         // text-to-speech (tts) via AWS Polly
-        TtsHelper tts = springContext.getBean("tts", TtsHelper.class);
-        dj = new SoundMachine();
-        if (tts.isReadyForUse()) {
-            tts.init();
-            dj.setTts(tts);
-        }
+        dj = springContext.getBean("soundMachine", SoundMachine.class);
+
+        // AWS SNS
+        smsHelper = springContext.getBean("smsHelper", SmsHelper.class);
+
+        // mail notifier
+        mailNotifier = springContext.getBean("mailNotifier", MailNotifier.class);
+
+        // event listener
+        executionEventListener = springContext.getBean("executionEventListener", ExecutionEventListener.class);
+        executionEventListener.setContext(this);
 
         expression = new ExpressionProcessor(this);
 
         defaultContextProps = springContext.getBean("defaultContextProps", new HashMap<String, String>().getClass());
-
-        executionEventListener = new ExecutionEventListener(this);
     }
 
     public void useTestScript(File testScript) throws IOException {
@@ -326,13 +325,15 @@ public class ExecutionContext {
 
     public NexialS3Helper getOtc() throws IOException {
         // check that the required properties are set
-        if (otc == null || !otc.isReadyForUse()) {
-            throw new IOException("Nexial S3 helper not probably configured. Please contact support for more details.");
-        }
+        if (otc == null || !otc.isReadyForUse()) { throw new IOException(otcNotReadyMessage); }
         return otc;
     }
 
     public SoundMachine getDj() { return dj; }
+
+    public SmsHelper getSmsHelper() { return smsHelper; }
+
+    public MailNotifier getMailNotifier() { return mailNotifier; }
 
     public NexialCommand findPlugin(String target) { return plugins.getPlugin(target); }
 
@@ -534,7 +535,7 @@ public class ExecutionContext {
     }
 
     public boolean isReadOnlyData(String var) {
-        return StringUtils.isBlank(var) || READ_ONLY_VARS.contains(var) || StringUtils.startsWith(var, "java.");
+        return StringUtils.isBlank(var) || readOnlyVars.contains(var) || StringUtils.startsWith(var, "java.");
     }
 
     /**
@@ -1036,7 +1037,7 @@ public class ExecutionContext {
         // special treatment for index-reference (list or array)
         if ((value.getClass().isArray() || Collection.class.isAssignableFrom(value.getClass()))
             && StringUtils.startsWith(postToken, TOKEN_ARRAY_START) && StringUtils.contains(postToken, TOKEN_ARRAY_END)
-            ) {
+        ) {
 
             String propName = StringUtils.substring(postToken, 1, StringUtils.indexOf(postToken, TOKEN_ARRAY_END, 1));
             if (!NumberUtils.isDigits(propName)) { return flattenArrayOfObject(value, propName); }

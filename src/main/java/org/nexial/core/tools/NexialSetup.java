@@ -25,6 +25,7 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.security.GeneralSecurityException;
+import java.security.Security;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -40,10 +41,7 @@ import javax.tools.StandardJavaFileManager;
 import javax.tools.ToolProvider;
 import javax.validation.constraints.NotNull;
 
-import org.apache.commons.cli.CommandLine;
-import org.apache.commons.cli.CommandLineParser;
-import org.apache.commons.cli.DefaultParser;
-import org.apache.commons.cli.Options;
+import org.apache.commons.cli.*;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.nexial.commons.utils.FileUtil;
@@ -66,6 +64,7 @@ public final class NexialSetup {
     private static final String SETUP_CLASS_TEMPLATE =
         "package org.nexial.core.config;\n" +
         "import java.io.StringReader;\n" +
+        "import java.security.Security;\n" +
         "import java.util.Properties;\n" +
         "import javax.crypto.Cipher;\n" +
         "import javax.crypto.spec.SecretKeySpec;\n" +
@@ -73,6 +72,7 @@ public final class NexialSetup {
         "class Setup {\n" +
         "  static {\n" +
         "    try {\n" +
+        "      Security.setProperty(\"crypto.policy\", \"unlimited\");\n" +
         "      %s\n" +
         "      %s\n" +
         "      Cipher cipher = Cipher.getInstance(\"AES\");\n" +
@@ -96,6 +96,7 @@ public final class NexialSetup {
                                                   "bin/nexial-setup.cmd or bin/nexial-setup.sh script";
     private static final String MSG_CANT_WRITE_TEMP = "Unable to read/write directory '" + TEMP + "' to generate " +
                                                       "setup artifacts.  Please fix permission and re-run again.";
+    private static Options cmdOptions = initCmdOptions();
 
     /**
      * The following steps take place.
@@ -125,19 +126,36 @@ public final class NexialSetup {
             System.exit(RC_FAILURE_FOUND);
         }
 
-        Options cmdOptions = new Options();
-        cmdOptions.addOption(CliUtils.newArgOption(OPT_DATA_FILE, "file", "The file containing key/value pairs."));
-        cmdOptions.addOption(CliUtils.newArgOption(OPT_SETUP_KEY, "key", "The key to encrypt data."));
+        // happy days
+        Security.setProperty("crypto.policy", "unlimited");
 
-        CommandLineParser parser = new DefaultParser();
         try {
+            CommandLineParser parser = new DefaultParser();
             CommandLine cmd = parser.parse(cmdOptions, args);
 
             final String dataFilePath = cmd.getOptionValue(OPT_DATA_FILE);
             checkValidFilePath(dataFilePath);
             String properties = FileUtils.readFileToString(new File(dataFilePath), DEF_CHARSET);
 
-            final String key = StringUtils.rightPad(cmd.getOptionValue(OPT_SETUP_KEY), 16, " ");
+            String key = cmd.getOptionValue(OPT_SETUP_KEY);
+            switch ((int) Math.ceil(key.length() / 16.0)) {
+                case 1: {
+                    key = StringUtils.rightPad(key, 16, " ");
+                    break;
+                }
+                case 2: {
+                    key = StringUtils.rightPad(key, 32, " ");
+                    break;
+                }
+                case 3: {
+                    key = StringUtils.rightPad(key, 64, " ");
+                    break;
+                }
+                default: {
+                    key = StringUtils.rightPad(key, 128, " ");
+                    break;
+                }
+            }
             String encrypted = encryptData(properties, key);
 
             StringBuilder parm1 = new StringBuilder("byte[] parm1=new byte[").append(encrypted.length()).append("];");
@@ -166,25 +184,23 @@ public final class NexialSetup {
             FileUtils.moveFile(new File(CLASS_FOLDER + SETUP_JAR), targetJar);
 
             System.out.println("\n\n" +
-                               "WARNING:\n" +
-                               "> Setup complete.\n" +
+                               "Setup complete.\n\n" +
+                               "IMPORTANT NOTE:\n" +
                                "> It is now safe to delete " + dataFilePath + "\n" +
                                "> to keep it out of prying eyes.\n" +
                                "> You can zip up " + System.getenv(ENV_NEXIAL_HOME) + " for distribution.\n" +
                                "\n");
+        } catch (ParseException e) {
+            System.err.println("\nERROR: " + e.getMessage() + "\n");
+            HelpFormatter formatter = new HelpFormatter();
+            formatter.printHelp(NexialSetup.class.getName(), cmdOptions, true);
+            System.exit(RC_BAD_CLI_ARGS);
         } catch (Exception e) {
             displayExceptionDetails(e);
         } finally {
             deleteFoldersRecursively(SETUP_FOLDER);
             deleteFoldersRecursively(CLASS_FOLDER);
         }
-    }
-
-    private static String encryptData(String properties, String key) throws GeneralSecurityException {
-        Cipher cipher = Cipher.getInstance(ENCRYPTION_ALGORITHM);
-        cipher.init(ENCRYPT_MODE, new SecretKeySpec(key.getBytes(), ENCRYPTION_ALGORITHM));
-
-        return new CipherHelper().encrypt(properties, cipher);
     }
 
     private static boolean ensureReadiness() {
@@ -202,6 +218,20 @@ public final class NexialSetup {
         }
 
         return true;
+    }
+
+    @NotNull
+    private static Options initCmdOptions() {
+        Options cmdOptions = new Options();
+        cmdOptions.addOption(CliUtils.newArgOption(OPT_DATA_FILE, "file", "The file containing key/value pairs."));
+        cmdOptions.addOption(CliUtils.newArgOption(OPT_SETUP_KEY, "key", "The key to encrypt data."));
+        return cmdOptions;
+    }
+
+    private static String encryptData(String properties, String key) throws GeneralSecurityException {
+        Cipher cipher = Cipher.getInstance(ENCRYPTION_ALGORITHM);
+        cipher.init(ENCRYPT_MODE, new SecretKeySpec(key.getBytes(), ENCRYPTION_ALGORITHM));
+        return new CipherHelper().encrypt(properties, cipher);
     }
 
     /**
@@ -275,26 +305,23 @@ public final class NexialSetup {
      * @throws IOException exception occurred while adding the file.
      */
     private static void add(@NotNull File source, @NotNull JarOutputStream target) throws IOException {
+        String name =
+            StringUtils.substringAfter(
+                StringUtils.appendIfMissing(source.getPath().replace("\\", "/"), "/").trim(),
+                StringUtils.replace(SETUP_FOLDER, "\\", "/"));
+
         BufferedInputStream in = null;
-
         try {
-            if (source == null) {
-                System.err.println("Null cannot be added to jar!");
-                deleteFoldersRecursively(SETUP_FOLDER);
-                System.exit(-1);
-            }
-
-            String name =
-                StringUtils.substringAfter(
-                    StringUtils.appendIfMissing(source.getPath().replace("\\", "/"), "/").trim(),
-                    StringUtils.replace(SETUP_FOLDER, "\\", "/"));
             JarEntry entry = new JarEntry(name);
             entry.setTime(source.lastModified());
             target.putNextEntry(entry);
 
             if (source.isDirectory()) {
                 target.closeEntry();
-                for (File nestedFile : source.listFiles()) { add(nestedFile, target); }
+                File[] files = source.listFiles();
+                if (files != null && files.length > 0) {
+                    for (File nestedFile : files) { add(nestedFile, target); }
+                }
                 return;
             }
 
@@ -339,7 +366,7 @@ public final class NexialSetup {
      * @param e{@link Exception} occurred.
      */
     private static void displayExceptionDetails(Exception e) {
-        System.err.println("Exception is " + e.getMessage());
+        System.err.println("Error ocurred during processing: " + e.getMessage());
         System.exit(RC_FAILURE_FOUND);
     }
 

@@ -19,6 +19,7 @@ package org.nexial.core.plugins.web;
 
 import java.io.File;
 import java.io.IOException;
+import java.time.Duration;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
@@ -131,8 +132,8 @@ public class WebCommand extends BaseCommand implements CanTakeScreenshot, CanLog
         //log("logToBrowser=" + logToBrowser);
 
         if (driver != null) {
-            waiter = new FluentWait<>(driver).withTimeout(context.getPollWaitMs(), MILLISECONDS)
-                                             .pollingEvery(10, MILLISECONDS)
+            waiter = new FluentWait<>(driver).withTimeout(Duration.ofMillis(context.getPollWaitMs()))
+                                             .pollingEvery(Duration.ofMillis(10))
                                              .ignoring(NoSuchElementException.class);
         }
     }
@@ -1792,7 +1793,7 @@ public class WebCommand extends BaseCommand implements CanTakeScreenshot, CanLog
     }
 
     protected boolean waitForCondition(long maxWaitMs, Predicate condition) {
-        // guanrantee at least 1 cycle
+        // guaranteed at least 1 cycle
         if (maxWaitMs < DEF_SLEEP_MS) { maxWaitMs = DEF_SLEEP_MS + 1; }
 
         int count = 0;

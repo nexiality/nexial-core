@@ -18,6 +18,7 @@
 package org.nexial.core.reports;
 
 import java.util.HashSet;
+import java.util.List;
 import java.util.Set;
 import javax.mail.MessagingException;
 
@@ -74,5 +75,21 @@ public class MailNotifier implements ExecutionNotifier {
         String content = mailTemplateEngine.process(mailTemplate, engineContext);
 
         mailer.sendResult(recipients, content, StringUtils.removeEnd(subject.toString(), ", "));
+    }
+
+    public void sendPlainText(List<String> recipients, String subject, String text) throws MessagingException {
+        if (CollectionUtils.isEmpty(recipients)) {
+            ConsoleUtils.log("No email to send since no recipient address provided.");
+            return;
+        }
+
+        if (StringUtils.isBlank(text)) {
+            ConsoleUtils.log("No email to send since content provided.");
+            return;
+        }
+
+        // off we go
+        ConsoleUtils.log("Sending email to " + recipients + ": " + text);
+        mailer.sendPlainText(recipients, StringUtils.trim(subject), text);
     }
 }

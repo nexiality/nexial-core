@@ -155,6 +155,8 @@ public class CheckUtils {
         return false;
     }
 
+    public static boolean isRunningInZeroTouchEnv() { return isRunningInCi() || isRunningInJUnit(); }
+
     public static boolean isSameType(Class[] types, Class required) {
         if (ArrayUtils.isEmpty(types)) { return false; }
 

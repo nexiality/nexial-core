@@ -50,6 +50,36 @@ public class Mailer {
 
     public void setMailer(MailObjectSupport mailer) { this.mailer = mailer; }
 
+    public void sendPlainText(List<String> recipients, String subject, String content) throws MessagingException {
+
+        Session session = mailer.getSession();
+        SMTPTransport transport = mailer.createTransport(session);
+
+        Message msg = prepMessage(session, subject);
+
+        try {
+            // add to, cc, bcc, from
+            for (String recipient : recipients) { msg.addRecipient(TO, new InternetAddress(recipient)); }
+
+            // content
+            MimeBodyPart part = new MimeBodyPart();
+            part.setContent(content, "text/plain");
+
+            Multipart mp = new MimeMultipart();
+            mp.addBodyPart(part);
+
+            // final steps
+            msg.setContent(mp);
+            msg.setSentDate(new Date());
+            msg.saveChanges();
+
+            // send it!
+            transport.sendMessage(msg, msg.getAllRecipients());
+        } finally {
+            transport.close();
+        }
+    }
+
     public void sendResult(String[] recipients, String content, String testCase) throws MessagingException {
 
         Session session = mailer.getSession();

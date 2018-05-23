@@ -18,44 +18,103 @@
 
 <beans xmlns="http://www.springframework.org/schema/beans"
        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-       xmlns:p="http://www.springframework.org/schema/p"
-       xsi:schemaLocation="http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans.xsd"
+       xmlns:p="http://www.springframework.org/schema/p" xmlns:utils="http://www.springframework.org/schema/util"
+       xsi:schemaLocation="http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans.xsd http://www.springframework.org/schema/util http://www.springframework.org/schema/util/spring-util.xsd"
        default-lazy-init="true">
 
-	<import resource="nexial-mail.xml"/>
+    <import resource="nexial-mail.xml"/>
 
-	<bean id="applicationEventMulticaster" class="org.springframework.context.event.SimpleApplicationEventMulticaster"/>
-	<bean id="applicationContextUtils" class="org.nexial.commons.spring.ApplicationContextUtils"/>
+    <bean id="applicationEventMulticaster" class="org.springframework.context.event.SimpleApplicationEventMulticaster"/>
+    <bean id="applicationContextUtils" class="org.nexial.commons.spring.ApplicationContextUtils"/>
 
-	<bean id="gsonBuilder" class="com.google.gson.GsonBuilder" init-method="setPrettyPrinting"/>
-	<bean id="gson" factory-bean="gsonBuilder" factory-method="create"/>
+    <bean id="gsonBuilder" class="com.google.gson.GsonBuilder" init-method="setPrettyPrinting"/>
+    <bean id="gson" factory-bean="gsonBuilder" factory-method="create"/>
 
-	<bean id="otc" class="org.nexial.core.aws.NexialS3Helper" init-method="init"
-	      p:encoding="UTF-8"
-	      p:outputBase="${nexial.outputCloudBase:}"
-	      p:accessKey="${otc.accessKey:}"
-	      p:secretKey="${otc.secretKey:}"
-	      p:s3PathStyleAccessEnabled="${otc.s3PathStyleAccessEnabled:true}"
-	      p:verbose="false">
-		<property name="region">
-			<bean class="com.amazonaws.regions.Regions" factory-method="fromName">
-				<constructor-arg value="${otc.region:us-east-1}"/>
-			</bean>
-		</property>
-	</bean>
+    <bean id="otc" class="org.nexial.core.aws.NexialS3Helper" init-method="init"
+          p:encoding="UTF-8"
+          p:outputBase="${nexial.outputCloudBase:}"
+          p:accessKey="${otc.accessKey:}"
+          p:secretKey="${otc.secretKey:}"
+          p:s3PathStyleAccessEnabled="${otc.s3PathStyleAccessEnabled:true}"
+          p:verbose="false">
+        <property name="region">
+            <bean class="com.amazonaws.regions.Regions" factory-method="fromName">
+                <constructor-arg value="${otc.region:us-east-1}"/>
+            </bean>
+        </property>
+    </bean>
 
-	<bean id="tts" class="org.nexial.core.aws.TtsHelper" scope="prototype"
-	      p:accessKey="${tts.accessKey:}"
-	      p:secretKey="${tts.secretKey:}"
-	      p:language="${tts.language:en-US}"
-	      p:sampleRate="${tts.sampleRate:22050}"
-	      p:voiceGenderString="${tts.voiceGender:Female}"
-	      p:verbose="false">
-		<property name="region">
-			<bean class="com.amazonaws.regions.Regions" factory-method="fromName">
-				<constructor-arg value="${tts.region:us-east-1}"/>
-			</bean>
-		</property>
-	</bean>
+    <bean id="otcNotReadyMessage" class="java.lang.String">
+        <constructor-arg value="Nexial S3 helper not probably configured. See https://nexiality.github.io/documentation/systemvars/index.html#nexial.outputToCloud for more details."/>
+    </bean>
+
+    <bean id="tts" class="org.nexial.core.aws.TtsHelper" scope="prototype"
+          p:accessKey="${tts.accessKey:}"
+          p:secretKey="${tts.secretKey:}"
+          p:language="${tts.language:en-US}"
+          p:sampleRate="${tts.sampleRate:22050}"
+          p:voiceGenderString="${tts.voiceGender:Female}"
+          p:verbose="false">
+        <property name="region">
+            <bean class="com.amazonaws.regions.Regions" factory-method="fromName">
+                <constructor-arg value="${tts.region:us-east-1}"/>
+            </bean>
+        </property>
+    </bean>
+
+    <utils:map id="soundResources" key-type="java.lang.String" value-type="java.lang.String">
+        <entry key="error1" value="sound/error1.wav"/>
+        <entry key="error2" value="sound/error2.wav"/>
+        <entry key="error3" value="sound/error3.wav"/>
+        <entry key="error4" value="sound/error4.wav"/>
+        <entry key="error5" value="sound/error5.wav"/>
+
+        <entry key="alert1" value="sound/alert1.mp3"/>
+        <entry key="alert2" value="sound/alert2.mp3"/>
+        <entry key="alert3" value="sound/alert3.mp3"/>
+        <entry key="alert4" value="sound/alert4.mp3"/>
+        <entry key="alert5" value="sound/alert5.mp3"/>
+
+        <entry key="chime1" value="sound/chime1.mp3"/>
+        <entry key="chime2" value="sound/chime2.wav"/>
+        <entry key="chime3" value="sound/chime3.wav"/>
+        <entry key="chime4" value="sound/chime4.wav"/>
+        <entry key="chime5" value="sound/chime5.mp3"/>
+        <entry key="chime6" value="sound/chime6.wav"/>
+
+        <entry key="fail1" value="sound/fail1.mp3"/>
+        <entry key="fail2" value="sound/fail2.wav"/>
+
+        <entry key="success1" value="sound/success1.wav"/>
+        <entry key="success2" value="sound/success2.mp3"/>
+        <entry key="success3" value="sound/success3.wav"/>
+    </utils:map>
+
+    <bean id="soundMachine" class="org.nexial.core.plugins.sound.SoundMachine" scope="prototype" init-method="init"
+          p:tts-ref="tts"
+          p:soundResources-ref="soundResources"
+          p:notReadMessage="tts not configured. See https://nexiality.github.io/documentation/commands/sound/speak(text).html#setup for setup details."
+    />
+
+    <bean id="smsNotReadyMessage" class="java.lang.String">
+        <constructor-arg value="sms not configured. See https://nexiality.github.io/documentation/commands/sms/index.html#setup for setup details."/>
+    </bean>
+
+    <bean id="smsHelper" class="org.nexial.core.aws.SmsHelper" scope="prototype" init-method="init"
+          p:smsNotReadyMessage-ref="smsNotReadyMessage"
+          p:accessKey="${sms.accessKey:}"
+          p:secretKey="${sms.secretKey:}">
+        <property name="region">
+            <bean class="com.amazonaws.regions.Regions" factory-method="fromName">
+                <constructor-arg value="${sms.region:us-east-1}"/>
+            </bean>
+        </property>
+    </bean>
+
+    <bean id="executionEventListener" class="org.nexial.core.ExecutionEventListener"
+          p:mailTagLine="~ powered by nexial ~ (https://nexiality.github.io) ~ test automation platform for everyone ~"
+          p:mailIncludeMeta="true"
+          p:smsIncludeMeta="false"
+    />
 
 </beans>

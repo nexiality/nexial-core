@@ -23,7 +23,7 @@ import javax.sound.sampled.*;
 import org.apache.commons.lang3.StringUtils;
 import org.nexial.commons.utils.FileUtil;
 import org.nexial.commons.utils.ResourceUtils;
-import org.nexial.commons.utils.TextUtils;
+import org.nexial.core.IntegrationConfigException;
 import org.nexial.core.aws.TtsHelper;
 import org.nexial.core.model.ExecutionContext;
 import org.nexial.core.utils.CheckUtils;
@@ -41,35 +41,9 @@ import static org.nexial.core.utils.CheckUtils.requiresNotBlank;
  * general utility to play audio files or TTS
  */
 public class SoundMachine {
-    private static final Map<String, String> SOUND_RESOURCES = TextUtils.toMap("=",
-                                                                               "error1=sound/error1.wav",
-                                                                               "error2=sound/error2.wav",
-                                                                               "error3=sound/error3.wav",
-                                                                               "error4=sound/error4.wav",
-                                                                               "error5=sound/error5.wav",
-
-                                                                               "alert1=sound/alert1.mp3",
-                                                                               "alert2=sound/alert2.mp3",
-                                                                               "alert3=sound/alert3.mp3",
-                                                                               "alert4=sound/alert4.mp3",
-                                                                               "alert5=sound/alert5.mp3",
-
-                                                                               "chime1=sound/chime1.mp3",
-                                                                               "chime2=sound/chime2.wav",
-                                                                               "chime3=sound/chime3.wav",
-                                                                               "chime4=sound/chime4.wav",
-                                                                               "chime5=sound/chime5.mp3",
-                                                                               "chime6=sound/chime6.mp3",
-
-                                                                               "fail1=sound/fail1.mp3",
-                                                                               "fail2=sound/fail2.wav",
-
-                                                                               "success1=sound/success1.wav",
-                                                                               "success2=sound/success2.mp3",
-                                                                               "success3=sound/success3.wav"
-                                                                              );
-
     private TtsHelper tts;
+    private Map<String, String> soundResources;
+    private String notReadMessage;
 
     class AudioLineListener implements LineListener {
         boolean completed = false;
@@ -109,34 +83,7 @@ public class SoundMachine {
 
     public void setTts(TtsHelper tts) { this.tts = tts; }
 
-    public static boolean shouldSkip() { return CheckUtils.isRunningInCi() || CheckUtils.isRunningInJUnit(); }
-
-    public boolean playAudio(String audio)
-        throws IOException, JavaLayerException, UnsupportedAudioFileException, LineUnavailableException {
-
-        if (shouldSkip()) { return false; }
-
-        requiresNotBlank(audio, "Invalid audio preset or file", audio);
-
-        String audioFile = SOUND_RESOURCES.getOrDefault(audio, audio);
-        if (StringUtils.endsWithIgnoreCase(audioFile, ".mp3")) {
-            playMp3(audioFile);
-        } else {
-            playWav(audioFile);
-        }
-
-        return true;
-    }
-
-    public void speak(String text, boolean wait) throws IOException, JavaLayerException {
-        if (tts == null || !tts.isReadyForUse()) {
-            throw new IOException("Nexial speech helper not probably configured. " +
-                                  "Please contact support for more details.");
-        }
-
-        tts.init();
-        tts.speak(text, wait);
-    }
+    public void setSoundResources(Map<String, String> soundResources) { this.soundResources = soundResources; }
 
     public boolean isReadyFroTTS() { return tts != null && tts.isReadyForUse(); }
 
@@ -159,6 +106,8 @@ public class SoundMachine {
     }
 
     public void playOrSpeak(ExecutionContext context, String sound, String event, boolean wait) {
+        if (CheckUtils.isRunningInZeroTouchEnv()) { return; }
+
         try {
             if (StringUtils.startsWith(sound, TTS_PREFIX)) {
                 String message = StringUtils.substringAfter(sound, TTS_PREFIX);
@@ -171,12 +120,42 @@ public class SoundMachine {
             } else {
                 playAudio(sound);
             }
-        } catch (IOException | JavaLayerException | LineUnavailableException | UnsupportedAudioFileException e) {
+        } catch (IOException | JavaLayerException | LineUnavailableException | UnsupportedAudioFileException | IntegrationConfigException e) {
             ConsoleUtils.error(context.getRunId(), event + " - Error playing sound: " + e.getMessage());
         }
     }
 
+    public void speak(String text, boolean wait) throws JavaLayerException, IntegrationConfigException {
+        if (CheckUtils.isRunningInZeroTouchEnv()) { return; }
+
+        if (tts == null || !tts.isReadyForUse()) { throw new IntegrationConfigException(notReadMessage); }
+
+        tts.init();
+        tts.speak(text, wait);
+    }
+
+    public boolean playAudio(String audio)
+        throws IOException, JavaLayerException, UnsupportedAudioFileException, LineUnavailableException {
+
+        requiresNotBlank(audio, "Invalid audio preset or file", audio);
+
+        String audioFile = soundResources.getOrDefault(audio, audio);
+        if (StringUtils.endsWithIgnoreCase(audioFile, ".mp3")) {
+            playMp3(audioFile);
+        } else {
+            playWav(audioFile);
+        }
+
+        return true;
+    }
+
+    public void setNotReadMessage(String message) { this.notReadMessage = message; }
+
+    protected void init() { if (tts != null && tts.isReadyForUse()) { tts.init(); } }
+
     private void playMp3(String audioFile) throws FileNotFoundException, JavaLayerException {
+        if (CheckUtils.isRunningInZeroTouchEnv()) { return; }
+
         BufferedInputStream bis;
         if (FileUtil.isFileReadable(audioFile, 5)) {
             bis = new BufferedInputStream(new FileInputStream(audioFile));
@@ -199,6 +178,7 @@ public class SoundMachine {
     }
 
     private void playWav(String audioFile) throws IOException, UnsupportedAudioFileException, LineUnavailableException {
+        if (CheckUtils.isRunningInZeroTouchEnv()) { return; }
 
         AudioInputStream audioIn;
         if (FileUtil.isFileReadable(audioFile, 5)) {

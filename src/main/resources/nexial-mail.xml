@@ -22,17 +22,16 @@
        xsi:schemaLocation="http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans.xsd"
        default-lazy-init="true">
 
-	<import resource="nexial-props.xml"/>
+    <import resource="nexial-props.xml"/>
 
-	<bean id="mailTemplateEngine" class="org.thymeleaf.TemplateEngine" lazy-init="true">
-		<property name="templateResolver">
-			<bean class="org.thymeleaf.templateresolver.ClassLoaderTemplateResolver"
-			      p:templateMode="HTML5" p:suffix=".html" p:prefix="org/nexial/core/reports/"/>
-		</property>
-	</bean>
+    <bean id="mailTemplateEngine" class="org.thymeleaf.TemplateEngine" lazy-init="true">
+        <property name="templateResolver">
+            <bean class="org.thymeleaf.templateresolver.ClassLoaderTemplateResolver"
+                  p:templateMode="HTML5" p:suffix=".html" p:prefix="org/nexial/core/reports/"/>
+        </property>
+    </bean>
 
-	<bean id="mailNotifier" class="org.nexial.core.reports.MailNotifier"
-	      lazy-init="true"
-	      p:mailTemplateEngine-ref="mailTemplateEngine"
-	      p:mailTemplate="email_notification"/>
+    <bean id="mailNotifier" class="org.nexial.core.reports.MailNotifier" lazy-init="true"
+          p:mailTemplateEngine-ref="mailTemplateEngine"
+          p:mailTemplate="email_notification"/>
 </beans>

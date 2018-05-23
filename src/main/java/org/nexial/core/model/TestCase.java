@@ -35,7 +35,7 @@ import static org.nexial.core.model.ExecutionSummary.ExecutionLevel.ACTIVITY;
  */
 public class TestCase {
     private static final String NESTED_SECTION_STEP_SKIPPED =
-        "current step skipped due to the enclosed section command being skipped";
+        "current step skipped due to the enclosing section command being skipped";
 
     private String name;
     private TestScenario testScenario;

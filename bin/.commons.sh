@@ -23,16 +23,16 @@ function resolveLinuxAppPath() {
 }
 
 # utilities to be invoked by other frontend scripts
-PROJECT_BASE=~/projects
-NEXIAL_HOME=$(cd `dirname $0`/..; pwd -P)
-NEXIAL_LIB=${NEXIAL_HOME}/lib
-NEXIAL_CLASSES=${NEXIAL_HOME}/classes
+export PROJECT_BASE=~/projects
+export NEXIAL_HOME=$(cd `dirname $0`/..; pwd -P)
+export NEXIAL_LIB=${NEXIAL_HOME}/lib
+export NEXIAL_CLASSES=${NEXIAL_HOME}/classes
 
 DEFAULT_CHROME_BIN=
 if [[ "`uname -s`" = "Darwin" ]] ; then
-	DEFAULT_CHROME_BIN="`resolveOSXAppPath "Google Chrome"`"
+	export DEFAULT_CHROME_BIN="`resolveOSXAppPath "Google Chrome"`"
 else
-	DEFAULT_CHROME_BIN="`resolveLinuxAppPath google-chrome`"
+	export DEFAULT_CHROME_BIN="`resolveLinuxAppPath google-chrome`"
 fi
 
 if [[ -z "${DEFAULT_CHROME_BIN// }" ]] ; then
@@ -41,9 +41,9 @@ if [[ -z "${DEFAULT_CHROME_BIN// }" ]] ; then
 fi
 
 if [[ "`uname -s`" = "Darwin" ]] ; then
-	DEFAULT_FIREFOX_BIN="`resolveOSXAppPath firefox-bin`"
+	export DEFAULT_FIREFOX_BIN="`resolveOSXAppPath firefox-bin`"
 else
-	DEFAULT_FIREFOX_BIN="`resolveLinuxAppPath firefox-bin`"
+	export DEFAULT_FIREFOX_BIN="`resolveLinuxAppPath firefox-bin`"
 fi
 
 if [[ -z "${DEFAULT_FIREFOX_BIN// }" ]] ; then

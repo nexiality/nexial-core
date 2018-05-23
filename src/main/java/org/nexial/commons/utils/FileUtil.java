@@ -234,16 +234,28 @@ public final class FileUtil {
 
     /** return true if {@code path} is a valid directory and readable by the current run user. */
     public static boolean isDirectoryReadable(String path) {
-        if (StringUtils.isBlank(path)) { return false; }
-        File dir = new File(path);
-        return dir.exists() && dir.isDirectory() && dir.canRead();
+        return !StringUtils.isBlank(path) && isDirectoryReadable(new File(path));
+    }
+
+    public static boolean isDirectoryReadable(File dir) {
+        return dir != null && dir.exists() && dir.isDirectory() && dir.canRead();
     }
 
     /** return true if {@code path} is a valid directory and read/writable by the current run user. */
     public static boolean isDirectoryReadWritable(String path) {
-        if (StringUtils.isBlank(path)) { return false; }
-        File dir = new File(path);
-        return dir.exists() && dir.isDirectory() && dir.canRead() && dir.canWrite();
+        return !StringUtils.isBlank(path) && isDirectoryReadWritable(new File(path));
+    }
+
+    public static boolean isDirectoryReadWritable(File dir) {
+        return dir != null && dir.exists() && dir.isDirectory() && dir.canRead() && dir.canWrite();
+    }
+
+    public static boolean isFileReadable(File file, long minFileSize) {
+        return file != null &&
+               file.exists() &&
+               file.isFile() &&
+               file.canRead() &&
+               (minFileSize < 0 || file.length() >= minFileSize);
     }
 
     /**
@@ -251,20 +263,18 @@ public final class FileUtil {
      * is -1, then it's ignored.
      */
     public static boolean isFileReadable(String file, long minFileSize) {
-        if (StringUtils.isBlank(file)) { return false; }
-
-        File f = new File(file);
-        return f.exists() && f.isFile() && f.canRead() && (minFileSize < 0 || f.length() >= minFileSize);
+        return !StringUtils.isBlank(file) && isFileReadable(new File(file), minFileSize);
     }
 
     /** return true if {@code file} is readable. */
     public static boolean isFileReadable(String file) { return isFileReadable(file, -1); }
 
     public static boolean isFileExecutable(String file) {
-        if (StringUtils.isBlank(file)) { return false; }
+        return !StringUtils.isBlank(file) && isFileExecutable(new File(file));
+    }
 
-        File f = new File(file);
-        return f.exists() && f.isFile() && f.canRead() && f.canExecute();
+    public static boolean isFileExecutable(File file) {
+        return file != null && file.exists() && file.isFile() && file.canRead() && file.canExecute();
     }
 
     public static boolean isFileReadWritable(String file, int minFileSize) {

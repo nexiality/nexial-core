@@ -19,6 +19,7 @@ package org.nexial.core;
 
 import java.io.File;
 import java.io.IOException;
+import java.security.Security;
 import java.text.MessageFormat;
 import java.util.ArrayList;
 import java.util.List;
@@ -188,6 +189,7 @@ public class Nexial {
 
     @SuppressWarnings("PMD.DoNotCallSystemExit")
     public static void main(String[] args) {
+        Security.setProperty("crypto.policy", "unlimited");
 
         Nexial main = null;
         try {

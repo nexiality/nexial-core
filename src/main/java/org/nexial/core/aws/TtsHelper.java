@@ -20,6 +20,7 @@ import java.io.InputStream;
 
 import org.apache.commons.lang3.StringUtils;
 import org.jetbrains.annotations.NotNull;
+import org.nexial.core.utils.CheckUtils;
 import org.nexial.core.utils.ConsoleUtils;
 
 import com.amazonaws.ClientConfiguration;
@@ -47,6 +48,7 @@ public class TtsHelper extends AwsSupport {
     protected Gender voiceGender = Gender.Female;
     protected AmazonPolly tts;
     protected Voice voice;
+
     static final String SSML_SHORT_PAUSE = "<break time=\"100ms\"/>";
     static final String SSML_PAUSE = "<break time=\"200ms\"/>";
 
@@ -100,6 +102,8 @@ public class TtsHelper extends AwsSupport {
     public void speak(String text, boolean wait) throws JavaLayerException {
         if (StringUtils.isBlank(text)) { throw new IllegalArgumentException("No text is found; tts aborted"); }
 
+        if (CheckUtils.isRunningInZeroTouchEnv()) { return; }
+
         if (StringUtils.length(text) > MAX_TTS_LENGTH) {
             ConsoleUtils.log("truncating TTS text to " + MAX_TTS_LENGTH + " characters");
             text = StringUtils.truncate(text, MAX_TTS_LENGTH);
@@ -148,6 +152,7 @@ public class TtsHelper extends AwsSupport {
     @NotNull
     protected String buildSsml(String text) {
         // treat text into SSML for more natural speeches
+        // https://docs.aws.amazon.com/polly/latest/dg/supported-ssml.html
         StringBuilder speechBuffer = new StringBuilder("<speak>");
 
         text = StringUtils.replace(text, "…", "…" + SSML_PAUSE);

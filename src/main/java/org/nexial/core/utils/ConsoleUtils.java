@@ -68,9 +68,11 @@ public final class ConsoleUtils {
         ExecutionEventListener listener = context.getExecutionEventListener();
         listener.onPause();
 
+        System.out.println();
+        System.out.println(msg);
+
         if (context != null && context.getBooleanData(OPT_INSPECT_ON_PAUSE, DEF_INSPECT_ON_PAUSE)) {
             // inspect mode
-            System.out.println(msg + "\n");
             System.out.println("/------------------------------------------------------------------------------\\");
             System.out.println("|" + centerPrompt("INSPECT ON PAUSE", 78) + "|");
             System.out.println("\\------------------------------------------------------------------------------/");
@@ -87,7 +89,7 @@ public final class ConsoleUtils {
                 input = in.nextLine();
             }
         } else {
-            System.out.println(msg + "\n\t>>> Press ENTER to continue... ");
+            System.out.println("\t>>> Press ENTER to continue... ");
             Scanner in = new Scanner(System.in);
             in.nextLine();
         }
@@ -215,17 +217,12 @@ public final class ConsoleUtils {
     }
 
     protected static boolean isPauseReady() {
-        if (CheckUtils.isRunningInCi()) {
-            log("SKIPPING pause-for-step since we are running in CI");
+        if (CheckUtils.isRunningInZeroTouchEnv()) {
+            log("SKIPPING pause-for-step since Nexial is currently running in non-interactive environment");
             return false;
+        } else {
+            return true;
         }
-
-        if (CheckUtils.isRunningInJUnit()) {
-            log("SKIPPING pause-for-step since we are running in JUnit");
-            return false;
-        }
-
-        return true;
     }
 
     private static void logAs(Level logLevel, String message) {

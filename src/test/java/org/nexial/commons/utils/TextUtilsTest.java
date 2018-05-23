@@ -490,4 +490,32 @@ public class TextUtilsTest {
         Assert.assertEquals("This is a test ",
                             TextUtils.removeExcessWhitespaces("This\nis\ra\ttest\n\n\n"));
     }
+
+    @Test
+    public void sanitizePhoneNumber() throws Exception {
+        try {
+            TextUtils.sanitizePhoneNumber(null);
+            Assert.fail("expects IllegalArgumentException");
+        } catch (IllegalArgumentException e) {
+            // expected
+        }
+
+        try {
+            TextUtils.sanitizePhoneNumber("");
+            Assert.fail("expects IllegalArgumentException");
+        } catch (IllegalArgumentException e) {
+            // expected
+        }
+
+        try {
+            TextUtils.sanitizePhoneNumber("           ");
+            Assert.fail("expects IllegalArgumentException");
+        } catch (IllegalArgumentException e) {
+            // expected
+        }
+
+        Assert.assertEquals("+18189091234", TextUtils.sanitizePhoneNumber("(818)909-1234"));
+        Assert.assertEquals("+18189091234", TextUtils.sanitizePhoneNumber("(818)909-1234"));
+        Assert.assertEquals("+18463865323", TextUtils.sanitizePhoneNumber("TIME-TO-Lead"));
+    }
 }

@@ -91,6 +91,10 @@ public class ExecutionMailConfig {
         if (StringUtils.isBlank(MapUtils.getString(configurations, MAIL_TO)) &&
             StringUtils.isBlank(MapUtils.getString(configurations, MAIL_TO2))) { return false; }
 
+        return isReadyForNotification();
+    }
+
+    public boolean isReadyForNotification() {
         if (StringUtils.isNotBlank(MapUtils.getString(configurations, MAIL_KEY_MAIL_JNDI_URL))) {
             return StringUtils.isNotBlank(MapUtils.getString(configurations, INITIAL_CONTEXT_FACTORY));
         }

@@ -52,7 +52,7 @@ public final class NexialConst {
     public static final String EPOCH = "epoch";
     public static final String RATE_FORMAT = "{0,number,0.00%}";
 
-    public static final int DEF_SLEEP_MS = 800;
+    public static final int DEF_SLEEP_MS = 250;
     public static final int DEF_UI_RENDER_WAIT_MS = 3000;
     public static final int MIN_STABILITY_WAIT_MS = 400;
     public static final int LAUNCHER_THREAD_COMPLETION_WAIT_MS = 1000;
@@ -747,14 +747,26 @@ public final class NexialConst {
         public static final String RECORDING_ENABLED = NAMESPACE + "recordingEnabled";
         public static final boolean DEF_RECORDING_ENABLED = true;
 
+        // event notification
+        // this will trump the use of `nexial.soundOn...` events, which is now deprecated and to be removed by v1.3
+        public static final String NOTIFY_ON = NAMESPACE + "notifyOn";
+        public static final String NOTIFY_ON_START = NOTIFY_ON + "Start";
+        public static final String NOTIFY_ON_ERROR = NOTIFY_ON + "Error";
+        public static final String NOTIFY_ON_PAUSE = NOTIFY_ON + "Pause";
+        public static final String NOTIFY_ON_COMPLETE = NOTIFY_ON + "Complete";
+        public static final String TTS_PREFIX = "tts:";
+        public static final String SMS_PREFIX = "sms:";
+        public static final String AUDIO_PREFIX = "audio:";
+        public static final String EMAIL_PREFIX = "email:";
+        public static final String CONSOLE_PREFIX = "console:";
+        public static final int MAX_TTS_LENGTH = 500;
+
         // sound
         public static final String SOUND_ON = NAMESPACE + "soundOn";
         public static final String SOUND_ON_START = SOUND_ON + "Start";
         public static final String SOUND_ON_ERROR = SOUND_ON + "Error";
         public static final String SOUND_ON_PAUSE = SOUND_ON + "Pause";
         public static final String SOUND_ON_COMPLETE = SOUND_ON + "Complete";
-        public static final String TTS_PREFIX = "tts:";
-        public static final int MAX_TTS_LENGTH = 500;
 
         public static final Map<String, String> SCOPE_SETTING_DEFAULTS = TextUtils.toMap(
             ITERATION + "=1\n" +
