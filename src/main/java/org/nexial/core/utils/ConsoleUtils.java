@@ -68,6 +68,12 @@ public final class ConsoleUtils {
         ExecutionEventListener listener = context.getExecutionEventListener();
         listener.onPause();
 
+        doPause(context, msg);
+
+        listener.afterPause();
+    }
+
+    public static void doPause(ExecutionContext context, String msg) {
         System.out.println();
         System.out.println(msg);
 
@@ -93,8 +99,6 @@ public final class ConsoleUtils {
             Scanner in = new Scanner(System.in);
             in.nextLine();
         }
-
-        listener.afterPause();
     }
 
     public static void pauseForStep(ExecutionContext context, String instructions) {

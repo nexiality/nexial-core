@@ -41,8 +41,7 @@ import org.nexial.core.utils.OutputFileUtils;
 
 import static java.io.File.separator;
 import static org.apache.poi.ss.usermodel.Row.MissingCellPolicy.CREATE_NULL_AS_BLANK;
-import static org.nexial.core.NexialConst.Data.SHEET_MERGED_DATA;
-import static org.nexial.core.NexialConst.Data.SHEET_SYSTEM;
+import static org.nexial.core.NexialConst.Data.*;
 import static org.nexial.core.NexialConst.NAMESPACE;
 import static org.nexial.core.NexialConst.Project.appendCapture;
 import static org.nexial.core.NexialConst.Project.appendLog;
@@ -58,10 +57,13 @@ import static org.nexial.core.excel.ExcelConfig.StyleConfig.*;
  * </ol>
  */
 class ExecutionInputPrep {
+
     public static Excel updateOutputDataSheet(File outputFile) throws IOException {
+        Excel excel = new Excel(outputFile);
 
         ExecutionContext context = ExecutionThread.get();
-        Excel excel = new Excel(outputFile);
+        if (context == null) { return null; }
+
         XSSFSheet dataSheet = excel.getWorkbook().getSheet(SHEET_MERGED_DATA);
 
         XSSFWorkbook workbook = dataSheet.getWorkbook();

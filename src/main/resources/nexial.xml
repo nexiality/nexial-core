@@ -494,6 +494,7 @@
     <util:list id="readOnlyVars" list-class="java.util.ArrayList">
         <value>nexial.runID</value>
         <value>nexial.runID.prefix</value>
+        <value>nexial.iterationEnded</value>
         <value>nexial.spreadsheet.program</value>
         <value>nexial.lastScreenshot</value>
         <value>nexial.lastOutcome</value>

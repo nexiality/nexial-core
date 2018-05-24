@@ -260,6 +260,7 @@ public class ExecutionContext {
         expression = new ExpressionProcessor(this);
 
         defaultContextProps = springContext.getBean("defaultContextProps", new HashMap<String, String>().getClass());
+        setData(ITERATION_EDNED, false);
     }
 
     public void useTestScript(File testScript) throws IOException {

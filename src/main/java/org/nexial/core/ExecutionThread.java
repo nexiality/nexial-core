@@ -167,13 +167,13 @@ public final class ExecutionThread extends Thread {
                 onIterationException(context, iterSummary, currIteration, e);
                 if (shouldStopNow(context, allPass)) { break; }
             } finally {
+                context.setData(ITERATION_EDNED, true);
 
                 try {
                     // sync #data sheet with context
                     ExecutionInputPrep.updateOutputDataSheet(testScript);
                 } catch (IOException e) {
-                    ConsoleUtils.error("unable to sync up values in #data sheet of output file from the context. " +
-                                       e.getMessage());
+                    ConsoleUtils.error("Error when updating data variables in #data: " + e.getMessage());
                 }
 
                 // now the execution for this iteration is done. We'll add new execution summary page to its output.
@@ -193,6 +193,8 @@ public final class ExecutionThread extends Thread {
                 context.endIteration();
 
                 if (testScript != null) { MemManager.recordMemoryChanges(testScript.getName() + " completed"); }
+
+                context.setData(ITERATION_EDNED, false);
             }
         }
 

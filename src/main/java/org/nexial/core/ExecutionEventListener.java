@@ -38,7 +38,7 @@ import org.nexial.core.utils.ExecUtil;
 import javazoom.jl.decoder.JavaLayerException;
 
 import static org.apache.commons.lang3.SystemUtils.USER_NAME;
-import static org.nexial.core.ExecutionEventListener.Events.ExecutionPause;
+import static org.nexial.core.ExecutionEvent.ExecutionPause;
 import static org.nexial.core.NexialConst.Data.*;
 
 public class ExecutionEventListener {
@@ -48,29 +48,6 @@ public class ExecutionEventListener {
     private String mailTagLine;
     private boolean mailIncludeMeta;
     private boolean smsIncludeMeta;
-
-    enum Events {
-        ScriptStart("onScriptStart", NOTIFY_ON_START, "Script Execution Started"),
-        ScriptComplete("onScriptComplete", NOTIFY_ON_COMPLETE, "Script Execution Completed"),
-        ErrorOccurred("onError", NOTIFY_ON_ERROR, "Error Occurred"),
-        ExecutionPause("onPause", NOTIFY_ON_PAUSE, "Execution Paused");
-
-        private String name;
-        private String variable;
-        private String description;
-
-        Events(String name, String variable, String description) {
-            this.name = name;
-            this.variable = variable;
-            this.description = description;
-        }
-
-        public String getName() { return name; }
-
-        public String getVariable() { return variable; }
-
-        public String getDescription() { return description; }
-    }
 
     public ExecutionEventListener() { }
 
@@ -82,11 +59,11 @@ public class ExecutionEventListener {
 
     public void setSmsIncludeMeta(boolean smsIncludeMeta) { this.smsIncludeMeta = smsIncludeMeta; }
 
-    public void onScriptStart() { handleEvent(Events.ScriptStart); }
+    public void onScriptStart() { handleEvent(ExecutionEvent.ScriptStart); }
 
-    public void onScriptComplete() { handleEvent(Events.ScriptComplete); }
+    public void onScriptComplete() { handleEvent(ExecutionEvent.ScriptComplete); }
 
-    public void onError() { handleEvent(Events.ErrorOccurred); }
+    public void onError() { handleEvent(ExecutionEvent.ErrorOccurred); }
 
     public void onPause() { handleEvent(ExecutionPause); }
 
@@ -94,18 +71,15 @@ public class ExecutionEventListener {
         // nothing for now
     }
 
-    public void handleEvent(Events event) {
-        String notifyConfig = context.getStringData(event.variable);
-        if (StringUtils.isBlank(notifyConfig)) {
-            // fallback
-            // todo: to be removed by v1.3
-            doSound(event);
-            return;
-        }
+    public void handleEvent(ExecutionEvent event) {
+        String notifyConfig = context.getStringData(event.getVariable());
+        if (StringUtils.isBlank(notifyConfig)) { return; }
+
+        String eventName = event.getName();
 
         String notifyPrefix = StringUtils.substringBefore(notifyConfig, ":") + ":";
         if (StringUtils.isBlank(notifyPrefix)) {
-            ConsoleUtils.error("Unknown notification for [" + event.name + "]: " + notifyConfig);
+            ConsoleUtils.error("Unknown notification for [" + eventName + "]: " + notifyConfig);
             return;
         }
 
@@ -113,23 +87,23 @@ public class ExecutionEventListener {
 
         switch (notifyPrefix) {
             case TTS_PREFIX:
-                doTts(event.name, notifyText);
+                doTts(event, notifyText);
                 break;
             case SMS_PREFIX:
-                doSms(event.name, notifyText);
+                doSms(event, notifyText);
                 break;
             case AUDIO_PREFIX:
-                doAudio(event.name, notifyText);
+                doAudio(event, notifyText);
                 break;
             case EMAIL_PREFIX:
-                doEmail(event.name, notifyText);
+                doEmail(event, notifyText);
                 break;
             case CONSOLE_PREFIX: {
                 if (event == ExecutionPause) {
                     ConsoleUtils.error(context.getRunId(),
-                                       event.name + " with [console] notification doesn't make sense. SKIPPING...");
+                                       eventName + " with [console] notification doesn't make sense. SKIPPING...");
                 } else {
-                    doConsole(event.name, notifyText);
+                    doConsole(event, notifyText);
                 }
                 break;
             }
@@ -139,7 +113,7 @@ public class ExecutionEventListener {
         }
     }
 
-    private void doEmail(String event, String config) {
+    private void doEmail(ExecutionEvent event, String config) {
         ExecutionMailConfig mailConfig = ExecutionMailConfig.get();
         if (mailConfig == null) { mailConfig = ExecutionMailConfig.configure(context); }
 
@@ -167,7 +141,7 @@ public class ExecutionEventListener {
             MailNotifier mailNotifier = context.getMailNotifier();
             mailNotifier.setMailer(mailer);
 
-            mailNotifier.sendPlainText(recipientList, "[nexial-notification] " + event, text);
+            mailNotifier.sendPlainText(recipientList, "[nexial-notification] " + event.getDescription(), text);
         } catch (MessagingException e) {
             ConsoleUtils.log(context.getRunId(), event + " - sms not configured properly: " + e.getMessage());
             ConsoleUtils.log(context.getRunId(), event + " - " + config);
@@ -182,10 +156,11 @@ public class ExecutionEventListener {
             throw new RuntimeException("Unable to determine host name of current host: " + e.getMessage());
         }
 
-        return "From " + USER_NAME + "@" + runHost + " using " + ExecUtil.deriveJarManifest();
+        return "From " + StringUtils.defaultString(USER_NAME, "unknown") + "@" + runHost +
+               " using " + ExecUtil.deriveJarManifest();
     }
 
-    private void doSms(String event, String config) {
+    private void doSms(ExecutionEvent event, String config) {
         if (StringUtils.isBlank(config) || !StringUtils.contains(config, EVENT_CONFIG_SEP)) {
             ConsoleUtils.log(context.getRunId(), event + " - notification not properly configured: " + config);
         } else {
@@ -204,7 +179,7 @@ public class ExecutionEventListener {
         }
     }
 
-    private void doTts(String event, String text) {
+    private void doTts(ExecutionEvent event, String text) {
         try {
             SoundMachine dj = context.getDj();
             if (dj == null) { return; }
@@ -215,7 +190,11 @@ public class ExecutionEventListener {
         }
     }
 
-    private void doAudio(String event, String text) {
+    private void doConsole(ExecutionEvent event, String text) {
+        ConsoleUtils.doPause(context, event.getDescription() + " - " + text);
+    }
+
+    private void doAudio(ExecutionEvent event, String text) {
         try {
             SoundMachine dj = context.getDj();
             if (dj == null) { return; }
@@ -224,19 +203,5 @@ public class ExecutionEventListener {
             ConsoleUtils.log(context.getRunId(), event + " - audio playback error: " + e.getMessage());
             ConsoleUtils.log(context.getRunId(), event + " - " + text);
         }
-    }
-
-    private void doConsole(String event, String text) { ConsoleUtils.pause(context, event + " - " + text); }
-
-    private void doSound(Events event) { doSound(event, false); }
-
-    private void doSound(Events event, boolean wait) {
-        String sound = context.getStringData(event.variable);
-        if (StringUtils.isBlank(sound)) { return; }
-
-        SoundMachine dj = context.getDj();
-        if (dj == null) { return; }
-
-        dj.playOrSpeak(context, sound, event.name, wait);
     }
 }

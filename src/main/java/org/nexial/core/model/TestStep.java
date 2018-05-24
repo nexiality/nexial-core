@@ -150,9 +150,6 @@ public class TestStep extends TestStepManifest {
         StopWatch tickTock = new StopWatch();
         tickTock.start();
 
-        // move to web plugin
-        //if (execution.getBooleanData(OPT_DEBUG_HIGHLIGHT, false)) { highlight(testStep); }
-
         context.setCurrentTestStep(this);
 
         // delay is carried out here so that timespan is captured as part of execution
@@ -407,8 +404,6 @@ public class TestStep extends TestStepManifest {
 
     protected void updateResult(StepResult result, long elapsedMs) {
         String message = result.getMessage();
-
-        //XSSFCell cell = row.get(COL_IDX_PARAMS_START);
 
         // test case
         XSSFCell cellTestCase = row.get(COL_IDX_TESTCASE);

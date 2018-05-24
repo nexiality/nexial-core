@@ -29,6 +29,7 @@ import org.nexial.core.model.TestScenario;
 import org.nexial.core.model.TestStep;
 import org.nexial.core.utils.ConsoleUtils;
 
+import static org.nexial.core.NexialConst.Data.ITERATION_EDNED;
 import static org.nexial.core.NexialConst.OPT_INPUT_EXCEL_FILE;
 
 /**
@@ -69,9 +70,15 @@ public class Execution {
         ExecutionContext context = ExecutionThread.get();
         if (context == null) { return null; }
 
-        TestStep currentStep = context.getCurrentTestStep();
+        String metaRequest = "$(execution|" + scope + "|" + metadata + ")";
+        boolean iterationEnded = context.getTestScript() == null || context.getBooleanData(ITERATION_EDNED, false);
+        if (iterationEnded) {
+            ConsoleUtils.log("Iteration ended; unable to determine " + metaRequest);
+            return "N/A";
+        }
 
-        String error = "Invalid function: $(execution|" + scope + "|" + metadata + ")";
+        TestStep currentStep = context.getCurrentTestStep();
+        String error = "Built-in function: " + metaRequest;
 
         switch (scope) {
             case command: {

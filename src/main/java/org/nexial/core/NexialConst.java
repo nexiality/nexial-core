@@ -738,6 +738,7 @@ public final class NexialConst {
          */
         public static final String SCRIPT_REF_PREFIX = NAMESPACE + "scriptRef.";
         public static final String BUILD_NO = "buildnum";
+        public static final String ITERATION_EDNED = NAMESPACE + "iterationEnded";
 
         //screen Recording
         // public static final String RECORDER_TYPE = "avi";
@@ -760,13 +761,6 @@ public final class NexialConst {
         public static final String EMAIL_PREFIX = "email:";
         public static final String CONSOLE_PREFIX = "console:";
         public static final int MAX_TTS_LENGTH = 500;
-
-        // sound
-        public static final String SOUND_ON = NAMESPACE + "soundOn";
-        public static final String SOUND_ON_START = SOUND_ON + "Start";
-        public static final String SOUND_ON_ERROR = SOUND_ON + "Error";
-        public static final String SOUND_ON_PAUSE = SOUND_ON + "Pause";
-        public static final String SOUND_ON_COMPLETE = SOUND_ON + "Complete";
 
         public static final Map<String, String> SCOPE_SETTING_DEFAULTS = TextUtils.toMap(
             ITERATION + "=1\n" +

@@ -25,7 +25,6 @@ import org.nexial.commons.utils.FileUtil;
 import org.nexial.commons.utils.ResourceUtils;
 import org.nexial.core.IntegrationConfigException;
 import org.nexial.core.aws.TtsHelper;
-import org.nexial.core.model.ExecutionContext;
 import org.nexial.core.utils.CheckUtils;
 import org.nexial.core.utils.ConsoleUtils;
 
@@ -34,7 +33,6 @@ import javazoom.jl.player.Player;
 
 import static javax.sound.sampled.LineEvent.Type.START;
 import static javax.sound.sampled.LineEvent.Type.STOP;
-import static org.nexial.core.NexialConst.Data.*;
 import static org.nexial.core.utils.CheckUtils.requiresNotBlank;
 
 /**
@@ -60,9 +58,7 @@ public class SoundMachine {
         private AudioLineListener listener = new AudioLineListener();
         private Clip audioClip;
 
-        public AudioPlayer(Clip audioClip) {
-            this.audioClip = audioClip;
-        }
+        public AudioPlayer(Clip audioClip) { this.audioClip = audioClip; }
 
         @Override
         public void run() {
@@ -86,44 +82,6 @@ public class SoundMachine {
     public void setSoundResources(Map<String, String> soundResources) { this.soundResources = soundResources; }
 
     public boolean isReadyFroTTS() { return tts != null && tts.isReadyForUse(); }
-
-    public void onError(ExecutionContext context) {
-        if (context == null) { return; }
-        String sound = context.getStringData(SOUND_ON_ERROR);
-        if (StringUtils.isBlank(sound)) { return; }
-        playOrSpeak(context, sound, "onError()");
-    }
-
-    public void onPause(ExecutionContext context) {
-        if (context == null) { return; }
-        String sound = context.getStringData(SOUND_ON_PAUSE);
-        if (StringUtils.isBlank(sound)) { return; }
-        playOrSpeak(context, sound, "onPause()", true);
-    }
-
-    public void playOrSpeak(ExecutionContext context, String sound, String event) {
-        playOrSpeak(context, sound, event, false);
-    }
-
-    public void playOrSpeak(ExecutionContext context, String sound, String event, boolean wait) {
-        if (CheckUtils.isRunningInZeroTouchEnv()) { return; }
-
-        try {
-            if (StringUtils.startsWith(sound, TTS_PREFIX)) {
-                String message = StringUtils.substringAfter(sound, TTS_PREFIX);
-                if (tts == null || !tts.isReadyForUse()) {
-                    ConsoleUtils.log(context.getRunId(), event + " - tts not configured; SKIPPED");
-                    ConsoleUtils.log(context.getRunId(), event + " - " + message);
-                } else {
-                    speak(message, wait);
-                }
-            } else {
-                playAudio(sound);
-            }
-        } catch (IOException | JavaLayerException | LineUnavailableException | UnsupportedAudioFileException | IntegrationConfigException e) {
-            ConsoleUtils.error(context.getRunId(), event + " - Error playing sound: " + e.getMessage());
-        }
-    }
 
     public void speak(String text, boolean wait) throws JavaLayerException, IntegrationConfigException {
         if (CheckUtils.isRunningInZeroTouchEnv()) { return; }
