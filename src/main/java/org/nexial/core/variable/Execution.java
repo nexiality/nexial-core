@@ -21,7 +21,6 @@ import java.io.File;
 import org.apache.commons.lang3.StringUtils;
 import org.jetbrains.annotations.NotNull;
 import org.nexial.core.ExecutionThread;
-import org.nexial.core.NexialConst.Data;
 import org.nexial.core.model.ExecutionContext;
 import org.nexial.core.model.ExecutionDefinition;
 import org.nexial.core.model.TestCase;
@@ -29,6 +28,7 @@ import org.nexial.core.model.TestScenario;
 import org.nexial.core.model.TestStep;
 import org.nexial.core.utils.ConsoleUtils;
 
+import static org.nexial.core.NexialConst.Data.CURR_ITERATION;
 import static org.nexial.core.NexialConst.Data.ITERATION_EDNED;
 import static org.nexial.core.NexialConst.OPT_INPUT_EXCEL_FILE;
 
@@ -72,12 +72,13 @@ public class Execution {
 
         String metaRequest = "$(execution|" + scope + "|" + metadata + ")";
         boolean iterationEnded = context.getTestScript() == null || context.getBooleanData(ITERATION_EDNED, false);
-        if (iterationEnded) {
+        TestStep currentStep = context.getCurrentTestStep();
+
+        if (iterationEnded && currentStep == null) {
             ConsoleUtils.log("Iteration ended; unable to determine " + metaRequest);
             return "N/A";
         }
 
-        TestStep currentStep = context.getCurrentTestStep();
         String error = "Built-in function: " + metaRequest;
 
         switch (scope) {
@@ -138,8 +139,8 @@ public class Execution {
             }
 
             case scenario: {
-                String scenarioNam = resolveScenario(currentStep);
-                if (StringUtils.isBlank(scenarioNam)) {
+                String scenarioName = resolveScenario(currentStep);
+                if (StringUtils.isBlank(scenarioName)) {
                     ConsoleUtils.error(error + " current scenario cannot be determined");
                     return "";
                 }
@@ -158,7 +159,7 @@ public class Execution {
             case iteration: {
                 switch (metadata) {
                     case index:
-                        return context.getIntData(Data.CURR_ITERATION) + "";
+                        return context.getIntData(CURR_ITERATION) + "";
                     case name:
                     case fullpath:
                     default:
@@ -174,7 +175,6 @@ public class Execution {
                     case fullpath: {
                         String excelFile = context.getStringData(OPT_INPUT_EXCEL_FILE);
                         if (StringUtils.isNotEmpty(excelFile)) { return new File(excelFile).getAbsolutePath(); }
-
                     }
                     case index:
                     default:

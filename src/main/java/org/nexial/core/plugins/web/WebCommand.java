@@ -1491,7 +1491,7 @@ public class WebCommand extends BaseCommand implements CanTakeScreenshot, CanLog
                 element = CollectionUtils.isEmpty(matches) ? null : matches.get(0);
             }
         } catch (TimeoutException e) {
-            return StepResult.fail("Unable to find element via locator '" + locator + "' within alloted time");
+            return StepResult.fail("Unable to find element via locator '" + locator + "' within allotted time");
         }
 
         if (element == null) { return StepResult.fail("No element via locator '" + locator + "'"); }
@@ -1800,7 +1800,6 @@ public class WebCommand extends BaseCommand implements CanTakeScreenshot, CanLog
 
         int maxWaitCycle = (int) (maxWaitMs / DEF_SLEEP_MS);
         for (int cycle = 0; cycle < maxWaitCycle; cycle++) {
-            //if (cycle >= maxWaitCycle) { NexialTestBase.fail("timeout after " + maxWaitMs + "ms"); }
             try {
                 if (condition.evaluate(driver)) {
                     count++;
@@ -1834,8 +1833,8 @@ public class WebCommand extends BaseCommand implements CanTakeScreenshot, CanLog
 
     protected byte[] downloadLink(String sessionName, String url) {
         // sanity check
-        if (ws == null) { fail("plugin 'ws' is not available.  Check with Nexial Support Group for details."); }
-        if (cookie == null) { fail("plugin 'cookie' is not available.  Check with Nexial Support Group for details."); }
+        if (ws == null) { fail("command type 'ws' is not available.  Check with Nexial Support Group for details."); }
+        if (cookie == null) { fail("command type 'cookie' is not available.  Check with Nexial Support Group for details."); }
         requires(StringUtils.isNotBlank(url), "valid/full URL or property reference required", url);
 
         String cookieVar = NAMESPACE + "downloadCookies";

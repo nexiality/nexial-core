@@ -271,7 +271,7 @@ public class Browser implements ForcefulTerminate {
                                            browser + "' the intended one? Or, is firefox not available?");
             }
 
-            // if browser supports implict wait and we are not using explicit wait (`WEB_ALWAYS_WAIT`), then
+            // if browser supports implicit wait and we are not using explicit wait (`WEB_ALWAYS_WAIT`), then
             // we'll change timeout's implicit wait time
             boolean shouldWaitImplicitly = browserType.isTimeoutChangesEnabled() &&
                                            context.getPollWaitMs() > 0 &&

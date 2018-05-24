@@ -105,6 +105,12 @@ public class TestCase {
                         if (testSteps.size() > sectionStepIndex) {
                             testSteps.get(sectionStepIndex)
                                      .postExecCommand(StepResult.skipped(NESTED_SECTION_STEP_SKIPPED), 0);
+
+                            // reduce the number of steps for repeatUntil command
+                            TestStep sectionTestStep = testSteps.get(sectionStepIndex);
+                            if (sectionTestStep.isCommandRepeater()) {
+                                steps -= Integer.parseInt(sectionTestStep.getParams().get(0));
+                            }
                         } else {
                             steps = j - 1;
                             break;
