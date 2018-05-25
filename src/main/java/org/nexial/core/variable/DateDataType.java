@@ -78,7 +78,7 @@ public class DateDataType extends ExpressionDataType<Date> {
                 textValue = StringUtils.substringBefore(textValue, ",");
             }
 
-            value = StringUtils.equals(format, "epoch") ?
+            value = StringUtils.equals(format, EPOCH_DATE_FORMAT) ?
                     new Date(NumberUtils.toLong(textValue)) : new Date(DateUtility.formatTo(textValue, format));
         }
     }

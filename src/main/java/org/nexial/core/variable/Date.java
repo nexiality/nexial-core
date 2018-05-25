@@ -24,10 +24,12 @@ import java.util.Calendar;
 
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.math.NumberUtils;
+import org.apache.commons.lang3.time.DurationFormatUtils;
 import org.nexial.core.utils.ConsoleUtils;
 
 import static java.util.Calendar.*;
 import static org.nexial.core.NexialConst.EPOCH;
+import static org.nexial.core.NexialConst.ONEYEAR;
 
 public class Date {
     public static final String STD_DATE_FORMAT = "MM/dd/yyyy HH:mm:ss";
@@ -45,9 +47,18 @@ public class Date {
             java.util.Date fromDate = StringUtils.equals(fromFormat, EPOCH) ?
                                       new java.util.Date(NumberUtils.toLong(date)) :
                                       new SimpleDateFormat(fromFormat).parse(date);
-            return StringUtils.equals(toFormat, EPOCH) ?
-                   fromDate.getTime() + "" :
-                   new SimpleDateFormat(toFormat).format(fromDate);
+
+            if (StringUtils.equals(toFormat, EPOCH)) { return fromDate.getTime() + ""; }
+            if (!StringUtils.equals(fromFormat, EPOCH)) { return new SimpleDateFormat(toFormat).format(fromDate); }
+
+            if (StringUtils.containsAny(toFormat, "GYyML") && fromDate.getTime() >= ONEYEAR) {
+                return new SimpleDateFormat(toFormat).format(fromDate);
+            }
+
+            // epoch to another time or "day" format
+            // make sure we don't have "bad" hours
+            toFormat = StringUtils.replace(toFormat, "h", "H");
+            return DurationFormatUtils.formatDuration(fromDate.getTime(), toFormat);
 
         } catch (ParseException e) {
             ConsoleUtils.error("Unable to format date '" + date + "' from '" + fromFormat + "' to '" + toFormat +

@@ -20,6 +20,9 @@ package org.nexial.core.variable;
 import org.junit.Assert;
 import org.junit.Test;
 
+import static org.nexial.core.NexialConst.ONEYEAR;
+import static org.nexial.core.NexialConst.THIRTYDAYS;
+
 /**
  *
  */
@@ -33,6 +36,24 @@ public class DateTest {
         Assert.assertEquals("11/10/2011 00:00:00", d.format("2011/10/11", "yyyy/dd/MM", "M/dd/yyyy HH:mm:ss"));
         Assert.assertEquals("11/10/2011 22:14:19",
                             d.format("2011/10/11 14:22:19", "yyyy/dd/MM mm:HH:ss", "M/dd/yyyy HH:mm:ss"));
+    }
+
+    @Test
+    public void testFormat2() {
+        System.out.println("System.currentTimeMillis() = " + System.currentTimeMillis());
+
+        Date d = new Date();
+        Assert.assertEquals("0000/00/00 00:01:12,000", d.format("72000", "epoch", "yyyy/MM/dd HH:mm:ss,SSS"));
+        Assert.assertEquals("2018/05/24 18:46:36,917", d.format("1527212796917", "epoch", "yyyy/MM/dd HH:mm:ss,SSS"));
+        Assert.assertEquals("00:00:07,461", d.format("7461", "epoch", "HH:mm:ss,SSS"));
+        Assert.assertEquals("00:00:07", d.format("7461", "epoch", "HH:mm:ss"));
+        Assert.assertEquals("0:0:7", d.format("7461", "epoch", "h:m:s"));
+        Assert.assertEquals("0", d.format("7461", "epoch", "y"));
+        Assert.assertEquals("720:0:0", d.format(THIRTYDAYS+"", "epoch", "h:m:s"));
+        Assert.assertEquals("30 0:0:0", d.format(THIRTYDAYS+"", "epoch", "dd h:m:s"));
+        Assert.assertEquals("00/30 0:0:0", d.format(THIRTYDAYS+"", "epoch", "MM/dd h:m:s"));
+        Assert.assertEquals("12/31 4:0:0", d.format(ONEYEAR+"", "epoch", "MM/dd h:m:s"));
+        Assert.assertEquals("1970/12/31 16:0:0", d.format(ONEYEAR+"", "epoch", "yyyy/MM/dd H:m:s"));
     }
 
     @Test

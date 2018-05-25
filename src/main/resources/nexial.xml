@@ -19,7 +19,6 @@
 <beans xmlns="http://www.springframework.org/schema/beans"
        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
        xmlns:util="http://www.springframework.org/schema/util"
-       xmlns:p="http://www.springframework.org/schema/p"
        xsi:schemaLocation="
         http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans.xsd
         http://www.springframework.org/schema/util http://www.springframework.org/schema/util/spring-util-2.0.xsd"
@@ -265,7 +264,9 @@
             <bean class="org.nexial.core.plugins.redis.RedisCommand"/>
         </entry>
         <entry key="sms">
-            <bean class="org.nexial.core.plugins.sms.SmsCommand" p:smsNotReadyMessage-ref="smsNotReadyMessage"/>
+            <bean class="org.nexial.core.plugins.sms.SmsCommand">
+                <constructor-arg ref="smsNotReadyMessage"/>
+            </bean>
         </entry>
         <entry key="sound">
             <bean class="org.nexial.core.plugins.sound.SoundCommand"/>

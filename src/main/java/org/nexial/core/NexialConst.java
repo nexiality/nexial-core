@@ -59,6 +59,8 @@ public final class NexialConst {
     public static final int ELEM_PRESENT_WAIT_MS = 1200;
     public static final int MIN_LOADING_WAIT_MS = 50;
     public static final long ONEDAY = 24 * 60 * 60 * 1000;
+    public static final long THIRTYDAYS = ONEDAY*30;
+    public static final long ONEYEAR = ONEDAY*365;
     public static final long MS_UNDEFINED = -1;
     public static final int UNDEFINED_INT_DATA = -1;
     public static final double UNDEFINED_DOUBLE_DATA = -1;
