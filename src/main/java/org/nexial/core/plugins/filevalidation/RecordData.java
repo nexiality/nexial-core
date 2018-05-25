@@ -35,7 +35,7 @@ public class RecordData {
     private transient Map<Integer, RecordBean> records;
     private transient Map<Integer, String> skippedRecords;
     private boolean hasError;
-    private Map<String, Object> mapValues;
+    private Map<String, Number> mapValues;
     private List<Error> errors;
 
     public String getStartTime() {
@@ -102,11 +102,11 @@ public class RecordData {
         this.hasError = hasError;
     }
 
-    public Map<String, Object> getMapValues() {
+    public Map<String, Number> getMapValues() {
         return mapValues;
     }
 
-    public void setMapValues(Map<String, Object> mapValues) {
+    public void setMapValues(Map<String, Number> mapValues) {
         this.mapValues = mapValues;
     }
 

@@ -29,6 +29,8 @@ public class MapfunctionsBean {
     private String function;
     @SerializedName("mapTo")
     private String mapTo;
+    @SerializedName("condition")
+    private String condition;
 
     public String getSignfield() {
         return signfield;
@@ -49,4 +51,8 @@ public class MapfunctionsBean {
     public String getMapTo() { return mapTo;}
 
     public void setMapTo(String mapTo) { this.mapTo = mapTo;}
+
+    public String getCondition() {
+        return condition;
+    }
 }

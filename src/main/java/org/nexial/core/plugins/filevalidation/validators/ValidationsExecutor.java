@@ -18,6 +18,7 @@
 package org.nexial.core.plugins.filevalidation.validators;
 
 import java.math.BigDecimal;
+import java.math.RoundingMode;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
@@ -25,9 +26,13 @@ import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 
+import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.collections4.map.HashedMap;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.math.NumberUtils;
+import org.nexial.core.ExecutionThread;
+import org.nexial.core.model.ExecutionContext;
+import org.nexial.core.model.NexialFilterList;
 import org.nexial.core.plugins.filevalidation.FieldBean;
 import org.nexial.core.plugins.filevalidation.RecordBean;
 import org.nexial.core.plugins.filevalidation.RecordData;
@@ -37,10 +42,15 @@ import org.nexial.core.plugins.filevalidation.config.RecordConfig;
 import org.nexial.core.plugins.filevalidation.config.ValidationConfig;
 import org.nexial.core.plugins.filevalidation.validators.Error.ErrorBuilder;
 
+import static java.math.RoundingMode.UP;
+
 public class ValidationsExecutor {
 
     private static final Map<String, DataType> ALL_DATA_TYPES = new HashedMap<>();
     private FieldValidator startValidator;
+    static final int DEC_SCALE = 25;
+    static final RoundingMode ROUND = UP;
+    private ExecutionContext context;
 
     public enum ValidationType {
         REGEX, EQUALS, SQL, API, DB, IN, DATE
@@ -107,7 +117,7 @@ public class ValidationsExecutor {
     }
 
     public ValidationsExecutor() {
-
+        context = ExecutionThread.get();
         startValidator = new RegexValidator();
         startValidator.setNextValidator(new EqualsValidator()).setNextValidator(new InListValidator()).setNextValidator(
             new DateValidator()).setNextValidator(new SqlValidator());
@@ -132,124 +142,216 @@ public class ValidationsExecutor {
 
     }
 
-    public Map<String, Object> collectMapValues(RecordConfig recordConfig, RecordBean recordBean,
-                                                Map<String, Object> mapValues) {
+    public Map<String, Number> collectMapValues(RecordConfig recordConfig, RecordBean recordBean,
+                                                Map<String, Number> mapValues) {
 
         List<MapFunctionConfig> mapFunctionConfigs = recordConfig.getMapFunctionConfigs();
 
         if (mapFunctionConfigs == null || mapFunctionConfigs.isEmpty()) { return mapValues; }
+
+        updateValuesToContext(recordConfig, recordBean, mapValues);
+
         for (MapFunctionConfig mapFunctionConfig : mapFunctionConfigs) {
+
             List<FieldBean> recordFields = recordBean.getFields();
-            boolean skipFunction = false;
+
+            String function = mapFunctionConfig.getFunction();
+            FieldBean signField = recordBean.get(mapFunctionConfig.getSignField());
+            String mapTo = mapFunctionConfig.getMapTo();
+
             for (FieldBean recordField : recordFields) {
 
-                if (mapFunctionConfig.getFieldName().equals(recordField.getConfig().getFieldname())) {
+                String fieldName = recordField.getConfig().getFieldname();
 
-                    FieldBean signField = recordBean.get(mapFunctionConfig.getSignField());
+                if (!mapFunctionConfig.getFieldName().equals(fieldName)) {continue;}
+
+                if (recordField.isDataTypeError()) {
+                    context.logCurrentStep("skipped map function '" + function +
+                                           "' due to validation error at field '" +
+                                           fieldName + "'");
+                    break;
+                }
+
+                String fieldValue = recordField.getFieldValue().trim();
+                fieldValue = (signField != null) ? signField.getFieldValue() + fieldValue : fieldValue;
+                BigDecimal big = NumberUtils.createBigDecimal((fieldValue));
+
+                String condition = mapFunctionConfig.getCondition();
+                if (condition != null && !isMatch(condition)) {
+                    context.logCurrentStep("skipped map function for record number '" +
+                                           recordBean.getRecordNumber() +
+                                           "' due to failed condition '" +
+                                           condition + "'");
+                    continue;
+                }
+
+                if (function.equals("AVERAGE")) {
+                    average(mapValues, mapTo, big);
+                }
+
+                if (function.equals("AGGREGATE")) {
+                    aggregate(mapValues, mapTo, big);
+                }
+
+                if (function.equals("MIN")) {
+                    min(mapValues, mapTo, big);
+                }
+
+                if (function.equals("MAX")) {
+                    max(mapValues, mapTo, big);
+                }
+
+                if (function.equals("COUNT")) {
+                    if (mapValues.containsKey(mapTo)) {
+                        int counter = mapValues.get(mapTo).intValue();
+                        mapValues.put(mapTo, ++counter);
+                    } else { mapValues.put(mapTo, 1); }
+                }
+            }
+
+        }
+
+        cleanValuesFromContext(recordBean);
+        return mapValues;
+    }
+
+    // todo: make all number functions as generic methods
+
+    public void max(Map<String, Number> mapValues, String mapTo, BigDecimal big) {
+        BigDecimal mapValue = mapValues.containsKey(mapTo) ?
+                              big.max((BigDecimal) mapValues.get(mapTo)) :
+                              big;
+        mapValues.put(mapTo, mapValue);
+    }
+
+    public void min(Map<String, Number> mapValues, String mapTo, BigDecimal big) {
+        BigDecimal mapValue = mapValues.containsKey(mapTo) ?
+                              big.min((BigDecimal) mapValues.get(mapTo)) :
+                              big;
+        mapValues.put(mapTo, mapValue);
+    }
+
+    public void aggregate(Map<String, Number> mapValues, String mapTo, BigDecimal big) {
+        BigDecimal mapValue = mapValues.containsKey(mapTo) ?
+                              big.add((BigDecimal) mapValues.get(mapTo)) :
+                              big;
+        mapValues.put(mapTo, mapValue);
+    }
+
+    public void average(Map<String, Number> mapValues, String mapTo, BigDecimal big) {
+
+        if (mapValues.containsKey(mapTo)) {
+            BigDecimal counter = new BigDecimal(mapValues.get(mapTo + "#Counter").intValue() + 1);
+            BigDecimal sum = big.add((BigDecimal) mapValues.get(mapTo + "#Sum"));
+            mapValues.put(mapTo + "#Counter", counter);
+            mapValues.put(mapTo + "#Sum", sum);
+            mapValues.put(mapTo, sum.divide(counter, DEC_SCALE, ROUND));
+
+        } else {
+            mapValues.put(mapTo + "#Counter", 1);
+            mapValues.put(mapTo + "#Sum", big);
+            mapValues.put(mapTo, big);
+        }
+    }
+
+    public void restoreValuesToContext(Map<String, Object> tempDupValues) {
+        if (tempDupValues.isEmpty()) { return; }
+        for (Entry<String, Object> stringObjectEntry : tempDupValues.entrySet()) {
+            context.setData(stringObjectEntry.getKey(), stringObjectEntry.getValue());
+            context.logCurrentStep("var '" +
+                                   stringObjectEntry.getKey() +
+                                   "' is restored to context with value '" +
+                                   context.getObjectData(stringObjectEntry.getKey()) + "'");
+        }
+    }
+
+    public void updateValuesToContext(RecordConfig recordConfig,
+                                      RecordBean recordBean,
+                                      Map<String, Number> mapValues) {
+        List<MapFunctionConfig> mapFunctionConfigs = recordConfig.getMapFunctionConfigs();
+
+        if (mapFunctionConfigs == null || mapFunctionConfigs.isEmpty()) { return; }
+
+        for (MapFunctionConfig mapFunctionConfig : mapFunctionConfigs) {
+
+            String mapTo = mapFunctionConfig.getMapTo();
+            if (mapTo != null) {
+                Number mapValue = (mapValues.get(mapTo) == null) ? 0 : mapValues.get(mapTo);
+                context.setData(mapTo, mapValue);
+            }
+        }
+        List<FieldBean> recordFields = recordBean.getFields();
+
+        for (FieldBean recordField : recordFields) {
+            String fName = recordField.getConfig().getFieldname();
+            String fieldValue = recordField.getFieldValue();
+
+            if (fieldValue == null) {
+                context.removeData(fName);
+            } else {
+                context.setData(fName, truncateLeadingZeroes(fieldValue));
+            }
+        }
+
+
+    }
+
+    public Map<String, Object> moveDupValuesFromContext(List<RecordConfig> configs) {
+        Map<String, Object> tempDupValues = new HashMap<>();
+
+        for (RecordConfig config : configs) {
+            if (config != null && CollectionUtils.isNotEmpty(config.getMapFunctionConfigs())) {
+                for (MapFunctionConfig mapFunctionConfig : config.getMapFunctionConfigs()) {
                     String mapTo = mapFunctionConfig.getMapTo();
-
-                    if (recordField.isDataTypeError()) {
-                        mapValues.put(mapTo, "Skipped due to validation error.");
-                        skipFunction = true;
-                        break;
-                    }
-
-                    // todo: instantiate with class
-
-                    if (mapFunctionConfig.getFunction().equals("AVERAGE")) {
-
-                        double value;
-                        if (signField != null) {
-                            value = NumberUtils.createDouble(signField.getFieldValue() +
-                                                             recordField.getFieldValue());
-                        } else { value = NumberUtils.createDouble(recordField.getFieldValue()); }
-                        if (mapValues.containsKey(mapTo)) {
-                            int counter = (Integer) mapValues.get(mapTo + "#Counter");
-                            counter = ++counter;
-                            double sum = value + (Double) mapValues.get(mapTo + "#Sum");
-                            mapValues.put(mapTo, sum / counter);
-                            mapValues.put(mapTo + "#Counter", counter);
-                            mapValues.put(mapTo + "#Sum", sum);
-
-                        } else {
-                            mapValues.put(mapTo, value);
-                            mapValues.put(mapTo + "#Counter", 1);
-                            mapValues.put(mapTo + "#Sum", value);
+                    String fieldName = mapFunctionConfig.getFieldName();
+                    if (mapTo != null) {
+                        if (context.hasData(mapTo)) { tempDupValues.put(mapTo, context.getObjectData(mapTo)); }
+                        if (context.hasData(fieldName)) {
+                            tempDupValues.put(fieldName,
+                                              context.getObjectData(fieldName));
                         }
-                    }
-
-                    if (mapFunctionConfig.getFunction().equals("AGGREGATE")) {
-                        BigDecimal big;
-                        if (signField != null) {
-                            big = NumberUtils.createBigDecimal((signField.getFieldValue() +
-                                                                recordField.getFieldValue()).trim());
-
-                        } else {
-                            big = NumberUtils.createBigDecimal((recordField.getFieldValue()).trim());
-                        }
-
-                        if (mapValues.containsKey(mapTo)) {
-                            big = big.add((BigDecimal) mapValues.get(mapTo));
-                            mapValues.put(mapTo, big);
-                        } else { mapValues.put(mapTo, big); }
-
-                    }
-                    if (mapFunctionConfig.getFunction().equals("MIN")) {
-                        double value;
-                        if (signField != null) {
-                            value = NumberUtils.createDouble(signField.getFieldValue() +
-                                                             recordField.getFieldValue());
-                        } else { value = NumberUtils.createDouble(recordField.getFieldValue()); }
-
-                        if (mapValues.containsKey(mapTo)) {
-
-                            if (value < (Double) mapValues.get(mapTo)) {
-                                mapValues.put(mapTo, value);
-                            }
-                        } else {
-
-                            mapValues.put(mapTo, value);
-                        }
-                    }
-                    if (mapFunctionConfig.getFunction().equals("MAX")) {
-                        double value;
-                        if (signField != null) {
-                            value = NumberUtils.createDouble(signField.getFieldValue() +
-                                                             recordField.getFieldValue());
-                        } else { value = NumberUtils.createDouble(recordField.getFieldValue()); }
-
-                        if (mapValues.containsKey(mapTo)) {
-
-                            if (value > (Double) mapValues.get(mapTo)) {
-                                mapValues.put(mapTo, value);
-                            }
-                        } else { mapValues.put(mapTo, value); }
-                    }
-
-                    if (mapFunctionConfig.getFunction().equals("COUNT")) {
-
-                        if (mapValues.containsKey(mapTo)) {
-                            int counter = (Integer) mapValues.get(mapTo);
-                            mapValues.put(mapTo, ++counter);
-                        } else { mapValues.put(mapTo, 1); }
                     }
                 }
             }
-            if (skipFunction) { break; }
+        }
+        return tempDupValues;
+    }
+
+    public void cleanValuesFromContext(RecordBean recordBean) {
+        for (FieldBean fieldBean : recordBean.getFields()) {
+            context.removeData(fieldBean.getConfig().getFieldname());
+        }
+    }
+
+    public String truncateLeadingZeroes(String text) {
+        // in case start with - or +
+        boolean isNegative = StringUtils.startsWith(text, "-");
+        text = StringUtils.removeStart(text, "+");
+        text = StringUtils.removeStart(text, "-");
+
+        text = StringUtils.removeFirst(text, "^0{1,}");
+        if (StringUtils.isBlank(text)) {
+            return null;
         }
 
-        return mapValues;
+        if (StringUtils.startsWithIgnoreCase(text, ".")) { text = "0" + text; }
+        if (isNegative) { text = "-" + text; }
+        return text;
+    }
+
+    public boolean isMatch(String condition) {
+        NexialFilterList filters = new NexialFilterList(condition);
+        return filters.isMatched(context, "filtering records with");
     }
 
     public static Error buildError(FieldBean field, Severity severity, String errorMessage, String validationType) {
         FieldConfig config = field.getConfig();
 
-        Error error = new ErrorBuilder().fieldName(config.getFieldname())
-                                        .severity(severity.toString())
-                                        .validationType(validationType)
-                                        .errorMessage(errorMessage)
-                                        .build();
-        return error;
+        return new ErrorBuilder().fieldName(config.getFieldname())
+                                 .severity(severity.toString())
+                                 .validationType(validationType)
+                                 .errorMessage(errorMessage)
+                                 .build();
     }
 
     private void collectErrors(RecordData recordData) {
@@ -286,7 +388,7 @@ public class ValidationsExecutor {
 
             for (FieldBean field : fields) {
                 List<ValidationConfig> validationConfigs = field.getConfig().getValidationConfigs();
-                if (validationConfigs != null || !validationConfigs.isEmpty()) {
+                if (validationConfigs != null && !validationConfigs.isEmpty()) {
                     startValidator.validateField(field);
                 }
             }

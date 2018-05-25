@@ -73,7 +73,7 @@ public class ErrorReport {
             sb.append(error.getFieldName()).append(",");
             sb.append(error.getSeverity()).append(",");
             sb.append(error.getValidationType()).append(",");
-            sb.append(error.getErrorMessage());
+            sb.append(error.getErrorMessage().replace(",","\\,"));
             sb.append(System.getProperty("line.separator"));
         }
         return sb.toString();
@@ -143,7 +143,7 @@ public class ErrorReport {
         summarySheet = setSummaryData(summarySheet, 10, "Has Error", String.valueOf(recordData.isHasError()));
 
         summarySheet.createRow(12).createCell(0).setCellValue("Map Values");
-        Map<String, Object> mapValues = recordData.getMapValues();
+        Map<String, Number> mapValues = recordData.getMapValues();
         int n = 14;
         for (String key : mapValues.keySet()) {
             summarySheet.createRow(n).createCell(0).setCellValue(key);
@@ -187,14 +187,14 @@ public class ErrorReport {
         String[] lines = errorsCSV.split("\n");
         int rowNum = 0;
         for (String line : lines) {
-            String[] fields = line.split(",");
+            String[] fields = line.split("(?<!\\\\),");
             Row row = sheet.createRow(rowNum);
 
             for (int i = 0; i < fields.length; i++) {
 
                 Cell cell = row.createCell(i);
                 cell.setCellType(CellType.STRING);
-                cell.setCellValue(fields[i]);
+                cell.setCellValue(fields[i].replace("\\,",","));
             }
             rowNum++;
         }

@@ -50,7 +50,7 @@ public class EqualsValidator implements FieldValidator {
                 String actual = field.getFieldValue();
 
                 if (StringUtils.startsWith(expected, "${")) {
-                    Map<String, Object> mapValues = field.getRecord().getRecordData().getMapValues();
+                    Map<String, Number> mapValues = field.getRecord().getRecordData().getMapValues();
                     DecimalFormat decimalFormat = new DecimalFormat("#.##");
                     actual = decimalFormat.format(Double.valueOf(actual));
                     expected = String.valueOf(mapValues.get(StringUtils.substringBetween(expected, "${", "}")));

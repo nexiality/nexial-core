@@ -24,11 +24,20 @@ import org.apache.commons.collections4.map.ListOrderedMap;
 
 public class RecordBean extends ListOrderedMap<String, FieldBean> {
 
+    private int recordNumber;
     private transient Map<String, FieldBean> recordFieldsMap;
     private List<FieldBean> fields;
     private transient RecordData recordData;
 
     public RecordData getRecordData() { return recordData; }
+
+    public int getRecordNumber() {
+        return recordNumber;
+    }
+
+    public void setRecordNumber(int recordNumber) {
+        this.recordNumber = recordNumber;
+    }
 
     public void setRecordData(RecordData recordData) { this.recordData = recordData; }
 
