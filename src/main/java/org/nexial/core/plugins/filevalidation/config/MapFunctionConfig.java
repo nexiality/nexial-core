@@ -45,40 +45,20 @@ public class MapFunctionConfig {
         return signField;
     }
 
-    public void setSignField(String signField) {
-        this.signField = signField;
-    }
-
     public String getFunction() {
         return function;
-    }
-
-    public void setFunction(String function) {
-        this.function = function;
     }
 
     public String getMapTo() {
         return mapTo;
     }
 
-    public void setMapTo(String mapTo) {
-        this.mapTo = mapTo;
-    }
-
     public String getFieldName() {
         return fieldName;
     }
 
-    public void setFieldName(String fieldName) {
-        this.fieldName = fieldName;
-    }
-
     public String getCondition() {
         return condition;
-    }
-
-    public void setCondition(String condition) {
-        this.condition = condition;
     }
 
     @Override

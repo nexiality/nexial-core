@@ -73,7 +73,7 @@ public class ErrorReport {
             sb.append(error.getFieldName()).append(",");
             sb.append(error.getSeverity()).append(",");
             sb.append(error.getValidationType()).append(",");
-            sb.append(error.getErrorMessage().replace(",","\\,"));
+            sb.append(error.getErrorMessage().replace(",", "\\,"));
             sb.append(System.getProperty("line.separator"));
         }
         return sb.toString();
@@ -187,14 +187,14 @@ public class ErrorReport {
         String[] lines = errorsCSV.split("\n");
         int rowNum = 0;
         for (String line : lines) {
+            // prevent writing field values with comma into multiple cells in excel sheet
             String[] fields = line.split("(?<!\\\\),");
             Row row = sheet.createRow(rowNum);
 
             for (int i = 0; i < fields.length; i++) {
-
                 Cell cell = row.createCell(i);
                 cell.setCellType(CellType.STRING);
-                cell.setCellValue(fields[i].replace("\\,",","));
+                cell.setCellValue(fields[i].replace("\\,", ","));
             }
             rowNum++;
         }

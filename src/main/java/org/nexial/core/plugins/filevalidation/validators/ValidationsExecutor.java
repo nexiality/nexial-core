@@ -125,6 +125,7 @@ public class ValidationsExecutor {
 
     public void executeValidations(RecordData recordData) {
 
+        // TODO: refactor field validations to take the advantage of Nexial filter
         doFieldValidations(recordData);
         recordData.printMapFunctionValues();
         collectErrors(recordData);
