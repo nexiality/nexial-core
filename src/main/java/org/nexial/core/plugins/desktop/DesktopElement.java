@@ -1598,10 +1598,14 @@ public class DesktopElement {
         setElement(driver.findElement(By.xpath(xpath)));
     }
 
+    protected StepResult typeTextComponent(boolean append, String... text) {
+        return typeTextComponent(false, append, text);
+    }
+
     /**
      * meant for TextBox or TextArea
      */
-    protected StepResult typeTextComponent(boolean append, String... text) {
+    protected StepResult typeTextComponent(boolean useSendKeys, boolean append, String... text) {
         requires(ArrayUtils.isNotEmpty(text), "at least one text parameter is required");
 
         if (append) {
@@ -1616,7 +1620,7 @@ public class DesktopElement {
             }
         } else {
             // join text into 1 string, parse the entire combined string and loop through each token to type
-            parseTextInputWithShortcuts(TextUtils.toString(text, "", "", "")).forEach(this::type);
+            parseTextInputWithShortcuts(TextUtils.toString(text, "", "", "")).forEach(txt -> type(txt, useSendKeys));
         }
 
         autoClearModalDialog();
@@ -1653,6 +1657,10 @@ public class DesktopElement {
     }
 
     protected void type(String text) {
+        type(text, false);
+    }
+
+    protected void type(String text, boolean useSendKeys) {
         if (StringUtils.isEmpty(text)) { return; }
 
         if (!element.isEnabled()) { CheckUtils.fail("Text cannot be entered as it is disabled for input"); }
@@ -1689,7 +1697,7 @@ public class DesktopElement {
             return;
         }
 
-        if (setValue(element, text)) { return; }
+        if (setValue(useSendKeys, element, text)) { return; }
 
         element.clear();
         element.sendKeys(text);
@@ -1728,8 +1736,12 @@ public class DesktopElement {
         return StringUtils.equals(text, actual.trim());
     }
 
-    /** This Method will set the value for TextBox Element **/
     protected boolean setValue(WebElement element, String text) {
+        return setValue(false, element, text);
+    }
+
+    /** This Method will set the value for TextBox Element **/
+    protected boolean setValue(boolean useSendKeys, WebElement element, String text) {
         if (!isValuePatternAvailable(element)) {
             element.sendKeys(text);
             return isActualAndTextMatched(element, getText(), text);
@@ -1737,7 +1749,11 @@ public class DesktopElement {
 
         String errPrefix = "Failed to execute ValuePattern.SetValue on '" + label + "': ";
         try {
-            driver.executeScript("automation: ValuePattern.SetValue", element, text);
+            if (useSendKeys) {
+                element.sendKeys(text);
+            } else {
+                driver.executeScript("automation: ValuePattern.SetValue", element, text);
+            }
             String actual = element.getText();
             boolean matched = isActualAndTextMatched(element, actual, text);
 

@@ -66,7 +66,8 @@ public class BaseCommand implements NexialCommand {
     public static final List<String> PARAM_AUTO_FILL_COMMANDS = Arrays.asList("desktop.typeTextBox",
                                                                               "desktop.typeAppendTextBox",
                                                                               "desktop.typeAppendTextArea",
-                                                                              "desktop.typeTextArea");
+                                                                              "desktop.typeTextArea",
+                                                                              "desktop.sendKeysToTextBox");
     // "self-derived" means that the command will figure out the appropriate param values for display
     public static final List<String> PARAM_DERIVED_COMMANDS = Collections.singletonList("step.observe");
 

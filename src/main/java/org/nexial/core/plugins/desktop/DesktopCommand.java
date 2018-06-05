@@ -454,6 +454,12 @@ public class DesktopCommand extends BaseCommand
         }
     }
 
+    public StepResult sendKeysToTextBox(String name, String text1, String text2, String text3, String text4) {
+        DesktopElement component = getRequiredElement(name, Textbox);
+        if (component == null) { return StepResult.fail("Unable to derive component via '" + name + "'"); }
+        return component.typeTextComponent(true, false, text1, text2, text3, text4);
+    }
+
     public StepResult typeTextBox(String name, String text1, String text2, String text3, String text4) {
         DesktopElement component = getRequiredElement(name, Textbox);
         if (component == null) { return StepResult.fail("Unable to derive component via '" + name + "'"); }
