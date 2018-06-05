@@ -20,6 +20,8 @@ package org.nexial.commons.utils;
 import java.net.InetAddress;
 import java.net.UnknownHostException;
 
+import javax.validation.constraints.NotNull;
+
 import org.apache.commons.lang3.StringUtils;
 
 import static java.lang.System.lineSeparator;
@@ -38,6 +40,7 @@ public final class EnvUtils {
      *
      * @throws UnknownHostException if no host or IP can be found for this host.
      */
+    @NotNull
     public static String getHostName() throws UnknownHostException {
         InetAddress localhost = InetAddress.getLocalHost();
         return StringUtils.defaultIfBlank(localhost.getHostName(), localhost.getHostAddress());
@@ -48,17 +51,20 @@ public final class EnvUtils {
                (StringUtils.contains(OS_ARCH, "64") || StringUtils.isNotBlank(System.getenv("ProgramFiles(x86)")));
     }
 
+    @NotNull
     public static String platformSpecificEOL(String text) {
         if (lineSeparator().equals("\n")) { return enforceUnixEOL(text); }
         if (lineSeparator().equals("\r\n")) { return enforceWindowsEOL(text); }
         return text;
     }
 
+    @NotNull
     public static String enforceUnixEOL(String text) {
         text = StringUtils.replace(text, "\r\n", "\n");
         return StringUtils.replace(text, "\r", "\n");
     }
 
+    @NotNull
     public static String enforceWindowsEOL(String text) {
         text = StringUtils.replace(text, "\r\n", "\n");
         text = StringUtils.replace(text, "\r", "\n");

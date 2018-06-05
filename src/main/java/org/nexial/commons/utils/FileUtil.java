@@ -281,6 +281,21 @@ public final class FileUtil {
         return FileUtil.isFileReadable(file, minFileSize) && new File(file).canWrite();
     }
 
+    /**
+     * collect the content of {@literal file} via a {@literal filter} and a {@literal transformer}. Internally uses
+     * stream instead of full-read.
+     */
+    public static List<String> filterAndTransform(File file,
+                                                  @NotNull LineFilter<String> filter,
+                                                  @NotNull LineTransformer<String> transformer) throws IOException {
+
+        if (!FileUtil.isFileReadable(file, 1)) { return null; }
+        return Files.lines(Paths.get(file.getAbsolutePath()))
+                    .filter(filter::filter)
+                    .map(transformer::transform)
+                    .collect(Collectors.toList());
+    }
+
     public static List<File> unzip(File zip, File target) throws IOException {
 
         // int unzipCount = 0;
