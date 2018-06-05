@@ -21,11 +21,14 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Objects;
+import java.util.stream.Collectors;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipException;
 import java.util.zip.ZipInputStream;
@@ -48,6 +51,7 @@ import static org.apache.commons.io.comparator.NameFileComparator.NAME_REVERSE;
 import static org.apache.commons.io.comparator.PathFileComparator.PATH_COMPARATOR;
 import static org.apache.commons.io.comparator.PathFileComparator.PATH_REVERSE;
 import static org.nexial.core.NexialConst.DEF_CHARSET;
+import static org.nexial.core.NexialConst.DEF_FILE_ENCODING;
 
 /**
  *
@@ -70,6 +74,14 @@ public final class FileUtil {
         SortBy(Comparator<File> comparator) { this.comparator = comparator; }
 
         Comparator<File> getComparator() { return comparator; }
+    }
+
+    public interface LineTransformer<T> {
+        T transform(T line);
+    }
+
+    public interface LineFilter<T> {
+        boolean filter(T line);
     }
 
     private FileUtil() {}
@@ -286,10 +298,11 @@ public final class FileUtil {
      * stream instead of full-read.
      */
     public static List<String> filterAndTransform(File file,
-                                                  @NotNull LineFilter<String> filter,
-                                                  @NotNull LineTransformer<String> transformer) throws IOException {
+                                                  LineFilter<String> filter,
+                                                  LineTransformer<String> transformer) throws IOException {
 
         if (!FileUtil.isFileReadable(file, 1)) { return null; }
+        if (filter == null || transformer == null) { return FileUtils.readLines(file, DEF_FILE_ENCODING); }
         return Files.lines(Paths.get(file.getAbsolutePath()))
                     .filter(filter::filter)
                     .map(transformer::transform)
