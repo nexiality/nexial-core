@@ -713,6 +713,12 @@ public class Nexial {
 
                 if (outputToCloud) {
                     NexialS3Helper otc = springContext.getBean("otc", NexialS3Helper.class);
+                    if (otc == null || !otc.isReadyForUse()) {
+                        // try one more time...
+                        springContext = new ClassPathXmlApplicationContext("classpath:/nexial-main.xml");
+                        otc = springContext.getBean("otc", NexialS3Helper.class);
+                    }
+
                     // can't use otc.resolveOutputDir() since we are out of context at this point in time
                     String outputDir =
                             System.getProperty(OPT_CLOUD_OUTPUT_BASE) + "/" + project.getName() + "/" + runId;
