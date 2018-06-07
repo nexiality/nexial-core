@@ -1750,7 +1750,9 @@ public class DesktopElement {
         String errPrefix = "Failed to execute ValuePattern.SetValue on '" + label + "': ";
         try {
             if (useSendKeys) {
-                element.sendKeys(text);
+                // for text fields where ctrl+A doesn't work, element.sendKeys becomes ineffective
+                // good to use shortcut script with <[{text}]>, which gives the effect of element.sendKeys and also sets cursor to beginning of text
+                driver.executeScript(SCRIPT_PREFIX_SHORTCUT + TEXT_INPUT_PREFIX + text + TEXT_INPUT_POSTFIX, element);
             } else {
                 driver.executeScript("automation: ValuePattern.SetValue", element, text);
             }
