@@ -48,32 +48,42 @@ public abstract class Request implements Serializable {
     protected String contentType = "application/json";
 
     Request(ExecutionContext context) {
-        setConnectionTimeout(context.getIntData(WS_CONN_TIMEOUT, DEF_WS_CONN_TIMEOUT));
-        setSocketTimeout(context.getIntData(WS_READ_TIMEOUT, DEF_WS_READ_TIMEOUT));
-        setEnableExpectContinue(context.getBooleanData(WS_ENABLE_EXPECT_CONTINUE, DEF_WS_ENABLE_EXPECT_CONTINUE));
-        setEnableRedirects(context.getBooleanData(WS_ENABLE_REDIRECTS, DEF_WS_ENABLE_REDIRECTS));
-        setAllowCircularRedirects(context.getBooleanData(WS_ALLOW_CIRCULAR_REDIRECTS, DEF_WS_CIRCULAR_REDIRECTS));
-        setAllowRelativeRedirects(context.getBooleanData(WS_ALLOW_RELATIVE_REDIRECTS, DEF_WS_RELATIVE_REDIRECTS));
-
         Map<String, Object> reqHeaders = new HashMap<>();
 
-        // these are the properties we want... however they might not be in the correct object type
-        // since execution.getDataByPrefix() converts them to string automatically.
-        Map<String, String> candidateProps = context.getDataByPrefix(WS_REQ_HEADER_PREFIX);
-        if (MapUtils.isNotEmpty(candidateProps)) {
-            Set<String> candidatePropKeys = candidateProps.keySet();
-            for (String key : candidatePropKeys) {
-                Object value = context.getObjectData(WS_REQ_HEADER_PREFIX + key);
-                if (value instanceof String) {
-                    // string values are for keeps since they have been treated with token replacement logic
-                    reqHeaders.put(key, candidateProps.get(key));
-                } else {
-                    reqHeaders.put(key, value);
+        if (context == null) {
+            setConnectionTimeout(DEF_WS_CONN_TIMEOUT);
+            setSocketTimeout(DEF_WS_READ_TIMEOUT);
+            setEnableExpectContinue(DEF_WS_ENABLE_EXPECT_CONTINUE);
+            setEnableRedirects(DEF_WS_ENABLE_REDIRECTS);
+            setAllowCircularRedirects(DEF_WS_CIRCULAR_REDIRECTS);
+            setAllowRelativeRedirects(DEF_WS_RELATIVE_REDIRECTS);
+            setHeaders(reqHeaders);
+        } else {
+            setConnectionTimeout(context.getIntData(WS_CONN_TIMEOUT, DEF_WS_CONN_TIMEOUT));
+            setSocketTimeout(context.getIntData(WS_READ_TIMEOUT, DEF_WS_READ_TIMEOUT));
+            setEnableExpectContinue(context.getBooleanData(WS_ENABLE_EXPECT_CONTINUE, DEF_WS_ENABLE_EXPECT_CONTINUE));
+            setEnableRedirects(context.getBooleanData(WS_ENABLE_REDIRECTS, DEF_WS_ENABLE_REDIRECTS));
+            setAllowCircularRedirects(context.getBooleanData(WS_ALLOW_CIRCULAR_REDIRECTS, DEF_WS_CIRCULAR_REDIRECTS));
+            setAllowRelativeRedirects(context.getBooleanData(WS_ALLOW_RELATIVE_REDIRECTS, DEF_WS_RELATIVE_REDIRECTS));
+
+            // these are the properties we want... however they might not be in the correct object type
+            // since execution.getDataByPrefix() converts them to string automatically.
+            Map<String, String> candidateProps = context.getDataByPrefix(WS_REQ_HEADER_PREFIX);
+            if (MapUtils.isNotEmpty(candidateProps)) {
+                Set<String> candidatePropKeys = candidateProps.keySet();
+                for (String key : candidatePropKeys) {
+                    Object value = context.getObjectData(WS_REQ_HEADER_PREFIX + key);
+                    if (value instanceof String) {
+                        // string values are for keeps since they have been treated with token replacement logic
+                        reqHeaders.put(key, candidateProps.get(key));
+                    } else {
+                        reqHeaders.put(key, value);
+                    }
                 }
             }
-        }
 
-        setHeaders(reqHeaders);
+            setHeaders(reqHeaders);
+        }
     }
 
     public String getUrl() { return url; }

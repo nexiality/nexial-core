@@ -30,6 +30,7 @@ import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang3.BooleanUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.math.NumberUtils;
+import org.jetbrains.annotations.NotNull;
 import org.nexial.commons.utils.TextUtils;
 import org.nexial.commons.utils.web.URLEncodingUtils;
 import org.nexial.core.model.ExecutionContext;
@@ -38,8 +39,6 @@ import org.nexial.core.plugins.base.BaseCommand;
 import org.nexial.core.utils.ConsoleUtils;
 import org.nexial.core.utils.OutputFileUtils;
 
-import com.google.gson.Gson;
-import com.google.gson.GsonBuilder;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
@@ -53,12 +52,12 @@ import static org.nexial.core.NexialConst.*;
 import static org.nexial.core.utils.CheckUtils.*;
 
 public class WsCommand extends BaseCommand {
-    private static final Gson GSON = new GsonBuilder().disableHtmlEscaping().setLenient().create();
+    protected boolean verbose;
+
+    public void setVerbose(boolean verbose) { this.verbose = verbose; }
 
     @Override
-    public void init(ExecutionContext context) {
-        super.init(context);
-    }
+    public void init(ExecutionContext context) { super.init(context); }
 
     @Override
     public String getTarget() { return "ws"; }
@@ -68,18 +67,18 @@ public class WsCommand extends BaseCommand {
         requiresValidVariableName(saveTo);
 
         WebServiceClient client = new WebServiceClient(context);
-
-        boolean compact = context.getBooleanData(WS_REQ_PAYLOAD_COMPACT, DEF_WS_REQ_PAYLOAD_COMPACT);
+        client.setVerbose(verbose);
 
         // is queryString a file?
         try {
-            queryString = OutputFileUtils.resolveContent(queryString, context, compact);
+            queryString = OutputFileUtils.resolveContent(queryString, context, compactRequestPayload());
         } catch (IOException e) {
             return StepResult.fail("Unable to read input '" + queryString + "' due to " + e.getMessage());
         }
 
+        logRequest(url, queryString);
+
         try {
-            logRequest(url, queryString);
             Response response = client.download(url, queryString, saveTo);
             logResponseForDownload(response, saveTo);
             return StepResult.success("Successfully downloaded '"
@@ -228,7 +227,7 @@ public class WsCommand extends BaseCommand {
                 return StepResult.fail("Unable to parse JWT token, invalid payload returned");
             } else {
                 Claims body = parsed.getBody();
-                context.setData(var, GSON.toJsonTree(body).toString());
+                context.setData(var, GSON_COMPRESSED.toJsonTree(body).toString());
                 return StepResult.success();
             }
         } catch (ExpiredJwtException e) {
@@ -313,7 +312,7 @@ public class WsCommand extends BaseCommand {
         }
 
         // parse response as JSON
-        JsonObject json = GSON.fromJson(response.getBody(), JsonObject.class);
+        JsonObject json = GSON_COMPRESSED.fromJson(response.getBody(), JsonObject.class);
         Set<Entry<String, JsonElement>> jsonProps = json.entrySet();
 
         // save response to var
@@ -358,6 +357,10 @@ public class WsCommand extends BaseCommand {
         return StepResult.fail(failPrefix + "unknown/unsupported " + OAUTH_TOKEN_TYPE + "found: " + tokenType);
     }
 
+    protected boolean compactRequestPayload() {
+        return context.getBooleanData(WS_REQ_PAYLOAD_COMPACT, DEF_WS_REQ_PAYLOAD_COMPACT);
+    }
+
     protected StepResult addAccessTokenToHeader(Map<String, String> oauthResponse, String authPrefix) {
         String bearerCode = oauthResponse.get(OAUTH_ACCESS_TOKEN);
         if (StringUtils.isBlank(bearerCode)) {
@@ -375,21 +378,19 @@ public class WsCommand extends BaseCommand {
         requiresValidVariableName(var);
 
         WebServiceClient client = new WebServiceClient(context);
+        client.setVerbose(verbose);
 
         // is queryString a file?
         try {
-            queryString = OutputFileUtils.resolveContent(
-                queryString,
-                context,
-                context.getBooleanData(WS_REQ_PAYLOAD_COMPACT, DEF_WS_REQ_PAYLOAD_COMPACT));
+            queryString = OutputFileUtils.resolveContent(queryString, context, compactRequestPayload());
+            queryString = URLEncodingUtils.encodeQueryString(queryString);
         } catch (IOException e) {
             return StepResult.fail("Unable to read input '" + queryString + "' due to " + e.getMessage());
         }
 
-        try {
-            queryString = URLEncodingUtils.encodeQueryString(queryString);
-            logRequest(url, queryString);
+        logRequest(url, queryString);
 
+        try {
             Response response = null;
             if (StringUtils.equals(method, "get")) { response = client.get(url, queryString); }
             if (StringUtils.equals(method, "head")) { response = client.head(url); }
@@ -399,8 +400,14 @@ public class WsCommand extends BaseCommand {
             logResponse(response, var);
             return StepResult.success("Successfully invoked web service '" + url + "'");
         } catch (IOException e) {
-            return StepResult.fail("Unable to invoke web service '" + url + "': " + e.getMessage());
+            return toFailResult(url, e);
         }
+    }
+
+    @NotNull
+    protected static StepResult toFailResult(String url, IOException e) {
+        String error = e.getCause() != null ? e.getCause().getMessage() : e.getMessage();
+        return StepResult.fail("Unable to invoke '" + url + "': " + error);
     }
 
     protected StepResult requestWithBody(String url, String body, String var, String method) {
@@ -408,13 +415,11 @@ public class WsCommand extends BaseCommand {
         requiresValidVariableName(var);
 
         WebServiceClient client = new WebServiceClient(context);
+        client.setVerbose(verbose);
 
         // is body a file?
         try {
-            body = OutputFileUtils.resolveContent(
-                body,
-                context,
-                context.getBooleanData(WS_REQ_PAYLOAD_COMPACT, DEF_WS_REQ_PAYLOAD_COMPACT));
+            body = OutputFileUtils.resolveContent(body, context, compactRequestPayload());
         } catch (IOException e) {
             return StepResult.fail("Unable to read input '" + body + "' due to " + e.getMessage());
         }
@@ -432,8 +437,7 @@ public class WsCommand extends BaseCommand {
             logResponse(response, var);
             return StepResult.success("Successfully invoked web service '" + url + "'");
         } catch (IOException e) {
-            String error = e.getCause() != null ? e.getCause().getMessage() : e.getMessage();
-            return StepResult.fail("Unable to invoke web service '" + url + "': " + error);
+            return toFailResult(url, e);
         }
     }
 

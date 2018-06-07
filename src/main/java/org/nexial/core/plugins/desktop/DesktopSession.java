@@ -46,6 +46,7 @@ import org.openqa.selenium.winium.WiniumDriverCommandExecutor;
 import static java.io.File.separator;
 import static java.lang.System.lineSeparator;
 import static org.nexial.core.NexialConst.DEF_CHARSET;
+import static org.nexial.core.NexialConst.GSON;
 import static org.nexial.core.plugins.desktop.DesktopConst.*;
 import static org.nexial.core.plugins.desktop.ElementType.WINDOW;
 

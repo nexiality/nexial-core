@@ -232,11 +232,7 @@ public class DesktopConst {
         @Override
         public boolean shouldSkipClass(Class<?> clazz) { return false; }
     };
-    public static final Gson GSON = new GsonBuilder().setPrettyPrinting()
-                                                     .disableHtmlEscaping()
-                                                     .disableInnerClassSerialization()
-                                                     .setLenient()
-                                                     .create();
+
     public static final Gson GSON2 = new GsonBuilder().setPrettyPrinting()
                                                       .disableHtmlEscaping()
                                                       .disableInnerClassSerialization()

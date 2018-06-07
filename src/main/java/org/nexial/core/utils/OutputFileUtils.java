@@ -294,7 +294,7 @@ public final class OutputFileUtils {
         if (execDef == null) { return outputFileName; }
         if (StringUtils.isBlank(execDef.getPlanFilename()) ||
             StringUtils.isBlank(execDef.getPlanName()) ||
-            execDef.getPlanSequnce() < 1) { return outputFileName; }
+            execDef.getPlanSequence() < 1) { return outputFileName; }
 
         String path;
         if (StringUtils.contains(outputFileName, separator)) {
@@ -306,8 +306,7 @@ public final class OutputFileUtils {
 
         return path +
                execDef.getPlanFilename() + DELIM +
-               // execDef.getPlanName() + DELIM +
-               StringUtils.leftPad(execDef.getPlanSequnce() + "", 3, "0") + PLAN_SCRIPT_SEP +
+               StringUtils.leftPad(execDef.getPlanSequence() + "", 3, "0") + PLAN_SCRIPT_SEP +
                outputFileName;
     }
 

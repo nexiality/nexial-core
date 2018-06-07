@@ -23,12 +23,12 @@ import org.nexial.core.plugins.base.BaseCommand
 import org.nexial.core.utils.CheckUtils.requiresNotBlank
 import org.nexial.core.utils.CheckUtils.requiresNotNull
 
-/**
- * commands around sending sms messages to one or more recipients
- */
-class SmsCommand(private val smsNotReadyMessage: String) : BaseCommand() {
+/** commands around sending sms messages to one or more recipients */
+class SmsCommand : BaseCommand() {
 
     override fun getTarget() = "sms"
+
+    var smsNotReadyMessage: String = ""
 
     /** send SMS `text` to one or more `phones` numbers.  */
     @Throws(IntegrationConfigException::class)

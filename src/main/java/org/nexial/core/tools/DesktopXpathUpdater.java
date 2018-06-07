@@ -41,7 +41,7 @@ import org.slf4j.LoggerFactory;
 import com.google.gson.JsonObject;
 
 import static java.io.File.separator;
-import static org.nexial.core.plugins.desktop.DesktopConst.GSON;
+import static org.nexial.core.NexialConst.GSON;
 
 /**
  * utility to update XPaths of one or more Desktop JSON configuration files

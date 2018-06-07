@@ -396,8 +396,10 @@ public class ExecutionContext {
 
     public boolean isOutputToCloud() { return getBooleanData(OUTPUT_TO_CLOUD, DEF_OUTPUT_TO_CLOUD); }
 
+    @NotNull
     public String getTextDelim() { return getStringData(TEXT_DELIM, ","); }
 
+    @NotNull
     public String getNullValueToken() { return getStringData(NULL_VALUE, NULL); }
 
     public long getPollWaitMs() { return getIntData(POLL_WAIT_MS, DEF_POLL_WAIT_MS); }
@@ -406,6 +408,7 @@ public class ExecutionContext {
 
     public long getDelayBetweenStep() { return getIntData(DELAY_BETWEEN_STEPS_MS, DEF_DELAY_BETWEEN_STEPS_MS); }
 
+    @NotNull
     public String getBrowserType() {
         String browserType = StringUtils.remove(System.getProperty(BROWSER, getStringData(BROWSER, DEF_BROWSER)), ".");
 

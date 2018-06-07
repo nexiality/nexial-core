@@ -44,7 +44,8 @@ import static org.nexial.core.NexialConst.Project.appendCommandJson;
 public final class CommandDiscovery {
     public static final Gson GSON = new GsonBuilder().setPrettyPrinting()
                                                      .disableInnerClassSerialization()
-                                                     .setLenient().create();
+                                                     .setLenient()
+                                                     .create();
 
     private static CommandDiscovery instance;
     private Map<String, List<String>> discoveredCommands;

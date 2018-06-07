@@ -27,7 +27,7 @@ import org.nexial.core.plugins.desktop.ThirdPartyComponent;
 import org.nexial.core.utils.ConsoleUtils;
 
 import static org.apache.commons.lang3.builder.ToStringStyle.JSON_STYLE;
-import static org.nexial.core.plugins.desktop.DesktopConst.GSON;
+import static org.nexial.core.NexialConst.GSON;
 
 public class IgRibbon extends ThirdPartyComponent {
     protected transient String currentModule;

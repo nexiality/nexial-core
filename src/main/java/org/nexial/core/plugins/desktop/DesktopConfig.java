@@ -29,6 +29,7 @@ import org.nexial.core.utils.ConsoleUtils;
 
 import static java.io.File.separator;
 import static org.apache.commons.lang3.builder.ToStringStyle.MULTI_LINE_STYLE;
+import static org.nexial.core.NexialConst.GSON;
 import static org.nexial.core.NexialConst.OPT_PROJECT_BASE;
 import static org.nexial.core.NexialConst.Project.DEF_REL_LOC_TEST_DATA;
 import static org.nexial.core.plugins.desktop.DesktopConst.*;

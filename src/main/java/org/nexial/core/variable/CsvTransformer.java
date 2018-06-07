@@ -44,6 +44,7 @@ import com.univocity.parsers.common.record.Record;
 import static java.lang.System.lineSeparator;
 import static org.nexial.core.NexialConst.CSV_FIELD_DEIM;
 import static org.nexial.core.NexialConst.CSV_ROW_SEP;
+import static org.nexial.core.NexialConst.GSON;
 import static org.nexial.core.model.NexialFilterComparator.Equal;
 import static org.nexial.core.variable.ExpressionUtils.fixControlChars;
 
@@ -390,7 +391,7 @@ public class CsvTransformer<T extends CsvDataType> extends Transformer {
             }
         });
 
-        jsonDataType.setTextValue(JsonDataType.GSON.toJson(jsonArray));
+        jsonDataType.setTextValue(GSON.toJson(jsonArray));
         jsonDataType.init();
         return jsonDataType;
     }

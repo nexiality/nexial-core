@@ -40,6 +40,7 @@ public class Response implements Serializable {
     protected long contentLength;
     protected Map<String, String> headers = new HashMap<>();
     protected Map<String, Cookie> cookies = new HashMap<>();
+    protected String payloadLocation;
 
     public int getReturnCode() { return returnCode; }
 
@@ -60,6 +61,10 @@ public class Response implements Serializable {
     public void setElapsedTime(long elapsedTime) { this.elapsedTime = elapsedTime; }
 
     public Map<String, String> getHeaders() { return headers; }
+
+    public String getPayloadLocation() { return payloadLocation; }
+
+    public void setPayloadLocation(String payloadLocation) { this.payloadLocation = payloadLocation; }
 
     public void setHeaders(Map<String, String> headers) {
         this.headers = headers;

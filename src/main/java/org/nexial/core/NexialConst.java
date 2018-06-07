@@ -59,8 +59,8 @@ public final class NexialConst {
     public static final int ELEM_PRESENT_WAIT_MS = 1200;
     public static final int MIN_LOADING_WAIT_MS = 50;
     public static final long ONEDAY = 24 * 60 * 60 * 1000;
-    public static final long THIRTYDAYS = ONEDAY*30;
-    public static final long ONEYEAR = ONEDAY*365;
+    public static final long THIRTYDAYS = ONEDAY * 30;
+    public static final long ONEYEAR = ONEDAY * 365;
     public static final long MS_UNDEFINED = -1;
     public static final int UNDEFINED_INT_DATA = -1;
     public static final double UNDEFINED_DOUBLE_DATA = -1;
@@ -206,10 +206,15 @@ public final class NexialConst {
     public static final boolean DEF_WS_REQ_PAYLOAD_COMPACT = false;
     public static final int DEF_WS_CONN_TIMEOUT = 5 * 60 * 1000;
     public static final int DEF_WS_READ_TIMEOUT = 5 * 60 * 1000;
-    public static final boolean DEF_WS_ENABLE_REDIRECTS = false;
-    public static final boolean DEF_WS_ENABLE_EXPECT_CONTINUE = false;
+    public static final boolean DEF_WS_ENABLE_REDIRECTS = true;
+    public static final boolean DEF_WS_ENABLE_EXPECT_CONTINUE = true;
     public static final boolean DEF_WS_CIRCULAR_REDIRECTS = false;
-    public static final boolean DEF_WS_RELATIVE_REDIRECTS = false;
+    public static final boolean DEF_WS_RELATIVE_REDIRECTS = true;
+
+    public static final String WS_ASYNC_NAMESPACE = WS_NAMESPACE + "async.";
+    public static final String WS_ASYNC_SHUTDOWN_TIMEOUT = WS_ASYNC_NAMESPACE + "shutdownWaitMs";
+    // default to 3 minutes
+    public static final long DEF_ASYNC_SHUTDOWN_TIMEOUT = 3 * 60 * 1000;
 
     // oauth
     public static final String OAUTH_CLIENT_ID = "client_id";
@@ -345,6 +350,11 @@ public final class NexialConst {
                                                      .disableInnerClassSerialization()
                                                      .setLenient()
                                                      .create();
+    public static final Gson GSON_COMPRESSED = new GsonBuilder().disableHtmlEscaping()
+                                                                .disableInnerClassSerialization()
+                                                                .enableComplexMapKeySerialization()
+                                                                .setLenient()
+                                                                .create();
 
     // browser types
     public enum BrowserType {
@@ -467,6 +477,9 @@ public final class NexialConst {
         public static final String NEXIAL_MACOSX_BIN_REL_PATH = NEXIAL_BIN_REL_PATH + "macosx" + separator;
         public static final String NEXIAL_WINDOWS_BIN_REL_PATH = NEXIAL_BIN_REL_PATH + "windows" + separator;
         public static final String NEXIAL_LINUX_BIN_REL_PATH = NEXIAL_BIN_REL_PATH + "linux" + separator;
+        public static final String NEXIAL_EXECUTION_TYPE = NAMESPACE + "executionType";
+        public static final String NEXIAL_EXECUTION_TYPE_SCRIPT = "script";
+        public static final String NEXIAL_EXECUTION_TYPE_PLAN = "plan";
 
         private Project() { }
 
@@ -587,6 +600,8 @@ public final class NexialConst {
         public static final String FAIL_IMMEDIATE = NAMESPACE + "failImmediate";
         public static final String END_IMMEDIATE = NAMESPACE + "endImmediate";
         public static final String BREAK_CURRENT_ITERATION = NAMESPACE + "breakCurrentIteration";
+        public static final String LAST_PLAN_STEP = NAMESPACE + "lastPlanStep";
+        public static final String DEF_LAST_PLAN_STEP = "false";
 
         public static final String COMMAND_DISCOVERY_MODE = NAMESPACE + "commandDiscovery";
         public static final String DEF_COMMAND_DISCOVERY_MODE = "false";
@@ -687,6 +702,9 @@ public final class NexialConst {
         public static final String CMD_REPEAT_UNTIL = "base.repeatUntil(steps,maxWaitMs)";
         public static final String CMD_SECTION = "base.section(steps)";
 
+        // step
+        public static final String STEP_RESPONSE = NAMESPACE + "step.response";
+
         // section
         public static final String SECTION_DESCRIPTION_PREFIX = "► ";
         public static final String REPEAT_CHECK_DESCRIPTION_PREFIX = "✔ ";
@@ -751,17 +769,11 @@ public final class NexialConst {
         public static final boolean DEF_RECORDING_ENABLED = true;
 
         // event notification
-        // this will trump the use of `nexial.soundOn...` events, which is now deprecated and to be removed by v1.3
-        public static final String NOTIFY_ON = NAMESPACE + "notifyOn";
-        public static final String NOTIFY_ON_START = NOTIFY_ON + "Start";
-        public static final String NOTIFY_ON_ERROR = NOTIFY_ON + "Error";
-        public static final String NOTIFY_ON_PAUSE = NOTIFY_ON + "Pause";
-        public static final String NOTIFY_ON_COMPLETE = NOTIFY_ON + "Complete";
-        public static final String TTS_PREFIX = "tts:";
         public static final String SMS_PREFIX = "sms:";
         public static final String AUDIO_PREFIX = "audio:";
         public static final String EMAIL_PREFIX = "email:";
         public static final String CONSOLE_PREFIX = "console:";
+        public static final String TTS_PREFIX = "tts:";
         public static final int MAX_TTS_LENGTH = 500;
 
         public static final Map<String, String> SCOPE_SETTING_DEFAULTS = TextUtils.toMap(

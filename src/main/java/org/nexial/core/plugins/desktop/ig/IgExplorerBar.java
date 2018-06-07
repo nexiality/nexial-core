@@ -35,6 +35,7 @@ import org.openqa.selenium.By;
 import org.openqa.selenium.WebElement;
 import org.openqa.selenium.interactions.Actions;
 
+import static org.nexial.core.NexialConst.GSON;
 import static org.nexial.core.plugins.desktop.DesktopConst.*;
 import static org.nexial.core.utils.CheckUtils.requires;
 import static org.nexial.core.utils.CheckUtils.requiresNotNull;

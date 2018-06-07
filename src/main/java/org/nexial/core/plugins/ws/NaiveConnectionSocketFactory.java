@@ -29,8 +29,8 @@ import org.apache.http.conn.ssl.NoopHostnameVerifier;
 import org.apache.http.conn.ssl.SSLConnectionSocketFactory;
 
 public class NaiveConnectionSocketFactory extends SSLConnectionSocketFactory {
-    private static final SSLContext I_TRUST_EVERYONE = initNaiveContext();
-    private static final HostnameVerifier NOOP_HOST_VERIFIER = initNoopHostVerifier();
+    static final SSLContext I_TRUST_EVERYONE = initNaiveContext();
+    static final HostnameVerifier NOOP_HOST_VERIFIER = initNoopHostVerifier();
 
     public NaiveConnectionSocketFactory() { super(I_TRUST_EVERYONE, NOOP_HOST_VERIFIER); }
 

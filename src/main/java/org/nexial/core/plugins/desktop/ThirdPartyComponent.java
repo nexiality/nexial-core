@@ -33,8 +33,8 @@ import org.openqa.selenium.winium.WiniumDriver;
 import com.google.gson.JsonObject;
 
 import static java.io.File.separator;
+import static org.nexial.core.NexialConst.GSON;
 import static org.nexial.core.plugins.desktop.DesktopConst.DEF_CONFIG_HOME;
-import static org.nexial.core.plugins.desktop.DesktopConst.GSON;
 
 public class ThirdPartyComponent extends DesktopCommand {
     protected transient DesktopElement component;

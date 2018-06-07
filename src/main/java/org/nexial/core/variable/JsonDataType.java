@@ -25,21 +25,15 @@ import org.json.JSONException;
 import org.json.JSONObject;
 import org.nexial.core.utils.ConsoleUtils;
 
-import com.google.gson.Gson;
-import com.google.gson.GsonBuilder;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 
 import static java.lang.System.lineSeparator;
 import static org.nexial.core.NexialConst.DEF_CHARSET;
+import static org.nexial.core.NexialConst.GSON;
 
 public class JsonDataType extends ExpressionDataType<JsonElement> {
-    static final Gson GSON = new GsonBuilder().setPrettyPrinting()
-                                              .disableHtmlEscaping()
-                                              .disableInnerClassSerialization()
-                                              .setLenient()
-                                              .create();
     private Transformer transformer = new JsonTransformer();
 
     public JsonDataType(String textValue) throws TypeConversionException { super(textValue); }

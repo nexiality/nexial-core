@@ -18,7 +18,7 @@
 
 <beans xmlns="http://www.springframework.org/schema/beans"
        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-       xmlns:util="http://www.springframework.org/schema/util"
+       xmlns:util="http://www.springframework.org/schema/util" xmlns:p="http://www.springframework.org/schema/p"
        xsi:schemaLocation="
         http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans.xsd
         http://www.springframework.org/schema/util http://www.springframework.org/schema/util/spring-util-2.0.xsd"
@@ -264,9 +264,7 @@
             <bean class="org.nexial.core.plugins.redis.RedisCommand"/>
         </entry>
         <entry key="sms">
-            <bean class="org.nexial.core.plugins.sms.SmsCommand">
-                <constructor-arg ref="smsNotReadyMessage"/>
-            </bean>
+            <bean class="org.nexial.core.plugins.sms.SmsCommand" p:smsNotReadyMessage-ref="smsNotReadyMessage"/>
         </entry>
         <entry key="sound">
             <bean class="org.nexial.core.plugins.sound.SoundCommand"/>
@@ -287,7 +285,10 @@
             <bean class="org.nexial.core.plugins.web.CookieCommand"/>
         </entry>
         <entry key="ws">
-            <bean class="org.nexial.core.plugins.ws.WsCommand"/>
+            <bean class="org.nexial.core.plugins.ws.WsCommand" p:verbose="false"/>
+        </entry>
+        <entry key="ws.async">
+            <bean class="org.nexial.core.plugins.ws.AsyncWsCommand" p:verbose="false"/>
         </entry>
         <entry key="xml">
             <bean class="org.nexial.core.plugins.xml.XmlCommand"/>

@@ -46,6 +46,7 @@ public class TestProject {
     private String outPath;
     private boolean isStandardStructure;
     private String projectProps;
+    private boolean hasProjectProps;
 
     public TestProject() { nexialHome = new File(System.getProperty(NEXIAL_HOME)); }
 
@@ -132,6 +133,8 @@ public class TestProject {
 
     public String getProjectProps() { return projectProps; }
 
+    public boolean isHasProjectProps() { return hasProjectProps; }
+
     public TestProject copy() {
         TestProject project = new TestProject();
         project.nexialHome = nexialHome;
@@ -152,6 +155,8 @@ public class TestProject {
         if (MapUtils.isNotEmpty(properties)) {
             PROJECT_PROPERTIES.clear();
             properties.forEach(PROJECT_PROPERTIES::put);
+
+            hasProjectProps = MapUtils.isNotEmpty(PROJECT_PROPERTIES);
         }
     }
 }

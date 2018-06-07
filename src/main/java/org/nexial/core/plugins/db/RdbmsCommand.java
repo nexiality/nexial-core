@@ -36,7 +36,6 @@ import org.nexial.core.utils.OutputFileUtils;
 
 import static java.io.File.separator;
 import static org.nexial.core.NexialConst.*;
-import static org.nexial.core.plugins.desktop.DesktopConst.GSON;
 import static org.nexial.core.utils.CheckUtils.*;
 
 public class RdbmsCommand extends BaseCommand {

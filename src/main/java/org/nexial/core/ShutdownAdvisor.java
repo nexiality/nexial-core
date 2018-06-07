@@ -24,10 +24,6 @@ import java.util.Objects;
 import org.nexial.core.plugins.ForcefulTerminate;
 import org.nexial.core.utils.ConsoleUtils;
 
-/**
- *
-
- */
 public final class ShutdownAdvisor {
     private static final List<ForcefulTerminate> ADVISORS = new ArrayList<>();
 

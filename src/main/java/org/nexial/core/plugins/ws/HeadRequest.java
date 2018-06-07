@@ -23,9 +23,6 @@ import org.apache.http.client.methods.HttpHead;
 import org.apache.http.client.methods.HttpUriRequest;
 import org.nexial.core.model.ExecutionContext;
 
-/**
- *
- */
 public class HeadRequest extends GetRequest {
 
     HeadRequest(ExecutionContext context) {

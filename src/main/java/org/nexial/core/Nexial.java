@@ -17,20 +17,7 @@
 
 package org.nexial.core;
 
-import java.io.File;
-import java.io.IOException;
-import java.security.Security;
-import java.text.MessageFormat;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
-import javax.mail.MessagingException;
-
-import org.apache.commons.cli.CommandLine;
-import org.apache.commons.cli.DefaultParser;
-import org.apache.commons.cli.HelpFormatter;
-import org.apache.commons.cli.Options;
-import org.apache.commons.cli.ParseException;
+import org.apache.commons.cli.*;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.collections4.MapUtils;
 import org.apache.commons.io.FileUtils;
@@ -42,26 +29,32 @@ import org.apache.commons.mail.EmailException;
 import org.apache.poi.xssf.usermodel.XSSFCell;
 import org.apache.poi.xssf.usermodel.XSSFRow;
 import org.nexial.commons.javamail.MailObjectSupport;
-import org.nexial.commons.utils.DateUtility;
-import org.nexial.commons.utils.EnvUtils;
-import org.nexial.commons.utils.FileUtil;
-import org.nexial.commons.utils.RegexUtils;
-import org.nexial.commons.utils.TextUtils;
+import org.nexial.commons.utils.*;
 import org.nexial.core.aws.NexialS3Helper;
 import org.nexial.core.excel.Excel;
 import org.nexial.core.excel.Excel.Worksheet;
-import org.nexial.core.model.ExecutionDefinition;
-import org.nexial.core.model.ExecutionSummary;
-import org.nexial.core.model.TestProject;
+import org.nexial.core.model.*;
+import org.nexial.core.plugins.ws.AsyncWebServiceClient;
 import org.nexial.core.reports.ExecutionMailConfig;
 import org.nexial.core.reports.ExecutionNotifier;
 import org.nexial.core.reports.MailNotifier;
 import org.nexial.core.reports.Mailer;
 import org.nexial.core.service.ServiceLauncher;
+import org.nexial.core.service.UsageService;
 import org.nexial.core.utils.ConsoleUtils;
 import org.nexial.core.utils.ExecUtil;
 import org.nexial.core.utils.InputFileUtils;
 import org.springframework.context.support.ClassPathXmlApplicationContext;
+
+import javax.mail.MessagingException;
+import java.io.File;
+import java.io.IOException;
+import java.security.Security;
+import java.text.MessageFormat;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
+import java.util.Map;
 
 import static java.io.File.separator;
 import static org.apache.commons.lang3.SystemUtils.USER_NAME;
@@ -186,6 +179,8 @@ public class Nexial {
     private int threadWaitCounter;
     private int listenPort = -1;
     private String listenerHandshake;
+    private String usageId;
+    private UsageService usageService;
 
     @SuppressWarnings("PMD.DoNotCallSystemExit")
     public static void main(String[] args) {
@@ -198,6 +193,9 @@ public class Nexial {
         } catch (Exception e) {
             if (!(e instanceof IllegalArgumentException)) { e.printStackTrace(); }
             System.err.println(e.getMessage());
+
+            if (main != null) { main.trackEvent(new NexialCmdErrorEvent(Arrays.asList(args), e.getMessage())); }
+
             usage();
             System.exit(-1);
         }
@@ -216,9 +214,11 @@ public class Nexial {
                 summary = main.execute();
                 MemManager.recordMemoryChanges("after execution");
             } catch (Throwable e) {
-                e.printStackTrace();
+                System.err.println("Unknown/unexpected error occurred: " + e.getMessage());
+                // e.printStackTrace();
             }
 
+            main.trackEvent(new NexialExecutionCompleteEvent(main.usageId));
             ConsoleUtils.log("Exiting Nexial...");
             System.exit(beforeShutdown(summary));
         }
@@ -268,82 +268,100 @@ public class Nexial {
         // plan or script?
         if (cmd.hasOption(PLAN)) {
             this.executions = parsePlanExecution(cmd);
+            System.setProperty(NEXIAL_EXECUTION_TYPE, NEXIAL_EXECUTION_TYPE_PLAN);
         } else {
             if (!cmd.hasOption(SCRIPT)) { fail("test script is required but not specified"); }
             this.executions = parseScriptExecution(cmd);
+            System.setProperty(NEXIAL_EXECUTION_TYPE, NEXIAL_EXECUTION_TYPE_SCRIPT);
         }
 
         ConsoleUtils.log("input files and output directory resolved...");
+
+        NexialExecutionStartEvent startEvent = new NexialExecutionStartEvent();
+        trackEvent(startEvent);
+        usageId = startEvent.getId();
+
+        trackExecution(new NexialEnv(usageId, cmd));
     }
 
     protected List<ExecutionDefinition> parsePlanExecution(CommandLine cmd) throws IOException {
-        // 1. based on plan location, determine script, data, output and artifact directory
-        String testPlanPath = cmd.getOptionValue(PLAN);
-        if (!InputFileUtils.isValidPlanFile(testPlanPath)) {
-            fail("specified test plan (" + testPlanPath + ") is not readable or does not contain valid format.");
-        }
-
-        File testPlanFile = new File(testPlanPath);
-
-        // resolve project directory structure based on the {@code testScriptFile} command line input
-        project = TestProject.newInstance(testPlanFile, DEF_REL_LOC_TEST_PLAN);
-        if (!project.isStandardStructure()) {
-            ConsoleUtils.log("specified plan (" + testPlanFile + ") not following standard project " +
-                             "structure, related directories would not be resolved from commandline arugments.");
-        }
-
-        deriveOutputDirectory(cmd, project);
-
-        // 2. parse plan file to determine number of executions (1 row per execution)
+        List<String> testPlanPathList = TextUtils.toList(cmd.getOptionValue(PLAN), DEF_TEXT_DELIM, true);
         List<ExecutionDefinition> executions = new ArrayList<>();
-        Excel excel = new Excel(testPlanFile, DEF_OPEN_EXCEL_AS_DUP);
-        List<Worksheet> plans = InputFileUtils.retrieveValidPlanSequence(excel);
-        if (CollectionUtils.isEmpty(plans)) { return executions; }
 
-        plans.forEach(testPlan -> {
-            int rowStartIndex = ADDR_PLAN_EXECUTION_START.getRowStartIndex();
-            int lastExecutionRow = testPlan.findLastDataRow(ADDR_PLAN_EXECUTION_START);
-
-            for (int i = rowStartIndex; i < lastExecutionRow; i++) {
-                XSSFRow row = testPlan.getSheet().getRow(i);
-
-                File testScript = deriveScriptFromPlan(row, project, testPlanPath);
-                List<String> scenarios = deriveScenarioFromPlan(row, testScript);
-                File dataFile = deriveDataFileFromPlan(row, project, testPlanFile, testScript);
-                List<String> dataSheets = deriveDataSheetsFromPlan(row, scenarios);
-
-                // create new definition instance, based on various input and derived values
-                ExecutionDefinition exec = new ExecutionDefinition();
-                exec.setPlanFilename(StringUtils.substringBeforeLast(testPlanFile.getName(), "."));
-                exec.setPlanName(testPlan.getName());
-                exec.setPlanSequnce((i - rowStartIndex + 1));
-                exec.setDescription(StringUtils.trim(readCellValue(row, COL_IDX_PLAN_DESCRIPTION)));
-                exec.setTestScript(testScript.getAbsolutePath());
-                exec.setScenarios(scenarios);
-                exec.setDataFile(dataFile.getAbsolutePath());
-                exec.setDataSheets(dataSheets);
-                exec.setProject(project);
-
-                // 2.1 mark option for parallel run and fail fast
-                exec.setFailFast(BooleanUtils.toBoolean(
-                    StringUtils.defaultIfBlank(readCellValue(row, COL_IDX_PLAN_FAIL_FAST), DEF_PLAN_FAIL_FAST)));
-                exec.setSerialMode(BooleanUtils.toBoolean(
-                    StringUtils.defaultIfBlank(readCellValue(row, COL_IDX_PLAN_WAIT), DEF_PLAN_SERIAL_MODE)));
-                exec.setLoadTestMode(BooleanUtils.toBoolean(readCellValue(row, COL_IDX_PLAN_LOAD_TEST)));
-                if (exec.isLoadTestMode()) { fail("Sorry... load testing mode not yet ready for use."); }
-
-                try {
-                    // 3. for each row, parse script (and scenario) and data (and datasheet)
-                    exec.parse();
-                    executions.add(exec);
-                } catch (IOException e) {
-                    fail("Unable to parse successfully for the test plan specified in ROW " +
-                         (row.getRowNum() + 1) + " of " + testPlanFile);
-                }
+        for (String testPlanPath : testPlanPathList) {
+            // String testPlanPath = cmd.getOptionValue(PLAN);
+            // 1. based on plan location, determine script, data, output and artifact directory
+            if (!InputFileUtils.isValidPlanFile(testPlanPath)) {
+                fail("specified test plan (" + testPlanPath + ") is not readable or does not contain valid format.");
             }
-        });
 
-        if (DEF_OPEN_EXCEL_AS_DUP) { FileUtils.deleteQuietly(excel.getFile().getParentFile()); }
+            File testPlanFile = new File(testPlanPath);
+
+            // resolve project directory structure based on the {@code testScriptFile} command line input
+            project = TestProject.newInstance(testPlanFile, DEF_REL_LOC_TEST_PLAN);
+            if (!project.isStandardStructure()) {
+                ConsoleUtils.log("specified plan (" +
+                                 testPlanFile +
+                                 ") not following standard project " +
+                                 "structure, related directories would not be resolved from commandline arguments.");
+            }
+
+            deriveOutputDirectory(cmd, project);
+
+            // 2. parse plan file to determine number of executions (1 row per execution)
+            Excel excel = new Excel(testPlanFile, DEF_OPEN_EXCEL_AS_DUP);
+            List<Worksheet> plans = InputFileUtils.retrieveValidPlanSequence(excel);
+            if (CollectionUtils.isEmpty(plans)) { return executions; }
+
+            plans.forEach(testPlan -> {
+                int rowStartIndex = ADDR_PLAN_EXECUTION_START.getRowStartIndex();
+                int lastExecutionRow = testPlan.findLastDataRow(ADDR_PLAN_EXECUTION_START);
+
+                for (int i = rowStartIndex; i < lastExecutionRow; i++) {
+                    XSSFRow row = testPlan.getSheet().getRow(i);
+
+                    File testScript = deriveScriptFromPlan(row, project, testPlanPath);
+                    List<String> scenarios = deriveScenarioFromPlan(row, testScript);
+                    File dataFile = deriveDataFileFromPlan(row, project, testPlanFile, testScript);
+                    List<String> dataSheets = deriveDataSheetsFromPlan(row, scenarios);
+
+                    // create new definition instance, based on various input and derived values
+                    ExecutionDefinition exec = new ExecutionDefinition();
+                    exec.setPlanFilename(StringUtils.substringBeforeLast(testPlanFile.getName(), "."));
+                    exec.setPlanName(testPlan.getName());
+                    exec.setPlanSequence((i - rowStartIndex + 1));
+                    exec.setDescription(StringUtils.trim(readCellValue(row, COL_IDX_PLAN_DESCRIPTION)));
+                    exec.setTestScript(testScript.getAbsolutePath());
+                    exec.setScenarios(scenarios);
+                    exec.setDataFile(dataFile.getAbsolutePath());
+                    exec.setDataSheets(dataSheets);
+                    exec.setProject(project);
+
+                    // 2.1 mark option for parallel run and fail fast
+                    exec.setFailFast(BooleanUtils.toBoolean(StringUtils.defaultIfBlank(readCellValue(row,
+                                                                                                     COL_IDX_PLAN_FAIL_FAST),
+                                                                                       DEF_PLAN_FAIL_FAST)));
+                    exec.setSerialMode(BooleanUtils.toBoolean(StringUtils.defaultIfBlank(readCellValue(row,
+                                                                                                       COL_IDX_PLAN_WAIT),
+                                                                                         DEF_PLAN_SERIAL_MODE)));
+                    exec.setLoadTestMode(BooleanUtils.toBoolean(readCellValue(row, COL_IDX_PLAN_LOAD_TEST)));
+                    if (exec.isLoadTestMode()) { fail("Sorry... load testing mode not yet ready for use."); }
+
+                    try {
+                        // 3. for each row, parse script (and scenario) and data (and datasheet)
+                        exec.parse();
+                        executions.add(exec);
+                    } catch (IOException e) {
+                        fail("Unable to parse successfully for the test plan specified in ROW " +
+                             (row.getRowNum() + 1) +
+                             " of " +
+                             testPlanFile);
+                    }
+                }
+            });
+
+            if (DEF_OPEN_EXCEL_AS_DUP) { FileUtils.deleteQuietly(excel.getFile().getParentFile()); }
+        }
 
         // 4. return a list of scripts mixin data
         return executions;
@@ -461,11 +479,14 @@ public class Nexial {
         // resolve project directory structure based on the {@code testScriptFile} command line input
         project = TestProject.newInstance(testScriptFile, DEF_REL_LOC_TEST_SCRIPT);
         if (!project.isStandardStructure()) {
-            ConsoleUtils.log("specified test script (" + testScriptFile + ") not following standard project " +
-                             "structure, related directories would not be resolved from commandline arugments.");
+            ConsoleUtils.log("specified test script (" +
+                             testScriptFile +
+                             ") not following standard project " +
+                             "structure, related directories would not be resolved from commandline arguments.");
         }
         String artifactPath = project.isStandardStructure() ?
-                              StringUtils.appendIfMissing(project.getArtifactPath(), separator) : null;
+                              StringUtils.appendIfMissing(project.getArtifactPath(), separator) :
+                              null;
 
         // command line option - scenario
         List<String> targetScenarios = new ArrayList<>();
@@ -507,7 +528,8 @@ public class Nexial {
         } else {
             dataFilePath = artifactPath +
                            StringUtils.appendIfMissing(DEF_LOC_TEST_DATA, separator) +
-                           StringUtils.substringBeforeLast(testScriptFile.getName(), ".") + ".data.xlsx";
+                           StringUtils.substringBeforeLast(testScriptFile.getName(), ".") +
+                           ".data.xlsx";
         }
 
         if (!InputFileUtils.isValidDataFile(dataFilePath)) {
@@ -536,8 +558,12 @@ public class Nexial {
 
         // create new definition instance, based on various input and derived values
         ExecutionDefinition exec = new ExecutionDefinition();
-        exec.setDescription("Started via commandline inputs on " + DateUtility.getCurrentDateTime() + " from " +
-                            EnvUtils.getHostName() + " via user " + USER_NAME);
+        exec.setDescription("Started via commandline inputs on " +
+                            DateUtility.getCurrentDateTime() +
+                            " from " +
+                            EnvUtils.getHostName() +
+                            " via user " +
+                            USER_NAME);
         exec.setTestScript(testScriptPath);
         exec.setScenarios(targetScenarios);
         exec.setDataFile(dataFile.getAbsolutePath());
@@ -584,7 +610,10 @@ public class Nexial {
 
         try {
             for (ExecutionDefinition exec : executions) {
+                if (BooleanUtils.toBoolean(System.getProperty(LAST_PLAN_STEP, DEF_LAST_PLAN_STEP))) { break; }
+
                 exec.setRunId(runId);
+                trackEvent(new NexialScriptStartEvent(usageId, exec.getTestScript()));
 
                 String msgPrefix = "[" + exec.getTestScript() + "] ";
                 ConsoleUtils.log(runId, msgPrefix + "resolve RUN ID as " + runId);
@@ -607,6 +636,8 @@ public class Nexial {
                             intraExecution = launcherThread.getIntraExecutionData();
                             executionThreads.remove(launcherThread);
                             summary.addNestSummary(launcherThread.getExecutionSummary());
+                            trackEvent(new NexialScriptCompleteEvent(usageId,
+                                                                     launcherThread.getExecDef().getTestScript()));
                             launcherThread = null;
                             break;
                         }
@@ -624,6 +655,7 @@ public class Nexial {
                             stillRunning[0] = true;
                         } else {
                             summary.addNestSummary(t.getExecutionSummary());
+                            trackEvent(new NexialScriptCompleteEvent(usageId, t.getExecDef().getTestScript()));
                             t = null;
                         }
                     }
@@ -652,9 +684,6 @@ public class Nexial {
      * this represents the end of an entire Nexial run, including all iterations and plan steps.
      */
     protected void onExecutionComplete(String runId, ExecutionSummary summary) {
-        // todo: THINK!!! WE MIGHT NEED A GLOBAL TEARDOWN() ROUTINE TO MATCH WHAT WAS DONE IN GLOBAL INIT().
-        //NexialLauncher.tearDown();
-
         // end of test suite (one per test plan in execution)
         long startTimeMs = NumberUtils.toLong(System.getProperty(TEST_START_TS));
         long stopTimeMs = System.currentTimeMillis();
@@ -666,8 +695,8 @@ public class Nexial {
 
         boolean outputToCloud = BooleanUtils.toBoolean(System.getProperty(OUTPUT_TO_CLOUD, DEF_OUTPUT_TO_CLOUD + ""));
         boolean generateReport =
-            outputToCloud ||
-            BooleanUtils.toBoolean(System.getProperty(GENERATE_EXEC_REPORT, DEF_GENERATE_EXEC_REPORT + ""));
+                outputToCloud ||
+                BooleanUtils.toBoolean(System.getProperty(GENERATE_EXEC_REPORT, DEF_GENERATE_EXEC_REPORT + ""));
 
         if (generateReport) {
             String reportPath = StringUtils.appendIfMissing(System.getProperty(OPT_OUT_DIR, project.getOutPath()),
@@ -686,7 +715,7 @@ public class Nexial {
                     NexialS3Helper otc = springContext.getBean("otc", NexialS3Helper.class);
                     // can't use otc.resolveOutputDir() since we are out of context at this point in time
                     String outputDir =
-                        System.getProperty(OPT_CLOUD_OUTPUT_BASE) + "/" + project.getName() + "/" + runId;
+                            System.getProperty(OPT_CLOUD_OUTPUT_BASE) + "/" + project.getName() + "/" + runId;
 
                     try {
                         otc.importToS3(new File(jsonSummaryReport), outputDir, true);
@@ -705,7 +734,7 @@ public class Nexial {
         }
 
         ExecutionMailConfig mailConfig = ExecutionMailConfig.get();
-        if (mailConfig.isReady() && springContext != null) {
+        if (mailConfig.isReady()) {
             ExecutionNotifier notifier = springContext.getBean("mailNotifier", ExecutionNotifier.class);
             notifyCompletion(notifier, summary);
         } else {
@@ -714,7 +743,16 @@ public class Nexial {
     }
 
     protected void initSpringContext() {
-        springContext = new ClassPathXmlApplicationContext("classpath:/nexial-main.xml");
+        if (springContext == null || !springContext.isActive()) {
+            springContext = new ClassPathXmlApplicationContext("classpath:/nexial-main.xml");
+        }
+
+        if (usageService == null) {
+            usageService = springContext.getBean("usageService", UsageService.class);
+            AsyncWebServiceClient wsClient = new AsyncWebServiceClient(null);
+            wsClient.setVerbose(false);
+            usageService.setWsClient(wsClient);
+        }
     }
 
     /**
@@ -788,7 +826,7 @@ public class Nexial {
             exitStatus = RC_EXECUTION_SUMMARY_MISSING;
         } else {
             double minExecSuccessRate = NumberUtils.toDouble(
-                System.getProperty(MIN_EXEC_SUCCESS_RATE, DEF_MIN_EXEC_SUCCESS_RATE + ""));
+                    System.getProperty(MIN_EXEC_SUCCESS_RATE, DEF_MIN_EXEC_SUCCESS_RATE + ""));
             if (minExecSuccessRate < 0 || minExecSuccessRate > 100) { minExecSuccessRate = DEF_MIN_EXEC_SUCCESS_RATE; }
             minExecSuccessRate = minExecSuccessRate / 100;
             String minSuccessRateString = MessageFormat.format(RATE_FORMAT, minExecSuccessRate);
@@ -884,6 +922,16 @@ public class Nexial {
             ConsoleUtils.error("Unable to send out notification email: " + e.getMessage());
             e.printStackTrace();
         }
+    }
+
+    private void trackEvent(NexialEvent event) {
+        initSpringContext();
+        usageService.send(event);
+    }
+
+    private void trackExecution(NexialEnv nexialEnv) {
+        initSpringContext();
+        usageService.send(nexialEnv);
     }
 
     /**

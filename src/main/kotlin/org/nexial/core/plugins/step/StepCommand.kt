@@ -17,11 +17,11 @@
 package org.nexial.core.plugins.step
 
 import org.apache.commons.lang3.StringUtils
+import org.nexial.core.NexialConst.Data.STEP_RESPONSE
 import org.nexial.core.model.StepResult
 import org.nexial.core.plugins.base.BaseCommand
 import org.nexial.core.utils.CheckUtils.requiresNotBlank
 import org.nexial.core.utils.ConsoleUtils
-import java.util.*
 
 class StepCommand : BaseCommand() {
 
@@ -29,6 +29,7 @@ class StepCommand : BaseCommand() {
 
     fun perform(instructions: String): StepResult {
         requiresNotBlank(instructions, "Invalid instruction(s)", instructions)
+
         ConsoleUtils.pauseForStep(context, instructions)
         return StepResult.success("Step(s) performed")
     }
@@ -37,6 +38,8 @@ class StepCommand : BaseCommand() {
         requiresNotBlank(prompt, "Invalid prompt(s)", prompt)
 
         val response = ConsoleUtils.pauseToValidate(context, prompt, responses)
+        context.setData(STEP_RESPONSE, response)
+
         if (StringUtils.isBlank(response)) {
             return if (StringUtils.isBlank(passResponses)) {
                 StepResult.success("Empty response accepted as PASS")
@@ -45,17 +48,16 @@ class StepCommand : BaseCommand() {
             }
         }
 
-        val possiblePasses = ArrayList(Arrays.asList(*StringUtils.split(passResponses, context.textDelim)))
-
-        val pass = possiblePasses.contains(response)
-        log("Response received: " + response + " " + if (pass) "PASSED" else "FAILED")
-        return StepResult(pass, "Response '" + response + "' considered as " + if (pass) "PASS" else "FAILED", null)
+        val pass = passResponses.split(context.textDelim).contains(response)
+        log("Response received as $response - ${if (pass) "PASSED" else "FAILED"}")
+        return StepResult(pass, "Response '$response' considered as ${if (pass) "PASS" else "FAILED"}", null)
     }
 
     fun observe(prompt: String): StepResult {
         requiresNotBlank(prompt, "Invalid prompt(s)", prompt)
 
         val response = ConsoleUtils.pauseForInput(context, prompt)
+        context.setData(STEP_RESPONSE, response)
 
         val result = StepResult.success("Response received as '$response'")
         result.paramValues = arrayOf<Any>(prompt, response)

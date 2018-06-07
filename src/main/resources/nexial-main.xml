@@ -100,8 +100,11 @@
         <constructor-arg value="sms not configured. See https://nexiality.github.io/documentation/commands/sms/index.html#setup for setup details."/>
     </bean>
 
+    <!-- The sender ID shown on the device. (shh.. it's 1-NEXIAL-BOTS) -->
     <bean id="smsHelper" class="org.nexial.core.aws.SmsHelper" scope="prototype" init-method="init"
           p:smsNotReadyMessage-ref="smsNotReadyMessage"
+          p:prefix="nexial-bot: "
+          p:senderId="16394252687"
           p:accessKey="${sms.accessKey:}"
           p:secretKey="${sms.secretKey:}">
         <property name="region">
@@ -112,9 +115,13 @@
     </bean>
 
     <bean id="executionEventListener" class="org.nexial.core.ExecutionEventListener"
-          p:mailTagLine="~ powered by nexial ~ (https://nexiality.github.io) ~ test automation platform for everyone ~"
+          p:mailTagLine="~ powered by nexial ~"
           p:mailIncludeMeta="true"
           p:smsIncludeMeta="false"
     />
+
+    <bean id="usageService" class="org.nexial.core.service.UsageService">
+        <constructor-arg value="https://w62rwmoetb.execute-api.us-east-1.amazonaws.com/nexial/num"/>
+    </bean>
 
 </beans>

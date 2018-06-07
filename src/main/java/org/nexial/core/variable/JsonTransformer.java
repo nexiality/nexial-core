@@ -35,7 +35,7 @@ import com.google.gson.JsonObject;
 import com.google.gson.JsonPrimitive;
 
 import static org.json.JSONObject.NULL;
-import static org.nexial.core.variable.JsonDataType.GSON;
+import static org.nexial.core.NexialConst.GSON;
 
 public class JsonTransformer<T extends JsonDataType> extends Transformer {
     private static final Map<String, Integer> FUNCTION_TO_PARAM_LIST = discoverFunctions(JsonTransformer.class);

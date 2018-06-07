@@ -207,6 +207,8 @@ public final class ExecutionThread extends Thread {
 
     public List<File> getCompletedTests() { return completedTests; }
 
+    public ExecutionDefinition getExecDef() { return execDef; }
+
     protected Map<String, Object> getIntraExecutionData() { return intraExecutionData; }
 
     protected void setIntraExecutionData(Map<String, Object> intraExecutionData) {
@@ -356,6 +358,10 @@ public final class ExecutionThread extends Thread {
                          StringUtils.defaultIfBlank(cloudOutput, "") + "\n\n");
 
         context.getExecutionEventListener().onScriptComplete();
+
+        if (context.hasData(LAST_PLAN_STEP)) {
+            System.setProperty(LAST_PLAN_STEP, context.getStringData(LAST_PLAN_STEP, DEF_LAST_PLAN_STEP));
+        }
 
         MemManager.gc(execDef);
     }

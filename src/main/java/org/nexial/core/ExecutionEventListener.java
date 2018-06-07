@@ -28,6 +28,7 @@ import org.nexial.commons.javamail.MailObjectSupport;
 import org.nexial.commons.utils.EnvUtils;
 import org.nexial.commons.utils.TextUtils;
 import org.nexial.core.model.ExecutionContext;
+import org.nexial.core.model.ExecutionEvent;
 import org.nexial.core.plugins.sound.SoundMachine;
 import org.nexial.core.reports.ExecutionMailConfig;
 import org.nexial.core.reports.MailNotifier;
@@ -38,7 +39,7 @@ import org.nexial.core.utils.ExecUtil;
 import javazoom.jl.decoder.JavaLayerException;
 
 import static org.apache.commons.lang3.SystemUtils.USER_NAME;
-import static org.nexial.core.ExecutionEvent.ExecutionPause;
+import static org.nexial.core.model.ExecutionEvent.ExecutionPause;
 import static org.nexial.core.NexialConst.Data.*;
 
 public class ExecutionEventListener {
@@ -75,7 +76,7 @@ public class ExecutionEventListener {
         String notifyConfig = context.getStringData(event.getVariable());
         if (StringUtils.isBlank(notifyConfig)) { return; }
 
-        String eventName = event.getName();
+        String eventName = event.getEventName();
 
         String notifyPrefix = StringUtils.substringBefore(notifyConfig, ":") + ":";
         if (StringUtils.isBlank(notifyPrefix)) {

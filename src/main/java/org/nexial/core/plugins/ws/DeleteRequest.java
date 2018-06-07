@@ -23,9 +23,6 @@ import org.apache.http.client.methods.HttpDelete;
 import org.apache.http.client.methods.HttpUriRequest;
 import org.nexial.core.model.ExecutionContext;
 
-/**
- *
- */
 public class DeleteRequest extends GetRequest {
 
     DeleteRequest(ExecutionContext context) {

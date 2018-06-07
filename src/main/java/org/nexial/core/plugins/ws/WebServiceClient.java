@@ -37,6 +37,7 @@ import org.apache.http.auth.AuthScope;
 import org.apache.http.auth.UsernamePasswordCredentials;
 import org.apache.http.client.AuthCache;
 import org.apache.http.client.CredentialsProvider;
+import org.apache.http.client.config.CookieSpecs;
 import org.apache.http.client.config.RequestConfig;
 import org.apache.http.client.config.RequestConfig.Builder;
 import org.apache.http.client.methods.CloseableHttpResponse;
@@ -44,7 +45,6 @@ import org.apache.http.client.methods.HttpUriRequest;
 import org.apache.http.client.protocol.HttpClientContext;
 import org.apache.http.config.SocketConfig;
 import org.apache.http.conn.routing.HttpRoute;
-import org.apache.http.conn.routing.HttpRoutePlanner;
 import org.apache.http.conn.ssl.SSLConnectionSocketFactory;
 import org.apache.http.impl.auth.BasicScheme;
 import org.apache.http.impl.auth.DigestScheme;
@@ -54,7 +54,9 @@ import org.apache.http.impl.client.CloseableHttpClient;
 import org.apache.http.impl.client.HttpClientBuilder;
 import org.apache.http.impl.client.HttpClients;
 import org.apache.http.impl.conn.DefaultProxyRoutePlanner;
+import org.apache.http.impl.nio.client.HttpAsyncClientBuilder;
 import org.apache.http.protocol.HttpContext;
+import org.jetbrains.annotations.NotNull;
 import org.nexial.core.ExecutionThread;
 import org.nexial.core.WebProxy;
 import org.nexial.core.model.ExecutionContext;
@@ -63,95 +65,114 @@ import org.nexial.core.utils.ConsoleUtils;
 
 import static org.nexial.core.NexialConst.*;
 
-class WebServiceClient {
+public class WebServiceClient {
     protected static final SSLConnectionSocketFactory SSL_SF = new NaiveConnectionSocketFactory();
     protected ExecutionContext context;
+    protected boolean verbose = true;
 
     public WebServiceClient(ExecutionContext context) { this.context = context; }
 
-    Response get(String url, String queryString) throws IOException {
-        GetRequest request = new GetRequest(context);
-        request.setUrl(url);
-        request.setQueryString(queryString);
-        return invokeRequest(request);
+    public void setVerbose(boolean verbose) { this.verbose = verbose; }
+
+    public Response get(String url, String queryString) throws IOException {
+        return invokeRequest(toGetRequest(url, queryString));
     }
 
-    Response download(String url, String queryString, String saveTo) throws IOException {
-        GetRequest request = new GetRequest(context);
-        request.setUrl(url);
-        request.setQueryString(queryString);
+    public Response download(String url, String queryString, String saveTo) throws IOException {
+        GetRequest request = toGetRequest(url, queryString);
         request.setPayloadSaveTo(saveTo);
         return invokeRequest(request);
     }
 
-    Response post(String url, String payload) throws IOException {
+    public Response post(String url, String payload) throws IOException {
+        return invokeRequest(toPostRequest(url, payload));
+    }
+
+    public Response head(String url) throws IOException { return invokeRequest(toHeadRequest(url)); }
+
+    public Response delete(String url, String queryString) throws IOException {
+        return invokeRequest(toDeleteRequest(url, queryString));
+    }
+
+    public Response deleteWithPayload(String url, String payload) throws IOException {
+        return invokeRequest(toDeleteRequestWithPayload(url, payload));
+    }
+
+    public Response patch(String url, String payload) throws IOException {
+        return invokeRequest(toPatchRequest(url, payload));
+    }
+
+    public Response put(String url, String payload) throws IOException {
+        return invokeRequest(toPutRequest(url, payload));
+    }
+
+    @NotNull
+    public GetRequest toGetRequest(String url, String queryString) {
+        GetRequest request = new GetRequest(context);
+        request.setUrl(url);
+        request.setQueryString(queryString);
+        return request;
+    }
+
+    @NotNull
+    public PostRequest toPostRequest(String url, String payload) {
         PostRequest request = new PostRequest(context);
         request.setUrl(url);
         request.setPayload(payload);
-        return invokeRequest(request);
+        return request;
     }
 
-    Response head(String url) throws IOException {
+    @NotNull
+    public HeadRequest toHeadRequest(String url) {
         HeadRequest request = new HeadRequest(context);
         request.setUrl(url);
-        return invokeRequest(request);
+        return request;
     }
 
-    Response delete(String url, String queryString) throws IOException {
+    @NotNull
+    public DeleteRequest toDeleteRequest(String url, String queryString) {
         DeleteRequest request = new DeleteRequest(context);
         request.setUrl(url);
         if (StringUtils.isNotEmpty(queryString)) { request.setQueryString(queryString); }
-        return invokeRequest(request);
+        return request;
     }
 
-    Response deleteWithPayload(String url, String payload) throws IOException {
+    @NotNull
+    public DeleteWithPayloadRequest toDeleteRequestWithPayload(String url, String payload) {
         DeleteWithPayloadRequest request = new DeleteWithPayloadRequest(context);
         request.setUrl(url);
         request.setPayload(payload);
-        return invokeRequest(request);
+        return request;
     }
 
-    Response patch(String url, String payload) throws IOException {
+    @NotNull
+    public PatchRequest toPatchRequest(String url, String payload) {
         PatchRequest request = new PatchRequest(context);
         request.setUrl(url);
         request.setPayload(payload);
-        return invokeRequest(request);
+        return request;
     }
 
-    Response put(String url, String payload) throws IOException {
+    @NotNull
+    public PutRequest toPutRequest(String url, String payload) {
         PutRequest request = new PutRequest(context);
         request.setUrl(url);
         request.setPayload(payload);
-        return invokeRequest(request);
-    }
-
-    protected void log(String msg) {
-        ExecutionContext context = ExecutionThread.get();
-        if (context != null) {
-            TestStep testStep = context.getCurrentTestStep();
-            if (testStep != null) {
-                context.getLogger().log(testStep, msg);
-                return;
-            }
-        }
-
-        ConsoleUtils.log(msg);
+        return request;
     }
 
     protected Response invokeRequest(Request request) throws IOException {
         StopWatch tickTock = new StopWatch();
         tickTock.start();
 
-        boolean requireProxy = context.getBooleanData(WS_PROXY_REQUIRED, false);
+        boolean requireProxy = context != null && context.getBooleanData(WS_PROXY_REQUIRED, false);
         HttpHost proxy = requireProxy ? WebProxy.getApacheProxy(context) : null;
-        BasicCredentialsProvider credsProvider =
-            requireProxy ? WebProxy.getApacheCredentialProvider(context) : null;
+        BasicCredentialsProvider credsProvider = requireProxy ? WebProxy.getApacheCredentialProvider(context) : null;
 
         RequestConfig requestConfig = prepRequestConfig(request, proxy, credsProvider);
         CloseableHttpClient client = prepareHttpClient(request, requestConfig, proxy, credsProvider);
         HttpUriRequest http = request.prepRequest(requestConfig);
 
-        Response response = new Response();
         CloseableHttpResponse httpResponse = null;
 
         try {
@@ -168,48 +189,108 @@ class WebServiceClient {
                 httpResponse = client.execute(http);
             }
 
-            StatusLine statusLine = httpResponse.getStatusLine();
-            log("Executed request " + http.getRequestLine() + ": " + statusLine);
-            response.setReturnCode(statusLine.getStatusCode());
-            response.setStatusText(statusLine.getReasonPhrase());
+            Response response = gatherResponseData(http, request, httpResponse);
 
-            HttpEntity responseEntity = httpResponse.getEntity();
-            if (request instanceof GetRequest
-                && StringUtils.isNotBlank(((GetRequest) request).getPayloadSaveTo())) {
+            tickTock.stop();
+            response.setElapsedTime(tickTock.getTime());
 
-                // check for response code; only 2xx means we are downloading
-                if (statusLine.getStatusCode() >= 200 && statusLine.getStatusCode() < 300) {
-                    String saveTo = ((GetRequest) request).getPayloadSaveTo();
-                    log("Saving response payload to " + saveTo);
-                    response.setContentLength(saveResponsePayload(responseEntity, saveTo));
-                } else {
-                    // status NOT in 2xx means failure
-                    log("Unable to download due to " + statusLine);
-                    throw new IOException(statusLine + "");
-                }
-            } else {
-                log("Saving response payload as raw bytes to Response object");
-                byte[] rawBody = harvestResponsePayload(responseEntity);
-                if (rawBody == null) {
-                    response.setRawBody(null);
-                    response.setContentLength(0);
-                } else {
-                    long contentLength = Math.max(responseEntity.getContentLength(), rawBody.length);
-                    response.setRawBody(rawBody);
-                    response.setContentLength(contentLength);
-                }
-            }
-
-            response.setHeaders(handleResponseHeaders(httpResponse));
+            return response;
         } finally {
             if (httpResponse != null) { try { httpResponse.close(); } catch (IOException e) { } }
         }
+    }
 
-        tickTock.stop();
-        response.setElapsedTime(tickTock.getTime());
+    protected void log(String msg) {
+        ExecutionContext context = ExecutionThread.get();
+        if (context != null) {
+            TestStep testStep = context.getCurrentTestStep();
+            if (testStep != null) {
+                context.getLogger().log(testStep, msg);
+                return;
+            }
+        }
 
-        // log("HttpResponse converted to ws.Response");
+        debug(msg);
+    }
+
+    protected void debug(String msg) { if (verbose && StringUtils.isNotBlank(msg)) { ConsoleUtils.log(msg); } }
+
+    protected Response gatherResponseData(HttpUriRequest http, Request request, HttpResponse httpResponse)
+        throws IOException {
+        StatusLine statusLine = httpResponse.getStatusLine();
+        log("Executed request " + http.getRequestLine() + ": " + statusLine);
+
+        Response response = new Response();
+        response.setReturnCode(statusLine.getStatusCode());
+        response.setStatusText(statusLine.getReasonPhrase());
+
+        HttpEntity responseEntity = httpResponse.getEntity();
+        if (request instanceof GetRequest && StringUtils.isNotBlank(((GetRequest) request).getPayloadSaveTo())) {
+
+            // check for response code; only 2xx means we are downloading
+            if (statusLine.getStatusCode() >= 200 && statusLine.getStatusCode() < 300) {
+                String saveTo = ((GetRequest) request).getPayloadSaveTo();
+                log("Saving response payload to " + saveTo);
+                response.setContentLength(saveResponsePayload(responseEntity, saveTo));
+                response.setPayloadLocation(saveTo);
+            } else {
+                // status NOT in 2xx means failure
+                log("Unable to download due to " + statusLine);
+                throw new IOException(statusLine + "");
+            }
+        } else {
+            log("Saving response payload as raw bytes to Response object");
+            byte[] rawBody = harvestResponsePayload(responseEntity);
+            if (rawBody == null) {
+                response.setRawBody(null);
+                response.setContentLength(0);
+            } else {
+                long contentLength = Math.max(responseEntity.getContentLength(), rawBody.length);
+                response.setRawBody(rawBody);
+                response.setContentLength(contentLength);
+            }
+        }
+
+        response.setHeaders(handleResponseHeaders(httpResponse));
+
         return response;
+    }
+
+    @NotNull
+    protected DefaultProxyRoutePlanner resolveRoutePlanner(Request request, HttpHost proxy) {
+        return new DefaultProxyRoutePlanner(proxy) {
+            @Override
+            public HttpRoute determineRoute(HttpHost host, HttpRequest req, HttpContext execution)
+                throws HttpException {
+
+                String hostname = host.getHostName();
+                // todo, need more configurable way
+                if (isIntranet(hostname)) {
+                    HttpHost target;
+                    if (host.getPort() <= 0) {
+                        try {
+                            URL url = new URL(request.getUrl());
+                            target = new HttpHost(url.getHost(), url.getPort(), url.getProtocol());
+                        } catch (MalformedURLException e) {
+                            throw new HttpException("Unable to decipher URL " + request.getUrl() + ": " +
+                                                    e.getMessage());
+                        }
+                    } else {
+                        target = host;
+                    }
+
+                    boolean secure = StringUtils.equalsIgnoreCase("https", target.getSchemeName());
+                    HttpClientContext clientContext = HttpClientContext.adapt(execution);
+                    RequestConfig config = clientContext.getRequestConfig();
+                    InetAddress local = config.getLocalAddress();
+
+                    return new HttpRoute(target, local, secure);
+                    //return new HttpRoute(host);
+                }
+
+                return super.determineRoute(host, req, execution);
+            }
+        };
     }
 
     protected RequestConfig prepRequestConfig(Request request, HttpHost proxy, BasicCredentialsProvider credsProvider) {
@@ -220,11 +301,10 @@ class WebServiceClient {
                                                     .setRedirectsEnabled(request.enableRedirects)
                                                     .setExpectContinueEnabled(request.enableExpectContinue)
                                                     .setCircularRedirectsAllowed(request.allowCircularRedirects)
-                                                    .setRelativeRedirectsAllowed(request.allowRelativeRedirects);
+                                                    .setRelativeRedirectsAllowed(request.allowRelativeRedirects)
+                                                    .setCookieSpec(CookieSpecs.STANDARD);
 
-        if (proxy != null) {
-            requestConfigBuilder = requestConfigBuilder.setProxy(proxy);
-        }
+        if (proxy != null) { requestConfigBuilder = requestConfigBuilder.setProxy(proxy); }
 
         return requestConfigBuilder.build();
     }
@@ -247,44 +327,9 @@ class WebServiceClient {
                                                          .setDefaultSocketConfig(socketConfig);
 
         if (proxy != null && credsProvider != null) {
-            httpClientBuilder = httpClientBuilder.setDefaultCredentialsProvider(credsProvider);
-            httpClientBuilder = httpClientBuilder.setProxy(proxy);
-
-            HttpRoutePlanner routePlanner = new DefaultProxyRoutePlanner(proxy) {
-                @Override
-                public HttpRoute determineRoute(HttpHost host, HttpRequest req, HttpContext execution)
-                    throws HttpException {
-
-                    String hostname = host.getHostName();
-                    // todo, need more configurable way
-                    if (isIntranet(hostname)) {
-                        HttpHost target;
-                        if (host.getPort() <= 0) {
-                            try {
-                                URL url = new URL(request.getUrl());
-                                target = new HttpHost(url.getHost(), url.getPort(), url.getProtocol());
-                            } catch (MalformedURLException e) {
-                                throw new HttpException("Unable to decipher URL " + request.getUrl() + ": " +
-                                                        e.getMessage());
-                            }
-                        } else {
-                            target = host;
-                        }
-
-                        boolean secure = StringUtils.equalsIgnoreCase("https", target.getSchemeName());
-                        HttpClientContext clientContext = HttpClientContext.adapt(execution);
-                        RequestConfig config = clientContext.getRequestConfig();
-                        InetAddress local = config.getLocalAddress();
-
-                        return new HttpRoute(target, local, secure);
-                        //return new HttpRoute(host);
-                    }
-
-                    return super.determineRoute(host, req, execution);
-                }
-            };
-
-            httpClientBuilder.setRoutePlanner(routePlanner);
+            httpClientBuilder = httpClientBuilder.setDefaultCredentialsProvider(credsProvider)
+                                                 .setProxy(proxy)
+                                                 .setRoutePlanner(resolveRoutePlanner(request, proxy));
         }
 
         // add basic auth, if specified
@@ -301,9 +346,78 @@ class WebServiceClient {
                !StringUtils.contains(hostname, ".");
     }
 
+    protected boolean isBasicAuth() {
+        if (context == null) { return false; }
+        String basicUser = context.getStringData(WS_BASIC_USER);
+        String basicPwd = context.getStringData(WS_BASIC_PWD);
+        return StringUtils.isNotBlank(basicUser) && StringUtils.isNotBlank(basicPwd);
+    }
+
+    protected HttpClientBuilder addBasicAuth(HttpClientBuilder httpClientBuilder, Request request)
+        throws MalformedURLException {
+        if (!isBasicAuth()) { return httpClientBuilder; }
+        return httpClientBuilder.setDefaultCredentialsProvider(resolveBasicAuthCredentialProvider(request));
+    }
+
+    protected HttpAsyncClientBuilder addBasicAuth(HttpAsyncClientBuilder httpClientBuilder, Request request)
+        throws MalformedURLException {
+        if (!isBasicAuth()) { return httpClientBuilder; }
+        return httpClientBuilder.setDefaultCredentialsProvider(resolveBasicAuthCredentialProvider(request));
+    }
+
+    @NotNull
+    protected CredentialsProvider resolveBasicAuthCredentialProvider(Request request) throws MalformedURLException {
+        if (context == null) { return null; }
+
+        String basicUser = context.getStringData(WS_BASIC_USER);
+        String basicPwd = context.getStringData(WS_BASIC_PWD);
+
+        URL url = new URL(request.getUrl());
+
+        CredentialsProvider credsProvider = new BasicCredentialsProvider();
+        credsProvider.setCredentials(new AuthScope(url.getHost(), url.getPort()),
+                                     new UsernamePasswordCredentials(basicUser, basicPwd));
+        return credsProvider;
+    }
+
+    protected HttpClientContext newBasicEnabledHttpContext(Request request) throws MalformedURLException {
+        URL url = new URL(request.getUrl());
+        HttpHost target = new HttpHost(url.getHost(), url.getPort(), url.getProtocol());
+
+        BasicAuthCache authCache = new BasicAuthCache();
+        authCache.put(target, new BasicScheme());
+
+        // Add AuthCache to the execution execution
+        HttpClientContext httpContext = HttpClientContext.create();
+        httpContext.setAuthCache(authCache);
+        return httpContext;
+    }
+
+    protected boolean isDigestAuth() {
+        if (context == null) { return false; }
+        String digestUser = context.getStringData(WS_DIGEST_USER);
+        String digestPwd = context.getStringData(WS_DIGEST_PWD);
+        String digestRealm = context.getStringData(WS_DIGEST_REALM);
+        return StringUtils.isNotBlank(digestUser) &&
+               StringUtils.isNotBlank(digestPwd) &&
+               StringUtils.isNotBlank(digestRealm);
+    }
+
     protected HttpClientBuilder addDigestAuth(HttpClientBuilder httpClientBuilder, Request request)
         throws MalformedURLException {
         if (!isDigestAuth()) { return httpClientBuilder; }
+        return httpClientBuilder.setDefaultCredentialsProvider(resolveDigestAuthCredentialProvider(request));
+    }
+
+    protected HttpAsyncClientBuilder addDigestAuth(HttpAsyncClientBuilder httpClientBuilder, Request request)
+        throws MalformedURLException {
+        if (!isDigestAuth()) { return httpClientBuilder; }
+        return httpClientBuilder.setDefaultCredentialsProvider(resolveDigestAuthCredentialProvider(request));
+    }
+
+    @NotNull
+    protected CredentialsProvider resolveDigestAuthCredentialProvider(Request request) throws MalformedURLException {
+        if (context == null) { return null; }
 
         String digestUser = context.getStringData(WS_DIGEST_USER);
         String digestPwd = context.getStringData(WS_DIGEST_PWD);
@@ -314,26 +428,12 @@ class WebServiceClient {
         digestCredsProvider.setCredentials(new AuthScope(url.getHost(), url.getPort()),
                                            new UsernamePasswordCredentials(digestUser, digestPwd));
 
-        return httpClientBuilder.setDefaultCredentialsProvider(digestCredsProvider);
-    }
-
-    protected HttpClientBuilder addBasicAuth(HttpClientBuilder httpClientBuilder, Request request)
-        throws MalformedURLException {
-        if (!isBasicAuth()) { return httpClientBuilder; }
-
-        String basicUser = context.getStringData(WS_BASIC_USER);
-        String basicPwd = context.getStringData(WS_BASIC_PWD);
-
-        URL url = new URL(request.getUrl());
-
-        CredentialsProvider credsProvider = new BasicCredentialsProvider();
-        credsProvider.setCredentials(new AuthScope(url.getHost(), url.getPort()),
-                                     new UsernamePasswordCredentials(basicUser, basicPwd));
-
-        return httpClientBuilder.setDefaultCredentialsProvider(credsProvider);
+        return digestCredsProvider;
     }
 
     protected HttpClientContext newDigestEnabledHttpContext(Request request) throws MalformedURLException {
+        if (context == null) { return null; }
+
         String realm = context.getStringData(WS_DIGEST_REALM);
         String nounce = context.getStringData(WS_DIGEST_NONCE);
 
@@ -396,33 +496,5 @@ class WebServiceClient {
             }
         }
         return headers;
-    }
-
-    protected boolean isDigestAuth() {
-        String digestUser = context.getStringData(WS_DIGEST_USER);
-        String digestPwd = context.getStringData(WS_DIGEST_PWD);
-        String digestRealm = context.getStringData(WS_DIGEST_REALM);
-        return StringUtils.isNotBlank(digestUser) &&
-               StringUtils.isNotBlank(digestPwd) &&
-               StringUtils.isNotBlank(digestRealm);
-    }
-
-    protected boolean isBasicAuth() {
-        String basicUser = context.getStringData(WS_BASIC_USER);
-        String basicPwd = context.getStringData(WS_BASIC_PWD);
-        return StringUtils.isNotBlank(basicUser) && StringUtils.isNotBlank(basicPwd);
-    }
-
-    private HttpClientContext newBasicEnabledHttpContext(Request request) throws MalformedURLException {
-        URL url = new URL(request.getUrl());
-        HttpHost target = new HttpHost(url.getHost(), url.getPort(), url.getProtocol());
-
-        BasicAuthCache authCache = new BasicAuthCache();
-        authCache.put(target, new BasicScheme());
-
-        // Add AuthCache to the execution execution
-        HttpClientContext httpContext = HttpClientContext.create();
-        httpContext.setAuthCache(authCache);
-        return httpContext;
     }
 }

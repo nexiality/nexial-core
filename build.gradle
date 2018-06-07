@@ -32,7 +32,6 @@ plugins {
 	id "org.jetbrains.kotlin.jvm" version "1.2.41"
 }
 
-apply plugin: 'kotlin'
 apply plugin: 'java'
 apply plugin: 'eclipse'
 apply plugin: 'idea'
@@ -73,8 +72,9 @@ sourceSets.main.compileClasspath += configurations.provided
 dependencies {
 	compile("org.apache.httpcomponents:httpcore:${httpcoreVersion}")
 	compile("org.apache.httpcomponents:httpclient:+")
-	compile("org.apache.httpcomponents:fluent-hc:${httpcoreVersion}")
+	compile("org.apache.httpcomponents:fluent-hc:${httpclientFluent}")
 	compile("org.apache.httpcomponents:httpmime:+")
+	compile("org.apache.httpcomponents:httpasyncclient:${httpasyncclient}")
 
 	// support: apache commons
 	compile("commons-beanutils:commons-beanutils:+")
@@ -214,7 +214,7 @@ dependencies {
 	// support: ssh, scp, sftp
 	compile("com.jcraft:jsch:+")
 
-	compile "org.jetbrains.kotlin:kotlin-stdlib-jdk8:$kotlin_version"
+	compile("org.jetbrains.kotlin:kotlin-stdlib-jdk8:$kotlin_version")
 
 	compile("com.googlecode.soundlibs:jlayer:1.0.1.4")
 
@@ -284,10 +284,10 @@ task sourcesJar(type: Jar) {
 	from sourceSets.main.allSource
 }
 
-task testJar(type:  Jar) {
+task testJar(type: Jar) {
 	classifier = 'tests'
 	from sourceSets.test.output
-	include ('**/*.class')
+	include('**/*.class')
 }
 
 artifacts {

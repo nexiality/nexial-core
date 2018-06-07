@@ -45,7 +45,7 @@ public class ExecutionDefinition {
 
     private String planFilename;
     private String planName;
-    private int planSequnce;
+    private int planSequence;
 
     public ExecutionDefinition() { }
 
@@ -131,9 +131,9 @@ public class ExecutionDefinition {
 
     public void setPlanName(String planName) { this.planName = planName; }
 
-    public int getPlanSequnce() { return planSequnce; }
+    public int getPlanSequence() { return planSequence; }
 
-    public void setPlanSequnce(int planSequnce) { this.planSequnce = planSequnce; }
+    public void setPlanSequence(int planSequence) { this.planSequence = planSequence; }
 
     public void parse() throws IOException {
         // parse and collect all relevant test data so we can merge then into iteration-bound test script

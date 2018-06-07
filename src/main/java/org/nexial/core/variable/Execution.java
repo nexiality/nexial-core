@@ -112,7 +112,7 @@ public class Execution {
                         return "[" + resolveScriptName(context) + "]" +
                                "[" + resolveScenario(currentStep) + "]" +
                                "[" + resolveActivity(currentStep) + "]" +
-                               "[ROW " + currentStep.getRowIndex() + "]";
+                               "[ROW " + (currentStep.getRowIndex() + 1) + "]";
                     case fullpath:
                     default:
                         ConsoleUtils.error(error);

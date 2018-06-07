@@ -24,9 +24,6 @@ import org.apache.http.client.methods.HttpPatch;
 import org.apache.http.client.methods.HttpUriRequest;
 import org.nexial.core.model.ExecutionContext;
 
-/**
- *
- */
 public class PatchRequest extends PostRequest {
 
     PatchRequest(ExecutionContext context) {

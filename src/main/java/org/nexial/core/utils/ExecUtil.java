@@ -22,6 +22,7 @@ import java.net.URL;
 import java.util.Enumeration;
 import java.util.jar.Attributes;
 import java.util.jar.Manifest;
+import javax.validation.constraints.NotNull;
 
 import org.apache.commons.lang3.StringUtils;
 import org.nexial.commons.utils.DateUtility;
@@ -35,6 +36,7 @@ public final class ExecUtil {
 
     private ExecUtil() {}
 
+    @NotNull
     public static String deriveJarManifest() {
         if (manifest == null) {
             Package pkg = Nexial.class.getPackage();
