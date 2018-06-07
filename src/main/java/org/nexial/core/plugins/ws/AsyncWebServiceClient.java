@@ -153,6 +153,10 @@ public class AsyncWebServiceClient extends WebServiceClient implements ForcefulT
      * invoke HTTP request asynchronously, with option to capture response (via {@link ResponseSink}).
      */
     public void invokeRequestAsync(@NotNull Request request, ResponseSink<Response> sink) throws IOException {
+        if (ASYNC_EXEC_SERVICE.isTerminated() ||  ASYNC_EXEC_SERVICE.isShutdown()) {
+            throw new IOException("Unable to invoke request asynchronously because ws client has been terminated");
+        }
+
         StopWatch tickTock = new StopWatch();
         tickTock.start();
 
