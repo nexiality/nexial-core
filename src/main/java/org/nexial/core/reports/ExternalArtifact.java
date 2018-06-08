@@ -18,10 +18,10 @@
 package org.nexial.core.reports;
 
 import java.io.Serializable;
+import javax.validation.constraints.NotNull;
 
 import org.apache.commons.lang3.builder.EqualsBuilder;
 import org.apache.commons.lang3.builder.HashCodeBuilder;
-import org.jetbrains.annotations.NotNull;
 
 import static org.nexial.core.reports.ExternalArtifact.TestCaseType.*;
 

@@ -5,6 +5,7 @@ import org.apache.commons.lang3.math.NumberUtils
 import org.junit.After
 import org.junit.Assert
 import org.junit.Test
+import org.nexial.commons.utils.TextUtils
 import org.nexial.core.model.ExecutionContext
 import org.nexial.core.model.MockExecutionContext
 
@@ -17,7 +18,7 @@ class NumberCommandTest {
 
     @Test
     @Throws(Exception::class)
-    fun testGetTarget() {
+    fun target() {
         val fixture = NumberCommand()
 
         fixture.init(context)
@@ -27,7 +28,7 @@ class NumberCommandTest {
 
     @Test
     @Throws(Exception::class)
-    fun testAssertEqual() {
+    fun assertEqual() {
         val fixture = NumberCommand()
 
         fixture.init(context)
@@ -42,7 +43,7 @@ class NumberCommandTest {
 
     @Test
     @Throws(Exception::class)
-    fun testAssertGreater() {
+    fun assertGreater() {
         val fixture = NumberCommand()
 
         fixture.init(context)
@@ -55,7 +56,7 @@ class NumberCommandTest {
 
     @Test
     @Throws(Exception::class)
-    fun testAssertGreaterOrEqual() {
+    fun assertGreaterOrEqual() {
         val fixture = NumberCommand()
 
         fixture.init(context)
@@ -68,7 +69,7 @@ class NumberCommandTest {
 
     @Test
     @Throws(Exception::class)
-    fun testAssertLesser() {
+    fun assertLesser() {
         val fixture = NumberCommand()
 
         fixture.init(context)
@@ -81,7 +82,7 @@ class NumberCommandTest {
 
     @Test
     @Throws(Exception::class)
-    fun testAssertLesserOrEqual() {
+    fun assertLesserOrEqual() {
         val fixture = NumberCommand()
 
         fixture.init(context)
@@ -94,7 +95,7 @@ class NumberCommandTest {
 
     @Test
     @Throws(Exception::class)
-    fun testAssertBetween() {
+    fun assertBetween() {
         val fixture = NumberCommand()
 
         fixture.init(context)
@@ -107,7 +108,7 @@ class NumberCommandTest {
 
     @Test
     @Throws(Exception::class)
-    fun testAverage() {
+    fun average() {
         val fixture = NumberCommand()
 
         fixture.init(context)
@@ -144,6 +145,10 @@ class NumberCommandTest {
         // wild wild west; expects non-number to be ignored
         Assert.assertTrue(fixture.average(varName, "1,.2,3.00,004,-105.00,6a,7b,blakhas,,,,").isSuccess)
         Assert.assertEquals(-12.1, NumberUtils.toDouble(context.getStringData(varName)), 0.000001)
+
+        // mixing number types
+        Assert.assertTrue(fixture.average(varName, "1,.2,3.0,004,-105.00,,,  ,52.214123,0,00.0,1,1.00,").isSuccess)
+        Assert.assertEquals(-3.871443364, context.getDoubleData(varName), 0.00001)
     }
 
     @Test
@@ -552,6 +557,13 @@ class NumberCommandTest {
         Assert.assertTrue(fixture.decrement(variableName, "0").isSuccess)
         Assert.assertEquals(0.0, NumberUtils.toDouble(context.getStringData(variableName)), 0.0)
 
+    }
+
+    @Test
+    fun testAdd() {
+        val strings = TextUtils.toList("1,2,3,4,5,6,7,8,9,10", ",", true)
+        val result = strings.foldRight(0.0, { s, acc -> NumberUtils.toDouble(s) + acc })
+        println("result = ${result}")
     }
 
 }

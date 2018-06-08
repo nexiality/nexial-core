@@ -13,8 +13,8 @@ class NumberCommand : BaseCommand() {
     override fun getTarget() = "number"
 
     override fun assertEqual(num1: String, num2: String): StepResult {
-       val asExpected = toDouble(num1, "num1") == toDouble(num2, "num2")
-       return StepResult(asExpected, "$num1 is ${if (asExpected) "" else "NOT "}equal to $num2", null)
+        val asExpected = toDouble(num1, "num1") == toDouble(num2, "num2")
+        return StepResult(asExpected, "$num1 is ${if (asExpected) "" else "NOT "}equal to $num2", null)
     }
 
     fun assertGreater(num1: String, num2: String): StepResult {
@@ -49,15 +49,11 @@ class NumberCommand : BaseCommand() {
     fun average(variableName: String, array: String?): StepResult {
         requiresValidVariableName(variableName)
 
-        var average = 0.0
-        //val strings: List<String> = TextUtils.toList(array, context.textDelim, true)
         val strings = TextUtils.toList(array, context.textDelim, true)
-        if (CollectionUtils.isNotEmpty(strings)) {
-            var total = 0.0
-            for (string in strings) {
-                total += NumberUtils.toDouble(string)
-            }
-            average = total / strings.size
+        val average = if (CollectionUtils.isNotEmpty(strings)) {
+            strings.foldRight(0.0 , { value: String?, curr: Double -> curr + NumberUtils.toDouble(value) })/ strings.size
+        } else {
+            0.0
         }
 
         context.setData(variableName, average)
@@ -76,7 +72,9 @@ class NumberCommand : BaseCommand() {
         var max = Double.MIN_VALUE
         for (string in strings) {
             val num = NumberUtils.toDouble(string)
-            if (num > max) { max = num }
+            if (num > max) {
+                max = num
+            }
         }
 
         context.setData(variableName, max)
@@ -95,7 +93,9 @@ class NumberCommand : BaseCommand() {
         var min = Double.MAX_VALUE
         for (string in strings) {
             val num = NumberUtils.toDouble(string)
-            if (num < min) { min = num }
+            if (num < min) {
+                min = num
+            }
         }
 
         context.setData(variableName, min)
@@ -141,9 +141,8 @@ class NumberCommand : BaseCommand() {
         var closest = NumberUtils.toDouble(closestDigit)
         val fractionDigitCount = StringUtils.length(StringUtils.substringAfter(closestDigit + "", "."))
 
-        val rounded: String
-        if (fractionDigitCount == 0) {
-            rounded = (Math.round(num / closest) * closest).toInt().toString() + ""
+        val rounded: String = if (fractionDigitCount == 0) {
+            (Math.round(num / closest) * closest).toInt().toString() + ""
         } else {
             val df = DecimalFormat()
             df.isGroupingUsed = false
@@ -154,7 +153,7 @@ class NumberCommand : BaseCommand() {
                 closest = NumberUtils.toDouble("0." + (StringUtils.repeat("0", fractionDigitCount - 1) + "1"))
             }
 
-            rounded = df.format(Math.round(num / closest) * closest)
+            df.format(Math.round(num / closest) * closest)
         }
 
         context.setData(variableName, rounded)
@@ -164,11 +163,10 @@ class NumberCommand : BaseCommand() {
     private fun numberFormatHelper(variableName: String, amount: String): NumberFormatHelper {
         val current = StringUtils.defaultString(context.getStringData(variableName, "0"))
         val formatHelper = NumberFormatHelper.newInstance(current)
-        requires(StringUtils.isNotBlank(formatHelper.normalFormat),
-                "variable '$variableName' does not represent a number",
-                current)
 
+        requiresNotBlank(formatHelper.normalFormat, "variable '$variableName' does not represent a number", current)
         requires(NumberUtils.isParsable(amount), "Variable does not contain correct number format", amount)
+
         return formatHelper
     }
 

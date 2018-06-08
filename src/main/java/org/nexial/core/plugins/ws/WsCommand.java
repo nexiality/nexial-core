@@ -23,6 +23,7 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
+import javax.validation.constraints.NotNull;
 
 import org.apache.commons.codec.binary.Base64;
 import org.apache.commons.collections4.MapUtils;
@@ -30,7 +31,6 @@ import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang3.BooleanUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.math.NumberUtils;
-import org.jetbrains.annotations.NotNull;
 import org.nexial.commons.utils.TextUtils;
 import org.nexial.commons.utils.web.URLEncodingUtils;
 import org.nexial.core.model.ExecutionContext;

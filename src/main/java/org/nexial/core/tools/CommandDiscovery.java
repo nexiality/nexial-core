@@ -24,11 +24,11 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import javax.validation.constraints.NotNull;
 
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang3.BooleanUtils;
 import org.apache.commons.lang3.StringUtils;
-import org.jetbrains.annotations.NotNull;
 import org.nexial.commons.utils.CollectionUtil;
 import org.nexial.core.tools.ScriptMetadata.Commands;
 import org.nexial.core.tools.ScriptMetadata.NamedRange;

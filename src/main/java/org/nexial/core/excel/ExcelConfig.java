@@ -20,6 +20,7 @@ package org.nexial.core.excel;
 import java.awt.*;
 import java.util.Arrays;
 import java.util.List;
+import javax.validation.constraints.NotNull;
 
 import org.apache.commons.lang3.StringUtils;
 import org.apache.poi.ss.usermodel.BorderStyle;
@@ -27,7 +28,6 @@ import org.apache.poi.ss.usermodel.FillPatternType;
 import org.apache.poi.ss.usermodel.HorizontalAlignment;
 import org.apache.poi.ss.usermodel.VerticalAlignment;
 import org.apache.poi.xssf.usermodel.*;
-import org.jetbrains.annotations.NotNull;
 import org.nexial.core.excel.Excel.Worksheet;
 import org.nexial.core.model.TestStep;
 

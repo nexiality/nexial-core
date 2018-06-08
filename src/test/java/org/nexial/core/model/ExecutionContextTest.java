@@ -18,8 +18,8 @@
 package org.nexial.core.model;
 
 import java.util.*;
+import javax.validation.constraints.NotNull;
 
-import org.jetbrains.annotations.NotNull;
 import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;

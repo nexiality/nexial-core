@@ -21,10 +21,10 @@ import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
+import javax.validation.constraints.NotNull;
 
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
-import org.jetbrains.annotations.NotNull;
 import org.nexial.commons.utils.TextUtils;
 import org.nexial.core.plugins.io.CsvExtendedComparison.ReportFormat;
 

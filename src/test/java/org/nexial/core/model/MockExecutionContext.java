@@ -21,6 +21,7 @@ import java.io.File;
 import java.io.IOException;
 import java.net.UnknownHostException;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -67,6 +68,26 @@ public class MockExecutionContext extends ExecutionContext {
             this.builtinFunctions = springContext.getBean("builtinFunctions", new HashMap<String, Object>().getClass());
             this.otc = springContext.getBean("otc", NexialS3Helper.class);
             this.readOnlyVars = springContext.getBean("readOnlyVars", new ArrayList<String>().getClass());
+        } else {
+            readOnlyVars = Arrays.asList("nexial.runID", "nexial.runID.prefix", "nexial.iterationEnded",
+                                         "nexial.spreadsheet.program", "nexial.lastScreenshot", "nexial.lastOutcome",
+                                         "nexial.minExecSuccessRate", "nexial.screenRecorder", "nexial.scope.iteration",
+                                         "nexial.scope.fallbackToPrevious", "nexial.scope.currentIteration",
+                                         "nexial.scope.lastIteration", "nexial.external.output",
+                                         "nexial.browser.windowSize", "nexial.delayBrowser",
+                                         "nexial.browser.ie.requireWindowFocus", "nexial.lastAlertText",
+                                         "nexial.ignoreBrowserAlert", "nexial.lastAlertText", "nexial.browser.incognito",
+                                         "nexial.browserstack.automatekey", "nexial.browserstack.username",
+                                         "nexial.browserstack.browser", "nexial.browserstack.browser.version",
+                                         "nexial.browserstack.debug", "nexial.browserstack.resolution",
+                                         "nexial.browserstack.app.buildnumber", "nexial.browserstack.enablelocal",
+                                         "nexial.browserstack.os", "nexial.browserstack.os.version",
+                                         "nexial.browser.safari.cleanSession", "nexial.browser.safari.useTechPreview",
+                                         "nexial.forceIE32", "webdriver.ie.driver", "webdriver.ie.driver.loglevel",
+                                         "webdriver.ie.driver.logfile", "webdriver.ie.driver.silent", "file.separator",
+                                         "java.home", "java.io.tmpdir", "java.version", "line.separator", "os.arch",
+                                         "os.name", "os.version", "user.country", "user.dir", "user.home", "user.language",
+                                         "user.name", "user.timezone");
         }
 
         expression = new ExpressionProcessor(this);

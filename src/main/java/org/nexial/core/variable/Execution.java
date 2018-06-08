@@ -17,9 +17,9 @@
 package org.nexial.core.variable;
 
 import java.io.File;
+import javax.validation.constraints.NotNull;
 
 import org.apache.commons.lang3.StringUtils;
-import org.jetbrains.annotations.NotNull;
 import org.nexial.core.ExecutionThread;
 import org.nexial.core.model.ExecutionContext;
 import org.nexial.core.model.ExecutionDefinition;

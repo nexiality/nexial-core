@@ -26,6 +26,7 @@ import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.HashMap;
 import java.util.Map;
+import javax.validation.constraints.NotNull;
 
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.IOUtils;
@@ -56,7 +57,6 @@ import org.apache.http.impl.client.HttpClients;
 import org.apache.http.impl.conn.DefaultProxyRoutePlanner;
 import org.apache.http.impl.nio.client.HttpAsyncClientBuilder;
 import org.apache.http.protocol.HttpContext;
-import org.jetbrains.annotations.NotNull;
 import org.nexial.core.ExecutionThread;
 import org.nexial.core.WebProxy;
 import org.nexial.core.model.ExecutionContext;

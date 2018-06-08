@@ -17,9 +17,9 @@
 package org.nexial.core.aws;
 
 import java.io.InputStream;
+import javax.validation.constraints.NotNull;
 
 import org.apache.commons.lang3.StringUtils;
-import org.jetbrains.annotations.NotNull;
 import org.nexial.core.utils.CheckUtils;
 import org.nexial.core.utils.ConsoleUtils;
 
