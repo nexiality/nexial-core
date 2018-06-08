@@ -138,4 +138,13 @@ public class NumberFormatHelper {
         if (!leadingZero) { originalFormat = StringUtils.replace(originalFormat, "0.", "."); }
         return this;
     }
+
+    public NumberFormatHelper subtractValue(String numberString) {
+        NumberFormatHelper additiveFormatHelper = NumberFormatHelper.newInstance(numberString);
+        value = value.subtract(additiveFormatHelper.value);
+        normalFormat = value.toString();
+        originalFormat = formatter.format(value.doubleValue());
+        if (!leadingZero) { originalFormat = StringUtils.replace(originalFormat, "0.", "."); }
+        return this;
+    }
 }
