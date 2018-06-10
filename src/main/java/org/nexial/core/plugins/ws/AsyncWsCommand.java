@@ -66,6 +66,7 @@ public class AsyncWsCommand extends WsCommand {
 
         try {
             client.download(url, queryString, saveTo);
+
             return StepResult.success("Successfully requested '" + request + "' to " + saveTo);
         } catch (IOException e) {
             return StepResult.fail("FAILED to downloaded from '" + request + "': " + e.getMessage());
@@ -96,6 +97,9 @@ public class AsyncWsCommand extends WsCommand {
     public StepResult head(String url, String output) {
         return super.head(url, output);
     }
+
+    @Override
+    public StepResult delete(String url, String body, String output) { return super.delete(url, body, output); }
 
     @Override
     protected StepResult requestNoBody(String url, String queryString, String output, String method) {

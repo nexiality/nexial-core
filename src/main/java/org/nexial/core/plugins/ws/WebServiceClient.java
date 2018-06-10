@@ -80,7 +80,7 @@ public class WebServiceClient {
 
     public Response download(String url, String queryString, String saveTo) throws IOException {
         GetRequest request = toGetRequest(url, queryString);
-        request.setPayloadSaveTo(saveTo);
+        request.setPayloadLocation(saveTo);
         return invokeRequest(request);
     }
 
@@ -225,11 +225,11 @@ public class WebServiceClient {
         response.setStatusText(statusLine.getReasonPhrase());
 
         HttpEntity responseEntity = httpResponse.getEntity();
-        if (request instanceof GetRequest && StringUtils.isNotBlank(((GetRequest) request).getPayloadSaveTo())) {
+        if (request instanceof GetRequest && StringUtils.isNotBlank(((GetRequest) request).getPayloadLocation())) {
 
             // check for response code; only 2xx means we are downloading
             if (statusLine.getStatusCode() >= 200 && statusLine.getStatusCode() < 300) {
-                String saveTo = ((GetRequest) request).getPayloadSaveTo();
+                String saveTo = ((GetRequest) request).getPayloadLocation();
                 log("Saving response payload to " + saveTo);
                 response.setContentLength(saveResponsePayload(responseEntity, saveTo));
                 response.setPayloadLocation(saveTo);

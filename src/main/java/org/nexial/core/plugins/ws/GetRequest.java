@@ -28,7 +28,7 @@ import org.nexial.core.model.ExecutionContext;
 
 public class GetRequest extends Request implements Serializable {
     private String queryString;
-    private String payloadSaveTo;
+    private String payloadLocation;
 
     GetRequest(ExecutionContext context) {
         super(context);
@@ -39,9 +39,9 @@ public class GetRequest extends Request implements Serializable {
 
     public void setQueryString(String queryString) { this.queryString = queryString; }
 
-    public String getPayloadSaveTo() { return payloadSaveTo; }
+    public String getPayloadLocation() { return payloadLocation; }
 
-    public void setPayloadSaveTo(String payloadSaveTo) { this.payloadSaveTo = payloadSaveTo; }
+    public void setPayloadLocation(String payloadLocation) { this.payloadLocation = payloadLocation; }
 
     @Override
     public String toString() {

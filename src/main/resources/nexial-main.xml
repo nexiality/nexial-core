@@ -121,7 +121,8 @@
     />
 
     <bean id="usageService" class="org.nexial.core.service.UsageService">
-        <constructor-arg value="https://w62rwmoetb.execute-api.us-east-1.amazonaws.com/nexial/num"/>
+        <constructor-arg index="0" value="https://w62rwmoetb.execute-api.us-east-1.amazonaws.com/nexial/num"/>
+        <constructor-arg index="1" value="false"/>
     </bean>
 
 </beans>

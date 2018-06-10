@@ -16,7 +16,16 @@
 
 package org.nexial.core.plugins.ws;
 
-import com.google.gson.JsonObject;
+import java.io.File;
+import java.io.IOException;
+import java.net.MalformedURLException;
+import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import javax.validation.constraints.NotNull;
+
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang3.RandomUtils;
 import org.apache.commons.lang3.StringUtils;
@@ -38,15 +47,7 @@ import org.nexial.core.model.ExecutionContext;
 import org.nexial.core.plugins.ForcefulTerminate;
 import org.nexial.core.utils.ConsoleUtils;
 
-import javax.validation.constraints.NotNull;
-import java.io.File;
-import java.io.IOException;
-import java.net.MalformedURLException;
-import java.util.Map;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.CountDownLatch;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
+import com.google.gson.JsonObject;
 
 import static org.nexial.core.NexialConst.*;
 import static org.nexial.core.plugins.ws.NaiveConnectionSocketFactory.I_TRUST_EVERYONE;
@@ -118,7 +119,7 @@ public class AsyncWebServiceClient extends WebServiceClient implements ForcefulT
     @Override
     public Response download(String url, String queryString, String saveTo) throws IOException {
         GetRequest request = toGetRequest(url, queryString);
-        request.setPayloadSaveTo(saveTo);
+        request.setPayloadLocation(saveTo);
         invokeRequest(request, new File(saveTo + ".json"));
         return null;
     }

@@ -35,7 +35,7 @@ enum class ExecutionEvent(val eventName: String, val variable: String, val descr
     ScriptStart("onScriptStart", NOTIFY_ON + "ScriptStart", "Script execution started"),
     ScriptComplete("onScriptComplete", NOTIFY_ON + "ScriptComplete", "Script execution completed"),
 
-    ScenarioStart("onScenarioStart", NOTIFY_ON + "", "Scenario execution started"),
+    ScenarioStart("onScenarioStart", NOTIFY_ON + "ScenarioStart", "Scenario execution started"),
     ScenarioComplete("onScenarioComplete", NOTIFY_ON + "ScenarioComplete", "Scenario execution completed"),
 
     ErrorOccurred("onError", NOTIFY_ON + "Error", "Error occurred"),

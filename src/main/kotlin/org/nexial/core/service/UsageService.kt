@@ -24,7 +24,7 @@ import org.nexial.core.utils.CheckUtils
 import org.nexial.core.utils.ConsoleUtils
 import java.io.IOException
 
-class UsageService(val url: String) {
+class UsageService(val url: String, val enabled: Boolean) {
     var wsClient: WebServiceClient? = null
 
     fun send(usage: NexialEvent) = post(usage)
@@ -32,30 +32,34 @@ class UsageService(val url: String) {
     fun send(nexialEnv: NexialEnv) = post(nexialEnv)
 
     private fun post(usage: NexialEvent) {
-        if (!CheckUtils.isRunningInJUnit()) {
-            if (wsClient == null) {
-                throw IntegrationConfigException("web service client not ready")
-            }
+        if (enabled) {
+            if (!CheckUtils.isRunningInJUnit()) {
+                if (wsClient == null) {
+                    throw IntegrationConfigException("web service client not ready")
+                }
 
-            try {
-                // ws.invokeAsyncRequest(ws.toPostRequest(url, usage.toJson()), (response, error1) -> { ... });
-                wsClient!!.post(url, usage.json())
-            } catch (e: IOException) {
-                ConsoleUtils.log(e.message)
+                try {
+                    // ws.invokeAsyncRequest(ws.toPostRequest(url, usage.toJson()), (response, error1) -> { ... });
+                    wsClient!!.post(url, usage.json())
+                } catch (e: IOException) {
+                    ConsoleUtils.log(e.message)
+                }
             }
         }
     }
 
     private fun post(usage: NexialEnv) {
-        if (!CheckUtils.isRunningInJUnit()) {
-            if (wsClient == null) {
-                throw IntegrationConfigException("web service client not ready")
-            }
+        if (enabled) {
+            if (!CheckUtils.isRunningInJUnit()) {
+                if (wsClient == null) {
+                    throw IntegrationConfigException("web service client not ready")
+                }
 
-            try {
-                wsClient!!.post(url, usage.json())
-            } catch (e: IOException) {
-                ConsoleUtils.log(e.message)
+                try {
+                    wsClient!!.post(url, usage.json())
+                } catch (e: IOException) {
+                    ConsoleUtils.log(e.message)
+                }
             }
         }
     }
