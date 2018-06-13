@@ -98,6 +98,16 @@ public class ExecutionContext {
     private static final String NAME_SPRING_CONTEXT = "nexialInternal.springContext";
     private static final String NAME_PLUGIN_MANAGER = "nexialInternal.pluginManager";
 
+    // function parsing
+    private static final String ESCAPED_DOLLAR = "\\$";
+    private static final String ESCAPED_OPEN_PARENTHESIS = "\\(";
+    private static final String ESCAPED_CLOSE_PARENTHESIS = "\\)";
+    private static final String ESCAPED_PIPE = "\\|";
+    private static final String ALT_DOLLAR = "__<~*~>__";
+    private static final String ALT_OPEN_PARENTHESIS = "__<?!?>__";
+    private static final String ALT_CLOSE_PARENTHESIS = "__<@*@>__";
+    private static final String ALT_PIPE = "__<%+%>__";
+
     protected Logger logger = LoggerFactory.getLogger(getClass());
     protected ExecutionDefinition execDef;
     protected TestProject project;
@@ -164,6 +174,7 @@ public class ExecutionContext {
 
             // get the rest of token after the first pipe.  this should represent the entirety of all params
             token = replaceTokens(StringUtils.substringAfter(token, TOKEN_PARAM_SEP));
+            token = StringUtils.replace(token, ESCAPED_PIPE, ALT_PIPE);
 
             // compensate the use of TOKEN_PARAM_SEP as delimiter
             String delim = getTextDelim();
@@ -174,13 +185,16 @@ public class ExecutionContext {
 
             List<String> paramList = TextUtils.toList(token, TOKEN_PARAM_SEP, false);
             if (CollectionUtils.isEmpty(paramList)) {
-                throw new IllegalArgumentException("No or insufficient parameters found");
+                throw new IllegalArgumentException("None or insufficient parameters found");
             }
 
             parameters = new String[paramList.size()];
             for (int i = 0; i < paramList.size(); i++) {
-                String param = paramList.get(i);
                 // return the magic
+                String param = StringUtils.replace(paramList.get(i), ALT_PIPE, "|");
+                param = StringUtils.replace(param, ESCAPED_DOLLAR, "$");
+                param = StringUtils.replace(param, ESCAPED_OPEN_PARENTHESIS, "(");
+                param = StringUtils.replace(param, ESCAPED_CLOSE_PARENTHESIS, ")");
                 parameters[i] = StringUtils.replace(param, TOKEN_TEMP_DELIM, delim);
             }
         }
@@ -1174,8 +1188,7 @@ public class ExecutionContext {
 
             errorPrefix += " with " + ArrayUtils.getLength(f.parameters) + " parameters - ";
 
-            Object value = MethodUtils.invokeExactMethod(f.function, f.operation, f.parameters);
-            return Objects.toString(value, "");
+            return Objects.toString(MethodUtils.invokeExactMethod(f.function, f.operation, f.parameters), "");
         } catch (IllegalArgumentException e) {
             throw new RuntimeException(errorPrefix + "cannot be resolved", e);
         } catch (NoSuchMethodException e) {
@@ -1196,6 +1209,9 @@ public class ExecutionContext {
     protected String nextFunctionToken(String text) {
         if (StringUtils.isBlank(text)) { return text; }
 
+        // circumvent the escaped conflicting character: $, ( and )
+        text = preFunctionParsing(text);
+
         if (!StringUtils.contains(text, TOKEN_FUNCTION_START)) { return null; }
 
         String tokenStart = StringUtils.substringAfterLast(text, TOKEN_FUNCTION_START);
@@ -1203,7 +1219,12 @@ public class ExecutionContext {
 
         String token = StringUtils.substringBefore(tokenStart, TOKEN_FUNCTION_END);
 
+        // if we found only `${ }` or `${<tab>}`, then forget it
         if (StringUtils.isBlank(token)) { return null; }
+
+        // put the alt-replaced characters back
+        token = postFunctionParsing(token);
+
         if (isFunction(token)) { return token; }
 
         // previously uncovered $(...) does not resolve to a function.
@@ -1371,6 +1392,22 @@ public class ExecutionContext {
 
         // DO NOT SET BROWSER TYPE TO SYSTEM PROPS, SINCE THIS WILL PREVENT ITERATION-LEVEL OVERRIDES
         // System.setProperty(SPREADSHEET_PROGRAM, spreadsheetProgram);
+    }
+
+    @NotNull
+    private static String preFunctionParsing(String text) {
+        text = StringUtils.replace(text, ESCAPED_DOLLAR, ALT_DOLLAR);
+        text = StringUtils.replace(text, ESCAPED_OPEN_PARENTHESIS, ALT_OPEN_PARENTHESIS);
+        text = StringUtils.replace(text, ESCAPED_CLOSE_PARENTHESIS, ALT_CLOSE_PARENTHESIS);
+        return StringUtils.replace(text, ESCAPED_PIPE, ALT_PIPE);
+    }
+
+    @NotNull
+    private static String postFunctionParsing(String text) {
+        text = StringUtils.replace(text, ALT_PIPE, ESCAPED_PIPE);
+        text = StringUtils.replace(text, ALT_CLOSE_PARENTHESIS, ESCAPED_CLOSE_PARENTHESIS);
+        text = StringUtils.replace(text, ALT_OPEN_PARENTHESIS, ESCAPED_OPEN_PARENTHESIS);
+        return StringUtils.replace(text, ALT_DOLLAR, ESCAPED_DOLLAR);
     }
 
     private Map<String, Object> getDataMap() { return data; }
