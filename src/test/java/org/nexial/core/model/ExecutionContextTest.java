@@ -205,29 +205,29 @@ public class ExecutionContextTest {
         f = toFunction(subject, "array|length|a\\|b\\|c");
         Assert.assertEquals("array", f.functionName);
         Assert.assertEquals("length", f.operation);
-        Assert.assertEquals("a\\|b\\|c", f.parameters[0]);
+        Assert.assertEquals("a|b|c", f.parameters[0]);
 
         f = toFunction(subject, "array|distinct|a\\|b\\|c");
         Assert.assertEquals("array", f.functionName);
         Assert.assertEquals("distinct", f.operation);
-        Assert.assertEquals("a\\|b\\|c", f.parameters[0]);
+        Assert.assertEquals("a|b|c", f.parameters[0]);
 
         f = toFunction(subject, "array|index|a\\|b\\|c|2");
         Assert.assertEquals("array", f.functionName);
         Assert.assertEquals("index", f.operation);
-        Assert.assertEquals("a\\|b\\|c", f.parameters[0]);
+        Assert.assertEquals("a|b|c", f.parameters[0]);
         Assert.assertEquals("2", f.parameters[1]);
 
         f = toFunction(subject, "array|item|a\\|b\\|c|0");
         Assert.assertEquals("array", f.functionName);
         Assert.assertEquals("item", f.operation);
-        Assert.assertEquals("a\\|b\\|c", f.parameters[0]);
+        Assert.assertEquals("a|b|c", f.parameters[0]);
         Assert.assertEquals("0", f.parameters[1]);
 
         f = toFunction(subject, "array|subarray|a\\|b\\|c|0|2");
         Assert.assertEquals("array", f.functionName);
         Assert.assertEquals("subarray", f.operation);
-        Assert.assertEquals("a\\|b\\|c", f.parameters[0]);
+        Assert.assertEquals("a|b|c", f.parameters[0]);
         Assert.assertEquals("0", f.parameters[1]);
         Assert.assertEquals("2", f.parameters[2]);
     }
@@ -261,15 +261,17 @@ public class ExecutionContextTest {
 
         try {
             subject.replaceTokens("$(array|subarray|mary,had,a|little,lamb|1|3)");
-            Assert.fail("Expected the abov to fail");
+            Assert.fail("Expected the above to fail");
         } catch (Exception e) {
             // expected
         }
 
-        Assert.assertEquals("had\\|a\\|little",
+        Assert.assertEquals("had|a|little",
                             subject.replaceTokens("$(array|subarray|mary\\|had\\|a\\|little\\|lamb|1|3)"));
-        Assert.assertEquals("had\\|a\\|little\\|had\\|a\\|little\\|had\\|a\\|little\\|had\\|a\\|little\\|had\\|a\\|little",
-                            subject.replaceTokens("$(array|replica|$(array|subarray|mary\\|had\\|a\\|little\\|lamb|1|3)|5)"));
+
+        subject.setData(TEXT_DELIM, ",");
+        Assert.assertEquals("had,a,little,had,a,little,had,a,little,had,a,little,had,a,little",
+                            subject.replaceTokens("$(array|replica|$(array|subarray|mary,had,a,little,lamb|1|3)|5)"));
     }
 
     @NotNull

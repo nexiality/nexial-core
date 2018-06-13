@@ -174,11 +174,17 @@ public class ExecutionContext {
 
             // get the rest of token after the first pipe.  this should represent the entirety of all params
             token = replaceTokens(StringUtils.substringAfter(token, TOKEN_PARAM_SEP));
-            token = StringUtils.replace(token, ESCAPED_PIPE, ALT_PIPE);
 
             // compensate the use of TOKEN_PARAM_SEP as delimiter
             String delim = getTextDelim();
-            if (StringUtils.equals(delim, TOKEN_PARAM_SEP)) { delim = "\\" + delim; }
+            boolean escapedDelim = false;
+            if (StringUtils.equals(delim, TOKEN_PARAM_SEP)) {
+                delim = ESCAPED_PIPE;
+                escapedDelim = true;
+            } else {
+                // if delim is not pipe, then we would want to preserve escaped pipe as part of argument
+                token = StringUtils.replace(token, ESCAPED_PIPE, ALT_PIPE);
+            }
 
             // replace delim with magic delim (not found in token)
             token = StringUtils.replace(token, delim, TOKEN_TEMP_DELIM);
@@ -190,12 +196,14 @@ public class ExecutionContext {
 
             parameters = new String[paramList.size()];
             for (int i = 0; i < paramList.size(); i++) {
+                String param = paramList.get(i);
                 // return the magic
-                String param = StringUtils.replace(paramList.get(i), ALT_PIPE, "|");
+                param = StringUtils.replace(param, TOKEN_TEMP_DELIM, escapedDelim ? TOKEN_PARAM_SEP :delim);
+                param = StringUtils.replace(param, ALT_PIPE, "|");
                 param = StringUtils.replace(param, ESCAPED_DOLLAR, "$");
                 param = StringUtils.replace(param, ESCAPED_OPEN_PARENTHESIS, "(");
                 param = StringUtils.replace(param, ESCAPED_CLOSE_PARENTHESIS, ")");
-                parameters[i] = StringUtils.replace(param, TOKEN_TEMP_DELIM, delim);
+                parameters[i] = param;
             }
         }
     }
