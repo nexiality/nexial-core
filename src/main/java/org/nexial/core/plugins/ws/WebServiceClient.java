@@ -57,7 +57,6 @@ import org.apache.http.impl.client.HttpClients;
 import org.apache.http.impl.conn.DefaultProxyRoutePlanner;
 import org.apache.http.impl.nio.client.HttpAsyncClientBuilder;
 import org.apache.http.protocol.HttpContext;
-import org.nexial.core.ExecutionThread;
 import org.nexial.core.WebProxy;
 import org.nexial.core.model.ExecutionContext;
 import org.nexial.core.model.TestStep;
@@ -201,13 +200,10 @@ public class WebServiceClient {
     }
 
     protected void log(String msg) {
-        ExecutionContext context = ExecutionThread.get();
+        // ExecutionContext context = ExecutionThread.get();
         if (context != null) {
             TestStep testStep = context.getCurrentTestStep();
-            if (testStep != null) {
-                context.getLogger().log(testStep, msg);
-                return;
-            }
+            if (testStep != null) { context.getLogger().log(testStep, msg); }
         }
 
         debug(msg);
@@ -348,9 +344,8 @@ public class WebServiceClient {
 
     protected boolean isBasicAuth() {
         if (context == null) { return false; }
-        String basicUser = context.getStringData(WS_BASIC_USER);
-        String basicPwd = context.getStringData(WS_BASIC_PWD);
-        return StringUtils.isNotBlank(basicUser) && StringUtils.isNotBlank(basicPwd);
+        return StringUtils.isNotBlank(context.getStringData(WS_BASIC_USER)) &&
+               StringUtils.isNotBlank(context.getStringData(WS_BASIC_PWD));
     }
 
     protected HttpClientBuilder addBasicAuth(HttpClientBuilder httpClientBuilder, Request request)
@@ -365,19 +360,8 @@ public class WebServiceClient {
         return httpClientBuilder.setDefaultCredentialsProvider(resolveBasicAuthCredentialProvider(request));
     }
 
-    @NotNull
     protected CredentialsProvider resolveBasicAuthCredentialProvider(Request request) throws MalformedURLException {
-        if (context == null) { return null; }
-
-        String basicUser = context.getStringData(WS_BASIC_USER);
-        String basicPwd = context.getStringData(WS_BASIC_PWD);
-
-        URL url = new URL(request.getUrl());
-
-        CredentialsProvider credsProvider = new BasicCredentialsProvider();
-        credsProvider.setCredentials(new AuthScope(url.getHost(), url.getPort()),
-                                     new UsernamePasswordCredentials(basicUser, basicPwd));
-        return credsProvider;
+        return resolveCredentialProvider(request, WS_BASIC_USER, WS_BASIC_PWD);
     }
 
     protected HttpClientContext newBasicEnabledHttpContext(Request request) throws MalformedURLException {
@@ -395,12 +379,9 @@ public class WebServiceClient {
 
     protected boolean isDigestAuth() {
         if (context == null) { return false; }
-        String digestUser = context.getStringData(WS_DIGEST_USER);
-        String digestPwd = context.getStringData(WS_DIGEST_PWD);
-        String digestRealm = context.getStringData(WS_DIGEST_REALM);
-        return StringUtils.isNotBlank(digestUser) &&
-               StringUtils.isNotBlank(digestPwd) &&
-               StringUtils.isNotBlank(digestRealm);
+        return StringUtils.isNotBlank(context.getStringData(WS_DIGEST_USER)) &&
+               StringUtils.isNotBlank(context.getStringData(WS_DIGEST_PWD)) &&
+               StringUtils.isNotBlank(context.getStringData(WS_DIGEST_REALM));
     }
 
     protected HttpClientBuilder addDigestAuth(HttpClientBuilder httpClientBuilder, Request request)
@@ -415,12 +396,18 @@ public class WebServiceClient {
         return httpClientBuilder.setDefaultCredentialsProvider(resolveDigestAuthCredentialProvider(request));
     }
 
-    @NotNull
     protected CredentialsProvider resolveDigestAuthCredentialProvider(Request request) throws MalformedURLException {
+        return resolveCredentialProvider(request, WS_DIGEST_USER, WS_DIGEST_PWD);
+    }
+
+    protected CredentialsProvider resolveCredentialProvider(Request request,
+                                                            String userVariable,
+                                                            String passwordVariable)
+        throws MalformedURLException {
         if (context == null) { return null; }
 
-        String digestUser = context.getStringData(WS_DIGEST_USER);
-        String digestPwd = context.getStringData(WS_DIGEST_PWD);
+        String digestUser = context.getStringData(userVariable);
+        String digestPwd = context.getStringData(passwordVariable);
 
         URL url = new URL(request.getUrl());
 

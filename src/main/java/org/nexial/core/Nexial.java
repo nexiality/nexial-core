@@ -17,7 +17,21 @@
 
 package org.nexial.core;
 
-import org.apache.commons.cli.*;
+import java.io.File;
+import java.io.IOException;
+import java.security.Security;
+import java.text.MessageFormat;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
+import java.util.Map;
+import javax.mail.MessagingException;
+
+import org.apache.commons.cli.CommandLine;
+import org.apache.commons.cli.DefaultParser;
+import org.apache.commons.cli.HelpFormatter;
+import org.apache.commons.cli.Options;
+import org.apache.commons.cli.ParseException;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.collections4.MapUtils;
 import org.apache.commons.io.FileUtils;
@@ -29,32 +43,25 @@ import org.apache.commons.mail.EmailException;
 import org.apache.poi.xssf.usermodel.XSSFCell;
 import org.apache.poi.xssf.usermodel.XSSFRow;
 import org.nexial.commons.javamail.MailObjectSupport;
-import org.nexial.commons.utils.*;
+import org.nexial.commons.utils.DateUtility;
+import org.nexial.commons.utils.EnvUtils;
+import org.nexial.commons.utils.FileUtil;
+import org.nexial.commons.utils.RegexUtils;
+import org.nexial.commons.utils.TextUtils;
 import org.nexial.core.aws.NexialS3Helper;
 import org.nexial.core.excel.Excel;
 import org.nexial.core.excel.Excel.Worksheet;
 import org.nexial.core.model.*;
-import org.nexial.core.plugins.ws.AsyncWebServiceClient;
 import org.nexial.core.reports.ExecutionMailConfig;
 import org.nexial.core.reports.ExecutionNotifier;
 import org.nexial.core.reports.MailNotifier;
 import org.nexial.core.reports.Mailer;
+import org.nexial.core.service.EventTracker;
 import org.nexial.core.service.ServiceLauncher;
-import org.nexial.core.service.UsageService;
 import org.nexial.core.utils.ConsoleUtils;
 import org.nexial.core.utils.ExecUtil;
 import org.nexial.core.utils.InputFileUtils;
 import org.springframework.context.support.ClassPathXmlApplicationContext;
-
-import javax.mail.MessagingException;
-import java.io.File;
-import java.io.IOException;
-import java.security.Security;
-import java.text.MessageFormat;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
-import java.util.Map;
 
 import static java.io.File.separator;
 import static org.apache.commons.lang3.SystemUtils.USER_NAME;
@@ -180,7 +187,6 @@ public class Nexial {
     private int listenPort = -1;
     private String listenerHandshake;
     private String usageId;
-    private UsageService usageService;
 
     @SuppressWarnings("PMD.DoNotCallSystemExit")
     public static void main(String[] args) {
@@ -752,13 +758,6 @@ public class Nexial {
         if (springContext == null || !springContext.isActive()) {
             springContext = new ClassPathXmlApplicationContext("classpath:/nexial-main.xml");
         }
-
-        if (usageService == null) {
-            usageService = springContext.getBean("usageService", UsageService.class);
-            AsyncWebServiceClient wsClient = new AsyncWebServiceClient(null);
-            wsClient.setVerbose(false);
-            usageService.setWsClient(wsClient);
-        }
     }
 
     /**
@@ -930,15 +929,9 @@ public class Nexial {
         }
     }
 
-    private void trackEvent(NexialEvent event) {
-        initSpringContext();
-        usageService.send(event);
-    }
+    private void trackEvent(NexialEvent event) { EventTracker.INSTANCE.track(event); }
 
-    private void trackExecution(NexialEnv nexialEnv) {
-        initSpringContext();
-        usageService.send(nexialEnv);
-    }
+    private void trackExecution(NexialEnv nexialEnv) { EventTracker.INSTANCE.track(nexialEnv); }
 
     /**
      * log {@code msg} to console if the System property {@code nexial.devLogging} is {@code "true"}.

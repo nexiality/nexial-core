@@ -120,9 +120,10 @@
           p:smsIncludeMeta="false"
     />
 
-    <bean id="usageService" class="org.nexial.core.service.UsageService">
+    <bean class="org.nexial.core.service.EventCollector" primary="true" lazy-init="false" init-method="init">
         <constructor-arg index="0" value="https://w62rwmoetb.execute-api.us-east-1.amazonaws.com/nexial/num"/>
-        <constructor-arg index="1" value="false"/>
+        <constructor-arg index="1" value="${nexial.event.publish.verbose:false}"/>
+        <constructor-arg index="2" value="${nexial.event.publish:true}"/>
     </bean>
 
 </beans>
