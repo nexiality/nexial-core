@@ -33,7 +33,7 @@ class EventCollector(val url: String, val verbose: Boolean, val enabled: Boolean
     private val shouldProceed = enabled && !CheckUtils.isRunningInJUnit()
 
     init {
-        isDaemon = false
+        isDaemon = true
         name = "nexial-event-collector"
         priority = MIN_PRIORITY
     }
