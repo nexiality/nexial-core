@@ -66,6 +66,8 @@ public final class ExecutionThread extends Thread {
     private ExecutionDefinition execDef;
     private ExecutionSummary executionSummary = new ExecutionSummary();
     private List<File> completedTests = new ArrayList<>();
+    private boolean firstUse;
+    private boolean lastUse;
 
     // capture the data after an execution run (all iteration, all scenarios within 1 file)
     private Map<String, Object> intraExecutionData = new HashMap<>();
@@ -81,6 +83,10 @@ public final class ExecutionThread extends Thread {
         self.execDef = execDef;
         return self;
     }
+
+    public void setFirstUse(boolean firstUse) { this.firstUse = firstUse;}
+
+    public void setLastUse(boolean lastUse) { this.lastUse = lastUse;}
 
     @Override
     public void run() {
@@ -152,6 +158,10 @@ public final class ExecutionThread extends Thread {
                 testScript = ExecutionInputPrep.prep(runId, execDef, iteration, currIteration);
                 iterSummary.setTestScript(testScript);
                 context.useTestScript(testScript);
+
+                // handling onExecutionStart
+                if (firstUse) { context.getExecutionEventListener().onExecutionStart(); }
+
                 context.setData(CURR_ITERATION, currIteration);
 
                 if (currIteration == 1) { context.getExecutionEventListener().onScriptStart(); }
@@ -199,6 +209,10 @@ public final class ExecutionThread extends Thread {
         }
 
         onScriptComplete(context, executionSummary, iterationManager, ticktock);
+
+        // handling onExecutionComplete
+        if (lastUse) { context.getExecutionEventListener().onExecutionComplete(); }
+
         ExecutionThread.unset();
         MemManager.recordMemoryChanges(scriptName + " completed");
     }

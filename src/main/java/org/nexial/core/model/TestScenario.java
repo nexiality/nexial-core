@@ -33,6 +33,7 @@ import org.apache.poi.ss.util.CellRangeAddress;
 import org.apache.poi.xssf.usermodel.XSSFCell;
 import org.apache.poi.xssf.usermodel.XSSFRow;
 import org.apache.poi.xssf.usermodel.XSSFSheet;
+import org.nexial.core.ExecutionEventListener;
 import org.nexial.core.excel.Excel.Worksheet;
 import org.nexial.core.excel.ExcelAddress;
 import org.nexial.core.excel.ExcelArea;
@@ -123,6 +124,9 @@ public class TestScenario {
         executionSummary.setTestScript(worksheet.getFile());
         executionSummary.setStartTime(System.currentTimeMillis());
         executionSummary.setTotalSteps(CollectionUtils.size(allSteps));
+
+        ExecutionEventListener executionEventListener = context.getExecutionEventListener();
+        executionEventListener.onScenarioStart();
 
         for (TestCase testCase : testCases) {
             if (skipDueToFailFast) {
@@ -221,6 +225,8 @@ public class TestScenario {
 
         logger.log(this, "saving test scenario");
         save();
+
+        executionEventListener.onScenarioComplete();
 
         return allPass;
     }

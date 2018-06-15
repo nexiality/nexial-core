@@ -39,8 +39,8 @@ import org.nexial.core.utils.ExecUtil;
 import javazoom.jl.decoder.JavaLayerException;
 
 import static org.apache.commons.lang3.SystemUtils.USER_NAME;
-import static org.nexial.core.model.ExecutionEvent.ExecutionPause;
 import static org.nexial.core.NexialConst.Data.*;
+import static org.nexial.core.model.ExecutionEvent.ExecutionPause;
 
 public class ExecutionEventListener {
     private static final String EVENT_CONFIG_SEP = "|";
@@ -60,9 +60,17 @@ public class ExecutionEventListener {
 
     public void setSmsIncludeMeta(boolean smsIncludeMeta) { this.smsIncludeMeta = smsIncludeMeta; }
 
+    public void onExecutionStart() { handleEvent(ExecutionEvent.ExecutionStart); }
+
+    public void onExecutionComplete() { handleEvent(ExecutionEvent.ExecutionComplete); }
+
     public void onScriptStart() { handleEvent(ExecutionEvent.ScriptStart); }
 
     public void onScriptComplete() { handleEvent(ExecutionEvent.ScriptComplete); }
+
+    public void onScenarioStart() { handleEvent(ExecutionEvent.ScenarioStart); }
+
+    public void onScenarioComplete() { handleEvent(ExecutionEvent.ScenarioComplete); }
 
     public void onError() { handleEvent(ExecutionEvent.ErrorOccurred); }
 
@@ -184,7 +192,7 @@ public class ExecutionEventListener {
         try {
             SoundMachine dj = context.getDj();
             if (dj == null) { return; }
-            dj.speak(text, false);
+            dj.speak(text, true);
         } catch (JavaLayerException | IntegrationConfigException e) {
             ConsoleUtils.log(context.getRunId(), event + " - tts not configured: " + e.getMessage());
             ConsoleUtils.log(context.getRunId(), event + " - " + text);

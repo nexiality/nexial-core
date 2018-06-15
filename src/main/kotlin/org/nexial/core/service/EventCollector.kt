@@ -22,22 +22,27 @@ import org.nexial.commons.utils.FileUtil
 import org.nexial.core.NexialConst.DEF_FILE_ENCODING
 import org.nexial.core.plugins.ws.WebServiceClient
 import org.nexial.core.service.EventUtils.postfix
-import org.nexial.core.service.EventUtils.prefix
 import org.nexial.core.service.EventUtils.storageLocation
 import org.nexial.core.utils.CheckUtils
 import org.nexial.core.utils.ConsoleUtils
 import java.io.File
 
 class EventCollector(val url: String, val verbose: Boolean, val enabled: Boolean) : Thread() {
-    private val sleepMs = 1000L
+    private val sleepMs = 250L
     private val wsClient = WebServiceClient(null)
     private val shouldProceed = enabled && !CheckUtils.isRunningInJUnit()
+
+    init {
+        isDaemon = false
+        name = "nexial-event-collector"
+        priority = MIN_PRIORITY
+    }
 
     override fun run() {
         while (true) {
 
             log("scanning for event files in $storageLocation...")
-            val files = FileUtil.listFiles(storageLocation, "$prefix.+$postfix", false)
+            val files = FileUtil.listFiles(storageLocation, ".+$postfix", false)
 
             if (CollectionUtils.isNotEmpty(files)) {
                 val file = files[0]
@@ -71,9 +76,6 @@ class EventCollector(val url: String, val verbose: Boolean, val enabled: Boolean
     }
 
     private fun init() {
-        isDaemon = true
-        name = "nexial-event-collector"
-        priority = Thread.MIN_PRIORITY
         wsClient.setVerbose(verbose)
         if (shouldProceed) start()
     }

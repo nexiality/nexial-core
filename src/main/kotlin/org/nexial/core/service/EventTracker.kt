@@ -25,22 +25,24 @@ import org.nexial.core.NexialConst.DEF_FILE_ENCODING
 import org.nexial.core.model.NexialEnv
 import org.nexial.core.model.NexialEvent
 import org.nexial.core.service.EventUtils.postfix
-import org.nexial.core.service.EventUtils.prefix
 import org.nexial.core.service.EventUtils.storageLocation
 import java.io.File
 import java.io.File.separator
+import java.text.SimpleDateFormat
+import java.util.*
 
 object EventTracker {
+    private val eventFileDateFormat = SimpleDateFormat("yyyyMMdd_HHmmss.SSS.")
 
-    fun track(event: NexialEvent) = write("event", event.json())
+    fun track(event: NexialEvent) = write(event.eventName, event.json())
 
     fun track(env: NexialEnv) = write("env", env.json())
 
     private fun write(type: String, content: String) {
         val file = File(storageLocation +
-                        prefix +
-                        System.currentTimeMillis() + "." + RandomStringUtils.randomAlphabetic(5) + "." + type +
-                        postfix)
+                        RandomStringUtils.randomAlphabetic(5) + "." +
+                        eventFileDateFormat.format(Date()) + "." +
+                        type + postfix)
         FileUtils.forceMkdirParent(file)
         FileUtils.write(file, content, DEF_FILE_ENCODING)
     }
@@ -49,11 +51,9 @@ object EventTracker {
 object EventUtils {
     internal val storageLocation = StringUtils.appendIfMissing(SystemUtils.getJavaIoTmpDir().absolutePath, separator) +
                                    Hex.encodeHexString("Nexial_Event".toByteArray()) + separator
-
-    internal const val prefix = "nexial."
     internal const val postfix = ".json"
 
-    init {
-        println("storageLocation = $storageLocation")
-    }
+//    init {
+//        println("storageLocation = $storageLocation")
+//    }
 }

@@ -614,8 +614,10 @@ public class Nexial {
         List<ExecutionThread> executionThreads = new ArrayList<>();
         Map<String, Object> intraExecution = null;
 
+        int lastUse = executions.size() - 1;
         try {
-            for (ExecutionDefinition exec : executions) {
+            for (int i = 0; i < executions.size(); i++) {
+                ExecutionDefinition exec = executions.get(i);
                 if (BooleanUtils.toBoolean(System.getProperty(LAST_PLAN_STEP, DEF_LAST_PLAN_STEP))) { break; }
 
                 exec.setRunId(runId);
@@ -625,6 +627,8 @@ public class Nexial {
                 ConsoleUtils.log(runId, msgPrefix + "resolve RUN ID as " + runId);
 
                 ExecutionThread launcherThread = ExecutionThread.newInstance(exec);
+                if (i == 0) { launcherThread.setFirstUse(true); }
+                if (i == lastUse) { launcherThread.setLastUse(true); }
                 if (MapUtils.isNotEmpty(intraExecution)) { launcherThread.setIntraExecutionData(intraExecution); }
                 executionThreads.add(launcherThread);
 
@@ -701,8 +705,8 @@ public class Nexial {
 
         boolean outputToCloud = BooleanUtils.toBoolean(System.getProperty(OUTPUT_TO_CLOUD, DEF_OUTPUT_TO_CLOUD + ""));
         boolean generateReport =
-                outputToCloud ||
-                BooleanUtils.toBoolean(System.getProperty(GENERATE_EXEC_REPORT, DEF_GENERATE_EXEC_REPORT + ""));
+            outputToCloud ||
+            BooleanUtils.toBoolean(System.getProperty(GENERATE_EXEC_REPORT, DEF_GENERATE_EXEC_REPORT + ""));
 
         if (generateReport) {
             String reportPath = StringUtils.appendIfMissing(System.getProperty(OPT_OUT_DIR, project.getOutPath()),
@@ -727,7 +731,7 @@ public class Nexial {
 
                     // can't use otc.resolveOutputDir() since we are out of context at this point in time
                     String outputDir =
-                            System.getProperty(OPT_CLOUD_OUTPUT_BASE) + "/" + project.getName() + "/" + runId;
+                        System.getProperty(OPT_CLOUD_OUTPUT_BASE) + "/" + project.getName() + "/" + runId;
 
                     try {
                         otc.importToS3(new File(jsonSummaryReport), outputDir, true);
@@ -825,13 +829,15 @@ public class Nexial {
         // -- haven't found a way to do this more gracefully yet...
         if (ShutdownAdvisor.mustForcefullyTerminate()) { ShutdownAdvisor.forcefullyTerminate(); }
 
+        // try { Thread.sleep(1000);} catch (InterruptedException e) { }
+
         int exitStatus;
         if (summary == null) {
             System.err.println("Unable to cleanly execute tests; execution summary missing!");
             exitStatus = RC_EXECUTION_SUMMARY_MISSING;
         } else {
             double minExecSuccessRate = NumberUtils.toDouble(
-                    System.getProperty(MIN_EXEC_SUCCESS_RATE, DEF_MIN_EXEC_SUCCESS_RATE + ""));
+                System.getProperty(MIN_EXEC_SUCCESS_RATE, DEF_MIN_EXEC_SUCCESS_RATE + ""));
             if (minExecSuccessRate < 0 || minExecSuccessRate > 100) { minExecSuccessRate = DEF_MIN_EXEC_SUCCESS_RATE; }
             minExecSuccessRate = minExecSuccessRate / 100;
             String minSuccessRateString = MessageFormat.format(RATE_FORMAT, minExecSuccessRate);
