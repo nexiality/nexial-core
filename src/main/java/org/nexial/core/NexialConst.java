@@ -106,11 +106,15 @@ public final class NexialConst {
     public static final String OPT_EASY_STRING_COMPARE = NAMESPACE + "lenientStringCompare";
     public static final String OPT_HTTP_TTL = NAMESPACE + "httpTTL";
     public static final String OPT_UI_RENDER_WAIT_MS = NAMESPACE + "uiRenderWaitMs";
+    public static final String OPT_WAIT_SPEED = NAMESPACE + "waitSpeed";
+
     public static final String OPT_LAST_ALERT_TEXT = NAMESPACE + "lastAlertText";
     public static final String OPT_ALERT_IGNORE_FLAG = NAMESPACE + "ignoreBrowserAlert";
-    public static final String OPT_WAIT_SPEED = NAMESPACE + "waitSpeed";
+    public static final String OPT_PREEMPTIVE_ALERT_CHECK = NAMESPACE + "web.preemptiveAlertCheck";
+    public static final boolean DEF_PREEMPTIVE_ALERT_CHECK = true;
     public static final String OPT_FORCE_IE_32 = NAMESPACE + "forceIE32";
     public static final boolean DEFAULT_FORCE_IE_32 = false;
+
     public static final String WEB_ALWAYS_WAIT = NAMESPACE + "web.alwaysWait";
     public static final boolean DEF_WEB_ALWAYS_WAIT = false;
 

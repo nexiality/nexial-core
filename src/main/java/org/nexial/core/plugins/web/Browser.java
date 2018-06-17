@@ -647,8 +647,7 @@ public class Browser implements ForcefulTerminate {
             capabilities = capabilities
                                // .useCreateProcessApiToLaunchIe()
                                // .useShellWindowsApiToAttachToIe()
-                               .takeFullPageScreenshot()
-            ;
+                               .takeFullPageScreenshot();
         } else {
             capabilities = capabilities
                                // https://stackoverflow.com/a/32691070/4615880

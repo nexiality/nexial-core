@@ -901,8 +901,18 @@ public class WebCommand extends BaseCommand implements CanTakeScreenshot, CanLog
     public StepResult selectWindow(String winId) { return selectWindowAndWait(winId, "2000"); }
 
     public StepResult selectWindowByIndex(String index) {
+        requiresPositiveNumber(index, "index must be a number", index);
+
         ensureReady();
-        return selectWindowAndWait((String) driver.getWindowHandles().toArray()[Integer.parseInt(index)], "2000");
+
+        Set<String> handles = driver.getWindowHandles();
+        if (CollectionUtils.isEmpty(handles)) { return StepResult.fail("No window or windows handle found"); }
+
+        int idx = NumberUtils.toInt(index);
+        String[] handleIds = handles.toArray(new String[0]);
+        if (handleIds.length <= idx) { return StepResult.fail("Window index " + index + " not found"); }
+
+        return selectWindowAndWait(handleIds[idx], "2000");
     }
 
     public StepResult selectWindowByIndexAndWait(String index, String waitMs) {
@@ -1050,7 +1060,7 @@ public class WebCommand extends BaseCommand implements CanTakeScreenshot, CanLog
         if (action != null) { action.perform(); }
 
         // could have alert text...
-        alert.harvestText();
+        alert.preemptiveDismissAlert();
 
         return StepResult.success("typed text at '" + locator + "'");
     }
@@ -1219,7 +1229,7 @@ public class WebCommand extends BaseCommand implements CanTakeScreenshot, CanLog
         new Actions(driver).doubleClick(element).build().perform();
 
         // could have alert text...
-        alert.harvestText();
+        alert.preemptiveDismissAlert();
         waitForBrowserStability(Long.parseLong(waitMsStr));
 
         if (!isNumber) {
@@ -1540,7 +1550,7 @@ public class WebCommand extends BaseCommand implements CanTakeScreenshot, CanLog
             return StepResult.fail(e.getMessage(), e);
         } finally {
             // could have alert text...
-            alert.harvestText();
+            alert.preemptiveDismissAlert();
         }
     }
 
@@ -1720,7 +1730,7 @@ public class WebCommand extends BaseCommand implements CanTakeScreenshot, CanLog
 
     protected boolean waitForBrowserStability(long maxWait) {
         // for firefox we can't be calling driver.getPageSource() or driver.findElement() when alert dialog is present
-        if (alert.isAlertPresent()) { return true; }
+        if (alert.preemptiveCheckAlert()) { return true; }
 
         // force at least 1 compare
         if (maxWait < MIN_STABILITY_WAIT_MS) { maxWait = MIN_STABILITY_WAIT_MS + 1; }
@@ -1834,7 +1844,9 @@ public class WebCommand extends BaseCommand implements CanTakeScreenshot, CanLog
     protected byte[] downloadLink(String sessionName, String url) {
         // sanity check
         if (ws == null) { fail("command type 'ws' is not available.  Check with Nexial Support Group for details."); }
-        if (cookie == null) { fail("command type 'cookie' is not available.  Check with Nexial Support Group for details."); }
+        if (cookie == null) {
+            fail("command type 'cookie' is not available.  Check with Nexial Support Group for details.");
+        }
         requires(StringUtils.isNotBlank(url), "valid/full URL or property reference required", url);
 
         String cookieVar = NAMESPACE + "downloadCookies";

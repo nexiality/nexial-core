@@ -170,6 +170,14 @@ public class AlertCommand extends BaseCommand implements RequireBrowser {
         return StepResult.fail("UNSUPPORTED matchBy rule: " + matchBy);
     }
 
+    protected void preemptiveDismissAlert() {
+        if (context.getBooleanData(OPT_PREEMPTIVE_ALERT_CHECK, DEF_PREEMPTIVE_ALERT_CHECK)) { harvestText(); }
+    }
+
+    protected boolean preemptiveCheckAlert() {
+        return context.getBooleanData(OPT_PREEMPTIVE_ALERT_CHECK, DEF_PREEMPTIVE_ALERT_CHECK) && isAlertPresent();
+    }
+
     protected String harvestText() {
         String alertText = null;
 
@@ -178,16 +186,13 @@ public class AlertCommand extends BaseCommand implements RequireBrowser {
         try {
             Alert alert = driver.switchTo().alert();
             if (alert != null) { alertText = alert.getText(); }
+            if (StringUtils.isNotBlank(alertText)) {
+                ConsoleUtils.log("found alert/confirm text - " + alertText);
+                context.setData(OPT_LAST_ALERT_TEXT, alertText);
+            }
         } catch (UnreachableBrowserException e) {
             ConsoleUtils.log("browser already closed: " + e);
-            return alertText;
         } catch (Exception e) {
-            alertText = getAlertText();
-        }
-
-        if (StringUtils.isNotBlank(alertText)) {
-            ConsoleUtils.log("found alert/confirm text - " + alertText);
-            context.setData(OPT_LAST_ALERT_TEXT, alertText);
         }
 
         return alertText;

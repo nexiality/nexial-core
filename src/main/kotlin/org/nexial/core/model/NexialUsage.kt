@@ -30,7 +30,10 @@ import java.io.Serializable
 class NexialEnv(val id: String, @Transient val commandline: CommandLine) : Serializable {
     data class OperatingSystem(val name: String = OS_NAME, val version: String = OS_VERSION, val arch: String = OS_ARCH)
 
-    data class JVM(val home: String = JAVA_HOME, val vendor: String = JAVA_VENDOR, val version: String = JAVA_VERSION)
+    data class JVM(val home: String = JAVA_HOME,
+                   val vendor: String = JAVA_VENDOR,
+                   val version: String = JAVA_VERSION,
+                   val bitset: String = System.getProperty("sun.arch.data.model"))
 
     data class Nexial(val manifest: String = ExecUtil.deriveJarManifest(),
                       val home: String = System.getProperty(NEXIAL_HOME, "UNKNOWN"))
@@ -63,7 +66,7 @@ class NexialEnv(val id: String, @Transient val commandline: CommandLine) : Seria
 
     init {
         cmd = commandline.options
-                .joinToString(separator = "", transform = { option -> "-${option.opt} ${option.value} " }).trim()
+            .joinToString(separator = "", transform = { option -> "-${option.opt} ${option.value} " }).trim()
         runPlan = StringUtils.contains(cmd, "-plan")
     }
 
@@ -75,15 +78,15 @@ open class NexialEvent(val id: String, val timestamp: Long = System.currentTimeM
 }
 
 class NexialExecutionStartEvent :
-        NexialEvent(id = Utils.newEventId(), eventName = ExecutionEvent.ExecutionStart.eventName)
+    NexialEvent(id = Utils.newEventId(), eventName = ExecutionEvent.ExecutionStart.eventName)
 
 class NexialExecutionCompleteEvent(id: String) : NexialEvent(id, eventName = ExecutionEvent.ExecutionComplete.eventName)
 
 class NexialScriptStartEvent(id: String, val script: String) :
-        NexialEvent(id, eventName = ExecutionEvent.ScriptStart.eventName)
+    NexialEvent(id, eventName = ExecutionEvent.ScriptStart.eventName)
 
 class NexialScriptCompleteEvent(id: String, val script: String) :
-        NexialEvent(id, eventName = ExecutionEvent.ScriptComplete.eventName)
+    NexialEvent(id, eventName = ExecutionEvent.ScriptComplete.eventName)
 
 /**
  * one-and-done event. after this, the execution will stop
@@ -92,7 +95,7 @@ class NexialScriptCompleteEvent(id: String, val script: String) :
  * @constructor
  */
 class NexialCmdErrorEvent(val args: List<String>, val error: String) :
-        NexialEvent(id = Utils.newEventId(), eventName = ExecutionEvent.ErrorOccurred.eventName)
+    NexialEvent(id = Utils.newEventId(), eventName = ExecutionEvent.ErrorOccurred.eventName)
 
 /**
  * when a failure occurred, regardless of whether the execution will continue
@@ -101,12 +104,12 @@ class NexialCmdErrorEvent(val args: List<String>, val error: String) :
  * @constructor
  */
 class NexialFailEvent(id: String, val error: String) :
-        NexialEvent(id, eventName = ExecutionEvent.ErrorOccurred.eventName) {
+    NexialEvent(id, eventName = ExecutionEvent.ErrorOccurred.eventName) {
     var exception: Throwable? = null
     var commandType: String? = null
     var command: String? = null
 }
 
 class NexialUrlInvokedEvent(id: String, val browser: String, val url: String) :
-        NexialEvent(id, eventName = ExecutionEvent.WebOpen.eventName)
+    NexialEvent(id, eventName = ExecutionEvent.WebOpen.eventName)
 
