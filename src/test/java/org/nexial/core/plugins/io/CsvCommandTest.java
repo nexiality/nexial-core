@@ -582,7 +582,7 @@ public class CsvCommandTest {
 
     @Test
     public void parseCsv_comma_newline() {
-        CsvParser parser = CsvCommand.newCsvParser("\"", ",", "\n", false);
+        CsvParser parser = CsvCommand.newCsvParser("\"", ",", "\n", false, -1);
 
         // test 1: last row has fewer columns
         String fixture = "col1,col2,col3,col3a\n" +
@@ -611,7 +611,7 @@ public class CsvCommandTest {
 
     @Test
     public void parseCsv_comma_newline_quote() {
-        CsvParser parser = CsvCommand.newCsvParser("\"", ",", "\n", false);
+        CsvParser parser = CsvCommand.newCsvParser("\"", ",", "\n", false, -1);
 
         // test 1: last row has fewer columns AND first row has quoted value
         String fixture = "col1,col2,\"col 3\",col3a\n" +
@@ -652,7 +652,7 @@ public class CsvCommandTest {
 
     @Test
     public void parseCsv_comma_newline_quote_auto() {
-        CsvParser parser = CsvCommand.newCsvParser(null, null, null, false);
+        CsvParser parser = CsvCommand.newCsvParser(null, null, null, false, -1);
 
         // test 1: last row has fewer columns AND first row has quoted value
         String fixture = "col1,col2,\"col 3\",col3a\n" +

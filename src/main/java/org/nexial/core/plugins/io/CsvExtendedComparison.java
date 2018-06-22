@@ -313,9 +313,9 @@ class CsvExtendedComparison implements Serializable {
             throw new IntegrationConfigException("No identity column(s) specified for actual");
         }
 
-        if (expectedParser == null) { expectedParser = CsvCommand.newCsvParser(null, null, null, true); }
+        if (expectedParser == null) { expectedParser = CsvCommand.newCsvParser(null, null, null, true, -1); }
 
-        if (actualParser == null) { actualParser = CsvCommand.newCsvParser(null, null, null, true); }
+        if (actualParser == null) { actualParser = CsvCommand.newCsvParser(null, null, null, true, -1); }
 
         if (reportFormat == null) { reportFormat = CSV; }
     }

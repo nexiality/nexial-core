@@ -53,6 +53,8 @@ public class CsvTransformer<T extends CsvDataType> extends Transformer {
     private static final Map<String, Method> FUNCTIONS =
         toFunctionMap(FUNCTION_TO_PARAM, CsvTransformer.class, CsvDataType.class);
 
+    public static final int DEF_MAX_COLUMNS = 512;
+
     private static final String PAIR_DELIM = "|";
     private static final String NAME_VALUE_DELIM = "=";
     private static final String ATTR_INDEX = "index";
@@ -75,6 +77,10 @@ public class CsvTransformer<T extends CsvDataType> extends Transformer {
             }
             if (configMap.containsKey("indexOn")) {
                 data.addIndices(Array.toArray(fixControlChars(configMap.get("indexOn")), "\\,"));
+            }
+            if (configMap.containsKey("maxColumns")) {
+                // 512 is the default
+                data.setMaxColumns(NumberUtils.toInt(configMap.get("maxColumns"), DEF_MAX_COLUMNS));
             }
         }
 

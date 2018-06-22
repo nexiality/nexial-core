@@ -40,6 +40,7 @@ import com.univocity.parsers.csv.CsvParserSettings;
 import static org.nexial.core.plugins.io.IoCommand.CompareMode.FAIL_FAST;
 import static org.nexial.core.plugins.io.IoCommand.CompareMode.THOROUGH;
 import static org.nexial.core.utils.CheckUtils.*;
+import static org.nexial.core.variable.CsvTransformer.DEF_MAX_COLUMNS;
 
 public class CsvCommand extends IoCommand {
     private ExcelHelper excelHelper;
@@ -108,7 +109,7 @@ public class CsvCommand extends IoCommand {
         comparison.setDisplayFields(
             TextUtils.toList(context.getStringData(configKey + "output.display"), textDelim, true));
 
-        // labls of the mismatched information
+        // labels of the mismatched information
         comparison.setMismatchedField(context.getStringData(configKey + "output.MISMATCHED"));
         comparison.setExpectedField(context.getStringData(configKey + "output.EXPECTED"));
         comparison.setActualField(context.getStringData(configKey + "output.ACTUAL"));
@@ -161,8 +162,17 @@ public class CsvCommand extends IoCommand {
                                          String delim,
                                          String lineSeparator,
                                          boolean hasHeader,
-                                         boolean keepQuote) {
-        CsvParserSettings settings = toCsvParserSettings(delim, lineSeparator, hasHeader);
+                                         int maxColumns) {
+        return newCsvParser(quote, delim, lineSeparator, hasHeader, true, maxColumns);
+    }
+
+    public static CsvParser newCsvParser(String quote,
+                                         String delim,
+                                         String lineSeparator,
+                                         boolean hasHeader,
+                                         boolean keepQuote,
+                                         int maxColumns) {
+        CsvParserSettings settings = toCsvParserSettings(delim, lineSeparator, hasHeader, maxColumns);
 
         settings.setQuoteDetectionEnabled(true);
         if (StringUtils.isNotEmpty(quote)) {
@@ -171,14 +181,12 @@ public class CsvCommand extends IoCommand {
         }
 
         return new CsvParser(settings);
-
     }
 
-    public static CsvParser newCsvParser(String quote, String delim, String lineSeparator, boolean hasHeader) {
-        return newCsvParser(quote, delim, lineSeparator, hasHeader, true);
-    }
-
-    protected static CsvParserSettings toCsvParserSettings(String delim, String lineSeparator, boolean hasHeader) {
+    protected static CsvParserSettings toCsvParserSettings(String delim,
+                                                           String lineSeparator,
+                                                           boolean hasHeader,
+                                                           int maxColumns) {
         /*
         withDelimiter(',')
         withQuote('"')
@@ -202,18 +210,20 @@ public class CsvCommand extends IoCommand {
         } else {
             settings.setDelimiterDetectionEnabled(true);
         }
+
+        if (maxColumns > DEF_MAX_COLUMNS) { settings.setMaxColumns(maxColumns); }
         return settings;
     }
 
     protected List<String[]> parseAsCSV(File file) {
-        CsvParser parser = newCsvParser(null, null, null, false);
+        CsvParser parser = newCsvParser(null, null, null, false, -1);
         List<String[]> records = parser.parseAll(file);
         log("found " + records.size() + " line(s) from '" + file + "'");
         return records;
     }
 
     protected List<String[]> parseAsCSV(String content, boolean hasHeader) {
-        CsvParser parser = newCsvParser(null, null, null, hasHeader);
+        CsvParser parser = newCsvParser(null, null, null, hasHeader, -1);
         List<String[]> records = parser.parseAll(new StringReader(content));
         log("found " + records.size() + " line(s)");
         return records;

@@ -41,6 +41,7 @@ public class CsvDataType extends ExpressionDataType<List<Record>> {
     private String quote;
     private String recordDelim;
     private boolean header = true;
+    private int maxColumns;
     private CsvParser parser;
     private List<String> headers;
     private int columnCount;
@@ -119,6 +120,10 @@ public class CsvDataType extends ExpressionDataType<List<Record>> {
 
     public void setRecordDelim(String recordDelim) { this.recordDelim = recordDelim; }
 
+    public int getMaxColumns() { return maxColumns; }
+
+    public void setMaxColumns(int maxColumns) { this.maxColumns = maxColumns; }
+
     public void setReadyToParse(boolean readyToParse) { this.readyToParse = readyToParse; }
 
     public void reset(List<Record> records) {
@@ -163,6 +168,7 @@ public class CsvDataType extends ExpressionDataType<List<Record>> {
         snapshot.quote = quote;
         snapshot.recordDelim = recordDelim;
         snapshot.header = header;
+        snapshot.maxColumns = maxColumns;
         snapshot.parser = parser;
         if (CollectionUtils.isNotEmpty(headers)) { snapshot.headers = new ArrayList<>(headers); }
         snapshot.rowCount = rowCount;
@@ -200,7 +206,7 @@ public class CsvDataType extends ExpressionDataType<List<Record>> {
             value = null;
         }
 
-        parser = CsvCommand.newCsvParser(quote, delim, recordDelim, header);
+        parser = CsvCommand.newCsvParser(quote, delim, recordDelim, header, maxColumns);
         value = parser.parseAllRecords(new StringReader(textValue));
         rowCount = CollectionUtils.size(value);
         if (header) {
