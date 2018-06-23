@@ -29,10 +29,13 @@ import org.nexial.commons.utils.EnvUtils;
 import org.nexial.commons.utils.TextUtils;
 import org.nexial.core.model.ExecutionContext;
 import org.nexial.core.model.ExecutionEvent;
+import org.nexial.core.model.ExecutionSummary;
+import org.nexial.core.model.NexialScenarioCompleteEvent;
 import org.nexial.core.plugins.sound.SoundMachine;
 import org.nexial.core.reports.ExecutionMailConfig;
 import org.nexial.core.reports.MailNotifier;
 import org.nexial.core.reports.Mailer;
+import org.nexial.core.service.EventTracker;
 import org.nexial.core.utils.ConsoleUtils;
 import org.nexial.core.utils.ExecUtil;
 
@@ -70,7 +73,10 @@ public class ExecutionEventListener {
 
     public void onScenarioStart() { handleEvent(ExecutionEvent.ScenarioStart); }
 
-    public void onScenarioComplete() { handleEvent(ExecutionEvent.ScenarioComplete); }
+    public void onScenarioComplete(ExecutionSummary executionSummary) {
+        handleEvent(ExecutionEvent.ScenarioComplete);
+        EventTracker.INSTANCE.track(new NexialScenarioCompleteEvent(executionSummary));
+    }
 
     public void onError() { handleEvent(ExecutionEvent.ErrorOccurred); }
 

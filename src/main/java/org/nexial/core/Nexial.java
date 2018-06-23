@@ -23,6 +23,7 @@ import java.security.Security;
 import java.text.MessageFormat;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 import javax.mail.MessagingException;
@@ -186,7 +187,6 @@ public class Nexial {
     private int threadWaitCounter;
     private int listenPort = -1;
     private String listenerHandshake;
-    private String usageId;
 
     @SuppressWarnings("PMD.DoNotCallSystemExit")
     public static void main(String[] args) {
@@ -218,13 +218,13 @@ public class Nexial {
             try {
                 MemManager.recordMemoryChanges("before execution");
                 summary = main.execute();
+                main.trackEvent(new NexialExecutionCompleteEvent(summary));
                 MemManager.recordMemoryChanges("after execution");
             } catch (Throwable e) {
                 System.err.println("Unknown/unexpected error occurred: " + e.getMessage());
                 // e.printStackTrace();
             }
 
-            main.trackEvent(new NexialExecutionCompleteEvent(main.usageId));
             ConsoleUtils.log("Exiting Nexial...");
             System.exit(beforeShutdown(summary));
         }
@@ -276,25 +276,21 @@ public class Nexial {
             this.executions = parsePlanExecution(cmd);
             System.setProperty(NEXIAL_EXECUTION_TYPE, NEXIAL_EXECUTION_TYPE_PLAN);
         } else {
-            if (!cmd.hasOption(SCRIPT)) { fail("test script is required but not specified"); }
+            if (!cmd.hasOption(SCRIPT)) { fail("test script is required but not specified."); }
             this.executions = parseScriptExecution(cmd);
             System.setProperty(NEXIAL_EXECUTION_TYPE, NEXIAL_EXECUTION_TYPE_SCRIPT);
         }
 
         ConsoleUtils.log("input files and output directory resolved...");
 
-        NexialExecutionStartEvent startEvent = new NexialExecutionStartEvent();
-        trackEvent(startEvent);
-        usageId = startEvent.getId();
-
-        trackExecution(new NexialEnv(usageId, cmd));
+        trackExecution(new NexialEnv(cmd));
     }
 
     protected List<ExecutionDefinition> parsePlanExecution(CommandLine cmd) throws IOException {
         List<String> testPlanPathList = TextUtils.toList(cmd.getOptionValue(PLAN), DEF_TEXT_DELIM, true);
         List<ExecutionDefinition> executions = new ArrayList<>();
 
-        for (String testPlanPath : testPlanPathList) {
+        for (String testPlanPath: testPlanPathList) {
             // String testPlanPath = cmd.getOptionValue(PLAN);
             // 1. based on plan location, determine script, data, output and artifact directory
             if (!InputFileUtils.isValidPlanFile(testPlanPath)) {
@@ -344,12 +340,10 @@ public class Nexial {
                     exec.setProject(project);
 
                     // 2.1 mark option for parallel run and fail fast
-                    exec.setFailFast(BooleanUtils.toBoolean(StringUtils.defaultIfBlank(readCellValue(row,
-                                                                                                     COL_IDX_PLAN_FAIL_FAST),
-                                                                                       DEF_PLAN_FAIL_FAST)));
-                    exec.setSerialMode(BooleanUtils.toBoolean(StringUtils.defaultIfBlank(readCellValue(row,
-                                                                                                       COL_IDX_PLAN_WAIT),
-                                                                                         DEF_PLAN_SERIAL_MODE)));
+                    exec.setFailFast(BooleanUtils.toBoolean(
+                        StringUtils.defaultIfBlank(readCellValue(row, COL_IDX_PLAN_FAIL_FAST), DEF_PLAN_FAIL_FAST)));
+                    exec.setSerialMode(BooleanUtils.toBoolean(
+                        StringUtils.defaultIfBlank(readCellValue(row, COL_IDX_PLAN_WAIT), DEF_PLAN_SERIAL_MODE)));
                     exec.setLoadTestMode(BooleanUtils.toBoolean(readCellValue(row, COL_IDX_PLAN_LOAD_TEST)));
                     if (exec.isLoadTestMode()) { fail("Sorry... load testing mode not yet ready for use."); }
 
@@ -359,9 +353,7 @@ public class Nexial {
                         executions.add(exec);
                     } catch (IOException e) {
                         fail("Unable to parse successfully for the test plan specified in ROW " +
-                             (row.getRowNum() + 1) +
-                             " of " +
-                             testPlanFile);
+                             (row.getRowNum() + 1) + " of " + testPlanFile + ".");
                     }
                 }
             });
@@ -376,7 +368,7 @@ public class Nexial {
     protected File deriveScriptFromPlan(XSSFRow row, TestProject project, String testPlan) {
         String testScriptPath = readCellValue(row, COL_IDX_PLAN_TEST_SCRIPT);
         if (StringUtils.isBlank(testScriptPath)) {
-            fail("Invalid test script specified in ROW " + (row.getRowNum() + 1) + " of " + testPlan);
+            fail("Invalid test script specified in ROW " + (row.getRowNum() + 1) + " of " + testPlan + ".");
         }
 
         testScriptPath = StringUtils.appendIfMissing(testScriptPath, ".xlsx");
@@ -401,7 +393,7 @@ public class Nexial {
 
         if (!InputFileUtils.isValidScript(testScriptPath)) {
             // could be abs. path or relative path based on current project
-            fail("Invalid/unreadable test script specified in ROW " + (row.getRowNum() + 1) + " of " + testPlan);
+            fail("Invalid/unreadable test script specified in ROW " + (row.getRowNum() + 1) + " of " + testPlan + ".");
         }
 
         return new File(testScriptPath);
@@ -417,13 +409,13 @@ public class Nexial {
             excel = new Excel(testScript, DEF_OPEN_EXCEL_AS_DUP);
             List<Worksheet> validScenarios = InputFileUtils.retrieveValidTestScenarios(excel);
             if (CollectionUtils.isEmpty(validScenarios)) {
-                fail("No valid scenario found in script " + testScript);
+                fail("No valid scenario found in script " + testScript + ".");
             } else {
                 scenarios = new ArrayList<>();
-                for (Worksheet scenario : validScenarios) { scenarios.add(scenario.getName()); }
+                for (Worksheet scenario: validScenarios) { scenarios.add(scenario.getName()); }
             }
         } catch (IOException e) {
-            fail("Unable to collect scenarios from " + testScript);
+            fail("Unable to collect scenarios from " + testScript + ".");
         } finally {
             if (DEF_OPEN_EXCEL_AS_DUP && excel != null) { FileUtils.deleteQuietly(excel.getFile().getParentFile()); }
         }
@@ -461,7 +453,7 @@ public class Nexial {
         }
 
         if (!InputFileUtils.isValidDataFile(dataFilePath)) {
-            fail("Invalid/unreadable data file specified in ROW " + (row.getRowNum() + 1) + " of " + testPlan);
+            fail("Invalid/unreadable data file specified in ROW " + (row.getRowNum() + 1) + " of " + testPlan + ".");
         }
 
         return new File(dataFilePath);
@@ -512,7 +504,7 @@ public class Nexial {
             if (CollectionUtils.isNotEmpty(allTestScripts)) {
                 allTestScripts.forEach(sheet -> targetScenarios.add(sheet.getName()));
             } else {
-                fail("Unable to derive any valid test script from " + testScriptPath);
+                fail("Unable to derive any valid test script from " + testScriptPath + ".");
             }
 
             if (DEF_OPEN_EXCEL_AS_DUP) { FileUtils.deleteQuietly(excel.getFile().getParentFile()); }
@@ -557,6 +549,7 @@ public class Nexial {
                 dataSheets.addAll(dataSets);
             }
         }
+
         // datasheet names are the same as scenario if none is specifically specified
         if (CollectionUtils.isEmpty(dataSheets)) { dataSheets = targetScenarios; }
 
@@ -564,12 +557,8 @@ public class Nexial {
 
         // create new definition instance, based on various input and derived values
         ExecutionDefinition exec = new ExecutionDefinition();
-        exec.setDescription("Started via commandline inputs on " +
-                            DateUtility.getCurrentDateTime() +
-                            " from " +
-                            EnvUtils.getHostName() +
-                            " via user " +
-                            USER_NAME);
+        exec.setDescription("Started via commandline inputs on " + DateUtility.getCurrentDateTime() +
+                            " from " + EnvUtils.getHostName() + " via user " + USER_NAME);
         exec.setTestScript(testScriptPath);
         exec.setScenarios(targetScenarios);
         exec.setDataFile(dataFile.getAbsolutePath());
@@ -621,7 +610,6 @@ public class Nexial {
                 if (BooleanUtils.toBoolean(System.getProperty(LAST_PLAN_STEP, DEF_LAST_PLAN_STEP))) { break; }
 
                 exec.setRunId(runId);
-                trackEvent(new NexialScriptStartEvent(usageId, exec.getTestScript()));
 
                 String msgPrefix = "[" + exec.getTestScript() + "] ";
                 ConsoleUtils.log(runId, msgPrefix + "resolve RUN ID as " + runId);
@@ -646,8 +634,6 @@ public class Nexial {
                             intraExecution = launcherThread.getIntraExecutionData();
                             executionThreads.remove(launcherThread);
                             summary.addNestSummary(launcherThread.getExecutionSummary());
-                            trackEvent(new NexialScriptCompleteEvent(usageId,
-                                                                     launcherThread.getExecDef().getTestScript()));
                             launcherThread = null;
                             break;
                         }
@@ -664,8 +650,8 @@ public class Nexial {
                         if (t.isAlive()) {
                             stillRunning[0] = true;
                         } else {
-                            summary.addNestSummary(t.getExecutionSummary());
-                            trackEvent(new NexialScriptCompleteEvent(usageId, t.getExecDef().getTestScript()));
+                            ExecutionSummary executionSummary = t.getExecutionSummary();
+                            summary.addNestSummary(executionSummary);
                             t = null;
                         }
                     }
@@ -790,7 +776,7 @@ public class Nexial {
             } // else dataFile is specified as a fully qualified path
         } else {
             if (testScriptFile == null) {
-                fail("data file cannot be resolved since test script is not specified");
+                fail("data file cannot be resolved since test script is not specified.");
                 return null;
             }
 
@@ -811,7 +797,9 @@ public class Nexial {
 
     protected static void fail(String message) {
         ConsoleUtils.error("ERROR: " + message);
-        throw new IllegalArgumentException("Required argument is missing or invalid.  Check usage details.");
+        throw new IllegalArgumentException("ERROR: " + message +
+                                           " Possibly the required argument is missing or invalid." +
+                                           " Check usage details.");
     }
 
     @SuppressWarnings("PMD.SystemPrintln")
@@ -828,8 +816,6 @@ public class Nexial {
         // need to kill JVM forcefully if awt was used during runtime
         // -- haven't found a way to do this more gracefully yet...
         if (ShutdownAdvisor.mustForcefullyTerminate()) { ShutdownAdvisor.forcefullyTerminate(); }
-
-        // try { Thread.sleep(1000);} catch (InterruptedException e) { }
 
         int exitStatus;
         if (summary == null) {
@@ -857,7 +843,7 @@ public class Nexial {
 
             if (successRate != 1) {
                 if (successRate >= minExecSuccessRate) {
-                    System.out.println("PASSED - success rate greater than specified minimium success rate " +
+                    System.out.println("PASSED - success rate greater than specified minimum success rate " +
                                        "(" + successRateString + " >= " + minSuccessRateString + ")");
                     exitStatus = 0;
                 } else {
@@ -880,6 +866,24 @@ public class Nexial {
                     }
                 }
             }
+        }
+
+        File eventPath = new File(EventTracker.INSTANCE.getStorageLocation());
+        String[] ext = new String[]{StringUtils.removeStart(EventTracker.INSTANCE.getExtension(), ".")};
+        Collection<File> eventFiles = FileUtils.listFiles(eventPath, ext, false);
+        long sleepTime = 500;
+        while (CollectionUtils.isNotEmpty(eventFiles)) {
+            // don't sleep too long... 5 sec tops
+            if (sleepTime > 5000) { break; }
+
+            // sleep/wait
+            try { Thread.sleep(sleepTime);} catch (InterruptedException e) { }
+
+            // next sleep time will be doubled
+            sleepTime += sleepTime;
+
+            // check for event files again...
+            eventFiles = FileUtils.listFiles(eventPath, ext, false);
         }
 
         beforeShutdownMemUsage();

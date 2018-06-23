@@ -36,6 +36,7 @@ import org.nexial.core.aws.NexialS3Helper;
 import org.nexial.core.excel.Excel;
 import org.nexial.core.model.*;
 import org.nexial.core.reports.ExecutionMailConfig;
+import org.nexial.core.service.EventTracker;
 import org.nexial.core.utils.ConsoleUtils;
 import org.nexial.core.utils.ExecutionLogger;
 
@@ -138,6 +139,7 @@ public final class ExecutionThread extends Thread {
         executionSummary.setName(scriptName);
         executionSummary.setExecutionLevel(SCRIPT);
         executionSummary.setStartTime(System.currentTimeMillis());
+        executionSummary.setSourceScript(testScriptLocation);
 
         for (int currIteration = 1; currIteration <= totalIterations; currIteration++) {
             // SINGLE THREAD EXECUTION WITHIN FOR LOOP!
@@ -153,6 +155,7 @@ public final class ExecutionThread extends Thread {
             iterSummary.setName(currIteration + " of " + totalIterations);
             iterSummary.setExecutionLevel(ITERATION);
             iterSummary.setStartTime(System.currentTimeMillis());
+            iterSummary.setSourceScript(testScriptLocation);
 
             try {
                 testScript = ExecutionInputPrep.prep(runId, execDef, iteration, currIteration);
@@ -191,6 +194,9 @@ public final class ExecutionThread extends Thread {
                 iterSummary.setEndTime(System.currentTimeMillis());
                 iterSummary.aggregatedNestedExecutions(context);
                 iterSummary.generateExcelReport(testScript);
+                EventTracker.INSTANCE.track(new NexialIterationCompleteEvent(testScriptLocation,
+                                                                             currIteration,
+                                                                             iterSummary));
                 executionSummary.addNestSummary(iterSummary);
 
                 if (testScript != null) {
@@ -331,6 +337,7 @@ public final class ExecutionThread extends Thread {
         ticktock.stop();
         summary.setEndTime(System.currentTimeMillis());
         summary.aggregatedNestedExecutions(context);
+        EventTracker.INSTANCE.track(new NexialScriptCompleteEvent(summary.getSourceScript(), summary));
 
         StringBuilder cloudOutputBuffer = new StringBuilder();
         if (context.isOutputToCloud()) {
@@ -383,7 +390,7 @@ public final class ExecutionThread extends Thread {
     protected void throwTerminalException(Result result) {
         if (result == null || result.getFailureCount() < 1) { return; }
 
-        for (Failure f : result.getFailures()) {
+        for (Failure f: result.getFailures()) {
             Throwable e = f.getException();
             if (e == null) { continue; }
             if (e instanceof InvocationTargetException) { e = ((InvocationTargetException) e).getTargetException(); }

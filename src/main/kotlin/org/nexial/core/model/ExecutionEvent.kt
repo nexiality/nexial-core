@@ -35,6 +35,9 @@ enum class ExecutionEvent(val eventName: String, val variable: String, val descr
     ScriptStart("onScriptStart", NOTIFY_ON + "ScriptStart", "Script execution started"),
     ScriptComplete("onScriptComplete", NOTIFY_ON + "ScriptComplete", "Script execution completed"),
 
+    IterationStart("onIterationStart", NOTIFY_ON + "IterationStart", "Iteration execution started"),
+    IterationComplete("onIterationComplete", NOTIFY_ON + "IterationComplete", "Iteration execution completed"),
+
     ScenarioStart("onScenarioStart", NOTIFY_ON + "ScenarioStart", "Scenario execution started"),
     ScenarioComplete("onScenarioComplete", NOTIFY_ON + "ScenarioComplete", "Scenario execution completed"),
 
@@ -57,6 +60,6 @@ enum class ExecutionEvent(val eventName: String, val variable: String, val descr
     override fun toString(): String = eventName
 
     object Utils {
-        fun newEventId(): String = RandomStringUtils.randomAlphanumeric(5)
+        val eventId: String = RandomStringUtils.randomAlphanumeric(10)
     }
 }

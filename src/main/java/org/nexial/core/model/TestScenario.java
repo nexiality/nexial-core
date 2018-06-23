@@ -226,7 +226,7 @@ public class TestScenario {
         logger.log(this, "saving test scenario");
         save();
 
-        executionEventListener.onScenarioComplete();
+        executionEventListener.onScenarioComplete(executionSummary);
 
         return allPass;
     }

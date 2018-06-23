@@ -96,6 +96,7 @@ public class ExecutionSummary {
 
     private String name;
     private ExecutionLevel executionLevel;
+    private String sourceScript;
     private transient File testScript;
     private String testScriptLink;
 
@@ -214,6 +215,10 @@ public class ExecutionSummary {
         this.testScriptLink = testScriptLink;
     }
 
+    public String getSourceScript() { return sourceScript;}
+
+    public void setSourceScript(String sourceScript) { this.sourceScript = sourceScript;}
+
     public String getName() { return name; }
 
     public void setName(String name) { this.name = name; }
@@ -330,7 +335,7 @@ public class ExecutionSummary {
             int rowNum = createReferenceDataSection(summary, 2);
             createSummaryHeader(summary, ++rowNum);
 
-            for (ExecutionSummary scenarioSummary : nestedExecutions) {
+            for (ExecutionSummary scenarioSummary: nestedExecutions) {
                 if (scenarioSummary == null ||
                     StringUtils.isBlank(scenarioSummary.getName()) ||
                     CollectionUtils.isEmpty(scenarioSummary.getNestedExecutions())) { continue; }
@@ -340,7 +345,7 @@ public class ExecutionSummary {
 
                 // test scenario should be nested with activities
                 List<ExecutionSummary> activitySummaries = scenarioSummary.getNestedExecutions();
-                for (ExecutionSummary activitySummary : activitySummaries) {
+                for (ExecutionSummary activitySummary: activitySummaries) {
                     if (activitySummary == null || StringUtils.isBlank(activitySummary.getName())) { continue; }
                     createActivityExecutionSummary(summary, activitySummary, rowNum++);
                 }
@@ -388,7 +393,7 @@ public class ExecutionSummary {
         Map<String, String> ref = summary.referenceData;
         if (MapUtils.isNotEmpty(ref)) {
             List<String> refNames = CollectionUtil.toList(ref.keySet());
-            for (String name : refNames) {
+            for (String name: refNames) {
                 createCell(sheet, "B" + rowNum, name, EXEC_SUMM_DATA_NAME);
                 createCell(sheet, "C" + rowNum, ref.get(name), EXEC_SUMM_DATA_VALUE);
                 rowNum++;
@@ -570,7 +575,7 @@ public class ExecutionSummary {
         if (StringUtils.isNotBlank(rootCauseMessage)) {
             error.append("ROOT CAUSE: ").append(EnvUtils.platformSpecificEOL(rootCauseMessage)).append(eol);
         }
-        for (String errorDetail : stackTrace) {
+        for (String errorDetail: stackTrace) {
             if (StringUtils.contains(errorDetail, "nexial")) {
                 error.append(errorDetail).append(eol);
             } else {
@@ -648,7 +653,7 @@ public class ExecutionSummary {
             int lineCount = StringUtils.countMatches(mergedContent, "\n") + 1;
             String[] lines = StringUtils.split(mergedContent, "\n");
             if (ArrayUtils.isEmpty(lines)) { lines = new String[]{mergedContent}; }
-            for (String line : lines) { lineCount += Math.ceil((double) StringUtils.length(line) / charPerLine) - 1; }
+            for (String line: lines) { lineCount += Math.ceil((double) StringUtils.length(line) / charPerLine) - 1; }
 
             // lineCount should always be at least 1. otherwise this row will not be rendered with height 0
             if (lineCount < 1) { lineCount = 1; }
@@ -714,6 +719,7 @@ public class ExecutionSummary {
         summary.runHost = null;
         summary.runHostOs = null;
         summary.runUser = null;
+        summary.sourceScript = source.sourceScript;
         return summary;
     }
 }

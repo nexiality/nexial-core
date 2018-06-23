@@ -32,7 +32,11 @@ import java.text.SimpleDateFormat
 import java.util.*
 
 object EventTracker {
-    private val eventFileDateFormat = SimpleDateFormat("yyyyMMdd_HHmmss.SSS.")
+    private val eventFileDateFormat = SimpleDateFormat("yyyyMMdd_HHmmss_SSS")
+
+    fun getStorageLocation() = EventUtils.storageLocation
+
+    fun getExtension() = EventUtils.postfix
 
     fun track(event: NexialEvent) = write(event.eventName, event.json())
 
@@ -40,7 +44,7 @@ object EventTracker {
 
     private fun write(type: String, content: String) {
         val file = File(storageLocation +
-                        RandomStringUtils.randomAlphabetic(5) + "." +
+                        RandomStringUtils.randomAlphabetic(10) + "." +
                         eventFileDateFormat.format(Date()) + "." +
                         type + postfix)
         FileUtils.forceMkdirParent(file)
@@ -53,7 +57,7 @@ object EventUtils {
                                    Hex.encodeHexString("Nexial_Event".toByteArray()) + separator
     internal const val postfix = ".json"
 
-//    init {
+    init {
 //        println("storageLocation = $storageLocation")
-//    }
+    }
 }
