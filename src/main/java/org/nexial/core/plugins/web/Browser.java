@@ -664,7 +664,7 @@ public class Browser implements ForcefulTerminate {
         // use multiple instances of the IE driver, and run into such issues, consider using the
         // RemoteWebDriver and virtual machines.
         //
-        // There are 2 solutiokns for problem with cookies (and another session items) shared between
+        // There are 2 solutions for problem with cookies (and another session items) shared between
         // multiple instances of InternetExplorer.
         //
         // The first is to start your InternetExplorer in private mode. After that InternetExplorer
