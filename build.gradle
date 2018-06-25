@@ -16,7 +16,7 @@
  */
 
 buildscript {
-	ext.kotlin_version = '1.2.41'
+	ext.kotlin_version = '1.2.50'
 	repositories {
 		mavenLocal()
 		mavenCentral()
@@ -29,7 +29,7 @@ buildscript {
 }
 
 plugins {
-	id "org.jetbrains.kotlin.jvm" version "1.2.41"
+	id "org.jetbrains.kotlin.jvm" version "1.2.50"
 }
 
 apply plugin: 'java'
