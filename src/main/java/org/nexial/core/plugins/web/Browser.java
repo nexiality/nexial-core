@@ -46,6 +46,7 @@ import org.nexial.core.plugins.external.ExternalCommand;
 import org.nexial.core.utils.ConsoleUtils;
 import org.openqa.selenium.*;
 import org.openqa.selenium.chrome.ChromeDriver;
+import org.openqa.selenium.chrome.ChromeDriverService;
 import org.openqa.selenium.chrome.ChromeOptions;
 import org.openqa.selenium.firefox.FirefoxDriver;
 import org.openqa.selenium.firefox.FirefoxOptions;
@@ -175,6 +176,8 @@ public class Browser implements ForcefulTerminate {
     public boolean isRunChromeHeadless() { return browserType == chromeheadless; }
 
     public boolean isRunChromeEmbedded() { return browserType == chromeembedded; }
+
+    public boolean isRunElectron() { return browserType == electron; }
 
     public boolean isRunSafari() { return browserType == safari; }
 
@@ -315,6 +318,7 @@ public class Browser implements ForcefulTerminate {
             if (isRunChrome()) { driver = initChrome(false); }
             if (isRunChromeHeadless()) { driver = initChrome(true); }
             if (isRunChromeEmbedded()) { driver = initChromeEmbedded(); }
+            if (isRunElectron()) { driver = initElectron(); }
             if (isRunIE()) { driver = initIE(); }
             if (isRunFireFox()) { driver = initFirefox(false); }
             if (isRunFirefoxHeadless()) { driver = initFirefox(true); }
@@ -506,6 +510,37 @@ public class Browser implements ForcefulTerminate {
         return chrome;
     }
 
+    private WebDriver initElectron() {
+        // ensure path specified for AUT app (where electron app is)
+        String clientLocation = context.getStringData(ELECTRON_CLIENT_LOCATION);
+        requiresExecutableFile(clientLocation);
+
+        resolveChromeDriverLocation();
+
+        ChromeOptions options = new ChromeOptions()
+                                    .setBinary(clientLocation)
+                                    .setAcceptInsecureCerts(true);
+        // options.addArguments("--disable-extensions"); // disabling extensions
+        // options.addArguments("--disable-gpu"); // applicable to windows os only
+        options.addArguments("--disable-dev-shm-usage"); // overcome limited resource problems
+        options.addArguments("--no-sandbox"); // Bypass OS security model
+        options.addArguments("--headless");
+
+        // determine chrome log file
+        String appName = StringUtils.substringBeforeLast(
+            StringUtils.substringAfterLast(StringUtils.substringAfterLast(clientLocation, "/"), "\\"), ".");
+        File logFile = new File(
+            StringUtils.appendIfMissing(System.getProperty(TEST_LOG_PATH, JAVA_IO_TMPDIR), separator) +
+            "chrome-" + appName + ".log");
+
+        ChromeDriverService driverService = new ChromeDriverService.Builder()
+                                                .withVerbose(true)
+                                                .withLogFile(logFile)
+                                                .build();
+
+        return new ChromeDriver(driverService, options);
+    }
+
     private WebDriver initChrome(boolean headless) {
         // check https://github.com/SeleniumHQ/selenium/wiki/ChromeDriver for details
 
@@ -553,13 +588,14 @@ public class Browser implements ForcefulTerminate {
 
     private void resolveChromeDriverLocation() {
         String nexialHome = StringUtils.appendIfMissing(context.getProject().getNexialHome(), separator);
+        String driverBasename = "chromedriver" + (browserType == electron ? "-electron" : "");
         String driverPath;
         if (IS_OS_WINDOWS) {
-            driverPath = nexialHome + NEXIAL_WINDOWS_BIN_REL_PATH + "chromedriver.exe";
+            driverPath = nexialHome + NEXIAL_WINDOWS_BIN_REL_PATH + driverBasename + ".exe";
         } else if (IS_OS_MAC_OSX) {
-            driverPath = nexialHome + NEXIAL_MACOSX_BIN_REL_PATH + "chromedriver";
+            driverPath = nexialHome + NEXIAL_MACOSX_BIN_REL_PATH + driverBasename;
         } else {
-            driverPath = nexialHome + NEXIAL_LINUX_BIN_REL_PATH + "chromedriver";
+            driverPath = nexialHome + NEXIAL_LINUX_BIN_REL_PATH + driverBasename;
         }
 
         context.setData(SELENIUM_CHROME_DRIVER, driverPath);
@@ -583,7 +619,7 @@ public class Browser implements ForcefulTerminate {
             return null;
         }
 
-        for (String location : possibleLocations) {
+        for (String location: possibleLocations) {
             if (FileUtil.isFileExecutable(location)) { return new File(location).getAbsolutePath(); }
         }
 
@@ -950,7 +986,7 @@ public class Browser implements ForcefulTerminate {
 
     private void setWindowSize(WebDriver driver) {
         // not suitable for cef
-        if (isRunChromeEmbedded()) { return; }
+        if (isRunChromeEmbedded() || isRunElectron()) { return; }
 
         String windowSize = context.getStringData(BROWSER_WINDOW_SIZE);
         if ((isRunChromeHeadless() || isRunFirefoxHeadless()) && StringUtils.isBlank(windowSize)) {

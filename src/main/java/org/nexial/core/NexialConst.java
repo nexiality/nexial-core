@@ -370,7 +370,8 @@ public final class NexialConst {
         ie(false, false, true, false),
         iphone(false, false, false, false),
         browserstack(false, false, false, true),
-        chromeembedded(false, false, true, true);
+        chromeembedded(false, false, true, true),
+        electron(false, false, true, true);
 
         private boolean profileSupported;
         private boolean consoleLoggingEnabled;
@@ -658,6 +659,7 @@ public final class NexialConst {
         public static final String SAFARI_USE_TECH_PREVIEW = BROWSER + ".safari.useTechPreview";
         public static final boolean DEF_SAFARI_USE_TECH_PREVIEW = false;
         public static final String CEF_CLIENT_LOCATION = BROWSER + ".embedded.appLocation";
+        public static final String ELECTRON_CLIENT_LOCATION = BROWSER + ".electron.appLocation";
 
         // desktop
         public static final String WINIUM_EXE = "Winium.Desktop.Driver.exe";
