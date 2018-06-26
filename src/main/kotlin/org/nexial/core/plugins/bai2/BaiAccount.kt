@@ -28,10 +28,10 @@ class BaiAccount : BaiModel {
             else -> {
                 val builder = StringBuilder()
                 var value: String
-                records.forEach({ transaction ->
+                records.forEach { transaction ->
                     value = transaction.field(recordType, name).textValue
                     builder.append(value).append(",")
-                })
+                }
                 val newValue = builder.toString().removeSuffix(",")
                 TextDataType(newValue)
             }
@@ -100,12 +100,12 @@ class BaiAccount : BaiModel {
         }else {
             val matchedTransactions: MutableList<BaiModel> = ArrayList()
             val baiAccount = BaiAccount()
-            records.forEach({ transaction ->
+            records.forEach { transaction ->
                 val newTransaction = transaction.filter(recordType = recordType, condition = condition)
                 if (newTransaction != null) {
                     matchedTransactions.add(newTransaction)
                 }
-            })
+            }
 
             if (CollectionUtils.isNotEmpty(matchedTransactions)) {
                 baiAccount.records = matchedTransactions
@@ -117,7 +117,7 @@ class BaiAccount : BaiModel {
 
     override fun toString(): String {
         val transactionsString = StringBuilder()
-        records.forEach({ transaction -> transactionsString.append(transaction.toString()) })
+        records.forEach { transaction -> transactionsString.append(transaction.toString()) }
         return "$header$transactionsString$trailer".replace("null", "")
     }
 }

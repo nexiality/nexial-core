@@ -21,7 +21,7 @@ import kotlin.collections.ArrayList
 
 class BaiFile : BaiModel {
 
-    var queue: Queue<String> = ArrayDeque<String>()
+    private var queue: Queue<String> = ArrayDeque<String>()
 
     constructor()
 
@@ -29,14 +29,6 @@ class BaiFile : BaiModel {
         this.queue = queue
         parse()
     }
-
-    override var errors: ArrayList<String>
-        get() = super.errors
-        set(value) {}
-
-    override var header: Header? = null
-    override var records: MutableList<BaiModel> = ArrayList()
-    override var trailer: Trailer? = null
 
     override fun parse(): BaiModel {
         parseFileHeader()
@@ -83,19 +75,19 @@ class BaiFile : BaiModel {
 //        todo: implement Nexial Filter
         val groupRecords: MutableList<BaiModel> = ArrayList()
 
-        records.forEach({ baiGroup ->
+        records.forEach { baiGroup ->
             val newBaiGroup: BaiModel? = baiGroup.filter(recordType, condition)
             if (newBaiGroup != null) {
                 groupRecords.add(newBaiGroup)
             }
 
-        })
+        }
 
         val newBaiFile = BaiFile()
         if (CollectionUtils.isNotEmpty(groupRecords)) {
             // return only next level records
             newBaiFile.records = groupRecords
-            groupRecords.forEach({ group -> newBaiFile.errors.addAll(group.errors) })
+            groupRecords.forEach { group -> newBaiFile.errors.addAll(group.errors) }
         }
         return newBaiFile
 
@@ -112,10 +104,10 @@ class BaiFile : BaiModel {
             else -> {
                 val builder = StringBuilder()
                 var value: String
-                records.forEach({ baiGroup ->
+                records.forEach { baiGroup ->
                     value = baiGroup.field(recordType, name).textValue
                     builder.append(value).append(",")
-                })
+                }
 
                 val newValue = builder.toString().removeSuffix(",")
                 TextDataType(newValue)
@@ -130,16 +122,16 @@ class BaiFile : BaiModel {
             val num = value.removePrefix("+")
             val numberFormat = NumberFormat.getInstance()
             val parsePosition = ParsePosition(0)
-            numberFormat.parse(num.trim({ it <= ' ' }), parsePosition)
-            return num.isEmpty() || num.trim({ it <= ' ' }).length == parsePosition.index
+            numberFormat.parse(num.trim { it <= ' ' }, parsePosition)
+            return num.isEmpty() || num.trim { it <= ' ' }.length == parsePosition.index
         }
     }
 
     override fun toString(): String {
         val groupString = StringBuilder()
-        records.forEach({ group ->
+        records.forEach { group ->
             groupString.append(group.toString())
-        })
+        }
         return "$header$groupString$trailer".replace("null", "")
     }
 }
@@ -147,7 +139,7 @@ class BaiFile : BaiModel {
 data class BaiFileHeader(private var nextRecord: String) : Header() {
     override fun get(fieldName: String) = fileHeaderMap.getValue(fieldName)
 
-    var fileHeaderMap: Map<String, String> = mutableMapOf()
+    private var fileHeaderMap: Map<String, String> = mutableMapOf()
 
     init {
         val values: Array<String> = StringUtils.splitByWholeSeparatorPreserveAllTokens(

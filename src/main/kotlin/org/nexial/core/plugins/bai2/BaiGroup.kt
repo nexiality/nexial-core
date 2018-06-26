@@ -20,13 +20,9 @@ import org.nexial.core.variable.TextDataType
 import java.util.*
 import kotlin.collections.ArrayList
 
-class BaiGroup : BaiModel {
+class BaiGroup(private var queue: Queue<String>) : BaiModel() {
 
-    private var queue: Queue<String> = LinkedList<String>()
-
-    constructor()
-    constructor(queue: Queue<String>) {
-        this.queue = queue
+    init {
         parse()
     }
 
@@ -83,12 +79,12 @@ class BaiGroup : BaiModel {
             val baiAccount = BaiAccount()
             val matchedAccounts: MutableList<BaiModel> = ArrayList()
 
-            records.forEach({ account ->
+            records.forEach { account ->
                 val newBaiAccount: BaiModel? = account.filter(recordType, condition)
                 if (newBaiAccount != null) {
                     matchedAccounts.add(newBaiAccount)
                 }
-            })
+            }
             if (CollectionUtils.isNotEmpty(matchedAccounts)) {
                 baiAccount.records = matchedAccounts
             }
@@ -104,10 +100,10 @@ class BaiGroup : BaiModel {
             else -> {
                 val builder = StringBuilder()
                 var value: String
-                records.forEach({ baiAccount ->
+                records.forEach { baiAccount ->
                     value = baiAccount.field(recordType, name).textValue
                     builder.append(value).append(",")
-                })
+                }
                 val newValue = builder.toString().removeSuffix(",")
                 TextDataType(newValue)
             }
@@ -116,7 +112,7 @@ class BaiGroup : BaiModel {
 
     override fun toString(): String {
         val accountsString = StringBuilder()
-        records.forEach({ account -> accountsString.append(account.toString()) })
+        records.forEach { account -> accountsString.append(account.toString()) }
         return "$header$accountsString$trailer".replace("null", "")
     }
 }
@@ -177,7 +173,7 @@ data class BaiGroupTrailer(private var nextRecord: String) : Trailer() {
 
     override fun get(fieldName: String) = groupTrailerMap.getValue(fieldName)
 
-    var groupTrailerMap: Map<String, String> = mutableMapOf()
+    private var groupTrailerMap: Map<String, String> = mutableMapOf()
 
     init {
         val values: Array<String> = splitByWholeSeparatorPreserveAllTokens(StringUtils.removeEnd(nextRecord, recordDelim).trim(), fieldDelim)
