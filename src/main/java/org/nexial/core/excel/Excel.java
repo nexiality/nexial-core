@@ -944,7 +944,7 @@ public class Excel {
                 ProcessInvoker.invoke(WIN32_CMD, Arrays.asList("/C", "start", "\"\"", spreadsheetProgram, file), null);
             }
         } catch (IOException | InterruptedException e) {
-            System.err.println("ERROR!!! Can't open " + testScript + ": " + e.getMessage());
+            ConsoleUtils.error("ERROR!!! Can't open " + testScript + ": " + e.getMessage());
         }
     }
 
@@ -959,13 +959,13 @@ public class Excel {
                                                                              "et.exe"), null);
                 int exitStatus = outcome.getExitStatus();
                 if (exitStatus != 0) {
-                    System.err.println("ERROR!!! Unable to determine WPS spreadsheet program location: " + exitStatus);
+                    ConsoleUtils.error("ERROR!!! Unable to determine WPS spreadsheet program location: " + exitStatus);
                     return null;
                 }
 
                 String[] output = StringUtils.split(outcome.getStdout(), "\r\n");
                 if (ArrayUtils.isEmpty(output)) {
-                    System.err.println("ERROR!!! Unable to determine WPS spreadsheet program location: NO OUTPUT");
+                    ConsoleUtils.error("ERROR!!! Unable to determine WPS spreadsheet program location: NO OUTPUT");
                     return null;
                 }
 
@@ -973,12 +973,12 @@ public class Excel {
                 ArrayUtils.reverse(output);
                 return output[0];
             } catch (IOException | InterruptedException e) {
-                System.err.println("ERROR!!! Unable to determine WPS spreadsheet program location: " + e.getMessage());
+                ConsoleUtils.error("ERROR!!! Unable to determine WPS spreadsheet program location: " + e.getMessage());
                 return null;
             }
         }
 
-        System.err.println("WPS is not supported on " + SystemUtils.OS_NAME);
+        ConsoleUtils.error("WPS is not supported on " + OS_NAME);
         return null;
     }
 

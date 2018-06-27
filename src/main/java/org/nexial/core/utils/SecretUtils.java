@@ -43,25 +43,4 @@ public final class SecretUtils {
         String stage2 = URLEncoder.encode(new String(stage1, DEF_CHARSET), DEF_CHARSET);
         return StringUtils.reverse(stage2);
     }
-
-	/*
-	public static void main(String[] args) throws Exception {
-		java.util.Scanner scanner = new java.util.Scanner(System.in);
-		String plaintext;
-		String scram;
-		boolean scramming = false;
-
-		if (scramming) {
-			System.out.print("Plain text:  ");
-			plaintext = scanner.nextLine();
-			scram = scramble(plaintext);
-			System.out.println("Scrambled: " + scram);
-		} else {
-			System.out.print("Scrambled: ");
-			scram = scanner.nextLine();
-			plaintext = unscramble(scram);
-			System.out.println("Plain text:  " + plaintext);
-		}
-	}
-	*/
 }

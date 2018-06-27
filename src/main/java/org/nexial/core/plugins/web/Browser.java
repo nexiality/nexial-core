@@ -33,6 +33,7 @@ import org.apache.commons.lang3.BooleanUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.math.NumberUtils;
 import org.apache.commons.text.WordUtils;
+import org.jetbrains.annotations.NotNull;
 import org.nexial.commons.utils.EnvUtils;
 import org.nexial.commons.utils.FileUtil;
 import org.nexial.core.NexialConst.*;
@@ -353,7 +354,7 @@ public class Browser implements ForcefulTerminate {
         }
 
         if (isRunFireFox() || isRunFirefoxHeadless() || driver instanceof FirefoxDriver) {
-            System.out.println("Shutting down firefox webdriver");
+            ConsoleUtils.log("Shutting down firefox webdriver...");
             try { Thread.sleep(2000);} catch (InterruptedException e) { }
             try { driver.quit(); } catch (Throwable e) { }
             try { Thread.sleep(2000);} catch (InterruptedException e) { }
@@ -527,16 +528,13 @@ public class Browser implements ForcefulTerminate {
         options.addArguments("--headless");
 
         // determine chrome log file
-        String appName = StringUtils.substringBeforeLast(
-            StringUtils.substringAfterLast(StringUtils.substringAfterLast(clientLocation, "/"), "\\"), ".");
-        File logFile = new File(
-            StringUtils.appendIfMissing(System.getProperty(TEST_LOG_PATH, JAVA_IO_TMPDIR), separator) +
-            "chrome-" + appName + ".log");
+        String appName = clientLocation;
+        if (StringUtils.contains(appName, "/")) { appName = StringUtils.substringAfterLast(appName, "/"); }
+        if (StringUtils.contains(appName, "\\")) { appName = StringUtils.substringAfterLast(appName, "\\"); }
+        if (StringUtils.contains(appName, ".")) { appName = StringUtils.substringBeforeLast(appName, "."); }
+        File logFile = resolveBrowserLogFile("chrome-" + appName + ".log");
 
-        ChromeDriverService driverService = new ChromeDriverService.Builder()
-                                                .withVerbose(true)
-                                                .withLogFile(logFile)
-                                                .build();
+        ChromeDriverService driverService = new ChromeDriverService.Builder().withLogFile(logFile).build();
 
         return new ChromeDriver(driverService, options);
     }
@@ -545,6 +543,10 @@ public class Browser implements ForcefulTerminate {
         // check https://github.com/SeleniumHQ/selenium/wiki/ChromeDriver for details
 
         resolveChromeDriverLocation();
+
+        String chromeLog = resolveBrowserLogFile("chrome-browser.log").getAbsolutePath();
+        System.setProperty("webdriver.chrome.logfile", chromeLog);
+        System.setProperty("webdriver.chrome.verboseLogging", "true");
 
         ChromeOptions options = new ChromeOptions();
         if (headless) {
@@ -583,7 +585,15 @@ public class Browser implements ForcefulTerminate {
         browserVersion = capabilities.getVersion();
         browserPlatform = capabilities.getPlatform();
         postInit(chrome);
+
         return chrome;
+    }
+
+    @NotNull
+    private File resolveBrowserLogFile(String logFileName) {
+        return new File(
+            StringUtils.appendIfMissing(System.getProperty(TEST_LOG_PATH, JAVA_IO_TMPDIR), separator) +
+            logFileName);
     }
 
     private void resolveChromeDriverLocation() {

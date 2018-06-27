@@ -2066,13 +2066,13 @@ public class DesktopCommand extends BaseCommand
 
     private void setTableFocus(DesktopTable table) {
         boolean isCurrentTable = table == context.getObjectData(CURRENT_DESKTOP_TABLE);
-        if (!isCurrentTable || (context.getObjectData(CURRENT_DESKTOP_TABLE_ROW)) == null) { return; }
+        if (!isCurrentTable || context.getObjectData(CURRENT_DESKTOP_TABLE_ROW) == null) { return; }
 
         DesktopTableRow tableRow = (DesktopTableRow) context.getObjectData(CURRENT_DESKTOP_TABLE_ROW);
         ConsoleUtils.log("shortcut key was pressed.. now setting focus back to table at " +
                          context.getStringData(CURRENT_DESKTOP_TABLE_EDITABLE_COLUMN_NAME));
-        WebElement editColumn = tableRow.getColumns().get(context
-                                                              .getStringData(CURRENT_DESKTOP_TABLE_EDITABLE_COLUMN_NAME));
+        WebElement editColumn =
+            tableRow.getColumns().get(context.getStringData(CURRENT_DESKTOP_TABLE_EDITABLE_COLUMN_NAME));
         editColumn.click();
         context.removeData(CURRENT_DESKTOP_TABLE_ROW);
     }

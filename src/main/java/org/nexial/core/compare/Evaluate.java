@@ -105,8 +105,6 @@ public final class Evaluate {
             String compareBy = StringUtils.trim(matcher.group(2));
             if (matcher.groupCount() >= 3) { rhs = StringUtils.trim(matcher.group(3)); }
 
-            //System.out.println("[" + lhs + "]\t[" + compareBy + "]\t[" + rhs + "]");
-
             evaluator = evaluators.get(compareBy);
             if (evaluator != null) { break; }
         }

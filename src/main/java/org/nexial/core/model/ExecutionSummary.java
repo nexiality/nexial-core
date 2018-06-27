@@ -273,11 +273,14 @@ public class ExecutionSummary {
             if (executionLevel == ITERATION) { referenceData = context.gatherScriptReferenceData(); }
 
             executionLog = System.getProperty(TEST_LOG_PATH) + separator + "nexial-" + context.getRunId() + ".log";
-            if (!FileUtil.isFileReadable(executionLog)) { return; }
 
-            if (executionLevel == SCENARIO || executionLevel == ACTIVITY) { return; }
+            // only transfer log file if
+            // - execution level is EXECUTION (so that we transfer towards the end of execution)
+            // - output to cloud is oN
+            if (!FileUtil.isFileReadable(executionLog) || executionLevel != EXECUTION || !context.isOutputToCloud()) {
+                return;
+            }
 
-            if (!context.isOutputToCloud()) { return; }
             try {
                 executionLog = context.getOtc().importLog(new File(executionLog), false);
             } catch (IOException e) {

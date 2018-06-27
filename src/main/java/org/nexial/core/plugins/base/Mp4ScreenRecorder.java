@@ -122,12 +122,7 @@ public class Mp4ScreenRecorder extends MediaToolAdapter implements Runnable, Scr
 
     @Override
     public void forcefulTerminate() {
-        // try {
         stop();
-        // } catch (IOException e) {
-        //     System.err.println("Unable to forcefully terminate screen recording: " + e.getMessage());
-        //     e.printStackTrace();
-        // }
     }
 
     public static BufferedImage convertToType(BufferedImage sourceImage, int targetType) {

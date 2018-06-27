@@ -63,8 +63,7 @@ public class ScpHelper {
                 forwardOffset(in, 0, 5);
 
                 long filesize = deriveFileSize(in);
-                String filename = deriveFilename(in);
-                // System.out.println("filesize=" + filesize + ", file=" + filename);
+                // String filename = deriveFilename(in);
 
                 // send '\0'
                 send(out, (byte) 0);

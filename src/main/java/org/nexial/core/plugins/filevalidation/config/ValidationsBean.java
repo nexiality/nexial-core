@@ -23,66 +23,54 @@ import com.google.gson.JsonElement;
 import com.google.gson.annotations.SerializedName;
 
 public class ValidationsBean {
-
     @SerializedName("field-name")
     private String fieldname;
+
     @SerializedName("validation-methods")
     private List<ValidationmethodsBean> validationmethods;
 
     public static class ValidationmethodsBean {
-
         @SerializedName("type")
         private String type;
+
         @SerializedName("params")
         private JsonElement params;
+
         @SerializedName("conditions")
         private List<ConditionBean> conditionBeans;
 
         public static class ConditionBean {
-
             @SerializedName("field-name")
             private String fieldname;
+
             @SerializedName("field-value")
             private String fieldvalue;
 
             public String getFieldname() { return fieldname;}
 
-            public void setFieldname(String fieldname) {
-                System.out.println("setting field name " + fieldname);
-                this.fieldname = fieldname;
-            }
+            public void setFieldname(String fieldname) { this.fieldname = fieldname; }
 
             public String getFieldvalue() { return fieldvalue;}
 
             public void setFieldvalue(String fieldvalue) { this.fieldvalue = fieldvalue;}
-
-
         }
 
-        public List<ConditionBean> getConditionBeans() {
-            return conditionBeans;
-        }
+        public List<ConditionBean> getConditionBeans() { return conditionBeans; }
 
-        public void setConditionBeans(List<ConditionBean> conditionBeans) {
-            this.conditionBeans = conditionBeans;
-        }
+        public void setConditionBeans(List<ConditionBean> conditionBeans) { this.conditionBeans = conditionBeans; }
 
-        public String getType() { return type;}
+        public String getType() { return type; }
 
-        public void setType(String type) { this.type = type;}
+        public void setType(String type) { this.type = type; }
 
-        public JsonElement getParams() {
-            return params;
-        }
+        public JsonElement getParams() { return params; }
 
-        public void setParams(JsonElement params) {
-            this.params = params;
-        }
+        public void setParams(JsonElement params) { this.params = params; }
     }
 
-    public String getFieldname() { return fieldname;}
+    public String getFieldname() { return fieldname; }
 
-    public void setFieldname(String fieldname) { this.fieldname = fieldname;}
+    public void setFieldname(String fieldname) { this.fieldname = fieldname; }
 
     public List<ValidationmethodsBean> getValidationmethods() { return validationmethods;}
 

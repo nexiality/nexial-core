@@ -221,8 +221,8 @@ public class Nexial {
                 main.trackEvent(new NexialExecutionCompleteEvent(summary));
                 MemManager.recordMemoryChanges("after execution");
             } catch (Throwable e) {
-                System.err.println("Unknown/unexpected error occurred: " + e.getMessage());
-                // e.printStackTrace();
+                ConsoleUtils.error("Unknown/unexpected error occurred: " + e.getMessage());
+                e.printStackTrace();
             }
 
             ConsoleUtils.log("Exiting Nexial...");
@@ -711,24 +711,28 @@ public class Nexial {
                     NexialS3Helper otc = springContext.getBean("otc", NexialS3Helper.class);
                     if (otc == null || !otc.isReadyForUse()) {
                         // try one more time...
+                        ConsoleUtils.log("resolving Nexial Cloud Integration...");
                         springContext = new ClassPathXmlApplicationContext("classpath:/nexial-main.xml");
                         otc = springContext.getBean("otc", NexialS3Helper.class);
                     }
 
-                    // can't use otc.resolveOutputDir() since we are out of context at this point in time
-                    String outputDir =
-                        System.getProperty(OPT_CLOUD_OUTPUT_BASE) + "/" + project.getName() + "/" + runId;
-
                     try {
+                        if (otc == null || !otc.isReadyForUse()) {
+                            // forget it...
+                            String errorMessage = springContext.getBean("otcNotReadyMessage", String.class);
+                            throw new IOException(errorMessage);
+                        }
+
+                        // can't use otc.resolveOutputDir() since we are out of context at this point in time
+                        String outputDir =
+                            System.getProperty(OPT_CLOUD_OUTPUT_BASE) + "/" + project.getName() + "/" + runId;
+
                         otc.importToS3(new File(jsonSummaryReport), outputDir, true);
                         otc.importToS3(new File(jsonDetailedReport), outputDir, true);
                         // otc.importToS3(new File(htmlReport), outputDir, true);
                     } catch (IOException e) {
                         ConsoleUtils.error("Unable to save to cloud storage due to " + e.getMessage());
                     }
-                    // } else {
-                    // ConsoleUtils.log(runId, "execution summary JSON saved to " + jsonSummaryReport);
-                    // ConsoleUtils.log(runId, "execution summary HTML saved to " + htmlReport);
                 }
             } catch (IOException e) {
                 ConsoleUtils.error(runId, "Unable to save execution summary due to " + e.getMessage(), e);
@@ -819,7 +823,7 @@ public class Nexial {
 
         int exitStatus;
         if (summary == null) {
-            System.err.println("Unable to cleanly execute tests; execution summary missing!");
+            ConsoleUtils.error("Unable to cleanly execute tests; execution summary missing!");
             exitStatus = RC_EXECUTION_SUMMARY_MISSING;
         } else {
             double minExecSuccessRate = NumberUtils.toDouble(
@@ -831,37 +835,38 @@ public class Nexial {
             double successRate = summary.getSuccessRate();
             String successRateString = MessageFormat.format(RATE_FORMAT, successRate);
 
-            System.out.println();
-            System.out.println("/-END OF EXECUTION--------------------------------------------------------------");
-            System.out.println("| » Execution Time: " + (summary.getElapsedTime() / 1000) + " sec.");
-            System.out.println("| » Test Steps:     " + summary.getExecuted());
-            System.out.println("| » Passed:         " + summary.getPassCount());
-            System.out.println("| » Failed:         " + summary.getFailCount());
-            System.out.println("| » Success Rate:   " + successRateString);
-            System.out.println("\\---------------------------------------------------------------" +
-                               StringUtils.leftPad(ExecUtil.deriveJarManifest(), 15, "-") + "-");
+            String manifest = StringUtils.leftPad(ExecUtil.deriveJarManifest(), 15, "-");
+            ConsoleUtils.log(
+                "\n\n" +
+                "/-END OF EXECUTION--------------------------------------------------------------\n" +
+                "| » Execution Time: " + (summary.getElapsedTime() / 1000) + " sec.\n" +
+                "| » Test Steps:     " + summary.getExecuted() + "\n" +
+                "| » Passed:         " + summary.getPassCount() + "\n" +
+                "| » Failed:         " + summary.getFailCount() + "\n" +
+                "| » Success Rate:   " + successRateString + "\n" +
+                "\\---------------------------------------------------------------" + manifest + "-" + "\n");
 
             if (successRate != 1) {
                 if (successRate >= minExecSuccessRate) {
-                    System.out.println("PASSED - success rate greater than specified minimum success rate " +
-                                       "(" + successRateString + " >= " + minSuccessRateString + ")");
+                    ConsoleUtils.log("PASSED - success rate greater than specified minimum success rate " +
+                                     "(" + successRateString + " >= " + minSuccessRateString + ")");
                     exitStatus = 0;
                 } else {
-                    System.err.println("failure found; success rate is " + successRateString);
+                    ConsoleUtils.error("failure found; success rate is " + successRateString);
                     exitStatus = RC_NOT_PERFECT_SUCCESS_RATE;
                 }
             } else {
                 int failCount = summary.getFailCount();
                 if (failCount > 0) {
-                    System.err.println(failCount + " failure(s) found, although success rate is 100%");
+                    ConsoleUtils.error(failCount + " failure(s) found, although success rate is 100%");
                     exitStatus = RC_FAILURE_FOUND;
                 } else {
                     int warnCount = summary.getWarnCount();
                     if (warnCount > 0) {
-                        System.err.println(warnCount + " warning(s) found, although success rate is 100%");
+                        ConsoleUtils.error(warnCount + " warning(s) found, although success rate is 100%");
                         exitStatus = RC_WARNING_FOUND;
                     } else {
-                        System.out.println("ALL PASSED!");
+                        ConsoleUtils.log("ALL PASSED!");
                         exitStatus = 0;
                     }
                 }
@@ -894,12 +899,12 @@ public class Nexial {
     private static void beforeShutdownMemUsage() {
         MemManager.gc((Object) Nexial.class);
         MemManager.recordMemoryChanges("just before exit");
-        String memUsage = MemManager.showUsage("| » ");
+        String memUsage = MemManager.showUsage("| »      ");
         if (StringUtils.isNotBlank(memUsage)) {
-            System.out.println("\n");
-            System.out.println("/-MEMORY-USAGE------------------------------------------------------------------");
-            System.out.println(memUsage);
-            System.out.println("\\-------------------------------------------------------------------------------");
+            ConsoleUtils.log("\n" +
+                             "/-MEMORY-USAGE------------------------------------------------------------------\n" +
+                             memUsage +
+                             "\\-------------------------------------------------------------------------------");
         }
     }
 

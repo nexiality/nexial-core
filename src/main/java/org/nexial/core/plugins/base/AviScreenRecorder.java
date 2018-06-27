@@ -25,6 +25,7 @@ import org.apache.commons.lang3.StringUtils;
 import org.monte.media.Format;
 import org.monte.media.math.Rational;
 import org.nexial.core.ShutdownAdvisor;
+import org.nexial.core.utils.ConsoleUtils;
 
 import static org.monte.media.FormatKeys.EncodingKey;
 import static org.monte.media.FormatKeys.FrameRateKey;
@@ -84,8 +85,7 @@ class AviScreenRecorder extends org.monte.screenrecorder.ScreenRecorder implemen
         try {
             stop();
         } catch (IOException e) {
-            System.err.println("Unable to forcefully terminate screen recording: " + e.getMessage());
-            e.printStackTrace();
+            ConsoleUtils.error("Unable to forcefully terminate screen recording: " + e.getMessage());
         }
     }
 

@@ -233,9 +233,6 @@ public class PdfTableExtractor {
 
             int pageCount = document.getNumberOfPages();
             for (Map.Entry<String, LineRange> entry : lineRanges.entrySet()) {
-                //String refName = entry.getKey();
-                //System.out.println("extracting table ref " + refName);
-
                 LineRange lineRange = entry.getValue();
                 int pageId = lineRange.getPageIdx();
                 if (pageId >= 0 && pageId < pageCount) {
@@ -554,8 +551,6 @@ public class PdfTableExtractor {
                 textByLine.put(mergedLine, text);
             }
         }
-
-        // textByLine.forEach((line, text) -> System.out.println(line + "\t= " + TextUtils.toString(text, "")));
 
         return textByLine;
     }

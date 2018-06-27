@@ -45,7 +45,7 @@
     </bean>
 
     <bean id="otcNotReadyMessage" class="java.lang.String">
-        <constructor-arg value="Nexial S3 helper not probably configured. See https://nexiality.github.io/documentation/systemvars/index.html#nexial.outputToCloud for more details."/>
+        <constructor-arg value="Nexial CLoud Integration not probably configured. See https://nexiality.github.io/documentation/systemvars/index.html#nexial.outputToCloud for more details."/>
     </bean>
 
     <bean id="tts" class="org.nexial.core.aws.TtsHelper" scope="prototype"
