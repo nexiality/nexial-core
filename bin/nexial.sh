@@ -71,5 +71,6 @@ ${JAVA} \
 	 -Dwebdriver.chrome.bin="${CHROME_BIN}" \
 	 -Dwebdriver.firefox.bin="${FIREFOX_BIN}" \
   org.nexial.core.Nexial $*
+rc=$?
 set +x
-exit $?
+exit $rc
