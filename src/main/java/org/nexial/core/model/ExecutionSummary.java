@@ -38,6 +38,7 @@ import org.nexial.commons.utils.DateUtility;
 import org.nexial.commons.utils.EnvUtils;
 import org.nexial.commons.utils.FileUtil;
 import org.nexial.commons.utils.RegexUtils;
+import org.nexial.core.aws.NexialS3Helper;
 import org.nexial.core.excel.Excel;
 import org.nexial.core.excel.Excel.Worksheet;
 import org.nexial.core.excel.ExcelAddress;
@@ -115,6 +116,7 @@ public class ExecutionSummary {
     private String errorStackTrace;
     private Throwable error;
     private String executionLog;
+    private Map<String, String> otherLogs;
 
     // optional
     private Map<String, String> referenceData = new TreeMap<>();
@@ -272,17 +274,39 @@ public class ExecutionSummary {
             if (executionLevel == SCENARIO) { referenceData = context.gatherScenarioReferenceData(); }
             if (executionLevel == ITERATION) { referenceData = context.gatherScriptReferenceData(); }
 
-            executionLog = System.getProperty(TEST_LOG_PATH) + separator + "nexial-" + context.getRunId() + ".log";
+            String logPath = System.getProperty(TEST_LOG_PATH);
+            String nexialLog = "nexial-" + context.getRunId() + ".log";
+            executionLog = logPath + separator + nexialLog;
+
+            Collection<File> logFiles = FileUtils.listFiles(new File(logPath), new String[]{"log"}, false);
+            if (CollectionUtils.isNotEmpty(logFiles) || logFiles.size() > 1) {
+                // if only 1 log file found - assume this one is the nexial log
+                otherLogs = new HashMap<>();
+                logFiles.forEach(file -> otherLogs.put(file.getName(), file.getAbsolutePath()));
+            }
 
             // only transfer log file if
             // - execution level is EXECUTION (so that we transfer towards the end of execution)
             // - output to cloud is oN
-            if (!FileUtil.isFileReadable(executionLog) || executionLevel != EXECUTION || !context.isOutputToCloud()) {
-                return;
-            }
+            if (executionLevel == SCENARIO || executionLevel == ACTIVITY || !context.isOutputToCloud()) { return; }
 
             try {
-                executionLog = context.getOtc().importLog(new File(executionLog), false);
+                NexialS3Helper otc = context.getOtc();
+                if (!otc.isReadyForUse()) {
+                    ConsoleUtils.error("Unable to save logs to cloud storage since Nexial Cloud Integration is not " +
+                                       "properly set up.");
+                    return;
+                }
+
+                if (MapUtils.isNotEmpty(otherLogs)) {
+                    List<String> otherLogNames = CollectionUtil.toList(otherLogs.keySet());
+                    for (String name: otherLogNames) {
+                        String path = otc.importLog(new File(otherLogs.get(name)), false);
+                        otherLogs.put(name, path);
+                    }
+                } else if (FileUtil.isFileReadable(executionLog)) {
+                    executionLog = otc.importLog(new File(executionLog), false);
+                }
             } catch (IOException e) {
                 ConsoleUtils.error("Unable to save " + executionLog + " to cloud storage due to " + e.getMessage());
             }
@@ -507,7 +531,15 @@ public class ExecutionSummary {
 
         // special case: log file is copied (NOT MOVED) to S3 with a special syntax here (markdown-like)
         // createCell() function will made regard to this format to create appropriate hyperlink-friendly cells
-        map.put("log", StringUtils.isBlank(executionLog) ? "" : (executionLog + "|Click here"));
+        if (StringUtils.isBlank(executionLog)) {
+            map.put("log", "");
+        } else if (MapUtils.isNotEmpty(otherLogs)) {
+            StringBuilder allLogs = new StringBuilder();
+            otherLogs.forEach((name, path) -> allLogs.append(path).append("|").append(name).append("\n"));
+            map.put("log", StringUtils.trim(allLogs.toString()));
+        } else {
+            map.put("log", executionLog + "|Click here");
+        }
 
         return map;
     }
@@ -540,11 +572,19 @@ public class ExecutionSummary {
             createCell(sheet, "B" + (i + rowNum), name, EXEC_SUMM_DATA_NAME);
 
             String value = data.get(name);
-            XSSFCell valueCell = createCell(sheet, "C" + (i + rowNum), value, EXEC_SUMM_DATA_VALUE);
-            if (RegexUtils.isExact(value, REGEX_LINKABLE_DATA)) {
-                String link = StringUtils.substringBefore(value, "|");
-                String text = StringUtils.substringAfter(value, "|");
-                Excel.setHyperlink(valueCell, link, text);
+            String[] values = StringUtils.splitByWholeSeparator(value, "\n");
+            for (int j = 0; j < values.length; j++) {
+                String dataValue = values[j];
+                if (StringUtils.isBlank(dataValue)) { continue; }
+                XSSFCell valueCell = createCell(sheet,
+                                                (char) ('C' + j) + "" + (i + rowNum),
+                                                dataValue,
+                                                EXEC_SUMM_DATA_VALUE);
+                if (RegexUtils.isExact(dataValue, REGEX_LINKABLE_DATA)) {
+                    String link = StringUtils.substringBefore(dataValue, "|");
+                    String text = StringUtils.substringAfter(dataValue, "|");
+                    Excel.setHyperlink(valueCell, link, text);
+                }
             }
         }
     }

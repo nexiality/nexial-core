@@ -18,17 +18,73 @@
 
 <beans xmlns="http://www.springframework.org/schema/beans"
        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+       xmlns:p="http://www.springframework.org/schema/p"
        xsi:schemaLocation="http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans.xsd"
        default-lazy-init="true">
 
-	<import resource="nexial-init.xml"/>
+    <import resource="nexial-props.xml"/>
 
-	<!--
-	added "PathStyleAccessEnabled() to avoid SSL certificate issue since the adding bucket as subdomain to
-	Amazon's SSL cert would result in cert to domain name mismatch
-	-->
-	<bean id="s3PathStyleAccessEnabled" class="java.lang.Boolean">
-		<constructor-arg value="true"/>
-	</bean>
+    <!--
+    added "PathStyleAccessEnabled() to avoid SSL certificate issue since the adding bucket as subdomain to
+    Amazon's SSL cert would result in cert to domain name mismatch
+    -->
+    <bean id="s3PathStyleAccessEnabled" class="java.lang.Boolean">
+        <constructor-arg value="true"/>
+    </bean>
 
+    <bean id="otc" class="org.nexial.core.aws.NexialS3Helper" init-method="init"
+          p:encoding="UTF-8"
+          p:outputBase="${nexial.outputCloudBase:}"
+          p:accessKey="${otc.accessKey:}"
+          p:secretKey="${otc.secretKey:}"
+          p:s3PathStyleAccessEnabled="${otc.s3PathStyleAccessEnabled:true}"
+          p:verbose="false">
+        <property name="region">
+            <bean class="com.amazonaws.regions.Regions" factory-method="fromName">
+                <constructor-arg value="${otc.region:us-east-1}"/>
+            </bean>
+        </property>
+    </bean>
+
+    <bean id="tts" class="org.nexial.core.aws.TtsHelper" scope="prototype"
+          p:accessKey="${tts.accessKey:}"
+          p:secretKey="${tts.secretKey:}"
+          p:language="${tts.language:en-US}"
+          p:sampleRate="${tts.sampleRate:22050}"
+          p:voiceGenderString="${tts.voiceGender:Female}"
+          p:verbose="false">
+        <property name="region">
+            <bean class="com.amazonaws.regions.Regions" factory-method="fromName">
+                <constructor-arg value="${tts.region:us-east-1}"/>
+            </bean>
+        </property>
+    </bean>
+
+    <!-- The sender ID shown on the device. (shh.. it's 1-NEXIAL-BOTS) -->
+    <bean id="smsHelper" class="org.nexial.core.aws.SmsHelper" scope="prototype" init-method="init"
+          p:smsNotReadyMessage-ref="smsNotReadyMessage"
+          p:prefix="nexial-bot: "
+          p:senderId="16394252687"
+          p:accessKey="${sms.accessKey:}"
+          p:secretKey="${sms.secretKey:}">
+        <property name="region">
+            <bean class="com.amazonaws.regions.Regions" factory-method="fromName">
+                <constructor-arg value="${sms.region:us-east-1}"/>
+            </bean>
+        </property>
+    </bean>
+
+    <bean id="otcNotReadyMessage" class="java.lang.String">
+        <constructor-arg value="Nexial CLoud Integration not probably configured. See https://nexiality.github.io/documentation/systemvars/index.html#nexial.outputToCloud for more details."/>
+    </bean>
+
+    <bean id="smsNotReadyMessage" class="java.lang.String">
+        <constructor-arg value="sms not configured. See https://nexiality.github.io/documentation/commands/sms/index.html#setup for setup details."/>
+    </bean>
+
+    <bean class="org.nexial.core.service.EventCollector" primary="true" lazy-init="false" init-method="init">
+        <constructor-arg index="0" value="https://w62rwmoetb.execute-api.us-east-1.amazonaws.com/nexial/num"/>
+        <constructor-arg index="1" value="${nexial.event.publish.verbose:false}"/>
+        <constructor-arg index="2" value="${nexial.event.publish:true}"/>
+    </bean>
 </beans>

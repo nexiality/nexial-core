@@ -708,15 +708,12 @@ public class Nexial {
                 // summary.generateHtmlReport(htmlReport);
 
                 if (outputToCloud) {
-                    NexialS3Helper otc = springContext.getBean("otc", NexialS3Helper.class);
-                    if (otc == null || !otc.isReadyForUse()) {
-                        // try one more time...
-                        ConsoleUtils.log("resolving Nexial Cloud Integration...");
-                        springContext = new ClassPathXmlApplicationContext("classpath:/nexial-main.xml");
-                        otc = springContext.getBean("otc", NexialS3Helper.class);
-                    }
+                    // need to make sure nexial setup run (possibly again)...
+                    ConsoleUtils.log("resolving Nexial Cloud Integration...");
+                    springContext = new ClassPathXmlApplicationContext("classpath:/nexial-aws.xml");
 
                     try {
+                        NexialS3Helper otc = springContext.getBean("otc", NexialS3Helper.class);
                         if (otc == null || !otc.isReadyForUse()) {
                             // forget it...
                             String errorMessage = springContext.getBean("otcNotReadyMessage", String.class);
@@ -730,6 +727,14 @@ public class Nexial {
                         otc.importToS3(new File(jsonSummaryReport), outputDir, true);
                         otc.importToS3(new File(jsonDetailedReport), outputDir, true);
                         // otc.importToS3(new File(htmlReport), outputDir, true);
+
+                        // push the latest logs to cloud...
+                        String logPath = System.getProperty(TEST_LOG_PATH);
+                        Collection<File> logFiles = FileUtils.listFiles(new File(logPath), new String[]{"log"}, false);
+                        if (CollectionUtils.isNotEmpty(logFiles)) {
+                            for (File log: logFiles) { otc.importLog(log, true); }
+                        }
+
                     } catch (IOException e) {
                         ConsoleUtils.error("Unable to save to cloud storage due to " + e.getMessage());
                     }

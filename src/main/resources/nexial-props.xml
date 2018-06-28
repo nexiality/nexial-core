@@ -25,7 +25,7 @@
         http://www.springframework.org/schema/util http://www.springframework.org/schema/util/spring-util-2.0.xsd"
        default-lazy-init="true">
 
-	<import resource="nexial-aws.xml"/>
+	<import resource="nexial-init.xml"/>
 
 	<!-- ##################################### -->
 	<!-- ### ENVIRONMENT VARIABLES         ### -->

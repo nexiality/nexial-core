@@ -30,38 +30,6 @@
     <bean id="gsonBuilder" class="com.google.gson.GsonBuilder" init-method="setPrettyPrinting"/>
     <bean id="gson" factory-bean="gsonBuilder" factory-method="create"/>
 
-    <bean id="otc" class="org.nexial.core.aws.NexialS3Helper" init-method="init"
-          p:encoding="UTF-8"
-          p:outputBase="${nexial.outputCloudBase:}"
-          p:accessKey="${otc.accessKey:}"
-          p:secretKey="${otc.secretKey:}"
-          p:s3PathStyleAccessEnabled="${otc.s3PathStyleAccessEnabled:true}"
-          p:verbose="false">
-        <property name="region">
-            <bean class="com.amazonaws.regions.Regions" factory-method="fromName">
-                <constructor-arg value="${otc.region:us-east-1}"/>
-            </bean>
-        </property>
-    </bean>
-
-    <bean id="otcNotReadyMessage" class="java.lang.String">
-        <constructor-arg value="Nexial CLoud Integration not probably configured. See https://nexiality.github.io/documentation/systemvars/index.html#nexial.outputToCloud for more details."/>
-    </bean>
-
-    <bean id="tts" class="org.nexial.core.aws.TtsHelper" scope="prototype"
-          p:accessKey="${tts.accessKey:}"
-          p:secretKey="${tts.secretKey:}"
-          p:language="${tts.language:en-US}"
-          p:sampleRate="${tts.sampleRate:22050}"
-          p:voiceGenderString="${tts.voiceGender:Female}"
-          p:verbose="false">
-        <property name="region">
-            <bean class="com.amazonaws.regions.Regions" factory-method="fromName">
-                <constructor-arg value="${tts.region:us-east-1}"/>
-            </bean>
-        </property>
-    </bean>
-
     <utils:map id="soundResources" key-type="java.lang.String" value-type="java.lang.String">
         <entry key="error1" value="sound/error1.wav"/>
         <entry key="error2" value="sound/error2.wav"/>
@@ -96,34 +64,10 @@
           p:notReadMessage="tts not configured. See https://nexiality.github.io/documentation/commands/sound/speak(text).html#setup for setup details."
     />
 
-    <bean id="smsNotReadyMessage" class="java.lang.String">
-        <constructor-arg value="sms not configured. See https://nexiality.github.io/documentation/commands/sms/index.html#setup for setup details."/>
-    </bean>
-
-    <!-- The sender ID shown on the device. (shh.. it's 1-NEXIAL-BOTS) -->
-    <bean id="smsHelper" class="org.nexial.core.aws.SmsHelper" scope="prototype" init-method="init"
-          p:smsNotReadyMessage-ref="smsNotReadyMessage"
-          p:prefix="nexial-bot: "
-          p:senderId="16394252687"
-          p:accessKey="${sms.accessKey:}"
-          p:secretKey="${sms.secretKey:}">
-        <property name="region">
-            <bean class="com.amazonaws.regions.Regions" factory-method="fromName">
-                <constructor-arg value="${sms.region:us-east-1}"/>
-            </bean>
-        </property>
-    </bean>
-
     <bean id="executionEventListener" class="org.nexial.core.ExecutionEventListener"
           p:mailTagLine="~ powered by nexial ~"
           p:mailIncludeMeta="true"
           p:smsIncludeMeta="false"
     />
-
-    <bean class="org.nexial.core.service.EventCollector" primary="true" lazy-init="false" init-method="init">
-        <constructor-arg index="0" value="https://w62rwmoetb.execute-api.us-east-1.amazonaws.com/nexial/num"/>
-        <constructor-arg index="1" value="${nexial.event.publish.verbose:false}"/>
-        <constructor-arg index="2" value="${nexial.event.publish:true}"/>
-    </bean>
 
 </beans>

@@ -22,7 +22,7 @@
        xsi:schemaLocation="http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans.xsd"
        default-lazy-init="true">
 
-    <import resource="nexial-props.xml"/>
+    <import resource="nexial-aws.xml"/>
 
     <bean id="mailTemplateEngine" class="org.thymeleaf.TemplateEngine" lazy-init="true">
         <property name="templateResolver">

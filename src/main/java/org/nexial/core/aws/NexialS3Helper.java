@@ -45,10 +45,16 @@ public class NexialS3Helper extends S3Support {
      * a common output prefix ({@link #outputBase}), current project name and current {@code Run ID}.
      */
     public String resolveOutputDir() {
-        checkContext();
-        return context.getStringData(OPT_CLOUD_OUTPUT_BASE, outputBase) + S3_PATH_SEPARATOR +
-               context.getProject().getName() + S3_PATH_SEPARATOR +
-               context.getRunId();
+        if (context == null) {
+            // no choice but to resolve output dir via System props.
+            return outputBase + S3_PATH_SEPARATOR +
+                   System.getProperty(OPT_PROJECT_NAME) + S3_PATH_SEPARATOR +
+                   System.getProperty(OPT_RUN_ID);
+        } else {
+            return context.getStringData(OPT_CLOUD_OUTPUT_BASE, outputBase) + S3_PATH_SEPARATOR +
+                   context.getProject().getName() + S3_PATH_SEPARATOR +
+                   context.getRunId();
+        }
     }
 
     @Override
