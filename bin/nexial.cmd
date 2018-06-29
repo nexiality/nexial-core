@@ -10,6 +10,7 @@ REM ----------------------------------------------------------------------------
 REM setlocal enableextensions enabledelayedexpansion
 setlocal enableextensions
 
+set NEXIAL_RC=0
 set NEXIAL_BIN=%~dp0
 
 call :init
@@ -77,9 +78,8 @@ if NOT "%NEXIAL_INTERACTIVE%"=="" set JAVA_OPT=$JAVA_OPT -Dnexial.interactive=%N
 REM run nexial now
 echo.
 %JAVA% -classpath %PROJECT_CLASSPATH%;%NEXIAL_CLASSES%;%NEXIAL_LIB%\nexial*.jar;%NEXIAL_LIB%\* %JAVA_OPT% org.nexial.core.Nexial %*
-endlocal
-exit /b 0
-goto :eof
+set NEXIAL_RC=%ERRORLEVEL%
+goto :exit
 
 :init
 	%NEXIAL_BIN%.commons.cmd %*
@@ -103,4 +103,4 @@ goto :eof
 
 :exit
 	endlocal
-	exit /b 1
+	exit /b %NEXIAL_RC%
