@@ -14,7 +14,7 @@ function resolveOSXAppPath() {
 }
 
 function resolveLinuxAppPath() {
-	location=`which --read-alias $1`
+	location=`which $1`
 	if [[ "$?" = "0" ]] ; then
 		echo ${location}
 	else
