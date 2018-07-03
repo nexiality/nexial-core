@@ -44,7 +44,6 @@ class BaiFile : BaiModel {
             this.errors.addAll((header as BaiFileHeader).validate())
             this.queue.poll()
         }
-
     }
 
     private fun delegate() {
@@ -67,7 +66,6 @@ class BaiFile : BaiModel {
             this.errors.addAll((trailer as BaiFileTrailer).validate())
             queue.poll()
         }
-
     }
 
     override fun filter(recordType: String, condition: String): BaiModel? {
@@ -80,7 +78,6 @@ class BaiFile : BaiModel {
             if (newBaiGroup != null) {
                 groupRecords.add(newBaiGroup)
             }
-
         }
 
         val newBaiFile = BaiFile()
@@ -89,31 +86,21 @@ class BaiFile : BaiModel {
             newBaiFile.records = groupRecords
             groupRecords.forEach { group -> newBaiFile.errors.addAll(group.errors) }
         }
+
         return newBaiFile
-
-
     }
 
     override fun field(recordType: String, name: String): TextDataType {
         return when (recordType) {
-
             FILE_HEADER  -> TextDataType(header!!.get(name))
-
             FILE_TRAILER -> TextDataType(trailer!!.get(name))
 
             else         -> {
                 val builder = StringBuilder()
-                var value: String
-                records.forEach { baiGroup ->
-                    value = baiGroup.field(recordType, name).textValue
-                    builder.append(value).append(",")
-                }
-
-                val newValue = builder.toString().removeSuffix(",")
-                TextDataType(newValue)
+                records.forEach { baiGroup -> builder.append(baiGroup.field(recordType, name).textValue).append(",") }
+                TextDataType(builder.toString().removeSuffix(","))
             }
         }
-
     }
 
     companion object {
@@ -129,9 +116,7 @@ class BaiFile : BaiModel {
 
     override fun toString(): String {
         val groupString = StringBuilder()
-        records.forEach { group ->
-            groupString.append(group.toString())
-        }
+        records.forEach { group -> groupString.append(group.toString()) }
         return "$header$groupString$trailer".replace("null", "")
     }
 }
@@ -151,11 +136,9 @@ data class BaiFileHeader(private var nextRecord: String) : Header() {
         }
 
         // todo: lookup for continuation of the record
-
     }
 
     override fun validate(): MutableList<String> {
-
         return validateRecord(fileHeaderMap, BaiRecordMeta.instance(FILE_HEADER))
     }
 
@@ -170,8 +153,8 @@ data class BaiFileTrailer(private val nextRecord: String) : Trailer() {
     override fun get(fieldName: String) = fileTrailerMap.getValue(fieldName)
 
     init {
-        val values: Array<String> = StringUtils
-            .splitByWholeSeparatorPreserveAllTokens(StringUtils.removeEnd(nextRecord, recordDelim).trim(), fieldDelim)
+        val values: Array<String> = StringUtils.splitByWholeSeparatorPreserveAllTokens(
+            StringUtils.removeEnd(nextRecord, recordDelim).trim(), fieldDelim)
         if (fileTrailerFields.size == values.size) {
             val fields = mutableListOf<String>()
             fileTrailerFields.forEach { pair -> fields.add(pair.first) }
@@ -179,7 +162,6 @@ data class BaiFileTrailer(private val nextRecord: String) : Trailer() {
         }
 
         // todo: lookup for continuation of the record
-
     }
 
     override fun validate(): MutableList<String> {
@@ -189,5 +171,4 @@ data class BaiFileTrailer(private val nextRecord: String) : Trailer() {
     override fun toString(): String {
         return if (nextRecord.isEmpty()) nextRecord else StringUtils.appendIfMissing(nextRecord, "\n")
     }
-
 }

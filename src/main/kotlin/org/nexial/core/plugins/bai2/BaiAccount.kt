@@ -25,6 +25,7 @@ class BaiAccount : BaiModel {
         return when (recordType) {
             ACCOUNT_HEADER  -> TextDataType(header!!.get(name))
             ACCOUNT_TRAILER -> TextDataType(trailer!!.get(name))
+
             else            -> {
                 val builder = StringBuilder()
                 var value: String
@@ -110,6 +111,7 @@ class BaiAccount : BaiModel {
                 baiAccount.records = matchedTransactions
                 return baiAccount
             }
+
             return baiAccount
         }
     }
@@ -136,8 +138,8 @@ data class BaiAccountIdentifier(private val nextRecord: String) : Header() {
         type.
         */
 
-        val values: Array<String> = StringUtils
-            .splitByWholeSeparatorPreserveAllTokens(StringUtils.removeEnd(nextRecord, recordDelim).trim(), fieldDelim)
+        val values: Array<String> = StringUtils.splitByWholeSeparatorPreserveAllTokens(
+            StringUtils.removeEnd(nextRecord, recordDelim).trim(), fieldDelim)
 
         // todo: implement 88 Continuation lookup
         if (accountHeaders.size == values.size) {
@@ -145,19 +147,15 @@ data class BaiAccountIdentifier(private val nextRecord: String) : Header() {
             accountHeaders.forEach { pair -> fields.add(pair.first) }
             accountHeaderMap = fields.zip(values).toMap()
         }
-
     }
 
     override fun validate(): MutableList<String> {
         return validateRecord(accountHeaderMap, BaiRecordMeta.instance(ACCOUNT_HEADER))
     }
 
-
     override fun toString(): String {
         return if (nextRecord.isEmpty()) nextRecord else StringUtils.appendIfMissing(nextRecord, "\n")
     }
-
-
 }
 
 data class BaiAccountTrailer(var nextRecord: String) : Trailer() {
@@ -166,8 +164,8 @@ data class BaiAccountTrailer(var nextRecord: String) : Trailer() {
     private var accountTrailerMap: Map<String, String> = mutableMapOf()
 
     init {
-        val values: Array<String> = StringUtils
-            .splitByWholeSeparatorPreserveAllTokens(StringUtils.removeEnd(nextRecord, recordDelim).trim(), fieldDelim)
+        val values: Array<String> = StringUtils.splitByWholeSeparatorPreserveAllTokens(
+            StringUtils.removeEnd(nextRecord, recordDelim).trim(), fieldDelim)
 
         if (accountTrailerFields.size == values.size) {
             val fields = mutableListOf<String>()
@@ -176,7 +174,6 @@ data class BaiAccountTrailer(var nextRecord: String) : Trailer() {
         }
 
         // todo: lookup for continuation of the record
-
     }
 
     override fun toString(): String {
@@ -186,7 +183,6 @@ data class BaiAccountTrailer(var nextRecord: String) : Trailer() {
     override fun validate(): MutableList<String> {
         return validateRecord(accountTrailerMap, BaiRecordMeta.instance(ACCOUNT_TRAILER))
     }
-
 }
 
 class BaiTransaction : BaiModel {
@@ -195,9 +191,7 @@ class BaiTransaction : BaiModel {
 
     constructor()
 
-    constructor(nextRecord: String) {
-        this.nextRecord = nextRecord
-    }
+    constructor(nextRecord: String) { this.nextRecord = nextRecord }
 
     override fun parse(): BaiModel {
 
@@ -233,25 +227,17 @@ class BaiTransaction : BaiModel {
         return this
     }
 
-
     private var transactionRecordMap: Map<String, String> = mutableMapOf()
 
     fun validate(): MutableList<String> {
         return validateRecord(transactionRecordMap, BaiRecordMeta.instance(TRANSACTION))
     }
 
-
     override fun field(recordType: String, name: String): TextDataType {
-        return if (recordType == TRANSACTION) {
-            val value = transactionRecordMap.getValue(name)
-            TextDataType(value)
-        } else
-            return TextDataType("")
+        return TextDataType(if (recordType == TRANSACTION) { transactionRecordMap.getValue(name) } else { "" })
     }
 
-
     override fun filter(recordType: String, condition: String): BaiModel? {
-
         if (recordType == TRANSACTION) {
             val options = condition.split("=")
             val fieldName: String = options[0].trim()
@@ -264,7 +250,6 @@ class BaiTransaction : BaiModel {
         }
         return BaiTransaction()
     }
-
 
     override fun toString(): String {
         return if (nextRecord.isEmpty()) nextRecord else StringUtils.appendIfMissing(nextRecord, "\n")

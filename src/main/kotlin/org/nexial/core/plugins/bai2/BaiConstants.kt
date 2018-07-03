@@ -1,6 +1,7 @@
 package org.nexial.core.plugins.bai2
 
 import org.nexial.core.plugins.bai2.Validations.validateAlphanumeric
+import org.nexial.core.plugins.bai2.Validations.validateAsciiPrintable
 import org.nexial.core.plugins.bai2.Validations.validateNumeric
 
 object BaiConstants {
@@ -28,7 +29,6 @@ object BaiConstants {
         Pair("File Block Size", validateNumeric),
         Pair("File Version Number", validateNumeric))
 
-
     val groupHeaders = mutableListOf(
         Pair("Record Code", validateNumeric),
         Pair("Bank Customer Number", validateAlphanumeric),
@@ -41,12 +41,12 @@ object BaiConstants {
 
     val accountHeaders = mutableListOf(
         Pair("Record Code", validateNumeric),
-        Pair("Bank Customer Account", validateAlphanumeric),
-        Pair("Currency Code", validateAlphanumeric),
+        Pair("Bank Customer Account", validateAsciiPrintable),
+        Pair("Currency Code", validateAsciiPrintable),
         Pair("Summary Type Code", validateNumeric),
         Pair("Summary Amount", validateNumeric),
         Pair("Summary Item Count", validateNumeric),
-        Pair("Funds Type", validateAlphanumeric))
+        Pair("Funds Type", validateAsciiPrintable))
 
     val transactionFields = mutableListOf(
         Pair("Record Code", validateNumeric),
@@ -55,10 +55,10 @@ object BaiConstants {
         Pair("Funds Type", validateAlphanumeric),
         Pair("Bank Ref Number", validateAlphanumeric),
         Pair("Customer Ref Number", validateAlphanumeric),
-        Pair("Detail Text", validateAlphanumeric)
-                                         )
+        Pair("Detail Text", validateAsciiPrintable))
+
     val accountTrailerFields = mutableListOf(
-        Pair("Record COde", validateNumeric),
+        Pair("Record Code", validateNumeric),
         Pair("Account Control Total Amount", validateNumeric),
         Pair("Account Total Records", validateNumeric))
 
@@ -67,7 +67,6 @@ object BaiConstants {
         Pair("Group Total Amount", validateNumeric),
         Pair("Group Total Accounts", validateNumeric),
         Pair("Group Total Records", validateNumeric))
-
 
     val fileTrailerFields = mutableListOf(
         Pair("Record Code", validateNumeric),
@@ -84,5 +83,4 @@ object BaiConstants {
     const val ACCOUNT_TRAILER = "Account Trailer"
     const val GROUP_TRAILER = "Group Trailer"
     const val FILE_TRAILER = "File Trailer"
-
 }

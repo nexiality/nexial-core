@@ -22,43 +22,28 @@ import org.nexial.core.plugins.bai2.BaiFile.Companion.isNumeric
 object Validations {
 
     val validateNumeric: (String) -> String = { field ->
-        if (!isNumeric(field)) {
-            "'$field'  is not Numeric"
-        } else {
-            ""
-        }
+        if (!isNumeric(field)) "'$field'  is not Numeric" else ""
     }
 
     val validateAlphanumeric: (String) -> String = { field ->
-        if (!StringUtils.isAlphanumericSpace((field))) {
-            "'$field' is not Alphanumeric"
-        } else {
-            ""
-        }
+        if (!StringUtils.isAlphanumericSpace((field))) "'$field' is not Alphanumeric" else ""
     }
 
     val validateAsciiPrintable: (String) -> String = { field ->
-        if (!StringUtils.isAsciiPrintable(field)) {
-            "$field is not Alphanumeric"
-        } else {
-            ""
-        }
+        if (!StringUtils.isAsciiPrintable(field)) "'$field' is not Alphanumeric" else ""
     }
 
     fun validateRecord(fieldValues: Map<String, String>, metadata: BaiRecordMeta): MutableList<String> {
         val errors: MutableList<String> = mutableListOf()
         metadata.fields!!.forEach { pair ->
-
             kotlin.run {
                 val field = pair.first
                 val value = fieldValues.getValue(field)
                 val validation = pair.second
                 val errorMessage = validation(value)
-                if (StringUtils.isNotBlank(errorMessage)) errors.add("${metadata.type}: $field: $errorMessage ")
+                if (StringUtils.isNotBlank(errorMessage)) errors.add("${metadata.type}: $field: $errorMessage")
             }
         }
         return errors
     }
-
-
 }

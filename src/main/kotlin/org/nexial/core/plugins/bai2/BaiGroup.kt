@@ -42,7 +42,6 @@ class BaiGroup(private var queue: Queue<String>) : BaiModel() {
     }
 
     private fun delegate() {
-
         while (true) {
             val nextRecord: String = queue.peek()
             if (startsWith(nextRecord, ACCOUNT_IDENTIFIER_CODE)) {
@@ -62,9 +61,7 @@ class BaiGroup(private var queue: Queue<String>) : BaiModel() {
         }
     }
 
-
     override fun filter(recordType: String, condition: String): BaiModel? {
-
         if (recordType == GROUP) {
             val options = condition.split("=")
             val fieldName: String = options[0]
@@ -91,20 +88,16 @@ class BaiGroup(private var queue: Queue<String>) : BaiModel() {
         }
     }
 
-
     override fun field(recordType: String, name: String): TextDataType {
         return when (recordType) {
             GROUP_HEADER  -> TextDataType(header!!.get(name))
             GROUP_TRAILER -> TextDataType(trailer!!.get(name))
             else          -> {
                 val builder = StringBuilder()
-                var value: String
                 records.forEach { baiAccount ->
-                    value = baiAccount.field(recordType, name).textValue
-                    builder.append(value).append(",")
+                    builder.append(baiAccount.field(recordType, name).textValue).append(",")
                 }
-                val newValue = builder.toString().removeSuffix(",")
-                TextDataType(newValue)
+                TextDataType(builder.toString().removeSuffix(","))
             }
         }
     }
@@ -131,7 +124,6 @@ data class BaiGroupHeader(private val nextRecord: String) : Header() {
         }
 
         // todo: lookup for continuation of the record
-
     }
 
     override fun toString(): String {
@@ -141,7 +133,6 @@ data class BaiGroupHeader(private val nextRecord: String) : Header() {
     override fun validate(): MutableList<String> {
         return Validations.validateRecord(groupHeadersMap, BaiRecordMeta.instance(GROUP_HEADER))
     }
-
 }
 
 data class BaiGroupTrailer(private var nextRecord: String) : Trailer() {
@@ -163,7 +154,6 @@ data class BaiGroupTrailer(private var nextRecord: String) : Trailer() {
         // todo: lookup for continuation of the record
     }
 
-
     override fun toString(): String {
         return if (nextRecord.isEmpty()) nextRecord else StringUtils.appendIfMissing(nextRecord, "\n")
     }
@@ -171,6 +161,4 @@ data class BaiGroupTrailer(private var nextRecord: String) : Trailer() {
     override fun validate(): MutableList<String> {
         return Validations.validateRecord(groupTrailerMap, BaiRecordMeta.instance(GROUP_TRAILER))
     }
-
-
 }
