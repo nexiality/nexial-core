@@ -14,7 +14,6 @@ import org.nexial.core.plugins.bai2.BaiConstants.fieldDelim
 import org.nexial.core.plugins.bai2.BaiConstants.groupHeaders
 import org.nexial.core.plugins.bai2.BaiConstants.groupTrailerFields
 import org.nexial.core.plugins.bai2.BaiConstants.recordDelim
-import org.nexial.core.plugins.bai2.BaiFile.Companion.isNumeric
 import org.nexial.core.utils.ConsoleUtils
 import org.nexial.core.variable.TextDataType
 import java.util.*
@@ -70,7 +69,7 @@ class BaiGroup(private var queue: Queue<String>) : BaiModel() {
             val options = condition.split("=")
             val fieldName: String = options[0]
             val fieldValue: String = options[1]
-            val value = (header as BaiGroupHeader).headers[fieldName]
+            val value = (header as BaiGroupHeader).groupHeadersMap[fieldName]
             return if (fieldValue == value) {
                 ConsoleUtils.log("matched group found")
                 this
@@ -95,9 +94,9 @@ class BaiGroup(private var queue: Queue<String>) : BaiModel() {
 
     override fun field(recordType: String, name: String): TextDataType {
         return when (recordType) {
-            GROUP_HEADER -> TextDataType(header!!.get(name))
+            GROUP_HEADER  -> TextDataType(header!!.get(name))
             GROUP_TRAILER -> TextDataType(trailer!!.get(name))
-            else -> {
+            else          -> {
                 val builder = StringBuilder()
                 var value: String
                 records.forEach { baiAccount ->
@@ -118,15 +117,20 @@ class BaiGroup(private var queue: Queue<String>) : BaiModel() {
 }
 
 data class BaiGroupHeader(private val nextRecord: String) : Header() {
-    override fun get(fieldName: String) = headers.getValue(fieldName)
+    override fun get(fieldName: String) = groupHeadersMap.getValue(fieldName)
 
-    var headers: Map<String, String> = mutableMapOf()
+    var groupHeadersMap: Map<String, String> = mutableMapOf()
 
     init {
-        val values: Array<String> = splitByWholeSeparatorPreserveAllTokens(StringUtils.removeEnd(nextRecord, recordDelim).trim(), fieldDelim)
+        val values: Array<String> = splitByWholeSeparatorPreserveAllTokens(
+            StringUtils.removeEnd(nextRecord, recordDelim).trim(), fieldDelim)
         if (groupHeaders.size == values.size) {
-            headers = groupHeaders.zip(values).toMap()
-        }// todo: lookup for continuation of the record
+            val fields = mutableListOf<String>()
+            groupHeaders.forEach { pair -> fields.add(pair.first) }
+            groupHeadersMap = fields.zip(values).toMap()
+        }
+
+        // todo: lookup for continuation of the record
 
     }
 
@@ -134,38 +138,9 @@ data class BaiGroupHeader(private val nextRecord: String) : Header() {
         return if (nextRecord.isEmpty()) nextRecord else StringUtils.appendIfMissing(nextRecord, "\n")
     }
 
-    override fun validate(): List<String> {
-        val errors: MutableList<String> = mutableListOf()
-
-        // todo: check min/max length, check allowable values, check date format
-        if (!isNumeric(headers.getValue(groupHeaders[0]))) {
-            errors.add("Group Header: ${groupHeaders[0]}: ${headers[groupHeaders[0]]} is not Numeric")
-        }
-        if (!StringUtils.isAlphanumeric(headers[groupHeaders[1]])) {
-            errors.add("Group Header: ${groupHeaders[1]}: ${headers[groupHeaders[1]]} is not Alphanumeric")
-        }
-        if (!StringUtils.isAlphanumeric(headers[groupHeaders[2]])) {
-            errors.add("Group Header: ${groupHeaders[2]}: ${headers[groupHeaders[2]]} is not Alphanumeric")
-        }
-        if (!isNumeric(headers.getValue(groupHeaders[3]))) {
-            errors.add("Group Header: ${groupHeaders[3]}: ${headers[groupHeaders[3]]} is not Numeric")
-        }
-        if (!isNumeric(headers.getValue(groupHeaders[4]))) {
-            errors.add("Group Header: ${groupHeaders[4]}: ${headers[groupHeaders[4]]} is not Numeric")
-        }
-        if (!isNumeric(headers.getValue(groupHeaders[5]))) {
-            errors.add("Group Header: ${groupHeaders[5]}: ${headers[groupHeaders[5]]} is not Numeric")
-        }
-        if (!StringUtils.isAlphanumeric(headers[groupHeaders[6]]!!)) {
-            errors.add("Group Header: ${groupHeaders[6]}: ${headers[groupHeaders[6]]} is not Alphanumeric")
-        }
-        if (!isNumeric(headers.getValue(groupHeaders[7]))) {
-            errors.add("Group Header: ${groupHeaders[7]}: ${headers[groupHeaders[7]]} is not Numeric")
-        }
-
-        return errors
+    override fun validate(): MutableList<String> {
+        return Validations.validateRecord(groupHeadersMap, BaiRecordMeta.instance(GROUP_HEADER))
     }
-
 
 }
 
@@ -176,11 +151,16 @@ data class BaiGroupTrailer(private var nextRecord: String) : Trailer() {
     private var groupTrailerMap: Map<String, String> = mutableMapOf()
 
     init {
-        val values: Array<String> = splitByWholeSeparatorPreserveAllTokens(StringUtils.removeEnd(nextRecord, recordDelim).trim(), fieldDelim)
-        if (groupTrailerFields.size == values.size) {
-            groupTrailerMap = groupTrailerFields.zip(values).toMap()
-        }// todo: lookup for continuation of the record
+        val values: Array<String> = splitByWholeSeparatorPreserveAllTokens(
+            StringUtils.removeEnd(nextRecord, recordDelim).trim(), fieldDelim)
 
+        if (groupTrailerFields.size == values.size) {
+            val fields = mutableListOf<String>()
+            groupTrailerFields.forEach { pair -> fields.add(pair.first) }
+            groupTrailerMap = fields.zip(values).toMap()
+        }
+
+        // todo: lookup for continuation of the record
     }
 
 
@@ -188,21 +168,9 @@ data class BaiGroupTrailer(private var nextRecord: String) : Trailer() {
         return if (nextRecord.isEmpty()) nextRecord else StringUtils.appendIfMissing(nextRecord, "\n")
     }
 
-    override fun validate(): List<String> {
-        val errors: MutableList<String> = mutableListOf()
-        if (!isNumeric(groupTrailerMap.getValue(groupTrailerFields[0]))) {
-            errors.add("Group Trailer: ${groupTrailerFields[0]}: ${groupTrailerMap[groupTrailerFields[0]]} is not Numeric")
-        }
-        if (!isNumeric(groupTrailerMap.getValue(groupTrailerFields[1]))) {
-            errors.add("Group Trailer: ${groupTrailerFields[1]}: ${groupTrailerMap[groupTrailerFields[1]]} is not Numeric")
-        }
-        if (!isNumeric(groupTrailerMap.getValue(groupTrailerFields[2]))) {
-            errors.add("Group Trailer: ${groupTrailerFields[2]}: ${groupTrailerMap[groupTrailerFields[2]]} is not Numeric")
-        }
-        if (!isNumeric(groupTrailerMap.getValue(groupTrailerFields[3]))) {
-            errors.add("Group Trailer: ${groupTrailerFields[3]}: ${groupTrailerMap[groupTrailerFields[3]]} is not Numeric")
-        }
-
-        return errors
+    override fun validate(): MutableList<String> {
+        return Validations.validateRecord(groupTrailerMap, BaiRecordMeta.instance(GROUP_TRAILER))
     }
+
+
 }

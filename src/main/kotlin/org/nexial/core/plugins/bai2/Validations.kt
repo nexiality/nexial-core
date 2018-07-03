@@ -21,41 +21,44 @@ import org.nexial.core.plugins.bai2.BaiFile.Companion.isNumeric
 
 object Validations {
 
-    val validateNumeric: (Map<String, String>, String) -> String = { record, field ->
-        if (!isNumeric(record.getValue(field))) {
-            "Transaction: $field:  ${record[field]} is not Numeric"
+    val validateNumeric: (String) -> String = { field ->
+        if (!isNumeric(field)) {
+            "'$field'  is not Numeric"
         } else {
             ""
         }
     }
 
-    val validateAlphanumeric: (Map<String, String>, String) -> String = { record, field ->
-        if (!StringUtils.isAlphanumeric(record.getValue(field))) {
-            "Transaction: $field:  ${record[field]} is not Alphanumeric"
+    val validateAlphanumeric: (String) -> String = { field ->
+        if (!StringUtils.isAlphanumericSpace((field))) {
+            "'$field' is not Alphanumeric"
         } else {
             ""
         }
     }
 
-    val validateAsciiPrintable: (Map<String, String>, String) -> String = { record, field ->
-        if (!StringUtils.isAsciiPrintable(record.getValue(field))) {
-            "Transaction: $field:  ${record[field]} is not Alphanumeric"
+    val validateAsciiPrintable: (String) -> String = { field ->
+        if (!StringUtils.isAsciiPrintable(field)) {
+            "$field is not Alphanumeric"
         } else {
             ""
         }
     }
 
-    fun validate(records: Map<String, String>,
-                 vararg validations: Pair<String, (Map<String, String>, String) -> String>): MutableList<String> {
+    fun validateRecord(fieldValues: Map<String, String>, metadata: BaiRecordMeta): MutableList<String> {
         val errors: MutableList<String> = mutableListOf()
-        validations.forEach { pair ->
-            run {
+        metadata.fields!!.forEach { pair ->
+
+            kotlin.run {
                 val field = pair.first
+                val value = fieldValues.getValue(field)
                 val validation = pair.second
-                val errorMessage = validation(records, field)
-                if (StringUtils.isNotBlank(errorMessage)) errors.add(errorMessage)
+                val errorMessage = validation(value)
+                if (StringUtils.isNotBlank(errorMessage)) errors.add("${metadata.type}: $field: $errorMessage ")
             }
         }
         return errors
     }
+
+
 }

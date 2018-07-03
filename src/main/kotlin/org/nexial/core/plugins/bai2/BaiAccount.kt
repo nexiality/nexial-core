@@ -13,7 +13,7 @@ import org.nexial.core.plugins.bai2.BaiConstants.accountTrailerFields
 import org.nexial.core.plugins.bai2.BaiConstants.fieldDelim
 import org.nexial.core.plugins.bai2.BaiConstants.recordDelim
 import org.nexial.core.plugins.bai2.BaiConstants.transactionFields
-import org.nexial.core.plugins.bai2.BaiFile.Companion.isNumeric
+import org.nexial.core.plugins.bai2.Validations.validateRecord
 import org.nexial.core.utils.ConsoleUtils
 import org.nexial.core.variable.TextDataType
 import java.util.*
@@ -23,9 +23,9 @@ class BaiAccount : BaiModel {
 
     override fun field(recordType: String, name: String): TextDataType {
         return when (recordType) {
-            ACCOUNT_HEADER -> TextDataType(header!!.get(name))
+            ACCOUNT_HEADER  -> TextDataType(header!!.get(name))
             ACCOUNT_TRAILER -> TextDataType(trailer!!.get(name))
-            else -> {
+            else            -> {
                 val builder = StringBuilder()
                 var value: String
                 records.forEach { transaction ->
@@ -77,7 +77,6 @@ class BaiAccount : BaiModel {
         }
     }
 
-
     private fun parseAccountTrailer() {
         val nextRecord = queue.peek()
         if (StringUtils.startsWith(nextRecord, BaiConstants.ACCOUNT_TRAILER_CODE)) {
@@ -97,11 +96,11 @@ class BaiAccount : BaiModel {
                 ConsoleUtils.log("matched account found")
                 this
             } else null
-        }else {
+        } else {
             val matchedTransactions: MutableList<BaiModel> = ArrayList()
             val baiAccount = BaiAccount()
             records.forEach { transaction ->
-                val newTransaction = transaction.filter(recordType = recordType, condition = condition)
+                val newTransaction = transaction.filter(recordType, condition)
                 if (newTransaction != null) {
                     matchedTransactions.add(newTransaction)
                 }
@@ -137,42 +136,22 @@ data class BaiAccountIdentifier(private val nextRecord: String) : Header() {
         type.
         */
 
-        val values: Array<String> = StringUtils.splitByWholeSeparatorPreserveAllTokens(StringUtils.removeEnd(nextRecord, recordDelim).trim(), fieldDelim)
+        val values: Array<String> = StringUtils
+            .splitByWholeSeparatorPreserveAllTokens(StringUtils.removeEnd(nextRecord, recordDelim).trim(), fieldDelim)
+
         // todo: implement 88 Continuation lookup
         if (accountHeaders.size == values.size) {
-            accountHeaderMap = accountHeaders.zip(values).toMap()
+            val fields = mutableListOf<String>()
+            accountHeaders.forEach { pair -> fields.add(pair.first) }
+            accountHeaderMap = fields.zip(values).toMap()
         }
 
     }
 
-    override fun validate(): List<String> {
-        val errors: MutableList<String> = mutableListOf()
-
-        if (!isNumeric(accountHeaderMap.getValue(accountHeaders[0]))) {
-            errors.add("Account: ${accountHeaders[0]}: ${accountHeaderMap[accountHeaders[0]]} is not Numeric")
-        }
-        if (!StringUtils.isAsciiPrintable(accountHeaderMap[accountHeaders[1]])) {
-            errors.add("Account: ${accountHeaders[1]}: ${accountHeaderMap[accountHeaders[1]]} is not Alphanumeric")
-        }
-        if (!StringUtils.isAsciiPrintable(accountHeaderMap[accountHeaders[2]])) {
-            errors.add("Account: ${accountHeaders[2]}: ${accountHeaderMap[accountHeaders[2]]} is not Alphanumeric")
-        }
-        if (!isNumeric(accountHeaderMap.getValue(accountHeaders[3]))) {
-            errors.add("Account: ${accountHeaders[3]}: ${accountHeaderMap[accountHeaders[3]]} is not Numeric")
-        }
-        if (!isNumeric(accountHeaderMap.getValue(accountHeaders[4]))) {
-            errors.add("Account: ${accountHeaders[4]}: ${accountHeaderMap[accountHeaders[4]]} is not Numeric")
-        }
-
-        if (!isNumeric(accountHeaderMap.getValue(accountHeaders[5]))) {
-            errors.add("Account: ${accountHeaders[5]}: ${accountHeaderMap[accountHeaders[5]]} is not Numeric")
-        }
-        if (!StringUtils.isAsciiPrintable(accountHeaderMap.getValue(accountHeaders[6]))) {
-            errors.add("Account: ${accountHeaders[6]}: ${accountHeaderMap[accountHeaders[6]]} is not Alphanumeric")
-        }
-
-        return errors
+    override fun validate(): MutableList<String> {
+        return validateRecord(accountHeaderMap, BaiRecordMeta.instance(ACCOUNT_HEADER))
     }
+
 
     override fun toString(): String {
         return if (nextRecord.isEmpty()) nextRecord else StringUtils.appendIfMissing(nextRecord, "\n")
@@ -187,11 +166,16 @@ data class BaiAccountTrailer(var nextRecord: String) : Trailer() {
     private var accountTrailerMap: Map<String, String> = mutableMapOf()
 
     init {
-        val values: Array<String> = StringUtils.splitByWholeSeparatorPreserveAllTokens(StringUtils.removeEnd(nextRecord, recordDelim).trim(), fieldDelim)
+        val values: Array<String> = StringUtils
+            .splitByWholeSeparatorPreserveAllTokens(StringUtils.removeEnd(nextRecord, recordDelim).trim(), fieldDelim)
 
         if (accountTrailerFields.size == values.size) {
-            accountTrailerMap = accountTrailerFields.zip(values).toMap()
-        }// todo: lookup for continuation of the record
+            val fields = mutableListOf<String>()
+            accountTrailerFields.forEach { pair -> fields.add(pair.first) }
+            accountTrailerMap = fields.zip(values).toMap()
+        }
+
+        // todo: lookup for continuation of the record
 
     }
 
@@ -199,20 +183,10 @@ data class BaiAccountTrailer(var nextRecord: String) : Trailer() {
         return if (nextRecord.isEmpty()) nextRecord else StringUtils.appendIfMissing(nextRecord, "\n")
     }
 
-    override fun validate(): List<String> {
-        val errors: MutableList<String> = mutableListOf()
-        if (!isNumeric(accountTrailerMap.getValue(accountTrailerFields[0]))) {
-            errors.add("Account: ${accountTrailerFields[0]}: ${accountTrailerMap[accountTrailerFields[0]]} is not Numeric")
-        }
-        if (!isNumeric(accountTrailerMap.getValue(accountTrailerFields[1]))) {
-            errors.add("Account: ${accountTrailerFields[1]}: ${accountTrailerMap[accountTrailerFields[1]]} is not Numeric")
-        }
-
-        if (!isNumeric(accountTrailerMap.getValue(accountTrailerFields[2]))) {
-            errors.add("Account: ${accountTrailerFields[2]}: ${accountTrailerMap[accountTrailerFields[2]]} is not Numeric")
-        }
-        return errors
+    override fun validate(): MutableList<String> {
+        return validateRecord(accountTrailerMap, BaiRecordMeta.instance(ACCOUNT_TRAILER))
     }
+
 }
 
 class BaiTransaction : BaiModel {
@@ -248,9 +222,12 @@ class BaiTransaction : BaiModel {
         }
         val values = StringUtils.removeEnd(edited.trim(), recordDelim).trim().split("(?<!\\\\),".toRegex())
         (values as MutableList)[fieldPosition] = values[fieldPosition].replace("\\,", ",")
+
         // todo: implement 88 Continuation lookup
         if (transactionFields.size == values.size) {
-            transactionRecordMap = transactionFields.zip(values).toMap()
+            val fields = mutableListOf<String>()
+            transactionFields.forEach { pair -> fields.add(pair.first) }
+            transactionRecordMap = fields.zip(values).toMap()
             this.errors.addAll(validate() as ArrayList<String>)
         }
         return this
@@ -259,36 +236,10 @@ class BaiTransaction : BaiModel {
 
     private var transactionRecordMap: Map<String, String> = mutableMapOf()
 
-    internal fun validate(): List<String> {
-
-        val errors: MutableList<String> = mutableListOf()
-
-        if (!isNumeric(transactionRecordMap.getValue(transactionFields[0]))) {
-            errors.add("Transaction: ${transactionFields[0]}:  ${transactionRecordMap[transactionFields[0]]} is not Numeric")
-        }
-        if (!isNumeric(transactionRecordMap.getValue(transactionFields[1]))) {
-            errors.add("Transaction: ${transactionFields[1]}:  ${transactionRecordMap[transactionFields[1]]} is not Numeric")
-        }
-        if (!isNumeric(transactionRecordMap.getValue(transactionFields[2]))) {
-            errors.add("Transaction: ${transactionFields[2]}:  ${transactionRecordMap[transactionFields[2]]} is not Numeric")
-        }
-        if (!StringUtils.isAlphanumeric(transactionRecordMap[transactionFields[3]])) {
-            errors.add("Transaction: ${transactionFields[3]}:  ${transactionRecordMap[transactionFields[3]]} is not AlphaNumeric")
-        }
-        if (!StringUtils.isAlphanumeric(transactionRecordMap[transactionFields[4]])) {
-            errors.add("Transaction: ${transactionFields[4]}:  ${transactionRecordMap[transactionFields[4]]} is not AlphaNumeric")
-        }
-
-        if (!StringUtils.isAlphanumeric(transactionRecordMap[transactionFields[5]])) {
-            errors.add("Transaction: ${transactionFields[5]}:  ${transactionRecordMap[transactionFields[5]]} is not Alphanumeric")
-        }
-        if (!StringUtils.isAsciiPrintable(transactionRecordMap[transactionFields[6]])) {
-            errors.add("Transaction: ${transactionFields[6]}:  ${transactionRecordMap[transactionFields[6]]} is not Alphanumeric")
-        }
-
-
-        return errors
+    fun validate(): MutableList<String> {
+        return validateRecord(transactionRecordMap, BaiRecordMeta.instance(TRANSACTION))
     }
+
 
     override fun field(recordType: String, name: String): TextDataType {
         return if (recordType == TRANSACTION) {

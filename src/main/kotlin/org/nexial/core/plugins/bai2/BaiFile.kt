@@ -12,7 +12,7 @@ import org.nexial.core.plugins.bai2.BaiConstants.fieldDelim
 import org.nexial.core.plugins.bai2.BaiConstants.fileHeaders
 import org.nexial.core.plugins.bai2.BaiConstants.fileTrailerFields
 import org.nexial.core.plugins.bai2.BaiConstants.recordDelim
-import org.nexial.core.plugins.bai2.BaiFile.Companion.isNumeric
+import org.nexial.core.plugins.bai2.Validations.validateRecord
 import org.nexial.core.variable.TextDataType
 import java.text.NumberFormat
 import java.text.ParsePosition
@@ -97,11 +97,11 @@ class BaiFile : BaiModel {
     override fun field(recordType: String, name: String): TextDataType {
         return when (recordType) {
 
-            FILE_HEADER -> TextDataType(header!!.get(fieldName = name))
+            FILE_HEADER  -> TextDataType(header!!.get(name))
 
             FILE_TRAILER -> TextDataType(trailer!!.get(name))
 
-            else -> {
+            else         -> {
                 val builder = StringBuilder()
                 var value: String
                 records.forEach { baiGroup ->
@@ -143,44 +143,20 @@ data class BaiFileHeader(private var nextRecord: String) : Header() {
 
     init {
         val values: Array<String> = StringUtils.splitByWholeSeparatorPreserveAllTokens(
-                StringUtils.removeEnd(nextRecord, recordDelim).trim(), fieldDelim)
+            StringUtils.removeEnd(nextRecord, recordDelim).trim(), fieldDelim)
         if (fileHeaders.size == values.size) {
-            fileHeaderMap = fileHeaders.zip(values).toMap()
-        }// todo: lookup for continuation of the record
+            val fields = mutableListOf<String>()
+            fileHeaders.forEach { pair -> fields.add(pair.first) }
+            fileHeaderMap = fields.zip(values).toMap()
+        }
+
+        // todo: lookup for continuation of the record
 
     }
 
-    override fun validate(): List<String> {
-        val errors: MutableList<String> = mutableListOf()
-        if (!isNumeric(fileHeaderMap.getValue(fileHeaders[0]))) {
-            errors.add("File Header: ${fileHeaders[0]}: ${fileHeaderMap[fileHeaders[0]]} is not Numeric")
-        }
-        if (!StringUtils.isAlphanumeric(fileHeaderMap[fileHeaders[1]])) {
-            errors.add("File Header: ${fileHeaders[1]}: ${fileHeaderMap[fileHeaders[1]]} is not Alphanumeric")
-        }
-        if (!StringUtils.isAlphanumeric(fileHeaderMap[fileHeaders[2]])) {
-            errors.add("File Header: ${fileHeaders[2]}: ${fileHeaderMap[fileHeaders[2]]} is not Alphanumeric")
-        }
-        if (!isNumeric(fileHeaderMap.getValue(fileHeaders[3]))) {
-            errors.add("File Header: ${fileHeaders[3]}: ${fileHeaderMap[fileHeaders[3]]} is not Numeric")
-        }
-        if (!isNumeric(fileHeaderMap.getValue(fileHeaders[4]))) {
-            errors.add("File Header: ${fileHeaders[4]}: ${fileHeaderMap[fileHeaders[4]]} is not Numeric")
-        }
-        if (!isNumeric(fileHeaderMap.getValue(fileHeaders[5]))) {
-            errors.add("File Header: ${fileHeaders[5]}: ${fileHeaderMap[fileHeaders[5]]} is not Numeric")
-        }
-        if (!isNumeric(fileHeaderMap.getValue(fileHeaders[6]))) {
-            errors.add("File Header: ${fileHeaders[6]}: ${fileHeaderMap[fileHeaders[6]]} is not Numeric")
-        }
-        if (!isNumeric(fileHeaderMap.getValue(fileHeaders[7]))) {
-            errors.add("File Header: ${fileHeaders[7]}: ${fileHeaderMap[fileHeaders[7]]} is not Numeric")
-        }
-        if (!isNumeric(fileHeaderMap.getValue(fileHeaders[8]))) {
-            errors.add("File Header: ${fileHeaders[8]}: ${fileHeaderMap[fileHeaders[8]]} is not Numeric")
-        }
+    override fun validate(): MutableList<String> {
 
-        return errors
+        return validateRecord(fileHeaderMap, BaiRecordMeta.instance(FILE_HEADER))
     }
 
     override fun toString(): String {
@@ -194,31 +170,20 @@ data class BaiFileTrailer(private val nextRecord: String) : Trailer() {
     override fun get(fieldName: String) = fileTrailerMap.getValue(fieldName)
 
     init {
-        val values: Array<String> = StringUtils.splitByWholeSeparatorPreserveAllTokens(StringUtils.removeEnd(nextRecord, recordDelim).trim(), fieldDelim)
+        val values: Array<String> = StringUtils
+            .splitByWholeSeparatorPreserveAllTokens(StringUtils.removeEnd(nextRecord, recordDelim).trim(), fieldDelim)
         if (fileTrailerFields.size == values.size) {
-            fileTrailerMap = fileTrailerFields.zip(values).toMap()
-        }// todo: lookup for continuation of the record
+            val fields = mutableListOf<String>()
+            fileTrailerFields.forEach { pair -> fields.add(pair.first) }
+            fileTrailerMap = fields.zip(values).toMap()
+        }
+
+        // todo: lookup for continuation of the record
 
     }
 
-
-    override fun validate(): List<String> {
-
-        val errors: MutableList<String> = mutableListOf()
-        if (!isNumeric(fileTrailerMap.getValue(fileTrailerFields[0]))) {
-            errors.add("File Trailer: ${fileTrailerFields[0]}: ${fileTrailerMap[fileTrailerFields[0]]} is not Numeric")
-
-        }
-        if (!isNumeric(fileTrailerMap.getValue(fileTrailerFields[1]))) {
-            errors.add("File Trailer: ${fileTrailerFields[1]}: ${fileTrailerMap[fileTrailerFields[1]]} is not Numeric")
-        }
-        if (!isNumeric(fileTrailerMap.getValue(fileTrailerFields[2]))) {
-            errors.add("File Trailer: ${fileTrailerFields[2]}: ${fileTrailerMap[fileTrailerFields[2]]} is not Numeric")
-        }
-        if (!isNumeric(fileTrailerMap.getValue(fileTrailerFields[3]))) {
-            errors.add("File Trailer: ${fileTrailerFields[3]}: ${fileTrailerMap[fileTrailerFields[3]]} is not Numeric")
-        }
-        return errors
+    override fun validate(): MutableList<String> {
+        return Validations.validateRecord(fileTrailerMap, BaiRecordMeta.instance(FILE_TRAILER))
     }
 
     override fun toString(): String {
