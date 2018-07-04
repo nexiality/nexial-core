@@ -412,11 +412,16 @@
                         // firefoxProfile.setPreference("browser.tabs.warnOnClose", false);
                         // firefoxProfile.setPreference("browser.tabs.warnOnCloseOtherTabs", false);
                         -->
+                        <entry key="browser.tabs.closeWindowWithLastTab" value="true"/>
+                        <entry key="browser.tabs.crashReporting.sendReport" value="false"/>
+                        <entry key="browser.urlbar.openintab" value="false"/>
+                        <entry key="dom.clients.openwindow_favors_same_process" value="true"/>
+
                         <entry key="security.csp.enable" value="false"/>
                         <entry key="security.ssl.enable_ocsp_stapling" value="false"/>
+                        <entry key="security.ssl.enable_ocsp_must_staple" value="false"/>
                         <entry key="services.sync.prefs.sync.security.OCSP.enabled" value="false"/>
                         <entry key="services.sync.prefs.sync.security.OCSP.require" value="false"/>
-                        <entry key="security.ssl.enable_ocsp_must_staple" value="false"/>
 
                         <entry key="webdriver_accept_untrusted_certs" value="true"/>
                         <entry key="webdriver_assume_untrusted_issuer" value="false"/>
@@ -425,7 +430,6 @@
                         <entry key="datareporting.healthreport.service.enabled" value="false"/>
                         <entry key="breakpad.reportURL" value="false"/>
                         <entry key="browser.search.suggest.enabled" value="false"/>
-                        <entry key="browser.tabs.crashReporting.sendReport" value="false"/>
 
                         <!-- nightly firefox -->
                         <entry key="dom.vr.enabled" value="false"/>
@@ -433,6 +437,8 @@
                         <entry key="dom.vr.openvr.enabled" value="false"/>
                         <entry key="dom.vr.osvr.enabled" value="false"/>
                         <entry key="dom.vr.poseprediction.enabled" value="false"/>
+
+                        <entry key="dom.allow_scripts_to_close_windows" value="true"/>
                     </map>
                 </property>
                 <property name="firefoxStringPrefs">
@@ -464,6 +470,9 @@
                         <!--<entry key="browser.link.open_newwindow" value="2"/>-->
                         <!--<entry key="browser.link.open_newwindow.override.external" value="2"/>-->
                         <!--<entry key="browser.link.open_newwindow.restriction" value="2"/>-->
+                        <!-- open to tab -->
+                        <entry key="browser.link.open_newwindow" value="3"/>
+                        <entry key="browser.link.open_newwindow.restriction" value="0"/>
 
                         <!--
                         indicates the default folder to download a file to. 0 indicates the Desktop; 1 indicates the systems

@@ -71,9 +71,11 @@ import static org.nexial.core.NexialConst.Data.*;
 import static org.nexial.core.NexialConst.Project.*;
 import static org.nexial.core.interactive.InteractiveConst.Command.browser;
 import static org.nexial.core.utils.CheckUtils.requiresExecutableFile;
+import static org.openqa.selenium.PageLoadStrategy.EAGER;
 import static org.openqa.selenium.UnexpectedAlertBehaviour.ACCEPT;
 import static org.openqa.selenium.UnexpectedAlertBehaviour.IGNORE;
 import static org.openqa.selenium.firefox.FirefoxDriver.MARIONETTE;
+import static org.openqa.selenium.firefox.FirefoxDriverLogLevel.ERROR;
 import static org.openqa.selenium.ie.InternetExplorerDriver.*;
 import static org.openqa.selenium.remote.CapabilityType.*;
 
@@ -255,12 +257,16 @@ public class Browser implements ForcefulTerminate {
                         LOGGER.debug("webdriver readiness check: current window handle=" + winHandle);
                     }
                     // everything's fine, moving on
-
                 } catch (Throwable e) {
-                    // something's wrong with current browser window or session, need to re-init
-                    shouldInitialize = true;
-                    LOGGER.error("webdriver readiness check: " + e.getMessage() +
-                                 "\nBROWSER MIGHT BE TERMINATED; RESTARTING...");
+                    String error = e.getMessage();
+                    if (StringUtils.contains(error, "unexpected end of stream on Connection")) {
+                        LOGGER.error("webdriver readiness check: " + e.getMessage());
+                    } else {
+                        // something's wrong with current browser window or session, need to re-init
+                        shouldInitialize = true;
+                        LOGGER.error("webdriver readiness check: " + e.getMessage() +
+                                     "\nBROWSER MIGHT BE TERMINATED; RESTARTING...");
+                    }
                 }
             }
         } else {
@@ -479,7 +485,6 @@ public class Browser implements ForcefulTerminate {
         SafariOptions options = new SafariOptions();
 
         // Whether to make sure the session has no cookies, cache entries, local storage, or databases.
-        options.useCleanSession(context.getBooleanData(SAFARI_CLEAN_SESSION, DEF_SAFARI_CLEAN_SESSION));
         options.setUseTechnologyPreview(context.getBooleanData(SAFARI_USE_TECH_PREVIEW, DEF_SAFARI_USE_TECH_PREVIEW));
 
         // todo: Create a SafariDriverService to specify what Safari flavour should be used and pass the service instance to a SafariDriver constructor.  When SafariDriver API updates to better code.. can't do this now
@@ -771,28 +776,10 @@ public class Browser implements ForcefulTerminate {
         context.setData(MARIONETTE, true);
         System.setProperty(MARIONETTE, "true");
 
-        FirefoxOptions options = new FirefoxOptions();
-        if (headless) { options.setHeadless(true); }
-
-        if (MapUtils.isNotEmpty(firefoxBooleanPrefs)) { firefoxBooleanPrefs.forEach(options::addPreference); }
-        if (MapUtils.isNotEmpty(firefoxIntPrefs)) { firefoxIntPrefs.forEach(options::addPreference); }
-        if (MapUtils.isNotEmpty(firefoxStringPrefs)) { firefoxStringPrefs.forEach(options::addPreference); }
-
-        if (context.getBooleanData(BROWER_INCOGNITO, DEF_BROWSER_INCOGNITO)) {
-            options.addPreference("browser.privatebrowsing.autostart", true);
-        }
-
-        if (CollectionUtils.isNotEmpty(firefoxBinArgs)) { firefoxBinArgs.forEach(options::addArguments); }
+        FirefoxOptions options;
 
         // todo: introduce auto-download feature
         //firefoxProfile.setPreference("browser.download.dir", SystemUtils.getJavaIoTmpDir().getAbsolutePath());
-        //firefoxProfile.setPreference("browser.download.folderList", 2);
-        //firefoxProfile.setPreference("browser.download.manager.showWhenStarting", false);
-        //firefoxProfile.setPreference("browser.helperApps.alwaysAsk.force", false);
-        //firefoxProfile.setPreference("browser.helperApps.neverAsk.saveToDisk",
-
-        // todo: check out nexial.autoDownloadMimeType
-        //                      "text/xml, text/csv, text/plain, text/log, application/zlib, application/x-gzip, application/gzip, application/x-compressed, application/x-gtar, multipart/x-gzip, application/tgz, application/gnutar, application/x-tar");
 
         // unrelated, added only to improve firefox-pdf perf.
         //firefoxProfile.setPreference("pdfjs.disabled", true);
@@ -806,25 +793,29 @@ public class Browser implements ForcefulTerminate {
             if (proxy != null) {
                 Proxy localProxy = proxy.getServer().seleniumProxy();
 
-                Properties browsermobProps = PropertiesLoaderUtils.loadAllProperties(
-                    "org/nexial/core/plugins/har/browsermob.properties");
-                int proxyPort = Integer.parseInt(browsermobProps.getProperty("browsermob.port"));
-
                 String localHost = InetAddress.getLocalHost().getHostName();
                 localProxy.setHttpProxy(localHost);
                 localProxy.setSslProxy(localHost);
 
+                capabilities = new DesiredCapabilities();
+                initCapabilities(capabilities);
+                capabilities.setCapability(PROXY, localProxy);
+
+                Properties browsermobProps = PropertiesLoaderUtils.loadAllProperties(
+                    "org/nexial/core/plugins/har/browsermob.properties");
+                int proxyPort = Integer.parseInt(browsermobProps.getProperty("browsermob.port"));
+
+                options = new FirefoxOptions(capabilities);
                 options.addPreference("network.proxy.type", 1);
                 options.addPreference("network.proxy.http_port", proxyPort);
                 options.addPreference("network.proxy.ssl_port", proxyPort);
                 options.addPreference("network.proxy.no_proxies_on", "");
 
-                capabilities = new DesiredCapabilities();
-                initCapabilities(capabilities);
-                capabilities.setCapability(PROXY, localProxy);
             } else {
                 capabilities = DesiredCapabilities.firefox();
                 initCapabilities(capabilities);
+
+                options = new FirefoxOptions(capabilities);
 
                 Proxy proxy = (Proxy) capabilities.getCapability(PROXY);
                 if (proxy != null) {
@@ -843,9 +834,26 @@ public class Browser implements ForcefulTerminate {
                 }
             }
 
-            capabilities.setCapability("moz:firefoxOptions", options);
-            FirefoxDriver firefox = new FirefoxDriver(capabilities);
-            // firefox.setLogLevel(Level.FINE);
+            if (headless) { options.setHeadless(true); }
+
+            // merge configured prefs (spring) to `options` instance
+            if (MapUtils.isNotEmpty(firefoxBooleanPrefs)) { firefoxBooleanPrefs.forEach(options::addPreference); }
+            if (MapUtils.isNotEmpty(firefoxIntPrefs)) { firefoxIntPrefs.forEach(options::addPreference); }
+            if (MapUtils.isNotEmpty(firefoxStringPrefs)) { firefoxStringPrefs.forEach(options::addPreference); }
+
+            // if (context.getBooleanData(BROWER_INCOGNITO, DEF_BROWSER_INCOGNITO)) {
+            //     options.addPreference("browser.privatebrowsing.autostart", true);
+            // }
+
+            if (CollectionUtils.isNotEmpty(firefoxBinArgs)) { firefoxBinArgs.forEach(options::addArguments); }
+
+            boolean ignoreAlert = BooleanUtils.toBoolean(context.getBooleanData(OPT_ALERT_IGNORE_FLAG));
+            options.setUnhandledPromptBehaviour(ignoreAlert ? IGNORE : ACCEPT);
+            options.setAcceptInsecureCerts(true);
+            options.setPageLoadStrategy(EAGER);
+            options.setLogLevel(ERROR);
+
+            FirefoxDriver firefox = new FirefoxDriver(options);
 
             browserVersion = capabilities.getVersion();
             browserPlatform = capabilities.getPlatform();
@@ -972,6 +980,8 @@ public class Browser implements ForcefulTerminate {
         capabilities.setCapability(SUPPORTS_ALERTS, true);
         capabilities.setCapability(ACCEPT_SSL_CERTS, true);
         capabilities.setCapability(HAS_NATIVE_EVENTS, true);
+
+        capabilities.setCapability(SUPPORTS_LOCATION_CONTEXT, false);
 
         // --------------------------------------------------------------------
         // Proxy

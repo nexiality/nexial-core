@@ -9,7 +9,20 @@
 
 function resolveOSXAppPath() {
 	local appExec=$1
-	path=`locate "MacOS/${appExec}" | grep -E "${appExec}$"`
+	local me=`whoami`
+	local path=""
+	for p in `locate "MacOS/${appExec}" | grep -E "${appExec}$"` ; do
+	    if [ "$path"="" ] ; then
+	        # first time.. just use what we found
+	        path=${p}
+        else
+            if [ "${p}" = *"${me}"* ] ; then
+                # the one under `me` takes a higher precedence
+                path=${p}
+            fi
+        fi
+	done
+
 	echo ${path}
 }
 

@@ -654,8 +654,6 @@ public final class NexialConst {
         public static final boolean DEF_BROWSER_IE_REQUIRE_WINDOW_FOCUS = false;
         public static final int BROWSER_STABILITY_COMPARE_TOLERANCE = 3;
         public static final String OPT_BROWSER_CONSOLE_LOG = NAMESPACE + "browserConsoleLog";
-        public static final String SAFARI_CLEAN_SESSION = BROWSER + ".safari.cleanSession";
-        public static final boolean DEF_SAFARI_CLEAN_SESSION = true;
         public static final String SAFARI_USE_TECH_PREVIEW = BROWSER + ".safari.useTechPreview";
         public static final boolean DEF_SAFARI_USE_TECH_PREVIEW = false;
         public static final String CEF_CLIENT_LOCATION = BROWSER + ".embedded.appLocation";
