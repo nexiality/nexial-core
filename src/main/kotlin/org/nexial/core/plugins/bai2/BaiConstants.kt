@@ -10,7 +10,7 @@ object BaiConstants {
     const val recordDelim = "/"
     const val FILE_HEADER_CODE = "01"
     const val GROUP_HEADER_CODE = "02"
-    const val ACCOUNT_IDENTIFIER_CODE = "03"
+    const val ACCOUNT_HEADER_CODE = "03"
     const val TRANSACTION_CODE = "16"
     // todo: continuation_code type to be implemented
     const val CONTINUATION_CODE = "88"
@@ -36,17 +36,17 @@ object BaiConstants {
         Pair("Group Status", validateNumeric),
         Pair("Effective Date", validateNumeric),
         Pair("Effective Time", validateNumeric),
-        Pair("Currency Code", validateNumeric),
+        Pair("Currency Code", validateAlphanumeric),
         Pair("Date Modifier", validateNumeric))
 
     val accountHeaders = mutableListOf(
         Pair("Record Code", validateNumeric),
         Pair("Bank Customer Account", validateAsciiPrintable),
-        Pair("Currency Code", validateAsciiPrintable),
+        Pair("Currency Code", validateAlphanumeric),
         Pair("Summary Type Code", validateNumeric),
         Pair("Summary Amount", validateNumeric),
         Pair("Summary Item Count", validateNumeric),
-        Pair("Funds Type", validateAsciiPrintable))
+        Pair("Funds Type", validateAlphanumeric))
 
     val transactionFields = mutableListOf(
         Pair("Record Code", validateNumeric),
@@ -57,18 +57,18 @@ object BaiConstants {
         Pair("Customer Ref Number", validateAlphanumeric),
         Pair("Detail Text", validateAsciiPrintable))
 
-    val accountTrailerFields = mutableListOf(
+    val accountTrailers = mutableListOf(
         Pair("Record Code", validateNumeric),
         Pair("Account Control Total Amount", validateNumeric),
         Pair("Account Total Records", validateNumeric))
 
-    val groupTrailerFields = mutableListOf(
+    val groupTrailers = mutableListOf(
         Pair("Record Code", validateNumeric),
         Pair("Group Total Amount", validateNumeric),
         Pair("Group Total Accounts", validateNumeric),
         Pair("Group Total Records", validateNumeric))
 
-    val fileTrailerFields = mutableListOf(
+    val fileTrailers = mutableListOf(
         Pair("Record Code", validateNumeric),
         Pair("File Total Amount", validateNumeric),
         Pair("File Total Groups", validateNumeric),
@@ -83,4 +83,15 @@ object BaiConstants {
     const val ACCOUNT_TRAILER = "Account Trailer"
     const val GROUP_TRAILER = "Group Trailer"
     const val FILE_TRAILER = "File Trailer"
+
+    class BaiRecordMeta(val code: String, val type: String, val fields: MutableList<Pair<String, (String) -> String>>)
+
+    val fileHeaderMeta = BaiRecordMeta(FILE_HEADER_CODE, FILE_HEADER, fileHeaders)
+    val groupHeaderMeta = BaiRecordMeta(GROUP_HEADER_CODE, GROUP_HEADER, groupHeaders)
+    val accountHeaderMeta = BaiRecordMeta(ACCOUNT_HEADER_CODE, ACCOUNT_HEADER, accountHeaders)
+    val transactionMeta = BaiRecordMeta(TRANSACTION_CODE, TRANSACTION, transactionFields)
+    val accountTrailerMeta = BaiRecordMeta(ACCOUNT_TRAILER_CODE, ACCOUNT_TRAILER, accountTrailers)
+    val groupTrailerMeta = BaiRecordMeta(GROUP_TRAILER_CODE, GROUP_TRAILER, groupTrailers)
+    val fileTrailerMeta = BaiRecordMeta(FILE_TRAILER_CODE, FILE_TRAILER, fileTrailers)
+
 }

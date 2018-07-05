@@ -9,8 +9,10 @@ import org.nexial.core.plugins.bai2.BaiConstants.FILE_TRAILER
 import org.nexial.core.plugins.bai2.BaiConstants.FILE_TRAILER_CODE
 import org.nexial.core.plugins.bai2.BaiConstants.GROUP_HEADER_CODE
 import org.nexial.core.plugins.bai2.BaiConstants.fieldDelim
+import org.nexial.core.plugins.bai2.BaiConstants.fileHeaderMeta
 import org.nexial.core.plugins.bai2.BaiConstants.fileHeaders
-import org.nexial.core.plugins.bai2.BaiConstants.fileTrailerFields
+import org.nexial.core.plugins.bai2.BaiConstants.fileTrailerMeta
+import org.nexial.core.plugins.bai2.BaiConstants.fileTrailers
 import org.nexial.core.plugins.bai2.BaiConstants.recordDelim
 import org.nexial.core.plugins.bai2.Validations.validateRecord
 import org.nexial.core.variable.TextDataType
@@ -139,7 +141,7 @@ data class BaiFileHeader(private var nextRecord: String) : Header() {
     }
 
     override fun validate(): MutableList<String> {
-        return validateRecord(fileHeaderMap, BaiRecordMeta.instance(FILE_HEADER))
+        return validateRecord(fileHeaderMap, fileHeaderMeta)
     }
 
     override fun toString(): String {
@@ -155,9 +157,9 @@ data class BaiFileTrailer(private val nextRecord: String) : Trailer() {
     init {
         val values: Array<String> = StringUtils.splitByWholeSeparatorPreserveAllTokens(
             StringUtils.removeEnd(nextRecord, recordDelim).trim(), fieldDelim)
-        if (fileTrailerFields.size == values.size) {
+        if (fileTrailers.size == values.size) {
             val fields = mutableListOf<String>()
-            fileTrailerFields.forEach { pair -> fields.add(pair.first) }
+            fileTrailers.forEach { pair -> fields.add(pair.first) }
             fileTrailerMap = fields.zip(values).toMap()
         }
 
@@ -165,7 +167,7 @@ data class BaiFileTrailer(private val nextRecord: String) : Trailer() {
     }
 
     override fun validate(): MutableList<String> {
-        return Validations.validateRecord(fileTrailerMap, BaiRecordMeta.instance(FILE_TRAILER))
+        return validateRecord(fileTrailerMap, fileTrailerMeta)
     }
 
     override fun toString(): String {

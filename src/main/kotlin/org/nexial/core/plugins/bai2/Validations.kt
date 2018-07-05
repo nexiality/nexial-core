@@ -17,6 +17,7 @@
 package org.nexial.core.plugins.bai2
 
 import org.apache.commons.lang3.StringUtils
+import org.nexial.core.plugins.bai2.BaiConstants.BaiRecordMeta
 import org.nexial.core.plugins.bai2.BaiFile.Companion.isNumeric
 
 object Validations {
@@ -35,7 +36,7 @@ object Validations {
 
     fun validateRecord(fieldValues: Map<String, String>, metadata: BaiRecordMeta): MutableList<String> {
         val errors: MutableList<String> = mutableListOf()
-        metadata.fields!!.forEach { pair ->
+        metadata.fields.forEach { pair ->
             kotlin.run {
                 val field = pair.first
                 val value = fieldValues.getValue(field)

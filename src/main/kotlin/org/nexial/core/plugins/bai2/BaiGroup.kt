@@ -4,16 +4,19 @@ import org.apache.commons.collections4.CollectionUtils
 import org.apache.commons.lang3.StringUtils
 import org.apache.commons.lang3.StringUtils.splitByWholeSeparatorPreserveAllTokens
 import org.apache.commons.lang3.StringUtils.startsWith
-import org.nexial.core.plugins.bai2.BaiConstants.ACCOUNT_IDENTIFIER_CODE
+import org.nexial.core.plugins.bai2.BaiConstants.ACCOUNT_HEADER_CODE
 import org.nexial.core.plugins.bai2.BaiConstants.GROUP
 import org.nexial.core.plugins.bai2.BaiConstants.GROUP_HEADER
 import org.nexial.core.plugins.bai2.BaiConstants.GROUP_HEADER_CODE
 import org.nexial.core.plugins.bai2.BaiConstants.GROUP_TRAILER
 import org.nexial.core.plugins.bai2.BaiConstants.GROUP_TRAILER_CODE
 import org.nexial.core.plugins.bai2.BaiConstants.fieldDelim
+import org.nexial.core.plugins.bai2.BaiConstants.groupHeaderMeta
 import org.nexial.core.plugins.bai2.BaiConstants.groupHeaders
-import org.nexial.core.plugins.bai2.BaiConstants.groupTrailerFields
+import org.nexial.core.plugins.bai2.BaiConstants.groupTrailerMeta
+import org.nexial.core.plugins.bai2.BaiConstants.groupTrailers
 import org.nexial.core.plugins.bai2.BaiConstants.recordDelim
+import org.nexial.core.plugins.bai2.Validations.validateRecord
 import org.nexial.core.utils.ConsoleUtils
 import org.nexial.core.variable.TextDataType
 import java.util.*
@@ -44,7 +47,7 @@ class BaiGroup(private var queue: Queue<String>) : BaiModel() {
     private fun delegate() {
         while (true) {
             val nextRecord: String = queue.peek()
-            if (startsWith(nextRecord, ACCOUNT_IDENTIFIER_CODE)) {
+            if (startsWith(nextRecord, ACCOUNT_HEADER_CODE)) {
                 val account = BaiAccount(queue)
                 errors.addAll(account.errors)
                 records.add(account)
@@ -131,7 +134,7 @@ data class BaiGroupHeader(private val nextRecord: String) : Header() {
     }
 
     override fun validate(): MutableList<String> {
-        return Validations.validateRecord(groupHeadersMap, BaiRecordMeta.instance(GROUP_HEADER))
+        return validateRecord(groupHeadersMap, groupHeaderMeta)
     }
 }
 
@@ -145,9 +148,9 @@ data class BaiGroupTrailer(private var nextRecord: String) : Trailer() {
         val values: Array<String> = splitByWholeSeparatorPreserveAllTokens(
             StringUtils.removeEnd(nextRecord, recordDelim).trim(), fieldDelim)
 
-        if (groupTrailerFields.size == values.size) {
+        if (groupTrailers.size == values.size) {
             val fields = mutableListOf<String>()
-            groupTrailerFields.forEach { pair -> fields.add(pair.first) }
+            groupTrailers.forEach { pair -> fields.add(pair.first) }
             groupTrailerMap = fields.zip(values).toMap()
         }
 
@@ -159,6 +162,6 @@ data class BaiGroupTrailer(private var nextRecord: String) : Trailer() {
     }
 
     override fun validate(): MutableList<String> {
-        return Validations.validateRecord(groupTrailerMap, BaiRecordMeta.instance(GROUP_TRAILER))
+        return validateRecord(groupTrailerMap, groupTrailerMeta)
     }
 }

@@ -5,14 +5,17 @@ import org.apache.commons.lang3.StringUtils
 import org.apache.commons.lang3.StringUtils.startsWith
 import org.nexial.core.plugins.bai2.BaiConstants.ACCOUNT
 import org.nexial.core.plugins.bai2.BaiConstants.ACCOUNT_HEADER
-import org.nexial.core.plugins.bai2.BaiConstants.ACCOUNT_IDENTIFIER_CODE
+import org.nexial.core.plugins.bai2.BaiConstants.ACCOUNT_HEADER_CODE
 import org.nexial.core.plugins.bai2.BaiConstants.ACCOUNT_TRAILER
 import org.nexial.core.plugins.bai2.BaiConstants.TRANSACTION
+import org.nexial.core.plugins.bai2.BaiConstants.accountHeaderMeta
 import org.nexial.core.plugins.bai2.BaiConstants.accountHeaders
-import org.nexial.core.plugins.bai2.BaiConstants.accountTrailerFields
+import org.nexial.core.plugins.bai2.BaiConstants.accountTrailerMeta
+import org.nexial.core.plugins.bai2.BaiConstants.accountTrailers
 import org.nexial.core.plugins.bai2.BaiConstants.fieldDelim
 import org.nexial.core.plugins.bai2.BaiConstants.recordDelim
 import org.nexial.core.plugins.bai2.BaiConstants.transactionFields
+import org.nexial.core.plugins.bai2.BaiConstants.transactionMeta
 import org.nexial.core.plugins.bai2.Validations.validateRecord
 import org.nexial.core.utils.ConsoleUtils
 import org.nexial.core.variable.TextDataType
@@ -28,9 +31,8 @@ class BaiAccount : BaiModel {
 
             else            -> {
                 val builder = StringBuilder()
-                var value: String
                 records.forEach { transaction ->
-                    value = transaction.field(recordType, name).textValue
+                    val value = transaction.field(recordType, name).textValue
                     builder.append(value).append(",")
                 }
                 val newValue = builder.toString().removeSuffix(",")
@@ -57,7 +59,7 @@ class BaiAccount : BaiModel {
 
     private fun parseAccountIdentifier() {
         val nextRecord = queue.peek()
-        if (startsWith(nextRecord, ACCOUNT_IDENTIFIER_CODE)) {
+        if (startsWith(nextRecord, ACCOUNT_HEADER_CODE)) {
             this.header = BaiAccountIdentifier(nextRecord)
             errors.addAll((this.header as BaiAccountIdentifier).validate())
             queue.poll()
@@ -150,7 +152,7 @@ data class BaiAccountIdentifier(private val nextRecord: String) : Header() {
     }
 
     override fun validate(): MutableList<String> {
-        return validateRecord(accountHeaderMap, BaiRecordMeta.instance(ACCOUNT_HEADER))
+        return validateRecord(accountHeaderMap, accountHeaderMeta)
     }
 
     override fun toString(): String {
@@ -167,9 +169,9 @@ data class BaiAccountTrailer(var nextRecord: String) : Trailer() {
         val values: Array<String> = StringUtils.splitByWholeSeparatorPreserveAllTokens(
             StringUtils.removeEnd(nextRecord, recordDelim).trim(), fieldDelim)
 
-        if (accountTrailerFields.size == values.size) {
+        if (accountTrailers.size == values.size) {
             val fields = mutableListOf<String>()
-            accountTrailerFields.forEach { pair -> fields.add(pair.first) }
+            accountTrailers.forEach { pair -> fields.add(pair.first) }
             accountTrailerMap = fields.zip(values).toMap()
         }
 
@@ -181,7 +183,7 @@ data class BaiAccountTrailer(var nextRecord: String) : Trailer() {
     }
 
     override fun validate(): MutableList<String> {
-        return validateRecord(accountTrailerMap, BaiRecordMeta.instance(ACCOUNT_TRAILER))
+        return validateRecord(accountTrailerMap, accountTrailerMeta)
     }
 }
 
@@ -230,7 +232,7 @@ class BaiTransaction : BaiModel {
     private var transactionRecordMap: Map<String, String> = mutableMapOf()
 
     fun validate(): MutableList<String> {
-        return validateRecord(transactionRecordMap, BaiRecordMeta.instance(TRANSACTION))
+        return validateRecord(transactionRecordMap, transactionMeta)
     }
 
     override fun field(recordType: String, name: String): TextDataType {
