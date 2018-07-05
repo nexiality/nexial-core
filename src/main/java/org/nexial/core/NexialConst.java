@@ -306,6 +306,11 @@ public final class NexialConst {
     public static final String CTRL_KEY_START = "{";
     public static final String CTRL_KEY_END = "}";
 
+    // CSVTransformer filter specific
+    public static final String FILTER_REGEX_PATTERN = "\\s+(not in|in|between|match|is|is not)\\s+(\\[.+?\\])";
+    public static final String FILTER_TEMP_DELIM1 = "~!2I3&f6n@S#*!~";
+    public static final String FILTER_TEMP_DELIM2 = "~!#*2!Fn3&6g@!~";
+
     // regex for built-in function
     public static final String TOKEN_FUNCTION_START = "$(";
     public static final String TOKEN_FUNCTION_END = ")";

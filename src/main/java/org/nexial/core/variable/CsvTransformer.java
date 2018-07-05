@@ -20,6 +20,8 @@ package org.nexial.core.variable;
 import java.io.IOException;
 import java.lang.reflect.Method;
 import java.util.*;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 import javax.validation.constraints.NotNull;
 
 import org.apache.commons.collections4.CollectionUtils;
@@ -35,6 +37,7 @@ import org.nexial.commons.utils.TextUtils.ListItemConverter;
 import org.nexial.core.ExecutionThread;
 import org.nexial.core.model.ExecutionContext;
 import org.nexial.core.model.NexialFilter;
+import org.nexial.core.model.NexialFilter.ListItemConverterImpl;
 import org.nexial.core.utils.ConsoleUtils;
 
 import com.google.gson.JsonArray;
@@ -42,9 +45,7 @@ import com.google.gson.JsonObject;
 import com.univocity.parsers.common.record.Record;
 
 import static java.lang.System.lineSeparator;
-import static org.nexial.core.NexialConst.CSV_FIELD_DEIM;
-import static org.nexial.core.NexialConst.CSV_ROW_SEP;
-import static org.nexial.core.NexialConst.GSON;
+import static org.nexial.core.NexialConst.*;
 import static org.nexial.core.model.NexialFilterComparator.Equal;
 import static org.nexial.core.variable.ExpressionUtils.fixControlChars;
 
@@ -62,6 +63,8 @@ public class CsvTransformer<T extends CsvDataType> extends Transformer {
     private static final String NODE_ROOT = "rows";
     private static final String NODE_ROW = "row";
     private static final String NODE_CELL = "cell";
+
+    private static final Pattern COMPILED_PATTERN = Pattern.compile(FILTER_REGEX_PATTERN);
 
     public TextDataType text(T data) { return super.text(data); }
 
@@ -131,7 +134,8 @@ public class CsvTransformer<T extends CsvDataType> extends Transformer {
     public T filter(T data, String filter) {
         if (data == null || data.getValue() == null || StringUtils.isBlank(filter)) { return data; }
 
-        ListItemConverter<NexialFilter> converter = NexialFilter::newInstance;
+        filter = getFormattedFilter(filter);
+        ListItemConverter<NexialFilter> converter = new ListItemConverterImpl();
         List<NexialFilter> filters = TextUtils.toList(filter, PAIR_DELIM, converter);
         if (CollectionUtils.isEmpty(filters)) { return data; }
 
@@ -157,7 +161,8 @@ public class CsvTransformer<T extends CsvDataType> extends Transformer {
     public ListDataType fetch(T data, String filter) {
         if (data == null || data.getValue() == null || StringUtils.isBlank(filter)) { return null; }
 
-        ListItemConverter<NexialFilter> converter = NexialFilter::newInstance;
+        filter = getFormattedFilter(filter);
+        ListItemConverter<NexialFilter> converter = new ListItemConverterImpl();
         List<NexialFilter> filters = TextUtils.toList(filter, PAIR_DELIM, converter);
         if (CollectionUtils.isEmpty(filters)) { return null; }
 
@@ -212,7 +217,8 @@ public class CsvTransformer<T extends CsvDataType> extends Transformer {
 
         // todo: support filter by column index (e.g. #2 != 02)
 
-        ListItemConverter<NexialFilter> converter = NexialFilter::newInstance;
+        matches = getFormattedFilter(matches);
+        ListItemConverter<NexialFilter> converter = new ListItemConverterImpl();
         List<NexialFilter> filters = TextUtils.toList(matches, PAIR_DELIM, converter);
         if (CollectionUtils.isEmpty(filters)) { return data; }
 
@@ -995,5 +1001,24 @@ public class CsvTransformer<T extends CsvDataType> extends Transformer {
         }
 
         return filter.isMatch(row.getString(filter.getSubject()));
+    }
+
+    private String getFormattedFilter(String filter) {
+        String filterText = "";
+        filter = StringUtils.replace(filter, "\\" + PAIR_DELIM, FILTER_TEMP_DELIM1);
+
+        while (true) {
+            Matcher matcher = COMPILED_PATTERN.matcher(filter);
+            Boolean isMatched = false;
+            while (matcher.find()) {
+                isMatched = true;
+                String condition = matcher.group(2);
+                String newCondition = StringUtils.replace(condition, PAIR_DELIM, FILTER_TEMP_DELIM2);
+                filterText += StringUtils.substringBefore(filter, condition) + newCondition;
+                filter = StringUtils.substringAfter(filter, condition);
+            }
+            if (!isMatched) { break; }
+        }
+        return filterText + filter;
     }
 }

@@ -32,11 +32,14 @@ import org.apache.commons.lang3.tuple.ImmutablePair;
 import org.apache.commons.lang3.tuple.Pair;
 import org.nexial.commons.utils.RegexUtils;
 import org.nexial.commons.utils.TextUtils;
+import org.nexial.commons.utils.TextUtils.ListItemConverter;
 import org.nexial.core.utils.CheckUtils;
 import org.nexial.core.utils.ConsoleUtils;
 import org.nexial.core.variable.CsvTransformer;
 
 import static org.nexial.core.NexialConst.Data.NULL;
+import static org.nexial.core.NexialConst.FILTER_TEMP_DELIM1;
+import static org.nexial.core.NexialConst.FILTER_TEMP_DELIM2;
 import static org.nexial.core.NexialConst.FlowControls.*;
 import static org.nexial.core.model.NexialFilterComparator.Any;
 
@@ -434,5 +437,14 @@ public class NexialFilter implements Serializable {
         List<String> matchList = new ArrayList<>();
         controlList.forEach(control -> matchList.add(context.replaceTokens(control)));
         return matchList;
+    }
+
+    public static class ListItemConverterImpl implements ListItemConverter<NexialFilter> {
+        @Override
+        public NexialFilter convert(String data) {
+            data = StringUtils.replace(data, FILTER_TEMP_DELIM1, "\\" + ITEM_SEP);
+            data = StringUtils.replace(data, FILTER_TEMP_DELIM2, ITEM_SEP);
+            return newInstance(data);
+        }
     }
 }
