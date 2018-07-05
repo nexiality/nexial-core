@@ -4,10 +4,6 @@ import org.apache.commons.collections4.CollectionUtils
 import org.apache.commons.lang3.StringUtils
 import org.apache.commons.lang3.StringUtils.startsWith
 import org.nexial.core.plugins.bai2.BaiConstants.ACCOUNT
-import org.nexial.core.plugins.bai2.BaiConstants.ACCOUNT_HEADER
-import org.nexial.core.plugins.bai2.BaiConstants.ACCOUNT_HEADER_CODE
-import org.nexial.core.plugins.bai2.BaiConstants.ACCOUNT_TRAILER
-import org.nexial.core.plugins.bai2.BaiConstants.TRANSACTION
 import org.nexial.core.plugins.bai2.BaiConstants.accountHeaderMeta
 import org.nexial.core.plugins.bai2.BaiConstants.accountHeaders
 import org.nexial.core.plugins.bai2.BaiConstants.accountTrailerMeta
@@ -26,10 +22,10 @@ class BaiAccount : BaiModel {
 
     override fun field(recordType: String, name: String): TextDataType {
         return when (recordType) {
-            ACCOUNT_HEADER  -> TextDataType(header!!.get(name))
-            ACCOUNT_TRAILER -> TextDataType(trailer!!.get(name))
+            accountHeaderMeta.type  -> TextDataType(header!!.get(name))
+            accountTrailerMeta.type -> TextDataType(trailer!!.get(name))
 
-            else            -> {
+            else                    -> {
                 val builder = StringBuilder()
                 records.forEach { transaction ->
                     val value = transaction.field(recordType, name).textValue
@@ -59,7 +55,7 @@ class BaiAccount : BaiModel {
 
     private fun parseAccountIdentifier() {
         val nextRecord = queue.peek()
-        if (startsWith(nextRecord, ACCOUNT_HEADER_CODE)) {
+        if (startsWith(nextRecord, accountHeaderMeta.code)) {
             this.header = BaiAccountIdentifier(nextRecord)
             errors.addAll((this.header as BaiAccountIdentifier).validate())
             queue.poll()
@@ -69,7 +65,7 @@ class BaiAccount : BaiModel {
     private fun delegate() {
         while (true) {
             val nextRecord = queue.peek()
-            if (StringUtils.startsWith(nextRecord, BaiConstants.TRANSACTION_CODE)) {
+            if (startsWith(nextRecord, transactionMeta.code)) {
                 val transaction = BaiTransaction(queue.peek()).parse()
                 this.records.add(transaction)
                 errors.addAll(transaction.errors)
@@ -82,7 +78,7 @@ class BaiAccount : BaiModel {
 
     private fun parseAccountTrailer() {
         val nextRecord = queue.peek()
-        if (StringUtils.startsWith(nextRecord, BaiConstants.ACCOUNT_TRAILER_CODE)) {
+        if (startsWith(nextRecord, accountTrailerMeta.code)) {
             this.trailer = BaiAccountTrailer(nextRecord)
             errors.addAll((this.trailer as BaiAccountTrailer).validate())
             queue.poll()
@@ -236,11 +232,11 @@ class BaiTransaction : BaiModel {
     }
 
     override fun field(recordType: String, name: String): TextDataType {
-        return TextDataType(if (recordType == TRANSACTION) { transactionRecordMap.getValue(name) } else { "" })
+        return TextDataType(if (recordType == transactionMeta.type) { transactionRecordMap.getValue(name) } else { "" })
     }
 
     override fun filter(recordType: String, condition: String): BaiModel? {
-        if (recordType == TRANSACTION) {
+        if (recordType == transactionMeta.type) {
             val options = condition.split("=")
             val fieldName: String = options[0].trim()
             val fieldValue: String = options[1].trim()

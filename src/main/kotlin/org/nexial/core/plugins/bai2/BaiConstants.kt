@@ -8,15 +8,10 @@ object BaiConstants {
 
     const val fieldDelim = ","
     const val recordDelim = "/"
-    const val FILE_HEADER_CODE = "01"
-    const val GROUP_HEADER_CODE = "02"
-    const val ACCOUNT_HEADER_CODE = "03"
-    const val TRANSACTION_CODE = "16"
+    const val GROUP = "Group"
+    const val ACCOUNT = "Account"
     // todo: continuation_code type to be implemented
-    const val CONTINUATION_CODE = "88"
-    const val ACCOUNT_TRAILER_CODE = "49"
-    const val GROUP_TRAILER_CODE = "98"
-    const val FILE_TRAILER_CODE = "99"
+    // const val CONTINUATION_CODE = "88"
 
     val fileHeaders = mutableListOf(
         Pair("Record Code", validateNumeric),
@@ -74,24 +69,14 @@ object BaiConstants {
         Pair("File Total Groups", validateNumeric),
         Pair("File Total Records", validateNumeric))
 
-    const val FILE_HEADER = "File Header"
-    const val GROUP = "Group"
-    const val GROUP_HEADER = "Group Header"
-    const val ACCOUNT = "Account"
-    const val ACCOUNT_HEADER = "Account Header"
-    const val TRANSACTION = "Transaction"
-    const val ACCOUNT_TRAILER = "Account Trailer"
-    const val GROUP_TRAILER = "Group Trailer"
-    const val FILE_TRAILER = "File Trailer"
-
     class BaiRecordMeta(val code: String, val type: String, val fields: MutableList<Pair<String, (String) -> String>>)
 
-    val fileHeaderMeta = BaiRecordMeta(FILE_HEADER_CODE, FILE_HEADER, fileHeaders)
-    val groupHeaderMeta = BaiRecordMeta(GROUP_HEADER_CODE, GROUP_HEADER, groupHeaders)
-    val accountHeaderMeta = BaiRecordMeta(ACCOUNT_HEADER_CODE, ACCOUNT_HEADER, accountHeaders)
-    val transactionMeta = BaiRecordMeta(TRANSACTION_CODE, TRANSACTION, transactionFields)
-    val accountTrailerMeta = BaiRecordMeta(ACCOUNT_TRAILER_CODE, ACCOUNT_TRAILER, accountTrailers)
-    val groupTrailerMeta = BaiRecordMeta(GROUP_TRAILER_CODE, GROUP_TRAILER, groupTrailers)
-    val fileTrailerMeta = BaiRecordMeta(FILE_TRAILER_CODE, FILE_TRAILER, fileTrailers)
+    val fileHeaderMeta = BaiRecordMeta("01", "File Header", fileHeaders)
+    val groupHeaderMeta = BaiRecordMeta("02", "Group Header", groupHeaders)
+    val accountHeaderMeta = BaiRecordMeta("03", "Account Header", accountHeaders)
+    val transactionMeta = BaiRecordMeta("16", "Transaction", transactionFields)
+    val accountTrailerMeta = BaiRecordMeta("49", "Account Trailer", accountTrailers)
+    val groupTrailerMeta = BaiRecordMeta("98", "Group Trailer", groupTrailers)
+    val fileTrailerMeta = BaiRecordMeta("99", "File Trailer", fileTrailers)
 
 }

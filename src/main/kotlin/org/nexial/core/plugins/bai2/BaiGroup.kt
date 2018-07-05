@@ -4,12 +4,8 @@ import org.apache.commons.collections4.CollectionUtils
 import org.apache.commons.lang3.StringUtils
 import org.apache.commons.lang3.StringUtils.splitByWholeSeparatorPreserveAllTokens
 import org.apache.commons.lang3.StringUtils.startsWith
-import org.nexial.core.plugins.bai2.BaiConstants.ACCOUNT_HEADER_CODE
 import org.nexial.core.plugins.bai2.BaiConstants.GROUP
-import org.nexial.core.plugins.bai2.BaiConstants.GROUP_HEADER
-import org.nexial.core.plugins.bai2.BaiConstants.GROUP_HEADER_CODE
-import org.nexial.core.plugins.bai2.BaiConstants.GROUP_TRAILER
-import org.nexial.core.plugins.bai2.BaiConstants.GROUP_TRAILER_CODE
+import org.nexial.core.plugins.bai2.BaiConstants.accountHeaderMeta
 import org.nexial.core.plugins.bai2.BaiConstants.fieldDelim
 import org.nexial.core.plugins.bai2.BaiConstants.groupHeaderMeta
 import org.nexial.core.plugins.bai2.BaiConstants.groupHeaders
@@ -37,7 +33,7 @@ class BaiGroup(private var queue: Queue<String>) : BaiModel() {
 
     private fun parseGroupHeader() {
         val nextRecord: String = this.queue.peek()
-        if (startsWith(nextRecord, GROUP_HEADER_CODE)) {
+        if (startsWith(nextRecord, groupHeaderMeta.code)) {
             this.header = BaiGroupHeader(nextRecord)
             errors.addAll((header as BaiGroupHeader).validate())
             this.queue.poll()
@@ -47,7 +43,7 @@ class BaiGroup(private var queue: Queue<String>) : BaiModel() {
     private fun delegate() {
         while (true) {
             val nextRecord: String = queue.peek()
-            if (startsWith(nextRecord, ACCOUNT_HEADER_CODE)) {
+            if (startsWith(nextRecord, accountHeaderMeta.code)) {
                 val account = BaiAccount(queue)
                 errors.addAll(account.errors)
                 records.add(account)
@@ -57,7 +53,7 @@ class BaiGroup(private var queue: Queue<String>) : BaiModel() {
 
     private fun parseGroupTrailer() {
         val nextRecord = queue.peek()
-        if (StringUtils.startsWith(nextRecord, GROUP_TRAILER_CODE)) {
+        if (StringUtils.startsWith(nextRecord, groupTrailerMeta.code)) {
             this.trailer = BaiGroupTrailer(nextRecord)
             errors.addAll((this.trailer as BaiGroupTrailer).validate())
             this.queue.poll()
@@ -93,8 +89,8 @@ class BaiGroup(private var queue: Queue<String>) : BaiModel() {
 
     override fun field(recordType: String, name: String): TextDataType {
         return when (recordType) {
-            GROUP_HEADER  -> TextDataType(header!!.get(name))
-            GROUP_TRAILER -> TextDataType(trailer!!.get(name))
+            groupHeaderMeta.type  -> TextDataType(header!!.get(name))
+            groupTrailerMeta.type -> TextDataType(trailer!!.get(name))
             else          -> {
                 val builder = StringBuilder()
                 records.forEach { baiAccount ->

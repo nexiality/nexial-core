@@ -3,16 +3,12 @@ package org.nexial.core.plugins.bai2
 import org.apache.commons.collections4.CollectionUtils
 import org.apache.commons.lang3.StringUtils
 import org.apache.commons.lang3.StringUtils.startsWith
-import org.nexial.core.plugins.bai2.BaiConstants.FILE_HEADER
-import org.nexial.core.plugins.bai2.BaiConstants.FILE_HEADER_CODE
-import org.nexial.core.plugins.bai2.BaiConstants.FILE_TRAILER
-import org.nexial.core.plugins.bai2.BaiConstants.FILE_TRAILER_CODE
-import org.nexial.core.plugins.bai2.BaiConstants.GROUP_HEADER_CODE
 import org.nexial.core.plugins.bai2.BaiConstants.fieldDelim
 import org.nexial.core.plugins.bai2.BaiConstants.fileHeaderMeta
 import org.nexial.core.plugins.bai2.BaiConstants.fileHeaders
 import org.nexial.core.plugins.bai2.BaiConstants.fileTrailerMeta
 import org.nexial.core.plugins.bai2.BaiConstants.fileTrailers
+import org.nexial.core.plugins.bai2.BaiConstants.groupHeaderMeta
 import org.nexial.core.plugins.bai2.BaiConstants.recordDelim
 import org.nexial.core.plugins.bai2.Validations.validateRecord
 import org.nexial.core.variable.TextDataType
@@ -41,7 +37,7 @@ class BaiFile : BaiModel {
 
     private fun parseFileHeader() {
         val firstRecord: String = this.queue.peek()
-        if (startsWith(firstRecord, FILE_HEADER_CODE)) {
+        if (startsWith(firstRecord, fileHeaderMeta.code)) {
             header = BaiFileHeader(firstRecord)
             this.errors.addAll((header as BaiFileHeader).validate())
             this.queue.poll()
@@ -52,7 +48,7 @@ class BaiFile : BaiModel {
 
         while (true) {
             val nextRecord: String = queue.peek()
-            if (startsWith(nextRecord, GROUP_HEADER_CODE)) {
+            if (startsWith(nextRecord, groupHeaderMeta.code)) {
                 val group = BaiGroup(queue)
                 this.errors.addAll(group.errors)
                 records.add(group)
@@ -63,7 +59,7 @@ class BaiFile : BaiModel {
     private fun parseFileTrailer() {
 
         val nextRecord: String = queue.peek()
-        if (startsWith(nextRecord, FILE_TRAILER_CODE)) {
+        if (startsWith(nextRecord, fileTrailerMeta.code)) {
             trailer = BaiFileTrailer(nextRecord)
             this.errors.addAll((trailer as BaiFileTrailer).validate())
             queue.poll()
@@ -94,8 +90,8 @@ class BaiFile : BaiModel {
 
     override fun field(recordType: String, name: String): TextDataType {
         return when (recordType) {
-            FILE_HEADER  -> TextDataType(header!!.get(name))
-            FILE_TRAILER -> TextDataType(trailer!!.get(name))
+            fileHeaderMeta.type  -> TextDataType(header!!.get(name))
+            fileTrailerMeta.type -> TextDataType(trailer!!.get(name))
 
             else         -> {
                 val builder = StringBuilder()
