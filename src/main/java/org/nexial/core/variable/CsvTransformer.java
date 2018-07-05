@@ -50,11 +50,11 @@ import static org.nexial.core.model.NexialFilterComparator.Equal;
 import static org.nexial.core.variable.ExpressionUtils.fixControlChars;
 
 public class CsvTransformer<T extends CsvDataType> extends Transformer {
+    public static final int DEF_MAX_COLUMNS = 512;
+
     private static final Map<String, Integer> FUNCTION_TO_PARAM = discoverFunctions(CsvTransformer.class);
     private static final Map<String, Method> FUNCTIONS =
         toFunctionMap(FUNCTION_TO_PARAM, CsvTransformer.class, CsvDataType.class);
-
-    public static final int DEF_MAX_COLUMNS = 512;
 
     private static final String PAIR_DELIM = "|";
     private static final String NAME_VALUE_DELIM = "=";
@@ -64,7 +64,7 @@ public class CsvTransformer<T extends CsvDataType> extends Transformer {
     private static final String NODE_ROW = "row";
     private static final String NODE_CELL = "cell";
 
-    private static final Pattern COMPILED_PATTERN = Pattern.compile(FILTER_REGEX_PATTERN);
+    private static final Pattern COMPILED_FILTER_REGEX_PATTERN = Pattern.compile(FILTER_REGEX_PATTERN);
 
     public TextDataType text(T data) { return super.text(data); }
 
@@ -318,25 +318,8 @@ public class CsvTransformer<T extends CsvDataType> extends Transformer {
         });
 
         data.setTextValue(StringUtils.removeEnd(csvModified.toString(), recordDelim));
-
-        // List<List<String>> csvRows = TextUtils.to2dList(data.getTextValue(), recordDelim, delim);
-        // for (List<String> row : csvRows) {
-        //     StringBuilder rowModified = new StringBuilder();
-        //     for (int i = 0; i < row.size(); i++) {
-        //         if (!indicesToRemove.contains(i)) { rowModified.append(row.get(i)).append(delim); }
-        //     }
-        //
-        //     csvModified.append(StringUtils.removeEnd(rowModified.toString(), delim))
-        //                .append(recordDelim);
-        // }
-
-        // try {
-        // data.setTextValue(StringUtils.removeEnd(csvModified.toString(), recordDelim));
         data.parse();
         return data;
-        // } catch (IOException e) {
-        //     throw new TypeConversionException(data.getName(), data.getTextValue(), e.getMessage(), e);
-        // }
     }
 
     public T renameColumn(T data, String find, String replace) {
@@ -353,13 +336,8 @@ public class CsvTransformer<T extends CsvDataType> extends Transformer {
         if (headers.contains(find)) { headers.set(headers.indexOf(find), replace); }
 
         data.reset(data.getValue());
-
-        // try {
         data.parse();
         return data;
-        // } catch (IOException e) {
-        //     throw new TypeConversionException(data.getName(), data.getTextValue(), e.getMessage(), e);
-        // }
     }
 
     public NumberDataType rowCount(T data) throws TypeConversionException {
@@ -432,11 +410,6 @@ public class CsvTransformer<T extends CsvDataType> extends Transformer {
                                               .setAttribute(ATTR_NAME, header + "")
                                               .setText(record.getString(header)));
                 }
-                // data.getHeaders().forEach(column ->
-                //                               rowElement.addContent(new Element(cellNodeName)
-                //                                                         .setAttribute(ATTR_INDEX, index + "")
-                //                                                         .setAttribute(ATTR_NAME, column + "")
-                //                                                         .setText(record.getString(column))));
             } else {
                 String[] values = record.getValues();
                 for (int i = 0; i < values.length; i++) {
@@ -458,8 +431,6 @@ public class CsvTransformer<T extends CsvDataType> extends Transformer {
 
     public T transpose(T data) {
         if (data == null || data.getValue() == null) { return null; }
-
-        // List<List<String>> transposed = CollectionUtil.transpose(data.getValue().iterator());
 
         List<List<String>> transposed = new ArrayList<>();
         for (Record row : data.getValue()) {
@@ -665,7 +636,6 @@ public class CsvTransformer<T extends CsvDataType> extends Transformer {
 
         Map<String, Integer> counts = new TreeMap<>();
         data.getValue().forEach(record -> {
-
             String value = "";
             for (String column : columns) {
                 value += (StringUtils.isNotEmpty(value) ? CSV_FIELD_DEIM : "") + record.getString(column);
@@ -1004,21 +974,22 @@ public class CsvTransformer<T extends CsvDataType> extends Transformer {
     }
 
     private String getFormattedFilter(String filter) {
-        String filterText = "";
         filter = StringUtils.replace(filter, "\\" + PAIR_DELIM, FILTER_TEMP_DELIM1);
 
+        StringBuilder filterText = new StringBuilder();
         while (true) {
-            Matcher matcher = COMPILED_PATTERN.matcher(filter);
-            Boolean isMatched = false;
+            Matcher matcher = COMPILED_FILTER_REGEX_PATTERN.matcher(filter);
+            boolean isMatched = false;
             while (matcher.find()) {
                 isMatched = true;
                 String condition = matcher.group(2);
                 String newCondition = StringUtils.replace(condition, PAIR_DELIM, FILTER_TEMP_DELIM2);
-                filterText += StringUtils.substringBefore(filter, condition) + newCondition;
+                filterText.append(StringUtils.substringBefore(filter, condition)).append(newCondition);
                 filter = StringUtils.substringAfter(filter, condition);
             }
             if (!isMatched) { break; }
         }
-        return filterText + filter;
+
+        return filterText.toString() + filter;
     }
 }

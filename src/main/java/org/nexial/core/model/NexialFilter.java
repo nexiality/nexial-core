@@ -56,6 +56,15 @@ public class NexialFilter implements Serializable {
     private String controls;
     private List<String> controlList;
 
+    public static class ListItemConverterImpl implements ListItemConverter<NexialFilter> {
+        @Override
+        public NexialFilter convert(String data) {
+            data = StringUtils.replace(data, FILTER_TEMP_DELIM1, "\\" + ITEM_SEP);
+            data = StringUtils.replace(data, FILTER_TEMP_DELIM2, ITEM_SEP);
+            return newInstance(data);
+        }
+    }
+
     public NexialFilter(String subject, NexialFilterComparator comparator, String controls) {
         this.subject = subject;
         this.comparator = comparator;
@@ -437,14 +446,5 @@ public class NexialFilter implements Serializable {
         List<String> matchList = new ArrayList<>();
         controlList.forEach(control -> matchList.add(context.replaceTokens(control)));
         return matchList;
-    }
-
-    public static class ListItemConverterImpl implements ListItemConverter<NexialFilter> {
-        @Override
-        public NexialFilter convert(String data) {
-            data = StringUtils.replace(data, FILTER_TEMP_DELIM1, "\\" + ITEM_SEP);
-            data = StringUtils.replace(data, FILTER_TEMP_DELIM2, ITEM_SEP);
-            return newInstance(data);
-        }
     }
 }
