@@ -259,13 +259,14 @@ public class Browser implements ForcefulTerminate {
                     // everything's fine, moving on
                 } catch (Throwable e) {
                     String error = e.getMessage();
-                    if (StringUtils.contains(error, "unexpected end of stream on Connection")) {
-                        LOGGER.error("webdriver readiness check: " + e.getMessage());
+                    if (StringUtils.contains(error, "unexpected end of stream on Connection") ||
+                        StringUtils.contains(error, "caused connection abort: recv failed")) {
+                        LOGGER.error("webdriver readiness check: " + error);
                     } else {
                         // something's wrong with current browser window or session, need to re-init
                         shouldInitialize = true;
-                        LOGGER.error("webdriver readiness check: " + e.getMessage() +
-                                     "\nBROWSER MIGHT BE TERMINATED; RESTARTING...");
+                        LOGGER.error("webdriver readiness check: " + error + "\n" +
+                                     "BROWSER MIGHT BE TERMINATED; RESTARTING...");
                     }
                 }
             }
@@ -634,7 +635,7 @@ public class Browser implements ForcefulTerminate {
             return null;
         }
 
-        for (String location: possibleLocations) {
+        for (String location : possibleLocations) {
             if (FileUtil.isFileExecutable(location)) { return new File(location).getAbsolutePath(); }
         }
 
