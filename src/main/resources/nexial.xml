@@ -498,6 +498,8 @@
         <entry key="nexial.generateReport" value="false"/>
         <entry key="nexial.screenRecorder" value="mp4"/>
         <entry key="nexial.browser.defaultWindowSize" value="1280x960"/>
+        <entry key="nexial.browser" value="firefox"/>
+        <!--
         <entry key="nexial.textDelim" value=","/>
         <entry key="nexial.openResult" value="off"/>
         <entry key="nexial.pollWaitMs" value="30000"/>
@@ -520,7 +522,6 @@
         <entry key="nexial.desktop.autoClearModalDialog" value="false"/>
         <entry key="nexial.web.preemptiveAlertCheck" value="true"/>
         <entry key="nexial.web.alwaysWait" value="false"/>
-        <entry key="nexial.browser" value="firefox"/>
         <entry key="nexial.browser.postCloseWaitMs" value="3000"/>
         <entry key="nexial.browser..safari.useTechPreview" value="false"/>
         <entry key="nexial.browser.incognito" value="true"/>
@@ -537,6 +538,7 @@
         <entry key="nexial.ws.requestPayloadCompact" value="false"/>
         <entry key="nexial.inspectOnPause" value="false"/>
         <entry key="nexial.rdbms.packSingleRow" value="false"/>
+        -->
         <!--<entry key="" value=""/>-->
     </util:map>
 

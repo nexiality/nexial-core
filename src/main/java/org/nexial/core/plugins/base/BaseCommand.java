@@ -330,7 +330,7 @@ public class BaseCommand implements NexialCommand {
         }
 
         if (CollectionUtils.isEmpty(expected) && CollectionUtils.isEmpty(actual)) {
-            return StepResult.fail("No data for cmparison, hence no order can be asserted");
+            return StepResult.fail("No data for comparison, hence no order can be asserted");
         }
 
         // now make 'expected' organized as expected - but applying case insensitive sort
