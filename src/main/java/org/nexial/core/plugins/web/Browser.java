@@ -789,17 +789,14 @@ public class Browser implements ForcefulTerminate {
             throw new RuntimeException("Browser automation for Microsoft Edge is only supported on Windows 10. Sorry.");
         }
 
-        // 2. setup default edge driver
-        String edgeDriverPath = StringUtils.appendIfMissing(context.getProject().getNexialHome(), separator) +
-                                NEXIAL_WINDOWS_BIN_REL_PATH + "MicrosoftWebDriver.exe";
+        // 2. setup
         Map<String, String> webdriverSupport = context.getWebdriverSupport();
-        String targetOsVer = webdriverSupport.get(OPT_EDGE_DRIVER_TARGET_OS_BUILD);
-
-        // 2. find current OS build of Windows 10
         String cmd = "C:\\Windows\\System32\\cmd.exe";
         List<String> argVer = Arrays.asList("/C", "ver");
-        String currentOsVer = "";
+        String edgeDriverPath;
+        String currentOsVer;
 
+        // 2. find current OS build of Windows 10
         try {
             ProcessOutcome outcome = ProcessInvoker.invoke(cmd, argVer, new HashedMap<>());
             // e.g. Microsoft Windows [Version 10.0.10240]
@@ -811,54 +808,53 @@ public class Browser implements ForcefulTerminate {
             throw new RuntimeException("Unable to determine OS Build number for current Windows 10: " + e.getMessage());
         }
 
-        // 3. if current OS build is the same as the target OS build of the shipped edge driver, then use this one
-        ConsoleUtils.log("current Windows 10 OS Build number is " + currentOsVer);
-        if (StringUtils.equals(targetOsVer, currentOsVer)) {
-            ConsoleUtils.log("current Windows 10 OS Build number matches the shipped version of Edge webdriver");
+        ConsoleUtils.log("[EDGE] current Windows 10 OS Build number is " + currentOsVer);
+
+        String newEdgeDriverHome = EDGE_DRIVER_HOME + currentOsVer + separator;
+        String newEdgeDriverPath = newEdgeDriverHome + "MicrosoftWebDriver.exe";
+
+        // 3. Check if we had already previously download this same driver (to $home/.nexial/edge)...
+        // let's check (file should exists with at least 50k)
+
+        int edgeDriverMinFileSize = NumberUtils.toInt(webdriverSupport.get("edgeDriverMinFileSize"));
+        if (FileUtil.isFileReadable(newEdgeDriverPath, edgeDriverMinFileSize)) {
+            edgeDriverPath = newEdgeDriverPath;
         } else {
-            // 4. if not, perhaps we had already previously download this same driver (to $home/.nexial/edge)...
-            // let's check (file should exists with at least 50k)
-            String newEdgeDriverHome = EDGE_DRIVER_HOME + currentOsVer + separator;
-            String newEdgeDriverPath = newEdgeDriverHome + "MicrosoftWebDriver.exe";
-            if (FileUtil.isFileReadable(newEdgeDriverPath, 1024 * 50)) {
-                edgeDriverPath = newEdgeDriverPath;
-            } else {
-                // 5. if not download the appropriate driver
-                String lookupBaseUrl = webdriverSupport.get(OPT_EDGE_DRIVER_LOOKUP_BASE_URL);
-                String lookupUrl = lookupBaseUrl + currentOsVer + ".txt";
-                String msgPrefix = "download Edge webdriver for Windows 10 Build " + currentOsVer;
+            // 4. if not download the appropriate driver
+            String lookupBaseUrl = webdriverSupport.get(OPT_EDGE_DRIVER_LOOKUP_BASE_URL);
+            String lookupUrl = lookupBaseUrl + currentOsVer + ".txt";
+            String msgPrefix = "download Edge webdriver for Windows 10 Build " + currentOsVer;
 
-                WebServiceClient wsClient = new WebServiceClient(null);
-                Response dlResp;
-                try {
-                    // 5.1 the URL for the appropriate driver is derived from `edgeDriverLookupBaseUrl` + osVer + .txt
-                    Response lookupResponse = wsClient.get(lookupUrl, "");
-                    String downloadUrl = StringUtils.trim(lookupResponse.getBody());
-                    ConsoleUtils.log("drived download URL as " + downloadUrl);
+            WebServiceClient wsClient = new WebServiceClient(null);
+            Response dlResp;
+            try {
+                // 4.1 the URL for the appropriate driver is derived from `edgeDriverLookupBaseUrl` + osVer + .txt
+                Response lookupResponse = wsClient.get(lookupUrl, "");
+                String downloadUrl = StringUtils.trim(lookupResponse.getBody());
+                ConsoleUtils.log("[EDGE] derived download URL as " + downloadUrl);
 
-                    FileUtils.forceMkdir(new File(newEdgeDriverHome));
+                FileUtils.forceMkdir(new File(newEdgeDriverHome));
 
-                    // 5.2 download the driver to `$home/.nexial/edge`
-                    dlResp = wsClient.download(downloadUrl, "", newEdgeDriverPath);
-                    if (dlResp.getReturnCode() != 200) {
-                        throw new RuntimeException("FAILED to " + msgPrefix + " from " + downloadUrl + ": Response " +
-                                                   dlResp.getReturnCode() + " " + dlResp.getStatusText());
-                    }
-
-                    // downloaded!
-                    ConsoleUtils.log(msgPrefix + " completed: " + newEdgeDriverPath);
-                } catch (IOException e) {
-                    throw new RuntimeException("FAILED to " + msgPrefix + ": " + e.getMessage());
+                // 4.2 download the driver to `$home/.nexial/edge`
+                dlResp = wsClient.download(downloadUrl, "", newEdgeDriverPath);
+                if (dlResp.getReturnCode() != 200) {
+                    throw new RuntimeException("FAILED to " + msgPrefix + " from " + downloadUrl + ": Response " +
+                                               dlResp.getReturnCode() + " " + dlResp.getStatusText());
                 }
 
-                if (!FileUtil.isFileReadable(newEdgeDriverPath, 1024 * 50)) {
-                    throw new RuntimeException("FAILED to " + msgPrefix + ": file not readable or cannot be found at " +
-                                               newEdgeDriverPath);
-                }
-
-                // 5.3 point the newly download driver as the one to use
-                edgeDriverPath = newEdgeDriverPath;
+                // downloaded!
+                ConsoleUtils.log("[EDGE] " + msgPrefix + " completed: " + newEdgeDriverPath);
+            } catch (IOException e) {
+                throw new RuntimeException("FAILED to " + msgPrefix + ": " + e.getMessage());
             }
+
+            if (!FileUtil.isFileReadable(newEdgeDriverPath, edgeDriverMinFileSize)) {
+                throw new RuntimeException("FAILED to " + msgPrefix + ": file not readable or cannot be found at " +
+                                           newEdgeDriverPath);
+            }
+
+            // 4.3 point the newly download driver as the one to use
+            edgeDriverPath = newEdgeDriverPath;
         }
 
         context.setData(SELENIUM_EDGE_DRIVER, edgeDriverPath);
