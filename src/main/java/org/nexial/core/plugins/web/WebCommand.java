@@ -803,7 +803,7 @@ public class WebCommand extends BaseCommand implements CanTakeScreenshot, CanLog
 
         String winHandle = browser.getCurrentWinHandle();
         Window window;
-        if (StringUtils.isNotBlank(winHandle)) {
+        if (StringUtils.isNotBlank(winHandle) && browser.getBrowserType().isSwitchWindowSupported()) {
             window = driver.switchTo().window(winHandle).manage().window();
         } else {
             log("Unable to recognize current window, this command will likely fail..");
@@ -862,7 +862,7 @@ public class WebCommand extends BaseCommand implements CanTakeScreenshot, CanLog
         // bring browser to foreground
         String initialHandle = browser.updateWinHandle();
         ConsoleUtils.log("current browser window handle:" + initialHandle);
-        if (StringUtils.isNotBlank(initialHandle)) {
+        if (StringUtils.isNotBlank(initialHandle) && browser.getBrowserType().isSwitchWindowSupported()) {
             driver = driver.switchTo().window(initialHandle).switchTo().defaultContent();
         }
 
@@ -1565,8 +1565,8 @@ public class WebCommand extends BaseCommand implements CanTakeScreenshot, CanLog
 
         if (driver == null) {
             driver = browser.ensureWebDriverReady();
-            waiter = new FluentWait<>(driver).withTimeout(context.getPollWaitMs(), MILLISECONDS)
-                                             .pollingEvery(10, MILLISECONDS)
+            waiter = new FluentWait<>(driver).withTimeout(Duration.ofMillis(context.getPollWaitMs()))
+                                             .pollingEvery(Duration.ofMillis(10))
                                              .ignoring(NoSuchElementException.class);
         }
         jsExecutor = (JavascriptExecutor) driver;
@@ -1739,6 +1739,10 @@ public class WebCommand extends BaseCommand implements CanTakeScreenshot, CanLog
 
         // some browser might not support 'view-source'...
         boolean hasSource = browser.isPageSourceSupported();
+        if (!hasSource) {
+            try { sleep(context.getPollWaitMs()); } catch (InterruptedException e) {}
+            return isBrowserLoadComplete();
+        }
 
         int successCount = 0;
         String oldSource = "";

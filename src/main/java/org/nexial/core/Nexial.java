@@ -290,7 +290,7 @@ public class Nexial {
         List<String> testPlanPathList = TextUtils.toList(cmd.getOptionValue(PLAN), DEF_TEXT_DELIM, true);
         List<ExecutionDefinition> executions = new ArrayList<>();
 
-        for (String testPlanPath: testPlanPathList) {
+        for (String testPlanPath : testPlanPathList) {
             // String testPlanPath = cmd.getOptionValue(PLAN);
             // 1. based on plan location, determine script, data, output and artifact directory
             if (!InputFileUtils.isValidPlanFile(testPlanPath)) {
@@ -412,7 +412,7 @@ public class Nexial {
                 fail("No valid scenario found in script " + testScript + ".");
             } else {
                 scenarios = new ArrayList<>();
-                for (Worksheet scenario: validScenarios) { scenarios.add(scenario.getName()); }
+                for (Worksheet scenario : validScenarios) { scenarios.add(scenario.getName()); }
             }
         } catch (IOException e) {
             fail("Unable to collect scenarios from " + testScript + ".");

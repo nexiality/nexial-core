@@ -180,7 +180,7 @@ public final class ExecutionThread extends Thread {
                 onIterationException(context, iterSummary, currIteration, e);
                 if (shouldStopNow(context, allPass)) { break; }
             } finally {
-                context.setData(ITERATION_EDNED, true);
+                context.setData(ITERATION_ENDED, true);
 
                 try {
                     // sync #data sheet with context
@@ -210,7 +210,7 @@ public final class ExecutionThread extends Thread {
 
                 if (testScript != null) { MemManager.recordMemoryChanges(testScript.getName() + " completed"); }
 
-                context.setData(ITERATION_EDNED, false);
+                context.setData(ITERATION_ENDED, false);
             }
         }
 

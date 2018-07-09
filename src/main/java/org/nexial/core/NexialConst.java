@@ -38,6 +38,7 @@ import com.google.gson.GsonBuilder;
 import static java.awt.image.BufferedImage.*;
 import static java.io.File.separator;
 import static org.apache.commons.lang3.SystemUtils.IS_OS_WINDOWS;
+import static org.apache.commons.lang3.SystemUtils.USER_HOME;
 import static org.nexial.core.NexialConst.Data.CMD_VERBOSE;
 
 /**
@@ -92,6 +93,7 @@ public final class NexialConst {
 
     // selenium specific
     public static final String SELENIUM_IE_DRIVER = "webdriver.ie.driver";
+    public static final String SELENIUM_EDGE_DRIVER = "webdriver.edge.driver";
     public static final String SELENIUM_CHROME_DRIVER = "webdriver.chrome.driver";
     public static final String SELENIUM_GECKO_DRIVER = "webdriver.gecko.driver";
     public static final String SELENIUM_CHROME_BIN = "webdriver.chrome.bin";
@@ -123,6 +125,12 @@ public final class NexialConst {
     public static final String STYLE_HIGHLIGHT = "background:#faf557;";
     public static final String HIGHLIGHT_WAIT_MS = NAMESPACE + "highlightWaitMs";
     public static final int DEF_HIGHLIGHT_WAIT_MS = 250;
+
+    // webdriver support map
+    public static final String OPT_EDGE_DRIVER_TARGET_OS_BUILD = "edgeDriverTargetOSBuild";
+    public static final String OPT_EDGE_DRIVER_LOOKUP_BASE_URL = "edgeDriverLookupBaseUrl";
+    public static final String NEXIAL_SUPPORT_HOME = StringUtils.appendIfMissing(USER_HOME, separator) + ".nexial";
+    public static final String EDGE_DRIVER_HOME = NEXIAL_SUPPORT_HOME + separator + "edge" + separator;
 
     // todo: need to evaluate how to use these 3 to modify the nexial result and excel output
     public static final String COMPARE_INCLUDE_MOVED = NAMESPACE + "io.compareIncludeMoved";
@@ -367,30 +375,34 @@ public final class NexialConst {
 
     // browser types
     public enum BrowserType {
-        firefox(true, true, true, true),
-        firefoxheadless(true, true, true, true),
-        safari(false, true, true, true),
-        chrome(true, false, true, true),
-        chromeheadless(true, false, true, true),
-        ie(false, false, true, false),
-        iphone(false, false, false, false),
-        browserstack(false, false, false, true),
-        chromeembedded(false, false, true, true),
-        electron(false, false, true, true);
+        firefox(true, true, true, true, true),
+        firefoxheadless(true, true, true, true, true),
+        safari(false, true, true, true, true),
+        chrome(true, false, true, true, true),
+        chromeheadless(true, false, true, true, true),
+        ie(false, false, true, false, true),
+        edge(false, false, true, false, false),
+        iphone(false, false, false, false, true),
+        browserstack(false, false, false, true, true),
+        chromeembedded(false, false, true, true, true),
+        electron(false, false, true, true, true);
 
         private boolean profileSupported;
         private boolean consoleLoggingEnabled;
         private boolean timeoutChangesEnabled;
         private boolean jsEventFavored;
+        private boolean switchWindowSupported;
 
         BrowserType(boolean profileSupported,
                     boolean consoleLoggingEnabled,
                     boolean timeoutChangesEnabled,
-                    boolean jsEventFavored) {
+                    boolean jsEventFavored,
+                    boolean switchWindowSupported) {
             this.profileSupported = profileSupported;
             this.consoleLoggingEnabled = consoleLoggingEnabled;
             this.timeoutChangesEnabled = timeoutChangesEnabled;
             this.jsEventFavored = jsEventFavored;
+            this.switchWindowSupported = switchWindowSupported;
         }
 
         public boolean isProfileSupported() { return profileSupported; }
@@ -400,6 +412,8 @@ public final class NexialConst {
         public boolean isTimeoutChangesEnabled() { return timeoutChangesEnabled; }
 
         public boolean isJsEventFavored() { return jsEventFavored; }
+
+        public boolean isSwitchWindowSupported() { return switchWindowSupported; }
     }
 
     public enum CrystalReportExportType {
@@ -767,7 +781,7 @@ public final class NexialConst {
          */
         public static final String SCRIPT_REF_PREFIX = NAMESPACE + "scriptRef.";
         public static final String BUILD_NO = "buildnum";
-        public static final String ITERATION_EDNED = NAMESPACE + "iterationEnded";
+        public static final String ITERATION_ENDED = NAMESPACE + "iterationEnded";
 
         //screen Recording
         // public static final String RECORDER_TYPE = "avi";

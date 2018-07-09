@@ -29,11 +29,15 @@ import java.util.regex.Pattern;
 
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.collections4.MapUtils;
+import org.apache.commons.collections4.map.HashedMap;
+import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang3.BooleanUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.math.NumberUtils;
 import org.apache.commons.text.WordUtils;
 import org.jetbrains.annotations.NotNull;
+import org.nexial.commons.proc.ProcessInvoker;
+import org.nexial.commons.proc.ProcessOutcome;
 import org.nexial.commons.utils.EnvUtils;
 import org.nexial.commons.utils.FileUtil;
 import org.nexial.core.NexialConst.*;
@@ -44,11 +48,15 @@ import org.nexial.core.model.ExecutionContext;
 import org.nexial.core.model.ExecutionDefinition;
 import org.nexial.core.plugins.ForcefulTerminate;
 import org.nexial.core.plugins.external.ExternalCommand;
+import org.nexial.core.plugins.ws.Response;
+import org.nexial.core.plugins.ws.WebServiceClient;
 import org.nexial.core.utils.ConsoleUtils;
 import org.openqa.selenium.*;
 import org.openqa.selenium.chrome.ChromeDriver;
 import org.openqa.selenium.chrome.ChromeDriverService;
 import org.openqa.selenium.chrome.ChromeOptions;
+import org.openqa.selenium.edge.EdgeDriver;
+import org.openqa.selenium.edge.EdgeOptions;
 import org.openqa.selenium.firefox.FirefoxDriver;
 import org.openqa.selenium.firefox.FirefoxOptions;
 import org.openqa.selenium.ie.InternetExplorerDriver;
@@ -173,6 +181,8 @@ public class Browser implements ForcefulTerminate {
     public boolean isRunFirefoxHeadless() { return browserType == firefoxheadless; }
 
     public boolean isRunIE() { return browserType == ie; }
+
+    public boolean isRunEdge() { return browserType == edge; }
 
     public boolean isRunChrome() { return browserType == chrome; }
 
@@ -328,6 +338,7 @@ public class Browser implements ForcefulTerminate {
             if (isRunChromeEmbedded()) { driver = initChromeEmbedded(); }
             if (isRunElectron()) { driver = initElectron(); }
             if (isRunIE()) { driver = initIE(); }
+            if (isRunEdge()) { driver = initEdge(); }
             if (isRunFireFox()) { driver = initFirefox(false); }
             if (isRunFirefoxHeadless()) { driver = initFirefox(true); }
             if (isRunBrowserStack()) { driver = initBrowserStack(); }
@@ -752,6 +763,106 @@ public class Browser implements ForcefulTerminate {
         ConsoleUtils.log(log.toString());
 
         return ie;
+    }
+
+    private WebDriver initEdge() {
+        initEdgeDriver();
+
+        EdgeDriver edge = new EdgeDriver(new EdgeOptions().merge(DesiredCapabilities.edge()));
+        postInit(edge);
+
+        Capabilities capabilities = edge.getCapabilities();
+        browserVersion = capabilities.getVersion();
+        browserPlatform = capabilities.getPlatform();
+        pageSourceSupported = false;
+
+        StringBuilder log = new StringBuilder("Edge WebDriver capabilities:\n");
+        capabilities.asMap().forEach((key, val) -> log.append("\t").append(key).append("\t=").append(val).append("\n"));
+        ConsoleUtils.log(log.toString() + "\n");
+
+        return edge;
+    }
+
+    private void initEdgeDriver() {
+        // 1. reject non-Windows10 platform
+        if (!IS_OS_WINDOWS_10) {
+            throw new RuntimeException("Browser automation for Microsoft Edge is only supported on Windows 10. Sorry.");
+        }
+
+        // 2. setup default edge driver
+        String edgeDriverPath = StringUtils.appendIfMissing(context.getProject().getNexialHome(), separator) +
+                                NEXIAL_WINDOWS_BIN_REL_PATH + "MicrosoftWebDriver.exe";
+        Map<String, String> webdriverSupport = context.getWebdriverSupport();
+        String targetOsVer = webdriverSupport.get(OPT_EDGE_DRIVER_TARGET_OS_BUILD);
+
+        // 2. find current OS build of Windows 10
+        String cmd = "C:\\Windows\\System32\\cmd.exe";
+        List<String> argVer = Arrays.asList("/C", "ver");
+        String currentOsVer = "";
+
+        try {
+            ProcessOutcome outcome = ProcessInvoker.invoke(cmd, argVer, new HashedMap<>());
+            // e.g. Microsoft Windows [Version 10.0.10240]
+            currentOsVer = StringUtils.substringBetween(outcome.getStdout(), "[Version", "]");
+            currentOsVer = StringUtils.removeEnd(currentOsVer, ".0");
+            currentOsVer = StringUtils.substringAfterLast(currentOsVer, ".");
+            currentOsVer = StringUtils.trim(currentOsVer);
+        } catch (Exception e) {
+            throw new RuntimeException("Unable to determine OS Build number for current Windows 10: " + e.getMessage());
+        }
+
+        // 3. if current OS build is the same as the target OS build of the shipped edge driver, then use this one
+        ConsoleUtils.log("current Windows 10 OS Build number is " + currentOsVer);
+        if (StringUtils.equals(targetOsVer, currentOsVer)) {
+            ConsoleUtils.log("current Windows 10 OS Build number matches the shipped version of Edge webdriver");
+        } else {
+            // 4. if not, perhaps we had already previously download this same driver (to $home/.nexial/edge)...
+            // let's check (file should exists with at least 50k)
+            String newEdgeDriverHome = EDGE_DRIVER_HOME + currentOsVer + separator;
+            String newEdgeDriverPath = newEdgeDriverHome + "MicrosoftWebDriver.exe";
+            if (FileUtil.isFileReadable(newEdgeDriverPath, 1024 * 50)) {
+                edgeDriverPath = newEdgeDriverPath;
+            } else {
+                // 5. if not download the appropriate driver
+                String lookupBaseUrl = webdriverSupport.get(OPT_EDGE_DRIVER_LOOKUP_BASE_URL);
+                String lookupUrl = lookupBaseUrl + currentOsVer + ".txt";
+                String msgPrefix = "download Edge webdriver for Windows 10 Build " + currentOsVer;
+
+                WebServiceClient wsClient = new WebServiceClient(null);
+                Response dlResp;
+                try {
+                    // 5.1 the URL for the appropriate driver is derived from `edgeDriverLookupBaseUrl` + osVer + .txt
+                    Response lookupResponse = wsClient.get(lookupUrl, "");
+                    String downloadUrl = StringUtils.trim(lookupResponse.getBody());
+                    ConsoleUtils.log("drived download URL as " + downloadUrl);
+
+                    FileUtils.forceMkdir(new File(newEdgeDriverHome));
+
+                    // 5.2 download the driver to `$home/.nexial/edge`
+                    dlResp = wsClient.download(downloadUrl, "", newEdgeDriverPath);
+                    if (dlResp.getReturnCode() != 200) {
+                        throw new RuntimeException("FAILED to " + msgPrefix + " from " + downloadUrl + ": Response " +
+                                                   dlResp.getReturnCode() + " " + dlResp.getStatusText());
+                    }
+
+                    // downloaded!
+                    ConsoleUtils.log(msgPrefix + " completed: " + newEdgeDriverPath);
+                } catch (IOException e) {
+                    throw new RuntimeException("FAILED to " + msgPrefix + ": " + e.getMessage());
+                }
+
+                if (!FileUtil.isFileReadable(newEdgeDriverPath, 1024 * 50)) {
+                    throw new RuntimeException("FAILED to " + msgPrefix + ": file not readable or cannot be found at " +
+                                               newEdgeDriverPath);
+                }
+
+                // 5.3 point the newly download driver as the one to use
+                edgeDriverPath = newEdgeDriverPath;
+            }
+        }
+
+        context.setData(SELENIUM_EDGE_DRIVER, edgeDriverPath);
+        System.setProperty(SELENIUM_EDGE_DRIVER, edgeDriverPath);
     }
 
     private void syncContextPropToSystem(String prop) {

@@ -488,8 +488,19 @@
         </property>
     </bean>
 
+    <util:map id="webdriverSupport" key-type="java.lang.String" value-type="java.lang.String">
+        <entry key="edgeDriverLookupBaseUrl"
+               value="https://raw.githubusercontent.com/nexiality/nexial-core/master/support/edge/"/>
+        <entry key="edgeDriverTargetOSBuild" value="10240a"/>
+    </util:map>
+
+
     <bean id="expressionProcessor" class="org.nexial.core.variable.ExpressionProcessor"/>
 
+
+    <!-- ####################################### -->
+    <!-- ### defaults                        ### -->
+    <!-- ####################################### -->
     <util:map id="defaultContextProps" key-type="java.lang.String" value-type="java.lang.String">
         <entry key="nexial.enableEmail" value="false"/>
         <entry key="nexial.assistantMode" value="off"/>

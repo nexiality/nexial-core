@@ -29,7 +29,7 @@ import org.nexial.core.model.TestStep;
 import org.nexial.core.utils.ConsoleUtils;
 
 import static org.nexial.core.NexialConst.Data.CURR_ITERATION;
-import static org.nexial.core.NexialConst.Data.ITERATION_EDNED;
+import static org.nexial.core.NexialConst.Data.ITERATION_ENDED;
 import static org.nexial.core.NexialConst.OPT_INPUT_EXCEL_FILE;
 
 /**
@@ -71,7 +71,7 @@ public class Execution {
         if (context == null) { return null; }
 
         String metaRequest = "$(execution|" + scope + "|" + metadata + ")";
-        boolean iterationEnded = context.getTestScript() == null || context.getBooleanData(ITERATION_EDNED, false);
+        boolean iterationEnded = context.getTestScript() == null || context.getBooleanData(ITERATION_ENDED, false);
         TestStep currentStep = context.getCurrentTestStep();
 
         if (iterationEnded && currentStep == null) {

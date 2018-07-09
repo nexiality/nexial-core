@@ -108,6 +108,9 @@ public class ExecutionContext {
     private static final String ALT_CLOSE_PARENTHESIS = "__<@*@>__";
     private static final String ALT_PIPE = "__<%+%>__";
 
+    static final String KEY_COMPLEX = "__lAIxEn__";
+    static final String DOT_LITERAL_REPLACER = "__53n7ry_4h34d__";
+
     protected Logger logger = LoggerFactory.getLogger(getClass());
     protected ExecutionDefinition execDef;
     protected TestProject project;
@@ -143,8 +146,8 @@ public class ExecutionContext {
     protected ExecutionEventListener executionEventListener;
     protected List<String> readOnlyVars;
 
-    static final String KEY_COMPLEX = "__lAIxEn__";
-    static final String DOT_LITERAL_REPLACER = "__53n7ry_4h34d__";
+    // spring-managed map of webdriver related configs.
+    protected Map<String, String> webdriverSupport;
 
     class Function {
         String functionName;
@@ -282,7 +285,9 @@ public class ExecutionContext {
         expression = new ExpressionProcessor(this);
 
         defaultContextProps = springContext.getBean("defaultContextProps", new HashMap<String, String>().getClass());
-        setData(ITERATION_EDNED, false);
+        setData(ITERATION_ENDED, false);
+
+        webdriverSupport = springContext.getBean("webdriverSupport", new HashMap<String, String>().getClass());
     }
 
     public void useTestScript(File testScript) throws IOException {
@@ -345,6 +350,8 @@ public class ExecutionContext {
     public String getEndDateTime() { return endDateTime; }
 
     public long getEndTimestamp() { return endTimestamp; }
+
+    public Map<String, String> getWebdriverSupport() { return webdriverSupport; }
 
     public NexialS3Helper getOtc() throws IOException {
         // check that the required properties are set

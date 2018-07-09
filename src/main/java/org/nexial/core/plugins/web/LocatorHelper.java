@@ -90,12 +90,10 @@ class LocatorHelper {
             if (StringUtils.startsWith(locator, startsWith)) { return By.xpath(fixBadXpath(locator)); }
         }
 
-        // todo: untested... needs more test cases..
-        if (StringUtils.startsWithIgnoreCase(locator, "dom=")) {
-            return By.tagName(StringUtils.substring(locator, "dom=".length()));
+        if (StringUtils.startsWithIgnoreCase(locator, "tag=")) {
+            return By.tagName(StringUtils.substring(locator, "tag=".length()));
         }
 
-        // todo: untested... needs more test cases..
         return By.tagName(locator);
     }
 
