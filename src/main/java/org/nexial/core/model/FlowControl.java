@@ -28,6 +28,7 @@ import org.nexial.commons.utils.RegexUtils;
 import org.nexial.core.utils.ConsoleUtils;
 
 import static org.nexial.core.NexialConst.FlowControls.REGEX_ARGS;
+import static org.nexial.core.model.FlowControl.Directive.TimeTrackStart;
 import static org.nexial.core.model.NexialFilterComparator.Any;
 
 /**
@@ -69,7 +70,9 @@ public class FlowControl {
         EndIf(true),
         FailIf(true),
         EndLoopIf(true),
-        ProceedIf(true);
+        ProceedIf(true),
+        TimeTrackStart(true),
+        TimeTrackEnd(false);
 
         private boolean conditionRequired;
 
@@ -144,6 +147,12 @@ public class FlowControl {
         // e.g. .*(PauseBefore\s*\((.+?)\)).*
         String flowControl = RegexUtils.replace(flowControls, regex, "$1");
         String conditions = StringUtils.trim(RegexUtils.replace(flowControl, directive + REGEX_ARGS, "$1"));
+
+        if (directive.equals(TimeTrackStart)) {
+            NexialFilterList filters = new NexialFilterList();
+            filters.add(new NexialFilter(conditions, Any, "*"));
+            return filters;
+        }
 
         // if there's no condition, then returns empty map
         if (StringUtils.isBlank(conditions)) {

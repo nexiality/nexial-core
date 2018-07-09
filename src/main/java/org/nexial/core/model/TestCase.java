@@ -23,9 +23,11 @@ import java.util.List;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.builder.ToStringBuilder;
+import org.nexial.core.ExecutionThread;
 import org.nexial.core.excel.Excel.Worksheet;
 import org.nexial.core.excel.ExcelConfig;
 import org.nexial.core.utils.ExecutionLogger;
+import org.nexial.core.utils.TrackTimeLogs;
 
 import static org.nexial.core.NexialConst.Data.CMD_SECTION;
 import static org.nexial.core.model.ExecutionSummary.ExecutionLevel.ACTIVITY;
@@ -73,6 +75,7 @@ public class TestCase {
 
     public boolean execute() {
         ExecutionContext context = testScenario.getContext();
+        TrackTimeLogs trackTimeLogs = ExecutionThread.getTrackTimeLogs();
         ExecutionLogger logger = context.getLogger();
 
         boolean allPassed = true;
@@ -90,6 +93,7 @@ public class TestCase {
 
             if (context.isEndImmediate()) {
                 executionSummary.adjustTotalSteps(-1);
+                trackTimeLogs.trackingDetails("Execution Interrupted");
                 break;
             }
 
@@ -144,14 +148,17 @@ public class TestCase {
             boolean shouldFailFast = !context.isInterativeMode() && context.isFailFast();
             if (shouldFailFast) {
                 logger.log(testStep, "test stopping due to execution failure and fail-fast in effect");
+                trackTimeLogs.trackingDetails("Execution Failed");
                 break;
             }
             if (context.isFailFastCommand(testStep)) {
                 logger.log(testStep, "test stopping due to failure on fail-fast command: " + testStep.getCommandFQN());
+                trackTimeLogs.trackingDetails("Execution Failed");
                 break;
             }
             if (context.isFailImmediate()) {
                 logger.log(testStep, "test stopping due fail-immediate in effect");
+                trackTimeLogs.trackingDetails("Execution Failed");
                 break;
             }
         }

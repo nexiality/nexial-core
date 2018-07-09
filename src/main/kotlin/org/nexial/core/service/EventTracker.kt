@@ -18,12 +18,16 @@ package org.nexial.core.service
 
 import org.apache.commons.codec.binary.Hex
 import org.apache.commons.io.FileUtils
+import org.apache.commons.lang3.BooleanUtils
 import org.apache.commons.lang3.RandomStringUtils
 import org.apache.commons.lang3.StringUtils
 import org.apache.commons.lang3.SystemUtils
+import org.nexial.core.ExecutionThread
 import org.nexial.core.NexialConst.DEF_FILE_ENCODING
-import org.nexial.core.model.NexialEnv
-import org.nexial.core.model.NexialEvent
+import org.nexial.core.NexialConst.Data.*
+import org.nexial.core.NexialConst.OPT_RUN_ID
+import org.nexial.core.model.*
+import org.nexial.core.model.ExecutionEvent.*
 import org.nexial.core.service.EventUtils.postfix
 import org.nexial.core.service.EventUtils.storageLocation
 import java.io.File
@@ -38,7 +42,10 @@ object EventTracker {
 
     fun getExtension() = EventUtils.postfix
 
-    fun track(event: NexialEvent) = write(event.eventName, event.json())
+    fun track(event: NexialEvent) {
+        write(event.eventName, event.json())
+        trackEvents(event)
+    }
 
     fun track(env: NexialEnv) = write("env", env.json())
 
@@ -49,6 +56,33 @@ object EventTracker {
                         type + postfix)
         FileUtils.forceMkdirParent(file)
         FileUtils.write(file, content, DEF_FILE_ENCODING)
+    }
+
+    private fun trackEvents(event: NexialEvent) {
+        val context = ExecutionThread.get()
+        when (event.eventName) {
+            ExecutionComplete.eventName -> {
+                if (BooleanUtils.toBoolean(System.getProperty(TRACK_EXECUTION))) {
+                    (event as NexialExecutionCompleteEvent).trackExecution(System.getProperty(OPT_RUN_ID))
+                }
+            }
+            ScriptComplete.eventName    -> {
+                if (BooleanUtils.toBoolean(context.getStringData(TRACK_SCRIPT))) {
+                    (event as NexialScriptCompleteEvent).trackScript()
+                }
+            }
+            IterationComplete.eventName -> {
+                (event as NexialIterationCompleteEvent).endTracking()
+                if (BooleanUtils.toBoolean(context.getStringData(TRACK_ITERATION))) {
+                    event.trackIteration()
+                }
+            }
+            ScenarioComplete.eventName  -> {
+                if (BooleanUtils.toBoolean(context.getStringData(TRACK_SCENARIO))) {
+                    (event as NexialScenarioCompleteEvent).trackScenario()
+                }
+            }
+        }
     }
 }
 

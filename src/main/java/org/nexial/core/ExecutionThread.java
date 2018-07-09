@@ -39,6 +39,7 @@ import org.nexial.core.reports.ExecutionMailConfig;
 import org.nexial.core.service.EventTracker;
 import org.nexial.core.utils.ConsoleUtils;
 import org.nexial.core.utils.ExecutionLogger;
+import org.nexial.core.utils.TrackTimeLogs;
 
 import static org.nexial.core.NexialConst.Data.*;
 import static org.nexial.core.NexialConst.OPT_LAST_OUTCOME;
@@ -63,6 +64,7 @@ import static org.nexial.core.model.ExecutionSummary.ExecutionLevel.SCRIPT;
  */
 public final class ExecutionThread extends Thread {
     private static final ThreadLocal<ExecutionContext> THREAD_LOCAL = new ThreadLocal<>();
+    private static final ThreadLocal<TrackTimeLogs> TRACK_TIME_THREAD_LOCAL = new ThreadLocal<>();
 
     private ExecutionDefinition execDef;
     private ExecutionSummary executionSummary = new ExecutionSummary();
@@ -77,7 +79,14 @@ public final class ExecutionThread extends Thread {
 
     public static void set(ExecutionContext context) { THREAD_LOCAL.set(context); }
 
-    public static void unset() { THREAD_LOCAL.remove(); }
+    public static void set(TrackTimeLogs trackTimeLogs) { TRACK_TIME_THREAD_LOCAL.set(trackTimeLogs); }
+
+    public static TrackTimeLogs getTrackTimeLogs() { return TRACK_TIME_THREAD_LOCAL.get(); }
+
+    public static void unset() {
+        THREAD_LOCAL.remove();
+        TRACK_TIME_THREAD_LOCAL.remove();
+    }
 
     public static ExecutionThread newInstance(ExecutionDefinition execDef) {
         ExecutionThread self = new ExecutionThread();
@@ -128,6 +137,8 @@ public final class ExecutionThread extends Thread {
         ConsoleUtils.log(runId, "executing " + testScriptLocation + ". " + iterationManager);
 
         ExecutionThread.set(context);
+        TrackTimeLogs trackTimeLogs = new TrackTimeLogs();
+        ExecutionThread.set(trackTimeLogs);
 
         int totalIterations = iterationManager.getIterationCount();
 
@@ -216,6 +227,7 @@ public final class ExecutionThread extends Thread {
 
         onScriptComplete(context, executionSummary, iterationManager, ticktock);
 
+        System.setProperty(TRACK_EXECUTION, context.getStringData(TRACK_EXECUTION));
         // handling onExecutionComplete
         if (lastUse) { context.getExecutionEventListener().onExecutionComplete(); }
 
