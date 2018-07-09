@@ -24,9 +24,11 @@ import java.util.List;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.builder.ToStringBuilder;
+import org.nexial.core.ExecutionThread;
 import org.nexial.core.excel.Excel.Worksheet;
 import org.nexial.core.excel.ExcelConfig;
 import org.nexial.core.utils.FlowControlUtils;
+import org.nexial.core.utils.TrackTimeLogs;
 
 import static org.apache.commons.lang3.builder.ToStringStyle.SIMPLE_STYLE;
 import static org.nexial.core.NexialConst.Data.*;
@@ -82,6 +84,8 @@ public class CommandRepeater {
             for (int i = 0; i < steps.size(); i++) {
                 TestStep testStep = steps.get(i);
                 ExecutionContext context = testStep.context;
+                TrackTimeLogs trackTimeLogs = ExecutionThread.getTrackTimeLogs();
+                trackTimeLogs.checkStartTracking(context, testStep);
 
                 try {
                     context.setCurrentTestStep(testStep);
@@ -136,6 +140,7 @@ public class CommandRepeater {
                 } catch (Throwable e) {
                     return StepResult.fail(resolveRootCause(e));
                 } finally {
+                    trackTimeLogs.checkEndTracking(context, testStep);
                     FlowControlUtils.checkPauseAfter(context, testStep);
                 }
             }

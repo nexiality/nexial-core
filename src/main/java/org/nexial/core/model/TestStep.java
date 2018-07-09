@@ -33,6 +33,7 @@ import org.apache.poi.xssf.usermodel.XSSFCell;
 import org.apache.poi.xssf.usermodel.XSSFCellStyle;
 import org.nexial.commons.utils.FileUtil;
 import org.nexial.commons.utils.TextUtils;
+import org.nexial.core.ExecutionThread;
 import org.nexial.core.excel.Excel;
 import org.nexial.core.excel.Excel.Worksheet;
 import org.nexial.core.excel.ExcelConfig;
@@ -43,6 +44,7 @@ import org.nexial.core.utils.ConsoleUtils;
 import org.nexial.core.utils.ExecutionLogger;
 import org.nexial.core.utils.FlowControlUtils;
 import org.nexial.core.utils.MessageUtils;
+import org.nexial.core.utils.TrackTimeLogs;
 import org.openqa.selenium.NoSuchElementException;
 
 import static java.lang.System.lineSeparator;
@@ -146,6 +148,8 @@ public class TestStep extends TestStepManifest {
     }
 
     public StepResult execute() {
+        TrackTimeLogs trackTimeLogs = ExecutionThread.getTrackTimeLogs();
+        trackTimeLogs.checkStartTracking(context, this);
         // clock's ticking
         StopWatch tickTock = new StopWatch();
         tickTock.start();
@@ -182,6 +186,7 @@ public class TestStep extends TestStepManifest {
             e.printStackTrace();
             result = StepResult.fail(e.getMessage());
         } finally {
+            trackTimeLogs.checkEndTracking(context, this);
             tickTock.stop();
             if (this.isCommandRepeater()) { context.setCurrentTestStep(this); }
             postExecCommand(result, tickTock.getTime());

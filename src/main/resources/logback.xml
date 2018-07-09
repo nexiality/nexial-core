@@ -74,6 +74,14 @@
 			<pattern>%d|%.-1p|%t|%m%n</pattern>
 		</encoder>
 	</appender>
+	<appender name="file-tracktime" class="ch.qos.logback.core.FileAppender">
+		<file>${nexial.logpath}/nexial-timetrack.log</file>
+		<append>true</append>
+		<prudent>true</prudent>
+		<encoder>
+			<pattern>%m%n</pattern>
+		</encoder>
+	</appender>
 	<appender name="file-3rdparty" class="ch.qos.logback.core.FileAppender">
 		<file>${nexial.3rdparty.logpath:-${java.io.tmpdir}}/nexial-3rdparty.log</file>
 		<append>true</append>
@@ -302,7 +310,9 @@
 		<appender-ref ref="console-execution"/>
 		<appender-ref ref="file-testexecution"/>
 	</logger>
-
+	<logger name="org.nexial.core.utils.TrackTimeLogs" additivity="false" level="INFO">
+		<appender-ref ref="file-tracktime"/>
+	</logger>
 	<!-- catch-all -->
 	<root level="INFO">
 		<appender-ref ref="console-catchall"/>
