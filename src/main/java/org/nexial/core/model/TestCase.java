@@ -23,7 +23,6 @@ import java.util.List;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.builder.ToStringBuilder;
-import org.nexial.core.ExecutionThread;
 import org.nexial.core.excel.Excel.Worksheet;
 import org.nexial.core.excel.ExcelConfig;
 import org.nexial.core.utils.ExecutionLogger;
@@ -75,7 +74,7 @@ public class TestCase {
 
     public boolean execute() {
         ExecutionContext context = testScenario.getContext();
-        TrackTimeLogs trackTimeLogs = ExecutionThread.getTrackTimeLogs();
+        TrackTimeLogs trackTimeLogs = context.getTrackTimeLogs();
         ExecutionLogger logger = context.getLogger();
 
         boolean allPassed = true;

@@ -629,6 +629,7 @@ public final class NexialConst {
 
         // predefined variable for time tracking of execution levels
         public static final String TRACK_EXECUTION = NAMESPACE + "trackExecution";
+        public static final String DEF_TRACK_EXECUTION = "false";
         public static final String TRACK_SCRIPT = NAMESPACE + "trackScript";
         public static final String TRACK_ITERATION = NAMESPACE + "trackIteration";
         public static final String TRACK_SCENARIO = NAMESPACE + "trackScenario";

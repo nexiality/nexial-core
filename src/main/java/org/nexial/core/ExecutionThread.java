@@ -39,7 +39,6 @@ import org.nexial.core.reports.ExecutionMailConfig;
 import org.nexial.core.service.EventTracker;
 import org.nexial.core.utils.ConsoleUtils;
 import org.nexial.core.utils.ExecutionLogger;
-import org.nexial.core.utils.TrackTimeLogs;
 
 import static org.nexial.core.NexialConst.Data.*;
 import static org.nexial.core.NexialConst.OPT_LAST_OUTCOME;
@@ -64,7 +63,6 @@ import static org.nexial.core.model.ExecutionSummary.ExecutionLevel.SCRIPT;
  */
 public final class ExecutionThread extends Thread {
     private static final ThreadLocal<ExecutionContext> THREAD_LOCAL = new ThreadLocal<>();
-    private static final ThreadLocal<TrackTimeLogs> TRACK_TIME_THREAD_LOCAL = new ThreadLocal<>();
 
     private ExecutionDefinition execDef;
     private ExecutionSummary executionSummary = new ExecutionSummary();
@@ -79,14 +77,7 @@ public final class ExecutionThread extends Thread {
 
     public static void set(ExecutionContext context) { THREAD_LOCAL.set(context); }
 
-    public static void set(TrackTimeLogs trackTimeLogs) { TRACK_TIME_THREAD_LOCAL.set(trackTimeLogs); }
-
-    public static TrackTimeLogs getTrackTimeLogs() { return TRACK_TIME_THREAD_LOCAL.get(); }
-
-    public static void unset() {
-        THREAD_LOCAL.remove();
-        TRACK_TIME_THREAD_LOCAL.remove();
-    }
+    public static void unset() { THREAD_LOCAL.remove(); }
 
     public static ExecutionThread newInstance(ExecutionDefinition execDef) {
         ExecutionThread self = new ExecutionThread();
@@ -109,7 +100,7 @@ public final class ExecutionThread extends Thread {
         ticktock.start();
 
         IterationManager iterationManager = execDef.getTestData().getIterationManager();
-        String testScriptLocation = execDef.getTestScript();
+        String scriptLocation = execDef.getTestScript();
 
         ExecutionContext context = MapUtils.isNotEmpty(intraExecutionData) ?
                                    new ExecutionContext(execDef, intraExecutionData) : new ExecutionContext(execDef);
@@ -134,23 +125,21 @@ public final class ExecutionThread extends Thread {
             }
         }
 
-        ConsoleUtils.log(runId, "executing " + testScriptLocation + ". " + iterationManager);
+        ConsoleUtils.log(runId, "executing " + scriptLocation + ". " + iterationManager);
 
         ExecutionThread.set(context);
-        TrackTimeLogs trackTimeLogs = new TrackTimeLogs();
-        ExecutionThread.set(trackTimeLogs);
 
         int totalIterations = iterationManager.getIterationCount();
 
         String scriptName =
             StringUtils.substringBeforeLast(
                 StringUtils.substringAfterLast(
-                    StringUtils.replace(testScriptLocation, "\\", "/"), "/"), ".") +
+                    StringUtils.replace(scriptLocation, "\\", "/"), "/"), ".") +
             " (" + totalIterations + ")";
         executionSummary.setName(scriptName);
         executionSummary.setExecutionLevel(SCRIPT);
         executionSummary.setStartTime(System.currentTimeMillis());
-        executionSummary.setSourceScript(testScriptLocation);
+        executionSummary.setSourceScript(scriptLocation);
 
         for (int currIteration = 1; currIteration <= totalIterations; currIteration++) {
             // SINGLE THREAD EXECUTION WITHIN FOR LOOP!
@@ -166,12 +155,17 @@ public final class ExecutionThread extends Thread {
             iterSummary.setName(currIteration + " of " + totalIterations);
             iterSummary.setExecutionLevel(ITERATION);
             iterSummary.setStartTime(System.currentTimeMillis());
-            iterSummary.setSourceScript(testScriptLocation);
+            iterSummary.setSourceScript(scriptLocation);
 
             try {
                 testScript = ExecutionInputPrep.prep(runId, execDef, iteration, currIteration);
                 iterSummary.setTestScript(testScript);
                 context.useTestScript(testScript);
+
+                context.getTrackTimeLogs();
+
+                // remember whether we want to track execution completion as a time-track event or not
+                System.setProperty(TRACK_EXECUTION, context.getStringData(TRACK_EXECUTION, DEF_TRACK_EXECUTION));
 
                 // handling onExecutionStart
                 if (firstUse) { context.getExecutionEventListener().onExecutionStart(); }
@@ -205,9 +199,8 @@ public final class ExecutionThread extends Thread {
                 iterSummary.setEndTime(System.currentTimeMillis());
                 iterSummary.aggregatedNestedExecutions(context);
                 iterSummary.generateExcelReport(testScript);
-                EventTracker.INSTANCE.track(new NexialIterationCompleteEvent(testScriptLocation,
-                                                                             currIteration,
-                                                                             iterSummary));
+                EventTracker.INSTANCE.track(
+                    new NexialIterationCompleteEvent(scriptLocation, currIteration, iterSummary));
                 executionSummary.addNestSummary(iterSummary);
 
                 if (testScript != null) {
@@ -218,6 +211,7 @@ public final class ExecutionThread extends Thread {
                 collectIntraExecutionData(context, currIteration);
                 ExecutionMailConfig.configure(context);
                 context.endIteration();
+                context.removeTrackTimeLogs();
 
                 if (testScript != null) { MemManager.recordMemoryChanges(testScript.getName() + " completed"); }
 
@@ -227,7 +221,6 @@ public final class ExecutionThread extends Thread {
 
         onScriptComplete(context, executionSummary, iterationManager, ticktock);
 
-        System.setProperty(TRACK_EXECUTION, context.getStringData(TRACK_EXECUTION));
         // handling onExecutionComplete
         if (lastUse) { context.getExecutionEventListener().onExecutionComplete(); }
 
@@ -402,7 +395,7 @@ public final class ExecutionThread extends Thread {
     protected void throwTerminalException(Result result) {
         if (result == null || result.getFailureCount() < 1) { return; }
 
-        for (Failure f: result.getFailures()) {
+        for (Failure f : result.getFailures()) {
             Throwable e = f.getException();
             if (e == null) { continue; }
             if (e instanceof InvocationTargetException) { e = ((InvocationTargetException) e).getTargetException(); }

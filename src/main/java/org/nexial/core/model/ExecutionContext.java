@@ -62,6 +62,7 @@ import org.nexial.core.reports.MailNotifier;
 import org.nexial.core.utils.ConsoleUtils;
 import org.nexial.core.utils.ExecutionLogger;
 import org.nexial.core.utils.OutputFileUtils;
+import org.nexial.core.utils.TrackTimeLogs;
 import org.nexial.core.variable.ExpressionException;
 import org.nexial.core.variable.ExpressionProcessor;
 import org.slf4j.Logger;
@@ -97,6 +98,7 @@ public class ExecutionContext {
     private static final String NON_DELIM_CHARS = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789_-";
     private static final String NAME_SPRING_CONTEXT = "nexialInternal.springContext";
     private static final String NAME_PLUGIN_MANAGER = "nexialInternal.pluginManager";
+    private static final String NAME_TRACK_TIME_LOGS = "nexialInternal.trackTimeLogs";
 
     // function parsing
     private static final String ESCAPED_DOLLAR = "\\$";
@@ -201,7 +203,7 @@ public class ExecutionContext {
             for (int i = 0; i < paramList.size(); i++) {
                 String param = paramList.get(i);
                 // return the magic
-                param = StringUtils.replace(param, TOKEN_TEMP_DELIM, escapedDelim ? TOKEN_PARAM_SEP :delim);
+                param = StringUtils.replace(param, TOKEN_TEMP_DELIM, escapedDelim ? TOKEN_PARAM_SEP : delim);
                 param = StringUtils.replace(param, ALT_PIPE, "|");
                 param = StringUtils.replace(param, ESCAPED_DOLLAR, "$");
                 param = StringUtils.replace(param, ESCAPED_OPEN_PARENTHESIS, "(");
@@ -858,6 +860,22 @@ public class ExecutionContext {
     }
 
     public void setBreakCurrentIteration(boolean breakLoop) { setData(BREAK_CURRENT_ITERATION, breakLoop); }
+
+    @NotNull
+    public TrackTimeLogs getTrackTimeLogs() {
+        TrackTimeLogs trackTimeLogs = null;
+        Object obj = getObjectData(NAME_TRACK_TIME_LOGS);
+        if (obj instanceof TrackTimeLogs) { trackTimeLogs = (TrackTimeLogs) obj; }
+
+        if (trackTimeLogs == null) {
+            trackTimeLogs = new TrackTimeLogs();
+            setData(NAME_TRACK_TIME_LOGS, trackTimeLogs);
+        }
+
+        return trackTimeLogs;
+    }
+
+    public void removeTrackTimeLogs() { removeData(NAME_TRACK_TIME_LOGS); }
 
     /** iteration-scoped execution */
     public boolean execute() throws IOException {

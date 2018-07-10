@@ -20,13 +20,11 @@ import org.apache.commons.cli.CommandLine
 import org.apache.commons.lang3.StringUtils
 import org.apache.commons.lang3.SystemUtils.*
 import org.nexial.commons.utils.EnvUtils
-import org.nexial.core.ExecutionThread
 import org.nexial.core.NexialConst.GSON_COMPRESSED
 import org.nexial.core.NexialConst.Project.NEXIAL_HOME
 import org.nexial.core.model.ExecutionEvent.*
 import org.nexial.core.utils.CheckUtils
 import org.nexial.core.utils.ExecUtil
-import org.nexial.core.utils.TrackTimeLogs
 import java.io.Serializable
 
 class NexialEnv(@Transient val commandline: CommandLine) : Serializable {
@@ -75,7 +73,6 @@ class NexialEnv(@Transient val commandline: CommandLine) : Serializable {
 open class NexialEvent(val eventName: String, val startTime: Long) {
     val id: String = Utils.eventId
     val endTime: Long = System.currentTimeMillis()
-    val timetracking: TrackTimeLogs? = ExecutionThread.getTrackTimeLogs()
     fun json(): String = GSON_COMPRESSED.toJson(this)
 }
 
@@ -98,13 +95,12 @@ class NexialExecutionCompleteEvent(startTime: Long,
                         executed = executed,
                         pass = pass,
                         fail = fail) {
+
     constructor(summary: ExecutionSummary) : this(summary.startTime,
                                                   summary.totalSteps,
                                                   summary.executed,
                                                   summary.passCount,
                                                   summary.failCount)
-
-    fun trackExecution(label: String) = TrackTimeLogs().trackExecutionLevels(label, startTime, endTime, "Execution")
 }
 
 class NexialScriptCompleteEvent(val script: String,
@@ -119,14 +115,9 @@ class NexialScriptCompleteEvent(val script: String,
                         executed = executed,
                         pass = pass,
                         fail = fail) {
+
     constructor(script: String, summary: ExecutionSummary) :
         this(script, summary.startTime, summary.totalSteps, summary.executed, summary.passCount, summary.failCount)
-
-    fun trackScript() {
-        val label: String = StringUtils.substringAfterLast(StringUtils.substringBeforeLast(script, "."), "\\")
-        timetracking?.trackExecutionLevels(label, startTime, endTime, "Script")
-    }
-
 }
 
 class NexialIterationCompleteEvent(val script: String,
@@ -142,6 +133,7 @@ class NexialIterationCompleteEvent(val script: String,
                         executed = executed,
                         pass = pass,
                         fail = fail) {
+
     constructor(script: String, iteration: Int, summary: ExecutionSummary) :
         this(script,
              iteration,
@@ -150,13 +142,6 @@ class NexialIterationCompleteEvent(val script: String,
              summary.executed,
              summary.passCount,
              summary.failCount)
-
-    fun endTracking() = timetracking?.forcefullyEndTracking()
-    fun trackIteration() {
-        val label: String = StringUtils.substringAfterLast(StringUtils.substringBeforeLast(script, "."),
-                                                           "\\") + "-00" + iteration
-        timetracking?.trackExecutionLevels(label, startTime, endTime, "Iteration")
-    }
 }
 
 class NexialScenarioCompleteEvent(val script: String,
@@ -172,6 +157,7 @@ class NexialScenarioCompleteEvent(val script: String,
                         executed = executed,
                         pass = pass,
                         fail = fail) {
+
     constructor(summary: ExecutionSummary) : this(summary.testScript.absolutePath,
                                                   summary.name,
                                                   summary.startTime,
@@ -179,8 +165,6 @@ class NexialScenarioCompleteEvent(val script: String,
                                                   summary.executed,
                                                   summary.passCount,
                                                   summary.failCount)
-
-    fun trackScenario() = timetracking?.trackExecutionLevels(scenario, startTime, endTime, "Scenario")
 }
 
 /**
@@ -200,6 +184,7 @@ class NexialCmdErrorEvent(val args: List<String>, val error: String) :
  */
 class NexialFailEvent(val error: String) :
     NexialEvent(eventName = ErrorOccurred.eventName, startTime = System.currentTimeMillis()) {
+
     var exception: Throwable? = null
     var commandType: String? = null
     var command: String? = null

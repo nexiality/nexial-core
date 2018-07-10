@@ -33,7 +33,6 @@ import org.apache.poi.xssf.usermodel.XSSFCell;
 import org.apache.poi.xssf.usermodel.XSSFCellStyle;
 import org.nexial.commons.utils.FileUtil;
 import org.nexial.commons.utils.TextUtils;
-import org.nexial.core.ExecutionThread;
 import org.nexial.core.excel.Excel;
 import org.nexial.core.excel.Excel.Worksheet;
 import org.nexial.core.excel.ExcelConfig;
@@ -148,7 +147,7 @@ public class TestStep extends TestStepManifest {
     }
 
     public StepResult execute() {
-        TrackTimeLogs trackTimeLogs = ExecutionThread.getTrackTimeLogs();
+        TrackTimeLogs trackTimeLogs = context.getTrackTimeLogs();
         trackTimeLogs.checkStartTracking(context, this);
         // clock's ticking
         StopWatch tickTock = new StopWatch();

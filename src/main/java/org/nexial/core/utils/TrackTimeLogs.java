@@ -42,7 +42,7 @@ public final class TrackTimeLogs {
     private static final String FORMAT_LOG = "yyyy-MM-dd HH:mm:ss,SSS";
     private static final DateFormat DATE_FORMAT_LOG = new SimpleDateFormat(FORMAT_LOG);
 
-    private static final String PIPE_SEP = "|";
+    private static final String SEP = "|";
     private static final String EMPTY = "";
 
     private String trackStartDate;
@@ -69,10 +69,13 @@ public final class TrackTimeLogs {
 
     public void checkStartTracking(ExecutionContext context, TestStep testStep) {
         if (!shouldTrack(context, testStep, TimeTrackStart)) { return; }
+
         if (StringUtils.isNotEmpty(trackStartDate)) {
-            System.out.println("Ignored this tracking start point as previous tracking start point is not ended yet.");
+            ConsoleUtils.log(testStep.getMessageId(),
+                             "Ignoring TimeTrackStart() here since previous time tracking has not ended yet.");
             return;
         }
+
         trackStartDate = DateUtility.getCurrentTimestampForLogging();
         NexialFilterList conditions = testStep.getFlowControls().get(TimeTrackStart).getConditions();
         label = conditions.get(0).getSubject();
@@ -84,16 +87,20 @@ public final class TrackTimeLogs {
             String scenario = testStep.getWorksheet().getName();
             label = scriptName + "#" + scenario;
         }
+
         trackStartDate1 = trackStartDate;
         label1 = label;
     }
 
     public void checkEndTracking(ExecutionContext context, TestStep testStep) {
         if (!shouldTrack(context, testStep, TimeTrackEnd)) { return; }
+
         if (StringUtils.isEmpty(trackStartDate)) {
-            System.out.println("Ignored this tracking end as tracking not started yet");
+            ConsoleUtils.log(testStep.getMessageId(),
+                             "Ignoring TimeTrackEnd() here since no time tracking has started yet");
             return;
         }
+
         trackStartDate1 = EMPTY;
         trackingDetails(EMPTY);
     }
@@ -103,13 +110,13 @@ public final class TrackTimeLogs {
         if (StringUtils.isEmpty(trackEndDate)) { trackEndDate = DateUtility.getCurrentTimestampForLogging(); }
         if (StringUtils.isEmpty(currentThread)) { currentThread = Thread.currentThread().getName(); }
 
-        Long elapsedTime = DateUtility.formatTo(trackEndDate, FORMAT_LOG) - DateUtility.formatTo(trackStartDate,
-                                                                                                 FORMAT_LOG);
-        LOGGER.info(StringUtils.replace(trackStartDate, " ", PIPE_SEP) + PIPE_SEP +
-                    StringUtils.replace(trackEndDate, " ", PIPE_SEP) + PIPE_SEP +
-                    elapsedTime + PIPE_SEP +
-                    currentThread + PIPE_SEP +
-                    label + (StringUtils.isNotEmpty(remark) ? PIPE_SEP : EMPTY) +
+        long elapsedTime = DateUtility.formatTo(trackEndDate, FORMAT_LOG) -
+                           DateUtility.formatTo(trackStartDate, FORMAT_LOG);
+        LOGGER.info(StringUtils.replace(trackStartDate, " ", SEP) + SEP +
+                    StringUtils.replace(trackEndDate, " ", SEP) + SEP +
+                    elapsedTime + SEP +
+                    currentThread + SEP +
+                    label + (StringUtils.isNotEmpty(remark) ? SEP : EMPTY) +
                     remark);
 
         // setting variable to default value
@@ -140,13 +147,15 @@ public final class TrackTimeLogs {
 
     private static Boolean shouldTrack(ExecutionContext context, TestStep testStep, Directive directive) {
         if (testStep == null || context == null) { return false; }
+
         Map<Directive, FlowControl> flowControls = testStep.getFlowControls();
         if (MapUtils.isEmpty(flowControls)) { return false; }
+
         FlowControl flowControl = flowControls.get(directive);
         if (flowControl == null) { return false; }
+
         NexialFilterList conditions = flowControl.getConditions();
-        return !CollectionUtils.isEmpty(conditions) && conditions.isMatched(context,
-                                                                            "Evaluating Time Tracking Directive " +
-                                                                            directive);
+        return !CollectionUtils.isEmpty(conditions) &&
+               conditions.isMatched(context, "Evaluating Time Tracking Directive " + directive);
     }
 }

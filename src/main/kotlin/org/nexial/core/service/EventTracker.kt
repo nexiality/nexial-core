@@ -30,6 +30,7 @@ import org.nexial.core.model.*
 import org.nexial.core.model.ExecutionEvent.*
 import org.nexial.core.service.EventUtils.postfix
 import org.nexial.core.service.EventUtils.storageLocation
+import org.nexial.core.utils.TrackTimeLogs
 import java.io.File
 import java.io.File.separator
 import java.text.SimpleDateFormat
@@ -60,30 +61,48 @@ object EventTracker {
 
     private fun trackEvents(event: NexialEvent) {
         val context = ExecutionThread.get()
-        when (event.eventName) {
-            ExecutionComplete.eventName -> {
-                if (BooleanUtils.toBoolean(System.getProperty(TRACK_EXECUTION))) {
-                    (event as NexialExecutionCompleteEvent).trackExecution(System.getProperty(OPT_RUN_ID))
+        val eventName = event.eventName
+        val startTime = event.startTime
+        val endTime = event.endTime
+        val trackTimeLogs = context?.trackTimeLogs ?: TrackTimeLogs()
+
+        when {
+            eventName == ExecutionComplete.eventName && trackEvent(TRACK_EXECUTION)        -> {
+                trackTimeLogs.trackExecutionLevels(System.getProperty(OPT_RUN_ID), startTime, endTime, "Execution")
+            }
+
+            eventName == ScriptComplete.eventName && trackEvent(context, TRACK_SCRIPT)     -> {
+                val label: String = asLabel((event as NexialScriptCompleteEvent).script)
+                trackTimeLogs.trackExecutionLevels(label, startTime, endTime, "Script")
+            }
+
+            eventName == IterationComplete.eventName                                       -> {
+                trackTimeLogs.forcefullyEndTracking()
+
+                if (trackEvent(context, TRACK_ITERATION)) {
+                    val iterEvent = event as NexialIterationCompleteEvent
+                    val iteration = "" + iterEvent.iteration
+                    val label: String = asLabel(iterEvent.script) + "-" +
+                                        StringUtils.rightPad("0", 3 - iteration.length) + iteration
+                    trackTimeLogs.trackExecutionLevels(label, startTime, endTime, "Iteration")
                 }
             }
-            ScriptComplete.eventName    -> {
-                if (BooleanUtils.toBoolean(context.getStringData(TRACK_SCRIPT))) {
-                    (event as NexialScriptCompleteEvent).trackScript()
-                }
-            }
-            IterationComplete.eventName -> {
-                (event as NexialIterationCompleteEvent).endTracking()
-                if (BooleanUtils.toBoolean(context.getStringData(TRACK_ITERATION))) {
-                    event.trackIteration()
-                }
-            }
-            ScenarioComplete.eventName  -> {
-                if (BooleanUtils.toBoolean(context.getStringData(TRACK_SCENARIO))) {
-                    (event as NexialScenarioCompleteEvent).trackScenario()
-                }
+
+            eventName == ScenarioComplete.eventName && trackEvent(context, TRACK_SCENARIO) -> {
+                trackTimeLogs.trackExecutionLevels((event as NexialScenarioCompleteEvent).scenario,
+                                                   startTime, endTime, "Scenario")
             }
         }
     }
+
+    private fun asLabel(script: String) =
+        StringUtils.substringBeforeLast(StringUtils.substringAfterLast(StringUtils.replace(script, "\\", "/"), "/"),
+                                        ".")
+
+    private fun trackEvent(context: ExecutionContext, trackId: String) =
+        BooleanUtils.toBoolean(context.getStringData(trackId))
+
+    private fun trackEvent(trackId: String) = BooleanUtils.toBoolean(System.getProperty(trackId))
 }
 
 object EventUtils {

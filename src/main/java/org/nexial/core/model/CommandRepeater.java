@@ -24,7 +24,6 @@ import java.util.List;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.builder.ToStringBuilder;
-import org.nexial.core.ExecutionThread;
 import org.nexial.core.excel.Excel.Worksheet;
 import org.nexial.core.excel.ExcelConfig;
 import org.nexial.core.utils.FlowControlUtils;
@@ -84,7 +83,7 @@ public class CommandRepeater {
             for (int i = 0; i < steps.size(); i++) {
                 TestStep testStep = steps.get(i);
                 ExecutionContext context = testStep.context;
-                TrackTimeLogs trackTimeLogs = ExecutionThread.getTrackTimeLogs();
+                TrackTimeLogs trackTimeLogs = context.getTrackTimeLogs();
                 trackTimeLogs.checkStartTracking(context, testStep);
 
                 try {
