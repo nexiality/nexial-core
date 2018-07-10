@@ -26,6 +26,7 @@ import java.net.UnknownHostException;
 import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+import javax.validation.constraints.NotNull;
 
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.collections4.MapUtils;
@@ -35,11 +36,11 @@ import org.apache.commons.lang3.BooleanUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.math.NumberUtils;
 import org.apache.commons.text.WordUtils;
-import org.jetbrains.annotations.NotNull;
 import org.nexial.commons.proc.ProcessInvoker;
 import org.nexial.commons.proc.ProcessOutcome;
 import org.nexial.commons.utils.EnvUtils;
 import org.nexial.commons.utils.FileUtil;
+import org.nexial.commons.utils.RegexUtils;
 import org.nexial.core.NexialConst.*;
 import org.nexial.core.ShutdownAdvisor;
 import org.nexial.core.WebProxy;
@@ -118,6 +119,11 @@ public class Browser implements ForcefulTerminate {
         USERHOME + "AppData\\Local\\Google\\Chrome\\Application\\chrome.exe",
         USERHOME + "AppDataLocal\\Google\\Chrome\\chrome.exe",
         USERHOME + "Local Settings\\Application Data\\Google\\Chrome\\chrome.exe");
+
+    private static final List<String> WIN_VER = Arrays.asList("/C", "ver");
+    private static final String WIN_VER_PATTERN_1 = "10\\.0\\.(\\d+)\\.(\\d+)";
+    private static final String WIN_VER_PATTERN_2 = "10\\.0\\.(\\d+)";
+    private static final String WIN_VER_PATTERN_3 = "([\\d\\.]+)";
 
     protected ExecutionContext context;
     protected WebDriver driver;
@@ -449,6 +455,47 @@ public class Browser implements ForcefulTerminate {
         // return StringUtils.equals(driver.getWindowHandle(), initialWinHandle) &&
         return CollectionUtils.size(driver.getWindowHandles()) <= 1 &&
                CollectionUtils.size(lastWinHandles) <= 1;
+    }
+
+    @NotNull
+    protected String deriveWin10BuildNumber() {
+        Map<String, String> webdriverSupport = context.getWebdriverSupport();
+        int edgeDriverMinVersion = NumberUtils.toInt(webdriverSupport.get("edgeDriverMinVersion"));
+
+        try {
+            ProcessOutcome outcome = ProcessInvoker.invoke(WIN32_CMD, WIN_VER, new HashedMap<>());
+            // e.g. Microsoft Windows [Version 10.0.10240]
+
+            String currentOsVer = outcome.getStdout();
+            ConsoleUtils.log("[EDGE] current Windows 10 version = " + currentOsVer);
+
+            currentOsVer = StringUtils.trim(StringUtils.substringBetween(currentOsVer, "[Version", "]"));
+            currentOsVer = deriveWind10BuildNumber(currentOsVer, edgeDriverMinVersion);
+
+            ConsoleUtils.log("[EDGE] current Windows 10 OS Build number resolved to " + currentOsVer);
+            return currentOsVer;
+        } catch (Exception e) {
+            throw new RuntimeException("Unable to determine OS Build number for current Windows 10: " + e.getMessage());
+        }
+    }
+
+    @NotNull
+    protected static String deriveWind10BuildNumber(String currentOsVer, int minVersion) {
+        if (RegexUtils.isExact(currentOsVer, WIN_VER_PATTERN_1)) {
+            currentOsVer = StringUtils.trim(RegexUtils.replace(currentOsVer, WIN_VER_PATTERN_1, "$1"));
+        } else if (RegexUtils.isExact(currentOsVer, WIN_VER_PATTERN_2)) {
+            currentOsVer = StringUtils.trim(RegexUtils.replace(currentOsVer, WIN_VER_PATTERN_2, "$1"));
+        } else if (RegexUtils.isExact(currentOsVer, WIN_VER_PATTERN_3)) {
+            currentOsVer = StringUtils.trim(StringUtils.substringAfterLast(currentOsVer, "."));
+        }
+
+        if (!NumberUtils.isDigits(currentOsVer)) { return minVersion + ""; }
+
+        int currentOsVerNum = NumberUtils.toInt(currentOsVer);
+        if (currentOsVerNum >= minVersion) { return currentOsVer; }
+
+        ConsoleUtils.log("[EDGE] current Windows 10 OS Build number not supported: " + currentOsVer);
+        return minVersion + "";
     }
 
     private void postInit(WebDriver driver) {
@@ -791,24 +838,10 @@ public class Browser implements ForcefulTerminate {
 
         // 2. setup
         Map<String, String> webdriverSupport = context.getWebdriverSupport();
-        String cmd = "C:\\Windows\\System32\\cmd.exe";
-        List<String> argVer = Arrays.asList("/C", "ver");
-        String edgeDriverPath;
-        String currentOsVer;
+        int edgeDriverMinFileSize = NumberUtils.toInt(webdriverSupport.get("edgeDriverMinFileSize"));
 
         // 2. find current OS build of Windows 10
-        try {
-            ProcessOutcome outcome = ProcessInvoker.invoke(cmd, argVer, new HashedMap<>());
-            // e.g. Microsoft Windows [Version 10.0.10240]
-            currentOsVer = StringUtils.substringBetween(outcome.getStdout(), "[Version", "]");
-            currentOsVer = StringUtils.removeEnd(currentOsVer, ".0");
-            currentOsVer = StringUtils.substringAfterLast(currentOsVer, ".");
-            currentOsVer = StringUtils.trim(currentOsVer);
-        } catch (Exception e) {
-            throw new RuntimeException("Unable to determine OS Build number for current Windows 10: " + e.getMessage());
-        }
-
-        ConsoleUtils.log("[EDGE] current Windows 10 OS Build number is " + currentOsVer);
+        String currentOsVer = deriveWin10BuildNumber();
 
         String newEdgeDriverHome = EDGE_DRIVER_HOME + currentOsVer + separator;
         String newEdgeDriverPath = newEdgeDriverHome + "MicrosoftWebDriver.exe";
@@ -816,7 +849,7 @@ public class Browser implements ForcefulTerminate {
         // 3. Check if we had already previously download this same driver (to $home/.nexial/edge)...
         // let's check (file should exists with at least 50k)
 
-        int edgeDriverMinFileSize = NumberUtils.toInt(webdriverSupport.get("edgeDriverMinFileSize"));
+        String edgeDriverPath;
         if (FileUtil.isFileReadable(newEdgeDriverPath, edgeDriverMinFileSize)) {
             edgeDriverPath = newEdgeDriverPath;
         } else {

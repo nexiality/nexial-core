@@ -492,6 +492,7 @@
         <entry key="edgeDriverLookupBaseUrl"
                value="https://raw.githubusercontent.com/nexiality/nexial-core/master/support/edge/"/>
         <entry key="edgeDriverMinFileSize" value="51200"/>
+        <entry key="edgeDriverMinVersion" value="10240"/>
     </util:map>
 
 
