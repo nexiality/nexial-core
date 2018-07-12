@@ -628,11 +628,23 @@ public final class NexialConst {
         public static final String DEF_LAST_PLAN_STEP = "false";
 
         // predefined variable for time tracking of execution levels
+        public static final String TRACK = "track.";
         public static final String TRACK_EXECUTION = NAMESPACE + "trackExecution";
         public static final String DEF_TRACK_EXECUTION = "false";
         public static final String TRACK_SCRIPT = NAMESPACE + "trackScript";
         public static final String TRACK_ITERATION = NAMESPACE + "trackIteration";
         public static final String TRACK_SCENARIO = NAMESPACE + "trackScenario";
+        public static final String TRACK_START_DATE = NAMESPACE + TRACK + "startDate";
+        public static final String TRACK_START_TIME = NAMESPACE + TRACK + "startTime";
+        public static final String TRACK_END_DATE = NAMESPACE + TRACK + "endDate";
+        public static final String TRACK_END_TIME = NAMESPACE + TRACK + "endTime";
+        public static final String TRACK_ELAPSED_TIME = NAMESPACE + TRACK + "elapsedTime";
+        public static final String TRACK_THREAD_NAME = NAMESPACE + TRACK + "threadName";
+        public static final String TRACK_LABEL = NAMESPACE + TRACK + "label";
+        public static final String TRACK_REMARK = NAMESPACE + TRACK + "remark";
+        public static final String TRACK_SEP = NAMESPACE + TRACK + "separator";
+        public static final String DEF_TRACK_VALUE = "true";
+        public static final String DEF_TRACK_SEP = "|";
 
         public static final String COMMAND_DISCOVERY_MODE = NAMESPACE + "commandDiscovery";
         public static final String DEF_COMMAND_DISCOVERY_MODE = "false";
