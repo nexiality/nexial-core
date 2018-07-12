@@ -56,7 +56,7 @@ import static org.nexial.core.model.ExecutionSummary.ExecutionLevel.SCRIPT;
  * {@link Nexial} as the initiator has the option to wait on thread complete or to launch another set of
  * tests in parallel.  This class will track all the test artifacts such as test scenarios, test steps, test data
  * and test results within its own thread context.  No sharing of such data between parallel test executions.
- * However test reuslts will be consolidated at the end of the entire run.
+ * However test results will be consolidated at the end of the entire run.
  *
  * @see Nexial
  * @see ExecutionDefinition

@@ -686,6 +686,7 @@ public class Nexial {
         long testSuiteElapsedTimeMs = stopTimeMs - startTimeMs;
         ConsoleUtils.log(runId, "test run completed in about " + (testSuiteElapsedTimeMs / 1000) + " seconds");
 
+        summary.setExecutionLevel(EXECUTION);
         summary.setEndTime(stopTimeMs);
         summary.aggregatedNestedExecutions(null);
 

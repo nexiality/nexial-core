@@ -110,9 +110,6 @@ public class ExecutionContext {
     private static final String ALT_CLOSE_PARENTHESIS = "__<@*@>__";
     private static final String ALT_PIPE = "__<%+%>__";
 
-    static final String KEY_COMPLEX = "__lAIxEn__";
-    static final String DOT_LITERAL_REPLACER = "__53n7ry_4h34d__";
-
     protected Logger logger = LoggerFactory.getLogger(getClass());
     protected ExecutionDefinition execDef;
     protected TestProject project;
@@ -140,16 +137,19 @@ public class ExecutionContext {
     protected SmsHelper smsHelper;
     protected MailNotifier mailNotifier;
     protected Map<String, String> defaultContextProps;
-
+    protected List<String> readOnlyVars;
+    protected List<String> referenceDataForExecution = new ArrayList<>();
     protected ClassPathXmlApplicationContext springContext;
     protected PluginManager plugins;
     protected Map<String, Object> data = new ListOrderedMap<>();
     protected ExpressionProcessor expression;
     protected ExecutionEventListener executionEventListener;
-    protected List<String> readOnlyVars;
 
     // spring-managed map of webdriver related configs.
     protected Map<String, String> webdriverSupport;
+
+    static final String KEY_COMPLEX = "__lAIxEn__";
+    static final String DOT_LITERAL_REPLACER = "__53n7ry_4h34d__";
 
     class Function {
         String functionName;
@@ -287,9 +287,11 @@ public class ExecutionContext {
         expression = new ExpressionProcessor(this);
 
         defaultContextProps = springContext.getBean("defaultContextProps", new HashMap<String, String>().getClass());
-        setData(ITERATION_ENDED, false);
-
+        referenceDataForExecution = TextUtils.toList(defaultContextProps.get("nexial.referenceDataForExecution"),
+                                                     ",", true);
         webdriverSupport = springContext.getBean("webdriverSupport", new HashMap<String, String>().getClass());
+
+        setData(ITERATION_ENDED, false);
     }
 
     public void useTestScript(File testScript) throws IOException {
@@ -593,7 +595,11 @@ public class ExecutionContext {
         return StringUtils.isEmpty(removed) ? removedFromSys : removed;
     }
 
-    public void setData(String name, String value) { setData(name, value, false); }
+    public void setData(String name, String value) {
+        // some reference data are considered "special" and should be elevated to "execution" level so that they can be
+        // as such for Execution Dashboard
+        setData(name, value, referenceDataForExecution.contains(name));
+    }
 
     public void setData(String name, String value, boolean updateSysProps) {
         if (data.containsKey(name)) { CellTextReader.unsetValue(value); }

@@ -511,6 +511,7 @@
         <entry key="nexial.screenRecorder" value="mp4"/>
         <entry key="nexial.browser.defaultWindowSize" value="1280x960"/>
         <entry key="nexial.browser" value="firefox"/>
+        <entry key="nexial.referenceDataForExecution" value="nexial.scriptRef.buildnum,nexial.scriptRef.app,nexial.scriptRef.release"/>
         <!--
         <entry key="nexial.textDelim" value=","/>
         <entry key="nexial.openResult" value="off"/>

@@ -75,7 +75,7 @@
         </encoder>
     </appender>
     <appender name="file-tracktime" class="ch.qos.logback.core.FileAppender">
-        <file>${nexial.logpath}/nexial-timetrack.log</file>
+        <file>${nexial.logpath:-${java.io.tmpdir}}/nexial-timetrack.log</file>
         <append>true</append>
         <prudent>true</prudent>
         <encoder>
