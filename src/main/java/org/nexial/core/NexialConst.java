@@ -629,14 +629,14 @@ public final class NexialConst {
 
         // predefined variable for time tracking of execution levels
         public static final String TIMETRACK = NAMESPACE + "timetrack.";
-        public static final String TRACK_EXECUTION = NAMESPACE + "trackExecution";
-        public static final String DEF_TRACK_EXECUTION = "false";
-        public static final String TRACK_SCRIPT = NAMESPACE + "trackScript";
-        public static final String TRACK_ITERATION = NAMESPACE + "trackIteration";
-        public static final String TRACK_SCENARIO = NAMESPACE + "trackScenario";
+        public static final String TRACK_EXECUTION = TIMETRACK + "trackExecution";
+        public static final String TRACK_SCRIPT = TIMETRACK + "trackScript";
+        public static final String TRACK_ITERATION = TIMETRACK + "trackIteration";
+        public static final String TRACK_SCENARIO = TIMETRACK + "trackScenario";
         public static final String TIMETRACK_FORMAT = TIMETRACK + "format";
-        public static final String DEF_TIMETRACK_FORMAT = "START_DATE|START_TIME|END_DATE|END_TIME|" +
-                                                          "ELAPSED_TIME|THREAD_NAME|LABEL|REMARK";
+        public static final String DEF_TRACK_EXECUTION = "false";
+        public static final String DEF_TIMETRACK_FORMAT =
+            "START_DATE|START_TIME|END_DATE|END_TIME|ELAPSED_TIME|THREAD_NAME|LABEL|REMARK";
 
         public static final String COMMAND_DISCOVERY_MODE = NAMESPACE + "commandDiscovery";
         public static final String DEF_COMMAND_DISCOVERY_MODE = "false";
