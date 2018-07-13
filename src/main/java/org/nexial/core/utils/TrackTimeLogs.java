@@ -24,7 +24,6 @@ import java.util.Map;
 
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.collections4.MapUtils;
-import org.apache.commons.lang3.BooleanUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.nexial.commons.utils.DateUtility;
 import org.nexial.core.ExecutionThread;
@@ -36,7 +35,8 @@ import org.nexial.core.model.TestStep;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import static org.nexial.core.NexialConst.Data.*;
+import static org.nexial.core.NexialConst.Data.DEF_TIMETRACK_FORMAT;
+import static org.nexial.core.NexialConst.Data.TIMETRACK_FORMAT;
 import static org.nexial.core.model.FlowControl.Directive.TimeTrackEnd;
 import static org.nexial.core.model.FlowControl.Directive.TimeTrackStart;
 
@@ -50,6 +50,7 @@ public final class TrackTimeLogs {
     private String trackStartDate;
     private String trackEndDate;
     private String label;
+    private ExecutionContext context;
 
     // used for forcefully end tracking
     private String trackStartDate1;
@@ -59,6 +60,7 @@ public final class TrackTimeLogs {
         this.trackStartDate = EMPTY;
         this.trackEndDate = EMPTY;
         this.label = EMPTY;
+        context = ExecutionThread.get();
     }
 
     public void setTrackStartDate(String trackStartDate) { this.trackStartDate = trackStartDate; }
@@ -115,27 +117,19 @@ public final class TrackTimeLogs {
                         DateUtility.formatTo(trackStartDate, FORMAT_LOG);
         String elapsedTime = Long.toString(timeDiff);
 
-        ExecutionContext context = ExecutionThread.get();
-        String separator = DEF_TRACK_SEP;
+        String format = System.getProperty(TIMETRACK_FORMAT);
+        if (format == null && context != null) {
+            format = context.getStringData(TIMETRACK_FORMAT, DEF_TIMETRACK_FORMAT);
+        }
 
-        String property = System.getProperty(TRACK_SEP);
-        if (property != null) { separator = property; }
-        if (property == null && context != null) { separator = context.getStringData(TRACK_SEP, separator); }
+        String[] searchList = new String[]{"START_DATE", "START_TIME", "END_DATE", "END_TIME", "ELAPSED_TIME",
+                                           "THREAD_NAME", "LABEL", "REMARK"};
+        String[] replaceList = new String[]{startDateTime[0], startDateTime[1], endDateTime[0], endDateTime[1],
+                                            elapsedTime, Thread.currentThread().getName(), label, remark};
 
-        trackStartDate = getBooleanData(context, TRACK_START_DATE) ? startDateTime[0] + separator : EMPTY;
-        String startTime = getBooleanData(context, TRACK_START_TIME) ? startDateTime[1] + separator : EMPTY;
-        trackEndDate = getBooleanData(context, TRACK_END_DATE) ? endDateTime[0] + separator : EMPTY;
-        String endTime = getBooleanData(context, TRACK_END_TIME) ? endDateTime[1] + separator : EMPTY;
-        elapsedTime = getBooleanData(context, TRACK_ELAPSED_TIME) ? elapsedTime + separator : EMPTY;
-        label = getBooleanData(context, TRACK_LABEL) ? label + separator : EMPTY;
-        remark = getBooleanData(context, TRACK_REMARK) && StringUtils.isNotEmpty(remark) ? remark : EMPTY;
-        String currentThread = getBooleanData(context, TRACK_THREAD_NAME) ?
-                               Thread.currentThread().getName() + separator :
-                               EMPTY;
+        format = StringUtils.replaceEach(format, searchList, replaceList);
 
-        String message =
-            trackStartDate + startTime + trackEndDate + endTime + elapsedTime + currentThread + label + remark;
-        if (StringUtils.isNotEmpty(message)) { LOGGER.info(StringUtils.removeEnd(message, separator)); }
+        if (StringUtils.isNotEmpty(format)) { LOGGER.info(format); }
         // setting variable to default value
         unset();
     }
@@ -144,14 +138,14 @@ public final class TrackTimeLogs {
         setTrackStartDate(formatDate(startTime));
         setTrackEndDate(formatDate(endTime));
         setLabel(label);
-        trackingDetails(executionLevel + " Ended");
+        trackingDetails(executionLevel + " ended");
     }
 
     public void forcefullyEndTracking() {
         if (StringUtils.isEmpty(trackStartDate1)) { return; }
         setTrackStartDate(trackStartDate1);
         setLabel(label1);
-        trackingDetails("Execution Ended");
+        trackingDetails("Execution ended");
     }
 
     private String formatDate(Long timestampMillis) { return DATE_FORMAT_LOG.format(new Date(timestampMillis)); }
@@ -175,18 +169,4 @@ public final class TrackTimeLogs {
         return !CollectionUtils.isEmpty(conditions) &&
                conditions.isMatched(context, "Evaluating Time Tracking Directive " + directive);
     }
-
-    private boolean getBooleanData(ExecutionContext context, String data) {
-        String property = System.getProperty(data);
-        if (property == null) {
-            if (context != null) {
-                property = context.getStringData(data, DEF_TRACK_VALUE);
-            } else {
-                property = DEF_TRACK_VALUE;
-            }
-        }
-        return BooleanUtils.toBoolean(property);
-    }
-
-
 }
