@@ -236,13 +236,19 @@ public class NexialFilter implements Serializable {
 
             case Is:
             case In:
-                return StringUtils.isEmpty(data) || toControlStream(controls).anyMatch(data::equals);
+                // true if `controls` is empty and data is also empty, or data is found in `controls`
+                return
+                    (StringUtils.equals(StringUtils.deleteWhitespace(controls), IS_OPEN_TAG + IS_CLOSE_TAG) &&
+                     StringUtils.isEmpty(data)) ||
+                    toControlStream(controls).anyMatch(data::equals);
 
             case IsNot:
             case NotIn:
-                return (StringUtils.equals(StringUtils.deleteWhitespace(controls), IS_OPEN_TAG + IS_CLOSE_TAG) &&
-                        StringUtils.isEmpty(data)) ||
-                       toControlStream(controls).noneMatch(data::equals);
+                // true if `controls` is [] and data is also empty, or data is not found in `controls`
+                return
+                    (StringUtils.equals(StringUtils.deleteWhitespace(controls), IS_OPEN_TAG + IS_CLOSE_TAG) &&
+                     !StringUtils.isEmpty(data)) ||
+                    toControlStream(controls).noneMatch(data::equals);
 
             // not applicable in this case
             case IsDefined:

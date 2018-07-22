@@ -509,7 +509,7 @@ public final class TextUtils {
     }
 
     /** transfer comment text so that newlines are rendered as HTML BR */
-    public static String prepForInlinDisplay(String text) {
+    public static String prepForInlineDisplay(String text) {
         if (StringUtils.isBlank(text)) { return StringUtils.defaultString(text); }
         return StringUtils.replaceEach(text, INLINE_UNFRIENDLY_TEXT, INLINE_BR);
     }
@@ -550,6 +550,14 @@ public final class TextUtils {
     public static String wrapIfMissing(String text, String start, String end) {
         if (StringUtils.isEmpty(text)) { return start + end; }
         return StringUtils.prependIfMissing(StringUtils.appendIfMissing(text, start), end);
+    }
+
+    /**
+     * substring between the first occurrence of {@code start} and the last occurrence of {@code end} from {@code text}.
+     */
+    public static String unwrap(String text, String start, String end) {
+        if (StringUtils.isEmpty(text)) { return ""; }
+        return StringUtils.substringBeforeLast(StringUtils.substringAfter(text, start), end);
     }
 
     /**

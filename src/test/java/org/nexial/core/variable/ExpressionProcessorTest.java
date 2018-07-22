@@ -333,6 +333,10 @@ public class ExpressionProcessorTest {
         result = subject.process(fixture);
         Assert.assertEquals("172646.2", result);
 
+        fixture = "[NUMBER(173921.22) => roundTo(0.0)]";
+        result = subject.process(fixture);
+        Assert.assertEquals("173921.2", result);
+
         fixture = "[NUMBER(0) => randomDigits(5)]";
         result = subject.process(fixture);
         Assert.assertTrue(NumberUtils.isDigits(result));
@@ -785,6 +789,22 @@ public class ExpressionProcessorTest {
         result = subject.process(fixture);
         Assert.assertNotNull(result);
         Assert.assertEquals("2", result);
+
+        fixture = "[CSV(" + csvFile + ") => " +
+                  " parse(delim=\\,|header=true)" +
+                  " filter(First Name in [David|Cynthia])" +
+                  " removeColumns(Country or Region|Office Phone|Mobile Phone|Fax)" +
+                  " filter(Last Name match \\w{2\\,5})" +
+                  " store(myData)" +
+                  " rowCount ]";
+        result = subject.process(fixture);
+        Assert.assertNotNull(result);
+        Assert.assertEquals("1", result);
+
+        fixture = "[CSV(myData) => column(First Name)]";
+        result = subject.process(fixture);
+        Assert.assertNotNull(result);
+        Assert.assertEquals("Cynthia", result);
     }
 
     @Test

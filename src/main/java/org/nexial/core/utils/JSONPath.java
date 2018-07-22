@@ -243,6 +243,7 @@ public class JSONPath {
         return overwrite(json, path, overwriteWith, false);
     }
 
+    // todo: currently used by JsonTransformer.replace()
     public static JSONObject overwrite(JSONObject json, String path, String overwriteWith, boolean blankOnly)
         throws JSONException {
         return overwrite(json, path, overwriteWith, OVERWRITE, blankOnly);
@@ -252,6 +253,7 @@ public class JSONPath {
         return overwrite(json, path, overwriteWith, false);
     }
 
+    // todo: currently used by JsonTransformer.replace()
     public static JSONArray overwrite(JSONArray json, String path, String overwriteWith, boolean blankOnly)
         throws JSONException {
         return overwrite(json, path, overwriteWith, OVERWRITE, blankOnly);

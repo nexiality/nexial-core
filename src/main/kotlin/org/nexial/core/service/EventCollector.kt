@@ -48,6 +48,7 @@ class EventCollector(val url: String, val verbose: Boolean, val enabled: Boolean
         while (true) {
 
             log("scanning for event files in $storageLocation...")
+            FileUtils.forceMkdir(File(storageLocation))
             val files = FileUtil.listFiles(storageLocation, ".+$postfix", false)
 
             if (CollectionUtils.isNotEmpty(files)) {

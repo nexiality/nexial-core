@@ -8,31 +8,36 @@
 # --------------------------------------------------------------------------------
 
 function resolveOSXAppPath() {
-	local appExec=$1
-	local me=`whoami`
-	local path=""
-	for p in `locate "MacOS/${appExec}" | grep -E "${appExec}$"` ; do
-	    if [ "$path"="" ] ; then
-	        # first time.. just use what we found
-	        path=${p}
+    local appExec=$1
+    local me=`whoami`
+    local path=""
+
+    IFS=$'\n'
+
+    for p in `locate "MacOS/${appExec}" | grep -E "${appExec}$"`; do
+        if [ "$path" = "" ]; then
+            # first time.. just use what we found
+            path="${p}"
         else
-            if [ "${p}" = *"${me}"* ] ; then
+            if [ "${p}" = *"${me}"* ]; then
                 # the one under `me` takes a higher precedence
-                path=${p}
+                path="${p}"
             fi
         fi
-	done
+    done
 
-	echo ${path}
+    unset IFS
+
+    echo "${path}"
 }
 
 function resolveLinuxAppPath() {
-	location=`which $1`
-	if [[ "$?" = "0" ]] ; then
-		echo ${location}
-	else
-		echo ""
-	fi
+    location=`which $1`
+    if [[ "$?" = "0" ]]; then
+        echo "${location}"
+    else
+        echo ""
+    fi
 }
 
 # utilities to be invoked by other frontend scripts
@@ -42,26 +47,26 @@ export NEXIAL_LIB=${NEXIAL_HOME}/lib
 export NEXIAL_CLASSES=${NEXIAL_HOME}/classes
 
 DEFAULT_CHROME_BIN=
-if [[ "`uname -s`" = "Darwin" ]] ; then
-	export DEFAULT_CHROME_BIN="`resolveOSXAppPath "Google Chrome"`"
+if [[ "`uname -s`" = "Darwin" ]]; then
+    export DEFAULT_CHROME_BIN="`resolveOSXAppPath "Google Chrome"`"
 else
-	export DEFAULT_CHROME_BIN="`resolveLinuxAppPath google-chrome`"
+    export DEFAULT_CHROME_BIN="`resolveLinuxAppPath google-chrome`"
 fi
 
-if [[ -z "${DEFAULT_CHROME_BIN// }" ]] ; then
-	echo "Unable to resolve location of Google Chrome.  If you want to use Chrome, you will need to set its location via the CHROME_BIN environment variable"
-	DEFAULT_CHROME_BIN=
+if [[ -z "${DEFAULT_CHROME_BIN//}" ]]; then
+    echo "Unable to resolve location of Google Chrome.  If you want to use Chrome, you will need to set its location via the CHROME_BIN environment variable"
+    DEFAULT_CHROME_BIN=
 fi
 
-if [[ "`uname -s`" = "Darwin" ]] ; then
-	export DEFAULT_FIREFOX_BIN="`resolveOSXAppPath firefox-bin`"
+if [[ "`uname -s`" = "Darwin" ]]; then
+    export DEFAULT_FIREFOX_BIN="`resolveOSXAppPath firefox-bin`"
 else
-	export DEFAULT_FIREFOX_BIN="`resolveLinuxAppPath firefox-bin`"
+    export DEFAULT_FIREFOX_BIN="`resolveLinuxAppPath firefox-bin`"
 fi
 
-if [[ -z "${DEFAULT_FIREFOX_BIN// }" ]] ; then
-	echo "Unable to resolve location of Firefox.  If you want to use Firefox, you will need to set its location via the FIREFOX_BIN environment variable"
-	DEFAULT_FIREFOX_BIN=
+if [[ -z "${DEFAULT_FIREFOX_BIN//}" ]]; then
+    echo "Unable to resolve location of Firefox.  If you want to use Firefox, you will need to set its location via the FIREFOX_BIN environment variable"
+    DEFAULT_FIREFOX_BIN=
 fi
 
 # --------------------------------------------------------------------------------
@@ -79,63 +84,63 @@ JAVA_OPT="${JAVA_OPT} -Dwebdriver.winium.silent=false"
 # Make sure prerequisite environment variables are set
 # --------------------------------------------------------------------------------
 function checkJava() {
-	if [ "${JAVA_HOME}" = "" -a "${JRE_HOME}" = "" ]; then
-		echo ERROR!!!
-		echo Neither the JAVA_HOME nor the JRE_HOME environment variable is defined
-		echo At least one of these environment variables is needed to run this program
-		echo
-		exit -1
-	fi
+    if [ "${JAVA_HOME}" = "" -a "${JRE_HOME}" = "" ]; then
+        echo ERROR!!!
+        echo Neither the JAVA_HOME nor the JRE_HOME environment variable is defined
+        echo At least one of these environment variables is needed to run this program
+        echo
+        exit -1
+    fi
 
-	if [ -x ${JAVA_HOME}/bin/java ]; then
-		JAVA=${JAVA_HOME}/bin/java
-	else
-		if [ -x ${JRE_HOME}/bin/java ]; then
-			JAVA=${JRE_HOME}/bin/java
-		else
-			echo ERROR!!!
-			echo The JAVA_HOME environment variable is not defined correctly
-			echo This environment variable is needed to run this program
-			echo NB: JAVA_HOME should point to a JDK not a JRE
-			echo
-			exit -1
-		fi
-	fi
+    if [ -x ${JAVA_HOME}/bin/java ]; then
+        JAVA=${JAVA_HOME}/bin/java
+    else
+        if [ -x ${JRE_HOME}/bin/java ]; then
+            JAVA=${JRE_HOME}/bin/java
+        else
+            echo ERROR!!!
+            echo The JAVA_HOME environment variable is not defined correctly
+            echo This environment variable is needed to run this program
+            echo NB: JAVA_HOME should point to a JDK not a JRE
+            echo
+            exit -1
+        fi
+    fi
 }
 
 
 function title() {
-	title="${1}"
-	title_length=${#title}
-	space_length=$((80 - 4 - ${title_length} - 3))
+    title="${1}"
+    title_length=${#title}
+    space_length=$((80 - 4 - ${title_length} - 3))
 
-	echo
-	echo "--------------------------------------------------------------------------------"
-	echo "|                        nexial - test automation for all                      |"
-	echo "--------------------------------------------------------------------------------"
-	printf "[:: "
-	printf "${title}"
-	printf "%0.s " $(seq 1 ${space_length})
-	printf "::]"
-	echo
-	echo "--------------------------------------------------------------------------------"
+    echo
+    echo "--------------------------------------------------------------------------------"
+    echo "|                        nexial - test automation for all                      |"
+    echo "--------------------------------------------------------------------------------"
+    printf "[:: "
+    printf "${title}"
+    printf "%0.s " $(seq 1 ${space_length})
+    printf "::]"
+    echo
+    echo "--------------------------------------------------------------------------------"
 }
 
 
 function resolveEnv() {
-		JAVA_VERSION=`echo "$(${JAVA} -version 2>&1)" | grep "java version" | awk '{ print substr($3, 2, length($3)-2); }'`
+    JAVA_VERSION=`echo "$(${JAVA} -version 2>&1)" | grep "java version" | awk '{ print substr($3, 2, length($3)-2); }'`
 
-		echo "» ENVIRONMENT: "
-		echo "  CURRENT TIME:   `date \"+%Y-%m-%d %H:%M%:%S\"`"
-		echo "  CURRENT USER:   ${USER}"
-		echo "  CURRENT HOST:   `hostname`"
-		echo "  JAVA:           ${JAVA}"
-		echo "  JAVA VERSION:   ${JAVA_VERSION}"
-		echo "  NEXIAL_HOME:    ${NEXIAL_HOME}"
-		echo "  NEXIAL_LIB:     ${NEXIAL_LIB}"
-		echo "  NEXIAL_CLASSES: ${NEXIAL_CLASSES}"
-		echo "  PROJECT_BASE:   ${PROJECT_BASE}"
-		if [ "${PROJECT_HOME}" != "" ]; then
-				echo "  PROJECT_HOME:   ${PROJECT_HOME}"
-  fi
+    echo "» ENVIRONMENT: "
+    echo "  CURRENT TIME:   `date \"+%Y-%m-%d %H:%M%:%S\"`"
+    echo "  CURRENT USER:   ${USER}"
+    echo "  CURRENT HOST:   `hostname`"
+    echo "  JAVA:           ${JAVA}"
+    echo "  JAVA VERSION:   ${JAVA_VERSION}"
+    echo "  NEXIAL_HOME:    ${NEXIAL_HOME}"
+    echo "  NEXIAL_LIB:     ${NEXIAL_LIB}"
+    echo "  NEXIAL_CLASSES: ${NEXIAL_CLASSES}"
+    echo "  PROJECT_BASE:   ${PROJECT_BASE}"
+    if [ "${PROJECT_HOME}" != "" ]; then
+        echo "  PROJECT_HOME:   ${PROJECT_HOME}"
+    fi
 }

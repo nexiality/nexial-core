@@ -878,24 +878,38 @@ public class Excel {
         return style;
     }
 
+    /**
+     * create or append to existing comment for {@code cell}.
+     */
     public static Comment createComment(XSSFCell cell, String comment, String author) {
-        XSSFSheet sheet = cell.getSheet();
-        XSSFWorkbook workbook = sheet.getWorkbook();
-        CreationHelper factory = workbook.getCreationHelper();
-        XSSFRow row = cell.getRow();
+        RichTextString str;
 
-        Drawing drawing = sheet.createDrawingPatriarch();
+        // append to existing comment (if exist)
+        XSSFComment commentCell = cell.getCellComment();
+        if (commentCell != null) {
+            str = commentCell.getString();
+            ((XSSFRichTextString) str).append("\n" + comment);
+        } else {
+            XSSFSheet sheet = cell.getSheet();
+            XSSFWorkbook workbook = sheet.getWorkbook();
 
-        // When the comment box is visible, have it show in a 1x3 space
-        ClientAnchor anchor = factory.createClientAnchor();
-        anchor.setCol1(cell.getColumnIndex());
-        anchor.setCol2(cell.getColumnIndex() + 1);
-        anchor.setRow1(row.getRowNum());
-        anchor.setRow2(row.getRowNum() + 3);
+            int column = cell.getColumnIndex();
+            int rowNum = cell.getRow().getRowNum();
 
-        // Create the comment and set the text+author
-        Comment commentCell = drawing.createCellComment(anchor);
-        RichTextString str = factory.createRichTextString(comment);
+            // When the comment box is visible, have it show in a 1x3 space
+            CreationHelper factory = workbook.getCreationHelper();
+            ClientAnchor anchor = factory.createClientAnchor();
+            anchor.setCol1(column);
+            anchor.setCol2(column + 1);
+            anchor.setRow1(rowNum);
+            anchor.setRow2(rowNum + 3);
+
+            XSSFDrawing drawing = sheet.createDrawingPatriarch();
+            commentCell = drawing.createCellComment(anchor);
+            str = factory.createRichTextString(comment);
+        }
+
+        // Create/append the comment and set the text+author
         commentCell.setString(str);
         commentCell.setAuthor(author);
 

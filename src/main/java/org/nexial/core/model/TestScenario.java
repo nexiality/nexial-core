@@ -253,8 +253,29 @@ public class TestScenario {
         }
         int charPerLine = (int) ((mergedWidth - DEF_CHAR_WIDTH) / (DEF_CHAR_WIDTH * MSG.getFontHeight()));
 
-        excelSheet.addMergedRegion(
-            new CellRangeAddress(rowIndex, rowIndex, COL_IDX_MERGE_RESULT_START, COL_IDX_MERGE_RESULT_END));
+        // make sure we aren't create merged region on existing merged region
+        boolean alreadyMerged = false;
+        List<CellRangeAddress> mergedRegions = excelSheet.getMergedRegions();
+        if (CollectionUtils.isNotEmpty(mergedRegions)) {
+            for (CellRangeAddress rangeAddress : mergedRegions) {
+                int firstRow = rangeAddress.getFirstRow();
+                int lastRow = rangeAddress.getLastRow();
+                int firstColumn = rangeAddress.getFirstColumn();
+                int lastColumn = rangeAddress.getLastColumn();
+
+                if (firstRow <= rowIndex && lastRow >= rowIndex &&
+                    firstColumn <= COL_IDX_MERGE_RESULT_START && lastColumn >= COL_IDX_MERGE_RESULT_END) {
+                    alreadyMerged = true;
+                    break;
+                }
+            }
+        }
+
+        if (!alreadyMerged) {
+            excelSheet.addMergedRegion(
+                new CellRangeAddress(rowIndex, rowIndex, COL_IDX_MERGE_RESULT_START, COL_IDX_MERGE_RESULT_END));
+        }
+
         if (cellMerge.getCellTypeEnum() == STRING) { cellMerge.setCellStyle(worksheet.getStyle(STYLE_MESSAGE)); }
 
         String mergedContent = cellMerge.getStringCellValue();

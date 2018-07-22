@@ -29,6 +29,8 @@ import org.nexial.core.model.StepResult;
 import org.nexial.core.plugins.base.BaseCommand;
 import org.nexial.core.utils.ConsoleUtils;
 import org.nexial.core.utils.JSONPath;
+import org.nexial.core.utils.JsonEditor;
+import org.nexial.core.utils.JsonEditor.JsonEditorConfig;
 import org.nexial.core.utils.JsonUtils;
 import org.nexial.core.utils.OutputFileUtils;
 
@@ -82,6 +84,32 @@ public class JsonCommand extends BaseCommand {
     public StepResult storeValues(String json, String jsonpath, String var) {
         // jsonpath resolves multiple matches to string anyways...
         return storeValue(json, jsonpath, var);
+    }
+
+    /**
+     * add {@code data} to {@code var}, which should represents a JSON object, at a location specified via {@code jsonpath}.
+     *
+     * Optionally, {@code jsonpath} can be empty to represent top level.
+     */
+    public StepResult addOrReplace(String json, String jsonpath, String input, String var) {
+        requiresNotBlank(json, "Invalid json", json);
+        requiresNotBlank(input, "Invalid input", json);
+        requiresValidVariableName(var);
+
+        JsonEditorConfig config = new JsonEditorConfig();
+        config.setRemoveNull(true);
+        JsonEditor editor = JsonEditor.newInstance(config);
+
+        if (context.isNullValue(jsonpath)) { jsonpath = ""; }
+        Object modified = editor.add(json, jsonpath, input);
+        if (modified == null) {
+            ConsoleUtils.log("JSON modified to null");
+            context.removeData(var);
+        } else {
+            context.setData(var, modified.toString());
+        }
+
+        return StepResult.success("JSON modified and stored to ${" + var + "}");
     }
 
     public StepResult storeCount(String json, String jsonpath, String var) {
