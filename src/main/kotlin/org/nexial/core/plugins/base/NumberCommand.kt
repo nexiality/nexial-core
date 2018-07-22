@@ -45,7 +45,7 @@ class NumberCommand : BaseCommand() {
 
     fun average(Var: String, array: String?): StepResult {
         requiresValidVariableName(Var)
-        requiresNotBlank(array, "invalid array", array)
+//        requiresNotBlank(array, "invalid array", array)
 
         val strings = TextUtils.toList(array, context.textDelim, true)
         val average = if (CollectionUtils.isNotEmpty(strings)) {
