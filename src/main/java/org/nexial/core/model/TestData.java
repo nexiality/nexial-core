@@ -18,6 +18,7 @@
 package org.nexial.core.model;
 
 import java.util.*;
+import java.util.stream.Collectors;
 
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.collections4.MapUtils;
@@ -105,6 +106,16 @@ public class TestData {
                 collectData(validDataSheet);
             }
         }));
+
+        System.setProperty(SCRIPT_REF_PREFIX + "DataSheet(s)",
+                           validDataSheets.stream()
+                                          .filter(validSheet -> validSheet.getName().equals(SHEET_DEFAULT_DATA) ||
+                                                                dataSheetNames.contains(validSheet.getName()))
+                                          .map(Worksheet::getName)
+                                          .distinct()
+                                          .collect(Collectors.joining(", ")));
+        System.setProperty(SCRIPT_REF_PREFIX + "Data File", excel.getFile().getName());
+
     }
 
     public String getMailTo() { return getSetting(MAIL_TO); }
