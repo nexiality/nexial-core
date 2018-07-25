@@ -337,6 +337,10 @@ public class Browser implements ForcefulTerminate {
         if (browserType.isProfileSupported()) { resolveBrowserProfile(); }
         if (LOGGER.isInfoEnabled()) { LOGGER.info("init " + browserType); }
 
+        // now we need to "remember" the browser type (even if it's default) so that the #data tab of output file will
+        // display the browser type used during execution
+        if (!context.hasData(BROWSER)) { context.setData(BROWSER, System.getProperty(BROWSER, DEF_BROWSER)); }
+
         try {
             if (isRunSafari()) { driver = initSafari(); }
             if (isRunChrome()) { driver = initChrome(false); }
@@ -708,6 +712,7 @@ public class Browser implements ForcefulTerminate {
         }
 
         // check https://github.com/SeleniumHQ/selenium/wiki/InternetExplorerDriver for details
+        System.setProperty(SELENIUM_IE_LOG_LEVEL, "WARN");
         syncContextPropToSystem(SELENIUM_IE_LOG_LEVEL);
         syncContextPropToSystem(SELENIUM_IE_DRIVER);
         syncContextPropToSystem(SELENIUM_IE_LOG_LOGFILE);

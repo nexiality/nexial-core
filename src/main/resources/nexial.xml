@@ -508,11 +508,18 @@
         <entry key="nexial.outputToCloud" value="false"/>
         <entry key="nexial.outputCloudBase" value="${nexial.outputCloudBase:}"/>
         <entry key="nexial.generateReport" value="false"/>
+        <!--<entry key="nexial.screenRecorder" value="avi"/>-->
         <entry key="nexial.screenRecorder" value="mp4"/>
         <entry key="nexial.browser.defaultWindowSize" value="1280x960"/>
-        <entry key="nexial.browser" value="firefox"/>
-        <entry key="nexial.referenceDataForExecution" value="nexial.scriptRef.buildnum,nexial.scriptRef.app,nexial.scriptRef.release"/>
+
         <!--
+        some reference data are considered "special" and should be elevated to "execution" level so that they can be
+        as such for Execution Dashboard. Those data variables are listed below.
+        -->
+        <entry key="nexial.referenceDataForExecution" value="nexial.scriptRef.buildnum,nexial.scriptRef.app,nexial.scriptRef.release"/>
+
+        <!--
+        <entry key="nexial.browser" value="firefox"/>
         <entry key="nexial.textDelim" value=","/>
         <entry key="nexial.openResult" value="off"/>
         <entry key="nexial.pollWaitMs" value="30000"/>
@@ -523,7 +530,7 @@
         <entry key="nexial.lastPlanStep" value="false"/>
         <entry key="nexial.recordingEnabled" value="true"/>
         <entry key="nexial.spreadsheet.program" value="excel"/>
-        <entry key="nexial.highlight" value="false"/>
+        <entry key="nexial.highlight" value="false"/>“
         <entry key="nexial.lenientStringCompare" value="true"/>
         <entry key="nexial.breakCurrentIteration" value="false"/>
         <entry key="nexial.failImmediate" value="false"/>

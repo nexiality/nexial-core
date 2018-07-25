@@ -37,9 +37,7 @@
 	set JAVA_OPT=%JAVA_OPT% -Dnexial.home="%NEXIAL_HOME%"
 	set JAVA_OPT=%JAVA_OPT% -Dwebdriver.winium.verbose=false
 	set JAVA_OPT=%JAVA_OPT% -Dwebdriver.winium.silent=false
-	set JAVA_OPT=%JAVA_OPT% -Dwebdriver.ie.driver.loglevel=WARN
 REM set JAVA_OPT=%JAVA_OPT% -Dwebdriver.winium.logpath=%TEMP%\winium-service.log
-REM set JAVA_OPT=%JAVA_OPT% -Dnexial.assistantMode=on
 
 	goto :eof
 

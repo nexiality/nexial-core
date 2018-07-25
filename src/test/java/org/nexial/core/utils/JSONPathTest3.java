@@ -89,6 +89,14 @@ public class JSONPathTest3 {
                          "{\"color\":\"yellow\",\"COLOR\":\"YELLOW\"}",
                          editor.add("{ \"COLOR\": \"YELLOW\" }", "", "\"color\":\"yellow\""));
 
+        assertAsExpected("add new node to JSON object; we don't replace case-insensitively",
+                         "{\"color\":\"yellow\",\"COLOR\":\"YELLOW\"}",
+                         editor.add("{ \"COLOR\": \"YELLOW\" }", "", "{\"color\":\"yellow\"}"));
+
+        assertAsExpected("add JSON to existing JSON node",
+                         "{\"red\":250,\"green\":250,\"color\":\"YELLOW\",\"blue\":230}",
+                         editor.add("{ \"color\":\"YELLOW\" }", "", "{\"red\":250,\"green\":250,\"blue\":230}"));
+
         assertAsExpected("add new node (string) to array",
                          "{\"color\":[\"YELLOW\",\"pink\"]}",
                          editor.add("{\"color\":[\"YELLOW\"]}", "color[1]", "pink"));
@@ -108,10 +116,6 @@ public class JSONPathTest3 {
         assertAsExpected("add new node to array",
                          "{\"color\":[\"YELLOW\",{\"favorite\":\"pink\"}]}",
                          editor.add("{\"color\":[\"YELLOW\"]}", "color[1]", "{\"favorite\":\"pink\"}"));
-
-        assertAsExpected("add JSON to existing JSON node",
-                         "{\"red\":250,\"green\":250,\"color\":\"YELLOW\",\"blue\":230}",
-                         editor.add("{ \"color\":\"YELLOW\" }", "", "{\"red\":250,\"green\":250,\"blue\":230}"));
 
         assertAsExpected("replace existing JSON node",
                          "{\"color\":{\"red\":250,\"green\":250,\"blue\":230}}",
@@ -198,7 +202,7 @@ public class JSONPathTest3 {
                          fixture2);
 
         // replacing existing empty array with new object structure (don't specify `favorite` to activate "replacement")
-        assertAsExpected("add new items to existing empty JSON array",
+        assertAsExpected("replace item in existing empty JSON array",
                          "{\"departments\":[" +
                          "{\"employees\":[\"John\",\"James\",\"Jack\"],\"group\":\"Technology\"}," +
                          "{\"employees\":[\"Adam\",\"Abbey\",\"Apollo\"],\"group\":\"Accounting\"}," +
@@ -213,11 +217,11 @@ public class JSONPathTest3 {
                          "{\"departments\":[" +
                          "{\"employees\":[\"John\",\"James\",\"Jack\"],\"group\":\"Technology\"}," +
                          "{\"employees\":[\"Adam\",\"Abbey\",\"Apollo\"],\"group\":\"Accounting\"}," +
-                         "{\"favorites\":[{\"color\":\"black\",\"numbers\":[42,39,7.14]}]}" +
+                         "{\"favorites\":[{\"color\":\"pink\",\"numbers\":[3,2,1.5]}]}" +
                          "]}",
                          editor.add(fixture2.toString(),
                                     "departments[2].favorites",
-                                    "{\"color\":\"black\",\"numbers\":[42,39,7.14]}"));
+                                    "{\"color\":\"pink\",\"numbers\":[3,2,1.5]}"));
 
         assertAsExpected("append to existing nested JSON array with more items",
                          "{\"departments\":[" +
