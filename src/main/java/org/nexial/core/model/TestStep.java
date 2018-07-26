@@ -162,28 +162,29 @@ public class TestStep extends TestStepManifest {
         try {
             result = invokeCommand();
         } catch (InvocationTargetException e) {
-            String error;
+            String error = e.getMessage();
             Throwable cause = e.getCause();
             if (cause != null) {
                 // assertion error are already account for.. so no need to increment fail test count
-                if (!(cause instanceof AssertionError)) { cause.printStackTrace(); }
+                if (!(cause instanceof AssertionError)) { ConsoleUtils.error(cause.getMessage()); }
                 error = StringUtils.defaultString(cause.getMessage(), cause.toString());
             } else {
-                e.printStackTrace();
-                error = e.getMessage();
+                ConsoleUtils.error(error);
             }
             result = StepResult.fail(error);
         } catch (NoSuchElementException e) {
-            e.printStackTrace();
-            String[] messageLines = StringUtils.split(e.getMessage(), "\n");
+            String error = e.getMessage();
+            ConsoleUtils.error(error);
+            String[] messageLines = StringUtils.split(error, "\n");
             if (ArrayUtils.getLength(messageLines) > 2) {
                 result = StepResult.fail(messageLines[0] + " " + messageLines[1]);
             } else {
-                result = StepResult.fail(e.getMessage());
+                result = StepResult.fail(error);
             }
         } catch (Throwable e) {
-            e.printStackTrace();
-            result = StepResult.fail(e.getMessage());
+            String error = e.getMessage();
+            ConsoleUtils.error(error);
+            result = StepResult.fail(error);
         } finally {
             trackTimeLogs.checkEndTracking(context, this);
             tickTock.stop();
@@ -431,7 +432,7 @@ public class TestStep extends TestStepManifest {
         } else {
             cellDescription.setCellStyle(worksheet.getStyle(STYLE_DESCRIPTION));
         }
-
+        cellDescription.setCellValue(context.replaceTokens(description));
         XSSFCellStyle styleTaintedParam = worksheet.getStyle(STYLE_TAINTED_PARAM);
         XSSFCellStyle styleParam = worksheet.getStyle(STYLE_PARAM);
 

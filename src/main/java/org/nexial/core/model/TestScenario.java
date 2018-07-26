@@ -102,6 +102,12 @@ public class TestScenario {
             summaryCell.setCellValue(executionSummary.toString());
         }
 
+        XSSFCell descriptionCell = worksheet.cell(ADDR_SCENARIO_DESCRIPTION);
+        if (descriptionCell != null) {
+            String description = descriptionCell.getStringCellValue();
+            descriptionCell.setCellValue(context.replaceTokens(description));
+        }
+
         worksheet.getSheet().setZoom(100);
         worksheet.save();
     }

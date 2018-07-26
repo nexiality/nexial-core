@@ -104,6 +104,7 @@ public class ExcelConfig {
     public static final int COL_IDX_PLAN_REASON = 'M' - 'A';
 
     // test script
+    public static final ExcelAddress ADDR_SCENARIO_DESCRIPTION = new ExcelAddress("A2:D2");
     public static final ExcelAddress ADDR_HEADER_SCENARIO_INFO1 = new ExcelAddress("A1:A1");
     public static final ExcelAddress ADDR_HEADER_SCENARIO_INFO2 = new ExcelAddress("E1:I1");
     public static final String HEADER_SCENARIO_INFO_DESCRIPTION = "description";

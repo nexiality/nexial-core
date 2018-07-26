@@ -24,6 +24,8 @@ import java.util.List;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.builder.ToStringBuilder;
+import org.apache.poi.xssf.usermodel.XSSFCell;
+import org.nexial.core.excel.Excel;
 import org.nexial.core.excel.Excel.Worksheet;
 import org.nexial.core.excel.ExcelConfig;
 import org.nexial.core.utils.FlowControlUtils;
@@ -32,8 +34,7 @@ import org.nexial.core.utils.TrackTimeLogs;
 import static org.apache.commons.lang3.builder.ToStringStyle.SIMPLE_STYLE;
 import static org.nexial.core.NexialConst.Data.*;
 import static org.nexial.core.NexialConst.OPT_LAST_OUTCOME;
-import static org.nexial.core.excel.ExcelConfig.COL_IDX_COMMAND;
-import static org.nexial.core.excel.ExcelConfig.COL_IDX_TARGET;
+import static org.nexial.core.excel.ExcelConfig.*;
 
 public class CommandRepeater {
     private TestStep initialTestStep;
@@ -140,6 +141,11 @@ public class CommandRepeater {
                     return StepResult.fail(resolveRootCause(e));
                 } finally {
                     trackTimeLogs.checkEndTracking(context, testStep);
+                    XSSFCell cellDescription = testStep.getRow().get(COL_IDX_DESCRIPTION);
+                    String description = Excel.getCellValue(cellDescription);
+                    if (StringUtils.isNotEmpty(description)) {
+                        cellDescription.setCellValue(context.replaceTokens(description));
+                    }
                     FlowControlUtils.checkPauseAfter(context, testStep);
                 }
             }
