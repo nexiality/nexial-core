@@ -182,6 +182,26 @@ public class TextTransformer<T extends TextDataType> extends Transformer {
         return data;
     }
 
+    public T removeRegex(T data, String regex) {
+        if (data == null || StringUtils.isEmpty(data.getTextValue()) || StringUtils.isEmpty(regex)) { return data; }
+        data.setValue(RegexUtils.removeMatches(data.getTextValue(), fixControlChars(regex)));
+        return data;
+    }
+
+    public T retain(T data, String keep) {
+        if (data == null || StringUtils.isEmpty(data.getTextValue()) || StringUtils.isEmpty(keep)) { return data; }
+
+        String current = data.getTextValue();
+        data.setValue(TextUtils.keepOnly(current, fixControlChars(keep)));
+        return data;
+    }
+
+    public T retainRegex(T data, String regex) {
+        if (data == null || StringUtils.isEmpty(data.getTextValue()) || StringUtils.isEmpty(regex)) { return data; }
+        data.setValue(RegexUtils.retainMatches(data.getTextValue(), fixControlChars(regex)));
+        return data;
+    }
+
     public T replace(T data, String searchFor, String replaceWith) {
         if (data == null || StringUtils.isEmpty(data.getTextValue()) || StringUtils.isEmpty(searchFor)) { return data;}
         data.setValue(StringUtils.replace(data.getTextValue(),

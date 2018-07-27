@@ -518,4 +518,15 @@ public class TextUtilsTest {
         Assert.assertEquals("+18189091234", TextUtils.sanitizePhoneNumber("(818)909-1234"));
         Assert.assertEquals("+18463865323", TextUtils.sanitizePhoneNumber("TIME-TO-Lead"));
     }
+
+    @Test
+    public void keepOnly() {
+        Assert.assertEquals("", TextUtils.keepOnly("", "abcde"));
+        Assert.assertEquals("This is a test. Do not be alarmed.",
+                            TextUtils.keepOnly("This is a test. Do not be alarmed.", ""));
+        Assert.assertEquals("09392394", TextUtils.keepOnly("sd0g9w3ihps9g23unap9w4", "0123456789"));
+        Assert.assertEquals("0123abbey", TextUtils.keepOnly("0123abbey", "0123abbey"));
+        Assert.assertEquals("0123abbey", TextUtils.keepOnly("0@1#2%3^^&*aKLRURTYbZXCBZDFGbWEWRey", "0123abbey"));
+
+    }
 }

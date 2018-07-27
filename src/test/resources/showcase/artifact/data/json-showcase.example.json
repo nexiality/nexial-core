@@ -1,0 +1,60 @@
+{
+	"breakageSummaryList": [
+		{
+			"payCode": "OT",
+			"payFactor": 2,
+			"minutes": 480,
+			"guaranteed": false,
+			"rate": null,
+			"adjustment": 1,
+			"shiftDate": "2016-05-08T00:00:00.000-07:00",
+			"premiumDayType": "SEVENTH",
+			"holiday": false,
+			"worked": true,
+			"nightPremium": false,
+			"flatAmount": 621.0599937894,
+			"travel": false,
+			"restViolation": false,
+			"sequenceNumber": 1,
+			"paycodeObject": null,
+			"withinPensionCeiling": true,
+			"duration": 8.0
+		},
+		{
+			"payCode": "OT",
+			"payFactor": 1.5,
+			"minutes": 420,
+			"guaranteed": false,
+			"rate": null,
+			"adjustment": 1,
+			"shiftDate": "2016-05-14T00:00:00.000-07:00",
+			"premiumDayType": "SIXTH",
+			"holiday": false,
+			"worked": true,
+			"nightPremium": false,
+			"flatAmount": 558.954,
+			"travel": false,
+			"restViolation": false,
+			"sequenceNumber": 1,
+			"paycodeObject": null,
+			"withinPensionCeiling": true,
+			"duration": 7.0
+		}
+	],
+	"flatPayItemSummaryList": [ ],
+	"historicProperty": {
+		"lastClockOut": null,
+		"totalRegHoursWorked": 2160,
+		"totalHoursWorked": null,
+		"weeklyHoursWorkedAccumulator": null,
+		"restPeriod": null,
+		"daysWorked": 6,
+		"consecutiveDaysWorked": 0,
+		"daysNotWorked": 0
+	},
+	"htgExceptions": null,
+	"hasError": null,
+	"disableBreakWeeklyAsDaily": null,
+	"totalMealPenalties": null,
+	"grossAmount": 3415.829994
+}

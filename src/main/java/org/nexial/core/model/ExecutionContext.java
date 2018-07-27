@@ -287,8 +287,8 @@ public class ExecutionContext {
         expression = new ExpressionProcessor(this);
 
         defaultContextProps = springContext.getBean("defaultContextProps", new HashMap<String, String>().getClass());
-        referenceDataForExecution = TextUtils.toList(defaultContextProps.get("nexial.referenceDataForExecution"),
-                                                     ",", true);
+        referenceDataForExecution =
+            TextUtils.toList(defaultContextProps.get("nexial.referenceDataForExecution"), ",", true);
         webdriverSupport = springContext.getBean("webdriverSupport", new HashMap<String, String>().getClass());
 
         setData(ITERATION_ENDED, false);

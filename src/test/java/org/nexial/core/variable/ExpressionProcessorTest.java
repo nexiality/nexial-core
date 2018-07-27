@@ -128,6 +128,35 @@ public class ExpressionProcessorTest {
     }
 
     @Test
+    public void processText2() throws Exception {
+        ExpressionProcessor subject = new ExpressionProcessor(context);
+
+        String fixture = "[TEXT(hello world) => retain(aeiou)]";
+        String result = subject.process(fixture);
+        Assert.assertEquals("eoo", result);
+
+        fixture = "[TEXT(This is a test) => retain(aeiou )]";
+        result = subject.process(fixture);
+        Assert.assertEquals("i i a e", result);
+
+        fixture = "[TEXT(This is a test) => removeRegex([aeiou ])]";
+        result = subject.process(fixture);
+        Assert.assertEquals("Thsstst", result);
+
+        fixture = "[TEXT(hello world) => removeRegex([aeiou])]";
+        result = subject.process(fixture);
+        Assert.assertEquals("hll wrld", result);
+
+        fixture = "[TEXT(12.450.90-b3419) => retainRegex([0-9\\.])]";
+        result = subject.process(fixture);
+        Assert.assertEquals("12.450.903419", result);
+
+        fixture = "[TEXT(four scores and seven years ago) => retainRegex([a-j ])]";
+        result = subject.process(fixture);
+        Assert.assertEquals("f ce ad ee ea ag", result);
+    }
+
+    @Test
     public void processTest_regex() throws Exception {
         ExpressionProcessor subject = new ExpressionProcessor(context);
 

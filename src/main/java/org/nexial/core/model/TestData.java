@@ -115,7 +115,6 @@ public class TestData {
                                           .distinct()
                                           .collect(Collectors.joining(", ")));
         System.setProperty(SCRIPT_REF_PREFIX + "Data File", excel.getFile().getName());
-
     }
 
     public String getMailTo() { return getSetting(MAIL_TO); }

@@ -131,4 +131,30 @@ public class RegexUtilsTest {
                             RegexUtils.replace(sqls, "-- sentry:", "-- nexial:"));
 
     }
+
+    @Test
+    public void removeMatches() {
+        Assert.assertNull(RegexUtils.removeMatches(null, "[A-Za-z]"));
+        Assert.assertEquals("", RegexUtils.removeMatches("", "[A-Za-z]"));
+        Assert.assertEquals(" ", RegexUtils.removeMatches(" ", "[A-Za-z]"));
+        Assert.assertEquals("12345", RegexUtils.removeMatches("a1s2g3b4w5pps", "[A-Za-z]"));
+        Assert.assertEquals("9449", RegexUtils.removeMatches("a;sdgihap9w4havliegrp49u", "[A-Za-z;]"));
+        Assert.assertEquals("82 23980 \n020",
+                            RegexUtils.removeMatches("a;asd8goj2;g 23980sl adlf\n02e0ijdkf", "[A-Za-z;]"));
+        Assert.assertEquals(";;  \n", RegexUtils.removeMatches("a;asd8goj2;g 23980sl adlf\n02e0ijdkf", "[\\d\\w]"));
+
+        Assert.assertEquals("GSLEWPvnse9otq09wbanw4k5ql4k4qjfh",
+                            RegexUtils.removeMatches("@#)GSLEWP)vnse9otq09wbanw4k5  ql4k4;qjfh",
+                                                     "[\\p{Punct}\\p{Space}]"));
+    }
+
+    @Test
+    public void retainMatches() {
+        Assert.assertNull(RegexUtils.retainMatches(null, "[A-Za-z]"));
+        Assert.assertEquals("", RegexUtils.retainMatches("", "[A-Za-z]"));
+        Assert.assertEquals("", RegexUtils.retainMatches(" ", "[A-Za-z]"));
+        Assert.assertEquals("12345", RegexUtils.retainMatches("a1s2g3b4w5pps", "[0-9]"));
+        Assert.assertEquals("12345432100991",
+                            RegexUtils.retainMatches("  askdjgh1asdjlkjslksj2345gggn ;;s;4321s.df--00991", "[0-9]"));
+    }
 }

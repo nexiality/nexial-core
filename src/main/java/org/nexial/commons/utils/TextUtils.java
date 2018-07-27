@@ -22,6 +22,7 @@ import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.*;
+import java.util.stream.Collectors;
 import javax.validation.constraints.NotNull;
 
 import org.apache.commons.collections4.CollectionUtils;
@@ -964,6 +965,22 @@ public final class TextUtils {
         if (StringUtils.length(phoneNumber) < 12) { phoneNumber = "+1" + StringUtils.substring(phoneNumber, 1); }
 
         return phoneNumber;
+    }
+
+    public static String keepOnly(String text, String keepTheseOnly) {
+        if (StringUtils.isEmpty(keepTheseOnly)) { return text; }
+        if (StringUtils.isEmpty(text)) { return text; }
+
+        char[] wantedChars = keepTheseOnly.toCharArray();
+        Character[] wanted = new Character[wantedChars.length];
+        Arrays.setAll(wanted, i -> wantedChars[i]);
+        List<Character> distinctWanted = Arrays.stream(wanted).distinct().collect(Collectors.toList());
+
+        StringBuilder buffer = new StringBuilder();
+        char[] chars = text.toCharArray();
+        for (char c : chars) { if (distinctWanted.contains(c)) { buffer.append(c); } }
+
+        return buffer.toString();
     }
 
     private static Map<String, String> initDefaultEscapeHtmlMapping() {

@@ -19,6 +19,7 @@ package org.nexial.commons.utils;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.regex.MatchResult;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -131,5 +132,32 @@ public final class RegexUtils {
         Matcher matcher = pattern.matcher(text);
         while (matcher.find()) { list.add(matcher.group()); }
         return list;
+    }
+
+    public static String removeMatches(String text, String regex) {
+        if (StringUtils.isEmpty(text)) { return text; }
+        if (StringUtils.isBlank(regex)) { return text; }
+
+        Pattern pattern = Pattern.compile(regex, DOTALL);
+        Matcher matcher = pattern.matcher(text);
+        while (matcher.find()) { text = matcher.replaceAll(""); }
+
+        return text;
+    }
+
+    public static String retainMatches(String text, String regex) {
+        if (StringUtils.isEmpty(text)) { return text; }
+        if (StringUtils.isBlank(regex)) { return text; }
+
+        String retained = "";
+        Pattern pattern = Pattern.compile(regex, DOTALL);
+        Matcher matcher = pattern.matcher(text);
+        while (matcher.find()) {
+            MatchResult result = matcher.toMatchResult();
+            retained += StringUtils.substring(text, result.start(), result.end());
+            // text = StringUtils.remove(text, retained);
+        }
+
+        return retained;
     }
 }

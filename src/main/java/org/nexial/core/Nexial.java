@@ -244,13 +244,13 @@ public class Nexial {
 
     /** read from the commandline and derive the intended execution order. */
     protected void init(String[] args) throws IOException, ParseException {
-        System.setProperty(SCRIPT_REF_PREFIX + "runtime args", Arrays.stream(args)
-                                                                     .collect(Collectors.joining(" ")));
+        System.setProperty(SCRIPT_REF_PREFIX + "runtime args", String.join(" ", args));
         List<String> inputArgs = ManagementFactory.getRuntimeMXBean().getInputArguments();
-        String argsList = inputArgs.stream().filter(arg -> arg.startsWith("-D") && !arg.startsWith("-Dweb")
+        String argsList = inputArgs.stream().filter(arg -> arg.startsWith("-D") && !arg.startsWith("-Dwebdriver.")
                                                            && !arg.contains(DEF_FILE_ENCODING))
                                    .collect(Collectors.joining(","));
         System.setProperty(SCRIPT_REF_PREFIX + "JAVA_OPT", argsList);
+
         // first things first -- do we have all the required system properties?
         String errPrefix = "System property " + NEXIAL_HOME;
         String nexialHome = System.getProperty(NEXIAL_HOME);
