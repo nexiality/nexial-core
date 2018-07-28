@@ -27,6 +27,8 @@ import org.json.JSONObject;
 import org.nexial.commons.utils.TextUtils;
 import org.nexial.core.utils.ConsoleUtils;
 import org.nexial.core.utils.JSONPath;
+import org.nexial.core.utils.JsonEditor;
+import org.nexial.core.utils.JsonEditor.JsonEditorConfig;
 
 import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
@@ -194,6 +196,26 @@ public class JsonTransformer<T extends JsonDataType> extends Transformer {
     }
 
     public ExpressionDataType save(T data, String path) { return super.save(data, path); }
+
+    public ExpressionDataType addOrReplace(T data, String jsonpath, String input) {
+        if (data == null || data.getValue() == null || StringUtils.isBlank(input)) { return null; }
+
+        JsonElement value = data.getValue();
+        String jsonString = value.toString();
+
+        JsonEditorConfig config = new JsonEditorConfig();
+        config.setRemoveNull(true);
+        JsonEditor editor = JsonEditor.newInstance(config);
+
+        Object modified = editor.add(jsonString, jsonpath, input);
+        if (modified == null || modified == NULL) {
+            data.setTextValue(null);
+            data.setValue(JsonNull.INSTANCE);
+            return data;
+        }
+
+        return handleJsonPathResult(data, modified.toString());
+    }
 
     @Override
     Map<String, Integer> listSupportedFunctions() { return FUNCTION_TO_PARAM_LIST; }

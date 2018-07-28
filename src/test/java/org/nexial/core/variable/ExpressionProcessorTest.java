@@ -596,6 +596,57 @@ public class ExpressionProcessorTest {
     }
 
     @Test
+    public void procesJsonAdd() throws Exception {
+        ExpressionProcessor subject = new ExpressionProcessor(context);
+
+        String jsonFile = ResourceUtils.getResourceFilePath(resourcePath + this.getClass().getSimpleName() + "13.json");
+        String fixture = "[JSON(" + jsonFile + ") =>" +
+                         " addOrReplace(office.address,\"932b 32nd Street\\, Big City\\, State of Confusion\")" +
+                         " text]";
+
+        // replace string with string
+        String result = subject.process(fixture);
+        Assert.assertEquals("{\"office\":{" +
+                            "\"code\":\"AEF\"," +
+                            "\"address\":\"932b 32nd Street, Big City, State of Confusion\"," +
+                            "\"description\":\"Advanced External Partnership\"" +
+                            "}}", result);
+
+        // replace string with array
+        fixture = "[JSON(" + jsonFile + ") =>" +
+                  " addOrReplace(office.address,932b 32nd Street\\, Big City\\, State of Confusion)" +
+                  " text]";
+        result = subject.process(fixture);
+        Assert.assertEquals("{\"office\":{" +
+                            "\"code\":\"AEF\"," +
+                            "\"address\":[\"932b 32nd Street\",\"Big City\",\"State of Confusion\"]," +
+                            "\"description\":\"Advanced External Partnership\"" +
+                            "}}", result);
+
+        // replace string with null
+        fixture = "[JSON(" + jsonFile + ") =>" +
+                  " addOrReplace(office.address,null)" +
+                  " text]";
+        result = subject.process(fixture);
+        Assert.assertEquals("{\"office\":{" +
+                            "\"code\":\"AEF\"," +
+                            "\"address\":null," +
+                            "\"description\":\"Advanced External Partnership\"" +
+                            "}}", result);
+
+        // replace object
+        fixture = "[JSON(" + jsonFile + ") =>" +
+                  " addOrReplace(office,{\"address\":{\"optional\":true}})" +
+                  " text]";
+        result = subject.process(fixture);
+        Assert.assertEquals("{\"office\":{" +
+                            "\"code\":\"AEF\"," +
+                            "\"address\":{\"optional\":true}," +
+                            "\"description\":\"Advanced External Partnership\"" +
+                            "}}", result);
+    }
+
+    @Test
     public void processXml() throws Exception {
         ExpressionProcessor subject = new ExpressionProcessor(context);
 
