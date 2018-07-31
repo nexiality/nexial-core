@@ -25,6 +25,7 @@ import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
+import org.nexial.commons.utils.ResourceUtils;
 
 /**
  *
@@ -136,6 +137,21 @@ public class JSONPathTest {
 
         testPathValue(fixture1, "response[0].erFein", "391127174");
         testPathValue(fixture1, "response[1].erFein", "363871028");
+    }
+
+    @Test
+    public void testArray2() throws Exception {
+        JSONArray fixture = new JSONArray(ResourceUtils.loadResource("org/nexial/core/utils/JSONPathTest1.json"));
+
+        testPathValue(fixture,
+                      "tag_name",
+                      "[\"v0.21.0\",\"v0.20.1\",\"v0.20.0\",\"v0.19.1\",\"v0.19.0\",\"v0.18.0\",\"v0.17.0\"," +
+                      "\"v0.16.1\",\"v0.16.0\",\"v0.15.0\",\"v0.14.0\",\"v0.13.0\",\"v0.12.0\",\"v0.11.1\"," +
+                      "\"v0.11.0\",\"v0.10.0\",\"v0.9.0\",\"v0.8.0\",\"v0.7.1\",\"v0.6.2\",\"v0.6.0\",\"v0.5.0\"," +
+                      "\"v0.4.2\",\"v0.4.1\",\"v0.4.0\",\"0.3.0\",\"v0.2.0\",\"v0.1.0\"]");
+        testPathValue(fixture,
+                      "[tag_name=v0.21.0].assets[name=REGEX:.+win64.+].browser_download_url",
+                      "https://github.com/mozilla/geckodriver/releases/download/v0.21.0/geckodriver-v0.21.0-win64.zip");
     }
 
     @Test

@@ -32,6 +32,7 @@ import org.nexial.core.utils.ConsoleUtils;
 import com.univocity.parsers.common.record.Record;
 import com.univocity.parsers.csv.CsvFormat;
 import com.univocity.parsers.csv.CsvParser;
+import com.univocity.parsers.csv.CsvParserSettings;
 
 import static java.lang.System.lineSeparator;
 
@@ -41,6 +42,7 @@ public class CsvDataType extends ExpressionDataType<List<Record>> {
     private String quote;
     private String recordDelim;
     private boolean header = true;
+    private boolean trimValue = true;
     private int maxColumns;
     private CsvParser parser;
     private List<String> headers;
@@ -119,6 +121,10 @@ public class CsvDataType extends ExpressionDataType<List<Record>> {
     public String getRecordDelim() { return recordDelim; }
 
     public void setRecordDelim(String recordDelim) { this.recordDelim = recordDelim; }
+
+    public boolean isTrimValue() { return trimValue; }
+
+    public void setTrimValue(boolean trimValue) { this.trimValue = trimValue; }
 
     public int getMaxColumns() { return maxColumns; }
 
@@ -206,7 +212,23 @@ public class CsvDataType extends ExpressionDataType<List<Record>> {
             value = null;
         }
 
-        parser = CsvCommand.newCsvParser(quote, delim, recordDelim, header, maxColumns);
+        CsvParserSettings settings = CsvCommand.newCsvParserSettings(delim, recordDelim, header, maxColumns);
+        settings.setQuoteDetectionEnabled(true);
+
+        if (StringUtils.isNotEmpty(quote)) {
+            settings.getFormat().setQuote(quote.charAt(0));
+            settings.setKeepQuotes(true);
+        }
+
+        if (!trimValue) {
+            settings.setIgnoreLeadingWhitespaces(false);
+            settings.setIgnoreLeadingWhitespacesInQuotes(false);
+            settings.setIgnoreTrailingWhitespaces(false);
+            settings.setIgnoreTrailingWhitespacesInQuotes(false);
+        }
+
+        parser = new CsvParser(settings);
+
         value = parser.parseAllRecords(new StringReader(textValue));
         rowCount = CollectionUtils.size(value);
         if (header) {

@@ -20,7 +20,7 @@ import org.junit.Assert;
 import org.junit.Test;
 import org.nexial.core.utils.JsonEditor.JsonEditorConfig;
 
-public class JSONPathTest3 {
+public class JsonEditorTest {
 
     // consider these jsonpath:
     // 1. a.b.c.d

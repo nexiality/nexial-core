@@ -2085,6 +2085,280 @@ public class ExpressionProcessorTest {
     }
 
     @Test
+    public void processCSV_retainColumns() throws Exception {
+        String fixtureBase = resourcePath + this.getClass().getSimpleName();
+        String file = ResourceUtils.getResourceFilePath(fixtureBase + "_retainColumns.csv");
+
+        ExpressionProcessor subject = new ExpressionProcessor(context);
+
+        Assert.assertEquals("Product,Price,Name,Country\n" +
+                            "Product1,1200,carolina,United Kingdom\n" +
+                            "Product1,1200,Betina,United States\n" +
+                            "Product1,1200,Federica e Andrea,United States\n" +
+                            "Product1,1200,Gouya,Australia\n" +
+                            "Product2,3600,Gerd W ,United States\n" +
+                            "Product1,1200,LAURENCE,United States\n" +
+                            "Product1,1200,Fleur,United States\n" +
+                            "Product1,1200,adam,United States\n" +
+                            "Product1,1200,Renee Elisabeth,Israel\n" +
+                            "Product1,1200,Aidan,France\n" +
+                            "Product1,1200,Stacy,United States\n" +
+                            "Product1,1200,Heidi,Netherlands\n" +
+                            "Product1,1200,Sean ,United States\n" +
+                            "Product1,1200,Georgia,United States\n" +
+                            "Product1,1200,Richard,United States\n" +
+                            "Product1,1200,Leanne,Ireland\n" +
+                            "Product1,1200,Janet,Canada\n" +
+                            "Product1,1200,barbara,India\n" +
+                            "Product2,3600,Sabine,United Kingdom\n" +
+                            "Product1,1200,Hani,United States\n" +
+                            "Product1,1200,Jeremy,United Kingdom\n" +
+                            "Product1,1200,Janis,Ireland\n" +
+                            "Product1,1200,Nicola,South Africa\n" +
+                            "Product1,1200,asuman,United States\n" +
+                            "Product1,1200,Lena,Finland\n" +
+                            "Product1,1200,Lisa,United States\n" +
+                            "Product1,1200,Bryan Kerrene,United States\n" +
+                            "Product1,1200,chris,United Kingdom\n" +
+                            "Product1,1200,Maxine,United States\n" +
+                            "Product1,1200,Family,United States\n" +
+                            "Product1,1200,Katherine,United States\n" +
+                            "Product1,1200,Linda,United States\n" +
+                            "Product1,1200,SYLVIA,Switzerland\n" +
+                            "Product1,1200,Sheila,United States\n" +
+                            "Product1,1200,Stephanie,Netherlands\n" +
+                            "Product1,1200,Kelly,United States\n" +
+                            "Product2,3600,James,Australia\n" +
+                            "Product1,1200,jennifer,United States\n" +
+                            "Product1,1200,Anneli,United States\n" +
+                            "Product2,3600,Ritz,United States\n" +
+                            "Product2,3600,Sylvia,United States\n" +
+                            "Product1,1200,Marie,United States\n" +
+                            "Product1,1200,Mehmet Fatih,Denmark\n" +
+                            "Product2,3600,Anabela,United States\n" +
+                            "Product1,1200,Nicole,United States\n" +
+                            "Product2,3600,Christiane ,United States\n" +
+                            "Product1,1200,Sari,United Kingdom\n" +
+                            "Product1,1200,simone,Denmark\n" +
+                            "Product1,1200,Vanessa,United States\n" +
+                            "Product1,1200,Anupam,Ireland\n" +
+                            "Product1,1200,Karina,United States\n" +
+                            "Product1,1200,Frank,Australia\n" +
+                            "Product1,1200,Angela,United States\n" +
+                            "Product1,1200,Darren,United States\n" +
+                            "Product1,1200,Nikki,United States\n" +
+                            "Product1,1200,chris,Australia\n" +
+                            "Product1,1200,Stephanie,Belgium\n" +
+                            "Product1,1200,Anushka,Canada\n" +
+                            "Product1,1200,June ,United States\n" +
+                            "Product2,3600,Baybars,Canada\n" +
+                            "Product1,1200,Bonnie,Sweden\n" +
+                            "Product1,1200,Cindy ,United Kingdom\n" +
+                            "Product1,1200,chrissy,United States\n" +
+                            "Product1,1200,Tamar,United Kingdom\n" +
+                            "Product2,3600,Deirdre,Switzerland\n" +
+                            "Product1,1200,Bernadett,United Kingdom\n" +
+                            "Product1,1200,Dottie,United States\n" +
+                            "Product1,1200,Stefan,Norway\n" +
+                            "Product1,1200,Gina,Canada\n" +
+                            "Product1,1200,Lynne,United States\n" +
+                            "Product1,1200,Tammy,Switzerland\n" +
+                            "Product1,1200,Kim,Canada\n" +
+                            "Product1,1200,Bruce,Canada\n" +
+                            "Product1,1200,Rosa Maria,United States\n" +
+                            "Product1,1200,Lydia,Canada\n" +
+                            "Product1,1200,Eric,Luxembourg\n" +
+                            "Product1,1200,AnaPaula,United Kingdom\n" +
+                            "Product1,1200,Robin,Italy\n" +
+                            "Product1,1200,Gitte,United States\n" +
+                            "Product1,1200,Dr. Claudia,Norway\n" +
+                            "Product1,1200,Crystal,United States\n" +
+                            "Product1,1200,Delphine,United States\n" +
+                            "Product1,1200,nathalie,Canada\n" +
+                            "Product1,1200,Lindi,Canada\n" +
+                            "Product2,3600,Valda,United States\n" +
+                            "Product2,3600,Marcia,Germany\n" +
+                            "Product1,1200,Kevin,United Kingdom\n" +
+                            "Product1,1200,Clare,United States\n" +
+                            "Product1,1200,Alice,Denmark\n" +
+                            "Product1,1200,ZENA,United States\n" +
+                            "Product1,1200,Andrea,Moldova\n" +
+                            "Product1,1200,Rennae,United States\n" +
+                            "Product1,1200,Gerhard,Canada\n" +
+                            "Product1,1200,Megan,Spain\n" +
+                            "Product1,1200,Danielle,Ireland\n" +
+                            "Product1,1200,Tod,United States\n" +
+                            "Product1,1200,Janaina,United States\n" +
+                            "Product1,1200,Kofi,Canada\n" +
+                            "Product1,1200,Jennifer,United Arab Emirates",
+                            subject.process("[CSV(" + file + ") =>" +
+                                            " parse(header=true,trim=false)" +
+                                            " retainColumns(1,2,4,7)" +
+                                            " text]")
+                           );
+    }
+
+    @Test
+    public void processCSV_replaceColumnsRegex() throws Exception {
+        String fixtureBase = resourcePath + this.getClass().getSimpleName();
+        String file = ResourceUtils.getResourceFilePath(fixtureBase + "_replaceColumnsRegex.csv");
+
+        ExpressionProcessor subject = new ExpressionProcessor(context);
+
+        Assert.assertEquals("Price,Payment_Type,Country,Latitude,Longitude\n" +
+                            "12.00,Mastercard,United Kingdom,51.5,-1.11\n" +
+                            "12.00,Visa,United States,39.19,-94.68\n" +
+                            "12.00,Mastercard,United States,46.18,-123.83\n" +
+                            "12.00,Visa,Australia,-36.13,144.75\n" +
+                            "36.00,Visa,United States,33.52,-86.80\n" +
+                            "12.00,Visa,United States,39.79,-75.23\n" +
+                            "12.00,Mastercard,United States,40.69,-89.58\n" +
+                            "12.00,Mastercard,United States,36.34,-88.85\n" +
+                            "12.00,Mastercard,Israel,32.06,34.76\n" +
+                            "12.00,Visa,France,48.88,2.15\n" +
+                            "12.00,Diners,United States,40.71,-74.00\n" +
+                            "12.00,Amex,Netherlands,51.45,5.46\n" +
+                            "12.00,Mastercard,United States,29.42,-98.49\n" +
+                            "12.00,Visa,United States,43.69,-116.35\n" +
+                            "12.00,Visa,United States,40.03,-74.95\n" +
+                            "12.00,Diners,Ireland,53.67,-6.31\n" +
+                            "12.00,Visa,Canada,45.41,-75.7\n" +
+                            "12.00,Diners,India,17.38,78.46\n" +
+                            "36.00,Visa,United Kingdom,51.52,0.14\n" +
+                            "12.00,Diners,United States,40.76,-111.89\n" +
+                            "12.00,Visa,United Kingdom,53.5,-2.21\n" +
+                            "12.00,Diners,Ireland,51.86,-8.58\n" +
+                            "12.00,Mastercard,South Africa,-26.16,27.86\n" +
+                            "12.00,Visa,United States,32.64,-117.08\n" +
+                            "12.00,Mastercard,Finland,62.9,27.68\n" +
+                            "12.00,Visa,United States,29.61,-95.63\n" +
+                            "12.00,Diners,United States,40.71,-74.00\n" +
+                            "12.00,Visa,United Kingdom,51.52,0.14\n" +
+                            "12.00,Visa,United States,40.61,-89.45\n" +
+                            "12.00,Visa,United States,37.22,-121.97\n" +
+                            "12.00,Mastercard,United States,40.71,-74.00\n" +
+                            "12.00,Mastercard,United States,25.77,-80.19\n" +
+                            "12.00,Mastercard,Switzerland,46.23,6.2\n" +
+                            "12.00,Diners,United States,40.65,-73.95\n" +
+                            "12.00,Mastercard,Netherlands,52.33,4.78\n" +
+                            "12.00,Amex,United States,38.96,-77.34\n" +
+                            "36.00,Visa,Australia,-27.16,152.95\n" +
+                            "12.00,Visa,United States,33.44,-112.07\n" +
+                            "12.00,Mastercard,United States,29.76,-95.36\n" +
+                            "36.00,Amex,United States,43.77,-72.81\n" +
+                            "36.00,Amex,United States,43.77,-72.81\n" +
+                            "12.00,Mastercard,United States,34.33,-84.37\n" +
+                            "12.00,Visa,Denmark,56.03,12.61\n" +
+                            "36.00,Visa,United States,41.54,-87.68\n" +
+                            "12.00,Amex,United States,29.76,-95.36\n" +
+                            "36.00,Visa,United States,26.46,-80.07\n" +
+                            "12.00,Mastercard,United Kingdom,51.4,-1.31\n" +
+                            "12.00,Mastercard,Denmark,55.66,12.58\n" +
+                            "12.00,Amex,United States,33.92,-84.37\n" +
+                            "12.00,Diners,Ireland,53.42,-6.17\n" +
+                            "12.00,Visa,United States,26.12,-80.14\n" +
+                            "12.00,Mastercard,Australia,-37.81,144.96\n" +
+                            "12.00,Visa,United States,41.72,-93.60\n" +
+                            "12.00,Visa,United States,35.72,-79.17\n" +
+                            "12.00,Mastercard,United States,40.91,-73.78\n" +
+                            "12.00,Visa,Australia,-28,153.43\n" +
+                            "12.00,Visa,Belgium,50.83,4.33\n" +
+                            "12.00,Visa,Canada,49.25,-122.5\n" +
+                            "12.00,Mastercard,United States,41.46,-81.50\n" +
+                            "36.00,Diners,Canada,53.2,-105.75\n" +
+                            "12.00,Mastercard,Sweden,59.28,18.3\n" +
+                            "12.00,Visa,United Kingdom,51.67,-2.01\n" +
+                            "12.00,Mastercard,United States,43.64,-72.31\n" +
+                            "12.00,Mastercard,United Kingdom,51.11,-0.81\n" +
+                            "36.00,Mastercard,Switzerland,46.53,6.66\n" +
+                            "12.00,Mastercard,United Kingdom,50.9,-1.4\n" +
+                            "12.00,Visa,United States,39.53,-77.31\n" +
+                            "12.00,Visa,Norway,58.96,5.75\n" +
+                            "12.00,Visa,Canada,52.26,-113.8\n" +
+                            "12.00,Diners,United States,35.14,-90.04\n" +
+                            "12.00,Mastercard,Switzerland,46.51,6.5\n" +
+                            "12.00,Visa,Canada,51.08,-114.08\n" +
+                            "12.00,Visa,Canada,44.16,-77.38\n" +
+                            "12.00,Visa,United States,39.16,-84.45\n" +
+                            "12.00,Visa,Canada,49.68,-124.93\n" +
+                            "12.00,Visa,Luxembourg,49.58,6.12\n" +
+                            "12.00,Mastercard,United Kingdom,54.65,-5.73\n" +
+                            "12.00,Visa,Italy,45.46,9.2\n" +
+                            "12.00,Visa,United States,40.63,-74.15\n" +
+                            "12.00,Visa,Norway,59.91,10.75\n" +
+                            "12.00,Visa,United States,42.46,-83.37\n" +
+                            "12.00,Diners,United States,34.01,-118.49\n" +
+                            "12.00,Visa,Canada,51.08,-114.08\n" +
+                            "12.00,Mastercard,Canada,49.25,-123.13\n" +
+                            "36.00,Mastercard,United States,33.66,-117.82\n" +
+                            "36.00,Mastercard,Germany,52.33,7.9\n" +
+                            "12.00,Mastercard,United Kingdom,51.9,-2.08\n" +
+                            "12.00,Visa,United States,37.61,-75.76\n" +
+                            "12.00,Visa,Denmark,54.83,11.15\n" +
+                            "12.00,Mastercard,United States,21.30,-157.85\n" +
+                            "12.00,Visa,Moldova,46.98,28.94\n" +
+                            "12.00,Visa,United States,30.66,-81.46\n" +
+                            "12.00,Visa,Canada,44.15,-79.86\n" +
+                            "12.00,Amex,Spain,37.93,-1.13\n" +
+                            "12.00,Mastercard,Ireland,53.31,-6.26\n" +
+                            "12.00,Mastercard,United States,25.72,-80.26\n" +
+                            "12.00,Visa,United States,25.77,-80.19\n" +
+                            "12.00,Visa,Canada,49.25,-123.13\n" +
+                            "12.00,Visa,United Arab Emirates,25.20,55.24",
+                            subject.process("[CSV(" + file + ") =>" +
+                                            " parse(header=true,trim=false)" +
+                                            " retainColumns(2,3,7,10,11)" +
+                                            " replaceColumnRegex((\\d+\\)(\\d\\d\\),$1.$2,0)" +
+                                            " replaceColumnRegex((-?\\d+\\.\\d\\d?\\)(.*\\),$1,3)" +
+                                            " replaceColumnRegex((-?\\d+\\.\\d\\d?\\)(.*\\),$1,4)" +
+                                            " text]")
+                           );
+    }
+
+    @Test
+    public void processCSV_distinct() throws Exception {
+        String fixtureBase = resourcePath + this.getClass().getSimpleName();
+        String file = ResourceUtils.getResourceFilePath(fixtureBase + "_replaceColumnsRegex.csv");
+
+        ExpressionProcessor subject = new ExpressionProcessor(context);
+
+        Assert.assertEquals("Product,Price,Country\n" +
+                            "Product1,1200,United Kingdom\n" +
+                            "Product1,1200,United States\n" +
+                            "Product1,1200,Australia\n" +
+                            "Product2,3600,United States\n" +
+                            "Product1,1200,Israel\n" +
+                            "Product1,1200,France\n" +
+                            "Product1,1200,Netherlands\n" +
+                            "Product1,1200,Ireland\n" +
+                            "Product1,1200,Canada\n" +
+                            "Product1,1200,India\n" +
+                            "Product2,3600,United Kingdom\n" +
+                            "Product1,1200,South Africa\n" +
+                            "Product1,1200,Finland\n" +
+                            "Product1,1200,Switzerland\n" +
+                            "Product2,3600,Australia\n" +
+                            "Product1,1200,Denmark\n" +
+                            "Product1,1200,Belgium\n" +
+                            "Product2,3600,Canada\n" +
+                            "Product1,1200,Sweden\n" +
+                            "Product2,3600,Switzerland\n" +
+                            "Product1,1200,Norway\n" +
+                            "Product1,1200,Luxembourg\n" +
+                            "Product1,1200,Italy\n" +
+                            "Product2,3600,Germany\n" +
+                            "Product1,1200,Moldova\n" +
+                            "Product1,1200,Spain\n" +
+                            "Product1,1200,United Arab Emirates",
+                            subject.process("[CSV(" + file + ") =>" +
+                                            " parse(header=true,trim=false)" +
+                                            " retainColumns(1,2,7)" +
+                                            " distinct" +
+                                            " text]")
+                           );
+    }
+
+    @Test
     public void processExcel() throws Exception {
         String fixtureBase = resourcePath + this.getClass().getSimpleName();
         String file = ResourceUtils.getResourceFilePath(fixtureBase + "9.xlsx");

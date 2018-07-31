@@ -22,6 +22,7 @@ import java.io.IOException;
 import java.io.StringReader;
 import java.util.List;
 import java.util.Map;
+import javax.validation.constraints.NotNull;
 
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.collections4.MapUtils;
@@ -172,21 +173,13 @@ public class CsvCommand extends IoCommand {
                                          boolean hasHeader,
                                          boolean keepQuote,
                                          int maxColumns) {
-        CsvParserSettings settings = toCsvParserSettings(delim, lineSeparator, hasHeader, maxColumns);
-
-        settings.setQuoteDetectionEnabled(true);
-        if (StringUtils.isNotEmpty(quote)) {
-            settings.getFormat().setQuote(quote.charAt(0));
-            settings.setKeepQuotes(keepQuote);
-        }
-
-        return new CsvParser(settings);
+        return new CsvParser(newCsvParserSetting(quote, delim, lineSeparator, hasHeader, keepQuote, maxColumns));
     }
 
-    protected static CsvParserSettings toCsvParserSettings(String delim,
-                                                           String lineSeparator,
-                                                           boolean hasHeader,
-                                                           int maxColumns) {
+    public static CsvParserSettings newCsvParserSettings(String delim,
+                                                         String lineSeparator,
+                                                         boolean hasHeader,
+                                                         int maxColumns) {
         /*
         withDelimiter(',')
         withQuote('"')
@@ -212,6 +205,24 @@ public class CsvCommand extends IoCommand {
         }
 
         if (maxColumns > DEF_MAX_COLUMNS) { settings.setMaxColumns(maxColumns); }
+        return settings;
+    }
+
+    @NotNull
+    public static CsvParserSettings newCsvParserSetting(String quote,
+                                                        String delim,
+                                                        String lineSeparator,
+                                                        boolean hasHeader,
+                                                        boolean keepQuote,
+                                                        int maxColumns) {
+        CsvParserSettings settings = newCsvParserSettings(delim, lineSeparator, hasHeader, maxColumns);
+
+        settings.setQuoteDetectionEnabled(true);
+        if (StringUtils.isNotEmpty(quote)) {
+            settings.getFormat().setQuote(quote.charAt(0));
+            settings.setKeepQuotes(keepQuote);
+        }
+
         return settings;
     }
 
