@@ -40,6 +40,10 @@ class SetupBeanFactory implements BeanFactoryAware {
             ConsoleUtils.log("No predefined nexial-setup found");
         } catch (Exception e) {
             ConsoleUtils.log("Exception is " + e.getMessage());
+            if (e instanceof NullPointerException || StringUtils.equals(e.getMessage(), "null")) {
+                ConsoleUtils.log("WARNING: NEXIAL MUST RUN UNDER JAVA 1.8.0_152 OR ABOVE. PLEASE CONSIDER DOWNLOAD " +
+                                 "THE LATEST JAVA 1.8 FROM http://www.oracle.com/technetwork/java/javase/downloads/jdk8-downloads-2133151.html");
+            }
         }
 
         // preference of properties is given in the following order: -D parameters, config beans, properties in

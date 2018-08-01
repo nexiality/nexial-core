@@ -182,6 +182,7 @@ import static org.nexial.core.model.ExecutionSummary.ExecutionLevel.EXECUTION;
  */
 public class Nexial {
     private static final int THREAD_WAIT_LOG_INTERVAL = 60;
+    private static final String SPRING_CONTEXT = "classpath:/nexial-mail.xml";
 
     private ClassPathXmlApplicationContext springContext;
     private TestProject project;
@@ -721,7 +722,7 @@ public class Nexial {
                 if (outputToCloud) {
                     // need to make sure nexial setup run (possibly again)...
                     ConsoleUtils.log("resolving Nexial Cloud Integration...");
-                    springContext = new ClassPathXmlApplicationContext("classpath:/nexial-aws.xml");
+                    springContext = new ClassPathXmlApplicationContext(SPRING_CONTEXT);
 
                     try {
                         NexialS3Helper otc = springContext.getBean("otc", NexialS3Helper.class);
@@ -743,7 +744,7 @@ public class Nexial {
                         String logPath = System.getProperty(TEST_LOG_PATH);
                         Collection<File> logFiles = FileUtils.listFiles(new File(logPath), new String[]{"log"}, false);
                         if (CollectionUtils.isNotEmpty(logFiles)) {
-                            for (File log : logFiles) { otc.importLog(log, true); }
+                            for (File log : logFiles) { otc.importLog(log, false); }
                         }
 
                     } catch (IOException e) {
@@ -766,7 +767,7 @@ public class Nexial {
 
     protected void initSpringContext() {
         if (springContext == null || !springContext.isActive()) {
-            springContext = new ClassPathXmlApplicationContext("classpath:/nexial-main.xml");
+            springContext = new ClassPathXmlApplicationContext(SPRING_CONTEXT);
         }
     }
 
