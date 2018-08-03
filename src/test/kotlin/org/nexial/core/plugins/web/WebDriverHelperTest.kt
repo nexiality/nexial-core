@@ -77,4 +77,28 @@ class WebDriverHelperTest {
         Assert.assertTrue(driverFile.canRead())
         Assert.assertTrue(driverFile.length() > 1572864)
     }
+
+    @Test
+    @Throws(Exception::class)
+    fun resolveElectronDriver() {
+        val driverHome = File(USER_HOME + separator + ".nexial" + separator + "electron")
+        FileUtils.deleteDirectory(driverHome)
+
+        val context = object : MockExecutionContext(true) {
+            override fun getCurrentTestStep(): TestStep {
+                return object : TestStep() {
+                    override fun generateFilename(ext: String): String {
+                        return className + StringUtils.prependIfMissing(StringUtils.trim(ext), ".")
+                    }
+                }
+            }
+        }
+
+        val helper = WebDriverHelper.newInstance(BrowserType.electron, context)
+        val driverFile = helper.resolveDriver()
+        Assert.assertNotNull(driverFile)
+        Assert.assertTrue(driverFile.exists())
+        Assert.assertTrue(driverFile.canRead())
+        Assert.assertTrue(driverFile.length() > 1572864)
+    }
 }

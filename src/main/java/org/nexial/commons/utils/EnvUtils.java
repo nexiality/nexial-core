@@ -19,10 +19,10 @@ package org.nexial.commons.utils;
 
 import java.net.InetAddress;
 import java.net.UnknownHostException;
-
 import javax.validation.constraints.NotNull;
 
 import org.apache.commons.lang3.StringUtils;
+import org.apache.commons.lang3.math.NumberUtils;
 
 import static java.lang.System.lineSeparator;
 import static org.apache.commons.lang3.SystemUtils.IS_OS_WINDOWS;
@@ -49,6 +49,10 @@ public final class EnvUtils {
     public static boolean isRunningWindows64bit() {
         return IS_OS_WINDOWS &&
                (StringUtils.contains(OS_ARCH, "64") || StringUtils.isNotBlank(System.getenv("ProgramFiles(x86)")));
+    }
+
+    public static int getOsArchBit() {
+        return NumberUtils.toInt(System.getProperty("sun.arch.data.model"), -1);
     }
 
     @NotNull

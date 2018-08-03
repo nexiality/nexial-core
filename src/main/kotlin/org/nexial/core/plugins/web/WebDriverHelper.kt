@@ -23,9 +23,11 @@ import org.apache.commons.compress.archivers.tar.TarArchiveInputStream
 import org.apache.commons.io.FileUtils
 import org.apache.commons.io.IOUtils
 import org.apache.commons.lang3.StringUtils
+import org.apache.commons.lang3.SystemUtils
 import org.apache.commons.lang3.SystemUtils.*
 import org.apache.commons.lang3.math.NumberUtils
 import org.json.JSONArray
+import org.json.JSONObject
 import org.nexial.commons.proc.ProcessInvoker
 import org.nexial.commons.utils.CollectionUtil
 import org.nexial.commons.utils.EnvUtils
@@ -116,11 +118,11 @@ abstract class WebDriverHelper protected constructor(protected var context: Exec
     /**
      * default implementation for github or github-like releases
      *
-     * @param checkOnline if true, then compare previously downloaded driver against the latest available
+     * @param pollForUpdates if true, then compare previously downloaded driver against the latest available
      * @return [WebDriverManifest] instance with transient information about driver download url and target version
      */
     @Throws(IOException::class)
-    protected open fun resolveDriverManifest(checkOnline: Boolean): WebDriverManifest {
+    protected open fun resolveDriverManifest(pollForUpdates: Boolean): WebDriverManifest {
         val manifest: WebDriverManifest = if (driverManifest.canRead() && driverManifest.length() > 10) {
             GSON.fromJson(FileUtils.readFileToString(driverManifest, DEF_CHARSET), WebDriverManifest::class.java)
         } else {
@@ -132,11 +134,9 @@ abstract class WebDriverHelper protected constructor(protected var context: Exec
         val hasDriver = isFileReadable(driverLocation, DRIVER_MIN_SIZE)
 
         // never check is turned on and we already have a driver, so just keep this one
-        if (manifest.neverCheck && hasDriver) {
-            return manifest
-        }
+        if (manifest.neverCheck && hasDriver) return manifest
 
-        if (checkOnline && manifest.lastChecked + config.checkFrequency > System.currentTimeMillis()) {
+        if (pollForUpdates && manifest.lastChecked + config.checkFrequency > System.currentTimeMillis()) {
             // we still have time.. no need to check now
             return manifest
         }
@@ -157,7 +157,7 @@ abstract class WebDriverHelper protected constructor(protected var context: Exec
         // persist the date/time when we last checked online
         manifest.lastChecked = System.currentTimeMillis()
 
-        if (!checkOnline || manifest.driverVersionExpanded < tagNumbersSorted[0]) {
+        if (!pollForUpdates || manifest.driverVersionExpanded < tagNumbersSorted[0]) {
             val targetVersion = tagNumbers[tagNumbersSorted[0]]
             manifest.driverVersion = targetVersion
 
@@ -232,8 +232,10 @@ abstract class WebDriverHelper protected constructor(protected var context: Exec
             val helper: WebDriverHelper = when (browserType) {
                 edge                     -> EdgeDriverHelper(context)
                 firefox, firefoxheadless -> FirefoxDriverHelper(context)
+                electron                 -> ElectronDriverHelper(context)
+//                chrome, chromeheadless, chromeembedded -> ChromeDriverHelper(context)
 
-            // todo: add more browserType-specific helper instantiation
+                // todo: add more browserType-specific helper instantiation
                 else                     -> throw RuntimeException("No WebDriverHelper implemented for $browserType")
             }
 
@@ -349,10 +351,10 @@ class EdgeDriverHelper(context: ExecutionContext) : WebDriverHelper(context) {
      * Also, it doesn't make sense to consider `checkOnline` argument since we would only download new driver
      * when there's a mismatch of Windows 10 build number (from current driver).
      *
-     * @param checkOnline IGNORED
+     * @param pollForUpdates IGNORED
      */
     @Throws(IOException::class)
-    override fun resolveDriverManifest(checkOnline: Boolean): WebDriverManifest {
+    override fun resolveDriverManifest(pollForUpdates: Boolean): WebDriverManifest {
         val manifest: WebDriverManifest = if (FileUtil.isFileReadable(driverManifest, 10)) {
             GSON.fromJson(FileUtils.readFileToString(driverManifest, DEF_CHARSET), WebDriverManifest::class.java)
         } else {
@@ -448,5 +450,64 @@ class FirefoxDriverHelper(context: ExecutionContext) : WebDriverHelper(context) 
     override fun resolveLocalDriverPath(): String {
         return StringUtils.appendIfMissing(File(context.replaceTokens(config.home)).absolutePath, separator) +
                config.baseName + if (IS_OS_WINDOWS) ".exe" else ""
+    }
+}
+
+class ElectronDriverHelper(context: ExecutionContext) : WebDriverHelper(context) {
+
+    override fun resolveLocalDriverPath(): String {
+        return StringUtils.appendIfMissing(File(context.replaceTokens(config.home)).absolutePath, separator) +
+               config.baseName + if (IS_OS_WINDOWS) ".exe" else ""
+    }
+
+    override fun resolveDriverManifest(pollForUpdates: Boolean): WebDriverManifest {
+        val manifest: WebDriverManifest = if (driverManifest.canRead() && driverManifest.length() > 10) {
+            GSON.fromJson(FileUtils.readFileToString(driverManifest, DEF_CHARSET), WebDriverManifest::class.java)
+        } else {
+            // first time
+            WebDriverManifest()
+        }
+        manifest.init()
+
+        val hasDriver = isFileReadable(driverLocation, DRIVER_MIN_SIZE)
+
+        // never check is turned on and we already have a driver, so just keep this one
+        if (manifest.neverCheck && hasDriver) return manifest
+
+        if (pollForUpdates && manifest.lastChecked + config.checkFrequency > System.currentTimeMillis()) {
+            // we still have time.. no need to check now
+            return manifest
+        }
+        // else, need to check online, poll online for newer driver
+
+        // first ws call to check existing/available versions of this driver
+        val wsClient = WebServiceClient(context)
+        val response = wsClient.get(config.checkUrlBase, null)
+
+        val driverContentJson = JSONObject(response.body)
+        val tag = JSONPath.find(driverContentJson, "tag_name")
+        if (!pollForUpdates || manifest.driverVersionExpanded < WebDriverHelper.expandVersion(tag)) {
+
+            // persist the date/time when we last checked online
+            manifest.lastChecked = System.currentTimeMillis()
+            manifest.driverVersion = tag
+
+            val env = when {
+                IS_OS_WINDOWS -> "win32"
+                IS_OS_LINUX   -> "linux"
+                IS_OS_MAC     -> "darwin"
+                else          -> throw IllegalArgumentException("OS ${SystemUtils.OS_NAME} not supported for $browserType")
+            }
+            val arch = when (EnvUtils.getOsArchBit()) {
+                32   -> "ia32"
+                64   -> "x64"
+                else -> "ia32"
+            }
+
+            manifest.driverUrl = JSONPath.find(driverContentJson,
+                                               "assets[name=chromedriver-$tag-$env-$arch.zip].browser_download_url")
+        }
+
+        return manifest
     }
 }

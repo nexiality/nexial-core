@@ -69,7 +69,9 @@ import static org.nexial.core.NexialConst.BrowserStack.*;
 import static org.nexial.core.NexialConst.BrowserType.*;
 import static org.nexial.core.NexialConst.*;
 import static org.nexial.core.NexialConst.Data.*;
-import static org.nexial.core.NexialConst.Project.*;
+import static org.nexial.core.NexialConst.Project.NEXIAL_LINUX_BIN_REL_PATH;
+import static org.nexial.core.NexialConst.Project.NEXIAL_MACOSX_BIN_REL_PATH;
+import static org.nexial.core.NexialConst.Project.NEXIAL_WINDOWS_BIN_REL_PATH;
 import static org.nexial.core.interactive.InteractiveConst.Command.browser;
 import static org.nexial.core.utils.CheckUtils.requiresExecutableFile;
 import static org.openqa.selenium.PageLoadStrategy.EAGER;
@@ -507,7 +509,7 @@ public class Browser implements ForcefulTerminate {
     }
 
     private WebDriver initChromeEmbedded() {
-        // ensure path specified for AUT app (where chronium is embedded)
+        // ensure path specified for AUT app (where chromium is embedded)
         String clientLocation = context.getStringData(CEF_CLIENT_LOCATION);
         requiresExecutableFile(clientLocation);
 
@@ -525,16 +527,21 @@ public class Browser implements ForcefulTerminate {
         return chrome;
     }
 
-    private WebDriver initElectron() {
+    private WebDriver initElectron() throws IOException {
         // ensure path specified for AUT app (where electron app is)
         String clientLocation = context.getStringData(ELECTRON_CLIENT_LOCATION);
         requiresExecutableFile(clientLocation);
 
-        resolveChromeDriverLocation();
+        // resolveChromeDriverLocation();
+        WebDriverHelper helper = WebDriverHelper.Companion.newInstance(electron, context);
+        File driver = helper.resolveDriver();
+        if (!driver.exists()) { throw new IOException("Can't resolve/download driver for " + electron); }
 
-        ChromeOptions options = new ChromeOptions()
-                                    .setBinary(clientLocation)
-                                    .setAcceptInsecureCerts(true);
+        String driverPath = driver.getAbsolutePath();
+        context.setData(SELENIUM_CHROME_DRIVER, driverPath);
+        System.setProperty(SELENIUM_CHROME_DRIVER, driverPath);
+
+        ChromeOptions options = new ChromeOptions().setBinary(clientLocation).setAcceptInsecureCerts(true);
         // options.addArguments("--disable-extensions"); // disabling extensions
         // options.addArguments("--disable-gpu"); // applicable to windows os only
         options.addArguments("--disable-dev-shm-usage"); // overcome limited resource problems

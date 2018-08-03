@@ -33,7 +33,7 @@ class NexialEnv(@Transient val commandline: CommandLine) : Serializable {
 
     data class JVM(val vendor: String = JAVA_VENDOR,
                    val version: String = JAVA_VERSION,
-                   val bits: String = System.getProperty("sun.arch.data.model"))
+                   val bits: Int = EnvUtils.getOsArchBit())
 
     data class Env(val host: String = EnvUtils.getHostName(),
                    val user: String = USER_NAME,
