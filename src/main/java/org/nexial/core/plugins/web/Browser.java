@@ -69,8 +69,6 @@ import static org.nexial.core.NexialConst.BrowserStack.*;
 import static org.nexial.core.NexialConst.BrowserType.*;
 import static org.nexial.core.NexialConst.*;
 import static org.nexial.core.NexialConst.Data.*;
-import static org.nexial.core.NexialConst.Project.NEXIAL_LINUX_BIN_REL_PATH;
-import static org.nexial.core.NexialConst.Project.NEXIAL_MACOSX_BIN_REL_PATH;
 import static org.nexial.core.NexialConst.Project.NEXIAL_WINDOWS_BIN_REL_PATH;
 import static org.nexial.core.interactive.InteractiveConst.Command.browser;
 import static org.nexial.core.utils.CheckUtils.requiresExecutableFile;
@@ -508,7 +506,7 @@ public class Browser implements ForcefulTerminate {
         return safari;
     }
 
-    private WebDriver initChromeEmbedded() {
+    private WebDriver initChromeEmbedded() throws IOException {
         // ensure path specified for AUT app (where chromium is embedded)
         String clientLocation = context.getStringData(CEF_CLIENT_LOCATION);
         requiresExecutableFile(clientLocation);
@@ -532,14 +530,7 @@ public class Browser implements ForcefulTerminate {
         String clientLocation = context.getStringData(ELECTRON_CLIENT_LOCATION);
         requiresExecutableFile(clientLocation);
 
-        // resolveChromeDriverLocation();
-        WebDriverHelper helper = WebDriverHelper.Companion.newInstance(electron, context);
-        File driver = helper.resolveDriver();
-        if (!driver.exists()) { throw new IOException("Can't resolve/download driver for " + electron); }
-
-        String driverPath = driver.getAbsolutePath();
-        context.setData(SELENIUM_CHROME_DRIVER, driverPath);
-        System.setProperty(SELENIUM_CHROME_DRIVER, driverPath);
+        resolveChromeDriverLocation();
 
         ChromeOptions options = new ChromeOptions().setBinary(clientLocation).setAcceptInsecureCerts(true);
         // options.addArguments("--disable-extensions"); // disabling extensions
@@ -560,7 +551,7 @@ public class Browser implements ForcefulTerminate {
         return new ChromeDriver(driverService, options);
     }
 
-    private WebDriver initChrome(boolean headless) {
+    private WebDriver initChrome(boolean headless) throws IOException {
         // check https://github.com/SeleniumHQ/selenium/wiki/ChromeDriver for details
 
         resolveChromeDriverLocation();
@@ -617,18 +608,12 @@ public class Browser implements ForcefulTerminate {
             logFileName);
     }
 
-    private void resolveChromeDriverLocation() {
-        String nexialHome = StringUtils.appendIfMissing(context.getProject().getNexialHome(), separator);
-        String driverBasename = "chromedriver" + (browserType == electron ? "-electron" : "");
-        String driverPath;
-        if (IS_OS_WINDOWS) {
-            driverPath = nexialHome + NEXIAL_WINDOWS_BIN_REL_PATH + driverBasename + ".exe";
-        } else if (IS_OS_MAC_OSX) {
-            driverPath = nexialHome + NEXIAL_MACOSX_BIN_REL_PATH + driverBasename;
-        } else {
-            driverPath = nexialHome + NEXIAL_LINUX_BIN_REL_PATH + driverBasename;
-        }
+    private void resolveChromeDriverLocation() throws IOException {
+        WebDriverHelper helper = WebDriverHelper.Companion.newInstance(browserType, context);
+        File driver = helper.resolveDriver();
+        if (!driver.exists()) { throw new IOException("Can't resolve/download driver for " + browserType); }
 
+        String driverPath = driver.getAbsolutePath();
         context.setData(SELENIUM_CHROME_DRIVER, driverPath);
         System.setProperty(SELENIUM_CHROME_DRIVER, driverPath);
     }

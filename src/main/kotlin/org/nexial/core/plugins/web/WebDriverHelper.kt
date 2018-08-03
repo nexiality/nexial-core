@@ -230,13 +230,13 @@ abstract class WebDriverHelper protected constructor(protected var context: Exec
             }
 
             val helper: WebDriverHelper = when (browserType) {
-                edge                     -> EdgeDriverHelper(context)
-                firefox, firefoxheadless -> FirefoxDriverHelper(context)
-                electron                 -> ElectronDriverHelper(context)
-//                chrome, chromeheadless, chromeembedded -> ChromeDriverHelper(context)
+                edge                                   -> EdgeDriverHelper(context)
+                firefox, firefoxheadless               -> FirefoxDriverHelper(context)
+                electron                               -> ElectronDriverHelper(context)
+                chrome, chromeheadless, chromeembedded -> ChromeDriverHelper(context)
 
                 // todo: add more browserType-specific helper instantiation
-                else                     -> throw RuntimeException("No WebDriverHelper implemented for $browserType")
+                else                                   -> throw RuntimeException("No WebDriverHelper implemented for $browserType")
             }
 
             helper.browserType = browserType
@@ -453,6 +453,10 @@ class FirefoxDriverHelper(context: ExecutionContext) : WebDriverHelper(context) 
     }
 }
 
+/**
+ * webdriver helper for Chrome-Electron (chromium)
+ * @constructor
+ */
 class ElectronDriverHelper(context: ExecutionContext) : WebDriverHelper(context) {
 
     override fun resolveLocalDriverPath(): String {
@@ -506,6 +510,62 @@ class ElectronDriverHelper(context: ExecutionContext) : WebDriverHelper(context)
 
             manifest.driverUrl = JSONPath.find(driverContentJson,
                                                "assets[name=chromedriver-$tag-$env-$arch.zip].browser_download_url")
+        }
+
+        return manifest
+    }
+}
+
+/**
+ * webdriver helper for Chrome browser
+ */
+class ChromeDriverHelper(context: ExecutionContext) : WebDriverHelper(context) {
+
+    private val minDriverVersion = "2.35"
+
+    override fun resolveLocalDriverPath(): String {
+        return StringUtils.appendIfMissing(File(context.replaceTokens(config.home)).absolutePath, separator) +
+               config.baseName + if (IS_OS_WINDOWS) ".exe" else ""
+    }
+
+    @Throws(IOException::class)
+    override fun resolveDriverManifest(pollForUpdates: Boolean): WebDriverManifest {
+        val manifest: WebDriverManifest = if (FileUtil.isFileReadable(driverManifest, 10)) {
+            GSON.fromJson(FileUtils.readFileToString(driverManifest, DEF_CHARSET), WebDriverManifest::class.java)
+        } else {
+            // first time
+            WebDriverManifest()
+        }
+        manifest.init()
+
+        val hasDriver = FileUtil.isFileReadable(driverLocation, WebDriverHelper.DRIVER_MIN_SIZE)
+
+        if (!hasDriver) {
+            var driverVersion = minDriverVersion
+
+            val wsClient = WebServiceClient(context)
+            val lookupResponse = wsClient.get("${config.checkUrlBase}/LATEST_RELEASE", "")
+            if (lookupResponse.returnCode != 200) {
+                // something's wrong...
+                ConsoleUtils.log("[Chrome] unable to resolve latest version for $browserType. " +
+                                 "Use min. driver version instead...")
+            } else {
+                driverVersion = lookupResponse.body
+            }
+
+            val env = when {
+                IS_OS_WINDOWS -> "win32"
+                IS_OS_LINUX   -> "linux64"
+                IS_OS_MAC     -> "mac64"
+                else          -> throw IllegalArgumentException("OS ${SystemUtils.OS_NAME} not supported for $browserType")
+            }
+
+            val downloadUrl = "${config.checkUrlBase}/$driverVersion/${config.baseName}_$env.zip"
+            ConsoleUtils.log("[Chrome] derived download URL as $downloadUrl")
+
+            manifest.driverUrl = downloadUrl
+            manifest.driverVersion = driverVersion
+            manifest.lastChecked = System.currentTimeMillis()
         }
 
         return manifest

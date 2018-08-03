@@ -507,7 +507,7 @@
                 "baseName": "chromedriver",
                 "checkFrequency": 1209600000,
                 "checkFrequencyDescription": "Every 2 weeks",
-                "checkUrlBase" : "https://github.com/mozilla/geckodriver/releases"
+                "checkUrlBase" : "https://chromedriver.storage.googleapis.com"
             }
           ]]></value>
         </entry>

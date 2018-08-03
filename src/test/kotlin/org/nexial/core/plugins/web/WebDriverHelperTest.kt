@@ -101,4 +101,38 @@ class WebDriverHelperTest {
         Assert.assertTrue(driverFile.canRead())
         Assert.assertTrue(driverFile.length() > 1572864)
     }
+
+    @Test
+    @Throws(Exception::class)
+    fun resolveChromeDriver() {
+        val driverHome = File(USER_HOME + separator + ".nexial" + separator + "chrome")
+        FileUtils.deleteDirectory(driverHome)
+
+        val context = object : MockExecutionContext(true) {
+            override fun getCurrentTestStep(): TestStep {
+                return object : TestStep() {
+                    override fun generateFilename(ext: String): String {
+                        return className + StringUtils.prependIfMissing(StringUtils.trim(ext), ".")
+                    }
+                }
+            }
+        }
+
+        val helper = WebDriverHelper.newInstance(BrowserType.chrome, context)
+        val driverFile = helper.resolveDriver()
+        Assert.assertNotNull(driverFile)
+        Assert.assertTrue(driverFile.exists())
+        Assert.assertTrue(driverFile.canRead())
+        Assert.assertTrue(driverFile.length() > 1572864)
+
+        println("trying chrome driver again, second time")
+
+        // second test to ensure caching works.
+        val helper2 = WebDriverHelper.newInstance(BrowserType.chrome, context)
+        val driverFile2 = helper2.resolveDriver()
+        Assert.assertNotNull(driverFile2)
+        Assert.assertTrue(driverFile2.exists())
+        Assert.assertTrue(driverFile2.canRead())
+        Assert.assertTrue(driverFile2.length() > 1572864)
+    }
 }
