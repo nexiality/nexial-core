@@ -30,17 +30,12 @@ import javax.validation.constraints.NotNull;
 
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.collections4.MapUtils;
-import org.apache.commons.collections4.map.HashedMap;
-import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang3.BooleanUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.math.NumberUtils;
 import org.apache.commons.text.WordUtils;
-import org.nexial.commons.proc.ProcessInvoker;
-import org.nexial.commons.proc.ProcessOutcome;
 import org.nexial.commons.utils.EnvUtils;
 import org.nexial.commons.utils.FileUtil;
-import org.nexial.commons.utils.RegexUtils;
 import org.nexial.core.NexialConst.*;
 import org.nexial.core.ShutdownAdvisor;
 import org.nexial.core.WebProxy;
@@ -49,15 +44,12 @@ import org.nexial.core.model.ExecutionContext;
 import org.nexial.core.model.ExecutionDefinition;
 import org.nexial.core.plugins.ForcefulTerminate;
 import org.nexial.core.plugins.external.ExternalCommand;
-import org.nexial.core.plugins.ws.Response;
-import org.nexial.core.plugins.ws.WebServiceClient;
 import org.nexial.core.utils.ConsoleUtils;
 import org.openqa.selenium.*;
 import org.openqa.selenium.chrome.ChromeDriver;
 import org.openqa.selenium.chrome.ChromeDriverService;
 import org.openqa.selenium.chrome.ChromeOptions;
 import org.openqa.selenium.edge.EdgeDriver;
-import org.openqa.selenium.edge.EdgeOptions;
 import org.openqa.selenium.firefox.FirefoxDriver;
 import org.openqa.selenium.firefox.FirefoxOptions;
 import org.openqa.selenium.ie.InternetExplorerDriver;
@@ -119,11 +111,6 @@ public class Browser implements ForcefulTerminate {
         USERHOME + "AppData\\Local\\Google\\Chrome\\Application\\chrome.exe",
         USERHOME + "AppDataLocal\\Google\\Chrome\\chrome.exe",
         USERHOME + "Local Settings\\Application Data\\Google\\Chrome\\chrome.exe");
-
-    private static final List<String> WIN_VER = Arrays.asList("/C", "ver");
-    private static final String WIN_VER_PATTERN_1 = "10\\.0\\.(\\d+)\\.(\\d+)";
-    private static final String WIN_VER_PATTERN_2 = "10\\.0\\.(\\d+)";
-    private static final String WIN_VER_PATTERN_3 = "([\\d\\.]+)";
 
     protected ExecutionContext context;
     protected WebDriver driver;
@@ -461,47 +448,6 @@ public class Browser implements ForcefulTerminate {
                CollectionUtils.size(lastWinHandles) <= 1;
     }
 
-    @NotNull
-    protected String deriveWin10BuildNumber() {
-        Map<String, String> webdriverSupport = context.getWebdriverSupport();
-        int edgeDriverMinVersion = NumberUtils.toInt(webdriverSupport.get("edgeDriverMinVersion"));
-
-        try {
-            ProcessOutcome outcome = ProcessInvoker.invoke(WIN32_CMD, WIN_VER, new HashedMap<>());
-            // e.g. Microsoft Windows [Version 10.0.10240]
-
-            String currentOsVer = outcome.getStdout();
-            ConsoleUtils.log("[EDGE] current Windows 10 version = " + currentOsVer);
-
-            currentOsVer = StringUtils.trim(StringUtils.substringBetween(currentOsVer, "[Version", "]"));
-            currentOsVer = deriveWind10BuildNumber(currentOsVer, edgeDriverMinVersion);
-
-            ConsoleUtils.log("[EDGE] current Windows 10 OS Build number resolved to " + currentOsVer);
-            return currentOsVer;
-        } catch (Exception e) {
-            throw new RuntimeException("Unable to determine OS Build number for current Windows 10: " + e.getMessage());
-        }
-    }
-
-    @NotNull
-    protected static String deriveWind10BuildNumber(String currentOsVer, int minVersion) {
-        if (RegexUtils.isExact(currentOsVer, WIN_VER_PATTERN_1)) {
-            currentOsVer = StringUtils.trim(RegexUtils.replace(currentOsVer, WIN_VER_PATTERN_1, "$1"));
-        } else if (RegexUtils.isExact(currentOsVer, WIN_VER_PATTERN_2)) {
-            currentOsVer = StringUtils.trim(RegexUtils.replace(currentOsVer, WIN_VER_PATTERN_2, "$1"));
-        } else if (RegexUtils.isExact(currentOsVer, WIN_VER_PATTERN_3)) {
-            currentOsVer = StringUtils.trim(StringUtils.substringAfterLast(currentOsVer, "."));
-        }
-
-        if (!NumberUtils.isDigits(currentOsVer)) { return minVersion + ""; }
-
-        int currentOsVerNum = NumberUtils.toInt(currentOsVer);
-        if (currentOsVerNum >= minVersion) { return currentOsVer; }
-
-        ConsoleUtils.log("[EDGE] current Windows 10 OS Build number not supported: " + currentOsVer);
-        return minVersion + "";
-    }
-
     private void postInit(WebDriver driver) {
         String browserVersion = getBrowserVersion();
         if (LOGGER.isDebugEnabled()) { LOGGER.debug("post-init for " + browserType + " " + browserVersion); }
@@ -817,10 +763,16 @@ public class Browser implements ForcefulTerminate {
         return ie;
     }
 
-    private WebDriver initEdge() {
-        initEdgeDriver();
+    private WebDriver initEdge() throws IOException {
+        WebDriverHelper helper = WebDriverHelper.Companion.newInstance(edge, context);
+        File driver = helper.resolveDriver();
+        if (!driver.exists()) { throw new IOException("Can't resolve/download driver for " + edge); }
 
-        EdgeDriver edge = new EdgeDriver(new EdgeOptions().merge(DesiredCapabilities.edge()));
+        String driverPath = driver.getAbsolutePath();
+        context.setData(SELENIUM_EDGE_DRIVER, driverPath);
+        System.setProperty(SELENIUM_EDGE_DRIVER, driverPath);
+
+        EdgeDriver edge = new EdgeDriver();
         postInit(edge);
 
         Capabilities capabilities = edge.getCapabilities();
@@ -835,88 +787,19 @@ public class Browser implements ForcefulTerminate {
         return edge;
     }
 
-    private void initEdgeDriver() {
-        // 1. reject non-Windows10 platform
-        if (!IS_OS_WINDOWS_10) {
-            throw new RuntimeException("Browser automation for Microsoft Edge is only supported on Windows 10. Sorry.");
-        }
-
-        // 2. setup
-        Map<String, String> webdriverSupport = context.getWebdriverSupport();
-        int edgeDriverMinFileSize = NumberUtils.toInt(webdriverSupport.get("edgeDriverMinFileSize"));
-
-        // 2. find current OS build of Windows 10
-        String currentOsVer = deriveWin10BuildNumber();
-
-        String newEdgeDriverHome = EDGE_DRIVER_HOME + currentOsVer + separator;
-        String newEdgeDriverPath = newEdgeDriverHome + "MicrosoftWebDriver.exe";
-
-        // 3. Check if we had already previously download this same driver (to $home/.nexial/edge)...
-        // let's check (file should exists with at least 50k)
-
-        String edgeDriverPath;
-        if (FileUtil.isFileReadable(newEdgeDriverPath, edgeDriverMinFileSize)) {
-            edgeDriverPath = newEdgeDriverPath;
-        } else {
-            // 4. if not download the appropriate driver
-            String lookupBaseUrl = webdriverSupport.get(OPT_EDGE_DRIVER_LOOKUP_BASE_URL);
-            String lookupUrl = lookupBaseUrl + currentOsVer + ".txt";
-            String msgPrefix = "download Edge webdriver for Windows 10 Build " + currentOsVer;
-
-            WebServiceClient wsClient = new WebServiceClient(null);
-            Response dlResp;
-            try {
-                // 4.1 the URL for the appropriate driver is derived from `edgeDriverLookupBaseUrl` + osVer + .txt
-                Response lookupResponse = wsClient.get(lookupUrl, "");
-                String downloadUrl = StringUtils.trim(lookupResponse.getBody());
-                ConsoleUtils.log("[EDGE] derived download URL as " + downloadUrl);
-
-                FileUtils.forceMkdir(new File(newEdgeDriverHome));
-
-                // 4.2 download the driver to `$home/.nexial/edge`
-                dlResp = wsClient.download(downloadUrl, "", newEdgeDriverPath);
-                if (dlResp.getReturnCode() != 200) {
-                    throw new RuntimeException("FAILED to " + msgPrefix + " from " + downloadUrl + ": Response " +
-                                               dlResp.getReturnCode() + " " + dlResp.getStatusText());
-                }
-
-                // downloaded!
-                ConsoleUtils.log("[EDGE] " + msgPrefix + " completed: " + newEdgeDriverPath);
-            } catch (IOException e) {
-                throw new RuntimeException("FAILED to " + msgPrefix + ": " + e.getMessage());
-            }
-
-            if (!FileUtil.isFileReadable(newEdgeDriverPath, edgeDriverMinFileSize)) {
-                throw new RuntimeException("FAILED to " + msgPrefix + ": file not readable or cannot be found at " +
-                                           newEdgeDriverPath);
-            }
-
-            // 4.3 point the newly download driver as the one to use
-            edgeDriverPath = newEdgeDriverPath;
-        }
-
-        context.setData(SELENIUM_EDGE_DRIVER, edgeDriverPath);
-        System.setProperty(SELENIUM_EDGE_DRIVER, edgeDriverPath);
-    }
-
     private void syncContextPropToSystem(String prop) {
         if (System.getProperty(prop) == null) {
             if (context.hasData(prop)) { System.setProperty(prop, context.getStringData(prop)); }
         }
     }
 
-    private WebDriver initFirefox(boolean headless) {
-        String nexialHome = StringUtils.appendIfMissing(context.getProject().getNexialHome(), separator);
+    private WebDriver initFirefox(boolean headless) throws IOException {
+        BrowserType browserType = headless ? firefoxheadless : firefox;
+        WebDriverHelper helper = WebDriverHelper.Companion.newInstance(browserType, context);
+        File driver = helper.resolveDriver();
+        if (!driver.exists()) { throw new IOException("Can't resolve/download driver for " + browserType); }
 
-        String driverPath;
-        if (IS_OS_WINDOWS) {
-            driverPath = nexialHome + NEXIAL_WINDOWS_BIN_REL_PATH + "geckodriver64.exe";
-        } else if (IS_OS_MAC_OSX) {
-            driverPath = nexialHome + NEXIAL_MACOSX_BIN_REL_PATH + "geckodriver";
-        } else {
-            driverPath = nexialHome + NEXIAL_LINUX_BIN_REL_PATH + "geckodriver";
-        }
-
+        String driverPath = driver.getAbsolutePath();
         context.setData(SELENIUM_GECKO_DRIVER, driverPath);
         System.setProperty(SELENIUM_GECKO_DRIVER, driverPath);
         context.setData(MARIONETTE, true);

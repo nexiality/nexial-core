@@ -146,7 +146,7 @@ public class ExecutionContext {
     protected ExecutionEventListener executionEventListener;
 
     // spring-managed map of webdriver related configs.
-    protected Map<String, String> webdriverSupport;
+    protected Map<BrowserType, String> webdriverHelperConfig;
 
     static final String KEY_COMPLEX = "__lAIxEn__";
     static final String DOT_LITERAL_REPLACER = "__53n7ry_4h34d__";
@@ -289,7 +289,8 @@ public class ExecutionContext {
         defaultContextProps = springContext.getBean("defaultContextProps", new HashMap<String, String>().getClass());
         referenceDataForExecution =
             TextUtils.toList(defaultContextProps.get("nexial.referenceDataForExecution"), ",", true);
-        webdriverSupport = springContext.getBean("webdriverSupport", new HashMap<String, String>().getClass());
+        webdriverHelperConfig =
+            springContext.getBean("webdriverHelperConfig", new HashMap<BrowserType, String>().getClass());
 
         setData(ITERATION_ENDED, false);
     }
@@ -355,7 +356,11 @@ public class ExecutionContext {
 
     public long getEndTimestamp() { return endTimestamp; }
 
-    public Map<String, String> getWebdriverSupport() { return webdriverSupport; }
+    public Map<BrowserType, String> getWebdriverHelperConfig() { return webdriverHelperConfig; }
+
+    public void setWebdriverHelperConfig(Map<BrowserType, String> webdriverHelperConfig) {
+        this.webdriverHelperConfig = webdriverHelperConfig;
+    }
 
     public NexialS3Helper getOtc() throws IOException {
         // check that the required properties are set

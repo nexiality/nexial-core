@@ -31,7 +31,9 @@ import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.SystemUtils;
 import org.nexial.commons.utils.DateUtility;
 import org.nexial.commons.utils.EnvUtils;
+import org.nexial.commons.utils.TextUtils;
 import org.nexial.core.ExecutionThread;
+import org.nexial.core.NexialConst.BrowserType;
 import org.nexial.core.aws.NexialS3Helper;
 import org.nexial.core.plugins.NexialCommand;
 import org.nexial.core.utils.ExecutionLogger;
@@ -64,10 +66,16 @@ public class MockExecutionContext extends ExecutionContext {
 
         if (withSpring) {
             this.springContext = new ClassPathXmlApplicationContext("classpath:/nexial.xml");
+            this.otc = springContext.getBean("otc", NexialS3Helper.class);
             this.failfastCommands = springContext.getBean("failfastCommands", new ArrayList<String>().getClass());
             this.builtinFunctions = springContext.getBean("builtinFunctions", new HashMap<String, Object>().getClass());
-            this.otc = springContext.getBean("otc", NexialS3Helper.class);
             this.readOnlyVars = springContext.getBean("readOnlyVars", new ArrayList<String>().getClass());
+            this.defaultContextProps =
+                springContext.getBean("defaultContextProps", new HashMap<String, String>().getClass());
+            this.referenceDataForExecution =
+                TextUtils.toList(defaultContextProps.get("nexial.referenceDataForExecution"), ",", true);
+            this.webdriverHelperConfig =
+                springContext.getBean("webdriverHelperConfig", new HashMap<BrowserType, String>().getClass());
         } else {
             readOnlyVars = Arrays.asList("nexial.runID", "nexial.runID.prefix", "nexial.iterationEnded",
                                          "nexial.spreadsheet.program", "nexial.lastScreenshot", "nexial.lastOutcome",
@@ -76,18 +84,19 @@ public class MockExecutionContext extends ExecutionContext {
                                          "nexial.scope.lastIteration", "nexial.external.output",
                                          "nexial.browser.windowSize", "nexial.delayBrowser",
                                          "nexial.browser.ie.requireWindowFocus", "nexial.lastAlertText",
-                                         "nexial.ignoreBrowserAlert", "nexial.lastAlertText", "nexial.browser.incognito",
-                                         "nexial.browserstack.automatekey", "nexial.browserstack.username",
-                                         "nexial.browserstack.browser", "nexial.browserstack.browser.version",
-                                         "nexial.browserstack.debug", "nexial.browserstack.resolution",
-                                         "nexial.browserstack.app.buildnumber", "nexial.browserstack.enablelocal",
-                                         "nexial.browserstack.os", "nexial.browserstack.os.version",
-                                         "nexial.browser.safari.cleanSession", "nexial.browser.safari.useTechPreview",
-                                         "nexial.forceIE32", "webdriver.ie.driver", "webdriver.ie.driver.loglevel",
-                                         "webdriver.ie.driver.logfile", "webdriver.ie.driver.silent", "file.separator",
-                                         "java.home", "java.io.tmpdir", "java.version", "line.separator", "os.arch",
-                                         "os.name", "os.version", "user.country", "user.dir", "user.home", "user.language",
-                                         "user.name", "user.timezone");
+                                         "nexial.ignoreBrowserAlert", "nexial.lastAlertText",
+                                         "nexial.browser.incognito", "nexial.browserstack.automatekey",
+                                         "nexial.browserstack.username", "nexial.browserstack.browser",
+                                         "nexial.browserstack.browser.version", "nexial.browserstack.debug",
+                                         "nexial.browserstack.resolution", "nexial.browserstack.app.buildnumber",
+                                         "nexial.browserstack.enablelocal", "nexial.browserstack.os",
+                                         "nexial.browserstack.os.version", "nexial.browser.safari.cleanSession",
+                                         "nexial.browser.safari.useTechPreview", "nexial.forceIE32",
+                                         "webdriver.ie.driver", "webdriver.ie.driver.loglevel",
+                                         "webdriver.ie.driver.logfile", "webdriver.ie.driver.silent",
+                                         "file.separator", "java.home", "java.io.tmpdir", "java.version",
+                                         "line.separator", "os.arch", "os.name", "os.version", "user.country",
+                                         "user.dir", "user.home", "user.language", "user.name", "user.timezone");
         }
 
         expression = new ExpressionProcessor(this);
@@ -95,7 +104,7 @@ public class MockExecutionContext extends ExecutionContext {
         try {
             newProject();
         } catch (IOException e) {
-            throw new RuntimeException("Unable to ceate mock test script and project structure: " + e.getMessage(), e);
+            throw new RuntimeException("Unable to create mock test script and project structure: " + e.getMessage(), e);
         }
 
         ExecutionThread.set(this);

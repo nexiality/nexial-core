@@ -374,6 +374,36 @@ public final class FileUtil {
         }
     }
 
+    /**
+     * same as {@link #unzip(File, File)}, except this method verifies after unzipping {@code zip} that the
+     * {@code expected} exists and are readable (IOW, unsuccessfully unzipped). If any of the {@code expected} files
+     * are not found after unzip, {@link IOException} will be thrown
+     */
+    public static void unzip(File zip, File target, List<File> expected) throws IOException {
+        List<File> unzipped = unzip(zip, target);
+
+        if (CollectionUtils.isEmpty(expected)) { return; }
+
+        if (CollectionUtils.isEmpty(unzipped)) { throw new IOException("Unable to unzip any file from " + zip); }
+
+        List<String> expectedFiles = new ArrayList<>();
+        expected.forEach(file -> expectedFiles.add(file.getAbsolutePath()));
+
+        for (File uncompressed : unzipped) {
+            String uncompressedFile = uncompressed.getAbsolutePath();
+            if (expectedFiles.contains(uncompressedFile)) {
+                if (!FileUtil.isFileReadable(uncompressedFile)) {
+                    throw new IOException("Unable to unzip an usable " + uncompressedFile + " from " + zip);
+                }
+                expectedFiles.remove(uncompressedFile);
+            }
+        }
+
+        if (CollectionUtils.isNotEmpty(expectedFiles)) {
+            throw new IOException("After unzipping " + zip + " these files still unaccounted for: " + expectedFiles);
+        }
+    }
+
     public static void zip(String filePattern, String targetZipFile) throws IOException {
         if (StringUtils.isBlank(filePattern)) { throw new IOException("Invalid filePattern: " + filePattern); }
         if (StringUtils.isBlank(targetZipFile)) { throw new IOException("Invali target ZIP file: " + targetZipFile); }

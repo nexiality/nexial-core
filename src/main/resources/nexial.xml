@@ -488,13 +488,65 @@
         </property>
     </bean>
 
-    <util:map id="webdriverSupport" key-type="java.lang.String" value-type="java.lang.String">
-        <entry key="edgeDriverLookupBaseUrl"
-               value="https://raw.githubusercontent.com/nexiality/nexial-core/master/support/edge/"/>
-        <entry key="edgeDriverMinFileSize" value="51200"/>
-        <entry key="edgeDriverMinVersion" value="10240"/>
-    </util:map>
+    <util:map id="webdriverHelperConfig" key-type="org.nexial.core.NexialConst$BrowserType" value-type="java.lang.String">
+        <entry key="firefox">
+            <value><![CDATA[
+            {
+                "home": "${user.home}/.nexial/firefox",
+                "baseName": "geckodriver",
+                "checkFrequency": 1209600000,
+                "checkFrequencyDescription": "Every 2 weeks",
+                "checkUrlBase" : "https://api.github.com/repos/mozilla/geckodriver/releases"
+            }
+          ]]></value>
+        </entry>
+        <entry key="chrome">
+            <value><![CDATA[
+            {
+                "home": "${user.home}/.nexial/chrome",
+                "baseName": "chromedriver",
+                "checkFrequency": 1209600000,
+                "checkFrequencyDescription": "Every 2 weeks",
+                "checkUrlBase" : "https://github.com/mozilla/geckodriver/releases"
+            }
+          ]]></value>
+        </entry>
+        <entry key="electron">
+            <value><![CDATA[
+            {
+                "home": "${user.home}/.nexial/electron",
+                "baseName": "chromedriver-electron",
+                "checkFrequency": 1209600000,
+                "checkFrequencyDescription": "Every 2 weeks",
+                "checkUrlBase" : "https://github.com/mozilla/geckodriver/releases"
+            }
+          ]]></value>
+        </entry>
+        <entry key="ie">
+            <!-- https://raw.githubusercontent.com/SeleniumHQ/selenium/master/cpp/iedriverserver/CHANGELOG -->
+            <value><![CDATA[
+            {
+                "home": "${user.home}/.nexial/ie",
+                "baseName": "IEDriverServer",
+                "checkFrequency": 1209600000,
+                "checkFrequencyDescription": "Every 2 weeks",
+                "checkUrlBase" : "https://github.com/mozilla/geckodriver/releases"
+            }
+          ]]></value>
+        </entry>
+        <entry key="edge">
+            <value><![CDATA[
+            {
+                "home": "${user.home}/.nexial/edge",
+                "baseName": "MicrosoftWebDriver.exe",
+                "checkFrequency": -1,
+                "checkFrequencyDescription": "NEVER",
+                "checkUrlBase" : "https://raw.githubusercontent.com/nexiality/nexial-core/master/support/edge/"
+            }
+          ]]></value>
+        </entry>
 
+    </util:map>
 
     <bean id="expressionProcessor" class="org.nexial.core.variable.ExpressionProcessor"/>
 

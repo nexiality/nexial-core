@@ -17,6 +17,7 @@
 package org.nexial.commons.utils;
 
 import java.io.File;
+import java.util.Collections;
 import java.util.List;
 
 import org.apache.commons.lang3.StringUtils;
@@ -27,6 +28,8 @@ import org.junit.Test;
 import org.nexial.core.NexialTestUtils;
 
 public class FileUtilTest {
+    private static final String PACKAGE = StringUtils.replace(FileUtilTest.class.getPackage().getName(), ".", "/");
+    private static final String CLASSNAME = FileUtilTest.class.getSimpleName();
 
     @Before
     public void setUp() throws Exception {
@@ -51,5 +54,15 @@ public class FileUtilTest {
         lincolns.forEach(System.out::println);
 
         Assert.assertEquals(144, lincolns.size());
+    }
+
+    @Test
+    public void unzip() throws Exception {
+        File zipFile = new File(ResourceUtils.getResourceFilePath("/" + PACKAGE + "/" + CLASSNAME + "-1.zip"));
+        File targetLoc = zipFile.getParentFile();
+        File expectedFile = new File(targetLoc.getAbsolutePath() + "/IEDriverServer.exe");
+
+        FileUtil.unzip(zipFile, targetLoc, Collections.singletonList(expectedFile));
+        Assert.assertTrue(FileUtil.isFileReadable(expectedFile.getAbsolutePath()));
     }
 }
