@@ -93,6 +93,7 @@ public class CsvCommand extends IoCommand {
         String textDelim = context.getTextDelim();
 
         CsvExtendedComparison comparison = new CsvExtendedComparison();
+        comparison.setDelimiter(textDelim);
 
         comparison.setExpectedContent(expectedContent);
         comparison.setActualContent(actualContent);

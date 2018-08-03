@@ -56,6 +56,7 @@ class CsvExtendedComparison implements Serializable {
     private String expectedField = "EXPECTED";
     private String actualField = "ACTUAL";
     private String identSeparator = "^";
+    private String delimiter;
 
     public enum ReportFormat {
         CSV(".csv"),
@@ -74,6 +75,10 @@ class CsvExtendedComparison implements Serializable {
 
         public static ReportFormat toReportFormat(String name) { return TYPES.get(name); }
     }
+
+    public String getDelimiter() { return delimiter; }
+
+    public void setDelimiter(String delimiter) { this.delimiter = delimiter; }
 
     public String getExpectedContent() { return expectedContent; }
 
@@ -276,6 +281,8 @@ class CsvExtendedComparison implements Serializable {
             throw new IOException("Unable to derive column headers from content");
         }
 
+        ConsoleUtils.log("file header columns resolved to " + fileHeaders);
+
         // check identity fields
         for (String identColumn : identityColumns) {
             if (!fileHeaders.contains(identColumn)) {
@@ -313,9 +320,9 @@ class CsvExtendedComparison implements Serializable {
             throw new IntegrationConfigException("No identity column(s) specified for actual");
         }
 
-        if (expectedParser == null) { expectedParser = CsvCommand.newCsvParser(null, null, null, true, -1); }
+        if (expectedParser == null) { expectedParser = CsvCommand.newCsvParser(null, delimiter, null, true, -1); }
 
-        if (actualParser == null) { actualParser = CsvCommand.newCsvParser(null, null, null, true, -1); }
+        if (actualParser == null) { actualParser = CsvCommand.newCsvParser(null, delimiter, null, true, -1); }
 
         if (reportFormat == null) { reportFormat = CSV; }
     }
