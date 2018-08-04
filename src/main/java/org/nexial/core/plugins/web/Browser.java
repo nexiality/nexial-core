@@ -371,6 +371,12 @@ public class Browser implements ForcefulTerminate {
         if (isRunFireFox() || isRunFirefoxHeadless() || driver instanceof FirefoxDriver) {
             ConsoleUtils.log("Shutting down firefox webdriver...");
             try { Thread.sleep(2000);} catch (InterruptedException e) { }
+            // try { driver.close(); } catch (Throwable e) { }
+            try { driver.quit(); } catch (Throwable e) { }
+            try { Thread.sleep(2000);} catch (InterruptedException e) { }
+        } else if (isRunSafari() || driver instanceof SafariDriver) {
+            ConsoleUtils.log("Shutting down safari webdriver...");
+            try { Thread.sleep(2000);} catch (InterruptedException e) { }
             try { driver.quit(); } catch (Throwable e) { }
             try { Thread.sleep(2000);} catch (InterruptedException e) { }
         } else {
@@ -833,10 +839,13 @@ public class Browser implements ForcefulTerminate {
                 options.addPreference("network.proxy.no_proxies_on", "");
 
             } else {
-                capabilities = DesiredCapabilities.firefox();
+                options = new FirefoxOptions();
+                capabilities = new DesiredCapabilities();
+                // capabilities = DesiredCapabilities.firefox();
                 initCapabilities(capabilities);
+                options.merge(capabilities);
 
-                options = new FirefoxOptions(capabilities);
+                // options = new FirefoxOptions(capabilities);
 
                 Proxy proxy = (Proxy) capabilities.getCapability(PROXY);
                 if (proxy != null) {
@@ -861,11 +870,6 @@ public class Browser implements ForcefulTerminate {
             if (MapUtils.isNotEmpty(firefoxBooleanPrefs)) { firefoxBooleanPrefs.forEach(options::addPreference); }
             if (MapUtils.isNotEmpty(firefoxIntPrefs)) { firefoxIntPrefs.forEach(options::addPreference); }
             if (MapUtils.isNotEmpty(firefoxStringPrefs)) { firefoxStringPrefs.forEach(options::addPreference); }
-
-            // if (context.getBooleanData(BROWER_INCOGNITO, DEF_BROWSER_INCOGNITO)) {
-            //     options.addPreference("browser.privatebrowsing.autostart", true);
-            // }
-
             if (CollectionUtils.isNotEmpty(firefoxBinArgs)) { firefoxBinArgs.forEach(options::addArguments); }
 
             boolean ignoreAlert = BooleanUtils.toBoolean(context.getBooleanData(OPT_ALERT_IGNORE_FLAG));

@@ -500,7 +500,29 @@
             }
           ]]></value>
         </entry>
+        <entry key="firefoxheadless">
+            <value><![CDATA[
+            {
+                "home": "${user.home}/.nexial/firefox",
+                "baseName": "geckodriver",
+                "checkFrequency": 1209600000,
+                "checkFrequencyDescription": "Every 2 weeks",
+                "checkUrlBase" : "https://api.github.com/repos/mozilla/geckodriver/releases"
+            }
+          ]]></value>
+        </entry>
         <entry key="chrome">
+            <value><![CDATA[
+            {
+                "home": "${user.home}/.nexial/chrome",
+                "baseName": "chromedriver",
+                "checkFrequency": 1209600000,
+                "checkFrequencyDescription": "Every 2 weeks",
+                "checkUrlBase" : "https://chromedriver.storage.googleapis.com"
+            }
+          ]]></value>
+        </entry>
+        <entry key="chromeheadless">
             <value><![CDATA[
             {
                 "home": "${user.home}/.nexial/chrome",

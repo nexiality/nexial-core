@@ -414,19 +414,6 @@ public class WebCommand extends BaseCommand implements CanTakeScreenshot, CanLog
         return StepResult.success("stored content of '" + locator + "' as ${" + var + "}");
     }
 
-    public StepResult assertOneMatch(String locator) {
-        try {
-            WebElement matched = findExactlyOneElement(locator);
-            if (matched != null) {
-                return StepResult.success("Found 1 element via locator '" + locator + "'");
-            } else {
-                return StepResult.fail("Unable to find matching element via locator '" + locator + "'");
-            }
-        } catch (IllegalArgumentException e) {
-            return StepResult.fail(e.getMessage());
-        }
-    }
-
     public StepResult saveElement(String var, String locator) {
         requires(StringUtils.isNotBlank(var) && !StringUtils.startsWith(var, "${"), "invalid variable", var);
         context.setData(var, findElement(locator));
@@ -524,6 +511,58 @@ public class WebCommand extends BaseCommand implements CanTakeScreenshot, CanLog
             return StepResult.fail(msgPrefix + "FOUND");
         } else {
             return StepResult.success(msgPrefix + "not found");
+        }
+    }
+
+    public StepResult assertTextMatches(String text, String minMatch, String scrollTo) {
+        requiresNotBlank(text, "Invalid text to search", text);
+        requiresPositiveNumber(minMatch, "index must be a positive number", minMatch);
+
+        String locator = locatorHelper.resolveContainLabelXpath(text);
+        int atLeast = NumberUtils.toInt(minMatch);
+        boolean alsoScrollTo = BooleanUtils.toBoolean(scrollTo);
+
+        List<WebElement> matches = findElements(locator);
+        if (CollectionUtils.isEmpty(matches) && atLeast > 0) {
+            return StepResult.fail("'" + text + "' not found but at least " + minMatch + " matches required");
+        }
+
+        int matchCount = matches.size();
+
+        if (atLeast == 0) {
+            return StepResult.fail(matchCount + " matches of '" + text + "' found but no matches is expected");
+        }
+
+        if (matchCount < atLeast) {
+            return StepResult.fail(minMatch + " matches of '" + text + "' required but only " + matchCount + " found");
+        }
+
+        if (alsoScrollTo) {
+            WebElement scrollTarget = matches.get(atLeast - 1);
+            if (scrollTarget instanceof Locatable) {
+                Locatable target = (Locatable) scrollTarget;
+                if (!scrollTo(target)) {
+                    log("At least " + minMatch + " matches of text '" + text + "' was found, but scrolling to the " +
+                        "last expected element was not possible due to its lack of page coordinates");
+                } else {
+                    highlight(scrollTarget);
+                }
+            }
+        }
+
+        return StepResult.success("At least " + minMatch + " matches of text '" + text + "' was found");
+    }
+
+    public StepResult assertOneMatch(String locator) {
+        try {
+            WebElement matched = findExactlyOneElement(locator);
+            if (matched != null) {
+                return StepResult.success("Found 1 element via locator '" + locator + "'");
+            } else {
+                return StepResult.fail("Unable to find matching element via locator '" + locator + "'");
+            }
+        } catch (IllegalArgumentException e) {
+            return StepResult.fail(e.getMessage());
         }
     }
 
@@ -1032,7 +1071,7 @@ public class WebCommand extends BaseCommand implements CanTakeScreenshot, CanLog
         }
 
         jsExecutor.executeScript("arguments[0].scrollIntoView(true);", element);
-        if (context.isHighlightWebElementEnabled()) { highlight(element); }
+        highlight(element);
         element.clear();
 
         if (StringUtils.isNotEmpty(value)) {
@@ -1046,7 +1085,7 @@ public class WebCommand extends BaseCommand implements CanTakeScreenshot, CanLog
     public StepResult typeKeys(String locator, String value) {
         WebElement element = toElement(locator);
         jsExecutor.executeScript("arguments[0].scrollIntoView(true);", element);
-        if (context.isHighlightWebElementEnabled()) { highlight(element); }
+        highlight(element);
 
         if (StringUtils.isBlank(value)) {
             element.clear();
@@ -1225,7 +1264,7 @@ public class WebCommand extends BaseCommand implements CanTakeScreenshot, CanLog
 
         WebElement element = toElement(locator);
         jsExecutor.executeScript("arguments[0].scrollIntoView(true);", element);
-        if (context.isHighlightWebElementEnabled()) { highlight(element); }
+        highlight(element);
         new Actions(driver).doubleClick(element).build().perform();
 
         // could have alert text...
@@ -1521,7 +1560,7 @@ public class WebCommand extends BaseCommand implements CanTakeScreenshot, CanLog
             tryFocus(element);
         }
 
-        if (context.isHighlightWebElementEnabled()) { highlight(element); }
+        highlight(element);
 
         boolean forceJSClick = jsExecutor != null &&
                                (browser.favorJSClick() || context.getBooleanData(FORCE_JS_CLICK, DEF_FORCE_JS_CLICK));
@@ -1835,6 +1874,10 @@ public class WebCommand extends BaseCommand implements CanTakeScreenshot, CanLog
     protected boolean scrollTo(Locatable element) throws ElementNotVisibleException {
         Coordinates coordinates = element.getCoordinates();
         if (coordinates != null) {
+            Point pagePosition = coordinates.onPage();
+            // either we are already in view, or this is not suitable for scrolling (i.e. Window, Document, Html object)
+            if (pagePosition.getX() < 10 && pagePosition.getY() < 10) { return true; }
+
             // according to Coordinates' Javadoc: "... This method automatically scrolls the page and/or
             // frames to make element visible in viewport before calculating its coordinates"
             Point topLeft = coordinates.inViewPort();
@@ -1905,7 +1948,7 @@ public class WebCommand extends BaseCommand implements CanTakeScreenshot, CanLog
 
     /** IE8-specific fix by adding randomized number sequence to URL to prevent overly-intelligent-caching by IE. */
     protected String fixURL(String url) {
-        if (browser.isRunIE() && browser.getMajorVersion() == 8 || browser.isRunChrome()) {
+        if (browser.isRunIE() && browser.getMajorVersion() == 8) { // || browser.isRunChrome()) {
             url = addNoCacheRandom(url);
         }
         return url;
@@ -1985,7 +2028,7 @@ public class WebCommand extends BaseCommand implements CanTakeScreenshot, CanLog
     protected void highlight(String locator) { highlight(toElement(context.replaceTokens(locator))); }
 
     protected void highlight(WebElement we) {
-        // if (browser.isRunPhantomJS()) { return; }
+        if (!context.isHighlightWebElementEnabled()) { return; }
 
         String initialStyle = null;
         Object retObj = jsExecutor.executeScript("return arguments[0].getAttribute('style');", we);
