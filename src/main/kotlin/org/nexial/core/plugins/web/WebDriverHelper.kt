@@ -39,6 +39,7 @@ import org.nexial.core.NexialConst.BrowserType.*
 import org.nexial.core.NexialConst.Data.WIN32_CMD
 import org.nexial.core.model.ExecutionContext
 import org.nexial.core.plugins.ws.WebServiceClient
+import org.nexial.core.plugins.xml.XmlCommand
 import org.nexial.core.utils.ConsoleUtils
 import org.nexial.core.utils.ExecUtil
 import org.nexial.core.utils.JSONPath
@@ -47,6 +48,7 @@ import java.io.File.separator
 import java.io.FileInputStream
 import java.io.FileOutputStream
 import java.io.IOException
+import java.math.BigInteger
 import java.util.*
 import java.util.zip.GZIPInputStream
 
@@ -234,8 +236,9 @@ abstract class WebDriverHelper protected constructor(protected var context: Exec
                 firefox, firefoxheadless               -> FirefoxDriverHelper(context)
                 electron                               -> ElectronDriverHelper(context)
                 chrome, chromeheadless, chromeembedded -> ChromeDriverHelper(context)
+                ie                                     -> IEDriverHelper(context)
 
-                // todo: add more browserType-specific helper instantiation
+            // todo: add more browserType-specific helper instantiation
                 else                                   -> throw RuntimeException("No WebDriverHelper implemented for $browserType")
             }
 
@@ -569,5 +572,71 @@ class ChromeDriverHelper(context: ExecutionContext) : WebDriverHelper(context) {
         }
 
         return manifest
+    }
+}
+
+/**
+ * webdriver helper for IE browser
+ */
+class IEDriverHelper(context: ExecutionContext) : WebDriverHelper(context) {
+
+    override fun resolveDriverManifest(pollForUpdates: Boolean): WebDriverManifest {
+        val manifest: WebDriverManifest = if (driverManifest.canRead() && driverManifest.length() > 10) {
+            GSON.fromJson(FileUtils.readFileToString(driverManifest, DEF_CHARSET), WebDriverManifest::class.java)
+        } else {
+            // first time
+            WebDriverManifest()
+        }
+        manifest.init()
+
+        val hasDriver = isFileReadable(driverLocation, DRIVER_MIN_SIZE)
+
+        // never check is turned on and we already have a driver, so just keep this one
+        if (manifest.neverCheck && hasDriver) return manifest
+
+        if (pollForUpdates && manifest.lastChecked + config.checkFrequency > System.currentTimeMillis()) {
+            // we still have time.. no need to check now
+            return manifest
+        }
+        // else, need to check online, poll online for newer driver
+
+        // first ws call to check existing/available versions of this driver
+        val wsClient = WebServiceClient(context)
+        val response = wsClient.get(config.checkUrlBase, null)
+        // todo: handle to set min version if failed to fetch latest version
+        val xmlPayload = response.body
+        val archKey = when (EnvUtils.getOsArchBit()) {
+            32   -> "Win32"
+            64   -> "x64"
+            else -> "Win32"
+        }
+
+        val generationsIE = "//*[local-name()='Key'][contains(text(),'IEDriverServer_$archKey')]//following-sibling::" +
+                            "*[local-name()='Generation']/text()"
+
+        val xmlCommand = XmlCommand()
+        xmlCommand.init(context)
+        val generationsList = xmlCommand.getValuesListByXPath(xmlPayload, generationsIE)
+        val generations = mutableListOf<BigInteger>()
+        generationsList.forEach { key -> generations.add(key.toBigInteger()) }
+        val latestGenKey = generations.max().toString()
+        val xpathKey = "//*[local-name()='Generation'][text()='$latestGenKey']//preceding-sibling::" +
+                       "*[local-name()='Key']/text()"
+        val key = xmlCommand.getValueByXPath(xmlPayload, xpathKey)
+        val tag = key.split("/")[0]
+
+        if (!pollForUpdates || manifest.driverVersionExpanded < WebDriverHelper.expandVersion(tag)) {
+            // persist the date/time when we last checked online
+            manifest.lastChecked = System.currentTimeMillis()
+            manifest.driverVersion = tag
+            manifest.driverUrl = "${config.checkUrlBase}/$key"
+        }
+        return manifest
+    }
+
+    override fun resolveLocalDriverPath(): String {
+
+        return StringUtils.appendIfMissing(File(context.replaceTokens(config.home)).absolutePath, separator) +
+               config.baseName + ".exe"
     }
 }

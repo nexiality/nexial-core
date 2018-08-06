@@ -56,8 +56,8 @@ import static org.nexial.core.utils.CheckUtils.requires;
 import static org.nexial.core.utils.CheckUtils.requiresNotBlank;
 
 public class XmlCommand extends BaseCommand {
-    public static final String PROLOG_START = "<?xml version=\"";
-    public static final String DEFAULT_PROLOG = PROLOG_START + "1.0\" encoding=\"utf-8\"?>";
+    public static final String PROLOG_START = "<?xml version=";
+    public static final String DEFAULT_PROLOG = PROLOG_START + "\"1.0\" encoding=\"utf-8\"?>";
 
     private static class SchemaError implements Serializable {
         String severity;

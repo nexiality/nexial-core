@@ -545,14 +545,13 @@
           ]]></value>
         </entry>
         <entry key="ie">
-            <!-- https://raw.githubusercontent.com/SeleniumHQ/selenium/master/cpp/iedriverserver/CHANGELOG -->
             <value><![CDATA[
             {
                 "home": "${user.home}/.nexial/ie",
                 "baseName": "IEDriverServer",
                 "checkFrequency": 1209600000,
                 "checkFrequencyDescription": "Every 2 weeks",
-                "checkUrlBase" : "https://github.com/mozilla/geckodriver/releases"
+                "checkUrlBase" : "https://selenium-release.storage.googleapis.com"
             }
           ]]></value>
         </entry>

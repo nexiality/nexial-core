@@ -69,7 +69,6 @@ import static org.nexial.core.NexialConst.BrowserStack.*;
 import static org.nexial.core.NexialConst.BrowserType.*;
 import static org.nexial.core.NexialConst.*;
 import static org.nexial.core.NexialConst.Data.*;
-import static org.nexial.core.NexialConst.Project.NEXIAL_WINDOWS_BIN_REL_PATH;
 import static org.nexial.core.interactive.InteractiveConst.Command.browser;
 import static org.nexial.core.utils.CheckUtils.requiresExecutableFile;
 import static org.openqa.selenium.PageLoadStrategy.EAGER;
@@ -649,11 +648,13 @@ public class Browser implements ForcefulTerminate {
         return null;
     }
 
-    private WebDriver initIE() {
+    private WebDriver initIE() throws IOException {
         if (!IS_OS_WINDOWS) {
             throw new RuntimeException("Browser automation for Internet Explorer is only supported on "
                                        + "Windows operating system. Sorry...");
         }
+        WebDriverHelper helper = WebDriverHelper.Companion.newInstance(ie, context);
+        File driver = helper.resolveDriver();
 
         // check https://github.com/SeleniumHQ/selenium/wiki/InternetExplorerDriver for details
         System.setProperty(SELENIUM_IE_LOG_LEVEL, "WARN");
@@ -663,11 +664,9 @@ public class Browser implements ForcefulTerminate {
         syncContextPropToSystem(SELENIUM_IE_SILENT);
         boolean runWin64 = EnvUtils.isRunningWindows64bit();
 
+        String ieDriverPath = driver.getAbsolutePath();
         if (System.getProperty(SELENIUM_IE_DRIVER) == null) {
             runWin64 = EnvUtils.isRunningWindows64bit() && !resolveConfig(OPT_FORCE_IE_32, DEFAULT_FORCE_IE_32);
-            String ieDriverPath = StringUtils.appendIfMissing(context.getProject().getNexialHome(), separator) +
-                                  NEXIAL_WINDOWS_BIN_REL_PATH +
-                                  (runWin64 ? "IEDriverServer64.exe" : "IEDriverServer.exe");
             context.setData(SELENIUM_IE_DRIVER, ieDriverPath);
             System.setProperty(SELENIUM_IE_DRIVER, ieDriverPath);
         }
