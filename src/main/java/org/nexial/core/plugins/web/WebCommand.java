@@ -1127,7 +1127,7 @@ public class WebCommand extends BaseCommand implements CanTakeScreenshot, CanLog
         requires(StringUtils.isNotBlank(var), "invalid variable", var);
 
         try {
-            context.setData(var, downloadLink(sessionIdName, url));
+            context.setData(var, new String(downloadLink(sessionIdName, url)));
             return StepResult.success("saved '" + url + "' as ${" + var + "}");
         } catch (Exception e) {
             String message = "Unable to save link '" + url + "' as property '" + var + "': " + e.getMessage();
