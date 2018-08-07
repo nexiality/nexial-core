@@ -225,8 +225,6 @@ abstract class WebDriverHelper protected constructor(protected var context: Exec
         @Throws(IOException::class)
         fun newInstance(browserType: BrowserType, context: ExecutionContext): WebDriverHelper {
             // sanity check
-//            if (context == null) throw IllegalArgumentException("browserType cannot be null")
-//            if (browserType == null) throw IllegalArgumentException("browserType cannot be null")
             if (browserType == safari || browserType == browserstack || browserType == iphone) {
                 throw IllegalArgumentException("No WebDriverHelper implementation needed/available for $browserType")
             }
@@ -237,8 +235,6 @@ abstract class WebDriverHelper protected constructor(protected var context: Exec
                 electron                               -> ElectronDriverHelper(context)
                 chrome, chromeheadless, chromeembedded -> ChromeDriverHelper(context)
                 ie                                     -> IEDriverHelper(context)
-
-            // todo: add more browserType-specific helper instantiation
                 else                                   -> throw RuntimeException("No WebDriverHelper implemented for $browserType")
             }
 
@@ -396,13 +392,13 @@ class EdgeDriverHelper(context: ExecutionContext) : WebDriverHelper(context) {
 
     companion object {
         // first version of edge browser as min/failback version
-        private val minOsVersionNum = 10240
-        private val minOsVersion = "" + minOsVersionNum
+        private const val minOsVersionNum = 10240
+        private const val minOsVersion = "" + minOsVersionNum
 
         private val winVer = mutableListOf("/C", "ver")
-        private val winVerRegex1 = "10\\.0\\.(\\d+)\\.(\\d+)"
-        private val winVerRegex2 = "10\\.0\\.(\\d+)"
-        private val winVerRegex3 = "([\\d\\.]+)"
+        private const val winVerRegex1 = "10\\.0\\.(\\d+)\\.(\\d+)"
+        private const val winVerRegex2 = "10\\.0\\.(\\d+)"
+        private const val winVerRegex3 = "([\\d\\.]+)"
 
         fun deriveWin10BuildNumber(): String {
             try {
