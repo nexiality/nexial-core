@@ -244,10 +244,11 @@ abstract class WebDriverHelper protected constructor(protected var context: Exec
             val config = helper.initConfig()
             helper.config = config
 
+            helper.driverLocation = helper.resolveLocalDriverPath()
+
             val driverHome = File(context.replaceTokens(config.home))
             FileUtils.forceMkdir(driverHome)
 
-            helper.driverLocation = helper.resolveLocalDriverPath()
             helper.driverManifest = File(StringUtils.appendIfMissing(driverHome.absolutePath, separator) + MANIFEST)
 
             return helper
@@ -599,13 +600,8 @@ class IEDriverHelper(context: ExecutionContext) : WebDriverHelper(context) {
         // first ws call to check existing/available versions of this driver
         val wsClient = WebServiceClient(context)
         val response = wsClient.get(config.checkUrlBase, null)
-        // todo: handle to set min version if failed to fetch latest version
         val xmlPayload = response.body
-        val archKey = when (EnvUtils.getOsArchBit()) {
-            32   -> "Win32"
-            64   -> "x64"
-            else -> "Win32"
-        }
+        val archKey = if (StringUtils.contains(driverLocation, "win32")) "Win32" else "x64"
 
         val generationsIE = "//*[local-name()='Key'][contains(text(),'IEDriverServer_$archKey')]//following-sibling::" +
                             "*[local-name()='Generation']/text()"
@@ -631,8 +627,17 @@ class IEDriverHelper(context: ExecutionContext) : WebDriverHelper(context) {
     }
 
     override fun resolveLocalDriverPath(): String {
+        if (!IS_OS_WINDOWS) {
+            throw RuntimeException(
+                "Browser automation for Internet Explorer is only supported on " + "Windows operating system. Sorry...")
+        }
 
-        return StringUtils.appendIfMissing(File(context.replaceTokens(config.home)).absolutePath, separator) +
-               config.baseName + ".exe"
+        val newConfigHome = context.replaceTokens(config.home) + separator +
+                            (if (EnvUtils.isRunningWindows64bit()
+                                 && !context.getBooleanData(OPT_FORCE_IE_32, DEFAULT_FORCE_IE_32)) "x64" else "win32")
+
+        this.driverLocation = newConfigHome
+        config.home = newConfigHome
+        return StringUtils.appendIfMissing(File(newConfigHome).absolutePath, separator) + config.baseName + ".exe"
     }
 }

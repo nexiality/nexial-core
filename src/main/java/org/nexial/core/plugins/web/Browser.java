@@ -649,12 +649,8 @@ public class Browser implements ForcefulTerminate {
     }
 
     private WebDriver initIE() throws IOException {
-        if (!IS_OS_WINDOWS) {
-            throw new RuntimeException("Browser automation for Internet Explorer is only supported on "
-                                       + "Windows operating system. Sorry...");
-        }
-        WebDriverHelper helper = WebDriverHelper.Companion.newInstance(ie, context);
-        File driver = helper.resolveDriver();
+
+        resolveIEDriverLocation();
 
         // check https://github.com/SeleniumHQ/selenium/wiki/InternetExplorerDriver for details
         System.setProperty(SELENIUM_IE_LOG_LEVEL, "WARN");
@@ -664,11 +660,8 @@ public class Browser implements ForcefulTerminate {
         syncContextPropToSystem(SELENIUM_IE_SILENT);
         boolean runWin64 = EnvUtils.isRunningWindows64bit();
 
-        String ieDriverPath = driver.getAbsolutePath();
         if (System.getProperty(SELENIUM_IE_DRIVER) == null) {
             runWin64 = EnvUtils.isRunningWindows64bit() && !resolveConfig(OPT_FORCE_IE_32, DEFAULT_FORCE_IE_32);
-            context.setData(SELENIUM_IE_DRIVER, ieDriverPath);
-            System.setProperty(SELENIUM_IE_DRIVER, ieDriverPath);
         }
 
         boolean ignoreAlert = resolveConfig(OPT_ALERT_IGNORE_FLAG, false);
@@ -758,6 +751,15 @@ public class Browser implements ForcefulTerminate {
         ConsoleUtils.log(log.toString());
 
         return ie;
+    }
+
+    private void resolveIEDriverLocation() throws IOException {
+        WebDriverHelper helper = WebDriverHelper.Companion.newInstance(ie, context);
+        File driver = helper.resolveDriver();
+        if (!driver.exists()) { throw new IOException("Unable to resolve/ download driver for IE browser."); }
+        String ieDriverPath = driver.getAbsolutePath();
+        context.setData(SELENIUM_IE_DRIVER, ieDriverPath);
+        System.setProperty(SELENIUM_IE_DRIVER, ieDriverPath);
     }
 
     private WebDriver initEdge() throws IOException {
