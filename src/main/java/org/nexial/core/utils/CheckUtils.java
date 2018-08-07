@@ -33,6 +33,8 @@ import org.nexial.commons.utils.FileUtil;
 import org.nexial.commons.utils.TextUtils;
 
 import static org.nexial.core.NexialConst.Jenkins.*;
+import static org.nexial.core.NexialConst.TOKEN_END;
+import static org.nexial.core.NexialConst.TOKEN_START;
 
 public class CheckUtils {
     public static final List<String> JUNIT_CLASSES = Arrays.asList("org.junit.runner.JUnitCore",
@@ -40,7 +42,7 @@ public class CheckUtils {
 
     public static boolean isValidVariable(String var) {
         return !StringUtils.isBlank(var) &&
-               !TextUtils.isBetween(var, "${", "}") &&
+               !TextUtils.isBetween(var, TOKEN_START, TOKEN_END) &&
                !StringUtils.containsAny(var, "$", "{", "}", "[", "]");
     }
 

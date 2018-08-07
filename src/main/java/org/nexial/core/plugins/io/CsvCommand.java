@@ -201,6 +201,7 @@ public class CsvCommand extends IoCommand {
 
         if (StringUtils.isNotEmpty(delim)) {
             settings.getFormat().setDelimiter(delim.charAt(0));
+            settings.setDelimiterDetectionEnabled(false);
         } else {
             settings.setDelimiterDetectionEnabled(true);
         }

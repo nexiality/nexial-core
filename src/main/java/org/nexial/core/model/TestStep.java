@@ -299,10 +299,21 @@ public class TestStep extends TestStepManifest {
 
             for (int i = 0; i < params.size(); i++) {
                 String param = params.get(i);
+
+                // could be literal syspath - e.g. $(syspath|out|fullpath)/...
+                // could be data variable that reference syspath function
+                boolean hasPath = isFileLink(param);
+                if (!hasPath && TextUtils.isBetween(param, TOKEN_START, TOKEN_END)) {
+                    // param is a data variable... so it might be referencing a syspath function
+                    Object pathObj = context.getObjectData(StringUtils.substringBetween(param, TOKEN_START, TOKEN_END));
+                    if (pathObj != null) {
+                        String pathString = pathObj.toString();
+                        if (isFileLink(pathString)) { hasPath = true; }
+                    }
+                }
+
                 // create hyperlink for syspath when path is referenced
-                int syspathCount = StringUtils.countMatches(param, TOKEN_FUNCTION_START + "syspath|");
-                int syspathNameCount = StringUtils.countMatches(param, "|name" + TOKEN_FUNCTION_END);
-                if (syspathCount == 1 && syspathNameCount == 0) {
+                if (hasPath) {
                     String value = context.replaceTokens(param);
                     // gotta make sure it's a file/path
                     if (FileUtil.isSuitableAsPath(value) && StringUtils.containsAny(value, "\\/")) {
@@ -588,6 +599,11 @@ public class TestStep extends TestStepManifest {
         lwTestStep.setLogToTestScript(isLogToTestScript());
         lwTestStep.setRowIndex(row.get(0).getRowIndex());
         return lwTestStep;
+    }
+
+    private boolean isFileLink(String param) {
+        return StringUtils.countMatches(param, TOKEN_FUNCTION_START + "syspath|") == 1 &&
+               StringUtils.countMatches(param, "|name" + TOKEN_FUNCTION_END) == 0;
     }
 
     private boolean hasCryptoIdent(String cellValue) {

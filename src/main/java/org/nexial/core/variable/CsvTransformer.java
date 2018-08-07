@@ -72,7 +72,18 @@ public class CsvTransformer<T extends CsvDataType> extends Transformer {
     public T parse(T data, String... configs) {
         if (ArrayUtils.isNotEmpty(configs)) {
             String config = TextUtils.toString(configs, PAIR_DELIM, null, null);
+            // escape pipe and comma
+            config = StringUtils.replace(config, "\\" + PAIR_DELIM, FILTER_TEMP_DELIM1);
+            config = StringUtils.replace(config, "\\,", FILTER_TEMP_DELIM2);
+
             Map<String, String> configMap = TextUtils.toMap(config, PAIR_DELIM, NAME_VALUE_DELIM);
+            // unescape pipes and comma
+            configMap.forEach((key, value) -> {
+                value = StringUtils.replace(value, FILTER_TEMP_DELIM1, PAIR_DELIM);
+                value = StringUtils.replace(value, FILTER_TEMP_DELIM2, ",");
+                configMap.put(key, value);
+            });
+
             if (configMap.containsKey("delim")) { data.setDelim(configMap.get("delim")); }
             if (configMap.containsKey("header")) { data.setHeader(BooleanUtils.toBoolean(configMap.get("header"))); }
             if (configMap.containsKey("quote")) { data.setQuote(configMap.get("quote")); }
@@ -124,8 +135,12 @@ public class CsvTransformer<T extends CsvDataType> extends Transformer {
 
         List<String> columnValues = new ArrayList<>();
         int pos = index;
-        data.getValue().forEach(record -> columnValues.add(record.getString(pos)));
-        return toListDataType(columnValues, ",");
+        data.getValue().forEach(record -> columnValues.add(record != null ? record.getString(pos) : null));
+
+        // converting to LIST object with the same delimiter used initially to parse `textValue`
+        ExecutionContext context = ExecutionThread.get();
+        String delim = StringUtils.defaultIfEmpty(data.getDelim(), context != null ? context.getTextDelim() : ",");
+        return toListDataType(columnValues, String.valueOf(delim.charAt(0)));
     }
 
     public ListDataType headers(T data) {
