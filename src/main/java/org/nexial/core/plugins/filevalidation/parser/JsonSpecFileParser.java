@@ -63,21 +63,17 @@ public class JsonSpecFileParser extends RecordSpecFileParser {
     private MasterConfig parseJsonDescriptor(JsonMappingConfig jsonMappingConfig) {
 
         MasterConfig masterConfig = new MasterConfig();
-
         RecordConfig fileHeaderConfig = parsefileHeaderFields(jsonMappingConfig.getFileheaderrecord());
         masterConfig.setFileHeader(fileHeaderConfig);
-
         masterConfig.setSectionConfigs(parseFilesections(jsonMappingConfig.getFilesections()));
-
         RecordConfig fileFooterConfig = parseFileFooterFields(jsonMappingConfig.getFilefooterrecord());
         masterConfig.setFileFooter(fileFooterConfig);
-
         return masterConfig;
-
     }
 
     private RecordConfig parsefileHeaderFields(FileheaderrecordBean fileheaderrecordBean) {
 
+        if (fileheaderrecordBean == null) { return null; }
         List<FieldConfig> fieldConfigs;
         fieldConfigs = createFieldConfigs(fileheaderrecordBean.getRecordspec(),
                                           fileheaderrecordBean.getValidations(),
@@ -96,28 +92,26 @@ public class JsonSpecFileParser extends RecordSpecFileParser {
     private List<SectionConfig> parseFilesections(List<FilesectionsBean> filesectionsBeans) {
 
         List<SectionConfig> sectionConfigs = new ArrayList<>();
+        for (FilesectionsBean filesectionsBean : filesectionsBeans) {
+            if (filesectionsBean != null) {
+                SectionConfig sectionConfig = new SectionConfig();
+                sectionConfig.setHeaderConfig(createHeaderRecordConfig(filesectionsBean.getHeaderrecord()));
+                List<RecordConfig> bodyConfigs = new ArrayList<>();
+                for (int j = 0; j < filesectionsBean.getBodyrecords().size(); j++) {
 
-        for (int i = 0; i < filesectionsBeans.size(); i++) {
-
-            FilesectionsBean filesectionsBean = filesectionsBeans.get(i);
-
-            SectionConfig sectionConfig = new SectionConfig();
-            sectionConfig.setHeaderConfig(createHeaderRecordConfig(filesectionsBean.getHeaderrecord()));
-            List<RecordConfig> bodyConfigs = new ArrayList<>();
-            for (int j = 0; j < filesectionsBean.getBodyrecords().size(); j++) {
-
-                bodyConfigs.add(createBodyRecordConfig(filesectionsBean.getBodyrecords().get(j)));
+                    bodyConfigs.add(createBodyRecordConfig(filesectionsBean.getBodyrecords().get(j)));
+                }
+                sectionConfig.setBodyConfigs(bodyConfigs);
+                sectionConfig.setFooterConfig(createFooterRecordConfig(filesectionsBean.getFooterrecord()));
+                sectionConfigs.add(sectionConfig);
             }
-            sectionConfig.setBodyConfigs(bodyConfigs);
-            sectionConfig.setFooterConfig(createFooterRecordConfig(filesectionsBean.getFooterrecord()));
-            sectionConfigs.add(sectionConfig);
         }
-
         return sectionConfigs;
     }
 
     private RecordConfig parseFileFooterFields(FilefooterrecordBean filefooterrecordBean) {
 
+        if (filefooterrecordBean == null) { return null; }
         List<FieldConfig> fieldConfigs;
         fieldConfigs = createFieldConfigs(filefooterrecordBean.getRecordspec(),
                                           filefooterrecordBean.getValidations(),
@@ -134,6 +128,7 @@ public class JsonSpecFileParser extends RecordSpecFileParser {
     }
 
     private RecordConfig createHeaderRecordConfig(HeaderrecordBean headerrecordBean) {
+        if (headerrecordBean == null) { return null; }
         List<FieldConfig> fieldConfigs = createFieldConfigs(headerrecordBean.getRecordspec(),
                                                             headerrecordBean.getValidations(),
                                                             headerrecordBean.getMapfunctions());
@@ -149,6 +144,7 @@ public class JsonSpecFileParser extends RecordSpecFileParser {
 
     private RecordConfig createBodyRecordConfig(BodyrecordsBean bodyrecordsBean) {
 
+        if (bodyrecordsBean == null) { return null; }
         List<FieldConfig> fieldConfigs = createFieldConfigs(bodyrecordsBean.getRecordspec(),
                                                             bodyrecordsBean.getValidations(),
                                                             bodyrecordsBean.getMapfunctions());
@@ -164,6 +160,7 @@ public class JsonSpecFileParser extends RecordSpecFileParser {
 
     private RecordConfig createFooterRecordConfig(FooterrecordBean footerrecordBean) {
 
+        if (footerrecordBean == null) { return null; }
         List<FieldConfig> fieldConfigs = createFieldConfigs(footerrecordBean.getRecordspec(),
                                                             footerrecordBean.getValidations(),
                                                             footerrecordBean.getMapfunctions());

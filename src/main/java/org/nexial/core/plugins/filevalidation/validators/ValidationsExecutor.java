@@ -172,10 +172,12 @@ public class ValidationsExecutor {
                                            fieldName + "'");
                     break;
                 }
-
-                String fieldValue = recordField.getFieldValue().trim();
-                fieldValue = (signField != null) ? signField.getFieldValue() + fieldValue : fieldValue;
-                BigDecimal big = NumberUtils.createBigDecimal((fieldValue));
+                BigDecimal big = null;
+                if (!function.equals("COUNT")) {
+                    String fieldValue = recordField.getFieldValue().trim();
+                    fieldValue = (signField != null) ? signField.getFieldValue().trim() + fieldValue : fieldValue;
+                    big = NumberUtils.createBigDecimal((fieldValue));
+                }
 
                 String condition = mapFunctionConfig.getCondition();
                 if (condition != null && !isMatch(condition)) {
@@ -201,13 +203,13 @@ public class ValidationsExecutor {
                 if (function.equals("MAX")) {
                     max(mapValues, mapTo, big);
                 }
-
                 if (function.equals("COUNT")) {
                     if (mapValues.containsKey(mapTo)) {
                         int counter = mapValues.get(mapTo).intValue();
                         mapValues.put(mapTo, ++counter);
                     } else { mapValues.put(mapTo, 1); }
                 }
+
             }
 
         }
