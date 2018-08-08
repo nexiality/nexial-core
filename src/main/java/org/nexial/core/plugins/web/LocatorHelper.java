@@ -23,6 +23,8 @@ import java.util.Collections;
 import java.util.List;
 import java.util.stream.Collectors;
 
+import javax.validation.constraints.NotNull;
+
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.ArrayUtils;
 import org.apache.commons.lang3.BooleanUtils;
@@ -55,10 +57,11 @@ class LocatorHelper {
     LocatorHelper(WebCommand delegator) { this.delegator = delegator; }
 
     // todo: use reflection to simplify code; nested if's are ugly, man
+    @NotNull
     protected By findBy(String locator) {
         if (StringUtils.isBlank(locator)) {
             CheckUtils.fail("invalid locator:" + locator);
-            return null;
+            throw new IllegalArgumentException("null/blank locator is not allowed!");
         }
 
         locator = validateLocator(locator);

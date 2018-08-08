@@ -26,6 +26,7 @@ import java.util.Map;
 import org.apache.commons.cli.Options;
 import org.apache.commons.lang3.BooleanUtils;
 import org.apache.commons.lang3.StringUtils;
+import org.nexial.commons.utils.RegexUtils;
 import org.nexial.commons.utils.TextUtils;
 import org.nexial.core.excel.ExcelConfig;
 import org.nexial.core.model.ExecutionContext;
@@ -761,6 +762,11 @@ public final class NexialConst {
         public static final String SSH_CLIENT_PREFIX = NAMESPACE + "ssh.";
         public static final String SSH_USERNAME = "username";
         public static final String SSH_PASSWORD = "password";
+        public static final String SSH_HOST = "host";
+        public static final String SSH_PORT = "port";
+        public static final String SSH_HOST_KEY_CHECK = "strictHostKeyChecking";
+        public static final String SSH_KNOWN_HOSTS = "knownHosts";
+        public static final String DEF_SSH_PORT = "22";
 
         /**
          * special prefix to mark certain data as contextual to a test scenario execution.  Such data will be displayed
@@ -831,11 +837,13 @@ public final class NexialConst {
         public static final String BLANK = "(blank)";
         public static final String TAB = "(tab)";
         public static final String NL = "(eol)";
-        public static final String SSH_HOST = "host";
-        public static final String SSH_PORT = "port";
-        public static final String SSH_HOST_KEY_CHECK = "strictHostKeyChecking";
-        public static final String SSH_KNOWN_HOSTS = "knownHosts";
-        public static final String DEF_SSH_PORT = "22";
+        public static final String REGEX_ONLY_NON_DISPLAYABLES = "(\\(blank\\)|\\(empty\\)|\\(tab\\)|\\(eol\\))+";
+        public static final Map<String, String> NON_DISPLAYABLE_REPLACEMENTS =
+            TextUtils.toMap("=",
+                            EMPTY + "=",
+                            BLANK + "= ",
+                            TAB + "=\t",
+                            NL + "=\n");
 
         private Data() { }
 
@@ -856,10 +864,16 @@ public final class NexialConst {
 
         public static String treatCommonValueShorthand(String text) {
             if (StringUtils.isBlank(text)) { return text; }
-            if (StringUtils.equals(text, EMPTY)) { return ""; }
-            if (StringUtils.equals(text, BLANK)) { return " "; }
-            if (StringUtils.equals(text, TAB)) { return "\t"; }
-            return text;
+
+            String[] text1 = new String[]{text};
+
+            // only `EMPTY`, `BLANK`, `TAB` or `NL` or combination of these are found
+            if (RegexUtils.isExact(text1[0], REGEX_ONLY_NON_DISPLAYABLES)) {
+                NON_DISPLAYABLE_REPLACEMENTS.forEach(
+                    (shorthand, replacement) -> text1[0] = StringUtils.replace(text1[0], shorthand, replacement));
+            }
+
+            return text1[0];
         }
     }
 

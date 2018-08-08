@@ -1565,11 +1565,13 @@ public class WebCommand extends BaseCommand implements CanTakeScreenshot, CanLog
         boolean forceJSClick = jsExecutor != null &&
                                (browser.favorJSClick() || context.getBooleanData(FORCE_JS_CLICK, DEF_FORCE_JS_CLICK));
 
+        // Nexial configure "preference" for each browser to use JS click on not. However, we need to honor user's
+        // wish NOT to use JS click if they had configured their test as such
+        if (context.hasData(FORCE_JS_CLICK) && !context.getBooleanData(FORCE_JS_CLICK)) { forceJSClick = false; }
+
         try {
             if (forceJSClick && StringUtils.isNotBlank(element.getAttribute("id"))) {
-                ConsoleUtils.log("click target via JS, @id=" + element.getAttribute("id"));
-                Object retObj = jsExecutor.executeScript("arguments[0].click(); return true;", element);
-                ConsoleUtils.log("clicked -> " + retObj);
+                jsClick(element);
                 return StepResult.success("click via JS event");
             } else {
                 element.click();
@@ -1579,11 +1581,9 @@ public class WebCommand extends BaseCommand implements CanTakeScreenshot, CanLog
             return StepResult.fail(e.getMessage(), e);
         } catch (Exception e) {
             // try again..
-            if (forceJSClick) {
-                ConsoleUtils.log("AGAIN click target via JS");
-                Object retObj = jsExecutor.executeScript("arguments[0].click(); return true;", element);
-                ConsoleUtils.log("clicked -> " + retObj);
-                return StepResult.success("click via JS event");
+            if (jsExecutor != null && browser.favorJSClick()) {
+                jsClick(element);
+                return StepResult.success("second attempt click via JS event");
             }
 
             return StepResult.fail(e.getMessage(), e);
@@ -1591,6 +1591,12 @@ public class WebCommand extends BaseCommand implements CanTakeScreenshot, CanLog
             // could have alert text...
             alert.preemptiveDismissAlert();
         }
+    }
+
+    protected void jsClick(WebElement element) {
+        ConsoleUtils.log("click target via JS, @id=" + element.getAttribute("id"));
+        Object retObj = jsExecutor.executeScript("arguments[0].click(); return true;", element);
+        ConsoleUtils.log("clicked -> " + retObj);
     }
 
     protected void initWebDriver() {
@@ -2013,7 +2019,9 @@ public class WebCommand extends BaseCommand implements CanTakeScreenshot, CanLog
     protected WebElement findElement(String locator) {
         ensureReady();
         By by = locatorHelper.findBy(locator);
-        return shouldWait() ? waiter.until(driver -> driver.findElement(by)) : driver.findElement(by);
+        WebElement target = shouldWait() ? waiter.until(driver -> driver.findElement(by)) : driver.findElement(by);
+        if (context.isHighlightWebElementEnabled() && target != null && target.isDisplayed()) { highlight(target); }
+        return target;
     }
 
     protected String addNoCacheRandom(String url) {
