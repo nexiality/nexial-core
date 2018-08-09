@@ -269,7 +269,7 @@ public final class ConsoleUtils {
         }
     }
 
-    private static String centerPrompt(String prompt, int width) {
+    public static String centerPrompt(String prompt, int width) {
         if (StringUtils.isBlank(prompt)) { return StringUtils.repeat(" ", width); }
 
         String paddingSpaces = StringUtils.repeat(" ", (width - prompt.length()) / 2);

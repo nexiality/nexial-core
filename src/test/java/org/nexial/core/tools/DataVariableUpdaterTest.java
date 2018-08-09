@@ -79,7 +79,8 @@ public class DataVariableUpdaterTest {
                                    "more stuff=a bit of everything;" +
 
                                    "jimmy.johnson.*=john.williams.*;" +
-                                   "sandy.*=mandy's *";
+                                   "sandy.*=mandy's *;" +
+                                   "variable1=result1";
 
     private DataVariableUpdater updater;
 
@@ -255,7 +256,7 @@ public class DataVariableUpdaterTest {
             "-- here's a comment" + sep +
             "-- here's another" + sep +
             sep +
-            "-- nexial:variable1" + sep +
+            "-- nexial:result1" + sep +
             "SELECT * FROM WHATEVER_TABLE WHERE NOBODY_CARE = \"that's right\";" + sep +
             sep +
             "-- nexial:variable2" + sep +
@@ -301,46 +302,29 @@ public class DataVariableUpdaterTest {
         UpdateLog updateLog = updater.new UpdateLog("file1").setPosition("line1");
 
         // unmatched cases
-        Assert.assertNull(updater.replaceVarsInKeywordWrapper("", updateLog));
-        Assert.assertNull(updater.replaceVarsInKeywordWrapper("No variable here", updateLog));
-        Assert.assertNull(updater.replaceVarsInKeywordWrapper("CENTREE.browser", updateLog));
-        Assert.assertNull(updater.replaceVarsInKeywordWrapper("store(CENTREE.browser", updateLog));
-        Assert.assertNull(updater.replaceVarsInKeywordWrapper("store CENTREE.browser)", updateLog));
-        Assert.assertNull(updater.replaceVarsInKeywordWrapper("store(CENTREE.browser)", updateLog));
+        Assert.assertNull(updater.replaceVarsInKeywordWrapper(""));
+        Assert.assertNull(updater.replaceVarsInKeywordWrapper("No variable here"));
+        Assert.assertNull(updater.replaceVarsInKeywordWrapper("CENTREE.browser"));
+        Assert.assertNull(updater.replaceVarsInKeywordWrapper("store(CENTREE.browser"));
+        Assert.assertNull(updater.replaceVarsInKeywordWrapper("store CENTREE.browser)"));
+        Assert.assertNull(updater.replaceVarsInKeywordWrapper("store(CENTREE.browser)"));
 
         // matched cases
         Assert.assertEquals("store(CENTREE.browser)",
-                            updater.replaceVarsInKeywordWrapper("store(nexial.browser)", updateLog));
-        Assert.assertEquals(1, updater.updated.size());
-        Assert.assertEquals("file1 [line1]: nexial.browser => CENTREE.browser",
-                            updater.updated.get(0).toString().trim());
-        updater.updated.clear();
+                            updater.replaceVarsInKeywordWrapper("store(nexial.browser)"));
 
         Assert.assertEquals("I'm gonna store(CENTREE.browser) as ${nexial.browser}",
-                            updater.replaceVarsInKeywordWrapper("I'm gonna store(nexial.browser) as ${nexial.browser}",
-                                                                updateLog));
-        Assert.assertEquals(1, updater.updated.size());
-        Assert.assertEquals("file1 [line1]: nexial.browser => CENTREE.browser",
-                            updater.updated.get(0).toString().trim());
-        updater.updated.clear();
+                            updater
+                                .replaceVarsInKeywordWrapper("I'm gonna store(nexial.browser) as ${nexial.browser}"));
 
         Assert.assertEquals("I'll \n store(CENTREE.browser)\n as ${nexial.browser}",
-                            updater.replaceVarsInKeywordWrapper("I'll \n store(nexial.browser)\n as ${nexial.browser}",
-                                                                updateLog));
-        Assert.assertEquals(1, updater.updated.size());
-        Assert.assertEquals("file1 [line1]: nexial.browser => CENTREE.browser",
-                            updater.updated.get(0).toString().trim());
-        updater.updated.clear();
+                            updater
+                                .replaceVarsInKeywordWrapper("I'll \n store(nexial.browser)\n as ${nexial.browser}"));
 
         Assert.assertEquals(
             "I'll \n store(CENTREE.browser)\n as ${nexial.browser}, and then again store(CENTREE.browser)",
             updater.replaceVarsInKeywordWrapper(
-                "I'll \n store(nexial.browser)\n as ${nexial.browser}, and then again store(nexial.browser)",
-                updateLog));
-        Assert.assertEquals(1, updater.updated.size());
-        Assert.assertEquals("file1 [line1]: nexial.browser => CENTREE.browser",
-                            updater.updated.get(0).toString().trim());
-        updater.updated.clear();
+                "I'll \n store(nexial.browser)\n as ${nexial.browser}, and then again store(nexial.browser)"));
     }
 
     @Test
@@ -348,44 +332,25 @@ public class DataVariableUpdaterTest {
         UpdateLog updateLog = updater.new UpdateLog("file1").setPosition("line1");
 
         // unmatched cases
-        Assert.assertNull(updater.replaceVarTokens("", updateLog));
-        Assert.assertNull(updater.replaceVarTokens("No variable here", updateLog));
-        Assert.assertNull(updater.replaceVarTokens("CENTREE.browser", updateLog));
-        Assert.assertNull(updater.replaceVarTokens("${CENTREE.browser", updateLog));
-        Assert.assertNull(updater.replaceVarTokens("$ CENTREE.browser}", updateLog));
-        Assert.assertNull(updater.replaceVarTokens("${CENTREE.browser}", updateLog));
+        Assert.assertNull(updater.replaceVarTokens(""));
+        Assert.assertNull(updater.replaceVarTokens("No variable here"));
+        Assert.assertNull(updater.replaceVarTokens("CENTREE.browser"));
+        Assert.assertNull(updater.replaceVarTokens("${CENTREE.browser"));
+        Assert.assertNull(updater.replaceVarTokens("$ CENTREE.browser}"));
+        Assert.assertNull(updater.replaceVarTokens("${CENTREE.browser}"));
 
         // matched cases
-        Assert.assertEquals("${CENTREE.browser}", updater.replaceVarTokens("${nexial.browser}", updateLog));
-        Assert.assertEquals(1, updater.updated.size());
-        Assert.assertEquals("file1 [line1]: ${nexial.browser} => ${CENTREE.browser}",
-                            updater.updated.get(0).toString().trim());
-        updater.updated.clear();
+        Assert.assertEquals("${CENTREE.browser}", updater.replaceVarTokens("${nexial.browser}"));
 
         Assert.assertEquals("I'm gonna store(nexial.browser) as ${CENTREE.browser}",
-                            updater.replaceVarTokens("I'm gonna store(nexial.browser) as ${nexial.browser}",
-                                                     updateLog));
-        Assert.assertEquals(1, updater.updated.size());
-        Assert.assertEquals("file1 [line1]: ${nexial.browser} => ${CENTREE.browser}",
-                            updater.updated.get(0).toString().trim());
-        updater.updated.clear();
+                            updater.replaceVarTokens("I'm gonna store(nexial.browser) as ${nexial.browser}"));
 
         Assert.assertEquals("I'll \n store(nexial.browser)\n as ${CENTREE.browser}",
-                            updater.replaceVarTokens("I'll \n store(nexial.browser)\n as ${nexial.browser}",
-                                                     updateLog));
-        Assert.assertEquals(1, updater.updated.size());
-        Assert.assertEquals("file1 [line1]: ${nexial.browser} => ${CENTREE.browser}",
-                            updater.updated.get(0).toString().trim());
-        updater.updated.clear();
+                            updater.replaceVarTokens("I'll \n store(nexial.browser)\n as ${nexial.browser}"));
 
         Assert.assertEquals(
             "I'll \n store(nexial.browser)\n as ${CENTREE.browser}, and then use it as ${CENTREE.browser}",
             updater.replaceVarTokens(
-                "I'll \n store(nexial.browser)\n as ${nexial.browser}, and then use it as ${nexial.browser}",
-                updateLog));
-        Assert.assertEquals(1, updater.updated.size());
-        Assert.assertEquals("file1 [line1]: ${nexial.browser} => ${CENTREE.browser}",
-                            updater.updated.get(0).toString().trim());
-        updater.updated.clear();
+                "I'll \n store(nexial.browser)\n as ${nexial.browser}, and then use it as ${nexial.browser}"));
     }
 }
