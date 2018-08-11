@@ -1471,6 +1471,17 @@ public class WebCommand extends BaseCommand implements CanTakeScreenshot, CanLog
         return StepResult.success("mouse-over on '" + locator + "'");
     }
 
+    public StepResult dragAndDrop(String fromLocator, String toLocator) {
+        requiresNotBlank(fromLocator, "invalid fromLocator", fromLocator);
+        requiresNotBlank(toLocator, "invalid toLocator", toLocator);
+
+        WebElement source = findElement(fromLocator);
+        WebElement target = findElement(toLocator);
+        new Actions(driver).clickAndHold(source).pause(500).dragAndDrop(source, target).build().perform();
+
+        return StepResult.success("Drag-and-drop element '" + fromLocator + "' to '" + toLocator + "'");
+    }
+
     @Nullable
     protected WebElement resolveNextPageForPaginatedTable(String nextPageLocator) {
         WebElement nextPage = null;
