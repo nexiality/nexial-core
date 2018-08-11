@@ -157,7 +157,7 @@ public class TestScriptUpdater {
                 String filePath = excel.getFile().getAbsolutePath();
 
                 if (InputFileUtils.isValidScript(excel)) {
-                    if (verbose) { System.out.println("processing " + filePath); }
+                    System.out.println("processing " + filePath);
 
                     if (updateTemplate(excel) && verbose) { System.out.println("\tscript updated to latest template"); }
 
@@ -171,7 +171,7 @@ public class TestScriptUpdater {
                     excel.getWorksheetsStartWith("").forEach(worksheet -> {
                         if (!StringUtils.equals(worksheet.getName(), SHEET_SYSTEM)) {
                             XSSFSheet sheet = worksheet.getSheet();
-                            System.out.println("[" + worksheet.getName() + "] " +
+                            System.out.println("\t[" + worksheet.getName() + "] " +
                                                "setting starting position as A5 and reset zoom to 100%");
                             sheet.setActiveCell(new CellAddress("A5"));
                             sheet.setZoom(100);
@@ -183,7 +183,7 @@ public class TestScriptUpdater {
                     excel.save();
 
                 } else if (InputFileUtils.isValidMacro(excel)) {
-                    if (verbose) { System.out.println("processing " + filePath); }
+                    System.out.println("processing " + filePath);
 
                     handleMacroSystemSheet(excel, metadata);
                     if (verbose) { System.out.println("\tupdated commands"); }
@@ -196,14 +196,14 @@ public class TestScriptUpdater {
                     Worksheet worksheet = excel.worksheet(SHEET_SYSTEM);
                     if (worksheet != null) {
                         if (verbose) {
-                            System.out.println("removing 'system' sheet for non-script file: " +
+                            System.out.println("\tremoving 'system' sheet for non-script file: " +
                                                excel.getFile().getName());
                         }
 
                         XSSFWorkbook workbook = excel.getWorkbook();
                         for (int i = 0; i < workbook.getNumberOfSheets(); i++) {
                             if (StringUtils.equals(workbook.getSheetAt(i).getSheetName(), SHEET_SYSTEM)) {
-                                System.out.println("deleting sheet #" + i + " for " + file.getAbsolutePath());
+                                System.out.println("\tdeleting sheet #" + i + " for " + file.getAbsolutePath());
                                 workbook.removeSheetAt(i);
                                 Excel.save(file, workbook);
                                 break;
@@ -216,11 +216,11 @@ public class TestScriptUpdater {
                     if (CollectionUtils.isEmpty(v2Plans)) {
                         if (verbose) { System.out.println("not recognized as nexial script: " + filePath); }
                     } else {
-                        if (verbose) { System.out.println("processing " + filePath); }
+                        System.out.println("processing " + filePath);
 
                         v2Plans.forEach(plan -> {
                             if (!updateV2Plan(plan)) {
-                                System.out.println("UNABLE TO UPDATE TEST PLAN " + plan.getName() +
+                                System.err.println("\tUNABLE TO UPDATE TEST PLAN " + plan.getName() +
                                                    " in " + filePath + "; CHECK TEST PLAN FOR ERRORS");
                             }
                         });
@@ -290,7 +290,7 @@ public class TestScriptUpdater {
         plan.setColumnValues(ADD_PLAN_HEADER_FEATURE_AND_TEST,
                              Arrays.asList(PLAN_HEADER_FEATURE_OVERRIDE, PLAN_HEADER_TESTREF_OVERRIDE));
 
-        System.out.println("[" + sheetName + "] setting starting position as A5 and reset zoom to 100%");
+        System.out.println("\t[" + sheetName + "] setting starting position as A5 and reset zoom to 100%");
         sheet.setActiveCell(new CellAddress("A5"));
         sheet.setZoom(100);
         return true;

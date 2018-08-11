@@ -59,10 +59,11 @@ import static org.nexial.core.tools.CliUtils.newArgOption;
  * Utility to rename the variables in the data files, scripts, properties files and sql files within a project.
  */
 final public class DataVariableUpdater {
+    protected static boolean isDryRun = false;
     private static final String OPT_PROJECT_PATH = "t";
     private static final String OPT_VARIABLES_LIST = "d";
     private static final String OPT_VERBOSE = "v";
-    protected static boolean isDryRun = false;
+    private static final String OPT_DRY_RUN = "p";
 
     private static final String DATA_FILE_SUFFIX = "data.xlsx";
     private static final String SCRIPT_FILE_SUFFIX = "xlsx";
@@ -71,15 +72,11 @@ final public class DataVariableUpdater {
     private static final String VARIABLE_SEPARATOR = ";";
 
     private static final List<String> KEYWORDS_VAR_PARAM = Arrays.asList("var", "saveVar", "profile", "config", "db");
-    private static final String OPT_DRY_RUN = "p";
-    // private static final List<String> VAR_PARTIAL_WRAPPERS = Arrays.asList("SkipIf", "PauseBefore", "PauseAfter",
-    //                                                                        "EndIf", "FailIf", "EndLoopIf", "ProceedIf");
-
-    protected String searchFrom;
-    protected File searchPath;
     private static final List<String> VAR_WRAPPERS = Arrays.asList("merge", "store", "BAI2", "CONFIG", "CSV", "DATE",
                                                                    "EXCEL", "INI", "JSON", "LIST", "NUMBER", "SQL",
                                                                    "TEXT", "XML");
+    protected String searchFrom;
+    protected File searchPath;
     protected Map<String, String> variableMap;
     protected List<UpdateLog> updated = new ArrayList<>();
 
@@ -164,7 +161,7 @@ final public class DataVariableUpdater {
     public static void main(String[] args) {
         Options cmdOptions = new Options();
         cmdOptions.addOption(OPT_VERBOSE, "verbose", false, "Turn on verbose logging.");
-        cmdOptions.addOption(OPT_DRY_RUN, "preview", false, "Turn on verbose logging.");
+        cmdOptions.addOption(OPT_DRY_RUN, "preview", false, "Preview changes (will not save to files)");
         cmdOptions.addOption(newArgOption(OPT_PROJECT_PATH, "target", "Starting location of update data variable."));
         cmdOptions.addOption(newArgOption(OPT_VARIABLES_LIST, "data", "Data variables to replace, in the form " +
                                                                       "old_var=new_var;old_var2=new_var2"));
@@ -277,7 +274,7 @@ final public class DataVariableUpdater {
                     String newVar = variableMap.get(oldVar);
 
                     if (StringUtils.contains(oldVar, "*")) {
-                        line = replaceWildcardVar(line, oldVar, newVar, updateLog);
+                        line = replaceWildcardVar(line, oldVar, newVar);
                         continue;
                     }
 
@@ -300,6 +297,7 @@ final public class DataVariableUpdater {
             if (!isDryRun) {
                 FileUtils.writeStringToFile(file, StringUtils.removeEnd(replaced.toString(), sep), DEF_CHARSET);
             }
+
             log("processed", file);
         } catch (IOException e) {
             System.err.println("Unable to process " + file + " successfully: " + e.getMessage());
@@ -337,7 +335,7 @@ final public class DataVariableUpdater {
                         // replacement as is (without prefixes or enclosure)
 
                         if (StringUtils.contains(oldVar, "*")) {
-                            line = replaceWildcardVar(line, oldVar, newVar, updateLog);
+                            line = replaceWildcardVar(line, oldVar, newVar);
                             continue;
                         }
 
@@ -358,6 +356,7 @@ final public class DataVariableUpdater {
                 if (!isDryRun) {
                     FileUtils.writeStringToFile(file, StringUtils.removeEnd(replaced.toString(), sep), DEF_CHARSET);
                 }
+
                 log("processed", file);
             } catch (IOException e) {
                 System.err.println("Unable to process " + file + " successfully: " + e.getMessage());
@@ -393,7 +392,6 @@ final public class DataVariableUpdater {
         }
     }
 
-
     /**
      * This method replaces all the variables specified in the variable list inside the data files for the specific
      * project.
@@ -426,8 +424,7 @@ final public class DataVariableUpdater {
 
             dataFile.save();
         } catch (IOException e) {
-            System.err.println("FATAIL ERROR: " + e.getMessage());
-            // System.exit(RC_BAD_CLI_ARGS);
+            System.err.println("FATAL ERROR: " + e.getMessage());
         }
 
         log("processed", file);
@@ -570,8 +567,7 @@ final public class DataVariableUpdater {
 
             saveExcel(file, script.getWorkbook());
         } catch (IOException | IllegalArgumentException e) {
-            System.err.println("FATAIL ERROR: " + e.getMessage());
-            // System.exit(RC_BAD_CLI_ARGS);
+            System.err.println("FATAL ERROR: " + e.getMessage());
         }
 
         log("processed", file);
@@ -642,7 +638,6 @@ final public class DataVariableUpdater {
         return cellHasUpdate ? cellValue : null;
     }
 
-
     @NotNull
     protected List<Integer> gatherVarIndices(List<XSSFCell> row) {
         List<Integer> varIndices = new ArrayList<>();
@@ -698,7 +693,6 @@ final public class DataVariableUpdater {
         return cellHasUpdate ? cellValue : null;
     }
 
-    @NotNull
     protected static Pair<String, String> varNameToRegex(String varName, String replaceWith) {
         int wildcardCount = StringUtils.countMatches(varName, "*");
         if (wildcardCount < 1) { return null; }
@@ -712,7 +706,6 @@ final public class DataVariableUpdater {
         String regex = varName;
         regex = StringUtils.replace(regex, ".", "\\.");
         regex = StringUtils.replace(regex, "*", "(.+)");
-        // regex = "^" + regex + "$";
 
         String replace = replaceWith;
         int idx = 1;
@@ -749,20 +742,6 @@ final public class DataVariableUpdater {
         return cellHasUpdate ? cellValue : null;
     }
 
-    private String replaceWildcardVar(String line, String oldVar, String newVar, UpdateLog updateLog) {
-        Pair<String, String> regexes = varNameToRegex(oldVar, newVar);
-        if (regexes == null) {
-            System.err.println("Invalid or erroneous wildcard references in either '" + oldVar +
-                               "' or '" + newVar + "', skipping");
-        } else {
-            String newLine = RegexUtils.replace(line, regexes.getKey(), regexes.getValue());
-            if (!StringUtils.equals(newLine, line)) {
-                line = newLine;
-            }
-        }
-        return line;
-    }
-
     protected void saveExcel(@NotNull File file, @NotNull XSSFWorkbook workBook) {
         try {
             Excel.save(file, workBook);
@@ -779,11 +758,22 @@ final public class DataVariableUpdater {
         }
     }
 
+    private String replaceWildcardVar(String line, String oldVar, String newVar) {
+        Pair<String, String> regexes = varNameToRegex(oldVar, newVar);
+        if (regexes == null) {
+            System.err.println("Invalid or erroneous wildcard references in either '" + oldVar +
+                               "' or '" + newVar + "', skipping");
+        } else {
+            String newLine = RegexUtils.replace(line, regexes.getKey(), regexes.getValue());
+            if (!StringUtils.equals(newLine, line)) { line = newLine; }
+        }
+
+        return line;
+    }
+
     private static void log(String message) { System.out.println(" >> " + message); }
 
-    private static void log(String action, Object subject) {
-        System.out.println(" >> " + StringUtils.rightPad(action, 26) + " " + subject);
-    }
+    private static void log(String action, Object subject) { log(StringUtils.rightPad(action, 26) + " " + subject); }
 
     private static String format(String file, String worksheet, String position, String updatingVars) {
         return StringUtils.rightPad(file, 45) +

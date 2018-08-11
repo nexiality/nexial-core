@@ -22,7 +22,6 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import java.util.stream.Collectors;
-
 import javax.validation.constraints.NotNull;
 
 import org.apache.commons.collections4.CollectionUtils;
@@ -65,27 +64,25 @@ class LocatorHelper {
         }
 
         locator = validateLocator(locator);
-        if (StringUtils.startsWithIgnoreCase(locator, "id=")) {
-            return By.id(StringUtils.substring(locator, "id=".length()));
-        }
+        if (StringUtils.startsWith(locator, "id=")) { return By.id(StringUtils.substring(locator, "id=".length())); }
 
-        if (StringUtils.startsWithIgnoreCase(locator, "class=")) {
+        if (StringUtils.startsWith(locator, "class=")) {
             return By.className(StringUtils.substring(locator, "class=".length()));
         }
 
-        if (StringUtils.startsWithIgnoreCase(locator, "name=")) {
+        if (StringUtils.startsWith(locator, "name=")) {
             return By.name(StringUtils.substring(locator, "name=".length()));
         }
 
-        if (StringUtils.startsWithIgnoreCase(locator, "css=")) {
+        if (StringUtils.startsWith(locator, "css=")) {
             return By.cssSelector(StringUtils.substring(locator, "css=".length()));
         }
 
-        if (StringUtils.startsWithIgnoreCase(locator, "link=")) {
+        if (StringUtils.startsWith(locator, "link=")) {
             return By.linkText(StringUtils.substring(locator, "link=".length()));
         }
 
-        if (StringUtils.startsWithIgnoreCase(locator, "xpath=")) {
+        if (StringUtils.startsWith(locator, "xpath=")) {
             return By.xpath(StringUtils.substring(locator, "xpath=".length()));
         }
 
@@ -93,7 +90,7 @@ class LocatorHelper {
             if (StringUtils.startsWith(locator, startsWith)) { return By.xpath(fixBadXpath(locator)); }
         }
 
-        if (StringUtils.startsWithIgnoreCase(locator, "tag=")) {
+        if (StringUtils.startsWith(locator, "tag=")) {
             return By.tagName(StringUtils.substring(locator, "tag=".length()));
         }
 
