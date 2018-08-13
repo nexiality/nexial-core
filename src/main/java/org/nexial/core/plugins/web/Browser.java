@@ -489,9 +489,9 @@ public class Browser implements ForcefulTerminate {
 
         String out = context.getProject().getOutPath();
         try {
-            ConsoleUtils.log("modifying safari's download path: \n" +
-                             ExternalCommand.exec("defaults write com.apple.Safari DownloadsPath \"" + out + "\"")
-                            );
+            ConsoleUtils.log(
+                "modifying safari's download path: \n" +
+                ExternalCommand.Companion.exec("defaults write com.apple.Safari DownloadsPath \"" + out + "\""));
         } catch (IOException e) {
             ConsoleUtils.error("Unable to modify safari's download path to " + out + ": " + e);
         }

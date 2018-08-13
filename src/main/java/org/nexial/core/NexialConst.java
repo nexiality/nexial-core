@@ -568,15 +568,15 @@ public final class NexialConst {
                                              "script, or fully qualified path, for this test execution.  " +
                                              "Default is the data file in the ../data directory with the same " +
                                              "name of the test script.");
-            cmdOptions.addOption(DATASHEETS, true, "[optional] Restricting to a comma-seperated list of data " +
+            cmdOptions.addOption(DATASHEETS, true, "[optional] Restricting to a comma-separated list of data " +
                                                    "sheets for this test execution. Default is to utilize all " +
                                                    "the data sheets of the specified/implied data file.");
             cmdOptions.addOption(OUTPUT, true, "[optional] The output directory where results and execution " +
                                                "artifacts will be stored. Default is ../../output, relative to " +
                                                "the specified test script.");
-            cmdOptions.addOption(PLAN, true, "[REQUIRED if -" + SCRIPT + " is missing] The fully qualified " +
-                                             "path of a test plan.  The use of this argument will disable the " +
-                                             "other arguments.");
+            cmdOptions.addOption(PLAN, true, "[REQUIRED if -" + SCRIPT + " is missing] The fully qualified path of a " +
+                                             "test plan (or plans). Multiple plans can be specified using comma as " +
+                                             "separator. The use of this argument will disable the other arguments.");
             return cmdOptions;
         }
     }
