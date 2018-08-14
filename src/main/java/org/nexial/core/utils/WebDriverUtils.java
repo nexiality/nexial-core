@@ -27,7 +27,6 @@ import org.nexial.commons.utils.TextUtils;
 import org.openqa.selenium.Keys;
 import org.openqa.selenium.WebDriver;
 import org.openqa.selenium.WebElement;
-import org.openqa.selenium.interactions.Action;
 import org.openqa.selenium.interactions.Actions;
 
 import static org.nexial.core.NexialConst.CTRL_KEY_END;
@@ -40,7 +39,7 @@ public final class WebDriverUtils {
 
     private WebDriverUtils() { }
 
-    public static Action toSendKeyAction(WebDriver driver, WebElement elem, String keystrokes) {
+    public static Actions toSendKeyAction(WebDriver driver, WebElement elem, String keystrokes) {
         if (driver == null) { return null; }
         if (StringUtils.isEmpty(keystrokes)) { return null; }
 
@@ -98,7 +97,7 @@ public final class WebDriverUtils {
         actions = addReleaseControlKeys(actions, elem, controlKeys);
 
         // 10. finally, all done!
-        return actions.build();
+        return actions;
     }
 
     public static Actions addReleaseControlKeys(Actions actions, WebElement element, Stack<Keys> controlKeys) {

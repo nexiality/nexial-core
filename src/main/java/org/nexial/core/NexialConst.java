@@ -113,13 +113,18 @@ public final class NexialConst {
 
     public static final String OPT_LAST_ALERT_TEXT = NAMESPACE + "lastAlertText";
     public static final String OPT_ALERT_IGNORE_FLAG = NAMESPACE + "ignoreBrowserAlert";
+
     public static final String OPT_PREEMPTIVE_ALERT_CHECK = NAMESPACE + "web.preemptiveAlertCheck";
-    public static final boolean DEF_PREEMPTIVE_ALERT_CHECK = true;
+    public static final boolean DEF_PREEMPTIVE_ALERT_CHECK = false;
+
     public static final String OPT_FORCE_IE_32 = NAMESPACE + "forceIE32";
     public static final boolean DEFAULT_FORCE_IE_32 = false;
 
     public static final String WEB_ALWAYS_WAIT = NAMESPACE + "web.alwaysWait";
     public static final boolean DEF_WEB_ALWAYS_WAIT = false;
+
+    public static final String WEB_UNFOCUS_AFTER_TYPE = NAMESPACE + "web.unfocusAfterType";
+    public static final boolean DEF_WEB_UNFOCUS_AFTER_TYPE= false;
 
     // highlight
     public static final String OPT_DEBUG_HIGHLIGHT = NAMESPACE + "highlight";

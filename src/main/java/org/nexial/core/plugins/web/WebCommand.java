@@ -60,7 +60,6 @@ import org.nexial.core.utils.WebDriverUtils;
 import org.openqa.selenium.*;
 import org.openqa.selenium.WebDriver.Timeouts;
 import org.openqa.selenium.WebDriver.Window;
-import org.openqa.selenium.interactions.Action;
 import org.openqa.selenium.interactions.Actions;
 import org.openqa.selenium.interactions.internal.Coordinates;
 import org.openqa.selenium.interactions.internal.Locatable;
@@ -84,6 +83,7 @@ import static org.apache.commons.lang3.SystemUtils.IS_OS_MAC;
 import static org.nexial.core.NexialConst.*;
 import static org.nexial.core.NexialConst.Data.*;
 import static org.nexial.core.utils.CheckUtils.*;
+import static org.openqa.selenium.Keys.TAB;
 
 public class WebCommand extends BaseCommand implements CanTakeScreenshot, CanLogExternally, RequireBrowser {
     protected Browser browser;
@@ -1210,7 +1210,18 @@ public class WebCommand extends BaseCommand implements CanTakeScreenshot, CanLog
 
         if (StringUtils.isNotEmpty(value)) {
             if (browser.isRunSafari()) { focus("//body"); }
-            element.sendKeys(value);
+
+            // onchange event will not fire until a different element is selected
+            if (context.getBooleanData(WEB_UNFOCUS_AFTER_TYPE, DEF_WEB_UNFOCUS_AFTER_TYPE)) {
+                // element.sendKeys();
+                new Actions(driver).moveToElement(element)
+                                   .sendKeys(element, value)
+                                   .sendKeys(element, TAB)
+                                   .build()
+                                   .perform();
+            } else {
+                element.sendKeys(value);
+            }
         }
 
         return StepResult.success("typed text at '" + locator + "'");
@@ -1229,8 +1240,13 @@ public class WebCommand extends BaseCommand implements CanTakeScreenshot, CanLog
         element.click();
         waitFor(MIN_STABILITY_WAIT_MS);
 
-        Action action = WebDriverUtils.toSendKeyAction(driver, element, value);
-        if (action != null) { action.perform(); }
+        Actions actions = WebDriverUtils.toSendKeyAction(driver, element, value);
+        if (actions != null) {
+            if (context.getBooleanData(WEB_UNFOCUS_AFTER_TYPE, DEF_WEB_UNFOCUS_AFTER_TYPE)) {
+                actions.sendKeys(element, TAB);
+            }
+            actions.build().perform();
+        }
 
         // could have alert text...
         alert.preemptiveDismissAlert();
@@ -1726,7 +1742,9 @@ public class WebCommand extends BaseCommand implements CanTakeScreenshot, CanLog
                 jsClick(element);
                 return StepResult.success("click via JS event");
             } else {
-                element.click();
+                // better impl. for CI
+                new Actions(driver).moveToElement(element).click().build().perform();
+                // element.click();
                 return StepResult.success("clicked on web element");
             }
         } catch (StaleElementReferenceException e) {
