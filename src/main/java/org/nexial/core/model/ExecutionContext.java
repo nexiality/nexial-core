@@ -584,7 +584,10 @@ public class ExecutionContext {
      * remove data variable both from context and system
      */
     public String removeData(String name) {
-        if (isReadOnlyData(name)) { return null; }
+        if (isReadOnlyData(name)) {
+            ConsoleUtils.error("Removing READ-ONLY variable is not allowed: " + name);
+            return null;
+        }
 
         Object removedObj = data.remove(name);
         String removed;

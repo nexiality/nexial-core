@@ -210,19 +210,31 @@ public class BaseCommand implements NexialCommand {
     public StepResult clear(String vars) {
         requiresNotBlank(vars, "invalid variable(s)", vars);
 
-        StringBuilder ignored = new StringBuilder("The following data variable(s) are READ ONLY and ignored: ");
-        StringBuilder message = new StringBuilder("The following data variable(s) are removed from execution: ");
+        List<String> ignoredVars = new ArrayList<>();
+        List<String> removedVars = new ArrayList<>();
 
         TextUtils.toList(vars, context.getTextDelim(), true).forEach(var -> {
             if (context.isReadOnlyData(var)) {
-                ignored.append(var).append(", ");
-            } else {
-                if (StringUtils.isNotEmpty(context.removeData(var))) { message.append(var).append(", "); }
+                ignoredVars.add(var);
+            } else if (StringUtils.isNotEmpty(context.removeData(var))) {
+                removedVars.add(var);
             }
         });
 
-        return StepResult.success(StringUtils.removeEnd(message.toString(), ", ") + ". " +
-                                  StringUtils.removeEnd(ignored.toString(), ", "));
+        StringBuilder message = new StringBuilder();
+        if (CollectionUtils.isNotEmpty(ignoredVars)) {
+            message.append("The following data variable(s) are READ ONLY and ignored: ")
+                   .append(TextUtils.toString(ignoredVars, ",")).append(" ");
+        }
+        if (CollectionUtils.isNotEmpty(removedVars)) {
+            message.append("The following data variable(s) are removed from execution: ")
+                   .append(TextUtils.toString(removedVars, ",")).append(" ");
+        }
+        if (CollectionUtils.isEmpty(ignoredVars) && CollectionUtils.isEmpty(removedVars)) {
+            message.append("None of the specified variables are removed since they either are READ-ONLY or not exist");
+        }
+
+        return StepResult.success(message.toString());
     }
 
     public StepResult substringAfter(String text, String delim, String saveVar) {

@@ -208,6 +208,28 @@ public class WebCommand extends BaseCommand implements CanTakeScreenshot, CanLog
 
     public StepResult assertNotChecked(String locator) { return new StepResult(!isChecked(locator)); }
 
+    public StepResult checkAll(String locator) {
+        requiresNotBlank(locator, "invalid locator", locator);
+
+        List<WebElement> elements = findElements(locator);
+        if (CollectionUtils.isEmpty(elements)) { return StepResult.fail("No element found via '" + locator + "'"); }
+
+        String script = "if (arguments[0].hasAttribute('type','checkbox')) { arguments[0].checked=true; }";
+        elements.forEach(element -> jsExecutor.executeScript(script, element));
+        return StepResult.success("CheckBox elements (" + locator + ") are checked");
+    }
+
+    public StepResult uncheckAll(String locator) {
+        requiresNotBlank(locator, "invalid locator", locator);
+
+        List<WebElement> elements = findElements(locator);
+        if (CollectionUtils.isEmpty(elements)) { return StepResult.fail("No element found via '" + locator + "'"); }
+
+        String script = "if (arguments[0].hasAttribute('type','checkbox')) { arguments[0].checked=false; }";
+        elements.forEach(element -> jsExecutor.executeScript(script, element));
+        return StepResult.success("CheckBox elements (" + locator + ") are unchecked");
+    }
+
     /** treated all matching elements as checkbox, radio or select-option and toggle their current 'selected' status */
     public StepResult toggleSelections(String locator) {
         List<WebElement> elements = findElements(locator);
@@ -235,43 +257,6 @@ public class WebCommand extends BaseCommand implements CanTakeScreenshot, CanLog
         }
 
         return StepResult.success("selected '" + text + "' from '" + locator + "'");
-    }
-
-    /**
-     * todo: (1) need to re-evaluate this method when firefox driver updates beyond 0.19+
-     * todo: (2) need to work on similar workaround for mutli-select and deselect
-     */
-    public StepResult jsSelect(String locator, String text) {
-        WebElement select = findElement(locator);
-
-        String msgPrefix = "Select '" + locator + "'";
-
-        if (select == null) { throw new NoSuchElementException(msgPrefix + " not found."); }
-
-        ConsoleUtils.log("selecting option via JavaScript because " + browser.getBrowserType() +
-                         " does not support native automation on SELECT");
-
-        if (StringUtils.isBlank(text)) {
-            String js = "var options = arguments[0].selectedOptions; " +
-                        "for (var i = 0; i < elements.length; i++) { elements[i].selected = false; }";
-            jsExecutor.executeScript(js, select);
-            return StepResult.success("all options are deselected from " + msgPrefix);
-        }
-
-        List<WebElement> options =
-            select.findElements(By.xpath(".//option[normalize-space(.) = " + Quotes.escape(text) + "]"));
-        if (CollectionUtils.isEmpty(options)) {
-            return StepResult.fail(msgPrefix + " does not contain OPTION '" + text + "'");
-        }
-
-        boolean isMultiple = BooleanUtils.toBoolean(select.getAttribute("multiple"));
-        String jsClickOption = "arguments[0].selected = true; arguments[1].dispatchEvent(new Event('change'));";
-        for (WebElement option : options) {
-            jsExecutor.executeScript(jsClickOption, option, select);
-            if (!isMultiple) { break; }
-        }
-
-        return StepResult.success(msgPrefix + " OPTION(s) with text '" + text + "' selected");
     }
 
     public StepResult selectMulti(String locator, String array) {
@@ -1496,6 +1481,72 @@ public class WebCommand extends BaseCommand implements CanTakeScreenshot, CanLog
         new Actions(driver).clickAndHold(source).pause(500).dragAndDrop(source, target).build().perform();
 
         return StepResult.success("Drag-and-drop element '" + fromLocator + "' to '" + toLocator + "'");
+    }
+
+    protected boolean isCheckbox(WebElement element, String locator, boolean checkstate) {
+        if (!StringUtils.equalsIgnoreCase(element.getAttribute("type"), "checkbox")) {
+            ConsoleUtils.log("A web element matching '" + locator + "' is NOT a CheckBox");
+            return false;
+        }
+
+        if (!element.isEnabled()) {
+            ConsoleUtils.log("A CheckBox element matching '" + locator + "' is NOT enabled");
+            return false;
+        }
+
+        if (!element.isDisplayed()) {
+            ConsoleUtils.log("A CheckBox element matching '" + locator + "' is NOT visible");
+            return false;
+        }
+
+        if (checkstate && element.isSelected()) {
+            ConsoleUtils.log("A CheckBox element matching '" + locator + "' is already CHECKED");
+            return false;
+        }
+
+        if (!checkstate && !element.isSelected()) {
+            ConsoleUtils.log("A CheckBox element matching '" + locator + "' is already UNCHECKED");
+            return false;
+        }
+
+        return true;
+    }
+
+    /**
+     * todo: (1) need to re-evaluate this method when firefox driver updates beyond 0.19+
+     * todo: (2) need to work on similar workaround for mutli-select and deselect
+     */
+    protected StepResult jsSelect(String locator, String text) {
+        WebElement select = findElement(locator);
+
+        String msgPrefix = "Select '" + locator + "'";
+
+        if (select == null) { throw new NoSuchElementException(msgPrefix + " not found."); }
+
+        ConsoleUtils.log("selecting option via JavaScript because " + browser.getBrowserType() +
+                         " does not support native automation on SELECT");
+
+        if (StringUtils.isBlank(text)) {
+            String js = "var options = arguments[0].selectedOptions; " +
+                        "for (var i = 0; i < elements.length; i++) { elements[i].selected = false; }";
+            jsExecutor.executeScript(js, select);
+            return StepResult.success("all options are deselected from " + msgPrefix);
+        }
+
+        List<WebElement> options =
+            select.findElements(By.xpath(".//option[normalize-space(.) = " + Quotes.escape(text) + "]"));
+        if (CollectionUtils.isEmpty(options)) {
+            return StepResult.fail(msgPrefix + " does not contain OPTION '" + text + "'");
+        }
+
+        boolean isMultiple = BooleanUtils.toBoolean(select.getAttribute("multiple"));
+        String jsClickOption = "arguments[0].selected = true; arguments[1].dispatchEvent(new Event('change'));";
+        for (WebElement option : options) {
+            jsExecutor.executeScript(jsClickOption, option, select);
+            if (!isMultiple) { break; }
+        }
+
+        return StepResult.success(msgPrefix + " OPTION(s) with text '" + text + "' selected");
     }
 
     @Nullable
