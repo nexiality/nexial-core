@@ -168,6 +168,9 @@ public final class JsonHelper {
      * convert {@code records}, which presumably from CSV file, to a JSON array streamed to the designated
      * {@code destination}. Optionally, one may use {@code header} to indicate if {@code records} contains header
      * (as first row) or not.
+     *
+     * <b>NOTE</b>: {@code destination} is NOT closed at the end of this method. Caller will need to flush/close after
+     * the method completes.
      */
     public static void fromCsv(List<List<String>> records, boolean header, Writer destination) throws IOException {
         if (CollectionUtils.isEmpty(records)) { throw new IOException("No valid content"); }

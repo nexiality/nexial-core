@@ -25,6 +25,7 @@ import java.io.OutputStream;
 import java.math.BigInteger;
 import java.util.*;
 import java.util.stream.Collectors;
+import javax.validation.constraints.NotNull;
 
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.collections4.IterableUtils;
@@ -180,34 +181,68 @@ public class Excel {
             return cell;
         }
 
-        public Worksheet writeAcross(ExcelAddress startCell, List<String> data) throws IOException {
+        /**
+         * write across (horizontally) an Excel spreadsheet, starting from {@code startCell}.  The {@code data} is
+         * represented as "list of list of string", where the outer list represents "rows" and inner list represents
+         * "columns".
+         *
+         * Excel rows are automatically created as needed.
+         *
+         * If {@code data} is a list of list of 1 item, it would essentially function as
+         * {@link #writeDown(ExcelAddress, List)}.
+         */
+        @NotNull
+        public Worksheet writeAcross(ExcelAddress startCell, List<List<String>> rows) throws IOException {
+            if (startCell == null) { return this; }
+            if (CollectionUtils.isEmpty(rows)) { return this; }
+
             int startRowIndex = startCell.getRowStartIndex();
             int startColIndex = startCell.getColumnStartIndex();
-            int endColIndex = startColIndex + CollectionUtils.size(data);
 
-            XSSFRow row = sheet.getRow(startRowIndex);
-            if (row == null) { row = sheet.createRow(startRowIndex); }
+            rows.forEach(data -> {
+                int endColIndex = startColIndex + CollectionUtils.size(data);
 
-            for (int i = startColIndex; i < endColIndex; i++) {
-                row.getCell(i, CREATE_NULL_AS_BLANK).setCellValue(IterableUtils.get(data, i - startColIndex));
-            }
+                XSSFRow row = sheet.getRow(startRowIndex);
+                if (row == null) { row = sheet.createRow(startRowIndex); }
+
+                for (int i = startColIndex; i < endColIndex; i++) {
+                    row.getCell(i, CREATE_NULL_AS_BLANK).setCellValue(IterableUtils.get(data, i - startColIndex));
+                }
+            });
 
             save();
             return this;
         }
 
-        public Worksheet writeDown(ExcelAddress startCell, List<String> data) throws IOException {
+        /**
+         * write down (vertically) an Excel spreadsheet, starting from {@code startCell}.  The {@code data} is
+         * represented as "list of list of string", where the outer list represents "columns" and inner list represents
+         * "rows".
+         *
+         * Excel rows are automatically created as needed.
+         *
+         * If {@code data} is a list of list of 1 item, it would essentially function as
+         * {@link #writeAcross(ExcelAddress, List)}.
+         */
+        @NotNull
+        public Worksheet writeDown(ExcelAddress startCell, List<List<String>> columns) throws IOException {
+            if (startCell == null) { return this; }
+            if (CollectionUtils.isEmpty(columns)) { return this; }
+
             int startRowIndex = startCell.getRowStartIndex();
-            int endRowIndex = startRowIndex + CollectionUtils.size(data);
             int startColIndex = startCell.getColumnStartIndex();
 
-            for (int i = startRowIndex; i < endRowIndex; i++) {
-                XSSFRow row = sheet.getRow(i);
-                if (row == null) { row = sheet.createRow(i); }
+            columns.forEach(data -> {
+                int endRowIndex = startRowIndex + CollectionUtils.size(data);
 
-                row.getCell(startColIndex, CREATE_NULL_AS_BLANK)
-                   .setCellValue(IterableUtils.get(data, i - startRowIndex));
-            }
+                for (int i = startRowIndex; i < endRowIndex; i++) {
+                    XSSFRow row = sheet.getRow(i);
+                    if (row == null) { row = sheet.createRow(i); }
+
+                    row.getCell(startColIndex, CREATE_NULL_AS_BLANK)
+                       .setCellValue(IterableUtils.get(data, i - startRowIndex));
+                }
+            });
 
             save();
             return this;

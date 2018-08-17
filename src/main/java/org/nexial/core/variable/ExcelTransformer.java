@@ -187,13 +187,15 @@ public class ExcelTransformer<T extends ExcelDataType> extends Transformer {
         }
 
         String start = startAndContent[0];
-        String[] content = ArrayUtils.remove(startAndContent, 0);
-        List<String> rowContent = Arrays.asList(content);
+
+        List<List<String>> rows = new ArrayList<>();
+        rows.add(Arrays.asList(ArrayUtils.remove(startAndContent, 0)));
+
         try {
-            data.getCurrentSheet().writeAcross(toExcelAddress(start), rowContent);
+            data.getCurrentSheet().writeAcross(toExcelAddress(start), rows);
             return data;
         } catch (IOException e) {
-            throw new TypeConversionException(data.getName(), rowContent.toString(),
+            throw new TypeConversionException(data.getName(), rows.get(0).toString(),
                                               "Unable to write across " + start + ": " + e.getMessage(), e);
         }
     }
@@ -209,12 +211,14 @@ public class ExcelTransformer<T extends ExcelDataType> extends Transformer {
         String start = startAndContent[0];
         String[] content = ArrayUtils.remove(startAndContent, 0);
 
-        List<String> rowContent = Arrays.asList(content);
+        List<List<String>> columns = new ArrayList<>();
+        columns.add(Arrays.asList(content));
+
         try {
-            data.getCurrentSheet().writeDown(toExcelAddress(start), rowContent);
+            data.getCurrentSheet().writeDown(toExcelAddress(start), columns);
             return data;
         } catch (IOException e) {
-            throw new TypeConversionException(data.getName(), rowContent.toString(),
+            throw new TypeConversionException(data.getName(), columns.get(0).toString(),
                                               "Unable to write downwards from " + start + ": " + e.getMessage(), e);
         }
     }

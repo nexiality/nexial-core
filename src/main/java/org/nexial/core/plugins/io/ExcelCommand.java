@@ -144,9 +144,9 @@ public class ExcelCommand extends BaseCommand {
         requiresNotBlank(worksheet, "invalid worksheet name", worksheet);
         requiresNotBlank(array, "Invalid array to write", array);
 
-        deriveExcel(file).requireWorksheet(worksheet, true)
-                         .writeAcross(new ExcelAddress(startCell),
-                                      TextUtils.toList(array, context.getTextDelim(), false));
+        List<List<String>> rows = new ArrayList<>();
+        rows.add(TextUtils.toList(array, context.getTextDelim(), false));
+        deriveExcel(file).requireWorksheet(worksheet, true).writeAcross(new ExcelAddress(startCell), rows);
 
         return StepResult.success("Data saved to " + file + "#" + worksheet);
     }
@@ -156,9 +156,10 @@ public class ExcelCommand extends BaseCommand {
         requiresNotBlank(worksheet, "invalid worksheet name", worksheet);
         requiresNotBlank(array, "Invalid array to write", array);
 
-        deriveExcel(file).requireWorksheet(worksheet, true)
-                         .writeDown(new ExcelAddress(startCell),
-                                    TextUtils.toList(array, context.getTextDelim(), false));
+        List<List<String>> columns = new ArrayList<>();
+        columns.add(TextUtils.toList(array, context.getTextDelim(), false));
+
+        deriveExcel(file).requireWorksheet(worksheet, true).writeDown(new ExcelAddress(startCell), columns);
 
         return StepResult.success("Data saved to " + file + "#" + worksheet);
     }

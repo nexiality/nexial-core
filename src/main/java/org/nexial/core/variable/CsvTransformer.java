@@ -17,6 +17,7 @@
 
 package org.nexial.core.variable;
 
+import java.io.File;
 import java.io.IOException;
 import java.lang.reflect.Method;
 import java.util.*;
@@ -36,6 +37,9 @@ import org.nexial.commons.utils.RegexUtils;
 import org.nexial.commons.utils.TextUtils;
 import org.nexial.commons.utils.TextUtils.ListItemConverter;
 import org.nexial.core.ExecutionThread;
+import org.nexial.core.excel.Excel;
+import org.nexial.core.excel.Excel.Worksheet;
+import org.nexial.core.excel.ExcelAddress;
 import org.nexial.core.model.ExecutionContext;
 import org.nexial.core.model.NexialFilter;
 import org.nexial.core.model.NexialFilter.ListItemConverterImpl;
@@ -582,12 +586,24 @@ public class CsvTransformer<T extends CsvDataType> extends Transformer {
         return data;
     }
 
-    // public ExcelDataType excel(T data, String file, String sheet,String addr) {
-    //
-    //     Excel excel  = new Excel(new File(file), false);
-    //     ExcelHelper.importCsv(excel, sheet, addr, data.getTextValue());
-    //
-    // }
+    public ExcelDataType excel(T data, String file, String sheet, String startCell)
+        throws IOException, TypeConversionException {
+        if (StringUtils.isEmpty(file)) { return null; }
+        if (StringUtils.isEmpty(sheet)) { return null; }
+        if (data.getRowCount() < 1 || data.getColumnCount() < 1) { return null; }
+
+        if (StringUtils.isBlank(startCell)) { startCell = "A1"; }
+
+        List<List<String>> rowsAndColumns = new ArrayList<>();
+        if (data.isHeader()) { rowsAndColumns.add(data.getHeaders()); }
+        data.getValue().forEach(record -> rowsAndColumns.add(Arrays.asList(record.getValues())));
+
+        // either write access or write down would work.
+        Worksheet worksheet = new Excel(new File(file)).worksheet(sheet, true);
+        worksheet.writeAcross(new ExcelAddress(startCell), rowsAndColumns);
+
+        return new ExcelDataType(file);
+    }
 
     public TextDataType render(T data, String template) throws TypeConversionException {
         TextDataType text = new TextDataType("");
