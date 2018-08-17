@@ -196,18 +196,20 @@ public class Excel {
             if (startCell == null) { return this; }
             if (CollectionUtils.isEmpty(rows)) { return this; }
 
-            int startRowIndex = startCell.getRowStartIndex();
+            final int[] startRowIndex = {startCell.getRowStartIndex()};
             int startColIndex = startCell.getColumnStartIndex();
 
             rows.forEach(data -> {
                 int endColIndex = startColIndex + CollectionUtils.size(data);
 
-                XSSFRow row = sheet.getRow(startRowIndex);
-                if (row == null) { row = sheet.createRow(startRowIndex); }
+                XSSFRow row = sheet.getRow(startRowIndex[0]);
+                if (row == null) { row = sheet.createRow(startRowIndex[0]); }
 
                 for (int i = startColIndex; i < endColIndex; i++) {
                     row.getCell(i, CREATE_NULL_AS_BLANK).setCellValue(IterableUtils.get(data, i - startColIndex));
                 }
+
+                startRowIndex[0]++;
             });
 
             save();
@@ -230,7 +232,7 @@ public class Excel {
             if (CollectionUtils.isEmpty(columns)) { return this; }
 
             int startRowIndex = startCell.getRowStartIndex();
-            int startColIndex = startCell.getColumnStartIndex();
+            final int[] startColIndex = {startCell.getColumnStartIndex()};
 
             columns.forEach(data -> {
                 int endRowIndex = startRowIndex + CollectionUtils.size(data);
@@ -239,9 +241,11 @@ public class Excel {
                     XSSFRow row = sheet.getRow(i);
                     if (row == null) { row = sheet.createRow(i); }
 
-                    row.getCell(startColIndex, CREATE_NULL_AS_BLANK)
+                    row.getCell(startColIndex[0], CREATE_NULL_AS_BLANK)
                        .setCellValue(IterableUtils.get(data, i - startRowIndex));
                 }
+
+                startColIndex[0]++;
             });
 
             save();
