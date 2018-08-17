@@ -17,30 +17,43 @@
 
 package org.nexial.core.plugins.json;
 
+import java.io.File;
+
+import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang3.StringUtils;
+import org.apache.commons.lang3.SystemUtils;
 import org.json.JSONObject;
 import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
-
 import org.nexial.core.model.ExecutionContext;
 import org.nexial.core.model.MockExecutionContext;
+import org.nexial.core.model.StepResult;
+
+import com.google.gson.JsonArray;
+
+import static java.io.File.separator;
+import static org.nexial.core.NexialConst.DEF_FILE_ENCODING;
+import static org.nexial.core.NexialConst.GSON_COMPRESSED;
 
 /**
  *
  */
 public class JsonCommandTest {
     private ExecutionContext context = new MockExecutionContext();
+    private String destinationBase;
 
     @Before
     public void init() {
         if (context == null) { context = new MockExecutionContext(); }
+        destinationBase = SystemUtils.getJavaIoTmpDir().getAbsolutePath() + separator + "JsonCommandTest" + separator;
     }
 
     @After
     public void tearDown() {
         if (context != null) { ((MockExecutionContext) context).cleanProject(); }
+        if (destinationBase != null) { FileUtils.deleteQuietly(new File(destinationBase)); }
     }
 
     @Test
@@ -531,5 +544,103 @@ public class JsonCommandTest {
         Assert.assertTrue(subject.assertValues(fixture, "deductionList.deductionAmount", "100.00,0.00", "true")
                                  .isSuccess());
 
+    }
+
+    @Test
+    public void fromCsv_withHeader() throws Exception {
+        context.setData("nexial.textDelim", "|");
+        String fixture = "ID|NAME|AGE|ADDRESS|TITLE\r\n" +
+                         "001|John Doe|17|154 Merlin Ave., Party Town, CA 90235|Senior Intern\n" +
+                         "002|Cassine LaCoprale|25|2054 Sourcano Avenida, Mi Casa|El Jefe\n" +
+                         "003|Chow Mi Toue|23|Apt 12-B, 9209 Ching Tong Rd, Konmandon, Mi Gouk|Big Boss Man\n";
+
+        String destination = destinationBase + "fromCsv_withHeader.json";
+
+        JsonCommand subject = new JsonCommand();
+        subject.init(context);
+        StepResult result = subject.fromCsv(fixture, "true", destination);
+
+        Assert.assertNotNull(result);
+        Assert.assertTrue(result.isSuccess());
+
+        String output = FileUtils.readFileToString(new File(destination), DEF_FILE_ENCODING);
+        System.out.println(output);
+        System.out.println();
+
+        JsonArray array = GSON_COMPRESSED.fromJson(output, JsonArray.class);
+        Assert.assertNotNull(array);
+        Assert.assertEquals(3, array.size());
+        String template = "{\"ID\":\"%s\",\"NAME\":\"%s\",\"AGE\":\"%s\",\"ADDRESS\":\"%s\",\"TITLE\":\"%s\"}";
+        Assert.assertEquals(String.format(template,
+                                          "001",
+                                          "John Doe",
+                                          "17",
+                                          "154 Merlin Ave., Party Town, CA 90235",
+                                          "Senior Intern"),
+                            array.get(0).getAsJsonObject().toString());
+        Assert.assertEquals(String.format(template,
+                                          "002",
+                                          "Cassine LaCoprale",
+                                          "25",
+                                          "2054 Sourcano Avenida, Mi Casa",
+                                          "El Jefe"),
+                            array.get(1).getAsJsonObject().toString());
+        Assert.assertEquals(String.format(template,
+                                          "003",
+                                          "Chow Mi Toue",
+                                          "23",
+                                          "Apt 12-B, 9209 Ching Tong Rd, Konmandon, Mi Gouk",
+                                          "Big Boss Man"),
+                            array.get(2).getAsJsonObject().toString());
+    }
+
+    @Test
+    public void fromCsv_noHeader() throws Exception {
+        context.setData("nexial.textDelim", "|");
+        String fixture = "ID|NAME|AGE|ADDRESS|TITLE\n" +
+                         "001|John Doe|17|154 Merlin Ave., Party Town, CA 90235|Senior Intern\n" +
+                         "002|Cassine LaCoprale|25|2054 Sourcano Avenida, Mi Casa|El Jefe\n\r" +
+                         "003|Chow Mi Toue|23|Apt 12-B, 9209 Ching Tong Rd, Konmandon, Mi Gouk|Big Boss Man\n";
+
+        String destination = destinationBase + "fromCsv_noHeader.json";
+
+        JsonCommand subject = new JsonCommand();
+        subject.init(context);
+        StepResult result = subject.fromCsv(fixture, "false", destination);
+
+        Assert.assertNotNull(result);
+        Assert.assertTrue(result.isSuccess());
+
+        String output = FileUtils.readFileToString(new File(destination), DEF_FILE_ENCODING);
+        System.out.println(output);
+        System.out.println();
+
+        JsonArray array = GSON_COMPRESSED.fromJson(output, JsonArray.class);
+        Assert.assertNotNull(array);
+        Assert.assertEquals(4, array.size());
+        String template = "[\"%s\",\"%s\",\"%s\",\"%s\",\"%s\"]";
+        Assert.assertEquals(String.format(template, "ID", "NAME", "AGE", "ADDRESS", "TITLE"),
+                            array.get(0).getAsJsonArray().toString());
+        Assert.assertEquals(String.format(template,
+                                          "001",
+                                          "John Doe",
+                                          "17",
+                                          "154 Merlin Ave., Party Town, CA 90235",
+                                          "Senior Intern"),
+                            array.get(1).getAsJsonArray().toString());
+        Assert.assertEquals(String.format(template,
+                                          "002",
+                                          "Cassine LaCoprale",
+                                          "25",
+                                          "2054 Sourcano Avenida, Mi Casa",
+                                          "El Jefe"),
+                            array.get(2).getAsJsonArray().toString());
+        Assert.assertEquals(String.format(template,
+                                          "003",
+                                          "Chow Mi Toue",
+                                          "23",
+                                          "Apt 12-B, 9209 Ching Tong Rd, Konmandon, Mi Gouk",
+                                          "Big Boss Man"),
+                            array.get(3).getAsJsonArray().toString());
     }
 }

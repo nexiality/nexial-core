@@ -582,6 +582,13 @@ public class CsvTransformer<T extends CsvDataType> extends Transformer {
         return data;
     }
 
+    // public ExcelDataType excel(T data, String file, String sheet,String addr) {
+    //
+    //     Excel excel  = new Excel(new File(file), false);
+    //     ExcelHelper.importCsv(excel, sheet, addr, data.getTextValue());
+    //
+    // }
+
     public TextDataType render(T data, String template) throws TypeConversionException {
         TextDataType text = new TextDataType("");
         if (data == null || data.getValue() == null || CollectionUtils.isEmpty(data.getValue())) { return text; }

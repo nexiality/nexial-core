@@ -43,7 +43,7 @@ class ExternalCommand : BaseCommand() {
 
         try {
             val testClass = Class.forName(className)
-            val testObject = testClass.newInstance()
+//            val testObject = testClass.newInstance()
             log("running external class '$className'")
 
             // save the current tests ran count, tests pass count, tests failed count... so that we can tally the

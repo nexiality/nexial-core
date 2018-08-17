@@ -18,8 +18,10 @@
 package org.nexial.core.plugins.json;
 
 import java.io.File;
+import java.io.FileWriter;
 import java.io.IOException;
 
+import org.apache.commons.lang3.BooleanUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.json.JSONArray;
 import org.json.JSONObject;
@@ -27,12 +29,8 @@ import org.nexial.commons.utils.TextUtils;
 import org.nexial.core.model.ExecutionContext;
 import org.nexial.core.model.StepResult;
 import org.nexial.core.plugins.base.BaseCommand;
-import org.nexial.core.utils.ConsoleUtils;
-import org.nexial.core.utils.JSONPath;
-import org.nexial.core.utils.JsonEditor;
+import org.nexial.core.utils.*;
 import org.nexial.core.utils.JsonEditor.JsonEditorConfig;
-import org.nexial.core.utils.JsonUtils;
-import org.nexial.core.utils.OutputFileUtils;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.github.fge.jackson.JsonLoader;
@@ -176,11 +174,31 @@ public class JsonCommand extends BaseCommand {
                StepResult.success("json validated as well-formed");
     }
 
+    public StepResult fromCsv(String csv, String header, String jsonFile) throws IOException {
+        requiresNotBlank(csv, "Invalid csv", csv);
+        requiresNotBlank(jsonFile, "Invalid destination JSON file", jsonFile);
+
+        String csvContent = OutputFileUtils.resolveContent(csv, context, false, true);
+        if (StringUtils.isBlank(csvContent)) { return StepResult.fail("CSV '" + csv + "' has no valid content"); }
+
+        File destination = new File(jsonFile);
+        if (!destination.getParentFile().mkdirs()) {
+            ConsoleUtils.log("Unable to create parent directory for '" + jsonFile + "'; more failure could ensue");
+        }
+
+        // these lines might have \r still; we need to remove them before field-level parsing
+        JsonHelper.fromCsv(TextUtils.to2dList(StringUtils.remove(csvContent, "\r"), "\n", context.getTextDelim()),
+                           BooleanUtils.toBoolean(header),
+                           new FileWriter(jsonFile));
+
+        return StepResult.success("CSV '" + csv + "' converted to JSON '" + jsonFile + "'");
+    }
+
     protected Object toJSONObject(ExecutionContext context, String json) {
         requires(StringUtils.isNotBlank(json), "invalid json", json);
 
         try {
-            // support path-based content specificaton
+            // support path-based content specification
             if (context != null) { json = OutputFileUtils.resolveContent(json, context, false); }
 
             requiresNotBlank(json, "invalid/malformed json", json);
@@ -247,7 +265,7 @@ public class JsonCommand extends BaseCommand {
 
         JsonNode jsonNode = null;
         try {
-            // support path-based content specificaton
+            // support path-based content specification
             json = OutputFileUtils.resolveContent(json, context, false);
             if (StringUtils.isNotBlank(json)) { jsonNode = JsonLoader.fromString(json); }
         } catch (IOException e) {

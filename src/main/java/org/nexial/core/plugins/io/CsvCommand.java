@@ -149,6 +149,14 @@ public class CsvCommand extends IoCommand {
     }
 
     public StepResult convertExcel(String excel, String worksheet, String csvFile) {
+        String msg = getTarget() + " » convertExcel() is DEPRECATED. PLEASE CONSIDER USING " +
+                     getTarget() + " » fromExcel() INSTEAD";
+        ConsoleUtils.log(msg);
+        log(msg);
+        return fromExcel(excel, worksheet, csvFile);
+    }
+
+    public StepResult fromExcel(String excel, String worksheet, String csvFile) {
         requiresNotBlank(excel, "invalid excel file", excel);
         requiresNotBlank(worksheet, "invalid worksheet", worksheet);
         requiresNotBlank(csvFile, "invalid CSV destination", csvFile);

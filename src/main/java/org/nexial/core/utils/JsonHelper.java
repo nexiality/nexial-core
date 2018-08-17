@@ -19,12 +19,13 @@ package org.nexial.core.utils;
 
 import java.io.File;
 import java.io.IOException;
+import java.io.Writer;
 import java.net.URL;
-import java.text.DateFormat;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
+import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.json.JSONArray;
@@ -33,111 +34,37 @@ import org.json.JSONObject;
 import org.nexial.commons.utils.ResourceUtils;
 import org.springframework.util.ClassUtils;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
+import com.google.gson.GsonBuilder;
+import com.google.gson.stream.JsonWriter;
 
-import static com.fasterxml.jackson.databind.SerializationFeature.WRITE_NULL_MAP_VALUES;
 import static org.nexial.core.NexialConst.DEF_CHARSET;
 
 public final class JsonHelper {
     private JsonHelper() { }
 
-    public static <T> T extractTypedValue(JSONObject json, Class<T> type) {
-        return extractTypedValue(json.toString(), type);
+    public static JSONObject toJsonObject(Object bean) {
+        String jsonString = toJsonString(bean, true);
+        return StringUtils.isNotBlank(jsonString) ? toJsonObject(jsonString) : null;
     }
 
-    public static <T> T extractTypedValue(JSONObject json, Class<T> type, DateFormat df) {
-        return extractTypedValue(json.toString(), type, df);
+    public static JSONObject toJsonObject(Object bean, boolean generateNullProperties) {
+        if (bean instanceof List) { return new JSONObject(toJsonArray(bean, generateNullProperties)); }
+        if (bean.getClass().isArray()) { return new JSONObject(toJsonArray(bean, generateNullProperties)); }
+
+        String jsonString = toJsonString(bean, generateNullProperties);
+        return StringUtils.isNotBlank(jsonString) ? toJsonObject(jsonString) : null;
     }
 
-    public static <T> T extractTypedValue(String json, Class<T> type) {
-        return extractTypedValue(json, type, null);
-    }
-
-    public static <T> T extractTypedValue(String json, Class<T> type, DateFormat df) {
-        if (StringUtils.isBlank(json)) { return null; }
-        if (type == null) { return null; }
-
-        T obj = extractKnownType(json, type);
-        if (obj != null) { return obj; }
-
-        ObjectMapper mapper = new ObjectMapper();
-        if (df != null) {
-            mapper.setDateFormat(df);
-            mapper.getDeserializationConfig().with(df);
-        }
-
-        try {
-            return mapper.readValue(json, type);
-        } catch (Exception e) {
-            throw new RuntimeException("Error instantiating type " + type.getName() + ": " + e.getMessage(), e);
-        }
-    }
-
-    public static <T> T lenientExtractTypedValue(JSONObject json, Class<T> type) {
-        if (json == null) { return null; }
-        return lenientExtractTypedValue(json.toString(), type);
-    }
-
-    public static <T> T lenientExtractTypedValue(JSONObject json, Class<T> type, DateFormat df) {
-        if (json == null) { return null; }
-        return lenientExtractTypedValue(json.toString(), type, df);
-    }
-
-    public static <T> T lenientExtractTypedValue(String json, Class<T> type) {
-        return lenientExtractTypedValue(json, type, null);
-    }
-
-    public static <T> T lenientExtractTypedValue(String json, Class<T> type, DateFormat df) {
-        return extractTypedValue(json, type, df);
-    }
-
-    public static String toJSONString(Object bean) throws Exception { return toJSONString(bean, true); }
-
-    public static JSONObject toJSONObject(Object bean) throws Exception {
-        String jsonString = toJSONString(bean, true);
-        return StringUtils.isNotBlank(jsonString) ? toJSONObject(jsonString) : null;
-    }
-
-    public static String toJSONString(Object bean, boolean generateNullProperties) throws Exception {
-        if (bean == null) { return generateNullProperties ? "{}" : ""; }
-
-        ObjectMapper mapper = new ObjectMapper();
-        if (!generateNullProperties) {
-            mapper.setConfig(mapper.getSerializationConfig().without(WRITE_NULL_MAP_VALUES));
-        }
-        return mapper.writerWithDefaultPrettyPrinter().writeValueAsString(bean);
-    }
-
-    public static JSONObject toJSONObject(Object bean, boolean generateNullProperties) throws Exception {
-        if (bean instanceof List) { return new JSONObject(toJSONArray(bean, generateNullProperties)); }
-        if (bean.getClass().isArray()) { return new JSONObject(toJSONArray(bean, generateNullProperties)); }
-
-        String jsonString = toJSONString(bean, generateNullProperties);
-        return StringUtils.isNotBlank(jsonString) ? toJSONObject(jsonString) : null;
-    }
-
-    public static JSONArray toJSONArray(Object bean, boolean generateNullProperties) throws Exception {
-        return new JSONArray(toJSONString(bean, generateNullProperties));
-    }
-
-    public static String getJSONString(JSONObject node, String name) {
-        return node == null ? "" : node.optString(name, "");
-    }
-
-    public static JSONArray getJSONArray(JSONObject node, String name) {
-        return node == null ? null : node.optJSONArray(name);
-    }
-
-    public static JSONObject retrieveJSONObject(String filePath) throws IOException, JSONException {
+    public static JSONObject retrieveJsonObject(String filePath) throws IOException, JSONException {
         return new JSONObject(FileUtils.readFileToString(new File(filePath), DEF_CHARSET));
     }
 
     /**
      * retrieve {@link JSONObject} structure based on a file found in classpath.  Classpath is derived by the
      * {@code clazz} parameter, and the file is based on {@code path} being the relative path calculated from the
-     * base of the claspath.
+     * base of the classpath.
      */
-    public static JSONObject retrieveJSONObject(Class clazz, String path) throws IOException, JSONException {
+    public static JSONObject retrieveJsonObject(Class clazz, String path) throws IOException, JSONException {
         if (clazz == null) { return null; }
         if (StringUtils.isBlank(path)) { return null; }
 
@@ -148,19 +75,23 @@ public final class JsonHelper {
         if (resource == null && StringUtils.startsWith(path, "/")) {
             resource = ClassUtils.getDefaultClassLoader().getResource(StringUtils.removeStart(path, "/"));
         }
+
         return new JSONObject(ResourceUtils.loadResource(resource));
     }
 
-    /**
-     * converts a {@link JSONArray} object into a String[] array.  If {@code jsonArray} is null or empty, then null
-     * will be returned.
-     */
-    public static String[] toStringArray(JSONArray jsonArray) {
-        if (jsonArray == null || jsonArray.length() < 1) { return null; }
+    public static String toJsonString(Object bean) { return toJsonString(bean, true); }
 
-        String[] array = new String[jsonArray.length()];
-        for (int i = 0; i < array.length; i++) { array[i] = jsonArray.optString(i); }
-        return array;
+    public static String toJsonString(Object bean, boolean generateNullProperties) {
+        if (bean == null) { return generateNullProperties ? "{}" : ""; }
+
+        GsonBuilder builder = new GsonBuilder().setPrettyPrinting().setLenient().disableHtmlEscaping();
+        if (generateNullProperties) { builder.serializeNulls(); }
+
+        return builder.create().toJson(bean);
+    }
+
+    public static String getJsonString(JSONObject node, String name) {
+        return node == null ? "" : node.optString(name, "");
     }
 
     public static List<String> toStringList(JSONArray stringArray) throws JSONException {
@@ -186,39 +117,10 @@ public final class JsonHelper {
         return buffer.deleteCharAt(buffer.length() - 1).toString();
     }
 
-    public static List<String> sortJSONArray(JSONArray array) {
-        List<String> list = new ArrayList<>();
-        if (array == null || array.length() < 1) { return list; }
-        for (int i = 0; i < array.length(); i++) { list.add(array.optString(i)); }
-        Collections.sort(list);
-        return list;
-    }
-
-    /**
-     * create compact deserialized string for {@code json}, suitable for network transmission.
-     * <p/>
-     * the {@code removeNullNameValuePair} parameter allows for removal of name/value pair where the value is null.
-     * <b>Note that null array indices will be kept untouched since removing of such indices will shift the
-     * position of subsequent indices in the same array</b>.  Also, string literal "null" will be ignored as well to
-     * maintain intent.
-     */
-    public static String toCompactString(JSONObject json, boolean removeNullNameValuePair) throws JSONException {
-        if (json == null) { return null; }
-
-        String string = StringUtils.replaceChars(json.toString(0), "\n\r", "");
-        if (removeNullNameValuePair && StringUtils.isNotBlank(string)) {
-            string = string.replaceAll("(?:\"[0-9A-Za-z_-]+\"\\:null,)", "");
-            string = string.replaceAll("(?:\"[0-9A-Za-z_-]+\"\\:null)", "");
-            // assure well-formed via second conversion
-            string = new JSONObject(string).toString(0);
-        }
-        return string;
-    }
-
     /**
      * provide js-like convenience to retrieve value from {@code json}.  {@code json} is expected to use dot (.) to
      * denote node hierarchy and square brackets ({@code [...]}) to denote array.  If a node name contains ., then
-     * the standard Javascript array denotion should be used.  For example,
+     * the standard Javascript array notation should be used.  For example,
      * <pre>{ "a": { "b.c": "hello" } }</pre>
      * can be referenced as:
      * <pre>JsonHelper.fetchString(json, "a[\"b.c\"]");</pre>
@@ -227,20 +129,72 @@ public final class JsonHelper {
      */
     public static String fetchString(JSONObject json, String path) { return JSONPath.find(json, path); }
 
+    public static JSONArray toJsonArray(Object bean, boolean generateNullProperties) {
+        return new JSONArray(toJsonString(bean, generateNullProperties));
+    }
+
+    public static JSONArray getJsonArray(JSONObject node, String name) {
+        return node == null ? null : node.optJSONArray(name);
+    }
+
+    /**
+     * converts a {@link JSONArray} object into a String[] array.  If {@code jsonArray} is null or empty, then null
+     * will be returned.
+     */
+    public static String[] toStringArray(JSONArray jsonArray) {
+        if (jsonArray == null || jsonArray.length() < 1) { return null; }
+
+        String[] array = new String[jsonArray.length()];
+        for (int i = 0; i < array.length; i++) { array[i] = jsonArray.optString(i); }
+        return array;
+    }
+
+    public static List<String> sortJsonArray(JSONArray array) {
+        List<String> list = new ArrayList<>();
+        if (array == null || array.length() < 1) { return list; }
+        for (int i = 0; i < array.length(); i++) { list.add(array.optString(i)); }
+        Collections.sort(list);
+
+        return list;
+    }
+
     public static boolean hasError(JSONObject json, String errorProperty) {
-        return StringUtils.isNotBlank(JsonHelper.getJSONString(json, errorProperty));
+        return StringUtils.isNotBlank(getJsonString(json, errorProperty));
     }
 
     public static boolean hasError(JSONObject json) { return hasError(json, "errorCode"); }
 
-    private static <T> T extractKnownType(String json, Class<T> type) {
-        String typeName = type.getName();
-        if (StringUtils.equals(typeName, "boolean") || StringUtils.equals(typeName, Boolean.class.getName())) {
-            return (T) Boolean.valueOf(StringUtils.containsOnly(json, "Yy") ||
-                                       StringUtils.equalsIgnoreCase(json, "true"));
-        }
-        if ("java.lang.String".equals(typeName)) { return (T) json; }
+    /**
+     * convert {@code records}, which presumably from CSV file, to a JSON array streamed to the designated
+     * {@code destination}. Optionally, one may use {@code header} to indicate if {@code records} contains header
+     * (as first row) or not.
+     */
+    public static void fromCsv(List<List<String>> records, boolean header, Writer destination) throws IOException {
+        if (CollectionUtils.isEmpty(records)) { throw new IOException("No valid content"); }
 
-        return null;
+        // only 1 line and it is the header... this will not do
+        if (header && records.size() == 1) { throw new IOException("Record contains only header; conversion aborted"); }
+
+        try (JsonWriter writer = new JsonWriter(destination)) {
+            writer.beginArray();
+
+            if (header) {
+                List<String> headers = records.get(0);
+                for (int i = 1; i < records.size(); i++) {
+                    writer.beginObject();
+                    List<String> record = records.get(i);
+                    for (int j = 0; j < record.size(); j++) { writer.name(headers.get(j)).value(record.get(j)); }
+                    writer.endObject();
+                }
+            } else {
+                for (List<String> record : records) {
+                    writer.beginArray();
+                    for (String field : record) { writer.value(field); }
+                    writer.endArray();
+                }
+            }
+
+            writer.endArray();
+        }
     }
 }
