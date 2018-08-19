@@ -2241,7 +2241,7 @@ public class WebCommand extends BaseCommand implements CanTakeScreenshot, CanLog
         ensureReady();
         By by = locatorHelper.findBy(locator);
         WebElement target = shouldWait() ? waiter.until(driver -> driver.findElement(by)) : driver.findElement(by);
-        if (context.isHighlightWebElementEnabled() && target != null && target.isDisplayed()) { highlight(target); }
+        if (target != null && target.isDisplayed()) { highlight(target); }
         return target;
     }
 
@@ -2254,30 +2254,32 @@ public class WebCommand extends BaseCommand implements CanTakeScreenshot, CanLog
         return url;
     }
 
-    protected void highlight(String locator) { highlight(toElement(context.replaceTokens(locator))); }
+    protected void highlight(String locator) {
+        if (!isHighlightEnabled()) { return; }
+        highlight(toElement(context.replaceTokens(locator)));
+    }
 
     protected void highlight(WebElement we) {
-        if (!context.isHighlightWebElementEnabled()) { return; }
+        if (!isHighlightEnabled()) { return; }
 
-        String initialStyle = null;
-        Object retObj = jsExecutor.executeScript("return arguments[0].getAttribute('style');", we);
-        if (retObj != null && !retObj.equals("") && !retObj.equals(STYLE_HIGHLIGHT)) {
-            initialStyle = retObj.toString();
-            ConsoleUtils.log("found current style as '" + initialStyle + "'");
+        // if we can't scroll to it, then we won't highlight it
+        if (scrollTo((Locatable) we)) {
+            int waitMs = context.hasData(HIGHLIGHT_WAIT_MS) ?
+                         context.getIntData(HIGHLIGHT_WAIT_MS) :
+                         context.getIntData(HIGHLIGHT_WAIT_MS_OLD, DEF_HIGHLIGHT_WAIT_MS);
+            String highlight = context.getStringData(HIGHLIGHT_STYLE, DEF_HIGHLIGHT_STYLE);
+            jsExecutor.executeScript("var ws = arguments[0];" +
+                                     "var oldStyle = arguments[0].getAttribute('style');" +
+                                     "ws.setAttribute('style', arguments[1]);" +
+                                     "setTimeout(function () { ws.setAttribute('style', oldStyle); }, " + waitMs + ");",
+                                     we, highlight);
         }
-
-        int waitMs = context.getIntData(HIGHLIGHT_WAIT_MS, DEF_HIGHLIGHT_WAIT_MS);
-        jsExecutor.executeScript(
-            "var elem = arguments[0];" +
-            "var tmpStyle = arguments[1];" +
-            "var initialStyle = arguments[2];" +
-            "elem.setAttribute('style', tmpStyle); " +
-            "setTimeout(function () { elem.setAttribute('style', initialStyle); }, " + waitMs + ");",
-            we, STYLE_HIGHLIGHT, StringUtils.defaultString(initialStyle, ""));
     }
 
     // todo incomplete... need more testing
     protected void highlight(TestStep teststep) {
+        if (!isHighlightEnabled()) { return; }
+
         String cmd = teststep.getCommand();
         if (StringUtils.contains(cmd, "()") || !StringUtils.contains(cmd, "(")) { return; }
 
@@ -2333,6 +2335,13 @@ public class WebCommand extends BaseCommand implements CanTakeScreenshot, CanLog
         } catch (Exception e) {
             log("unable to execute focus on target element: " + e.getMessage());
         }
+    }
+
+    private boolean isHighlightEnabled() {
+        return !browser.getBrowserType().isHeadless() &&
+               context.hasData(OPT_DEBUG_HIGHLIGHT) ?
+               context.getBooleanData(OPT_DEBUG_HIGHLIGHT) :
+               context.getBooleanData(OPT_DEBUG_HIGHLIGHT_OLD, DEF_DEBUG_HIGHLIGHT);
     }
 
     private boolean shouldWait() { return context.getBooleanData(WEB_ALWAYS_WAIT, DEF_WEB_ALWAYS_WAIT); }

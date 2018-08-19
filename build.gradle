@@ -121,6 +121,9 @@ dependencies {
 	compile("org.seleniumhq.selenium:selenium-safari-driver:${seleniumVersion}")
 	compile("org.seleniumhq.selenium:selenium-chrome-driver:${seleniumVersion}")
 
+	// https://mvnrepository.com/artifact/io.appium/java-client
+//	compile("io.appium:java-client:${appiumVersion}")
+
 	// winium
 	// for Winium.Desktop.Driver.exe download: https://github.com/2gis/Winium.Desktop/releases/latest
 	compile("com.github.2gis.winium:winium-webdriver:+")
@@ -204,6 +207,9 @@ dependencies {
 	compile("javax.transaction:jta:1.1")
 	compile("org.apache.activemq:activemq-client:5.14.5")
 	compile("com.rabbitmq.jms:rabbitmq-jms:1.8.1")
+
+	// https://mvnrepository.com/artifact/pl.touk/throwing-function
+	compile("pl.touk:throwing-function:1.3")
 
 	compile("org.apache.tika:tika-core:+")
 	compile("org.apache.tika:tika-parsers:+")

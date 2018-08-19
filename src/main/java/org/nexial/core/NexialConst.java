@@ -114,23 +114,30 @@ public final class NexialConst {
     public static final String OPT_LAST_ALERT_TEXT = NAMESPACE + "lastAlertText";
     public static final String OPT_ALERT_IGNORE_FLAG = NAMESPACE + "ignoreBrowserAlert";
 
-    public static final String OPT_PREEMPTIVE_ALERT_CHECK = NAMESPACE + "web.preemptiveAlertCheck";
+    public static final String NS_WEB = NAMESPACE + "web.";
+    public static final String OPT_PREEMPTIVE_ALERT_CHECK = NS_WEB + "preemptiveAlertCheck";
     public static final boolean DEF_PREEMPTIVE_ALERT_CHECK = false;
 
     public static final String OPT_FORCE_IE_32 = NAMESPACE + "forceIE32";
     public static final boolean DEFAULT_FORCE_IE_32 = false;
 
-    public static final String WEB_ALWAYS_WAIT = NAMESPACE + "web.alwaysWait";
+    public static final String WEB_ALWAYS_WAIT = NS_WEB + "alwaysWait";
     public static final boolean DEF_WEB_ALWAYS_WAIT = false;
 
-    public static final String WEB_UNFOCUS_AFTER_TYPE = NAMESPACE + "web.unfocusAfterType";
+    public static final String WEB_UNFOCUS_AFTER_TYPE = NS_WEB + "unfocusAfterType";
     public static final boolean DEF_WEB_UNFOCUS_AFTER_TYPE= false;
 
     // highlight
-    public static final String OPT_DEBUG_HIGHLIGHT = NAMESPACE + "highlight";
-    public static final String STYLE_HIGHLIGHT = "background:#faf557;";
-    public static final String HIGHLIGHT_WAIT_MS = NAMESPACE + "highlightWaitMs";
+    public static final String OPT_DEBUG_HIGHLIGHT_OLD = NAMESPACE + "highlight";
+    public static final String OPT_DEBUG_HIGHLIGHT = NS_WEB + "highlight";
+    public static final boolean DEF_DEBUG_HIGHLIGHT = false;
+
+    public static final String HIGHLIGHT_WAIT_MS_OLD = NAMESPACE + "highlightWaitMs";
+    public static final String HIGHLIGHT_WAIT_MS = NS_WEB + "highlight.waitMs";
     public static final int DEF_HIGHLIGHT_WAIT_MS = 250;
+
+    public static final String HIGHLIGHT_STYLE = NS_WEB + "highlight.style";
+    public static final String DEF_HIGHLIGHT_STYLE = "background:#faf557;";
 
     // webdriver support map
     public static final String OPT_EDGE_DRIVER_TARGET_OS_BUILD = "edgeDriverTargetOSBuild";
@@ -420,6 +427,8 @@ public final class NexialConst {
         public boolean isJsEventFavored() { return jsEventFavored; }
 
         public boolean isSwitchWindowSupported() { return switchWindowSupported; }
+
+        public boolean isHeadless() { return this == firefoxheadless || this == chromeheadless; }
     }
 
     public enum CrystalReportExportType {

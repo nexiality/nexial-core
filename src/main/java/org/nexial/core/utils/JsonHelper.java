@@ -36,6 +36,7 @@ import org.springframework.util.ClassUtils;
 
 import com.google.gson.GsonBuilder;
 import com.google.gson.stream.JsonWriter;
+import pl.touk.throwing.ThrowingConsumer;
 
 import static org.nexial.core.NexialConst.DEF_CHARSET;
 
@@ -165,28 +166,64 @@ public final class JsonHelper {
     public static boolean hasError(JSONObject json) { return hasError(json, "errorCode"); }
 
     /**
-     * convert {@code records}, which presumably from CSV file, to a JSON array streamed to the designated
-     * {@code destination}. Optionally, one may use {@code header} to indicate if {@code records} contains header
-     * (as first row) or not.
-     *
-     * <b>NOTE</b>: {@code destination} is NOT closed at the end of this method. Caller will need to flush/close after
-     * the method completes.
+     * See {@link #fromCsv(List, boolean, Writer)}.
      */
     public static void fromCsv(List<List<String>> records, boolean header, Writer destination) throws IOException {
+        fromCsv(records, header, null, destination, null);
+    }
+
+    /**
+     * <p>Convert {@code records}, which presumably from CSV file, to a JSON array streamed to the designated
+     * {@code destination}. Optionally, one may use {@code header} to indicate if {@code records} contains header
+     * (as first row) or not.
+     * </p>
+     *
+     * <p>The {@code before} param is a caller-provisioned function to write to the same {@code destination} writer
+     * <b>BEFORE</b> the CSV->JSON conversion. The {@code after} param is a caller-provisioned function to write to the
+     * same {@code destination} writer <b>AFTER</b> the conversion. This method will accordingly invoke the before and
+     * after writes before closing the writer stream. Both maybe null to indicate omission.
+     * </p>
+     *
+     * <p>
+     * <b>NOTE</b>: {@code destination} is NOT closed at the end of this method. Caller will need to flush/close after
+     * the method completes.
+     * </p>
+     */
+    public static void fromCsv(List<List<String>> records,
+                               boolean header,
+                               ThrowingConsumer<Writer, IOException> before,
+                               Writer destination,
+                               ThrowingConsumer<Writer, IOException> after) throws IOException {
         if (CollectionUtils.isEmpty(records)) { throw new IOException("No valid content"); }
 
         // only 1 line and it is the header... this will not do
         if (header && records.size() == 1) { throw new IOException("Record contains only header; conversion aborted"); }
 
+        if (before != null) { before.accept(destination); }
+
+        // since we are dealing with list of list, the conversion target will be JSON array of either JSON object
+        // (if header=true) or JSON array.
         try (JsonWriter writer = new JsonWriter(destination)) {
             writer.beginArray();
 
             if (header) {
                 List<String> headers = records.get(0);
+                int headerSize = headers.size();
+
                 for (int i = 1; i < records.size(); i++) {
                     writer.beginObject();
+
                     List<String> record = records.get(i);
-                    for (int j = 0; j < record.size(); j++) { writer.name(headers.get(j)).value(record.get(j)); }
+                    for (int j = 0; j < record.size(); j++) {
+                        if (headerSize <= j) {
+                            // uneven record found: field without matching header
+                            ConsoleUtils.error("CSV record (Row " + i + ", Field " + j + ") found without header: " +
+                                               record.get(j));
+                        } else {
+                            writer.name(headers.get(j)).value(record.get(j));
+                        }
+                    }
+
                     writer.endObject();
                 }
             } else {
@@ -198,6 +235,8 @@ public final class JsonHelper {
             }
 
             writer.endArray();
+
+            if (after != null) { after.accept(destination); }
         }
     }
 }

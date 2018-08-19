@@ -122,7 +122,7 @@ public class JsonCommand extends BaseCommand {
 
     public StepResult assertValues(String json, String jsonpath, String array, String exactOrder) {
         String actual = find(json, jsonpath);
-        // accomodate for [, ] and double quotes
+        // accommodate for [, ] and double quotes
         actual = StringUtils.removeStart(actual, "[");
         actual = StringUtils.removeEnd(actual, "]");
         actual = StringUtils.remove(actual, "\"");

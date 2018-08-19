@@ -422,12 +422,6 @@ public class ExecutionContext {
 
     public boolean isVerbose() { return getBooleanData(VERBOSE); }
 
-    /**
-     * true if web element should be highlighted as it's being referenced durin testing.  ONLY APPLICABLE TO
-     * WEB APPLICATION.
-     */
-    public boolean isHighlightWebElementEnabled() { return getBooleanData(OPT_DEBUG_HIGHLIGHT, false); }
-
     public boolean isLenientStringCompare() { return getBooleanData(OPT_EASY_STRING_COMPARE, true); }
 
     public boolean isProxyRequired() { return getBooleanData(OPT_PROXY_REQUIRED, false); }

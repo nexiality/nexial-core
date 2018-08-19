@@ -17,8 +17,15 @@
 
 package org.nexial.core.utils;
 
+import java.io.File;
+import java.io.FileWriter;
 import java.io.IOException;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
 
+import org.apache.commons.io.FileUtils;
+import org.apache.commons.lang3.SystemUtils;
 import org.json.JSONException;
 import org.json.JSONObject;
 import org.junit.After;
@@ -26,22 +33,29 @@ import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 
-/**
- *
- */
+import com.google.gson.JsonElement;
+
+import static java.io.File.separator;
+import static org.nexial.core.NexialConst.DEF_FILE_ENCODING;
+import static org.nexial.core.NexialConst.GSON_COMPRESSED;
+
 public class JsonHelperTest {
+    private String destinationBase;
 
     @Before
-    public void setUp() { }
+    public void setUp() {
+        destinationBase = SystemUtils.getJavaIoTmpDir().getAbsolutePath() + separator + "JsonHelperTest" + separator;
+        new File(destinationBase).mkdirs();
+    }
 
     @After
-    public void tearDown() { }
+    public void tearDown() {
+        if (destinationBase != null) { FileUtils.deleteQuietly(new File(destinationBase)); }
+    }
 
     @Test
     public void testRetrieveJSONObject() throws Exception {
-        String fixture1 = "";
-        Assert.assertNull(JsonHelper.retrieveJsonObject(JsonHelper.class, fixture1));
-
+        Assert.assertNull(JsonHelper.retrieveJsonObject(JsonHelper.class, ""));
         Assert.assertNull(JsonHelper.retrieveJsonObject(JsonHelper.class, null));
         Assert.assertNull(JsonHelper.retrieveJsonObject(null, null));
 
@@ -96,4 +110,126 @@ public class JsonHelperTest {
         Assert.assertEquals("yoyoma", JsonHelper.fetchString(json, "h[i.j]"));
         Assert.assertEquals("n", JsonHelper.fetchString(json, "k.l.m"));
     }
+
+    @Test
+    public void fromCsv_simple() throws Exception {
+
+        List<List<String>> records = new ArrayList<>();
+        records.add(Arrays.asList("NAME", "ADDRESS", "AGE"));
+        records.add(Arrays.asList("Johnny", "123 Elm Street", "29"));
+        records.add(Arrays.asList("Sam", "#14 Sesame Street", "35"));
+        records.add(Arrays.asList("Shandra", "49 Mississippi Ave.", "7"));
+
+        String destination = destinationBase + "fromCsv_simple.json";
+        FileWriter writer = new FileWriter(destination);
+
+        JsonHelper.fromCsv(records, true, writer);
+
+        Assert.assertEquals("[" +
+                            "{\"NAME\":\"Johnny\",\"ADDRESS\":\"123 Elm Street\",\"AGE\":\"29\"}," +
+                            "{\"NAME\":\"Sam\",\"ADDRESS\":\"#14 Sesame Street\",\"AGE\":\"35\"}," +
+                            "{\"NAME\":\"Shandra\",\"ADDRESS\":\"49 Mississippi Ave.\",\"AGE\":\"7\"}" +
+                            "]",
+                            readJsonContent(destination));
+    }
+
+    @Test
+    public void fromCsv_uneven_records() throws Exception {
+        List<List<String>> records = new ArrayList<>();
+        records.add(Arrays.asList("NAME", "ADDRESS", "AGE"));
+        records.add(Arrays.asList("Johnny", "123 Elm Street", "29"));
+        records.add(Arrays.asList("Sam", "#14 Sesame Street"));
+        records.add(Arrays.asList("Shandra", "49 Mississippi Ave.", "7", "123-ABC"));
+
+        String destination = destinationBase + "fromCsv_uneven_records.json";
+        FileWriter writer = new FileWriter(destination);
+
+        JsonHelper.fromCsv(records, true, writer);
+
+        Assert.assertEquals("[" +
+                            "{\"NAME\":\"Johnny\",\"ADDRESS\":\"123 Elm Street\",\"AGE\":\"29\"}," +
+                            "{\"NAME\":\"Sam\",\"ADDRESS\":\"#14 Sesame Street\"}," +
+                            "{\"NAME\":\"Shandra\",\"ADDRESS\":\"49 Mississippi Ave.\",\"AGE\":\"7\"}" +
+                            "]",
+                            readJsonContent(destination));
+    }
+
+    @Test
+    public void fromCsv_empty_records() throws Exception {
+        List<List<String>> records = new ArrayList<>();
+        records.add(Arrays.asList("NAME", "ADDRESS", "AGE"));
+        records.add(Arrays.asList("Johnny", "123 Elm Street", "29"));
+        records.add(Arrays.asList(""));
+        records.add(Arrays.asList("Shandra"));
+        records.add(Arrays.asList("     "));
+
+        String destination = destinationBase + "fromCsv_empty_records.json";
+        FileWriter writer = new FileWriter(destination);
+
+        JsonHelper.fromCsv(records, true, writer);
+
+        Assert.assertEquals("[" +
+                            "{\"NAME\":\"Johnny\",\"ADDRESS\":\"123 Elm Street\",\"AGE\":\"29\"}," +
+                            "{\"NAME\":\"\"}," +
+                            "{\"NAME\":\"Shandra\"}," +
+                            "{\"NAME\":\"     \"}" +
+                            "]",
+                            readJsonContent(destination));
+
+        records = new ArrayList<>();
+        records.add(Arrays.asList("Johnny", "123 Elm Street", "29"));
+        records.add(Arrays.asList(""));
+        records.add(Arrays.asList("Shandra"));
+        records.add(Arrays.asList("     "));
+
+        destination = destinationBase + "fromCsv_empty_records2.json";
+        writer = new FileWriter(destination);
+
+        JsonHelper.fromCsv(records, false, writer);
+
+        Assert.assertEquals("[" +
+                            "[\"Johnny\",\"123 Elm Street\",\"29\"]," +
+                            "[\"\"]," +
+                            "[\"Shandra\"]," +
+                            "[\"     \"]" +
+                            "]",
+                            readJsonContent(destination));
+    }
+
+    @Test
+    public void fromCsv_before_after() throws Exception {
+
+        List<List<String>> records = new ArrayList<>();
+        records.add(Arrays.asList("NAME", "ADDRESS", "AGE"));
+        records.add(Arrays.asList("Johnny", "123 Elm Street", "29"));
+        records.add(Arrays.asList("Sam", "#14 Sesame Street", "35"));
+        records.add(Arrays.asList("Shandra", "49 Mississippi Ave.", "7"));
+
+        String destination = destinationBase + "fromCsv_simple.json";
+        FileWriter writer = new FileWriter(destination);
+
+        JsonHelper.fromCsv(records,
+                           true,
+                           before -> before.write("{ \"version\": \"12.3401b\", \"details\": "),
+                           writer,
+                           after -> after.write("}"));
+
+        Assert.assertEquals("{" +
+                            "\"version\":\"12.3401b\"," +
+                            "\"details\":" +
+                            "[" +
+                            "{\"NAME\":\"Johnny\",\"ADDRESS\":\"123 Elm Street\",\"AGE\":\"29\"}," +
+                            "{\"NAME\":\"Sam\",\"ADDRESS\":\"#14 Sesame Street\",\"AGE\":\"35\"}," +
+                            "{\"NAME\":\"Shandra\",\"ADDRESS\":\"49 Mississippi Ave.\",\"AGE\":\"7\"}" +
+                            "]" +
+                            "}",
+                            readJsonContent(destination));
+    }
+
+    private String readJsonContent(String destination) throws IOException {
+        String content = FileUtils.readFileToString(new File(destination), DEF_FILE_ENCODING);
+        System.out.println(content);
+        return GSON_COMPRESSED.toJson(GSON_COMPRESSED.fromJson(content, JsonElement.class));
+    }
+
 }
