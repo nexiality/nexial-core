@@ -198,7 +198,6 @@ public class JsonHelperTest {
 
     @Test
     public void fromCsv_before_after() throws Exception {
-
         List<List<String>> records = new ArrayList<>();
         records.add(Arrays.asList("NAME", "ADDRESS", "AGE"));
         records.add(Arrays.asList("Johnny", "123 Elm Street", "29"));
@@ -222,6 +221,49 @@ public class JsonHelperTest {
                             "{\"NAME\":\"Sam\",\"ADDRESS\":\"#14 Sesame Street\",\"AGE\":\"35\"}," +
                             "{\"NAME\":\"Shandra\",\"ADDRESS\":\"49 Mississippi Ave.\",\"AGE\":\"7\"}" +
                             "]" +
+                            "}",
+                            readJsonContent(destination));
+    }
+
+    @Test
+    public void fromCsv_nested_before_after() throws Exception {
+        List<List<String>> records = new ArrayList<>();
+        records.add(Arrays.asList("NAME", "ADDRESS", "AGE"));
+        records.add(Arrays.asList("Johnny", "123 Elm Street", "29"));
+        records.add(Arrays.asList("Sam", "#14 Sesame Street", "35"));
+        records.add(Arrays.asList("Shandra", "49 Mississippi Ave.", "7"));
+
+        List<List<String>> records2 = new ArrayList<>();
+        records2.add(Arrays.asList("94", "Red", "29"));
+        records2.add(Arrays.asList("78", "Yellow", "35"));
+        records2.add(Arrays.asList("34.2", "Blue", "7"));
+
+        String destination = destinationBase + "fromCsv_simple.json";
+        FileWriter writer = new FileWriter(destination);
+
+        JsonHelper.fromCsv(records,
+                           true,
+                           before -> before.write("{ \"version\": \"12.3401b\", \"details\": "),
+                           writer,
+                           after -> JsonHelper.fromCsv(records2,
+                                                       false,
+                                                       before -> before.write(",\"stats\":"),
+                                                       after,
+                                                       after2 -> after2.write(", \"complete\":true}")));
+
+        Assert.assertEquals("{" +
+                            "\"version\":\"12.3401b\"," +
+                            "\"details\":[" +
+                            "{\"NAME\":\"Johnny\",\"ADDRESS\":\"123 Elm Street\",\"AGE\":\"29\"}," +
+                            "{\"NAME\":\"Sam\",\"ADDRESS\":\"#14 Sesame Street\",\"AGE\":\"35\"}," +
+                            "{\"NAME\":\"Shandra\",\"ADDRESS\":\"49 Mississippi Ave.\",\"AGE\":\"7\"}" +
+                            "]," +
+                            "\"stats\":[" +
+                            "[\"94\",\"Red\",\"29\"]," +
+                            "[\"78\",\"Yellow\",\"35\"]," +
+                            "[\"34.2\",\"Blue\",\"7\"]" +
+                            "]," +
+                            "\"complete\":true" +
                             "}",
                             readJsonContent(destination));
     }
