@@ -17,27 +17,25 @@
 
 package org.nexial.core.plugins.filevalidation;
 
-import java.util.HashSet;
-import java.util.List;
 import java.util.Map;
-import java.util.Set;
-
-import org.nexial.core.plugins.filevalidation.validators.Error;
-import org.nexial.core.plugins.filevalidation.validators.ValidationsExecutor.Severity;
 
 public class RecordData {
 
     private String startTime;
     private String processTime;
-    private int totalRecordsProcessed;
     private String inputFile;
     private String excelFile;
-    private transient Map<Integer, RecordBean> records;
-    private transient Map<Integer, String> skippedRecords;
     private boolean hasError;
     private Map<String, Number> mapValues;
-    private List<Error> errors;
+    private int totalRecordsProcessed;
+    private int totalRecordsSkipped;
+    private int totalRecordsPassed;
+    private int totalRecordsFailed;
+    private int totalRecordsWarning;
 
+    public void calculateTotalPassed(){
+        totalRecordsPassed = totalRecordsProcessed - totalRecordsFailed;
+    }
     public String getStartTime() {
         return startTime;
     }
@@ -46,28 +44,12 @@ public class RecordData {
         this.startTime = startTime;
     }
 
-    public List<Error> getErrors() {
-        return errors;
-    }
-
-    public void setErrors(List<Error> errors) {
-        this.errors = errors;
-    }
-
     public int getTotalRecordsProcessed() {
         return totalRecordsProcessed;
     }
 
     public void setTotalRecordsProcessed(int totalRecordsProcessed) {
         this.totalRecordsProcessed = totalRecordsProcessed;
-    }
-
-    public Map<Integer, String> getSkippedRecords() {
-        return skippedRecords;
-    }
-
-    public void setSkippedRecords(Map<Integer, String> skippedRecords) {
-        this.skippedRecords = skippedRecords;
     }
 
     public String getInputFile() {
@@ -110,44 +92,44 @@ public class RecordData {
         this.mapValues = mapValues;
     }
 
-    public Map<Integer, RecordBean> getRecords() {
-        return records;
+    public int getTotalRecordsWarning() {
+        return totalRecordsWarning;
     }
 
-    public void setRecords(Map<Integer, RecordBean> records) {
-        this.records = records;
+    public void setTotalRecordsWarning(int totalRecordsWarning) {
+        this.totalRecordsWarning = totalRecordsWarning;
     }
 
     public void printMapFunctionValues() {
-
         mapValues.entrySet().removeIf(entry -> entry.getKey().contains("#"));
-
     }
 
-    public int totalRecordsFailed() {
-        Set<String> set = new HashSet<>();
-        for (Error error : errors) {
-            if (error.getSeverity().equals(Severity.ERROR.toString())) {
-                set.add(error.getRecordLine());
-            }
+    public int getTotalRecordsSkipped() {
+        return totalRecordsSkipped;
+    }
 
-        }
-        return set.size();
+    public void setTotalRecordsSkipped(int totalRecordsSkipped) {
+        this.totalRecordsSkipped = totalRecordsSkipped;
+    }
+
+    public int getTotalRecordsPassed() {
+        return totalRecordsPassed;
+    }
+
+    public void setTotalRecordsPassed(int totalRecordsPassed) {
+        this.totalRecordsPassed = totalRecordsPassed;
+    }
+
+    public int getTotalRecordsFailed() {
+        return totalRecordsFailed;
+    }
+
+    public void setTotalRecordsFailed(int totalRecordsFailed) {
+        this.totalRecordsFailed = totalRecordsFailed;
     }
 
     public int totalRecordsPassed() {
-        return totalRecordsProcessed - totalRecordsFailed();
-    }
-
-    public int totalWarnings() {
-        Set<String> set = new HashSet<>();
-        for (Error error : errors) {
-            if (error.getSeverity().equals(Severity.WARNING.toString())) {
-                set.add(error.getRecordLine());
-            }
-
-        }
-        return set.size();
+        return totalRecordsProcessed - getTotalRecordsFailed();
     }
 
     @Override

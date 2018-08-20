@@ -17,9 +17,11 @@
 
 package org.nexial.core.plugins.filevalidation.validators;
 
+import java.io.File;
+import java.io.IOException;
+import java.io.OutputStream;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
-import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
@@ -30,6 +32,7 @@ import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.collections4.map.HashedMap;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.math.NumberUtils;
+import org.nexial.commons.utils.FileUtil;
 import org.nexial.core.ExecutionThread;
 import org.nexial.core.model.ExecutionContext;
 import org.nexial.core.model.NexialFilterList;
@@ -39,8 +42,10 @@ import org.nexial.core.plugins.filevalidation.RecordData;
 import org.nexial.core.plugins.filevalidation.config.FieldConfig;
 import org.nexial.core.plugins.filevalidation.config.MapFunctionConfig;
 import org.nexial.core.plugins.filevalidation.config.RecordConfig;
-import org.nexial.core.plugins.filevalidation.config.ValidationConfig;
 import org.nexial.core.plugins.filevalidation.validators.Error.ErrorBuilder;
+import org.nexial.core.utils.ConsoleUtils;
+import org.nexial.core.utils.OutputFileUtils;
+import org.nexial.core.variable.Syspath;
 
 import static java.math.RoundingMode.UP;
 
@@ -61,9 +66,12 @@ public class ValidationsExecutor {
     }
 
     public enum DataType {
-        // numeric, alphanumeric, alpha, any, blank, t/f
+        // numeric, alphanumeric, alpha, alphaupper, alphalower, any, blank, t/f
         NUMERIC("N", "Numeric", "Num", "Number"),
-        ALPHANUMERIC("A/N", "Alphanumeric", "Alpha Numeric"),
+        ALPHANUMERIC("A/N", "AN", "Alphanumeric", "Alpha Numeric"),
+        ALPHA("Alpha", "A"),
+        ALPHAUPPER("Alpha Upper", "Alphaupper"),
+        ALPHALOWER("Alpha Lower", "Alphalower"),
         BLANK("Blank"),
         ANY("*", "any", " ");
 
@@ -89,6 +97,18 @@ public class ValidationsExecutor {
 
         public boolean isAlphaNumeric(String text) {
             return ALPHANUMERIC.references.keySet().stream().anyMatch(text::equalsIgnoreCase);
+        }
+
+        public boolean isAlpha(String text) {
+            return ALPHA.references.keySet().stream().anyMatch(text::equalsIgnoreCase);
+        }
+
+        public boolean isAlphaUpper(String text) {
+            return ALPHAUPPER.references.keySet().stream().anyMatch(text::equalsIgnoreCase);
+        }
+
+        public boolean isAlphaLower(String text) {
+            return ALPHALOWER.references.keySet().stream().anyMatch(text::equalsIgnoreCase);
         }
 
         public boolean isBlank(String text) {
@@ -123,49 +143,50 @@ public class ValidationsExecutor {
             new DateValidator()).setNextValidator(new SqlValidator());
     }
 
-    public void executeValidations(RecordData recordData) {
+    public File resolveCsvOutputFile() {
+        String outputCsvFilePath = new Syspath().out("fullpath") + File.separator +
+                                   OutputFileUtils.generateOutputFilename(context.getCurrentTestStep(), "csv");
+        if (FileUtil.isFileReadable(outputCsvFilePath)) {
+            throw new IllegalArgumentException("Unable to create a csv output file.");
+        }
+        return new File(outputCsvFilePath);
+    }
+
+    public void executeValidations(OutputStream outputStream, RecordBean recordBean) {
+
+        RecordData recordData = recordBean.getRecordData();
+        int totalFailed = recordData.getTotalRecordsFailed();
+        doFieldValidations(recordBean);
+        if (recordBean.isFailed()) {
+            recordData.setTotalRecordsFailed(++totalFailed);
+        }
+        writeReportToFile(outputStream, recordBean);
 
         // TODO: refactor field validations to take the advantage of Nexial filter
-        doFieldValidations(recordData);
-        recordData.printMapFunctionValues();
-        collectErrors(recordData);
     }
 
     public void doBasicValidations(RecordBean recordBean) {
         BasicValidator basicValidator = new BasicValidator();
-
         List<FieldBean> fields = recordBean.getFields();
-
         for (FieldBean field : fields) {
-
             basicValidator.validateField(field);
         }
-
     }
 
     public Map<String, Number> collectMapValues(RecordConfig recordConfig, RecordBean recordBean,
                                                 Map<String, Number> mapValues) {
 
         List<MapFunctionConfig> mapFunctionConfigs = recordConfig.getMapFunctionConfigs();
-
         if (mapFunctionConfigs == null || mapFunctionConfigs.isEmpty()) { return mapValues; }
-
         updateValuesToContext(recordConfig, recordBean, mapValues);
-
         for (MapFunctionConfig mapFunctionConfig : mapFunctionConfigs) {
-
             List<FieldBean> recordFields = recordBean.getFields();
-
             String function = mapFunctionConfig.getFunction();
             FieldBean signField = recordBean.get(mapFunctionConfig.getSignField());
             String mapTo = mapFunctionConfig.getMapTo();
-
             for (FieldBean recordField : recordFields) {
-
                 String fieldName = recordField.getConfig().getFieldname();
-
                 if (!mapFunctionConfig.getFieldName().equals(fieldName)) {continue;}
-
                 if (recordField.isDataTypeError()) {
                     context.logCurrentStep("skipped map function '" + function +
                                            "' due to validation error at field '" +
@@ -357,47 +378,30 @@ public class ValidationsExecutor {
                                  .build();
     }
 
-    private void collectErrors(RecordData recordData) {
+    private void doFieldValidations(RecordBean recordBean) {
+        List<FieldBean> fields = recordBean.getFields();
 
-        List<Error> errors = new ArrayList<>();
-
-        for (Entry<Integer, RecordBean> recordEntry : recordData.getRecords().entrySet()) {
-
-            List<FieldBean> recordFields = recordEntry.getValue().getFields();
-
-            for (FieldBean recordField : recordFields) {
-
-                if (recordField.getErrors() != null && recordField.getErrors().size() >= 1) {
-                    for (Error error : recordField.getErrors()) {
-
-                        error.setRecordLine(String.valueOf(recordEntry.getKey() + 1));
-                        if (error.getSeverity().equals(Severity.ERROR.toString())) {
-                            recordData.setHasError(true);
-                        }
-
-                        errors.add(error);
-                    }
-                }
+        for (FieldBean field : fields) {
+            if (CollectionUtils.isNotEmpty(field.getConfig().getValidationConfigs())) {
+                startValidator.validateField(field);
             }
         }
-
-        recordData.setErrors(errors);
+        recordBean.collectErrors();
     }
 
-    private void doFieldValidations(RecordData recordData) {
-        Map<Integer, RecordBean> records = recordData.getRecords();
-        for (Entry<Integer, RecordBean> recordEntry : records.entrySet()) {
-            List<FieldBean> fields = (recordEntry.getValue()).getFields();
-
-            for (FieldBean field : fields) {
-                List<ValidationConfig> validationConfigs = field.getConfig().getValidationConfigs();
-                if (validationConfigs != null && !validationConfigs.isEmpty()) {
-                    startValidator.validateField(field);
-                }
+    public void writeReportToFile(OutputStream outputStream, RecordBean recordBean) {
+        try {
+            String msg = null;
+            if (recordBean.isFailed()) {
+                msg = ErrorReport.createCSV(recordBean.getErrors());
+            } else if (recordBean.isSkipped()) {
+                msg = recordBean.getSkippedMsg();
             }
-
+            if (outputStream != null && msg != null) {
+                outputStream.write(msg.getBytes());
+            }
+        } catch (IOException e) {
+            ConsoleUtils.log("Failed to write errors to csv file: "+e.getMessage());
         }
     }
-
-
 }

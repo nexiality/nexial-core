@@ -20,6 +20,8 @@ package org.nexial.core.plugins.filevalidation.config;
 import java.util.ArrayList;
 import java.util.List;
 
+import org.nexial.core.utils.CheckUtils;
+
 public class MasterConfig {
 
     private RecordConfig fileHeader;
@@ -28,6 +30,7 @@ public class MasterConfig {
 
     public List<RecordConfig> getConfigs(MasterConfig masterConfig) {
         List<RecordConfig> configs = new ArrayList<>();
+
         configs.add(masterConfig.getFileHeader());
         for (SectionConfig sectionConfig : masterConfig.getSectionConfigs()) {
             configs.add(sectionConfig.getHeaderConfig());
@@ -35,7 +38,12 @@ public class MasterConfig {
             configs.add(sectionConfig.getFooterConfig());
         }
         configs.add(masterConfig.getFileFooter());
+        if (!isValid(configs)) {CheckUtils.fail("Minimum one configuration with valid 'record-id-field' is required.");}
         return configs;
+    }
+
+    private boolean isValid(List<RecordConfig> configs) {
+        return configs.stream().anyMatch(config -> config != null && config.isValid());
     }
 
     @Override

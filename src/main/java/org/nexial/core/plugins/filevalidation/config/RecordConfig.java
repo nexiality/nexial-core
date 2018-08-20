@@ -24,7 +24,7 @@ public class RecordConfig {
     private List<FieldConfig> fieldConfigList;
     private List<MapFunctionConfig> mapFunctionConfigs;
     private String fieldSeparator;
-    private String recordIdFiled;
+    private String recordIdField;
     private String recordId;
 
     public static class RecordConfigBuilder {
@@ -64,13 +64,15 @@ public class RecordConfig {
             recordConfig.fieldConfigList = this.fieldConfigList;
             recordConfig.mapFunctionConfigs = this.mapFunctionConfigs;
             recordConfig.fieldSeparator = this.fieldSeparator;
-            recordConfig.recordIdFiled = this.recordIdField;
+            recordConfig.recordIdField = this.recordIdField;
             recordConfig.recordId = this.recordId;
 
             return recordConfig;
         }
+    }
 
-
+    public boolean isValid(){
+        return this.fieldConfigList.stream().map(FieldConfig::getFieldname).anyMatch(this.recordIdField::equals);
     }
 
     private RecordConfig() {}
@@ -87,10 +89,9 @@ public class RecordConfig {
         return fieldSeparator;
     }
 
-    public String getRecordIdFiled() {
-        return recordIdFiled;
+    public String getRecordIdField() {
+        return recordIdField;
     }
-
     public String getRecordId() {
         return recordId;
     }
@@ -100,7 +101,7 @@ public class RecordConfig {
         return "RecordConfig{fieldConfigList=" + fieldConfigList +
                ", mapFunctionConfigs=" + mapFunctionConfigs +
                ", fieldSeparator='" + fieldSeparator + '\'' +
-               ", recordIdFiled='" + recordIdFiled + '\'' +
+               ", recordIdField='" + recordIdField + '\'' +
                ", recordId='" + recordId + '\'' +
                '}';
     }

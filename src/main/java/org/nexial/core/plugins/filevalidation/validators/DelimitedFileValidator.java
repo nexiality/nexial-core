@@ -17,15 +17,15 @@
 
 package org.nexial.core.plugins.filevalidation.validators;
 
+import java.io.BufferedOutputStream;
 import java.io.File;
-import java.io.IOException;
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
 import org.apache.commons.collections4.map.ListOrderedMap;
 import org.apache.commons.io.FileUtils;
+import org.apache.commons.io.LineIterator;
 import org.apache.commons.lang3.StringUtils;
 import org.nexial.core.plugins.filevalidation.FieldBean;
 import org.nexial.core.plugins.filevalidation.RecordBean;
@@ -50,34 +50,21 @@ public class DelimitedFileValidator implements MasterFileValidator {
     @Override
     public RecordData parseAndValidate(String targetFilePath) {
         requiresReadableFile(targetFilePath);
-        List<String> targetLines;
         File targetFile = new File(targetFilePath);
-        try {
-            targetLines = FileUtils.readLines(targetFile, "UTF-8");
-
-        } catch (IOException e) {
-            throw new IllegalStateException("Unable to locate targetFile " + targetFile.getAbsolutePath());
-        }
-
         RecordData recordData = new RecordData();
-        Map<Integer, RecordBean> recordSet = new HashMap<>();
-        Map<Integer, String> skippedRecords = new ListOrderedMap<>();
         ValidationsExecutor validationsExecutor = new ValidationsExecutor();
-
+        File csvOutputFile = validationsExecutor.resolveCsvOutputFile();
         Map<String, Number> mapValues = new ListOrderedMap<>();
         Map<String, Object> tempDupValues = validationsExecutor.moveDupValuesFromContext(configs);
-
-        try {
-            for (int i = 0; i < targetLines.size(); i++) {
-                RecordBean recordBean = new RecordBean();
-                recordBean.setRecordNumber(i);
-                String targetLine = targetLines.get(i);
-
+        int i = 0;
+        int processedLines = 0;
+        try (BufferedOutputStream outputStream = new BufferedOutputStream(FileUtils.openOutputStream(csvOutputFile))) {
+            LineIterator iterator = FileUtils.lineIterator(targetFile, "UTF-8");
+            while (iterator.hasNext()) {
+                String targetLine = iterator.next();
                 List<FieldBean> fields = new ArrayList<>();
-
                 for (RecordConfig recordConfig : configs) {
-                    if (recordConfig == null) { continue; }
-
+                    if (recordConfig == null || !recordConfig.isValid()) { continue; }
                     List<FieldConfig> configs = recordConfig.getFieldConfigList();
                     String[] fieldValues =
                         StringUtils.splitByWholeSeparatorPreserveAllTokens(targetLine,
@@ -87,7 +74,7 @@ public class DelimitedFileValidator implements MasterFileValidator {
                     String expectedRecordIdValue = recordConfig.getRecordId();
                     int recordIdPosition = 0;
                     for (int n = 0; n < configs.size(); n++) {
-                        if (configs.get(n).getFieldname().equals(recordConfig.getRecordIdFiled())) {
+                        if (configs.get(n).getFieldname().equals(recordConfig.getRecordIdField())) {
                             recordIdPosition = n;
                             break;
                         }
@@ -95,44 +82,46 @@ public class DelimitedFileValidator implements MasterFileValidator {
 
                     // condition to identify the record with config
                     if (fieldValues[recordIdPosition].equals(expectedRecordIdValue)) {
-
+                        RecordBean recordBean = new RecordBean();
+                        recordBean.setRecordNumber(i);
                         int expectedRecords = configs.size() + 1;
                         if (fieldValues.length != configs.size() + 1) {
-                            String msg = "Record ID: " +
-                                         expectedRecordIdValue +
-                                         " - Skipped Validation; Expected records: " +
-                                         expectedRecords + ". But Actual records found: " + fieldValues.length;
-                            skippedRecords.put(i, msg);
+                            int totalSkipped = recordData.getTotalRecordsSkipped();
+                            String msg = "Skipped:" + i + "," + expectedRecordIdValue + ",Expected records "
+                                         + expectedRecords + ". But Actual records found "
+                                         + fieldValues.length;
+                            ConsoleUtils.log(msg);
+                            recordBean.setSkippedMsg(msg);
+                            recordData.setTotalRecordsSkipped(++totalSkipped);
+                            validationsExecutor.writeReportToFile(outputStream, recordBean);
                             continue;
                         }
-
+                        ConsoleUtils.log("validating line number: " + i + " Record ID: " + expectedRecordIdValue);
+                        processedLines++;
                         for (int j = 0; j < configs.size(); j++) {
                             FieldBean field = new FieldBean(configs.get(j), fieldValues[j]);
                             field.setRecord(recordBean);
                             fields.add(field);
                         }
-
                         recordBean.setFields(fields);
                         validationsExecutor.doBasicValidations(recordBean);
                         recordBean.setRecordData(recordData);
                         mapValues = validationsExecutor.collectMapValues(recordConfig, recordBean, mapValues);
                         recordData.setMapValues(mapValues);
-                        // add recordBean to recordSet and end loop
-                        recordSet.put(i, recordBean);
-                        recordData.setRecords(recordSet);
+                        validationsExecutor.executeValidations(outputStream, recordBean);
                         break;
                     }
                 }
+                i++;
             }
         } catch (Exception e) {
-            ConsoleUtils.log("File validation failed. "+e.getMessage());
+            ConsoleUtils.log("File validation failed. " + e.getMessage());
         } finally {
             validationsExecutor.restoreValuesToContext(tempDupValues);
         }
-        recordData.setSkippedRecords(skippedRecords);
-        recordData.setTotalRecordsProcessed(targetLines.size());
-        validationsExecutor.executeValidations(recordData);
-
+        recordData.printMapFunctionValues();
+        recordData.setTotalRecordsProcessed(processedLines);
+        recordData.calculateTotalPassed();
         return recordData;
     }
 }

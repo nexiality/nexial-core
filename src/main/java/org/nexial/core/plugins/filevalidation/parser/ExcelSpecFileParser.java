@@ -34,7 +34,9 @@ import org.apache.poi.ss.usermodel.Sheet;
 import org.apache.poi.ss.usermodel.Workbook;
 import org.apache.poi.ss.util.CellReference;
 import org.apache.poi.ss.util.CellUtil;
+import org.apache.poi.xssf.usermodel.XSSFCell;
 import org.apache.poi.xssf.usermodel.XSSFWorkbook;
+import org.nexial.core.excel.Excel;
 import org.nexial.core.plugins.filevalidation.config.ExcelMappingConfig;
 import org.nexial.core.plugins.filevalidation.config.ExcelMappingConfig.FilefooterrecordBean;
 import org.nexial.core.plugins.filevalidation.config.ExcelMappingConfig.FileheaderrecordBean;
@@ -81,17 +83,9 @@ public class ExcelSpecFileParser extends RecordSpecFileParser {
         }
     }
 
-    protected String getStringCellValue(Sheet sheet, String cellCol, int rowNum) {
-
-        CellReference cellReference = new CellReference(cellCol + rowNum);
-        Row row = sheet.getRow(cellReference.getRow());
-        Cell cell = row.getCell(cellReference.getCol());
-        return cell.getStringCellValue();
-    }
-
     private MasterConfig parseExcelDescriptor(ExcelMappingConfig mappingConfig, String mappingFilePath) {
         try {
-            // try use existing excel
+            //todo refactor to use existing excel
             Workbook workbook = new XSSFWorkbook(new File(mappingFilePath));
             return mapMasterConfig(mappingConfig, workbook);
         } catch (IOException | InvalidFormatException e) {
@@ -163,9 +157,6 @@ public class ExcelSpecFileParser extends RecordSpecFileParser {
 
         List<SectionConfig> sectionConfigs = new ArrayList<>();
         List<FilesectionsBean> filesectionsBeanList = mappingConfig.getFilesections();
-        if (filesectionsBeanList.isEmpty()) {
-            throw new IllegalArgumentException("File section configs can't be empty.");
-        }
         for (FilesectionsBean filesectionsBean : filesectionsBeanList) {
             SectionConfig sectionConfig = new SectionConfig();
 
@@ -205,32 +196,34 @@ public class ExcelSpecFileParser extends RecordSpecFileParser {
             // add section body record(s)
             List<BodyrecordsBean> bodyrecordsBeansList = filesectionsBean.getBodyrecords();
             List<RecordConfig> bodyRecordConfigs = new ArrayList<>();
-            for (BodyrecordsBean bodyrecordsBean : bodyrecordsBeansList) {
-                if (bodyrecordsBean != null && StringUtils.isNotBlank(bodyrecordsBean.getSheetname())) {
-                    String precedeBy = bodyrecordsBean.getPrecedeby();
-                    boolean endsOnEmptyRowBody = bodyrecordsBean.isEndsonblankrow();
-                    String followBy = bodyrecordsBean.getFollowby();
-                    String checkColumn = bodyrecordsBean.getCheckcolumn().trim();
-                    String sheetName = bodyrecordsBean.getSheetname();
-                    Sheet sheet = workbook.getSheet(sheetName);
-                    Map<String, Integer> startEndRows;
-                    if (!endsOnEmptyRowBody) {
-                        startEndRows = findStartEndRows(sheet, precedeBy, followBy, checkColumn);
-                    } else { startEndRows = findStartEndRows(sheet, checkColumn, precedeBy); }
+            if (bodyrecordsBeansList != null) {
+                for (BodyrecordsBean bodyrecordsBean : bodyrecordsBeansList) {
+                    if (bodyrecordsBean != null && StringUtils.isNotBlank(bodyrecordsBean.getSheetname())) {
+                        String precedeBy = bodyrecordsBean.getPrecedeby();
+                        boolean endsOnEmptyRowBody = bodyrecordsBean.isEndsonblankrow();
+                        String followBy = bodyrecordsBean.getFollowby();
+                        String checkColumn = bodyrecordsBean.getCheckcolumn().trim();
+                        String sheetName = bodyrecordsBean.getSheetname();
+                        Sheet sheet = workbook.getSheet(sheetName);
+                        Map<String, Integer> startEndRows;
+                        if (!endsOnEmptyRowBody) {
+                            startEndRows = findStartEndRows(sheet, precedeBy, followBy, checkColumn);
+                        } else { startEndRows = findStartEndRows(sheet, checkColumn, precedeBy); }
 
-                    List<FieldConfig> bodyConfigs;
-                    bodyConfigs = getConfigList(startEndRows, mappingConfig, sheet);
-                    RecordConfig bodyRecordConfig = new RecordConfigBuilder()
-                                                        .fieldConfigList(bodyConfigs).mapFunctionConfigs(
-                            mapFunctionsToRecord(bodyrecordsBean.getMapfunctions())).fieldSeparator(bodyrecordsBean
-                                                                                                        .getFieldseparator())
-                                                        .recordIdField(bodyrecordsBean.getRecordidfield()).recordId(
-                            bodyrecordsBean.getRecordid()).build();
-                    for (FieldConfig config : bodyConfigs) {
-                        parseValidationConfigs(config, bodyrecordsBean.getValidations());
-                        mapFunctionsToField(config, bodyrecordsBean.getMapfunctions());
+                        List<FieldConfig> bodyConfigs;
+                        bodyConfigs = getConfigList(startEndRows, mappingConfig, sheet);
+                        RecordConfig bodyRecordConfig = new RecordConfigBuilder()
+                                                            .fieldConfigList(bodyConfigs).mapFunctionConfigs(
+                                mapFunctionsToRecord(bodyrecordsBean.getMapfunctions()))
+                                                            .fieldSeparator(bodyrecordsBean.getFieldseparator())
+                                                            .recordIdField(bodyrecordsBean.getRecordidfield())
+                                                            .recordId(bodyrecordsBean.getRecordid()).build();
+                        for (FieldConfig config : bodyConfigs) {
+                            parseValidationConfigs(config, bodyrecordsBean.getValidations());
+                            mapFunctionsToField(config, bodyrecordsBean.getMapfunctions());
+                        }
+                        bodyRecordConfigs.add(bodyRecordConfig);
                     }
-                    bodyRecordConfigs.add(bodyRecordConfig);
                 }
             }
             sectionConfig.setBodyConfigs(bodyRecordConfigs);
@@ -254,11 +247,10 @@ public class ExcelSpecFileParser extends RecordSpecFileParser {
                 List<FieldConfig> footerConfigs = getConfigList(startEndRowsFooter, mappingConfig, footerSheet);
                 RecordConfig footerRecordConfig = new RecordConfigBuilder()
                                                       .fieldConfigList(footerConfigs).mapFunctionConfigs(
-                        mapFunctionsToRecord(filesectionsBean.getFooterrecord()
-                                                             .getMapfunctions())).fieldSeparator(footerrecordBean
-                                                                                                     .getFieldseparator())
-                                                      .recordIdField(footerrecordBean.getRecordidfield()).recordId(
-                        footerrecordBean.getRecordid()).build();
+                        mapFunctionsToRecord(filesectionsBean.getFooterrecord().getMapfunctions()))
+                                                      .fieldSeparator(footerrecordBean.getFieldseparator())
+                                                      .recordIdField(footerrecordBean.getRecordidfield())
+                                                      .recordId(footerrecordBean.getRecordid()).build();
                 for (FieldConfig config : footerConfigs) {
                     parseValidationConfigs(config, filesectionsBean.getFooterrecord().getValidations());
                     mapFunctionsToField(config, filesectionsBean.getFooterrecord().getMapfunctions());
@@ -412,11 +404,11 @@ public class ExcelSpecFileParser extends RecordSpecFileParser {
 
         String fixedLengthDefColumn = config.getFieldlengthdefcolumn();
         if (StringUtils.isNotBlank(fixedLengthDefColumn)) {
-            fieldConfig.setFieldlength(getNumericCellValue(sheet, fixedLengthDefColumn, rowNumber));
+            fieldConfig.setFieldlength(Integer.valueOf(getStringCellValue(sheet, fixedLengthDefColumn, rowNumber)));
         }
         String positionFromCol = config.getPositionfromdefcolumn();
         if (StringUtils.isNotBlank(positionFromCol)) {
-            fieldConfig.setPositionfrom(getNumericCellValue(sheet, positionFromCol, rowNumber));
+            fieldConfig.setPositionfrom(Integer.valueOf(getStringCellValue(sheet, positionFromCol, rowNumber)));
         }// compute this if not provided
         else if (StringUtils.isNotBlank(fixedLengthDefColumn)) {
             fieldConfig.setPositionfrom(previousFieldLength + 1);
@@ -424,7 +416,7 @@ public class ExcelSpecFileParser extends RecordSpecFileParser {
         String positionToCol = config.getPositiontodefcolumn();
 
         if (StringUtils.isNotBlank(positionToCol)) {
-            fieldConfig.setPositionto(getNumericCellValue(sheet, positionToCol, rowNumber));
+            fieldConfig.setPositionto(Integer.valueOf(getStringCellValue(sheet, positionToCol, rowNumber)));
         } else if (StringUtils.isNotBlank(fixedLengthDefColumn)) {
             fieldConfig.setPositionto(previousFieldLength + fieldConfig.getFieldlength());
             previousFieldLength = previousFieldLength + fieldConfig.getFieldlength();
@@ -437,10 +429,11 @@ public class ExcelSpecFileParser extends RecordSpecFileParser {
         return fieldConfig;
     }
 
-    private int getNumericCellValue(Sheet sheet, String cellCol, int rowNum) {
+    private String getStringCellValue(Sheet sheet, String cellCol, int rowNum) {
+
         CellReference cellReference = new CellReference(cellCol + rowNum);
         Row row = sheet.getRow(cellReference.getRow());
         Cell cell = row.getCell(cellReference.getCol());
-        return (int) cell.getNumericCellValue();
+        return Excel.getCellValue((XSSFCell) cell);
     }
 }
