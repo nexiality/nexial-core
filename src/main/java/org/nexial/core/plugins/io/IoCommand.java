@@ -368,16 +368,17 @@ public class IoCommand extends BaseCommand {
         requiresValidVariableName(var);
         requiresNotBlank(profile, "Invalid 'profile',", profile);
         requiresReadableFile(inputFile);
+
         DateTimeFormatter dtf = DateTimeFormatter.ofPattern("MM/dd/yyyy HH:mm:ss");
         String startTime = dtf.format(LocalDateTime.now());
+
         Map<String, String> configs = context.getDataByPrefix(profile);
         String jsonConfigFilePath;
         if (configs.containsKey(CONFIG_JSON)) {
             jsonConfigFilePath = configs.get(CONFIG_JSON);
             requiresReadableFile(jsonConfigFilePath);
         } else {
-            return StepResult.fail("Invalid profile name '" +
-                                   profile +
+            return StepResult.fail("Invalid profile name '" + profile +
                                    "' or associated variable '.configJson' not found");
         }
 
@@ -392,9 +393,11 @@ public class IoCommand extends BaseCommand {
         RecordData recordData;
         MasterFileValidator fileParser = FileParserFactory.getFileParser(jsonConfigFilePath, excelMappingFilePath);
         requiresNotNull(fileParser, "Failed to provide suitable file parser");
+
         stopWatch.start();
         recordData = fileParser.parseAndValidate(inputFile);
         stopWatch.stop();
+
         recordData.setStartTime(startTime);
         recordData.setProcessTime(DateFormatUtils.format(stopWatch.getTime(), "mm:ss:SSS"));
         recordData.setInputFile(inputFile);
@@ -411,18 +414,15 @@ public class IoCommand extends BaseCommand {
             ConsoleUtils.log("validation report can't be generated for invalid report type '" + reportType +
                              "'. Valid reportType can be Excel or JSON");
         }
-        if (reportType.equalsIgnoreCase("Excel")) {
-            results = ErrorReport.createExcel(recordData);
-        }
-        if (reportType.equalsIgnoreCase("JSON")) {
-            results = ErrorReport.createJSON(recordData);
-        }
-        if (results != null) {
-            addLinkToOutputFile(results, reportType + " report", caption);
-        }
+
+        if (reportType.equalsIgnoreCase("Excel")) { results = ErrorReport.createExcel(recordData); }
+        if (reportType.equalsIgnoreCase("JSON")) { results = ErrorReport.createJSON(recordData); }
+        if (results != null) { addLinkToOutputFile(results, reportType + " report", caption); }
         if (recordData.isHasError()) {
             return StepResult.fail("Error in file validation. Refer error report.");
-        } else { return StepResult.success(); }
+        } else {
+            return StepResult.success();
+        }
 
     }
 

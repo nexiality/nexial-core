@@ -89,6 +89,7 @@
     <bean id="count" class="org.nexial.core.variable.Count" init-method="init"/>
     <bean id="date" class="org.nexial.core.variable.Date" init-method="init"/>
     <bean id="execution" class="org.nexial.core.variable.Execution" init-method="init"/>
+    <bean id="file" class="org.nexial.core.variable.File" init-method="init"/>
     <bean id="format" class="org.nexial.core.variable.Format" init-method="init"/>
     <bean id="projectfile" class="org.nexial.core.variable.ProjectFile" init-method="init"/>
     <bean id="random" class="org.nexial.core.variable.Random" init-method="init"/>
