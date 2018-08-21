@@ -39,7 +39,6 @@ import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
-
 import org.nexial.commons.utils.FileUtil;
 import org.nexial.commons.utils.ResourceUtils;
 import org.nexial.core.model.ExecutionContext;
@@ -47,10 +46,10 @@ import org.nexial.core.model.MockExecutionContext;
 import org.nexial.core.model.StepResult;
 import org.nexial.core.variable.Random;
 
+import static java.io.File.separator;
 import static org.nexial.core.NexialConst.DEF_CHARSET;
 import static org.nexial.core.NexialConst.Data.LOG_MATCH;
 import static org.nexial.core.NexialConst.OPT_OUT_DIR;
-import static java.io.File.separator;
 
 public class IoCommandTest {
 
@@ -431,6 +430,25 @@ public class IoCommandTest {
         io.init(context);
 
         StepResult result = io.writeFile(testFile1, propContent, "false");
+        Assert.assertNotNull(result);
+        Assert.assertTrue(result.isSuccess());
+
+        Properties prop = ResourceUtils.loadProperties(new File(testFile1));
+        Assert.assertEquals("a", prop.getProperty("prop1"));
+        Assert.assertEquals("b", prop.getProperty("prop2"));
+        Assert.assertEquals("-", prop.getProperty("prop3"));
+    }
+
+    @Test
+    public void testWriteFileAsIs() throws Exception {
+        String propContent = "prop1=a\n" +
+                             "prop2=b\n" +
+                             "prop3=${prop1}-${prop2}\n";
+
+        IoCommand io = new IoCommand();
+        io.init(context);
+
+        StepResult result = io.writeFileAsIs(testFile1, propContent, "false");
         Assert.assertNotNull(result);
         Assert.assertTrue(result.isSuccess());
 

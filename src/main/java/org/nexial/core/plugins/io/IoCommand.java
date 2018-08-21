@@ -39,6 +39,7 @@ import org.apache.commons.lang3.time.StopWatch;
 import org.apache.commons.lang3.tuple.ImmutablePair;
 import org.apache.commons.lang3.tuple.Pair;
 import org.apache.commons.text.similarity.LevenshteinDetailedDistance;
+import org.jetbrains.annotations.NotNull;
 import org.nexial.commons.utils.DateUtility;
 import org.nexial.commons.utils.FileUtil;
 import org.nexial.commons.utils.IOFilePathFilter;
@@ -215,28 +216,11 @@ public class IoCommand extends BaseCommand {
     }
 
     public StepResult writeFile(String file, String content, String append) {
-        requires(StringUtils.isNotBlank(file), "invalid file", file);
-        // allow user to write empty content to file (instead of throwing error)
-        // requires(StringUtils.isNotBlank(content), "invalid content", content);
-        requires(StringUtils.isNotBlank(append), "invalid value for append", append);
+        return writeFile(file, content, append, true);
+    }
 
-        boolean isAppend = BooleanUtils.toBoolean(append);
-        File output = new File(file);
-        if (output.isDirectory()) {
-            return StepResult.fail("'" + file + "' is EXPECTED as file, but found directory instead.");
-        }
-
-        try {
-            content = OutputFileUtils.resolveContent(content, context, false, true);
-            content = StringUtils.replace(content, "\r\n", TMP_EOL);
-            content = StringUtils.replace(content, "\n", TMP_EOL);
-            content = StringUtils.replace(content, TMP_EOL, lineSeparator());
-
-            FileUtils.writeStringToFile(output, StringUtils.defaultString(content), DEF_CHARSET, isAppend);
-            return StepResult.success("Content " + (isAppend ? " appended" : " written") + " to " + file);
-        } catch (IOException e) {
-            return StepResult.fail("Error occurred when writing to " + file + ": " + e.getMessage());
-        }
+    public StepResult writeFileAsIs(String file, String content, String append) {
+        return writeFile(file, content, append, false);
     }
 
     public StepResult writeProperty(String file, String property, String value) {
@@ -478,6 +462,32 @@ public class IoCommand extends BaseCommand {
     }
 
     public static String formatPercent(double number) { return PERCENT_FORMAT.format(number); }
+
+    @NotNull
+    protected StepResult writeFile(String file, String content, String append, boolean replaceTokens) {
+        requires(StringUtils.isNotBlank(file), "invalid file", file);
+        // allow user to write empty content to file (instead of throwing error)
+        // requires(StringUtils.isNotBlank(content), "invalid content", content);
+        requires(StringUtils.isNotBlank(append), "invalid value for append", append);
+
+        boolean isAppend = BooleanUtils.toBoolean(append);
+        File output = new File(file);
+        if (output.isDirectory()) {
+            return StepResult.fail("'" + file + "' is EXPECTED as file, but found directory instead.");
+        }
+
+        try {
+            content = OutputFileUtils.resolveContent(content, context, false, replaceTokens);
+            content = StringUtils.replace(content, "\r\n", TMP_EOL);
+            content = StringUtils.replace(content, "\n", TMP_EOL);
+            content = StringUtils.replace(content, TMP_EOL, lineSeparator());
+
+            FileUtils.writeStringToFile(output, StringUtils.defaultString(content), DEF_CHARSET, isAppend);
+            return StepResult.success("Content " + (isAppend ? " appended" : " written") + " to " + file);
+        } catch (IOException e) {
+            return StepResult.fail("Error occurred when writing to " + file + ": " + e.getMessage());
+        }
+    }
 
     protected StepResult doAction(IoAction action, String source, String target) {
         // sanity check
