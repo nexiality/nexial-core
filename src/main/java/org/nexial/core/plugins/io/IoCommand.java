@@ -376,7 +376,9 @@ public class IoCommand extends BaseCommand {
             jsonConfigFilePath = configs.get(CONFIG_JSON);
             requiresReadableFile(jsonConfigFilePath);
         } else {
-            return StepResult.fail("Invalid profile name. Profile keyword 'CONFIG_JSON' not found");
+            return StepResult.fail("Invalid profile name '" +
+                                   profile +
+                                   "' or associated variable '.configJson' not found");
         }
 
         String excelMappingFilePath = null;
@@ -389,28 +391,37 @@ public class IoCommand extends BaseCommand {
 
         RecordData recordData;
         MasterFileValidator fileParser = FileParserFactory.getFileParser(jsonConfigFilePath, excelMappingFilePath);
-        if (fileParser != null) {
-            stopWatch.start();
-            recordData = fileParser.parseAndValidate(inputFile);
-            stopWatch.stop();
-        } else { return StepResult.fail("Unable to parse input file '" + inputFile + "'"); }
-
+        requiresNotNull(fileParser, "Failed to provide suitable file parser");
+        stopWatch.start();
+        recordData = fileParser.parseAndValidate(inputFile);
+        stopWatch.stop();
         recordData.setStartTime(startTime);
         recordData.setProcessTime(DateFormatUtils.format(stopWatch.getTime(), "mm:ss:SSS"));
         recordData.setInputFile(inputFile);
         recordData.setExcelFile(excelMappingFilePath);
         context.setData(var, recordData);
 
-        String caption = "Total " + recordData.totalRecordsFailed() +
+        String caption = "Total " + recordData.getTotalRecordsFailed() +
                          " records failed out of " + recordData.getTotalRecordsProcessed() +
                          " (click link on the right for details)";
 
-        String type = context.getStringData(profile + REPORT_TYPE);
-
-        File results = ErrorReport.create(type, recordData);
-        addLinkToOutputFile(results, type + " report", caption);
+        File results = null;
+        String reportType = context.getStringData(profile + REPORT_TYPE);
+        if (!StringUtils.equalsAnyIgnoreCase(reportType, "Excel", "JSON")) {
+            ConsoleUtils.log("validation report can't be generated for invalid report type '" + reportType +
+                             "'. Valid reportType can be Excel or JSON");
+        }
+        if (reportType.equalsIgnoreCase("Excel")) {
+            results = ErrorReport.createExcel(recordData);
+        }
+        if (reportType.equalsIgnoreCase("JSON")) {
+            results = ErrorReport.createJSON(recordData);
+        }
+        if (results != null) {
+            addLinkToOutputFile(results, reportType + " report", caption);
+        }
         if (recordData.isHasError()) {
-            return StepResult.fail("Error in file validation ");
+            return StepResult.fail("Error in file validation. Refer error report.");
         } else { return StepResult.success(); }
 
     }

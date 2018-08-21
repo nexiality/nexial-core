@@ -18,24 +18,22 @@
 package org.nexial.core.plugins.filevalidation.parser;
 
 import java.io.File;
-import java.io.FileNotFoundException;
-import java.io.FileReader;
+import java.io.IOException;
 import javax.annotation.Nullable;
 
+import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.json.JSONObject;
+import org.nexial.core.NexialConst;
 import org.nexial.core.plugins.filevalidation.validators.DelimitedFileValidator;
 import org.nexial.core.plugins.filevalidation.validators.FixedLengthFileValidator;
 import org.nexial.core.plugins.filevalidation.validators.MasterFileValidator;
 import org.nexial.core.utils.CheckUtils;
 import org.nexial.core.utils.JSONPath;
-
-import com.google.gson.JsonElement;
-import com.google.gson.JsonParseException;
-import com.google.gson.JsonParser;
+import org.nexial.core.utils.JsonUtils;
 
 import static org.nexial.core.utils.CheckUtils.requiresNotBlank;
-import static org.nexial.core.utils.CheckUtils.requiresNotNull;
+import static org.nexial.core.utils.CheckUtils.requiresReadableFile;
 
 public class FileParserFactory {
 
@@ -45,22 +43,23 @@ public class FileParserFactory {
     private static final String MAPPING_SPEC_TYPE = "mapping-config.spec-type";
 
     public static MasterFileValidator getFileParser(String jsonConfig, @Nullable String mappingFile) {
-        requiresNotBlank(jsonConfig, "Invalid config json path", jsonConfig);
-        JsonElement json;
+        requiresReadableFile(jsonConfig);
+        JSONObject json;
+
         try {
-            json = new JsonParser().parse(new FileReader(new File(jsonConfig)));
-        } catch (FileNotFoundException | JsonParseException e) {
+            json = JsonUtils.toJSONObject(FileUtils
+                                              .readFileToString(new File(jsonConfig), NexialConst.DEF_FILE_ENCODING));
+        } catch (IOException e) {
             throw new IllegalArgumentException(" JSON path specified '" + jsonConfig + "' is not found or invalid");
         }
 
-        MasterFileValidator fileParser = null;
-
-        String fileType = JSONPath.find(new JSONObject(json.toString()), MAPPING_FILE_TYPE);
+        String fileType = JSONPath.find(json, MAPPING_FILE_TYPE);
 
         if (!StringUtils.equalsAnyIgnoreCase(fileType, FIXED_LENGTH, DELIMITER_SEPARATED)) {
             CheckUtils.fail("Invalid file-type '" + fileType + "'. It must be one of [" + FIXED_LENGTH + "," +
                             DELIMITER_SEPARATED + "]");
         }
+        MasterFileValidator fileParser = null;
         if (StringUtils.equals(fileType, FIXED_LENGTH)) {
             fileParser = new FixedLengthFileValidator();
         }
@@ -71,13 +70,15 @@ public class FileParserFactory {
 
         if (fileParser != null) {
 
-            requiresNotNull(fileParser, "Failed to provide file parser");
-            String specType = JSONPath.find(new JSONObject(json.toString()), MAPPING_SPEC_TYPE);
+            String specType = JSONPath.find(json, MAPPING_SPEC_TYPE);
             if (!StringUtils.equalsAnyIgnoreCase(specType, "JSON", "EXCEL")) {
-                requiresNotBlank(mappingFile, "Invalid mapping file path", mappingFile);
+
                 CheckUtils.fail("Invalid spec-type '" + specType + "'. It must be one among [JSON, EXCEL]");
             }
             if (StringUtils.equalsIgnoreCase(specType, "EXCEL")) {
+                requiresNotBlank(mappingFile,
+                                 "profile not set any value with .mappingExcel or invalid mapping file path",
+                                 mappingFile);
                 fileParser.setMasterConfig(new ExcelSpecFileParser(jsonConfig, mappingFile).parseMappingFile());
             }
 

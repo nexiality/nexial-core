@@ -22,6 +22,5 @@ import org.nexial.core.plugins.filevalidation.config.MasterConfig;
 
 public interface MasterFileValidator {
     void setMasterConfig(MasterConfig masterConfig);
-
     RecordData parseAndValidate(String targetFilePath);
 }

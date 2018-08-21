@@ -31,6 +31,8 @@ import org.nexial.core.plugins.filevalidation.validators.ValidationsExecutor.Dat
 import org.nexial.core.plugins.filevalidation.validators.ValidationsExecutor.Severity;
 import org.nexial.core.utils.CheckUtils;
 
+import static org.nexial.core.plugins.filevalidation.validators.ValidationsExecutor.DataType.NUMERIC;
+
 public class BasicValidator {
 
     public void validateField(FieldBean field) {
@@ -52,16 +54,38 @@ public class BasicValidator {
 
         if (dataType == null || StringUtils.isBlank(dataType)) { return; }
 
+
         if (DataType.NUMERIC.isNumeric(dataType)) {
             if (!validateNumberDataType(fieldValue)) {
-                addDataTypeError(field, Severity.ERROR, DataType.NUMERIC);
+                addDataTypeError(field, Severity.ERROR, NUMERIC);
             }
             return;
         }
 
         if (DataType.ALPHANUMERIC.isAlphaNumeric(dataType)) {
             if (!validateAlphaNumericDataType(fieldValue)) {
-                addDataTypeError(field, Severity.ERROR, DataType.NUMERIC);
+                addDataTypeError(field, Severity.ERROR, NUMERIC);
+            }
+            return;
+        }
+
+        if (DataType.ALPHA.isAlpha((dataType))){
+            if (!validateAlphaDataType(fieldValue)) {
+                addDataTypeError(field, Severity.ERROR, DataType.ALPHA);
+            }
+            return;
+        }
+
+        if (DataType.ALPHAUPPER.isAlphaUpper((dataType))){
+            if (!validateAlphaUpperDataType(fieldValue)) {
+                addDataTypeError(field, Severity.ERROR, DataType.ALPHAUPPER);
+            }
+            return;
+        }
+
+        if (DataType.ALPHALOWER.isAlphaLower((dataType))){
+            if (!validateAlphaLowerDataType(fieldValue)) {
+                addDataTypeError(field, Severity.ERROR, DataType.ALPHALOWER);
             }
             return;
         }
@@ -94,8 +118,21 @@ public class BasicValidator {
     }
 
     private boolean validateAlphaNumericDataType(String fieldValue) {
+        // considering printable characters (e.g. +,-,...)
         return StringUtils.isAsciiPrintable(fieldValue.trim());
+    }
 
+    private boolean validateAlphaDataType(String fieldValue){
+        // considering spaces
+        return StringUtils.isAlphaSpace(fieldValue.trim());
+    }
+
+    private boolean validateAlphaUpperDataType(String fieldValue) {
+        return StringUtils.isAllUpperCase(fieldValue.trim());
+    }
+
+    private boolean validateAlphaLowerDataType(String fieldValue) {
+        return StringUtils.isAllLowerCase(fieldValue.trim());
     }
 
     private void validateTextAlignment(FieldBean field) {

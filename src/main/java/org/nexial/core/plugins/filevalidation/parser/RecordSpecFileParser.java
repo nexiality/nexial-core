@@ -20,6 +20,7 @@ package org.nexial.core.plugins.filevalidation.parser;
 import java.util.ArrayList;
 import java.util.List;
 
+import org.apache.commons.collections4.CollectionUtils;
 import org.nexial.core.plugins.filevalidation.config.*;
 
 public abstract class RecordSpecFileParser {
@@ -27,14 +28,14 @@ public abstract class RecordSpecFileParser {
     public abstract MasterConfig parseMappingFile();
 
     public FieldConfig parseValidationConfigs(FieldConfig fieldConfig, List<ValidationsBean> validations) {
+        if (CollectionUtils.isEmpty(validations)) { return fieldConfig; }
+        // todo check validity of field name given in validation methods
         List<ValidationConfig> validationConfigs = new ArrayList<>();
-        if (validations != null) {
-            for (ValidationsBean validationsBean : validations) {
-                if (validationsBean.getFieldname().equals(fieldConfig.getFieldname())) {
-                    validationsBean.getValidationmethods()
-                                   .forEach(validation -> validationConfigs
-                                                              .add(ValidationConfig.newInstance(validation)));
-                }
+
+        for (ValidationsBean validationsBean : validations) {
+            if (fieldConfig.getFieldname().equals(validationsBean.getFieldname())) {
+                validationsBean.getValidationmethods()
+                               .forEach(validation -> validationConfigs.add(ValidationConfig.newInstance(validation)));
             }
         }
 
@@ -45,9 +46,10 @@ public abstract class RecordSpecFileParser {
     public FieldConfig mapFunctionsToField(FieldConfig fieldConfig,
                                            List<MapfunctionsBean> mapFunctions) {
         List<MapFunctionConfig> mapFunctionConfigs = new ArrayList<>();
+        // todo check validity of field name given in map functions
         if (mapFunctions != null) {
             for (MapfunctionsBean function : mapFunctions) {
-                if (function.getFieldname().equals(fieldConfig.getFieldname())) {
+                if (fieldConfig.getFieldname().equals(function.getFieldname())) {
                     mapFunctionConfigs.add(MapFunctionConfig.newInstance(function));
                 }
             }

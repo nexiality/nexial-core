@@ -47,6 +47,7 @@ public class InListValidator implements FieldValidator {
         for (ValidationConfig validationConfig : validationConfigs) {
             if (validationConfig.getType().equals(ValidationType.IN.toString())) {
                 JsonArray listValues = (JsonArray) validationConfig.getParams();
+                // accepting list values as only String type, for exact match
                 List<String> stringList = new Gson().fromJson(listValues, ArrayList.class);
                 String actual = field.getFieldValue().trim();
                 if (!actual.isEmpty() && !stringList.contains(actual)) {
