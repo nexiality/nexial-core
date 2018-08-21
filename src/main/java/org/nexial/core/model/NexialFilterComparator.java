@@ -119,7 +119,8 @@ public enum NexialFilterComparator {
             // we should check for type compatibility at this time since data variable might be in reference
             // controlText = checkTypeCompatibility(NexialFilter.normalizeCondition(controlText));
             controlText = NexialFilter.normalizeCondition(controlText);
-            return new ImmutablePair<>(controlText, Collections.singletonList(controlText));
+            controlList.add(controlText);
+            return new ImmutablePair<>(controlText, controlList);
         }
 
         // could be 2 or -1 (any)

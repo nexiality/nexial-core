@@ -79,7 +79,7 @@ public class ExecutionLogger {
 
     public void error(ExecutionContext subject, String message) { error(toHeader(subject), message); }
 
-    private String toHeader(TestStep subject) {
+    public static String toHeader(TestStep subject) {
         if (subject == null) { return "UNKNOWN TEST STEP"; }
 
         String header = toHeader(subject.getTestCase());
@@ -93,16 +93,16 @@ public class ExecutionLogger {
         return header;
     }
 
-    private String toHeader(TestCase subject) {
+    public static String toHeader(TestCase subject) {
         return subject == null ? "UNKNOWN TESTCASE" : (toHeader(subject.getTestScenario()) + "|" + subject.getName());
     }
 
-    private String toHeader(TestScenario subject) {
+    public static String toHeader(TestScenario subject) {
         Worksheet worksheet = subject.getWorksheet();
         return justFileName(worksheet.getFile()) + "|" + worksheet.getName();
     }
 
-    private String toHeader(ExecutionContext subject) { return justFileName(subject.getTestScript()); }
+    public static String toHeader(ExecutionContext subject) { return justFileName(subject.getTestScript()); }
 
     private static String justFileName(File file) { return StringUtils.substringBeforeLast(file.getName(), "."); }
 

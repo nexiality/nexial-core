@@ -209,25 +209,27 @@ public class WebCommand extends BaseCommand implements CanTakeScreenshot, CanLog
     public StepResult assertNotChecked(String locator) { return new StepResult(!isChecked(locator)); }
 
     public StepResult checkAll(String locator) {
-        requiresNotBlank(locator, "invalid locator", locator);
+        String script = "if (arguments[0].hasAttribute('type','checkbox') && !arguments[0].hasAttribute('checked')) {" +
+                        "   arguments[0].click(); " +
+                        "}";
 
-        List<WebElement> elements = findElements(locator);
-        if (CollectionUtils.isEmpty(elements)) { return StepResult.fail("No element found via '" + locator + "'"); }
-
-        String script = "if (arguments[0].hasAttribute('type','checkbox')) { arguments[0].checked=true; }";
-        elements.forEach(element -> jsExecutor.executeScript(script, element));
-        return StepResult.success("CheckBox elements (" + locator + ") are checked");
+        if (!execJsOverFreshElements(locator, script)) {
+            return StepResult.fail("No element found via '" + locator + "'");
+        } else {
+            return StepResult.success("CheckBox elements (" + locator + ") are checked");
+        }
     }
 
     public StepResult uncheckAll(String locator) {
-        requiresNotBlank(locator, "invalid locator", locator);
+        String script = "if (arguments[0].hasAttribute('type','checkbox') && arguments[0].hasAttribute('checked')) {" +
+                        "   arguments[0].click();" +
+                        "}";
 
-        List<WebElement> elements = findElements(locator);
-        if (CollectionUtils.isEmpty(elements)) { return StepResult.fail("No element found via '" + locator + "'"); }
-
-        String script = "if (arguments[0].hasAttribute('type','checkbox')) { arguments[0].checked=false; }";
-        elements.forEach(element -> jsExecutor.executeScript(script, element));
-        return StepResult.success("CheckBox elements (" + locator + ") are unchecked");
+        if (!execJsOverFreshElements(locator, script)) {
+            return StepResult.fail("No element found via '" + locator + "'");
+        } else {
+            return StepResult.success("CheckBox elements (" + locator + ") are unchecked");
+        }
     }
 
     /** treated all matching elements as checkbox, radio or select-option and toggle their current 'selected' status */
@@ -1189,8 +1191,8 @@ public class WebCommand extends BaseCommand implements CanTakeScreenshot, CanLog
             return StepResult.fail(msg);
         }
 
-        jsExecutor.executeScript("arguments[0].scrollIntoView(true);", element);
         highlight(element);
+
         element.clear();
 
         if (StringUtils.isNotEmpty(value)) {
@@ -1205,6 +1207,7 @@ public class WebCommand extends BaseCommand implements CanTakeScreenshot, CanLog
                                    .build()
                                    .perform();
             } else {
+                jsExecutor.executeScript("arguments[0].scrollIntoView(true);", element);
                 element.sendKeys(value);
             }
         }
@@ -1481,6 +1484,27 @@ public class WebCommand extends BaseCommand implements CanTakeScreenshot, CanLog
         new Actions(driver).clickAndHold(source).pause(500).dragAndDrop(source, target).build().perform();
 
         return StepResult.success("Drag-and-drop element '" + fromLocator + "' to '" + toLocator + "'");
+    }
+
+    protected boolean execJsOverFreshElements(String locator, String script) {
+        if (StringUtils.isBlank(script)) { throw new IllegalArgumentException("script is blank/empty"); }
+
+        requiresNotBlank(locator, "invalid locator", locator);
+
+        List<WebElement> elements = findElements(locator);
+        if (CollectionUtils.isEmpty(elements)) { return false; }
+
+        // since we are activating click event, there's a chance that the page would be updated and the element(s) might
+        // no longer be valid. As such we need to refresh the element list each time one element is clicked
+        int count = elements.size();
+
+        for (int i = 0; i < count; i++) {
+            elements = findElements(locator);
+            if (CollectionUtils.size(elements) > i) { jsExecutor.executeScript(script, elements.get(i)); }
+        }
+        // elements.forEach(element -> jsExecutor.executeScript(script, element));
+
+        return true;
     }
 
     protected boolean isCheckbox(WebElement element, String locator, boolean checkstate) {
@@ -1772,13 +1796,6 @@ public class WebCommand extends BaseCommand implements CanTakeScreenshot, CanLog
     protected StepResult clickInternal(WebElement element) {
         if (element == null) { return StepResult.fail("Unable to obtain element"); }
 
-        if (jsExecutor != null) {
-            jsExecutor.executeScript("arguments[0].scrollIntoView(true);", element);
-        } else {
-            scrollTo((Locatable) element);
-            tryFocus(element);
-        }
-
         highlight(element);
 
         boolean forceJSClick = jsExecutor != null &&
@@ -1794,7 +1811,7 @@ public class WebCommand extends BaseCommand implements CanTakeScreenshot, CanLog
                 return StepResult.success("click via JS event");
             } else {
                 // better impl. for CI
-                new Actions(driver).moveToElement(element).click().build().perform();
+                new Actions(driver).moveToElement(element).click(element).build().perform();
                 // element.click();
                 return StepResult.success("clicked on web element");
             }
@@ -1816,7 +1833,8 @@ public class WebCommand extends BaseCommand implements CanTakeScreenshot, CanLog
 
     protected void jsClick(WebElement element) {
         ConsoleUtils.log("click target via JS, @id=" + element.getAttribute("id"));
-        Object retObj = jsExecutor.executeScript("arguments[0].click(); return true;", element);
+        String clickJs = "arguments[0].scrollIntoView(true); arguments[0].click(); return true;";
+        Object retObj = jsExecutor.executeScript(clickJs, element);
         ConsoleUtils.log("clicked -> " + retObj);
     }
 
@@ -1933,7 +1951,14 @@ public class WebCommand extends BaseCommand implements CanTakeScreenshot, CanLog
         return browser.getBrowserVersionNum() == docModeVersion;
     }
 
-    protected String getElementText(String locator) { return toElement(locator).getText(); }
+    protected String getElementText(String locator) {
+        try {
+            return toElement(locator).getText();
+        } catch (NoSuchElementException e) {
+            ConsoleUtils.error(e.getMessage());
+            return null;
+        }
+    }
 
     protected boolean isTextPresent(String text) {
         ensureReady();
@@ -2060,7 +2085,7 @@ public class WebCommand extends BaseCommand implements CanTakeScreenshot, CanLog
             log("Unable to execute [selenium.getEval(document.readyState)] due to " + e.getMessage());
             log("Trying another approach...");
             try {
-                // failsafe retry
+                // fail-safe retry
                 readyState = (String) jsExecutor.executeScript(
                     "return selenium.browserbot.getCurrentWindow().document.readyState");
             } catch (Exception e1) {
@@ -2337,16 +2362,16 @@ public class WebCommand extends BaseCommand implements CanTakeScreenshot, CanLog
         }
     }
 
-    private boolean isHighlightEnabled() {
+    protected boolean isHighlightEnabled() {
         return !browser.getBrowserType().isHeadless() &&
                context.hasData(OPT_DEBUG_HIGHLIGHT) ?
                context.getBooleanData(OPT_DEBUG_HIGHLIGHT) :
                context.getBooleanData(OPT_DEBUG_HIGHLIGHT_OLD, DEF_DEBUG_HIGHLIGHT);
     }
 
-    private boolean shouldWait() { return context.getBooleanData(WEB_ALWAYS_WAIT, DEF_WEB_ALWAYS_WAIT); }
+    protected boolean shouldWait() { return context.getBooleanData(WEB_ALWAYS_WAIT, DEF_WEB_ALWAYS_WAIT); }
 
-    private StepResult saveTextSubstring(String var, String locator, String delimStart, String delimEnd) {
+    protected StepResult saveTextSubstring(String var, String locator, String delimStart, String delimEnd) {
         List<WebElement> matches = findElements(locator);
         if (CollectionUtils.isEmpty(matches)) {
             context.removeData(var);

@@ -77,6 +77,8 @@ public class StepResult {
 
     public boolean isWarn() { return MessageUtils.isWarn(message); }
 
+    public boolean isError() { return !success && !isSkipped() && !isWarn(); }
+
     public String getMessage() { return message; }
 
     public Throwable getException() { return exception; }

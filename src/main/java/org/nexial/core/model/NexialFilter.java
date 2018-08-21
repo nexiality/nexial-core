@@ -119,20 +119,24 @@ public class NexialFilter implements Serializable {
 
         // for Is operator, we will defer the double-quote-wrap until isAtLeastOneMatched()
         String expected = context.replaceTokens(controls);
-        ConsoleUtils.log(msgPrefix + "(" + actual + comparator.getSymbol() + expected + ")");
+        String msg = msgPrefix + "(" + actual + comparator.getSymbol() + expected + ")\t\t=> ";
 
+        boolean result;
         switch (comparator) {
             // always good
             case Any:
-                return true;
+                result = true;
+                break;
 
             case Equal:
             case Equal_2:
-                return isEqualsTextOrNumeric(actual, expected);
+                result = isEqualsTextOrNumeric(actual, expected);
+                break;
 
             case NotEqual:
             case NotEqual_2:
-                return !isEqualsTextOrNumeric(actual, expected);
+                result = !isEqualsTextOrNumeric(actual, expected);
+                break;
 
             case Greater:
             case Greater_2:
@@ -142,45 +146,61 @@ public class NexialFilter implements Serializable {
             case Lesser_2:
             case LesserOrEqual:
             case LesserOrEqual_2:
-                return isNumericMatch(actual, context, msgPrefix);
+                result = isNumericMatch(actual, context, msgPrefix);
+                break;
 
             case In:
             case Is:
-                return isAtLeastOneMatched(actual, context);
+                result = isAtLeastOneMatched(actual, context);
+                break;
 
             case IsNot:
             case NotIn:
-                return isNoneMatched(actual, context);
+                result = isNoneMatched(actual, context);
+                break;
 
             case Between:
-                return isInRange(actual, context, msgPrefix);
+                result = isInRange(actual, context, msgPrefix);
+                break;
 
             case StartsWith:
             case EndsWith:
             case Contain:
-                return isMatchingStringCompare(actual, context);
+                result = isMatchingStringCompare(actual, context);
+                break;
 
             case Match:
-                return isMatchByRegex(actual, context);
+                result = isMatchByRegex(actual, context);
+                break;
 
             case HasLengthOf:
-                return isNumericMatch(StringUtils.length(actual) + "", context, msgPrefix);
+                result = isNumericMatch(StringUtils.length(actual) + "", context, msgPrefix);
+                break;
 
             case IsEmpty:
-                return StringUtils.isEmpty(actual);
+                result = StringUtils.isEmpty(actual);
+                break;
+
             case IsNotEmpty:
-                return StringUtils.isNotEmpty(actual);
+                result = StringUtils.isNotEmpty(actual);
+                break;
 
             case IsDefined:
-                return context.hasData(subject);
+                result = context.hasData(subject);
+                break;
+
             case IsUndefined:
-                return !context.hasData(subject);
+                result = !context.hasData(subject);
+                break;
 
             default: {
                 ConsoleUtils.error("Unsupported comparison: " + comparator.getSymbol());
-                return false;
+                result = false;
             }
         }
+
+        ConsoleUtils.log(msg + (!result ? "NOT " : "") + "MATCHED");
+        return result;
     }
 
     /**
@@ -347,15 +367,11 @@ public class NexialFilter implements Serializable {
             case EndsWith:
                 return StringUtils.endsWith(actual, expected);
             case Contain: {
-                boolean containsAll = true;
                 for (String contain : controlList) {
-                    if (!StringUtils.contains(actual, context.replaceTokens(contain))) {
-                        containsAll = false;
-                        break;
-                    }
+                    if (StringUtils.contains(actual, context.replaceTokens(contain))) { return true; }
                 }
 
-                return containsAll;
+                return false;
             }
             default: {
                 ConsoleUtils.error("UNSUPPORTED Operator for text-compare: " + comparator.getSymbol());

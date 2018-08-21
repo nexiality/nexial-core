@@ -19,12 +19,17 @@ package org.nexial.core.model;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.List;
 
+import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.ArrayUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.nexial.commons.utils.TextUtils;
 import org.nexial.core.utils.ConsoleUtils;
 
+import static org.nexial.core.NexialConst.TOKEN_END;
+import static org.nexial.core.NexialConst.TOKEN_START;
+import static org.nexial.core.model.NexialFilter.ITEM_SEP;
 import static org.nexial.core.model.NexialFilterComparator.Any;
 
 public class NexialFilterList extends ArrayList<NexialFilter> {
@@ -77,7 +82,7 @@ public class NexialFilterList extends ArrayList<NexialFilter> {
         return super.addAll(index, c);
     }
 
-    public  boolean isMatched(ExecutionContext context, String msgPrefix) {
+    public boolean isMatched(ExecutionContext context, String msgPrefix) {
         // * condition means ALWAYS MATCHED --> meaning always match
         if (containsAny()) {
             ConsoleUtils.log(msgPrefix + " found ANY - ALWAYS MATCH");
@@ -85,6 +90,16 @@ public class NexialFilterList extends ArrayList<NexialFilter> {
         }
 
         for (NexialFilter filter : this) {
+            // rework the control list now that we have the context
+            List<String> controlList = filter.getControlList();
+            if (CollectionUtils.size(controlList) == 1 &&
+                StringUtils.containsAny(controlList.get(0), TOKEN_START, TOKEN_END)) {
+
+                String[] controls = StringUtils.split(context.replaceTokens(controlList.get(0)), ITEM_SEP);
+                controlList.clear();
+                controlList.addAll(Arrays.asList(controls));
+            }
+
             String subject = filter.getSubject();
             if (!StringUtils.isBlank(subject) && !filter.isMatch(context, msgPrefix)) { return false; }
         }

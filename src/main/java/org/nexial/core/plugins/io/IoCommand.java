@@ -226,11 +226,12 @@ public class IoCommand extends BaseCommand {
             return StepResult.fail("'" + file + "' is EXPECTED as file, but found directory instead.");
         }
 
-        content = StringUtils.replace(content, "\r\n", TMP_EOL);
-        content = StringUtils.replace(content, "\n", TMP_EOL);
-        content = StringUtils.replace(content, TMP_EOL, lineSeparator());
-
         try {
+            content = OutputFileUtils.resolveContent(content, context, false, true);
+            content = StringUtils.replace(content, "\r\n", TMP_EOL);
+            content = StringUtils.replace(content, "\n", TMP_EOL);
+            content = StringUtils.replace(content, TMP_EOL, lineSeparator());
+
             FileUtils.writeStringToFile(output, StringUtils.defaultString(content), DEF_CHARSET, isAppend);
             return StepResult.success("Content " + (isAppend ? " appended" : " written") + " to " + file);
         } catch (IOException e) {

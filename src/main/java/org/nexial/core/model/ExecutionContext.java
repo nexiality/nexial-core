@@ -77,7 +77,7 @@ import static org.apache.commons.lang3.SystemUtils.USER_NAME;
 import static org.nexial.commons.utils.EnvUtils.enforceUnixEOL;
 import static org.nexial.core.NexialConst.*;
 import static org.nexial.core.NexialConst.Data.*;
-import static org.nexial.core.NexialConst.FlowControls.OPT_STEP_BY_STEP;
+import static org.nexial.core.NexialConst.FlowControls.*;
 import static org.nexial.core.NexialConst.Project.NEXIAL_HOME;
 import static org.nexial.core.excel.ext.CipherHelper.CRYPT_IND;
 
@@ -414,6 +414,11 @@ public class ExecutionContext {
         }
 
         executionEventListener.onError();
+
+        if (getBooleanData(OPT_PAUSE_ON_ERROR, DEF_PAUSE_ON_ERROR)) {
+            ConsoleUtils.doPause(this, "[ERROR #" + execFailCount + "]: Error found " +
+                                       ExecutionLogger.toHeader(getCurrentTestStep()));
+        }
     }
 
     public int getFailAfter() { return getIntData(FAIL_AFTER, DEF_FAIL_AFTER); }

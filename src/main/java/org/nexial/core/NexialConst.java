@@ -39,7 +39,6 @@ import com.google.gson.GsonBuilder;
 import static java.awt.image.BufferedImage.*;
 import static java.io.File.separator;
 import static org.apache.commons.lang3.SystemUtils.IS_OS_WINDOWS;
-import static org.apache.commons.lang3.SystemUtils.USER_HOME;
 import static org.nexial.core.NexialConst.Data.CMD_VERBOSE;
 
 /**
@@ -125,7 +124,7 @@ public final class NexialConst {
     public static final boolean DEF_WEB_ALWAYS_WAIT = false;
 
     public static final String WEB_UNFOCUS_AFTER_TYPE = NS_WEB + "unfocusAfterType";
-    public static final boolean DEF_WEB_UNFOCUS_AFTER_TYPE= false;
+    public static final boolean DEF_WEB_UNFOCUS_AFTER_TYPE = false;
 
     // highlight
     public static final String OPT_DEBUG_HIGHLIGHT_OLD = NAMESPACE + "highlight";
@@ -140,10 +139,10 @@ public final class NexialConst {
     public static final String DEF_HIGHLIGHT_STYLE = "background:#faf557;";
 
     // webdriver support map
-    public static final String OPT_EDGE_DRIVER_TARGET_OS_BUILD = "edgeDriverTargetOSBuild";
-    public static final String OPT_EDGE_DRIVER_LOOKUP_BASE_URL = "edgeDriverLookupBaseUrl";
-    public static final String NEXIAL_SUPPORT_HOME = StringUtils.appendIfMissing(USER_HOME, separator) + ".nexial";
-    public static final String EDGE_DRIVER_HOME = NEXIAL_SUPPORT_HOME + separator + "edge" + separator;
+    // public static final String OPT_EDGE_DRIVER_TARGET_OS_BUILD = "edgeDriverTargetOSBuild";
+    // public static final String OPT_EDGE_DRIVER_LOOKUP_BASE_URL = "edgeDriverLookupBaseUrl";
+    // public static final String NEXIAL_SUPPORT_HOME = StringUtils.appendIfMissing(USER_HOME, separator) + ".nexial";
+    // public static final String EDGE_DRIVER_HOME = NEXIAL_SUPPORT_HOME + separator + "edge" + separator;
 
     // todo: need to evaluate how to use these 3 to modify the nexial result and excel output
     public static final String COMPARE_INCLUDE_MOVED = NAMESPACE + "io.compareIncludeMoved";
@@ -925,6 +924,8 @@ public final class NexialConst {
         public static final String OPT_INSPECT_ON_PAUSE = NAMESPACE + "inspectOnPause";
         public static final boolean DEF_INSPECT_ON_PAUSE = false;
         public static final String RESUME_FROM_PAUSE = ":resume";
+        public static final String OPT_PAUSE_ON_ERROR = NAMESPACE + "pauseOnError";
+        public static final boolean DEF_PAUSE_ON_ERROR = false;
 
         public static final String ARG_PREFIX = "(";
         public static final String ARG_SUFFIX = ")";
