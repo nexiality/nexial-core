@@ -58,11 +58,10 @@ import org.nexial.core.utils.ConsoleUtils;
 import org.nexial.core.utils.OutputFileUtils;
 import org.nexial.core.utils.WebDriverUtils;
 import org.openqa.selenium.*;
-import org.openqa.selenium.WebDriver.Timeouts;
 import org.openqa.selenium.WebDriver.Window;
 import org.openqa.selenium.interactions.Actions;
+import org.openqa.selenium.interactions.Locatable;
 import org.openqa.selenium.interactions.internal.Coordinates;
-import org.openqa.selenium.interactions.internal.Locatable;
 import org.openqa.selenium.support.ui.FluentWait;
 import org.openqa.selenium.support.ui.Quotes;
 import org.openqa.selenium.support.ui.Select;
@@ -78,7 +77,6 @@ import net.lightbody.bmp.proxy.jetty.http.HttpRequest;
 
 import static java.io.File.separator;
 import static java.lang.Thread.sleep;
-import static java.util.concurrent.TimeUnit.MILLISECONDS;
 import static org.apache.commons.lang3.SystemUtils.IS_OS_MAC;
 import static org.nexial.core.NexialConst.*;
 import static org.nexial.core.NexialConst.Data.*;
@@ -100,6 +98,7 @@ public class WebCommand extends BaseCommand implements CanTakeScreenshot, CanLog
 
     protected boolean logToBrowser;
     protected long browserStabilityWaitMs;
+    protected long pollWaitMs;
     private FluentWait<WebDriver> waiter;
 
     @Override
@@ -112,7 +111,7 @@ public class WebCommand extends BaseCommand implements CanTakeScreenshot, CanLog
     public void init(ExecutionContext context) {
         super.init(context);
 
-        // initWebDriver();
+        pollWaitMs = context.getPollWaitMs();
 
         // todo: revisit to handle proxy
         if (context.getBooleanData(OPT_PROXY_ENABLE, false)) {
@@ -130,11 +129,10 @@ public class WebCommand extends BaseCommand implements CanTakeScreenshot, CanLog
         locatorHelper = new LocatorHelper(this);
 
         browserStabilityWaitMs = context.getIntData(OPT_UI_RENDER_WAIT_MS, DEF_UI_RENDER_WAIT_MS);
-        log("setting browser stability wait time to " + browserStabilityWaitMs + " ms");
+        log("default browser stability wait time is " + browserStabilityWaitMs + " ms");
 
         // todo: consider this http://seleniumhq.github.io/selenium/docs/api/javascript/module/selenium-webdriver/lib/logging.html
         logToBrowser = !browser.isRunChrome() && context.getBooleanData(OPT_BROWSER_CONSOLE_LOG, false);
-        //log("logToBrowser=" + logToBrowser);
 
         if (driver != null) {
             waiter = new FluentWait<>(driver).withTimeout(Duration.ofMillis(context.getPollWaitMs()))
@@ -1776,12 +1774,13 @@ public class WebCommand extends BaseCommand implements CanTakeScreenshot, CanLog
 
         WebElement element;
         try {
-            if (shouldWait()) {
-                element = findElement(locator);
-            } else {
-                List<WebElement> matches = findElements(locator);
-                element = CollectionUtils.isEmpty(matches) ? null : matches.get(0);
-            }
+            // stupid code! both findElement() and findElements() are using waiter
+            // if (shouldWait()) {
+            //     element = findElement(locator);
+            // } else {
+            List<WebElement> matches = findElements(locator);
+            element = CollectionUtils.isEmpty(matches) ? null : matches.get(0);
+            // }
         } catch (TimeoutException e) {
             return StepResult.fail("Unable to find element via locator '" + locator + "' within allotted time");
         }
@@ -1798,15 +1797,16 @@ public class WebCommand extends BaseCommand implements CanTakeScreenshot, CanLog
 
         highlight(element);
 
-        boolean forceJSClick = jsExecutor != null &&
-                               (browser.favorJSClick() || context.getBooleanData(FORCE_JS_CLICK, DEF_FORCE_JS_CLICK));
-
         // Nexial configure "preference" for each browser to use JS click on not. However, we need to honor user's
         // wish NOT to use JS click if they had configured their test as such
-        if (context.hasData(FORCE_JS_CLICK) && !context.getBooleanData(FORCE_JS_CLICK)) { forceJSClick = false; }
+        boolean systemFavorJsClick = jsExecutor != null && browser.favorJSClick();
+        boolean forceJSClick = (!context.hasData(FORCE_JS_CLICK) || context.getBooleanData(FORCE_JS_CLICK)) &&
+                               systemFavorJsClick;
 
         try {
-            if (forceJSClick && StringUtils.isNotBlank(element.getAttribute("id"))) {
+            // @id doesn't matter anymore...
+            // if (forceJSClick && StringUtils.isNotBlank(element.getAttribute("id"))) {
+            if (forceJSClick) {
                 jsClick(element);
                 return StepResult.success("click via JS event");
             } else {
@@ -1819,7 +1819,7 @@ public class WebCommand extends BaseCommand implements CanTakeScreenshot, CanLog
             return StepResult.fail(e.getMessage(), e);
         } catch (Exception e) {
             // try again..
-            if (jsExecutor != null && browser.favorJSClick()) {
+            if (systemFavorJsClick) {
                 jsClick(element);
                 return StepResult.success("second attempt click via JS event");
             }
@@ -1918,20 +1918,29 @@ public class WebCommand extends BaseCommand implements CanTakeScreenshot, CanLog
 
         By by = locatorHelper.findBy(locator);
         boolean wait = shouldWait();
-        boolean timeoutChangesEnabled = browser.getBrowserType().isTimeoutChangesEnabled();
-        Timeouts timeouts = driver.manage().timeouts();
+        // boolean timeoutChangesEnabled = browser.getBrowserType().isTimeoutChangesEnabled();
+        // Timeouts timeouts = driver.manage().timeouts();
 
         try {
             // shorten wait to avoid competing timeout in selenium-browser comm.
-            if (!wait && timeoutChangesEnabled) { timeouts.implicitlyWait(ELEM_PRESENT_WAIT_MS, MILLISECONDS); }
+            // if (!wait && timeoutChangesEnabled) { timeouts.implicitlyWait(ELEM_PRESENT_WAIT_MS, MILLISECONDS); }
 
             return wait ? waiter.until(driver -> driver.findElements(by)) : driver.findElements(by);
         } catch (NoSuchElementException e) {
             return null;
-        } finally {
+        // } finally {
             // set it back to default
-            if (!wait && timeoutChangesEnabled) { timeouts.implicitlyWait(pollWaitMs, MILLISECONDS); }
+            // if (!wait && timeoutChangesEnabled) { timeouts.implicitlyWait(pollWaitMs, MILLISECONDS); }
         }
+    }
+
+    protected WebElement findElement(String locator) {
+        ensureReady();
+
+        By by = locatorHelper.findBy(locator);
+        WebElement target = shouldWait() ? waiter.until(driver -> driver.findElement(by)) : driver.findElement(by);
+        if (target != null && target.isDisplayed()) { highlight(target); }
+        return target;
     }
 
     protected WebElement toElement(String locator) {
@@ -2036,19 +2045,16 @@ public class WebCommand extends BaseCommand implements CanTakeScreenshot, CanLog
         }
 
         int successCount = 0;
-        String oldSource = "";
-        String newSource = "";
-        int speed;
+        int speed = context.getIntData(OPT_WAIT_SPEED, BROWSER_STABILITY_COMPARE_TOLERANCE);
         long endTime = System.currentTimeMillis() + maxWait;
 
         try {
-            speed = context.getIntData(OPT_WAIT_SPEED, BROWSER_STABILITY_COMPARE_TOLERANCE);
-
-            if (hasSource) { oldSource = driver.getPageSource(); }
+            String oldSource = driver.getPageSource();
 
             do {
                 sleep(MIN_STABILITY_WAIT_MS);
-                if (hasSource) { newSource = driver.getPageSource(); }
+
+                String newSource = driver.getPageSource();
 
                 if (isBrowserLoadComplete() && StringUtils.equals(oldSource, newSource)) {
                     successCount += 1;
@@ -2057,11 +2063,24 @@ public class WebCommand extends BaseCommand implements CanTakeScreenshot, CanLog
                 } else {
                     successCount = 0;
                     // compare didn't work.. but let's wait until maxWait is reached before declaring failure
-                    if (hasSource) { oldSource = newSource; }
+                    oldSource = newSource;
                 }
             } while (System.currentTimeMillis() < endTime);
         } catch (Exception e) {
+            // exception thrown because a JS alert is "blocking" the browser.. in this case we consider the page as "loaded"
             if (e.getMessage().contains("Modal") || e instanceof UnhandledAlertException) {return true;}
+
+            if (successCount == 0) {
+                // failed at first try
+                if (System.currentTimeMillis() > endTime) {
+                    // times up
+                    ConsoleUtils.log("browser stability unknown; exceeded allotted page load timeout");
+                    return isBrowserLoadComplete();
+                } else {
+                    WebDriverWait waiter = new WebDriverWait(driver, maxWait);
+                    return waiter.until(driver -> isBrowserLoadComplete());
+                }
+            }
 
             log("Unable to determine browser's stability: " + e.getMessage());
             throw new RuntimeException(e.getMessage(), e);
@@ -2072,9 +2091,9 @@ public class WebCommand extends BaseCommand implements CanTakeScreenshot, CanLog
 
     protected boolean isBrowserLoadComplete() {
         ensureReady();
-        boolean timeoutChangesEnabled = browser.getBrowserType().isTimeoutChangesEnabled();
-        Timeouts timeouts = driver.manage().timeouts();
-        if (timeoutChangesEnabled) { timeouts.implicitlyWait(pollWaitMs, MILLISECONDS); }
+        // boolean timeoutChangesEnabled = browser.getBrowserType().isTimeoutChangesEnabled();
+        // Timeouts timeouts = driver.manage().timeouts();
+        // if (timeoutChangesEnabled) { timeouts.implicitlyWait(pollWaitMs, MILLISECONDS); }
 
         JavascriptExecutor jsExecutor = (JavascriptExecutor) this.driver;
 
@@ -2211,6 +2230,15 @@ public class WebCommand extends BaseCommand implements CanTakeScreenshot, CanLog
         return fixURL(url);
     }
 
+    protected String addNoCacheRandom(String url) {
+        int indexAfterHttp = StringUtils.indexOf(url, "//") + 2;
+        if (StringUtils.indexOf(url, "/", indexAfterHttp) == -1) { url += "/"; }
+
+        // add random 'prevent-cache' tail request param
+        url += (StringUtils.contains(url, "&") ? "&" : "?") + "random=" + RandomStringUtils.random(16, false, true);
+        return url;
+    }
+
     /** add logging to browser's console (via console.log call) */
     protected void logToBrowserConsole(String message) {
         if (!logToBrowser) { return; }
@@ -2260,23 +2288,6 @@ public class WebCommand extends BaseCommand implements CanTakeScreenshot, CanLog
         if (matched == null) { throw new IllegalArgumentException("No element matched via locator '" + xpath + "'"); }
 
         return matched;
-    }
-
-    protected WebElement findElement(String locator) {
-        ensureReady();
-        By by = locatorHelper.findBy(locator);
-        WebElement target = shouldWait() ? waiter.until(driver -> driver.findElement(by)) : driver.findElement(by);
-        if (target != null && target.isDisplayed()) { highlight(target); }
-        return target;
-    }
-
-    protected String addNoCacheRandom(String url) {
-        int indexAfterHttp = StringUtils.indexOf(url, "//") + 2;
-        if (StringUtils.indexOf(url, "/", indexAfterHttp) == -1) { url += "/"; }
-
-        // add random 'prevent-cache' tail request param
-        url += (StringUtils.contains(url, "&") ? "&" : "?") + "random=" + RandomStringUtils.random(16, false, true);
-        return url;
     }
 
     protected void highlight(String locator) {

@@ -286,14 +286,21 @@ public class Browser implements ForcefulTerminate {
 
             // if browser supports implicit wait and we are not using explicit wait (`WEB_ALWAYS_WAIT`), then
             // we'll change timeout's implicit wait time
-            boolean shouldWaitImplicitly = browserType.isTimeoutChangesEnabled() &&
-                                           context.getPollWaitMs() > 0 &&
+            Timeouts timeouts = driver.manage().timeouts();
+            long pollWaitMs = context.getPollWaitMs();
+            boolean timeoutChangesEnabled = browserType.isTimeoutChangesEnabled();
+            boolean shouldWaitImplicitly = timeoutChangesEnabled &&
+                                           pollWaitMs > 0 &&
                                            !context.getBooleanData(WEB_ALWAYS_WAIT, DEF_WEB_ALWAYS_WAIT);
             if (shouldWaitImplicitly) {
-                long pollWaitMs = context.getPollWaitMs();
-                Timeouts timeouts = driver.manage().timeouts();
                 timeouts.implicitlyWait(pollWaitMs, MILLISECONDS);
-                if (LOGGER.isDebugEnabled()) { LOGGER.debug("setting polling wait time to " + pollWaitMs + " ms"); }
+                ConsoleUtils.log("setting browser polling wait time to " + pollWaitMs + " ms");
+            }
+
+            if (timeoutChangesEnabled) {
+                int pageLoadTimeout = context.getIntData(OPT_WEB_PAGE_LOAD_WAIT_MS, DEF_WEB_PAGE_LOAD_WAIT_MS);
+                timeouts.pageLoadTimeout(pageLoadTimeout, MILLISECONDS);
+                ConsoleUtils.log("setting browser page load timeout to " + pageLoadTimeout + " ms");
             }
         }
 
@@ -588,7 +595,6 @@ public class Browser implements ForcefulTerminate {
         }
 
         ChromeDriver chrome = new ChromeDriver(options);
-
         Capabilities capabilities = chrome.getCapabilities();
         initCapabilities((MutableCapabilities) capabilities);
 
@@ -602,6 +608,7 @@ public class Browser implements ForcefulTerminate {
         browserVersion = capabilities.getVersion();
         browserPlatform = capabilities.getPlatform();
         postInit(chrome);
+        // pageSourceSupported = false;
 
         return chrome;
     }

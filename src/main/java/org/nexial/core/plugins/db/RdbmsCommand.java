@@ -53,12 +53,12 @@ public class RdbmsCommand extends BaseCommand {
 
     public void setDataAccess(DataAccess dataAccess) { this.dataAccess = dataAccess; }
 
-    public StepResult runSQL(String var, String db, String sql) {
+    public StepResult runSQL(String var, String db, String sql) throws IOException {
         requiresValidVariableName(var);
         requiresNotBlank(db, "invalid db", db);
         requiresNotBlank(sql, "invalid sql", sql);
 
-        String query = StringUtils.trim(sql);
+        String query = StringUtils.trim(OutputFileUtils.resolveRawContent(sql, context));
         // we want to support ALL types of SQL, including those vendor-specific
         // so for that reason, we are no longer insisting on the use of standard ANSI sql
         // requires(dataAccess.validSQL(query), "invalid sql", sql);
@@ -209,7 +209,7 @@ public class RdbmsCommand extends BaseCommand {
 
         try {
             List<SqlComponent> qualifiedSqlList =
-                SqlComponent.toList(OutputFileUtils.resolveContent(sqls, context, false, true));
+                SqlComponent.toList(OutputFileUtils.resolveRawContent(sqls, context));
             requires(CollectionUtils.isNotEmpty(qualifiedSqlList), "No valid SQL statements found", sqls);
 
             int qualifiedSqlCount = qualifiedSqlList.size();
@@ -263,14 +263,14 @@ public class RdbmsCommand extends BaseCommand {
         requiresNotBlank(output, "invalid output", output);
         if (!StringUtils.endsWithIgnoreCase(output, ".csv")) { output += ".csv"; }
 
-        String query = StringUtils.trim(sql);
-        // we want to support ALL types of SQL, including those vendor-specific
-        // so for that reason, we are no longer insisting on the use of standard ANSI sql
-        // requires(dataAccess.validSQL(query), "invalid sql", sql);
-
         SimpleExtractionDao dao = resolveDao(db);
 
         try {
+            String query = StringUtils.trim(OutputFileUtils.resolveRawContent(sql, context));
+            // we want to support ALL types of SQL, including those vendor-specific
+            // so for that reason, we are no longer insisting on the use of standard ANSI sql
+            // requires(dataAccess.validSQL(query), "invalid sql", sql);
+
             JdbcResult result = dataAccess.execute(query, dao, new File(output));
             if (result == null) { return StepResult.fail("FAILED TO EXECUTE SQL '" + sql + "': no result found"); }
 

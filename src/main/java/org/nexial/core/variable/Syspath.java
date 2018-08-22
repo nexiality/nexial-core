@@ -34,7 +34,12 @@ public class Syspath {
 
     public String out(String scope) { return evaluateExecutionScope(scope, OPT_OUT_DIR); }
 
-    public String script(String scope) { return evaluateScope(scope, getExecutionData(OPT_INPUT_EXCEL_FILE)); }
+    // public String script(String scope) { return evaluateScope(scope, getExecutionData(OPT_INPUT_EXCEL_FILE)); }
+    public String script(String scope) {
+        ExecutionContext context = ExecutionThread.get();
+        if (context != null) { return evaluateScope(scope, context.getExecDef().getTestScript()); }
+        return evaluateScope(scope, getExecutionData(OPT_INPUT_EXCEL_FILE));
+    }
 
     public String data(String scope) { return evaluateScope(scope, getExecutionData(OPT_DATA_DIR)); }
 

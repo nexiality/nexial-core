@@ -400,7 +400,7 @@ public class ExecutionContext {
      * increment current failure count and evaluate if execution failure should be declared since we've passed the
      * failAfter threshold
      */
-    public void incrementAndEvaluateFail() {
+    public void incrementAndEvaluateFail(StepResult result) {
         // increment execution fail count
         int execFailCount = getIntData(EXECUTION_FAIL_COUNT, 0) + 1;
         setData(EXECUTION_FAIL_COUNT, execFailCount);
@@ -413,11 +413,13 @@ public class ExecutionContext {
             setFailImmediate(true);
         }
 
-        executionEventListener.onError();
-
-        if (getBooleanData(OPT_PAUSE_ON_ERROR, DEF_PAUSE_ON_ERROR)) {
-            ConsoleUtils.doPause(this, "[ERROR #" + execFailCount + "]: Error found " +
-                                       ExecutionLogger.toHeader(getCurrentTestStep()));
+        if (result.isError()) {
+            executionEventListener.onError();
+            if (getBooleanData(OPT_PAUSE_ON_ERROR, DEF_PAUSE_ON_ERROR)) {
+                ConsoleUtils.doPause(this, "[ERROR #" + execFailCount + "]: Error found " +
+                                           ExecutionLogger.toHeader(getCurrentTestStep()) + " - " +
+                                           result.getMessage());
+            }
         }
     }
 

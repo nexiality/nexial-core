@@ -352,8 +352,8 @@ public class TestStep extends TestStepManifest {
             log(MessageUtils.renderAsPass(StringUtils.equals(getCommandFQN(), CMD_VERBOSE) ? "" : result.getMessage()));
         } else {
             summary.incrementFail();
-            context.incrementAndEvaluateFail();
             log(MessageUtils.renderAsFail(result.getMessage()));
+            context.incrementAndEvaluateFail(result);
         }
     }
 

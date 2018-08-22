@@ -75,7 +75,6 @@ public class BaseCommand implements NexialCommand {
 
     protected transient Map<String, Method> commandMethods = new HashMap<>();
     protected transient ExecutionContext context;
-    protected long pollWaitMs;
     protected long pauseMs;
     protected transient ContextScreenRecorder screenRecorder;
 
@@ -86,7 +85,6 @@ public class BaseCommand implements NexialCommand {
     @Override
     public void init(ExecutionContext context) {
         this.context = context;
-        pollWaitMs = context.getPollWaitMs();
         pauseMs = context.getDelayBetweenStep();
     }
 

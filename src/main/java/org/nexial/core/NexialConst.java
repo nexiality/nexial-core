@@ -126,6 +126,9 @@ public final class NexialConst {
     public static final String WEB_UNFOCUS_AFTER_TYPE = NS_WEB + "unfocusAfterType";
     public static final boolean DEF_WEB_UNFOCUS_AFTER_TYPE = false;
 
+    public static final String OPT_WEB_PAGE_LOAD_WAIT_MS = NS_WEB + "pageLoadWaitMs";
+    public static final int DEF_WEB_PAGE_LOAD_WAIT_MS = 10000;
+
     // highlight
     public static final String OPT_DEBUG_HIGHLIGHT_OLD = NAMESPACE + "highlight";
     public static final String OPT_DEBUG_HIGHLIGHT = NS_WEB + "highlight";
