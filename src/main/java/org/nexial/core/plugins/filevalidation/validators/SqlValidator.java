@@ -17,6 +17,7 @@
 
 package org.nexial.core.plugins.filevalidation.validators;
 
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -32,6 +33,7 @@ import org.nexial.core.plugins.filevalidation.config.ValidationConfig;
 import org.nexial.core.plugins.filevalidation.config.ValidationsBean.ValidationmethodsBean.ConditionBean;
 import org.nexial.core.plugins.filevalidation.validators.ValidationsExecutor.Severity;
 import org.nexial.core.plugins.filevalidation.validators.ValidationsExecutor.ValidationType;
+import org.nexial.core.utils.ConsoleUtils;
 
 import com.google.gson.Gson;
 import com.google.gson.JsonArray;
@@ -67,26 +69,35 @@ public class SqlValidator implements FieldValidator {
                 JsonArray listValues = (JsonArray) validationConfig.getParams();
                 List stringList = new Gson().fromJson(listValues, ArrayList.class);
                 String actual = field.getFieldValue().trim();
+
                 String dbProfile = String.valueOf(stringList.get(DB_PROFILE_INDEX));
-                String sql = String.valueOf(stringList.get(SQL_QUERY_INDEX));
                 requiresNotBlank(dbProfile, "invalid db", dbProfile);
+
+                String sql = String.valueOf(stringList.get(SQL_QUERY_INDEX));
                 requiresNotBlank(sql, "invalid sql", sql);
+
                 String[] fields = lookUpFieldNames(sql);
                 if (fields != null && fields.length > 0) {
                     sql = substituteFieldValues(sql, fields, field.getRecord());
                 }
                 sql = context.handleExpression(sql);
-                String resultVar = getClass().getName() + System.currentTimeMillis() + "dbresult";
-                ((RdbmsCommand) rdbms).runSQL(resultVar, dbProfile, sql);
-                JdbcResult result = ((JdbcResult) context.getObjectData(resultVar));
 
-                if (result.getRowCount() < 1) {
-                    String msg =
-                        " No matched row(s) found. Executed query in " + result.getElapsedTime() + " ms with " +
-                        (result.hasError() ?
-                         "ERROR " + result.getError() :
-                         result.getRowCount() + " row(s)");
-                    logErrorMessage(field, msg, actual);
+                String resultVar = getClass().getName() + System.currentTimeMillis() + "dbresult";
+
+                try {
+                    ((RdbmsCommand) rdbms).runSQL(resultVar, dbProfile, sql);
+                    JdbcResult result = ((JdbcResult) context.getObjectData(resultVar));
+                    if (result.getRowCount() < 1) {
+                        String msg =
+                            " No matched row(s) found. Executed query in " + result.getElapsedTime() + " ms with " +
+                            (result.hasError() ?
+                             "ERROR " + result.getError() :
+                             result.getRowCount() + " row(s)");
+                        logErrorMessage(field, msg, actual);
+                    }
+                } catch (IOException e) {
+                    ConsoleUtils.error(e.getMessage());
+                    logErrorMessage(field, e.getMessage(), "ERROR");
                 }
             }
         }
