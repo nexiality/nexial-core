@@ -34,18 +34,25 @@ public class Syspath {
 
     public String out(String scope) { return evaluateExecutionScope(scope, OPT_OUT_DIR); }
 
-    // public String script(String scope) { return evaluateScope(scope, getExecutionData(OPT_INPUT_EXCEL_FILE)); }
     public String script(String scope) {
         ExecutionContext context = ExecutionThread.get();
-        if (context != null) { return evaluateScope(scope, context.getExecDef().getTestScript()); }
-        return evaluateScope(scope, getExecutionData(OPT_INPUT_EXCEL_FILE));
+
+        String executionData = null;
+        if (context != null && context.getExecDef() != null) {
+            executionData = context.getExecDef().getTestScript();
+        }
+
+        if (executionData == null) { executionData = getExecutionData(OPT_INPUT_EXCEL_FILE); }
+
+        ConsoleUtils.log(TOKEN_FUNCTION_START + "syspath|script" + TOKEN_FUNCTION_END +
+                         ": executionData=" + executionData);
+
+        return evaluateScope(scope, executionData);
     }
 
     public String data(String scope) { return evaluateScope(scope, getExecutionData(OPT_DATA_DIR)); }
 
-    public String screenshot(String scope) {
-        return evaluateScope(scope, appendCapture(getExecutionData(OPT_OUT_DIR)));
-    }
+    public String screenshot(String scope) { return evaluateScope(scope, appendCapture(getExecutionData(OPT_OUT_DIR)));}
 
     public String log(String scope) { return evaluateScope(scope, appendLog(getExecutionData(OPT_OUT_DIR))); }
 
