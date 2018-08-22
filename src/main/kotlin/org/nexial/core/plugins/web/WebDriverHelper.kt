@@ -508,8 +508,8 @@ class ElectronDriverHelper(context: ExecutionContext) : WebDriverHelper(context)
                 else -> "ia32"
             }
 
-            manifest.driverUrl = JSONPath.find(driverContentJson,
-                                               "assets[name=chromedriver-$tag-$env-$arch.zip].browser_download_url")
+            manifest.driverUrl = JSONPath
+                .find(driverContentJson, "assets[name=electron-$tag-$env-$arch.zip].browser_download_url")
         }
 
         return manifest
