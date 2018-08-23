@@ -210,24 +210,18 @@ public class WebCommand extends BaseCommand implements CanTakeScreenshot, CanLog
         String script = "if (arguments[0].hasAttribute('type','checkbox') && !arguments[0].hasAttribute('checked')) {" +
                         "   arguments[0].click(); " +
                         "}";
-
-        if (!execJsOverFreshElements(locator, script)) {
-            return StepResult.fail("No element found via '" + locator + "'");
-        } else {
-            return StepResult.success("CheckBox elements (" + locator + ") are checked");
-        }
+        return execJsOverFreshElements(locator, script, (int) pollWaitMs) ?
+               StepResult.success("CheckBox elements (" + locator + ") are checked") :
+               StepResult.fail("Check FAILED on element(s) '" + locator + "'");
     }
 
     public StepResult uncheckAll(String locator) {
         String script = "if (arguments[0].hasAttribute('type','checkbox') && arguments[0].hasAttribute('checked')) {" +
                         "   arguments[0].click();" +
                         "}";
-
-        if (!execJsOverFreshElements(locator, script)) {
-            return StepResult.fail("No element found via '" + locator + "'");
-        } else {
-            return StepResult.success("CheckBox elements (" + locator + ") are unchecked");
-        }
+        return execJsOverFreshElements(locator, script, (int) pollWaitMs) ?
+               StepResult.success("CheckBox elements (" + locator + ") are unchecked") :
+               StepResult.fail("Uncheck FAILED on element(s) '" + locator + "'");
     }
 
     /** treated all matching elements as checkbox, radio or select-option and toggle their current 'selected' status */
@@ -1484,7 +1478,7 @@ public class WebCommand extends BaseCommand implements CanTakeScreenshot, CanLog
         return StepResult.success("Drag-and-drop element '" + fromLocator + "' to '" + toLocator + "'");
     }
 
-    protected boolean execJsOverFreshElements(String locator, String script) {
+    protected boolean execJsOverFreshElements(String locator, String script, int inBetweenWaitMs) {
         if (StringUtils.isBlank(script)) { throw new IllegalArgumentException("script is blank/empty"); }
 
         requiresNotBlank(locator, "invalid locator", locator);
@@ -1495,12 +1489,16 @@ public class WebCommand extends BaseCommand implements CanTakeScreenshot, CanLog
         // since we are activating click event, there's a chance that the page would be updated and the element(s) might
         // no longer be valid. As such we need to refresh the element list each time one element is clicked
         int count = elements.size();
+        ConsoleUtils.log("executing JavaScript over " + count + " elements (" + locator + ")...");
 
         for (int i = 0; i < count; i++) {
             elements = findElements(locator);
-            if (CollectionUtils.size(elements) > i) { jsExecutor.executeScript(script, elements.get(i)); }
+            if (CollectionUtils.size(elements) > i) {
+                ConsoleUtils.log("\t...executing JavaScript over element " + (i + 1));
+                jsExecutor.executeScript(script, elements.get(i));
+                waitFor(inBetweenWaitMs);
+            }
         }
-        // elements.forEach(element -> jsExecutor.executeScript(script, element));
 
         return true;
     }
@@ -1928,7 +1926,7 @@ public class WebCommand extends BaseCommand implements CanTakeScreenshot, CanLog
             return wait ? waiter.until(driver -> driver.findElements(by)) : driver.findElements(by);
         } catch (NoSuchElementException e) {
             return null;
-        // } finally {
+            // } finally {
             // set it back to default
             // if (!wait && timeoutChangesEnabled) { timeouts.implicitlyWait(pollWaitMs, MILLISECONDS); }
         }
