@@ -45,7 +45,7 @@ public class FixedLengthFileValidator implements MasterFileValidator {
     @Override
     public void setMasterConfig(MasterConfig masterConfig) {
         requiresNotNull(masterConfig, "Failed to create master config");
-        this.configs = masterConfig.getConfigs(masterConfig);
+        this.configs = masterConfig.getConfigs();
     }
 
     public RecordData parseAndValidate(String targetFilePath) {
@@ -60,6 +60,7 @@ public class FixedLengthFileValidator implements MasterFileValidator {
         Map<String, Object> tempDupValues = validationsExecutor.moveDupValuesFromContext(configs);
         try (BufferedOutputStream outputStream = new BufferedOutputStream(FileUtils.openOutputStream(csvOutputFile))) {
             LineIterator iterator = FileUtils.lineIterator(targetFile, "UTF-8");
+
             while (iterator.hasNext()) {
                 String targetLine = iterator.nextLine();
                 List<FieldBean> fields = new ArrayList<>();
@@ -127,4 +128,6 @@ public class FixedLengthFileValidator implements MasterFileValidator {
         recordData.calculateTotalPassed();
         return recordData;
     }
+
+
 }

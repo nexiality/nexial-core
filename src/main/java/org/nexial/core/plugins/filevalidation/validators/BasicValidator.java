@@ -20,7 +20,8 @@ package org.nexial.core.plugins.filevalidation.validators;
 import java.text.NumberFormat;
 import java.text.ParsePosition;
 import java.util.ArrayList;
-import java.util.EnumSet;
+import java.util.regex.Pattern;
+import java.util.regex.PatternSyntaxException;
 
 import org.apache.commons.lang3.StringUtils;
 import org.nexial.core.plugins.filevalidation.FieldBean;
@@ -28,22 +29,22 @@ import org.nexial.core.plugins.filevalidation.config.FieldConfig;
 import org.nexial.core.plugins.filevalidation.validators.Error.ErrorBuilder;
 import org.nexial.core.plugins.filevalidation.validators.ValidationsExecutor.Alignment;
 import org.nexial.core.plugins.filevalidation.validators.ValidationsExecutor.DataType;
-import org.nexial.core.plugins.filevalidation.validators.ValidationsExecutor.Severity;
 import org.nexial.core.utils.CheckUtils;
+import org.nexial.core.utils.ConsoleUtils;
 
-import static org.nexial.core.plugins.filevalidation.validators.ValidationsExecutor.DataType.NUMERIC;
+import static org.nexial.core.plugins.filevalidation.validators.ValidationsExecutor.DataType.*;
+import static org.nexial.core.plugins.filevalidation.validators.ValidationsExecutor.Severity.ERROR;
+import static org.nexial.core.plugins.filevalidation.validators.ValidationsExecutor.Severity.WARNING;
 
 public class BasicValidator {
 
-    public void validateField(FieldBean field) {
-
+    void validateField(FieldBean field) {
         field.setErrors(new ArrayList<>());
-
         validateDataType(field);
         validateTextAlignment(field);
     }
 
-    protected void validateDataType(FieldBean field) {
+    private void validateDataType(FieldBean field) {
         FieldConfig config = field.getConfig();
         String fieldValue = field.getFieldValue();
 
@@ -51,63 +52,78 @@ public class BasicValidator {
         CheckUtils.requiresNotNull(fieldValue, "Invalid field value", fieldValue);
 
         String dataType = StringUtils.trim(config.getDatatype());
-
-        if (dataType == null || StringUtils.isBlank(dataType)) { return; }
-
-
-        if (DataType.NUMERIC.isNumeric(dataType)) {
-            if (!validateNumberDataType(fieldValue)) {
-                addDataTypeError(field, Severity.ERROR, NUMERIC);
+        if (StringUtils.startsWith(dataType, "REGEX:")) {
+            String regex = StringUtils.substringAfter(dataType, "REGEX:");
+            try {
+                final Pattern pattern = Pattern.compile(regex);
+                if (!pattern.matcher(fieldValue).matches()) {
+                    addDataTypeError(field, REGEX);
+                }
+            } catch (PatternSyntaxException e) {
+                ConsoleUtils.error("Invalid REGEX: " + regex);
+                addDataTypeError(field, REGEX);
             }
             return;
         }
+        DataType enumType = DataType.toEnum(dataType);
 
-        if (DataType.ALPHANUMERIC.isAlphaNumeric(dataType)) {
-            if (!validateAlphaNumericDataType(fieldValue)) {
-                addDataTypeError(field, Severity.ERROR, NUMERIC);
-            }
+        if (enumType == null) {
+            addUndefinedValidationError(field, dataType);
             return;
         }
 
-        if (DataType.ALPHA.isAlpha((dataType))){
-            if (!validateAlphaDataType(fieldValue)) {
-                addDataTypeError(field, Severity.ERROR, DataType.ALPHA);
+        switch (enumType) {
+            case ANY: {
+                if (!StringUtils.isAsciiPrintable(fieldValue)) {
+                    addDataTypeError(field, DataType.ANY);
+                }
+                break;
             }
-            return;
-        }
-
-        if (DataType.ALPHAUPPER.isAlphaUpper((dataType))){
-            if (!validateAlphaUpperDataType(fieldValue)) {
-                addDataTypeError(field, Severity.ERROR, DataType.ALPHAUPPER);
+            case ALPHA: {
+                if (!StringUtils.isAlphaSpace(fieldValue)) {
+                    addDataTypeError(field, DataType.ALPHA);
+                }
+                break;
             }
-            return;
-        }
-
-        if (DataType.ALPHALOWER.isAlphaLower((dataType))){
-            if (!validateAlphaLowerDataType(fieldValue)) {
-                addDataTypeError(field, Severity.ERROR, DataType.ALPHALOWER);
+            case BLANK: {
+                if (StringUtils.isNotBlank(fieldValue)) {
+                    addDataTypeError(field, DataType.BLANK);
+                }
+                break;
             }
-            return;
-        }
 
-        if (DataType.BLANK.isBlank(dataType)) {
-            if (StringUtils.isNotBlank(fieldValue)) {
-                addDataTypeError(field, Severity.ERROR, DataType.BLANK);
+            case NUMERIC: {
+                if (!validateNumberDataType(fieldValue)) {
+                    addDataTypeError(field, NUMERIC);
+                }
+                break;
             }
-            return;
-        }
-        addUndefinedValidationError(field, Severity.WARNING, dataType);
-
-    }
-
-    private boolean isEnumContains(EnumSet enumSet, String value) {
-        for (Object obj : enumSet) {
-
-            if (obj.toString().equalsIgnoreCase(value)) {
-                return true;
+            case ALPHALOWER: {
+                if (!StringUtils.isAllLowerCase(fieldValue.trim())) {
+                    addDataTypeError(field, DataType.ALPHALOWER);
+                }
+                break;
+            }
+            case ALPHAUPPER: {
+                if (!StringUtils.isAllUpperCase(fieldValue.trim())) {
+                    addDataTypeError(field, DataType.ALPHAUPPER);
+                }
+                break;
+            }
+            case PERSONNAME: {
+                final Pattern pattern = Pattern.compile("^[a-zA-Z]+[ ,.'\\-(a-zA-Z)]*$");
+                if (!pattern.matcher(fieldValue).matches()) {
+                    addDataTypeError(field, PERSONNAME);
+                }
+                break;
+            }
+            case ALPHANUMERIC: {
+                if (!StringUtils.isAlphanumericSpace(fieldValue)) {
+                    addDataTypeError(field, ALPHANUMERIC);
+                }
+                break;
             }
         }
-        return false;
     }
 
     private boolean validateNumberDataType(String fieldValue) {
@@ -117,59 +133,42 @@ public class BasicValidator {
         return fieldValue.trim().length() == parsePosition.getIndex();
     }
 
-    private boolean validateAlphaNumericDataType(String fieldValue) {
-        // considering printable characters (e.g. +,-,...)
-        return StringUtils.isAsciiPrintable(fieldValue.trim());
-    }
-
-    private boolean validateAlphaDataType(String fieldValue){
-        // considering spaces
-        return StringUtils.isAlphaSpace(fieldValue.trim());
-    }
-
-    private boolean validateAlphaUpperDataType(String fieldValue) {
-        return StringUtils.isAllUpperCase(fieldValue.trim());
-    }
-
-    private boolean validateAlphaLowerDataType(String fieldValue) {
-        return StringUtils.isAllLowerCase(fieldValue.trim());
-    }
-
     private void validateTextAlignment(FieldBean field) {
         FieldConfig config = field.getConfig();
         String alignmentType = config.getAlignment();
         String fieldValue = field.getFieldValue();
 
-        if (alignmentType == null || StringUtils.isBlank(alignmentType)) { return; }
+        if (StringUtils.isBlank(fieldValue) || StringUtils.isBlank(alignmentType)) { return; }
 
-        if (!isEnumContains(EnumSet.allOf(Alignment.class), alignmentType)) {
-            field.setTextAlignmentError(true);
-            addUndefinedValidationError(field, Severity.WARNING, alignmentType);
+        Alignment alignment = Alignment.toEnum(alignmentType);
+
+        if (alignment == null) {
+            addUndefinedValidationError(field, alignmentType);
             return;
         }
 
-        if (StringUtils.isBlank(fieldValue)) { return; }
-
-        if (isEnumContains(EnumSet.of(Alignment.L, Alignment.LEFT), alignmentType)) {
-            if (fieldValue.length() >= 1 && fieldValue.charAt(0) == ' ') {
-                addAlignmentError(field, Severity.ERROR, Alignment.LEFT);
+        switch (alignment) {
+            case LEFT: {
+                if (fieldValue.length() >= 1 && fieldValue.charAt(0) == ' ') {
+                    addAlignmentError(field, Alignment.LEFT);
+                }
+                break;
+            }
+            case RIGHT: {
+                if (fieldValue.length() >= 1 && fieldValue.charAt(fieldValue.length() - 1) == ' ') {
+                    addAlignmentError(field, Alignment.RIGHT);
+                }
+                break;
             }
         }
-
-        if (isEnumContains(EnumSet.of(Alignment.R, Alignment.RIGHT), alignmentType)) {
-            if (fieldValue.length() >= 1 && fieldValue.charAt(fieldValue.length() - 1) == ' ') {
-                addAlignmentError(field, Severity.ERROR, Alignment.RIGHT);
-            }
-        }
-
     }
 
-    private void addDataTypeError(FieldBean field, Severity severity, DataType dataType) {
+    private void addDataTypeError(FieldBean field, DataType dataType) {
         field.setDataTypeError(true);
         FieldConfig config = field.getConfig();
         String errorMessage = ErrorMessage.dataTypeError(field.getFieldValue(), config.getDatatype(), config);
         Error error = new ErrorBuilder().fieldName(config.getFieldname())
-                                        .severity(severity.toString())
+                                        .severity(ERROR.toString())
                                         .validationType(dataType.toString())
                                         .errorMessage(errorMessage)
                                         .build();
@@ -177,12 +176,12 @@ public class BasicValidator {
         field.getErrors().add(error);
     }
 
-    private void addAlignmentError(FieldBean field, Severity severity, Alignment alignmentType) {
+    private void addAlignmentError(FieldBean field, Alignment alignmentType) {
         field.setTextAlignmentError(true);
         FieldConfig config = field.getConfig();
         String errorMessage = ErrorMessage.alignmentError(field.getFieldValue(), config.getAlignment(), config);
         Error error = new ErrorBuilder().fieldName(config.getFieldname())
-                                        .severity(severity.toString())
+                                        .severity(ERROR.toString())
                                         .validationType(alignmentType.toString())
                                         .errorMessage(errorMessage)
                                         .build();
@@ -190,10 +189,10 @@ public class BasicValidator {
         field.getErrors().add(error);
     }
 
-    private void addUndefinedValidationError(FieldBean field, Severity severity, String validationType) {
+    private void addUndefinedValidationError(FieldBean field, String validationType) {
         FieldConfig config = field.getConfig();
         Error error = new ErrorBuilder().fieldName(config.getFieldname())
-                                        .severity(severity.toString())
+                                        .severity(WARNING.toString())
                                         .validationType(validationType)
                                         .errorMessage(ErrorMessage.undefinedValidationError(field.getFieldValue(),
                                                                                             validationType,

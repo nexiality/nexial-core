@@ -52,9 +52,10 @@ import static java.math.RoundingMode.UP;
 public class ValidationsExecutor {
 
     private static final Map<String, DataType> ALL_DATA_TYPES = new HashedMap<>();
+    private static Map<String, Alignment> ALL_ALIGNMENTS = new HashMap<>();
     private FieldValidator startValidator;
-    static final int DEC_SCALE = 25;
-    static final RoundingMode ROUND = UP;
+    private static final int DEC_SCALE = 25;
+    private static final RoundingMode ROUND = UP;
     private ExecutionContext context;
 
     public enum ValidationType {
@@ -67,72 +68,41 @@ public class ValidationsExecutor {
 
     public enum DataType {
         // numeric, alphanumeric, alpha, alphaupper, alphalower, any, blank, t/f
+        REGEX,
+        PERSONNAME("Person Name", "First Name", "Last Name"),
         NUMERIC("N", "Numeric", "Num", "Number"),
-        ALPHANUMERIC("A/N", "AN", "Alphanumeric", "Alpha Numeric"),
+        ALPHANUMERIC("A/N", "AN", "Alphanumeric", "Alpha Numeric", "Alphanum", "Alpha Num"),
         ALPHA("Alpha", "A"),
         ALPHAUPPER("Alpha Upper", "Alphaupper"),
         ALPHALOWER("Alpha Lower", "Alphalower"),
         BLANK("Blank"),
-        ANY("*", "any", " ");
-
-        private Map<String, DataType> references = new HashMap<>();
+        ANY("*", "any", " ", "");
 
         DataType(String... text) {
-            Arrays.stream(text).forEach(key -> {
-                ALL_DATA_TYPES.put(StringUtils.lowerCase(key), this);
-                references.put(StringUtils.lowerCase(key), this);
-            });
+            Arrays.stream(text).forEach(key -> ALL_DATA_TYPES.put(StringUtils.lowerCase(key), this));
         }
 
         // before search for key, make sure you trim and lowercase
-        public DataType toEnum(String text) {
-            return ALL_DATA_TYPES.get(text);
+        public static DataType toEnum(String text) {
+            return ALL_DATA_TYPES.get(text.toLowerCase());
         }
 
         public boolean isValidDataType(String text) { return ALL_DATA_TYPES.containsKey(text); }
 
-        public boolean isNumeric(String text) {
-            return NUMERIC.references.keySet().stream().anyMatch(text::equalsIgnoreCase);
-        }
-
-        public boolean isAlphaNumeric(String text) {
-            return ALPHANUMERIC.references.keySet().stream().anyMatch(text::equalsIgnoreCase);
-        }
-
-        public boolean isAlpha(String text) {
-            return ALPHA.references.keySet().stream().anyMatch(text::equalsIgnoreCase);
-        }
-
-        public boolean isAlphaUpper(String text) {
-            return ALPHAUPPER.references.keySet().stream().anyMatch(text::equalsIgnoreCase);
-        }
-
-        public boolean isAlphaLower(String text) {
-            return ALPHALOWER.references.keySet().stream().anyMatch(text::equalsIgnoreCase);
-        }
-
-        public boolean isBlank(String text) {
-            return BLANK.references.keySet().stream().anyMatch(text::equalsIgnoreCase);
-        }
-
-        public boolean isAny(String text) {
-            return ANY.references.keySet().stream().anyMatch(text::equalsIgnoreCase);
-        }
     }
 
     public enum Alignment {
-        L("L"),
-        LEFT("Left"),
-        R("R"),
-        RIGHT("Right");
-        private String alignmentType;
 
-        Alignment(String alignmentType) {
-            this.alignmentType = alignmentType;
+        LEFT("Left", "L"),
+        RIGHT("Right", "R");
+
+        Alignment(String... alignmentType) {
+            Arrays.stream(alignmentType).forEach(key -> ALL_ALIGNMENTS.put(StringUtils.lowerCase(key), this));
         }
 
-        public String toString() {
-            return alignmentType;
+        public static Alignment toEnum(String alignmentType) {
+
+            return ALL_ALIGNMENTS.get(alignmentType.toLowerCase());
         }
     }
 
@@ -143,7 +113,7 @@ public class ValidationsExecutor {
             new DateValidator()).setNextValidator(new SqlValidator());
     }
 
-    public File resolveCsvOutputFile() {
+    File resolveCsvOutputFile() {
         String outputCsvFilePath = new Syspath().out("fullpath") + File.separator +
                                    OutputFileUtils.generateOutputFilename(context.getCurrentTestStep(), "csv");
         if (FileUtil.isFileReadable(outputCsvFilePath)) {
@@ -152,7 +122,7 @@ public class ValidationsExecutor {
         return new File(outputCsvFilePath);
     }
 
-    public void executeValidations(OutputStream outputStream, RecordBean recordBean) {
+    void executeValidations(OutputStream outputStream, RecordBean recordBean) {
 
         RecordData recordData = recordBean.getRecordData();
         int totalFailed = recordData.getTotalRecordsFailed();
@@ -165,7 +135,7 @@ public class ValidationsExecutor {
         // TODO: refactor field validations to take the advantage of Nexial filter
     }
 
-    public void doBasicValidations(RecordBean recordBean) {
+    void doBasicValidations(RecordBean recordBean) {
         BasicValidator basicValidator = new BasicValidator();
         List<FieldBean> fields = recordBean.getFields();
         for (FieldBean field : fields) {
@@ -173,8 +143,8 @@ public class ValidationsExecutor {
         }
     }
 
-    public Map<String, Number> collectMapValues(RecordConfig recordConfig, RecordBean recordBean,
-                                                Map<String, Number> mapValues) {
+    Map<String, Number> collectMapValues(RecordConfig recordConfig, RecordBean recordBean,
+                                         Map<String, Number> mapValues) {
 
         List<MapFunctionConfig> mapFunctionConfigs = recordConfig.getMapFunctionConfigs();
         if (mapFunctionConfigs == null || mapFunctionConfigs.isEmpty()) { return mapValues; }
@@ -194,7 +164,7 @@ public class ValidationsExecutor {
                     break;
                 }
                 BigDecimal big = null;
-                if (!function.equals("COUNT")) {
+                if (!StringUtils.equalsAnyIgnoreCase(function, "COUNT", "SAVE")) {
                     String fieldValue = recordField.getFieldValue().trim();
                     fieldValue = (signField != null) ? signField.getFieldValue().trim() + fieldValue : fieldValue;
                     big = NumberUtils.createBigDecimal((fieldValue));
@@ -208,31 +178,42 @@ public class ValidationsExecutor {
                                            condition + "'");
                     continue;
                 }
+                switch (function.toUpperCase()) {
+                    /*case "SAVE": {
+                        if (mapValues.containsKey("FILE#" + mapTo)) {
+                            int counter = mapValues.get("FILE#" + mapTo).intValue();
+                            mapValues.put("FILE#" + mapTo, ++counter);
+                        } else { mapValues.put("FILE#" + mapTo, 1);}
+                        break;
 
-                if (function.equals("AVERAGE")) {
-                    average(mapValues, mapTo, big);
+                    }*/
+                    case "AVERAGE": {
+                        average(mapValues, mapTo, big);
+                        break;
+                    }
+                    case "AGGREGATE": {
+                        aggregate(mapValues, mapTo, big);
+                        break;
+                    }
+                    case "MIN": {
+                        min(mapValues, mapTo, big);
+                        break;
+                    }
+                    case "MAX": {
+                        max(mapValues, mapTo, big);
+                        break;
+                    }
+                    case "COUNT": {
+                        if (mapValues.containsKey(mapTo)) {
+                            int counter = mapValues.get(mapTo).intValue();
+                            mapValues.put(mapTo, ++counter);
+                        } else {
+                            mapValues.put(mapTo, 1);
+                            break;
+                        }
+                    }
                 }
-
-                if (function.equals("AGGREGATE")) {
-                    aggregate(mapValues, mapTo, big);
-                }
-
-                if (function.equals("MIN")) {
-                    min(mapValues, mapTo, big);
-                }
-
-                if (function.equals("MAX")) {
-                    max(mapValues, mapTo, big);
-                }
-                if (function.equals("COUNT")) {
-                    if (mapValues.containsKey(mapTo)) {
-                        int counter = mapValues.get(mapTo).intValue();
-                        mapValues.put(mapTo, ++counter);
-                    } else { mapValues.put(mapTo, 1); }
-                }
-
             }
-
         }
 
         cleanValuesFromContext(recordBean);
@@ -255,14 +236,14 @@ public class ValidationsExecutor {
         mapValues.put(mapTo, mapValue);
     }
 
-    public void aggregate(Map<String, Number> mapValues, String mapTo, BigDecimal big) {
+    private void aggregate(Map<String, Number> mapValues, String mapTo, BigDecimal big) {
         BigDecimal mapValue = mapValues.containsKey(mapTo) ?
                               big.add((BigDecimal) mapValues.get(mapTo)) :
                               big;
         mapValues.put(mapTo, mapValue);
     }
 
-    public void average(Map<String, Number> mapValues, String mapTo, BigDecimal big) {
+    private void average(Map<String, Number> mapValues, String mapTo, BigDecimal big) {
 
         if (mapValues.containsKey(mapTo)) {
             BigDecimal counter = new BigDecimal(mapValues.get(mapTo + "#Counter").intValue() + 1);
@@ -278,7 +259,7 @@ public class ValidationsExecutor {
         }
     }
 
-    public void restoreValuesToContext(Map<String, Object> tempDupValues) {
+    void restoreValuesToContext(Map<String, Object> tempDupValues) {
         if (tempDupValues.isEmpty()) { return; }
         for (Entry<String, Object> stringObjectEntry : tempDupValues.entrySet()) {
             context.setData(stringObjectEntry.getKey(), stringObjectEntry.getValue());
@@ -289,9 +270,9 @@ public class ValidationsExecutor {
         }
     }
 
-    public void updateValuesToContext(RecordConfig recordConfig,
-                                      RecordBean recordBean,
-                                      Map<String, Number> mapValues) {
+    private void updateValuesToContext(RecordConfig recordConfig,
+                                       RecordBean recordBean,
+                                       Map<String, Number> mapValues) {
         List<MapFunctionConfig> mapFunctionConfigs = recordConfig.getMapFunctionConfigs();
 
         if (mapFunctionConfigs == null || mapFunctionConfigs.isEmpty()) { return; }
@@ -320,7 +301,7 @@ public class ValidationsExecutor {
 
     }
 
-    public Map<String, Object> moveDupValuesFromContext(List<RecordConfig> configs) {
+    Map<String, Object> moveDupValuesFromContext(List<RecordConfig> configs) {
         Map<String, Object> tempDupValues = new HashMap<>();
 
         for (RecordConfig config : configs) {
@@ -341,13 +322,13 @@ public class ValidationsExecutor {
         return tempDupValues;
     }
 
-    public void cleanValuesFromContext(RecordBean recordBean) {
+    private void cleanValuesFromContext(RecordBean recordBean) {
         for (FieldBean fieldBean : recordBean.getFields()) {
             context.removeData(fieldBean.getConfig().getFieldname());
         }
     }
 
-    public String truncateLeadingZeroes(String text) {
+    private String truncateLeadingZeroes(String text) {
         // in case start with - or +
         boolean isNegative = StringUtils.startsWith(text, "-");
         text = StringUtils.removeStart(text, "+");
@@ -363,7 +344,7 @@ public class ValidationsExecutor {
         return text;
     }
 
-    public boolean isMatch(String condition) {
+    private boolean isMatch(String condition) {
         NexialFilterList filters = new NexialFilterList(condition);
         return filters.isMatched(context, "filtering records with");
     }
@@ -377,7 +358,6 @@ public class ValidationsExecutor {
                                  .errorMessage(errorMessage)
                                  .build();
     }
-
     private void doFieldValidations(RecordBean recordBean) {
         List<FieldBean> fields = recordBean.getFields();
 
@@ -389,7 +369,7 @@ public class ValidationsExecutor {
         recordBean.collectErrors();
     }
 
-    public void writeReportToFile(OutputStream outputStream, RecordBean recordBean) {
+    void writeReportToFile(OutputStream outputStream, RecordBean recordBean) {
         try {
             String msg = null;
             if (recordBean.isFailed()) {
@@ -401,7 +381,7 @@ public class ValidationsExecutor {
                 outputStream.write(msg.getBytes());
             }
         } catch (IOException e) {
-            ConsoleUtils.log("Failed to write errors to csv file: "+e.getMessage());
+            ConsoleUtils.log("Failed to write errors to csv file: " + e.getMessage());
         }
     }
 }

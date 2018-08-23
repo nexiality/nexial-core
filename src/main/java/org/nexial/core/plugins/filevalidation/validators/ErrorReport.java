@@ -39,6 +39,7 @@ import org.nexial.core.excel.ExcelAddress;
 import org.nexial.core.model.ExecutionContext;
 import org.nexial.core.plugins.filevalidation.RecordData;
 import org.nexial.core.utils.CheckUtils;
+import org.nexial.core.utils.ConsoleUtils;
 import org.nexial.core.utils.JsonHelper;
 import org.nexial.core.utils.OutputFileUtils;
 import org.nexial.core.variable.Syspath;
@@ -75,6 +76,7 @@ public class ErrorReport {
         String csvFile = new Syspath().out("fullpath") + File.separator +
                          OutputFileUtils.generateOutputFilename(context.getCurrentTestStep(), "csv");
 
+        ConsoleUtils.log("writing validation report to excel..");
         try {
             Excel excel = Excel.createExcel(outputFile);
             createSummarySheet(recordData, excel.getWorkbook());
@@ -99,7 +101,7 @@ public class ErrorReport {
 
         List<List<String>> errors = createListFromCsv(csvFile, false, errorHeaders);
         List<List<String>> skipped = createListFromCsv(csvFile, true, skipHeaders);
-
+        ConsoleUtils.log("writing validation report to json..");
         try (Writer fileWriter = new FileWriter(outputFile)) {
 
             if (CollectionUtils.isEmpty(errors) && CollectionUtils.isEmpty(skipped)) {

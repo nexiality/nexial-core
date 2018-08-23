@@ -28,16 +28,16 @@ public class MasterConfig {
     private List<SectionConfig> sectionConfigs;
     private RecordConfig fileFooter;
 
-    public List<RecordConfig> getConfigs(MasterConfig masterConfig) {
+    public List<RecordConfig> getConfigs() {
         List<RecordConfig> configs = new ArrayList<>();
 
-        configs.add(masterConfig.getFileHeader());
-        for (SectionConfig sectionConfig : masterConfig.getSectionConfigs()) {
+        configs.add(getFileHeader());
+        for (SectionConfig sectionConfig : getSectionConfigs()) {
             configs.add(sectionConfig.getHeaderConfig());
             configs.addAll(sectionConfig.getBodyConfigs());
             configs.add(sectionConfig.getFooterConfig());
         }
-        configs.add(masterConfig.getFileFooter());
+        configs.add(getFileFooter());
         if (!isValid(configs)) {CheckUtils.fail("Minimum one configuration with valid 'record-id-field' is required.");}
         return configs;
     }

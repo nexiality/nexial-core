@@ -44,7 +44,7 @@ public class DelimitedFileValidator implements MasterFileValidator {
     @Override
     public void setMasterConfig(MasterConfig masterConfig) {
         requiresNotNull(masterConfig, "Failed to create master config.");
-        this.configs = masterConfig.getConfigs(masterConfig);
+        this.configs = masterConfig.getConfigs();
     }
 
     @Override
