@@ -69,7 +69,6 @@ import static org.nexial.core.NexialConst.BrowserStack.*;
 import static org.nexial.core.NexialConst.BrowserType.*;
 import static org.nexial.core.NexialConst.*;
 import static org.nexial.core.NexialConst.Data.*;
-import static org.nexial.core.interactive.InteractiveConst.Command.browser;
 import static org.nexial.core.utils.CheckUtils.requiresExecutableFile;
 import static org.openqa.selenium.PageLoadStrategy.EAGER;
 import static org.openqa.selenium.UnexpectedAlertBehaviour.ACCEPT;
@@ -236,13 +235,9 @@ public class Browser implements ForcefulTerminate {
 
     public WebDriver ensureWebDriverReady() {
         boolean shouldInitialize = false;
+        String browser = context.getBrowserType();
 
         if (driver != null) {
-            // if (driver instanceof RemoteWebDriver) {
-            //     ConsoleUtils.log("current webdriver session: " + ((RemoteWebDriver) driver).getSessionId());
-            // }
-
-            String browser = context.getBrowserType();
             if (LOGGER.isDebugEnabled()) { LOGGER.debug("current browser type - " + browser); }
 
             if (browserType != BrowserType.valueOf(browser)) {
@@ -284,6 +279,10 @@ public class Browser implements ForcefulTerminate {
                                            browser + "' the intended one? Or, is firefox not available?");
             }
 
+            // new driver means new browser instance... so we reset any window handle ref. of previous browser window.
+            initialWinHandle = null;
+            lastWinHandles.clear();
+
             // if browser supports implicit wait and we are not using explicit wait (`WEB_ALWAYS_WAIT`), then
             // we'll change timeout's implicit wait time
             Timeouts timeouts = driver.manage().timeouts();
@@ -310,7 +309,7 @@ public class Browser implements ForcefulTerminate {
             lastWinHandles.push(initialWinHandle);
         }
 
-        if (LOGGER.isDebugEnabled()) { LOGGER.debug("webdriver ready"); }
+        if (LOGGER.isDebugEnabled()) { LOGGER.debug("webdriver ready for " + browser); }
         return driver;
     }
 
@@ -351,12 +350,12 @@ public class Browser implements ForcefulTerminate {
             // if (runPhantomJS) { driver = initPhantomJS(); }
 
             if (driver != null) {
-                if (LOGGER.isInfoEnabled()) { LOGGER.info("browser initialization completed.");}
+                if (LOGGER.isInfoEnabled()) { LOGGER.info("browser initialization completed for '" + browser + "'"); }
             } else {
                 LOGGER.error("browser '" + browser + "' is not supported.");
             }
         } catch (Throwable e) {
-            String msg = "Error initializing browser " + browserType + ": " + e.getMessage();
+            String msg = "Error initializing browser '" + browser + "': " + e.getMessage();
             ConsoleUtils.error(msg);
             throw new RuntimeException(msg, e);
         }
@@ -374,21 +373,29 @@ public class Browser implements ForcefulTerminate {
             return;
         }
 
-        if (isRunFireFox() || isRunFirefoxHeadless() || driver instanceof FirefoxDriver) {
-            ConsoleUtils.log("Shutting down firefox webdriver...");
-            try { Thread.sleep(2000);} catch (InterruptedException e) { }
-            // try { driver.close(); } catch (Throwable e) { }
-            try { driver.quit(); } catch (Throwable e) { }
-            try { Thread.sleep(2000);} catch (InterruptedException e) { }
-        } else if (isRunSafari() || driver instanceof SafariDriver) {
-            ConsoleUtils.log("Shutting down safari webdriver...");
-            try { Thread.sleep(2000);} catch (InterruptedException e) { }
-            try { driver.quit(); } catch (Throwable e) { }
-            try { Thread.sleep(2000);} catch (InterruptedException e) { }
-        } else {
+        // if (isRunFireFox() || isRunFirefoxHeadless() || driver instanceof FirefoxDriver) {
+        //     // try { driver.close(); } catch (Throwable e) { }
+        //     try { driver.quit(); } catch (Throwable e) { }
+        // } else if (isRunSafari() || driver instanceof SafariDriver) {
+        //     try { driver.close(); } catch (Throwable e) { }
+        //     try { driver.quit(); } catch (Throwable e) { }
+        // } else {
+        //     try { driver.close(); } catch (Throwable e) { }
+        //     try { driver.quit(); } catch (Throwable e) { }
+        // }
+
+        ConsoleUtils.log("Shutting down '" + browserType.name() + "' webdriver...");
+
+        try { Thread.sleep(2000);} catch (InterruptedException e) { }
+
+        if (!isRunFireFox() && !isRunFirefoxHeadless() && !(driver instanceof FirefoxDriver)) {
+            // close before quite doesn't seem to work for firefox driver
             try { driver.close(); } catch (Throwable e) { }
-            try { driver.quit(); } catch (Throwable e) { }
         }
+
+        try { driver.quit(); } catch (Throwable e) { }
+
+        try { Thread.sleep(4000);} catch (InterruptedException e) { }
 
         clearWinHandles();
         driver = null;
@@ -1013,7 +1020,6 @@ public class Browser implements ForcefulTerminate {
         capabilities.setCapability(SUPPORTS_ALERTS, true);
         capabilities.setCapability(ACCEPT_SSL_CERTS, true);
         capabilities.setCapability(HAS_NATIVE_EVENTS, true);
-
         capabilities.setCapability(SUPPORTS_LOCATION_CONTEXT, false);
 
         // --------------------------------------------------------------------

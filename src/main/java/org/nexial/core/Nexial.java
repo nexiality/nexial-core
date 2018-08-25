@@ -272,8 +272,8 @@ public class Nexial {
             return;
         }
 
-        // force logs to be pushed into the specified output directory (and not taint other past/concurrent runs)
         if (cmd.hasOption(OUTPUT)) {
+            // force logs to be pushed into the specified output directory (and not taint other past/concurrent runs)
             String logPath = cmd.getOptionValue(OUTPUT);
             System.setProperty(TEST_LOG_PATH, logPath);
             if (StringUtils.isBlank(System.getProperty(THIRD_PARTY_LOG_PATH))) {
@@ -289,6 +289,18 @@ public class Nexial {
             if (!cmd.hasOption(SCRIPT)) { fail("test script is required but not specified."); }
             this.executions = parseScriptExecution(cmd);
             System.setProperty(NEXIAL_EXECUTION_TYPE, NEXIAL_EXECUTION_TYPE_SCRIPT);
+        }
+
+        // any variable override?
+        if (cmd.hasOption(OVERRIDE)) {
+            String[] overrides = cmd.getOptionValues(OVERRIDE);
+            Arrays.stream(overrides).forEach(data -> {
+                String[] pair = StringUtils.split(data, "=");
+                if (ArrayUtils.getLength(pair) == 2) {
+                    ConsoleUtils.log("adding/override data variable " + pair[0] + "=" + pair[1]);
+                    System.setProperty(pair[0], pair[1]);
+                }
+            });
         }
 
         ConsoleUtils.log("input files and output directory resolved...");

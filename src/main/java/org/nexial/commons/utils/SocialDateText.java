@@ -19,19 +19,56 @@ package org.nexial.commons.utils;
 
 import java.util.Date;
 
+import org.jetbrains.annotations.NotNull;
+
+import static org.nexial.commons.utils.SocialDateText.SocialDate.*;
+
 public final class SocialDateText {
     private static final String JUST_NOW = "just now";
     private static final int LESS_THAN_A_MIN = 30;
     private static final int ABOUT_A_MIN = 60 + 15;
     private static final int ABOUT_5_MIN = 4;
-    private static final long LESS_THAN_7_MIN = 7;
+    // private static final long LESS_THAN_7_MIN = 7;
     private static final int ABOUT_10_MIN = 10;
     //private static final int ABOUT_15_MIN = 17;
     //private static final int ABOUT_HALF_AN_HOUR = 40;
-    private static final int AN_HOUR = 60;
+    private static final int LESS_THAN_AN_HOUR = 60;
     private static final int LESS_THAN_A_DAY = 23;
     private static final int LESS_THAN_A_MONTH = 29;
     private static final int LESS_THAN_A_YEAR = 11;
+
+    enum SocialDate {
+        // < 3 months is considered as "about a year", 5-6 months means half a year
+        YEAR("year", "month", 3, 4, 7),
+        // < 5 days is considered as "about a month", 14-16 days means half a month
+        MONTH("month", "day", 5, 13, 17),
+        // < 2 days is considered as "about a week", 3-4 days means half a week
+        WEEK("week", "day", 2, 2, 5),
+        // < 3 hours is considered as "about a day", 11-13 hours means half a day
+        DAY("day", "hour", 3, 10, 14),
+        // < 5 minutes is considered as "about a hour", 27-34 minutes means half an hour
+        HOUR("hour", "minute", 5, 26, 35),
+        // < 10 seconds is considered as "about a minute", 25-34 seconds means half a minute
+        MINUTE("minute", "second", 10, 26, 35);
+
+        private String primarySuffix;
+        private String secondarySuffix;
+        private int minConsiderationAsWhole;
+        private int minConsiderationAsHalf;
+        private int maxConsiderationAsHalf;
+
+        SocialDate(String primarySuffix,
+                   String secondarySuffix,
+                   int minConsiderationAsWhole,
+                   int minConsiderationAsHalf,
+                   int maxConsiderationAsHalf) {
+            this.primarySuffix = primarySuffix;
+            this.secondarySuffix = secondarySuffix;
+            this.minConsiderationAsWhole = minConsiderationAsWhole;
+            this.minConsiderationAsHalf = minConsiderationAsHalf;
+            this.maxConsiderationAsHalf = maxConsiderationAsHalf;
+        }
+    }
 
     private SocialDateText() { }
 
@@ -51,7 +88,7 @@ public final class SocialDateText {
         if (elapsedMills == 0) { return JUST_NOW; }
         if (elapsedMills < 0) { return later(current, from); }
 
-        return stringifyTimeElapsed(elapsedMills, " ago");
+        return stringifyTimeElapsed(Math.abs(elapsedMills), " ago");
     }
 
     public static String later(Date laterDate, Date currentDate) {
@@ -70,58 +107,59 @@ public final class SocialDateText {
         if (elapsedMills == 0) { return JUST_NOW; }
         if (elapsedMills > 0) { return since(current, later); }
 
-        return stringifyTimeElapsed(elapsedMills, " later");
+        return stringifyTimeElapsed(Math.abs(elapsedMills), " later");
     }
 
     private static String stringifyTimeElapsed(long elapsedMills, String timeUnit) {
-        long elapsedSecond = elapsedMills / 1000;
+        double elapsedSecond = (double) elapsedMills / 1000;
         if (elapsedSecond <= LESS_THAN_A_MIN) { return JUST_NOW; }
         if (between(elapsedSecond, LESS_THAN_A_MIN + 1, ABOUT_A_MIN)) { return "just a minute" + timeUnit; }
 
-        long elapsedMinute = elapsedSecond / 60;
+        double elapsedMinute = elapsedSecond / 60;
         if (elapsedMinute <= ABOUT_5_MIN) { return "a few minutes" + timeUnit; }
-        if (between(elapsedMinute, ABOUT_5_MIN, LESS_THAN_7_MIN)) { return "about 5 minutes" + timeUnit; }
-        if (between(elapsedMinute, LESS_THAN_7_MIN + 1, ABOUT_10_MIN)) { return "about 10 minutes" + timeUnit; }
-        if (between(elapsedMinute, ABOUT_10_MIN + 1, AN_HOUR)) { return elapsedMinute + " minutes" + timeUnit; }
-        //if (between(elapsedMinute, ABOUT_15_MIN + 1, ABOUT_HALF_AN_HOUR)) { return "about half an hour" + timeUnit; }
-        //if (elapsedMinute <= ABOUT_HALF_AN_HOUR) { return "about half an hour" + timeUnit; }
-        //if (elapsedMinute <= AN_HOUR) { return "about an hour" + timeUnit; }
+        if (elapsedMinute < ABOUT_10_MIN) { return "about " + (int) elapsedMinute + " minutes" + timeUnit; }
 
-        double elapsedHour = (double) elapsedMinute / 60;
-        if (between(elapsedHour, 0.9, LESS_THAN_A_DAY)) {
-            int minutes = (int) (elapsedHour * 100 % 100 / 100 * 60);
-            if (between(minutes, 0, 16)) {
-                return (int) elapsedHour + " hour" + (elapsedHour < 2 ? "" : "s") + timeUnit;
-            }
-            if (between(minutes, 17, 44)) { return "about " + (int) elapsedHour + ".5 hours" + timeUnit; }
-            return "about " + ((int) elapsedHour + 1) + " hours" + timeUnit;
+        if (elapsedMinute <= 1) { return (int) elapsedSecond + " seconds"; }
+
+        double elapsedHour = elapsedMinute / 60;
+        if (elapsedMinute <= LESS_THAN_AN_HOUR || elapsedHour < 1) {
+            return getSocialDateTime(MINUTE, (int) elapsedSecond / 60, (int) Math.round(elapsedSecond % 60), timeUnit);
         }
 
-        double elapsedDay = elapsedHour / 24;
-        if (between(elapsedDay, 0.9, 1.3)) { return "1 day" + timeUnit; }
-        if (between(elapsedDay, 1, LESS_THAN_A_MONTH)) {
-            int hours = (int) (elapsedDay * 100 % 100 / 100 * 24);
-            if (between(hours, 0, 16)) { return (int) elapsedDay + " days" + timeUnit; }
-            if (between(hours, 17, 35)) { return "about " + (int) elapsedDay + ".5 days" + timeUnit; }
-            return "about " + ((int) elapsedDay + 1) + " days" + timeUnit;
+        double elapsedDays = elapsedHour / 24;
+        if (elapsedHour <= LESS_THAN_A_DAY || elapsedDays < 1) {
+            return getSocialDateTime(HOUR, (int) elapsedMinute / 60, (int) Math.round(elapsedMinute % 60), timeUnit);
         }
 
-        double elapsedMonth = elapsedDay / 30;
-        if (between(elapsedMonth, 0.8, 1.2)) { return "1 month" + timeUnit; }
-        if (between(elapsedMonth, 1, LESS_THAN_A_YEAR)) {
-            int days = (int) (elapsedMonth * 100 % 100 / 100 * 30);
-            if (between(days, 0, 16)) { return (int) elapsedMonth + " months" + timeUnit; }
-            if (between(days, 17, 35)) { return "about " + (int) elapsedMonth + ".5 months" + timeUnit; }
-            return "about " + ((int) elapsedMonth + 1) + " months" + timeUnit;
+        double elapsedMonth = elapsedDays / 30;
+        if (elapsedDays <= LESS_THAN_A_MONTH || elapsedMonth < 1) {
+            return getSocialDateTime(DAY, (int) elapsedHour / 24, (int) Math.round(elapsedHour % 24), timeUnit);
         }
 
-        double elapsedYear = elapsedMonth / 12;
-        if (between(elapsedYear, 0.875, 1.125)) { return "1 year" + timeUnit; }
+        if (elapsedMonth <= LESS_THAN_A_YEAR) {
+            return getSocialDateTime(MONTH, (int) (elapsedDays / 30), (int) Math.round(elapsedDays % 30), timeUnit);
+        }
 
-        int months = (int) (elapsedYear * 100 % 100 / 100 * 12);
-        if (between(months, 0, 16)) { return (int) elapsedYear + " years" + timeUnit; }
-        if (between(months, 17, 35)) { return "about " + (int) elapsedYear + ".5 years" + timeUnit; }
-        return elapsedYear + " years" + timeUnit;
+        return getSocialDateTime(YEAR, (int) (elapsedMonth / 12), (int) Math.round(elapsedMonth % 12), timeUnit);
+    }
+
+    @NotNull
+    private static String getSocialDateTime(SocialDate dateType, int primary, int secondary, String timeUnit) {
+        String text = primary + "";
+        String text2 = " " + dateType.primarySuffix + (primary < 2 ? "" : "s");
+
+        if (secondary < 1) { return text + text2 + timeUnit; }
+
+        if (dateType != MINUTE) { text = "about " + text; }
+
+        if (secondary < dateType.minConsiderationAsWhole) { return text + text2 + timeUnit; }
+
+        if (secondary > dateType.minConsiderationAsHalf && secondary < dateType.maxConsiderationAsHalf) {
+            return text + " and a half" + text2 + timeUnit;
+        }
+
+        return text + text2 + " and " + secondary + " " + dateType.secondarySuffix + (secondary > 1 ? "s" : "") +
+               timeUnit;
     }
 
     private static boolean between(double number, double low, double high) { return number >= low && number <= high; }

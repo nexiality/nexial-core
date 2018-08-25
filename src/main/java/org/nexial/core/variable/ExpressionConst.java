@@ -41,9 +41,6 @@ final class ExpressionConst {
                                                                                     "\\,=~~<~~|",
                                                                                     "|", "=");
 
-    static final String DEF_DATE_FORMAT = "MM/dd/yyyy HH:mm:ss";
-    static final String EPOCH_DATE_FORMAT = "epoch";
-    static final List<String> ALIAS_NOW = Arrays.asList("now", "right now", "today", "rightnow");
     static final List<String> ALIAS_EMPTY = Arrays.asList("", "\"\"", "''");
 
     private ExpressionConst() { }

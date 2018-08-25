@@ -25,15 +25,13 @@ import java.util.Calendar;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.math.NumberUtils;
 import org.apache.commons.lang3.time.DurationFormatUtils;
+import org.nexial.commons.utils.SocialDateText;
 import org.nexial.core.utils.ConsoleUtils;
 
 import static java.util.Calendar.*;
-import static org.nexial.core.NexialConst.EPOCH;
-import static org.nexial.core.NexialConst.ONEYEAR;
+import static org.nexial.core.NexialConst.*;
 
 public class Date {
-    public static final String STD_DATE_FORMAT = "MM/dd/yyyy HH:mm:ss";
-    public static final String STD_JUST_DATE_FORMAT = "MM/dd/yyyy";
 
     private abstract class DateTransform {
         abstract Calendar transform(Calendar c);
@@ -43,23 +41,32 @@ public class Date {
 
     public String format(String date, String fromFormat, String toFormat) {
         try {
-
             java.util.Date fromDate = StringUtils.equals(fromFormat, EPOCH) ?
                                       new java.util.Date(NumberUtils.toLong(date)) :
                                       new SimpleDateFormat(fromFormat).parse(date);
 
             if (StringUtils.equals(toFormat, EPOCH)) { return fromDate.getTime() + ""; }
-            if (!StringUtils.equals(fromFormat, EPOCH)) { return new SimpleDateFormat(toFormat).format(fromDate); }
 
-            if (StringUtils.containsAny(toFormat, "GYyML") && fromDate.getTime() >= ONEYEAR) {
-                return new SimpleDateFormat(toFormat).format(fromDate);
+            if (StringUtils.equals(toFormat, HUMAN_DATE)) {
+                return SocialDateText.since(fromDate.getTime(), System.currentTimeMillis());
             }
 
-            // epoch to another time or "day" format
-            // make sure we don't have "bad" hours
-            toFormat = StringUtils.replace(toFormat, "h", "H");
-            return DurationFormatUtils.formatDuration(fromDate.getTime(), toFormat);
+            if (!StringUtils.equals(fromFormat, EPOCH)) {
+                // from a non-epoch date, that means standard date object/string
+                return new SimpleDateFormat(toFormat).format(fromDate);
+            } else {
+                // else, from epoch to another date format
 
+                // from epoch to a full date format (contains era, years or month)
+                if (StringUtils.containsAny(toFormat, "GYyML") && fromDate.getTime() >= ONEYEAR) {
+                    return new SimpleDateFormat(toFormat).format(fromDate);
+                }
+
+                // epoch to another time or "day" format
+                // make sure we don't have "bad" hours; duration must be in the 24-hour format
+                toFormat = StringUtils.replace(toFormat, "h", "H");
+                return DurationFormatUtils.formatDuration(fromDate.getTime(), toFormat);
+            }
         } catch (ParseException e) {
             ConsoleUtils.error("Unable to format date '" + date + "' from '" + fromFormat + "' to '" + toFormat +
                                "': " + e.getMessage());

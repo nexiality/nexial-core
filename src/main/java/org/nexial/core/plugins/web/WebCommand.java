@@ -198,6 +198,20 @@ public class WebCommand extends BaseCommand implements CanTakeScreenshot, CanLog
         return StepResult.fail("element '" + expected + "' EXPECTS not to be focused but it is.");
     }
 
+    // todo need to test
+    public StepResult focus(String locator) {
+        requiresNotBlank(locator, "Invalid locator", locator);
+
+        try {
+            focus(toElement(locator));
+            return StepResult.success("SUCCESSFULLY focused on element '" + locator + "'");
+        } catch (NullPointerException e) {
+            return StepResult.fail("No element found via '" + locator + "'");
+        } catch (IllegalArgumentException e) {
+            return StepResult.fail("FAIL to focus because " + e.getMessage() + ": " + locator);
+        }
+    }
+
     public StepResult assertLinkByLabel(String label) {
         return assertElementPresent("//a[text()=" + locatorHelper.normalizeXpathText(label) + "]");
     }
@@ -1007,8 +1021,7 @@ public class WebCommand extends BaseCommand implements CanTakeScreenshot, CanLog
 
         ensureReady();
 
-        url = validateUrl(url);
-        driver.get(url);
+        driver.get(validateUrl(url));
         waitForBrowserStability(toPositiveLong(waitMs, "waitMs"));
 
         // bring browser to foreground
@@ -1030,7 +1043,7 @@ public class WebCommand extends BaseCommand implements CanTakeScreenshot, CanLog
     public StepResult refreshAndWait() {
         ensureReady();
         driver.navigate().refresh();
-        waitForBrowserStability(context.getPollWaitMs());
+        waitForBrowserStability(pollWaitMs);
         return StepResult.success("active window refreshed");
     }
 
@@ -1210,7 +1223,6 @@ public class WebCommand extends BaseCommand implements CanTakeScreenshot, CanLog
     public StepResult typeKeys(String locator, String value) {
         WebElement element = toElement(locator);
         jsExecutor.executeScript("arguments[0].scrollIntoView(true);", element);
-        highlight(element);
 
         if (StringUtils.isBlank(value)) {
             element.clear();
@@ -1845,21 +1857,31 @@ public class WebCommand extends BaseCommand implements CanTakeScreenshot, CanLog
         //	browser.setProxy(proxy);
         //}
 
-        if (driver == null) {
-            driver = browser.ensureWebDriverReady();
-            waiter = new FluentWait<>(driver).withTimeout(Duration.ofMillis(context.getPollWaitMs()))
-                                             .pollingEvery(Duration.ofMillis(10))
-                                             .ignoring(NoSuchElementException.class);
+        WebDriver currentDriver = browser.ensureWebDriverReady();
+        if (currentDriver == null) {
+            // oops... we are in trouble...
+            throw new RuntimeException("Unable to initialize WebDriver for " + context.getBrowserType());
         }
-        jsExecutor = (JavascriptExecutor) driver;
-        screenshot = (TakesScreenshot) driver;
-        frameHelper = new FrameHelper(this, driver);
+
+        if (driver == null || currentDriver != driver) {
+            driver = currentDriver;
+
+            waiter = new FluentWait<>(this.driver).withTimeout(Duration.ofMillis(context.getPollWaitMs()))
+                                                  .pollingEvery(Duration.ofMillis(10))
+                                                  .ignoring(NoSuchElementException.class);
+            alert = null;
+            cookie = null;
+        }
+
+        jsExecutor = (JavascriptExecutor) this.driver;
+        screenshot = (TakesScreenshot) this.driver;
+        frameHelper = new FrameHelper(this, this.driver);
 
         if (alert == null) {
             alert = (AlertCommand) context.findPlugin("webalert");
             alert.init(context);
         } else {
-            alert.driver = driver;
+            alert.driver = this.driver;
         }
         alert.setBrowser(browser);
 
@@ -1867,7 +1889,7 @@ public class WebCommand extends BaseCommand implements CanTakeScreenshot, CanLog
             cookie = (CookieCommand) context.findPlugin("webcookie");
             cookie.init(context);
         } else {
-            cookie.driver = driver;
+            cookie.driver = this.driver;
         }
         cookie.setBrowser(browser);
     }
@@ -2354,12 +2376,21 @@ public class WebCommand extends BaseCommand implements CanTakeScreenshot, CanLog
         return element.isDisplayed();
     }
 
-    // todo need to test
-    protected void focus(String locator) { focus(toElement(locator)); }
-
     protected void focus(WebElement element) {
+        if (element == null) { throw new NullPointerException("element is null"); }
+        if (!element.isDisplayed()) { throw new IllegalArgumentException("element is not displayed"); }
+        if (!element.isEnabled()) { throw new IllegalArgumentException("element is not enabled"); }
+
         new Actions(driver).moveToElement(element).build().perform();
-        if (StringUtils.equals(element.getTagName(), "input")) { element.sendKeys(""); }
+
+        String tagName = element.getTagName();
+        if (StringUtils.equalsIgnoreCase(tagName, "input") &&
+            StringUtils.equalsIgnoreCase(element.getAttribute("type"), "text")) {
+            element.sendKeys("");
+            return;
+        }
+
+        if (StringUtils.equalsIgnoreCase(tagName, "textarea")) { element.sendKeys(""); }
     }
 
     protected void tryFocus(WebElement element) {

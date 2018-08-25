@@ -50,7 +50,12 @@ public final class NexialConst {
     public static final String DATE_FORMAT_NOW = "yyyy-MM-dd-HH-mm-ss.S";
     public static final String COOKIE_DATE_FORMAT = "EEE, dd MMM yyyy HH:mm:ss ZZZ";
     public static final DateFormat DF_TIMESTAMP = new SimpleDateFormat("yyyyMMdd_HHmmss");
+    public static final String STD_DATE_FORMAT = "MM/dd/yyyy HH:mm:ss";
+    public static final String STD_JUST_DATE_FORMAT = "MM/dd/yyyy";
     public static final String EPOCH = "epoch";
+    public static final String HUMAN_DATE = "informal";
+    public static final List<String> ALIAS_NOW = Arrays.asList("now", "right now", "today", "rightnow");
+
     public static final String RATE_FORMAT = "{0,number,0.00%}";
 
     public static final int DEF_SLEEP_MS = 250;
@@ -570,6 +575,7 @@ public final class NexialConst {
         public static final String DATASHEETS = "datasheets";
         public static final String PLAN = "plan";
         public static final String OUTPUT = "output";
+        public static final String OVERRIDE = "override";
         public static final Options OPTIONS = initCmdOptions();
 
         private CLI() { }
@@ -593,6 +599,10 @@ public final class NexialConst {
             cmdOptions.addOption(PLAN, true, "[REQUIRED if -" + SCRIPT + " is missing] The fully qualified path of a " +
                                              "test plan (or plans). Multiple plans can be specified using comma as " +
                                              "separator. The use of this argument will disable the other arguments.");
+            cmdOptions.addOption(OVERRIDE, true, "[optional] Add or override data variables in the form of " +
+                                                 "name=value. Multiple overrides are supported via multiple " +
+                                                 "-" + OVERRIDE + " name=value declarations. Note that variable name " +
+                                                 "or value with spaces must be enclosed in double quotes.");
             return cmdOptions;
         }
     }

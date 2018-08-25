@@ -26,16 +26,17 @@ import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.math.NumberUtils;
 
 import static java.util.Calendar.*;
+import static org.nexial.core.NexialConst.EPOCH;
 
-public class DateTransformer extends Transformer<DateDataType> {
+public class DateTransformer<T extends DateDataType> extends Transformer {
     private static final Map<String, Integer> FUNCTION_TO_PARAM = discoverFunctions(DateTransformer.class);
     private static final Map<String, Method> FUNCTIONS =
         toFunctionMap(FUNCTION_TO_PARAM, DateTransformer.class, DateDataType.class);
     private static final org.nexial.core.variable.Date dateHelper = new org.nexial.core.variable.Date();
 
-    public TextDataType text(DateDataType data) { return super.text(data); }
+    public TextDataType text(T data) { return super.text(data); }
 
-    public TextDataType format(DateDataType data, String format) {
+    public TextDataType format(T data, String format) {
         TextDataType returnType;
         try {
             returnType = new TextDataType("");
@@ -47,40 +48,40 @@ public class DateTransformer extends Transformer<DateDataType> {
             return returnType;
         }
 
-        String formatted = StringUtils.equals(format, "epoch") ?
+        String formatted = StringUtils.equals(format, EPOCH) ?
                            data.getValue().getTime() + "" :
                            dateHelper.format(data.getTextValue(), data.getFormat(), format);
         returnType.setValue(formatted);
         return returnType;
     }
 
-    public DateDataType addYear(DateDataType data, String years) { return addDateField(data, YEAR, years); }
+    public T addYear(T data, String years) { return addDateField(data, YEAR, years); }
 
-    public DateDataType addMonth(DateDataType data, String months) {return addDateField(data, MONTH, months); }
+    public T addMonth(T data, String months) {return addDateField(data, MONTH, months); }
 
-    public DateDataType addDay(DateDataType data, String days) { return addDateField(data, DAY_OF_MONTH, days); }
+    public T addDay(T data, String days) { return addDateField(data, DAY_OF_MONTH, days); }
 
-    public DateDataType addHour(DateDataType data, String hours) { return addDateField(data, HOUR_OF_DAY, hours); }
+    public T addHour(T data, String hours) { return addDateField(data, HOUR_OF_DAY, hours); }
 
-    public DateDataType addMinute(DateDataType data, String minutes) { return addDateField(data, MINUTE, minutes); }
+    public T addMinute(T data, String minutes) { return addDateField(data, MINUTE, minutes); }
 
-    public DateDataType addSecond(DateDataType data, String seconds) { return addDateField(data, SECOND, seconds); }
+    public T addSecond(T data, String seconds) { return addDateField(data, SECOND, seconds); }
 
-    public DateDataType setYear(DateDataType data, String years) { return setDateField(data, YEAR, years); }
+    public T setYear(T data, String years) { return setDateField(data, YEAR, years); }
 
-    public DateDataType setMonth(DateDataType data, String months) { return setDateField(data, MONTH, months); }
+    public T setMonth(T data, String months) { return setDateField(data, MONTH, months); }
 
-    public DateDataType setDay(DateDataType data, String days) { return setDateField(data, DAY_OF_MONTH, days); }
+    public T setDay(T data, String days) { return setDateField(data, DAY_OF_MONTH, days); }
 
-    public DateDataType setDOW(DateDataType data, String days) { return setDateField(data, DAY_OF_WEEK, days); }
+    public T setDOW(T data, String days) { return setDateField(data, DAY_OF_WEEK, days); }
 
-    public DateDataType setHour(DateDataType data, String hours) { return setDateField(data, HOUR_OF_DAY, hours); }
+    public T setHour(T data, String hours) { return setDateField(data, HOUR_OF_DAY, hours); }
 
-    public DateDataType setMinute(DateDataType data, String minutes) { return setDateField(data, MINUTE, minutes); }
+    public T setMinute(T data, String minutes) { return setDateField(data, MINUTE, minutes); }
 
-    public DateDataType setSecond(DateDataType data, String seconds) { return setDateField(data, SECOND, seconds); }
+    public T setSecond(T data, String seconds) { return setDateField(data, SECOND, seconds); }
 
-    public DateDataType store(DateDataType data, String var) {
+    public T store(T data, String var) {
         snapshot(var, data);
         return data;
     }
@@ -91,15 +92,15 @@ public class DateTransformer extends Transformer<DateDataType> {
     @Override
     Map<String, Method> listSupportedMethods() { return FUNCTIONS; }
 
-    protected DateDataType setDateField(DateDataType data, int field, String value) {
+    protected T setDateField(T data, int field, String value) {
         return handleDateField(data, field, value, false);
     }
 
-    protected DateDataType addDateField(DateDataType data, int field, String value) {
+    protected T addDateField(T data, int field, String value) {
         return handleDateField(data, field, value, true);
     }
 
-    protected DateDataType handleDateField(DateDataType data, int field, String value, boolean add) {
+    protected T handleDateField(T data, int field, String value, boolean add) {
         if (data == null || StringUtils.isBlank(data.getTextValue())) { return data; }
         if (StringUtils.isBlank(value) || !NumberUtils.isDigits(value)) { return data; }
 

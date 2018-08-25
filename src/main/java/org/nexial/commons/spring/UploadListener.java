@@ -23,22 +23,17 @@ import java.text.NumberFormat;
 import javax.servlet.ServletContext;
 
 import org.apache.commons.lang3.StringUtils;
-import org.apache.commons.lang3.time.DateFormatUtils;
 import org.nexial.commons.ConcurrentUploadException;
 import org.nexial.commons.UploadCancelException;
+import org.nexial.commons.utils.DateUtility;
 import org.nexial.commons.utils.FileUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.context.MessageSource;
 import org.springframework.web.context.ServletContextAware;
 
-/**
- *
-
- */
 public class UploadListener implements OutputStreamListener, ServletContextAware {
     public static final NumberFormat NF = new DecimalFormat("0.00");
-    public static final String DEF_DATETIME_FORMAT = "MM/dd/yyyy HH:mm:ss";
     public static final double SYNTHETIC_RATIO = 2.25;
     public static final double HUNDRED_PERCENT = 100d;
 
@@ -284,7 +279,7 @@ public class UploadListener implements OutputStreamListener, ServletContextAware
             long startTime = (Long) progressObject;
             if (LOGGER.isInfoEnabled()) {
                 LOGGER.info("another backup attachment is in progress for tracer " + identifier +
-                            " since " + DateFormatUtils.format(startTime, DEF_DATETIME_FORMAT));
+                            " since " + DateUtility.formatLongDate(startTime));
             }
 
             if (rightNow - startTime < maxUploadAllowedSeconds * 1000) { return true; }

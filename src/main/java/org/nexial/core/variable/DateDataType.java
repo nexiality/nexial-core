@@ -24,7 +24,7 @@ import org.apache.commons.lang3.math.NumberUtils;
 import org.nexial.commons.utils.DateUtility;
 import org.nexial.commons.utils.RegexUtils;
 
-import static org.nexial.core.variable.ExpressionConst.*;
+import static org.nexial.core.NexialConst.*;
 
 public class DateDataType extends ExpressionDataType<Date> {
     private Transformer transformer = new DateTransformer();
@@ -60,15 +60,15 @@ public class DateDataType extends ExpressionDataType<Date> {
         if (StringUtils.isBlank(textValue) || ALIAS_NOW.contains(StringUtils.lowerCase(textValue))) {
             // blank means use current date/time and default date format
             value = new Date();
-            format = DEF_DATE_FORMAT;
+            format = STD_DATE_FORMAT;
             textValue = DateUtility.format(value.getTime(), format);
         } else if (NumberUtils.isDigits(textValue)) {
             // epoch
-            format = EPOCH_DATE_FORMAT;
+            format = EPOCH;
             value = new Date(NumberUtils.toLong(textValue));
         } else {
             // assuming default date format
-            format = DEF_DATE_FORMAT;
+            format = STD_DATE_FORMAT;
             if (RegexUtils.isExact(textValue, "^.+\\,.+$")) {
                 // use specified date and date format
                 format = StringUtils.substringAfter(textValue, ",");
@@ -78,7 +78,7 @@ public class DateDataType extends ExpressionDataType<Date> {
                 textValue = StringUtils.substringBefore(textValue, ",");
             }
 
-            value = StringUtils.equals(format, EPOCH_DATE_FORMAT) ?
+            value = StringUtils.equals(format, EPOCH) ?
                     new Date(NumberUtils.toLong(textValue)) : new Date(DateUtility.formatTo(textValue, format));
         }
     }

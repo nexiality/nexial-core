@@ -353,7 +353,7 @@ public class IoCommand extends BaseCommand {
         requiresNotBlank(profile, "Invalid 'profile',", profile);
         requiresReadableFile(inputFile);
 
-        DateTimeFormatter dtf = DateTimeFormatter.ofPattern("MM/dd/yyyy HH:mm:ss");
+        DateTimeFormatter dtf = DateTimeFormatter.ofPattern(STD_DATE_FORMAT);
         String startTime = dtf.format(LocalDateTime.now());
 
         Map<String, String> configs = context.getDataByPrefix(profile);
