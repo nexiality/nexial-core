@@ -186,8 +186,8 @@ public class TestStep extends TestStepManifest {
             ConsoleUtils.error(error);
             result = StepResult.fail(error);
         } finally {
-            trackTimeLogs.checkEndTracking(context, this);
             tickTock.stop();
+            trackTimeLogs.checkEndTracking(context, this);
             if (this.isCommandRepeater()) { context.setCurrentTestStep(this); }
             postExecCommand(result, tickTock.getTime());
             FlowControlUtils.checkPauseAfter(context, this);
@@ -297,31 +297,6 @@ public class TestStep extends TestStepManifest {
 
             result = plugin.execute(command, args);
 
-            for (int i = 0; i < params.size(); i++) {
-                String param = params.get(i);
-
-                // could be literal syspath - e.g. $(syspath|out|fullpath)/...
-                // could be data variable that reference syspath function
-                boolean hasPath = isFileLink(param);
-                if (!hasPath && TextUtils.isBetween(param, TOKEN_START, TOKEN_END)) {
-                    // param is a data variable... so it might be referencing a syspath function
-                    Object pathObj = context.getObjectData(StringUtils.substringBetween(param, TOKEN_START, TOKEN_END));
-                    if (pathObj != null) {
-                        String pathString = pathObj.toString();
-                        if (isFileLink(pathString)) { hasPath = true; }
-                    }
-                }
-
-                // create hyperlink for syspath when path is referenced
-                if (hasPath) {
-                    String value = context.replaceTokens(param);
-                    // gotta make sure it's a file/path
-                    if (FileUtil.isSuitableAsPath(value) && StringUtils.containsAny(value, "\\/")) {
-                        linkableParams.set(i, value);
-                    }
-                }
-            }
-
             // todo: resolve soon. we need to stop logging to excel when not running external program
             // if (isExternalProgram) {
             //	// stop excel logging
@@ -346,9 +321,13 @@ public class TestStep extends TestStepManifest {
         }
 
         summary.incrementExecuted();
-        context.setData(OPT_LAST_OUTCOME, result.isSuccess());
-        if (result.isSuccess()) {
+
+        boolean lastOutcome = result.isSuccess();
+        context.setData(OPT_LAST_OUTCOME, lastOutcome);
+
+        if (lastOutcome) {
             summary.incrementPass();
+            // avoid printing verbose() message to avoid leaking of sensitive information on log
             log(MessageUtils.renderAsPass(StringUtils.equals(getCommandFQN(), CMD_VERBOSE) ? "" : result.getMessage()));
         } else {
             summary.incrementFail();
@@ -444,8 +423,32 @@ public class TestStep extends TestStepManifest {
             cellDescription.setCellStyle(worksheet.getStyle(STYLE_DESCRIPTION));
         }
         cellDescription.setCellValue(context.replaceTokens(description));
+
         XSSFCellStyle styleTaintedParam = worksheet.getStyle(STYLE_TAINTED_PARAM);
         XSSFCellStyle styleParam = worksheet.getStyle(STYLE_PARAM);
+
+        // update the params that can be expressed as links (file or url)
+        for (int i = 0; i < params.size(); i++) {
+            String param = params.get(i);
+
+            // could be literal syspath - e.g. $(syspath|out|fullpath)/...
+            // could be data variable that reference syspath function
+            boolean hasPath = isFileLink(param);
+            if (!hasPath && TextUtils.isBetween(param, TOKEN_START, TOKEN_END)) {
+                // param is a data variable... so it might be referencing a syspath function
+                Object pathObj = context.getObjectData(StringUtils.substringBetween(param, TOKEN_START, TOKEN_END));
+                if (pathObj != null && isFileLink(pathObj.toString())) { hasPath = true; }
+            }
+
+            // create hyperlink for syspath when path is referenced
+            if (hasPath) {
+                String value = context.replaceTokens(param);
+                // gotta make sure it's a file/path
+                if (FileUtil.isSuitableAsPath(value) && StringUtils.containsAny(value, "\\/")) {
+                    linkableParams.set(i, value);
+                }
+            }
+        }
 
         Object[] paramValues = result.getParamValues();
 

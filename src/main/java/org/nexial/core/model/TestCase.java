@@ -138,13 +138,14 @@ public class TestCase {
                 continue;
             }
 
+            // SKIP condition handle earlier, so this is real FAIL condition
             executionSummary.incrementFail();
             allPassed = false;
 
             // by default, only fail fast if we are not in interactive mode
-            // this line is added instead of outside the loop so that we can consider any changes to nexial.failFast
+            // this line is added here instead of outside the loop so that we can consider any changes to nexial.failFast
             // whilst executing the activity
-            boolean shouldFailFast = !context.isInterativeMode() && context.isFailFast();
+            boolean shouldFailFast = context.isFailFast();
             if (shouldFailFast) {
                 logger.log(testStep, "test stopping due to execution failure and fail-fast in effect");
                 trackTimeLogs.trackingDetails("Execution Failed");
@@ -165,7 +166,7 @@ public class TestCase {
         formatTestCase(testSteps);
 
         executionSummary.setEndTime(System.currentTimeMillis());
-        executionSummary.setFailedFast(!context.isInterativeMode() && context.isFailFast());
+        executionSummary.setFailedFast(context.isFailFast());
         executionSummary.aggregatedNestedExecutions(context);
         return allPassed;
     }

@@ -1226,6 +1226,7 @@ public class WebCommand extends BaseCommand implements CanTakeScreenshot, CanLog
 
         if (StringUtils.isBlank(value)) {
             element.clear();
+            WebDriverUtils.toSendKeyAction(driver, element, "{BACKSPACE}{TAB}").perform();
             return StepResult.success("cleared out value at '" + locator + "'");
         }
 

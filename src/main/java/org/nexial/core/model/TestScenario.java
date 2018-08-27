@@ -116,10 +116,8 @@ public class TestScenario {
         ExecutionLogger logger = context.getLogger();
         logger.log(this, "executing test scenario");
 
-        boolean interativeMode = context.isInterativeMode();
-
         // by default, only fail fast if we are not in interactive mode
-        boolean shouldFailFast = !interativeMode && context.isFailFast();
+        boolean shouldFailFast = context.isFailFast();
         boolean skipDueToFailFast = false;
         boolean skipDueToEndFast = false;
         boolean skipDueToEndLoop = false;

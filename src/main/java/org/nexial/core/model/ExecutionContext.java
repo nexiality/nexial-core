@@ -384,12 +384,12 @@ public class ExecutionContext {
 
     public boolean isScreenshotOnError() { return getBooleanData(OPT_SCREENSHOT_ON_ERROR, false); }
 
-    public boolean isInterativeMode() {
+    public boolean isInteractiveMode() {
         JenkinsVariables jv = JenkinsVariables.getInstance(this);
         return getBooleanData(OPT_INTERACTIVE, false) && jv.isNotInvokedFromJenkins();
     }
 
-    public boolean isFailFast() { return getBooleanData(FAIL_FAST, DEF_FAIL_FAST); }
+    public boolean isFailFast() { return getBooleanData(FAIL_FAST, DEF_FAIL_FAST) && !isInteractiveMode(); }
 
     /** Evaluate Page Source Stability Required */
     public boolean isPageSourceStabilityEnforced() {
@@ -401,6 +401,9 @@ public class ExecutionContext {
      * failAfter threshold
      */
     public void incrementAndEvaluateFail(StepResult result) {
+        // `isError()` ensure that the result is not SUCCESS, SKIP or WARN
+        if (!result.isError()) { return; }
+
         // increment execution fail count
         int execFailCount = getIntData(EXECUTION_FAIL_COUNT, 0) + 1;
         setData(EXECUTION_FAIL_COUNT, execFailCount);
@@ -413,13 +416,13 @@ public class ExecutionContext {
             setFailImmediate(true);
         }
 
-        if (result.isError()) {
-            executionEventListener.onError();
-            if (getBooleanData(OPT_PAUSE_ON_ERROR, DEF_PAUSE_ON_ERROR)) {
-                ConsoleUtils.doPause(this, "[ERROR #" + execFailCount + "]: Error found " +
-                                           ExecutionLogger.toHeader(getCurrentTestStep()) + " - " +
-                                           result.getMessage());
-            }
+        // in effect, the `onError()` event works the same way as `pauseOnError`. Nexial supports both stylistic variety
+        executionEventListener.onError();
+
+        if (getBooleanData(OPT_PAUSE_ON_ERROR, DEF_PAUSE_ON_ERROR)) {
+            ConsoleUtils.doPause(this, "[ERROR #" + execFailCount + "]: Error found " +
+                                       ExecutionLogger.toHeader(getCurrentTestStep()) + " - " +
+                                       result.getMessage());
         }
     }
 
