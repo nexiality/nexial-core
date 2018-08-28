@@ -72,8 +72,6 @@ fi
 # --------------------------------------------------------------------------------
 # setting Java runtime options and classpath
 # --------------------------------------------------------------------------------
-JAVA_OPT="${JAVA_OPT} -Xms256m"
-JAVA_OPT="${JAVA_OPT} -Xmx1024m"
 JAVA_OPT="${JAVA_OPT} -ea"
 JAVA_OPT="${JAVA_OPT} -Dfile.encoding=UTF-8"
 JAVA_OPT="${JAVA_OPT} -Dnexial.home=${NEXIAL_HOME}"

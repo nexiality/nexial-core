@@ -30,8 +30,6 @@
 	)
 
 	REM # setting Java runtime options and classpath
-	set JAVA_OPT=%JAVA_OPT% -Xms256m
-	set JAVA_OPT=%JAVA_OPT% -Xmx1024m
 	set JAVA_OPT=%JAVA_OPT% -ea
 	set JAVA_OPT=%JAVA_OPT% -Dfile.encoding=UTF-8
 	set JAVA_OPT=%JAVA_OPT% -Dnexial.home="%NEXIAL_HOME%"
