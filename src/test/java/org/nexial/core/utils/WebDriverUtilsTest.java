@@ -122,12 +122,15 @@ public class WebDriverUtilsTest {
         WebDriverUtils.toSendKeyAction(driver, element, "{BACKSPACE}ABC{TAB}").perform();
 
         List<Sequence> actions = driver.actions;
+
         Assert.assertNotNull(actions);
-        // 1 for key, and the other for mouse
+        // keyboard, and mouse actions
         Assert.assertEquals(2, actions.size());
 
-        // 0 for key
-        Map<String, Object> encodedMap = actions.get(0).encode();
+        // for keyboard
+        Map<String, Object> encodedMap = actions.stream().filter(action -> action.encode().get("id")
+                                                                                 .equals("default keyboard"))
+                                                .findFirst().map(Sequence::encode).orElse(null);
         Assert.assertNotNull(encodedMap);
         Assert.assertEquals("key", encodedMap.get("type"));
         Assert.assertTrue(encodedMap.containsKey("actions"));
@@ -172,6 +175,7 @@ public class WebDriverUtilsTest {
         Assert.assertEquals("keyUp", ((Map) actionList.get(12)).get("type"));
         Assert.assertEquals(TAB.toString(), ((Map) actionList.get(12)).get("value"));
     }
+
 
     // todo: need to fix for control, alt, and shift characters
     // @Test
