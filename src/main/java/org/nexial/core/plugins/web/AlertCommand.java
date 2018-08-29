@@ -67,7 +67,6 @@ public class AlertCommand extends BaseCommand implements RequireBrowser {
 
     public StepResult dismiss() {
         ensureWebDriver();
-        String error = "No alert found";
 
         try {
             Alert alert = driver.switchTo().alert();
@@ -76,35 +75,18 @@ public class AlertCommand extends BaseCommand implements RequireBrowser {
                 context.setData(OPT_LAST_ALERT_TEXT, msg);
                 alert.dismiss();
                 return StepResult.success("dismissed alert '" + msg + "'");
+            } else {
+                return StepResult.fail("No alert dialog found");
             }
         } catch (NoAlertPresentException e) {
-            try {
-                String msg = getAlertText();
-                if (StringUtils.isNotBlank(msg)) {
-                    context.setData(OPT_LAST_ALERT_TEXT, msg);
-                    return StepResult.success("dismissed alert '" + msg + "'");
-                }
-            } catch (Exception e1) {
-                error = e1.getMessage();
-            }
+            return StepResult.fail("No alert was present");
         } catch (UnreachableBrowserException e) {
             return StepResult.fail("browser already closed");
-        }
-
-        String msg = context.removeData(OPT_LAST_ALERT_TEXT);
-        if (StringUtils.isNotBlank(msg)) {
-            // this means that there was a alert text harvested, but the dialog is gone now
-            return StepResult.success("dismissed alert '" + msg + "'");
-        } else {
-            log("alert - exception: " + error);
-            return StepResult.fail(error);
         }
     }
 
     public StepResult accept() {
         ensureWebDriver();
-
-        String error = "No alert found";
 
         try {
             Alert alert = driver.switchTo().alert();
@@ -113,28 +95,14 @@ public class AlertCommand extends BaseCommand implements RequireBrowser {
                 context.setData(OPT_LAST_ALERT_TEXT, msg);
                 alert.accept();
                 return StepResult.success("accepted alert '" + msg + "'");
+            } else {
+                log("No alert found");
+                return StepResult.fail("No alert found");
             }
         } catch (NoAlertPresentException e) {
-            try {
-                String msg = getAlertText();
-                if (StringUtils.isNotBlank(msg)) {
-                    context.setData(OPT_LAST_ALERT_TEXT, msg);
-                    return StepResult.success("accepted alert '" + msg + "'");
-                }
-            } catch (Exception e1) {
-                error = e1.getMessage();
-            }
+            return StepResult.fail("No alert was present");
         } catch (UnreachableBrowserException e) {
             return StepResult.fail("browser already closed");
-        }
-
-        String msg = context.removeData(OPT_LAST_ALERT_TEXT);
-        if (StringUtils.isNotBlank(msg)) {
-            // this means that there was a alert text harvested, but the dialog is gone now
-            return StepResult.success("accepted alert '" + msg + "'");
-        } else {
-            log("alert - exception: " + error);
-            return StepResult.fail(error);
         }
     }
 

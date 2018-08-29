@@ -368,8 +368,8 @@ public class BaseCommand implements NexialCommand {
         assertEquals(StringUtils.equals(expected, nullValue) ? null : expected,
                      StringUtils.equals(actual, nullValue) ? null : actual);
 
-        return StepResult.success("validated " + StringUtils.defaultString(expected, nullValue) +
-                                  "=" + StringUtils.defaultString(actual, nullValue));
+        return StepResult.success("validated " + StringUtils.defaultString(expected, nullValue) + " = " +
+                                  StringUtils.defaultString(actual, nullValue));
     }
 
     public StepResult assertNotEqual(String expected, String actual) {
@@ -378,8 +378,8 @@ public class BaseCommand implements NexialCommand {
         assertNotEquals(StringUtils.equals(expected, nullValue) ? null : expected,
                         StringUtils.equals(actual, nullValue) ? null : actual);
 
-        return StepResult.success("validated " + StringUtils.defaultString(expected, nullValue) +
-                                  " not equals to " + StringUtils.defaultString(actual, nullValue));
+        return StepResult.success("validated " + StringUtils.defaultString(expected, nullValue) + " not equals to " +
+                                  StringUtils.defaultString(actual, nullValue));
     }
 
     public StepResult assertContains(String text, String substring) {

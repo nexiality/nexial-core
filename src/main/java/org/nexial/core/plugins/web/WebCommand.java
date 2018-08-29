@@ -99,7 +99,7 @@ public class WebCommand extends BaseCommand implements CanTakeScreenshot, CanLog
     protected boolean logToBrowser;
     protected long browserStabilityWaitMs;
     protected long pollWaitMs;
-    private FluentWait<WebDriver> waiter;
+    protected FluentWait<WebDriver> waiter;
 
     @Override
     public Browser getBrowser() { return browser; }
@@ -1098,7 +1098,7 @@ public class WebCommand extends BaseCommand implements CanTakeScreenshot, CanLog
 
     public StepResult selectWindowAndWait(String winId, String waitMs) {
         requiresNotNull(winId, "Invalid window handle/id", winId);
-        requiresPositiveNumber(waitMs, "waitMs must be a positve integer", waitMs);
+        requiresPositiveNumber(waitMs, "waitMs must be a positive integer", waitMs);
 
         // wait time removed since in a multi-window scenario, the last (main) window might no yet selected.
         //waitForBrowserStability(context.getPollWaitMs());
@@ -1196,19 +1196,18 @@ public class WebCommand extends BaseCommand implements CanTakeScreenshot, CanLog
             return StepResult.fail(msg);
         }
 
-        highlight(element);
-
         element.clear();
 
         if (StringUtils.isNotEmpty(value)) {
-            if (browser.isRunSafari()) { focus("//body"); }
+            // was needed for Safari/Windows. We don't need this anymore
+            // if (browser.isRunSafari()) { focus("//body"); }
 
             // onchange event will not fire until a different element is selected
             if (context.getBooleanData(WEB_UNFOCUS_AFTER_TYPE, DEF_WEB_UNFOCUS_AFTER_TYPE)) {
                 // element.sendKeys();
                 new Actions(driver).moveToElement(element)
                                    .sendKeys(element, value)
-                                   .sendKeys(element, TAB)
+                                   .sendKeys(TAB)
                                    .build()
                                    .perform();
             } else {
@@ -1230,13 +1229,10 @@ public class WebCommand extends BaseCommand implements CanTakeScreenshot, CanLog
             return StepResult.success("cleared out value at '" + locator + "'");
         }
 
-        element.click();
-        waitFor(MIN_STABILITY_WAIT_MS);
-
         Actions actions = WebDriverUtils.toSendKeyAction(driver, element, value);
         if (actions != null) {
             if (context.getBooleanData(WEB_UNFOCUS_AFTER_TYPE, DEF_WEB_UNFOCUS_AFTER_TYPE)) {
-                actions.sendKeys(element, TAB);
+                actions.sendKeys(TAB);
             }
             actions.build().perform();
         }

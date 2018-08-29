@@ -44,17 +44,17 @@ public final class WebDriverUtils {
         if (StringUtils.isEmpty(keystrokes)) { return null; }
 
         Actions actions = new Actions(driver);
-
         Stack<Keys> controlKeys = new Stack<>();
+        if (elem != null) { actions = actions.moveToElement(elem); }
 
         // 1. is there any {...}?
         while (StringUtils.isNotEmpty(keystrokes)) {
             String nextKeyStroke = TextUtils.substringBetweenFirstPair(keystrokes, CTRL_KEY_START, CTRL_KEY_END);
             if (StringUtils.isBlank(nextKeyStroke)) {
                 // 2. if none (or no more) {..} found, gather remaining string and create sendKey() action
-                actions = addReleaseControlKeys(actions, elem, controlKeys);
+                actions = addReleaseControlKeys(actions, null, controlKeys);
                 String[] keys = TextUtils.toOneCharArray(keystrokes);
-                actions = elem == null ? actions.sendKeys(keys) : actions.sendKeys(elem, keys);
+                actions = actions.sendKeys(keys);
                 break;
             }
 
@@ -63,9 +63,10 @@ public final class WebDriverUtils {
             // 3. if {..} found, let's push all the keystrokes before the found {..} to action
             String text = StringUtils.substringBefore(keystrokes, keystrokeId);
             if (StringUtils.isNotEmpty(text)) {
-                actions = addReleaseControlKeys(actions, elem, controlKeys);
+                actions = addReleaseControlKeys(actions, null, controlKeys);
                 String[] keys = TextUtils.toOneCharArray(text);
-                actions = elem == null ? actions.sendKeys(keys) : actions.sendKeys(elem, keys);
+                // actions = elem == null ? actions.sendKeys(keys) : actions.sendKeys(elem, keys);
+                actions = actions.sendKeys(keys);
             }
 
             // 4. keystrokes now contain the rest of the key strokes after the found {..}
@@ -73,28 +74,27 @@ public final class WebDriverUtils {
 
             // 5. if the found {..} is a single key, just add it as such (i.e. {CONTROL}{C})
             if (StringUtils.length(nextKeyStroke) == 1 && StringUtils.isAlphanumeric(nextKeyStroke)) {
-                actions = elem == null ? actions.sendKeys(nextKeyStroke) : actions.sendKeys(elem, nextKeyStroke);
-                actions = addReleaseControlKeys(actions, elem, controlKeys);
+                actions = actions.sendKeys(nextKeyStroke);
+                actions = addReleaseControlKeys(actions, null, controlKeys);
             } else if (CONTROL_KEY_MAPPING.containsKey(keystrokeId)) {
                 // 6. is the found {..} one of the control keys (CTRL, SHIFT, ALT)?
                 Keys control = CONTROL_KEY_MAPPING.get(keystrokeId);
                 controlKeys.push(control);
-                actions = elem == null ? actions.keyDown(control) : actions.keyDown(elem, control);
+                actions = actions.keyDown(control);
             } else {
                 // 7. if not, then it must one of the non-printable character
                 Keys keystroke = KEY_MAPPING.get(keystrokeId);
                 if (keystroke == null) { throw new RuntimeException("Unsupported/unknown key " + keystrokeId); }
 
-                //actions = elem == null ? actions.sendKeys(keystroke) : actions.sendKeys(elem, keystroke);
                 actions = actions.sendKeys(keystroke);
-                actions = addReleaseControlKeys(actions, elem, controlKeys);
+                actions = addReleaseControlKeys(actions, null, controlKeys);
             }
 
             // 8. loop back
         }
 
         // 9. just in case user put a control character at the end (not sure why though)
-        actions = addReleaseControlKeys(actions, elem, controlKeys);
+        actions = addReleaseControlKeys(actions, null, controlKeys);
 
         // 10. finally, all done!
         return actions;

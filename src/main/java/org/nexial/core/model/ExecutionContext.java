@@ -593,6 +593,10 @@ public class ExecutionContext {
             return null;
         }
 
+        return removeDataForcefully(name);
+    }
+
+    public String removeDataForcefully(String name) {
         Object removedObj = data.remove(name);
         String removed;
         if (removedObj == null) {
