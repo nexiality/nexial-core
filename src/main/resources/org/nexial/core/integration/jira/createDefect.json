@@ -1,0 +1,16 @@
+{
+    "fields": {
+        "project": {
+            "key": "${jiraProjectKey}"
+        },
+        "summary": "${jiraDefectSummary}",
+        "description": "${jiraDefectDescription}",
+        "issuetype": { "name": "Bug" },
+        "customfield_10101": {
+            "value": "Minor (S3)"
+        },
+        "customfield_10102": {
+            "value": "Medium (P3)"
+        }
+    }
+}

@@ -576,6 +576,7 @@ public final class NexialConst {
         public static final String PLAN = "plan";
         public static final String OUTPUT = "output";
         public static final String OVERRIDE = "override";
+        public static final String ANNOUNCE = "announce";
         public static final Options OPTIONS = initCmdOptions();
 
         private CLI() { }
@@ -603,6 +604,8 @@ public final class NexialConst {
                                                  "name=value. Multiple overrides are supported via multiple " +
                                                  "-" + OVERRIDE + " name=value declarations. Note that variable name " +
                                                  "or value with spaces must be enclosed in double quotes.");
+            cmdOptions.addOption(ANNOUNCE, true, "[REQUIRED] the output directory path to announce " +
+                                                 "the automation report over collaboration tools");
             return cmdOptions;
         }
     }

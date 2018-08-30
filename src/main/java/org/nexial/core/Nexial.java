@@ -54,6 +54,7 @@ import org.nexial.commons.utils.TextUtils;
 import org.nexial.core.aws.NexialS3Helper;
 import org.nexial.core.excel.Excel;
 import org.nexial.core.excel.Excel.Worksheet;
+import org.nexial.core.integration.IntegrationManager;
 import org.nexial.core.model.*;
 import org.nexial.core.reports.ExecutionMailConfig;
 import org.nexial.core.reports.ExecutionNotifier;
@@ -190,6 +191,7 @@ public class Nexial {
     private int threadWaitCounter;
     private int listenPort = -1;
     private String listenerHandshake;
+    private boolean integrationMode;
 
     @SuppressWarnings("PMD.DoNotCallSystemExit")
     public static void main(String[] args) {
@@ -209,6 +211,10 @@ public class Nexial {
             System.exit(-1);
         }
 
+        if (main.isIntegrationMode()) {
+            return;
+        }
+
         if (main.isListenMode()) {
             try {
                 main.listen();
@@ -216,7 +222,7 @@ public class Nexial {
             } catch (Throwable e) {
                 e.printStackTrace();
             }
-        } else {
+        } else { // isExecutionMode()
             ExecutionSummary summary = null;
             try {
                 MemManager.recordMemoryChanges("before execution");
@@ -236,6 +242,8 @@ public class Nexial {
     protected void listen() throws Exception { ServiceLauncher.main(new String[]{}); }
 
     protected boolean isListenMode() { return listenPort > 0 && StringUtils.isNotBlank(listenerHandshake); }
+
+    protected boolean isIntegrationMode() { return integrationMode; }
 
     protected Options addMsaOptions(Options options) {
         options.addOption("listen", true, "start Nexial in listen mode");
@@ -281,6 +289,15 @@ public class Nexial {
             }
         }
 
+        // integration mode
+        // integrate or announce or assimilate
+        if (cmd.hasOption(ANNOUNCE)) {
+            integrationMode = true;
+            String outputDirPath = cmd.getOptionValue(ANNOUNCE);
+            initSpringContext();
+            IntegrationManager.Companion.manageIntegration(outputDirPath);
+            return;
+        }
         // plan or script?
         if (cmd.hasOption(PLAN)) {
             this.executions = parsePlanExecution(cmd);
