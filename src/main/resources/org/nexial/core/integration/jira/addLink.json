@@ -1,0 +1,16 @@
+{
+    "type": {
+        "name": "Relates"
+    },
+    "inwardIssue": {
+        "key": "${jiraInwardIssue}"
+    },
+    "outwardIssue": {
+        "key": "${jiraOutwardIssue}"
+    },
+    "comment": {
+        "body": "Linked related issue! Refer ${jiraOutwardIssue}"
+    }
+}
+
+

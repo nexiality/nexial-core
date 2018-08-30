@@ -1,0 +1,34 @@
+{
+    "channel": "${slackCommentChannel}",
+    "link_names": 1,
+    "parse":"full",
+    "mrkdwn": true,
+    "text": "Ride with Nexial. Nexial Integrates Slack!",
+    "attachments": [
+        {
+            "fallback": "Sample template",
+            "title": "Sample template",
+            "color": "#008000",
+            "attachment_type": "default",
+            "fields": [
+                {
+                    "title": "Smoke Test",
+                    "value": "100%",
+                    "short": true
+                },
+                {
+                    "title": "Regression Test",
+                    "value": "100%",
+                    "short": true
+                },
+                {
+                    "title": "Defects",
+                    "value": "0",
+                    "short": true
+                }
+            ]
+
+        }
+    ]
+
+}
