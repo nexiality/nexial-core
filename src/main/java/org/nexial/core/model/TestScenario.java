@@ -133,6 +133,8 @@ public class TestScenario {
         executionEventListener.onScenarioStart();
 
         for (TestCase testCase : testCases) {
+            context.setCurrentActivity(testCase);
+
             if (skipDueToFailFast) {
                 logger.log(this, "skipping test case due to previous failure");
                 continue;
@@ -179,6 +181,8 @@ public class TestScenario {
         // doInteractive(context);
         // return allPass;
         // }
+
+        context.setCurrentActivity(null);
 
         executionSummary.setEndTime(System.currentTimeMillis());
         executionSummary.setFailedFast(shouldFailFast);

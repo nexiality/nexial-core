@@ -822,6 +822,16 @@ public class ExecutionContext {
 
     protected void setCurrentTestStep(TestStep testStep) { this.currentTestStep = testStep; }
 
+    public String getCurrentActivity() { return getStringData(OPT_CURRENT_ACTIVITY); }
+
+    public void setCurrentActivity(TestCase activity) {
+        if (activity == null) {
+            removeDataForcefully(OPT_CURRENT_ACTIVITY);
+            return;
+        }
+        setData(OPT_CURRENT_ACTIVITY, activity.getName());
+    }
+
     public void fillIntraExecutionData(Map<String, Object> intraExecutionData) {
         intraExecutionData.putAll(getDataMap());
         intraExecutionData.put(NAME_PLUGIN_MANAGER, plugins);

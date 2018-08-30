@@ -104,6 +104,7 @@ public final class ExecutionThread extends Thread {
 
         ExecutionContext context = MapUtils.isNotEmpty(intraExecutionData) ?
                                    new ExecutionContext(execDef, intraExecutionData) : new ExecutionContext(execDef);
+        context.setCurrentActivity(null);
 
         // in case there were fail-immediate condition from previous script..
         if (context.isFailImmediate()) {
@@ -186,6 +187,7 @@ public final class ExecutionThread extends Thread {
                 if (shouldStopNow(context, allPass)) { break; }
             } finally {
                 context.setData(ITERATION_ENDED, true);
+                context.setCurrentActivity(null);
 
                 try {
                     // sync #data sheet with context

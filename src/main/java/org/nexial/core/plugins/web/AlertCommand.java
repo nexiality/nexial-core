@@ -17,6 +17,8 @@
 
 package org.nexial.core.plugins.web;
 
+import javax.validation.constraints.NotNull;
+
 import org.apache.commons.lang3.StringUtils;
 import org.nexial.core.model.ExecutionContext;
 import org.nexial.core.model.StepResult;
@@ -25,12 +27,12 @@ import org.nexial.core.plugins.base.BaseCommand;
 import org.nexial.core.utils.ConsoleUtils;
 import org.openqa.selenium.Alert;
 import org.openqa.selenium.NoAlertPresentException;
-import org.openqa.selenium.UnhandledAlertException;
 import org.openqa.selenium.WebDriver;
 import org.openqa.selenium.remote.UnreachableBrowserException;
 
 import static org.nexial.core.NexialConst.*;
 import static org.nexial.core.utils.CheckUtils.requires;
+import static org.nexial.core.utils.CheckUtils.requiresValidVariableName;
 
 public class AlertCommand extends BaseCommand implements RequireBrowser {
     protected Browser browser;
@@ -52,74 +54,34 @@ public class AlertCommand extends BaseCommand implements RequireBrowser {
     @Override
     public String getTarget() { return "webalert"; }
 
+    public StepResult dismiss() { return handleDialog(false, false, null); }
+
+    public StepResult accept() { return handleDialog(true, false, null); }
+
+    public StepResult replyOK(String text) { return handleDialog(true, true, StringUtils.defaultIfEmpty(text, "")); }
+
+    public StepResult replyCancel(String text) {
+        return handleDialog(false, true, StringUtils.defaultIfEmpty(text, ""));
+    }
+
     public StepResult assertPresent() {
-        boolean alertTextHarvested = StringUtils.isNotBlank(context.getStringData(OPT_LAST_ALERT_TEXT));
-        if (alertTextHarvested) { return StepResult.success("EXPECTED alert popup found"); }
-
-        String alertText = harvestText();
-        if (StringUtils.isNotBlank(alertText)) {
-            return StepResult.success("EXPECTED alert popup found with text '" + alertText + "'");
-        }
-
-        if (isAlertPresent()) { return StepResult.success("EXPECTED alert popup found"); }
-        return StepResult.fail("EXPECTS alert popup present but it is not");
-    }
-
-    public StepResult dismiss() {
-        ensureWebDriver();
-
-        try {
-            Alert alert = driver.switchTo().alert();
-            if (alert != null) {
-                String msg = alert.getText();
-                context.setData(OPT_LAST_ALERT_TEXT, msg);
-                alert.dismiss();
-                return StepResult.success("dismissed alert '" + msg + "'");
-            } else {
-                return StepResult.fail("No alert dialog found");
-            }
-        } catch (NoAlertPresentException e) {
-            return StepResult.fail("No alert was present");
-        } catch (UnreachableBrowserException e) {
-            return StepResult.fail("browser already closed");
-        }
-    }
-
-    public StepResult accept() {
-        ensureWebDriver();
-
-        try {
-            Alert alert = driver.switchTo().alert();
-            if (alert != null) {
-                String msg = alert.getText();
-                context.setData(OPT_LAST_ALERT_TEXT, msg);
-                alert.accept();
-                return StepResult.success("accepted alert '" + msg + "'");
-            } else {
-                log("No alert found");
-                return StepResult.fail("No alert found");
-            }
-        } catch (NoAlertPresentException e) {
-            return StepResult.fail("No alert was present");
-        } catch (UnreachableBrowserException e) {
-            return StepResult.fail("browser already closed");
-        }
+        return isDialogPresent() ?
+               StepResult.success("EXPECTED dialog found") :
+               StepResult.fail("expected dialog NOT present");
     }
 
     public StepResult storeText(String var) {
-        requires(StringUtils.isNotBlank(var), "invalid var", var);
+        requiresValidVariableName(var);
 
         // get current alert text (if any)
-        String alertText = StringUtils.defaultIfBlank(harvestText(), context.getStringData(OPT_LAST_ALERT_TEXT));
-        if (StringUtils.isNotBlank(alertText)) {
-            // this means that there was a alert text harvested, but the dialog is gone now
-            context.setData(var, alertText);
-            return StepResult.success("stored text from alert popup '" + alertText + "'");
-        }
+        String alertText = harvestDialogText();
+        if (StringUtils.isEmpty(alertText)) { return StepResult.fail("No dialog found"); }
 
-        return StepResult.fail("No alert found");
+        context.setData(var, alertText);
+        return StepResult.success("stored dialog text '" + alertText + "' to ${" + var + "}");
     }
 
+    @NotNull
     public StepResult assertText(String text, String matchBy) {
         requires(StringUtils.isNotBlank(text), "invalid text", text);
 
@@ -127,9 +89,9 @@ public class AlertCommand extends BaseCommand implements RequireBrowser {
         requires(MATCH_BY_RULES.contains(matchBy), "invalid 'matchBy' value", matchBy);
 
         // get current alert text (if any)
-        //String alertText = StringUtils.defaultIfBlank(harvestText(), context.removeData(OPT_LAST_ALERT_TEXT));
-        String alertText = StringUtils.defaultIfBlank(harvestText(), context.getStringData(OPT_LAST_ALERT_TEXT));
-        if (StringUtils.isBlank(alertText)) { return StepResult.fail("No alert found"); }
+        String lastHarvested = context.getStringData(OPT_LAST_ALERT_TEXT);
+        String alertText = StringUtils.defaultIfEmpty(harvestDialogText(), lastHarvested);
+        if (StringUtils.isEmpty(alertText)) { return StepResult.fail("No dialog found; no dialog text captured"); }
 
         if (matchBy.equals(MATCH_BY_EXACT)) { return assertEqual(text, alertText); }
         if (matchBy.equals(MATCH_BY_CONTAINS)) { return assertContains(alertText, text); }
@@ -138,52 +100,69 @@ public class AlertCommand extends BaseCommand implements RequireBrowser {
         return StepResult.fail("UNSUPPORTED matchBy rule: " + matchBy);
     }
 
-    protected void preemptiveDismissAlert() {
-        if (context.getBooleanData(OPT_PREEMPTIVE_ALERT_CHECK, DEF_PREEMPTIVE_ALERT_CHECK)) { harvestText(); }
-    }
-
-    protected boolean preemptiveCheckAlert() {
-        return context.getBooleanData(OPT_PREEMPTIVE_ALERT_CHECK, DEF_PREEMPTIVE_ALERT_CHECK) && isAlertPresent();
-    }
-
-    protected String harvestText() {
-        String alertText = null;
-
+    @NotNull
+    protected StepResult handleDialog(boolean accept, boolean reply, String text) {
         ensureWebDriver();
 
         try {
             Alert alert = driver.switchTo().alert();
-            if (alert != null) { alertText = alert.getText(); }
-            if (StringUtils.isNotBlank(alertText)) {
-                ConsoleUtils.log("found alert/confirm text - " + alertText);
-                context.setData(OPT_LAST_ALERT_TEXT, alertText);
+            if (alert == null) {
+                log("No dialog found");
+                return StepResult.fail("No dialog found");
             }
+
+            String msg = harvestDialogText(alert);
+
+            if (reply) { alert.sendKeys(text); }
+
+            if (accept) {
+                alert.accept();
+                return StepResult.success("accepted dialog '" + msg + "'");
+            } else {
+                alert.dismiss();
+                return StepResult.success("dismissed dialog '" + msg + "'");
+            }
+        } catch (NoAlertPresentException e) {
+            return StepResult.fail("No dialog was present");
+        } catch (UnreachableBrowserException e) {
+            return StepResult.fail("browser already closed");
+        }
+    }
+
+    protected void preemptiveDismissAlert() { if (preemptiveCheckAlert()) { accept(); } }
+
+    protected boolean preemptiveCheckAlert() {
+        return context.getBooleanData(OPT_PREEMPTIVE_ALERT_CHECK, DEF_PREEMPTIVE_ALERT_CHECK) && isDialogPresent();
+    }
+
+    protected String harvestDialogText(Alert alert) {
+        String msg = alert.getText();
+        if (StringUtils.isNotEmpty(msg)) {
+            ConsoleUtils.log("found dialog text - " + msg);
+            context.setData(OPT_LAST_ALERT_TEXT, msg);
+        }
+        return msg;
+    }
+
+    protected String harvestDialogText() {
+        ensureWebDriver();
+
+        try {
+            Alert alert = driver.switchTo().alert();
+            if (alert == null) { return null; }
+            return harvestDialogText(alert);
+        } catch (NoAlertPresentException e) {
+            ConsoleUtils.log("No dialog was present");
         } catch (UnreachableBrowserException e) {
             ConsoleUtils.log("browser already closed: " + e);
-        } catch (Exception e) {
         }
 
-        return alertText;
+        return null;
     }
 
-    protected String harvestText(UnhandledAlertException e) throws NoAlertPresentException {
-        // we expects alert dialog
-        String alertText = harvestText();
-
-        if (StringUtils.isBlank(alertText)) {
-            if (e == null) {
-                throw new NoAlertPresentException("expected alert dialog NOT found");
-            } else {
-                alertText = e.getAlertText();
-                if (StringUtils.isNotBlank(alertText)) { context.setData(OPT_LAST_ALERT_TEXT, alertText); }
-            }
-        }
-
-        return alertText;
-    }
-
-    protected boolean isAlertPresent() {
+    protected boolean isDialogPresent() {
         ensureWebDriver();
+
         try {
             driver.switchTo().alert();
             return true;
@@ -192,16 +171,5 @@ public class AlertCommand extends BaseCommand implements RequireBrowser {
         }
     }
 
-    protected String getAlertText() {
-        ensureWebDriver();
-        try {
-            return driver.switchTo().alert().getText();
-        } catch (NoAlertPresentException e) {
-            return null;
-        }
-    }
-
-    private void ensureWebDriver() {
-        if (driver == null && browser != null) { driver = browser.ensureWebDriverReady(); }
-    }
+    private void ensureWebDriver() { if (driver == null && browser != null) { driver = browser.ensureWebDriverReady();}}
 }

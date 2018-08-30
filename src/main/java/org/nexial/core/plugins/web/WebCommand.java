@@ -1229,6 +1229,9 @@ public class WebCommand extends BaseCommand implements CanTakeScreenshot, CanLog
             return StepResult.success("cleared out value at '" + locator + "'");
         }
 
+        element.click();
+        waitFor(MIN_STABILITY_WAIT_MS);
+
         Actions actions = WebDriverUtils.toSendKeyAction(driver, element, value);
         if (actions != null) {
             if (context.getBooleanData(WEB_UNFOCUS_AFTER_TYPE, DEF_WEB_UNFOCUS_AFTER_TYPE)) {
@@ -1353,7 +1356,7 @@ public class WebCommand extends BaseCommand implements CanTakeScreenshot, CanLog
         }
 
         // short-circuit for firefox+alert
-        if (browser.isRunFireFox() && alert.isAlertPresent()) {
+        if (browser.isRunFireFox() && alert.isDialogPresent()) {
             log("screen capture is not supported by firefox when Javascript alert dialog is present");
             return null;
         }

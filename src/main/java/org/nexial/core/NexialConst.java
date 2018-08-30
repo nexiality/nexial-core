@@ -654,6 +654,8 @@ public final class NexialConst {
         public static final String LAST_PLAN_STEP = NAMESPACE + "lastPlanStep";
         public static final String DEF_LAST_PLAN_STEP = "false";
 
+        public static final String OPT_CURRENT_ACTIVITY = NAMESPACE + "currentActivity";
+
         // predefined variable for time tracking of execution levels
         public static final String TIMETRACK = NAMESPACE + "timetrack.";
         public static final String TRACK_EXECUTION = TIMETRACK + "trackExecution";
