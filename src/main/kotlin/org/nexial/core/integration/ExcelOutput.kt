@@ -43,10 +43,10 @@ class ExcelOutput(file: File) : IterationOutput() {
         val summarySheet: Worksheet = excel.worksheet("#summary")
         // summarySheet.findLastDataRow(ExcelAddress(scenarioStartAddress))
         val scenarioEndRow = summarySheet.sheet.lastRowNum
-        val scenarioCells = summarySheet.getCellData("$scenarioStartAddress:A$scenarioEndRow")
-
-        summary = parseSummaryOutput(summarySheet)
-        scenarioCells.values.forEach { name ->
+        val scenarioCells = summarySheet.cells(ExcelAddress("$scenarioStartAddress:A$scenarioEndRow"))
+        val cellValues = mutableListOf<String>()
+        scenarioCells.forEach { row -> row.forEach { cell -> cellValues.add(Excel.getCellValue(cell)) } }
+        cellValues.forEach { name ->
             if (StringUtils.isNotBlank(name)) {
                 val scenarioSheet = excel.worksheet(name)
                 val scenarioOutput = readScenarioOutput(scenarioSheet)
@@ -54,13 +54,13 @@ class ExcelOutput(file: File) : IterationOutput() {
                 scenarioOutput.iterationOutput = this
             }
         }
+        summary = parseSummaryOutput(summarySheet)
         // parse data sheet if needed
         // data = parseDataSheet(excel.worksheet("#data"))
 
     }
 
     /*private fun parseDataSheet(worksheet: Worksheet): Map<String, String>? {
-
         return null
     }*/
 
