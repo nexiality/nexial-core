@@ -604,8 +604,8 @@ public final class NexialConst {
                                                  "name=value. Multiple overrides are supported via multiple " +
                                                  "-" + OVERRIDE + " name=value declarations. Note that variable name " +
                                                  "or value with spaces must be enclosed in double quotes.");
-            cmdOptions.addOption(ANNOUNCE, true, "[REQUIRED] the output directory path to announce " +
-                                                 "the automation report over collaboration tools");
+            // cmdOptions.addOption(ANNOUNCE, true, "[REQUIRED] the output directory path to announce " +
+            //                                      "the automation report over collaboration tools");
             return cmdOptions;
         }
     }

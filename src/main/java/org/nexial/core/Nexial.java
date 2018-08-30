@@ -222,7 +222,7 @@ public class Nexial {
             } catch (Throwable e) {
                 e.printStackTrace();
             }
-        } else { // isExecutionMode()
+        } else {
             ExecutionSummary summary = null;
             try {
                 MemManager.recordMemoryChanges("before execution");
@@ -298,6 +298,7 @@ public class Nexial {
             IntegrationManager.Companion.manageIntegration(outputDirPath);
             return;
         }
+
         // plan or script?
         if (cmd.hasOption(PLAN)) {
             this.executions = parsePlanExecution(cmd);
