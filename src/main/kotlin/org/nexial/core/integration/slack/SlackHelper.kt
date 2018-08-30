@@ -2,14 +2,17 @@ package org.nexial.core.integration.slack
 
 import org.apache.commons.lang3.StringUtils
 import org.apache.commons.validator.routines.UrlValidator
-import org.nexial.core.integration.*
+import org.nexial.core.integration.COMMENT_ENDPOINT
+import org.nexial.core.integration.INTEGRATION
+import org.nexial.core.integration.IntegrationHelper
+import org.nexial.core.integration.SLACK_CHAT_URL
+import org.nexial.core.integration.ScenarioOutput
 import org.nexial.core.model.ExecutionContext
 import org.nexial.core.plugins.ws.AsyncWebServiceClient
 import org.nexial.core.utils.ConsoleUtils
 
 class SlackHelper(val context: ExecutionContext, private val httpClient: AsyncWebServiceClient) : IntegrationHelper() {
 
-    val templateEngine = TemplateEngine(context)
     fun process(profile: String, scenarioOutput: ScenarioOutput) {
         val actions = getActions(context, profile)
         actions.forEach { action ->

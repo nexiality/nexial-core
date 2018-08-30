@@ -234,7 +234,7 @@ class JiraHelper(val context: ExecutionContext, private val httpClient: AsyncWeb
         val wsClient = ConnectionFactory.getWebServiceClient(profile)
         val response = wsClient.get(getLabelsUrl, "")
         var currentLabels = JSONArray()
-        if (response != null && StringUtils.isNotBlank(response.body)) {
+        if (response != null && response.returnCode == 200) {
             currentLabels = JSONObject(response.body).getJSONObject("fields").getJSONArray("labels")
             if (!currentLabels.contains(label)) {
                 currentLabels.put(label)

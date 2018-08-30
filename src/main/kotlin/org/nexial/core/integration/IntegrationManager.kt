@@ -22,6 +22,7 @@ import org.apache.commons.validator.routines.UrlValidator
 import org.nexial.core.ExecutionThread
 import org.nexial.core.integration.connection.ConnectionFactory
 import org.nexial.core.integration.jira.JiraHelper
+import org.nexial.core.integration.slack.SlackHelper
 import org.nexial.core.model.ExecutionContext
 import org.nexial.core.model.ExecutionDefinition
 import org.nexial.core.model.TestProject
@@ -105,9 +106,9 @@ class IntegrationManager {
             return File(outputDirUrl)
         }
 
-        private fun setDataToContext(data: Map<String, String>, context: ExecutionContext) {
+        /*private fun setDataToContext(data: Map<String, String>, context: ExecutionContext) {
             data.forEach { key, value -> context.setData(key, value) }
-        }
+        }*/
 
         @JvmStatic
         fun isValidServer(profile: String): Boolean {
@@ -132,7 +133,7 @@ class IntegrationManager {
                         }
                         "slack" ->{
                             val httpClient = ConnectionFactory.getInstance(context).getAsyncWsClient(server)
-//                            SlackHelper(context, httpClient).process(server, scenario)
+                            SlackHelper(context, httpClient).process(server, scenario)
                         }
                     }
                 }
