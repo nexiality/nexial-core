@@ -1082,7 +1082,7 @@ public class WebCommand extends BaseCommand implements CanTakeScreenshot, CanLog
 
     public StepResult selectWindowByIndexAndWait(String index, String waitMs) {
         requiresPositiveNumber(index, "window index must be a positive integer (zero-based");
-        requiresPositiveNumber(waitMs, "waitMs must be a positve integer", waitMs);
+        requiresPositiveNumber(waitMs, "waitMs must be a positive integer", waitMs);
 
         ensureReady();
 
