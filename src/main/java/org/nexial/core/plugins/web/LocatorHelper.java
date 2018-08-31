@@ -279,9 +279,9 @@ class LocatorHelper {
 
     protected StepResult assertElementCount(String locator, String count) {
         locator = validateLocator(locator);
-        int expcted = delegator.toPositiveInt(count, "count");
+        int expected = delegator.toPositiveInt(count, "count");
         int actual = delegator.getElementCount(locator);
-        return delegator.assertEqual(expcted + "", actual + "");
+        return delegator.assertEqual(expected + "", actual + "");
     }
 
     protected StepResult assertTextOrder(String locator, String descending) {

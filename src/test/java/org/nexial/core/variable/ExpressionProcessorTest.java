@@ -511,6 +511,70 @@ public class ExpressionProcessorTest {
     }
 
     @Test
+    public void processDateMath() throws  Exception {
+        ExpressionProcessor subject = new ExpressionProcessor(context);
+
+        String fixture = "[DATE(2018/04/01,yyyy/MM/dd) => text]";
+        String result = subject.process(fixture);
+        Assert.assertNotNull(result);
+        Assert.assertEquals(result, "2018/04/01");
+
+        // days
+        fixture = "[DATE(2018/04/01,yyyy/MM/dd) => addDay(5) text]";
+        result = subject.process(fixture);
+        Assert.assertNotNull(result);
+        Assert.assertEquals(result, "2018/04/06");
+
+        fixture = "[DATE(2018/04/01,yyyy/MM/dd) => addDay(-5) text]";
+        result = subject.process(fixture);
+        Assert.assertNotNull(result);
+        Assert.assertEquals(result, "2018/03/27");
+
+        fixture = "[DATE(2018/04/01,yyyy/MM/dd) => addDay(-1) text]";
+        result = subject.process(fixture);
+        Assert.assertNotNull(result);
+        Assert.assertEquals(result, "2018/03/31");
+
+        fixture = "[DATE(2018/04/01,yyyy/MM/dd) => addDay(-10) addDay(11) addDay(-1) text]";
+        result = subject.process(fixture);
+        Assert.assertNotNull(result);
+        Assert.assertEquals(result, "2018/04/01");
+
+        fixture = "[DATE(2018/04/01,yyyy/MM/dd) => addMonth(-4) text]";
+        result = subject.process(fixture);
+        Assert.assertNotNull(result);
+        Assert.assertEquals(result, "2017/12/01");
+
+        fixture = "[DATE(2018/04/01,yyyy/MM/dd) => addMonth(-12) text]";
+        result = subject.process(fixture);
+        Assert.assertNotNull(result);
+        Assert.assertEquals(result, "2017/04/01");
+
+        fixture = "[DATE(2018/04/01,yyyy/MM/dd) => addMonth(-12) addMonth(13) addDay(-1) text]";
+        result = subject.process(fixture);
+        Assert.assertNotNull(result);
+        Assert.assertEquals(result, "2018/04/30");
+
+        // DateFormat df = new SimpleDateFormat("MM/dd/yyyy HH:mm:ss");
+        // long resultTime = df.parse(result).getTime();
+        // Assert.assertTrue(resultTime - rightNow < 200);
+        //
+        // fixture = "[DATE(2017/10/19,yyyy/MM/dd) => text]";
+        // result = subject.process(fixture);
+        // Assert.assertEquals("2017/10/19", result);
+        //
+        // fixture = "[DATE(2017/05/01,yyyy/MM/dd) => addYear(2)]";
+        // result = subject.process(fixture);
+        // Assert.assertEquals("2019/05/01", result);
+        //
+        // fixture = "[DATE(2017/05/01,yyyy/MM/dd) => addYear(2) setMonth(8) setDOW(2) text]";
+        // result = subject.process(fixture);
+        // Assert.assertEquals("2019/07/29", result);
+
+
+    }
+
+    @Test
     public void processJson() throws Exception {
         ExpressionProcessor subject = new ExpressionProcessor(context);
 

@@ -102,7 +102,7 @@ public class DateTransformer<T extends DateDataType> extends Transformer {
 
     protected T handleDateField(T data, int field, String value, boolean add) {
         if (data == null || StringUtils.isBlank(data.getTextValue())) { return data; }
-        if (StringUtils.isBlank(value) || !NumberUtils.isDigits(value)) { return data; }
+        if (StringUtils.isBlank(value) || !NumberUtils.isCreatable(value)) { return data; }
 
         int val = NumberUtils.toInt(value);
 
