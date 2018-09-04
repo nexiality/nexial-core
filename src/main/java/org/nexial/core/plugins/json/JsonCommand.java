@@ -261,7 +261,7 @@ public class JsonCommand extends BaseCommand {
     }
 
     private JsonNode deriveWellformedJson(String json) {
-        requires(StringUtils.isNotBlank(json), "empty json", json);
+        requiresNotBlank(json, "empty json", json);
 
         JsonNode jsonNode = null;
         try {

@@ -17,6 +17,8 @@
 
 package org.nexial.core.variable;
 
+import javax.validation.constraints.NotNull;
+
 import org.apache.commons.lang3.StringUtils;
 import org.nexial.core.ExecutionThread;
 import org.nexial.core.model.ExecutionContext;
@@ -38,14 +40,18 @@ public class ListDataType extends ExpressionDataType<String[]> {
         init();
     }
 
+    @NotNull
     @Override
     public String getName() { return "LIST"; }
 
+    @NotNull
     public String getDelim() { return delim; }
 
+    @NotNull
     @Override
     Transformer getTransformer() { return transformer; }
 
+    @NotNull
     @Override
     ListDataType snapshot() {
         ListDataType snapshot = new ListDataType();

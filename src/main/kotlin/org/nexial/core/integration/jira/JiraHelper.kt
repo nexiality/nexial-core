@@ -129,13 +129,13 @@ class JiraHelper(val context: ExecutionContext, private val httpClient: AsyncWeb
 
             if (defectKey != null) {
                 // add defect labels to defect card
-                addLabels(defectKey!!, projectInfo.server!!, JSONArray("[\"$DEFECT_LABEL\"]"))
+                addLabels(defectKey, projectInfo.server!!, JSONArray("[\"$DEFECT_LABEL\"]"))
 
                 // create links to features and test ref with defect card
                 val inwardLinks = mutableSetOf<String>()
                 inwardLinks.addAll(projectInfo.features)
                 inwardLinks.addAll(projectInfo.testIds)
-                inwardLinks.forEach { link -> addLink(projectInfo.server!!, link, defectKey!!) }
+                inwardLinks.forEach { link -> addLink(projectInfo.server!!, link, defectKey) }
             }
         }
     }
@@ -186,7 +186,7 @@ class JiraHelper(val context: ExecutionContext, private val httpClient: AsyncWeb
         if (UrlValidator.getInstance().isValid(url) && StringUtils.isNotBlank(labelsBody)) {
             httpClient.put(url, labelsBody)
         } else {
-            ConsoleUtils.log("Unable to add labels with URL: $url and lables payload: $labelsBody")
+            ConsoleUtils.log("Unable to add labels with URL: $url and labels payload: $labelsBody")
         }
     }
 

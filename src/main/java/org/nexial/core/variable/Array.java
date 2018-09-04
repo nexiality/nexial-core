@@ -242,8 +242,24 @@ public class Array {
     protected static String[] toArray(String array) { return toArray(array, getDelim()); }
 
     protected static String[] toArray(String array, String delim) {
-        if (TextUtils.isBetween(array, "[", "]")) { array = TextUtils.substringBetweenFirstPair(array, "[", "]"); }
-        if (TextUtils.isBetween(array, "{", "}")) { array = TextUtils.substringBetweenFirstPair(array, "{", "}"); }
+        // need special parsing to compensate the case of web elements which looks like [[...]],[[...]],..
+        if (TextUtils.isBetween(array, "[", "]")) {
+            if (StringUtils.startsWith(array, "[[") && StringUtils.contains(array, "],[[")) {
+                // likely webelement lists.. need special care
+                String[] split = StringUtils.splitByWholeSeparator(array, "],[");
+                return Arrays.stream(split)
+                             .map(str -> (StringUtils.startsWith(str, "[[") ? "" : "[") +
+                                         StringUtils.appendIfMissing(str, "]"))
+                             .toArray(String[]::new);
+            }
+
+            array = TextUtils.substringBetweenFirstPair(array, "[", "]");
+        }
+
+        if (TextUtils.isBetween(array, "{", "}")) {
+            array = TextUtils.substringBetweenFirstPair(array, "{", "}");
+        }
+
         return StringUtils.splitByWholeSeparatorPreserveAllTokens(array, delim);
     }
 
