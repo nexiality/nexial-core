@@ -17,13 +17,13 @@
 
 package org.nexial.core.integration
 
+import org.apache.commons.lang3.StringUtils
+
 open class IterationOutput {
 
     var fileName: String? = null
-    var scriptName: String? = null
-    var executionType: String? = null
+    var executionOutput: ExecutionOutput? = null
     var iteration: String? = null
-    var executionId: String? = null
     var summary: SummaryOutput? = null
     var scenarios: MutableList<ScenarioOutput> = mutableListOf()
     var data: Map<String, String>? = null
@@ -41,8 +41,11 @@ open class IterationOutput {
             }
             sb.append(" | $key | $result |\\n")
         }
-
         return sb.toString()
+    }
+
+    fun getIterationFromTitle(): String {
+        return StringUtils.substringAfterLast(summary!!.title, ".")
     }
 }
 
@@ -59,5 +62,3 @@ open class ScenarioOutput {
     var testSteps = mutableMapOf<Int, List<String>>()
     var isFailed = false
 }
-
-

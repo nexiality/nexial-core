@@ -30,33 +30,38 @@ import java.io.File
 
 private const val scenarioStartAddress = "A20"
 
-class ExcelOutput(file: File) : IterationOutput() {
+class ExcelOutput(file: File) {//: IterationOutput() {
+
+    var excel: Excel? = null
 
     init {
-        val excel = Excel(file, false, false)
-        parse(excel)
+        excel = Excel(file, false, false)
     }
 
 
-    fun parse(excel: Excel) {
-        fileName = excel.file.name
-        val summarySheet: Worksheet = excel.worksheet("#summary")
-        // summarySheet.findLastDataRow(ExcelAddress(scenarioStartAddress))
+    fun parse(): IterationOutput {
+        val iterationOutput = IterationOutput()
+
+        iterationOutput.fileName = excel!!.file.name
+        val summarySheet: Worksheet = excel!!.worksheet("#summary")
+        iterationOutput.summary = parseSummaryOutput(summarySheet)
+//         summarySheet.findLastDataRow(ExcelAddress(scenarioStartAddress))
         val scenarioEndRow = summarySheet.sheet.lastRowNum
         val scenarioCells = summarySheet.cells(ExcelAddress("$scenarioStartAddress:A$scenarioEndRow"))
         val cellValues = mutableListOf<String>()
         scenarioCells.forEach { row -> row.forEach { cell -> cellValues.add(Excel.getCellValue(cell)) } }
         cellValues.forEach { name ->
             if (StringUtils.isNotBlank(name)) {
-                val scenarioSheet = excel.worksheet(name)
-                val scenarioOutput = readScenarioOutput(scenarioSheet)
-                scenarios.add(scenarioOutput!!)
-                scenarioOutput.iterationOutput = this
+                val scenarioSheet = excel!!.worksheet(name)
+                val scenarioOutput: ScenarioOutput = readScenarioOutput(scenarioSheet)!!
+                iterationOutput.scenarios.add(scenarioOutput)
+                scenarioOutput.iterationOutput = iterationOutput
             }
         }
-        summary = parseSummaryOutput(summarySheet)
+
         // parse data sheet if needed
         // data = parseDataSheet(excel.worksheet("#data"))
+        return iterationOutput
 
     }
 
@@ -77,15 +82,16 @@ class ExcelOutput(file: File) : IterationOutput() {
         return summaryOutput
     }
 
+
     private fun readExecutionSummary(worksheet: Worksheet): Map<String, String> {
         val cols: List<Char> = listOf('B', 'C')
         val map: MutableMap<String, String> = mutableMapOf()
         // summary rows range (2..12)
         (2..12).forEach { row ->
             val key = Excel
-                .getCellValue(worksheet.cell(ExcelAddress("${cols[0]}$row")))
+                    .getCellValue(worksheet.cell(ExcelAddress("${cols[0]}$row")))
             val value = Excel
-                .getCellValue(worksheet.cell(ExcelAddress("${cols[1]}$row")))
+                    .getCellValue(worksheet.cell(ExcelAddress("${cols[1]}$row")))
             map[key] = value
         }
         return map
@@ -147,8 +153,8 @@ class ExcelOutput(file: File) : IterationOutput() {
         val lastCommandRow = worksheet.findLastDataRow(ExcelConfig.ADDR_COMMAND_START)
         val startRowIndex = ExcelConfig.ADDR_COMMAND_START.rowStartIndex!! + 1
         val area = ExcelArea(worksheet,
-                             ExcelAddress("" + ExcelConfig.COL_TEST_CASE + startRowIndex + ":" +
-                                          ExcelConfig.COL_REASON + lastCommandRow), false)
+                ExcelAddress("" + ExcelConfig.COL_TEST_CASE + startRowIndex + ":" +
+                        ExcelConfig.COL_REASON + lastCommandRow), false)
 
         val steps = mutableMapOf<Int, List<String>>()
 
@@ -184,31 +190,16 @@ class ExcelOutput(file: File) : IterationOutput() {
 
     private fun parseScenarioResult(scenarioResult: String?): MutableMap<String, String> {
         val scenarioSummaryMap = mutableMapOf<String, String>()
-        val lines: List<String> = scenarioResult!!.split("\n")
-        var n: String
+        val lines: List<String> = scenarioResult!!.split(System.getProperty("line.separator"))
         for (line in lines) {
-            n = StringUtils.removeEnd(line, "\r")
-            if (StringUtils.isNotEmpty(n)) {
-
-                val attrs = n.split(":")
-                val key = StringUtils.trim(attrs[0])
-                val value = StringUtils.trim(attrs[1])
-                when (key) {
-                    "Run From"  -> scenarioSummaryMap["runFrom"] = value
-                    "Run User"  -> scenarioSummaryMap["runUser"] = value
-                    "Time Span" -> scenarioSummaryMap["timeSpan"] = value
-                    "Duration"  -> scenarioSummaryMap["duration"] = value
-                    "Steps"     -> scenarioSummaryMap["steps"] = value
-                    "Executed"  -> scenarioSummaryMap["executed"] = value
-                    "PASS"      -> scenarioSummaryMap["passed"] = value
-                    "FAIL"      -> scenarioSummaryMap["failed"] = value
-                }
+            if (StringUtils.isNotEmpty(line)) {
+                val key = StringUtils.substringBefore(line, ":").trim()
+                val value = StringUtils.substringAfter(line, ":").trim()
+                scenarioSummaryMap[key] = value
             }
         }
         return scenarioSummaryMap
     }
 
-    override fun toString(): String {
-        return "ExcelOutput(summary=$summary, scenarios=$scenarios)"
-    }
+
 }

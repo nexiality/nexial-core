@@ -1,34 +1,41 @@
 {
     "channel": "${slackCommentChannel}",
     "link_names": 1,
-    "parse":"full",
+    "parse": "full",
     "mrkdwn": true,
-    "text": "Ride with Nexial. Nexial Integrates Slack!",
+    "text": "Nexial Automation Results!",
     "attachments": [
         {
-            "fallback": "Sample template",
-            "title": "Sample template",
-            "color": "#008000",
-            "attachment_type": "default",
+            "title": "Test Environment",
+            "color": "#000000",
+            "text": "${testEnvironmentDetails}"
+        },
+        {
+            "title": "Test Results",
+            "color": "${resultColor}",
             "fields": [
                 {
-                    "title": "Smoke Test",
-                    "value": "100%",
+                    "title": "Total Steps",
+                    "value": "${totalSteps}",
                     "short": true
                 },
                 {
-                    "title": "Regression Test",
-                    "value": "100%",
+                    "title": "Total Executed",
+                    "value": "${totalExecuted}",
                     "short": true
                 },
                 {
-                    "title": "Defects",
-                    "value": "0",
+                    "title": "Passed",
+                    "value": "${totalPassed}",
+                    "short": true
+                },
+                {
+                    "title": "Failed",
+                    "value": "${totalFailed}",
                     "short": true
                 }
             ]
 
         }
     ]
-
 }

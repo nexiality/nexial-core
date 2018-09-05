@@ -2,35 +2,28 @@ package org.nexial.core.integration.slack
 
 import org.apache.commons.lang3.StringUtils
 import org.apache.commons.validator.routines.UrlValidator
-import org.nexial.core.integration.COMMENT_ENDPOINT
-import org.nexial.core.integration.INTEGRATION
-import org.nexial.core.integration.IntegrationHelper
-import org.nexial.core.integration.SLACK_CHAT_URL
-import org.nexial.core.integration.ScenarioOutput
+import org.nexial.core.integration.*
 import org.nexial.core.model.ExecutionContext
 import org.nexial.core.plugins.ws.AsyncWebServiceClient
 import org.nexial.core.utils.ConsoleUtils
 
 class SlackHelper(val context: ExecutionContext, private val httpClient: AsyncWebServiceClient) : IntegrationHelper() {
 
-    fun process(profile: String, scenarioOutput: ScenarioOutput) {
+    fun process(profile: String, executionOutput: ExecutionOutput) {
         val actions = getActions(context, profile)
         actions.forEach { action ->
             when (action) {
-                "comment" -> {
-                    processComment(profile, scenarioOutput)
+                "comment-summary" -> {
+                    processComment(profile, executionOutput)
                 }
             }
         }
     }
 
-    private fun processComment(profile: String, scenario: ScenarioOutput) {
+    private fun processComment(profile: String, executionOutput: ExecutionOutput) {
 
-        // todo: create template to post results
-        // context.setData(SLACK_COMMENT_BODY, parseResultToMdFormat(scenario))
-        val commentBody = StringUtils.replace(context.replaceTokens(getTemplate(COMMENT_ENDPOINT)), "\n", "")
         val url = context.getStringData("$INTEGRATION.$profile.$SLACK_CHAT_URL")
-        addComment(url!!, commentBody)
+        addComment(url!!, TemplateEngine.setSlackSummary(executionOutput))
 
     }
 
@@ -47,7 +40,7 @@ class SlackHelper(val context: ExecutionContext, private val httpClient: AsyncWe
         if (UrlValidator.getInstance().isValid(url) && StringUtils.isNotBlank(commentBody)) {
             httpClient.post(url, commentBody)
         } else {
-            ConsoleUtils.log("Unable to add comment with URL: $url and ")
+            ConsoleUtils.log("Unable to add comment with URL: $url")
         }
     }
 

@@ -27,27 +27,51 @@ import org.nexial.core.integration.connection.ConnectionFactory
 import org.nexial.core.model.ExecutionContext
 import org.nexial.core.plugins.ws.AsyncWebServiceClient
 import org.nexial.core.utils.ConsoleUtils
-import org.nexial.core.variable.Syspath
 import java.io.File
-import java.io.FileOutputStream
+import java.io.FileInputStream
 import java.util.*
 
 
 class JiraHelper(val context: ExecutionContext, private val httpClient: AsyncWebServiceClient) : IntegrationHelper() {
 
-    fun process(profile: String, scenario: ScenarioOutput) {
-        performActions(profile, scenario)
+    val lineSeparator = System.getProperty("line.separator")!!
+
+    fun process(profile: String, executionOutput: ExecutionOutput) {
+        performActions(profile, executionOutput)
     }
 
-
-    private fun performActions(profile: String, scenario: ScenarioOutput) {
+    private fun performActions(profile: String, executionOutput: ExecutionOutput) {
 
         val actions = getActions(context, profile)
         actions.forEach { action ->
             when (action) {
-                "comment" -> processComment(profile, scenario)
-                "label"   -> processLabel(profile, scenario, AUTOMATION_COMPLETE)
-                "defect"  -> processDefect(profile, scenario)
+                "comment-summary" -> {
+                    executionOutput.iterations.forEach { iteration ->
+                        for (scenario in iteration.scenarios) {
+                            processComment(profile, scenario)
+                        }
+                    }
+                }
+                "label-automation" -> {
+                    executionOutput.iterations.forEach { iteration ->
+                        for (scenario in iteration.scenarios) {
+                            processLabel(profile, scenario, AUTOMATION_COMPLETE)
+                        }
+                    }
+
+                }
+                "defect" -> {
+                    val defectList = mutableListOf<Pair<String, String>>()
+                    executionOutput.iterations.forEach { iteration ->
+                        for (scenario in iteration.scenarios) {
+                            defectList.addAll(processDefect(profile, scenario))
+                        }
+                        if (CollectionUtils.isNotEmpty(defectList)) {
+                            //todo: design a centralized defect history record
+                            updateJiraDefectHistory(defectList)
+                        }
+                    }
+                }
             }
         }
     }
@@ -62,8 +86,8 @@ class JiraHelper(val context: ExecutionContext, private val httpClient: AsyncWeb
         }
         context.setData(JIRA_COMMENT_BODY, parseResultToMdFormat(scenario))
 
-        val commentBody = StringUtils.replace(context.replaceTokens(getTemplate(COMMENT_ENDPOINT)),
-                                              "\n", "")
+        val commentBody = StringUtils.replace(context.replaceTokens(TemplateEngine.getTemplate(profile, COMMENT_ENDPOINT)),
+                lineSeparator, "")
         features.forEach { feature ->
             val url = jiraPostCommentUrl(feature, profile)
             addComment(url!!, commentBody)
@@ -71,73 +95,46 @@ class JiraHelper(val context: ExecutionContext, private val httpClient: AsyncWeb
 
     }
 
-    private fun processDefect(profile: String, scenarioOutput: ScenarioOutput) {
+    private fun processDefect(profile: String, scenarioOutput: ScenarioOutput): MutableList<Pair<String, String>> {
+        val defectData = mutableListOf<Pair<String, String>>()
+        val defectList = mutableListOf<String>()
         for (projectInfo in scenarioOutput.projects) {
             // assume that one project for one profile
             if (profile != projectInfo.profile) {
                 continue
             }
-            val projectKey = projectInfo.projectName
-            val sb = StringBuilder()
-            val failedSteps = scenarioOutput.testSteps
-            sb.append("h2. *Nexial Defect Summary*\\n----\\n")
-            sb.append("h3. *Relates to Feature IDs:* ${projectInfo.features.joinToString(separator = ",")} \\n ")
-            sb.append("h3. *Relates to Test IDs:* ${projectInfo.testIds.joinToString(separator = ",")} \\n ")
-            sb.append("h3. *Test Script*: ${scenarioOutput.iterationOutput!!.fileName} \\n ")
-            sb.append("h3. *Test Scenario*: ${scenarioOutput.scenarioName} \\n ")
-            sb.append("h3. *Test Steps*:\\n")
-            sb.append("|| Row || Activity || Description || Command || Result || \\n")
-
-            val defectlist = mutableListOf<String>()
-            failedSteps.forEach { index, value ->
-                val activity = value[0]
-                val description = value[1]
-                val command = "${value.get(2)}&raquo;${value.get(3)}"
-                var params = ""
-                (4..8).forEach { i ->
-                    val param = value.get(i)
-                    if (param.isNotBlank()) {
-                        params = "$params$param, "
-                    }
-                }
-                params = "[${StringUtils.removeEnd(params, ", ")}]"
-                val msg = StringUtils.replaceAll(value.get(13), "\"", "'")
-                sb.append(
-                    "| $index | $activity | $description | $command $params | {panel:bgColor=#ff4d4d} $msg {panel} | \\n ")
-
-                val defecthash = "${scenarioOutput.scenarioName}_${activity}_$index"
-                defectlist.add(StringUtils.replacePattern(defecthash, "\\s+", ""))
+            val newDefects = TemplateEngine.setJiraDefect(projectInfo, scenarioOutput)
+            val defectHistory = Properties()
+            val file = File("${context.project.projectHome}/jiraDefects.properties")
+            if (file.exists()) {
+                defectHistory.load(FileInputStream(file))
             }
-
-            sb.append("\\n\\n")
-
-            val summary = "A defect is created based on test script failures."
-            val description = sb.toString()
-            context.setData(JIRA_PROJECT_KEY, projectKey)
-            context.setData(JIRA_DEFECT_SUMMARY, summary)
-            context.setData(JIRA_DEFECT_DESCRIPTION, description)
+            // check if defects are repeated or contains in history
+            // create a defect only when this condition is not met
+            if (CollectionUtils.isEqualCollection(defectList, newDefects)
+                    || CollectionUtils.containsAll(defectHistory.keys, newDefects)) continue
             val defectKey = createDefect(projectInfo.server!!)
+            CollectionUtils.addAll(defectList, newDefects)
 
-            //todo: design defect history record
-            val defectMeta = Properties()
-            if (CollectionUtils.isNotEmpty(defectlist) && defectKey != null) {
-                defectlist.forEach { hash -> defectMeta.setProperty(hash, defectKey) }
-                defectMeta.store(FileOutputStream(File(
-                    "${Syspath().out("fullpath")}${File.separator}defectmeta.properties")), "Nexial Defect History")
 
+            defectList.forEach { hash ->
+                val pair = Pair(hash, defectKey!!)
+                defectData.add(pair)
             }
 
-            if (defectKey != null) {
-                // add defect labels to defect card
-                addLabels(defectKey, projectInfo.server!!, JSONArray("[\"$DEFECT_LABEL\"]"))
+            if (StringUtils.isNotBlank(defectKey)) {
+                // add defect labels
+                addLabels(defectKey!!, projectInfo.server!!, JSONArray("[\"$DEFECT_LABEL\"]"))
 
-                // create links to features and test ref with defect card
+                // add links to features and test ref
                 val inwardLinks = mutableSetOf<String>()
                 inwardLinks.addAll(projectInfo.features)
                 inwardLinks.addAll(projectInfo.testIds)
                 inwardLinks.forEach { link -> addLink(projectInfo.server!!, link, defectKey) }
             }
         }
+        return defectData
+
     }
 
     private fun processLabel(profile: String, scenario: ScenarioOutput, label: String) {
@@ -158,7 +155,8 @@ class JiraHelper(val context: ExecutionContext, private val httpClient: AsyncWeb
     private fun addLabels(feature: String, profile: String, labels: JSONArray) {
         val putLabelsUrl = jiraPutLabelsUrl(feature, profile)
         context.setData(JIRA_LABELS, labels)
-        val labelsBody = StringUtils.replace(context.replaceTokens(getTemplate(LABEL_ENDPOINT)), "\n", "")
+        val labelsBody = StringUtils.replace(context.replaceTokens(TemplateEngine.getTemplate(profile, LABEL_ENDPOINT)),
+                lineSeparator, "")
         addLabels(putLabelsUrl!!, labelsBody)
 
     }
@@ -167,9 +165,9 @@ class JiraHelper(val context: ExecutionContext, private val httpClient: AsyncWeb
         context.setData(JIRA_INWARD_ISSUE, inwardIssue)
         context.setData(JIRA_OUTWARD_ISSUE, outwardIssue)
         val linkUrl = context.getStringData("$INTEGRATION.$profile.$JIRA_ISSUE_LINK_URL")
-        var issueLinkBody = context.replaceTokens(getTemplate(LINK_ENDPOINT))
+        var issueLinkBody = context.replaceTokens(TemplateEngine.getTemplate(profile, LINK_ENDPOINT))
         issueLinkBody = context.replaceTokens(issueLinkBody)
-        issueLinkBody = StringUtils.replaceAll(issueLinkBody, "\n", "")
+        issueLinkBody = StringUtils.replaceAll(issueLinkBody, lineSeparator, "")
         addLink(linkUrl, issueLinkBody)
 
     }
@@ -200,8 +198,8 @@ class JiraHelper(val context: ExecutionContext, private val httpClient: AsyncWeb
 
     override fun createDefect(profile: String): String? {
         val url = context.getStringData("$INTEGRATION.$profile.createIssueUrl")
-        val defectBody = context.replaceTokens(getTemplate(DEFECT_ENDPOINT))
-        val requestBody = StringUtils.replaceAll(defectBody, "\n", "")
+        val defectBody = context.replaceTokens(TemplateEngine.getTemplate(profile, DEFECT_ENDPOINT))
+        val requestBody = StringUtils.replaceAll(defectBody, lineSeparator, "")
         val response = ConnectionFactory.getWebServiceClient(profile).post(url, requestBody)
         // todo: check status
         val responseJson = JSONObject(response.body)

@@ -39,27 +39,28 @@ class IntegrationManager {
 
         fun manageIntegration(outputDirPath: String) {
 
-            val execDef = createExecDefinition()
-            val context = ExecutionContext(execDef)
+            val context = ExecutionContext(createExecDefinition())
             ExecutionThread.set(context)
             val outputDir = resolveOutputDir(context, outputDirPath)
             val iterationOutputList = mutableListOf<IterationOutput>()
+            val executionOutput = ExecutionOutput().readExecutionSummary(outputDir.absolutePath)
 
             when {
-                outputDir.isFile      -> if (isExcelFile(outputDir)) iterationOutputList.add(ExcelOutput(outputDir))
+//                outputDir.isFile      -> if (isExcelFile(outputDir)) iterationOutputList.add(ExcelOutput(outputDir).parse())
                 outputDir.isDirectory -> outputDir.listFiles().forEach { file ->
                     if (isExcelFile(file)) {
-                        iterationOutputList.add(ExcelOutput(file))
+                        val iterationOutput = ExcelOutput(file).parse()
+                        iterationOutput.executionOutput = executionOutput
+                        iterationOutputList.add(iterationOutput)
                     }
                 }
             }
-            iterationOutputList.forEach { iterationOutput ->
-                handle(iterationOutput, context)
-            }
+            executionOutput.iterations = iterationOutputList
+            handle(executionOutput, context)
         }
 
         private fun isExcelFile(file: File) = (StringUtils.startsWith(file.name, "~").not()
-                                               && StringUtils.endsWith(file.name, ".xlsx"))
+                && StringUtils.endsWith(file.name, ".xlsx"))
 
         private fun createExecDefinition(): ExecutionDefinition {
             val execDef = ExecutionDefinition()
@@ -69,6 +70,7 @@ class IntegrationManager {
             project.projectHome = "${System.getProperty("user.home")}$separator.nexial${separator}native"
             project.outPath = File("${project.projectHome}$separator${project.name}${separator}output").absolutePath
             val artifact = File("${project.projectHome}$separator${project.name}${separator}artifact").absolutePath
+            project.artifactPath = File(artifact).absolutePath
             project.scriptPath = File("$artifact${separator}script$separator").absolutePath
             project.dataPath = File("$artifact${separator}data$separator").absolutePath
             project.planPath = File("$artifact${separator}plan$separator").absolutePath
@@ -93,8 +95,8 @@ class IntegrationManager {
 
                 val remotePath = url.path.removePrefix("/")
                 val stepResult = s3Command.copyFrom(result, profile,
-                                                    "${StringUtils.appendIfMissing(remotePath, "/")}*",
-                                                    Syspath().out("fullpath"))
+                        "${StringUtils.appendIfMissing(remotePath, "/")}*",
+                        Syspath().out("fullpath"))
 
                 if (stepResult.isSuccess) {
                     return File(Syspath().out("fullpath"))
@@ -116,32 +118,30 @@ class IntegrationManager {
             return StringUtils.equalsAnyIgnoreCase(profile, "Jira", "Slack")
         }
 
-        private fun handle(iterationOutput: IterationOutput, context: ExecutionContext) {
+        private fun handle(executionOutput: ExecutionOutput, context: ExecutionContext) {
+            val servers = mutableSetOf<String>()
+            executionOutput.iterations.forEach { iteration ->
+                for (scenario in iteration.scenarios) {
 
-//            setDataToContext(iterationOutput.data, context)
-            for (scenario in iterationOutput.scenarios) {
-                val servers = mutableSetOf<String>()
-                scenario.projects.forEach { project -> servers.add(project.server!!) }
-                for (server in servers) {
-                    if (!isValidServer(server)) {
-                        throw IllegalArgumentException("Unsupported server $server specified.")
+                    scenario.projects.forEach { project -> servers.add(project.server!!) }
+
+                }
+            }
+            servers.forEach { server ->
+                if (!isValidServer(server)) {
+                    throw IllegalArgumentException("Unsupported server $server specified.")
+                }
+                when (server) {
+                    "jira" -> {
+                        val httpClient = ConnectionFactory.getInstance(context).getAsyncWsClient(server)
+                        JiraHelper(context, httpClient).process(server, executionOutput)
                     }
-                    when (server) {
-                        "jira" -> {
-                            val httpClient = ConnectionFactory.getInstance(context).getAsyncWsClient(server)
-                            JiraHelper(context, httpClient).process(server, scenario)
-                        }
-                        "slack" ->{
-                            val httpClient = ConnectionFactory.getInstance(context).getAsyncWsClient(server)
-                            SlackHelper(context, httpClient).process(server, scenario)
-                        }
+                    "slack" -> {
+                        val httpClient = ConnectionFactory.getInstance(context).getAsyncWsClient(server)
+                        SlackHelper(context, httpClient).process(server, executionOutput)
                     }
                 }
             }
         }
     }
 }
-
-
-
-

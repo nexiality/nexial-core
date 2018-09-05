@@ -3,7 +3,6 @@ package org.nexial.core.integration
 import org.nexial.core.NexialConst
 
 const val INTEGRATION = NexialConst.NAMESPACE + "integration"
-
 // jira actions
 
 // comment

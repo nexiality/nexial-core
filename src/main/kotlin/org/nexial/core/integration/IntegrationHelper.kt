@@ -17,10 +17,12 @@
 
 package org.nexial.core.integration
 
-import org.apache.commons.io.FileUtils
+import org.apache.commons.collections4.CollectionUtils
 import org.apache.commons.lang3.StringUtils
+import org.nexial.core.ExecutionThread
 import org.nexial.core.model.ExecutionContext
 import java.io.File
+import java.io.FileOutputStream
 import java.util.*
 import java.util.stream.Collectors
 
@@ -34,7 +36,7 @@ abstract class IntegrationHelper {
         var actions = mutableListOf<String>()
         if (!StringUtils.isEmpty(profile)) {
             val data = context.getStringData("$INTEGRATION.$profile.actions")
-            actions = Arrays.stream(StringUtils.split(data, ",")).collect(Collectors.toList())
+            actions = Arrays.stream(StringUtils.split(data, ",")).collect(Collectors.toList())!!
         }
         return actions
     }
@@ -46,11 +48,27 @@ abstract class IntegrationHelper {
         return result
     }
 
-    fun readFileToString(filePath: String) =
-        FileUtils.readFileToString(File(javaClass.getResource(filePath).toURI()), "UTF-8")!!
-
-    fun getTemplate(target: String): String {
-        val resourceBasePath = "/${StringUtils.replace(this.javaClass.getPackage().name, ".", "/")}"
-        return readFileToString("$resourceBasePath/$target.json")
+    fun updateJiraDefectHistory(defectList: MutableList<Pair<String, String>>) {
+        val defectMeta = Properties()
+        val outPath = ExecutionThread.get().project.projectHome
+        if (CollectionUtils.isNotEmpty(defectList)) {
+            defectList.forEach { pair ->
+                val key = pair.first
+                // avoid overwriting
+                if (!defectMeta.containsKey(key)) {
+                    defectMeta.setProperty(key, pair.second)
+                }
+            }
+            var outputStream: FileOutputStream? = null
+            try {
+                outputStream = FileOutputStream(File("$outPath${File.separator}jiraDefects.properties"))
+                defectMeta.store(outputStream, "Nexial Defect History")
+            } finally {
+                outputStream?.run {
+                    flush()
+                    close()
+                }
+            }
+        }
     }
 }
