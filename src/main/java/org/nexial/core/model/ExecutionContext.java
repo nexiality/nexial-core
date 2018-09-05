@@ -25,6 +25,7 @@ import java.lang.reflect.InvocationTargetException;
 import java.net.URLEncoder;
 import java.net.UnknownHostException;
 import java.util.*;
+
 import javax.annotation.Nullable;
 import javax.validation.constraints.NotNull;
 
@@ -39,6 +40,7 @@ import org.apache.commons.lang3.ArrayUtils;
 import org.apache.commons.lang3.BooleanUtils;
 import org.apache.commons.lang3.ObjectUtils;
 import org.apache.commons.lang3.StringUtils;
+import org.apache.commons.lang3.exception.ExceptionUtils;
 import org.apache.commons.lang3.math.NumberUtils;
 import org.apache.poi.xssf.usermodel.XSSFCell;
 import org.nexial.commons.utils.EnvUtils;
@@ -754,7 +756,13 @@ public class ExecutionContext {
         try {
             return expression.process(text);
         } catch (ExpressionException e) {
-            ConsoleUtils.error(getRunId(), "Unable to process expression due to " + e.getMessage(), e);
+            String errorPrefix = "Unable to process expression due to ";
+            for (Throwable throwable : ExceptionUtils.getThrowableList(e.getCause())) {
+                if (throwable instanceof IOException) {
+                    throw new IllegalArgumentException(errorPrefix + throwable.getMessage());
+                }
+            }
+            ConsoleUtils.error(getRunId(), errorPrefix + e.getMessage(), e);
             return text;
         }
     }
