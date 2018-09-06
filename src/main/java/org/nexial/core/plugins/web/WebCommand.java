@@ -62,6 +62,7 @@ import org.openqa.selenium.WebDriver.Window;
 import org.openqa.selenium.interactions.Actions;
 import org.openqa.selenium.interactions.Locatable;
 import org.openqa.selenium.interactions.internal.Coordinates;
+import org.openqa.selenium.support.ui.ExpectedConditions;
 import org.openqa.selenium.support.ui.FluentWait;
 import org.openqa.selenium.support.ui.Quotes;
 import org.openqa.selenium.support.ui.Select;
@@ -135,7 +136,7 @@ public class WebCommand extends BaseCommand implements CanTakeScreenshot, CanLog
         logToBrowser = !browser.isRunChrome() && context.getBooleanData(OPT_BROWSER_CONSOLE_LOG, false);
 
         if (driver != null) {
-            waiter = new FluentWait<>(driver).withTimeout(Duration.ofMillis(context.getPollWaitMs()))
+            waiter = new FluentWait<>(driver).withTimeout(Duration.ofMillis(browserStabilityWaitMs))
                                              .pollingEvery(Duration.ofMillis(10))
                                              .ignoring(NoSuchElementException.class);
         }
@@ -1057,10 +1058,8 @@ public class WebCommand extends BaseCommand implements CanTakeScreenshot, CanLog
         requires(StringUtils.isNotBlank(text), "invalid title text", text);
 
         ensureReady();
-        return new StepResult(
-            waitForCondition(context.getPollWaitMs(),
-                             object -> StringUtils.equals(driver.getTitle(), text))
-        );
+        Boolean expectedTitleFound = waiter.until(ExpectedConditions.titleIs(text));
+        return new StepResult(expectedTitleFound, (expectedTitleFound ? "EXPECTED title " : "NOT ") + "found", null);
     }
 
     public StepResult selectWindow(String winId) { return selectWindowAndWait(winId, "2000"); }

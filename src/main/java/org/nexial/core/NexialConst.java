@@ -62,8 +62,8 @@ public final class NexialConst {
     public static final int DEF_UI_RENDER_WAIT_MS = 3000;
     public static final int MIN_STABILITY_WAIT_MS = 400;
     public static final int LAUNCHER_THREAD_COMPLETION_WAIT_MS = 1000;
-    public static final int ELEM_PRESENT_WAIT_MS = 1200;
-    public static final int MIN_LOADING_WAIT_MS = 50;
+    // public static final int ELEM_PRESENT_WAIT_MS = 1200;
+    // public static final int MIN_LOADING_WAIT_MS = 50;
     public static final long ONEDAY = 24 * 60 * 60 * 1000;
     public static final long THIRTYDAYS = ONEDAY * 30;
     public static final long ONEYEAR = ONEDAY * 365;

@@ -19,6 +19,7 @@ package org.nexial.core.service
 
 import org.apache.commons.io.FileUtils
 import org.apache.commons.lang3.StringUtils
+import org.nexial.core.NexialConst
 import org.nexial.core.NexialConst.Data.THIRD_PARTY_LOG_PATH
 import org.nexial.core.NexialConst.Project.resolveStandardPaths
 import org.nexial.core.NexialConst.SUBDIR_LOGS
@@ -70,7 +71,7 @@ open class ServiceLauncher : SpringBootServletInitializer() {
             val project = resolveProject()
 
             // 2. register log directory and system properties
-            System.setProperty(THIRD_PARTY_LOG_PATH, project.outPath + SUBDIR_LOGS)
+            System.setProperty(THIRD_PARTY_LOG_PATH, NexialConst.Project.appendLog(project.outPath) + SUBDIR_LOGS)
 
             // 3. new context
             val execDef = ExecutionDefinition()
