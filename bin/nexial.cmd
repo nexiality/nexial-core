@@ -35,14 +35,14 @@ if EXIST "%PROJECT_HOME%\nul" (
 REM setting additional Java runtime options and classpath
 
 REM determine if nexial is running locally or on server (changes screencapture logic)
-if "%NEXIAL_RUNMODE%"=="" set NEXIAL_RUNMODE=local
+REM if "%NEXIAL_RUNMODE%"=="" set NEXIAL_RUNMODE=local
 REM echo setting NEXIAL_RUNMODE as %NEXIAL_RUNMODE%
-set JAVA_OPT=%JAVA_OPT% -Dnexial.scope.executionMode=%NEXIAL_RUNMODE%
+REM set JAVA_OPT=%JAVA_OPT% -Dnexial.scope.executionMode=%NEXIAL_RUNMODE%
 
 REM determine the browser type to use for this run - THIS PROPERTY OVERWRITES THE SAME SETTING IN EXCEL
 REM - valid types are: firefox, chrome, ie, safari
-if NOT "%BROWSER_TYPE%"=="" (
-REM	echo setting BROWSER_TYPE as %BROWSER_TYPE%
+if NOT [%BROWSER_TYPE%]==[] (
+    REM	echo setting BROWSER_TYPE as %BROWSER_TYPE%
 	set JAVA_OPT=%JAVA_OPT% -Dnexial.browser=%BROWSER_TYPE%
 )
 
@@ -58,7 +58,7 @@ if [%CHROME_BIN%]==[] (
 	)
 )
 if NOT [%CHROME_BIN%]==[] (
-REM	echo setting CHROME_BIN as %CHROME_BIN%
+    REM	echo setting CHROME_BIN as %CHROME_BIN%
 	set JAVA_OPT=%JAVA_OPT% -Dwebdriver.chrome.bin=%CHROME_BIN%
 )
 
@@ -68,12 +68,17 @@ if [%FIREFOX_BIN%]==[] (
 	)
 )
 if NOT [%FIREFOX_BIN%]==[] (
-REM	echo setting FIREFOX_BIN as %FIREFOX_BIN%
+    REM	echo setting FIREFOX_BIN as %FIREFOX_BIN%
 	set JAVA_OPT=%JAVA_OPT% -Dwebdriver.firefox.bin=%FIREFOX_BIN%
 )
 
 REM interactive mode support
-if NOT "%NEXIAL_INTERACTIVE%"=="" set JAVA_OPT=$JAVA_OPT -Dnexial.interactive=%NEXIAL_INTERACTIVE%
+REM if NOT "%NEXIAL_INTERACTIVE%"=="" set JAVA_OPT=$JAVA_OPT -Dnexial.interactive=%NEXIAL_INTERACTIVE%
+
+REM	support environment default for output base directory
+if NOT [%NEXIAL_OUTPUT%]==[] (
+	set JAVA_OPT=%JAVA_OPT% -Dnexial.defaultOutBase=%NEXIAL_OUTPUT%
+)
 
 REM run nexial now
 echo.

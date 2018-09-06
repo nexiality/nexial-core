@@ -56,6 +56,7 @@ repositories {
 	mavenLocal()
 	mavenCentral()
 	//	maven { url "http://www.dcm4che.org/maven2" }
+//	maven { url 'https://jitpack.io' }
 }
 
 bootRepackage { enabled = false }
@@ -133,7 +134,7 @@ dependencies {
 	compile("ch.qos.logback:logback-core:+")
 	compile("ch.qos.logback:logback-access:+")
 	compile("ch.qos.logback.contrib:logback-json-core:+")
-	compile("ch.qos.logback.contrib:logback-mongodb-core:+")
+	//	compile("ch.qos.logback.contrib:logback-mongodb-core:+")
 
 	// support: aws
 	compile("com.amazonaws:aws-java-sdk-core:+")
@@ -154,9 +155,9 @@ dependencies {
 	compile("org.apache.pdfbox:xmpbox:+")
 
 	// support: poi/msoffice
-	compile("org.apache.poi:poi:+")
-	compile("org.apache.poi:poi-ooxml:+")
-	compile("org.apache.poi:poi-ooxml-schemas:+")
+	compile("org.apache.poi:poi:${poiVersion}")
+	compile("org.apache.poi:poi-ooxml:${poiVersion}")
+	compile("org.apache.poi:poi-ooxml-schemas:${poiVersion}")
 
 	// support: json
 	compile("org.json:json:${jsonVersion}")
@@ -175,8 +176,6 @@ dependencies {
 	compile("org.ini4j:ini4j:+")
 
 	// support: data sources
-	compile("org.mongodb:mongo-java-driver:+")
-	compile("org.mongodb:mongodb-driver-async:+")
 	// compile("org.mongodb:mongodb-driver-async:${mongoDriverVersion}") { force = true }
 	compile("mysql:mysql-connector-java:${mysqlVersion}")
 	compile("org.postgresql:postgresql:+")

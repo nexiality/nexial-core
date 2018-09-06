@@ -30,7 +30,7 @@ fi
 # determine the browser type to use for this run - THIS PROPERTY OVERWRITES THE SAME SETTING IN EXCEL
 # - valid types are: firefox, chrome, ie, safari
 if [ "${BROWSER_TYPE}" != "" ]; then
-	echo "setting BROWSER_TYPE as ${BROWSER_TYPE}"
+	echo "setting nexial.browser as ${BROWSER_TYPE}"
 	JAVA_OPT="${JAVA_OPT} -Dnexial.browser=${BROWSER_TYPE}"
 fi
 
@@ -54,9 +54,9 @@ fi
 echo "setting FIREFOX_BIN as ${FIREFOX_BIN}"
 
 # interactive mode support
-if [ "${NEXIAL_INTERACTIVE}" != "" ]; then
-	JAVA_OPT="$JAVA_OPT -Dnexial.interactive=${NEXIAL_INTERACTIVE}"
-fi
+#if [ "${NEXIAL_INTERACTIVE}" != "" ]; then
+#    JAVA_OPT="$JAVA_OPT -Dnexial.interactive=${NEXIAL_INTERACTIVE}"
+#fi
 
 # --------------------------------------------------------------------------------
 # run nexial now
@@ -70,6 +70,7 @@ ${JAVA} \
 	 ${JAVA_OPT} \
 	 -Dwebdriver.chrome.bin="${CHROME_BIN}" \
 	 -Dwebdriver.firefox.bin="${FIREFOX_BIN}" \
+	 -Dnexial.defaultOutBase="${NEXIAL_OUTPUT}" \
   org.nexial.core.Nexial $*
 rc=$?
 set +x

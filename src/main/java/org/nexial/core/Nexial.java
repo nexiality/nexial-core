@@ -195,6 +195,7 @@ public class Nexial {
 
     @SuppressWarnings("PMD.DoNotCallSystemExit")
     public static void main(String[] args) {
+        // enforce "unlimited" crypto strength for NexialSetup
         Security.setProperty("crypto.policy", "unlimited");
 
         Nexial main = null;
@@ -211,9 +212,7 @@ public class Nexial {
             System.exit(-1);
         }
 
-        if (main.isIntegrationMode()) {
-            return;
-        }
+        if (main.isIntegrationMode()) { return; }
 
         if (main.isListenMode()) {
             try {
@@ -246,13 +245,18 @@ public class Nexial {
     protected boolean isIntegrationMode() { return integrationMode; }
 
     protected Options addMsaOptions(Options options) {
-        options.addOption("listen", true, "start Nexial in listen mode");
-        options.addOption("listenCode", true, "establish listener/receiver handshake");
-        return options;
+        Options optionsAdded = new Options();
+        options.getOptions().forEach(optionsAdded::addOption);
+        optionsAdded.addOption("listen", true, "start Nexial in listen mode on the specified port");
+        optionsAdded.addOption("listenCode", true, "establish listener/receiver handshake");
+        optionsAdded.addOption(ANNOUNCE, true, "the output directory path to announce the automation " +
+                                               "report over collaboration tools");
+        return optionsAdded;
     }
 
     /** read from the commandline and derive the intended execution order. */
     protected void init(String[] args) throws IOException, ParseException {
+        // collect execution-time arguments so that we can display them in output
         System.setProperty(SCRIPT_REF_PREFIX + "runtime args", String.join(" ", args));
         List<String> inputArgs = ManagementFactory.getRuntimeMXBean().getInputArguments();
         String argsList = inputArgs.stream().filter(arg -> arg.startsWith("-D") && !arg.startsWith("-Dwebdriver.")
@@ -618,7 +622,17 @@ public class Nexial {
         if (StringUtils.isNotBlank(outputPath)) { project.setOutPath(outputPath); }
 
         String outPath = project.getOutPath();
-        if (StringUtils.isBlank(outPath)) { fail("output location cannot be resolved."); }
+        if (StringUtils.isBlank(outPath)) {
+            // one last try: consider environment setup (NEXIAL_OUTPUT), if defined
+            // nexial.cmd|sh converts NEXIAL_OUTPUT to -Dnexial.defaultOutBase
+            if (StringUtils.isNotBlank(System.getProperty(OPT_DEF_OUT_DIR))) {
+                outPath = System.getProperty(OPT_DEF_OUT_DIR);
+                project.setOutPath(outPath);
+            } else {
+                fail("output location cannot be resolved.");
+            }
+        }
+
         if (FileUtil.isFileReadable(outPath)) {
             fail("output location (" + outPath + ") cannot be accessed as a directory.");
         }

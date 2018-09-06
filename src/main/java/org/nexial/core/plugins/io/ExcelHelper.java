@@ -33,6 +33,7 @@ import org.apache.poi.hssf.usermodel.HSSFSheet;
 import org.apache.poi.hssf.usermodel.HSSFWorkbook;
 import org.apache.poi.poifs.filesystem.POIFSFileSystem;
 import org.apache.poi.ss.usermodel.Cell;
+import org.apache.poi.ss.usermodel.CellType;
 import org.apache.poi.xssf.usermodel.XSSFCell;
 import org.apache.poi.xssf.usermodel.XSSFRow;
 import org.apache.poi.xssf.usermodel.XSSFSheet;
@@ -42,7 +43,8 @@ import org.nexial.core.model.StepResult;
 import org.nexial.core.utils.ConsoleUtils;
 
 import static java.lang.System.lineSeparator;
-import static org.apache.poi.ss.usermodel.Cell.*;
+import static org.apache.poi.ss.usermodel.CellType.NUMERIC;
+import static org.apache.poi.ss.usermodel.CellType.STRING;
 import static org.nexial.core.NexialConst.DEF_CHARSET;
 
 public class ExcelHelper {
@@ -138,17 +140,17 @@ public class ExcelHelper {
 
     protected String returnCellValue(Cell cell) {
         try {
-            switch (cell.getCellType()) {
-                case CELL_TYPE_STRING:
-                case CELL_TYPE_BOOLEAN:
+            switch (cell.getCellTypeEnum()) {
+                case STRING:
+                case BOOLEAN:
                     return cell.getRichStringCellValue().toString();
-                case CELL_TYPE_NUMERIC:
+                case NUMERIC:
                     return formattedCellToString(cell);
-                case CELL_TYPE_FORMULA:
-                    int resultType = cell.getCachedFormulaResultType();
-                    if (resultType == CELL_TYPE_STRING) {
+                case FORMULA:
+                    CellType resultType = cell.getCachedFormulaResultTypeEnum();
+                    if (resultType == STRING) {
                         return cell.getRichStringCellValue().toString();
-                    } else if (resultType == CELL_TYPE_NUMERIC) {
+                    } else if (resultType == NUMERIC) {
                         return formattedCellToString(cell);
                     } else {
                         return cell.getStringCellValue();

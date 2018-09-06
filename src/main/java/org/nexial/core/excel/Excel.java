@@ -51,9 +51,8 @@ import org.nexial.core.utils.ConsoleUtils;
 import static java.io.File.separator;
 import static org.apache.commons.lang3.SystemUtils.*;
 import static org.apache.poi.ss.SpreadsheetVersion.EXCEL2007;
-import static org.apache.poi.ss.usermodel.Cell.CELL_TYPE_BLANK;
-import static org.apache.poi.ss.usermodel.CellType.ERROR;
-import static org.apache.poi.ss.usermodel.CellType.STRING;
+import static org.apache.poi.ss.usermodel.CellType.BLANK;
+import static org.apache.poi.ss.usermodel.CellType.*;
 import static org.apache.poi.ss.usermodel.Row.MissingCellPolicy.CREATE_NULL_AS_BLANK;
 import static org.apache.poi.ss.usermodel.Row.MissingCellPolicy.RETURN_BLANK_AS_NULL;
 import static org.nexial.core.NexialConst.Data.*;
@@ -167,8 +166,8 @@ public class Excel {
             assert style != null;
 
             XSSFCell cell = firstCell(addr);
-            int cellType = cell.getCellType();
-            if (cellType == CELL_TYPE_BLANK) {
+            CellType cellType = cell.getCellTypeEnum();
+            if (cellType == BLANK) {
                 setValue(cell, appendWith, style);
                 return cell;
             }
@@ -407,8 +406,8 @@ public class Excel {
         }
 
         /**
-         * find the next empty row immediately after the specified {@code startCellAddr}.  The scope of a row is defined by
-         * the {@code startCellAddr}.
+         * find the next empty row immediately after the specified {@code startCellAddr}.  The scope of a row is
+         * defined by the {@code startCellAddr}.
          */
         public int findNextEntirelyEmptyRow(ExcelAddress startCellAddr) {
             assert startCellAddr != null;
@@ -1074,7 +1073,7 @@ public class Excel {
         if (file == null || !file.exists() || !file.canRead()) { return null; }
 
         File tmpDir = SystemUtils.getJavaIoTmpDir();
-        // use random alphanum to avoid collision in parallel processing
+        // use random alphabetic to avoid collision in parallel processing
         File tmpFile = new File((tmpDir.getAbsolutePath() + separator +
                                  RandomStringUtils.randomAlphabetic(5)) + separator +
                                 file.getName());

@@ -85,6 +85,11 @@ public final class NexialConst {
     public static final String OPT_SCRIPT_DIR = NAMESPACE + "scriptBase";
     public static final String OPT_PROJECT_BASE = NAMESPACE + "projectBase";
     public static final String OPT_PROJECT_NAME = NAMESPACE + "project";
+    // special System variable to allow user-defined output directory for ALL executions, except those explicitly
+    // stated as commandline argument during execution (i.e. -output ...)
+    // this System variable is being set up in nexial.sh|cmd upon detecting an Environment variable named as
+    // `NEXIAL_OUTPUT`
+    public static final String OPT_DEF_OUT_DIR = NAMESPACE + "defaultOutBase";
 
     // testcase specific
     public static final String TEST_START_TS = "testsuite.startTs";
@@ -557,7 +562,7 @@ public final class NexialConst {
                 project.setArtifactPath(projectHome + separator + DEF_REL_LOC_ARTIFACT);
                 project.setDataPath(projectHome + separator + DEF_REL_LOC_TEST_DATA);
                 project.setPlanPath(projectHome + separator + DEF_REL_LOC_TEST_PLAN);
-                project.setOutPath(projectHome + separator + DEF_REL_LOC_OUTPUT);
+                project.setOutPath(System.getProperty(OPT_DEF_OUT_DIR, projectHome + separator + DEF_REL_LOC_OUTPUT));
             }
 
             return project;
@@ -604,8 +609,6 @@ public final class NexialConst {
                                                  "name=value. Multiple overrides are supported via multiple " +
                                                  "-" + OVERRIDE + " name=value declarations. Note that variable name " +
                                                  "or value with spaces must be enclosed in double quotes.");
-            // cmdOptions.addOption(ANNOUNCE, true, "[REQUIRED] the output directory path to announce " +
-            //                                      "the automation report over collaboration tools");
             return cmdOptions;
         }
     }
