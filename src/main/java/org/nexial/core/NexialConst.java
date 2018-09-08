@@ -562,7 +562,8 @@ public final class NexialConst {
                 project.setArtifactPath(projectHome + separator + DEF_REL_LOC_ARTIFACT);
                 project.setDataPath(projectHome + separator + DEF_REL_LOC_TEST_DATA);
                 project.setPlanPath(projectHome + separator + DEF_REL_LOC_TEST_PLAN);
-                project.setOutPath(System.getProperty(OPT_DEF_OUT_DIR, projectHome + separator + DEF_REL_LOC_OUTPUT));
+                project.setOutPath(StringUtils.defaultIfBlank(System.getProperty(OPT_DEF_OUT_DIR),
+                                                              projectHome + separator + DEF_REL_LOC_OUTPUT));
             }
 
             return project;
