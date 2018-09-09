@@ -24,17 +24,21 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
+import javax.validation.constraints.NotNull;
 
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang3.ArrayUtils;
+import org.apache.commons.lang3.BooleanUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.nexial.commons.utils.CollectionUtil;
 import org.nexial.commons.utils.FileUtil;
 import org.nexial.commons.utils.TextUtils;
+import org.nexial.core.ExecutionThread;
 import org.nexial.core.excel.Excel;
 import org.nexial.core.excel.Excel.Worksheet;
 import org.nexial.core.excel.ExcelAddress;
+import org.nexial.core.model.ExecutionContext;
 import org.nexial.core.utils.ConsoleUtils;
 
 public class ExcelTransformer<T extends ExcelDataType> extends Transformer {
@@ -85,6 +89,7 @@ public class ExcelTransformer<T extends ExcelDataType> extends Transformer {
         return data;
     }
 
+    @NotNull
     public T transpose(T data) {
         requireAfterRead(data, "transpose()");
 
@@ -92,32 +97,15 @@ public class ExcelTransformer<T extends ExcelDataType> extends Transformer {
         return data;
     }
 
-    public CsvDataType csv(T data) throws TypeConversionException {
-        requireAfterRead(data, "csv()");
+    @NotNull
+    public CsvDataType csv(T data) throws TypeConversionException { return toCsv(data, false); }
 
-        StringBuilder csvBuffer = new StringBuilder();
+    @NotNull
+    public CsvDataType csvWithHeader(T data) throws TypeConversionException { return toCsv(data, true); }
 
-        String delim = ",";
-        String recordDelim = "\r\n";
-
-        List<List<String>> capturedValues = data.getCapturedValues();
-        capturedValues.forEach(row -> {
-            StringBuilder rowBuffer = new StringBuilder();
-            row.forEach(cell -> rowBuffer.append(cell).append(delim));
-            csvBuffer.append(StringUtils.removeEnd(rowBuffer.toString(), delim)).append(recordDelim);
-        });
-
-        CsvDataType csv = new CsvDataType(StringUtils.removeEnd(csvBuffer.toString(), recordDelim));
-        // try {
-        csv.setRecordDelim(recordDelim);
-        csv.setDelim(delim);
-        csv.setHeader(false);
-        csv.setReadyToParse(true);
-        csv.parse();
-        return csv;
-        // } catch (IOException e) {
-        //     throw new TypeConversionException(csv.getName(), csv.getTextValue(), e.getMessage(), e);
-        // }
+    @NotNull
+    public JsonDataType json(T data, String firstRowAsHeader) throws TypeConversionException {
+        return new CsvTransformer<>().json(toCsv(data, BooleanUtils.toBoolean(firstRowAsHeader)));
     }
 
     public T save(T data, String file, String sheet, String start) throws IOException {
@@ -233,6 +221,33 @@ public class ExcelTransformer<T extends ExcelDataType> extends Transformer {
 
     @Override
     Map<String, Method> listSupportedMethods() { return FUNCTIONS; }
+
+    @NotNull
+    protected CsvDataType toCsv(T data, boolean withHeader) throws TypeConversionException {
+        requireAfterRead(data, withHeader ? "csvWithHeader" : "csv()");
+
+        StringBuilder csvBuffer = new StringBuilder();
+
+        ExecutionContext context = ExecutionThread.get();
+        String delim = context == null ? "," : context.getTextDelim();
+        String recordDelim = "\r\n";
+
+        List<List<String>> capturedValues = data.getCapturedValues();
+        capturedValues.forEach(row -> {
+            StringBuilder rowBuffer = new StringBuilder();
+            row.forEach(cell -> rowBuffer.append(cell).append(delim));
+            csvBuffer.append(StringUtils.removeEnd(rowBuffer.toString(), delim)).append(recordDelim);
+        });
+
+        CsvDataType csv = new CsvDataType(StringUtils.removeEnd(csvBuffer.toString(), recordDelim));
+        csv.setRecordDelim(recordDelim);
+        csv.setDelim(delim);
+        csv.setHeader(withHeader);
+        csv.setReadyToParse(true);
+        csv.parse();
+
+        return csv;
+    }
 
     // todo?
     // public ExcelDataType deleteRow(ExcelDataType data, String row) { }

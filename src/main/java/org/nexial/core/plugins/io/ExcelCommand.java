@@ -25,6 +25,7 @@ import java.util.*;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.collections4.MapUtils;
 import org.apache.commons.lang3.ArrayUtils;
+import org.apache.commons.lang3.BooleanUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.text.StrTokenizer;
 import org.apache.poi.xssf.usermodel.XSSFCell;
@@ -162,6 +163,34 @@ public class ExcelCommand extends BaseCommand {
         deriveExcel(file).requireWorksheet(worksheet, true).writeDown(new ExcelAddress(startCell), columns);
 
         return StepResult.success("Data saved to " + file + "#" + worksheet);
+    }
+
+    public StepResult csv(String file, String worksheet, String range, String output) {
+        requiresReadableFile(file);
+        requiresNotBlank(worksheet, "Invalid worksheet", worksheet);
+        requiresNotBlank(range, "Invalid range", range);
+        requiresNotBlank(output, "Invalid CSV output", output);
+
+        context.replaceTokens("[EXCEL(" + file + ") => " +
+                              " read(" + worksheet + "," + range + ")" +
+                              " csv" +
+                              " save(" + output + ")" +
+                              "]");
+        return StepResult.success("Excel content from " + worksheet + "," + range + " saved to " + output);
+    }
+
+    public StepResult json(String file, String worksheet, String range, String header, String output) {
+        requiresReadableFile(file);
+        requiresNotBlank(worksheet, "Invalid worksheet", worksheet);
+        requiresNotBlank(range, "Invalid range", range);
+        requiresNotBlank(output, "Invalid CSV output", output);
+
+        context.replaceTokens("[EXCEL(" + file + ") => " +
+                              " read(" + worksheet + "," + range + ")" +
+                              " json(" + BooleanUtils.toBoolean(header) + ")" +
+                              " save(" + output + ")" +
+                              "]");
+        return StepResult.success("Excel content from " + worksheet + "," + range + " saved to " + output);
     }
 
     protected Excel deriveExcel(String file) throws IOException { return new Excel(deriveReadableFile(file)); }

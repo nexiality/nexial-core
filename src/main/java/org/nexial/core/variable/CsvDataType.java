@@ -19,6 +19,7 @@ package org.nexial.core.variable;
 
 import java.io.StringReader;
 import java.util.*;
+import javax.validation.constraints.NotNull;
 
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.collections4.MapUtils;
@@ -163,9 +164,11 @@ public class CsvDataType extends ExpressionDataType<List<Record>> {
         resetTextValue();
     }
 
+    @NotNull
     @Override
-    Transformer getTransformer() { return transformer; }
+    CsvTransformer getTransformer() { return transformer; }
 
+    @NotNull
     @Override
     CsvDataType snapshot() {
         CsvDataType snapshot = new CsvDataType();

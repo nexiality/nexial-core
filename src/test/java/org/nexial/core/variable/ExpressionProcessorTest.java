@@ -31,6 +31,7 @@ import org.apache.commons.lang3.math.NumberUtils;
 import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
+import org.junit.FixMethodOrder;
 import org.junit.Test;
 import org.nexial.commons.utils.ResourceUtils;
 import org.nexial.core.NexialTestUtils;
@@ -46,8 +47,10 @@ import org.nexial.core.plugins.db.RdbmsCommand;
 import static java.io.File.separator;
 import static org.hamcrest.Matchers.*;
 import static org.junit.Assert.assertThat;
+import static org.junit.runners.MethodSorters.NAME_ASCENDING;
 import static org.nexial.core.NexialConst.FlowControls.ANY_FIELD;
 
+@FixMethodOrder(value = NAME_ASCENDING)
 public class ExpressionProcessorTest {
     private DataAccess da = initDataAccess();
     private ExecutionContext context = new MockExecutionContext(true) {
@@ -511,7 +514,7 @@ public class ExpressionProcessorTest {
     }
 
     @Test
-    public void processDateMath() throws  Exception {
+    public void processDateMath() throws Exception {
         ExpressionProcessor subject = new ExpressionProcessor(context);
 
         String fixture = "[DATE(2018/04/01,yyyy/MM/dd) => text]";
@@ -570,7 +573,6 @@ public class ExpressionProcessorTest {
         // fixture = "[DATE(2017/05/01,yyyy/MM/dd) => addYear(2) setMonth(8) setDOW(2) text]";
         // result = subject.process(fixture);
         // Assert.assertEquals("2019/07/29", result);
-
 
     }
 
@@ -2827,6 +2829,262 @@ public class ExpressionProcessorTest {
 
         assertThat(subject.process("[EXCEL(excel4) => pack transpose csv parse(header=true) rowCount]"),
                    allOf(is(not(nullValue())), is(equalTo("8"))));
+    }
+
+    @Test
+    public void processExcel_csv() throws Exception {
+        String fixtureBase = resourcePath + this.getClass().getSimpleName();
+        String file = ResourceUtils.getResourceFilePath(fixtureBase + "9.xlsx");
+        ExpressionProcessor subject = new ExpressionProcessor(context);
+
+        assertThat(subject.process("[EXCEL(" + file + ") => read(list45,A1:F13) csv]"),
+                   allOf(is(not(nullValue())),
+                         is(equalTo("number1,group,bus type,prod type,fid,misc\r\n" +
+                                    "69898,1,PP,30 min series,,\r\n" +
+                                    "28520,1,PP,theat,,\r\n" +
+                                    "15970,1,PP,mow,,\r\n" +
+                                    "1,1,RS,residuals,,\r\n" +
+                                    "76990,1,CS,casting,27,postage\r\n" +
+                                    "78277,1,CS,casting,47,\r\n" +
+                                    "78294,1,MS,music,,\r\n" +
+                                    "16041,1,CM,comm,,\r\n" +
+                                    "74546,6,PP,group 6,,\r\n" +
+                                    "39503,2000,PP,agency,2,\r\n" +
+                                    "16042,1,CM,comm,,\r\n" +
+                                    "75341,1,PP,1 hr series,,accrue w/c"))));
+
+        assertThat(subject.process("[EXCEL(" + file + ") => read(list45,A1:F13) csvWithHeader()]"),
+                   allOf(is(not(nullValue())),
+                         is(equalTo("number1,group,bus type,prod type,fid,misc\r\n" +
+                                    "69898,1,PP,30 min series,,\r\n" +
+                                    "28520,1,PP,theat,,\r\n" +
+                                    "15970,1,PP,mow,,\r\n" +
+                                    "1,1,RS,residuals,,\r\n" +
+                                    "76990,1,CS,casting,27,postage\r\n" +
+                                    "78277,1,CS,casting,47,\r\n" +
+                                    "78294,1,MS,music,,\r\n" +
+                                    "16041,1,CM,comm,,\r\n" +
+                                    "74546,6,PP,group 6,,\r\n" +
+                                    "39503,2000,PP,agency,2,\r\n" +
+                                    "16042,1,CM,comm,,\r\n" +
+                                    "75341,1,PP,1 hr series,,accrue w/c"))));
+    }
+
+    @Test
+    public void processExcel_json() throws Exception {
+        String fixtureBase = resourcePath + this.getClass().getSimpleName();
+        String file = ResourceUtils.getResourceFilePath(fixtureBase + "9.xlsx");
+        ExpressionProcessor subject = new ExpressionProcessor(context);
+
+        assertThat(subject.process("[EXCEL(" + file + ") => read(list45,A1:F13) json(false)]"),
+                   allOf(is(not(nullValue())),
+                         is(equalTo("[\n" +
+                                    "  [\n" +
+                                    "    \"number1\",\n" +
+                                    "    \"group\",\n" +
+                                    "    \"bus type\",\n" +
+                                    "    \"prod type\",\n" +
+                                    "    \"fid\",\n" +
+                                    "    \"misc\"\n" +
+                                    "  ],\n" +
+                                    "  [\n" +
+                                    "    \"69898\",\n" +
+                                    "    \"1\",\n" +
+                                    "    \"PP\",\n" +
+                                    "    \"30 min series\",\n" +
+                                    "    \"\",\n" +
+                                    "    \"\"\n" +
+                                    "  ],\n" +
+                                    "  [\n" +
+                                    "    \"28520\",\n" +
+                                    "    \"1\",\n" +
+                                    "    \"PP\",\n" +
+                                    "    \"theat\",\n" +
+                                    "    \"\",\n" +
+                                    "    \"\"\n" +
+                                    "  ],\n" +
+                                    "  [\n" +
+                                    "    \"15970\",\n" +
+                                    "    \"1\",\n" +
+                                    "    \"PP\",\n" +
+                                    "    \"mow\",\n" +
+                                    "    \"\",\n" +
+                                    "    \"\"\n" +
+                                    "  ],\n" +
+                                    "  [\n" +
+                                    "    \"1\",\n" +
+                                    "    \"1\",\n" +
+                                    "    \"RS\",\n" +
+                                    "    \"residuals\",\n" +
+                                    "    \"\",\n" +
+                                    "    \"\"\n" +
+                                    "  ],\n" +
+                                    "  [\n" +
+                                    "    \"76990\",\n" +
+                                    "    \"1\",\n" +
+                                    "    \"CS\",\n" +
+                                    "    \"casting\",\n" +
+                                    "    \"27\",\n" +
+                                    "    \"postage\"\n" +
+                                    "  ],\n" +
+                                    "  [\n" +
+                                    "    \"78277\",\n" +
+                                    "    \"1\",\n" +
+                                    "    \"CS\",\n" +
+                                    "    \"casting\",\n" +
+                                    "    \"47\",\n" +
+                                    "    \"\"\n" +
+                                    "  ],\n" +
+                                    "  [\n" +
+                                    "    \"78294\",\n" +
+                                    "    \"1\",\n" +
+                                    "    \"MS\",\n" +
+                                    "    \"music\",\n" +
+                                    "    \"\",\n" +
+                                    "    \"\"\n" +
+                                    "  ],\n" +
+                                    "  [\n" +
+                                    "    \"16041\",\n" +
+                                    "    \"1\",\n" +
+                                    "    \"CM\",\n" +
+                                    "    \"comm\",\n" +
+                                    "    \"\",\n" +
+                                    "    \"\"\n" +
+                                    "  ],\n" +
+                                    "  [\n" +
+                                    "    \"74546\",\n" +
+                                    "    \"6\",\n" +
+                                    "    \"PP\",\n" +
+                                    "    \"group 6\",\n" +
+                                    "    \"\",\n" +
+                                    "    \"\"\n" +
+                                    "  ],\n" +
+                                    "  [\n" +
+                                    "    \"39503\",\n" +
+                                    "    \"2000\",\n" +
+                                    "    \"PP\",\n" +
+                                    "    \"agency\",\n" +
+                                    "    \"2\",\n" +
+                                    "    \"\"\n" +
+                                    "  ],\n" +
+                                    "  [\n" +
+                                    "    \"16042\",\n" +
+                                    "    \"1\",\n" +
+                                    "    \"CM\",\n" +
+                                    "    \"comm\",\n" +
+                                    "    \"\",\n" +
+                                    "    \"\"\n" +
+                                    "  ],\n" +
+                                    "  [\n" +
+                                    "    \"75341\",\n" +
+                                    "    \"1\",\n" +
+                                    "    \"PP\",\n" +
+                                    "    \"1 hr series\",\n" +
+                                    "    \"\",\n" +
+                                    "    \"accrue w/c\"\n" +
+                                    "  ]\n" +
+                                    "]"))));
+
+        assertThat(subject.process("[EXCEL(" + file + ") => read(list45,A1:F13) json(true)]"),
+                   allOf(is(not(nullValue())),
+                         is(equalTo("[\n" +
+                                    "  {\n" +
+                                    "    \"number1\": \"69898\",\n" +
+                                    "    \"group\": \"1\",\n" +
+                                    "    \"bus type\": \"PP\",\n" +
+                                    "    \"prod type\": \"30 min series\",\n" +
+                                    "    \"fid\": \"\",\n" +
+                                    "    \"misc\": \"\"\n" +
+                                    "  },\n" +
+                                    "  {\n" +
+                                    "    \"number1\": \"28520\",\n" +
+                                    "    \"group\": \"1\",\n" +
+                                    "    \"bus type\": \"PP\",\n" +
+                                    "    \"prod type\": \"theat\",\n" +
+                                    "    \"fid\": \"\",\n" +
+                                    "    \"misc\": \"\"\n" +
+                                    "  },\n" +
+                                    "  {\n" +
+                                    "    \"number1\": \"15970\",\n" +
+                                    "    \"group\": \"1\",\n" +
+                                    "    \"bus type\": \"PP\",\n" +
+                                    "    \"prod type\": \"mow\",\n" +
+                                    "    \"fid\": \"\",\n" +
+                                    "    \"misc\": \"\"\n" +
+                                    "  },\n" +
+                                    "  {\n" +
+                                    "    \"number1\": \"1\",\n" +
+                                    "    \"group\": \"1\",\n" +
+                                    "    \"bus type\": \"RS\",\n" +
+                                    "    \"prod type\": \"residuals\",\n" +
+                                    "    \"fid\": \"\",\n" +
+                                    "    \"misc\": \"\"\n" +
+                                    "  },\n" +
+                                    "  {\n" +
+                                    "    \"number1\": \"76990\",\n" +
+                                    "    \"group\": \"1\",\n" +
+                                    "    \"bus type\": \"CS\",\n" +
+                                    "    \"prod type\": \"casting\",\n" +
+                                    "    \"fid\": \"27\",\n" +
+                                    "    \"misc\": \"postage\"\n" +
+                                    "  },\n" +
+                                    "  {\n" +
+                                    "    \"number1\": \"78277\",\n" +
+                                    "    \"group\": \"1\",\n" +
+                                    "    \"bus type\": \"CS\",\n" +
+                                    "    \"prod type\": \"casting\",\n" +
+                                    "    \"fid\": \"47\",\n" +
+                                    "    \"misc\": \"\"\n" +
+                                    "  },\n" +
+                                    "  {\n" +
+                                    "    \"number1\": \"78294\",\n" +
+                                    "    \"group\": \"1\",\n" +
+                                    "    \"bus type\": \"MS\",\n" +
+                                    "    \"prod type\": \"music\",\n" +
+                                    "    \"fid\": \"\",\n" +
+                                    "    \"misc\": \"\"\n" +
+                                    "  },\n" +
+                                    "  {\n" +
+                                    "    \"number1\": \"16041\",\n" +
+                                    "    \"group\": \"1\",\n" +
+                                    "    \"bus type\": \"CM\",\n" +
+                                    "    \"prod type\": \"comm\",\n" +
+                                    "    \"fid\": \"\",\n" +
+                                    "    \"misc\": \"\"\n" +
+                                    "  },\n" +
+                                    "  {\n" +
+                                    "    \"number1\": \"74546\",\n" +
+                                    "    \"group\": \"6\",\n" +
+                                    "    \"bus type\": \"PP\",\n" +
+                                    "    \"prod type\": \"group 6\",\n" +
+                                    "    \"fid\": \"\",\n" +
+                                    "    \"misc\": \"\"\n" +
+                                    "  },\n" +
+                                    "  {\n" +
+                                    "    \"number1\": \"39503\",\n" +
+                                    "    \"group\": \"2000\",\n" +
+                                    "    \"bus type\": \"PP\",\n" +
+                                    "    \"prod type\": \"agency\",\n" +
+                                    "    \"fid\": \"2\",\n" +
+                                    "    \"misc\": \"\"\n" +
+                                    "  },\n" +
+                                    "  {\n" +
+                                    "    \"number1\": \"16042\",\n" +
+                                    "    \"group\": \"1\",\n" +
+                                    "    \"bus type\": \"CM\",\n" +
+                                    "    \"prod type\": \"comm\",\n" +
+                                    "    \"fid\": \"\",\n" +
+                                    "    \"misc\": \"\"\n" +
+                                    "  },\n" +
+                                    "  {\n" +
+                                    "    \"number1\": \"75341\",\n" +
+                                    "    \"group\": \"1\",\n" +
+                                    "    \"bus type\": \"PP\",\n" +
+                                    "    \"prod type\": \"1 hr series\",\n" +
+                                    "    \"fid\": \"\",\n" +
+                                    "    \"misc\": \"accrue w/c\"\n" +
+                                    "  }\n" +
+                                    "]"))));
     }
 
     @Test

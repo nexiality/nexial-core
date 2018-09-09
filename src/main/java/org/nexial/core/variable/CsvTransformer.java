@@ -458,6 +458,7 @@ public class CsvTransformer<T extends CsvDataType> extends Transformer {
         return count;
     }
 
+    @NotNull
     public JsonDataType json(T data) throws TypeConversionException {
         JsonDataType jsonDataType = new JsonDataType("{}");
         if (data == null || CollectionUtils.isEmpty(data.getValue())) { return jsonDataType; }
@@ -480,6 +481,7 @@ public class CsvTransformer<T extends CsvDataType> extends Transformer {
         return jsonDataType;
     }
 
+    @NotNull
     public XmlDataType xml(T data, String root, String row, String cell) throws TypeConversionException {
         if (StringUtils.isBlank(root)) { root = NODE_ROOT; }
         if (StringUtils.isBlank(row)) { row = NODE_ROW; }
@@ -523,6 +525,7 @@ public class CsvTransformer<T extends CsvDataType> extends Transformer {
         }
     }
 
+    @NotNull
     public T transpose(T data) {
         if (data == null || data.getValue() == null) { return null; }
 
