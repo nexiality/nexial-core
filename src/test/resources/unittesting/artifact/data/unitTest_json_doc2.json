@@ -1,0 +1,20 @@
+{
+    "type": "donut",
+    "topping": [
+        { "id": "5002", "type": "Glazed" },
+        { "id": "5003", "type": "Sugar" },
+        { "id": "5007", "type": "Powdered Sugar" },
+        { "id": "5006", "type": "Chocolate with Sprinkles" },
+        { "id": "5004", "type": "Maple" }
+    ],
+    "batters": {
+        "batter": [
+            { "id": "1001", "type": "Regular" },
+            { "id": "1002", "type": "Chocolatey" },
+            { "id": "1003", "type": "Blueberry" }
+        ]
+    }
+}
+
+
+

@@ -794,6 +794,9 @@ public final class NexialConst {
         public static final boolean DEF_LOG_MATCH = false;
         // public static final double DEF_COMPARE_TOLERANCE = 0.6;
 
+        // json
+        public static final String LAST_JSON_COMPARE_RESULT = NAMESPACE + "json.lastCompareResults";
+
         public static final String SSH_CLIENT_PREFIX = NAMESPACE + "ssh.";
         public static final String SSH_USERNAME = "username";
         public static final String SSH_PASSWORD = "password";

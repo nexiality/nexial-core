@@ -38,8 +38,11 @@ import com.github.fge.jsonschema.core.exceptions.ProcessingException;
 import com.github.fge.jsonschema.core.report.ProcessingReport;
 import com.github.fge.jsonschema.main.JsonSchema;
 import com.github.fge.jsonschema.main.JsonSchemaFactory;
+import com.google.gson.JsonParser;
 
 import static org.nexial.core.NexialConst.DEF_CHARSET;
+import static org.nexial.core.NexialConst.Data.LAST_JSON_COMPARE_RESULT;
+import static org.nexial.core.NexialConst.GSON;
 import static org.nexial.core.utils.CheckUtils.*;
 
 /**
@@ -50,6 +53,44 @@ public class JsonCommand extends BaseCommand {
 
     @Override
     public String getTarget() { return "json"; }
+
+    public StepResult assertEqual(String expected, String actual) {
+        requiresNotBlank(expected, "Invalid JSON", expected);
+        requiresNotBlank(actual, "Invalid JSON", actual);
+
+        String expectedJsonContent;
+        try {
+            expectedJsonContent = OutputFileUtils.resolveContent(expected, context, false, true);
+        } catch (IOException e) {
+            return StepResult.fail("EXPECTED json is invalid or not readable: " + e.getMessage());
+        }
+
+        String actualJsonContent;
+        try {
+            actualJsonContent = OutputFileUtils.resolveContent(actual, context, false, true);
+        } catch (IOException e) {
+            return StepResult.fail("ACTUAL json is invalid or not readable: " + e.getMessage());
+        }
+
+        JsonMetaParser jsonMetaParser = new JsonMetaParser();
+        JsonParser jsonParser = new JsonParser();
+        JsonMeta expectedMeta = jsonMetaParser.parse(jsonParser.parse(expectedJsonContent));
+        JsonMeta actualMeta = jsonMetaParser.parse(jsonParser.parse(actualJsonContent));
+        JsonComparisonResult results = expectedMeta.compare(actualMeta);
+
+        if (results.hasDifferences()) {
+            String differences = GSON.toJson(results.toJson());
+            context.setData(LAST_JSON_COMPARE_RESULT, differences);
+            ConsoleUtils.log("JSON differences found:\n" + differences);
+            addContentAsLink("JSON comparison resulted in " + results.differenceCount() + " differences",
+                             differences,
+                             "json");
+            return StepResult.fail("EXPECTED json is NOT equivalent to the ACTUAL json");
+        } else {
+            context.removeData(LAST_JSON_COMPARE_RESULT);
+            return StepResult.success("EXPECTED json is equivalent to the ACTUAL json");
+        }
+    }
 
     public StepResult assertElementPresent(String json, String jsonpath) {
         String match = find(json, jsonpath);
@@ -67,7 +108,7 @@ public class JsonCommand extends BaseCommand {
 
     public StepResult assertElementCount(String json, String jsonpath, String count) {
         int countInt = toPositiveInt(count, "count");
-        return assertEqual(countInt + "", count(json, jsonpath) + "");
+        return super.assertEqual(countInt + "", count(json, jsonpath) + "");
     }
 
     public StepResult storeValue(String json, String jsonpath, String var) {
@@ -117,7 +158,7 @@ public class JsonCommand extends BaseCommand {
     }
 
     public StepResult assertValue(String json, String jsonpath, String expected) {
-        return assertEqual(expected, find(json, jsonpath));
+        return super.assertEqual(expected, find(json, jsonpath));
     }
 
     public StepResult assertValues(String json, String jsonpath, String array, String exactOrder) {

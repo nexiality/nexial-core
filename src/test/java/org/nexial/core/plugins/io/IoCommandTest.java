@@ -26,6 +26,7 @@ import java.util.List;
 import java.util.Properties;
 
 import org.apache.commons.collections4.CollectionUtils;
+import org.apache.commons.collections4.map.HashedMap;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.filefilter.FalseFileFilter;
 import org.apache.commons.io.filefilter.IOFileFilter;
@@ -45,10 +46,13 @@ import org.nexial.core.model.ExecutionContext;
 import org.nexial.core.model.MockExecutionContext;
 import org.nexial.core.model.StepResult;
 import org.nexial.core.variable.Random;
+import org.nexial.core.variable.Sysdate;
+import org.nexial.core.variable.Syspath;
 
 import static java.io.File.separator;
 import static org.nexial.core.NexialConst.DEF_CHARSET;
 import static org.nexial.core.NexialConst.Data.LOG_MATCH;
+import static org.nexial.core.NexialConst.OPT_DATA_DIR;
 import static org.nexial.core.NexialConst.OPT_OUT_DIR;
 
 public class IoCommandTest {
@@ -62,7 +66,15 @@ public class IoCommandTest {
     private String basePath = StringUtils.appendIfMissing(SystemUtils.getJavaIoTmpDir().getAbsolutePath(), separator) +
                               this.getClass().getSimpleName() + separator;
 
-    private ExecutionContext context = new MockExecutionContext();
+    private ExecutionContext context = new MockExecutionContext() {
+        @Override
+        public String replaceTokens(String text) {
+            builtinFunctions = new HashedMap<>();
+            builtinFunctions.put("sysdate", new Sysdate());
+            builtinFunctions.put("syspath", new Syspath());
+            return super.replaceTokens(text);
+        }
+    };
 
     @Before
     public void setUp() throws IOException {
@@ -343,6 +355,30 @@ public class IoCommandTest {
         Assert.assertNotNull(fileContent);
         Assert.assertEquals(expectedLength, fileContent.length());
         Assert.assertTrue(fileContent.length() > 1000);
+    }
+
+    @Test
+    public void testReadFile_xml() throws Exception {
+        String resourceFile = "/org/nexial/core/plugins/io/IOCommandTest_1.xml";
+        String resource = ResourceUtils.getResourceFilePath(resourceFile);
+
+        System.setProperty(OPT_DATA_DIR, "~/tmp/nexial/artifact/data");
+
+        context.setData("ConfigFile", "$(syspath|data|fullpath)/Configurations.csv");
+        String varName = "testFile1";
+        IoCommand io = new IoCommand();
+        io.init(context);
+
+        StepResult result = io.readFile(varName, resource);
+        System.out.println("result = " + result);
+
+        Assert.assertNotNull(result);
+        Assert.assertTrue(result.isSuccess());
+
+        String fileContent = context.getStringData(varName);
+        System.out.println("fileContent = " + fileContent);
+        Assert.assertNotNull(fileContent);
+        Assert.assertTrue(StringUtils.contains(fileContent, "\\"));
     }
 
     @Test

@@ -31,6 +31,7 @@ import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
 import org.apache.commons.collections4.CollectionUtils;
+import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang3.ArrayUtils;
 import org.apache.commons.lang3.BooleanUtils;
 import org.apache.commons.lang3.StringUtils;
@@ -49,13 +50,16 @@ import org.nexial.core.plugins.NexialCommand;
 import org.nexial.core.tools.CommandDiscovery;
 import org.nexial.core.utils.CheckUtils;
 import org.nexial.core.utils.ConsoleUtils;
+import org.nexial.core.utils.OutputFileUtils;
+import org.nexial.core.variable.Syspath;
 
+import static java.io.File.separator;
 import static java.lang.Boolean.FALSE;
 import static java.lang.Boolean.TRUE;
 import static java.lang.System.lineSeparator;
 import static java.util.regex.Pattern.CASE_INSENSITIVE;
-import static org.nexial.core.NexialConst.Data.NULL;
 import static org.nexial.core.NexialConst.*;
+import static org.nexial.core.NexialConst.Data.NULL;
 import static org.nexial.core.excel.ExcelConfig.MSG_PASS;
 import static org.nexial.core.excel.ext.CipherHelper.CRYPT_IND;
 import static org.nexial.core.plugins.base.IncrementStrategy.ALPHANUM;
@@ -77,6 +81,7 @@ public class BaseCommand implements NexialCommand {
     protected transient ExecutionContext context;
     protected long pauseMs;
     protected transient ContextScreenRecorder screenRecorder;
+    private Syspath syspath = new Syspath();
 
     public BaseCommand() {
         collectCommandMethods();
@@ -1033,6 +1038,32 @@ public class BaseCommand implements NexialCommand {
 
     protected void error(String message, Throwable e) {
         if (StringUtils.isNotBlank(message)) { context.getLogger().error(this, message, e); }
+    }
+
+    /**
+     * create a file with {@code output} as its text content and its name based on current step and {@code extension}.
+     *
+     * to improve readability and user experience, use {@code caption} to describe such file on the execution output.
+     */
+    protected void addContentAsLink(String caption, String output, String extension) {
+        String outFile = syspath.out("fullpath") + separator +
+                         OutputFileUtils.generateOutputFilename(context.getCurrentTestStep(), extension);
+        File outputFile = new File(outFile);
+
+        try {
+            FileUtils.writeStringToFile(outputFile, output, DEF_FILE_ENCODING);
+            if (context.isOutputToCloud()) {
+                try {
+                    outFile = context.getOtc().importMedia(outputFile);
+                } catch (IOException e) {
+                    log("Unable to save " + outFile + " to cloud storage due to " + e.getMessage());
+                }
+            }
+
+            addLinkRef(caption, extension + " report", outFile);
+        } catch (IOException e) {
+            error("Unable to write log file to '" + outFile + "': " + e.getMessage(), e);
+        }
     }
 
     private Object[] resolveParamValues(Method m, String... params) {

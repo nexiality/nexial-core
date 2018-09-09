@@ -42,6 +42,7 @@ import org.slf4j.LoggerFactory;
 
 import com.cedarsoftware.util.io.JsonReader;
 import com.cedarsoftware.util.io.JsonWriter;
+import com.google.gson.JsonPrimitive;
 import com.jayway.jsonpath.Configuration;
 import com.jayway.jsonpath.Configuration.Defaults;
 import com.jayway.jsonpath.JsonPath;
@@ -227,6 +228,16 @@ public final class JsonUtils {
 
     public static String findByJsonPath(String json, String jsonPath) {
         return JsonPath.using(Configuration.defaultConfiguration()).parse(json).read(jsonPath);
+    }
+
+    public static String getPrimitiveType(JsonPrimitive value) {
+        if (value.isBoolean()) { return "boolean"; }
+        if (value.isNumber()) { return "number"; }
+        if (value.isString()) { return "text"; }
+        if (value.isJsonNull()) { return "null"; }
+        if (value.isJsonArray()) { return "array"; }
+        if (value.isJsonObject()) { return "object"; }
+        return "unknown";
     }
 
     protected static boolean isSimpleType(Object struct) {

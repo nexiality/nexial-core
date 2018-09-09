@@ -53,7 +53,6 @@ import org.nexial.core.plugins.filevalidation.validators.ErrorReport;
 import org.nexial.core.plugins.filevalidation.validators.MasterFileValidator;
 import org.nexial.core.utils.ConsoleUtils;
 import org.nexial.core.utils.OutputFileUtils;
-import org.nexial.core.variable.Syspath;
 
 import static java.io.File.separator;
 import static java.io.File.separatorChar;
@@ -72,7 +71,6 @@ public class IoCommand extends BaseCommand {
     private static final String TMP_EOL = "~~~5EntrY.w4z.hErE~~~";
     private static final List<String> MS_OFFICE_FILE_EXT = Arrays.asList("xlsx", "xls", "doc", "docx", "ppt", "pptx");
     private static final NumberFormat PERCENT_FORMAT = NumberFormat.getPercentInstance();
-    private Syspath syspath = new Syspath();
 
     enum CompareMode {FAIL_FAST, THOROUGH, DIFF}
 
@@ -802,34 +800,15 @@ public class IoCommand extends BaseCommand {
                     "Match percentage: " + IoCommand.formatPercent(report.getMatchPercent());
         }
 
-        String outFile = syspath.out("fullpath") + separator +
-                         OutputFileUtils.generateOutputFilename(context.getCurrentTestStep(), type);
         String output = null;
         if (StringUtils.equals(type, COMPARE_LOG_PLAIN)) { output = report.toPlainTextReport(); }
         if (StringUtils.equals(type, COMPARE_LOG_JSON)) { output = report.toJsonReport(); }
+        if (StringUtils.isEmpty(output)) { ConsoleUtils.error("logComparisonReport(): INVALID REPORT TYPE " + type); }
 
-        if (StringUtils.isEmpty(output)) {
-            ConsoleUtils.error("logComparisonReport(): INVALID REPORT TYPE " + type);
-        }
+        if (stats != null) { caption += lineSeparator() + stats; }
+        caption += " (click link on the right for details)";
 
-        File outputFile = new File(outFile);
-
-        try {
-            FileUtils.writeStringToFile(outputFile, output, DEF_FILE_ENCODING);
-            if (context.isOutputToCloud()) {
-                try {
-                    outFile = context.getOtc().importMedia(outputFile);
-                } catch (IOException e) {
-                    log("Unable to save " + outFile + " to cloud storage due to " + e.getMessage());
-                }
-            }
-
-            if (stats != null) { caption += lineSeparator() + stats; }
-            caption += " (click link on the right for details)";
-            addLinkRef(caption, type + " report", outFile);
-        } catch (IOException e) {
-            error("Unable to write log file to '" + outFile + "': " + e.getMessage(), e);
-        }
+        addContentAsLink(caption, output, type);
     }
 
     protected int scanForMatchingRow(String matchTo, List<String> matchFrom, int startFrom) {
