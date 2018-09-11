@@ -782,10 +782,7 @@ public class WebCommand extends BaseCommand implements CanTakeScreenshot, CanLog
         requiresNotBlank(property, "invalid css property", property);
 
         String actual = getCssValue(locator, property);
-        if (context.isVerbose()) {
-            context.getLogger().log(context.getCurrentTestStep(),
-                                    "CSS property '" + property + "' for locator '" + locator + "' is " + actual);
-        }
+        if (context.isVerbose()) { log("CSS property '" + property + "' for locator '" + locator + "' is " + actual); }
 
         if (StringUtils.isEmpty(actual) && StringUtils.isEmpty(value)) {
             return StepResult.success("no value found for CSS property '" + property + "' as EXPECTED");
@@ -2120,8 +2117,7 @@ public class WebCommand extends BaseCommand implements CanTakeScreenshot, CanLog
         try {
             readyState = (String) jsExecutor.executeScript("return document.readyState");
         } catch (Exception e) {
-            log("Unable to execute [selenium.getEval(document.readyState)] due to " + e.getMessage());
-            log("Trying another approach...");
+            log("Unable to execute [document.readyState] due to " + e.getMessage() + ". Trying another approach...");
             try {
                 // fail-safe retry
                 readyState = (String) jsExecutor.executeScript(
@@ -2163,19 +2159,17 @@ public class WebCommand extends BaseCommand implements CanTakeScreenshot, CanLog
 
     protected boolean scrollTo(Locatable element) throws ElementNotVisibleException {
         Coordinates coordinates = element.getCoordinates();
-        if (coordinates != null) {
-            Point pagePosition = coordinates.onPage();
-            // either we are already in view, or this is not suitable for scrolling (i.e. Window, Document, Html object)
-            if (pagePosition.getX() < 10 && pagePosition.getY() < 10) { return true; }
+        if (coordinates == null) { return false; }
 
-            // according to Coordinates' Javadoc: "... This method automatically scrolls the page and/or
-            // frames to make element visible in viewport before calculating its coordinates"
-            Point topLeft = coordinates.inViewPort();
-            log("scrolled to " + topLeft.getX() + "/" + topLeft.getY());
-            return true;
-        } else {
-            return false;
-        }
+        Point pagePosition = coordinates.onPage();
+        // either we are already in view, or this is not suitable for scrolling (i.e. Window, Document, Html object)
+        if (pagePosition.getX() < 10 && pagePosition.getY() < 10) { return true; }
+
+        // according to Coordinates' Javadoc: "... This method automatically scrolls the page and/or
+        // frames to make element visible in viewport before calculating its coordinates"
+        Point topLeft = coordinates.inViewPort();
+        if (context.isVerbose()) { log("scrolled to " + topLeft.getX() + "/" + topLeft.getY()); }
+        return true;
     }
 
     protected byte[] downloadLink(String sessionName, String url) {

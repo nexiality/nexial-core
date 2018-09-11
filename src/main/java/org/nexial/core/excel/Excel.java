@@ -22,7 +22,6 @@ import java.math.BigInteger;
 import java.security.GeneralSecurityException;
 import java.util.*;
 import java.util.stream.Collectors;
-
 import javax.validation.constraints.NotNull;
 
 import org.apache.commons.collections4.CollectionUtils;
@@ -55,6 +54,7 @@ import org.nexial.core.utils.ConsoleUtils;
 
 import static java.io.File.separator;
 import static org.apache.commons.lang3.SystemUtils.*;
+import static org.apache.poi.poifs.filesystem.FileMagic.OLE2;
 import static org.apache.poi.ss.SpreadsheetVersion.EXCEL2007;
 import static org.apache.poi.ss.usermodel.CellType.BLANK;
 import static org.apache.poi.ss.usermodel.CellType.*;
@@ -1048,17 +1048,18 @@ public class Excel {
 
         try (OutputStream os = enc.getDataStream(npoifs)) {
             OPCPackage opc = OPCPackage.open(excelFile);
+
             opc.save(os);
             opc.close();
 
             if (!npoifs.isInPlaceWriteable()) {
-                try (FileOutputStream fos = new FileOutputStream(excelFile)) {
-                    npoifs.writeFilesystem(fos);
-                }
-            } else { npoifs.writeFilesystem(); }
+                try (FileOutputStream fos = new FileOutputStream(excelFile)) { npoifs.writeFilesystem(fos); }
+            } else {
+                npoifs.writeFilesystem();
+            }
 
         } catch (IOException | InvalidFormatException | GeneralSecurityException e) {
-            throw new IllegalArgumentException("Unable to set password to excel file: " + e.getMessage());
+            throw new IllegalArgumentException("Unable to set password to excel file " + e.getMessage(), e);
         }
     }
 
@@ -1066,7 +1067,7 @@ public class Excel {
         try {
             return FileMagic.valueOf(FileUtils.readFileToByteArray(excelFile));
         } catch (IOException e) {
-            throw new IllegalArgumentException("Unable to derive file type for input file" + e.getMessage());
+            throw new IllegalArgumentException("Unable to derive file type for " + e.getMessage());
         }
     }
 
@@ -1074,27 +1075,23 @@ public class Excel {
 
         try (FileInputStream fis = new FileInputStream(excelFile);
              NPOIFSFileSystem npoifs = new NPOIFSFileSystem(fis)) {
+
             EncryptionInfo encInfo = new EncryptionInfo(npoifs);
             Decryptor decryptor = Decryptor.getInstance(encInfo);
-            if (decryptor.verifyPassword(password)) {
-                try (InputStream dataStream = decryptor.getDataStream(npoifs);
-                     XSSFWorkbook workbook = new XSSFWorkbook(dataStream);
-                     FileOutputStream fos = new FileOutputStream(excelFile)) {
-                    workbook.write(fos);
-                    return true;
-                }
-            } else {
-                return false;
+            if (!decryptor.verifyPassword(password)) { return false; }
+
+            try (InputStream dataStream = decryptor.getDataStream(npoifs);
+                 XSSFWorkbook workbook = new XSSFWorkbook(dataStream);
+                 FileOutputStream fos = new FileOutputStream(excelFile)) {
+                workbook.write(fos);
+                return true;
             }
         } catch (IOException | GeneralSecurityException e) {
-            throw new IllegalArgumentException("Unable to read excel file: " + excelFile.getAbsolutePath());
+            throw new IllegalArgumentException("Unable to read excel file " + excelFile.getAbsolutePath(), e);
         }
-
     }
 
-    public static boolean assertPassword(File excelFile) {
-        return deriveFileFormat(excelFile) == FileMagic.OLE2;
-    }
+    public static boolean isPasswordSet(File excelFile) { return deriveFileFormat(excelFile) == OLE2; }
 
     /**
      * if {@code startsWith} is an empty string, then all worksheets will be returned

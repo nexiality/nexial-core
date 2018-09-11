@@ -39,6 +39,8 @@ import org.nexial.core.excel.ExcelAddress;
 import org.nexial.core.model.StepResult;
 import org.nexial.core.plugins.base.BaseCommand;
 
+import static org.apache.poi.poifs.filesystem.FileMagic.OLE2;
+import static org.apache.poi.poifs.filesystem.FileMagic.OOXML;
 import static org.apache.poi.ss.usermodel.Row.MissingCellPolicy.CREATE_NULL_AS_BLANK;
 import static org.nexial.core.excel.Excel.clearExcelPassword;
 import static org.nexial.core.excel.Excel.deriveFileFormat;
@@ -114,20 +116,21 @@ public class ExcelCommand extends BaseCommand {
         requiresNotBlank(password, "password can't be blank.");
         File excelFile = deriveReadableFile(file);
         FileMagic fileFormat = deriveFileFormat(excelFile);
-        if (fileFormat == FileMagic.OOXML) {
+
+        if (fileFormat == OOXML) {
             Excel.setExcelPassword(excelFile, password);
             return StepResult.success("Password set to " + file);
         }
-        if (fileFormat == FileMagic.OLE2) {
-            return StepResult.fail("Password was already set to " + file);
-        }
-        return StepResult.fail("Unable to set password: wrong file format " + file);
+
+        if (fileFormat == OLE2) { return StepResult.fail("A password is already set to " + file); }
+
+        return StepResult.fail("Unable to set password: wrong file format " + fileFormat + " on " + file);
     }
 
     public StepResult clearPassword(String file, String password) {
         requiresNotBlank(password, "password can't be blank.");
         File excelFile = deriveReadableFile(file);
-        if (deriveFileFormat(excelFile) == FileMagic.OLE2 && clearExcelPassword(excelFile, password)) {
+        if (deriveFileFormat(excelFile) == OLE2 && clearExcelPassword(excelFile, password)) {
             return StepResult.success("Password cleared for " + file);
         }
         return StepResult.fail("Incorrect or no password was set to " + file);
@@ -135,9 +138,7 @@ public class ExcelCommand extends BaseCommand {
 
     public StepResult assertPassword(String file) {
         File excelFile = deriveReadableFile(file);
-        if (Excel.assertPassword(excelFile)) {
-            return StepResult.success("Password set to " + file);
-        }
+        if (Excel.isPasswordSet(excelFile)) { return StepResult.success("Password set to " + file); }
         return StepResult.fail("Password NOT set to " + file);
     }
 
