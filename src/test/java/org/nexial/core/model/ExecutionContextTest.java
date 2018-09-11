@@ -20,18 +20,22 @@ package org.nexial.core.model;
 import java.util.*;
 import javax.validation.constraints.NotNull;
 
+import org.apache.commons.lang3.StringUtils;
 import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 import org.nexial.core.model.ExecutionContext.Function;
-import org.nexial.core.variable.Array;
-import org.nexial.core.variable.Count;
+import org.nexial.core.variable.*;
 import org.nexial.core.variable.Date;
-import org.nexial.core.variable.Format;
-import org.nexial.core.variable.Sysdate;
 
+import static java.io.File.separator;
+import static org.apache.commons.lang3.SystemUtils.JAVA_IO_TMPDIR;
+import static org.hamcrest.core.AllOf.allOf;
+import static org.hamcrest.core.IsNot.not;
+import static org.hamcrest.core.StringContains.containsString;
 import static org.nexial.core.NexialConst.Data.TEXT_DELIM;
+import static org.nexial.core.NexialConst.*;
 
 public class ExecutionContextTest {
     @Before
@@ -122,6 +126,25 @@ public class ExecutionContextTest {
 
         System.out.println(subject.handleFunction(
             "$(date|format|$(date|addDay|$(sysdate|firstDOW|MM/dd/yyyy)|1)|MM/dd/yyyy|MM/dd/yy)"));
+    }
+
+    @Test
+    public void handleFunction_syspath() {
+        ExecutionContext subject = initMockContext();
+
+        String theOtherSlash = StringUtils.equals(separator, "/") ? "\\" : "/";
+        String fixture = "$(syspath|script|fullpath)" + theOtherSlash + "MyScript.xlsx";
+        String actual = subject.handleFunction(fixture);
+        System.out.println("actual = " + actual);
+        Assert.assertThat(actual,
+                          allOf(not(containsString(theOtherSlash)),
+                                containsString("artifact" + separator + "script" + separator + "MyScript.xlsx")));
+
+        subject.setData("MyFile", fixture);
+        String actual2 = subject.replaceTokens("${MyFile}\\\\ 2 backslashes and // 2 forward slashes");
+        System.out.println(actual2);
+        Assert.assertThat(actual2, allOf(containsString(actual),
+                                         containsString("\\\\ 2 backslashes and // 2 forward slashes")));
     }
 
     @Test
@@ -252,7 +275,8 @@ public class ExecutionContextTest {
         Assert.assertEquals("HAD,A,LITTLE",
                             subject.replaceTokens("$(array|subarray|$(format|upper|mary,had,a,little,lamb)|1|3)"));
         Assert.assertEquals("had,a,very",
-                            subject.replaceTokens("$(array|subarray|$(array|insert|mary,had,a,little,lamb|3|very)|1|3)"));
+                            subject
+                                .replaceTokens("$(array|subarray|$(array|insert|mary,had,a,little,lamb|3|very)|1|3)"));
 
         // change textDelim
         subject.setData(TEXT_DELIM, "|");
@@ -283,6 +307,15 @@ public class ExecutionContextTest {
 
     @NotNull
     private ExecutionContext initMockContext() {
+        // for syspath
+        String projectBase = JAVA_IO_TMPDIR + "dummy";
+        System.setProperty(OPT_PROJECT_BASE, projectBase);
+        System.setProperty(OPT_OUT_DIR, projectBase + separator + "output");
+        System.setProperty(OPT_INPUT_EXCEL_FILE, projectBase + separator +
+                                                 "artifact" + separator +
+                                                 "script" + separator +
+                                                 "MyScript.xlsx");
+
         ExecutionContext subject = new MockExecutionContext();
         subject.setData(TEXT_DELIM, ",");
         subject.builtinFunctions = new HashMap<>();
@@ -291,6 +324,7 @@ public class ExecutionContextTest {
         subject.builtinFunctions.put("date", new Date());
         subject.builtinFunctions.put("format", new Format());
         subject.builtinFunctions.put("sysdate", new Sysdate());
+        subject.builtinFunctions.put("syspath", new Syspath());
         return subject;
     }
 
