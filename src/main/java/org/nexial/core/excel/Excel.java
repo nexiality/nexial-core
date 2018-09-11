@@ -17,14 +17,12 @@
 
 package org.nexial.core.excel;
 
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.FileOutputStream;
-import java.io.IOException;
-import java.io.OutputStream;
+import java.io.*;
 import java.math.BigInteger;
+import java.security.GeneralSecurityException;
 import java.util.*;
 import java.util.stream.Collectors;
+
 import javax.validation.constraints.NotNull;
 
 import org.apache.commons.collections4.CollectionUtils;
@@ -37,6 +35,13 @@ import org.apache.commons.lang3.SystemUtils;
 import org.apache.commons.lang3.tuple.Pair;
 import org.apache.poi.openxml4j.exceptions.InvalidFormatException;
 import org.apache.poi.openxml4j.exceptions.OLE2NotOfficeXmlFileException;
+import org.apache.poi.openxml4j.opc.OPCPackage;
+import org.apache.poi.poifs.crypt.Decryptor;
+import org.apache.poi.poifs.crypt.EncryptionInfo;
+import org.apache.poi.poifs.crypt.EncryptionMode;
+import org.apache.poi.poifs.crypt.Encryptor;
+import org.apache.poi.poifs.filesystem.FileMagic;
+import org.apache.poi.poifs.filesystem.NPOIFSFileSystem;
 import org.apache.poi.ss.usermodel.*;
 import org.apache.poi.ss.util.CellRangeAddress;
 import org.apache.poi.ss.util.WorkbookUtil;
@@ -1032,6 +1037,63 @@ public class Excel {
 
         ConsoleUtils.error("WPS is not supported on " + OS_NAME);
         return null;
+    }
+
+    public static void setExcelPassword(File excelFile, String password) {
+
+        EncryptionInfo encInfo = new EncryptionInfo(EncryptionMode.agile);
+        Encryptor enc = encInfo.getEncryptor();
+        enc.confirmPassword(password);
+        NPOIFSFileSystem npoifs = new NPOIFSFileSystem();
+
+        try (OutputStream os = enc.getDataStream(npoifs)) {
+            OPCPackage opc = OPCPackage.open(excelFile);
+            opc.save(os);
+            opc.close();
+
+            if (!npoifs.isInPlaceWriteable()) {
+                try (FileOutputStream fos = new FileOutputStream(excelFile)) {
+                    npoifs.writeFilesystem(fos);
+                }
+            } else { npoifs.writeFilesystem(); }
+
+        } catch (IOException | InvalidFormatException | GeneralSecurityException e) {
+            throw new IllegalArgumentException("Unable to set password to excel file: " + e.getMessage());
+        }
+    }
+
+    public static FileMagic deriveFileFormat(File excelFile) {
+        try {
+            return FileMagic.valueOf(FileUtils.readFileToByteArray(excelFile));
+        } catch (IOException e) {
+            throw new IllegalArgumentException("Unable to derive file type for input file" + e.getMessage());
+        }
+    }
+
+    public static boolean clearExcelPassword(File excelFile, String password) {
+
+        try (FileInputStream fis = new FileInputStream(excelFile);
+             NPOIFSFileSystem npoifs = new NPOIFSFileSystem(fis)) {
+            EncryptionInfo encInfo = new EncryptionInfo(npoifs);
+            Decryptor decryptor = Decryptor.getInstance(encInfo);
+            if (decryptor.verifyPassword(password)) {
+                try (InputStream dataStream = decryptor.getDataStream(npoifs);
+                     XSSFWorkbook workbook = new XSSFWorkbook(dataStream);
+                     FileOutputStream fos = new FileOutputStream(excelFile)) {
+                    workbook.write(fos);
+                    return true;
+                }
+            } else {
+                return false;
+            }
+        } catch (IOException | GeneralSecurityException e) {
+            throw new IllegalArgumentException("Unable to read excel file: " + excelFile.getAbsolutePath());
+        }
+
+    }
+
+    public static boolean assertPassword(File excelFile) {
+        return deriveFileFormat(excelFile) == FileMagic.OLE2;
     }
 
     /**

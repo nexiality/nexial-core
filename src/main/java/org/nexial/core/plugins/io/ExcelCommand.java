@@ -28,6 +28,7 @@ import org.apache.commons.lang3.ArrayUtils;
 import org.apache.commons.lang3.BooleanUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.text.StrTokenizer;
+import org.apache.poi.poifs.filesystem.FileMagic;
 import org.apache.poi.xssf.usermodel.XSSFCell;
 import org.apache.poi.xssf.usermodel.XSSFRow;
 import org.apache.poi.xssf.usermodel.XSSFSheet;
@@ -39,6 +40,8 @@ import org.nexial.core.model.StepResult;
 import org.nexial.core.plugins.base.BaseCommand;
 
 import static org.apache.poi.ss.usermodel.Row.MissingCellPolicy.CREATE_NULL_AS_BLANK;
+import static org.nexial.core.excel.Excel.clearExcelPassword;
+import static org.nexial.core.excel.Excel.deriveFileFormat;
 import static org.nexial.core.utils.CheckUtils.*;
 
 public class ExcelCommand extends BaseCommand {
@@ -105,6 +108,37 @@ public class ExcelCommand extends BaseCommand {
 
         context.setData(var, data.size() == 1 ? data.get(0) : data);
         return StepResult.success(data.size() + " cells read and stored to '" + var + "'");
+    }
+
+    public StepResult setPassword(String file, String password) {
+        requiresNotBlank(password, "password can't be blank.");
+        File excelFile = deriveReadableFile(file);
+        FileMagic fileFormat = deriveFileFormat(excelFile);
+        if (fileFormat == FileMagic.OOXML) {
+            Excel.setExcelPassword(excelFile, password);
+            return StepResult.success("Password set to " + file);
+        }
+        if (fileFormat == FileMagic.OLE2) {
+            return StepResult.fail("Password was already set to " + file);
+        }
+        return StepResult.fail("Unable to set password: wrong file format " + file);
+    }
+
+    public StepResult clearPassword(String file, String password) {
+        requiresNotBlank(password, "password can't be blank.");
+        File excelFile = deriveReadableFile(file);
+        if (deriveFileFormat(excelFile) == FileMagic.OLE2 && clearExcelPassword(excelFile, password)) {
+            return StepResult.success("Password cleared for " + file);
+        }
+        return StepResult.fail("Incorrect or no password was set to " + file);
+    }
+
+    public StepResult assertPassword(String file) {
+        File excelFile = deriveReadableFile(file);
+        if (Excel.assertPassword(excelFile)) {
+            return StepResult.success("Password set to " + file);
+        }
+        return StepResult.fail("Password NOT set to " + file);
     }
 
     public StepResult writeVar(String var, String file, String worksheet, String startCell) throws IOException {
@@ -195,13 +229,9 @@ public class ExcelCommand extends BaseCommand {
 
     protected Excel deriveExcel(String file) throws IOException { return new Excel(deriveReadableFile(file)); }
 
-    protected File deriveReadableFile(String file) {
-        // sanity check
-        requires(StringUtils.isNotBlank(file), "invalid file", file);
-
-        File excelFile = new File(file);
-        requires(excelFile.isFile() && excelFile.canRead() && excelFile.length() > 100, "unreadable file", file);
-        return excelFile;
+    protected static File deriveReadableFile(String file) {
+        requiresReadableFile(file);
+        return new File(file);
     }
 
     protected void addData(XSSFSheet sheet, ExcelAddress addr, List<List<String>> dataRows) {
