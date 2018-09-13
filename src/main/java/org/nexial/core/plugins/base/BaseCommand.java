@@ -81,7 +81,6 @@ public class BaseCommand implements NexialCommand {
     protected transient ExecutionContext context;
     protected long pauseMs;
     protected transient ContextScreenRecorder screenRecorder;
-    protected transient NumberCommand numberCommand;
     protected Syspath syspath = new Syspath();
 
     public BaseCommand() {
@@ -92,7 +91,6 @@ public class BaseCommand implements NexialCommand {
     public void init(ExecutionContext context) {
         this.context = context;
         pauseMs = context.getDelayBetweenStep();
-        numberCommand = (NumberCommand) context.findPlugin("number");
     }
 
     @Override
@@ -319,14 +317,9 @@ public class BaseCommand implements NexialCommand {
 
     public StepResult assertCount(String text, String regex, String expects) {
         requiresPositiveNumber(expects, "invalid numeric value as 'expects'", expects);
-
-        List<String> groups = findTextMatches(text, regex);
-        StepResult result = numberCommand.assertEqual(expects, CollectionUtils.size(groups) + "");
-        if (result.isSuccess()) {
-            return StepResult.success("expected number of matches found");
-        } else {
-            return StepResult.fail("expected number of matches was NOT found");
-        }
+        return toInt(expects, "expects") == CollectionUtils.size(findTextMatches(text, regex)) ?
+               StepResult.success("expected number of matches found") :
+               StepResult.fail("expected number of matches was NOT found");
     }
 
     public StepResult assertTextOrder(String var, String descending) {
