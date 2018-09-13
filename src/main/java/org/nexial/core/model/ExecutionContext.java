@@ -272,9 +272,6 @@ public class ExecutionContext {
         otc.setContext(this);
         otcNotReadyMessage = springContext.getBean("otcNotReadyMessage", String.class);
 
-        // text-to-speech (tts) via AWS Polly
-        dj = springContext.getBean("soundMachine", SoundMachine.class);
-
         // AWS SNS
         smsHelper = springContext.getBean("smsHelper", SmsHelper.class);
 
@@ -369,7 +366,10 @@ public class ExecutionContext {
         return otc;
     }
 
-    public SoundMachine getDj() { return dj; }
+    public SoundMachine getDj() {
+        if (dj == null) { initDj(); }
+        return dj;
+    }
 
     public SmsHelper getSmsHelper() { return smsHelper; }
 
@@ -979,6 +979,11 @@ public class ExecutionContext {
 
     public static String getSystemThenContextStringData(String name, ExecutionContext context, String def) {
         return System.getProperty(name, context == null ? def : context.getStringData(name, def));
+    }
+
+    protected void initDj() {
+        // text-to-speech (tts) via AWS Polly
+        dj = springContext.getBean("soundMachine", SoundMachine.class);
     }
 
     protected void clearReferenceData(String prefix) {

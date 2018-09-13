@@ -147,6 +147,11 @@ abstract class WebDriverHelper protected constructor(protected var context: Exec
         // first ws call to check existing/available versions of this driver
         val wsClient = WebServiceClient(context)
         val response = wsClient.get(config.checkUrlBase, null)
+        if (response.returnCode >= 400) {
+            // error in checking online
+            throw IOException("Error when accessing ${config.checkUrlBase}: ${response.statusText}")
+        }
+
         val availableDriverContent = response.body
 
         val driverContentJon = JSONArray(availableDriverContent)

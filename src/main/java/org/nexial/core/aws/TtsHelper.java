@@ -23,6 +23,7 @@ import org.apache.commons.lang3.StringUtils;
 import org.nexial.core.utils.CheckUtils;
 import org.nexial.core.utils.ConsoleUtils;
 
+import com.amazonaws.AmazonClientException;
 import com.amazonaws.ClientConfiguration;
 import com.amazonaws.auth.AWSCredentials;
 import com.amazonaws.auth.AWSCredentialsProvider;
@@ -70,32 +71,36 @@ public class TtsHelper extends AwsSupport {
 
         if (!isReadyForUse()) { throw new RuntimeException("Missing critical configuration; Not ready for use"); }
 
-        if (tts == null) {
-            AWSCredentials credential = new BasicAWSCredentials(accessKey, secretKey);
-            AWSCredentialsProvider credentialsProvider = new AWSStaticCredentialsProvider(credential);
+        try {
+            if (tts == null) {
+                AWSCredentials credential = new BasicAWSCredentials(accessKey, secretKey);
+                AWSCredentialsProvider credentialsProvider = new AWSStaticCredentialsProvider(credential);
 
-            ClientConfiguration clientConfiguration = new ClientConfiguration();
+                ClientConfiguration clientConfiguration = new ClientConfiguration();
 
-            tts = AmazonPollyClientBuilder.standard()
-                                          .withCredentials(credentialsProvider)
-                                          .withClientConfiguration(clientConfiguration)
-                                          .withRegion(region)
-                                          .build();
-        }
+                tts = AmazonPollyClientBuilder.standard()
+                                              .withCredentials(credentialsProvider)
+                                              .withClientConfiguration(clientConfiguration)
+                                              .withRegion(region)
+                                              .build();
+            }
 
-        if (voice == null) {
-            // Create describe voices request.
-            DescribeVoicesRequest describeVoicesRequest = new DescribeVoicesRequest();
-            describeVoicesRequest.setLanguageCode(languageCode);
+            if (voice == null) {
+                // Create describe voices request.
+                DescribeVoicesRequest describeVoicesRequest = new DescribeVoicesRequest();
+                describeVoicesRequest.setLanguageCode(languageCode);
 
-            // Synchronously ask Amazon Polly to describe available TTS voices.
-            DescribeVoicesResult describeVoicesResult = tts.describeVoices(describeVoicesRequest);
+                // Synchronously ask Amazon Polly to describe available TTS voices.
+                DescribeVoicesResult describeVoicesResult = tts.describeVoices(describeVoicesRequest);
 
-            // for EN-GR, this would be Emma
-            // for EU-US, this would be Salli
-            voice = describeVoicesResult.getVoices().get(0);
-            // todo: not yet implemented... need to convert to voice id
-            voice.setGender(voiceGender);
+                // for EN-GR, this would be Emma
+                // for EU-US, this would be Salli
+                voice = describeVoicesResult.getVoices().get(0);
+                // todo: not yet implemented... need to convert to voice id
+                voice.setGender(voiceGender);
+            }
+        } catch (AmazonClientException e) {
+            throw new RuntimeException("Critical error: " + e.getMessage());
         }
     }
 

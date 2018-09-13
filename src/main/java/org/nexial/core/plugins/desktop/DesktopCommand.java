@@ -40,7 +40,6 @@ import org.nexial.core.plugins.CanTakeScreenshot;
 import org.nexial.core.plugins.ForcefulTerminate;
 import org.nexial.core.plugins.RequireWinium;
 import org.nexial.core.plugins.base.BaseCommand;
-import org.nexial.core.plugins.base.NumberCommand;
 import org.nexial.core.plugins.base.ScreenshotUtils;
 import org.nexial.core.plugins.desktop.DesktopTable.TableMetaData;
 import org.nexial.core.plugins.desktop.ig.IgExplorerBar;
@@ -78,7 +77,6 @@ public class DesktopCommand extends BaseCommand
     protected static final Map<String, Class<? extends By>> SUPPORTED_FIND_BY = initSupportedFindBys();
 
     protected transient WiniumDriver winiumDriver;
-    protected transient NumberCommand numberCommand;
 
     @Override
     public void init(ExecutionContext context) {
@@ -86,7 +84,6 @@ public class DesktopCommand extends BaseCommand
         ShutdownAdvisor.addAdvisor(this);
         // todo need a way to load winium driver dynamically. we have that in nextgen, but need one for this class
         // if (!context.getBooleanData(WINIUM_LAZY_LOAD, DEF_WINIUM_LAZY_LOAD)) { winiumDriver = initWinium(context); }
-        numberCommand = (NumberCommand) context.findPlugin("number");
     }
 
     @Override

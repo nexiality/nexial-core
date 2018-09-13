@@ -44,6 +44,7 @@ import org.nexial.core.utils.JsonHelper;
 import org.nexial.core.utils.OutputFileUtils;
 import org.nexial.core.variable.Syspath;
 
+import static java.io.File.separator;
 import static org.nexial.core.NexialConst.GSON;
 
 public class ErrorReport {
@@ -64,17 +65,12 @@ public class ErrorReport {
         return sb.toString();
     }
 
-    private static String getJsonString(RecordData recordData) {
-        return GSON.toJson(recordData);
-    }
-
     public static File createExcel(RecordData recordData) {
 
-        String outFile = new Syspath().out("fullpath") + File.separator +
-                         OutputFileUtils.generateOutputFilename(context.getCurrentTestStep(), "xlsx");
+        String outPath = new Syspath().out("fullpath") + separator;
+        String outFile = outPath + OutputFileUtils.generateOutputFilename(context.getCurrentTestStep(), "xlsx");
+        String csvFile = outPath + OutputFileUtils.generateOutputFilename(context.getCurrentTestStep(), "csv");
         File outputFile = new File(outFile);
-        String csvFile = new Syspath().out("fullpath") + File.separator +
-                         OutputFileUtils.generateOutputFilename(context.getCurrentTestStep(), "csv");
 
         ConsoleUtils.log("writing validation report to excel..");
         try {
@@ -83,17 +79,18 @@ public class ErrorReport {
             createReportSheets(csvFile, excel);
             excel.save();
         } catch (IOException e) {
-            throw new IllegalArgumentException("Unable to write error report to excel file: "+e.getMessage());
+            throw new IllegalArgumentException("Unable to write error report to excel file: " + e.getMessage());
         }
+
         return outputFile;
     }
 
     public static File createJSON(RecordData recordData) {
-        String outFile = new Syspath().out("fullpath") + File.separator +
-                         OutputFileUtils.generateOutputFilename(context.getCurrentTestStep(), "json");
+        String outPath = new Syspath().out("fullpath") + separator;
+        String outFile = outPath + OutputFileUtils.generateOutputFilename(context.getCurrentTestStep(), "json");
         File outputFile = new File(outFile);
-        String csvFile = new Syspath().out("fullpath") + File.separator +
-                         OutputFileUtils.generateOutputFilename(context.getCurrentTestStep(), "csv");
+        String csvFile = outPath + OutputFileUtils.generateOutputFilename(context.getCurrentTestStep(), "csv");
+
         String summary = getJsonString(recordData);
 
         String errorHeaders = "Record Line, Field Name, Severity, Validation Type, Error Message \n";
@@ -102,31 +99,36 @@ public class ErrorReport {
         List<List<String>> errors = createListFromCsv(csvFile, false, errorHeaders);
         List<List<String>> skipped = createListFromCsv(csvFile, true, skipHeaders);
         ConsoleUtils.log("writing validation report to json..");
+
         try (Writer fileWriter = new FileWriter(outputFile)) {
 
             if (CollectionUtils.isEmpty(errors) && CollectionUtils.isEmpty(skipped)) {
                 fileWriter.write(summary);
                 return outputFile;
             }
+
             if (CollectionUtils.isNotEmpty(errors)) {
                 String appendErrors = StringUtils.removeEnd(summary, "}") + ",\n\"errors\":";
                 createErrorsFromCsv(errors, skipped, appendErrors, fileWriter);
             } else if (CollectionUtils.isNotEmpty(skipped)) {
-
                 String appendSkipped = StringUtils.removeEnd(summary, "}") + ",\n\"skipped\":";
                 createSkippedFromCsv(skipped, appendSkipped, fileWriter);
             }
         } catch (IOException e) {
             throw new IllegalStateException("Unable to create JSON output file: " + e.getMessage());
         }
+
         return outputFile;
+    }
+
+    private static String getJsonString(RecordData recordData) {
+        return GSON.toJson(recordData);
     }
 
     private static void createErrorsFromCsv(List<List<String>> errors,
                                             List<List<String>> skipped,
                                             String appendErrors,
-                                            Writer fileWriter
-                                           ) throws IOException {
+                                            Writer fileWriter) throws IOException {
         String appendSkipped = ",\n\"skipped\":";
         JsonHelper.fromCsv(errors,
                            true, beforeErrors -> beforeErrors.write(appendErrors),

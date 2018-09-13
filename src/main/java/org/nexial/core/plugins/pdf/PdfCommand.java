@@ -50,7 +50,6 @@ import org.nexial.core.model.StepResult;
 import org.nexial.core.plugins.base.BaseCommand;
 import org.nexial.core.plugins.io.IoCommand;
 import org.nexial.core.plugins.pdf.PdfTableExtractor.LineRange;
-import org.nexial.core.variable.Syspath;
 import org.thymeleaf.util.ArrayUtils;
 import org.thymeleaf.util.ListUtils;
 
@@ -100,7 +99,7 @@ public class PdfCommand extends BaseCommand {
         requiresNotBlank(actualPdf, "blank baseline");
         requiresNotBlank(expectedPdf, "blank current");
 
-        String outPath = new Syspath().out("fullpath");
+        String outPath = syspath.out("fullpath");
 
         String actualExt = StringUtils.lowerCase(FilenameUtils.getExtension(actualPdf));
         String newBaselinePath;

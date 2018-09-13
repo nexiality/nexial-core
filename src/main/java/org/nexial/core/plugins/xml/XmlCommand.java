@@ -45,7 +45,6 @@ import org.nexial.core.model.StepResult;
 import org.nexial.core.plugins.base.BaseCommand;
 import org.nexial.core.utils.ConsoleUtils;
 import org.nexial.core.utils.OutputFileUtils;
-import org.nexial.core.variable.Syspath;
 import org.xml.sax.ErrorHandler;
 import org.xml.sax.SAXParseException;
 
@@ -339,7 +338,7 @@ public class XmlCommand extends BaseCommand {
     }
 
     protected void generateErrorLogs(XmlCommand.SchemaErrorCollector errorHandler) {
-        String outFile = new Syspath().out("fullpath") + separator +
+        String outFile = syspath.out("fullpath") + separator +
                          OutputFileUtils.generateOutputFilename(context.getCurrentTestStep(), "log");
 
         String output = TextUtils.createAsciiTable(Arrays.asList("severity", "line", "column", "message"),

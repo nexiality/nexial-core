@@ -34,6 +34,7 @@ import static org.apache.commons.lang3.SystemUtils.JAVA_IO_TMPDIR;
 import static org.hamcrest.core.AllOf.allOf;
 import static org.hamcrest.core.IsNot.not;
 import static org.hamcrest.core.StringContains.containsString;
+import static org.hamcrest.core.StringEndsWith.endsWith;
 import static org.nexial.core.NexialConst.Data.TEXT_DELIM;
 import static org.nexial.core.NexialConst.*;
 
@@ -144,6 +145,27 @@ public class ExecutionContextTest {
         String actual2 = subject.replaceTokens("${MyFile}\\\\ 2 backslashes and // 2 forward slashes");
         System.out.println(actual2);
         Assert.assertThat(actual2, allOf(containsString(actual),
+                                         containsString("\\\\ 2 backslashes and // 2 forward slashes")));
+    }
+
+    @Test
+    public void handleFunction_syspath_in_data() {
+        ExecutionContext subject = initMockContext();
+
+        String theOtherSlash = StringUtils.equals(separator, "/") ? "\\" : "/";
+        String fixture = "$(syspath|script|fullpath)" + theOtherSlash + "MyScript.xlsx";
+        subject.setData("scriptPath", fixture);
+
+        String actual = subject.replaceTokens("<MyWay>${scriptPath}<\\MyWay><YourWay/>");
+        System.out.println("actual = " + actual);
+        Assert.assertThat(actual,
+                          allOf(endsWith("<\\MyWay><YourWay/>"),
+                                containsString("artifact" + separator + "script" + separator + "MyScript.xlsx")));
+
+        subject.setData("MyFile", fixture);
+        String actual2 = subject.replaceTokens("${MyFile}\\\\ 2 backslashes and // 2 forward slashes");
+        System.out.println(actual2);
+        Assert.assertThat(actual2, allOf(containsString(subject.handleFunction(fixture)),
                                          containsString("\\\\ 2 backslashes and // 2 forward slashes")));
     }
 

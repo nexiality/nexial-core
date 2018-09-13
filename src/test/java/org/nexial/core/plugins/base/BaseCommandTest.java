@@ -28,11 +28,6 @@ import org.nexial.core.model.StepResult;
 public class BaseCommandTest {
     private ExecutionContext context = new MockExecutionContext(true);
 
-    static {
-        System.setProperty("clear_var2", "I repeat, this is a test.");
-        System.setProperty("clear_var3", "System is a go");
-    }
-
     @Before
     public void init() {
         context.setData("var1", "a string separated by space");
@@ -108,5 +103,61 @@ public class BaseCommandTest {
         Assert.assertNotNull(subject.getContextValueAsString("os.name"));
         Assert.assertNotNull(System.getProperty("os.name"));
 
+    }
+
+    @Test
+    public void saveCount() throws Exception {
+        BaseCommand subject = new BaseCommand();
+        subject.init(context);
+
+        try {
+            subject.saveCount("", "", "");
+            Assert.fail("expected assertion error NOT thrown");
+        } catch (AssertionError e) {
+            // expected
+        }
+
+        // count just the letters
+        StepResult result = subject.saveCount("a0b1c2d3e4f5g6h7i8j9k0l1m2n3o4p5q6r7s8t9u0v1w2x3y4z5", "[a-z]", "count");
+        Assert.assertTrue(result.isSuccess());
+        Assert.assertEquals(26, context.getIntData("count"));
+
+        // count just the numbers
+        result = subject.saveCount("a0b1c2d3e4f5g6h7i8j9k0l1m2n3o4p5q6r7s8t9u0v1w2x3y4z5", "[0-9]", "count");
+        Assert.assertTrue(result.isSuccess());
+        Assert.assertEquals(26, context.getIntData("count"));
+
+        // count the sequence of letter-number-letter
+        result = subject.saveCount("a0b1c2d3e4f5g6h7i8j9k0l1m2n3o4p5q6r7s8t9u0v1w2x3y4z5", "[a-z][0-9][a-z]", "count");
+        Assert.assertTrue(result.isSuccess());
+        Assert.assertEquals(13, context.getIntData("count"));
+
+        // same, but number should be 0, 1, 2, 3, 4, or 5
+        result = subject.saveCount("a0b1c2d3e4f5g6h7i8j9k0l1m2n3o4p5q6r7s8t9u0v1w2x3y4z5", "[a-z][0-5][a-z]", "count");
+        Assert.assertTrue(result.isSuccess());
+        Assert.assertEquals(9, context.getIntData("count"));
+
+        // count just the 5's
+        result = subject.saveCount("a0b1c2d3e4f5g6h7i8j9k0l1m2n3o4p5q6r7s8t9u0v1w2x3y4z5", "5", "count");
+        Assert.assertTrue(result.isSuccess());
+        Assert.assertEquals(3, context.getIntData("count"));
+
+        // count all the spaces
+        result = subject.saveCount("Now is the time for all good men to come to the aid of his country",
+                                   "\\s", "count");
+        Assert.assertTrue(result.isSuccess());
+        Assert.assertEquals(15, context.getIntData("count"));
+
+        // count all the, a, to, of, for, is, are
+        result = subject.saveCount("Now is the time for all good men to come to the aid of his country",
+                                   "the| a |to|of|for|is|are", "count");
+        Assert.assertTrue(result.isSuccess());
+        Assert.assertEquals(7, context.getIntData("count"));
+
+    }
+
+    static {
+        System.setProperty("clear_var2", "I repeat, this is a test.");
+        System.setProperty("clear_var3", "System is a go");
     }
 }

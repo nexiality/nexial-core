@@ -81,7 +81,8 @@ public class BaseCommand implements NexialCommand {
     protected transient ExecutionContext context;
     protected long pauseMs;
     protected transient ContextScreenRecorder screenRecorder;
-    private Syspath syspath = new Syspath();
+    protected transient NumberCommand numberCommand;
+    protected Syspath syspath = new Syspath();
 
     public BaseCommand() {
         collectCommandMethods();
@@ -91,6 +92,7 @@ public class BaseCommand implements NexialCommand {
     public void init(ExecutionContext context) {
         this.context = context;
         pauseMs = context.getDelayBetweenStep();
+        numberCommand = (NumberCommand) context.findPlugin("number");
     }
 
     @Override
@@ -280,37 +282,51 @@ public class BaseCommand implements NexialCommand {
         return StepResult.success("prepend '" + prependWith + " to ${" + var + "}");
     }
 
-    public StepResult saveMatches(String text, String regex, String saveVar) {
-        requires(StringUtils.isNotBlank(text), "invalid text", text);
+    public StepResult saveCount(String text, String regex, String saveVar) {
         requiresValidVariableName(saveVar);
-        context.setData(saveVar, findTextMatches(text, regex));
-        return StepResult.success("matches stored to variable " + saveVar);
+        List<String> groups = findTextMatches(text, regex);
+        int count = CollectionUtils.size(groups);
+        context.setData(saveVar, count);
+        return StepResult.success("match count (" + count + ") stored to variable ${" + saveVar + "}");
+    }
+
+    public StepResult saveMatches(String text, String regex, String saveVar) {
+        requiresValidVariableName(saveVar);
+        List<String> groups = findTextMatches(text, regex);
+        if (CollectionUtils.isEmpty(groups)) {
+            context.removeData(saveVar);
+            return StepResult.success("No matches found on text '" + text + "'");
+        } else {
+            context.setData(saveVar, groups);
+            return StepResult.success("matches stored to variable ${" + saveVar + "}");
+        }
     }
 
     public StepResult saveReplace(String text, String regex, String replace, String saveVar) {
-        requiresNotBlank(text, "invalid text", text);
-        requires(StringUtils.isNotBlank(regex), "invalid regular expression", regex);
+        requiresValidVariableName(saveVar);
         if (replace == null || context.isNullValue(replace)) { replace = ""; }
 
         // run regex routine
         List<String> groups = findTextMatches(text, regex);
         if (CollectionUtils.isEmpty(groups)) {
             context.removeData(saveVar);
-            return StepResult.success("No matches found on variable " + text);
+            return StepResult.success("No matches found on text '" + text + "'");
+        } else {
+            context.setData(saveVar, JRegexUtils.replace(text, regex, replace));
+            return StepResult.success("matches replaced and stored to variable " + saveVar);
         }
-
-        context.setData(saveVar, JRegexUtils.replace(text, regex, replace));
-        return StepResult.success("matches replaced and stored to variable " + saveVar);
     }
 
     public StepResult assertCount(String text, String regex, String expects) {
-        requires(StringUtils.isNotBlank(text), "invalid text", text);
-        requires(StringUtils.isNotBlank(expects) && NumberUtils.isDigits(expects), "invalid expects", expects);
+        requiresPositiveNumber(expects, "invalid numeric value as 'expects'", expects);
 
         List<String> groups = findTextMatches(text, regex);
-
-        // final assertion
-        return assertEqual(expects, CollectionUtils.size(groups) + "");
+        StepResult result = numberCommand.assertEqual(expects, CollectionUtils.size(groups) + "");
+        if (result.isSuccess()) {
+            return StepResult.success("expected number of matches found");
+        } else {
+            return StepResult.fail("expected number of matches was NOT found");
+        }
     }
 
     public StepResult assertTextOrder(String var, String descending) {
@@ -422,7 +438,7 @@ public class BaseCommand implements NexialCommand {
 
     public StepResult assertEndsWith(String text, String suffix) {
         boolean contains = StringUtils.endsWith(text, suffix);
-        // not so fast.. could be one of those quarky IE issues..
+        // not so fast.. could be one of those quirky IE issues..
         if (!contains && context.isLenientStringCompare()) {
             String lenientSuffix = StringUtils.replaceEach(StringUtils.trim(suffix),
                                                            new String[]{"\r", "\n"},
@@ -870,21 +886,19 @@ public class BaseCommand implements NexialCommand {
         Object value = context.getObjectData(var);
         if (value == null) { return null; }
 
-        String text = "";
         if (value.getClass().isArray()) {
             int length = ArrayUtils.getLength(value);
+            String text = "";
             for (int i = 0; i < length; i++) {
                 text += Objects.toString(Array.get(value, i));
                 if (i < length - 1) { text += lineSeparator(); }
             }
-        } else if (value instanceof List) {
-            text = TextUtils.toString((List) value, lineSeparator());
-        } else if (value instanceof Map) {
-            text = TextUtils.toString((Map) value, lineSeparator(), "=");
-        } else {
-            text = Objects.toString(value);
+            return text;
         }
-        return text;
+
+        if (value instanceof List) { return TextUtils.toString((List) value, lineSeparator()); }
+        if (value instanceof Map) { return TextUtils.toString((Map) value, lineSeparator(), "="); }
+        return Objects.toString(value);
     }
 
     protected StepResult saveSubstring(List<String> textArray, String delimStart, String delimEnd, String var) {
@@ -1066,7 +1080,7 @@ public class BaseCommand implements NexialCommand {
         }
     }
 
-    private Object[] resolveParamValues(Method m, String... params) {
+    protected Object[] resolveParamValues(Method m, String... params) {
         int numOfParamSpecified = ArrayUtils.getLength(params);
         int numOfParamExpected = ArrayUtils.getLength(m.getParameterTypes());
 
