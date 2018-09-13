@@ -2434,7 +2434,7 @@ public class ExpressionProcessorTest {
         assertThat(subject.process("[EXCEL(" + file + ") => text]"),
                    allOf(is(not(nullValue())), is(equalTo(file))));
         assertThat(subject.process("[EXCEL(" + file + ") => worksheets]"),
-                   allOf(is(not(nullValue())), is(equalTo("sc1,gpos1,tc17,list45,rccTo_2355"))));
+                   allOf(is(not(nullValue())), is(equalTo("sc1,gpos1,tc17,list45,list46,rccTo_2355"))));
 
         String expectedCapturedData =
             "number1,numbers3,name,emp type,soc sec no,fso,union,class,addr 1,city,state,postal code,email,fed mar stat,allow/dep,calc type,adj amt,state mar stat,allow/dep,calc type,adj amt,i-9,last year w4,wfr NY,wfr CA,start date,union dues,document id,res state,work state,state of incorporation,employee status,vacation type,holiday type,start memo,gl code,tax waiver,from,to,state,CA,NC,SC,MI,MS,NM,GA,PA,MA,CO,LA\r\n" +
@@ -2569,7 +2569,7 @@ public class ExpressionProcessorTest {
         assertThat(subject.process("[EXCEL(" + file + ") => text]"),
                    allOf(is(not(nullValue())), is(equalTo(file))));
         assertThat(subject.process("[EXCEL(" + file + ") => worksheets]"),
-                   allOf(is(not(nullValue())), is(equalTo("sc1,gpos1,tc17,list45,rccTo_2355"))));
+                   allOf(is(not(nullValue())), is(equalTo("sc1,gpos1,tc17,list45,list46,rccTo_2355"))));
     }
 
     @Test
@@ -2837,7 +2837,7 @@ public class ExpressionProcessorTest {
         String file = ResourceUtils.getResourceFilePath(fixtureBase + "9.xlsx");
         ExpressionProcessor subject = new ExpressionProcessor(context);
 
-        assertThat(subject.process("[EXCEL(" + file + ") => read(list45,A1:F13) csv]"),
+        assertThat(subject.process("[EXCEL(" + file + ") => read(list46,A1:F13) csv]"),
                    allOf(is(not(nullValue())),
                          is(equalTo("number1,group,bus type,prod type,fid,misc\r\n" +
                                     "69898,1,PP,30 min series,,\r\n" +
@@ -2853,7 +2853,7 @@ public class ExpressionProcessorTest {
                                     "16042,1,CM,comm,,\r\n" +
                                     "75341,1,PP,1 hr series,,accrue w/c"))));
 
-        assertThat(subject.process("[EXCEL(" + file + ") => read(list45,A1:F13) csvWithHeader()]"),
+        assertThat(subject.process("[EXCEL(" + file + ") => read(list46,A1:F13) csvWithHeader()]"),
                    allOf(is(not(nullValue())),
                          is(equalTo("number1,group,bus type,prod type,fid,misc\r\n" +
                                     "69898,1,PP,30 min series,,\r\n" +
@@ -2876,7 +2876,7 @@ public class ExpressionProcessorTest {
         String file = ResourceUtils.getResourceFilePath(fixtureBase + "9.xlsx");
         ExpressionProcessor subject = new ExpressionProcessor(context);
 
-        assertThat(subject.process("[EXCEL(" + file + ") => read(list45,A1:F13) json(false)]"),
+        assertThat(subject.process("[EXCEL(" + file + ") => read(list46,A1:F13) json(false)]"),
                    allOf(is(not(nullValue())),
                          is(equalTo("[\n" +
                                     "  [\n" +
@@ -2985,7 +2985,7 @@ public class ExpressionProcessorTest {
                                     "  ]\n" +
                                     "]"))));
 
-        assertThat(subject.process("[EXCEL(" + file + ") => read(list45,A1:F13) json(true)]"),
+        assertThat(subject.process("[EXCEL(" + file + ") => read(list46,A1:F13) json(true)]"),
                    allOf(is(not(nullValue())),
                          is(equalTo("[\n" +
                                     "  {\n" +

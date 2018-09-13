@@ -150,7 +150,7 @@ public class BaseCommandTest {
 
         // count all the, a, to, of, for, is, are
         result = subject.saveCount("Now is the time for all good men to come to the aid of his country",
-                                   "the| a |to|of|for|is|are", "count");
+                                   "the | a | to | of | for | is | are ", "count");
         Assert.assertTrue(result.isSuccess());
         Assert.assertEquals(7, context.getIntData("count"));
 
