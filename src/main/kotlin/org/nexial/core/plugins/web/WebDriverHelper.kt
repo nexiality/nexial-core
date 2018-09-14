@@ -23,7 +23,6 @@ import org.apache.commons.compress.archivers.tar.TarArchiveInputStream
 import org.apache.commons.io.FileUtils
 import org.apache.commons.io.IOUtils
 import org.apache.commons.lang3.StringUtils
-import org.apache.commons.lang3.SystemUtils
 import org.apache.commons.lang3.SystemUtils.*
 import org.apache.commons.lang3.math.NumberUtils
 import org.json.JSONArray
@@ -505,7 +504,7 @@ class ElectronDriverHelper(context: ExecutionContext) : WebDriverHelper(context)
                 IS_OS_WINDOWS -> "win32"
                 IS_OS_LINUX   -> "linux"
                 IS_OS_MAC     -> "darwin"
-                else          -> throw IllegalArgumentException("OS ${SystemUtils.OS_NAME} not supported for $browserType")
+                else          -> throw IllegalArgumentException("OS $OS_NAME not supported for $browserType")
             }
             val arch = when (EnvUtils.getOsArchBit()) {
                 32   -> "ia32"
@@ -513,8 +512,8 @@ class ElectronDriverHelper(context: ExecutionContext) : WebDriverHelper(context)
                 else -> "ia32"
             }
 
-            manifest.driverUrl = JSONPath
-                .find(driverContentJson, "assets[name=electron-$tag-$env-$arch.zip].browser_download_url")
+            manifest.driverUrl =
+                JSONPath.find(driverContentJson, "assets[name=${config.baseName}-$tag-$env-$arch.zip].browser_download_url")
         }
 
         return manifest
@@ -562,7 +561,7 @@ class ChromeDriverHelper(context: ExecutionContext) : WebDriverHelper(context) {
                 IS_OS_WINDOWS -> "win32"
                 IS_OS_LINUX   -> "linux64"
                 IS_OS_MAC     -> "mac64"
-                else          -> throw IllegalArgumentException("OS ${SystemUtils.OS_NAME} not supported for $browserType")
+                else          -> throw IllegalArgumentException("OS $OS_NAME not supported for $browserType")
             }
 
             val downloadUrl = "${config.checkUrlBase}/$driverVersion/${config.baseName}_$env.zip"

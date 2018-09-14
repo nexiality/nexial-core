@@ -538,7 +538,7 @@
             <value><![CDATA[
             {
                 "home": "${user.home}/.nexial/electron",
-                "baseName": "electron",
+                "baseName": "chromedriver",
                 "checkFrequency": 1209600000,
                 "checkFrequencyDescription": "Every 2 weeks",
                 "checkUrlBase" : "https://api.github.com/repos/electron/electron/releases/latest"
