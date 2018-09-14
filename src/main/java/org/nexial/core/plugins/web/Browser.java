@@ -554,9 +554,10 @@ public class Browser implements ForcefulTerminate {
         ChromeOptions options = new ChromeOptions().setBinary(clientLocation).setAcceptInsecureCerts(true);
         // options.addArguments("--disable-extensions"); // disabling extensions
         // options.addArguments("--disable-gpu"); // applicable to windows os only
+
         options.addArguments("--disable-dev-shm-usage"); // overcome limited resource problems
         options.addArguments("--no-sandbox"); // Bypass OS security model
-        options.addArguments("--headless");
+        // options.addArguments("--headless");
 
         // determine chrome log file
         String appName = clientLocation;

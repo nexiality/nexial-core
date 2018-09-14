@@ -932,18 +932,9 @@ public class WebCommand extends BaseCommand implements CanTakeScreenshot, CanLog
         return StepResult.success("Dismiss invalid certification popup message in " + browser);
     }
 
-    public StepResult goBack() {
-        ensureReady();
-        driver.navigate().back();
-        return StepResult.success("went back previous page");
-    }
+    public StepResult goBack() { return goBack(false); }
 
-    public StepResult goBackAndWait() {
-        ensureReady();
-        driver.navigate().back();
-        waitForBrowserStability(context.getPollWaitMs());
-        return StepResult.success("went back previous page");
-    }
+    public StepResult goBackAndWait() { return goBack(true); }
 
     public StepResult selectText(String locator) {
         WebElement elem = toElement(locator);
@@ -964,6 +955,9 @@ public class WebCommand extends BaseCommand implements CanTakeScreenshot, CanLog
 
     public StepResult maximizeWindow() {
         ensureReady();
+
+        StepResult failed = notSupportedForElectron();
+        if (failed != null) { return failed; }
 
         String winHandle = browser.getCurrentWinHandle();
         Window window;
@@ -1484,6 +1478,23 @@ public class WebCommand extends BaseCommand implements CanTakeScreenshot, CanLog
         new Actions(driver).clickAndHold(source).pause(500).dragAndDrop(source, target).build().perform();
 
         return StepResult.success("Drag-and-drop element '" + fromLocator + "' to '" + toLocator + "'");
+    }
+
+    @NotNull
+    protected StepResult goBack(boolean wait) {
+        ensureReady();
+
+        StepResult failed = notSupportedForElectron();
+        if (failed != null) { return failed; }
+
+        driver.navigate().back();
+        if (wait) { waitForBrowserStability(context.getPollWaitMs()); }
+        return StepResult.success("went back previous page");
+    }
+
+    protected StepResult notSupportedForElectron() {
+        if (browser.isRunElectron()) { return StepResult.fail("This command is NOT supported on Electron apps."); }
+        return null;
     }
 
     protected boolean execJsOverFreshElements(String locator, String script, int inBetweenWaitMs) {
