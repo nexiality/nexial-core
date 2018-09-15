@@ -711,7 +711,12 @@ public class ExecutionContext {
 
             Class valueType = value.getClass();
             if (valueType.isPrimitive() || SIMPLE_VALUES.contains(valueType)) {
-                text = StringUtils.replace(text, tokenized, StringUtils.defaultString(getStringData(token)));
+                // if there's substitution for ${...}[] and the `value` can be treated as list
+                if (isListCompatible(value) && containListAccess(text, tokenized)) {
+                    collectionValues.put(token, StringUtils.split(value.toString(), getTextDelim()));
+                } else {
+                    text = StringUtils.replace(text, tokenized, StringUtils.defaultString(getStringData(token)));
+                }
             } else if (Collection.class.isAssignableFrom(valueType) || valueType.isArray()) {
                 collectionValues.put(token, value);
             } else {
@@ -981,6 +986,18 @@ public class ExecutionContext {
         return System.getProperty(name, context == null ? def : context.getStringData(name, def));
     }
 
+    protected boolean isListCompatible(Object value) {
+        return !Objects.isNull(value) && StringUtils.contains(value.toString(), getTextDelim());
+    }
+
+    protected boolean containListAccess(String text, String tokenized) {
+        if (StringUtils.isEmpty(text) || StringUtils.isEmpty(tokenized)) { return false; }
+
+        String regex = StringUtils.replace(StringUtils.replace(tokenized, TOKEN_START, "\\$\\{"), TOKEN_END, "\\}") +
+                       "\\[[0-9]+\\]";
+        return RegexUtils.match(text, regex, true);
+    }
+
     protected void initDj() {
         // text-to-speech (tts) via AWS Polly
         dj = springContext.getBean("soundMachine", SoundMachine.class);
@@ -1124,15 +1141,12 @@ public class ExecutionContext {
         String postToken = data.get(NAME_POST_TOKEN);
 
         // if value is simple type, then no more introspection can be done.
-        if (isSimpleType(value)) {
-            // can't find the ${data}.xyz or ${data}.[xyz] pattern.  just replace ${data} with value stringified
-            return flattenAsString(text, token, value);
-        }
+        // can't find the ${data}.xyz or ${data}.[xyz] pattern.  just replace ${data} with value stringified
+        if (isSimpleType(value)) { return flattenAsString(text, token, value); }
 
         // special treatment for index-reference (list or array)
-        if ((value.getClass().isArray() || Collection.class.isAssignableFrom(value.getClass()))
-            && StringUtils.startsWith(postToken, TOKEN_ARRAY_START) && StringUtils.contains(postToken, TOKEN_ARRAY_END)
-        ) {
+        if ((value.getClass().isArray() || Collection.class.isAssignableFrom(value.getClass())) &&
+            StringUtils.startsWith(postToken, TOKEN_ARRAY_START) && StringUtils.contains(postToken, TOKEN_ARRAY_END)) {
 
             String propName = StringUtils.substring(postToken, 1, StringUtils.indexOf(postToken, TOKEN_ARRAY_END, 1));
             if (!NumberUtils.isDigits(propName)) { return flattenArrayOfObject(value, propName); }

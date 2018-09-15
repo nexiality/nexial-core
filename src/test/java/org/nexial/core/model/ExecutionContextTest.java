@@ -116,6 +116,36 @@ public class ExecutionContextTest {
     }
 
     @Test
+    public void replaceTokens_array() {
+        ExecutionContext subject = initMockContext();
+        subject.setData("a", "Hello,World,Johnny boy");
+        subject.setData("b", "Hello World Johnny boy");
+
+        Assert.assertEquals("Hello", subject.replaceTokens("${a}[0]"));
+        Assert.assertEquals("World", subject.replaceTokens("${a}[1]"));
+        Assert.assertEquals("Johnny boy", subject.replaceTokens("${a}[2]"));
+        Assert.assertEquals("Hello,World,Johnny boy", subject.replaceTokens("${a}"));
+        Assert.assertEquals("The World and Hello,World,Johnny boy", subject.replaceTokens("The ${a}[1] and ${a}"));
+        Assert.assertEquals("This World ain't gotta\n" +
+                            "hold on that Johnny boy!\n" +
+                            "Ya, Hello and out!\n" +
+                            "Hello,World,Johnny boy",
+                            subject.replaceTokens("This ${a}[1] ain't gotta\n" +
+                                                  "hold on that ${a}[2]!\n" +
+                                                  "Ya, ${a}[0] and out!\n" +
+                                                  "${a}"));
+
+        // out of bounds
+        Assert.assertEquals("", subject.replaceTokens("${a}[3]"));
+        Assert.assertEquals("Hello,World,Johnny boy[-2]", subject.replaceTokens("${a}[-2]"));
+
+        // not array
+        Assert.assertEquals("Hello World Johnny boy", subject.replaceTokens("${b}"));
+        Assert.assertEquals("Hello World Johnny boy[0]", subject.replaceTokens("${b}[0]"));
+        Assert.assertEquals("Hello World Johnny boy[1]", subject.replaceTokens("${b}[1]"));
+    }
+
+    @Test
     public void handleFunction() {
         ExecutionContext subject = initMockContext();
         subject.setData("firstDOW", "04/30/2017");

@@ -89,6 +89,18 @@ public final class RegexUtils {
         return p.matcher(text).matches();
     }
 
+    /** "contain" match (instead of exact) */
+    public static boolean match(String text, String regex) { return match(text, regex, false); }
+
+    /** "contain" match (instead of exact).  Use {@code multiline} to handle {@code text} that might contain multiple lines */
+    public static boolean match(String text, String regex, boolean multiline) {
+        if (StringUtils.isEmpty(text)) { return false; }
+        if (StringUtils.isEmpty(regex)) { return false; }
+
+        Pattern p = multiline ? Pattern.compile(regex, MULTILINE | UNIX_LINES | DOTALL) : Pattern.compile(regex);
+        return p.matcher(text).find();
+    }
+
     /**
      * same as {@link #collectGroups(String, String, boolean)} except that empty/blank {@code text} is treated as
      * "no-match".
