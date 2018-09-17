@@ -1015,8 +1015,16 @@ public class BaseCommand implements NexialCommand {
         if (context != null && context.getLogger() != null) { context.getLogger().log(this, message); }
     }
 
-    protected void addLinkRef(String message, String label, String link) {
+    public void addLinkRef(String message, String label, String link) {
         if (StringUtils.isBlank(link)) { return; }
+
+        if (context.isOutputToCloud()) {
+                try {
+                    link = context.getOtc().importMedia(new File(link));
+                } catch (IOException e) {
+                    log("Unable to save " + link + " to cloud storage due to " + e.getMessage());
+                }
+        }
 
         if (context != null && context.getLogger() != null) {
             TestStep testStep = context.getCurrentTestStep();
@@ -1028,18 +1036,20 @@ public class BaseCommand implements NexialCommand {
         }
     }
 
-    protected void addLinkToOutputFile(File outputFile, String label, String linkCaption) {
-        String outFile = outputFile.getPath();
-        if (context.isOutputToCloud()) {
-            try {
-                outFile = context.getOtc().importMedia(outputFile);
-            } catch (IOException e) {
-                log("Unable to save " + outFile + " to cloud storage due to " + e.getMessage());
-            }
-        }
-
-        addLinkRef(linkCaption, label, outFile);
-    }
+    // protected void addLinkToOutputFile(File outputFile, String label, String linkCaption) {
+    //     if (outputFile == null) { return; }
+    //
+    //     String outFile = outputFile.getPath();
+    //     if (context.isOutputToCloud()) {
+    //         try {
+    //             outFile = context.getOtc().importMedia(outputFile);
+    //         } catch (IOException e) {
+    //             log("Unable to save " + outFile + " to cloud storage due to " + e.getMessage());
+    //         }
+    //     }
+    //
+    //     addLinkRef(linkCaption, label, outFile);
+    // }
 
     protected void error(String message) { error(message, null); }
 
@@ -1052,21 +1062,13 @@ public class BaseCommand implements NexialCommand {
      *
      * to improve readability and user experience, use {@code caption} to describe such file on the execution output.
      */
-    protected void addContentAsLink(String caption, String output, String extension) {
+    protected void addOutputAsLink(String caption, String output, String extension) {
         String outFile = syspath.out("fullpath") + separator +
                          OutputFileUtils.generateOutputFilename(context.getCurrentTestStep(), extension);
         File outputFile = new File(outFile);
 
         try {
             FileUtils.writeStringToFile(outputFile, output, DEF_FILE_ENCODING);
-            if (context.isOutputToCloud()) {
-                try {
-                    outFile = context.getOtc().importMedia(outputFile);
-                } catch (IOException e) {
-                    log("Unable to save " + outFile + " to cloud storage due to " + e.getMessage());
-                }
-            }
-
             addLinkRef(caption, extension + " report", outFile);
         } catch (IOException e) {
             error("Unable to write log file to '" + outFile + "': " + e.getMessage(), e);

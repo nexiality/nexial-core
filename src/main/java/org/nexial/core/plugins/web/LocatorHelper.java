@@ -12,7 +12,6 @@
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
- *
  */
 
 package org.nexial.core.plugins.web;
@@ -20,11 +19,13 @@ package org.nexial.core.plugins.web;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.stream.Collectors;
 import javax.validation.constraints.NotNull;
 
 import org.apache.commons.collections4.CollectionUtils;
+import org.apache.commons.collections4.ListUtils;
 import org.apache.commons.lang3.ArrayUtils;
 import org.apache.commons.lang3.BooleanUtils;
 import org.apache.commons.lang3.StringUtils;
@@ -202,20 +203,22 @@ class LocatorHelper {
     }
 
     protected StepResult assertTextList(String locator, String textList, String ignoreOrder) {
-        requires(StringUtils.isNotBlank(textList), "invalid textList", textList);
-
-        List<WebElement> matches = delegator.findElements(locator);
-        if (CollectionUtils.isEmpty(matches)) {
-            return StepResult.fail("No matching element found by '" + locator + "'");
+        List<String> matchText = collectTextList(locator);
+        if (CollectionUtils.isEmpty(matchText)) {
+            if (StringUtils.isEmpty(textList)) {
+                return StepResult.success("The expected text list is empty and specified locator resolved to nothing");
+            } else {
+                return StepResult.fail("No matching element found by '" + locator + "'");
+            }
         }
-
-        List<String> matchText =
-            matches.stream().map(element -> StringUtils.trim(element.getText())).collect(Collectors.toList());
 
         List<String> expectedTextList = TextUtils.toList(textList, delegator.getContext().getTextDelim(), true);
         if (CollectionUtils.isEmpty(expectedTextList)) {
             return StepResult.fail("expected text list cannot be parsed: " + textList);
         }
+
+        // remove empty items since we can't compare them..
+        matchText = ListUtils.removeAll(matchText, Collections.singletonList(""));
 
         if (BooleanUtils.toBoolean(ignoreOrder)) {
             Collections.sort(matchText);
@@ -223,6 +226,14 @@ class LocatorHelper {
         }
 
         return delegator.assertEqual(expectedTextList.toString(), matchText.toString());
+    }
+
+    @NotNull
+    protected List<String> collectTextList(String locator) {
+        List<WebElement> matches = delegator.findElements(locator);
+        return CollectionUtils.isNotEmpty(matches) ?
+               matches.stream().map(element -> StringUtils.trim(element.getText())).collect(Collectors.toList()) :
+               new LinkedList<>();
     }
 
     protected StepResult assertElementNotPresent(String locator) {

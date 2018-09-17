@@ -18,8 +18,7 @@
 package org.nexial.commons.utils;
 
 import java.util.Date;
-
-import org.jetbrains.annotations.NotNull;
+import javax.validation.constraints.NotNull;
 
 import static org.nexial.commons.utils.SocialDateText.SocialDate.*;
 

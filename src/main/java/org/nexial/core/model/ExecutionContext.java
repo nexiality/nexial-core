@@ -712,11 +712,11 @@ public class ExecutionContext {
             Class valueType = value.getClass();
             if (valueType.isPrimitive() || SIMPLE_VALUES.contains(valueType)) {
                 // if there's substitution for ${...}[] and the `value` can be treated as list
-                if (isListCompatible(value) && containListAccess(text, tokenized)) {
-                    collectionValues.put(token, StringUtils.split(value.toString(), getTextDelim()));
-                } else {
-                    text = StringUtils.replace(text, tokenized, StringUtils.defaultString(getStringData(token)));
-                }
+                // if (isListCompatible(value) && containListAccess(text, tokenized)) {
+                //     collectionValues.put(token, StringUtils.split(value.toString(), getTextDelim()));
+                // } else {
+                text = StringUtils.replace(text, tokenized, StringUtils.defaultString(getStringData(token)));
+                // }
             } else if (Collection.class.isAssignableFrom(valueType) || valueType.isArray()) {
                 collectionValues.put(token, value);
             } else {
@@ -983,7 +983,13 @@ public class ExecutionContext {
     }
 
     public static String getSystemThenContextStringData(String name, ExecutionContext context, String def) {
-        return System.getProperty(name, context == null ? def : context.getStringData(name, def));
+        if (System.getProperty(name) == null) {
+            String value = context == null ? def : context.getStringData(name, def);
+            System.setProperty(name, value);
+            return value;
+        } else {
+            return System.getProperty(name, def);
+        }
     }
 
     protected boolean isListCompatible(Object value) {

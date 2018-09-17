@@ -29,9 +29,6 @@ import org.openqa.selenium.WebDriver;
 
 import static org.nexial.core.utils.CheckUtils.requires;
 
-/**
- *
- */
 public class CookieCommand extends BaseCommand implements RequireBrowser {
     protected Browser browser;
     protected WebDriver driver;
@@ -55,7 +52,6 @@ public class CookieCommand extends BaseCommand implements RequireBrowser {
     public StepResult assertValue(String name, String value) {
         Cookie cookie = getCookie(name);
         if (StringUtils.isBlank(value) && cookie == null) { return StepResult.success(); }
-
         return assertEqual(StringUtils.trim(value), StringUtils.trim(cookie.getValue()));
     }
 

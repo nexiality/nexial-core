@@ -226,8 +226,9 @@ public class RdbmsCommand extends BaseCommand {
                     String outFile = StringUtils.appendIfMissing(OutputFileUtils.webFriendly(varName), ".csv");
                     String output = StringUtils.appendIfMissing(new File(outputDir).getAbsolutePath(), separator) +
                                     outFile;
+                    File targetFile = new File(output);
 
-                    JdbcResult result = dataAccess.execute(sql, dao, new File(output));
+                    JdbcResult result = dataAccess.execute(sql, dao, targetFile);
 
                     if (result == null) {
                         return StepResult.fail("FAILED TO EXECUTE SQL '" + printableSql + "': no result");
@@ -236,7 +237,7 @@ public class RdbmsCommand extends BaseCommand {
                         log("ERROR found while executing " + printableSql + ": " + result.getError());
                     }
                     if (FileUtil.isFileReadable(output, 3)) {
-                        addLinkToOutputFile(new File(output), outFile, "Output for " + printableSql);
+                        addLinkRef("Output for " + printableSql, outFile, targetFile.getAbsolutePath());
                     }
 
                     String msg = "executed " + printableSql + " in " + result.getElapsedTime() + " ms with " +

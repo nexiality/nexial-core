@@ -33,12 +33,12 @@ import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.collections4.IterableUtils;
 import org.apache.commons.collections4.Predicate;
 import org.apache.commons.io.FileUtils;
+import org.apache.commons.lang3.ArrayUtils;
 import org.apache.commons.lang3.BooleanUtils;
 import org.apache.commons.lang3.RandomStringUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.math.NumberUtils;
 import org.apache.http.client.methods.HttpRequestBase;
-import org.jetbrains.annotations.Nullable;
 import org.nexial.commons.utils.CollectionUtil;
 import org.nexial.commons.utils.RegexUtils;
 import org.nexial.commons.utils.TextUtils;
@@ -68,9 +68,6 @@ import org.openqa.selenium.support.ui.Quotes;
 import org.openqa.selenium.support.ui.Select;
 import org.openqa.selenium.support.ui.WebDriverWait;
 
-import com.univocity.parsers.csv.CsvFormat;
-import com.univocity.parsers.csv.CsvWriter;
-import com.univocity.parsers.csv.CsvWriterSettings;
 import net.lightbody.bmp.proxy.ProxyServer;
 import net.lightbody.bmp.proxy.http.RequestInterceptor;
 import net.lightbody.bmp.proxy.jetty.http.HttpMessage;
@@ -96,6 +93,7 @@ public class WebCommand extends BaseCommand implements CanTakeScreenshot, CanLog
     protected AlertCommand alert;
     protected CookieCommand cookie;
     protected WsCommand ws;
+    protected TableHelper tableHelper;
 
     protected boolean logToBrowser;
     protected long browserStabilityWaitMs;
@@ -140,6 +138,8 @@ public class WebCommand extends BaseCommand implements CanTakeScreenshot, CanLog
                                              .pollingEvery(Duration.ofMillis(10))
                                              .ignoring(NoSuchElementException.class);
         }
+
+        tableHelper = new TableHelper(this);
     }
 
     @Override
@@ -437,12 +437,15 @@ public class WebCommand extends BaseCommand implements CanTakeScreenshot, CanLog
     }
 
     public StepResult saveTextArray(String var, String locator) {
-        requires(StringUtils.isNotBlank(var) && !StringUtils.startsWith(var, "${"), "invalid variable", var);
-        List<WebElement> matches = findElements(locator);
-        if (CollectionUtils.isNotEmpty(matches)) {
-            List<String> matchedText = matches.stream().map(WebElement::getText).collect(Collectors.toList());
-            context.setData(var, matchedText.toArray(new String[matchedText.size()]));
+        requiresValidVariableName(var);
+
+        String[] textArray = collectTextList(locator);
+        if (ArrayUtils.isNotEmpty(textArray)) {
+            context.setData(var, textArray);
+        } else {
+            context.removeData(var);
         }
+
         return StepResult.success("stored content of '" + locator + "' as ${" + var + "}");
     }
 
@@ -605,127 +608,33 @@ public class WebCommand extends BaseCommand implements CanTakeScreenshot, CanLog
     }
 
     public StepResult assertTable(String locator, String row, String column, String text) {
-        requires(NumberUtils.isDigits(row) && NumberUtils.toInt(row) > 0, "invalid row number", row);
-        requires(NumberUtils.isDigits(column) && NumberUtils.toInt(column) > 0, "invalid column number", column);
-
-        WebElement table = toElement(locator);
-
-        WebElement cell = table.findElement(By.xpath(".//tr[" + row + "]/td[" + column + "]"));
-        if (cell == null) {
-            return StepResult.fail("EXPECTED cell at Row " + row + " Column " + column +
-                                   " of table '" + locator + "' does not exist.");
-        }
-
-        String actual = cell.getText();
-        if (StringUtils.isBlank(text)) {
-            if (StringUtils.isBlank(actual)) {
-                return StepResult.success("found empty value in table '" + locator + "'");
-            } else {
-                return StepResult.fail("EXPECTED empty value but found '" + actual + "' instead.");
-            }
-        }
-
-        if (StringUtils.isBlank(actual)) {
-            return StepResult.fail("EXPECTED '" + text + "' but found empty value instead.");
-        }
-
-        String msgPrefix = "EXPECTED '" + text + "' in table '" + locator + "'";
-        if (StringUtils.equals(text, actual)) {
-            return StepResult.success(msgPrefix);
-        } else {
-            return StepResult.fail(msgPrefix + " but found '" + actual + "' instead.");
-        }
+        return tableHelper.assertTable(locator, row, column, text);
     }
 
     public StepResult saveTableAsCsv(String locator, String nextPageLocator, String file) {
-        requiresNotBlank(file, "Invalid file", file);
+        return tableHelper.saveTableAsCsv(locator, nextPageLocator, file);
+    }
 
-        // exception thrown if locator doesn't resolve to element
-        WebElement table = toElement(locator);
-
-        CsvFormat format = new CsvFormat();
-        format.setDelimiter(context.getTextDelim().charAt(0));
-        format.setLineSeparator("\n");
-        CsvWriterSettings settings = new CsvWriterSettings();
-        settings.setFormat(format);
-        CsvWriter writer = new CsvWriter(new File(file), DEF_FILE_ENCODING, settings);
-
-        String msgPrefix = "Table '" + locator + "'";
-
-        // table has header via thead?
-        List<WebElement> headers = table.findElements(By.xpath(".//thead//*[ name() = 'TH' or name() = 'TD' ]"));
-        // table has header via th?
-        if (CollectionUtils.isEmpty(headers)) { headers = table.findElements(By.xpath(".//tr/th")); }
-        if (CollectionUtils.isEmpty(headers)) {
-            ConsoleUtils.log(msgPrefix + " does not contain usable headers");
-        } else {
-            List<String> headerNames = new ArrayList<>();
-            headers.forEach(header -> headerNames.add(header.getText()));
-            writer.writeHeaders(headerNames);
-        }
-
-        int pageCount = 0;
-        String firstRow = "";
-
-        while (true) {
-            // table has body?
-            List<WebElement> rows = table.findElements(By.xpath(".//tbody/tr"));
-            // table has rows not trapped within tbody?
-            if (CollectionUtils.isEmpty(rows)) { rows = table.findElements(By.xpath(".//tr/*[ .[name() = 'TD'] ]")); }
-            if (CollectionUtils.isEmpty(rows)) {
-                if (pageCount < 1) { ConsoleUtils.log(msgPrefix + " does not contain usable data cells"); }
-                break;
-            }
-
-            ConsoleUtils.log("collecting table data for page " + (pageCount + 1));
-            boolean hasData = true;
-
-            for (int i = 0; i < rows.size(); i++) {
-                WebElement row = rows.get(i);
-                List<WebElement> cells = row.findElements(By.tagName("td"));
-                List<String> cellContent = new ArrayList<>();
-                if (CollectionUtils.isNotEmpty(cells)) {
-                    cells.forEach(cell -> cellContent.add(cell.getText()));
-
-                    if (i == 0) {
-                        // compare the first row of every page after the 1st page
-                        if (pageCount > 0 && StringUtils.equals(firstRow, cellContent.toString())) {
-                            // found duplicate... maybe we have reached the end?
-                            ConsoleUtils.log(msgPrefix + " reached the end of records.");
-                            hasData = false;
-                            break;
-                        }
-
-                        // mark first row for comparison against next page
-                        firstRow = cellContent.toString();
-                    }
-
-                    writer.writeRow(cellContent);
-                } else {
-                    writer.writeEmptyRow();
-                    firstRow = "";
-                }
-            }
-
-            if (!hasData) { break; }
-
-            pageCount++;
-
-            WebElement nextPage = resolveNextPageForPaginatedTable(nextPageLocator);
-            if (nextPage != null && nextPage.isDisplayed() && nextPage.isEnabled()) {
-                nextPage.click();
-            } else {
-                break;
-            }
-        }
-
-        // table has footer via tfoot? we are ignoring it...
-
-        // write to target file
-        writer.flush();
-        writer.close();
-
-        return StepResult.success(msgPrefix + " successfully written to " + file);
+    /**
+     * This one is different from {@link #saveTableAsCsv(String, String, String)} in that it does NOT rely on
+     * conventional HTML table structure. Instead, this method uses {@code headerCellsLoc} to represent the "header"
+     * cells, the {@code rowLocator} to represent the pattern of a "data" row and the {@code cellLocator} as the
+     * relative path of a "data" cell (hierarchically contained within a row).
+     *
+     * Optionally, the {@code nextPageLocator} is used to forward to the "page" of the table data. If provided, this
+     * method will forward to the next page of data AFTER the current page of table data is collected. Furthermore, this
+     * method will keep forward to the next page of table data until the element represented by the
+     * {@code nextPageLocator} is either disabled or no longer visible.
+     *
+     * Collected table data will be saved as CSV into {@code file}. {@code headerCellsLoc} is optional; if it is not
+     * specified, then the target {@code file} will not contain header either.
+     */
+    public StepResult saveDivsAsCsv(String headerCellsLoc,
+                                    String rowLocator,
+                                    String cellLocator,
+                                    String nextPageLocator,
+                                    String file) {
+        return tableHelper.saveDivsAsCsv(headerCellsLoc, rowLocator, cellLocator, nextPageLocator, file);
     }
 
     public StepResult assertValue(String locator, String value) {
@@ -1481,6 +1390,15 @@ public class WebCommand extends BaseCommand implements CanTakeScreenshot, CanLog
     }
 
     @NotNull
+    protected String[] collectTextList(String locator) { return collectTextList(findElements(locator)); }
+
+    @NotNull
+    protected String[] collectTextList(List<WebElement> matches) {
+        if (CollectionUtils.isEmpty(matches)) { return new String[0]; }
+        return matches.stream().map(WebElement::getText).toArray(String[]::new);
+    }
+
+    @NotNull
     protected StepResult goBack(boolean wait) {
         ensureReady();
 
@@ -1588,13 +1506,6 @@ public class WebCommand extends BaseCommand implements CanTakeScreenshot, CanLog
         return StepResult.success(msgPrefix + " OPTION(s) with text '" + text + "' selected");
     }
 
-    @Nullable
-    protected WebElement resolveNextPageForPaginatedTable(String nextPageLocator) {
-        WebElement nextPage = null;
-        if (StringUtils.isNotBlank(nextPageLocator)) { nextPage = findElement(nextPageLocator); }
-        return nextPage;
-    }
-
     protected StepResult scrollTo(String locator, Locatable element) {
         try {
             boolean success = scrollTo(element);
@@ -1609,7 +1520,6 @@ public class WebCommand extends BaseCommand implements CanTakeScreenshot, CanLog
     }
 
     protected StepResult mouseOut(String locator) {
-
         ensureReady();
         jsExecutor.executeScript("arguments[0].mouseout();", toElement(locator));
 

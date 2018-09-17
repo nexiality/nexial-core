@@ -96,7 +96,7 @@ public class ExecutionContextTest {
         Map<String, List<Number>> stuff2 = new LinkedHashMap<>();
         stuff2.put("Banana", Arrays.asList(14.59, 15.01, 15.02));
         stuff2.put("Apple", Arrays.asList(11.55, 12, 12.31));
-        stuff2.put("Chocolate", Arrays.asList(8.50));
+        stuff2.put("Chocolate", Collections.singletonList(8.50));
         stuff.add(stuff2);
         subject.setData("stuff", stuff);
 
@@ -121,28 +121,29 @@ public class ExecutionContextTest {
         subject.setData("a", "Hello,World,Johnny boy");
         subject.setData("b", "Hello World Johnny boy");
 
-        Assert.assertEquals("Hello", subject.replaceTokens("${a}[0]"));
-        Assert.assertEquals("World", subject.replaceTokens("${a}[1]"));
-        Assert.assertEquals("Johnny boy", subject.replaceTokens("${a}[2]"));
+        Assert.assertEquals("Hello", subject.replaceTokens("$(array|item|${a}|0)"));
+        Assert.assertEquals("World", subject.replaceTokens("$(array|item|${a}|1)"));
+        Assert.assertEquals("Johnny boy", subject.replaceTokens("$(array|item|${a}|2)"));
         Assert.assertEquals("Hello,World,Johnny boy", subject.replaceTokens("${a}"));
-        Assert.assertEquals("The World and Hello,World,Johnny boy", subject.replaceTokens("The ${a}[1] and ${a}"));
+        Assert.assertEquals("The World and Hello,World,Johnny boy",
+                            subject.replaceTokens("The $(array|item|${a}|1) and ${a}"));
         Assert.assertEquals("This World ain't gotta\n" +
                             "hold on that Johnny boy!\n" +
                             "Ya, Hello and out!\n" +
                             "Hello,World,Johnny boy",
-                            subject.replaceTokens("This ${a}[1] ain't gotta\n" +
-                                                  "hold on that ${a}[2]!\n" +
-                                                  "Ya, ${a}[0] and out!\n" +
+                            subject.replaceTokens("This $(array|item|${a}|1) ain't gotta\n" +
+                                                  "hold on that $(array|item|${a}|2)!\n" +
+                                                  "Ya, $(array|item|${a}|0) and out!\n" +
                                                   "${a}"));
 
         // out of bounds
-        Assert.assertEquals("", subject.replaceTokens("${a}[3]"));
-        Assert.assertEquals("Hello,World,Johnny boy[-2]", subject.replaceTokens("${a}[-2]"));
+        Assert.assertEquals("", subject.replaceTokens("$(array|item|${a}|3)"));
+        Assert.assertEquals("", subject.replaceTokens("$(array|item|${a}|-2)"));
 
         // not array
         Assert.assertEquals("Hello World Johnny boy", subject.replaceTokens("${b}"));
-        Assert.assertEquals("Hello World Johnny boy[0]", subject.replaceTokens("${b}[0]"));
-        Assert.assertEquals("Hello World Johnny boy[1]", subject.replaceTokens("${b}[1]"));
+        Assert.assertEquals("Hello World Johnny boy", subject.replaceTokens("$(array|item|${b}|0)"));
+        Assert.assertEquals("", subject.replaceTokens("$(array|item|${b}|1)"));
     }
 
     @Test

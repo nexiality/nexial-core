@@ -82,9 +82,9 @@ public class JsonCommand extends BaseCommand {
             String differences = GSON.toJson(results.toJson());
             context.setData(LAST_JSON_COMPARE_RESULT, differences);
             ConsoleUtils.log("JSON differences found:\n" + differences);
-            addContentAsLink("JSON comparison resulted in " + results.differenceCount() + " differences",
-                             differences,
-                             "json");
+            addOutputAsLink("JSON comparison resulted in " + results.differenceCount() + " differences",
+                            differences,
+                            "json");
             return StepResult.fail("EXPECTED json is NOT equivalent to the ACTUAL json");
         } else {
             context.removeData(LAST_JSON_COMPARE_RESULT);

@@ -416,6 +416,7 @@ public final class TextUtils {
      * convert {@code array} into a string, with optional delimiter, prefix and suffix.  For example,
      * {@code toString(new String[]{"a", "b", "c"}, ",", "'", "'")} will return {@code "'a','b','c'"}
      */
+    @NotNull
     public static String toString(String[] array, String delim, String prefix, String suffix) {
         if (array == null || array.length == 0) { return ""; }
 
@@ -428,8 +429,9 @@ public final class TextUtils {
         return sb.substring(0, sb.length() - d.length());
     }
 
-    public static String toCsvLine(String[] array, String delim, String recordDelm) {
-        if (ArrayUtils.isEmpty(array)) { return recordDelm; }
+    @NotNull
+    public static String toCsvLine(String[] array, String delim, String recordDelim) {
+        if (ArrayUtils.isEmpty(array)) { return recordDelim; }
 
         StringBuilder sb = new StringBuilder();
         for (String value : array) {
@@ -438,7 +440,21 @@ public final class TextUtils {
             sb.append(data).append(delim);
         }
 
-        return StringUtils.removeEnd(sb.toString(), delim) + recordDelm;
+        return StringUtils.removeEnd(sb.toString(), delim) + recordDelim;
+    }
+
+    @NotNull
+    public static String toCsvLine(List<String> array, String delim, String recordDelim) {
+        if (CollectionUtils.isEmpty(array)) { return recordDelim; }
+
+        StringBuilder sb = new StringBuilder();
+        for (String value : array) {
+            String data = StringUtils.containsAny(value, delim, "\r", "\n") ?
+                          TextUtils.wrapIfMissing(value, "\"", "\"") : value;
+            sb.append(data).append(delim);
+        }
+
+        return StringUtils.removeEnd(sb.toString(), delim) + recordDelim;
     }
 
     public static String toString(Map map, String pairDelim, String nameValueDelim) {
@@ -455,8 +471,10 @@ public final class TextUtils {
         return sb.toString();
     }
 
+    @NotNull
     public static String toString(List list, String delim) { return CollectionUtil.toString(list, delim); }
 
+    @NotNull
     public static String toString(List<?> list, String delim, String prefix, String suffix) {
         if (CollectionUtils.isEmpty(list)) { return ""; }
 
@@ -469,6 +487,7 @@ public final class TextUtils {
         return StringUtils.removeEnd(sb.toString(), d);
     }
 
+    @NotNull
     public static String toString(Set<?> set, String delim) { return CollectionUtil.toString(set, delim); }
 
     /** test to see if {@code matchList} contains any element that starts with {@code matchBy}. */
@@ -629,7 +648,7 @@ public final class TextUtils {
     }
 
     /**
-     * remove all extraneous whitespaces, including space, tab, newline, carriage return so that {@link text} would
+     * remove all extraneous whitespaces, including space, tab, newline, carriage return so that {@code text} would
      * contain NO CONTIGUOUS whitespace.
      *
      * Note that this method will convert all whitespaces (non-printable) to space (ASCII 20), and remove space dups.

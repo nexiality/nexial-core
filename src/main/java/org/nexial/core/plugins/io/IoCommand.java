@@ -26,6 +26,7 @@ import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.*;
 import java.util.regex.Pattern;
+import javax.validation.constraints.NotNull;
 
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.io.FileUtils;
@@ -39,7 +40,6 @@ import org.apache.commons.lang3.time.StopWatch;
 import org.apache.commons.lang3.tuple.ImmutablePair;
 import org.apache.commons.lang3.tuple.Pair;
 import org.apache.commons.text.similarity.LevenshteinDetailedDistance;
-import org.jetbrains.annotations.NotNull;
 import org.nexial.commons.utils.DateUtility;
 import org.nexial.commons.utils.FileUtil;
 import org.nexial.commons.utils.IOFilePathFilter;
@@ -399,7 +399,7 @@ public class IoCommand extends BaseCommand {
 
         if (reportType.equalsIgnoreCase("Excel")) { results = ErrorReport.createExcel(recordData); }
         if (reportType.equalsIgnoreCase("JSON")) { results = ErrorReport.createJSON(recordData); }
-        if (results != null) { addLinkToOutputFile(results, reportType + " report", caption); }
+        if (results != null) { addLinkRef(caption, reportType + " report", results.getAbsolutePath()); }
         if (recordData.isHasError()) {
             return StepResult.fail("Error in file validation. Refer error report.");
         } else {
@@ -808,7 +808,7 @@ public class IoCommand extends BaseCommand {
         if (stats != null) { caption += lineSeparator() + stats; }
         caption += " (click link on the right for details)";
 
-        addContentAsLink(caption, output, type);
+        addOutputAsLink(caption, output, type);
     }
 
     protected int scanForMatchingRow(String matchTo, List<String> matchFrom, int startFrom) {
