@@ -26,7 +26,6 @@ import org.nexial.core.model.StepResult
 import org.nexial.core.utils.CheckUtils.requiresNotBlank
 import org.nexial.core.utils.CheckUtils.requiresPositiveNumber
 import org.nexial.core.utils.ConsoleUtils
-import org.nexial.core.variable.Syspath
 import org.openqa.selenium.By
 import org.openqa.selenium.WebElement
 import java.io.File
@@ -34,8 +33,6 @@ import java.util.*
 import javax.validation.constraints.NotNull
 
 class TableHelper(private val webCommand: WebCommand) {
-    private val syspath = Syspath()
-
     fun saveDivsAsCsv(headerCellsLoc: String,
                       rowLocator: String,
                       cellLocator: String,
@@ -116,8 +113,8 @@ class TableHelper(private val webCommand: WebCommand) {
 
         // table has header via thead?
         // table has header via th?
-        val headers = table.findElements<WebElement>(By.xpath(".//thead//*[ name() = 'TH' or name() = 'TD' ]"))
-                      ?: table.findElements(By.xpath(".//tr/th"))
+        val headers: List<WebElement> = table.findElements(By.xpath(".//thead//*[ name() = 'TH' or name() = 'TD' ]"))
+                                        ?: table.findElements(By.xpath(".//tr/th"))
         writeCsvHeader(msgPrefix, writer, headers)
 
         var pageCount = 0
@@ -125,9 +122,9 @@ class TableHelper(private val webCommand: WebCommand) {
 
         while (true) {
             // table has body?
-            var rows = table.findElements<WebElement>(By.xpath(".//tbody/tr"))
+            var rows: List<WebElement> = table.findElements(By.xpath(".//tbody/tr"))
             // table has rows not trapped within tbody?
-            if (CollectionUtils.isEmpty(rows)) rows = table.findElements(By.xpath(".//tr/*[ .[name() = 'TD'] ]"));
+            if (CollectionUtils.isEmpty(rows)) rows = table.findElements(By.xpath(".//tr/*[ .[name() = 'TD'] ]"))
             if (CollectionUtils.isEmpty(rows)) {
                 if (pageCount < 1) ConsoleUtils.log("$msgPrefix does not contain usable data cells")
                 break
@@ -185,8 +182,9 @@ class TableHelper(private val webCommand: WebCommand) {
 
         val table = webCommand.toElement(locator)
 
-        val cell = table.findElement<WebElement>(By.xpath(".//tr[$row]/td[$column]"))
-                   ?: return StepResult.fail("EXPECTED cell at Row $row Column $column of table '$locator' NOT found")
+        val cell: WebElement = table.findElement(By.xpath(".//tr[$row]/td[$column]"))
+                               ?: return StepResult.fail("EXPECTED cell at Row $row Column $column of " +
+                                                         "table '$locator' NOT found")
 
         val actual = cell.text
         if (StringUtils.isBlank(text)) {
@@ -209,7 +207,7 @@ class TableHelper(private val webCommand: WebCommand) {
 
     @NotNull
     private fun toCellContent(row: WebElement, cellLocator: String): List<String> {
-        val cells = row.findElements<WebElement>(webCommand.locatorHelper.findBy(cellLocator))
+        val cells: List<WebElement> = row.findElements(webCommand.locatorHelper.findBy(cellLocator))
 
         val cellContent = ArrayList<String>()
         if (CollectionUtils.isEmpty(cells)) return cellContent
