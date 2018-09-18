@@ -346,9 +346,7 @@ public class Nexial {
             // resolve project directory structure based on the {@code testScriptFile} command line input
             project = TestProject.newInstance(testPlanFile, DEF_REL_LOC_TEST_PLAN);
             if (!project.isStandardStructure()) {
-                ConsoleUtils.log("specified plan (" +
-                                 testPlanFile +
-                                 ") not following standard project " +
+                ConsoleUtils.log("specified plan (" + testPlanFile + ") not following standard project " +
                                  "structure, related directories would not be resolved from commandline arguments.");
             }
 

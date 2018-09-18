@@ -49,6 +49,12 @@ public class CsvCommand extends IoCommand {
     @Override
     public String getTarget() { return "csv"; }
 
+    @Override
+    public void init(ExecutionContext context) {
+        super.init(context);
+        if (excelHelper == null) { excelHelper = new ExcelHelper(context); }
+    }
+
     /**
      * both {@code expected} and {@code actual} can be file or content. {@code failFast} should be "true" or "false".
      */
@@ -59,12 +65,6 @@ public class CsvCommand extends IoCommand {
                        actual,
                        !StringUtils.isBlank(failFast) && BooleanUtils.toBoolean(failFast) ? FAIL_FAST : THOROUGH,
                        null);
-    }
-
-    @Override
-    public void init(ExecutionContext context) {
-        super.init(context);
-        if (excelHelper == null) { excelHelper = new ExcelHelper(context); }
     }
 
     public StepResult compareExtended(String var, String profile, String expected, String actual) {

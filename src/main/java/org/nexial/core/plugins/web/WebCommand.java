@@ -617,24 +617,20 @@ public class WebCommand extends BaseCommand implements CanTakeScreenshot, CanLog
 
     /**
      * This one is different from {@link #saveTableAsCsv(String, String, String)} in that it does NOT rely on
-     * conventional HTML table structure. Instead, this method uses {@code headerCellsLoc} to represent the "header"
-     * cells, the {@code rowLocator} to represent the pattern of a "data" row and the {@code cellLocator} as the
+     * conventional HTML table structure. Instead, this method uses {@code headers} to represent the "header"
+     * cells, the {@code rows} to represent the pattern of a "data" row and the {@code cells} as the
      * relative path of a "data" cell (hierarchically contained within a row).
      *
-     * Optionally, the {@code nextPageLocator} is used to forward to the "page" of the table data. If provided, this
+     * Optionally, the {@code nextPage} is used to forward to the "page" of the table data. If provided, this
      * method will forward to the next page of data AFTER the current page of table data is collected. Furthermore, this
      * method will keep forward to the next page of table data until the element represented by the
-     * {@code nextPageLocator} is either disabled or no longer visible.
+     * {@code nextPage} is either disabled or no longer visible.
      *
-     * Collected table data will be saved as CSV into {@code file}. {@code headerCellsLoc} is optional; if it is not
+     * Collected table data will be saved as CSV into {@code file}. {@code headers} is optional; if it is not
      * specified, then the target {@code file} will not contain header either.
      */
-    public StepResult saveDivsAsCsv(String headerCellsLoc,
-                                    String rowLocator,
-                                    String cellLocator,
-                                    String nextPageLocator,
-                                    String file) {
-        return tableHelper.saveDivsAsCsv(headerCellsLoc, rowLocator, cellLocator, nextPageLocator, file);
+    public StepResult saveDivsAsCsv(String headers, String rows, String cells, String nextPage, String file) {
+        return tableHelper.saveDivsAsCsv(headers, rows, cells, nextPage, file);
     }
 
     public StepResult assertValue(String locator, String value) {
