@@ -40,6 +40,7 @@ import org.apache.commons.lang3.time.StopWatch;
 import org.apache.commons.lang3.tuple.ImmutablePair;
 import org.apache.commons.lang3.tuple.Pair;
 import org.apache.commons.text.similarity.LevenshteinDetailedDistance;
+import org.jetbrains.annotations.Nullable;
 import org.nexial.commons.utils.DateUtility;
 import org.nexial.commons.utils.FileUtil;
 import org.nexial.commons.utils.IOFilePathFilter;
@@ -476,10 +477,7 @@ public class IoCommand extends BaseCommand {
 
         try {
             content = OutputFileUtils.resolveContent(content, context, false, replaceTokens);
-            content = StringUtils.replace(content, "\r\n", TMP_EOL);
-            content = StringUtils.replace(content, "\n", TMP_EOL);
-            content = StringUtils.replace(content, TMP_EOL, lineSeparator());
-
+            content = adjustEol(content);
             FileUtils.writeStringToFile(output, StringUtils.defaultString(content), DEF_CHARSET, isAppend);
             return StepResult.success("Content " + (isAppend ? " appended" : " written") + " to " + file);
         } catch (IOException e) {
@@ -856,6 +854,49 @@ public class IoCommand extends BaseCommand {
         if (report == null || !report.hasMismatch()) { return StepResult.success("No diff found"); }
         context.setData(var, report.showDiffs());
         return StepResult.success("File diffs are saved to '" + var + "'");
+    }
+
+    @Nullable
+    private String adjustEol(String content) {
+        if (StringUtils.isEmpty(content)) { return content; }
+
+        String eol;
+        String eolConfig = context.getStringData(OPT_IO_EOL_CONFIG, EOL_CONFIG_DEF);
+        switch (eolConfig) {
+            case EOL_CONFIG_AS_IS: {
+                eol = "";
+                break;
+            }
+            case EOL_CONFIG_PLATFORM: {
+                eol = lineSeparator();
+                break;
+            }
+            case EOL_CONFIG_UNIX: {
+                eol = "\n";
+                break;
+            }
+            case EOL_CONFIG_WINDOWS: {
+                eol = "\r\n";
+                break;
+            }
+            default: {
+                eol = "";
+                break;
+            }
+        }
+
+        ConsoleUtils.log("setting end-of-line character as " +
+                         (StringUtils.isEmpty(eol) ?
+                          "is" :
+                          StringUtils.replace(StringUtils.replace(eol, "\n", "\\n"), "\r", "\\r")));
+
+        if (StringUtils.isNotEmpty(eol)) {
+            content = StringUtils.replace(content, "\r\n", TMP_EOL);
+            content = StringUtils.replace(content, "\n", TMP_EOL);
+            content = StringUtils.replace(content, TMP_EOL, eol);
+        }
+
+        return content;
     }
 
     private boolean isMSOfficeTempFile(String filepath) {

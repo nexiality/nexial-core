@@ -157,11 +157,6 @@ public final class NexialConst {
     // public static final String NEXIAL_SUPPORT_HOME = StringUtils.appendIfMissing(USER_HOME, separator) + ".nexial";
     // public static final String EDGE_DRIVER_HOME = NEXIAL_SUPPORT_HOME + separator + "edge" + separator;
 
-    // todo: need to evaluate how to use these 3 to modify the nexial result and excel output
-    public static final String COMPARE_INCLUDE_MOVED = NAMESPACE + "io.compareIncludeMoved";
-    public static final String COMPARE_INCLUDE_ADDED = NAMESPACE + "io.compareIncludeAdded";
-    public static final String COMPARE_INCLUDE_DELETED = NAMESPACE + "io.compareIncludeRemoved";
-
     public static final String OPT_PROXY_USER = NAMESPACE + "proxy_user";
     public static final String OPT_PROXY_PASSWORD = NAMESPACE + "proxy_password";
     public static final String OPT_PROXY_REQUIRED = NAMESPACE + "proxyRequired";
@@ -787,16 +782,28 @@ public final class NexialConst {
         // io
         public static final String COMPARE_LOG_PLAIN = "log";
         public static final String COMPARE_LOG_JSON = "json";
-        public static final String GEN_COMPARE_LOG = NAMESPACE + "compare.textReport";
-        public static final String GEN_COMPARE_JSON = NAMESPACE + "compare.jsonReport";
+        public static final String NAMESPACE_COMPARE = NAMESPACE + "compare.";
+        public static final String GEN_COMPARE_LOG = NAMESPACE_COMPARE + "textReport";
+        public static final String GEN_COMPARE_JSON = NAMESPACE_COMPARE + "jsonReport";
+        public static final String LOG_MATCH = NAMESPACE_COMPARE + "reportMatch";
         public static final String MAPPING_EXCEL = ".mappingExcel";
         public static final String CONFIG_JSON = ".configJson";
         public static final String REPORT_TYPE = ".reportType";
-        public static final String LOG_MATCH = NAMESPACE + "compare.reportMatch";
         public static final boolean DEF_GEN_COMPARE_LOG = true;
         public static final boolean DEF_GEN_COMPARE_JSON = false;
         public static final boolean DEF_LOG_MATCH = false;
         // public static final double DEF_COMPARE_TOLERANCE = 0.6;
+        public static final String NAMESPACE_IO = NAMESPACE + "io.";
+        // todo: need to evaluate how to use these 3 to modify the nexial result and excel output
+        public static final String COMPARE_INCLUDE_MOVED = NAMESPACE_IO + "compareIncludeMoved";
+        public static final String COMPARE_INCLUDE_ADDED = NAMESPACE_IO + "compareIncludeAdded";
+        public static final String COMPARE_INCLUDE_DELETED = NAMESPACE_IO + "compareIncludeRemoved";
+        public static final String OPT_IO_EOL_CONFIG = NAMESPACE_IO + "eolConfig";
+        public static final String EOL_CONFIG_AS_IS = "as is";
+        public static final String EOL_CONFIG_PLATFORM = "platform";
+        public static final String EOL_CONFIG_WINDOWS = "windows";
+        public static final String EOL_CONFIG_UNIX = "unix";
+        public static final String EOL_CONFIG_DEF = EOL_CONFIG_PLATFORM;
 
         // json
         public static final String LAST_JSON_COMPARE_RESULT = NAMESPACE + "json.lastCompareResults";

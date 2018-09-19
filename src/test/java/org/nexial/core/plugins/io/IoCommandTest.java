@@ -50,10 +50,9 @@ import org.nexial.core.variable.Sysdate;
 import org.nexial.core.variable.Syspath;
 
 import static java.io.File.separator;
-import static org.nexial.core.NexialConst.DEF_CHARSET;
-import static org.nexial.core.NexialConst.Data.LOG_MATCH;
-import static org.nexial.core.NexialConst.OPT_DATA_DIR;
-import static org.nexial.core.NexialConst.OPT_OUT_DIR;
+import static java.lang.System.lineSeparator;
+import static org.nexial.core.NexialConst.*;
+import static org.nexial.core.NexialConst.Data.*;
 
 public class IoCommandTest {
 
@@ -469,10 +468,139 @@ public class IoCommandTest {
         Assert.assertNotNull(result);
         Assert.assertTrue(result.isSuccess());
 
-        Properties prop = ResourceUtils.loadProperties(new File(testFile1));
+        File file1 = new File(testFile1);
+        Properties prop = ResourceUtils.loadProperties(file1);
         Assert.assertEquals("a", prop.getProperty("prop1"));
         Assert.assertEquals("b", prop.getProperty("prop2"));
         Assert.assertEquals("-", prop.getProperty("prop3"));
+    }
+
+    @Test
+    public void testEol_simple() throws Exception {
+        String propContent = "prop1=a\n" +
+                             "prop2=b\n" +
+                             "prop3=${prop1}-${prop2}\n";
+
+        IoCommand io = new IoCommand();
+        io.init(context);
+
+        StepResult result = io.writeFile(testFile1, propContent, "false");
+        Assert.assertTrue(result.isSuccess());
+
+        File file1 = new File(testFile1);
+
+        // check testFile1 for eol
+        String content = FileUtils.readFileToString(file1, DEF_FILE_ENCODING);
+
+        // eol default (platform) test
+        // default is platform-specific eol
+        String eol = lineSeparator();
+        Assert.assertEquals("prop1=a" + eol +
+                            "prop2=b" + eol +
+                            "prop3=-" + eol,
+                            content);
+
+        // eol as is test
+        context.setData(OPT_IO_EOL_CONFIG, EOL_CONFIG_AS_IS);
+        result = io.writeFile(testFile1, propContent, "false");
+        Assert.assertTrue(result.isSuccess());
+        content = FileUtils.readFileToString(file1, DEF_FILE_ENCODING);
+        eol = "\n";
+        Assert.assertEquals("prop1=a" + eol +
+                            "prop2=b" + eol +
+                            "prop3=-" + eol,
+                            content);
+
+        // eol for windows test
+        context.setData(OPT_IO_EOL_CONFIG, EOL_CONFIG_WINDOWS);
+        result = io.writeFile(testFile1, propContent, "false");
+        Assert.assertTrue(result.isSuccess());
+        content = FileUtils.readFileToString(file1, DEF_FILE_ENCODING);
+        eol = "\r\n";
+        Assert.assertEquals("prop1=a" + eol +
+                            "prop2=b" + eol +
+                            "prop3=-" + eol,
+                            content);
+
+        // eol for linux test
+        context.setData(OPT_IO_EOL_CONFIG, EOL_CONFIG_UNIX);
+        result = io.writeFile(testFile1, propContent, "false");
+        Assert.assertTrue(result.isSuccess());
+        content = FileUtils.readFileToString(file1, DEF_FILE_ENCODING);
+        eol = "\n";
+        Assert.assertEquals("prop1=a" + eol +
+                            "prop2=b" + eol +
+                            "prop3=-" + eol,
+                            content);
+    }
+
+    @Test
+    public void testEol_mixed() throws Exception {
+        String propContent = "Now is the time for all good men to come to the aid of his country\n" +
+                             "The lazy brown fox jump over the dog, \r\n" +
+                             "or something like that.\n\n" +
+                             "Now is the winter of your discontent\r\n\r\n" +
+                             "Good bye\n";
+
+        IoCommand io = new IoCommand();
+        io.init(context);
+
+        StepResult result = io.writeFile(testFile1, propContent, "false");
+        Assert.assertTrue(result.isSuccess());
+
+        File file1 = new File(testFile1);
+
+        // check testFile1 for eol
+        String content = FileUtils.readFileToString(file1, DEF_FILE_ENCODING);
+
+        // eol default (platform) test
+        // default is platform-specific eol
+        String eol = lineSeparator();
+        Assert.assertEquals("Now is the time for all good men to come to the aid of his country" + eol +
+                            "The lazy brown fox jump over the dog, " + eol +
+                            "or something like that." + eol + eol +
+                            "Now is the winter of your discontent" + eol + eol +
+                            "Good bye" + eol,
+                            content);
+
+        // eol as is test
+        context.setData(OPT_IO_EOL_CONFIG, EOL_CONFIG_AS_IS);
+        result = io.writeFile(testFile1, propContent, "false");
+        Assert.assertTrue(result.isSuccess());
+        content = FileUtils.readFileToString(file1, DEF_FILE_ENCODING);
+        eol = "\n";
+        Assert.assertEquals("Now is the time for all good men to come to the aid of his country" + eol +
+                            "The lazy brown fox jump over the dog, " + eol +
+                            "or something like that." + eol + eol +
+                            "Now is the winter of your discontent" + eol + eol +
+                            "Good bye" + eol,
+                            content);
+
+        // eol for windows test
+        context.setData(OPT_IO_EOL_CONFIG, EOL_CONFIG_WINDOWS);
+        result = io.writeFile(testFile1, propContent, "false");
+        Assert.assertTrue(result.isSuccess());
+        content = FileUtils.readFileToString(file1, DEF_FILE_ENCODING);
+        eol = "\r\n";
+        Assert.assertEquals("Now is the time for all good men to come to the aid of his country" + eol +
+                            "The lazy brown fox jump over the dog, " + eol +
+                            "or something like that." + eol + eol +
+                            "Now is the winter of your discontent" + eol + eol +
+                            "Good bye" + eol,
+                            content);
+
+        // eol for linux test
+        context.setData(OPT_IO_EOL_CONFIG, EOL_CONFIG_UNIX);
+        result = io.writeFile(testFile1, propContent, "false");
+        Assert.assertTrue(result.isSuccess());
+        content = FileUtils.readFileToString(file1, DEF_FILE_ENCODING);
+        eol = "\n";
+        Assert.assertEquals("Now is the time for all good men to come to the aid of his country" + eol +
+                            "The lazy brown fox jump over the dog, " + eol +
+                            "or something like that." + eol + eol +
+                            "Now is the winter of your discontent" + eol + eol +
+                            "Good bye" + eol,
+                            content);
     }
 
     @Test
