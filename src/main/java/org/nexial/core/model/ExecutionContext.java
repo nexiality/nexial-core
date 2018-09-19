@@ -440,10 +440,10 @@ public class ExecutionContext {
     public boolean isOutputToCloud() { return getBooleanData(OUTPUT_TO_CLOUD, DEF_OUTPUT_TO_CLOUD); }
 
     @NotNull
-    public String getTextDelim() { return getStringData(TEXT_DELIM, ","); }
+    public String getTextDelim() { return getRawStringData(TEXT_DELIM, ","); }
 
     @NotNull
-    public String getNullValueToken() { return getStringData(NULL_VALUE, NULL); }
+    public String getNullValueToken() { return getRawStringData(NULL_VALUE, NULL); }
 
     public long getPollWaitMs() { return getIntData(POLL_WAIT_MS, DEF_POLL_WAIT_MS); }
 
@@ -472,16 +472,15 @@ public class ExecutionContext {
     }
 
     public String getStringData(String name) {
-        // perhaps it's a system property?
-        String rawValue = System.getProperty(name, MapUtils.getString(data, name));
+        String rawValue = getRawStringData(name);
+        if (StringUtils.isBlank(rawValue)) { return rawValue; }
         String resolved = replaceTokens(rawValue);
         if (StringUtils.startsWith(rawValue, CRYPT_IND)) { CellTextReader.registerCrypt(name, rawValue, resolved); }
         return resolved;
     }
 
     public String getStringData(String name, String def) {
-        if (MapUtils.isEmpty(data) || StringUtils.isEmpty(name) || !data.containsKey(name)) { return def; }
-        return getStringData(name);
+        return StringUtils.isEmpty(name) ? def : StringUtils.defaultIfEmpty(getStringData(name), def);
     }
 
     public int getIntData(String name) {
@@ -663,6 +662,9 @@ public class ExecutionContext {
         Map<String, Object> complexValues = new HashMap<>();
         Set<String> tokens = findTokens(text);
 
+        List<String> ignoredVars = TextUtils.toList(getRawStringData(OPT_VAR_EXCLUDE_LIST), getTextDelim(), false);
+        if (CollectionUtils.isNotEmpty(ignoredVars)) { tokens.removeAll(ignoredVars); }
+
         boolean allTokenResolvedToNull = CollectionUtils.isNotEmpty(tokens);
         for (String token : tokens) {
             Object value = getObjectData(token);
@@ -673,9 +675,7 @@ public class ExecutionContext {
                 // if data contains a key (token) with value `null`, then we should just return null as is.
                 if (data.containsKey(token)) {
                     // if this is the only token, then we are done
-                    if (tokens.size() == 1 && StringUtils.equals(text, tokenized)) {
-                        return null;
-                    }
+                    if (tokens.size() == 1 && StringUtils.equals(text, tokenized)) { return null; }
 
                     // if not, replace token with "" and continue.  Doesn't make sense to replace token with `null`
                     text = StringUtils.replace(text, tokenized, "");
@@ -990,6 +990,15 @@ public class ExecutionContext {
         } else {
             return System.getProperty(name, def);
         }
+    }
+
+    /**
+     * perhaps it's a system property? first check System property, then internal map
+     */
+    protected String getRawStringData(String name) { return System.getProperty(name, MapUtils.getString(data, name)); }
+
+    protected String getRawStringData(String name, String def) {
+        return System.getProperty(name, MapUtils.getString(data, name, def));
     }
 
     protected boolean isListCompatible(Object value) {

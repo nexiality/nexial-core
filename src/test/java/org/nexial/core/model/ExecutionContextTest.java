@@ -35,6 +35,7 @@ import static org.hamcrest.core.AllOf.allOf;
 import static org.hamcrest.core.IsNot.not;
 import static org.hamcrest.core.StringContains.containsString;
 import static org.hamcrest.core.StringEndsWith.endsWith;
+import static org.nexial.core.NexialConst.Data.OPT_VAR_EXCLUDE_LIST;
 import static org.nexial.core.NexialConst.Data.TEXT_DELIM;
 import static org.nexial.core.NexialConst.*;
 
@@ -144,6 +145,29 @@ public class ExecutionContextTest {
         Assert.assertEquals("Hello World Johnny boy", subject.replaceTokens("${b}"));
         Assert.assertEquals("Hello World Johnny boy", subject.replaceTokens("$(array|item|${b}|0)"));
         Assert.assertEquals("", subject.replaceTokens("$(array|item|${b}|1)"));
+    }
+
+    @Test
+    public void replaceTokens_ignored() {
+        ExecutionContext subject = initMockContext();
+        subject.setData(OPT_VAR_EXCLUDE_LIST, "username,applications");
+        subject.setData("a1", "blah");
+        subject.setData("a2", "yada");
+        subject.setData("username", "Me and I and myself");
+        subject.setData("a3", "${a3}");
+
+        Assert.assertEquals("The ${username} is blah and the ${applications} are yada yada",
+                            subject.replaceTokens("The ${username} is ${a1} and the ${applications} are ${a2} ${a2}"));
+        // 8 characters between there are 8 alphanumeric characters in '${username}'
+        Assert.assertEquals("The ${username} has 8 characters",
+                            subject.replaceTokens("The ${username} has $(count|alphanumeric|${username}) characters"));
+        // 11 characters between there are 11 characters in '${username}'
+        Assert.assertEquals("The ${username} has 11 characters",
+                            subject.replaceTokens("The ${username} has $(count|size|${username}) characters"));
+        Assert.assertEquals("The ${username} has 11 characters",
+                            subject.replaceTokens("The ${username} has [TEXT(${username}) => length] characters"));
+        Assert.assertEquals("The ${username} is ${USERNAME}",
+                            subject.replaceTokens("The ${username} is [TEXT(${username}) => upper]"));
     }
 
     @Test

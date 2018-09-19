@@ -443,31 +443,31 @@ public final class NexialConst {
         public boolean isHeadless() { return this == firefoxheadless || this == chromeheadless; }
     }
 
-    public enum CrystalReportExportType {
-        rpt(".rpt", "Crystal Reports (RPT)"),
-        pdf(".pdf", "PDF"),
-        xls_formatted(".xls", "Microsoft Excel (97-2003)"),
-        xls(".xls", "Microsoft Excel (97-2003) Data-Only"),
-        xlsx(".xlsx", "Microsoft Excel Workbook Data-only"),
-        doc(".rtf", "Microsoft Word (97-2003)"),
-        doc_editable(".rtf", "Microsoft Word (97-2003) - Editable"),
-        rtf(".rtf", "Rich Text Format (RTF)"),
-        csv(".csv", "Separated Values (CSV)"),
-        xml(".xml", "XML"),
-        NONE("", "");
-
-        private String extension;
-        private String description;
-
-        CrystalReportExportType(String extension, String description) {
-            this.extension = extension;
-            this.description = description;
-        }
-
-        public String getExtension() { return extension; }
-
-        public String getDescription() { return description; }
-    }
+    // public enum CrystalReportExportType {
+    //     rpt(".rpt", "Crystal Reports (RPT)"),
+    //     pdf(".pdf", "PDF"),
+    //     xls_formatted(".xls", "Microsoft Excel (97-2003)"),
+    //     xls(".xls", "Microsoft Excel (97-2003) Data-Only"),
+    //     xlsx(".xlsx", "Microsoft Excel Workbook Data-only"),
+    //     doc(".rtf", "Microsoft Word (97-2003)"),
+    //     doc_editable(".rtf", "Microsoft Word (97-2003) - Editable"),
+    //     rtf(".rtf", "Rich Text Format (RTF)"),
+    //     csv(".csv", "Separated Values (CSV)"),
+    //     xml(".xml", "XML"),
+    //     NONE("", "");
+    //
+    //     private String extension;
+    //     private String description;
+    //
+    //     CrystalReportExportType(String extension, String description) {
+    //         this.extension = extension;
+    //         this.description = description;
+    //     }
+    //
+    //     public String getExtension() { return extension; }
+    //
+    //     public String getDescription() { return description; }
+    // }
 
     public enum ImageType {
         png(TYPE_INT_RGB),
@@ -662,6 +662,10 @@ public final class NexialConst {
         public static final String DEF_LAST_PLAN_STEP = "false";
 
         public static final String OPT_CURRENT_ACTIVITY = NAMESPACE + "currentActivity";
+
+        // data/variable
+        public static final String NAMESPACE_VAR = NAMESPACE + "var.";
+        public static final String OPT_VAR_EXCLUDE_LIST = NAMESPACE_VAR + "ignored";
 
         // predefined variable for time tracking of execution levels
         public static final String TIMETRACK = NAMESPACE + "timetrack.";
