@@ -494,7 +494,10 @@ public class DesktopElement {
 
     public String getText() {
 
-        if (!element.isEnabled()) { return getValue(element); }
+        if (!element.isEnabled() && elementType == TextArea || elementType == TypeAheadCombo ||
+            elementType == DateTimeCombo) {
+            return getValue(element);
+        }
 
         if (elementType == SingleSelectList) {
             ComboBox winiumComboBox = new ComboBox(element);
