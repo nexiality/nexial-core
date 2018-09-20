@@ -1491,9 +1491,9 @@ public class ExecutionContext {
         });
 
         // support dynamic resolution of WPS executable path
-        String spreadsheetProgram = getSystemThenContextStringData(SPREADSHEET_PROGRAM, this, DEF_SPREADSHEET);
+        String spreadsheetProgram = getStringData(SPREADSHEET_PROGRAM, DEF_SPREADSHEET);
         if (StringUtils.equals(spreadsheetProgram, SPREADSHEET_PROGRAM_WPS)) {
-            spreadsheetProgram = Excel.resolveWpsExecutablePath();
+            setData(WPS_EXE_LOCATION, Excel.resolveWpsExecutablePath());
         }
 
         // DO NOT SET BROWSER TYPE TO SYSTEM PROPS, SINCE THIS WILL PREVENT ITERATION-LEVEL OVERRIDES

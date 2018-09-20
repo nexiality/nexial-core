@@ -16,7 +16,7 @@
  */
 
 buildscript {
-	ext.kotlin_version = '1.2.51'
+	ext.kotlin_version = '1.2.70'
 	repositories {
 		mavenLocal()
 		mavenCentral()
@@ -29,7 +29,7 @@ buildscript {
 }
 
 plugins {
-	id "org.jetbrains.kotlin.jvm" version "1.2.51"
+	id "org.jetbrains.kotlin.jvm" version "1.2.70"
 }
 
 apply plugin: 'java'
@@ -210,8 +210,8 @@ dependencies {
 	// https://mvnrepository.com/artifact/pl.touk/throwing-function
 	compile("pl.touk:throwing-function:1.3")
 
-	compile("org.apache.tika:tika-core:+")
-	compile("org.apache.tika:tika-parsers:+")
+	compile("org.apache.tika:tika-core:${tikaVersion}")
+	compile("org.apache.tika:tika-parsers:${tikaVersion}")
 	compile("org.apache.commons:commons-compress:+")
 
 	//	compile("com.rallydev.rest:rally-rest-api:+")

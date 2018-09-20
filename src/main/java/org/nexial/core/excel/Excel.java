@@ -48,8 +48,10 @@ import org.apache.poi.xssf.usermodel.*;
 import org.nexial.commons.proc.ProcessInvoker;
 import org.nexial.commons.proc.ProcessOutcome;
 import org.nexial.commons.utils.FileUtil;
+import org.nexial.core.ExecutionThread;
 import org.nexial.core.excel.ExcelConfig.*;
 import org.nexial.core.excel.ext.CellTextReader;
+import org.nexial.core.model.ExecutionContext;
 import org.nexial.core.utils.ConsoleUtils;
 
 import static java.io.File.separator;
@@ -993,12 +995,25 @@ public class Excel {
     }
 
     public static void openExcel(File testScript) {
+        String file = testScript.getAbsolutePath();
+
         try {
-            String file = testScript.getAbsolutePath();
-            if (IS_OS_MAC) { ProcessInvoker.invoke("open", Collections.singletonList(file), null); }
+            if (IS_OS_MAC) {
+                ProcessInvoker.invoke("open", Collections.singletonList(file), null);
+                return;
+            }
+
             if (IS_OS_WINDOWS) {
-                String spreadsheetProgram = System.getProperty(SPREADSHEET_PROGRAM, DEF_SPREADSHEET);
-                ProcessInvoker.invoke(WIN32_CMD, Arrays.asList("/C", "start", "\"\"", spreadsheetProgram, file), null);
+                ExecutionContext context = ExecutionThread.get();
+                String spreadsheetExe = context == null ?
+                                        System.getProperty(SPREADSHEET_PROGRAM, DEF_SPREADSHEET) :
+                                        context.getStringData(SPREADSHEET_PROGRAM);
+                if (StringUtils.equals(spreadsheetExe, SPREADSHEET_PROGRAM_WPS)) {
+                    spreadsheetExe = context == null ? System.getProperty(WPS_EXE_LOCATION) :
+                                     context.getStringData(WPS_EXE_LOCATION);
+                }
+
+                ProcessInvoker.invoke(WIN32_CMD, Arrays.asList("/C", "start", "\"\"", spreadsheetExe, file), null);
             }
         } catch (IOException | InterruptedException e) {
             ConsoleUtils.error("ERROR!!! Can't open " + testScript + ": " + e.getMessage());
@@ -1006,37 +1021,38 @@ public class Excel {
     }
 
     public static String resolveWpsExecutablePath() {
-        if (IS_OS_WINDOWS) {
-            try {
-                ProcessOutcome outcome = ProcessInvoker.invoke(WIN32_CMD,
-                                                               Arrays.asList("/C",
-                                                                             "%windir%\\System32\\where.exe",
-                                                                             "/R",
-                                                                             "\"%LOCALAPPDATA%\\Kingsoft\\WPS Office\"",
-                                                                             "et.exe"), null);
-                int exitStatus = outcome.getExitStatus();
-                if (exitStatus != 0) {
-                    ConsoleUtils.error("ERROR!!! Unable to determine WPS spreadsheet program location: " + exitStatus);
-                    return null;
-                }
-
-                String[] output = StringUtils.split(outcome.getStdout(), "\r\n");
-                if (ArrayUtils.isEmpty(output)) {
-                    ConsoleUtils.error("ERROR!!! Unable to determine WPS spreadsheet program location: NO OUTPUT");
-                    return null;
-                }
-
-                Arrays.sort(output);
-                ArrayUtils.reverse(output);
-                return output[0];
-            } catch (IOException | InterruptedException e) {
-                ConsoleUtils.error("ERROR!!! Unable to determine WPS spreadsheet program location: " + e.getMessage());
-                return null;
-            }
+        if (!IS_OS_WINDOWS) {
+            ConsoleUtils.error("WPS is not supported on " + OS_NAME);
+            return null;
         }
 
-        ConsoleUtils.error("WPS is not supported on " + OS_NAME);
-        return null;
+        try {
+            ProcessOutcome outcome = ProcessInvoker.invoke(WIN32_CMD,
+                                                           Arrays.asList("/C",
+                                                                         "%windir%\\System32\\where.exe",
+                                                                         "/R",
+                                                                         "\"%LOCALAPPDATA%\\Kingsoft\\WPS Office\"",
+                                                                         "et.exe"), null);
+            int exitStatus = outcome.getExitStatus();
+            if (exitStatus != 0) {
+                ConsoleUtils.error("ERROR!!! Unable to determine WPS spreadsheet program location: " + exitStatus);
+                return null;
+            }
+
+            String[] output = StringUtils.split(outcome.getStdout(), "\r\n");
+            if (ArrayUtils.isEmpty(output)) {
+                ConsoleUtils.error("ERROR!!! Unable to determine WPS spreadsheet program location: NO OUTPUT");
+                return null;
+            }
+
+            Arrays.sort(output);
+            ArrayUtils.reverse(output);
+            ConsoleUtils.log("resolving WPS Spreadsheet as '" + output[0]);
+            return output[0];
+        } catch (IOException | InterruptedException e) {
+            ConsoleUtils.error("ERROR!!! Unable to determine WPS spreadsheet program location: " + e.getMessage());
+            return null;
+        }
     }
 
     public static void setExcelPassword(File excelFile, String password) {

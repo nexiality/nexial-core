@@ -32,6 +32,8 @@ import org.nexial.core.excel.ExcelConfig;
 import org.nexial.core.model.ExecutionContext;
 import org.nexial.core.model.ExecutionDefinition;
 import org.nexial.core.model.TestProject;
+import org.nexial.core.utils.CheckUtils;
+import org.nexial.core.utils.ConsoleUtils;
 
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
@@ -687,6 +689,7 @@ public final class NexialConst {
         public static final String SPREADSHEET_PROGRAM_EXCEL = "excel";
         public static final String SPREADSHEET_PROGRAM_WPS = "wps";
         public static final String DEF_SPREADSHEET = SPREADSHEET_PROGRAM_EXCEL;
+        public static final String WPS_EXE_LOCATION = "nexialInternal.wpsLocation";
 
         // system-wide enable/disable email notification
         public static final String MAIL_TO = SCOPE + "mailTo";
@@ -901,6 +904,12 @@ public final class NexialConst {
         }
 
         public static boolean isAutoOpenResult() {
+            if (CheckUtils.isRunningInZeroTouchEnv()) {
+                ConsoleUtils.log("SKIPPING auto-open-result since Nexial is currently running in non-interactive " +
+                                 "environment");
+                return false;
+            }
+
             ExecutionContext context = ExecutionThread.get();
             if (context == null) {
                 return BooleanUtils.toBoolean(System.getProperty(OPT_OPEN_RESULT, DEF_OPEN_RESULT)) ||

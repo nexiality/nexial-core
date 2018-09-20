@@ -206,7 +206,21 @@ public final class ExecutionThread extends Thread {
                 executionSummary.addNestSummary(iterSummary);
 
                 if (testScript != null) {
-                    if (isAutoOpenResult()) { Excel.openExcel(testScript); }
+                    if (isAutoOpenResult()) {
+
+                        String spreadsheetExe = context.getStringData(SPREADSHEET_PROGRAM, DEF_SPREADSHEET);
+                        System.setProperty(SPREADSHEET_PROGRAM, spreadsheetExe);
+
+                        if (StringUtils.equals(spreadsheetExe, SPREADSHEET_PROGRAM_WPS)) {
+                            if (!context.hasData(WPS_EXE_LOCATION)) {
+                                // lightweight: resolve now to save time later
+                                context.setData(WPS_EXE_LOCATION, Excel.resolveWpsExecutablePath());
+                            }
+                            System.setProperty(WPS_EXE_LOCATION, context.getStringData(WPS_EXE_LOCATION));
+                        }
+
+                        Excel.openExcel(testScript);
+                    }
                     completedTests.add(testScript);
                 }
 
