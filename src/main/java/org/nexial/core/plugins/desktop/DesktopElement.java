@@ -507,23 +507,21 @@ public class DesktopElement {
                    selected.getAttribute("Name") : selected.getText();
         }
 
-        WebElement targetElement = element;
-        WebElement element;
+        WebElement targetElement;
         if (elementType.isCombo()) {
-            element = resolveComboContentElement(targetElement);
+            targetElement = resolveComboContentElement(element);
         } else if (elementType == TextArea) {
-            targetElement.click();
-            element = targetElement.findElement(By.xpath(LOCATOR_DOCUMENT));
+            element.click();
+            targetElement = element.findElement(By.xpath(LOCATOR_DOCUMENT));
         } else {
-            element = targetElement;
+            targetElement = element;
         }
 
-        if (element == null) {
-            ConsoleUtils.error("Cannot resolve target content element for '" + getLabel() + "'");
-            return null;
+        if (targetElement == null) {
+            throw new IllegalArgumentException("Cannot resolve target element for '" + getLabel() + "'");
         }
 
-        return getValue(element);
+        return getValue(targetElement);
     }
 
     public WebElement findModalDialog() {

@@ -239,7 +239,6 @@ public class DesktopTable extends DesktopElement {
 
     public TableData fetchAll() {
         sanityCheck();
-
         Instant startTime = Instant.now();
         String object = (String) driver.executeScript("datagrid: fetch-all", element);
         Instant endTime = Instant.now();
@@ -387,7 +386,7 @@ public class DesktopTable extends DesktopElement {
         WebElement cellElement;
 
         boolean focused = true;
-        boolean clickExplorerbar = false;
+        boolean setFocusOut = false;
         for (Map.Entry<String, String> nameValue : nameValues.entrySet()) {
 
             //todo: support function keys along with [CLICK]? and [CHECK]
@@ -413,7 +412,7 @@ public class DesktopTable extends DesktopElement {
             if (StringUtils.equals(value, TABLE_CELL_CLICK)) {
                 ConsoleUtils.log("clicked on " + msgPrefix2);
                 focused = false;
-                if (context != null) { context.setData(CURRENT_DESKTOP_TABLE_ROW, tableRow); }
+                context.setData(CURRENT_DESKTOP_TABLE_ROW, tableRow);
 
                 actionClick(cellElement);
                 continue;
@@ -459,7 +458,7 @@ public class DesktopTable extends DesktopElement {
 
                         if (context.getBooleanData(CURRENT_DESKTOP_TABLE_EDITABLE_COLUMN_FOUND) &&
                             context.getStringData(CURRENT_DESKTOP_TABLE_EDITABLE_COLUMN_NAME).contentEquals(column)) {
-                            clickExplorerbar = true;
+                            setFocusOut = true;
                         }
 
                         messageBuffer.append(msgPrefix2).append("unchecked \n");
@@ -472,7 +471,7 @@ public class DesktopTable extends DesktopElement {
 
                         if (context.getBooleanData(CURRENT_DESKTOP_TABLE_EDITABLE_COLUMN_FOUND) &&
                             context.getStringData(CURRENT_DESKTOP_TABLE_EDITABLE_COLUMN_NAME).contentEquals(column)) {
-                            clickExplorerbar = true;
+                            setFocusOut = true;
                         }
 
                         messageBuffer.append(msgPrefix2).append("checked \n");
@@ -491,7 +490,7 @@ public class DesktopTable extends DesktopElement {
         if (focused) {
             // todo: need to handle first column = null problem
 
-            if (clickExplorerbar) {
+            if (setFocusOut) {
                 looseCurrentFocus();
             } else if (context.getBooleanData(
                 CURRENT_DESKTOP_TABLE_EDITABLE_COLUMN_FOUND)) {
@@ -537,7 +536,7 @@ public class DesktopTable extends DesktopElement {
         if (!context.hasData(CURRENT_DESKTOP_SESSION)) { return null; }
 
         Object sessionObj = context.getObjectData(CURRENT_DESKTOP_SESSION);
-        if (sessionObj == null || !(sessionObj instanceof DesktopSession)) {
+        if (!(sessionObj instanceof DesktopSession)) {
             context.removeData(CURRENT_DESKTOP_SESSION);
             return null;
         }

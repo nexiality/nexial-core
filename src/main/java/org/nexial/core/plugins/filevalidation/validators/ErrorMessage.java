@@ -42,7 +42,8 @@ final class ErrorMessage {
     public static String inCheckError(FieldBean field, List<String> expectedStringList, String actual) {
         return initErrorMessagePrefix(field.getConfig()) +
                "Failed Validation: " + IN + "; Field value: " +
-               "Expected '" + expectedStringList.toString().replaceAll(",", ":") + "' Actual '" + actual + "'";
+               "Expected '" + expectedStringList.toString() + "' Actual '" + actual + "'";
+
     }
 
     public static String compareEqualsError(FieldBean field, ValidationType type, String expected, String actual) {

@@ -78,12 +78,15 @@ public class ErrorReport {
             createSummarySheet(recordData, excel.getWorkbook());
             createReportSheets(csvFile, excel);
             excel.save();
+
         } catch (IOException e) {
             throw new IllegalArgumentException("Unable to write error report to excel file: " + e.getMessage());
         }
 
         return outputFile;
     }
+
+
 
     public static File createJSON(RecordData recordData) {
         String outPath = new Syspath().out("fullpath") + separator;
@@ -199,12 +202,14 @@ public class ErrorReport {
 
     private static List<List<String>> createListFromCsv(String errorsCsv, boolean isSkipped, String headers) {
         String csv;
+
         try {
+
             List<String> lines = FileUtils.readLines(new File(errorsCsv), NexialConst.DEF_FILE_ENCODING);
             csv = lines.stream().filter(line -> (isSkipped) == line.startsWith("Skipped"))
                        .collect(Collectors.joining("\n"));
         } catch (IOException e) {
-            throw new IllegalArgumentException("Unable to create excel report file.");
+            throw new IllegalArgumentException("Unable to read errors csv file: " + e.getMessage());
         }
         if (isSkipped) { csv = StringUtils.replace(csv, "Skipped:", ""); }
         return StringUtils.isNotBlank(csv) ?

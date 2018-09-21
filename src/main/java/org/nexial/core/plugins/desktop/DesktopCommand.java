@@ -1106,9 +1106,8 @@ public class DesktopCommand extends BaseCommand
         requires(StringUtils.contains(nameValues, "="), "Name-values MUST be in the form of name=value", nameValues);
 
         DesktopTable table = getCurrentTable();
-        setTableFocus(table);
         requiresNotNull(table, "No Table element referenced or scanned");
-
+        setTableFocus(table);
         return table.editCells(rowIndex, nameValuesToMap(nameValues));
     }
 
@@ -1176,10 +1175,10 @@ public class DesktopCommand extends BaseCommand
     public StepResult saveRowCount(String var) {
         requiresValidVariableName(var);
         DesktopTable table = getCurrentTable();
-        setTableFocus(table);
         if (table == null) {
             throw new IllegalArgumentException("ERROR: no Table object found. Make sure to run useTable() first");
         }
+        setTableFocus(table);
         context.setData(var, table.getTableRowCount());
         return StepResult.success("Table row count is saved to var " + var);
     }
@@ -1518,7 +1517,7 @@ public class DesktopCommand extends BaseCommand
         if (!context.hasData(CURRENT_DESKTOP_SESSION)) { return null; }
 
         Object sessionObj = context.getObjectData(CURRENT_DESKTOP_SESSION);
-        if (sessionObj == null || !(sessionObj instanceof DesktopSession)) {
+        if (!(sessionObj instanceof DesktopSession)) {
             context.removeData(CURRENT_DESKTOP_SESSION);
             return null;
         }
@@ -1539,7 +1538,7 @@ public class DesktopCommand extends BaseCommand
 
     protected DesktopElement getCurrentContainer() {
         Object obj = context.getObjectData(CURRENT_DESKTOP_CONTAINER);
-        return obj != null && obj instanceof DesktopElement ? (DesktopElement) obj : null;
+        return obj instanceof DesktopElement ? (DesktopElement) obj : null;
     }
 
     protected DesktopElement getRequiredElement(String name, ElementType expectedType) {
@@ -1855,7 +1854,7 @@ public class DesktopCommand extends BaseCommand
         return component.clear();
     }
 
-    protected String getText(String name) { return getRequiredElement(name, Any).getText(); }
+    protected String getText(String name) { return StringUtils.trim(getRequiredElement(name, Any).getText()); }
 
     protected String getAttribute(String locator, String attribute) {
         requires(StringUtils.isNotBlank(attribute), "invalid attribute", attribute);
@@ -1958,12 +1957,12 @@ public class DesktopCommand extends BaseCommand
 
     protected DesktopTable getCurrentTable() {
         Object obj = context.getObjectData(CURRENT_DESKTOP_TABLE);
-        return obj != null && obj instanceof DesktopTable ? (DesktopTable) obj : null;
+        return obj instanceof DesktopTable ? (DesktopTable) obj : null;
     }
 
     protected DesktopList getCurrentList() {
         Object obj = context.getObjectData(CURRENT_DESKTOP_LIST);
-        return obj != null && obj instanceof DesktopList ? (DesktopList) obj : null;
+        return obj instanceof DesktopList ? (DesktopList) obj : null;
     }
 
     protected StepResult saveListMetaData(String var, String name) {
@@ -2019,7 +2018,7 @@ public class DesktopCommand extends BaseCommand
 
     protected DesktopHierTable getCurrentHierTable() {
         Object obj = context.getObjectData(CURRENT_DESKTOP_HIER_TABLE);
-        return obj != null && obj instanceof DesktopHierTable ? (DesktopHierTable) obj : null;
+        return obj instanceof DesktopHierTable ? (DesktopHierTable) obj : null;
     }
 
     /**
@@ -2069,10 +2068,12 @@ public class DesktopCommand extends BaseCommand
         if (!isCurrentTable || context.getObjectData(CURRENT_DESKTOP_TABLE_ROW) == null) { return; }
 
         DesktopTableRow tableRow = (DesktopTableRow) context.getObjectData(CURRENT_DESKTOP_TABLE_ROW);
+
         ConsoleUtils.log("shortcut key was pressed.. now setting focus back to table at " +
                          context.getStringData(CURRENT_DESKTOP_TABLE_EDITABLE_COLUMN_NAME));
-        WebElement editColumn =
-            tableRow.getColumns().get(context.getStringData(CURRENT_DESKTOP_TABLE_EDITABLE_COLUMN_NAME));
+
+        WebElement editColumn = tableRow.getColumns()
+                                        .get(context.getStringData(CURRENT_DESKTOP_TABLE_EDITABLE_COLUMN_NAME));
         editColumn.click();
         context.removeData(CURRENT_DESKTOP_TABLE_ROW);
     }

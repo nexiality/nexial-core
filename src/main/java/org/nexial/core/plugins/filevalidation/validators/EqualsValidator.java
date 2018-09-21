@@ -57,7 +57,7 @@ public class EqualsValidator implements FieldValidator {
                     expected = decimalFormat.format(Double.valueOf(expected));
                 }
 
-                if (!StringUtils.equals(expected, actual)) {
+                if (!StringUtils.equals(StringUtils.trim(expected), StringUtils.trim(actual))) {
                     String errorMessage = ErrorMessage.compareEqualsError(field,
                                                                           ValidationType.EQUALS,
                                                                           expected,
