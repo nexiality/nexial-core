@@ -31,6 +31,7 @@ import java.util.TreeSet;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.nexial.commons.utils.EnvUtils;
+import org.nexial.commons.utils.FileUtil;
 import org.nexial.core.utils.ConsoleUtils;
 
 import static org.nexial.core.NexialConst.DEF_FILE_ENCODING;
@@ -143,6 +144,17 @@ public class ConfigTransformer<T extends ConfigDataType> extends Transformer {
 
     @Override
     Map<String, Method> listSupportedMethods() { return FUNCTIONS; }
+
+    @Override
+    protected void saveContentAsAppend(ExpressionDataType data, File target) throws IOException {
+        if (FileUtil.isFileReadable(target, 1) && data instanceof ConfigDataType) {
+            String currentContent = FileUtils.readFileToString(target, DEF_FILE_ENCODING);
+            if (!StringUtils.endsWith(currentContent, "\n")) {
+                FileUtils.writeStringToFile(target, ((ConfigDataType) data).getEol(), DEF_FILE_ENCODING, true);
+            }
+        }
+        super.saveContentAsAppend(data, target);
+    }
 
     protected T resortKeys(T data, SortedSet<String> sortedKeys) throws TypeConversionException {
         if (data == null || data.getValue() == null || data.getValue().isEmpty()) {

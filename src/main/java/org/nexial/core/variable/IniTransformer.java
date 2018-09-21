@@ -26,11 +26,15 @@ import java.lang.reflect.Method;
 import java.util.List;
 import java.util.Map;
 
+import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.ini4j.Ini;
 import org.ini4j.Profile.Section;
+import org.nexial.commons.utils.FileUtil;
 import org.nexial.core.utils.ConsoleUtils;
 
+import static java.lang.System.lineSeparator;
+import static org.nexial.core.NexialConst.DEF_FILE_ENCODING;
 import static org.nexial.core.variable.ExpressionUtils.handleExternal;
 
 /**
@@ -190,5 +194,16 @@ public class IniTransformer extends Transformer<IniDataType> {
     @Override
     Map<String, Method> listSupportedMethods() {
         return FUNCTIONS;
+    }
+
+    @Override
+    protected void saveContentAsAppend(ExpressionDataType data, File target) throws IOException {
+        if (FileUtil.isFileReadable(target, 1) && data instanceof IniDataType) {
+            String currentContent = FileUtils.readFileToString(target, DEF_FILE_ENCODING);
+            if (!StringUtils.endsWith(currentContent, "\n")) {
+                FileUtils.writeStringToFile(target, lineSeparator(), DEF_FILE_ENCODING, true);
+            }
+        }
+        super.saveContentAsAppend(data, target);
     }
 }

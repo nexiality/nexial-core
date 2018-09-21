@@ -30,6 +30,7 @@ import java.util.Map;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.collections4.MapUtils;
 import org.apache.commons.io.FileUtils;
+import org.apache.commons.lang3.BooleanUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.math.NumberUtils;
 import org.nexial.commons.utils.FileUtil;
@@ -57,7 +58,21 @@ public abstract class Transformer<T extends ExpressionDataType> {
         // varargs means paramCount = -1
         int paramCount = validFunctions.get(function.getFunctionName());
         int functionParamCount = CollectionUtils.size(function.getParams());
-        return (paramCount == -1 && functionParamCount >= 0) || paramCount == functionParamCount;
+
+        if (paramCount == -1) { return functionParamCount >= 0; }
+
+        // if user specified too many params, then it's error -> so return false
+        if (paramCount < functionParamCount) { return false; }
+
+        // if user didn't specify enough, then we can _supplement_ on behalf of user
+        // this technique will allow us to add more params in the future without creating new methods
+        if (paramCount > functionParamCount) {
+            for (int i = functionParamCount; i < paramCount; i++) { function.getParams().add(null); }
+        }
+
+        // either paramCount > functionParamCount or paramCount == functionParamCount -> both are now considered valid
+        return true;
+
     }
 
     ExpressionDataType transform(T data, ExpressionFunction function) throws ExpressionException {
@@ -117,25 +132,40 @@ public abstract class Transformer<T extends ExpressionDataType> {
 
     abstract Map<String, Method> listSupportedMethods();
 
-    protected ExpressionDataType save(ExpressionDataType data, String path) {
+    protected ExpressionDataType save(ExpressionDataType data, String path, String append) {
         if (data == null || data.getValue() == null) { return data; }
         if (StringUtils.isBlank(path)) { throw new IllegalArgumentException("path is empty/blank"); }
 
+        File target = new File(path);
         if (!FileUtil.isDirectoryReadable(path)) {
             try {
-                FileUtils.forceMkdirParent(new File(path));
+                FileUtils.forceMkdirParent(target);
             } catch (IOException e) {
                 throw new IllegalArgumentException("Unable to create directory for '" + path + "'");
             }
         }
 
         try {
-            FileUtils.writeStringToFile(new File(path), data.getTextValue(), DEF_FILE_ENCODING);
-            ConsoleUtils.log("content saved to '" + path + "'");
+            boolean shouldAppend = BooleanUtils.toBoolean(append);
+            if (shouldAppend) {
+                saveContentAsAppend(data, target);
+            } else {
+                saveContentAsOverwrite(data, target);
+            }
+
+            ConsoleUtils.log("content " + (shouldAppend ? "appended" : "saved") + " to '" + path + "'");
             return data;
         } catch (IOException e) {
             throw new IllegalArgumentException("Unable to write to " + path + ": " + e.getMessage(), e);
         }
+    }
+
+    protected void saveContentAsAppend(ExpressionDataType data, File target) throws IOException {
+        FileUtils.writeStringToFile(target, data.getTextValue(), DEF_FILE_ENCODING, true);
+    }
+
+    protected void saveContentAsOverwrite(ExpressionDataType data, File target) throws IOException {
+        FileUtils.writeStringToFile(target, data.getTextValue(), DEF_FILE_ENCODING);
     }
 
     protected TextDataType text(ExpressionDataType data) {

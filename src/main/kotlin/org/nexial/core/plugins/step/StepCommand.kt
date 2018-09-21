@@ -59,7 +59,9 @@ class StepCommand : BaseCommand() {
         val response = ConsoleUtils.pauseForInput(context, prompt)
         context.setData(STEP_RESPONSE, response)
 
-        val result = StepResult.success("Response received as '$response'")
+        // supports keyword FAIL | PASS
+        val result = if (StringUtils.startsWith(response, "FAIL ")) StepResult.fail(response) else
+            StepResult.success("Response received as '$response'")
         result.paramValues = arrayOf<Any>(prompt, response)
         return result
     }

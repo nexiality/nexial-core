@@ -48,6 +48,7 @@ import static java.io.File.separator;
 import static org.hamcrest.Matchers.*;
 import static org.junit.Assert.assertThat;
 import static org.junit.runners.MethodSorters.NAME_ASCENDING;
+import static org.nexial.core.NexialConst.DEF_FILE_ENCODING;
 import static org.nexial.core.NexialConst.FlowControls.ANY_FIELD;
 
 @FixMethodOrder(value = NAME_ASCENDING)
@@ -662,7 +663,7 @@ public class ExpressionProcessorTest {
     }
 
     @Test
-    public void procesJsonAdd() throws Exception {
+    public void processJsonAdd() throws Exception {
         ExpressionProcessor subject = new ExpressionProcessor(context);
 
         String jsonFile = ResourceUtils.getResourceFilePath(resourcePath + this.getClass().getSimpleName() + "13.json");
@@ -710,6 +711,77 @@ public class ExpressionProcessorTest {
                             "\"address\":{\"optional\":true}," +
                             "\"description\":\"Advanced External Partnership\"" +
                             "}}", result);
+    }
+
+    @Test
+    public void processJson_save() throws Exception {
+        ExpressionProcessor subject = new ExpressionProcessor(context);
+
+        String jsonFile = ResourceUtils.getResourceFilePath(resourcePath + this.getClass().getSimpleName() + "13.json");
+        String output = StringUtils.replace(jsonFile, ".json", "-new.json");
+        FileUtils.deleteQuietly(new File(output));
+
+        String fixture = "[JSON(" + jsonFile + ") =>" +
+                         " addOrReplace(office.address,\"932b 32nd Street\\, Big City\\, State of Confusion\")" +
+                         " save(" + output + ",true) ]";
+
+        // replace string with string
+        String result = subject.process(fixture);
+        Assert.assertEquals("{\"office\":{" +
+                            "\"code\":\"AEF\"," +
+                            "\"address\":\"932b 32nd Street, Big City, State of Confusion\"," +
+                            "\"description\":\"Advanced External Partnership\"" +
+                            "}}", FileUtils.readFileToString(new File(output), DEF_FILE_ENCODING));
+
+        // replace string with array
+        fixture = "[JSON(" + jsonFile + ") =>" +
+                  " addOrReplace(office.address,932b 32nd Street\\, Big City\\, State of Confusion)" +
+                  " save(" + output + ",true) ]";
+        result = subject.process(fixture);
+        Assert.assertEquals("{\"office\":{" +
+                            "\"code\":\"AEF\"," +
+                            "\"address\":\"932b 32nd Street, Big City, State of Confusion\"," +
+                            "\"description\":\"Advanced External Partnership\"" +
+                            "}," +
+                            "\"office\":{" +
+                            "\"code\":\"AEF\"," +
+                            "\"address\":[\"932b 32nd Street\",\"Big City\",\"State of Confusion\"]," +
+                            "\"description\":\"Advanced External Partnership\"" +
+                            "}}", FileUtils.readFileToString(new File(output), DEF_FILE_ENCODING));
+
+    }
+
+    @Test
+    public void processJson_save2() throws Exception {
+        ExpressionProcessor subject = new ExpressionProcessor(context);
+
+        String jsonFile = ResourceUtils.getResourceFilePath(resourcePath + this.getClass().getSimpleName() + "14.json");
+        String output = StringUtils.replace(jsonFile, ".json", "-new.json");
+        FileUtils.deleteQuietly(new File(output));
+
+        String fixture = "[JSON(" + jsonFile + ") => replace(age,year) save(" + output + ",true) ]";
+
+        // replace string with string
+        String result = subject.process(fixture);
+        Assert.assertEquals("[{\"Name\":\"Jim\"},{\"Name\":\"Natalie\"},{\"Name\":\"Sam\"}]",
+                            FileUtils.readFileToString(new File(output), DEF_FILE_ENCODING));
+
+        fixture = "[JSON(" + jsonFile + ") => replace(age,year) save(" + output + ",true) ]";
+        result = subject.process(fixture);
+        Assert.assertEquals("[" +
+                            "{\"Name\":\"Jim\"},{\"Name\":\"Natalie\"},{\"Name\":\"Sam\"}," +
+                            "{\"Name\":\"Jim\"},{\"Name\":\"Natalie\"},{\"Name\":\"Sam\"}" +
+                            "]",
+                            FileUtils.readFileToString(new File(output), DEF_FILE_ENCODING));
+
+        fixture = "[JSON([59,47,13,1]) => replace(age,year) save(" + output + ",true) ]";
+        result = subject.process(fixture);
+        Assert.assertEquals("[" +
+                            "{\"Name\":\"Jim\"},{\"Name\":\"Natalie\"},{\"Name\":\"Sam\"}," +
+                            "{\"Name\":\"Jim\"},{\"Name\":\"Natalie\"},{\"Name\":\"Sam\"}," +
+                            "59,47,13,1" +
+                            "]",
+                            FileUtils.readFileToString(new File(output), DEF_FILE_ENCODING));
     }
 
     @Test
@@ -2854,6 +2926,39 @@ public class ExpressionProcessorTest {
                                     "75341,1,PP,1 hr series,,accrue w/c"))));
 
         assertThat(subject.process("[EXCEL(" + file + ") => read(list46,A1:F13) csvWithHeader()]"),
+                   allOf(is(not(nullValue())),
+                         is(equalTo("number1,group,bus type,prod type,fid,misc\r\n" +
+                                    "69898,1,PP,30 min series,,\r\n" +
+                                    "28520,1,PP,theat,,\r\n" +
+                                    "15970,1,PP,mow,,\r\n" +
+                                    "1,1,RS,residuals,,\r\n" +
+                                    "76990,1,CS,casting,27,postage\r\n" +
+                                    "78277,1,CS,casting,47,\r\n" +
+                                    "78294,1,MS,music,,\r\n" +
+                                    "16041,1,CM,comm,,\r\n" +
+                                    "74546,6,PP,group 6,,\r\n" +
+                                    "39503,2000,PP,agency,2,\r\n" +
+                                    "16042,1,CM,comm,,\r\n" +
+                                    "75341,1,PP,1 hr series,,accrue w/c"))));
+    }
+
+    @Test
+    public void processExcel_csv_append() throws Exception {
+        String fixtureBase = resourcePath + this.getClass().getSimpleName();
+        String file = ResourceUtils.getResourceFilePath(fixtureBase + "9.xlsx");
+        String output = StringUtils.replace(file, ".xlsx", ".csv");
+
+        ExpressionProcessor subject = new ExpressionProcessor(context);
+
+        String outcome1 = subject.process("[EXCEL(" + file + ") => read(list46,A1:F6) csv save(" + output + ")]");
+        System.out.println("outcome1 = " + outcome1);
+
+        String outcome2 = subject.process("[EXCEL(" + file + ") => read(list46,A7:F13) csv save(" + output + ",true)]");
+        System.out.println("outcome2 = " + outcome2);
+
+        String csvContent = FileUtils.readFileToString(new File(output), DEF_FILE_ENCODING);
+
+        assertThat(csvContent,
                    allOf(is(not(nullValue())),
                          is(equalTo("number1,group,bus type,prod type,fid,misc\r\n" +
                                     "69898,1,PP,30 min series,,\r\n" +

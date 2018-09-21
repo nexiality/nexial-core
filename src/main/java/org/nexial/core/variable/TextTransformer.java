@@ -262,7 +262,7 @@ public class TextTransformer<T extends TextDataType> extends Transformer {
         return data;
     }
 
-    public ExpressionDataType save(T data, String path) { return super.save(data, path); }
+    public ExpressionDataType save(T data, String path, String append) { return super.save(data, path, append); }
 
     public T removeEnd(T data, String ending) {
         if (data == null || StringUtils.isEmpty(ending)) { return data; }

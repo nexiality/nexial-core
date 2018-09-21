@@ -13,31 +13,20 @@ class Bai2Transformer : Transformer<Bai2DataType>() {
 
     private val functions = toFunctionMap(functionToParam, Bai2Transformer::class.java, Bai2DataType::class.java)
 
-    override fun listSupportedFunctions(): MutableMap<String, Int> {
-        return functionToParam
-    }
+    override fun listSupportedFunctions(): MutableMap<String, Int> = functionToParam
 
-    override fun listSupportedMethods(): MutableMap<String, Method> {
-        return functions
-    }
+    override fun listSupportedMethods(): MutableMap<String, Method> = functions
 
     fun store(data: Bai2DataType, Var: String): Bai2DataType {
         snapshot(Var, data)
         return data
     }
 
-    fun save(data: Bai2DataType, path: String): ExpressionDataType<Any> {
-        return super.save(data, path)
-    }
+    fun save(data: Bai2DataType, path: String): ExpressionDataType<Any> = super.save(data, path, "false")
 
-    fun errors(data: Bai2DataType): ListDataType {
-
-        val errors: List<String>? = data.getValue().errors
-        return ListDataType(errors.toString())
-    }
+    fun errors(data: Bai2DataType): ListDataType = ListDataType(data.getValue().errors.toString())
 
     fun field(data: Bai2DataType, recordType: String, name: String): TextDataType {
-
         return data.getValue().field(recordType, name)
     }
 
@@ -51,7 +40,6 @@ class Bai2Transformer : Transformer<Bai2DataType>() {
         csvDataType.setReadyToParse(true)
         csvDataType.parse()
         return csvDataType
-
     }
 
     fun count(data: Bai2DataType): NumberDataType {
@@ -62,9 +50,7 @@ class Bai2Transformer : Transformer<Bai2DataType>() {
     }
 
     fun filter(data: Bai2DataType, recordType: String, condition: String): Bai2DataType {
-        if (data.getValue() == null || StringUtils.isAnyBlank(recordType, condition)) {
-            return data
-        }
+        if (data.getValue() == null || StringUtils.isAnyBlank(recordType, condition)) return data
 
         val baiFileInstance = data.getValue()
         val newBiaData: BaiModel? = baiFileInstance.filter(recordType, condition)

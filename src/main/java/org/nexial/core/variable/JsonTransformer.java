@@ -17,13 +17,17 @@
 
 package org.nexial.core.variable;
 
+import java.io.File;
+import java.io.IOException;
 import java.lang.reflect.Method;
 import java.util.Map;
 
+import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
+import org.nexial.commons.utils.FileUtil;
 import org.nexial.commons.utils.TextUtils;
 import org.nexial.core.utils.ConsoleUtils;
 import org.nexial.core.utils.JSONPath;
@@ -35,8 +39,10 @@ import com.google.gson.JsonElement;
 import com.google.gson.JsonNull;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonPrimitive;
+import com.google.gson.stream.MalformedJsonException;
 
 import static org.json.JSONObject.NULL;
+import static org.nexial.core.NexialConst.DEF_FILE_ENCODING;
 import static org.nexial.core.NexialConst.GSON;
 
 public class JsonTransformer<T extends JsonDataType> extends Transformer {
@@ -195,7 +201,7 @@ public class JsonTransformer<T extends JsonDataType> extends Transformer {
         return data;
     }
 
-    public ExpressionDataType save(T data, String path) { return super.save(data, path); }
+    public ExpressionDataType save(T data, String path, String append) { return super.save(data, path, append); }
 
     public ExpressionDataType addOrReplace(T data, String jsonpath, String input) {
         if (data == null || data.getValue() == null || StringUtils.isBlank(input)) { return null; }
@@ -220,10 +226,57 @@ public class JsonTransformer<T extends JsonDataType> extends Transformer {
     @Override
     Map<String, Integer> listSupportedFunctions() { return FUNCTION_TO_PARAM_LIST; }
 
-    // todo: merge
-
     @Override
     Map<String, Method> listSupportedMethods() { return FUNCTIONS; }
+
+    @Override
+    protected void saveContentAsAppend(ExpressionDataType data, File target) throws IOException {
+        if (!FileUtil.isFileReadable(target, 1) || !(data instanceof JsonDataType)) {
+            super.saveContentAsAppend(data, target);
+            return;
+        }
+
+        String content = StringUtils.trim(FileUtils.readFileToString(target, DEF_FILE_ENCODING));
+        if (StringUtils.startsWith(content, "[") && StringUtils.endsWith(content, "]")) {
+            String newContent = StringUtils.trim(data.getTextValue());
+
+            if (TextUtils.isBetween(newContent, "[", "]")) {
+                newContent = StringUtils.removeStart(StringUtils.removeEnd(newContent, "]"), "[");
+                FileUtils.writeStringToFile(target,
+                                            StringUtils.removeEnd(content, "]") + "," + newContent + "]",
+                                            DEF_FILE_ENCODING);
+                return;
+            }
+
+            if (TextUtils.isBetween(newContent, "{", "}")) {
+                FileUtils.writeStringToFile(target,
+                                            StringUtils.removeEnd(content, "]") + "," + newContent + "]",
+                                            DEF_FILE_ENCODING);
+                return;
+            }
+
+            throw new MalformedJsonException("Unknown JSON structure: " + newContent);
+        }
+
+        if (StringUtils.startsWith(content, "{") && StringUtils.endsWith(content, "}")) {
+            String newContent = StringUtils.trim(data.getTextValue());
+
+            if (TextUtils.isBetween(newContent, "{", "}")) {
+                newContent = StringUtils.removeStart(StringUtils.removeEnd(newContent, "}"), "{");
+                FileUtils.writeStringToFile(target,
+                                            StringUtils.removeEnd(content, "}") + "," + newContent + "}",
+                                            DEF_FILE_ENCODING);
+                return;
+            }
+
+            if (TextUtils.isBetween(newContent, "[", "]")) {
+                ConsoleUtils.log("can't merge JSON array into a JSON document file");
+                throw new MalformedJsonException("JSON array cannot be merged into a JSON document");
+            }
+
+            throw new MalformedJsonException("Unknown JSON structure: " + newContent);
+        }
+    }
 
     protected ExpressionDataType handleJsonPathResult(T data, JSONObject json) {
         if (json == null || json == NULL) { return TextDataType.newEmptyInstance(); }

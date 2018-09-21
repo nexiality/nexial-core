@@ -28,11 +28,13 @@ import javax.validation.constraints.NotNull;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.collections4.IterableUtils;
 import org.apache.commons.collections4.MapUtils;
+import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang3.ArrayUtils;
 import org.apache.commons.lang3.BooleanUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.math.NumberUtils;
 import org.jdom2.Element;
+import org.nexial.commons.utils.FileUtil;
 import org.nexial.commons.utils.RegexUtils;
 import org.nexial.commons.utils.TextUtils;
 import org.nexial.commons.utils.TextUtils.ListItemConverter;
@@ -561,7 +563,7 @@ public class CsvTransformer<T extends CsvDataType> extends Transformer {
         return data;
     }
 
-    public ExpressionDataType save(T data, String path) { return super.save(data, path); }
+    public ExpressionDataType save(T data, String path, String append) { return super.save(data, path, append); }
 
     public T store(T data, String var) {
         snapshot(var, data);
@@ -880,6 +882,17 @@ public class CsvTransformer<T extends CsvDataType> extends Transformer {
 
     @Override
     Map<String, Method> listSupportedMethods() { return FUNCTIONS; }
+
+    @Override
+    protected void saveContentAsAppend(ExpressionDataType data, File target) throws IOException {
+        if (FileUtil.isFileReadable(target, 1) && data instanceof CsvDataType) {
+            String currentContent = FileUtils.readFileToString(target, DEF_FILE_ENCODING);
+            if (!StringUtils.endsWith(currentContent, "\n")) {
+                FileUtils.writeStringToFile(target, ((CsvDataType) data).getRecordDelim(), DEF_FILE_ENCODING, true);
+            }
+        }
+        super.saveContentAsAppend(data, target);
+    }
 
     @NotNull
     protected Set<Integer> toIndices(T data, String... columnNamesOrIndices) {
