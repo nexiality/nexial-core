@@ -27,6 +27,9 @@ import java.util.*
 import java.util.stream.Collectors
 
 abstract class IntegrationHelper {
+
+    val jiraDefectMeta = "${ExecutionThread.get().project.projectHome}/jiraDefects.properties"
+
     abstract fun createDefect(profile: String): String?
     abstract fun addLink(url: String, linkBody: String)
     abstract fun addComment(url: String, commentBody: String)
@@ -41,18 +44,10 @@ abstract class IntegrationHelper {
         return actions
     }
 
-    fun parseResultToMdFormat(scenario: ScenarioOutput): String {
-        val iteration = scenario.iterationOutput!!
-        var result = iteration.parseToMDTable(iteration.summary!!.execSummary!!)
-        result = "| test script | ${iteration.summary!!.title} | \\n $result"
-        return result
-    }
-
-    fun updateJiraDefectHistory(defectList: MutableList<Pair<String, String>>) {
+    fun updateJiraDefectHistory(defectData: MutableList<Pair<String, String>>) {
         val defectMeta = Properties()
-        val outPath = ExecutionThread.get().project.projectHome
-        if (CollectionUtils.isNotEmpty(defectList)) {
-            defectList.forEach { pair ->
+        if (CollectionUtils.isNotEmpty(defectData)) {
+            defectData.forEach { pair ->
                 val key = pair.first
                 // avoid overwriting
                 if (!defectMeta.containsKey(key)) {
@@ -61,7 +56,7 @@ abstract class IntegrationHelper {
             }
             var outputStream: FileOutputStream? = null
             try {
-                outputStream = FileOutputStream(File("$outPath${File.separator}jiraDefects.properties"))
+                outputStream = FileOutputStream(File(jiraDefectMeta))
                 defectMeta.store(outputStream, "Nexial Defect History")
             } finally {
                 outputStream?.run {
@@ -71,4 +66,6 @@ abstract class IntegrationHelper {
             }
         }
     }
+
+
 }

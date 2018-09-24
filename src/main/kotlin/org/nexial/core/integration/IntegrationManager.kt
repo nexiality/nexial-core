@@ -17,9 +17,13 @@
 
 package org.nexial.core.integration
 
+import com.google.gson.JsonParser
+import org.apache.commons.io.FileUtils
 import org.apache.commons.lang3.StringUtils
 import org.apache.commons.validator.routines.UrlValidator
+import org.json.JSONObject
 import org.nexial.core.ExecutionThread
+import org.nexial.core.NexialConst.GSON
 import org.nexial.core.integration.connection.ConnectionFactory
 import org.nexial.core.integration.jira.JiraHelper
 import org.nexial.core.integration.slack.SlackHelper
@@ -27,26 +31,30 @@ import org.nexial.core.model.ExecutionContext
 import org.nexial.core.model.ExecutionDefinition
 import org.nexial.core.model.TestProject
 import org.nexial.core.plugins.aws.S3Command
+import org.nexial.core.utils.ConsoleUtils
 import org.nexial.core.utils.ExecUtil
 import org.nexial.core.variable.Syspath
 import java.io.File
 import java.io.File.separator
 import java.net.URL
+import java.nio.charset.Charset
 
 class IntegrationManager {
 
     companion object {
-
-        fun manageIntegration(outputDirPath: String) {
-
+        var remoteUrl:String? = null
+        fun manageIntegration(remoteUrl: String) {
             val context = ExecutionContext(createExecDefinition())
             ExecutionThread.set(context)
-            val outputDir = resolveOutputDir(context, outputDirPath)
+            val localPath = Syspath().out("fullpath")
+            if (!copyOutputDirTo(context, localPath, remoteUrl)) {
+                throw IllegalArgumentException("Unable to download output files from given url: $remoteUrl")
+            }
             val iterationOutputList = mutableListOf<IterationOutput>()
-            val executionOutput = ExecutionOutput().readExecutionSummary(outputDir.absolutePath)
-
+            val executionOutput = ExecutionOutput().readExecutionSummary(localPath)
+            val outputDir = File(localPath)
             when {
-//                outputDir.isFile      -> if (isExcelFile(outputDir)) iterationOutputList.add(ExcelOutput(outputDir).parse())
+//          outputDir.isFile      -> if (isExcelFile(outputDir)) iterationOutputList.add(ExcelOutput(outputDir).parse())
                 outputDir.isDirectory -> outputDir.listFiles().forEach { file ->
                     if (isExcelFile(file)) {
                         val iterationOutput = ExcelOutput(file).parse()
@@ -78,34 +86,30 @@ class IntegrationManager {
             return execDef
         }
 
-        private fun resolveOutputDir(context: ExecutionContext, outputDirUrl: String): File {
-            if (UrlValidator.getInstance().isValid(outputDirUrl)) {
+        private fun copyOutputDirTo(context: ExecutionContext, localPath: String, remotePath: String): Boolean {
+
+            ConsoleUtils.log("Copying remote dir '$remotePath' to output dir '$localPath")
+            if (UrlValidator.getInstance().isValid(remotePath)) {
 
                 // todo: check for s3 in url for s3 implementation
 
                 // use profile name, for s3Command to work
                 val profile = "temp"
-                val url = URL(outputDirUrl)
+                val url = URL(remotePath).path.removePrefix("/")
+                remoteUrl = url
                 context.setData("$profile.aws.accessKey", System.getProperty("otc.accessKey"))
                 context.setData("$profile.aws.secretKey", System.getProperty("otc.secretKey"))
                 context.setData("$profile.aws.region", System.getProperty("otc.region"))
                 val s3Command = S3Command()
                 s3Command.init(context)
                 val result = "~s3OutputDir"
-
-                val remotePath = url.path.removePrefix("/")
                 val stepResult = s3Command.copyFrom(result, profile,
-                        "${StringUtils.appendIfMissing(remotePath, "/")}*",
-                        Syspath().out("fullpath"))
+                        "${StringUtils.appendIfMissing(url, "/")}*",
+                        localPath)
 
-                if (stepResult.isSuccess) {
-                    return File(Syspath().out("fullpath"))
-                } else {
-                    throw IllegalArgumentException("Unable to download output files from given url: $outputDirUrl")
-                }
+                return stepResult.isSuccess
             }
-
-            return File(outputDirUrl)
+            return false
         }
 
         /*private fun setDataToContext(data: Map<String, String>, context: ExecutionContext) {
@@ -122,11 +126,10 @@ class IntegrationManager {
             val servers = mutableSetOf<String>()
             executionOutput.iterations.forEach { iteration ->
                 for (scenario in iteration.scenarios) {
-
                     scenario.projects.forEach { project -> servers.add(project.server!!) }
-
                 }
             }
+            val metadata = JSONObject()
             servers.forEach { server ->
                 if (!isValidServer(server)) {
                     throw IllegalArgumentException("Unsupported server $server specified.")
@@ -134,13 +137,30 @@ class IntegrationManager {
                 when (server) {
                     "jira" -> {
                         val httpClient = ConnectionFactory.getInstance(context).getAsyncWsClient(server)
-                        JiraHelper(context, httpClient).process(server, executionOutput)
+                        val jiraHelper = JiraHelper(context, httpClient)
+                        val integrationMeta = jiraHelper.process(server, executionOutput)
+                        metadata.put(server, GSON.toJson(integrationMeta))
                     }
                     "slack" -> {
                         val httpClient = ConnectionFactory.getInstance(context).getAsyncWsClient(server)
                         SlackHelper(context, httpClient).process(server, executionOutput)
                     }
                 }
+            }
+
+            updateMeta(metadata, context)
+        }
+
+        private fun updateMeta(data: JSONObject, context: ExecutionContext) {
+            val jsonFile = Syspath().out("fullpath") + File.separator + "integrationMeta.json"
+
+            FileUtils.write(File(jsonFile), GSON.toJson(JsonParser().parse(data.toString())),
+                    Charset.defaultCharset())
+            val s3Command = S3Command()
+            s3Command.init(context)
+            val result = s3Command.copyTo("copyMeta", "temp", jsonFile, remoteUrl)
+            if (!result.isSuccess) {
+                throw IllegalArgumentException("Integration meta is not update to S3 output folder.")
             }
         }
     }

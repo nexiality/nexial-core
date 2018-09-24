@@ -30,7 +30,7 @@ import java.io.File
 
 private const val scenarioStartAddress = "A20"
 
-class ExcelOutput(file: File) {//: IterationOutput() {
+class ExcelOutput(file: File) {
 
     var excel: Excel? = null
 
@@ -38,10 +38,8 @@ class ExcelOutput(file: File) {//: IterationOutput() {
         excel = Excel(file, false, false)
     }
 
-
     fun parse(): IterationOutput {
         val iterationOutput = IterationOutput()
-
         iterationOutput.fileName = excel!!.file.name
         val summarySheet: Worksheet = excel!!.worksheet("#summary")
         iterationOutput.summary = parseSummaryOutput(summarySheet)
@@ -200,6 +198,4 @@ class ExcelOutput(file: File) {//: IterationOutput() {
         }
         return scenarioSummaryMap
     }
-
-
 }

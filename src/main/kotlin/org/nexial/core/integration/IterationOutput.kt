@@ -32,18 +32,6 @@ open class IterationOutput {
         return scenarios.find { scenarioOutput -> scenarioOutput.scenarioName == scenarioName }!!
     }
 
-    fun parseToMDTable(map: Map<String, String>): String {
-        val sb = StringBuilder()
-        map.forEach { key, value ->
-            var result = value
-            if (value.contains("100.00%")) {
-                result = "{panel:bgColor=lightgreen} $value {panel}"
-            }
-            sb.append(" | $key | $result |\\n")
-        }
-        return sb.toString()
-    }
-
     fun getIterationFromTitle(): String {
         return StringUtils.substringAfterLast(summary!!.title, ".")
     }

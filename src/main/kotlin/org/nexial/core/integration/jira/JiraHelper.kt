@@ -22,11 +22,15 @@ import org.apache.commons.lang3.StringUtils
 import org.apache.commons.validator.routines.UrlValidator
 import org.json.JSONArray
 import org.json.JSONObject
+import org.nexial.commons.utils.RegexUtils
+import org.nexial.core.NexialConst.DATE_FORMAT_NOW
 import org.nexial.core.integration.*
 import org.nexial.core.integration.connection.ConnectionFactory
 import org.nexial.core.model.ExecutionContext
 import org.nexial.core.plugins.ws.AsyncWebServiceClient
 import org.nexial.core.utils.ConsoleUtils
+import org.nexial.core.utils.JsonUtils
+import org.nexial.core.variable.Sysdate
 import java.io.File
 import java.io.FileInputStream
 import java.util.*
@@ -35,13 +39,14 @@ import java.util.*
 class JiraHelper(val context: ExecutionContext, private val httpClient: AsyncWebServiceClient) : IntegrationHelper() {
 
     val lineSeparator = System.getProperty("line.separator")!!
+    private val integrationMeta = IntegrationMeta()
 
-    fun process(profile: String, executionOutput: ExecutionOutput) {
-        performActions(profile, executionOutput)
+    fun process(profile: String, executionOutput: ExecutionOutput): IntegrationMeta {
+        return performActions(profile, executionOutput)
     }
 
-    private fun performActions(profile: String, executionOutput: ExecutionOutput) {
-
+    private fun performActions(profile: String, executionOutput: ExecutionOutput): IntegrationMeta {
+        integrationMeta.processedTime = Sysdate().now(DATE_FORMAT_NOW)
         val actions = getActions(context, profile)
         actions.forEach { action ->
             when (action) {
@@ -58,22 +63,22 @@ class JiraHelper(val context: ExecutionContext, private val httpClient: AsyncWeb
                             processLabel(profile, scenario, AUTOMATION_COMPLETE)
                         }
                     }
-
                 }
                 "defect" -> {
-                    val defectList = mutableListOf<Pair<String, String>>()
+                    val defectData = mutableListOf<Pair<String, String>>()
                     executionOutput.iterations.forEach { iteration ->
                         for (scenario in iteration.scenarios) {
-                            defectList.addAll(processDefect(profile, scenario))
+                            defectData.addAll(processDefect(profile, scenario))
                         }
-                        if (CollectionUtils.isNotEmpty(defectList)) {
+                        if (CollectionUtils.isNotEmpty(defectData)) {
                             //todo: design a centralized defect history record
-                            updateJiraDefectHistory(defectList)
+                            updateJiraDefectHistory(defectData)
                         }
                     }
                 }
             }
         }
+        return integrationMeta
     }
 
     private fun processComment(profile: String, scenario: ScenarioOutput) {
@@ -84,7 +89,7 @@ class JiraHelper(val context: ExecutionContext, private val httpClient: AsyncWeb
                 features.addAll(projectInfo.features)
             }
         }
-        context.setData(JIRA_COMMENT_BODY, parseResultToMdFormat(scenario))
+        context.setData(JIRA_COMMENT_BODY, TemplateEngine.setJiraCommentSummary(scenario))
 
         val commentBody = StringUtils.replace(context.replaceTokens(TemplateEngine.getTemplate(profile, COMMENT_ENDPOINT)),
                 lineSeparator, "")
@@ -92,7 +97,6 @@ class JiraHelper(val context: ExecutionContext, private val httpClient: AsyncWeb
             val url = jiraPostCommentUrl(feature, profile)
             addComment(url!!, commentBody)
         }
-
     }
 
     private fun processDefect(profile: String, scenarioOutput: ScenarioOutput): MutableList<Pair<String, String>> {
@@ -105,7 +109,7 @@ class JiraHelper(val context: ExecutionContext, private val httpClient: AsyncWeb
             }
             val newDefects = TemplateEngine.setJiraDefect(projectInfo, scenarioOutput)
             val defectHistory = Properties()
-            val file = File("${context.project.projectHome}/jiraDefects.properties")
+            val file = File(jiraDefectMeta)
             if (file.exists()) {
                 defectHistory.load(FileInputStream(file))
             }
@@ -115,16 +119,16 @@ class JiraHelper(val context: ExecutionContext, private val httpClient: AsyncWeb
                     || CollectionUtils.containsAll(defectHistory.keys, newDefects)) continue
             val defectKey = createDefect(projectInfo.server!!)
             CollectionUtils.addAll(defectList, newDefects)
-
+            integrationMeta.defects.add(defectKey!!)
 
             defectList.forEach { hash ->
-                val pair = Pair(hash, defectKey!!)
+                val pair = Pair(hash, defectKey)
                 defectData.add(pair)
             }
 
             if (StringUtils.isNotBlank(defectKey)) {
                 // add defect labels
-                addLabels(defectKey!!, projectInfo.server!!, JSONArray("[\"$DEFECT_LABEL\"]"))
+                addLabels(defectKey, projectInfo.server!!, JSONArray("[\"$DEFECT_LABEL\"]"))
 
                 // add links to features and test ref
                 val inwardLinks = mutableSetOf<String>()
@@ -155,6 +159,7 @@ class JiraHelper(val context: ExecutionContext, private val httpClient: AsyncWeb
     private fun addLabels(feature: String, profile: String, labels: JSONArray) {
         val putLabelsUrl = jiraPutLabelsUrl(feature, profile)
         context.setData(JIRA_LABELS, labels)
+        integrationMeta.labels.addAll(JsonUtils.toList(labels) as MutableList<String>)
         val labelsBody = StringUtils.replace(context.replaceTokens(TemplateEngine.getTemplate(profile, LABEL_ENDPOINT)),
                 lineSeparator, "")
         addLabels(putLabelsUrl!!, labelsBody)
@@ -167,7 +172,7 @@ class JiraHelper(val context: ExecutionContext, private val httpClient: AsyncWeb
         val linkUrl = context.getStringData("$INTEGRATION.$profile.$JIRA_ISSUE_LINK_URL")
         var issueLinkBody = context.replaceTokens(TemplateEngine.getTemplate(profile, LINK_ENDPOINT))
         issueLinkBody = context.replaceTokens(issueLinkBody)
-        issueLinkBody = StringUtils.replaceAll(issueLinkBody, lineSeparator, "")
+        issueLinkBody = RegexUtils.replace(issueLinkBody, lineSeparator, "")
         addLink(linkUrl, issueLinkBody)
 
     }
@@ -199,7 +204,7 @@ class JiraHelper(val context: ExecutionContext, private val httpClient: AsyncWeb
     override fun createDefect(profile: String): String? {
         val url = context.getStringData("$INTEGRATION.$profile.createIssueUrl")
         val defectBody = context.replaceTokens(TemplateEngine.getTemplate(profile, DEFECT_ENDPOINT))
-        val requestBody = StringUtils.replaceAll(defectBody, lineSeparator, "")
+        val requestBody = RegexUtils.replace(defectBody, lineSeparator, "")
         val response = ConnectionFactory.getWebServiceClient(profile).post(url, requestBody)
         // todo: check status
         val responseJson = JSONObject(response.body)

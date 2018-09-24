@@ -2,6 +2,7 @@ package org.nexial.core.integration
 
 import org.apache.commons.io.FileUtils
 import org.apache.commons.lang3.StringUtils
+import org.nexial.commons.utils.RegexUtils
 import org.nexial.core.ExecutionThread
 import java.io.File
 
@@ -10,7 +11,7 @@ class TemplateEngine {
     companion object {
         val context = ExecutionThread.get()!!
 
-        fun setSlackSummary(executionOutput: ExecutionOutput): String {
+        fun setSlackChatSummary(executionOutput: ExecutionOutput): String {
             var slackSummaryTemplate = StringUtils.replace(getTemplate("slack", COMMENT_ENDPOINT),
                     System.getProperty("line.separator"), "")
 
@@ -25,6 +26,25 @@ class TemplateEngine {
             context.setData("totalFailed", executionOutput.failCount)
             slackSummaryTemplate = context.replaceTokens(slackSummaryTemplate)
             return slackSummaryTemplate
+        }
+
+        fun setJiraCommentSummary(scenario: ScenarioOutput): String {
+            val iteration = scenario.iterationOutput!!
+            var result = parseSummaryToMdTable(iteration.summary!!.execSummary!!)
+            result = "| test script | ${iteration.summary!!.title} | \\n $result"
+            return result
+        }
+
+        private fun parseSummaryToMdTable(map: Map<String, String>): String {
+            val sb = StringBuilder()
+            map.forEach { key, value ->
+                var result = value
+                if (value.contains("100.00%")) {
+                    result = "{panel:bgColor=lightgreen} $value {panel}"
+                }
+                sb.append(" | $key | $result |\\n")
+            }
+            return sb.toString()
         }
 
         fun setJiraDefect(projectInfo: ProjectInfo, scenarioOutput: ScenarioOutput): MutableList<String> {
@@ -52,17 +72,15 @@ class TemplateEngine {
                     }
                 }
                 params = "[${StringUtils.removeEnd(params, ", ")}]"
-                val msg = StringUtils.replaceAll(value.get(13), "\"", "'")
+                val msg = RegexUtils.replace(value.get(13), "\"", "'")
                 sb.append(
                         "| $stepIndex | $activity | $description | $command $params | {panel:bgColor=#ff4d4d} $msg {panel} | \\n ")
 
-
+                // check for uniqueness of this hash value.. consider scripts with same values?
                 val defecthash = "${scenarioOutput.scenarioName}_${activity}_$stepIndex"
-                defectlist.add(StringUtils.replacePattern(defecthash, "\\s+", ""))
+                defectlist.add(RegexUtils.replace(defecthash, "\\s+", ""))
             }
-
             sb.append("\\n\\n")
-
             val summary = "A defect is created based on test script failures."
             val description = sb.toString()
             context.setData(JIRA_PROJECT_KEY, projectKey)

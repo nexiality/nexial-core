@@ -21,10 +21,8 @@ class SlackHelper(val context: ExecutionContext, private val httpClient: AsyncWe
     }
 
     private fun processComment(profile: String, executionOutput: ExecutionOutput) {
-
         val url = context.getStringData("$INTEGRATION.$profile.$SLACK_CHAT_URL")
-        addComment(url!!, TemplateEngine.setSlackSummary(executionOutput))
-
+        addComment(url!!, TemplateEngine.setSlackChatSummary(executionOutput))
     }
 
     override fun createDefect(profile: String): String {
