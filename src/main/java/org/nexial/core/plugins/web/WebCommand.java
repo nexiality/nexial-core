@@ -17,6 +17,7 @@
 
 package org.nexial.core.plugins.web;
 
+import java.awt.*;
 import java.io.File;
 import java.io.IOException;
 import java.time.Duration;
@@ -37,6 +38,7 @@ import org.apache.commons.lang3.ArrayUtils;
 import org.apache.commons.lang3.BooleanUtils;
 import org.apache.commons.lang3.RandomStringUtils;
 import org.apache.commons.lang3.StringUtils;
+import org.apache.commons.lang3.SystemUtils;
 import org.apache.commons.lang3.math.NumberUtils;
 import org.apache.http.client.methods.HttpRequestBase;
 import org.nexial.commons.utils.CollectionUtil;
@@ -58,6 +60,8 @@ import org.nexial.core.utils.ConsoleUtils;
 import org.nexial.core.utils.OutputFileUtils;
 import org.nexial.core.utils.WebDriverUtils;
 import org.openqa.selenium.*;
+import org.openqa.selenium.Dimension;
+import org.openqa.selenium.Point;
 import org.openqa.selenium.WebDriver.Window;
 import org.openqa.selenium.interactions.Actions;
 import org.openqa.selenium.interactions.Locatable;
@@ -876,7 +880,11 @@ public class WebCommand extends BaseCommand implements CanTakeScreenshot, CanLog
         if (window == null) { return StepResult.fail("No current window found"); }
 
         try {
-            window.maximize();
+            if (browser.isRunChrome() && SystemUtils.IS_OS_MAC_OSX) {
+                nativeMaximizeScreen(window);
+            } else {
+                window.maximize();
+            }
             return StepResult.success("browser window maximized");
         } catch (WebDriverException e) {
             // fail safe..
@@ -1383,6 +1391,12 @@ public class WebCommand extends BaseCommand implements CanTakeScreenshot, CanLog
         new Actions(driver).clickAndHold(source).pause(500).dragAndDrop(source, target).build().perform();
 
         return StepResult.success("Drag-and-drop element '" + fromLocator + "' to '" + toLocator + "'");
+    }
+
+    protected void nativeMaximizeScreen(Window window) {
+        java.awt.Dimension screenSize = Toolkit.getDefaultToolkit().getScreenSize();
+        window.setPosition(new Point(0, 0));
+        window.setSize(new Dimension((int) screenSize.getWidth(), (int) screenSize.getHeight()));
     }
 
     @NotNull

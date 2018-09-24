@@ -164,7 +164,7 @@ dependencies {
 	compile("com.cedarsoftware:java-util:+")
 	compile("com.cedarsoftware:json-io:+")
 	compile("com.github.fge:json-schema-validator:+")
-	compile("com.google.code.gson:gson:+")
+	compile("com.google.code.gson:gson:${gsonVersion}")
 	compile("org.danilopianini:gson-extras:+")
 	compile("com.jayway.jsonpath:json-path:+")
 	compile("org.jdom:jdom2:+")

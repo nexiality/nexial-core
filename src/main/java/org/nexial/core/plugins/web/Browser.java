@@ -316,6 +316,10 @@ public class Browser implements ForcefulTerminate {
     public void init() {
         ShutdownAdvisor.addAdvisor(this);
 
+        System.setProperty("webdriver.reap_profile", "true");
+        System.setProperty("webdriver.accept.untrusted.certs", "true");
+        System.setProperty("webdriver.assume.untrusted.issuer", "true");
+
         // enable native event
         context.setData("webdriver.enable.native.events", 1);
         System.setProperty("webdriver.enable.native.events", "1");
@@ -1016,11 +1020,11 @@ public class Browser implements ForcefulTerminate {
         // if true then we tell firefox not to auto-close js alert diaglog
         boolean ignoreAlert = BooleanUtils.toBoolean(context.getBooleanData(OPT_ALERT_IGNORE_FLAG));
         capabilities.setCapability(UNEXPECTED_ALERT_BEHAVIOUR, ignoreAlert ? IGNORE : ACCEPT);
-        capabilities.setCapability(SUPPORTS_WEB_STORAGE, true);
         capabilities.setCapability(SUPPORTS_ALERTS, true);
-        capabilities.setCapability(ACCEPT_SSL_CERTS, true);
+        capabilities.setCapability(SUPPORTS_WEB_STORAGE, true);
         capabilities.setCapability(HAS_NATIVE_EVENTS, true);
         capabilities.setCapability(SUPPORTS_LOCATION_CONTEXT, false);
+        capabilities.setCapability(ACCEPT_SSL_CERTS, true);
 
         // --------------------------------------------------------------------
         // Proxy
