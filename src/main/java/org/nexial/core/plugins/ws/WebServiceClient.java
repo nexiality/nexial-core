@@ -57,6 +57,7 @@ import org.apache.http.impl.client.HttpClients;
 import org.apache.http.impl.conn.DefaultProxyRoutePlanner;
 import org.apache.http.impl.nio.client.HttpAsyncClientBuilder;
 import org.apache.http.protocol.HttpContext;
+import org.nexial.commons.utils.RegexUtils;
 import org.nexial.core.WebProxy;
 import org.nexial.core.model.ExecutionContext;
 import org.nexial.core.model.TestStep;
@@ -66,6 +67,7 @@ import static org.nexial.core.NexialConst.*;
 
 public class WebServiceClient {
     protected static final SSLConnectionSocketFactory SSL_SF = new NaiveConnectionSocketFactory();
+    protected static final String REGEX_URL_HAS_AUTH = "(.+\\ )?(http[s]?)\\:\\/\\/(.+)\\:(.+)\\@(.+)";
     protected ExecutionContext context;
     protected boolean verbose = true;
 
@@ -160,6 +162,16 @@ public class WebServiceClient {
         return request;
     }
 
+    public static String hideAuthDetails(RequestLine requestLine) {
+        return requestLine.getMethod() + " " + hideAuthDetails(requestLine.getUri()) + " " +
+               requestLine.getProtocolVersion();
+    }
+
+    public static String hideAuthDetails(String url) {
+        return RegexUtils.match(url, REGEX_URL_HAS_AUTH) ?
+               RegexUtils.replace(url, REGEX_URL_HAS_AUTH, "$1$2://$5") : url;
+    }
+
     protected Response invokeRequest(Request request) throws IOException {
         StopWatch tickTock = new StopWatch();
         tickTock.start();
@@ -175,7 +187,7 @@ public class WebServiceClient {
         CloseableHttpResponse httpResponse = null;
 
         try {
-            log("Executing request " + http.getRequestLine());
+            log("Executing request " + hideAuthDetails(http.getRequestLine()));
 
             boolean digestAuth = isDigestAuth();
             boolean basicAuth = isBasicAuth();
@@ -214,7 +226,7 @@ public class WebServiceClient {
     protected Response gatherResponseData(HttpUriRequest http, Request request, HttpResponse httpResponse)
         throws IOException {
         StatusLine statusLine = httpResponse.getStatusLine();
-        log("Executed request " + http.getRequestLine() + ": " + statusLine);
+        log("Executed request " + hideAuthDetails(http.getRequestLine()) + ": " + statusLine);
 
         Response response = new Response();
         response.setReturnCode(statusLine.getStatusCode());
@@ -268,8 +280,8 @@ public class WebServiceClient {
                             URL url = new URL(request.getUrl());
                             target = new HttpHost(url.getHost(), url.getPort(), url.getProtocol());
                         } catch (MalformedURLException e) {
-                            throw new HttpException("Unable to decipher URL " + request.getUrl() + ": " +
-                                                    e.getMessage());
+                            throw new HttpException("Unable to decipher URL " + hideAuthDetails(request.getUrl()) +
+                                                    ": " + e.getMessage());
                         }
                     } else {
                         target = host;

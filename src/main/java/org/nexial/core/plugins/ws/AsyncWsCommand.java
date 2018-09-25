@@ -25,6 +25,7 @@ import org.nexial.core.model.ExecutionContext;
 import org.nexial.core.model.StepResult;
 import org.nexial.core.utils.OutputFileUtils;
 
+import static org.nexial.core.plugins.ws.WebServiceClient.hideAuthDetails;
 import static org.nexial.core.utils.CheckUtils.requiresNotBlank;
 import static org.nexial.core.utils.CheckUtils.requiresValidVariableName;
 
@@ -66,10 +67,9 @@ public class AsyncWsCommand extends WsCommand {
 
         try {
             client.download(url, queryString, saveTo);
-
-            return StepResult.success("Successfully requested '" + request + "' to " + saveTo);
+            return StepResult.success("Successfully requested '" + hideAuthDetails(request) + "' to " + saveTo);
         } catch (IOException e) {
-            return StepResult.fail("FAILED to downloaded from '" + request + "': " + e.getMessage());
+            return StepResult.fail("FAILED to downloaded from '" + hideAuthDetails(request) + "': " + e.getMessage());
         }
     }
 
@@ -122,7 +122,8 @@ public class AsyncWsCommand extends WsCommand {
             if (StringUtils.equals(method, "head")) { client.head(url, outputFile); }
             if (StringUtils.equals(method, "delete")) { client.delete(url, queryString, outputFile); }
 
-            return StepResult.success("Successfully invoked '" + url + "', output will be saved to " + output);
+            return StepResult.success("Successfully invoked '" + hideAuthDetails(url) + "'; output will be saved to " +
+                                      output);
         } catch (IOException e) {
             return toFailResult(url, e);
         }
@@ -149,7 +150,7 @@ public class AsyncWsCommand extends WsCommand {
             if (StringUtils.equals(method, "put")) { client.put(url, body, outputFile); }
             if (StringUtils.equals(method, "delete")) { client.deleteWithPayload(url, body, outputFile); }
 
-            return StepResult.success("Successfully invoked '" + url + "'");
+            return StepResult.success("Successfully invoked '" + hideAuthDetails(url) + "'");
         } catch (IOException e) {
             return toFailResult(url, e);
         }

@@ -1,0 +1,8 @@
+<soapenv:Envelope xmlns:soapenv="http://schemas.xmlsoap.org/soap/envelope/" xmlns:sam="http://www.example.org/sample/">
+	<soapenv:Header/>
+	<soapenv:Body>
+		<sam:logoutResponse>
+			<sessioninfo>OK</sessioninfo>
+		</sam:logoutResponse>
+	</soapenv:Body>
+</soapenv:Envelope>

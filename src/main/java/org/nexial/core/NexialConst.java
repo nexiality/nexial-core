@@ -394,6 +394,7 @@ public final class NexialConst {
                                                                 .enableComplexMapKeySerialization()
                                                                 .setLenient()
                                                                 .create();
+    public static final String MSG_CHECK_SUPPORT = "Check with Nexial Support Group for details.";
 
     // browser types
     public enum BrowserType {

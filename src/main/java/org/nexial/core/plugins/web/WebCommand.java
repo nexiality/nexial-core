@@ -44,6 +44,7 @@ import org.apache.http.client.methods.HttpRequestBase;
 import org.nexial.commons.utils.CollectionUtil;
 import org.nexial.commons.utils.RegexUtils;
 import org.nexial.commons.utils.TextUtils;
+import org.nexial.commons.utils.web.URLEncodingUtils;
 import org.nexial.core.WebProxy;
 import org.nexial.core.browsermob.ProxyHandler;
 import org.nexial.core.model.ExecutionContext;
@@ -82,6 +83,7 @@ import static java.lang.Thread.sleep;
 import static org.apache.commons.lang3.SystemUtils.IS_OS_MAC;
 import static org.nexial.core.NexialConst.*;
 import static org.nexial.core.NexialConst.Data.*;
+import static org.nexial.core.plugins.ws.WebServiceClient.hideAuthDetails;
 import static org.nexial.core.utils.CheckUtils.*;
 import static org.openqa.selenium.Keys.TAB;
 
@@ -744,7 +746,7 @@ public class WebCommand extends BaseCommand implements CanTakeScreenshot, CanLog
 
     public StepResult clickAndWait(String locator, String waitMs) {
         boolean isNumber = NumberUtils.isDigits(waitMs);
-        long waitMs1 = isNumber ? (long) NumberUtils.toDouble(waitMs) : pollWaitMs;
+        long waitMs1 = isNumber ? (long) NumberUtils.toDouble(waitMs) : context.getPollWaitMs();
 
         StepResult result = clickInternal(locator);
         if (result.failed()) { return result; }
@@ -898,8 +900,8 @@ public class WebCommand extends BaseCommand implements CanTakeScreenshot, CanLog
     }
 
     public StepResult resizeWindow(String width, String height) {
-        requires(NumberUtils.isDigits(width), "invalid value for width", width);
-        requires(NumberUtils.isDigits(height), "invalid value for height", height);
+        requiresPositiveNumber(width, "invalid value for width", width);
+        requiresPositiveNumber(height, "invalid value for height", height);
 
         ensureReady();
         int numWidth = NumberUtils.toInt(width);
@@ -922,7 +924,7 @@ public class WebCommand extends BaseCommand implements CanTakeScreenshot, CanLog
     public StepResult open(String url) { return openAndWait(url, "100"); }
 
     public StepResult openAndWait(String url, String waitMs) {
-        requires(StringUtils.isNotBlank(url), "invalid URL", url);
+        requiresNotBlank(url, "invalid URL", url);
 
         ensureReady();
 
@@ -936,7 +938,31 @@ public class WebCommand extends BaseCommand implements CanTakeScreenshot, CanLog
             driver = driver.switchTo().window(initialHandle).switchTo().defaultContent();
         }
 
-        return StepResult.success("opened URL " + url);
+        return StepResult.success("opened URL " + hideAuthDetails(url));
+    }
+
+    public StepResult openHttpBasic(String url, String username, String password) {
+        requiresNotBlank(url, "invalid URL", url);
+        requiresNotBlank(username, "invalid username", url);
+        requiresNotBlank(password, "invalid password", url);
+
+        ensureReady();
+
+        String urlBasic = StringUtils.substringBefore(url, "://") + "://" +
+                          URLEncodingUtils.encodeAuth(username) + ":" +
+                          URLEncodingUtils.encodeAuth(password) + "@" +
+                          StringUtils.substringAfter(url, "://");
+        driver.get(urlBasic);
+        waitForBrowserStability(context.getPollWaitMs());
+
+        // bring browser to foreground
+        String initialHandle = browser.updateWinHandle();
+        ConsoleUtils.log("current browser window handle:" + initialHandle);
+        if (StringUtils.isNotBlank(initialHandle) && browser.getBrowserType().isSwitchWindowSupported()) {
+            driver = driver.switchTo().window(initialHandle).switchTo().defaultContent();
+        }
+
+        return StepResult.success("opened URL " + hideAuthDetails(url));
     }
 
     public StepResult refresh() {
@@ -948,7 +974,7 @@ public class WebCommand extends BaseCommand implements CanTakeScreenshot, CanLog
     public StepResult refreshAndWait() {
         ensureReady();
         driver.navigate().refresh();
-        waitForBrowserStability(pollWaitMs);
+        waitForBrowserStability(context.getPollWaitMs());
         return StepResult.success("active window refreshed");
     }
 
@@ -959,7 +985,7 @@ public class WebCommand extends BaseCommand implements CanTakeScreenshot, CanLog
     }
 
     public StepResult waitForTitle(final String text) {
-        requires(StringUtils.isNotBlank(text), "invalid title text", text);
+        requiresNotBlank(text, "invalid title text", text);
 
         ensureReady();
         Boolean expectedTitleFound = waiter.until(ExpectedConditions.titleIs(text));
@@ -1122,25 +1148,31 @@ public class WebCommand extends BaseCommand implements CanTakeScreenshot, CanLog
         return StepResult.success("typed text at '" + locator + "'");
     }
 
+    /** support no locator */
     public StepResult typeKeys(String locator, String value) {
-        WebElement element = toElement(locator);
-        jsExecutor.executeScript("arguments[0].scrollIntoView(true);", element);
+        if (StringUtils.isBlank(locator)) {
+            WebElement element = toElement(locator);
+            jsExecutor.executeScript("arguments[0].scrollIntoView(true);", element);
 
-        if (StringUtils.isBlank(value)) {
-            element.clear();
-            WebDriverUtils.toSendKeyAction(driver, element, "{BACKSPACE}{TAB}").perform();
-            return StepResult.success("cleared out value at '" + locator + "'");
-        }
-
-        element.click();
-        waitFor(MIN_STABILITY_WAIT_MS);
-
-        Actions actions = WebDriverUtils.toSendKeyAction(driver, element, value);
-        if (actions != null) {
-            if (context.getBooleanData(WEB_UNFOCUS_AFTER_TYPE, DEF_WEB_UNFOCUS_AFTER_TYPE)) {
-                actions.sendKeys(TAB);
+            if (StringUtils.isBlank(value)) {
+                element.clear();
+                WebDriverUtils.toSendKeyAction(driver, element, "{BACKSPACE}{TAB}").perform();
+                return StepResult.success("cleared out value at '" + locator + "'");
             }
-            actions.build().perform();
+
+            element.click();
+            waitFor(MIN_STABILITY_WAIT_MS);
+
+            Actions actions = WebDriverUtils.toSendKeyAction(driver, element, value);
+            if (actions != null) {
+                if (context.getBooleanData(WEB_UNFOCUS_AFTER_TYPE, DEF_WEB_UNFOCUS_AFTER_TYPE)) {
+                    actions.sendKeys(TAB);
+                }
+                actions.build().perform();
+            }
+        } else {
+            // no locator
+            WebDriverUtils.toSendKeyAction(driver, null, value).build().perform();
         }
 
         // could have alert text...
@@ -1169,22 +1201,25 @@ public class WebCommand extends BaseCommand implements CanTakeScreenshot, CanLog
     public StepResult verifyText(String locator, String text) { return assertText(locator, text); }
 
     public StepResult savePageAs(String var, String sessionIdName, String url) {
-        requires(StringUtils.isNotBlank(var), "invalid variable", var);
+        requiresNotBlank(var, "invalid variable", var);
+        String safeUrl = hideAuthDetails(url);
 
         try {
             context.setData(var, new String(downloadLink(sessionIdName, url)));
-            return StepResult.success("saved '" + url + "' as ${" + var + "}");
+            return StepResult.success("saved '" + safeUrl + "' as ${" + var + "}");
         } catch (Exception e) {
-            String message = "Unable to save link '" + url + "' as property '" + var + "': " + e.getMessage();
+            String message = "Unable to save link '" + safeUrl + "' as property '" + var + "': " + e.getMessage();
             return StepResult.fail(message);
         }
     }
 
     public StepResult savePageAsFile(String sessionIdName, String url, String file) {
-        requires(StringUtils.isNotBlank(file), "invalid filename", file);
+        requiresNotBlank(file, "invalid filename", file);
 
         File f = new File(file);
         requires(!f.isDirectory(), "filename cannot be a directory", file);
+
+        String safeUrl = hideAuthDetails(url);
 
         try {
             // download
@@ -1194,9 +1229,9 @@ public class WebCommand extends BaseCommand implements CanTakeScreenshot, CanLog
             f.getParentFile().mkdirs();
 
             FileUtils.writeByteArrayToFile(f, payload);
-            return StepResult.success("saved '" + url + "' as '" + file + "'");
+            return StepResult.success("saved '" + safeUrl + "' as '" + file + "'");
         } catch (IOException e) {
-            return StepResult.fail("Unable to save '" + url + "' as '" + file + "': " + e.getMessage());
+            return StepResult.fail("Unable to save '" + safeUrl + "' as '" + file + "': " + e.getMessage());
         }
     }
 
@@ -2105,14 +2140,13 @@ public class WebCommand extends BaseCommand implements CanTakeScreenshot, CanLog
 
     protected byte[] downloadLink(String sessionName, String url) {
         // sanity check
-        if (ws == null) { fail("command type 'ws' is not available.  Check with Nexial Support Group for details."); }
-        if (cookie == null) {
-            fail("command type 'cookie' is not available.  Check with Nexial Support Group for details.");
-        }
-        requires(StringUtils.isNotBlank(url), "valid/full URL or property reference required", url);
+        if (ws == null) { fail("command type 'ws' is not available. " + MSG_CHECK_SUPPORT); }
+        if (cookie == null) { fail("command type 'wscookie' is not available. " + MSG_CHECK_SUPPORT); }
+        requiresNotBlank(url, "valid/full URL or property reference required", url);
 
         String cookieVar = NAMESPACE + "downloadCookies";
         String wsRespVar = NAMESPACE + "downloadResponse";
+        String safeUrl = hideAuthDetails(url);
 
         try {
             // in case we need to use specific cookie(s) for the HTTP GET
@@ -2137,20 +2171,20 @@ public class WebCommand extends BaseCommand implements CanTakeScreenshot, CanLog
             if (context.hasData(cookieVar)) {
                 StepResult result = ws.headerByVar("Cookie", cookieVar);
                 if (result.failed()) {
-                    fail("Failed to download from '" + url + "': " + result.getMessage());
+                    fail("Failed to download from '" + safeUrl + "': " + result.getMessage());
                     return null;
                 }
             }
 
             StepResult result = ws.get(url, null, wsRespVar);
             if (result.failed()) {
-                fail("Failed to download from '" + url + "': " + result.getMessage());
+                fail("Failed to download from '" + safeUrl + "': " + result.getMessage());
                 return null;
             }
 
             Object response = context.getObjectData(wsRespVar);
             if (!(response instanceof Response)) {
-                fail("Failed to download from '" + url + "': valid HTTP response; check log for details");
+                fail("Failed to download from '" + safeUrl + "': valid HTTP response; check log for details");
                 return null;
             }
 

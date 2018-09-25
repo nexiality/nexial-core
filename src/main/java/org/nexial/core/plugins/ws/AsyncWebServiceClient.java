@@ -241,7 +241,7 @@ public class AsyncWebServiceClient extends WebServiceClient implements ForcefulT
             }
         };
 
-        log("Executing request " + http.getRequestLine());
+        log("Executing request " + hideAuthDetails(http.getRequestLine()));
 
         boolean digestAuth = isDigestAuth();
         boolean basicAuth = isBasicAuth();

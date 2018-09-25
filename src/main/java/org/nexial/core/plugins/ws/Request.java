@@ -34,6 +34,7 @@ import org.nexial.core.utils.ExecUtil;
 import org.openqa.selenium.Cookie;
 
 import static org.nexial.core.NexialConst.*;
+import static org.nexial.core.plugins.ws.WebServiceClient.hideAuthDetails;
 
 public abstract class Request implements Serializable {
     protected String url;
@@ -135,12 +136,12 @@ public abstract class Request implements Serializable {
     @Override
     public String toString() {
         return "Request{" +
-               "url='" + url + '\'' +
-               ", method='" + method + '\'' +
-               ", headers=" + headers +
-               ", contentType='" + contentType + '\'' +
-               ", connectionTimeout=" + connectionTimeout +
-               ", socketTimeout=" + socketTimeout +
+               "url='" + hideAuthDetails(url) + "', " +
+               "method='" + method + "', " +
+               "headers=" + headers + ", " +
+               "contentType='" + contentType + "', " +
+               "connectionTimeout=" + connectionTimeout + ", " +
+               "socketTimeout=" + socketTimeout +
                '}';
     }
 

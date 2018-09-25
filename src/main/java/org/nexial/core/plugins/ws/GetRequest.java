@@ -18,7 +18,6 @@
 package org.nexial.core.plugins.ws;
 
 import java.io.Serializable;
-import java.io.UnsupportedEncodingException;
 
 import org.apache.commons.lang3.StringUtils;
 import org.apache.http.client.config.RequestConfig;
@@ -49,7 +48,7 @@ public class GetRequest extends Request implements Serializable {
     }
 
     @Override
-    protected HttpUriRequest prepRequest(RequestConfig requestConfig) throws UnsupportedEncodingException {
+    protected HttpUriRequest prepRequest(RequestConfig requestConfig) {
         if (StringUtils.isNotBlank(getQueryString())) { url += "?" + getQueryString(); }
 
         HttpGet httpget = new HttpGet(url);

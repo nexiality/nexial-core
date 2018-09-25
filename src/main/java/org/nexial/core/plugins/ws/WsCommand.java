@@ -49,6 +49,7 @@ import static io.jsonwebtoken.impl.TextCodec.BASE64URL;
 import static org.apache.http.HttpHeaders.AUTHORIZATION;
 import static org.apache.http.HttpHeaders.CONTENT_TYPE;
 import static org.nexial.core.NexialConst.*;
+import static org.nexial.core.plugins.ws.WebServiceClient.hideAuthDetails;
 import static org.nexial.core.utils.CheckUtils.*;
 
 public class WsCommand extends BaseCommand {
@@ -81,13 +82,12 @@ public class WsCommand extends BaseCommand {
         try {
             Response response = client.download(url, queryString, saveTo);
             logResponseForDownload(response, saveTo);
-            return StepResult.success("Successfully downloaded '"
-                                      + url + (StringUtils.isBlank(queryString) ? "" : ("?" + queryString))
-                                      + "' to " + saveTo);
+            return StepResult.success("Successfully downloaded '" + hideAuthDetails(url) +
+                                      (StringUtils.isBlank(queryString) ? "" : ("?" + queryString)) + "' to " + saveTo);
         } catch (IOException e) {
-            return StepResult.fail("FAILED to downloaded from '"
-                                   + url + (StringUtils.isBlank(queryString) ? "" : ("?" + queryString))
-                                   + "': " + e.getMessage());
+            return StepResult.fail("FAILED to downloaded from '" + hideAuthDetails(url) +
+                                   (StringUtils.isBlank(queryString) ? "" : ("?" + queryString)) +
+                                   "': " + e.getMessage());
         }
     }
 
@@ -398,7 +398,7 @@ public class WsCommand extends BaseCommand {
 
             context.setData(var, response);
             logResponse(response, var);
-            return StepResult.success("Successfully invoked web service '" + url + "'");
+            return StepResult.success("Successfully invoked web service '" + hideAuthDetails(url) + "'");
         } catch (IOException e) {
             return toFailResult(url, e);
         }
@@ -407,7 +407,7 @@ public class WsCommand extends BaseCommand {
     @NotNull
     protected static StepResult toFailResult(String url, IOException e) {
         String error = e.getCause() != null ? e.getCause().getMessage() : e.getMessage();
-        return StepResult.fail("Unable to invoke '" + url + "': " + error);
+        return StepResult.fail("Unable to invoke '" + hideAuthDetails(url) + "': " + error);
     }
 
     protected StepResult requestWithBody(String url, String body, String var, String method) {
@@ -435,7 +435,7 @@ public class WsCommand extends BaseCommand {
 
             context.setData(var, response);
             logResponse(response, var);
-            return StepResult.success("Successfully invoked web service '" + url + "'");
+            return StepResult.success("Successfully invoked web service '" + hideAuthDetails(url) + "'");
         } catch (IOException e) {
             return toFailResult(url, e);
         }
@@ -450,11 +450,11 @@ public class WsCommand extends BaseCommand {
     }
 
     protected void logRequestWithBody(String url, String body) {
-        ConsoleUtils.log("REQUEST  --> '" + url + "', body length=" + StringUtils.length(body));
+        ConsoleUtils.log("REQUEST  --> '" + hideAuthDetails(url) + "', body length=" + StringUtils.length(body));
     }
 
     protected void logRequest(String url, String queryString) {
-        ConsoleUtils.log("REQUEST  --> '" + url + "', " +
+        ConsoleUtils.log("REQUEST  --> '" + hideAuthDetails(url) + "', " +
                          "queryString='" + StringUtils.defaultString(queryString, "<NONE>") + "'");
     }
 

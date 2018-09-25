@@ -1,0 +1,19 @@
+<soapenv:Envelope xmlns:soapenv="http://schemas.xmlsoap.org/soap/envelope/" xmlns:sam="http://www.example.org/sample/">
+	<soapenv:Header/>
+	<soapenv:Body>
+		<sam:searchResponse>
+			<sam:searchResponse>
+				<item>
+					<id>Item 1</id>
+					<description>One handy protocol droid. This droid is fluent \t\tin over six million forms of communication and has a lovely golden color. \t\tBuilt by an enthusiast. Mindwiped only once. Can be carried on your back.</description>
+					<price>1</price>
+				</item>
+				<item>
+					<id new="true">Item 2</id>
+					<description>Yada yada</description>
+					<price>12</price>
+				</item>
+			</sam:searchResponse>
+		</sam:searchResponse>
+	</soapenv:Body>
+</soapenv:Envelope>
