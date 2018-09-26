@@ -48,9 +48,11 @@ import static org.nexial.core.NexialConst.OPT_INPUT_EXCEL_FILE;
  * </ol>
  */
 public class Execution {
-    enum Metadata {name, fullpath, index}
+    enum Metadata {
+        name, fullpath, index, script, iteration, scenario, activity, description, command
+    }
 
-    enum Artifact {script, scenario, activity, step, command, iteration}
+    enum Artifact {script, scenario, activity, step, iteration}
 
     public String script(String scope) { return evaluateExecutionData(Artifact.script, Metadata.valueOf(scope)); }
 
@@ -82,23 +84,6 @@ public class Execution {
         String error = "Built-in function: " + metaRequest;
 
         switch (scope) {
-            case command: {
-                if (currentStep == null) {
-                    ConsoleUtils.error(error + " current step cannot be determined");
-                    return "";
-                }
-
-                switch (metadata) {
-                    case name:
-                        return currentStep.getCommandFQN();
-                    case index:
-                    case fullpath:
-                    default:
-                        ConsoleUtils.error(error);
-                        return "";
-                }
-            }
-
             case step: {
                 if (currentStep == null) {
                     ConsoleUtils.error(error + " current step cannot be determined");
@@ -107,12 +92,24 @@ public class Execution {
 
                 switch (metadata) {
                     case index:
-                        return currentStep.getRowIndex() + "";
+                        return (currentStep.getRowIndex() + 1) + "";
                     case name:
                         return "[" + resolveScriptName(context) + "]" +
                                "[" + resolveScenario(currentStep) + "]" +
                                "[" + resolveActivity(currentStep) + "]" +
                                "[ROW " + (currentStep.getRowIndex() + 1) + "]";
+                    case script:
+                        return resolveScriptName(context);
+                    case iteration:
+                        return context.getIntData(CURR_ITERATION) + "";
+                    case scenario:
+                        return resolveScenario(currentStep);
+                    case activity:
+                        return resolveActivity(currentStep);
+                    case description:
+                        return currentStep.getDescription();
+                    case command:
+                        return currentStep.getCommandFQN();
                     case fullpath:
                     default:
                         ConsoleUtils.error(error);
@@ -132,6 +129,12 @@ public class Execution {
                         return activityName;
                     case fullpath:
                     case index:
+                    case script:
+                    case iteration:
+                    case scenario:
+                    case activity:
+                    case description:
+                    case command:
                     default:
                         ConsoleUtils.error(error);
                         return "";
@@ -150,6 +153,12 @@ public class Execution {
                         return resolveScenario(currentStep);
                     case fullpath:
                     case index:
+                    case script:
+                    case iteration:
+                    case scenario:
+                    case activity:
+                    case description:
+                    case command:
                     default:
                         ConsoleUtils.error(error);
                         return "";
@@ -162,6 +171,12 @@ public class Execution {
                         return context.getIntData(CURR_ITERATION) + "";
                     case name:
                     case fullpath:
+                    case script:
+                    case iteration:
+                    case scenario:
+                    case activity:
+                    case description:
+                    case command:
                     default:
                         ConsoleUtils.error(error);
                         return "";
@@ -177,6 +192,12 @@ public class Execution {
                         if (StringUtils.isNotEmpty(excelFile)) { return new File(excelFile).getAbsolutePath(); }
                     }
                     case index:
+                    case script:
+                    case iteration:
+                    case scenario:
+                    case activity:
+                    case description:
+                    case command:
                     default:
                         ConsoleUtils.error(error);
                         return "";
