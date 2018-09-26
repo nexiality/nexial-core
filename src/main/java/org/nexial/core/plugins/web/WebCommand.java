@@ -1150,7 +1150,7 @@ public class WebCommand extends BaseCommand implements CanTakeScreenshot, CanLog
 
     /** support no locator */
     public StepResult typeKeys(String locator, String value) {
-        if (StringUtils.isBlank(locator)) {
+        if (StringUtils.isNotBlank(locator)) {
             WebElement element = toElement(locator);
             jsExecutor.executeScript("arguments[0].scrollIntoView(true);", element);
 
