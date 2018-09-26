@@ -221,7 +221,7 @@ public class RdbmsCommand extends BaseCommand {
                 String printableSql = StringUtils.length(sql) > MAX_PRINTABLE_SQL_LENGTH ?
                                       StringUtils.right(sql, MAX_PRINTABLE_SQL_LENGTH) + "..." : sql;
 
-                String varName = sqlComponent.getVarName();
+                String varName = context.replaceTokens(sqlComponent.getVarName());
                 if (StringUtils.isNotBlank(varName)) {
                     String outFile = StringUtils.appendIfMissing(OutputFileUtils.webFriendly(varName), ".csv");
                     String output = StringUtils.appendIfMissing(new File(outputDir).getAbsolutePath(), separator) +
