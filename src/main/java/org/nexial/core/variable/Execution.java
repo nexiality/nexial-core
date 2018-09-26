@@ -127,11 +127,14 @@ public class Execution {
                 switch (metadata) {
                     case name:
                         return activityName;
+                    case script:
+                        return resolveScriptName(context);
+                    case iteration:
+                        return context.getIntData(CURR_ITERATION) + "";
+                    case scenario:
+                        return resolveScenario(currentStep);
                     case fullpath:
                     case index:
-                    case script:
-                    case iteration:
-                    case scenario:
                     case activity:
                     case description:
                     case command:
@@ -151,10 +154,12 @@ public class Execution {
                 switch (metadata) {
                     case name:
                         return resolveScenario(currentStep);
+                    case script:
+                        return resolveScriptName(context);
+                    case iteration:
+                        return context.getIntData(CURR_ITERATION) + "";
                     case fullpath:
                     case index:
-                    case script:
-                    case iteration:
                     case scenario:
                     case activity:
                     case description:
@@ -169,9 +174,10 @@ public class Execution {
                 switch (metadata) {
                     case index:
                         return context.getIntData(CURR_ITERATION) + "";
+                    case script:
+                        return resolveScriptName(context);
                     case name:
                     case fullpath:
-                    case script:
                     case iteration:
                     case scenario:
                     case activity:
