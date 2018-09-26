@@ -58,7 +58,7 @@ public class RdbmsCommand extends BaseCommand {
         requiresNotBlank(db, "invalid db", db);
         requiresNotBlank(sql, "invalid sql", sql);
 
-        String query = StringUtils.trim(OutputFileUtils.resolveRawContent(sql, context));
+        String query = context.replaceTokens(StringUtils.trim(OutputFileUtils.resolveRawContent(sql, context)));
         // we want to support ALL types of SQL, including those vendor-specific
         // so for that reason, we are no longer insisting on the use of standard ANSI sql
         // requires(dataAccess.validSQL(query), "invalid sql", sql);
@@ -217,12 +217,12 @@ public class RdbmsCommand extends BaseCommand {
             msgPrefix = "executed " + qualifiedSqlCount + " SQL(s); ";
 
             for (SqlComponent sqlComponent : qualifiedSqlList) {
-                String sql = StringUtils.trim(sqlComponent.getSql());
+                String sql = context.replaceTokens(StringUtils.trim(sqlComponent.getSql()));
                 String printableSql = StringUtils.length(sql) > MAX_PRINTABLE_SQL_LENGTH ?
                                       StringUtils.right(sql, MAX_PRINTABLE_SQL_LENGTH) + "..." : sql;
 
-                String varName = context.replaceTokens(sqlComponent.getVarName());
-                if (StringUtils.isNotBlank(varName)) {
+                if (StringUtils.isNotBlank(sqlComponent.getVarName())) {
+                    String varName = context.replaceTokens(sqlComponent.getVarName());
                     String outFile = StringUtils.appendIfMissing(OutputFileUtils.webFriendly(varName), ".csv");
                     String output = StringUtils.appendIfMissing(new File(outputDir).getAbsolutePath(), separator) +
                                     outFile;
@@ -267,7 +267,7 @@ public class RdbmsCommand extends BaseCommand {
         SimpleExtractionDao dao = resolveDao(db);
 
         try {
-            String query = StringUtils.trim(OutputFileUtils.resolveRawContent(sql, context));
+            String query = context.replaceTokens(StringUtils.trim(OutputFileUtils.resolveRawContent(sql, context)));
             // we want to support ALL types of SQL, including those vendor-specific
             // so for that reason, we are no longer insisting on the use of standard ANSI sql
             // requires(dataAccess.validSQL(query), "invalid sql", sql);
