@@ -24,6 +24,7 @@ import java.util.*;
 
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.collections4.MapUtils;
+import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang3.ArrayUtils;
 import org.apache.commons.lang3.BooleanUtils;
 import org.apache.commons.lang3.StringUtils;
@@ -201,16 +202,20 @@ public class ExcelCommand extends BaseCommand {
     }
 
     public StepResult csv(String file, String worksheet, String range, String output) {
-        requiresReadableFile(file);
+        // requiresReadableFile(file);
+        requiresNotBlank(file, "Invalid file", file);
         requiresNotBlank(worksheet, "Invalid worksheet", worksheet);
         requiresNotBlank(range, "Invalid range", range);
         requiresNotBlank(output, "Invalid CSV output", output);
 
-        context.replaceTokens("[EXCEL(" + file + ") => " +
-                              " read(" + worksheet + "," + range + ")" +
-                              " csv" +
-                              " save(" + output + ")" +
-                              "]");
+        String[] ranges = StringUtils.split(range, context.getTextDelim());
+        FileUtils.deleteQuietly(new File(output));
+        Arrays.stream(ranges).forEach(r -> context.replaceTokens("[EXCEL(" + file + ") => " +
+                                                                 " read(" + worksheet + "," + r + ")" +
+                                                                 " csv" +
+                                                                 " save(" + output + ",true)" +
+                                                                 "]"));
+
         return StepResult.success("Excel content from " + worksheet + "," + range + " saved to " + output);
     }
 

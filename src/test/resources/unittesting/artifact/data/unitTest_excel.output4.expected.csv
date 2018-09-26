@@ -1,0 +1,20 @@
+Segment,Country,Product,Discount Band,Units Sold,Manufacturing Price,Sale Price,Gross Sales,Discounts,Sales,COGS,Profit,Date,Month Number,Month Name,Year
+Government,Canada,Carretera,None,1618.5,$   3.00,$   20.00,"$   32,370.00",$   - 0,"$   32,370.00","$   16,185.00","$   16,185.00",1/1/14,1,January,2014
+Government,Germany,Carretera,None,1321,$   3.00,$   20.00,"$   26,420.00",$   - 0,"$   26,420.00","$   13,210.00","$   13,210.00",1/1/14,1,January,2014
+Midmarket,France,Carretera,None,2178,$   3.00,$   15.00,"$   32,670.00",$   - 0,"$   32,670.00","$   21,780.00","$   10,890.00",6/1/14,6,June,2014
+Midmarket,Germany,Carretera,None,888,$   3.00,$   15.00,"$   13,320.00",$   - 0,"$   13,320.00","$   8,880.00","$   4,440.00",6/1/14,6,June,2014
+Midmarket,Mexico,Carretera,None,2470,$   3.00,$   15.00,"$   37,050.00",$   - 0,"$   37,050.00","$   24,700.00","$   12,350.00",6/1/14,6,June,2014
+Government,Germany,Carretera,None,1513,$   3.00,$   350.00,"$   529,550.00",$   - 0,"$   529,550.00","$   393,380.00","$   136,170.00",12/1/14,12,December,2014
+Midmarket,Germany,Montana,None,921,$   5.00,$   15.00,"$   13,815.00",$   - 0,"$   13,815.00","$   9,210.00","$   4,605.00",3/1/14,3,March,2014
+Channel Partners,Canada,Montana,None,2518,$   5.00,$   12.00,"$   30,216.00",$   - 0,"$   30,216.00","$   7,554.00","$   22,662.00",6/1/14,6,June,2014
+Government,France,Montana,None,1899,$   5.00,$   20.00,"$   37,980.00",$   - 0,"$   37,980.00","$   18,990.00","$   18,990.00",6/1/14,6,June,2014
+Government,Mexico,Carretera,Low,1397,$   3.00,$   350.00,"$   488,950.00","$   4,889.50","$   484,060.50","$   363,220.00"
+Government,France,Carretera,Low,2155,$   3.00,$   350.00,"$   754,250.00","$   7,542.50","$   746,707.50","$   560,300.00"
+Midmarket,Mexico,Montana,Low,2214,$   5.00,$   15.00,"$   33,210.00",$   332.10,"$   32,877.90","$   22,140.00"
+Small Business,United States of America,Montana,Low,2301,$   5.00,$   300.00,"$   690,300.00","$   6,903.00","$   683,397.00","$   575,250.00"
+Government,France,Montana,Low,1375.5,$   5.00,$   20.00,"$   27,510.00",$   275.10,"$   27,234.90","$   13,755.00"
+Government,Canada,Montana,Low,1830,$   5.00,$   7.00,"$   12,810.00",$   128.10,"$   12,681.90","$   9,150.00"
+Small Business,United States of America,Montana,Low,2498,$   5.00,$   300.00,"$   749,400.00","$   7,494.00","$   741,906.00","$   624,500.00"
+Enterprise,United States of America,Montana,Low,663,$   5.00,$   125.00,"$   82,875.00",$   828.75,"$   82,046.25","$   79,560.00"
+Midmarket,United States of America,Paseo,Low,1514,$   10.00,$   15.00,"$   22,710.00",$   227.10,"$   22,482.90","$   15,140.00"
+Government,United States of America,Paseo,Low,4492.5,$   10.00,$   7.00,"$   31,447.50",$   314.48,"$   31,133.02","$   22,462.50"

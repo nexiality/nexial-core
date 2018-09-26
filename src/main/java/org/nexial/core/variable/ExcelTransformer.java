@@ -108,6 +108,7 @@ public class ExcelTransformer<T extends ExcelDataType> extends Transformer {
         return new CsvTransformer<>().json(toCsv(data, BooleanUtils.toBoolean(firstRowAsHeader)));
     }
 
+    @NotNull
     public T save(T data, String file, String sheet, String start) throws IOException {
         requireAfterRead(data, "save()");
 
@@ -120,7 +121,7 @@ public class ExcelTransformer<T extends ExcelDataType> extends Transformer {
         ExcelAddress addr = toExcelAddress(start);
 
         if (FileUtil.isFileReadable(file, 5 * 1024)) {
-            ConsoleUtils.log("Overwritting '" + file + "' with current EXCEL content");
+            ConsoleUtils.log("Overwriting '" + file + "' with current EXCEL content");
         } else {
             FileUtils.forceMkdirParent(new File(file));
         }
@@ -224,7 +225,7 @@ public class ExcelTransformer<T extends ExcelDataType> extends Transformer {
 
     @NotNull
     protected CsvDataType toCsv(T data, boolean withHeader) throws TypeConversionException {
-        requireAfterRead(data, withHeader ? "csvWithHeader" : "csv()");
+        requireAfterRead(data, withHeader ? "csvWithHeader()" : "csv()");
 
         StringBuilder csvBuffer = new StringBuilder();
 

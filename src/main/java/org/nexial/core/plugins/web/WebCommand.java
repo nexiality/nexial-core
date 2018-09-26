@@ -962,7 +962,7 @@ public class WebCommand extends BaseCommand implements CanTakeScreenshot, CanLog
             driver = driver.switchTo().window(initialHandle).switchTo().defaultContent();
         }
 
-        return StepResult.success("opened URL " + hideAuthDetails(url));
+        return StepResult.success("opened URL " + hideAuthDetails(urlBasic));
     }
 
     public StepResult refresh() {

@@ -1,0 +1,20 @@
+Segment,Country,Product,Discount Band,Units Sold,Manufacturing Price,Sale Price,Gross Sales,Discounts,Sales,COGS,Profit,Date,Month Number,Month Name,Year
+Government,Canada,Carretera,None,1618.5,$   3.00,$   20.00,"$   32,370.00",$   - 0,"$   32,370.00","$   16,185.00","$   16,185.00",1/1/14,1,January,2014
+Government,Germany,Carretera,None,1321,$   3.00,$   20.00,"$   26,420.00",$   - 0,"$   26,420.00","$   13,210.00","$   13,210.00",1/1/14,1,January,2014
+Midmarket,France,Carretera,None,2178,$   3.00,$   15.00,"$   32,670.00",$   - 0,"$   32,670.00","$   21,780.00","$   10,890.00",6/1/14,6,June,2014
+Midmarket,Germany,Carretera,None,888,$   3.00,$   15.00,"$   13,320.00",$   - 0,"$   13,320.00","$   8,880.00","$   4,440.00",6/1/14,6,June,2014
+Midmarket,Mexico,Carretera,None,2470,$   3.00,$   15.00,"$   37,050.00",$   - 0,"$   37,050.00","$   24,700.00","$   12,350.00",6/1/14,6,June,2014
+Government,Germany,Carretera,None,1513,$   3.00,$   350.00,"$   529,550.00",$   - 0,"$   529,550.00","$   393,380.00","$   136,170.00",12/1/14,12,December,2014
+Midmarket,Germany,Montana,None,921,$   5.00,$   15.00,"$   13,815.00",$   - 0,"$   13,815.00","$   9,210.00","$   4,605.00",3/1/14,3,March,2014
+Channel Partners,Canada,Montana,None,2518,$   5.00,$   12.00,"$   30,216.00",$   - 0,"$   30,216.00","$   7,554.00","$   22,662.00",6/1/14,6,June,2014
+Government,France,Montana,None,1899,$   5.00,$   20.00,"$   37,980.00",$   - 0,"$   37,980.00","$   18,990.00","$   18,990.00",6/1/14,6,June,2014
+Channel Partners,Germany,Montana,None,1545,$   5.00,$   12.00,"$   18,540.00",$   - 0,"$   18,540.00","$   4,635.00","$   13,905.00",6/1/14,6,June,2014
+Midmarket,Mexico,Montana,None,2470,$   5.00,$   15.00,"$   37,050.00",$   - 0,"$   37,050.00","$   24,700.00","$   12,350.00",6/1/14,6,June,2014
+Enterprise,Canada,Montana,None,2665.5,$   5.00,$   125.00,"$   333,187.50",$   - 0,"$   333,187.50","$   319,860.00","$   13,327.50",7/1/14,7,July,2014
+Small Business,Mexico,Montana,None,958,$   5.00,$   300.00,"$   287,400.00",$   - 0,"$   287,400.00","$   239,500.00","$   47,900.00",8/1/14,8,August,2014
+Government,Germany,Montana,None,2146,$   5.00,$   7.00,"$   15,022.00",$   - 0,"$   15,022.00","$   10,730.00","$   4,292.00",9/1/14,9,September,2014
+Enterprise,Canada,Montana,None,345,$   5.00,$   125.00,"$   43,125.00",$   - 0,"$   43,125.00","$   41,400.00","$   1,725.00",10/1/13,10,October,2013
+Midmarket,United States of America,Montana,None,615,$   5.00,$   15.00,"$   9,225.00",$   - 0,"$   9,225.00","$   6,150.00","$   3,075.00",12/1/14,12,December,2014
+Government,Canada,Paseo,None,292,$   10.00,$   20.00,"$   5,840.00",$   - 0,"$   5,840.00","$   2,920.00","$   2,920.00",2/1/14,2,February,2014
+Midmarket,Mexico,Paseo,None,974,$   10.00,$   15.00,"$   14,610.00",$   - 0,"$   14,610.00","$   9,740.00","$   4,870.00",2/1/14,2,February,2014
+Channel Partners,Canada,Paseo,None,2518,$   10.00,$   12.00,"$   30,216.00",$   - 0,"$   30,216.00","$   7,554.00","$   22,662.00",6/1/14,6,June,2014
