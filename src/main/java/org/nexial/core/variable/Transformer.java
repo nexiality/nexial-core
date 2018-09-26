@@ -176,7 +176,7 @@ public abstract class Transformer<T extends ExpressionDataType> {
             throw new IllegalArgumentException("Unable to extract text: " + e.getMessage(), e);
         }
 
-        if (data == null || StringUtils.isBlank(data.getTextValue())) { return returnType; }
+        if (data == null || StringUtils.isEmpty(data.getTextValue())) { return returnType; }
 
         returnType.setValue(data.getTextValue());
         return returnType;

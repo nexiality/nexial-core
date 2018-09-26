@@ -234,6 +234,8 @@ public class XmlTransformer<T extends XmlDataType> extends Transformer {
         return data;
     }
 
+    public ExpressionDataType save(T data, String path, String append) { return super.save(data, path, append); }
+
     @Override
     Map<String, Integer> listSupportedFunctions() { return FUNCTION_TO_PARAM_LIST; }
 
