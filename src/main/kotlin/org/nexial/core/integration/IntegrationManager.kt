@@ -21,6 +21,7 @@ import com.google.gson.JsonParser
 import org.apache.commons.io.FileUtils
 import org.apache.commons.lang3.StringUtils
 import org.apache.commons.validator.routines.UrlValidator
+import org.json.JSONArray
 import org.json.JSONObject
 import org.nexial.core.ExecutionThread
 import org.nexial.core.NexialConst.GSON
@@ -129,7 +130,7 @@ class IntegrationManager {
                     scenario.projects.forEach { project -> servers.add(project.server!!) }
                 }
             }
-            val metadata = JSONObject()
+            val metadata = JSONArray()
             servers.forEach { server ->
                 if (!isValidServer(server)) {
                     throw IllegalArgumentException("Unsupported server $server specified.")
@@ -139,7 +140,8 @@ class IntegrationManager {
                         val httpClient = ConnectionFactory.getInstance(context).getAsyncWsClient(server)
                         val jiraHelper = JiraHelper(context, httpClient)
                         val integrationMeta = jiraHelper.process(server, executionOutput)
-                        metadata.put(server, GSON.toJson(integrationMeta))
+
+                        metadata.put(JSONObject().put(server, JSONObject(GSON.toJson(integrationMeta))))
                     }
                     "slack" -> {
                         val httpClient = ConnectionFactory.getInstance(context).getAsyncWsClient(server)
@@ -151,7 +153,7 @@ class IntegrationManager {
             updateMeta(metadata, context)
         }
 
-        private fun updateMeta(data: JSONObject, context: ExecutionContext) {
+        private fun updateMeta(data: JSONArray, context: ExecutionContext) {
             val jsonFile = Syspath().out("fullpath") + File.separator + "integrationMeta.json"
 
             FileUtils.write(File(jsonFile), GSON.toJson(JsonParser().parse(data.toString())),
