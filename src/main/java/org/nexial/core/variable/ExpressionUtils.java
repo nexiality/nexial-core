@@ -70,9 +70,9 @@ public class ExpressionUtils {
     }
 
     protected static String fixControlChars(String text) {
-        text = StringUtils.replace(text, "\\\n", "\n");
-        text = StringUtils.replace(text, "\\\r", "\r");
-        text = StringUtils.replace(text, "\\\t", "\t");
+        text = StringUtils.replace(text, "\\n", "\n");
+        text = StringUtils.replace(text, "\\r", "\r");
+        text = StringUtils.replace(text, "\\t", "\t");
         return text;
     }
 

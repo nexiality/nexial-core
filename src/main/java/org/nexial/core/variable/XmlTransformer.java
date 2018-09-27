@@ -120,8 +120,7 @@ public class XmlTransformer<T extends XmlDataType> extends Transformer {
         });
 
         try {
-            data.setTextValue(XmlUtils.toPrettyXml(data.getValue()));
-            data.init();
+            data.reset(data.getValue());
         } catch (IOException e) {
             throw new TypeConversionException(data.getName(), data.getValue().toString(), e.getMessage(), e);
         }
@@ -192,8 +191,7 @@ public class XmlTransformer<T extends XmlDataType> extends Transformer {
         matches.forEach(match -> match = updateContent(match, content));
 
         try {
-            data.setTextValue(XmlUtils.toPrettyXml(data.getValue()));
-            data.init();
+            data.reset(data.getValue());
         } catch (IOException e) {
             throw new TypeConversionException(data.getName(), data.getValue().toString(), e.getMessage(), e);
         }
@@ -210,8 +208,7 @@ public class XmlTransformer<T extends XmlDataType> extends Transformer {
         matches.forEach(match -> { if (match instanceof Content) { ((Content) match).detach(); }});
 
         try {
-            data.setTextValue(XmlUtils.toPrettyXml(data.getValue()));
-            data.init();
+            data.reset(data.getValue());
         } catch (IOException e) {
             throw new TypeConversionException(data.getName(), data.getValue().toString(), e.getMessage(), e);
         }

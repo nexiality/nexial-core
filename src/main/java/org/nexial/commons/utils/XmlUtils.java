@@ -43,7 +43,9 @@ import org.json.XML;
  */
 public final class XmlUtils {
     private static final SAXBuilder SAX_BUILDER = new SAXBuilder();
-    private static final XMLOutputter PRETTY_XML_OUTPUTTER = new XMLOutputter(Format.getPrettyFormat());
+    private static final XMLOutputter PRETTY_XML_OUTPUTTER = new XMLOutputter(Format.getPrettyFormat()
+                                                                                    .setLineSeparator("\n")
+                                                                                    .setIndent("    "));
 
     private XmlUtils() { }
 
