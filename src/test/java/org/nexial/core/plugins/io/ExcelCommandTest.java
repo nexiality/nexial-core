@@ -17,18 +17,38 @@
 
 package org.nexial.core.plugins.io;
 
+import java.io.File;
 import java.util.List;
 
 import org.apache.commons.collections4.CollectionUtils;
+import org.apache.commons.io.FileUtils;
+import org.apache.commons.lang3.StringUtils;
 import org.junit.After;
 import org.junit.Assert;
 import org.junit.Test;
-
+import org.nexial.commons.utils.FileUtil;
+import org.nexial.commons.utils.ResourceUtils;
 import org.nexial.core.model.ExecutionContext;
 import org.nexial.core.model.MockExecutionContext;
+import org.nexial.core.model.StepResult;
+import org.nexial.core.model.TestStep;
+
+import static org.nexial.core.NexialConst.DEF_FILE_ENCODING;
 
 public class ExcelCommandTest {
-    private ExecutionContext context = new MockExecutionContext();
+    private static final String CLASSNAME = ExcelCommandTest.class.getSimpleName();
+    private ExecutionContext context = new MockExecutionContext(true) {
+        @Override
+        public TestStep getCurrentTestStep() {
+            return new TestStep() {
+                @Override
+                public String generateFilename(String ext) {
+                    return CLASSNAME + StringUtils.prependIfMissing(StringUtils.trim(ext), ".");
+                }
+            };
+        }
+    };
+    private final String resourceBasePath = "/" + StringUtils.replace(this.getClass().getPackage().getName(), ".", "/");
 
     @After
     public void tearDown() {
@@ -71,5 +91,80 @@ public class ExcelCommandTest {
         Assert.assertArrayEquals(new String[]{"", "", "", "", "5"}, twoDlist.get(1).toArray());
         Assert.assertArrayEquals(new String[]{"", "", "asdf", "", "$$"}, twoDlist.get(2).toArray());
         Assert.assertArrayEquals(new String[]{".", "l", ";", "'", "", ""}, twoDlist.get(3).toArray());
+    }
+
+    @Test
+    public void columnarCsv() throws Exception {
+        ExcelCommand command = new ExcelCommand();
+        command.init(context);
+
+        String basename = resourceBasePath + "/" + this.getClass().getSimpleName();
+        String excel = ResourceUtils.getResourceFilePath(basename + "2.xlsx");
+        Assert.assertTrue(FileUtil.isFileReadable(excel));
+        String target = new File(excel).getParent() + "/" + this.getClass().getSimpleName() + "2.csv";
+
+        // test 1: 2 areas, same height, no gaps, no quotes
+        StepResult result = command.columnarCsv(excel, "Sheet1", "A1:C5,E1:E5", target);
+        System.out.println("result = " + result);
+        Assert.assertTrue(result.isSuccess());
+
+        File output = new File(target);
+        Assert.assertTrue(FileUtil.isFileReadable(output, 10));
+        Assert.assertEquals("A1,B1,C1,E1\r\n" +
+                            "A2,B2,C2,E2\r\n" +
+                            "A3,B3,C3,E3\r\n" +
+                            "A4,B4,C4,E4\r\n" +
+                            "A5,B5,C5,E5", FileUtils.readFileToString(output, DEF_FILE_ENCODING));
+
+        // test 2: 2 areas, same height, some gaps, no quotes
+        result = command.columnarCsv(excel, "Sheet1", "A7:C11,E7:E11", target);
+        System.out.println("result = " + result);
+        Assert.assertTrue(result.isSuccess());
+
+        output = new File(target);
+        Assert.assertTrue(FileUtil.isFileReadable(output, 10));
+        Assert.assertEquals("A1,B1,C1,E1\r\n" +
+                            "A2,B2,C2,\r\n" +
+                            "A3,,C3,\r\n" +
+                            "A4,B4,,E4\r\n" +
+                            "A5,B5,C5,E5", FileUtils.readFileToString(output, DEF_FILE_ENCODING));
+
+        // test 3: 2 areas, same height, some gaps, some quotes
+        result = command.columnarCsv(excel, "Sheet1", "A13:A17,C13:E17", target);
+        System.out.println("result = " + result);
+        Assert.assertTrue(result.isSuccess());
+
+        output = new File(target);
+        Assert.assertTrue(FileUtil.isFileReadable(output, 10));
+        Assert.assertEquals("A1,C1,D1,E1\r\n" +
+                            "A2,\"\"C2\"\",D2,\r\n" +
+                            "A3,C3,D3,\r\n" +
+                            "A4,,,E4\r\n" +
+                            "A5,C5,,E5", FileUtils.readFileToString(output, DEF_FILE_ENCODING));
+
+        // test 4: 2 areas, uneven height, some gaps, some quotes
+        result = command.columnarCsv(excel, "Sheet1", "A19:C21,D19:E23", target);
+        System.out.println("result = " + result);
+        Assert.assertTrue(result.isSuccess());
+
+        output = new File(target);
+        Assert.assertTrue(FileUtil.isFileReadable(output, 10));
+        Assert.assertEquals("A1,B1,C1,D1,E1\r\n" +
+                            "A2,B2,\"\"C2\"\",D2,\r\n" +
+                            "A3,,C3,D3,\r\n" +
+                            ",,,,E4\r\n" +
+                            ",,,,E5", FileUtils.readFileToString(output, DEF_FILE_ENCODING));
+
+        // test 5: 3 areas, uneven height, overlaps some gaps, some quotes, commas
+        result = command.columnarCsv(excel, "Sheet1", "A31:B34,B32:E33,A33:D35", target);
+        System.out.println("result = " + result);
+        Assert.assertTrue(result.isSuccess());
+
+        output = new File(target);
+        Assert.assertTrue(FileUtil.isFileReadable(output, 10));
+        Assert.assertEquals(",B1,B2,\"\"C2\"\",D2,E2  32,A3,B3,C3,D3\r\n" +
+                            "A2,B2,B3,C3,D3,E3,\"\"A4,34\"\",B4,C4,D4\r\n" +
+                            "A3,B3,,,,,A5,B5,C5,\r\n" +
+                            "\"\"A4,34\"\",B4", FileUtils.readFileToString(output, DEF_FILE_ENCODING));
     }
 }

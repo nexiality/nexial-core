@@ -48,6 +48,7 @@ import org.apache.poi.xssf.usermodel.*;
 import org.nexial.commons.proc.ProcessInvoker;
 import org.nexial.commons.proc.ProcessOutcome;
 import org.nexial.commons.utils.FileUtil;
+import org.nexial.commons.utils.TextUtils;
 import org.nexial.core.ExecutionThread;
 import org.nexial.core.excel.ExcelConfig.*;
 import org.nexial.core.excel.ext.CellTextReader;
@@ -564,6 +565,35 @@ public class Excel {
         }
 
         public void save() throws IOException { Excel.save(getFile(), sheet.getWorkbook()); }
+
+        @NotNull
+        public List<List<String>> readRange(ExcelAddress range) {
+            List<List<String>> values = new ArrayList<>();
+            if (range == null) { return values; }
+
+            List<List<XSSFCell>> wholeArea = cells(range, false);
+            if (CollectionUtils.isEmpty(wholeArea)) { return values; }
+
+            wholeArea.forEach(row -> {
+                List<String> rowValues = new ArrayList<>();
+                row.forEach(cell -> rowValues.add(prepCellData(Excel.getCellValue(cell))));
+                values.add(rowValues);
+            });
+
+            return values;
+        }
+
+        protected String prepCellData(String cellValue) {
+            if (StringUtils.isEmpty(cellValue)) { return cellValue; }
+
+            cellValue = StringUtils.replace(cellValue, "\"", "\"\"");
+
+            if (StringUtils.containsAny(cellValue, ",", "\r", "\n")) {
+                return TextUtils.wrapIfMissing(cellValue, "\"", "\"");
+            }
+
+            return cellValue;
+        }
 
         /** set a worksheet as readonly -- mainly so that user won't accidentally modify test result */
         protected void setAsReadOnly() {

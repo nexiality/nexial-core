@@ -21,8 +21,6 @@ import org.junit.Test;
 import org.nexial.core.ExcelBasedTests;
 import org.nexial.core.model.ExecutionSummary;
 
-import static org.nexial.core.NexialConst.Data.OPT_OPEN_RESULT;
-
 public class HeadlessExcelTests extends ExcelBasedTests {
     @Test
     public void alltests() throws Exception {
@@ -34,9 +32,4 @@ public class HeadlessExcelTests extends ExcelBasedTests {
         assertPassFail(executionSummary, "excel", TestOutcomeStats.allPassed());
         Assert.assertEquals(0, executionSummary.getFailCount());
     }
-
-    static {
-        System.setProperty(OPT_OPEN_RESULT, "off");
-    }
-
 }

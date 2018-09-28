@@ -226,21 +226,15 @@ public class ExcelTransformer<T extends ExcelDataType> extends Transformer {
     @NotNull
     protected CsvDataType toCsv(T data, boolean withHeader) throws TypeConversionException {
         requireAfterRead(data, withHeader ? "csvWithHeader()" : "csv()");
-
-        StringBuilder csvBuffer = new StringBuilder();
+        List<List<String>> capturedValues = data.getCapturedValues();
 
         ExecutionContext context = ExecutionThread.get();
         String delim = context == null ? "," : context.getTextDelim();
         String recordDelim = "\r\n";
 
-        List<List<String>> capturedValues = data.getCapturedValues();
-        capturedValues.forEach(row -> {
-            StringBuilder rowBuffer = new StringBuilder();
-            row.forEach(cell -> rowBuffer.append(cell).append(delim));
-            csvBuffer.append(StringUtils.removeEnd(rowBuffer.toString(), delim)).append(recordDelim);
-        });
+        String csvBuffer = TextUtils.toCsvContent(capturedValues, delim, recordDelim);
 
-        CsvDataType csv = new CsvDataType(StringUtils.removeEnd(csvBuffer.toString(), recordDelim));
+        CsvDataType csv = new CsvDataType(StringUtils.removeEnd(csvBuffer, recordDelim));
         csv.setRecordDelim(recordDelim);
         csv.setDelim(delim);
         csv.setHeader(withHeader);

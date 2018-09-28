@@ -1002,6 +1002,17 @@ public final class TextUtils {
         return buffer.toString();
     }
 
+    @NotNull
+    public static String toCsvContent(List<List<String>> values, String delim, String recordDelim) {
+        StringBuilder csvBuffer = new StringBuilder();
+        values.forEach(row -> {
+            StringBuilder rowBuffer = new StringBuilder();
+            row.forEach(cell -> rowBuffer.append(cell).append(delim));
+            csvBuffer.append(StringUtils.removeEnd(rowBuffer.toString(), delim)).append(recordDelim);
+        });
+        return csvBuffer.toString();
+    }
+
     private static Map<String, String> initDefaultEscapeHtmlMapping() {
         Map<String, String> searchReplace = new HashMap<>();
         searchReplace.put("<", "&lt;");

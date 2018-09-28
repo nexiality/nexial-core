@@ -24,7 +24,6 @@ import java.util.List;
 
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
-import org.apache.poi.xssf.usermodel.XSSFCell;
 import org.nexial.commons.utils.FileUtil;
 import org.nexial.commons.utils.TextUtils;
 import org.nexial.core.excel.Excel;
@@ -127,32 +126,8 @@ public class ExcelDataType extends ExpressionDataType<Excel> {
 
     protected void read(Worksheet worksheet, ExcelAddress range) {
         worksheet.getSheet().getWorkbook().setMissingCellPolicy(CREATE_NULL_AS_BLANK);
-
-        List<List<String>> values = new ArrayList<>();
-        List<List<XSSFCell>> wholeArea = worksheet.cells(range, false);
-        if (CollectionUtils.isNotEmpty(wholeArea)) {
-            wholeArea.forEach(row -> {
-                List<String> rowValues = new ArrayList<>();
-                row.forEach(cell -> rowValues.add(prepCellData(Excel.getCellValue(cell))));
-                values.add(rowValues);
-            });
-        }
-
         currentRange = range;
         currentSheet = worksheet;
-        setCapturedValues(values);
+        setCapturedValues(worksheet.readRange(range));
     }
-
-    protected String prepCellData(String cellValue) {
-        if (StringUtils.isEmpty(cellValue)) { return cellValue; }
-
-        cellValue = StringUtils.replace(cellValue, "\"", "\"\"");
-
-        if (StringUtils.containsAny(cellValue, ",", "\r", "\n")) {
-            return TextUtils.wrapIfMissing(cellValue, "\"", "\"");
-        }
-
-        return cellValue;
-    }
-
 }

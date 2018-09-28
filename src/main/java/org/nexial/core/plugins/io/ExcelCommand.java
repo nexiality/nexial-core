@@ -19,8 +19,10 @@ package org.nexial.core.plugins.io;
 
 import java.io.File;
 import java.io.IOException;
+import java.io.StringReader;
 import java.lang.reflect.Array;
 import java.util.*;
+import java.util.stream.Collectors;
 
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.collections4.MapUtils;
@@ -40,9 +42,14 @@ import org.nexial.core.excel.ExcelAddress;
 import org.nexial.core.model.StepResult;
 import org.nexial.core.plugins.base.BaseCommand;
 
+import com.univocity.parsers.common.record.Record;
+import com.univocity.parsers.csv.CsvParser;
+import com.univocity.parsers.csv.CsvParserSettings;
+
 import static org.apache.poi.poifs.filesystem.FileMagic.OLE2;
 import static org.apache.poi.poifs.filesystem.FileMagic.OOXML;
 import static org.apache.poi.ss.usermodel.Row.MissingCellPolicy.CREATE_NULL_AS_BLANK;
+import static org.nexial.core.NexialConst.DEF_FILE_ENCODING;
 import static org.nexial.core.excel.Excel.clearExcelPassword;
 import static org.nexial.core.excel.Excel.deriveFileFormat;
 import static org.nexial.core.utils.CheckUtils.*;
@@ -217,6 +224,64 @@ public class ExcelCommand extends BaseCommand {
                                                                  "]"));
 
         return StepResult.success("Excel content from " + worksheet + "," + range + " saved to " + output);
+    }
+
+    public StepResult columnarCsv(String file, String worksheet, String ranges, String output) throws IOException {
+        requiresReadableFile(file);
+        requiresNotBlank(worksheet, "Invalid worksheet", worksheet);
+        requiresNotBlank(ranges, "Invalid range", ranges);
+        requiresNotBlank(output, "Invalid CSV output", output);
+
+        File outputFile = new File(output);
+        FileUtils.deleteQuietly(outputFile);
+
+        Excel excel = new Excel(new File(file), false, false);
+        Worksheet ws = excel.requireWorksheet(worksheet, false);
+
+        String delim = context.getTextDelim();
+
+        List<List<String>> data = new ArrayList<>();
+        final Integer[] maxColumns = {0};
+
+        String[] cellRanges = StringUtils.split(ranges, delim);
+        Arrays.stream(cellRanges).forEach(r -> {
+            List<List<String>> rows = ws.readRange(new ExcelAddress(r));
+            if (CollectionUtils.isNotEmpty(rows)) {
+                // ensure proper allocation
+                int columnCount = rows.get(0).size();
+                while (data.size() < rows.size()) { data.add(new ArrayList<>(columnCount)); }
+
+                for (int i = 0; i < rows.size(); i++) {
+                    List<String> newRow = data.get(i);
+                    while (newRow.size() < maxColumns[0]) { newRow.add(""); }
+                    // add all cells to the end of `newRow`
+                    newRow.addAll(rows.get(i));
+                }
+
+                maxColumns[0] += columnCount;
+            }
+        });
+
+        String recordDelim = "\r\n";
+        String csvContent = StringUtils.removeEnd(TextUtils.toCsvContent(data, delim, recordDelim), recordDelim);
+
+        CsvParserSettings settings = CsvCommand.newCsvParserSettings(delim, recordDelim, false, 0);
+        settings.setQuoteDetectionEnabled(true);
+        settings.getFormat().setQuote('"');
+        settings.setKeepQuotes(true);
+
+        CsvParser parser = new CsvParser(settings);
+        List<Record> value = parser.parseAllRecords(new StringReader(csvContent));
+
+        csvContent = StringUtils.removeEnd(value.stream()
+                                                .map(row -> TextUtils.toCsvLine(row.getValues(), delim, recordDelim))
+                                                .collect(Collectors.joining()),
+                                           recordDelim);
+
+        outputFile.getParentFile().mkdirs();
+        FileUtils.writeStringToFile(outputFile, csvContent, DEF_FILE_ENCODING);
+
+        return StepResult.success("Excel content from " + worksheet + "," + ranges + " saved (columnar) to " + output);
     }
 
     public StepResult json(String file, String worksheet, String range, String header, String output) {
