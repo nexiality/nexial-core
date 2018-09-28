@@ -20,20 +20,20 @@ package org.nexial.core.integration.jira
 import org.apache.commons.collections4.CollectionUtils
 import org.apache.commons.lang3.StringUtils
 import org.apache.commons.validator.routines.UrlValidator
-import org.json.JSONArray
 import org.json.JSONObject
 import org.nexial.commons.utils.RegexUtils
+import org.nexial.core.NexialConst
 import org.nexial.core.NexialConst.DATE_FORMAT_NOW
 import org.nexial.core.integration.*
 import org.nexial.core.integration.connection.ConnectionFactory
 import org.nexial.core.model.ExecutionContext
 import org.nexial.core.plugins.ws.AsyncWebServiceClient
 import org.nexial.core.utils.ConsoleUtils
-import org.nexial.core.utils.JsonUtils
 import org.nexial.core.variable.Sysdate
 import java.io.File
 import java.io.FileInputStream
 import java.util.*
+import kotlin.collections.ArrayList
 
 
 class JiraHelper(val context: ExecutionContext, private val httpClient: AsyncWebServiceClient) : IntegrationHelper() {
@@ -128,7 +128,7 @@ class JiraHelper(val context: ExecutionContext, private val httpClient: AsyncWeb
 
             if (StringUtils.isNotBlank(defectKey)) {
                 // add defect labels
-                addLabels(defectKey, projectInfo.server!!, JSONArray("[\"$DEFECT_LABEL\"]"))
+                addLabels(defectKey, projectInfo.server!!, arrayListOf(DEFECT_LABEL))
 
                 // add links to features and test ref
                 val inwardLinks = mutableSetOf<String>()
@@ -156,10 +156,10 @@ class JiraHelper(val context: ExecutionContext, private val httpClient: AsyncWeb
 
     }
 
-    private fun addLabels(feature: String, profile: String, labels: JSONArray) {
+    private fun addLabels(feature: String, profile: String, labels: MutableList<String>) {
         val putLabelsUrl = jiraPutLabelsUrl(feature, profile)
         context.setData(JIRA_LABELS, labels)
-        integrationMeta.labels.addAll(JsonUtils.toList(labels) as MutableList<String>)
+        integrationMeta.labels.addAll(labels)
         val labelsBody = StringUtils.replace(context.replaceTokens(TemplateEngine.getTemplate(profile, LABEL_ENDPOINT)),
                 lineSeparator, "")
         addLabels(putLabelsUrl!!, labelsBody)
@@ -174,7 +174,6 @@ class JiraHelper(val context: ExecutionContext, private val httpClient: AsyncWeb
         issueLinkBody = context.replaceTokens(issueLinkBody)
         issueLinkBody = RegexUtils.replace(issueLinkBody, lineSeparator, "")
         addLink(linkUrl, issueLinkBody)
-
     }
 
     override fun addLink(url: String, linkBody: String) {
@@ -232,15 +231,16 @@ class JiraHelper(val context: ExecutionContext, private val httpClient: AsyncWeb
         return context.getStringData("$INTEGRATION.$profile.putLabelsUrl")
     }
 
-    private fun appendToCurrentLabels(feature: String, profile: String, label: String): JSONArray {
+    private fun appendToCurrentLabels(feature: String, profile: String, label: String): MutableList<String> {
         val getLabelsUrl = jiraGetLabelsUrl(feature, profile)
         val wsClient = ConnectionFactory.getWebServiceClient(profile)
         val response = wsClient.get(getLabelsUrl, "")
-        var currentLabels = JSONArray()
+        var currentLabels = mutableListOf<String>()
         if (response != null && response.returnCode == 200) {
-            currentLabels = JSONObject(response.body).getJSONObject("fields").getJSONArray("labels")
+            val labels = JSONObject(response.body).getJSONObject("fields").getJSONArray("labels")
+            currentLabels = NexialConst.GSON.fromJson(labels.toString(), ArrayList<String>().javaClass)
             if (!currentLabels.contains(label)) {
-                currentLabels.put(label)
+                currentLabels.add(label)
             }
         }
         return currentLabels
