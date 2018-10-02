@@ -185,11 +185,14 @@ public class ExecutionInputPrepTest {
             dataCells.forEach(row -> {
                 // skip over those defined via -D
                 String name = row.get(0).getStringCellValue();
-                String value = row.get(1).getStringCellValue();
-                System.out.print("asserting that data name " + name + " has value " + value + "... ");
-                String expected = MapUtils.getString(expectedData, name, System.getProperty(name));
-                Assert.assertEquals(expected, value);
-                System.out.println("PASSED");
+                if (!StringUtils.startsWith(name, "java.")) {
+                    String value = row.get(1).getStringCellValue();
+                    System.out.print("asserting that data name " + name + " has value " + value + "... ");
+                    String expected = MapUtils.getString(expectedData, name, System.getProperty(name));
+                    System.out.println("expected=" + expected + ", actual=" + value);
+                    Assert.assertEquals(expected, value);
+                    System.out.println("PASSED");
+                }
             });
 
             System.out.println();

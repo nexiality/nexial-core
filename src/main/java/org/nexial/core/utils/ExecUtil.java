@@ -111,10 +111,10 @@ public final class ExecUtil {
 
         List<String> inputArgs = ManagementFactory.getRuntimeMXBean().getInputArguments();
 
-        String argsList = inputArgs.stream().filter(arg -> {
-            if (!arg.startsWith("-D")) { return false; }
-            return IGNORED_CLI_OPT.stream().noneMatch(ignored -> StringUtils.startsWith(arg, ignored));
-        }).collect(Collectors.joining(DEF_TEXT_DELIM));
+        String argsList = inputArgs.stream().filter(
+            arg -> arg.startsWith("-D") &&
+                   IGNORED_CLI_OPT.stream().noneMatch(
+                       ignored -> StringUtils.startsWith(arg, ignored))).collect(Collectors.joining(DEF_TEXT_DELIM));
         System.setProperty(SCRIPT_REF_PREFIX + JAVA_OPT, argsList);
     }
 
