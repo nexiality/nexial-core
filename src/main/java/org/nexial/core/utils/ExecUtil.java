@@ -107,8 +107,10 @@ public final class ExecUtil {
         System.setProperty(SCRIPT_REF_PREFIX + RUNTIME_ARGS, String.join(" ", args));
 
         List<String> inputArgs = ManagementFactory.getRuntimeMXBean().getInputArguments();
-        String argsList = inputArgs.stream().filter(arg -> arg.startsWith("-D") && !arg.startsWith("-Dwebdriver.")
-                                                           && !arg.contains(DEF_FILE_ENCODING))
+        String argsList = inputArgs.stream().filter(arg -> arg.startsWith("-D") &&
+                                                           !arg.startsWith("-Dwebdriver.") &&
+                                                           !arg.startsWith("-Djava.") &&
+                                                           !arg.contains(DEF_FILE_ENCODING))
                                    .collect(Collectors.joining(DEF_TEXT_DELIM));
         System.setProperty(SCRIPT_REF_PREFIX + JAVA_OPT, argsList);
     }

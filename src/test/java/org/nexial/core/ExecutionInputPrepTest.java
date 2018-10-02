@@ -184,7 +184,9 @@ public class ExecutionInputPrepTest {
             dataCells.forEach(row -> {
                 // skip over those defined via -D
                 String name = row.get(0).getStringCellValue();
-                if (!StringUtils.startsWith(name, "idea.test") && !StringUtils.startsWith(name, "nexial.home")) {
+                if (!StringUtils.startsWith(name, "idea.test") && 
+                    !StringUtils.startsWith(name, "nexial.home") &&
+                    !StringUtils.startsWith(name, "java.")) {
                     String value = row.get(1).getStringCellValue();
                     System.out.print("asserting that data name " + name + " has value " + value + "... ");
                     Assert.assertEquals(expectedData.get(name), value);
