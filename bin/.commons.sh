@@ -4,7 +4,6 @@
 # environment variable guide
 # --------------------------------------------------------------------------------
 # JAVA_HOME           - home directory of a valid JDK installation (1.6 or above)
-# NEXIAL_OUT          - the output directory
 # --------------------------------------------------------------------------------
 
 function resolveOSXAppPath() {
@@ -31,6 +30,7 @@ function resolveOSXAppPath() {
     echo "${path}"
 }
 
+
 function resolveLinuxAppPath() {
     location=`which $1`
     if [[ "$?" = "0" ]]; then
@@ -40,68 +40,37 @@ function resolveLinuxAppPath() {
     fi
 }
 
-# utilities to be invoked by other frontend scripts
-export PROJECT_BASE=~/projects
-export NEXIAL_HOME=$(cd `dirname $0`/..; pwd -P)
-export NEXIAL_LIB=${NEXIAL_HOME}/lib
-export NEXIAL_CLASSES=${NEXIAL_HOME}/classes
 
-DEFAULT_CHROME_BIN=
-if [[ "`uname -s`" = "Darwin" ]]; then
-    export DEFAULT_CHROME_BIN="`resolveOSXAppPath "Google Chrome"`"
-else
-    export DEFAULT_CHROME_BIN="`resolveLinuxAppPath google-chrome`"
-fi
-
-if [[ -z "${DEFAULT_CHROME_BIN//}" ]]; then
-    echo "Unable to resolve location of Google Chrome.  If you want to use Chrome, you will need to set its location via the CHROME_BIN environment variable"
-    DEFAULT_CHROME_BIN=
-fi
-
-if [[ "`uname -s`" = "Darwin" ]]; then
-    export DEFAULT_FIREFOX_BIN="`resolveOSXAppPath firefox-bin`"
-else
-    export DEFAULT_FIREFOX_BIN="`resolveLinuxAppPath firefox-bin`"
-fi
-
-if [[ -z "${DEFAULT_FIREFOX_BIN//}" ]]; then
-    echo "Unable to resolve location of Firefox.  If you want to use Firefox, you will need to set its location via the FIREFOX_BIN environment variable"
-    DEFAULT_FIREFOX_BIN=
-fi
-
-# --------------------------------------------------------------------------------
-# setting Java runtime options and classpath
-# --------------------------------------------------------------------------------
-JAVA_OPT="${JAVA_OPT} -ea"
-JAVA_OPT="${JAVA_OPT} -Dfile.encoding=UTF-8"
-JAVA_OPT="${JAVA_OPT} -Dnexial.home=${NEXIAL_HOME}"
-JAVA_OPT="${JAVA_OPT} -Dwebdriver.winium.verbose=true"
-JAVA_OPT="${JAVA_OPT} -Dwebdriver.winium.silent=false"
-
-# --------------------------------------------------------------------------------
-# Make sure prerequisite environment variables are set
-# --------------------------------------------------------------------------------
 function checkJava() {
     if [ "${JAVA_HOME}" = "" -a "${JRE_HOME}" = "" ]; then
-        echo ERROR!!!
-        echo Neither the JAVA_HOME nor the JRE_HOME environment variable is defined
-        echo At least one of these environment variables is needed to run this program
         echo
-        exit -1
-    fi
-
-    if [ -x ${JAVA_HOME}/bin/java ]; then
-        JAVA=${JAVA_HOME}/bin/java
+        echo =WARNING=========================================================================
+        echo Neither the JAVA_HOME nor the JRE_HOME environment variable is defined.
+        echo Nexial will use the JVM based on current PATH. Nexial requires Java 1.8
+        echo or above to run, so this might not work...
+        echo ================================================================================
+        JAVA=`which java`
+        echo resolving Java as ${JAVA}
+        echo
     else
-        if [ -x ${JRE_HOME}/bin/java ]; then
-            JAVA=${JRE_HOME}/bin/java
+        if [ -x ${JAVA_HOME}/bin/java ]; then
+            JAVA=${JAVA_HOME}/bin/java
         else
-            echo ERROR!!!
-            echo The JAVA_HOME environment variable is not defined correctly
-            echo This environment variable is needed to run this program
-            echo NB: JAVA_HOME should point to a JDK not a JRE
-            echo
-            exit -1
+            if [ -x ${JRE_HOME}/bin/java ]; then
+                JAVA=${JRE_HOME}/bin/java
+            else
+                echo =WARNING=========================================================================
+                echo JAVA_HOME nor JRE_HOME environment variable is not defined correctly.
+                echo One of these environment variables is needed to run this program.
+                echo NB: JAVA_HOME should point to a JDK not a JRE
+                echo
+                echo Nexial will use the JVM based on current PATH. Nexial requires Java 1.8
+                echo or above to run, so this might not work...
+                echo ================================================================================
+                JAVA=`which java`
+                echo resolving Java as ${JAVA}
+                echo
+            fi
         fi
     fi
 }
@@ -141,4 +110,50 @@ function resolveEnv() {
     if [ "${PROJECT_HOME}" != "" ]; then
         echo "  PROJECT_HOME:   ${PROJECT_HOME}"
     fi
+    echo
 }
+
+
+# utilities to be invoked by other frontend scripts
+export PROJECT_BASE=~/projects
+export NEXIAL_HOME=$(cd `dirname $0`/..; pwd -P)
+export NEXIAL_LIB=${NEXIAL_HOME}/lib
+export NEXIAL_CLASSES=${NEXIAL_HOME}/classes
+
+DEFAULT_CHROME_BIN=
+if [[ "`uname -s`" = "Darwin" ]]; then
+    export DEFAULT_CHROME_BIN="`resolveOSXAppPath "Google Chrome"`"
+else
+    export DEFAULT_CHROME_BIN="`resolveLinuxAppPath google-chrome`"
+fi
+
+if [[ -z "${DEFAULT_CHROME_BIN//}" ]]; then
+    echo "WARNING: Unable to resolve location of Google Chrome. If you want to use Chrome,"
+    echo "         you will need to set its location via the CHROME_BIN environment variable"
+    echo
+    DEFAULT_CHROME_BIN=
+fi
+
+if [[ "`uname -s`" = "Darwin" ]]; then
+    export DEFAULT_FIREFOX_BIN="`resolveOSXAppPath firefox-bin`"
+else
+    export DEFAULT_FIREFOX_BIN="`resolveLinuxAppPath firefox-bin`"
+fi
+
+if [[ -z "${DEFAULT_FIREFOX_BIN//}" ]]; then
+    echo "WARNING: Unable to resolve location of Firefox. If you want to use Firefox, you "
+    echo "         will need to set its location via the FIREFOX_BIN environment variable"
+    echo
+    DEFAULT_FIREFOX_BIN=
+fi
+
+
+# --------------------------------------------------------------------------------
+# setting Java runtime options and classpath
+# --------------------------------------------------------------------------------
+JAVA_OPT="${JAVA_OPT} -ea"
+JAVA_OPT="${JAVA_OPT} -Dfile.encoding=UTF-8"
+JAVA_OPT="${JAVA_OPT} -Dnexial.home=${NEXIAL_HOME}"
+JAVA_OPT="${JAVA_OPT} -Dwebdriver.winium.verbose=true"
+JAVA_OPT="${JAVA_OPT} -Dwebdriver.winium.silent=false"
+# JAVA_OPT="${JAVA_OPT} -Dwebdriver.winium.logpath=$TMPDIR/winium-service.log"

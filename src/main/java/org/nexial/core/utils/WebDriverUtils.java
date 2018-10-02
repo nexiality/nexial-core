@@ -53,8 +53,7 @@ public final class WebDriverUtils {
             if (StringUtils.isBlank(nextKeyStroke)) {
                 // 2. if none (or no more) {..} found, gather remaining string and create sendKey() action
                 actions = addReleaseControlKeys(actions, null, controlKeys);
-                String[] keys = TextUtils.toOneCharArray(keystrokes);
-                actions = actions.sendKeys(keys);
+                actions = actions.sendKeys(TextUtils.toOneCharArray(keystrokes));
                 break;
             }
 
@@ -64,9 +63,8 @@ public final class WebDriverUtils {
             String text = StringUtils.substringBefore(keystrokes, keystrokeId);
             if (StringUtils.isNotEmpty(text)) {
                 actions = addReleaseControlKeys(actions, null, controlKeys);
-                String[] keys = TextUtils.toOneCharArray(text);
                 // actions = elem == null ? actions.sendKeys(keys) : actions.sendKeys(elem, keys);
-                actions = actions.sendKeys(keys);
+                actions = actions.sendKeys(TextUtils.toOneCharArray(text));
             }
 
             // 4. keystrokes now contain the rest of the key strokes after the found {..}

@@ -54,12 +54,16 @@ public enum NexialFilterComparator {
     IsUndefined(" is undefined", 0, null, 2.6),
     Is(" is ", -1, String.class, 2.7),
 
-    Between(" between ", 2, Number.class, 3),
-    Contain(" contain ", -1, String.class, 3.1),
-    StartsWith(" start with ", 1, String.class, 3.2),
-    EndsWith(" end with ", 1, String.class, 3.3),
-    Match(" match ", 1, String.class, 3.4),
-    HasLengthOf(" has length of ", 1, Number.class, 3.5),
+    NotContain(" not contain ", -1, String.class, 3.1),
+    NotStartsWith(" not start with ", 1, String.class, 3.2),
+    NotEndsWith(" not end with ", 1, String.class, 3.3),
+
+    Between(" between ", 2, Number.class, 3.4),
+    Contain(" contain ", -1, String.class, 3.5),
+    StartsWith(" start with ", 1, String.class, 3.6),
+    EndsWith(" end with ", 1, String.class, 3.7),
+    Match(" match ", 1, String.class, 3.8),
+    HasLengthOf(" has length of ", 1, Number.class, 3.9),
 
     Any(null, 0, null, 10);
 

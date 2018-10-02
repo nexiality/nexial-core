@@ -216,7 +216,9 @@ public final class ExecutionThread extends Thread {
                                 // lightweight: resolve now to save time later
                                 context.setData(WPS_EXE_LOCATION, Excel.resolveWpsExecutablePath());
                             }
-                            System.setProperty(WPS_EXE_LOCATION, context.getStringData(WPS_EXE_LOCATION));
+                            if (context.hasData(WPS_EXE_LOCATION)) {
+                                System.setProperty(WPS_EXE_LOCATION, context.getStringData(WPS_EXE_LOCATION));
+                            }
                         }
 
                         Excel.openExcel(testScript);

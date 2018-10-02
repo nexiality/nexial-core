@@ -30,6 +30,7 @@ import org.apache.poi.xssf.usermodel.XSSFCellStyle;
 import org.apache.poi.xssf.usermodel.XSSFRow;
 import org.apache.poi.xssf.usermodel.XSSFSheet;
 import org.apache.poi.xssf.usermodel.XSSFWorkbook;
+import org.nexial.commons.utils.FileUtil;
 import org.nexial.core.excel.Excel;
 import org.nexial.core.excel.ExcelConfig.StyleDecorator;
 import org.nexial.core.excel.ext.CellTextReader;
@@ -37,11 +38,13 @@ import org.nexial.core.model.ExecutionContext;
 import org.nexial.core.model.ExecutionDefinition;
 import org.nexial.core.model.TestData;
 import org.nexial.core.utils.ConsoleUtils;
+import org.nexial.core.utils.ExecUtil;
 import org.nexial.core.utils.OutputFileUtils;
 
 import static java.io.File.separator;
 import static org.apache.poi.ss.usermodel.Row.MissingCellPolicy.CREATE_NULL_AS_BLANK;
-import static org.nexial.core.NexialConst.Data.*;
+import static org.nexial.core.NexialConst.Data.SHEET_MERGED_DATA;
+import static org.nexial.core.NexialConst.Data.SHEET_SYSTEM;
 import static org.nexial.core.NexialConst.NAMESPACE;
 import static org.nexial.core.NexialConst.Project.appendCapture;
 import static org.nexial.core.NexialConst.Project.appendLog;
@@ -97,7 +100,8 @@ class ExecutionInputPrep {
         assert execDef != null;
 
         // 1. create output directory structure
-        String outBase = StringUtils.appendIfMissing(execDef.getOutPath(), separator) + runId;
+        String outBaseParent = StringUtils.appendIfMissing(execDef.getOutPath(), separator);
+        String outBase = outBaseParent + runId;
         createSubdirs(runId, outBase);
 
         // 2. copy output file to tmp directory for data merge
@@ -164,6 +168,17 @@ class ExecutionInputPrep {
         FileUtils.copyFile(tmpFile, outputFile);
         FileUtils.deleteQuietly(tmpFile.getParentFile());
 
+        // copy any existing JIT batch  (from nexial.sh only)
+        String jitBatchTarget = StringUtils.appendIfMissing(outBase, separator) + "nexial.sh";
+        if (!FileUtil.isFileReadable(jitBatchTarget, 800)) {
+            // didn't copy the file yet.. time to do so
+            String jitBatchSource = outBaseParent + "nexial.sh";
+            if (FileUtil.isFileReadable(jitBatchSource, 800)) {
+                ConsoleUtils.log(runId, "copying just-in-time batch script to output");
+                FileUtils.copyFile(new File(jitBatchSource), new File(jitBatchTarget));
+            }
+        }
+
         return outputFile;
     }
 
@@ -179,6 +194,7 @@ class ExecutionInputPrep {
         XSSFCellStyle styleTestDataValue = StyleDecorator.generate(workbook, TEST_DATA_VALUE);
 
         testData.getAllSettings().forEach(data::put);
+        data.putAll(ExecUtil.deriveJavaOpts());
 
         final int[] currentRowIndex = {0};
         data.forEach((name, value) -> {

@@ -162,6 +162,7 @@ public class BaseCommand implements NexialCommand {
             return StepResult.success("video recording already stopped (or never ran)");
         }
 
+        ConsoleUtils.log("stopping currently in-progress video recording...");
         try {
             screenRecorder.setContext(context);
             screenRecorder.stop();

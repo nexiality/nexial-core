@@ -282,7 +282,9 @@ public class ExecutionSummary {
             if (CollectionUtils.isNotEmpty(logFiles) || logFiles.size() > 1) {
                 // if only 1 log file found - assume this one is the nexial log
                 otherLogs = new HashMap<>();
-                logFiles.forEach(file -> otherLogs.put(file.getName(), file.getAbsolutePath()));
+                logFiles.forEach(file -> {
+                    if (file.length() > 1) { otherLogs.put(file.getName(), file.getAbsolutePath()); }
+                });
             }
 
             // only transfer log file if
@@ -300,9 +302,8 @@ public class ExecutionSummary {
 
                 if (MapUtils.isNotEmpty(otherLogs)) {
                     List<String> otherLogNames = CollectionUtil.toList(otherLogs.keySet());
-                    for (String name: otherLogNames) {
-                        String path = otc.importLog(new File(otherLogs.get(name)), false);
-                        otherLogs.put(name, path);
+                    for (String name : otherLogNames) {
+                        otherLogs.put(name, otc.importLog(new File(otherLogs.get(name)), false));
                     }
                 } else if (FileUtil.isFileReadable(executionLog)) {
                     executionLog = otc.importLog(new File(executionLog), false);
@@ -362,7 +363,7 @@ public class ExecutionSummary {
             int rowNum = createReferenceDataSection(summary, 2);
             createSummaryHeader(summary, ++rowNum);
 
-            for (ExecutionSummary scenarioSummary: nestedExecutions) {
+            for (ExecutionSummary scenarioSummary : nestedExecutions) {
                 if (scenarioSummary == null ||
                     StringUtils.isBlank(scenarioSummary.getName()) ||
                     CollectionUtils.isEmpty(scenarioSummary.getNestedExecutions())) { continue; }
@@ -372,7 +373,7 @@ public class ExecutionSummary {
 
                 // test scenario should be nested with activities
                 List<ExecutionSummary> activitySummaries = scenarioSummary.getNestedExecutions();
-                for (ExecutionSummary activitySummary: activitySummaries) {
+                for (ExecutionSummary activitySummary : activitySummaries) {
                     if (activitySummary == null || StringUtils.isBlank(activitySummary.getName())) { continue; }
                     createActivityExecutionSummary(summary, activitySummary, rowNum++);
                 }
@@ -420,7 +421,7 @@ public class ExecutionSummary {
         Map<String, String> ref = summary.referenceData;
         if (MapUtils.isNotEmpty(ref)) {
             List<String> refNames = CollectionUtil.toList(ref.keySet());
-            for (String name: refNames) {
+            for (String name : refNames) {
                 createCell(sheet, "B" + rowNum, name, EXEC_SUMM_DATA_NAME);
                 createCell(sheet, "C" + rowNum, ref.get(name), EXEC_SUMM_DATA_VALUE);
                 rowNum++;
@@ -531,15 +532,17 @@ public class ExecutionSummary {
 
         // special case: log file is copied (NOT MOVED) to S3 with a special syntax here (markdown-like)
         // createCell() function will made regard to this format to create appropriate hyperlink-friendly cells
-        if (StringUtils.isBlank(executionLog)) {
-            map.put("log", "");
-        } else if (MapUtils.isNotEmpty(otherLogs)) {
-            StringBuilder allLogs = new StringBuilder();
-            otherLogs.forEach((name, path) -> allLogs.append(path).append("|").append(name).append("\n"));
-            map.put("log", StringUtils.trim(allLogs.toString()));
-        } else {
-            map.put("log", executionLog + "|Click here");
+        StringBuilder allLogs = new StringBuilder();
+        if (StringUtils.isNotBlank(executionLog)) { allLogs.append(executionLog).append("|nexial log\n"); }
+        if (MapUtils.isNotEmpty(otherLogs)) {
+            otherLogs.forEach((name, path) -> {
+                if (!StringUtils.equals(path, executionLog)) {
+                    allLogs.append(path).append("|").append(name).append("\n");
+                }
+            });
         }
+
+        if (allLogs.length() != 0) { map.put("log", StringUtils.trim(allLogs.toString())); }
 
         return map;
     }
@@ -618,7 +621,7 @@ public class ExecutionSummary {
         if (StringUtils.isNotBlank(rootCauseMessage)) {
             error.append("ROOT CAUSE: ").append(EnvUtils.platformSpecificEOL(rootCauseMessage)).append(eol);
         }
-        for (String errorDetail: stackTrace) {
+        for (String errorDetail : stackTrace) {
             if (StringUtils.contains(errorDetail, "nexial")) {
                 error.append(errorDetail).append(eol);
             } else {
@@ -696,7 +699,7 @@ public class ExecutionSummary {
             int lineCount = StringUtils.countMatches(mergedContent, "\n") + 1;
             String[] lines = StringUtils.split(mergedContent, "\n");
             if (ArrayUtils.isEmpty(lines)) { lines = new String[]{mergedContent}; }
-            for (String line: lines) { lineCount += Math.ceil((double) StringUtils.length(line) / charPerLine) - 1; }
+            for (String line : lines) { lineCount += Math.ceil((double) StringUtils.length(line) / charPerLine) - 1; }
 
             // lineCount should always be at least 1. otherwise this row will not be rendered with height 0
             if (lineCount < 1) { lineCount = 1; }

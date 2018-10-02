@@ -408,7 +408,7 @@ public final class NexialConst {
         iphone(false, false, false, false, true),
         browserstack(false, false, false, true, true),
         chromeembedded(false, false, true, true, true),
-        electron(false, false, true, true, true);
+        electron(false, false, true, false, true);
 
         private boolean profileSupported;
         private boolean consoleLoggingEnabled;
@@ -708,25 +708,39 @@ public final class NexialConst {
         public static final String DEF_BROWSER = "firefox";
         public static final String BROWSER_LANG = NAMESPACE + "browserLang";
         public static final String START_URL = NAMESPACE + "startUrl";
-        public static final String BROWER_INCOGNITO = BROWSER + ".incognito";
-        public static final boolean DEF_BROWSER_INCOGNITO = true;
-        public static final String BROWSER_POST_CLOSE_WAIT = BROWSER + ".postCloseWaitMs";
-        public static final int DEF_BROWSER_POST_CLOSE_WAIT = 3000;
-        // public static final String BROWSER_HEADLESS = "headless";
-        public static final String BROWSER_WINDOW_SIZE = BROWSER + ".windowSize";
-        public static final String BROWSER_DEFAULT_WINDOW_SIZE = BROWSER + ".defaultWindowSize";
-        public static final String ENFORCE_PAGE_SOURCE_STABILITY = NAMESPACE + "enforcePageSourceStability";
-        public static final boolean DEF_ENFORCE_PAGE_SOURCE_STABILITY = true;
-        public static final String FORCE_JS_CLICK = BROWSER + ".forceJSClick";
-        public static final boolean DEF_FORCE_JS_CLICK = false;
-        public static final String BROWSER_IE_REQUIRE_WINDOW_FOCUS = BROWSER + ".ie.requireWindowFocus";
-        public static final boolean DEF_BROWSER_IE_REQUIRE_WINDOW_FOCUS = false;
         public static final int BROWSER_STABILITY_COMPARE_TOLERANCE = 3;
         public static final String OPT_BROWSER_CONSOLE_LOG = NAMESPACE + "browserConsoleLog";
+
+        public static final String BROWER_INCOGNITO = BROWSER + ".incognito";
+        public static final boolean DEF_BROWSER_INCOGNITO = true;
+
+        public static final String BROWSER_POST_CLOSE_WAIT = BROWSER + ".postCloseWaitMs";
+        public static final int DEF_BROWSER_POST_CLOSE_WAIT = 3000;
+
+        public static final String BROWSER_WINDOW_SIZE = BROWSER + ".windowSize";
+        public static final String BROWSER_DEFAULT_WINDOW_SIZE = BROWSER + ".defaultWindowSize";
+
+        public static final String ENFORCE_PAGE_SOURCE_STABILITY = NAMESPACE + "enforcePageSourceStability";
+        public static final boolean DEF_ENFORCE_PAGE_SOURCE_STABILITY = true;
+
+        public static final String FORCE_JS_CLICK = BROWSER + ".forceJSClick";
+        public static final boolean DEF_FORCE_JS_CLICK = false;
+
+        public static final String BROWSER_IE_REQUIRE_WINDOW_FOCUS = BROWSER + ".ie.requireWindowFocus";
+        public static final boolean DEF_BROWSER_IE_REQUIRE_WINDOW_FOCUS = false;
+
         public static final String SAFARI_USE_TECH_PREVIEW = BROWSER + ".safari.useTechPreview";
         public static final boolean DEF_SAFARI_USE_TECH_PREVIEW = false;
+
         public static final String CEF_CLIENT_LOCATION = BROWSER + ".embedded.appLocation";
         public static final String ELECTRON_CLIENT_LOCATION = BROWSER + ".electron.appLocation";
+
+        public static final String LOG_ELECTRON_DRIVER = BROWSER + ".logElectron";
+        public static final boolean DEF_LOG_ELECTRON_DRIVER = false;
+
+        public static final String LOG_CHROME_DRIVER = BROWSER + ".logChrome";
+        public static final boolean DEF_LOG_CHROME_DRIVER = false;
+
 
         // desktop
         public static final String WINIUM_EXE = "Winium.Desktop.Driver.exe";

@@ -47,7 +47,7 @@ import org.nexial.core.plugins.external.ExternalCommand;
 import org.nexial.core.utils.ConsoleUtils;
 import org.openqa.selenium.*;
 import org.openqa.selenium.chrome.ChromeDriver;
-import org.openqa.selenium.chrome.ChromeDriverService;
+import org.openqa.selenium.chrome.ChromeDriverService.Builder;
 import org.openqa.selenium.chrome.ChromeOptions;
 import org.openqa.selenium.edge.EdgeDriver;
 import org.openqa.selenium.firefox.FirefoxDriver;
@@ -562,16 +562,17 @@ public class Browser implements ForcefulTerminate {
         options.addArguments("--no-sandbox"); // Bypass OS security model
         // options.addArguments("--headless");
 
-        // determine chrome log file
-        String appName = clientLocation;
-        if (StringUtils.contains(appName, "/")) { appName = StringUtils.substringAfterLast(appName, "/"); }
-        if (StringUtils.contains(appName, "\\")) { appName = StringUtils.substringAfterLast(appName, "\\"); }
-        if (StringUtils.contains(appName, ".")) { appName = StringUtils.substringBeforeLast(appName, "."); }
-        File logFile = resolveBrowserLogFile("chrome-" + appName + ".log");
+        Builder cdsBuilder = new Builder();
+        if (context.getBooleanData(LOG_ELECTRON_DRIVER, DEF_LOG_ELECTRON_DRIVER)) {
+            // determine chrome log file
+            String appName = clientLocation;
+            if (StringUtils.contains(appName, "/")) { appName = StringUtils.substringAfterLast(appName, "/"); }
+            if (StringUtils.contains(appName, "\\")) { appName = StringUtils.substringAfterLast(appName, "\\"); }
+            if (StringUtils.contains(appName, ".")) { appName = StringUtils.substringBeforeLast(appName, "."); }
+            cdsBuilder = cdsBuilder.withLogFile(resolveBrowserLogFile("chrome-" + appName + ".log"));
+        }
 
-        ChromeDriverService driverService = new ChromeDriverService.Builder().withLogFile(logFile).build();
-
-        return new ChromeDriver(driverService, options);
+        return new ChromeDriver(cdsBuilder.build(), options);
     }
 
     private WebDriver initChrome(boolean headless) throws IOException {
@@ -579,9 +580,13 @@ public class Browser implements ForcefulTerminate {
 
         resolveChromeDriverLocation();
 
-        String chromeLog = resolveBrowserLogFile("chrome-browser.log").getAbsolutePath();
-        System.setProperty("webdriver.chrome.logfile", chromeLog);
-        System.setProperty("webdriver.chrome.verboseLogging", "true");
+        if (context.getBooleanData(LOG_CHROME_DRIVER, DEF_LOG_CHROME_DRIVER)) {
+            String chromeLog = resolveBrowserLogFile("chrome-browser.log").getAbsolutePath();
+            System.setProperty("webdriver.chrome.logfile", chromeLog);
+            System.setProperty("webdriver.chrome.verboseLogging", "true");
+        } else {
+            System.setProperty("webdriver.chrome.verboseLogging", "false");
+        }
 
         ChromeOptions options = new ChromeOptions();
         if (headless) {
@@ -626,9 +631,8 @@ public class Browser implements ForcefulTerminate {
 
     @NotNull
     private File resolveBrowserLogFile(String logFileName) {
-        return new File(
-            StringUtils.appendIfMissing(System.getProperty(TEST_LOG_PATH, JAVA_IO_TMPDIR), separator) +
-            logFileName);
+        return new File(StringUtils.appendIfMissing(System.getProperty(TEST_LOG_PATH, JAVA_IO_TMPDIR), separator) +
+                        logFileName);
     }
 
     private void resolveChromeDriverLocation() throws IOException {
@@ -649,10 +653,9 @@ public class Browser implements ForcefulTerminate {
                                "search for alternative...");
         }
 
-        List<String> possibleLocations =
-            IS_OS_WINDOWS ? POSSIBLE_WIN_CHROME_BIN_LOCATIONS :
-            IS_OS_MAC ? POSSIBLE_OSX_CHROME_BIN_LOCATIONS :
-            IS_OS_LINUX ? POSSIBLE_NIX_CHROME_BIN_LOCATIONS : null;
+        List<String> possibleLocations = IS_OS_WINDOWS ? POSSIBLE_WIN_CHROME_BIN_LOCATIONS :
+                                         IS_OS_MAC ? POSSIBLE_OSX_CHROME_BIN_LOCATIONS :
+                                         IS_OS_LINUX ? POSSIBLE_NIX_CHROME_BIN_LOCATIONS : null;
         if (CollectionUtils.isEmpty(possibleLocations)) {
             ConsoleUtils.error("Unable to derive alternative Chrome binary... ");
             return null;

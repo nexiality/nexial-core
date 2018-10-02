@@ -26,6 +26,7 @@ import org.apache.commons.lang3.RandomStringUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.SystemUtils;
 import org.nexial.core.NexialConst.Project;
+import org.nexial.core.ShutdownAdvisor;
 import org.nexial.core.utils.ConsoleUtils;
 
 import com.xuggle.mediatool.IMediaWriter;
@@ -71,6 +72,7 @@ public class Mp4ScreenRecorder extends MediaToolAdapter implements Runnable, Scr
         screenBounds = getRequiredBounds();
         robot = new Robot();
         pool = Executors.newScheduledThreadPool(1);
+        ShutdownAdvisor.addAdvisor(this);
     }
 
     @Override
@@ -93,6 +95,7 @@ public class Mp4ScreenRecorder extends MediaToolAdapter implements Runnable, Scr
     }
 
     public void stop() {
+        ConsoleUtils.log("stopping screen recording service...");
         try {
             pool.shutdown();
             pool.awaitTermination(1, SECONDS);

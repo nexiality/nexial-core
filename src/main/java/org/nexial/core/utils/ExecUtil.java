@@ -18,10 +18,16 @@
 package org.nexial.core.utils;
 
 import java.io.IOException;
+import java.lang.management.ManagementFactory;
 import java.net.URL;
+import java.util.Arrays;
 import java.util.Enumeration;
+import java.util.List;
+import java.util.Map;
+import java.util.TreeMap;
 import java.util.jar.Attributes;
 import java.util.jar.Manifest;
+import java.util.stream.Collectors;
 import javax.validation.constraints.NotNull;
 
 import org.apache.commons.lang3.StringUtils;
@@ -29,9 +35,14 @@ import org.nexial.commons.utils.DateUtility;
 import org.nexial.core.Nexial;
 
 import static org.nexial.core.NexialConst.*;
+import static org.nexial.core.NexialConst.Data.DEF_TEXT_DELIM;
+import static org.nexial.core.NexialConst.Data.SCRIPT_REF_PREFIX;
 
 public final class ExecUtil {
     public static final String PRODUCT = "nexial";
+    public static final String JAVA_OPT = "JAVA_OPT";
+    public static final String RUNTIME_ARGS = "runtime args";
+
     public static String manifest;
 
     private ExecUtil() {}
@@ -89,5 +100,30 @@ public final class ExecUtil {
         System.setProperty(TEST_START_TS, rightNow + "");
 
         return runId;
+    }
+
+    public static void collectCliProps(String[] args) {
+        // collect execution-time arguments so that we can display them in output
+        System.setProperty(SCRIPT_REF_PREFIX + RUNTIME_ARGS, String.join(" ", args));
+
+        List<String> inputArgs = ManagementFactory.getRuntimeMXBean().getInputArguments();
+        String argsList = inputArgs.stream().filter(arg -> arg.startsWith("-D") && !arg.startsWith("-Dwebdriver.")
+                                                           && !arg.contains(DEF_FILE_ENCODING))
+                                   .collect(Collectors.joining(DEF_TEXT_DELIM));
+        System.setProperty(SCRIPT_REF_PREFIX + JAVA_OPT, argsList);
+    }
+
+    public static Map<String, String> deriveJavaOpts() {
+        Map<String, String> javaOpts = new TreeMap<>();
+
+        String javaOptsString = System.getProperty(SCRIPT_REF_PREFIX + JAVA_OPT);
+        if (StringUtils.isNotBlank(javaOptsString)) {
+            Arrays.stream(StringUtils.split(javaOptsString, DEF_TEXT_DELIM)).forEach(opt -> {
+                String[] nameValue = StringUtils.removeStart(opt, "-D").split("=");
+                javaOpts.put(nameValue[0], nameValue[1]);
+            });
+        }
+
+        return javaOpts;
     }
 }

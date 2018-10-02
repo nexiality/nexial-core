@@ -19,7 +19,6 @@ package org.nexial.core;
 
 import java.io.File;
 import java.io.IOException;
-import java.lang.management.ManagementFactory;
 import java.security.Security;
 import java.text.MessageFormat;
 import java.util.ArrayList;
@@ -27,7 +26,6 @@ import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
-import java.util.stream.Collectors;
 import javax.mail.MessagingException;
 
 import org.apache.commons.cli.CommandLine;
@@ -256,13 +254,7 @@ public class Nexial {
 
     /** read from the commandline and derive the intended execution order. */
     protected void init(String[] args) throws IOException, ParseException {
-        // collect execution-time arguments so that we can display them in output
-        System.setProperty(SCRIPT_REF_PREFIX + "runtime args", String.join(" ", args));
-        List<String> inputArgs = ManagementFactory.getRuntimeMXBean().getInputArguments();
-        String argsList = inputArgs.stream().filter(arg -> arg.startsWith("-D") && !arg.startsWith("-Dwebdriver.")
-                                                           && !arg.contains(DEF_FILE_ENCODING))
-                                   .collect(Collectors.joining(","));
-        System.setProperty(SCRIPT_REF_PREFIX + "JAVA_OPT", argsList);
+        ExecUtil.collectCliProps(args);
 
         // first things first -- do we have all the required system properties?
         String errPrefix = "System property " + NEXIAL_HOME;

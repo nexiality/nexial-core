@@ -166,6 +166,9 @@ public class NexialFilter implements Serializable {
             case StartsWith:
             case EndsWith:
             case Contain:
+            case NotStartsWith:
+            case NotEndsWith:
+            case NotContain:
                 result = isMatchingStringCompare(actual, context);
                 break;
 
@@ -242,14 +245,26 @@ public class NexialFilter implements Serializable {
                 return TextUtils.isBetween(controls, IS_OPEN_TAG, IS_CLOSE_TAG) ?
                        toControlStream(controls).anyMatch(data::startsWith) :
                        StringUtils.startsWith(data, normalizeCondition(controls));
+            case NotStartsWith:
+                return TextUtils.isBetween(controls, IS_OPEN_TAG, IS_CLOSE_TAG) ?
+                       toControlStream(controls).noneMatch(data::startsWith) :
+                       !StringUtils.startsWith(data, normalizeCondition(controls));
             case EndsWith:
                 return TextUtils.isBetween(controls, IS_OPEN_TAG, IS_CLOSE_TAG) ?
                        toControlStream(controls).anyMatch(data::endsWith) :
                        StringUtils.endsWith(data, normalizeCondition(controls));
+            case NotEndsWith:
+                return TextUtils.isBetween(controls, IS_OPEN_TAG, IS_CLOSE_TAG) ?
+                       toControlStream(controls).noneMatch(data::endsWith) :
+                       !StringUtils.endsWith(data, normalizeCondition(controls));
             case Contain:
                 return TextUtils.isBetween(controls, IS_OPEN_TAG, IS_CLOSE_TAG) ?
                        toControlStream(controls).anyMatch(data::contains) :
                        StringUtils.contains(data, normalizeCondition(controls));
+            case NotContain:
+                return TextUtils.isBetween(controls, IS_OPEN_TAG, IS_CLOSE_TAG) ?
+                       toControlStream(controls).noneMatch(data::contains) :
+                       !StringUtils.contains(data, normalizeCondition(controls));
 
             case Match:
                 return RegexUtils.isExact(data, controls);
@@ -364,14 +379,25 @@ public class NexialFilter implements Serializable {
         switch (comparator) {
             case StartsWith:
                 return StringUtils.startsWith(actual, expected);
+            case NotStartsWith:
+                return !StringUtils.startsWith(actual, expected);
             case EndsWith:
                 return StringUtils.endsWith(actual, expected);
+            case NotEndsWith:
+                return !StringUtils.endsWith(actual, expected);
             case Contain: {
                 for (String contain : controlList) {
                     if (StringUtils.contains(actual, context.replaceTokens(contain))) { return true; }
                 }
 
                 return false;
+            }
+            case NotContain: {
+                for (String contain : controlList) {
+                    if (StringUtils.contains(actual, context.replaceTokens(contain))) { return false; }
+                }
+
+                return true;
             }
             default: {
                 ConsoleUtils.error("UNSUPPORTED Operator for text-compare: " + comparator.getSymbol());
