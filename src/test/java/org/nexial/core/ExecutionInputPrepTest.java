@@ -24,6 +24,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import org.apache.commons.collections4.MapUtils;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang3.RandomStringUtils;
 import org.apache.commons.lang3.StringUtils;
@@ -184,14 +185,11 @@ public class ExecutionInputPrepTest {
             dataCells.forEach(row -> {
                 // skip over those defined via -D
                 String name = row.get(0).getStringCellValue();
-                if (!StringUtils.startsWith(name, "idea.test") && 
-                    !StringUtils.startsWith(name, "nexial.home") &&
-                    !StringUtils.startsWith(name, "java.")) {
-                    String value = row.get(1).getStringCellValue();
-                    System.out.print("asserting that data name " + name + " has value " + value + "... ");
-                    Assert.assertEquals(expectedData.get(name), value);
-                    System.out.println("PASSED");
-                }
+                String value = row.get(1).getStringCellValue();
+                System.out.print("asserting that data name " + name + " has value " + value + "... ");
+                String expected = MapUtils.getString(expectedData, name, System.getProperty(name));
+                Assert.assertEquals(expected, value);
+                System.out.println("PASSED");
             });
 
             System.out.println();

@@ -34,14 +34,17 @@ import org.apache.commons.lang3.StringUtils;
 import org.nexial.commons.utils.DateUtility;
 import org.nexial.core.Nexial;
 
-import static org.nexial.core.NexialConst.*;
 import static org.nexial.core.NexialConst.Data.DEF_TEXT_DELIM;
 import static org.nexial.core.NexialConst.Data.SCRIPT_REF_PREFIX;
+import static org.nexial.core.NexialConst.*;
 
 public final class ExecUtil {
     public static final String PRODUCT = "nexial";
     public static final String JAVA_OPT = "JAVA_OPT";
     public static final String RUNTIME_ARGS = "runtime args";
+    public static final List<String> IGNORED_CLI_OPT = Arrays.asList("webdriver.", "java.", "org.gradle.",
+                                                                     "idea.test.", "user.country", "user.language",
+                                                                     "nexial.home");
 
     public static String manifest;
 
@@ -107,11 +110,11 @@ public final class ExecUtil {
         System.setProperty(SCRIPT_REF_PREFIX + RUNTIME_ARGS, String.join(" ", args));
 
         List<String> inputArgs = ManagementFactory.getRuntimeMXBean().getInputArguments();
-        String argsList = inputArgs.stream().filter(arg -> arg.startsWith("-D") &&
-                                                           !arg.startsWith("-Dwebdriver.") &&
-                                                           !arg.startsWith("-Djava.") &&
-                                                           !arg.contains(DEF_FILE_ENCODING))
-                                   .collect(Collectors.joining(DEF_TEXT_DELIM));
+
+        String argsList = inputArgs.stream().filter(arg -> {
+            if (!arg.startsWith("-D")) { return false; }
+            return IGNORED_CLI_OPT.stream().noneMatch(ignored -> StringUtils.startsWith(arg, ignored));
+        }).collect(Collectors.joining(DEF_TEXT_DELIM));
         System.setProperty(SCRIPT_REF_PREFIX + JAVA_OPT, argsList);
     }
 
