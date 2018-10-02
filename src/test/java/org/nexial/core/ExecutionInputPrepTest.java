@@ -33,8 +33,6 @@ import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
-import org.springframework.util.ResourceUtils;
-
 import org.nexial.commons.utils.DateUtility;
 import org.nexial.commons.utils.FileUtil;
 import org.nexial.core.NexialConst.Project;
@@ -43,11 +41,12 @@ import org.nexial.core.excel.Excel.Worksheet;
 import org.nexial.core.excel.ExcelAddress;
 import org.nexial.core.model.ExecutionDefinition;
 import org.nexial.core.model.TestProject;
+import org.springframework.util.ResourceUtils;
 
+import static java.io.File.separator;
 import static org.nexial.core.NexialConst.Data.SHEET_MERGED_DATA;
 import static org.nexial.core.NexialConst.Project.DEF_REL_LOC_OUTPUT;
 import static org.nexial.core.NexialConst.Project.DEF_REL_LOC_TEST_SCRIPT;
-import static java.io.File.separator;
 
 public class ExecutionInputPrepTest {
     private String projectHome;
@@ -177,15 +176,20 @@ public class ExecutionInputPrepTest {
             Excel excel = new Excel(targetOutputFile);
             Worksheet worksheet = excel.worksheet(SHEET_MERGED_DATA);
             int lastRow = worksheet.findLastDataRow(new ExcelAddress("A1"));
-            Assert.assertEquals(expectedData.size(), lastRow);
+
+            // 1 extra due to the addition of `nexial.home` in #data
+            Assert.assertTrue(lastRow >= expectedData.size());
 
             List<List<XSSFCell>> dataCells = worksheet.cells(new ExcelAddress("A1:B" + lastRow));
             dataCells.forEach(row -> {
+                // skip over those defined via -D
                 String name = row.get(0).getStringCellValue();
-                String value = row.get(1).getStringCellValue();
-                System.out.print("asserting that data name " + name + " has value " + value + "... ");
-                Assert.assertEquals(expectedData.get(name), value);
-                System.out.println("PASSED");
+                if (!StringUtils.startsWith(name, "idea.test") && !StringUtils.startsWith(name, "nexial.home")) {
+                    String value = row.get(1).getStringCellValue();
+                    System.out.print("asserting that data name " + name + " has value " + value + "... ");
+                    Assert.assertEquals(expectedData.get(name), value);
+                    System.out.println("PASSED");
+                }
             });
 
             System.out.println();

@@ -119,8 +119,10 @@ public final class ExecUtil {
         String javaOptsString = System.getProperty(SCRIPT_REF_PREFIX + JAVA_OPT);
         if (StringUtils.isNotBlank(javaOptsString)) {
             Arrays.stream(StringUtils.split(javaOptsString, DEF_TEXT_DELIM)).forEach(opt -> {
-                String[] nameValue = StringUtils.removeStart(opt, "-D").split("=");
-                javaOpts.put(nameValue[0], nameValue[1]);
+                if (StringUtils.length(opt) > 5 && StringUtils.contains(opt, "=")) {
+                    String[] nameValue = StringUtils.removeStart(opt, "-D").split("=");
+                    if (nameValue.length == 2) { javaOpts.put(nameValue[0], nameValue[1]); }
+                }
             });
         }
 
