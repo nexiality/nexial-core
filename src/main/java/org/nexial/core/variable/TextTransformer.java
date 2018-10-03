@@ -344,6 +344,18 @@ public class TextTransformer<T extends TextDataType> extends Transformer {
         return csv;
     }
 
+    public T base64encoding(T data) {
+        if (data == null || StringUtils.isEmpty(data.getValue())) { return data; }
+        data.setValue(TextUtils.base64encoding(data.getValue()));
+        return data;
+    }
+
+    public T base64decoding(T data) {
+        if (data == null || StringUtils.isEmpty(data.getValue())) { return data; }
+        data.setValue(TextUtils.base64decoding(data.getValue()));
+        return data;
+    }
+
     @Override
     Map<String, Integer> listSupportedFunctions() { return FUNCTION_TO_PARAM_LIST; }
 

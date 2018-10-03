@@ -1013,6 +1013,14 @@ public final class TextUtils {
         return csvBuffer.toString();
     }
 
+    public static String base64encoding(String plain) {
+        return StringUtils.isEmpty(plain) ? plain : Base64.getEncoder().encodeToString(plain.getBytes());
+    }
+
+    public static String base64decoding(String encoded) {
+        return StringUtils.isEmpty(encoded) ? encoded : new String(Base64.getDecoder().decode(encoded.getBytes()));
+    }
+
     private static Map<String, String> initDefaultEscapeHtmlMapping() {
         Map<String, String> searchReplace = new HashMap<>();
         searchReplace.put("<", "&lt;");
