@@ -529,4 +529,17 @@ public class TextUtilsTest {
         Assert.assertEquals("0123abbey", TextUtils.keepOnly("0@1#2%3^^&*aKLRURTYbZXCBZDFGbWEWRey", "0123abbey"));
 
     }
+
+    @Test
+    public void base64() {
+        Assert.assertEquals("WVBxVFd6ejlWbkZidGNsNE1hYmpOaDZRRW5nak5OQUg6UlNkRnRSYWdBZmtIZnNPbw==",
+                            TextUtils.base64encoding("YPqTWzz9VnFbtcl4MabjNh6QEngjNNAH:RSdFtRagAfkHfsOo"));
+        Assert.assertEquals("UVJHZ2tCRDNZSHp2SGdBMGVhSWgyWEd4R2VBM0FHb1k6VVV1QUhOY0xlb00yZTBWZg==",
+                            TextUtils.base64encoding("QRGgkBD3YHzvHgA0eaIh2XGxGeA3AGoY:UUuAHNcLeoM2e0Vf"));
+
+        Assert.assertEquals("YPqTWzz9VnFbtcl4MabjNh6QEngjNNAH:RSdFtRagAfkHfsOo",
+                            TextUtils.base64decoding("WVBxVFd6ejlWbkZidGNsNE1hYmpOaDZRRW5nak5OQUg6UlNkRnRSYWdBZmtIZnNPbw=="));
+        Assert.assertEquals("QRGgkBD3YHzvHgA0eaIh2XGxGeA3AGoY:UUuAHNcLeoM2e0Vf",
+                            TextUtils.base64decoding("UVJHZ2tCRDNZSHp2SGdBMGVhSWgyWEd4R2VBM0FHb1k6VVV1QUhOY0xlb00yZTBWZg=="));
+    }
 }
