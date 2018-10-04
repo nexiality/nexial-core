@@ -169,11 +169,11 @@ class ExecutionInputPrep {
         FileUtils.deleteQuietly(tmpFile.getParentFile());
 
         // copy any existing JIT batch  (from nexial.sh only)
-        String jitBatchTarget = StringUtils.appendIfMissing(outBase, separator) + "nexial.sh";
-        if (!FileUtil.isFileReadable(jitBatchTarget, 800)) {
-            // didn't copy the file yet.. time to do so
-            String jitBatchSource = outBaseParent + "nexial.sh";
-            if (FileUtil.isFileReadable(jitBatchSource, 800)) {
+        String jitBatchSource = System.getProperty("nexial.script");
+        if (StringUtils.isNotBlank(jitBatchSource) && FileUtil.isFileReadable(jitBatchSource, 800)) {
+            String jitBatchTarget = StringUtils.appendIfMissing(outBase, separator) + "nexial.sh";
+            if (!FileUtil.isFileReadable(jitBatchTarget, 800)) {
+                // didn't copy the file yet.. time to do so
                 ConsoleUtils.log(runId, "copying just-in-time batch script to output");
                 FileUtils.copyFile(new File(jitBatchSource), new File(jitBatchTarget));
             }
