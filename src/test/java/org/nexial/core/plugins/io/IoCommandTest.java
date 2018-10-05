@@ -331,6 +331,28 @@ public class IoCommandTest {
     }
 
     @Test
+    public void testRenameFiles() throws Exception {
+        String fixture1 = testDestination1 + separator + "testDeleteFiles1.txt";
+        makeDummyContent(fixture1);
+
+        IoCommand io = new IoCommand();
+        io.init(context);
+
+        StepResult result = io.rename(fixture1, "fingerLickingGood.doc");
+        System.out.println("result = " + result);
+
+        Assert.assertNotNull(result);
+        Assert.assertTrue(result.isSuccess());
+
+        File sourceFile = new File(fixture1);
+        Assert.assertFalse(sourceFile.exists());
+
+        File targetFile = new File(testDestination1 + separator + "fingerLickingGood.doc");
+        Assert.assertTrue(targetFile.exists());
+        Assert.assertTrue(targetFile.canRead());
+    }
+
+    @Test
     public void testReadFile() throws Exception {
         String myTestFile = testFile1 + ".testReadFile";
         File file = makeDummyContent(myTestFile);

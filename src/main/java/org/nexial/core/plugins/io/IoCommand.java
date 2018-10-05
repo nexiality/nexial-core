@@ -460,6 +460,35 @@ public class IoCommand extends BaseCommand {
         }
     }
 
+    /**
+     * rename a file or directory to the new name. {@code newName} is expected to be just the new file name or new
+     * directory name ONLY. This command is not a means to move a file or directory to another directory.
+     */
+    public StepResult rename(String target, String newName) {
+        requiresNotBlank(target, "Invalid target", target);
+        requiresNotBlank(newName, "Invalid new name", newName);
+
+        // is target a file or directory
+        String msgPrefix = "Unable to rename '" + target + "' to '" + newName + "' ";
+        if (!FileUtil.isFileReadable(target) && !FileUtil.isDirectoryReadable(target)) {
+            return StepResult.fail(msgPrefix + "because it cannot be resolved either as a file or a directory");
+        }
+
+        File targetFile = new File(target);
+
+        File newTarget = new File(targetFile.getParent(), newName);
+        if (newTarget.exists() && newTarget.canRead()) {
+            return StepResult.fail(msgPrefix + "because '" + newTarget + "' already exists.");
+        }
+
+        if (!targetFile.renameTo(newTarget)) {
+            return StepResult.fail("Unable to rename '" + target + "' to '" + newTarget + "': " +
+                                   "check on access and the feasibility of the new name '" + newName + "'");
+        }
+
+        return StepResult.success("'" + target + "' renamed to '" + newTarget + "'");
+    }
+
     public static String formatPercent(double number) { return PERCENT_FORMAT.format(number); }
 
     @NotNull
