@@ -154,6 +154,11 @@ public class ValidationsExecutor {
             String function = mapFunctionConfig.getFunction();
             FieldBean signField = recordBean.get(mapFunctionConfig.getSignField());
             String mapTo = mapFunctionConfig.getMapTo();
+
+            //initialize count as 0
+            if (!mapValues.containsKey(mapTo) && StringUtils.equalsIgnoreCase(function, "COUNT")) {
+                mapValues.put(mapTo, 0);
+            }
             for (FieldBean recordField : recordFields) {
                 String fieldName = recordField.getConfig().getFieldname();
                 if (!mapFunctionConfig.getFieldName().equals(fieldName)) {continue;}
@@ -294,7 +299,12 @@ public class ValidationsExecutor {
             if (fieldValue == null) {
                 context.removeData(fName);
             } else {
-                context.setData(fName, truncateLeadingZeroes(fieldValue));
+                if (!(DataType.toEnum(recordField.getConfig().getDatatype()) == DataType.NUMERIC)) {
+                    context.setData(fName, truncateLeadingZeroes(fieldValue));
+                } else {
+                    context.setData(fName, fieldValue);
+                }
+
             }
         }
 
