@@ -31,6 +31,7 @@ public class HeadlessJsonTests extends ExcelBasedTests {
         assertPassFail(executionSummary, "jsonpath1", TestOutcomeStats.allPassed());
         assertPassFail(executionSummary, "bad_jsonpath", TestOutcomeStats.allPassed());
         assertPassFail(executionSummary, "json_compare", new TestOutcomeStats(1, 19));
+        assertPassFail(executionSummary, "read_json", TestOutcomeStats.allPassed());
     }
 
     static {

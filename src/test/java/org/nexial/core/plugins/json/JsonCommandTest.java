@@ -496,7 +496,7 @@ public class JsonCommandTest {
 
         JsonCommand subject = new JsonCommand();
         subject.init(context);
-        Object jsonObject = subject.toJSONObject(context, fixture);
+        Object jsonObject = subject.toJSONObject(fixture);
         Assert.assertNotNull(jsonObject);
         Assert.assertTrue(jsonObject instanceof JSONObject);
 
@@ -518,7 +518,7 @@ public class JsonCommandTest {
 
         JsonCommand subject = new JsonCommand();
         subject.init(context);
-        Object jsonObject = subject.toJSONObject(context, fixture);
+        Object jsonObject = subject.toJSONObject(fixture);
         Assert.assertNotNull(jsonObject);
         Assert.assertTrue(jsonObject instanceof JSONObject);
 

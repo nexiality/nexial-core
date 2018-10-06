@@ -1276,7 +1276,16 @@ public class WebCommand extends BaseCommand implements CanTakeScreenshot, CanLog
         requiresValidVariableName(var);
         requiresNotBlank(script, "Invalid script", script);
 
-        Object retVal = jsExecutor.executeScript(script);
+        String javascript;
+        try {
+            javascript = OutputFileUtils.resolveContent(script, context, false, true);
+        } catch (IOException e) {
+            // can't resolve content.. then we'll leave it be
+            ConsoleUtils.log("Unable to resolve JavaScript '" + script + "': " + e.getMessage() + ". Use as is...");
+            javascript = script;
+        }
+
+        Object retVal = jsExecutor.executeScript(javascript);
         if (retVal != null) { context.setData(var, retVal); }
 
         return StepResult.success("script executed");

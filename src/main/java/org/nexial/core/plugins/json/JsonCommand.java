@@ -26,7 +26,6 @@ import org.apache.commons.lang3.StringUtils;
 import org.json.JSONArray;
 import org.json.JSONObject;
 import org.nexial.commons.utils.TextUtils;
-import org.nexial.core.model.ExecutionContext;
 import org.nexial.core.model.StepResult;
 import org.nexial.core.plugins.base.BaseCommand;
 import org.nexial.core.utils.*;
@@ -131,7 +130,13 @@ public class JsonCommand extends BaseCommand {
      * Optionally, {@code jsonpath} can be empty to represent top level.
      */
     public StepResult addOrReplace(String json, String jsonpath, String input, String var) {
-        requiresNotBlank(json, "Invalid json", json);
+        try {
+            json = OutputFileUtils.resolveContent(json, context, false, true);
+        } catch (IOException e) {
+            ConsoleUtils.log("Unable to read JSON as a file; considering it as is...");
+        }
+        requiresNotBlank(json, "invalid/malformed json", json);
+
         requiresNotBlank(input, "Invalid input", json);
         requiresValidVariableName(var);
 
@@ -235,13 +240,12 @@ public class JsonCommand extends BaseCommand {
         return StepResult.success("CSV '" + csv + "' converted to JSON '" + jsonFile + "'");
     }
 
-    protected Object toJSONObject(ExecutionContext context, String json) {
+    protected Object toJSONObject(String json) {
         requires(StringUtils.isNotBlank(json), "invalid json", json);
 
         try {
             // support path-based content specification
-            if (context != null) { json = OutputFileUtils.resolveContent(json, context, false); }
-
+            json = OutputFileUtils.resolveContent(json, context, false, true);
             requiresNotBlank(json, "invalid/malformed json", json);
 
             json = new String(StringUtils.trim(json).getBytes(DEF_CHARSET), DEF_CHARSET);
@@ -264,7 +268,7 @@ public class JsonCommand extends BaseCommand {
 
     protected Object sanityCheck(String json, String jsonpath) {
         requires(StringUtils.isNotBlank(jsonpath), "invalid jsonpath", jsonpath);
-        return toJSONObject(context, json);
+        return toJSONObject(json);
     }
 
     protected String find(String json, String jsonpath) {
