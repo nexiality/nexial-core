@@ -245,7 +245,7 @@ jar {
 }
 
 tasks.withType(Test) {
-	maxParallelForks = 5
+	maxParallelForks = 3
 	// -Dnexial.home=~/projects/nexial/nexial-core
 	//	systemProperty 'BROWSER', System.getProperty('BROWSER', 'firefox')
 	systemProperty 'nexial.home', projectDir
