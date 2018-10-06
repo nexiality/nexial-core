@@ -56,7 +56,7 @@ repositories {
 	mavenLocal()
 	mavenCentral()
 	//	maven { url "http://www.dcm4che.org/maven2" }
-//	maven { url 'https://jitpack.io' }
+	//	maven { url 'https://jitpack.io' }
 }
 
 bootRepackage { enabled = false }
@@ -108,7 +108,7 @@ dependencies {
 	compile("org.springframework:spring-tx")
 
 	// unit testing
-	compile("junit:junit")
+	compile("junit:junit:${junitVersion}")
 
 	// selenium
 	// for IE webdriver: https://developer.microsoft.com/en-us/microsoft-edge/tools/webdriver/
@@ -229,7 +229,7 @@ dependencies {
 	provided("javax.servlet:javax.servlet-api:${servletApiVersion}") { force = true }
 
 	testCompile("org.springframework.boot:spring-boot-starter-test")
-	testCompile("junit:junit")
+	testCompile("junit:junit:${junitVersion}")
 	testCompile("org.jetbrains.kotlin:kotlin-test")
 	testCompile("org.jetbrains.kotlin:kotlin-test-junit")
 }
@@ -245,7 +245,7 @@ jar {
 }
 
 tasks.withType(Test) {
-	//	maxParallelForks = 2
+	maxParallelForks = 5
 	// -Dnexial.home=~/projects/nexial/nexial-core
 	//	systemProperty 'BROWSER', System.getProperty('BROWSER', 'firefox')
 	systemProperty 'nexial.home', projectDir
@@ -255,6 +255,9 @@ test {
 	reports.html.enabled = true
 	reports.junitXml.enabled = true
 	exclude '**/*Manual*'
+	testLogging {
+		events "PASSED", "STARTED", "FAILED", "SKIPPED"
+	}
 }
 
 kotlin {
