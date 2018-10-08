@@ -569,7 +569,7 @@ public class Browser implements ForcefulTerminate {
             if (StringUtils.contains(appName, "/")) { appName = StringUtils.substringAfterLast(appName, "/"); }
             if (StringUtils.contains(appName, "\\")) { appName = StringUtils.substringAfterLast(appName, "\\"); }
             if (StringUtils.contains(appName, ".")) { appName = StringUtils.substringBeforeLast(appName, "."); }
-            cdsBuilder = cdsBuilder.withLogFile(resolveBrowserLogFile("chrome-" + appName + ".log"));
+            cdsBuilder = cdsBuilder.withLogFile(resolveBrowserLogFile("electron-" + appName + ".log"));
         }
 
         return new ChromeDriver(cdsBuilder.build(), options);
