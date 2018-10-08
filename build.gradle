@@ -245,13 +245,14 @@ jar {
 }
 
 tasks.withType(Test) {
-	maxParallelForks = 3
+	maxParallelForks = 5
 	// -Dnexial.home=~/projects/nexial/nexial-core
 	//	systemProperty 'BROWSER', System.getProperty('BROWSER', 'firefox')
 	systemProperty 'nexial.home', projectDir
 }
 
 test {
+	jvmArgs '-XX:MaxPermSize=512m'
 	reports.html.enabled = true
 	reports.junitXml.enabled = true
 	exclude '**/*Manual*'
