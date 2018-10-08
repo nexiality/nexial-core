@@ -21,8 +21,6 @@ import org.junit.Test;
 import org.nexial.core.ExcelBasedTests;
 import org.nexial.core.model.ExecutionSummary;
 
-import static org.nexial.core.NexialConst.Data.OPT_OPEN_RESULT;
-
 public class HeadlessJsonTests extends ExcelBasedTests {
     @Test
     public void jsonCommandTests() throws Exception {
@@ -32,9 +30,5 @@ public class HeadlessJsonTests extends ExcelBasedTests {
         assertPassFail(executionSummary, "bad_jsonpath", TestOutcomeStats.allPassed());
         assertPassFail(executionSummary, "json_compare", new TestOutcomeStats(1, 19));
         assertPassFail(executionSummary, "read_json", TestOutcomeStats.allPassed());
-    }
-
-    static {
-        System.setProperty(OPT_OPEN_RESULT, "off");
     }
 }
