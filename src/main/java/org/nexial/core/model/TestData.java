@@ -107,6 +107,7 @@ public class TestData {
             }
         }));
 
+        // to be added/displayed in execution output #summary
         System.setProperty(SCRIPT_REF_PREFIX + "DataSheet(s)",
                            validDataSheets.stream()
                                           .filter(validSheet -> validSheet.getName().equals(SHEET_DEFAULT_DATA) ||
@@ -201,12 +202,16 @@ public class TestData {
     public boolean has(int iteration, String name) {
         // data name must exists, data value must exist or else fallback must be set to true and iteration is not the 1st
         return dataMap.containsKey(name) &&
-               (StringUtils.isNotEmpty(CollectionUtil.getOrDefault(dataMap.get(name), (iteration - 1), ""))
-                || (getSettingAsBoolean(FALLBACK_TO_PREVIOUS) && iteration > 1));
+               (StringUtils.isNotEmpty(CollectionUtil.getOrDefault(dataMap.get(name), (iteration - 1), "")) ||
+                getSettingAsBoolean(FALLBACK_TO_PREVIOUS) && iteration > 1);
     }
 
     public String getValue(int iteration, String name) {
         List<String> values = getAllValue(name);
+
+        // in case there isn't any iteration, or data is defined outside of iteration (i.e. in project.properties or
+        // #default sheet).
+        if (CollectionUtils.size(values) == 1) { return values.get(0); }
 
         for (int i = iteration - 1; i >= 0; i--) {
             String data = CollectionUtil.getOrDefault(values, i, "");

@@ -741,7 +741,6 @@ public final class NexialConst {
         public static final String LOG_CHROME_DRIVER = BROWSER + ".logChrome";
         public static final boolean DEF_LOG_CHROME_DRIVER = false;
 
-
         // desktop
         public static final String WINIUM_EXE = "Winium.Desktop.Driver.exe";
         public static final String WINIUM_PORT = NAMESPACE + "winiumPort";
@@ -883,21 +882,21 @@ public final class NexialConst {
         public static final String TTS_PREFIX = "tts:";
         public static final int MAX_TTS_LENGTH = 500;
 
-        public static final Map<String, String> SCOPE_SETTING_DEFAULTS = TextUtils.toMap(
-            ITERATION + "=1\n" +
-            FALLBACK_TO_PREVIOUS + "=true\n" +
-            MAIL_TO + "=\n",
-            "\n", "=");
+        public static final Map<String, String> SCOPE_SETTING_DEFAULTS =
+            TextUtils.toMap("=",
+                            ITERATION + "=1",
+                            FALLBACK_TO_PREVIOUS + "=true",
+                            MAIL_TO + "=");
 
         // todo: find a way so that it is easy to manage this map and to publish this as part of standard documentation
-        public static final Map<String, String> DEFAULTS = TextUtils.toMap(
-            DELAY_BETWEEN_STEPS_MS + "=" + DEF_DELAY_BETWEEN_STEPS_MS + "\n" +
-            FAIL_FAST + "=" + DEF_FAIL_FAST + "\n" +
-            VERBOSE + "=" + DEF_VERBOSE + "\n" +
-            TEXT_DELIM + "=" + DEF_TEXT_DELIM + "\n" +
-            POLL_WAIT_MS + "=" + DEF_POLL_WAIT_MS + "\n" +
-            FAIL_AFTER + "=" + DEF_FAIL_AFTER + "\n",
-            "\n", "=");
+        public static final Map<String, String> DEFAULTS =
+            TextUtils.toMap("=",
+                            DELAY_BETWEEN_STEPS_MS + "=" + DEF_DELAY_BETWEEN_STEPS_MS,
+                            FAIL_FAST + "=" + DEF_FAIL_FAST,
+                            VERBOSE + "=" + DEF_VERBOSE,
+                            TEXT_DELIM + "=" + DEF_TEXT_DELIM,
+                            POLL_WAIT_MS + "=" + DEF_POLL_WAIT_MS,
+                            FAIL_AFTER + "=" + DEF_FAIL_AFTER);
 
         public static final String NULL = "(null)";
         public static final String EMPTY = "(empty)";

@@ -42,9 +42,9 @@ public final class ExecUtil {
     public static final String PRODUCT = "nexial";
     public static final String JAVA_OPT = "JAVA_OPT";
     public static final String RUNTIME_ARGS = "runtime args";
-    public static final List<String> IGNORED_CLI_OPT = Arrays.asList("webdriver.", "java.", "org.gradle.",
-                                                                     "idea.test.", "user.country", "user.language",
-                                                                     "nexial.home");
+    public static final List<String> IGNORED_CLI_OPT =
+        Arrays.asList("-Dwebdriver.", "-Djava.", "-Dorg.gradle.", "-Didea.test.", "-Duser.country", "-Duser.language",
+                      "-Dfile.encoding", "-Dnexial.home");
 
     public static String manifest;
 

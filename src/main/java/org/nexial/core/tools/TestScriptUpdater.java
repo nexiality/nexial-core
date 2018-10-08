@@ -69,17 +69,16 @@ import static org.nexial.core.tools.CommandDiscovery.GSON;
 public class TestScriptUpdater {
     private static final List<String> NON_MACRO_COMMANDS = Arrays.asList("macro(file,sheet,name)");
     private static final Map<String, String> REPLACED_COMMANDS = TextUtils.toMap(
-        "number.assertBetween(num,lower,upper)=number.assertBetween(num,min,max);" +
-        "desktop.scanTable(var,name)=desktop.useTable(var,name);" +
-        "desktop.getRowCount(var)=desktop.saveRowCount(var);",
-        ";",
-        "=");
+        "=",
+        "number.assertBetween(num,lower,upper)=number.assertBetween(num,min,max)",
+        "desktop.scanTable(var,name)=desktop.useTable(var,name)",
+        "desktop.getRowCount(var)=desktop.saveRowCount(var)");
     private static final Map<String, String> COMMAND_SUGGESTIONS = TextUtils.toMap(
+        "=",
         "desktop.useTable(var,name)=This command is deprecated and will soon be removed. " +
-        "Consider using desktop » editTableCells(row,nameValues) instead;" +
+        "Consider using desktop » editTableCells(row,nameValues) instead",
         "desktop.editCurrentRow(nameValues)=This command is deprecated and will soon be removed. " +
-        "Consider using desktop » editTableCells(row,nameValues) instead;",
-        ";", "=");
+        "Consider using desktop » editTableCells(row,nameValues) instead");
     private static final Options cmdOptions = new Options();
 
     private boolean verbose;

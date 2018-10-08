@@ -1453,8 +1453,8 @@ public class ExecutionContext {
         ExcelAddress addr = new ExcelAddress("A1");
         XSSFCell firstCell = dataSheet.cell(addr);
         if (firstCell == null || StringUtils.isBlank(firstCell.getStringCellValue())) {
-            throw new IllegalArgumentException("File (" + testScript + "), Worksheet (" + dataSheet.getName() +
-                                               "): no test data defined");
+            throw new IllegalArgumentException("File (" + testScript + "), Worksheet (" + dataSheet.getName() + "): " +
+                                               "no test data defined");
         }
 
         // 2. retrieve all data in range
@@ -1464,7 +1464,11 @@ public class ExecutionContext {
             List<XSSFCell> row = dataSheet.cells(addrRow).get(0);
             String name = row.get(0).getStringCellValue();
             String value = row.get(1).getStringCellValue();
-            if (StringUtils.isNotBlank(value)) { data.put(name, value); }
+            // no longer checks for blank value, we'll accept data value as is since it's been dealt with in
+            // ExecutionThread.prep()
+            // if (StringUtils.isNotBlank(value)) {
+            data.put(name, value);
+            // }
         }
 
         // 3. parse test scenarios
@@ -1492,7 +1496,7 @@ public class ExecutionContext {
 
         // support dynamic resolution of WPS executable path
         String spreadsheetProgram = getStringData(SPREADSHEET_PROGRAM, DEF_SPREADSHEET);
-        if (StringUtils.equals(spreadsheetProgram, SPREADSHEET_PROGRAM_WPS)) {
+        if (StringUtils.equals(spreadsheetProgram, SPREADSHEET_PROGRAM_WPS) && IS_OS_WINDOWS) {
             setData(WPS_EXE_LOCATION, Excel.resolveWpsExecutablePath());
         }
 

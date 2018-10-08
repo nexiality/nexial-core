@@ -37,6 +37,7 @@ public class HeadlessBaseTests extends ExcelBasedTests {
 
     @Test
     public void baseCommandTests_part2() throws Exception {
+        // ExecutionSummary executionSummary = testViaExcel("unitTest_base_part2.xlsx", "macro-test");
         ExecutionSummary executionSummary = testViaExcel("unitTest_base_part2.xlsx");
         assertPassFail(executionSummary, "crypto", TestOutcomeStats.allPassed());
         assertPassFail(executionSummary, "macro-test", TestOutcomeStats.allPassed());
@@ -62,5 +63,4 @@ public class HeadlessBaseTests extends ExcelBasedTests {
     static {
         System.setProperty(OPT_OPEN_RESULT, "off");
     }
-
 }
