@@ -252,7 +252,7 @@ tasks.withType(Test) {
 }
 
 test {
-	jvmArgs '-XX:MaxPermSize=512m'
+//	jvmArgs '-XX:MaxPermSize=512m'
 	reports.html.enabled = true
 	reports.junitXml.enabled = true
 	exclude '**/*Manual*'
