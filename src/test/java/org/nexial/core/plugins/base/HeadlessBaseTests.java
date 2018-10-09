@@ -35,14 +35,14 @@ public class HeadlessBaseTests extends ExcelBasedTests {
 
     @Test
     public void baseCommandTests_part2() throws Exception {
-        // ExecutionSummary executionSummary = testViaExcel("unitTest_base_part2.xlsx", "macro-test");
+        // ExecutionSummary executionSummary = testViaExcel("unitTest_base_part2.xlsx", "flow_controls");
         ExecutionSummary executionSummary = testViaExcel("unitTest_base_part2.xlsx");
         assertPassFail(executionSummary, "crypto", TestOutcomeStats.allPassed());
         assertPassFail(executionSummary, "macro-test", TestOutcomeStats.allPassed());
         assertPassFail(executionSummary, "repeat-test", TestOutcomeStats.allPassed());
         assertPassFail(executionSummary, "expression-test", TestOutcomeStats.allPassed());
         assertPassFail(executionSummary, "multi-scenario2", TestOutcomeStats.allPassed());
-        assertPassFail(executionSummary, "flow_controls", new TestOutcomeStats(2, 4));
+        assertPassFail(executionSummary, "flow_controls", new TestOutcomeStats(2, 14));
     }
 
     @Test
