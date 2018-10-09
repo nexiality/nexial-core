@@ -925,43 +925,51 @@ public class Browser implements ForcefulTerminate {
         MutableCapabilities capabilities = new MutableCapabilities();
         initCapabilities(capabilities);
 
-        capabilities.setCapability("browserstack.local", context.getBooleanData(KEY_ENABLE_LOCAL, DEF_ENABLE_LOCAL));
+        // support any existing or new browserstack.* configs
+        Map<String, String> bsConfig = context.getDataByPrefix("browserstack.");
 
-        String browserName = context.getStringData(KEY_BROWSER);
-        String bsBrowser = StringUtils.length(browserName) < 3 ?
-                           StringUtils.upperCase(browserName) : WordUtils.capitalize(browserName);
+        capabilities.setCapability("browserstack.local", bsConfig.containsKey("local") ?
+                                                         bsConfig.remove("local") :
+                                                         context.getBooleanData(KEY_ENABLE_LOCAL, DEF_ENABLE_LOCAL));
 
-        setCapability(capabilities, "browserName", StringUtils.lowerCase(browserName));
-        setCapability(capabilities, "browser", bsBrowser);
-        setCapability(capabilities, "browser_version", context.getStringData(KEY_BROWSER_VER));
-        setCapability(capabilities, "browserstack.debug", context.getBooleanData(KEY_DEBUG, DEF_DEBUG));
-        setCapability(capabilities, "resolution", context.getStringData(KEY_RESOLUTION));
-        setCapability(capabilities, "build", context.getStringData(KEY_BUILD_NUM));
-        if (context.hasData(KEY_CAPTURE_CRASH)) {
-            setCapability(capabilities, "browserstack.captureCrash", context.getBooleanData(KEY_CAPTURE_CRASH));
-        }
+        String resolution = bsConfig.containsKey("resolution") ?
+                            bsConfig.remove("resolution") :
+                            context.getStringData(KEY_RESOLUTION);
 
-        ExecutionDefinition execDef = context.getExecDef();
-        if (execDef != null) {
-            if (execDef.getProject() != null && StringUtils.isNotBlank(execDef.getProject().getName())) {
-                setCapability(capabilities, "project", execDef.getProject().getName());
-            }
+        // os specific setting, including mobile devices
+        String targetOs = bsConfig.containsKey("os") ?
+                          bsConfig.remove("os") :
+                          context.getStringData(KEY_OS);
+        String targetOsVer = bsConfig.containsKey("os_version") ?
+                             bsConfig.remove("os_version") :
+                             context.getStringData(KEY_OS_VER);
 
-            if (StringUtils.isNotBlank(execDef.getTestScript())) {
-                String scriptName = StringUtils.substringAfterLast(
-                    StringUtils.replace(execDef.getTestScript(), "\\", "/"), "/");
-                setCapability(capabilities, "name", scriptName);
-            }
-        }
+        String bsCapsUrl = "Check https://www.browserstack.com/automate/capabilities for more details";
+        String msgRequired = "'browserstack.device' is required for ";
 
-        // Timezone tz = Timezone.byName(TimeZone.getDefault().toZoneId().getId());
-        // setCapability(capabilities, "browserstack.timezone", tz.name());
+        if (StringUtils.equalsIgnoreCase(targetOs, "ANDROID")) {
+            String device = bsConfig.remove("device");
+            if (StringUtils.isBlank(device)) { throw new RuntimeException(msgRequired + "'ANDROID'. " + bsCapsUrl); }
 
-        String targetOs = context.getStringData(KEY_OS);
-        String targetOsVer = context.getStringData(KEY_OS_VER);
-        if (StringUtils.isNotBlank(targetOs) && StringUtils.isNotBlank(targetOsVer)) {
+            setCapability(capabilities, "platform", "ANDROID");
+            setCapability(capabilities, "device", device);
+            setCapability(capabilities, "real_mobile", true);
+            setCapability(capabilities, "os_version", targetOsVer);
+
+        } else if (StringUtils.equalsIgnoreCase(targetOs, "IOS")) {
+            String device = bsConfig.remove("device");
+            if (StringUtils.isBlank(device)) { throw new RuntimeException(msgRequired + "'iOS'. " + bsCapsUrl); }
+
+            setCapability(capabilities, "device", device);
+            setCapability(capabilities, "real_mobile", true);
+            setCapability(capabilities, "os_version", targetOsVer);
+
+        } else if (StringUtils.isNotBlank(targetOs) && StringUtils.isNotBlank(targetOsVer)) {
+
             setCapability(capabilities, "os", StringUtils.upperCase(targetOs));
             setCapability(capabilities, "os_version", targetOsVer);
+            setCapability(capabilities, "resolution", resolution);
+
         } else {
             // if no target OS specified, then we'll just stick to automation host's OS
             if (IS_OS_WINDOWS) {
@@ -979,7 +987,7 @@ public class Browser implements ForcefulTerminate {
                     setCapability(capabilities, "os_version", "10");
                 }
                 if (IS_OS_WINDOWS_2008) {
-                    setCapability(capabilities, "platform", "WWINOWS");
+                    setCapability(capabilities, "platform", "WINDOWS");
                     setCapability(capabilities, "os_version", "2008");
                 }
             }
@@ -993,13 +1001,55 @@ public class Browser implements ForcefulTerminate {
                 if (IS_OS_MAC_OSX_YOSEMITE) { setCapability(capabilities, "os_version", "Yosemite"); }
                 if (IS_OS_MAC_OSX_EL_CAPITAN) { setCapability(capabilities, "os_version", "El Capitan"); }
             }
+
+            setCapability(capabilities, "resolution", resolution);
         }
 
-        // support any existing or new browserstack.* configs
-        Map<String, String> browserstackConfig = context.getDataByPrefix("browserstack.");
-        if (MapUtils.isNotEmpty(browserstackConfig)) {
-            browserstackConfig.forEach((key, value) -> setCapability(capabilities, "browserstack." + key, value));
+        // browser setting
+        String browserName = bsConfig.containsKey("browser") ?
+                             bsConfig.remove("browser") : context.getStringData(KEY_BROWSER);
+        if (StringUtils.equals(browserName, "iPad") ||
+            StringUtils.equals(browserName, "iPhone") ||
+            StringUtils.equals(browserName, "android")) {
+            setCapability(capabilities, "browserName", browserName);
+        } else {
+            setCapability(capabilities, "browserName", StringUtils.lowerCase(browserName));
+            setCapability(capabilities, "browser", StringUtils.length(browserName) < 3 ?
+                                                   StringUtils.upperCase(browserName) :
+                                                   WordUtils.capitalize(browserName));
+            setCapability(capabilities, "browser_version", bsConfig.containsKey("browser_version") ?
+                                                           bsConfig.remove("browser_version") :
+                                                           context.getStringData(KEY_BROWSER_VER));
         }
+
+        setCapability(capabilities, "browserstack.debug", bsConfig.containsKey("debug") ?
+                                                          BooleanUtils.toBoolean(bsConfig.remove("debug")) :
+                                                          context.getBooleanData(KEY_DEBUG, DEF_DEBUG));
+
+        // project settings
+        setCapability(capabilities, "build", bsConfig.containsKey("build") ?
+                                             bsConfig.remove("build") :
+                                             context.getStringData(KEY_BUILD_NUM));
+
+        if (context.hasData(KEY_CAPTURE_CRASH)) {
+            setCapability(capabilities, "browserstack.captureCrash", context.getBooleanData(KEY_CAPTURE_CRASH));
+        }
+
+        ExecutionDefinition execDef = context.getExecDef();
+        if (execDef != null) {
+            if (execDef.getProject() != null && StringUtils.isNotBlank(execDef.getProject().getName())) {
+                setCapability(capabilities, "project", execDef.getProject().getName());
+            }
+
+            if (StringUtils.isNotBlank(execDef.getTestScript())) {
+                String scriptName = StringUtils.substringAfterLast(
+                    StringUtils.replace(execDef.getTestScript(), "\\", "/"), "/");
+                setCapability(capabilities, "name", scriptName);
+            }
+        }
+
+        // remaining configs specific to browserstack
+        bsConfig.forEach((key, value) -> setCapability(capabilities, "browserstack." + key, value));
 
         try {
             RemoteWebDriver driver =

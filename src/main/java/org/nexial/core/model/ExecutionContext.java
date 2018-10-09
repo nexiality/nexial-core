@@ -541,6 +541,7 @@ public class ExecutionContext {
         return null;
     }
 
+    @NotNull
     public Map<String, String> getDataByPrefix(String prefix) {
         Map<String, String> props = new LinkedHashMap<>();
 
