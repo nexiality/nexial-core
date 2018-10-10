@@ -374,7 +374,11 @@ public class TestStep extends TestStepManifest {
     }
 
     protected String handleScreenshot(StepResult result) {
-        if (!captureScreen && (result.isSuccess() || !context.isScreenshotOnError())) { return null; }
+        // no screenshot specified and no error found (success or skipped)
+        if (!captureScreen && (result.isSuccess() || result.isSkipped())) { return null; }
+
+        // no screenshot specified and screenshot-on-error is turned off
+        if (!captureScreen && !context.isScreenshotOnError()) { return null; }
 
         NexialCommand plugin = context.findPlugin(target);
         if (!(plugin instanceof CanTakeScreenshot)) {
