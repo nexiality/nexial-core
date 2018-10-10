@@ -20,16 +20,19 @@ package org.nexial.core.plugins.desktop;
 import java.io.File;
 import java.io.IOException;
 import java.net.URL;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Stack;
 
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.io.FileUtils;
-import org.apache.commons.lang3.ArrayUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.math.NumberUtils;
 import org.apache.commons.lang3.tuple.MutablePair;
 import org.nexial.commons.proc.ProcessInvoker;
-import org.nexial.commons.proc.ProcessOutcome;
+import org.nexial.commons.proc.RuntimeUtils;
 import org.nexial.commons.utils.FileUtil;
 import org.nexial.commons.utils.TextUtils;
 import org.nexial.core.ExecutionThread;
@@ -46,8 +49,6 @@ import org.openqa.selenium.winium.WiniumDriverService;
 import com.google.common.collect.ImmutableList;
 
 import static java.io.File.separator;
-import static java.lang.System.lineSeparator;
-import static org.apache.commons.lang3.SystemUtils.IS_OS_WINDOWS;
 import static org.nexial.commons.proc.ProcessInvoker.WORKING_DIRECTORY;
 import static org.nexial.core.NexialConst.*;
 import static org.nexial.core.NexialConst.Data.*;
@@ -105,7 +106,7 @@ public final class WiniumUtils {
         // we shouldn't have multiple instance of AUT running at the same time.. could get into unexpected result
         if (aut.isTerminateExisting()) { terminateRunningInstance(aut.getExe()); }
 
-        List<Integer> runningInstances = WiniumUtils.findRunningInstances(aut.getExe());
+        List<Integer> runningInstances = RuntimeUtils.findRunningInstances(aut.getExe());
         if (CollectionUtils.isEmpty(runningInstances)) {
             // nope.. can't find AUT instance.  Let's start it now
             ConsoleUtils.log("starting new AUT instance via " + autCmd);
@@ -151,7 +152,7 @@ public final class WiniumUtils {
                     throw new IOException("Unable to start new app: " + e.getMessage(), e);
                 }
 
-                runningInstances = WiniumUtils.findRunningInstances(aut.getExe());
+                runningInstances = RuntimeUtils.findRunningInstances(aut.getExe());
                 ConsoleUtils.log("Found running instance of " + aut.getExe() + ": " + runningInstances);
             }
         }
@@ -164,7 +165,7 @@ public final class WiniumUtils {
         // and use it as _THE_ AUT instance
         if (CollectionUtils.isNotEmpty(runningInstances)) {
             // but we don't know if winium is still running... let's make sure
-            List<Integer> runningWiniums = WiniumUtils.findRunningInstances(WINIUM_EXE);
+            List<Integer> runningWiniums = RuntimeUtils.findRunningInstances(WINIUM_EXE);
             if (CollectionUtils.isNotEmpty(runningWiniums) && StringUtils.isNotBlank(winiumPort)) {
                 ConsoleUtils.log("joining existing Winium session over port " + winiumPort);
                 return joinCurrentWiniumSession(NumberUtils.toInt(winiumPort), autCmd, args);
@@ -355,95 +356,13 @@ public final class WiniumUtils {
                                                                 DEF_WINIUM_SOLO_MODE);
     }
 
-    protected static boolean terminateRunningInstance(int processId) {
-        try {
-            ConsoleUtils.log("terminating process with process id " + processId);
-            ProcessInvoker.invokeNoWait(WIN32_CMD,
-                                        Arrays.asList("/C", "start", "\"\"",
-                                                      "taskkill", "/pid", processId + "", "/T", "/F"),
-                                        null);
-            return true;
-        } catch (IOException e) {
-            ConsoleUtils.error("Unable to terminate process with process id " + processId + ": " + e.getMessage());
-            return false;
-        }
-    }
-
     protected static boolean terminateRunningInstance(String exeName) {
-        if (!IS_OS_WINDOWS || !isSoloMode()) {
-            ConsoleUtils.log("not terminating " + exeName + " since " +
-                             "!IS_OS_WINDOWS=" + (!IS_OS_WINDOWS) + " || !isSoloMode()=" + (!isSoloMode()));
+        if (!isSoloMode()) {
+            ConsoleUtils.log("not terminating " + exeName + " since !isSoloMode()=" + (!isSoloMode()));
             return false;
         }
 
-        try {
-            ConsoleUtils.log("terminating any leftover instance of " + exeName);
-            ProcessOutcome outcome = ProcessInvoker.invoke(
-                WIN32_CMD, Arrays.asList("/C", "taskkill", "/IM", exeName + "*", "/T", "/F"), null);
-            ConsoleUtils.log(outcome.getStdout());
-            try { Thread.sleep(2000); } catch (InterruptedException e) { }
-            return true;
-        } catch (IOException | InterruptedException e) {
-            ConsoleUtils.error("Unable to terminate any running " + exeName + ": " + e.getMessage());
-            return false;
-        }
-    }
-
-    protected static List<Integer> findRunningInstances(String exeName) {
-        try {
-            // ConsoleUtils.log("finding existing instances of " + exeName);
-            ProcessOutcome outcome = ProcessInvoker.invoke(
-                WIN32_CMD,
-                Arrays.asList("/C", "tasklist", "/FO", "CSV", "/FI", "\"imagename eq " + exeName + "\"", "/NH"),
-                null);
-            String output = outcome.getStdout();
-            if (StringUtils.isBlank(output)) {
-                ConsoleUtils.log("No running process found for " + exeName);
-                return null;
-            }
-
-            String[] lines = StringUtils.split(StringUtils.trim(output), lineSeparator());
-            if (ArrayUtils.isEmpty(lines)) {
-                ConsoleUtils.log("No running process found for " + exeName + " (can't split lines)");
-                return null;
-            }
-
-            // proc id is ALWAYS the second field of this CSV output
-            List<Integer> runningProcs = new ArrayList<>();
-            for (String line : lines) {
-                String[] fields = StringUtils.split(line, ",");
-                if (ArrayUtils.isEmpty(fields)) {
-                    ConsoleUtils.log("No running process found for " + exeName + " (likely invalid output)");
-                    return null;
-                }
-
-                if (fields.length < 2) {
-                    ConsoleUtils.log("No running process found for " + exeName + " (output without process id)");
-                    return null;
-                }
-
-                runningProcs.add(NumberUtils.toInt(StringUtils.substringBetween(fields[1], "\"", "\"")));
-            }
-
-            ConsoleUtils.log("Found the following running instances of " + exeName + ": " + runningProcs);
-            return runningProcs;
-        } catch (IOException | InterruptedException e) {
-            ConsoleUtils.error("Error when finding running instances of " + exeName + ": " + e.getMessage());
-            return null;
-        }
-    }
-
-    protected static void runApp(String exePath, String exeName, List<String> args) throws IOException {
-        runApp(exePath, exeName, args, new HashMap<>());
-    }
-
-    protected static void runApp(String exePath, String exeName, List<String> args, Map<String, String> env)
-        throws IOException {
-        if (StringUtils.isBlank(exePath)) { return; }
-        if (StringUtils.isBlank(exeName)) { return; }
-
-        String fullpath = exePath + separator + exeName;
-        ProcessInvoker.invokeNoWait(fullpath, args, env);
+        return RuntimeUtils.terminateInstance(exeName);
     }
 
     protected static void shutdownDriverService(WiniumDriverService service) {

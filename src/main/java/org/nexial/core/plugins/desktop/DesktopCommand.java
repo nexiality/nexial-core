@@ -1333,6 +1333,11 @@ public class DesktopCommand extends BaseCommand
     }
 
     public StepResult closeApplication() {
+        if (context != null) {
+            CanTakeScreenshot agent = context.findCurrentScreenshotAgent();
+            if (agent instanceof DesktopCommand) { context.clearScreenshotAgent(); }
+        }
+
         DesktopSession session = getCurrentSession();
         requiresNotNull(session, "No active desktop session found");
 

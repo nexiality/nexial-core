@@ -239,6 +239,8 @@ abstract class WebDriverHelper protected constructor(protected var context: Exec
                 electron                               -> ElectronDriverHelper(context)
                 chrome, chromeheadless, chromeembedded -> ChromeDriverHelper(context)
                 ie                                     -> IEDriverHelper(context)
+                // download BrowserStackLocal executable only needed when `browserstack.local` is `true`
+                browserstack                           -> BrowserStackLocalHelper(context)
                 else                                   -> throw RuntimeException("No WebDriverHelper implemented for $browserType")
             }
 
@@ -643,5 +645,41 @@ class IEDriverHelper(context: ExecutionContext) : WebDriverHelper(context) {
         this.driverLocation = newConfigHome
         config.home = newConfigHome
         return StringUtils.appendIfMissing(File(newConfigHome).absolutePath, separator) + config.baseName + ".exe"
+    }
+}
+
+class BrowserStackLocalHelper(context: ExecutionContext) : WebDriverHelper(context) {
+    override fun resolveLocalDriverPath(): String {
+        return StringUtils.appendIfMissing(File(context.replaceTokens(config.home)).absolutePath, separator) +
+               config.baseName + if (IS_OS_WINDOWS) ".exe" else ""
+    }
+
+    @Throws(IOException::class)
+    override fun resolveDriverManifest(pollForUpdates: Boolean): WebDriverManifest {
+        val manifest: WebDriverManifest = if (FileUtil.isFileReadable(driverManifest, 10)) {
+            GSON.fromJson(FileUtils.readFileToString(driverManifest, DEF_CHARSET), WebDriverManifest::class.java)
+        } else {
+            // first time
+            WebDriverManifest()
+        }
+        manifest.init()
+
+        val hasDriver = FileUtil.isFileReadable(driverLocation, WebDriverHelper.DRIVER_MIN_SIZE)
+        if (!hasDriver || pollForUpdates) {
+            val env = when {
+                IS_OS_WINDOWS -> "win32"
+                IS_OS_LINUX   -> "linux-x64"
+                IS_OS_MAC     -> "darwin-x64"
+                else          -> throw IllegalArgumentException("OS $OS_NAME not supported for $browserType")
+            }
+
+            val downloadUrl = "${config.checkUrlBase}/${config.baseName}-$env.zip"
+            ConsoleUtils.log("[BrowserStackLocal] derived download URL as $downloadUrl")
+
+            manifest.driverUrl = downloadUrl
+            manifest.lastChecked = System.currentTimeMillis()
+        }
+
+        return manifest
     }
 }

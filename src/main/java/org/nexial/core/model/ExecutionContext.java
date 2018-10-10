@@ -55,6 +55,7 @@ import org.nexial.core.excel.Excel;
 import org.nexial.core.excel.Excel.Worksheet;
 import org.nexial.core.excel.ExcelAddress;
 import org.nexial.core.excel.ext.CellTextReader;
+import org.nexial.core.plugins.CanTakeScreenshot;
 import org.nexial.core.plugins.NexialCommand;
 import org.nexial.core.plugins.pdf.CommonKeyValueIdentStrategies;
 import org.nexial.core.plugins.sound.SoundMachine;
@@ -145,6 +146,7 @@ public class ExecutionContext {
     protected Map<String, Object> data = new ListOrderedMap<>();
     protected ExpressionProcessor expression;
     protected ExecutionEventListener executionEventListener;
+    protected CanTakeScreenshot screenshotAgent;
 
     // spring-managed map of webdriver related configs.
     protected Map<BrowserType, String> webdriverHelperConfig;
@@ -385,9 +387,14 @@ public class ExecutionContext {
 
     public boolean isScreenshotOnError() { return getBooleanData(OPT_SCREENSHOT_ON_ERROR, false); }
 
+    public void registerScreenshotAgent(CanTakeScreenshot agent) { screenshotAgent = agent; }
+
+    public void clearScreenshotAgent() { screenshotAgent = null; }
+
+    public CanTakeScreenshot findCurrentScreenshotAgent() { return screenshotAgent; }
+
     public boolean isInteractiveMode() {
-        JenkinsVariables jv = JenkinsVariables.getInstance(this);
-        return getBooleanData(OPT_INTERACTIVE, false) && jv.isNotInvokedFromJenkins();
+        return getBooleanData(OPT_INTERACTIVE, false) && JenkinsVariables.getInstance(this).isNotInvokedFromJenkins();
     }
 
     public boolean isFailFast() { return getBooleanData(FAIL_FAST, DEF_FAIL_FAST) && !isInteractiveMode(); }

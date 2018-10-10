@@ -17,6 +17,8 @@
 
 package org.nexial.core.reports;
 
+import javax.validation.constraints.NotNull;
+
 import org.apache.commons.lang3.StringUtils;
 import org.nexial.core.model.ExecutionContext;
 
@@ -59,6 +61,7 @@ public final class JenkinsVariables {
                              StringUtils.isNotBlank(buildUrl);
     }
 
+    @NotNull
     public static JenkinsVariables getInstance(ExecutionContext context) {
         if (self == null) { self = new JenkinsVariables(context); }
         return self;

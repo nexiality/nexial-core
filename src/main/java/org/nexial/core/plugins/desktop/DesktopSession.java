@@ -31,6 +31,7 @@ import org.apache.commons.lang3.StringUtils;
 import org.apache.http.client.fluent.Request;
 import org.jdom2.Document;
 import org.jdom2.JDOMException;
+import org.nexial.commons.proc.RuntimeUtils;
 import org.nexial.commons.utils.FileUtil;
 import org.nexial.commons.utils.XmlUtils;
 import org.nexial.core.plugins.xml.XmlCommand;
@@ -153,12 +154,12 @@ public class DesktopSession {
         if (runningProcessIds == null) { runningProcessIds = new ArrayList<>(); }
 
         // find other procs not registered
-        List<Integer> runningProcs = WiniumUtils.findRunningInstances(exeName);
+        List<Integer> runningProcs = RuntimeUtils.findRunningInstances(exeName);
         if (CollectionUtils.isNotEmpty(runningProcs)) { runningProcessIds.addAll(runningProcs); }
 
         if (CollectionUtils.isNotEmpty(runningProcessIds)) {
             for (Integer prodId : runningProcessIds) {
-                if (WiniumUtils.terminateRunningInstance(prodId)) {
+                if (RuntimeUtils.terminateInstance(prodId)) {
                     ConsoleUtils.log("terminated " + exeName + " with process id " + prodId);
                 } else {
                     remainingProcId.add(prodId);
@@ -215,7 +216,7 @@ public class DesktopSession {
     public void terminateSession() {
         List<Integer> runningProcIds = RUNNING_INSTANCES.remove(exeFullPath);
         if (CollectionUtils.isNotEmpty(runningProcIds)) {
-            runningProcIds.forEach(WiniumUtils::terminateRunningInstance);
+            runningProcIds.forEach(RuntimeUtils::terminateInstance);
         }
 
         SESSIONS.remove(exeFullPath);
@@ -328,9 +329,9 @@ public class DesktopSession {
         session.driver = WiniumUtils.newWiniumInstance(aut);
         updateImplicitWaitMs(config, session.getDriver());
 
-        List<Integer> runingInstances = WiniumUtils.findRunningInstances(aut.getExe());
-        if (CollectionUtils.isNotEmpty(runingInstances)) {
-            RUNNING_INSTANCES.computeIfAbsent(session.exeFullPath, list -> new ArrayList<>()).addAll(runingInstances);
+        List<Integer> runningInstances = RuntimeUtils.findRunningInstances(aut.getExe());
+        if (CollectionUtils.isNotEmpty(runningInstances)) {
+            RUNNING_INSTANCES.computeIfAbsent(session.exeFullPath, list -> new ArrayList<>()).addAll(runningInstances);
         }
     }
 

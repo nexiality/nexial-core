@@ -567,6 +567,17 @@
             }
           ]]></value>
         </entry>
+        <entry key="browserstack">
+            <value><![CDATA[
+            {
+                "home": "${user.home}/.nexial/browserstacklocal",
+                "baseName": "BrowserStackLocal",
+                "checkFrequency": 2592000000,
+                "checkFrequencyDescription": "Every 1 month",
+                "checkUrlBase" : "https://www.browserstack.com/browserstack-local"
+            }
+          ]]></value>
+        </entry>
 
     </util:map>
 

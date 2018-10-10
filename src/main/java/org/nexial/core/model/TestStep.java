@@ -149,6 +149,7 @@ public class TestStep extends TestStepManifest {
     public StepResult execute() {
         TrackTimeLogs trackTimeLogs = context.getTrackTimeLogs();
         trackTimeLogs.checkStartTracking(context, this);
+
         // clock's ticking
         StopWatch tickTock = new StopWatch();
         tickTock.start();
@@ -295,6 +296,7 @@ public class TestStep extends TestStepManifest {
             //context.setLogToExcel(true);
             // }
 
+            if (plugin instanceof CanTakeScreenshot) { context.registerScreenshotAgent((CanTakeScreenshot) plugin); }
             result = plugin.execute(command, args);
 
             // todo: resolve soon. we need to stop logging to excel when not running external program
@@ -380,15 +382,15 @@ public class TestStep extends TestStepManifest {
         // no screenshot specified and screenshot-on-error is turned off
         if (!captureScreen && !context.isScreenshotOnError()) { return null; }
 
-        NexialCommand plugin = context.findPlugin(target);
-        if (!(plugin instanceof CanTakeScreenshot)) {
-            log("Command " + getCommandFQN() + " is not capable of taking screenshot");
+        CanTakeScreenshot agent = context.findCurrentScreenshotAgent();
+        if (agent == null) {
+            log("No screenshot capability available for command " + getCommandFQN() + "; no screenshot taken");
             return null;
         }
 
         // screenshot failure shouldn't cause exception to offset execution pass/fail percentage
         try {
-            String screenshotPath = ((CanTakeScreenshot) plugin).takeScreenshot(this);
+            String screenshotPath = agent.takeScreenshot(this);
             if (StringUtils.isBlank(screenshotPath)) {
                 log("Unable to capture screenshot");
                 return null;

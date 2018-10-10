@@ -34,6 +34,7 @@ import org.apache.commons.lang3.BooleanUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.math.NumberUtils;
 import org.apache.commons.text.WordUtils;
+import org.nexial.commons.proc.RuntimeUtils;
 import org.nexial.commons.utils.EnvUtils;
 import org.nexial.commons.utils.FileUtil;
 import org.nexial.core.NexialConst.*;
@@ -42,6 +43,7 @@ import org.nexial.core.WebProxy;
 import org.nexial.core.browsermob.ProxyHandler;
 import org.nexial.core.model.ExecutionContext;
 import org.nexial.core.model.ExecutionDefinition;
+import org.nexial.core.plugins.CanTakeScreenshot;
 import org.nexial.core.plugins.ForcefulTerminate;
 import org.nexial.core.plugins.external.ExternalCommand;
 import org.nexial.core.utils.ConsoleUtils;
@@ -70,6 +72,7 @@ import static org.nexial.core.NexialConst.BrowserType.*;
 import static org.nexial.core.NexialConst.*;
 import static org.nexial.core.NexialConst.Data.*;
 import static org.nexial.core.utils.CheckUtils.requiresExecutableFile;
+import static org.nexial.core.utils.CheckUtils.requiresNotBlank;
 import static org.openqa.selenium.PageLoadStrategy.EAGER;
 import static org.openqa.selenium.UnexpectedAlertBehaviour.ACCEPT;
 import static org.openqa.selenium.UnexpectedAlertBehaviour.IGNORE;
@@ -403,6 +406,11 @@ public class Browser implements ForcefulTerminate {
 
         clearWinHandles();
         driver = null;
+
+        if (context != null ) {
+            CanTakeScreenshot agent = context.findCurrentScreenshotAgent();
+            if (agent instanceof WebCommand) { context.clearScreenshotAgent(); }
+        }
     }
 
     protected String updateWinHandle() {
@@ -928,9 +936,7 @@ public class Browser implements ForcefulTerminate {
         // support any existing or new browserstack.* configs
         Map<String, String> bsConfig = context.getDataByPrefix("browserstack.");
 
-        capabilities.setCapability("browserstack.local", bsConfig.containsKey("local") ?
-                                                         bsConfig.remove("local") :
-                                                         context.getBooleanData(KEY_ENABLE_LOCAL, DEF_ENABLE_LOCAL));
+        handleBrowserStackLocal(capabilities, bsConfig);
 
         String resolution = bsConfig.containsKey("resolution") ?
                             bsConfig.remove("resolution") :
@@ -957,6 +963,7 @@ public class Browser implements ForcefulTerminate {
             setCapability(capabilities, "os_version", targetOsVer);
 
         } else if (StringUtils.equalsIgnoreCase(targetOs, "IOS")) {
+
             String device = bsConfig.remove("device");
             if (StringUtils.isBlank(device)) { throw new RuntimeException(msgRequired + "'iOS'. " + bsCapsUrl); }
 
@@ -971,6 +978,7 @@ public class Browser implements ForcefulTerminate {
             setCapability(capabilities, "resolution", resolution);
 
         } else {
+
             // if no target OS specified, then we'll just stick to automation host's OS
             if (IS_OS_WINDOWS) {
                 setCapability(capabilities, "os", "WINDOWS");
@@ -1058,6 +1066,36 @@ public class Browser implements ForcefulTerminate {
             return driver;
         } catch (MalformedURLException | WebDriverException e) {
             throw new RuntimeException("Unable to initialize BrowserStack session: " + e.getMessage(), e);
+        }
+    }
+
+    private void handleBrowserStackLocal(MutableCapabilities capabilities, Map<String, String> bsConfig) {
+        boolean enableLocal = bsConfig.containsKey("local") ?
+                              BooleanUtils.toBoolean(bsConfig.remove("local")) :
+                              context.getBooleanData(KEY_ENABLE_LOCAL, DEF_ENABLE_LOCAL);
+        if (enableLocal) {
+            String automateKey = context.getStringData(KEY_AUTOMATEKEY);
+            requiresNotBlank(automateKey,
+                             "BrowserStack Access Key not defined via '" + KEY_AUTOMATEKEY + "'",
+                             automateKey);
+
+            capabilities.setCapability("browserstack.local", enableLocal);
+
+            try {
+                WebDriverHelper helper = WebDriverHelper.Companion.newInstance(browserstack, context);
+                File driver = helper.resolveDriver();
+                if (!driver.exists()) { throw new RuntimeException("Can't resolve/download driver for " + edge); }
+
+                String browserstacklocal = helper.config.getBaseName();
+
+                ConsoleUtils.log("terminating any running instances of " + browserstacklocal + "...");
+                RuntimeUtils.terminateInstance(browserstacklocal);
+
+                ConsoleUtils.log("starting new instance of " + browserstacklocal + "...");
+                RuntimeUtils.runApp(driver.getParent(), driver.getName(), Arrays.asList("--key", automateKey));
+            } catch (IOException e) {
+                throw new RuntimeException("unable to start BrowserStackLocal: " + e.getMessage(), e);
+            }
         }
     }
 

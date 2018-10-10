@@ -458,11 +458,9 @@ public class BaseCommand implements NexialCommand {
         String nullValue = context.getNullValueToken();
 
         // null corner case
-        if (StringUtils.equals(array1, nullValue)) {
-            if (StringUtils.equals(array2, nullValue)) {
-                return StepResult.success("validated " + StringUtils.defaultString(array1, nullValue) +
-                                          "=" + StringUtils.defaultString(array2, nullValue));
-            }
+        if (areBothArraysNull(array1, array2, nullValue)) {
+            return StepResult.success("validated " + StringUtils.defaultString(array1, nullValue) + "=" +
+                                      StringUtils.defaultString(array2, nullValue));
         }
 
         String delim = context.getTextDelim();
@@ -479,6 +477,68 @@ public class BaseCommand implements NexialCommand {
 
         assertEquals(expectedList.toString(), actualList.toString());
         return StepResult.success("validated " + array1 + "=" + array2 + " as EXPECTED");
+    }
+
+    /** assert that {@code array} contains all items in {@code expected}. */
+    public StepResult assertArrayContain(String array, String expected) {
+        requiresNotBlank(array, "array is blank", array);
+        requiresNotBlank(expected, "expected is blank", expected);
+
+        // null corner case
+        String nullValue = context.getNullValueToken();
+        if (areBothArraysNull(array, expected, nullValue)) {
+            return StepResult.success("validated " + StringUtils.defaultString(array, nullValue) +
+                                      " contain " + StringUtils.defaultString(expected, nullValue));
+        }
+
+        String delim = context.getTextDelim();
+
+        List<String> list = TextUtils.toList(array, delim, false);
+        if (CollectionUtils.isEmpty(list)) { CheckUtils.fail("'array' cannot be parsed: " + array); }
+
+        List<String> expectedList = TextUtils.toList(expected, delim, false)
+                                             .stream()
+                                             .distinct()
+                                             .collect(Collectors.toList());
+
+        if (CollectionUtils.isEmpty(expectedList)) { CheckUtils.fail("'expected' cannot be parsed: " + expected); }
+
+        // all all items in `expectedList` is removed due to match against `list`, then all items in `expected` matched
+        if (expectedList.removeIf(list::contains) && expectedList.isEmpty()) {
+            return StepResult.success("All items in 'expected' are found in 'array'");
+        }
+
+        return StepResult.fail("Not all items in 'expected' are found in 'array': " + expectedList);
+    }
+
+    /** assert that {@code array} DOES NOT contains any items in {@code expected}. */
+    public StepResult assertArrayNotContain(String array, String unexpected) {
+        requiresNotBlank(array, "array is blank", array);
+        requiresNotBlank(unexpected, "unexpected is blank", unexpected);
+
+        // null corner case
+        String nullValue = context.getNullValueToken();
+        if (areBothArraysNull(array, unexpected, nullValue)) {
+            return StepResult.fail("Both 'array' and 'unexpected' are NULL");
+        }
+
+        String delim = context.getTextDelim();
+
+        List<String> list = TextUtils.toList(array, delim, false);
+        if (CollectionUtils.isEmpty(list)) { CheckUtils.fail("'array' cannot be parsed: " + array); }
+
+        List<String> unexpectedList = TextUtils.toList(unexpected, delim, false)
+                                               .stream()
+                                               .distinct()
+                                               .collect(Collectors.toList());
+        if (CollectionUtils.isEmpty(unexpectedList)) { CheckUtils.fail("'unexpected' cannot be parsed: " + unexpected);}
+
+        // all all items in `expectedList` is removed due to match against `list`, then all items in `expected` matched
+        if (unexpectedList.removeIf(item -> !list.contains(item)) && unexpectedList.isEmpty()) {
+            return StepResult.success("All items in 'unexpected' are NOT found in 'array'");
+        }
+
+        return StepResult.fail("One or more items in 'unexpected' are found in 'array': " + unexpectedList);
     }
 
     public StepResult assertVarPresent(String var) {
@@ -515,8 +575,6 @@ public class BaseCommand implements NexialCommand {
         waitFor(NumberUtils.toInt(waitMs));
         return StepResult.success();
     }
-
-    // todo: repeatForList(String varList, String maxWaitMs)
 
     public StepResult repeatUntil(String steps, String maxWaitMs) {
         requiresPositiveNumber(steps, "Invalid step count", steps);
@@ -634,6 +692,31 @@ public class BaseCommand implements NexialCommand {
 
         requires(NumberUtils.isCreatable(something), "invalid " + label, something);
         return NumberUtils.toDouble((isNegative ? "-" : "") + something);
+    }
+
+    public void addLinkRef(String message, String label, String link) {
+        if (StringUtils.isBlank(link)) { return; }
+
+        if (context.isOutputToCloud()) {
+            try {
+                link = context.getOtc().importMedia(new File(link));
+            } catch (IOException e) {
+                log("Unable to save " + link + " to cloud storage due to " + e.getMessage());
+            }
+        }
+
+        if (context != null && context.getLogger() != null) {
+            TestStep testStep = context.getCurrentTestStep();
+            if (testStep != null && testStep.getWorksheet() != null) {
+                // test step undefined could mean that we are in interactive mode, or we are running unit testing
+                context.setData(OPT_LAST_OUTCOME, link);
+                testStep.addNestedScreenCapture(link, message, label);
+            }
+        }
+    }
+
+    protected static boolean areBothArraysNull(String array1, String array2, String nullValue) {
+        return StringUtils.equals(array1, nullValue) && StringUtils.equals(array2, nullValue);
     }
 
     /**
@@ -1014,27 +1097,6 @@ public class BaseCommand implements NexialCommand {
     protected void log(String message) {
         if (StringUtils.isBlank(message)) { return; }
         if (context != null && context.getLogger() != null) { context.getLogger().log(this, message); }
-    }
-
-    public void addLinkRef(String message, String label, String link) {
-        if (StringUtils.isBlank(link)) { return; }
-
-        if (context.isOutputToCloud()) {
-                try {
-                    link = context.getOtc().importMedia(new File(link));
-                } catch (IOException e) {
-                    log("Unable to save " + link + " to cloud storage due to " + e.getMessage());
-                }
-        }
-
-        if (context != null && context.getLogger() != null) {
-            TestStep testStep = context.getCurrentTestStep();
-            if (testStep != null && testStep.getWorksheet() != null) {
-                // test step undefined could mean that we are in interactive mode, or we are running unit testing
-                context.setData(OPT_LAST_OUTCOME, link);
-                testStep.addNestedScreenCapture(link, message, label);
-            }
-        }
     }
 
     // protected void addLinkToOutputFile(File outputFile, String label, String linkCaption) {
