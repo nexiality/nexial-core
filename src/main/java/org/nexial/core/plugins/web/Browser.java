@@ -148,6 +148,9 @@ public class Browser implements ForcefulTerminate {
         }
     };
 
+    protected boolean isBrowserStackLocalRunning;
+    protected String browserStackLocalExeName;
+
     public void setContext(ExecutionContext context) { this.context = context; }
 
     public void setChromeOptions(List<String> chromeOptions) { this.chromeOptions = chromeOptions; }
@@ -407,9 +410,13 @@ public class Browser implements ForcefulTerminate {
         clearWinHandles();
         driver = null;
 
-        if (context != null ) {
+        if (context != null) {
             CanTakeScreenshot agent = context.findCurrentScreenshotAgent();
             if (agent instanceof WebCommand) { context.clearScreenshotAgent(); }
+        }
+
+        if (isBrowserStackLocalRunning) {
+            RuntimeUtils.terminateInstance(browserStackLocalExeName);
         }
     }
 
@@ -938,6 +945,69 @@ public class Browser implements ForcefulTerminate {
 
         handleBrowserStackLocal(capabilities, bsConfig);
 
+        handleBrowserStackOS(capabilities, bsConfig);
+
+        // browser setting
+        String browserName = bsConfig.containsKey("browser") ?
+                             bsConfig.remove("browser") : context.getStringData(KEY_BROWSER);
+        if (StringUtils.equals(browserName, "iPad") ||
+            StringUtils.equals(browserName, "iPhone") ||
+            StringUtils.equals(browserName, "android")) {
+            setCapability(capabilities, "browserName", browserName);
+        } else {
+            setCapability(capabilities, "browserName", StringUtils.lowerCase(browserName));
+            setCapability(capabilities, "browser", StringUtils.length(browserName) < 3 ?
+                                                   StringUtils.upperCase(browserName) :
+                                                   WordUtils.capitalize(browserName));
+            setCapability(capabilities, "browser_version", bsConfig.containsKey("browser_version") ?
+                                                           bsConfig.remove("browser_version") :
+                                                           context.getStringData(KEY_BROWSER_VER));
+        }
+
+        setCapability(capabilities, "browserstack.debug", bsConfig.containsKey("debug") ?
+                                                          BooleanUtils.toBoolean(bsConfig.remove("debug")) :
+                                                          context.getBooleanData(KEY_DEBUG, DEF_DEBUG));
+
+        // project settings
+        setCapability(capabilities, "build", bsConfig.containsKey("build") ?
+                                             bsConfig.remove("build") :
+                                             context.getStringData(KEY_BUILD_NUM));
+
+        if (context.hasData(KEY_CAPTURE_CRASH)) {
+            setCapability(capabilities, "browserstack.captureCrash", context.getBooleanData(KEY_CAPTURE_CRASH));
+        }
+
+        ExecutionDefinition execDef = context.getExecDef();
+        if (execDef != null) {
+            if (execDef.getProject() != null && StringUtils.isNotBlank(execDef.getProject().getName())) {
+                setCapability(capabilities, "project", execDef.getProject().getName());
+            }
+
+            if (StringUtils.isNotBlank(execDef.getTestScript())) {
+                String scriptName = StringUtils.substringAfterLast(
+                    StringUtils.replace(execDef.getTestScript(), "\\", "/"), "/");
+                setCapability(capabilities, "name", scriptName);
+            }
+        }
+
+        // remaining configs specific to browserstack
+        bsConfig.forEach((key, value) -> {
+            // might be just `key`, might be browserstack.`key`... can't known for sure so we do both
+            setCapability(capabilities, key, value);
+            setCapability(capabilities, "browserstack." + key, value);
+        });
+
+        try {
+            RemoteWebDriver driver =
+                new RemoteWebDriver(new URL(BASE_PROTOCOL + username + ":" + automateKey + BASE_URL), capabilities);
+            postInit(driver);
+            return driver;
+        } catch (MalformedURLException | WebDriverException e) {
+            throw new RuntimeException("Unable to initialize BrowserStack session: " + e.getMessage(), e);
+        }
+    }
+
+    private void handleBrowserStackOS(MutableCapabilities capabilities, Map<String, String> bsConfig) {
         String resolution = bsConfig.containsKey("resolution") ?
                             bsConfig.remove("resolution") :
                             context.getStringData(KEY_RESOLUTION);
@@ -999,6 +1069,7 @@ public class Browser implements ForcefulTerminate {
                     setCapability(capabilities, "os_version", "2008");
                 }
             }
+
             if (IS_OS_MAC_OSX) {
                 setCapability(capabilities, "os", "OS X");
                 setCapability(capabilities, "platform", "MAC");
@@ -1011,61 +1082,6 @@ public class Browser implements ForcefulTerminate {
             }
 
             setCapability(capabilities, "resolution", resolution);
-        }
-
-        // browser setting
-        String browserName = bsConfig.containsKey("browser") ?
-                             bsConfig.remove("browser") : context.getStringData(KEY_BROWSER);
-        if (StringUtils.equals(browserName, "iPad") ||
-            StringUtils.equals(browserName, "iPhone") ||
-            StringUtils.equals(browserName, "android")) {
-            setCapability(capabilities, "browserName", browserName);
-        } else {
-            setCapability(capabilities, "browserName", StringUtils.lowerCase(browserName));
-            setCapability(capabilities, "browser", StringUtils.length(browserName) < 3 ?
-                                                   StringUtils.upperCase(browserName) :
-                                                   WordUtils.capitalize(browserName));
-            setCapability(capabilities, "browser_version", bsConfig.containsKey("browser_version") ?
-                                                           bsConfig.remove("browser_version") :
-                                                           context.getStringData(KEY_BROWSER_VER));
-        }
-
-        setCapability(capabilities, "browserstack.debug", bsConfig.containsKey("debug") ?
-                                                          BooleanUtils.toBoolean(bsConfig.remove("debug")) :
-                                                          context.getBooleanData(KEY_DEBUG, DEF_DEBUG));
-
-        // project settings
-        setCapability(capabilities, "build", bsConfig.containsKey("build") ?
-                                             bsConfig.remove("build") :
-                                             context.getStringData(KEY_BUILD_NUM));
-
-        if (context.hasData(KEY_CAPTURE_CRASH)) {
-            setCapability(capabilities, "browserstack.captureCrash", context.getBooleanData(KEY_CAPTURE_CRASH));
-        }
-
-        ExecutionDefinition execDef = context.getExecDef();
-        if (execDef != null) {
-            if (execDef.getProject() != null && StringUtils.isNotBlank(execDef.getProject().getName())) {
-                setCapability(capabilities, "project", execDef.getProject().getName());
-            }
-
-            if (StringUtils.isNotBlank(execDef.getTestScript())) {
-                String scriptName = StringUtils.substringAfterLast(
-                    StringUtils.replace(execDef.getTestScript(), "\\", "/"), "/");
-                setCapability(capabilities, "name", scriptName);
-            }
-        }
-
-        // remaining configs specific to browserstack
-        bsConfig.forEach((key, value) -> setCapability(capabilities, "browserstack." + key, value));
-
-        try {
-            RemoteWebDriver driver =
-                new RemoteWebDriver(new URL(BASE_PROTOCOL + username + ":" + automateKey + BASE_URL), capabilities);
-            postInit(driver);
-            return driver;
-        } catch (MalformedURLException | WebDriverException e) {
-            throw new RuntimeException("Unable to initialize BrowserStack session: " + e.getMessage(), e);
         }
     }
 
@@ -1088,12 +1104,15 @@ public class Browser implements ForcefulTerminate {
 
                 String browserstacklocal = helper.config.getBaseName();
 
-                ConsoleUtils.log("terminating any running instances of " + browserstacklocal + "...");
                 RuntimeUtils.terminateInstance(browserstacklocal);
 
+                // start browserstack local, but wait (3s) for it to start up completely.
                 ConsoleUtils.log("starting new instance of " + browserstacklocal + "...");
-                RuntimeUtils.runApp(driver.getParent(), driver.getName(), Arrays.asList("--key", automateKey));
-            } catch (IOException e) {
+                RuntimeUtils.runAppNoWait(driver.getParent(), driver.getName(), Arrays.asList("--key", automateKey));
+                Thread.sleep(3000);
+                isBrowserStackLocalRunning = true;
+                browserStackLocalExeName = driver.getName();
+            } catch (IOException | InterruptedException e) {
                 throw new RuntimeException("unable to start BrowserStackLocal: " + e.getMessage(), e);
             }
         }

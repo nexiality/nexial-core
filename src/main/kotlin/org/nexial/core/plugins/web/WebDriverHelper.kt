@@ -229,7 +229,7 @@ abstract class WebDriverHelper protected constructor(protected var context: Exec
         @Throws(IOException::class)
         fun newInstance(browserType: BrowserType, context: ExecutionContext): WebDriverHelper {
             // sanity check
-            if (browserType == safari || browserType == browserstack || browserType == iphone) {
+            if (browserType == safari || browserType == iphone) {
                 throw IllegalArgumentException("No WebDriverHelper implementation needed/available for $browserType")
             }
 
@@ -515,7 +515,8 @@ class ElectronDriverHelper(context: ExecutionContext) : WebDriverHelper(context)
             }
 
             manifest.driverUrl =
-                JSONPath.find(driverContentJson, "assets[name=${config.baseName}-$tag-$env-$arch.zip].browser_download_url")
+                JSONPath
+                    .find(driverContentJson, "assets[name=${config.baseName}-$tag-$env-$arch.zip].browser_download_url")
         }
 
         return manifest
@@ -592,7 +593,7 @@ class IEDriverHelper(context: ExecutionContext) : WebDriverHelper(context) {
         }
         manifest.init()
 
-        val hasDriver = isFileReadable(driverLocation, DRIVER_MIN_SIZE)
+        val hasDriver = FileUtil.isFileReadable(driverLocation, DRIVER_MIN_SIZE)
 
         // never check is turned on and we already have a driver, so just keep this one
         if (manifest.neverCheck && hasDriver) return manifest
@@ -665,20 +666,28 @@ class BrowserStackLocalHelper(context: ExecutionContext) : WebDriverHelper(conte
         manifest.init()
 
         val hasDriver = FileUtil.isFileReadable(driverLocation, WebDriverHelper.DRIVER_MIN_SIZE)
-        if (!hasDriver || pollForUpdates) {
-            val env = when {
-                IS_OS_WINDOWS -> "win32"
-                IS_OS_LINUX   -> "linux-x64"
-                IS_OS_MAC     -> "darwin-x64"
-                else          -> throw IllegalArgumentException("OS $OS_NAME not supported for $browserType")
-            }
 
-            val downloadUrl = "${config.checkUrlBase}/${config.baseName}-$env.zip"
-            ConsoleUtils.log("[BrowserStackLocal] derived download URL as $downloadUrl")
+        // never check is turned on and we already have a driver, so just keep this one
+        if (manifest.neverCheck && hasDriver) return manifest
 
-            manifest.driverUrl = downloadUrl
-            manifest.lastChecked = System.currentTimeMillis()
+        if (pollForUpdates && manifest.lastChecked + config.checkFrequency > System.currentTimeMillis()) {
+            // we still have time.. no need to check now
+            return manifest
         }
+        // else, need to check online, poll online for newer driver
+
+        val env = when {
+            IS_OS_WINDOWS -> "win32"
+            IS_OS_LINUX   -> "linux-x64"
+            IS_OS_MAC     -> "darwin-x64"
+            else          -> throw IllegalArgumentException("OS $OS_NAME not supported for $browserType")
+        }
+
+        val downloadUrl = "${config.checkUrlBase}/${config.baseName}-$env.zip"
+        ConsoleUtils.log("[BrowserStackLocal] derived download URL as $downloadUrl")
+
+        manifest.driverUrl = downloadUrl
+        manifest.lastChecked = System.currentTimeMillis()
 
         return manifest
     }

@@ -56,13 +56,13 @@ public class RuntimeUtilsManualTest {
     }
 
     @Test
-    public void runApp() throws Throwable {
+    public void runAppNoWait() throws Throwable {
         // create dummy file to be used for `tail`
         FileUtils.writeStringToFile(tempFile1, RandomStringUtils.randomAlphanumeric(50), DEF_FILE_ENCODING);
 
-        RuntimeUtils.runApp("/usr/bin", "tail", Arrays.asList("-f", tempFile1.getAbsolutePath()), null);
-        RuntimeUtils.runApp("/usr/bin", "tail", Arrays.asList("-f", tempFile1.getAbsolutePath()), null);
-        RuntimeUtils.runApp("/usr/bin", "tail", Arrays.asList("-f", tempFile1.getAbsolutePath()), null);
+        RuntimeUtils.runAppNoWait("/usr/bin", "tail", Arrays.asList("-f", tempFile1.getAbsolutePath()), null);
+        RuntimeUtils.runAppNoWait("/usr/bin", "tail", Arrays.asList("-f", tempFile1.getAbsolutePath()), null);
+        RuntimeUtils.runAppNoWait("/usr/bin", "tail", Arrays.asList("-f", tempFile1.getAbsolutePath()), null);
 
         scan_and_kill();
     }

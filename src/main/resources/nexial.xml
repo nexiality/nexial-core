@@ -570,7 +570,7 @@
         <entry key="browserstack">
             <value><![CDATA[
             {
-                "home": "${user.home}/.nexial/browserstacklocal",
+                "home": "${user.home}/.nexial/browserstack",
                 "baseName": "BrowserStackLocal",
                 "checkFrequency": 2592000000,
                 "checkFrequencyDescription": "Every 1 month",

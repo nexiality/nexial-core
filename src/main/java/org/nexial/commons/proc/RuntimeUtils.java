@@ -66,6 +66,17 @@ public final class RuntimeUtils {
         return false;
     }
 
+    public static void runAppNoWait(String exePath, String exeName, List<String> args) throws IOException {
+        runAppNoWait(exePath, exeName, args, new HashMap<>());
+    }
+
+    public static void runAppNoWait(String exePath, String exeName, List<String> args, Map<String, String> env)
+        throws IOException {
+        if (StringUtils.isBlank(exePath)) { return; }
+        if (StringUtils.isBlank(exeName)) { return; }
+        ProcessInvoker.invokeNoWait(exePath + separator + exeName, args, env);
+    }
+
     public static void runApp(String exePath, String exeName, List<String> args) throws IOException {
         runApp(exePath, exeName, args, new HashMap<>());
     }
@@ -74,7 +85,15 @@ public final class RuntimeUtils {
         throws IOException {
         if (StringUtils.isBlank(exePath)) { return; }
         if (StringUtils.isBlank(exeName)) { return; }
-        ProcessInvoker.invokeNoWait(exePath + separator + exeName, args, env);
+
+        String fullpath = exePath + separator + exeName;
+        try {
+            ProcessOutcome outcome = ProcessInvoker.invoke(fullpath, args, env);
+            // System.out.println("outcome = " + outcome);
+            // System.out.println(outcome.getExitStatus());
+        } catch (InterruptedException e) {
+            throw new IOException("Unable to start " + fullpath + ": " + e.getMessage(), e);
+        }
     }
 
     protected static List<Integer> findRunningInstancesOnNIX(String prog) {
