@@ -741,8 +741,8 @@ public final class NexialConst {
         public static final String LOG_CHROME_DRIVER = BROWSER + ".logChrome";
         public static final boolean DEF_LOG_CHROME_DRIVER = false;
 
-        public static final String BROWSER_ACCEPT_INVALID_CERTS = BROWSER + "acceptInsecureCerts";
-        public static final boolean DEF_BROWSER_ACCEPT_INVALID_CERTS = true;
+        public static final String BROWSER_ACCEPT_INVALID_CERTS = BROWSER + ".acceptInsecureCerts";
+        public static final boolean DEF_BROWSER_ACCEPT_INVALID_CERTS = false;
 
         // desktop
         public static final String WINIUM_EXE = "Winium.Desktop.Driver.exe";
