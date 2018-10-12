@@ -57,7 +57,7 @@ public class JsonCommandTest {
     }
 
     @Test
-    public void testAssertElementPresent() {
+    public void assertElementPresent() {
         JsonCommand fixture = new JsonCommand();
         fixture.init(context);
 
@@ -133,7 +133,7 @@ public class JsonCommandTest {
     }
 
     @Test
-    public void testFind() {
+    public void find() {
         JsonCommand fixture = new JsonCommand();
         fixture.init(context);
 
@@ -214,7 +214,7 @@ public class JsonCommandTest {
     }
 
     @Test
-    public void testCount() {
+    public void count() {
         JsonCommand fixture = new JsonCommand();
         fixture.init(context);
 
@@ -253,7 +253,7 @@ public class JsonCommandTest {
     }
 
     @Test
-    public void testCount_Array() {
+    public void count_Array() {
         JsonCommand fixture = new JsonCommand();
         fixture.init(context);
 
@@ -272,7 +272,7 @@ public class JsonCommandTest {
     }
 
     @Test
-    public void testWellform() {
+    public void wellform() {
         JsonCommand fixture = new JsonCommand();
         fixture.init(context);
 
@@ -304,7 +304,7 @@ public class JsonCommandTest {
     }
 
     @Test
-    public void testNotWellform() {
+    public void notWellform() {
         JsonCommand fixture = new JsonCommand();
         fixture.init(context);
 
@@ -346,7 +346,7 @@ public class JsonCommandTest {
     }
 
     @Test
-    public void testCorrectness() {
+    public void correctness() {
         JsonCommand fixture = new JsonCommand();
         fixture.init(context);
 
@@ -390,7 +390,7 @@ public class JsonCommandTest {
     }
 
     @Test
-    public void testCorrectness2() {
+    public void correctness2() {
         JsonCommand fixture = new JsonCommand();
         fixture.init(context);
 
@@ -433,7 +433,7 @@ public class JsonCommandTest {
     }
 
     @Test
-    public void testCorrectness3() {
+    public void correctness3() {
         JsonCommand fixture = new JsonCommand();
         fixture.init(context);
 
@@ -483,7 +483,7 @@ public class JsonCommandTest {
     }
 
     @Test
-    public void testToJsonObject() {
+    public void toJsonObject() {
         String fixture =
             "{" +
             "   \"timestamp\":\"2017-09-25T19:23:24.419-07:00\"," +
@@ -505,7 +505,7 @@ public class JsonCommandTest {
     }
 
     @Test
-    public void testToJsonObject2() {
+    public void toJsonObject2() {
         String fixture =
             "{" +
             "   \"timestamp\":\"2017-09-25T19:23:24.419-07:00\"," +
@@ -643,4 +643,36 @@ public class JsonCommandTest {
                                           "Big Boss Man"),
                             array.get(3).getAsJsonArray().toString());
     }
+
+    @Test
+    public void assertValue_or_Values() throws Exception {
+        context.setData("jobParameters", "[]");
+        JsonCommand fixture = new JsonCommand();
+        fixture.init(context);
+
+        String json = "{ " +
+                      " \"response\": { " +
+                      "     \"jobParameters\": [    \t \t \n \n \t   ] " +
+                      " } " +
+                      "}";
+
+        System.out.println("data = " + fixture.find(json, "response.jobParameters"));
+        System.out.println("data = " + fixture.find(json, "response.jobParameters[]"));
+
+        Assert.assertTrue(fixture.assertValue(json, "response.jobParameters", null).isSuccess());
+
+        Assert.assertTrue(fixture.assertValues(json, "response.jobParameters", "[]", "false").isSuccess());
+        Assert.assertTrue(fixture.assertValues(json, "response.jobParameters", "(null)", "false").isSuccess());
+        Assert.assertTrue(fixture.assertValues(json, "response.jobParameters", "", "false").isSuccess());
+        Assert.assertTrue(fixture.assertValues(json, "response.jobParameters", null, "false").isSuccess());
+        Assert.assertTrue(fixture.assertValues(json,
+                                               "response.jobParameters",
+                                               context.replaceTokens("[TEXT(${jobParameters}) => removeRegex(\\[\\])]"),
+                                               "false")
+                                 .isSuccess());
+
+        Assert.assertTrue(fixture.assertElementCount(json, "response.jobParameters", "0").isSuccess());
+        Assert.assertTrue(fixture.assertElementCount(json, "response.jobParameters[]", "0").isSuccess());
+    }
+
 }

@@ -653,6 +653,10 @@ public class ExecutionContext {
 
     public boolean isNullValue(String value) { return StringUtils.equals(value, getNullValueToken()); }
 
+    public boolean isEmptyValue(String value) {
+        return StringUtils.equals(value, "") || StringUtils.equals(value, EMPTY);
+    }
+
     public String replaceTokens(String text) {
         if (StringUtils.isBlank(text)) { return text; }
         if (StringUtils.equals(text, getNullValueToken())) { return null; }

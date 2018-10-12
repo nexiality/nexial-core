@@ -172,7 +172,15 @@ public class JsonCommand extends BaseCommand {
         actual = StringUtils.removeStart(actual, "[");
         actual = StringUtils.removeEnd(actual, "]");
         actual = StringUtils.remove(actual, "\"");
-        return assertArrayEqual(array, actual, exactOrder);
+
+        String expected = array;
+        if (!context.isNullValue(array)) {
+            expected = StringUtils.removeStart(array, "[");
+            expected = StringUtils.removeEnd(expected, "]");
+            expected = StringUtils.remove(expected, "\"");
+        }
+
+        return assertArrayEqual(expected, actual, exactOrder);
     }
 
     public StepResult assertCorrectness(String json, String schema) {

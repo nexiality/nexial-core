@@ -378,11 +378,9 @@ public class BaseCommand implements NexialCommand {
     }
 
     public StepResult assertEqual(String expected, String actual) {
+        assertEquals(context.isNullValue(expected) ? null : expected, context.isNullValue(actual) ? null : actual);
+
         String nullValue = context.getNullValueToken();
-
-        assertEquals(StringUtils.equals(expected, nullValue) ? null : expected,
-                     StringUtils.equals(actual, nullValue) ? null : actual);
-
         return StepResult.success("validated " + StringUtils.defaultString(expected, nullValue) + " = " +
                                   StringUtils.defaultString(actual, nullValue));
     }
@@ -451,14 +449,13 @@ public class BaseCommand implements NexialCommand {
     }
 
     public StepResult assertArrayEqual(String array1, String array2, String exactOrder) {
-        requires(StringUtils.isNotEmpty(array1), "first array is empty", array1);
-        requires(StringUtils.isNotEmpty(array2), "second array is empty", array2);
+        // requires(StringUtils.isNotEmpty(array1), "first array is empty", array1);
+        // requires(StringUtils.isNotEmpty(array2), "second array is empty", array2);
         requires(StringUtils.isNotEmpty(exactOrder), "invalid value for exactOrder", exactOrder);
 
-        String nullValue = context.getNullValueToken();
-
         // null corner case
-        if (areBothArraysNull(array1, array2, nullValue)) {
+        if (areBothEmpty(array1, array2)) {
+            String nullValue = context.getNullValueToken();
             return StepResult.success("validated " + StringUtils.defaultString(array1, nullValue) + "=" +
                                       StringUtils.defaultString(array2, nullValue));
         }
@@ -485,8 +482,8 @@ public class BaseCommand implements NexialCommand {
         requiresNotBlank(expected, "expected is blank", expected);
 
         // null corner case
-        String nullValue = context.getNullValueToken();
-        if (areBothArraysNull(array, expected, nullValue)) {
+        if (areBothEmpty(array, expected)) {
+            String nullValue = context.getNullValueToken();
             return StepResult.success("validated " + StringUtils.defaultString(array, nullValue) +
                                       " contain " + StringUtils.defaultString(expected, nullValue));
         }
@@ -517,10 +514,7 @@ public class BaseCommand implements NexialCommand {
         requiresNotBlank(unexpected, "unexpected is blank", unexpected);
 
         // null corner case
-        String nullValue = context.getNullValueToken();
-        if (areBothArraysNull(array, unexpected, nullValue)) {
-            return StepResult.fail("Both 'array' and 'unexpected' are NULL");
-        }
+        if (areBothEmpty(array, unexpected)) { return StepResult.fail("Both 'array' and 'unexpected' are NULL"); }
 
         String delim = context.getTextDelim();
 
@@ -715,8 +709,9 @@ public class BaseCommand implements NexialCommand {
         }
     }
 
-    protected static boolean areBothArraysNull(String array1, String array2, String nullValue) {
-        return StringUtils.equals(array1, nullValue) && StringUtils.equals(array2, nullValue);
+    protected boolean areBothEmpty(String value1, String value2) {
+        return (StringUtils.isEmpty(value1) || context.isNullValue(value1) || context.isEmptyValue(value1)) &&
+               (StringUtils.isEmpty(value2) || context.isNullValue(value2) || context.isEmptyValue(value2));
     }
 
     /**
