@@ -724,6 +724,9 @@ public class Browser implements ForcefulTerminate {
         capabilities.setCapability(SUPPORTS_WEB_STORAGE, true);
         capabilities.setCapability(SUPPORTS_ALERTS, true);
         capabilities.setCapability(ACCEPT_SSL_CERTS, true);
+        if (context.getBooleanData(BROWSER_ACCEPT_INVALID_CERTS, DEF_BROWSER_ACCEPT_INVALID_CERTS)) {
+            capabilities.setCapability(ACCEPT_INSECURE_CERTS, true);
+        }
 
         // Determines whether the driver should attempt to remove obsolete elements from the element cache
         // on page navigation (true by default). This is to help manage the IE driver's memory footprint,
@@ -911,7 +914,9 @@ public class Browser implements ForcefulTerminate {
 
             boolean ignoreAlert = BooleanUtils.toBoolean(context.getBooleanData(OPT_ALERT_IGNORE_FLAG));
             options.setUnhandledPromptBehaviour(ignoreAlert ? IGNORE : ACCEPT);
-            options.setAcceptInsecureCerts(true);
+            if (context.getBooleanData(BROWSER_ACCEPT_INVALID_CERTS, DEF_BROWSER_ACCEPT_INVALID_CERTS)) {
+                options.setAcceptInsecureCerts(true);
+            }
             options.setPageLoadStrategy(EAGER);
             options.setLogLevel(ERROR);
 
@@ -1135,6 +1140,9 @@ public class Browser implements ForcefulTerminate {
         capabilities.setCapability(HAS_NATIVE_EVENTS, true);
         capabilities.setCapability(SUPPORTS_LOCATION_CONTEXT, false);
         capabilities.setCapability(ACCEPT_SSL_CERTS, true);
+        if (context.getBooleanData(BROWSER_ACCEPT_INVALID_CERTS, DEF_BROWSER_ACCEPT_INVALID_CERTS)) {
+            capabilities.setCapability(ACCEPT_INSECURE_CERTS, true);
+        }
 
         // --------------------------------------------------------------------
         // Proxy
