@@ -51,6 +51,7 @@ public final class NexialConst {
     // default values
     public static final String DATE_FORMAT_NOW = "yyyy-MM-dd-HH-mm-ss.S";
     public static final String COOKIE_DATE_FORMAT = "EEE, dd MMM yyyy HH:mm:ss ZZZ";
+    public static final String COOKIE_DATE_FORMAT2 = "EEE, dd-MMM-yyyy HH:mm:ss ZZZ";
     public static final DateFormat DF_TIMESTAMP = new SimpleDateFormat("yyyyMMdd_HHmmss");
     public static final String STD_DATE_FORMAT = "MM/dd/yyyy HH:mm:ss";
     public static final String STD_JUST_DATE_FORMAT = "MM/dd/yyyy";

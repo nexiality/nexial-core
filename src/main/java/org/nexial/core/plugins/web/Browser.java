@@ -151,6 +151,8 @@ public class Browser implements ForcefulTerminate {
     protected boolean isBrowserStackLocalRunning;
     protected String browserStackLocalExeName;
 
+    protected boolean isMobile;
+
     public void setContext(ExecutionContext context) { this.context = context; }
 
     public void setChromeOptions(List<String> chromeOptions) { this.chromeOptions = chromeOptions; }
@@ -192,6 +194,8 @@ public class Browser implements ForcefulTerminate {
     public boolean isRunSafari() { return browserType == safari; }
 
     public boolean isRunBrowserStack() { return browserType == browserstack; }
+
+    public boolean isMobile() { return isMobile; }
 
     public BrowserType getBrowserType() { return browserType; }
 
@@ -1006,6 +1010,7 @@ public class Browser implements ForcefulTerminate {
             RemoteWebDriver driver =
                 new RemoteWebDriver(new URL(BASE_PROTOCOL + username + ":" + automateKey + BASE_URL), capabilities);
             postInit(driver);
+            pageSourceSupported = false;
             return driver;
         } catch (MalformedURLException | WebDriverException e) {
             throw new RuntimeException("Unable to initialize BrowserStack session: " + e.getMessage(), e);
@@ -1024,6 +1029,8 @@ public class Browser implements ForcefulTerminate {
         String targetOsVer = bsConfig.containsKey("os_version") ?
                              bsConfig.remove("os_version") :
                              context.getStringData(KEY_OS_VER);
+        boolean realMobile = BooleanUtils.toBoolean(bsConfig.containsKey("browserstack.real_mobile") ?
+                                                    bsConfig.remove("browserstack.real_mobile") : "false");
 
         String bsCapsUrl = "Check https://www.browserstack.com/automate/capabilities for more details";
         String msgRequired = "'browserstack.device' is required for ";
@@ -1034,8 +1041,9 @@ public class Browser implements ForcefulTerminate {
 
             setCapability(capabilities, "platform", "ANDROID");
             setCapability(capabilities, "device", device);
-            setCapability(capabilities, "real_mobile", true);
+            setCapability(capabilities, "real_mobile", realMobile);
             setCapability(capabilities, "os_version", targetOsVer);
+            isMobile = realMobile;
 
         } else if (StringUtils.equalsIgnoreCase(targetOs, "IOS")) {
 
@@ -1043,8 +1051,9 @@ public class Browser implements ForcefulTerminate {
             if (StringUtils.isBlank(device)) { throw new RuntimeException(msgRequired + "'iOS'. " + bsCapsUrl); }
 
             setCapability(capabilities, "device", device);
-            setCapability(capabilities, "real_mobile", true);
+            setCapability(capabilities, "real_mobile", realMobile);
             setCapability(capabilities, "os_version", targetOsVer);
+            isMobile = realMobile;
 
         } else if (StringUtils.isNotBlank(targetOs) && StringUtils.isNotBlank(targetOsVer)) {
 

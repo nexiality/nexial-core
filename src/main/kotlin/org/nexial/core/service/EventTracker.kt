@@ -38,6 +38,8 @@ import java.util.*
 
 object EventTracker {
     private val eventFileDateFormat = SimpleDateFormat("yyyyMMdd_HHmmss_SSS")
+    private val enableUniversalTracking =
+        BooleanUtils.toBoolean(System.getProperty("nexial.universalTracking", "false"))
 
     fun getStorageLocation() = EventUtils.storageLocation
 
@@ -51,12 +53,14 @@ object EventTracker {
     fun track(env: NexialEnv) = write("env", env.json())
 
     private fun write(type: String, content: String) {
-        val file = File(storageLocation +
-                        RandomStringUtils.randomAlphabetic(10) + "." +
-                        eventFileDateFormat.format(Date()) + "." +
-                        type + postfix)
-        FileUtils.forceMkdirParent(file)
-        FileUtils.write(file, content, DEF_FILE_ENCODING)
+        if (enableUniversalTracking) {
+            val file = File(storageLocation +
+                            RandomStringUtils.randomAlphabetic(10) + "." +
+                            eventFileDateFormat.format(Date()) + "." +
+                            type + postfix)
+            FileUtils.forceMkdirParent(file)
+            FileUtils.write(file, content, DEF_FILE_ENCODING)
+        }
     }
 
     private fun trackEvents(event: NexialEvent) {
@@ -111,6 +115,5 @@ object EventUtils {
     internal const val postfix = ".json"
 
     init {
-//        println("storageLocation = $storageLocation")
     }
 }

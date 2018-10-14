@@ -31,6 +31,7 @@ import org.apache.http.impl.cookie.BasicClientCookie;
 import org.nexial.commons.utils.DateUtility;
 
 import static org.nexial.core.NexialConst.COOKIE_DATE_FORMAT;
+import static org.nexial.core.NexialConst.COOKIE_DATE_FORMAT2;
 
 public class Response implements Serializable {
     protected int returnCode;
@@ -119,7 +120,9 @@ public class Response implements Serializable {
                         break;
                     }
                     case "Expires": {
-                        cookie.setExpiryDate(new Date(DateUtility.formatTo(value, COOKIE_DATE_FORMAT)));
+                        long expiryDate = DateUtility.formatTo(value, COOKIE_DATE_FORMAT);
+                        if (expiryDate == -1) { expiryDate = DateUtility.formatTo(value, COOKIE_DATE_FORMAT2); }
+                        cookie.setExpiryDate(new Date(expiryDate));
                         break;
                     }
                     case "HttpOnly": {

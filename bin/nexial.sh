@@ -61,7 +61,7 @@ echo -n ${JAVA} \
     -XX:+UnlockExperimentalVMOptions -XX:+ExplicitGCInvokesConcurrent \
     -Dwebdriver.chrome.bin="`echo ${CHROME_BIN} | sed 's/\ /\\\ /g'`" \
     -Dwebdriver.firefox.bin="`echo ${FIREFOX_BIN} | sed 's/\ /\\\ /g'`" >> ${EXEC_SH}
-echo -n "${JAVA_OPT}" >> ${EXEC_SH}
+echo -n " ${JAVA_OPT}" >> ${EXEC_SH}
 echo -n " org.nexial.core.Nexial $*" >> ${EXEC_SH}
 
 #cat $EXEC_SH

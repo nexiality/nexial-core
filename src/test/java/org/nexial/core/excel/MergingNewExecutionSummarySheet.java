@@ -120,7 +120,7 @@ public class MergingNewExecutionSummarySheet {
 
         startRow += 1;
         createCell(summary, new ExcelAddress("B" + startRow), "user", EXEC_SUMM_DATA_NAME);
-        createCell(summary, new ExcelAddress("C" + startRow), "mliu@ep.com", EXEC_SUMM_DATA_VALUE);
+        createCell(summary, new ExcelAddress("C" + startRow), "nobody@nowhere.com", EXEC_SUMM_DATA_VALUE);
 
         startRow += 1;
         createCell(summary, new ExcelAddress("D" + startRow), "activity #1", EXEC_SUMM_ACTIVITY);

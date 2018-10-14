@@ -870,6 +870,8 @@ public class WebCommand extends BaseCommand implements CanTakeScreenshot, CanLog
         StepResult failed = notSupportedForElectron();
         if (failed != null) { return failed; }
 
+        if (browser.isMobile()) { return StepResult.skipped("maximizeWindow not supported for mobile device"); }
+
         String winHandle = browser.getCurrentWinHandle();
         Window window;
         if (StringUtils.isNotBlank(winHandle) && browser.getBrowserType().isSwitchWindowSupported()) {
