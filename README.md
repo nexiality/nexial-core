@@ -64,6 +64,7 @@ Nexial Automation is a free and open source project.  We appreciate any help any
 fixing bugs, improving documentation, suggesting new features, or collaboration via coding. Check out the 
 [contributing guide](.github/CONTRIBUTING.md) for more details.
 
+```html
 <div style="width:420px; vertical-align:middle; height:60px; background: rgba(250,250,230,0.45)">
     <img src="https://nexiality.github.io/documentation/image/browserstack/Browserstack-logo@2x.png"
         style="box-shadow:none; padding:10px 15px 10px; width:150px;" align="left"/>
@@ -71,5 +72,17 @@ fixing bugs, improving documentation, suggesting new features, or collaboration 
         Nexial Automation uses <a href="http://browserstack.com">BrowserStack</a> for compatibility and feature testing.
     </div>
 </div>
+```
 
 ---
+
+## [Code of Conduct](.github/CODE_OF_CONDUCT.md)
+
+Please note that by participating in this project you agree to abide by its terms as published in 
+[Contributor Code of Conduct](.github/CODE_OF_CONDUCT.md).
+
+---
+
+## [License][license]
+
+Nexial Automation is [licensed](LICENSE) under the Apache License, Version 2.0.
