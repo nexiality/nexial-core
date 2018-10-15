@@ -409,7 +409,8 @@ public final class NexialConst {
         iphone(false, false, false, false, true),
         browserstack(false, false, false, true, true),
         chromeembedded(false, false, true, true, true),
-        electron(false, false, true, false, true);
+        electron(false, false, true, false, true),
+        crossbrowsertesting(false, false, false, true, true);
 
         private boolean profileSupported;
         private boolean consoleLoggingEnabled;
@@ -494,8 +495,8 @@ public final class NexialConst {
     public static class BrowserStack {
         public static final String BASE_PROTOCOL = "http://";
         public static final String BASE_URL = "@hub.browserstack.com/wd/hub";
-        public static final boolean DEF_ENABLE_LOCAL = false;
         public static final boolean DEF_DEBUG = true;
+        public static final boolean DEF_ENABLE_LOCAL = false;
         private static final String NS = NAMESPACE + "browserstack.";
         public static final String KEY_USERNAME = NS + "username";
         public static final String KEY_AUTOMATEKEY = NS + "automatekey";
@@ -507,9 +508,53 @@ public final class NexialConst {
         public static final String KEY_ENABLE_LOCAL = NS + "enablelocal";
         public static final String KEY_OS = NS + "os";
         public static final String KEY_OS_VER = NS + "os.version";
+
         public static final String KEY_CAPTURE_CRASH = NS + "captureCrash";
 
         private BrowserStack() {}
+    }
+
+    public static class CrossBrowserTesting {
+        public static final String BASE_PROTOCOL = "http://";
+        public static final String BASE_URL = "@hub.crossbrowsertesting.com:80/wd/hub";
+
+        public static final String NS = "cbt.";
+
+        // https://help.crossbrowsertesting.com/selenium-testing/tutorials/crossbrowsertesting-automation-capabilities/
+        public static final String REFERENCE_URL =
+            "https://help.crossbrowsertesting.com/selenium-testing/tutorials/crossbrowsertesting-automation-capabilities/";
+
+        // credential
+        public static final String KEY_USERNAME = "username";
+        public static final String KEY_AUTHKEY = "authkey";
+
+        // project meta
+        public static final String KEY_NAME = "name";
+        public static final String KEY_BUILD = "build";
+        public static final String KEY_ENABLE_VIDEO = "record_video";
+        public static final boolean DEF_ENABLE_VIDEO = true;
+        public static final String KEY_RECORD_NETWORK = "record_network";
+        public static final boolean DEF_RECORD_NETWORK = false;
+        public static final String KEY_MAX_DURATION = "max_duration";
+        // https://help.crossbrowsertesting.com/selenium-testing/resources/list-of-timezones/
+        public static final String KEY_TZ = "timezone";
+
+        // browser
+        public static final String KEY_BROWSER = "browserName";
+        public static final String KEY_BROWSER_VER = "version";
+        public static final String KEY_RESOLUTION = "screenResolution";
+
+        // os/platform
+        public static final String KEY_PLATFORM = "platform";
+
+        // mobile
+        public static final String KEY_MOBILE_PLATFORM = "platformName";
+        public static final String KEY_MOBILE_PLATFORM_VER = "platformVersion";
+        public static final String KEY_DEVICE = "deviceName";
+        public static final String KEY_DEVICE_ORIENTATION = "deviceOrientation";
+        public static final String DEF_DEVICE_ORIENTATION = "portrait";
+
+        private CrossBrowserTesting() {}
     }
 
     public static final class Project {

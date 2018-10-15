@@ -1034,15 +1034,7 @@ public class WebCommand extends BaseCommand implements CanTakeScreenshot, CanLog
         // wait time removed since in a multi-window scenario, the last (main) window might no yet selected.
         //waitForBrowserStability(context.getPollWaitMs());
 
-        winId = StringUtils.defaultString(winId, "");
-        if (StringUtils.equals(winId, "null")) { winId = ""; }
-
-        if (StringUtils.isEmpty(winId)) {
-            String initialWinHandle = browser.getInitialWinHandle();
-            return trySelectWindow(StringUtils.isNotBlank(initialWinHandle) ? initialWinHandle : "#DEF#", waitMs);
-        } else {
-            return trySelectWindow(winId, waitMs);
-        }
+        return trySelectWindow(winId, waitMs);
     }
 
     public StepResult waitForPopUp(String winId, String waitMs) {
@@ -1287,7 +1279,18 @@ public class WebCommand extends BaseCommand implements CanTakeScreenshot, CanLog
             javascript = script;
         }
 
-        Object retVal = jsExecutor.executeScript(javascript);
+        Object retVal = null;
+        try {
+            retVal = jsExecutor.executeScript(javascript);
+        } catch (UnhandledAlertException e) {
+            if (browser.isRunSafari()) {
+                // it's ok.. safari's been known to barf at JS... let's try to move on...
+                ConsoleUtils.error("UnhandledAlertException when executing JavaScript with Safari, might be ok...");
+            } else {
+                throw e;
+            }
+        }
+
         if (retVal != null) { context.setData(var, retVal); }
 
         return StepResult.success("script executed");
@@ -1304,12 +1307,6 @@ public class WebCommand extends BaseCommand implements CanTakeScreenshot, CanLog
             return null;
         }
 
-        // short-circuit for firefox+alert
-        if (browser.isRunFireFox() && alert.isDialogPresent()) {
-            log("screen capture is not supported by firefox when Javascript alert dialog is present");
-            return null;
-        }
-
         // proceed... with caution (or not!)
         waitForBrowserStability(browserStabilityWaitMs);
 
@@ -1320,7 +1317,18 @@ public class WebCommand extends BaseCommand implements CanTakeScreenshot, CanLog
         }
         filename = context.getProject().getScreenCaptureDir() + separator + filename;
 
-        File screenshotFile = ScreenshotUtils.saveScreenshot(screenshot, filename);
+        File screenshotFile;
+        if (alert.isDialogPresent()) {
+            if (browser.isRunBrowserStack() || browser.isRunCrossBrowserTesting()) {
+                alert.dismiss();
+                screenshotFile = ScreenshotUtils.saveScreenshot(screenshot, filename);
+            } else {
+                screenshotFile = ScreenshotUtils.saveDesktopScreenshot(filename);
+            }
+        } else {
+            screenshotFile = ScreenshotUtils.saveScreenshot(screenshot, filename);
+        }
+
         if (screenshotFile == null) {
             ConsoleUtils.error("Unable to save screenshot for " + testStep);
             return null;
@@ -1725,16 +1733,17 @@ public class WebCommand extends BaseCommand implements CanTakeScreenshot, CanLog
             driver = driver.switchTo().defaultContent();
         }
 
-        String dummyWinId = "#DEF#";
+        String dummyId = "#DEF#";
+
+        if (StringUtils.equals(winId, "null")) { winId = ""; }
+        if (StringUtils.isEmpty(winId)) { winId = StringUtils.defaultIfBlank(browser.getInitialWinHandle(), dummyId); }
 
         do {
             try {
-                if (StringUtils.equals(winId, dummyWinId)) {
+                if (StringUtils.equals(winId, dummyId)) {
                     driver = driver.switchTo().defaultContent();
                 } else {
-                    driver = driver.switchTo().window(StringUtils.isNotBlank(winId) ?
-                                                      winId :
-                                                      browser.getInitialWinHandle());
+                    driver = driver.switchTo().window(winId);
                 }
                 rc = true;
                 break;
@@ -1743,7 +1752,7 @@ public class WebCommand extends BaseCommand implements CanTakeScreenshot, CanLog
             }
         } while (System.currentTimeMillis() < endTime);
 
-        String targetWinId = (StringUtils.equals(winId, dummyWinId) ? "default" : winId) + " window";
+        String targetWinId = (StringUtils.equals(winId, dummyId) ? "default" : winId) + " window";
         if (rc) {
             waitForBrowserStability(context.getPollWaitMs());
             return StepResult.success("selected " + targetWinId);
@@ -1932,7 +1941,7 @@ public class WebCommand extends BaseCommand implements CanTakeScreenshot, CanLog
 
         By by = locatorHelper.findBy(locator);
         WebElement target = shouldWait() ? waiter.until(driver -> driver.findElement(by)) : driver.findElement(by);
-        if (target != null && target.isDisplayed()) { highlight(target); }
+        if (isHighlightEnabled() && target != null && target.isDisplayed()) { highlight(target); }
         return target;
     }
 
@@ -1989,7 +1998,6 @@ public class WebCommand extends BaseCommand implements CanTakeScreenshot, CanLog
     protected List<String> getAllWindowNames() {
         if (driver == null) { return new ArrayList<>(); }
 
-        // ensureReady();
         browser.resyncWinHandles();
 
         List<String> windowNames = new ArrayList<>();
@@ -2024,11 +2032,11 @@ public class WebCommand extends BaseCommand implements CanTakeScreenshot, CanLog
     protected boolean waitForBrowserStability(long maxWait) {
         // for firefox we can't be calling driver.getPageSource() or driver.findElement() when alert dialog is present
         if (alert.preemptiveCheckAlert()) { return true; }
+        if (alert.isDialogPresent()) { return false; }
+        if (!context.isPageSourceStabilityEnforced()) { return false; }
 
         // force at least 1 compare
         if (maxWait < MIN_STABILITY_WAIT_MS) { maxWait = MIN_STABILITY_WAIT_MS + 1; }
-
-        if (!context.isPageSourceStabilityEnforced()) { return false; }
 
         // some browser might not support 'view-source'...
         boolean hasSource = browser.isPageSourceSupported();
@@ -2137,6 +2145,11 @@ public class WebCommand extends BaseCommand implements CanTakeScreenshot, CanLog
     protected boolean scrollTo(Locatable element) throws ElementNotVisibleException {
         Coordinates coordinates = element.getCoordinates();
         if (coordinates == null) { return false; }
+
+        if (browser.isRunSafari()) {
+            jsExecutor.executeScript("arguments[0].scrollIntoViewIfNeeded();", element);
+            return true;
+        }
 
         Point pagePosition = coordinates.onPage();
         // either we are already in view, or this is not suitable for scrolling (i.e. Window, Document, Html object)

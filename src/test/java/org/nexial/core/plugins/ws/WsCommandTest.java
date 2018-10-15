@@ -26,7 +26,6 @@ import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
-import org.nexial.core.model.ExecutionContext;
 import org.nexial.core.model.MockExecutionContext;
 import org.nexial.core.model.StepResult;
 import org.nexial.core.utils.JsonUtils;
@@ -39,16 +38,17 @@ import static org.apache.http.HttpHeaders.AUTHORIZATION;
 import static org.apache.http.HttpHeaders.CONTENT_TYPE;
 
 public class WsCommandTest {
-    ExecutionContext context = new MockExecutionContext();
+    private MockExecutionContext context;
     private String secret = "1234567890abcdefghijk";
 
     @Before
     public void init() {
+        context = new MockExecutionContext();
     }
 
     @After
     public void tearDown() {
-        if (context != null) { ((MockExecutionContext) context).cleanProject(); }
+        if (context != null) { context.cleanProject(); }
     }
 
     @Test
@@ -183,10 +183,10 @@ public class WsCommandTest {
         subject.init(context);
 
         StepResult result = subject.oauth("dummy", "https://oidc-dev.api.ep.com/oauth/token",
-                                            "client_id=5MrGaUmuplzAL08ZN87kMm89CdAlM3dz\n" +
-                                            "client_secret=SOmlVfTpvfaWbZLa\n" +
-                                            "scope=NotificationAPINotificationScope\n" +
-                                            "grant_type=client_credentials");
+                                          "client_id=5MrGaUmuplzAL08ZN87kMm89CdAlM3dz\n" +
+                                          "client_secret=SOmlVfTpvfaWbZLa\n" +
+                                          "scope=NotificationAPINotificationScope\n" +
+                                          "grant_type=client_credentials");
         System.out.println("result = " + result);
         Assert.assertNotNull(result);
         Assert.assertTrue(result.isSuccess());

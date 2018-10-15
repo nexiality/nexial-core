@@ -20,7 +20,6 @@ package org.nexial.core.plugins.image;
 import java.awt.image.*;
 import java.io.File;
 import java.io.IOException;
-
 import javax.imageio.ImageIO;
 
 import org.apache.commons.io.FileUtils;
@@ -30,9 +29,7 @@ import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
-
 import org.nexial.commons.utils.ResourceUtils;
-import org.nexial.core.model.ExecutionContext;
 import org.nexial.core.model.MockExecutionContext;
 import org.nexial.core.model.StepResult;
 
@@ -42,7 +39,7 @@ public class ImageCommandTest {
 	//private final String testResource = StringUtils.replace(this.getClass().getName(), ".", "/") + "/../";
 	private final String resourceBasePath = StringUtils.replace(this.getClass().getPackage().getName(), ".", "/");
 
-	private ExecutionContext context = new MockExecutionContext();
+	private MockExecutionContext context = new MockExecutionContext();
 
 	@Before
 	public void init() throws IOException {
@@ -52,7 +49,7 @@ public class ImageCommandTest {
 	@After
 	public void cleanup() {
 		FileUtils.deleteQuietly(new File(testDir));
-		if (context != null) { ((MockExecutionContext) context).cleanProject(); }
+		if (context != null) { context.cleanProject(); }
 	}
 
 	@Test

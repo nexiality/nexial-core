@@ -20,8 +20,6 @@ package org.nexial.core.plugins.web;
 import java.io.File;
 import java.io.IOException;
 import java.net.InetAddress;
-import java.net.MalformedURLException;
-import java.net.URL;
 import java.net.UnknownHostException;
 import java.util.*;
 import java.util.regex.Matcher;
@@ -33,16 +31,12 @@ import org.apache.commons.collections4.MapUtils;
 import org.apache.commons.lang3.BooleanUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.math.NumberUtils;
-import org.apache.commons.text.WordUtils;
-import org.nexial.commons.proc.RuntimeUtils;
 import org.nexial.commons.utils.EnvUtils;
 import org.nexial.commons.utils.FileUtil;
 import org.nexial.core.NexialConst.*;
 import org.nexial.core.ShutdownAdvisor;
-import org.nexial.core.WebProxy;
 import org.nexial.core.browsermob.ProxyHandler;
 import org.nexial.core.model.ExecutionContext;
-import org.nexial.core.model.ExecutionDefinition;
 import org.nexial.core.plugins.CanTakeScreenshot;
 import org.nexial.core.plugins.ForcefulTerminate;
 import org.nexial.core.plugins.external.ExternalCommand;
@@ -57,7 +51,6 @@ import org.openqa.selenium.firefox.FirefoxOptions;
 import org.openqa.selenium.ie.InternetExplorerDriver;
 import org.openqa.selenium.ie.InternetExplorerOptions;
 import org.openqa.selenium.remote.DesiredCapabilities;
-import org.openqa.selenium.remote.RemoteWebDriver;
 import org.openqa.selenium.safari.SafariDriver;
 import org.openqa.selenium.safari.SafariOptions;
 import org.slf4j.Logger;
@@ -67,12 +60,12 @@ import org.springframework.core.io.support.PropertiesLoaderUtils;
 import static java.io.File.separator;
 import static java.util.concurrent.TimeUnit.MILLISECONDS;
 import static org.apache.commons.lang3.SystemUtils.*;
-import static org.nexial.core.NexialConst.BrowserStack.*;
 import static org.nexial.core.NexialConst.BrowserType.*;
 import static org.nexial.core.NexialConst.*;
 import static org.nexial.core.NexialConst.Data.*;
+import static org.nexial.core.plugins.web.WebDriverCapabilityUtils.*;
+import static org.nexial.core.plugins.web.WebDriverCapabilityUtils.initCapabilities;
 import static org.nexial.core.utils.CheckUtils.requiresExecutableFile;
-import static org.nexial.core.utils.CheckUtils.requiresNotBlank;
 import static org.openqa.selenium.PageLoadStrategy.EAGER;
 import static org.openqa.selenium.UnexpectedAlertBehaviour.ACCEPT;
 import static org.openqa.selenium.UnexpectedAlertBehaviour.IGNORE;
@@ -87,6 +80,7 @@ public class Browser implements ForcefulTerminate {
     private static final String REGEX_WINDOW_SIZE = "^[0-9]{2,4}x[0-9]{2,4}$";
     private static final int MIN_WIDTH_OR_HEIGHT = 100;
     private static final Point INITIAL_POSITION = new Point(0, 0);
+    private static final Point INITIAL_POSITION_SAFARI = new Point(2, 2);
 
     private static final String USERHOME = StringUtils.appendIfMissing(USER_HOME, separator);
     private static final List<String> POSSIBLE_NIX_CHROME_BIN_LOCATIONS = Arrays.asList(
@@ -148,10 +142,9 @@ public class Browser implements ForcefulTerminate {
         }
     };
 
-    protected boolean isBrowserStackLocalRunning;
-    protected String browserStackLocalExeName;
-
     protected boolean isMobile;
+    protected BrowserStackHelper browserstackHelper;
+    protected CrossBrowserTestingHelper cbtHelper;
 
     public void setContext(ExecutionContext context) { this.context = context; }
 
@@ -194,6 +187,8 @@ public class Browser implements ForcefulTerminate {
     public boolean isRunSafari() { return browserType == safari; }
 
     public boolean isRunBrowserStack() { return browserType == browserstack; }
+
+    public boolean isRunCrossBrowserTesting() { return browserType == crossbrowsertesting; }
 
     public boolean isMobile() { return isMobile; }
 
@@ -358,10 +353,7 @@ public class Browser implements ForcefulTerminate {
             if (isRunFireFox()) { driver = initFirefox(false); }
             if (isRunFirefoxHeadless()) { driver = initFirefox(true); }
             if (isRunBrowserStack()) { driver = initBrowserStack(); }
-
-            // NO LONGER SUPPORTED! ALL HAIL CHROME HEADLESS!!!
-            // runPhantomJS = browserType == BrowserType.phantomjs;
-            // if (runPhantomJS) { driver = initPhantomJS(); }
+            if (isRunCrossBrowserTesting()) { driver = initCrossBrowserTesting(); }
 
             if (driver != null) {
                 if (LOGGER.isInfoEnabled()) { LOGGER.info("browser initialization completed for '" + browser + "'"); }
@@ -419,8 +411,14 @@ public class Browser implements ForcefulTerminate {
             if (agent instanceof WebCommand) { context.clearScreenshotAgent(); }
         }
 
-        if (isBrowserStackLocalRunning) {
-            RuntimeUtils.terminateInstance(browserStackLocalExeName);
+        if (browserstackHelper != null) {
+            browserstackHelper.terminateLocal();
+            browserstackHelper = null;
+        }
+
+        if (cbtHelper != null) {
+            cbtHelper.terminateLocal();
+            cbtHelper = null;
         }
     }
 
@@ -490,65 +488,7 @@ public class Browser implements ForcefulTerminate {
                CollectionUtils.size(lastWinHandles) <= 1;
     }
 
-    private void postInit(WebDriver driver) {
-        String browserVersion = getBrowserVersion();
-        if (LOGGER.isDebugEnabled()) { LOGGER.debug("post-init for " + browserType + " " + browserVersion); }
-        if (StringUtils.isNotBlank(browserVersion)) {
-            String temp = StringUtils.substringBefore(StringUtils.substringBefore(browserVersion, "."), " ");
-            majorVersion = NumberUtils.toInt(StringUtils.trim(temp));
-            if (LOGGER.isDebugEnabled()) { LOGGER.debug("determined browser major version as " + majorVersion); }
-        }
-        setWindowSize(driver);
-    }
-
-    private String resolveConfig(String propName, String defaultValue) {
-        return System.getProperty(propName, StringUtils.defaultString(context.getStringData(propName), defaultValue));
-    }
-
-    private boolean resolveConfig(String propName, boolean defaultValue) {
-        return BooleanUtils.toBoolean(System.getProperty(propName,
-                                                         StringUtils.defaultString(context.getStringData(propName),
-                                                                                   defaultValue + "")));
-    }
-
-    private String resolveConfig(String propName) { return resolveConfig(propName, null); }
-
-    private void resolveBrowserProfile() {
-        if (browserType == firefox) { browserProfile = resolveConfig(SELENIUM_FIREFOX_PROFILE); }
-        if (browserType == chrome) { browserProfile = resolveConfig(OPT_CHROME_PROFILE); }
-    }
-
-    private WebDriver initSafari() {
-        // change location of safari's download location to "out" directory
-        if (!IS_OS_MAC_OSX) {
-            throw new RuntimeException("Browser automation for Safari is only supported on Mac OSX. Sorry...");
-        }
-
-        String out = context.getProject().getOutPath();
-        try {
-            ConsoleUtils.log(
-                "modifying safari's download path: \n" +
-                ExternalCommand.Companion.exec("defaults write com.apple.Safari DownloadsPath \"" + out + "\""));
-        } catch (IOException e) {
-            ConsoleUtils.error("Unable to modify safari's download path to " + out + ": " + e);
-        }
-
-        SafariOptions options = new SafariOptions();
-
-        // Whether to make sure the session has no cookies, cache entries, local storage, or databases.
-        options.setUseTechnologyPreview(context.getBooleanData(SAFARI_USE_TECH_PREVIEW, DEF_SAFARI_USE_TECH_PREVIEW));
-
-        // todo: Create a SafariDriverService to specify what Safari flavour should be used and pass the service instance to a SafariDriver constructor.  When SafariDriver API updates to better code.. can't do this now
-        SafariDriver safari = new SafariDriver(options);
-        initCapabilities((MutableCapabilities) safari.getCapabilities());
-
-        browserVersion = safari.getCapabilities().getVersion();
-        browserPlatform = safari.getCapabilities().getPlatform();
-        postInit(safari);
-        return safari;
-    }
-
-    private WebDriver initChromeEmbedded() throws IOException {
+    protected WebDriver initChromeEmbedded() throws IOException {
         // ensure path specified for AUT app (where chromium is embedded)
         String clientLocation = context.getStringData(CEF_CLIENT_LOCATION);
         requiresExecutableFile(clientLocation);
@@ -561,13 +501,13 @@ public class Browser implements ForcefulTerminate {
 
         ChromeDriver chrome = new ChromeDriver(options);
         Capabilities capabilities = chrome.getCapabilities();
-        initCapabilities((MutableCapabilities) capabilities);
+        initCapabilities(context, (MutableCapabilities) capabilities);
 
         postInit(chrome);
         return chrome;
     }
 
-    private WebDriver initElectron() throws IOException {
+    protected WebDriver initElectron() throws IOException {
         // ensure path specified for AUT app (where electron app is)
         String clientLocation = context.getStringData(ELECTRON_CLIENT_LOCATION);
         requiresExecutableFile(clientLocation);
@@ -594,7 +534,7 @@ public class Browser implements ForcefulTerminate {
         return new ChromeDriver(cdsBuilder.build(), options);
     }
 
-    private WebDriver initChrome(boolean headless) throws IOException {
+    protected WebDriver initChrome(boolean headless) throws IOException {
         // check https://github.com/SeleniumHQ/selenium/wiki/ChromeDriver for details
 
         resolveChromeDriverLocation();
@@ -631,7 +571,7 @@ public class Browser implements ForcefulTerminate {
 
         ChromeDriver chrome = new ChromeDriver(options);
         Capabilities capabilities = chrome.getCapabilities();
-        initCapabilities((MutableCapabilities) capabilities);
+        initCapabilities(context, (MutableCapabilities) capabilities);
 
         Map<String, Object> prefs = new HashMap<>();
         //prefs.put("download.prompt_for_download", "true");
@@ -648,47 +588,133 @@ public class Browser implements ForcefulTerminate {
         return chrome;
     }
 
-    @NotNull
-    private File resolveBrowserLogFile(String logFileName) {
-        return new File(StringUtils.appendIfMissing(System.getProperty(TEST_LOG_PATH, JAVA_IO_TMPDIR), separator) +
-                        logFileName);
-    }
-
-    private void resolveChromeDriverLocation() throws IOException {
+    protected WebDriver initFirefox(boolean headless) throws IOException {
+        BrowserType browserType = headless ? firefoxheadless : firefox;
         WebDriverHelper helper = WebDriverHelper.Companion.newInstance(browserType, context);
         File driver = helper.resolveDriver();
         if (!driver.exists()) { throw new IOException("Can't resolve/download driver for " + browserType); }
 
         String driverPath = driver.getAbsolutePath();
-        context.setData(SELENIUM_CHROME_DRIVER, driverPath);
-        System.setProperty(SELENIUM_CHROME_DRIVER, driverPath);
+        context.setData(SELENIUM_GECKO_DRIVER, driverPath);
+        System.setProperty(SELENIUM_GECKO_DRIVER, driverPath);
+        context.setData(MARIONETTE, true);
+        System.setProperty(MARIONETTE, "true");
+
+        FirefoxOptions options;
+
+        // todo: introduce auto-download feature
+        //firefoxProfile.setPreference("browser.download.dir", SystemUtils.getJavaIoTmpDir().getAbsolutePath());
+
+        // unrelated, added only to improve firefox-pdf perf.
+        //firefoxProfile.setPreference("pdfjs.disabled", true);
+
+        // options.setLogLevel(FirefoxDriverLogLevel.FATAL);
+
+        try {
+            DesiredCapabilities capabilities;
+
+            // todo: not ready for prime time
+            if (proxy != null) {
+                Proxy localProxy = proxy.getServer().seleniumProxy();
+
+                String localHost = InetAddress.getLocalHost().getHostName();
+                localProxy.setHttpProxy(localHost);
+                localProxy.setSslProxy(localHost);
+
+                capabilities = new DesiredCapabilities();
+                initCapabilities(context, capabilities);
+                capabilities.setCapability(PROXY, localProxy);
+
+                Properties browsermobProps = PropertiesLoaderUtils.loadAllProperties(
+                    "org/nexial/core/plugins/har/browsermob.properties");
+                int proxyPort = Integer.parseInt(browsermobProps.getProperty("browsermob.port"));
+
+                options = new FirefoxOptions(capabilities);
+                options.addPreference("network.proxy.type", 1);
+                options.addPreference("network.proxy.http_port", proxyPort);
+                options.addPreference("network.proxy.ssl_port", proxyPort);
+                options.addPreference("network.proxy.no_proxies_on", "");
+
+            } else {
+                options = new FirefoxOptions();
+                capabilities = new DesiredCapabilities();
+                // capabilities = DesiredCapabilities.firefox();
+                initCapabilities(context, capabilities);
+                options.merge(capabilities);
+
+                // options = new FirefoxOptions(capabilities);
+
+                Proxy proxy = (Proxy) capabilities.getCapability(PROXY);
+                if (proxy != null) {
+                    options.addPreference("network.proxy.type", 1);
+
+                    String proxyHostAndPort = proxy.getHttpProxy();
+                    String proxyHost = StringUtils.substringBefore(proxyHostAndPort, ":");
+                    String proxyPort = StringUtils.substringAfter(proxyHostAndPort, ":");
+                    options.addPreference("network.proxy.http", proxyHost);
+                    options.addPreference("network.proxy.http_port", proxyPort);
+                    options.addPreference("network.proxy.ssl", proxyHost);
+                    options.addPreference("network.proxy.ssl_port", proxyPort);
+                    options.addPreference("network.proxy.ftp", proxyHost);
+                    options.addPreference("network.proxy.ftp_port", proxyPort);
+                    options.addPreference("network.proxy.no_proxies_on", "localhost, 127.0.0.1");
+                }
+            }
+
+            if (headless) { options.setHeadless(true); }
+
+            // merge configured prefs (spring) to `options` instance
+            if (MapUtils.isNotEmpty(firefoxBooleanPrefs)) { firefoxBooleanPrefs.forEach(options::addPreference); }
+            if (MapUtils.isNotEmpty(firefoxIntPrefs)) { firefoxIntPrefs.forEach(options::addPreference); }
+            if (MapUtils.isNotEmpty(firefoxStringPrefs)) { firefoxStringPrefs.forEach(options::addPreference); }
+            if (CollectionUtils.isNotEmpty(firefoxBinArgs)) { firefoxBinArgs.forEach(options::addArguments); }
+
+            boolean ignoreAlert = BooleanUtils.toBoolean(context.getBooleanData(OPT_ALERT_IGNORE_FLAG));
+            options.setUnhandledPromptBehaviour(ignoreAlert ? IGNORE : ACCEPT);
+            if (context.getBooleanData(BROWSER_ACCEPT_INVALID_CERTS, DEF_BROWSER_ACCEPT_INVALID_CERTS)) {
+                options.setAcceptInsecureCerts(true);
+            }
+            options.setPageLoadStrategy(EAGER);
+            options.setLogLevel(ERROR);
+
+            FirefoxDriver firefox = new FirefoxDriver(options);
+
+            browserVersion = capabilities.getVersion();
+            browserPlatform = capabilities.getPlatform();
+
+            postInit(firefox);
+            return firefox;
+        } catch (Exception e) {
+            e.printStackTrace();
+            throw new RuntimeException(e);
+        }
     }
 
-    private String resolveChromeBinLocation() {
-        String configuredPath = resolveConfig(SELENIUM_CHROME_BIN);
-        if (StringUtils.isNotBlank(configuredPath)) {
-            if (FileUtil.isFileExecutable(configuredPath)) { return configuredPath; }
-            ConsoleUtils.error("Configured Chrome binary '" + configuredPath + "' is not executable; " +
-                               "search for alternative...");
-        }
+    protected WebDriver initEdge() throws IOException {
+        WebDriverHelper helper = WebDriverHelper.Companion.newInstance(edge, context);
+        File driver = helper.resolveDriver();
+        if (!driver.exists()) { throw new IOException("Can't resolve/download driver for " + edge); }
 
-        List<String> possibleLocations = IS_OS_WINDOWS ? POSSIBLE_WIN_CHROME_BIN_LOCATIONS :
-                                         IS_OS_MAC ? POSSIBLE_OSX_CHROME_BIN_LOCATIONS :
-                                         IS_OS_LINUX ? POSSIBLE_NIX_CHROME_BIN_LOCATIONS : null;
-        if (CollectionUtils.isEmpty(possibleLocations)) {
-            ConsoleUtils.error("Unable to derive alternative Chrome binary... ");
-            return null;
-        }
+        String driverPath = driver.getAbsolutePath();
+        context.setData(SELENIUM_EDGE_DRIVER, driverPath);
+        System.setProperty(SELENIUM_EDGE_DRIVER, driverPath);
 
-        for (String location : possibleLocations) {
-            if (FileUtil.isFileExecutable(location)) { return new File(location).getAbsolutePath(); }
-        }
+        EdgeDriver edge = new EdgeDriver();
+        postInit(edge);
 
-        ConsoleUtils.error("Unable to derive alternative Chrome binary... ");
-        return null;
+        Capabilities capabilities = edge.getCapabilities();
+        browserVersion = capabilities.getVersion();
+        browserPlatform = capabilities.getPlatform();
+        pageSourceSupported = false;
+
+        StringBuilder log = new StringBuilder("Edge WebDriver capabilities:\n");
+        capabilities.asMap().forEach((key, val) -> log.append("\t").append(key).append("\t=").append(val).append("\n"));
+        ConsoleUtils.log(log.toString() + "\n");
+
+        return edge;
     }
 
-    private WebDriver initIE() throws IOException {
+    protected WebDriver initIE() throws IOException {
 
         resolveIEDriverLocation();
 
@@ -796,387 +822,46 @@ public class Browser implements ForcefulTerminate {
         return ie;
     }
 
-    private void resolveIEDriverLocation() throws IOException {
-        WebDriverHelper helper = WebDriverHelper.Companion.newInstance(ie, context);
-        File driver = helper.resolveDriver();
-        if (!driver.exists()) { throw new IOException("Unable to resolve/ download driver for IE browser."); }
-        String ieDriverPath = driver.getAbsolutePath();
-        context.setData(SELENIUM_IE_DRIVER, ieDriverPath);
-        System.setProperty(SELENIUM_IE_DRIVER, ieDriverPath);
+    protected WebDriver initBrowserStack() {
+        browserstackHelper = new BrowserStackHelper(context);
+        WebDriver webDriver = browserstackHelper.initWebDriver();
+
+        isMobile = browserstackHelper.isMobile();
+        pageSourceSupported = browserstackHelper.isPageSourceSupported();
+        // browserVersion = browserstack.getBrowserVersion();
+
+        postInit(webDriver);
+        return webDriver;
     }
 
-    private WebDriver initEdge() throws IOException {
-        WebDriverHelper helper = WebDriverHelper.Companion.newInstance(edge, context);
-        File driver = helper.resolveDriver();
-        if (!driver.exists()) { throw new IOException("Can't resolve/download driver for " + edge); }
+    protected WebDriver initCrossBrowserTesting() {
+        cbtHelper = new CrossBrowserTestingHelper(context);
+        WebDriver webDriver = cbtHelper.initWebDriver();
 
-        String driverPath = driver.getAbsolutePath();
-        context.setData(SELENIUM_EDGE_DRIVER, driverPath);
-        System.setProperty(SELENIUM_EDGE_DRIVER, driverPath);
+        isMobile = cbtHelper.isMobile();
+        pageSourceSupported = cbtHelper.isPageSourceSupported();
 
-        EdgeDriver edge = new EdgeDriver();
-        postInit(edge);
-
-        Capabilities capabilities = edge.getCapabilities();
-        browserVersion = capabilities.getVersion();
-        browserPlatform = capabilities.getPlatform();
-        pageSourceSupported = false;
-
-        StringBuilder log = new StringBuilder("Edge WebDriver capabilities:\n");
-        capabilities.asMap().forEach((key, val) -> log.append("\t").append(key).append("\t=").append(val).append("\n"));
-        ConsoleUtils.log(log.toString() + "\n");
-
-        return edge;
+        postInit(webDriver);
+        return webDriver;
     }
 
-    private void syncContextPropToSystem(String prop) {
-        if (System.getProperty(prop) == null) {
-            if (context.hasData(prop)) { System.setProperty(prop, context.getStringData(prop)); }
-        }
-    }
+    private void postInit(WebDriver driver) {
+        String browserVersion = getBrowserVersion();
 
-    private WebDriver initFirefox(boolean headless) throws IOException {
-        BrowserType browserType = headless ? firefoxheadless : firefox;
-        WebDriverHelper helper = WebDriverHelper.Companion.newInstance(browserType, context);
-        File driver = helper.resolveDriver();
-        if (!driver.exists()) { throw new IOException("Can't resolve/download driver for " + browserType); }
+        if (LOGGER.isDebugEnabled()) { LOGGER.debug("post-init for " + browserType + " " + browserVersion); }
 
-        String driverPath = driver.getAbsolutePath();
-        context.setData(SELENIUM_GECKO_DRIVER, driverPath);
-        System.setProperty(SELENIUM_GECKO_DRIVER, driverPath);
-        context.setData(MARIONETTE, true);
-        System.setProperty(MARIONETTE, "true");
-
-        FirefoxOptions options;
-
-        // todo: introduce auto-download feature
-        //firefoxProfile.setPreference("browser.download.dir", SystemUtils.getJavaIoTmpDir().getAbsolutePath());
-
-        // unrelated, added only to improve firefox-pdf perf.
-        //firefoxProfile.setPreference("pdfjs.disabled", true);
-
-        // options.setLogLevel(FirefoxDriverLogLevel.FATAL);
-
-        try {
-            DesiredCapabilities capabilities;
-
-            // todo: not ready for prime time
-            if (proxy != null) {
-                Proxy localProxy = proxy.getServer().seleniumProxy();
-
-                String localHost = InetAddress.getLocalHost().getHostName();
-                localProxy.setHttpProxy(localHost);
-                localProxy.setSslProxy(localHost);
-
-                capabilities = new DesiredCapabilities();
-                initCapabilities(capabilities);
-                capabilities.setCapability(PROXY, localProxy);
-
-                Properties browsermobProps = PropertiesLoaderUtils.loadAllProperties(
-                    "org/nexial/core/plugins/har/browsermob.properties");
-                int proxyPort = Integer.parseInt(browsermobProps.getProperty("browsermob.port"));
-
-                options = new FirefoxOptions(capabilities);
-                options.addPreference("network.proxy.type", 1);
-                options.addPreference("network.proxy.http_port", proxyPort);
-                options.addPreference("network.proxy.ssl_port", proxyPort);
-                options.addPreference("network.proxy.no_proxies_on", "");
-
-            } else {
-                options = new FirefoxOptions();
-                capabilities = new DesiredCapabilities();
-                // capabilities = DesiredCapabilities.firefox();
-                initCapabilities(capabilities);
-                options.merge(capabilities);
-
-                // options = new FirefoxOptions(capabilities);
-
-                Proxy proxy = (Proxy) capabilities.getCapability(PROXY);
-                if (proxy != null) {
-                    options.addPreference("network.proxy.type", 1);
-
-                    String proxyHostAndPort = proxy.getHttpProxy();
-                    String proxyHost = StringUtils.substringBefore(proxyHostAndPort, ":");
-                    String proxyPort = StringUtils.substringAfter(proxyHostAndPort, ":");
-                    options.addPreference("network.proxy.http", proxyHost);
-                    options.addPreference("network.proxy.http_port", proxyPort);
-                    options.addPreference("network.proxy.ssl", proxyHost);
-                    options.addPreference("network.proxy.ssl_port", proxyPort);
-                    options.addPreference("network.proxy.ftp", proxyHost);
-                    options.addPreference("network.proxy.ftp_port", proxyPort);
-                    options.addPreference("network.proxy.no_proxies_on", "localhost, 127.0.0.1");
-                }
-            }
-
-            if (headless) { options.setHeadless(true); }
-
-            // merge configured prefs (spring) to `options` instance
-            if (MapUtils.isNotEmpty(firefoxBooleanPrefs)) { firefoxBooleanPrefs.forEach(options::addPreference); }
-            if (MapUtils.isNotEmpty(firefoxIntPrefs)) { firefoxIntPrefs.forEach(options::addPreference); }
-            if (MapUtils.isNotEmpty(firefoxStringPrefs)) { firefoxStringPrefs.forEach(options::addPreference); }
-            if (CollectionUtils.isNotEmpty(firefoxBinArgs)) { firefoxBinArgs.forEach(options::addArguments); }
-
-            boolean ignoreAlert = BooleanUtils.toBoolean(context.getBooleanData(OPT_ALERT_IGNORE_FLAG));
-            options.setUnhandledPromptBehaviour(ignoreAlert ? IGNORE : ACCEPT);
-            if (context.getBooleanData(BROWSER_ACCEPT_INVALID_CERTS, DEF_BROWSER_ACCEPT_INVALID_CERTS)) {
-                options.setAcceptInsecureCerts(true);
-            }
-            options.setPageLoadStrategy(EAGER);
-            options.setLogLevel(ERROR);
-
-            FirefoxDriver firefox = new FirefoxDriver(options);
-
-            browserVersion = capabilities.getVersion();
-            browserPlatform = capabilities.getPlatform();
-
-            postInit(firefox);
-            return firefox;
-        } catch (Exception e) {
-            e.printStackTrace();
-            throw new RuntimeException(e);
-        }
-    }
-
-    private WebDriver initBrowserStack() {
-        String username = context.getStringData(KEY_USERNAME);
-        String automateKey = context.getStringData(KEY_AUTOMATEKEY);
-
-        if (StringUtils.isBlank(username) || StringUtils.isBlank(automateKey)) {
-            throw new RuntimeException("Both " + KEY_USERNAME + " and " + KEY_AUTOMATEKEY +
-                                       " are required to use BrowserStack");
+        if (StringUtils.isNotBlank(browserVersion)) {
+            String temp = StringUtils.substringBefore(StringUtils.substringBefore(browserVersion, "."), " ");
+            majorVersion = NumberUtils.toInt(StringUtils.trim(temp));
+            if (LOGGER.isDebugEnabled()) { LOGGER.debug("determined browser major version as " + majorVersion); }
         }
 
-        MutableCapabilities capabilities = new MutableCapabilities();
-        initCapabilities(capabilities);
-
-        // support any existing or new browserstack.* configs
-        Map<String, String> bsConfig = context.getDataByPrefix("browserstack.");
-
-        handleBrowserStackLocal(capabilities, bsConfig);
-
-        handleBrowserStackOS(capabilities, bsConfig);
-
-        // browser setting
-        String browserName = bsConfig.containsKey("browser") ?
-                             bsConfig.remove("browser") : context.getStringData(KEY_BROWSER);
-        if (StringUtils.equals(browserName, "iPad") ||
-            StringUtils.equals(browserName, "iPhone") ||
-            StringUtils.equals(browserName, "android")) {
-            setCapability(capabilities, "browserName", browserName);
-        } else {
-            setCapability(capabilities, "browserName", StringUtils.lowerCase(browserName));
-            setCapability(capabilities, "browser", StringUtils.length(browserName) < 3 ?
-                                                   StringUtils.upperCase(browserName) :
-                                                   WordUtils.capitalize(browserName));
-            setCapability(capabilities, "browser_version", bsConfig.containsKey("browser_version") ?
-                                                           bsConfig.remove("browser_version") :
-                                                           context.getStringData(KEY_BROWSER_VER));
-        }
-
-        setCapability(capabilities, "browserstack.debug", bsConfig.containsKey("debug") ?
-                                                          BooleanUtils.toBoolean(bsConfig.remove("debug")) :
-                                                          context.getBooleanData(KEY_DEBUG, DEF_DEBUG));
-
-        // project settings
-        setCapability(capabilities, "build", bsConfig.containsKey("build") ?
-                                             bsConfig.remove("build") :
-                                             context.getStringData(KEY_BUILD_NUM));
-
-        if (context.hasData(KEY_CAPTURE_CRASH)) {
-            setCapability(capabilities, "browserstack.captureCrash", context.getBooleanData(KEY_CAPTURE_CRASH));
-        }
-
-        ExecutionDefinition execDef = context.getExecDef();
-        if (execDef != null) {
-            if (execDef.getProject() != null && StringUtils.isNotBlank(execDef.getProject().getName())) {
-                setCapability(capabilities, "project", execDef.getProject().getName());
-            }
-
-            if (StringUtils.isNotBlank(execDef.getTestScript())) {
-                String scriptName = StringUtils.substringAfterLast(
-                    StringUtils.replace(execDef.getTestScript(), "\\", "/"), "/");
-                setCapability(capabilities, "name", scriptName);
-            }
-        }
-
-        // remaining configs specific to browserstack
-        bsConfig.forEach((key, value) -> {
-            // might be just `key`, might be browserstack.`key`... can't known for sure so we do both
-            setCapability(capabilities, key, value);
-            setCapability(capabilities, "browserstack." + key, value);
-        });
-
-        try {
-            RemoteWebDriver driver =
-                new RemoteWebDriver(new URL(BASE_PROTOCOL + username + ":" + automateKey + BASE_URL), capabilities);
-            postInit(driver);
-            pageSourceSupported = false;
-            return driver;
-        } catch (MalformedURLException | WebDriverException e) {
-            throw new RuntimeException("Unable to initialize BrowserStack session: " + e.getMessage(), e);
-        }
-    }
-
-    private void handleBrowserStackOS(MutableCapabilities capabilities, Map<String, String> bsConfig) {
-        String resolution = bsConfig.containsKey("resolution") ?
-                            bsConfig.remove("resolution") :
-                            context.getStringData(KEY_RESOLUTION);
-
-        // os specific setting, including mobile devices
-        String targetOs = bsConfig.containsKey("os") ?
-                          bsConfig.remove("os") :
-                          context.getStringData(KEY_OS);
-        String targetOsVer = bsConfig.containsKey("os_version") ?
-                             bsConfig.remove("os_version") :
-                             context.getStringData(KEY_OS_VER);
-        boolean realMobile = BooleanUtils.toBoolean(bsConfig.containsKey("browserstack.real_mobile") ?
-                                                    bsConfig.remove("browserstack.real_mobile") : "false");
-
-        String bsCapsUrl = "Check https://www.browserstack.com/automate/capabilities for more details";
-        String msgRequired = "'browserstack.device' is required for ";
-
-        if (StringUtils.equalsIgnoreCase(targetOs, "ANDROID")) {
-            String device = bsConfig.remove("device");
-            if (StringUtils.isBlank(device)) { throw new RuntimeException(msgRequired + "'ANDROID'. " + bsCapsUrl); }
-
-            setCapability(capabilities, "platform", "ANDROID");
-            setCapability(capabilities, "device", device);
-            setCapability(capabilities, "real_mobile", realMobile);
-            setCapability(capabilities, "os_version", targetOsVer);
-            isMobile = realMobile;
-
-        } else if (StringUtils.equalsIgnoreCase(targetOs, "IOS")) {
-
-            String device = bsConfig.remove("device");
-            if (StringUtils.isBlank(device)) { throw new RuntimeException(msgRequired + "'iOS'. " + bsCapsUrl); }
-
-            setCapability(capabilities, "device", device);
-            setCapability(capabilities, "real_mobile", realMobile);
-            setCapability(capabilities, "os_version", targetOsVer);
-            isMobile = realMobile;
-
-        } else if (StringUtils.isNotBlank(targetOs) && StringUtils.isNotBlank(targetOsVer)) {
-
-            setCapability(capabilities, "os", StringUtils.upperCase(targetOs));
-            setCapability(capabilities, "os_version", targetOsVer);
-            setCapability(capabilities, "resolution", resolution);
-
-        } else {
-
-            // if no target OS specified, then we'll just stick to automation host's OS
-            if (IS_OS_WINDOWS) {
-                setCapability(capabilities, "os", "WINDOWS");
-                if (IS_OS_WINDOWS_7) {
-                    setCapability(capabilities, "platform", "WIN7");
-                    setCapability(capabilities, "os_version", "7");
-                }
-                if (IS_OS_WINDOWS_8) {
-                    setCapability(capabilities, "platform", "WIN8");
-                    setCapability(capabilities, "os_version", "8");
-                }
-                if (IS_OS_WINDOWS_10) {
-                    setCapability(capabilities, "platform", "WIN10");
-                    setCapability(capabilities, "os_version", "10");
-                }
-                if (IS_OS_WINDOWS_2008) {
-                    setCapability(capabilities, "platform", "WINDOWS");
-                    setCapability(capabilities, "os_version", "2008");
-                }
-            }
-
-            if (IS_OS_MAC_OSX) {
-                setCapability(capabilities, "os", "OS X");
-                setCapability(capabilities, "platform", "MAC");
-                if (IS_OS_MAC_OSX_SNOW_LEOPARD) { setCapability(capabilities, "os_version", "Snow Leopard"); }
-                if (IS_OS_MAC_OSX_LION) { setCapability(capabilities, "os_version", "Lion"); }
-                if (IS_OS_MAC_OSX_MOUNTAIN_LION) { setCapability(capabilities, "os_version", "Mountain Lion"); }
-                if (IS_OS_MAC_OSX_MAVERICKS) { setCapability(capabilities, "os_version", "Mavericks"); }
-                if (IS_OS_MAC_OSX_YOSEMITE) { setCapability(capabilities, "os_version", "Yosemite"); }
-                if (IS_OS_MAC_OSX_EL_CAPITAN) { setCapability(capabilities, "os_version", "El Capitan"); }
-            }
-
-            setCapability(capabilities, "resolution", resolution);
-        }
-    }
-
-    private void handleBrowserStackLocal(MutableCapabilities capabilities, Map<String, String> bsConfig) {
-        boolean enableLocal = bsConfig.containsKey("local") ?
-                              BooleanUtils.toBoolean(bsConfig.remove("local")) :
-                              context.getBooleanData(KEY_ENABLE_LOCAL, DEF_ENABLE_LOCAL);
-        if (enableLocal) {
-            String automateKey = context.getStringData(KEY_AUTOMATEKEY);
-            requiresNotBlank(automateKey,
-                             "BrowserStack Access Key not defined via '" + KEY_AUTOMATEKEY + "'",
-                             automateKey);
-
-            capabilities.setCapability("browserstack.local", enableLocal);
-
-            try {
-                WebDriverHelper helper = WebDriverHelper.Companion.newInstance(browserstack, context);
-                File driver = helper.resolveDriver();
-                if (!driver.exists()) { throw new RuntimeException("Can't resolve/download driver for " + edge); }
-
-                String browserstacklocal = helper.config.getBaseName();
-
-                RuntimeUtils.terminateInstance(browserstacklocal);
-
-                // start browserstack local, but wait (3s) for it to start up completely.
-                ConsoleUtils.log("starting new instance of " + browserstacklocal + "...");
-                RuntimeUtils.runAppNoWait(driver.getParent(), driver.getName(), Arrays.asList("--key", automateKey));
-                Thread.sleep(3000);
-                isBrowserStackLocalRunning = true;
-                browserStackLocalExeName = driver.getName();
-            } catch (IOException | InterruptedException e) {
-                throw new RuntimeException("unable to start BrowserStackLocal: " + e.getMessage(), e);
-            }
-        }
-    }
-
-    private void setCapability(MutableCapabilities capabilities, String key, String config) {
-        if (StringUtils.isNotBlank(config)) { capabilities.setCapability(key, config); }
-    }
-
-    private void setCapability(MutableCapabilities capabilities, String key, boolean config) {
-        capabilities.setCapability(key, config);
-    }
-
-    private void initCapabilities(MutableCapabilities capabilities) {
-        // if true then we tell firefox not to auto-close js alert diaglog
-        boolean ignoreAlert = BooleanUtils.toBoolean(context.getBooleanData(OPT_ALERT_IGNORE_FLAG));
-        capabilities.setCapability(UNEXPECTED_ALERT_BEHAVIOUR, ignoreAlert ? IGNORE : ACCEPT);
-        capabilities.setCapability(SUPPORTS_ALERTS, true);
-        capabilities.setCapability(SUPPORTS_WEB_STORAGE, true);
-        capabilities.setCapability(HAS_NATIVE_EVENTS, true);
-        capabilities.setCapability(SUPPORTS_LOCATION_CONTEXT, false);
-        capabilities.setCapability(ACCEPT_SSL_CERTS, true);
-        if (context.getBooleanData(BROWSER_ACCEPT_INVALID_CERTS, DEF_BROWSER_ACCEPT_INVALID_CERTS)) {
-            capabilities.setCapability(ACCEPT_INSECURE_CERTS, true);
-        }
-
-        // --------------------------------------------------------------------
-        // Proxy
-        // --------------------------------------------------------------------
-        // When a proxy is specified using the proxy capability, this capability sets the proxy settings on
-        // a per-process basis when set to true. The default is false, which means the proxy capability will
-        // set the system proxy, which IE will use.
-        //capabilities.setCapability("ie.setProxyByServer", true);
-        capabilities.setCapability("honorSystemProxy", false);
-
-        // todo: not ready for prime time
-        if (context.getBooleanData(OPT_PROXY_REQUIRED, false) && proxy == null) {
-            ConsoleUtils.log("setting proxy server for webdriver");
-            capabilities.setCapability(PROXY, WebProxy.getSeleniumProxy());
-        }
-
-        if (context.getBooleanData(OPT_PROXY_DIRECT, false)) {
-            ConsoleUtils.log("setting direct connection for webdriver");
-            capabilities.setCapability(PROXY, WebProxy.getDirect());
-        }
+        if (!isMobile) { setWindowSize(driver); }
     }
 
     private void setWindowSize(WebDriver driver) {
-        // not suitable for cef
-        if (isRunChromeEmbedded() || isRunElectron()) { return; }
+        // not suitable for cef, electron or mobile
+        if (isRunChromeEmbedded() || isRunElectron() || isMobile()) { return; }
 
         String windowSize = context.getStringData(BROWSER_WINDOW_SIZE);
         if ((isRunChromeHeadless() || isRunFirefoxHeadless()) && StringUtils.isBlank(windowSize)) {
@@ -1185,7 +870,7 @@ public class Browser implements ForcefulTerminate {
             ConsoleUtils.log("No '" + BROWSER_WINDOW_SIZE + "' defined for headless browser; default to " + windowSize);
         }
 
-        if (StringUtils.isNotEmpty(windowSize)) {
+        if (StringUtils.isNotBlank(windowSize)) {
             Pattern p = Pattern.compile(REGEX_WINDOW_SIZE);
             Matcher m = p.matcher(windowSize);
             if (!m.matches()) {throw new RuntimeException("The valid window size not defined.. Found : " + windowSize);}
@@ -1201,7 +886,112 @@ public class Browser implements ForcefulTerminate {
 
             Window window = driver.manage().window();
             window.setSize(new Dimension(width, height));
-            window.setPosition(INITIAL_POSITION);
+            window.setPosition(isRunSafari() ? INITIAL_POSITION_SAFARI : INITIAL_POSITION);
+        }
+    }
+
+    private String resolveConfig(String propName, String defaultValue) {
+        return System.getProperty(propName, StringUtils.defaultString(context.getStringData(propName), defaultValue));
+    }
+
+    private boolean resolveConfig(String propName, boolean defaultValue) {
+        return BooleanUtils.toBoolean(System.getProperty(propName,
+                                                         StringUtils.defaultString(context.getStringData(propName),
+                                                                                   defaultValue + "")));
+    }
+
+    private String resolveConfig(String propName) { return resolveConfig(propName, null); }
+
+    private void resolveBrowserProfile() {
+        if (browserType == firefox) { browserProfile = resolveConfig(SELENIUM_FIREFOX_PROFILE); }
+        if (browserType == chrome) { browserProfile = resolveConfig(OPT_CHROME_PROFILE); }
+    }
+
+    private WebDriver initSafari() {
+        // change location of safari's download location to "out" directory
+        if (!IS_OS_MAC_OSX) { throw new RuntimeException("Safari automation is only supported on Mac OSX. Sorry..."); }
+
+        String out = context.getProject().getOutPath();
+        try {
+            ConsoleUtils.log(
+                "modifying safari's download path: \n" +
+                ExternalCommand.Companion.exec("defaults write com.apple.Safari DownloadsPath \"" + out + "\""));
+        } catch (IOException e) {
+            ConsoleUtils.error("Unable to modify safari's download path to " + out + ": " + e);
+        }
+
+        SafariOptions options = new SafariOptions();
+
+        // Whether to make sure the session has no cookies, cache entries, local storage, or databases.
+        options.setUseTechnologyPreview(context.getBooleanData(SAFARI_USE_TECH_PREVIEW, DEF_SAFARI_USE_TECH_PREVIEW));
+
+        // todo: Create a SafariDriverService to specify what Safari flavour should be used and pass the service instance to a SafariDriver constructor.  When SafariDriver API updates to better code.. can't do this now
+        SafariDriver safari = new SafariDriver(options);
+        MutableCapabilities capabilities = (MutableCapabilities) safari.getCapabilities();
+        initCapabilities(context, capabilities);
+        setCapability(capabilities, "javascriptEnabled", true);
+        setCapability(capabilities, "databaseEnabled", true);
+        setCapability(capabilities, "webStorageEnabled", true);
+        // setCapability(capabilities, "unexpectedAlertBehaviour", "ignore");
+
+        browserVersion = capabilities.getVersion();
+        browserPlatform = capabilities.getPlatform();
+        postInit(safari);
+        return safari;
+    }
+
+    @NotNull
+    private File resolveBrowserLogFile(String logFileName) {
+        return new File(StringUtils.appendIfMissing(System.getProperty(TEST_LOG_PATH, JAVA_IO_TMPDIR), separator) +
+                        logFileName);
+    }
+
+    private void resolveChromeDriverLocation() throws IOException {
+        WebDriverHelper helper = WebDriverHelper.Companion.newInstance(browserType, context);
+        File driver = helper.resolveDriver();
+        if (!driver.exists()) { throw new IOException("Can't resolve/download driver for " + browserType); }
+
+        String driverPath = driver.getAbsolutePath();
+        context.setData(SELENIUM_CHROME_DRIVER, driverPath);
+        System.setProperty(SELENIUM_CHROME_DRIVER, driverPath);
+    }
+
+    private String resolveChromeBinLocation() {
+        String configuredPath = resolveConfig(SELENIUM_CHROME_BIN);
+        if (StringUtils.isNotBlank(configuredPath)) {
+            if (FileUtil.isFileExecutable(configuredPath)) { return configuredPath; }
+            ConsoleUtils.error("Configured Chrome binary '" + configuredPath + "' is not executable; " +
+                               "search for alternative...");
+        }
+
+        List<String> possibleLocations = IS_OS_WINDOWS ? POSSIBLE_WIN_CHROME_BIN_LOCATIONS :
+                                         IS_OS_MAC ? POSSIBLE_OSX_CHROME_BIN_LOCATIONS :
+                                         IS_OS_LINUX ? POSSIBLE_NIX_CHROME_BIN_LOCATIONS : null;
+        if (CollectionUtils.isEmpty(possibleLocations)) {
+            ConsoleUtils.error("Unable to derive alternative Chrome binary... ");
+            return null;
+        }
+
+        for (String location : possibleLocations) {
+            if (FileUtil.isFileExecutable(location)) { return new File(location).getAbsolutePath(); }
+        }
+
+        ConsoleUtils.error("Unable to derive alternative Chrome binary... ");
+        return null;
+    }
+
+    private void resolveIEDriverLocation() throws IOException {
+        WebDriverHelper helper = WebDriverHelper.Companion.newInstance(ie, context);
+        File driver = helper.resolveDriver();
+        if (!driver.exists()) { throw new IOException("Unable to resolve/ download driver for IE browser."); }
+        String ieDriverPath = driver.getAbsolutePath();
+        context.setData(SELENIUM_IE_DRIVER, ieDriverPath);
+        System.setProperty(SELENIUM_IE_DRIVER, ieDriverPath);
+    }
+
+    private void syncContextPropToSystem(String prop) {
+        if (System.getProperty(prop) == null) {
+            if (context.hasData(prop)) { System.setProperty(prop, context.getStringData(prop)); }
         }
     }
 }

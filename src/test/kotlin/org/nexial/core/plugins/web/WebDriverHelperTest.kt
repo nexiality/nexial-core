@@ -76,6 +76,8 @@ class WebDriverHelperTest {
         Assert.assertTrue(driverFile.exists())
         Assert.assertTrue(driverFile.canRead())
         Assert.assertTrue(driverFile.length() > 1572864)
+
+        context.cleanProject()
     }
 
     @Test
@@ -100,6 +102,8 @@ class WebDriverHelperTest {
         Assert.assertTrue(driverFile.exists())
         Assert.assertTrue(driverFile.canRead())
         Assert.assertTrue(driverFile.length() > 1572864)
+
+        context.cleanProject()
     }
 
     @Test
@@ -134,5 +138,7 @@ class WebDriverHelperTest {
         Assert.assertTrue(driverFile2.exists())
         Assert.assertTrue(driverFile2.canRead())
         Assert.assertTrue(driverFile2.length() > 1572864)
+
+        context.cleanProject()
     }
 }

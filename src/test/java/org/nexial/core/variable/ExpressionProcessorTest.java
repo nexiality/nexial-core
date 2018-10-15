@@ -1129,6 +1129,8 @@ public class ExpressionProcessorTest {
             "cynthia@contoso.com,Carey,Cynthia Carey,Senior Director,Information Technology,112324,312-490-1192,123-555-6644,123-555-9824,1 Microsoft way,Redmond,WA,98052,United States\r\n" +
             "melissa@contoso.com,MacBeth,Melissa MacBeth,Supervisor,Human Resource,345345,312-490-3892,123-555-6645,123-555-9825,1 Microsoft way,Redmond,WA,98052,United States",
             junk2Content);
+
+        FileUtils.deleteQuietly(new File(tmp));
     }
 
     @Test
@@ -1238,6 +1240,8 @@ public class ExpressionProcessorTest {
                                         " parse(delim=\\,|header=true)" +
                                         " ascii-table]");
         System.out.println("output = \n" + output);
+
+        FileUtils.deleteQuietly(tmpFile);
     }
 
     @Test
@@ -2606,6 +2610,8 @@ public class ExpressionProcessorTest {
         Assert.assertEquals("numbers3", worksheet.cell(new ExcelAddress("K10")).getStringCellValue());
         Assert.assertEquals("2", worksheet.cell(new ExcelAddress("M10")).getStringCellValue());
 
+        FileUtils.deleteQuietly(targetFile);
+
         // --------------------------------------------------------------------------------
         // test with [potentially] new worksheet
         // --------------------------------------------------------------------------------
@@ -2629,6 +2635,8 @@ public class ExpressionProcessorTest {
         Assert.assertEquals("69898", worksheet.cell(new ExcelAddress("D14")).getStringCellValue());
         Assert.assertEquals("numbers3", worksheet.cell(new ExcelAddress("C15")).getStringCellValue());
         Assert.assertEquals("2", worksheet.cell(new ExcelAddress("E15")).getStringCellValue());
+
+        FileUtils.deleteQuietly(tmpFile);
     }
 
     @Test
@@ -2767,6 +2775,8 @@ public class ExpressionProcessorTest {
         Assert.assertEquals("numbers3", worksheet.cell(new ExcelAddress("K10")).getStringCellValue());
         Assert.assertEquals("2", worksheet.cell(new ExcelAddress("M10")).getStringCellValue());
 
+        FileUtils.deleteQuietly(targetFile);
+
         // --------------------------------------------------------------------------------
         // test with [potentially] new worksheet
         // --------------------------------------------------------------------------------
@@ -2790,6 +2800,8 @@ public class ExpressionProcessorTest {
         Assert.assertEquals("69898", worksheet.cell(new ExcelAddress("D14")).getStringCellValue());
         Assert.assertEquals("numbers3", worksheet.cell(new ExcelAddress("C15")).getStringCellValue());
         Assert.assertEquals("2", worksheet.cell(new ExcelAddress("E15")).getStringCellValue());
+
+        FileUtils.deleteQuietly(tmpFile);
     }
 
     @Test
@@ -3287,6 +3299,8 @@ public class ExpressionProcessorTest {
                                    " text" +
                                    "]"),
                    allOf(is(not(nullValue())), is(equalTo(expected))));
+
+        FileUtils.deleteQuietly(new File(sqlPath));
     }
 
     @Test

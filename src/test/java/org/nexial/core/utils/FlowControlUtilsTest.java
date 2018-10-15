@@ -31,7 +31,7 @@ import static org.nexial.core.model.FlowControl.Directive.*;
 import static org.nexial.core.model.NexialFilterComparator.NotEqual;
 
 public class FlowControlUtilsTest {
-    ExecutionContext context = new MockExecutionContext();
+    private MockExecutionContext context;
 
     public static class DummyTestStep extends TestStep {
         public DummyTestStep(Directive directive, FlowControl flowControl) {
@@ -43,13 +43,14 @@ public class FlowControlUtilsTest {
 
     @Before
     public void init() {
+        context = new MockExecutionContext();
         context.setData("condition1", "banana");
         context.setData("condition2", "red");
         context.setData("condition3", "coffee");
     }
 
     @After
-    public void tearDown() { if (context != null) { ((MockExecutionContext) context).cleanProject(); } }
+    public void tearDown() { if (context != null) { context.cleanProject(); } }
 
     @Test
     public void checkPauseBefore() {

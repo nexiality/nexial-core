@@ -31,10 +31,9 @@ import org.junit.Test;
 
 import static org.apache.commons.lang3.builder.ToStringStyle.SHORT_PREFIX_STYLE;
 import static org.nexial.core.NexialConst.Data.START_URL;
-import static org.nexial.core.NexialConst.OPT_DELAY_BROWSER;
 
 public class ExecutionTokenReplacementTest {
-    private ExecutionContext context;
+    private MockExecutionContext context;
 
     public static class Movie {
         private String id;
@@ -112,12 +111,11 @@ public class ExecutionTokenReplacementTest {
 
     @After
     public void tearDown() {
-        if (context != null) { ((MockExecutionContext) context).cleanProject(); }
+        if (context != null) { context.cleanProject(); }
     }
 
     @Test
     public void testReplaceTokens4() {
-
         Assert.assertEquals("R1C2 = Good", context.replaceTokens("R1C2 = ${myData}[0].col3"));
         String actual = context.replaceTokens("${myData}");
         Assert.assertTrue(StringUtils.contains(actual, "col1=Johnny"));
@@ -128,9 +126,9 @@ public class ExecutionTokenReplacementTest {
         Assert.assertTrue(StringUtils.contains(actual, "col3=Jackson"));
 
         String actual1 = context.replaceTokens("${myData}[1]");
-        Assert.assertTrue(StringUtils.contains(actual, "col1=Samuel"));
-        Assert.assertTrue(StringUtils.contains(actual, "col2=L."));
-        Assert.assertTrue(StringUtils.contains(actual, "col3=Jackson"));
+        Assert.assertTrue(StringUtils.contains(actual1, "col1=Samuel"));
+        Assert.assertTrue(StringUtils.contains(actual1, "col2=L."));
+        Assert.assertTrue(StringUtils.contains(actual1, "col3=Jackson"));
 
         Assert.assertEquals("Yo yo Johnny,Samuel yaw!", context.replaceTokens("Yo yo ${myData}.col1 yaw!"));
     }
@@ -160,23 +158,14 @@ public class ExecutionTokenReplacementTest {
         movie.setYear(1991);
         movies.add(movie);
 
-        context = new MockExecutionContext();
         context.setData("movies", movies);
 
         Assert.assertNotNull(context.replaceTokens("${movies}[0]"));
-        Assert.assertEquals("1",context.replaceTokens("${movies}[0].id"));
-        Assert.assertEquals("10,000 Leagues under the sea",context.replaceTokens("${movies}[0].name"));
-        Assert.assertEquals("1971",context.replaceTokens("${movies}[0].year"));
-        Assert.assertEquals("112",context.replaceTokens("${movies}[1].minutes"));
-        Assert.assertEquals("Great Escape",context.replaceTokens("${movies}[2].name"));
-        Assert.assertEquals("12",context.replaceTokens("${movies}[2].getId"));
+        Assert.assertEquals("1", context.replaceTokens("${movies}[0].id"));
+        Assert.assertEquals("10,000 Leagues under the sea", context.replaceTokens("${movies}[0].name"));
+        Assert.assertEquals("1971", context.replaceTokens("${movies}[0].year"));
+        Assert.assertEquals("112", context.replaceTokens("${movies}[1].minutes"));
+        Assert.assertEquals("Great Escape", context.replaceTokens("${movies}[2].name"));
+        Assert.assertEquals("12", context.replaceTokens("${movies}[2].getId"));
     }
-
-    static {
-        System.setProperty("nexial.runMode", "local");
-        System.setProperty("nexial.outBase", ".");
-        System.setProperty("app.env", "DEV2");
-        System.setProperty(OPT_DELAY_BROWSER, "true");
-    }
-
 }

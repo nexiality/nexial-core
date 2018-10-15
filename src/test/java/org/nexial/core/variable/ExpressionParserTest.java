@@ -22,17 +22,20 @@ import java.util.List;
 import org.apache.commons.collections4.CollectionUtils;
 import org.junit.After;
 import org.junit.Assert;
+import org.junit.Before;
 import org.junit.Test;
-import org.nexial.core.model.ExecutionContext;
 import org.nexial.core.model.MockExecutionContext;
 import org.nexial.core.variable.Expression.ExpressionFunction;
 
 public class ExpressionParserTest {
-    ExecutionContext context = new MockExecutionContext();
+    private MockExecutionContext context;
+
+    @Before
+    public void init() { context = new MockExecutionContext(); }
 
     @After
     public void tearDown() {
-        if (context != null) { ((MockExecutionContext) context).cleanProject(); }
+        if (context != null) { context.cleanProject(); }
     }
 
     @Test

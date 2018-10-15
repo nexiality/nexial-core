@@ -85,7 +85,7 @@ public class TestContextTest {
 
     @Test
     public void testReplaceTokens() {
-        ExecutionContext context = new MockExecutionContext();
+        MockExecutionContext context = new MockExecutionContext();
         context.setData("dummy", "that's me");
         context.setData("a", "Hello");
         context.setData("b", "World");
@@ -99,12 +99,12 @@ public class TestContextTest {
         fixture = "And I suppose ${e}?";
         Assert.assertEquals(context.replaceTokens(fixture), "And I suppose my name is Johnny boy?");
 
-        if (context != null) { ((MockExecutionContext) context).cleanProject(); }
+        context.cleanProject();
     }
 
     @Test
     public void testReplaceArrayTokens() {
-        ExecutionContext context = new MockExecutionContext();
+        MockExecutionContext context = new MockExecutionContext();
         context.setData("dummy", "that's me");
         context.setData(TEXT_DELIM, "|");
         context.setData("a", new String[]{"Hello", "World", "Johnny boy"});
@@ -112,13 +112,12 @@ public class TestContextTest {
         String fixture = "Well, ${a}";
         Assert.assertEquals(context.replaceTokens(fixture), "Well, Hello|World|Johnny boy");
 
-        if (context != null) { ((MockExecutionContext) context).cleanProject(); }
-
+        context.cleanProject();
     }
 
     @Test
     public void testReplaceStringListTokens() {
-        ExecutionContext context = new MockExecutionContext();
+        MockExecutionContext context = new MockExecutionContext();
         context.setData("dummy", "that's me");
         context.setData(TEXT_DELIM, "|");
         context.setData("a", Arrays.asList("Hello", "World", "Johnny boy"));
@@ -126,7 +125,7 @@ public class TestContextTest {
         String fixture = "Well, ${a}";
         Assert.assertEquals(context.replaceTokens(fixture), "Well, Hello|World|Johnny boy");
 
-        if (context != null) { ((MockExecutionContext) context).cleanProject(); }
+        context.cleanProject();
     }
 
     @Test
@@ -152,7 +151,7 @@ public class TestContextTest {
 
     @Test
     public void testReplaceTokens2() {
-        ExecutionContext context = new MockExecutionContext();
+        MockExecutionContext context = new MockExecutionContext();
         context.setData("dummy", "that's me");
 
         List<String> items = new ArrayList<>();
@@ -182,12 +181,12 @@ public class TestContextTest {
                             "living on 444 Silverlake Drive, Kansas City, KS, he " +
                             "would say 'Don't die young'.", context.replaceTokens(fixture));
 
-        if (context != null) { ((MockExecutionContext) context).cleanProject(); }
+        context.cleanProject();
     }
 
     @Test
     public void testReplaceTokens3() {
-        ExecutionContext context = new MockExecutionContext();
+        MockExecutionContext context = new MockExecutionContext();
         context.setData("dummy", "that's me");
 
         List<Map<String, String>> spreadsheet = new ArrayList<>();
@@ -238,7 +237,7 @@ public class TestContextTest {
         //fixture = "My friend is ${spreadsheet}[0]";
         //fixture = "My friend is ${spreadsheet}.name";
 
-        if (context != null) { ((MockExecutionContext) context).cleanProject(); }
+        context.cleanProject();
     }
 
     /**
@@ -246,7 +245,7 @@ public class TestContextTest {
      */
     @Test
     public void testReplaceTokens4() {
-        ExecutionContext context = new MockExecutionContext();
+        MockExecutionContext context = new MockExecutionContext();
         context.setData("dummy", "that's me");
 
         List<Map<String, String>> spreadsheet = new ArrayList<>();
@@ -316,7 +315,7 @@ public class TestContextTest {
         // ${response}.headers[Pragma]
         // ${response}.headers\.Pragma
 
-        if (context != null) { ((MockExecutionContext) context).cleanProject(); }
+        context.cleanProject();
     }
 
     /**
@@ -324,7 +323,7 @@ public class TestContextTest {
      */
     @Test
     public void testReplaceTokens5() {
-        ExecutionContext context = new MockExecutionContext();
+        MockExecutionContext context = new MockExecutionContext();
         context.setData("dummy", "that's me");
 
         Map<String, List<Person>> fixture = new HashMap<>();
@@ -340,7 +339,7 @@ public class TestContextTest {
                             context.replaceTokens("So what if ${facts}.Cartoon[1].name loves " +
                                                   "${facts}.Cartoon[1].favorite!? He's ${facts}.Cartoon[1].age!"));
 
-        if (context != null) { ((MockExecutionContext) context).cleanProject(); }
+        context.cleanProject();
     }
 
     /**
@@ -348,7 +347,7 @@ public class TestContextTest {
      */
     @Test
     public void testReplaceTokens6() {
-        ExecutionContext context = new MockExecutionContext();
+        MockExecutionContext context = new MockExecutionContext();
         context.setData("dummy", "that's me");
 
         Person fixture = new Person("Me and Myself", 29, "Watermelon");
@@ -375,7 +374,7 @@ public class TestContextTest {
                                   "${me}.dummy[1].name who is ${me}.dummy[1].age")
                            );
 
-        if (context != null) { ((MockExecutionContext) context).cleanProject(); }
+        context.cleanProject();
     }
 
     @Test
@@ -394,7 +393,7 @@ public class TestContextTest {
 
         Map<String, Object> complexValues = new HashMap<>();
 
-        ExecutionContext context = new MockExecutionContext();
+        MockExecutionContext context = new MockExecutionContext();
         context.setData("dummy", "that's me");
 
         List<Map<String, String>> spreadsheet = new ArrayList<>();
@@ -429,12 +428,12 @@ public class TestContextTest {
         testSubject = context.replaceCollectionTokens("${stateList}[0].state", listValues, complexValues);
         System.out.println("testSubject = " + testSubject);
         Assert.assertEquals("${__lAIxEn__stateList[0]}.state", testSubject);
-        Assert.assertTrue(complexValues.size() == 1);
+        Assert.assertEquals(1, complexValues.size());
 
         testSubject = context.replaceCollectionTokens("${stateList}[5].state", listValues, complexValues);
         System.out.println("testSubject = " + testSubject);
         Assert.assertEquals("${__lAIxEn__stateList[5]}.state", testSubject);
-        Assert.assertTrue(complexValues.size() == 2);
+        Assert.assertEquals(2, complexValues.size());
 
         testSubject = context.replaceComplexTokens("${__lAIxEn__stateList[0]}.state", complexValues);
         Assert.assertEquals("AL", testSubject);
@@ -442,7 +441,7 @@ public class TestContextTest {
         testSubject = context.replaceComplexTokens("${__lAIxEn__stateList[5]}.state", complexValues);
         Assert.assertEquals("CT", testSubject);
 
-        ((MockExecutionContext) context).cleanProject();
+        context.cleanProject();
     }
 
     @Test
@@ -477,7 +476,7 @@ public class TestContextTest {
         listValues.put("dummies", dummies);
         Map<String, Object> complexValues = new HashMap<>();
 
-        ExecutionContext context = new MockExecutionContext();
+        MockExecutionContext context = new MockExecutionContext();
         context.setData("dummy", "that's me");
 
         List<Map<String, String>> spreadsheet = new ArrayList<>();
@@ -513,12 +512,12 @@ public class TestContextTest {
         testSubject = context.replaceCollectionTokens("${dummies}[0].age", listValues, complexValues);
         System.out.println("testSubject = " + testSubject);
         Assert.assertEquals("${" + KEY_COMPLEX + "dummies[0]}.age", testSubject);
-        Assert.assertTrue(complexValues.size() == 1);
+        Assert.assertEquals(1, complexValues.size());
 
         testSubject = context.replaceCollectionTokens("${dummies}[4].state", listValues, complexValues);
         System.out.println("testSubject = " + testSubject);
         Assert.assertEquals("${" + KEY_COMPLEX + "dummies[4]}.state", testSubject);
-        Assert.assertTrue(complexValues.size() == 2);
+        Assert.assertEquals(2, complexValues.size());
 
         testSubject = context.replaceComplexTokens("${" + KEY_COMPLEX + "dummies[0]}.age", complexValues);
         Assert.assertEquals("91", testSubject);
@@ -534,7 +533,7 @@ public class TestContextTest {
         System.out.println("testSubject = " + testSubject);
         Assert.assertEquals("false,false,false,false,true", testSubject);
 
-        if (context != null) { ((MockExecutionContext) context).cleanProject(); }
+        context.cleanProject();
     }
 
     private Map<String, String> newSinglePairMap(String name, String value) {

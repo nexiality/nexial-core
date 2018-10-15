@@ -43,11 +43,10 @@ public class TestScenarioTest {
         Assert.assertTrue(file.isFile() && file.canRead());
 
         String testScenarioName = "Test Scenario";
-        ExecutionContext context = new MockExecutionContext();
+        MockExecutionContext context = new MockExecutionContext();
         Excel excel = new Excel(file);
         Worksheet worksheet = excel.worksheet(testScenarioName);
         Assert.assertNotNull(worksheet);
-        ((MockExecutionContext) context).cleanProject();
 
         TestScenario scenario = new TestScenario(context, worksheet);
         Assert.assertNotNull(scenario);
@@ -176,7 +175,7 @@ public class TestScenarioTest {
         Assert.assertEquals(Arrays.asList("${date1}", "2014-09-29 is 7 days later"), testStep.getParams());
         Assert.assertTrue(MapUtils.isEmpty(testStep.getFlowControls()));
 
-        ((MockExecutionContext) context).cleanProject();
+        context.cleanProject();
     }
 
 }

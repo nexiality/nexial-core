@@ -465,7 +465,8 @@ public class TextUtilsTest {
         String tmpPropFile = StringUtils.appendIfMissing(SystemUtils.getJavaIoTmpDir().getAbsolutePath(), separator) +
                              "testLoadProperties.properties";
 
-        FileUtils.writeStringToFile(new File(tmpPropFile), propContent, DEF_FILE_ENCODING);
+        File tmpProp = new File(tmpPropFile);
+        FileUtils.writeStringToFile(tmpProp, propContent, DEF_FILE_ENCODING);
 
         Map<String, String> propMap = TextUtils.loadProperties(tmpPropFile);
         Assert.assertEquals("Humpty Dumpty together again", propMap.get("couldn't put"));
@@ -474,6 +475,7 @@ public class TextUtilsTest {
         Assert.assertEquals("", propMap.get("gotten"));
         Assert.assertEquals("${nexial.web.alwaysWait}", propMap.get("nexial.lenientStringCompare"));
 
+        FileUtils.deleteQuietly(tmpProp);
     }
 
     @Test

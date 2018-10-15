@@ -6,15 +6,14 @@ import org.junit.After
 import org.junit.Assert
 import org.junit.Test
 import org.nexial.commons.utils.TextUtils
-import org.nexial.core.model.ExecutionContext
 import org.nexial.core.model.MockExecutionContext
 
 class NumberCommandTest {
 
-    val context: ExecutionContext = MockExecutionContext()
+    val context: MockExecutionContext = MockExecutionContext()
 
     @After
-    fun tearDown() = (context as MockExecutionContext).cleanProject()
+    fun tearDown() = context.cleanProject()
 
     @Test
     @Throws(Exception::class)

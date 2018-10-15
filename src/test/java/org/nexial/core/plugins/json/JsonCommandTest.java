@@ -27,7 +27,6 @@ import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
-import org.nexial.core.model.ExecutionContext;
 import org.nexial.core.model.MockExecutionContext;
 import org.nexial.core.model.StepResult;
 
@@ -37,11 +36,8 @@ import static java.io.File.separator;
 import static org.nexial.core.NexialConst.DEF_FILE_ENCODING;
 import static org.nexial.core.NexialConst.GSON_COMPRESSED;
 
-/**
- *
- */
 public class JsonCommandTest {
-    private ExecutionContext context = new MockExecutionContext();
+    private MockExecutionContext context = new MockExecutionContext();
     private String destinationBase;
 
     @Before
@@ -52,7 +48,7 @@ public class JsonCommandTest {
 
     @After
     public void tearDown() {
-        if (context != null) { ((MockExecutionContext) context).cleanProject(); }
+        if (context != null) { context.cleanProject(); }
         if (destinationBase != null) { FileUtils.deleteQuietly(new File(destinationBase)); }
     }
 

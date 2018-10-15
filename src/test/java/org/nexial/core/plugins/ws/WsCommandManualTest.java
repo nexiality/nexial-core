@@ -17,27 +17,27 @@
 
 package org.nexial.core.plugins.ws;
 
-import org.apache.commons.lang3.SystemUtils;
 import org.json.JSONObject;
 import org.junit.After;
 import org.junit.Assert;
+import org.junit.Before;
 import org.junit.Test;
-
-import org.nexial.core.model.ExecutionContext;
 import org.nexial.core.model.MockExecutionContext;
-
-import static org.nexial.core.NexialConst.OPT_DELAY_BROWSER;
-import static org.nexial.core.NexialConst.OPT_OUT_DIR;
 
 /**
  * CANNOT AUTOMATE THIS TEST DUE TO MISSING CONNECTION TO PROXY SRV
  */
 public class WsCommandManualTest {
-    ExecutionContext context = new MockExecutionContext();
+    private MockExecutionContext context;
+
+    @Before
+    public void init() {
+        context = new MockExecutionContext();
+    }
 
     @After
     public void tearDown() {
-        if (context != null) { ((MockExecutionContext) context).cleanProject(); }
+        if (context != null) { context.cleanProject(); }
     }
 
     @Test
@@ -132,8 +132,8 @@ public class WsCommandManualTest {
     // 	System.out.println("html = " + html);
     // }
 
-    static {
-        System.setProperty(OPT_OUT_DIR, SystemUtils.getJavaIoTmpDir().getAbsolutePath());
-        System.setProperty(OPT_DELAY_BROWSER, "true");
-    }
+    // static {
+    //     System.setProperty(OPT_OUT_DIR, SystemUtils.getJavaIoTmpDir().getAbsolutePath());
+    //     System.setProperty(OPT_DELAY_BROWSER, "true");
+    // }
 }

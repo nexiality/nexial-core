@@ -925,21 +925,23 @@ public class Nexial {
         }
 
         File eventPath = new File(EventTracker.INSTANCE.getStorageLocation());
-        String[] ext = new String[]{StringUtils.removeStart(EventTracker.INSTANCE.getExtension(), ".")};
-        Collection<File> eventFiles = FileUtils.listFiles(eventPath, ext, false);
-        long sleepTime = 500;
-        while (CollectionUtils.isNotEmpty(eventFiles)) {
-            // don't sleep too long... 5 sec tops
-            if (sleepTime > 5000) { break; }
+        if (FileUtil.isDirectoryReadable(eventPath)) {
+            String[] ext = new String[]{StringUtils.removeStart(EventTracker.INSTANCE.getExtension(), ".")};
+            Collection<File> eventFiles = FileUtils.listFiles(eventPath, ext, false);
+            long sleepTime = 500;
+            while (CollectionUtils.isNotEmpty(eventFiles)) {
+                // don't sleep too long... 5 sec tops
+                if (sleepTime > 5000) { break; }
 
-            // sleep/wait
-            try { Thread.sleep(sleepTime);} catch (InterruptedException e) { }
+                // sleep/wait
+                try { Thread.sleep(sleepTime);} catch (InterruptedException e) { }
 
-            // next sleep time will be doubled
-            sleepTime += sleepTime;
+                // next sleep time will be doubled
+                sleepTime += sleepTime;
 
-            // check for event files again...
-            eventFiles = FileUtils.listFiles(eventPath, ext, false);
+                // check for event files again...
+                eventFiles = FileUtils.listFiles(eventPath, ext, false);
+            }
         }
 
         beforeShutdownMemUsage();

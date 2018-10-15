@@ -262,6 +262,7 @@ public class FlowControlTest {
         assertExpectedFilterEval(fixture, "SkipIf -> [" +
                                           "my_age is defined, ${my_age} is not empty, ${my_age} has length of 2]");
 
+        context.cleanProject();
     }
 
     protected void assertFailFilterEval(TestStep fixture) throws InvocationTargetException, IllegalAccessException {

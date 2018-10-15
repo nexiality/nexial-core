@@ -21,12 +21,11 @@ import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
-import org.nexial.core.model.ExecutionContext;
 import org.nexial.core.model.MockExecutionContext;
 import org.nexial.core.model.StepResult;
 
 public class BaseCommandTest {
-    private ExecutionContext context = new MockExecutionContext(true);
+    private MockExecutionContext context = new MockExecutionContext(true);
 
     @Before
     public void init() {
@@ -38,7 +37,7 @@ public class BaseCommandTest {
 
     @After
     public void tearDown() {
-        if (context != null) { ((MockExecutionContext) context).cleanProject(); }
+        if (context != null) { context.cleanProject(); }
     }
 
     @Test

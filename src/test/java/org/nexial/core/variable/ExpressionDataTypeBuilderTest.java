@@ -22,18 +22,19 @@ import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
-import org.nexial.core.model.ExecutionContext;
 import org.nexial.core.model.MockExecutionContext;
 
 public class ExpressionDataTypeBuilderTest {
-    private ExecutionContext context = new MockExecutionContext();
+    private MockExecutionContext context;
 
     @Before
     public void setUp() throws Exception {
+        context = new MockExecutionContext();
     }
 
     @After
     public void tearDown() throws Exception {
+        if (context != null) { context.cleanProject(); }
     }
 
     @Test

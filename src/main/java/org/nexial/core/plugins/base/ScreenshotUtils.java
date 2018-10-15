@@ -17,8 +17,10 @@
 
 package org.nexial.core.plugins.base;
 
+import java.awt.*;
 import java.awt.image.*;
 import java.io.File;
+import java.io.IOException;
 import javax.imageio.ImageIO;
 
 import org.apache.commons.codec.binary.Base64;
@@ -33,6 +35,7 @@ import org.openqa.selenium.UnhandledAlertException;
 import org.openqa.selenium.WebDriverException;
 
 import static org.nexial.core.NexialConst.OPT_LAST_SCREENSHOT_NAME;
+import static org.nexial.core.NexialConst.SCREENSHOT_EXT;
 import static org.openqa.selenium.OutputType.BASE64;
 
 public class ScreenshotUtils {
@@ -59,8 +62,23 @@ public class ScreenshotUtils {
                 return imageFile;
             }
         } catch (Exception e) {
-            ConsoleUtils.error("failed to crop screen capture to '" + filename + "': " + e.getMessage());
+            ConsoleUtils.error("failed to capture screen capture to '" + filename + "': " + e.getMessage());
             return imageFile;
+        }
+    }
+
+    public static File saveDesktopScreenshot(String filename) {
+        if (filename == null) { throw new IllegalArgumentException("filename is null"); }
+        File output = new File(filename);
+
+        try {
+            BufferedImage image =
+                new Robot().createScreenCapture(new java.awt.Rectangle(Toolkit.getDefaultToolkit().getScreenSize()));
+            ImageIO.write(image, StringUtils.removeStart(SCREENSHOT_EXT, "."), output);
+            return output;
+        } catch (HeadlessException | AWTException | IOException e) {
+            ConsoleUtils.error("failed to save screen capture to '" + filename + "': " + e.getMessage());
+            return null;
         }
     }
 

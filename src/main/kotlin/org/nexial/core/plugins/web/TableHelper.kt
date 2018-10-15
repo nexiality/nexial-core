@@ -29,10 +29,13 @@ import org.nexial.core.utils.ConsoleUtils
 import org.openqa.selenium.By
 import org.openqa.selenium.WebElement
 import java.io.File
-import java.util.*
 import javax.validation.constraints.NotNull
 
 class TableHelper(private val webCommand: WebCommand) {
+    private val tableHeaderLocators = listOf(".//thead//*[ name() = 'th' or name() = 'td' ]",
+                                             ".//thead//*[ name() = 'TH' or name() = 'TD' ]",
+                                             ".//tr/th")
+
     fun saveDivsAsCsv(headerCellsLoc: String,
                       rowLocator: String,
                       cellLocator: String,
@@ -111,10 +114,13 @@ class TableHelper(private val webCommand: WebCommand) {
 
         val msgPrefix = "Table '$locator'"
 
-        // table has header via thead?
-        // table has header via th?
-        val headers: List<WebElement> = table.findElements(By.xpath(".//thead//*[ name() = 'TH' or name() = 'TD' ]"))
-                                        ?: table.findElements(By.xpath(".//tr/th"))
+        var headers: List<WebElement> = ArrayList()
+        tableHeaderLocators.forEach(fun(locator: String?) {
+            run {
+                if (CollectionUtils.isEmpty(headers)) headers = table.findElements(By.xpath(locator))
+            }
+        })
+
         writeCsvHeader(msgPrefix, writer, headers)
 
         var pageCount = 0

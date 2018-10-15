@@ -48,7 +48,7 @@ public class ExecutionContextTest {
 
     @Test
     public void replaceTokens() {
-        ExecutionContext subject = initMockContext();
+        MockExecutionContext subject = initMockContext();
         subject.setData("a", new String[]{"Hello", "World", "Johnny boy"});
 
         Assert.assertEquals("Hello", subject.replaceTokens("${a}[0]"));
@@ -114,11 +114,13 @@ public class ExecutionContextTest {
 
         // since there's not index 15 of stuff, we'll get empty string
         Assert.assertEquals("", subject.replaceTokens("${stuff}[14]"));
+
+        subject.cleanProject();
     }
 
     @Test
     public void replaceTokens_array() {
-        ExecutionContext subject = initMockContext();
+        MockExecutionContext subject = initMockContext();
         subject.setData("a", "Hello,World,Johnny boy");
         subject.setData("b", "Hello World Johnny boy");
 
@@ -145,11 +147,13 @@ public class ExecutionContextTest {
         Assert.assertEquals("Hello World Johnny boy", subject.replaceTokens("${b}"));
         Assert.assertEquals("Hello World Johnny boy", subject.replaceTokens("$(array|item|${b}|0)"));
         Assert.assertEquals("", subject.replaceTokens("$(array|item|${b}|1)"));
+
+        subject.cleanProject();
     }
 
     @Test
     public void replaceTokens_ignored() {
-        ExecutionContext subject = initMockContext();
+        MockExecutionContext subject = initMockContext();
         subject.setData(OPT_VAR_EXCLUDE_LIST, "username,applications");
         subject.setData("a1", "blah");
         subject.setData("a2", "yada");
@@ -168,11 +172,13 @@ public class ExecutionContextTest {
                             subject.replaceTokens("The ${username} has [TEXT(${username}) => length] characters"));
         Assert.assertEquals("The ${username} is ${USERNAME}",
                             subject.replaceTokens("The ${username} is [TEXT(${username}) => upper]"));
+
+        subject.cleanProject();
     }
 
     @Test
     public void handleFunction() {
-        ExecutionContext subject = initMockContext();
+        MockExecutionContext subject = initMockContext();
         subject.setData("firstDOW", "04/30/2017");
 
         Assert.assertEquals("05/01/2017", subject.handleFunction("$(date|addDay|${firstDOW}|1)"));
@@ -182,11 +188,13 @@ public class ExecutionContextTest {
 
         System.out.println(subject.handleFunction(
             "$(date|format|$(date|addDay|$(sysdate|firstDOW|MM/dd/yyyy)|1)|MM/dd/yyyy|MM/dd/yy)"));
+
+        subject.cleanProject();
     }
 
     @Test
     public void handleFunction_syspath() {
-        ExecutionContext subject = initMockContext();
+        MockExecutionContext subject = initMockContext();
 
         String theOtherSlash = StringUtils.equals(separator, "/") ? "\\" : "/";
         String fixture = "$(syspath|script|fullpath)" + theOtherSlash + "MyScript.xlsx";
@@ -201,11 +209,13 @@ public class ExecutionContextTest {
         System.out.println(actual2);
         Assert.assertThat(actual2, allOf(containsString(actual),
                                          containsString("\\\\ 2 backslashes and // 2 forward slashes")));
+
+        subject.cleanProject();
     }
 
     @Test
     public void handleFunction_syspath_in_data() {
-        ExecutionContext subject = initMockContext();
+        MockExecutionContext subject = initMockContext();
 
         String theOtherSlash = StringUtils.equals(separator, "/") ? "\\" : "/";
         String fixture = "$(syspath|script|fullpath)" + theOtherSlash + "MyScript.xlsx";
@@ -222,21 +232,25 @@ public class ExecutionContextTest {
         System.out.println(actual2);
         Assert.assertThat(actual2, allOf(containsString(subject.handleFunction(fixture)),
                                          containsString("\\\\ 2 backslashes and // 2 forward slashes")));
+
+        subject.cleanProject();
     }
 
     @Test
     public void isFunction() throws Exception {
-        ExecutionContext subject = initMockContext();
+        MockExecutionContext subject = initMockContext();
 
         Assert.assertFalse(subject.isFunction(null));
         Assert.assertFalse(subject.isFunction(""));
         Assert.assertFalse(subject.isFunction(" "));
         Assert.assertTrue(subject.isFunction("array|remove|a"));
+
+        subject.cleanProject();
     }
 
     @Test
     public void parseFunction() throws Exception {
-        ExecutionContext subject = initMockContext();
+        MockExecutionContext subject = initMockContext();
 
         Function f;
 
@@ -330,11 +344,13 @@ public class ExecutionContextTest {
         Assert.assertEquals("a|b|c", f.parameters[0]);
         Assert.assertEquals("0", f.parameters[1]);
         Assert.assertEquals("2", f.parameters[2]);
+
+        subject.cleanProject();
     }
 
     @Test
     public void invokeFunction() throws Exception {
-        ExecutionContext subject = initMockContext();
+        MockExecutionContext subject = initMockContext();
 
         // one param
         Assert.assertEquals("0", subject.replaceTokens("$(count|upper|there's no uppercase here)"));
@@ -373,6 +389,8 @@ public class ExecutionContextTest {
         subject.setData(TEXT_DELIM, ",");
         Assert.assertEquals("had,a,little,had,a,little,had,a,little,had,a,little,had,a,little",
                             subject.replaceTokens("$(array|replica|$(array|subarray|mary,had,a,little,lamb|1|3)|5)"));
+
+        subject.cleanProject();
     }
 
     @NotNull
@@ -383,7 +401,7 @@ public class ExecutionContextTest {
     }
 
     @NotNull
-    private ExecutionContext initMockContext() {
+    private MockExecutionContext initMockContext() {
         // for syspath
         String projectBase = JAVA_IO_TMPDIR + "dummy";
         System.setProperty(OPT_PROJECT_BASE, projectBase);
@@ -393,7 +411,7 @@ public class ExecutionContextTest {
                                                  "script" + separator +
                                                  "MyScript.xlsx");
 
-        ExecutionContext subject = new MockExecutionContext();
+        MockExecutionContext subject = new MockExecutionContext();
         subject.setData(TEXT_DELIM, ",");
         subject.builtinFunctions = new HashMap<>();
         subject.builtinFunctions.put("array", new Array());
@@ -404,5 +422,4 @@ public class ExecutionContextTest {
         subject.builtinFunctions.put("syspath", new Syspath());
         return subject;
     }
-
 }

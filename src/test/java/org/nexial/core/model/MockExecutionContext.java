@@ -130,13 +130,14 @@ public class MockExecutionContext extends ExecutionContext {
     public NexialCommand findPlugin(String target) { return plugins.get(target); }
 
     public void newProject() throws IOException {
-        String nexialHome = System.getProperty(NEXIAL_HOME, "/Users/ml093043/projects/nexial/nexial-core");
+        // String nexialHome = System.getProperty(NEXIAL_HOME, "/Users/ml093043/projects/nexial/nexial-core");
+        String nexialHome = System.getProperty(NEXIAL_HOME, "/NON_EXISTING_PATH/nexial");
         System.setProperty(NEXIAL_HOME, nexialHome);
 
         projectHome = SystemUtils.getJavaIoTmpDir().getAbsolutePath() + separator
                       + "_nexial_" + RandomStringUtils.randomAlphabetic(5) + separator;
-        String tetsScriptPath = projectHome + DEF_REL_LOC_TEST_SCRIPT + "temp.xlsx";
-        File testScript = new File(tetsScriptPath);
+        String testScriptPath = projectHome + DEF_REL_LOC_TEST_SCRIPT + "temp.xlsx";
+        File testScript = new File(testScriptPath);
         FileUtils.writeStringToFile(testScript, RandomStringUtils.random(100), DEF_CHARSET);
         project = TestProject.newInstance(testScript, DEF_REL_LOC_TEST_SCRIPT);
         project.setProjectHome(projectHome);

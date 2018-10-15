@@ -32,33 +32,34 @@ import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.SystemUtils;
 import org.apache.commons.text.similarity.LevenshteinDetailedDistance;
 import org.apache.commons.text.similarity.LevenshteinResults;
+import org.junit.AfterClass;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Test;
-
 import org.nexial.commons.utils.TextUtils;
 import org.nexial.core.model.ExecutionContext;
 import org.nexial.core.model.MockExecutionContext;
 import org.nexial.core.model.StepResult;
 import org.nexial.core.model.TestStep;
+
 import com.google.gson.JsonObject;
 import com.univocity.parsers.csv.CsvParser;
 
+import static java.io.File.separator;
 import static org.nexial.core.NexialConst.DEF_FILE_ENCODING;
 import static org.nexial.core.NexialConst.Data.*;
 import static org.nexial.core.NexialConst.OPT_OUT_DIR;
 import static org.nexial.core.plugins.io.ComparisonResult.*;
 import static org.nexial.core.plugins.io.FileComparisonReport.GSON;
 import static org.nexial.core.plugins.io.IoCommand.levenshtein;
-import static java.io.File.separator;
 
 public class CsvCommandTest {
     private static final String CLASSNAME = CsvCommandTest.class.getSimpleName();
     private static final String TMP_PATH = SystemUtils.getJavaIoTmpDir().getAbsolutePath();
-    public static final String LOG_FILE = StringUtils.appendIfMissing(TMP_PATH, separator) + CLASSNAME + ".log";
+    private static final String LOG_FILE = StringUtils.appendIfMissing(TMP_PATH, separator) + CLASSNAME + ".log";
 
-    private ExecutionContext context = new MockExecutionContext(true) {
+    private static ExecutionContext context = new MockExecutionContext(true) {
         @Override
         public TestStep getCurrentTestStep() {
             return new TestStep() {
@@ -74,6 +75,13 @@ public class CsvCommandTest {
     @BeforeClass
     public static void init() {
         System.setProperty(OPT_OUT_DIR, TMP_PATH);
+    }
+
+    @AfterClass
+    public static void afterClass() {
+        if (context != null) { ((MockExecutionContext) context).cleanProject(); }
+        FileUtils.deleteQuietly(new File(LOG_FILE));
+        FileUtils.deleteQuietly(new File(StringUtils.substringBeforeLast(LOG_FILE, ".log") + ".json"));
     }
 
     @Before
