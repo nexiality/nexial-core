@@ -2219,17 +2219,15 @@ public class WebCommand extends BaseCommand implements CanTakeScreenshot, CanLog
         }
     }
 
-    /** IE8-specific fix by adding randomized number sequence to URL to prevent overly-intelligent-caching by IE. */
-    protected String fixURL(String url) {
-        if (browser.isRunIE() && browser.getMajorVersion() == 8) { // || browser.isRunChrome()) {
-            url = addNoCacheRandom(url);
-        }
-        return url;
-    }
-
     protected String validateUrl(String url) {
         requires(RegexUtils.isExact(StringUtils.lowerCase(url), REGEX_VALID_WEB_PROTOCOL), "invalid URL", url);
         return fixURL(url);
+    }
+
+    /** IE8-specific fix by adding randomized number sequence to URL to prevent overly-intelligent-caching by IE. */
+    protected String fixURL(String url) {
+        if (browser.isRunIE() && browser.getMajorVersion() == 8) { url = addNoCacheRandom(url); }
+        return url;
     }
 
     protected String addNoCacheRandom(String url) {

@@ -1,4 +1,4 @@
-# nexial-core - Nexial Automation
+# Nexial Automation
 
 #### Test Automation Platform for _Everyone_!<br/>
 ![logo](https://nexiality.github.io/documentation/image/logo-x.png)
@@ -29,7 +29,6 @@ To see Nexial in action, watch this short demo showcasing how Nexial
 [![Nexial in Action](https://nexiality.github.io/documentation/image/nexial-in-action-youtube-preview.png)](https://www.youtube.com/watch?v=b372XikN1YU&cc_lang_pref=en&cc_load_policy=1)
 
 <br/>
-<br/>
 
 **Wanna try? Have at it!**
 1. Download [Nexial distro](https://github.com/nexiality/nexial-core/releases)
@@ -56,5 +55,21 @@ More introductory information can be found at our
 For more information, please visit [Our Site](https://nexiality.github.io/documentation/).
 
 [Tutorials](https://nexiality.github.io/tutorials/)
+
+---
+
+## Contributing
+
+Nexial Automation is a free and open source project.  We appreciate any help anyone is willing to give - whether it's 
+fixing bugs, improving documentation, suggesting new features, or collaboration via coding. Check out the 
+[contributing guide](.github/CONTRIBUTING.md) for more details.
+
+<div style="width:420px; vertical-align:middle; height:60px; background: rgba(250,250,230,0.45)">
+    <img src="https://nexiality.github.io/documentation/image/browserstack/Browserstack-logo@2x.png"
+        style="box-shadow:none; padding:10px 15px 10px; width:150px;" align="left"/>
+    <div style="vertical-align:middle; padding:10px 0; font-size:10pt; color:#333;">
+        Nexial Automation uses <a href="http://browserstack.com">BrowserStack</a> for compatibility and feature testing.
+    </div>
+</div>
 
 ---
