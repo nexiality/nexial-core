@@ -569,7 +569,7 @@ public final class TextUtils {
 
     public static String wrapIfMissing(String text, String start, String end) {
         if (StringUtils.isEmpty(text)) { return start + end; }
-        return StringUtils.prependIfMissing(StringUtils.appendIfMissing(text, start), end);
+        return StringUtils.prependIfMissing(StringUtils.appendIfMissing(text, end), start);
     }
 
     /**

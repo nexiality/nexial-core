@@ -20,6 +20,7 @@ package org.nexial.core.plugins.json;
 import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
+import javax.validation.constraints.NotNull;
 
 import org.apache.commons.lang3.BooleanUtils;
 import org.apache.commons.lang3.StringUtils;
@@ -37,6 +38,8 @@ import com.github.fge.jsonschema.core.exceptions.ProcessingException;
 import com.github.fge.jsonschema.core.report.ProcessingReport;
 import com.github.fge.jsonschema.main.JsonSchema;
 import com.github.fge.jsonschema.main.JsonSchemaFactory;
+import com.google.gson.JsonArray;
+import com.google.gson.JsonElement;
 import com.google.gson.JsonParser;
 
 import static org.nexial.core.NexialConst.DEF_CHARSET;
@@ -71,24 +74,9 @@ public class JsonCommand extends BaseCommand {
             return StepResult.fail("ACTUAL json is invalid or not readable: " + e.getMessage());
         }
 
-        JsonMetaParser jsonMetaParser = new JsonMetaParser();
         JsonParser jsonParser = new JsonParser();
-        JsonMeta expectedMeta = jsonMetaParser.parse(jsonParser.parse(expectedJsonContent));
-        JsonMeta actualMeta = jsonMetaParser.parse(jsonParser.parse(actualJsonContent));
-        JsonComparisonResult results = expectedMeta.compare(actualMeta);
-
-        if (results.hasDifferences()) {
-            String differences = GSON.toJson(results.toJson());
-            context.setData(LAST_JSON_COMPARE_RESULT, differences);
-            ConsoleUtils.log("JSON differences found:\n" + differences);
-            addOutputAsLink("JSON comparison resulted in " + results.differenceCount() + " differences",
-                            differences,
-                            "json");
-            return StepResult.fail("EXPECTED json is NOT equivalent to the ACTUAL json");
-        } else {
-            context.removeData(LAST_JSON_COMPARE_RESULT);
-            return StepResult.success("EXPECTED json is equivalent to the ACTUAL json");
-        }
+        return assertEqual(jsonParser.parse(expectedJsonContent),
+                           jsonParser.parse(actualJsonContent));
     }
 
     public StepResult assertElementPresent(String json, String jsonpath) {
@@ -163,24 +151,40 @@ public class JsonCommand extends BaseCommand {
     }
 
     public StepResult assertValue(String json, String jsonpath, String expected) {
-        return super.assertEqual(expected, find(json, jsonpath));
+        return assertEqual(expected, find(json, jsonpath));
     }
 
     public StepResult assertValues(String json, String jsonpath, String array, String exactOrder) {
-        String actual = find(json, jsonpath);
-        // accommodate for [, ] and double quotes
-        actual = StringUtils.removeStart(actual, "[");
-        actual = StringUtils.removeEnd(actual, "]");
-        actual = StringUtils.remove(actual, "\"");
+        requiresNotBlank(json, "Invalid JSON", json);
+        requiresNotBlank(jsonpath, "Invalid JsonPath", jsonpath);
 
-        String expected = array;
-        if (!context.isNullValue(array)) {
-            expected = StringUtils.removeStart(array, "[");
-            expected = StringUtils.removeEnd(expected, "]");
-            expected = StringUtils.remove(expected, "\"");
+        String actual = find(json, jsonpath);
+        String expected = TextUtils.wrapIfMissing(array, "[", "]");
+        boolean isExactOrder = BooleanUtils.toBoolean(exactOrder);
+
+        JsonParser jsonParser = new JsonParser();
+        JsonElement expectedJson = StringUtils.isEmpty(expected) ? new JsonArray() : jsonParser.parse(expected);
+        JsonElement actualJson = StringUtils.isEmpty(actual) ? new JsonArray() : jsonParser.parse(actual);
+
+        if (!expectedJson.isJsonArray()) { return StepResult.fail("JSON matched to '" + jsonpath + "' is NOT array"); }
+        if (!actualJson.isJsonArray()) { return StepResult.fail("The expected JSON structure is NOT array"); }
+
+        // by this point both `expected` and `actual` are array
+        JsonArray expectedArray = expectedJson.getAsJsonArray();
+        JsonArray actualArray = actualJson.getAsJsonArray();
+        if (expectedArray.size() == 0 && actualArray.size() == 0) { return StepResult.success("Both array are empty"); }
+
+        StepResult valueCompare = assertEqual(expectedJson, actualJson);
+        if (valueCompare.failed() || !isExactOrder) { return valueCompare; }
+
+        for (int i = 0; i < expectedArray.size(); i++) {
+            JsonElement expectedItem = expectedArray.get(i);
+            JsonElement actualItem = actualArray.get(i);
+            StepResult itemCompare = assertEqual(expectedItem, actualItem);
+            if (itemCompare.failed()) { return itemCompare; }
         }
 
-        return assertArrayEqual(expected, actual, exactOrder);
+        return StepResult.success("EXPECTED array is equivalent to the ACTUAL array");
     }
 
     public StepResult assertCorrectness(String json, String schema) {
@@ -248,6 +252,27 @@ public class JsonCommand extends BaseCommand {
         return StepResult.success("CSV '" + csv + "' converted to JSON '" + jsonFile + "'");
     }
 
+    @NotNull
+    protected StepResult assertEqual(JsonElement expectedJson, JsonElement actualJson) {
+        JsonMetaParser jsonMetaParser = new JsonMetaParser();
+        JsonMeta expectedMeta = jsonMetaParser.parse(expectedJson);
+        JsonMeta actualMeta = jsonMetaParser.parse(actualJson);
+        JsonComparisonResult results = expectedMeta.compare(actualMeta);
+
+        if (results.hasDifferences()) {
+            String differences = GSON.toJson(results.toJson());
+            context.setData(LAST_JSON_COMPARE_RESULT, differences);
+            ConsoleUtils.log("JSON differences found:\n" + differences);
+            addOutputAsLink("JSON comparison resulted in " + results.differenceCount() + " differences",
+                            differences,
+                            "json");
+            return StepResult.fail("EXPECTED json is NOT equivalent to the ACTUAL json");
+        } else {
+            context.removeData(LAST_JSON_COMPARE_RESULT);
+            return StepResult.success("EXPECTED json is equivalent to the ACTUAL json");
+        }
+    }
+
     protected Object toJSONObject(String json) {
         requires(StringUtils.isNotBlank(json), "invalid json", json);
 
@@ -293,9 +318,7 @@ public class JsonCommand extends BaseCommand {
         if (obj instanceof JSONArray) { jp = new JSONPath((JSONArray) obj, jsonpath); }
         if (obj instanceof JSONObject) { jp = new JSONPath((JSONObject) obj, jsonpath); }
 
-        if (jp == null) {
-            throw new IllegalArgumentException("Unsupported data type " + obj.getClass().getSimpleName());
-        }
+        if (jp == null) {throw new IllegalArgumentException("Unsupported data type " + obj.getClass().getSimpleName());}
 
         String matches = jp.get();
 

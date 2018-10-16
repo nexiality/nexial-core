@@ -757,8 +757,8 @@ public class BaseCommand implements NexialCommand {
         expectedGlob = expectedGlob.replaceAll("\\*", ".*");
         expectedGlob = expectedGlob.replaceAll("\\?", ".");
         if (!Pattern.compile(expectedGlob, Pattern.DOTALL).matcher(actual).matches()) {
-            ConsoleUtils.log("expected \"" + actual + "\" to match glob \"" + expectedPattern
-                             + "\" (had transformed the glob into regexp \"" + expectedGlob + "\"");
+            // ConsoleUtils.log("expected \"" + actual + "\" to match glob \"" + expectedPattern
+            //                  + "\" (had transformed the glob into regexp \"" + expectedGlob + "\"");
             return false;
         }
         return true;
@@ -880,7 +880,6 @@ public class BaseCommand implements NexialCommand {
     protected void verifyFalse(String description, boolean b) {
         String result = !b ? MSG_PASS : MSG_FAIL;
         log(result + (StringUtils.isNotBlank(description) ? description : ""));
-        //if (b) { verificationErrors.append(description); }
         verifyFalse(b);
     }
 

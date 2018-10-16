@@ -88,7 +88,7 @@ public class TestStep extends TestStepManifest {
 
         setMessageId("[" + worksheet.getFile().getName() + "]" +
                      "[" + worksheet.getName() + "][" + testCase.getName() + "]" +
-                     "[ROW " + StringUtils.leftPad(row.get(0).getRowIndex() + 1 + "", 3) + "]" +
+                     "[ROW " + StringUtils.leftPad((getRowIndex() + 1) + "", 3) + "]" +
                      "[" + target + "][" + command + "]");
 
         nestedTestResults = new ArrayList<>();
@@ -256,11 +256,15 @@ public class TestStep extends TestStepManifest {
     }
 
     protected StepResult invokeCommand() throws InvocationTargetException, IllegalAccessException {
-        String[] args = params.toArray(new String[params.size()]);
+        String[] args = params.toArray(new String[0]);
 
         // log before pause (DO NOT use log() since that might trigger logToTestScript())
         ExecutionLogger logger = context.getLogger();
-        logger.log(this, "executing " + command + "(" + TextUtils.toString(args, ", ", "", "") + ")");
+        StringBuilder argText = new StringBuilder();
+        for (String arg : args) {
+            argText.append(StringUtils.startsWith(arg, "$(execution") ? context.replaceTokens(arg) : arg).append(", ");
+        }
+        logger.log(this, "executing " + command + "(" + StringUtils.removeEnd(argText.toString(), ", ") + ")");
 
         FlowControlUtils.checkPauseBefore(context, this);
 

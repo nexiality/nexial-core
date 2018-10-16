@@ -49,7 +49,7 @@ class StepCommand : BaseCommand() {
         }
 
         val pass = passResponses.split(context.textDelim).contains(response)
-        log("Response received as $response - ${if (pass) "PASSED" else "FAILED"}")
+//        log("Response received as $response - ${if (pass) "PASSED" else "FAILED"}")
         return StepResult(pass, "Response '$response' considered as ${if (pass) "PASS" else "FAILED"}", null)
     }
 
