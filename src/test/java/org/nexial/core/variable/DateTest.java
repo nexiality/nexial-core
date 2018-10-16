@@ -17,15 +17,16 @@
 
 package org.nexial.core.variable;
 
+import java.text.DateFormat;
+import java.text.SimpleDateFormat;
+
 import org.junit.Assert;
 import org.junit.Test;
 
+import static org.nexial.core.NexialConst.EPOCH;
 import static org.nexial.core.NexialConst.ONEYEAR;
 import static org.nexial.core.NexialConst.THIRTYDAYS;
 
-/**
- *
- */
 public class DateTest {
 
     @Test
@@ -43,17 +44,17 @@ public class DateTest {
         System.out.println("System.currentTimeMillis() = " + System.currentTimeMillis());
 
         Date d = new Date();
-        Assert.assertEquals("0000/00/00 00:01:12,000", d.format("72000", "epoch", "yyyy/MM/dd HH:mm:ss,SSS"));
-        Assert.assertEquals("2018/05/24 18:46:36,917", d.format("1527212796917", "epoch", "yyyy/MM/dd HH:mm:ss,SSS"));
-        Assert.assertEquals("00:00:07,461", d.format("7461", "epoch", "HH:mm:ss,SSS"));
-        Assert.assertEquals("00:00:07", d.format("7461", "epoch", "HH:mm:ss"));
-        Assert.assertEquals("0:0:7", d.format("7461", "epoch", "h:m:s"));
-        Assert.assertEquals("0", d.format("7461", "epoch", "y"));
-        Assert.assertEquals("720:0:0", d.format(THIRTYDAYS+"", "epoch", "h:m:s"));
-        Assert.assertEquals("30 0:0:0", d.format(THIRTYDAYS+"", "epoch", "dd h:m:s"));
-        Assert.assertEquals("00/30 0:0:0", d.format(THIRTYDAYS+"", "epoch", "MM/dd h:m:s"));
-        Assert.assertEquals("12/31 4:0:0", d.format(ONEYEAR+"", "epoch", "MM/dd h:m:s"));
-        Assert.assertEquals("1970/12/31 16:0:0", d.format(ONEYEAR+"", "epoch", "yyyy/MM/dd H:m:s"));
+        Assert.assertEquals("0000/00/00 00:01:12,000", d.format("72000", EPOCH, "yyyy/MM/dd HH:mm:ss,SSS"));
+        Assert.assertEquals("2018/05/24 18:46:36,917", d.format("1527212796917", EPOCH, "yyyy/MM/dd HH:mm:ss,SSS"));
+        Assert.assertEquals("00:00:07,461", d.format("7461", EPOCH, "HH:mm:ss,SSS"));
+        Assert.assertEquals("00:00:07", d.format("7461", EPOCH, "HH:mm:ss"));
+        Assert.assertEquals("0:0:7", d.format("7461", EPOCH, "h:m:s"));
+        Assert.assertEquals("0", d.format("7461", EPOCH, "y"));
+        Assert.assertEquals("720:0:0", d.format(THIRTYDAYS + "", EPOCH, "h:m:s"));
+        Assert.assertEquals("30 0:0:0", d.format(THIRTYDAYS + "", EPOCH, "dd h:m:s"));
+        Assert.assertEquals("00/30 0:0:0", d.format(THIRTYDAYS + "", EPOCH, "MM/dd h:m:s"));
+        Assert.assertEquals("12/31 4:0:0", d.format(ONEYEAR + "", EPOCH, "MM/dd h:m:s"));
+        Assert.assertEquals("1970/12/31 16:0:0", d.format(ONEYEAR + "", EPOCH, "yyyy/MM/dd H:m:s"));
     }
 
     @Test
@@ -165,5 +166,43 @@ public class DateTest {
         Assert.assertEquals("04/14/2010 11:15:10", d.setSecond("04/14/2010 11:15:22", "10"));
         Assert.assertEquals("04/14/2010 11:16:04", d.setSecond("04/14/2010 11:15:22", "64"));
         Assert.assertEquals("04/14/2010 11:15:00", d.setSecond("04/14/2010 11:15:22", "0"));
+    }
+
+    @Test
+    public void fromBase10Time() throws Exception {
+        DateFormat dateFormat = new SimpleDateFormat("HH:mm:ss.S");
+        Assert.assertEquals("00:00:00.0", dateFormat.format(Date.fromBase10Time("0")));
+        Assert.assertEquals("00:00:00.0", dateFormat.format(Date.fromBase10Time("0.00")));
+        Assert.assertEquals("00:30:00.0", dateFormat.format(Date.fromBase10Time("0.50")));
+        Assert.assertEquals("01:00:00.0", dateFormat.format(Date.fromBase10Time("1")));
+        Assert.assertEquals("02:27:00.0", dateFormat.format(Date.fromBase10Time("2.45")));
+        Assert.assertEquals("14:27:00.0", dateFormat.format(Date.fromBase10Time("14.45")));
+        Assert.assertEquals("14:19:45.48", dateFormat.format(Date.fromBase10Time("14.32918")));
+        Assert.assertEquals("23:59:59.964", dateFormat.format(Date.fromBase10Time("23.99999")));
+        // lost in fidelity... need a different date format to see the overflown time information
+        Assert.assertEquals("00:00:00.360", dateFormat.format(Date.fromBase10Time("24.0001")));
+        Assert.assertEquals("01:06:03.640", dateFormat.format(Date.fromBase10Time("25.101011")));
+        Assert.assertEquals("01:06:03.639", dateFormat.format(Date.fromBase10Time("25.1010108333")));
+
+        DateFormat dateFormat2 = new SimpleDateFormat("dd HH:mm:ss.S");
+        Assert.assertEquals("01 00:00:00.360", dateFormat2.format(Date.fromBase10Time("24.0001")));
+        Assert.assertEquals("01 01:06:03.640", dateFormat2.format(Date.fromBase10Time("25.101011")));
+        Assert.assertEquals("01 01:06:03.639", dateFormat2.format(Date.fromBase10Time("25.1010108333")));
+    }
+
+    @Test
+    public void toBase10Time() throws Exception {
+        DateFormat dateFormat = new SimpleDateFormat("HH:mm:ss.S");
+        Assert.assertEquals(0, Date.toBase10Time(dateFormat.parse("00:00:00.0")), 0);
+        Assert.assertEquals(0.00, Date.toBase10Time(dateFormat.parse("00:00:00.0")), 0);
+        Assert.assertEquals(0.50, Date.toBase10Time(dateFormat.parse("00:30:00.0")), 0);
+        Assert.assertEquals(1, Date.toBase10Time(dateFormat.parse("01:00:00.0")), 0);
+        Assert.assertEquals(2.45, Date.toBase10Time(dateFormat.parse("02:27:00.0")), 0);
+        Assert.assertEquals(14.45, Date.toBase10Time(dateFormat.parse("14:27:00.0")), 0);
+        Assert.assertEquals(14.32918, Date.toBase10Time(dateFormat.parse("14:19:45.48")), 0);
+        Assert.assertEquals(23.99999, Date.toBase10Time(dateFormat.parse("23:59:59.964")), 0);
+        Assert.assertEquals(24.0001, Date.toBase10Time(dateFormat.parse("24:00:00.360")), 0);
+        Assert.assertEquals(25.1010108333, Date.toBase10Time(dateFormat.parse("25:06:03.639")), 0);
+        Assert.assertEquals(10.425, Date.toBase10Time(dateFormat.parse("10:25:30.0")), 0);
     }
 }

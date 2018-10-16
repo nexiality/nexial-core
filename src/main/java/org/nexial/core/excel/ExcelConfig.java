@@ -988,8 +988,7 @@ public class ExcelConfig {
         int expectedCommandCellWidth = commandLength * charWidthFactor;
 
         if (actualCommandCellWidth < expectedCommandCellWidth) {
-            // excel can only support 255 as max cell width
-            sheet.setColumnWidth(columnIndex, Math.min(expectedCommandCellWidth, 255));
+            sheet.setColumnWidth(columnIndex, expectedCommandCellWidth);
         }
     }
 

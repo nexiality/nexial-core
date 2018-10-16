@@ -30,6 +30,8 @@ import org.nexial.commons.logging.LogbackUtils;
 import org.nexial.commons.utils.DateUtility;
 import org.nexial.core.ExecutionEventListener;
 import org.nexial.core.model.ExecutionContext;
+import org.nexial.core.model.TestCase;
+import org.nexial.core.model.TestStep;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.slf4j.event.Level;
@@ -45,6 +47,11 @@ import static org.slf4j.event.Level.INFO;
 public final class ConsoleUtils {
     private static final Logger LOGGER = LoggerFactory.getLogger(ConsoleUtils.class);
     private static final List<Pair<Level, String>> PRE_EXEC_READY_BUFFER = new ArrayList<>();
+    private static final int PROMPT_LINE_WIDTH = 80;
+    private static final String HDR_START = "";
+    private static final String HDR_END = "";
+    private static final String META_START = "[";
+    private static final String META_END = "]";
 
     private ConsoleUtils() { }
 
@@ -60,129 +67,6 @@ public final class ConsoleUtils {
         if (System.err == null) { throw new RuntimeException("System.err is null!"); }
         System.err.println(DateUtility.getCurrentTimestampForLogging() + " >> " + msg);
         logAs(ERROR, msg);
-    }
-
-    public static void pause(ExecutionContext context, String msg) {
-        if (!isPauseReady()) { return; }
-
-        ExecutionEventListener listener = context.getExecutionEventListener();
-        listener.onPause();
-
-        doPause(context, msg);
-
-        listener.afterPause();
-    }
-
-    public static void doPause(ExecutionContext context, String msg) {
-        System.out.println();
-        System.out.println(msg);
-
-        if (context != null && context.getBooleanData(OPT_INSPECT_ON_PAUSE, DEF_INSPECT_ON_PAUSE)) {
-            // inspect mode
-            System.out.println("/------------------------------------------------------------------------------\\");
-            System.out.println("|" + centerPrompt("INSPECT ON PAUSE", 78) + "|");
-            System.out.println("\\------------------------------------------------------------------------------/");
-            System.out.println("> Enter statement to inspect.  Press ENTER or " + RESUME_FROM_PAUSE + " to resume " +
-                               "execution\n");
-            System.out.print("inspect-> ");
-            Scanner in = new Scanner(System.in);
-            String input = in.nextLine();
-
-            while (StringUtils.isNotBlank(input) && !StringUtils.equals(StringUtils.trim(input), RESUME_FROM_PAUSE)) {
-                System.out.println(context.replaceTokens(input));
-                System.out.println();
-                System.out.print("inspect-> ");
-                input = in.nextLine();
-            }
-        } else {
-            System.out.println("\t>>> Press ENTER to continue... ");
-            Scanner in = new Scanner(System.in);
-            in.nextLine();
-        }
-    }
-
-    public static void pauseForStep(ExecutionContext context, String instructions) {
-        // not applicable when running in Jenkins environment
-        if (!isPauseReady()) { return; }
-
-        ExecutionEventListener listener = context.getExecutionEventListener();
-        listener.onPause();
-
-        System.out.println("\n");
-        System.out.println("/------------------------------------------------------------------------------\\");
-        System.out.println(centerPrompt("PERFORM THE FOLLOWING STEPS", 80));
-        System.out.println("\\------------------------------------------------------------------------------/");
-        System.out.println("> Instruction(s) from " + context.getCurrentTestStep().getMessageId());
-
-        Arrays.stream(StringUtils.split(instructions, "\n"))
-              .forEach(step -> System.out.println(" | " + StringUtils.removeEnd(step, "\r")));
-
-        System.out.println("> When complete, press ENTER to continue ");
-
-        Scanner in = new Scanner(System.in);
-        in.nextLine();
-
-        listener.afterPause();
-    }
-
-    public static String pauseToValidate(ExecutionContext context, String instructions, String possibleResponses) {
-        // not applicable when running in Jenkins environment
-        if (!isPauseReady()) { return null; }
-
-        ExecutionEventListener listener = context.getExecutionEventListener();
-        listener.onPause();
-
-        System.out.println("\n");
-        System.out.println("/------------------------------------------------------------------------------\\");
-        System.out.println(centerPrompt("VALIDATE THE FOLLOWING", 80));
-        System.out.println("\\------------------------------------------------------------------------------/");
-        System.out.println("> Validation(s) from " + context.getCurrentTestStep().getMessageId());
-
-        Arrays.stream(StringUtils.split(instructions, "\n"))
-              .forEach(step -> System.out.println(" | " + StringUtils.removeEnd(step, "\r")));
-
-        List<String> responses = new ArrayList<>();
-        if (StringUtils.isBlank(possibleResponses)) {
-            responses.add("Y");
-            responses.add("N");
-        } else {
-            responses.addAll(Arrays.asList(StringUtils.split(possibleResponses, context.getTextDelim())));
-        }
-
-        System.out.printf(" > %s: ", responses);
-
-        Scanner in = new Scanner(System.in);
-        String input = in.nextLine();
-
-        listener.afterPause();
-
-        return input;
-    }
-
-    public static String pauseForInput(ExecutionContext context, String prompt) {
-        // not applicable when running in Jenkins environment
-        if (!isPauseReady()) { return null; }
-
-        ExecutionEventListener listener = context.getExecutionEventListener();
-        listener.onPause();
-
-        System.out.println("\n");
-        System.out.println("/------------------------------------------------------------------------------\\");
-        System.out.println(centerPrompt("NOTE YOUR OBSERVATION", 80));
-        System.out.println("\\------------------------------------------------------------------------------/");
-        System.out.println("> Prompt from " + context.getCurrentTestStep().getMessageId());
-
-        Arrays.stream(StringUtils.split(prompt, "\n"))
-              .forEach(step -> System.out.println(" | " + StringUtils.removeEnd(step, "\r")));
-
-        System.out.print("> ");
-
-        Scanner in = new Scanner(System.in);
-        String input = in.nextLine();
-
-        listener.afterPause();
-
-        return input;
     }
 
     @SuppressWarnings("PMD.SystemPrintln")
@@ -209,15 +93,156 @@ public final class ConsoleUtils {
         logAs(ERROR, "[" + id + "] " + msg + e.getMessage());
     }
 
+    @SuppressWarnings("PMD.SystemPrintln")
     public static void showMissingLibraryError(String message) {
-        System.out.println("\n");
-        System.out.println("\n");
-        System.out.println("/!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!\\");
+        System.out.println();
+        System.out.println();
+        System.out.println("/" + StringUtils.repeat("!", PROMPT_LINE_WIDTH - 2) + "\\");
         System.out.println(" ! ERROR:");
         System.out.println(" !   " + StringUtils.replace(message, "\n", "\n !   "));
-        System.out.println("\\!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!/");
-        System.out.println("\n");
-        System.out.println("\n");
+        System.out.println("\\" + StringUtils.repeat("!", PROMPT_LINE_WIDTH - 2) + "/");
+        System.out.println();
+        System.out.println();
+    }
+
+    public static void pause(ExecutionContext context, String msg) {
+        if (!isPauseReady()) { return; }
+
+        ExecutionEventListener listener = context.getExecutionEventListener();
+        listener.onPause();
+        doPause(context, msg);
+        listener.afterPause();
+    }
+
+    @SuppressWarnings("PMD.SystemPrintln")
+    public static void doPause(ExecutionContext context, String msg) {
+        System.out.println();
+        System.out.println(msg);
+
+        if (context != null && context.getBooleanData(OPT_INSPECT_ON_PAUSE, DEF_INSPECT_ON_PAUSE)) {
+            // inspect mode
+            System.out.println("/------------------------------------------------------------------------------\\");
+            System.out.println("|" + centerPrompt("INSPECT ON PAUSE", PROMPT_LINE_WIDTH - 2) + "|");
+            System.out.println("\\------------------------------------------------------------------------------/");
+            System.out.println("> Enter statement to inspect.  Press ENTER or " + RESUME_FROM_PAUSE + " to resume " +
+                               "execution\n");
+            System.out.print("inspect-> ");
+            Scanner in = new Scanner(System.in);
+            String input = in.nextLine();
+
+            while (StringUtils.isNotBlank(input) && !StringUtils.equals(StringUtils.trim(input), RESUME_FROM_PAUSE)) {
+                // if (StringUtils.trim(input), INTERACTIVE)
+                System.out.println(context.replaceTokens(input));
+                System.out.println();
+                System.out.print("inspect-> ");
+                input = in.nextLine();
+            }
+        } else {
+            System.out.println("\t>>> Press ENTER to continue... ");
+            Scanner in = new Scanner(System.in);
+            in.nextLine();
+        }
+    }
+
+    @SuppressWarnings("PMD.SystemPrintln")
+    public static void pauseForStep(ExecutionContext context, String instructions) {
+        // not applicable when running in Jenkins environment
+        if (!isPauseReady()) { return; }
+
+        ExecutionEventListener listener = context.getExecutionEventListener();
+        listener.onPause();
+
+        printHeader(HDR_START + "PERFORM ACTION" + HDR_END, context);
+        printStepPrompt(instructions);
+
+        System.out.println("> When complete, press ENTER to continue ");
+
+        new Scanner(System.in).nextLine();
+
+        listener.afterPause();
+    }
+
+    @SuppressWarnings("PMD.SystemPrintln")
+    public static String pauseToValidate(ExecutionContext context, String instructions, String possibleResponses) {
+        // not applicable when running in Jenkins environment
+        if (!isPauseReady()) { return null; }
+
+        ExecutionEventListener listener = context.getExecutionEventListener();
+        listener.onPause();
+
+        printHeader(HDR_START + "VALIDATION" + HDR_END, context);
+        printStepPrompt(instructions);
+
+        List<String> responses = new ArrayList<>();
+        if (StringUtils.isBlank(possibleResponses)) {
+            responses.add("Y");
+            responses.add("N");
+        } else {
+            responses.addAll(Arrays.asList(StringUtils.split(possibleResponses, context.getTextDelim())));
+        }
+
+        System.out.printf("> %s: ", responses);
+
+        String input = new Scanner(System.in).nextLine();
+
+        listener.afterPause();
+
+        return input;
+    }
+
+    @SuppressWarnings("PMD.SystemPrintln")
+    public static String pauseForInput(ExecutionContext context, String prompt) {
+        // not applicable when running in Jenkins environment
+        if (!isPauseReady()) { return null; }
+
+        ExecutionEventListener listener = context.getExecutionEventListener();
+        listener.onPause();
+
+        printHeader(HDR_START + "OBSERVATION" + HDR_END, context);
+        printStepPrompt(prompt);
+
+        System.out.print("> ");
+
+        String input = new Scanner(System.in).nextLine();
+
+        listener.afterPause();
+
+        return input;
+    }
+
+    public static String centerPrompt(String prompt, int width) {
+        if (StringUtils.isBlank(prompt)) { return StringUtils.repeat(" ", width); }
+
+        String paddingSpaces = StringUtils.repeat(" ", (width - prompt.length()) / 2);
+        String newPrompt = paddingSpaces + prompt + paddingSpaces;
+        if (newPrompt.length() > width) { newPrompt = StringUtils.removeEnd(newPrompt, " "); }
+        if (newPrompt.length() < width) { newPrompt += " "; }
+        return newPrompt;
+    }
+
+    @SuppressWarnings("PMD.SystemPrintln")
+    protected static void printStepPrompt(String instructions) {
+        Arrays.stream(StringUtils.split(instructions, "\n"))
+              .forEach(step -> System.out.println("> " + StringUtils.removeEnd(step, "\r")));
+    }
+
+    @SuppressWarnings("PMD.SystemPrintln")
+    protected static void printHeader(String header, ExecutionContext context) {
+        TestStep testStep = context.getCurrentTestStep();
+        TestCase activity = testStep.getTestCase();
+        String activityName = activity.getName();
+        String scenarioName = activity.getTestScenario().getName();
+
+        int fillerLength = PROMPT_LINE_WIDTH - 2 - header.length() - 1;
+        String filler1 = StringUtils.repeat("-", fillerLength / 2);
+        String filler2 = StringUtils.repeat("-", fillerLength - filler1.length());
+
+        System.out.println();
+        System.out.println("/-" + filler1 + header + filler2 + "\\");
+        printHeaderLine(META_START + "scenario" + META_END + " ", scenarioName, PROMPT_LINE_WIDTH);
+        printHeaderLine(META_START + "activity" + META_END + " ", activityName, PROMPT_LINE_WIDTH);
+        printHeaderLine(META_START + "row/step" + META_END + " ", (testStep.getRowIndex() + 1) + "", PROMPT_LINE_WIDTH);
+        System.out.println("\\" + StringUtils.repeat("-", PROMPT_LINE_WIDTH - 2) + "/");
     }
 
     protected static boolean isPauseReady() {
@@ -227,6 +252,36 @@ public final class ConsoleUtils {
         } else {
             return true;
         }
+    }
+
+    @SuppressWarnings("PMD.SystemPrintln")
+    private static void printHeaderLine(String header1, String header2, int lineWidth) {
+        // garbage in, garbage out
+        if (StringUtils.isBlank(header1) || StringUtils.isBlank(header2)) { return; }
+
+        header2 = StringUtils.trim(header2);
+
+        String headerLine1 = "| " + header1 + header2;
+        if (StringUtils.length(headerLine1) < lineWidth) {
+            System.out.println(headerLine1 + StringUtils.repeat(" ", lineWidth - headerLine1.length() - 1) + "|");
+            return;
+        }
+
+        // longer than 1 line
+        boolean firstLine = true;
+        int leftMargin = PROMPT_LINE_WIDTH - 2 - header1.length() - 1;
+
+        do {
+            String portion =
+                (StringUtils.length(header2) <= lineWidth - leftMargin - 1) ?
+                header2 :
+                StringUtils.trim(StringUtils.substringBeforeLast(StringUtils.substring(header2, 0, leftMargin), " "));
+            String headerLine = "| " + ((firstLine ? header1 : StringUtils.repeat(" ", header1.length())) + portion);
+            System.out.println(headerLine + StringUtils.repeat(" ", lineWidth - headerLine.length() - 1) + "|");
+            firstLine = false;
+
+            header2 = StringUtils.trim(StringUtils.substringAfter(header2, portion));
+        } while (StringUtils.isNotBlank(header2));
     }
 
     private static void logAs(Level logLevel, String message) {
@@ -267,15 +322,5 @@ public final class ConsoleUtils {
             default:
                 if (LOGGER.isDebugEnabled()) { LOGGER.debug(message); }
         }
-    }
-
-    public static String centerPrompt(String prompt, int width) {
-        if (StringUtils.isBlank(prompt)) { return StringUtils.repeat(" ", width); }
-
-        String paddingSpaces = StringUtils.repeat(" ", (width - prompt.length()) / 2);
-        String newPrompt = paddingSpaces + prompt + paddingSpaces;
-        if (newPrompt.length() > width) { newPrompt = StringUtils.removeEnd(newPrompt, " "); }
-        if (newPrompt.length() < width) { newPrompt += " "; }
-        return newPrompt;
     }
 }

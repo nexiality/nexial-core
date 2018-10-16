@@ -18,9 +18,12 @@
 package org.nexial.core.variable;
 
 import java.text.DateFormat;
+import java.text.DecimalFormat;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.Calendar;
+import java.util.GregorianCalendar;
+import javax.annotation.Nullable;
 
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.math.NumberUtils;
@@ -40,38 +43,9 @@ public class Date {
     public String stdFormat(String date, String fromFormat) { return format(date, fromFormat, STD_DATE_FORMAT); }
 
     public String format(String date, String fromFormat, String toFormat) {
-        try {
-            java.util.Date fromDate = StringUtils.equals(fromFormat, EPOCH) ?
-                                      new java.util.Date(NumberUtils.toLong(date)) :
-                                      new SimpleDateFormat(fromFormat).parse(date);
-
-            if (StringUtils.equals(toFormat, EPOCH)) { return fromDate.getTime() + ""; }
-
-            if (StringUtils.equals(toFormat, HUMAN_DATE)) {
-                return SocialDateText.since(fromDate.getTime(), System.currentTimeMillis());
-            }
-
-            if (!StringUtils.equals(fromFormat, EPOCH)) {
-                // from a non-epoch date, that means standard date object/string
-                return new SimpleDateFormat(toFormat).format(fromDate);
-            } else {
-                // else, from epoch to another date format
-
-                // from epoch to a full date format (contains era, years or month)
-                if (StringUtils.containsAny(toFormat, "GYyML") && fromDate.getTime() >= ONEYEAR) {
-                    return new SimpleDateFormat(toFormat).format(fromDate);
-                }
-
-                // epoch to another time or "day" format
-                // make sure we don't have "bad" hours; duration must be in the 24-hour format
-                toFormat = StringUtils.replace(toFormat, "h", "H");
-                return DurationFormatUtils.formatDuration(fromDate.getTime(), toFormat);
-            }
-        } catch (ParseException e) {
-            ConsoleUtils.error("Unable to format date '" + date + "' from '" + fromFormat + "' to '" + toFormat +
-                               "': " + e.getMessage());
-            return date;
-        }
+        java.util.Date dateObject = parseDate(date, fromFormat);
+        if (dateObject == null) { return date; }
+        return StringUtils.defaultIfEmpty(fromDate(dateObject, toFormat, fromFormat), date);
     }
 
     public String addYear(String date, String years) { return modifyDate(date, YEAR, NumberUtils.toInt(years)); }
@@ -129,6 +103,103 @@ public class Date {
     public String setSecond(String date, String seconds) { return setDate(date, SECOND, NumberUtils.toInt(seconds)); }
 
     public String setSecond(String date, int seconds) { return setDate(date, SECOND, seconds); }
+
+    protected java.util.Date parseDate(String date, String format) {
+        if (StringUtils.isBlank(date)) { return null; }
+        if (StringUtils.equals(format, EPOCH)) { return new java.util.Date(NumberUtils.toLong(date)); }
+        if (StringUtils.equals(format, TIME_IN_TENS)) { return fromBase10Time(date); }
+
+        // date format below
+        try {
+            return new SimpleDateFormat(format).parse(date);
+        } catch (ParseException e) {
+            ConsoleUtils.error("Unable to format date '" + date + "' as '" + format + "': " + e.getMessage());
+            return null;
+        }
+    }
+
+    protected String fromDate(java.util.Date date, String format, String sourceFormat) {
+        if (date == null) { return null; }
+        if (StringUtils.equals(format, EPOCH)) { return date.getTime() + ""; }
+        if (StringUtils.equals(format, TIME_IN_TENS)) { return toBase10Time(date) + ""; }
+        if (StringUtils.equals(format, HUMAN_DATE)) {
+            return SocialDateText.since(date.getTime(), System.currentTimeMillis());
+        }
+
+        // toFormat is not EPOCH or HUMAN_DATE
+        if (!StringUtils.equals(sourceFormat, EPOCH)) {
+            // from a non-epoch date, that means standard date object/string
+            return new SimpleDateFormat(format).format(date);
+        } else {
+            // else, from epoch to another date format
+
+            // from epoch to a full date format (contains era, years or month)
+            if (StringUtils.containsAny(format, "GYyML") && date.getTime() >= ONEYEAR) {
+                return new SimpleDateFormat(format).format(date);
+            }
+
+            // epoch to another time or "day" format
+            // make sure we don't have "bad" hours; duration must be in the 24-hour format
+            format = StringUtils.replace(format, "h", "H");
+            return DurationFormatUtils.formatDuration(date.getTime(), format);
+        }
+    }
+
+    @Nullable
+    protected static java.util.Date fromBase10Time(String date) {
+        if (StringUtils.isBlank(date)) { return null; }
+        if (!NumberUtils.isParsable(date)) { return null; }
+
+        double timeNumber = NumberUtils.toDouble(date);
+
+        int hour = new Double(timeNumber).intValue();
+        timeNumber = 60 * (timeNumber - hour);
+
+        int minute = new Double(timeNumber).intValue();
+        timeNumber = 60 * (timeNumber - minute);
+
+        int second = new Double(timeNumber).intValue();
+        int millisecond = (int) Math.round(1000 * (timeNumber - second));
+
+        Calendar c = new GregorianCalendar();
+        c.setTimeInMillis(0);
+        if (hour > 23) {
+            c.set(DAY_OF_YEAR, hour / 24);
+            c.set(HOUR_OF_DAY, hour % 24);
+        } else {
+            c.set(HOUR_OF_DAY, hour);
+        }
+        c.set(MINUTE, minute);
+        c.set(SECOND, second);
+        c.set(MILLISECOND, millisecond);
+        return c.getTime();
+    }
+
+    protected static double toBase10Time(java.util.Date date) {
+        if (date == null) { return -1; }
+
+        Calendar c = new GregorianCalendar();
+        c.setTime(date);
+
+        // `1970` is consider the `0` year
+        // Day `1` should not be counted towards `DAY_OF_YEAR`
+        double base10 = (c.get(YEAR) - 1970) * 365 * 24 +
+                        (c.get(DAY_OF_YEAR) - 1) * 24 +
+                        c.get(HOUR_OF_DAY) +
+                        (double) c.get(MINUTE) / 60 +
+                        (double) c.get(SECOND) / 60 / 60 +
+                        (double) c.get(MILLISECOND) / 60 / 60 / 1000;
+
+        DecimalFormat df = new DecimalFormat();
+        df.setGroupingUsed(false);
+        df.setMaximumFractionDigits(10);
+
+        try {
+            return df.parse(df.format(base10)).doubleValue();
+        } catch (Exception e) {
+            throw new RuntimeException("Unable to parse '" + base10 + "' as base10 time value");
+        }
+    }
 
     protected void init() { }
 

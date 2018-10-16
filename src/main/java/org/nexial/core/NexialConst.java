@@ -57,6 +57,7 @@ public final class NexialConst {
     public static final String STD_JUST_DATE_FORMAT = "MM/dd/yyyy";
     public static final String EPOCH = "epoch";
     public static final String HUMAN_DATE = "informal";
+    public static final String TIME_IN_TENS = "base10time";
     public static final List<String> ALIAS_NOW = Arrays.asList("now", "right now", "today", "rightnow");
 
     public static final String RATE_FORMAT = "{0,number,0.00%}";
