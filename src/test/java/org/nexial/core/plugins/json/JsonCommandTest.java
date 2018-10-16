@@ -658,7 +658,8 @@ public class JsonCommandTest {
         Assert.assertTrue(fixture.assertValue(json, "response.jobParameters", null).isSuccess());
 
         Assert.assertTrue(fixture.assertValues(json, "response.jobParameters", "[]", "false").isSuccess());
-        Assert.assertTrue(fixture.assertValues(json, "response.jobParameters", "(null)", "false").isSuccess());
+        Assert.assertTrue(fixture.assertValues(json, "response.jobParameters", context.replaceTokens("(null)"), "false")
+                                 .isSuccess());
         Assert.assertTrue(fixture.assertValues(json, "response.jobParameters", "", "false").isSuccess());
         Assert.assertTrue(fixture.assertValues(json, "response.jobParameters", null, "false").isSuccess());
         Assert.assertTrue(fixture.assertValues(json,

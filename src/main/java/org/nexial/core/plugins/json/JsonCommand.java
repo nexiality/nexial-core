@@ -57,8 +57,8 @@ public class JsonCommand extends BaseCommand {
     public String getTarget() { return "json"; }
 
     public StepResult assertEqual(String expected, String actual) {
-        requiresNotBlank(expected, "Invalid JSON", expected);
-        requiresNotBlank(actual, "Invalid JSON", actual);
+        if (expected == null && actual == null) { return StepResult.success("Both EXPECTED and ACTUAL are null"); }
+        if (StringUtils.equals(expected, actual)) { return StepResult.success("Both EXPECTED and ACTUAL are the same");}
 
         String expectedJsonContent;
         try {
