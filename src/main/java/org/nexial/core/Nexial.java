@@ -26,7 +26,9 @@ import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
+import javax.annotation.Nullable;
 import javax.mail.MessagingException;
+import javax.validation.constraints.NotNull;
 
 import org.apache.commons.cli.CommandLine;
 import org.apache.commons.cli.DefaultParser;
@@ -72,6 +74,7 @@ import static org.nexial.core.NexialConst.*;
 import static org.nexial.core.NexialConst.Data.*;
 import static org.nexial.core.NexialConst.ExitStatus.*;
 import static org.nexial.core.NexialConst.Project.*;
+import static org.nexial.core.excel.Excel.MIN_EXCEL_FILE_SIZE;
 import static org.nexial.core.excel.ExcelConfig.*;
 import static org.nexial.core.model.ExecutionSummary.ExecutionLevel.EXECUTION;
 
@@ -169,7 +172,7 @@ import static org.nexial.core.model.ExecutionSummary.ExecutionLevel.EXECUTION;
  * </ul>
  * </li>
  * <li>
- * iterate through all the derived iterations and invoke {@link ExecutionThread} accordingly<br/>
+ * iterate through all the derived iterations and invoke ExecutionThreadTest accordingly<br/>
  * The test results will be saved to the {@code summary} directory, the logs and screencapture
  * saved to the respective {@code logs} and {@code captures} directories.
  * </li>
@@ -201,8 +204,13 @@ public class Nexial {
             main = new Nexial();
             main.init(args);
         } catch (Exception e) {
-            if (!(e instanceof IllegalArgumentException)) { e.printStackTrace(); }
-            System.err.println(e.getMessage());
+            if (e instanceof IllegalArgumentException) {
+                // like from fail()
+                ConsoleUtils.errorBeforeTerminate(e.getMessage());
+            } else {
+                e.printStackTrace();
+                System.err.println(e.getMessage());
+            }
 
             if (main != null) { main.trackEvent(new NexialCmdErrorEvent(Arrays.asList(args), e.getMessage())); }
 
@@ -336,7 +344,7 @@ public class Nexial {
             File testPlanFile = new File(testPlanPath);
 
             // resolve project directory structure based on the {@code testScriptFile} command line input
-            project = TestProject.newInstance(testPlanFile, DEF_REL_LOC_TEST_PLAN);
+            project = TestProject.newInstance(testPlanFile);
             if (!project.isStandardStructure()) {
                 ConsoleUtils.log("specified plan (" + testPlanFile + ") not following standard project " +
                                  "structure, related directories would not be resolved from commandline arguments.");
@@ -416,15 +424,16 @@ public class Nexial {
 
             // ok, not on local drive, not on network drive, not on *NIX or Mac disk
             // let's treat it as a project file
-            testScriptPath = project.getScriptPath() + testScriptPath;
-            ConsoleUtils.log("trying test script as " + testScriptPath);
-            if (InputFileUtils.isValidScript(testScriptPath)) { return new File(testScriptPath); }
-
-            // hmm.. maybe it's a relative path based on current plan file?
-            testScriptPath = project.getPlanPath() + testScriptPath;
-            ConsoleUtils.log("trying test script as " + testScriptPath);
+            String testScriptPath1 = project.getScriptPath() + testScriptPath;
+            if (FileUtil.isFileReadable(testScriptPath1, MIN_EXCEL_FILE_SIZE)) {
+                testScriptPath = testScriptPath1;
+            } else {
+                // hmm.. maybe it's a relative path based on current plan file?
+                testScriptPath = project.getPlanPath() + testScriptPath;
+            }
         }
 
+        ConsoleUtils.log("validating test script as " + testScriptPath);
         if (!InputFileUtils.isValidScript(testScriptPath)) {
             // could be abs. path or relative path based on current project
             fail("Invalid/unreadable test script specified in ROW " + (row.getRowNum() + 1) + " of " + testPlan + ".");
@@ -459,38 +468,65 @@ public class Nexial {
 
     protected File deriveDataFileFromPlan(XSSFRow row, TestProject project, File testPlan, File testScript) {
         String dataFilePath = readCellValue(row, COL_IDX_PLAN_TEST_DATA);
-        String dataPath = project.getDataPath();
 
-        // if data file not specified, derive it via the test script
         if (StringUtils.isBlank(dataFilePath)) {
-            dataFilePath = dataPath + StringUtils.substringBeforeLast(testScript.getName(), ".") + ".data.xlsx";
+            // since there's no data file specified, we'll assume standard path/file convention
+            String testScriptPath = testScript.getAbsolutePath();
+            String dataPath1 = StringUtils.substringBefore(testScriptPath, DEF_REL_LOC_ARTIFACT) +
+                               DEF_REL_LOC_TEST_DATA;
+            String dataFilePath1 = dataPath1 +
+                                   StringUtils.substringBeforeLast(
+                                       StringUtils.substringAfter(testScriptPath, DEF_REL_LOC_TEST_SCRIPT), ".") +
+                                   DEF_DATAFILE_SUFFIX;
+            if (!FileUtil.isFileReadable(dataFilePath1, MIN_EXCEL_FILE_SIZE)) {
+                // else, don't know what to do...
+                fail("Invalid/unreadable data file specified in ROW " + (row.getRowNum() + 1) + " of " + testPlan +
+                     ". Data file not specified and cannot be resolved by standard convention (" + dataFilePath1 + ")");
+                return null;
+            }
+
+            dataFilePath = dataFilePath1;
         } else {
             dataFilePath = StringUtils.appendIfMissing(dataFilePath, ".xlsx");
 
-            // is the data file specified as full path (local PC)?
-            if (!RegexUtils.isExact(dataFilePath, "[A-Za-z]\\:\\\\.+") &&
-                // is it on network drive (UNC)?
-                !StringUtils.startsWith(dataFilePath, "\\\\") &&
-                // is it on *NIX or Mac disk?
-                !StringUtils.startsWith(dataFilePath, "/")) {
+            // dataFile is specified as a fully qualified path
+            if (!FileUtil.isFileReadable(dataFilePath)) {
+                // first, check if data file exists in the similar rel. position as specified in script
+                String dataPath = project.getDataPath();
+                String scriptRelPath =
+                    StringUtils.substringBeforeLast(
+                        StringUtils.replace(readCellValue(row, COL_IDX_PLAN_TEST_SCRIPT), "\\", "/"), "/");
+                String dataFilePath1 = StringUtils.appendIfMissing(dataPath, separator) +
+                                       StringUtils.appendIfMissing(scriptRelPath, separator) +
+                                       dataFilePath;
+                if (!FileUtil.isFileReadable(dataFilePath1, MIN_EXCEL_FILE_SIZE)) {
+                    // next, check again standard data directory
+                    dataFilePath1 = StringUtils.appendIfMissing(dataPath, separator) + dataFilePath;
+                    if (!FileUtil.isFileReadable(dataFilePath1, MIN_EXCEL_FILE_SIZE)) {
+                        // next, maybe it's relative to the plan
+                        dataFilePath1 = project.getPlanPath() + dataFilePath;
+                        if (!FileUtil.isFileReadable(dataFilePath1, MIN_EXCEL_FILE_SIZE)) {
+                            // next, maybe it's relative to `artifact`
+                            dataFilePath1 = project.getArtifactPath() + dataFilePath;
+                            if (!FileUtil.isFileReadable(dataFilePath1, MIN_EXCEL_FILE_SIZE)) {
+                                fail("Invalid/unreadable data file specified in ROW " + (row.getRowNum() + 1) +
+                                     " of " + testPlan + ". The specified data file (" + dataFilePath + ") cannot be " +
+                                     "resolved to a valid data file.");
+                                return null;
+                            }
+                        }
+                    }
+                }
 
-                // ok, not on local drive, not on network drive, not on *NIX or Mac disk
-                // let's treat it as a project file
-                dataFilePath = dataPath + dataFilePath;
-                ConsoleUtils.log("trying data file as " + dataFilePath);
-                if (InputFileUtils.isValidDataFile(dataFilePath)) { return new File(dataFilePath); }
-
-                // hmm.. maybe it's a relative path based on current plan file?
-                dataFilePath = project.getPlanPath() + dataFilePath;
-                ConsoleUtils.log("trying data file as " + dataFilePath);
+                dataFilePath = dataFilePath1;
             }
         }
 
-        if (!InputFileUtils.isValidDataFile(dataFilePath)) {
-            fail("Invalid/unreadable data file specified in ROW " + (row.getRowNum() + 1) + " of " + testPlan + ".");
-        }
+        ConsoleUtils.log("validating data file as " + dataFilePath);
+        if (InputFileUtils.isValidDataFile(dataFilePath)) { return new File(dataFilePath); }
 
-        return new File(dataFilePath);
+        fail("Invalid/unreadable data file specified in ROW " + (row.getRowNum() + 1) + " of " + testPlan + ".");
+        return null;
     }
 
     protected List<String> deriveDataSheetsFromPlan(XSSFRow row, List<String> scenarios) {
@@ -509,84 +545,23 @@ public class Nexial {
         File testScriptFile = new File(testScriptPath);
 
         // resolve project directory structure based on the {@code testScriptFile} command line input
-        project = TestProject.newInstance(testScriptFile, DEF_REL_LOC_TEST_SCRIPT);
+        project = TestProject.newInstance(testScriptFile);
         if (!project.isStandardStructure()) {
-            ConsoleUtils.log("specified test script (" +
-                             testScriptFile +
-                             ") not following standard project " +
+            ConsoleUtils.log("specified test script (" + testScriptFile + ") not following standard project " +
                              "structure, related directories would not be resolved from commandline arguments.");
         }
+
         String artifactPath = project.isStandardStructure() ?
-                              StringUtils.appendIfMissing(project.getArtifactPath(), separator) :
-                              null;
+                              StringUtils.appendIfMissing(project.getArtifactPath(), separator) : null;
 
         // command line option - scenario
-        List<String> targetScenarios = new ArrayList<>();
-        if (cmd.hasOption(SCENARIO)) {
-            List<String> scenarios = TextUtils.toList(cmd.getOptionValue(SCENARIO), ",", true);
-            if (CollectionUtils.isEmpty(scenarios)) {
-                fail("Unable to derive any valid test script to run.");
-            } else {
-                targetScenarios.addAll(scenarios);
-            }
-        }
-
-        // resolve scenario
-        if (CollectionUtils.isEmpty(targetScenarios)) {
-            Excel excel = new Excel(testScriptFile, DEF_OPEN_EXCEL_AS_DUP);
-            List<Worksheet> allTestScripts = InputFileUtils.retrieveValidTestScenarios(excel);
-            if (CollectionUtils.isNotEmpty(allTestScripts)) {
-                allTestScripts.forEach(sheet -> targetScenarios.add(sheet.getName()));
-            } else {
-                fail("Unable to derive any valid test script from " + testScriptPath + ".");
-            }
-
-            if (DEF_OPEN_EXCEL_AS_DUP) { FileUtils.deleteQuietly(excel.getFile().getParentFile()); }
-        }
+        List<String> targetScenarios = resolveScenarios(cmd, testScriptFile);
 
         // command line option - data. could be fully qualified or relative to script
-        String dataFilePath = cmd.hasOption(DATA) ? cmd.getOptionValue(DATA) : null;
-        if (StringUtils.isNotBlank(dataFilePath)) {
-            // could be fully qualified or relative to script
-            if (!FileUtil.isFileReadable(dataFilePath)) {
-                // try again by relative path
-                String dataFile1 = artifactPath + dataFilePath;
-                if (!FileUtil.isFileReadable(dataFile1)) {
-                    fail("data file (" + dataFilePath + ") is not readable via absolute or relative path.");
-                } else {
-                    dataFilePath = dataFile1;
-                }
-            } // else dataFile is specified as a fully qualified path
-        } else {
-            dataFilePath = artifactPath +
-                           StringUtils.appendIfMissing(DEF_LOC_TEST_DATA, separator) +
-                           StringUtils.substringBeforeLast(testScriptFile.getName(), ".") +
-                           ".data.xlsx";
-        }
+        File dataFile = resolveDataFile(cmd, artifactPath, testScriptPath);
 
-        if (!InputFileUtils.isValidDataFile(dataFilePath)) {
-            fail("data file (" + dataFilePath + ") does not contain valid data file format.");
-            return null;
-        }
-
-        File dataFile = new File(dataFilePath);
-        if (!project.isStandardStructure()) { project.setDataPath(dataFile.getParentFile().getAbsolutePath()); }
-
-        ConsoleUtils.log("data file resolved as " + dataFile.getAbsolutePath());
-
-        // command line option - datasheets
-        List<String> dataSheets = new ArrayList<>();
-        if (cmd.hasOption(DATASHEETS)) {
-            List<String> dataSets = TextUtils.toList(cmd.getOptionValue(DATASHEETS), ",", true);
-            if (CollectionUtils.isEmpty(dataSets)) {
-                fail("Unable to derive any valid data sheet to use.");
-            } else {
-                dataSheets.addAll(dataSets);
-            }
-        }
-
-        // datasheet names are the same as scenario if none is specifically specified
-        if (CollectionUtils.isEmpty(dataSheets)) { dataSheets = targetScenarios; }
+        // command line option - data sheets
+        List<String> dataSheets = resolveDataSheets(cmd, targetScenarios);
 
         deriveOutputDirectory(cmd, project);
 
@@ -596,7 +571,7 @@ public class Nexial {
                             " from " + EnvUtils.getHostName() + " via user " + USER_NAME);
         exec.setTestScript(testScriptPath);
         exec.setScenarios(targetScenarios);
-        exec.setDataFile(dataFile.getAbsolutePath());
+        if (dataFile != null) { exec.setDataFile(dataFile.getAbsolutePath()); }
         exec.setDataSheets(dataSheets);
         exec.setProject(project);
         exec.parse();
@@ -836,23 +811,31 @@ public class Nexial {
             }
 
             dataFile = appendData(artifactPath) + separator +
-                       (StringUtils.substringBeforeLast(testScriptFile.getName(), ".") + ".data.xlsx");
+                       (StringUtils.substringBeforeLast(testScriptFile.getName(), ".") + DEF_DATAFILE_SUFFIX);
         }
 
-        if (!InputFileUtils.isValidDataFile(dataFile)) {
-            fail("data file (" + dataFile + ") does not contain valid data file format.");
-            return null;
+        return validateDataFile(project, dataFile);
+    }
+
+    protected List<String> resolveDataSheets(CommandLine cmd, List<String> targetScenarios) {
+        List<String> dataSheets = new ArrayList<>();
+        if (cmd.hasOption(DATASHEETS)) {
+            List<String> dataSets = TextUtils.toList(cmd.getOptionValue(DATASHEETS), ",", true);
+            if (CollectionUtils.isEmpty(dataSets)) {
+                fail("Unable to derive any valid data sheet to use.");
+            } else {
+                dataSheets.addAll(dataSets);
+            }
         }
 
-        File file = new File(dataFile);
-        if (!project.isStandardStructure()) { project.setDataPath(file.getParentFile().getAbsolutePath()); }
-        ConsoleUtils.log("data file resolved as " + file.getAbsolutePath());
-        return file;
+        // data sheet names are the same as scenario if none is specifically specified
+        if (CollectionUtils.isEmpty(dataSheets)) { dataSheets = targetScenarios; }
+        return dataSheets;
     }
 
     protected static void fail(String message) {
-        ConsoleUtils.error("ERROR: " + message);
-        throw new IllegalArgumentException("ERROR: " + message +
+        // ConsoleUtils.error("ERROR: " + message);
+        throw new IllegalArgumentException(message +
                                            " Possibly the required argument is missing or invalid." +
                                            " Check usage details.");
     }
@@ -866,6 +849,93 @@ public class Nexial {
     }
 
     protected static boolean mustTerminateForcefully() { return ShutdownAdvisor.mustForcefullyTerminate(); }
+
+    @Nullable
+    private File resolveDataFile(CommandLine cmd, String artifactPath, String testScriptPath) {
+        return resolveDataFile(artifactPath, testScriptPath, cmd.hasOption(DATA) ? cmd.getOptionValue(DATA) : null);
+    }
+
+    private File resolveDataFile(String artifactPath, String testScriptPath, String dataFilePath) {
+        if (StringUtils.isBlank(dataFilePath)) {
+            // since there's no data file specified, we'll assume standard path/file convention
+            String dataPath = StringUtils.substringBefore(testScriptPath, DEF_REL_LOC_ARTIFACT) + DEF_REL_LOC_TEST_DATA;
+            dataFilePath = dataPath +
+                           StringUtils.substringBeforeLast(
+                               StringUtils.substringAfter(testScriptPath, DEF_REL_LOC_TEST_SCRIPT),
+                               ".") +
+                           DEF_DATAFILE_SUFFIX;
+            return validateDataFile(project, dataFilePath);
+        }
+
+        dataFilePath = StringUtils.appendIfMissing(dataFilePath, ".xlsx");
+
+        // dataFile is specified as a fully qualified path
+        if (FileUtil.isFileReadable(dataFilePath)) { return validateDataFile(project, dataFilePath); }
+
+        // could be fully qualified or relative to script.
+
+        // let's resolve from closest point to script, then expand out
+        String dataFile1 = StringUtils.appendIfMissing(new File(testScriptPath).getParent(), separator) + dataFilePath;
+        if (FileUtil.isFileReadable(dataFile1)) { return validateDataFile(project, dataFile1); }
+
+        // for path resolution, we'll try based on artifact location and script path
+        if (StringUtils.isNotBlank(artifactPath)) {
+            artifactPath = StringUtils.appendIfMissing(artifactPath, separator);
+
+            // first try with `artifact/data`
+            dataFile1 = artifactPath + DEF_LOC_TEST_DATA + separator + dataFilePath;
+            if (FileUtil.isFileReadable(dataFile1)) { return validateDataFile(project, dataFile1); }
+
+            // next, try with just `artifactPath`
+            dataFile1 = artifactPath + dataFilePath;
+            if (FileUtil.isFileReadable(dataFile1)) { return validateDataFile(project, dataFile1); }
+        }
+
+        // can't find it.. failed!
+        fail("data file (" + dataFilePath + ") is not readable via absolute or relative path. Relative path is " +
+             "based on either the specified script or the resolved artifact directory.");
+        return null;
+    }
+
+    @NotNull
+    private File validateDataFile(TestProject project, String dataFile) {
+        if (!InputFileUtils.isValidDataFile(dataFile)) {
+            fail("data file (" + dataFile + ") does not contain valid data file format.");
+            return null;
+        }
+
+        File file = new File(dataFile);
+        if (!project.isStandardStructure()) { project.setDataPath(file.getParentFile().getAbsolutePath()); }
+        ConsoleUtils.log("data file resolved as " + file.getAbsolutePath());
+        return file;
+    }
+
+    @NotNull
+    private List<String> resolveScenarios(CommandLine cmd, File testScriptFile) throws IOException {
+        List<String> targetScenarios = new ArrayList<>();
+        if (cmd.hasOption(SCENARIO)) {
+            List<String> scenarios = TextUtils.toList(cmd.getOptionValue(SCENARIO), ",", true);
+            if (CollectionUtils.isEmpty(scenarios)) {
+                fail("Unable to derive any valid test script to run.");
+            } else {
+                targetScenarios.addAll(scenarios);
+            }
+        }
+
+        // resolve scenario
+        if (CollectionUtils.isEmpty(targetScenarios)) {
+            Excel excel = new Excel(testScriptFile, DEF_OPEN_EXCEL_AS_DUP);
+            List<Worksheet> allTestScripts = InputFileUtils.retrieveValidTestScenarios(excel);
+            if (CollectionUtils.isNotEmpty(allTestScripts)) {
+                allTestScripts.forEach(sheet -> targetScenarios.add(sheet.getName()));
+            } else {
+                fail("Unable to derive any valid test script from " + testScriptFile + ".");
+            }
+
+            if (DEF_OPEN_EXCEL_AS_DUP) { FileUtils.deleteQuietly(excel.getFile().getParentFile()); }
+        }
+        return targetScenarios;
+    }
 
     private static int beforeShutdown(ExecutionSummary summary) {
         // need to kill JVM forcefully if awt was used during runtime

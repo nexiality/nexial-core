@@ -139,7 +139,7 @@ public class MockExecutionContext extends ExecutionContext {
         String testScriptPath = projectHome + DEF_REL_LOC_TEST_SCRIPT + "temp.xlsx";
         File testScript = new File(testScriptPath);
         FileUtils.writeStringToFile(testScript, RandomStringUtils.random(100), DEF_CHARSET);
-        project = TestProject.newInstance(testScript, DEF_REL_LOC_TEST_SCRIPT);
+        project = TestProject.newInstance(testScript);
         project.setProjectHome(projectHome);
         setTestProject(project);
     }

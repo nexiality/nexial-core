@@ -227,9 +227,7 @@ public class Execution {
 
     @NotNull
     private String resolveScenario(TestStep step) {
-        if (step == null) { return "";}
-
-        TestCase activity = step.getTestCase();
+        TestCase activity = resolveEnclosedActivity(step);
         if (activity == null) { return ""; }
 
         TestScenario scenario = activity.getTestScenario();
@@ -237,12 +235,10 @@ public class Execution {
     }
 
     @NotNull
-    private String resolveActivity(TestStep currentStep) {
-        if (currentStep == null) { return ""; }
-
-        TestCase activity = currentStep.getTestCase();
-        if (activity == null) { return ""; }
-
-        return activity.getName();
+    private String resolveActivity(TestStep step) {
+        TestCase activity = resolveEnclosedActivity(step);
+        return activity == null ? "" : activity.getName();
     }
+
+    private TestCase resolveEnclosedActivity(TestStep step) { return step == null ? null : step.getTestCase(); }
 }

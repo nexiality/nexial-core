@@ -81,7 +81,8 @@ public class ExecutionMailConfig {
         return self;
     }
 
-    public static ExecutionMailConfig get() { return self; }
+    // might generate new instance of `ExecutionMailConfig` to avoid NPE
+    public static ExecutionMailConfig get() { return self == null ? new ExecutionMailConfig() : self; }
 
     public boolean isReady() {
         if (!BooleanUtils.toBoolean(MapUtils.getString(configurations, ENABLE_EMAIL, DEF_ENABLE_EMAIL))) {

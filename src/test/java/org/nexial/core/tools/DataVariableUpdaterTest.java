@@ -99,8 +99,9 @@ public class DataVariableUpdaterTest {
     public void replaceDataFile() throws Exception {
         updater.replaceDataFiles();
 
-        File projectProps = new File(StringUtils.appendIfMissing(searchFrom, separator) + DEF_REL_LOC_TEST_DATA +
-                                     "MyTestScript.data.xlsx");
+        File projectProps = new File(StringUtils.appendIfMissing(searchFrom, separator) +
+                                     DEF_REL_LOC_TEST_DATA +
+                                     "MyTestScript" + DEF_DATAFILE_SUFFIX);
 
         Excel dataExcel = new Excel(projectProps, false, false);
         Worksheet worksheetDefault = dataExcel.worksheet("#default");

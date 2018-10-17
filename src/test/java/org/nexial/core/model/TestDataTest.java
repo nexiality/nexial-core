@@ -28,11 +28,13 @@ import org.nexial.core.excel.Excel;
 import org.springframework.util.ResourceUtils;
 import org.springframework.util.StringUtils;
 
+import static org.nexial.core.NexialConst.Project.DEF_DATAFILE_SUFFIX;
+
 public class TestDataTest {
     @Test
     public void collectAllDataSet() throws Exception {
 
-        String excelFile = getPath("TestScenarioTest1.data.xlsx");
+        String excelFile = getPath("TestScenarioTest1" + DEF_DATAFILE_SUFFIX);
         System.out.println("excelFile = " + excelFile);
         Excel excel = new Excel(new File(excelFile));
         TestData testData = new TestData(excel, Collections.singletonList("new_test1"));
@@ -84,7 +86,7 @@ public class TestDataTest {
     @Test
     public void collectAllDataSet_2() throws Exception {
 
-        String excelFile = getPath("TestScenarioTest1.data.xlsx");
+        String excelFile = getPath("TestScenarioTest1" + DEF_DATAFILE_SUFFIX);
         System.out.println("excelFile = " + excelFile);
 
         Excel excel = new Excel(new File(excelFile));

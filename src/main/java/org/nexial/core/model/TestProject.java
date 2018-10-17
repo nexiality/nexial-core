@@ -24,6 +24,7 @@ import java.util.Set;
 
 import org.apache.commons.collections4.MapUtils;
 import org.apache.commons.lang3.StringUtils;
+import org.nexial.commons.utils.RegexUtils;
 import org.nexial.commons.utils.TextUtils;
 
 import static java.io.File.separator;
@@ -50,25 +51,28 @@ public class TestProject {
 
     public TestProject() { nexialHome = new File(System.getProperty(NEXIAL_HOME)); }
 
-    public static TestProject newInstance(File inputFile, String relativePath) {
+    public static TestProject newInstance(File inputFile) {
+        // this file could be a script or a plan
         String inputFullPath = inputFile.getAbsolutePath();
 
-        // is the test script confined within the standard project structure (i.e. artifact/script/[...].xlsx)?
-        String inputFileRelPath = relativePath + inputFile.getName();
+        // String inputFileRelPath = DEF_REL_LOC_TEST_SCRIPT + inputFile.getName();
 
         TestProject project = new TestProject();
-        if (StringUtils.contains(inputFullPath, inputFileRelPath)) {
+        // is the test script confined within the standard project structure (i.e. artifact/script/[...].xlsx)?
+        // if (StringUtils.contains(inputFullPath, inputFileRelPath)) {
+        if (RegexUtils.match(inputFullPath, ".+" + DEF_REL_LOC_TEST_SCRIPT + ".+")) {
             // yes, standard project structure observed. proceed to resolve other directories
             project.setProjectHome(
-                StringUtils.removeEnd(StringUtils.substringBefore(inputFullPath, inputFileRelPath), separator));
+                StringUtils.removeEnd(StringUtils.substringBefore(inputFullPath, DEF_REL_LOC_TEST_SCRIPT), separator));
             project.isStandardStructure = true;
         } else {
             // is the input file a test plan?
-            inputFileRelPath = DEF_REL_LOC_TEST_PLAN + inputFile.getName();
-            if (StringUtils.contains(inputFullPath, inputFileRelPath)) {
+            // inputFileRelPath = DEF_REL_LOC_TEST_PLAN + inputFile.getName();
+            // if (StringUtils.contains(inputFullPath, inputFileRelPath)) {
+            if (RegexUtils.match(inputFullPath, ".+" + DEF_REL_LOC_TEST_PLAN + ".+")) {
                 // yes, standard project structure observed. proceed to resolve other directories
                 project.setProjectHome(
-                    StringUtils.removeEnd(StringUtils.substringBefore(inputFullPath, inputFileRelPath), separator));
+                    StringUtils.removeEnd(StringUtils.substringBefore(inputFullPath, DEF_REL_LOC_TEST_PLAN), separator));
                 project.isStandardStructure = true;
             }
         }

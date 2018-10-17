@@ -46,8 +46,8 @@ import org.springframework.util.ResourceUtils;
 
 import static java.io.File.separator;
 import static org.nexial.core.NexialConst.Data.SHEET_MERGED_DATA;
+import static org.nexial.core.NexialConst.Project.DEF_DATAFILE_SUFFIX;
 import static org.nexial.core.NexialConst.Project.DEF_REL_LOC_OUTPUT;
-import static org.nexial.core.NexialConst.Project.DEF_REL_LOC_TEST_SCRIPT;
 
 public class ExecutionInputPrepTest {
     private String projectHome;
@@ -135,7 +135,8 @@ public class ExecutionInputPrepTest {
         String testScript = dirScript.getAbsolutePath() + separator + fileTestScript.getName();
 
         // setup test data
-        File fileTestData = new File(getPath(ExecutionInputPrepTest.class.getSimpleName() + "_test1.data.xlsx"));
+        File fileTestData =
+            new File(getPath(ExecutionInputPrepTest.class.getSimpleName() + "_test1" + DEF_DATAFILE_SUFFIX));
         FileUtils.copyFileToDirectory(fileTestData, dirData);
         String testData = dirData.getAbsolutePath() + separator + fileTestData.getName();
 
@@ -146,7 +147,7 @@ public class ExecutionInputPrepTest {
         execDef.setScenarios(scenarios);
         execDef.setDataFile(testData);
         execDef.setDataSheets(scenarios);
-        execDef.setProject(TestProject.newInstance(new File(testScript), DEF_REL_LOC_TEST_SCRIPT));
+        execDef.setProject(TestProject.newInstance(new File(testScript)));
         execDef.parse();
 
         String baseScriptName = StringUtils.substringBefore(fileTestScript.getName(), ".xlsx");

@@ -577,6 +577,8 @@ public final class NexialConst {
         public static final String NEXIAL_EXECUTION_TYPE_SCRIPT = "script";
         public static final String NEXIAL_EXECUTION_TYPE_PLAN = "plan";
 
+        public static final String DEF_DATAFILE_SUFFIX = ".data.xlsx";
+
         private Project() { }
 
         public static String appendCapture(String dir) { return appendSep(dir) + SUBDIR_CAPTURES; }
