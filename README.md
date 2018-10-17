@@ -71,6 +71,8 @@ Nexial Automation enables test automation with [BrowserStack](http://browserstac
 
 
 
+
+
 ![CrossBrowserTesting.com](https://nexiality.github.io/documentation/image/cbt/CrossBrowserTesting-logo-small.png)
 
 Nexial Automation enables test automation with [CrossBrowserTesting](http://CrossBrowserTesting.com).
