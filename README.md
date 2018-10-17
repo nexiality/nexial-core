@@ -66,10 +66,13 @@ fixing bugs, improving documentation, suggesting new features, or collaboration 
 
 
 ![BrowserStack.com](https://nexiality.github.io/documentation/image/browserstack/Browserstack-logo-small.png)
+
 Nexial Automation enables test automation with [BrowserStack](http://browserstack.com).
 
 
+
 ![CrossBrowserTesting.com](https://nexiality.github.io/documentation/image/cbt/CrossBrowserTesting-logo-small.png)
+
 Nexial Automation enables test automation with [CrossBrowserTesting](http://CrossBrowserTesting.com).
 
 
