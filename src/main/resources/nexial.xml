@@ -307,7 +307,7 @@
                 <property name="chromeOptions">
                     <!-- http://peter.sh/experiments/chromium-command-line-switches/ -->
                     <array>
-                        <value>disable-background-mode</value>
+                        <!--<value>disable-background-mode</value>-->
                         <!--<value>disable-breakpad</value>-->
                         <value>disable-component-update</value>
                         <value>disable-default-apps</value>
@@ -316,21 +316,24 @@
                         <value>disable-prompt-on-repost</value>
                         <value>disable-smooth-scrolling</value>
                         <value>disable-sync</value>
-                        <value>disable-restore-background-contents</value>
-                        <value>disable-restore-session-state</value>
+                        <!--<value>disable-restore-background-contents</value>-->
+                        <!--<value>disable-restore-session-state</value>-->
                         <!--<value>disable-translate</value>-->
                         <value>homepage</value>
 
-                        <value>disable-application-cache</value>
-                        <value>disable-cache</value>
+                        <!--<value>disable-application-cache</value>-->
+                        <!--<value>disable-cache</value>-->
+
+                        <value>hide-scrollbars</value>
+                        <value>allow-insecure-localhost</value>
                         <!--<value>disable-web-security</value>-->
 
                         <!-- enable the WebKit page cache -->
-                        <value>enable-fastback</value>
+                        <!--<value>enable-fastback</value>-->
                         <value>disable-extensions-file-access-check</value>
                         <value>no-default-browser-check</value>
-                        <value>enable-precache</value>
-                        <value>enable-preparsed-js-caching</value>
+                        <!--<value>enable-precache</value>-->
+                        <!--<value>enable-preparsed-js-caching</value>-->
                         <value>noerrdialogs</value>
 
                         <value>ignore-certificate-errors</value>
@@ -340,7 +343,7 @@
                         <value>mute-audio</value>
                         <value>disable-resize-lock</value>
                         <value>disable-print-preview</value>
-                        <value>enable-automation</value>
+                        <!--<value>enable-automation</value>-->
                         <!--<value>start-maximized</value>-->
                     </array>
                 </property>
