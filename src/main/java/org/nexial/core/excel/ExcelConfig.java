@@ -239,6 +239,7 @@ public class ExcelConfig {
     public static final int ALPHABET_COUNT = 'Z' - 'A' + 1;
     public static final short CELL_HEIGHT_DEPRECATED = 440;
     public static final short CELL_HEIGHT_DEFAULT = 480;
+    public static final int MAX_CELL_WIDTH = 256 * 255;
 
     // agenda metadata
     public static final String MSG_DEPRECATED = "DEPRECATED ";
@@ -987,7 +988,7 @@ public class ExcelConfig {
         }
         int expectedCommandCellWidth = commandLength * charWidthFactor;
 
-        if (actualCommandCellWidth < expectedCommandCellWidth) {
+        if (actualCommandCellWidth < expectedCommandCellWidth && expectedCommandCellWidth < MAX_CELL_WIDTH) {
             sheet.setColumnWidth(columnIndex, expectedCommandCellWidth);
         }
     }
