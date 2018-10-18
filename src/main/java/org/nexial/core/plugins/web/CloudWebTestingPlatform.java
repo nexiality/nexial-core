@@ -18,17 +18,29 @@ package org.nexial.core.plugins.web;
 
 import javax.validation.constraints.NotNull;
 
+import org.nexial.core.NexialConst.BrowserType;
 import org.nexial.core.model.ExecutionContext;
 import org.openqa.selenium.WebDriver;
 
 public abstract class CloudWebTestingPlatform {
     protected ExecutionContext context;
-    protected boolean isRunningLocal;
-    protected String localExeName;
-    protected boolean isMobile;
+
+    protected String os;
+    protected boolean isRunningWindows;
+    protected boolean isRunningOSX;
+
+    protected BrowserType browser;
     protected String browserVersion;
     protected String browserName;
     protected boolean pageSourceSupported;
+
+    protected boolean isMobile;
+    protected String device;
+    protected boolean isRunningIOS;
+    protected boolean isRunningAndroid;
+
+    protected boolean isRunningLocal;
+    protected String localExeName;
 
     protected CloudWebTestingPlatform(ExecutionContext context) { this.context = context; }
 
@@ -43,6 +55,20 @@ public abstract class CloudWebTestingPlatform {
     public String getBrowserVersion() { return browserVersion; }
 
     public String getBrowserName() { return browserName; }
+
+    public String getOs() { return os;}
+
+    public boolean isRunningWindows() { return isRunningWindows; }
+
+    public boolean isRunningOSX() { return isRunningOSX; }
+
+    public BrowserType getBrowser() { return browser; }
+
+    public String getDevice() { return device; }
+
+    public boolean isRunningIOS() { return isRunningIOS; }
+
+    public boolean isRunningAndroid() { return isRunningAndroid; }
 
     @NotNull
     public abstract WebDriver initWebDriver();

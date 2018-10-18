@@ -210,6 +210,10 @@ public class Browser implements ForcefulTerminate {
 
     public boolean isPageSourceSupported() { return pageSourceSupported; }
 
+    public BrowserStackHelper getBrowserstackHelper() { return browserstackHelper; }
+
+    public CrossBrowserTestingHelper getCbtHelper() { return cbtHelper; }
+
     @Override
     public String toString() {
         int excelVer = NumberUtils.toInt(resolveConfig(OPT_EXCEL_VER, "2007"), 2007);
@@ -845,24 +849,20 @@ public class Browser implements ForcefulTerminate {
         return webDriver;
     }
 
-    private void postInit(WebDriver driver) {
-        String browserVersion = getBrowserVersion();
-
-        if (LOGGER.isDebugEnabled()) { LOGGER.debug("post-init for " + browserType + " " + browserVersion); }
-
-        if (StringUtils.isNotBlank(browserVersion)) {
-            String temp = StringUtils.substringBefore(StringUtils.substringBefore(browserVersion, "."), " ");
-            majorVersion = NumberUtils.toInt(StringUtils.trim(temp));
-            if (LOGGER.isDebugEnabled()) { LOGGER.debug("determined browser major version as " + majorVersion); }
+    protected void setWindowSize(WebDriver driver) {
+        // not suitable for cef, electron or mobile
+        // for safari, we can only change position AFTER browser is opened
+        if (isRunChromeEmbedded() ||
+            isRunElectron() ||
+            isMobile() ||
+            (isRunBrowserStack() && browserstackHelper.getBrowser() == safari)) {
+            return;
         }
 
-        if (!isMobile) { setWindowSize(driver); }
+        setWindowSizeForcefully(driver);
     }
 
-    private void setWindowSize(WebDriver driver) {
-        // not suitable for cef, electron or mobile
-        if (isRunChromeEmbedded() || isRunElectron() || isMobile()) { return; }
-
+    protected void setWindowSizeForcefully(WebDriver driver) {
         String windowSize = context.getStringData(BROWSER_WINDOW_SIZE);
         if ((isRunChromeHeadless() || isRunFirefoxHeadless()) && StringUtils.isBlank(windowSize)) {
             // window size required for headless browser
@@ -886,8 +886,24 @@ public class Browser implements ForcefulTerminate {
 
             Window window = driver.manage().window();
             window.setSize(new Dimension(width, height));
-            window.setPosition(isRunSafari() ? INITIAL_POSITION_SAFARI : INITIAL_POSITION);
+            Point initialPosition = isRunSafari() || (isRunBrowserStack() && browserstackHelper.browser == safari) ?
+                                    INITIAL_POSITION_SAFARI : INITIAL_POSITION;
+            window.setPosition(initialPosition);
         }
+    }
+
+    private void postInit(WebDriver driver) {
+        String browserVersion = getBrowserVersion();
+
+        if (LOGGER.isDebugEnabled()) { LOGGER.debug("post-init for " + browserType + " " + browserVersion); }
+
+        if (StringUtils.isNotBlank(browserVersion)) {
+            String temp = StringUtils.substringBefore(StringUtils.substringBefore(browserVersion, "."), " ");
+            majorVersion = NumberUtils.toInt(StringUtils.trim(temp));
+            if (LOGGER.isDebugEnabled()) { LOGGER.debug("determined browser major version as " + majorVersion); }
+        }
+
+        setWindowSize(driver);
     }
 
     private String resolveConfig(String propName, String defaultValue) {

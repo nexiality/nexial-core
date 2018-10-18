@@ -20,16 +20,21 @@ import java.io.File;
 import java.io.IOException;
 import java.net.MalformedURLException;
 import java.net.URL;
+import java.text.MessageFormat;
 import java.util.Arrays;
 import java.util.Map;
 import javax.validation.constraints.NotNull;
 
 import org.apache.commons.lang3.BooleanUtils;
+import org.apache.commons.lang3.RandomStringUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.text.WordUtils;
 import org.nexial.commons.proc.RuntimeUtils;
 import org.nexial.core.model.ExecutionContext;
 import org.nexial.core.model.ExecutionDefinition;
+import org.nexial.core.model.ExecutionSummary;
+import org.nexial.core.plugins.NexialCommand;
+import org.nexial.core.plugins.ws.WsCommand;
 import org.nexial.core.utils.ConsoleUtils;
 import org.openqa.selenium.MutableCapabilities;
 import org.openqa.selenium.WebDriver;
@@ -38,9 +43,9 @@ import org.openqa.selenium.remote.RemoteWebDriver;
 
 import static org.apache.commons.lang3.SystemUtils.*;
 import static org.nexial.core.NexialConst.BrowserStack.*;
-import static org.nexial.core.NexialConst.BrowserType.browserstack;
-import static org.nexial.core.NexialConst.BrowserType.edge;
+import static org.nexial.core.NexialConst.BrowserType.*;
 import static org.nexial.core.NexialConst.Data.BROWSER_WINDOW_SIZE;
+import static org.nexial.core.NexialConst.RATE_FORMAT;
 import static org.nexial.core.plugins.web.WebDriverCapabilityUtils.setCapability;
 import static org.nexial.core.utils.CheckUtils.requiresNotBlank;
 
@@ -48,8 +53,11 @@ import static org.nexial.core.utils.CheckUtils.requiresNotBlank;
  * extension to {@link Browser} in support of all things BrowserStack.
  */
 public class BrowserStackHelper extends CloudWebTestingPlatform {
+    protected String sessionId;
 
     public BrowserStackHelper(ExecutionContext context) { super(context); }
+
+    public String getSessionId() { return sessionId; }
 
     @Override
     @NotNull
@@ -72,6 +80,7 @@ public class BrowserStackHelper extends CloudWebTestingPlatform {
         handleOS(capabilities, config);
         handleTargetBrowser(capabilities, config);
         handleProjectMeta(capabilities, config);
+        handleOthers(capabilities, config);
 
         // remaining configs specific to browserstack
         config.forEach((key, value) -> {
@@ -84,136 +93,42 @@ public class BrowserStackHelper extends CloudWebTestingPlatform {
 
         try {
             String url = BASE_PROTOCOL + username + ":" + automateKey + BASE_URL;
-            return new RemoteWebDriver(new URL(url), capabilities);
+            RemoteWebDriver driver = new RemoteWebDriver(new URL(url), capabilities);
+
+            sessionId = driver.getSessionId().toString();
+
+            // safari's usually a bit slower to come up...
+            if (browser == safari) {
+                ConsoleUtils.log("5 second grace period for starting up Safari on BrowserStack...");
+                try { Thread.sleep(5000);} catch (InterruptedException e) {}
+            }
+
+            return driver;
         } catch (MalformedURLException | WebDriverException e) {
             throw new RuntimeException("Unable to initialize BrowserStack session: " + e.getMessage(), e);
         }
     }
 
-    protected void handleProjectMeta(MutableCapabilities capabilities, Map<String, String> config) {
-        setCapability(capabilities,
-                      "build",
-                      StringUtils.defaultIfBlank(config.remove("build"), context.getStringData(KEY_BUILD_NUM)));
+    public void reportExecutionStatus(ExecutionSummary summary) {
+        if (context == null) { return; }
 
-        if (context.hasData(KEY_CAPTURE_CRASH)) {
-            setCapability(capabilities, "browserstack.captureCrash", context.getBooleanData(KEY_CAPTURE_CRASH));
-        }
+        NexialCommand wsCommand = context.findPlugin("ws");
+        if (!(wsCommand instanceof WsCommand)) { return; }
 
-        ExecutionDefinition execDef = context.getExecDef();
-        if (execDef != null) {
-            if (execDef.getProject() != null && StringUtils.isNotBlank(execDef.getProject().getName())) {
-                setCapability(capabilities, "project", execDef.getProject().getName());
-            }
+        String url = StringUtils.replace(SESSION_URL, "${username}", context.getStringData(KEY_USERNAME));
+        url = StringUtils.replace(url, "${automatekey}", context.getStringData(KEY_AUTOMATEKEY));
+        url = StringUtils.replace(url, "${sessionId}", sessionId);
 
-            if (StringUtils.isNotBlank(execDef.getTestScript())) {
-                setCapability(capabilities, "name", new File(execDef.getTestScript()).getName());
-            }
-        }
-    }
+        String status = summary.getFailCount() > 0 ? "failed" : "passed";
+        String reason = "total: " + summary.getTotalSteps() +
+                        ", pass: " + summary.getPassCount() +
+                        ", fail: " + summary.getFailCount() +
+                        ", success%: " + MessageFormat.format(RATE_FORMAT, summary.getSuccessRate());
+        String payload = "{\"status\":\"" + status + "\", \"reason\":\"" + reason + "\"}";
 
-    protected void handleTargetBrowser(MutableCapabilities capabilities, Map<String, String> config) {
-        setCapability(capabilities, "browserstack.debug", config.containsKey("debug") ?
-                                                          BooleanUtils.toBoolean(config.remove("debug")) :
-                                                          context.getBooleanData(KEY_DEBUG, DEF_DEBUG));
-
-        browserName = StringUtils.defaultIfBlank(config.remove("browser"), context.getStringData(KEY_BROWSER));
-
-        if (StringUtils.startsWithIgnoreCase(browserName, "iPad") ||
-            StringUtils.startsWithIgnoreCase(browserName, "iPhone") ||
-            StringUtils.startsWithIgnoreCase(browserName, "android")) {
-            setCapability(capabilities, "browserName", browserName);
-            return;
-        }
-
-        if (StringUtils.isNotBlank(browserName)) {
-            setCapability(capabilities, "browserName", StringUtils.lowerCase(browserName));
-            setCapability(capabilities, "browser", StringUtils.length(browserName) < 3 ?
-                                                   StringUtils.upperCase(browserName) :
-                                                   WordUtils.capitalize(browserName));
-        }
-
-        browserVersion = StringUtils.defaultIfBlank(config.remove("browser_version"),
-                                                    context.getStringData(KEY_BROWSER_VER));
-        if (StringUtils.isNotBlank(browserVersion)) { setCapability(capabilities, "browser_version", browserVersion); }
-    }
-
-    protected void handleOS(MutableCapabilities capabilities, Map<String, String> config) {
-        // os specific setting, including mobile devices
-        String targetOs = config.containsKey("os") ? config.remove("os") : context.getStringData(KEY_OS);
-        String targetOsVer = StringUtils.defaultIfBlank(config.remove("os_version"), context.getStringData(KEY_OS_VER));
-        boolean realMobile = BooleanUtils.toBoolean(StringUtils.defaultIfBlank(config.remove("real_mobile"), "false"));
-
-        String bsCapsUrl = "Check https://www.browserstack.com/automate/capabilities for more details";
-        String msgRequired = "'browserstack.device' is required for ";
-
-        if (StringUtils.equalsIgnoreCase(targetOs, "ANDROID")) {
-            String device = config.remove("device");
-            if (StringUtils.isBlank(device)) { throw new RuntimeException(msgRequired + "'ANDROID'. " + bsCapsUrl); }
-
-            setCapability(capabilities, "platform", "ANDROID");
-            setCapability(capabilities, "device", device);
-            setCapability(capabilities, "real_mobile", realMobile);
-            setCapability(capabilities, "os_version", targetOsVer);
-            isMobile = realMobile;
-            return;
-        }
-
-        if (StringUtils.equalsIgnoreCase(targetOs, "IOS")) {
-
-            String device = config.remove("device");
-            if (StringUtils.isBlank(device)) { throw new RuntimeException(msgRequired + "'iOS'. " + bsCapsUrl); }
-
-            setCapability(capabilities, "device", device);
-            setCapability(capabilities, "real_mobile", realMobile);
-            setCapability(capabilities, "os_version", targetOsVer);
-            isMobile = realMobile;
-            return;
-        }
-
-        setCapability(capabilities, "resolution",
-                      StringUtils.defaultIfBlank(
-                          config.remove("resolution"),
-                          StringUtils.defaultIfBlank(context.getStringData(KEY_RESOLUTION),
-                                                     context.getStringData(BROWSER_WINDOW_SIZE))));
-
-        if (StringUtils.isNotBlank(targetOs) && StringUtils.isNotBlank(targetOsVer)) {
-            setCapability(capabilities, "os", StringUtils.upperCase(targetOs));
-            setCapability(capabilities, "os_version", targetOsVer);
-            return;
-        }
-
-        // if no target OS specified, then we'll just stick to automation host's OS
-        if (IS_OS_WINDOWS) {
-            setCapability(capabilities, "os", "WINDOWS");
-            if (IS_OS_WINDOWS_7) {
-                setCapability(capabilities, "platform", "WIN7");
-                setCapability(capabilities, "os_version", "7");
-            }
-            if (IS_OS_WINDOWS_8) {
-                setCapability(capabilities, "platform", "WIN8");
-                setCapability(capabilities, "os_version", "8");
-            }
-            if (IS_OS_WINDOWS_10) {
-                setCapability(capabilities, "platform", "WIN10");
-                setCapability(capabilities, "os_version", "10");
-            }
-            if (IS_OS_WINDOWS_2008) {
-                setCapability(capabilities, "platform", "WINDOWS");
-                setCapability(capabilities, "os_version", "2008");
-            }
-            return;
-        }
-
-        if (IS_OS_MAC_OSX) {
-            setCapability(capabilities, "os", "OS X");
-            setCapability(capabilities, "platform", "MAC");
-            if (IS_OS_MAC_OSX_SNOW_LEOPARD) { setCapability(capabilities, "os_version", "Snow Leopard"); }
-            if (IS_OS_MAC_OSX_LION) { setCapability(capabilities, "os_version", "Lion"); }
-            if (IS_OS_MAC_OSX_MOUNTAIN_LION) { setCapability(capabilities, "os_version", "Mountain Lion"); }
-            if (IS_OS_MAC_OSX_MAVERICKS) { setCapability(capabilities, "os_version", "Mavericks"); }
-            if (IS_OS_MAC_OSX_YOSEMITE) { setCapability(capabilities, "os_version", "Yosemite"); }
-            if (IS_OS_MAC_OSX_EL_CAPITAN) { setCapability(capabilities, "os_version", "El Capitan"); }
-        }
+        ConsoleUtils.log("reporting execution status to BrowserStack...");
+        WsCommand ws = ((WsCommand) wsCommand);
+        ws.put(url, payload, RandomStringUtils.randomAlphabetic(5));
     }
 
     protected void handleLocal(MutableCapabilities capabilities, Map<String, String> config) {
@@ -227,7 +142,7 @@ public class BrowserStackHelper extends CloudWebTestingPlatform {
                          "BrowserStack Access Key not defined via '" + KEY_AUTOMATEKEY + "'",
                          automateKey);
 
-        capabilities.setCapability("browserstack.local", enableLocal);
+        capabilities.setCapability("browserstack.local", true);
 
         try {
             WebDriverHelper helper = WebDriverHelper.Companion.newInstance(browserstack, context);
@@ -246,6 +161,137 @@ public class BrowserStackHelper extends CloudWebTestingPlatform {
             localExeName = driver.getName();
         } catch (IOException | InterruptedException e) {
             throw new RuntimeException("unable to start BrowserStackLocal: " + e.getMessage(), e);
+        }
+    }
+
+    protected void handleOS(MutableCapabilities capabilities, Map<String, String> config) {
+        // os specific setting, including mobile devices
+        String targetOs = StringUtils.defaultIfBlank(config.remove("os"), context.getStringData(KEY_OS));
+        String targetOsVer = StringUtils.defaultIfBlank(config.remove("os_version"), context.getStringData(KEY_OS_VER));
+        String bsCapsUrl = "Check https://www.browserstack.com/automate/capabilities for more details";
+        String msgRequired = "'browserstack.device' is required for ";
+
+        if (StringUtils.equalsIgnoreCase(targetOs, "ANDROID") || StringUtils.equalsIgnoreCase(targetOs, "IOS")) {
+            String device = config.remove("device");
+            if (StringUtils.isBlank(device)) { throw new RuntimeException(msgRequired + targetOs + ". " + bsCapsUrl); }
+
+            setCapability(capabilities, "device", device);
+            setCapability(capabilities, "os_version", targetOsVer);
+
+            boolean realMobile =
+                BooleanUtils.toBoolean(StringUtils.defaultIfBlank(config.remove("real_mobile"), "false"));
+            setCapability(capabilities, "real_mobile", realMobile);
+            setCapability(capabilities, "realMobile", realMobile);
+
+            this.isRunningAndroid = StringUtils.equalsIgnoreCase(targetOs, "ANDROID");
+            this.isRunningIOS = StringUtils.equalsIgnoreCase(targetOs, "IOS");
+            this.device = device;
+            this.isMobile = realMobile;
+            return;
+        }
+
+        // resolution only works for non-mobile platforms
+        setCapability(capabilities, "resolution",
+                      StringUtils.defaultIfBlank(
+                          config.remove("resolution"),
+                          StringUtils.defaultIfBlank(context.getStringData(KEY_RESOLUTION),
+                                                     context.getStringData(BROWSER_WINDOW_SIZE))));
+
+        if (StringUtils.isNotBlank(targetOs) && StringUtils.isNotBlank(targetOsVer)) {
+            setCapability(capabilities, "os", StringUtils.upperCase(targetOs));
+            setCapability(capabilities, "os_version", targetOsVer);
+
+            this.os = targetOs;
+            this.isRunningWindows = StringUtils.startsWithIgnoreCase(targetOs, "WIN");
+            this.isRunningOSX = StringUtils.equalsIgnoreCase(targetOs, "OS X");
+            return;
+        }
+
+        // if no target OS specified, then we'll just stick to automation host's OS
+        if (IS_OS_WINDOWS) {
+            setCapability(capabilities, "os", "Windows");
+            if (IS_OS_WINDOWS_7) { setCapability(capabilities, "os_version", "7"); }
+            if (IS_OS_WINDOWS_8) { setCapability(capabilities, "os_version", "8"); }
+            if (IS_OS_WINDOWS_10) { setCapability(capabilities, "os_version", "10"); }
+            if (IS_OS_WINDOWS_2008) { setCapability(capabilities, "os_version", "2008"); }
+
+            this.isRunningWindows = true;
+            this.os = "Windows";
+            return;
+        }
+
+        if (IS_OS_MAC_OSX) {
+            setCapability(capabilities, "os", "OS X");
+            if (IS_OS_MAC_OSX_SNOW_LEOPARD) { setCapability(capabilities, "os_version", "Snow Leopard"); }
+            if (IS_OS_MAC_OSX_LION) { setCapability(capabilities, "os_version", "Lion"); }
+            if (IS_OS_MAC_OSX_MOUNTAIN_LION) { setCapability(capabilities, "os_version", "Mountain Lion"); }
+            if (IS_OS_MAC_OSX_MAVERICKS) { setCapability(capabilities, "os_version", "Mavericks"); }
+            if (IS_OS_MAC_OSX_YOSEMITE) { setCapability(capabilities, "os_version", "Yosemite"); }
+            if (IS_OS_MAC_OSX_EL_CAPITAN) { setCapability(capabilities, "os_version", "El Capitan"); }
+
+            this.isRunningOSX = true;
+            this.os = "OS X";
+        }
+    }
+
+    protected void handleTargetBrowser(MutableCapabilities capabilities, Map<String, String> config) {
+        browserName = StringUtils.defaultIfBlank(config.remove("browser"), context.getStringData(KEY_BROWSER));
+
+        if (StringUtils.startsWithIgnoreCase(browserName, "iPad") ||
+            StringUtils.startsWithIgnoreCase(browserName, "iPhone") ||
+            StringUtils.startsWithIgnoreCase(browserName, "android")) {
+            setCapability(capabilities, "browserName", browserName);
+            if (StringUtils.startsWithIgnoreCase(browserName, "iPhone")) { this.browser = iphone; }
+            return;
+        }
+
+        if (StringUtils.isNotBlank(browserName)) {
+            setCapability(capabilities, "browser", StringUtils.length(browserName) < 3 ?
+                                                   StringUtils.upperCase(browserName) :
+                                                   WordUtils.capitalize(browserName));
+        }
+
+        browserVersion =
+            StringUtils.defaultIfBlank(config.remove("browser_version"), context.getStringData(KEY_BROWSER_VER));
+        if (StringUtils.isNotBlank(browserVersion)) { setCapability(capabilities, "browser_version", browserVersion); }
+
+        if (StringUtils.startsWithIgnoreCase(browserName, "Firefox")) { this.browser = firefox; }
+        if (StringUtils.startsWithIgnoreCase(browserName, "Chrome")) { this.browser = chrome; }
+        if (StringUtils.startsWithIgnoreCase(browserName, "Safari")) { this.browser = safari; }
+        if (StringUtils.startsWithIgnoreCase(browserName, "IE")) { this.browser = ie; }
+        if (StringUtils.startsWithIgnoreCase(browserName, "Edge")) { this.browser = edge; }
+    }
+
+    protected void handleProjectMeta(MutableCapabilities capabilities, Map<String, String> config) {
+        setCapability(capabilities,
+                      "build",
+                      StringUtils.defaultIfBlank(config.remove("build"), context.getStringData(KEY_BUILD_NUM)));
+
+        ExecutionDefinition execDef = context.getExecDef();
+        if (execDef != null) {
+            if (execDef.getProject() != null && StringUtils.isNotBlank(execDef.getProject().getName())) {
+                setCapability(capabilities, "project", execDef.getProject().getName());
+            }
+
+            if (StringUtils.isNotBlank(execDef.getTestScript())) {
+                setCapability(capabilities, "name", new File(execDef.getTestScript()).getName());
+            }
+        }
+    }
+
+    protected void handleOthers(MutableCapabilities capabilities, Map<String, String> config) {
+        boolean debug = config.containsKey("debug") ?
+                        BooleanUtils.toBoolean(config.remove("debug")) :
+                        context.getBooleanData(KEY_DEBUG, DEF_DEBUG);
+        setCapability(capabilities, "browserstack.debug", debug);
+        if (debug) {
+            setCapability(capabilities, "browserstack.console", "verbose");
+            setCapability(capabilities, "browserstack.networkLogs", true);
+        }
+        setCapability(capabilities, "browserstack.use_w3c", BooleanUtils.toBoolean(config.remove("use_w3c")));
+
+        if (context.hasData(KEY_CAPTURE_CRASH)) {
+            setCapability(capabilities, "browserstack.captureCrash", context.getBooleanData(KEY_CAPTURE_CRASH));
         }
     }
 

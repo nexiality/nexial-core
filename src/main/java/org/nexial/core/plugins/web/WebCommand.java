@@ -81,6 +81,7 @@ import static java.io.File.separator;
 import static java.lang.Thread.sleep;
 import static org.apache.commons.lang3.SystemUtils.IS_OS_MAC;
 import static org.nexial.core.NexialConst.*;
+import static org.nexial.core.NexialConst.BrowserType.safari;
 import static org.nexial.core.NexialConst.Data.*;
 import static org.nexial.core.plugins.ws.WebServiceClient.hideAuthDetails;
 import static org.nexial.core.utils.CheckUtils.*;
@@ -940,12 +941,8 @@ public class WebCommand extends BaseCommand implements CanTakeScreenshot, CanLog
         driver.get(validateUrl(url));
         waitForBrowserStability(toPositiveLong(waitMs, "waitMs"));
 
-        // bring browser to foreground
-        String initialHandle = browser.updateWinHandle();
-        ConsoleUtils.log("current browser window handle:" + initialHandle);
-        if (StringUtils.isNotBlank(initialHandle) && browser.getBrowserType().isSwitchWindowSupported()) {
-            driver = driver.switchTo().window(initialHandle).switchTo().defaultContent();
-        }
+        updateWinHandle();
+        resizeSafariAfterOpen();
 
         return StepResult.success("opened URL " + hideAuthDetails(url));
     }
@@ -964,12 +961,8 @@ public class WebCommand extends BaseCommand implements CanTakeScreenshot, CanLog
         driver.get(urlBasic);
         waitForBrowserStability(context.getPollWaitMs());
 
-        // bring browser to foreground
-        String initialHandle = browser.updateWinHandle();
-        ConsoleUtils.log("current browser window handle:" + initialHandle);
-        if (StringUtils.isNotBlank(initialHandle) && browser.getBrowserType().isSwitchWindowSupported()) {
-            driver = driver.switchTo().window(initialHandle).switchTo().defaultContent();
-        }
+        updateWinHandle();
+        resizeSafariAfterOpen();
 
         return StepResult.success("opened URL " + hideAuthDetails(urlBasic));
     }
@@ -1452,6 +1445,25 @@ public class WebCommand extends BaseCommand implements CanTakeScreenshot, CanLog
         new Actions(driver).clickAndHold(source).pause(500).dragAndDrop(source, target).build().perform();
 
         return StepResult.success("Drag-and-drop element '" + fromLocator + "' to '" + toLocator + "'");
+    }
+
+    protected void resizeSafariAfterOpen() {
+        if (browser.isRunBrowserStack() && browser.getBrowserstackHelper().getBrowser() == safari) {
+            if (!context.getBooleanData(SAFARI_RESIZED, DEF_SAFARI_RESIZED)) {
+                // time to resize it now
+                browser.setWindowSizeForcefully(driver);
+                context.setData(SAFARI_RESIZED, true);
+            }
+        }
+    }
+
+    // bring browser to foreground
+    protected void updateWinHandle() {
+        String initialHandle = browser.updateWinHandle();
+        ConsoleUtils.log("current browser window handle:" + initialHandle);
+        if (StringUtils.isNotBlank(initialHandle) && browser.getBrowserType().isSwitchWindowSupported()) {
+            driver = driver.switchTo().window(initialHandle).switchTo().defaultContent();
+        }
     }
 
     protected void nativeMaximizeScreen(Window window) {

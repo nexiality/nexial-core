@@ -496,17 +496,25 @@ public final class NexialConst {
     public static class BrowserStack {
         public static final String BASE_PROTOCOL = "http://";
         public static final String BASE_URL = "@hub.browserstack.com/wd/hub";
+        public static final String SESSION_URL =
+            "https://${username}:${automatekey}@api.browserstack.com/automate/sessions/${sessionId}.json";
+
         public static final boolean DEF_DEBUG = true;
         public static final boolean DEF_ENABLE_LOCAL = false;
+
         private static final String NS = NAMESPACE + "browserstack.";
+
         public static final String KEY_USERNAME = NS + "username";
         public static final String KEY_AUTOMATEKEY = NS + "automatekey";
+
         public static final String KEY_BROWSER = NS + "browser";
         public static final String KEY_BROWSER_VER = NS + "browser.version";
+
         public static final String KEY_DEBUG = NS + "debug";
         public static final String KEY_RESOLUTION = NS + "resolution";
         public static final String KEY_BUILD_NUM = NS + "app.buildnumber";
         public static final String KEY_ENABLE_LOCAL = NS + "enablelocal";
+
         public static final String KEY_OS = NS + "os";
         public static final String KEY_OS_VER = NS + "os.version";
 
@@ -780,6 +788,9 @@ public final class NexialConst {
 
         public static final String SAFARI_USE_TECH_PREVIEW = BROWSER + ".safari.useTechPreview";
         public static final boolean DEF_SAFARI_USE_TECH_PREVIEW = false;
+
+        public static final String SAFARI_RESIZED = BROWSER + ".safari.resizedAfterOpen";
+        public static final boolean DEF_SAFARI_RESIZED = false;
 
         public static final String CEF_CLIENT_LOCATION = BROWSER + ".embedded.appLocation";
         public static final String ELECTRON_CLIENT_LOCATION = BROWSER + ".electron.appLocation";
