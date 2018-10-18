@@ -430,7 +430,11 @@ public class TestStep extends TestStepManifest {
         } else if (StringUtils.contains(description, REPEAT_DESCRIPTION_PREFIX)) {
             ExcelConfig.formatRepeatUntilDescription(worksheet, cellDescription);
         } else {
-            cellDescription.setCellStyle(worksheet.getStyle(STYLE_DESCRIPTION));
+            ExcelConfig.formatDescription(worksheet, cellDescription);
+        }
+        if (result.failed()) {
+            ExcelConfig.formatFailedStepDescription(this);
+            Excel.createComment(cellDescription, result.getMessage(), "NexialBot");
         }
         cellDescription.setCellValue(context.replaceTokens(description));
 

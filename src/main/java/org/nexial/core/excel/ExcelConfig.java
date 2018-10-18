@@ -257,6 +257,7 @@ public class ExcelConfig {
     public static final String STYLE_DESCRIPTION = "DESCRIPTION";
     public static final String STYLE_SECTION_DESCRIPTION = "SECTION_DESCRIPTION";
     public static final String STYLE_REPEAT_UNTIL_DESCRIPTION = "REPEAT_UNTIL_DESCRIPTION";
+    public static final String STYLE_FAILED_STEP_DESCRIPTION = "FAILED_STEP_DESCRIPTION";
     public static final String STYLE_ELAPSED_MS = "ELAPSED_MS";
     public static final String STYLE_ELAPSED_MS_BAD_SLA = "ELAPSED_MS_BAD_SLA";
     public static final String STYLE_FAILED_RESULT = "FAILED_RESULT";
@@ -298,6 +299,7 @@ public class ExcelConfig {
         public static final StyleConfig DESCRIPTION = newDescriptionStyle();
         public static final StyleConfig SECTION_DESCRIPTION = newSectionDescriptionStyle();
         public static final StyleConfig REPEAT_UNTIL_DESCRIPTION = newRepeatUntilDescriptionStyle();
+        public static final StyleConfig FAILED_STEP_DESCRIPTION = newFailedStepDescriptionStyle();
         public static final StyleConfig SCREENSHOT = newScreenshotStyle();
         public static final StyleConfig ELAPSED_MS = newElapsedMsStyle();
         public static final StyleConfig SUCCESS = newSuccessStyle();
@@ -516,6 +518,20 @@ public class ExcelConfig {
             config.indention = INDENT_1;
             config.wrapText = true;
             config.verticalAlignment = CENTER;
+            return config;
+        }
+
+        // only additive style updates
+        private static StyleConfig newFailedStepDescriptionStyle() {
+            StyleConfig config = new StyleConfig();
+            config.backgroundColor = new XSSFColor(new Color(255, 199, 206));
+            config.fontHeight = FONT_HEIGHT_DEFAULT;
+            config.fontColor = FG_FAIL;
+            config.boldFont = true;
+            config.verticalAlignment = CENTER;
+
+            config.wrapText = true;
+            config.borderColor = new XSSFColor(new Color(205, 195, 195));
             return config;
         }
 
@@ -1019,6 +1035,10 @@ public class ExcelConfig {
 
     public static TestStep formatRepeatUntilDescription(TestStep testStep, String prefix) {
         return formatDescriptionCell(testStep, STYLE_REPEAT_UNTIL_DESCRIPTION, prefix);
+    }
+
+    public static TestStep formatFailedStepDescription(TestStep testStep) {
+        return formatDescriptionCell(testStep, STYLE_FAILED_STEP_DESCRIPTION, null);
     }
 
     public static void formatTargetCell(Worksheet worksheet, XSSFCell cell) {

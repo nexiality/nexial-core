@@ -35,7 +35,6 @@ import org.nexial.commons.logging.LogbackUtils;
 import org.nexial.core.aws.NexialS3Helper;
 import org.nexial.core.excel.Excel;
 import org.nexial.core.model.*;
-import org.nexial.core.plugins.NexialCommand;
 import org.nexial.core.plugins.web.Browser;
 import org.nexial.core.plugins.web.WebCommand;
 import org.nexial.core.reports.ExecutionMailConfig;
@@ -393,8 +392,8 @@ public final class ExecutionThread extends Thread {
 
         // special case for BrowserStack
         // https://www.browserstack.com/automate/rest-api
-        NexialCommand webCommand = context.findPlugin("web");
-        if (webCommand instanceof WebCommand) {
+        Object webCommand = context.getObjectData("nexialInternal.pluginManager");
+        if (webCommand != null && webCommand instanceof WebCommand) {
             Browser browser = ((WebCommand) webCommand).getBrowser();
             if (browser != null && browser.isRunBrowserStack() && browser.getBrowserstackHelper() != null) {
                 // this means we were running browser in this script.. now let's report status
