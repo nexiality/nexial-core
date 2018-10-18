@@ -118,20 +118,23 @@ public class BrowserStackHelper extends CloudWebTestingPlatform {
 
         browserName = StringUtils.defaultIfBlank(config.remove("browser"), context.getStringData(KEY_BROWSER));
 
-        if (StringUtils.equals(browserName, "iPad") ||
-            StringUtils.equals(browserName, "iPhone") ||
-            StringUtils.equals(browserName, "android")) {
+        if (StringUtils.startsWithIgnoreCase(browserName, "iPad") ||
+            StringUtils.startsWithIgnoreCase(browserName, "iPhone") ||
+            StringUtils.startsWithIgnoreCase(browserName, "android")) {
             setCapability(capabilities, "browserName", browserName);
             return;
         }
 
-        setCapability(capabilities, "browserName", StringUtils.lowerCase(browserName));
-        setCapability(capabilities, "browser", StringUtils.length(browserName) < 3 ?
-                                               StringUtils.upperCase(browserName) :
-                                               WordUtils.capitalize(browserName));
+        if (StringUtils.isNotBlank(browserName)) {
+            setCapability(capabilities, "browserName", StringUtils.lowerCase(browserName));
+            setCapability(capabilities, "browser", StringUtils.length(browserName) < 3 ?
+                                                   StringUtils.upperCase(browserName) :
+                                                   WordUtils.capitalize(browserName));
+        }
+
         browserVersion = StringUtils.defaultIfBlank(config.remove("browser_version"),
                                                     context.getStringData(KEY_BROWSER_VER));
-        setCapability(capabilities, "browser_version", browserVersion);
+        if (StringUtils.isNotBlank(browserVersion)) { setCapability(capabilities, "browser_version", browserVersion); }
     }
 
     protected void handleOS(MutableCapabilities capabilities, Map<String, String> config) {

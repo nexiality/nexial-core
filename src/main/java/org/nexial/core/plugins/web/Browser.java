@@ -63,7 +63,6 @@ import static org.apache.commons.lang3.SystemUtils.*;
 import static org.nexial.core.NexialConst.BrowserType.*;
 import static org.nexial.core.NexialConst.*;
 import static org.nexial.core.NexialConst.Data.*;
-import static org.nexial.core.plugins.web.WebDriverCapabilityUtils.*;
 import static org.nexial.core.plugins.web.WebDriverCapabilityUtils.initCapabilities;
 import static org.nexial.core.utils.CheckUtils.requiresExecutableFile;
 import static org.openqa.selenium.PageLoadStrategy.EAGER;
@@ -930,10 +929,8 @@ public class Browser implements ForcefulTerminate {
         SafariDriver safari = new SafariDriver(options);
         MutableCapabilities capabilities = (MutableCapabilities) safari.getCapabilities();
         initCapabilities(context, capabilities);
-        setCapability(capabilities, "javascriptEnabled", true);
-        setCapability(capabilities, "databaseEnabled", true);
-        setCapability(capabilities, "webStorageEnabled", true);
-        // setCapability(capabilities, "unexpectedAlertBehaviour", "ignore");
+        // setCapability(capabilities, "javascriptEnabled", true);
+        // setCapability(capabilities, "databaseEnabled", true);
 
         browserVersion = capabilities.getVersion();
         browserPlatform = capabilities.getPlatform();

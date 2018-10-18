@@ -167,7 +167,8 @@ public class TestScenario {
 
             if (context.isBreakCurrentIteration()) {
                 skipDueToEndLoop = true;
-                logger.log(this, "test case execution ending due to EndLoopIf() flow control activated.");
+                logger.log(this, "test case execution ending due to EndLoopIf() flow control activated " +
+                                 "or unrecoverable execution failure.");
             }
 
             executionSummary.addNestSummary(testCase.getExecutionSummary());

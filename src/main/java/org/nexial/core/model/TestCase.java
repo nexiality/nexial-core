@@ -154,6 +154,7 @@ public class TestCase {
             if (context.isFailFastCommand(testStep)) {
                 logger.log(testStep, "test stopping due to failure on fail-fast command: " + testStep.getCommandFQN());
                 trackTimeLogs.trackingDetails("Execution Failed");
+                context.setFailImmediate(true);
                 break;
             }
             if (context.isFailImmediate()) {

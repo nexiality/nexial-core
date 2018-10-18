@@ -94,13 +94,14 @@ public class ScreenshotUtils {
 
         String screen;
         try {
+            // if (screenshot instanceof RemoteWebDriver) { ((RemoteWebDriver) screenshot).manage().window().fullscreen();}
             screen = screenshot.getScreenshotAs(BASE64);
         } catch (WebDriverException e) {
             Throwable cause = e.getCause();
-            if (cause == null || !(cause instanceof UnhandledAlertException)) {
-                log("Error when performing screen capture: " + e.getMessage());
-            } else {
+            if (cause instanceof UnhandledAlertException) {
                 log("screen capture not support when Javascript alert present");
+            } else {
+                log("Error when performing screen capture: " + e.getMessage());
             }
             return null;
         }
