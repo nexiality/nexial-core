@@ -24,7 +24,6 @@ import java.util.Set;
 
 import org.apache.commons.collections4.MapUtils;
 import org.apache.commons.lang3.StringUtils;
-import org.nexial.commons.utils.RegexUtils;
 import org.nexial.commons.utils.TextUtils;
 
 import static java.io.File.separator;
@@ -59,20 +58,17 @@ public class TestProject {
 
         TestProject project = new TestProject();
         // is the test script confined within the standard project structure (i.e. artifact/script/[...].xlsx)?
-        // if (StringUtils.contains(inputFullPath, inputFileRelPath)) {
-        if (RegexUtils.match(inputFullPath, ".+" + DEF_REL_LOC_TEST_SCRIPT + ".+")) {
+        if (containsWithin(inputFullPath, DEF_REL_LOC_TEST_SCRIPT)) {
             // yes, standard project structure observed. proceed to resolve other directories
             project.setProjectHome(
                 StringUtils.removeEnd(StringUtils.substringBefore(inputFullPath, DEF_REL_LOC_TEST_SCRIPT), separator));
             project.isStandardStructure = true;
         } else {
             // is the input file a test plan?
-            // inputFileRelPath = DEF_REL_LOC_TEST_PLAN + inputFile.getName();
-            // if (StringUtils.contains(inputFullPath, inputFileRelPath)) {
-            if (RegexUtils.match(inputFullPath, ".+" + DEF_REL_LOC_TEST_PLAN + ".+")) {
+            if (containsWithin(inputFullPath, DEF_REL_LOC_TEST_PLAN)) {
                 // yes, standard project structure observed. proceed to resolve other directories
-                project.setProjectHome(
-                    StringUtils.removeEnd(StringUtils.substringBefore(inputFullPath, DEF_REL_LOC_TEST_PLAN), separator));
+                project.setProjectHome(StringUtils.removeEnd(
+                    StringUtils.substringBefore(inputFullPath, DEF_REL_LOC_TEST_PLAN), separator));
                 project.isStandardStructure = true;
             }
         }
@@ -159,8 +155,12 @@ public class TestProject {
         if (MapUtils.isNotEmpty(properties)) {
             PROJECT_PROPERTIES.clear();
             properties.forEach(PROJECT_PROPERTIES::put);
-
             hasProjectProps = MapUtils.isNotEmpty(PROJECT_PROPERTIES);
         }
+    }
+
+    private static boolean containsWithin(String path, String substring) {
+        return path.indexOf(
+            StringUtils.appendIfMissing(StringUtils.prependIfMissing(substring, separator), separator)) > 1;
     }
 }

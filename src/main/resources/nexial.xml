@@ -325,6 +325,7 @@
                         <!--<value>disable-cache</value>-->
 
                         <value>hide-scrollbars</value>
+                        <value>allow-http-screen-capture</value>
                         <value>allow-insecure-localhost</value>
                         <!--<value>disable-web-security</value>-->
 

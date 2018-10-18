@@ -39,6 +39,7 @@ import com.jcraft.jsch.*;
 import com.jcraft.jsch.ChannelSftp.*;
 
 import static com.jcraft.jsch.ChannelSftp.*;
+import static java.io.File.separator;
 import static org.nexial.core.plugins.RemoteFileActionOutcome.TransferAction.*;
 import static org.nexial.core.plugins.RemoteFileActionOutcome.TransferProtocol.SCP;
 import static org.nexial.core.plugins.RemoteFileActionOutcome.TransferProtocol.SFTP;
@@ -409,7 +410,7 @@ public class SshCommand extends BaseCommand {
                                            " is a directory, but directory copy/move is currently UNSUPPORTED");
                 }
 
-                outcome.setLocalPath(StringUtils.appendIfMissing(localPath, "/") + filename);
+                outcome.setLocalPath(StringUtils.appendIfMissing(localPath, separator) + filename);
             } else if (localFileReadable) {
                 // if not, we'd assume this as file
                 ConsoleUtils.log(logPrefix + "local file " + localPath + " will be OVERWRITTEN");
@@ -537,7 +538,7 @@ public class SshCommand extends BaseCommand {
     }
 
     protected StepResult failSingleFile(String var, String file, RemoteFileActionOutcome outcome, String message) {
-        ConsoleUtils.log(resolveLogPrefix(outcome) + "[" + file + "] FAIL: " + message);
+        ConsoleUtils.error(resolveLogPrefix(outcome) + "[" + file + "] FAIL: " + message);
         context.setData(var, outcome.addFailed(file).appendError(message).end());
         return StepResult.fail(message);
     }
@@ -605,7 +606,7 @@ public class SshCommand extends BaseCommand {
         config.setProperty("PreferredAuthentications", "publickey,keyboard-interactive,password");
         session.setConfig(config);
 
-        session.setPassword(connection.getPassword());
+        if (StringUtils.isNotEmpty(connection.getPassword())) { session.setPassword(connection.getPassword()); }
         session.connect();
 
         return session;
@@ -645,7 +646,7 @@ public class SshCommand extends BaseCommand {
 
     protected SshClientConnection resolveSshClientConnection(String profile) throws IntegrationConfigException {
         SshClientConnection connection = SshClientConnection.resolveFrom(context, profile);
-        requiresNotNull(connection, "Unable to resolve SFTP connection");
+        requiresNotNull(connection, "Unable to resolve SSH connection");
         return connection;
     }
 

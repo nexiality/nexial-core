@@ -38,9 +38,7 @@ public class RemoteFileActionOutcome implements Serializable {
     private String remotePath;
     private String localPath;
 
-    public enum TransferProtocol {
-        SFTP, SCP, AWS
-    }
+    public enum TransferProtocol {SFTP, SCP, AWS}
 
     public enum TransferAction {
         COPY_TO("copy to"),
@@ -52,27 +50,17 @@ public class RemoteFileActionOutcome implements Serializable {
 
         private String description;
 
-        TransferAction(String description) {
-            this.description = description;
-        }
+        TransferAction(String description) { this.description = description; }
 
-        public String getDescription() {
-            return description;
-        }
+        public String getDescription() { return description; }
 
         @Override
-        public String toString() {
-            return description;
-        }
+        public String toString() { return description; }
     }
 
-    public RemoteFileActionOutcome() {
-        this.startTime = System.currentTimeMillis();
-    }
+    public RemoteFileActionOutcome() { this.startTime = System.currentTimeMillis(); }
 
-    public List<String> getAffected() {
-        return affected;
-    }
+    public List<String> getAffected() { return affected; }
 
     public RemoteFileActionOutcome setAffected(List<String> affected) {
         this.affected = affected;
@@ -80,15 +68,11 @@ public class RemoteFileActionOutcome implements Serializable {
     }
 
     public RemoteFileActionOutcome addAffected(String... affected) {
-        if (ArrayUtils.isNotEmpty(affected)) {
-            this.affected.addAll(Arrays.asList(affected));
-        }
+        if (ArrayUtils.isNotEmpty(affected)) { this.affected.addAll(Arrays.asList(affected)); }
         return this;
     }
 
-    public List<String> getFailed() {
-        return failed;
-    }
+    public List<String> getFailed() { return failed; }
 
     public RemoteFileActionOutcome setFailed(List<String> failed) {
         this.failed = failed;
@@ -96,15 +80,11 @@ public class RemoteFileActionOutcome implements Serializable {
     }
 
     public RemoteFileActionOutcome addFailed(String... failed) {
-        if (ArrayUtils.isNotEmpty(failed)) {
-            this.failed.addAll(Arrays.asList(failed));
-        }
+        if (ArrayUtils.isNotEmpty(failed)) { this.failed.addAll(Arrays.asList(failed)); }
         return this;
     }
 
-    public String getErrors() {
-        return errors;
-    }
+    public String getErrors() { return errors; }
 
     public RemoteFileActionOutcome setErrors(String errors) {
         this.errors = errors;
@@ -126,13 +106,9 @@ public class RemoteFileActionOutcome implements Serializable {
         return this;
     }
 
-    public boolean hasError() {
-        return StringUtils.isNotBlank(errors);
-    }
+    public boolean hasError() { return StringUtils.isNotBlank(errors); }
 
-    public long getStartTime() {
-        return startTime;
-    }
+    public long getStartTime() { return startTime; }
 
     public RemoteFileActionOutcome setStartTime(long startTime) {
         this.startTime = startTime;
@@ -144,9 +120,7 @@ public class RemoteFileActionOutcome implements Serializable {
         return this;
     }
 
-    public long getElapsedTime() {
-        return elapsedTime;
-    }
+    public long getElapsedTime() { return elapsedTime; }
 
     public RemoteFileActionOutcome setElapsedTime(long elapsedTime) {
         this.elapsedTime = elapsedTime;
@@ -158,36 +132,28 @@ public class RemoteFileActionOutcome implements Serializable {
         return this;
     }
 
-    public TransferProtocol getProtocol() {
-        return protocol;
-    }
+    public TransferProtocol getProtocol() { return protocol; }
 
     public RemoteFileActionOutcome setProtocol(TransferProtocol protocol) {
         this.protocol = protocol;
         return this;
     }
 
-    public TransferAction getAction() {
-        return action;
-    }
+    public TransferAction getAction() { return action; }
 
     public RemoteFileActionOutcome setAction(TransferAction action) {
         this.action = action;
         return this;
     }
 
-    public String getRemotePath() {
-        return remotePath;
-    }
+    public String getRemotePath() { return remotePath; }
 
     public RemoteFileActionOutcome setRemotePath(String remotePath) {
         this.remotePath = remotePath;
         return this;
     }
 
-    public String getLocalPath() {
-        return localPath;
-    }
+    public String getLocalPath() { return localPath; }
 
     public RemoteFileActionOutcome setLocalPath(String localPath) {
         this.localPath = localPath;

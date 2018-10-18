@@ -60,16 +60,15 @@ import org.nexial.core.plugins.ws.WsCommand;
 import org.nexial.core.utils.ConsoleUtils;
 import org.nexial.core.utils.OutputFileUtils;
 import org.nexial.core.utils.WebDriverUtils;
-import org.openqa.selenium.*;
 import org.openqa.selenium.Dimension;
 import org.openqa.selenium.Point;
+import org.openqa.selenium.*;
 import org.openqa.selenium.WebDriver.Window;
 import org.openqa.selenium.interactions.Actions;
 import org.openqa.selenium.interactions.Locatable;
 import org.openqa.selenium.interactions.internal.Coordinates;
 import org.openqa.selenium.support.ui.ExpectedConditions;
 import org.openqa.selenium.support.ui.FluentWait;
-import org.openqa.selenium.support.ui.Quotes;
 import org.openqa.selenium.support.ui.Select;
 import org.openqa.selenium.support.ui.WebDriverWait;
 
@@ -262,16 +261,24 @@ public class WebCommand extends BaseCommand implements CanTakeScreenshot, CanLog
     }
 
     public StepResult select(String locator, String text) {
-        if (browser.isRunFireFox()) { return jsSelect(locator, text); }
-
         Select select = getSelectElement(locator);
         if (StringUtils.isBlank(text)) {
             select.deselectAll();
+            return StepResult.success("deselected ALL from '" + locator + "' since no text was provided");
         } else {
             select.selectByVisibleText(text);
+            return StepResult.success("selected '" + text + "' from '" + locator + "'");
         }
+    }
 
-        return StepResult.success("selected '" + text + "' from '" + locator + "'");
+    public StepResult deselect(String locator, String text) {
+        Select select = getSelectElement(locator);
+        if (StringUtils.isNotBlank(text)) {
+            select.deselectByVisibleText(text);
+            return StepResult.success("deselected '" + text + "' from '" + locator + "'");
+        } else {
+            return StepResult.success("NO action performed on '" + locator + "' since no text was provided");
+        }
     }
 
     public StepResult selectMulti(String locator, String array) {
@@ -1533,42 +1540,39 @@ public class WebCommand extends BaseCommand implements CanTakeScreenshot, CanLog
         return true;
     }
 
-    /**
-     * todo: (1) need to re-evaluate this method when firefox driver updates beyond 0.19+
-     * todo: (2) need to work on similar workaround for mutli-select and deselect
-     */
-    protected StepResult jsSelect(String locator, String text) {
-        WebElement select = findElement(locator);
-
-        String msgPrefix = "Select '" + locator + "'";
-
-        if (select == null) { throw new NoSuchElementException(msgPrefix + " not found."); }
-
-        ConsoleUtils.log("selecting option via JavaScript because " + browser.getBrowserType() +
-                         " does not support native automation on SELECT");
-
-        if (StringUtils.isBlank(text)) {
-            String js = "var options = arguments[0].selectedOptions; " +
-                        "for (var i = 0; i < elements.length; i++) { elements[i].selected = false; }";
-            jsExecutor.executeScript(js, select);
-            return StepResult.success("all options are deselected from " + msgPrefix);
-        }
-
-        List<WebElement> options =
-            select.findElements(By.xpath(".//option[normalize-space(.) = " + Quotes.escape(text) + "]"));
-        if (CollectionUtils.isEmpty(options)) {
-            return StepResult.fail(msgPrefix + " does not contain OPTION '" + text + "'");
-        }
-
-        boolean isMultiple = BooleanUtils.toBoolean(select.getAttribute("multiple"));
-        String jsClickOption = "arguments[0].selected = true; arguments[1].dispatchEvent(new Event('change'));";
-        for (WebElement option : options) {
-            jsExecutor.executeScript(jsClickOption, option, select);
-            if (!isMultiple) { break; }
-        }
-
-        return StepResult.success(msgPrefix + " OPTION(s) with text '" + text + "' selected");
-    }
+    // NO LONGER NEEDED SINCE FIREFOX DRIVER FIXED PREVIOUS ISSUE WITH MUTLI-SELECT
+    // protected StepResult jsSelect(String locator, String text) {
+    //     WebElement select = findElement(locator);
+    //
+    //     String msgPrefix = "Select '" + locator + "'";
+    //
+    //     if (select == null) { throw new NoSuchElementException(msgPrefix + " not found."); }
+    //
+    //     ConsoleUtils.log("selecting option via JavaScript because " + browser.getBrowserType() +
+    //                      " does not support native automation on SELECT");
+    //
+    //     if (StringUtils.isBlank(text)) {
+    //         String js = "var options = arguments[0].selectedOptions; " +
+    //                     "for (var i = 0; i < elements.length; i++) { elements[i].selected = false; }";
+    //         jsExecutor.executeScript(js, select);
+    //         return StepResult.success("all options are deselected from " + msgPrefix);
+    //     }
+    //
+    //     List<WebElement> options =
+    //         select.findElements(By.xpath(".//option[normalize-space(.) = " + Quotes.escape(text) + "]"));
+    //     if (CollectionUtils.isEmpty(options)) {
+    //         return StepResult.fail(msgPrefix + " does not contain OPTION '" + text + "'");
+    //     }
+    //
+    //     boolean isMultiple = BooleanUtils.toBoolean(select.getAttribute("multiple"));
+    //     String jsClickOption = "arguments[0].selected = true; arguments[1].dispatchEvent(new Event('change'));";
+    //     for (WebElement option : options) {
+    //         jsExecutor.executeScript(jsClickOption, option, select);
+    //         if (!isMultiple) { break; }
+    //     }
+    //
+    //     return StepResult.success(msgPrefix + " OPTION(s) with text '" + text + "' selected");
+    // }
 
     protected StepResult scrollTo(String locator, Locatable element) {
         try {
@@ -1905,7 +1909,7 @@ public class WebCommand extends BaseCommand implements CanTakeScreenshot, CanLog
     protected Select getSelectElement(String locator) {
         WebElement element = findElement(locator);
         if (element == null) { throw new NoSuchElementException("element '" + locator + "' not found."); }
-        return new Select(element);
+        return new RegexAwareSelect(element);
     }
 
     protected int getElementCount(String locator) {

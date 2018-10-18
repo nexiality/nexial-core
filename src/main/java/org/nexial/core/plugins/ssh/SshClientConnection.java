@@ -73,7 +73,8 @@ public class SshClientConnection {
         if (StringUtils.isBlank(username)) { throw IntegrationConfigException.missingConfig(prefix1 + SSH_USERNAME); }
 
         String password = config.get(SSH_PASSWORD);
-        if (StringUtils.isBlank(password)) { throw IntegrationConfigException.missingConfig(prefix1 + SSH_PASSWORD); }
+        // password is not necessarily required
+        // if (StringUtils.isBlank(password)) { throw IntegrationConfigException.missingConfig(prefix1 + SSH_PASSWORD); }
 
         String host = config.get(SSH_HOST);
         if (StringUtils.isBlank(host)) { throw IntegrationConfigException.missingConfig(prefix1 + SSH_HOST); }
