@@ -432,7 +432,7 @@ public class TestStep extends TestStepManifest {
         } else {
             ExcelConfig.formatDescription(worksheet, cellDescription);
         }
-        if (result.failed()) {
+        if (result.isError()) {
             ExcelConfig.formatFailedStepDescription(this);
             Excel.createComment(cellDescription, result.getMessage(), "NexialBot");
         }
