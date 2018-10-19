@@ -156,9 +156,9 @@ public final class ConsoleUtils {
     }
 
     @SuppressWarnings("PMD.SystemPrintln")
-    public static void pauseForStep(ExecutionContext context, String instructions) {
+    public static String pauseForStep(ExecutionContext context, String instructions) {
         // not applicable when running in Jenkins environment
-        if (!isPauseReady()) { return; }
+        if (!isPauseReady()) { return null; }
 
         ExecutionEventListener listener = context.getExecutionEventListener();
         listener.onPause();
@@ -166,15 +166,18 @@ public final class ConsoleUtils {
         printHeader(HDR_START + "PERFORM ACTION" + HDR_END, context);
         printStepPrompt(instructions);
 
-        System.out.println("> When complete, press ENTER to continue ");
-
-        new Scanner(System.in).nextLine();
+        System.out.println("> When complete, enter your comment or press ENTER to continue ");
+        String comment = new Scanner(System.in).nextLine();
 
         listener.afterPause();
+
+        return comment;
     }
 
     @SuppressWarnings("PMD.SystemPrintln")
-    public static String pauseToValidate(ExecutionContext context, String instructions, String possibleResponses) {
+    public static List<String> pauseToValidate(ExecutionContext context,
+                                               String instructions,
+                                               String possibleResponses) {
         // not applicable when running in Jenkins environment
         if (!isPauseReady()) { return null; }
 
@@ -193,12 +196,14 @@ public final class ConsoleUtils {
         }
 
         System.out.printf("> %s: ", responses);
-
         String input = new Scanner(System.in).nextLine();
+
+        System.out.print("> Comment: ");
+        String comment = new Scanner(System.in).nextLine();
 
         listener.afterPause();
 
-        return input;
+        return Arrays.asList(input, comment);
     }
 
     @SuppressWarnings("PMD.SystemPrintln")

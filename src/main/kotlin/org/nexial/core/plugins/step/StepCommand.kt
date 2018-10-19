@@ -30,27 +30,35 @@ class StepCommand : BaseCommand() {
     fun perform(instructions: String): StepResult {
         requiresNotBlank(instructions, "Invalid instruction(s)", instructions)
 
-        ConsoleUtils.pauseForStep(context, instructions)
-        return StepResult.success("Step(s) performed")
+        val comment = ConsoleUtils.pauseForStep(context, instructions)
+        if (StringUtils.isNotBlank(comment)) log(comment);
+
+        // supports keyword FAIL
+        return if (StringUtils.isBlank(comment)) StepResult.success("Step(s) performed") else
+            if (StringUtils.startsWith(comment, "FAIL ")) StepResult.fail(comment) else
+                StepResult.success("Response received as '$comment'")
     }
 
     fun validate(prompt: String, responses: String, passResponses: String): StepResult {
         requiresNotBlank(prompt, "Invalid prompt(s)", prompt)
 
-        val response = ConsoleUtils.pauseToValidate(context, prompt, responses)
+        val validationResponses = ConsoleUtils.pauseToValidate(context, prompt, responses)
+        val response = validationResponses?.get(0)
+        val comment = validationResponses?.get(1)
+
         context.setData(STEP_RESPONSE, response)
+        if (StringUtils.isNotBlank(comment)) log(comment)
 
-        if (StringUtils.isBlank(response)) {
-            return if (StringUtils.isBlank(passResponses)) {
-                StepResult.success("Empty response accepted as PASS")
-            } else {
-                StepResult.fail("Empty response NOT acceptable as PASS")
-            }
+        return if (StringUtils.isBlank(response)) {
+            StepResult.success("Empty response " +
+                               "${if (StringUtils.isBlank(passResponses)) "accepted as PASS" else "found"}. " +
+                               if (comment != null) "Comment: $comment" else "")
+        } else {
+            val pass = passResponses.split(context.textDelim).contains(response)
+            StepResult(pass,
+                       "Response is '$response'. ${if (comment != null) "Comment: $comment" else ""}",
+                       null)
         }
-
-        val pass = passResponses.split(context.textDelim).contains(response)
-//        log("Response received as $response - ${if (pass) "PASSED" else "FAILED"}")
-        return StepResult(pass, "Response '$response' considered as ${if (pass) "PASS" else "FAILED"}", null)
     }
 
     fun observe(prompt: String): StepResult {
