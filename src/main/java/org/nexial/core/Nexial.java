@@ -366,7 +366,11 @@ public class Nexial {
 
                     File testScript = deriveScriptFromPlan(row, project, testPlanPath);
                     List<String> scenarios = deriveScenarioFromPlan(row, testScript);
-                    File dataFile = deriveDataFileFromPlan(row, project, testPlanFile, testScript);
+                    Excel dataFile = deriveDataFileFromPlan(row, project, testPlanFile, testScript);
+                    if (dataFile == null) {
+                        fail("Unable to resolve data file for the test plan specified in ROW " +
+                             (row.getRowNum() + 1) + " of " + testPlanFile + ".");
+                    }
                     List<String> dataSheets = deriveDataSheetsFromPlan(row, scenarios);
 
                     // create new definition instance, based on various input and derived values
@@ -377,7 +381,7 @@ public class Nexial {
                     exec.setDescription(StringUtils.trim(readCellValue(row, COL_IDX_PLAN_DESCRIPTION)));
                     exec.setTestScript(testScript.getAbsolutePath());
                     exec.setScenarios(scenarios);
-                    exec.setDataFile(dataFile.getAbsolutePath());
+                    exec.setDataFile(dataFile);
                     exec.setDataSheets(dataSheets);
                     exec.setProject(project);
 
@@ -389,14 +393,14 @@ public class Nexial {
                     exec.setLoadTestMode(BooleanUtils.toBoolean(readCellValue(row, COL_IDX_PLAN_LOAD_TEST)));
                     if (exec.isLoadTestMode()) { fail("Sorry... load testing mode not yet ready for use."); }
 
-                    try {
-                        // 3. for each row, parse script (and scenario) and data (and datasheet)
-                        exec.parse();
-                        executions.add(exec);
-                    } catch (IOException e) {
-                        fail("Unable to parse successfully for the test plan specified in ROW " +
-                             (row.getRowNum() + 1) + " of " + testPlanFile + ".");
-                    }
+                    // try {
+                    // 3. for each row, parse script (and scenario) and data (and datasheet)
+                    exec.parse();
+                    executions.add(exec);
+                    // } catch (IOException e) {
+                    //     fail("Unable to parse successfully for the test plan specified in ROW " +
+                    //          (row.getRowNum() + 1) + " of " + testPlanFile + ".");
+                    // }
                 }
             });
 
@@ -466,7 +470,7 @@ public class Nexial {
         return scenarios;
     }
 
-    protected File deriveDataFileFromPlan(XSSFRow row, TestProject project, File testPlan, File testScript) {
+    protected Excel deriveDataFileFromPlan(XSSFRow row, TestProject project, File testPlan, File testScript) {
         String dataFilePath = readCellValue(row, COL_IDX_PLAN_TEST_DATA);
 
         if (StringUtils.isBlank(dataFilePath)) {
@@ -523,7 +527,8 @@ public class Nexial {
         }
 
         ConsoleUtils.log("validating data file as " + dataFilePath);
-        if (InputFileUtils.isValidDataFile(dataFilePath)) { return new File(dataFilePath); }
+        Excel dataFile = InputFileUtils.asDataFile(dataFilePath);
+        if (dataFile != null) { return dataFile; }
 
         fail("Invalid/unreadable data file specified in ROW " + (row.getRowNum() + 1) + " of " + testPlan + ".");
         return null;
@@ -558,7 +563,12 @@ public class Nexial {
         List<String> targetScenarios = resolveScenarios(cmd, testScriptFile);
 
         // command line option - data. could be fully qualified or relative to script
-        File dataFile = resolveDataFile(cmd, artifactPath, testScriptPath);
+        Excel dataFile = resolveDataFile(cmd, artifactPath, testScriptPath);
+        if (dataFile == null) {
+            String error = "Unable to successfully resolve appropriate data file";
+            ConsoleUtils.error(error);
+            throw new RuntimeException(error);
+        }
 
         // command line option - data sheets
         List<String> dataSheets = resolveDataSheets(cmd, targetScenarios);
@@ -571,7 +581,7 @@ public class Nexial {
                             " from " + EnvUtils.getHostName() + " via user " + USER_NAME);
         exec.setTestScript(testScriptPath);
         exec.setScenarios(targetScenarios);
-        if (dataFile != null) { exec.setDataFile(dataFile.getAbsolutePath()); }
+        exec.setDataFile(dataFile);
         exec.setDataSheets(dataSheets);
         exec.setProject(project);
         exec.parse();
@@ -784,7 +794,7 @@ public class Nexial {
      * resolve data file and standard "data" directory based on either data-related commandline input or
      * {@code testScriptFile} commandline input.
      */
-    protected File resolveDataFile(TestProject project, CommandLine cmd, File testScriptFile) {
+    protected Excel resolveDataFile(TestProject project, CommandLine cmd, File testScriptFile) {
         String artifactPath = null;
         if (project.isStandardStructure()) { artifactPath = project.getArtifactPath(); }
 
@@ -851,11 +861,11 @@ public class Nexial {
     protected static boolean mustTerminateForcefully() { return ShutdownAdvisor.mustForcefullyTerminate(); }
 
     @Nullable
-    private File resolveDataFile(CommandLine cmd, String artifactPath, String testScriptPath) {
+    private Excel resolveDataFile(CommandLine cmd, String artifactPath, String testScriptPath) {
         return resolveDataFile(artifactPath, testScriptPath, cmd.hasOption(DATA) ? cmd.getOptionValue(DATA) : null);
     }
 
-    private File resolveDataFile(String artifactPath, String testScriptPath, String dataFilePath) {
+    private Excel resolveDataFile(String artifactPath, String testScriptPath, String dataFilePath) {
         if (StringUtils.isBlank(dataFilePath)) {
             // since there's no data file specified, we'll assume standard path/file convention
             String dataPath = StringUtils.substringBefore(testScriptPath, DEF_REL_LOC_ARTIFACT) + DEF_REL_LOC_TEST_DATA;
@@ -898,16 +908,19 @@ public class Nexial {
     }
 
     @NotNull
-    private File validateDataFile(TestProject project, String dataFile) {
-        if (!InputFileUtils.isValidDataFile(dataFile)) {
+    private Excel validateDataFile(TestProject project, String dataFile) {
+        Excel dataFileExcel = InputFileUtils.asDataFile(dataFile);
+
+        if (dataFileExcel == null) {
             fail("data file (" + dataFile + ") does not contain valid data file format.");
             return null;
         }
 
-        File file = new File(dataFile);
+        File file = dataFileExcel.getFile();
         if (!project.isStandardStructure()) { project.setDataPath(file.getParentFile().getAbsolutePath()); }
         ConsoleUtils.log("data file resolved as " + file.getAbsolutePath());
-        return file;
+
+        return dataFileExcel;
     }
 
     @NotNull

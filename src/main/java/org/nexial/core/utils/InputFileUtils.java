@@ -106,6 +106,22 @@ public final class InputFileUtils {
         }
     }
 
+    public static Excel asDataFile(String file) {
+        final Excel excel = toExcel(file, DEF_OPEN_EXCEL_AS_DUP);
+        if (excel == null) { return null; }
+
+        List<Worksheet> allSheets = excel.getWorksheetsStartWith("");
+        if (CollectionUtils.isEmpty(allSheets)) {
+            ConsoleUtils.error("File " + file + " contains no worksheet; NOT A VALID DATA FILE");
+            return null;
+        }
+
+        if (allSheets.stream().anyMatch(InputFileUtils::isValidDataSheet)) { return excel; }
+
+        ConsoleUtils.error("File " + file + " contains NO valid data sheets");
+        return null;
+    }
+
     public static boolean isValidDataFile(String file) {
         return hasMatchingSheets(file, excel -> {
             List<Worksheet> allSheets = excel.getWorksheetsStartWith("");

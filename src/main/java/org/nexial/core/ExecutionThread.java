@@ -19,7 +19,6 @@ package org.nexial.core;
 
 import java.io.File;
 import java.io.IOException;
-import java.lang.reflect.InvocationTargetException;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -29,8 +28,6 @@ import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.collections4.MapUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.time.StopWatch;
-import org.junit.runner.Result;
-import org.junit.runner.notification.Failure;
 import org.nexial.commons.logging.LogbackUtils;
 import org.nexial.core.aws.NexialS3Helper;
 import org.nexial.core.excel.Excel;
@@ -148,7 +145,7 @@ public final class ExecutionThread extends Thread {
             // SINGLE THREAD EXECUTION WITHIN FOR LOOP!
 
             int iteration = iterationManager.getIterationRef(currIteration - 1);
-            File testScript = null;
+            Excel testScript = null;
             boolean allPass = true;
 
             // we need to infuse "between" #default and whatever data sheets is assigned for this test script
@@ -191,25 +188,35 @@ public final class ExecutionThread extends Thread {
                 context.setData(ITERATION_ENDED, true);
                 context.setCurrentActivity(null);
 
-                try {
-                    // sync #data sheet with context
-                    ExecutionInputPrep.updateOutputDataSheet(testScript);
-                } catch (IOException e) {
-                    ConsoleUtils.error("Error when updating data variables in #data: " + e.getMessage());
-                }
-
-                // now the execution for this iteration is done. We'll add new execution summary page to its output.
-                iterSummary.setFailedFast(context.isFailFast());
-                iterSummary.setEndTime(System.currentTimeMillis());
-                iterSummary.aggregatedNestedExecutions(context);
-                iterSummary.generateExcelReport(testScript);
-                EventTracker.INSTANCE.track(
-                    new NexialIterationCompleteEvent(scriptLocation, currIteration, iterSummary));
-                executionSummary.addNestSummary(iterSummary);
-
+                File testScriptFile = null;
                 if (testScript != null) {
-                    if (isAutoOpenResult()) {
+                    testScriptFile = testScript.getFile();
 
+                    try {
+                        // sync #data sheet with context
+                        ExecutionInputPrep.updateOutputDataSheet(testScript);
+
+                        // now the execution for this iteration is done. We'll add new execution summary page to its output.
+                        iterSummary.setFailedFast(context.isFailFast());
+                        iterSummary.setEndTime(System.currentTimeMillis());
+                        iterSummary.aggregatedNestedExecutions(context);
+                        iterSummary.generateExcelReport(testScript);
+                        EventTracker.INSTANCE.track(
+                            new NexialIterationCompleteEvent(scriptLocation, currIteration, iterSummary));
+                        executionSummary.addNestSummary(iterSummary);
+                    } catch (IOException e) {
+                        ConsoleUtils.error("Error when updating data variables in #data: " + e.getMessage());
+                    }
+
+                    // try {
+                    // save it before use it
+                    // testScript.save();
+                    // testScript = new Excel(testScriptFile, false, true);
+                    // } catch (IOException e) {
+                    //     ConsoleUtils.error("Error saving execution output: " + e.getMessage());
+                    // }
+
+                    if (isAutoOpenResult()) {
                         String spreadsheetExe = context.getStringData(SPREADSHEET_PROGRAM, DEF_SPREADSHEET);
                         System.setProperty(SPREADSHEET_PROGRAM, spreadsheetExe);
 
@@ -223,9 +230,10 @@ public final class ExecutionThread extends Thread {
                             }
                         }
 
-                        Excel.openExcel(testScript);
+                        Excel.openExcel(testScriptFile);
                     }
-                    completedTests.add(testScript);
+
+                    completedTests.add(testScriptFile);
                 }
 
                 collectIntraExecutionData(context, currIteration);
@@ -233,7 +241,9 @@ public final class ExecutionThread extends Thread {
                 context.endIteration();
                 context.removeTrackTimeLogs();
 
-                if (testScript != null) { MemManager.recordMemoryChanges(testScript.getName() + " completed"); }
+                MemManager.recordMemoryChanges(testScriptFile == null ?
+                                               "UNKNOWN TEST SCRIPT" :
+                                               testScriptFile.getName() + " completed");
 
                 context.setData(ITERATION_ENDED, false);
             }
@@ -300,7 +310,7 @@ public final class ExecutionThread extends Thread {
             context.setFailImmediate(true);
         }
 
-        File testScript = context == null ? null : context.getTestScript();
+        File testScript = context == null ? null : context.getTestScript().getFile();
         String testScriptName = testScript == null ? execDef.getTestScript() + " (unparseable?)" : testScript.getName();
 
         String runId;
@@ -346,7 +356,7 @@ public final class ExecutionThread extends Thread {
         ConsoleUtils.log(context.getRunId(),
                          "\n" +
                          "/-TEST COMPLETE-----------------------------------------------------------------\n" +
-                         "| Test Output:    " + context.getTestScript() + "\n" +
+                         "| Test Output:    " + context.getTestScript().getFile() + "\n" +
                          "| Iteration:      " + iteration + "\n" +
                          "\\-------------------------------------------------------------------------------\n" +
                          "» Execution Time: " + (context.getEndTimestamp() - context.getStartTimestamp()) + " ms\n" +
@@ -373,7 +383,7 @@ public final class ExecutionThread extends Thread {
                 boolean removeLocal = !isAutoOpenResult();
 
                 summary.getNestedExecutions().forEach(nested -> {
-                    File testScript = nested.getTestScript();
+                    File testScript = nested.getTestScript().getFile();
                     try {
                         String testScriptUrl = otc.importFile(testScript, removeLocal);
                         nested.setTestScriptLink(testScriptUrl);
@@ -423,16 +433,16 @@ public final class ExecutionThread extends Thread {
         MemManager.gc(execDef);
     }
 
-    protected void throwTerminalException(Result result) {
-        if (result == null || result.getFailureCount() < 1) { return; }
-
-        for (Failure f : result.getFailures()) {
-            Throwable e = f.getException();
-            if (e == null) { continue; }
-            if (e instanceof InvocationTargetException) { e = ((InvocationTargetException) e).getTargetException(); }
-            if (e instanceof RuntimeException) { throw (RuntimeException) e; }
-            if (e instanceof Error) { throw (Error) e; }
-        }
-    }
+    // protected void throwTerminalException(Result result) {
+    //     if (result == null || result.getFailureCount() < 1) { return; }
+    //
+    //     for (Failure f : result.getFailures()) {
+    //         Throwable e = f.getException();
+    //         if (e == null) { continue; }
+    //         if (e instanceof InvocationTargetException) { e = ((InvocationTargetException) e).getTargetException(); }
+    //         if (e instanceof RuntimeException) { throw (RuntimeException) e; }
+    //         if (e instanceof Error) { throw (Error) e; }
+    //     }
+    // }
 
 }

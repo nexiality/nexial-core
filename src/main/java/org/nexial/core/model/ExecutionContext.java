@@ -115,7 +115,7 @@ public class ExecutionContext {
     protected Logger logger = LoggerFactory.getLogger(getClass());
     protected ExecutionDefinition execDef;
     protected TestProject project;
-    protected File testScript;
+    protected Excel testScript;
     protected List<TestScenario> testScenarios;
     protected TestStep currentTestStep;
 
@@ -295,9 +295,9 @@ public class ExecutionContext {
         setData(ITERATION_ENDED, false);
     }
 
-    public void useTestScript(File testScript) throws IOException {
+    public void useTestScript(Excel testScript) throws IOException {
         this.testScript = testScript;
-        setData(OPT_INPUT_EXCEL_FILE, testScript.getAbsoluteFile());
+        setData(OPT_INPUT_EXCEL_FILE, testScript.getFile().getAbsoluteFile());
 
         MDC.put(TEST_SUITE_NAME, getRunId());
         MDC.put(TEST_NAME, getId());
@@ -333,7 +333,7 @@ public class ExecutionContext {
     public String getRunId() { return execDef.getRunId(); }
 
     public String getId() {
-        return "[" + getRunId() + "][" + (testScript == null ? "UNKNOWN SCRIPT" : testScript.getName()) + "]";
+        return "[" + getRunId() + "][" + (testScript == null ? "UNKNOWN SCRIPT" : testScript.getFile().getName()) + "]";
     }
 
     public boolean isFailFastCommand(String target, String command) {
@@ -379,7 +379,7 @@ public class ExecutionContext {
 
     public NexialCommand findPlugin(String target) { return plugins.getPlugin(target); }
 
-    public File getTestScript() { return testScript; }
+    public Excel getTestScript() { return testScript; }
 
     public List<TestScenario> getTestScenarios() { return testScenarios; }
 
@@ -851,9 +851,9 @@ public class ExecutionContext {
     public void setCurrentActivity(TestCase activity) {
         if (activity == null) {
             removeDataForcefully(OPT_CURRENT_ACTIVITY);
-            return;
+        } else {
+            setData(OPT_CURRENT_ACTIVITY, activity.getName());
         }
-        setData(OPT_CURRENT_ACTIVITY, activity.getName());
     }
 
     public void fillIntraExecutionData(Map<String, Object> intraExecutionData) {
@@ -1457,10 +1457,9 @@ public class ExecutionContext {
 
     protected void parse() throws IOException {
         // parse and collect all relevant test data so we can merge then into iteration-bound test script
-        Excel excel = new Excel(testScript);
 
         // 1. make range for data
-        Worksheet dataSheet = excel.worksheet(SHEET_MERGED_DATA);
+        Worksheet dataSheet = testScript.worksheet(SHEET_MERGED_DATA);
 
         ExcelAddress addr = new ExcelAddress("A1");
         XSSFCell firstCell = dataSheet.cell(addr);
@@ -1487,7 +1486,7 @@ public class ExecutionContext {
         testScenarios = new ArrayList<>();
         for (int i = 0; i < execDef.getScenarios().size(); i++) {
             String scenario = execDef.getScenarios().get(i);
-            Worksheet worksheet = excel.worksheet(scenario);
+            Worksheet worksheet = testScript.worksheet(scenario);
             if (worksheet == null) {
                 throw new IOException("Specified scenario '" + scenario + "' not found");
             } else {

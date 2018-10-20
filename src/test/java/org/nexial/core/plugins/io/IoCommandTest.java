@@ -19,11 +19,7 @@ package org.nexial.core.plugins.io;
 
 import java.io.File;
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.List;
-import java.util.Properties;
+import java.util.*;
 
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.collections4.map.HashedMap;
@@ -90,6 +86,7 @@ public class IoCommandTest {
         FileUtils.deleteQuietly(new File(testFile1));
         FileUtils.deleteQuietly(new File(testFile2));
         FileUtils.deleteQuietly(new File(testFile1 + ".testReadFile"));
+        FileUtils.deleteQuietly(new File(testFile1 + ".testRenameFiles"));
         FileUtils.deleteQuietly(new File(testFile1 + ".txt"));
         FileUtils.deleteQuietly(new File(testFile2 + ".txt"));
         FileUtils.deleteQuietly(new File(testDestination1));
@@ -140,15 +137,16 @@ public class IoCommandTest {
 
     @Test
     public void copy_wildcard_files_to_dir() throws Exception {
-        File file1 = makeDummyContent(baseLocation + "_E3_test1_step4_myLogs.txt");
-        File file2 = makeDummyContent(baseLocation + "_E3_test1_step4_hello.log");
-        File file3 = makeDummyContent(baseLocation + "_E3_test1_step4_190FFV.csv");
+        String sourceDir = baseLocation + RandomStringUtils.randomAlphanumeric(5) + separator;
+        makeDummyContent(sourceDir + "_E4_test1_step4_myLogs.txt");
+        makeDummyContent(sourceDir + "_E4_test1_step4_hello.log");
+        makeDummyContent(sourceDir + "_E4_test1_step4_190FFV.csv");
 
         IoCommand io = new IoCommand();
         io.init(context);
 
-        String sourceDir = baseLocation + "_E3_test1_step4*.*";
-        StepResult result = io.copyFiles(sourceDir, testDestination1);
+        String sourcePattern = sourceDir + "_E4_test1_step4*.*";
+        StepResult result = io.copyFiles(sourcePattern, testDestination1);
         Assert.assertNotNull(result);
         Assert.assertTrue(result.isSuccess());
 
@@ -157,7 +155,7 @@ public class IoCommandTest {
             public boolean accept(File file) { return file.canRead() && file.isFile(); }
 
             @Override
-            public boolean accept(File dir, String name) { return name.startsWith("_E3_test1_step4_"); }
+            public boolean accept(File dir, String name) { return name.startsWith("_E4_test1_step4_"); }
         }, null);
 
         Assert.assertNotNull(destinationFiles);
@@ -165,26 +163,31 @@ public class IoCommandTest {
         List<String> destinationPaths = new ArrayList<>();
 
         destinationFiles.forEach(f -> destinationPaths.add(f.getAbsolutePath()));
-        Assert.assertTrue(destinationPaths.contains(testDestination1 + separator + "_E3_test1_step4_myLogs.txt"));
-        Assert.assertTrue(destinationPaths.contains(testDestination1 + separator + "_E3_test1_step4_hello.log"));
-        Assert.assertTrue(destinationPaths.contains(testDestination1 + separator + "_E3_test1_step4_190FFV.csv"));
+        Assert.assertTrue(destinationPaths.contains(testDestination1 + separator + "_E4_test1_step4_myLogs.txt"));
+        Assert.assertTrue(destinationPaths.contains(testDestination1 + separator + "_E4_test1_step4_hello.log"));
+        Assert.assertTrue(destinationPaths.contains(testDestination1 + separator + "_E4_test1_step4_190FFV.csv"));
+
+        FileUtils.deleteDirectory(new File(sourceDir));
     }
 
     @Test
     public void move_wildcard_files_to_dir() throws Exception {
-        File file1 = makeDummyContent(baseLocation + "_E3_test1_step4_myLogs.txt");
-        File file2 = makeDummyContent(baseLocation + "_E3_test1_step4_hello.log");
-        File file3 = makeDummyContent(baseLocation + "_E3_test1_step4_190FFV.csv");
+        String sourceDir = baseLocation + RandomStringUtils.randomAlphanumeric(5) + separator;
+        File file1 = makeDummyContent(sourceDir + "_E3_test1_step4_myLogs.txt");
+        File file2 = makeDummyContent(sourceDir + "_E3_test1_step4_hello.log");
+        File file3 = makeDummyContent(sourceDir + "_E3_test1_step4_190FFV.csv");
 
         IoCommand io = new IoCommand();
         io.init(context);
 
-        String sourceDir = baseLocation + "_E3_test1_step4*.*";
-        StepResult result = io.moveFiles(sourceDir, testDestination1);
+        String sourcePattern = sourceDir + "_E3_test1_step4*.*";
+        String destinationDir = testDestination1 + separator + RandomStringUtils.randomAlphanumeric(5);
+        new File(destinationDir).mkdirs();
+        StepResult result = io.moveFiles(sourcePattern, destinationDir);
         Assert.assertNotNull(result);
         Assert.assertTrue(result.isSuccess());
 
-        Collection<File> destinationFiles = FileUtils.listFiles(new File(testDestination1), new IOFileFilter() {
+        Collection<File> destinationFiles = FileUtils.listFiles(new File(destinationDir), new IOFileFilter() {
             @Override
             public boolean accept(File file) { return file.canRead() && file.isFile(); }
 
@@ -197,29 +200,33 @@ public class IoCommandTest {
         List<String> destinationPaths = new ArrayList<>();
 
         destinationFiles.forEach(f -> destinationPaths.add(f.getAbsolutePath()));
-        Assert.assertTrue(destinationPaths.contains(testDestination1 + separator + "_E3_test1_step4_myLogs.txt"));
-        Assert.assertTrue(destinationPaths.contains(testDestination1 + separator + "_E3_test1_step4_hello.log"));
-        Assert.assertTrue(destinationPaths.contains(testDestination1 + separator + "_E3_test1_step4_190FFV.csv"));
+        Assert.assertTrue(destinationPaths.contains(destinationDir + separator + "_E3_test1_step4_myLogs.txt"));
+        Assert.assertTrue(destinationPaths.contains(destinationDir + separator + "_E3_test1_step4_hello.log"));
+        Assert.assertTrue(destinationPaths.contains(destinationDir + separator + "_E3_test1_step4_190FFV.csv"));
         Assert.assertTrue(!file1.exists());
         Assert.assertTrue(!file2.exists());
         Assert.assertTrue(!file3.exists());
+
+        FileUtils.deleteDirectory(new File(sourceDir));
     }
 
     @Test
     public void move_wildcard_files_to_single_file() throws Exception {
-        File file1 = makeDummyContent(baseLocation + "_E3_test1_step4_myLogs.txt");
-        File file2 = makeDummyContent(baseLocation + "_E3_test1_step4_hello.log");
-        File file3 = makeDummyContent(baseLocation + "_E3_test1_step4_190FFV.csv");
+        String sourceDir = baseLocation + RandomStringUtils.randomAlphanumeric(5) + separator;
+        File file1 = makeDummyContent(sourceDir + "_E5_test1_step4_myLogs.txt");
+        File file2 = makeDummyContent(sourceDir + "_E5_test1_step4_hello.log");
+        File file3 = makeDummyContent(sourceDir + "_E5_test1_step4_190FFV.csv");
 
         IoCommand io = new IoCommand();
         io.init(context);
 
-        String sourceDir = baseLocation + "_E3_test1_step4*.*";
-        StepResult result = io.moveFiles(sourceDir, testDestination1 + separator + "myFile.text");
+        String sourcePathPattern = sourceDir + "_E5_test1_step4*.*";
+        String destinationDir = testDestination1 + separator + RandomStringUtils.randomAlphanumeric(5);
+        StepResult result = io.moveFiles(sourcePathPattern, destinationDir + separator + "myFile.text");
         Assert.assertNotNull(result);
         Assert.assertTrue(result.isSuccess());
 
-        Collection<File> destinationFiles = FileUtils.listFiles(new File(testDestination1), new IOFileFilter() {
+        Collection<File> destinationFiles = FileUtils.listFiles(new File(destinationDir), new IOFileFilter() {
             @Override
             public boolean accept(File file) { return file.canRead() && file.isFile(); }
 
@@ -232,10 +239,12 @@ public class IoCommandTest {
         List<String> destinationPaths = new ArrayList<>();
 
         destinationFiles.forEach(f -> destinationPaths.add(f.getAbsolutePath()));
-        Assert.assertTrue(destinationPaths.contains(testDestination1 + separator + "myFile.text"));
+        Assert.assertTrue(destinationPaths.contains(destinationDir + separator + "myFile.text"));
         Assert.assertTrue(!file1.exists());
         Assert.assertTrue(!file2.exists());
         Assert.assertTrue(!file3.exists());
+
+        FileUtils.deleteDirectory(new File(sourceDir));
     }
 
     @Test
@@ -332,7 +341,7 @@ public class IoCommandTest {
 
     @Test
     public void testRenameFiles() throws Exception {
-        String fixture1 = testDestination1 + separator + "testDeleteFiles1.txt";
+        String fixture1 = testDestination1 + separator + "testRenameFiles1.txt";
         makeDummyContent(fixture1);
 
         IoCommand io = new IoCommand();
@@ -409,7 +418,7 @@ public class IoCommandTest {
         String enteredText = "623132658,20130318,ANDERSON/CARTER,5270.00";
         IoCommand io = new IoCommand();
         io.init(context);
-        io.writeFile(myTestFile, String.valueOf(enteredText), "true");
+        io.writeFile(myTestFile, enteredText, "true");
         StepResult result = io.saveFileMeta("myData", myTestFile);
         Assert.assertNotNull(result);
         Assert.assertTrue(result.isSuccess());
@@ -426,11 +435,9 @@ public class IoCommandTest {
         Assert.assertEquals(filemeta.isExecutable(), file.canExecute());
         Assert.assertEquals(filemeta.getLastmod(), file.lastModified());
 
-        //Long lastMod = filemeta.getLastmod(); //store this to compare with the next updates
-
         //Update same file and validate the changes
         String updateText = "623132658,20130318,ANDERSON/UPDATED,5271.01";
-        io.writeFile(myTestFile, String.valueOf(updateText), "false");
+        io.writeFile(myTestFile, updateText, "false");
         result = io.saveFileMeta("myData", myTestFile);
         Assert.assertNotNull(result);
         Assert.assertTrue(result.isSuccess());
@@ -966,7 +973,7 @@ public class IoCommandTest {
                        "623132658,20130520,ANDERSON/CARTER,4745.00\n" +
                        "623132658,20130527,ANDERSON/CARTER,3957.50\n" +
                        "623132658,20130603,ANDERSON/CARTER,5675.00\n");
-        messages.add(Arrays.asList("content matched exactly"));
+        messages.add(Collections.singletonList("content matched exactly"));
 
         expectedData.add("taxID,weekBeginDate,name,gross\n" +
                          "623132658,20130318,ANDERSON/CARTER,5270.00\n" +

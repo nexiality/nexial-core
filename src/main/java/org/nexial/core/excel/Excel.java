@@ -265,9 +265,7 @@ public class Excel {
         }
 
         public Style style(XSSFCell cell) {
-            return new Style(copyFont(cell != null ?
-                                      cell.getCellStyle().getFont() :
-                                      workbook.getFontAt((short) 0)));
+            return new Style(copyFont(cell != null ? cell.getCellStyle().getFont() : workbook.getFontAt((short) 0)));
         }
 
         public XSSFRichTextString setValue(ExcelAddress addr, RichTextString value) {
@@ -275,12 +273,10 @@ public class Excel {
             assert value != null;
 
             XSSFCell cell = firstCell(addr);
-            if (cell != null) {
-                cell.setCellValue(value);
-                return cell.getRichStringCellValue();
-            }
+            if (cell == null) { return null; }
 
-            return null;
+            cell.setCellValue(value);
+            return cell.getRichStringCellValue();
         }
 
         public void setRowValues(ExcelAddress addr, List<String> values) {
@@ -295,6 +291,55 @@ public class Excel {
             for (int i = startRow; i < endRow; i++) {
                 if (sheet.getRow(i) == null) { sheet.createRow(i); }
                 sheet.getRow(i).getCell(columnIndex).setCellValue(values.get(i - startRow));
+            }
+        }
+
+        /**
+         * optimized version of {@link #setRowValues(ExcelAddress, List)}. This one is faster
+         */
+        public void setRowValues(ExcelAddress addr, List<String> values, String styleName, float rowHeight) {
+            assert addr != null;
+            assert CollectionUtils.isNotEmpty(values);
+            // assert styleConfig != null;
+
+            workbook.setMissingCellPolicy(CREATE_NULL_AS_BLANK);
+            // XSSFCellStyle cellStyle = StyleDecorator.decorate(newCellStyle(), createFont(), styleConfig);
+            XSSFCellStyle cellStyle = commonStyles.get(styleName);
+
+            int columnIndex = addr.getColumnStartIndex();
+            int startRow = addr.getRowStartIndex();
+            int endRow = values.size() + startRow;
+            for (int i = startRow; i < endRow; i++) {
+                if (sheet.getRow(i) == null) { sheet.createRow(i); }
+                XSSFRow row = sheet.getRow(i);
+                XSSFCell cell = row.getCell(columnIndex);
+                cell.setCellValue(values.get(i - startRow));
+                cell.setCellStyle(cellStyle);
+                row.setHeightInPoints(rowHeight);
+            }
+        }
+
+        public void setLinkCell(ExcelAddress addr, String link, String text, String styleName, float rowHeight) {
+            assert addr != null;
+            assert text != null;
+            // assert styleConfig != null;
+
+            workbook.setMissingCellPolicy(CREATE_NULL_AS_BLANK);
+            // XSSFCellStyle cellStyle = StyleDecorator.decorate(newCellStyle(), createFont(), styleConfig);
+            XSSFCellStyle cellStyle = commonStyles.get(styleName);
+
+            int startRow = addr.getRowStartIndex();
+            if (sheet.getRow(startRow) == null) { sheet.createRow(startRow); }
+            XSSFRow row = sheet.getRow(startRow);
+
+            XSSFCell cell = row.getCell(addr.getColumnStartIndex());
+            cell.setCellStyle(cellStyle);
+            row.setHeightInPoints(rowHeight);
+
+            if (StringUtils.isNotBlank(link)) {
+                Excel.setHyperlink(cell, link, text);
+            } else {
+                cell.setCellValue(text);
             }
         }
 
@@ -376,6 +421,8 @@ public class Excel {
         public XSSFCell unwrapText(ExcelAddress addr) { return setWrapText(addr, false); }
 
         public File getFile() { return file; }
+
+        public Excel excel() { return Excel.this; }
 
         /** find the last row in a contiguous column block */
         public int findLastDataRow(ExcelAddress startCellAddr) {
@@ -727,6 +774,9 @@ public class Excel {
 
     public Excel(File file, boolean dupThenOpen, boolean initCommonStyles) throws IOException {
         assert file != null && file.canRead();
+
+        // SimpleBenchmarker.start();
+
         if (dupThenOpen) { file = duplicateInTemp(file); }
 
         this.file = file;
@@ -741,6 +791,10 @@ public class Excel {
         workbookStyles = gatherCellStyles();
 
         if (initCommonStyles) { initCommonStyles(); }
+
+        // SimpleBenchmarker.logEnd(logger, "new Excel(file=" + file +
+        //                                  ",dupThenOpen=" + dupThenOpen +
+        //                                  ",initCommonStyles=" + initCommonStyles);
     }
 
     public Worksheet worksheet(String name) { return worksheet(name, false); }
@@ -865,6 +919,8 @@ public class Excel {
     public void save() throws IOException { save(file, workbook); }
 
     public static void save(File excelFile, XSSFWorkbook excelWorkbook) throws IOException {
+        // SimpleBenchmarker.start();
+
         OutputStream out = null;
         try {
             out = FileUtils.openOutputStream(excelFile);
@@ -874,6 +930,8 @@ public class Excel {
                 out.flush();
                 out.close();
             }
+
+            // SimpleBenchmarker.logEnd(logger, "Excel.save(excelFile=" + excelFile);
         }
     }
 
@@ -1211,6 +1269,26 @@ public class Excel {
         commonStyles.put(STYLE_SUCCESS_RESULT, StyleDecorator.generate(workbook, SUCCESS));
         commonStyles.put(STYLE_FAILED_RESULT, StyleDecorator.generate(workbook, FAILED));
         commonStyles.put(STYLE_SKIPPED_RESULT, StyleDecorator.generate(workbook, SKIPPED));
+
+        commonStyles.put(STYLE_EXEC_SUMM_TITLE, StyleDecorator.generate(workbook, EXEC_SUMM_TITLE));
+        commonStyles.put(STYLE_EXEC_SUMM_DATA_HEADER, StyleDecorator.generate(workbook, EXEC_SUMM_DATA_HEADER));
+        commonStyles.put(STYLE_EXEC_SUMM_DATA_NAME, StyleDecorator.generate(workbook, EXEC_SUMM_DATA_NAME));
+        commonStyles.put(STYLE_EXEC_SUMM_DATA_VALUE, StyleDecorator.generate(workbook, EXEC_SUMM_DATA_VALUE));
+        commonStyles.put(STYLE_EXEC_SUMM_EXCEPTION, StyleDecorator.generate(workbook, EXEC_SUMM_EXCEPTION));
+        commonStyles.put(STYLE_EXEC_SUMM_HEADER, StyleDecorator.generate(workbook, EXEC_SUMM_HEADER));
+        commonStyles.put(STYLE_EXEC_SUMM_SCENARIO, StyleDecorator.generate(workbook, EXEC_SUMM_SCENARIO));
+        commonStyles.put(STYLE_EXEC_SUMM_ACTIVITY, StyleDecorator.generate(workbook, EXEC_SUMM_ACTIVITY));
+        commonStyles.put(STYLE_EXEC_SUMM_TIMESPAN, StyleDecorator.generate(workbook, EXEC_SUMM_TIMESPAN));
+        commonStyles.put(STYLE_EXEC_SUMM_DURATION, StyleDecorator.generate(workbook, EXEC_SUMM_DURATION));
+        commonStyles.put(STYLE_EXEC_SUMM_TOTAL, StyleDecorator.generate(workbook, EXEC_SUMM_TOTAL));
+        commonStyles.put(STYLE_EXEC_SUMM_PASS, StyleDecorator.generate(workbook, EXEC_SUMM_PASS));
+        commonStyles.put(STYLE_EXEC_SUMM_FAIL, StyleDecorator.generate(workbook, EXEC_SUMM_FAIL));
+        commonStyles.put(STYLE_EXEC_SUMM_SUCCESS, StyleDecorator.generate(workbook, EXEC_SUMM_SUCCESS));
+        commonStyles.put(STYLE_EXEC_SUMM_NOT_SUCCESS, StyleDecorator.generate(workbook, EXEC_SUMM_NOT_SUCCESS));
+        commonStyles.put(STYLE_EXEC_SUMM_FINAL_SUCCESS, StyleDecorator.generate(workbook, EXEC_SUMM_FINAL_SUCCESS));
+        commonStyles.put(STYLE_EXEC_SUMM_FINAL_NOT_SUCCESS,
+                         StyleDecorator.generate(workbook, EXEC_SUMM_FINAL_NOT_SUCCESS));
+        commonStyles.put(STYLE_EXEC_SUMM_FINAL_TOTAL, StyleDecorator.generate(workbook, EXEC_SUMM_FINAL_TOTAL));
     }
 
     private List<XSSFSheet> gatherWorksheets() {

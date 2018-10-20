@@ -42,6 +42,7 @@ import org.nexial.core.excel.Excel.Worksheet;
 import org.nexial.core.excel.ExcelAddress;
 import org.nexial.core.model.ExecutionDefinition;
 import org.nexial.core.model.TestProject;
+import org.nexial.core.utils.InputFileUtils;
 import org.springframework.util.ResourceUtils;
 
 import static java.io.File.separator;
@@ -145,7 +146,7 @@ public class ExecutionInputPrepTest {
         ExecutionDefinition execDef = new ExecutionDefinition();
         execDef.setTestScript(testScript);
         execDef.setScenarios(scenarios);
-        execDef.setDataFile(testData);
+        execDef.setDataFile(InputFileUtils.asDataFile(testData));
         execDef.setDataSheets(scenarios);
         execDef.setProject(TestProject.newInstance(new File(testScript)));
         execDef.parse();
@@ -155,7 +156,8 @@ public class ExecutionInputPrepTest {
         String runId = DateUtility.createTimestampString(null);
 
         for (int iterationIndex = 1; iterationIndex <= 3; iterationIndex++) {
-            File targetOutputFile = ExecutionInputPrep.prep(runId, execDef, iterationIndex, iterationIndex);
+            Excel targetExcel = ExecutionInputPrep.prep(runId, execDef, iterationIndex, iterationIndex);
+            File targetOutputFile = targetExcel.getFile();
 
             System.out.println("asserting project directories are generated ");
 

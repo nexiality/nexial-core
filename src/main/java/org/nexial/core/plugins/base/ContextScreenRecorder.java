@@ -69,7 +69,7 @@ public class ContextScreenRecorder {
         startingLocation = "ROW " + (startsFrom.getRow().get(0).getRowIndex() + 1);
         ConsoleUtils.log(startingLocation, "start recording to '" + videoFile + "'");
 
-        videoTitle = context.getTestScript().getName() + " : " + context.getCurrentTestStep().toString();
+        videoTitle = context.getTestScript().getFile().getName() + " : " + context.getCurrentTestStep().toString();
 
         screenRecorder.setTitle(videoTitle);
         screenRecorder.start(videoFile);

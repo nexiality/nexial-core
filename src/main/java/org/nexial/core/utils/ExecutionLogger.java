@@ -102,7 +102,7 @@ public class ExecutionLogger {
         return justFileName(worksheet.getFile()) + "|" + worksheet.getName();
     }
 
-    public static String toHeader(ExecutionContext subject) { return justFileName(subject.getTestScript()); }
+    public static String toHeader(ExecutionContext subject) { return justFileName(subject.getTestScript().getFile()); }
 
     private static String justFileName(File file) { return StringUtils.substringBeforeLast(file.getName(), "."); }
 

@@ -85,9 +85,11 @@ public class MacroMerger {
         }
 
         // save excel, rinse and repeat.
+        // (2018/10/18,automike): skip saving now because this file will be saved later anyways
         if (fileModified) {
-            ConsoleUtils.log("macro(s) merged, saving excel " + excel.getFile());
-            excel.save();
+            ConsoleUtils.log("macro(s) found and merged; " + excel.getFile() + " will need to be saved");
+        //     ConsoleUtils.log("macro(s) merged, saving excel " + excel.getFile());
+        //     excel.save();
         }
     }
 

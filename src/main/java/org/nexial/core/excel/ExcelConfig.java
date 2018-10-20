@@ -268,6 +268,25 @@ public class ExcelConfig {
     public static final String STYLE_SKIPPED_RESULT = "SKIPPED_STYLE";
     public static final String STYLE_SUCCESS_RESULT = "SUCCESS_RESULT";
 
+    public static final String STYLE_EXEC_SUMM_TITLE = "EXEC_SUMM_TITLE";
+    public static final String STYLE_EXEC_SUMM_DATA_HEADER = "EXEC_SUMM_DATA_HEADER";
+    public static final String STYLE_EXEC_SUMM_DATA_NAME = "EXEC_SUMM_DATA_NAME";
+    public static final String STYLE_EXEC_SUMM_DATA_VALUE = "EXEC_SUMM_DATA_VALUE";
+    public static final String STYLE_EXEC_SUMM_EXCEPTION = "EXEC_SUMM_EXCEPTION";
+    public static final String STYLE_EXEC_SUMM_HEADER = "EXEC_SUMM_HEADER";
+    public static final String STYLE_EXEC_SUMM_SCENARIO = "EXEC_SUMM_SCENARIO";
+    public static final String STYLE_EXEC_SUMM_ACTIVITY = "EXEC_SUMM_ACTIVITY";
+    public static final String STYLE_EXEC_SUMM_TIMESPAN = "EXEC_SUMM_TIMESPAN";
+    public static final String STYLE_EXEC_SUMM_DURATION = "EXEC_SUMM_DURATION";
+    public static final String STYLE_EXEC_SUMM_TOTAL = "EXEC_SUMM_TOTAL";
+    public static final String STYLE_EXEC_SUMM_PASS = "EXEC_SUMM_PASS";
+    public static final String STYLE_EXEC_SUMM_FAIL = "EXEC_SUMM_FAIL";
+    public static final String STYLE_EXEC_SUMM_SUCCESS = "EXEC_SUMM_SUCCESS";
+    public static final String STYLE_EXEC_SUMM_NOT_SUCCESS = "EXEC_SUMM_NOT_SUCCESS";
+    public static final String STYLE_EXEC_SUMM_FINAL_SUCCESS = "EXEC_SUMM_FINAL_SUCCESS";
+    public static final String STYLE_EXEC_SUMM_FINAL_NOT_SUCCESS = "EXEC_SUMM_FINAL_NOT_SUCCESS";
+    public static final String STYLE_EXEC_SUMM_FINAL_TOTAL = "EXEC_SUMM_FINAL_TOTAL";
+
     // color
     public static final XSSFColor WHITE = new XSSFColor(new Color(255, 255, 255));
     public static final XSSFColor YELLOW = new XSSFColor(new Color(255, 255, 0));
@@ -284,6 +303,7 @@ public class ExcelConfig {
     public static final int DEF_CHAR_WIDTH_FACTOR_TAHOMA_BOLD = 337;
     public static final int DEF_CHAR_WIDTH_FACTOR_CONSOLAS = 273;
     public static final short INDENT_1 = (short) 1;
+    public static final float EXEC_SUMMARY_HEIGHT = 21f;
 
     public static class StyleConfig {
         public static final String FONT_NAME_DEFAULT = "Tahoma";
@@ -1054,9 +1074,7 @@ public class ExcelConfig {
     public static TestStep formatParams(TestStep testStep) {
         XSSFCellStyle style = testStep.getWorksheet().getStyle(STYLE_PARAM);
         List<XSSFCell> row = testStep.getRow();
-        for (int i = COL_IDX_PARAMS_START; i < COL_IDX_PARAMS_END; i++) {
-            row.get(i).setCellStyle(style);
-        }
+        for (int i = COL_IDX_PARAMS_START; i < COL_IDX_PARAMS_END; i++) { row.get(i).setCellStyle(style); }
         return testStep;
     }
 

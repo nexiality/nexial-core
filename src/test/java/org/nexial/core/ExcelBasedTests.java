@@ -26,6 +26,7 @@ import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang3.ArrayUtils;
 import org.apache.commons.lang3.StringUtils;
+import org.jetbrains.annotations.NotNull;
 import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
@@ -44,6 +45,7 @@ public abstract class ExcelBasedTests {
     protected String resourcePath = "unittesting/artifact/script/";
     protected String dataResourcePath = "unittesting/artifact/data/";
     protected String planResourcePath = "unittesting/artifact/plan/";
+    protected Nexial nexial;
 
     public static class TestOutcomeStats {
         private static final TestOutcomeStats ALL_PASSED = new TestOutcomeStats(0, -1);
@@ -120,9 +122,6 @@ public abstract class ExcelBasedTests {
             // is plan or script?
             if (StringUtils.isNotBlank(plan)) { return testPlanViaExcel(plan); }
 
-            // building arguments...
-            List<String> arguments = new ArrayList<>();
-
             // script
             if (StringUtils.isBlank(script)) { throw new RuntimeException("script not specified!"); }
 
@@ -135,7 +134,12 @@ public abstract class ExcelBasedTests {
             NexialTestUtils.setupCommonProps(script, script.getParentFile().getParentFile().getParent());
             System.clearProperty(FAIL_FAST);
 
+            System.out.println();
+            System.out.println();
             System.out.println("script = " + script);
+
+            // building arguments...
+            List<String> arguments = new ArrayList<>();
             arguments.add("-script");
             arguments.add(script.getAbsolutePath());
 
@@ -163,7 +167,7 @@ public abstract class ExcelBasedTests {
                 arguments.add(TextUtils.toString(dataSheets, ","));
             }
 
-            Nexial main = new Nexial();
+            Nexial main = getNexial();
             main.init(arguments.toArray(new String[arguments.size()]));
 
             try {
@@ -185,8 +189,10 @@ public abstract class ExcelBasedTests {
         if (projectRoot == null) { Assert.fail("Unable to determine project root"); }
 
         projectBase = projectRoot.getAbsolutePath();
-        FileUtils.deleteQuietly(new File(StringUtils.appendIfMissing(projectBase, separator) + "output"));
-        FileUtils.forceMkdir(new File(StringUtils.appendIfMissing(projectBase, separator) + "output"));
+
+        File outputBase = new File(StringUtils.appendIfMissing(projectBase, separator) + "output");
+        FileUtils.deleteQuietly(outputBase);
+        FileUtils.forceMkdir(outputBase);
     }
 
     @After
@@ -210,9 +216,11 @@ public abstract class ExcelBasedTests {
         NexialTestUtils.setupCommonProps(script, script.getParentFile().getParentFile().getParent());
         System.setProperty(FAIL_FAST, "false");
 
+        System.out.println();
+        System.out.println();
         System.out.println("script = " + script);
 
-        Nexial main = new Nexial();
+        Nexial main = getNexial();
         if (ArrayUtils.isEmpty(scenarios)) {
             main.init(new String[]{"-script", script.getAbsolutePath()});
         } else {
@@ -227,6 +235,12 @@ public abstract class ExcelBasedTests {
         }
     }
 
+    @NotNull
+    private Nexial getNexial() {
+        if (nexial == null) { nexial = new Nexial(); }
+        return nexial;
+    }
+
     protected ExecutionSummary testPlanViaExcel(String planFile) throws Exception {
         File plan = resolveFile(planResourcePath + planFile);
         if (plan == null) { Assert.fail("The required plan does not exist"); }
@@ -237,9 +251,11 @@ public abstract class ExcelBasedTests {
         NexialTestUtils.setupCommonProps(plan, plan.getParentFile().getParentFile().getParent());
         System.clearProperty(FAIL_FAST);
 
+        System.out.println();
+        System.out.println();
         System.out.println("plan = " + plan);
 
-        Nexial main = new Nexial();
+        Nexial main = getNexial();
         main.init(new String[]{"-plan", plan.getAbsolutePath()});
 
         try {

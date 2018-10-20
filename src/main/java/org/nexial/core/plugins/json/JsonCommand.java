@@ -60,23 +60,29 @@ public class JsonCommand extends BaseCommand {
         if (expected == null && actual == null) { return StepResult.success("Both EXPECTED and ACTUAL are null"); }
         if (StringUtils.equals(expected, actual)) { return StepResult.success("Both EXPECTED and ACTUAL are the same");}
 
-        String expectedJsonContent;
+        String expectedJson;
         try {
-            expectedJsonContent = OutputFileUtils.resolveContent(expected, context, false, true);
+            expectedJson = OutputFileUtils.resolveContent(expected, context, true, true);
         } catch (IOException e) {
             return StepResult.fail("EXPECTED json is invalid or not readable: " + e.getMessage());
         }
 
-        String actualJsonContent;
+        String actualJson;
         try {
-            actualJsonContent = OutputFileUtils.resolveContent(actual, context, false, true);
+            actualJson = OutputFileUtils.resolveContent(actual, context, true, true);
         } catch (IOException e) {
             return StepResult.fail("ACTUAL json is invalid or not readable: " + e.getMessage());
         }
 
-        JsonParser jsonParser = new JsonParser();
-        return assertEqual(jsonParser.parse(expectedJsonContent),
-                           jsonParser.parse(actualJsonContent));
+        // maybe expected or actual are NOT json doc or array...
+        if ((TextUtils.isBetween(expectedJson, "{", "}") || TextUtils.isBetween(expectedJson, "[", "]")) &&
+            (TextUtils.isBetween(actualJson, "{", "}") || TextUtils.isBetween(actualJson, "[", "]"))) {
+            JsonParser jsonParser = new JsonParser();
+            return assertEqual(jsonParser.parse(expectedJson), jsonParser.parse(actualJson));
+        } else {
+            // one or both of expected and actual is not json.. unlikely equal
+            return super.assertEqual(expectedJson, actualJson);
+        }
     }
 
     public StepResult assertElementPresent(String json, String jsonpath) {

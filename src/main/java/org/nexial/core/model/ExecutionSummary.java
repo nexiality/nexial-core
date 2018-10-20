@@ -43,8 +43,7 @@ import org.nexial.core.excel.Excel;
 import org.nexial.core.excel.Excel.Worksheet;
 import org.nexial.core.excel.ExcelAddress;
 import org.nexial.core.excel.ExcelArea;
-import org.nexial.core.excel.ExcelConfig.StyleConfig;
-import org.nexial.core.excel.ExcelConfig.StyleDecorator;
+import org.nexial.core.excel.ExcelConfig.*;
 import org.nexial.core.utils.ConsoleUtils;
 import org.nexial.core.utils.ExecUtil;
 
@@ -58,10 +57,11 @@ import static org.apache.commons.lang3.SystemUtils.*;
 import static org.apache.poi.ss.usermodel.Row.MissingCellPolicy.CREATE_NULL_AS_BLANK;
 import static org.nexial.core.NexialConst.*;
 import static org.nexial.core.NexialConst.Data.*;
-import static org.nexial.core.excel.ExcelConfig.DEF_CHAR_WIDTH;
+import static org.nexial.core.excel.Excel.MIN_EXCEL_FILE_SIZE;
+import static org.nexial.core.excel.ExcelConfig.*;
 import static org.nexial.core.excel.ExcelConfig.StyleConfig.*;
-import static org.nexial.core.model.ExecutionSummary.ExecutionLevel.*;
 import static org.nexial.core.model.ExecutionSummary.ExecutionLevel.ITERATION;
+import static org.nexial.core.model.ExecutionSummary.ExecutionLevel.*;
 
 /**
  * serves as the summary of a test execution, which can be scoped into:
@@ -79,7 +79,6 @@ public class ExecutionSummary {
     protected static final int LABEL_SIZE = 10;
     protected static final String SUMMARY_TAB_NAME = "#summary";
     protected static final String MERGE_AREA_TITLE = "A1:J1";
-    protected static final float EXEC_SUMMARY_HEIGHT = 21f;
     protected static final double CELL_WIDTH_MULTIPLIER = 275.3;
     protected static final List<Integer> COLUMN_WIDTHS = Arrays.asList(
         (int) (CELL_WIDTH_MULTIPLIER * 38), // scenario name
@@ -94,11 +93,10 @@ public class ExecutionSummary {
         (int) (CELL_WIDTH_MULTIPLIER * 10)); // success rate
     protected static final String REGEX_LINKABLE_DATA = "^(http|/[0-9A-Za-z/_]+|[A-Za-z]\\:\\\\|\\\\\\\\.+).+\\|.+$";
     protected static final Gson GSON = new GsonBuilder().setLenient().create();
-
     private String name;
     private ExecutionLevel executionLevel;
     private String sourceScript;
-    private transient File testScript;
+    private transient Excel testScript;
     private String testScriptLink;
 
     private String runHost;
@@ -207,9 +205,9 @@ public class ExecutionSummary {
 
     public void setFailedFast(boolean failedFast) { this.failedFast = failedFast; }
 
-    public File getTestScript() { return testScript; }
+    public Excel getTestScript() { return testScript; }
 
-    public void setTestScript(File testScript) { this.testScript = testScript; }
+    public void setTestScript(Excel testScript) { this.testScript = testScript; }
 
     public String getTestScriptLink() { return testScriptLink; }
 
@@ -341,24 +339,24 @@ public class ExecutionSummary {
 
     public Map<TestStepManifest, List<NestedMessage>> getNestMessages() { return nestMessages; }
 
-    public void generateExcelReport(File testScript) {
-        if (testScript == null || !FileUtil.isFileReadable(testScript.getAbsolutePath())) {
+    public void generateExcelReport(Excel testScript) {
+        if (testScript == null || !FileUtil.isFileReadable(testScript.getFile(), MIN_EXCEL_FILE_SIZE)) {
             ConsoleUtils.error("Unable to generate Excel report because file " + testScript + " is not readable");
             return;
         }
 
-        try {
-            Excel excel = new Excel(testScript, false);
-            XSSFWorkbook workbook = excel.getWorkbook();
+        File scriptFile = testScript.getFile();
 
-            Worksheet summary = excel.worksheet(SUMMARY_TAB_NAME, true);
+        try {
+            XSSFWorkbook workbook = testScript.getWorkbook();
+            Worksheet summary = testScript.worksheet(SUMMARY_TAB_NAME, true);
             workbook.setSheetOrder(summary.getName(), 0);
             workbook.setSelectedTab(0);
             workbook.setActiveSheet(0);
             XSSFSheet summarySheet = summary.getSheet();
 
             // title
-            createReportTitle(testScript, summary);
+            createReportTitle(scriptFile, summary);
 
             int rowNum = createReferenceDataSection(summary, 2);
             createSummaryHeader(summary, ++rowNum);
@@ -384,7 +382,8 @@ public class ExecutionSummary {
             // set column widths
             for (int i = 0; i < COLUMN_WIDTHS.size(); i++) { summarySheet.setColumnWidth(i, COLUMN_WIDTHS.get(i)); }
 
-            excel.save();
+            testScript.save();
+            // testScript = new Excel(testScript.getFile(), false, true);
         } catch (Throwable e) {
             ConsoleUtils.error("Unable to generate Excel report to " + testScript + ": " + e.getMessage());
         }
@@ -407,23 +406,26 @@ public class ExecutionSummary {
     }
 
     protected int createScenarioExecutionSummary(Worksheet sheet, ExecutionSummary summary, int rowNum) {
-        createCell(sheet, "A" + rowNum, summary.getName(), EXEC_SUMM_SCENARIO);
-        createCell(sheet, "E" + rowNum, DateUtility.formatLongDate(summary.startTime), EXEC_SUMM_TIMESPAN);
-        createCell(sheet, "F" + rowNum, formatDuration(summary.getElapsedTime()), EXEC_SUMM_DURATION);
+        float rowHeight = EXEC_SUMMARY_HEIGHT;
+        createCell(sheet, "A" + rowNum, summary.getName(), STYLE_EXEC_SUMM_SCENARIO, rowHeight);
+        createCell(sheet, "E" + rowNum, DateUtility.formatLongDate(summary.startTime), STYLE_EXEC_SUMM_TIMESPAN,
+                   rowHeight);
+        createCell(sheet, "F" + rowNum, formatDuration(summary.getElapsedTime()), STYLE_EXEC_SUMM_DURATION, rowHeight);
         //createCell(sheet, "F" + rowNum, formatDuration(summary.getElapsedTime()), EXEC_SUMM_DURATION);
-        createCell(sheet, "G" + rowNum, summary.getTotalSteps(), EXEC_SUMM_FINAL_TOTAL);
-        createCell(sheet, "H" + rowNum, summary.getPassCount(), EXEC_SUMM_FINAL_TOTAL);
-        createCell(sheet, "I" + rowNum, summary.getFailCount(), EXEC_SUMM_FINAL_TOTAL);
+        createCell(sheet, "G" + rowNum, summary.getTotalSteps(), STYLE_EXEC_SUMM_FINAL_TOTAL, rowHeight);
+        createCell(sheet, "H" + rowNum, summary.getPassCount(), STYLE_EXEC_SUMM_FINAL_TOTAL, rowHeight);
+        createCell(sheet, "I" + rowNum, summary.getFailCount(), STYLE_EXEC_SUMM_FINAL_TOTAL, rowHeight);
         double successRate = summary.getSuccessRate();
         createCell(sheet, "J" + rowNum, MessageFormat.format(RATE_FORMAT, successRate),
-                   successRate == 1 ? EXEC_SUMM_FINAL_SUCCESS : EXEC_SUMM_FINAL_NOT_SUCCESS);
+                   successRate == 1 ? STYLE_EXEC_SUMM_FINAL_SUCCESS : STYLE_EXEC_SUMM_FINAL_NOT_SUCCESS,
+                   rowHeight);
 
         Map<String, String> ref = summary.referenceData;
         if (MapUtils.isNotEmpty(ref)) {
             List<String> refNames = CollectionUtil.toList(ref.keySet());
             for (String name : refNames) {
-                createCell(sheet, "B" + rowNum, name, EXEC_SUMM_DATA_NAME);
-                createCell(sheet, "C" + rowNum, ref.get(name), EXEC_SUMM_DATA_VALUE);
+                createCell(sheet, "B" + rowNum, name, STYLE_EXEC_SUMM_DATA_NAME, rowHeight);
+                createCell(sheet, "C" + rowNum, ref.get(name), STYLE_EXEC_SUMM_DATA_VALUE, rowHeight);
                 rowNum++;
             }
         } else {
@@ -434,15 +436,17 @@ public class ExecutionSummary {
     }
 
     protected void createActivityExecutionSummary(Worksheet sheet, ExecutionSummary summary, int rowNum) {
-        createCell(sheet, "D" + rowNum, summary.getName(), EXEC_SUMM_ACTIVITY);
-        createCell(sheet, "F" + rowNum, formatDuration(summary.getElapsedTime()), EXEC_SUMM_DURATION);
+        float rowHeight = EXEC_SUMMARY_HEIGHT;
+        createCell(sheet, "D" + rowNum, summary.getName(), STYLE_EXEC_SUMM_ACTIVITY, rowHeight);
+        createCell(sheet, "F" + rowNum, formatDuration(summary.getElapsedTime()), STYLE_EXEC_SUMM_DURATION, rowHeight);
         //createCell(sheet, "F" + rowNum, formatDuration(summary.getElapsedTime()), EXEC_SUMM_DURATION);
-        createCell(sheet, "G" + rowNum, summary.getTotalSteps(), EXEC_SUMM_TOTAL);
-        createCell(sheet, "H" + rowNum, summary.getPassCount(), EXEC_SUMM_PASS);
-        createCell(sheet, "I" + rowNum, summary.getFailCount(), EXEC_SUMM_FAIL);
+        createCell(sheet, "G" + rowNum, summary.getTotalSteps(), STYLE_EXEC_SUMM_TOTAL, rowHeight);
+        createCell(sheet, "H" + rowNum, summary.getPassCount(), STYLE_EXEC_SUMM_PASS, rowHeight);
+        createCell(sheet, "I" + rowNum, summary.getFailCount(), STYLE_EXEC_SUMM_FAIL, rowHeight);
         double successRate = summary.getSuccessRate();
         createCell(sheet, "J" + rowNum, MessageFormat.format(RATE_FORMAT, successRate),
-                   successRate == 1 ? EXEC_SUMM_SUCCESS : EXEC_SUMM_NOT_SUCCESS);
+                   successRate == 1 ? STYLE_EXEC_SUMM_SUCCESS : STYLE_EXEC_SUMM_NOT_SUCCESS,
+                   rowHeight);
     }
 
     protected void createIterationExecutionSummary(Worksheet sheet, int rowNum) {
@@ -467,19 +471,21 @@ public class ExecutionSummary {
                                         "Totals", EXEC_SUMM_FINAL_TOTAL);
         mergedCell.getRow().setHeightInPoints(EXEC_SUMMARY_HEIGHT);
 
-        createCell(sheet, "E" + rowNum, DateUtility.formatLongDate(startTime), EXEC_SUMM_TIMESPAN);
-        createCell(sheet, "F" + rowNum, formatDuration(endTime - startTime), EXEC_SUMM_FINAL_TOTAL);
+        float rowHeight = EXEC_SUMMARY_HEIGHT;
+        createCell(sheet, "E" + rowNum, DateUtility.formatLongDate(startTime), STYLE_EXEC_SUMM_TIMESPAN, rowHeight);
+        createCell(sheet, "F" + rowNum, formatDuration(endTime - startTime), STYLE_EXEC_SUMM_FINAL_TOTAL, rowHeight);
         //createCell(sheet, "F" + rowNum, formatDuration(endTime - startTime), EXEC_SUMM_FINAL_TOTAL);
-        createCell(sheet, "G" + rowNum, totalSteps, EXEC_SUMM_FINAL_TOTAL);
-        createCell(sheet, "H" + rowNum, passCount, EXEC_SUMM_FINAL_TOTAL);
-        createCell(sheet, "I" + rowNum, failCount, EXEC_SUMM_FINAL_TOTAL);
+        createCell(sheet, "G" + rowNum, totalSteps, STYLE_EXEC_SUMM_FINAL_TOTAL, rowHeight);
+        createCell(sheet, "H" + rowNum, passCount, STYLE_EXEC_SUMM_FINAL_TOTAL, rowHeight);
+        createCell(sheet, "I" + rowNum, failCount, STYLE_EXEC_SUMM_FINAL_TOTAL, rowHeight);
         double successRate = getSuccessRate();
         createCell(sheet, "J" + rowNum, MessageFormat.format(RATE_FORMAT, successRate),
-                   successRate == 1 ? EXEC_SUMM_FINAL_SUCCESS : EXEC_SUMM_FINAL_NOT_SUCCESS);
+                   successRate == 1 ? STYLE_EXEC_SUMM_FINAL_SUCCESS : STYLE_EXEC_SUMM_FINAL_NOT_SUCCESS, rowHeight);
     }
 
     protected int createReferenceDataSection(Worksheet summary, int rowNum) {
         Map<String, String> executionData = gatherExecutionData();
+
         if (MapUtils.isNotEmpty(executionData)) {
             createTestExecutionSection(summary, rowNum, "Test Execution", executionData);
             rowNum += executionData.size();
@@ -503,16 +509,18 @@ public class ExecutionSummary {
     }
 
     protected void createSummaryHeader(Worksheet summary, int rowNum) {
-        createCell(summary, "A" + rowNum, "scenario", EXEC_SUMM_HEADER);
+        float rowHeight = EXEC_SUMMARY_HEIGHT;
+        createCell(summary, "A" + rowNum, "scenario", STYLE_EXEC_SUMM_HEADER, rowHeight);
         mergeCell(new ExcelArea(summary, new ExcelAddress("B" + rowNum + ":C" + rowNum), false),
-                  "user data (" + SCENARIO_REF_PREFIX + "*)", EXEC_SUMM_HEADER);
-        createCell(summary, "D" + rowNum, "activity", EXEC_SUMM_HEADER);
-        createCell(summary, "E" + rowNum, "start date/time", EXEC_SUMM_HEADER);
-        createCell(summary, "F" + rowNum, "duration (ms)", EXEC_SUMM_HEADER);
-        createCell(summary, "G" + rowNum, "total", EXEC_SUMM_HEADER);
-        createCell(summary, "H" + rowNum, "pass", EXEC_SUMM_HEADER);
-        createCell(summary, "I" + rowNum, "fail", EXEC_SUMM_HEADER);
-        createCell(summary, "J" + rowNum, "success %", EXEC_SUMM_HEADER);
+                  "user data (" + SCENARIO_REF_PREFIX + "*)",
+                  EXEC_SUMM_HEADER);
+        createCell(summary, "D" + rowNum, "activity", STYLE_EXEC_SUMM_HEADER, rowHeight);
+        createCell(summary, "E" + rowNum, "start date/time", STYLE_EXEC_SUMM_HEADER, rowHeight);
+        createCell(summary, "F" + rowNum, "duration (ms)", STYLE_EXEC_SUMM_HEADER, rowHeight);
+        createCell(summary, "G" + rowNum, "total", STYLE_EXEC_SUMM_HEADER, rowHeight);
+        createCell(summary, "H" + rowNum, "pass", STYLE_EXEC_SUMM_HEADER, rowHeight);
+        createCell(summary, "I" + rowNum, "fail", STYLE_EXEC_SUMM_HEADER, rowHeight);
+        createCell(summary, "J" + rowNum, "success %", STYLE_EXEC_SUMM_HEADER, rowHeight);
     }
 
     protected Map<String, String> gatherExecutionData() {
@@ -567,49 +575,50 @@ public class ExecutionSummary {
     }
 
     protected void createTestExecutionSection(Worksheet sheet, int rowNum, String title, Map<String, String> data) {
-        createCell(sheet, "A" + rowNum, title, EXEC_SUMM_DATA_HEADER);
+        float rowHeight = EXEC_SUMMARY_HEIGHT;
+        createCell(sheet, "A" + rowNum, title, STYLE_EXEC_SUMM_DATA_HEADER, rowHeight);
 
         List<String> names = CollectionUtil.toList(data.keySet());
         for (int i = 0; i < names.size(); i++) {
             String name = names.get(i);
-            createCell(sheet, "B" + (i + rowNum), name, EXEC_SUMM_DATA_NAME);
+            createCell(sheet, "B" + (i + rowNum), name, STYLE_EXEC_SUMM_DATA_NAME, rowHeight);
 
             String value = data.get(name);
             String[] values = StringUtils.splitByWholeSeparator(value, "\n");
             for (int j = 0; j < values.length; j++) {
                 String dataValue = values[j];
                 if (StringUtils.isBlank(dataValue)) { continue; }
-                XSSFCell valueCell = createCell(sheet,
-                                                (char) ('C' + j) + "" + (i + rowNum),
-                                                dataValue,
-                                                EXEC_SUMM_DATA_VALUE);
-                if (RegexUtils.isExact(dataValue, REGEX_LINKABLE_DATA)) {
-                    String link = StringUtils.substringBefore(dataValue, "|");
-                    String text = StringUtils.substringAfter(dataValue, "|");
-                    Excel.setHyperlink(valueCell, link, text);
-                }
+                createLinkCell(sheet, (char) ('C' + j) + "" + (i + rowNum), dataValue, STYLE_EXEC_SUMM_DATA_VALUE);
             }
         }
     }
 
-    protected XSSFCell createCell(Worksheet worksheet, String cellAddress, Object content, StyleConfig styleConfig) {
-        if (worksheet == null) { return null; }
-        if (StringUtils.isBlank(cellAddress)) { return null; }
+    protected void createCell(Worksheet worksheet, String cellAddress, Object content, String style, float rowHeight) {
+        if (worksheet == null || StringUtils.isBlank(cellAddress)) { return; }
+
+        worksheet.setRowValues(new ExcelAddress(cellAddress),
+                               Collections.singletonList(Objects.toString(content)),
+                               style,
+                               rowHeight);
+    }
+
+    protected void createLinkCell(Worksheet worksheet, String cellAddress, Object content, String styleName) {
+        if (worksheet == null || StringUtils.isBlank(cellAddress)) { return; }
 
         ExcelAddress addr = new ExcelAddress(cellAddress);
 
-        worksheet.setRowValues(addr, Collections.singletonList(Objects.toString(content)));
-        XSSFCell cell = worksheet.cell(addr);
-        if (cell == null) { return null; }
-
-        cell.setCellStyle(StyleDecorator.generate(worksheet, styleConfig));
-        cell.getRow().setHeightInPoints(EXEC_SUMMARY_HEIGHT);
-
-        return cell;
+        String dataValue = Objects.toString(content);
+        if (RegexUtils.isExact(dataValue, REGEX_LINKABLE_DATA)) {
+            String link = StringUtils.substringBefore(dataValue, "|");
+            String text = StringUtils.substringAfter(dataValue, "|");
+            worksheet.setLinkCell(addr, link, text, styleName, EXEC_SUMMARY_HEIGHT);
+        } else {
+            createCell(worksheet, cellAddress, content, styleName, EXEC_SUMMARY_HEIGHT);
+        }
     }
 
     protected void createExceptionSection(Worksheet sheet, int rowNum, Throwable exception) {
-        createCell(sheet, "A" + rowNum, "Fatal Error", EXEC_SUMM_DATA_HEADER);
+        createCell(sheet, "A" + rowNum, "Fatal Error", STYLE_EXEC_SUMM_DATA_HEADER, EXEC_SUMMARY_HEIGHT);
 
         String eol = lineSeparator();
 
@@ -662,8 +671,7 @@ public class ExecutionSummary {
             row.setHeightInPoints(EXEC_SUMMARY_HEIGHT);
 
             for (int j = startColumnIdx; j <= endColumnIndex; j++) {
-                XSSFCell cell = row.getCell(j, CREATE_NULL_AS_BLANK);
-                cell.setCellStyle(cellStyle);
+                row.getCell(j, CREATE_NULL_AS_BLANK).setCellStyle(cellStyle);
             }
         }
 
@@ -746,7 +754,7 @@ public class ExecutionSummary {
     private ExecutionSummary summarized(ExecutionSummary source) {
         // check for "not started" tests due to preceding error
         if (source.startTime == 0 || source.endTime == 0 || source.totalSteps == 0 || source.executed == 0) {
-            // nothing started on unkown time and nothing executed? this is useless
+            // nothing started on unknown time and nothing executed? this is useless
             return null;
         }
 

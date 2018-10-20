@@ -125,7 +125,7 @@ public class TestScenario {
 
         executionSummary.setName(name);
         executionSummary.setExecutionLevel(SCENARIO);
-        executionSummary.setTestScript(worksheet.getFile());
+        executionSummary.setTestScript(worksheet.excel());
         executionSummary.setStartTime(System.currentTimeMillis());
         executionSummary.setTotalSteps(CollectionUtils.size(allSteps));
 
