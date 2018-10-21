@@ -878,8 +878,12 @@ public class BaseCommand implements NexialCommand {
     }
 
     protected void verifyFalse(String description, boolean b) {
-        String result = !b ? MSG_PASS : MSG_FAIL;
-        log(result + (StringUtils.isNotBlank(description) ? description : ""));
+        description = StringUtils.isNotBlank(description) ? description : "";
+        if (!b) {
+            log(MSG_PASS + description);
+        } else {
+            error(MSG_FAIL + description);
+        }
         verifyFalse(b);
     }
 
@@ -901,8 +905,12 @@ public class BaseCommand implements NexialCommand {
     }
 
     protected void verifyTrue(String description, boolean b) {
-        String result = b ? MSG_PASS : MSG_FAIL;
-        log(result + (StringUtils.isNotBlank(description) ? description : ""));
+        description = StringUtils.isNotBlank(description) ? description : "";
+        if (b) {
+            log(MSG_PASS + description);
+        } else {
+            error(MSG_FAIL + description);
+        }
         verifyTrue(b);
     }
 
@@ -1089,8 +1097,17 @@ public class BaseCommand implements NexialCommand {
     }
 
     protected void log(String message) {
-        if (StringUtils.isBlank(message)) { return; }
-        if (context != null && context.getLogger() != null) { context.getLogger().log(this, message); }
+        if (StringUtils.isNotBlank(message) && context != null && context.getLogger() != null) {
+            context.getLogger().log(this, message);
+        }
+    }
+
+    protected void error(String message) { error(message, null); }
+
+    protected void error(String message, Throwable e) {
+        if (StringUtils.isNotBlank(message) && context != null && context.getLogger() != null) {
+            context.getLogger().error(this, message, e);
+        }
     }
 
     // protected void addLinkToOutputFile(File outputFile, String label, String linkCaption) {
@@ -1107,12 +1124,6 @@ public class BaseCommand implements NexialCommand {
     //
     //     addLinkRef(linkCaption, label, outFile);
     // }
-
-    protected void error(String message) { error(message, null); }
-
-    protected void error(String message, Throwable e) {
-        if (StringUtils.isNotBlank(message)) { context.getLogger().error(this, message, e); }
-    }
 
     /**
      * create a file with {@code output} as its text content and its name based on current step and {@code extension}.

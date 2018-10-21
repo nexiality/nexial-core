@@ -93,7 +93,6 @@ public class NestedMessage {
         if (MessageUtils.isSkipped(message)) {
             isPass = false;
             resultMessage = MSG_SKIPPED;
-            //markAsSkipped();
             return;
         }
 
@@ -101,19 +100,16 @@ public class NestedMessage {
             if (MessageUtils.isPass(message)) {
                 isPass = true;
                 resultMessage = MSG_PASS;
-                //markAsSuccess();
                 return;
             }
 
             if (MessageUtils.isFail(message)) {
                 resultMessage = MSG_FAIL;
-                //markAsFailure();
                 return;
             }
 
             if (MessageUtils.isWarn(message)) {
                 resultMessage = MSG_WARN;
-                //markAsFailure();
                 return;
             }
         }

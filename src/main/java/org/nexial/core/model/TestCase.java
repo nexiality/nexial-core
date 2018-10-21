@@ -84,7 +84,7 @@ public class TestCase {
         executionSummary.setStartTime(System.currentTimeMillis());
         executionSummary.setTotalSteps(CollectionUtils.size(testSteps));
 
-        logger.log(this, "executing test case");
+        logger.log(this, "executing activity");
 
         for (int i = 0; i < testSteps.size(); i++) {
             TestStep testStep = testSteps.get(i);

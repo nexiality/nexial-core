@@ -18,11 +18,8 @@
 package org.nexial.core.utils;
 
 import java.io.File;
-import java.util.List;
 
-import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
-import org.apache.poi.xssf.usermodel.XSSFCell;
 import org.nexial.core.ExecutionThread;
 import org.nexial.core.excel.Excel.Worksheet;
 import org.nexial.core.model.ExecutionContext;
@@ -81,20 +78,13 @@ public class ExecutionLogger {
 
     public static String toHeader(TestStep subject) {
         if (subject == null) { return "UNKNOWN TEST STEP"; }
-
-        String header = toHeader(subject.getTestCase());
-
-        List<XSSFCell> row = subject.getRow();
-        if (CollectionUtils.isNotEmpty(row)) {
-            header += "|#" + StringUtils.leftPad(row.get(0).getRowIndex() + 1 + "", 3);
-        }
-        header += "|" + StringUtils.truncate(StringUtils.defaultString(subject.getCommandFQN()), 25);
-
-        return header;
+        return toHeader(subject.getTestCase()) +
+               "|#" + StringUtils.leftPad((subject.getRowIndex() + 1) + "", 3) +
+               "|" + StringUtils.truncate(subject.getCommandFQN(), 25);
     }
 
     public static String toHeader(TestCase subject) {
-        return subject == null ? "UNKNOWN TESTCASE" : (toHeader(subject.getTestScenario()) + "|" + subject.getName());
+        return subject == null ? "UNKNOWN ACTIVITY" : (toHeader(subject.getTestScenario()) + "|" + subject.getName());
     }
 
     public static String toHeader(TestScenario subject) {
@@ -111,11 +101,11 @@ public class ExecutionLogger {
     private void error(String header, String message) { error(header, message, null); }
 
     private void error(String header, String message, Throwable e) {
-        Logger logger = LoggerFactory.getLogger(header);
+        // Logger logger = LoggerFactory.getLogger(header);
         if (e == null) {
-            logger.error(message);
+            logger.error(header + " - " + message);
         } else {
-            logger.error(message, e);
+            logger.error(header + " - " + message, e);
         }
     }
 }

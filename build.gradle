@@ -134,6 +134,8 @@ dependencies {
 	compile("ch.qos.logback:logback-core:+")
 	compile("ch.qos.logback:logback-access:+")
 	compile("ch.qos.logback.contrib:logback-json-core:+")
+	compile("org.fusesource.jansi:jansi:1.+")
+
 	//	compile("ch.qos.logback.contrib:logback-mongodb-core:+")
 
 	// support: aws
@@ -245,13 +247,14 @@ jar {
 }
 
 tasks.withType(Test) {
-	maxParallelForks = 5
+	maxParallelForks = 10
 	// -Dnexial.home=~/projects/nexial/nexial-core
 	//	systemProperty 'BROWSER', System.getProperty('BROWSER', 'firefox')
 	systemProperty 'nexial.home', projectDir
 }
 
 test {
+	maxHeapSize = "256m"
 //	jvmArgs '-XX:MaxPermSize=512m'
 	reports.html.enabled = true
 	reports.junitXml.enabled = true

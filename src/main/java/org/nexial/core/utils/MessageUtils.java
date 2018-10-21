@@ -41,7 +41,7 @@ public final class MessageUtils {
 
     public static void logAsPass(Logger logger, String message) { logger.info(renderAsPass(message)); }
 
-    public static void logAsFail(Logger logger, String message) { logger.info(renderAsFail(message)); }
+    public static void logAsFail(Logger logger, String message) { logger.error(renderAsFail(message)); }
 
     public static void logAsWarn(Logger logger, String message) { logger.info(renderAsWarn(message)); }
 

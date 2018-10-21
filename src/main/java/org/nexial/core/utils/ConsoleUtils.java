@@ -59,14 +59,14 @@ public final class ConsoleUtils {
     @SuppressWarnings("PMD.SystemPrintln")
     public static void log(String msg) {
         if (System.out == null) { throw new RuntimeException("System.out is null!"); }
-        System.out.println(DateUtility.getCurrentTimestampForLogging() + " >> " + msg);
+        System.out.println(DateUtility.getCurrentTimeForLogging() + " >> " + msg);
         logAs(INFO, msg);
     }
 
     @SuppressWarnings("PMD.SystemPrintln")
     public static void error(String msg) {
         if (System.err == null) { throw new RuntimeException("System.err is null!"); }
-        System.err.println(DateUtility.getCurrentTimestampForLogging() + " >> " + msg);
+        System.err.println(DateUtility.getCurrentTimeForLogging() + " >> " + msg);
         logAs(ERROR, msg);
     }
 
@@ -74,7 +74,7 @@ public final class ConsoleUtils {
     public static void log(String id, String msg) {
         assert StringUtils.isNotBlank(id);
         if (System.out == null) { throw new RuntimeException("System.out is null!"); }
-        System.out.println(DateUtility.getCurrentTimestampForLogging() + " >> [" + id + "] " + msg);
+        System.out.println(DateUtility.getCurrentTimeForLogging() + " >> [" + id + "] " + msg);
         logAs(INFO, "[" + id + "] " + msg);
     }
 
@@ -82,7 +82,7 @@ public final class ConsoleUtils {
     public static void error(String id, String msg) {
         assert StringUtils.isNotBlank(id);
         if (System.err == null) { throw new RuntimeException("System.err is null!"); }
-        System.err.println(DateUtility.getCurrentTimestampForLogging() + " >> [" + id + "] " + msg);
+        System.err.println(DateUtility.getCurrentTimeForLogging() + " >> [" + id + "] " + msg);
         logAs(ERROR, "[" + id + "] " + msg);
     }
 

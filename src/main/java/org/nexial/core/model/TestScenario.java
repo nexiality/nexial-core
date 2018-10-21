@@ -366,20 +366,20 @@ public class TestScenario {
         String errMsg = "[ROW " + (startFrom + ADDR_COMMAND_START.getRowStartIndex()) + "]" +
                         " wrong parameters specified for " + CMD_REPEAT_UNTIL + ": " + testStep.getParams();
         if (CollectionUtils.size(testStep.getParams()) != 2) {
-            ConsoleUtils.log(errMsg);
+            ConsoleUtils.error(errMsg);
             throw new RuntimeException(errMsg);
         }
 
         String steps = context.replaceTokens(testStep.getParams().get(0));
         int numOfStepsIncluded = NumberUtils.toInt(steps);
         if (numOfStepsIncluded < 1) {
-            ConsoleUtils.log(errMsg);
+            ConsoleUtils.error(errMsg);
             throw new RuntimeException(errMsg);
         }
 
         if ((startFrom + numOfStepsIncluded) > allSteps.size()) {
             String errMsg1 = errMsg + " - number of steps specified greater than available in this test scenario";
-            ConsoleUtils.log(errMsg1);
+            ConsoleUtils.error(errMsg1);
             throw new RuntimeException(errMsg1);
         }
 
@@ -387,7 +387,7 @@ public class TestScenario {
         long maxWait = NumberUtils.toLong(maxWaitMs);
         if (maxWait != -1 && maxWait < 1000) {
             String errMsg1 = errMsg + " - minimum wait time is 1000ms: " + maxWait;
-            ConsoleUtils.log(errMsg1);
+            ConsoleUtils.error(errMsg1);
             throw new RuntimeException(errMsg1);
         }
 

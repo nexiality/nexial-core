@@ -258,13 +258,7 @@ public class TestStep extends TestStepManifest {
     protected StepResult invokeCommand() throws InvocationTargetException, IllegalAccessException {
         String[] args = params.toArray(new String[0]);
 
-        // log before pause (DO NOT use log() since that might trigger logToTestScript())
-        ExecutionLogger logger = context.getLogger();
-        StringBuilder argText = new StringBuilder();
-        for (String arg : args) {
-            argText.append(StringUtils.startsWith(arg, "$(execution") ? context.replaceTokens(arg) : arg).append(", ");
-        }
-        logger.log(this, "executing " + command + "(" + StringUtils.removeEnd(argText.toString(), ", ") + ")");
+        logCommand(args);
 
         FlowControlUtils.checkPauseBefore(context, this);
 
@@ -316,6 +310,16 @@ public class TestStep extends TestStepManifest {
         return result;
     }
 
+    protected void logCommand(String[] args) {
+        // log before pause (DO NOT use log() since that might trigger logToTestScript())
+        ExecutionLogger logger = context.getLogger();
+        StringBuilder argText = new StringBuilder();
+        for (String arg : args) {
+            argText.append(StringUtils.startsWith(arg, "$(execution") ? context.replaceTokens(arg) : arg).append(", ");
+        }
+        logger.log(this, "executing " + command + "(" + StringUtils.removeEnd(argText.toString(), ", ") + ")");
+    }
+
     protected void postExecCommand(StepResult result, long elapsedMs) {
         updateResult(result, elapsedMs);
 
@@ -337,7 +341,7 @@ public class TestStep extends TestStepManifest {
             log(MessageUtils.renderAsPass(StringUtils.equals(getCommandFQN(), CMD_VERBOSE) ? "" : result.getMessage()));
         } else {
             summary.incrementFail();
-            log(MessageUtils.renderAsFail(result.getMessage()));
+            error(MessageUtils.renderAsFail(result.getMessage()));
             context.incrementAndEvaluateFail(result);
         }
     }
@@ -578,6 +582,12 @@ public class TestStep extends TestStepManifest {
     }
 
     protected void log(String message) {
+        if (StringUtils.isBlank(message)) { return; }
+        context.getLogger().log(this, message);
+        logToTestScript(message);
+    }
+
+    protected void error(String message) {
         if (StringUtils.isBlank(message)) { return; }
         context.getLogger().log(this, message);
         logToTestScript(message);

@@ -18,6 +18,7 @@
 
 <configuration debug="false">
     <conversionRule conversionWord="color" converterClass="org.springframework.boot.logging.logback.ColorConverter"/>
+    <conversionRule conversionWord="resultColor" converterClass="org.nexial.commons.logging.ResultColorConverter"/>
 
     <statusListener class="ch.qos.logback.core.status.NopStatusListener"/>
 
@@ -37,10 +38,17 @@
         </encoder>
     </appender>
     <appender name="console-execution" class="ch.qos.logback.core.ConsoleAppender">
+        <withJansi>true</withJansi>
         <encoder>
-            <pattern>%color(%d|%.-1p|%t|%m){green}%n</pattern>
+            <pattern>%resultColor(%d{HH:mm:ss.SSS}|%m%n)</pattern>
         </encoder>
     </appender>
+    <!--<appender name="console-executionBAK" class="ch.qos.logback.core.ConsoleAppender">-->
+    <!--<withJansi>true</withJansi>-->
+    <!--<encoder>-->
+    <!--<pattern>%color(%d{HH:mm:ss.SSS}|%m){green}%n</pattern>-->
+    <!--</encoder>-->
+    <!--</appender>-->
     <appender name="console-tools" class="ch.qos.logback.core.ConsoleAppender">
         <encoder>
             <pattern>%color(%d|%m){faint}%n</pattern>
@@ -270,7 +278,7 @@
 
     <!-- seeknow -->
     <logger name="org.nexial.seeknow" additivity="false" level="DEBUG">
-        <appender-ref ref="console"/>
+        <appender-ref ref="console-execution"/>
         <appender-ref ref="file-testexecution"/>
     </logger>
 
@@ -278,7 +286,7 @@
     <!-- nexial categories  -->
     <!-- ============================= -->
     <logger name="org.nexial.core" additivity="false" level="INFO">
-        <appender-ref ref="console"/>
+        <appender-ref ref="console-execution"/>
         <appender-ref ref="file-testexecution"/>
     </logger>
     <logger name="org.nexial.core.plugins.ws.NaiveConnectionSocketFactory" additivity="false" level="WARN">

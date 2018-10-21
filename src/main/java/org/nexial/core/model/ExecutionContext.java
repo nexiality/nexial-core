@@ -324,7 +324,7 @@ public class ExecutionContext {
         if (isVerbose()) {
             executionLogger.log(command, message);
         } else {
-            ConsoleUtils.log(command.toString(), message);
+            ConsoleUtils.log(command.getTarget(), message);
         }
     }
 
