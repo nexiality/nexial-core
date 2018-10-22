@@ -22,6 +22,7 @@ import java.io.IOException;
 import java.util.*;
 
 import org.apache.commons.collections4.CollectionUtils;
+import org.apache.commons.collections4.MapUtils;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.poi.xssf.usermodel.XSSFCell;
@@ -49,6 +50,7 @@ import static org.nexial.core.NexialConst.NAMESPACE;
 import static org.nexial.core.NexialConst.Project.appendCapture;
 import static org.nexial.core.NexialConst.Project.appendLog;
 import static org.nexial.core.excel.ExcelConfig.StyleConfig.*;
+import static org.nexial.core.utils.ExecUtil.IGNORED_CLI_OPT;
 
 /**
  * This class serves 2 purposes:
@@ -61,14 +63,14 @@ import static org.nexial.core.excel.ExcelConfig.StyleConfig.*;
  */
 class ExecutionInputPrep {
 
-    public static Excel updateOutputDataSheet(Excel outputFile) throws IOException {
+    public static Excel updateOutputDataSheet(Excel outputFile) {
         ExecutionContext context = ExecutionThread.get();
         if (context == null) { return null; }
 
         XSSFSheet dataSheet = outputFile.getWorkbook().getSheet(SHEET_MERGED_DATA);
 
-        XSSFWorkbook workbook = dataSheet.getWorkbook();
-        XSSFCellStyle styleTestDataValue = StyleDecorator.generate(workbook, TEST_DATA_VALUE);
+        // XSSFWorkbook workbook = dataSheet.getWorkbook();
+        // XSSFCellStyle styleTestDataValue = StyleDecorator.generate(workbook, TEST_DATA_VALUE);
 
         final int[] currentRowIndex = {0};
 
@@ -82,7 +84,7 @@ class ExecutionInputPrep {
             XSSFCell cellValue = row.getCell(1, CREATE_NULL_AS_BLANK);
             if (context.hasData(name)) {
                 cellValue.setCellValue(CellTextReader.readValue(context.getStringData(name)));
-                cellValue.setCellStyle(styleTestDataValue);
+                // cellValue.setCellStyle(styleTestDataValue);
             }
         });
 
@@ -183,13 +185,11 @@ class ExecutionInputPrep {
         // save it before use it
         outputExcel.save();
         return new Excel(outputExcel.getFile(), false, true);
-        // return outputExcel;
     }
 
-    private static Excel mergeTestData(Excel excel, TestData testData, int iteration) throws IOException {
+    private static Excel mergeTestData(Excel excel, TestData testData, int iteration) {
         SortedMap<String, String> data = new TreeMap<>(testData.getAllValue(iteration));
 
-        // Excel excel = new Excel(outputFile);
         XSSFSheet dataSheet = excel.getWorkbook().createSheet(SHEET_MERGED_DATA);
 
         XSSFWorkbook workbook = dataSheet.getWorkbook();
@@ -199,6 +199,21 @@ class ExecutionInputPrep {
 
         testData.getAllSettings().forEach(data::put);
         data.putAll(ExecUtil.deriveJavaOpts());
+
+        Properties sysprops = System.getProperties();
+        if (MapUtils.isNotEmpty(sysprops)) {
+            sysprops.forEach((name, value) -> {
+                if (name != null && value != null) {
+                    String nameString = name.toString();
+                    String valueString = value.toString();
+                    boolean shouldIgnored = false;
+                    for (String ignored : IGNORED_CLI_OPT) {
+                        if (StringUtils.startsWith(nameString, ignored)) { shouldIgnored = true; }
+                    }
+                    if (!shouldIgnored) { data.put(nameString, valueString); }
+                }
+            });
+        }
 
         final int[] currentRowIndex = {0};
         data.forEach((name, value) -> {

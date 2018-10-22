@@ -192,21 +192,17 @@ public final class ExecutionThread extends Thread {
                 if (testScript != null) {
                     testScriptFile = testScript.getFile();
 
-                    try {
-                        // sync #data sheet with context
-                        ExecutionInputPrep.updateOutputDataSheet(testScript);
+                    // sync #data sheet with context
+                    ExecutionInputPrep.updateOutputDataSheet(testScript);
 
-                        // now the execution for this iteration is done. We'll add new execution summary page to its output.
-                        iterSummary.setFailedFast(context.isFailFast());
-                        iterSummary.setEndTime(System.currentTimeMillis());
-                        iterSummary.aggregatedNestedExecutions(context);
-                        iterSummary.generateExcelReport(testScript);
-                        EventTracker.INSTANCE.track(
-                            new NexialIterationCompleteEvent(scriptLocation, currIteration, iterSummary));
-                        executionSummary.addNestSummary(iterSummary);
-                    } catch (IOException e) {
-                        ConsoleUtils.error("Error when updating data variables in #data: " + e.getMessage());
-                    }
+                    // now the execution for this iteration is done. We'll add new execution summary page to its output.
+                    iterSummary.setFailedFast(context.isFailFast());
+                    iterSummary.setEndTime(System.currentTimeMillis());
+                    iterSummary.aggregatedNestedExecutions(context);
+                    iterSummary.generateExcelReport(testScript);
+                    EventTracker.INSTANCE.track(
+                        new NexialIterationCompleteEvent(scriptLocation, currIteration, iterSummary));
+                    executionSummary.addNestSummary(iterSummary);
 
                     // try {
                     // save it before use it

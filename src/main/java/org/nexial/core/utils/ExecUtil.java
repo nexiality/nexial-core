@@ -43,8 +43,8 @@ public final class ExecUtil {
     public static final String JAVA_OPT = "JAVA_OPT";
     public static final String RUNTIME_ARGS = "runtime args";
     public static final List<String> IGNORED_CLI_OPT =
-        Arrays.asList("-Dwebdriver.", "-Djava.", "-Dorg.gradle.", "-Didea.test.", "-Duser.country", "-Duser.language",
-                      "-Dfile.encoding", "-Dnexial.home");
+        Arrays.asList("webdriver.", "java.", "org.gradle.", "idea.test.", "user.country", "user.language",
+                      "file.encoding", "nexial.home", "sun.java");
 
     public static String manifest;
 
@@ -113,9 +113,12 @@ public final class ExecUtil {
 
         String argsList = inputArgs.stream().filter(
             arg -> arg.startsWith("-D") &&
-                   IGNORED_CLI_OPT.stream().noneMatch(
-                       ignored -> StringUtils.startsWith(arg, ignored))).collect(Collectors.joining(DEF_TEXT_DELIM));
-        System.setProperty(SCRIPT_REF_PREFIX + JAVA_OPT, argsList);
+                   IGNORED_CLI_OPT.stream()
+                                  .noneMatch(ignored -> StringUtils.startsWith(StringUtils.substring(arg, 2), ignored))
+                                                   ).collect(Collectors.joining(DEF_TEXT_DELIM));
+        if (StringUtils.isNotBlank(argsList)) {
+            System.setProperty(SCRIPT_REF_PREFIX + JAVA_OPT, argsList);
+        }
     }
 
     public static Map<String, String> deriveJavaOpts() {

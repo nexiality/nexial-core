@@ -460,12 +460,16 @@ public class ExecutionContext {
 
     @NotNull
     public String getBrowserType() {
-        String browserType = StringUtils.remove(System.getProperty(BROWSER, getStringData(BROWSER, DEF_BROWSER)), ".");
+        // gotta push default to context
+        // String browser = System.getProperty(BROWSER);
+        // String browser = StringUtils.remove(System.getProperty(BROWSER, getStringData(BROWSER, DEF_BROWSER)), ".");
+        // setData(BROWSER, browser);
+        // return browser;
 
         // DO NOT SET BROWSER TYPE TO SYSTEM PROPS, SINCE THIS WILL PREVENT ITERATION-LEVEL OVERRIDES
         // System.setProperty(BROWSER, browserType);
 
-        return browserType;
+        return StringUtils.remove(System.getProperty(BROWSER, getStringData(BROWSER, DEF_BROWSER)), ".");
     }
 
     public boolean hasData(String name) { return getObjectData(name) != null; }
