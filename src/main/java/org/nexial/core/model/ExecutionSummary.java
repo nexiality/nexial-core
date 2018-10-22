@@ -345,6 +345,8 @@ public class ExecutionSummary {
             return;
         }
 
+        // initialize result-related styles so that we can reuse them here
+        testScript.initResultCommonStyles();
         File scriptFile = testScript.getFile();
 
         try {

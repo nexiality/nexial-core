@@ -381,8 +381,8 @@ public class BaseCommand implements NexialCommand {
         assertEquals(context.isNullValue(expected) ? null : expected, context.isNullValue(actual) ? null : actual);
 
         String nullValue = context.getNullValueToken();
-        return StepResult.success("validated " + StringUtils.defaultString(expected, nullValue) + " = " +
-                                  StringUtils.defaultString(actual, nullValue));
+        return StepResult.success("validated EXPECTED = ACTUAL; '" + StringUtils.defaultString(expected, nullValue) +
+                                  "' = '" + StringUtils.defaultString(actual, nullValue) + "'");
     }
 
     public StepResult assertNotEqual(String expected, String actual) {
@@ -391,8 +391,9 @@ public class BaseCommand implements NexialCommand {
         assertNotEquals(StringUtils.equals(expected, nullValue) ? null : expected,
                         StringUtils.equals(actual, nullValue) ? null : actual);
 
-        return StepResult.success("validated " + StringUtils.defaultString(expected, nullValue) + " not equals to " +
-                                  StringUtils.defaultString(actual, nullValue));
+        return StepResult.success("validated EXPECTED not equal to ACTUAL; '" +
+                                  StringUtils.defaultString(expected, nullValue) + "' not equals to '" +
+                                  StringUtils.defaultString(actual, nullValue) + "'");
     }
 
     public StepResult assertContains(String text, String substring) {
@@ -847,8 +848,8 @@ public class BaseCommand implements NexialCommand {
     protected void assertTrue(String message, boolean condition) {
         if (!condition) {
             CheckUtils.fail(message);
-        } else {
-            log(MSG_PASS + message);
+            // } else {
+            //     log(MSG_PASS + message);
         }
     }
 

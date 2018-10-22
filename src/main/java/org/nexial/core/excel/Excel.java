@@ -1270,6 +1270,11 @@ public class Excel {
         commonStyles.put(STYLE_FAILED_RESULT, StyleDecorator.generate(workbook, FAILED));
         commonStyles.put(STYLE_SKIPPED_RESULT, StyleDecorator.generate(workbook, SKIPPED));
 
+        // use only once... so maybe don't add to common styles (aka template)
+        // initResultCommonStyles();
+    }
+
+    public void initResultCommonStyles() {
         commonStyles.put(STYLE_EXEC_SUMM_TITLE, StyleDecorator.generate(workbook, EXEC_SUMM_TITLE));
         commonStyles.put(STYLE_EXEC_SUMM_DATA_HEADER, StyleDecorator.generate(workbook, EXEC_SUMM_DATA_HEADER));
         commonStyles.put(STYLE_EXEC_SUMM_DATA_NAME, StyleDecorator.generate(workbook, EXEC_SUMM_DATA_NAME));
