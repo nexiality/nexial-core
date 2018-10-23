@@ -63,8 +63,8 @@ For more information, please visit [Our Site](https://nexiality.github.io/docume
 Nexial Automation is a free and open source project.  We appreciate any help anyone is willing to give - whether it's 
 fixing bugs, improving documentation, suggesting new features, or collaboration via coding. Check out the 
 [contributing guide](.github/CONTRIBUTING.md) for more details.
-
-
+\
+\
 Nexial Automation enables test automation with [BrowserStack](http://browserstack.com).  
 ![BrowserStack.com](https://nexiality.github.io/documentation/image/browserstack/Browserstack-logo-small.png).  
 \
@@ -83,6 +83,6 @@ Please note that by participating in this project you agree to abide by its term
 
 ---
 
-## [License][license]
+## [License](LICENSE)
 
 Nexial Automation is [licensed](LICENSE) under the Apache License, Version 2.0.
