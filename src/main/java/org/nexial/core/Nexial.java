@@ -776,7 +776,7 @@ public class Nexial {
         }
 
         ExecutionMailConfig mailConfig = ExecutionMailConfig.get();
-        if (mailConfig.isReady()) {
+        if (mailConfig != null && mailConfig.isReady()) {
             ExecutionNotifier notifier = springContext.getBean("mailNotifier", ExecutionNotifier.class);
             notifyCompletion(notifier, summary);
         } else {
@@ -1058,12 +1058,13 @@ public class Nexial {
 
         // setup
         ExecutionMailConfig mailConfig = ExecutionMailConfig.get();
-        String[] recipientList = mailConfig.getRecipients();
+        String[] recipientList = mailConfig == null ? null : mailConfig.getRecipients();
         if (ArrayUtils.isEmpty(recipientList)) {
             ConsoleUtils.log("No email to send since no recipient is specified.");
             return;
         }
 
+        // if we get to here the `mailConfig` is already set up properly
         MailObjectSupport mailObjectSupport = new MailObjectSupport();
         mailObjectSupport.configure();
 

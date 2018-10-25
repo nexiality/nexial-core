@@ -21,24 +21,23 @@ import java.io.File;
 import java.net.URL;
 import java.util.ArrayList;
 import java.util.List;
+import javax.validation.constraints.NotNull;
 
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang3.ArrayUtils;
 import org.apache.commons.lang3.StringUtils;
-import org.jetbrains.annotations.NotNull;
 import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.BeforeClass;
-
 import org.nexial.commons.utils.TextUtils;
 import org.nexial.core.model.ExecutionSummary;
 
+import static java.io.File.separator;
 import static org.nexial.core.NexialConst.Data.FAIL_FAST;
 import static org.nexial.core.NexialConst.*;
 import static org.nexial.core.model.ExecutionSummary.ExecutionLevel.ITERATION;
-import static java.io.File.separator;
 
 public abstract class ExcelBasedTests {
     protected String projectBase;

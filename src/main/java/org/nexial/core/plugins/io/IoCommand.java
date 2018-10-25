@@ -26,6 +26,7 @@ import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.*;
 import java.util.regex.Pattern;
+import javax.annotation.Nullable;
 import javax.validation.constraints.NotNull;
 
 import org.apache.commons.collections4.CollectionUtils;
@@ -40,7 +41,6 @@ import org.apache.commons.lang3.time.StopWatch;
 import org.apache.commons.lang3.tuple.ImmutablePair;
 import org.apache.commons.lang3.tuple.Pair;
 import org.apache.commons.text.similarity.LevenshteinDetailedDistance;
-import org.jetbrains.annotations.Nullable;
 import org.nexial.commons.utils.DateUtility;
 import org.nexial.commons.utils.FileUtil;
 import org.nexial.commons.utils.IOFilePathFilter;
@@ -63,8 +63,8 @@ import static org.nexial.core.NexialConst.Data.*;
 import static org.nexial.core.plugins.io.ComparisonResult.*;
 import static org.nexial.core.plugins.io.IoAction.copy;
 import static org.nexial.core.plugins.io.IoAction.move;
-import static org.nexial.core.plugins.io.IoCommand.CompareMode.*;
 import static org.nexial.core.plugins.io.IoCommand.CompareMode.FAIL_FAST;
+import static org.nexial.core.plugins.io.IoCommand.CompareMode.*;
 import static org.nexial.core.utils.CheckUtils.*;
 
 public class IoCommand extends BaseCommand {
@@ -110,7 +110,7 @@ public class IoCommand extends BaseCommand {
      * </p>
      * This method is different than {@link #compare(String, String, String)} in that
      * {@link #compare(String, String, String)} includes the same "fast" compare, plus: <ol>
-     * <li><code>compare()</code> inclludes line-by-line comparison and differential report</li>
+     * <li><code>compare()</code> includes line-by-line comparison and differential report</li>
      * </ol>
      *
      * @see #compare(String, String, String)
@@ -242,15 +242,11 @@ public class IoCommand extends BaseCommand {
             props.setProperty(property, value);
         }
 
-        FileWriter writer = null;
-        try {
-            writer = new FileWriter(input);
+        try (FileWriter writer = new FileWriter(input)) {
             props.store(writer, "updated on " + DateUtility.getCurrentDateTime());
             return StepResult.success("Property '" + property + "' updated to " + file);
         } catch (IOException e) {
             return StepResult.fail("Error occurred when writing to " + file + ": " + e.getMessage());
-        } finally {
-            if (writer != null) { try { writer.close(); } catch (IOException e) { } }
         }
     }
 
@@ -612,7 +608,7 @@ public class IoCommand extends BaseCommand {
             error(error);
 
             report.addFileMismatch(file(error));
-            // keep goinging
+            // keep going
         }
 
         return null;

@@ -133,7 +133,7 @@ public class ExecutionEventListener {
         if (mailConfig == null) { mailConfig = ExecutionMailConfig.configure(context); }
 
         if (!mailConfig.isReadyForNotification() || context.getMailNotifier() == null) {
-            ConsoleUtils.log(context.getRunId(), event + " - sms not configured for notification; SKIPPING...");
+            ConsoleUtils.log(context.getRunId(), event + " - smtp not configured for notification; SKIPPING...");
             ConsoleUtils.log(context.getRunId(), event + " - " + config);
             return;
         }
@@ -146,7 +146,7 @@ public class ExecutionEventListener {
         text += "\n" + mailTagLine + "\n";
 
         try {
-            // setup
+            // setup - mailConfig shouldn't be null or invalid at this point since we've already check for it above
             MailObjectSupport mailObjectSupport = new MailObjectSupport();
             mailObjectSupport.configure();
 
@@ -158,7 +158,7 @@ public class ExecutionEventListener {
 
             mailNotifier.sendPlainText(recipientList, "[nexial-notification] " + event.getDescription(), text);
         } catch (MessagingException e) {
-            ConsoleUtils.log(context.getRunId(), event + " - sms not configured properly: " + e.getMessage());
+            ConsoleUtils.log(context.getRunId(), event + " - smtp not configured properly: " + e.getMessage());
             ConsoleUtils.log(context.getRunId(), event + " - " + config);
         }
     }

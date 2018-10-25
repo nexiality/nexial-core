@@ -20,6 +20,8 @@ import java.net.UnknownHostException;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 
+import javax.annotation.Nullable;
+
 import org.apache.commons.collections4.ListUtils;
 import org.apache.commons.collections4.MapUtils;
 import org.apache.commons.lang3.BooleanUtils;
@@ -81,8 +83,8 @@ public class ExecutionMailConfig {
         return self;
     }
 
-    // might generate new instance of `ExecutionMailConfig` to avoid NPE
-    public static ExecutionMailConfig get() { return self == null ? new ExecutionMailConfig() : self; }
+    @Nullable
+    public static ExecutionMailConfig get() { return self; }
 
     public boolean isReady() {
         if (!BooleanUtils.toBoolean(MapUtils.getString(configurations, ENABLE_EMAIL, DEF_ENABLE_EMAIL))) {
