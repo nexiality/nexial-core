@@ -24,7 +24,6 @@ import javax.imageio.ImageIO;
 
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang3.StringUtils;
-import org.apache.commons.lang3.SystemUtils;
 import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
@@ -33,99 +32,96 @@ import org.nexial.commons.utils.ResourceUtils;
 import org.nexial.core.model.MockExecutionContext;
 import org.nexial.core.model.StepResult;
 
+import static java.io.File.separator;
+import static org.apache.commons.lang3.SystemUtils.JAVA_IO_TMPDIR;
+
 public class ImageCommandTest {
-	private final String testDir = SystemUtils.getJavaIoTmpDir().getAbsolutePath() + File.separatorChar +
-	                               this.getClass().getSimpleName();
-	//private final String testResource = StringUtils.replace(this.getClass().getName(), ".", "/") + "/../";
-	private final String resourceBasePath = StringUtils.replace(this.getClass().getPackage().getName(), ".", "/");
+    private final String testDir = StringUtils.appendIfMissing(JAVA_IO_TMPDIR, separator) +
+                                   this.getClass().getSimpleName();
+    private final String resourceBasePath = StringUtils.replace(this.getClass().getPackage().getName(), ".", "/");
 
-	private MockExecutionContext context = new MockExecutionContext();
+    private MockExecutionContext context = new MockExecutionContext();
 
-	@Before
-	public void init() throws IOException {
-		FileUtils.forceMkdir(new File(testDir));
-	}
+    @Before
+    public void init() throws IOException {
+        FileUtils.forceMkdir(new File(testDir));
+    }
 
-	@After
-	public void cleanup() {
-		FileUtils.deleteQuietly(new File(testDir));
-		if (context != null) { context.cleanProject(); }
-	}
+    @After
+    public void cleanup() {
+        FileUtils.deleteQuietly(new File(testDir));
+        if (context != null) { context.cleanProject(); }
+    }
 
-	@Test
-	public void testCrop() throws Exception {
-		String imageFile = ResourceUtils.getResourceFilePath(resourceBasePath + "/overall.png");
-		System.out.println("imageFile = " + imageFile);
+    @Test
+    public void testCrop() throws Exception {
+        String imageFile = ResourceUtils.getResourceFilePath(resourceBasePath + "/overall.png");
+        System.out.println("imageFile = " + imageFile);
 
-		ImageCommand command = new ImageCommand();
-		command.init(context);
-		assertSuccess(command.crop(imageFile, "80,185,892,350", testDir + "/test1.png"));
+        ImageCommand command = new ImageCommand();
+        command.init(context);
+        assertSuccess(command.crop(imageFile, "80,185,892,350", testDir + "/test1.png"));
 
-		String baselineImage = ResourceUtils.getResourceFilePath(resourceBasePath + "/overall-cropped-baseline.png");
-		assertSuccess(command.compare(baselineImage, testDir + "/test1.png"));
-	}
+        String baselineImage = ResourceUtils.getResourceFilePath(resourceBasePath + "/overall-cropped-baseline.png");
+        assertSuccess(command.compare(baselineImage, testDir + "/test1.png"));
+    }
 
+    @Test
+    public void testConvert() throws Exception {
+        String sourceImageFile = ResourceUtils.getResourceFilePath(resourceBasePath + "/overall.png");
+        ImageCommand command = new ImageCommand();
+        command.init(context);
+        command.convert(sourceImageFile, "jpg", testDir + "/converted.jpg");
+        checkConvertedFile(testDir + "/converted.jpg");
 
-	@Test
-	public void testConvert() throws Exception {
-		String sourceImageFile = ResourceUtils.getResourceFilePath(resourceBasePath + "/overall.png");
-		ImageCommand command = new ImageCommand();
-		command.init(context);
-		command.convert(sourceImageFile,"jpg",testDir + "/converted.jpg");
-		checkConvertedFile(testDir + "/converted.jpg");
+        command.convert(sourceImageFile, "jpg", testDir + "/converted1.gif");
+        checkConvertedFile(testDir + "/converted1.gif");
+    }
 
-		command.convert(sourceImageFile,"jpg",testDir + "/converted1.gif");
-		checkConvertedFile(testDir + "/converted1.gif");
-	}
+    @Test
+    public void testResize() throws Exception {
 
+        String imageFile = ResourceUtils.getResourceFilePath(resourceBasePath + "/overall.png");
+        System.out.println("imageFile = " + imageFile);
 
-	@Test
-	public void testResize() throws Exception {
+        ImageCommand command = new ImageCommand();
+        command.init(context);
+        assertSuccess(command.resize(imageFile, "20", "10", testDir + "/test1.png"));
 
-		String imageFile = ResourceUtils.getResourceFilePath(resourceBasePath + "/overall.png");
-		System.out.println("imageFile = " + imageFile);
+        File resizedImgFile = new File(testDir + "/test1.png");
+        BufferedImage img = ImageIO.read(resizedImgFile);
 
-		ImageCommand command = new ImageCommand();
-		command.init(context);
-		assertSuccess(command.resize(imageFile, "20","10", testDir + "/test1.png"));
+        Assert.assertEquals(20, img.getWidth());
+        Assert.assertEquals(10, img.getHeight());
+    }
 
-		File resizedImgFile = new File(testDir + "/test1.png");
-		BufferedImage img = ImageIO.read(resizedImgFile);
+    @Test
+    public void testImageCompare() {
+        String imageFile1 = ResourceUtils.getResourceFilePath(resourceBasePath + "/overall.png");
+        String imageFile2 = ResourceUtils.getResourceFilePath(resourceBasePath + "/quality.png");
+        String imageFile3 = ResourceUtils.getResourceFilePath(resourceBasePath + "/spider4.png");
 
-		Assert.assertEquals(20,img.getWidth());
-		Assert.assertEquals(10,img.getHeight());
+        ImageCommand command = new ImageCommand();
+        command.init(context);
+        command.compare(imageFile1, imageFile2);
 
-	}
+        StepResult result = command.compare(imageFile1, imageFile2);
+        if (!result.isSuccess()) { Assert.assertTrue(true); }
 
-	@Test
-	public void testImageCompare(){
-		String imageFile1 = ResourceUtils.getResourceFilePath(resourceBasePath + "/overall.png");
-		String imageFile2 = ResourceUtils.getResourceFilePath(resourceBasePath + "/quality.png");
-		String imageFile3 = ResourceUtils.getResourceFilePath(resourceBasePath + "/spider4.png");
+        result = command.compare(imageFile2, imageFile3);
+        if (!result.isSuccess()) { Assert.assertTrue(true); }
+    }
 
-		ImageCommand command = new ImageCommand();
-		command.init(context);
-		command.compare(imageFile1,imageFile2);
+    protected void assertSuccess(StepResult result) {
+        Assert.assertNotNull(result);
+        Assert.assertTrue(result.isSuccess());
+    }
 
-		StepResult result = command.compare(imageFile1,imageFile2);
-		if (!result.isSuccess()){ Assert.assertTrue(true); }
-
-		result =command.compare(imageFile2,imageFile3);
-		if (!result.isSuccess()){ Assert.assertTrue(true); }
-
-	}
-
-
-	protected void assertSuccess(StepResult result) {
-		Assert.assertNotNull(result);
-		Assert.assertTrue(result.isSuccess());
-	}
-
-	protected void checkConvertedFile(String imageFilePath) {
-		File imgFile = new File(imageFilePath);
-		Assert.assertTrue(imgFile.isFile());
-		Assert.assertTrue(imgFile.canRead());
-		Assert.assertTrue(imgFile.length() > 1);
-	}
+    protected void checkConvertedFile(String imageFilePath) {
+        File imgFile = new File(imageFilePath);
+        Assert.assertTrue(imgFile.isFile());
+        Assert.assertTrue(imgFile.canRead());
+        Assert.assertTrue(imgFile.length() > 1);
+    }
 
 }

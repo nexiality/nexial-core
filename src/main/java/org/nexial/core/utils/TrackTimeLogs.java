@@ -17,8 +17,6 @@
 
 package org.nexial.core.utils;
 
-import java.text.DateFormat;
-import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.Map;
 
@@ -27,6 +25,7 @@ import org.apache.commons.collections4.MapUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.nexial.commons.utils.DateUtility;
 import org.nexial.core.ExecutionThread;
+import org.nexial.core.NexialConst.Data;
 import org.nexial.core.model.ExecutionContext;
 import org.nexial.core.model.FlowControl;
 import org.nexial.core.model.FlowControl.Directive;
@@ -35,16 +34,12 @@ import org.nexial.core.model.TestStep;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import static org.nexial.core.NexialConst.Data.DEF_TIMETRACK_FORMAT;
-import static org.nexial.core.NexialConst.Data.TIMETRACK_FORMAT;
+import static org.nexial.core.NexialConst.Data.*;
 import static org.nexial.core.model.FlowControl.Directive.TimeTrackEnd;
 import static org.nexial.core.model.FlowControl.Directive.TimeTrackStart;
 
 public final class TrackTimeLogs {
     private static final Logger LOGGER = LoggerFactory.getLogger(TrackTimeLogs.class);
-    private static final String FORMAT_LOG = "yyyy-MM-dd HH:mm:ss,SSS";
-    private static final DateFormat DATE_FORMAT_LOG = new SimpleDateFormat(FORMAT_LOG);
-
     private static final String EMPTY = "";
 
     private String trackStartDate;
@@ -111,23 +106,18 @@ public final class TrackTimeLogs {
         if (StringUtils.isEmpty(trackStartDate)) { return; }
         if (StringUtils.isEmpty(trackEndDate)) { trackEndDate = DateUtility.getCurrentTimestampForLogging(); }
 
-        String startDateTime[] = StringUtils.split(trackStartDate, " ");
-        String endDateTime[] = StringUtils.split(trackEndDate, " ");
-        long timeDiff = DateUtility.formatTo(trackEndDate, FORMAT_LOG) -
-                        DateUtility.formatTo(trackStartDate, FORMAT_LOG);
+        String[] startDateTime = StringUtils.split(trackStartDate, " ");
+        String[] endDateTime = StringUtils.split(trackEndDate, " ");
+        long timeDiff = DateUtility.formatTo(trackEndDate, TIMETRACK_DATE_FORMAT) -
+                        DateUtility.formatTo(trackStartDate, TIMETRACK_DATE_FORMAT);
         String elapsedTime = Long.toString(timeDiff);
 
         String format = System.getProperty(TIMETRACK_FORMAT);
-        if (format == null && context != null) {
-            format = context.getStringData(TIMETRACK_FORMAT, DEF_TIMETRACK_FORMAT);
-        }
+        if (format == null && context != null) {format = context.getStringData(TIMETRACK_FORMAT, DEF_TIMETRACK_FORMAT);}
 
-        String[] searchList = new String[]{"START_DATE", "START_TIME", "END_DATE", "END_TIME", "ELAPSED_TIME",
-                                           "THREAD_NAME", "LABEL", "REMARK"};
         String[] replaceList = new String[]{startDateTime[0], startDateTime[1], endDateTime[0], endDateTime[1],
                                             elapsedTime, Thread.currentThread().getName(), label, remark};
-
-        format = StringUtils.replaceEach(format, searchList, replaceList);
+        format = StringUtils.replaceEach(format, Data.TRACKING_DETAIL_TOKENS, replaceList);
 
         if (StringUtils.isNotEmpty(format)) { LOGGER.info(format); }
         // setting variable to default value
@@ -148,7 +138,7 @@ public final class TrackTimeLogs {
         trackingDetails("Execution ended");
     }
 
-    private String formatDate(Long timestampMillis) { return DATE_FORMAT_LOG.format(new Date(timestampMillis)); }
+    private String formatDate(Long timestampMillis) { return TIMETRACK_LOG_DATE_FORMAT.format(new Date(timestampMillis)); }
 
     private void unset() {
         setTrackStartDate(EMPTY);

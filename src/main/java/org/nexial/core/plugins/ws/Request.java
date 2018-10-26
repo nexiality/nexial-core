@@ -152,35 +152,35 @@ public abstract class Request implements Serializable {
         addHeaderIfNotSpecified(WS_USER_AGENT, ExecUtil.deriveJarManifest());
 
         Map<String, Object> requestHeaders = getHeaders();
-        if (MapUtils.isNotEmpty(requestHeaders)) {
-            for (String name : requestHeaders.keySet()) {
-                Object value = requestHeaders.get(name);
-                String headerValue;
-                if (value instanceof Collection) {
-                    Collection values = (Collection) value;
-                    StringBuilder headerValues = new StringBuilder();
-                    for (Object val : values) {
-                        if (val instanceof Cookie) {
-                            Cookie cookie = (Cookie) val;
-                            headerValues.append(cookie.getName()).append("=").append(cookie.getValue()).append("; ");
-                        } else {
-                            headerValues.append(val.toString()).append("; ");
-                        }
-                    }
+        if (MapUtils.isEmpty(requestHeaders)) { return; }
+        requestHeaders.keySet().forEach(name -> setRequestHeader(http, name, requestHeaders));
+    }
 
-                    headerValue = StringUtils.removeEnd(headerValues.toString(), "; ");
+    protected void setRequestHeader(HttpRequest http, String name, Map<String, Object> requestHeaders) {
+        Object value = requestHeaders.get(name);
+        String headerValue;
+        if (value instanceof Collection) {
+            Collection values = (Collection) value;
+            StringBuilder headerValues = new StringBuilder();
+            for (Object val : values) {
+                if (val instanceof Cookie) {
+                    Cookie cookie = (Cookie) val;
+                    headerValues.append(cookie.getName()).append("=").append(cookie.getValue()).append("; ");
                 } else {
-                    headerValue = value.toString();
-                }
-
-                if (http.containsHeader(name)) {
-                    http.addHeader(name, http.getHeaders(name) + "; " + headerValue);
-                } else {
-                    http.addHeader(name, headerValue);
+                    headerValues.append(val.toString()).append("; ");
                 }
             }
+
+            headerValue = StringUtils.removeEnd(headerValues.toString(), "; ");
+        } else {
+            headerValue = value.toString();
         }
 
+        if (http.containsHeader(name)) {
+            http.addHeader(name, http.getHeaders(name) + "; " + headerValue);
+        } else {
+            http.addHeader(name, headerValue);
+        }
     }
 
     protected void addHeaderIfNotSpecified(String key, String value) {

@@ -732,6 +732,10 @@ public final class NexialConst {
         public static final String DEF_TRACK_EXECUTION = "false";
         public static final String DEF_TIMETRACK_FORMAT =
             "START_DATE|START_TIME|END_DATE|END_TIME|ELAPSED_TIME|THREAD_NAME|LABEL|REMARK";
+        public static final String[] TRACKING_DETAIL_TOKENS = new String[]{
+            "START_DATE", "START_TIME", "END_DATE", "END_TIME", "ELAPSED_TIME", "THREAD_NAME", "LABEL", "REMARK"};
+        public static final String TIMETRACK_DATE_FORMAT = "yyyy-MM-dd HH:mm:ss,SSS";
+        public static final DateFormat TIMETRACK_LOG_DATE_FORMAT = new SimpleDateFormat(TIMETRACK_DATE_FORMAT);
 
         public static final String COMMAND_DISCOVERY_MODE = NAMESPACE + "commandDiscovery";
         public static final String DEF_COMMAND_DISCOVERY_MODE = "false";

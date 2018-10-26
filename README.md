@@ -67,16 +67,15 @@ fixing bugs, improving documentation, suggesting new features, or collaboration 
 \
 \
 Nexial Automation enables test automation with [BrowserStack](http://browserstack.com).  
-![BrowserStack.com](https://nexiality.github.io/documentation/image/browserstack/Browserstack-logo-small.png).  
+![BrowserStack.com](https://nexiality.github.io/documentation/image/browserstack/Browserstack-logo-small.png)  
 \
 \
 \
 Nexial Automation enables test automation with [CrossBrowserTesting](http://CrossBrowserTesting.com).  
-![CrossBrowserTesting.com](https://nexiality.github.io/documentation/image/cbt/CrossBrowserTesting-logo-small.png) 
-\
-\
-
-
+![CrossBrowserTesting.com](https://nexiality.github.io/documentation/image/cbt/CrossBrowserTesting-logo-small.png)  
+  
+  
+  
 ---
 
 ## [Code of Conduct](.github/CODE_OF_CONDUCT.md)

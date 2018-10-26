@@ -23,6 +23,7 @@ import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 import org.nexial.core.model.MockExecutionContext;
+import org.nexial.core.model.StepResult;
 
 /**
  * CANNOT AUTOMATE THIS TEST DUE TO MISSING CONNECTION TO PROXY SRV
@@ -84,6 +85,35 @@ public class WsCommandManualTest {
         JSONObject json = new JSONObject(jsonContent);
         Assert.assertNotNull(json);
         System.out.println("json = " + json);
+    }
+
+    @Test
+    public void testUpload() throws Exception {
+        String url = "http://localhost:3000/projects/psg/reports/perf-test.12.32.22.1a";
+
+        WsCommand ws = new WsCommand();
+        ws.init(context);
+
+        StepResult result = ws.upload(url,
+                                      "reportZip=/Users/ml093043/Downloads/junk/mliu_Employees-API_rev1_2018_06_06.zip\n" +
+                                      "favourite=chicken\n" +
+                                      "more data=yes\n" +
+                                      "you&me=now&forever",
+                                      "reportZip",
+                                      "response");
+        System.out.println("result = " + result);
+
+        Object response = context.getObjectData("response");
+        System.out.println("response = " + response);
+
+        Response resp = (Response) response;
+
+        Assert.assertNotNull(resp);
+        Assert.assertEquals(resp.returnCode, 200);
+        Assert.assertTrue(resp.getContentLength() > 1);
+
+        String responseContent = new String(resp.getRawBody());
+        System.out.println("responseContent = " + responseContent);
     }
 
     // @Test

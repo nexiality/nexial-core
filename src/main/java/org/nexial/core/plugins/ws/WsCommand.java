@@ -91,6 +91,10 @@ public class WsCommand extends BaseCommand {
         }
     }
 
+    public StepResult upload(String url, String body, String fileParams, String var) {
+        return requestWithBodyMultipart(url, body, fileParams, var);
+    }
+
     public StepResult get(String url, String queryString, String var) {
         return requestNoBody(url, queryString, var, "get");
     }
@@ -441,6 +445,33 @@ public class WsCommand extends BaseCommand {
         }
     }
 
+    protected StepResult requestWithBodyMultipart(String url, String body, String fileParams, String var) {
+        requiresNotBlank(url, "invalid url", url);
+        requiresValidVariableName(var);
+
+        WebServiceClient client = new WebServiceClient(context);
+        client.setVerbose(verbose);
+
+        // is body a file?
+        try {
+            body = OutputFileUtils.resolveContent(body, context, compactRequestPayload());
+        } catch (IOException e) {
+            return StepResult.fail("Unable to read input '" + body + "' due to " + e.getMessage());
+        }
+
+        try {
+            logRequestWithBody(url, body);
+
+            Response response = client.postMultipart(url, body, fileParams);
+
+            context.setData(var, response);
+            logResponse(response, var);
+            return StepResult.success("Successfully invoked web service '" + hideAuthDetails(url) + "'");
+        } catch (IOException e) {
+            return toFailResult(url, e);
+        }
+    }
+
     protected Response resolveResponseObject(String var) throws ClassCastException {
         Object response = context.getObjectData(var);
         if (!(response instanceof Response)) {
@@ -467,5 +498,4 @@ public class WsCommand extends BaseCommand {
             log("RESPONSE payload save to '" + saveTo + "' --> \n" + response.getContentLength());
         }
     }
-
 }

@@ -89,6 +89,10 @@ public class WebServiceClient {
         return invokeRequest(toPostRequest(url, payload));
     }
 
+    public Response postMultipart(String url, String payload, String fileParams) throws IOException {
+        return invokeRequest(toPostMultipartRequest(url, payload, fileParams));
+    }
+
     public Response head(String url) throws IOException { return invokeRequest(toHeadRequest(url)); }
 
     public Response delete(String url, String queryString) throws IOException {
@@ -120,6 +124,14 @@ public class WebServiceClient {
         PostRequest request = new PostRequest(context);
         request.setUrl(url);
         request.setPayload(payload);
+        return request;
+    }
+
+    @NotNull
+    public PostRequest toPostMultipartRequest(String url, String payload, String fileParams) {
+        PostMultipartRequest request = new PostMultipartRequest(context);
+        request.setUrl(url);
+        request.setPayload(payload, StringUtils.split(fileParams, context.getTextDelim()));
         return request;
     }
 
@@ -172,6 +184,7 @@ public class WebServiceClient {
                RegexUtils.replace(url, REGEX_URL_HAS_AUTH, "$1$2://$5") : url;
     }
 
+
     protected Response invokeRequest(Request request) throws IOException {
         StopWatch tickTock = new StopWatch();
         tickTock.start();
@@ -199,6 +212,7 @@ public class WebServiceClient {
             } else {
                 httpResponse = client.execute(http);
             }
+
 
             Response response = gatherResponseData(http, request, httpResponse);
 

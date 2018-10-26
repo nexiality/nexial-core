@@ -38,6 +38,7 @@ import static org.nexial.core.utils.CheckUtils.*;
 
 public class ImageCommand extends BaseCommand implements ForcefulTerminate {
     protected static final DecimalFormat IMAGE_PERCENT_FORMAT = new DecimalFormat("##.00");
+
     protected boolean mustForcefullyTerminate;
 
     @Override

@@ -41,12 +41,14 @@ import org.nexial.commons.utils.ResourceUtils;
 import org.nexial.core.model.ExecutionContext;
 import org.nexial.core.model.MockExecutionContext;
 import org.nexial.core.model.StepResult;
+import org.nexial.core.plugins.image.ImageCommandTest;
 import org.nexial.core.variable.Random;
 import org.nexial.core.variable.Sysdate;
 import org.nexial.core.variable.Syspath;
 
 import static java.io.File.separator;
 import static java.lang.System.lineSeparator;
+import static org.apache.commons.lang3.SystemUtils.JAVA_IO_TMPDIR;
 import static org.nexial.core.NexialConst.*;
 import static org.nexial.core.NexialConst.Data.*;
 
@@ -60,6 +62,7 @@ public class IoCommandTest {
     private String testDestination1 = baseLocation + "newloc";
     private String basePath = StringUtils.appendIfMissing(SystemUtils.getJavaIoTmpDir().getAbsolutePath(), separator) +
                               this.getClass().getSimpleName() + separator;
+    private String dummyPng = StringUtils.appendIfMissing(JAVA_IO_TMPDIR, separator) + "dummy.png";
 
     private ExecutionContext context = new MockExecutionContext() {
         @Override
@@ -91,6 +94,7 @@ public class IoCommandTest {
         FileUtils.deleteQuietly(new File(testFile2 + ".txt"));
         FileUtils.deleteQuietly(new File(testDestination1));
         FileUtils.deleteQuietly(new File(tmpOutdir));
+        FileUtils.deleteQuietly(new File(dummyPng));
         if (context != null) { ((MockExecutionContext) context).cleanProject(); }
     }
 
@@ -1038,6 +1042,32 @@ public class IoCommandTest {
                 System.out.println("PASSED!");
             }
         }
+    }
+
+    @Test
+    public void testBase64() throws IOException {
+        String resourcePath = StringUtils.replace(ImageCommandTest.class.getPackage().getName(), ".", "/");
+        String imageFile1 = ResourceUtils.getResourceFilePath(resourcePath + "/overall.png");
+
+        IoCommand io = new IoCommand();
+        io.init(context);
+
+        StepResult result = io.base64("myImageBase64", imageFile1);
+        System.out.println("result = " + result);
+        Assert.assertNotNull(result);
+        Assert.assertTrue(result.isSuccess());
+
+        String base64 = context.getStringData("myImageBase64");
+        System.out.println("base64 = " + base64);
+        Assert.assertNotNull(base64);
+
+        byte[] decoded = Base64.getDecoder().decode(base64);
+        FileUtils.writeByteArrayToFile(new File(dummyPng), decoded);
+
+        StepResult compareResult = io.compare(imageFile1, dummyPng, "true");
+        System.out.println("compareResult = " + compareResult);
+        Assert.assertNotNull(compareResult);
+        Assert.assertTrue(compareResult.isSuccess());
     }
 
     protected static File makeDummyContent(String dummyFilePath) throws IOException {

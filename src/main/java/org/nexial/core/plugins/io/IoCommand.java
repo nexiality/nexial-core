@@ -485,6 +485,19 @@ public class IoCommand extends BaseCommand {
         return StepResult.success("'" + target + "' renamed to '" + newTarget + "'");
     }
 
+    /**
+     * read binary content of {@code file} as base64 string and story it to {@code var}.
+     */
+    public StepResult base64(String var, String file) throws IOException {
+        requiresValidVariableName(var);
+        requiresReadableFile(file);
+
+        byte[] content = FileUtils.readFileToByteArray(new File(file));
+        context.setData(var, Base64.getEncoder().encodeToString(content));
+
+        return StepResult.success("File content converted to BASE64 and saved to '" + var + "'");
+    }
+
     public static String formatPercent(double number) { return PERCENT_FORMAT.format(number); }
 
     @NotNull
