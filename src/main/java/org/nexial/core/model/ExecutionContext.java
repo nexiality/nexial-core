@@ -655,7 +655,7 @@ public class ExecutionContext {
         if (value == null) { data.remove(name); } else { data.put(name, value); }
     }
 
-    public boolean isNullValue(String value) { return StringUtils.equals(value, getNullValueToken()); }
+    public boolean isNullValue(String value) { return value == null || StringUtils.equals(value, getNullValueToken()); }
 
     public boolean isEmptyValue(String value) {
         return StringUtils.equals(value, "") || StringUtils.equals(value, EMPTY);
