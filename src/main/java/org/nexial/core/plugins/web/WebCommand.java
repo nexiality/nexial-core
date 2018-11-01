@@ -60,9 +60,9 @@ import org.nexial.core.plugins.ws.WsCommand;
 import org.nexial.core.utils.ConsoleUtils;
 import org.nexial.core.utils.OutputFileUtils;
 import org.nexial.core.utils.WebDriverUtils;
+import org.openqa.selenium.*;
 import org.openqa.selenium.Dimension;
 import org.openqa.selenium.Point;
-import org.openqa.selenium.*;
 import org.openqa.selenium.WebDriver.Window;
 import org.openqa.selenium.interactions.Actions;
 import org.openqa.selenium.interactions.Locatable;
@@ -80,8 +80,8 @@ import net.lightbody.bmp.proxy.jetty.http.HttpRequest;
 import static java.io.File.separator;
 import static java.lang.Thread.sleep;
 import static org.apache.commons.lang3.SystemUtils.IS_OS_MAC;
-import static org.nexial.core.NexialConst.*;
 import static org.nexial.core.NexialConst.BrowserType.safari;
+import static org.nexial.core.NexialConst.*;
 import static org.nexial.core.NexialConst.Data.*;
 import static org.nexial.core.plugins.ws.WebServiceClient.hideAuthDetails;
 import static org.nexial.core.utils.CheckUtils.*;
@@ -751,6 +751,22 @@ public class WebCommand extends BaseCommand implements CanTakeScreenshot, CanLog
     }
 
     public StepResult click(String locator) { return clickInternal(locator); }
+
+    public StepResult clickWithKeys(String locator, String keys) {
+        requiresNotBlank(locator, "locator must not be empty", locator);
+        WebElement element = toElement(locator);
+        if (element == null) {
+            return StepResult.fail("Unable to find element via locator '" + locator);
+        }
+
+        // if keys not specified, it is Equivalent to : web.click()
+        if (StringUtils.isBlank(keys)) { return clickInternal(element); }
+
+        Actions actions = WebDriverUtils.sendKeysActions(driver, element, keys);
+        if (actions != null) { actions.build().perform(); }
+
+        return StepResult.success("clicked element '" + locator + "'");
+    }
 
     public StepResult clickAndWait(String locator, String waitMs) {
         boolean isNumber = NumberUtils.isDigits(waitMs);

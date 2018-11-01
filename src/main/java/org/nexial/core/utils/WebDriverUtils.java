@@ -106,6 +106,43 @@ public final class WebDriverUtils {
         return actions;
     }
 
+    public static Actions sendKeysActions(WebDriver driver, WebElement element, String keystrokes) {
+        if (driver == null) { return null; }
+        if (StringUtils.isEmpty(keystrokes)) { return null; }
+
+        Actions actions = new Actions(driver);
+        Stack<Keys> controlKeys = new Stack<>();
+
+        if (element != null) { actions.moveToElement(element); }
+
+        while (StringUtils.isNotEmpty(keystrokes)) {
+            String nextKeyStroke = TextUtils.substringBetweenFirstPair(keystrokes, CTRL_KEY_START, CTRL_KEY_END);
+            if (StringUtils.isBlank(nextKeyStroke)) { break; }
+
+            String keystrokeId = CTRL_KEY_START + nextKeyStroke + CTRL_KEY_END;
+            if (keystrokeId == null) { throw new RuntimeException("Unsupported/unknown key " + keystrokeId); }
+
+            Keys controlKey = CONTROL_KEY_MAPPING.get(keystrokeId);
+            if (controlKey == null) { throw new RuntimeException("Unsuppported/unknown key " + keystrokeId); }
+
+            controlKeys.push(controlKey);
+            actions.keyDown(controlKey);
+
+            keystrokes = StringUtils.substringAfter(keystrokes, keystrokeId);
+
+            // removing duplicate keys if any
+            if (StringUtils.contains(keystrokes, keystrokeId)) {
+                keystrokes = StringUtils.remove(keystrokes, keystrokeId);
+            }
+        }
+        // click the locator with keydown
+        actions.click();
+
+        // release all the keys
+        actions = addReleaseControlKeys(actions, null, controlKeys);
+        return actions;
+    }
+
     public static Map<String, Keys> initControlKeyMapping() {
         Map<String, Keys> map = new HashMap<>();
         map.put("{SHIFT}", SHIFT);
