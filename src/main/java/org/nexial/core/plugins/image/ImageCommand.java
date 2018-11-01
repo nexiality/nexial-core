@@ -22,18 +22,20 @@ import java.awt.image.*;
 import java.io.File;
 import java.io.IOException;
 import java.text.DecimalFormat;
+import java.util.Arrays;
 import javax.imageio.ImageIO;
 
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.math.NumberUtils;
+import org.apache.commons.lang3.time.StopWatch;
 import org.nexial.commons.utils.RegexUtils;
-import org.nexial.core.NexialConst.ImageType;
+import org.nexial.core.NexialConst.*;
 import org.nexial.core.model.StepResult;
 import org.nexial.core.plugins.ForcefulTerminate;
 import org.nexial.core.plugins.base.BaseCommand;
 
 import static java.awt.image.BufferedImage.*;
-import static org.nexial.core.NexialConst.OPT_IMAGE_TOLERANCE;
+import static org.nexial.core.NexialConst.*;
 import static org.nexial.core.utils.CheckUtils.*;
 
 public class ImageCommand extends BaseCommand implements ForcefulTerminate {
@@ -202,6 +204,8 @@ public class ImageCommand extends BaseCommand implements ForcefulTerminate {
         for (int x = 0; x < width; x++) {
             for (int y = 0; y < height; y++) {
                 if (baseImage.getRGB(x, y) == testImage.getRGB(x, y)) { matchCount++; }
+                // converting to grayscale image then comparing
+                //if (ImageComparison.isMatched(baseImage.getRGB(x, y), testImage.getRGB(x, y))) { matchCount++; }
             }
         }
 
@@ -219,6 +223,74 @@ public class ImageCommand extends BaseCommand implements ForcefulTerminate {
         } else {
             return StepResult.success("baseline and test images match " + message);
         }
+    }
+
+    protected StepResult saveDiff(String baseline, String actual, String saveTo) {
+        requiresNotBlank(baseline, "null/invalid baseline file", baseline);
+        requiresNotBlank(actual, "null/invalid actual file", actual);
+
+        // get baseline image
+        File baselineFile = new File(baseline);
+        requires(baselineFile.canRead() && baselineFile.length() > 0, "empty or unreadable baseline file", baseline);
+        // get test image
+        File testFile = new File(actual);
+        requires(testFile.canRead() && testFile.length() > 0, "empty or unreadable test file", testFile);
+
+        String colorString = context.getStringData(OPT_IMAGE_DIFF_COLOR, DEF_IMAGE_DIFF_COLOR);
+        Color color;
+        if (!Arrays.asList(Colors.values()).contains(colorString)) {
+            color = Colors.red.getColor();
+        } else {
+            color = Colors.valueOf(colorString).getColor();
+        }
+
+        try {
+            StopWatch watch = new StopWatch();
+            watch.start();
+            ImageComparison imageComparison = new ImageComparison(baselineFile, testFile);
+            BufferedImage outImage = imageComparison.compareImages(color);
+            ImageIO.write(outImage, ImageType.png.toString(), new File(saveTo));
+            watch.stop();
+            System.out.println("time is watch " + watch.getTime());
+            return StepResult.success("file is saved to " + saveTo);
+        } catch (IOException e) {
+            return StepResult.fail("can not read/write file " + e.getMessage());
+        }
+    }
+
+    protected StepResult changeBitColor(String baseline, String bit, String saveTo) throws IOException {
+        requiresNotBlank(baseline, "null/invalid baseline file", baseline);
+        requiresPositiveNumber(bit, "invalid value for bit", bit);
+
+        int targetImageBit = NumberUtils.toInt(bit);
+
+        // get baseline image
+        File baselineFile = new File(baseline);
+        requires(baselineFile.canRead() && baselineFile.length() > 0, "empty or unreadable baseline file", baseline);
+        BufferedImage baseImage = null;
+        try {
+            baseImage = ImageIO.read(baselineFile);
+            if (baseImage == null) {
+                StepResult.fail("Baseline File" + baselineFile.getAbsolutePath() + " is unlikely to be proper image");
+            }
+        } catch (IOException e) {
+            StepResult.fail("Unable to read baseline '" + baselineFile.getAbsolutePath() + "': " + e.getMessage());
+        }
+
+        int baseImageBit = baseImage.getColorModel().getPixelSize();
+        if (baseImageBit == targetImageBit) {
+            String message = "color bit of source image and target bit are the same; no conversion needed";
+            log(message);
+            return StepResult.success(message);
+        }
+        baseImage = BitDepthConversion.changeColorBit(baseImage, targetImageBit);
+        String targetExt = StringUtils.substringAfterLast(baselineFile.getAbsolutePath(), ".");
+
+        File saveFile = resolveSaveTo(saveTo);
+        ImageIO.write(baseImage, targetExt, saveFile);
+        String message = "Image color bit is converted from " + baseImageBit + " to " + targetImageBit;
+        log(message);
+        return StepResult.success(message);
     }
 
     @Override

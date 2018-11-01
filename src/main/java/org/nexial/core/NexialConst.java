@@ -17,6 +17,7 @@
 
 package org.nexial.core;
 
+import java.awt.*;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.util.Arrays;
@@ -38,6 +39,7 @@ import org.nexial.core.utils.ConsoleUtils;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 
+import static java.awt.Color.*;
 import static java.awt.image.BufferedImage.*;
 import static java.io.File.separator;
 import static org.apache.commons.lang3.SystemUtils.IS_OS_WINDOWS;
@@ -168,6 +170,8 @@ public final class NexialConst {
     public static final int PROXY_PORT = 19850;
 
     public static final String OPT_IMAGE_TOLERANCE = NAMESPACE + "imageTolerance";
+    public static final String OPT_IMAGE_DIFF_COLOR = NAMESPACE + "imageDiffColor";
+    public static final String DEF_IMAGE_DIFF_COLOR = "red";
 
     // derived from System property ONLY -- should be set to each automation server
     public static final String OPT_REPORT_SERVER_URL = NAMESPACE + "reportServerUrl";
@@ -481,6 +485,20 @@ public final class NexialConst {
         ImageType(int imageType) { this.imageType = imageType; }
 
         public int getImageType() { return imageType; }
+    }
+
+    public enum Colors {
+        red(RED),
+        blue(BLUE),
+        green(GREEN),
+        black(BLACK),
+        white(WHITE);
+
+        private Color color;
+
+        Colors(Color color) { this.color = color; }
+
+        public Color getColor() { return color; }
     }
 
     public static final class AwsSettings {
