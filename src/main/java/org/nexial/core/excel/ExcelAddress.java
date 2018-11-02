@@ -49,7 +49,7 @@ public class ExcelAddress {
     private Integer columnCount;
 
     /**
-     * instance with a single or range address.  For eample:
+     * instance with a single or range address.  For example:
      * <pre>
      * new ExcelAddress("A1:E5");
      * new ExcelAddress("P205");

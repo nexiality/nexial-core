@@ -43,7 +43,8 @@ import java.nio.charset.Charset
 class IntegrationManager {
 
     companion object {
-        var remoteUrl:String? = null
+        var remoteUrl: String? = null
+
         fun manageIntegration(remoteUrl: String) {
             val context = ExecutionContext(createExecDefinition())
             ExecutionThread.set(context)
@@ -51,6 +52,7 @@ class IntegrationManager {
             if (!copyOutputDirTo(context, localPath, remoteUrl)) {
                 throw IllegalArgumentException("Unable to download output files from given url: $remoteUrl")
             }
+
             val iterationOutputList = mutableListOf<IterationOutput>()
             val executionOutput = ExecutionOutput().readExecutionSummary(localPath)
             val outputDir = File(localPath)
@@ -64,12 +66,13 @@ class IntegrationManager {
                     }
                 }
             }
+
             executionOutput.iterations = iterationOutputList
             handle(executionOutput, context)
         }
 
-        private fun isExcelFile(file: File) = (StringUtils.startsWith(file.name, "~").not()
-                && StringUtils.endsWith(file.name, ".xlsx"))
+        private fun isExcelFile(file: File) =
+            StringUtils.startsWith(file.name, "~").not() && StringUtils.endsWith(file.name, ".xlsx")
 
         private fun createExecDefinition(): ExecutionDefinition {
             val execDef = ExecutionDefinition()
@@ -88,8 +91,8 @@ class IntegrationManager {
         }
 
         private fun copyOutputDirTo(context: ExecutionContext, localPath: String, remotePath: String): Boolean {
-
             ConsoleUtils.log("Copying remote dir '$remotePath' to output dir '$localPath")
+
             if (UrlValidator.getInstance().isValid(remotePath)) {
 
                 // todo: check for s3 in url for s3 implementation
@@ -105,8 +108,8 @@ class IntegrationManager {
                 s3Command.init(context)
                 val result = "~s3OutputDir"
                 val stepResult = s3Command.copyFrom(result, profile,
-                        "${StringUtils.appendIfMissing(url, "/")}*",
-                        localPath)
+                                                    "${StringUtils.appendIfMissing(url, "/")}*",
+                                                    localPath)
 
                 return stepResult.isSuccess
             }
@@ -117,11 +120,13 @@ class IntegrationManager {
             data.forEach { key, value -> context.setData(key, value) }
         }*/
 
+        /**
+         * check for Nexial supported integration servers
+         * @param profile String
+         * @return Boolean
+         */
         @JvmStatic
-        fun isValidServer(profile: String): Boolean {
-            // check for Nexial supported integration servers
-            return StringUtils.equalsAnyIgnoreCase(profile, "Jira", "Slack")
-        }
+        fun isValidServer(profile: String) = StringUtils.equalsAnyIgnoreCase(profile, "Jira", "Slack")
 
         private fun handle(executionOutput: ExecutionOutput, context: ExecutionContext) {
             val servers = mutableSetOf<String>()
@@ -130,19 +135,20 @@ class IntegrationManager {
                     scenario.projects.forEach { project -> servers.add(project.server!!) }
                 }
             }
+
             val metadata = JSONArray()
             servers.forEach { server ->
-                if (!isValidServer(server)) {
-                    throw IllegalArgumentException("Unsupported server $server specified.")
-                }
+                if (!isValidServer(server)) throw IllegalArgumentException("Unsupported server $server specified.")
+
                 when (server) {
-                    "jira" -> {
+                    "jira"  -> {
                         val httpClient = ConnectionFactory.getInstance(context).getAsyncWsClient(server)
                         val jiraHelper = JiraHelper(context, httpClient)
                         val integrationMeta = jiraHelper.process(server, executionOutput)
 
                         metadata.put(JSONObject().put(server, JSONObject(GSON.toJson(integrationMeta))))
                     }
+
                     "slack" -> {
                         val httpClient = ConnectionFactory.getInstance(context).getAsyncWsClient(server)
                         SlackHelper(context, httpClient).process(server, executionOutput)
@@ -154,13 +160,12 @@ class IntegrationManager {
         }
 
         private fun updateMeta(data: JSONArray, context: ExecutionContext) {
-            val jsonFile = Syspath().out("fullpath") + File.separator + "integrationMeta.json"
+            val jsonFile = "${Syspath().out("fullpath")}${separator}integrationMeta.json"
 
-            FileUtils.write(File(jsonFile), GSON.toJson(JsonParser().parse(data.toString())),
-                    Charset.defaultCharset())
+            FileUtils.write(File(jsonFile), GSON.toJson(JsonParser().parse(data.toString())), Charset.defaultCharset())
             val s3Command = S3Command()
             s3Command.init(context)
-            val result = s3Command.copyTo("copyMeta", "temp", jsonFile, remoteUrl)
+            val result = s3Command.copyTo("copyMeta", "temp", jsonFile, remoteUrl!!)
             if (!result.isSuccess) {
                 throw IllegalArgumentException("Integration meta is not update to S3 output folder.")
             }

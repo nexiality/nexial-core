@@ -23,8 +23,8 @@ import javax.mail.MessagingException;
 import javax.sound.sampled.LineUnavailableException;
 import javax.sound.sampled.UnsupportedAudioFileException;
 
+import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
-import org.nexial.commons.javamail.MailObjectSupport;
 import org.nexial.commons.utils.EnvUtils;
 import org.nexial.commons.utils.TextUtils;
 import org.nexial.core.model.ExecutionContext;
@@ -32,9 +32,7 @@ import org.nexial.core.model.ExecutionEvent;
 import org.nexial.core.model.ExecutionSummary;
 import org.nexial.core.model.NexialScenarioCompleteEvent;
 import org.nexial.core.plugins.sound.SoundMachine;
-import org.nexial.core.reports.ExecutionMailConfig;
-import org.nexial.core.reports.MailNotifier;
-import org.nexial.core.reports.Mailer;
+import org.nexial.core.reports.NexialMailer;
 import org.nexial.core.service.EventTracker;
 import org.nexial.core.utils.ConsoleUtils;
 import org.nexial.core.utils.ExecUtil;
@@ -43,6 +41,7 @@ import javazoom.jl.decoder.JavaLayerException;
 
 import static org.apache.commons.lang3.SystemUtils.USER_NAME;
 import static org.nexial.core.NexialConst.Data.*;
+import static org.nexial.core.model.ExecutionEvent.*;
 import static org.nexial.core.model.ExecutionEvent.ExecutionPause;
 
 public class ExecutionEventListener {
@@ -63,22 +62,22 @@ public class ExecutionEventListener {
 
     public void setSmsIncludeMeta(boolean smsIncludeMeta) { this.smsIncludeMeta = smsIncludeMeta; }
 
-    public void onExecutionStart() { handleEvent(ExecutionEvent.ExecutionStart); }
+    public void onExecutionStart() { handleEvent(ExecutionStart); }
 
-    public void onExecutionComplete() { handleEvent(ExecutionEvent.ExecutionComplete); }
+    public void onExecutionComplete() { handleEvent(ExecutionComplete); }
 
-    public void onScriptStart() { handleEvent(ExecutionEvent.ScriptStart); }
+    public void onScriptStart() { handleEvent(ScriptStart); }
 
-    public void onScriptComplete() { handleEvent(ExecutionEvent.ScriptComplete); }
+    public void onScriptComplete() { handleEvent(ScriptComplete); }
 
-    public void onScenarioStart() { handleEvent(ExecutionEvent.ScenarioStart); }
+    public void onScenarioStart() { handleEvent(ScenarioStart); }
 
     public void onScenarioComplete(ExecutionSummary executionSummary) {
-        handleEvent(ExecutionEvent.ScenarioComplete);
+        handleEvent(ScenarioComplete);
         EventTracker.INSTANCE.track(new NexialScenarioCompleteEvent(executionSummary));
     }
 
-    public void onError() { handleEvent(ExecutionEvent.ErrorOccurred); }
+    public void onError() { handleEvent(ErrorOccurred); }
 
     public void onPause() { handleEvent(ExecutionPause); }
 
@@ -129,37 +128,32 @@ public class ExecutionEventListener {
     }
 
     private void doEmail(ExecutionEvent event, String config) {
-        ExecutionMailConfig mailConfig = ExecutionMailConfig.get();
-        if (mailConfig == null) { mailConfig = ExecutionMailConfig.configure(context); }
+        String msgId = context.getRunId();
 
-        if (!mailConfig.isReadyForNotification() || context.getMailNotifier() == null) {
-            ConsoleUtils.log(context.getRunId(), event + " - smtp not configured for notification; SKIPPING...");
-            ConsoleUtils.log(context.getRunId(), event + " - " + config);
+        NexialMailer nexialMailer = context.getNexialMailer();
+        if (nexialMailer == null) {
+            ConsoleUtils.log(msgId, event + " - nexial mailer not configured for notification; SKIPPING...");
+            ConsoleUtils.log(msgId, event + " - " + config);
             return;
         }
 
-        String recipients = StringUtils.substringBefore(config, EVENT_CONFIG_SEP);
-        List<String> recipientList = TextUtils.toList(recipients, context.getTextDelim(), true);
+        List<String> recipientList = TextUtils.toList(StringUtils.substringBefore(config, EVENT_CONFIG_SEP),
+                                                      context.getTextDelim(),
+                                                      true);
+        if (CollectionUtils.isEmpty(recipientList)) {
+            ConsoleUtils.log(msgId, event + " - invalid or no recipient specified; SKIPPING...");
+            ConsoleUtils.log(msgId, event + " - " + config);
+            return;
+        }
 
-        String text = StringUtils.trim(StringUtils.substringAfter(config, EVENT_CONFIG_SEP));
-        if (mailIncludeMeta) { text += "\n" + gatherMeta(); }
-        text += "\n" + mailTagLine + "\n";
+        String text = StringUtils.trim(StringUtils.substringAfter(config, EVENT_CONFIG_SEP)) +
+                      (mailIncludeMeta ? "\n" + gatherMeta() : "") + "\n" + mailTagLine + "\n";
 
         try {
-            // setup - mailConfig shouldn't be null or invalid at this point since we've already check for it above
-            MailObjectSupport mailObjectSupport = new MailObjectSupport();
-            mailObjectSupport.configure();
-
-            Mailer mailer = new Mailer();
-            mailer.setMailer(mailObjectSupport);
-
-            MailNotifier mailNotifier = context.getMailNotifier();
-            mailNotifier.setMailer(mailer);
-
-            mailNotifier.sendPlainText(recipientList, "[nexial-notification] " + event.getDescription(), text);
+            nexialMailer.sendPlainText(recipientList, "[nexial-notification] " + event.getDescription(), text);
         } catch (MessagingException e) {
-            ConsoleUtils.log(context.getRunId(), event + " - smtp not configured properly: " + e.getMessage());
-            ConsoleUtils.log(context.getRunId(), event + " - " + config);
+            ConsoleUtils.log(msgId, event + " - nexial mailer not configured properly: " + e.getMessage());
+            ConsoleUtils.log(msgId, event + " - " + config);
         }
     }
 

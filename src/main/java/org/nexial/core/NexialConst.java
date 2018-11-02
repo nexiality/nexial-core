@@ -25,6 +25,7 @@ import java.util.List;
 import java.util.Map;
 
 import org.apache.commons.cli.Options;
+import org.apache.commons.collections4.ListUtils;
 import org.apache.commons.lang3.BooleanUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.nexial.commons.utils.RegexUtils;
@@ -42,8 +43,10 @@ import com.google.gson.GsonBuilder;
 import static java.awt.Color.*;
 import static java.awt.image.BufferedImage.*;
 import static java.io.File.separator;
+import static javax.naming.Context.*;
 import static org.apache.commons.lang3.SystemUtils.IS_OS_WINDOWS;
-import static org.nexial.core.NexialConst.Data.CMD_VERBOSE;
+import static org.nexial.core.NexialConst.AwsSettings.*;
+import static org.nexial.core.NexialConst.Data.*;
 
 /**
  * constants
@@ -300,10 +303,7 @@ public final class NexialConst {
     public static final String MAIL_KEY_BUFF_SIZE = "mail.smtp.bufferSize";
     public static final String MAIL_KEY_TLS_ENABLE = "mail.smtp.starttls.enable";
     public static final String MAIL_KEY_CONTENT_TYPE = "mail.smtp.contentType";
-    public static final List<String> MAIL_KEYS =
-        Arrays.asList(MAIL_KEY_AUTH, MAIL_KEY_USERNAME, MAIL_KEY_PASSWORD, MAIL_KEY_DEBUG, MAIL_KEY_MAIL_HOST,
-                      MAIL_KEY_MAIL_PORT, MAIL_KEY_PROTOCOL, MAIL_KEY_SMTP_LOCALHOST, MAIL_KEY_MAIL_JNDI_URL,
-                      MAIL_KEY_BUFF_SIZE, MAIL_KEY_TLS_ENABLE, MAIL_KEY_CONTENT_TYPE);
+
     // mailer specific
     public static final String OPT_MAIL_FROM = "mail.smtp.from";
     public static final String OPT_MAIL_CC = "mail.smtp.cc";
@@ -502,10 +502,17 @@ public final class NexialConst {
     }
 
     public static final class AwsSettings {
+        public static final String SUFFIX = "aws";
+
         public static final String AWS_ACCESS_KEY = "accessKey";
         public static final String AWS_SECRET_KEY = "secretKey";
         public static final String AWS_REGION = "region";
-        public static final String SUFFIX = "aws";
+        public static final String AWS_SES_FROM = "from";
+        public static final String AWS_SES_REPLY_TO = "replyTo";
+        public static final String AWS_SES_CC = "cc";
+        public static final String AWS_SES_BCC = "bcc";
+        public static final String AWS_SES_CONFIG_SET = "configurationSetName";
+        public static final String AWS_XMAILER = "xmailer";
 
         private AwsSettings() {}
     }
@@ -1134,6 +1141,54 @@ public final class NexialConst {
         public static final String DESCRIPTION = "Description";
 
         private PdfMeta() {}
+    }
+
+    public static class Mailer {
+        // standalone smtp config
+        public static final List<String> SMTP_KEYS = Arrays.asList(
+            MAIL_KEY_BUFF_SIZE, MAIL_KEY_PROTOCOL, MAIL_KEY_MAIL_HOST, MAIL_KEY_MAIL_PORT, MAIL_KEY_TLS_ENABLE,
+            MAIL_KEY_AUTH, MAIL_KEY_DEBUG, MAIL_KEY_CONTENT_TYPE, MAIL_KEY_USERNAME, MAIL_KEY_PASSWORD, OPT_MAIL_FROM,
+            OPT_MAIL_CC, OPT_MAIL_BCC, OPT_MAIL_XMAILER);
+
+        // jndi smtp config
+        public static final List<String> JNDI_KEYS = Arrays.asList(
+            MAIL_KEY_MAIL_JNDI_URL, INITIAL_CONTEXT_FACTORY, OBJECT_FACTORIES, STATE_FACTORIES,
+            URL_PKG_PREFIXES, PROVIDER_URL, DNS_URL, AUTHORITATIVE, BATCHSIZE, REFERRAL, SECURITY_PROTOCOL,
+            SECURITY_AUTHENTICATION, SECURITY_PRINCIPAL, SECURITY_CREDENTIALS, LANGUAGE);
+
+        // ses api config
+        public static final String SES_PREFIX = "nexial-mailer." + SUFFIX + ".";
+        public static final List<String> SES_KEYS = Arrays.asList(
+            SES_PREFIX + AWS_ACCESS_KEY,
+            SES_PREFIX + AWS_SECRET_KEY,
+            SES_PREFIX + AWS_REGION,
+            SES_PREFIX + AWS_SES_FROM,
+            SES_PREFIX + AWS_SES_REPLY_TO,
+            SES_PREFIX + AWS_SES_CC,
+            SES_PREFIX + AWS_SES_BCC,
+            SES_PREFIX + AWS_SES_CONFIG_SET,
+            SES_PREFIX + AWS_XMAILER);
+
+        // enable for email notification?
+        public static final List<String> MAILER_KEYS =
+            ListUtils.sum(ListUtils.sum(ListUtils.sum(Arrays.asList(ENABLE_EMAIL, MAIL_TO, MAIL_TO2), SMTP_KEYS),
+                                        JNDI_KEYS), SES_KEYS);
+
+        public static final String NOT_READY_PREFIX = "nexial mailer not enabled: ";
+        public static final String DOC_REF_SUFFIX = " Please check " +
+                                                    "https://nexiality.github.io/documentation/tipsandtricks/IntegratingNexialWithEmail.html" +
+                                                    " for more details";
+        public static final String JNDI_NOT_READY = NOT_READY_PREFIX + "missing required JNDI configurations." +
+                                                    DOC_REF_SUFFIX;
+        public static final String SMTP_NOT_READY = NOT_READY_PREFIX + "missing required smtp/imap configurations." +
+                                                    DOC_REF_SUFFIX;
+        public static final String SES_NOT_READY = NOT_READY_PREFIX + "missing required AWS SES configurations." +
+                                                   DOC_REF_SUFFIX;
+        public static final String MAILER_NOT_READY = NOT_READY_PREFIX +
+                                                      "unable to resolve any valid mailer configurations." +
+                                                      DOC_REF_SUFFIX;
+
+        private Mailer() {}
     }
 
     private NexialConst() { }

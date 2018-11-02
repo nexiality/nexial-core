@@ -17,22 +17,29 @@
 package org.nexial.core.reports;
 
 import java.net.UnknownHostException;
-import java.util.*;
+import java.util.Hashtable;
+import java.util.List;
+import java.util.Map;
+import java.util.Properties;
 import java.util.concurrent.ConcurrentHashMap;
-
 import javax.annotation.Nullable;
+import javax.validation.constraints.NotNull;
 
-import org.apache.commons.collections4.ListUtils;
 import org.apache.commons.collections4.MapUtils;
 import org.apache.commons.lang3.BooleanUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.nexial.commons.utils.EnvUtils;
+import org.nexial.commons.utils.TextUtils;
 import org.nexial.core.model.ExecutionContext;
 import org.nexial.core.utils.ConsoleUtils;
+import org.nexial.core.utils.ExecUtil;
 
-import static javax.naming.Context.*;
+import static javax.naming.Context.INITIAL_CONTEXT_FACTORY;
+import static org.apache.commons.lang3.SystemUtils.USER_NAME;
+import static org.nexial.core.NexialConst.AwsSettings.*;
 import static org.nexial.core.NexialConst.Data.*;
 import static org.nexial.core.NexialConst.*;
+import static org.nexial.core.NexialConst.Mailer.*;
 
 /**
  * central object to resolve and avail mail-related configuration for the purpose of sending execution-level report
@@ -50,35 +57,19 @@ import static org.nexial.core.NexialConst.*;
  * (i.e. -D...) or to project.properties.
  */
 public class ExecutionMailConfig {
-
-    // standalone smtp config?
-    private static final List<String> MAIL_CONIG_KEYS = Arrays.asList(
-        MAIL_KEY_BUFF_SIZE, MAIL_KEY_PROTOCOL, MAIL_KEY_MAIL_HOST, MAIL_KEY_MAIL_PORT, MAIL_KEY_TLS_ENABLE,
-        MAIL_KEY_AUTH, MAIL_KEY_DEBUG, MAIL_KEY_CONTENT_TYPE, MAIL_KEY_USERNAME, MAIL_KEY_PASSWORD, OPT_MAIL_FROM,
-        OPT_MAIL_CC, OPT_MAIL_BCC, OPT_MAIL_XMAILER);
-
-    // jndi smtp config?
-    private static final List<String> JNDI_CONFIG_KEY = Arrays.asList(
-        MAIL_KEY_MAIL_JNDI_URL, INITIAL_CONTEXT_FACTORY, OBJECT_FACTORIES, STATE_FACTORIES,
-        URL_PKG_PREFIXES, PROVIDER_URL, DNS_URL, AUTHORITATIVE, BATCHSIZE, REFERRAL, SECURITY_PROTOCOL,
-        SECURITY_AUTHENTICATION, SECURITY_PRINCIPAL, SECURITY_CREDENTIALS, LANGUAGE);
-
-    // enable for email notification?
-    private static final List<String> CONFIG_KEYS =
-        ListUtils.sum(ListUtils.sum(Arrays.asList(ENABLE_EMAIL, MAIL_TO, MAIL_TO2), MAIL_CONIG_KEYS), JNDI_CONFIG_KEY);
-
     private static ExecutionMailConfig self;
+    private final Map<String, String> configurations = new ConcurrentHashMap<>();
 
-    private Map<String, String> configurations = new ConcurrentHashMap<>();
-
+    @NotNull
     public static ExecutionMailConfig configure(ExecutionContext context) {
-        if (self == null) { self = new ExecutionMailConfig(); }
-
-        Optional.ofNullable(self.getConfigKeys()).orElse(new ArrayList<>()).forEach(key -> {
-            if (!self.configurations.containsKey(key) && StringUtils.isNotBlank(context.getStringData(key))) {
-                self.configurations.put(key, context.getStringData(key));
-            }
-        });
+        if (self == null) {
+            self = new ExecutionMailConfig();
+            MAILER_KEYS.forEach(key -> {
+                if (!isConfigFound(self.configurations, key) && context.hasData(key)) {
+                    self.configurations.put(key, context.getStringData(key));
+                }
+            });
+        }
 
         return self;
     }
@@ -87,29 +78,62 @@ public class ExecutionMailConfig {
     public static ExecutionMailConfig get() { return self; }
 
     public boolean isReady() {
-        if (!BooleanUtils.toBoolean(MapUtils.getString(configurations, ENABLE_EMAIL, DEF_ENABLE_EMAIL))) {
+        String enableEmail = MapUtils.getString(configurations, ENABLE_EMAIL, DEF_ENABLE_EMAIL);
+        if (!BooleanUtils.toBoolean(enableEmail)) {
+            ConsoleUtils.log(NOT_READY_PREFIX + ENABLE_EMAIL + "=" + enableEmail);
             return false;
         }
 
-        if (StringUtils.isBlank(MapUtils.getString(configurations, MAIL_TO)) &&
-            StringUtils.isBlank(MapUtils.getString(configurations, MAIL_TO2))) { return false; }
+        String mailTo = MapUtils.getString(configurations, MAIL_TO);
+        String mailTo2 = MapUtils.getString(configurations, MAIL_TO2);
+        if (StringUtils.isBlank(mailTo) && StringUtils.isBlank(mailTo2)) {
+            ConsoleUtils.log(NOT_READY_PREFIX + MAIL_TO + "=" + mailTo + ", " + MAIL_TO2 + "=" + mailTo2);
+            return false;
+        }
 
         return isReadyForNotification();
     }
 
     public boolean isReadyForNotification() {
-        if (StringUtils.isNotBlank(MapUtils.getString(configurations, MAIL_KEY_MAIL_JNDI_URL))) {
-            return StringUtils.isNotBlank(MapUtils.getString(configurations, INITIAL_CONTEXT_FACTORY));
+        // jndi as first priority
+        if (isConfigFound(configurations, MAIL_KEY_MAIL_JNDI_URL)) {
+            if (!isConfigFound(configurations, INITIAL_CONTEXT_FACTORY)) {
+                ConsoleUtils.log(JNDI_NOT_READY);
+            } else {
+                return true;
+            }
         }
 
-        return StringUtils.isNotBlank(MapUtils.getString(configurations, MAIL_KEY_PROTOCOL)) &&
-               StringUtils.isNotBlank(MapUtils.getString(configurations, MAIL_KEY_MAIL_HOST)) &&
-               StringUtils.isNotBlank(MapUtils.getString(configurations, MAIL_KEY_MAIL_PORT));
+        // smtp/imap as second priority
+        if (isConfigFound(configurations, MAIL_KEY_MAIL_HOST)) {
+            if (!isConfigFound(configurations, MAIL_KEY_PROTOCOL) ||
+                !isConfigFound(configurations, MAIL_KEY_MAIL_PORT)) {
+                ConsoleUtils.log(SMTP_NOT_READY);
+            } else {
+                return true;
+            }
+        }
+
+        // ses as third priority
+        if (isConfigFound(configurations, SES_PREFIX + AWS_ACCESS_KEY)) {
+            if (!isConfigFound(configurations, SES_PREFIX + AWS_SECRET_KEY) ||
+                !isConfigFound(configurations, SES_PREFIX + AWS_SES_FROM)) {
+                ConsoleUtils.log(SES_NOT_READY);
+            } else {
+                return true;
+            }
+        }
+
+        // can't find required config for JNDI, SMTP, IMAP or SES
+        ConsoleUtils.log(MAILER_NOT_READY);
+        return false;
     }
 
-    public Properties toMailProperties() {
+    @NotNull
+    public Properties toSmtpConfigs() {
         Properties props = new Properties();
-        MAIL_CONIG_KEYS.forEach(key -> {
+
+        SMTP_KEYS.forEach(key -> {
             if (configurations.containsKey(key)) { props.setProperty(key, configurations.get(key)); }
         });
 
@@ -124,20 +148,43 @@ public class ExecutionMailConfig {
         return props;
     }
 
+    @NotNull
+    public Properties toSesConfigs() {
+        Properties props = new Properties();
+
+        SES_KEYS.forEach(key -> {
+            if (configurations.containsKey(key)) { props.setProperty(key, configurations.get(key)); }
+        });
+
+        if (StringUtils.isBlank(configurations.get(SES_PREFIX + AWS_XMAILER))) {
+            String callSign = ExecUtil.deriveJarManifest() + "/" + USER_NAME;
+            try {
+                configurations.put(SES_PREFIX + AWS_XMAILER, callSign + "@" + EnvUtils.getHostName());
+            } catch (UnknownHostException e) {
+                ConsoleUtils.log("Unable to query localhost's hostname: " + e.getMessage());
+                configurations.put(SES_PREFIX + AWS_XMAILER, callSign + "@localhost");
+            }
+        }
+
+        return props;
+    }
+
+    @NotNull
     public Hashtable toJndiEnv() {
         Hashtable env = new Hashtable();
-        JNDI_CONFIG_KEY.forEach(key -> {
-            if (configurations.containsKey(key)) { env.put(key, configurations.get(key)); }
-        });
+        JNDI_KEYS.forEach(key -> { if (configurations.containsKey(key)) { env.put(key, configurations.get(key)); }});
         return env;
     }
 
-    public String[] getRecipients() {
+    @Nullable
+    public List<String> getRecipients() {
         String recipients = configurations.get(MAIL_TO);
         if (StringUtils.isBlank(recipients)) { recipients = configurations.get(MAIL_TO2); }
         if (StringUtils.isBlank(recipients)) { return null; }
-        return StringUtils.split(StringUtils.replace(recipients, ";", ","), ",");
+        return TextUtils.toList(StringUtils.replace(recipients, ";", ","), ",", true);
     }
 
-    protected List<String> getConfigKeys() { return CONFIG_KEYS; }
+    protected static boolean isConfigFound(Map<String, String> config, String key) {
+        return StringUtils.isNotBlank(MapUtils.getString(config, key));
+    }
 }

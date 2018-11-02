@@ -30,6 +30,7 @@ import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang3.BooleanUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.nexial.commons.utils.CollectionUtil;
+import org.nexial.core.excel.ExcelAddress;
 import org.nexial.core.tools.ScriptMetadata.Commands;
 import org.nexial.core.tools.ScriptMetadata.NamedRange;
 
@@ -111,7 +112,8 @@ public final class CommandDiscovery {
 
             // resolve [excel] named range based on command list size
             int commandSize = commands.size();
-            char columnName = (char) ('B' + i);
+            // char columnName = (char) ('B' + i);
+            String columnName = ExcelAddress.toLetterCellRef(i + 2);
             String reference = referencePrefix + columnName + "$2:$" + columnName + "$" + (commandSize + 1);
             metadata.addName(new NamedRange(commandType, reference));
         }

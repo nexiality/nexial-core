@@ -29,33 +29,34 @@ private const val NOTIFY_ON = NAMESPACE + "notifyOn"
  * @constructor
  */
 enum class ExecutionEvent(val eventName: String, val variable: String, val description: String) {
-    ExecutionStart("onExecutionStart", NOTIFY_ON + "ExecutionStart", "Execution started"),
-    ExecutionComplete("onExecutionComplete", NOTIFY_ON + "ExecutionComplete", "Execution completed"),
 
-    ScriptStart("onScriptStart", NOTIFY_ON + "ScriptStart", "Script execution started"),
-    ScriptComplete("onScriptComplete", NOTIFY_ON + "ScriptComplete", "Script execution completed"),
+    ExecutionStart("onExecutionStart", "${NOTIFY_ON}ExecutionStart", "Execution started"),
+    ExecutionComplete("onExecutionComplete", "${NOTIFY_ON}ExecutionComplete", "Execution completed"),
 
-    IterationStart("onIterationStart", NOTIFY_ON + "IterationStart", "Iteration execution started"),
-    IterationComplete("onIterationComplete", NOTIFY_ON + "IterationComplete", "Iteration execution completed"),
+    ScriptStart("onScriptStart", "${NOTIFY_ON}ScriptStart", "Script execution started"),
+    ScriptComplete("onScriptComplete", "${NOTIFY_ON}ScriptComplete", "Script execution completed"),
 
-    ScenarioStart("onScenarioStart", NOTIFY_ON + "ScenarioStart", "Scenario execution started"),
-    ScenarioComplete("onScenarioComplete", NOTIFY_ON + "ScenarioComplete", "Scenario execution completed"),
+    IterationStart("onIterationStart", "${NOTIFY_ON}IterationStart", "Iteration execution started"),
+    IterationComplete("onIterationComplete", "${NOTIFY_ON}IterationComplete", "Iteration execution completed"),
 
-    ErrorOccurred("onError", NOTIFY_ON + "Error", "Error occurred"),
-    ExecutionPause("onPause", NOTIFY_ON + "Pause", "Execution paused"),
+    ScenarioStart("onScenarioStart", "${NOTIFY_ON}ScenarioStart", "Scenario execution started"),
+    ScenarioComplete("onScenarioComplete", "${NOTIFY_ON}ScenarioComplete", "Scenario execution completed"),
 
-    WebOpen("onWebOpen", NOTIFY_ON + "WebOpen", "URL invoked"),
+    ErrorOccurred("onError", "${NOTIFY_ON}Error", "Error occurred"),
+    ExecutionPause("onPause", "${NOTIFY_ON}Pause", "Execution paused"),
 
-    DesktopUseApp("onDesktopUseApp", NOTIFY_ON + "DesktopUseApp", "Desktop app in use"),
-    DesktopUseForm("onDesktopUseForm", NOTIFY_ON + "DesktopUseForm", "Desktop form in use"),
-    DesktopUseTable("onDesktopUseTable", NOTIFY_ON + "DesktopUseTable", "Desktop table in use"),
-    DesktopUseList("onDesktopUseList", NOTIFY_ON + "DesktopUseList", "Desktop list in use"),
+    WebOpen("onWebOpen", "${NOTIFY_ON}WebOpen", "URL invoked"),
 
-    WsStart("onWsStart", NOTIFY_ON + "WsStart", "Web service invoked"),
-    WsComplete("onWsComplete", NOTIFY_ON + "WsComplete", "Web service completed"),
+    DesktopUseApp("onDesktopUseApp", "${NOTIFY_ON}DesktopUseApp", "Desktop app in use"),
+    DesktopUseForm("onDesktopUseForm", "${NOTIFY_ON}DesktopUseForm", "Desktop form in use"),
+    DesktopUseTable("onDesktopUseTable", "${NOTIFY_ON}DesktopUseTable", "Desktop table in use"),
+    DesktopUseList("onDesktopUseList", "${NOTIFY_ON}DesktopUseList", "Desktop list in use"),
 
-    RdbmsStart("onRdbmsStart", NOTIFY_ON + "RdbmsStart", "SQL query started"),
-    RdbmsComplete("onRdbmsComplete", NOTIFY_ON + "RdbmsComplete", "SQL query completed");
+    WsStart("onWsStart", "${NOTIFY_ON}WsStart", "Web service invoked"),
+    WsComplete("onWsComplete", "${NOTIFY_ON}WsComplete", "Web service completed"),
+
+    RdbmsStart("onRdbmsStart", "${NOTIFY_ON}RdbmsStart", "SQL query started"),
+    RdbmsComplete("onRdbmsComplete", "${NOTIFY_ON}RdbmsComplete", "SQL query completed");
 
     override fun toString(): String = eventName
 

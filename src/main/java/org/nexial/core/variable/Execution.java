@@ -27,7 +27,9 @@ import org.nexial.core.model.TestCase;
 import org.nexial.core.model.TestScenario;
 import org.nexial.core.model.TestStep;
 import org.nexial.core.utils.ConsoleUtils;
+import org.nexial.core.utils.ExecUtil;
 
+import static org.apache.commons.lang3.SystemUtils.*;
 import static org.nexial.core.NexialConst.Data.CURR_ITERATION;
 import static org.nexial.core.NexialConst.Data.ITERATION_ENDED;
 import static org.nexial.core.NexialConst.OPT_INPUT_EXCEL_FILE;
@@ -64,9 +66,14 @@ public class Execution {
 
     public String iteration(String scope) { return evaluateExecutionData(Artifact.iteration, Metadata.valueOf(scope)); }
 
-    protected void init() { }
+    public String meta(String type) {
+        if (StringUtils.equalsIgnoreCase(type, "nexial")) { return ExecUtil.deriveJarManifest(); }
+        if (StringUtils.equalsIgnoreCase(type, "java")) { return "Java " + JAVA_VERSION; }
+        ConsoleUtils.log("Unknown 'type': " + type);
+        return null;
+    }
 
-    // public String plan(String scope) { return evaluateExecutionData(Artifact.script, scope); }
+    protected void init() { }
 
     private String evaluateExecutionData(Artifact scope, Metadata metadata) {
         ExecutionContext context = ExecutionThread.get();

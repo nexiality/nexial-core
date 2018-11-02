@@ -27,7 +27,6 @@ import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 import javax.annotation.Nullable;
-import javax.mail.MessagingException;
 import javax.validation.constraints.NotNull;
 
 import org.apache.commons.cli.CommandLine;
@@ -42,10 +41,8 @@ import org.apache.commons.lang3.ArrayUtils;
 import org.apache.commons.lang3.BooleanUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.math.NumberUtils;
-import org.apache.commons.mail.EmailException;
 import org.apache.poi.xssf.usermodel.XSSFCell;
 import org.apache.poi.xssf.usermodel.XSSFRow;
-import org.nexial.commons.javamail.MailObjectSupport;
 import org.nexial.commons.utils.DateUtility;
 import org.nexial.commons.utils.EnvUtils;
 import org.nexial.commons.utils.FileUtil;
@@ -58,8 +55,7 @@ import org.nexial.core.integration.IntegrationManager;
 import org.nexial.core.model.*;
 import org.nexial.core.reports.ExecutionMailConfig;
 import org.nexial.core.reports.ExecutionNotifier;
-import org.nexial.core.reports.MailNotifier;
-import org.nexial.core.reports.Mailer;
+import org.nexial.core.reports.NexialMailer;
 import org.nexial.core.service.EventTracker;
 import org.nexial.core.service.ServiceLauncher;
 import org.nexial.core.utils.ConsoleUtils;
@@ -177,14 +173,14 @@ import static org.nexial.core.model.ExecutionSummary.ExecutionLevel.EXECUTION;
  * saved to the respective {@code logs} and {@code captures} directories.
  * </li>
  * <li>
- * invoke {@link MailNotifier} to consolidate all the test results and email it to the specified
+ * invoke {@link NexialMailer} to consolidate all the test results and email it to the specified
  * email addresses (based on {@code nexial.mailTo} variable).
  * </li>
  * </ol>
  */
 public class Nexial {
     private static final int THREAD_WAIT_LOG_INTERVAL = 60;
-    private static final String SPRING_CONTEXT = "classpath:/nexial-mail.xml";
+    private static final String SPRING_CONTEXT = "classpath:/nexial-integration.xml";
 
     private ClassPathXmlApplicationContext springContext;
     private TestProject project;
@@ -777,8 +773,7 @@ public class Nexial {
 
         ExecutionMailConfig mailConfig = ExecutionMailConfig.get();
         if (mailConfig != null && mailConfig.isReady()) {
-            ExecutionNotifier notifier = springContext.getBean("mailNotifier", ExecutionNotifier.class);
-            notifyCompletion(notifier, summary);
+            notifyCompletion(summary);
         } else {
             ConsoleUtils.log("skipped email notification as configured");
         }
@@ -960,8 +955,8 @@ public class Nexial {
             ConsoleUtils.error("Unable to cleanly execute tests; execution summary missing!");
             exitStatus = RC_EXECUTION_SUMMARY_MISSING;
         } else {
-            double minExecSuccessRate = NumberUtils.toDouble(
-                System.getProperty(MIN_EXEC_SUCCESS_RATE, DEF_MIN_EXEC_SUCCESS_RATE + ""));
+            double minExecSuccessRate =
+                NumberUtils.toDouble(System.getProperty(MIN_EXEC_SUCCESS_RATE, DEF_MIN_EXEC_SUCCESS_RATE + ""));
             if (minExecSuccessRate < 0 || minExecSuccessRate > 100) { minExecSuccessRate = DEF_MIN_EXEC_SUCCESS_RATE; }
             minExecSuccessRate = minExecSuccessRate / 100;
             String minSuccessRateString = MessageFormat.format(RATE_FORMAT, minExecSuccessRate);
@@ -1050,34 +1045,12 @@ public class Nexial {
         return cell == null ? "" : StringUtils.trim(cell.getStringCellValue());
     }
 
-    private void notifyCompletion(ExecutionNotifier notifier, ExecutionSummary summary) {
-        if (notifier == null) {
-            ConsoleUtils.log("No email to send since email notification is disabled or not configured.");
-            return;
-        }
-
-        // setup
-        ExecutionMailConfig mailConfig = ExecutionMailConfig.get();
-        String[] recipientList = mailConfig == null ? null : mailConfig.getRecipients();
-        if (ArrayUtils.isEmpty(recipientList)) {
-            ConsoleUtils.log("No email to send since no recipient is specified.");
-            return;
-        }
-
-        // if we get to here the `mailConfig` is already set up properly
-        MailObjectSupport mailObjectSupport = new MailObjectSupport();
-        mailObjectSupport.configure();
-
-        Mailer mailer = new Mailer();
-        mailer.setMailer(mailObjectSupport);
-
-        notifier.setMailer(mailer);
-
+    private void notifyCompletion(ExecutionSummary summary) {
         try {
-            notifier.notify(recipientList, summary);
-        } catch (IOException | EmailException | MessagingException e) {
+            ExecutionNotifier nexialMailer = springContext.getBean("nexialMailer", ExecutionNotifier.class);
+            nexialMailer.notify(summary);
+        } catch (IntegrationConfigException | IOException e) {
             ConsoleUtils.error("Unable to send out notification email: " + e.getMessage());
-            e.printStackTrace();
         }
     }
 

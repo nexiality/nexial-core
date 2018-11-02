@@ -142,7 +142,6 @@ public class ExecutionInterruptTests extends ExcelBasedTests {
         Assert.assertTrue(CollectionUtils.isEmpty(iterations));
     }
 
-    /*
     @Test
     public void failfast_in_plan2() throws Exception {
         ExecutionSummary executionSummary =
@@ -181,7 +180,6 @@ public class ExecutionInterruptTests extends ExcelBasedTests {
         iterationSummary = iterations.get(0);
         assertPassFail(iterationSummary, "failfast_in_scenario", new TestOutcomeStats(1, 1));
     }
-    */
 
     static {
         System.clearProperty(OPT_RUN_ID);

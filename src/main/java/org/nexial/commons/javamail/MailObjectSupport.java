@@ -17,8 +17,8 @@
 
 package org.nexial.commons.javamail;
 
-import java.net.UnknownHostException;
 import java.util.Hashtable;
+import java.util.List;
 import java.util.Properties;
 import javax.mail.Authenticator;
 import javax.mail.MessagingException;
@@ -31,34 +31,29 @@ import javax.naming.NamingException;
 import org.apache.commons.collections4.MapUtils;
 import org.apache.commons.lang3.BooleanUtils;
 import org.apache.commons.lang3.StringUtils;
-import org.nexial.commons.utils.EnvUtils;
 import org.nexial.core.reports.ExecutionMailConfig;
+import org.nexial.core.utils.ConsoleUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.sun.mail.smtp.SMTPTransport;
 
-import static javax.naming.Context.*;
+import static javax.naming.Context.INITIAL_CONTEXT_FACTORY;
+import static org.nexial.core.NexialConst.AwsSettings.*;
 import static org.nexial.core.NexialConst.*;
+import static org.nexial.core.NexialConst.Mailer.SES_PREFIX;
 
 /**
  * @author Mike Liu
  */
 public final class MailObjectSupport {
-    public static final String[] JNDI_KEYS = new String[]{
-        INITIAL_CONTEXT_FACTORY, OBJECT_FACTORIES, STATE_FACTORIES, URL_PKG_PREFIXES, PROVIDER_URL, DNS_URL,
-        AUTHORITATIVE, BATCHSIZE, REFERRAL, SECURITY_PROTOCOL, SECURITY_AUTHENTICATION, SECURITY_PRINCIPAL,
-        SECURITY_CREDENTIALS, LANGUAGE
-    };
-    public static final String[] MAIL_PROP_KEYS = new String[]{
-        MAIL_KEY_BUFF_SIZE, MAIL_KEY_PROTOCOL, MAIL_KEY_MAIL_HOST, MAIL_KEY_MAIL_PORT, MAIL_KEY_TLS_ENABLE,
-        MAIL_KEY_AUTH, MAIL_KEY_DEBUG, MAIL_KEY_CONTENT_TYPE, MAIL_KEY_USERNAME, MAIL_KEY_PASSWORD,
-        MAIL_KEY_MAIL_JNDI_URL};
-
     private static final Logger LOGGER = LoggerFactory.getLogger(MailObjectSupport.class);
 
+    private ExecutionMailConfig mailConfig;
     private Properties mailProps;
     private Hashtable jndiEnv;
+    private Properties sesProps;
+
     private Session session;
     private SMTPTransport transport;
 
@@ -66,32 +61,37 @@ public final class MailObjectSupport {
 
     public void setJndiEnv(Hashtable jndiEnv) { this.jndiEnv = jndiEnv; }
 
-    /**
-     * configure this instance with currently configured {@link ExecutionMailConfig}.  Also create mail session
-     */
-    public void configure() {
-        ExecutionMailConfig mailConfig = ExecutionMailConfig.get();
+    /** configure this instance with currently configured {@link ExecutionMailConfig}.  Also create mail session */
+    public static MailObjectSupport configure(ExecutionMailConfig mailConfig) {
+        MailObjectSupport instance = new MailObjectSupport();
+        instance.mailConfig = mailConfig;
 
-        Properties mailProps = mailConfig.toMailProperties();
-        if (MapUtils.isNotEmpty(mailProps)) { this.mailProps = mailProps; }
-
-        Hashtable jndiEnv = mailConfig.toJndiEnv();
-        if (MapUtils.isNotEmpty(jndiEnv)) { this.jndiEnv = jndiEnv; }
-
-        createSession();
-    }
-
-    public void init() {
-        try {
-            mailProps.setProperty(MAIL_KEY_SMTP_LOCALHOST, EnvUtils.getHostName());
-        } catch (UnknownHostException e) {
-            LOGGER.warn("Unable to query localhost's hostname, setting '" + MAIL_KEY_SMTP_LOCALHOST +
-                        "' to 'localhost', but it probably won't work. " + e.getMessage());
-            mailProps.setProperty(MAIL_KEY_SMTP_LOCALHOST, "localhost");
+        Properties mailProps = mailConfig.toSmtpConfigs();
+        if (MapUtils.isNotEmpty(mailProps)) {
+            instance.mailProps = mailProps;
+            if (instance.hasSmtpConfigs()) {
+                instance.createSession();
+                return instance;
+            }
         }
 
-        createSession();
-        //createTransport();
+        Hashtable jndiEnv = mailConfig.toJndiEnv();
+        if (MapUtils.isNotEmpty(jndiEnv)) {
+            instance.jndiEnv = jndiEnv;
+            if (instance.hasJndiConfigs()) {
+                instance.createSession();
+                return instance;
+            }
+        }
+
+        Properties sesProps = mailConfig.toSesConfigs();
+        if (MapUtils.isNotEmpty(sesProps)) {
+            instance.sesProps = sesProps;
+            if (instance.hasSesConfigs()) { return instance; }
+        }
+
+        ConsoleUtils.error("Nexial mailer not properly configured for use");
+        return null;
     }
 
     public SMTPTransport getTransport() {
@@ -103,6 +103,8 @@ public final class MailObjectSupport {
         if (session == null) { createSession(); }
         return session;
     }
+
+    public Properties getSesProps() { return sesProps; }
 
     public String getConfiguredProperty(String property) { return mailProps.getProperty(property); }
 
@@ -116,6 +118,28 @@ public final class MailObjectSupport {
         InitialContext ctx = new InitialContext();
         return (Session) ctx.lookup(jndiName);
     }
+
+    public boolean hasSmtpConfigs() {
+        return MapUtils.isNotEmpty(mailProps) &&
+               StringUtils.isNotBlank(mailProps.getProperty(MAIL_KEY_MAIL_HOST)) &&
+               StringUtils.isNotBlank(mailProps.getProperty(MAIL_KEY_PROTOCOL)) &&
+               StringUtils.isNotBlank(mailProps.getProperty(MAIL_KEY_MAIL_PORT));
+    }
+
+    public boolean hasJndiConfigs() {
+        return MapUtils.isNotEmpty(jndiEnv) &&
+               jndiEnv.get(MAIL_KEY_MAIL_JNDI_URL) != null &&
+               jndiEnv.get(INITIAL_CONTEXT_FACTORY) != null;
+    }
+
+    public boolean hasSesConfigs() {
+        return MapUtils.isNotEmpty(sesProps) &&
+               StringUtils.isNotBlank(sesProps.getProperty(SES_PREFIX + AWS_ACCESS_KEY)) &&
+               StringUtils.isNotBlank(sesProps.getProperty(SES_PREFIX + AWS_SECRET_KEY)) &&
+               StringUtils.isNotBlank(sesProps.getProperty(SES_PREFIX + AWS_SES_FROM));
+    }
+
+    public List<String> getRecipients() { return mailConfig == null ? null : mailConfig.getRecipients(); }
 
     private void createSession() {
         // is javamail session configured in JNDI?

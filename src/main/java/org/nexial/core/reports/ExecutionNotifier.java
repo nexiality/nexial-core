@@ -18,14 +18,12 @@
 package org.nexial.core.reports;
 
 import java.io.IOException;
-import javax.mail.MessagingException;
 
-import org.apache.commons.mail.EmailException;
+import org.nexial.core.IntegrationConfigException;
 import org.nexial.core.model.ExecutionSummary;
 
 public interface ExecutionNotifier {
 
-    void notify(String[] recipients, ExecutionSummary summary) throws IOException, EmailException, MessagingException;
+    void notify(ExecutionSummary summary) throws IntegrationConfigException, IOException;
 
-    void setMailer(Mailer mailer);
 }

@@ -59,8 +59,9 @@ import org.nexial.core.plugins.CanTakeScreenshot;
 import org.nexial.core.plugins.NexialCommand;
 import org.nexial.core.plugins.pdf.CommonKeyValueIdentStrategies;
 import org.nexial.core.plugins.sound.SoundMachine;
+import org.nexial.core.reports.ExecutionMailConfig;
 import org.nexial.core.reports.JenkinsVariables;
-import org.nexial.core.reports.MailNotifier;
+import org.nexial.core.reports.NexialMailer;
 import org.nexial.core.utils.ConsoleUtils;
 import org.nexial.core.utils.ExecutionLogger;
 import org.nexial.core.utils.OutputFileUtils;
@@ -137,7 +138,7 @@ public class ExecutionContext {
     protected String otcNotReadyMessage;
     protected SoundMachine dj;
     protected SmsHelper smsHelper;
-    protected MailNotifier mailNotifier;
+    protected NexialMailer nexialMailer;
     protected Map<String, String> defaultContextProps;
     protected List<String> readOnlyVars;
     protected List<String> referenceDataForExecution = new ArrayList<>();
@@ -278,7 +279,8 @@ public class ExecutionContext {
         smsHelper = springContext.getBean("smsHelper", SmsHelper.class);
 
         // mail notifier
-        mailNotifier = springContext.getBean("mailNotifier", MailNotifier.class);
+        nexialMailer = springContext.getBean("nexialMailer", NexialMailer.class);
+        nexialMailer.setContext(this);
 
         // event listener
         executionEventListener = springContext.getBean("executionEventListener", ExecutionEventListener.class);
@@ -375,7 +377,7 @@ public class ExecutionContext {
 
     public SmsHelper getSmsHelper() { return smsHelper; }
 
-    public MailNotifier getMailNotifier() { return mailNotifier; }
+    public NexialMailer getNexialMailer() { return nexialMailer; }
 
     public NexialCommand findPlugin(String target) { return plugins.getPlugin(target); }
 
@@ -1308,7 +1310,7 @@ public class ExecutionContext {
             f = new Function();
             f.parse(token);
 
-            errorPrefix += " with " + ArrayUtils.getLength(f.parameters) + " parameters - ";
+            errorPrefix += " with " + ArrayUtils.getLength(f.parameters) + " parameter(s) - ";
 
             return Objects.toString(MethodUtils.invokeExactMethod(f.function, f.operation, f.parameters), "");
         } catch (IllegalArgumentException e) {
@@ -1517,6 +1519,8 @@ public class ExecutionContext {
 
         // DO NOT SET BROWSER TYPE TO SYSTEM PROPS, SINCE THIS WILL PREVENT ITERATION-LEVEL OVERRIDES
         // System.setProperty(SPREADSHEET_PROGRAM, spreadsheetProgram);
+
+        ExecutionMailConfig.configure(this);
     }
 
     @NotNull

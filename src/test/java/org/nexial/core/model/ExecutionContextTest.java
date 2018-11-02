@@ -393,6 +393,16 @@ public class ExecutionContextTest {
         subject.cleanProject();
     }
 
+    @Test
+    public void executionFunction() throws Exception {
+        try {
+            System.out.println(new Execution().meta("java"));
+            System.out.println(new Execution().meta("nexial"));
+        } catch (Exception e) {
+            Assert.fail("Unexpected exception: " + e);
+        }
+    }
+
     @NotNull
     private Function toFunction(ExecutionContext subject, String token) {
         Function f = subject.new Function();

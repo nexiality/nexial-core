@@ -16,7 +16,7 @@ if [[ ${build_ret} != 0 ]] ; then
 fi
 
 mkdir -p build/install/nexial-core/support
-cp -Rvf support/nexial*.* build/install/nexial-core/support
+cp -Rf support/nexial*.* build/install/nexial-core/support
 
 # generate the latest command listing
 cd build/install/nexial-core/support

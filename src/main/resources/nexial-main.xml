@@ -22,7 +22,7 @@
        xsi:schemaLocation="http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans.xsd http://www.springframework.org/schema/util http://www.springframework.org/schema/util/spring-util.xsd"
        default-lazy-init="true">
 
-    <import resource="nexial-mail.xml"/>
+    <import resource="nexial-integration.xml"/>
 
     <bean id="applicationEventMulticaster" class="org.springframework.context.event.SimpleApplicationEventMulticaster"/>
     <bean id="applicationContextUtils" class="org.nexial.commons.spring.ApplicationContextUtils"/>
