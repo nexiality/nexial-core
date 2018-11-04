@@ -52,6 +52,7 @@ import org.nexial.core.aws.NexialS3Helper;
 import org.nexial.core.excel.Excel;
 import org.nexial.core.excel.Excel.Worksheet;
 import org.nexial.core.integration.IntegrationManager;
+import org.nexial.core.interactive.NexialInteractive;
 import org.nexial.core.model.*;
 import org.nexial.core.reports.ExecutionMailConfig;
 import org.nexial.core.reports.ExecutionNotifier;
@@ -189,6 +190,7 @@ public class Nexial {
     private int listenPort = -1;
     private String listenerHandshake;
     private boolean integrationMode;
+    private boolean interactiveMode;
 
     @SuppressWarnings("PMD.DoNotCallSystemExit")
     public static void main(String[] args) {
@@ -201,7 +203,7 @@ public class Nexial {
             main.init(args);
         } catch (Exception e) {
             if (e instanceof IllegalArgumentException) {
-                // like from fail()
+                // adopted from fail()
                 ConsoleUtils.errorBeforeTerminate(e.getMessage());
             } else {
                 e.printStackTrace();
@@ -214,8 +216,10 @@ public class Nexial {
             System.exit(-1);
         }
 
+        // integration mode, only for metrics and post-exec analysis
         if (main.isIntegrationMode()) { return; }
 
+        // listen mode, only for studio integration
         if (main.isListenMode()) {
             try {
                 main.listen();
@@ -223,21 +227,34 @@ public class Nexial {
             } catch (Throwable e) {
                 e.printStackTrace();
             }
-        } else {
-            ExecutionSummary summary = null;
+            return;
+        }
+
+        // interactive mode, only for stepwise or blockwise execution. to be integrated into studio
+        if (main.isInteractiveMode()) {
             try {
-                MemManager.recordMemoryChanges("before execution");
-                summary = main.execute();
-                main.trackEvent(new NexialExecutionCompleteEvent(summary));
-                MemManager.recordMemoryChanges("after execution");
+                main.interact();
             } catch (Throwable e) {
                 ConsoleUtils.error("Unknown/unexpected error occurred: " + e.getMessage());
                 e.printStackTrace();
             }
-
-            ConsoleUtils.log("Exiting Nexial...");
-            System.exit(beforeShutdown(summary));
+            return;
         }
+
+        // normal execution
+        ExecutionSummary summary = null;
+        try {
+            MemManager.recordMemoryChanges("before execution");
+            summary = main.execute();
+            main.trackEvent(new NexialExecutionCompleteEvent(summary));
+            MemManager.recordMemoryChanges("after execution");
+        } catch (Throwable e) {
+            ConsoleUtils.error("Unknown/unexpected error occurred: " + e.getMessage());
+            e.printStackTrace();
+        }
+
+        ConsoleUtils.log("Exiting Nexial...");
+        System.exit(beforeShutdown(summary));
     }
 
     protected void listen() throws Exception { ServiceLauncher.main(new String[]{}); }
@@ -245,6 +262,8 @@ public class Nexial {
     protected boolean isListenMode() { return listenPort > 0 && StringUtils.isNotBlank(listenerHandshake); }
 
     protected boolean isIntegrationMode() { return integrationMode; }
+
+    protected boolean isInteractiveMode() { return interactiveMode; }
 
     protected Options addMsaOptions(Options options) {
         Options optionsAdded = new Options();
@@ -299,8 +318,17 @@ public class Nexial {
             return;
         }
 
+        if (cmd.hasOption(INTERACTIVE)) {
+            interactiveMode = true;
+            // proceed to parsing, but only script will be supported
+        }
+
         // plan or script?
         if (cmd.hasOption(PLAN)) {
+            if (isInteractiveMode()) {
+                throw new ParseException("Interactive Mode is NOT support with plan files. " +
+                                         "Try specifying a script instead");
+            }
             this.executions = parsePlanExecution(cmd);
             System.setProperty(NEXIAL_EXECUTION_TYPE, NEXIAL_EXECUTION_TYPE_PLAN);
         } else {
@@ -310,6 +338,7 @@ public class Nexial {
         }
 
         // any variable override?
+        // this is synonymous to using `JAVA_OPT=-D....` from console prior to executing Nexial
         if (cmd.hasOption(OVERRIDE)) {
             String[] overrides = cmd.getOptionValues(OVERRIDE);
             Arrays.stream(overrides).forEach(data -> {
@@ -613,6 +642,20 @@ public class Nexial {
         if (StringUtils.isBlank(System.getProperty(THIRD_PARTY_LOG_PATH))) {
             System.setProperty(THIRD_PARTY_LOG_PATH, outPath);
         }
+    }
+
+    protected void interact() {
+        // there should only be 1 execution (ie script) since we've checked this earlier
+        if (CollectionUtils.isEmpty(executions)) {
+            throw new IllegalArgumentException("Interactive Mode requires 1 script to be specified via -script");
+        }
+
+        initSpringContext();
+
+        ExecutionDefinition execDef = executions.get(0);
+        NexialInteractive interactive = new NexialInteractive();
+        interactive.setExecutionDefinition(execDef);
+        interactive.startSession();
     }
 
     protected ExecutionSummary execute() {

@@ -19,7 +19,6 @@ package org.nexial.core.model;
 
 import java.io.File;
 import java.io.IOException;
-import java.net.UnknownHostException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
@@ -55,13 +54,8 @@ public class MockExecutionContext extends ExecutionContext {
     public MockExecutionContext(boolean withSpring) {
         super();
 
-        try {
-            hostname = StringUtils.upperCase(EnvUtils.getHostName());
-        } catch (UnknownHostException e) {
-            throw new RuntimeException("Unable to determine host name of current host: " + e.getMessage());
-        }
-
-        executionLogger = new ExecutionLogger(getRunId());
+        hostname = StringUtils.upperCase(EnvUtils.getHostName());
+        executionLogger = new ExecutionLogger(this);
         runId = DateUtility.createTimestampString(System.currentTimeMillis());
 
         if (withSpring) {

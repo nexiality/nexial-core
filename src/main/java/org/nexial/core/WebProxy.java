@@ -18,7 +18,6 @@
 package org.nexial.core;
 
 import java.io.IOException;
-import java.net.UnknownHostException;
 import java.util.Properties;
 import java.util.Set;
 
@@ -183,14 +182,7 @@ public final class WebProxy implements ForcefulTerminate {
     }
 
     private void initApacheProxy(ExecutionContext context) {
-        String hostname;
-        try {
-            hostname = EnvUtils.getHostName();
-        } catch (UnknownHostException e) {
-            ConsoleUtils.log("Unable to determine host name, default to localhost: " + e.getMessage());
-            hostname = "localhost";
-        }
-
+        String hostname = EnvUtils.getHostName();
         String proxyHost = context.getStringData(WS_PROXY_HOST);
         int proxyPort = NumberUtils.toInt(context.getStringData(WS_PROXY_PORT));
 

@@ -32,13 +32,16 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 public class ExecutionLogger {
+    private ExecutionContext context;
     private String runId;
     private Logger logger = LoggerFactory.getLogger(this.getClass());
 
-    public ExecutionLogger(String runId) { this.runId = runId; }
+    public ExecutionLogger(ExecutionContext context) {
+        this.context = context;
+        this.runId = context.getRunId();
+    }
 
     public void log(NexialCommand subject, String message) {
-        ExecutionContext context = ExecutionThread.get();
         TestStep testStep = context.getCurrentTestStep();
         if (testStep != null) {
             // test step undefined could mean that we are in interactive mode, or we are running unit testing

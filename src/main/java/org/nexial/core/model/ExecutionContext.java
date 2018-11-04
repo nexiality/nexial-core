@@ -23,7 +23,6 @@ import java.io.UnsupportedEncodingException;
 import java.lang.reflect.Array;
 import java.lang.reflect.InvocationTargetException;
 import java.net.URLEncoder;
-import java.net.UnknownHostException;
 import java.util.*;
 import javax.annotation.Nullable;
 import javax.validation.constraints.NotNull;
@@ -225,12 +224,7 @@ public class ExecutionContext {
     public ExecutionContext(ExecutionDefinition execDef, Map<String, Object> intraExecutionData) {
         this.execDef = execDef;
         this.project = adjustPath(execDef);
-
-        try {
-            hostname = StringUtils.upperCase(EnvUtils.getHostName());
-        } catch (UnknownHostException e) {
-            throw new RuntimeException("Unable to determine host name of current host: " + e.getMessage());
-        }
+        this.hostname = StringUtils.upperCase(EnvUtils.getHostName());
 
         // init data map... something just doesn't make sense not to exist from the get-go
         data.put(OPT_LAST_OUTCOME, true);
@@ -305,7 +299,7 @@ public class ExecutionContext {
         MDC.put(TEST_NAME, getId());
         if (logger.isInfoEnabled()) { logger.info("STARTS"); }
 
-        executionLogger = new ExecutionLogger(getRunId());
+        executionLogger = new ExecutionLogger(this);
 
         // parse merged test script
         parse();
@@ -823,34 +817,39 @@ public class ExecutionContext {
         return resolveRunModeSpecificUrl(file.getAbsolutePath());
     }
 
-    public String resolveRunModeSpecificUrl(String filename) {
-        return filename;
-
-        // following logic no longer needed
-        /*
-        if (StringUtils.isBlank(filename)) { return filename; }
-
-        if (StringUtils.startsWithIgnoreCase(filename, "https://") ||
-            StringUtils.startsWithIgnoreCase(filename, "http://")) { return filename; }
-
-        if (!isRemoteExecution()) { return filename; }
-
-        filename = encodeForUrl(filename);
-        // make sure serverUrl ends with /
-        String serverUrl = StringUtils.appendIfMissing(getStringData(OPT_REPORT_SERVER_URL), "/");
-
-        String serverUri = StringUtils.substringAfter(filename, getStringData(OPT_REPORT_SERVER_BASEDIR));
-        // make sure serverUri DOES NOT starts with /
-        serverUri = StringUtils.removeStart(StringUtils.replace(serverUri, "\\", "/"), "/");
-        return serverUrl + serverUri;
-        */
-    }
+    public String resolveRunModeSpecificUrl(String filename) { return filename; }
 
     public TestProject getProject() { return project; }
 
     public TestStep getCurrentTestStep() { return currentTestStep; }
 
     protected void setCurrentTestStep(TestStep testStep) { this.currentTestStep = testStep; }
+
+    public void adjustForInteractive(InteractiveSession session) {
+        String targetScenario = session.getScenario();
+        List<String> targetActivities = session.getActivities();
+
+        List<TestScenario> filteredScenarios = new ArrayList<>();
+        testScenarios.forEach(scenario -> {
+            if (StringUtils.equals(targetScenario, scenario.getName())) {
+                if (CollectionUtils.isNotEmpty(targetActivities)) {
+                    List<TestCase> filteredActivities = new ArrayList<>();
+                    List<TestCase> testCases = scenario.getTestCases();
+                    targetActivities.forEach(targetActivity -> testCases.forEach(activity -> {
+                        if (StringUtils.equals(targetActivity, activity.getName())) {
+                            filteredActivities.add(activity);
+                        }
+                    }));
+                    testCases.clear();
+                    testCases.addAll(filteredActivities);
+                }
+
+                filteredScenarios.add(scenario);
+            }
+        });
+
+        testScenarios = filteredScenarios;
+    }
 
     public String getCurrentActivity() { return getStringData(OPT_CURRENT_ACTIVITY); }
 
@@ -951,7 +950,7 @@ public class ExecutionContext {
         Map<String, String> ref = gatherScenarioReferenceData();
 
         for (TestScenario testScenario : testScenarios) {
-            // re-init scneario ref data
+            // re-init scenario ref data
             clearScenarioRefData();
             ref.forEach((name, value) -> data.put(SCENARIO_REF_PREFIX + name, replaceTokens(value)));
 

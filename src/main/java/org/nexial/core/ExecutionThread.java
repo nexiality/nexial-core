@@ -115,7 +115,7 @@ public final class ExecutionThread extends Thread {
 
         if (execDef.isFailFast() && !context.getBooleanData(OPT_LAST_OUTCOME)) {
             if (context.getBooleanData(RESET_FAIL_FAST, DEF_RESET_FAIL_FAST)) {
-                // reset and pretend nothin's wrong.  Current script will be executed..
+                // reset and pretend nothing's wrong.  Current script will be executed..
                 context.setData(OPT_LAST_OUTCOME, true);
             } else {
                 ConsoleUtils.error("previous test scenario execution failed, and current test script is set to " +

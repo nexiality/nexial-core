@@ -17,7 +17,6 @@
 package org.nexial.core;
 
 import java.io.IOException;
-import java.net.UnknownHostException;
 import java.util.List;
 import javax.mail.MessagingException;
 import javax.sound.sampled.LineUnavailableException;
@@ -42,7 +41,6 @@ import javazoom.jl.decoder.JavaLayerException;
 import static org.apache.commons.lang3.SystemUtils.USER_NAME;
 import static org.nexial.core.NexialConst.Data.*;
 import static org.nexial.core.model.ExecutionEvent.*;
-import static org.nexial.core.model.ExecutionEvent.ExecutionPause;
 
 public class ExecutionEventListener {
     private static final String EVENT_CONFIG_SEP = "|";
@@ -74,7 +72,10 @@ public class ExecutionEventListener {
 
     public void onScenarioComplete(ExecutionSummary executionSummary) {
         handleEvent(ScenarioComplete);
-        EventTracker.INSTANCE.track(new NexialScenarioCompleteEvent(executionSummary));
+        // summary and context are null in Interactive Mode
+        if (executionSummary != null && ExecutionThread.get() != null) {
+            EventTracker.INSTANCE.track(new NexialScenarioCompleteEvent(executionSummary));
+        }
     }
 
     public void onError() { handleEvent(ErrorOccurred); }
@@ -158,13 +159,7 @@ public class ExecutionEventListener {
     }
 
     private String gatherMeta() {
-        String runHost;
-        try {
-            runHost = StringUtils.upperCase(EnvUtils.getHostName());
-        } catch (UnknownHostException e) {
-            throw new RuntimeException("Unable to determine host name of current host: " + e.getMessage());
-        }
-
+        String runHost = StringUtils.upperCase(EnvUtils.getHostName());
         return "From " + StringUtils.defaultString(USER_NAME, "unknown") + "@" + runHost +
                " using " + ExecUtil.deriveJarManifest();
     }

@@ -16,7 +16,6 @@
 
 package org.nexial.core.reports;
 
-import java.net.UnknownHostException;
 import java.util.Hashtable;
 import java.util.List;
 import java.util.Map;
@@ -137,13 +136,7 @@ public class ExecutionMailConfig {
             if (configurations.containsKey(key)) { props.setProperty(key, configurations.get(key)); }
         });
 
-        try {
-            props.setProperty(MAIL_KEY_SMTP_LOCALHOST, EnvUtils.getHostName());
-        } catch (UnknownHostException e) {
-            ConsoleUtils.log("Unable to query localhost's hostname, setting '" + MAIL_KEY_SMTP_LOCALHOST +
-                             "' to 'localhost', but it probably won't work. " + e.getMessage());
-            props.setProperty(MAIL_KEY_SMTP_LOCALHOST, "localhost");
-        }
+        props.setProperty(MAIL_KEY_SMTP_LOCALHOST, EnvUtils.getHostName());
 
         return props;
     }
@@ -158,12 +151,7 @@ public class ExecutionMailConfig {
 
         if (StringUtils.isBlank(configurations.get(SES_PREFIX + AWS_XMAILER))) {
             String callSign = ExecUtil.deriveJarManifest() + "/" + USER_NAME;
-            try {
-                configurations.put(SES_PREFIX + AWS_XMAILER, callSign + "@" + EnvUtils.getHostName());
-            } catch (UnknownHostException e) {
-                ConsoleUtils.log("Unable to query localhost's hostname: " + e.getMessage());
-                configurations.put(SES_PREFIX + AWS_XMAILER, callSign + "@localhost");
-            }
+            configurations.put(SES_PREFIX + AWS_XMAILER, callSign + "@" + EnvUtils.getHostName());
         }
 
         return props;

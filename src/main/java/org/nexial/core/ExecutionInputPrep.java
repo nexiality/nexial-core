@@ -61,7 +61,7 @@ import static org.nexial.core.utils.ExecUtil.IGNORED_CLI_OPT;
  * decorated where its filename indicates its associated iteration.</li>
  * </ol>
  */
-class ExecutionInputPrep {
+public class ExecutionInputPrep {
 
     public static Excel updateOutputDataSheet(Excel outputFile) {
         ExecutionContext context = ExecutionThread.get();
@@ -96,7 +96,7 @@ class ExecutionInputPrep {
     }
 
     /** called from {@link ExecutionThread} for each iteration. */
-    static Excel prep(String runId, ExecutionDefinition execDef, int iteration, int counter) throws IOException {
+    public static Excel prep(String runId, ExecutionDefinition execDef, int iteration, int counter) throws IOException {
         assert StringUtils.isNotBlank(runId);
         assert execDef != null;
 

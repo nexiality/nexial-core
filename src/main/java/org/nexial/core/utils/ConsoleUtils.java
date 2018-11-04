@@ -24,6 +24,7 @@ import java.util.List;
 import java.util.Scanner;
 
 import org.apache.commons.collections4.CollectionUtils;
+import org.apache.commons.lang3.ArrayUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.tuple.ImmutablePair;
 import org.apache.commons.lang3.tuple.Pair;
@@ -46,13 +47,21 @@ import static org.slf4j.event.Level.INFO;
  */
 @SuppressWarnings("PMD.SystemPrintln")
 public final class ConsoleUtils {
+    public static final char FILLER = '-';
+
+    public static final String MARGIN_LEFT = "| ";
+    public static final String MARGIN_RIGHT = "|";
+    public static final String HDR_START = "";
+    public static final String HDR_END = "";
+    public static final String META_START = "[";
+    public static final String META_END = "] ";
+    public static final String MULTI_SEP = " / ";
+
+    public static final int PROMPT_LINE_WIDTH = 80;
+    public static final int PRINTABLE_LENGTH = PROMPT_LINE_WIDTH - MARGIN_LEFT.length() - MARGIN_RIGHT.length();
+
     private static final Logger LOGGER = LoggerFactory.getLogger(ConsoleUtils.class);
     private static final List<Pair<Level, String>> PRE_EXEC_READY_BUFFER = new ArrayList<>();
-    private static final int PROMPT_LINE_WIDTH = 80;
-    private static final String HDR_START = "";
-    private static final String HDR_END = "";
-    private static final String META_START = "[";
-    private static final String META_END = "]";
 
     private ConsoleUtils() { }
 
@@ -133,7 +142,7 @@ public final class ConsoleUtils {
         if (context != null && context.getBooleanData(OPT_INSPECT_ON_PAUSE, DEF_INSPECT_ON_PAUSE)) {
             // inspect mode
             System.out.println("/------------------------------------------------------------------------------\\");
-            System.out.println("|" + centerPrompt("INSPECT ON PAUSE", PROMPT_LINE_WIDTH - 2) + "|");
+            System.out.println(MARGIN_RIGHT + centerPrompt("INSPECT ON PAUSE", PROMPT_LINE_WIDTH - 2) + MARGIN_RIGHT);
             System.out.println("\\------------------------------------------------------------------------------/");
             System.out.println("> Enter statement to inspect.  Press ENTER or " + RESUME_FROM_PAUSE + " to resume " +
                                "execution\n");
@@ -142,7 +151,6 @@ public final class ConsoleUtils {
             String input = in.nextLine();
 
             while (StringUtils.isNotBlank(input) && !StringUtils.equals(StringUtils.trim(input), RESUME_FROM_PAUSE)) {
-                // if (StringUtils.trim(input), INTERACTIVE)
                 System.out.println(context.replaceTokens(input));
                 System.out.println();
                 System.out.print("inspect-> ");
@@ -163,7 +171,7 @@ public final class ConsoleUtils {
         ExecutionEventListener listener = context.getExecutionEventListener();
         listener.onPause();
 
-        printHeader(HDR_START + "PERFORM ACTION" + HDR_END, context);
+        printStepHeader(HDR_START + "PERFORM ACTION" + HDR_END, context);
         printStepPrompt(instructions);
 
         System.out.println("> When complete, enter your comment or press ENTER to continue ");
@@ -184,7 +192,7 @@ public final class ConsoleUtils {
         ExecutionEventListener listener = context.getExecutionEventListener();
         listener.onPause();
 
-        printHeader(HDR_START + "VALIDATION" + HDR_END, context);
+        printStepHeader(HDR_START + "VALIDATION" + HDR_END, context);
         printStepPrompt(instructions);
 
         List<String> responses = new ArrayList<>();
@@ -214,7 +222,7 @@ public final class ConsoleUtils {
         ExecutionEventListener listener = context.getExecutionEventListener();
         listener.onPause();
 
-        printHeader(HDR_START + "OBSERVATION" + HDR_END, context);
+        printStepHeader(HDR_START + "OBSERVATION" + HDR_END, context);
         printStepPrompt(prompt);
 
         System.out.print("> ");
@@ -236,69 +244,101 @@ public final class ConsoleUtils {
         return newPrompt;
     }
 
-    @SuppressWarnings("PMD.SystemPrintln")
-    private static void printStepPrompt(String instructions) {
-        Arrays.stream(StringUtils.split(instructions, "\n"))
-              .forEach(step -> System.out.println("> " + StringUtils.removeEnd(step, "\r")));
-    }
-
-    @SuppressWarnings("PMD.SystemPrintln")
-    private static void printHeader(String header, ExecutionContext context) {
-        TestStep testStep = context.getCurrentTestStep();
-        TestCase activity = testStep.getTestCase();
-        String activityName = activity.getName();
-        String scenarioName = activity.getTestScenario().getName();
-
-        char filler = '-';
-        printConsoleHeaderTop(System.out, header, filler);
-        printHeaderLine(System.out, META_START + "scenario" + META_END + " ", scenarioName);
-        printHeaderLine(System.out, META_START + "activity" + META_END + " ", activityName);
-        printHeaderLine(System.out, META_START + "row/step" + META_END + " ", (testStep.getRowIndex() + 1) + "");
-        printConsoleHeaderBottom(System.out, filler);
-    }
-
-    private static void printConsoleHeaderTop(PrintStream out, String header, char filler) {
+    public static void printConsoleHeaderTop(PrintStream out, String header, char filler) {
+        // `-2` because we are adding filler twice later
         int fillerLength = PROMPT_LINE_WIDTH - 2 - header.length() - 1;
         String filler1 = StringUtils.repeat(filler, fillerLength / 2);
         String filler2 = StringUtils.repeat(filler, fillerLength - filler1.length());
 
         out.println();
-        out.println("/-" + filler1 + header + filler2 + "\\");
+        out.println("/" + filler + filler1 + header + filler2 + "\\");
     }
 
-    private static void printConsoleHeaderBottom(PrintStream out, char filler) {
+    public static void printConsoleHeaderBottom(PrintStream out, char filler) {
         out.println("\\" + StringUtils.repeat(filler, PROMPT_LINE_WIDTH - 2) + "/");
     }
 
-    @SuppressWarnings("PMD.SystemPrintln")
-    private static void printHeaderLine(PrintStream out, String header1, String header2) {
+    public static void printConsoleSectionSeparator(PrintStream out, char filler) {
+        out.println(MARGIN_LEFT + StringUtils.repeat(filler, PRINTABLE_LENGTH) + MARGIN_RIGHT);
+    }
+
+    public static void printHeaderLine(PrintStream out, String header1, List<String> headers2) {
+        if (CollectionUtils.isEmpty(headers2)) { return; }
+        printHeaderLine(out, header1, headers2.toArray(new String[0]));
+    }
+
+    public static void printHeaderLine(PrintStream out, String header1, String... headers2) {
         // garbage in, garbage out
-        if (StringUtils.isBlank(header1) || StringUtils.isBlank(header2)) { return; }
+        if (StringUtils.isEmpty(header1) || ArrayUtils.isEmpty(headers2)) { return; }
+
+        String filler = StringUtils.repeat(' ', header1.length());
+        for (int i = 0; i < headers2.length; i++) {
+            printHeaderLine(out, i == 0 ? header1 : filler, headers2[i]);
+        }
+    }
+
+    @SuppressWarnings("PMD.SystemPrintln")
+    public static void printHeaderLine(PrintStream out, String header1, String header2) {
+        // garbage in, garbage out
+        if (StringUtils.isEmpty(header1) || StringUtils.isEmpty(header2)) { return; }
 
         header2 = StringUtils.trim(header2);
 
-        String headerLine1 = "| " + header1 + header2;
+        String headerLine1 = MARGIN_LEFT + header1 + header2;
         if (StringUtils.length(headerLine1) < PROMPT_LINE_WIDTH) {
-            out.println(headerLine1 + StringUtils.repeat(" ", PROMPT_LINE_WIDTH - headerLine1.length() - 1) + "|");
+            String padding = StringUtils.repeat(" ", PROMPT_LINE_WIDTH - headerLine1.length() - MARGIN_RIGHT.length());
+            out.println(headerLine1 + padding + MARGIN_RIGHT);
             return;
         }
 
-        // longer than 1 line
+        // we have longer than 1 line to display
         boolean firstLine = true;
         // `-3` because we have `| ` in the beginning and `|` at the end of each line
-        int leftMargin = PROMPT_LINE_WIDTH - header1.length() - 3;
+        int leftMargin = PROMPT_LINE_WIDTH - header1.length() - MARGIN_LEFT.length() - MARGIN_RIGHT.length();
 
         do {
-            String portion =
-                (StringUtils.length(header2) <= leftMargin) ?
-                header2 :
-                StringUtils.trim(StringUtils.substringBeforeLast(StringUtils.substring(header2, 0, leftMargin), " "));
-            String headerLine = "| " + ((firstLine ? header1 : StringUtils.repeat(" ", header1.length())) + portion);
-            out.println(headerLine + StringUtils.repeat(" ", PROMPT_LINE_WIDTH - headerLine.length() - 1) + "|");
+            String portion;
+            if (StringUtils.length(header2) <= leftMargin) {
+                portion = header2;
+            } else {
+                portion = StringUtils.substringBeforeLast(StringUtils.substring(header2, 0, leftMargin), " ");
+                portion = StringUtils.trim(portion);
+            }
+
+            String headerLine = MARGIN_LEFT;
+            if (firstLine) {
+                headerLine += header1;
+            } else {
+                headerLine += StringUtils.repeat(" ", header1.length());
+            }
+            headerLine += portion;
+
+            String padding = StringUtils.repeat(" ", PROMPT_LINE_WIDTH - headerLine.length() - MARGIN_RIGHT.length());
+            out.println(headerLine + padding + MARGIN_RIGHT);
+
             firstLine = false;
 
             header2 = StringUtils.trim(StringUtils.substringAfter(header2, portion));
         } while (StringUtils.isNotBlank(header2));
+    }
+
+    private static void printStepHeader(String header, ExecutionContext context) {
+        TestStep testStep = context.getCurrentTestStep();
+        TestCase activity = testStep.getTestCase();
+        String activityName = activity.getName();
+        String scenarioName = activity.getTestScenario().getName();
+
+        printConsoleHeaderTop(System.out, header, FILLER);
+        printHeaderLine(System.out, META_START + "scenario" + META_END, scenarioName);
+        printHeaderLine(System.out, META_START + "activity" + META_END, activityName);
+        printHeaderLine(System.out, META_START + "row/step" + META_END, (testStep.getRowIndex() + 1) + "");
+        printConsoleHeaderBottom(System.out, FILLER);
+    }
+
+    @SuppressWarnings("PMD.SystemPrintln")
+    private static void printStepPrompt(String instructions) {
+        Arrays.stream(StringUtils.split(instructions, "\n"))
+              .forEach(step -> System.out.println("> " + StringUtils.removeEnd(step, "\r")));
     }
 
     private static boolean isPauseReady() {

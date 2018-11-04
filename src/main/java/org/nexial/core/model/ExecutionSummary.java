@@ -19,7 +19,6 @@ package org.nexial.core.model;
 
 import java.io.File;
 import java.io.IOException;
-import java.net.UnknownHostException;
 import java.text.MessageFormat;
 import java.text.NumberFormat;
 import java.util.*;
@@ -129,12 +128,7 @@ public class ExecutionSummary {
     public ExecutionSummary() {
         runUser = USER_NAME;
         runHostOs = OS_ARCH + " " + OS_NAME + " " + OS_VERSION;
-
-        try {
-            runHost = StringUtils.upperCase(EnvUtils.getHostName());
-        } catch (UnknownHostException e) {
-            throw new RuntimeException("Unable to determine host name of current host: " + e.getMessage());
-        }
+        runHost = StringUtils.upperCase(EnvUtils.getHostName());
 
         // set up startTime now, just in case this execution didn't complete normally..
         // then at least we'll have the time when this failed test started

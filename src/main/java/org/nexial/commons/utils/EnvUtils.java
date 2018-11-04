@@ -23,6 +23,7 @@ import javax.validation.constraints.NotNull;
 
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.math.NumberUtils;
+import org.nexial.core.utils.ConsoleUtils;
 
 import static java.lang.System.lineSeparator;
 import static org.apache.commons.lang3.SystemUtils.IS_OS_WINDOWS;
@@ -32,28 +33,22 @@ import static org.apache.commons.lang3.SystemUtils.OS_ARCH;
  * environment-specific utility.
  */
 public final class EnvUtils {
+    private final static String hostname;
 
     private EnvUtils() {}
 
     /**
      * return the hostname of current host.  If no host can be found, IP address will be returned instead.
-     *
-     * @throws UnknownHostException if no host or IP can be found for this host.
      */
     @NotNull
-    public static String getHostName() throws UnknownHostException {
-        InetAddress localhost = InetAddress.getLocalHost();
-        return StringUtils.defaultIfBlank(localhost.getHostName(), localhost.getHostAddress());
-    }
+    public static String getHostName() { return hostname; }
 
     public static boolean isRunningWindows64bit() {
         return IS_OS_WINDOWS &&
                (StringUtils.contains(OS_ARCH, "64") || StringUtils.isNotBlank(System.getenv("ProgramFiles(x86)")));
     }
 
-    public static int getOsArchBit() {
-        return NumberUtils.toInt(System.getProperty("sun.arch.data.model"), -1);
-    }
+    public static int getOsArchBit() { return NumberUtils.toInt(System.getProperty("sun.arch.data.model"), -1); }
 
     @NotNull
     public static String platformSpecificEOL(String text) {
@@ -73,5 +68,19 @@ public final class EnvUtils {
         text = StringUtils.replace(text, "\r\n", "\n");
         text = StringUtils.replace(text, "\r", "\n");
         return StringUtils.replace(text, "\n", "\r\n");
+    }
+
+    static {
+        String host;
+        try {
+            InetAddress localhost = InetAddress.getLocalHost();
+            host = StringUtils.defaultIfBlank(localhost.getHostName(), localhost.getHostAddress());
+        } catch (UnknownHostException e) {
+            ConsoleUtils.error("Unable to determine host name of current host: " + e.getMessage() + ". " +
+                               "Default to 'localhost'");
+            host = "localhost";
+        }
+
+        hostname = StringUtils.upperCase(host);
     }
 }

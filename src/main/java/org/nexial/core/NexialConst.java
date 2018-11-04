@@ -663,6 +663,7 @@ public final class NexialConst {
         public static final String OUTPUT = "output";
         public static final String OVERRIDE = "override";
         public static final String ANNOUNCE = "announce";
+        public static final String INTERACTIVE = "interactive";
         public static final Options OPTIONS = initCmdOptions();
 
         private CLI() { }
@@ -690,6 +691,7 @@ public final class NexialConst {
                                                  "name=value. Multiple overrides are supported via multiple " +
                                                  "-" + OVERRIDE + " name=value declarations. Note that variable name " +
                                                  "or value with spaces must be enclosed in double quotes.");
+            cmdOptions.addOption(INTERACTIVE, false, "[optional] Run Nexial in Interactive Mode.");
             return cmdOptions;
         }
     }
@@ -769,7 +771,7 @@ public final class NexialConst {
         public static final String THIRD_PARTY_LOG_PATH = NAMESPACE + "3rdparty.logpath";
         public static final String TEST_LOG_PATH = NAMESPACE + "logpath";
         public static final String ASSISTANT_MODE = NAMESPACE + "assistantMode";
-        // synomyous to `assistantMode`, but reads better
+        // synonymous to `assistantMode`, but reads better
         public static final String OPT_OPEN_RESULT = NAMESPACE + "openResult";
         public static final String DEF_OPEN_RESULT = "off";
         public static final String SPREADSHEET_PROGRAM = NAMESPACE + "spreadsheet.program";
