@@ -22,20 +22,25 @@ import java.awt.image.*;
 import java.io.File;
 import java.io.IOException;
 import java.text.DecimalFormat;
-import java.util.Arrays;
 import javax.imageio.ImageIO;
 
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.math.NumberUtils;
 import org.apache.commons.lang3.time.StopWatch;
 import org.nexial.commons.utils.RegexUtils;
-import org.nexial.core.NexialConst.*;
+import org.nexial.core.NexialConst.ImageDiffColor;
+import org.nexial.core.NexialConst.ImageType;
 import org.nexial.core.model.StepResult;
 import org.nexial.core.plugins.ForcefulTerminate;
 import org.nexial.core.plugins.base.BaseCommand;
+import org.nexial.core.utils.ConsoleUtils;
 
 import static java.awt.image.BufferedImage.*;
-import static org.nexial.core.NexialConst.*;
+import static java.io.File.separator;
+import static org.nexial.core.NexialConst.ImageDiffColor.DEF_IMAGE_DIFF_COLOR;
+import static org.nexial.core.NexialConst.ImageType.png;
+import static org.nexial.core.NexialConst.OPT_IMAGE_DIFF_COLOR;
+import static org.nexial.core.NexialConst.OPT_IMAGE_TOLERANCE;
 import static org.nexial.core.utils.CheckUtils.*;
 
 public class ImageCommand extends BaseCommand implements ForcefulTerminate {
@@ -47,7 +52,6 @@ public class ImageCommand extends BaseCommand implements ForcefulTerminate {
     public String getTarget() { return "image"; }
 
     public StepResult convert(String source, String format, String saveTo) throws IOException {
-        requires(StringUtils.isNotBlank(source), "invalid source specified", source);
         requiresReadableFile(source);
 
         requires(StringUtils.isNotBlank(format), "missing format", format);
@@ -58,8 +62,6 @@ public class ImageCommand extends BaseCommand implements ForcefulTerminate {
             fail("Invalid/unsupported image format: " + format + ".  Supported formats are png, jpg, gif, bmp");
             return null;
         }
-
-        File saveFile = resolveSaveTo(saveTo);
 
         mustForcefullyTerminate = true;
 
@@ -77,6 +79,7 @@ public class ImageCommand extends BaseCommand implements ForcefulTerminate {
         // saveImage.createGraphics().drawImage(srcImage, 0, 0, WHITE, null);
 
         // write to new file
+        File saveFile = resolveSaveTo(saveTo, StringUtils.substringAfterLast(srcFile.getAbsolutePath(), separator));
         ImageIO.write(saveImage, targetExt, saveFile);
 
         String message = "image '" + source + "' converted to '" + saveFile.getAbsolutePath() + "'";
@@ -101,8 +104,6 @@ public class ImageCommand extends BaseCommand implements ForcefulTerminate {
         int w = NumberUtils.toInt(StringUtils.trim(split[2]));
         int h = NumberUtils.toInt(StringUtils.trim(split[3]));
 
-        File saveFile = resolveSaveTo(saveTo);
-
         mustForcefullyTerminate = true;
 
         //fill in the corners of the desired crop location here
@@ -113,6 +114,7 @@ public class ImageCommand extends BaseCommand implements ForcefulTerminate {
         g.drawImage(newImage, 0, 0, null);
 
         String ext = StringUtils.lowerCase(StringUtils.substringAfterLast(image, "."));
+        File saveFile = resolveSaveTo(saveTo, StringUtils.substringAfterLast(imageFile.getAbsolutePath(), separator));
         ImageIO.write(cropped, ext, saveFile);
 
         String message = "image cropped and saved to '" + saveTo + "'";
@@ -121,17 +123,14 @@ public class ImageCommand extends BaseCommand implements ForcefulTerminate {
     }
 
     public StepResult resize(String image, String width, String height, String saveTo) throws IOException {
-        requires(StringUtils.isNotBlank(image), "invalid image", image);
+        requiresReadableFile(image);
         File imageFile = new File(image);
-        requires(imageFile.isFile() && imageFile.canRead() && imageFile.length() > 2, "unreadable image", image);
 
         requires(NumberUtils.isDigits(width), "invalid width", width);
         int w = NumberUtils.toInt(width);
 
         requires(NumberUtils.isDigits(height), "invalid height", height);
         int h = NumberUtils.toInt(height);
-
-        File saveFile = resolveSaveTo(saveTo);
 
         mustForcefullyTerminate = true;
 
@@ -147,6 +146,7 @@ public class ImageCommand extends BaseCommand implements ForcefulTerminate {
         g.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
 
         String ext = StringUtils.lowerCase(StringUtils.substringAfterLast(image, "."));
+        File saveFile = resolveSaveTo(saveTo, StringUtils.substringAfterLast(imageFile.getAbsolutePath(), separator));
         ImageIO.write(resizedImage, ext, saveFile);
 
         String message = "image resized and save to '" + saveTo + "'";
@@ -226,69 +226,67 @@ public class ImageCommand extends BaseCommand implements ForcefulTerminate {
     }
 
     protected StepResult saveDiff(String baseline, String actual, String saveTo) {
-        requiresNotBlank(baseline, "null/invalid baseline file", baseline);
-        requiresNotBlank(actual, "null/invalid actual file", actual);
+        requiresReadableFile(baseline);
+        requiresReadableFile(actual);
+        requiresNotBlank(saveTo, "Invalid 'saveTo' location", saveTo);
 
         // get baseline image
         File baselineFile = new File(baseline);
-        requires(baselineFile.canRead() && baselineFile.length() > 0, "empty or unreadable baseline file", baseline);
+
         // get test image
         File testFile = new File(actual);
-        requires(testFile.canRead() && testFile.length() > 0, "empty or unreadable test file", testFile);
 
-        String colorString = context.getStringData(OPT_IMAGE_DIFF_COLOR, DEF_IMAGE_DIFF_COLOR);
-        Color color;
-        if (!Arrays.asList(Colors.values()).contains(colorString)) {
-            color = Colors.red.getColor();
-        } else {
-            color = Colors.valueOf(colorString).getColor();
-        }
+        String colorName = context.getStringData(OPT_IMAGE_DIFF_COLOR, DEF_IMAGE_DIFF_COLOR);
+        Color color = ImageDiffColor.toColor(colorName);
 
         try {
             StopWatch watch = new StopWatch();
             watch.start();
+
             ImageComparison imageComparison = new ImageComparison(baselineFile, testFile);
             BufferedImage outImage = imageComparison.compareImages(color);
-            ImageIO.write(outImage, ImageType.png.toString(), new File(saveTo));
+            ImageIO.write(outImage, png.toString(), new File(saveTo));
+
             watch.stop();
-            System.out.println("time is watch " + watch.getTime());
+
+            ConsoleUtils.log("time elapsed to save image difference is " + watch.getTime());
             return StepResult.success("file is saved to " + saveTo);
         } catch (IOException e) {
             return StepResult.fail("can not read/write file " + e.getMessage());
         }
     }
 
-    protected StepResult changeBitColor(String baseline, String bit, String saveTo) throws IOException {
-        requiresNotBlank(baseline, "null/invalid baseline file", baseline);
+    protected StepResult colorbit(String image, String bit, String saveTo) throws IOException {
+        requiresReadableFile(image);
         requiresPositiveNumber(bit, "invalid value for bit", bit);
+        requiresNotBlank(saveTo, "invalid 'saveTo' location", saveTo);
 
         int targetImageBit = NumberUtils.toInt(bit);
 
-        // get baseline image
-        File baselineFile = new File(baseline);
-        requires(baselineFile.canRead() && baselineFile.length() > 0, "empty or unreadable baseline file", baseline);
-        BufferedImage baseImage = null;
+        // get image image
+        File imageFile = new File(image);
+        BufferedImage img;
         try {
-            baseImage = ImageIO.read(baselineFile);
-            if (baseImage == null) {
-                StepResult.fail("Baseline File" + baselineFile.getAbsolutePath() + " is unlikely to be proper image");
-            }
+            img = ImageIO.read(imageFile);
+            if (img == null) { return StepResult.fail("File '" + image + "' CANNOT be read as an image"); }
         } catch (IOException e) {
-            StepResult.fail("Unable to read baseline '" + baselineFile.getAbsolutePath() + "': " + e.getMessage());
+            return StepResult.fail("Unable to read image '" + imageFile.getAbsolutePath() + "': " + e.getMessage());
         }
 
-        int baseImageBit = baseImage.getColorModel().getPixelSize();
-        if (baseImageBit == targetImageBit) {
+        int imgBit = img.getColorModel().getPixelSize();
+        if (imgBit == targetImageBit) {
             String message = "color bit of source image and target bit are the same; no conversion needed";
             log(message);
             return StepResult.success(message);
         }
-        baseImage = BitDepthConversion.changeColorBit(baseImage, targetImageBit);
-        String targetExt = StringUtils.substringAfterLast(baselineFile.getAbsolutePath(), ".");
 
-        File saveFile = resolveSaveTo(saveTo);
-        ImageIO.write(baseImage, targetExt, saveFile);
-        String message = "Image color bit is converted from " + baseImageBit + " to " + targetImageBit;
+        String defaultFileName = StringUtils.substringAfterLast(imageFile.getAbsolutePath(), separator);
+        File saveFile = resolveSaveTo(saveTo, defaultFileName);
+
+        String targetExt = StringUtils.lowerCase(StringUtils.substringAfterLast(imageFile.getAbsolutePath(), "."));
+        ImageIO.write(BitDepthConversion.changeColorBit(img, targetImageBit), targetExt, saveFile);
+
+        String message = "Image color bit is converted from " + imgBit + " to " + targetImageBit;
         log(message);
         return StepResult.success(message);
     }
@@ -299,11 +297,15 @@ public class ImageCommand extends BaseCommand implements ForcefulTerminate {
     @Override
     public void forcefulTerminate() { }
 
-    protected static File resolveSaveTo(String saveTo) {
-        requiresNotBlank(saveTo, "missing 'saveTo'", saveTo);
+    protected static File resolveSaveTo(String saveTo, String defaultFileName) {
         File saveFile = new File(saveTo);
-        requires(!saveFile.isDirectory(), "'saveTo' refers to a directory", saveTo);
-        return saveFile;
+        if (StringUtils.endsWithAny(saveTo, "/", "\\") || saveFile.isDirectory()) {
+            saveFile.mkdirs();
+            return new File(StringUtils.appendIfMissing(saveTo, separator) + defaultFileName);
+        } else {
+            saveFile.getParentFile().mkdirs();
+            return saveFile;
+        }
     }
 
     protected String formatToleranceMessage(float match, float tolerance) {

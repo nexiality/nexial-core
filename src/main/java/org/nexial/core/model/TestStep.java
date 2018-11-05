@@ -49,8 +49,8 @@ import org.openqa.selenium.NoSuchElementException;
 import static java.lang.System.lineSeparator;
 import static org.apache.commons.lang3.builder.ToStringStyle.SIMPLE_STYLE;
 import static org.nexial.commons.utils.EnvUtils.platformSpecificEOL;
-import static org.nexial.core.NexialConst.Data.*;
 import static org.nexial.core.NexialConst.*;
+import static org.nexial.core.NexialConst.Data.*;
 import static org.nexial.core.excel.ExcelConfig.*;
 import static org.nexial.core.excel.ext.CipherHelper.CRYPT_IND;
 
@@ -155,6 +155,7 @@ public class TestStep extends TestStepManifest {
         tickTock.start();
 
         context.setCurrentTestStep(this);
+        boolean printStackTrace = context.getBooleanData(OPT_PRINT_ERROR_DETAIL, DEF_PRINT_ERROR_DETAIL);
 
         // delay is carried out here so that timespan is captured as part of execution
         waitFor(context.getDelayBetweenStep());
@@ -169,9 +170,14 @@ public class TestStep extends TestStepManifest {
                 // assertion error are already account for.. so no need to increment fail test count
                 if (!(cause instanceof AssertionError)) { ConsoleUtils.error(cause.getMessage()); }
                 error = StringUtils.defaultString(cause.getMessage(), cause.toString());
+            }
+
+            if (printStackTrace) {
+                ConsoleUtils.error(context.getRunId(), error, e);
             } else {
                 ConsoleUtils.error(error);
             }
+
             result = StepResult.fail(error);
         } catch (NoSuchElementException e) {
             String error = e.getMessage();
@@ -184,7 +190,11 @@ public class TestStep extends TestStepManifest {
             }
         } catch (Throwable e) {
             String error = e.getMessage();
-            ConsoleUtils.error(error);
+            if (printStackTrace) {
+                ConsoleUtils.error(context.getRunId(), error, e);
+            } else {
+                ConsoleUtils.error(error);
+            }
             result = StepResult.fail(error);
         } finally {
             tickTock.stop();

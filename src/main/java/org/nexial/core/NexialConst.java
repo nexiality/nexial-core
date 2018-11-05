@@ -21,11 +21,13 @@ import java.awt.*;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.util.Arrays;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
 import org.apache.commons.cli.Options;
 import org.apache.commons.collections4.ListUtils;
+import org.apache.commons.collections4.MapUtils;
 import org.apache.commons.lang3.BooleanUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.nexial.commons.utils.RegexUtils;
@@ -174,14 +176,12 @@ public final class NexialConst {
 
     public static final String OPT_IMAGE_TOLERANCE = NAMESPACE + "imageTolerance";
     public static final String OPT_IMAGE_DIFF_COLOR = NAMESPACE + "imageDiffColor";
-    public static final String DEF_IMAGE_DIFF_COLOR = "red";
 
-    // derived from System property ONLY -- should be set to each automation server
-    public static final String OPT_REPORT_SERVER_URL = NAMESPACE + "reportServerUrl";
-    public static final String OPT_REPORT_SERVER_BASEDIR = NAMESPACE + "reportServerBaseDir";
     public static final String OPT_SCREENSHOT_ON_ERROR = NAMESPACE + "screenshotOnError";
     public static final String OPT_LAST_SCREENSHOT_NAME = NAMESPACE + "lastScreenshot";
     public static final String OPT_LAST_OUTCOME = NAMESPACE + "lastOutcome";
+    public static final String OPT_PRINT_ERROR_DETAIL = NAMESPACE + "printErrorDetails";
+    public static final boolean DEF_PRINT_ERROR_DETAIL = false;
 
     // control verbosity of multi-step commands
     public static final String OPT_ELAPSED_TIME_SLA = NAMESPACE + "elapsedTimeSLA";
@@ -487,18 +487,28 @@ public final class NexialConst {
         public int getImageType() { return imageType; }
     }
 
-    public enum Colors {
-        red(RED),
-        blue(BLUE),
-        green(GREEN),
-        black(BLACK),
-        white(WHITE);
+    public static class ImageDiffColor {
+        public static final String DEF_IMAGE_DIFF_COLOR = "red";
 
-        private Color color;
+        private static final Map<String, Color> COLOR_NAMES = new HashMap<>();
 
-        Colors(Color color) { this.color = color; }
+        private ImageDiffColor() {}
 
-        public Color getColor() { return color; }
+        /**
+         * default to red
+         */
+        public static Color toColor(String colorName) {
+            return MapUtils.getObject(COLOR_NAMES, colorName, COLOR_NAMES.get(DEF_IMAGE_DIFF_COLOR));
+        }
+
+        static {
+            COLOR_NAMES.put("red", RED);
+            COLOR_NAMES.put("yellow", YELLOW);
+            COLOR_NAMES.put("blue", BLACK);
+            COLOR_NAMES.put("green", GREEN);
+            COLOR_NAMES.put("black", BLACK);
+            COLOR_NAMES.put("white", WHITE);
+        }
     }
 
     public static final class AwsSettings {
