@@ -17,6 +17,7 @@
 
 package org.nexial.core.plugins.base;
 
+import java.awt.image.*;
 import java.io.File;
 import java.io.IOException;
 import java.io.PrintWriter;
@@ -29,6 +30,7 @@ import java.lang.reflect.Parameter;
 import java.util.*;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
+import javax.imageio.ImageIO;
 
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.io.FileUtils;
@@ -1131,14 +1133,18 @@ public class BaseCommand implements NexialCommand {
      *
      * to improve readability and user experience, use {@code caption} to describe such file on the execution output.
      */
-    protected void addOutputAsLink(String caption, String output, String extension) {
+    protected void addOutputAsLink(String caption, Object output, String extension) {
         String outFile = syspath.out("fullpath") + separator +
                          OutputFileUtils.generateOutputFilename(context.getCurrentTestStep(), extension);
-        File outputFile = new File(outFile);
 
         try {
-            FileUtils.writeStringToFile(outputFile, output, DEF_FILE_ENCODING);
-            addLinkRef(caption, extension + " report", outFile);
+            if (output instanceof BufferedImage) {
+                ImageIO.write((BufferedImage) output, extension, new File(outFile));
+                addLinkRef(caption, "image diff", outFile);
+            } else {
+                FileUtils.writeStringToFile(new File(outFile), String.valueOf(output), DEF_FILE_ENCODING);
+                addLinkRef(caption, extension + " report", outFile);
+            }
         } catch (IOException e) {
             error("Unable to write log file to '" + outFile + "': " + e.getMessage(), e);
         }

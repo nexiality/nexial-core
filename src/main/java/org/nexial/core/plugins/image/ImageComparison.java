@@ -7,6 +7,7 @@ import java.io.IOException;
 import javax.imageio.ImageIO;
 
 import static org.nexial.core.plugins.image.BitDepthConversion.changeColorBit;
+import static org.nexial.core.plugins.image.ImageCommand.IMAGE_PERCENT_FORMAT;
 
 public class ImageComparison {
 
@@ -16,11 +17,18 @@ public class ImageComparison {
     private final BufferedImage image2;
     private ImageDifferenceTools tools;
 
+    private int matchCount = 0;
+    private float matchPercent;
+
     public ImageComparison(File image1, File image2) throws IOException {
         this.image1 = ImageIO.read(image1);
         this.image2 = ImageIO.read(image2);
         this.tools = new ImageDifferenceTools();
+
+        initDiffMatrix();
     }
+
+    public float getMatchPercent() { return matchPercent; }
 
     /**
      * Draw rectangles which cover the regions of the difference pixels.
@@ -30,7 +38,6 @@ public class ImageComparison {
      */
     public BufferedImage compareImages(Color color) {
         // checkCorrectImageSize(image1, image2);
-        initDiffMatrix();
         BufferedImage outputImg = deepCopy(image2);
 
         Graphics2D graphics = outputImg.createGraphics();
@@ -86,6 +93,10 @@ public class ImageComparison {
 
         int[][] matrix = populateMatrixOfDifferences(convertedImage1, convertedImage2);
         tools.setMatrix(matrix);
+
+        float dimensionBase = image1.getWidth() * image1.getHeight();
+        //Percentage matching calculation
+        matchPercent = Float.parseFloat(IMAGE_PERCENT_FORMAT.format(matchCount / dimensionBase * 100));
     }
 
     /**
@@ -100,9 +111,13 @@ public class ImageComparison {
         for (int y = 0; y < image1.getHeight(); y++) {
             for (int x = 0; x < image1.getWidth(); x++) {
                 try {
-                    matrix[x][y] = !isMatched(image1.getRGB(x, y), image2.getRGB(x, y)) ? 1 : 0;
+                    if (isMatched(image1.getRGB(x, y), image2.getRGB(x, y))) {
+                        matrix[x][y] = 0;
+                        matchCount++;
+                    } else {
+                        matrix[x][y] = 1;
+                    }
                 } catch (Exception e) {
-                    System.out.println("exception is at " + x + "" + y);
                     break;
                 }
             }

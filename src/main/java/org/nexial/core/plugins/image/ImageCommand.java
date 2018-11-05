@@ -225,10 +225,12 @@ public class ImageCommand extends BaseCommand implements ForcefulTerminate {
         }
     }
 
-    protected StepResult saveDiff(String baseline, String actual, String saveTo) {
+    public StepResult saveDiff(String baseline, String actual) {
         requiresReadableFile(baseline);
         requiresReadableFile(actual);
-        requiresNotBlank(saveTo, "Invalid 'saveTo' location", saveTo);
+
+        float imageTol = context.hasData(OPT_IMAGE_TOLERANCE) ?
+                         Float.parseFloat(context.getStringData(OPT_IMAGE_TOLERANCE)) : 0;
 
         // get baseline image
         File baselineFile = new File(baseline);
@@ -244,38 +246,45 @@ public class ImageCommand extends BaseCommand implements ForcefulTerminate {
             watch.start();
 
             ImageComparison imageComparison = new ImageComparison(baselineFile, testFile);
-            BufferedImage outImage = imageComparison.compareImages(color);
-            ImageIO.write(outImage, png.toString(), new File(saveTo));
+            float matchPercent = imageComparison.getMatchPercent();
+            String message = formatToleranceMessage(matchPercent, imageTol);
 
-            watch.stop();
+            if ((matchPercent + imageTol) < 100) {
+                BufferedImage outImage = imageComparison.compareImages(color);
+                addOutputAsLink("Image comparison resulted in " + message, outImage, png.toString());
 
-            ConsoleUtils.log("time elapsed to save image difference is " + watch.getTime());
-            return StepResult.success("file is saved to " + saveTo);
+                watch.stop();
+                ConsoleUtils.log("time elapsed to save image difference is " + watch.getTime());
+                return StepResult.fail("baseline and test images are different " + message);
+            } else {
+                return StepResult.success("baseline and test images are same " + message);
+            }
         } catch (IOException e) {
-            return StepResult.fail("can not read/write file " + e.getMessage());
+            return StepResult.fail("can not read file " + e.getMessage());
         }
     }
 
-    protected StepResult colorbit(String image, String bit, String saveTo) throws IOException {
-        requiresReadableFile(image);
+    public StepResult colorbit(String source, String bit, String saveTo) throws IOException {
+        requiresReadableFile(source);
         requiresPositiveNumber(bit, "invalid value for bit", bit);
         requiresNotBlank(saveTo, "invalid 'saveTo' location", saveTo);
 
         int targetImageBit = NumberUtils.toInt(bit);
 
-        // get image image
-        File imageFile = new File(image);
+        // get image
+        File imageFile = new File(source);
         BufferedImage img;
         try {
             img = ImageIO.read(imageFile);
-            if (img == null) { return StepResult.fail("File '" + image + "' CANNOT be read as an image"); }
+            if (img == null) { return StepResult.fail("File '" + source + "' CANNOT be read as an image"); }
         } catch (IOException e) {
             return StepResult.fail("Unable to read image '" + imageFile.getAbsolutePath() + "': " + e.getMessage());
         }
 
         int imgBit = img.getColorModel().getPixelSize();
-        if (imgBit == targetImageBit) {
-            String message = "color bit of source image and target bit are the same; no conversion needed";
+        if (imgBit <= targetImageBit) {
+            String message = "color bit of source image(" + imgBit + ") is equal/less than target bit("
+                             + targetImageBit + "); no conversion needed";
             log(message);
             return StepResult.success(message);
         }
