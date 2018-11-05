@@ -830,7 +830,8 @@ public class ExecutionContext {
     @NotNull
     public String generateTestStepOutput(String extension) {
         if (syspath == null) { syspath = new Syspath(); }
-        return syspath.out("fullpath") + separator + OutputFileUtils.generateOutputFilename(currentTestStep, extension);
+        return syspath.out("fullpath") + separator +
+               OutputFileUtils.generateOutputFilename(getCurrentTestStep(), extension);
     }
 
     public void adjustForInteractive(InteractiveSession session) {
