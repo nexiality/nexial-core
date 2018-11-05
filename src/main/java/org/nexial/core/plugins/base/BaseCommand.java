@@ -52,10 +52,8 @@ import org.nexial.core.plugins.NexialCommand;
 import org.nexial.core.tools.CommandDiscovery;
 import org.nexial.core.utils.CheckUtils;
 import org.nexial.core.utils.ConsoleUtils;
-import org.nexial.core.utils.OutputFileUtils;
 import org.nexial.core.variable.Syspath;
 
-import static java.io.File.separator;
 import static java.lang.Boolean.FALSE;
 import static java.lang.Boolean.TRUE;
 import static java.lang.System.lineSeparator;
@@ -1113,40 +1111,35 @@ public class BaseCommand implements NexialCommand {
         }
     }
 
-    // protected void addLinkToOutputFile(File outputFile, String label, String linkCaption) {
-    //     if (outputFile == null) { return; }
-    //
-    //     String outFile = outputFile.getPath();
-    //     if (context.isOutputToCloud()) {
-    //         try {
-    //             outFile = context.getOtc().importMedia(outputFile);
-    //         } catch (IOException e) {
-    //             log("Unable to save " + outFile + " to cloud storage due to " + e.getMessage());
-    //         }
-    //     }
-    //
-    //     addLinkRef(linkCaption, label, outFile);
-    // }
-
     /**
      * create a file with {@code output} as its text content and its name based on current step and {@code extension}.
      *
      * to improve readability and user experience, use {@code caption} to describe such file on the execution output.
      */
-    protected void addOutputAsLink(String caption, Object output, String extension) {
-        String outFile = syspath.out("fullpath") + separator +
-                         OutputFileUtils.generateOutputFilename(context.getCurrentTestStep(), extension);
+    protected void addOutputAsLink(String caption, String output, String extension) {
+        String outFile = context.generateTestStepOutput(extension);
 
         try {
-            if (output instanceof BufferedImage) {
-                ImageIO.write((BufferedImage) output, extension, new File(outFile));
-                addLinkRef(caption, "image diff", outFile);
-            } else {
-                FileUtils.writeStringToFile(new File(outFile), String.valueOf(output), DEF_FILE_ENCODING);
-                addLinkRef(caption, extension + " report", outFile);
-            }
+            FileUtils.writeStringToFile(new File(outFile), output, DEF_FILE_ENCODING);
+            addLinkRef(caption, extension + " report", outFile);
         } catch (IOException e) {
             error("Unable to write log file to '" + outFile + "': " + e.getMessage(), e);
+        }
+    }
+
+    /**
+     * create a file with {@code output} as its content and its name based on current step and {@code extension}.
+     *
+     * to improve readability and user experience, use {@code caption} to describe such file on the execution output.
+     */
+    protected void addOutputAsLink(String caption, BufferedImage output, String extension) {
+        String outFile = context.generateTestStepOutput(extension);
+
+        try {
+            ImageIO.write(output, extension, new File(outFile));
+            addLinkRef(caption, "image diff", outFile);
+        } catch (IOException e) {
+            error("Unable to create image file '" + outFile + "': " + e.getMessage(), e);
         }
     }
 

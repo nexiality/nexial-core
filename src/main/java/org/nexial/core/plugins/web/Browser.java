@@ -556,7 +556,6 @@ public class Browser implements ForcefulTerminate {
             options.addArguments("--no-sandbox");
         }
 
-        options.addArguments("--hide-scrollbars");
         options.addArguments(this.chromeOptions);
         if (context.getBooleanData(BROWER_INCOGNITO, DEF_BROWSER_INCOGNITO)) { options.addArguments("incognito"); }
 

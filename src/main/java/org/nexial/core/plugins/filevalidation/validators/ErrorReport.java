@@ -41,10 +41,7 @@ import org.nexial.core.plugins.filevalidation.RecordData;
 import org.nexial.core.utils.CheckUtils;
 import org.nexial.core.utils.ConsoleUtils;
 import org.nexial.core.utils.JsonHelper;
-import org.nexial.core.utils.OutputFileUtils;
-import org.nexial.core.variable.Syspath;
 
-import static java.io.File.separator;
 import static org.nexial.core.NexialConst.GSON;
 
 public class ErrorReport {
@@ -67,10 +64,8 @@ public class ErrorReport {
 
     public static File createExcel(RecordData recordData) {
 
-        String outPath = new Syspath().out("fullpath") + separator;
-        String outFile = outPath + OutputFileUtils.generateOutputFilename(context.getCurrentTestStep(), "xlsx");
-        String csvFile = outPath + OutputFileUtils.generateOutputFilename(context.getCurrentTestStep(), "csv");
-        File outputFile = new File(outFile);
+        String csvFile = context.generateTestStepOutput("csv");
+        File outputFile = new File(context.generateTestStepOutput("xlsx"));
 
         ConsoleUtils.log("writing validation report to excel..");
         try {
@@ -89,10 +84,8 @@ public class ErrorReport {
 
 
     public static File createJSON(RecordData recordData) {
-        String outPath = new Syspath().out("fullpath") + separator;
-        String outFile = outPath + OutputFileUtils.generateOutputFilename(context.getCurrentTestStep(), "json");
-        File outputFile = new File(outFile);
-        String csvFile = outPath + OutputFileUtils.generateOutputFilename(context.getCurrentTestStep(), "csv");
+        File outputFile = new File(context.generateTestStepOutput("json"));
+        String csvFile = context.generateTestStepOutput("csv");
 
         String summary = getJsonString(recordData);
 

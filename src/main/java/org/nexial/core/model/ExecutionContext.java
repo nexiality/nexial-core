@@ -67,6 +67,7 @@ import org.nexial.core.utils.OutputFileUtils;
 import org.nexial.core.utils.TrackTimeLogs;
 import org.nexial.core.variable.ExpressionException;
 import org.nexial.core.variable.ExpressionProcessor;
+import org.nexial.core.variable.Syspath;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.slf4j.MDC;
@@ -147,6 +148,7 @@ public class ExecutionContext {
     protected ExpressionProcessor expression;
     protected ExecutionEventListener executionEventListener;
     protected CanTakeScreenshot screenshotAgent;
+    protected Syspath syspath;
 
     // spring-managed map of webdriver related configs.
     protected Map<BrowserType, String> webdriverHelperConfig;
@@ -824,6 +826,12 @@ public class ExecutionContext {
     public TestStep getCurrentTestStep() { return currentTestStep; }
 
     protected void setCurrentTestStep(TestStep testStep) { this.currentTestStep = testStep; }
+
+    @NotNull
+    public String generateTestStepOutput(String extension) {
+        if (syspath == null) { syspath = new Syspath(); }
+        return syspath.out("fullpath") + separator + OutputFileUtils.generateOutputFilename(currentTestStep, extension);
+    }
 
     public void adjustForInteractive(InteractiveSession session) {
         String targetScenario = session.getScenario();

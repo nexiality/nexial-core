@@ -48,7 +48,6 @@ import org.nexial.core.utils.OutputFileUtils;
 import org.xml.sax.ErrorHandler;
 import org.xml.sax.SAXParseException;
 
-import static java.io.File.separator;
 import static org.jdom2.input.sax.XMLReaders.XSDVALIDATING;
 import static org.nexial.core.NexialConst.DEF_FILE_ENCODING;
 import static org.nexial.core.utils.CheckUtils.requires;
@@ -338,8 +337,7 @@ public class XmlCommand extends BaseCommand {
     }
 
     protected void generateErrorLogs(XmlCommand.SchemaErrorCollector errorHandler) {
-        String outFile = syspath.out("fullpath") + separator +
-                         OutputFileUtils.generateOutputFilename(context.getCurrentTestStep(), "log");
+        String outFile = context.generateTestStepOutput("log");
 
         String output = TextUtils.createAsciiTable(Arrays.asList("severity", "line", "column", "message"),
                                                    errorHandler.getErrors(),

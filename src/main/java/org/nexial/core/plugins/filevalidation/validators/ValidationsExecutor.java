@@ -44,8 +44,6 @@ import org.nexial.core.plugins.filevalidation.config.MapFunctionConfig;
 import org.nexial.core.plugins.filevalidation.config.RecordConfig;
 import org.nexial.core.plugins.filevalidation.validators.Error.ErrorBuilder;
 import org.nexial.core.utils.ConsoleUtils;
-import org.nexial.core.utils.OutputFileUtils;
-import org.nexial.core.variable.Syspath;
 
 import static java.math.RoundingMode.UP;
 
@@ -53,9 +51,9 @@ public class ValidationsExecutor {
 
     private static final Map<String, DataType> ALL_DATA_TYPES = new HashedMap<>();
     private static Map<String, Alignment> ALL_ALIGNMENTS = new HashMap<>();
-    private FieldValidator startValidator;
     private static final int DEC_SCALE = 25;
     private static final RoundingMode ROUND = UP;
+    private FieldValidator startValidator;
     private ExecutionContext context;
 
     public enum ValidationType {
@@ -113,14 +111,37 @@ public class ValidationsExecutor {
             new DateValidator()).setNextValidator(new SqlValidator());
     }
 
-    File resolveCsvOutputFile() {
-        String outputCsvFilePath = new Syspath().out("fullpath") + File.separator +
-                                   OutputFileUtils.generateOutputFilename(context.getCurrentTestStep(), "csv");
-        if (FileUtil.isFileReadable(outputCsvFilePath)) {
-            throw new IllegalArgumentException("Unable to create a csv output file.");
-        }
-        return new File(outputCsvFilePath);
+    public void max(Map<String, Number> mapValues, String mapTo, BigDecimal big) {
+        BigDecimal mapValue = mapValues.containsKey(mapTo) ?
+                              big.max((BigDecimal) mapValues.get(mapTo)) :
+                              big;
+        mapValues.put(mapTo, mapValue);
     }
+
+    public void min(Map<String, Number> mapValues, String mapTo, BigDecimal big) {
+        BigDecimal mapValue = mapValues.containsKey(mapTo) ?
+                              big.min((BigDecimal) mapValues.get(mapTo)) :
+                              big;
+        mapValues.put(mapTo, mapValue);
+    }
+
+    public static Error buildError(FieldBean field, Severity severity, String errorMessage, String validationType) {
+        FieldConfig config = field.getConfig();
+
+        return new ErrorBuilder().fieldName(config.getFieldname())
+                                 .severity(severity.toString())
+                                 .validationType(validationType)
+                                 .errorMessage(errorMessage)
+                                 .build();
+    }
+
+    File resolveCsvOutputFile() {
+        String file = context.generateTestStepOutput("csv");
+        if (FileUtil.isFileReadable(file)) { throw new IllegalArgumentException("Unable to create a csv output file.");}
+        return new File(file);
+    }
+
+    // todo: make all number functions as generic methods
 
     void executeValidations(OutputStream outputStream, RecordBean recordBean) {
 
@@ -225,20 +246,52 @@ public class ValidationsExecutor {
         return mapValues;
     }
 
-    // todo: make all number functions as generic methods
-
-    public void max(Map<String, Number> mapValues, String mapTo, BigDecimal big) {
-        BigDecimal mapValue = mapValues.containsKey(mapTo) ?
-                              big.max((BigDecimal) mapValues.get(mapTo)) :
-                              big;
-        mapValues.put(mapTo, mapValue);
+    void restoreValuesToContext(Map<String, Object> tempDupValues) {
+        if (tempDupValues.isEmpty()) { return; }
+        for (Entry<String, Object> stringObjectEntry : tempDupValues.entrySet()) {
+            context.setData(stringObjectEntry.getKey(), stringObjectEntry.getValue());
+            context.logCurrentStep("var '" +
+                                   stringObjectEntry.getKey() +
+                                   "' is restored to context with value '" +
+                                   context.getObjectData(stringObjectEntry.getKey()) + "'");
+        }
     }
 
-    public void min(Map<String, Number> mapValues, String mapTo, BigDecimal big) {
-        BigDecimal mapValue = mapValues.containsKey(mapTo) ?
-                              big.min((BigDecimal) mapValues.get(mapTo)) :
-                              big;
-        mapValues.put(mapTo, mapValue);
+    Map<String, Object> moveDupValuesFromContext(List<RecordConfig> configs) {
+        Map<String, Object> tempDupValues = new HashMap<>();
+
+        for (RecordConfig config : configs) {
+            if (config != null && CollectionUtils.isNotEmpty(config.getMapFunctionConfigs())) {
+                for (MapFunctionConfig mapFunctionConfig : config.getMapFunctionConfigs()) {
+                    String mapTo = mapFunctionConfig.getMapTo();
+                    String fieldName = mapFunctionConfig.getFieldName();
+                    if (mapTo != null) {
+                        if (context.hasData(mapTo)) { tempDupValues.put(mapTo, context.getObjectData(mapTo)); }
+                        if (context.hasData(fieldName)) {
+                            tempDupValues.put(fieldName,
+                                              context.getObjectData(fieldName));
+                        }
+                    }
+                }
+            }
+        }
+        return tempDupValues;
+    }
+
+    void writeReportToFile(OutputStream outputStream, RecordBean recordBean) {
+        try {
+            String msg = null;
+            if (recordBean.isFailed()) {
+                msg = ErrorReport.createCSV(recordBean.getErrors());
+            } else if (recordBean.isSkipped()) {
+                msg = recordBean.getSkippedMsg();
+            }
+            if (outputStream != null && msg != null) {
+                outputStream.write(msg.getBytes());
+            }
+        } catch (IOException e) {
+            ConsoleUtils.log("Failed to write errors to csv file: " + e.getMessage());
+        }
     }
 
     private void aggregate(Map<String, Number> mapValues, String mapTo, BigDecimal big) {
@@ -261,17 +314,6 @@ public class ValidationsExecutor {
             mapValues.put(mapTo + "#Counter", 1);
             mapValues.put(mapTo + "#Sum", big);
             mapValues.put(mapTo, big);
-        }
-    }
-
-    void restoreValuesToContext(Map<String, Object> tempDupValues) {
-        if (tempDupValues.isEmpty()) { return; }
-        for (Entry<String, Object> stringObjectEntry : tempDupValues.entrySet()) {
-            context.setData(stringObjectEntry.getKey(), stringObjectEntry.getValue());
-            context.logCurrentStep("var '" +
-                                   stringObjectEntry.getKey() +
-                                   "' is restored to context with value '" +
-                                   context.getObjectData(stringObjectEntry.getKey()) + "'");
         }
     }
 
@@ -311,27 +353,6 @@ public class ValidationsExecutor {
 
     }
 
-    Map<String, Object> moveDupValuesFromContext(List<RecordConfig> configs) {
-        Map<String, Object> tempDupValues = new HashMap<>();
-
-        for (RecordConfig config : configs) {
-            if (config != null && CollectionUtils.isNotEmpty(config.getMapFunctionConfigs())) {
-                for (MapFunctionConfig mapFunctionConfig : config.getMapFunctionConfigs()) {
-                    String mapTo = mapFunctionConfig.getMapTo();
-                    String fieldName = mapFunctionConfig.getFieldName();
-                    if (mapTo != null) {
-                        if (context.hasData(mapTo)) { tempDupValues.put(mapTo, context.getObjectData(mapTo)); }
-                        if (context.hasData(fieldName)) {
-                            tempDupValues.put(fieldName,
-                                              context.getObjectData(fieldName));
-                        }
-                    }
-                }
-            }
-        }
-        return tempDupValues;
-    }
-
     private void cleanValuesFromContext(RecordBean recordBean) {
         for (FieldBean fieldBean : recordBean.getFields()) {
             context.removeData(fieldBean.getConfig().getFieldname());
@@ -359,15 +380,6 @@ public class ValidationsExecutor {
         return filters.isMatched(context, "filtering records with");
     }
 
-    public static Error buildError(FieldBean field, Severity severity, String errorMessage, String validationType) {
-        FieldConfig config = field.getConfig();
-
-        return new ErrorBuilder().fieldName(config.getFieldname())
-                                 .severity(severity.toString())
-                                 .validationType(validationType)
-                                 .errorMessage(errorMessage)
-                                 .build();
-    }
     private void doFieldValidations(RecordBean recordBean) {
         List<FieldBean> fields = recordBean.getFields();
 
@@ -377,21 +389,5 @@ public class ValidationsExecutor {
             }
         }
         recordBean.collectErrors();
-    }
-
-    void writeReportToFile(OutputStream outputStream, RecordBean recordBean) {
-        try {
-            String msg = null;
-            if (recordBean.isFailed()) {
-                msg = ErrorReport.createCSV(recordBean.getErrors());
-            } else if (recordBean.isSkipped()) {
-                msg = recordBean.getSkippedMsg();
-            }
-            if (outputStream != null && msg != null) {
-                outputStream.write(msg.getBytes());
-            }
-        } catch (IOException e) {
-            ConsoleUtils.log("Failed to write errors to csv file: " + e.getMessage());
-        }
     }
 }
