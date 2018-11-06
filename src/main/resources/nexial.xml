@@ -337,7 +337,7 @@
                         <value>always-authorize-plugins</value>
                         <value>disable-browser-side-navigation</value>
                         <value>hide-scrollbars</value>
-                        <value>disable-gpu</value>
+                        <!--<value>disable-gpu</value>-->
                     </array>
                 </property>
 

@@ -257,7 +257,7 @@ tasks.withType(Test) {
 test {
 	maxHeapSize = "256m"
 //	jvmArgs '-XX:MaxPermSize=512m'
-	jvmArgs '-Xss4m'
+	jvmArgs '-Xss24m'
 	reports.html.enabled = true
 	reports.junitXml.enabled = true
 	exclude '**/*Manual*'

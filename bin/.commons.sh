@@ -152,7 +152,7 @@ fi
 # setting Java runtime options and classpath
 # --------------------------------------------------------------------------------
 JAVA_OPT="${JAVA_OPT} -ea"
-JAVA_OPT="${JAVA_OPT} -Xss4m"
+JAVA_OPT="${JAVA_OPT} -Xss16m"
 JAVA_OPT="${JAVA_OPT} -Dfile.encoding=UTF-8"
 JAVA_OPT="${JAVA_OPT} -Dnexial.home=${NEXIAL_HOME}"
 JAVA_OPT="${JAVA_OPT} -Dwebdriver.winium.verbose=true"

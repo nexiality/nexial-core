@@ -170,26 +170,28 @@ public class ImageCommand extends BaseCommand implements ForcefulTerminate {
         String colorName = context.getStringData(OPT_IMAGE_DIFF_COLOR, DEF_IMAGE_DIFF_COLOR);
         Color color = ImageDiffColor.toColor(colorName);
 
+        StopWatch watch = new StopWatch();
+        watch.start();
         try {
-            StopWatch watch = new StopWatch();
-            watch.start();
-
             ImageComparison imageComparison = new ImageComparison(baselineFile, testFile);
             float matchPercent = imageComparison.getMatchPercent();
-            String message = formatToleranceMessage(matchPercent, imageTol);
+            String stats = formatToleranceMessage(matchPercent, imageTol);
 
             if ((matchPercent + imageTol) < 100) {
                 BufferedImage outImage = imageComparison.compareImages(color);
-                addOutputAsLink("Image comparison resulted in " + message, outImage, png.toString());
-
-                watch.stop();
-                ConsoleUtils.log("time elapsed to save image difference is " + watch.getTime());
-                return StepResult.fail("baseline and test images are different " + message);
+                String msg = "Difference between baseline and actual BEYOND tolerance " + stats;
+                addOutputAsLink(msg, outImage, png.toString());
+                return StepResult.fail(msg);
             } else {
-                return StepResult.success("baseline and test images are same " + message);
+                String msg = "Difference between baseline and actual within tolerance " + stats;
+                log(msg);
+                return StepResult.success("baseline and test images are same " + stats);
             }
         } catch (IOException e) {
-            return StepResult.fail("can not read file " + e.getMessage());
+            return StepResult.fail("ERROR reading image file: " + e.getMessage());
+        } finally {
+            watch.stop();
+            ConsoleUtils.log("Image comparison completed in " + watch.getTime() + "ms");
         }
     }
 
@@ -247,14 +249,11 @@ public class ImageCommand extends BaseCommand implements ForcefulTerminate {
     }
 
     protected String formatToleranceMessage(float match, float tolerance) {
-        boolean hasTol = context.hasData(OPT_IMAGE_TOLERANCE);
-
-        StringBuilder str = new StringBuilder();
-        str.append("(");
-        if (hasTol) { str.append("Tolerance: ").append(IMAGE_PERCENT_FORMAT.format(tolerance)).append(", "); }
-        str.append("Match: ").append(IMAGE_PERCENT_FORMAT.format(match)).append("%");
-        // if (hasTol) { str.append("Total: ").append(IMAGE_PERCENT_FORMAT.format(match + tolerance)); }
-        str.append(")");
+        StringBuilder str = new StringBuilder("(");
+        if (context.hasData(OPT_IMAGE_TOLERANCE)) {
+            str.append("Tolerance: ").append(IMAGE_PERCENT_FORMAT.format(tolerance)).append(", ");
+        }
+        str.append("Match: ").append(IMAGE_PERCENT_FORMAT.format(match)).append("%)");
         return str.toString();
     }
 }

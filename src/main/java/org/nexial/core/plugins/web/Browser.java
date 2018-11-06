@@ -553,6 +553,7 @@ public class Browser implements ForcefulTerminate {
         ChromeOptions options = new ChromeOptions();
         if (headless) {
             options.setHeadless(true);
+            options.addArguments("--disable-gpu");
             options.addArguments("--no-sandbox");
         }
 

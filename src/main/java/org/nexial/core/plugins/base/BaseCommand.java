@@ -1137,7 +1137,7 @@ public class BaseCommand implements NexialCommand {
 
         try {
             ImageIO.write(output, extension, new File(outFile));
-            addLinkRef(caption, "image diff", outFile);
+            addLinkRef(caption, "comparison", outFile);
         } catch (IOException e) {
             error("Unable to create image file '" + outFile + "': " + e.getMessage(), e);
         }

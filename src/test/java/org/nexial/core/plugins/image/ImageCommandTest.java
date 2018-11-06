@@ -24,6 +24,7 @@ import javax.imageio.ImageIO;
 
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang3.StringUtils;
+import org.apache.commons.lang3.SystemUtils;
 import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
@@ -31,19 +32,35 @@ import org.junit.Test;
 import org.nexial.commons.utils.ResourceUtils;
 import org.nexial.core.model.MockExecutionContext;
 import org.nexial.core.model.StepResult;
+import org.nexial.core.model.TestStep;
 
 import static java.io.File.separator;
 import static org.apache.commons.lang3.SystemUtils.JAVA_IO_TMPDIR;
+import static org.nexial.core.NexialConst.OPT_OUT_DIR;
 
 public class ImageCommandTest {
+    private static final String CLASSNAME = ImageCommandTest.class.getSimpleName();
+    private static final String TMP_PATH = SystemUtils.getJavaIoTmpDir().getAbsolutePath();
+
     private final String testDir = StringUtils.appendIfMissing(JAVA_IO_TMPDIR, separator) +
                                    this.getClass().getSimpleName();
     private final String resourceBasePath = StringUtils.replace(this.getClass().getPackage().getName(), ".", "/");
 
-    private MockExecutionContext context = new MockExecutionContext();
+    private MockExecutionContext context = new MockExecutionContext() {
+        @Override
+        public TestStep getCurrentTestStep() {
+            return new TestStep() {
+                @Override
+                public String generateFilename(String ext) {
+                    return CLASSNAME + StringUtils.prependIfMissing(StringUtils.trim(ext), ".");
+                }
+            };
+        }
+    };
 
     @Before
     public void init() throws IOException {
+        System.setProperty(OPT_OUT_DIR, TMP_PATH);
         FileUtils.forceMkdir(new File(testDir));
     }
 
