@@ -36,13 +36,14 @@ import org.nexial.core.model.ExecutionSummary;
 import org.nexial.core.model.TestScenario;
 
 import com.diogonunes.jcdp.bw.Printer;
+import com.diogonunes.jcdp.bw.Printer.Builder;
 import com.diogonunes.jcdp.bw.Printer.Types;
 import com.diogonunes.jcdp.color.ColoredPrinter;
 import com.diogonunes.jcdp.color.api.Ansi.Attribute;
+import com.diogonunes.jcdp.color.api.Ansi.BColor;
+import com.diogonunes.jcdp.color.api.Ansi.FColor;
 
-import static com.diogonunes.jcdp.color.api.Ansi.Attribute.BOLD;
-import static com.diogonunes.jcdp.color.api.Ansi.BColor.NONE;
-import static com.diogonunes.jcdp.color.api.Ansi.FColor.*;
+import static com.diogonunes.jcdp.color.api.Ansi.Attribute.*;
 import static org.apache.commons.lang3.SystemUtils.*;
 import static org.nexial.core.interactive.InteractiveConsole.Commands.*;
 import static org.nexial.core.model.ExecutionSummary.ExecutionLevel.STEP;
@@ -61,21 +62,34 @@ public class InteractiveConsole {
 
     private static final String SUB1_START = StringUtils.repeat(" ", HEADER_ACTIVITY.length());
     private static final String SUB2_END = ": ";
+    private static final String CMD_START = "  ";
+    private static final String CMD_END = " ";
+    private static final char FILLER_MENU = '~';
 
     private static final String SUB1_HEADER_TIMESPAN = SUB1_START + "timespan       " + SUB2_END;
     private static final String SUB1_HEADER_DURATION = SUB1_START + "duration       " + SUB2_END;
     private static final String SUB1_HEADER_ITERATION = SUB1_START + "iteration      " + SUB2_END;
     private static final String SUB1_HEADER_STATS = SUB1_START + "total/pass/fail" + SUB2_END;
 
-    private static final int SCRIPT_MAX_LENGTH = PROMPT_LINE_WIDTH -
-                                                 MARGIN_LEFT.length() -
-                                                 HEADER_SCRIPT.length() -
-                                                 MARGIN_RIGHT.length();
-    private static final int REF_MAX_LENGTH = SUB1_HEADER_STATS.length() - SUB1_START.length() - SUB2_END.length();
+    private static final int MAX_LENGTH_BASE = PROMPT_LINE_WIDTH - MARGIN_LEFT.length() - MARGIN_RIGHT.length();
+    private static final int MAX_LENGTH_SCRIPT = MAX_LENGTH_BASE - HEADER_SCRIPT.length();
+    private static final int MAX_LENGTH_REF = SUB1_HEADER_STATS.length() - SUB1_START.length() - SUB2_END.length();
+    private static final int LEFT_MARGIN_L2_VAL = MAX_LENGTH_BASE - SUB1_HEADER_STATS.length();
+    private static final int LEFT_MARGIN_L3_HEADER = MAX_LENGTH_BASE - SUB1_START.length();
 
-    private static final char FILLER_MENU = '~';
-    private static final String CMD_START = "  ";
-    private static final String CMD_END = " ";
+    private static final Printer CONSOLE = new Builder(Types.TERM).timestamping(false).build();
+    private static final ColoredPrinter CONSOLE_L3_HEADER =
+        new ColoredPrinter.Builder(1, false).attribute(UNDERLINE)
+                                            .foreground(FColor.CYAN)
+                                            .background(BColor.NONE)
+                                            .timestamping(false)
+                                            .build();
+    private static final ColoredPrinter CONSOLE_STATS =
+        new ColoredPrinter.Builder(1, false).foreground(FColor.WHITE)
+                                            .background(BColor.NONE)
+                                            .timestamping(false)
+                                            .build();
+
     private static final String HELP_TEMPLATE_RESOURCE =
         StringUtils.replace(InteractiveConsole.class.getPackage().getName(), ".", "/") +
         "/nexial-interactive-help.properties";
@@ -90,7 +104,6 @@ public class InteractiveConsole {
         static final String CMD_SET_STEPS = "6";
         static final String CMD_RELOAD_SCRIPT = "7";
         static final String CMD_RELOAD_DATA = "8";
-        // static final String CMD_RELOAD_MENU = "9";
         static final String CMD_RELOAD_MENU = "R";
         static final String CMD_HELP = "H";
         static final String CMD_RUN = "X";
@@ -112,9 +125,7 @@ public class InteractiveConsole {
         printHeaderLine(System.out, HEADER_SCENARIO, session.getScenario());
         printHeaderLine(System.out, HEADER_ACTIVITY, session.getActivities());
         printHeaderLine(System.out, HEADER_STEPS, TextUtils.toString(session.getSteps(), ","));
-        // printConsoleSectionSeparator(System.out, FILLER_MENU);
 
-        // printHeaderLine(System.out, "Available commands:", " ");
         printConsoleSectionSeparator(System.out, "~~options", FILLER_MENU);
         printHeaderLine(System.out, CMD_START + CMD_SET_SCRIPT + " <script>   " + CMD_END, "assign test script");
         printHeaderLine(System.out, CMD_START + CMD_SET_DATA + " <data file>" + CMD_END, "assign data file");
@@ -128,11 +139,6 @@ public class InteractiveConsole {
                         "reload assigned test script");
         printHeaderLine(System.out, CMD_START + CMD_RELOAD_DATA + "            " + CMD_END,
                         "reload assigned data file");
-        // printHeaderLine(System.out, CMD_START + CMD_RELOAD_MENU +   "            " + CMD_END, "reload this menu");
-        // printHeaderLine(System.out, CMD_START + CMD_HELP +          "            " + CMD_END, "get help on Nexial Interactive");
-        // printHeaderLine(System.out, CMD_START + CMD_RUN +           "            " + CMD_END, "execute current configuration");
-        // printHeaderLine(System.out, CMD_START + CMD_INSPECT +       "            " + CMD_END, "inspect data");
-        // printHeaderLine(System.out, CMD_START + CMD_EXIT +          "            " + CMD_END, "quit Nexial Interactive");
         printHeaderLine(System.out, CMD_START + "action       " + CMD_END, "(" + CMD_RELOAD_MENU + ")eload menu  " +
                                                                            "(" + CMD_HELP + ")elp  " +
                                                                            "e(" + CMD_RUN + ")ecute  " +
@@ -160,8 +166,6 @@ public class InteractiveConsole {
     }
 
     public static void showRun(ExecutionSummary scenarioSummary, InteractiveSession session) {
-        // scenarioSummary.aggregatedNestedExecutions(session.getContext());
-
         printConsoleHeaderTop(System.out, "NEXIAL INTERACTIVE", FILLER);
         printHeaderLine(System.out, HEADER_EXECUTED, formatExecutionMeta(scenarioSummary.getStartTime()));
         printHeaderLine(System.out, HEADER_SCRIPT, formatTestScript(session.getScript()));
@@ -183,15 +187,7 @@ public class InteractiveConsole {
             printHeaderLine(System.out, header, activity.getName());
             printHeaderLine(System.out, SUB1_HEADER_TIMESPAN, timeSpan);
             printHeaderLine(System.out, SUB1_HEADER_DURATION, duration);
-            printStats(activity.getTotalSteps(), activity.getPassCount(), activity.getFailCount());
-
-            Map<String, String> refs = activity.getReferenceData();
-            if (MapUtils.isNotEmpty(refs)) {
-                refs.forEach((key, value) -> {
-                    String refKey = SUB1_START + StringUtils.rightPad("(" + key + ")", REF_MAX_LENGTH, " ") + SUB2_END;
-                    printHeaderLine(System.out, refKey, value);
-                });
-            }
+            printStats(activity);
         });
 
         printConsoleSectionSeparator(System.out, FILLER_MENU);
@@ -204,32 +200,65 @@ public class InteractiveConsole {
         printHeaderLine(System.out, SUB1_HEADER_TIMESPAN, timeSpan);
         printHeaderLine(System.out, SUB1_HEADER_DURATION, duration);
         printHeaderLine(System.out, SUB1_HEADER_ITERATION, session.getIteration() + "");
-        printStats(scenarioSummary.getTotalSteps(), scenarioSummary.getPassCount(), scenarioSummary.getFailCount());
+        printStats(scenarioSummary);
+
+        ExecutionContext context = session.getContext();
+        printReferenceData("script reference data", context.gatherScriptReferenceData());
+        printReferenceData("scenario reference data", scenarioSummary.getReferenceData());
 
         printConsoleHeaderBottom(System.out, FILLER);
     }
 
-    protected static void printStats(int total, int pass, int fail) {
+    protected static void printReferenceData(String header, Map<String, String> refs) {
+        if (MapUtils.isEmpty(refs)) { return; }
+
+        String header1 = "[" + header + "]";
+
+        CONSOLE.print(MARGIN_LEFT);
+        CONSOLE.print(SUB1_START);
+        CONSOLE_L3_HEADER.print(header1);
+        CONSOLE_L3_HEADER.clear();
+
+        int fillerLength = LEFT_MARGIN_L3_HEADER - header1.length();
+        CONSOLE.print(StringUtils.repeat(" ", fillerLength));
+        CONSOLE.println(MARGIN_RIGHT);
+
+        refs.forEach((key, value) -> {
+            String refKey = SUB1_START + StringUtils.rightPad("(" + key + ")", MAX_LENGTH_REF, " ") + SUB2_END;
+            printHeaderLine(System.out, refKey, value);
+        });
+    }
+
+    protected static void printStats(ExecutionSummary executionSummary) {
+        int totalCount = executionSummary.getTotalSteps();
+        int failCount = executionSummary.getFailCount();
+        int skipCount = totalCount - executionSummary.getExecuted();
+
+        String total = StringUtils.leftPad(totalCount + "", 3);
+        String pass = StringUtils.leftPad(executionSummary.getPassCount() + "", 3);
+        String fail = StringUtils.leftPad(failCount + "", 3);
+        String skipped = StringUtils.leftPad(skipCount + "", 3);
+
         String headerLine = MARGIN_LEFT + SUB1_HEADER_STATS;
+        String skippedStat = (skipCount > 0 ? "  (SKIPPED:" + skipped + ")" : "");
+        String statDetails = total + MULTI_SEP + pass + MULTI_SEP + fail + skippedStat;
 
-        int leftMargin = PROMPT_LINE_WIDTH - SUB1_HEADER_STATS.length() - MARGIN_LEFT.length() - MARGIN_RIGHT.length();
+        CONSOLE.print(headerLine);
+        CONSOLE_STATS.print(total, BOLD, FColor.WHITE, BColor.NONE);
+        CONSOLE_STATS.print(MULTI_SEP, Attribute.NONE, FColor.WHITE, BColor.NONE);
+        CONSOLE_STATS.print(pass, BOLD, FColor.GREEN, BColor.NONE);
+        CONSOLE_STATS.print(MULTI_SEP, Attribute.NONE, FColor.WHITE, BColor.NONE);
+        if (failCount < 1) {
+            CONSOLE_STATS.print(fail, BOLD, FColor.WHITE, BColor.NONE);
+        } else {
+            CONSOLE_STATS.print(fail, BOLD, FColor.RED, BColor.NONE);
+        }
+        if (skipCount > 0) { CONSOLE_STATS.print(skippedStat, CLEAR, FColor.YELLOW, BColor.NONE); }
+        CONSOLE_STATS.clear();
 
-        Printer printer = new Printer.Builder(Types.TERM).timestamping(false).build();
-        printer.print(headerLine);
-
-        ColoredPrinter cprinter = new ColoredPrinter.Builder(1, false).foreground(WHITE)
-                                                                      .background(NONE)
-                                                                      .timestamping(false)
-                                                                      .build();
-        cprinter.print(total, BOLD, WHITE, NONE);
-        cprinter.print(MULTI_SEP, Attribute.NONE, WHITE, NONE);
-        cprinter.print(pass, BOLD, GREEN, NONE);
-        cprinter.print(MULTI_SEP, Attribute.NONE, WHITE, NONE);
-        cprinter.print(fail, BOLD, fail < 1 ? WHITE : RED, NONE);
-        cprinter.clear();
-
-        printer.print(StringUtils.repeat(" ", leftMargin - (total + MULTI_SEP + pass + MULTI_SEP + fail).length()));
-        printer.println(MARGIN_RIGHT);
+        int fillerLength = LEFT_MARGIN_L2_VAL - statDetails.length();
+        CONSOLE.print(StringUtils.repeat(" ", fillerLength));
+        CONSOLE.println(MARGIN_RIGHT);
     }
 
     protected static void showHelp(InteractiveSession session) {
@@ -312,8 +341,8 @@ public class InteractiveConsole {
     }
 
     private static String formatTestScript(String testScript) {
-        if (StringUtils.length(testScript) > SCRIPT_MAX_LENGTH) {
-            testScript = "..." + testScript.substring(testScript.length() - SCRIPT_MAX_LENGTH + 3);
+        if (StringUtils.length(testScript) > MAX_LENGTH_SCRIPT) {
+            testScript = "..." + testScript.substring(testScript.length() - MAX_LENGTH_SCRIPT + 3);
         }
         return testScript;
     }

@@ -17,29 +17,41 @@
 package org.nexial.core.utils;
 
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.Map;
 
+import org.jetbrains.annotations.NotNull;
 import org.junit.Test;
 import org.nexial.commons.utils.ResourceUtils;
 import org.nexial.commons.utils.TextUtils;
 import org.nexial.core.interactive.InteractiveConsole;
-import org.nexial.core.model.ExecutionSummary;
 import org.nexial.core.interactive.InteractiveSession;
+import org.nexial.core.model.ExecutionDefinition;
+import org.nexial.core.model.ExecutionSummary;
 import org.nexial.core.model.MockExecutionContext;
+import org.nexial.core.model.TestProject;
 
 public class ConsoleUtilsTest {
 
-    public static void main(String[] args) {
-        _showInteractiveMenu();
-    }
-
     @Test
     public void showInteractiveMenu() {
-        _showInteractiveMenu();
+        String script = ResourceUtils.getResourceFilePath("/showcase/artifact/script/base-showcase.xlsx");
+        MockExecutionContext context = new MockExecutionContext();
+        ExecutionDefinition execDef = prepExecDef(context, script);
+
+        InteractiveSession session = new InteractiveSession(context);
+        session.setExecutionDefinition(execDef);
+        session.setActivities(Arrays.asList("progressively slowing down", "Assert Nested Data Ref.", "Assert Count"));
+        session.setSteps(Arrays.asList("5", "17", "6", "15", "12", "14", "14", "13", "14"));
+        session.setIteration(2);
+
+        InteractiveConsole.showMenu(session);
     }
 
     @Test
     public void showInteractiveRun() {
+        MockExecutionContext context = new MockExecutionContext();
+
         ExecutionSummary activity1 = new ExecutionSummary();
         activity1.setName("showcase for $(count)");
         activity1.setStartTime(1541293351459L);
@@ -47,44 +59,56 @@ public class ConsoleUtilsTest {
         activity1.setTotalSteps(10);
         activity1.setPassCount(9);
         activity1.setFailCount(1);
+        activity1.setExecuted(10);
 
-        ExecutionSummary activity2 = new ExecutionSummary() {
+        ExecutionSummary activity2 = new ExecutionSummary();
+        activity2.setName("showcase for $(array), but this is a very long activity name (against all good judgement)");
+        activity2.setStartTime(1541293351557L);
+        activity2.setEndTime(1541293351584L);
+        activity2.setTotalSteps(18);
+        activity2.setPassCount(7);
+        activity2.setFailCount(10);
+        activity2.setExecuted(17);
+
+        ExecutionSummary scenarioSummary = new ExecutionSummary() {
             @Override
             public Map<String, String> getReferenceData() {
                 return TextUtils.toMap("=", "version=1.5.23", "environment=QA", "client=Sony");
             }
         };
-        activity2.setName("showcase for $(array), but this is a very long activity name (against all good judgement)");
-        activity2.setStartTime(1541293351557L);
-        activity2.setEndTime(1541293351584L);
-        activity2.setTotalSteps(18);
-        activity2.setPassCount(8);
-        activity2.setFailCount(10);
-
-        ExecutionSummary scenarioSummary = new ExecutionSummary();
         scenarioSummary.setName("nexial_function_count");
         scenarioSummary.setStartTime(1541293351457L);
         scenarioSummary.setEndTime(1541293351584L);
         scenarioSummary.addNestSummary(activity1);
         scenarioSummary.addNestSummary(activity2);
+        scenarioSummary.aggregatedNestedExecutions(context);
 
-        MockExecutionContext context = new MockExecutionContext();
+        String script = ResourceUtils.getResourceFilePath("/showcase/artifact/script/base-showcase.xlsx");
+        ExecutionDefinition execDef = prepExecDef(context, script);
+
         InteractiveSession session = new InteractiveSession(context);
-        session.setScript("/Users/SOMEBODY/projects/nexial/nexial-core/src/test/resource/showcase" +
-                          "/artifact/script/base-showcase.xlsx");
+        session.setExecutionDefinition(execDef);
+        session.setScript(ResourceUtils.getResourceFilePath("/showcase/artifact/script/io-showcase.xlsx"));
         session.setException(new Exception("error! error!"));
+
         InteractiveConsole.showRun(scenarioSummary, session);
     }
 
-    protected static void _showInteractiveMenu() {
-        MockExecutionContext context = new MockExecutionContext();
-        InteractiveSession session = new InteractiveSession(context);
-        session.setScript(ResourceUtils.getResourceFilePath("/showcase/artifact/script/base-showcase.xlsx"));
-        session.setScenario("base_showcase");
-        session.setActivities(Arrays.asList("progressively slowing down", "Assert Nested Data Ref.", "Assert Count"));
-        session.setSteps(Arrays.asList("5", "17", "6", "15", "12", "14", "14", "13", "14"));
-        session.setIteration(2);
+    @NotNull
+    private static ExecutionDefinition prepExecDef(MockExecutionContext context, String script) {
+        String runId = ExecUtil.deriveRunId();
 
-        InteractiveConsole.showMenu(session);
+        TestProject project = new TestProject();
+        project.setScriptPath(script);
+
+        ExecutionDefinition execDef = new ExecutionDefinition();
+        execDef.setRunId(runId);
+        execDef.setTestScript(script);
+        execDef.setScenarios(Collections.singletonList("base_showcase"));
+        execDef.setProject(project);
+
+        context.setExecDef(execDef);
+
+        return execDef;
     }
 }

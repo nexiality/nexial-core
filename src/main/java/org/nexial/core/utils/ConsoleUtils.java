@@ -363,11 +363,10 @@ public final class ConsoleUtils {
     private static void logAs(Level logLevel, String message) {
         if (!LogbackUtils.isExecLoggingReady()) {
             PRE_EXEC_READY_BUFFER.add(new ImmutablePair<>(logLevel, message));
-            return;
+        } else {
+            flushPreExecReadyBuffer();
+            sendToLogger(logLevel, message);
         }
-
-        flushPreExecReadyBuffer();
-        sendToLogger(logLevel, message);
     }
 
     private static void flushPreExecReadyBuffer() {

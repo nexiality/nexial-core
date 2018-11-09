@@ -40,7 +40,9 @@ import org.nexial.core.variable.ExpressionProcessor;
 import org.springframework.context.support.ClassPathXmlApplicationContext;
 
 import static java.io.File.separator;
+import static org.apache.commons.lang3.SystemUtils.JAVA_IO_TMPDIR;
 import static org.nexial.core.NexialConst.DEF_CHARSET;
+import static org.nexial.core.NexialConst.Data.TEST_LOG_PATH;
 import static org.nexial.core.NexialConst.Project.DEF_REL_LOC_TEST_SCRIPT;
 import static org.nexial.core.NexialConst.Project.NEXIAL_HOME;
 
@@ -57,6 +59,7 @@ public class MockExecutionContext extends ExecutionContext {
         hostname = StringUtils.upperCase(EnvUtils.getHostName());
         executionLogger = new ExecutionLogger(this);
         runId = DateUtility.createTimestampString(System.currentTimeMillis());
+        System.setProperty(TEST_LOG_PATH, JAVA_IO_TMPDIR);
 
         if (withSpring) {
             this.springContext = new ClassPathXmlApplicationContext("classpath:/nexial.xml");
@@ -112,6 +115,11 @@ public class MockExecutionContext extends ExecutionContext {
     public void setTestProject(TestProject project) {
         if (this.execDef == null) { this.execDef = new ExecutionDefinition(); }
         this.execDef.setProject(project);
+    }
+
+    public void setExecDef(ExecutionDefinition execDef) {
+        this.execDef = execDef;
+        this.project = adjustPath(execDef);
     }
 
     @Override
