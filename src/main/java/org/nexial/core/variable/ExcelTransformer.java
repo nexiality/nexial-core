@@ -126,12 +126,11 @@ public class ExcelTransformer<T extends ExcelDataType> extends Transformer {
             FileUtils.forceMkdirParent(new File(file));
         }
 
-        Excel targetExcel = Excel.asXlsxExcel(file, false);
+        Excel targetExcel = Excel.asXlsxExcel(file, false, false);
         if (targetExcel == null) {
             // file doesn't exists, can't be opened, or not compatible with Excel 2007
             // if file not exists or not a XLSX, creating a new file will effectively overwrite the existing.
-            File targetFile = new File(file);
-            targetExcel = Excel.createExcel(targetFile, sheet);
+            targetExcel = Excel.createExcel(new File(file), sheet);
         }
 
         Worksheet currentWorksheet = targetExcel.worksheet(sheet, true);

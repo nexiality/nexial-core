@@ -259,7 +259,17 @@ public final class ConsoleUtils {
     }
 
     public static void printConsoleSectionSeparator(PrintStream out, char filler) {
-        out.println(MARGIN_LEFT + StringUtils.repeat(filler, PRINTABLE_LENGTH) + MARGIN_RIGHT);
+        printConsoleSectionSeparator(out, null, filler);
+    }
+
+    public static void printConsoleSectionSeparator(PrintStream out, String prefix, char filler) {
+        out.print(MARGIN_LEFT);
+        if (StringUtils.isNotEmpty(prefix)) {
+            out.print(prefix + StringUtils.repeat(filler, PRINTABLE_LENGTH - prefix.length()));
+        } else {
+            out.print(StringUtils.repeat(filler, PRINTABLE_LENGTH));
+        }
+        out.println(MARGIN_RIGHT);
     }
 
     public static void printHeaderLine(PrintStream out, String header1, List<String> headers2) {

@@ -108,7 +108,7 @@ public final class NexialConst {
     public static final String TEST_NAME = "test.name";
 
     public static final String OPT_EXCEL_FILE = NAMESPACE + "excel";
-    public static final String OPT_EXCEL_WORKSHEET = NAMESPACE + "worksheet";
+    // public static final String OPT_EXCEL_WORKSHEET = NAMESPACE + "worksheet";
     public static final String OPT_INPUT_EXCEL_FILE = NAMESPACE + "inputExcel";
     public static final String OPT_SUITE_PROP = NAMESPACE + "suite";
 
@@ -312,7 +312,6 @@ public final class NexialConst {
 
     public static final String OPT_EXCEL_VER = NAMESPACE + "excelVer";
     public static final String OPT_INTERACTIVE = NAMESPACE + "interactive";
-    public static final String OPT_INTERACTIVE_DEBUG = NAMESPACE + "interactive.debug";
 
     //browsermob proxy
     public static final String OPT_PROXY_ENABLE = "proxy.enable";
@@ -337,8 +336,8 @@ public final class NexialConst {
     public static final String TOKEN_END = "}";
     public static final String TOKEN_ARRAY_START = "[";
     public static final String TOKEN_ARRAY_END = "]";
-    public static final String DEFERED_TOKEN_START = "${";
-    public static final String DEFERED_TOKEN_END = "}";
+    public static final String DEFERRED_TOKEN_START = "${";
+    public static final String DEFERRED_TOKEN_END = "}";
     public static final String CTRL_KEY_START = "{";
     public static final String CTRL_KEY_END = "}";
 
@@ -758,6 +757,8 @@ public final class NexialConst {
         // data/variable
         public static final String NAMESPACE_VAR = NAMESPACE + "var.";
         public static final String OPT_VAR_EXCLUDE_LIST = NAMESPACE_VAR + "ignored";
+        public static final String OPT_VAR_DEFAULT_AS_IS = NAMESPACE_VAR + "defaultAsIs";
+        public static final boolean DEF_VAR_DEFAULT_AS_IS = false;
 
         // predefined variable for time tracking of execution levels
         public static final String TIMETRACK = NAMESPACE + "timetrack.";
@@ -942,7 +943,7 @@ public final class NexialConst {
          * special prefix to mark certain data as contextual to a test scenario execution.  Such data will be displayed
          * in the execution summary to provide as "reference" towards the associated scenario execution. E.g.
          * nexial.scenarioRef.browser=chrome
-         * nexial.scenarioRef.envionment=QA
+         * nexial.scenarioRef.environment=QA
          * nexial.scenarioRef.appVersion=1.6.235.1
          *
          * Hence one could conclude that the associated test execution uses 'chrome' to test the application of
@@ -1093,7 +1094,8 @@ public final class NexialConst {
         public static final String ARG_PREFIX = "(";
         public static final String ARG_SUFFIX = ")";
         public static final String REGEX_ARGS = "\\s*\\" + ARG_PREFIX + "(.*?)\\" + ARG_SUFFIX;
-        public static final String DELIM_ARGS = "&";
+        // public static final String DELIM_ARGS = "&";
+        public static final String FILTER_CHAINING_SEP = " & ";
 
         public static final String OPERATOR_IS = " is";
         public static final String IS_OPEN_TAG = "[";

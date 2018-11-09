@@ -123,7 +123,7 @@ dependencies {
 	compile("org.seleniumhq.selenium:selenium-chrome-driver:${seleniumVersion}")
 
 	// https://mvnrepository.com/artifact/io.appium/java-client
-//	compile("io.appium:java-client:${appiumVersion}")
+	//	compile("io.appium:java-client:${appiumVersion}")
 
 	// winium
 	// for Winium.Desktop.Driver.exe download: https://github.com/2gis/Winium.Desktop/releases/latest
@@ -217,14 +217,15 @@ dependencies {
 	compile("org.apache.tika:tika-parsers:${tikaVersion}")
 	compile("org.apache.commons:commons-compress:+")
 
-	//	compile("com.rallydev.rest:rally-rest-api:+")
-
 	// support: ssh, scp, sftp
 	compile("com.jcraft:jsch:+")
 
 	compile("org.jetbrains.kotlin:kotlin-stdlib-jdk8:$kotlin_version")
 
 	compile("com.googlecode.soundlibs:jlayer:1.0.1.4")
+
+	// console with color
+	compile("com.diogonunes:JCDP:2.0.3.1")
 
 	//	non-distributable libs
 	compile fileTree(dir: 'lib', include: '*.jar')
@@ -239,7 +240,7 @@ dependencies {
 
 jar {
 	baseName = archivesBaseName
-	version = version
+//	version = version
 	manifest {
 		attributes "Implementation-Title": archivesBaseName,
 		           "Implementation-Version": version,
@@ -256,7 +257,7 @@ tasks.withType(Test) {
 
 test {
 	maxHeapSize = "256m"
-//	jvmArgs '-XX:MaxPermSize=512m'
+	//	jvmArgs '-XX:MaxPermSize=512m'
 	jvmArgs '-Xss24m'
 	reports.html.enabled = true
 	reports.junitXml.enabled = true
@@ -287,7 +288,7 @@ task singleDependentJar(type: Jar) {
 		           "Main-Class": componentMainClass
 	}
 	baseName = archivesBaseName
-	version = version
+//	version = version
 	from { configurations.compile.collect { it.isDirectory() ? it : zipTree(it) } }
 	with jar
 	zip64 = true

@@ -27,13 +27,13 @@ import org.apache.commons.lang3.StringUtils;
 import org.nexial.commons.utils.TextUtils;
 import org.nexial.core.utils.ConsoleUtils;
 
+import static org.nexial.core.NexialConst.FlowControls.FILTER_CHAINING_SEP;
 import static org.nexial.core.NexialConst.TOKEN_END;
 import static org.nexial.core.NexialConst.TOKEN_START;
 import static org.nexial.core.model.NexialFilter.ITEM_SEP;
 import static org.nexial.core.model.NexialFilterComparator.Any;
 
 public class NexialFilterList extends ArrayList<NexialFilter> {
-    public static final String FILTER_CHAINING_SEP = " & ";
 
     private String filterText;
     private boolean containsAny;

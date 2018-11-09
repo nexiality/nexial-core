@@ -301,16 +301,6 @@ public class TestScenario {
         worksheet.setMinHeight(cellMerge, lineCount);
     }
 
-    // protected void doInteractive(ExecutionContext context) {
-    // todo probably not in the right place.  Interactive mode would negate multiple test scenarios
-    // context.setData(OPT_EXCEL_FILE, context.getStringData(OPT_LAST_TEST_SCENARIO));
-    // context.setData(OPT_EXCEL_WORKSHEET, context.getStringData(OPT_LAST_TEST_STEP));
-    // todo: need to fix soon
-    //InteractiveDispatcher dispatcher = execution.newInteractiveDispatcher();
-    //dispatcher.setExecutor(this);
-    //dispatcher.doPrompt();
-    // }
-
     protected void parse() {
         // 1. parse meta
         meta = TestScenarioMeta.newInstance(worksheet);

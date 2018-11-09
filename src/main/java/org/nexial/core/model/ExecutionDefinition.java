@@ -107,7 +107,7 @@ public class ExecutionDefinition {
     public TestData getTestData(boolean refetch) {
         if (refetch) {
             try {
-                dataFile = new Excel(dataFile.getFile(), DEF_OPEN_EXCEL_AS_DUP);
+                dataFile = new Excel(dataFile.getFile(), DEF_OPEN_EXCEL_AS_DUP, false);
                 parse();
             } catch (IOException e) {
                 String error = "Unable to successfully read/parse data file " + dataFile + ": " + e.getMessage();

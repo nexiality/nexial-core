@@ -320,6 +320,7 @@ public class Nexial {
 
         if (cmd.hasOption(INTERACTIVE)) {
             interactiveMode = true;
+            System.setProperty(OPT_INTERACTIVE, "true");
             // proceed to parsing, but only script will be supported
         }
 
@@ -378,7 +379,7 @@ public class Nexial {
             deriveOutputDirectory(cmd, project);
 
             // 2. parse plan file to determine number of executions (1 row per execution)
-            Excel excel = new Excel(testPlanFile, DEF_OPEN_EXCEL_AS_DUP);
+            Excel excel = new Excel(testPlanFile, DEF_OPEN_EXCEL_AS_DUP, false);
             List<Worksheet> plans = InputFileUtils.retrieveValidPlanSequence(excel);
             if (CollectionUtils.isEmpty(plans)) { return executions; }
 
@@ -567,9 +568,8 @@ public class Nexial {
     protected List<ExecutionDefinition> parseScriptExecution(CommandLine cmd) throws IOException {
         // command line option - script
         String testScriptPath = cmd.getOptionValue(SCRIPT);
-        if (!InputFileUtils.isValidScript(testScriptPath)) {
-            fail("specified test script (" + testScriptPath + ") is not readable or does not contain valid format.");
-        }
+        Excel script = InputFileUtils.resolveValidScript(testScriptPath);
+        if (script == null) { fail("Invalid test script - " + testScriptPath); }
 
         // resolve the standard project structure based on test script input
         File testScriptFile = new File(testScriptPath);
@@ -585,7 +585,7 @@ public class Nexial {
                               StringUtils.appendIfMissing(project.getArtifactPath(), separator) : null;
 
         // command line option - scenario
-        List<String> targetScenarios = resolveScenarios(cmd, testScriptFile);
+        List<String> targetScenarios = resolveScenarios(cmd, script);
 
         // command line option - data. could be fully qualified or relative to script
         Excel dataFile = resolveDataFile(cmd, artifactPath, testScriptPath);
@@ -602,7 +602,7 @@ public class Nexial {
 
         // create new definition instance, based on various input and derived values
         ExecutionDefinition exec = new ExecutionDefinition();
-        exec.setDescription("Started via commandline inputs on " + DateUtility.getCurrentDateTime() +
+        exec.setDescription("Started on " + DateUtility.getCurrentDateTime() +
                             " from " + EnvUtils.getHostName() + " via user " + USER_NAME);
         exec.setTestScript(testScriptPath);
         exec.setScenarios(targetScenarios);
@@ -882,7 +882,6 @@ public class Nexial {
     }
 
     protected static void fail(String message) {
-        // ConsoleUtils.error("ERROR: " + message);
         throw new IllegalArgumentException(message +
                                            " Possibly the required argument is missing or invalid." +
                                            " Check usage details.");
@@ -906,11 +905,9 @@ public class Nexial {
     private Excel resolveDataFile(String artifactPath, String testScriptPath, String dataFilePath) {
         if (StringUtils.isBlank(dataFilePath)) {
             // since there's no data file specified, we'll assume standard path/file convention
-            String dataPath = StringUtils.substringBefore(testScriptPath, DEF_REL_LOC_ARTIFACT) + DEF_REL_LOC_TEST_DATA;
-            dataFilePath = dataPath +
+            dataFilePath = (StringUtils.substringBefore(testScriptPath, DEF_REL_LOC_ARTIFACT) + DEF_REL_LOC_TEST_DATA) +
                            StringUtils.substringBeforeLast(
-                               StringUtils.substringAfter(testScriptPath, DEF_REL_LOC_TEST_SCRIPT),
-                               ".") +
+                               StringUtils.substringAfter(testScriptPath, DEF_REL_LOC_TEST_SCRIPT), ".") +
                            DEF_DATAFILE_SUFFIX;
             return validateDataFile(project, dataFilePath);
         }
@@ -962,7 +959,7 @@ public class Nexial {
     }
 
     @NotNull
-    private List<String> resolveScenarios(CommandLine cmd, File testScriptFile) throws IOException {
+    private List<String> resolveScenarios(CommandLine cmd, Excel script) {
         List<String> targetScenarios = new ArrayList<>();
         if (cmd.hasOption(SCENARIO)) {
             List<String> scenarios = TextUtils.toList(cmd.getOptionValue(SCENARIO), ",", true);
@@ -975,16 +972,10 @@ public class Nexial {
 
         // resolve scenario
         if (CollectionUtils.isEmpty(targetScenarios)) {
-            Excel excel = new Excel(testScriptFile, DEF_OPEN_EXCEL_AS_DUP);
-            List<Worksheet> allTestScripts = InputFileUtils.retrieveValidTestScenarios(excel);
-            if (CollectionUtils.isNotEmpty(allTestScripts)) {
-                allTestScripts.forEach(sheet -> targetScenarios.add(sheet.getName()));
-            } else {
-                fail("Unable to derive any valid test script from " + testScriptFile + ".");
-            }
-
-            if (DEF_OPEN_EXCEL_AS_DUP) { FileUtils.deleteQuietly(excel.getFile().getParentFile()); }
+            targetScenarios.addAll(InputFileUtils.retrieveValidTestScenarioNames(script));
+            if (targetScenarios.isEmpty()) { fail("No scenarios found in " + script.getFile().getAbsolutePath()); }
         }
+
         return targetScenarios;
     }
 

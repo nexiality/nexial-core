@@ -23,6 +23,7 @@ import java.util.Collections;
 import java.util.List;
 import java.util.function.Function;
 import java.util.stream.Collectors;
+import javax.validation.constraints.NotNull;
 
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.io.FileUtils;
@@ -57,14 +58,14 @@ public final class InputFileUtils {
                                                        "bin/nexial-script-update.cmd to update your test script";
     private static final String MSG_SCRIPT_HEADER_NOT_FOUND = "required script header not found at " +
                                                               ArrayUtils.toString(ADDR_HEADER_TEST_STEP);
-    private static final String MSG_MISSING_TEST_ACTIVITIY = "First test step must be accompanied by a test activity";
+    private static final String MSG_MISSING_TEST_ACTIVITY = "First test step must be accompanied by a test activity";
 
     private InputFileUtils() {}
 
     public static List<Worksheet> findMatchingSheets(String file, Function<Excel, List<Worksheet>> matcher) {
         Excel excel = null;
         try {
-            excel = toExcel(file, DEF_OPEN_EXCEL_AS_DUP);
+            excel = toExcel(file);
             return excel == null ? new ArrayList<>() : matcher.apply(excel);
         } finally {
             if (DEF_OPEN_EXCEL_AS_DUP && excel != null) { FileUtils.deleteQuietly(excel.getFile().getParentFile()); }
@@ -74,7 +75,7 @@ public final class InputFileUtils {
     public static int countMatchingSheets(String file, Function<Excel, Integer> matcher) {
         Excel excel = null;
         try {
-            excel = toExcel(file, DEF_OPEN_EXCEL_AS_DUP);
+            excel = toExcel(file);
             return excel == null ? 0 : matcher.apply(excel);
         } finally {
             if (DEF_OPEN_EXCEL_AS_DUP && excel != null) { FileUtils.deleteQuietly(excel.getFile().getParentFile()); }
@@ -84,14 +85,14 @@ public final class InputFileUtils {
     public static boolean hasMatchingSheets(String file, Function<Excel, Boolean> matcher) {
         Excel excel = null;
         try {
-            excel = toExcel(file, DEF_OPEN_EXCEL_AS_DUP);
+            excel = toExcel(file);
             return excel == null ? false : matcher.apply(excel);
         } finally {
             if (DEF_OPEN_EXCEL_AS_DUP && excel != null) { FileUtils.deleteQuietly(excel.getFile().getParentFile()); }
         }
     }
 
-    public static Excel toExcel(String file, boolean openAsDup) {
+    public static Excel toExcel(String file) {
         if (StringUtils.isBlank(file)) {
             if (LOGGER.isInfoEnabled()) { LOGGER.info("filename is blank"); }
             return null;
@@ -99,7 +100,7 @@ public final class InputFileUtils {
 
         try {
             // check that file is in Excel 2007 or above format
-            return Excel.asXlsxExcel(file, openAsDup);
+            return Excel.asXlsxExcel(file, DEF_OPEN_EXCEL_AS_DUP, false);
         } catch (IOException e) {
             if (LOGGER.isInfoEnabled()) { LOGGER.info("File (" + file + ") cannot be loaded: " + e.getMessage()); }
             return null;
@@ -107,7 +108,7 @@ public final class InputFileUtils {
     }
 
     public static Excel asDataFile(String file) {
-        final Excel excel = toExcel(file, DEF_OPEN_EXCEL_AS_DUP);
+        final Excel excel = toExcel(file);
         if (excel == null) { return null; }
 
         List<Worksheet> allSheets = excel.getWorksheetsStartWith("");
@@ -142,8 +143,8 @@ public final class InputFileUtils {
         String errPrefix = "File (" + sheet.getFile().getAbsolutePath() + ") sheet (" + sheet.getName() + ") ";
 
         // for every data sheet, at least 1 1x2 row
-        ExcelAddress addrMinimiumData = new ExcelAddress("A1:B1");
-        List<List<XSSFCell>> dataCells = sheet.cells(addrMinimiumData);
+        ExcelAddress addrMinimumData = new ExcelAddress("A1:B1");
+        List<List<XSSFCell>> dataCells = sheet.cells(addrMinimumData);
         if (CollectionUtils.isEmpty(dataCells)) {
             if (LOGGER.isInfoEnabled()) { LOGGER.info(errPrefix + "does not contain data or the expected format"); }
             return false;
@@ -152,14 +153,14 @@ public final class InputFileUtils {
         for (List<XSSFCell> row : dataCells) {
             if (CollectionUtils.isEmpty(row)) {
                 if (LOGGER.isInfoEnabled()) {
-                    LOGGER.info(errPrefix + "does not contain data or the expected format in " + addrMinimiumData);
+                    LOGGER.info(errPrefix + "does not contain data or the expected format in " + addrMinimumData);
                 }
                 return false;
             }
 
             for (XSSFCell cell : row) {
                 if (cell == null || StringUtils.isBlank(cell.getStringCellValue())) {
-                    LOGGER.info(errPrefix + "does not contain data or the expected format in " + addrMinimiumData);
+                    LOGGER.info(errPrefix + "does not contain data or the expected format in " + addrMinimumData);
                     return false;
                 }
             }
@@ -198,6 +199,21 @@ public final class InputFileUtils {
         return true;
     }
 
+    public static Excel resolveValidScript(String file) {
+        Excel excel = null;
+        try {
+            excel = toExcel(file);
+            if (isValidScript(excel)) {
+                return excel;
+            } else {
+                ConsoleUtils.error("test script (" + file + ") is not readable or does not contain valid format.");
+                return null;
+            }
+        } finally {
+            if (DEF_OPEN_EXCEL_AS_DUP && excel != null) { FileUtils.deleteQuietly(excel.getFile().getParentFile()); }
+        }
+    }
+
     public static boolean isValidScript(String file) { return hasMatchingSheets(file, InputFileUtils::isValidScript); }
 
     public static boolean isValidScript(Excel excel) {
@@ -208,6 +224,16 @@ public final class InputFileUtils {
 
     public static boolean isValidMacro(Excel excel) {
         return hasValidSystemSheet(excel) && CollectionUtils.isNotEmpty(retrieveValidMacros(excel));
+    }
+
+    @NotNull
+    public static List<String> retrieveValidTestScenarioNames(Excel excel) {
+        List<Worksheet> allScenarios = InputFileUtils.retrieveValidTestScenarios(excel);
+        ArrayList<String> scenarioNames = new ArrayList<>();
+        if (CollectionUtils.isNotEmpty(allScenarios)) {
+            allScenarios.forEach(sheet -> scenarioNames.add(sheet.getName()));
+        }
+        return scenarioNames;
     }
 
     /**
@@ -252,7 +278,7 @@ public final class InputFileUtils {
             if (lastRowIndex - ADDR_COMMAND_START.getRowStartIndex() > 0) {
                 XSSFCell cellTestCase = sheet.cell(FIRST_TEST_STEP);
                 if (StringUtils.isBlank(Excel.getCellValue(cellTestCase))) {
-                    if (LOGGER.isInfoEnabled()) { LOGGER.info(errPrefix1 + MSG_MISSING_TEST_ACTIVITIY); }
+                    if (LOGGER.isInfoEnabled()) { LOGGER.info(errPrefix1 + MSG_MISSING_TEST_ACTIVITY); }
                 }
             }
 

@@ -259,7 +259,7 @@ public class MacroMerger {
         }
 
         // open specified sheet
-        Excel macroExcel = new Excel(macroFile, false);
+        Excel macroExcel = new Excel(macroFile, false, false);
         Worksheet macroSheet = macroExcel.worksheet(paramSheet);
         int lastMacroRow = macroSheet.findLastDataRow(ADDR_MACRO_COMMAND_START);
         ExcelArea macroArea = new ExcelArea(macroSheet, new ExcelAddress("A2:L" + lastMacroRow), false);

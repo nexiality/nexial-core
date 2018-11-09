@@ -330,13 +330,11 @@
 
                         <value>ignore-certificate-errors</value>
 
-                        <value>disable-prompt-on-repost</value>
                         <value>mute-audio</value>
                         <value>disable-resize-lock</value>
                         <value>disable-print-preview</value>
                         <value>always-authorize-plugins</value>
                         <value>disable-browser-side-navigation</value>
-                        <value>hide-scrollbars</value>
                         <!--<value>disable-gpu</value>-->
                     </array>
                 </property>

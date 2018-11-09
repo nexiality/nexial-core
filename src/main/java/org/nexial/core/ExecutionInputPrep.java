@@ -160,7 +160,6 @@ public class ExecutionInputPrep {
         // this is necessary since the output directory (and final output file) could be remote
         // merging test data to remote output file could be time-consuming
         ConsoleUtils.log(runId, "merging test data to tmp file " + outputFile);
-        // mergeTestData(outputExcel, execDef.getTestData(true), iteration);
 
         // we are no longer concerned with remote file access. The best practice to follow is NOT to use remote fs
         mergeTestData(outputExcel, execDef.getTestData(true), iteration);

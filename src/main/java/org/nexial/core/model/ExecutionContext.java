@@ -54,13 +54,14 @@ import org.nexial.core.excel.Excel;
 import org.nexial.core.excel.Excel.Worksheet;
 import org.nexial.core.excel.ExcelAddress;
 import org.nexial.core.excel.ext.CellTextReader;
+import org.nexial.core.interactive.InteractiveSession;
 import org.nexial.core.plugins.CanTakeScreenshot;
 import org.nexial.core.plugins.NexialCommand;
 import org.nexial.core.plugins.pdf.CommonKeyValueIdentStrategies;
 import org.nexial.core.plugins.sound.SoundMachine;
 import org.nexial.core.reports.ExecutionMailConfig;
-import org.nexial.core.reports.JenkinsVariables;
 import org.nexial.core.reports.NexialMailer;
+import org.nexial.core.utils.CheckUtils;
 import org.nexial.core.utils.ConsoleUtils;
 import org.nexial.core.utils.ExecutionLogger;
 import org.nexial.core.utils.OutputFileUtils;
@@ -392,7 +393,7 @@ public class ExecutionContext {
     public CanTakeScreenshot findCurrentScreenshotAgent() { return screenshotAgent; }
 
     public boolean isInteractiveMode() {
-        return getBooleanData(OPT_INTERACTIVE, false) && JenkinsVariables.getInstance(this).isNotInvokedFromJenkins();
+        return getBooleanData(OPT_INTERACTIVE, false) && !CheckUtils.isRunningInZeroTouchEnv();
     }
 
     public boolean isFailFast() { return getBooleanData(FAIL_FAST, DEF_FAIL_FAST) && !isInteractiveMode(); }
@@ -680,6 +681,12 @@ public class ExecutionContext {
         if (CollectionUtils.isNotEmpty(ignoredVars)) { tokens.removeAll(ignoredVars); }
 
         boolean allTokenResolvedToNull = CollectionUtils.isNotEmpty(tokens);
+        boolean unresolvedAsIs = DEF_VAR_DEFAULT_AS_IS;
+        if (hasData(OPT_VAR_DEFAULT_AS_IS)) {
+            Object config = getObjectData(OPT_VAR_DEFAULT_AS_IS);
+            if (config != null) { unresolvedAsIs = BooleanUtils.toBoolean(config.toString()); }
+        }
+
         for (String token : tokens) {
             Object value = getObjectData(token);
             String tokenized = TOKEN_START + token + TOKEN_END;
@@ -696,8 +703,8 @@ public class ExecutionContext {
                 } else {
                     // otherwise, this token is not defined in context nor system prop.
                     // so we'll replace it with empty string
-                    if (tokens.size() == 1 && StringUtils.equals(text, tokenized)) { return ""; }
-                    text = StringUtils.replace(text, tokenized, "");
+                    if (tokens.size() == 1 && StringUtils.equals(text, tokenized)) { return unresolvedAsIs ? text : "";}
+                    if (!unresolvedAsIs) { text = StringUtils.replace(text, tokenized, ""); }
                 }
 
                 // NO LONGER APPLIES!! SEE CODE ABOVE
@@ -843,14 +850,14 @@ public class ExecutionContext {
             if (StringUtils.equals(targetScenario, scenario.getName())) {
                 if (CollectionUtils.isNotEmpty(targetActivities)) {
                     List<TestCase> filteredActivities = new ArrayList<>();
-                    List<TestCase> testCases = scenario.getTestCases();
-                    targetActivities.forEach(targetActivity -> testCases.forEach(activity -> {
+                    List<TestCase> activities = scenario.getTestCases();
+                    targetActivities.forEach(targetActivity -> activities.forEach(activity -> {
                         if (StringUtils.equals(targetActivity, activity.getName())) {
                             filteredActivities.add(activity);
                         }
                     }));
-                    testCases.clear();
-                    testCases.addAll(filteredActivities);
+                    activities.clear();
+                    activities.addAll(filteredActivities);
                 }
 
                 filteredScenarios.add(scenario);
@@ -949,8 +956,7 @@ public class ExecutionContext {
 
     /** iteration-scoped execution */
     public boolean execute() throws IOException {
-        startTimestamp = System.currentTimeMillis();
-        startDateTime = DF_TIMESTAMP.format(startTimestamp);
+        markExecutionStart();
 
         boolean allPass = true;
 
@@ -990,12 +996,21 @@ public class ExecutionContext {
             }
         }
 
-        endTimestamp = System.currentTimeMillis();
-        endDateTime = DF_TIMESTAMP.format(endTimestamp);
+        markExecutionEnd();
 
         MemManager.gc(this);
 
         return allPass;
+    }
+
+    public void markExecutionEnd() {
+        endTimestamp = System.currentTimeMillis();
+        endDateTime = DF_TIMESTAMP.format(endTimestamp);
+    }
+
+    public void markExecutionStart() {
+        startTimestamp = System.currentTimeMillis();
+        startDateTime = DF_TIMESTAMP.format(startTimestamp);
     }
 
     public static boolean getSystemThenContextBooleanData(String name, ExecutionContext context, boolean def) {
@@ -1371,13 +1386,13 @@ public class ExecutionContext {
 
     protected String resolveDeferredTokens(String text) {
         String nullValue = getNullValueToken();
-        String[] tokens = StringUtils.substringsBetween(text, DEFERED_TOKEN_START, DEFERED_TOKEN_END);
+        String[] tokens = StringUtils.substringsBetween(text, DEFERRED_TOKEN_START, DEFERRED_TOKEN_END);
 
         if (ArrayUtils.isEmpty(tokens)) { return text; }
 
         for (String token : tokens) {
             String replaceToken = TOKEN_START + token + TOKEN_END;
-            String searchToken = DEFERED_TOKEN_START + token + DEFERED_TOKEN_END;
+            String searchToken = DEFERRED_TOKEN_START + token + DEFERRED_TOKEN_END;
 
             String replace = StringUtils.equals(searchToken, nullValue) ? null : replaceTokens(replaceToken);
             if (replace == null) {

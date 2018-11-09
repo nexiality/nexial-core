@@ -123,7 +123,7 @@ public class ExecutionSummary {
     // not persisted to JSON
     private transient Map<TestStepManifest, List<NestedMessage>> nestMessages = new LinkedHashMap<>();
 
-    public enum ExecutionLevel {EXECUTION, SCRIPT, ITERATION, SCENARIO, ACTIVITY}
+    public enum ExecutionLevel {EXECUTION, SCRIPT, ITERATION, SCENARIO, ACTIVITY, STEP}
 
     public ExecutionSummary() {
         runUser = USER_NAME;
@@ -140,8 +140,10 @@ public class ExecutionSummary {
     public Throwable getError() { return error; }
 
     public void setError(Throwable error) {
-        this.error = error;
-        errorStackTrace = ExceptionUtils.getStackTrace(error);
+        if (error != null) {
+            this.error = error;
+            errorStackTrace = ExceptionUtils.getStackTrace(error);
+        }
     }
 
     public String getRunHost() { return runHost; }

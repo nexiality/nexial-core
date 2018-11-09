@@ -44,7 +44,8 @@ public final class ExecUtil {
     public static final String RUNTIME_ARGS = "runtime args";
     public static final List<String> IGNORED_CLI_OPT =
         Arrays.asList("webdriver.", "java.", "org.gradle.", "idea.test.", "user.country", "user.language",
-                      "file.encoding", "nexial.home", "sun.java");
+                      "file.encoding", "nexial.home", "sun.java", "awt.", "sun.boot", "sun.cpu", "sun.io",
+                      "sun.os", "sun.font");
 
     public static String manifest;
 

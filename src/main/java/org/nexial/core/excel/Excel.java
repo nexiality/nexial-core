@@ -31,6 +31,7 @@ import org.apache.commons.lang3.ArrayUtils;
 import org.apache.commons.lang3.RandomStringUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.SystemUtils;
+import org.apache.commons.lang3.math.NumberUtils;
 import org.apache.commons.lang3.tuple.Pair;
 import org.apache.poi.openxml4j.exceptions.InvalidFormatException;
 import org.apache.poi.openxml4j.exceptions.OLE2NotOfficeXmlFileException;
@@ -83,6 +84,7 @@ public class Excel {
     /** list all existing cell styles in the excel file */
     private Set<XSSFCellStyle> workbookStyles;
     private Map<String, XSSFCellStyle> commonStyles;
+    private static boolean verboseInstantiation = false;
 
     public class Worksheet {
         private XSSFSheet sheet;
@@ -775,7 +777,16 @@ public class Excel {
     public Excel(File file, boolean dupThenOpen, boolean initCommonStyles) throws IOException {
         assert file != null && file.canRead();
 
-        // SimpleBenchmarker.start();
+        if (verboseInstantiation) {
+            // SimpleBenchmarker.start();
+            StackTraceElement[] stackTrace = Thread.currentThread().getStackTrace();
+            System.out.println(">>>>> new Excel(" + file + "," + dupThenOpen + "," + initCommonStyles + ") from");
+            int max = NumberUtils.min(5, stackTrace.length - 1);
+            for (int i = 1; i <= max; i++) {
+                StackTraceElement st = stackTrace[i];
+                System.out.println("\t\t" + st.getClassName() + "." + st.getMethodName() + ":" + st.getLineNumber());
+            }
+        }
 
         if (dupThenOpen) { file = duplicateInTemp(file); }
 
@@ -935,13 +946,13 @@ public class Excel {
         }
     }
 
-    public static Excel asXlsxExcel(String file, boolean dupThenOpen) throws IOException {
+    public static Excel asXlsxExcel(String file, boolean dupThenOpen, boolean initCommonStyles) throws IOException {
         if (StringUtils.isBlank(file) || !FileUtil.isFileReadable(file, MIN_EXCEL_FILE_SIZE)) { return null; }
 
         Workbook workbook = null;
         try {
             File excelFile = new File(file);
-            Excel excel = new Excel(new File(file), dupThenOpen);
+            Excel excel = new Excel(new File(file), dupThenOpen, initCommonStyles);
             if (excel.workbook.getSpreadsheetVersion() == EXCEL2007) {
                 return excel;
             }
@@ -1197,6 +1208,28 @@ public class Excel {
 
     public static boolean isPasswordSet(File excelFile) { return deriveFileFormat(excelFile) == OLE2; }
 
+    public void initResultCommonStyles() {
+        commonStyles.put(STYLE_EXEC_SUMM_TITLE, StyleDecorator.generate(workbook, EXEC_SUMM_TITLE));
+        commonStyles.put(STYLE_EXEC_SUMM_DATA_HEADER, StyleDecorator.generate(workbook, EXEC_SUMM_DATA_HEADER));
+        commonStyles.put(STYLE_EXEC_SUMM_DATA_NAME, StyleDecorator.generate(workbook, EXEC_SUMM_DATA_NAME));
+        commonStyles.put(STYLE_EXEC_SUMM_DATA_VALUE, StyleDecorator.generate(workbook, EXEC_SUMM_DATA_VALUE));
+        commonStyles.put(STYLE_EXEC_SUMM_EXCEPTION, StyleDecorator.generate(workbook, EXEC_SUMM_EXCEPTION));
+        commonStyles.put(STYLE_EXEC_SUMM_HEADER, StyleDecorator.generate(workbook, EXEC_SUMM_HEADER));
+        commonStyles.put(STYLE_EXEC_SUMM_SCENARIO, StyleDecorator.generate(workbook, EXEC_SUMM_SCENARIO));
+        commonStyles.put(STYLE_EXEC_SUMM_ACTIVITY, StyleDecorator.generate(workbook, EXEC_SUMM_ACTIVITY));
+        commonStyles.put(STYLE_EXEC_SUMM_TIMESPAN, StyleDecorator.generate(workbook, EXEC_SUMM_TIMESPAN));
+        commonStyles.put(STYLE_EXEC_SUMM_DURATION, StyleDecorator.generate(workbook, EXEC_SUMM_DURATION));
+        commonStyles.put(STYLE_EXEC_SUMM_TOTAL, StyleDecorator.generate(workbook, EXEC_SUMM_TOTAL));
+        commonStyles.put(STYLE_EXEC_SUMM_PASS, StyleDecorator.generate(workbook, EXEC_SUMM_PASS));
+        commonStyles.put(STYLE_EXEC_SUMM_FAIL, StyleDecorator.generate(workbook, EXEC_SUMM_FAIL));
+        commonStyles.put(STYLE_EXEC_SUMM_SUCCESS, StyleDecorator.generate(workbook, EXEC_SUMM_SUCCESS));
+        commonStyles.put(STYLE_EXEC_SUMM_NOT_SUCCESS, StyleDecorator.generate(workbook, EXEC_SUMM_NOT_SUCCESS));
+        commonStyles.put(STYLE_EXEC_SUMM_FINAL_SUCCESS, StyleDecorator.generate(workbook, EXEC_SUMM_FINAL_SUCCESS));
+        commonStyles.put(STYLE_EXEC_SUMM_FINAL_NOT_SUCCESS,
+                         StyleDecorator.generate(workbook, EXEC_SUMM_FINAL_NOT_SUCCESS));
+        commonStyles.put(STYLE_EXEC_SUMM_FINAL_TOTAL, StyleDecorator.generate(workbook, EXEC_SUMM_FINAL_TOTAL));
+    }
+
     /**
      * if {@code startsWith} is an empty string, then all worksheets will be returned
      */
@@ -1272,28 +1305,6 @@ public class Excel {
 
         // use only once... so maybe don't add to common styles (aka template)
         // initResultCommonStyles();
-    }
-
-    public void initResultCommonStyles() {
-        commonStyles.put(STYLE_EXEC_SUMM_TITLE, StyleDecorator.generate(workbook, EXEC_SUMM_TITLE));
-        commonStyles.put(STYLE_EXEC_SUMM_DATA_HEADER, StyleDecorator.generate(workbook, EXEC_SUMM_DATA_HEADER));
-        commonStyles.put(STYLE_EXEC_SUMM_DATA_NAME, StyleDecorator.generate(workbook, EXEC_SUMM_DATA_NAME));
-        commonStyles.put(STYLE_EXEC_SUMM_DATA_VALUE, StyleDecorator.generate(workbook, EXEC_SUMM_DATA_VALUE));
-        commonStyles.put(STYLE_EXEC_SUMM_EXCEPTION, StyleDecorator.generate(workbook, EXEC_SUMM_EXCEPTION));
-        commonStyles.put(STYLE_EXEC_SUMM_HEADER, StyleDecorator.generate(workbook, EXEC_SUMM_HEADER));
-        commonStyles.put(STYLE_EXEC_SUMM_SCENARIO, StyleDecorator.generate(workbook, EXEC_SUMM_SCENARIO));
-        commonStyles.put(STYLE_EXEC_SUMM_ACTIVITY, StyleDecorator.generate(workbook, EXEC_SUMM_ACTIVITY));
-        commonStyles.put(STYLE_EXEC_SUMM_TIMESPAN, StyleDecorator.generate(workbook, EXEC_SUMM_TIMESPAN));
-        commonStyles.put(STYLE_EXEC_SUMM_DURATION, StyleDecorator.generate(workbook, EXEC_SUMM_DURATION));
-        commonStyles.put(STYLE_EXEC_SUMM_TOTAL, StyleDecorator.generate(workbook, EXEC_SUMM_TOTAL));
-        commonStyles.put(STYLE_EXEC_SUMM_PASS, StyleDecorator.generate(workbook, EXEC_SUMM_PASS));
-        commonStyles.put(STYLE_EXEC_SUMM_FAIL, StyleDecorator.generate(workbook, EXEC_SUMM_FAIL));
-        commonStyles.put(STYLE_EXEC_SUMM_SUCCESS, StyleDecorator.generate(workbook, EXEC_SUMM_SUCCESS));
-        commonStyles.put(STYLE_EXEC_SUMM_NOT_SUCCESS, StyleDecorator.generate(workbook, EXEC_SUMM_NOT_SUCCESS));
-        commonStyles.put(STYLE_EXEC_SUMM_FINAL_SUCCESS, StyleDecorator.generate(workbook, EXEC_SUMM_FINAL_SUCCESS));
-        commonStyles.put(STYLE_EXEC_SUMM_FINAL_NOT_SUCCESS,
-                         StyleDecorator.generate(workbook, EXEC_SUMM_FINAL_NOT_SUCCESS));
-        commonStyles.put(STYLE_EXEC_SUMM_FINAL_TOTAL, StyleDecorator.generate(workbook, EXEC_SUMM_FINAL_TOTAL));
     }
 
     private List<XSSFSheet> gatherWorksheets() {

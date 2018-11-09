@@ -40,6 +40,7 @@ import org.apache.commons.lang3.RandomStringUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.SystemUtils;
 import org.apache.commons.lang3.math.NumberUtils;
+import org.apache.commons.lang3.time.StopWatch;
 import org.apache.http.client.methods.HttpRequestBase;
 import org.nexial.commons.utils.CollectionUtil;
 import org.nexial.commons.utils.RegexUtils;
@@ -60,13 +61,13 @@ import org.nexial.core.plugins.ws.WsCommand;
 import org.nexial.core.utils.ConsoleUtils;
 import org.nexial.core.utils.OutputFileUtils;
 import org.nexial.core.utils.WebDriverUtils;
-import org.openqa.selenium.*;
 import org.openqa.selenium.Dimension;
 import org.openqa.selenium.Point;
+import org.openqa.selenium.*;
 import org.openqa.selenium.WebDriver.Window;
 import org.openqa.selenium.interactions.Actions;
-import org.openqa.selenium.interactions.Locatable;
 import org.openqa.selenium.interactions.Coordinates;
+import org.openqa.selenium.interactions.Locatable;
 import org.openqa.selenium.support.ui.ExpectedConditions;
 import org.openqa.selenium.support.ui.FluentWait;
 import org.openqa.selenium.support.ui.Select;
@@ -956,10 +957,8 @@ public class WebCommand extends BaseCommand implements CanTakeScreenshot, CanLog
 
         driver.get(validateUrl(url));
         waitForBrowserStability(toPositiveLong(waitMs, "waitMs"));
-
         updateWinHandle();
         resizeSafariAfterOpen();
-
         return StepResult.success("opened URL " + hideAuthDetails(url));
     }
 
@@ -981,6 +980,43 @@ public class WebCommand extends BaseCommand implements CanTakeScreenshot, CanLog
         resizeSafariAfterOpen();
 
         return StepResult.success("opened URL " + hideAuthDetails(urlBasic));
+    }
+
+    public StepResult openIgnoreTimeout(String url) {
+        requiresNotBlank(url, "invalid URL", url);
+
+        ensureReady();
+
+        driver.get("about:blank");
+
+        StopWatch stopWatch = StopWatch.createStarted();
+        long maxLoadTime = context.getIntData(OPT_WEB_PAGE_LOAD_WAIT_MS, DEF_WEB_PAGE_LOAD_WAIT_MS);
+
+        url = validateUrl(url);
+        String linkToUrl = "var a = document.createElement(\"a\");" +
+                           "var linkText = document.createTextNode(\"" + url + "\");" +
+                           "a.appendChild(linkText);" +
+                           "a.title = \"" + url + "\";" +
+                           "a.href = \"" + url + "\";" +
+                           "document.body.appendChild(a);";
+        jsExecutor.executeScript(linkToUrl);
+
+        WebElement elemA = findElement("css=a");
+        elemA.click();
+
+        String checkReadyState = "return document.readyState";
+        Object readyState = jsExecutor.executeScript(checkReadyState);
+        while (readyState == null || !StringUtils.equals(readyState.toString(), "complete")) {
+            waitFor(100);
+            if (stopWatch.getTime() >= maxLoadTime) { break; }
+            readyState = jsExecutor.executeScript(checkReadyState);
+        }
+
+        stopWatch.stop();
+
+        resizeSafariAfterOpen();
+
+        return StepResult.success("opened URL " + hideAuthDetails(url));
     }
 
     public StepResult refresh() {
@@ -1952,19 +1988,11 @@ public class WebCommand extends BaseCommand implements CanTakeScreenshot, CanLog
 
         By by = locatorHelper.findBy(locator);
         boolean wait = shouldWait();
-        // boolean timeoutChangesEnabled = browser.getBrowserType().isTimeoutChangesEnabled();
-        // Timeouts timeouts = driver.manage().timeouts();
 
         try {
-            // shorten wait to avoid competing timeout in selenium-browser comm.
-            // if (!wait && timeoutChangesEnabled) { timeouts.implicitlyWait(ELEM_PRESENT_WAIT_MS, MILLISECONDS); }
-
             return wait ? waiter.until(driver -> driver.findElements(by)) : driver.findElements(by);
         } catch (NoSuchElementException e) {
             return null;
-            // } finally {
-            // set it back to default
-            // if (!wait && timeoutChangesEnabled) { timeouts.implicitlyWait(pollWaitMs, MILLISECONDS); }
         }
     }
 
@@ -2099,7 +2127,7 @@ public class WebCommand extends BaseCommand implements CanTakeScreenshot, CanLog
                     oldSource = newSource;
                 }
             } while (System.currentTimeMillis() < endTime);
-        } catch (Exception e) {
+        } catch (Throwable e) {
             // exception thrown because a JS alert is "blocking" the browser.. in this case we consider the page as "loaded"
             if (e.getMessage().contains("Modal") || e instanceof UnhandledAlertException) {return true;}
 

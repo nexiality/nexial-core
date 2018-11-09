@@ -107,7 +107,7 @@ public class ExcelDataType extends ExpressionDataType<Excel> {
             if (!FileUtil.isFileReadable(textValue, MIN_EXCEL_FILE_SIZE)) {
                 value = Excel.newExcel(new File(textValue));
             } else {
-                value = new Excel(new File(textValue), false);
+                value = new Excel(new File(textValue), false, false);
             }
 
             filePath = textValue;

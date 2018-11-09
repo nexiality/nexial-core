@@ -127,9 +127,7 @@ public final class RegexUtils {
         Matcher matcher = pattern.matcher(text);
         if (matcher.matches() && matcher.groupCount() > 0) {
             // always starts with 1 since group 0 represents the "entire" match
-            for (int i = 1; i <= matcher.groupCount(); i++) {
-                list.add(matcher.group(i));
-            }
+            for (int i = 1; i <= matcher.groupCount(); i++) { list.add(matcher.group(i)); }
         }
 
         return list;
@@ -157,6 +155,7 @@ public final class RegexUtils {
         return text;
     }
 
+    /** extract (and join) matched region(s) */
     public static String retainMatches(String text, String regex) {
         if (StringUtils.isEmpty(text)) { return text; }
         if (StringUtils.isBlank(regex)) { return text; }
@@ -167,9 +166,23 @@ public final class RegexUtils {
         while (matcher.find()) {
             MatchResult result = matcher.toMatchResult();
             retained += StringUtils.substring(text, result.start(), result.end());
-            // text = StringUtils.remove(text, retained);
         }
 
         return retained;
+    }
+
+    /** extract first matched region(s) */
+    public static String firstMatches(String text, String regex) {
+        if (StringUtils.isEmpty(text)) { return text; }
+        if (StringUtils.isBlank(regex)) { return text; }
+
+        Pattern pattern = Pattern.compile(regex, DOTALL);
+        Matcher matcher = pattern.matcher(text);
+        if (matcher.find()) {
+            MatchResult result = matcher.toMatchResult();
+            return StringUtils.substring(text, result.start(), result.end());
+        }
+
+        return null;
     }
 }

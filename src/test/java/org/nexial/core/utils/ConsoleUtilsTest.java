@@ -20,10 +20,11 @@ import java.util.Arrays;
 import java.util.Map;
 
 import org.junit.Test;
+import org.nexial.commons.utils.ResourceUtils;
 import org.nexial.commons.utils.TextUtils;
 import org.nexial.core.interactive.InteractiveConsole;
 import org.nexial.core.model.ExecutionSummary;
-import org.nexial.core.model.InteractiveSession;
+import org.nexial.core.interactive.InteractiveSession;
 import org.nexial.core.model.MockExecutionContext;
 
 public class ConsoleUtilsTest {
@@ -62,29 +63,28 @@ public class ConsoleUtilsTest {
 
         ExecutionSummary scenarioSummary = new ExecutionSummary();
         scenarioSummary.setName("nexial_function_count");
-        scenarioSummary.setSourceScript("/Users/SOMEBODY/projects/nexial/nexial-core/src/test/resource/showcase" +
-                                        "/artifact/script/base-showcase.xlsx");
         scenarioSummary.setStartTime(1541293351457L);
         scenarioSummary.setEndTime(1541293351584L);
         scenarioSummary.addNestSummary(activity1);
         scenarioSummary.addNestSummary(activity2);
 
-        InteractiveConsole.showInteractiveRun(scenarioSummary, new Exception("error! error!"));
+        MockExecutionContext context = new MockExecutionContext();
+        InteractiveSession session = new InteractiveSession(context);
+        session.setScript("/Users/SOMEBODY/projects/nexial/nexial-core/src/test/resource/showcase" +
+                          "/artifact/script/base-showcase.xlsx");
+        session.setException(new Exception("error! error!"));
+        InteractiveConsole.showRun(scenarioSummary, session);
     }
 
     protected static void _showInteractiveMenu() {
         MockExecutionContext context = new MockExecutionContext();
         InteractiveSession session = new InteractiveSession(context);
-        session.setScript("/Users/SOMEBODY/projects/nexial/nexial-core/src/test/resource/showcase" +
-                          "/artifact/script/base-showcase.xlsx");
-        session.setScenario("Basic Login Tests");
-        session.setActivities(Arrays.asList("known users",
-                                            "admin users",
-                                            "foreign users without proper registration but has validated emails",
-                                            "gold members"));
-        session.setSteps(Arrays.asList("3", "4", "5", "15", "12","14","1", "13", "14"));
+        session.setScript(ResourceUtils.getResourceFilePath("/showcase/artifact/script/base-showcase.xlsx"));
+        session.setScenario("base_showcase");
+        session.setActivities(Arrays.asList("progressively slowing down", "Assert Nested Data Ref.", "Assert Count"));
+        session.setSteps(Arrays.asList("5", "17", "6", "15", "12", "14", "14", "13", "14"));
         session.setIteration(2);
 
-        InteractiveConsole.showInteractiveMenu(session);
+        InteractiveConsole.showMenu(session);
     }
 }
