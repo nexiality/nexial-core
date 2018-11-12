@@ -652,9 +652,8 @@ public class Nexial {
 
         initSpringContext();
 
-        ExecutionDefinition execDef = executions.get(0);
         NexialInteractive interactive = new NexialInteractive();
-        interactive.setExecutionDefinition(execDef);
+        interactive.setExecutionDefinition(executions.get(0));
         interactive.startSession();
     }
 

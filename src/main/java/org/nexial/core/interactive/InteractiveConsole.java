@@ -25,10 +25,12 @@ import java.util.Set;
 
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.collections4.MapUtils;
+import org.apache.commons.lang3.ArrayUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.jetbrains.annotations.NotNull;
 import org.nexial.commons.utils.DateUtility;
 import org.nexial.commons.utils.EnvUtils;
+import org.nexial.commons.utils.RegexUtils;
 import org.nexial.commons.utils.ResourceUtils;
 import org.nexial.commons.utils.TextUtils;
 import org.nexial.core.model.ExecutionContext;
@@ -46,6 +48,8 @@ import com.diogonunes.jcdp.color.api.Ansi.FColor;
 import static com.diogonunes.jcdp.color.api.Ansi.Attribute.*;
 import static org.apache.commons.lang3.SystemUtils.*;
 import static org.nexial.core.interactive.InteractiveConsole.Commands.*;
+import static org.nexial.core.interactive.InteractiveConsole.MenuIdentifier.digit;
+import static org.nexial.core.interactive.InteractiveConsole.MenuIdentifier.uppercase;
 import static org.nexial.core.model.ExecutionSummary.ExecutionLevel.STEP;
 import static org.nexial.core.utils.ConsoleUtils.*;
 
@@ -78,22 +82,14 @@ public class InteractiveConsole {
     private static final int LEFT_MARGIN_L3_HEADER = MAX_LENGTH_BASE - SUB1_START.length();
 
     private static final Printer CONSOLE = new Builder(Types.TERM).timestamping(false).build();
-    private static final ColoredPrinter CONSOLE_L3_HEADER =
-        new ColoredPrinter.Builder(1, false).attribute(UNDERLINE)
-                                            .foreground(FColor.CYAN)
-                                            .background(BColor.NONE)
-                                            .timestamping(false)
-                                            .build();
-    private static final ColoredPrinter CONSOLE_STATS =
-        new ColoredPrinter.Builder(1, false).foreground(FColor.WHITE)
-                                            .background(BColor.NONE)
-                                            .timestamping(false)
-                                            .build();
+    private static final ColoredPrinter CPRINTER = new ColoredPrinter.Builder(1, false).timestamping(false).build();
 
     private static final String HELP_TEMPLATE_RESOURCE =
         StringUtils.replace(InteractiveConsole.class.getPackage().getName(), ".", "/") +
         "/nexial-interactive-help.properties";
     private static final Properties HELP_TEMPLATE;
+
+    enum MenuIdentifier {uppercase, digit}
 
     class Commands {
         static final String CMD_SET_SCRIPT = "1";
@@ -104,10 +100,14 @@ public class InteractiveConsole {
         static final String CMD_SET_STEPS = "6";
         static final String CMD_RELOAD_SCRIPT = "7";
         static final String CMD_RELOAD_DATA = "8";
+
         static final String CMD_RELOAD_MENU = "R";
-        static final String CMD_HELP = "H";
         static final String CMD_RUN = "X";
         static final String CMD_INSPECT = "I";
+        static final String CMD_ALL_STEP = "A";
+        static final String CMD_OPEN_SCRIPT = "S";
+        static final String CMD_OPEN_DATA = "D";
+        static final String CMD_HELP = "H";
         static final String CMD_EXIT = "Q";
 
         private Commands() {}
@@ -127,23 +127,24 @@ public class InteractiveConsole {
         printHeaderLine(System.out, HEADER_STEPS, TextUtils.toString(session.getSteps(), ","));
 
         printConsoleSectionSeparator(System.out, "~~options", FILLER_MENU);
-        printHeaderLine(System.out, CMD_START + CMD_SET_SCRIPT + " <script>   " + CMD_END, "assign test script");
-        printHeaderLine(System.out, CMD_START + CMD_SET_DATA + " <data file>" + CMD_END, "assign data file");
-        printHeaderLine(System.out, CMD_START + CMD_SET_SCENARIO + " <scenario> " + CMD_END, "assign scenario");
-        printHeaderLine(System.out, CMD_START + CMD_SET_ITER + " <iteration>" + CMD_END, "assign iteration");
-        printHeaderLine(System.out, CMD_START + CMD_SET_ACTIVITY + " <activity> " + CMD_END,
-                        "assign activities; clears assigned test steps");
-        printHeaderLine(System.out, CMD_START + CMD_SET_STEPS + " <step>     " + CMD_END,
-                        "assign steps; clears assigned activities");
-        printHeaderLine(System.out, CMD_START + CMD_RELOAD_SCRIPT + "            " + CMD_END,
-                        "reload assigned test script");
-        printHeaderLine(System.out, CMD_START + CMD_RELOAD_DATA + "            " + CMD_END,
-                        "reload assigned data file");
-        printHeaderLine(System.out, CMD_START + "action       " + CMD_END, "(" + CMD_RELOAD_MENU + ")eload menu  " +
-                                                                           "(" + CMD_HELP + ")elp  " +
-                                                                           "e(" + CMD_RUN + ")ecute  " +
-                                                                           "(" + CMD_INSPECT + ")nspect  " +
-                                                                           "(" + CMD_EXIT + ")uit");
+        printMenu(CMD_START, digit, CMD_SET_SCRIPT + " <script>   " + CMD_END + "assign test script");
+        printMenu(CMD_START, digit, CMD_SET_DATA + " <data file>" + CMD_END + "assign data file");
+        printMenu(CMD_START, digit, CMD_SET_SCENARIO + " <scenario> " + CMD_END + "assign scenario");
+        printMenu(CMD_START, digit, CMD_SET_ITER + " <iteration>" + CMD_END + "assign iteration");
+        printMenu(CMD_START, digit, CMD_SET_ACTIVITY + " <activity> " + CMD_END + "assign activities; clears assigned test steps");
+        printMenu(CMD_START, digit, CMD_SET_STEPS + " <step>     " + CMD_END + "assign steps; clears assigned activities");
+        printMenu(CMD_START, digit, CMD_RELOAD_SCRIPT + "            " + CMD_END + "reload assigned test script");
+        printMenu(CMD_START, digit, CMD_RELOAD_DATA + "            " + CMD_END + "reload assigned data file");
+        printMenu(CMD_START + "action       " + CMD_END, uppercase,
+                  StringUtils.rightPad(CMD_RELOAD_MENU + "eload menu", 15),
+                  StringUtils.rightPad("e" + CMD_RUN + "ecute", 18),
+                  StringUtils.rightPad(CMD_INSPECT + "nspect", 12),
+                  StringUtils.rightPad(CMD_ALL_STEP + "ll steps", 12));
+        printMenu(CMD_START + "             " + CMD_END, uppercase,
+                  StringUtils.rightPad(CMD_OPEN_SCRIPT + "cript open", 15),
+                  StringUtils.rightPad(CMD_OPEN_DATA + "ata file open", 18),
+                  StringUtils.rightPad(CMD_HELP + "elp", 12),
+                  StringUtils.rightPad(CMD_EXIT + "uit", 12));
         printConsoleHeaderBottom(System.out, FILLER_MENU);
     }
 
@@ -209,6 +210,37 @@ public class InteractiveConsole {
         printConsoleHeaderBottom(System.out, FILLER);
     }
 
+    protected static void printMenu(String prefix, MenuIdentifier menuIdentifier, String... menus) {
+        if (ArrayUtils.isEmpty(menus)) { return; }
+
+        int charPrinted = 0;
+
+        CONSOLE.print(MARGIN_LEFT);
+        CONSOLE.print(prefix);
+        charPrinted += MARGIN_LEFT.length() + prefix.length();
+
+        String regex = menuIdentifier == uppercase ? "[A-Z]" : "[0-9]";
+        for (String menu : menus) {
+            charPrinted += menu.length();
+            String key = RegexUtils.firstMatches(menu, regex);
+            if (StringUtils.isBlank(key)) {
+                CONSOLE.print(menu);
+            } else {
+                String beforeKey = StringUtils.substringBefore(menu, key);
+                if (StringUtils.isNotEmpty(beforeKey)) { CONSOLE.print(beforeKey); }
+
+                CPRINTER.print(key, UNDERLINE, FColor.BLACK, BColor.WHITE);
+                CPRINTER.clear();
+
+                String afterKey = StringUtils.substringAfter(menu, key);
+                if (StringUtils.isNotEmpty(afterKey)) { CONSOLE.print(afterKey); }
+            }
+        }
+
+        CONSOLE.print(StringUtils.repeat(' ', PROMPT_LINE_WIDTH - charPrinted - 1));
+        CONSOLE.println(MARGIN_RIGHT);
+    }
+
     protected static void printReferenceData(String header, Map<String, String> refs) {
         if (MapUtils.isEmpty(refs)) { return; }
 
@@ -216,8 +248,8 @@ public class InteractiveConsole {
 
         CONSOLE.print(MARGIN_LEFT);
         CONSOLE.print(SUB1_START);
-        CONSOLE_L3_HEADER.print(header1);
-        CONSOLE_L3_HEADER.clear();
+        CPRINTER.print(header1, UNDERLINE, FColor.CYAN, BColor.NONE);
+        CPRINTER.clear();
 
         int fillerLength = LEFT_MARGIN_L3_HEADER - header1.length();
         CONSOLE.print(StringUtils.repeat(" ", fillerLength));
@@ -244,17 +276,13 @@ public class InteractiveConsole {
         String statDetails = total + MULTI_SEP + pass + MULTI_SEP + fail + skippedStat;
 
         CONSOLE.print(headerLine);
-        CONSOLE_STATS.print(total, BOLD, FColor.WHITE, BColor.NONE);
-        CONSOLE_STATS.print(MULTI_SEP, Attribute.NONE, FColor.WHITE, BColor.NONE);
-        CONSOLE_STATS.print(pass, BOLD, FColor.GREEN, BColor.NONE);
-        CONSOLE_STATS.print(MULTI_SEP, Attribute.NONE, FColor.WHITE, BColor.NONE);
-        if (failCount < 1) {
-            CONSOLE_STATS.print(fail, BOLD, FColor.WHITE, BColor.NONE);
-        } else {
-            CONSOLE_STATS.print(fail, BOLD, FColor.RED, BColor.NONE);
-        }
-        if (skipCount > 0) { CONSOLE_STATS.print(skippedStat, CLEAR, FColor.YELLOW, BColor.NONE); }
-        CONSOLE_STATS.clear();
+        CPRINTER.print(total, BOLD, FColor.WHITE, BColor.NONE);
+        CPRINTER.print(MULTI_SEP, Attribute.NONE, FColor.WHITE, BColor.NONE);
+        CPRINTER.print(pass, BOLD, FColor.GREEN, BColor.NONE);
+        CPRINTER.print(MULTI_SEP, Attribute.NONE, FColor.WHITE, BColor.NONE);
+        CPRINTER.print(fail, BOLD, (failCount < 1) ? FColor.WHITE: FColor.RED, BColor.NONE);
+        if (skipCount > 0) { CPRINTER.print(skippedStat, CLEAR, FColor.YELLOW, BColor.NONE); }
+        CPRINTER.clear();
 
         int fillerLength = LEFT_MARGIN_L2_VAL - statDetails.length();
         CONSOLE.print(StringUtils.repeat(" ", fillerLength));
@@ -300,28 +328,21 @@ public class InteractiveConsole {
         printHeaderLine(System.out, HEADER_STEPS, resolveContent("steps", tokens));
 
         printConsoleSectionSeparator(System.out, "~~options", FILLER_MENU);
-        printHeaderLine(System.out, CMD_START + CMD_SET_SCRIPT + " <script>   " + CMD_END,
-                        resolveContent("command.script", tokens));
-        printHeaderLine(System.out, CMD_START + CMD_SET_DATA + " <data file>" + CMD_END,
-                        resolveContent("command.data", tokens));
-        printHeaderLine(System.out, CMD_START + CMD_SET_SCENARIO + " <scenario> " + CMD_END,
-                        resolveContent("command.scenario", tokens));
-        printHeaderLine(System.out, CMD_START + CMD_SET_ITER + " <iteration>" + CMD_END,
-                        resolveContent("command.iteration", tokens));
-        printHeaderLine(System.out, CMD_START + CMD_SET_ACTIVITY + " <activity> " + CMD_END,
-                        resolveContent("command.activity", tokens));
-        printHeaderLine(System.out, CMD_START + CMD_SET_STEPS + " <step>     " + CMD_END,
-                        resolveContent("command.steps", tokens));
-        printHeaderLine(System.out, CMD_START + CMD_RELOAD_SCRIPT + "            " + CMD_END,
-                        resolveContent("command.reloadscript", tokens));
-        printHeaderLine(System.out, CMD_START + CMD_RELOAD_DATA + "            " + CMD_END,
-                        resolveContent("command.reloaddata", tokens));
-        printHeaderLine(System.out, " (" + CMD_RELOAD_MENU + ")eload      " + CMD_END,
-                        resolveContent("command.reloadmenu", tokens));
-        printHeaderLine(System.out, " (" + CMD_HELP + ")elp        " + CMD_END, resolveContent("command.help", tokens));
+        printHeaderLine(System.out, CMD_START + CMD_SET_SCRIPT + " <script>   " + CMD_END, resolveContent("command.script", tokens));
+        printHeaderLine(System.out, CMD_START + CMD_SET_DATA + " <data file>" + CMD_END, resolveContent("command.data", tokens));
+        printHeaderLine(System.out, CMD_START + CMD_SET_SCENARIO + " <scenario> " + CMD_END, resolveContent("command.scenario", tokens));
+        printHeaderLine(System.out, CMD_START + CMD_SET_ITER + " <iteration>" + CMD_END, resolveContent("command.iteration", tokens));
+        printHeaderLine(System.out, CMD_START + CMD_SET_ACTIVITY + " <activity> " + CMD_END, resolveContent("command.activity", tokens));
+        printHeaderLine(System.out, CMD_START + CMD_SET_STEPS + " <step>     " + CMD_END, resolveContent("command.steps", tokens));
+        printHeaderLine(System.out, CMD_START + CMD_RELOAD_SCRIPT + "            " + CMD_END, resolveContent("command.reloadscript", tokens));
+        printHeaderLine(System.out, CMD_START + CMD_RELOAD_DATA + "            " + CMD_END, resolveContent("command.reloaddata", tokens));
+        printHeaderLine(System.out, " (" + CMD_RELOAD_MENU + ")eload      " + CMD_END, resolveContent("command.reloadmenu", tokens));
         printHeaderLine(System.out, "e(" + CMD_RUN + ")ecute      " + CMD_END, resolveContent("command.run", tokens));
-        printHeaderLine(System.out, " (" + CMD_INSPECT + ")nspect     " + CMD_END,
-                        resolveContent("command.inspect", tokens));
+        printHeaderLine(System.out, " (" + CMD_INSPECT + ")nspect     " + CMD_END, resolveContent("command.inspect", tokens));
+        printHeaderLine(System.out, " (" + CMD_ALL_STEP + ")ll steps   " + CMD_END, resolveContent("command.allstep", tokens));
+        printHeaderLine(System.out, " (" + CMD_OPEN_SCRIPT + ")cript open " + CMD_END, resolveContent("command.openscript", tokens));
+        printHeaderLine(System.out, " (" + CMD_OPEN_DATA + ")ata file..." + CMD_END, resolveContent("command.opendata", tokens));
+        printHeaderLine(System.out, " (" + CMD_HELP + ")elp        " + CMD_END, resolveContent("command.help", tokens));
         printHeaderLine(System.out, " (" + CMD_EXIT + ")uit        " + CMD_END, resolveContent("command.exit", tokens));
 
         printConsoleHeaderBottom(System.out, FILLER_MENU);
@@ -358,9 +379,8 @@ public class InteractiveConsole {
         try {
             HELP_TEMPLATE = ResourceUtils.loadProperties(HELP_TEMPLATE_RESOURCE);
         } catch (IOException e) {
-            throw new RuntimeException("Help resource cannot be loaded via '" + HELP_TEMPLATE_RESOURCE +
-                                       "': " + e.getMessage(),
-                                       e);
+            throw new RuntimeException("Help resource cannot be loaded via '" + HELP_TEMPLATE_RESOURCE + "': " +
+                                       e.getMessage(), e);
         }
     }
 }

@@ -16,6 +16,7 @@
 
 package org.nexial.core.interactive;
 
+import java.io.File;
 import java.util.List;
 import java.util.Map;
 import java.util.Scanner;
@@ -68,9 +69,7 @@ public class NexialInteractive {
 
         ConsoleUtils.log(runId, "[" + scriptLocation + "] resolve RUN ID as " + runId);
 
-        ExecutionContext context = new ExecutionContext(executionDefinition);
-
-        InteractiveSession session = new InteractiveSession(context);
+        InteractiveSession session = new InteractiveSession(new ExecutionContext(executionDefinition));
         session.setExecutionDefinition(executionDefinition);
         session.setIteration(1);
 
@@ -170,6 +169,30 @@ public class NexialInteractive {
                 case CMD_INSPECT: {
                     inspect(session);
                     InteractiveConsole.showMenu(session);
+                    break;
+                }
+
+                case CMD_ALL_STEP: {
+                    session.useAllActivities();
+                    InteractiveConsole.showMenu(session);
+                    break;
+                }
+
+                case CMD_OPEN_SCRIPT: {
+                    if (StringUtils.isBlank(session.getScript())) {
+                        ConsoleUtils.error("No valid test script assigned");
+                    } else {
+                        Excel.openExcel(new File(session.getScript()));
+                    }
+                    break;
+                }
+
+                case CMD_OPEN_DATA: {
+                    if (StringUtils.isBlank(session.getDataFile())) {
+                        ConsoleUtils.error("No valid data file assigned");
+                    } else {
+                        Excel.openExcel(new File(session.getDataFile()));
+                    }
                     break;
                 }
 
@@ -463,8 +486,8 @@ public class NexialInteractive {
         // augment the execution summaries
         // String scriptPath = session.getScript();
         // testScenarios.forEach(testScenario -> {
-            // ExecutionSummary executionSummary = testScenario.getExecutionSummary();
-            // if (executionSummary != null) { executionSummary.setSourceScript(scriptPath); }
+        // ExecutionSummary executionSummary = testScenario.getExecutionSummary();
+        // if (executionSummary != null) { executionSummary.setSourceScript(scriptPath); }
         // });
 
         InteractiveConsole.showRun(session);

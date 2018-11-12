@@ -63,8 +63,13 @@ data class InteractiveSession(val context: ExecutionContext) {
             if (value == null) throw IllegalArgumentException("ExecutionDefinition MUST not be null")
 
             field = value
+
+            // save scenario, in case we can use it
+            val execScenario = value.scenarios[0] ?: ""
             script = value.testScript
             if (value.dataFile != null) dataFile = value.dataFile.file.absolutePath
+
+            if (execScenario != "") scenario = execScenario
         }
 
     // inflight / flyweight pattern
@@ -180,6 +185,12 @@ data class InteractiveSession(val context: ExecutionContext) {
 
     fun clearSteps() = steps.clear()
 
+    fun useAllActivities() {
+        steps.clear()
+        activities.clear()
+        activities.addAll(allActivities)
+    }
+
     private fun loadTestScript(reloadExcel: Boolean) {
         if (reloadExcel) {
             excel = Excel(File(script), DEF_OPEN_EXCEL_AS_DUP, false)
@@ -265,10 +276,7 @@ data class InteractiveSession(val context: ExecutionContext) {
             activities.clear()
 
             // check if current steps are valid / if not use the ones from scenario
-            if (steps.isEmpty() || steps.find { step -> !allSteps.contains(step) } != null) {
-                steps.clear()
-                activities.addAll(allActivities)
-            }
+            if (steps.isEmpty() || steps.find { step -> !allSteps.contains(step) } != null) useAllActivities()
         } else {
             steps.clear()
         }
