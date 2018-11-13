@@ -370,6 +370,7 @@ public class NexialInteractive {
             }
         }
 
+        parentSummary.aggregatedNestedExecutions(context);
         return allPass;
     }
 

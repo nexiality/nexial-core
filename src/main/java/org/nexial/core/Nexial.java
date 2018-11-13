@@ -216,45 +216,37 @@ public class Nexial {
             System.exit(-1);
         }
 
-        // integration mode, only for metrics and post-exec analysis
-        if (main.isIntegrationMode()) { return; }
-
-        // listen mode, only for studio integration
-        if (main.isListenMode()) {
-            try {
-                main.listen();
-                ConsoleUtils.log("Nexial Services ready...");
-            } catch (Throwable e) {
-                e.printStackTrace();
-            }
-            return;
-        }
-
-        // interactive mode, only for stepwise or blockwise execution. to be integrated into studio
-        if (main.isInteractiveMode()) {
-            try {
-                main.interact();
-            } catch (Throwable e) {
-                ConsoleUtils.error("Unknown/unexpected error occurred: " + e.getMessage());
-                e.printStackTrace();
-            }
-            return;
-        }
-
-        // normal execution
         ExecutionSummary summary = null;
         try {
+            // integration mode, only for metrics and post-exec analysis
+            if (main.isIntegrationMode()) { return; }
+
+            // listen mode, only for studio integration
+            if (main.isListenMode()) {
+                main.listen();
+                ConsoleUtils.log("Nexial Services ready...");
+                return;
+            }
+
+            // interactive mode, only for stepwise or blockwise execution. to be integrated into studio
+            if (main.isInteractiveMode()) {
+                main.interact();
+                return;
+            }
+
+            // normal execution
             MemManager.recordMemoryChanges("before execution");
             summary = main.execute();
             main.trackEvent(new NexialExecutionCompleteEvent(summary));
             MemManager.recordMemoryChanges("after execution");
+
         } catch (Throwable e) {
             ConsoleUtils.error("Unknown/unexpected error occurred: " + e.getMessage());
             e.printStackTrace();
+        } finally {
+            ConsoleUtils.log("Exiting Nexial...");
+            System.exit(main.beforeShutdown(summary));
         }
-
-        ConsoleUtils.log("Exiting Nexial...");
-        System.exit(beforeShutdown(summary));
     }
 
     protected void listen() throws Exception { ServiceLauncher.main(new String[]{}); }
@@ -978,11 +970,14 @@ public class Nexial {
         return targetScenarios;
     }
 
-    private static int beforeShutdown(ExecutionSummary summary) {
+    private int beforeShutdown(ExecutionSummary summary) {
         // need to kill JVM forcefully if awt was used during runtime
         // -- haven't found a way to do this more gracefully yet...
         if (ShutdownAdvisor.mustForcefullyTerminate()) { ShutdownAdvisor.forcefullyTerminate(); }
 
+        if (isIntegrationMode() || isListenMode() || isInteractiveMode()) { return 0; }
+
+        // only for normal execution mode
         int exitStatus;
         if (summary == null) {
             ConsoleUtils.error("Unable to cleanly execute tests; execution summary missing!");
@@ -1035,25 +1030,26 @@ public class Nexial {
             }
         }
 
-        File eventPath = new File(EventTracker.INSTANCE.getStorageLocation());
-        if (FileUtil.isDirectoryReadable(eventPath)) {
-            String[] ext = new String[]{StringUtils.removeStart(EventTracker.INSTANCE.getExtension(), ".")};
-            Collection<File> eventFiles = FileUtils.listFiles(eventPath, ext, false);
-            long sleepTime = 500;
-            while (CollectionUtils.isNotEmpty(eventFiles)) {
-                // don't sleep too long... 5 sec tops
-                if (sleepTime > 5000) { break; }
-
-                // sleep/wait
-                try { Thread.sleep(sleepTime);} catch (InterruptedException e) { }
-
-                // next sleep time will be doubled
-                sleepTime += sleepTime;
-
-                // check for event files again...
-                eventFiles = FileUtils.listFiles(eventPath, ext, false);
-            }
-        }
+        // not used at this time
+        // File eventPath = new File(EventTracker.INSTANCE.getStorageLocation());
+        // if (FileUtil.isDirectoryReadable(eventPath)) {
+        //     String[] ext = new String[]{StringUtils.removeStart(EventTracker.INSTANCE.getExtension(), ".")};
+        //     Collection<File> eventFiles = FileUtils.listFiles(eventPath, ext, false);
+        //     long sleepTime = 500;
+        //     while (CollectionUtils.isNotEmpty(eventFiles)) {
+        //         // don't sleep too long... 5 sec tops
+        //         if (sleepTime > 5000) { break; }
+        //
+        //         // sleep/wait
+        //         try { Thread.sleep(sleepTime);} catch (InterruptedException e) { }
+        //
+        //         // next sleep time will be doubled
+        //         sleepTime += sleepTime;
+        //
+        //         // check for event files again...
+        //         eventFiles = FileUtils.listFiles(eventPath, ext, false);
+        //     }
+        // }
 
         beforeShutdownMemUsage();
 
