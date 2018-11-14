@@ -159,15 +159,17 @@ public class ExecutionMailConfig {
                                                    DEFAULT_REGION.getName());
 
         AwsSesSettings settings = new AwsSesSettings(accessKey, secretKey, Regions.fromName(region), from);
-        settings.setAssumeRoleArn(configurations.get(SES_PREFIX + AWS_STS_ROLE_ARN));
-        settings.setAssumeRoleSession(configurations.get(SES_PREFIX + AWS_STS_ROLE_SESSION));
+        settings.setAssumeRoleArn(StringUtils.defaultString(configurations.get(SES_PREFIX + AWS_STS_ROLE_ARN), ""));
+        settings.setAssumeRoleSession(StringUtils.defaultString(configurations.get(SES_PREFIX + AWS_STS_ROLE_SESSION),
+                                                                ""));
         settings.setAssumeRoleDuration(NumberUtils.toInt(
             StringUtils.defaultIfBlank(configurations.get(SES_PREFIX + AWS_STS_ROLE_DURATION),
                                        "" + DEF_AWS_STS_ROLE_DURATION)));
-        settings.setReplyTo(configurations.get(SES_PREFIX + AWS_SES_REPLY_TO));
-        settings.setCc(configurations.get(SES_PREFIX + AWS_SES_CC));
-        settings.setBcc(configurations.get(SES_PREFIX + AWS_SES_BCC));
-        settings.setConfigurationSetName(configurations.get(SES_PREFIX + AWS_SES_CONFIG_SET));
+        settings.setReplyTo(StringUtils.defaultString(configurations.get(SES_PREFIX + AWS_SES_REPLY_TO), ""));
+        settings.setCc(StringUtils.defaultString(configurations.get(SES_PREFIX + AWS_SES_CC), ""));
+        settings.setBcc(StringUtils.defaultString(configurations.get(SES_PREFIX + AWS_SES_BCC), ""));
+        settings.setConfigurationSetName(StringUtils.defaultString(configurations.get(SES_PREFIX + AWS_SES_CONFIG_SET),
+                                                                   ""));
         settings.setXmailer(StringUtils.defaultIfBlank(
             configurations.get(SES_PREFIX + AWS_XMAILER),
             ExecUtil.deriveJarManifest() + "/" + USER_NAME + "@" + EnvUtils.getHostName()));
