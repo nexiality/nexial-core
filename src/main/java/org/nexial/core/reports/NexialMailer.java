@@ -19,7 +19,11 @@ package org.nexial.core.reports;
 
 import java.io.File;
 import java.io.IOException;
-import java.util.*;
+import java.util.Date;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 import javax.activation.DataHandler;
 import javax.activation.DataSource;
 import javax.activation.FileDataSource;
@@ -44,19 +48,17 @@ import org.nexial.core.aws.SesSupport;
 import org.nexial.core.aws.SesSupport.SesConfig;
 import org.nexial.core.model.ExecutionContext;
 import org.nexial.core.model.ExecutionSummary;
+import org.nexial.core.plugins.aws.AwsSesSettings;
 import org.nexial.core.utils.ConsoleUtils;
 import org.nexial.core.utils.ExecUtil;
 import org.thymeleaf.TemplateEngine;
 import org.thymeleaf.context.Context;
 
-import com.amazonaws.regions.Regions;
 import com.sun.mail.smtp.SMTPTransport;
 
 import static javax.mail.Message.RecipientType.TO;
-import static org.nexial.core.NexialConst.AwsSettings.*;
 import static org.nexial.core.NexialConst.Data.*;
 import static org.nexial.core.NexialConst.MAIL_KEY_CONTENT_TYPE;
-import static org.nexial.core.NexialConst.Mailer.SES_PREFIX;
 import static org.nexial.core.NexialConst.OPT_MAIL_FROM;
 
 public class NexialMailer implements ExecutionNotifier {
@@ -98,7 +100,7 @@ public class NexialMailer implements ExecutionNotifier {
             return;
         }
 
-        if (mailSupport.hasSesConfigs()) { sesSendPlainText(recipients, subject, content); }
+        if (mailSupport.hasSesSettings()) { sesSendPlainText(recipients, subject, content); }
     }
 
     @Override
@@ -166,7 +168,7 @@ public class NexialMailer implements ExecutionNotifier {
             return;
         }
 
-        if (mailSupport.hasSesConfigs()) { sesSendResult(recipients, subject, content); }
+        if (mailSupport.hasSesSettings()) { sesSendResult(recipients, subject, content); }
     }
 
     public void sendResult(List<String> recipients, String content, List<File> attachments) throws MessagingException {
@@ -182,7 +184,7 @@ public class NexialMailer implements ExecutionNotifier {
             return;
         }
 
-        if (mailSupport.hasSesConfigs()) {
+        if (mailSupport.hasSesSettings()) {
             if (CollectionUtils.isNotEmpty(attachments)) {
                 ConsoleUtils.error("AWS SES mailer currently does not support file attachments");
             }
@@ -329,7 +331,7 @@ public class NexialMailer implements ExecutionNotifier {
     }
 
     protected void sesSendEmail(List<String> recipients, String subject, String content, boolean plaintext) {
-        Properties sesProps = mailSupport.getSesProps();
+        AwsSesSettings sesSettings = mailSupport.getSesSettings();
 
         SesConfig sesConfig = SesSupport.Companion.newConfig();
         sesConfig.setSubject(subject);
@@ -341,29 +343,30 @@ public class NexialMailer implements ExecutionNotifier {
         }
 
         sesConfig.setTo(recipients);
-        sesConfig.setFrom(sesProps.getProperty(SES_PREFIX + AWS_SES_FROM));
+        sesConfig.setFrom(sesSettings.getFrom());
 
-        String replyTo = sesProps.getProperty(SES_PREFIX + AWS_SES_REPLY_TO);
+        String replyTo = sesSettings.getReplyTo();
         if (StringUtils.isNotBlank(replyTo)) { sesConfig.setReplyTo(TextUtils.toList(replyTo, ",", true)); }
 
-        String cc = sesProps.getProperty(SES_PREFIX + AWS_SES_CC);
+        String cc = sesSettings.getCc();
         if (StringUtils.isNotBlank(cc)) { sesConfig.setCc(TextUtils.toList(cc, ",", true)); }
 
-        String bcc = sesProps.getProperty(SES_PREFIX + AWS_SES_BCC);
+        String bcc = sesSettings.getBcc();
         if (StringUtils.isNotBlank(bcc)) { sesConfig.setBcc(TextUtils.toList(bcc, ",", true)); }
 
-        String configSet = sesProps.getProperty(SES_PREFIX + AWS_SES_CONFIG_SET);
+        String configSet = sesSettings.getConfigurationSetName();
         if (StringUtils.isNotBlank(configSet)) { sesConfig.setConfigurationSetName(configSet); }
 
-        String xmailer = sesProps.getProperty(SES_PREFIX + AWS_XMAILER);
+        String xmailer = sesSettings.getXmailer();
         if (StringUtils.isNotBlank(xmailer)) { sesConfig.setXmailer(xmailer); }
 
         SesSupport ses = new SesSupport();
-        ses.setAccessKey(sesProps.getProperty(SES_PREFIX + AWS_ACCESS_KEY));
-        ses.setSecretKey(sesProps.getProperty(SES_PREFIX + AWS_SECRET_KEY));
-
-        String region = sesProps.getProperty(SES_PREFIX + AWS_REGION);
-        if (StringUtils.isNotBlank(region)) { ses.setRegion(Regions.fromName(region)); }
+        ses.setAccessKey(sesSettings.getAccessKey());
+        ses.setSecretKey(sesSettings.getSecretKey());
+        ses.setRegion(sesSettings.getRegion());
+        ses.setAssumeRoleArn(sesSettings.getAssumeRoleArn());
+        ses.setAssumeRoleSession(sesSettings.getAssumeRoleSession());
+        ses.setAssumeRoleDuration(sesSettings.getAssumeRoleDuration());
 
         ses.sendMail(sesConfig);
         try { Thread.sleep(2000);} catch (InterruptedException e) { }
@@ -381,7 +384,7 @@ public class NexialMailer implements ExecutionNotifier {
         }
 
         return mailSupport != null &&
-               (mailSupport.hasSmtpConfigs() || mailSupport.hasJndiConfigs() || mailSupport.hasSesConfigs());
+               (mailSupport.hasSmtpConfigs() || mailSupport.hasJndiConfigs() || mailSupport.hasSesSettings());
     }
 
     private static String deriveTestName(List<File> attachments) {

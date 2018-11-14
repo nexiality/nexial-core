@@ -25,10 +25,6 @@ import org.nexial.core.utils.ConsoleUtils;
 
 import com.amazonaws.AmazonClientException;
 import com.amazonaws.ClientConfiguration;
-import com.amazonaws.auth.AWSCredentials;
-import com.amazonaws.auth.AWSCredentialsProvider;
-import com.amazonaws.auth.AWSStaticCredentialsProvider;
-import com.amazonaws.auth.BasicAWSCredentials;
 import com.amazonaws.services.polly.AmazonPolly;
 import com.amazonaws.services.polly.AmazonPollyClientBuilder;
 import com.amazonaws.services.polly.model.*;
@@ -73,13 +69,9 @@ public class TtsHelper extends AwsSupport {
 
         try {
             if (tts == null) {
-                AWSCredentials credential = new BasicAWSCredentials(accessKey, secretKey);
-                AWSCredentialsProvider credentialsProvider = new AWSStaticCredentialsProvider(credential);
-
                 ClientConfiguration clientConfiguration = new ClientConfiguration();
-
                 tts = AmazonPollyClientBuilder.standard()
-                                              .withCredentials(credentialsProvider)
+                                              .withCredentials(resolveCredentials(region))
                                               .withClientConfiguration(clientConfiguration)
                                               .withRegion(region)
                                               .build();

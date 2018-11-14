@@ -523,6 +523,12 @@ public final class NexialConst {
         public static final String AWS_SES_CONFIG_SET = "configurationSetName";
         public static final String AWS_XMAILER = "xmailer";
 
+        // sts / assume-role config
+        public static final String AWS_STS_ROLE_ARN = "assumeRoleArn";
+        public static final String AWS_STS_ROLE_SESSION = "assumeRoleSession";
+        public static final String AWS_STS_ROLE_DURATION = "assumeRoleDuration";
+        public static final int DEF_AWS_STS_ROLE_DURATION = 900;
+
         private AwsSettings() {}
     }
 
@@ -1176,6 +1182,9 @@ public final class NexialConst {
             SES_PREFIX + AWS_ACCESS_KEY,
             SES_PREFIX + AWS_SECRET_KEY,
             SES_PREFIX + AWS_REGION,
+            SES_PREFIX + AWS_STS_ROLE_ARN,
+            SES_PREFIX + AWS_STS_ROLE_SESSION,
+            SES_PREFIX + AWS_STS_ROLE_DURATION,
             SES_PREFIX + AWS_SES_FROM,
             SES_PREFIX + AWS_SES_REPLY_TO,
             SES_PREFIX + AWS_SES_CC,

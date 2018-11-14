@@ -87,7 +87,7 @@ public abstract class S3Support extends AwsSupport {
      */
     protected PutObjectResult copyToS3(File from, String to) {
         PutOption option = new PutOption();
-        option.setPublicableReadable(true);
+        option.setPubliclyReadable(true);
         option.setReducedRedundancy(true);
 
         // conform to URL convention for path separator

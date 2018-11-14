@@ -27,12 +27,17 @@ import javax.validation.constraints.NotNull;
 import org.apache.commons.collections4.MapUtils;
 import org.apache.commons.lang3.BooleanUtils;
 import org.apache.commons.lang3.StringUtils;
+import org.apache.commons.lang3.math.NumberUtils;
 import org.nexial.commons.utils.EnvUtils;
 import org.nexial.commons.utils.TextUtils;
 import org.nexial.core.model.ExecutionContext;
+import org.nexial.core.plugins.aws.AwsSesSettings;
 import org.nexial.core.utils.ConsoleUtils;
 import org.nexial.core.utils.ExecUtil;
 
+import com.amazonaws.regions.Regions;
+
+import static com.amazonaws.regions.Regions.DEFAULT_REGION;
 import static javax.naming.Context.INITIAL_CONTEXT_FACTORY;
 import static org.apache.commons.lang3.SystemUtils.USER_NAME;
 import static org.nexial.core.NexialConst.AwsSettings.*;
@@ -142,19 +147,32 @@ public class ExecutionMailConfig {
     }
 
     @NotNull
-    public Properties toSesConfigs() {
-        Properties props = new Properties();
-
-        SES_KEYS.forEach(key -> {
-            if (configurations.containsKey(key)) { props.setProperty(key, configurations.get(key)); }
-        });
-
-        if (StringUtils.isBlank(configurations.get(SES_PREFIX + AWS_XMAILER))) {
-            String callSign = ExecUtil.deriveJarManifest() + "/" + USER_NAME;
-            configurations.put(SES_PREFIX + AWS_XMAILER, callSign + "@" + EnvUtils.getHostName());
+    public AwsSesSettings toSesConfigs() {
+        String accessKey = configurations.get(SES_PREFIX + AWS_ACCESS_KEY);
+        String secretKey = configurations.get(SES_PREFIX + AWS_SECRET_KEY);
+        String from = configurations.get(SES_PREFIX + AWS_SES_FROM);
+        if (StringUtils.isBlank(accessKey) || StringUtils.isBlank(secretKey) || StringUtils.isBlank(from)) {
+            return null;
         }
 
-        return props;
+        String region = StringUtils.defaultIfBlank(configurations.get(SES_PREFIX + AWS_REGION),
+                                                   DEFAULT_REGION.getName());
+
+        AwsSesSettings settings = new AwsSesSettings(accessKey, secretKey, Regions.fromName(region), from);
+        settings.setAssumeRoleArn(configurations.get(SES_PREFIX + AWS_STS_ROLE_ARN));
+        settings.setAssumeRoleSession(configurations.get(SES_PREFIX + AWS_STS_ROLE_SESSION));
+        settings.setAssumeRoleDuration(NumberUtils.toInt(
+            StringUtils.defaultIfBlank(configurations.get(SES_PREFIX + AWS_STS_ROLE_DURATION),
+                                       "" + DEF_AWS_STS_ROLE_DURATION)));
+        settings.setReplyTo(configurations.get(SES_PREFIX + AWS_SES_REPLY_TO));
+        settings.setCc(configurations.get(SES_PREFIX + AWS_SES_CC));
+        settings.setBcc(configurations.get(SES_PREFIX + AWS_SES_BCC));
+        settings.setConfigurationSetName(configurations.get(SES_PREFIX + AWS_SES_CONFIG_SET));
+        settings.setXmailer(StringUtils.defaultIfBlank(
+            configurations.get(SES_PREFIX + AWS_XMAILER),
+            ExecUtil.deriveJarManifest() + "/" + USER_NAME + "@" + EnvUtils.getHostName()));
+
+        return settings;
     }
 
     @NotNull

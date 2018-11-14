@@ -61,9 +61,7 @@ class SesCommand : BaseCommand() {
             config.xmailer = settings.xmailer
 
             val support = SesSupport()
-            support.setAccessKey(settings.accessKey)
-            support.setSecretKey(settings.secretKey)
-            support.setRegion(settings.region)
+            support.setCredentials(settings)
             support.sendMail(config)
 
             return StepResult.success("Mail sent via AWS SES to $to")

@@ -16,8 +16,6 @@
 
 package org.nexial.core.aws
 
-import com.amazonaws.auth.AWSStaticCredentialsProvider
-import com.amazonaws.auth.BasicAWSCredentials
 import com.amazonaws.handlers.AsyncHandler
 import com.amazonaws.regions.Regions.DEFAULT_REGION
 import com.amazonaws.services.simpleemail.AmazonSimpleEmailServiceAsyncClientBuilder
@@ -47,7 +45,6 @@ class SesSupport : AwsSupport() {
         // sanity check
         if (StringUtils.isBlank(accessKey)) throw IllegalArgumentException("AWS accessKey is missing")
         if (StringUtils.isBlank(secretKey)) throw IllegalArgumentException("AWS secretKey is missing")
-//        if (config == null) throw IllegalArgumentException("config MUST not be null")
         if (StringUtils.isBlank(config.from)) throw IllegalArgumentException("from address is required")
         if (CollectionUtils.isEmpty(config.to)) throw IllegalArgumentException("to address is required")
         if (StringUtils.isBlank(config.subject)) throw IllegalArgumentException("subject is required")
@@ -69,7 +66,7 @@ class SesSupport : AwsSupport() {
 
         val client = AmazonSimpleEmailServiceAsyncClientBuilder.standard()
             .withRegion(region)
-            .withCredentials(AWSStaticCredentialsProvider(BasicAWSCredentials(accessKey, secretKey)))
+            .withCredentials(resolveCredentials(region))
             .build()
 
         ConsoleUtils.log("scheduling sent-mail via AWS SES...")

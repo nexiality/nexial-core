@@ -17,8 +17,6 @@
 package org.nexial.core.aws
 
 import com.amazonaws.ClientConfiguration
-import com.amazonaws.auth.AWSStaticCredentialsProvider
-import com.amazonaws.auth.BasicAWSCredentials
 import com.amazonaws.services.sns.AmazonSNS
 import com.amazonaws.services.sns.AmazonSNSAsyncClientBuilder
 import com.amazonaws.services.sns.model.MessageAttributeValue
@@ -44,9 +42,8 @@ class SmsHelper : AwsSupport() {
         }
 
         if (sns == null) {
-            val credential = BasicAWSCredentials(accessKey, secretKey)
             sns = AmazonSNSAsyncClientBuilder.standard()
-                .withCredentials(AWSStaticCredentialsProvider(credential))
+                .withCredentials(resolveCredentials(region))
                 .withClientConfiguration(ClientConfiguration())
                 .withRegion(region)
                 .build()

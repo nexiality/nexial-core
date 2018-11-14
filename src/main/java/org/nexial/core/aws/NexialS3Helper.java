@@ -29,7 +29,7 @@ import static com.amazonaws.regions.Regions.DEFAULT_REGION;
 import static org.nexial.core.NexialConst.*;
 
 /**
- * S3 helper specific to Nexial's internal use for transfering execution output to S3
+ * S3 helper specific to Nexial's internal use for transferring execution output to S3
  */
 public class NexialS3Helper extends S3Support {
     protected ExecutionContext context;

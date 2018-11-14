@@ -31,6 +31,7 @@ import javax.naming.NamingException;
 import org.apache.commons.collections4.MapUtils;
 import org.apache.commons.lang3.BooleanUtils;
 import org.apache.commons.lang3.StringUtils;
+import org.nexial.core.plugins.aws.AwsSesSettings;
 import org.nexial.core.reports.ExecutionMailConfig;
 import org.nexial.core.utils.ConsoleUtils;
 import org.slf4j.Logger;
@@ -39,9 +40,7 @@ import org.slf4j.LoggerFactory;
 import com.sun.mail.smtp.SMTPTransport;
 
 import static javax.naming.Context.INITIAL_CONTEXT_FACTORY;
-import static org.nexial.core.NexialConst.AwsSettings.*;
 import static org.nexial.core.NexialConst.*;
-import static org.nexial.core.NexialConst.Mailer.SES_PREFIX;
 
 /**
  * @author Mike Liu
@@ -52,7 +51,7 @@ public final class MailObjectSupport {
     private ExecutionMailConfig mailConfig;
     private Properties mailProps;
     private Hashtable jndiEnv;
-    private Properties sesProps;
+    private AwsSesSettings sesSettings;
 
     private Session session;
     private SMTPTransport transport;
@@ -84,10 +83,10 @@ public final class MailObjectSupport {
             }
         }
 
-        Properties sesProps = mailConfig.toSesConfigs();
-        if (MapUtils.isNotEmpty(sesProps)) {
-            instance.sesProps = sesProps;
-            if (instance.hasSesConfigs()) { return instance; }
+        AwsSesSettings sesSettings = mailConfig.toSesConfigs();
+        if (sesSettings != null) {
+            instance.sesSettings = sesSettings;
+            if (instance.hasSesSettings()) { return instance; }
         }
 
         ConsoleUtils.error("Nexial mailer not properly configured for use");
@@ -104,7 +103,7 @@ public final class MailObjectSupport {
         return session;
     }
 
-    public Properties getSesProps() { return sesProps; }
+    public AwsSesSettings getSesSettings() { return sesSettings; }
 
     public String getConfiguredProperty(String property) { return mailProps.getProperty(property); }
 
@@ -132,12 +131,7 @@ public final class MailObjectSupport {
                jndiEnv.get(INITIAL_CONTEXT_FACTORY) != null;
     }
 
-    public boolean hasSesConfigs() {
-        return MapUtils.isNotEmpty(sesProps) &&
-               StringUtils.isNotBlank(sesProps.getProperty(SES_PREFIX + AWS_ACCESS_KEY)) &&
-               StringUtils.isNotBlank(sesProps.getProperty(SES_PREFIX + AWS_SECRET_KEY)) &&
-               StringUtils.isNotBlank(sesProps.getProperty(SES_PREFIX + AWS_SES_FROM));
-    }
+    public boolean hasSesSettings() { return sesSettings != null; }
 
     public List<String> getRecipients() { return mailConfig == null ? null : mailConfig.getRecipients(); }
 
@@ -187,7 +181,7 @@ public final class MailObjectSupport {
         } catch (NoSuchProviderException e) {
             LOGGER.error("Mail provider not found for mail host " + mailHost, e);
         } catch (MessagingException e) {
-            LOGGER.error("Error occured while setting transport on mail host " + mailHost, e);
+            LOGGER.error("Error occurred while setting transport on mail host " + mailHost, e);
         }
     }
 

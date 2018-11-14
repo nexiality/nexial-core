@@ -20,21 +20,26 @@ import com.amazonaws.regions.Regions
 import com.amazonaws.regions.Regions.DEFAULT_REGION
 import org.apache.commons.collections4.MapUtils
 import org.apache.commons.lang3.StringUtils
+import org.apache.commons.lang3.math.NumberUtils
 import org.nexial.core.IntegrationConfigException
 import org.nexial.core.NexialConst.AwsSettings.*
 import org.nexial.core.model.ExecutionContext
 import org.nexial.core.utils.ConsoleUtils
 
-open class AwsSettings constructor(val accessKey: String, val secretKey: String, val region: Regions)
+open class AwsSettings constructor(val accessKey: String, val secretKey: String, val region: Regions) {
+    lateinit var assumeRoleArn: String
+    lateinit var assumeRoleSession: String
+    var assumeRoleDuration = DEF_AWS_STS_ROLE_DURATION
+}
 
 class AwsSesSettings constructor(accessKey: String, secretKey: String, region: Regions, val from: String) :
         AwsSettings(accessKey, secretKey, region) {
 
-    var replyTo: String? = null
-    var cc: String? = null
-    var bcc: String? = null
-    var configurationSetName: String? = null
-    var xmailer: String? = null
+    lateinit var replyTo: String
+    lateinit var cc: String
+    lateinit var bcc: String
+    lateinit var configurationSetName: String
+    lateinit var xmailer: String
 }
 
 class AwsUtils {
@@ -66,6 +71,8 @@ class AwsUtils {
             val settings = AwsSettings(getRequiredSetting(config, prefix1, AWS_ACCESS_KEY),
                                        getRequiredSetting(config, prefix1, AWS_SECRET_KEY),
                                        resolveRegion(config))
+            configAssumeRole(settings, config)
+
             context.setData(prefix, settings)
             return settings
         }
@@ -98,28 +105,29 @@ class AwsUtils {
                                           secretKey = getRequiredSetting(config, prefix1, AWS_SECRET_KEY),
                                           region = resolveRegion(config),
                                           from = getRequiredSetting(config, prefix1, AWS_SES_FROM))
+            configAssumeRole(settings, config)
 
-            val cc = config[AWS_SES_CC]
-            if (StringUtils.isNotBlank(cc)) settings.cc = cc
-
-            val bcc = config[AWS_SES_BCC]
-            if (StringUtils.isNotBlank(bcc)) settings.bcc = bcc
-
-            val replyTo = config[AWS_SES_REPLY_TO]
-            if (StringUtils.isNotBlank(replyTo)) settings.replyTo = replyTo
-
-            val configSet = config[AWS_SES_CONFIG_SET]
-            if (StringUtils.isNotBlank(configSet)) settings.configurationSetName = configSet
-
-            val xmailer = config[AWS_XMAILER]
-            if (StringUtils.isNotBlank(xmailer)) settings.xmailer = xmailer
+            settings.cc = config[AWS_SES_CC] ?: ""
+            settings.bcc = config[AWS_SES_BCC] ?: ""
+            settings.replyTo = config[AWS_SES_REPLY_TO] ?: ""
+            settings.configurationSetName = config[AWS_SES_CONFIG_SET] ?: ""
+            settings.xmailer = config[AWS_XMAILER] ?: ""
 
             context.setData(prefix, settings)
             return settings
         }
 
-        fun resolveRegion(config: Map<String, String>) =
-                (if (StringUtils.isBlank(config[AWS_REGION])) DEFAULT_REGION else Regions.fromName(config[AWS_REGION]))!!
+        private fun <T : AwsSettings> configAssumeRole(settings: T, config: MutableMap<String, String>) {
+            settings.assumeRoleArn = config[AWS_STS_ROLE_ARN] ?: ""
+            settings.assumeRoleSession = config[AWS_STS_ROLE_SESSION] ?: ""
+            settings.assumeRoleDuration = NumberUtils.toInt(config[AWS_STS_ROLE_DURATION], DEF_AWS_STS_ROLE_DURATION)
+        }
+
+        private fun resolveRegion(config: Map<String, String>) = if (StringUtils.isBlank(config[AWS_REGION])) {
+            DEFAULT_REGION
+        } else {
+            Regions.fromName(config[AWS_REGION])
+        }
 
         @Throws(IntegrationConfigException::class)
         fun getRequiredSetting(config: Map<String, String>, prefix: String, key: String) =

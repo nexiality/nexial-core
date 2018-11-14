@@ -33,9 +33,9 @@ import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.nexial.commons.utils.CollectionUtil;
 import org.nexial.commons.utils.RegexUtils;
+import org.nexial.core.plugins.aws.AwsSettings;
 
-import com.amazonaws.auth.AWSStaticCredentialsProvider;
-import com.amazonaws.auth.BasicAWSCredentials;
+import com.amazonaws.auth.AWSCredentialsProvider;
 import com.amazonaws.regions.Regions;
 import com.amazonaws.services.s3.AmazonS3;
 import com.amazonaws.services.s3.AmazonS3ClientBuilder;
@@ -56,18 +56,21 @@ public class AwsS3Helper {
 
     private String accessKey;
     private String secretKey;
+    private Regions region;
+    private String assumeRoleArn;
+    private String assumeRoleSession;
+    private int assumeRoleDuration;
     private String bucketName;
     private String subDir;
-    private Regions region;
     private boolean s3PathStyleAccessEnabled = true;
 
     public static class PutOption {
-        private boolean publicableReadable;
+        private boolean publiclyReadable;
         private boolean reducedRedundancy;
 
-        public boolean isPublicableReadable() { return publicableReadable;}
+        public boolean isPubliclyReadable() { return publiclyReadable;}
 
-        public void setPublicableReadable(boolean publicableReadable) { this.publicableReadable = publicableReadable;}
+        public void setPubliclyReadable(boolean publiclyReadable) { this.publiclyReadable = publiclyReadable;}
 
         public boolean isReducedRedundancy() { return reducedRedundancy;}
 
@@ -86,6 +89,21 @@ public class AwsS3Helper {
 
     public void setS3PathStyleAccessEnabled(boolean s3PathStyleAccessEnabled) {
         this.s3PathStyleAccessEnabled = s3PathStyleAccessEnabled;
+    }
+
+    public void setAssumeRoleArn(String assumeRoleArn) { this.assumeRoleArn = assumeRoleArn;}
+
+    public void setAssumeRoleSession(String assumeRoleSession) { this.assumeRoleSession = assumeRoleSession;}
+
+    public void setAssumeRoleDuration(int assumeRoleDuration) { this.assumeRoleDuration = assumeRoleDuration;}
+
+    public void setCredentials(AwsSettings settings) {
+        setAccessKey(settings.getAccessKey());
+        setSecretKey(settings.getSecretKey());
+        setRegion(settings.getRegion());
+        setAssumeRoleArn(settings.getAssumeRoleArn());
+        setAssumeRoleSession(settings.getAssumeRoleSession());
+        setAssumeRoleDuration(settings.getAssumeRoleDuration());
     }
 
     public void parseObjectPath(String path) {
@@ -108,7 +126,7 @@ public class AwsS3Helper {
         String objectPath = (subDir != null ? StringUtils.appendIfMissing(subDir, "/") : "") + file.getName();
         PutObjectRequest request = new PutObjectRequest(bucketName, objectPath, file);
         if (options != null) {
-            if (options.isPublicableReadable()) { request = request.withCannedAcl(PublicRead); }
+            if (options.isPubliclyReadable()) { request = request.withCannedAcl(PublicRead); }
             if (options.isReducedRedundancy()) { request.setStorageClass(ReducedRedundancy); }
         }
 
@@ -144,7 +162,7 @@ public class AwsS3Helper {
         assert StringUtils.isNotBlank(bucketName);
 
         PutOption option = new PutOption();
-        // option.setPublicableReadable(true);
+        // option.setPubliclyReadable(true);
         option.setReducedRedundancy(true);
 
         PutObjectResult result = copyToS3(source, option);
@@ -341,14 +359,23 @@ public class AwsS3Helper {
     private AmazonS3 newS3Client() { return newS3Client(DEFAULT_REGION); }
 
     private AmazonS3 newS3Client(@NotNull final Regions region) {
-        BasicAWSCredentials credential = new BasicAWSCredentials(accessKey, secretKey);
         // added "PathStyleAccessEnabled() to avoid SSL certificate issue since the adding bucket as subdomain to
         // Amazon's SSL cert would result in cert to domain name mismatch
         return AmazonS3ClientBuilder.standard()
                                     .withRegion(region)
-                                    .withCredentials(new AWSStaticCredentialsProvider(credential))
+                                    .withCredentials(resolveCredentials(region))
                                     .withPathStyleAccessEnabled(s3PathStyleAccessEnabled)
                                     .build();
+    }
+
+    private AWSCredentialsProvider resolveCredentials(Regions region) {
+        AWSCredentialsProvider credProvider = AwsSupport.resolveBasicCredentials(accessKey, secretKey);
+        if (StringUtils.isBlank(assumeRoleArn)) { return credProvider; }
+
+        return AwsSupport.resolveAssumeRoleCredentials(credProvider, region,
+                                                       assumeRoleArn,
+                                                       assumeRoleSession,
+                                                       assumeRoleDuration);
     }
 
     /**

@@ -389,9 +389,8 @@ class S3Command : BaseCommand() {
      */
     private fun initS3helper(settings: AwsSettings): AwsS3Helper {
         val helper = AwsS3Helper()
-        helper.setAccessKey(settings.accessKey)
-        helper.setSecretKey(settings.secretKey)
-        helper.setRegion(settings.region)
+        helper.setCredentials(settings)
+
         // added to avoid SSL certificate issue since the adding bucket as subdomain to Amazon's SSL cert would result
         // in cert to domain name mismatch
         helper.setS3PathStyleAccessEnabled(true)
