@@ -30,7 +30,23 @@ import org.nexial.core.NexialConst.Data.*
 import org.nexial.core.NexialConst.OPT_LAST_OUTCOME
 import org.nexial.core.NexialConst.Project.appendLog
 import org.nexial.core.excel.Excel
-import org.nexial.core.interactive.InteractiveConsole.Commands.*
+import org.nexial.core.interactive.InteractiveConsole.Commands.ALL_STEP
+import org.nexial.core.interactive.InteractiveConsole.Commands.EXIT
+import org.nexial.core.interactive.InteractiveConsole.Commands.HELP
+import org.nexial.core.interactive.InteractiveConsole.Commands.INSPECT
+import org.nexial.core.interactive.InteractiveConsole.Commands.OPEN_DATA
+import org.nexial.core.interactive.InteractiveConsole.Commands.OPEN_SCRIPT
+import org.nexial.core.interactive.InteractiveConsole.Commands.RELOAD_DATA
+import org.nexial.core.interactive.InteractiveConsole.Commands.RELOAD_MENU
+import org.nexial.core.interactive.InteractiveConsole.Commands.RELOAD_PROJPROP
+import org.nexial.core.interactive.InteractiveConsole.Commands.RELOAD_SCRIPT
+import org.nexial.core.interactive.InteractiveConsole.Commands.RUN
+import org.nexial.core.interactive.InteractiveConsole.Commands.SET_ACTIVITY
+import org.nexial.core.interactive.InteractiveConsole.Commands.SET_DATA
+import org.nexial.core.interactive.InteractiveConsole.Commands.SET_ITER
+import org.nexial.core.interactive.InteractiveConsole.Commands.SET_SCENARIO
+import org.nexial.core.interactive.InteractiveConsole.Commands.SET_SCRIPT
+import org.nexial.core.interactive.InteractiveConsole.Commands.SET_STEPS
 import org.nexial.core.model.ExecutionContext
 import org.nexial.core.model.ExecutionDefinition
 import org.nexial.core.model.ExecutionSummary
@@ -79,7 +95,7 @@ class NexialInteractive {
             val argument = StringUtils.trim(StringUtils.substringAfter(input, " "))
 
             when (command) {
-                CMD_SET_SCRIPT    -> {
+                SET_SCRIPT      -> {
                     if (StringUtils.isBlank(argument)) {
                         ConsoleUtils.error("No test script assigned")
                     } else {
@@ -87,7 +103,7 @@ class NexialInteractive {
                     }
                 }
 
-                CMD_SET_DATA      -> {
+                SET_DATA        -> {
                     if (StringUtils.isBlank(argument)) {
                         ConsoleUtils.error("No data file assigned")
                     } else {
@@ -95,7 +111,7 @@ class NexialInteractive {
                     }
                 }
 
-                CMD_SET_SCENARIO  -> {
+                SET_SCENARIO    -> {
                     if (StringUtils.isBlank(argument)) {
                         ConsoleUtils.error("No scenario assigned")
                     } else {
@@ -103,7 +119,7 @@ class NexialInteractive {
                     }
                 }
 
-                CMD_SET_ITER      -> {
+                SET_ITER        -> {
                     if (StringUtils.isBlank(argument)) {
                         ConsoleUtils.error("No iteration assigned")
                     } else {
@@ -111,7 +127,7 @@ class NexialInteractive {
                     }
                 }
 
-                CMD_SET_ACTIVITY  -> {
+                SET_ACTIVITY    -> {
                     if (StringUtils.isBlank(argument)) {
                         ConsoleUtils.error("No activity assigned")
                     } else {
@@ -120,7 +136,7 @@ class NexialInteractive {
                     }
                 }
 
-                CMD_SET_STEPS     -> {
+                SET_STEPS       -> {
                     // steps can be range (dash) or comma-separated
                     if (StringUtils.isBlank(argument)) {
                         ConsoleUtils.error("No test step assigned")
@@ -130,41 +146,41 @@ class NexialInteractive {
                     }
                 }
 
-                CMD_RELOAD_SCRIPT -> {
+                RELOAD_SCRIPT   -> {
                     session.reloadTestScript()
                     InteractiveConsole.showMenu(session)
                 }
 
-                CMD_RELOAD_DATA   -> {
+                RELOAD_DATA     -> {
                     session.reloadDataFile()
                     InteractiveConsole.showMenu(session)
                 }
 
-                CMD_RELOAD_PROJPROP   -> {
+                RELOAD_PROJPROP -> {
                     session.reloadProjectProperties()
                     InteractiveConsole.showMenu(session)
                 }
 
-                CMD_RELOAD_MENU   -> {
+                RELOAD_MENU     -> {
                     InteractiveConsole.showMenu(session)
                 }
 
-                CMD_RUN           -> {
+                RUN             -> {
                     execute(session)
                     InteractiveConsole.showMenu(session)
                 }
 
-                CMD_INSPECT       -> {
+                INSPECT         -> {
                     inspect(session)
                     InteractiveConsole.showMenu(session)
                 }
 
-                CMD_ALL_STEP      -> {
+                ALL_STEP        -> {
                     session.useAllActivities()
                     InteractiveConsole.showMenu(session)
                 }
 
-                CMD_OPEN_SCRIPT   -> {
+                OPEN_SCRIPT     -> {
                     if (StringUtils.isBlank(session.script)) {
                         ConsoleUtils.error("No valid test script assigned")
                     } else {
@@ -172,7 +188,7 @@ class NexialInteractive {
                     }
                 }
 
-                CMD_OPEN_DATA     -> {
+                OPEN_DATA       -> {
                     if (StringUtils.isBlank(session.dataFile)) {
                         ConsoleUtils.error("No valid data file assigned")
                     } else {
@@ -180,17 +196,17 @@ class NexialInteractive {
                     }
                 }
 
-                CMD_HELP          -> {
+                HELP            -> {
                     InteractiveConsole.showHelp(session)
                     InteractiveConsole.showMenu(session)
                 }
 
-                CMD_EXIT          -> {
+                EXIT            -> {
                     proceed = false
                     ConsoleUtils.log("Ending Nexial Interactive session...")
                 }
 
-                else              -> {
+                else            -> {
                     ConsoleUtils.error("Unknown command $input. Try again...")
                 }
             }
@@ -296,7 +312,7 @@ class NexialInteractive {
                 }
 
                 if (targetScenario == null) {
-                    ConsoleUtils.error("Invalid test scenario assigned: " + session.script!!)
+                    ConsoleUtils.error("Invalid test scenario assigned: ${session.script!!}")
                     return
                 }
 
@@ -423,7 +439,7 @@ class NexialInteractive {
             }
 
             if (context.isFailFastCommand(testStep)) {
-                logger.log(testStep, "test stopping due to failure on fail-fast command: " + testStep.commandFQN)
+                logger.log(testStep, "test stopping due to failure on fail-fast command: ${testStep.commandFQN}")
                 context.isFailImmediate = true
                 break
             }
@@ -470,7 +486,6 @@ class NexialInteractive {
         if (session == null) return
 
         val context = session.context
-
         val testScenarios = context.testScenarios
         if (CollectionUtils.isEmpty(testScenarios)) return
 
@@ -478,10 +493,9 @@ class NexialInteractive {
     }
 
     @NotNull
-    private fun resetScenarioExecutionSummary(session: InteractiveSession,
-                                              targetScenario: TestScenario): ExecutionSummary {
-        val scenarioSummary = targetScenario.executionSummary
-        resetExecutionSummary(session, scenarioSummary, targetScenario.name, SCENARIO)
+    private fun resetScenarioExecutionSummary(session: InteractiveSession, scenario: TestScenario): ExecutionSummary {
+        val scenarioSummary = scenario.executionSummary
+        resetExecutionSummary(session, scenarioSummary, scenario.name, SCENARIO)
         return scenarioSummary
     }
 

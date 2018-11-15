@@ -49,8 +49,7 @@ import static org.nexial.core.NexialConst.Data.*;
 import static org.nexial.core.excel.ExcelConfig.*;
 
 public class MacroMerger {
-    private static final String TEST_STEPS_PREFIX =
-        "" + COL_TEST_CASE + (ADDR_COMMAND_START.getRowStartIndex() + 1) + ":" + COL_REASON;
+    private static final String TEST_STEPS_PREFIX = FIRST_STEP_ROW + ":" + COL_REASON;
     private static final Map<String, List<List<String>>> MACRO_CACHE = new HashMap<>();
 
     private Excel excel;
@@ -144,6 +143,12 @@ public class MacroMerger {
                     macroExpanded = true;
                 }
             }
+        }
+
+        if (macroExpanded) {
+            // we need to add one extra blank row so that the macro expansion won't accidentally merge with other
+            // inactivated test steps.
+            allTestSteps.add(new ArrayList<>(COL_IDX_CAPTURE_SCREEN));
         }
 
         return macroExpanded;
@@ -297,7 +302,7 @@ public class MacroMerger {
 
     protected List<String> collectMacroStep(List<XSSFCell> macroRow) {
         List<String> oneStep = new ArrayList<>();
-        for (int i = 1; i <= 11; i++) { oneStep.add(macroRow.get(i).getStringCellValue()); }
+        for (int i = 1; i <= COL_IDX_CAPTURE_SCREEN; i++) { oneStep.add(macroRow.get(i).getStringCellValue()); }
         return oneStep;
     }
 }

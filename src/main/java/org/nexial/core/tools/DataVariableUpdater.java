@@ -578,8 +578,7 @@ final public class DataVariableUpdater {
         log("processing scenario", scenario);
 
         int lastCommandRow = worksheet.findLastDataRow(ADDR_COMMAND_START);
-        ExcelAddress addr = new ExcelAddress("" + COL_TEST_CASE + (ADDR_COMMAND_START.getRowStartIndex() + 1) +
-                                             ":" + COL_REASON + lastCommandRow);
+        ExcelAddress addr = new ExcelAddress(FIRST_STEP_ROW + ":" + COL_REASON + lastCommandRow);
         ExcelArea area = new ExcelArea(worksheet, addr, false);
 
         boolean hasUpdate = false;

@@ -234,6 +234,7 @@ public class ExcelConfig {
 
     public static final ExcelAddress ADDR_COMMAND_START = new ExcelAddress("C5:D5");
     public static final ExcelAddress ADDR_PARAMS_START = new ExcelAddress("E5:I5");
+    public static final String FIRST_STEP_ROW = "" + COL_TEST_CASE + (ADDR_COMMAND_START.getRowStartIndex() + 1);
 
     // agenda
     public static final int ALPHABET_COUNT = 'Z' - 'A' + 1;

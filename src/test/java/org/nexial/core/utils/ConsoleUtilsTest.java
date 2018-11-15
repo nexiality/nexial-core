@@ -45,7 +45,7 @@ public class ConsoleUtilsTest {
         session.setSteps(Arrays.asList("5", "17", "6", "15", "12", "14", "14", "13", "14"));
         session.setIteration(2);
 
-        InteractiveConsole.showMenu(session);
+        InteractiveConsole.Companion.showMenu(session);
     }
 
     @Test
@@ -91,7 +91,7 @@ public class ConsoleUtilsTest {
         session.setScript(ResourceUtils.getResourceFilePath("/showcase/artifact/script/io-showcase.xlsx"));
         session.setException(new Exception("error! error!"));
 
-        InteractiveConsole.showRun(scenarioSummary, session);
+        InteractiveConsole.Companion.showRun(scenarioSummary, session);
     }
 
     @NotNull

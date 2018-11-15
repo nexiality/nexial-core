@@ -307,10 +307,7 @@ public class TestScenario {
 
         // 2. find last command
         int lastCommandRow = worksheet.findLastDataRow(ADDR_COMMAND_START);
-        area = new ExcelArea(worksheet,
-                             new ExcelAddress("" + COL_TEST_CASE + (ADDR_COMMAND_START.getRowStartIndex() + 1) + ":" +
-                                              COL_REASON + lastCommandRow),
-                             false);
+        area = new ExcelArea(worksheet, new ExcelAddress(FIRST_STEP_ROW + ":" + COL_REASON + lastCommandRow), false);
         testCases = new ArrayList<>();
         testCaseMap = new HashMap<>();
         allSteps = new ArrayList<>();

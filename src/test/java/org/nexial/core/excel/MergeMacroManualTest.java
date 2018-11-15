@@ -49,8 +49,7 @@ import static org.nexial.core.NexialConst.Data.CMD_MACRO;
 import static org.nexial.core.excel.ExcelConfig.*;
 
 public class MergeMacroManualTest {
-    private static final String TEST_STEPS_PREFIX =
-        "" + COL_TEST_CASE + (ADDR_COMMAND_START.getRowStartIndex() + 1) + ":" + COL_REASON;
+    private static final String TEST_STEPS_PREFIX = FIRST_STEP_ROW + ":" + COL_REASON;
 
     private File testSheetFile;
 

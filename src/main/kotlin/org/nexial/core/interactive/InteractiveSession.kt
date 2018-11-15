@@ -249,8 +249,7 @@ data class InteractiveSession(val context: ExecutionContext) {
         // collect activities and steps for the specified scenario
         val worksheet = excel!!.worksheet(scenario)
         val lastCommandRow = worksheet.findLastDataRow(ADDR_COMMAND_START)
-        val stepArea = ExcelAddress("" + COL_TEST_CASE + (ADDR_COMMAND_START.rowStartIndex!! + 1) + ":" +
-                                    COL_REASON + lastCommandRow)
+        val stepArea = ExcelAddress("$FIRST_STEP_ROW:$COL_REASON$lastCommandRow")
         val area = ExcelArea(worksheet, stepArea, false)
 
         var currentActivity = ""
