@@ -100,6 +100,7 @@ public class InteractiveConsole {
         static final String CMD_SET_STEPS = "6";
         static final String CMD_RELOAD_SCRIPT = "7";
         static final String CMD_RELOAD_DATA = "8";
+        static final String CMD_RELOAD_PROJPROP = "9";
 
         static final String CMD_RELOAD_MENU = "R";
         static final String CMD_RUN = "X";
@@ -135,6 +136,7 @@ public class InteractiveConsole {
         printMenu(CMD_START, digit, CMD_SET_STEPS + " <step>     " + CMD_END + "assign steps; clears assigned activities");
         printMenu(CMD_START, digit, CMD_RELOAD_SCRIPT + "            " + CMD_END + "reload assigned test script");
         printMenu(CMD_START, digit, CMD_RELOAD_DATA + "            " + CMD_END + "reload assigned data file");
+        printMenu(CMD_START, digit, CMD_RELOAD_PROJPROP + "            " + CMD_END + "reload project.properties (if found)");
         printMenu(CMD_START + "action       " + CMD_END, uppercase,
                   StringUtils.rightPad(CMD_RELOAD_MENU + "eload menu", 15),
                   StringUtils.rightPad("e" + CMD_RUN + "ecute", 18),
@@ -336,6 +338,7 @@ public class InteractiveConsole {
         printHeaderLine(System.out, CMD_START + CMD_SET_STEPS + " <step>     " + CMD_END, resolveContent("command.steps", tokens));
         printHeaderLine(System.out, CMD_START + CMD_RELOAD_SCRIPT + "            " + CMD_END, resolveContent("command.reloadscript", tokens));
         printHeaderLine(System.out, CMD_START + CMD_RELOAD_DATA + "            " + CMD_END, resolveContent("command.reloaddata", tokens));
+        printHeaderLine(System.out, CMD_START + CMD_RELOAD_PROJPROP + "            " + CMD_END, resolveContent("command.reloadprojprop", tokens));
         printHeaderLine(System.out, " (" + CMD_RELOAD_MENU + ")eload      " + CMD_END, resolveContent("command.reloadmenu", tokens));
         printHeaderLine(System.out, "e(" + CMD_RUN + ")ecute      " + CMD_END, resolveContent("command.run", tokens));
         printHeaderLine(System.out, " (" + CMD_INSPECT + ")nspect     " + CMD_END, resolveContent("command.inspect", tokens));

@@ -49,6 +49,7 @@ import static javax.naming.Context.*;
 import static org.apache.commons.lang3.SystemUtils.IS_OS_WINDOWS;
 import static org.nexial.core.NexialConst.AwsSettings.*;
 import static org.nexial.core.NexialConst.Data.*;
+import static org.nexial.core.NexialConst.Integration.MAIL_PREFIX;
 
 /**
  * constants
@@ -290,26 +291,6 @@ public final class NexialConst {
     public static final String DEF_PLAN_SERIAL_MODE = "true";
     public static final String DEF_PLAN_FAIL_FAST = "true";
 
-    // predefined SMTP system properties as required by caps-framework
-    public static final String MAIL_KEY_AUTH = "mail.smtp.auth";
-    public static final String MAIL_KEY_USERNAME = "mail.smtp.username";
-    public static final String MAIL_KEY_PASSWORD = "mail.smtp.password";
-    public static final String MAIL_KEY_DEBUG = "mail.smtp.debug";
-    public static final String MAIL_KEY_MAIL_HOST = "mail.smtp.host";
-    public static final String MAIL_KEY_MAIL_PORT = "mail.smtp.port";
-    public static final String MAIL_KEY_PROTOCOL = "mail.transport.protocol";
-    public static final String MAIL_KEY_SMTP_LOCALHOST = "mail.smtp.localhost";
-    public static final String MAIL_KEY_MAIL_JNDI_URL = "mail.jndi.url";
-    public static final String MAIL_KEY_BUFF_SIZE = "mail.smtp.bufferSize";
-    public static final String MAIL_KEY_TLS_ENABLE = "mail.smtp.starttls.enable";
-    public static final String MAIL_KEY_CONTENT_TYPE = "mail.smtp.contentType";
-
-    // mailer specific
-    public static final String OPT_MAIL_FROM = "mail.smtp.from";
-    public static final String OPT_MAIL_CC = "mail.smtp.cc";
-    public static final String OPT_MAIL_BCC = "mail.smtp.bcc";
-    public static final String OPT_MAIL_XMAILER = "mail.header.xmail";
-
     public static final String OPT_EXCEL_VER = NAMESPACE + "excelVer";
     public static final String OPT_INTERACTIVE = NAMESPACE + "interactive";
 
@@ -486,7 +467,7 @@ public final class NexialConst {
         public int getImageType() { return imageType; }
     }
 
-    public static class ImageDiffColor {
+    public static final class ImageDiffColor {
         public static final String DEF_IMAGE_DIFF_COLOR = "red";
 
         private static final Map<String, Color> COLOR_NAMES = new HashMap<>();
@@ -533,7 +514,7 @@ public final class NexialConst {
     }
 
     // browserstack
-    public static class BrowserStack {
+    public static final class BrowserStack {
         public static final String BASE_PROTOCOL = "http://";
         public static final String BASE_URL = "@hub.browserstack.com/wd/hub";
         public static final String SESSION_URL =
@@ -563,7 +544,7 @@ public final class NexialConst {
         private BrowserStack() {}
     }
 
-    public static class CrossBrowserTesting {
+    public static final class CrossBrowserTesting {
         public static final String BASE_PROTOCOL = "http://";
         public static final String BASE_URL = "@hub.crossbrowsertesting.com:80/wd/hub";
 
@@ -1111,7 +1092,7 @@ public final class NexialConst {
         private FlowControls() {}
     }
 
-    public final static class SoapUI {
+    public static final class SoapUI {
         public static final String TESTRUNNER_REL_PATH = separator + "bin" + separator + "testrunner.bat";
         // r : Turns on printing of a small summary report
         // a : Turns on exporting of all test results, not only errors
@@ -1144,7 +1125,7 @@ public final class NexialConst {
         private SoapUI() {}
     }
 
-    public static class PdfMeta {
+    public static final class PdfMeta {
         public static final String MIME_PDF = "application/pdf";
         public static final String TITLE = "Title";
         public static final String SUBJECT = "Subject";
@@ -1163,13 +1144,37 @@ public final class NexialConst {
         private PdfMeta() {}
     }
 
-    public static class Mailer {
+    public static final class Integration {
+        public static final String OTC_PREFIX = NAMESPACE + "otc.";
+        public static final String TTS_PREFIX = NAMESPACE + "tts.";
+        public static final String MAIL_PREFIX = NAMESPACE + "mail.";
+        public static final String SMS_PREFIX = NAMESPACE + "sms.";
+    }
+
+    public static final class Mailer {
+        public static final String MAIL_KEY_AUTH = MAIL_PREFIX + "smtp.auth";
+        public static final String MAIL_KEY_BCC = MAIL_PREFIX + "smtp.bcc";
+        public static final String MAIL_KEY_BUFF_SIZE = MAIL_PREFIX + "smtp.bufferSize";
+        public static final String MAIL_KEY_CC = MAIL_PREFIX + "smtp.cc";
+        public static final String MAIL_KEY_CONTENT_TYPE = MAIL_PREFIX + "smtp.contentType";
+        public static final String MAIL_KEY_DEBUG = MAIL_PREFIX + "smtp.debug";
+        public static final String MAIL_KEY_FROM = MAIL_PREFIX + "smtp.from";
+        public static final String MAIL_KEY_LOCALHOST = MAIL_PREFIX + "smtp.localhost";
+        public static final String MAIL_KEY_MAIL_HOST = MAIL_PREFIX + "smtp.host";
+        public static final String MAIL_KEY_MAIL_PORT = MAIL_PREFIX + "smtp.port";
+        public static final String MAIL_KEY_PASSWORD = MAIL_PREFIX + "smtp.password";
+        public static final String MAIL_KEY_PROTOCOL = MAIL_PREFIX + "transport.protocol";
+        public static final String MAIL_KEY_TLS_ENABLE = MAIL_PREFIX + "smtp.starttls.enable";
+        public static final String MAIL_KEY_USERNAME = MAIL_PREFIX + "smtp.username";
+        public static final String MAIL_KEY_XMAILER = MAIL_PREFIX + "header.xmail";
+
         // standalone smtp config
         public static final List<String> SMTP_KEYS = Arrays.asList(
             MAIL_KEY_BUFF_SIZE, MAIL_KEY_PROTOCOL, MAIL_KEY_MAIL_HOST, MAIL_KEY_MAIL_PORT, MAIL_KEY_TLS_ENABLE,
-            MAIL_KEY_AUTH, MAIL_KEY_DEBUG, MAIL_KEY_CONTENT_TYPE, MAIL_KEY_USERNAME, MAIL_KEY_PASSWORD, OPT_MAIL_FROM,
-            OPT_MAIL_CC, OPT_MAIL_BCC, OPT_MAIL_XMAILER);
+            MAIL_KEY_AUTH, MAIL_KEY_DEBUG, MAIL_KEY_CONTENT_TYPE, MAIL_KEY_USERNAME, MAIL_KEY_PASSWORD, MAIL_KEY_FROM,
+            MAIL_KEY_CC, MAIL_KEY_BCC, MAIL_KEY_XMAILER);
 
+        public static final String MAIL_KEY_MAIL_JNDI_URL = MAIL_PREFIX + "jndi.url";
         // jndi smtp config
         public static final List<String> JNDI_KEYS = Arrays.asList(
             MAIL_KEY_MAIL_JNDI_URL, INITIAL_CONTEXT_FACTORY, OBJECT_FACTORIES, STATE_FACTORIES,
@@ -1212,6 +1217,7 @@ public final class NexialConst {
                                                       DOC_REF_SUFFIX;
 
         private Mailer() {}
+
     }
 
     private NexialConst() { }

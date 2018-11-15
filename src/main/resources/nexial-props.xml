@@ -31,39 +31,39 @@
 	<!-- ### ENVIRONMENT VARIABLES         ### -->
 	<!-- ##################################### -->
 	<!--
-		mail.smtp.host         = the SMTP host for nexial
-		mail.smtp.port         = the SMTP port for nexial
-		mail.smtp.username     = auth user for SMTP host
-		mail.smtp.password     = auth credential for SMTP host
-		mail.smtp.starttls.enable
-							   = determine if TTLS is enable for SMTP
-		mail.smtp.localhost    = determine if SMTP service is locally available
-		mail.smtp.from         = the sender of mail sent via nexial
+		nexial.mail.smtp.host         = the SMTP host for nexial
+		nexial.mail.smtp.port         = the SMTP port for nexial
+		nexial.mail.smtp.username     = auth user for SMTP host
+		nexial.mail.smtp.password     = auth credential for SMTP host
+		nexial.mail.smtp.starttls.enable
+							   		  = determine if TTLS is enable for SMTP
+		nexial.mail.smtp.localhost    = determine if SMTP service is locally available
+		nexial.mail.smtp.from         = the sender of mail sent via nexial
 
-		mail.header.xmail      = xmail header for mail service
-		mail.transport.protocol= smtp or imap; default is smtp
-		mail.smtp.auth         = whether authentication is required to send mail; default is false
-		mail.smtp.bufferSize   = buffer size for smtp packet; default to system default
-		mail.smtp.contentType  = smtp MIME type to use; default is 'text/html'
-		mail.smtp.debug        = whether debug mode should be turned on during mail send; default is false
+		nexial.mail.header.xmail      = xmail header for mail service
+		nexial.mail.transport.protocol= smtp or imap; default is smtp
+		nexial.mail.smtp.auth         = whether authentication is required to send mail; default is false
+		nexial.mail.smtp.bufferSize   = buffer size for smtp packet; default to system default
+		nexial.mail.smtp.contentType  = smtp MIME type to use; default is 'text/html'
+		nexial.mail.smtp.debug        = whether debug mode should be turned on during mail send; default is false
 	-->
 	<!-- selectively exposing spring properties as system properties -->
 	<util:properties id="nexialSysProps">
 		<!-- ${nexial.outputCloudBase:} -->
-		<prop key="mail.header.xmail">nexial-mailer</prop>
-		<prop key="mail.transport.protocol">smtp</prop>
-		<prop key="mail.smtp.bufferSize">512</prop>
-		<prop key="mail.smtp.contentType">text/html</prop>
-		<prop key="mail.smtp.debug">false</prop>
-		<prop key="mail.smtp.from">${mail.smtp.from:nexial-noreply@nexiality.github.io}</prop>
+		<prop key="nexial.mail.header.xmail">nexial-mailer</prop>
+		<prop key="nexial.mail.transport.protocol">smtp</prop>
+		<prop key="nexial.mail.smtp.bufferSize">512</prop>
+		<prop key="nexial.mail.smtp.contentType">text/html</prop>
+		<prop key="nexial.mail.smtp.debug">false</prop>
+		<prop key="nexial.mail.smtp.from">${nexial.mail.smtp.from:nexial-noreply@nexiality.github.io}</prop>
 
 		<!-- needed for jdbc beans -->
-		<prop key="jdbc.maxTotal">5</prop>
-		<prop key="jdbc.maxIdle">1</prop>
-		<prop key="jdbc.maxOpenPreparedStatements">300</prop>
-		<prop key="jdbc.poolPreparedStatements">true</prop>
-		<prop key="jdbc.defaultAutoCommit">true</prop>
-		<prop key="jdbc.accessToUnderlyingConnectionAllowed">true</prop>
+		<prop key="nexial.jdbc.maxTotal">5</prop>
+		<prop key="nexial.jdbc.maxIdle">1</prop>
+		<prop key="nexial.jdbc.maxOpenPreparedStatements">300</prop>
+		<prop key="nexial.jdbc.poolPreparedStatements">true</prop>
+		<prop key="nexial.jdbc.defaultAutoCommit">true</prop>
+		<prop key="nexial.jdbc.accessToUnderlyingConnectionAllowed">true</prop>
 	</util:properties>
 
 	<bean id="setsysenv" class="org.springframework.beans.factory.config.MethodInvokingFactoryBean"

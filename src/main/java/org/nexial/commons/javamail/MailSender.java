@@ -37,6 +37,7 @@ import javax.mail.internet.MimeMultipart;
 import com.sun.mail.smtp.SMTPTransport;
 
 import static javax.mail.Message.RecipientType.*;
+import static org.nexial.core.NexialConst.Mailer.MAIL_KEY_CONTENT_TYPE;
 
 /**
  * @author Mike Liu
@@ -91,7 +92,7 @@ public final class MailSender {
 
         Session session = mail.getSession();
         SMTPTransport transport = mail.createTransport(session);
-        String contentType = mail.getConfiguredProperty("mail.smtp.contentType");
+        String contentType = mail.getConfiguredProperty(MAIL_KEY_CONTENT_TYPE);
 
         Message msg = new MimeMessage(session);
 

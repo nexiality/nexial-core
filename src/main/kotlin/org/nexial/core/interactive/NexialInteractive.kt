@@ -1,0 +1,499 @@
+/*
+ * Copyright 2012-2018 the original author or authors.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *       http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+package org.nexial.core.interactive
+
+import org.apache.commons.collections4.CollectionUtils
+import org.apache.commons.lang3.RegExUtils
+import org.apache.commons.lang3.StringUtils
+import org.apache.commons.lang3.math.NumberUtils
+import org.nexial.commons.logging.LogbackUtils
+import org.nexial.commons.proc.RuntimeUtils
+import org.nexial.commons.utils.RegexUtils
+import org.nexial.commons.utils.TextUtils
+import org.nexial.core.ExecutionInputPrep
+import org.nexial.core.ExecutionThread
+import org.nexial.core.NexialConst.Data.*
+import org.nexial.core.NexialConst.OPT_LAST_OUTCOME
+import org.nexial.core.NexialConst.Project.appendLog
+import org.nexial.core.excel.Excel
+import org.nexial.core.interactive.InteractiveConsole.Commands.*
+import org.nexial.core.model.ExecutionContext
+import org.nexial.core.model.ExecutionDefinition
+import org.nexial.core.model.ExecutionSummary
+import org.nexial.core.model.ExecutionSummary.ExecutionLevel
+import org.nexial.core.model.ExecutionSummary.ExecutionLevel.*
+import org.nexial.core.model.TestCase
+import org.nexial.core.model.TestScenario
+import org.nexial.core.utils.ConsoleUtils
+import org.nexial.core.utils.ExecUtil
+import java.io.File
+import java.util.*
+import javax.validation.constraints.NotNull
+
+class NexialInteractive {
+    // todo: disable during jenkins or junit run
+    // todo: enable video recording
+    // todo: save session
+
+    lateinit var executionDefinition: ExecutionDefinition
+
+    fun startSession() {
+        // start of test suite (one per test plan in execution)
+        val runId = ExecUtil.deriveRunId()
+
+        executionDefinition.runId = runId
+        LogbackUtils.registerLogDirectory(appendLog(executionDefinition))
+
+        val scriptLocation = executionDefinition.testScript
+
+        ConsoleUtils.log(runId, "[$scriptLocation] resolve RUN ID as $runId")
+
+        val session = InteractiveSession(ExecutionContext(executionDefinition))
+        session.executionDefinition = executionDefinition
+        session.iteration = 1
+
+        InteractiveConsole.showMenu(session)
+        processMenu(session)
+    }
+
+    private fun processMenu(session: InteractiveSession) {
+        var proceed = true
+        while (proceed) {
+            print("> command: ")
+            val input = Scanner(System.`in`).nextLine()
+            val command = StringUtils.upperCase(StringUtils.trim(StringUtils.substringBefore(input, " ")))
+            val argument = StringUtils.trim(StringUtils.substringAfter(input, " "))
+
+            when (command) {
+                CMD_SET_SCRIPT    -> {
+                    if (StringUtils.isBlank(argument)) {
+                        ConsoleUtils.error("No test script assigned")
+                    } else {
+                        session.script = argument
+                    }
+                }
+
+                CMD_SET_DATA      -> {
+                    if (StringUtils.isBlank(argument)) {
+                        ConsoleUtils.error("No data file assigned")
+                    } else {
+                        session.dataFile = argument
+                    }
+                }
+
+                CMD_SET_SCENARIO  -> {
+                    if (StringUtils.isBlank(argument)) {
+                        ConsoleUtils.error("No scenario assigned")
+                    } else {
+                        session.scenario = argument
+                    }
+                }
+
+                CMD_SET_ITER      -> {
+                    if (StringUtils.isBlank(argument)) {
+                        ConsoleUtils.error("No iteration assigned")
+                    } else {
+                        session.iteration = NumberUtils.createInteger(argument)
+                    }
+                }
+
+                CMD_SET_ACTIVITY  -> {
+                    if (StringUtils.isBlank(argument)) {
+                        ConsoleUtils.error("No activity assigned")
+                    } else {
+                        session.activities = TextUtils.toList(argument, LIST_SEP, true)
+                        session.clearSteps()
+                    }
+                }
+
+                CMD_SET_STEPS     -> {
+                    // steps can be range (dash) or comma-separated
+                    if (StringUtils.isBlank(argument)) {
+                        ConsoleUtils.error("No test step assigned")
+                    } else {
+                        session.steps = toSteps(argument)
+                        session.clearActivities()
+                    }
+                }
+
+                CMD_RELOAD_SCRIPT -> {
+                    session.reloadTestScript()
+                    InteractiveConsole.showMenu(session)
+                }
+
+                CMD_RELOAD_DATA   -> {
+                    session.reloadDataFile()
+                    InteractiveConsole.showMenu(session)
+                }
+
+                CMD_RELOAD_PROJPROP   -> {
+                    session.reloadProjectProperties()
+                    InteractiveConsole.showMenu(session)
+                }
+
+                CMD_RELOAD_MENU   -> {
+                    InteractiveConsole.showMenu(session)
+                }
+
+                CMD_RUN           -> {
+                    execute(session)
+                    InteractiveConsole.showMenu(session)
+                }
+
+                CMD_INSPECT       -> {
+                    inspect(session)
+                    InteractiveConsole.showMenu(session)
+                }
+
+                CMD_ALL_STEP      -> {
+                    session.useAllActivities()
+                    InteractiveConsole.showMenu(session)
+                }
+
+                CMD_OPEN_SCRIPT   -> {
+                    if (StringUtils.isBlank(session.script)) {
+                        ConsoleUtils.error("No valid test script assigned")
+                    } else {
+                        Excel.openExcel(File(session.script!!))
+                    }
+                }
+
+                CMD_OPEN_DATA     -> {
+                    if (StringUtils.isBlank(session.dataFile)) {
+                        ConsoleUtils.error("No valid data file assigned")
+                    } else {
+                        Excel.openExcel(File(session.dataFile!!))
+                    }
+                }
+
+                CMD_HELP          -> {
+                    InteractiveConsole.showHelp(session)
+                    InteractiveConsole.showMenu(session)
+                }
+
+                CMD_EXIT          -> {
+                    proceed = false
+                    ConsoleUtils.log("Ending Nexial Interactive session...")
+                }
+
+                else              -> {
+                    ConsoleUtils.error("Unknown command $input. Try again...")
+                }
+            }
+        }
+    }
+
+    //    @NotNull
+    private fun toSteps(argument: String): MutableList<String> {
+        var steps = argument
+        while (true) {
+            val range = RegexUtils.firstMatches(steps, "(\\d+\\-\\d+)")
+            if (StringUtils.isBlank(range)) break
+
+            val startNum = NumberUtils.toInt(StringUtils.substringBefore(range, RANGE_SEP))
+            val endNum = NumberUtils.toInt(StringUtils.substringAfter(range, RANGE_SEP))
+            val numberRange = StringBuilder()
+            for (i in startNum..endNum) numberRange.append(i).append(LIST_SEP)
+            steps = StringUtils.replace(steps, range, StringUtils.removeEnd(numberRange.toString() + "", LIST_SEP))
+        }
+
+        steps = RegExUtils.removeAll(steps, "\\ \\t\\n\\r")
+        return TextUtils.toList(steps, LIST_SEP, true)
+    }
+
+    private fun inspect(session: InteractiveSession) {
+        print("> inspect: ")
+        val `in` = Scanner(System.`in`)
+        var input = `in`.nextLine()
+
+        while (StringUtils.isNotBlank(input)) {
+            try {
+                println(session.context.replaceTokens(input))
+            } catch (e: Throwable) {
+                ConsoleUtils.error("ERROR on '" + input + "' - " + e.message)
+            }
+
+            println()
+            print("> inspect: ")
+            input = `in`.nextLine()
+        }
+    }
+
+    private fun execute(session: InteractiveSession) {
+        // sanity check
+        if (StringUtils.isBlank(session.script)) {
+            ConsoleUtils.error("No test script assigned")
+            return
+        }
+
+        if (StringUtils.isBlank(session.scenario)) {
+            ConsoleUtils.error("No test scenario assigned")
+            return
+        }
+
+        if (CollectionUtils.isEmpty(session.activities) && CollectionUtils.isEmpty(session.steps)) {
+            ConsoleUtils.error("No activity or test step assigned")
+            return
+        }
+
+        val context = session.context
+
+        val runId = context.runId
+        val currIteration = session.iteration
+
+        context.setCurrentActivity(null)
+        context.isFailImmediate = false
+        context.setData(OPT_LAST_OUTCOME, true)
+        context.removeData(BREAK_CURRENT_ITERATION)
+        context.setData(CURR_ITERATION, currIteration)
+
+        val scriptLocation = executionDefinition.testScript
+        val testData = executionDefinition.testData
+        val iterationManager = testData.iterationManager
+        val iteration = iterationManager.getIterationRef(currIteration - 1)
+
+        ConsoleUtils.log(runId, "executing $scriptLocation. $iterationManager")
+
+        ExecutionThread.set(context)
+
+        var allPass = true
+        var targetScenario: TestScenario?
+        var scenarioSummary: ExecutionSummary? = null
+
+        try {
+            context.markExecutionStart()
+
+            var testScript = session.inflightScript
+            if (testScript == null) {
+                testScript = ExecutionInputPrep.prep(runId, executionDefinition, iteration, currIteration)
+                context.useTestScript(testScript)
+                session.inflightScript = testScript
+            }
+
+            // find target scenario object
+            targetScenario = session.inflightScenario
+            if (targetScenario == null) {
+                val availableScenarios = context.testScenarios
+                for (testScenario in availableScenarios) {
+                    if (StringUtils.equals(testScenario.name, session.scenario)) {
+                        targetScenario = testScenario
+                        break
+                    }
+                }
+
+                if (targetScenario == null) {
+                    ConsoleUtils.error("Invalid test scenario assigned: " + session.script!!)
+                    return
+                }
+
+                session.inflightScenario = targetScenario
+                availableScenarios.clear()
+                availableScenarios.add(targetScenario)
+            }
+
+            // gather pre-execution reference data here, so that after the execution we can reset the reference data
+            // set back to its pre-execution state
+            val ref = context.gatherScenarioReferenceData()
+
+            // re-init scenario ref data
+            context.clearScenarioRefData()
+            ref.forEach { name, value -> context.setData(SCENARIO_REF_PREFIX + name, context.replaceTokens(value)) }
+
+            // reset for this run
+            scenarioSummary = resetScenarioExecutionSummary(session, targetScenario)
+
+            allPass = if (CollectionUtils.isNotEmpty(session.activities))
+                executeActivities(session, scenarioSummary)
+            else
+                executeSteps(session, scenarioSummary)
+        } catch (e: Throwable) {
+            e.printStackTrace()
+            session.exception = e
+        } finally {
+            context.setData(ITERATION_ENDED, true)
+            context.removeData(BREAK_CURRENT_ITERATION)
+
+            context.markExecutionEnd()
+            if (scenarioSummary != null) {
+                scenarioSummary.endTime = context.endTimestamp
+            }
+
+            postExecution(allPass, session)
+
+            // context.endIteration();
+            ExecutionThread.unset()
+
+            RuntimeUtils.gc()
+        }
+    }
+
+    private fun executeActivities(session: InteractiveSession, parentSummary: ExecutionSummary?): Boolean {
+        val context = session.context
+        val scenario = context.testScenarios[0]
+
+        var allPass = true
+        val activities = session.activities
+        for (activityName in activities) {
+            val activity = scenario.getTestCase(activityName)
+            if (activity != null) {
+                val activitySummary = resetActivityExecutionSummary(session, activity)
+                allPass = activity.execute()
+                parentSummary!!.addNestSummary(activitySummary)
+            }
+        }
+
+        parentSummary!!.aggregatedNestedExecutions(context)
+        return allPass
+    }
+
+    private fun executeSteps(session: InteractiveSession, parentSummary: ExecutionSummary?): Boolean {
+
+        val context = session.context
+        val logger = context.logger
+        val scenario = context.testScenarios[0]
+
+        val steps = session.steps
+        parentSummary!!.totalSteps = steps.size
+
+        var allPass = true
+        for (testStepId in steps) {
+            val testStep = scenario.getTestStepByRowIndex(NumberUtils.toInt(testStepId))
+
+            val stepSummary = ExecutionSummary()
+            stepSummary.name = "[ROW " + StringUtils.leftPad(testStepId + "", 3) + "]"
+            stepSummary.startTime = System.currentTimeMillis()
+            stepSummary.totalSteps = 1
+            stepSummary.executionLevel = STEP
+
+            val result = testStep.execute()
+
+            stepSummary.endTime = System.currentTimeMillis()
+            parentSummary.addNestSummary(stepSummary)
+
+            if (context.isEndImmediate) {
+                // parentSummary.adjustTotalSteps(-1);
+                stepSummary.adjustTotalSteps(-1)
+                break
+            }
+
+            if (result.isSkipped) {
+                // parentSummary.adjustTotalSteps(-1);
+                stepSummary.adjustTotalSteps(-1)
+                if (context.isBreakCurrentIteration) {
+                    break
+                } else {
+                    continue
+                }
+            }
+
+            // parentSummary.incrementExecuted();
+            stepSummary.incrementExecuted()
+
+            if (result.isSuccess) {
+                // parentSummary.incrementPass();
+                stepSummary.incrementPass()
+                continue
+            }
+
+            // SKIP condition handle earlier, so this is real FAIL condition
+            // parentSummary.incrementFail();
+            stepSummary.incrementFail()
+            allPass = false
+
+            // by default, only fail fast if we are not in interactive mode
+            // this line is added here instead of outside the loop so that we can consider any changes to nexial.failFast
+            // whilst executing the activity
+            if (context.isFailFast) {
+                logger.log(testStep, "test stopping due to execution failure and fail-fast in effect")
+                break
+            }
+
+            if (context.isFailFastCommand(testStep)) {
+                logger.log(testStep, "test stopping due to failure on fail-fast command: " + testStep.commandFQN)
+                context.isFailImmediate = true
+                break
+            }
+
+            if (context.isFailImmediate) {
+                logger.log(testStep, "test stopping due fail-immediate in effect")
+                break
+            }
+
+            if (context.isEndImmediate) {
+                logger.log(testStep, "test scenario execution ended due to EndIf() flow control")
+                break
+            }
+
+            if (context.isBreakCurrentIteration) {
+                logger.log(testStep, "test scenario execution ended due to EndLoopIf() flow control")
+                break
+            }
+        }
+
+        parentSummary.aggregatedNestedExecutions(context)
+        return allPass
+    }
+
+    private fun resetExecutionSummary(session: InteractiveSession,
+                                      es: ExecutionSummary,
+                                      name: String,
+                                      level: ExecutionLevel) {
+        es.sourceScript = session.script
+        es.startTime = System.currentTimeMillis()
+        es.executionLevel = level
+        es.name = name
+        es.nestedExecutions.clear()
+        es.nestMessages.clear()
+        es.totalSteps = 0
+        es.executed = 0
+        es.failCount = 0
+        es.passCount = 0
+        es.warnCount = 0
+        es.error = null
+    }
+
+    private fun postExecution(allPass: Boolean, session: InteractiveSession?) {
+        if (session == null) return
+
+        val context = session.context
+
+        val testScenarios = context.testScenarios
+        if (CollectionUtils.isEmpty(testScenarios)) return
+
+        InteractiveConsole.showRun(session)
+    }
+
+    @NotNull
+    private fun resetScenarioExecutionSummary(session: InteractiveSession,
+                                              targetScenario: TestScenario): ExecutionSummary {
+        val scenarioSummary = targetScenario.executionSummary
+        resetExecutionSummary(session, scenarioSummary, targetScenario.name, SCENARIO)
+        return scenarioSummary
+    }
+
+    @NotNull
+    private fun resetActivityExecutionSummary(session: InteractiveSession, activity: TestCase): ExecutionSummary {
+        val activitySummary = activity.executionSummary
+        resetExecutionSummary(session, activitySummary, activity.name, ACTIVITY)
+        return activitySummary
+    }
+
+    companion object {
+        private const val RANGE_SEP = "-"
+        private const val LIST_SEP = ","
+    }
+}

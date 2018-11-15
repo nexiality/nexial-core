@@ -35,27 +35,27 @@
     <bean id="otc" class="org.nexial.core.aws.NexialS3Helper" init-method="init"
           p:encoding="UTF-8"
           p:outputBase="${nexial.outputCloudBase:}"
-          p:accessKey="${otc.accessKey:}"
-          p:secretKey="${otc.secretKey:}"
-          p:s3PathStyleAccessEnabled="${otc.s3PathStyleAccessEnabled:true}"
+          p:accessKey="${nexial.otc.accessKey:}"
+          p:secretKey="${nexial.otc.secretKey:}"
+          p:s3PathStyleAccessEnabled="${nexial.otc.s3PathStyleAccessEnabled:true}"
           p:verbose="false">
         <property name="region">
             <bean class="com.amazonaws.regions.Regions" factory-method="fromName">
-                <constructor-arg value="${otc.region:us-east-1}"/>
+                <constructor-arg value="${nexial.otc.region:us-east-1}"/>
             </bean>
         </property>
     </bean>
 
     <bean id="tts" class="org.nexial.core.aws.TtsHelper" scope="prototype"
-          p:accessKey="${tts.accessKey:}"
-          p:secretKey="${tts.secretKey:}"
-          p:language="${tts.language:en-US}"
-          p:sampleRate="${tts.sampleRate:22050}"
-          p:voiceGenderString="${tts.voiceGender:Female}"
+          p:accessKey="${nexial.tts.accessKey:}"
+          p:secretKey="${nexial.tts.secretKey:}"
+          p:language="${nexial.tts.language:en-US}"
+          p:sampleRate="${nexial.tts.sampleRate:22050}"
+          p:voiceGenderString="${nexial.tts.voiceGender:Female}"
           p:verbose="false">
         <property name="region">
             <bean class="com.amazonaws.regions.Regions" factory-method="fromName">
-                <constructor-arg value="${tts.region:us-east-1}"/>
+                <constructor-arg value="${nexial.tts.region:us-east-1}"/>
             </bean>
         </property>
     </bean>
@@ -65,11 +65,11 @@
           p:smsNotReadyMessage-ref="smsNotReadyMessage"
           p:prefix="nexial-bot: "
           p:senderId="16394252687"
-          p:accessKey="${sms.accessKey:}"
-          p:secretKey="${sms.secretKey:}">
+          p:accessKey="${nexial.sms.accessKey:}"
+          p:secretKey="${nexial.sms.secretKey:}">
         <property name="region">
             <bean class="com.amazonaws.regions.Regions" factory-method="fromName">
-                <constructor-arg value="${sms.region:us-east-1}"/>
+                <constructor-arg value="${nexial.sms.region:us-east-1}"/>
             </bean>
         </property>
     </bean>

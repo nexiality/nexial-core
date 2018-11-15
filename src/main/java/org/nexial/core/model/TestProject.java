@@ -54,8 +54,6 @@ public class TestProject {
         // this file could be a script or a plan
         String inputFullPath = inputFile.getAbsolutePath();
 
-        // String inputFileRelPath = DEF_REL_LOC_TEST_SCRIPT + inputFile.getName();
-
         TestProject project = new TestProject();
         // is the test script confined within the standard project structure (i.e. artifact/script/[...].xlsx)?
         if (containsWithin(inputFullPath, DEF_REL_LOC_TEST_SCRIPT)) {

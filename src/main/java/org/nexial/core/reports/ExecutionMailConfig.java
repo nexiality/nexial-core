@@ -42,7 +42,6 @@ import static javax.naming.Context.INITIAL_CONTEXT_FACTORY;
 import static org.apache.commons.lang3.SystemUtils.USER_NAME;
 import static org.nexial.core.NexialConst.AwsSettings.*;
 import static org.nexial.core.NexialConst.Data.*;
-import static org.nexial.core.NexialConst.*;
 import static org.nexial.core.NexialConst.Mailer.*;
 
 /**
@@ -141,7 +140,7 @@ public class ExecutionMailConfig {
             if (configurations.containsKey(key)) { props.setProperty(key, configurations.get(key)); }
         });
 
-        props.setProperty(MAIL_KEY_SMTP_LOCALHOST, EnvUtils.getHostName());
+        props.setProperty(MAIL_KEY_LOCALHOST, EnvUtils.getHostName());
 
         return props;
     }

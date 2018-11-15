@@ -112,12 +112,12 @@
     <!-- ### RDBMS beans                   ### -->
     <!-- ##################################### -->
     <bean id="template:dataSource" class="org.apache.commons.dbcp2.BasicDataSource" destroy-method="close" abstract="true" scope="prototype">
-        <property name="maxTotal" value="${jdbc.maxTotal}"/>
-        <property name="maxIdle" value="${jdbc.maxIdle}"/>
-        <property name="maxOpenPreparedStatements" value="${jdbc.maxOpenPreparedStatements}"/>
-        <property name="poolPreparedStatements" value="${jdbc.poolPreparedStatements}"/>
-        <property name="defaultAutoCommit" value="${jdbc.defaultAutoCommit}"/>
-        <property name="accessToUnderlyingConnectionAllowed" value="${jdbc.accessToUnderlyingConnectionAllowed}"/>
+        <property name="maxTotal" value="${nexial.jdbc.maxTotal}"/>
+        <property name="maxIdle" value="${nexial.jdbc.maxIdle}"/>
+        <property name="maxOpenPreparedStatements" value="${nexial.jdbc.maxOpenPreparedStatements}"/>
+        <property name="poolPreparedStatements" value="${nexial.jdbc.poolPreparedStatements}"/>
+        <property name="defaultAutoCommit" value="${nexial.jdbc.defaultAutoCommit}"/>
+        <property name="accessToUnderlyingConnectionAllowed" value="${nexial.jdbc.accessToUnderlyingConnectionAllowed}"/>
         <!--<property name="driverClassName" value="${XYZ.db.driverClass}"/>-->
         <!--<property name="url" value="${url}"/>-->
         <!--<property name="username" value="${username}"/>-->

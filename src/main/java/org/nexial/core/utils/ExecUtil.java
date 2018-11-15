@@ -37,15 +37,63 @@ import org.nexial.core.Nexial;
 import static org.nexial.core.NexialConst.Data.DEF_TEXT_DELIM;
 import static org.nexial.core.NexialConst.Data.SCRIPT_REF_PREFIX;
 import static org.nexial.core.NexialConst.*;
+import static org.nexial.core.NexialConst.Integration.*;
 
 public final class ExecUtil {
     public static final String PRODUCT = "nexial";
     public static final String JAVA_OPT = "JAVA_OPT";
     public static final String RUNTIME_ARGS = "runtime args";
-    public static final List<String> IGNORED_CLI_OPT =
-        Arrays.asList("webdriver.", "java.", "org.gradle.", "idea.test.", "user.country", "user.language",
-                      "file.encoding", "nexial.home", "sun.java", "awt.", "sun.boot", "sun.cpu", "sun.io",
-                      "sun.os", "sun.font");
+    public static final List<String> IGNORED_CLI_OPT = Arrays.asList(
+        "awt.",
+        "java.",
+        "idea.test.",
+        "org.gradle.",
+
+        "file.encoding",
+        "file.separator",
+        "line.separator",
+        "path.separator",
+
+        "ftp.nonProxyHosts",
+        "gopherProxySet",
+        "http.nonProxyHosts",
+        "socksNonProxyHosts",
+
+        "nexial-mailer.",
+        "nexial.3rdparty.logpath",
+        "nexial.jdbc.",
+        "nexial.home",
+        "nexial.dataBase",
+        "nexial.defaultOutBase",
+        "nexial.outputCloudBase",
+        "nexial.scriptBase",
+        "nexial.planBase",
+        "site-name",
+        Integration.SMS_PREFIX,
+        MAIL_PREFIX,
+        OTC_PREFIX,
+        TTS_PREFIX,
+
+        "sun.arch",
+        "sun.boot",
+        "sun.cpu",
+        "sun.desktop",
+        "sun.font",
+        "sun.io",
+        "sun.java",
+        "sun.jnu",
+        "sun.management",
+        "sun.os",
+        "sun.stderr.encoding",
+        "sun.stdout.encoding",
+
+        "user.country",
+        "user.dir",
+        "user.home",
+        "user.language",
+        "user.variant",
+
+        "webdriver.");
 
     public static String manifest;
 

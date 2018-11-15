@@ -306,7 +306,8 @@ public final class ExecutionThread extends Thread {
             context.setFailImmediate(true);
         }
 
-        File testScript = context == null ? null : context.getTestScript().getFile();
+        File testScript = null;
+        if (context != null && context.getTestScript() != null) { testScript = context.getTestScript().getFile(); }
         String testScriptName = testScript == null ? execDef.getTestScript() + " (unparseable?)" : testScript.getName();
 
         String runId;

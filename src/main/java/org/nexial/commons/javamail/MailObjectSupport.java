@@ -40,7 +40,7 @@ import org.slf4j.LoggerFactory;
 import com.sun.mail.smtp.SMTPTransport;
 
 import static javax.naming.Context.INITIAL_CONTEXT_FACTORY;
-import static org.nexial.core.NexialConst.*;
+import static org.nexial.core.NexialConst.Mailer.*;
 
 /**
  * @author Mike Liu

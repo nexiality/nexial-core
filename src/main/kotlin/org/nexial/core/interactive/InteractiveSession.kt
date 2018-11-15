@@ -28,6 +28,7 @@ import org.nexial.core.excel.ExcelConfig.*
 import org.nexial.core.model.ExecutionContext
 import org.nexial.core.model.ExecutionDefinition
 import org.nexial.core.model.StepResult
+import org.nexial.core.model.TestProject
 import org.nexial.core.model.TestScenario
 import org.nexial.core.utils.ConsoleUtils
 import org.nexial.core.utils.ExecUtil
@@ -178,6 +179,16 @@ data class InteractiveSession(val context: ExecutionContext) {
             dataFile == null                   -> ConsoleUtils.error("No data file assigned.")
             !FileUtil.isFileReadable(dataFile) -> ConsoleUtils.error("Assigned data file is not readable: $dataFile")
             else                               -> loadDataFile()
+        }
+    }
+
+    fun reloadProjectProperties() {
+        val projectHome = executionDefinition?.project?.projectHome
+        if (projectHome != null) {
+            executionDefinition?.project?.projectHome = projectHome
+            TestProject.listProjectPropertyKeys().forEach { key: String? ->
+                System.setProperty(key, TestProject.getProjectProperty(key))
+            }
         }
     }
 

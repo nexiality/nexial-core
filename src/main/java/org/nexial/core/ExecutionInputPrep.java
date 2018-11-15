@@ -187,32 +187,27 @@ public class ExecutionInputPrep {
     }
 
     private static Excel mergeTestData(Excel excel, TestData testData, int iteration) {
-        SortedMap<String, String> data = new TreeMap<>(testData.getAllValue(iteration));
-
         XSSFSheet dataSheet = excel.getWorkbook().createSheet(SHEET_MERGED_DATA);
 
         XSSFWorkbook workbook = dataSheet.getWorkbook();
-        XSSFCellStyle stylePredefTestDataName = StyleDecorator.generate(workbook, PREDEF_TEST_DATA_NAME);
+        XSSFCellStyle styleSystemDataName = StyleDecorator.generate(workbook, PREDEF_TEST_DATA_NAME);
         XSSFCellStyle styleTestDataName = StyleDecorator.generate(workbook, TEST_DATA_NAME);
         XSSFCellStyle styleTestDataValue = StyleDecorator.generate(workbook, TEST_DATA_VALUE);
 
+        SortedMap<String, String> data = new TreeMap<>(testData.getAllValue(iteration));
         testData.getAllSettings().forEach(data::put);
         data.putAll(ExecUtil.deriveJavaOpts());
 
         Properties sysprops = System.getProperties();
         if (MapUtils.isNotEmpty(sysprops)) {
-            sysprops.forEach((name, value) -> {
-                if (name != null && value != null) {
-                    String nameString = name.toString();
-                    String valueString = value.toString();
-                    boolean shouldIgnored = false;
-                    for (String ignored : IGNORED_CLI_OPT) {
-                        if (StringUtils.startsWith(nameString, ignored)) { shouldIgnored = true; }
-                    }
-                    if (!shouldIgnored) { data.put(nameString, valueString); }
-                }
-            });
+            sysprops.forEach((name, value) -> data.put(name.toString(), value.toString()));
         }
+
+        // remove all excluded data variables
+        String[] dataNames = data.keySet().toArray(new String[0]);
+        Arrays.stream(dataNames).forEach(name -> {
+            if (StringUtils.isBlank(name) || shouldExcludeDataVariable(name)) { data.remove(name); }
+        });
 
         final int[] currentRowIndex = {0};
         data.forEach((name, value) -> {
@@ -221,8 +216,7 @@ public class ExecutionInputPrep {
 
             XSSFCell cellName = row.getCell(0, CREATE_NULL_AS_BLANK);
             cellName.setCellValue(name);
-            cellName.setCellStyle(StringUtils.startsWith(name, NAMESPACE) ?
-                                  stylePredefTestDataName : styleTestDataName);
+            cellName.setCellStyle(StringUtils.startsWith(name, NAMESPACE) ? styleSystemDataName : styleTestDataName);
 
             XSSFCell cellValue = row.getCell(1, CREATE_NULL_AS_BLANK);
             cellValue.setCellValue(CellTextReader.readValue(value));
@@ -234,6 +228,11 @@ public class ExecutionInputPrep {
         // excel.save();
 
         return excel;
+    }
+
+    private static boolean shouldExcludeDataVariable(String varName) {
+        for (String ignored : IGNORED_CLI_OPT) { if (StringUtils.startsWith(varName, ignored)) { return true; } }
+        return false;
     }
 
     private static void createSubdirs(String runId, String base) {

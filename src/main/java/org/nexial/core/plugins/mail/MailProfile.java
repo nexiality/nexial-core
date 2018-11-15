@@ -27,7 +27,7 @@ import org.nexial.core.ExecutionThread;
 import org.nexial.core.model.ExecutionContext;
 import org.nexial.core.utils.CheckUtils;
 
-import static org.nexial.core.NexialConst.*;
+import static org.nexial.core.NexialConst.Mailer.*;
 import static org.nexial.core.utils.CheckUtils.requiresNotBlank;
 import static org.nexial.core.utils.CheckUtils.requiresNotNull;
 

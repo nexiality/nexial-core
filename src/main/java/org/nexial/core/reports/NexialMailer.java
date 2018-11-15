@@ -58,8 +58,8 @@ import com.sun.mail.smtp.SMTPTransport;
 
 import static javax.mail.Message.RecipientType.TO;
 import static org.nexial.core.NexialConst.Data.*;
-import static org.nexial.core.NexialConst.MAIL_KEY_CONTENT_TYPE;
-import static org.nexial.core.NexialConst.OPT_MAIL_FROM;
+import static org.nexial.core.NexialConst.Mailer.MAIL_KEY_CONTENT_TYPE;
+import static org.nexial.core.NexialConst.Mailer.MAIL_KEY_FROM;
 
 public class NexialMailer implements ExecutionNotifier {
     private ExecutionContext context;
@@ -396,7 +396,7 @@ public class NexialMailer implements ExecutionNotifier {
     }
 
     private Message prepMessage(Session session, String subject) throws MessagingException {
-        String from = mailSupport.getConfiguredProperty(OPT_MAIL_FROM);
+        String from = mailSupport.getConfiguredProperty(MAIL_KEY_FROM);
 
         Message msg = new MimeMessage(session);
         msg.addHeader("X-Mailer", ExecUtil.deriveJarManifest());

@@ -25,6 +25,7 @@ import org.json.JSONArray
 import org.json.JSONObject
 import org.nexial.core.ExecutionThread
 import org.nexial.core.NexialConst.GSON
+import org.nexial.core.NexialConst.Integration.OTC_PREFIX
 import org.nexial.core.integration.connection.ConnectionFactory
 import org.nexial.core.integration.jira.JiraHelper
 import org.nexial.core.integration.slack.SlackHelper
@@ -101,9 +102,9 @@ class IntegrationManager {
                 val profile = "temp"
                 val url = URL(remotePath).path.removePrefix("/")
                 remoteUrl = url
-                context.setData("$profile.aws.accessKey", System.getProperty("otc.accessKey"))
-                context.setData("$profile.aws.secretKey", System.getProperty("otc.secretKey"))
-                context.setData("$profile.aws.region", System.getProperty("otc.region"))
+                context.setData("$profile.aws.accessKey", System.getProperty("${OTC_PREFIX}accessKey"))
+                context.setData("$profile.aws.secretKey", System.getProperty("${OTC_PREFIX}secretKey"))
+                context.setData("$profile.aws.region", System.getProperty("${OTC_PREFIX}region"))
                 val s3Command = S3Command()
                 s3Command.init(context)
                 val result = "~s3OutputDir"

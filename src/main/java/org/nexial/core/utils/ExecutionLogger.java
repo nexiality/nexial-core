@@ -95,7 +95,13 @@ public class ExecutionLogger {
         return justFileName(worksheet.getFile()) + "|" + worksheet.getName();
     }
 
-    public static String toHeader(ExecutionContext subject) { return justFileName(subject.getTestScript().getFile()); }
+    public static String toHeader(ExecutionContext subject) {
+        if (subject != null && subject.getTestScript() != null) {
+            return justFileName(subject.getTestScript().getFile());
+        } else {
+            return "current script";
+        }
+    }
 
     private static String justFileName(File file) { return StringUtils.substringBeforeLast(file.getName(), "."); }
 
