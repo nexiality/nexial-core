@@ -12,6 +12,7 @@ import static org.nexial.core.plugins.image.ImageCommand.IMAGE_PERCENT_FORMAT;
 public class ImageComparison {
 
     private static final int DEF_COLOR_BIT = 32;
+    private static final int BORDER_WIDTH = 2;
 
     private final BufferedImage image1;
     private final BufferedImage image2;
@@ -42,7 +43,7 @@ public class ImageComparison {
 
         Graphics2D graphics = outputImg.createGraphics();
         graphics.setColor(color);
-
+        graphics.setStroke(new BasicStroke(BORDER_WIDTH));
         tools.groupRegions();
         tools.drawRectangles(graphics);
 
