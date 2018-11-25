@@ -105,6 +105,7 @@ public class ConsoleUtilsTest {
         execDef.setRunId(runId);
         execDef.setTestScript(script);
         execDef.setScenarios(Collections.singletonList("base_showcase"));
+        execDef.setDataSheets(TextUtils.toList("base_showcase", ",", true));
         execDef.setProject(project);
 
         context.setExecDef(execDef);
