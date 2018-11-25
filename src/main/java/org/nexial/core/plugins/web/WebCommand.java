@@ -695,7 +695,8 @@ public class WebCommand extends BaseCommand implements CanTakeScreenshot, CanLog
         String actual = getCssValue(locator, property);
         return StringUtils.isEmpty(actual) ?
                StepResult.success("No CSS property '" + property + "' found, as EXPECTED") :
-               StepResult.fail("CSS property '" + property + "' found with UNEXPECTED value '" + actual + "'");
+               StepResult.fail("CSS property '" + property + "' (" + actual + ") found with UNEXPECTED value '" +
+                               actual + "'");
     }
 
     public StepResult assertCssPresent(String locator, String property, String value) {
@@ -712,7 +713,8 @@ public class WebCommand extends BaseCommand implements CanTakeScreenshot, CanLog
 
         return StringUtils.equals(actual, value) ?
                StepResult.success("CSS property '" + property + "' contains EXPECTED value") :
-               StepResult.fail("CSS property '" + property + "' DOES NOT contain expected value: " + value);
+               StepResult.fail("CSS property '" + property + "' (" + actual + ") DOES NOT contain expected value: '" +
+                               value + "'");
     }
 
     public StepResult assertVisible(String locator) {
@@ -1500,7 +1502,8 @@ public class WebCommand extends BaseCommand implements CanTakeScreenshot, CanLog
     }
 
     protected void resizeSafariAfterOpen() {
-        if (browser.isRunBrowserStack() && browser.getBrowserstackHelper().getBrowser() == safari) {
+        if ((browser.isRunBrowserStack() && browser.getBrowserstackHelper().getBrowser() == safari) ||
+            (browser.isRunCrossBrowserTesting() && browser.getCbtHelper().getBrowser() == safari)) {
             if (!context.getBooleanData(SAFARI_RESIZED, DEF_SAFARI_RESIZED)) {
                 // time to resize it now
                 browser.setWindowSizeForcefully(driver);
@@ -1512,10 +1515,12 @@ public class WebCommand extends BaseCommand implements CanTakeScreenshot, CanLog
     // bring browser to foreground
     protected void updateWinHandle() {
         String initialHandle = browser.updateWinHandle();
+        if (!StringUtils.isNotBlank(initialHandle)) { return; }
+        if (!browser.getBrowserType().isSwitchWindowSupported()) { return; }
+        if (browser.isRunCrossBrowserTesting() && browser.getCbtHelper().isMobile()) { return; }
+
         ConsoleUtils.log("current browser window handle:" + initialHandle);
-        if (StringUtils.isNotBlank(initialHandle) && browser.getBrowserType().isSwitchWindowSupported()) {
-            driver = driver.switchTo().window(initialHandle).switchTo().defaultContent();
-        }
+        driver = driver.switchTo().window(initialHandle).switchTo().defaultContent();
     }
 
     protected void nativeMaximizeScreen(Window window) {
@@ -2129,7 +2134,10 @@ public class WebCommand extends BaseCommand implements CanTakeScreenshot, CanLog
             } while (System.currentTimeMillis() < endTime);
         } catch (Throwable e) {
             // exception thrown because a JS alert is "blocking" the browser.. in this case we consider the page as "loaded"
-            if (e.getMessage().contains("Modal") || e instanceof UnhandledAlertException) {return true;}
+            if (StringUtils.containsAny(e.getMessage(), "Modal", "modal dialog") ||
+                e instanceof UnhandledAlertException) {
+                return true;
+            }
 
             if (successCount == 0) {
                 // failed at first try

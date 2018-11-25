@@ -75,7 +75,7 @@
     </bean>
 
     <bean id="otcNotReadyMessage" class="java.lang.String">
-        <constructor-arg value="Nexial CLoud Integration not probably configured. See https://nexiality.github.io/documentation/systemvars/index.html#nexial.outputToCloud for more details."/>
+        <constructor-arg value="Nexial Cloud Integration not probably configured. See https://nexiality.github.io/documentation/systemvars/index.html#nexial.outputToCloud for more details."/>
     </bean>
 
     <bean id="smsNotReadyMessage" class="java.lang.String">

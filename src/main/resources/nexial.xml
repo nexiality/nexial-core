@@ -491,7 +491,7 @@
                 "baseName": "geckodriver",
                 "checkFrequency": 1209600000,
                 "checkFrequencyDescription": "Every 2 weeks",
-                "checkUrlBase" : "https://api.github.com/repos/mozilla/geckodriver/releases"
+                "checkUrlBase" : "https://api.github.com/repos/mozilla/geckodriver/releases/latest"
             }
           ]]></value>
         </entry>
@@ -502,7 +502,7 @@
                 "baseName": "geckodriver",
                 "checkFrequency": 1209600000,
                 "checkFrequencyDescription": "Every 2 weeks",
-                "checkUrlBase" : "https://api.github.com/repos/mozilla/geckodriver/releases"
+                "checkUrlBase" : "https://api.github.com/repos/mozilla/geckodriver/releases/latest"
             }
           ]]></value>
         </entry>
@@ -569,6 +569,17 @@
                 "checkFrequency": 2592000000,
                 "checkFrequencyDescription": "Every 1 month",
                 "checkUrlBase" : "https://www.browserstack.com/browserstack-local"
+            }
+          ]]></value>
+        </entry>
+        <entry key="crossbrowsertesting">
+            <value><![CDATA[
+            {
+                "home": "${user.home}/.nexial/crossbrowsertesting",
+                "baseName": "cbt_tunnels",
+                "checkFrequency": 2592000000,
+                "checkFrequencyDescription": "Every 1 month",
+                "checkUrlBase" : "https://api.github.com/repos/crossbrowsertesting/cbt-tunnel-nodejs/releases/latest"
             }
           ]]></value>
         </entry>

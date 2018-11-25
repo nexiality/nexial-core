@@ -120,7 +120,12 @@ public class TestData {
 
     public String getMailTo() { return getSetting(MAIL_TO); }
 
-    public int getIteration() { return getSettingAsInt(ITERATION); }
+    public int getIteration() {
+        String iteration = getSetting(ITERATION);
+        return NumberUtils.isDigits(iteration) ?
+               NumberUtils.toInt(iteration) :
+               NumberUtils.toInt(StringUtils.substringBefore(iteration, "-"));
+    }
 
     public IterationManager getIterationManager() { return IterationManager.newInstance(getSetting(ITERATION)); }
 

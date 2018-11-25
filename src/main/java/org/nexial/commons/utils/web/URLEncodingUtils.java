@@ -114,7 +114,7 @@ public final class URLEncodingUtils {
 
     public static String encodeAuth(String plain) {
         try {
-            return UriUtils.encodeAuthority(plain, DEF_CHAR_ENCODING);
+            return UriUtils.encodeUserInfo(plain, DEF_CHAR_ENCODING);
         } catch (UnsupportedEncodingException e) {
             System.err.println("Unable to encode: " + e.getMessage());
             return plain;

@@ -80,7 +80,6 @@ class NexialInteractive {
 
         val session = InteractiveSession(ExecutionContext(executionDefinition))
         session.executionDefinition = executionDefinition
-        session.iteration = 1
 
         InteractiveConsole.showMenu(session)
         processMenu(session)
@@ -215,6 +214,8 @@ class NexialInteractive {
 
     //    @NotNull
     private fun toSteps(argument: String): MutableList<String> {
+        if (argument == "*") return mutableListOf("*")
+
         var steps = argument
         while (true) {
             val range = RegexUtils.firstMatches(steps, "(\\d+\\-\\d+)")

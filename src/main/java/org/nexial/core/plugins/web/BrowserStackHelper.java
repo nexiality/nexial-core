@@ -138,16 +138,13 @@ public class BrowserStackHelper extends CloudWebTestingPlatform {
         if (!enableLocal) { return; }
 
         String automateKey = context.getStringData(KEY_AUTOMATEKEY);
-        requiresNotBlank(automateKey,
-                         "BrowserStack Access Key not defined via '" + KEY_AUTOMATEKEY + "'",
-                         automateKey);
+        requiresNotBlank(automateKey, "BrowserStack Access Key not defined via '" + KEY_AUTOMATEKEY + "'", automateKey);
 
         capabilities.setCapability("browserstack.local", true);
 
         try {
             WebDriverHelper helper = WebDriverHelper.Companion.newInstance(browserstack, context);
             File driver = helper.resolveDriver();
-            if (!driver.exists()) { throw new RuntimeException("Can't resolve/download driver for " + edge); }
 
             String browserstacklocal = helper.config.getBaseName();
 

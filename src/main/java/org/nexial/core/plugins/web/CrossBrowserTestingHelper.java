@@ -16,31 +16,42 @@
 
 package org.nexial.core.plugins.web;
 
+import java.io.File;
+import java.io.IOException;
 import java.net.MalformedURLException;
 import java.net.URL;
+import java.util.Arrays;
 import java.util.Map;
 import javax.validation.constraints.NotNull;
 
+import org.apache.commons.lang3.BooleanUtils;
+import org.apache.commons.lang3.RandomStringUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.nexial.commons.proc.RuntimeUtils;
 import org.nexial.commons.utils.web.URLEncodingUtils;
 import org.nexial.core.model.ExecutionContext;
 import org.nexial.core.model.ExecutionDefinition;
+import org.nexial.core.model.ExecutionSummary;
+import org.nexial.core.plugins.NexialCommand;
+import org.nexial.core.plugins.ws.WsCommand;
+import org.nexial.core.utils.ConsoleUtils;
 import org.openqa.selenium.MutableCapabilities;
 import org.openqa.selenium.WebDriver;
 import org.openqa.selenium.WebDriverException;
 import org.openqa.selenium.remote.RemoteWebDriver;
 
-import static org.nexial.core.NexialConst.BrowserStack.KEY_RESOLUTION;
+import static org.nexial.core.NexialConst.BrowserType.crossbrowsertesting;
 import static org.nexial.core.NexialConst.CrossBrowserTesting.*;
 import static org.nexial.core.NexialConst.Data.*;
+import static org.nexial.core.NexialConst.WS_BASIC_PWD;
+import static org.nexial.core.NexialConst.WS_BASIC_USER;
 import static org.nexial.core.plugins.web.WebDriverCapabilityUtils.initCapabilities;
 import static org.nexial.core.plugins.web.WebDriverCapabilityUtils.setCapability;
 
 /**
  * extension to {@link Browser} in support of all things CrossBrowserTesting.
  */
-class CrossBrowserTestingHelper extends CloudWebTestingPlatform {
+public class CrossBrowserTestingHelper extends CloudWebTestingPlatform {
     private final String docUrl = "Check " + REFERENCE_URL + " for more details";
 
     protected CrossBrowserTestingHelper(ExecutionContext context) { super(context); }
@@ -61,19 +72,88 @@ class CrossBrowserTestingHelper extends CloudWebTestingPlatform {
         MutableCapabilities capabilities = new MutableCapabilities();
         initCapabilities(context, capabilities);
 
-        // handleLocal(capabilities, config);
+        handleLocal(username, authKey, config);
         handlePlatform(capabilities, config);
         handleProjectMeta(capabilities, config);
 
         // remaining configs specific to cbt
+        setCapability(capabilities, KEY_ENABLE_VIDEO, config.getOrDefault(KEY_ENABLE_VIDEO, DEF_ENABLE_VIDEO));
+        setCapability(capabilities, KEY_RECORD_NETWORK, config.getOrDefault(KEY_RECORD_NETWORK, DEF_RECORD_NETWORK));
         config.forEach((key, value) -> setCapability(capabilities, key, value));
 
         pageSourceSupported = false;
         try {
             String url = BASE_PROTOCOL + URLEncodingUtils.encodeAuth(username) + ":" + authKey + BASE_URL;
-            return new RemoteWebDriver(new URL(url), capabilities);
+            RemoteWebDriver driver = new RemoteWebDriver(new URL(url), capabilities);
+
+            String sessionId = driver.getSessionId().toString();
+            context.addScriptReferenceData(KEY_SESSION_ID, sessionId);
+
+            return driver;
         } catch (MalformedURLException | WebDriverException e) {
             throw new RuntimeException("Unable to initialize CrossBrowserTesting session: " + e.getMessage(), e);
+        }
+    }
+
+    public void reportExecutionStatus(ExecutionSummary summary) {
+        if (context == null) { return; }
+
+        NexialCommand wsCommand = context.findPlugin("ws");
+        if (!(wsCommand instanceof WsCommand)) { return; }
+
+        String sessionId = context.gatherScriptReferenceData().get(KEY_SESSION_ID);
+        if (StringUtils.isBlank(sessionId)) {
+            ConsoleUtils.error("Unable to report execution status since session id is blank or cannot be retrieved.");
+            return;
+        }
+
+        String oldUsername = context.getStringData(WS_BASIC_USER);
+        String oldPassword = context.getStringData(WS_BASIC_PWD);
+
+        ConsoleUtils.log("reporting execution status to CrossBrowserTesting...");
+
+        context.setData(WS_BASIC_USER, context.getStringData(NS + KEY_USERNAME));
+        context.setData(WS_BASIC_PWD, context.getStringData(NS + KEY_AUTHKEY));
+
+        try {
+            WsCommand ws = ((WsCommand) wsCommand);
+            ws.put(StringUtils.replace(SESSION_URL, "${seleniumTestId}", sessionId),
+                   "{\"action\":\"set_score\", \"score\":\"" + (summary.getFailCount() > 0 ? "fail" : "pass") + "\"}",
+                   RandomStringUtils.randomAlphabetic(5));
+        } finally {
+            // put BASIC AUTH back
+            context.setData(WS_BASIC_USER, oldUsername);
+            context.setData(WS_BASIC_PWD, oldPassword);
+        }
+    }
+
+    protected void handleLocal(String username, String authkey, Map<String, String> config) {
+        boolean enableLocal = config.containsKey("local") ?
+                              BooleanUtils.toBoolean(config.remove("local")) :
+                              context.getBooleanData(KEY_ENABLE_LOCAL, DEF_ENABLE_LOCAL);
+        if (!enableLocal) { return; }
+
+        // capabilities.setCapability("crossbrowsertesting.local", true);
+
+        try {
+            WebDriverHelper helper = WebDriverHelper.Companion.newInstance(crossbrowsertesting, context);
+            File driver = helper.resolveDriver();
+
+            String cbtlocal = helper.config.getBaseName();
+
+            RuntimeUtils.terminateInstance(cbtlocal);
+
+            // start cbt local, but wait (3s) for it to start up completely.
+            // Command line: 'cbt_tunnels --username USERNAME --authkey AUTHKEY'
+            ConsoleUtils.log("starting new instance of " + cbtlocal + "...");
+            RuntimeUtils.runAppNoWait(driver.getParent(),
+                                      driver.getName(),
+                                      Arrays.asList("--username", username, "--authkey", authkey));
+            Thread.sleep(3000);
+            isRunningLocal = true;
+            localExeName = driver.getName();
+        } catch (IOException | InterruptedException e) {
+            throw new RuntimeException("unable to start CrossBrowsingTesting Local: " + e.getMessage(), e);
         }
     }
 
@@ -97,6 +177,7 @@ class CrossBrowserTestingHelper extends CloudWebTestingPlatform {
                                                      context.getStringData(BROWSER_WINDOW_SIZE)));
             setCapability(capabilities, KEY_BROWSER_VER, config.remove(KEY_BROWSER_VER));
             isMobile = false;
+            ConsoleUtils.log("[CBT] setting up " + browserName + " on " + targetOS);
             return;
         }
 
@@ -107,6 +188,7 @@ class CrossBrowserTestingHelper extends CloudWebTestingPlatform {
                                        "is required. " + docUrl);
         }
 
+        // mobile for sure, at this point
         String deviceName = config.remove(KEY_DEVICE);
         if (StringUtils.isBlank(deviceName)) {
             throw new RuntimeException("'" + NS + KEY_DEVICE + "' is required for mobile web testing. " + docUrl);
@@ -117,6 +199,8 @@ class CrossBrowserTestingHelper extends CloudWebTestingPlatform {
         setCapability(capabilities, KEY_DEVICE, deviceName);
         setCapability(capabilities, KEY_DEVICE_ORIENTATION, config.remove(KEY_DEVICE_ORIENTATION));
         isMobile = true;
+
+        ConsoleUtils.log("[CBT] setting up " + browserName + " on " + deviceName + "/" + targetMobileOS);
     }
 
     protected void handleProjectMeta(MutableCapabilities capabilities, Map<String, String> config) {

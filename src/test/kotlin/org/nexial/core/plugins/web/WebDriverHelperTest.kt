@@ -21,14 +21,17 @@ import org.apache.commons.lang3.StringUtils
 import org.apache.commons.lang3.SystemUtils.USER_HOME
 import org.junit.Assert
 import org.junit.Test
-import org.nexial.core.NexialConst.BrowserType
+import org.nexial.commons.utils.FileUtil
+import org.nexial.core.NexialConst.BrowserType.*
 import org.nexial.core.model.MockExecutionContext
 import org.nexial.core.model.TestStep
+import org.nexial.core.plugins.web.WebDriverHelper.Companion.newInstance
 import java.io.File
 import java.io.File.separator
 
 class WebDriverHelperTest {
     private val className = WebDriverHelperTest::class.java.simpleName
+    private val driverHomeBase = "$USER_HOME$separator.nexial$separator"
 
     @Test
     fun deriveWind10BuildNumber() {
@@ -56,8 +59,8 @@ class WebDriverHelperTest {
 
     @Test
     @Throws(Exception::class)
-    fun resolveDriver() {
-        val driverHome = File(USER_HOME + separator + ".nexial" + separator + "firefox")
+    fun resolveFirefoxDriver() {
+        val driverHome = File("${driverHomeBase}firefox")
         FileUtils.deleteDirectory(driverHome)
 
         val context = object : MockExecutionContext(true) {
@@ -70,20 +73,34 @@ class WebDriverHelperTest {
             }
         }
 
-        val helper = WebDriverHelper.newInstance(BrowserType.firefox, context)
-        val driverFile = helper.resolveDriver()
-        Assert.assertNotNull(driverFile)
-        Assert.assertTrue(driverFile.exists())
-        Assert.assertTrue(driverFile.canRead())
-        Assert.assertTrue(driverFile.length() > 1572864)
+        assertDriverExists(newInstance(firefox, context).resolveDriver())
+        context.cleanProject()
+    }
 
+    @Test
+    @Throws(Exception::class)
+    fun resolveFirefoxHeadlessDriver() {
+        val driverHome = File("${driverHomeBase}firefox")
+        FileUtils.deleteDirectory(driverHome)
+
+        val context = object : MockExecutionContext(true) {
+            override fun getCurrentTestStep(): TestStep {
+                return object : TestStep() {
+                    override fun generateFilename(ext: String): String {
+                        return className + StringUtils.prependIfMissing(StringUtils.trim(ext), ".")
+                    }
+                }
+            }
+        }
+
+        assertDriverExists(newInstance(firefoxheadless, context).resolveDriver())
         context.cleanProject()
     }
 
     @Test
     @Throws(Exception::class)
     fun resolveElectronDriver() {
-        val driverHome = File(USER_HOME + separator + ".nexial" + separator + "electron")
+        val driverHome = File("${driverHomeBase}electron")
         FileUtils.deleteDirectory(driverHome)
 
         val context = object : MockExecutionContext(true) {
@@ -96,20 +113,14 @@ class WebDriverHelperTest {
             }
         }
 
-        val helper = WebDriverHelper.newInstance(BrowserType.electron, context)
-        val driverFile = helper.resolveDriver()
-        Assert.assertNotNull(driverFile)
-        Assert.assertTrue(driverFile.exists())
-        Assert.assertTrue(driverFile.canRead())
-        Assert.assertTrue(driverFile.length() > 1572864)
-
+        assertDriverExists(newInstance(electron, context).resolveDriver())
         context.cleanProject()
     }
 
     @Test
     @Throws(Exception::class)
     fun resolveChromeDriver() {
-        val driverHome = File(USER_HOME + separator + ".nexial" + separator + "chrome")
+        val driverHome = File("${driverHomeBase}chrome")
         FileUtils.deleteDirectory(driverHome)
 
         val context = object : MockExecutionContext(true) {
@@ -122,23 +133,62 @@ class WebDriverHelperTest {
             }
         }
 
-        val helper = WebDriverHelper.newInstance(BrowserType.chrome, context)
-        val driverFile = helper.resolveDriver()
-        Assert.assertNotNull(driverFile)
-        Assert.assertTrue(driverFile.exists())
-        Assert.assertTrue(driverFile.canRead())
-        Assert.assertTrue(driverFile.length() > 1572864)
+        val driver1 = assertDriverExists(newInstance(chrome, context).resolveDriver())
 
         println("trying chrome driver again, second time")
 
         // second test to ensure caching works.
-        val helper2 = WebDriverHelper.newInstance(BrowserType.chrome, context)
-        val driverFile2 = helper2.resolveDriver()
-        Assert.assertNotNull(driverFile2)
-        Assert.assertTrue(driverFile2.exists())
-        Assert.assertTrue(driverFile2.canRead())
-        Assert.assertTrue(driverFile2.length() > 1572864)
+        val driver2 = assertDriverExists(newInstance(chrome, context).resolveDriver())
 
+        Assert.assertEquals(driver1.lastModified(), driver2.lastModified())
         context.cleanProject()
+    }
+
+    @Test
+    @Throws(Exception::class)
+    fun downloadBrowserStackLocalDriver() {
+        val driverHome = File("${driverHomeBase}browserstack")
+        FileUtils.deleteDirectory(driverHome)
+
+        val context = MockExecutionContext(true)
+
+        assertDriverExists(newInstance(browserstack, context).resolveDriver())
+        context.cleanProject()
+    }
+
+    @Test
+    @Throws(Exception::class)
+    fun downloadCbtLocalDriver() {
+        val driverHome = File("${driverHomeBase}crossbrowsertesting")
+        FileUtils.deleteDirectory(driverHome)
+
+        val context = MockExecutionContext(true)
+
+        assertDriverExists(newInstance(crossbrowsertesting, context).resolveDriver())
+        context.cleanProject()
+    }
+
+    @Test
+    @Throws(Exception::class)
+    fun downloadChromeHeadlessDriver() {
+        val driverHome = File("${driverHomeBase}chrome")
+        FileUtils.deleteDirectory(driverHome)
+
+        val context = MockExecutionContext(true)
+
+        assertDriverExists(newInstance(chromeheadless, context).resolveDriver())
+        context.cleanProject()
+    }
+
+    private fun assertDriverExists(driver: File): File {
+        println("driver = $driver")
+
+        // not null and at least 5 meg
+        Assert.assertNotNull(driver)
+        Assert.assertTrue(driver.exists())
+        Assert.assertTrue(driver.canRead())
+        Assert.assertTrue(FileUtil.isFileReadable(driver, 5 * 1024 * 1024))
+
+        return driver
     }
 }

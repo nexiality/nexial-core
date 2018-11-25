@@ -163,12 +163,6 @@ public final class NexialConst {
     public static final String HIGHLIGHT_STYLE = NS_WEB + "highlight.style";
     public static final String DEF_HIGHLIGHT_STYLE = "background:#faf557;";
 
-    // webdriver support map
-    // public static final String OPT_EDGE_DRIVER_TARGET_OS_BUILD = "edgeDriverTargetOSBuild";
-    // public static final String OPT_EDGE_DRIVER_LOOKUP_BASE_URL = "edgeDriverLookupBaseUrl";
-    // public static final String NEXIAL_SUPPORT_HOME = StringUtils.appendIfMissing(USER_HOME, separator) + ".nexial";
-    // public static final String EDGE_DRIVER_HOME = NEXIAL_SUPPORT_HOME + separator + "edge" + separator;
-
     public static final String OPT_PROXY_USER = NAMESPACE + "proxy_user";
     public static final String OPT_PROXY_PASSWORD = NAMESPACE + "proxy_password";
     public static final String OPT_PROXY_REQUIRED = NAMESPACE + "proxyRequired";
@@ -519,23 +513,17 @@ public final class NexialConst {
         public static final String BASE_URL = "@hub.browserstack.com/wd/hub";
         public static final String SESSION_URL =
             "https://${username}:${automatekey}@api.browserstack.com/automate/sessions/${sessionId}.json";
-
         public static final boolean DEF_DEBUG = true;
         public static final boolean DEF_ENABLE_LOCAL = false;
-
         private static final String NS = NAMESPACE + "browserstack.";
-
         public static final String KEY_USERNAME = NS + "username";
         public static final String KEY_AUTOMATEKEY = NS + "automatekey";
-
         public static final String KEY_BROWSER = NS + "browser";
         public static final String KEY_BROWSER_VER = NS + "browser.version";
-
         public static final String KEY_DEBUG = NS + "debug";
         public static final String KEY_RESOLUTION = NS + "resolution";
         public static final String KEY_BUILD_NUM = NS + "app.buildnumber";
         public static final String KEY_ENABLE_LOCAL = NS + "enablelocal";
-
         public static final String KEY_OS = NS + "os";
         public static final String KEY_OS_VER = NS + "os.version";
 
@@ -547,6 +535,7 @@ public final class NexialConst {
     public static final class CrossBrowserTesting {
         public static final String BASE_PROTOCOL = "http://";
         public static final String BASE_URL = "@hub.crossbrowsertesting.com:80/wd/hub";
+        public static final String SESSION_URL = "http://crossbrowsertesting.com/api/v3/selenium/${seleniumTestId}";
 
         public static final String NS = "cbt.";
 
@@ -558,14 +547,23 @@ public final class NexialConst {
         public static final String KEY_USERNAME = "username";
         public static final String KEY_AUTHKEY = "authkey";
 
+        public static final String KEY_SESSION_ID = "sessionId";
+
+        public static final String KEY_ENABLE_LOCAL = NS + "enablelocal";
+        public static final boolean DEF_ENABLE_LOCAL = false;
+
         // project meta
         public static final String KEY_NAME = "name";
         public static final String KEY_BUILD = "build";
+
         public static final String KEY_ENABLE_VIDEO = "record_video";
-        public static final boolean DEF_ENABLE_VIDEO = true;
+        public static final String DEF_ENABLE_VIDEO = "true";
+
         public static final String KEY_RECORD_NETWORK = "record_network";
-        public static final boolean DEF_RECORD_NETWORK = false;
+        public static final String DEF_RECORD_NETWORK = "false";
+
         public static final String KEY_MAX_DURATION = "max_duration";
+
         // https://help.crossbrowsertesting.com/selenium-testing/resources/list-of-timezones/
         public static final String KEY_TZ = "timezone";
 
@@ -797,7 +795,8 @@ public final class NexialConst {
         public static final int BROWSER_STABILITY_COMPARE_TOLERANCE = 3;
         public static final String OPT_BROWSER_CONSOLE_LOG = NAMESPACE + "browserConsoleLog";
 
-        public static final String BROWER_INCOGNITO = BROWSER + ".incognito";
+        public static final String KEY_INCOGNITO = "incognito";
+        public static final String BROWER_INCOGNITO = BROWSER + "." + KEY_INCOGNITO;
         public static final boolean DEF_BROWSER_INCOGNITO = true;
 
         public static final String BROWSER_POST_CLOSE_WAIT = BROWSER + ".postCloseWaitMs";
@@ -829,6 +828,17 @@ public final class NexialConst {
 
         public static final String LOG_CHROME_DRIVER = BROWSER + ".logChrome";
         public static final boolean DEF_LOG_CHROME_DRIVER = false;
+
+        public static final String NS_EMULATION = BROWSER + ".emulation.";
+        public static final String KEY_EMU_DEVICE_NAME = NS_EMULATION + "deviceName";
+        public static final String KEY_EMU_WIDTH = NS_EMULATION + "width";
+        public static final int DEF_EMU_WIDTH = 400;
+        public static final String KEY_EMU_HEIGHT = NS_EMULATION + "height";
+        public static final int DEF_EMU_HEIGHT = 850;
+        public static final String KEY_EMU_PIXEL_RATIO = NS_EMULATION + "pixelRatio";
+        public static final double DEF_EMU_PIXEL_RATIO = 3.0;
+        public static final String KEY_EMU_TOUCH = NS_EMULATION + "touch";
+        public static final String KEY_EMU_USER_AGENT = NS_EMULATION + "userAgent";
 
         public static final String BROWSER_ACCEPT_INVALID_CERTS = BROWSER + ".acceptInsecureCerts";
         public static final boolean DEF_BROWSER_ACCEPT_INVALID_CERTS = false;

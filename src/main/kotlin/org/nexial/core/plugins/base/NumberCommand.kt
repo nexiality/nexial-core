@@ -25,7 +25,7 @@ class NumberCommand : BaseCommand() {
 
     fun assertGreaterOrEqual(num1: String, num2: String): StepResult {
         val asExpected: Boolean = toDouble(num1, "num1") >= toDouble(num2, "num2")
-        return StepResult(asExpected, "$num1 is ${if (asExpected) "" else "NOT"}greater than or equal to $num2", null)
+        return StepResult(asExpected, "$num1 is ${if (asExpected) "" else "NOT "}greater than or equal to $num2", null)
     }
 
     fun assertLesser(num1: String, num2: String): StepResult {

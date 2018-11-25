@@ -68,6 +68,8 @@ import static org.nexial.core.utils.CheckUtils.requiresExecutableFile;
 import static org.openqa.selenium.PageLoadStrategy.EAGER;
 import static org.openqa.selenium.UnexpectedAlertBehaviour.ACCEPT;
 import static org.openqa.selenium.UnexpectedAlertBehaviour.IGNORE;
+import static org.openqa.selenium.chrome.ChromeDriverService.CHROME_DRIVER_LOG_PROPERTY;
+import static org.openqa.selenium.chrome.ChromeDriverService.CHROME_DRIVER_VERBOSE_LOG_PROPERTY;
 import static org.openqa.selenium.firefox.FirefoxDriver.MARIONETTE;
 import static org.openqa.selenium.firefox.FirefoxDriverLogLevel.ERROR;
 import static org.openqa.selenium.ie.InternetExplorerDriver.*;
@@ -544,10 +546,10 @@ public class Browser implements ForcefulTerminate {
 
         if (context.getBooleanData(LOG_CHROME_DRIVER, DEF_LOG_CHROME_DRIVER)) {
             String chromeLog = resolveBrowserLogFile("chrome-browser.log").getAbsolutePath();
-            System.setProperty("webdriver.chrome.logfile", chromeLog);
-            System.setProperty("webdriver.chrome.verboseLogging", "true");
+            System.setProperty(CHROME_DRIVER_LOG_PROPERTY, chromeLog);
+            System.setProperty(CHROME_DRIVER_VERBOSE_LOG_PROPERTY, "true");
         } else {
-            System.setProperty("webdriver.chrome.verboseLogging", "false");
+            System.setProperty(CHROME_DRIVER_VERBOSE_LOG_PROPERTY, "false");
         }
 
         ChromeOptions options = new ChromeOptions();
@@ -558,7 +560,7 @@ public class Browser implements ForcefulTerminate {
         }
 
         options.addArguments(this.chromeOptions);
-        if (context.getBooleanData(BROWER_INCOGNITO, DEF_BROWSER_INCOGNITO)) { options.addArguments("incognito"); }
+        if (context.getBooleanData(BROWER_INCOGNITO, DEF_BROWSER_INCOGNITO)) { options.addArguments(KEY_INCOGNITO); }
 
         String binaryLocation = resolveChromeBinLocation();
         if (StringUtils.isNotBlank(binaryLocation)) { options.setBinary(binaryLocation); }
@@ -571,6 +573,34 @@ public class Browser implements ForcefulTerminate {
             } catch (UnknownHostException e) {
                 throw new RuntimeException("Unable to determine localhost hostname: " + e.getMessage());
             }
+        }
+
+        // support mobile emulation on chrome
+        // ref: http://chromedriver.chromium.org/mobile-emulation
+        // ref: https://developers.google.com/web/tools/chrome-devtools/device-mode/?utm_source=dcc&utm_medium=redirect&utm_campaign=2016q3
+        // issue: https://bugs.chromium.org/p/chromedriver/issues/detail?id=2144&desc=2
+        // devices: https://codesearch.chromium.org/codesearch/f/chromium/src/third_party/blink/renderer/devtools/front_end/emulated_devices/module.json
+        String emuDevice = context.getStringData(KEY_EMU_DEVICE_NAME);
+        if (StringUtils.isNotBlank(emuDevice)) {
+            Map<String, String> mobileEmulation = new HashMap<>();
+            mobileEmulation.put("deviceName", emuDevice);
+            options.setExperimentalOption("mobileEmulation", mobileEmulation);
+            ConsoleUtils.log("setting mobile emulation on Chrome as " + emuDevice);
+        }
+
+        String emuUserAgent = context.getStringData(KEY_EMU_USER_AGENT);
+        if (StringUtils.isNotBlank(emuUserAgent)) {
+            Map<String, Object> deviceMetrics = new HashMap<>();
+            deviceMetrics.put("width", context.getIntData(KEY_EMU_WIDTH, DEF_EMU_WIDTH));
+            deviceMetrics.put("height", context.getIntData(KEY_EMU_HEIGHT, DEF_EMU_HEIGHT));
+            deviceMetrics.put("pixelRatio", context.getDoubleData(KEY_EMU_PIXEL_RATIO, DEF_EMU_PIXEL_RATIO));
+            deviceMetrics.put("touch", context.getBooleanData(KEY_EMU_TOUCH, true));
+
+            Map<String, Object> mobileEmulation = new HashMap<>();
+            mobileEmulation.put("deviceMetrics", deviceMetrics);
+            mobileEmulation.put("userAgent", emuUserAgent);
+            options.setExperimentalOption("mobileEmulation", mobileEmulation);
+            ConsoleUtils.log("setting mobile emulation on Chrome as " + emuUserAgent);
         }
 
         ChromeDriver chrome = new ChromeDriver(options);
@@ -596,7 +626,6 @@ public class Browser implements ForcefulTerminate {
         BrowserType browserType = headless ? firefoxheadless : firefox;
         WebDriverHelper helper = WebDriverHelper.Companion.newInstance(browserType, context);
         File driver = helper.resolveDriver();
-        if (!driver.exists()) { throw new IOException("Can't resolve/download driver for " + browserType); }
 
         String driverPath = driver.getAbsolutePath();
         context.setData(SELENIUM_GECKO_DRIVER, driverPath);
@@ -697,7 +726,6 @@ public class Browser implements ForcefulTerminate {
     protected WebDriver initEdge() throws IOException {
         WebDriverHelper helper = WebDriverHelper.Companion.newInstance(edge, context);
         File driver = helper.resolveDriver();
-        if (!driver.exists()) { throw new IOException("Can't resolve/download driver for " + edge); }
 
         String driverPath = driver.getAbsolutePath();
         context.setData(SELENIUM_EDGE_DRIVER, driverPath);
@@ -855,7 +883,8 @@ public class Browser implements ForcefulTerminate {
         if (isRunChromeEmbedded() ||
             isRunElectron() ||
             isMobile() ||
-            (isRunBrowserStack() && browserstackHelper.getBrowser() == safari)) {
+            (isRunBrowserStack() && browserstackHelper.getBrowser() == safari) ||
+            (isRunCrossBrowserTesting() && cbtHelper.getBrowser() == safari)) {
             return;
         }
 
@@ -886,8 +915,11 @@ public class Browser implements ForcefulTerminate {
 
             Window window = driver.manage().window();
             window.setSize(new Dimension(width, height));
-            Point initialPosition = isRunSafari() || (isRunBrowserStack() && browserstackHelper.browser == safari) ?
-                                    INITIAL_POSITION_SAFARI : INITIAL_POSITION;
+
+            boolean runningSafari = isRunSafari() ||
+                                    (isRunBrowserStack() && browserstackHelper.browser == safari) ||
+                                    (isRunCrossBrowserTesting() && cbtHelper.browser == safari);
+            Point initialPosition = runningSafari ? INITIAL_POSITION_SAFARI : INITIAL_POSITION;
             window.setPosition(initialPosition);
         }
     }
@@ -963,7 +995,6 @@ public class Browser implements ForcefulTerminate {
     private void resolveChromeDriverLocation() throws IOException {
         WebDriverHelper helper = WebDriverHelper.Companion.newInstance(browserType, context);
         File driver = helper.resolveDriver();
-        if (!driver.exists()) { throw new IOException("Can't resolve/download driver for " + browserType); }
 
         String driverPath = driver.getAbsolutePath();
         context.setData(SELENIUM_CHROME_DRIVER, driverPath);
@@ -997,7 +1028,7 @@ public class Browser implements ForcefulTerminate {
     private void resolveIEDriverLocation() throws IOException {
         WebDriverHelper helper = WebDriverHelper.Companion.newInstance(ie, context);
         File driver = helper.resolveDriver();
-        if (!driver.exists()) { throw new IOException("Unable to resolve/ download driver for IE browser."); }
+
         String ieDriverPath = driver.getAbsolutePath();
         context.setData(SELENIUM_IE_DRIVER, ieDriverPath);
         System.setProperty(SELENIUM_IE_DRIVER, ieDriverPath);

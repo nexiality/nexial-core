@@ -67,7 +67,21 @@ data class InteractiveSession(val context: ExecutionContext) {
 
             // save scenario, in case we can use it
             val execScenario = value.scenarios[0] ?: ""
+            val dataSheet = value.dataSheets[0] ?: ""
+
+            // setter will override scenario & data sheet information
             script = value.testScript
+
+            if (dataSheet != "") {
+                value.dataSheets.clear()
+                value.dataSheets.add(dataSheet)
+            }
+
+            if (execScenario != "") {
+                value.scenarios.clear()
+                value.scenarios.add(execScenario)
+            }
+
             if (value.dataFile != null) dataFile = value.dataFile.file.absolutePath
 
             if (execScenario != "") scenario = execScenario
@@ -75,7 +89,6 @@ data class InteractiveSession(val context: ExecutionContext) {
 
     // inflight / flyweight pattern
     var inflightScript: Excel? = null
-
     var inflightScenario: TestScenario? = null
 
     // user input
@@ -123,7 +136,12 @@ data class InteractiveSession(val context: ExecutionContext) {
         set(value) {
             if (excel != null && allActivities.isNotEmpty()) {
                 if (value.isNotEmpty()) {
-                    if (value.find { activity -> !allActivities.contains(activity) } != null) {
+                    if (value.size == 1 && value[0] == "*") {
+                        // reset to all activities
+                        field.clear()
+                        field.addAll(allActivities)
+                        steps.clear()
+                    } else if (value.find { activity -> !allActivities.contains(activity) } != null) {
                         // found invalid activity
                         ConsoleUtils.error("Invalid activity specified: $value")
                     } else {
@@ -140,7 +158,12 @@ data class InteractiveSession(val context: ExecutionContext) {
         set(value) {
             if (excel != null && allSteps.isNotEmpty()) {
                 if (value.isNotEmpty()) {
-                    if (value.find { step -> !allSteps.contains(step) } != null) {
+                    if (value.size == 1 && value[0] == "*") {
+                        // reset to all steps
+                        field.clear()
+                        field.addAll(allSteps)
+                        activities.clear()
+                    } else if (value.find { step -> !allSteps.contains(step) } != null) {
                         // found invalid step
                         ConsoleUtils.error("Invalid step specified: $value")
                     } else {
@@ -155,9 +178,15 @@ data class InteractiveSession(val context: ExecutionContext) {
 
     var iteration: Int = 0
         set(value) {
-            if (value != field) {
-                field = value
-                useIterationData()
+            field = value
+
+            if (executionDefinition != null && executionDefinition!!.testData != null) {
+                val testData = executionDefinition!!.testData
+
+                val data = TreeMap(testData.getAllValue(iteration))
+                testData.allSettings.forEach { key, testValue -> data[key] = testValue }
+                data.putAll(ExecUtil.deriveJavaOpts())
+                data.forEach { key, dataValue -> context.setData(key, dataValue) }
             }
         }
 
@@ -215,36 +244,33 @@ data class InteractiveSession(val context: ExecutionContext) {
         allScenarios.addAll(InputFileUtils.retrieveValidTestScenarioNames(excel))
         if (StringUtils.isBlank(scenario) || !allScenarios.contains(scenario)) {
             scenario = if (allScenarios.isEmpty()) "" else allScenarios[0]
+        } else {
+            collectScenarioDetails()
+            calibrateActivitiesAndSteps()
         }
     }
 
     private fun loadDataFile() {
         if (executionDefinition == null) return
 
+        val execDef = executionDefinition!!
+
         val dataFileOfValue = File(dataFile).absolutePath
-        if (executionDefinition!!.dataFile == null ||
-            !StringUtils.equals(executionDefinition!!.dataFile.file.absolutePath, dataFileOfValue)) {
-            executionDefinition!!.dataFile = Excel(File(dataFile), DEF_OPEN_EXCEL_AS_DUP, false)
+        if (execDef.dataFile == null ||
+            !StringUtils.equals(execDef.dataFile.file.absolutePath, dataFileOfValue)) {
+            execDef.dataFile = Excel(File(dataFile), DEF_OPEN_EXCEL_AS_DUP, false)
         }
 
-        executionDefinition!!.getTestData(true)
-        useIterationData()
-    }
-
-    private fun useIterationData() {
-        if (executionDefinition != null && executionDefinition!!.testData != null) {
-            val testData = executionDefinition!!.testData
-            val data = TreeMap(testData.getAllValue(iteration))
-            testData.allSettings.forEach { key, value -> data[key] = value }
-            data.putAll(ExecUtil.deriveJavaOpts())
-            data.forEach { key, value -> context.setData(key, value) }
-        }
+        execDef.getTestData(true)
+        this.iteration = if (this.iteration == 0) execDef.testData.iteration else this.iteration
     }
 
     private fun collectScenarioDetails() {
         allActivities.clear()
         allSteps.clear()
         activityStepMap.clear()
+        activities.clear()
+        steps.clear()
 
         // collect activities and steps for the specified scenario
         val worksheet = excel!!.worksheet(scenario)
