@@ -549,7 +549,7 @@ public final class NexialConst {
 
         public static final String KEY_SESSION_ID = "sessionId";
 
-        public static final String KEY_ENABLE_LOCAL = NS + "enablelocal";
+        public static final String KEY_ENABLE_LOCAL = "enablelocal";
         public static final boolean DEF_ENABLE_LOCAL = false;
 
         // project meta

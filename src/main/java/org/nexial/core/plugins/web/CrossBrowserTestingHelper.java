@@ -128,12 +128,9 @@ public class CrossBrowserTestingHelper extends CloudWebTestingPlatform {
     }
 
     protected void handleLocal(String username, String authkey, Map<String, String> config) {
-        boolean enableLocal = config.containsKey("local") ?
-                              BooleanUtils.toBoolean(config.remove("local")) :
-                              context.getBooleanData(KEY_ENABLE_LOCAL, DEF_ENABLE_LOCAL);
+        boolean enableLocal = config.containsKey(KEY_ENABLE_LOCAL) ?
+                              BooleanUtils.toBoolean(config.remove(KEY_ENABLE_LOCAL)) : DEF_ENABLE_LOCAL;
         if (!enableLocal) { return; }
-
-        // capabilities.setCapability("crossbrowsertesting.local", true);
 
         try {
             WebDriverHelper helper = WebDriverHelper.Companion.newInstance(crossbrowsertesting, context);
