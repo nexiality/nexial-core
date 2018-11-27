@@ -113,6 +113,8 @@ public class ExecutionContext {
     private static final String ALT_OPEN_PARENTHESIS = "__<?!?>__";
     private static final String ALT_CLOSE_PARENTHESIS = "__<@*@>__";
     private static final String ALT_PIPE = "__<%+%>__";
+    private static final String ALT_GML_CLOSE_TAG = "__#~~^~~#__";
+    private static final String ALT_GML_CLOSE_TAG2 = "__%&&*&&$__";
 
     protected Logger logger = LoggerFactory.getLogger(getClass());
     protected ExecutionDefinition execDef;
@@ -807,10 +809,18 @@ public class ExecutionContext {
                 pathPart = StringUtils.substringBefore(pathPart, " ");
 
                 if (StringUtils.isNotBlank(pathPart)) {
+                    // need to skip `</...>` text for HTML/XML content
+                    text = StringUtils.replace(text, "</", ALT_GML_CLOSE_TAG);
+                    text = StringUtils.replace(text, "/>", ALT_GML_CLOSE_TAG2);
+
                     String pathPathReplace = IS_OS_WINDOWS ?
                                              StringUtils.replace(pathPart, "/", "\\") :
                                              StringUtils.replace(pathPart, "\\", "/");
                     text = StringUtils.replaceOnce(text, pathPart, pathPathReplace);
+
+                    // put `</...>` back for HTML/XML content
+                    text = StringUtils.replace(text, ALT_GML_CLOSE_TAG, "</");
+                    text = StringUtils.replace(text, ALT_GML_CLOSE_TAG2, "/>");
                 }
             }
 

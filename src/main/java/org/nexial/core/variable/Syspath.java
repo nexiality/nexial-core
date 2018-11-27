@@ -44,8 +44,7 @@ public class Syspath {
 
         if (executionData == null) { executionData = getExecutionData(OPT_INPUT_EXCEL_FILE); }
 
-        ConsoleUtils.log(TOKEN_FUNCTION_START + "syspath|script" + TOKEN_FUNCTION_END +
-                         ": executionData=" + executionData);
+        ConsoleUtils.log(TOKEN_FUNCTION_START + "syspath|script" + TOKEN_FUNCTION_END + ": value=" + executionData);
 
         return evaluateScope(scope, executionData);
     }

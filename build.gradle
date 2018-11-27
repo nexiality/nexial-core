@@ -174,7 +174,7 @@ dependencies {
 	compile("org.jdom:jdom2:+")
 	compile("org.jsoup:jsoup:+")
 	// v23r* is not compatible with selenium 3.4.0
-	compile("com.google.guava:guava:+")
+	compile("com.google.guava:guava:${guavaVersion}")
 
 	// support: ini
 	compile("org.ini4j:ini4j:+")
@@ -188,7 +188,7 @@ dependencies {
 	compile("org.hsqldb:hsqldb:${hsqldbVersion}")
 
 	// support: redis
-	compile("redis.clients:jedis:${redisVersion}")
+	compile("redis.clients:jedis:${jedisVersion}")
 
 	// support: joda-time
 	compile("joda-time:joda-time:+")

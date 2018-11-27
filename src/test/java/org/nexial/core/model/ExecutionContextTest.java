@@ -26,8 +26,8 @@ import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 import org.nexial.core.model.ExecutionContext.Function;
-import org.nexial.core.variable.*;
 import org.nexial.core.variable.Date;
+import org.nexial.core.variable.*;
 
 import static java.io.File.separator;
 import static org.apache.commons.lang3.SystemUtils.JAVA_IO_TMPDIR;
@@ -35,8 +35,8 @@ import static org.hamcrest.core.AllOf.allOf;
 import static org.hamcrest.core.IsNot.not;
 import static org.hamcrest.core.StringContains.containsString;
 import static org.hamcrest.core.StringEndsWith.endsWith;
-import static org.nexial.core.NexialConst.*;
 import static org.nexial.core.NexialConst.Data.*;
+import static org.nexial.core.NexialConst.*;
 
 public class ExecutionContextTest {
     @Before
@@ -427,6 +427,67 @@ public class ExecutionContextTest {
         subject.cleanProject();
     }
 
+    @Test
+    public void replaceTokensInXML() throws Exception {
+        String fixture =
+            "<logger name=\"ch.qos.logback\" additivity=\"false\" level=\"WARN\"><appender-ref ref=\"${path1}\"/></logger>" +
+            "<logger name=\"ch.qos.logback.classic.LoggerContext\" additivity=\"false\" level=\"WARN\"><appender-ref ref=\"console\">${path2}</appender></logger>" +
+            "<logger name=\"ch.qos.logback.core\" additivity=\"false\" level=\"WARN\">${path3}</logger>";
+
+        // test 1: replace Windows-path variables
+        MockExecutionContext subject = initMockContext();
+        subject.setData("path1", "C:\\temp\\junk1.txt");
+        subject.setData("path2", "C:\\temp\\junk2.txt");
+        subject.setData("path3", "C:\\temp\\junk3.txt");
+
+        String expected =
+            "<logger name=\"ch.qos.logback\" additivity=\"false\" level=\"WARN\"><appender-ref ref=\"C:\\temp\\junk1.txt\"/></logger>" +
+            "<logger name=\"ch.qos.logback.classic.LoggerContext\" additivity=\"false\" level=\"WARN\"><appender-ref ref=\"console\">C:\\temp\\junk2.txt</appender></logger>" +
+            "<logger name=\"ch.qos.logback.core\" additivity=\"false\" level=\"WARN\">C:\\temp\\junk3.txt</logger>";
+
+        String actual = subject.replaceTokens(fixture);
+        Assert.assertEquals(expected, actual);
+
+        // test 2: use syspath on script
+        subject.setData("path1", "$(syspath|script|base)\\junk1.txt");
+        subject.setData("path2", "$(syspath|script|base)\\junk2.txt");
+        subject.setData("path3", "$(syspath|script|base)\\junk3.txt");
+
+        String scriptPath = System.getProperty(OPT_PROJECT_BASE) + separator + "artifact" + separator + "script";
+        expected = "<logger name=\"ch.qos.logback\" additivity=\"false\" level=\"WARN\">" +
+                   "<appender-ref ref=\"" + scriptPath + "\\junk1.txt\"/>" +
+                   "</logger>" +
+                   "<logger name=\"ch.qos.logback.classic.LoggerContext\" additivity=\"false\" level=\"WARN\">" +
+                   "<appender-ref ref=\"console\">" + scriptPath + "\\junk2.txt</appender>" +
+                   "</logger>" +
+                   "<logger name=\"ch.qos.logback.core\" additivity=\"false\" level=\"WARN\">" +
+                   scriptPath + "\\junk3.txt" +
+                   "</logger>";
+
+        actual = subject.replaceTokens(fixture);
+        Assert.assertEquals(expected, actual);
+
+        // test 3: use syspath on fullpath
+        subject.setData("path1", "$(syspath|data|fullpath)\\junk1.txt");
+        subject.setData("path2", "$(syspath|data|fullpath)\\junk2.txt");
+        subject.setData("path3", "$(syspath|data|fullpath)\\junk3.txt");
+
+        String dataPath = System.getProperty(OPT_PROJECT_BASE) + separator + "artifact" + separator + "data";
+        expected = "<logger name=\"ch.qos.logback\" additivity=\"false\" level=\"WARN\">" +
+                   "<appender-ref ref=\"" + dataPath + "/junk1.txt\"/>" +
+                   "</logger>" +
+                   "<logger name=\"ch.qos.logback.classic.LoggerContext\" additivity=\"false\" level=\"WARN\">" +
+                   "<appender-ref ref=\"console\">" + dataPath + "/junk2.txt</appender>" +
+                   "</logger>" +
+                   "<logger name=\"ch.qos.logback.core\" additivity=\"false\" level=\"WARN\">" +
+                   dataPath + "/junk3.txt" +
+                   "</logger>";
+
+        actual = subject.replaceTokens(fixture);
+        Assert.assertEquals(expected, actual);
+
+    }
+
     @NotNull
     private Function toFunction(ExecutionContext subject, String token) {
         Function f = subject.new Function();
@@ -438,12 +499,11 @@ public class ExecutionContextTest {
     private MockExecutionContext initMockContext() {
         // for syspath
         String projectBase = JAVA_IO_TMPDIR + "dummy";
+        String artifactBase = projectBase + separator + "artifact" + separator;
         System.setProperty(OPT_PROJECT_BASE, projectBase);
         System.setProperty(OPT_OUT_DIR, projectBase + separator + "output");
-        System.setProperty(OPT_INPUT_EXCEL_FILE, projectBase + separator +
-                                                 "artifact" + separator +
-                                                 "script" + separator +
-                                                 "MyScript.xlsx");
+        System.setProperty(OPT_DATA_DIR, artifactBase + "data");
+        System.setProperty(OPT_INPUT_EXCEL_FILE, artifactBase + "script" + separator + "MyScript.xlsx");
 
         MockExecutionContext subject = new MockExecutionContext();
         subject.setData(TEXT_DELIM, ",");
