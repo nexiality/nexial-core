@@ -378,6 +378,8 @@ public class ExecutionContext {
 
     public NexialMailer getNexialMailer() { return nexialMailer; }
 
+    public boolean isPluginLoaded(String target) { return plugins.isPluginLoaded(target); }
+
     public NexialCommand findPlugin(String target) { return plugins.getPlugin(target); }
 
     public Excel getTestScript() { return testScript; }

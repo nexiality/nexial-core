@@ -49,6 +49,8 @@ public class PluginManager {
 
     public void setBrowser(Browser browser) { this.browser = browser; }
 
+    public boolean isPluginLoaded(String target) { return initialized.containsKey(target); }
+
     public NexialCommand getPlugin(String target) {
         boolean isInitialized = false;
 

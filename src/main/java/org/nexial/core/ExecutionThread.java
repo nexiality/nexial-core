@@ -372,6 +372,26 @@ public final class ExecutionThread extends Thread {
         summary.aggregatedNestedExecutions(context);
         EventTracker.INSTANCE.track(new NexialScriptCompleteEvent(summary.getSourceScript(), summary));
 
+        // special case for BrowserStack and CrossBrowserTesting
+        // https://www.browserstack.com/automate/rest-api
+        if (context.isPluginLoaded("web")) {
+            // only look for the `web` plugin IF it is already loaded. Otherwise we could prematurely load webdriver
+            // as a side effect..
+            NexialCommand webCommand = context.findPlugin("web");
+            if (webCommand instanceof WebCommand) {
+                Browser browser = ((WebCommand) webCommand).getBrowser();
+                if (browser != null) {
+                    // this means we were running browser in this script.. now let's report status
+                    if (browser.isRunBrowserStack() && browser.getBrowserstackHelper() != null) {
+                        browser.getBrowserstackHelper().reportExecutionStatus(summary);
+                    }
+                    if (browser.isRunCrossBrowserTesting() && browser.getCbtHelper() != null) {
+                        browser.getCbtHelper().reportExecutionStatus(summary);
+                    }
+                }
+            }
+        }
+
         StringBuilder cloudOutputBuffer = new StringBuilder();
         if (context.isOutputToCloud()) {
             try {
@@ -397,22 +417,6 @@ public final class ExecutionThread extends Thread {
             }
         }
         String cloudOutput = cloudOutputBuffer.toString();
-
-        // special case for BrowserStack and CrossBrowserTesting
-        // https://www.browserstack.com/automate/rest-api
-        NexialCommand webCommand = context.findPlugin("web");
-        if (webCommand instanceof WebCommand) {
-            Browser browser = ((WebCommand) webCommand).getBrowser();
-            if (browser != null) {
-                // this means we were running browser in this script.. now let's report status
-                if (browser.isRunBrowserStack() && browser.getBrowserstackHelper() != null) {
-                    browser.getBrowserstackHelper().reportExecutionStatus(summary);
-                }
-                if (browser.isRunCrossBrowserTesting() && browser.getCbtHelper() != null) {
-                    browser.getCbtHelper().reportExecutionStatus(summary);
-                }
-            }
-        }
 
         ConsoleUtils.log(context.getRunId(),
                          "\n" +
