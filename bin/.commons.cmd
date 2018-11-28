@@ -31,7 +31,7 @@
 
 	REM # setting Java runtime options and classpath
 	set JAVA_OPT=%JAVA_OPT% -ea
-	set JAVA_OPT=%JAVA_OPT% -Xss16m
+	set JAVA_OPT=%JAVA_OPT% -Xss24m
 	set JAVA_OPT=%JAVA_OPT% -Dfile.encoding=UTF-8
 	set JAVA_OPT=%JAVA_OPT% -Dnexial.home="%NEXIAL_HOME%"
 	set JAVA_OPT=%JAVA_OPT% -Dwebdriver.winium.verbose=false

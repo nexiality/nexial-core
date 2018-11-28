@@ -175,6 +175,7 @@ public final class NexialConst {
     public static final String OPT_SCREENSHOT_ON_ERROR = NAMESPACE + "screenshotOnError";
     public static final String OPT_LAST_SCREENSHOT_NAME = NAMESPACE + "lastScreenshot";
     public static final String OPT_LAST_OUTCOME = NAMESPACE + "lastOutcome";
+    public static final String OPT_LAST_OUTPUT_LINK = NAMESPACE + "lastOutputLink";
     public static final String OPT_PRINT_ERROR_DETAIL = NAMESPACE + "printErrorDetails";
     public static final boolean DEF_PRINT_ERROR_DETAIL = false;
 

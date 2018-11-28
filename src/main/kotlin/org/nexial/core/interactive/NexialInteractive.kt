@@ -212,7 +212,7 @@ class NexialInteractive {
         }
     }
 
-    //    @NotNull
+    @NotNull
     private fun toSteps(argument: String): MutableList<String> {
         if (argument == "*") return mutableListOf("*")
 

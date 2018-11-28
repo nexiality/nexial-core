@@ -704,7 +704,7 @@ public class BaseCommand implements NexialCommand {
             TestStep testStep = context.getCurrentTestStep();
             if (testStep != null && testStep.getWorksheet() != null) {
                 // test step undefined could mean that we are in interactive mode, or we are running unit testing
-                context.setData(OPT_LAST_OUTCOME, link);
+                context.setData(OPT_LAST_OUTPUT_LINK, link);
                 testStep.addNestedScreenCapture(link, message, label);
             }
         }
