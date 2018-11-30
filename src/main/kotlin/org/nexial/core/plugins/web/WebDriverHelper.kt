@@ -690,10 +690,21 @@ class BrowserStackLocalHelper(context: ExecutionContext) : WebDriverHelper(conte
 class CrossBrowserTestingLocalHelper(context: ExecutionContext) : WebDriverHelper(context) {
     override fun resolveLocalDriverPath(): String {
         return StringUtils.appendIfMissing(File(context.replaceTokens(config.home)).absolutePath, separator) +
-               config.baseName + if (IS_OS_WINDOWS) ".exe" else ""
+               resolveBaseName() + if (IS_OS_WINDOWS) ".exe" else ""
     }
 
     override fun resolveDriverSearchName(tag: String): String {
+        val fileType = when {
+            IS_OS_WINDOWS -> ".zip"
+            IS_OS_LINUX   -> ".zip"
+            IS_OS_MAC     -> ".zip"
+            else          -> ""
+        }
+
+        return "${resolveBaseName()}$fileType"
+    }
+
+    private fun resolveBaseName(): String {
         val env = when {
             IS_OS_WINDOWS -> "win"
             IS_OS_LINUX   -> "linux"
@@ -707,11 +718,6 @@ class CrossBrowserTestingLocalHelper(context: ExecutionContext) : WebDriverHelpe
             else -> ""
         }
 
-        val fileType = when {
-            IS_OS_WINDOWS -> ".exe"
-            else          -> ""
-        }
-
-        return "${config.baseName}-$env$arch$fileType"
+        return "${config.baseName}-$env$arch"
     }
 }
