@@ -49,12 +49,11 @@ import static org.nexial.core.model.NexialFilterComparator.Any;
  * portions of CSV content.
  */
 public class NexialFilter implements Serializable {
+    protected String subject;
+    protected NexialFilterComparator comparator;
+    protected String controls;
+    protected List<String> controlList;
     static final String ITEM_SEP = "|";
-
-    private String subject;
-    private NexialFilterComparator comparator;
-    private String controls;
-    private List<String> controlList;
 
     public static class ListItemConverterImpl implements ListItemConverter<NexialFilter> {
         @Override
@@ -83,9 +82,16 @@ public class NexialFilter implements Serializable {
 
         if (StringUtils.isBlank(filterText)) { throw new IllegalArgumentException(errPrefix + "null"); }
 
-        String regexFilter = NexialFilterComparator.getRegexFilter();
+        // check for unary filter: true|false|!${var}|${var}
+        String unaryFilter = filterText.trim();
+        if (RegexUtils.isExact(unaryFilter, REGEX_IS_UNARY_FILTER)) {
+            // could be an unary filter
+            boolean negate = StringUtils.startsWith(unaryFilter, "!${") || StringUtils.startsWith(unaryFilter, "not ");
+            return new TrueOrFalseFilter(unaryFilter, negate);
+        }
 
         // general pattern: [subject] [comparator] [control]
+        String regexFilter = NexialFilterComparator.getRegexFilter();
         if (!RegexUtils.isExact(filterText, regexFilter, true)) {
             throw new IllegalArgumentException(errPrefix + "does not match required format");
         }
@@ -304,17 +310,17 @@ public class NexialFilter implements Serializable {
         }
     }
 
-    public static boolean isEqualsTextOrNumeric(String expected, String actual) {
+    @Override
+    public String toString() {
+        return subject + (comparator == Any ? " MATCH ANY " : comparator) + StringUtils.defaultString(controls);
+    }
+
+    protected static boolean isEqualsTextOrNumeric(String expected, String actual) {
         if (StringUtils.equals(expected, actual)) { return true; }
 
         return NumberUtils.isCreatable(numericReady(expected)) &&
                NumberUtils.isCreatable(numericReady(actual)) &&
                toDouble(expected) == toDouble(actual);
-    }
-
-    @Override
-    public String toString() {
-        return subject + (comparator == Any ? " MATCH ANY " : comparator) + StringUtils.defaultString(controls);
     }
 
     /**

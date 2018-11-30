@@ -317,7 +317,7 @@ public final class NexialConst {
     public static final String CTRL_KEY_START = "{";
     public static final String CTRL_KEY_END = "}";
 
-    // CSVTransformer filter specific
+    // filter specific
     public static final String FILTER_REGEX_PATTERN = "\\s+(not in|in|between|match|is|is not)\\s+(\\[.+?\\])";
     public static final String FILTER_TEMP_DELIM1 = "~!2I3&f6n@S#*!~";
     public static final String FILTER_TEMP_DELIM2 = "~!#*2!Fn3&6g@!~";
@@ -1099,6 +1099,9 @@ public final class NexialConst {
         public static final String IS_OPEN_TAG = "[";
         public static final String IS_CLOSE_TAG = "]";
         public static final String ANY_FIELD = "[ANY FIELD]";
+
+        public static final String REGEX_IS_UNARY_FILTER =
+            "(true|false|\\$\\{[^\\}]+\\}|\\!\\$\\{[^\\}]+\\}|not\\s+\\$\\{[^\\}]+\\})";
 
         private FlowControls() {}
     }

@@ -232,6 +232,12 @@ public class NexialFilterTest {
     }
 
     @Test
+    public void isMatchUnaryFilter() {
+        Assert.assertTrue(NexialFilter.newInstance("true").isMatch("true"));
+        Assert.assertTrue(NexialFilter.newInstance("false").isMatch("false"));
+    }
+
+    @Test
     public void parseChainedFilter() {
 
         // Equal("="),

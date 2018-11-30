@@ -52,6 +52,22 @@ public class FlowControlTest {
     }
 
     @Test
+    public void parseToMap_unary() {
+        Map<Directive, FlowControl> subjects = FlowControl.parse("SkipIf(${bool_condition})");
+        Assert.assertNotNull(subjects);
+        Assert.assertEquals(1, subjects.size());
+
+        FlowControl subject = subjects.get(SkipIf);
+        Assert.assertNotNull(subject);
+        Assert.assertEquals(SkipIf, subject.getDirective());
+
+        NexialFilterList conditions = subject.getConditions();
+        Assert.assertNotNull(conditions);
+        Assert.assertEquals(1, conditions.size());
+        Assert.assertEquals("${bool_condition}", conditions.get(0).toString());
+    }
+
+    @Test
     public void parseToMap_ProceedIf() {
         Map<Directive, FlowControl> subjects = FlowControl.parse("ProceedIf(var1 = \"a\")");
         Assert.assertNotNull(subjects);

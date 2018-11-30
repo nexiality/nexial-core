@@ -65,6 +65,8 @@ public enum NexialFilterComparator {
     Match(" match ", 1, String.class, 3.8),
     HasLengthOf(" has length of ", 1, Number.class, 3.9),
 
+    TrueOrFalse(null, 0, Boolean.class, 4.0),
+
     Any(null, 0, null, 10);
 
     private static final List<String> REQUIRED_WRAP_SPACE = Arrays.asList(">", ">=", "<", "<=", "=", "!=");
