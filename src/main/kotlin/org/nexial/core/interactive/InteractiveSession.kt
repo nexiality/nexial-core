@@ -18,6 +18,7 @@ package org.nexial.core.interactive
 
 import org.apache.commons.lang3.StringUtils
 import org.apache.commons.lang3.SystemUtils.USER_NAME
+import org.apache.commons.lang3.math.NumberUtils
 import org.nexial.commons.utils.EnvUtils
 import org.nexial.commons.utils.FileUtil
 import org.nexial.core.NexialConst.Data.DEF_OPEN_EXCEL_AS_DUP
@@ -141,15 +142,34 @@ data class InteractiveSession(val context: ExecutionContext) {
                         field.clear()
                         field.addAll(allActivities)
                         steps.clear()
-                    } else if (value.find { activity -> !allActivities.contains(activity) } != null) {
-                        // found invalid activity
-                        ConsoleUtils.error("Invalid activity specified: $value")
-                    } else {
-                        // all activities are valid
-                        field.clear()
-                        field.addAll(value)
-                        steps.clear()
+                        return
                     }
+
+                    val mappedActivities = mutableListOf<String>()
+                    value.forEach { activity ->
+                        if (NumberUtils.isDigits(activity)) {
+                            try {
+                                mappedActivities.add(allActivities[NumberUtils.toInt(activity)])
+                            } catch (e: IndexOutOfBoundsException) {
+                                // found invalid activity
+                                ConsoleUtils.error("Invalid activity index specified: $activity")
+                                return
+                            }
+                        } else {
+                            if (allActivities.contains(activity)) {
+                                mappedActivities.add(activity)
+                            } else {
+                                // found invalid activity
+                                ConsoleUtils.error("Invalid activity specified: $activity")
+                                return
+                            }
+                        }
+                    }
+
+                    // all activities are valid
+                    field.clear()
+                    field.addAll(mappedActivities)
+                    steps.clear()
                 }
             }
         }

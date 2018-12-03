@@ -129,7 +129,7 @@ open class InteractiveConsole {
             printHeaderLine(System.out, HDR_SESSION, formatExecutionMeta(session.startTime))
             printHeaderLine(System.out, HDR_SCRIPT, formatTestScript(session.script))
             printHeaderLine(System.out, HDR_SCENARIO, session.scenario)
-            printHeaderLine(System.out, HDR_ACTIVITY, session.activities)
+            printHeaderLine(System.out, HDR_ACTIVITY, *(formatActivities(session.activities)))
             printHeaderLine(System.out, HDR_STEPS, TextUtils.toString(session.steps, ","))
 
             printConsoleSectionSeparator(System.out, "~~options", FILLER)
@@ -217,85 +217,6 @@ open class InteractiveConsole {
             printConsoleHeaderBottom(System.out, ConsoleUtils.FILLER)
         }
 
-        private fun printMenu(prefix: String, menuIdentifier: MenuIdentifier, vararg menus: String) {
-            if (ArrayUtils.isEmpty(menus)) return
-
-            var charPrinted = 0
-
-            CONSOLE.print(MARGIN_LEFT)
-            CONSOLE.print(prefix)
-            charPrinted += MARGIN_LEFT.length + prefix.length
-
-            val regex = menuIdentifier.regex
-            for (menu in menus) {
-                charPrinted += menu.length
-                val key = RegexUtils.firstMatches(menu, regex)
-                if (StringUtils.isBlank(key)) {
-                    CONSOLE.print(menu)
-                } else {
-                    val beforeKey = StringUtils.substringBefore(menu, key)
-                    if (StringUtils.isNotEmpty(beforeKey)) CONSOLE.print(beforeKey)
-
-                    CPRINTER.print(key, UNDERLINE, FColor.BLACK, BColor.WHITE)
-                    CPRINTER.clear()
-
-                    val afterKey = StringUtils.substringAfter(menu, key)
-                    if (StringUtils.isNotEmpty(afterKey)) CONSOLE.print(afterKey)
-                }
-            }
-
-            CONSOLE.print(StringUtils.repeat(' ', PROMPT_LINE_WIDTH - charPrinted - 1))
-            CONSOLE.println(MARGIN_RIGHT)
-        }
-
-        protected fun printReferenceData(header: String, refs: Map<String, String>) {
-            if (MapUtils.isEmpty(refs)) return
-
-            val header1 = "[$header]"
-
-            CONSOLE.print(MARGIN_LEFT)
-            CONSOLE.print(SUB1_START)
-            CPRINTER.print(header1, UNDERLINE, FColor.CYAN, BColor.NONE)
-            CPRINTER.clear()
-
-            val fillerLength = LEFT_MARGIN_L3_HEADER - header1.length
-            CONSOLE.print(StringUtils.repeat(" ", fillerLength))
-            CONSOLE.println(MARGIN_RIGHT)
-
-            refs.forEach { key, value ->
-                val refKey = SUB1_START + StringUtils.rightPad("($key)", MAX_LENGTH_REF, " ") + SUB2_END
-                printHeaderLine(System.out, refKey, value)
-            }
-        }
-
-        protected fun printStats(executionSummary: ExecutionSummary) {
-            val totalCount = executionSummary.totalSteps
-            val failCount = executionSummary.failCount
-            val skipCount = totalCount - executionSummary.executed
-
-            val total = StringUtils.leftPad(totalCount.toString(), 3)
-            val pass = StringUtils.leftPad(executionSummary.passCount.toString(), 3)
-            val fail = StringUtils.leftPad(failCount.toString(), 3)
-            val skipped = StringUtils.leftPad(skipCount.toString(), 3)
-
-            val headerLine = MARGIN_LEFT + HDR_STATS
-            val skippedStat = if (skipCount > 0) "  (SKIPPED:$skipped)" else ""
-            val statDetails = total + MULTI_SEP + pass + MULTI_SEP + fail + skippedStat
-
-            CONSOLE.print(headerLine)
-            CPRINTER.print(total, BOLD, FColor.WHITE, BColor.NONE)
-            CPRINTER.print(MULTI_SEP, Attribute.NONE, FColor.WHITE, BColor.NONE)
-            CPRINTER.print(pass, BOLD, FColor.GREEN, BColor.NONE)
-            CPRINTER.print(MULTI_SEP, Attribute.NONE, FColor.WHITE, BColor.NONE)
-            CPRINTER.print(fail, BOLD, if (failCount < 1) FColor.WHITE else FColor.RED, BColor.NONE)
-            if (skipCount > 0) CPRINTER.print(skippedStat, CLEAR, FColor.YELLOW, BColor.NONE)
-            CPRINTER.clear()
-
-            val fillerLength = LEFT_MARGIN_L2_VAL - statDetails.length
-            CONSOLE.print(StringUtils.repeat(" ", fillerLength))
-            CONSOLE.println(MARGIN_RIGHT)
-        }
-
         fun showHelp(session: InteractiveSession) {
             // tokens for template search-n-replace
             val tokens = HashMap<String, String>()
@@ -370,7 +291,92 @@ open class InteractiveConsole {
             println()
         }
 
-        protected fun resolveContent(templateKey: String, tokens: Map<String, String>): String? {
+        private fun printMenu(prefix: String, menuIdentifier: MenuIdentifier, vararg menus: String) {
+            if (ArrayUtils.isEmpty(menus)) return
+
+            var charPrinted = 0
+
+            CONSOLE.print(MARGIN_LEFT)
+            CONSOLE.print(prefix)
+            charPrinted += MARGIN_LEFT.length + prefix.length
+
+            val regex = menuIdentifier.regex
+            for (menu in menus) {
+                charPrinted += menu.length
+                val key = RegexUtils.firstMatches(menu, regex)
+                if (StringUtils.isBlank(key)) {
+                    CONSOLE.print(menu)
+                } else {
+                    val beforeKey = StringUtils.substringBefore(menu, key)
+                    if (StringUtils.isNotEmpty(beforeKey)) CONSOLE.print(beforeKey)
+
+                    CPRINTER.print(key, UNDERLINE, FColor.BLACK, BColor.WHITE)
+                    CPRINTER.clear()
+
+                    val afterKey = StringUtils.substringAfter(menu, key)
+                    if (StringUtils.isNotEmpty(afterKey)) CONSOLE.print(afterKey)
+                }
+            }
+
+            CONSOLE.print(StringUtils.repeat(' ', PROMPT_LINE_WIDTH - charPrinted - 1))
+            CONSOLE.println(MARGIN_RIGHT)
+        }
+
+        private fun printReferenceData(header: String, refs: Map<String, String>) {
+            if (MapUtils.isEmpty(refs)) return
+
+            val header1 = "[$header]"
+
+            CONSOLE.print(MARGIN_LEFT)
+            CONSOLE.print(SUB1_START)
+            CPRINTER.print(header1, UNDERLINE, FColor.CYAN, BColor.NONE)
+            CPRINTER.clear()
+
+            val fillerLength = LEFT_MARGIN_L3_HEADER - header1.length
+            CONSOLE.print(StringUtils.repeat(" ", fillerLength))
+            CONSOLE.println(MARGIN_RIGHT)
+
+            refs.forEach { key, value ->
+                val refKey = SUB1_START + StringUtils.rightPad("($key)", MAX_LENGTH_REF, " ") + SUB2_END
+                printHeaderLine(System.out, refKey, value)
+            }
+        }
+
+        private fun printStats(executionSummary: ExecutionSummary) {
+            val totalCount = executionSummary.totalSteps
+            val failCount = executionSummary.failCount
+            val skipCount = totalCount - executionSummary.executed
+
+            val total = StringUtils.leftPad(totalCount.toString(), 3)
+            val pass = StringUtils.leftPad(executionSummary.passCount.toString(), 3)
+            val fail = StringUtils.leftPad(failCount.toString(), 3)
+            val skipped = StringUtils.leftPad(skipCount.toString(), 3)
+
+            val headerLine = MARGIN_LEFT + HDR_STATS
+            val skippedStat = if (skipCount > 0) "  (SKIPPED:$skipped)" else ""
+            val statDetails = total + MULTI_SEP + pass + MULTI_SEP + fail + skippedStat
+
+            CONSOLE.print(headerLine)
+            CPRINTER.print(total, BOLD, FColor.WHITE, BColor.NONE)
+            CPRINTER.print(MULTI_SEP, Attribute.NONE, FColor.WHITE, BColor.NONE)
+            CPRINTER.print(pass, BOLD, FColor.GREEN, BColor.NONE)
+            CPRINTER.print(MULTI_SEP, Attribute.NONE, FColor.WHITE, BColor.NONE)
+            CPRINTER.print(fail, BOLD, if (failCount < 1) FColor.WHITE else FColor.RED, BColor.NONE)
+            if (skipCount > 0) CPRINTER.print(skippedStat, CLEAR, FColor.YELLOW, BColor.NONE)
+            CPRINTER.clear()
+
+            val fillerLength = LEFT_MARGIN_L2_VAL - statDetails.length
+            CONSOLE.print(StringUtils.repeat(" ", fillerLength))
+            CONSOLE.println(MARGIN_RIGHT)
+        }
+
+        private fun formatActivities(activities: MutableList<String>): Array<String> {
+            val buffer = mutableListOf<String>()
+            activities.forEachIndexed { index, activity -> buffer += "$index/$activity" }
+            return buffer.toTypedArray()
+        }
+
+        private fun resolveContent(templateKey: String, tokens: Map<String, String>): String? {
             if (StringUtils.isBlank(templateKey)) return " "
 
             var template = HELP_TEMPLATE!!.getProperty(templateKey)
