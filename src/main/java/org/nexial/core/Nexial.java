@@ -60,7 +60,7 @@ import org.nexial.core.reports.NexialMailer;
 import org.nexial.core.service.EventTracker;
 import org.nexial.core.service.ServiceLauncher;
 import org.nexial.core.utils.ConsoleUtils;
-import org.nexial.core.utils.ExecUtil;
+import org.nexial.core.utils.ExecUtils;
 import org.nexial.core.utils.InputFileUtils;
 import org.springframework.context.support.ClassPathXmlApplicationContext;
 
@@ -230,6 +230,7 @@ public class Nexial {
 
             // interactive mode, only for stepwise or blockwise execution. to be integrated into studio
             if (main.isInteractiveMode()) {
+
                 main.interact();
                 return;
             }
@@ -269,7 +270,7 @@ public class Nexial {
 
     /** read from the commandline and derive the intended execution order. */
     protected void init(String[] args) throws IOException, ParseException {
-        ExecUtil.collectCliProps(args);
+        ExecUtils.collectCliProps(args);
 
         // first things first -- do we have all the required system properties?
         String errPrefix = "System property " + NEXIAL_HOME;
@@ -280,7 +281,7 @@ public class Nexial {
                                        "unable to proceed");
         }
 
-        ConsoleUtils.log(ExecUtil.deriveJarManifest() + " starting up...");
+        ConsoleUtils.log(ExecUtils.deriveJarManifest() + " starting up...");
 
         CommandLine cmd = new DefaultParser().parse(addMsaOptions(OPTIONS), args);
 
@@ -653,7 +654,7 @@ public class Nexial {
         initSpringContext();
 
         // start of test suite (one per test plan in execution)
-        String runId = ExecUtil.deriveRunId();
+        String runId = ExecUtils.deriveRunId();
 
         ExecutionSummary summary = new ExecutionSummary();
         summary.setName(runId);
@@ -992,7 +993,7 @@ public class Nexial {
             double successRate = summary.getSuccessRate();
             String successRateString = MessageFormat.format(RATE_FORMAT, successRate);
 
-            String manifest = StringUtils.leftPad(ExecUtil.deriveJarManifest(), 15, "-");
+            String manifest = StringUtils.leftPad(ExecUtils.deriveJarManifest(), 15, "-");
             ConsoleUtils.log(
                 "\n\n" +
                 "/-END OF EXECUTION--------------------------------------------------------------\n" +

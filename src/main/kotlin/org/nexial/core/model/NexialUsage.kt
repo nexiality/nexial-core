@@ -23,8 +23,7 @@ import org.nexial.commons.utils.EnvUtils
 import org.nexial.core.NexialConst.GSON_COMPRESSED
 import org.nexial.core.NexialConst.Project.NEXIAL_HOME
 import org.nexial.core.model.ExecutionEvent.*
-import org.nexial.core.utils.CheckUtils
-import org.nexial.core.utils.ExecUtil
+import org.nexial.core.utils.ExecUtils
 import java.io.Serializable
 
 class NexialEnv(@Transient val commandline: CommandLine) : Serializable {
@@ -40,9 +39,9 @@ class NexialEnv(@Transient val commandline: CommandLine) : Serializable {
                    val country: String = USER_COUNTRY,
                    val timezone: String = USER_TIMEZONE,
                    val language: String = USER_LANGUAGE,
-                   val isRunningInCI: Boolean = CheckUtils.isRunningInCi())
+                   val isRunningInCI: Boolean = ExecUtils.isRunningInCi())
 
-    data class Execution(val manifest: String = ExecUtil.deriveJarManifest(),
+    data class Execution(val manifest: String = ExecUtils.deriveJarManifest(),
                          val home: String = System.getProperty(NEXIAL_HOME, "UNKNOWN"),
                          val cmdOption: String,
                          val runPlan: Boolean)

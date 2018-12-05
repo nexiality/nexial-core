@@ -55,7 +55,7 @@ import org.nexial.core.model.ExecutionSummary.ExecutionLevel.*
 import org.nexial.core.model.TestCase
 import org.nexial.core.model.TestScenario
 import org.nexial.core.utils.ConsoleUtils
-import org.nexial.core.utils.ExecUtil
+import org.nexial.core.utils.ExecUtils
 import java.io.File
 import java.util.*
 import javax.validation.constraints.NotNull
@@ -69,7 +69,7 @@ class NexialInteractive {
 
     fun startSession() {
         // start of test suite (one per test plan in execution)
-        val runId = ExecUtil.deriveRunId()
+        val runId = ExecUtils.deriveRunId()
 
         executionDefinition.runId = runId
         LogbackUtils.registerLogDirectory(appendLog(executionDefinition))
@@ -84,6 +84,8 @@ class NexialInteractive {
         InteractiveConsole.showMenu(session)
         processMenu(session)
     }
+
+    private val tmpComma = "~~!@!~~"
 
     private fun processMenu(session: InteractiveSession) {
         var proceed = true
@@ -130,8 +132,8 @@ class NexialInteractive {
                     if (StringUtils.isBlank(argument)) {
                         ConsoleUtils.error("No activity assigned")
                     } else {
-                        session.activities = TextUtils.toList(argument, LIST_SEP, true)
-                        session.clearSteps()
+                        session.assignActivities(TextUtils.replaceItems(TextUtils.toList(
+                                StringUtils.replace(argument, "\\,", tmpComma), LIST_SEP, true), tmpComma, ","))
                     }
                 }
 
@@ -262,7 +264,7 @@ class NexialInteractive {
             return
         }
 
-        if (CollectionUtils.isEmpty(session.activities) && CollectionUtils.isEmpty(session.steps)) {
+        if (session.activities.isEmpty() && session.steps.isEmpty()) {
             ConsoleUtils.error("No activity or test step assigned")
             return
         }
@@ -333,7 +335,7 @@ class NexialInteractive {
             // reset for this run
             scenarioSummary = resetScenarioExecutionSummary(session, targetScenario)
 
-            allPass = if (CollectionUtils.isNotEmpty(session.activities))
+            allPass = if (session.activities.isNotEmpty())
                 executeActivities(session, scenarioSummary)
             else
                 executeSteps(session, scenarioSummary)

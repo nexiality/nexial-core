@@ -33,7 +33,7 @@ import org.nexial.commons.utils.TextUtils;
 import org.nexial.core.model.ExecutionContext;
 import org.nexial.core.plugins.aws.AwsSesSettings;
 import org.nexial.core.utils.ConsoleUtils;
-import org.nexial.core.utils.ExecUtil;
+import org.nexial.core.utils.ExecUtils;
 
 import com.amazonaws.regions.Regions;
 
@@ -171,7 +171,7 @@ public class ExecutionMailConfig {
                                                                    ""));
         settings.setXmailer(StringUtils.defaultIfBlank(
             configurations.get(SES_PREFIX + AWS_XMAILER),
-            ExecUtil.deriveJarManifest() + "/" + USER_NAME + "@" + EnvUtils.getHostName()));
+            ExecUtils.deriveJarManifest() + "/" + USER_NAME + "@" + EnvUtils.getHostName()));
 
         return settings;
     }

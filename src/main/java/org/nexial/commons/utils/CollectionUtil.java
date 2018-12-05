@@ -49,17 +49,14 @@ public final class CollectionUtil {
         return genericList;
     }
 
-    public static String toString(List list, String delim) {
+    public static String toString(Collection list, String delim) {
         if (CollectionUtils.isEmpty(list)) { return ""; }
         if (delim == null) { delim = ""; }
 
         StringBuilder buffer = new StringBuilder();
-        for (int i = 0; i < list.size(); i++) {
-            buffer.append(list.get(i));
-            if (i < list.size() - 1) { buffer.append(delim); }
-        }
+        for (Object item : list) { buffer.append(item).append(delim); }
 
-        return buffer.toString();
+        return StringUtils.removeEnd(buffer.toString(), delim);
     }
 
     public static String toString(Set set, String delim) {

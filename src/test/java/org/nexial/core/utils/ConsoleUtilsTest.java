@@ -41,7 +41,8 @@ public class ConsoleUtilsTest {
 
         InteractiveSession session = new InteractiveSession(context);
         session.setExecutionDefinition(execDef);
-        session.setActivities(Arrays.asList("progressively slowing down", "Assert Nested Data Ref.", "Assert Count"));
+        session.assignActivities(
+            Arrays.asList("progressively slowing down", "Assert Nested Data Ref.", "Assert Count"));
         session.setSteps(Arrays.asList("5", "17", "6", "15", "12", "14", "14", "13", "14"));
         session.setIteration(2);
 
@@ -96,7 +97,7 @@ public class ConsoleUtilsTest {
 
     @NotNull
     private static ExecutionDefinition prepExecDef(MockExecutionContext context, String script) {
-        String runId = ExecUtil.deriveRunId();
+        String runId = ExecUtils.deriveRunId();
 
         TestProject project = new TestProject();
         project.setScriptPath(script);

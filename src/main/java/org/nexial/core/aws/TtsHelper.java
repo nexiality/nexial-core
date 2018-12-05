@@ -20,8 +20,8 @@ import java.io.InputStream;
 import javax.validation.constraints.NotNull;
 
 import org.apache.commons.lang3.StringUtils;
-import org.nexial.core.utils.CheckUtils;
 import org.nexial.core.utils.ConsoleUtils;
+import org.nexial.core.utils.ExecUtils;
 
 import com.amazonaws.AmazonClientException;
 import com.amazonaws.ClientConfiguration;
@@ -99,7 +99,7 @@ public class TtsHelper extends AwsSupport {
     public void speak(String text, boolean wait) throws JavaLayerException {
         if (StringUtils.isBlank(text)) { throw new IllegalArgumentException("No text is found; tts aborted"); }
 
-        if (CheckUtils.isRunningInZeroTouchEnv()) { return; }
+        if (ExecUtils.isRunningInZeroTouchEnv()) { return; }
 
         if (StringUtils.length(text) > MAX_TTS_LENGTH) {
             ConsoleUtils.log("truncating TTS text to " + MAX_TTS_LENGTH + " characters");

@@ -41,7 +41,7 @@ import org.nexial.core.model.ExecutionContext
 import org.nexial.core.plugins.ws.WebServiceClient
 import org.nexial.core.plugins.xml.XmlCommand
 import org.nexial.core.utils.ConsoleUtils
-import org.nexial.core.utils.ExecUtil
+import org.nexial.core.utils.ExecUtils
 import org.nexial.core.utils.JSONPath
 import java.io.File
 import java.io.File.separator
@@ -114,7 +114,7 @@ abstract class WebDriverHelper protected constructor(protected var context: Exec
             File(driverLocation).setExecutable(true)
 
             ConsoleUtils.log("[WebDriverHelper] webdriver for $browserType downloaded to $driverLocation")
-            manifest.downloadAgent = ExecUtil.deriveJarManifest()
+            manifest.downloadAgent = ExecUtils.deriveJarManifest()
         }
 
         // update metadata

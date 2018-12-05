@@ -34,7 +34,7 @@ import org.nexial.core.model.ExecutionDefinition
 import org.nexial.core.model.TestProject
 import org.nexial.core.plugins.aws.S3Command
 import org.nexial.core.utils.ConsoleUtils
-import org.nexial.core.utils.ExecUtil
+import org.nexial.core.utils.ExecUtils
 import org.nexial.core.variable.Syspath
 import java.io.File
 import java.io.File.separator
@@ -77,7 +77,7 @@ class IntegrationManager {
 
         private fun createExecDefinition(): ExecutionDefinition {
             val execDef = ExecutionDefinition()
-            execDef.runId = ExecUtil.deriveRunId()
+            execDef.runId = ExecUtils.deriveRunId()
             val project = TestProject()
             project.name = "integration"
             project.projectHome = "${System.getProperty("user.home")}$separator.nexial${separator}native"

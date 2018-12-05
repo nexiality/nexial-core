@@ -36,8 +36,8 @@ import org.nexial.core.excel.ExcelConfig;
 import org.nexial.core.model.ExecutionContext;
 import org.nexial.core.model.ExecutionDefinition;
 import org.nexial.core.model.TestProject;
-import org.nexial.core.utils.CheckUtils;
 import org.nexial.core.utils.ConsoleUtils;
+import org.nexial.core.utils.ExecUtils;
 
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
@@ -552,6 +552,8 @@ public final class NexialConst {
 
         public static final String KEY_ENABLE_LOCAL = "enablelocal";
         public static final boolean DEF_ENABLE_LOCAL = false;
+        public static final String KEY_LOCAL_START_WAITMS = "localStartWaitMs";
+        public static final long DEF_LOCAL_START_WAITMS = 5000;
 
         // project meta
         public static final String KEY_NAME = "name";
@@ -1021,7 +1023,7 @@ public final class NexialConst {
         }
 
         public static boolean isAutoOpenResult() {
-            if (CheckUtils.isRunningInZeroTouchEnv()) {
+            if (ExecUtils.isRunningInZeroTouchEnv()) {
                 ConsoleUtils.log("SKIPPING auto-open-result since Nexial is currently running in non-interactive " +
                                  "environment");
                 return false;

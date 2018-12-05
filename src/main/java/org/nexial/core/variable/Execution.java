@@ -27,7 +27,7 @@ import org.nexial.core.model.TestCase;
 import org.nexial.core.model.TestScenario;
 import org.nexial.core.model.TestStep;
 import org.nexial.core.utils.ConsoleUtils;
-import org.nexial.core.utils.ExecUtil;
+import org.nexial.core.utils.ExecUtils;
 
 import static org.apache.commons.lang3.SystemUtils.*;
 import static org.nexial.core.NexialConst.Data.CURR_ITERATION;
@@ -67,7 +67,7 @@ public class Execution {
     public String iteration(String scope) { return evaluateExecutionData(Artifact.iteration, Metadata.valueOf(scope)); }
 
     public String meta(String type) {
-        if (StringUtils.equalsIgnoreCase(type, "nexial")) { return ExecUtil.deriveJarManifest(); }
+        if (StringUtils.equalsIgnoreCase(type, "nexial")) { return ExecUtils.deriveJarManifest(); }
         if (StringUtils.equalsIgnoreCase(type, "java")) { return "Java " + JAVA_VERSION; }
         ConsoleUtils.log("Unknown 'type': " + type);
         return null;

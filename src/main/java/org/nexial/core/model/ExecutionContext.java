@@ -61,8 +61,8 @@ import org.nexial.core.plugins.pdf.CommonKeyValueIdentStrategies;
 import org.nexial.core.plugins.sound.SoundMachine;
 import org.nexial.core.reports.ExecutionMailConfig;
 import org.nexial.core.reports.NexialMailer;
-import org.nexial.core.utils.CheckUtils;
 import org.nexial.core.utils.ConsoleUtils;
+import org.nexial.core.utils.ExecUtils;
 import org.nexial.core.utils.ExecutionLogger;
 import org.nexial.core.utils.OutputFileUtils;
 import org.nexial.core.utils.TrackTimeLogs;
@@ -397,7 +397,7 @@ public class ExecutionContext {
     public CanTakeScreenshot findCurrentScreenshotAgent() { return screenshotAgent; }
 
     public boolean isInteractiveMode() {
-        return getBooleanData(OPT_INTERACTIVE, false) && !CheckUtils.isRunningInZeroTouchEnv();
+        return getBooleanData(OPT_INTERACTIVE, false) && !ExecUtils.isRunningInZeroTouchEnv();
     }
 
     public boolean isFailFast() { return getBooleanData(FAIL_FAST, DEF_FAIL_FAST) && !isInteractiveMode(); }
@@ -855,7 +855,7 @@ public class ExecutionContext {
 
     public void adjustForInteractive(InteractiveSession session) {
         String targetScenario = session.getScenario();
-        List<String> targetActivities = session.getActivities();
+        Collection<String> targetActivities = session.getActivities();
 
         List<TestScenario> filteredScenarios = new ArrayList<>();
         testScenarios.forEach(scenario -> {

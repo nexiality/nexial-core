@@ -34,7 +34,7 @@ import org.nexial.core.plugins.sound.SoundMachine;
 import org.nexial.core.reports.NexialMailer;
 import org.nexial.core.service.EventTracker;
 import org.nexial.core.utils.ConsoleUtils;
-import org.nexial.core.utils.ExecUtil;
+import org.nexial.core.utils.ExecUtils;
 
 import javazoom.jl.decoder.JavaLayerException;
 
@@ -161,7 +161,7 @@ public class ExecutionEventListener {
     private String gatherMeta() {
         String runHost = StringUtils.upperCase(EnvUtils.getHostName());
         return "From " + StringUtils.defaultString(USER_NAME, "unknown") + "@" + runHost +
-               " using " + ExecUtil.deriveJarManifest();
+               " using " + ExecUtils.deriveJarManifest();
     }
 
     private void doSms(ExecutionEvent event, String config) {

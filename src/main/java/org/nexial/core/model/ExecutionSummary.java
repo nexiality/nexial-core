@@ -44,7 +44,7 @@ import org.nexial.core.excel.ExcelAddress;
 import org.nexial.core.excel.ExcelArea;
 import org.nexial.core.excel.ExcelConfig.*;
 import org.nexial.core.utils.ConsoleUtils;
-import org.nexial.core.utils.ExecUtil;
+import org.nexial.core.utils.ExecUtils;
 
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
@@ -152,7 +152,7 @@ public class ExecutionSummary {
 
     public String getRunUser() { return runUser; }
 
-    public String getManifest() { return ExecUtil.deriveJarManifest(); }
+    public String getManifest() { return ExecUtils.deriveJarManifest(); }
 
     public long getStartTime() { return startTime; }
 
@@ -533,7 +533,7 @@ public class ExecutionSummary {
         map.put("passed", formatStat(passCount));
         map.put("failed", formatStat(failCount));
         map.put("fail-fast", failedFast + "");
-        map.put("nexial version", ExecUtil.deriveJarManifest());
+        map.put("nexial version", ExecUtils.deriveJarManifest());
         map.put("java version", JAVA_VERSION);
 
         // special case: log file is copied (NOT MOVED) to S3 with a special syntax here (markdown-like)

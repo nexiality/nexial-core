@@ -27,6 +27,7 @@ import javax.validation.constraints.NotNull;
 import org.apache.commons.lang3.BooleanUtils;
 import org.apache.commons.lang3.RandomStringUtils;
 import org.apache.commons.lang3.StringUtils;
+import org.apache.commons.lang3.math.NumberUtils;
 import org.nexial.commons.proc.RuntimeUtils;
 import org.nexial.commons.utils.web.URLEncodingUtils;
 import org.nexial.core.model.ExecutionContext;
@@ -140,13 +141,17 @@ public class CrossBrowserTestingHelper extends CloudWebTestingPlatform {
 
             RuntimeUtils.terminateInstance(cbtlocal);
 
+            long waitMs = NumberUtils.toLong(config.remove(KEY_LOCAL_START_WAITMS), DEF_LOCAL_START_WAITMS);
+
             // start cbt local, but wait (3s) for it to start up completely.
             // Command line: 'cbt_tunnels --username USERNAME --authkey AUTHKEY'
             ConsoleUtils.log("starting new instance of " + cbtlocal + "...");
             RuntimeUtils.runAppNoWait(driver.getParent(),
                                       driver.getName(),
                                       Arrays.asList("--username", username, "--authkey", authkey));
-            Thread.sleep(3000);
+
+            ConsoleUtils.log("waiting for " + cbtlocal + " to start/stabilize: " + waitMs + "ms");
+            Thread.sleep(waitMs);
             isRunningLocal = true;
             localExeName = driver.getName();
         } catch (IOException | InterruptedException e) {

@@ -26,7 +26,7 @@ import org.nexial.core.NexialConst.SUBDIR_LOGS
 import org.nexial.core.model.ExecutionContext
 import org.nexial.core.model.ExecutionDefinition
 import org.nexial.core.model.TestProject
-import org.nexial.core.utils.ExecUtil
+import org.nexial.core.utils.ExecUtils
 import org.springframework.boot.ExitCodeGenerator
 import org.springframework.boot.SpringApplication
 import org.springframework.boot.autoconfigure.EnableAutoConfiguration
@@ -67,7 +67,7 @@ open class ServiceLauncher : SpringBootServletInitializer() {
             Companion.args += args
 
             // 1. create `service` project
-            val runId = ExecUtil.deriveRunId()
+            val runId = ExecUtils.deriveRunId()
             val project = resolveProject()
 
             // 2. register log directory and system properties

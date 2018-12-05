@@ -142,6 +142,15 @@ public final class TextUtils {
         return replaced;
     }
 
+    public static List<String> replaceItems(List<String> list, String find, String replaceWith) {
+        if (CollectionUtils.isEmpty(list)) { return list; }
+        if (StringUtils.isEmpty(find)) { return list; }
+
+        List<String> newList = new ArrayList<>(list.size());
+        list.forEach(item -> newList.add(StringUtils.replace(item, find, replaceWith)));
+        return newList;
+    }
+
     public static String insert(String text, int position, String extra) {
         if (StringUtils.isBlank(text)) { return text; }
         if (StringUtils.isEmpty(extra)) { return text; }
@@ -472,7 +481,7 @@ public final class TextUtils {
     }
 
     @NotNull
-    public static String toString(List list, String delim) { return CollectionUtil.toString(list, delim); }
+    public static String toString(Collection list, String delim) { return CollectionUtil.toString(list, delim); }
 
     @NotNull
     public static String toString(List<?> list, String delim, String prefix, String suffix) {

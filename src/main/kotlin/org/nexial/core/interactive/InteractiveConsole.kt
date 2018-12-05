@@ -56,6 +56,7 @@ import org.nexial.core.model.ExecutionSummary.ExecutionLevel.STEP
 import org.nexial.core.utils.ConsoleUtils
 import org.nexial.core.utils.ConsoleUtils.*
 import java.io.IOException
+import java.lang.System.out
 import java.util.*
 
 open class InteractiveConsole {
@@ -125,14 +126,14 @@ open class InteractiveConsole {
                 return
             }
 
-            printConsoleHeaderTop(System.out, "NEXIAL INTERACTIVE", FILLER)
-            printHeaderLine(System.out, HDR_SESSION, formatExecutionMeta(session.startTime))
-            printHeaderLine(System.out, HDR_SCRIPT, formatTestScript(session.script))
-            printHeaderLine(System.out, HDR_SCENARIO, session.scenario)
-            printHeaderLine(System.out, HDR_ACTIVITY, *(formatActivities(session.activities)))
-            printHeaderLine(System.out, HDR_STEPS, TextUtils.toString(session.steps, ","))
+            printConsoleHeaderTop(out, "NEXIAL INTERACTIVE", FILLER)
+            printHeaderLine(out, HDR_SESSION, formatExecutionMeta(session.startTime))
+            printHeaderLine(out, HDR_SCRIPT, formatTestScript(session.script))
+            printHeaderLine(out, HDR_SCENARIO, session.scenario)
+            printHeaderLine(out, HDR_ACTIVITY, session.formatActivities(session.activities))
+            printHeaderLine(out, HDR_STEPS, TextUtils.toString(session.steps, ","))
 
-            printConsoleSectionSeparator(System.out, "~~options", FILLER)
+            printConsoleSectionSeparator(out, "~~options", FILLER)
             printMenu(CMD_START, DIGIT, "$SET_SCRIPT <script>   ${CMD_END}assign test script")
             printMenu(CMD_START, DIGIT, "$SET_DATA <data file>${CMD_END}assign data file")
             printMenu(CMD_START, DIGIT, "$SET_SCENARIO <scenario> ${CMD_END}assign scenario")
@@ -152,7 +153,7 @@ open class InteractiveConsole {
                       StringUtils.rightPad("${OPEN_DATA}ata file open", 18),
                       StringUtils.rightPad("${HELP}elp", 12),
                       StringUtils.rightPad("${EXIT}uit", 12))
-            printConsoleHeaderBottom(System.out, FILLER)
+            printConsoleHeaderBottom(out, FILLER)
         }
 
         fun showRun(session: InteractiveSession?) {
@@ -174,15 +175,15 @@ open class InteractiveConsole {
         }
 
         fun showRun(scenarioSummary: ExecutionSummary, session: InteractiveSession) {
-            printConsoleHeaderTop(System.out, "NEXIAL INTERACTIVE", ConsoleUtils.FILLER)
-            printHeaderLine(System.out, HDR_EXECUTED, formatExecutionMeta(scenarioSummary.startTime))
-            printHeaderLine(System.out, HDR_SCRIPT, formatTestScript(session.script))
-            printHeaderLine(System.out, HDR_SCENARIO, scenarioSummary.name)
+            printConsoleHeaderTop(out, "NEXIAL INTERACTIVE", ConsoleUtils.FILLER)
+            printHeaderLine(out, HDR_EXECUTED, formatExecutionMeta(scenarioSummary.startTime))
+            printHeaderLine(out, HDR_SCRIPT, formatTestScript(session.script))
+            printHeaderLine(out, HDR_SCENARIO, scenarioSummary.name)
 
             val error = session.exception
-            if (error != null) printHeaderLine(System.out, HDR_EXCEPTION, error.message)
+            if (error != null) printHeaderLine(out, HDR_EXCEPTION, error.message)
 
-            printConsoleSectionSeparator(System.out, FILLER)
+            printConsoleSectionSeparator(out, FILLER)
 
             val activitySummaries = scenarioSummary.nestedExecutions
             activitySummaries.forEach { activity ->
@@ -192,29 +193,29 @@ open class InteractiveConsole {
                 val duration = DateUtility.formatStopWatchTime(endTime - startTime)
 
                 val header = if (activity.executionLevel == STEP) HDR_STEPS else HDR_ACTIVITY
-                printHeaderLine(System.out, header, activity.name)
-                printHeaderLine(System.out, HDR_TIMESPAN, timeSpan)
-                printHeaderLine(System.out, HDR_DURATION, duration)
+                printHeaderLine(out, header, activity.name)
+                printHeaderLine(out, HDR_TIMESPAN, timeSpan)
+                printHeaderLine(out, HDR_DURATION, duration)
                 printStats(activity)
             }
 
-            printConsoleSectionSeparator(System.out, FILLER)
+            printConsoleSectionSeparator(out, FILLER)
 
             val endTime = scenarioSummary.endTime
             val startTime = scenarioSummary.startTime
             val timeSpan = formatLongDate(startTime) + " - " + formatLongDate(endTime)
             val duration = DateUtility.formatStopWatchTime(endTime - startTime)
-            printHeaderLine(System.out, HDR_SUMMARY, scenarioSummary.name)
-            printHeaderLine(System.out, HDR_TIMESPAN, timeSpan)
-            printHeaderLine(System.out, HDR_DURATION, duration)
-            printHeaderLine(System.out, HDR_ITERATION, session.iteration.toString())
+            printHeaderLine(out, HDR_SUMMARY, scenarioSummary.name)
+            printHeaderLine(out, HDR_TIMESPAN, timeSpan)
+            printHeaderLine(out, HDR_DURATION, duration)
+            printHeaderLine(out, HDR_ITERATION, session.iteration.toString())
             printStats(scenarioSummary)
 
             val context = session.context
             printReferenceData("script reference data", context.gatherScriptReferenceData())
             printReferenceData("scenario reference data", scenarioSummary.referenceData)
 
-            printConsoleHeaderBottom(System.out, ConsoleUtils.FILLER)
+            printConsoleHeaderBottom(out, ConsoleUtils.FILLER)
         }
 
         fun showHelp(session: InteractiveSession) {
@@ -238,55 +239,48 @@ open class InteractiveConsole {
             tokens["cmd.quit"] = EXIT
             tokens["script"] = session.script ?: ""
             tokens["scenario"] = session.scenario ?: ""
-            tokens["activities"] = TextUtils.toString(session.activities, ", ")
+            tokens["activities"] = TextUtils.toString(session.formatActivities(session.activities), ", ")
             tokens["steps"] = TextUtils.toString(session.steps, ", ")
 
-            printConsoleHeaderTop(System.out, "NEXIAL INTERACTIVE HELP", FILLER)
-            printHeaderLine(System.out, "INTRO ", resolveContent("intro", tokens))
-            printHeaderLine(System.out, "NOTE- ", resolveContent("notes.1", tokens))
-            printHeaderLine(System.out, "    - ", resolveContent("notes.2", tokens))
-            printHeaderLine(System.out, "    - ", resolveContent("notes.3", tokens))
-            printHeaderLine(System.out, "    - ", resolveContent("notes.4", tokens))
+            printConsoleHeaderTop(out, "NEXIAL INTERACTIVE HELP", FILLER)
+            printHeaderLine(out, "INTRO ", resolveContent("intro", tokens))
+            printHeaderLine(out, "NOTE- ", resolveContent("notes.1", tokens))
+            printHeaderLine(out, "    - ", resolveContent("notes.2", tokens))
+            printHeaderLine(out, "    - ", resolveContent("notes.3", tokens))
+            printHeaderLine(out, "    - ", resolveContent("notes.4", tokens))
 
-            printConsoleSectionSeparator(System.out, "~~informational", FILLER)
-            printHeaderLine(System.out, HDR_SESSION, resolveContent("session", tokens))
-            printHeaderLine(System.out, HDR_SCRIPT, resolveContent("script", tokens))
-            printHeaderLine(System.out, HDR_SCENARIO, resolveContent("scenario", tokens))
-            printHeaderLine(System.out, HDR_ACTIVITY, resolveContent("activity", tokens))
-            printHeaderLine(System.out, HDR_STEPS, resolveContent("steps", tokens))
+            printConsoleSectionSeparator(out, "~~informational", FILLER)
+            printHeaderLine(out, HDR_SESSION, resolveContent("session", tokens))
+            printHeaderLine(out, HDR_SCRIPT, resolveContent("script", tokens))
+            printHeaderLine(out, HDR_SCENARIO, resolveContent("scenario", tokens))
+            printHeaderLine(out, HDR_ACTIVITY, resolveContent("activity", tokens))
+            printHeaderLine(out, HDR_STEPS, resolveContent("steps", tokens))
 
-            printConsoleSectionSeparator(System.out, "~~options", FILLER)
-            printHeaderLine(System.out, "$CMD_START$SET_SCRIPT <script>   $CMD_END",
-                            resolveContent("command.script", tokens))
-            printHeaderLine(System.out, "$CMD_START$SET_DATA <data file>$CMD_END",
-                            resolveContent("command.data", tokens))
-            printHeaderLine(System.out, "$CMD_START$SET_SCENARIO <scenario> $CMD_END",
+            printConsoleSectionSeparator(out, "~~options", FILLER)
+            printHeaderLine(out, "$CMD_START$SET_SCRIPT <script>   $CMD_END", resolveContent("command.script", tokens))
+            printHeaderLine(out, "$CMD_START$SET_DATA <data file>$CMD_END", resolveContent("command.data", tokens))
+            printHeaderLine(out, "$CMD_START$SET_SCENARIO <scenario> $CMD_END",
                             resolveContent("command.scenario", tokens))
-            printHeaderLine(System.out, "$CMD_START$SET_ITER <iteration>$CMD_END",
-                            resolveContent("command.iteration", tokens))
-            printHeaderLine(System.out, "$CMD_START$SET_ACTIVITY <activity> $CMD_END",
+            printHeaderLine(out, "$CMD_START$SET_ITER <iteration>$CMD_END", resolveContent("command.iteration", tokens))
+            printHeaderLine(out, "$CMD_START$SET_ACTIVITY <activity> $CMD_END",
                             resolveContent("command.activity", tokens))
-            printHeaderLine(System.out, "$CMD_START$SET_STEPS <step>     $CMD_END",
-                            resolveContent("command.steps", tokens))
-            printHeaderLine(System.out, "$CMD_START$RELOAD_SCRIPT            $CMD_END",
+            printHeaderLine(out, "$CMD_START$SET_STEPS <step>     $CMD_END", resolveContent("command.steps", tokens))
+            printHeaderLine(out, "$CMD_START$RELOAD_SCRIPT            $CMD_END",
                             resolveContent("command.reloadscript", tokens))
-            printHeaderLine(System.out, "$CMD_START$RELOAD_DATA            $CMD_END",
+            printHeaderLine(out, "$CMD_START$RELOAD_DATA            $CMD_END",
                             resolveContent("command.reloaddata", tokens))
-            printHeaderLine(System.out, "$CMD_START$RELOAD_PROJPROP            $CMD_END",
+            printHeaderLine(out, "$CMD_START$RELOAD_PROJPROP            $CMD_END",
                             resolveContent("command.reloadprojprop", tokens))
-            printHeaderLine(System.out, " ($RELOAD_MENU)eload      $CMD_END",
-                            resolveContent("command.reloadmenu", tokens))
-            printHeaderLine(System.out, "e($RUN)ecute      $CMD_END", resolveContent("command.run", tokens))
-            printHeaderLine(System.out, " ($INSPECT)nspect     $CMD_END", resolveContent("command.inspect", tokens))
-            printHeaderLine(System.out, " ($ALL_STEP)ll steps   $CMD_END", resolveContent("command.allstep", tokens))
-            printHeaderLine(System.out, " ($OPEN_SCRIPT)cript open $CMD_END",
-                            resolveContent("command.openscript", tokens))
-            printHeaderLine(System.out, " ($OPEN_DATA)ata file...$CMD_END",
-                            resolveContent("command.opendata", tokens))
-            printHeaderLine(System.out, " ($HELP)elp        $CMD_END", resolveContent("command.help", tokens))
-            printHeaderLine(System.out, " ($EXIT)uit        $CMD_END", resolveContent("command.exit", tokens))
+            printHeaderLine(out, " ($RELOAD_MENU)eload      $CMD_END", resolveContent("command.reloadmenu", tokens))
+            printHeaderLine(out, "e($RUN)ecute      $CMD_END", resolveContent("command.run", tokens))
+            printHeaderLine(out, " ($INSPECT)nspect     $CMD_END", resolveContent("command.inspect", tokens))
+            printHeaderLine(out, " ($ALL_STEP)ll steps   $CMD_END", resolveContent("command.allstep", tokens))
+            printHeaderLine(out, " ($OPEN_SCRIPT)cript open $CMD_END", resolveContent("command.openscript", tokens))
+            printHeaderLine(out, " ($OPEN_DATA)ata file...$CMD_END", resolveContent("command.opendata", tokens))
+            printHeaderLine(out, " ($HELP)elp        $CMD_END", resolveContent("command.help", tokens))
+            printHeaderLine(out, " ($EXIT)uit        $CMD_END", resolveContent("command.exit", tokens))
 
-            printConsoleHeaderBottom(System.out, FILLER)
+            printConsoleHeaderBottom(out, FILLER)
             println()
             println()
         }
@@ -338,7 +332,7 @@ open class InteractiveConsole {
 
             refs.forEach { key, value ->
                 val refKey = SUB1_START + StringUtils.rightPad("($key)", MAX_LENGTH_REF, " ") + SUB2_END
-                printHeaderLine(System.out, refKey, value)
+                printHeaderLine(out, refKey, value)
             }
         }
 
@@ -368,12 +362,6 @@ open class InteractiveConsole {
             val fillerLength = LEFT_MARGIN_L2_VAL - statDetails.length
             CONSOLE.print(StringUtils.repeat(" ", fillerLength))
             CONSOLE.println(MARGIN_RIGHT)
-        }
-
-        private fun formatActivities(activities: MutableList<String>): Array<String> {
-            val buffer = mutableListOf<String>()
-            activities.forEachIndexed { index, activity -> buffer += "$index/$activity" }
-            return buffer.toTypedArray()
         }
 
         private fun resolveContent(templateKey: String, tokens: Map<String, String>): String? {

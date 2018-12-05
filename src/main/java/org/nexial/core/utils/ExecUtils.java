@@ -19,6 +19,8 @@ package org.nexial.core.utils;
 
 import java.io.IOException;
 import java.lang.management.ManagementFactory;
+import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.Method;
 import java.net.URL;
 import java.util.Arrays;
 import java.util.Enumeration;
@@ -36,68 +38,40 @@ import org.nexial.core.Nexial;
 
 import static org.nexial.core.NexialConst.Data.DEF_TEXT_DELIM;
 import static org.nexial.core.NexialConst.Data.SCRIPT_REF_PREFIX;
-import static org.nexial.core.NexialConst.*;
 import static org.nexial.core.NexialConst.Integration.*;
+import static org.nexial.core.NexialConst.Jenkins.*;
+import static org.nexial.core.NexialConst.*;
+import static org.nexial.core.NexialConst.Project.NEXIAL_HOME;
 
-public final class ExecUtil {
+public final class ExecUtils {
     public static final String PRODUCT = "nexial";
     public static final String JAVA_OPT = "JAVA_OPT";
     public static final String RUNTIME_ARGS = "runtime args";
     public static final List<String> IGNORED_CLI_OPT = Arrays.asList(
-        "awt.",
-        "java.",
+        "awt.", "java.",
         "idea.test.",
         "org.gradle.",
 
-        "file.encoding",
-        "file.separator",
-        "line.separator",
-        "path.separator",
+        "file.encoding", "file.separator", "line.separator", "path.separator",
 
-        "ftp.nonProxyHosts",
-        "gopherProxySet",
-        "http.nonProxyHosts",
-        "socksNonProxyHosts",
+        "ftp.nonProxyHosts", "gopherProxySet", "http.nonProxyHosts", "socksNonProxyHosts",
 
-        "nexial-mailer.",
-        "nexial.3rdparty.logpath",
-        "nexial.jdbc.",
-        "nexial.home",
-        "nexial.dataBase",
-        "nexial.defaultOutBase",
-        "nexial.outputCloudBase",
-        "nexial.scriptBase",
-        "nexial.planBase",
-        "site-name",
-        Integration.SMS_PREFIX,
-        MAIL_PREFIX,
-        OTC_PREFIX,
+        "nexial-mailer.", "nexial.3rdparty.logpath", "nexial.jdbc.", NEXIAL_HOME, OPT_DATA_DIR, OPT_DEF_OUT_DIR,
+        OPT_CLOUD_OUTPUT_BASE, OPT_SCRIPT_DIR, OPT_PLAN_DIR, "site-name", SMS_PREFIX, MAIL_PREFIX, OTC_PREFIX,
         TTS_PREFIX,
 
-        "sun.arch",
-        "sun.boot",
-        "sun.cpu",
-        "sun.desktop",
-        "sun.font",
-        "sun.io",
-        "sun.java",
-        "sun.jnu",
-        "sun.management",
-        "sun.os",
-        "sun.stderr.encoding",
-        "sun.stdout.encoding",
+        "sun.arch", "sun.boot", "sun.cpu", "sun.desktop", "sun.font", "sun.io", "sun.java", "sun.jnu", "sun.management",
+        "sun.os", "sun.stderr.encoding", "sun.stdout.encoding",
 
-        "user.country",
-        "user.dir",
-        "user.home",
-        "user.language",
-        "user.variant",
+        "user.country", "user.dir", "user.home", "user.language", "user.variant",
 
         "webdriver.");
 
+    public static final List<String> JUNIT_CLASSES = Arrays.asList("org.junit.runner.JUnitCore",
+                                                                   "org.junit.runners.ParentRunner");
     public static String manifest;
 
-    private ExecUtil() {}
+    private ExecUtils() {}
 
     @NotNull
     public static String deriveJarManifest() {
@@ -123,9 +97,9 @@ public final class ExecUtil {
                     Attributes attributes = manifest.getMainAttributes();
                     String product = attributes.getValue("Implementation-Title");
                     if (StringUtils.equals(product, PRODUCT)) {
-                        ExecUtil.manifest =
+                        ExecUtils.manifest =
                             PRODUCT + " " + StringUtils.remove(attributes.getValue("Implementation-Version"), "Build ");
-                        return ExecUtil.manifest;
+                        return ExecUtils.manifest;
                     }
                 }
             } catch (IOException e) {
@@ -185,4 +159,34 @@ public final class ExecUtil {
 
         return javaOpts;
     }
+
+    /** determine if we are running under CI (Jenkins) using current system properties */
+    public static boolean isRunningInCi() {
+        Map<String, String> environments = System.getenv();
+        return StringUtils.isNotBlank(environments.get(OPT_JENKINS_URL)) &&
+               StringUtils.isNotBlank(environments.get(OPT_JENKINS_HOME)) &&
+               StringUtils.isNotBlank(environments.get(OPT_BUILD_ID)) &&
+               StringUtils.isNotBlank(environments.get(OPT_BUILD_URL));
+    }
+
+    /** determine if we are running under JUnit framework */
+    public static boolean isRunningInJUnit() {
+        ClassLoader cl = ClassLoader.getSystemClassLoader();
+
+        // am i running via junit?
+        for (String junitClass : JUNIT_CLASSES) {
+            try {
+                Method m = ClassLoader.class.getDeclaredMethod("findLoadedClass", String.class);
+                m.setAccessible(true);
+                Object loaded = m.invoke(cl, junitClass);
+                if (loaded != null) { return true; }
+            } catch (NoSuchMethodException | IllegalAccessException | InvocationTargetException e) {
+                // probably not loaded... ignore error; it's probably not critical...
+            }
+        }
+
+        return false;
+    }
+
+    public static boolean isRunningInZeroTouchEnv() { return isRunningInCi() || isRunningInJUnit(); }
 }

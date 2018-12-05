@@ -28,7 +28,7 @@ import org.nexial.core.IntegrationConfigException;
 import org.nexial.core.model.ExecutionContext;
 import org.nexial.core.model.StepResult;
 import org.nexial.core.plugins.base.BaseCommand;
-import org.nexial.core.utils.CheckUtils;
+import org.nexial.core.utils.ExecUtils;
 
 import javazoom.jl.decoder.JavaLayerException;
 
@@ -61,7 +61,7 @@ public class SoundCommand extends BaseCommand {
     }
 
     public StepResult laser(String repeats) throws LineUnavailableException {
-        if (CheckUtils.isRunningInZeroTouchEnv()) {
+        if (ExecUtils.isRunningInZeroTouchEnv()) {
             return StepResult.skipped("Current running in non-interactive environment");
         }
 

@@ -25,8 +25,8 @@ import org.nexial.commons.utils.FileUtil;
 import org.nexial.commons.utils.ResourceUtils;
 import org.nexial.core.IntegrationConfigException;
 import org.nexial.core.aws.TtsHelper;
-import org.nexial.core.utils.CheckUtils;
 import org.nexial.core.utils.ConsoleUtils;
+import org.nexial.core.utils.ExecUtils;
 
 import javazoom.jl.decoder.JavaLayerException;
 import javazoom.jl.player.Player;
@@ -84,7 +84,7 @@ public class SoundMachine {
     public boolean isReadyFroTTS() { return tts != null && tts.isReadyForUse(); }
 
     public void speak(String text, boolean wait) throws JavaLayerException, IntegrationConfigException {
-        if (CheckUtils.isRunningInZeroTouchEnv()) { return; }
+        if (ExecUtils.isRunningInZeroTouchEnv()) { return; }
 
         if (tts == null || !tts.isReadyForUse()) { throw new IntegrationConfigException(notReadMessage); }
 
@@ -112,7 +112,7 @@ public class SoundMachine {
     protected void init() { if (tts != null && tts.isReadyForUse()) { tts.init(); } }
 
     private void playMp3(String audioFile) throws FileNotFoundException, JavaLayerException {
-        if (CheckUtils.isRunningInZeroTouchEnv()) { return; }
+        if (ExecUtils.isRunningInZeroTouchEnv()) { return; }
 
         BufferedInputStream bis;
         if (FileUtil.isFileReadable(audioFile, 5)) {
@@ -136,7 +136,7 @@ public class SoundMachine {
     }
 
     private void playWav(String audioFile) throws IOException, UnsupportedAudioFileException, LineUnavailableException {
-        if (CheckUtils.isRunningInZeroTouchEnv()) { return; }
+        if (ExecUtils.isRunningInZeroTouchEnv()) { return; }
 
         AudioInputStream audioIn;
         if (FileUtil.isFileReadable(audioFile, 5)) {

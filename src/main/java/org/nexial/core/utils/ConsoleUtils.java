@@ -352,7 +352,7 @@ public final class ConsoleUtils {
     }
 
     private static boolean isPauseReady() {
-        if (CheckUtils.isRunningInZeroTouchEnv()) {
+        if (ExecUtils.isRunningInZeroTouchEnv()) {
             log("SKIPPING pause-for-step since Nexial is currently running in non-interactive environment");
             return false;
         } else {

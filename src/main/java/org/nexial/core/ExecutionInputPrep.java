@@ -39,7 +39,7 @@ import org.nexial.core.model.ExecutionContext;
 import org.nexial.core.model.ExecutionDefinition;
 import org.nexial.core.model.TestData;
 import org.nexial.core.utils.ConsoleUtils;
-import org.nexial.core.utils.ExecUtil;
+import org.nexial.core.utils.ExecUtils;
 import org.nexial.core.utils.OutputFileUtils;
 
 import static java.io.File.separator;
@@ -50,7 +50,7 @@ import static org.nexial.core.NexialConst.NAMESPACE;
 import static org.nexial.core.NexialConst.Project.appendCapture;
 import static org.nexial.core.NexialConst.Project.appendLog;
 import static org.nexial.core.excel.ExcelConfig.StyleConfig.*;
-import static org.nexial.core.utils.ExecUtil.IGNORED_CLI_OPT;
+import static org.nexial.core.utils.ExecUtils.IGNORED_CLI_OPT;
 
 /**
  * This class serves 2 purposes:
@@ -196,7 +196,7 @@ public class ExecutionInputPrep {
 
         SortedMap<String, String> data = new TreeMap<>(testData.getAllValue(iteration));
         testData.getAllSettings().forEach(data::put);
-        data.putAll(ExecUtil.deriveJavaOpts());
+        data.putAll(ExecUtils.deriveJavaOpts());
 
         Properties sysprops = System.getProperties();
         if (MapUtils.isNotEmpty(sysprops)) {

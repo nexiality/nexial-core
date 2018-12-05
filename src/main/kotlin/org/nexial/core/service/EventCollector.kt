@@ -26,8 +26,8 @@ import org.nexial.core.NexialConst.GSON_COMPRESSED
 import org.nexial.core.plugins.ws.WebServiceClient
 import org.nexial.core.service.EventUtils.postfix
 import org.nexial.core.service.EventUtils.storageLocation
-import org.nexial.core.utils.CheckUtils
 import org.nexial.core.utils.ConsoleUtils
+import org.nexial.core.utils.ExecUtils
 import java.io.File
 import java.text.DateFormat
 import java.text.SimpleDateFormat
@@ -35,7 +35,7 @@ import java.text.SimpleDateFormat
 class EventCollector(val url: String, val verbose: Boolean, val enabled: Boolean) : Thread() {
     private val sleepMs = 250L
     private val wsClient = WebServiceClient(null)
-    private val shouldProceed = enabled && !CheckUtils.isRunningInJUnit()
+    private val shouldProceed = enabled && !ExecUtils.isRunningInJUnit()
     private val filenameDateFormat: DateFormat = SimpleDateFormat("yyyyMMdd_HHmmss_SSS")
 
     init {
