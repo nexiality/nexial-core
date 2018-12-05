@@ -137,21 +137,21 @@ public class CrossBrowserTestingHelper extends CloudWebTestingPlatform {
             WebDriverHelper helper = WebDriverHelper.Companion.newInstance(crossbrowsertesting, context);
             File driver = helper.resolveDriver();
 
-            String cbtlocal = helper.config.getBaseName();
+            String cbtLocal = helper.config.getBaseName();
 
-            RuntimeUtils.terminateInstance(cbtlocal);
+            RuntimeUtils.terminateInstance(cbtLocal);
 
             long waitMs = NumberUtils.toLong(config.remove(KEY_LOCAL_START_WAITMS), DEF_LOCAL_START_WAITMS);
 
             // start cbt local, but wait (3s) for it to start up completely.
             // Command line: 'cbt_tunnels --username USERNAME --authkey AUTHKEY'
-            ConsoleUtils.log("starting new instance of " + cbtlocal + "...");
-            RuntimeUtils.runAppNoWait(driver.getParent(),
-                                      driver.getName(),
+            ConsoleUtils.log("starting new instance of " + cbtLocal + "...");
+            RuntimeUtils.runAppNoWait(driver.getParent(), driver.getName(),
                                       Arrays.asList("--username", username, "--authkey", authkey));
 
-            ConsoleUtils.log("waiting for " + cbtlocal + " to start/stabilize: " + waitMs + "ms");
+            ConsoleUtils.log("waiting for " + cbtLocal + " to start/stabilize: " + waitMs + "ms");
             Thread.sleep(waitMs);
+
             isRunningLocal = true;
             localExeName = driver.getName();
         } catch (IOException | InterruptedException e) {
