@@ -12,10 +12,9 @@
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
- *
  */
 
-package org.nexial.core;
+package org.nexial.core.model;
 
 import java.io.File;
 import java.io.IOException;
@@ -31,14 +30,12 @@ import org.apache.poi.xssf.usermodel.XSSFCellStyle;
 import org.apache.poi.xssf.usermodel.XSSFRow;
 import org.apache.poi.xssf.usermodel.XSSFSheet;
 import org.nexial.commons.utils.FileUtil;
+import org.nexial.core.ExecutionThread;
 import org.nexial.core.excel.Excel;
 import org.nexial.core.excel.Excel.Worksheet;
 import org.nexial.core.excel.ExcelAddress;
 import org.nexial.core.excel.ExcelArea;
 import org.nexial.core.excel.ExcelConfig;
-import org.nexial.core.model.ExecutionContext;
-import org.nexial.core.model.ExecutionDefinition;
-import org.nexial.core.model.TestProject;
 import org.nexial.core.utils.ConsoleUtils;
 import org.nexial.core.utils.InputFileUtils;
 
@@ -65,7 +62,7 @@ public class MacroMerger {
 
     public void setExcel(Excel excel) { this.excel = excel; }
 
-    protected void mergeMacro() throws IOException {
+    public void mergeMacro() throws IOException {
         excel.getWorkbook().setMissingCellPolicy(CREATE_NULL_AS_BLANK);
 
         // find all scenario sheets
@@ -225,8 +222,7 @@ public class MacroMerger {
             List<String> testStepRow = new ArrayList<>();
 
             // check for strikethrough (which means skip)
-            boolean shouldSkip = row.get(COL_IDX_COMMAND).getCellStyle().getFont().getStrikeout();
-            if (shouldSkip) {
+            if (isTestStepDisabled(row)) {
                 XSSFCell cellFlowControls = row.get(COL_IDX_FLOW_CONTROLS);
                 String currentFlowControls = Excel.getCellValue(cellFlowControls);
                 currentFlowControls = StringUtils.prependIfMissing(currentFlowControls, "SkipIf(true) ");
@@ -238,6 +234,10 @@ public class MacroMerger {
         });
 
         return testStepData;
+    }
+
+    public static boolean isTestStepDisabled(List<XSSFCell> row) {
+        return row.get(COL_IDX_COMMAND).getCellStyle().getFont().getStrikeout();
     }
 
     protected List<List<String>> harvestMacroSteps(String paramFile, String paramSheet, String paramMacro)

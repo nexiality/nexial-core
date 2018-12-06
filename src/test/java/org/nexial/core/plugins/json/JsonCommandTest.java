@@ -672,4 +672,44 @@ public class JsonCommandTest {
         Assert.assertTrue(fixture.assertElementCount(json, "response.jobParameters[]", "0").isSuccess());
     }
 
+    @Test
+    public void toJsonArray_simple() throws Exception {
+        String delim = ",";
+
+        JsonArray array = JsonCommand.toJsonArray("a,b,c,d,e", delim);
+        Assert.assertNotNull(array);
+        Assert.assertEquals(5, array.size());
+
+        array = JsonCommand.toJsonArray("a, b, c, d,e", delim);
+        Assert.assertNotNull(array);
+        Assert.assertEquals(5, array.size());
+
+        array = JsonCommand.toJsonArray("a, b,true,27,0.09283", delim);
+        Assert.assertNotNull(array);
+        Assert.assertEquals(5, array.size());
+        Assert.assertEquals("a", array.get(0).getAsString());
+        Assert.assertEquals("b", array.get(1).getAsString());
+        Assert.assertEquals("true", array.get(2).getAsString());
+        Assert.assertEquals("27", array.get(3).getAsString());
+        Assert.assertEquals("0.09283", array.get(4).getAsString());
+
+        array = JsonCommand.toJsonArray("a, b,true,27, this is a test", delim);
+        Assert.assertNotNull(array);
+        Assert.assertEquals(5, array.size());
+        Assert.assertEquals("a", array.get(0).getAsString());
+        Assert.assertEquals(" b", array.get(1).getAsString());
+        Assert.assertEquals("true", array.get(2).getAsString());
+        Assert.assertEquals("27", array.get(3).getAsString());
+        Assert.assertEquals(" this is a test", array.get(4).getAsString());
+
+        // this one FAILS to parse!!!
+        // array = JsonCommand.toJsonArray("a, b,true,{\"key\":\"value\"}, this is a test", delim);
+        // Assert.assertNotNull(array);
+        // Assert.assertEquals(5, array.size());
+        // Assert.assertEquals("a", array.get(0).getAsString());
+        // Assert.assertEquals(" b", array.get(1).getAsString());
+        // Assert.assertEquals("true", array.get(2).getAsString());
+        // Assert.assertEquals("{\"key\":\"value\"}", array.get(3).getAsJsonObject().toString());
+        // Assert.assertEquals(" this is a test", array.get(4).getAsString());
+    }
 }

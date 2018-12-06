@@ -20,6 +20,7 @@ package org.nexial.core.plugins.json;
 import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
+import java.util.Arrays;
 import javax.validation.constraints.NotNull;
 
 import org.apache.commons.lang3.BooleanUtils;
@@ -41,6 +42,7 @@ import com.github.fge.jsonschema.main.JsonSchemaFactory;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonParser;
+import com.google.gson.JsonSyntaxException;
 
 import static org.nexial.core.NexialConst.DEF_CHARSET;
 import static org.nexial.core.NexialConst.Data.LAST_JSON_COMPARE_RESULT;
@@ -164,29 +166,26 @@ public class JsonCommand extends BaseCommand {
         requiresNotBlank(json, "Invalid JSON", json);
         requiresNotBlank(jsonpath, "Invalid JsonPath", jsonpath);
 
-        String actual = find(json, jsonpath);
-        String expected = TextUtils.wrapIfMissing(array, "[", "]");
         boolean isExactOrder = BooleanUtils.toBoolean(exactOrder);
 
-        JsonParser jsonParser = new JsonParser();
-        JsonElement expectedJson = StringUtils.isEmpty(expected) ? new JsonArray() : jsonParser.parse(expected);
-        JsonElement actualJson = StringUtils.isEmpty(actual) ? new JsonArray() : jsonParser.parse(actual);
+        JsonArray expectedArray = toJsonArray(array, context.getTextDelim());
+        if (expectedArray == null) { return StepResult.fail("Unable to parse array '" + array + "'"); }
 
-        if (!expectedJson.isJsonArray()) { return StepResult.fail("JSON matched to '" + jsonpath + "' is NOT array"); }
+        String actual = find(json, jsonpath);
+        JsonParser jsonParser = new JsonParser();
+        JsonElement actualJson = StringUtils.isEmpty(actual) ? new JsonArray() : jsonParser.parse(actual);
         if (!actualJson.isJsonArray()) { return StepResult.fail("The expected JSON structure is NOT array"); }
 
         // by this point both `expected` and `actual` are array
-        JsonArray expectedArray = expectedJson.getAsJsonArray();
+        // JsonArray expectedArray = expectedJson.getAsJsonArray();
         JsonArray actualArray = actualJson.getAsJsonArray();
         if (expectedArray.size() == 0 && actualArray.size() == 0) { return StepResult.success("Both array are empty"); }
 
-        StepResult valueCompare = assertEqual(expectedJson, actualJson);
+        StepResult valueCompare = assertEqual(expectedArray, actualArray);
         if (valueCompare.failed() || !isExactOrder) { return valueCompare; }
 
         for (int i = 0; i < expectedArray.size(); i++) {
-            JsonElement expectedItem = expectedArray.get(i);
-            JsonElement actualItem = actualArray.get(i);
-            StepResult itemCompare = assertEqual(expectedItem, actualItem);
+            StepResult itemCompare = assertEqual(expectedArray.get(i), actualArray.get(i));
             if (itemCompare.failed()) { return itemCompare; }
         }
 
@@ -270,8 +269,7 @@ public class JsonCommand extends BaseCommand {
             context.setData(LAST_JSON_COMPARE_RESULT, differences);
             ConsoleUtils.log("JSON differences found:\n" + differences);
             addOutputAsLink("JSON comparison resulted in " + results.differenceCount() + " differences",
-                            differences,
-                            "json");
+                            differences, "json");
             return StepResult.fail("EXPECTED json is NOT equivalent to the ACTUAL json");
         } else {
             context.removeData(LAST_JSON_COMPARE_RESULT);
@@ -340,6 +338,35 @@ public class JsonCommand extends BaseCommand {
         }
 
         return count;
+    }
+
+    protected static JsonArray toJsonArray(String array, String delimiter) {
+        if (StringUtils.isEmpty(array)) { return new JsonArray(); }
+
+        JsonParser jsonParser = new JsonParser();
+        JsonElement expectedJson;
+
+        try {
+            // case 1: expected is good/parsable JSON
+            expectedJson = jsonParser.parse(TextUtils.wrapIfMissing(array, "[", "]"));
+        } catch (JsonSyntaxException e) {
+            // nope, not valid json.. move on to next evaluation...
+            // case 2: delimiter string with spaces (string with no spaces should be parsed in case 1)
+            String fixed = TextUtils.toString(
+                Arrays.asList(StringUtils.splitByWholeSeparator(array, delimiter)), ",", "\"", "\"");
+
+            try {
+                expectedJson = jsonParser.parse(TextUtils.wrapIfMissing(fixed, "[", "]"));
+            } catch (JsonSyntaxException e1) {
+                // report the original `array` as error
+                ConsoleUtils.error("Unable to parse array '" + array + "': " + e1.getMessage());
+                return null;
+            }
+        }
+
+        if (expectedJson == null || !expectedJson.isJsonArray()) { return null; }
+
+        return expectedJson.getAsJsonArray();
     }
 
     private JsonNode deriveWellformedJson(String json) {

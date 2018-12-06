@@ -37,6 +37,7 @@ import org.nexial.core.excel.ExcelConfig.StyleDecorator;
 import org.nexial.core.excel.ext.CellTextReader;
 import org.nexial.core.model.ExecutionContext;
 import org.nexial.core.model.ExecutionDefinition;
+import org.nexial.core.model.MacroMerger;
 import org.nexial.core.model.TestData;
 import org.nexial.core.utils.ConsoleUtils;
 import org.nexial.core.utils.ExecUtils;
