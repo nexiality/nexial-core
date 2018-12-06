@@ -18,6 +18,7 @@ package org.nexial.commons.proc;
 
 import java.io.File;
 import java.util.Arrays;
+import java.util.HashMap;
 import java.util.List;
 
 import org.apache.commons.io.FileUtils;
@@ -60,9 +61,10 @@ public class RuntimeUtilsManualTest {
         // create dummy file to be used for `tail`
         FileUtils.writeStringToFile(tempFile1, RandomStringUtils.randomAlphanumeric(50), DEF_FILE_ENCODING);
 
-        RuntimeUtils.runAppNoWait("/usr/bin", "tail", Arrays.asList("-f", tempFile1.getAbsolutePath()), null);
-        RuntimeUtils.runAppNoWait("/usr/bin", "tail", Arrays.asList("-f", tempFile1.getAbsolutePath()), null);
-        RuntimeUtils.runAppNoWait("/usr/bin", "tail", Arrays.asList("-f", tempFile1.getAbsolutePath()), null);
+        String tmpFilePath = tempFile1.getAbsolutePath();
+        RuntimeUtils.runAppNoWait("/usr/bin", "tail", Arrays.asList("-f", tmpFilePath), new HashMap<>());
+        RuntimeUtils.runAppNoWait("/usr/bin", "tail", Arrays.asList("-f", tmpFilePath), new HashMap<>());
+        RuntimeUtils.runAppNoWait("/usr/bin", "tail", Arrays.asList("-f", tmpFilePath), new HashMap<>());
 
         scan_and_kill();
     }

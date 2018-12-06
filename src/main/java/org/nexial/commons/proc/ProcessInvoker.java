@@ -18,6 +18,7 @@
 package org.nexial.commons.proc;
 
 import java.io.*;
+import java.lang.ProcessBuilder.Redirect;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -43,6 +44,7 @@ import org.nexial.commons.utils.FileUtil;
  */
 public class ProcessInvoker {
     public static final String WORKING_DIRECTORY = "[working.directory]";
+    public static final String PROC_REDIRECT_OUT = "[proc.redirect]";
 
     @SuppressWarnings("PMD.DoNotUseThreads")
     /** internally class to trap stdout/stderr output. */
@@ -139,8 +141,7 @@ public class ProcessInvoker {
         return outcome;
     }
 
-    public static void invokeNoWait(String command, List<String> params, Map<String, String> env)
-        throws IOException {
+    public static void invokeNoWait(String command, List<String> params, Map<String, String> env) throws IOException {
         ProcessOutcome outcome = new ProcessOutcome();
         outcome.setCommand(command);
         outcome.setArguments(params);
@@ -150,7 +151,14 @@ public class ProcessInvoker {
         processArg.add(0, command);
 
         // create processbuilder and mod. environment, if need be
-        ProcessBuilder pb = new ProcessBuilder(processArg);
+        ProcessBuilder pb;
+        if (env.containsKey(PROC_REDIRECT_OUT)) {
+            File out = new File(env.remove(PROC_REDIRECT_OUT));
+            pb = new ProcessBuilder(processArg).redirectErrorStream(true).redirectOutput(Redirect.appendTo(out));
+        } else {
+            pb = new ProcessBuilder(processArg);
+        }
+
         prepareEnv(pb, env, outcome);
 
         // here we go...

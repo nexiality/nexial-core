@@ -47,6 +47,7 @@ import static java.awt.image.BufferedImage.*;
 import static java.io.File.separator;
 import static javax.naming.Context.*;
 import static org.apache.commons.lang3.SystemUtils.IS_OS_WINDOWS;
+import static org.apache.commons.lang3.SystemUtils.JAVA_IO_TMPDIR;
 import static org.nexial.core.NexialConst.AwsSettings.*;
 import static org.nexial.core.NexialConst.Data.*;
 import static org.nexial.core.NexialConst.Integration.MAIL_PREFIX;
@@ -554,6 +555,10 @@ public final class NexialConst {
         public static final boolean DEF_ENABLE_LOCAL = false;
         public static final String KEY_LOCAL_START_WAITMS = "localStartWaitMs";
         public static final long DEF_LOCAL_START_WAITMS = 5000;
+        public static final long MAX_LOCAL_START_WAITMS = 20000;
+        public static final String AUTO_LOCAL_START_WAIT = "auto";
+        public static final String LOCAL_READY_FILE =
+            StringUtils.appendIfMissing(JAVA_IO_TMPDIR, separator) + "nexial.cbtlocal.ready";
 
         // project meta
         public static final String KEY_NAME = "name";

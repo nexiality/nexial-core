@@ -29,6 +29,7 @@ import org.nexial.core.utils.ConsoleUtils;
 import static java.io.File.separator;
 import static java.lang.System.lineSeparator;
 import static org.apache.commons.lang3.SystemUtils.*;
+import static org.nexial.commons.proc.ProcessInvoker.PROC_REDIRECT_OUT;
 import static org.nexial.core.NexialConst.Data.WIN32_CMD;
 
 public final class RuntimeUtils {
@@ -74,6 +75,9 @@ public final class RuntimeUtils {
         throws IOException {
         if (StringUtils.isBlank(exePath)) { return; }
         if (StringUtils.isBlank(exeName)) { return; }
+
+        String outFile = StringUtils.substringBeforeLast(exeName, ".");
+        env.put(PROC_REDIRECT_OUT, StringUtils.appendIfMissing(JAVA_IO_TMPDIR, separator) + outFile + ".out");
         ProcessInvoker.invokeNoWait(exePath + separator + exeName, args, env);
     }
 

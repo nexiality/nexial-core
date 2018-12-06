@@ -268,11 +268,11 @@ test {
 	}
 }
 
-kotlin {
-	experimental {
-		coroutines 'enable'
-	}
-}
+//kotlin {
+//	experimental {
+//		coroutines 'enable'
+//	}
+//}
 
 compileJava.dependsOn(processResources)
 

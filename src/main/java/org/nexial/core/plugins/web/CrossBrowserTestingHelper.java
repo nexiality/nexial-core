@@ -20,15 +20,18 @@ import java.io.File;
 import java.io.IOException;
 import java.net.MalformedURLException;
 import java.net.URL;
-import java.util.Arrays;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Map;
 import javax.validation.constraints.NotNull;
 
+import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang3.BooleanUtils;
 import org.apache.commons.lang3.RandomStringUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.math.NumberUtils;
 import org.nexial.commons.proc.RuntimeUtils;
+import org.nexial.commons.utils.FileUtil;
 import org.nexial.commons.utils.web.URLEncodingUtils;
 import org.nexial.core.model.ExecutionContext;
 import org.nexial.core.model.ExecutionDefinition;
@@ -141,21 +144,48 @@ public class CrossBrowserTestingHelper extends CloudWebTestingPlatform {
 
             RuntimeUtils.terminateInstance(cbtLocal);
 
-            long waitMs = NumberUtils.toLong(config.remove(KEY_LOCAL_START_WAITMS), DEF_LOCAL_START_WAITMS);
+            List<String> cmdlineArgs = new ArrayList<>();
+            cmdlineArgs.add("--username");
+            cmdlineArgs.add(username);
+            cmdlineArgs.add("--authkey");
+            cmdlineArgs.add(authkey);
+            cmdlineArgs.add("--acceptAllCerts");
 
-            // start cbt local, but wait (3s) for it to start up completely.
-            // Command line: 'cbt_tunnels --username USERNAME --authkey AUTHKEY'
+            String localStartWaitMs = StringUtils.trim(config.remove(KEY_LOCAL_START_WAITMS));
+            boolean useReadyFile = StringUtils.isEmpty(localStartWaitMs) ||
+                                   StringUtils.equals(localStartWaitMs, AUTO_LOCAL_START_WAIT);
+
             ConsoleUtils.log("starting new instance of " + cbtLocal + "...");
-            RuntimeUtils.runAppNoWait(driver.getParent(), driver.getName(),
-                                      Arrays.asList("--username", username, "--authkey", authkey));
 
-            ConsoleUtils.log("waiting for " + cbtLocal + " to start/stabilize: " + waitMs + "ms");
-            Thread.sleep(waitMs);
+            if (useReadyFile) {
+                long waitMs = MAX_LOCAL_START_WAITMS;
+                FileUtils.deleteQuietly(new File(LOCAL_READY_FILE));
+
+                cmdlineArgs.add("--ready");
+                cmdlineArgs.add(LOCAL_READY_FILE);
+
+                RuntimeUtils.runAppNoWait(driver.getParent(), driver.getName(), cmdlineArgs);
+
+                ConsoleUtils.log("waiting for " + cbtLocal + " to start/stabilize, up to " + waitMs + "ms...");
+                long maxWaitTime = System.currentTimeMillis() + waitMs;
+                while (!FileUtil.isFileReadable(LOCAL_READY_FILE)) {
+                    Thread.sleep(500);
+                    if (System.currentTimeMillis() > maxWaitTime) {
+                        throw new IOException("CrossBrowserTesting Local executable NOT ready within max wait time");
+                    }
+                }
+            } else {
+                RuntimeUtils.runAppNoWait(driver.getParent(), driver.getName(), cmdlineArgs);
+
+                long waitMs = NumberUtils.toLong(localStartWaitMs, DEF_LOCAL_START_WAITMS);
+                ConsoleUtils.log("waiting for " + cbtLocal + " to start/stabilize: " + waitMs + "ms");
+                Thread.sleep(waitMs);
+            }
 
             isRunningLocal = true;
             localExeName = driver.getName();
         } catch (IOException | InterruptedException e) {
-            throw new RuntimeException("unable to start CrossBrowsingTesting Local: " + e.getMessage(), e);
+            throw new RuntimeException("unable to start CrossBrowserTesting Local: " + e.getMessage(), e);
         }
     }
 
