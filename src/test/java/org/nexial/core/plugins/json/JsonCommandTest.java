@@ -665,11 +665,53 @@ public class JsonCommandTest {
         Assert.assertTrue(fixture.assertValues(json,
                                                "response.jobParameters",
                                                context.replaceTokens("[TEXT(${jobParameters}) => removeRegex(\\[\\])]"),
-                                               "false")
-                                 .isSuccess());
+                                               "false").isSuccess());
 
         Assert.assertTrue(fixture.assertElementCount(json, "response.jobParameters", "0").isSuccess());
         Assert.assertTrue(fixture.assertElementCount(json, "response.jobParameters[]", "0").isSuccess());
+    }
+
+    @Test
+    public void assertValues() throws Exception {
+        JsonCommand fixture = new JsonCommand();
+        fixture.init(context);
+
+        Assert.assertTrue(fixture.assertValues("{\"a\":[{\"name\":\"John\"},{\"name\":\"Jim\"},{\"name\":\"James\"}]}",
+                                               "a.name", "John,Jim,James", "true").isSuccess());
+
+        Assert.assertTrue(fixture.assertValues("{\"b\":[{\"id\":2},{\"id\":23},{\"id\":235}]}",
+                                               "b.id", "2,23,235", "true").isSuccess());
+
+        Assert.assertTrue(fixture.assertValues("{\"c\":[{\"id\":2},{\"id\":23},{\"id\":235}]}",
+                                               "c.id", "23,235,2", "false").isSuccess());
+
+        Assert.assertTrue(fixture.assertValues("{\"a\":[" +
+                                               "    {\"name\":\"John A.\"}," +
+                                               "    {\"name\":\"Jim C.\"}," +
+                                               "    {\"name\":\"James W.\"}" +
+                                               "]}",
+                                               "a.name", "John A.,Jim C.,James W.", "true").isSuccess());
+
+        Assert.assertTrue(fixture.assertValues("{\"a\":[" +
+                                               "    {\"name\":\"John A.\"}," +
+                                               "    {\"name\":\"Jim C.\"}," +
+                                               "    {\"name\":\"James W.\"}" +
+                                               "]}",
+                                               "a",
+                                               "{\"name\":\"John A.\"}, {\"name\":\"Jim C.\"}, {\"name\":\"James W.\"}",
+                                               "true").isSuccess());
+
+        Assert.assertTrue(fixture.assertValues("{\"a\":[" +
+                                               "    {\"name\":\"John A.\"}," +
+                                               "    {\"name\":\"Jim C.\"}," +
+                                               "    {\"name\":\"James W.\"}" +
+                                               "]}",
+                                               "a",
+                                               "{\"name\":\"Jim C.\"}, {\"name\":\"John A.\"}, {\"name\":\"James W.\"}",
+                                               "false").isSuccess());
+
+        Assert.assertFalse(fixture.assertValues("{\"c\":[{\"id\":2},{\"id\":23},{\"id\":235}]}",
+                                                "c.id", "23,2,235,2", "false").isSuccess());
     }
 
     @Test

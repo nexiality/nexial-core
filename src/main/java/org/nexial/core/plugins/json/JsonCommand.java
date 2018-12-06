@@ -21,8 +21,11 @@ import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.util.Arrays;
+import java.util.Comparator;
+import java.util.List;
 import javax.validation.constraints.NotNull;
 
+import org.apache.commons.collections4.IterableUtils;
 import org.apache.commons.lang3.BooleanUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.json.JSONArray;
@@ -168,25 +171,34 @@ public class JsonCommand extends BaseCommand {
 
         boolean isExactOrder = BooleanUtils.toBoolean(exactOrder);
 
+        // could be an array of 1 item
         JsonArray expectedArray = toJsonArray(array, context.getTextDelim());
         if (expectedArray == null) { return StepResult.fail("Unable to parse array '" + array + "'"); }
 
         String actual = find(json, jsonpath);
-        JsonParser jsonParser = new JsonParser();
-        JsonElement actualJson = StringUtils.isEmpty(actual) ? new JsonArray() : jsonParser.parse(actual);
-        if (!actualJson.isJsonArray()) { return StepResult.fail("The expected JSON structure is NOT array"); }
+        JsonArray actualArray = toJsonArray(actual, ",");
+        if (actualArray == null) {
+            return StepResult.fail("JsonPath '" + jsonpath + "' derived invalid JSON: '" + actual + "'");
+        }
 
         // by this point both `expected` and `actual` are array
-        // JsonArray expectedArray = expectedJson.getAsJsonArray();
-        JsonArray actualArray = actualJson.getAsJsonArray();
         if (expectedArray.size() == 0 && actualArray.size() == 0) { return StepResult.success("Both array are empty"); }
 
-        StepResult valueCompare = assertEqual(expectedArray, actualArray);
-        if (valueCompare.failed() || !isExactOrder) { return valueCompare; }
+        if (!isExactOrder) {
+            List<JsonElement> expectedList = IterableUtils.toList(expectedArray);
+            expectedList.sort(Comparator.comparing(elem -> (elem == null ? "" : elem.toString())));
 
-        for (int i = 0; i < expectedArray.size(); i++) {
-            StepResult itemCompare = assertEqual(expectedArray.get(i), actualArray.get(i));
-            if (itemCompare.failed()) { return itemCompare; }
+            List<JsonElement> actualList = IterableUtils.toList(actualArray);
+            actualList.sort(Comparator.comparing(elem -> (elem == null ? "" : elem.toString())));
+
+            for (int i = 0; i < expectedList.size(); i++) {
+                JsonElement expected = expectedList.get(i);
+                StepResult itemCompare = assertEqual(expected, actualList.get(i));
+                if (itemCompare.failed()) { return itemCompare; }
+            }
+        } else {
+            StepResult valueCompare = assertEqual(expectedArray, actualArray);
+            if (valueCompare.failed()) { return valueCompare; }
         }
 
         return StepResult.success("EXPECTED array is equivalent to the ACTUAL array");
