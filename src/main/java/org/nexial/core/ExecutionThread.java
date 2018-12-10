@@ -238,14 +238,15 @@ public final class ExecutionThread extends Thread {
                 context.endIteration();
                 context.removeTrackTimeLogs();
 
-                MemManager.recordMemoryChanges(testScriptFile == null ?
-                                               "UNKNOWN TEST SCRIPT" :
-                                               testScriptFile.getName() + " completed");
+                MemManager.recordMemoryChanges(
+                    (testScriptFile == null ? "UNKNOWN TEST SCRIPT" : testScriptFile.getName()) + " completed");
 
                 context.setData(ITERATION_ENDED, false);
             }
         }
 
+        // we need to infuse "between" #default and whatever data sheets is assigned for this test script
+        // execDef.infuseIntraExecutionData(intraExecutionData);
         onScriptComplete(context, executionSummary, iterationManager, ticktock);
 
         // handling onExecutionComplete

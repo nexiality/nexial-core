@@ -29,7 +29,8 @@ import org.nexial.core.model.TestStep;
 import org.nexial.core.utils.ConsoleUtils;
 import org.nexial.core.utils.ExecUtils;
 
-import static org.apache.commons.lang3.SystemUtils.*;
+import static org.apache.commons.lang3.SystemUtils.JAVA_VERSION;
+import static org.apache.commons.lang3.SystemUtils.USER_NAME;
 import static org.nexial.core.NexialConst.Data.CURR_ITERATION;
 import static org.nexial.core.NexialConst.Data.ITERATION_ENDED;
 import static org.nexial.core.NexialConst.OPT_INPUT_EXCEL_FILE;
@@ -51,10 +52,13 @@ import static org.nexial.core.NexialConst.OPT_INPUT_EXCEL_FILE;
  */
 public class Execution {
     enum Metadata {
-        name, fullpath, index, script, iteration, scenario, activity, description, command
+        name, fullpath, index, script, iteration, scenario, activity, description, command,
+        // on-the-fly calculation of elapsed time, pass count, fail count, skip count and success rate at every scope
+        // EXCEPT step
+        // elapsed, passed, failed, skipped, success
     }
 
-    enum Artifact {script, scenario, activity, step, iteration}
+    enum Artifact {script, iteration, scenario, activity, step }
 
     public String script(String scope) { return evaluateExecutionData(Artifact.script, Metadata.valueOf(scope)); }
 
@@ -69,6 +73,7 @@ public class Execution {
     public String meta(String type) {
         if (StringUtils.equalsIgnoreCase(type, "nexial")) { return ExecUtils.deriveJarManifest(); }
         if (StringUtils.equalsIgnoreCase(type, "java")) { return "Java " + JAVA_VERSION; }
+        if (StringUtils.equalsIgnoreCase(type, "user")) { return USER_NAME; }
         ConsoleUtils.log("Unknown 'type': " + type);
         return null;
     }

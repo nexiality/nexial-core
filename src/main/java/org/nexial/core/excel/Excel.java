@@ -1291,6 +1291,7 @@ public class Excel {
         commonStyles.put(STYLE_SECTION_DESCRIPTION, StyleDecorator.generate(workbook, SECTION_DESCRIPTION));
         commonStyles.put(STYLE_REPEAT_UNTIL_DESCRIPTION, StyleDecorator.generate(workbook, REPEAT_UNTIL_DESCRIPTION));
         commonStyles.put(STYLE_FAILED_STEP_DESCRIPTION, StyleDecorator.generate(workbook, FAILED_STEP_DESCRIPTION));
+        // commonStyles.put(STYLE_SKIPPED_STEP_DESCRIPTION, StyleDecorator.generate(workbook, SKIPPED_STEP_DESCRIPTION));
         commonStyles.put(STYLE_TARGET, StyleDecorator.generate(workbook, TARGET));
         commonStyles.put(STYLE_MESSAGE, StyleDecorator.generate(workbook, MSG));
         commonStyles.put(STYLE_COMMAND, StyleDecorator.generate(workbook, COMMAND));

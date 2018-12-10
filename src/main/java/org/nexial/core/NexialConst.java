@@ -377,6 +377,7 @@ public final class NexialConst {
                                                                 .setLenient()
                                                                 .create();
     public static final String MSG_CHECK_SUPPORT = "Check with Nexial Support Group for details.";
+    public static final String COMMENT_AUTHOR = "NexialBot";
 
     // browser types
     public enum BrowserType {

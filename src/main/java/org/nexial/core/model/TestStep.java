@@ -337,22 +337,21 @@ public class TestStep extends TestStepManifest {
         if (result.isSkipped()) {
             summary.adjustTotalSteps(-1);
             log(MessageUtils.renderAsSkipped(result.getMessage()));
-            return;
-        }
-
-        summary.incrementExecuted();
-
-        boolean lastOutcome = result.isSuccess();
-        context.setData(OPT_LAST_OUTCOME, lastOutcome);
-
-        if (lastOutcome) {
-            summary.incrementPass();
-            // avoid printing verbose() message to avoid leaking of sensitive information on log
-            log(MessageUtils.renderAsPass(StringUtils.equals(getCommandFQN(), CMD_VERBOSE) ? "" : result.getMessage()));
         } else {
-            summary.incrementFail();
-            error(MessageUtils.renderAsFail(result.getMessage()));
-            context.incrementAndEvaluateFail(result);
+            summary.incrementExecuted();
+
+            boolean lastOutcome = result.isSuccess();
+            context.setData(OPT_LAST_OUTCOME, lastOutcome);
+
+            if (lastOutcome) {
+                summary.incrementPass();
+                // avoid printing verbose() message to avoid leaking of sensitive information on log
+                log(MessageUtils.renderAsPass(StringUtils.equals(getCommandFQN(), CMD_VERBOSE) ? "" : result.getMessage()));
+            } else {
+                summary.incrementFail();
+                error(MessageUtils.renderAsFail(result.getMessage()));
+                context.incrementAndEvaluateFail(result);
+            }
         }
     }
 
@@ -448,8 +447,9 @@ public class TestStep extends TestStepManifest {
         }
         if (result.isError()) {
             ExcelConfig.formatFailedStepDescription(this);
-            Excel.createComment(cellDescription, result.getMessage(), "NexialBot");
+            Excel.createComment(cellDescription, result.getMessage(), COMMENT_AUTHOR);
         }
+        // if (result.isSkipped()) { ExcelConfig.formatSkippedStepDescription(this); }
         cellDescription.setCellValue(context.replaceTokens(description));
 
         XSSFCellStyle styleTaintedParam = worksheet.getStyle(STYLE_TAINTED_PARAM);
@@ -655,7 +655,7 @@ public class TestStep extends TestStepManifest {
     }
 
     private Comment toSystemComment(XSSFCell paramCell, String message) {
-        return Excel.createComment(paramCell, toSystemComment(message), "NexialBot");
+        return Excel.createComment(paramCell, toSystemComment(message), COMMENT_AUTHOR);
     }
 
     private String toSystemComment(String message) { return "test script:" + lineSeparator() + message; }

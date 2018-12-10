@@ -19,7 +19,6 @@ package org.nexial.core.model;
 import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -30,6 +29,7 @@ import org.apache.poi.xssf.usermodel.XSSFCellStyle;
 import org.apache.poi.xssf.usermodel.XSSFRow;
 import org.apache.poi.xssf.usermodel.XSSFSheet;
 import org.nexial.commons.utils.FileUtil;
+import org.nexial.core.ExecutionInputPrep;
 import org.nexial.core.ExecutionThread;
 import org.nexial.core.excel.Excel;
 import org.nexial.core.excel.Excel.Worksheet;
@@ -47,7 +47,8 @@ import static org.nexial.core.excel.ExcelConfig.*;
 
 public class MacroMerger {
     private static final String TEST_STEPS_PREFIX = FIRST_STEP_ROW + ":" + COL_REASON;
-    private static final Map<String, List<List<String>>> MACRO_CACHE = new HashMap<>();
+    // (2018/12/9,automike): remove to support dynamic macro changes during execution and interactive mode
+    // private static final Map<String, List<List<String>>> MACRO_CACHE = new HashMap<>();
 
     private Excel excel;
     private ExecutionDefinition execDef;
@@ -222,22 +223,13 @@ public class MacroMerger {
             List<String> testStepRow = new ArrayList<>();
 
             // check for strikethrough (which means skip)
-            if (isTestStepDisabled(row)) {
-                XSSFCell cellFlowControls = row.get(COL_IDX_FLOW_CONTROLS);
-                String currentFlowControls = Excel.getCellValue(cellFlowControls);
-                currentFlowControls = StringUtils.prependIfMissing(currentFlowControls, "SkipIf(true) ");
-                cellFlowControls.setCellValue(currentFlowControls);
-            }
+            if (ExecutionInputPrep.isTestStepDisabled(row)) { addSkipFlowControl(row); }
 
             row.forEach(cell -> testStepRow.add(Excel.getCellValue(cell)));
             testStepData.add(testStepRow);
         });
 
         return testStepData;
-    }
-
-    public static boolean isTestStepDisabled(List<XSSFCell> row) {
-        return row.get(COL_IDX_COMMAND).getCellStyle().getFont().getStrikeout();
     }
 
     protected List<List<String>> harvestMacroSteps(String paramFile, String paramSheet, String paramMacro)
@@ -265,13 +257,13 @@ public class MacroMerger {
             macroFile = new File(macroFilePath);
         }
 
-        String macroKey = macroFile + ":" + paramSheet + ":" + paramMacro;
-
-        if (MACRO_CACHE.containsKey(macroKey)) {
-            // shortcircut: in case the same macro is referenced
-            ConsoleUtils.log("reading macro from cache: " + macroKey);
-            return MACRO_CACHE.get(macroKey);
-        }
+        // (2018/12/9,automike): remove to support dynamic macro changes during execution and interactive mode
+        // String macroKey = macroFile + ":" + paramSheet + ":" + paramMacro;
+        // if (MACRO_CACHE.containsKey(macroKey)) {
+        //     shortcut: in case the same macro is referenced
+        // ConsoleUtils.log("reading macro from cache: " + macroKey);
+        // return MACRO_CACHE.get(macroKey);
+        // }
 
         // open specified sheet
         Excel macroExcel = new Excel(macroFile, false, false);
@@ -284,7 +276,7 @@ public class MacroMerger {
 
         // 6. read test steps based on macro name
         for (List<XSSFCell> macroRow : macroStepArea) {
-            String currentMacroName = macroRow.get(0).getStringCellValue();
+            String currentMacroName = macroRow.get(COL_IDX_TESTCASE).getStringCellValue();
             if (StringUtils.equals(currentMacroName, paramMacro)) {
                 macroFound = true;
                 macroSteps.add(collectMacroStep(macroRow));
@@ -295,24 +287,39 @@ public class MacroMerger {
                 if (StringUtils.isBlank(currentMacroName)) {
                     macroSteps.add(collectMacroStep(macroRow));
                 } else {
-                    MACRO_CACHE.put(macroKey, macroSteps);
-                    macroSteps = new ArrayList<>();
-                    macroFound = false;
-                    break;
+                    return macroSteps;
+                    // (2018/12/9,automike): remove to support dynamic macro changes during execution and interactive mode
+                    // MACRO_CACHE.put(macroKey, macroSteps);
+                    // macroSteps = new ArrayList<>();
+                    // macroFound = false;
+                    // break;
                 }
             }
         }
 
-        if (macroFound && !macroSteps.isEmpty()) { MACRO_CACHE.put(macroKey, macroSteps); }
+        return macroSteps;
 
-        if (!MACRO_CACHE.containsKey(macroKey)) { ConsoleUtils.error("Unable to resolve macro via " + macroKey); }
-
-        return MACRO_CACHE.get(macroKey);
+        // (2018/12/9,automike): remove to support dynamic macro changes during execution and interactive mode
+        // capture last one
+        // if (macroFound && !macroSteps.isEmpty()) { MACRO_CACHE.put(macroKey, macroSteps); }
+        // if (!MACRO_CACHE.containsKey(macroKey)) { ConsoleUtils.error("Unable to resolve macro via " + macroKey);}
+        // return MACRO_CACHE.get(macroKey);
     }
 
     protected List<String> collectMacroStep(List<XSSFCell> macroRow) {
+        if (ExecutionInputPrep.isMacroStepDisabled(macroRow)) { addSkipFlowControl(macroRow); }
+
         List<String> oneStep = new ArrayList<>();
-        for (int i = 1; i <= COL_IDX_CAPTURE_SCREEN; i++) { oneStep.add(macroRow.get(i).getStringCellValue()); }
+        for (int i = COL_IDX_DESCRIPTION; i <= COL_IDX_CAPTURE_SCREEN; i++) {
+            oneStep.add(Excel.getCellValue(macroRow.get(i)));
+        }
         return oneStep;
+    }
+
+    private void addSkipFlowControl(List<XSSFCell> row) {
+        XSSFCell cellFlowControls = row.get(COL_IDX_FLOW_CONTROLS);
+        String currentFlowControls = Excel.getCellValue(cellFlowControls);
+        currentFlowControls = StringUtils.prependIfMissing(currentFlowControls, "SkipIf(true) ");
+        cellFlowControls.setCellValue(currentFlowControls);
     }
 }

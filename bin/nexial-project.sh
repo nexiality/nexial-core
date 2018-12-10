@@ -10,7 +10,7 @@ function reportBadInputAndExit() {
 
 NEXIAL_HOME=$(cd `dirname $0`/..; pwd -P)
 . ${NEXIAL_HOME}/bin/.commons.sh
-title "nexial project creator"
+title "nexial project artifact creator"
 checkJava
 resolveEnv
 
@@ -28,7 +28,6 @@ else
 fi
 echo "  PROJECT_HOME:   ${PROJECT_HOME}"
 
-
 echo
 echo "» (re)creating project home at ${PROJECT_HOME}"
 mkdir -p ${PROJECT_HOME}/.meta > /dev/null 2>&1
@@ -38,52 +37,46 @@ mkdir -p ${PROJECT_HOME}/artifact/plan > /dev/null 2>&1
 mkdir -p ${PROJECT_HOME}/output > /dev/null 2>&1
 
 # create project.id file to uniquely identify a "project" across enterprise (i.e. same SCM)
-if [[ ! -s ${PROJECT_HOME}/.meta/project.id ]] ; then
-    echo "» create project.id file under ${PROJECT_HOME}/.meta"
-    echo $1 > ${PROJECT_HOME}/.meta/project.id
+PROJECT_ID=${PROJECT_HOME}/.meta/project.id
+if [[ ! -s ${PROJECT_ID} ]] ; then
+    echo "» create ${PROJECT_ID}"
+    echo $1 > ${PROJECT_ID}
 fi
 
-SCRIPT_COUNT=`wc -l <(ls -1 ${PROJECT_HOME}/artifact/script/*.xlsx) | cut -d " " -f 8`
-echo "script count is $SCRIPT_COUNT"
 SKIP_DEF_SCRIPTS=true
-if [[ "${SCRIPT_COUNT}" = "0" || "${SCRIPT_COUNT}" = "" ]] ; then
-    echo "setting skip as false"
-    SKIP_DEF_SCRIPTS=false
-fi
+for f in ${PROJECT_HOME}/artifact/script/*.xlsx; do
+    ## Check if the glob gets expanded to existing files.
+    ## If not, f here will be exactly the pattern above
+    ## and the exists test will evaluate to false.
+    [[ -e "$f" ]] && SKIP_DEF_SCRIPTS=true || SKIP_DEF_SCRIPTS=false
+
+    ## This is all we needed to know, so we can break after the first iteration
+    break
+done
+
 if [[ ${SKIP_DEF_SCRIPTS} = true ]] ; then
     echo "» skip over the creation of default script/data files"
-fi
 
-if [[ $# -eq 1 ]] ; then
-    if [[ ${SKIP_DEF_SCRIPTS} = false ]] ; then
-        cp ${NEXIAL_HOME}/template/nexial-testplan.xlsx ${PROJECT_HOME}/artifact/plan/`basename $1`-plan.xlsx
-        cp ${NEXIAL_HOME}/template/nexial-script.xlsx   ${PROJECT_HOME}/artifact/script/`basename $1`.xlsx
-        cp ${NEXIAL_HOME}/template/nexial-data.xlsx     ${PROJECT_HOME}/artifact/data/`basename $1`.data.xlsx
-    fi
+    # in dealing with existing project, we don't need to create default script/data files
+    shift
 else
-    if [[ ${SKIP_DEF_SCRIPTS} = true ]] ; then
-        # in dealing with existing project, we don't need to create default script/data files
-        shift
-    else
-        cp ${NEXIAL_HOME}/template/nexial-testplan.xlsx ${PROJECT_HOME}/artifact/plan/`basename $1`-plan.xlsx
-    fi
-
-    while [[ "$1" != "" ]]; do
-        script_name=`basename $1`
-        echo "» create test script and data file for '${script_name}'"
-        cp ${NEXIAL_HOME}/template/nexial-script.xlsx ${PROJECT_HOME}/artifact/script/${script_name}.xlsx
-        cp ${NEXIAL_HOME}/template/nexial-data.xlsx   ${PROJECT_HOME}/artifact/data/${script_name}.data.xlsx
-        shift
-    done
+    cp -n ${NEXIAL_HOME}/template/nexial-testplan.xlsx "${PROJECT_HOME}/artifact/plan/`basename $1`-plan.xlsx"
 fi
+
+while [[ "$1" != "" ]]; do
+    script_name="$1"
+    echo "» create test script and data file for '${script_name}'"
+    cp -n ${NEXIAL_HOME}/template/nexial-script.xlsx "${PROJECT_HOME}/artifact/script/${script_name}.xlsx"
+    cp -n ${NEXIAL_HOME}/template/nexial-data.xlsx   "${PROJECT_HOME}/artifact/data/${script_name}.data.xlsx"
+    shift
+done
 
 echo "» DONE - nexial automation project created as follows:"
 echo
 
 cd ${PROJECT_HOME}
 chmod -fR 755 ${PROJECT_HOME}
-pwd
-ls -GRAF
+find ${PROJECT_HOME} | sort -n
 
 echo
 echo

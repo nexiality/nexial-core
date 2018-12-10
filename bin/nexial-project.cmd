@@ -7,7 +7,7 @@ set NEXIAL_BIN=%~dp0
 call :init
 if NOT ERRORLEVEL 0 goto :exit
 
-call :title "nexial project creator"
+call :title "nexial project artifact creator"
 if NOT ERRORLEVEL 0 goto :exit
 
 call :checkJava
@@ -25,35 +25,49 @@ if "%1"=="" goto :reportBadInputAndExit
 		set PROJECT_HOME=%PROJECT_BASE%\%1
 	)
 	echo   PROJECT_HOME:   %PROJECT_HOME%
-	echo.
 
-	echo creating project home at %PROJECT_HOME%
-	mkdir %PROJECT_HOME%\artifact\script >NUL
-	mkdir %PROJECT_HOME%\artifact\data >NUL
-	mkdir %PROJECT_HOME%\artifact\\plan >NUL
-	mkdir %PROJECT_HOME%\output >NUL
+	echo.
+	echo ^>^> (re)creating project home at %PROJECT_HOME%
+	mkdir %PROJECT_HOME%\.meta 2>NUL
+	mkdir %PROJECT_HOME%\artifact\script 2>NUL
+	mkdir %PROJECT_HOME%\artifact\data 2>NUL
+	mkdir %PROJECT_HOME%\artifact\plan 2>NUL
+	mkdir %PROJECT_HOME%\output 2>NUL
+
+    REM create project.id file to uniquely identify a "project" across enterprise (i.e. same SCM)
+    set PROJECT_ID=%PROJECT_HOME%\.meta\project.id
+    if not exist %PROJECT_ID% (
+        echo ^>^> create %PROJECT_ID%
+        echo %1 > %PROJECT_ID%
+    )
 
 	set script_name=%~n1
-	copy %NEXIAL_HOME%\template\nexial-testplan.xlsx %PROJECT_HOME%\artifact\plan\%script_name%-plan.xlsx >NUL
+    set SKIP_DEF_SCRIPTS=false
+    if exist %PROJECT_HOME%\artifact\script\*.xlsx (
+        echo ^>^> skip over the creation of default script/data files
+        set SKIP_DEF_SCRIPTS=true
+        shift
+    ) else (
+        echo n | copy /-y %NEXIAL_HOME%\template\nexial-testplan.xlsx "%PROJECT_HOME%\artifact\plan\%script_name%-plan.xlsx" >NUL
+    )
 
 :copyTemplate
-	echo create test script for %script_name%
-	copy %NEXIAL_HOME%\template\nexial-script.xlsx %PROJECT_HOME%\artifact\script\%script_name%.xlsx >NUL
-	copy %NEXIAL_HOME%\template\nexial-data.xlsx %PROJECT_HOME%\artifact\data\%script_name%.data.xlsx >NUL
-	shift
-	if "%1"=="" goto doneCopy
+	if "%~n1"=="" goto doneCopy
 	set script_name=%~n1
+	echo ^>^> create test script and data file for '%script_name%'
+	echo n | copy /-y %NEXIAL_HOME%\template\nexial-script.xlsx "%PROJECT_HOME%\artifact\script\%script_name%.xlsx" >NUL
+	echo n | copy /-y %NEXIAL_HOME%\template\nexial-data.xlsx "%PROJECT_HOME%\artifact\data\%script_name%.data.xlsx" >NUL
+	shift
 	goto copyTemplate
 
 :doneCopy
 	cd %PROJECT_HOME%
-	echo.
-	echo DONE - nexial automation project created as follows:
+	echo ^>^> DONE - nexial automation project created as follows:
 	echo.
 
 	cd %PROJECT_HOME%
 	cd
-	dir /s /b
+	dir /s /b /on
 
 	echo.
 	echo.
@@ -80,4 +94,3 @@ if "%1"=="" goto :reportBadInputAndExit
 	echo.
 	exit /b -1
 	goto :eof
-

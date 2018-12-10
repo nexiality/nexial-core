@@ -25,11 +25,7 @@ import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.collections4.MapUtils;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang3.StringUtils;
-import org.apache.poi.xssf.usermodel.XSSFCell;
-import org.apache.poi.xssf.usermodel.XSSFCellStyle;
-import org.apache.poi.xssf.usermodel.XSSFRow;
-import org.apache.poi.xssf.usermodel.XSSFSheet;
-import org.apache.poi.xssf.usermodel.XSSFWorkbook;
+import org.apache.poi.xssf.usermodel.*;
 import org.nexial.commons.utils.FileUtil;
 import org.nexial.core.excel.Excel;
 import org.nexial.core.excel.Excel.Worksheet;
@@ -50,6 +46,8 @@ import static org.nexial.core.NexialConst.Data.SHEET_SYSTEM;
 import static org.nexial.core.NexialConst.NAMESPACE;
 import static org.nexial.core.NexialConst.Project.appendCapture;
 import static org.nexial.core.NexialConst.Project.appendLog;
+import static org.nexial.core.excel.ExcelConfig.COL_IDX_COMMAND;
+import static org.nexial.core.excel.ExcelConfig.COL_IDX_PLAN_TEST_SCRIPT;
 import static org.nexial.core.excel.ExcelConfig.StyleConfig.*;
 import static org.nexial.core.utils.ExecUtils.IGNORED_CLI_OPT;
 
@@ -185,6 +183,40 @@ public class ExecutionInputPrep {
         // save it before use it
         outputExcel.save();
         return new Excel(outputExcel.getFile(), false, true);
+    }
+
+    public static boolean isTestStepDisabled(List<XSSFCell> row) {
+        return isCellStrikeOut(row, COL_IDX_COMMAND, "test step");
+    }
+
+    public static boolean isMacroStepDisabled(List<XSSFCell> row) {
+        return isCellStrikeOut(row, COL_IDX_COMMAND, "macro step");
+    }
+
+    public static boolean isPlanStepDisabled(List<XSSFCell> row) {
+        return isCellStrikeOut(row, COL_IDX_PLAN_TEST_SCRIPT, "plan step");
+    }
+
+    public static boolean isPlanStepDisabled(XSSFRow row) {
+        return isCellStrikeOut(row.getCell(COL_IDX_PLAN_TEST_SCRIPT), "plan step");
+    }
+
+    protected static boolean isCellStrikeOut(List<XSSFCell> row, int cellIndex, String stepName) {
+        return row != null && cellIndex >= 0 && cellIndex < row.size() && isCellStrikeOut(row.get(cellIndex), stepName);
+    }
+
+    private static boolean isCellStrikeOut(XSSFCell cell, String stepName) {
+        if (cell == null) { return false; }
+
+        XSSFCellStyle cellStyle = cell.getCellStyle();
+        if (cellStyle == null) { return false; }
+
+        XSSFFont font = cellStyle.getFont();
+        if (font == null || !font.getStrikeout()) { return false; }
+
+        int rowNum = cell.getRowIndex() + 1;
+        ConsoleUtils.log("skipping " + stepName + " in ROW " + rowNum + " since it's disabled");
+        return true;
     }
 
     private static Excel mergeTestData(Excel excel, TestData testData, int iteration) {

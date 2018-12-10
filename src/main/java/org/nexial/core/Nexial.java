@@ -230,7 +230,6 @@ public class Nexial {
 
             // interactive mode, only for stepwise or blockwise execution. to be integrated into studio
             if (main.isInteractiveMode()) {
-
                 main.interact();
                 return;
             }
@@ -382,6 +381,9 @@ public class Nexial {
 
                 for (int i = rowStartIndex; i < lastExecutionRow; i++) {
                     XSSFRow row = testPlan.getSheet().getRow(i);
+
+                    // check for disabled step
+                    if (ExecutionInputPrep.isPlanStepDisabled(row)) { continue; }
 
                     File testScript = deriveScriptFromPlan(row, project, testPlanPath);
                     List<String> scenarios = deriveScenarioFromPlan(row, testScript);

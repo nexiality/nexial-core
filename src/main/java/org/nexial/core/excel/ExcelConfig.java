@@ -259,6 +259,7 @@ public class ExcelConfig {
     public static final String STYLE_SECTION_DESCRIPTION = "SECTION_DESCRIPTION";
     public static final String STYLE_REPEAT_UNTIL_DESCRIPTION = "REPEAT_UNTIL_DESCRIPTION";
     public static final String STYLE_FAILED_STEP_DESCRIPTION = "FAILED_STEP_DESCRIPTION";
+    // public static final String STYLE_SKIPPED_STEP_DESCRIPTION = "SKIPPED_STEP_DESCRIPTION";
     public static final String STYLE_ELAPSED_MS = "ELAPSED_MS";
     public static final String STYLE_ELAPSED_MS_BAD_SLA = "ELAPSED_MS_BAD_SLA";
     public static final String STYLE_FAILED_RESULT = "FAILED_RESULT";
@@ -300,7 +301,7 @@ public class ExcelConfig {
     public static final XSSFColor RED = new XSSFColor(new Color(255, 0, 0));
 
     public static final double DEF_CHAR_WIDTH = 24.7;
-    public static final int DEF_CHAR_WIDTH_FACTOR_TAHOMA = 247;
+    public static final int DEF_CHAR_WIDTH_FACTOR_TAHOMA = 290;
     public static final int DEF_CHAR_WIDTH_FACTOR_TAHOMA_BOLD = 337;
     public static final int DEF_CHAR_WIDTH_FACTOR_CONSOLAS = 273;
     public static final short INDENT_1 = (short) 1;
@@ -321,6 +322,7 @@ public class ExcelConfig {
         public static final StyleConfig SECTION_DESCRIPTION = newSectionDescriptionStyle();
         public static final StyleConfig REPEAT_UNTIL_DESCRIPTION = newRepeatUntilDescriptionStyle();
         public static final StyleConfig FAILED_STEP_DESCRIPTION = newFailedStepDescriptionStyle();
+        // public static final StyleConfig SKIPPED_STEP_DESCRIPTION = newSkippedStepDescriptionStyle();
         public static final StyleConfig SCREENSHOT = newScreenshotStyle();
         public static final StyleConfig ELAPSED_MS = newElapsedMsStyle();
         public static final StyleConfig SUCCESS = newSuccessStyle();
@@ -550,11 +552,25 @@ public class ExcelConfig {
             config.fontColor = FG_FAIL;
             config.boldFont = true;
             config.verticalAlignment = CENTER;
-
             config.wrapText = true;
             config.borderColor = new XSSFColor(new Color(205, 195, 195));
             return config;
         }
+
+        /*
+        // only additive style updates
+        private static StyleConfig newSkippedStepDescriptionStyle() {
+            StyleConfig config = new StyleConfig();
+            // config.backgroundColor = new XSSFColor(new Color(245, 245, 245));
+            config.fontColor = new XSSFColor(new Color(100, 100, 100));
+            config.fontHeight = FONT_HEIGHT_DEFAULT;
+            config.verticalAlignment = CENTER;
+            config.italicFont = true;
+            config.wrapText = true;
+            // config.borderColor = new XSSFColor(new Color(100, 100, 100));
+            return config;
+        }
+        */
 
         private static StyleConfig newParamStyle() {
             StyleConfig config = new StyleConfig();
@@ -1046,7 +1062,25 @@ public class ExcelConfig {
     }
 
     public static TestStep formatSectionDescription(TestStep testStep, boolean prefix) {
-        return formatDescriptionCell(testStep, STYLE_SECTION_DESCRIPTION, prefix ? SECTION_DESCRIPTION_PREFIX : "");
+        return enhanceDescriptionFormat(formatDescriptionCell(testStep,
+                                                              STYLE_SECTION_DESCRIPTION,
+                                                              prefix ? SECTION_DESCRIPTION_PREFIX : ""));
+    }
+
+    protected static TestStep enhanceDescriptionFormat(TestStep testStep) {
+        String result = Excel.getCellValue(testStep.getRow().get(COL_IDX_RESULT));
+        XSSFCellStyle cellStyle = testStep.getRow().get(COL_IDX_DESCRIPTION).getCellStyle();
+        XSSFFont font = cellStyle.getFont();
+
+        if (StringUtils.startsWith(result, MSG_SKIPPED)) {
+            font.setItalic(true);
+            font.setColor(new XSSFColor(new Color(100, 100, 100)));
+            return testStep;
+        }
+
+        if (StringUtils.startsWith(result, MSG_FAIL)) { return formatFailedStepDescription(testStep); }
+
+        return testStep;
     }
 
     public static void formatRepeatUntilDescription(Worksheet worksheet, XSSFCell cell) {
@@ -1055,12 +1089,16 @@ public class ExcelConfig {
     }
 
     public static TestStep formatRepeatUntilDescription(TestStep testStep, String prefix) {
-        return formatDescriptionCell(testStep, STYLE_REPEAT_UNTIL_DESCRIPTION, prefix);
+        return enhanceDescriptionFormat(formatDescriptionCell(testStep, STYLE_REPEAT_UNTIL_DESCRIPTION, prefix));
     }
 
     public static TestStep formatFailedStepDescription(TestStep testStep) {
         return formatDescriptionCell(testStep, STYLE_FAILED_STEP_DESCRIPTION, null);
     }
+
+    // public static TestStep formatSkippedStepDescription(TestStep testStep) {
+    //     return formatDescriptionCell(testStep, STYLE_SKIPPED_STEP_DESCRIPTION, null);
+    // }
 
     public static void formatTargetCell(Worksheet worksheet, XSSFCell cell) {
         cell.setCellStyle(worksheet.getStyle(STYLE_TARGET));
