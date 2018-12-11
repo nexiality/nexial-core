@@ -46,7 +46,6 @@ import org.nexial.commons.utils.RegexUtils;
 import org.nexial.commons.utils.TextUtils;
 import org.nexial.core.ExecutionEventListener;
 import org.nexial.core.MemManager;
-import org.nexial.core.PluginManager;
 import org.nexial.core.TokenReplacementException;
 import org.nexial.core.aws.NexialS3Helper;
 import org.nexial.core.aws.SmsHelper;
@@ -59,6 +58,7 @@ import org.nexial.core.plugins.CanTakeScreenshot;
 import org.nexial.core.plugins.NexialCommand;
 import org.nexial.core.plugins.pdf.CommonKeyValueIdentStrategies;
 import org.nexial.core.plugins.sound.SoundMachine;
+import org.nexial.core.plugins.web.Browser;
 import org.nexial.core.reports.ExecutionMailConfig;
 import org.nexial.core.reports.NexialMailer;
 import org.nexial.core.utils.ConsoleUtils;
@@ -382,6 +382,22 @@ public class ExecutionContext {
 
     public NexialCommand findPlugin(String target) { return plugins.getPlugin(target); }
 
+    public Browser getBrowser() { return plugins.getBrowser(); }
+
+    @NotNull
+    public String getBrowserType() {
+        // gotta push default to context
+        // String browser = System.getProperty(BROWSER);
+        // String browser = StringUtils.remove(System.getProperty(BROWSER, getStringData(BROWSER, DEF_BROWSER)), ".");
+        // setData(BROWSER, browser);
+        // return browser;
+
+        // DO NOT SET BROWSER TYPE TO SYSTEM PROPS, SINCE THIS WILL PREVENT ITERATION-LEVEL OVERRIDES
+        // System.setProperty(BROWSER, browserType);
+
+        return StringUtils.remove(System.getProperty(BROWSER, getStringData(BROWSER, DEF_BROWSER)), ".");
+    }
+
     public Excel getTestScript() { return testScript; }
 
     public List<TestScenario> getTestScenarios() { return testScenarios; }
@@ -460,20 +476,6 @@ public class ExecutionContext {
     public long getSLAElapsedTimeMs() { return getIntData(OPT_ELAPSED_TIME_SLA); }
 
     public long getDelayBetweenStep() { return getIntData(DELAY_BETWEEN_STEPS_MS, DEF_DELAY_BETWEEN_STEPS_MS); }
-
-    @NotNull
-    public String getBrowserType() {
-        // gotta push default to context
-        // String browser = System.getProperty(BROWSER);
-        // String browser = StringUtils.remove(System.getProperty(BROWSER, getStringData(BROWSER, DEF_BROWSER)), ".");
-        // setData(BROWSER, browser);
-        // return browser;
-
-        // DO NOT SET BROWSER TYPE TO SYSTEM PROPS, SINCE THIS WILL PREVENT ITERATION-LEVEL OVERRIDES
-        // System.setProperty(BROWSER, browserType);
-
-        return StringUtils.remove(System.getProperty(BROWSER, getStringData(BROWSER, DEF_BROWSER)), ".");
-    }
 
     public boolean hasData(String name) { return getObjectData(name) != null; }
 

@@ -20,7 +20,6 @@ import java.io.File;
 import java.io.IOException;
 import java.net.MalformedURLException;
 import java.net.URL;
-import java.text.MessageFormat;
 import java.util.Arrays;
 import java.util.Map;
 import javax.validation.constraints.NotNull;
@@ -45,7 +44,6 @@ import static org.apache.commons.lang3.SystemUtils.*;
 import static org.nexial.core.NexialConst.BrowserStack.*;
 import static org.nexial.core.NexialConst.BrowserType.*;
 import static org.nexial.core.NexialConst.Data.BROWSER_WINDOW_SIZE;
-import static org.nexial.core.NexialConst.RATE_FORMAT;
 import static org.nexial.core.plugins.web.WebDriverCapabilityUtils.setCapability;
 import static org.nexial.core.utils.CheckUtils.requiresNotBlank;
 
@@ -53,11 +51,8 @@ import static org.nexial.core.utils.CheckUtils.requiresNotBlank;
  * extension to {@link Browser} in support of all things BrowserStack.
  */
 public class BrowserStackHelper extends CloudWebTestingPlatform {
-    protected String sessionId;
 
     public BrowserStackHelper(ExecutionContext context) { super(context); }
-
-    public String getSessionId() { return sessionId; }
 
     @Override
     @NotNull
@@ -95,7 +90,7 @@ public class BrowserStackHelper extends CloudWebTestingPlatform {
             String url = BASE_PROTOCOL + username + ":" + automateKey + BASE_URL;
             RemoteWebDriver driver = new RemoteWebDriver(new URL(url), capabilities);
 
-            sessionId = driver.getSessionId().toString();
+            saveSessionId(driver);
 
             // safari's usually a bit slower to come up...
             if (browser == safari) {
@@ -109,25 +104,27 @@ public class BrowserStackHelper extends CloudWebTestingPlatform {
         }
     }
 
-    public void reportExecutionStatus(ExecutionSummary summary) {
+    public void reportExecutionStatus(ExecutionSummary summary) { reportExecutionStatus(context, summary); }
+
+    public static void reportExecutionStatus(ExecutionContext context, ExecutionSummary summary) {
         if (context == null) { return; }
 
         NexialCommand wsCommand = context.findPlugin("ws");
         if (!(wsCommand instanceof WsCommand)) { return; }
 
+        WsCommand ws = ((WsCommand) wsCommand);
+
+        String sessionId = CloudWebTestingPlatform.getSessionId(context);
+        if (sessionId == null) { return; }
+
         String url = StringUtils.replace(SESSION_URL, "${username}", context.getStringData(KEY_USERNAME));
         url = StringUtils.replace(url, "${automatekey}", context.getStringData(KEY_AUTOMATEKEY));
         url = StringUtils.replace(url, "${sessionId}", sessionId);
 
-        String status = summary.getFailCount() > 0 ? "failed" : "passed";
-        String reason = "total: " + summary.getTotalSteps() +
-                        ", pass: " + summary.getPassCount() +
-                        ", fail: " + summary.getFailCount() +
-                        ", success%: " + MessageFormat.format(RATE_FORMAT, summary.getSuccessRate());
-        String payload = "{\"status\":\"" + status + "\", \"reason\":\"" + reason + "\"}";
+        String payload = "{\"status\":\"" + (summary.getFailCount() > 0 ? "failed" : "passed") +
+                         "\", \"reason\":\"" + formatStatusDescription(summary) + "\"}";
 
         ConsoleUtils.log("reporting execution status to BrowserStack...");
-        WsCommand ws = ((WsCommand) wsCommand);
         ws.put(url, payload, RandomStringUtils.randomAlphabetic(5));
     }
 

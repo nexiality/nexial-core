@@ -49,6 +49,7 @@ import org.nexial.commons.utils.web.URLEncodingUtils;
 import org.nexial.core.WebProxy;
 import org.nexial.core.browsermob.ProxyHandler;
 import org.nexial.core.model.ExecutionContext;
+import org.nexial.core.model.NexialUrlInvokedEvent;
 import org.nexial.core.model.StepResult;
 import org.nexial.core.model.TestStep;
 import org.nexial.core.plugins.CanLogExternally;
@@ -58,6 +59,7 @@ import org.nexial.core.plugins.base.BaseCommand;
 import org.nexial.core.plugins.base.ScreenshotUtils;
 import org.nexial.core.plugins.ws.Response;
 import org.nexial.core.plugins.ws.WsCommand;
+import org.nexial.core.service.EventTracker;
 import org.nexial.core.utils.ConsoleUtils;
 import org.nexial.core.utils.OutputFileUtils;
 import org.nexial.core.utils.WebDriverUtils;
@@ -957,10 +959,14 @@ public class WebCommand extends BaseCommand implements CanTakeScreenshot, CanLog
 
         ensureReady();
 
-        driver.get(validateUrl(url));
+        url = validateUrl(url);
+        driver.get(url);
         waitForBrowserStability(toPositiveLong(waitMs, "waitMs"));
         updateWinHandle();
         resizeSafariAfterOpen();
+
+        EventTracker.INSTANCE.track(new NexialUrlInvokedEvent(browser.getBrowserType().name(), url));
+
         return StepResult.success("opened URL " + hideAuthDetails(url));
     }
 
@@ -980,6 +986,8 @@ public class WebCommand extends BaseCommand implements CanTakeScreenshot, CanLog
 
         updateWinHandle();
         resizeSafariAfterOpen();
+
+        EventTracker.INSTANCE.track(new NexialUrlInvokedEvent(browser.getBrowserType().name(), url));
 
         return StepResult.success("opened URL " + hideAuthDetails(urlBasic));
     }
@@ -1017,6 +1025,8 @@ public class WebCommand extends BaseCommand implements CanTakeScreenshot, CanLog
         stopWatch.stop();
 
         resizeSafariAfterOpen();
+
+        EventTracker.INSTANCE.track(new NexialUrlInvokedEvent(browser.getBrowserType().name(), url));
 
         return StepResult.success("opened URL " + hideAuthDetails(url));
     }

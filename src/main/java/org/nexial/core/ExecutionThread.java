@@ -32,9 +32,7 @@ import org.nexial.commons.logging.LogbackUtils;
 import org.nexial.core.aws.NexialS3Helper;
 import org.nexial.core.excel.Excel;
 import org.nexial.core.model.*;
-import org.nexial.core.plugins.NexialCommand;
-import org.nexial.core.plugins.web.Browser;
-import org.nexial.core.plugins.web.WebCommand;
+import org.nexial.core.plugins.web.CloudWebTestingPlatform;
 import org.nexial.core.reports.ExecutionMailConfig;
 import org.nexial.core.service.EventTracker;
 import org.nexial.core.utils.ConsoleUtils;
@@ -43,6 +41,7 @@ import org.nexial.core.utils.ExecutionLogger;
 import static org.nexial.core.NexialConst.Data.*;
 import static org.nexial.core.NexialConst.OPT_LAST_OUTCOME;
 import static org.nexial.core.NexialConst.Project.appendLog;
+import static org.nexial.core.model.ExecutionEvent.*;
 import static org.nexial.core.model.ExecutionSummary.ExecutionLevel.ITERATION;
 import static org.nexial.core.model.ExecutionSummary.ExecutionLevel.SCRIPT;
 
@@ -205,6 +204,9 @@ public final class ExecutionThread extends Thread {
                         new NexialIterationCompleteEvent(scriptLocation, currIteration, iterSummary));
                     executionSummary.addNestSummary(iterSummary);
 
+                    // report status at iteration level
+                    CloudWebTestingPlatform.reportCloudBrowserStatus(context, iterSummary, IterationComplete);
+
                     // try {
                     // save it before use it
                     // testScript.save();
@@ -250,7 +252,10 @@ public final class ExecutionThread extends Thread {
         onScriptComplete(context, executionSummary, iterationManager, ticktock);
 
         // handling onExecutionComplete
-        if (lastUse) { context.getExecutionEventListener().onExecutionComplete(); }
+        if (lastUse) {
+            CloudWebTestingPlatform.reportCloudBrowserStatus(context, executionSummary, ExecutionComplete);
+            context.getExecutionEventListener().onExecutionComplete();
+        }
 
         ExecutionThread.unset();
         MemManager.recordMemoryChanges(scriptName + " completed");
@@ -373,25 +378,7 @@ public final class ExecutionThread extends Thread {
         summary.aggregatedNestedExecutions(context);
         EventTracker.INSTANCE.track(new NexialScriptCompleteEvent(summary.getSourceScript(), summary));
 
-        // special case for BrowserStack and CrossBrowserTesting
-        // https://www.browserstack.com/automate/rest-api
-        if (context.isPluginLoaded("web")) {
-            // only look for the `web` plugin IF it is already loaded. Otherwise we could prematurely load webdriver
-            // as a side effect..
-            NexialCommand webCommand = context.findPlugin("web");
-            if (webCommand instanceof WebCommand) {
-                Browser browser = ((WebCommand) webCommand).getBrowser();
-                if (browser != null) {
-                    // this means we were running browser in this script.. now let's report status
-                    if (browser.isRunBrowserStack() && browser.getBrowserstackHelper() != null) {
-                        browser.getBrowserstackHelper().reportExecutionStatus(summary);
-                    }
-                    if (browser.isRunCrossBrowserTesting() && browser.getCbtHelper() != null) {
-                        browser.getCbtHelper().reportExecutionStatus(summary);
-                    }
-                }
-            }
-        }
+        CloudWebTestingPlatform.reportCloudBrowserStatus(context, summary, ScriptComplete);
 
         StringBuilder cloudOutputBuffer = new StringBuilder();
         if (context.isOutputToCloud()) {

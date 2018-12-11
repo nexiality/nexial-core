@@ -36,10 +36,12 @@ import org.nexial.commons.utils.FileUtil;
 import org.nexial.core.NexialConst.*;
 import org.nexial.core.ShutdownAdvisor;
 import org.nexial.core.browsermob.ProxyHandler;
+import org.nexial.core.model.BrowserCompleteEvent;
 import org.nexial.core.model.ExecutionContext;
 import org.nexial.core.plugins.CanTakeScreenshot;
 import org.nexial.core.plugins.ForcefulTerminate;
 import org.nexial.core.plugins.external.ExternalCommand;
+import org.nexial.core.service.EventTracker;
 import org.nexial.core.utils.ConsoleUtils;
 import org.openqa.selenium.*;
 import org.openqa.selenium.chrome.ChromeDriver;
@@ -396,6 +398,8 @@ public class Browser implements ForcefulTerminate {
         // }
 
         ConsoleUtils.log("Shutting down '" + browserType.name() + "' webdriver...");
+
+        EventTracker.INSTANCE.track(new BrowserCompleteEvent(browserType.name()));
 
         try { Thread.sleep(2000);} catch (InterruptedException e) { }
 

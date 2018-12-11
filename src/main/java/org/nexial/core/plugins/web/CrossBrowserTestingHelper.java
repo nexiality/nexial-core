@@ -90,8 +90,7 @@ public class CrossBrowserTestingHelper extends CloudWebTestingPlatform {
             String url = BASE_PROTOCOL + URLEncodingUtils.encodeAuth(username) + ":" + authKey + BASE_URL;
             RemoteWebDriver driver = new RemoteWebDriver(new URL(url), capabilities);
 
-            String sessionId = driver.getSessionId().toString();
-            context.addScriptReferenceData(KEY_SESSION_ID, sessionId);
+            saveSessionId(driver);
 
             return driver;
         } catch (MalformedURLException | WebDriverException e) {
@@ -99,17 +98,16 @@ public class CrossBrowserTestingHelper extends CloudWebTestingPlatform {
         }
     }
 
-    public void reportExecutionStatus(ExecutionSummary summary) {
+    public void reportExecutionStatus(ExecutionSummary summary) { reportExecutionStatus(context, summary); }
+
+    public static void reportExecutionStatus(ExecutionContext context, ExecutionSummary summary) {
         if (context == null) { return; }
 
         NexialCommand wsCommand = context.findPlugin("ws");
         if (!(wsCommand instanceof WsCommand)) { return; }
 
-        String sessionId = context.gatherScriptReferenceData().get(KEY_SESSION_ID);
-        if (StringUtils.isBlank(sessionId)) {
-            ConsoleUtils.error("Unable to report execution status since session id is blank or cannot be retrieved.");
-            return;
-        }
+        String sessionId = CloudWebTestingPlatform.getSessionId(context);
+        if (sessionId == null) { return; }
 
         String oldUsername = context.getStringData(WS_BASIC_USER);
         String oldPassword = context.getStringData(WS_BASIC_PWD);
@@ -121,8 +119,13 @@ public class CrossBrowserTestingHelper extends CloudWebTestingPlatform {
 
         try {
             WsCommand ws = ((WsCommand) wsCommand);
-            ws.put(StringUtils.replace(SESSION_URL, "${seleniumTestId}", sessionId),
+            String statusApi = StringUtils.replace(SESSION_URL, "${seleniumTestId}", sessionId);
+
+            ws.put(statusApi,
                    "{\"action\":\"set_score\", \"score\":\"" + (summary.getFailCount() > 0 ? "fail" : "pass") + "\"}",
+                   RandomStringUtils.randomAlphabetic(5));
+            ws.put(statusApi,
+                   "{\"action\":\"set_description\", \"description\":\"" + formatStatusDescription(summary) + "\"}",
                    RandomStringUtils.randomAlphabetic(5));
         } finally {
             // put BASIC AUTH back

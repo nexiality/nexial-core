@@ -303,7 +303,7 @@
     <!-- ####################################### -->
     <!-- ### command targets / plugins       ### -->
     <!-- ####################################### -->
-    <bean id="pluginManager" class="org.nexial.core.PluginManager">
+    <bean id="pluginManager" class="org.nexial.core.model.PluginManager">
         <property name="plugins" ref="plugins"/>
         <property name="browser">
             <bean class="org.nexial.core.plugins.web.Browser">

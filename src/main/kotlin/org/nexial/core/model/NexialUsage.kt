@@ -191,3 +191,6 @@ class NexialFailEvent(val error: String) :
 
 class NexialUrlInvokedEvent(val browser: String, val url: String) :
     NexialEvent(eventName = WebOpen.eventName, startTime = System.currentTimeMillis())
+
+class BrowserCompleteEvent(val browser: String) :
+        NexialEvent(eventName = BrowserComplete.eventName, startTime = System.currentTimeMillis())

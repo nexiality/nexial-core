@@ -35,6 +35,7 @@ import org.nexial.commons.utils.TextUtils;
 import org.nexial.core.excel.ExcelConfig;
 import org.nexial.core.model.ExecutionContext;
 import org.nexial.core.model.ExecutionDefinition;
+import org.nexial.core.model.ExecutionEvent;
 import org.nexial.core.model.TestProject;
 import org.nexial.core.utils.ConsoleUtils;
 import org.nexial.core.utils.ExecUtils;
@@ -51,6 +52,7 @@ import static org.apache.commons.lang3.SystemUtils.JAVA_IO_TMPDIR;
 import static org.nexial.core.NexialConst.AwsSettings.*;
 import static org.nexial.core.NexialConst.Data.*;
 import static org.nexial.core.NexialConst.Integration.MAIL_PREFIX;
+import static org.nexial.core.model.ExecutionEvent.*;
 
 /**
  * constants
@@ -510,17 +512,41 @@ public final class NexialConst {
         private AwsSettings() {}
     }
 
-    // browserstack
-    public static final class BrowserStack {
+    public static class CloudWebTesting {
         public static final String BASE_PROTOCOL = "http://";
+
+        public static final boolean DEF_DEBUG = true;
+        public static final boolean DEF_ENABLE_LOCAL = false;
+
+        public static final String KEY_SESSION_ID = "sessionId";
+
+        public static final String SCOPE_ITERATION = "iteration";
+        public static final String SCOPE_SCRIPT = "script";
+        public static final String SCOPE_EXECUTION = "execution";
+        public static final String SCOPE_DEFAULT = SCOPE_EXECUTION;
+        public static final List<ExecutionEvent> SUPPORTED_SCOPES =
+            Arrays.asList(IterationComplete, ScriptComplete, ExecutionComplete);
+
+        public static boolean isValidReportScope(String scope) {
+            return StringUtils.equals(scope, SCOPE_EXECUTION) || StringUtils.equals(scope, SCOPE_ITERATION);
+        }
+
+        public static boolean isValidReportScope(ExecutionEvent scope) {
+            return SUPPORTED_SCOPES.contains(scope);
+        }
+    }
+
+    // browserstack
+    public static final class BrowserStack extends CloudWebTesting {
         public static final String BASE_URL = "@hub.browserstack.com/wd/hub";
         public static final String SESSION_URL =
             "https://${username}:${automatekey}@api.browserstack.com/automate/sessions/${sessionId}.json";
-        public static final boolean DEF_DEBUG = true;
-        public static final boolean DEF_ENABLE_LOCAL = false;
+
         private static final String NS = NAMESPACE + "browserstack.";
+
         public static final String KEY_USERNAME = NS + "username";
         public static final String KEY_AUTOMATEKEY = NS + "automatekey";
+
         public static final String KEY_BROWSER = NS + "browser";
         public static final String KEY_BROWSER_VER = NS + "browser.version";
         public static final String KEY_DEBUG = NS + "debug";
@@ -532,11 +558,13 @@ public final class NexialConst {
 
         public static final String KEY_CAPTURE_CRASH = NS + "captureCrash";
 
+        // status report
+        public static final String KEY_STATUS_SCOPE = NS + "reportStatus";
+
         private BrowserStack() {}
     }
 
-    public static final class CrossBrowserTesting {
-        public static final String BASE_PROTOCOL = "http://";
+    public static final class CrossBrowserTesting extends CloudWebTesting {
         public static final String BASE_URL = "@hub.crossbrowsertesting.com:80/wd/hub";
         public static final String SESSION_URL = "http://crossbrowsertesting.com/api/v3/selenium/${seleniumTestId}";
 
@@ -550,10 +578,7 @@ public final class NexialConst {
         public static final String KEY_USERNAME = "username";
         public static final String KEY_AUTHKEY = "authkey";
 
-        public static final String KEY_SESSION_ID = "sessionId";
-
         public static final String KEY_ENABLE_LOCAL = "enablelocal";
-        public static final boolean DEF_ENABLE_LOCAL = false;
         public static final String KEY_LOCAL_START_WAITMS = "localStartWaitMs";
         public static final long DEF_LOCAL_START_WAITMS = 5000;
         public static final long MAX_LOCAL_START_WAITMS = 20000;
@@ -590,6 +615,9 @@ public final class NexialConst {
         public static final String KEY_DEVICE = "deviceName";
         public static final String KEY_DEVICE_ORIENTATION = "deviceOrientation";
         public static final String DEF_DEVICE_ORIENTATION = "portrait";
+
+        // status report
+        public static final String KEY_STATUS_SCOPE = NS + "reportStatus";
 
         private CrossBrowserTesting() {}
     }

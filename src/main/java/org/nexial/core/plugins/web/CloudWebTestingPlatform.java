@@ -16,11 +16,26 @@
 
 package org.nexial.core.plugins.web;
 
+import java.text.MessageFormat;
 import javax.validation.constraints.NotNull;
 
+import org.apache.commons.lang3.StringUtils;
+import org.jetbrains.annotations.Nullable;
+import org.nexial.core.NexialConst.BrowserStack;
 import org.nexial.core.NexialConst.BrowserType;
+import org.nexial.core.NexialConst.CloudWebTesting;
+import org.nexial.core.NexialConst.CrossBrowserTesting;
 import org.nexial.core.model.ExecutionContext;
+import org.nexial.core.model.ExecutionEvent;
+import org.nexial.core.model.ExecutionSummary;
+import org.nexial.core.utils.ConsoleUtils;
 import org.openqa.selenium.WebDriver;
+import org.openqa.selenium.remote.RemoteWebDriver;
+
+import static org.nexial.core.NexialConst.CloudWebTesting.*;
+import static org.nexial.core.NexialConst.CrossBrowserTesting.KEY_SESSION_ID;
+import static org.nexial.core.NexialConst.RATE_FORMAT;
+import static org.nexial.core.model.ExecutionEvent.*;
 
 public abstract class CloudWebTestingPlatform {
     protected ExecutionContext context;
@@ -73,5 +88,79 @@ public abstract class CloudWebTestingPlatform {
     @NotNull
     public abstract WebDriver initWebDriver();
 
+    /**
+     * report execution status to the on-demand, cloud-based browser execution service such as BrowserStack or
+     * CrossBrowserTesting. The execution status can be scoped to the entire execution or per iteration.
+     */
+    public static void reportCloudBrowserStatus(ExecutionContext context,
+                                                ExecutionSummary summary,
+                                                ExecutionEvent targetScope) {
+
+        if (context == null || summary == null || targetScope == null) { return; }
+
+        if (!CloudWebTesting.isValidReportScope(targetScope)) {
+            ConsoleUtils.error("Execution Scope '" + targetScope.getEventName() +
+                               "' currently not supported for status report on cloud-based browser execution");
+            return;
+        }
+
+        if (!context.isPluginLoaded("web")) { return; }
+
+        // blank browser type means no browser init yet.
+        String browserType = context.getBrowserType();
+        if (StringUtils.isBlank(browserType)) { return; }
+
+        // null browser means no web command yet.
+        Browser browser = context.getBrowser();
+        if (browser == null) { return; }
+
+        // special case for BrowserStack and CrossBrowserTesting
+        // https://www.browserstack.com/automate/rest-api
+
+        // this means we were running browser in this script.. now let's report status
+        if (browser.isRunBrowserStack() &&
+            isReportStatusMatchingScope(targetScope,
+                                        context.getStringData(BrowserStack.KEY_STATUS_SCOPE, SCOPE_DEFAULT))) {
+            BrowserStackHelper.reportExecutionStatus(context, summary);
+        }
+
+        if (browser.isRunCrossBrowserTesting() &&
+            isReportStatusMatchingScope(targetScope,
+                                        context.getStringData(CrossBrowserTesting.KEY_STATUS_SCOPE, SCOPE_DEFAULT))) {
+            CrossBrowserTestingHelper.reportExecutionStatus(context, summary);
+        }
+    }
+
+    protected void saveSessionId(RemoteWebDriver driver) {
+        context.addScriptReferenceData(KEY_SESSION_ID, driver.getSessionId().toString());
+    }
+
+    @Nullable
+    protected String getSessionId() { return getSessionId(context); }
+
+    @Nullable
+    protected static String getSessionId(ExecutionContext context) {
+        String sessionId = context.gatherScriptReferenceData().get(KEY_SESSION_ID);
+        if (StringUtils.isBlank(sessionId)) {
+            ConsoleUtils.error("Unable to report execution status since session id is blank or cannot be retrieved.");
+            return null;
+        }
+        return sessionId;
+    }
+
+    @NotNull
+    protected static String formatStatusDescription(ExecutionSummary summary) {
+        return "total: " + summary.getTotalSteps() +
+               ", pass: " + summary.getPassCount() +
+               ", fail: " + summary.getFailCount() +
+               ", success%: " + MessageFormat.format(RATE_FORMAT, summary.getSuccessRate());
+    }
+
     protected abstract void terminateLocal();
+
+    private static boolean isReportStatusMatchingScope(ExecutionEvent targetScope, String scope) {
+        return (scope.equals(SCOPE_EXECUTION) && targetScope == ExecutionComplete) ||
+               (scope.equals(SCOPE_SCRIPT) && targetScope == ScriptComplete) ||
+               (scope.equals(SCOPE_ITERATION) && targetScope == IterationComplete);
+    }
 }

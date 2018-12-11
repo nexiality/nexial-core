@@ -12,16 +12,14 @@
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
- *
  */
 
-package org.nexial.core;
+package org.nexial.core.model;
 
 import java.util.HashMap;
 import java.util.Map;
 
 import org.apache.commons.collections4.MapUtils;
-import org.nexial.core.model.ExecutionContext;
 import org.nexial.core.plugins.NexialCommand;
 import org.nexial.core.plugins.RequireBrowser;
 import org.nexial.core.plugins.web.Browser;
@@ -46,8 +44,6 @@ public class PluginManager {
     }
 
     public void setPlugins(Map<String, NexialCommand> plugins) { this.plugins = plugins; }
-
-    public void setBrowser(Browser browser) { this.browser = browser; }
 
     public boolean isPluginLoaded(String target) { return initialized.containsKey(target); }
 
@@ -90,4 +86,8 @@ public class PluginManager {
         browser.ensureWebDriverReady();
         browserInitialized = true;
     }
+
+    protected Browser getBrowser() { return browser; }
+
+    public void setBrowser(Browser browser) { this.browser = browser; }
 }

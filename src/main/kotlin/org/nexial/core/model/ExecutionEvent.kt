@@ -45,8 +45,6 @@ enum class ExecutionEvent(val eventName: String, val variable: String, val descr
     ErrorOccurred("onError", "${NOTIFY_ON}Error", "Error occurred"),
     ExecutionPause("onPause", "${NOTIFY_ON}Pause", "Execution paused"),
 
-    WebOpen("onWebOpen", "${NOTIFY_ON}WebOpen", "URL invoked"),
-
     DesktopUseApp("onDesktopUseApp", "${NOTIFY_ON}DesktopUseApp", "Desktop app in use"),
     DesktopUseForm("onDesktopUseForm", "${NOTIFY_ON}DesktopUseForm", "Desktop form in use"),
     DesktopUseTable("onDesktopUseTable", "${NOTIFY_ON}DesktopUseTable", "Desktop table in use"),
@@ -56,7 +54,10 @@ enum class ExecutionEvent(val eventName: String, val variable: String, val descr
     WsComplete("onWsComplete", "${NOTIFY_ON}WsComplete", "Web service completed"),
 
     RdbmsStart("onRdbmsStart", "${NOTIFY_ON}RdbmsStart", "SQL query started"),
-    RdbmsComplete("onRdbmsComplete", "${NOTIFY_ON}RdbmsComplete", "SQL query completed");
+    RdbmsComplete("onRdbmsComplete", "${NOTIFY_ON}RdbmsComplete", "SQL query completed"),
+
+    WebOpen("onWebOpen", "${NOTIFY_ON}WebOpen", "URL invoked"),
+    BrowserComplete("onBrowserComplete", "${NOTIFY_ON}BrowserComplete", "current Browser instance terminated");
 
     override fun toString(): String = eventName
 
