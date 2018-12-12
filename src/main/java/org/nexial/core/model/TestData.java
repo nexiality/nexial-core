@@ -44,7 +44,7 @@ import static org.nexial.core.NexialConst.*;
  * <ol>
  * <li>Predefined data that remains constant throughout an entire test execution (which could be multiple scenarios and
  * or iterations).  Such data names are prefixed with <code>nexial.scope.</code>.  The value of such data, once parsed,
- * will remain unchange as not to alter the execution context. For example:
+ * will remain unchanged as not to alter the execution context. For example:
  * <pre>
  *     nexial.scope.iteration=4                     # define that nexial should loop the specified test 4 times.
  *     nexial.scope.fallbackToPrevious=true         # define that missing data in current iteration should resolve to previous value.
@@ -59,12 +59,12 @@ import static org.nexial.core.NexialConst.*;
  *     nexial.textDelim                             # define the delimiter character to transform text string into a list.
  * </pre>
  * </li>
- * <li>USer-defined data that could be altered between iterations.  Such data names are anything not prefixed with
+ * <li>User-defined data that could be altered between iterations.  Such data names are anything not prefixed with
  * <code>nexial.</code>  Nexial users are free to define any names or values.  Using <code>nexial.scope.iteration</code>
  * and <code>nexial.scope.fallbackToPrevious</code> one can control how Nexial handle data values between iterations.</li>
  * </ol>
  *
- * It is noteworthy that non-scoped data can be altereed as a test execution progresses.  The altered data would impacting
+ * It is noteworthy that non-scoped data can be altered as a test execution progresses.  The altered data would impacting
  * the subsequent test scenarios/cases/steps.  The progressive data management is by design. The ability to "remember" data
  * states would allow a more meaningful and dynamic way to execute tests, esp. for tests that spread across multiple
  * scenarios. However data changes and the transitive behavior will not persists between test execution.
@@ -360,9 +360,11 @@ public class TestData {
     protected void eliminateFromDefaultDataMap(String dataKey) { defaultDataMap.remove(dataKey); }
 
     protected void infuseIntraExecutionData(Map<String, Object> intraExecutionData) {
-        if (MapUtils.isEmpty(intraExecutionData)) { return; }
+        if (MapUtils.isEmpty(intraExecutionData) || !intraExecutionData.containsKey(LAST_ITERATION)) { return; }
 
         int lastIteration = NumberUtils.toInt(Objects.toString(intraExecutionData.get(LAST_ITERATION)));
+        if (lastIteration < 1) { return; }
+
         intraExecutionData.forEach((name, value) -> {
             // (2018/12/06,automike): no longer limit to just "default" variable so that we can extend the changes from
             // (2018/12/06,automike): one script to another within the same execution plan.

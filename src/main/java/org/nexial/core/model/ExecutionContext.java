@@ -242,6 +242,7 @@ public class ExecutionContext {
 
             data.putAll(intraExecutionData);
             data.remove(BREAK_CURRENT_ITERATION);
+            data.remove(LAST_ITERATION);
         } else {
             // init spring
             springContext = new ClassPathXmlApplicationContext(

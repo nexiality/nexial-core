@@ -41,8 +41,7 @@ import org.nexial.core.utils.OutputFileUtils;
 
 import static java.io.File.separator;
 import static org.apache.poi.ss.usermodel.Row.MissingCellPolicy.CREATE_NULL_AS_BLANK;
-import static org.nexial.core.NexialConst.Data.SHEET_MERGED_DATA;
-import static org.nexial.core.NexialConst.Data.SHEET_SYSTEM;
+import static org.nexial.core.NexialConst.Data.*;
 import static org.nexial.core.NexialConst.NAMESPACE;
 import static org.nexial.core.NexialConst.Project.appendCapture;
 import static org.nexial.core.NexialConst.Project.appendLog;
@@ -230,6 +229,12 @@ public class ExecutionInputPrep {
         SortedMap<String, String> data = new TreeMap<>(testData.getAllValue(iteration));
         testData.getAllSettings().forEach(data::put);
         data.putAll(ExecUtils.deriveJavaOpts());
+        data.put(CURR_ITERATION, iteration + "");
+        if (iteration > 1) {
+            data.put(LAST_ITERATION, (iteration - 1) + "");
+        } else {
+            data.remove(LAST_ITERATION);
+        }
 
         Properties sysprops = System.getProperties();
         if (MapUtils.isNotEmpty(sysprops)) {

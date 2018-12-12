@@ -247,8 +247,6 @@ public final class ExecutionThread extends Thread {
             }
         }
 
-        // we need to infuse "between" #default and whatever data sheets is assigned for this test script
-        // execDef.infuseIntraExecutionData(intraExecutionData);
         onScriptComplete(context, executionSummary, iterationManager, ticktock);
 
         // handling onExecutionComplete
@@ -275,9 +273,10 @@ public final class ExecutionThread extends Thread {
 
     protected void collectIntraExecutionData(ExecutionContext context, int completeIteration) {
         if (context == null) { return; }
+
+        context.fillIntraExecutionData(intraExecutionData);
         // override, if found, previous "last completed iteration count"
         intraExecutionData.put(LAST_ITERATION, completeIteration);
-        context.fillIntraExecutionData(intraExecutionData);
     }
 
     protected boolean shouldStopNow(ExecutionContext context, boolean allPass) {
@@ -424,6 +423,8 @@ public final class ExecutionThread extends Thread {
         if (context.hasData(LAST_PLAN_STEP)) {
             System.setProperty(LAST_PLAN_STEP, context.getStringData(LAST_PLAN_STEP, DEF_LAST_PLAN_STEP));
         }
+
+        if (MapUtils.isNotEmpty(intraExecutionData)) { intraExecutionData.remove(LAST_ITERATION); }
 
         MemManager.gc(execDef);
     }
