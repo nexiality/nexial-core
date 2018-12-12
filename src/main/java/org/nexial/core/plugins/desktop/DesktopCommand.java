@@ -1482,7 +1482,6 @@ public class DesktopCommand extends BaseCommand
     }
 
     protected Map<String, String> nameValuesToMap(String nameValues) {
-        nameValues = StringUtils.trim(nameValues);
         if (nameValues.isEmpty()) { return new HashMap<>(); }
         String pairDelim = "\n";
         if (!StringUtils.contains(nameValues, pairDelim) && !StringUtils.contains(nameValues, "\r")) {

@@ -876,8 +876,6 @@ public class DesktopTable extends DesktopElement {
             return false;
         }
 
-        value = StringUtils.trim(value);
-
         Pattern p = Pattern.compile("^(.+)\\[(.+)]$");
         Matcher m = p.matcher(value);
         if (m.find()) {

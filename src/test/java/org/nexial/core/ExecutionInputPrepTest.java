@@ -78,6 +78,7 @@ public class ExecutionInputPrepTest {
         iteration1DataMap.put("nexial.scope.executionMode", "local");
         iteration1DataMap.put("nexial.scope.fallbackToPrevious", "true");
         iteration1DataMap.put("nexial.scope.iteration", "3");
+        iteration1DataMap.put("nexial.scope.currentIteration", "1");
         iteration1DataMap.put("nexial.scope.mailTo", "jumbotron@tiny.corp");
         iteration1DataMap.put("nexial.delayBetweenStepsMs", "600");
         iteration1DataMap.put("nexial.failFast", "false");
@@ -92,6 +93,8 @@ public class ExecutionInputPrepTest {
         iteration2DataMap.put("nexial.scope.executionMode", "local");
         iteration2DataMap.put("nexial.scope.fallbackToPrevious", "true");
         iteration2DataMap.put("nexial.scope.iteration", "3");
+        iteration2DataMap.put("nexial.scope.currentIteration", "2");
+        iteration2DataMap.put("nexial.scope.lastIteration", "1");
         iteration2DataMap.put("nexial.scope.mailTo", "jumbotron@tiny.corp");
         iteration2DataMap.put("nexial.delayBetweenStepsMs", "600");
         iteration2DataMap.put("nexial.failFast", "false");
@@ -106,6 +109,8 @@ public class ExecutionInputPrepTest {
         iteration3DataMap.put("nexial.scope.executionMode", "local");
         iteration3DataMap.put("nexial.scope.fallbackToPrevious", "true");
         iteration3DataMap.put("nexial.scope.iteration", "3");
+        iteration3DataMap.put("nexial.scope.currentIteration", "3");
+        iteration3DataMap.put("nexial.scope.lastIteration", "2");
         iteration3DataMap.put("nexial.scope.mailTo", "jumbotron@tiny.corp");
         iteration3DataMap.put("nexial.delayBetweenStepsMs", "600");
         iteration3DataMap.put("nexial.failFast", "false");
