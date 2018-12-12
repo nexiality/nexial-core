@@ -364,17 +364,26 @@ public class TestData {
 
         int lastIteration = NumberUtils.toInt(Objects.toString(intraExecutionData.get(LAST_ITERATION)));
         intraExecutionData.forEach((name, value) -> {
-            if (isDefinedAsDefault(name)) {
-                String stringValue = Objects.toString(value);
+            // (2018/12/06,automike): no longer limit to just "default" variable so that we can extend the changes from
+            // (2018/12/06,automike): one script to another within the same execution plan.
+            // (2018/12/06,automike): Use Case 1: modification of an iteration-bound data variable in `script1` should
+            // (2018/12/06,automike):             remain effective to the subsequent scripts within same plan.
+            // (2018/12/06,automike): Use Case 2: modification of an iteration-bound data variable in `script1` should
+            // (2018/12/06,automike):             not preclude the same by subsequent scripts within same plan.
+            // (2018/12/06,automike): Use Case 3: data variables defined or created in one script should be read/write-
+            // (2018/12/06,automike):             able by all subsequent scripts within same plan.
 
-                // we should be sync'ing back value to its initial iteration, not the current/latest iteration
-                List<String> data = dataMap.get(name);
-                if (CollectionUtils.size(data) < lastIteration) {
-                    if (CollectionUtils.isEmpty(data)) { data = new ArrayList<>(); }
-                    for (int i = 0; i < lastIteration; i++) { if (data.size() <= i) { data.add(i, null); } }
-                }
-                data.set((lastIteration - 1), stringValue);
+            // if (isDefinedAsDefault(name)) {
+            String stringValue = Objects.toString(value);
+
+            // we should be sync'ing back value to its initial iteration, not the current/latest iteration
+            List<String> data = dataMap.get(name);
+            if (CollectionUtils.size(data) < lastIteration) {
+                if (CollectionUtils.isEmpty(data)) { data = new ArrayList<>(); }
+                for (int i = 0; i < lastIteration; i++) { if (data.size() <= i) { data.add(i, null); } }
             }
+            data.set((lastIteration - 1), stringValue);
+            // }
         });
     }
 }

@@ -151,7 +151,7 @@ public class ExecutionEventListener {
                       (mailIncludeMeta ? "\n" + gatherMeta() : "") + "\n" + mailTagLine + "\n";
 
         try {
-            nexialMailer.sendPlainText(recipientList, "[nexial-notification] " + event.getDescription(), text);
+            nexialMailer.sendPlainText(recipientList, MAIL_NOTIF_SUBJECT_PREFIX + event.getDescription(), text);
         } catch (MessagingException e) {
             ConsoleUtils.log(msgId, event + " - nexial mailer not configured properly: " + e.getMessage());
             ConsoleUtils.log(msgId, event + " - " + config);

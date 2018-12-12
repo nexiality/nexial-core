@@ -90,7 +90,7 @@ public class NexialMailer implements ExecutionNotifier {
         }
 
         // default subject
-        if (StringUtils.isBlank(subject)) { subject = "[nexial] You've got mail"; }
+        if (StringUtils.isBlank(subject)) { subject = MAIL_RESULT_SUBJECT_PREFIX + "You've got mail"; }
 
         // off we go
         ConsoleUtils.log("Sending email to " + recipients);
@@ -161,7 +161,7 @@ public class NexialMailer implements ExecutionNotifier {
             return;
         }
 
-        String subject = "Test Result for '" + testCase + "'";
+        String subject = MAIL_RESULT_SUBJECT_PREFIX + "Test Result for '" + testCase + "'";
 
         if (mailSupport.hasSmtpConfigs() || mailSupport.hasJndiConfigs()) {
             smtpSendResult(recipients, subject, content, null);
@@ -177,7 +177,7 @@ public class NexialMailer implements ExecutionNotifier {
             return;
         }
 
-        String subject = "Test Result for '" + deriveTestName(attachments) + "'";
+        String subject = MAIL_RESULT_SUBJECT_PREFIX + "Test Result for '" + deriveTestName(attachments) + "'";
 
         if (mailSupport.hasSmtpConfigs() || mailSupport.hasJndiConfigs()) {
             smtpSendResult(recipients, subject, content, attachments);

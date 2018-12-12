@@ -49,7 +49,7 @@ public final class ExecUtils {
     public static final String RUNTIME_ARGS = "runtime args";
     public static final List<String> IGNORED_CLI_OPT = Arrays.asList(
         "awt.", "java.",
-        "idea.test.",
+        "idea.test.", "intellij.debug",
         "org.gradle.",
 
         "file.encoding", "file.separator", "line.separator", "path.separator",
@@ -62,6 +62,8 @@ public final class ExecUtils {
 
         "sun.arch", "sun.boot", "sun.cpu", "sun.desktop", "sun.font", "sun.io", "sun.java", "sun.jnu", "sun.management",
         "sun.os", "sun.stderr.encoding", "sun.stdout.encoding",
+
+        "jboss.modules",
 
         "user.country", "user.dir", "user.home", "user.language", "user.variant",
 

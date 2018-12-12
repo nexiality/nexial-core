@@ -17,6 +17,7 @@
 
 package org.nexial.commons.javamail;
 
+import java.util.Arrays;
 import java.util.Hashtable;
 import java.util.List;
 import java.util.Properties;
@@ -41,6 +42,7 @@ import com.sun.mail.smtp.SMTPTransport;
 
 import static javax.naming.Context.INITIAL_CONTEXT_FACTORY;
 import static org.nexial.core.NexialConst.Mailer.*;
+import static org.nexial.core.NexialConst.NAMESPACE;
 
 /**
  * @author Mike Liu
@@ -140,7 +142,8 @@ public final class MailObjectSupport {
         String jndiName = mailProps.getProperty(MAIL_KEY_MAIL_JNDI_URL);
         if (StringUtils.isNotBlank(jndiName)) {
             try {
-                InitialContext ctx = MapUtils.isEmpty(jndiEnv) ? new InitialContext() : new InitialContext(jndiEnv);
+                InitialContext ctx = MapUtils.isEmpty(jndiEnv) ?
+                                     new InitialContext() : new InitialContext(cleanMailProp(jndiEnv));
                 session = (Session) ctx.lookup(jndiName);
                 if (LOGGER.isInfoEnabled()) { LOGGER.info("JNDI resource '" + jndiName + "' for sending email..."); }
             } catch (NamingException e) {
@@ -159,6 +162,8 @@ public final class MailObjectSupport {
     private void createStandAloneSession() {
         Authenticator auth = null;
 
+        boolean debug = BooleanUtils.toBoolean(mailProps.getProperty(MAIL_KEY_DEBUG));
+
         String userName = mailProps.getProperty(MAIL_KEY_USERNAME);
         if (BooleanUtils.toBoolean(mailProps.getProperty(MAIL_KEY_AUTH)) && StringUtils.isNotBlank(userName)) {
             final String smtpUsername = userName;
@@ -170,8 +175,19 @@ public final class MailObjectSupport {
             };
         }
 
-        session = Session.getInstance(mailProps, auth);
-        if (BooleanUtils.toBoolean(mailProps.getProperty(MAIL_KEY_DEBUG))) { session.setDebug(true); }
+        session = Session.getInstance(cleanMailProp(mailProps), auth);
+        if (debug) { session.setDebug(true); }
+    }
+
+    private <T extends Hashtable<Object, Object>> T cleanMailProp(T props) {
+        if (MapUtils.isEmpty(props)) { return props; }
+
+        Object[] propKeys = props.keySet().toArray();
+        Arrays.stream(propKeys).forEach(key -> {
+            if (key != null) { props.put(StringUtils.removeStart(key.toString(), NAMESPACE), props.get(key)); }
+        });
+
+        return props;
     }
 
     private void createTransport() {
