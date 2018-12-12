@@ -2195,7 +2195,7 @@ public class WebCommand extends BaseCommand implements CanTakeScreenshot, CanLog
     }
 
     protected boolean waitForCondition(long maxWaitMs, Predicate condition) {
-        // guaranteed at least 1 cycle
+        // guaranteed at least 1 cycle of wait
         if (maxWaitMs < DEF_SLEEP_MS) { maxWaitMs = DEF_SLEEP_MS + 1; }
 
         int count = 0;

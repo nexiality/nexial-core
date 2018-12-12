@@ -711,6 +711,9 @@ public final class NexialConst {
         public static final String LAST_ITERATION = SCOPE + "lastIteration";
         // read-only: the currently in-progress iteration (doesn't mean it will or has completed successfully)
         public static final String CURR_ITERATION = SCOPE + "currentIteration";
+        // read-only: reload data file between iteration or not
+        public static final String REFETCH_DATA_FILE = SCOPE + "refetchDataFile";
+        public static final boolean DEF_REFETCH_DATA_FILE = true;
         public static final String ITERATION_SEP = ",";
         public static final String ITERATION_RANGE_SEP = "-";
         public static final String FALLBACK_TO_PREVIOUS = SCOPE + "fallbackToPrevious";
@@ -1001,6 +1004,7 @@ public final class NexialConst {
             TextUtils.toMap("=",
                             ITERATION + "=1",
                             FALLBACK_TO_PREVIOUS + "=true",
+                            REFETCH_DATA_FILE + "=" + DEF_REFETCH_DATA_FILE,
                             MAIL_TO + "=");
 
         // todo: find a way so that it is easy to manage this map and to publish this as part of standard documentation

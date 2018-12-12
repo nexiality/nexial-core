@@ -376,15 +376,15 @@ public class TestData {
             // (2018/12/06,automike):             able by all subsequent scripts within same plan.
 
             // if (isDefinedAsDefault(name)) {
-            String stringValue = Objects.toString(value);
+                String stringValue = Objects.toString(value);
 
-            // we should be sync'ing back value to its initial iteration, not the current/latest iteration
-            List<String> data = dataMap.get(name);
-            if (CollectionUtils.size(data) < lastIteration) {
-                if (CollectionUtils.isEmpty(data)) { data = new ArrayList<>(); }
-                for (int i = 0; i < lastIteration; i++) { if (data.size() <= i) { data.add(i, null); } }
-            }
-            data.set((lastIteration - 1), stringValue);
+                // we should be sync'ing back value to its initial iteration, not the current/latest iteration
+                List<String> data = dataMap.get(name);
+                if (CollectionUtils.size(data) < lastIteration) {
+                    if (CollectionUtils.isEmpty(data)) { data = new ArrayList<>(); }
+                    for (int i = 0; i < lastIteration; i++) { if (data.size() <= i) { data.add(i, null); } }
+                }
+                data.set((lastIteration - 1), stringValue);
             // }
         });
     }
