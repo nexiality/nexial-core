@@ -44,8 +44,6 @@ public class SyspathTest {
     public void setUp() throws Exception {
         System.setProperty(OPT_OUT_DIR, OUT_BASE + separator + "20170106_230142");
         System.setProperty(OPT_EXCEL_FILE, ARTIFACT_BASE + separator + "MyScript.xlsx");
-        System.setProperty(OPT_SUITE_PROP, ARTIFACT_BASE + separator + "TestCycle" + separator +
-                                           "ReleaseTesting.properties");
         System.setProperty(OPT_INPUT_EXCEL_FILE, ARTIFACT_BASE + separator + "MyScript.xlsx");
         System.setProperty(OPT_PROJECT_BASE, PROJ_REL_BASE);
         System.out.println("setting project base as " + PROJ_REL_BASE);
@@ -86,14 +84,6 @@ public class SyspathTest {
         Assert.assertEquals(OUT_BASE + separator + "20170106_230142", syspath.log("base"));
         Assert.assertEquals(OUT_BASE + separator + "20170106_230142" + separator + "logs",
                             syspath.log("fullpath"));
-    }
-
-    @Test
-    public void testSuite() throws Exception {
-        Assert.assertEquals("ReleaseTesting.properties", syspath.suite("name"));
-        Assert.assertEquals(ARTIFACT_BASE + separator + "TestCycle", syspath.suite("base"));
-        Assert.assertEquals(ARTIFACT_BASE + separator + "TestCycle" + separator + "ReleaseTesting.properties",
-                            syspath.suite("fullpath"));
     }
 
     @Test

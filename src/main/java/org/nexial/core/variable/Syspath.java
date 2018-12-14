@@ -55,9 +55,6 @@ public class Syspath {
 
     public String log(String scope) { return evaluateScope(scope, appendLog(getExecutionData(OPT_OUT_DIR))); }
 
-    // todo: still needed?
-    public String suite(String scope) { return evaluateExecutionScope(scope, OPT_SUITE_PROP); }
-
     public String temp(String scope) { return evaluateScope(scope, SystemUtils.getJavaIoTmpDir().getAbsolutePath()); }
 
     public String project(String scope) { return evaluateScope(scope, getExecutionData(OPT_PROJECT_BASE)); }

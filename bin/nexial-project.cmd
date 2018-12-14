@@ -38,7 +38,9 @@ if "%1"=="" goto :reportBadInputAndExit
     set PROJECT_ID=%PROJECT_HOME%\.meta\project.id
     if not exist %PROJECT_ID% (
         echo ^>^> create %PROJECT_ID%
-        echo %1 > %PROJECT_ID%
+		set PROJECT_NAME=
+		for %%F in (%1) do set PROJECT_NAME=%%~nF
+        echo %PROJECT_NAME% > %PROJECT_ID%
     )
 
 	set script_name=%~n1

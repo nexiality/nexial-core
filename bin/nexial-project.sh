@@ -40,7 +40,7 @@ mkdir -p ${PROJECT_HOME}/output > /dev/null 2>&1
 PROJECT_ID=${PROJECT_HOME}/.meta/project.id
 if [[ ! -s ${PROJECT_ID} ]] ; then
     echo "» create ${PROJECT_ID}"
-    echo $1 > ${PROJECT_ID}
+    echo `basename $1` > ${PROJECT_ID}
 fi
 
 SKIP_DEF_SCRIPTS=true

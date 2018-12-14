@@ -52,8 +52,7 @@ public final class JenkinsVariables {
 
         // favor nexial.suite, then nexial.inputExcel, then nexial.excel
         // nexial.excel most likely modified to the output version by this point
-        testScript = System.getProperty(OPT_SUITE_PROP,
-                                        System.getProperty(OPT_INPUT_EXCEL_FILE, System.getProperty(OPT_EXCEL_FILE)));
+        testScript = System.getProperty(OPT_INPUT_EXCEL_FILE, System.getProperty(OPT_EXCEL_FILE));
 
         invokedFromJenkins = StringUtils.isNotBlank(buildUserId) &&
                              StringUtils.isNotBlank(buildUser) &&

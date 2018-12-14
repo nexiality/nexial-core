@@ -295,10 +295,6 @@ public class ExecutionContext {
             springContext.getBean("webdriverHelperConfig", new HashMap<BrowserType, String>().getClass());
 
         setData(ITERATION_ENDED, false);
-        setData(EXECUTION_EXEC_COUNT, 0);
-        setData(EXECUTION_SKIP_COUNT, 0);
-        setData(EXECUTION_PASS_COUNT, 0);
-        setData(EXECUTION_FAIL_COUNT, 0);
     }
 
     public void useTestScript(Excel testScript) throws IOException {
@@ -460,13 +456,13 @@ public class ExecutionContext {
 
     public void evaluateResult(StepResult result) {
         if (result.isSkipped()) {
-            setData(EXECUTION_SKIP_COUNT, getIntData(EXECUTION_SKIP_COUNT, 0));
+            setData(EXECUTION_SKIP_COUNT, getIntData(EXECUTION_SKIP_COUNT, 0) + 1);
             return;
         }
 
-        setData(EXECUTION_EXEC_COUNT, getIntData(EXECUTION_EXEC_COUNT, 0));
+        setData(EXECUTION_EXEC_COUNT, getIntData(EXECUTION_EXEC_COUNT, 0) + 1);
         if (result.isSuccess()) {
-            setData(EXECUTION_PASS_COUNT, getIntData(EXECUTION_PASS_COUNT, 0));
+            setData(EXECUTION_PASS_COUNT, getIntData(EXECUTION_PASS_COUNT, 0) + 1);
         } else {
             incrementAndEvaluateFail(result);
         }
