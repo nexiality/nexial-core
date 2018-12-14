@@ -350,9 +350,10 @@ public class TestStep extends TestStepManifest {
             } else {
                 summary.incrementFail();
                 error(MessageUtils.renderAsFail(result.getMessage()));
-                context.incrementAndEvaluateFail(result);
             }
         }
+
+        context.evaluateResult(result);
     }
 
     protected void readDescriptionCell(List<XSSFCell> row) {
@@ -389,7 +390,7 @@ public class TestStep extends TestStepManifest {
 
     protected void readCaptureScreenCell(List<XSSFCell> row) {
         XSSFCell cell = row.get(COL_IDX_CAPTURE_SCREEN);
-        setCaptureScreen(cell != null && StringUtils.startsWithIgnoreCase(cell.getStringCellValue(), "X"));
+        setCaptureScreen(StringUtils.startsWithIgnoreCase(Excel.getCellValue(cell), "X"));
     }
 
     protected String handleScreenshot(StepResult result) {
@@ -491,7 +492,7 @@ public class TestStep extends TestStepManifest {
                 continue;
             }
 
-            String origParamValue = paramCell.getStringCellValue();
+            String origParamValue = Excel.getCellValue(paramCell);
 
             if (i == COL_IDX_PARAMS_START && StringUtils.equals(getCommandFQN(), CMD_VERBOSE)) {
                 if (hasCryptoIdent(origParamValue)) {

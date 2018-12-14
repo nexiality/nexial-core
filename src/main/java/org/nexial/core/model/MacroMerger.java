@@ -266,7 +266,7 @@ public class MacroMerger {
         // }
 
         // open specified sheet
-        Excel macroExcel = new Excel(macroFile, false, false);
+        Excel macroExcel = new Excel(macroFile, DEF_OPEN_EXCEL_AS_DUP, false);
         Worksheet macroSheet = macroExcel.worksheet(paramSheet);
         int lastMacroRow = macroSheet.findLastDataRow(ADDR_MACRO_COMMAND_START);
         ExcelArea macroArea = new ExcelArea(macroSheet, new ExcelAddress("A2:L" + lastMacroRow), false);
@@ -276,7 +276,7 @@ public class MacroMerger {
 
         // 6. read test steps based on macro name
         for (List<XSSFCell> macroRow : macroStepArea) {
-            String currentMacroName = macroRow.get(COL_IDX_TESTCASE).getStringCellValue();
+            String currentMacroName = Excel.getCellValue(macroRow.get(COL_IDX_TESTCASE));
             if (StringUtils.equals(currentMacroName, paramMacro)) {
                 macroFound = true;
                 macroSteps.add(collectMacroStep(macroRow));

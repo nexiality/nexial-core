@@ -394,16 +394,14 @@ public class TestScriptUpdater {
 
                 // form the command signature
                 XSSFCell cellTarget = row.get(COL_IDX_TARGET);
-                String target = cellTarget == null || StringUtils.isBlank(cellTarget.getRawValue()) ?
-                                "" : cellTarget.getStringCellValue();
+                String target = Excel.getCellValue(cellTarget);
                 if (!targets.contains(target)) {
                     System.err.println("\tInvalid command target - " + target);
                     continue;
                 }
 
                 XSSFCell cellCommand = row.get(COL_IDX_COMMAND);
-                String command = cellCommand == null || StringUtils.isBlank(cellCommand.getRawValue()) ?
-                                 "" : cellCommand.getStringCellValue();
+                String command = Excel.getCellValue(cellCommand);
                 if (StringUtils.isBlank(command)) {
                     System.err.println("\tInvalid command: " + command);
                     continue;

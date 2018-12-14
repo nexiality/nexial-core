@@ -25,6 +25,7 @@ import java.util.List;
 import org.apache.commons.lang3.ArrayUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.poi.xssf.usermodel.XSSFCell;
+import org.nexial.core.excel.Excel;
 import org.nexial.core.excel.Excel.Worksheet;
 import org.nexial.core.excel.ExcelAddress;
 
@@ -96,20 +97,20 @@ public class TestPlanMeta {
 
     private void parse() {
         XSSFCell cell = worksheet.cell(ADDR_SUMMARY);
-        if (cell != null) { summary = cell.getStringCellValue(); }
+        if (cell != null) { summary = Excel.getCellValue(cell); }
 
         cell = worksheet.cell(ADDR_AUTHOR);
-        if (cell != null) { author = cell.getStringCellValue(); }
+        if (cell != null) { author = Excel.getCellValue(cell); }
 
         cell = worksheet.cell(ADDR_FEATURE);
-        if (cell != null) { featureRef = cell.getStringCellValue(); }
+        if (cell != null) { featureRef = Excel.getCellValue(cell); }
 
         cell = worksheet.cell(ADDR_TESTID);
-        if (cell != null) { testRef = cell.getStringCellValue(); }
+        if (cell != null) { testRef = Excel.getCellValue(cell); }
 
         cell = worksheet.cell(ADDR_NOTIFICATION);
         if (cell != null) {
-            String value = cell.getStringCellValue();
+            String value = Excel.getCellValue(cell);
             if (StringUtils.isNotBlank(value)) {
                 value = StringUtils.replace(value, "\r", "\n");
                 String[] array = StringUtils.split(value, "\n");

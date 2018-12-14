@@ -28,6 +28,7 @@ import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.collections4.IterableUtils;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang3.ArrayUtils;
+import org.apache.commons.lang3.ObjectUtils;
 import org.apache.commons.lang3.RandomStringUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.SystemUtils;
@@ -42,10 +43,12 @@ import org.apache.poi.poifs.crypt.EncryptionMode;
 import org.apache.poi.poifs.crypt.Encryptor;
 import org.apache.poi.poifs.filesystem.FileMagic;
 import org.apache.poi.poifs.filesystem.NPOIFSFileSystem;
+import org.apache.poi.ss.formula.eval.NotImplementedException;
 import org.apache.poi.ss.usermodel.*;
 import org.apache.poi.ss.util.CellRangeAddress;
 import org.apache.poi.ss.util.WorkbookUtil;
 import org.apache.poi.xssf.usermodel.*;
+import org.jetbrains.annotations.Nullable;
 import org.nexial.commons.proc.ProcessInvoker;
 import org.nexial.commons.proc.ProcessOutcome;
 import org.nexial.commons.utils.FileUtil;
@@ -73,6 +76,7 @@ import static org.nexial.core.excel.ExcelConfig.StyleConfig.*;
  */
 public class Excel {
     public static final int MIN_EXCEL_FILE_SIZE = 5 * 1024;
+    private static boolean verboseInstantiation = false;
 
     // var to support spring-injected value
     float _cellSpacing = 5.2f;
@@ -84,7 +88,8 @@ public class Excel {
     /** list all existing cell styles in the excel file */
     private Set<XSSFCellStyle> workbookStyles;
     private Map<String, XSSFCellStyle> commonStyles;
-    private static boolean verboseInstantiation = false;
+    // in case of `dupThenOpen` it's a good idea to track the actual target file
+    private File originalFile;
 
     public class Worksheet {
         private XSSFSheet sheet;
@@ -788,7 +793,10 @@ public class Excel {
             }
         }
 
-        if (dupThenOpen) { file = duplicateInTemp(file); }
+        if (dupThenOpen) {
+            this.originalFile = file;
+            file = duplicateInTemp(file);
+        }
 
         this.file = file;
         // DO NOT USE - open excel via File object will cause JVM crash during save!
@@ -835,6 +843,8 @@ public class Excel {
 
     public File getFile() { return file; }
 
+    public File getOriginalFile() { return ObjectUtils.defaultIfNull(originalFile, file); }
+
     public XSSFWorkbook getWorkbook() { return workbook; }
 
     public Set<XSSFCellStyle> getWorkbookStyles() { return workbookStyles; }
@@ -849,25 +859,29 @@ public class Excel {
     public static String getCellValue(XSSFCell cell) {
         if (cell == null) { return null; }
 
-        XSSFWorkbook workbook = cell.getRow().getSheet().getWorkbook();
-        FormulaEvaluator evaluator = workbook != null ? workbook.getCreationHelper().createFormulaEvaluator() : null;
-
         CellType cellType = cell.getCellTypeEnum();
         switch (cellType) {
             case BLANK:
             case NUMERIC:
             case BOOLEAN:
+                FormulaEvaluator evaluator = deriveFormulaEvaluator(cell);
                 return new DataFormatter().formatCellValue(cell, evaluator);
             case FORMULA:
-                if (evaluator == null) { return new DataFormatter().formatCellValue(cell); }
+                FormulaEvaluator evaluator1 = deriveFormulaEvaluator(cell);
+                if (evaluator1 == null) { return new DataFormatter().formatCellValue(cell); }
 
-                CellValue cellValue = evaluator.evaluate(cell);
+                // evaluation might fail since not all formulae are implemented by POI
+                try {
+                    CellValue cellValue = evaluator1.evaluate(cell);
 
-                // special handling for error after formula is evaluated
-                if (cellValue == null) { return ""; }
-                if (cellValue.getCellTypeEnum() == ERROR) { return cellValue.formatAsString(); }
+                    // special handling for error after formula is evaluated
+                    if (cellValue == null) { return ""; }
+                    if (cellValue.getCellTypeEnum() == ERROR) { return cellValue.formatAsString(); }
 
-                return new DataFormatter().formatCellValue(cell, evaluator);
+                    return new DataFormatter().formatCellValue(cell, evaluator1);
+                } catch (NotImplementedException e) {
+                    return new DataFormatter().formatCellValue(cell);
+                }
             case ERROR:
                 return cell.getErrorCellString();
             default:
@@ -908,7 +922,8 @@ public class Excel {
         }
 
         XSSFSheet sheet = cell.getSheet();
-        //sheet.setForceFormulaRecalculation(true);
+        // forces recalculation will help the hyperlink cell to format properly
+        sheet.setForceFormulaRecalculation(true);
         cell.setCellStyle(StyleDecorator.generate(sheet.getWorkbook(), LINK));
         return cell;
     }
@@ -1088,9 +1103,9 @@ public class Excel {
         if (CollectionUtils.isEmpty(cells)) { return false; }
 
         // now compare the gathered cell values against the expected values
-        List<String> headers = new ArrayList<>();
-        cells.forEach(cell -> headers.add(cell.getStringCellValue()));
-        return CollectionUtils.isEqualCollection(expectRowText, headers);
+        List<String> actual = new ArrayList<>();
+        cells.forEach(cell -> actual.add(Excel.getCellValue(cell)));
+        return CollectionUtils.isEqualCollection(expectRowText, actual);
     }
 
     public static void openExcel(File testScript) {
@@ -1231,6 +1246,27 @@ public class Excel {
     }
 
     /**
+     * adjust cell height to fit (visibly) its content. {@literal charPerLine} indicates the number of characters each
+     * line should have within said cell.
+     */
+    public static void adjustCellHeight(Worksheet worksheet, XSSFCell cell, int charPerLine) {
+        if (worksheet == null) { return; }
+
+        String content = Excel.getCellValue(cell);
+        if (StringUtils.isBlank(content)) { return; }
+
+        int lineCount = StringUtils.countMatches(content, "\n") + 1;
+        String[] lines = StringUtils.split(content, "\n");
+        if (ArrayUtils.isEmpty(lines)) { lines = new String[]{content}; }
+        for (String line : lines) { lineCount += Math.ceil((double) StringUtils.length(line) / charPerLine) - 1; }
+
+        // lineCount should always be at least 1. otherwise this row will not be rendered with height 0
+        if (lineCount < 1) { lineCount = 1; }
+
+        worksheet.setMinHeight(cell, lineCount);
+    }
+
+    /**
      * if {@code startsWith} is an empty string, then all worksheets will be returned
      */
     List<Worksheet> worksheetsStartWith(String startsWith) {
@@ -1258,6 +1294,12 @@ public class Excel {
         newFont.setTypeOffset(cellFont.getTypeOffset());
         newFont.setUnderline(cellFont.getUnderline());
         return newFont;
+    }
+
+    @Nullable
+    protected static FormulaEvaluator deriveFormulaEvaluator(XSSFCell cell) {
+        XSSFWorkbook workbook = cell.getRow().getSheet().getWorkbook();
+        return workbook != null ? workbook.getCreationHelper().createFormulaEvaluator() : null;
     }
 
     private static void createWorkbook(File file) throws IOException {

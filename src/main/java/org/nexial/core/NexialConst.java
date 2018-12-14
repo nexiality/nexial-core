@@ -727,6 +727,9 @@ public final class NexialConst {
         public static final String FAIL_AFTER = NAMESPACE + "failAfter";
         public static final int DEF_FAIL_AFTER = -1;
         public static final String EXECUTION_FAIL_COUNT = NAMESPACE + "executionFailCount";
+        public static final String EXECUTION_SKIP_COUNT = NAMESPACE + "executionSkipCount";
+        public static final String EXECUTION_PASS_COUNT = NAMESPACE + "executionPassCount";
+        public static final String EXECUTION_EXEC_COUNT = NAMESPACE + "executionCount";
 
         public static final String MIN_EXEC_SUCCESS_RATE = NAMESPACE + "minExecSuccessRate";
         public static final double DEF_MIN_EXEC_SUCCESS_RATE = 100;

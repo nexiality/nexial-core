@@ -77,7 +77,7 @@ public class ExecutionInputPrep {
             if (row == null) { return; }
 
             XSSFCell cellName = row.getCell(0, CREATE_NULL_AS_BLANK);
-            String name = cellName.getStringCellValue();
+            String name = Excel.getCellValue(cellName);
 
             XSSFCell cellValue = row.getCell(1, CREATE_NULL_AS_BLANK);
             if (context.hasData(name)) {

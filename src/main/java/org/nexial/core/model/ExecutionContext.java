@@ -295,6 +295,10 @@ public class ExecutionContext {
             springContext.getBean("webdriverHelperConfig", new HashMap<BrowserType, String>().getClass());
 
         setData(ITERATION_ENDED, false);
+        setData(EXECUTION_EXEC_COUNT, 0);
+        setData(EXECUTION_SKIP_COUNT, 0);
+        setData(EXECUTION_PASS_COUNT, 0);
+        setData(EXECUTION_FAIL_COUNT, 0);
     }
 
     public void useTestScript(Excel testScript) throws IOException {
@@ -451,6 +455,20 @@ public class ExecutionContext {
             ConsoleUtils.doPause(this, "[ERROR #" + execFailCount + "]: Error found " +
                                        ExecutionLogger.toHeader(getCurrentTestStep()) + " - " +
                                        result.getMessage());
+        }
+    }
+
+    public void evaluateResult(StepResult result) {
+        if (result.isSkipped()) {
+            setData(EXECUTION_SKIP_COUNT, getIntData(EXECUTION_SKIP_COUNT, 0));
+            return;
+        }
+
+        setData(EXECUTION_EXEC_COUNT, getIntData(EXECUTION_EXEC_COUNT, 0));
+        if (result.isSuccess()) {
+            setData(EXECUTION_PASS_COUNT, getIntData(EXECUTION_PASS_COUNT, 0));
+        } else {
+            incrementAndEvaluateFail(result);
         }
     }
 
@@ -1507,7 +1525,7 @@ public class ExecutionContext {
 
         ExcelAddress addr = new ExcelAddress("A1");
         XSSFCell firstCell = dataSheet.cell(addr);
-        if (firstCell == null || StringUtils.isBlank(firstCell.getStringCellValue())) {
+        if (StringUtils.isBlank(Excel.getCellValue(firstCell))) {
             throw new IllegalArgumentException("File (" + testScript + "), Worksheet (" + dataSheet.getName() + "): " +
                                                "no test data defined");
         }
@@ -1517,8 +1535,8 @@ public class ExecutionContext {
         for (int i = 1; i < endRowIndex; i++) {
             ExcelAddress addrRow = new ExcelAddress("A" + i + ":B" + i);
             List<XSSFCell> row = dataSheet.cells(addrRow).get(0);
-            String name = row.get(0).getStringCellValue();
-            String value = row.get(1).getStringCellValue();
+            String name = Excel.getCellValue(row.get(0));
+            String value = Excel.getCellValue(row.get(1));
             // no longer checks for blank value, we'll accept data value as is since it's been dealt with in
             // ExecutionThread.prep()
             // if (StringUtils.isNotBlank(value)) {

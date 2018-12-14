@@ -41,7 +41,6 @@ import org.apache.commons.lang3.ArrayUtils;
 import org.apache.commons.lang3.BooleanUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.math.NumberUtils;
-import org.apache.poi.xssf.usermodel.XSSFCell;
 import org.apache.poi.xssf.usermodel.XSSFRow;
 import org.nexial.commons.utils.DateUtility;
 import org.nexial.commons.utils.EnvUtils;
@@ -1073,8 +1072,7 @@ public class Nexial {
 
     private static String readCellValue(XSSFRow row, int columnIndex) {
         if (row == null) { return ""; }
-        XSSFCell cell = row.getCell(columnIndex);
-        return cell == null ? "" : StringUtils.trim(cell.getStringCellValue());
+        return StringUtils.trim(Excel.getCellValue(row.getCell(columnIndex)));
     }
 
     private void notifyCompletion(ExecutionSummary summary) {

@@ -73,13 +73,7 @@ public class ExcelCommand extends BaseCommand {
     public StepResult saveRange(String var, String file, String worksheet, String range) throws IOException {
         requiresValidVariableName(var);
 
-        Excel excel = deriveExcel(file);
-        Worksheet sheet = excel.worksheet(worksheet);
-        requires(sheet != null && sheet.getSheet() != null, "invalid worksheet", worksheet);
-
-        requires(StringUtils.isNotBlank(range), "invalid cell range", range);
-        ExcelAddress addr = new ExcelAddress(range);
-        List<List<XSSFCell>> rows = sheet.cells(addr);
+        List<List<XSSFCell>> rows = fetchRows(file, worksheet, range);
         Map<String, String> data = new LinkedHashMap<>();
         for (List<XSSFCell> row : rows) {
             for (XSSFCell cell : row) { data.put(cell.getReference(), Excel.getCellValue(cell)); }
@@ -97,13 +91,7 @@ public class ExcelCommand extends BaseCommand {
     public StepResult saveData(String var, String file, String worksheet, String range) throws IOException {
         requiresValidVariableName(var);
 
-        Excel excel = deriveExcel(file);
-        Worksheet sheet = excel.worksheet(worksheet);
-        requires(sheet != null && sheet.getSheet() != null, "invalid worksheet", worksheet);
-
-        requires(StringUtils.isNotBlank(range), "invalid cell range", range);
-        ExcelAddress addr = new ExcelAddress(range);
-        List<List<XSSFCell>> rows = sheet.cells(addr);
+        List<List<XSSFCell>> rows = fetchRows(file, worksheet, range);
         List<List<String>> data = new ArrayList<>();
         for (List<XSSFCell> row : rows) {
             List<String> rowData = new ArrayList<>();
@@ -192,7 +180,7 @@ public class ExcelCommand extends BaseCommand {
         rows.add(TextUtils.toList(array, context.getTextDelim(), false));
         deriveExcel(file).requireWorksheet(worksheet, true).writeAcross(new ExcelAddress(startCell), rows);
 
-        return StepResult.success("Data saved to " + file + "#" + worksheet);
+        return StepResult.success("Data (" + array + ") saved to " + file + "#" + worksheet);
     }
 
     public StepResult writeDown(String file, String worksheet, String startCell, String array) throws IOException {
@@ -202,10 +190,9 @@ public class ExcelCommand extends BaseCommand {
 
         List<List<String>> columns = new ArrayList<>();
         columns.add(TextUtils.toList(array, context.getTextDelim(), false));
-
         deriveExcel(file).requireWorksheet(worksheet, true).writeDown(new ExcelAddress(startCell), columns);
 
-        return StepResult.success("Data saved to " + file + "#" + worksheet);
+        return StepResult.success("Data (" + array + ") saved to " + file + "#" + worksheet);
     }
 
     public StepResult csv(String file, String worksheet, String range, String output) {
@@ -296,6 +283,16 @@ public class ExcelCommand extends BaseCommand {
                               " save(" + output + ")" +
                               "]");
         return StepResult.success("Excel content from " + worksheet + "," + range + " saved to " + output);
+    }
+
+    protected List<List<XSSFCell>> fetchRows(String file, String worksheet, String range) throws IOException {
+        Excel excel = deriveExcel(file);
+        Worksheet sheet = excel.worksheet(worksheet);
+        requires(sheet != null && sheet.getSheet() != null, "invalid worksheet", worksheet);
+
+        requires(StringUtils.isNotBlank(range), "invalid cell range", range);
+        ExcelAddress addr = new ExcelAddress(range);
+        return sheet.cells(addr);
     }
 
     protected Excel deriveExcel(String file) throws IOException { return new Excel(deriveReadableFile(file)); }

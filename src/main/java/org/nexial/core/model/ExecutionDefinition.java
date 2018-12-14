@@ -17,6 +17,7 @@
 
 package org.nexial.core.model;
 
+import java.io.File;
 import java.io.IOException;
 import java.util.List;
 import java.util.Map;
@@ -107,7 +108,9 @@ public class ExecutionDefinition {
     public TestData getTestData(boolean refetch) {
         if (refetch) {
             try {
-                dataFile = new Excel(dataFile.getFile(), DEF_OPEN_EXCEL_AS_DUP, false);
+                File dataFilePath = dataFile.getOriginalFile();
+                ConsoleUtils.log("refetching data from " + dataFilePath);
+                dataFile = new Excel(dataFilePath, DEF_OPEN_EXCEL_AS_DUP, false);
                 parse();
             } catch (IOException e) {
                 String error = "Unable to successfully read/parse data file " + dataFile + ": " + e.getMessage();

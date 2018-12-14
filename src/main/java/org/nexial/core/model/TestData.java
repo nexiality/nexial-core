@@ -252,7 +252,7 @@ public class TestData {
 
         // make sure we have data def. in A1, since that's where we start
         XSSFCell firstCell = sheet.cell(addr);
-        if (firstCell == null || StringUtils.isBlank(firstCell.getStringCellValue())) {
+        if (StringUtils.isBlank(Excel.getCellValue(firstCell))) {
             throw new IllegalArgumentException(errPrefix + "test data must be defined at " + addr);
         }
 
@@ -275,15 +275,16 @@ public class TestData {
 
             // column A must be defined with data name
             XSSFCell headerCell = row.get(0).get(0);
-            if (headerCell == null || StringUtils.isBlank(headerCell.getStringCellValue())) {
+            String name = Excel.getCellValue(headerCell);
+            if (StringUtils.isBlank(name)) {
                 throw new IllegalArgumentException(errPrefix + "no data name defined at A" + i);
             }
 
-            String name = headerCell.getStringCellValue();
             if (StringUtils.startsWith(name, SCOPE)) {
                 XSSFCell dataCell = row.get(0).get(1);
-                if (dataCell == null || StringUtils.isBlank(dataCell.getStringCellValue())) { continue; }
-                scopeSettings.put(name, dataCell.getStringCellValue());
+                String dataCellValue = Excel.getCellValue(dataCell);
+                if (StringUtils.isBlank(dataCellValue)) { continue; }
+                scopeSettings.put(name, dataCellValue);
             }
         }
 
@@ -298,8 +299,7 @@ public class TestData {
             // no need for empty/bad row checks since we did it in the first pass
 
             List<XSSFCell> row = sheet.cells(addrThisRow).get(0);
-            XSSFCell headerCell = row.get(0);
-            String name = headerCell.getStringCellValue();
+            String name = Excel.getCellValue(row.get(0));
             if (!StringUtils.startsWith(name, SCOPE)) {
                 collectIterationData(row, lastIteration, name, dataMap);
 

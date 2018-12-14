@@ -26,7 +26,6 @@ import java.util.Set;
 
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.collections4.MapUtils;
-import org.apache.commons.lang3.ArrayUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.math.NumberUtils;
 import org.apache.poi.ss.util.CellRangeAddress;
@@ -34,6 +33,7 @@ import org.apache.poi.xssf.usermodel.XSSFCell;
 import org.apache.poi.xssf.usermodel.XSSFRow;
 import org.apache.poi.xssf.usermodel.XSSFSheet;
 import org.nexial.core.ExecutionEventListener;
+import org.nexial.core.excel.Excel;
 import org.nexial.core.excel.Excel.Worksheet;
 import org.nexial.core.excel.ExcelAddress;
 import org.nexial.core.excel.ExcelArea;
@@ -104,8 +104,7 @@ public class TestScenario {
 
         XSSFCell descriptionCell = worksheet.cell(ADDR_SCENARIO_DESCRIPTION);
         if (descriptionCell != null) {
-            String description = descriptionCell.getStringCellValue();
-            descriptionCell.setCellValue(context.replaceTokens(description));
+            descriptionCell.setCellValue(context.replaceTokens(Excel.getCellValue(descriptionCell)));
         }
 
         worksheet.getSheet().setZoom(100);
@@ -225,8 +224,8 @@ public class TestScenario {
 
             XSSFCell cellTarget = row.getCell(COL_IDX_TARGET);
             XSSFCell cellCommand = row.getCell(COL_IDX_COMMAND);
-            String command = (cellTarget == null ? "" : cellTarget.getStringCellValue()) + "." +
-                             (cellCommand == null ? "" : cellCommand.getStringCellValue());
+            String command = StringUtils.defaultIfBlank(Excel.getCellValue(cellTarget), "") + "." +
+                             StringUtils.defaultIfBlank(Excel.getCellValue(cellCommand), "");
             if (MERGE_OUTPUTS.contains(command)) { mergeOutput(excelSheet, row, i); }
         }
 
@@ -260,6 +259,7 @@ public class TestScenario {
         for (int j = COL_IDX_MERGE_RESULT_START; j < COL_IDX_MERGE_RESULT_END + 1; j++) {
             mergedWidth += worksheet.getSheet().getColumnWidth(j);
         }
+
         int charPerLine = (int) ((mergedWidth - DEF_CHAR_WIDTH) / (DEF_CHAR_WIDTH * MSG.getFontHeight()));
 
         // make sure we aren't create merged region on existing merged region
@@ -287,18 +287,10 @@ public class TestScenario {
 
         if (cellMerge.getCellTypeEnum() == STRING) { cellMerge.setCellStyle(worksheet.getStyle(STYLE_MESSAGE)); }
 
-        String mergedContent = cellMerge.getStringCellValue();
+        String mergedContent = Excel.getCellValue(cellMerge);
         cellMerge.setCellValue(mergedContent);
 
-        int lineCount = StringUtils.countMatches(mergedContent, "\n") + 1;
-        String[] lines = StringUtils.split(mergedContent, "\n");
-        if (ArrayUtils.isEmpty(lines)) { lines = new String[]{mergedContent}; }
-        for (String line : lines) { lineCount += Math.ceil((double) StringUtils.length(line) / charPerLine) - 1; }
-
-        // lineCount should always be at least 1. otherwise this row will not be rendered with height 0
-        if (lineCount < 1) { lineCount = 1; }
-
-        worksheet.setMinHeight(cellMerge, lineCount);
+        Excel.adjustCellHeight(worksheet, cellMerge, charPerLine);
     }
 
     protected void parse() {
@@ -319,7 +311,8 @@ public class TestScenario {
             List<XSSFCell> row = area.getWholeArea().get(i);
 
             XSSFCell cellTestCase = row.get(COL_IDX_TESTCASE);
-            boolean hasTestCase = cellTestCase != null && StringUtils.isNotBlank(cellTestCase.getStringCellValue());
+            String testCase = Excel.getCellValue(cellTestCase);
+            boolean hasTestCase = StringUtils.isNotBlank(testCase);
             if (currentTestCase == null && !hasTestCase) {
                 // first row must define test case (hence at least 1 test case is required)
                 throw new RuntimeException("Invalid format found in " + worksheet.getFile() + " (" + name +
@@ -328,7 +321,7 @@ public class TestScenario {
 
             if (hasTestCase) {
                 currentTestCase = new TestCase();
-                currentTestCase.setName(cellTestCase.getStringCellValue());
+                currentTestCase.setName(testCase);
                 currentTestCase.setTestScenario(this);
                 testCases.add(currentTestCase);
                 testCaseMap.put(currentTestCase.getName(), currentTestCase);

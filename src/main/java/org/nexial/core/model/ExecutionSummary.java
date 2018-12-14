@@ -26,7 +26,6 @@ import java.util.*;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.collections4.MapUtils;
 import org.apache.commons.io.FileUtils;
-import org.apache.commons.lang3.ArrayUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.exception.ExceptionUtils;
 import org.apache.commons.lang3.math.NumberUtils;
@@ -686,31 +685,18 @@ public class ExecutionSummary {
         if (StringUtils.isNotEmpty(mergedContent)) {
             if (multiline) {
                 cellMerge.setCellValue(new XSSFRichTextString(mergedContent));
+                if (cellStyle != null) { cellStyle.setWrapText(true); }
             } else {
                 cellMerge.setCellValue(mergedContent);
             }
-        }
 
-        if (styleConfig != null) {
-            if (multiline) { cellStyle.setWrapText(true); }
-            cellMerge.setCellStyle(cellStyle);
-        }
+            if (cellStyle != null) { cellMerge.setCellStyle(cellStyle); }
 
-        if (StringUtils.isNotEmpty(mergedContent)) {
             int mergedWidth = 0;
             for (int j = startColumnIdx; j < endColumnIndex + 1; j++) { mergedWidth += sheet.getColumnWidth(j); }
             int charPerLine = (int) ((mergedWidth - DEF_CHAR_WIDTH) * addr.getRowCount() /
                                      (DEF_CHAR_WIDTH * FONT_HEIGHT_DEFAULT));
-
-            int lineCount = StringUtils.countMatches(mergedContent, "\n") + 1;
-            String[] lines = StringUtils.split(mergedContent, "\n");
-            if (ArrayUtils.isEmpty(lines)) { lines = new String[]{mergedContent}; }
-            for (String line : lines) { lineCount += Math.ceil((double) StringUtils.length(line) / charPerLine) - 1; }
-
-            // lineCount should always be at least 1. otherwise this row will not be rendered with height 0
-            if (lineCount < 1) { lineCount = 1; }
-
-            worksheet.setMinHeight(cellMerge, lineCount);
+            Excel.adjustCellHeight(worksheet, cellMerge, charPerLine);
         }
 
         return cellMerge;

@@ -159,7 +159,7 @@ public final class InputFileUtils {
             }
 
             for (XSSFCell cell : row) {
-                if (cell == null || StringUtils.isBlank(cell.getStringCellValue())) {
+                if (StringUtils.isBlank(Excel.getCellValue(cell))) {
                     LOGGER.info(errPrefix + "does not contain data or the expected format in " + addrMinimumData);
                     return false;
                 }
@@ -359,7 +359,7 @@ public final class InputFileUtils {
             // make sure that the first command row also specifies test case
             XSSFCell cellMacroName = sheet.cell(new ExcelAddress("" + COL_TEST_CASE +
                                                                  ADDR_MACRO_COMMAND_START.getRowStartIndex()));
-            return !(cellMacroName == null || StringUtils.isBlank(cellMacroName.getStringCellValue()));
+            return StringUtils.isNotBlank(Excel.getCellValue(cellMacroName));
         }).collect(Collectors.toList());
 
         // check that all valid scenario sheet do not have result (output file)
@@ -405,17 +405,15 @@ public final class InputFileUtils {
         systemSheet.cells(new ExcelAddress("B1:" + (char) ('A' + lastColumn - 1) + "1"))
                    .get(0)
                    .stream()
-                   .filter(cell -> cell != null && StringUtils.isNotBlank(cell.getStringCellValue()))
-                   .forEach(cell -> targets.add(cell.getStringCellValue()));
+                   .filter(cell -> StringUtils.isNotBlank(Excel.getCellValue(cell)))
+                   .forEach(cell -> targets.add(Excel.getCellValue(cell)));
         //if (LOGGER.isDebugEnabled()) { LOGGER.debug(errPrefix + "has commands of type: " + targets); }
 
         List<String> targets2 = new ArrayList<>();
         systemSheet.cells(new ExcelAddress("A2:A" + (lastColumn + 2)))
                    .stream()
-                   .filter(row -> row != null &&
-                                  row.get(0) != null &&
-                                  StringUtils.isNotBlank(row.get(0).getStringCellValue()))
-                   .forEach(row -> targets2.add(row.get(0).getStringCellValue()));
+                   .filter(row -> row != null && StringUtils.isNotBlank(Excel.getCellValue(row.get(0))))
+                   .forEach(row -> targets2.add(Excel.getCellValue(row.get(0))));
         //if (LOGGER.isDebugEnabled()) { LOGGER.debug(errPrefix + "has targets: " + targets2); }
 
         if (!CollectionUtils.isEqualCollection(targets, targets2)) {
