@@ -926,6 +926,22 @@ public class ExecutionContext {
 
     public void clearScriptRefData() { clearReferenceData(SCRIPT_REF_PREFIX); }
 
+    public void startIteration(int currIteration, boolean firstUse) {
+        getTrackTimeLogs();
+
+        // remember whether we want to track execution completion as a time-track event or not
+        System.setProperty(TRACK_EXECUTION, getStringData(TRACK_EXECUTION, DEF_TRACK_EXECUTION));
+
+        ExecutionEventListener eventListener = getExecutionEventListener();
+
+        // handling onExecutionStart
+        if (firstUse) { eventListener.onExecutionStart(); }
+
+        setData(CURR_ITERATION, currIteration);
+        if (currIteration == 1) { eventListener.onScriptStart(); }
+        eventListener.onIterationStart();
+    }
+
     public void endIteration() {
         testScript = null;
 
@@ -940,6 +956,8 @@ public class ExecutionContext {
         }
 
         testScenarios = null;
+        getExecutionEventListener().onIterationComplete();
+        removeTrackTimeLogs();
     }
 
     public int getScriptStepCount() { return scriptStepCount; }

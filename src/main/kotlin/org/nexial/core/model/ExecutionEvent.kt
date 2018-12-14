@@ -28,36 +28,42 @@ private const val NOTIFY_ON = NAMESPACE + "notifyOn"
  * @property description String
  * @constructor
  */
-enum class ExecutionEvent(val eventName: String, val variable: String, val description: String) {
+enum class ExecutionEvent(val eventName: String,
+                          val variable: String,
+                          val conditionalVar: String = variable + "If",
+                          val description: String) {
 
-    ExecutionStart("onExecutionStart", "${NOTIFY_ON}ExecutionStart", "Execution started"),
-    ExecutionComplete("onExecutionComplete", "${NOTIFY_ON}ExecutionComplete", "Execution completed"),
+    ExecutionStart("onExecutionStart", "${NOTIFY_ON}ExecutionStart", description = "Execution started"),
+    ExecutionComplete("onExecutionComplete", "${NOTIFY_ON}ExecutionComplete", description = "Execution completed"),
 
-    ScriptStart("onScriptStart", "${NOTIFY_ON}ScriptStart", "Script execution started"),
-    ScriptComplete("onScriptComplete", "${NOTIFY_ON}ScriptComplete", "Script execution completed"),
+    ScriptStart("onScriptStart", "${NOTIFY_ON}ScriptStart", description = "Script execution started"),
+    ScriptComplete("onScriptComplete", "${NOTIFY_ON}ScriptComplete", description = "Script execution completed"),
 
-    IterationStart("onIterationStart", "${NOTIFY_ON}IterationStart", "Iteration execution started"),
-    IterationComplete("onIterationComplete", "${NOTIFY_ON}IterationComplete", "Iteration execution completed"),
+    IterationStart("onIterationStart", "${NOTIFY_ON}IterationStart", description = "Iteration execution started"),
+    IterationComplete("onIterationComplete", "${NOTIFY_ON}IterationComplete",
+                      description = "Iteration execution completed"),
 
-    ScenarioStart("onScenarioStart", "${NOTIFY_ON}ScenarioStart", "Scenario execution started"),
-    ScenarioComplete("onScenarioComplete", "${NOTIFY_ON}ScenarioComplete", "Scenario execution completed"),
+    ScenarioStart("onScenarioStart", "${NOTIFY_ON}ScenarioStart", description = "Scenario execution started"),
+    ScenarioComplete("onScenarioComplete", "${NOTIFY_ON}ScenarioComplete",
+                     description = "Scenario execution completed"),
 
-    ErrorOccurred("onError", "${NOTIFY_ON}Error", "Error occurred"),
-    ExecutionPause("onPause", "${NOTIFY_ON}Pause", "Execution paused"),
+    ErrorOccurred("onError", "${NOTIFY_ON}Error", description = "Error occurred"),
+    ExecutionPause("onPause", "${NOTIFY_ON}Pause", description = "Execution paused"),
 
-    DesktopUseApp("onDesktopUseApp", "${NOTIFY_ON}DesktopUseApp", "Desktop app in use"),
-    DesktopUseForm("onDesktopUseForm", "${NOTIFY_ON}DesktopUseForm", "Desktop form in use"),
-    DesktopUseTable("onDesktopUseTable", "${NOTIFY_ON}DesktopUseTable", "Desktop table in use"),
-    DesktopUseList("onDesktopUseList", "${NOTIFY_ON}DesktopUseList", "Desktop list in use"),
+    DesktopUseApp("onDesktopUseApp", "${NOTIFY_ON}DesktopUseApp", description = "Desktop app in use"),
+    DesktopUseForm("onDesktopUseForm", "${NOTIFY_ON}DesktopUseForm", description = "Desktop form in use"),
+    DesktopUseTable("onDesktopUseTable", "${NOTIFY_ON}DesktopUseTable", description = "Desktop table in use"),
+    DesktopUseList("onDesktopUseList", "${NOTIFY_ON}DesktopUseList", description = "Desktop list in use"),
 
-    WsStart("onWsStart", "${NOTIFY_ON}WsStart", "Web service invoked"),
-    WsComplete("onWsComplete", "${NOTIFY_ON}WsComplete", "Web service completed"),
+    WsStart("onWsStart", "${NOTIFY_ON}WsStart", description = "Web service invoked"),
+    WsComplete("onWsComplete", "${NOTIFY_ON}WsComplete", description = "Web service completed"),
 
-    RdbmsStart("onRdbmsStart", "${NOTIFY_ON}RdbmsStart", "SQL query started"),
-    RdbmsComplete("onRdbmsComplete", "${NOTIFY_ON}RdbmsComplete", "SQL query completed"),
+    RdbmsStart("onRdbmsStart", "${NOTIFY_ON}RdbmsStart", description = "SQL query started"),
+    RdbmsComplete("onRdbmsComplete", "${NOTIFY_ON}RdbmsComplete", description = "SQL query completed"),
 
-    WebOpen("onWebOpen", "${NOTIFY_ON}WebOpen", "URL invoked"),
-    BrowserComplete("onBrowserComplete", "${NOTIFY_ON}BrowserComplete", "current Browser instance terminated");
+    WebOpen("onWebOpen", "${NOTIFY_ON}WebOpen", description = "URL invoked"),
+    BrowserComplete("onBrowserComplete", "${NOTIFY_ON}BrowserComplete",
+                    description = "current Browser instance terminated");
 
     override fun toString(): String = eventName
 

@@ -29,6 +29,7 @@ import org.nexial.commons.utils.TextUtils;
 import org.nexial.core.model.ExecutionContext;
 import org.nexial.core.model.ExecutionEvent;
 import org.nexial.core.model.ExecutionSummary;
+import org.nexial.core.model.NexialFilterList;
 import org.nexial.core.model.NexialScenarioCompleteEvent;
 import org.nexial.core.plugins.sound.SoundMachine;
 import org.nexial.core.reports.NexialMailer;
@@ -68,6 +69,10 @@ public class ExecutionEventListener {
 
     public void onScriptComplete() { handleEvent(ScriptComplete); }
 
+    public void onIterationStart() { handleEvent(IterationStart); }
+
+    public void onIterationComplete() { handleEvent(IterationComplete); }
+
     public void onScenarioStart() { handleEvent(ScenarioStart); }
 
     public void onScenarioComplete(ExecutionSummary executionSummary) {
@@ -90,8 +95,9 @@ public class ExecutionEventListener {
         String notifyConfig = context.getStringData(event.getVariable());
         if (StringUtils.isBlank(notifyConfig)) { return; }
 
-        String eventName = event.getEventName();
+        if (!isConditionMatched(event)) { return; }
 
+        String eventName = event.getEventName();
         String notifyPrefix = StringUtils.substringBefore(notifyConfig, ":") + ":";
         if (StringUtils.isBlank(notifyPrefix)) {
             ConsoleUtils.error("Unknown notification for [" + eventName + "]: " + notifyConfig);
@@ -126,6 +132,16 @@ public class ExecutionEventListener {
                 ConsoleUtils.error(context.getRunId(), "Unknown event notification: " + notifyConfig);
                 break;
         }
+    }
+
+    protected boolean isConditionMatched(ExecutionEvent event) {
+        String condition = context.getStringData(event.getConditionalVar());
+        if (StringUtils.isBlank(condition)) { return true; }
+
+        NexialFilterList filters = new NexialFilterList(condition);
+        if (CollectionUtils.isEmpty(filters)) { return true; }
+
+        return filters.isMatched(context, "handling event " + event.getEventName());
     }
 
     private void doEmail(ExecutionEvent event, String config) {

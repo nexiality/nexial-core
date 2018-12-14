@@ -125,11 +125,10 @@ public final class ExecutionThread extends Thread {
             }
         }
 
-        ConsoleUtils.log(runId, "executing " + scriptLocation + ". " + iterationManager);
+        int totalIterations = iterationManager.getIterationCount();
+        ConsoleUtils.log(runId, "executing " + scriptLocation + " with " + totalIterations + " iteration(s)");
 
         ExecutionThread.set(context);
-
-        int totalIterations = iterationManager.getIterationCount();
 
         String scriptName =
             StringUtils.substringBeforeLast(
@@ -162,17 +161,7 @@ public final class ExecutionThread extends Thread {
                 iterSummary.setTestScript(testScript);
                 context.useTestScript(testScript);
 
-                context.getTrackTimeLogs();
-
-                // remember whether we want to track execution completion as a time-track event or not
-                System.setProperty(TRACK_EXECUTION, context.getStringData(TRACK_EXECUTION, DEF_TRACK_EXECUTION));
-
-                // handling onExecutionStart
-                if (firstUse) { context.getExecutionEventListener().onExecutionStart(); }
-
-                context.setData(CURR_ITERATION, currIteration);
-
-                if (currIteration == 1) { context.getExecutionEventListener().onScriptStart(); }
+                context.startIteration(currIteration, firstUse);
 
                 ExecutionLogger logger = context.getLogger();
                 logger.log(context, "executing iteration #" + currIteration +
@@ -238,7 +227,6 @@ public final class ExecutionThread extends Thread {
                 collectIntraExecutionData(context, currIteration);
                 ExecutionMailConfig.configure(context);
                 context.endIteration();
-                context.removeTrackTimeLogs();
 
                 MemManager.recordMemoryChanges(
                     (testScriptFile == null ? "UNKNOWN TEST SCRIPT" : testScriptFile.getName()) + " completed");
