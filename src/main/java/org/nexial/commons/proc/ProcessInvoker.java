@@ -152,7 +152,7 @@ public class ProcessInvoker {
 
         // create processbuilder and mod. environment, if need be
         ProcessBuilder pb;
-        if (env.containsKey(PROC_REDIRECT_OUT)) {
+        if (env != null && env.containsKey(PROC_REDIRECT_OUT)) {
             File out = new File(env.remove(PROC_REDIRECT_OUT));
             pb = new ProcessBuilder(processArg).redirectErrorStream(true).redirectOutput(Redirect.appendTo(out));
         } else {
