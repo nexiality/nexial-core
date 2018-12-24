@@ -391,6 +391,17 @@ public class Nexial {
                         fail("Unable to resolve data file for the test plan specified in ROW " +
                              (row.getRowNum() + 1) + " of " + testPlanFile + ".");
                     }
+                    File dataFilePath = dataFile.getOriginalFile();
+
+                    // (2018/12/16,automike): memory consumption precaution
+                    try {
+                        dataFile.close();
+                    } catch (IOException e) {
+                        ConsoleUtils.error("Unable to close data file (" + dataFilePath + "): " + e.getMessage());
+                    } finally {
+                        dataFile = null;
+                    }
+
                     List<String> dataSheets = deriveDataSheetsFromPlan(row, scenarios);
 
                     // create new definition instance, based on various input and derived values
@@ -401,7 +412,7 @@ public class Nexial {
                     exec.setDescription(StringUtils.trim(readCellValue(row, COL_IDX_PLAN_DESCRIPTION)));
                     exec.setTestScript(testScript.getAbsolutePath());
                     exec.setScenarios(scenarios);
-                    exec.setDataFile(dataFile);
+                    exec.setDataFile(dataFilePath);
                     exec.setDataSheets(dataSheets);
                     exec.setProject(project);
 
@@ -413,18 +424,21 @@ public class Nexial {
                     exec.setLoadTestMode(BooleanUtils.toBoolean(readCellValue(row, COL_IDX_PLAN_LOAD_TEST)));
                     if (exec.isLoadTestMode()) { fail("Sorry... load testing mode not yet ready for use."); }
 
-                    // try {
-                    // 3. for each row, parse script (and scenario) and data (and datasheet)
-                    exec.parse();
-                    executions.add(exec);
-                    // } catch (IOException e) {
-                    //     fail("Unable to parse successfully for the test plan specified in ROW " +
-                    //          (row.getRowNum() + 1) + " of " + testPlanFile + ".");
-                    // }
+                    try {
+                        // 3. for each row, parse script (and scenario) and data (and datasheet)
+                        exec.parse();
+                        executions.add(exec);
+                    } catch (IOException e) {
+                        fail("Unable to parse successfully for the test plan specified in ROW " +
+                             (row.getRowNum() + 1) + " of " + testPlanFile + ".");
+                    }
                 }
             });
 
             if (DEF_OPEN_EXCEL_AS_DUP) { FileUtils.deleteQuietly(excel.getFile().getParentFile()); }
+
+            // (2018/12/16,automike): memory consumption precaution
+            excel.close();
         }
 
         // 4. return a list of scripts mixin data
@@ -485,6 +499,13 @@ public class Nexial {
             fail("Unable to collect scenarios from " + testScript + ".");
         } finally {
             if (DEF_OPEN_EXCEL_AS_DUP && excel != null) { FileUtils.deleteQuietly(excel.getFile().getParentFile()); }
+
+            try {
+                // (2018/12/16,automike): memory consumption precaution
+                excel.close();
+            } catch (IOException e) {
+                ConsoleUtils.error("Unable to close Excel file (" + testScript + "): " + e.getMessage());
+            }
         }
 
         return scenarios;
@@ -589,6 +610,17 @@ public class Nexial {
             throw new RuntimeException(error);
         }
 
+        File dataFilePath = dataFile.getOriginalFile();
+
+        // (2018/12/16,automike): memory consumption precaution
+        try {
+            dataFile.close();
+        } catch (IOException e) {
+            ConsoleUtils.error("Unable to close data file (" + dataFilePath + "): " + e.getMessage());
+        } finally {
+            dataFile = null;
+        }
+
         // command line option - data sheets
         List<String> dataSheets = resolveDataSheets(cmd, targetScenarios);
 
@@ -600,7 +632,7 @@ public class Nexial {
                             " from " + EnvUtils.getHostName() + " via user " + USER_NAME);
         exec.setTestScript(testScriptPath);
         exec.setScenarios(targetScenarios);
-        exec.setDataFile(dataFile);
+        exec.setDataFile(dataFilePath);
         exec.setDataSheets(dataSheets);
         exec.setProject(project);
         exec.parse();
@@ -680,7 +712,6 @@ public class Nexial {
                 if (i == 0) { launcherThread.setFirstUse(true); }
                 if (i == lastUse) { launcherThread.setLastUse(true); }
                 if (MapUtils.isNotEmpty(intraExecution)) { launcherThread.setIntraExecutionData(intraExecution); }
-                executionThreads.add(launcherThread);
 
                 ConsoleUtils.log(runId, msgPrefix + "new thread started");
                 launcherThread.start();
@@ -694,13 +725,16 @@ public class Nexial {
                             ConsoleUtils.log(runId, msgPrefix + "now completed");
                             // pass the post-execution state of data to the next execution
                             intraExecution = launcherThread.getIntraExecutionData();
-                            executionThreads.remove(launcherThread);
                             summary.addNestSummary(launcherThread.getExecutionSummary());
                             launcherThread = null;
                             break;
                         }
                     }
+
+                    executions.set(i, null);
+                    exec = null;
                 } else {
+                    executionThreads.add(launcherThread);
                     ConsoleUtils.log(runId, msgPrefix + "in progress, progressing to next execution");
                 }
             }
@@ -752,18 +786,25 @@ public class Nexial {
         summary.setEndTime(stopTimeMs);
         summary.aggregatedNestedExecutions(null);
 
+        String reportPath = StringUtils.appendIfMissing(System.getProperty(OPT_OUT_DIR, project.getOutPath()),
+                                                        separator);
+        if (!StringUtils.contains(reportPath, runId)) { reportPath += runId + separator; }
+        // String htmlReport = reportPath + "execution-summary.html";
+        //
+        // try {
+        //     summary.generateHtmlReport(htmlReport);
+        // } catch (IOException e) {
+        //     ConsoleUtils.error(runId, "Unable to generate HTML report for this execution: " + e.getMessage());
+        // }
+
         boolean outputToCloud = BooleanUtils.toBoolean(System.getProperty(OUTPUT_TO_CLOUD, DEF_OUTPUT_TO_CLOUD + ""));
         boolean generateReport =
             outputToCloud ||
             BooleanUtils.toBoolean(System.getProperty(GENERATE_EXEC_REPORT, DEF_GENERATE_EXEC_REPORT + ""));
 
         if (generateReport) {
-            String reportPath = StringUtils.appendIfMissing(System.getProperty(OPT_OUT_DIR, project.getOutPath()),
-                                                            separator);
-            if (!StringUtils.contains(reportPath, runId)) { reportPath += runId + separator; }
             String jsonDetailedReport = reportPath + "execution-detail.json";
             String jsonSummaryReport = reportPath + "execution-summary.json";
-            // String htmlReport = reportPath + "execution-summary.html";
 
             try {
                 summary.generateDetailedJson(jsonDetailedReport);

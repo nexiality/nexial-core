@@ -142,6 +142,8 @@ public class ExecutionInputPrep {
             Collections.reverse(unusedWorksheetIndices);
             for (Integer index : unusedWorksheetIndices) { outputExcel.getWorkbook().removeSheetAt(index); }
             outputExcel.save();
+            // (2018/12/16,automike): memory consumption precaution
+            outputExcel.close();
             outputExcel = new Excel(outputFile, false, true);
         }
 
@@ -183,7 +185,9 @@ public class ExecutionInputPrep {
 
         // save it before use it
         outputExcel.save();
-        return new Excel(outputExcel.getFile(), false, true);
+        // (2018/12/16,automike): memory consumption precaution
+        outputExcel.close();
+        return new Excel(outputFile, false, true);
     }
 
     public static boolean isTestStepDisabled(List<XSSFCell> row) {
@@ -262,6 +266,9 @@ public class ExecutionInputPrep {
             cellValue.setCellValue(CellTextReader.readValue(value));
             cellValue.setCellStyle(styleTestDataValue);
         });
+
+        dataSheet.autoSizeColumn(0);
+        dataSheet.autoSizeColumn(1);
 
         // save output file with expanded data
         // (2018/10/18,automike): skip saving because it'll need to be saved later anyways

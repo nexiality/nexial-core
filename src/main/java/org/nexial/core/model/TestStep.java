@@ -123,15 +123,15 @@ public class TestStep extends TestStepManifest {
             MessageUtils.isWarn(message) ||
             MessageUtils.isSkipped(message)) { return; }
         if (worksheet == null) { return; }
-        nestedTestResults.add(new NestedMessage(worksheet, message));
+        nestedTestResults.add(new NestedMessage(message));
     }
 
     public void addNestedScreenCapture(String link, String message) {
-        nestedTestResults.add(new NestedScreenCapture(worksheet, message, link));
+        nestedTestResults.add(new NestedScreenCapture(message, link));
     }
 
     public void addNestedScreenCapture(String link, String message, String label) {
-        nestedTestResults.add(new NestedScreenCapture(worksheet, message, link, label));
+        nestedTestResults.add(new NestedScreenCapture(message, link, label));
     }
 
     /**
@@ -142,9 +142,7 @@ public class TestStep extends TestStepManifest {
      * the immediate subsequent message can then be skipped.  However, whether a message is skipped or not, the "logged"
      * flag will always be reset.
      */
-    public void addNestedTestResult(String message) {
-        nestedTestResults.add(new NestedTestResult(worksheet, message));
-    }
+    public void addNestedTestResult(String message) { nestedTestResults.add(new NestedTestResult(message)); }
 
     public StepResult execute() {
         TrackTimeLogs trackTimeLogs = context.getTrackTimeLogs();
@@ -255,6 +253,25 @@ public class TestStep extends TestStepManifest {
         return params;
     }
 
+    public void close() {
+        worksheet = null;
+
+        if (CollectionUtils.isNotEmpty(row)) {
+            row.clear();
+            row = null;
+        }
+
+        if (CollectionUtils.isNotEmpty(nestedTestResults)) {
+            nestedTestResults.clear();
+            nestedTestResults = null;
+        }
+
+        if (commandRepeater != null) {
+            commandRepeater.close();
+            commandRepeater = null;
+        }
+    }
+
     protected void waitFor(long waitMs) {
         if (waitMs < 100) { return; }
 
@@ -346,7 +363,8 @@ public class TestStep extends TestStepManifest {
             if (lastOutcome) {
                 summary.incrementPass();
                 // avoid printing verbose() message to avoid leaking of sensitive information on log
-                log(MessageUtils.renderAsPass(StringUtils.equals(getCommandFQN(), CMD_VERBOSE) ? "" : result.getMessage()));
+                log(MessageUtils.renderAsPass(StringUtils.equals(getCommandFQN(), CMD_VERBOSE) ?
+                                              "" : result.getMessage()));
             } else {
                 summary.incrementFail();
                 error(MessageUtils.renderAsFail(result.getMessage()));

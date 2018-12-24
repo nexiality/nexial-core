@@ -38,6 +38,7 @@ import org.apache.commons.lang3.ArrayUtils;
 import org.apache.commons.lang3.BooleanUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.math.NumberUtils;
+import org.jetbrains.annotations.NotNull;
 import org.nexial.commons.utils.JRegexUtils;
 import org.nexial.commons.utils.RegexUtils;
 import org.nexial.commons.utils.TextUtils;
@@ -548,6 +549,18 @@ public class BaseCommand implements NexialCommand {
         return new StepResult(!found, "Variable '" + var + "' " + (found ? "INDEED" : "does not") + " exist", null);
     }
 
+    public StepResult saveVariablesByRegex(String var, String regex) {
+        requiresValidVariableName(var);
+        requiresNotBlank(regex, "invalid regex", regex);
+        return saveMatchedVariables(var, regex, context.getDataNamesByRegex(regex));
+    }
+
+    public StepResult saveVariablesByPrefix(String var, String prefix) {
+        requiresValidVariableName(var);
+        requiresNotBlank(prefix, "invalid prefix", prefix);
+        return saveMatchedVariables(var, prefix, context.getDataNames(prefix));
+    }
+
     public StepResult failImmediate(String text) {
         context.setFailImmediate(true);
         return StepResult.fail(text);
@@ -708,6 +721,19 @@ public class BaseCommand implements NexialCommand {
                 testStep.addNestedScreenCapture(link, message, label);
             }
         }
+    }
+
+    @NotNull
+    protected StepResult saveMatchedVariables(String var, String regex, Collection<String> matched) {
+        int matchCount = CollectionUtils.size(matched);
+        if (matchCount < 1) {
+            ConsoleUtils.log("No data variable matching to " + regex);
+            context.removeData(var);
+        } else {
+            context.setData(var, TextUtils.toString(matched, context.getTextDelim()));
+        }
+
+        return StepResult.success(matchCount + " matched variable(s) saved to data variable '" + var + "'");
     }
 
     protected boolean areBothEmpty(String value1, String value2) {

@@ -89,6 +89,15 @@ public final class InputFileUtils {
             return excel == null ? false : matcher.apply(excel);
         } finally {
             if (DEF_OPEN_EXCEL_AS_DUP && excel != null) { FileUtils.deleteQuietly(excel.getFile().getParentFile()); }
+
+            // (2018/12/16,automike): memory consumption precaution
+            if (excel != null) {
+                try {
+                    excel.close();
+                } catch (IOException e) {
+                    ConsoleUtils.error("Unable to close Excel file (" + file + "): " + e.getMessage());
+                }
+            }
         }
     }
 

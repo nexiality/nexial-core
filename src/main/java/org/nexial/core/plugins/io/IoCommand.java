@@ -25,11 +25,13 @@ import java.text.NumberFormat;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.*;
+import java.util.concurrent.atomic.AtomicReference;
 import java.util.regex.Pattern;
 import javax.annotation.Nullable;
 import javax.validation.constraints.NotNull;
 
 import org.apache.commons.collections4.CollectionUtils;
+import org.apache.commons.collections4.MapUtils;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.LineIterator;
 import org.apache.commons.lang3.BooleanUtils;
@@ -46,6 +48,7 @@ import org.nexial.commons.utils.FileUtil;
 import org.nexial.commons.utils.IOFilePathFilter;
 import org.nexial.commons.utils.ResourceUtils;
 import org.nexial.commons.utils.TextUtils;
+import org.nexial.core.model.ExecutionContext;
 import org.nexial.core.model.StepResult;
 import org.nexial.core.plugins.base.BaseCommand;
 import org.nexial.core.plugins.filevalidation.RecordData;
@@ -100,6 +103,39 @@ public class IoCommand extends BaseCommand {
         // save matches
         context.setData(var, files);
         return StepResult.success("saving matching file list to " + var);
+    }
+
+    /**
+     * search-and-replace routine on the content of {@code file} via the name/value pairs found in {@code config}. The
+     * {@code name} will be the search string, and the {@code value} the replacement string. Each name/value pairs will
+     * be first scanned for data variable substitution (based on {@code ${...}} syntax) before performing the
+     * search-and-replace routine. In order to circumvent the {@code ${...}} substitution - e.g. perhaps one desires
+     * to search for {@code ${data}} with {@code data} - one can escape the {@code ${...}} syntax. For example,
+     * {@code \$\{data\}}.
+     */
+    public StepResult searchAndReplace(String file, String config, String saveAs) throws IOException {
+        requiresReadableFile(file);
+        requiresReadableFile(config);
+        requiresNotBlank(saveAs, "invalid saveAs", saveAs);
+
+        Map<String, String> configMap = TextUtils.loadProperties(config);
+        if (MapUtils.isEmpty(configMap)) {
+            FileUtils.copyFile(new File(file), new File(saveAs));
+            return StepResult.success("Config '" + config + "' does not contain any search-and-replace configuration");
+        }
+
+        // treat escaped ${...} sequence
+        Map<String, String> configMap2 = new HashMap<>();
+        configMap.forEach((name, value) ->
+                              configMap2.put(ExecutionContext.unescapeToken(context.replaceTokens(name)),
+                                             ExecutionContext.unescapeToken(context.replaceTokens(value))));
+
+        AtomicReference<String> content =
+            new AtomicReference<>(FileUtils.readFileToString(new File(file), DEF_FILE_ENCODING));
+        configMap2.forEach((name, value) -> content.set(StringUtils.replace(content.get(), name, value)));
+        FileUtils.writeStringToFile(new File(saveAs), content.get(), DEF_FILE_ENCODING);
+
+        return StepResult.success("search-and-replace completed and saved to '" + saveAs + "'");
     }
 
     /**
@@ -517,7 +553,7 @@ public class IoCommand extends BaseCommand {
             content = OutputFileUtils.resolveContent(content, context, false, replaceTokens);
             content = adjustEol(content);
             FileUtils.writeStringToFile(output, StringUtils.defaultString(content), DEF_CHARSET, isAppend);
-            return StepResult.success("Content " + (isAppend ? " appended" : " written") + " to " + file);
+            return StepResult.success("Content " + (isAppend ? "appended" : "written") + " to " + file);
         } catch (IOException e) {
             return StepResult.fail("Error occurred when writing to " + file + ": " + e.getMessage());
         }

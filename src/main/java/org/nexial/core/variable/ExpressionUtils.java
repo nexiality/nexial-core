@@ -25,11 +25,18 @@ import org.nexial.core.model.ExecutionContext;
 import org.nexial.core.utils.CheckUtils;
 import org.nexial.core.utils.OutputFileUtils;
 
+import static org.nexial.core.NexialConst.Data.DEF_EXPRESSION_READ_FILE_AS_IS;
+import static org.nexial.core.NexialConst.Data.OPT_EXPRESSION_READ_FILE_AS_IS;
+
 public class ExpressionUtils {
     private ExpressionUtils() { }
 
     protected static String handleExternal(String dataType, String value) throws TypeConversionException {
-        return handleExternal(dataType, value, true);
+        ExecutionContext context = ExecutionThread.get();
+        boolean openFileAsIs = context != null ?
+                               context.getBooleanData(OPT_EXPRESSION_READ_FILE_AS_IS, DEF_EXPRESSION_READ_FILE_AS_IS) :
+                               DEF_EXPRESSION_READ_FILE_AS_IS;
+        return handleExternal(dataType, value, !openFileAsIs);
     }
 
     protected static String handleExternal(String dataType, String value, boolean replaceTokens)

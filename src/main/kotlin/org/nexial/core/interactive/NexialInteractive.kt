@@ -235,6 +235,8 @@ class NexialInteractive {
     }
 
     private fun inspect(session: InteractiveSession) {
+        ExecutionThread.set(session.context)
+
         print("> inspect: ")
         val `in` = Scanner(System.`in`)
         var input = `in`.nextLine()

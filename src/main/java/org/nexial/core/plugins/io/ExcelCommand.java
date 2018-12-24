@@ -147,6 +147,9 @@ public class ExcelCommand extends BaseCommand {
         addData(sheet, new ExcelAddress(startCell), to2dStringList(var));
         excel.save();
 
+        // (2018/12/16,automike): memory consumption precaution
+        excel.close();
+
         return StepResult.success("Data saved to " + file + "#" + worksheet);
     }
 
@@ -168,6 +171,9 @@ public class ExcelCommand extends BaseCommand {
         addData(sheet, new ExcelAddress(startCell), data2d);
         excel.save();
 
+        // (2018/12/16,automike): memory consumption precaution
+        excel.close();
+
         return StepResult.success("Data saved to " + file + "#" + worksheet);
     }
 
@@ -178,7 +184,12 @@ public class ExcelCommand extends BaseCommand {
 
         List<List<String>> rows = new ArrayList<>();
         rows.add(TextUtils.toList(array, context.getTextDelim(), false));
-        deriveExcel(file).requireWorksheet(worksheet, true).writeAcross(new ExcelAddress(startCell), rows);
+
+        Excel excel = deriveExcel(file);
+        excel.requireWorksheet(worksheet, true).writeAcross(new ExcelAddress(startCell), rows);
+
+        // (2018/12/16,automike): memory consumption precaution
+        excel.close();
 
         return StepResult.success("Data (" + array + ") saved to " + file + "#" + worksheet);
     }
@@ -190,7 +201,12 @@ public class ExcelCommand extends BaseCommand {
 
         List<List<String>> columns = new ArrayList<>();
         columns.add(TextUtils.toList(array, context.getTextDelim(), false));
-        deriveExcel(file).requireWorksheet(worksheet, true).writeDown(new ExcelAddress(startCell), columns);
+
+        Excel excel = deriveExcel(file);
+        excel.requireWorksheet(worksheet, true).writeDown(new ExcelAddress(startCell), columns);
+
+        // (2018/12/16,automike): memory consumption precaution
+        excel.close();
 
         return StepResult.success("Data (" + array + ") saved to " + file + "#" + worksheet);
     }

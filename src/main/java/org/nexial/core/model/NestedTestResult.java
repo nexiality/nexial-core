@@ -17,19 +17,11 @@
 
 package org.nexial.core.model;
 
-import org.nexial.core.excel.Excel.Worksheet;
 import org.nexial.core.utils.MessageUtils;
 
-/**
- *
- */
 public class NestedTestResult extends NestedMessage {
 
-    public NestedTestResult(Worksheet worksheet, String message) {
-        super(worksheet, message);
-    }
+    public NestedTestResult(String message) { super(message); }
 
-    public NestedTestResult(Worksheet worksheet, String message, boolean isPass) {
-        this(worksheet, MessageUtils.markResult(message, isPass));
-    }
+    public NestedTestResult(String message, boolean isPass) { this(MessageUtils.markResult(message, isPass)); }
 }

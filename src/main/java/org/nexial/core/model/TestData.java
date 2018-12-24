@@ -17,6 +17,7 @@
 
 package org.nexial.core.model;
 
+import java.io.File;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -80,7 +81,7 @@ import static org.nexial.core.NexialConst.*;
  * <p/>
  */
 public class TestData {
-    private Excel excel;
+    private File dataFile;
     private List<String> dataSheetNames;
     private Map<String, String> scopeSettings = new HashMap<>();
     private Map<String, List<String>> dataMap = new HashMap<>();
@@ -89,10 +90,10 @@ public class TestData {
     public TestData(Excel excel, List<String> dataSheetNames) {
         assert excel != null && excel.getFile() != null && CollectionUtils.isNotEmpty(dataSheetNames);
 
-        this.excel = excel;
+        dataFile = excel.getFile();
         this.dataSheetNames = dataSheetNames;
 
-        List<Worksheet> validDataSheets = InputFileUtils.filterValidDataSheets(this.excel);
+        List<Worksheet> validDataSheets = InputFileUtils.filterValidDataSheets(excel);
         if (CollectionUtils.isEmpty(validDataSheets)) { return; }
 
         // #default is always the first one; default datasheet IS ALWAYS overridden by other datasheets
@@ -115,7 +116,7 @@ public class TestData {
                                           .map(Worksheet::getName)
                                           .distinct()
                                           .collect(Collectors.joining(", ")));
-        System.setProperty(SCRIPT_REF_PREFIX + "Data File", excel.getFile().getName());
+        System.setProperty(SCRIPT_REF_PREFIX + "Data File", dataFile.getName());
     }
 
     public String getMailTo() { return getSetting(MAIL_TO); }
@@ -226,8 +227,6 @@ public class TestData {
         // nothing means nothing
         return "";
     }
-
-    public Excel getExcel() { return excel; }
 
     public List<String> getDataSheetNames() { return dataSheetNames; }
 
@@ -342,7 +341,7 @@ public class TestData {
                             data.add(dataIndex, value);
                         }
                     } catch (IllegalStateException e) {
-                        ConsoleUtils.error("Unable to read/handle file " + excel.getFile() +
+                        ConsoleUtils.error("Unable to read/handle file " + dataFile +
                                            ", worksheet " + dataCell.getSheet().getSheetName() +
                                            ", location " + dataCell.getAddress().formatAsString() + ": " +
                                            e.getMessage());

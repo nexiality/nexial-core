@@ -18,17 +18,9 @@
 package org.nexial.core.model;
 
 import org.apache.commons.lang3.StringUtils;
-import org.apache.poi.ss.usermodel.CellStyle;
-import org.apache.poi.xssf.usermodel.XSSFCell;
-import org.apache.poi.xssf.usermodel.XSSFCellStyle;
-import org.apache.poi.xssf.usermodel.XSSFFont;
-import org.apache.poi.xssf.usermodel.XSSFRow;
-import org.nexial.core.excel.Excel.Worksheet;
-import org.nexial.core.excel.ExcelConfig.*;
 import org.nexial.core.utils.MessageUtils;
 
 import static org.nexial.core.excel.ExcelConfig.*;
-import static org.nexial.core.excel.ExcelConfig.StyleConfig.*;
 
 /**
  * at times it is useful, and maybe even critical, to display multiple lines of information post execution of a
@@ -39,15 +31,8 @@ public class NestedMessage {
     private String message;
     private boolean isPass;
     private String resultMessage;
-    private XSSFFont font;
-    private XSSFCellStyle style;
-    private XSSFCellStyle resultStyle;
 
-    public NestedMessage(Worksheet worksheet, String message) {
-        style = worksheet.getStyle(STYLE_MESSAGE);
-        font = worksheet.createFont();
-        resultStyle = StyleDecorator.generate(worksheet, RESULT);
-
+    public NestedMessage(String message) {
         this.message = StringUtils.defaultString(message, "");
         processMessage();
     }
@@ -59,35 +44,6 @@ public class NestedMessage {
     public boolean isPass() { return isPass; }
 
     public String getResultMessage() { return resultMessage; }
-
-    public CellStyle getStyle() { return style; }
-
-    public void markAsSkipped() { style = StyleDecorator.decorate(style, font, SKIPPED); }
-
-    public void markAsFailure() { style = StyleDecorator.decorate(style, font, FAILED); }
-
-    public void markAsDeprecated() { style = StyleDecorator.decorate(style, font, DEPRECATED); }
-
-    public void markAsSuccess() { style = StyleDecorator.decorate(style, font, SUCCESS); }
-
-    public void printTo(XSSFRow row) {
-        XSSFCell cell = row.createCell(COL_IDX_MERGE_RESULT_START);
-        cell.setCellValue(message);
-        cell.setCellStyle(style);
-
-        if (StringUtils.equals(resultMessage, MSG_DEPRECATED)) {
-            row.setHeight(CELL_HEIGHT_DEPRECATED);
-        } else {
-            short actualHeight = row.getHeight();
-            if (actualHeight < CELL_HEIGHT_DEFAULT) { row.setHeight(CELL_HEIGHT_DEFAULT); }
-
-            if (StringUtils.isNotBlank(resultMessage)) {
-                cell = row.createCell(COL_IDX_RESULT);
-                cell.setCellValue(getResultMessage());
-                cell.setCellStyle(resultStyle);
-            }
-        }
-    }
 
     private void processMessage() {
         if (MessageUtils.isSkipped(message)) {
@@ -112,12 +68,6 @@ public class NestedMessage {
                 resultMessage = MSG_WARN;
                 return;
             }
-        }
-
-        if (MessageUtils.isDeprecated(message)) {
-            resultMessage = MSG_DEPRECATED;
-            markAsDeprecated();
-            return;
         }
     }
 }

@@ -94,7 +94,7 @@ public class ExecutionSummary {
     private String name;
     private ExecutionLevel executionLevel;
     private String sourceScript;
-    private transient Excel testScript;
+    private transient File testScript;
     private String testScriptLink;
 
     private String runHost;
@@ -167,7 +167,7 @@ public class ExecutionSummary {
 
     public void setTotalSteps(int totalSteps) { this.totalSteps = totalSteps; }
 
-    /** when a teststep is skipped, we would need to adjust the total number of execution */
+    /** when a test step is skipped, we would need to adjust the total number of execution */
     public void adjustTotalSteps(int changeBy) { this.totalSteps += changeBy; }
 
     public int getPassCount() { return passCount; }
@@ -200,9 +200,9 @@ public class ExecutionSummary {
 
     public void setFailedFast(boolean failedFast) { this.failedFast = failedFast; }
 
-    public Excel getTestScript() { return testScript; }
+    public File getTestScript() { return testScript; }
 
-    public void setTestScript(Excel testScript) { this.testScript = testScript; }
+    public void setTestScript(File testScript) { this.testScript = testScript; }
 
     public String getTestScriptLink() { return testScriptLink; }
 

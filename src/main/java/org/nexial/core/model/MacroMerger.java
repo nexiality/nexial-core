@@ -297,6 +297,9 @@ public class MacroMerger {
             }
         }
 
+        // (2018/12/16,automike): memory consumption precaution
+        macroExcel.close();
+
         return macroSteps;
 
         // (2018/12/9,automike): remove to support dynamic macro changes during execution and interactive mode

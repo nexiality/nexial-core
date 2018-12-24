@@ -22,16 +22,14 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
 
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.collections4.MapUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.math.NumberUtils;
-import org.apache.poi.ss.util.CellRangeAddress;
 import org.apache.poi.xssf.usermodel.XSSFCell;
-import org.apache.poi.xssf.usermodel.XSSFRow;
 import org.apache.poi.xssf.usermodel.XSSFSheet;
+import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 import org.nexial.core.ExecutionEventListener;
 import org.nexial.core.excel.Excel;
 import org.nexial.core.excel.Excel.Worksheet;
@@ -40,13 +38,8 @@ import org.nexial.core.excel.ExcelArea;
 import org.nexial.core.utils.ConsoleUtils;
 import org.nexial.core.utils.ExecutionLogger;
 
-import static org.apache.poi.ss.usermodel.CellType.STRING;
-import static org.apache.poi.ss.usermodel.Row.MissingCellPolicy.CREATE_NULL_AS_BLANK;
 import static org.nexial.core.NexialConst.Data.CMD_REPEAT_UNTIL;
-import static org.nexial.core.NexialConst.Data.CMD_VERBOSE;
-import static org.nexial.core.NexialConst.MERGE_OUTPUTS;
 import static org.nexial.core.excel.ExcelConfig.*;
-import static org.nexial.core.excel.ExcelConfig.StyleConfig.MSG;
 import static org.nexial.core.model.ExecutionSummary.ExecutionLevel.SCENARIO;
 
 public class TestScenario {
@@ -95,22 +88,6 @@ public class TestScenario {
 
     public TestCase getTestCase(String name) { return testCaseMap.get(name); }
 
-    public void save() throws IOException {
-        XSSFCell summaryCell = worksheet.cell(ADDR_SCENARIO_EXEC_SUMMARY);
-        if (summaryCell != null) {
-            if (executionSummary.getEndTime() == 0) { executionSummary.setEndTime(System.currentTimeMillis()); }
-            summaryCell.setCellValue(executionSummary.toString());
-        }
-
-        XSSFCell descriptionCell = worksheet.cell(ADDR_SCENARIO_DESCRIPTION);
-        if (descriptionCell != null) {
-            descriptionCell.setCellValue(context.replaceTokens(Excel.getCellValue(descriptionCell)));
-        }
-
-        worksheet.getSheet().setZoom(100);
-        worksheet.save();
-    }
-
     public boolean execute() throws IOException {
         ExecutionLogger logger = context.getLogger();
         logger.log(this, "executing test scenario");
@@ -124,7 +101,7 @@ public class TestScenario {
 
         executionSummary.setName(name);
         executionSummary.setExecutionLevel(SCENARIO);
-        executionSummary.setTestScript(worksheet.excel());
+        executionSummary.setTestScript(worksheet.excel().getOriginalFile());
         executionSummary.setStartTime(System.currentTimeMillis());
         executionSummary.setTotalSteps(CollectionUtils.size(allSteps));
 
@@ -171,68 +148,15 @@ public class TestScenario {
             }
 
             executionSummary.addNestSummary(testCase.getExecutionSummary());
-
-            // todo: forcefully stop video recording (if any) in case we are currently dealing
-            // with the last agenda or that fail-fast condition is reached.
-            //if (i == testScenarios.size() - 1 || failFast) { forceStopVideoRecording(); }
         }
-
-        // if (interativeMode) {
-        // doInteractive(context);
-        // return allPass;
-        // }
 
         context.setCurrentActivity(null);
 
         executionSummary.setEndTime(System.currentTimeMillis());
         executionSummary.setFailedFast(shouldFailFast);
-
-        XSSFSheet excelSheet = worksheet.getSheet();
-        excelSheet.getWorkbook().setMissingCellPolicy(CREATE_NULL_AS_BLANK);
-
-        Map<TestStepManifest, List<NestedMessage>> nestMessages = executionSummary.getNestMessages();
-        int lastRow = worksheet.findLastDataRow(ADDR_COMMAND_START);
-        if (MapUtils.isNotEmpty(nestMessages)) {
-            int forwardRowsBy = 0;
-
-            Set<TestStepManifest> testStepsWithNestMessages = nestMessages.keySet();
-            for (TestStepManifest step : testStepsWithNestMessages) {
-                if (StringUtils.equals(step.getCommandFQN(), CMD_VERBOSE)) { continue; }
-
-                List<NestedMessage> nestedMessages = nestMessages.get(step);
-                int messageCount = CollectionUtils.size(nestedMessages);
-                if (messageCount < 1) { continue; }
-
-                int currentRow = step.getRowIndex() + 1 + forwardRowsBy;
-                // +1 if lastRow is the same as currentRow.  Otherwise shiftRow on a single row block causes problem for createRow (later on).
-                worksheet.shiftRows(currentRow, lastRow + (currentRow == lastRow ? 1 : 0), messageCount);
-
-                for (int i = 0; i < messageCount; i++) {
-                    nestedMessages.get(i).printTo(excelSheet.createRow(currentRow + i));
-                }
-
-                lastRow += messageCount;
-                forwardRowsBy += messageCount;
-            }
-        }
-
-        // scan for verbose() or similar commands where merging should be done
-        int startRow = ADDR_PARAMS_START.getRowStartIndex();
-        for (int i = startRow; i < lastRow; i++) {
-            XSSFRow row = excelSheet.getRow(i);
-            if (row == null) { continue; }
-
-            XSSFCell cellTarget = row.getCell(COL_IDX_TARGET);
-            XSSFCell cellCommand = row.getCell(COL_IDX_COMMAND);
-            String command = StringUtils.defaultIfBlank(Excel.getCellValue(cellTarget), "") + "." +
-                             StringUtils.defaultIfBlank(Excel.getCellValue(cellCommand), "");
-            if (MERGE_OUTPUTS.contains(command)) { mergeOutput(excelSheet, row, i); }
-        }
-
         executionSummary.aggregatedNestedExecutions(context);
 
-        logger.log(this, "saving test scenario");
-        save();
+        ExecutionResultHelper.writeTestScenarioResult(worksheet, executionSummary);
 
         executionEventListener.onScenarioComplete(executionSummary);
 
@@ -250,47 +174,42 @@ public class TestScenario {
         return testSteps;
     }
 
-    protected void mergeOutput(XSSFSheet excelSheet, XSSFRow row, int rowIndex) {
-        XSSFCell cellMerge = row.getCell(COL_IDX_MERGE_RESULT_START);
-        if (cellMerge == null) { return; }
-
-        // determine aggregated column width from 'param 1' to 'flow control'
-        int mergedWidth = 0;
-        for (int j = COL_IDX_MERGE_RESULT_START; j < COL_IDX_MERGE_RESULT_END + 1; j++) {
-            mergedWidth += worksheet.getSheet().getColumnWidth(j);
+    public void close() {
+        if (CollectionUtils.isNotEmpty(testCases)) {
+            testCases.forEach(TestCase::close);
+            testCases.clear();
+            testCases = null;
         }
 
-        int charPerLine = (int) ((mergedWidth - DEF_CHAR_WIDTH) / (DEF_CHAR_WIDTH * MSG.getFontHeight()));
-
-        // make sure we aren't create merged region on existing merged region
-        boolean alreadyMerged = false;
-        List<CellRangeAddress> mergedRegions = excelSheet.getMergedRegions();
-        if (CollectionUtils.isNotEmpty(mergedRegions)) {
-            for (CellRangeAddress rangeAddress : mergedRegions) {
-                int firstRow = rangeAddress.getFirstRow();
-                int lastRow = rangeAddress.getLastRow();
-                int firstColumn = rangeAddress.getFirstColumn();
-                int lastColumn = rangeAddress.getLastColumn();
-
-                if (firstRow <= rowIndex && lastRow >= rowIndex &&
-                    firstColumn <= COL_IDX_MERGE_RESULT_START && lastColumn >= COL_IDX_MERGE_RESULT_END) {
-                    alreadyMerged = true;
-                    break;
+        if (worksheet != null) {
+            XSSFSheet sheet = worksheet.getSheet();
+            if (sheet != null) {
+                XSSFWorkbook workbook = sheet.getWorkbook();
+                if (workbook != null) {
+                    try {
+                        workbook.close();
+                    } catch (IOException e) {
+                        ConsoleUtils.error("Unable to close scenario (" + name + "): " + e.getMessage());
+                    }
                 }
             }
+            worksheet = null;
         }
 
-        if (!alreadyMerged) {
-            excelSheet.addMergedRegion(
-                new CellRangeAddress(rowIndex, rowIndex, COL_IDX_MERGE_RESULT_START, COL_IDX_MERGE_RESULT_END));
+        if (MapUtils.isNotEmpty(testCaseMap)) {
+            testCaseMap.clear();
+            testCaseMap = null;
         }
 
-        if (cellMerge.getCellTypeEnum() == STRING) { cellMerge.setCellStyle(worksheet.getStyle(STYLE_MESSAGE)); }
+        if (CollectionUtils.isNotEmpty(allSteps)) {
+            allSteps.clear();
+            allSteps = null;
+        }
 
-        String mergedContent = Excel.getCellValue(cellMerge);
-        cellMerge.setCellValue(mergedContent);
-
-        Excel.adjustCellHeight(worksheet, cellMerge, charPerLine);
+        if (MapUtils.isNotEmpty(testStepsByRow)) {
+            testStepsByRow.clear();
+            testStepsByRow = null;
+        }
     }
 
     protected void parse() {

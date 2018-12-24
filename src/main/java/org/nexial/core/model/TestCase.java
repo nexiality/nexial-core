@@ -172,6 +172,16 @@ public class TestCase {
         return allPassed;
     }
 
+    public void close() {
+        if (CollectionUtils.isNotEmpty(testSteps)) {
+            testSteps.forEach(TestStep::close);
+            testSteps.clear();
+            testSteps = null;
+        }
+
+        testScenario = null;
+    }
+
     private void formatTestCase(List<TestStep> testSteps) {
         if (CollectionUtils.isEmpty(testSteps)) { return; }
 

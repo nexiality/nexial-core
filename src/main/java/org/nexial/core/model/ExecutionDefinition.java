@@ -22,16 +22,18 @@ import java.io.IOException;
 import java.util.List;
 import java.util.Map;
 
+import org.nexial.commons.utils.FileUtil;
 import org.nexial.core.excel.Excel;
 import org.nexial.core.utils.ConsoleUtils;
 
 import static org.nexial.core.NexialConst.Data.DEF_OPEN_EXCEL_AS_DUP;
+import static org.nexial.core.excel.Excel.MIN_EXCEL_FILE_SIZE;
 
 public class ExecutionDefinition {
     private String description;
     private String testScript;
     private List<String> scenarios;
-    private Excel dataFile;
+    private File dataFile;
     private List<String> dataSheets;
     private boolean failFast = true;
     private boolean serialMode = true;
@@ -63,9 +65,9 @@ public class ExecutionDefinition {
 
     public void setScenarios(List<String> scenarios) { this.scenarios = scenarios; }
 
-    public Excel getDataFile() { return dataFile; }
+    public File getDataFile() { return dataFile; }
 
-    public void setDataFile(Excel dataFile) { this.dataFile = dataFile; }
+    public void setDataFile(File dataFile) { this.dataFile = dataFile; }
 
     public List<String> getDataSheets() { return dataSheets; }
 
@@ -108,9 +110,7 @@ public class ExecutionDefinition {
     public TestData getTestData(boolean refetch) {
         if (refetch) {
             try {
-                File dataFilePath = dataFile.getOriginalFile();
-                ConsoleUtils.log("refetching data from " + dataFilePath);
-                dataFile = new Excel(dataFilePath, DEF_OPEN_EXCEL_AS_DUP, false);
+                ConsoleUtils.log("refetching data from " + dataFile);
                 parse();
             } catch (IOException e) {
                 String error = "Unable to successfully read/parse data file " + dataFile + ": " + e.getMessage();
@@ -140,13 +140,25 @@ public class ExecutionDefinition {
 
     public void setPlanSequence(int planSequence) { this.planSequence = planSequence; }
 
-    public void parse() {
+    public void parse() throws IOException {
+        if (this.dataFile == null) {
+            throw new IllegalArgumentException("data file not specified for this script: " + this.testScript);
+        }
+
+        if (!FileUtil.isFileReadable(this.dataFile, MIN_EXCEL_FILE_SIZE)) {
+            throw new IllegalArgumentException("specified data file is not readable or valid: " + this.dataFile);
+        }
+
+        Excel dataFile = new Excel(this.dataFile, DEF_OPEN_EXCEL_AS_DUP, false);
+
         // parse and collect all relevant test data so we can merge then into iteration-bound test script
         testData = new TestData(dataFile, dataSheets);
+
+        // (2018/12/16,automike): memory consumption precaution
+        dataFile.close();
     }
 
     public void infuseIntraExecutionData(Map<String, Object> intraExecutionData) {
         testData.infuseIntraExecutionData(intraExecutionData);
     }
-
 }

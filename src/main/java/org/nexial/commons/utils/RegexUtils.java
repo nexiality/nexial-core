@@ -31,6 +31,8 @@ import static java.util.regex.Pattern.*;
  * @author Mike Liu
  */
 public final class RegexUtils {
+    private static final int REGEX_FLAGS = MULTILINE | UNIX_LINES | DOTALL;
+
     private RegexUtils() { }
 
     /**
@@ -42,7 +44,7 @@ public final class RegexUtils {
         if (StringUtils.isEmpty(text)) { return text; }
         if (StringUtils.isEmpty(regex)) { return text; }
 
-        Pattern p = Pattern.compile(regex);
+        Pattern p = Pattern.compile(regex, REGEX_FLAGS);
 
         StringBuilder sb = new StringBuilder();
         String[] lines = StringUtils.splitPreserveAllTokens(text, '\n');
@@ -68,7 +70,7 @@ public final class RegexUtils {
         if (StringUtils.isEmpty(text)) { return text; }
         if (StringUtils.isEmpty(regex)) { return text; }
 
-        Pattern p = Pattern.compile(regex, MULTILINE | UNIX_LINES | DOTALL);
+        Pattern p = Pattern.compile(regex, REGEX_FLAGS);
         Matcher matcher = p.matcher(text);
         if (matcher.find()) { return matcher.replaceAll(replace); }
         return text;
@@ -85,7 +87,7 @@ public final class RegexUtils {
     public static boolean isExact(String text, String regex, boolean multiline) {
         if (StringUtils.isEmpty(regex)) { return true; }
         if (StringUtils.isEmpty(text)) { return false; }
-        Pattern p = multiline ? Pattern.compile(regex, DOTALL) : Pattern.compile(regex);
+        Pattern p = multiline ? Pattern.compile(regex, REGEX_FLAGS) : Pattern.compile(regex);
         return p.matcher(text).matches();
     }
 
@@ -97,7 +99,7 @@ public final class RegexUtils {
         if (StringUtils.isEmpty(text)) { return false; }
         if (StringUtils.isEmpty(regex)) { return false; }
 
-        Pattern p = multiline ? Pattern.compile(regex, MULTILINE | UNIX_LINES | DOTALL) : Pattern.compile(regex);
+        Pattern p = multiline ? Pattern.compile(regex, REGEX_FLAGS) : Pattern.compile(regex);
         return p.matcher(text).find();
     }
 
@@ -123,7 +125,7 @@ public final class RegexUtils {
         if (!acceptBlank && StringUtils.isBlank(text)) { return list; }
         if (StringUtils.isBlank(regex)) { return list; }
 
-        Pattern pattern = multiline ? Pattern.compile(regex, DOTALL) : Pattern.compile(regex);
+        Pattern pattern = multiline ? Pattern.compile(regex, REGEX_FLAGS) : Pattern.compile(regex);
         Matcher matcher = pattern.matcher(text);
         if (matcher.matches() && matcher.groupCount() > 0) {
             // always starts with 1 since group 0 represents the "entire" match
@@ -138,7 +140,7 @@ public final class RegexUtils {
         if (!acceptBlank && StringUtils.isBlank(text)) { return list; }
         if (StringUtils.isBlank(regex)) { return list; }
 
-        Pattern pattern = multiline ? Pattern.compile(regex, DOTALL) : Pattern.compile(regex);
+        Pattern pattern = multiline ? Pattern.compile(regex, REGEX_FLAGS) : Pattern.compile(regex);
         Matcher matcher = pattern.matcher(text);
         while (matcher.find()) { list.add(matcher.group()); }
         return list;
@@ -148,7 +150,7 @@ public final class RegexUtils {
         if (StringUtils.isEmpty(text)) { return text; }
         if (StringUtils.isBlank(regex)) { return text; }
 
-        Pattern pattern = Pattern.compile(regex, DOTALL);
+        Pattern pattern = Pattern.compile(regex, REGEX_FLAGS);
         Matcher matcher = pattern.matcher(text);
         while (matcher.find()) { text = matcher.replaceAll(""); }
 
@@ -161,7 +163,7 @@ public final class RegexUtils {
         if (StringUtils.isBlank(regex)) { return text; }
 
         String retained = "";
-        Pattern pattern = Pattern.compile(regex, DOTALL);
+        Pattern pattern = Pattern.compile(regex, REGEX_FLAGS);
         Matcher matcher = pattern.matcher(text);
         while (matcher.find()) {
             MatchResult result = matcher.toMatchResult();
@@ -176,7 +178,7 @@ public final class RegexUtils {
         if (StringUtils.isEmpty(text)) { return text; }
         if (StringUtils.isBlank(regex)) { return text; }
 
-        Pattern pattern = Pattern.compile(regex, DOTALL);
+        Pattern pattern = Pattern.compile(regex, REGEX_FLAGS);
         Matcher matcher = pattern.matcher(text);
         if (matcher.find()) {
             MatchResult result = matcher.toMatchResult();

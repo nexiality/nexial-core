@@ -184,6 +184,13 @@ public class CommandRepeater {
                    .toString();
     }
 
+    public void close() {
+        if (CollectionUtils.isNotEmpty(steps)) {
+            steps.clear();
+            steps = null;
+        }
+    }
+
     protected boolean shouldFailFast(ExecutionContext context, TestStep testStep) {
         boolean shouldFailFast = context.isFailFast() || context.isFailFastCommand(testStep);
         if (shouldFailFast) {

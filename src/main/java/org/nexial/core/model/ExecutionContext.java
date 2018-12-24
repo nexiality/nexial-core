@@ -24,6 +24,7 @@ import java.lang.reflect.Array;
 import java.lang.reflect.InvocationTargetException;
 import java.net.URLEncoder;
 import java.util.*;
+import java.util.stream.Collectors;
 import javax.annotation.Nullable;
 import javax.validation.constraints.NotNull;
 
@@ -115,6 +116,8 @@ public class ExecutionContext {
     private static final String ALT_PIPE = "__<%+%>__";
     private static final String ALT_GML_CLOSE_TAG = "__#~~^~~#__";
     private static final String ALT_GML_CLOSE_TAG2 = "__%&&*&&$__";
+    private static final String ESCAPED_TOKEN_START = "\\$\\{";
+    private static final String ESCAPED_TOKEN_END = "\\}";
 
     protected Logger logger = LoggerFactory.getLogger(getClass());
     protected ExecutionDefinition execDef;
@@ -576,19 +579,57 @@ public class ExecutionContext {
     public Map<String, String> getDataByPrefix(String prefix) {
         Map<String, String> props = new LinkedHashMap<>();
 
-        System.getProperties().forEach((key, value) -> {
-            String sKey = key.toString();
-            if (StringUtils.startsWith(sKey, prefix)) {
-                props.put(StringUtils.substringAfter(sKey, prefix), replaceTokens(Objects.toString(value)));
-            }
-        });
         data.forEach((key, value) -> {
             if (StringUtils.startsWith(key, prefix)) {
                 props.put(StringUtils.substringAfter(key, prefix), replaceTokens(Objects.toString(value)));
             }
         });
 
+        // scan system properties later so that they can override those also found in `data`
+        System.getProperties().forEach((key, value) -> {
+            String sKey = key.toString();
+            if (StringUtils.startsWith(sKey, prefix)) {
+                props.put(StringUtils.substringAfter(sKey, prefix), replaceTokens(Objects.toString(value)));
+            }
+        });
+
         return props;
+    }
+
+    @NotNull
+    public Collection<String> getDataNames(String prefix) {
+        // ordered data names during collection; we have no way to predetermined the right order
+        Set<String> names = new TreeSet<>();
+
+        names.addAll(data.keySet()
+                         .stream()
+                         .filter(name -> StringUtils.isEmpty(prefix) || StringUtils.startsWith(name, prefix))
+                         .collect(Collectors.toList()));
+        names.addAll(System.getProperties()
+                           .stringPropertyNames()
+                           .stream()
+                           .filter(name -> StringUtils.isEmpty(prefix) || StringUtils.startsWith(name, prefix))
+                           .collect(Collectors.toList()));
+
+        return names;
+    }
+
+    @NotNull
+    public Collection<String> getDataNamesByRegex(String regex) {
+        // ordered data names during collection; we have no way to predetermined the right order
+        Set<String> names = new TreeSet<>();
+
+        names.addAll(data.keySet()
+                         .stream()
+                         .filter(name -> StringUtils.isEmpty(regex) || RegexUtils.match(name, regex))
+                         .collect(Collectors.toList()));
+        names.addAll(System.getProperties()
+                           .stringPropertyNames()
+                           .stream()
+                           .filter(name -> StringUtils.isEmpty(regex) || RegexUtils.match(name, regex))
+                           .collect(Collectors.toList()));
+
+        return names;
     }
 
     @NotNull
@@ -943,9 +984,9 @@ public class ExecutionContext {
     }
 
     public void endIteration() {
-        testScript = null;
+        if (getBooleanData(OPT_INTERACTIVE, false)) { return; }
 
-        if (testScenarios != null) {
+        if (CollectionUtils.isNotEmpty(testScenarios)) {
             for (TestScenario testScenario : testScenarios) {
                 ExecutionSummary executionSummary = testScenario.getExecutionSummary();
                 scriptStepCount += executionSummary.getTotalSteps();
@@ -953,11 +994,49 @@ public class ExecutionContext {
                 scriptWarnCount += executionSummary.getWarnCount();
                 scriptFailCount += executionSummary.getFailCount();
             }
+
+            testScenarios.forEach(TestScenario::close);
+            testScenarios.clear();
+            testScenarios = null;
         }
 
-        testScenarios = null;
+        currentTestStep = null;
+
         getExecutionEventListener().onIterationComplete();
         removeTrackTimeLogs();
+
+        try {
+            // (2018/12/16,automike): memory consumption precaution
+            testScript.close();
+        } catch (IOException e) {
+            ConsoleUtils.error("Unable to close Excel file (" + testScript + "): " + e.getMessage());
+        }
+
+        testScript = null;
+    }
+
+    public void endScript() {
+        if (getBooleanData(OPT_INTERACTIVE, false)) { return; }
+
+        execDef = null;
+
+        if (testScript != null) {
+            try {
+                testScript.close();
+            } catch (IOException e) {
+                ConsoleUtils.error("Unable to close script (" + testScript.getOriginalFile() + "): " + e.getMessage());
+            }
+
+            testScript = null;
+        }
+
+        if (CollectionUtils.isNotEmpty(testScenarios)) {
+            testScenarios.forEach(TestScenario::close);
+            testScenarios.clear();
+            testScenarios = null;
+        }
+
+        currentTestStep = null;
     }
 
     public int getScriptStepCount() { return scriptStepCount; }
@@ -1080,6 +1159,16 @@ public class ExecutionContext {
         }
     }
 
+    public static String unescapeToken(String text) {
+        return StringUtils.replace(StringUtils.replace(text, ESCAPED_TOKEN_START, TOKEN_START),
+                                   ESCAPED_TOKEN_END, TOKEN_END);
+    }
+
+    public static String escapeToken(String text) {
+        return StringUtils.replace(StringUtils.replace(text, TOKEN_START, ESCAPED_TOKEN_START),
+                                   TOKEN_END, ESCAPED_TOKEN_END);
+    }
+
     /**
      * perhaps it's a system property? first check System property, then internal map
      */
@@ -1095,10 +1184,7 @@ public class ExecutionContext {
 
     protected boolean containListAccess(String text, String tokenized) {
         if (StringUtils.isEmpty(text) || StringUtils.isEmpty(tokenized)) { return false; }
-
-        String regex = StringUtils.replace(StringUtils.replace(tokenized, TOKEN_START, "\\$\\{"), TOKEN_END, "\\}") +
-                       "\\[[0-9]+\\]";
-        return RegexUtils.match(text, regex, true);
+        return RegexUtils.match(text, escapeToken(tokenized) + "\\[[0-9]+\\]", true);
     }
 
     protected void initDj() {

@@ -298,6 +298,8 @@ public class XmlCommand extends BaseCommand {
                 buffer.add(StringUtils.trim(((Element) match).getTextNormalize()));
             } else if (match instanceof Content) {
                 buffer.add(StringUtils.trim(((Content) match).getValue()));
+            } else if (match instanceof Attribute) {
+                buffer.add(StringUtils.defaultIfEmpty(((Attribute) match).getValue(), ""));
             } else {
                 buffer.add(StringUtils.trim(match.toString()));
             }

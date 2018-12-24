@@ -342,7 +342,6 @@ public final class NexialConst {
     public static final String MSG_FAIL = ExcelConfig.MSG_FAIL;
     public static final String MSG_WARN = ExcelConfig.MSG_WARN;
     public static final String MSG_SKIPPED = ExcelConfig.MSG_SKIPPED;
-    public static final String MSG_DEPRECATED = ExcelConfig.MSG_DEPRECATED;
     public static final String PREFIX_JAR = "jar:";
 
     // text matching rules
@@ -759,6 +758,8 @@ public final class NexialConst {
         public static final String OPT_VAR_EXCLUDE_LIST = NAMESPACE_VAR + "ignored";
         public static final String OPT_VAR_DEFAULT_AS_IS = NAMESPACE_VAR + "defaultAsIs";
         public static final boolean DEF_VAR_DEFAULT_AS_IS = false;
+        public static final String OPT_EXPRESSION_READ_FILE_AS_IS = NAMESPACE + "expression.OpenFileAsIs";
+        public static final boolean DEF_EXPRESSION_READ_FILE_AS_IS = false;
 
         // predefined variable for time tracking of execution levels
         public static final String TIMETRACK = NAMESPACE + "timetrack.";
@@ -781,6 +782,7 @@ public final class NexialConst {
         // overly eager Nexial that opens up completed/failed excel output
         public static final String THIRD_PARTY_LOG_PATH = NAMESPACE + "3rdparty.logpath";
         public static final String TEST_LOG_PATH = NAMESPACE + "logpath";
+
         public static final String ASSISTANT_MODE = NAMESPACE + "assistantMode";
         // synonymous to `assistantMode`, but reads better
         public static final String OPT_OPEN_RESULT = NAMESPACE + "openResult";
@@ -986,7 +988,6 @@ public final class NexialConst {
         public static final String ITERATION_ENDED = NAMESPACE + "iterationEnded";
 
         //screen Recording
-        // public static final String RECORDER_TYPE = "avi";
         public static final String RECORDER_TYPE = NAMESPACE + "screenRecorder";
         public static final String RECORDER_TYPE_MP4 = "mp4";
         public static final String RECORDER_TYPE_AVI = "avi";

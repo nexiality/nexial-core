@@ -78,7 +78,7 @@ data class InteractiveSession(val context: ExecutionContext) {
                 value.scenarios.add(execScenario)
             }
 
-            if (value.dataFile != null) dataFile = value.dataFile.file.absolutePath
+            if (value.dataFile != null) dataFile = value.dataFile.absolutePath
 
             if (execScenario != "") scenario = execScenario
         }
@@ -155,10 +155,10 @@ data class InteractiveSession(val context: ExecutionContext) {
 
         val execDef = executionDefinition!!
 
-        val dataFileOfValue = File(dataFile).absolutePath
-        if (execDef.dataFile == null ||
-            !StringUtils.equals(execDef.dataFile.file.absolutePath, dataFileOfValue)) {
-            execDef.dataFile = Excel(File(dataFile), DEF_OPEN_EXCEL_AS_DUP, false)
+        val dataFileObj = File(dataFile)
+        val dataFileOfValue = dataFileObj.absolutePath
+        if (execDef.dataFile == null || !StringUtils.equals(execDef.dataFile.absolutePath, dataFileOfValue)) {
+            execDef.dataFile = dataFileObj
         }
 
         execDef.getTestData(true)

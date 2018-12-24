@@ -238,12 +238,10 @@ public class ExcelConfig {
 
     // agenda
     public static final int ALPHABET_COUNT = 'Z' - 'A' + 1;
-    public static final short CELL_HEIGHT_DEPRECATED = 440;
     public static final short CELL_HEIGHT_DEFAULT = 480;
     public static final int MAX_CELL_WIDTH = 256 * 255;
 
     // agenda metadata
-    public static final String MSG_DEPRECATED = "DEPRECATED ";
     public static final String MSG_FAIL = "FAIL ";
     public static final String MSG_PASS = "PASS ";
     public static final String MSG_SCREENCAPTURE = "Click here";
@@ -334,7 +332,6 @@ public class ExcelConfig {
         public static final StyleConfig PARAM = newParamStyle();
         public static final StyleConfig TAINTED_PARAM = newTaintedParamStyle();
         public static final StyleConfig MSG = newMsgStyle();
-        public static final StyleConfig DEPRECATED = newDeprecatedStyle();
 
         // public static final StyleConfig SETTING_NAME = newSettingNameStyle();
         // public static final StyleConfig SETTING_VALUE = newSettingValueStyle();
@@ -658,17 +655,6 @@ public class ExcelConfig {
             config.fontColor = new XSSFColor(new Color(128, 128, 128));
             config.boldFont = false;
             config.verticalAlignment = CENTER;
-            return config;
-        }
-
-        private static StyleConfig newDeprecatedStyle() {
-            StyleConfig config = new StyleConfig();
-            config.backgroundColor = new XSSFColor(new Color(110, 30, 30));
-            config.verticalAlignment = CENTER;
-            config.wrapText = true;
-            config.fontName = FONT_NAME_FIXED_DEFAULT;
-            config.fontHeight = (short) 10;
-            config.fontColor = new XSSFColor(new Color(210, 210, 210));
             return config;
         }
 
@@ -1067,22 +1053,6 @@ public class ExcelConfig {
                                                               prefix ? SECTION_DESCRIPTION_PREFIX : ""));
     }
 
-    protected static TestStep enhanceDescriptionFormat(TestStep testStep) {
-        String result = Excel.getCellValue(testStep.getRow().get(COL_IDX_RESULT));
-        XSSFCellStyle cellStyle = testStep.getRow().get(COL_IDX_DESCRIPTION).getCellStyle();
-        XSSFFont font = cellStyle.getFont();
-
-        if (StringUtils.startsWith(result, MSG_SKIPPED)) {
-            font.setItalic(true);
-            font.setColor(new XSSFColor(new Color(100, 100, 100)));
-            return testStep;
-        }
-
-        if (StringUtils.startsWith(result, MSG_FAIL)) { return formatFailedStepDescription(testStep); }
-
-        return testStep;
-    }
-
     public static void formatRepeatUntilDescription(Worksheet worksheet, XSSFCell cell) {
         cell.setCellStyle(worksheet.getStyle(STYLE_REPEAT_UNTIL_DESCRIPTION));
         fixCellWidth(cell.getSheet(), cell, COL_IDX_DESCRIPTION, DEF_CHAR_WIDTH_FACTOR_TAHOMA);
@@ -1095,10 +1065,6 @@ public class ExcelConfig {
     public static TestStep formatFailedStepDescription(TestStep testStep) {
         return formatDescriptionCell(testStep, STYLE_FAILED_STEP_DESCRIPTION, null);
     }
-
-    // public static TestStep formatSkippedStepDescription(TestStep testStep) {
-    //     return formatDescriptionCell(testStep, STYLE_SKIPPED_STEP_DESCRIPTION, null);
-    // }
 
     public static void formatTargetCell(Worksheet worksheet, XSSFCell cell) {
         cell.setCellStyle(worksheet.getStyle(STYLE_TARGET));
@@ -1124,6 +1090,22 @@ public class ExcelConfig {
             cell.setCellStyle(worksheet.getStyle(STYLE_PARAM));
             fixCellWidth(worksheet.getSheet(), cell, COL_IDX_FLOW_CONTROLS, DEF_CHAR_WIDTH_FACTOR_CONSOLAS);
         }
+    }
+
+    protected static TestStep enhanceDescriptionFormat(TestStep testStep) {
+        String result = Excel.getCellValue(testStep.getRow().get(COL_IDX_RESULT));
+        XSSFCellStyle cellStyle = testStep.getRow().get(COL_IDX_DESCRIPTION).getCellStyle();
+        XSSFFont font = cellStyle.getFont();
+
+        if (StringUtils.startsWith(result, MSG_SKIPPED)) {
+            font.setItalic(true);
+            font.setColor(new XSSFColor(new Color(100, 100, 100)));
+            return testStep;
+        }
+
+        if (StringUtils.startsWith(result, MSG_FAIL)) { return formatFailedStepDescription(testStep); }
+
+        return testStep;
     }
 
     @NotNull

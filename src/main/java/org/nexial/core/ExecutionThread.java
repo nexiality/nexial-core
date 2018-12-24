@@ -76,7 +76,13 @@ public final class ExecutionThread extends Thread {
 
     public static void set(ExecutionContext context) { THREAD_LOCAL.set(context); }
 
-    public static void unset() { THREAD_LOCAL.remove(); }
+    public static void unset() {
+        ExecutionContext context = THREAD_LOCAL.get();
+        if (context != null) {
+            context.endScript();
+            THREAD_LOCAL.remove();
+        }
+    }
 
     public static ExecutionThread newInstance(ExecutionDefinition execDef) {
         ExecutionThread self = new ExecutionThread();
@@ -158,14 +164,14 @@ public final class ExecutionThread extends Thread {
 
             try {
                 testScript = ExecutionInputPrep.prep(runId, execDef, iteration, currIteration);
-                iterSummary.setTestScript(testScript);
+                iterSummary.setTestScript(testScript.getOriginalFile());
                 context.useTestScript(testScript);
 
                 context.startIteration(currIteration, firstUse);
 
                 ExecutionLogger logger = context.getLogger();
-                logger.log(context, "executing iteration #" + currIteration +
-                                    "; Iteration #" + iteration + " of " + totalIterations);
+                logger.log(context, "executing iteration #" + currIteration + " of " + totalIterations +
+                                    "; Iteration Index " + iteration);
                 allPass = context.execute();
 
                 onIterationComplete(context, iterSummary, currIteration);
@@ -189,6 +195,7 @@ public final class ExecutionThread extends Thread {
                     iterSummary.setEndTime(System.currentTimeMillis());
                     iterSummary.aggregatedNestedExecutions(context);
                     iterSummary.generateExcelReport(testScript);
+
                     EventTracker.INSTANCE.track(
                         new NexialIterationCompleteEvent(scriptLocation, currIteration, iterSummary));
                     executionSummary.addNestSummary(iterSummary);
@@ -226,6 +233,7 @@ public final class ExecutionThread extends Thread {
 
                 collectIntraExecutionData(context, currIteration);
                 ExecutionMailConfig.configure(context);
+
                 context.endIteration();
 
                 MemManager.recordMemoryChanges(
@@ -376,7 +384,7 @@ public final class ExecutionThread extends Thread {
                 boolean removeLocal = !isAutoOpenResult();
 
                 summary.getNestedExecutions().forEach(nested -> {
-                    File testScript = nested.getTestScript().getFile();
+                    File testScript = nested.getTestScript();
                     try {
                         String testScriptUrl = otc.importFile(testScript, removeLocal);
                         nested.setTestScriptLink(testScriptUrl);

@@ -157,7 +157,7 @@ class NexialScenarioCompleteEvent(val script: String,
                         pass = pass,
                         fail = fail) {
 
-    constructor(summary: ExecutionSummary) : this(summary.testScript.file.absolutePath,
+    constructor(summary: ExecutionSummary) : this(summary.testScript.absolutePath,
                                                   summary.name,
                                                   summary.startTime,
                                                   summary.totalSteps,

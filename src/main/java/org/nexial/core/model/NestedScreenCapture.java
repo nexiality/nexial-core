@@ -17,17 +17,7 @@
 
 package org.nexial.core.model;
 
-import org.apache.commons.lang3.StringUtils;
-import org.apache.poi.xssf.usermodel.XSSFCell;
-import org.apache.poi.xssf.usermodel.XSSFCellStyle;
-import org.apache.poi.xssf.usermodel.XSSFRow;
-import org.nexial.core.excel.Excel;
-import org.nexial.core.excel.Excel.Worksheet;
-import org.nexial.core.excel.ExcelConfig.StyleDecorator;
-
-import static org.nexial.core.excel.ExcelConfig.COL_IDX_CAPTURE_SCREEN;
 import static org.nexial.core.excel.ExcelConfig.MSG_SCREENCAPTURE;
-import static org.nexial.core.excel.ExcelConfig.StyleConfig.SCREENSHOT;
 
 /**
  * used to capture and render nested screen capture(s) post execution of a test step.
@@ -35,30 +25,20 @@ import static org.nexial.core.excel.ExcelConfig.StyleConfig.SCREENSHOT;
  * @see NestedMessage
  */
 public class NestedScreenCapture extends NestedMessage {
-    private XSSFCellStyle cellStyle;
     private String link;
     private String label = MSG_SCREENCAPTURE;
 
-    public NestedScreenCapture(Worksheet worksheet, String message, String link) {
-        super(worksheet, message);
-        // cell style must be associated with specific worksheet... CANNOT BE STATIC
-        cellStyle = StyleDecorator.generate(worksheet, SCREENSHOT);
+    public NestedScreenCapture(String message, String link) {
+        super(message);
         this.link = link;
     }
 
-    public NestedScreenCapture(Worksheet worksheet, String message, String link, String label) {
-        this(worksheet, message, link);
+    public NestedScreenCapture(String message, String link, String label) {
+        this(message, link);
         this.label = label;
     }
 
-    public String getLink() { return link; }
+    public String getLabel() { return label; }
 
-    @Override
-    public void printTo(XSSFRow row) {
-        super.printTo(row);
-        if (StringUtils.isNotBlank(link)) {
-            XSSFCell cell = Excel.setHyperlink(row.createCell(COL_IDX_CAPTURE_SCREEN), link, label);
-            cell.setCellStyle(cellStyle);
-        }
-    }
+    public String getLink() { return link; }
 }

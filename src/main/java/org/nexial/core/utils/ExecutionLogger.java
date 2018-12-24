@@ -103,7 +103,7 @@ public class ExecutionLogger {
         }
     }
 
-    private static String justFileName(File file) { return StringUtils.substringBeforeLast(file.getName(), "."); }
+    public static String justFileName(File file) { return StringUtils.substringBeforeLast(file.getName(), "."); }
 
     private void log(String header, String message) { logger.info(header + " - " + message); }
 

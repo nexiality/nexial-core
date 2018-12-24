@@ -35,8 +35,6 @@ public final class MessageUtils {
 
     public static boolean isSkipped(String message) { return StringUtils.startsWith(message, MSG_SKIPPED); }
 
-    public static boolean isDeprecated(String message) { return StringUtils.startsWith(message, MSG_DEPRECATED); }
-
     public static boolean isTestResult(String message) { return isPass(message) || isFail(message) || isWarn(message); }
 
     public static void logAsPass(Logger logger, String message) { logger.info(renderAsPass(message)); }
