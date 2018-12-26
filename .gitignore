@@ -303,3 +303,8 @@ support/sync-src-vm.sh
 /.archive/
 /build
 /logs
+/src/test/resources/showcase/artifact/data/image1-1.png
+/src/test/resources/showcase/artifact/data/image1-2.png
+/src/test/resources/showcase/artifact/data/image2-2.png
+/src/test/resources/showcase/artifact/data/image2-1.png
+/src/test/resources/showcase/artifact/data/image1-3.png

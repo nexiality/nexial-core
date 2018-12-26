@@ -10,7 +10,7 @@ resolveEnv
 echo
 echo
 ${JAVA} -classpath "${NEXIAL_CLASSES}:${NEXIAL_LIB}/nexial*.jar:${NEXIAL_LIB}/*" ${JAVA_OPT} \
-	org.nexial.core.tools.NexialCrypt $*
+	org.nexial.core.tools.NexialCrypt "$*"
 ret=$?
 echo
 echo

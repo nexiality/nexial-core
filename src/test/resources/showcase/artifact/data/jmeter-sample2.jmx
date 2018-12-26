@@ -16,7 +16,7 @@
         <stringProp name="keyspace">stock</stringProp>
         <stringProp name="loadBalancer">TokenAware(DCAwareRoundRobin)</stringProp>
         <stringProp name="localDataCenter"></stringProp>
-        <stringProp name="password"></stringProp>
+        <stringProp name="password">${testdata1}</stringProp>
         <stringProp name="sessionName">session1</stringProp>
         <stringProp name="username"></stringProp>
       </CassandraConnection>

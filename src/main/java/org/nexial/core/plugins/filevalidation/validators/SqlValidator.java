@@ -21,6 +21,7 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
+import org.apache.commons.lang3.ArrayUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.nexial.core.ExecutionThread;
 import org.nexial.core.model.ExecutionContext;
@@ -31,7 +32,6 @@ import org.nexial.core.plugins.filevalidation.FieldBean;
 import org.nexial.core.plugins.filevalidation.RecordBean;
 import org.nexial.core.plugins.filevalidation.config.ValidationConfig;
 import org.nexial.core.plugins.filevalidation.config.ValidationsBean.ValidationmethodsBean.ConditionBean;
-import org.nexial.core.plugins.filevalidation.validators.ValidationsExecutor.Severity;
 import org.nexial.core.plugins.filevalidation.validators.ValidationsExecutor.ValidationType;
 import org.nexial.core.utils.ConsoleUtils;
 
@@ -40,6 +40,7 @@ import com.google.gson.JsonArray;
 
 import static org.nexial.core.NexialConst.TOKEN_END;
 import static org.nexial.core.NexialConst.TOKEN_START;
+import static org.nexial.core.plugins.filevalidation.validators.ValidationsExecutor.Severity.ERROR;
 import static org.nexial.core.plugins.filevalidation.validators.ValidationsExecutor.buildError;
 import static org.nexial.core.utils.CheckUtils.requiresNotBlank;
 
@@ -75,12 +76,7 @@ public class SqlValidator implements FieldValidator {
 
                 String sql = String.valueOf(stringList.get(SQL_QUERY_INDEX));
                 requiresNotBlank(sql, "invalid sql", sql);
-
-                String[] fields = lookUpFieldNames(sql);
-                if (fields != null && fields.length > 0) {
-                    sql = substituteFieldValues(sql, fields, field.getRecord());
-                }
-                sql = context.handleExpression(sql);
+                sql = context.handleExpression(substituteFieldValues(sql, lookUpFieldNames(sql), field.getRecord()));
 
                 String resultVar = getClass().getName() + System.currentTimeMillis() + "dbresult";
 
@@ -107,41 +103,35 @@ public class SqlValidator implements FieldValidator {
     }
 
     private boolean resolveConditions(FieldBean field, ValidationConfig validationConfig) {
+        if (validationConfig.getConditionBeans() == null) { return true; }
 
-        if (validationConfig.getConditionBeans() != null) {
-            int trueCount = 0;
-            for (ConditionBean conditionBean : validationConfig.getConditionBeans()) {
-                String fieldName = conditionBean.getFieldname();
-                String fieldValue = conditionBean.getFieldvalue();
+        int trueCount = 0;
+        for (ConditionBean conditionBean : validationConfig.getConditionBeans()) {
+            String fieldName = conditionBean.getFieldname();
+            String fieldValue = conditionBean.getFieldvalue();
 
-                for (FieldBean fieldBean : field.getRecord().getFields()) {
-
-                    if (fieldBean.getConfig().getFieldname().equals(fieldName) &&
-                        fieldBean.getFieldValue().trim().equals(fieldValue)) {
-                        trueCount++;
-                        break;
-                    }
+            for (FieldBean fieldBean : field.getRecord().getFields()) {
+                if (fieldBean.getConfig().getFieldname().equals(fieldName) &&
+                    fieldBean.getFieldValue().trim().equals(fieldValue)) {
+                    trueCount++;
+                    break;
                 }
             }
-            return (trueCount == validationConfig.getConditionBeans().size());
         }
-        return true;
+
+        return trueCount == validationConfig.getConditionBeans().size();
     }
 
-    private String[] lookUpFieldNames(String sql) {
-
-        String[] fieldNames = StringUtils.substringsBetween(sql, TOKEN_START, TOKEN_END);
-
-        return fieldNames;
-    }
+    private String[] lookUpFieldNames(String sql) { return StringUtils.substringsBetween(sql, TOKEN_START, TOKEN_END); }
 
     private String substituteFieldValues(String query, String[] fields, RecordBean recordBean) {
+        if (ArrayUtils.isEmpty(fields)) { return query; }
 
         for (String fieldName : fields) {
             for (FieldBean fieldBean : recordBean.getFields()) {
                 if (fieldBean.getConfig().getFieldname().equals(fieldName.trim())) {
-                    query = StringUtils.replaceEach(query, new String[]{TOKEN_START, TOKEN_END}, new String[]{"", ""});
-                    query = StringUtils.replace(query, fieldName, fieldBean.getFieldValue());
+                    // query = StringUtils.replaceEach(query, new String[]{TOKEN_START, TOKEN_END}, new String[]{"", ""});
+                    query = StringUtils.replace(query, TOKEN_START + fieldName + TOKEN_END, fieldBean.getFieldValue());
                     break;
                 }
             }
@@ -152,10 +142,7 @@ public class SqlValidator implements FieldValidator {
 
     private void logErrorMessage(FieldBean field, String msg, String actual) {
         String errorMessage = ErrorMessage.sqlCheckError(field, msg, actual);
-        field.getErrors().add(buildError(field,
-                                         Severity.ERROR,
-                                         errorMessage,
-                                         ValidationType.SQL.toString()));
+        field.getErrors().add(buildError(field, ERROR, errorMessage, ValidationType.SQL.toString()));
     }
 
 }
