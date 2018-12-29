@@ -98,9 +98,11 @@ public final class ConsoleUtils {
     @SuppressWarnings("PMD.SystemPrintln")
     public static void error(String id, String msg, Throwable e) {
         error(id, msg);
-        e.printStackTrace(System.err);
-        System.err.print("\n\n");
-        logAs(ERROR, "[" + id + "] " + msg + e.getMessage());
+        if (e != null) {
+            e.printStackTrace(System.err);
+            System.err.print("\n\n");
+            logAs(ERROR, "[" + id + "] " + msg + e.getMessage());
+        }
     }
 
     @SuppressWarnings("PMD.SystemPrintln")

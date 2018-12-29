@@ -29,6 +29,7 @@ import org.apache.commons.collections4.MapUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.time.StopWatch;
 import org.nexial.commons.logging.LogbackUtils;
+import org.nexial.commons.utils.FileUtil;
 import org.nexial.core.aws.NexialS3Helper;
 import org.nexial.core.excel.Excel;
 import org.nexial.core.model.*;
@@ -39,6 +40,7 @@ import org.nexial.core.utils.ConsoleUtils;
 import org.nexial.core.utils.ExecutionLogger;
 
 import static org.nexial.core.NexialConst.Data.*;
+import static org.nexial.core.NexialConst.OPT_INPUT_EXCEL_FILE;
 import static org.nexial.core.NexialConst.OPT_LAST_OUTCOME;
 import static org.nexial.core.NexialConst.Project.appendLog;
 import static org.nexial.core.model.ExecutionEvent.*;
@@ -176,7 +178,7 @@ public final class ExecutionThread extends Thread {
 
                 onIterationComplete(context, iterSummary, currIteration);
                 if (shouldStopNow(context, allPass)) { break; }
-            } catch (Exception e) {
+            } catch (Throwable e) {
                 onIterationException(context, iterSummary, currIteration, e);
                 if (shouldStopNow(context, allPass)) { break; }
             } finally {
@@ -184,17 +186,33 @@ public final class ExecutionThread extends Thread {
                 context.setCurrentActivity(null);
 
                 File testScriptFile = null;
-                if (testScript != null) {
+                if (testScript == null) {
+                    // possibly the script prep/parsing routine failed (ie ExecutionInputPrep.prep()), but the output
+                    // file might already generated. If so then we should use the generated output file and generate
+                    // output (as much as possible).
+                    String scriptOutputFullPath = context.getStringData(OPT_INPUT_EXCEL_FILE);
+                    if (StringUtils.isNotBlank(scriptOutputFullPath)) {testScriptFile = new File(scriptOutputFullPath);}
+                } else {
                     testScriptFile = testScript.getFile();
-
                     // sync #data sheet with context
-                    ExecutionInputPrep.updateOutputDataSheet(testScript);
+                    ExecutionResultHelper.updateOutputDataSheet(context, testScript);
+                }
+
+                String testScriptFileName = "UNKNOWN TEST SCRIPT";
+
+                if (FileUtil.isFileReadable(testScriptFile)) {
+                    testScriptFileName = testScriptFile.getName();
 
                     // now the execution for this iteration is done. We'll add new execution summary page to its output.
                     iterSummary.setFailedFast(context.isFailFast());
                     iterSummary.setEndTime(System.currentTimeMillis());
                     iterSummary.aggregatedNestedExecutions(context);
-                    iterSummary.generateExcelReport(testScript);
+
+                    if (testScript != null) {
+                        iterSummary.generateExcelReport(testScript);
+                    } else {
+                        iterSummary.generateExcelReport(testScriptFile);
+                    }
 
                     EventTracker.INSTANCE.track(
                         new NexialIterationCompleteEvent(scriptLocation, currIteration, iterSummary));
@@ -236,8 +254,7 @@ public final class ExecutionThread extends Thread {
 
                 context.endIteration();
 
-                MemManager.recordMemoryChanges(
-                    (testScriptFile == null ? "UNKNOWN TEST SCRIPT" : testScriptFile.getName()) + " completed");
+                MemManager.recordMemoryChanges(testScriptFileName + " completed");
 
                 context.setData(ITERATION_ENDED, false);
             }
@@ -300,7 +317,7 @@ public final class ExecutionThread extends Thread {
     protected void onIterationException(ExecutionContext context,
                                         ExecutionSummary iterationSummary,
                                         int iteration,
-                                        Exception e) {
+                                        Throwable e) {
         if (context == null) { context = ExecutionThread.get(); }
 
         if (e != null) {
@@ -308,9 +325,17 @@ public final class ExecutionThread extends Thread {
             context.setFailImmediate(true);
         }
 
-        File testScript = null;
-        if (context != null && context.getTestScript() != null) { testScript = context.getTestScript().getFile(); }
-        String testScriptName = testScript == null ? execDef.getTestScript() + " (unparseable?)" : testScript.getName();
+        String testScript = null;
+        if (context != null) {
+            if (context.getTestScript() != null) {
+                testScript = context.getTestScript().getFile().getAbsolutePath();
+            } else {
+                String testScriptFullpath = context.getStringData(OPT_INPUT_EXCEL_FILE);
+                if (FileUtil.isFileReadable(testScriptFullpath)) { testScript = testScriptFullpath; }
+            }
+        }
+
+        if (StringUtils.isBlank(testScript)) { testScript = execDef.getTestScript() + " (unparseable?)"; }
 
         String runId;
         if (context == null) {
@@ -329,11 +354,11 @@ public final class ExecutionThread extends Thread {
         ConsoleUtils.error(runId,
                            "\n" +
                            "/-TEST FAILED!!-----------------------------------------------------------------\n" +
-                           "| Test Output:    " + testScriptName + "\n" +
+                           "| Test Output:    " + testScript + "\n" +
                            "| Iteration:      " + iteration + "\n" +
                            "\\-------------------------------------------------------------------------------\n" +
                            (e != null ? "» Error:          " + e.getMessage() : ""),
-                           e);
+                           (e instanceof AssertionError) ? null : e);
     }
 
     protected void onIterationComplete(ExecutionContext context, ExecutionSummary iterationSummary, int iteration) {

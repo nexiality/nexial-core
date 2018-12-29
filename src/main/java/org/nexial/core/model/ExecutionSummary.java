@@ -31,11 +31,7 @@ import org.apache.commons.lang3.exception.ExceptionUtils;
 import org.apache.commons.lang3.math.NumberUtils;
 import org.apache.poi.ss.util.CellRangeAddress;
 import org.apache.poi.xssf.usermodel.*;
-import org.nexial.commons.utils.CollectionUtil;
-import org.nexial.commons.utils.DateUtility;
-import org.nexial.commons.utils.EnvUtils;
-import org.nexial.commons.utils.FileUtil;
-import org.nexial.commons.utils.RegexUtils;
+import org.nexial.commons.utils.*;
 import org.nexial.core.aws.NexialS3Helper;
 import org.nexial.core.excel.Excel;
 import org.nexial.core.excel.Excel.Worksheet;
@@ -334,6 +330,16 @@ public class ExecutionSummary {
 
     public Map<TestStepManifest, List<NestedMessage>> getNestMessages() { return nestMessages; }
 
+    public void generateExcelReport(File testScript) {
+        if (FileUtil.isFileReadable(testScript, MIN_EXCEL_FILE_SIZE)) {
+            try {
+                generateExcelReport(new Excel(testScript, false, false));
+            } catch (IOException e) {
+                ConsoleUtils.error("Unable to generate execution output: " + e.getMessage());
+            }
+        }
+    }
+
     public void generateExcelReport(Excel testScript) {
         if (testScript == null || !FileUtil.isFileReadable(testScript.getFile(), MIN_EXCEL_FILE_SIZE)) {
             ConsoleUtils.error("Unable to generate Excel report because file " + testScript + " is not readable");
@@ -380,7 +386,6 @@ public class ExecutionSummary {
             for (int i = 0; i < COLUMN_WIDTHS.size(); i++) { summarySheet.setColumnWidth(i, COLUMN_WIDTHS.get(i)); }
 
             testScript.save();
-            // testScript = new Excel(testScript.getFile(), false, true);
         } catch (Throwable e) {
             ConsoleUtils.error("Unable to generate Excel report to " + testScript + ": " + e.getMessage());
         }
@@ -618,15 +623,16 @@ public class ExecutionSummary {
         createCell(sheet, "A" + rowNum, "Fatal Error", STYLE_EXEC_SUMM_DATA_HEADER, EXEC_SUMMARY_HEIGHT);
 
         String eol = lineSeparator();
+        StringBuilder error = new StringBuilder();
 
         String errorMessage = ExceptionUtils.getMessage(exception);
         String rootCauseMessage = ExceptionUtils.getRootCauseMessage(exception);
-        String[] stackTrace = ExceptionUtils.getStackFrames(exception);
-        StringBuilder error = new StringBuilder();
-        if (StringUtils.isNotBlank(errorMessage)) { error.append("ERROR: ").append(errorMessage).append(eol); }
-        if (StringUtils.isNotBlank(rootCauseMessage)) {
+        if (StringUtils.isNotBlank(errorMessage)) { error.append(errorMessage).append(eol); }
+        if (StringUtils.isNotBlank(rootCauseMessage) && !StringUtils.equals(errorMessage, rootCauseMessage)) {
             error.append("ROOT CAUSE: ").append(EnvUtils.platformSpecificEOL(rootCauseMessage)).append(eol);
         }
+
+        String[] stackTrace = ExceptionUtils.getStackFrames(exception);
         for (String errorDetail : stackTrace) {
             if (StringUtils.contains(errorDetail, "nexial")) {
                 error.append(errorDetail).append(eol);
@@ -635,7 +641,7 @@ public class ExecutionSummary {
             }
         }
 
-        errorMessage = StringUtils.trim(error.toString());
+        errorMessage = TextUtils.demarcate(StringUtils.trim(error.toString()), 120, eol);
 
         mergeCell(new ExcelArea(sheet, new ExcelAddress("B" + rowNum + ":J" + rowNum), false),
                   errorMessage,

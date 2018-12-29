@@ -593,7 +593,7 @@ public class BaseCommand implements NexialCommand {
         if (StringUtils.isNotBlank(maxWaitMs) && !StringUtils.equals(StringUtils.trim(maxWaitMs), "-1")) {
             requiresPositiveNumber(maxWaitMs, "maxWaitMs must be a positive number", maxWait);
             maxWait = NumberUtils.toLong(maxWaitMs);
-            requires(maxWait > 1000, "mininium maxWaitMs is 1 second", maxWaitMs);
+            requires(maxWait > 1000, "minimum maxWaitMs is 1 second", maxWaitMs);
         }
 
         TestStep currentTestStep = context.getCurrentTestStep();

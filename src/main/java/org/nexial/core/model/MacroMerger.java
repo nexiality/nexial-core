@@ -47,6 +47,7 @@ import static org.nexial.core.excel.ExcelConfig.*;
 
 public class MacroMerger {
     private static final String TEST_STEPS_PREFIX = FIRST_STEP_ROW + ":" + COL_REASON;
+    private static final String CONDITION_DISABLE = "SkipIf(true) ";
     // (2018/12/9,automike): remove to support dynamic macro changes during execution and interactive mode
     // private static final Map<String, List<List<String>>> MACRO_CACHE = new HashMap<>();
 
@@ -67,8 +68,17 @@ public class MacroMerger {
         excel.getWorkbook().setMissingCellPolicy(CREATE_NULL_AS_BLANK);
 
         // find all scenario sheets
+        List<String> expectedScenarios = new ArrayList<>(execDef.getScenarios());
+        assert CollectionUtils.isNotEmpty(expectedScenarios) : "No scenario specified for " + execDef.getTestScript();
+
         List<Worksheet> testSheets = InputFileUtils.retrieveValidTestScenarios(excel);
-        assert testSheets != null;
+        assert CollectionUtils.isNotEmpty(testSheets) :
+            "Specified scenario(s) of " + execDef.getTestScript() + "not found: " + expectedScenarios;
+
+        testSheets.forEach(worksheet -> expectedScenarios.remove(worksheet.getName()));
+        assert CollectionUtils.isEmpty(expectedScenarios) :
+            "Invalid scenario(s) found in " + execDef.getTestScript() + ": " + expectedScenarios;
+
         boolean fileModified = false;
 
         // scan all test steps
@@ -321,8 +331,12 @@ public class MacroMerger {
 
     private void addSkipFlowControl(List<XSSFCell> row) {
         XSSFCell cellFlowControls = row.get(COL_IDX_FLOW_CONTROLS);
-        String currentFlowControls = Excel.getCellValue(cellFlowControls);
-        currentFlowControls = StringUtils.prependIfMissing(currentFlowControls, "SkipIf(true) ");
-        cellFlowControls.setCellValue(currentFlowControls);
+        cellFlowControls.setCellValue(CONDITION_DISABLE);
+
+        // (2018/12/28,automike): we MUST NOT prepend or append since other flow control may supersede the flow
+        // control we are adding here to "disable" a command
+        // String currentFlowControls = Excel.getCellValue(cellFlowControls);
+        // currentFlowControls = StringUtils.prependIfMissing(currentFlowControls, CONDITION_DISABLE);
+        // cellFlowControls.setCellValue(currentFlowControls);
     }
 }

@@ -28,6 +28,7 @@ import javax.validation.constraints.NotNull;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang3.ArrayUtils;
+import org.apache.commons.lang3.ObjectUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.poi.xssf.usermodel.XSSFCell;
 import org.nexial.core.excel.Excel;
@@ -149,7 +150,8 @@ public final class InputFileUtils {
     public static boolean isValidDataSheet(Worksheet sheet) {
         if (sheet == null) { return false; }
 
-        String errPrefix = "File (" + sheet.getFile().getAbsolutePath() + ") sheet (" + sheet.getName() + ") ";
+        Excel excel = sheet.excel();
+        String errPrefix = deriveFileErrorPrefix(excel) + "sheet (" + sheet.getName() + ") ";
 
         // for every data sheet, at least 1 1x2 row
         ExcelAddress addrMinimumData = new ExcelAddress("A1:B1");
@@ -175,7 +177,7 @@ public final class InputFileUtils {
             }
         }
 
-        // find the end of the dta block
+        // find the end of the data block
         int lastRowIndex = sheet.findLastDataRow(new ExcelAddress("A1:A1"));
         ExcelAddress addrDataBlock = new ExcelAddress("A1:A" + lastRowIndex);
         List<List<XSSFCell>> rows = sheet.cells(addrDataBlock);
@@ -212,6 +214,7 @@ public final class InputFileUtils {
         Excel excel = null;
         try {
             excel = toExcel(file);
+            if (excel == null) { return null; }
             if (isValidScript(excel)) {
                 return excel;
             } else {
@@ -249,7 +252,7 @@ public final class InputFileUtils {
      * filter all the worksheets in {@code excel} that are considered as valid test script.
      */
     public static List<Worksheet> retrieveValidTestScenarios(Excel excel) {
-        String errPrefix = "File (" + excel.getFile() + ") ";
+        String errPrefix = deriveFileErrorPrefix(excel);
 
         // check for at least 1 test scenario
         List<Worksheet> allSheets = excel.getWorksheetsStartWith("");
@@ -335,7 +338,7 @@ public final class InputFileUtils {
      * filter all the worksheets in {@code excel} that are considered as valid Nexial test script.
      */
     public static List<Worksheet> retrieveValidMacros(Excel excel) {
-        String errPrefix = "File (" + excel.getFile() + ") ";
+        String errPrefix = deriveFileErrorPrefix(excel);
 
         // check for at least 1 test scenario
         List<Worksheet> allSheets = excel.getWorksheetsStartWith("");
@@ -366,8 +369,8 @@ public final class InputFileUtils {
             }
 
             // make sure that the first command row also specifies test case
-            XSSFCell cellMacroName = sheet.cell(new ExcelAddress("" + COL_TEST_CASE +
-                                                                 ADDR_MACRO_COMMAND_START.getRowStartIndex()));
+            XSSFCell cellMacroName =
+                sheet.cell(new ExcelAddress("" + COL_TEST_CASE + ADDR_MACRO_COMMAND_START.getRowStartIndex()));
             return StringUtils.isNotBlank(Excel.getCellValue(cellMacroName));
         }).collect(Collectors.toList());
 
@@ -395,13 +398,10 @@ public final class InputFileUtils {
 
     public static boolean hasValidSystemSheet(Excel excel) {
         // check for #system sheet
-        String errPrefix = "File (" + excel.getFile() + ") 'system' sheet ";
+        String errPrefix = deriveFileErrorPrefix(excel) + "'system' sheet ";
 
         Worksheet systemSheet = excel.worksheet(SHEET_SYSTEM);
-        if (systemSheet == null) {
-            // if (LOGGER.isInfoEnabled()) { LOGGER.info(errPrefix + "does not exist"); }
-            return false;
-        }
+        if (systemSheet == null) { return false; }
 
         // check that #system sheet has targets and commands
         int lastColumn = systemSheet.findLastDataColumn(new ExcelAddress("A1"));
@@ -438,7 +438,7 @@ public final class InputFileUtils {
             // check for at least 1 test scenario
             List<Worksheet> allSheets = excel.getWorksheetsStartWith("");
             if (CollectionUtils.isEmpty(allSheets)) {
-                if (LOGGER.isInfoEnabled()) { LOGGER.info("File (" + excel.getFile() + ") is missing test plans."); }
+                if (LOGGER.isInfoEnabled()) { LOGGER.info(deriveFileErrorPrefix(excel) + "is missing test plans."); }
                 return false;
             }
 
@@ -452,7 +452,7 @@ public final class InputFileUtils {
         // check for at least 1 test scenario
         List<Worksheet> allSheets = excel.getWorksheetsStartWith("");
         if (CollectionUtils.isEmpty(allSheets)) {
-            if (LOGGER.isInfoEnabled()) { LOGGER.info("File (" + excel.getFile() + ") is missing test plans."); }
+            if (LOGGER.isInfoEnabled()) { LOGGER.info(deriveFileErrorPrefix(excel) + "is missing test plans."); }
             return null;
         }
 
@@ -474,7 +474,7 @@ public final class InputFileUtils {
     }
 
     public static List<Worksheet> retrieveV2Plan(Excel excel) {
-        String errPrefix = "File (" + excel.getFile() + ") ";
+        String errPrefix = deriveFileErrorPrefix(excel);
 
         // check for at least 1 test scenario
         List<Worksheet> allSheets = excel.getWorksheetsStartWith("");
@@ -506,18 +506,23 @@ public final class InputFileUtils {
     }
 
     protected static boolean isValidPlan(Worksheet sheet) {
-        String sheetName = sheet.getName();
+        if (sheet == null) { return false; }
 
-        String errPrefix1 = "File (" + sheet.getFile() + ") worksheet (" + sheetName + ") ";
+        String sheetName = sheet.getName();
+        Excel excel = sheet.excel();
+        String errPrefix = deriveFileErrorPrefix(excel);
+        String errPrefix1 = errPrefix + "worksheet (" + sheetName + ") ";
 
         // check summary header
         if (!Excel.isRowTextFound(sheet,
                                   PLAN_HEADER_SEQUENCE,
                                   ADDR_PLAN_HEADER_SEQUENCE1,
                                   ADDR_PLAN_HEADER_SEQUENCE2)) {
-            LOGGER.info(errPrefix1 + "required plan header not found at " +
-                        ArrayUtils.toString(ADDR_PLAN_HEADER_SEQUENCE1) + "," +
-                        ArrayUtils.toString(ADDR_PLAN_HEADER_SEQUENCE2) + "; ignoring this worksheet...");
+            if (LOGGER.isInfoEnabled()) {
+                LOGGER.info(errPrefix1 + "required plan header not found at " +
+                            ArrayUtils.toString(ADDR_PLAN_HEADER_SEQUENCE1) + "," +
+                            ArrayUtils.toString(ADDR_PLAN_HEADER_SEQUENCE2) + "; ignoring this worksheet...");
+            }
             return false;
         }
 
@@ -525,16 +530,20 @@ public final class InputFileUtils {
         if (!Excel.isRowTextFound(sheet,
                                   Collections.singletonList(HEADER_EXEC_SUMMARY),
                                   ADDR_PLAN_HEADER_EXEC_SUMMARY_HEADER)) {
-            LOGGER.info(errPrefix1 + "required plan header not found at " +
-                        ArrayUtils.toString(ADDR_PLAN_HEADER_SEQUENCE1) + "," +
-                        ArrayUtils.toString(ADDR_PLAN_HEADER_SEQUENCE2) + "; ignoring this worksheet...");
+            if (LOGGER.isInfoEnabled()) {
+                LOGGER.info(errPrefix1 + "required plan header not found at " +
+                            ArrayUtils.toString(ADDR_PLAN_HEADER_SEQUENCE1) + "," +
+                            ArrayUtils.toString(ADDR_PLAN_HEADER_SEQUENCE2) + "; ignoring this worksheet...");
+            }
             return false;
         }
 
         // check execution header
         if (!Excel.isRowTextFound(sheet, PLAN_HEADER_EXECUTION, ADDR_PLAN_HEADER_EXECUTION)) {
-            LOGGER.info(errPrefix1 + "required plan header not found at " +
-                        ArrayUtils.toString(ADDR_PLAN_HEADER_EXECUTION) + "; ignoring this worksheet...");
+            if (LOGGER.isInfoEnabled()) {
+                LOGGER.info(errPrefix1 + "required plan header not found at " +
+                            ArrayUtils.toString(ADDR_PLAN_HEADER_EXECUTION) + "; ignoring this worksheet...");
+            }
             return false;
         }
 
@@ -546,5 +555,10 @@ public final class InputFileUtils {
         }
 
         return true;
+    }
+
+    @NotNull
+    private static String deriveFileErrorPrefix(Excel excel) {
+        return "File (" + ObjectUtils.defaultIfNull(excel.getOriginalFile(), excel.getFile()) + ") ";
     }
 }

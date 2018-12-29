@@ -1030,6 +1030,22 @@ public final class TextUtils {
         return StringUtils.isEmpty(encoded) ? encoded : new String(Base64.getDecoder().decode(encoded.getBytes()));
     }
 
+    public static String demarcate(String text, int markPosition, String delim) {
+        if (StringUtils.isEmpty(text)) { return text; }
+        if (StringUtils.isEmpty(delim)) { return text; }
+        if (markPosition < 1 || markPosition > text.length()) { return text; }
+
+        int delimLength = delim.length();
+        int seekPos = markPosition;
+
+        while (seekPos < text.length()) {
+            text = text.substring(0, seekPos) + delim + text.substring(seekPos);
+            seekPos += markPosition + delimLength;
+        }
+
+        return text;
+    }
+
     private static Map<String, String> initDefaultEscapeHtmlMapping() {
         Map<String, String> searchReplace = new HashMap<>();
         searchReplace.put("<", "&lt;");

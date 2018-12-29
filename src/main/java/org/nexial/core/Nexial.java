@@ -762,7 +762,7 @@ public class Nexial {
 
             ConsoleUtils.log(runId, "all execution thread(s) have terminated");
         } catch (Throwable e) {
-            ConsoleUtils.error(e.toString());
+            ConsoleUtils.error(e.getMessage());
             e.printStackTrace();
             summary.setError(e);
         } finally {

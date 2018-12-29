@@ -298,6 +298,8 @@ public class ExecutionContext {
             springContext.getBean("webdriverHelperConfig", new HashMap<BrowserType, String>().getClass());
 
         setData(ITERATION_ENDED, false);
+
+        executionLogger = new ExecutionLogger(this);
     }
 
     public void useTestScript(Excel testScript) throws IOException {
@@ -307,8 +309,6 @@ public class ExecutionContext {
         MDC.put(TEST_SUITE_NAME, getRunId());
         MDC.put(TEST_NAME, getId());
         if (logger.isInfoEnabled()) { logger.info("STARTS"); }
-
-        executionLogger = new ExecutionLogger(this);
 
         // parse merged test script
         parse();
@@ -1005,14 +1005,16 @@ public class ExecutionContext {
         getExecutionEventListener().onIterationComplete();
         removeTrackTimeLogs();
 
-        try {
-            // (2018/12/16,automike): memory consumption precaution
-            testScript.close();
-        } catch (IOException e) {
-            ConsoleUtils.error("Unable to close Excel file (" + testScript + "): " + e.getMessage());
-        }
+        if (testScript != null) {
+            try {
+                // (2018/12/16,automike): memory consumption precaution
+                testScript.close();
+            } catch (IOException e) {
+                ConsoleUtils.error("Unable to close Excel file (" + testScript + "): " + e.getMessage());
+            }
 
-        testScript = null;
+            testScript = null;
+        }
     }
 
     public void endScript() {

@@ -32,18 +32,51 @@ import org.apache.poi.xssf.usermodel.XSSFSheet;
 import org.nexial.core.ExecutionThread;
 import org.nexial.core.excel.Excel;
 import org.nexial.core.excel.Excel.Worksheet;
+import org.nexial.core.excel.ext.CellTextReader;
 import org.nexial.core.utils.ConsoleUtils;
 import org.nexial.core.utils.ExecutionLogger;
 
 import static org.apache.poi.ss.usermodel.CellType.STRING;
 import static org.apache.poi.ss.usermodel.Row.MissingCellPolicy.CREATE_NULL_AS_BLANK;
 import static org.nexial.core.NexialConst.Data.CMD_VERBOSE;
+import static org.nexial.core.NexialConst.Data.SHEET_MERGED_DATA;
 import static org.nexial.core.NexialConst.MERGE_OUTPUTS;
 import static org.nexial.core.excel.ExcelConfig.*;
 import static org.nexial.core.excel.ExcelConfig.StyleConfig.*;
 
 public final class ExecutionResultHelper {
     private ExecutionResultHelper() { }
+
+    public static Excel updateOutputDataSheet(ExecutionContext context, Excel outputFile) {
+        if (context == null) { return null; }
+
+        XSSFSheet dataSheet = outputFile.getWorkbook().getSheet(SHEET_MERGED_DATA);
+
+        // XSSFWorkbook workbook = dataSheet.getWorkbook();
+        // XSSFCellStyle styleTestDataValue = StyleDecorator.generate(workbook, TEST_DATA_VALUE);
+
+        final int[] currentRowIndex = {0};
+
+        dataSheet.forEach(datarow -> {
+            XSSFRow row = dataSheet.getRow(currentRowIndex[0]++);
+            if (row == null) { return; }
+
+            XSSFCell cellName = row.getCell(0, CREATE_NULL_AS_BLANK);
+            String name = Excel.getCellValue(cellName);
+
+            XSSFCell cellValue = row.getCell(1, CREATE_NULL_AS_BLANK);
+            if (context.hasData(name)) {
+                cellValue.setCellValue(CellTextReader.readValue(context.getStringData(name)));
+                // cellValue.setCellStyle(styleTestDataValue);
+            }
+        });
+
+        // save output file with updated data
+        // (2018/10/18,automike): omit saving here because this file will be saved later anyways
+        // outputFile.save();
+
+        return outputFile;
+    }
 
     protected static void writeTestScenarioResult(Worksheet worksheet, ExecutionSummary executionSummary)
         throws IOException {

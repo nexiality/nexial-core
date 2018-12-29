@@ -44,7 +44,7 @@ public class TextUtilsTest {
         Assert.assertEquals("bracket", TextUtils.substringBetweenFirstPair("[bracket]]]", "[", "]"));
         Assert.assertEquals("bracket", TextUtils.substringBetweenFirstPair("[[[[bracket]]", "[", "]"));
         Assert.assertEquals("", TextUtils.substringBetweenFirstPair("[][[[bracket]]", "[", "]"));
-        Assert.assertEquals(null, TextUtils.substringBetweenFirstPair("bracket]bracket[[[bracket]]", "[", "]"));
+        Assert.assertNull(TextUtils.substringBetweenFirstPair("bracket]bracket[[[bracket]]", "[", "]"));
     }
 
     @Test
@@ -72,8 +72,8 @@ public class TextUtilsTest {
         Assert.assertEquals("   ", TextUtils.toOneLine(" \n ", false));
         Assert.assertEquals("That's enough already Jimmy",
                             TextUtils.toOneLine("That's \nenough\r already\n\rJimmy", true));
-        Assert.assertEquals("Check out my really awsome hover text. I can include HTML tags and everything!!!",
-                            TextUtils.toOneLine("Check out my really awsome\n" +
+        Assert.assertEquals("Check out my really awesome hover text. I can include HTML tags and everything!!!",
+                            TextUtils.toOneLine("Check out my really awesome\n" +
                                                 " hover text. \n" +
                                                 " I can include HTML tags and everything!!!", true));
     }
@@ -543,5 +543,25 @@ public class TextUtilsTest {
                             TextUtils.base64decoding("WVBxVFd6ejlWbkZidGNsNE1hYmpOaDZRRW5nak5OQUg6UlNkRnRSYWdBZmtIZnNPbw=="));
         Assert.assertEquals("QRGgkBD3YHzvHgA0eaIh2XGxGeA3AGoY:UUuAHNcLeoM2e0Vf",
                             TextUtils.base64decoding("UVJHZ2tCRDNZSHp2SGdBMGVhSWgyWEd4R2VBM0FHb1k6VVV1QUhOY0xlb00yZTBWZg=="));
+    }
+
+    @Test
+    public void breakLines() {
+        // sanity checks
+        Assert.assertEquals("This is a test. Do not be alarmed.",
+                            TextUtils.demarcate("This is a test. Do not be alarmed.", 5, ""));
+        Assert.assertEquals("This is a test. Do not be alarmed.",
+                            TextUtils.demarcate("This is a test. Do not be alarmed.", 0, ","));
+        Assert.assertEquals("This is a test. Do not be alarmed.",
+                            TextUtils.demarcate("This is a test. Do not be alarmed.", 35, ","));
+
+        Assert.assertEquals("This |is a |test.| Do n|ot be| alar|med.",
+                            TextUtils.demarcate("This is a test. Do not be alarmed.", 5, "|"));
+        Assert.assertEquals("This > <is a > <test.> < Do n> <ot be> < alar> <med.",
+                            TextUtils.demarcate("This is a test. Do not be alarmed.", 5, "> <"));
+        Assert.assertEquals("This <**>is a <**>test.<**> Do n<**>ot be<**> alar<**>med!!",
+                            TextUtils.demarcate("This is a test. Do not be alarmed!!", 5, "<**>"));
+        Assert.assertEquals("This is a test.... Do not be alar...med!!",
+                            TextUtils.demarcate("This is a test. Do not be alarmed!!", 15, "..."));
     }
 }

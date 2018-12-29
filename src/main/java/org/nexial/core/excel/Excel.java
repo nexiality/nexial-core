@@ -943,6 +943,7 @@ public class Excel {
     }
 
     public void initResultCommonStyles() {
+        if (commonStyles == null) { commonStyles = new HashMap<>(); }
         commonStyles.put(STYLE_EXEC_SUMM_TITLE, StyleDecorator.generate(workbook, EXEC_SUMM_TITLE));
         commonStyles.put(STYLE_EXEC_SUMM_DATA_HEADER, StyleDecorator.generate(workbook, EXEC_SUMM_DATA_HEADER));
         commonStyles.put(STYLE_EXEC_SUMM_DATA_NAME, StyleDecorator.generate(workbook, EXEC_SUMM_DATA_NAME));

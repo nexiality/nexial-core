@@ -31,7 +31,6 @@ import org.nexial.core.excel.Excel;
 import org.nexial.core.excel.Excel.Worksheet;
 import org.nexial.core.excel.ExcelConfig.StyleDecorator;
 import org.nexial.core.excel.ext.CellTextReader;
-import org.nexial.core.model.ExecutionContext;
 import org.nexial.core.model.ExecutionDefinition;
 import org.nexial.core.model.MacroMerger;
 import org.nexial.core.model.TestData;
@@ -43,6 +42,7 @@ import static java.io.File.separator;
 import static org.apache.poi.ss.usermodel.Row.MissingCellPolicy.CREATE_NULL_AS_BLANK;
 import static org.nexial.core.NexialConst.Data.*;
 import static org.nexial.core.NexialConst.NAMESPACE;
+import static org.nexial.core.NexialConst.OPT_INPUT_EXCEL_FILE;
 import static org.nexial.core.NexialConst.Project.appendCapture;
 import static org.nexial.core.NexialConst.Project.appendLog;
 import static org.nexial.core.excel.ExcelConfig.COL_IDX_COMMAND;
@@ -60,38 +60,6 @@ import static org.nexial.core.utils.ExecUtils.IGNORED_CLI_OPT;
  * </ol>
  */
 public class ExecutionInputPrep {
-
-    public static Excel updateOutputDataSheet(Excel outputFile) {
-        ExecutionContext context = ExecutionThread.get();
-        if (context == null) { return null; }
-
-        XSSFSheet dataSheet = outputFile.getWorkbook().getSheet(SHEET_MERGED_DATA);
-
-        // XSSFWorkbook workbook = dataSheet.getWorkbook();
-        // XSSFCellStyle styleTestDataValue = StyleDecorator.generate(workbook, TEST_DATA_VALUE);
-
-        final int[] currentRowIndex = {0};
-
-        dataSheet.forEach(datarow -> {
-            XSSFRow row = dataSheet.getRow(currentRowIndex[0]++);
-            if (row == null) { return; }
-
-            XSSFCell cellName = row.getCell(0, CREATE_NULL_AS_BLANK);
-            String name = Excel.getCellValue(cellName);
-
-            XSSFCell cellValue = row.getCell(1, CREATE_NULL_AS_BLANK);
-            if (context.hasData(name)) {
-                cellValue.setCellValue(CellTextReader.readValue(context.getStringData(name)));
-                // cellValue.setCellStyle(styleTestDataValue);
-            }
-        });
-
-        // save output file with updated data
-        // (2018/10/18,automike): omit saving here because this file will be saved later anyways
-        // outputFile.save();
-
-        return outputFile;
-    }
 
     /** called from {@link ExecutionThread} for each iteration. */
     public static Excel prep(String runId, ExecutionDefinition execDef, int iteration, int counter) throws IOException {
@@ -126,17 +94,20 @@ public class ExecutionInputPrep {
         File outputFile = new File(outputFileName);
 
         FileUtils.copyFile(testScript, outputFile);
+        System.setProperty(OPT_INPUT_EXCEL_FILE, outputFileName);
 
         // 3. remove unused sheets
         List<String> scenarios = execDef.getScenarios();
         List<Integer> unusedWorksheetIndices = new ArrayList<>();
         Excel outputExcel = new Excel(outputFile, false, true);
+
         // collect the index of all unused worksheets
         for (Worksheet worksheet : outputExcel.getWorksheetsStartWith("")) {
             if (!StringUtils.equals(worksheet.getName(), SHEET_SYSTEM) && !scenarios.contains(worksheet.getName())) {
                 unusedWorksheetIndices.add(outputExcel.getWorkbook().getSheetIndex(worksheet.getSheet()));
             }
         }
+
         // remove the latter ones first so that we don't need to deal with shift in positions
         if (CollectionUtils.isNotEmpty(unusedWorksheetIndices)) {
             Collections.reverse(unusedWorksheetIndices);
@@ -187,6 +158,7 @@ public class ExecutionInputPrep {
         outputExcel.save();
         // (2018/12/16,automike): memory consumption precaution
         outputExcel.close();
+
         return new Excel(outputFile, false, true);
     }
 
@@ -232,7 +204,14 @@ public class ExecutionInputPrep {
         XSSFCellStyle styleTestDataName = StyleDecorator.generate(workbook, TEST_DATA_NAME);
         XSSFCellStyle styleTestDataValue = StyleDecorator.generate(workbook, TEST_DATA_VALUE);
 
-        SortedMap<String, String> data = new TreeMap<>(testData.getAllValue(iteration));
+        SortedMap<String, String> data = new TreeMap<>((key1, key2) -> {
+            if (StringUtils.startsWith(key1, NAMESPACE)) {
+                return StringUtils.startsWith(key2, NAMESPACE) ? key1.compareTo(key2) : -1;
+            } else {
+                return StringUtils.startsWith(key2, NAMESPACE) ? 1 : key1.compareTo(key2);
+            }
+        });
+        data.putAll(testData.getAllValue(iteration));
         testData.getAllSettings().forEach(data::put);
         data.putAll(ExecUtils.deriveJavaOpts());
         data.put(CURR_ITERATION, iteration + "");

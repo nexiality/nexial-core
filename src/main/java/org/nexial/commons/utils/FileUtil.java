@@ -270,6 +270,8 @@ public final class FileUtil {
                (minFileSize < 0 || file.length() >= minFileSize);
     }
 
+    public static boolean isFileReadable(File file) { return isFileReadable(file, -1); }
+
     /**
      * return true if {@code file} is readable and larger than {@code minFileSize} bytes.  If {@code minFileSize}
      * is -1, then it's ignored.
