@@ -1,0 +1,319 @@
+/*
+ * Copyright 2012-2018 the original author or authors.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *       http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+body {
+    font-family:      Tahoma, serif;
+    font-size:        11pt;
+    margin:           0;
+    background-color: transparent;
+    padding:          25px;
+}
+
+.title {
+    font-size:        14pt;
+    font-family:      Tahoma, serif;
+    font-weight:      bold;
+    background-color: rgba(228, 227, 201, 1);
+    color:            rgba(64, 62, 13, 1);
+    box-shadow:       0 0 25px rgba(88, 77, 61, 0.75);
+    border:           2px solid rgba(37, 114, 71, 1);
+    vertical-align:   middle;
+    padding:          15px;
+}
+
+.title span {
+    text-shadow: 2px 2px 5px rgba(0, 0, 0, 0.25);
+}
+
+.showhide-all {
+    position:  relative;
+    font-size: 25px;
+    float:     right;
+    top:       -5px;
+    right:     -5px;
+    padding:   2px 6px;
+    color:     rgba(124, 122, 73, 1);
+}
+
+.showhide-all i {
+    cursor: pointer;
+}
+
+.showhide-all i:hover { text-shadow: 1px 1px 5px rgba(255, 255, 255, 1); }
+
+.showhide {
+    position:                   relative;
+    font-size:                  18px;
+    float:                      right;
+    top:                        -10px;
+    right:                      -10px;
+    padding:                    2px 6px;
+    border-top-right-radius:    10px;
+    border-bottom-right-radius: 10px;
+    background-color:           rgba(150, 160, 171, 0.75);
+    box-shadow:                 0 0 1px #333;
+}
+
+.showhide i {
+    padding: 3px;
+    cursor:  pointer;
+}
+
+.showhide i:hover { text-shadow: 0 0 15px rgba(255, 255, 255, 1); }
+
+.canHide {
+    padding:       10px;
+    margin:        25px 0 15px 0;
+    min-height:    8px;
+    border:        1px solid rgba(50, 50, 50, 0.35);
+    border-radius: 10px;
+}
+
+div.execMeta {
+    font-size: 10pt;
+}
+
+table.execMeta { font-size: 10pt; font-family: Consolas, monospace;}
+
+.execLabel { width: 145px;color: #555;background-color: rgba(239, 239, 239, 0.75); padding: 5px 3px; }
+
+.execValue { text-align: left; font-weight: bold; background-color: rgba(255, 255, 255, 0.75); color: #333; }
+
+.execNum {
+    text-align:  right;
+    font-weight: bold;
+    white-space: nowrap;
+    max-width:   10px !important;
+    border:      1px solid rgba(200, 200, 200, 0.75);
+}
+
+.result { font-family: Tahoma, serif; font-size: 10pt; border: none; background: #fff; }
+
+.result td, .result th { border-bottom: 1px solid #ddd; }
+
+.footer {
+    font-size:        8pt; color: #555;
+    font-family:      Consolas, monospace;
+    background-color: #d0e0e0;
+    padding:          5px;
+    text-align:       right;
+    border-top:       2px solid #c0c0c0;
+    border-bottom:    2px solid #c0c0c0;
+    letter-spacing:   0.125em;
+}
+
+.errorSection {
+    font-size:        12pt;
+    font-family:      Tahoma, serif;
+    color:            #faa;
+    background-color: #800;
+    padding:          5px;
+    border-top:       2px solid #f00;
+    border-bottom:    2px solid #f00;
+    margin:           4px 0;
+}
+
+.errorPrompt { color: #ccc; font-size: 10pt; }
+
+.errorStackTrace {
+    background:  #fdd;
+    padding:     5px;
+    margin:      8px;
+    line-height: 12pt;
+    font-family: Consolas, monospace;
+    font-size:   9pt;
+    color:       #800;
+}
+
+.reportFooter { background: #ddd }
+
+.exec-summary-header {
+    clear:                      both;
+    margin-right:               5px;
+    background-color:           rgba(150, 160, 171, 0.75);
+    border-top-left-radius:     10px;
+    border-top-right-radius:    10px;
+    border-bottom-right-radius: 10px;
+}
+
+.exec-summary-header .label {
+    font-weight:    normal;
+    font-size:      9pt;
+    text-transform: uppercase;
+
+    padding:        10px 5px 0 5px;
+
+    float:          left;
+    text-align:     left;
+    vertical-align: middle;
+
+    height:         23px;
+}
+
+.exec-summary-header .label-small { width: auto; }
+
+.exec-summary { clear: both; }
+
+.exec-summary .planStep {
+    padding:                   0 !important;
+    margin:                    0 5px 0 0;
+    border-top-left-radius:    0;
+    border-bottom-left-radius: 0;
+}
+
+.planStep .showhide {
+    top:     0;
+    right:   0;
+    z-index: 99;
+}
+
+.label-datetime, .value-datetime { min-width: 175px; width: 175px; }
+
+.label-time, .value-time { min-width: 80px; width: 80px; }
+
+.plan-step-summary .value {
+    font-weight:      bold;
+    font-size:        11pt;
+    text-overflow:    ellipsis;
+    overflow:         hidden;
+
+    background-color: rgba(255, 255, 255, 0.25);
+    padding:          3px 5px 1px 5px;
+    border-bottom:    1px solid rgba(100, 100, 100, 0.15);
+
+    float:            left;
+    text-align:       left;
+    vertical-align:   middle;
+
+    height:           23px;
+}
+
+.plan-step-summary .value-small {
+    width:   auto;
+    padding: 8px 15px 2px 5px !important;
+}
+
+.label-script, .value-script { width: 250px; }
+
+.label-data, .value-data { width: 280px; }
+
+.iteration {
+    padding:       0 !important;
+    clear:         both;
+    margin:        5px 0 30px 20px;
+    border-radius: 0;
+    border:        none;
+}
+
+.iteration table th:last-child { padding-right: 10px; }
+
+.iteration .label {
+    font-weight:      normal;
+    font-size:        9pt;
+    text-transform:   uppercase;
+    white-space:      nowrap;
+    text-wrap:        none;
+
+    background-color: rgba(220, 220, 220, 0.5);
+    border-bottom:    1px solid rgba(100, 100, 100, 0.5);
+    padding:          5px;
+
+    text-align:       left;
+    vertical-align:   middle;
+
+    height:           25px;
+}
+
+.exec-summary .planStep .iteration .value {
+    font-weight:      normal;
+    font-size:        11pt;
+    background-color: rgba(255, 255, 255, 0.25);
+    border-bottom:    1px solid rgba(100, 100, 100, 0.25);
+    height:           auto;
+    text-align:       left;
+    vertical-align:   text-top;
+    text-overflow:    ellipsis;
+    overflow:         hidden;
+}
+
+.label-num, .value-num { min-width: 60px; width: 60px; max-width: 60px; white-space: nowrap; }
+
+.label-num { text-align: center !important; }
+
+.value-num { text-align: right !important; }
+
+.label-title, .value-title { text-wrap: none; min-width: 300px; width: 300px; }
+
+.value-title { font-weight: bold; }
+
+.plan-step-summary .value-title, .exec-summary-header .label-title { min-width: 385px; width: 385px; }
+
+.plan-step-summary .value-iteration, .exec-summary-header .label-iteration { min-width: 150px; width: 150px; }
+
+.value-time { min-width: 70px !important; }
+
+.value-scriptRef, .value-scenarioRef {
+    font-weight:      normal;
+    vertical-align:   text-top;
+    height:           content-box;
+    color:            rgba(64, 62, 13, 1);
+    background-color: rgba(228, 227, 201, 0.5);
+    padding:          5px;
+    margin:           5px 0 0 0;
+}
+
+.label-ref {
+    float:         left;
+    clear:         both;
+    font-family:   monospace;
+    color:         rgba(64, 62, 13, 0.5);
+    width:         50%;
+    text-overflow: ellipsis;
+    overflow:      hidden;
+}
+
+.value-ref {
+    font-family:   monospace;
+    width:         50%;
+    text-overflow: ellipsis;
+    overflow:      hidden;
+}
+
+.info {
+    float:    right;
+    position: sticky;
+    right:    -2px;
+    top:      21px;
+    color:    rgba(64, 62, 53, 0.75);
+}
+
+.value-tally {
+    text-decoration-line:  underline;
+    text-decoration-color: rgba(80, 80, 80, 0.75);
+    text-decoration-style: double;
+}
+
+.spacer, .spacer2 { flex-grow: 100; }
+
+.spacer2 { border: none !important; }
+
+tr:hover {
+    background-color: rgba(210, 210, 210, 0.15);
+}
+
+.hasFailure { background: #fdd; font-weight: bold; color: #800; }
+
+.allPass { background: #dfd; color: #080; }
