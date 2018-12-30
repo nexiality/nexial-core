@@ -65,4 +65,18 @@ public class FileUtilTest {
         FileUtil.unzip(zipFile, targetLoc, Collections.singletonList(expectedFile));
         Assert.assertTrue(FileUtil.isFileReadable(expectedFile.getAbsolutePath()));
     }
+
+    @Test
+    public void extractFilename()throws Exception {
+        Assert.assertEquals("", FileUtil.extractFilename(null));
+        Assert.assertEquals("", FileUtil.extractFilename(""));
+        Assert.assertEquals("a.txt", FileUtil.extractFilename("a.txt"));
+        Assert.assertEquals("a.txt", FileUtil.extractFilename("/a.txt"));
+        Assert.assertEquals("a.txt", FileUtil.extractFilename("/b/c/a.txt"));
+        Assert.assertEquals("a.txt", FileUtil.extractFilename("x/c/a.txt"));
+        Assert.assertEquals("a.txt", FileUtil.extractFilename("x\\c\\a.txt"));
+        Assert.assertEquals("a.txt", FileUtil.extractFilename("x\\c//a.txt"));
+        Assert.assertEquals("a.txt", FileUtil.extractFilename("C:\\x\\c//a.txt"));
+        Assert.assertEquals("", FileUtil.extractFilename("a.txt/"));
+    }
 }

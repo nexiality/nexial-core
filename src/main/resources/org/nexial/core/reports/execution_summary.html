@@ -1,19 +1,3 @@
-<!--
-  ~ Copyright 2012-2018 the original author or authors.
-  ~
-  ~ Licensed under the Apache License, Version 2.0 (the "License");
-  ~ you may not use this file except in compliance with the License.
-  ~ You may obtain a copy of the License at
-  ~
-  ~       http://www.apache.org/licenses/LICENSE-2.0
-  ~
-  ~ Unless required by applicable law or agreed to in writing, software
-  ~ distributed under the License is distributed on an "AS IS" BASIS,
-  ~ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-  ~ See the License for the specific language governing permissions and
-  ~ limitations under the License.
-  -->
-
 <html xmlns="http://www.w3.org/1999/html" xmlns:th="http://www.thymeleaf.org">
 <head>
     <link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.6.1/css/all.css"/>
@@ -141,12 +125,7 @@
             <table cellspacing="0" cellpadding="5" border="0">
                 <tr data-th-class="${script.failCount > 0 ? 'hasFailure' : 'noFailure'}">
                     <td class="value value-title" data-th-text="${@org.nexial.commons.utils.FileUtil@extractFilename(script.scriptFile)}" title="${@org.nexial.commons.utils.FileUtil@extractFilename(script.scriptFile)}">Payroll_Processing_Summer_Special.xlsx</td>
-                    <th:block data-th-if="${script.dataFile}">
-                        <td class="value value-title" data-th-utext="${@org.nexial.commons.utils.FileUtil@extractFilename(script.dataFile)}" title="${script.dataFile}">Payroll_Processing_Summer_Special.data.xlsx</td>
-                    </th:block>
-                    <th:block data-th-if="${script.dataFile == null and script.nestedExecutions and script.nestedExecutions.get(0).referenceData.containsKey('Data File')}">
-                        <td class="value value-title" data-th-utext="${script.nestedExecutions.get(0).referenceData.get('Data File')}" title="${script.nestedExecutions.get(0).referenceData.get('Data File')}">Payroll_Processing_Summer_Special.data.xlsx</td>
-                    </th:block>
+                    <td class="value value-title" data-th-utext="${@org.nexial.commons.utils.FileUtil@extractFilename(script.resolveDataFile())}" title="${script.resolveDataFile()}">Payroll_Processing_Summer_Special.data.xlsx</td>
                     <td class="value value-iteration" data-th-utext="${script.nestedExecutions.size()}">1234</td>
                     <td class="value value-datetime" data-th-utext="${#dates.format(new java.util.Date(script.startTime), 'yyyy/MM/dd HH:mm:ss')}">2018/12/16 12:53:21</td>
                     <td class="value value-time value-tally" data-th-utext="${#dates.format(#dates.create(0,0,0,0,0,0, (script.endTime - script.startTime)), 'HH:mm:ss')}">00:42:11</td>

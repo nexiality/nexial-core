@@ -96,7 +96,7 @@ public class TestData {
         List<Worksheet> validDataSheets = InputFileUtils.filterValidDataSheets(excel);
         if (CollectionUtils.isEmpty(validDataSheets)) { return; }
 
-        // #default is always the first one; default datasheet IS ALWAYS overridden by other datasheets
+        // #default is always the first one; default data sheet IS ALWAYS overridden by other data sheets
         validDataSheets.forEach(validDataSheet -> {
             if (StringUtils.equals(validDataSheet.getName(), SHEET_DEFAULT_DATA)) { collectData(validDataSheet); }
         });
@@ -109,14 +109,14 @@ public class TestData {
         }));
 
         // to be added/displayed in execution output #summary
-        System.setProperty(SCRIPT_REF_PREFIX + "DataSheet(s)",
+        System.setProperty(SCRIPT_REF_PREFIX + DATA_SHEETS,
                            validDataSheets.stream()
                                           .filter(validSheet -> validSheet.getName().equals(SHEET_DEFAULT_DATA) ||
                                                                 dataSheetNames.contains(validSheet.getName()))
                                           .map(Worksheet::getName)
                                           .distinct()
                                           .collect(Collectors.joining(", ")));
-        System.setProperty(SCRIPT_REF_PREFIX + "Data File", dataFile.getName());
+        System.setProperty(SCRIPT_REF_PREFIX + DATA_FILE, dataFile.getName());
     }
 
     public String getMailTo() { return getSetting(MAIL_TO); }

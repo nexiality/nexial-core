@@ -17,7 +17,7 @@
 package org.nexial.core.reports;
 
 import java.io.File;
-import java.util.Arrays;
+import java.util.Collections;
 
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang3.StringUtils;
@@ -35,8 +35,7 @@ import static org.nexial.core.NexialConst.GSON;
 
 public class ExecutionHtmlManualTest {
     private String resourcePath = "/" + StringUtils.replace(this.getClass().getPackage().getName(), ".", "/") + "/";
-    // private String template = ResourceUtils.getResourceFilePath(resourcePath + "execution_summary.html");
-    private String json = ResourceUtils.getResourceFilePath(resourcePath + "execution-detail.json");
+    private String json = ResourceUtils.getResourceFilePath(resourcePath + "execution-detail2.json");
     private File outputFile = new File(JAVA_IO_TMPDIR + separator + "test-execution.html");
 
     public static void main(String[] args) throws Throwable {
@@ -62,6 +61,6 @@ public class ExecutionHtmlManualTest {
 
         String content = templateEngine.process("execution_summary", engineContext);
         FileUtils.writeStringToFile(outputFile, content, DEF_FILE_ENCODING);
-        ProcessInvoker.invokeNoWait("open", Arrays.asList(outputFile.getAbsolutePath()), null);
+        ProcessInvoker.invokeNoWait("open", Collections.singletonList(outputFile.getAbsolutePath()), null);
     }
 }

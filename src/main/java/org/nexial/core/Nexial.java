@@ -832,6 +832,7 @@ public class Nexial {
                 // upload HTML report to cloud
                 if (FileUtil.isFileReadable(htmlReport, 16 * 1024)) {
                     String url = otc.importToS3(htmlReport, outputDir, true);
+                    ConsoleUtils.log("HTML output for this execution export to " + url);
                     if (StringUtils.isNotBlank(url) && autoOpenReport) { reporter.openReport(url); }
                 }
 

@@ -213,6 +213,21 @@ public class ExecutionSummary {
 
     public void setDataFile(String dataFile) { this.dataFile = dataFile; }
 
+    public String resolveDataFile() {
+        if (StringUtils.isNotBlank(dataFile)) { return dataFile; }
+
+        if (referenceData.containsKey(DATA_FILE)) { return referenceData.get(DATA_FILE); }
+
+        if (CollectionUtils.isNotEmpty(nestedExecutions)) {
+            ExecutionSummary nested = nestedExecutions.get(0);
+            if (nested != null && nested.getReferenceData().containsKey(DATA_FILE)) {
+                return nested.getReferenceData().get(DATA_FILE);
+            }
+        }
+
+        return "";
+    }
+
     public String getName() { return name; }
 
     public void setName(String name) { this.name = name; }
@@ -443,6 +458,39 @@ public class ExecutionSummary {
         if (allLogs.length() != 0) { map.put("log", StringUtils.trim(allLogs.toString())); }
 
         return map;
+    }
+
+    public ExecutionSummary toSummary() {
+        // execution
+        ExecutionSummary summary = summarized(this);
+        if (summary == null) { return null; }
+
+        // for execution-level, we need to add referenceData back to track execution-level context data
+        summary.referenceData = this.getReferenceData();
+
+        summary.runHost = this.runHost;
+        summary.runHostOs = this.runHostOs;
+        summary.runUser = this.runUser;
+
+        this.getNestedExecutions().forEach(exec -> {
+            // script
+            ExecutionSummary scriptExec = summarized(exec);
+            if (scriptExec != null) {
+                // iteration
+                exec.getNestedExecutions().forEach(exec2 -> {
+                    ExecutionSummary iterationExec = summarized(exec2);
+                    if (iterationExec != null) {
+                        iterationExec.nestedExecutions = null;
+                        scriptExec.addNestSummary(iterationExec);
+                    }
+                });
+
+                summary.addNestSummary(scriptExec);
+            }
+        });
+
+        // we stop here
+        return summary;
     }
 
     protected int createScenarioExecutionSummary(Worksheet sheet, ExecutionSummary summary, int rowNum) {
@@ -712,39 +760,6 @@ public class ExecutionSummary {
         }
 
         return cellMerge;
-    }
-
-    public ExecutionSummary toSummary() {
-        // execution
-        ExecutionSummary summary = summarized(this);
-        if (summary == null) { return null; }
-
-        // for execution-level, we need to add referenceData back to track execution-level context data
-        summary.referenceData = this.getReferenceData();
-
-        summary.runHost = this.runHost;
-        summary.runHostOs = this.runHostOs;
-        summary.runUser = this.runUser;
-
-        this.getNestedExecutions().forEach(exec -> {
-            // script
-            ExecutionSummary scriptExec = summarized(exec);
-            if (scriptExec != null) {
-                // iteration
-                exec.getNestedExecutions().forEach(exec2 -> {
-                    ExecutionSummary iterationExec = summarized(exec2);
-                    if (iterationExec != null) {
-                        iterationExec.nestedExecutions = null;
-                        scriptExec.addNestSummary(iterationExec);
-                    }
-                });
-
-                summary.addNestSummary(scriptExec);
-            }
-        });
-
-        // we stop here
-        return summary;
     }
 
     private ExecutionSummary summarized(ExecutionSummary source) {

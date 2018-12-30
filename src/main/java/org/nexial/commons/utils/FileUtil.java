@@ -514,7 +514,9 @@ public final class FileUtil {
      */
     public static String extractFilename(String path) {
         if (StringUtils.isBlank(path)) { return ""; }
-        return StringUtils.substringAfterLast(StringUtils.replace(path, "\\", "/"), "/");
+
+        if (StringUtils.contains(path, "\\")) { path = StringUtils.replace(path, "\\", "/"); }
+        return !StringUtils.contains(path, "/") ? path : StringUtils.substringAfterLast(path, "/");
     }
 
 }

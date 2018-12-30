@@ -988,6 +988,8 @@ public final class NexialConst {
          */
         public static final String SCRIPT_REF_PREFIX = NAMESPACE + "scriptRef.";
         public static final String BUILD_NO = "buildnum";
+        public static final String DATA_FILE = "Data File";
+        public static final String DATA_SHEETS = "DataSheet(s)";
         public static final String ITERATION_ENDED = NAMESPACE + "iterationEnded";
 
         //screen Recording
