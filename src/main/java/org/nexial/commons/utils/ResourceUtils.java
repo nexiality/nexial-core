@@ -30,6 +30,7 @@ import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.json.JSONException;
 
+import static java.nio.charset.StandardCharsets.UTF_8;
 import static org.nexial.core.NexialConst.DEF_CHARSET;
 
 /**
@@ -134,6 +135,7 @@ public final class ResourceUtils {
         return loadContent(ResourceUtils.class.getClassLoader().getResourceAsStream(resourcePath));
     }
 
+    /** load {@code resource} and return its content.  */
     public static String loadResource(String resource) throws IOException {
         if (StringUtils.isBlank(resource)) { return null; }
         InputStream inputStream = getInputStream(resource);
@@ -150,7 +152,7 @@ public final class ResourceUtils {
             int read = bis.read(buffer);
             if (read == -1) { break; }
 
-            sb.append(new String(buffer, 0, read, "UTF-8"));
+            sb.append(new String(buffer, 0, read, UTF_8));
             buffer = new byte[BUFFER_SIZE];
         } while (true);
 

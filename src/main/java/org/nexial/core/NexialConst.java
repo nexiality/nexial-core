@@ -787,6 +787,9 @@ public final class NexialConst {
         // synonymous to `assistantMode`, but reads better
         public static final String OPT_OPEN_RESULT = NAMESPACE + "openResult";
         public static final String DEF_OPEN_RESULT = "off";
+        public static final String OPT_OPEN_EXEC_SUMMARY = NAMESPACE + "openExecutionSummary";
+        public static final String DEF_OPEN_EXEC_SUMMARY = "off";
+
         public static final String SPREADSHEET_PROGRAM = NAMESPACE + "spreadsheet.program";
         public static final String SPREADSHEET_PROGRAM_EXCEL = "excel";
         public static final String SPREADSHEET_PROGRAM_WPS = "wps";
@@ -1017,7 +1020,8 @@ public final class NexialConst {
                             VERBOSE + "=" + DEF_VERBOSE,
                             TEXT_DELIM + "=" + DEF_TEXT_DELIM,
                             POLL_WAIT_MS + "=" + DEF_POLL_WAIT_MS,
-                            FAIL_AFTER + "=" + DEF_FAIL_AFTER);
+                            FAIL_AFTER + "=" + DEF_FAIL_AFTER,
+                            OPT_OPEN_EXEC_SUMMARY + "=" + DEF_OPEN_EXEC_SUMMARY);
 
         public static final String NULL = "(null)";
         public static final String EMPTY = "(empty)";

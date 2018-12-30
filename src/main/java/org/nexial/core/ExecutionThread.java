@@ -146,7 +146,8 @@ public final class ExecutionThread extends Thread {
         executionSummary.setName(scriptName);
         executionSummary.setExecutionLevel(SCRIPT);
         executionSummary.setStartTime(System.currentTimeMillis());
-        executionSummary.setSourceScript(scriptLocation);
+        executionSummary.setScriptFile(scriptLocation);
+        executionSummary.setDataFile(execDef.getDataFile().getAbsolutePath());
 
         for (int currIteration = 1; currIteration <= totalIterations; currIteration++) {
             // SINGLE THREAD EXECUTION WITHIN FOR LOOP!
@@ -162,7 +163,7 @@ public final class ExecutionThread extends Thread {
             iterSummary.setName(currIteration + " of " + totalIterations);
             iterSummary.setExecutionLevel(ITERATION);
             iterSummary.setStartTime(System.currentTimeMillis());
-            iterSummary.setSourceScript(scriptLocation);
+            iterSummary.setScriptFile(scriptLocation);
 
             try {
                 testScript = ExecutionInputPrep.prep(runId, execDef, iteration, currIteration);
@@ -396,7 +397,7 @@ public final class ExecutionThread extends Thread {
         ticktock.stop();
         summary.setEndTime(System.currentTimeMillis());
         summary.aggregatedNestedExecutions(context);
-        EventTracker.INSTANCE.track(new NexialScriptCompleteEvent(summary.getSourceScript(), summary));
+        EventTracker.INSTANCE.track(new NexialScriptCompleteEvent(summary.getScriptFile(), summary));
 
         CloudWebTestingPlatform.reportCloudBrowserStatus(context, summary, ScriptComplete);
 

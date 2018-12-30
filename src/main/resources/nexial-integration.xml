@@ -91,7 +91,7 @@
     </bean>
 
     <!-- mail -->
-    <bean id="mailTemplateEngine" class="org.thymeleaf.TemplateEngine" lazy-init="true">
+    <bean id="htmlTemplateEngine" class="org.thymeleaf.TemplateEngine" lazy-init="true">
         <property name="templateResolver">
             <bean class="org.thymeleaf.templateresolver.ClassLoaderTemplateResolver"
                   p:templateMode="HTML5" p:suffix=".html" p:prefix="org/nexial/core/reports/"/>
@@ -99,10 +99,17 @@
     </bean>
 
     <!--<bean id="mailNotifier" class="org.nexial.core.reports.MailNotifier" lazy-init="true"-->
-          <!--p:mailTemplateEngine-ref="mailTemplateEngine"-->
-          <!--p:mailTemplate="email_notification"/>-->
+    <!--p:mailTemplateEngine-ref="mailTemplateEngine"-->
+    <!--p:mailTemplate="email_notification"/>-->
     <bean id="nexialMailer" class="org.nexial.core.reports.NexialMailer" lazy-init="true"
-          p:mailTemplateEngine-ref="mailTemplateEngine"
+          p:mailTemplateEngine-ref="htmlTemplateEngine"
           p:mailTemplate="email_notification"/>
+
+    <bean id="executionResultHelper" class="org.nexial.core.reports.ExecutionReporter" lazy-init="true"
+          p:templateEngine-ref="htmlTemplateEngine"
+          p:executionTemplate="execution_summary"
+          p:htmlOutputFile="execution-output.html"
+          p:detailJsonFile="execution-detail.json"
+          p:summaryJsonFile="execution-summary.json"/>
 
 </beans>

@@ -41,16 +41,14 @@ import org.nexial.core.excel.ExcelConfig.*;
 import org.nexial.core.utils.ConsoleUtils;
 import org.nexial.core.utils.ExecUtils;
 
-import com.google.gson.Gson;
-import com.google.gson.GsonBuilder;
-
 import static java.io.File.separator;
 import static java.lang.System.lineSeparator;
 import static java.util.Locale.US;
 import static org.apache.commons.lang3.SystemUtils.*;
 import static org.apache.poi.ss.usermodel.Row.MissingCellPolicy.CREATE_NULL_AS_BLANK;
-import static org.nexial.core.NexialConst.*;
 import static org.nexial.core.NexialConst.Data.*;
+import static org.nexial.core.NexialConst.RATE_FORMAT;
+import static org.nexial.core.NexialConst.TEST_START_TS;
 import static org.nexial.core.excel.Excel.MIN_EXCEL_FILE_SIZE;
 import static org.nexial.core.excel.ExcelConfig.*;
 import static org.nexial.core.excel.ExcelConfig.StyleConfig.*;
@@ -86,10 +84,11 @@ public class ExecutionSummary {
         (int) (CELL_WIDTH_MULTIPLIER * 10), // total fail
         (int) (CELL_WIDTH_MULTIPLIER * 10)); // success rate
     protected static final String REGEX_LINKABLE_DATA = "^(http|/[0-9A-Za-z/_]+|[A-Za-z]\\:\\\\|\\\\\\\\.+).+\\|.+$";
-    protected static final Gson GSON = new GsonBuilder().setLenient().create();
+    // protected static final Gson GSON = new GsonBuilder().setLenient().create();
     private String name;
     private ExecutionLevel executionLevel;
-    private String sourceScript;
+    private String scriptFile;
+    private String dataFile;
     private transient File testScript;
     private String testScriptLink;
 
@@ -206,9 +205,13 @@ public class ExecutionSummary {
         this.testScriptLink = testScriptLink;
     }
 
-    public String getSourceScript() { return sourceScript;}
+    public String getScriptFile() { return scriptFile; }
 
-    public void setSourceScript(String sourceScript) { this.sourceScript = sourceScript;}
+    public void setScriptFile(String scriptFile) { this.scriptFile = scriptFile; }
+
+    public String getDataFile() { return dataFile; }
+
+    public void setDataFile(String dataFile) { this.dataFile = dataFile; }
 
     public String getName() { return name; }
 
@@ -312,9 +315,9 @@ public class ExecutionSummary {
             formatValue(DateUtility.formatLongDate(startTime) + " - " + DateUtility.formatLongDate(endTime)));
         text.append(formatLabel("Duration")).append(formatValue(DateUtility.formatStopWatchTime(endTime - startTime)));
         text.append(formatLabel("Steps")).append(formatValue(StringUtils.leftPad(totalSteps + "", 4, " ")));
-        text.append(formatLabel("Executed")).append(formatStat(executed));
-        text.append(formatLabel("PASS")).append(formatStat(passCount));
-        text.append(formatLabel("FAIL")).append(formatStat(failCount));
+        text.append(formatLabel("Executed")).append(formatStat(executed, totalSteps));
+        text.append(formatLabel("PASS")).append(formatStat(passCount, totalSteps));
+        text.append(formatLabel("FAIL")).append(formatStat(failCount, totalSteps));
 
         //if (MapUtils.isNotEmpty(referenceData)) {
         //	StringBuffer refData = new StringBuffer();
@@ -391,20 +394,55 @@ public class ExecutionSummary {
         }
     }
 
-    public void generateDetailedJson(String jsonFile) throws IOException {
-        if (StringUtils.isBlank(jsonFile)) { return; }
-        FileUtils.writeStringToFile(new File(jsonFile), GSON.toJson(this), DEF_CHARSET);
-    }
+    // public void generateDetailedJson(String jsonFile) throws IOException {
+    //     if (StringUtils.isBlank(jsonFile)) { return; }
+    //     FileUtils.writeStringToFile(new File(jsonFile), GSON.toJson(this), DEF_CHARSET);
+    // }
+    //
+    // public void generateSummaryJson(String jsonFile) throws IOException {
+    //     if (StringUtils.isBlank(jsonFile)) { return; }
+    //     ExecutionSummary report = this.toSummary();
+    //     if (report != null) { FileUtils.writeStringToFile(new File(jsonFile), GSON.toJson(report), DEF_CHARSET); }
+    // }
+    //
+    // public void generateHtmlReport(String targetHtmlFile) throws IOException {
+    //     // ConsoleUtils.error("\n\n\nNO HTML GENERATION YET!!!\n" + toString() + "\n\n\n");
+    //     FileUtils.writeStringToFile(new File(targetHtmlFile), toString(), DEF_CHARSET);
+    // }
 
-    public void generateSummaryJson(String jsonFile) throws IOException {
-        if (StringUtils.isBlank(jsonFile)) { return; }
-        ExecutionSummary report = this.toSummary();
-        if (report != null) { FileUtils.writeStringToFile(new File(jsonFile), GSON.toJson(report), DEF_CHARSET); }
-    }
+    public static Map<String, String> gatherExecutionData(ExecutionSummary summary) {
+        Map<String, String> map = new LinkedHashMap<>();
+        map.put("run from", ExecutionSummary.formatValue(summary.runHost, summary.runHostOs));
+        map.put("run user", ExecutionSummary.formatValue(summary.runUser));
+        map.put("time span", ExecutionSummary.formatValue(DateUtility.formatLongDate(summary.startTime) + " - " +
+                                                          DateUtility.formatLongDate(summary.endTime)));
+        map.put("duration", ExecutionSummary.formatValue(DateUtility.formatStopWatchTime(summary.endTime -
+                                                                                         summary.startTime)));
+        map.put("total steps", ExecutionSummary.formatValue(StringUtils.leftPad(summary.totalSteps + "", 4, " ")));
+        map.put("executed steps", ExecutionSummary.formatStat(summary.executed, summary.totalSteps));
+        map.put("passed", ExecutionSummary.formatStat(summary.passCount, summary.totalSteps));
+        map.put("failed", ExecutionSummary.formatStat(summary.failCount, summary.totalSteps));
+        map.put("fail-fast", summary.failedFast + "");
+        map.put("nexial version", ExecUtils.deriveJarManifest());
+        map.put("java version", JAVA_VERSION);
 
-    public void generateHtmlReport(String targetHtmlFile) throws IOException {
-        // ConsoleUtils.error("\n\n\nNO HTML GENERATION YET!!!\n" + toString() + "\n\n\n");
-        FileUtils.writeStringToFile(new File(targetHtmlFile), toString(), DEF_CHARSET);
+        // special case: log file is copied (NOT MOVED) to S3 with a special syntax here (markdown-like)
+        // createCell() function will made regard to this format to create appropriate hyperlink-friendly cells
+        StringBuilder allLogs = new StringBuilder();
+        if (StringUtils.isNotBlank(summary.executionLog)) {
+            allLogs.append(summary.executionLog).append("|nexial log\n");
+        }
+        if (MapUtils.isNotEmpty(summary.otherLogs)) {
+            summary.otherLogs.forEach((name, path) -> {
+                if (!StringUtils.equals(path, summary.executionLog)) {
+                    allLogs.append(path).append("|").append(name).append("\n");
+                }
+            });
+        }
+
+        if (allLogs.length() != 0) { map.put("log", StringUtils.trim(allLogs.toString())); }
+
+        return map;
     }
 
     protected int createScenarioExecutionSummary(Worksheet sheet, ExecutionSummary summary, int rowNum) {
@@ -486,7 +524,7 @@ public class ExecutionSummary {
     }
 
     protected int createReferenceDataSection(Worksheet summary, int rowNum) {
-        Map<String, String> executionData = gatherExecutionData();
+        Map<String, String> executionData = gatherExecutionData(this);
 
         if (MapUtils.isNotEmpty(executionData)) {
             createTestExecutionSection(summary, rowNum, "Test Execution", executionData);
@@ -525,38 +563,6 @@ public class ExecutionSummary {
         createCell(summary, "J" + rowNum, "success %", STYLE_EXEC_SUMM_HEADER, rowHeight);
     }
 
-    protected Map<String, String> gatherExecutionData() {
-        Map<String, String> map = new LinkedHashMap<>();
-        map.put("run from", formatValue(runHost, runHostOs));
-        map.put("run user", formatValue(runUser));
-        map.put("time span",
-                formatValue(DateUtility.formatLongDate(startTime) + " - " + DateUtility.formatLongDate(endTime)));
-        map.put("duration", formatValue(DateUtility.formatStopWatchTime(endTime - startTime)));
-        map.put("total steps", formatValue(StringUtils.leftPad(totalSteps + "", 4, " ")));
-        map.put("executed steps", formatStat(executed));
-        map.put("passed", formatStat(passCount));
-        map.put("failed", formatStat(failCount));
-        map.put("fail-fast", failedFast + "");
-        map.put("nexial version", ExecUtils.deriveJarManifest());
-        map.put("java version", JAVA_VERSION);
-
-        // special case: log file is copied (NOT MOVED) to S3 with a special syntax here (markdown-like)
-        // createCell() function will made regard to this format to create appropriate hyperlink-friendly cells
-        StringBuilder allLogs = new StringBuilder();
-        if (StringUtils.isNotBlank(executionLog)) { allLogs.append(executionLog).append("|nexial log\n"); }
-        if (MapUtils.isNotEmpty(otherLogs)) {
-            otherLogs.forEach((name, path) -> {
-                if (!StringUtils.equals(path, executionLog)) {
-                    allLogs.append(path).append("|").append(name).append("\n");
-                }
-            });
-        }
-
-        if (allLogs.length() != 0) { map.put("log", StringUtils.trim(allLogs.toString())); }
-
-        return map;
-    }
-
     protected static String formatLabel(String label) { return StringUtils.rightPad(label + ":", LABEL_SIZE); }
 
     protected static String formatValue(String value, String detail) {
@@ -567,9 +573,9 @@ public class ExecutionSummary {
 
     protected static String formatValue(String value) { return StringUtils.defaultString(value) + lineSeparator(); }
 
-    protected String formatStat(int actual) {
+    protected static String formatStat(int actual, int total) {
         return formatValue(StringUtils.leftPad("" + actual, 4, " "),
-                           MessageFormat.format(RATE_FORMAT, totalSteps < 1 ? 0 : ((double) actual / totalSteps)));
+                           MessageFormat.format(RATE_FORMAT, total < 1 ? 0 : ((double) actual / total)));
     }
 
     protected static String formatDuration(long elapsedTime) {
@@ -708,7 +714,7 @@ public class ExecutionSummary {
         return cellMerge;
     }
 
-    private ExecutionSummary toSummary() {
+    public ExecutionSummary toSummary() {
         // execution
         ExecutionSummary summary = summarized(this);
         if (summary == null) { return null; }
@@ -763,7 +769,7 @@ public class ExecutionSummary {
         summary.runHost = null;
         summary.runHostOs = null;
         summary.runUser = null;
-        summary.sourceScript = source.sourceScript;
+        summary.scriptFile = source.scriptFile;
         return summary;
     }
 }

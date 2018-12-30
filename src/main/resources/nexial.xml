@@ -595,6 +595,8 @@
     <util:map id="defaultContextProps" key-type="java.lang.String" value-type="java.lang.String">
         <entry key="nexial.enableEmail" value="false"/>
         <entry key="nexial.assistantMode" value="off"/>
+        <entry key="nexial.openResult" value="off"/>
+        <entry key="nexial.openExecutionSummary" value="off"/>
         <entry key="nexial.outputToCloud" value="false"/>
         <entry key="nexial.outputCloudBase" value="${nexial.outputCloudBase:}"/>
         <entry key="nexial.generateReport" value="false"/>

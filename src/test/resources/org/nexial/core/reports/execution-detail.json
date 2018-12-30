@@ -1,0 +1,607 @@
+{
+    "name": "20181229_165505",
+    "executionLevel": "EXECUTION",
+    "runHost": "LM11222",
+    "runHostOs": "x86_64 Mac OS X 10.13.6",
+    "runUser": "ml093043",
+    "startTime": 1546131305950,
+    "endTime": 1546131414257,
+    "totalSteps": 27,
+    "passCount": 21,
+    "failCount": 6,
+    "warnCount": 0,
+    "executed": 27,
+    "failedFast": false,
+    "referenceData": {
+        "runtime args": "-plan /Users/ml093043/projects/nexial/nexial-core/src/test/resources/showcase/artifact/plan/iteration-showcase-plan.xlsx -output /Users/ml093043/tmp/nexial/showcase/output",
+        "JAVA_OPT": "-Dnexial.generateReport\u003dtrue",
+        "release": "Dragonfly v2.0991",
+        "buildnum": "YoMaMa v2.334.0",
+        "Data File": "iteration-showcase.data.xlsx",
+        "DataSheet(s)": "#default"
+    },
+    "nestedExecutions": [
+        {
+            "name": "iteration-showcase (1)",
+            "executionLevel": "SCRIPT",
+            "scriptFile": "/Users/ml093043/projects/nexial/nexial-core/src/test/resources/showcase/artifact/script/iteration-showcase.xlsx",
+            "dataFile1": "/Users/ml093043/projects/nexial/nexial-core/src/test/resources/showcase/artifact/data/iteration-showcase.data.xlsx",
+            "runHost": "LM11222",
+            "runHostOs": "x86_64 Mac OS X 10.13.6",
+            "runUser": "ml093043",
+            "startTime": 1546131306712,
+            "endTime": 1546131326602,
+            "totalSteps": 4,
+            "passCount": 4,
+            "failCount": 0,
+            "warnCount": 0,
+            "executed": 4,
+            "failedFast": false,
+            "executionLog": "/Users/ml093043/tmp/nexial/showcase/output/20181229_165505/logs/nexial-20181229_165505.log",
+            "otherLogs": {
+                "nexial-20181229_165505.log": "/Users/ml093043/tmp/nexial/showcase/output/20181229_165505/logs/nexial-20181229_165505.log"
+            },
+            "referenceData": { },
+            "nestedExecutions": [
+                {
+                    "name": "1 of 1",
+                    "executionLevel": "ITERATION",
+                    "scriptFile": "/Users/ml093043/projects/nexial/nexial-core/src/test/resources/showcase/artifact/script/iteration-showcase.xlsx",
+                    "runHost": "LM11222",
+                    "runHostOs": "x86_64 Mac OS X 10.13.6",
+                    "runUser": "ml093043",
+                    "startTime": 1546131306714,
+                    "endTime": 1546131321762,
+                    "totalSteps": 4,
+                    "passCount": 4,
+                    "failCount": 0,
+                    "warnCount": 0,
+                    "executed": 4,
+                    "failedFast": false,
+                    "executionLog": "/Users/ml093043/tmp/nexial/showcase/output/20181229_165505/logs/nexial-20181229_165505.log",
+                    "otherLogs": {
+                        "nexial-20181229_165505.log": "/Users/ml093043/tmp/nexial/showcase/output/20181229_165505/logs/nexial-20181229_165505.log"
+                    },
+                    "referenceData": {
+                        "Data File": "iteration-showcase.data.xlsx",
+                        "DataSheet(s)": "#default",
+                        "JAVA_OPT": "-Dnexial.generateReport\u003dtrue",
+                        "release": "Firefly v1.056",
+                        "runtime args": "-plan /Users/ml093043/projects/nexial/nexial-core/src/test/resources/showcase/artifact/plan/iteration-showcase-plan.xlsx -output /Users/ml093043/tmp/nexial/showcase/output"
+                    },
+                    "nestedExecutions": [
+                        {
+                            "name": "single_run",
+                            "executionLevel": "SCENARIO",
+                            "runHost": "LM11222",
+                            "runHostOs": "x86_64 Mac OS X 10.13.6",
+                            "runUser": "ml093043",
+                            "startTime": 1546131318633,
+                            "endTime": 1546131321177,
+                            "totalSteps": 4,
+                            "passCount": 4,
+                            "failCount": 0,
+                            "warnCount": 0,
+                            "executed": 4,
+                            "failedFast": false,
+                            "executionLog": "/Users/ml093043/tmp/nexial/showcase/output/20181229_165505/logs/nexial-20181229_165505.log",
+                            "otherLogs": {
+                                "nexial-20181229_165505.log": "/Users/ml093043/tmp/nexial/showcase/output/20181229_165505/logs/nexial-20181229_165505.log"
+                            },
+                            "referenceData": { },
+                            "nestedExecutions": [
+                                {
+                                    "name": "Test Case #1",
+                                    "executionLevel": "ACTIVITY",
+                                    "runHost": "LM11222",
+                                    "runHostOs": "x86_64 Mac OS X 10.13.6",
+                                    "runUser": "ml093043",
+                                    "startTime": 1546131318633,
+                                    "endTime": 1546131320573,
+                                    "totalSteps": 3,
+                                    "passCount": 3,
+                                    "failCount": 0,
+                                    "warnCount": 0,
+                                    "executed": 3,
+                                    "failedFast": false,
+                                    "referenceData": { },
+                                    "nestedExecutions": [ ]
+                                },
+                                {
+                                    "name": "Test data fallback",
+                                    "executionLevel": "ACTIVITY",
+                                    "runHost": "LM11222",
+                                    "runHostOs": "x86_64 Mac OS X 10.13.6",
+                                    "runUser": "ml093043",
+                                    "startTime": 1546131320573,
+                                    "endTime": 1546131321177,
+                                    "totalSteps": 1,
+                                    "passCount": 1,
+                                    "failCount": 0,
+                                    "warnCount": 0,
+                                    "executed": 1,
+                                    "failedFast": false,
+                                    "referenceData": { },
+                                    "nestedExecutions": [ ]
+                                }
+                            ]
+                        }
+                    ]
+                }
+            ]
+        }, {
+            "name": "iteration-showcase (4)",
+            "executionLevel": "SCRIPT",
+            "scriptFile": "/Users/ml093043/projects/nexial/nexial-core/src/test/resources/showcase/artifact/script/iteration-showcase.xlsx",
+            "dataFile": "/Users/ml093043/projects/nexial/nexial-core/src/test/resources/showcase/artifact/data/iteration-showcase.data.xlsx",
+            "runHost": "LM11222",
+            "runHostOs": "x86_64 Mac OS X 10.13.6",
+            "runUser": "ml093043",
+            "startTime": 1546131327021,
+            "endTime": 1546131398759,
+            "totalSteps": 20,
+            "passCount": 16,
+            "failCount": 4,
+            "warnCount": 0,
+            "executed": 20,
+            "failedFast": false,
+            "executionLog": "/Users/ml093043/tmp/nexial/showcase/output/20181229_165505/logs/nexial-20181229_165505.log",
+            "otherLogs": {
+                "nexial-20181229_165505.log": "/Users/ml093043/tmp/nexial/showcase/output/20181229_165505/logs/nexial-20181229_165505.log"
+            },
+            "referenceData": { },
+            "nestedExecutions": [
+                {
+                    "name": "1 of 4",
+                    "executionLevel": "ITERATION",
+                    "scriptFile": "/Users/ml093043/projects/nexial/nexial-core/src/test/resources/showcase/artifact/script/iteration-showcase.xlsx",
+                    "runHost": "LM11222",
+                    "runHostOs": "x86_64 Mac OS X 10.13.6",
+                    "runUser": "ml093043",
+                    "startTime": 1546131327021,
+                    "endTime": 1546131339543,
+                    "totalSteps": 4,
+                    "passCount": 3,
+                    "failCount": 1,
+                    "warnCount": 0,
+                    "executed": 4,
+                    "failedFast": false,
+                    "executionLog": "/Users/ml093043/tmp/nexial/showcase/output/20181229_165505/logs/nexial-20181229_165505.log",
+                    "otherLogs": {
+                        "nexial-20181229_165505.log": "/Users/ml093043/tmp/nexial/showcase/output/20181229_165505/logs/nexial-20181229_165505.log"
+                    },
+                    "referenceData": {
+                        "runtime args": "-plan /Users/ml093043/projects/nexial/nexial-core/src/test/resources/showcase/artifact/plan/iteration-showcase-plan.xlsx -output /Users/ml093043/tmp/nexial/showcase/output",
+                        "Data File": "iteration-showcase.data.xlsx",
+                        "DataSheet(s)": "#default, iteration_run",
+                        "JAVA_OPT": "-Dnexial.generateReport\u003dtrue",
+                        "release": "Dragonfly v1.9928",
+                        "buildnum": "YoMaMa v2.334.0"
+                    },
+                    "nestedExecutions": [
+                        {
+                            "name": "iteration_run",
+                            "executionLevel": "SCENARIO",
+                            "runHost": "LM11222",
+                            "runHostOs": "x86_64 Mac OS X 10.13.6",
+                            "runUser": "ml093043",
+                            "startTime": 1546131334606,
+                            "endTime": 1546131339466,
+                            "totalSteps": 4,
+                            "passCount": 3,
+                            "failCount": 1,
+                            "warnCount": 0,
+                            "executed": 4,
+                            "failedFast": false,
+                            "executionLog": "/Users/ml093043/tmp/nexial/showcase/output/20181229_165505/logs/nexial-20181229_165505.log",
+                            "otherLogs": {
+                                "nexial-20181229_165505.log": "/Users/ml093043/tmp/nexial/showcase/output/20181229_165505/logs/nexial-20181229_165505.log"
+                            },
+                            "referenceData": { "company name": "Sony" },
+                            "nestedExecutions": [
+                                {
+                                    "name": "Test Case #2",
+                                    "executionLevel": "ACTIVITY",
+                                    "runHost": "LM11222",
+                                    "runHostOs": "x86_64 Mac OS X 10.13.6",
+                                    "runUser": "ml093043",
+                                    "startTime": 1546131334606,
+                                    "endTime": 1546131337646,
+                                    "totalSteps": 2,
+                                    "passCount": 1,
+                                    "failCount": 1,
+                                    "warnCount": 0,
+                                    "executed": 2,
+                                    "failedFast": false,
+                                    "referenceData": { },
+                                    "nestedExecutions": [ ]
+                                },
+                                {
+                                    "name": "Test data fallback #2",
+                                    "executionLevel": "ACTIVITY",
+                                    "runHost": "LM11222",
+                                    "runHostOs": "x86_64 Mac OS X 10.13.6",
+                                    "runUser": "ml093043",
+                                    "startTime": 1546131337646,
+                                    "endTime": 1546131339466,
+                                    "totalSteps": 2,
+                                    "passCount": 2,
+                                    "failCount": 0,
+                                    "warnCount": 0,
+                                    "executed": 2,
+                                    "failedFast": false,
+                                    "referenceData": { },
+                                    "nestedExecutions": [ ]
+                                }
+                            ]
+                        }
+                    ]
+                }, {
+                    "name": "2 of 4",
+                    "executionLevel": "ITERATION",
+                    "scriptFile": "/Users/ml093043/projects/nexial/nexial-core/src/test/resources/showcase/artifact/script/iteration-showcase.xlsx",
+                    "runHost": "LM11222",
+                    "runHostOs": "x86_64 Mac OS X 10.13.6",
+                    "runUser": "ml093043",
+                    "startTime": 1546131344905,
+                    "endTime": 1546131357885,
+                    "totalSteps": 4,
+                    "passCount": 3,
+                    "failCount": 1,
+                    "warnCount": 0,
+                    "executed": 4,
+                    "failedFast": false,
+                    "executionLog": "/Users/ml093043/tmp/nexial/showcase/output/20181229_165505/logs/nexial-20181229_165505.log",
+                    "otherLogs": {
+                        "nexial-20181229_165505.log": "/Users/ml093043/tmp/nexial/showcase/output/20181229_165505/logs/nexial-20181229_165505.log"
+                    },
+                    "referenceData": {
+                        "runtime args": "-plan /Users/ml093043/projects/nexial/nexial-core/src/test/resources/showcase/artifact/plan/iteration-showcase-plan.xlsx -output /Users/ml093043/tmp/nexial/showcase/output",
+                        "Data File": "iteration-showcase.data.xlsx",
+                        "DataSheet(s)": "#default, iteration_run",
+                        "JAVA_OPT": "-Dnexial.generateReport\u003dtrue",
+                        "release": "Dragonfly v1.9928",
+                        "buildnum": "YoMaMa v2.334.0"
+                    },
+                    "nestedExecutions": [
+                        {
+                            "name": "iteration_run",
+                            "executionLevel": "SCENARIO",
+                            "runHost": "LM11222",
+                            "runHostOs": "x86_64 Mac OS X 10.13.6",
+                            "runUser": "ml093043",
+                            "startTime": 1546131352938,
+                            "endTime": 1546131357803,
+                            "totalSteps": 4,
+                            "passCount": 3,
+                            "failCount": 1,
+                            "warnCount": 0,
+                            "executed": 4,
+                            "failedFast": false,
+                            "executionLog": "/Users/ml093043/tmp/nexial/showcase/output/20181229_165505/logs/nexial-20181229_165505.log",
+                            "otherLogs": {
+                                "nexial-20181229_165505.log": "/Users/ml093043/tmp/nexial/showcase/output/20181229_165505/logs/nexial-20181229_165505.log"
+                            },
+                            "referenceData": { "company name": "Disney" },
+                            "nestedExecutions": [
+                                {
+                                    "name": "Test Case #2",
+                                    "executionLevel": "ACTIVITY",
+                                    "runHost": "LM11222",
+                                    "runHostOs": "x86_64 Mac OS X 10.13.6",
+                                    "runUser": "ml093043",
+                                    "startTime": 1546131352938,
+                                    "endTime": 1546131355985,
+                                    "totalSteps": 2,
+                                    "passCount": 1,
+                                    "failCount": 1,
+                                    "warnCount": 0,
+                                    "executed": 2,
+                                    "failedFast": false,
+                                    "referenceData": { },
+                                    "nestedExecutions": [ ]
+                                },
+                                {
+                                    "name": "Test data fallback #2",
+                                    "executionLevel": "ACTIVITY",
+                                    "runHost": "LM11222",
+                                    "runHostOs": "x86_64 Mac OS X 10.13.6",
+                                    "runUser": "ml093043",
+                                    "startTime": 1546131355985,
+                                    "endTime": 1546131357803,
+                                    "totalSteps": 2,
+                                    "passCount": 2,
+                                    "failCount": 0,
+                                    "warnCount": 0,
+                                    "executed": 2,
+                                    "failedFast": false,
+                                    "referenceData": { },
+                                    "nestedExecutions": [ ]
+                                }
+                            ]
+                        }
+                    ]
+                }, {
+                    "name": "3 of 4",
+                    "executionLevel": "ITERATION",
+                    "scriptFile": "/Users/ml093043/projects/nexial/nexial-core/src/test/resources/showcase/artifact/script/iteration-showcase.xlsx",
+                    "runHost": "LM11222",
+                    "runHostOs": "x86_64 Mac OS X 10.13.6",
+                    "runUser": "ml093043",
+                    "startTime": 1546131363718,
+                    "endTime": 1546131376482,
+                    "totalSteps": 6,
+                    "passCount": 5,
+                    "failCount": 1,
+                    "warnCount": 0,
+                    "executed": 6,
+                    "failedFast": false,
+                    "executionLog": "/Users/ml093043/tmp/nexial/showcase/output/20181229_165505/logs/nexial-20181229_165505.log",
+                    "otherLogs": {
+                        "nexial-20181229_165505.log": "/Users/ml093043/tmp/nexial/showcase/output/20181229_165505/logs/nexial-20181229_165505.log"
+                    },
+                    "referenceData": {
+                        "runtime args": "-plan /Users/ml093043/projects/nexial/nexial-core/src/test/resources/showcase/artifact/plan/iteration-showcase-plan.xlsx -output /Users/ml093043/tmp/nexial/showcase/output",
+                        "Data File": "iteration-showcase.data.xlsx",
+                        "DataSheet(s)": "#default, iteration_run",
+                        "JAVA_OPT": "-Dnexial.generateReport\u003dtrue",
+                        "release": "Dragonfly v2.0991",
+                        "buildnum": "YoMaMa v2.334.0"
+                    },
+                    "nestedExecutions": [
+                        {
+                            "name": "iteration_run",
+                            "executionLevel": "SCENARIO",
+                            "runHost": "LM11222",
+                            "runHostOs": "x86_64 Mac OS X 10.13.6",
+                            "runUser": "ml093043",
+                            "startTime": 1546131371568,
+                            "endTime": 1546131376415,
+                            "totalSteps": 6,
+                            "passCount": 5,
+                            "failCount": 1,
+                            "warnCount": 0,
+                            "executed": 6,
+                            "failedFast": false,
+                            "executionLog": "/Users/ml093043/tmp/nexial/showcase/output/20181229_165505/logs/nexial-20181229_165505.log",
+                            "otherLogs": {
+                                "nexial-20181229_165505.log": "/Users/ml093043/tmp/nexial/showcase/output/20181229_165505/logs/nexial-20181229_165505.log"
+                            },
+                            "referenceData": { "company name": "Viacom" },
+                            "nestedExecutions": [
+                                {
+                                    "name": "Test Case #2",
+                                    "executionLevel": "ACTIVITY",
+                                    "runHost": "LM11222",
+                                    "runHostOs": "x86_64 Mac OS X 10.13.6",
+                                    "runUser": "ml093043",
+                                    "startTime": 1546131371568,
+                                    "endTime": 1546131374596,
+                                    "totalSteps": 4,
+                                    "passCount": 3,
+                                    "failCount": 1,
+                                    "warnCount": 0,
+                                    "executed": 4,
+                                    "failedFast": false,
+                                    "referenceData": { },
+                                    "nestedExecutions": [ ]
+                                },
+                                {
+                                    "name": "Test data fallback #2",
+                                    "executionLevel": "ACTIVITY",
+                                    "runHost": "LM11222",
+                                    "runHostOs": "x86_64 Mac OS X 10.13.6",
+                                    "runUser": "ml093043",
+                                    "startTime": 1546131374597,
+                                    "endTime": 1546131376415,
+                                    "totalSteps": 2,
+                                    "passCount": 2,
+                                    "failCount": 0,
+                                    "warnCount": 0,
+                                    "executed": 2,
+                                    "failedFast": false,
+                                    "referenceData": { },
+                                    "nestedExecutions": [ ]
+                                }
+                            ]
+                        }
+                    ]
+                }, {
+                    "name": "4 of 4",
+                    "executionLevel": "ITERATION",
+                    "scriptFile": "/Users/ml093043/projects/nexial/nexial-core/src/test/resources/showcase/artifact/script/iteration-showcase.xlsx",
+                    "runHost": "LM11222",
+                    "runHostOs": "x86_64 Mac OS X 10.13.6",
+                    "runUser": "ml093043",
+                    "startTime": 1546131381372,
+                    "endTime": 1546131393892,
+                    "totalSteps": 6,
+                    "passCount": 5,
+                    "failCount": 1,
+                    "warnCount": 0,
+                    "executed": 6,
+                    "failedFast": false,
+                    "executionLog": "/Users/ml093043/tmp/nexial/showcase/output/20181229_165505/logs/nexial-20181229_165505.log",
+                    "otherLogs": {
+                        "nexial-20181229_165505.log": "/Users/ml093043/tmp/nexial/showcase/output/20181229_165505/logs/nexial-20181229_165505.log"
+                    },
+                    "referenceData": {
+                        "runtime args": "-plan /Users/ml093043/projects/nexial/nexial-core/src/test/resources/showcase/artifact/plan/iteration-showcase-plan.xlsx -output /Users/ml093043/tmp/nexial/showcase/output",
+                        "Data File": "iteration-showcase.data.xlsx",
+                        "DataSheet(s)": "#default, iteration_run",
+                        "JAVA_OPT": "-Dnexial.generateReport\u003dtrue",
+                        "release": "Dragonfly v2.0991",
+                        "buildnum": "YoMaMa v2.334.0"
+                    },
+                    "nestedExecutions": [
+                        {
+                            "name": "iteration_run",
+                            "executionLevel": "SCENARIO",
+                            "runHost": "LM11222",
+                            "runHostOs": "x86_64 Mac OS X 10.13.6",
+                            "runUser": "ml093043",
+                            "startTime": 1546131388984,
+                            "endTime": 1546131393828,
+                            "totalSteps": 6,
+                            "passCount": 5,
+                            "failCount": 1,
+                            "warnCount": 0,
+                            "executed": 6,
+                            "failedFast": false,
+                            "executionLog": "/Users/ml093043/tmp/nexial/showcase/output/20181229_165505/logs/nexial-20181229_165505.log",
+                            "otherLogs": {
+                                "nexial-20181229_165505.log": "/Users/ml093043/tmp/nexial/showcase/output/20181229_165505/logs/nexial-20181229_165505.log"
+                            },
+                            "referenceData": { "company name": "Warner Brother", "run file": "2017-Q4-CA" },
+                            "nestedExecutions": [
+                                {
+                                    "name": "Test Case #2",
+                                    "executionLevel": "ACTIVITY",
+                                    "runHost": "LM11222",
+                                    "runHostOs": "x86_64 Mac OS X 10.13.6",
+                                    "runUser": "ml093043",
+                                    "startTime": 1546131388984,
+                                    "endTime": 1546131392011,
+                                    "totalSteps": 3,
+                                    "passCount": 2,
+                                    "failCount": 1,
+                                    "warnCount": 0,
+                                    "executed": 3,
+                                    "failedFast": false,
+                                    "referenceData": { },
+                                    "nestedExecutions": [ ]
+                                },
+                                {
+                                    "name": "Test data fallback #2",
+                                    "executionLevel": "ACTIVITY",
+                                    "runHost": "LM11222",
+                                    "runHostOs": "x86_64 Mac OS X 10.13.6",
+                                    "runUser": "ml093043",
+                                    "startTime": 1546131392011,
+                                    "endTime": 1546131393828,
+                                    "totalSteps": 3,
+                                    "passCount": 3,
+                                    "failCount": 0,
+                                    "warnCount": 0,
+                                    "executed": 3,
+                                    "failedFast": false,
+                                    "referenceData": { },
+                                    "nestedExecutions": [ ]
+                                }
+                            ]
+                        }
+                    ]
+                }
+            ]
+        }, {
+            "name": "iteration-showcase (1)",
+            "executionLevel": "SCRIPT",
+            "scriptFile": "/Users/ml093043/projects/nexial/nexial-core/src/test/resources/showcase/artifact/script/iteration-showcase.xlsx",
+            "dataFile": "/Users/ml093043/projects/nexial/nexial-core/src/test/resources/showcase/artifact/data/iteration-showcase.data.xlsx",
+            "runHost": "LM11222",
+            "runHostOs": "x86_64 Mac OS X 10.13.6",
+            "runUser": "ml093043",
+            "startTime": 1546131399209,
+            "endTime": 1546131413952,
+            "totalSteps": 3,
+            "passCount": 1,
+            "failCount": 2,
+            "warnCount": 0,
+            "executed": 3,
+            "failedFast": false,
+            "executionLog": "/Users/ml093043/tmp/nexial/showcase/output/20181229_165505/logs/nexial-20181229_165505.log",
+            "otherLogs": {
+                "nexial-20181229_165505.log": "/Users/ml093043/tmp/nexial/showcase/output/20181229_165505/logs/nexial-20181229_165505.log"
+            },
+            "referenceData": { },
+            "nestedExecutions": [
+                {
+                    "name": "1 of 1",
+                    "executionLevel": "ITERATION",
+                    "scriptFile": "/Users/ml093043/projects/nexial/nexial-core/src/test/resources/showcase/artifact/script/iteration-showcase.xlsx",
+                    "runHost": "LM11222",
+                    "runHostOs": "x86_64 Mac OS X 10.13.6",
+                    "runUser": "ml093043",
+                    "startTime": 1546131399209,
+                    "endTime": 1546131409024,
+                    "totalSteps": 3,
+                    "passCount": 1,
+                    "failCount": 2,
+                    "warnCount": 0,
+                    "executed": 3,
+                    "failedFast": false,
+                    "executionLog": "/Users/ml093043/tmp/nexial/showcase/output/20181229_165505/logs/nexial-20181229_165505.log",
+                    "otherLogs": {
+                        "nexial-20181229_165505.log": "/Users/ml093043/tmp/nexial/showcase/output/20181229_165505/logs/nexial-20181229_165505.log"
+                    },
+                    "referenceData": {
+                        "runtime args": "-plan /Users/ml093043/projects/nexial/nexial-core/src/test/resources/showcase/artifact/plan/iteration-showcase-plan.xlsx -output /Users/ml093043/tmp/nexial/showcase/output",
+                        "DataSheet(s)": "#default",
+                        "JAVA_OPT": "-Dnexial.generateReport\u003dtrue",
+                        "buildnum": "YoMaMa v2.334.0",
+                        "Data File": "iteration-showcase.data.xlsx",
+                        "release": "Dragonfly v2.0991"
+                    },
+                    "nestedExecutions": [
+                        {
+                            "name": "last_run",
+                            "executionLevel": "SCENARIO",
+                            "runHost": "LM11222",
+                            "runHostOs": "x86_64 Mac OS X 10.13.6",
+                            "runUser": "ml093043",
+                            "startTime": 1546131406871,
+                            "endTime": 1546131408683,
+                            "totalSteps": 3,
+                            "passCount": 1,
+                            "failCount": 2,
+                            "warnCount": 0,
+                            "executed": 3,
+                            "failedFast": false,
+                            "executionLog": "/Users/ml093043/tmp/nexial/showcase/output/20181229_165505/logs/nexial-20181229_165505.log",
+                            "otherLogs": {
+                                "nexial-20181229_165505.log": "/Users/ml093043/tmp/nexial/showcase/output/20181229_165505/logs/nexial-20181229_165505.log"
+                            },
+                            "referenceData": { "company name": "Warner Brother", "run file": "2017-Q4-CA" },
+                            "nestedExecutions": [
+                                {
+                                    "name": "Test Case #3",
+                                    "executionLevel": "ACTIVITY",
+                                    "runHost": "LM11222",
+                                    "runHostOs": "x86_64 Mac OS X 10.13.6",
+                                    "runUser": "ml093043",
+                                    "startTime": 1546131406871,
+                                    "endTime": 1546131408079,
+                                    "totalSteps": 2,
+                                    "passCount": 1,
+                                    "failCount": 1,
+                                    "warnCount": 0,
+                                    "executed": 2,
+                                    "failedFast": false,
+                                    "referenceData": { },
+                                    "nestedExecutions": [ ]
+                                },
+                                {
+                                    "name": "Test data fallback #3",
+                                    "executionLevel": "ACTIVITY",
+                                    "runHost": "LM11222",
+                                    "runHostOs": "x86_64 Mac OS X 10.13.6",
+                                    "runUser": "ml093043",
+                                    "startTime": 1546131408079,
+                                    "endTime": 1546131408683,
+                                    "totalSteps": 1,
+                                    "passCount": 0,
+                                    "failCount": 1,
+                                    "warnCount": 0,
+                                    "executed": 1,
+                                    "failedFast": false,
+                                    "referenceData": { },
+                                    "nestedExecutions": [ ]
+                                }
+                            ]
+                        }
+                    ]
+                }
+            ]
+        }
+    ]
+}

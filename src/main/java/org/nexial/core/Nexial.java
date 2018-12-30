@@ -55,6 +55,7 @@ import org.nexial.core.interactive.NexialInteractive;
 import org.nexial.core.model.*;
 import org.nexial.core.reports.ExecutionMailConfig;
 import org.nexial.core.reports.ExecutionNotifier;
+import org.nexial.core.reports.ExecutionReporter;
 import org.nexial.core.reports.NexialMailer;
 import org.nexial.core.service.EventTracker;
 import org.nexial.core.service.ServiceLauncher;
@@ -789,63 +790,66 @@ public class Nexial {
         String reportPath = StringUtils.appendIfMissing(System.getProperty(OPT_OUT_DIR, project.getOutPath()),
                                                         separator);
         if (!StringUtils.contains(reportPath, runId)) { reportPath += runId + separator; }
-        // String htmlReport = reportPath + "execution-summary.html";
-        //
-        // try {
-        //     summary.generateHtmlReport(htmlReport);
-        // } catch (IOException e) {
-        //     ConsoleUtils.error(runId, "Unable to generate HTML report for this execution: " + e.getMessage());
-        // }
 
-        boolean outputToCloud = BooleanUtils.toBoolean(System.getProperty(OUTPUT_TO_CLOUD, DEF_OUTPUT_TO_CLOUD + ""));
-        boolean generateReport =
-            outputToCloud ||
-            BooleanUtils.toBoolean(System.getProperty(GENERATE_EXEC_REPORT, DEF_GENERATE_EXEC_REPORT + ""));
+        springContext = new ClassPathXmlApplicationContext(SPRING_CONTEXT);
+        ExecutionReporter reporter = springContext.getBean("executionResultHelper", ExecutionReporter.class);
+        reporter.setReportPath(reportPath);
 
-        if (generateReport) {
-            String jsonDetailedReport = reportPath + "execution-detail.json";
-            String jsonSummaryReport = reportPath + "execution-summary.json";
+        boolean autoOpenReport =
+            BooleanUtils.toBoolean(System.getProperty(OPT_OPEN_EXEC_SUMMARY, DEF_OPEN_EXEC_SUMMARY));
+        File htmlReport = null;
+        try {
+            htmlReport = reporter.generateHtml(summary);
+        } catch (IOException e) {
+            ConsoleUtils.error(runId, "Unable to generate HTML report for this execution: " + e.getMessage());
+        }
 
+        List<File> generatedJsons = null;
+        if (BooleanUtils.toBoolean(System.getProperty(GENERATE_EXEC_REPORT, DEF_GENERATE_EXEC_REPORT + ""))) {
             try {
-                summary.generateDetailedJson(jsonDetailedReport);
-                summary.generateSummaryJson(jsonSummaryReport);
-                // summary.generateHtmlReport(htmlReport);
-
-                if (outputToCloud) {
-                    // need to make sure nexial setup run (possibly again)...
-                    ConsoleUtils.log("resolving Nexial Cloud Integration...");
-                    springContext = new ClassPathXmlApplicationContext(SPRING_CONTEXT);
-
-                    try {
-                        NexialS3Helper otc = springContext.getBean("otc", NexialS3Helper.class);
-                        if (otc == null || !otc.isReadyForUse()) {
-                            // forget it...
-                            String errorMessage = springContext.getBean("otcNotReadyMessage", String.class);
-                            throw new IOException(errorMessage);
-                        }
-
-                        // can't use otc.resolveOutputDir() since we are out of context at this point in time
-                        String outputDir =
-                            System.getProperty(OPT_CLOUD_OUTPUT_BASE) + "/" + project.getName() + "/" + runId;
-
-                        otc.importToS3(new File(jsonSummaryReport), outputDir, true);
-                        otc.importToS3(new File(jsonDetailedReport), outputDir, true);
-                        // otc.importToS3(new File(htmlReport), outputDir, true);
-
-                        // push the latest logs to cloud...
-                        String logPath = System.getProperty(TEST_LOG_PATH);
-                        Collection<File> logFiles = FileUtils.listFiles(new File(logPath), new String[]{"log"}, false);
-                        if (CollectionUtils.isNotEmpty(logFiles)) {
-                            for (File log : logFiles) { otc.importLog(log, false); }
-                        }
-
-                    } catch (IOException e) {
-                        ConsoleUtils.error("Unable to save to cloud storage due to " + e.getMessage());
-                    }
-                }
+                generatedJsons = reporter.generateJson(summary);
             } catch (IOException e) {
                 ConsoleUtils.error(runId, "Unable to save execution summary due to " + e.getMessage(), e);
             }
+        }
+
+        boolean outputToCloud = BooleanUtils.toBoolean(System.getProperty(OUTPUT_TO_CLOUD, DEF_OUTPUT_TO_CLOUD + ""));
+        if (outputToCloud) {
+            // need to make sure nexial setup run (possibly again)...
+            ConsoleUtils.log("resolving Nexial Cloud Integration...");
+
+            try {
+                NexialS3Helper otc = springContext.getBean("otc", NexialS3Helper.class);
+                if (otc == null || !otc.isReadyForUse()) {
+                    // forget it...
+                    throw new IOException(springContext.getBean("otcNotReadyMessage", String.class));
+                }
+
+                // can't use otc.resolveOutputDir() since we are out of context at this point in time
+                String outputDir = System.getProperty(OPT_CLOUD_OUTPUT_BASE) + "/" + project.getName() + "/" +
+                                   runId;
+
+                // upload HTML report to cloud
+                if (FileUtil.isFileReadable(htmlReport, 16 * 1024)) {
+                    String url = otc.importToS3(htmlReport, outputDir, true);
+                    if (StringUtils.isNotBlank(url) && autoOpenReport) { reporter.openReport(url); }
+                }
+
+                if (CollectionUtils.isNotEmpty(generatedJsons)) {
+                    for (File file : generatedJsons) { otc.importToS3(file, outputDir, true); }
+                }
+
+                // push the latest logs to cloud...
+                String logPath = System.getProperty(TEST_LOG_PATH);
+                Collection<File> logFiles = FileUtils.listFiles(new File(logPath), new String[]{"log"}, false);
+                if (CollectionUtils.isNotEmpty(logFiles)) {
+                    for (File log : logFiles) { otc.importLog(log, false); }
+                }
+            } catch (IOException e) {
+                ConsoleUtils.error("Unable to save to cloud storage due to " + e.getMessage());
+            }
+        } else {
+            if (autoOpenReport) { reporter.openReport(htmlReport); }
         }
 
         ExecutionMailConfig mailConfig = ExecutionMailConfig.get();

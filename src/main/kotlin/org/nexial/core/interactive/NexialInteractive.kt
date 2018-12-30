@@ -473,7 +473,7 @@ class NexialInteractive {
                                       es: ExecutionSummary,
                                       name: String,
                                       level: ExecutionLevel) {
-        es.sourceScript = session.script
+        es.scriptFile = session.script
         es.startTime = System.currentTimeMillis()
         es.executionLevel = level
         es.name = name

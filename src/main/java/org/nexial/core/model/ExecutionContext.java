@@ -266,6 +266,7 @@ public class ExecutionContext {
         overrideIfSysPropFound(NEXIAL_HOME);
         overrideIfSysPropFound(ENABLE_EMAIL);
         overrideIfSysPropFound(OPT_OPEN_RESULT);
+        overrideIfSysPropFound(OPT_OPEN_EXEC_SUMMARY);
         overrideIfSysPropFound(ASSISTANT_MODE);
         overrideIfSysPropFound(OPT_EASY_STRING_COMPARE);
         overrideIfSysPropFound(OUTPUT_TO_CLOUD);
