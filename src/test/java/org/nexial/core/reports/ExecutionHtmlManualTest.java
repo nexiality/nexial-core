@@ -28,22 +28,26 @@ import org.thymeleaf.TemplateEngine;
 import org.thymeleaf.context.Context;
 import org.thymeleaf.templateresolver.ClassLoaderTemplateResolver;
 
-import static java.io.File.separator;
-import static org.apache.commons.lang3.SystemUtils.JAVA_IO_TMPDIR;
 import static org.nexial.core.NexialConst.DEF_FILE_ENCODING;
 import static org.nexial.core.NexialConst.GSON;
 
 public class ExecutionHtmlManualTest {
-    private String resourcePath = "/" + StringUtils.replace(this.getClass().getPackage().getName(), ".", "/") + "/";
-    private String json = ResourceUtils.getResourceFilePath(resourcePath + "execution-detail2.json");
-    private File outputFile = new File(JAVA_IO_TMPDIR + separator + "test-execution.html");
+    private static String resourcePath =
+        "/" + StringUtils.replace(ExecutionHtmlManualTest.class.getPackage().getName(), ".", "/") + "/";
+    private static String json = ResourceUtils.getResourceFilePath(resourcePath + "execution-detail.json");
+    // private static File outputFile = new File(JAVA_IO_TMPDIR + separator + "test-execution.html");
+    private static File outputFile =
+        new File("/Users/ml093043/projects/nexial/documentation/assets/report/test-execution.html");
 
     public static void main(String[] args) throws Throwable {
+        ExecutionSummary summary =
+            GSON.fromJson(FileUtils.readFileToString(new File(json), DEF_FILE_ENCODING), ExecutionSummary.class);
+
         ExecutionHtmlManualTest test = new ExecutionHtmlManualTest();
-        test.generateHtml();
+        test.testThymeleaf(summary);
     }
 
-    private void generateHtml() throws Exception {
+    private void testThymeleaf(ExecutionSummary summary) throws Exception {
         ClassLoaderTemplateResolver templateResolver = new ClassLoaderTemplateResolver();
         templateResolver.setTemplateMode("HTML5");
         templateResolver.setSuffix(".html");
@@ -51,9 +55,6 @@ public class ExecutionHtmlManualTest {
 
         TemplateEngine templateEngine = new TemplateEngine();
         templateEngine.setTemplateResolver(templateResolver);
-
-        ExecutionSummary summary = GSON.fromJson(FileUtils.readFileToString(new File(json), DEF_FILE_ENCODING),
-                                                 ExecutionSummary.class);
 
         Context engineContext = new Context();
         engineContext.setVariable("execution", ExecutionSummary.gatherExecutionData(summary));

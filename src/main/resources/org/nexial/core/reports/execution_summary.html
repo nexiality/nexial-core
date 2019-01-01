@@ -2,19 +2,28 @@
 <head>
     <link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.6.1/css/all.css"/>
     <link rel="stylesheet" href="https://nexiality.github.io/documentation/assets/report/execution_summary.css"/>
-    <!--<link rel="stylesheet" href="file:///Users/ml093043/projects/nexial/documentation/assets/report/execution_summary.css"/>-->
+    <!--<link rel="stylesheet" href="execution_summary.css"/>-->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.3.1/jquery.min.js"></script>
     <script src="https://nexiality.github.io/documentation/assets/report/execution_summary.js"></script>
-    <!--<script src="file:///Users/ml093043/projects/nexial/documentation/assets/report/execution_summary.js"></script>-->
+    <!--<script src="execution_summary.js"></script>-->
 </head>
 <body>
 
 <div class="title">
     Execution Summary for <span data-th-utext="${summary.name}">PROJECT_PLAN_WITH_RUNID</span>
-    <div class="showhide-all">
-        <i class="fas fa-minus-circle" onclick="hideAllSections()" title="minimize all sections"></i>
-        <i class="fas fa-plus-circle" onclick="showAllSections()" title="restore all sections"></i>
-    </div>
+</div>
+
+<div class="result-controls">
+    <i class="fas fa-toggle-on on" id="script-toggle" onclick="toggleScript(this)" title="toggle the display of only scripts"><span>Scripts</span></i>
+    <i class="fas fa-toggle-on on" id="iteration-toggle" onclick="toggleIteration(this)" title="toggle the display of iterations"><span>Iterations</span></i>
+    <i class="fas fa-toggle-on on" id="scenario-toggle" onclick="toggleScenario(this)" title="toggle the display of scenarios"><span>Scenarios</span></i>
+    <i class="fas fa-toggle-on on" id="activity-toggle" onclick="toggleActivity(this)" title="toggle the display of activities"><span>Activities</span></i>
+    <i class="fas fa-toggle-on on" id="reference-toggle" onclick="toggleRefs(this);" title="toggle the display of script/scenario references"><span>References</span></i>
+    &nbsp;|&nbsp;&nbsp;
+    <i class="fas fa-exclamation-circle off" id="failure-toggle" onclick="collapsePassRows(this);"><span>Failures</span></i>
+    <i class="fas fa-check-circle on" id="all-toggle" onclick="showPassRows(this);"><span>All Results</span></i>
+    &nbsp;|&nbsp;&nbsp;
+    <i class="fas fa-compress on" id="collapse-toggle" onclick="toggleExpansion(this)" title="collapse/expand all sections"><span>Collapse/Expand All</span></i>
 </div>
 
 <div class="execMeta canHide">
@@ -55,7 +64,7 @@
         </tr>
         <tr>
             <td nowrap="nowrap" class="execLabel">failed:</td>
-            <th class="execValue"><pre data-th-utext="${execution.get('failed')}"> 0 (0.00%)</pre></th>
+            <th class="execValue" data-th-attrappend="class=${execution.get('executed steps') == execution.get('passed') ? ' ' : ' execValueFail'}"><pre data-th-utext="${execution.get('failed')}"> 0 (0.00%)</pre></th>
         </tr>
         <tr>
             <td nowrap="nowrap" class="execLabel">nexial version:</td>
@@ -67,7 +76,7 @@
         </tr>
         <tr>
             <td nowrap="nowrap" class="execLabel">log:</td>
-            <th class="execValue" data-th-utext="${execution.get('log')}"><a href="javascript:alert('not implemented');">nexial log</a></th>
+            <th class="execValue" data-th-utext="${execution.get('log')}"><a href="javascript:alert('not yet implemented');">nexial log</a></th>
         </tr>
         <tr>
             <td nowrap="nowrap" class="execLabel">runtime args:</td>
@@ -90,11 +99,6 @@
         <span class="errorPrompt">Check log file for more details</span>
     </div>
     <br/>
-</div>
-
-<div class="result-controls">
-    <i class="fas fa-frown-open" onclick="collapsePassRows();"> Only Failures</i>
-    <i class="fas fa-theater-masks" onclick="showPassRows();"> All Results</i>
 </div>
 
 <div class="exec-summary-header">
@@ -124,8 +128,8 @@
         <div class="plan-step-summary">
             <table cellspacing="0" cellpadding="5" border="0">
                 <tr data-th-class="${script.failCount > 0 ? 'hasFailure' : 'noFailure'}">
-                    <td class="value value-title" data-th-text="${@org.nexial.commons.utils.FileUtil@extractFilename(script.scriptFile)}" title="${@org.nexial.commons.utils.FileUtil@extractFilename(script.scriptFile)}">Payroll_Processing_Summer_Special.xlsx</td>
-                    <td class="value value-title" data-th-utext="${@org.nexial.commons.utils.FileUtil@extractFilename(script.resolveDataFile())}" title="${script.resolveDataFile()}">Payroll_Processing_Summer_Special.data.xlsx</td>
+                    <td class="value value-title" data-th-text="${@org.nexial.commons.utils.FileUtil@extractFilename(script.scriptFile)}" data-th-attr="title=${@org.nexial.commons.utils.FileUtil@extractFilename(script.scriptFile)}">Payroll_Processing_Summer_Special.xlsx</td>
+                    <td class="value value-title" data-th-utext="${@org.nexial.commons.utils.FileUtil@extractFilename(script.resolveDataFile())}" data-th-attr="title=${script.resolveDataFile()}">Payroll_Processing_Summer_Special.data.xlsx</td>
                     <td class="value value-iteration" data-th-utext="${script.nestedExecutions.size()}">1234</td>
                     <td class="value value-datetime" data-th-utext="${#dates.format(new java.util.Date(script.startTime), 'yyyy/MM/dd HH:mm:ss')}">2018/12/16 12:53:21</td>
                     <td class="value value-time value-tally" data-th-utext="${#dates.format(#dates.create(0,0,0,0,0,0, (script.endTime - script.startTime)), 'HH:mm:ss')}">00:42:11</td>
@@ -140,9 +144,9 @@
         <div class="iteration canHide" data-th-attr="id='planStep' + ${scriptStat.count} + 'details'" data-th-if="#{script.nestedExecutions}">
             <table cellspacing="0" cellpadding="5" border="0">
                 <tr class="record-header">
-                    <th class="label">Iteration</th>
-                    <th class="label">Scenario</th>
-                    <th class="label">Activity</th>
+                    <th class="label label-title">Iteration</th>
+                    <th class="label label-title">Scenario</th>
+                    <th class="label label-title">Activity</th>
                     <th class="label label-datetime">Start Date/Time</th>
                     <th class="label label-time">Duration</th>
                     <th class="label label-num">Total</th>
@@ -153,7 +157,7 @@
                 </tr>
 
                 <th:block data-th-if="${script.nestedExecutions}" data-th-each="iteration : ${script.nestedExecutions}">
-                <tr class="record" data-th-class="${iteration.failCount > 0 ? 'hasFailure' : 'noFailure'}">
+                <tr data-th-class="'record iter ' + ${iteration.failCount > 0 ? 'hasFailure' : 'noFailure'}">
                     <td class="value value-title" data-th-attr="title=${iteration.name}">
                         <th:block data-th-utext="${iteration.name}">Payroll_Processing_Summer_Special.001.xlsx</th:block>
                         <div class="value-scriptRef" data-th-if="${iteration.referenceData.size() > 0}">
@@ -170,7 +174,7 @@
                             </table>
                         </div>
                     </td>
-                    <td colspan="2" class="value spacer2">&nbsp;</td>
+                    <td colspan="2" class="value spacer">&nbsp;</td>
                     <td class="value value-datetime" data-th-utext="${#dates.format(new java.util.Date(iteration.startTime), 'yyyy/MM/dd HH:mm:ss')}">2018/12/16 12:53:21</td>
                     <td class="value value-time value-tally" data-th-utext="${#dates.format(#dates.create(0,0,0,0,0,0, (iteration.endTime - iteration.startTime)), 'HH:mm:ss')}">00:42:11</td>
                     <td class="value value-num value-tally" data-th-utext="${#numbers.formatInteger(iteration.executed, 1, 'DEFAULT')}">23456</td>
@@ -180,7 +184,7 @@
                 </tr>
 
                 <th:block data-th-if="${iteration.nestedExecutions}" data-th-each="scenario : ${iteration.nestedExecutions}">
-                <tr class="record" data-th-class="${scenario.failCount > 0 ? 'hasFailure' : 'noFailure'}">
+                <tr data-th-class="'record scenario ' + ${scenario.failCount > 0 ? 'hasFailure' : 'noFailure'}">
                     <td class="value spacer2">&nbsp;</td>
                     <td class="value value-title" data-th-attr="title=${scenario.name}">
                         <th:block data-th-utext="${scenario.name}">Scenario 123.7</th:block>
@@ -207,7 +211,7 @@
                 </tr>
 
                 <th:block data-th-if="${scenario.nestedExecutions}" data-th-each="activity : ${scenario.nestedExecutions}">
-                <tr class="record" data-th-class="${activity.failCount > 0 ? 'hasFailure' : 'noFailure'}">
+                <tr data-th-class="'record activity ' + ${activity.failCount > 0 ? 'hasFailure' : 'noFailure'}">
                     <td colspan="2" class="value spacer2"></td>
                     <td class="value value-title" data-th-utext="${activity.name}" data-th-attr="title=${activity.name}">Act 1</td>
 
@@ -230,7 +234,7 @@
 <br/>
 <br/>
 <br/>
-<div class="footer">powered by NEXIAL</div>
+<div class="footer">powered by <a href="https://nexiality.github.io">NEXIAL</a></div>
 <br/>
 <br/>
 
