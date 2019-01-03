@@ -795,8 +795,7 @@ public class Nexial {
         ExecutionReporter reporter = springContext.getBean("executionResultHelper", ExecutionReporter.class);
         reporter.setReportPath(reportPath);
 
-        boolean autoOpenReport =
-            BooleanUtils.toBoolean(System.getProperty(OPT_OPEN_EXEC_SUMMARY, DEF_OPEN_EXEC_SUMMARY));
+        boolean autoOpenReport = isAutoOpenResult();
         File htmlReport = null;
         try {
             htmlReport = reporter.generateHtml(summary);

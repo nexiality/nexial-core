@@ -787,8 +787,6 @@ public final class NexialConst {
         // synonymous to `assistantMode`, but reads better
         public static final String OPT_OPEN_RESULT = NAMESPACE + "openResult";
         public static final String DEF_OPEN_RESULT = "off";
-        public static final String OPT_OPEN_EXEC_SUMMARY = NAMESPACE + "openExecutionSummary";
-        public static final String DEF_OPEN_EXEC_SUMMARY = "off";
 
         public static final String SPREADSHEET_PROGRAM = NAMESPACE + "spreadsheet.program";
         public static final String SPREADSHEET_PROGRAM_EXCEL = "excel";
@@ -1022,8 +1020,7 @@ public final class NexialConst {
                             VERBOSE + "=" + DEF_VERBOSE,
                             TEXT_DELIM + "=" + DEF_TEXT_DELIM,
                             POLL_WAIT_MS + "=" + DEF_POLL_WAIT_MS,
-                            FAIL_AFTER + "=" + DEF_FAIL_AFTER,
-                            OPT_OPEN_EXEC_SUMMARY + "=" + DEF_OPEN_EXEC_SUMMARY);
+                            FAIL_AFTER + "=" + DEF_FAIL_AFTER);
 
         public static final String NULL = "(null)";
         public static final String EMPTY = "(empty)";
@@ -1053,11 +1050,12 @@ public final class NexialConst {
 
             ExecutionContext context = ExecutionThread.get();
             if (context == null) {
-                return BooleanUtils.toBoolean(System.getProperty(OPT_OPEN_RESULT, DEF_OPEN_RESULT)) ||
-                       BooleanUtils.toBoolean(System.getProperty(ASSISTANT_MODE, DEF_OPEN_RESULT));
+                return BooleanUtils.toBoolean(System.getProperty(OPT_OPEN_RESULT,
+                                                                 System.getProperty(ASSISTANT_MODE, DEF_OPEN_RESULT)));
             } else {
-                return context.getBooleanData(OPT_OPEN_RESULT, BooleanUtils.toBoolean(DEF_OPEN_RESULT)) ||
-                       context.getBooleanData(ASSISTANT_MODE, BooleanUtils.toBoolean(DEF_OPEN_RESULT));
+                return context.getBooleanData(OPT_OPEN_RESULT,
+                                              context.getBooleanData(ASSISTANT_MODE,
+                                                                     BooleanUtils.toBoolean(DEF_OPEN_RESULT)));
             }
         }
 
