@@ -20,16 +20,16 @@ resolveEnv
 # --------------------------------------------------------------------------------
 # giving priority to project-specific classpaths
 PROJECT_CLASSPATH=
-if [ -d "${PROJECT_HOME}" ]; then
+if [[ -d "${PROJECT_HOME}" ]]; then
 	PROJECT_CLASSPATH="${PROJECT_HOME}/classes:${PROJECT_HOME}/lib/*"
 else
 	PROJECT_CLASSPATH=
 fi
 
-if [ "${CHROME_BIN}" = "" ]; then CHROME_BIN="${DEFAULT_CHROME_BIN}"; fi
+if [[ "${CHROME_BIN}" = "" ]]; then CHROME_BIN="${DEFAULT_CHROME_BIN}"; fi
 echo "setting CHROME_BIN  as ${CHROME_BIN}"
 
-if [ "${FIREFOX_BIN}" = "" ]; then FIREFOX_BIN="${DEFAULT_FIREFOX_BIN}"; fi
+if [[ "${FIREFOX_BIN}" = "" ]]; then FIREFOX_BIN="${DEFAULT_FIREFOX_BIN}"; fi
 echo "setting FIREFOX_BIN as ${FIREFOX_BIN}"
 
 
