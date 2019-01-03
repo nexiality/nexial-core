@@ -233,6 +233,7 @@ public class ExecutionContext {
         this.execDef = execDef;
         this.project = adjustPath(execDef);
         this.hostname = StringUtils.upperCase(EnvUtils.getHostName());
+        data.put(HOSTNAME, this.hostname);
 
         // init data map... something just doesn't make sense not to exist from the get-go
         data.put(OPT_LAST_OUTCOME, true);

@@ -701,6 +701,8 @@ public final class NexialConst {
     public static final class Data {
         public static final String SCOPE = NAMESPACE + "scope.";
 
+        public static final String HOSTNAME = "os.hostname";
+
         // iteration
         // predefined variable to define the iteration to use
         public static final String ITERATION = SCOPE + "iteration";
