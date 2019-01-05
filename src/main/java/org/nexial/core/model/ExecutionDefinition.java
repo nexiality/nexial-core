@@ -47,6 +47,7 @@ public class ExecutionDefinition {
     private String runId;
     private TestData testData;
 
+    private String planFile;
     private String planFilename;
     private String planName;
     private int planSequence;
@@ -127,6 +128,10 @@ public class ExecutionDefinition {
     public String getRunId() { return runId; }
 
     public void setRunId(String runId) { this.runId = runId; }
+
+    public String getPlanFile() { return planFile; }
+
+    public void setPlanFile(String planFile) { this.planFile = planFile; }
 
     public String getPlanFilename() { return planFilename; }
 

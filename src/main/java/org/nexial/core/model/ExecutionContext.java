@@ -726,6 +726,7 @@ public class ExecutionContext {
     public String replaceTokens(String text) {
         if (StringUtils.isBlank(text)) { return text; }
         if (StringUtils.equals(text, getNullValueToken())) { return null; }
+
         text = treatCommonValueShorthand(text);
         if (text == null) { return null; }
 
@@ -1674,6 +1675,11 @@ public class ExecutionContext {
         String spreadsheetProgram = getStringData(SPREADSHEET_PROGRAM, DEF_SPREADSHEET);
         if (StringUtils.equals(spreadsheetProgram, SPREADSHEET_PROGRAM_WPS) && IS_OS_WINDOWS) {
             setData(WPS_EXE_LOCATION, Excel.resolveWpsExecutablePath());
+        }
+
+        if (StringUtils.isBlank(System.getProperty(OPT_OPEN_RESULT))) {
+            boolean openResult = MapUtils.getBoolean(data, OPT_OPEN_RESULT, BooleanUtils.toBoolean(DEF_OPEN_RESULT));
+            System.setProperty(OPT_OPEN_RESULT, openResult + "");
         }
 
         // DO NOT SET BROWSER TYPE TO SYSTEM PROPS, SINCE THIS WILL PREVENT ITERATION-LEVEL OVERRIDES

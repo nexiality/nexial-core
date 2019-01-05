@@ -49,6 +49,21 @@ public class Syspath {
         return evaluateScope(scope, executionData);
     }
 
+    public String plan(String scope) {
+        ExecutionContext context = ExecutionThread.get();
+
+        String executionData = null;
+        if (context != null && context.getExecDef() != null) {
+            executionData = context.getExecDef().getPlanFile();
+        }
+
+        if (executionData == null) { executionData = getExecutionData(OPT_INPUT_PLAN_FILE); }
+
+        ConsoleUtils.log(TOKEN_FUNCTION_START + "syspath|plan" + TOKEN_FUNCTION_END + ": value=" + executionData);
+
+        return evaluateScope(scope, executionData);
+    }
+
     public String data(String scope) { return evaluateScope(scope, getExecutionData(OPT_DATA_DIR)); }
 
     public String screenshot(String scope) { return evaluateScope(scope, appendCapture(getExecutionData(OPT_OUT_DIR)));}

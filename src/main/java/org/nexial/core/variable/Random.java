@@ -30,7 +30,7 @@ import org.nexial.core.utils.ConsoleUtils;
  */
 public class Random {
     public String integer(String length) {
-        if (isValidLength("random.integer()", length)) { return ""; }
+        if (isDigit("random.integer()", length)) { return ""; }
         int len = NumberUtils.toInt(length);
         if (len == 0) { return ""; }
         if (len == 1) { return RandomStringUtils.randomNumeric(len); }
@@ -56,38 +56,36 @@ public class Random {
     }
 
     public String letter(String length) {
-        if (isValidLength("random.letter()", length)) { return ""; }
+        if (isDigit("random.letter()", length)) { return ""; }
         return RandomStringUtils.randomAlphabetic(NumberUtils.toInt(length));
     }
 
     public String alphanumeric(String length) {
-        if (isValidLength("random.alphanumeric()", length)) { return ""; }
+        if (isDigit("random.alphanumeric()", length)) { return ""; }
         return RandomStringUtils.randomAlphanumeric(NumberUtils.toInt(length));
     }
 
     public String any(String length) {
-        if (isValidLength("random.any()", length)) { return ""; }
+        if (isDigit("random.any()", length)) { return ""; }
         return RandomStringUtils.randomAscii(NumberUtils.toInt(length));
     }
 
     public String characters(String characters, String length) {
-        if (isValidLength("random.characters()", length)) { return ""; }
+        if (isDigit("random.characters()", length)) { return ""; }
         return RandomStringUtils.random(NumberUtils.toInt(length), characters.toCharArray());
     }
 
     public String numeric(String from, String to) {
-        if (isValidLength("random.numeric()", from)) { return ""; }
-        if (isValidLength("random.numeric()", to)) { return ""; }
+        if (isDigit("random.numeric()", from)) { return ""; }
+        if (isDigit("random.numeric()", to)) { return ""; }
         return RandomUtils.nextInt(NumberUtils.toInt(from), NumberUtils.toInt(to)) + "";
     }
 
     protected void init() { }
 
-    private boolean isValidLength(String funcName, String length) {
-        if (!NumberUtils.isDigits(length)) {
-            ConsoleUtils.error("Error at " + funcName + " - length " + length + " is not a number");
-            return true;
-        }
-        return false;
+    private boolean isDigit(String funcName, String length) {
+        if (NumberUtils.isDigits(length)) { return false; }
+        ConsoleUtils.error("Error at " + funcName + ": " + length + " is not a number");
+        return true;
     }
 }

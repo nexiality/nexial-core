@@ -407,6 +407,7 @@ public class Nexial {
 
                     // create new definition instance, based on various input and derived values
                     ExecutionDefinition exec = new ExecutionDefinition();
+                    exec.setPlanFile(testPlanFile.getAbsolutePath());
                     exec.setPlanFilename(StringUtils.substringBeforeLast(testPlanFile.getName(), "."));
                     exec.setPlanName(testPlan.getName());
                     exec.setPlanSequence((i - rowStartIndex + 1));

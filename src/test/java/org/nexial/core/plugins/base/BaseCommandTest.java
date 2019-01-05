@@ -155,6 +155,22 @@ public class BaseCommandTest {
 
     }
 
+    @Test
+    public void assertTextOrder() throws Exception {
+        BaseCommand subject = new BaseCommand();
+        subject.init(context);
+
+        String var = "var";
+        context.setData(var, "April,August,February,December,January,July,June,November,October,September");
+
+        try {
+            StepResult result = subject.assertTextOrder(var, "true");
+            Assert.assertFalse(result.isSuccess());
+        } catch (AssertionError e) {
+            // expected
+        }
+    }
+
     static {
         System.setProperty("clear_var2", "I repeat, this is a test.");
         System.setProperty("clear_var3", "System is a go");

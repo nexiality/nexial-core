@@ -23,6 +23,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.concurrent.atomic.AtomicBoolean;
 import javax.validation.constraints.NotNull;
 
@@ -75,6 +76,12 @@ final public class DataVariableUpdater {
     private static final List<String> VAR_WRAPPERS = Arrays.asList("merge", "store", "BAI2", "CONFIG", "CSV", "DATE",
                                                                    "EXCEL", "INI", "JSON", "LIST", "NUMBER", "SQL",
                                                                    "TEXT", "XML");
+    private static final int COLUMN_1_WIDTH = 45;
+    private static final int COLUMN_2_WIDTH = 20;
+    private static final int COLUMN_3_WIDTH = 10;
+    private static final int COLUMN_4_LEFT_MARGIN = (COLUMN_1_WIDTH + COLUMN_2_WIDTH + COLUMN_3_WIDTH);
+    private static final String BECOME_SYMBOL = " => ";
+
     protected String searchFrom;
     protected File searchPath;
     protected Map<String, String> variableMap;
@@ -140,8 +147,10 @@ final public class DataVariableUpdater {
             if (StringUtils.startsWith(file, getSearchFrom())) {
                 file = StringUtils.substringAfter(file, getSearchFrom() + separator);
             }
+
             position = "[" + StringUtils.leftPad(position, 4) + "]";
-            return format(this.file, worksheet, position, before + " => " + after);
+
+            return formatColumns(file, worksheet, position, reformatLines(before, after, COLUMN_4_LEFT_MARGIN));
         }
     }
 
@@ -159,6 +168,8 @@ final public class DataVariableUpdater {
      * @param args command line arguments as {@link Options}.
      */
     public static void main(String[] args) {
+        Arrays.stream(args).forEach(System.out::println);
+
         Options cmdOptions = new Options();
         cmdOptions.addOption(OPT_VERBOSE, "verbose", false, "Turn on verbose logging.");
         cmdOptions.addOption(OPT_DRY_RUN, "preview", false, "Preview changes (will not save to files)");
@@ -225,22 +236,21 @@ final public class DataVariableUpdater {
         replaceDataFiles();
         replaceScripts();
 
-        String prompt = " data variable update summary";
-        if (isDryRun) { prompt = " data variable update preview"; }
+        String prompt = isDryRun ? " data variable update preview" : " data variable update summary";
+        String banner = StringUtils.repeat('-', 100);
+
         System.out.println();
         System.out.println();
-        System.out.println(
-            "/----------------------------------------------------------------------------------------------------\\");
-        System.out.println(ConsoleUtils.centerPrompt(prompt, 102));
-        System.out.println(
-            "\\----------------------------------------------------------------------------------------------------/");
+        System.out.println("/" + banner + "\\");
+        System.out.println("|" + ConsoleUtils.centerPrompt(prompt, 100) + "|");
+        System.out.println("\\" + banner + "/");
         if (updated.size() == 0) {
             System.out.println(ConsoleUtils.centerPrompt("There are no matching data variables in the files.", 102));
             return;
         }
-        System.out.println(format("File", "DataSheet/Scenario", "Position", "Updating Lines/Cells"));
-        System.out.println(
-            "----------------------------------------------------------------------------------------------------");
+
+        System.out.println(formatColumns("File", "DataSheet/Scenario", "Position", "Updating Lines/Cells"));
+        System.out.println(banner + "--");
         updated.forEach(System.out::println);
         System.out.println();
     }
@@ -382,14 +392,14 @@ final public class DataVariableUpdater {
     protected boolean updateDataVariableName(XSSFCell cell, UpdateLog updateLog) {
         String cellValue = Excel.getCellValue(cell);
         String replaced = replaceVarName(cellValue);
-        if (replaced != null) {
-            updated.add(updateLog.copy().setChange(cellValue, replaced));
-            if (isDryRun) { return false; }
-            cell.setCellValue(replaced);
-            return true;
-        } else {
-            return false;
-        }
+
+        if (replaced == null) { return false; }
+
+        updated.add(updateLog.copy().setChange(cellValue, replaced));
+        if (isDryRun) { return false; }
+
+        cell.setCellValue(replaced);
+        return true;
     }
 
     /**
@@ -757,6 +767,40 @@ final public class DataVariableUpdater {
         }
     }
 
+    private static String reformatLines(String before, String after, int leftMargin) {
+        if (StringUtils.isBlank(before) && StringUtils.isBlank(after)) { return before + BECOME_SYMBOL + after; }
+
+        final StringBuilder lines = new StringBuilder();
+
+        if (StringUtils.contains(before, "\n")) {
+            toLines(before, leftMargin, lines);
+            lines.append(BECOME_SYMBOL).append("\n");
+        } else {
+            lines.append(before).append(BECOME_SYMBOL);
+        }
+
+        if (StringUtils.contains(after, "\n")) {
+            toLines(after, leftMargin, lines);
+        } else {
+            lines.append(after);
+        }
+
+        return lines.toString();
+    }
+
+    private static void toLines(String text, int leftMargin, StringBuilder newLines) {
+        text = StringUtils.remove(text, "\r");
+        List<String> lines = TextUtils.toList(text, "\n", false);
+
+        String margin = StringUtils.repeat(" ", leftMargin);
+        Objects.requireNonNull(lines).forEach(line -> {
+            if (newLines.length() > 0) { newLines.append(margin); }
+            newLines.append(line).append("\n");
+        });
+
+        newLines.deleteCharAt(newLines.length() - 1);
+    }
+
     private String replaceWildcardVar(String line, String oldVar, String newVar) {
         Pair<String, String> regexes = varNameToRegex(oldVar, newVar);
         if (regexes == null) {
@@ -774,9 +818,10 @@ final public class DataVariableUpdater {
 
     private static void log(String action, Object subject) { log(StringUtils.rightPad(action, 26) + " " + subject); }
 
-    private static String format(String file, String worksheet, String position, String updatingVars) {
-        return StringUtils.rightPad(file, 45) +
-               StringUtils.rightPad(StringUtils.defaultIfEmpty(worksheet, ""), 20) +
-               StringUtils.rightPad(position, 11) + updatingVars;
+    private static String formatColumns(String file, String worksheet, String position, String updatingVars) {
+        return StringUtils.rightPad(file, COLUMN_1_WIDTH) +
+               StringUtils.rightPad(StringUtils.defaultIfEmpty(worksheet, ""), COLUMN_2_WIDTH) +
+               StringUtils.rightPad(position, COLUMN_3_WIDTH) +
+               updatingVars;
     }
 }

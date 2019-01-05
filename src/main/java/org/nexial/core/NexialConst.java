@@ -113,6 +113,7 @@ public final class NexialConst {
 
     public static final String OPT_EXCEL_FILE = NAMESPACE + "excel";
     public static final String OPT_INPUT_EXCEL_FILE = NAMESPACE + "inputExcel";
+    public static final String OPT_INPUT_PLAN_FILE = NAMESPACE + "planFile";
 
     // selenium specific
     public static final String SELENIUM_IE_DRIVER = "webdriver.ie.driver";

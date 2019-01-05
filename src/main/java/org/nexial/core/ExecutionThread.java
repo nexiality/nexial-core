@@ -39,9 +39,8 @@ import org.nexial.core.service.EventTracker;
 import org.nexial.core.utils.ConsoleUtils;
 import org.nexial.core.utils.ExecutionLogger;
 
+import static org.nexial.core.NexialConst.*;
 import static org.nexial.core.NexialConst.Data.*;
-import static org.nexial.core.NexialConst.OPT_INPUT_EXCEL_FILE;
-import static org.nexial.core.NexialConst.OPT_LAST_OUTCOME;
 import static org.nexial.core.NexialConst.Project.appendLog;
 import static org.nexial.core.model.ExecutionEvent.*;
 import static org.nexial.core.model.ExecutionSummary.ExecutionLevel.ITERATION;
@@ -135,6 +134,10 @@ public final class ExecutionThread extends Thread {
 
         int totalIterations = iterationManager.getIterationCount();
         ConsoleUtils.log(runId, "executing " + scriptLocation + " with " + totalIterations + " iteration(s)");
+
+        if (StringUtils.isNotBlank(execDef.getPlanFile())) {
+            context.setData(OPT_INPUT_PLAN_FILE, execDef.getPlanFile());
+        }
 
         ExecutionThread.set(context);
 

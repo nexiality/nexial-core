@@ -100,6 +100,7 @@
         <entry key="count" value-ref="count"/>
         <entry key="date" value-ref="date"/>
         <entry key="execution" value-ref="execution"/>
+        <entry key="file" value-ref="file"/>
         <entry key="format" value-ref="format"/>
         <entry key="projectfile" value-ref="projectfile"/>
         <entry key="random" value-ref="random"/>

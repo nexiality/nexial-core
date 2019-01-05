@@ -14,11 +14,11 @@ function resolveOSXAppPath() {
     IFS=$'\n'
 
     for p in `locate "MacOS/${appExec}" | grep -E "${appExec}$"`; do
-        if [ "$path" = "" ]; then
+        if [[ "$path" = "" ]]; then
             # first time.. just use what we found
             path="${p}"
         else
-            if [ "${p}" = *"${me}"* ]; then
+            if [[ "${p}" = *"${me}"* ]]; then
                 # the one under `me` takes a higher precedence
                 path="${p}"
             fi
@@ -42,7 +42,7 @@ function resolveLinuxAppPath() {
 
 
 function checkJava() {
-    if [ "${JAVA_HOME}" = "" -a "${JRE_HOME}" = "" ]; then
+    if [[ "${JAVA_HOME}" = "" && "${JRE_HOME}" = "" ]]; then
         echo
         echo =WARNING=========================================================================
         echo Neither the JAVA_HOME nor the JRE_HOME environment variable is defined.
@@ -53,10 +53,10 @@ function checkJava() {
         echo resolving Java as ${JAVA}
         echo
     else
-        if [ -x ${JAVA_HOME}/bin/java ]; then
+        if [[ -x ${JAVA_HOME}/bin/java ]]; then
             JAVA=${JAVA_HOME}/bin/java
         else
-            if [ -x ${JRE_HOME}/bin/java ]; then
+            if [[ -x ${JRE_HOME}/bin/java ]]; then
                 JAVA=${JRE_HOME}/bin/java
             else
                 echo =WARNING=========================================================================
@@ -107,10 +107,36 @@ function resolveEnv() {
     echo "  NEXIAL_LIB:     ${NEXIAL_LIB}"
     echo "  NEXIAL_CLASSES: ${NEXIAL_CLASSES}"
     echo "  PROJECT_BASE:   ${PROJECT_BASE}"
-    if [ "${PROJECT_HOME}" != "" ]; then
+    if [[ "${PROJECT_HOME}" != "" ]]; then
         echo "  PROJECT_HOME:   ${PROJECT_HOME}"
     fi
     echo
+}
+
+
+function resolveAppPath() {
+    local cacheKey="$1"
+
+    if [[ ! -f "${CACHE_FILE}" ]] ; then
+        touch "${CACHE_FILE}"
+    fi
+
+    local appPath=` cat "${CACHE_FILE}" | grep "$1=" | sed "s/$1=//g" `
+
+    if [[ "${appPath}" = "" || ! -f "${appPath}" ]]; then
+        # re-search for app path
+        if [[ "${IS_MAC}" = "true" ]]; then
+            sed -E -i '' "/$1=/d" "${CACHE_FILE}"
+            appPath="`resolveOSXAppPath "$1"`"
+        else
+            sed -i "/$1=/d" "${CACHE_FILE}"
+            appPath="`resolveLinuxAppPath "$1"`"
+        fi
+
+        echo "$1=${appPath}" >> "${CACHE_FILE}"
+    fi
+
+    echo ${appPath}
 }
 
 
@@ -119,14 +145,11 @@ export PROJECT_BASE=~/projects
 export NEXIAL_HOME=$(cd `dirname $0`/..; pwd -P)
 export NEXIAL_LIB=${NEXIAL_HOME}/lib
 export NEXIAL_CLASSES=${NEXIAL_HOME}/classes
+export IS_MAC=$([[ "`uname -s`" = "Darwin" ]] && echo "true" || echo "false" )
+export CACHE_FILE=$([[ ${IS_MAC} = "true" ]] && echo "$HOME/.nexial/cache.macos" || echo "$HOME/.nexial/cache.nix" )
 
-DEFAULT_CHROME_BIN=
-if [[ "`uname -s`" = "Darwin" ]]; then
-    export DEFAULT_CHROME_BIN="`resolveOSXAppPath "Google Chrome"`"
-else
-    export DEFAULT_CHROME_BIN="`resolveLinuxAppPath google-chrome`"
-fi
-
+CHROME_KEY=$([[ ${IS_MAC} = "true" ]] && echo "Google Chrome" || echo "google-chrome" )
+export DEFAULT_CHROME_BIN="`resolveAppPath "${CHROME_KEY}"`"
 if [[ -z "${DEFAULT_CHROME_BIN//}" ]]; then
     echo "WARNING: Unable to resolve location of Google Chrome. If you want to use Chrome,"
     echo "         you will need to set its location via the CHROME_BIN environment variable"
@@ -134,12 +157,9 @@ if [[ -z "${DEFAULT_CHROME_BIN//}" ]]; then
     DEFAULT_CHROME_BIN=
 fi
 
-if [[ "`uname -s`" = "Darwin" ]]; then
-    export DEFAULT_FIREFOX_BIN="`resolveOSXAppPath firefox-bin`"
-else
-    export DEFAULT_FIREFOX_BIN="`resolveLinuxAppPath firefox-bin`"
-fi
-
+#FIREFOX_KEY=$([[ ${IS_MAC} = "true" ]] && echo "firefox-bin" || echo "firefox-bin" )
+FIREFOX_KEY=firefox-bin
+export DEFAULT_FIREFOX_BIN="`resolveAppPath "${FIREFOX_KEY}"`"
 if [[ -z "${DEFAULT_FIREFOX_BIN//}" ]]; then
     echo "WARNING: Unable to resolve location of Firefox. If you want to use Firefox, you "
     echo "         will need to set its location via the FIREFOX_BIN environment variable"
