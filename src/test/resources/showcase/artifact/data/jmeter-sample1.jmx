@@ -204,7 +204,7 @@
               </elementProp>
               <elementProp name="Status" elementType="Argument">
                 <stringProp name="Argument.name">Status</stringProp>
-                <stringProp name="Argument.value">OK</stringProp>
+		<stringProp name="Argument.value">${status}</stringProp>
                 <stringProp name="Argument.metadata">=</stringProp>
               </elementProp>
               <elementProp name="SamplerData" elementType="Argument">

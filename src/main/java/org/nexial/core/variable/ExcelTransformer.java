@@ -259,7 +259,7 @@ public class ExcelTransformer<T extends ExcelDataType> extends Transformer {
 
     protected void requireAfterRead(T data, String op) {
         if (data == null) { throw new IllegalArgumentException("data is null"); }
-        if (CollectionUtils.isEmpty(data.getCapturedValues()) || data.getCurrentSheet() == null) {
+        if (CollectionUtils.isEmpty(data.getCapturedValues()) && data.getCurrentSheet() == null) {
             throw new IllegalArgumentException(op + " can only be performed after a valid read() operation");
         }
     }

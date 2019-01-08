@@ -12,10 +12,5 @@
     </content>
     <orderEntry type="inheritedJdk" />
     <orderEntry type="sourceFolder" forTests="false" />
-    <orderEntry type="library" name="execution_summary" level="application" />
-    <orderEntry type="library" name="jquery-3.3.1" level="application" />
-    <orderEntry type="library" name="vue" level="application" />
-    <orderEntry type="library" name="moment" level="application" />
-    <orderEntry type="library" name="numeral" level="application" />
   </component>
 </module>

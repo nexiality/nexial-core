@@ -35,9 +35,11 @@ import org.apache.poi.poifs.filesystem.FileMagic;
 import org.apache.poi.xssf.usermodel.XSSFCell;
 import org.apache.poi.xssf.usermodel.XSSFRow;
 import org.apache.poi.xssf.usermodel.XSSFSheet;
+import org.apache.poi.xssf.usermodel.XSSFWorkbook;
+import org.nexial.commons.utils.FileUtil;
 import org.nexial.commons.utils.TextUtils;
 import org.nexial.core.excel.Excel;
-import org.nexial.core.excel.Excel.Worksheet;
+import org.nexial.core.excel.Excel.*;
 import org.nexial.core.excel.ExcelAddress;
 import org.nexial.core.model.StepResult;
 import org.nexial.core.plugins.base.BaseCommand;
@@ -50,8 +52,7 @@ import static org.apache.poi.poifs.filesystem.FileMagic.OLE2;
 import static org.apache.poi.poifs.filesystem.FileMagic.OOXML;
 import static org.apache.poi.ss.usermodel.Row.MissingCellPolicy.CREATE_NULL_AS_BLANK;
 import static org.nexial.core.NexialConst.DEF_FILE_ENCODING;
-import static org.nexial.core.excel.Excel.clearExcelPassword;
-import static org.nexial.core.excel.Excel.deriveFileFormat;
+import static org.nexial.core.excel.Excel.*;
 import static org.nexial.core.utils.CheckUtils.*;
 
 public class ExcelCommand extends BaseCommand {
@@ -59,15 +60,44 @@ public class ExcelCommand extends BaseCommand {
     public String getTarget() { return "excel"; }
 
     public StepResult clear(String file, String worksheet, String range) throws IOException {
+        if (!FileUtil.isFileReadable(file, MIN_EXCEL_FILE_SIZE)) {
+            return StepResult.success("Excel file " + file + " not found; not need to clear worksheet");
+        }
+
         Excel excel = deriveExcel(file);
 
-        requires(StringUtils.isNotBlank(range) && StringUtils.contains(range, ":"), "invalid Excel range", range);
-        ExcelAddress addr = new ExcelAddress(range);
+        requiresNotBlank(worksheet, "invalid worksheet name", worksheet);
+        requiresNotBlank(range, "invalid Excel range", range);
 
-        excel.requireWorksheet(worksheet, true).clearCells(addr);
+        String message;
+        boolean clearAll = StringUtils.equals(range, "*");
+        if (clearAll) {
+            XSSFWorkbook workbook = excel.getWorkbook();
+            XSSFSheet sheet = workbook.getSheet(worksheet);
+            // worksheet doesn't exist... this is the same as it's already "cleared". so we are done here.
+            if (sheet == null) { return StepResult.success("worksheet '" + worksheet + "' not found for " + file); }
+
+            requiresNotNull(sheet, "invalid worksheet", worksheet);
+
+            int sheetIndex = workbook.getSheetIndex(worksheet);
+            workbook.removeSheetAt(sheetIndex);
+
+            workbook.createSheet(worksheet);
+            workbook.setSheetOrder(worksheet, sheetIndex);
+
+            message = "worksheet '" + worksheet + "' clear for " + file;
+        } else {
+            requires(StringUtils.contains(range, ":"), "invalid Excel range", range);
+
+            ExcelAddress addr = new ExcelAddress(range);
+            excel.requireWorksheet(worksheet, true).clearCells(addr);
+
+            message = "Data at " + range + " cleared for " + file + "#" + worksheet;
+        }
+
         excel.save();
 
-        return StepResult.success("Data at " + range + " cleared for " + file + "#" + worksheet);
+        return StepResult.success(message);
     }
 
     public StepResult saveRange(String var, String file, String worksheet, String range) throws IOException {
@@ -142,7 +172,7 @@ public class ExcelCommand extends BaseCommand {
         requiresValidVariableName(var);
         requiresNotBlank(startCell, "invalid cell address", startCell);
 
-        Excel excel = deriveExcel(file);
+        Excel excel = deriveExcel(file, true);
         XSSFSheet sheet = excel.requireWorksheet(worksheet, true).getSheet();
         addData(sheet, new ExcelAddress(startCell), to2dStringList(var));
         excel.save();
@@ -166,7 +196,7 @@ public class ExcelCommand extends BaseCommand {
             }
         }
 
-        Excel excel = deriveExcel(file);
+        Excel excel = deriveExcel(file, true);
         XSSFSheet sheet = excel.requireWorksheet(worksheet, true).getSheet();
         addData(sheet, new ExcelAddress(startCell), data2d);
         excel.save();
@@ -185,7 +215,7 @@ public class ExcelCommand extends BaseCommand {
         List<List<String>> rows = new ArrayList<>();
         rows.add(TextUtils.toList(array, context.getTextDelim(), false));
 
-        Excel excel = deriveExcel(file);
+        Excel excel = deriveExcel(file, true);
         excel.requireWorksheet(worksheet, true).writeAcross(new ExcelAddress(startCell), rows);
 
         // (2018/12/16,automike): memory consumption precaution
@@ -202,7 +232,7 @@ public class ExcelCommand extends BaseCommand {
         List<List<String>> columns = new ArrayList<>();
         columns.add(TextUtils.toList(array, context.getTextDelim(), false));
 
-        Excel excel = deriveExcel(file);
+        Excel excel = deriveExcel(file, true);
         excel.requireWorksheet(worksheet, true).writeDown(new ExcelAddress(startCell), columns);
 
         // (2018/12/16,automike): memory consumption precaution
@@ -311,7 +341,14 @@ public class ExcelCommand extends BaseCommand {
         return sheet.cells(addr);
     }
 
-    protected Excel deriveExcel(String file) throws IOException { return new Excel(deriveReadableFile(file)); }
+    protected Excel deriveExcel(String file) throws IOException {
+        return new Excel(deriveReadableFile(file), false, false);
+    }
+
+    protected Excel deriveExcel(String file, boolean create) throws IOException {
+        if (!FileUtil.isFileReadable(file, MIN_EXCEL_FILE_SIZE) && create) { return Excel.newExcel(new File(file)); }
+        return new Excel(deriveReadableFile(file), false, false);
+    }
 
     protected static File deriveReadableFile(String file) {
         requiresReadableFile(file);
