@@ -1160,6 +1160,8 @@ public class Excel {
                                      context.getStringData(WPS_EXE_LOCATION);
                 }
 
+                // https://superuser.com/questions/198525/how-can-i-execute-a-windows-command-line-in-background
+                // start "" [program]... will cause CMD to exit before program executes.. sorta like running program in background
                 ProcessInvoker.invoke(WIN32_CMD, Arrays.asList("/C", "start", "\"\"", spreadsheetExe, file), null);
             }
         } catch (IOException | InterruptedException e) {

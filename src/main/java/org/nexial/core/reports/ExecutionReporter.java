@@ -110,7 +110,9 @@ public class ExecutionReporter {
             }
 
             if (IS_OS_WINDOWS) {
-                ProcessInvoker.invokeNoWait(WIN32_CMD, Arrays.asList("/C", "start", "\"" + reportFile + "\""), null);
+                // https://superuser.com/questions/198525/how-can-i-execute-a-windows-command-line-in-background
+                // start "" [program]... will cause CMD to exit before program executes.. sorta like running program in background
+                ProcessInvoker.invokeNoWait(WIN32_CMD, Arrays.asList("/C", "\"\"", "\"" + reportFile + "\""), null);
             }
         } catch (IOException e) {
             ConsoleUtils.error("ERROR!!! Can't open " + reportFile + ": " + e.getMessage());
