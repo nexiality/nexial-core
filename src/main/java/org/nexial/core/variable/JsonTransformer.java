@@ -42,8 +42,7 @@ import com.google.gson.JsonPrimitive;
 import com.google.gson.stream.MalformedJsonException;
 
 import static org.json.JSONObject.NULL;
-import static org.nexial.core.NexialConst.DEF_FILE_ENCODING;
-import static org.nexial.core.NexialConst.GSON;
+import static org.nexial.core.NexialConst.*;
 
 public class JsonTransformer<T extends JsonDataType> extends Transformer {
     private static final Map<String, Integer> FUNCTION_TO_PARAM_LIST = discoverFunctions(JsonTransformer.class);
@@ -221,6 +220,24 @@ public class JsonTransformer<T extends JsonDataType> extends Transformer {
         }
 
         return handleJsonPathResult(data, modified.toString());
+    }
+
+    public T minify(T data) {
+        if (data == null || data.getValue() == null) { return null; }
+
+        String compressed = GSON_COMPRESSED.toJson(data.getValue());
+        data.setValue(GSON_COMPRESSED.fromJson(compressed, JsonElement.class));
+        data.setTextValue(compressed);
+        return data;
+    }
+
+    public T beautify(T data) {
+        if (data == null || data.getValue() == null) { return null; }
+
+        String beautified = GSON.toJson(data.getValue());
+        data.setValue(GSON.fromJson(beautified, JsonElement.class));
+        data.setTextValue(beautified);
+        return data;
     }
 
     @Override

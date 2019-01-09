@@ -47,9 +47,8 @@ import com.google.gson.JsonElement;
 import com.google.gson.JsonParser;
 import com.google.gson.JsonSyntaxException;
 
-import static org.nexial.core.NexialConst.DEF_CHARSET;
+import static org.nexial.core.NexialConst.*;
 import static org.nexial.core.NexialConst.Data.LAST_JSON_COMPARE_RESULT;
-import static org.nexial.core.NexialConst.GSON;
 import static org.nexial.core.utils.CheckUtils.*;
 
 /**
@@ -269,6 +268,38 @@ public class JsonCommand extends BaseCommand {
         return StepResult.success("CSV '" + csv + "' converted to JSON '" + jsonFile + "'");
     }
 
+    public StepResult minify(String json, String var) {
+        requiresValidVariableName(var);
+
+        String jsonContent = retrieveJsonContent(json);
+        if (jsonContent == null) { return StepResult.fail("Unable to parse JSON content: " + json); }
+
+        JsonElement jsonElement = GSON_COMPRESSED.fromJson(jsonContent, JsonElement.class);
+        requiresNotNull(jsonElement, "invalid json", json);
+
+        String compressed = GSON_COMPRESSED.toJson(jsonElement);
+        if (StringUtils.isBlank(compressed)) { return StepResult.fail("Unable to minify JSON content"); }
+
+        context.setData(var, compressed);
+        return StepResult.success("JSON content compressed and saved to '" + var);
+    }
+
+    public StepResult beautify(String json, String var) {
+        requiresValidVariableName(var);
+
+        String jsonContent = retrieveJsonContent(json);
+        if (jsonContent == null) { return StepResult.fail("Unable to parse JSON content: " + json); }
+
+        JsonElement jsonElement = GSON.fromJson(jsonContent, JsonElement.class);
+        requiresNotNull(jsonElement, "invalid json", json);
+
+        String beautified = GSON.toJson(jsonElement);
+        if (StringUtils.isBlank(beautified)) { return StepResult.fail("Unable to beautify JSON content"); }
+
+        context.setData(var, beautified);
+        return StepResult.success("JSON content beautified and saved to '" + var);
+    }
+
     @NotNull
     protected StepResult assertEqual(JsonElement expectedJson, JsonElement actualJson) {
         JsonMetaParser jsonMetaParser = new JsonMetaParser();
@@ -289,7 +320,7 @@ public class JsonCommand extends BaseCommand {
         }
     }
 
-    protected Object toJSONObject(String json) {
+    protected String retrieveJsonContent(String json) {
         requires(StringUtils.isNotBlank(json), "invalid json", json);
 
         try {
@@ -297,16 +328,7 @@ public class JsonCommand extends BaseCommand {
             json = OutputFileUtils.resolveContent(json, context, false, true);
             requiresNotBlank(json, "invalid/malformed json", json);
 
-            json = new String(StringUtils.trim(json).getBytes(DEF_CHARSET), DEF_CHARSET);
-            if (TextUtils.isBetween(json, "[", "]")) {
-                JSONArray jsonArray = JsonUtils.toJSONArray(json);
-                requires(jsonArray != null, "invalid/malformed json", json);
-                return jsonArray;
-            }
-
-            JSONObject jsonObject = JsonUtils.toJSONObject(json);
-            requires(jsonObject != null, "invalid/malformed json", json);
-            return jsonObject;
+            return new String(StringUtils.trim(json).getBytes(DEF_CHARSET), DEF_CHARSET);
         } catch (IOException e) {
             ConsoleUtils.log("Error reading as file '" + json + "': " + e.getMessage());
             fail("Error reading as file '" + json + "': " + e.getMessage());
@@ -315,8 +337,23 @@ public class JsonCommand extends BaseCommand {
         }
     }
 
+    protected Object toJSONObject(String json) {
+        json = retrieveJsonContent(json);
+        if (json == null) { return null; }
+
+        if (TextUtils.isBetween(json, "[", "]")) {
+            JSONArray jsonArray = JsonUtils.toJSONArray(json);
+            requiresNotNull(jsonArray, "invalid/malformed json", json);
+            return jsonArray;
+        }
+
+        JSONObject jsonObject = JsonUtils.toJSONObject(json);
+        requiresNotNull(jsonObject, "invalid/malformed json", json);
+        return jsonObject;
+    }
+
     protected Object sanityCheck(String json, String jsonpath) {
-        requires(StringUtils.isNotBlank(jsonpath), "invalid jsonpath", jsonpath);
+        requiresNotBlank(jsonpath, "invalid jsonpath", jsonpath);
         return toJSONObject(json);
     }
 
