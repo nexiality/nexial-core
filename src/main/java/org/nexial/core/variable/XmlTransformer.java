@@ -26,6 +26,7 @@ import java.util.Map;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.jdom2.*;
+import org.jdom2.output.Format;
 import org.jdom2.output.XMLOutputter;
 import org.nexial.commons.utils.TextUtils;
 import org.nexial.commons.utils.XmlUtils;
@@ -224,6 +225,26 @@ public class XmlTransformer<T extends XmlDataType> extends Transformer {
             throw new TypeConversionException(data.getName(), data.getTextValue(),
                                               "Error converting to XML: " + jdomException.getMessage(), jdomException);
         }
+    }
+
+    private T minify(T data) throws JDOMException, IOException {
+        if (data == null || data.getValue() == null) { return null; }
+
+        Document document = XmlUtils.parse(data.getTextValue());
+        XMLOutputter compressedXmlOutputter = new XMLOutputter(Format.getCompactFormat());
+        String compressed = compressedXmlOutputter.outputString(document);
+        data.setTextValue(compressed.trim());
+        return data;
+    }
+
+    private T beautify(T data) throws JDOMException, IOException {
+        if (data == null || data.getValue() == null) { return null; }
+
+        Document doc = XmlUtils.parse(data.getTextValue());
+        XMLOutputter compressedXmlOutputter = new XMLOutputter(Format.getPrettyFormat());
+        String beautified = compressedXmlOutputter.outputString(doc);
+        data.setTextValue(beautified.trim());
+        return data;
     }
 
     public T store(T data, String var) {

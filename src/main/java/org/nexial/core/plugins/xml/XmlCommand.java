@@ -38,6 +38,8 @@ import org.jdom2.JDOMException;
 import org.jdom2.input.SAXBuilder;
 import org.jdom2.input.sax.XMLReaderJDOMFactory;
 import org.jdom2.input.sax.XMLReaderXSDFactory;
+import org.jdom2.output.Format;
+import org.jdom2.output.XMLOutputter;
 import org.nexial.commons.utils.CollectionUtil;
 import org.nexial.commons.utils.TextUtils;
 import org.nexial.commons.utils.XmlUtils;
@@ -50,8 +52,7 @@ import org.xml.sax.SAXParseException;
 
 import static org.jdom2.input.sax.XMLReaders.XSDVALIDATING;
 import static org.nexial.core.NexialConst.DEF_FILE_ENCODING;
-import static org.nexial.core.utils.CheckUtils.requires;
-import static org.nexial.core.utils.CheckUtils.requiresNotBlank;
+import static org.nexial.core.utils.CheckUtils.*;
 
 public class XmlCommand extends BaseCommand {
     public static final String PROLOG_START = "<?xml version=";
@@ -276,6 +277,48 @@ public class XmlCommand extends BaseCommand {
         return doc == null ?
                StepResult.fail("invalid xml: " + xml) :
                StepResult.success("xml validated as well-formed");
+    }
+
+    private StepResult beautify(String xml, String var) {
+        requiresValidVariableName(var);
+
+        Document doc = deriveXmlDocument(xml);
+        requiresNotNull(StringUtils.isNotBlank(xml), "invalid xml", xml);
+
+        XMLOutputter prettyXmlOutputter = new XMLOutputter(Format.getPrettyFormat());
+        String beautified = prettyXmlOutputter.outputString(doc);
+        if (StringUtils.isBlank(beautified)) { return StepResult.fail("Unable to beautify XML content"); }
+
+        context.setData(var, beautified.trim());
+        return StepResult.success("XML content beautified and saved to '" + var);
+    }
+
+    private StepResult minify(String xml, String var) {
+        requiresValidVariableName(var);
+
+        Document doc = deriveXmlDocument(xml);
+        requiresNotNull(StringUtils.isNotBlank(xml), "invalid xml", xml);
+
+        XMLOutputter compressedXmlOutputter = new XMLOutputter(Format.getCompactFormat());
+        String compressed = compressedXmlOutputter.outputString(doc);
+        if (StringUtils.isBlank(compressed)) { return StepResult.fail("Unable to compress XML content"); }
+
+        context.setData(var, compressed.trim());
+        return StepResult.success("XML content compressed and saved to '" + var);
+    }
+
+    private Document deriveXmlDocument(String xml) {
+        requires(StringUtils.isNotBlank(xml), "invalid xml", xml);
+
+        try {
+            Document doc = XmlUtils.parse(xml);
+            return doc;
+        } catch (JDOMException e) {
+            ConsoleUtils.log("Error reading as file '" + xml + "': " + e.getMessage());
+        } catch (IOException e) {
+            ConsoleUtils.log("Error when validating xml '" + xml + "': " + e.getMessage());
+        }
+        return null;
     }
 
     public String getValuesByXPath(String xml, String xpath) {
