@@ -26,7 +26,6 @@ import java.util.Map;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.jdom2.*;
-import org.jdom2.output.Format;
 import org.jdom2.output.XMLOutputter;
 import org.nexial.commons.utils.TextUtils;
 import org.nexial.commons.utils.XmlUtils;
@@ -34,7 +33,9 @@ import org.nexial.core.ExecutionThread;
 import org.nexial.core.model.ExecutionContext;
 import org.nexial.core.utils.ConsoleUtils;
 
+import static org.nexial.core.NexialConst.COMPRESSED_XML_OUTPUTTER;
 import static org.nexial.core.NexialConst.Data.DEF_TEXT_DELIM;
+import static org.nexial.core.NexialConst.PRETTY_XML_OUTPUTTER;
 
 public class XmlTransformer<T extends XmlDataType> extends Transformer {
     private static final Map<String, Integer> FUNCTION_TO_PARAM_LIST = discoverFunctions(XmlTransformer.class);
@@ -227,23 +228,15 @@ public class XmlTransformer<T extends XmlDataType> extends Transformer {
         }
     }
 
-    private T minify(T data) throws JDOMException, IOException {
+    public T beautify(T data) { return format(data, PRETTY_XML_OUTPUTTER); }
+
+    public T minify(T data) { return format(data, COMPRESSED_XML_OUTPUTTER); }
+
+    private T format(T data, XMLOutputter outputter) {
         if (data == null || data.getValue() == null) { return null; }
 
-        Document document = XmlUtils.parse(data.getTextValue());
-        XMLOutputter compressedXmlOutputter = new XMLOutputter(Format.getCompactFormat());
-        String compressed = compressedXmlOutputter.outputString(document);
-        data.setTextValue(compressed.trim());
-        return data;
-    }
-
-    private T beautify(T data) throws JDOMException, IOException {
-        if (data == null || data.getValue() == null) { return null; }
-
-        Document doc = XmlUtils.parse(data.getTextValue());
-        XMLOutputter compressedXmlOutputter = new XMLOutputter(Format.getPrettyFormat());
-        String beautified = compressedXmlOutputter.outputString(doc);
-        data.setTextValue(beautified.trim());
+        String outputXml = outputter.outputString(data.getDocument());
+        data.setTextValue(outputXml.trim());
         return data;
     }
 

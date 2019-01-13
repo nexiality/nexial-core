@@ -30,6 +30,8 @@ import org.apache.commons.collections4.ListUtils;
 import org.apache.commons.collections4.MapUtils;
 import org.apache.commons.lang3.BooleanUtils;
 import org.apache.commons.lang3.StringUtils;
+import org.jdom2.output.Format;
+import org.jdom2.output.XMLOutputter;
 import org.nexial.commons.utils.RegexUtils;
 import org.nexial.commons.utils.TextUtils;
 import org.nexial.core.excel.ExcelConfig;
@@ -256,6 +258,10 @@ public final class NexialConst {
     public static final String WS_ASYNC_SHUTDOWN_TIMEOUT = WS_ASYNC_NAMESPACE + "shutdownWaitMs";
     // default to 3 minutes
     public static final long DEF_ASYNC_SHUTDOWN_TIMEOUT = 3 * 60 * 1000;
+
+    //plugin: xml
+    public static XMLOutputter COMPRESSED_XML_OUTPUTTER = new XMLOutputter(Format.getCompactFormat());
+    public static XMLOutputter PRETTY_XML_OUTPUTTER = new XMLOutputter(Format.getPrettyFormat());
 
     // oauth
     public static final String OAUTH_CLIENT_ID = "client_id";

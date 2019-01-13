@@ -38,7 +38,6 @@ import org.jdom2.JDOMException;
 import org.jdom2.input.SAXBuilder;
 import org.jdom2.input.sax.XMLReaderJDOMFactory;
 import org.jdom2.input.sax.XMLReaderXSDFactory;
-import org.jdom2.output.Format;
 import org.jdom2.output.XMLOutputter;
 import org.nexial.commons.utils.CollectionUtil;
 import org.nexial.commons.utils.TextUtils;
@@ -51,7 +50,7 @@ import org.xml.sax.ErrorHandler;
 import org.xml.sax.SAXParseException;
 
 import static org.jdom2.input.sax.XMLReaders.XSDVALIDATING;
-import static org.nexial.core.NexialConst.DEF_FILE_ENCODING;
+import static org.nexial.core.NexialConst.*;
 import static org.nexial.core.utils.CheckUtils.*;
 
 public class XmlCommand extends BaseCommand {
@@ -279,46 +278,24 @@ public class XmlCommand extends BaseCommand {
                StepResult.success("xml validated as well-formed");
     }
 
-    private StepResult beautify(String xml, String var) {
+    public StepResult beautify(String xml, String var) { return format(xml, var, PRETTY_XML_OUTPUTTER); }
+
+    public StepResult minify(String xml, String var) { return format(xml, var, COMPRESSED_XML_OUTPUTTER); }
+
+    private StepResult format(String xml, String var, XMLOutputter outputter) {
         requiresValidVariableName(var);
+        requiresNotBlank(xml, "invalid xml", xml);
 
-        Document doc = deriveXmlDocument(xml);
-        requiresNotNull(StringUtils.isNotBlank(xml), "invalid xml", xml);
+        Document doc = deriveWellformXml(xml);
+        if (doc == null) { return StepResult.fail("invalid xml: " + xml); }
 
-        XMLOutputter prettyXmlOutputter = new XMLOutputter(Format.getPrettyFormat());
-        String beautified = prettyXmlOutputter.outputString(doc);
-        if (StringUtils.isBlank(beautified)) { return StepResult.fail("Unable to beautify XML content"); }
+        String action = "XML " + (outputter == COMPRESSED_XML_OUTPUTTER ? "minification" : "beautification");
 
-        context.setData(var, beautified.trim());
-        return StepResult.success("XML content beautified and saved to '" + var);
-    }
+        String outputXml = outputter.outputString(doc);
+        if (StringUtils.isBlank(outputXml)) { return StepResult.fail(action + " failed with blank XML content"); }
 
-    private StepResult minify(String xml, String var) {
-        requiresValidVariableName(var);
-
-        Document doc = deriveXmlDocument(xml);
-        requiresNotNull(StringUtils.isNotBlank(xml), "invalid xml", xml);
-
-        XMLOutputter compressedXmlOutputter = new XMLOutputter(Format.getCompactFormat());
-        String compressed = compressedXmlOutputter.outputString(doc);
-        if (StringUtils.isBlank(compressed)) { return StepResult.fail("Unable to compress XML content"); }
-
-        context.setData(var, compressed.trim());
-        return StepResult.success("XML content compressed and saved to '" + var);
-    }
-
-    private Document deriveXmlDocument(String xml) {
-        requires(StringUtils.isNotBlank(xml), "invalid xml", xml);
-
-        try {
-            Document doc = XmlUtils.parse(xml);
-            return doc;
-        } catch (JDOMException e) {
-            ConsoleUtils.log("Error reading as file '" + xml + "': " + e.getMessage());
-        } catch (IOException e) {
-            ConsoleUtils.log("Error when validating xml '" + xml + "': " + e.getMessage());
-        }
-        return null;
+        context.setData(var, outputXml.trim());
+        return StepResult.success(action + " completed and saved to '" + var + "'");
     }
 
     public String getValuesByXPath(String xml, String xpath) {
