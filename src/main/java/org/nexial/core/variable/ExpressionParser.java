@@ -58,15 +58,17 @@ class ExpressionParser {
         Expression expr = new Expression();
         expr.setDataType(dataType);
 
-        text = typeGrouping.get(3);
-        text = StringUtils.replace(text, ALT_CLOSE_ANGLED_BRACKET, "\\]");
+        // text = typeGrouping.get(3);
+        // text = StringUtils.replace(text, ALT_CLOSE_ANGLED_BRACKET, "\\]");
 
         // gather fragment for textual representation reconstruction
-        String fragment = typeGrouping.get(0) + typeGrouping.get(1) + typeGrouping.get(2) + text;
+        // String fragment = typeGrouping.get(0) + typeGrouping.get(1) + typeGrouping.get(2) + text;
+        String fragment = typeGrouping.get(0) + typeGrouping.get(1) + typeGrouping.get(2) + typeGrouping.get(3);
         expr.appendOriginalExpression(fragment);
 
+        text = typeGrouping.get(3);
         // workaround to avoid character conflicts
-        text = StringUtils.replace(text, "\\]", "]");
+        // text = StringUtils.replace(text, "\\]", "]");
         text = preFunctionParsingSubstitution(text);
 
         List<String> functionGroups = RegexUtils.eagerCollectGroups(text, REGEX_FUNCTION, false, true);
