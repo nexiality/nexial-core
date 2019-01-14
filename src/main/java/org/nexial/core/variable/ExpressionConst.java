@@ -44,7 +44,7 @@ final class ExpressionConst {
 
     static final List<String> ALIAS_EMPTY = Arrays.asList("", "\"\"", "''");
 
-    static final String ALT_CLOSE_ANGLED_BRACKET = "TEMP_CLOSE_ANGLED_BRACKET";
+    // static final String ALT_CLOSE_ANGLED_BRACKET = "TEMP_CLOSE_ANGLED_BRACKET";
 
     private ExpressionConst() { }
 }
