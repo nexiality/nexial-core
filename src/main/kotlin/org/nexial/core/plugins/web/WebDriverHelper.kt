@@ -36,7 +36,7 @@ import org.nexial.commons.utils.RegexUtils
 import org.nexial.commons.utils.TextUtils
 import org.nexial.core.NexialConst.*
 import org.nexial.core.NexialConst.BrowserType.*
-import org.nexial.core.NexialConst.Data.WIN32_CMD
+import org.nexial.core.NexialConst.Data.*
 import org.nexial.core.model.ExecutionContext
 import org.nexial.core.plugins.ws.WebServiceClient
 import org.nexial.core.plugins.xml.XmlCommand

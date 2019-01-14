@@ -126,11 +126,12 @@ public class RdbmsCommand extends BaseCommand {
         requiresNotBlank(db, "invalid db", db);
         requiresReadableFile(file);
 
-        try {
-            return runSQLs(var, db, OutputFileUtils.resolveRawContent(file, context));
-        } catch (IOException e) {
-            return StepResult.fail("Unable to read SQL file '" + file + "': " + e.getMessage());
-        }
+        return runSQLs(var, db, file);
+        // try {
+        //     return runSQLs(var, db, OutputFileUtils.resolveRawContent(file, context));
+        // } catch (IOException e) {
+        //     return StepResult.fail("Unable to read SQL file '" + file + "': " + e.getMessage());
+        // }
     }
 
     public StepResult resultToCSV(String var, String csvFile, String delim, String showHeader) throws IOException {

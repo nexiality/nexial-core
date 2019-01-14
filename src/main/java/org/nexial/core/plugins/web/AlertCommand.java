@@ -31,6 +31,8 @@ import org.openqa.selenium.WebDriver;
 import org.openqa.selenium.remote.UnreachableBrowserException;
 
 import static org.nexial.core.NexialConst.*;
+import static org.nexial.core.NexialConst.Data.DEF_PREEMPTIVE_ALERT_CHECK;
+import static org.nexial.core.NexialConst.Data.OPT_PREEMPTIVE_ALERT_CHECK;
 import static org.nexial.core.utils.CheckUtils.requires;
 import static org.nexial.core.utils.CheckUtils.requiresValidVariableName;
 

@@ -34,7 +34,7 @@ final class ExpressionConst {
     static final String REGEX_FUNCTION = "(\\s*[A-Za-z_\\-]{3,})(\\s*\\([^)]+\\)\\s*)?";
 
     static final String REGEX_VALID_TYPE_PREFIX = ".*\\[(";
-    static final String REGEX_VALID_TYPE_SUFFIX = ")(\\(.+\\))(\\s*\\=\\>\\s*)(.+)\\].*";
+    static final String REGEX_VALID_TYPE_SUFFIX = ")(\\(.+\\))(\\s*\\=\\>\\s*)([^\\]]+)\\].*";
 
     static final Map<String, String> FUNCTION_PARAM_SUBSTITUTIONS = TextUtils.toMap("\\(=~~9~~|" +
                                                                                     "\\)=~~0~~|" +
@@ -42,6 +42,8 @@ final class ExpressionConst {
                                                                                     "|", "=");
 
     static final List<String> ALIAS_EMPTY = Arrays.asList("", "\"\"", "''");
+
+    static final String ALT_CLOSE_ANGLED_BRACKET = "TEMP_CLOSE_ANGLED_BRACKET";
 
     private ExpressionConst() { }
 }

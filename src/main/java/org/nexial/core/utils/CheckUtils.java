@@ -27,6 +27,7 @@ import org.apache.commons.lang3.math.NumberUtils;
 import org.nexial.commons.utils.FileUtil;
 import org.nexial.commons.utils.TextUtils;
 
+import static java.lang.Integer.MIN_VALUE;
 import static org.nexial.core.NexialConst.TOKEN_END;
 import static org.nexial.core.NexialConst.TOKEN_START;
 
@@ -112,6 +113,14 @@ public class CheckUtils {
     public static boolean requiresPositiveNumber(String number, String message, Object... params) {
         requiresNotBlank(number, message, params);
         if (!NumberUtils.isDigits(number)) { fail(message + ": " + ArrayUtils.toString(params)); }
+        return true;
+    }
+
+    public static boolean requiresInteger(String number, String message, Object... params) {
+        requiresNotBlank(number, message, params);
+
+        int integer = NumberUtils.toInt(number, MIN_VALUE);
+        if (integer == MIN_VALUE) { fail(message + ": " + ArrayUtils.toString(params)); }
         return true;
     }
 

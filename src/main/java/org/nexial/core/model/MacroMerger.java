@@ -73,7 +73,7 @@ public class MacroMerger {
 
         List<Worksheet> testSheets = InputFileUtils.retrieveValidTestScenarios(excel);
         assert CollectionUtils.isNotEmpty(testSheets) :
-            "Specified scenario(s) of " + execDef.getTestScript() + "not found: " + expectedScenarios;
+            "Specified scenario(s) of " + execDef.getTestScript() + " not found: " + expectedScenarios;
 
         testSheets.forEach(worksheet -> expectedScenarios.remove(worksheet.getName()));
         assert CollectionUtils.isEmpty(expectedScenarios) :

@@ -139,34 +139,6 @@ public final class NexialConst {
     public static final String OPT_LAST_ALERT_TEXT = NAMESPACE + "lastAlertText";
     public static final String OPT_ALERT_IGNORE_FLAG = NAMESPACE + "ignoreBrowserAlert";
 
-    public static final String NS_WEB = NAMESPACE + "web.";
-    public static final String OPT_PREEMPTIVE_ALERT_CHECK = NS_WEB + "preemptiveAlertCheck";
-    public static final boolean DEF_PREEMPTIVE_ALERT_CHECK = false;
-
-    public static final String OPT_FORCE_IE_32 = NAMESPACE + "forceIE32";
-    public static final boolean DEFAULT_FORCE_IE_32 = false;
-
-    public static final String WEB_ALWAYS_WAIT = NS_WEB + "alwaysWait";
-    public static final boolean DEF_WEB_ALWAYS_WAIT = false;
-
-    public static final String WEB_UNFOCUS_AFTER_TYPE = NS_WEB + "unfocusAfterType";
-    public static final boolean DEF_WEB_UNFOCUS_AFTER_TYPE = false;
-
-    public static final String OPT_WEB_PAGE_LOAD_WAIT_MS = NS_WEB + "pageLoadWaitMs";
-    public static final int DEF_WEB_PAGE_LOAD_WAIT_MS = 10000;
-
-    // highlight
-    public static final String OPT_DEBUG_HIGHLIGHT_OLD = NAMESPACE + "highlight";
-    public static final String OPT_DEBUG_HIGHLIGHT = NS_WEB + "highlight";
-    public static final boolean DEF_DEBUG_HIGHLIGHT = false;
-
-    public static final String HIGHLIGHT_WAIT_MS_OLD = NAMESPACE + "highlightWaitMs";
-    public static final String HIGHLIGHT_WAIT_MS = NS_WEB + "highlight.waitMs";
-    public static final int DEF_HIGHLIGHT_WAIT_MS = 250;
-
-    public static final String HIGHLIGHT_STYLE = NS_WEB + "highlight.style";
-    public static final String DEF_HIGHLIGHT_STYLE = "background:#faf557;";
-
     public static final String OPT_PROXY_USER = NAMESPACE + "proxy_user";
     public static final String OPT_PROXY_PASSWORD = NAMESPACE + "proxy_password";
     public static final String OPT_PROXY_REQUIRED = NAMESPACE + "proxyRequired";
@@ -871,6 +843,49 @@ public final class NexialConst {
 
         public static final String BROWSER_ACCEPT_INVALID_CERTS = BROWSER + ".acceptInsecureCerts";
         public static final boolean DEF_BROWSER_ACCEPT_INVALID_CERTS = false;
+
+        public static final String NS_WEB = NAMESPACE + "web.";
+
+        public static final String OPT_WEB_PAGE_LOAD_WAIT_MS = NS_WEB + "pageLoadWaitMs";
+        public static final int DEF_WEB_PAGE_LOAD_WAIT_MS = 10000;
+
+        public static final String WEB_UNFOCUS_AFTER_TYPE = NS_WEB + "unfocusAfterType";
+        public static final boolean DEF_WEB_UNFOCUS_AFTER_TYPE = false;
+
+        public static final String WEB_ALWAYS_WAIT = NS_WEB + "alwaysWait";
+        public static final boolean DEF_WEB_ALWAYS_WAIT = false;
+
+        public static final String OPT_PREEMPTIVE_ALERT_CHECK = NS_WEB + "preemptiveAlertCheck";
+        public static final boolean DEF_PREEMPTIVE_ALERT_CHECK = false;
+
+        public static final String OPT_FORCE_IE_32 = NAMESPACE + "forceIE32";
+        public static final boolean DEFAULT_FORCE_IE_32 = false;
+
+        // web element highlight
+        public static final String OPT_DEBUG_HIGHLIGHT_OLD = NAMESPACE + "highlight";
+        public static final String OPT_DEBUG_HIGHLIGHT = NS_WEB + "highlight";
+        public static final boolean DEF_DEBUG_HIGHLIGHT = false;
+
+        public static final String HIGHLIGHT_WAIT_MS = NS_WEB + "highlight.waitMs";
+        public static final String HIGHLIGHT_WAIT_MS_OLD = NAMESPACE + "highlightWaitMs";
+        public static final int DEF_HIGHLIGHT_WAIT_MS = 250;
+
+        public static final String HIGHLIGHT_STYLE = NS_WEB + "highlight.style";
+        public static final String DEF_HIGHLIGHT_STYLE = "background:#faf557;";
+
+        // web drag-and-move config
+        public static final String OPT_DRAG_FROM = NS_WEB + "dragFrom";
+        public static final String OPT_DRAG_FROM_LEFT_CORNER = "left";
+        public static final String OPT_DRAG_FROM_RIGHT_CORNER = "right";
+        public static final String OPT_DRAG_FROM_TOP_CORNER = "top";
+        public static final String OPT_DRAG_FROM_BOTTOM_CORNER = "bottom";
+        public static final String OPT_DRAG_FROM_MIDDLE = "middle";
+        public static final List<String> OPT_DRAG_FROMS = Arrays.asList(OPT_DRAG_FROM_LEFT_CORNER,
+                                                                        OPT_DRAG_FROM_RIGHT_CORNER,
+                                                                        OPT_DRAG_FROM_TOP_CORNER,
+                                                                        OPT_DRAG_FROM_BOTTOM_CORNER,
+                                                                        OPT_DRAG_FROM_MIDDLE);
+        public static final String DEF_DRAG_FROM = OPT_DRAG_FROM_MIDDLE;
 
         // desktop
         public static final String WINIUM_EXE = "Winium.Desktop.Driver.exe";

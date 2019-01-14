@@ -60,6 +60,7 @@ import org.nexial.core.plugins.NexialCommand;
 import org.nexial.core.plugins.pdf.CommonKeyValueIdentStrategies;
 import org.nexial.core.plugins.sound.SoundMachine;
 import org.nexial.core.plugins.web.Browser;
+import org.nexial.core.plugins.web.WebDriverExceptionHelper;
 import org.nexial.core.reports.ExecutionMailConfig;
 import org.nexial.core.reports.NexialMailer;
 import org.nexial.core.utils.ConsoleUtils;
@@ -155,6 +156,7 @@ public class ExecutionContext {
     protected ExecutionEventListener executionEventListener;
     protected CanTakeScreenshot screenshotAgent;
     protected Syspath syspath;
+    protected WebDriverExceptionHelper webDriverExceptionHelper;
 
     // spring-managed map of webdriver related configs.
     protected Map<BrowserType, String> webdriverHelperConfig;
@@ -297,6 +299,7 @@ public class ExecutionContext {
             TextUtils.toList(defaultContextProps.get("nexial.referenceDataForExecution"), ",", true);
         webdriverHelperConfig =
             springContext.getBean("webdriverHelperConfig", new HashMap<BrowserType, String>().getClass());
+        webDriverExceptionHelper = springContext.getBean("webdriverExceptionHelper", WebDriverExceptionHelper.class);
 
         setData(ITERATION_ENDED, false);
 
@@ -367,6 +370,8 @@ public class ExecutionContext {
     public void setWebdriverHelperConfig(Map<BrowserType, String> webdriverHelperConfig) {
         this.webdriverHelperConfig = webdriverHelperConfig;
     }
+
+    public WebDriverExceptionHelper getWebDriverExceptionHelper() { return webDriverExceptionHelper; }
 
     public NexialS3Helper getOtc() throws IOException {
         // check that the required properties are set

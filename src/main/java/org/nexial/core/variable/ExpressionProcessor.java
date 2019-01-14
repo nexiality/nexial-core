@@ -37,6 +37,8 @@ public class ExpressionProcessor {
     }
 
     public String process(String text) throws ExpressionException {
+        // in case `text` contains expression that contains escaped "close eangled bracket" as operation parameter
+        text = StringUtils.replace(text, "\\]", ExpressionConst.ALT_CLOSE_ANGLED_BRACKET);
         Expression expr = parser.parse(text);
         if (expr == null) { return text; }
 

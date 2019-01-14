@@ -1511,6 +1511,57 @@ public class WebCommand extends BaseCommand implements CanTakeScreenshot, CanLog
         return StepResult.success("Drag-and-drop element '" + fromLocator + "' to '" + toLocator + "'");
     }
 
+    public StepResult dragTo(String fromLocator, String xOffset, String yOffset) {
+        requiresNotBlank(fromLocator, "invalid fromLocator", fromLocator);
+        requiresInteger(xOffset, "invalid x-offset", xOffset);
+        requiresInteger(yOffset, "invalid y-offset", yOffset);
+
+        int moveX = NumberUtils.toInt(xOffset);
+        int moveY = NumberUtils.toInt(yOffset);
+
+        WebElement source = findElement(fromLocator);
+
+        Point xy = deriveDragFrom(source);
+        ConsoleUtils.log("start dragging from target element (" + xy.getX() + "," + xy.getY() + ")");
+
+        new Actions(driver).moveToElement(source, xy.getX(), xy.getY())
+                           .dragAndDropBy(source, moveX, moveY)
+                           .build().perform();
+
+        return StepResult.success("Drag-and-move element '" + fromLocator + "' by (" + moveX + "," + moveY + ")");
+    }
+
+    protected Point deriveDragFrom(WebElement source) {
+        String dragFrom = context.getStringData(OPT_DRAG_FROM, DEF_DRAG_FROM);
+        if (!OPT_DRAG_FROMS.contains(dragFrom)) {
+            ConsoleUtils.error("Invalid drag-from value: " + dragFrom + ", use default instead");
+            dragFrom = DEF_DRAG_FROM;
+        }
+
+        Dimension dimension = source.getSize();
+
+        if (StringUtils.equals(dragFrom, OPT_DRAG_FROM_LEFT_CORNER)) {
+            return new Point(0, dimension.getHeight() / 2);
+        }
+
+        if (StringUtils.equals(dragFrom, OPT_DRAG_FROM_RIGHT_CORNER)) {
+            return new Point(dimension.getWidth(), dimension.getHeight() / 2);
+        }
+
+        if (StringUtils.equals(dragFrom, OPT_DRAG_FROM_LEFT_CORNER)) {
+            return new Point(dimension.getWidth() / 2, 0);
+        }
+
+        if (StringUtils.equals(dragFrom, OPT_DRAG_FROM_LEFT_CORNER)) {
+            return new Point(dimension.getWidth() / 2, dimension.getHeight());
+        }
+
+        // default
+        // if (StringUtils.equals(dragFrom,OPT_DRAG_FROM_MIDDLE)) {
+        return new Point(dimension.getWidth() / 2, dimension.getHeight() / 2);
+        // }
+    }
+
     protected void resizeSafariAfterOpen() {
         if ((browser.isRunBrowserStack() && browser.getBrowserstackHelper().getBrowser() == safari) ||
             (browser.isRunCrossBrowserTesting() && browser.getCbtHelper().getBrowser() == safari)) {

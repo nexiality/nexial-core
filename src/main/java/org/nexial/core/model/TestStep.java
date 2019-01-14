@@ -44,7 +44,7 @@ import org.nexial.core.utils.ExecutionLogger;
 import org.nexial.core.utils.FlowControlUtils;
 import org.nexial.core.utils.MessageUtils;
 import org.nexial.core.utils.TrackTimeLogs;
-import org.openqa.selenium.NoSuchElementException;
+import org.openqa.selenium.WebDriverException;
 
 import static java.lang.System.lineSeparator;
 import static org.apache.commons.lang3.builder.ToStringStyle.SIMPLE_STYLE;
@@ -177,15 +177,19 @@ public class TestStep extends TestStepManifest {
             }
 
             result = StepResult.fail(error);
-        } catch (NoSuchElementException e) {
-            String error = e.getMessage();
-            ConsoleUtils.error(error);
-            String[] messageLines = StringUtils.split(error, "\n");
-            if (ArrayUtils.getLength(messageLines) > 2) {
-                result = StepResult.fail(messageLines[0] + " " + messageLines[1]);
-            } else {
-                result = StepResult.fail(error);
-            }
+        } catch (WebDriverException e) {
+            String error = context.getWebDriverExceptionHelper().analyzeError(context, this, e);
+            ConsoleUtils.error(context.getRunId(), error);
+            result = StepResult.fail(error);
+            // } catch (NoSuchElementException e) {
+            //     String error = e.getMessage();
+            //     ConsoleUtils.error(error);
+            //     String[] messageLines = StringUtils.split(error, "\n");
+            //     if (ArrayUtils.getLength(messageLines) > 2) {
+            //         result = StepResult.fail(messageLines[0] + " " + messageLines[1]);
+            //     } else {
+            //         result = StepResult.fail(error);
+            //     }
         } catch (Throwable e) {
             String error = e.getMessage();
             if (printStackTrace) {
