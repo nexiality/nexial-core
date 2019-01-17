@@ -243,6 +243,8 @@ public class ExecutionContext {
         if (MapUtils.isNotEmpty(intraExecutionData)) {
             // reuse existing spring context
             springContext = (ClassPathXmlApplicationContext) intraExecutionData.remove(NAME_SPRING_CONTEXT);
+            initSpringBeans();
+
             plugins = (PluginManager) intraExecutionData.remove(NAME_PLUGIN_MANAGER);
             plugins.setContext(this);
 
@@ -251,19 +253,15 @@ public class ExecutionContext {
             data.remove(LAST_ITERATION);
         } else {
             // init spring
-            springContext = new ClassPathXmlApplicationContext(
-                "classpath:" + System.getProperty(OPT_SPRING_XML, DEF_SPRING_XML));
+            springContext = new ClassPathXmlApplicationContext("classpath:" +
+                                                               System.getProperty(OPT_SPRING_XML, DEF_SPRING_XML));
+            initSpringBeans();
+
             // init plugins
             plugins = springContext.getBean("pluginManager", PluginManager.class);
             plugins.setContext(this);
             plugins.init();
         }
-
-        readOnlyVars = springContext.getBean("readOnlyVars", new ArrayList<String>().getClass());
-        failfastCommands = springContext.getBean("failfastCommands", new ArrayList<String>().getClass());
-
-        // init built-in variables
-        builtinFunctions = springContext.getBean("builtinFunctions", new HashMap<String, Object>().getClass());
 
         // some data can be overridden by System property
         overrideIfSysPropFound(NEXIAL_HOME);
@@ -276,33 +274,11 @@ public class ExecutionContext {
         overrideIfSysPropFound(VERBOSE);
         overrideIfSysPropFound(TEXT_DELIM);
 
-        // otc=output-to-cloud (S3)
-        otc = springContext.getBean("otc", NexialS3Helper.class);
-        otc.setContext(this);
-        otcNotReadyMessage = springContext.getBean("otcNotReadyMessage", String.class);
-
-        // AWS SNS
-        smsHelper = springContext.getBean("smsHelper", SmsHelper.class);
-
-        // mail notifier
-        nexialMailer = springContext.getBean("nexialMailer", NexialMailer.class);
-        nexialMailer.setContext(this);
-
-        // event listener
-        executionEventListener = springContext.getBean("executionEventListener", ExecutionEventListener.class);
-        executionEventListener.setContext(this);
-
-        expression = new ExpressionProcessor(this);
-
-        defaultContextProps = springContext.getBean("defaultContextProps", new HashMap<String, String>().getClass());
-        referenceDataForExecution =
-            TextUtils.toList(defaultContextProps.get("nexial.referenceDataForExecution"), ",", true);
-        webdriverHelperConfig =
-            springContext.getBean("webdriverHelperConfig", new HashMap<BrowserType, String>().getClass());
-        webDriverExceptionHelper = springContext.getBean("webdriverExceptionHelper", WebDriverExceptionHelper.class);
+        // initSpringBeans();
 
         setData(ITERATION_ENDED, false);
 
+        expression = new ExpressionProcessor(this);
         executionLogger = new ExecutionLogger(this);
     }
 
@@ -366,10 +342,6 @@ public class ExecutionContext {
     public long getEndTimestamp() { return endTimestamp; }
 
     public Map<BrowserType, String> getWebdriverHelperConfig() { return webdriverHelperConfig; }
-
-    public void setWebdriverHelperConfig(Map<BrowserType, String> webdriverHelperConfig) {
-        this.webdriverHelperConfig = webdriverHelperConfig;
-    }
 
     public WebDriverExceptionHelper getWebDriverExceptionHelper() { return webDriverExceptionHelper; }
 
@@ -1205,10 +1177,11 @@ public class ExecutionContext {
         Object[] deleteCandidates = data.keySet().stream().filter(key -> StringUtils.startsWith(key, prefix)).toArray();
         for (Object deleteCandidate : deleteCandidates) { data.remove(Objects.toString(deleteCandidate)); }
 
-        System.getProperties().keySet().forEach(key -> {
+        Object[] sysProps = System.getProperties().keySet().toArray();
+        for (Object key : sysProps) {
             String sKey = Objects.toString(key);
             if (StringUtils.startsWith(sKey, prefix)) { System.clearProperty(sKey); }
-        });
+        }
     }
 
     protected Map<String, String> gatherReferenceData(String prefix) { return getDataByPrefix(prefix); }
@@ -1691,6 +1664,40 @@ public class ExecutionContext {
         // System.setProperty(SPREADSHEET_PROGRAM, spreadsheetProgram);
 
         ExecutionMailConfig.configure(this);
+    }
+
+    private void initSpringBeans() {
+        readOnlyVars = springContext.getBean("readOnlyVars", new ArrayList<String>().getClass());
+        failfastCommands = springContext.getBean("failfastCommands", new ArrayList<String>().getClass());
+
+        // init built-in variables
+        builtinFunctions = springContext.getBean("builtinFunctions", new HashMap<String, Object>().getClass());
+
+        // otc=output-to-cloud (S3)
+        otc = springContext.getBean("otc", NexialS3Helper.class);
+        otc.setContext(this);
+        otcNotReadyMessage = springContext.getBean("otcNotReadyMessage", String.class);
+
+        // AWS SNS
+        smsHelper = springContext.getBean("smsHelper", SmsHelper.class);
+
+        // mail notifier
+        nexialMailer = springContext.getBean("nexialMailer", NexialMailer.class);
+        nexialMailer.setContext(this);
+
+        // event listener
+        executionEventListener = springContext.getBean("executionEventListener", ExecutionEventListener.class);
+        executionEventListener.setContext(this);
+
+        // default / reference
+        defaultContextProps = springContext.getBean("defaultContextProps", new HashMap<String, String>().getClass());
+        referenceDataForExecution =
+            TextUtils.toList(defaultContextProps.get("nexial.referenceDataForExecution"), ",", true);
+
+        // web driver
+        webdriverHelperConfig =
+            springContext.getBean("webdriverHelperConfig", new HashMap<BrowserType, String>().getClass());
+        webDriverExceptionHelper = springContext.getBean("webdriverExceptionHelper", WebDriverExceptionHelper.class);
     }
 
     @NotNull

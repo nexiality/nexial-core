@@ -41,6 +41,7 @@ public final class DateUtility {
     private static final String FORMAT_TIME = "HH:mm:ss";
     private static final String FORMAT_TIME_WITH_MS = "HH:mm:ss.SSS";
     private static final String FORMAT_DB2_DATE = "yyyy-MM-dd";
+    private static final String FORMAT_ISO8601_DATE = "yyyy-MM-dd'T'HH:mm:ss";
     private static final DateFormat DATE_FORMAT_LONG = new SimpleDateFormat(FORMAT_LONG);
     private static final DateFormat DATE_FORMAT_LONG1 = new SimpleDateFormat(FORMAT_LONG1);
     private static final DateFormat DATE_FORMAT_LOG = new SimpleDateFormat(FORMAT_LOG);
@@ -48,6 +49,17 @@ public final class DateUtility {
     private static final DateFormat DATE_FORMAT_TIME = new SimpleDateFormat(FORMAT_TIME);
     private static final DateFormat DATE_FORMAT_TIME_WITH_MS = new SimpleDateFormat(FORMAT_TIME_WITH_MS);
     private static final DateFormat DATE_FORMAT_DB2_DATE = new SimpleDateFormat(FORMAT_DB2_DATE);
+    private static final DateFormat DATE_FORMAT_ISO8601_DATE = new SimpleDateFormat(FORMAT_ISO8601_DATE);
+
+    /**
+     * This method formats date given as long in MM/DD/YYYY HH:mm:ss AM/PM format
+     *
+     * @param timestampMillis <b>long<b> - date as long
+     * @return <b>String<b> - formatted string
+     */
+    public static String formatISO8601(long timestampMillis) {
+        return DATE_FORMAT_ISO8601_DATE.format(new Date(timestampMillis));
+    }
 
     /**
      * This method formats date given as long in MM/DD/YYYY HH:mm:ss AM/PM format

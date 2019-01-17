@@ -1548,11 +1548,11 @@ public class WebCommand extends BaseCommand implements CanTakeScreenshot, CanLog
             return new Point(dimension.getWidth(), dimension.getHeight() / 2);
         }
 
-        if (StringUtils.equals(dragFrom, OPT_DRAG_FROM_LEFT_CORNER)) {
+        if (StringUtils.equals(dragFrom, OPT_DRAG_FROM_TOP_CORNER)) {
             return new Point(dimension.getWidth() / 2, 0);
         }
 
-        if (StringUtils.equals(dragFrom, OPT_DRAG_FROM_LEFT_CORNER)) {
+        if (StringUtils.equals(dragFrom, OPT_DRAG_FROM_BOTTOM_CORNER)) {
             return new Point(dimension.getWidth() / 2, dimension.getHeight());
         }
 

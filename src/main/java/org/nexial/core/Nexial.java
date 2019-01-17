@@ -23,7 +23,7 @@ import java.security.Security;
 import java.text.MessageFormat;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Collection;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import javax.annotation.Nullable;
@@ -774,6 +774,64 @@ public class Nexial {
         return summary;
     }
 
+    protected static void updateLogLocation(NexialS3Helper otc, ExecutionSummary summary) {
+        // push the latest logs to cloud...
+        if (otc == null || !otc.isReadyForUse()) {
+            // forget it...
+            ConsoleUtils.error("Unable to save log files to cloud since Nexial is NOT configured for such capability");
+            return;
+        }
+
+        Map<String, String> logs = new HashMap<>();
+
+        uploadLogLocations(otc, summary, logs);
+
+        if (CollectionUtils.isNotEmpty(summary.getNestedExecutions())) {
+            summary.getNestedExecutions().forEach(execution -> uploadLogLocations(otc, execution, logs));
+        }
+    }
+
+    protected static void uploadLogLocations(NexialS3Helper otc,
+                                             ExecutionSummary summary,
+                                             Map<String, String> cachedLogLocation) {
+
+        String logName1 = uploadLogToCloud(otc, summary.getExecutionLog(), cachedLogLocation);
+        if (StringUtils.isNotBlank(logName1) && StringUtils.isNotBlank(cachedLogLocation.get(logName1))) {
+            summary.updateExecutionLogLocation(cachedLogLocation.get(logName1));
+        }
+
+        if (MapUtils.isNotEmpty(summary.getOtherLogs())) {
+            summary.getOtherLogs().forEach((logName, logFile) -> {
+                logFile = uploadLogToCloud(otc, logFile, cachedLogLocation);
+                if (StringUtils.isNotBlank(logFile) && StringUtils.isNotBlank(cachedLogLocation.get(logName))) {
+                    summary.getOtherLogs().put(logName, cachedLogLocation.get(logName));
+                }
+            });
+        }
+    }
+
+    protected static String uploadLogToCloud(NexialS3Helper otc, String logFile, Map<String, String> logs) {
+        if (StringUtils.isBlank(logFile)) { return ""; }
+
+        String logName = StringUtils.substringAfterLast(StringUtils.replace(logFile, "\\", "/"), "/");
+
+        if (StringUtils.startsWith(logFile, "http") && !logs.containsKey(logName)) {
+            logs.put(logName, logFile);
+            return logName;
+        }
+
+        if (StringUtils.isBlank(logs.get(logName)) && FileUtil.isFileReadable(logFile, 1024)) {
+            try {
+                logs.put(logName, otc.importLog(new File(logFile), false));
+                return logName;
+            } catch (IOException e) {
+                ConsoleUtils.error("Unable to save log (" + logFile + ") to cloud due to " + e.getMessage());
+            }
+        }
+
+        return logName;
+    }
+
     /**
      * this represents the end of an entire Nexial run, including all iterations and plan steps.
      */
@@ -796,12 +854,38 @@ public class Nexial {
         ExecutionReporter reporter = springContext.getBean("executionResultHelper", ExecutionReporter.class);
         reporter.setReportPath(reportPath);
 
-        boolean autoOpenReport = isAutoOpenResult();
+        NexialS3Helper otc = springContext.getBean("otc", NexialS3Helper.class);
+        String octNotReadyMessage = springContext.getBean("otcNotReadyMessage", String.class);
+
+        boolean outputToCloud = BooleanUtils.toBoolean(System.getProperty(OUTPUT_TO_CLOUD, DEF_OUTPUT_TO_CLOUD + ""));
+
+        if (outputToCloud) {
+            // update log file path in execution summary BEFORE rendering any of the reports
+            if (otc == null || !otc.isReadyForUse()) {
+                // forget it...
+                ConsoleUtils.error("Unable to save log files to cloud storage due to " + octNotReadyMessage);
+            } else {
+                updateLogLocation(otc, summary);
+            }
+        }
+
+        boolean autoOpenExecReport = isAutoOpenExecResult();
+
         File htmlReport = null;
         try {
             htmlReport = reporter.generateHtml(summary);
+            System.setProperty(EXEC_OUTPUT_PATH, htmlReport.getAbsolutePath());
         } catch (IOException e) {
             ConsoleUtils.error(runId, "Unable to generate HTML report for this execution: " + e.getMessage());
+        }
+
+        File junitReport = null;
+        try {
+            junitReport = reporter.generateJUnitXml(summary);
+            ConsoleUtils.log("Generated JUnit report for this execution: " + junitReport.getAbsolutePath());
+            System.setProperty(JUNIT_XML_LOCATION, junitReport.getAbsolutePath());
+        } catch (IOException e) {
+            ConsoleUtils.error(runId, "Unable to generate JUnit report for this execution: " + e.getMessage());
         }
 
         List<File> generatedJsons = null;
@@ -813,13 +897,11 @@ public class Nexial {
             }
         }
 
-        boolean outputToCloud = BooleanUtils.toBoolean(System.getProperty(OUTPUT_TO_CLOUD, DEF_OUTPUT_TO_CLOUD + ""));
         if (outputToCloud) {
             // need to make sure nexial setup run (possibly again)...
             ConsoleUtils.log("resolving Nexial Cloud Integration...");
 
             try {
-                NexialS3Helper otc = springContext.getBean("otc", NexialS3Helper.class);
                 if (otc == null || !otc.isReadyForUse()) {
                     // forget it...
                     throw new IOException(springContext.getBean("otcNotReadyMessage", String.class));
@@ -833,24 +915,26 @@ public class Nexial {
                 if (FileUtil.isFileReadable(htmlReport, 16 * 1024)) {
                     String url = otc.importToS3(htmlReport, outputDir, true);
                     ConsoleUtils.log("HTML output for this execution export to " + url);
-                    if (StringUtils.isNotBlank(url) && autoOpenReport) { reporter.openReport(url); }
+                    System.setProperty(EXEC_OUTPUT_PATH, url);
+                    if (StringUtils.isNotBlank(url) && autoOpenExecReport) { reporter.openReport(url); }
                 }
 
+                // upload JSON reports
                 if (CollectionUtils.isNotEmpty(generatedJsons)) {
                     for (File file : generatedJsons) { otc.importToS3(file, outputDir, true); }
                 }
 
-                // push the latest logs to cloud...
-                String logPath = System.getProperty(TEST_LOG_PATH);
-                Collection<File> logFiles = FileUtils.listFiles(new File(logPath), new String[]{"log"}, false);
-                if (CollectionUtils.isNotEmpty(logFiles)) {
-                    for (File log : logFiles) { otc.importLog(log, false); }
+                // upload junit xml
+                if (FileUtil.isFileReadable(junitReport, 512)) {
+                    String url = otc.importToS3(junitReport, outputDir, true);
+                    ConsoleUtils.log("JUnit XML output for this execution export to " + url);
+                    System.setProperty(JUNIT_XML_LOCATION, url);
                 }
             } catch (IOException e) {
                 ConsoleUtils.error("Unable to save to cloud storage due to " + e.getMessage());
             }
         } else {
-            if (autoOpenReport) { reporter.openReport(htmlReport); }
+            if (autoOpenExecReport) { reporter.openReport(htmlReport); }
         }
 
         ExecutionMailConfig mailConfig = ExecutionMailConfig.get();
@@ -1039,6 +1123,7 @@ public class Nexial {
 
             double successRate = summary.getSuccessRate();
             String successRateString = MessageFormat.format(RATE_FORMAT, successRate);
+            System.setProperty(SUCCESS_RATE, successRateString);
 
             String manifest = StringUtils.leftPad(ExecUtils.deriveJarManifest(), 15, "-");
             ConsoleUtils.log(
@@ -1077,6 +1162,14 @@ public class Nexial {
                 }
             }
         }
+
+        System.setProperty(EXIT_STATUS, exitStatus + "");
+        ConsoleUtils.log("End of Execution:\n" +
+                         "OUTPUT:       " + System.getProperty(OUTPUT_LOCATION) + "\n" +
+                         "EXECUTION:    " + System.getProperty(EXEC_OUTPUT_PATH) + "\n" +
+                         "JUNIT XML:    " + System.getProperty(JUNIT_XML_LOCATION) + "\n" +
+                         "SUCCESS RATE: " + System.getProperty(SUCCESS_RATE) + "\n" +
+                         "EXIT STATUS:  " + exitStatus);
 
         // not used at this time
         // File eventPath = new File(EventTracker.INSTANCE.getStorageLocation());

@@ -367,6 +367,8 @@ public class Browser implements ForcefulTerminate {
             } else {
                 LOGGER.error("browser '" + browser + "' is not supported.");
             }
+
+            syncContextPropToSystem(BROWSER);
         } catch (Throwable e) {
             String msg = "Error initializing browser '" + browser + "': " + e.getMessage();
             ConsoleUtils.error(msg);

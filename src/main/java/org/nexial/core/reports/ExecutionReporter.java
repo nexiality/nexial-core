@@ -44,6 +44,7 @@ public class ExecutionReporter {
     private String htmlOutputFile;
     private String detailJsonFile;
     private String summaryJsonFile;
+    private String junitFile;
 
     public void setTemplateEngine(TemplateEngine templateEngine) { this.templateEngine = templateEngine; }
 
@@ -56,6 +57,8 @@ public class ExecutionReporter {
     public void setDetailJsonFile(String detailJsonFile) { this.detailJsonFile = detailJsonFile;}
 
     public void setSummaryJsonFile(String summaryJsonFile) { this.summaryJsonFile = summaryJsonFile;}
+
+    public void setJunitFile(String junitFile) { this.junitFile = junitFile; }
 
     public File generateHtml(ExecutionSummary summary) throws IOException {
         if (summary == null) { return null; }
@@ -94,10 +97,19 @@ public class ExecutionReporter {
         return jsons;
     }
 
-    public void openReport(File report) {
-        if (report == null) { return; }
-        openReport(report.getAbsolutePath());
+    public File generateJUnitXml(ExecutionSummary summary) throws IOException {
+        if (summary == null) { return null; }
+
+        File output = new File(reportPath + junitFile);
+        ConsoleUtils.log("generating JUnit XML output for this execution to " + output.getAbsolutePath());
+
+        // convert to JUnit XML
+        JUnitReportHelper.toJUnitXml(summary, output);
+
+        return output;
     }
+
+    public void openReport(File report) { if (report != null) { openReport(report.getAbsolutePath()); } }
 
     public void openReport(String reportFile) {
         if (StringUtils.isBlank(reportFile)) { return; }

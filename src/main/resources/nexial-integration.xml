@@ -110,6 +110,7 @@
           p:executionTemplate="execution_summary"
           p:htmlOutputFile="execution-output.html"
           p:detailJsonFile="execution-detail.json"
+          p:junitFile="junit.xml"
           p:summaryJsonFile="execution-summary.json"/>
 
 </beans>

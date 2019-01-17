@@ -39,8 +39,8 @@ import org.nexial.core.service.EventTracker;
 import org.nexial.core.utils.ConsoleUtils;
 import org.nexial.core.utils.ExecutionLogger;
 
-import static org.nexial.core.NexialConst.*;
 import static org.nexial.core.NexialConst.Data.*;
+import static org.nexial.core.NexialConst.*;
 import static org.nexial.core.NexialConst.Project.appendLog;
 import static org.nexial.core.model.ExecutionEvent.*;
 import static org.nexial.core.model.ExecutionSummary.ExecutionLevel.ITERATION;
@@ -151,6 +151,10 @@ public final class ExecutionThread extends Thread {
         executionSummary.setStartTime(System.currentTimeMillis());
         executionSummary.setScriptFile(scriptLocation);
         executionSummary.setDataFile(execDef.getDataFile().getAbsolutePath());
+        executionSummary.setIterationTotal(totalIterations);
+        executionSummary.setPlanSequence(execDef.getPlanSequence());
+        executionSummary.setPlanName(execDef.getPlanName());
+        executionSummary.setPlanFile(execDef.getPlanFile());
 
         for (int currIteration = 1; currIteration <= totalIterations; currIteration++) {
             // SINGLE THREAD EXECUTION WITHIN FOR LOOP!
@@ -167,6 +171,8 @@ public final class ExecutionThread extends Thread {
             iterSummary.setExecutionLevel(ITERATION);
             iterSummary.setStartTime(System.currentTimeMillis());
             iterSummary.setScriptFile(scriptLocation);
+            iterSummary.setIterationIndex(currIteration);
+            iterSummary.setIterationTotal(totalIterations);
 
             try {
                 testScript = ExecutionInputPrep.prep(runId, execDef, iteration, currIteration);
@@ -405,30 +411,14 @@ public final class ExecutionThread extends Thread {
         CloudWebTestingPlatform.reportCloudBrowserStatus(context, summary, ScriptComplete);
 
         StringBuilder cloudOutputBuffer = new StringBuilder();
-        if (context.isOutputToCloud()) {
-            try {
-                NexialS3Helper otc = context.getOtc();
 
-                // when saving test output to cloud, we might NOT want to remove it locally - esp. when assistant-mode is on
-                boolean removeLocal = !isAutoOpenResult();
+        if (summary.getTestScript() != null) { handleTestScript(context, summary);}
 
-                summary.getNestedExecutions().forEach(nested -> {
-                    File testScript = nested.getTestScript();
-                    try {
-                        String testScriptUrl = otc.importFile(testScript, removeLocal);
-                        nested.setTestScriptLink(testScriptUrl);
-                        cloudOutputBuffer.append("» Iteration ").append(nested.getName()).append(": ")
-                                         .append(testScriptUrl).append("\n");
-                    } catch (IOException e) {
-                        ConsoleUtils.error("Unable to save " + testScript + " to cloud storage due to " +
-                                           e.getMessage());
-                    }
-                });
-            } catch (IOException e) {
-                ConsoleUtils.error("Unable to save test output to cloud storage due to " + e.getMessage());
-            }
-        }
-        String cloudOutput = cloudOutputBuffer.toString();
+        summary.getNestedExecutions().forEach(nested -> {
+            handleTestScript(context, nested);
+            cloudOutputBuffer.append("» Iteration ").append(nested.getName()).append(": ")
+                             .append(nested.getTestScriptLink()).append("\n");
+        });
 
         ConsoleUtils.log(context.getRunId(),
                          "\n" +
@@ -441,7 +431,7 @@ public final class ExecutionThread extends Thread {
                          "» Passed:         " + summary.getPassCount() + "\n" +
                          "» Error(s):       " + summary.getFailCount() + "\n" +
                          //"» Warnings:       " + summary.getWarnCount() + "\n" +
-                         StringUtils.defaultIfBlank(cloudOutput, "") + "\n\n");
+                         StringUtils.defaultIfBlank(cloudOutputBuffer.toString(), "") + "\n\n");
 
         context.getExecutionEventListener().onScriptComplete();
 
@@ -451,7 +441,30 @@ public final class ExecutionThread extends Thread {
 
         if (MapUtils.isNotEmpty(intraExecutionData)) { intraExecutionData.remove(LAST_ITERATION); }
 
+        // we don't want the reference data from this script to leak over to the next
+        context.clearScenarioRefData();
+        context.clearScriptRefData();
+
         MemManager.gc(execDef);
+    }
+
+    private static void handleTestScript(ExecutionContext context, ExecutionSummary execution) {
+        // already done?
+        if (StringUtils.isNotBlank(execution.getTestScriptLink()) || execution.getTestScript() == null) { return; }
+
+        File testScript = execution.getTestScript();
+        if (context.isOutputToCloud()) {
+            try {
+                NexialS3Helper otc = context.getOtc();
+                // when saving test output to cloud, we might NOT want to remove it locally - esp. when open-result is on
+                String testScriptUrl = otc.importFile(testScript, !isAutoOpenResult());
+                execution.setTestScriptLink(testScriptUrl);
+            } catch (IOException e) {
+                ConsoleUtils.error("Unable to save " + testScript + " to cloud storage due to " + e.getMessage());
+            }
+        } else {
+            execution.setTestScriptLink(testScript.getAbsolutePath());
+        }
     }
 
     // protected void throwTerminalException(Result result) {

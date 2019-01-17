@@ -117,6 +117,15 @@ public class ExecutionSummary {
     // not persisted to JSON
     private transient Map<TestStepManifest, List<NestedMessage>> nestMessages = new LinkedHashMap<>();
 
+    // only applicable to script in plan
+    private int planSequence;
+    private int iterationIndex;
+    private int iterationTotal;
+
+    // only application to plan
+    private String planName;
+    private String planFile;
+
     public enum ExecutionLevel {EXECUTION, SCRIPT, ITERATION, SCENARIO, ACTIVITY, STEP}
 
     public ExecutionSummary() {
@@ -139,6 +148,26 @@ public class ExecutionSummary {
             errorStackTrace = ExceptionUtils.getStackTrace(error);
         }
     }
+
+    public int getIterationIndex() { return iterationIndex; }
+
+    public void setIterationIndex(int iterationIndex) { this.iterationIndex = iterationIndex; }
+
+    public int getIterationTotal() { return iterationTotal; }
+
+    public void setIterationTotal(int iterationTotal) { this.iterationTotal = iterationTotal; }
+
+    public int getPlanSequence() { return planSequence; }
+
+    public void setPlanSequence(int planSequence) { this.planSequence = planSequence; }
+
+    public String getPlanName() { return planName; }
+
+    public void setPlanName(String planName) { this.planName = planName; }
+
+    public String getPlanFile() { return planFile; }
+
+    public void setPlanFile(String planFile) { this.planFile = planFile; }
 
     public String getRunHost() { return runHost; }
 
@@ -212,6 +241,11 @@ public class ExecutionSummary {
     public String getDataFile() { return dataFile; }
 
     public void setDataFile(String dataFile) { this.dataFile = dataFile; }
+
+    public String getExecutionLog() { return executionLog; }
+
+    public void updateExecutionLogLocation(String url) { executionLog = url; }
+    public Map<String, String> getOtherLogs() { return otherLogs; }
 
     public String resolveDataFile() {
         if (StringUtils.isNotBlank(dataFile)) { return dataFile; }

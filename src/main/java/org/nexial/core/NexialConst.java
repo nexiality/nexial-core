@@ -768,6 +768,8 @@ public final class NexialConst {
         // synonymous to `assistantMode`, but reads better
         public static final String OPT_OPEN_RESULT = NAMESPACE + "openResult";
         public static final String DEF_OPEN_RESULT = "off";
+        public static final String OPT_OPEN_EXEC_REPORT = NAMESPACE + "openExecutionReport";
+        public static final boolean DEF_OPEN_EXEC_REPORT = false;
 
         public static final String SPREADSHEET_PROGRAM = NAMESPACE + "spreadsheet.program";
         public static final String SPREADSHEET_PROGRAM_EXCEL = "excel";
@@ -1065,6 +1067,22 @@ public final class NexialConst {
             return BooleanUtils.toBoolean(System.getProperty(ENABLE_EMAIL, DEF_ENABLE_EMAIL));
         }
 
+        public static boolean isAutoOpenExecResult() {
+            if (ExecUtils.isRunningInZeroTouchEnv()) {
+                ConsoleUtils.log("SKIPPING auto-open-result since Nexial is currently running in non-interactive " +
+                                 "environment");
+                return false;
+            }
+
+            ExecutionContext context = ExecutionThread.get();
+            if (context != null && context.getBooleanData(OPT_OPEN_EXEC_REPORT, DEF_OPEN_EXEC_REPORT)) { return true; }
+            if (BooleanUtils.toBoolean(System.getProperty(OPT_OPEN_EXEC_REPORT, DEF_OPEN_EXEC_REPORT + ""))) {
+                return true;
+            }
+
+            return isAutoOpenResult();
+        }
+
         public static boolean isAutoOpenResult() {
             if (ExecUtils.isRunningInZeroTouchEnv()) {
                 ConsoleUtils.log("SKIPPING auto-open-result since Nexial is currently running in non-interactive " +
@@ -1073,13 +1091,13 @@ public final class NexialConst {
             }
 
             ExecutionContext context = ExecutionThread.get();
-            if (context == null) {
-                return BooleanUtils.toBoolean(System.getProperty(OPT_OPEN_RESULT,
-                                                                 System.getProperty(ASSISTANT_MODE, DEF_OPEN_RESULT)));
-            } else {
+            if (context != null) {
                 return context.getBooleanData(OPT_OPEN_RESULT,
                                               context.getBooleanData(ASSISTANT_MODE,
                                                                      BooleanUtils.toBoolean(DEF_OPEN_RESULT)));
+            } else {
+                return BooleanUtils.toBoolean(System.getProperty(OPT_OPEN_RESULT,
+                                                                 System.getProperty(ASSISTANT_MODE, DEF_OPEN_RESULT)));
             }
         }
 
@@ -1122,6 +1140,13 @@ public final class NexialConst {
         public static final int RC_EXCEL_IN_USE = -17;
         public static final int RC_FILE_GEN_FAILED = -18;
         public static final int RC_FILE_NOT_FOUND = -19;
+
+        // env. properties (mainly to export to)
+        public static final String OUTPUT_LOCATION = "nexial.output";
+        public static final String JUNIT_XML_LOCATION = "nexial.junitxml";
+        public static final String EXEC_OUTPUT_PATH = "nexial.execution.output";
+        public static final String SUCCESS_RATE = "nexial.success.rate";
+        public static final String EXIT_STATUS = "nexial.exit.status";
 
         private ExitStatus() { }
     }
