@@ -64,7 +64,7 @@ public class JUnitReportHelper {
     private static final String TYPE = "type";
 
     private static final String UNKNOWN = "UNKNOWN";
-    private static final String TYPE_ACTIVITY_FAILURE = "test step failure";
+    private static final String TYPE_ACTIVITY_FAILURE = "failure found in test activity";
 
     static void toJUnitXml(ExecutionSummary summary, File output) throws IOException {
         Document document = new Document();
@@ -130,6 +130,8 @@ public class JUnitReportHelper {
                              .forEach((name, value) -> properties.addContent(newProperty(name, value)));
                 }
 
+                testsuite.addContent(properties);
+
                 iteration.getNestedExecutions()
                          .forEach(scenario -> testsuite.addContent(toTestCases(scenario, iteration)));
 
@@ -164,51 +166,25 @@ public class JUnitReportHelper {
 
                 if (activity.getFailCount() > 0) {
                     testcase.addContent(new Element(FAILURE)
+                                            .setAttribute(TYPE, TYPE_ACTIVITY_FAILURE)
                                             .setAttribute(MESSAGE, activity.getFailCount() + " of " +
                                                                    activity.getTotalSteps() + " FAILED. " +
                                                                    "Check " + outputLink + " for execution result, " +
-                                                                   "or " + executionLog + " for execution logs")
-                                            .setAttribute(TYPE, TYPE_ACTIVITY_FAILURE));
+                                                                   executionLog + " for execution logs"));
                 }
 
-                testcase.addContent(new Element(SYSTEM_OUT).addContent(
-                    "Total  : " + activity.getTotalSteps() + "\n" +
-                    "Passed : " + activity.getPassCount() + "\n" +
-                    "Failed : " + activity.getFailCount() + "\n" +
-                    "Output : " + outputLink + "\n" +
-                    "Logs   : " + executionLog));
+                testcase.addContent(new Element(SYSTEM_OUT)
+                                        .addContent("Total : " + activity.getTotalSteps() + "\n" +
+                                                    "Passed: " + activity.getPassCount() + "\n" +
+                                                    "Failed: " + activity.getFailCount() + "\n" +
+                                                    "Output: " + outputLink + "\n" +
+                                                    "Logs  : " + executionLog + "\n"));
 
                 testcases.add(testcase);
             });
         }
 
         return testcases;
-    }
-
-    /** format/formula: [plan sequence * 1000] + [iteration index] */
-    private static String toTestSuiteId(ExecutionSummary execution) {
-        if (execution == null) { return "-1"; }
-        return ((execution.getPlanSequence() * 1000) + execution.getIterationIndex()) + "";
-    }
-
-    /** format/formula: [plan sequence] [script name], [iteration index] of [iteration total] */
-    private static String toTestSuitePackage(ExecutionSummary execution) {
-        if (execution == null) { return UNKNOWN; }
-
-        String name = execution.getName();
-        if (StringUtils.isBlank(name)) { return UNKNOWN; }
-
-        String packageName = "";
-
-        if (execution.getPlanSequence() > 0) { packageName = execution.getPlanSequence() + " "; }
-
-        packageName += name;
-
-        if (execution.getIterationTotal() > 1 & execution.getIterationIndex() > 0) {
-            packageName += ", Iteration " + execution.getIterationIndex() + " of " + execution.getIterationTotal();
-        }
-
-        return packageName;
     }
 
     /** format: [script name]|[script name] [iteration total] */
@@ -218,7 +194,8 @@ public class JUnitReportHelper {
         String name = execution.getName();
         if (StringUtils.isBlank(name)) { return UNKNOWN; }
 
-        return StringUtils.substringBeforeLast(name, " (1)");
+        // so "2 iteration-showcase (4)" --> "2 iteration-showcase"
+        return StringUtils.substringBeforeLast(name, " (");
     }
 
     private static Element newProperty(String name, String value) {
@@ -229,4 +206,32 @@ public class JUnitReportHelper {
     private static String toJUnitTime(long milliseconds) {
         return JUNIT_TIME_FORMATTER.format(milliseconds / (double) 1000);
     }
+
+    // NOT USED
+    /** format/formula: [plan sequence * 1000] + [iteration index] */
+    // private static String toTestSuiteId(ExecutionSummary execution) {
+    //     if (execution == null) { return "-1"; }
+    //     return ((execution.getPlanSequence() * 1000) + execution.getIterationIndex()) + "";
+    // }
+
+    // NOT USED
+    /** format/formula: [plan sequence] [script name], [iteration index] of [iteration total] */
+    // private static String toTestSuitePackage(ExecutionSummary execution) {
+    //     if (execution == null) { return UNKNOWN; }
+    //
+    //     String name = execution.getName();
+    //     if (StringUtils.isBlank(name)) { return UNKNOWN; }
+    //
+    //     String packageName = "";
+    //
+    //     if (execution.getPlanSequence() > 0) { packageName = execution.getPlanSequence() + " "; }
+    //
+    //     packageName += name;
+    //
+    //     if (execution.getIterationTotal() > 1 & execution.getIterationIndex() > 0) {
+    //         packageName += ", Iteration " + execution.getIterationIndex() + " of " + execution.getIterationTotal();
+    //     }
+    //
+    //     return packageName;
+    // }
 }
