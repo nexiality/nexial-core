@@ -61,6 +61,7 @@ import static java.lang.System.lineSeparator;
 import static java.util.regex.Pattern.CASE_INSENSITIVE;
 import static org.nexial.core.NexialConst.*;
 import static org.nexial.core.NexialConst.Data.NULL;
+import static org.nexial.core.NexialConst.Data.toCloudIntegrationNotReadyMessage;
 import static org.nexial.core.excel.ExcelConfig.MSG_PASS;
 import static org.nexial.core.excel.ext.CipherHelper.CRYPT_IND;
 import static org.nexial.core.plugins.base.IncrementStrategy.ALPHANUM;
@@ -709,7 +710,7 @@ public class BaseCommand implements NexialCommand {
             try {
                 link = context.getOtc().importMedia(new File(link));
             } catch (IOException e) {
-                log("Unable to save " + link + " to cloud storage due to " + e.getMessage());
+                log(toCloudIntegrationNotReadyMessage(link) + ": " + e.getMessage());
             }
         }
 

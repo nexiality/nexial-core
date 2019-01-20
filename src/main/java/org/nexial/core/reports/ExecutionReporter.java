@@ -68,6 +68,7 @@ public class ExecutionReporter {
 
         Context engineContext = new Context();
         engineContext.setVariable("execution", ExecutionSummary.gatherExecutionData(summary));
+        engineContext.setVariable("logs", summary.getLogs());
         engineContext.setVariable("summary", summary);
 
         String content = templateEngine.process(executionTemplate, engineContext);

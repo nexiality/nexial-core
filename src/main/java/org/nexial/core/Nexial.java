@@ -748,8 +748,7 @@ public class Nexial {
                         if (t.isAlive()) {
                             stillRunning[0] = true;
                         } else {
-                            ExecutionSummary executionSummary = t.getExecutionSummary();
-                            summary.addNestSummary(executionSummary);
+                            summary.addNestSummary(t.getExecutionSummary());
                             t = null;
                         }
                     }
@@ -778,7 +777,7 @@ public class Nexial {
         // push the latest logs to cloud...
         if (otc == null || !otc.isReadyForUse()) {
             // forget it...
-            ConsoleUtils.error("Unable to save log files to cloud since Nexial is NOT configured for such capability");
+            ConsoleUtils.error(toCloudIntegrationNotReadyMessage("logs"));
             return;
         }
 
@@ -800,11 +799,11 @@ public class Nexial {
             summary.updateExecutionLogLocation(cachedLogLocation.get(logName1));
         }
 
-        if (MapUtils.isNotEmpty(summary.getOtherLogs())) {
-            summary.getOtherLogs().forEach((logName, logFile) -> {
+        if (MapUtils.isNotEmpty(summary.getLogs())) {
+            summary.getLogs().forEach((logName, logFile) -> {
                 logFile = uploadLogToCloud(otc, logFile, cachedLogLocation);
                 if (StringUtils.isNotBlank(logFile) && StringUtils.isNotBlank(cachedLogLocation.get(logName))) {
-                    summary.getOtherLogs().put(logName, cachedLogLocation.get(logName));
+                    summary.getLogs().put(logName, cachedLogLocation.get(logName));
                 }
             });
         }
@@ -825,7 +824,7 @@ public class Nexial {
                 logs.put(logName, otc.importLog(new File(logFile), false));
                 return logName;
             } catch (IOException e) {
-                ConsoleUtils.error("Unable to save log (" + logFile + ") to cloud due to " + e.getMessage());
+                ConsoleUtils.error(toCloudIntegrationNotReadyMessage(logFile) + ": " + e.getMessage());
             }
         }
 
@@ -842,9 +841,12 @@ public class Nexial {
         long testSuiteElapsedTimeMs = stopTimeMs - startTimeMs;
         ConsoleUtils.log(runId, "test run completed in about " + (testSuiteElapsedTimeMs / 1000) + " seconds");
 
-        summary.setExecutionLevel(EXECUTION);
         summary.setEndTime(stopTimeMs);
         summary.aggregatedNestedExecutions(null);
+
+        if (MapUtils.isEmpty(summary.getLogs()) && CollectionUtils.isNotEmpty(summary.getNestedExecutions())) {
+            summary.getLogs().putAll(summary.getNestedExecutions().get(0).getLogs());
+        }
 
         String reportPath = StringUtils.appendIfMissing(System.getProperty(OPT_OUT_DIR, project.getOutPath()),
                                                         separator);
@@ -855,15 +857,13 @@ public class Nexial {
         reporter.setReportPath(reportPath);
 
         NexialS3Helper otc = springContext.getBean("otc", NexialS3Helper.class);
-        String octNotReadyMessage = springContext.getBean("otcNotReadyMessage", String.class);
 
         boolean outputToCloud = BooleanUtils.toBoolean(System.getProperty(OUTPUT_TO_CLOUD, DEF_OUTPUT_TO_CLOUD + ""));
-
         if (outputToCloud) {
             // update log file path in execution summary BEFORE rendering any of the reports
             if (otc == null || !otc.isReadyForUse()) {
                 // forget it...
-                ConsoleUtils.error("Unable to save log files to cloud storage due to " + octNotReadyMessage);
+                ConsoleUtils.error(toCloudIntegrationNotReadyMessage("logs"));
             } else {
                 updateLogLocation(otc, summary);
             }
@@ -912,7 +912,7 @@ public class Nexial {
                                    runId;
 
                 // upload HTML report to cloud
-                if (FileUtil.isFileReadable(htmlReport, 16 * 1024)) {
+                if (FileUtil.isFileReadable(htmlReport, 1024)) {
                     String url = otc.importToS3(htmlReport, outputDir, true);
                     ConsoleUtils.log("HTML output for this execution export to " + url);
                     System.setProperty(EXEC_OUTPUT_PATH, url);
@@ -925,13 +925,13 @@ public class Nexial {
                 }
 
                 // upload junit xml
-                if (FileUtil.isFileReadable(junitReport, 512)) {
+                if (FileUtil.isFileReadable(junitReport, 100)) {
                     String url = otc.importToS3(junitReport, outputDir, true);
                     ConsoleUtils.log("JUnit XML output for this execution export to " + url);
                     System.setProperty(JUNIT_XML_LOCATION, url);
                 }
             } catch (IOException e) {
-                ConsoleUtils.error("Unable to save to cloud storage due to " + e.getMessage());
+                ConsoleUtils.error(toCloudIntegrationNotReadyMessage("execution output") + ": " + e.getMessage());
             }
         } else {
             if (autoOpenExecReport) { reporter.openReport(htmlReport); }

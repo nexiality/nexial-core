@@ -107,7 +107,7 @@ public class ExecutionSummary {
     private String errorStackTrace;
     private Throwable error;
     private String executionLog;
-    private Map<String, String> otherLogs;
+    private Map<String, String> logs = new TreeMap<>();
 
     // optional
     private Map<String, String> referenceData = new TreeMap<>();
@@ -245,7 +245,8 @@ public class ExecutionSummary {
     public String getExecutionLog() { return executionLog; }
 
     public void updateExecutionLogLocation(String url) { executionLog = url; }
-    public Map<String, String> getOtherLogs() { return otherLogs; }
+
+    public Map<String, String> getLogs() { return logs; }
 
     public String resolveDataFile() {
         if (StringUtils.isNotBlank(dataFile)) { return dataFile; }
@@ -281,7 +282,8 @@ public class ExecutionSummary {
     public void setExecutionLevel(ExecutionLevel executionLevel) {
         this.executionLevel = executionLevel;
         if (this.executionLevel == EXECUTION) {
-            referenceData = ExecutionContext.getSysPropsByPrefix(SCRIPT_REF_PREFIX);
+            Map<String, String> scriptRefs = ExecutionContext.getSysPropsByPrefix(SCRIPT_REF_PREFIX);
+            if (MapUtils.isNotEmpty(scriptRefs)) { referenceData.putAll(scriptRefs); }
         }
     }
 
@@ -316,41 +318,38 @@ public class ExecutionSummary {
             if (executionLevel == ITERATION) { referenceData = context.gatherScriptReferenceData(); }
 
             String logPath = System.getProperty(TEST_LOG_PATH);
-            String nexialLog = "nexial-" + context.getRunId() + ".log";
-            executionLog = logPath + separator + nexialLog;
+            executionLog = logPath + separator + NEXIAL_LOG_PREFIX + context.getRunId() + ".log";
 
             Collection<File> logFiles = FileUtils.listFiles(new File(logPath), new String[]{"log"}, false);
             if (CollectionUtils.isNotEmpty(logFiles) || logFiles.size() > 1) {
                 // if only 1 log file found - assume this one is the nexial log
-                otherLogs = new HashMap<>();
                 logFiles.forEach(file -> {
-                    if (file.length() > 1) { otherLogs.put(file.getName(), file.getAbsolutePath()); }
+                    if (file.length() > 1) { logs.put(file.getName(), file.getAbsolutePath()); }
                 });
             }
 
             // only transfer log file if
             // - execution level is EXECUTION (so that we transfer towards the end of execution)
-            // - output to cloud is oN
+            // - output to cloud is on
             if (executionLevel == SCENARIO || executionLevel == ACTIVITY || !context.isOutputToCloud()) { return; }
 
             try {
                 NexialS3Helper otc = context.getOtc();
                 if (!otc.isReadyForUse()) {
-                    ConsoleUtils.error("Unable to save logs to cloud storage since Nexial Cloud Integration is not " +
-                                       "properly set up.");
+                    ConsoleUtils.error(toCloudIntegrationNotReadyMessage("logs"));
                     return;
                 }
 
-                if (MapUtils.isNotEmpty(otherLogs)) {
-                    List<String> otherLogNames = CollectionUtil.toList(otherLogs.keySet());
+                if (MapUtils.isNotEmpty(logs)) {
+                    List<String> otherLogNames = CollectionUtil.toList(logs.keySet());
                     for (String name : otherLogNames) {
-                        otherLogs.put(name, otc.importLog(new File(otherLogs.get(name)), false));
+                        logs.put(name, otc.importLog(new File(logs.get(name)), false));
                     }
                 } else if (FileUtil.isFileReadable(executionLog)) {
                     executionLog = otc.importLog(new File(executionLog), false);
                 }
             } catch (IOException e) {
-                ConsoleUtils.error("Unable to save " + executionLog + " to cloud storage due to " + e.getMessage());
+                ConsoleUtils.error(toCloudIntegrationNotReadyMessage(executionLog) + ": " + e.getMessage());
             }
         }
     }
@@ -443,22 +442,6 @@ public class ExecutionSummary {
         }
     }
 
-    // public void generateDetailedJson(String jsonFile) throws IOException {
-    //     if (StringUtils.isBlank(jsonFile)) { return; }
-    //     FileUtils.writeStringToFile(new File(jsonFile), GSON.toJson(this), DEF_CHARSET);
-    // }
-    //
-    // public void generateSummaryJson(String jsonFile) throws IOException {
-    //     if (StringUtils.isBlank(jsonFile)) { return; }
-    //     ExecutionSummary report = this.toSummary();
-    //     if (report != null) { FileUtils.writeStringToFile(new File(jsonFile), GSON.toJson(report), DEF_CHARSET); }
-    // }
-    //
-    // public void generateHtmlReport(String targetHtmlFile) throws IOException {
-    //     // ConsoleUtils.error("\n\n\nNO HTML GENERATION YET!!!\n" + toString() + "\n\n\n");
-    //     FileUtils.writeStringToFile(new File(targetHtmlFile), toString(), DEF_CHARSET);
-    // }
-
     public static Map<String, String> gatherExecutionData(ExecutionSummary summary) {
         Map<String, String> map = new LinkedHashMap<>();
         map.put("run from", ExecutionSummary.formatValue(summary.runHost, summary.runHostOs));
@@ -481,8 +464,8 @@ public class ExecutionSummary {
         if (StringUtils.isNotBlank(summary.executionLog)) {
             allLogs.append(summary.executionLog).append("|nexial log\n");
         }
-        if (MapUtils.isNotEmpty(summary.otherLogs)) {
-            summary.otherLogs.forEach((name, path) -> {
+        if (MapUtils.isNotEmpty(summary.logs)) {
+            summary.logs.forEach((name, path) -> {
                 if (!StringUtils.equals(path, summary.executionLog)) {
                     allLogs.append(path).append("|").append(name).append("\n");
                 }

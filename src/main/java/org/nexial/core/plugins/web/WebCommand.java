@@ -1402,7 +1402,7 @@ public class WebCommand extends BaseCommand implements CanTakeScreenshot, CanLog
             try {
                 return context.getOtc().importMedia(screenshotFile);
             } catch (IOException e) {
-                log("Unable to save " + screenshotFile + " to cloud storage due to " + e.getMessage());
+                log(toCloudIntegrationNotReadyMessage(screenshotFile.toString()) + ": " + e.getMessage());
             }
         }
 

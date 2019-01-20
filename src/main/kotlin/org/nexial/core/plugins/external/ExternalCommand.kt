@@ -20,6 +20,7 @@ import org.apache.commons.io.FileUtils
 import org.apache.commons.io.IOUtils
 import org.apache.commons.lang3.StringUtils
 import org.junit.runner.JUnitCore
+import org.nexial.commons.proc.RuntimeUtils
 import org.nexial.commons.utils.TextUtils
 import org.nexial.core.NexialConst.DEF_CHARSET
 import org.nexial.core.NexialConst.OPT_RUN_PROGRAM_OUTPUT
@@ -86,11 +87,11 @@ class ExternalCommand : BaseCommand() {
         }
     }
 
-    fun runProgram(programPathAndParms: String): StepResult {
-        requires(StringUtils.isNotBlank(programPathAndParms), "empty/null programPathAndParms")
+    fun runProgram(programPathAndParams: String): StepResult {
+        requires(StringUtils.isNotBlank(programPathAndParams), "empty/null programPathAndParams")
 
         try {
-            val output = exec(programPathAndParms)
+            val output = exec(programPathAndParams)
 
             //attach link to results
             val outputFileName = "runProgram_${context.currentTestStep.row[0].reference}.log"
@@ -107,10 +108,11 @@ class ExternalCommand : BaseCommand() {
 
     companion object {
         @Throws(IOException::class)
-        fun exec(programPathAndParms: String): String {
-            val proc = Runtime.getRuntime().exec(programPathAndParms)
-            val buffer = IOUtils.readLines(proc.inputStream, DEF_CHARSET)
-            return TextUtils.toString(buffer, lineSeparator())
+        fun exec(programPathAndParams: String): String {
+            // could be xyz.cmd "long parameter with spaces" "and another one"
+            // could be "weird batch file with spaces.bat" "blah blah blah" 1 2 3
+            val proc = Runtime.getRuntime().exec(RuntimeUtils.formatCommandLine(programPathAndParams))
+            return TextUtils.toString(IOUtils.readLines(proc.inputStream, DEF_CHARSET), lineSeparator())
         }
     }
 }

@@ -51,6 +51,7 @@ import org.xml.sax.SAXParseException;
 
 import static org.jdom2.input.sax.XMLReaders.XSDVALIDATING;
 import static org.nexial.core.NexialConst.*;
+import static org.nexial.core.NexialConst.Data.toCloudIntegrationNotReadyMessage;
 import static org.nexial.core.utils.CheckUtils.*;
 
 public class XmlCommand extends BaseCommand {
@@ -380,7 +381,7 @@ public class XmlCommand extends BaseCommand {
                     try {
                         outFile = context.getOtc().importMedia(outputFile);
                     } catch (IOException e) {
-                        log("Unable to save " + outFile + " to cloud storage due to " + e.getMessage());
+                        log(toCloudIntegrationNotReadyMessage(outFile) + ": " + e.getMessage());
                     }
                 }
 

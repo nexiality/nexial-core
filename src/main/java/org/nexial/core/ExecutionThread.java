@@ -441,7 +441,7 @@ public final class ExecutionThread extends Thread {
 
         if (MapUtils.isNotEmpty(intraExecutionData)) { intraExecutionData.remove(LAST_ITERATION); }
 
-        // we don't want the reference data from this script to leak over to the next
+        // we don't want the reference data from this script to taint the next
         context.clearScenarioRefData();
         context.clearScriptRefData();
 
@@ -460,23 +460,10 @@ public final class ExecutionThread extends Thread {
                 String testScriptUrl = otc.importFile(testScript, !isAutoOpenResult());
                 execution.setTestScriptLink(testScriptUrl);
             } catch (IOException e) {
-                ConsoleUtils.error("Unable to save " + testScript + " to cloud storage due to " + e.getMessage());
+                ConsoleUtils.error(toCloudIntegrationNotReadyMessage(testScript.toString()) + ": " + e.getMessage());
             }
         } else {
             execution.setTestScriptLink(testScript.getAbsolutePath());
         }
     }
-
-    // protected void throwTerminalException(Result result) {
-    //     if (result == null || result.getFailureCount() < 1) { return; }
-    //
-    //     for (Failure f : result.getFailures()) {
-    //         Throwable e = f.getException();
-    //         if (e == null) { continue; }
-    //         if (e instanceof InvocationTargetException) { e = ((InvocationTargetException) e).getTargetException(); }
-    //         if (e instanceof RuntimeException) { throw (RuntimeException) e; }
-    //         if (e instanceof Error) { throw (Error) e; }
-    //     }
-    // }
-
 }

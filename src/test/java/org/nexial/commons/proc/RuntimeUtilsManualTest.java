@@ -22,6 +22,7 @@ import java.util.HashMap;
 import java.util.List;
 
 import org.apache.commons.io.FileUtils;
+import org.apache.commons.lang3.ArrayUtils;
 import org.apache.commons.lang3.RandomStringUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.junit.After;
@@ -67,6 +68,38 @@ public class RuntimeUtilsManualTest {
         RuntimeUtils.runAppNoWait("/usr/bin", "tail", Arrays.asList("-f", tmpFilePath), new HashMap<>());
 
         scan_and_kill();
+    }
+
+    @Test
+    public void formatCommandLine() throws Throwable {
+        // sanity check
+        assertFormatCommandLine("{}", null);
+        assertFormatCommandLine("{}", "");
+        assertFormatCommandLine("{ }", " ");
+        assertFormatCommandLine("{   }", "   ");
+
+        // basic happy paths
+        assertFormatCommandLine("{C:\\dir1\\dir2\\cmd.bat}", "C:\\dir1\\dir2\\cmd.bat");
+        assertFormatCommandLine("{C:\\dir1\\dir2\\cmd.bat,pa1,pa2}", "C:\\dir1\\dir2\\cmd.bat pa1 pa2");
+        assertFormatCommandLine("{C:\\dir1\\dir2\\cmd.bat,pa1,pa2}", "C:\\dir1\\dir2\\cmd.bat pa1 pa2  ");
+        assertFormatCommandLine("{C:\\dir1\\dir2\\cmd.bat,pa1,pa2}", "C:\\dir1\\dir2\\cmd.bat pa1   pa2 ");
+
+        // double quotes
+        assertFormatCommandLine("{C:\\dir1\\dir2\\cmd.bat,\"pa 1\",pa2}", "C:\\dir1\\dir2\\cmd.bat \"pa 1\" pa2");
+        assertFormatCommandLine("{\"C:\\dir1\\dir 2\\cmd 1.bat\",\"pa 1\",pa2}",
+                                "\"C:\\dir1\\dir 2\\cmd 1.bat\" \"pa 1\" pa2");
+        assertFormatCommandLine("{\"C:\\dir1\\dir 2\\cmd 1.bat\",\"pa 1\",\"\",pa2}",
+                                "\"C:\\dir1\\dir 2\\cmd 1.bat\" \"pa 1\" \"\" pa2");
+
+        // escaped double quotes
+        assertFormatCommandLine("{\"C:\\dir1\\dir 2\\cmd 1.bat\",\"pa \\\"1\\\" and two\",\"\",pa2}",
+                                "\"C:\\dir1\\dir 2\\cmd 1.bat\" \"pa \\\"1\\\" and two\" \"\" pa2");
+        assertFormatCommandLine("{\"C:\\dir1\\dir 2\\cmd 1.bat\",a\\\"b\\\"c,\"\",pa2}",
+                                "\"C:\\dir1\\dir 2\\cmd 1.bat\" a\\\"b\\\"c \"\" pa2");
+    }
+
+    protected static void assertFormatCommandLine(String expected, String fixture) {
+        Assert.assertEquals(expected, ArrayUtils.toString(RuntimeUtils.formatCommandLine(fixture)));
     }
 
     protected void scan_and_kill() {

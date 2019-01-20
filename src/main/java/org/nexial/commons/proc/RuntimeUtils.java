@@ -24,6 +24,7 @@ import java.util.stream.Collectors;
 import org.apache.commons.lang3.ArrayUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.math.NumberUtils;
+import org.nexial.commons.utils.RegexUtils;
 import org.nexial.core.utils.ConsoleUtils;
 
 import static java.io.File.separator;
@@ -35,6 +36,9 @@ import static org.nexial.core.NexialConst.Data.WIN32_CMD;
 public final class RuntimeUtils {
 
     public static final String NIX_SHELL = "/bin/sh";
+    private static final String TEMP_ESCAPED_DOUBLE_QUOTES = "@!#DQ#!@";
+    private static final String TEMP_SPACE = "@!#SP#!@";
+    private static final String TEMP_DOUBLE_QUOTES = "@!#QU#!@";
 
     private RuntimeUtils() { }
 
@@ -98,6 +102,50 @@ public final class RuntimeUtils {
         } catch (InterruptedException e) {
             throw new IOException("Unable to start " + fullpath + ": " + e.getMessage(), e);
         }
+    }
+
+    public static String[] formatCommandLine(String programAndParams) {
+        if (StringUtils.isBlank(programAndParams)) {
+            return new String[]{StringUtils.defaultString(programAndParams)};
+        }
+
+        // double quote treatments
+        String escaped = StringUtils.replace(programAndParams, "\\\"", TEMP_ESCAPED_DOUBLE_QUOTES);
+
+        int doubleQuoteCount = StringUtils.countMatches(escaped, "\"");
+        if (doubleQuoteCount % 2 != 0) {
+            // uneven number of quotes... not good idea.
+            ConsoleUtils.error("Uneven double quotes found in [" + programAndParams + "]... abort reformatting");
+            return new String[]{programAndParams};
+        }
+
+        while (StringUtils.contains(escaped, "\"")) {
+            String textInQuotes = RegexUtils.firstMatches(escaped, "(\".*?\")");
+            String textInQuotesTreated =
+                StringUtils.replace(StringUtils.replace(textInQuotes, " ", TEMP_SPACE), "\"", TEMP_DOUBLE_QUOTES);
+            escaped = StringUtils.replace(escaped, textInQuotes, textInQuotesTreated);
+        }
+
+        // now split by space
+        String[] splits = StringUtils.splitByWholeSeparator(escaped, " ");
+        if (ArrayUtils.isEmpty(splits)) {
+            // uneven number of quotes... not good idea.
+            ConsoleUtils.error("Fail to parse [" + programAndParams + "]... abort reformatting");
+            return new String[]{programAndParams};
+        }
+
+        List<String> cmdline = new ArrayList<>();
+        Arrays.stream(splits).forEach(text -> {
+            if (StringUtils.isNotBlank(text)) {
+                // reverse all the previous replacements
+                text = StringUtils.replace(text, TEMP_DOUBLE_QUOTES, "\"");
+                text = StringUtils.replace(text, TEMP_SPACE, " ");
+                text = StringUtils.replace(text, TEMP_ESCAPED_DOUBLE_QUOTES, "\\\"");
+                cmdline.add(StringUtils.trim(text));
+            }
+        });
+
+        return cmdline.toArray(new String[0]);
     }
 
     protected static List<Integer> findRunningInstancesOnNIX(String prog) {

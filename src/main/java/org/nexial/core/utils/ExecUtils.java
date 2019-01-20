@@ -141,9 +141,7 @@ public final class ExecUtils {
                    IGNORED_CLI_OPT.stream()
                                   .noneMatch(ignored -> StringUtils.startsWith(StringUtils.substring(arg, 2), ignored))
                                                    ).collect(Collectors.joining(DEF_TEXT_DELIM));
-        if (StringUtils.isNotBlank(argsList)) {
-            System.setProperty(SCRIPT_REF_PREFIX + JAVA_OPT, argsList);
-        }
+        if (StringUtils.isNotBlank(argsList)) { System.setProperty(SCRIPT_REF_PREFIX + JAVA_OPT, argsList); }
     }
 
     public static Map<String, String> deriveJavaOpts() {

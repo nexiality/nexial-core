@@ -999,10 +999,10 @@ public final class NexialConst {
         /**
          * special prefix to mark certain data as contextual within the execution of a script.  Such data will be
          * displayed in the execution summary to provide as "reference" towards the execution of a script, and any
-         * associated iterations.  E.g.
+         * associated iterations.  E.g.<pre>
          * nexial.scriptRef.user=User1
          * nexial.scriptRef.taxState=CA
-         * nexial.scriptRef.company=Johnson Co & Ltd
+         * nexial.scriptRef.company=Johnson Co & Ltd</pre>
          *
          * Hence one could conclude that the execution of the associated script uses 'User1' to login to application,
          * and test 'CA' as the state for tax rules and 'Johnson Co & Ltd' as the target company.
@@ -1030,6 +1030,8 @@ public final class NexialConst {
         public static final String CONSOLE_PREFIX = "console:";
         public static final String TTS_PREFIX = "tts:";
         public static final int MAX_TTS_LENGTH = 500;
+
+        public static final String NEXIAL_LOG_PREFIX = "nexial-";
 
         public static final Map<String, String> SCOPE_SETTING_DEFAULTS =
             TextUtils.toMap("=",
@@ -1113,6 +1115,13 @@ public final class NexialConst {
             }
 
             return text1[0];
+        }
+
+        public static String toCloudIntegrationNotReadyMessage(String data) {
+            return "Unable to save " + (StringUtils.isBlank(data) ? "content" : data) + " to cloud storage since " +
+                   "Nexial Cloud Integration is not properly configured. See " +
+                   "https://nexiality.github.io/documentation/systemvars/index.html#nexial.outputToCloud " +
+                   "for more details.";
         }
     }
 

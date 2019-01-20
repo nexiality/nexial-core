@@ -170,7 +170,7 @@ public class DesktopCommand extends BaseCommand
             try {
                 return context.getOtc().importMedia(file);
             } catch (IOException e) {
-                log("Unable to save " + file + " to cloud storage due to " + e.getMessage());
+                log(toCloudIntegrationNotReadyMessage(file.toString()) + ": " + e.getMessage());
             }
         }
 

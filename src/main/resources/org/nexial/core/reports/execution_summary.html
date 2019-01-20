@@ -1,11 +1,23 @@
 <html xmlns="http://www.w3.org/1999/html" xmlns:th="http://www.thymeleaf.org">
 <head>
-    <link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.6.1/css/all.css"/>
-    <link rel="stylesheet" href="https://nexiality.github.io/documentation/assets/report/execution_summary.css"/>
-    <!--<link rel="stylesheet" href="execution_summary.css"/>-->
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.3.1/jquery.min.js"></script>
-    <script src="https://nexiality.github.io/documentation/assets/report/execution_summary.js"></script>
-    <!--<script src="execution_summary.js"></script>-->
+    <script>
+        var loadErrorFound = false;
+        function externalResourceNotFound() {
+            if (!loadErrorFound) {
+                window.alert("Unable to load one or more external web resources needed to display this page.\n\n" +
+                             "Please check/adjust your Internet access and reload this page again.\n\n" +
+                             "Thank you.");
+                loadErrorFound = true;
+            }
+            return false;
+        }
+    </script>
+    <link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.6.1/css/all.css" onerror="externalResourceNotFound()"/>
+    <link rel="stylesheet" href="https://nexiality.github.io/documentation/assets/report/execution_summary.css" onerror="externalResourceNotFound()"/>
+    <!--<link rel="stylesheet" href="execution_summary.css" onerror="externalResourceNotFound()"/>-->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.3.1/jquery.min.js" onerror="externalResourceNotFound()"></script>
+    <script src="https://nexiality.github.io/documentation/assets/report/execution_summary.js" onerror="externalResourceNotFound()"></script>
+    <!--<script src="execution_summary.js" onerror="externalResourceNotFound()"></script>-->
 </head>
 <body>
 
@@ -35,55 +47,59 @@
     <table id="execMeta" class="execMeta" cellpadding="4" cellspacing="3">
         <tbody>
         <tr>
-            <td nowrap="nowrap" class="execLabel">run from:</td>
+            <td nowrap="nowrap" class="execLabel">run from</td>
             <th width="100%" class="execValue" data-th-utext="${execution.get('run from')}">HOSTNAME (HOST OS)</th>
         </tr>
         <tr>
-            <td nowrap="nowrap" class="execLabel">run user:</td>
+            <td nowrap="nowrap" class="execLabel">run user</td>
             <th class="execValue" data-th-utext="${execution.get('run user')}">USER_NAME</th>
         </tr>
         <tr>
-            <td nowrap="nowrap" class="execLabel">time span:</td>
+            <td nowrap="nowrap" class="execLabel">time span</td>
             <th class="execValue" data-th-utext="${execution.get('time span')}">10/30/2018 01:31:39 - 10/30/2018 01:33:09</th>
         </tr>
         <tr>
-            <td nowrap="nowrap" class="execLabel">duration:</td>
+            <td nowrap="nowrap" class="execLabel">duration</td>
             <th class="execValue" data-th-utext="${execution.get('duration')}">00:01:29.693</th>
         </tr>
         <tr>
-            <td nowrap="nowrap" class="execLabel">total steps:</td>
+            <td nowrap="nowrap" class="execLabel">total steps</td>
             <th class="execValue"><pre data-th-utext="${execution.get('total steps')}"> 63</pre></th>
         </tr>
         <tr>
-            <td nowrap="nowrap" class="execLabel">executed steps:</td>
+            <td nowrap="nowrap" class="execLabel">executed steps</td>
             <th class="execValue"><pre data-th-utext="${execution.get('executed steps')}"> 63 (100%)</pre></th>
         </tr>
         <tr>
-            <td nowrap="nowrap" class="execLabel">passed:</td>
+            <td nowrap="nowrap" class="execLabel">passed</td>
             <th class="execValue"><pre data-th-utext="${execution.get('passed')}"> 63 (100%)</pre></th>
         </tr>
         <tr>
-            <td nowrap="nowrap" class="execLabel">failed:</td>
+            <td nowrap="nowrap" class="execLabel">failed</td>
             <th class="execValue" data-th-attrappend="class=${execution.get('executed steps') == execution.get('passed') ? ' ' : ' execValueFail'}"><pre data-th-utext="${execution.get('failed')}"> 0 (0.00%)</pre></th>
         </tr>
         <tr>
-            <td nowrap="nowrap" class="execLabel">nexial version:</td>
+            <td nowrap="nowrap" class="execLabel">nexial version</td>
             <th class="execValue" data-th-utext="${execution.get('nexial version')}">Nexial 1.8.162</th>
         </tr>
         <tr>
-            <td nowrap="nowrap" class="execLabel">java version:</td>
+            <td nowrap="nowrap" class="execLabel">java version</td>
             <th class="execValue" data-th-utext="${execution.get('java version')}">1.8.0_181</th>
         </tr>
         <tr>
-            <td nowrap="nowrap" class="execLabel">log:</td>
-            <th class="execValue" data-th-utext="${execution.get('log')}"><a href="javascript:alert('not yet implemented');">nexial log</a></th>
+            <td nowrap="nowrap" class="execLabel">log</td>
+            <th class="execValue execLog">
+                <th:block data-th-if="#{logs}" data-th-each="log : ${logs}">
+                    <a data-th-href="${log.value}" target="_nexial_link" data-th-utext="${log.key}">log file</a><br/>
+                </th:block>
+            </th>
         </tr>
         <tr>
-            <td nowrap="nowrap" class="execLabel">runtime args:</td>
-            <th class="execValue" data-th-utext="${summary.referenceData.get('runtime args')}">-script /Users/ml093043/projects/ep/jody/artifact/script/SL_Scheduler_Regression.xlsx -scenario Job_CRUD</th>
+            <td nowrap="nowrap" class="execLabel">runtime args</td>
+            <th class="execValue" data-th-utext="${summary.referenceData.get('runtime args')}">-script /Users/me/project/artifact/script/myscript.xlsx -scenario Job_CRUD</th>
         </tr>
         <tr>
-            <td nowrap="nowrap" class="execLabel">JAVA_OPT:</td>
+            <td nowrap="nowrap" class="execLabel">JAVA_OPT</td>
             <th class="execValue" data-th-utext="${summary.referenceData.get('JAVA_OPT')}">-Dnexial.generateOutput=TRUE -Dnexial.outputToCloud=TRUE</th>
         </tr>
         </tbody>
@@ -128,8 +144,8 @@
         <div class="plan-step-summary">
             <table cellspacing="0" cellpadding="5" border="0">
                 <tr data-th-class="${script.failCount > 0 ? 'hasFailure' : 'noFailure'}">
-                    <td class="value value-title" data-th-text="${@org.nexial.commons.utils.FileUtil@extractFilename(script.scriptFile)}" data-th-attr="title=${@org.nexial.commons.utils.FileUtil@extractFilename(script.scriptFile)}">Payroll_Processing_Summer_Special.xlsx</td>
-                    <td class="value value-title" data-th-utext="${@org.nexial.commons.utils.FileUtil@extractFilename(script.resolveDataFile())}" data-th-attr="title=${script.resolveDataFile()}">Payroll_Processing_Summer_Special.data.xlsx</td>
+                    <td class="value value-title" data-th-attr="title=${@org.nexial.commons.utils.FileUtil@extractFilename(script.scriptFile)}" data-th-utext="${@org.nexial.commons.utils.FileUtil@extractFilename(script.scriptFile)}">myscript.xlsx</td>
+                    <td class="value value-title" data-th-attr="title=${script.resolveDataFile()}" data-th-utext="${@org.nexial.commons.utils.FileUtil@extractFilename(script.resolveDataFile())}">myscript.data.xlsx</td>
                     <td class="value value-iteration" data-th-utext="${script.nestedExecutions.size()}">1234</td>
                     <td class="value value-datetime" data-th-utext="${#dates.format(new java.util.Date(script.startTime), 'yyyy/MM/dd HH:mm:ss')}">2018/12/16 12:53:21</td>
                     <td class="value value-time value-tally" data-th-utext="${#dates.format(#dates.create(0,0,0,0,0,0, (script.endTime - script.startTime)), 'HH:mm:ss')}">00:42:11</td>
@@ -159,14 +175,14 @@
                 <th:block data-th-if="${script.nestedExecutions}" data-th-each="iteration : ${script.nestedExecutions}">
                 <tr data-th-class="'record iter ' + ${iteration.failCount > 0 ? 'hasFailure' : 'noFailure'}">
                     <td class="value value-title" data-th-attr="title=${iteration.name}">
-                        <th:block data-th-utext="${iteration.name}">Payroll_Processing_Summer_Special.001.xlsx</th:block>
+                        <a target="_nexial_link" data-th-href="${iteration.testScriptLink}" data-th-utext="${iteration.name}">myscript.001.xlsx</a>
                         <div class="value-scriptRef" data-th-if="${iteration.referenceData.size() > 0}">
                             <i class="fas fa-info-circle info" title="Reference Data labeled as nexial.scriptRef.*"></i>
                             <table cellspacing="0" cellpadding="0">
                             <th:block data-th-each="data : ${iteration.referenceData}">
                             <th:block data-th-if="${data.key != 'JAVA_OPT' and data.key != 'runtime args' and data.key != 'Data File'}">
                             <tr>
-                                <td class="label-ref" data-th-attr="title=${data.key}" data-th-utext="${data.key + ':'}">Tax Year:</td>
+                                <td class="label-ref" data-th-attr="title=${data.key}" data-th-utext="${data.key}">Tax Year</td>
                                 <td class="value-ref" data-th-attr="title=${data.value}" data-th-utext="${data.value}">2018</td>
                             </tr>
                             </th:block>
@@ -180,7 +196,7 @@
                     <td class="value value-num value-tally" data-th-utext="${#numbers.formatInteger(iteration.executed, 1, 'DEFAULT')}">23456</td>
                     <td class="value value-num value-tally" data-th-utext="${#numbers.formatInteger(iteration.passCount, 1, 'DEFAULT')}">12345</td>
                     <td class="value value-num value-tally" data-th-utext="${#numbers.formatInteger(iteration.failCount, 1, 'DEFAULT')}">10001</td>
-                    <td class="value value-num value-tally " data-th-attrappend="class=${iteration.passCount == iteration.executed ? 'allPass' : 'hasFailure'}" data-th-utext="${#numbers.formatDecimal((iteration.passCount * 1.0 / iteration.executed) * 100, 1, 2, 'DEFAULT')} + '%'">98.12%</td>
+                    <td class="value value-num value-tally" data-th-attrappend="class=${iteration.passCount == iteration.executed ? 'allPass' : 'hasFailure'}" data-th-utext="${#numbers.formatDecimal((iteration.passCount * 1.0 / iteration.executed) * 100, 1, 2, 'DEFAULT')} + '%'">98.12%</td>
                 </tr>
 
                 <th:block data-th-if="${iteration.nestedExecutions}" data-th-each="scenario : ${iteration.nestedExecutions}">
@@ -193,7 +209,7 @@
                             <table cellspacing="0" cellpadding="0">
                             <th:block data-th-each="data : ${scenario.referenceData}">
                             <tr>
-                                <td class="label-ref" data-th-attr="title=${data.key}" data-th-utext="${data.key + ':'}">Tax Year:</td>
+                                <td class="label-ref" data-th-attr="title=${data.key}" data-th-utext="${data.key}">Tax Year</td>
                                 <td class="value-ref" data-th-attr="title=${data.value}" data-th-utext="${data.value}">2018</td>
                             </tr>
                             </th:block>
@@ -237,6 +253,13 @@
 <div class="footer">powered by <a href="https://nexiality.github.io">NEXIAL</a></div>
 <br/>
 <br/>
+
+<div id="loadError" style="display:none;font-weight:bold;font-size:16pt;color:#800;background:rgba(230,200,200,0.9);border:5px solid;padding:25px;margin:auto;position:fixed;width:500px;height:175px;top:0;left:0;right:0;bottom:0;">
+    Unable to load one or more external web resources needed to display this page.<br/><br/>
+    Please check/adjust your Internet access and reload this page again.<br/><br/>
+    Thank you.
+</div>
+<script>if (loadErrorFound) { document.getElementById('loadError').style.display = 'block'; }</script>
 
 </body>
 </html>

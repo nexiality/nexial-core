@@ -32,8 +32,10 @@ import org.jdom2.Element;
 import org.jetbrains.annotations.NotNull;
 import org.nexial.commons.utils.DateUtility;
 import org.nexial.commons.utils.EnvUtils;
+import org.nexial.commons.utils.FileUtil;
 import org.nexial.core.model.ExecutionSummary;
 
+import static org.nexial.core.NexialConst.Data.NEXIAL_LOG_PREFIX;
 import static org.nexial.core.NexialConst.PRETTY_XML_OUTPUTTER;
 
 public class JUnitReportHelper {
@@ -54,9 +56,9 @@ public class JUnitReportHelper {
     private static final String ERRORS = "errors";
     private static final String PACKAGE = "package";
     private static final String HOSTNAME = "hostname";
-    private static final String RUN_HOST = "runHost";
-    private static final String RUN_HOST_OS = "runHostOs";
-    private static final String RUN_USER = "runUser";
+    private static final String RUN_HOST = "Run From";
+    private static final String RUN_HOST_OS = "Run OS";
+    private static final String RUN_USER = "Run User";
     private static final String NAME = "name";
     private static final String VALUE = "value";
     private static final String CLASSNAME = "classname";
@@ -102,12 +104,13 @@ public class JUnitReportHelper {
             scriptExec.getNestedExecutions().forEach(iteration -> {
                 int iterationTotal = iteration.getIterationTotal();
                 int currIteration = iteration.getIterationIndex();
+                String iterationText = currIteration + " of " + iterationTotal;
 
                 Element testsuite = new Element(TESTSUITE);
                 testsuite.setAttribute(ID, (idBase + currIteration) + "");
                 testsuite.setAttribute(NAME, iterationTotal < 2 ?
                                              nameBase :
-                                             nameBase + ", Iteration " + currIteration + " of " + iterationTotal);
+                                             nameBase + ", Iteration " + iterationText);
                 testsuite.setAttribute(PACKAGE, nameBase);
                 testsuite.setAttribute(HOSTNAME, EnvUtils.getHostName());
                 testsuite.setAttribute(TIMESTAMP, DateUtility.formatISO8601(iteration.getStartTime()));
@@ -119,10 +122,16 @@ public class JUnitReportHelper {
                 addTo(properties, newProperty(RUN_HOST, iteration.getRunHost()));
                 addTo(properties, newProperty(RUN_HOST_OS, iteration.getRunHostOs()));
                 addTo(properties, newProperty(RUN_USER, iteration.getRunUser()));
-                // addTo(properties, newProperty("executionLog", iteration.getExecutionLog()));
+                addTo(properties, newProperty("Iteration", iterationText));
+                addTo(properties, newProperty("Script", FileUtil.extractFilename(iteration.getScriptFile())));
+                addTo(properties, newProperty("Data", iteration.getDataFile()));
 
-                if (MapUtils.isNotEmpty(iteration.getOtherLogs())) {
-                    iteration.getOtherLogs().forEach((name, value) -> properties.addContent(newProperty(name, value)));
+                if (MapUtils.isNotEmpty(iteration.getLogs())) {
+                    iteration.getLogs()
+                             .forEach((name, value) -> {
+                                 String logName = StringUtils.startsWith(name, NEXIAL_LOG_PREFIX) ? "Logs" : name;
+                                 addTo(properties, newProperty(logName, value));
+                             });
                 }
 
                 if (MapUtils.isNotEmpty(iteration.getReferenceData())) {
