@@ -743,16 +743,18 @@ public class Nexial {
 
             while (true) {
                 final boolean[] stillRunning = {false};
-                executionThreads.forEach(t -> {
+                for (int i = 0; i < executionThreads.size(); i++) {
+                    ExecutionThread t = executionThreads.get(i);
                     if (t != null) {
                         if (t.isAlive()) {
                             stillRunning[0] = true;
                         } else {
                             summary.addNestSummary(t.getExecutionSummary());
-                            t = null;
+                            // relinquish reference to completed/dead threads
+                            executionThreads.set(i, null);
                         }
                     }
-                });
+                }
 
                 if (!stillRunning[0]) { break; }
 
