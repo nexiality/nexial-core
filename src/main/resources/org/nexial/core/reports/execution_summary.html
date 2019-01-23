@@ -76,7 +76,7 @@
         </tr>
         <tr>
             <td nowrap="nowrap" class="execLabel">failed</td>
-            <th class="execValue" data-th-attrappend="class=${execution.get('executed steps') == execution.get('passed') ? ' ' : ' execValueFail'}"><pre data-th-utext="${execution.get('failed')}"> 0 (0.00%)</pre></th>
+            <th class="execValue " data-th-attrappend="class=${execution.get('executed steps') == execution.get('passed') ? '' : 'execValueFail'}"><pre data-th-utext="${execution.get('failed')}"> 0 (0.00%)</pre></th>
         </tr>
         <tr>
             <td nowrap="nowrap" class="execLabel">nexial version</td>
@@ -196,7 +196,7 @@
                     <td class="value value-num value-tally" data-th-utext="${#numbers.formatInteger(iteration.executed, 1, 'DEFAULT')}">23456</td>
                     <td class="value value-num value-tally" data-th-utext="${#numbers.formatInteger(iteration.passCount, 1, 'DEFAULT')}">12345</td>
                     <td class="value value-num value-tally" data-th-utext="${#numbers.formatInteger(iteration.failCount, 1, 'DEFAULT')}">10001</td>
-                    <td class="value value-num value-tally" data-th-attrappend="class=${iteration.passCount == iteration.executed ? 'allPass' : 'hasFailure'}" data-th-utext="${#numbers.formatDecimal((iteration.passCount * 1.0 / iteration.executed) * 100, 1, 2, 'DEFAULT')} + '%'">98.12%</td>
+                    <td class="value value-num value-tally " data-th-attrappend="class=${iteration.passCount == iteration.executed ? ' allPass' : ' hasFailure'}" data-th-utext="${#numbers.formatDecimal((iteration.passCount * 1.0 / iteration.executed) * 100, 1, 2, 'DEFAULT')} + '%'">98.12%</td>
                 </tr>
 
                 <th:block data-th-if="${iteration.nestedExecutions}" data-th-each="scenario : ${iteration.nestedExecutions}">

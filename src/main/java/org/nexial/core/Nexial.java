@@ -860,7 +860,7 @@ public class Nexial {
 
         NexialS3Helper otc = springContext.getBean("otc", NexialS3Helper.class);
 
-        boolean outputToCloud = BooleanUtils.toBoolean(System.getProperty(OUTPUT_TO_CLOUD, DEF_OUTPUT_TO_CLOUD + ""));
+        boolean outputToCloud = isOutputToCloud();
         if (outputToCloud) {
             // update log file path in execution summary BEFORE rendering any of the reports
             if (otc == null || !otc.isReadyForUse()) {
@@ -891,7 +891,7 @@ public class Nexial {
         }
 
         List<File> generatedJsons = null;
-        if (BooleanUtils.toBoolean(System.getProperty(GENERATE_EXEC_REPORT, DEF_GENERATE_EXEC_REPORT + ""))) {
+        if (isGenerateExecReport()) {
             try {
                 generatedJsons = reporter.generateJson(summary);
             } catch (IOException e) {

@@ -31,7 +31,7 @@
             <collectionProp name="Arguments.arguments">
               <elementProp name="Sleep_Time" elementType="Argument">
                 <stringProp name="Argument.name">Sleep_Time</stringProp>
-                <stringProp name="Argument.value">${sleepTime}</stringProp>
+                <stringProp name="Argument.value">${sleep time}</stringProp>
                 <stringProp name="Argument.metadata">=</stringProp>
               </elementProp>
               <elementProp name="Sleep_Mask" elementType="Argument">

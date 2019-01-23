@@ -1103,6 +1103,15 @@ public final class NexialConst {
             }
         }
 
+        public static boolean isOutputToCloud() {
+            return BooleanUtils.toBoolean(System.getProperty(OUTPUT_TO_CLOUD, DEF_OUTPUT_TO_CLOUD + ""));
+        }
+
+        public static boolean isGenerateExecReport() {
+            return isOutputToCloud() ||
+                   BooleanUtils.toBoolean(System.getProperty(GENERATE_EXEC_REPORT, DEF_GENERATE_EXEC_REPORT + ""));
+        }
+
         public static String treatCommonValueShorthand(String text) {
             if (StringUtils.isBlank(text)) { return text; }
 

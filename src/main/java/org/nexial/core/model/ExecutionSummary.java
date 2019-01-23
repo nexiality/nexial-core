@@ -84,7 +84,6 @@ public class ExecutionSummary {
         (int) (CELL_WIDTH_MULTIPLIER * 10), // total fail
         (int) (CELL_WIDTH_MULTIPLIER * 10)); // success rate
     protected static final String REGEX_LINKABLE_DATA = "^(http|/[0-9A-Za-z/_]+|[A-Za-z]\\:\\\\|\\\\\\\\.+).+\\|.+$";
-    // protected static final Gson GSON = new GsonBuilder().setLenient().create();
     private String name;
     private ExecutionLevel executionLevel;
     private String scriptFile;
