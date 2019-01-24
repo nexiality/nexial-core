@@ -75,8 +75,7 @@ public class JUnitReportHelper {
         document.setRootElement(testsuites);
 
         // script
-        summary.getNestedExecutions()
-               .forEach(scriptExec -> testsuites.addContent(toTestSuiteList(scriptExec, summary)));
+        summary.getNestedExecutions().forEach(scriptExec -> addTo(testsuites, toTestSuiteList(scriptExec, summary)));
 
         try (FileOutputStream out = new FileOutputStream(output)) { PRETTY_XML_OUTPUTTER.output(document, out); }
     }
@@ -136,13 +135,13 @@ public class JUnitReportHelper {
 
                 if (MapUtils.isNotEmpty(iteration.getReferenceData())) {
                     iteration.getReferenceData()
-                             .forEach((name, value) -> properties.addContent(newProperty(name, value)));
+                             .forEach((name, value) -> addTo(properties, newProperty(name, value)));
                 }
 
                 testsuite.addContent(properties);
 
                 iteration.getNestedExecutions()
-                         .forEach(scenario -> testsuite.addContent(toTestCases(scenario, iteration)));
+                         .forEach(scenario -> addTo(testsuite, toTestCases(scenario, iteration)));
 
                 testsuites.add(testsuite);
             });
@@ -154,6 +153,11 @@ public class JUnitReportHelper {
     private static void addTo(Element parent, Element childElement) {
         if (parent == null || childElement == null) { return; }
         parent.addContent(childElement);
+    }
+
+    private static void addTo(Element parent, List<Element> elements) {
+        if (parent == null || CollectionUtils.isEmpty(elements)) { return; }
+        parent.addContent(elements);
     }
 
     private static List<Element> toTestCases(ExecutionSummary scenario, ExecutionSummary iteration) {
