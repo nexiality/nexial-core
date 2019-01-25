@@ -119,5 +119,12 @@ public enum ElementType {
                this == SingleSelectList;
     }
 
+    public boolean isTextPatternAvailable() {
+        return this == TextArea ||
+               this == DateTimeCombo ||
+               this == TypeAheadCombo ||
+               this == SingleSelectCombo;
+    }
+
     public boolean isTextbox() { return this == Textbox || this == FormattedTextbox; }
 }

@@ -463,6 +463,9 @@ public class DesktopElement {
 
         if (elementType == SingleSelectComboNotEditable) { resolveRuntimeComboType(); }
 
+        // if combo box is disabled
+        if (!element.isEnabled()) { return StepResult.fail("Text can not be selected as it is disabled for input"); }
+
         List<String> list = parseTextInputWithShortcuts(text);
 
         StepResult result = null;
@@ -494,8 +497,7 @@ public class DesktopElement {
 
     public String getText() {
 
-        if (!element.isEnabled() && elementType == TextArea || elementType == TypeAheadCombo ||
-            elementType == DateTimeCombo) {
+        if (!element.isEnabled() && elementType.isTextPatternAvailable()) {
             return getValue(element);
         }
 
@@ -2011,6 +2013,8 @@ public class DesktopElement {
     }
 
     protected StepResult selectSingleSelectCombo(String text) {
+        element.click();
+
         text = normalizeUiText(text);
         String firstChar = text.charAt(0) + "";
 

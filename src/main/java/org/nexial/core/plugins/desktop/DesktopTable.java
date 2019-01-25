@@ -267,6 +267,7 @@ public class DesktopTable extends DesktopElement {
 
     public DesktopTableRow fetchOrCreateRow(int row) {
         sanityCheck(row, null);
+        ExecutionContext context = ExecutionThread.get();
 
         List<WebElement> dataElements = element.findElements(By.xpath(LOCATOR_TABLE_DATA));
         List<WebElement> rows;
@@ -296,7 +297,12 @@ public class DesktopTable extends DesktopElement {
             List<WebElement> matches;
             // using offsets, only when to click on the first row and it is new row.
             if (row == 0) {
-                clickOffset(element, clickOffsetX, (headerHeight + (TABLE_ROW_HEIGHT * row) + (TABLE_ROW_HEIGHT / 2)));
+                boolean clickBeforeEdit = context.getBooleanData(CURRENT_DESKTOP_TABLE_CLICK_BEFORE_EDIT,
+                                                                 DEF_DESKTOP_TABLE_CLICK_BEFORE_EDIT);
+                if (clickBeforeEdit) {
+                    clickOffset(element, clickOffsetX,
+                                (headerHeight + (TABLE_ROW_HEIGHT * row) + (TABLE_ROW_HEIGHT / 2)));
+                }
                 matches = element.findElements(By.xpath(LOCATOR_NEW_ROW));
                 if (CollectionUtils.isEmpty(matches)) {
                     throw new IllegalArgumentException(msgPrefix + "Unable to retrieve columns - no 'Add Row'");
@@ -332,7 +338,6 @@ public class DesktopTable extends DesktopElement {
         if (CollectionUtils.isEmpty(columns)) { throw new IllegalArgumentException(msgPrefix + "No columns found"); }
 
         // collect names so we can reuse them
-        ExecutionContext context = ExecutionThread.get();
         boolean editableColumnFound = context != null && context.getBooleanData(
             CURRENT_DESKTOP_TABLE_EDITABLE_COLUMN_FOUND);
 
