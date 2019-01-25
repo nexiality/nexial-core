@@ -18,10 +18,10 @@
 package org.nexial.core.utils;
 
 import java.lang.reflect.Array;
-import java.util.Iterator;
-import java.util.Map;
-import java.util.Objects;
+import java.math.BigDecimal;
+import java.util.*;
 
+import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.math.NumberUtils;
 import org.apache.commons.lang3.tuple.ImmutablePair;
@@ -29,7 +29,9 @@ import org.apache.commons.lang3.tuple.Pair;
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
+import org.nexial.commons.utils.RegexUtils;
 import org.nexial.commons.utils.TextUtils;
+import org.nexial.core.variable.NumberTransformer;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -85,12 +87,15 @@ public class JSONPath {
                                                                                       "\\]=~~}~~|" +
                                                                                       "\\[=~~{~~|",
                                                                                       "|", "=");
+    private static final String FUNCTION_PREFIX = "=>";
+
     private transient Logger logger = LoggerFactory.getLogger(getClass());
     private Object dataStruc;
     private String key;
     private JSONPath child;
     private JSONPath parent;
     private Object parsedVal;
+    private List<String> functions;
 
     enum Option {
         PREPEND, APPEND, OVERWRITE, DELETE, OVERWRITE_OR_ADD;
@@ -122,6 +127,166 @@ public class JSONPath {
         }
     }
 
+    private static class JsonPathFunctions {
+
+        static String invoke(String parsed, String function) {
+            switch (function) {
+                case "sum":
+                    return sum(parsed);
+                case "count":
+                    return count(parsed);
+                case "first":
+                    return first(parsed);
+                case "last":
+                    return last(parsed);
+                case "average":
+                    return average(parsed);
+                case "max":
+                    return max(parsed);
+                case "min":
+                    return min(parsed);
+                case "unique":
+                    return unique(parsed);
+                case "distinct":
+                    return distinct(parsed);
+                case "ascending":
+                    return ascending(parsed);
+                case "descending":
+                    return descending(parsed);
+                default:
+                    throw new IllegalArgumentException("Unknown/unsupported function: " + function);
+            }
+        }
+
+        static String sum(String parsed) {
+            if (!isArray(parsed)) { return parsed; }
+
+            List<String> array = toPrimitiveArray(parsed);
+            if (CollectionUtils.isEmpty(array)) { return parsed; }
+
+            return array.stream().reduce((first, second) -> {
+                BigDecimal number = NumberUtils.isCreatable(first) ?
+                                    NumberUtils.createBigDecimal(first) : new BigDecimal(0);
+                if (NumberUtils.isCreatable(second)) { number = number.add(NumberUtils.createBigDecimal(second)); }
+                return number.toString();
+            }).orElse(parsed);
+        }
+
+        static String count(String parsed) {
+            if (StringUtils.isEmpty(parsed)) { return "1"; }
+
+            // is this array?
+            return TextUtils.isBetween(parsed, "[", "]") ? new JSONArray(parsed).length() + "" : "1";
+        }
+
+        static String first(String parsed) {
+            if (!isArray(parsed)) { return parsed; }
+
+            List<String> array = toPrimitiveArray(parsed);
+            if (CollectionUtils.isEmpty(array)) { return parsed; }
+
+            return array.get(0);
+        }
+
+        static String last(String parsed) {
+            if (!isArray(parsed)) { return parsed; }
+
+            List<String> array = toPrimitiveArray(parsed);
+            if (CollectionUtils.isEmpty(array)) { return parsed; }
+
+            return array.get(array.size() - 1);
+        }
+
+        static String average(String parsed) {
+            if (!isArray(parsed)) { return parsed; }
+
+            List<String> array = toPrimitiveArray(parsed);
+            if (CollectionUtils.isEmpty(array)) { return parsed; }
+
+            if (array.size() == 1) { return array.get(0); }
+
+            return NumberTransformer.average((Number) null, array.toArray(new String[0])).toString();
+        }
+
+        static String max(String parsed) { return most(parsed, true); }
+
+        static String min(String parsed) { return most(parsed, false); }
+
+        static String unique(String parsed) { return distinct(parsed); }
+
+        static String distinct(String parsed) {
+            if (!isArray(parsed)) { return parsed; }
+
+            List<String> array = toPrimitiveArray(parsed, false);
+            if (CollectionUtils.isEmpty(array)) { return parsed; }
+
+            Set<String> distinct = new HashSet<>(array);
+            return "[" + TextUtils.toString(distinct, ",") + "]";
+        }
+
+        static String ascending(String parsed) { return sort(parsed, true); }
+
+        static String descending(String parsed) { return sort(parsed, false); }
+
+        private static String most(String parsed, boolean largest) {
+            if (!isArray(parsed)) { return parsed; }
+
+            List<String> array = toPrimitiveArray(parsed);
+            if (CollectionUtils.isEmpty(array)) { return parsed; }
+
+            return array.stream().reduce((first, second) -> {
+                BigDecimal number = NumberUtils.isCreatable(first) ?
+                                    NumberUtils.createBigDecimal(first) : new BigDecimal(0);
+                if (!NumberUtils.isCreatable(second)) { return number.toString(); }
+
+                BigDecimal number2 = NumberUtils.createBigDecimal(second);
+                if (largest) {
+                    return (number2.compareTo(number) < 0 ? number : number2).toString();
+                } else {
+                    // smallest
+                    return (number2.compareTo(number) > 0 ? number : number2).toString();
+                }
+            }).orElse(parsed);
+        }
+
+        private static String sort(String parsed, boolean ascending) {
+            if (!isArray(parsed)) { return parsed; }
+
+            List<String> array = toPrimitiveArray(parsed, false);
+            if (CollectionUtils.isEmpty(array)) { return parsed; }
+
+            if (ascending) {
+                Collections.sort(array);
+            } else {
+                array.sort((o1, o2) -> o1.compareTo(o2) * -1);
+            }
+
+            return "[" + TextUtils.toString(array, ",") + "]";
+        }
+
+        /** assume that {@code parsed} contains a list of simple/primitive values */
+        private static List<String> toPrimitiveArray(String parsed) { return toPrimitiveArray(parsed, true); }
+
+        private static List<String> toPrimitiveArray(String parsed, boolean removeQuotes) {
+            if (!isArray(parsed)) { throw new IllegalArgumentException("not an array: " + parsed); }
+
+            // check if `parsed` is an array wrapping JSON object or JSON array
+            String REGEX_NOT_SIMPLY_ARRAY = "\\[.*([\\{\\[].+[\\}\\]]\\,?)+.*\\]";
+            if (RegexUtils.match(parsed, REGEX_NOT_SIMPLY_ARRAY)) {
+                // match means this array is not simple/primitive array
+                return null;
+            }
+
+            List<String> array = TextUtils.toList(TextUtils.unwrap(parsed, "[", "]"), ",", true);
+            if (removeQuotes) {
+                for (int i = 0; i < array.size(); i++) { array.set(i, StringUtils.unwrap(array.get(i), "\"")); }
+            }
+            return array;
+        }
+
+        private static boolean isArray(String parsed) { return TextUtils.isBetween(parsed, "[", "]"); }
+    }
+
     private class JSONPathKey {
         boolean isIndexOrdinal;
         String nodeName;
@@ -134,14 +299,12 @@ public class JSONPath {
 
     public JSONPath(JSONObject dataStruc, String key) {
         this.dataStruc = dataStruc;
-        this.key = key;
-        init();
+        init(key);
     }
 
     public JSONPath(JSONArray dataStruc, String key) {
         this.dataStruc = dataStruc;
-        this.key = key;
-        init();
+        init(key);
     }
 
     private JSONPath(Object dataStruc, String key, JSONPath parent) {
@@ -182,15 +345,17 @@ public class JSONPath {
     }
 
     public String get() {
-        if (child != null) { return child.get(); }
-        if (parsedVal == null) { return null; }
-        if (parsedVal == NULL) { return null; }
+        if (child != null) { return handleFunctions(child.get()); }
+
+        if (parsedVal == null || parsedVal == NULL) { return null; }
+
         if (parsedVal instanceof JSONArray) {
             JSONArray array = (JSONArray) parsedVal;
             if (array.length() < 1) { return null; }
-            return array.toString();
+            return handleFunctions(array.toString());
+        } else {
+            return handleFunctions(parsedVal.toString());
         }
-        return parsedVal.toString();
     }
 
     public int count() {
@@ -380,6 +545,25 @@ public class JSONPath {
             filterByNodeName(nodeName, (JSONArray) obj, matches);
             return;
         }
+    }
+
+    private void init(String key) {
+        if (!StringUtils.contains(key, FUNCTION_PREFIX)) {
+            this.key = key;
+        } else {
+            this.key = StringUtils.trim(StringUtils.substringBeforeLast(key, FUNCTION_PREFIX));
+            this.functions = TextUtils.toList(
+                StringUtils.trim(StringUtils.substringAfterLast(key, FUNCTION_PREFIX)), " ", true);
+        }
+        init();
+    }
+
+    private String handleFunctions(String parsedVal) {
+        if (CollectionUtils.isEmpty(functions)) { return parsedVal; }
+
+        String[] parsed = new String[]{parsedVal};
+        functions.forEach(function -> parsed[0] = JsonPathFunctions.invoke(parsed[0], function));
+        return parsed[0];
     }
 
     private void modify(JSONArray array, String modifyWith, Option option) throws JSONException {

@@ -314,6 +314,18 @@ public class ExpressionProcessorTest {
         result = subject.process(fixture);
         Assert.assertEquals("1", result);
 
+        fixture = "[NUMBER(3628800) => divide(,2, 3 ,blah,5,6,7,8,this is not number, 10)]";
+        result = subject.process(fixture);
+        Assert.assertEquals("36", result);
+
+        fixture = "[NUMBER(1) => average(2,3,4,5,6,7,8,9,10)]";
+        result = subject.process(fixture);
+        Assert.assertEquals("5.5", result);
+
+        fixture = "[NUMBER(3628800) => average(,2, 3 ,blah,5,6,7,8,this is not number, 10)]";
+        result = subject.process(fixture);
+        Assert.assertEquals("362884.1", result);
+
         fixture = "[NUMBER(5) => divide(3,4.0,11)]";
         result = subject.process(fixture);
         Assert.assertEquals("0.03787878787878788", result);
@@ -622,9 +634,16 @@ public class ExpressionProcessorTest {
                                  "                           list average]");
         Assert.assertEquals("600.0", result);
 
-        fixture = "[JSON(" + jsonFile + ") => replace(details[type1=A2].type1,7th)" +
-                  "                           extract(details[type1=7th].type1)]";
-        result = subject.process(fixture);
+        result = subject.process("[JSON(" + jsonFile + ") => " +
+                                 "extract(details[date1=REGEX:2016-05-0\\.+].minutes => count)]");
+        Assert.assertEquals("2", result);
+
+        result = subject.process("[JSON(" + jsonFile + ") => " +
+                                 "extract(details[date1=REGEX:2016-05-1\\.+].minutes => sum)]");
+        Assert.assertEquals("3300", result);
+
+        result = subject.process("[JSON(" + jsonFile + ") => replace(details[type1=A2].type1,7th)" +
+                                 "                           extract(details[type1=7th].type1)]");
         Assert.assertEquals("7th", result);
 
         result = subject.process("[JSON(" + jsonFile + ") => extract(error)]");

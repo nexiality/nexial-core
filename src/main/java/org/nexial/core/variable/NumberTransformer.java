@@ -22,6 +22,7 @@ import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.text.DecimalFormat;
 import java.util.Map;
+import javax.validation.constraints.NotNull;
 
 import org.apache.commons.lang3.ArrayUtils;
 import org.apache.commons.lang3.StringUtils;
@@ -104,6 +105,21 @@ public class NumberTransformer<T extends NumberDataType> extends Transformer {
         return data;
     }
 
+    public T average(T data, String... numbers) {
+        if (data == null || data.getTextValue() == null) { return data; }
+        if (ArrayUtils.isEmpty(numbers)) {
+            ConsoleUtils.log(data.getName() + ".average(): cannot operate on empty number");
+            return data;
+        }
+
+        Number numberObject = data.getValue();
+        if (numberObject == null) { return data; }
+
+        data.setValue(average(numberObject, numbers));
+        data.setTextValue(data.getValue() + "");
+        return data;
+    }
+
     public T add(T data, String... numbers) {
         if (data == null || data.getTextValue() == null) { return data; }
         if (ArrayUtils.isEmpty(numbers)) {
@@ -114,17 +130,7 @@ public class NumberTransformer<T extends NumberDataType> extends Transformer {
         Number numberObject = data.getValue();
         if (numberObject == null) { return data; }
 
-        for (String number : numbers) {
-            number = StringUtils.trim(number);
-            if (isDecimal(number) || numberObject instanceof Double || numberObject instanceof Float) {
-                data.setValue(BigDecimal.valueOf(numberObject.doubleValue())
-                                        .add(BigDecimal.valueOf(NumberUtils.toDouble(number))).doubleValue());
-            } else {
-                data.setValue(numberObject.longValue() + NumberUtils.toLong(number));
-            }
-            numberObject = data.getValue();
-        }
-
+        data.setValue(addSequentially(numberObject, numbers));
         data.setTextValue(data.getValue() + "");
         return data;
     }
@@ -139,17 +145,7 @@ public class NumberTransformer<T extends NumberDataType> extends Transformer {
         Number numberObject = data.getValue();
         if (numberObject == null) { return data; }
 
-        for (String number : numbers) {
-            number = StringUtils.trim(number);
-            if (isDecimal(number) || numberObject instanceof Double || numberObject instanceof Float) {
-                data.setValue(BigDecimal.valueOf(numberObject.doubleValue())
-                                        .subtract(BigDecimal.valueOf(NumberUtils.toDouble(number))).doubleValue());
-            } else {
-                data.setValue(numberObject.longValue() - NumberUtils.toLong(number));
-            }
-            numberObject = data.getValue();
-        }
-
+        data.setValue(minusSequentially(numberObject, numbers));
         data.setTextValue(data.getValue() + "");
         return data;
     }
@@ -164,17 +160,7 @@ public class NumberTransformer<T extends NumberDataType> extends Transformer {
         Number numberObject = data.getValue();
         if (numberObject == null) { return data; }
 
-        for (String number : numbers) {
-            number = StringUtils.trim(number);
-            if (isDecimal(number) || numberObject instanceof Double || numberObject instanceof Float) {
-                data.setValue(BigDecimal.valueOf(numberObject.doubleValue())
-                                        .multiply(BigDecimal.valueOf(NumberUtils.toDouble(number))).doubleValue());
-            } else {
-                data.setValue(numberObject.longValue() * NumberUtils.toLong(number));
-            }
-            numberObject = data.getValue();
-        }
-
+        data.setValue(multiplySequentially(numberObject, numbers));
         data.setTextValue(data.getValue() + "");
         return data;
     }
@@ -189,25 +175,7 @@ public class NumberTransformer<T extends NumberDataType> extends Transformer {
         Number numberObject = data.getValue();
         if (numberObject == null) { return data; }
 
-        for (String number : numbers) {
-            number = StringUtils.trim(number);
-            if (isDecimal(number) || numberObject instanceof Double || numberObject instanceof Float) {
-                data.setValue(BigDecimal.valueOf(numberObject.doubleValue())
-                                        .divide(BigDecimal.valueOf(NumberUtils.toDouble(number)), DEC_SCALE, ROUND)
-                                        .doubleValue());
-            } else {
-                BigDecimal result = BigDecimal.valueOf(numberObject.longValue())
-                                              .divide(BigDecimal.valueOf(NumberUtils.toLong(number)), DEC_SCALE, ROUND);
-                if (result.doubleValue() == result.longValue()) {
-                    // maintain current "whole number" representation
-                    data.setValue(result.longValue());
-                } else {
-                    data.setValue(result.doubleValue());
-                }
-            }
-            numberObject = data.getValue();
-        }
-
+        data.setValue(divideSequential(numberObject, numbers));
         data.setTextValue(data.getValue() + "");
         return data;
     }
@@ -278,6 +246,106 @@ public class NumberTransformer<T extends NumberDataType> extends Transformer {
     public T store(T data, String var) {
         snapshot(var, data);
         return data;
+    }
+
+    @NotNull
+    public static Number average(Number base, String... numbers) {
+        if (ArrayUtils.isEmpty(numbers)) { return base; }
+
+        // +1 because of base
+        int count = numbers.length + (base == null ? 0 : 1);
+        return BigDecimal.valueOf(addSequentially(base, numbers).doubleValue())
+                         .divide(BigDecimal.valueOf(count), DEC_SCALE, ROUND)
+                         .doubleValue();
+    }
+
+    public static Number addSequentially(Number base, String... numbers) {
+        for (String number : numbers) {
+            number = StringUtils.trim(number);
+            if (!NumberUtils.isParsable(number)) {
+                ConsoleUtils.log("[" + number + "] is not a number; ignored...");
+            } else if (isDecimal(number) || base instanceof Double || base instanceof Float) {
+                base = BigDecimal.valueOf(base == null ? 0 : base.doubleValue())
+                                 .add(BigDecimal.valueOf(NumberUtils.toDouble(number)))
+                                 .doubleValue();
+            } else {
+                base = base.longValue() + NumberUtils.toLong(number);
+            }
+        }
+        return base;
+    }
+
+    public static Number minusSequentially(Number base, String... numbers) {
+        for (String number : numbers) {
+            number = StringUtils.trim(number);
+            if (!NumberUtils.isParsable(number)) {
+                ConsoleUtils.log("[" + number + "] is not a number; ignored...");
+            } else if (isDecimal(number) || base instanceof Double || base instanceof Float) {
+                base = BigDecimal.valueOf(base == null ? 0 : base.doubleValue())
+                                 .subtract(BigDecimal.valueOf(NumberUtils.toDouble(number))).doubleValue();
+            } else {
+                base = (base == null ? 0 : base.longValue()) - NumberUtils.toLong(number);
+            }
+        }
+        return base;
+    }
+
+    public static Number multiplySequentially(Number base, String... numbers) {
+        for (String number : numbers) {
+            number = StringUtils.trim(number);
+
+            if (!NumberUtils.isParsable(number)) {
+                ConsoleUtils.log("[" + number + "] is not a number; ignored...");
+                continue;
+            }
+
+            if (base == null) {
+                base = isDecimal(number) ? NumberUtils.toDouble(number) : NumberUtils.toLong(number);
+                continue;
+            }
+
+            if (isDecimal(number) || base instanceof Double || base instanceof Float) {
+                base = BigDecimal.valueOf(base.doubleValue())
+                                 .multiply(BigDecimal.valueOf(NumberUtils.toDouble(number))).doubleValue();
+            } else {
+                base = base.longValue() * NumberUtils.toLong(number);
+            }
+        }
+
+        return base;
+    }
+
+    public static Number divideSequential(Number base, String... numbers) {
+        for (String number : numbers) {
+            number = StringUtils.trim(number);
+
+            if (!NumberUtils.isParsable(number)) {
+                ConsoleUtils.log("[" + number + "] is not a number; ignored...");
+                continue;
+            }
+
+            if (base == null) {
+                base = isDecimal(number) ? NumberUtils.toDouble(number) : NumberUtils.toLong(number);
+                continue;
+            }
+
+            if (isDecimal(number) || base instanceof Double || base instanceof Float) {
+                base = BigDecimal.valueOf(base.doubleValue())
+                                 .divide(BigDecimal.valueOf(NumberUtils.toDouble(number)), DEC_SCALE, ROUND)
+                                 .doubleValue();
+            } else {
+                BigDecimal result = BigDecimal.valueOf(base.longValue())
+                                              .divide(BigDecimal.valueOf(NumberUtils.toLong(number)), DEC_SCALE, ROUND);
+                if (result.doubleValue() == result.longValue()) {
+                    // maintain current "whole number" representation
+                    base = result.longValue();
+                } else {
+                    base = result.doubleValue();
+                }
+            }
+        }
+
+        return base;
     }
 
     @Override

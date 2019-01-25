@@ -788,6 +788,36 @@ public class JSONPathTest {
         Assert.assertEquals("[\"Johnny\",\"Sammy\",\"Kerry\",\"Alex\"]", JSONPath.find(result, "[REGEX:\\.+]"));
     }
 
+    @Test
+    public void jsonPathFunctions() {
+        String fixture = "{\n" +
+                         "    \"books\": [\n" +
+                         "        { \"title\": \"Introduction to Programming\", \"price\": 13.95, \"category\": \"Technology\" },\n" +
+                         "        { \"title\": \"How to Cook Good Food Cheap\", \"price\": 15.60, \"category\": \"Home Improvement\" },\n" +
+                         "        { \"title\": \"Furniture for Harmony\", \"price\": 32.50, \"category\": \"Home Improvement\" }\n" +
+                         "    ],\n" +
+                         "    \"published date\": \"2019-01-14\"\n" +
+                         "}";
+        Assert.assertEquals("1", JSONPath.find(new JSONObject(fixture), "published date => count"));
+        Assert.assertEquals("2", JSONPath.find(new JSONObject(fixture), "books[category=Home Improvement] => count"));
+        Assert.assertEquals("3", JSONPath.find(new JSONObject(fixture), "books.title => count"));
+        Assert.assertEquals("3", JSONPath.find(new JSONObject(fixture), "books => count"));
+        Assert.assertEquals(
+            "[\"Furniture for Harmony\",\"How to Cook Good Food Cheap\",\"Introduction to Programming\"]",
+            JSONPath.find(new JSONObject(fixture), "books.title => ascending"));
+        Assert.assertEquals("[\"Technology\",\"Home Improvement\",\"Home Improvement\"]",
+                            JSONPath.find(new JSONObject(fixture), "books.category => descending"));
+        Assert.assertEquals("62.05", JSONPath.find(new JSONObject(fixture), "books.price => sum"));
+        Assert.assertEquals("20.683333333333334", JSONPath.find(new JSONObject(fixture), "books.price => average"));
+        Assert.assertEquals("13.95", JSONPath.find(new JSONObject(fixture), "books.price => min"));
+        Assert.assertEquals("32.50", JSONPath.find(new JSONObject(fixture), "books.price => max"));
+        Assert.assertEquals("13.95", JSONPath.find(new JSONObject(fixture), "books.price => first"));
+        Assert.assertEquals("32.50", JSONPath.find(new JSONObject(fixture), "books.price => last"));
+        Assert.assertEquals("[\"Home Improvement\",\"Technology\"]",
+                            JSONPath.find(new JSONObject(fixture), "books.category => distinct"));
+
+    }
+
     private void testPathValue(JSONObject fixture, String path, String expected) {
         String testVal = JSONPath.find(fixture, path);
         Assert.assertEquals(expected, testVal);

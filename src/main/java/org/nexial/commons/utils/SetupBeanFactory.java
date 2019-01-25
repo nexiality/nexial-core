@@ -51,8 +51,9 @@ class SetupBeanFactory implements BeanFactoryAware {
         Set<String> projectPropertyKeys = TestProject.listProjectPropertyKeys();
         if (!projectPropertyKeys.isEmpty()) {
             projectPropertyKeys.forEach(property -> {
-                if (StringUtils.isBlank(System.getProperty(property))) {
-                    System.setProperty(property, TestProject.getProjectProperty(property));
+                if (StringUtils.isNotBlank(property) && StringUtils.isBlank(System.getProperty(property))) {
+                    String value = TestProject.getProjectProperty(property);
+                    if (StringUtils.isEmpty(value)) { System.setProperty(property, value); }
                 }
             });
         }

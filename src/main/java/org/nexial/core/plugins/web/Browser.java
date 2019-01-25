@@ -27,6 +27,7 @@ import java.util.regex.Pattern;
 import javax.validation.constraints.NotNull;
 
 import org.apache.commons.collections4.CollectionUtils;
+import org.apache.commons.collections4.IterableUtils;
 import org.apache.commons.collections4.MapUtils;
 import org.apache.commons.lang3.BooleanUtils;
 import org.apache.commons.lang3.StringUtils;
@@ -63,8 +64,8 @@ import static java.io.File.separator;
 import static java.util.concurrent.TimeUnit.MILLISECONDS;
 import static org.apache.commons.lang3.SystemUtils.*;
 import static org.nexial.core.NexialConst.BrowserType.*;
-import static org.nexial.core.NexialConst.*;
 import static org.nexial.core.NexialConst.Data.*;
+import static org.nexial.core.NexialConst.*;
 import static org.nexial.core.plugins.web.WebDriverCapabilityUtils.initCapabilities;
 import static org.nexial.core.utils.CheckUtils.requiresExecutableFile;
 import static org.openqa.selenium.PageLoadStrategy.EAGER;
@@ -271,6 +272,8 @@ public class Browser implements ForcefulTerminate {
                     if (StringUtils.contains(error, "unexpected end of stream on Connection") ||
                         StringUtils.contains(error, "caused connection abort: recv failed")) {
                         LOGGER.error("webdriver readiness check: " + error);
+                    } else if (StringUtils.contains(error, "window already closed")) {
+                        shouldInitialize = resolveActiveWindowHandle();
                     } else {
                         // something's wrong with current browser window or session, need to re-init
                         shouldInitialize = true;
@@ -928,6 +931,66 @@ public class Browser implements ForcefulTerminate {
             Point initialPosition = runningSafari ? INITIAL_POSITION_SAFARI : INITIAL_POSITION;
             window.setPosition(initialPosition);
         }
+    }
+
+    private boolean resolveActiveWindowHandle() {
+        // find last window
+        if (CollectionUtils.isNotEmpty(lastWinHandles)) {
+            List<String> badHandles = new ArrayList<>();
+            String winHandle = null;
+
+            for (int i = lastWinHandles.size() - 1; i >= 0; i--) {
+                String lastWinHandle = lastWinHandles.get(i);
+                try {
+                    driver.switchTo().window(lastWinHandle);
+                    winHandle = lastWinHandle;
+                    break;
+                } catch (Throwable e) {
+                    // keep going...
+                    badHandles.add(lastWinHandle);
+                }
+            }
+
+            if (CollectionUtils.isNotEmpty(badHandles)) { lastWinHandles.removeAll(badHandles); }
+
+            if (winHandle != null) {
+                if (LOGGER.isDebugEnabled()) {
+                    LOGGER.debug("webdriver readiness check: last window handle appeared to be " +
+                                 "invalid; window handle resolved to previous one: " + winHandle);
+                }
+                return false;
+            } // else, recheck via webdriver for the last set of window handles.
+        } else if (initialWinHandle != null) {
+            if (LOGGER.isDebugEnabled()) {
+                LOGGER.debug("webdriver readiness check: last window handle appeared to be " +
+                             "invalid; window handle resolved to initial one: " + initialWinHandle);
+            }
+
+            return false;
+        }
+
+        // recheck via webdriver
+        Set<String> currentWinHandles = driver.getWindowHandles();
+        if (CollectionUtils.isNotEmpty(currentWinHandles)) {
+            // no guaranteed that the last is the active one...
+            // but good enough
+            initialWinHandle = IterableUtils.get(currentWinHandles, currentWinHandles.size() - 1);
+            currentWinHandles.forEach(handle -> lastWinHandles.push(handle));
+
+            if (LOGGER.isDebugEnabled()) {
+                LOGGER.debug("webdriver readiness check: last window handle appeared to be " +
+                             "invalid; window handle resolved to " + initialWinHandle);
+            }
+
+            return false;
+        }
+
+        // exhausted all possibilities..
+        if (LOGGER.isDebugEnabled()) {
+            LOGGER.error("webdriver readiness check: no windows available\nBROWSER MIGHT BE TERMINATED; RESTARTING...");
+        }
+
+        return true;
     }
 
     private void postInit(WebDriver driver) {
