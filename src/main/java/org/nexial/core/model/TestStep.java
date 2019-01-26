@@ -662,7 +662,8 @@ public class TestStep extends TestStepManifest {
     }
 
     private boolean isFileLink(String param) {
-        return StringUtils.countMatches(param, TOKEN_FUNCTION_START + "syspath|") == 1 &&
+        return !StringUtils.startsWith(param, "[") &&
+               StringUtils.countMatches(param, TOKEN_FUNCTION_START + "syspath|") == 1 &&
                StringUtils.countMatches(param, "|name" + TOKEN_FUNCTION_END) == 0;
     }
 

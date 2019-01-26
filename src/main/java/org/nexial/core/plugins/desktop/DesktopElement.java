@@ -464,7 +464,7 @@ public class DesktopElement {
         if (elementType == SingleSelectComboNotEditable) { resolveRuntimeComboType(); }
 
         // if combo box is disabled
-        if (!element.isEnabled()) { return StepResult.fail("Text can not be selected as it is disabled for input"); }
+        if (!element.isEnabled()) {return StepResult.fail("Text cannot be selected since '" + label + "' is disabled");}
 
         List<String> list = parseTextInputWithShortcuts(text);
 

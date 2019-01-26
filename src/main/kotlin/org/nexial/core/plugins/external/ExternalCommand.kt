@@ -20,6 +20,8 @@ import org.apache.commons.io.FileUtils
 import org.apache.commons.io.IOUtils
 import org.apache.commons.lang3.StringUtils
 import org.junit.runner.JUnitCore
+import org.nexial.commons.proc.ProcessInvoker
+import org.nexial.commons.proc.ProcessInvoker.PROC_REDIRECT_OUT
 import org.nexial.commons.proc.RuntimeUtils
 import org.nexial.commons.utils.TextUtils
 import org.nexial.core.NexialConst.DEF_CHARSET
@@ -98,6 +100,33 @@ class ExternalCommand : BaseCommand() {
             context.setData(OPT_RUN_PROGRAM_OUTPUT, outputFileName)
             val fileName = Syspath().out("fullpath") + separator + outputFileName
             FileUtils.write(File(fileName), output, DEF_CHARSET, false)
+            addLinkRef("Follow the link to view the output", "output", fileName)
+
+            return StepResult.success()
+        } catch (e: Exception) {
+            return StepResult.fail(e.message)
+        }
+    }
+
+    fun runProgramNoWait(programPathAndParams: String): StepResult {
+        requires(StringUtils.isNotBlank(programPathAndParams), "empty/null programPathAndParams")
+
+        try {
+            val programAndParams = RuntimeUtils.formatCommandLine(programPathAndParams)
+            if (programAndParams.isEmpty()) {
+                throw IllegalArgumentException("Unable to parse programPathAndParams: $programAndParams")
+            }
+
+            val outputFileName = "runProgramNoWait_${context.currentTestStep.row[0].reference}.log"
+            context.setData(OPT_RUN_PROGRAM_OUTPUT, outputFileName)
+            val fileName = Syspath().out("fullpath") + separator + outputFileName
+
+            val env = mutableMapOf<String, String>()
+            env[PROC_REDIRECT_OUT] = fileName
+
+            ProcessInvoker.invokeNoWait(programAndParams[0], programAndParams.asList().drop(0), env)
+
+            //attach link to results
             addLinkRef("Follow the link to view the output", "output", fileName)
 
             return StepResult.success()
