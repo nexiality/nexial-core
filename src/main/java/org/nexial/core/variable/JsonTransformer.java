@@ -20,15 +20,20 @@ package org.nexial.core.variable;
 import java.io.File;
 import java.io.IOException;
 import java.lang.reflect.Method;
+import java.util.Arrays;
+import java.util.List;
 import java.util.Map;
 
 import org.apache.commons.io.FileUtils;
+import org.apache.commons.lang3.ArrayUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 import org.nexial.commons.utils.FileUtil;
 import org.nexial.commons.utils.TextUtils;
+import org.nexial.core.ExecutionThread;
+import org.nexial.core.model.ExecutionContext;
 import org.nexial.core.utils.ConsoleUtils;
 import org.nexial.core.utils.JSONPath;
 import org.nexial.core.utils.JsonEditor;
@@ -43,11 +48,13 @@ import com.google.gson.stream.MalformedJsonException;
 
 import static org.json.JSONObject.NULL;
 import static org.nexial.core.NexialConst.*;
+import static org.nexial.core.NexialConst.Data.DEF_TEXT_DELIM;
 
 public class JsonTransformer<T extends JsonDataType> extends Transformer {
     private static final Map<String, Integer> FUNCTION_TO_PARAM_LIST = discoverFunctions(JsonTransformer.class);
     private static final Map<String, Method> FUNCTIONS =
         toFunctionMap(FUNCTION_TO_PARAM_LIST, JsonTransformer.class, JsonDataType.class);
+    private static final String TEMP_TEXT_DELIM = "$~~TD~~$";
 
     public TextDataType text(T data) { return super.text(data); }
 
@@ -238,6 +245,66 @@ public class JsonTransformer<T extends JsonDataType> extends Transformer {
         data.setValue(GSON.fromJson(beautified, JsonElement.class));
         data.setTextValue(beautified);
         return data;
+    }
+
+    public CsvDataType select(T data, String... jsonpaths) throws ExpressionException {
+        if (data == null || data.getValue() == null) { return null; }
+        if (ArrayUtils.isEmpty(jsonpaths)) { return null; }
+
+        StringBuilder buffer = new StringBuilder();
+        Arrays.stream(jsonpaths).forEach(jsonpath -> {
+            try {
+                jsonpath = ExpressionUtils.handleExternal("TEXT", jsonpath);
+                if (StringUtils.isNotBlank(jsonpath)) { buffer.append("\n").append(jsonpath); }
+            } catch (TypeConversionException e) {
+                ConsoleUtils.error("Invalid jsonpath - " + jsonpath + ": " + e.getMessage());
+            }
+        });
+
+        String compoundJsonPaths = StringUtils.trim(buffer.toString());
+        if (StringUtils.isBlank(compoundJsonPaths)) { return null; }
+
+        ExecutionContext context = ExecutionThread.get();
+        String textDelim = context == null ? DEF_TEXT_DELIM : context.getTextDelim();
+
+        compoundJsonPaths = StringUtils.replace(compoundJsonPaths, "\\" + textDelim, TEMP_TEXT_DELIM);
+        compoundJsonPaths = StringUtils.replace(compoundJsonPaths, textDelim, "\n");
+        List<String> jsonpathList = TextUtils.toList(compoundJsonPaths, "\n", true);
+        StringBuilder output = new StringBuilder();
+
+        /*
+        [JSON(${json}) =>
+            export(
+                summary[payCode=OT].duration,
+                COUNT::summary[payCode=OT],
+                grossAmount,
+                SUM::summary[payCode=OT].flatAmount
+                summary[payCode=OT].flatAmount -> sum
+            )
+
+            // now a CSV doc in memory:
+            // summary[payCode=OT].duration         [8.0,7.0]
+            // COUNT::summary[payCode=OT]           2
+            // grossAmount                          3415.829994
+            // SUM::summary[payCode=OT].flatAmount  1180.053999379
+
+            save(${external_csv_file})
+        ]
+        */
+        JsonElement value = data.getValue();
+        jsonpathList.forEach(jsonpath -> {
+            jsonpath = StringUtils.trim(StringUtils.replace(jsonpath, TEMP_TEXT_DELIM, textDelim));
+            output.append(jsonpath).append(textDelim);
+            if (value instanceof JsonObject) { output.append(JSONPath.find(data.toJSONObject(), jsonpath)); }
+            if (value instanceof JsonArray) { output.append(JSONPath.find(data.toJSONArray(), jsonpath)); }
+            output.append("\r\n");
+        });
+
+        CsvDataType returnObj = new CsvDataType(output.toString());
+        returnObj.setHeader(false);
+        returnObj.setDelim(textDelim);
+        returnObj.parse();
+        return returnObj;
     }
 
     @Override

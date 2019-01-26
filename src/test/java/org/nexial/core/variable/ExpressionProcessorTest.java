@@ -804,6 +804,34 @@ public class ExpressionProcessorTest {
     }
 
     @Test
+    public void processJsonSelect() throws Exception {
+        ExpressionProcessor subject = new ExpressionProcessor(context);
+
+        String jsonFile = ResourceUtils.getResourceFilePath(resourcePath + this.getClass().getSimpleName() + "2.json");
+
+        Assert.assertEquals("details.minutes => sum,4500\r\n" +
+                            "details.amt1 => sum,3415.8299937894\r\n" +
+                            "details[code=A1].key0019,[8.0,12.0,7.0]\r\n",
+                            subject.process("[JSON(" + jsonFile + ") => select(" +
+                                            "details.minutes => sum," +
+                                            "details.amt1 => sum," +
+                                            "details[code=A1].key0019" +
+                                            ") text]"));
+
+        Assert.assertEquals("details.code              => distinct,[\"A1\",\"B1\"]\r\n" +
+                            "details.key0019           => average,10.714285714285714\r\n" +
+                            "details[code=B1].amt1     => max,372.636\r\n" +
+                            "details[key0029=false].id => count,2\r\n",
+                            subject.process("[JSON(" + jsonFile + ")      => select(" +
+                                            "   details.code              => distinct \n" +
+                                            "   details.key0019           => average  \n" +
+                                            "   details[code=B1].amt1     => max      \n" +
+                                            "   details[key0029=false].id => count\n" +
+                                            ") text]"));
+
+    }
+
+    @Test
     public void processXml() throws Exception {
         ExpressionProcessor subject = new ExpressionProcessor(context);
 
