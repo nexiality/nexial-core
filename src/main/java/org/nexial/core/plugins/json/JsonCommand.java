@@ -20,6 +20,7 @@ package org.nexial.core.plugins.json;
 import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Comparator;
 import java.util.List;
@@ -48,7 +49,7 @@ import com.google.gson.JsonParser;
 import com.google.gson.JsonSyntaxException;
 
 import static org.nexial.core.NexialConst.*;
-import static org.nexial.core.NexialConst.Data.LAST_JSON_COMPARE_RESULT;
+import static org.nexial.core.NexialConst.Data.*;
 import static org.nexial.core.utils.CheckUtils.*;
 
 /**
@@ -109,17 +110,12 @@ public class JsonCommand extends BaseCommand {
     }
 
     public StepResult storeValue(String json, String jsonpath, String var) {
-        requiresNotBlank(var, "invalid variable", var);
-        String match = find(json, jsonpath);
-        if (match == null) { return StepResult.fail("EXPECTED match against '" + jsonpath + "' was not found"); }
-
-        context.setData(var, match);
-        return StepResult.success("EXPECTED match against '" + jsonpath + "' stored to ${" + var + "}");
+        return extractJsonValue(json, jsonpath, var);
     }
 
     public StepResult storeValues(String json, String jsonpath, String var) {
         // jsonpath resolves multiple matches to string anyways...
-        return storeValue(json, jsonpath, var);
+        return extractJsonValue(json, jsonpath, var);
     }
 
     /**
@@ -298,6 +294,29 @@ public class JsonCommand extends BaseCommand {
 
         context.setData(var, beautified);
         return StepResult.success("JSON content beautified and saved to '" + var);
+    }
+
+    @NotNull
+    protected StepResult extractJsonValue(String json, String jsonpath, String var) {
+        requiresNotBlank(var, "invalid variable", var);
+        String match = find(json, jsonpath);
+        if (match == null) { return StepResult.fail("EXPECTED match against '" + jsonpath + "' was not found"); }
+
+        boolean asIs = context.getBooleanData(TREAT_JSON_AS_IS, DEF_TREAT_JSON_AS_IS);
+        if (asIs || !TextUtils.isBetween(match, "[", "]")) {
+            context.setData(var, match);
+        } else {
+            JSONArray array = new JSONArray(match);
+            if (array.length() < 1) {
+                context.setData(var, "[]");
+            } else {
+                List<String> matches = new ArrayList<>();
+                array.forEach(elem -> matches.add(elem.toString()));
+                context.setData(var, matches);
+            }
+        }
+
+        return StepResult.success("EXPECTED match against '" + jsonpath + "' stored to ${" + var + "}");
     }
 
     @NotNull

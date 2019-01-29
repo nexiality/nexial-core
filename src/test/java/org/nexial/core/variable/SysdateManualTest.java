@@ -45,7 +45,7 @@ public class SysdateManualTest {
     @Test
     public void testNow() {
         System.out.println("sysdate.now = " + sysdate.now("yyyy-MM-dd HH:mm:ss"));
-        Assert.assertEquals("2018", sysdate.now("yyyy"));
+        Assert.assertEquals("2019", sysdate.now("yyyy"));
     }
 
     @Test
@@ -84,34 +84,34 @@ public class SysdateManualTest {
     @Test
     public void testFirstDOW() {
         // manual update needed
-        Assert.assertEquals("014", sysdate.firstDOW("ddd"));
+        Assert.assertEquals("027", sysdate.firstDOW("ddd"));
     }
 
     @Test
     public void testLastDOW() {
         // manual update needed
-        Assert.assertEquals("20", sysdate.lastDOW("dd"));
+        Assert.assertEquals("02", sysdate.lastDOW("dd"));
     }
 
     @Test
     public void testLastQtr() {
-        Assert.assertEquals("2018-3", sysdate.lastQtr("yyyy-q"));
-        Assert.assertEquals("2018-3", sysdate.lastQtr("yyyy-qqq"));
-        Assert.assertEquals("3", sysdate.lastQtr("qqq"));
+        Assert.assertEquals("2018-4", sysdate.lastQtr("yyyy-q"));
+        Assert.assertEquals("2018-4", sysdate.lastQtr("yyyy-qqq"));
+        Assert.assertEquals("4", sysdate.lastQtr("qqq"));
     }
 
     @Test
     public void testCurrentQtr() {
-        Assert.assertEquals("2018-4", sysdate.currentQtr("yyyy-q"));
-        Assert.assertEquals("2018-4", sysdate.currentQtr("yyyy-qqq"));
-        Assert.assertEquals("4", sysdate.currentQtr("qqq"));
+        Assert.assertEquals("2019-1", sysdate.currentQtr("yyyy-q"));
+        Assert.assertEquals("2019-1", sysdate.currentQtr("yyyy-qqq"));
+        Assert.assertEquals("1", sysdate.currentQtr("qqq"));
     }
 
     @Test
     public void testNextQtr() {
-        Assert.assertEquals("2019-1", sysdate.nextQtr("yyyy-q"));
-        Assert.assertEquals("2019-1", sysdate.nextQtr("yyyy-qqq"));
-        Assert.assertEquals("1", sysdate.nextQtr("qqq"));
+        Assert.assertEquals("2019-2", sysdate.nextQtr("yyyy-q"));
+        Assert.assertEquals("2019-2", sysdate.nextQtr("yyyy-qqq"));
+        Assert.assertEquals("2", sysdate.nextQtr("qqq"));
     }
 
     @Test

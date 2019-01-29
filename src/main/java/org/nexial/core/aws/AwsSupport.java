@@ -16,9 +16,10 @@
 
 package org.nexial.core.aws;
 
+import javax.validation.constraints.NotNull;
+
 import org.apache.commons.lang3.RandomStringUtils;
 import org.apache.commons.lang3.StringUtils;
-import org.jetbrains.annotations.NotNull;
 import org.nexial.core.plugins.aws.AwsSettings;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;

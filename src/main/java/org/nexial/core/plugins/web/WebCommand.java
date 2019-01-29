@@ -450,7 +450,7 @@ public class WebCommand extends BaseCommand implements CanTakeScreenshot, CanLog
     public StepResult saveCount(String var, String locator) {
         requires(StringUtils.isNotBlank(var) && !StringUtils.startsWith(var, "${"), "invalid variable", var);
         context.setData(var, getElementCount(locator));
-        return StepResult.success("stored matche count of '" + locator + "' as ${" + var + "}");
+        return StepResult.success("stored matched count of '" + locator + "' as ${" + var + "}");
     }
 
     public StepResult saveTextArray(String var, String locator) {

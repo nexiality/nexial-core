@@ -19,8 +19,8 @@ package org.nexial.core.utils;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.Map;
+import javax.validation.constraints.NotNull;
 
-import org.jetbrains.annotations.NotNull;
 import org.junit.Test;
 import org.nexial.commons.utils.ResourceUtils;
 import org.nexial.commons.utils.TextUtils;

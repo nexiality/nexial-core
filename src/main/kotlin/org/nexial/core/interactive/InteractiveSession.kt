@@ -207,6 +207,11 @@ data class InteractiveSession(val context: ExecutionContext) {
         while (i < area.wholeArea.size) {
             val row = area.wholeArea[i]
             val activityName = Excel.getCellValue(row[COL_IDX_TESTCASE])
+            if (i == 0 && StringUtils.isBlank(activityName)) {
+                ConsoleUtils.error("first row in Scenario '$scenario' must contain a valid activity name!")
+                break
+            }
+
             val currentRow = "" + (row[COL_IDX_COMMAND].rowIndex + 1)
 
             if (StringUtils.isNotBlank(activityName)) {

@@ -19,6 +19,9 @@ package org.nexial.commons.utils;
 
 import java.net.InetAddress;
 import java.net.UnknownHostException;
+import java.util.LinkedHashMap;
+import java.util.Map;
+import java.util.Objects;
 import javax.validation.constraints.NotNull;
 
 import org.apache.commons.lang3.StringUtils;
@@ -68,6 +71,21 @@ public final class EnvUtils {
         text = StringUtils.replace(text, "\r\n", "\n");
         text = StringUtils.replace(text, "\r", "\n");
         return StringUtils.replace(text, "\n", "\r\n");
+    }
+
+    /**
+     * gather all system properties whose key matches to specified {@code prefix}.
+     */
+    @NotNull
+    public static Map<String, String> getSysPropsByPrefix(String prefix) {
+        Map<String, String> props = new LinkedHashMap<>();
+        System.getProperties().forEach((key, value) -> {
+            String sKey = key.toString();
+            if (StringUtils.startsWith(sKey, prefix)) {
+                props.put(StringUtils.substringAfter(sKey, prefix), Objects.toString(value));
+            }
+        });
+        return props;
     }
 
     static {

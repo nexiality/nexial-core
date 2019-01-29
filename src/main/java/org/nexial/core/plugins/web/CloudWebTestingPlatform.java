@@ -17,10 +17,10 @@
 package org.nexial.core.plugins.web;
 
 import java.text.MessageFormat;
+import javax.annotation.Nullable;
 import javax.validation.constraints.NotNull;
 
 import org.apache.commons.lang3.StringUtils;
-import org.jetbrains.annotations.Nullable;
 import org.nexial.core.NexialConst.BrowserStack;
 import org.nexial.core.NexialConst.BrowserType;
 import org.nexial.core.NexialConst.CloudWebTesting;

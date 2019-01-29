@@ -48,7 +48,7 @@ import com.google.gson.stream.MalformedJsonException;
 
 import static org.json.JSONObject.NULL;
 import static org.nexial.core.NexialConst.*;
-import static org.nexial.core.NexialConst.Data.DEF_TEXT_DELIM;
+import static org.nexial.core.NexialConst.Data.*;
 
 public class JsonTransformer<T extends JsonDataType> extends Transformer {
     private static final Map<String, Integer> FUNCTION_TO_PARAM_LIST = discoverFunctions(JsonTransformer.class);
@@ -291,12 +291,14 @@ public class JsonTransformer<T extends JsonDataType> extends Transformer {
             save(${external_csv_file})
         ]
         */
+        boolean jsonAsIs = context == null ?
+                           DEF_TREAT_JSON_AS_IS : context.getBooleanData(TREAT_JSON_AS_IS, DEF_TREAT_JSON_AS_IS);
         JsonElement value = data.getValue();
         jsonpathList.forEach(jsonpath -> {
             jsonpath = StringUtils.trim(StringUtils.replace(jsonpath, TEMP_TEXT_DELIM, textDelim));
             output.append(jsonpath).append(textDelim);
-            if (value instanceof JsonObject) { output.append(JSONPath.find(data.toJSONObject(), jsonpath)); }
-            if (value instanceof JsonArray) { output.append(JSONPath.find(data.toJSONArray(), jsonpath)); }
+            if (value instanceof JsonObject) { output.append(JSONPath.find(data.toJSONObject(), jsonpath, !jsonAsIs)); }
+            if (value instanceof JsonArray) { output.append(JSONPath.find(data.toJSONArray(), jsonpath, !jsonAsIs)); }
             output.append("\r\n");
         });
 

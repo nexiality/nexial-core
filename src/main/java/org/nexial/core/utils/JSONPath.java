@@ -96,6 +96,7 @@ public class JSONPath {
     private JSONPath parent;
     private Object parsedVal;
     private List<String> functions;
+    private boolean simplePrimitives;
 
     enum Option {
         PREPEND, APPEND, OVERWRITE, DELETE, OVERWRITE_OR_ADD;
@@ -261,7 +262,7 @@ public class JSONPath {
                 array.sort((o1, o2) -> o1.compareTo(o2) * -1);
             }
 
-            return "[" + TextUtils.toString(array, ",") + "]";
+            return "[" + TextUtils.toString(array, ",", null) + "]";
         }
 
         /** assume that {@code parsed} contains a list of simple/primitive values */
@@ -297,20 +298,27 @@ public class JSONPath {
         public String toString() { return StringUtils.defaultString(nodeName, nodeIndex); }
     }
 
-    public JSONPath(JSONObject dataStruc, String key) {
+    public JSONPath(JSONObject dataStruc, String key, boolean simplePrimitives) {
         this.dataStruc = dataStruc;
+        this.simplePrimitives = simplePrimitives;
         init(key);
     }
 
-    public JSONPath(JSONArray dataStruc, String key) {
+    public JSONPath(JSONObject dataStruc, String key) { this(dataStruc, key, false); }
+
+    public JSONPath(JSONArray dataStruc, String key, boolean simplePrimitives) {
         this.dataStruc = dataStruc;
+        this.simplePrimitives = simplePrimitives;
         init(key);
     }
+
+    public JSONPath(JSONArray dataStruc, String key) { this(dataStruc, key, false); }
 
     private JSONPath(Object dataStruc, String key, JSONPath parent) {
         this.dataStruc = dataStruc;
         this.key = key;
         this.parent = parent;
+        this.simplePrimitives = parent.simplePrimitives;
         init();
     }
 
@@ -352,9 +360,9 @@ public class JSONPath {
         if (parsedVal instanceof JSONArray) {
             JSONArray array = (JSONArray) parsedVal;
             if (array.length() < 1) { return null; }
-            return handleFunctions(array.toString());
+            return handleFunctions(simplifyPrimitives(array));
         } else {
-            return handleFunctions(parsedVal.toString());
+            return handleFunctions(simplifyPrimitives(parsedVal));
         }
     }
 
@@ -371,14 +379,24 @@ public class JSONPath {
         }
     }
 
-    public static String find(JSONObject json, String path) { return new JSONPath(json, path).get(); }
+    public static String find(JSONObject json, String path, boolean simplePrimitives) {
+        return new JSONPath(json, path, simplePrimitives).get();
+    }
 
-    public static String find(JSONArray json, String path) { return new JSONPath(json, path).get(); }
+    public static String find(JSONObject json, String path) { return find(json, path, false); }
 
-    public static <T> T find(JSONObject json, String path, Class<T> type) {
-        JSONPath jsonPath = new JSONPath(json, path);
+    public static String find(JSONArray json, String path, boolean simplePrimitives) {
+        return new JSONPath(json, path, simplePrimitives).get();
+    }
+
+    public static String find(JSONArray json, String path) { return find(json, path, false); }
+
+    public static <T> T find(JSONObject json, String path, Class<T> type, boolean simplePrimitives) {
+        JSONPath jsonPath = new JSONPath(json, path, simplePrimitives);
         return jsonPath.getAs(type);
     }
+
+    public static <T> T find(JSONObject json, String path, Class<T> type) { return find(json, path, type, false); }
 
     public static JSONObject append(JSONObject json, String path, String appendWith) throws JSONException {
         return change(json, path, appendWith, APPEND);
@@ -545,6 +563,21 @@ public class JSONPath {
             filterByNodeName(nodeName, (JSONArray) obj, matches);
             return;
         }
+    }
+
+    private String simplifyPrimitives(JSONArray array) {
+        if (!simplePrimitives) { return array.toString(); }
+
+        String delim = ",";
+        return "[" + TextUtils.toString(array, delim, null) + "]";
+    }
+
+    private String simplifyPrimitives(Object parsedVal) {
+        if (!simplePrimitives) { return parsedVal.toString(); }
+
+        if (parsedVal instanceof String) { return StringUtils.unwrap(parsedVal.toString(), "\""); }
+
+        return parsedVal.toString();
     }
 
     private void init(String key) {

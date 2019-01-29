@@ -168,8 +168,6 @@ final public class DataVariableUpdater {
      * @param args command line arguments as {@link Options}.
      */
     public static void main(String[] args) {
-        Arrays.stream(args).forEach(System.out::println);
-
         Options cmdOptions = new Options();
         cmdOptions.addOption(OPT_VERBOSE, "verbose", false, "Turn on verbose logging.");
         cmdOptions.addOption(OPT_DRY_RUN, "preview", false, "Preview changes (will not save to files)");

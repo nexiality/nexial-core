@@ -971,7 +971,10 @@ public final class NexialConst {
         public static final String EOL_CONFIG_DEF = EOL_CONFIG_PLATFORM;
 
         // json
-        public static final String LAST_JSON_COMPARE_RESULT = NAMESPACE + "json.lastCompareResults";
+        public static final String NAMESPACE_JSON = NAMESPACE + "json.";
+        public static final String LAST_JSON_COMPARE_RESULT = NAMESPACE_JSON + "lastCompareResults";
+        public static final String TREAT_JSON_AS_IS = NAMESPACE_JSON + "treatJsonAsIs";
+        public static final boolean DEF_TREAT_JSON_AS_IS = true;
 
         public static final String SSH_CLIENT_PREFIX = NAMESPACE + "ssh.";
         public static final String SSH_USERNAME = "username";

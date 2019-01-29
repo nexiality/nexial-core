@@ -26,6 +26,7 @@ import java.util.stream.Collectors;
 import javax.validation.constraints.NotNull;
 
 import org.apache.commons.collections4.CollectionUtils;
+import org.apache.commons.collections4.IterableUtils;
 import org.apache.commons.collections4.MapUtils;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang3.ArrayUtils;
@@ -482,6 +483,11 @@ public final class TextUtils {
 
     @NotNull
     public static String toString(Collection list, String delim) { return CollectionUtil.toString(list, delim); }
+
+    @NotNull
+    public static String toString(Iterable<?> iterable, String delim, String nullValue) {
+        return IterableUtils.toString(iterable, input -> input == null ? nullValue : input.toString(), delim, "", "");
+    }
 
     @NotNull
     public static String toString(List<?> list, String delim, String prefix, String suffix) {

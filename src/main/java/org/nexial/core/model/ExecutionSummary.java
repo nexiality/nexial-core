@@ -281,7 +281,7 @@ public class ExecutionSummary {
     public void setExecutionLevel(ExecutionLevel executionLevel) {
         this.executionLevel = executionLevel;
         if (this.executionLevel == EXECUTION) {
-            Map<String, String> scriptRefs = ExecutionContext.getSysPropsByPrefix(SCRIPT_REF_PREFIX);
+            Map<String, String> scriptRefs = EnvUtils.getSysPropsByPrefix(SCRIPT_REF_PREFIX);
             if (MapUtils.isNotEmpty(scriptRefs)) { referenceData.putAll(scriptRefs); }
         }
     }

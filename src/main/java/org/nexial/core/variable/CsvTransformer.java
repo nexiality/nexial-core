@@ -390,7 +390,7 @@ public class CsvTransformer<T extends CsvDataType> extends Transformer {
             for (int i = 0; i < values.length; i++) {
                 String value = values[i];
                 rowModified.append(indicesToSearch.contains(i) ?
-                                   RegexUtils.replace(value, searchFor, replaceWith) : value)
+                                   RegexUtils.replaceMultiLines(value, searchFor, replaceWith) : value)
                            .append(delim);
             }
 

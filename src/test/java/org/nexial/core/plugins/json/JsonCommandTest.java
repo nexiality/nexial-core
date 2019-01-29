@@ -34,6 +34,7 @@ import com.google.gson.JsonArray;
 
 import static java.io.File.separator;
 import static org.nexial.core.NexialConst.DEF_FILE_ENCODING;
+import static org.nexial.core.NexialConst.Data.TREAT_JSON_AS_IS;
 import static org.nexial.core.NexialConst.GSON_COMPRESSED;
 
 public class JsonCommandTest {
@@ -753,5 +754,48 @@ public class JsonCommandTest {
         // Assert.assertEquals("true", array.get(2).getAsString());
         // Assert.assertEquals("{\"key\":\"value\"}", array.get(3).getAsJsonObject().toString());
         // Assert.assertEquals(" this is a test", array.get(4).getAsString());
+    }
+
+    @Test
+    public void extractJsonValue() throws Exception {
+        JsonCommand fixture = new JsonCommand();
+        fixture.init(context);
+
+        String json = "{\n" +
+                      "    \"shipping_address\": [\n" +
+                      "        {\n" +
+                      "            \"street_address\": \"1600 Pennsylvania Avenue NW\",\n" +
+                      "            \"city\": \"Washington\",\n" +
+                      "            \"state\": \"DC\"\n" +
+                      "        },\n" +
+                      "        {\n" +
+                      "            \"street_address\": \"1733 Washington Avenue\",\n" +
+                      "            \"city\": \"Glenoak\",\n" +
+                      "            \"state\": \"CA\"\n" +
+                      "        }\n" +
+                      "    ],\n" +
+                      "    \"billing_address\": {\n" +
+                      "        \"street_address\": \"1st Street SE\",\n" +
+                      "        \"city\": \"Washington\",\n" +
+                      "        \"state\": \"DC\"\n" +
+                      "    }\n" +
+                      "}";
+
+        Assert.assertTrue(fixture.extractJsonValue(json, "shipping_address[0].city", "dummy").isSuccess());
+        Assert.assertEquals("Washington", context.getStringData("dummy"));
+
+        Assert.assertTrue(fixture.extractJsonValue(json,
+                                                   "[REGEX:shipping_address|billing_address].city => distinct ascending",
+                                                   "dummy")
+                                 .isSuccess());
+        Assert.assertEquals("[\"Glenoak\",\"Washington\"]", context.getStringData("dummy"));
+
+        context.setData(TREAT_JSON_AS_IS, "false");
+        Assert.assertTrue(fixture.extractJsonValue(json,
+                                                   "[REGEX:shipping_address|billing_address].city => distinct ascending",
+                                                   "dummy")
+                                 .isSuccess());
+        Assert.assertEquals("[Glenoak, Washington]", context.getStringData("dummy"));
+
     }
 }

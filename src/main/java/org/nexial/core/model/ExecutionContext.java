@@ -612,21 +612,9 @@ public class ExecutionContext {
 
     @NotNull
     public Map<String, Object> getObjectByPrefix(String prefix) {
-        Map<String, Object> props = new LinkedHashMap<>(getSysPropsByPrefix(prefix));
+        Map<String, Object> props = new LinkedHashMap<>(EnvUtils.getSysPropsByPrefix(prefix));
         data.forEach((key, value) -> {
             if (StringUtils.startsWith(key, prefix)) { props.put(StringUtils.substringAfter(key, prefix), value); }
-        });
-        return props;
-    }
-
-    @NotNull
-    public static Map<String, String> getSysPropsByPrefix(String prefix) {
-        Map<String, String> props = new LinkedHashMap<>();
-        System.getProperties().forEach((key, value) -> {
-            String sKey = key.toString();
-            if (StringUtils.startsWith(sKey, prefix)) {
-                props.put(StringUtils.substringAfter(sKey, prefix), Objects.toString(value));
-            }
         });
         return props;
     }

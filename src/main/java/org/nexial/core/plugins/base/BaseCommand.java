@@ -31,6 +31,7 @@ import java.util.*;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 import javax.imageio.ImageIO;
+import javax.validation.constraints.NotNull;
 
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.io.FileUtils;
@@ -38,7 +39,6 @@ import org.apache.commons.lang3.ArrayUtils;
 import org.apache.commons.lang3.BooleanUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.math.NumberUtils;
-import org.jetbrains.annotations.NotNull;
 import org.nexial.commons.utils.JRegexUtils;
 import org.nexial.commons.utils.RegexUtils;
 import org.nexial.commons.utils.TextUtils;
@@ -610,7 +610,7 @@ public class BaseCommand implements NexialCommand {
      * invoke a set of test steps stored in {@code file}, referenced by {@code name}.  {@code file} must be
      * fully qualified, whilst Nexial function may be used (e.g. {@code $(syspath)}).
      *
-     * @param file the fullpath of the macro library.
+     * @param file the full path of the macro library.
      * @param name the name of the macro to invoke
      * @return pass/fail based on the validity of the referenced macro/file.  If macro {@code name} or library
      * ({@code file}) is not found, a failure is returned with fail-immediate in effect.
