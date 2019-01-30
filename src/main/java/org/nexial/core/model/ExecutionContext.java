@@ -666,21 +666,15 @@ public class ExecutionContext {
         }
     }
 
-    public void setData(String name, int value) { data.put(name, value); }
+    public void setData(String name, int value) { setDataOrSysProp(name, value); }
 
-    public void setData(String name, Map<String, String> value) {
-        if (MapUtils.isEmpty(value)) { data.remove(name); }
-        data.put(name, value);
-    }
+    public void setData(String name, Map<String, String> value) { setDataOrSysProp(name, value); }
 
-    public void setData(String name, List value) { data.put(name, value); }
+    public void setData(String name, List value) { setDataOrSysProp(name, value); }
 
-    public void setData(String name, Boolean value) { data.put(name, value); }
+    public void setData(String name, Boolean value) { setDataOrSysProp(name, value); }
 
-    public void setData(String name, Object value) {
-        if (StringUtils.isBlank(name)) { return; }
-        if (value == null) { data.remove(name); } else { data.put(name, value); }
-    }
+    public void setData(String name, Object value) { setDataOrSysProp(name, value); }
 
     public boolean isNullValue(String value) { return value == null || StringUtils.equals(value, getNullValueToken()); }
 
@@ -1136,6 +1130,52 @@ public class ExecutionContext {
     public static String escapeToken(String text) {
         return StringUtils.replace(StringUtils.replace(text, TOKEN_START, ESCAPED_TOKEN_START),
                                    TOKEN_END, ESCAPED_TOKEN_END);
+    }
+
+    /**
+     * updating corresponding System property when a data variable of the same name is updated. Note that the purpose of
+     * this method is to keep in sync the data variable that might have been set as System variable with those defined
+     * in data sheets. Data variables defined via command line (<code>-Dname=value</code>, for example) and
+     * <code>project.properties</code> are kept as System properties. Suppose the same data variable is updated with
+     * new value during execution, then we need to update both the data variable repo ({@link #data}) and System
+     * properties to keep the same data variable in sync.
+     *
+     * Note that System properties will be updating <b>ONLY</b> IF:
+     * <ol>
+     * <li>{@code name} is valid (not null)</li>
+     * <li>the same data variable is already defined as System properties (hence needing to overwrite)</li>
+     * <li>execution is currently in progress</li>
+     * </ol>
+     */
+    protected void setDataOrSysProp(String name, Object value) {
+        // we will only update System properties IF:
+        // 1) we have valid/non-empty name/value
+        // 2) same property found from System (hence needing to overwrite)
+        // 3) we are currently automating a test scenario/activity/step (ie. currentTestStep != null)
+        if (StringUtils.isBlank(name)) { return; }
+
+        if (data.containsKey(name) && value != null) { CellTextReader.unsetValue(Objects.toString(value)); }
+
+        boolean remove = value == null || StringUtils.isEmpty(Objects.toString(value));
+        if (value instanceof Map && MapUtils.isEmpty((Map) value)) { remove = true; }
+        if (value instanceof Collection && CollectionUtils.isEmpty((Collection) value)) { remove = true; }
+        if (value instanceof String && isNullValue(Objects.toString(value))) { remove = true; }
+
+        if (remove) {
+            data.remove(name);
+            System.clearProperty(name);
+            return;
+        }
+
+        if (StringUtils.isEmpty(System.getProperty(name))) {
+            data.put(name, value);
+
+            // some reference data are considered "special" and should be elevated to "execution" level so that they
+            // can be used as such for Execution Dashboard
+            if (referenceDataForExecution.contains(name)) { System.setProperty(name, Objects.toString(value)); }
+        } else {
+            System.setProperty(name, Objects.toString(value));
+        }
     }
 
     /**
