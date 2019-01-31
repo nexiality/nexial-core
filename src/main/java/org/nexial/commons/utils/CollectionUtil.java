@@ -118,4 +118,15 @@ public final class CollectionUtil {
 
         return transposed;
     }
+
+    public static Map<String, String> removeEmptyEntries(Map<String, String> map) {
+        if (MapUtils.isEmpty(map)) { return map; }
+
+        String[] keys = map.keySet().toArray(new String[0]);
+        Arrays.stream(keys).forEach(key -> {
+            if (StringUtils.isEmpty(key) || StringUtils.isEmpty(map.get(key))) { map.remove(key); }
+        });
+
+        return map;
+    }
 }
