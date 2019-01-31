@@ -496,10 +496,7 @@ public class DesktopElement {
     public boolean isSelected() { return element != null && element.isSelected(); }
 
     public String getText() {
-
-        if (!element.isEnabled() && elementType.isTextPatternAvailable()) {
-            return getValue(element);
-        }
+        if (!element.isEnabled() && elementType.isTextPatternAvailable()) { return getValue(element); }
 
         if (elementType == SingleSelectList) {
             ComboBox winiumComboBox = new ComboBox(element);
@@ -513,8 +510,13 @@ public class DesktopElement {
         if (elementType.isCombo()) {
             targetElement = resolveComboContentElement(element);
         } else if (elementType == TextArea) {
-            element.click();
-            targetElement = element.findElement(By.xpath(LOCATOR_DOCUMENT));
+            String controlType = element.getAttribute("ControlType");
+            if (StringUtils.endsWith(controlType, "ControlType.Document")) {
+                targetElement = element;
+            } else {
+                element.click();
+                targetElement = element.findElement(By.xpath(LOCATOR_DOCUMENT));
+            }
         } else {
             targetElement = element;
         }
@@ -1733,15 +1735,11 @@ public class DesktopElement {
 
     /** This is to check the set value is equal with entered text **/
     protected boolean isActualAndTextMatched(WebElement element, String actual, String text) {
-        if (actual.isEmpty()) {
-            actual = element.getAttribute("Name");
-        }
+        if (StringUtils.isEmpty(actual)) { actual = element.getAttribute("Name"); }
         return StringUtils.equals(text, actual.trim());
     }
 
-    protected boolean setValue(WebElement element, String text) {
-        return setValue(false, element, text);
-    }
+    protected boolean setValue(WebElement element, String text) { return setValue(false, element, text); }
 
     /** This Method will set the value for TextBox Element **/
     protected boolean setValue(boolean useSendKeys, WebElement element, String text) {

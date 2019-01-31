@@ -272,12 +272,6 @@ public final class ExecutionThread extends Thread {
 
         onScriptComplete(context, executionSummary, iterationManager, ticktock);
 
-        // handling onExecutionComplete
-        if (lastUse) {
-            CloudWebTestingPlatform.reportCloudBrowserStatus(context, executionSummary, ExecutionComplete);
-            context.getExecutionEventListener().onExecutionComplete();
-        }
-
         ExecutionThread.unset();
         MemManager.recordMemoryChanges(scriptName + " completed");
     }
@@ -440,6 +434,11 @@ public final class ExecutionThread extends Thread {
         }
 
         if (MapUtils.isNotEmpty(intraExecutionData)) { intraExecutionData.remove(LAST_ITERATION); }
+
+        if (lastUse) {
+            CloudWebTestingPlatform.reportCloudBrowserStatus(context, executionSummary, ExecutionComplete);
+            context.getExecutionEventListener().onExecutionComplete();
+        }
 
         // we don't want the reference data from this script to taint the next
         context.clearScenarioRefData();
