@@ -203,10 +203,10 @@ public class DesktopCommand extends BaseCommand
         }
 
         // in case this appId is mapped to a location override
-        String locationOverrride = context.getStringData(OPT_CONFIG_LOCATION_PREFIX + appId);
+        String locationOverride = context.getStringData(OPT_CONFIG_LOCATION_PREFIX + appId);
         String configLocation =
-            StringUtils.isNotBlank(locationOverrride) ?
-            locationOverrride :
+            StringUtils.isNotBlank(locationOverride) ?
+            locationOverride :
             context.getProject().getDataPath() + DEF_CONFIG_HOME + appId + separator + DEF_CONFIG_FILENAME;
 
         try {
