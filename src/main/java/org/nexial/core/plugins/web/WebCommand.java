@@ -798,6 +798,33 @@ public class WebCommand extends BaseCommand implements CanTakeScreenshot, CanLog
         return clickAndWait(xpath, waitMs);
     }
 
+    public StepResult clickOffset(String locator, String x, String y) {
+        requiresPositiveNumber(x, "Invalid value for x", x);
+        requiresPositiveNumber(y, "Invalid value for y", y);
+
+        WebElement element;
+        try {
+            List<WebElement> matches = findElements(locator);
+            element = CollectionUtils.isEmpty(matches) ? null : matches.get(0);
+            if (element == null) { return StepResult.fail("No element via locator '" + locator + "'"); }
+
+            ConsoleUtils.log("clicking '" + locator + "'...");
+            highlight(element);
+
+            int offsetX = NumberUtils.toInt(x);
+            int offsetY = NumberUtils.toInt(y);
+            new Actions(driver).moveToElement(element, offsetX, offsetY).click().build().perform();
+            return StepResult.success("clicked on web element at offset (" + x + "," + y + ")");
+        } catch (TimeoutException e) {
+            return StepResult.fail("Unable to find element via locator '" + locator + "' within allotted time");
+        } catch (Exception e) {
+            return StepResult.fail(e.getMessage(), e);
+        } finally {
+            // could have alert text...
+            alert.preemptiveDismissAlert();
+        }
+    }
+
     public StepResult doubleClickByLabel(String label) {
         return doubleClickByLabelAndWait(label, context.getPollWaitMs() + "");
     }
