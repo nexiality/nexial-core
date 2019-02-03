@@ -64,7 +64,15 @@ public class DesktopMenuBar extends DesktopElement {
     }
 
     public StepResult click(String... menuItems) {
-        return click(this, TextUtils.toString(menuItems, NESTED_CONTAINER_SEP, "", ""));
+        this.refreshElement();
+        StepResult result = click(this, TextUtils.toString(menuItems, NESTED_CONTAINER_SEP, "", ""));
+
+        // remove focus from current menu item. This seems to help with back-to-back menu clicks.
+        if (getContainer() != null && StringUtils.isNotBlank(getContainer().getXpath())) {
+            DesktopConst.clickAppTopLeft(driver, getContainer().getXpath());
+        }
+
+        return result;
     }
 
     public StepResult click(String menu) { return click(this, menu); }
@@ -224,7 +232,7 @@ public class DesktopMenuBar extends DesktopElement {
                 addMenus(subMenuItems, components);
             }
 
-            // click to deactive/release
+            // click to deactivate/release
             menuItem.click();
         }
     }

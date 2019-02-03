@@ -1599,8 +1599,7 @@ public class DesktopElement {
     }
 
     protected void refreshElement() {
-        if (StringUtils.isBlank(xpath)) { return; }
-        setElement(driver.findElement(By.xpath(xpath)));
+        if (StringUtils.isNotBlank(xpath)) { setElement(driver.findElement(By.xpath(xpath)));}
     }
 
     protected StepResult typeTextComponent(boolean append, String... text) {
@@ -1736,7 +1735,7 @@ public class DesktopElement {
     /** This is to check the set value is equal with entered text **/
     protected boolean isActualAndTextMatched(WebElement element, String actual, String text) {
         if (StringUtils.isEmpty(actual)) { actual = element.getAttribute("Name"); }
-        return StringUtils.equals(text, actual.trim());
+        return StringUtils.equals(StringUtils.remove(text.trim(), '\r'), StringUtils.remove(actual.trim(), '\r'));
     }
 
     protected boolean setValue(WebElement element, String text) { return setValue(false, element, text); }

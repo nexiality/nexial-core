@@ -348,7 +348,7 @@ public class DesktopCommand extends BaseCommand
         requiresNotBlank(name, "Invalid name/label", name);
         DesktopElement component = getRequiredElement(name, Any);
         boolean found = component != null;
-        return new StepResult(found, "Element '" + name + "' " + (found ? "" : "NOT") + " found", null);
+        return new StepResult(found, "Element '" + name + "' " + (found ? "" : "NOT ") + "found", null);
     }
 
     public StepResult assertEnabled(String name) {
