@@ -36,6 +36,7 @@ import org.apache.commons.lang3.StringUtils;
 import org.nexial.commons.utils.DateUtility;
 import org.nexial.core.Nexial;
 
+import static org.apache.commons.lang3.SystemUtils.IS_OS_WINDOWS;
 import static org.nexial.core.NexialConst.Data.DEF_TEXT_DELIM;
 import static org.nexial.core.NexialConst.Data.SCRIPT_REF_PREFIX;
 import static org.nexial.core.NexialConst.Integration.*;
@@ -71,6 +72,8 @@ public final class ExecUtils {
 
     public static final List<String> JUNIT_CLASSES = Arrays.asList("org.junit.runner.JUnitCore",
                                                                    "org.junit.runners.ParentRunner");
+    public static final String BIN_SCRIPT_EXT = (IS_OS_WINDOWS ? ".cmd" : ".sh");
+
     public static String manifest;
 
     private ExecUtils() {}

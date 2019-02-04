@@ -52,6 +52,7 @@ import static java.util.jar.Attributes.Name.MANIFEST_VERSION;
 import static javax.crypto.Cipher.ENCRYPT_MODE;
 import static org.nexial.core.NexialConst.*;
 import static org.nexial.core.NexialConst.ExitStatus.*;
+import static org.nexial.core.utils.ExecUtils.BIN_SCRIPT_EXT;
 
 /**
  * This class is a utility for encrypting the setup/data file with the given key file passed as options
@@ -93,7 +94,7 @@ public final class NexialSetup {
     private static final String ENCRYPTION_ALGORITHM = "AES";
 
     private static final String MSG_MISSING_ENV = "Missing environment details. Please be sure to run via " +
-                                                  "bin/nexial-setup.cmd or bin/nexial-setup.sh script";
+                                                  "bin/nexial-setup" + BIN_SCRIPT_EXT + " script";
     private static final String MSG_CANT_WRITE_TEMP = "Unable to read/write directory '" + TEMP + "' to generate " +
                                                       "setup artifacts.  Please fix permission and re-run again.";
     private static Options cmdOptions = initCmdOptions();

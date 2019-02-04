@@ -41,6 +41,7 @@ import static org.apache.poi.ss.usermodel.CellType.STRING;
 import static org.nexial.core.NexialConst.Data.DEF_OPEN_EXCEL_AS_DUP;
 import static org.nexial.core.NexialConst.Data.SHEET_SYSTEM;
 import static org.nexial.core.excel.ExcelConfig.*;
+import static org.nexial.core.utils.ExecUtils.BIN_SCRIPT_EXT;
 
 public final class InputFileUtils {
     private static final Logger LOGGER = LoggerFactory.getLogger(InputFileUtils.class);
@@ -50,13 +51,15 @@ public final class InputFileUtils {
                                                       ArrayUtils.toString(ADDR_HEADER_SCENARIO_INFO1) + "," +
                                                       ArrayUtils.toString(ADDR_HEADER_SCENARIO_INFO2) + "," +
                                                       ArrayUtils.toString(ADDR_HEADER_TEST_STEP) + "; please run " +
-                                                      "bin/nexial-script-update.cmd to update your test script";
+                                                      "bin/nexial-script-update" + BIN_SCRIPT_EXT +
+                                                      " to update your test script";
     private static final String MSG_HEADER_NOT_FOUND = "required script header NOT found at " +
                                                        ArrayUtils.toString(ADDR_HEADER_SCENARIO_INFO1) + "," +
                                                        ArrayUtils.toString(ADDR_HEADER_SCENARIO_INFO2);
     private static final String MSG_V1_SCRIPT_HEADER = "Outdated format found at " +
                                                        ArrayUtils.toString(ADDR_HEADER_TEST_STEP) + "; please run " +
-                                                       "bin/nexial-script-update.cmd to update your test script";
+                                                       "bin/nexial-script-update" + BIN_SCRIPT_EXT +
+                                                       " to update your test script";
     private static final String MSG_SCRIPT_HEADER_NOT_FOUND = "required script header not found at " +
                                                               ArrayUtils.toString(ADDR_HEADER_TEST_STEP);
     private static final String MSG_MISSING_TEST_ACTIVITY = "First test step must be accompanied by a test activity";

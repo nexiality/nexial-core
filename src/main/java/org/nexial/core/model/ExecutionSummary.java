@@ -366,15 +366,6 @@ public class ExecutionSummary {
         text.append(formatLabel("PASS")).append(formatStat(passCount, totalSteps));
         text.append(formatLabel("FAIL")).append(formatStat(failCount, totalSteps));
 
-        //if (MapUtils.isNotEmpty(referenceData)) {
-        //	StringBuffer refData = new StringBuffer();
-        //	referenceData.forEach((key, value) -> refData.append(" [")
-        //	                                             .append(key).append("=")
-        //	                                             .append(referenceData.get(key))
-        //	                                             .append("]"));
-        //	text.append(formatLabel("References")).append(formatValue(refData.toString()));
-        //}
-
         return text.toString();
     }
 
@@ -528,8 +519,14 @@ public class ExecutionSummary {
         if (MapUtils.isNotEmpty(ref)) {
             List<String> refNames = CollectionUtil.toList(ref.keySet());
             for (String name : refNames) {
+                if (StringUtils.isBlank(name)) { continue; }
+
+                String value = ref.get(name);
+                if (StringUtils.isEmpty(value)) { continue; }
+
+                // don't print empty/missing ref data
                 createCell(sheet, "B" + rowNum, name, STYLE_EXEC_SUMM_DATA_NAME, rowHeight);
-                createCell(sheet, "C" + rowNum, ref.get(name), STYLE_EXEC_SUMM_DATA_VALUE, rowHeight);
+                createCell(sheet, "C" + rowNum, value, STYLE_EXEC_SUMM_DATA_VALUE, rowHeight);
                 rowNum++;
             }
         } else {
@@ -647,10 +644,20 @@ public class ExecutionSummary {
     }
 
     protected void createTestExecutionSection(Worksheet sheet, int rowNum, String title, Map<String, String> data) {
+        // gotta make sure we don't print empty/missing ref.
+        if (MapUtils.isEmpty(data)) { return; }
+
+        List<String> names = CollectionUtil.toList(data.keySet());
+        names.forEach(name -> {
+            if (StringUtils.isBlank(name) || StringUtils.isEmpty(data.get(name))) { data.remove(name); }
+        });
+
+        if (MapUtils.isEmpty(data)) { return; }
+
         float rowHeight = EXEC_SUMMARY_HEIGHT;
         createCell(sheet, "A" + rowNum, title, STYLE_EXEC_SUMM_DATA_HEADER, rowHeight);
 
-        List<String> names = CollectionUtil.toList(data.keySet());
+        names = CollectionUtil.toList(data.keySet());
         for (int i = 0; i < names.size(); i++) {
             String name = names.get(i);
             createCell(sheet, "B" + (i + rowNum), name, STYLE_EXEC_SUMM_DATA_NAME, rowHeight);
@@ -659,7 +666,6 @@ public class ExecutionSummary {
             String[] values = StringUtils.splitByWholeSeparator(value, "\n");
             for (int j = 0; j < values.length; j++) {
                 String dataValue = values[j];
-                if (StringUtils.isBlank(dataValue)) { continue; }
                 createLinkCell(sheet, (char) ('C' + j) + "" + (i + rowNum), dataValue, STYLE_EXEC_SUMM_DATA_VALUE);
             }
         }
