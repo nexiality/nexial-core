@@ -375,8 +375,6 @@ public class IoCommand extends BaseCommand {
         } finally {
             if (tempDest != null) { FileUtils.deleteQuietly(new File(tempDest)); }
         }
-
-
     }
 
     public StepResult validate(String var, String profile, String inputFile) {
