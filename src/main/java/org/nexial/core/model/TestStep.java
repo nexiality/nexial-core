@@ -165,9 +165,17 @@ public class TestStep extends TestStepManifest {
             String error = e.getMessage();
             Throwable cause = e.getCause();
             if (cause != null) {
-                // assertion error are already account for.. so no need to increment fail test count
-                if (!(cause instanceof AssertionError)) { ConsoleUtils.error(cause.getMessage()); }
-                error = StringUtils.defaultString(cause.getMessage(), cause.toString());
+                if (cause instanceof WebDriverException) {
+                    error = context.getWebDriverExceptionHelper()
+                                   .analyzeError(context, this, (WebDriverException) cause);
+                    ConsoleUtils.error(context.getRunId(), error);
+                    result = StepResult.fail(error);
+                    return result;
+                } else {
+                    // assertion error are already account for.. so no need to increment fail test count
+                    if (!(cause instanceof AssertionError)) { ConsoleUtils.error(cause.getMessage()); }
+                    error = StringUtils.defaultString(cause.getMessage(), cause.toString());
+                }
             }
 
             if (printStackTrace) {
@@ -181,15 +189,6 @@ public class TestStep extends TestStepManifest {
             String error = context.getWebDriverExceptionHelper().analyzeError(context, this, e);
             ConsoleUtils.error(context.getRunId(), error);
             result = StepResult.fail(error);
-            // } catch (NoSuchElementException e) {
-            //     String error = e.getMessage();
-            //     ConsoleUtils.error(error);
-            //     String[] messageLines = StringUtils.split(error, "\n");
-            //     if (ArrayUtils.getLength(messageLines) > 2) {
-            //         result = StepResult.fail(messageLines[0] + " " + messageLines[1]);
-            //     } else {
-            //         result = StepResult.fail(error);
-            //     }
         } catch (Throwable e) {
             String error = e.getMessage();
             if (printStackTrace) {

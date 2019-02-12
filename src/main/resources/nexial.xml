@@ -337,6 +337,7 @@
                         <value>always-authorize-plugins</value>
                         <value>disable-browser-side-navigation</value>
                         <!--<value>disable-gpu</value>-->
+                        <!-- auto-open-devtools-for-tabs -->
                     </array>
                 </property>
 

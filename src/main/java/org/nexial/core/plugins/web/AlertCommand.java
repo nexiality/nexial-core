@@ -134,6 +134,7 @@ public class AlertCommand extends BaseCommand implements RequireBrowser {
     protected void preemptiveDismissAlert() { if (preemptiveCheckAlert()) { accept(); } }
 
     protected boolean preemptiveCheckAlert() {
+        if (browser == null || browser.isRunElectron()) { return false; }
         return context.getBooleanData(OPT_PREEMPTIVE_ALERT_CHECK, DEF_PREEMPTIVE_ALERT_CHECK) && isDialogPresent();
     }
 
@@ -163,12 +164,14 @@ public class AlertCommand extends BaseCommand implements RequireBrowser {
     }
 
     protected boolean isDialogPresent() {
+        if (browser == null || browser.isRunElectron()) { return false; }
+
         ensureWebDriver();
 
         try {
             driver.switchTo().alert();
             return true;
-        } catch (NoAlertPresentException e) {
+        } catch (NoAlertPresentException | UnreachableBrowserException e) {
             return false;
         }
     }

@@ -391,17 +391,6 @@ public class Browser implements ForcefulTerminate {
             return;
         }
 
-        // if (isRunFireFox() || isRunFirefoxHeadless() || driver instanceof FirefoxDriver) {
-        //     // try { driver.close(); } catch (Throwable e) { }
-        //     try { driver.quit(); } catch (Throwable e) { }
-        // } else if (isRunSafari() || driver instanceof SafariDriver) {
-        //     try { driver.close(); } catch (Throwable e) { }
-        //     try { driver.quit(); } catch (Throwable e) { }
-        // } else {
-        //     try { driver.close(); } catch (Throwable e) { }
-        //     try { driver.quit(); } catch (Throwable e) { }
-        // }
-
         ConsoleUtils.log("Shutting down '" + browserType.name() + "' webdriver...");
 
         EventTracker.INSTANCE.track(new BrowserCompleteEvent(browserType.name()));
@@ -528,11 +517,15 @@ public class Browser implements ForcefulTerminate {
 
         resolveChromeDriverLocation();
 
-        ChromeOptions options = new ChromeOptions().setBinary(clientLocation).setAcceptInsecureCerts(true);
-        // options.addArguments("--disable-extensions"); // disabling extensions
+        ChromeOptions options = new ChromeOptions().setBinary(clientLocation)
+                                                   .setAcceptInsecureCerts(true)
+                                                   .setUnhandledPromptBehaviour(IGNORE);
+
+        options.addArguments("--disable-extensions"); // disabling extensions
         // options.addArguments("--disable-gpu"); // applicable to windows os only
         options.addArguments("--disable-dev-shm-usage"); // overcome limited resource problems
         options.addArguments("--no-sandbox"); // Bypass OS security model
+        // options.addArguments("--auto-open-devtools-for-tabs"); // open devtools
         // options.addArguments("--headless");
 
         Builder cdsBuilder = new Builder();
@@ -545,6 +538,7 @@ public class Browser implements ForcefulTerminate {
             cdsBuilder = cdsBuilder.withLogFile(resolveBrowserLogFile("electron-" + appName + ".log"));
         }
 
+        pageSourceSupported = false;
         return new ChromeDriver(cdsBuilder.build(), options);
     }
 

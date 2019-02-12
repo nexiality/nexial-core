@@ -1087,20 +1087,7 @@ public class WebCommand extends BaseCommand implements CanTakeScreenshot, CanLog
 
     public StepResult selectWindow(String winId) { return selectWindowAndWait(winId, "2000"); }
 
-    public StepResult selectWindowByIndex(String index) {
-        requiresPositiveNumber(index, "index must be a number", index);
-
-        ensureReady();
-
-        Set<String> handles = driver.getWindowHandles();
-        if (CollectionUtils.isEmpty(handles)) { return StepResult.fail("No window or windows handle found"); }
-
-        int idx = NumberUtils.toInt(index);
-        String[] handleIds = handles.toArray(new String[0]);
-        if (handleIds.length <= idx) { return StepResult.fail("Window index " + index + " not found"); }
-
-        return selectWindowAndWait(handleIds[idx], "2000");
-    }
+    public StepResult selectWindowByIndex(String index) { return selectWindowByIndexAndWait(index, "2000"); }
 
     public StepResult selectWindowByIndexAndWait(String index, String waitMs) {
         requiresPositiveNumber(index, "window index must be a positive integer (zero-based");
@@ -1108,14 +1095,18 @@ public class WebCommand extends BaseCommand implements CanTakeScreenshot, CanLog
 
         ensureReady();
 
-        int windowIndex = Integer.parseInt(index);
+        Set<String> handles = driver.getWindowHandles();
+        if (CollectionUtils.isEmpty(handles)) { return StepResult.fail("No window or windows handle found"); }
 
-        Set<String> windowHandles = driver.getWindowHandles();
-        if (CollectionUtils.size(windowHandles) <= windowIndex) {
-            return StepResult.fail("Number of available window is less than " + (windowIndex + 1));
-        }
+        int handleCount = handles.size();
+        ConsoleUtils.log("found " + handleCount + " window handles...");
 
-        return selectWindowAndWait(IterableUtils.get(windowHandles, windowIndex), waitMs);
+        int idx = NumberUtils.toInt(index);
+        if (idx >= handleCount) { return StepResult.fail("Window index " + index + " not found"); }
+
+        String handle = IterableUtils.get(handles, idx);
+        ConsoleUtils.log("selecting window based on handle " + handle);
+        return selectWindowAndWait(handle, "2000");
     }
 
     public StepResult selectWindowAndWait(String winId, String waitMs) {
@@ -2183,6 +2174,8 @@ public class WebCommand extends BaseCommand implements CanTakeScreenshot, CanLog
     }
 
     protected boolean waitForBrowserStability(long maxWait) {
+        if (browser == null || browser.isRunElectron()) { return false; }
+
         // for firefox we can't be calling driver.getPageSource() or driver.findElement() when alert dialog is present
         if (alert.preemptiveCheckAlert()) { return true; }
         if (alert.isDialogPresent()) { return false; }
