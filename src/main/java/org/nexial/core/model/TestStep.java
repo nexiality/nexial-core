@@ -385,7 +385,8 @@ public class TestStep extends TestStepManifest {
     protected void readTargetCell(List<XSSFCell> row) {
         XSSFCell cell = row.get(COL_IDX_TARGET);
         if (cell == null || StringUtils.isBlank(cell.toString())) {
-            throw new IllegalArgumentException(messageId + " no target specified");
+            throw new IllegalArgumentException(StringUtils.defaultString(messageId) + " no target specified" +
+                                               (cell != null ? " on ROW " + cell.getRowIndex() : ""));
         }
         setTarget(cell.toString());
     }
@@ -393,7 +394,8 @@ public class TestStep extends TestStepManifest {
     protected void readCommandCell(List<XSSFCell> row) {
         XSSFCell cell = row.get(COL_IDX_COMMAND);
         if (cell == null || StringUtils.isBlank(cell.toString())) {
-            throw new IllegalArgumentException(messageId + " no command specified");
+            throw new IllegalArgumentException(StringUtils.defaultString(messageId) + " no command specified" +
+                                               (cell != null ? " on ROW " + cell.getRowIndex() : ""));
         }
         setCommand(cell.toString());
     }

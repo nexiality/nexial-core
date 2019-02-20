@@ -189,6 +189,9 @@
         <entry key="number">
             <bean class="org.nexial.core.plugins.base.NumberCommand"/>
         </entry>
+        <entry key="macro">
+            <bean class="org.nexial.core.plugins.base.MacroCommand"/>
+        </entry>
         <entry key="mail">
             <bean class="org.nexial.core.plugins.mail.MailCommand"/>
         </entry>

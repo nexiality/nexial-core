@@ -58,6 +58,8 @@ import static org.nexial.core.NexialConst.Project.NEXIAL_HOME;
 import static org.nexial.core.NexialConst.Project.appendCommandJson;
 import static org.nexial.core.excel.ExcelConfig.*;
 import static org.nexial.core.plugins.base.BaseCommand.PARAM_AUTO_FILL_COMMANDS;
+import static org.nexial.core.tools.CliConst.OPT_VERBOSE;
+import static org.nexial.core.tools.CliUtils.newArgOption;
 import static org.nexial.core.tools.CommandDiscovery.GSON;
 
 /**
@@ -296,9 +298,10 @@ public class TestScriptUpdater {
     }
 
     private static void initOptions() {
-        cmdOptions.addOption("v", "verbose", false, "Turn on verbose logging.");
-        cmdOptions.addOption("t", "target", true, "[REQUIRED] Location of a single Excel test script or a " +
-                                                  "directory to update.");
+        cmdOptions.addOption(OPT_VERBOSE);
+        cmdOptions.addOption(newArgOption("t", "target",
+                                          "[REQUIRED] Location of a single Excel test script or a directory to update.",
+                                          true));
     }
 
     private void handleMacroSystemSheet(Excel excel, ScriptMetadata metadata) throws IOException {

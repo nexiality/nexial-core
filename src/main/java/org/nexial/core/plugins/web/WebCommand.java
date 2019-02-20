@@ -447,6 +447,26 @@ public class WebCommand extends BaseCommand implements CanTakeScreenshot, CanLog
         return StepResult.success("attribute '" + attrName + "' for '" + locator + "' saved to '" + var + "'");
     }
 
+    public StepResult saveAttributeList(String var, String locator, String attrName) {
+        requiresNotBlank(locator, "invalid locator", locator);
+        requiresNotBlank(attrName, "invalid attribute name", attrName);
+        requiresValidVariableName(var);
+
+        List<WebElement> elements = findElements(locator);
+        if (CollectionUtils.isEmpty(elements)) { return StepResult.fail("No element matched to '" + locator + "'"); }
+
+        String[] attrValues = elements.stream().map(element -> element.getAttribute(attrName)).toArray(String[]::new);
+
+        if (ArrayUtils.isNotEmpty(attrValues)) {
+            context.setData(var, attrValues);
+        } else {
+            ConsoleUtils.log("saving null to variable '" + var + "'");
+        }
+
+        return StepResult.success("attribute '" + attrName + "' for elements that matched '" + locator +
+                                  "' saved to '" + var + "'");
+    }
+
     public StepResult saveCount(String var, String locator) {
         requires(StringUtils.isNotBlank(var) && !StringUtils.startsWith(var, "${"), "invalid variable", var);
         context.setData(var, getElementCount(locator));

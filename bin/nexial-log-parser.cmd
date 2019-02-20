@@ -48,14 +48,6 @@ goto :eof
 :resolveEnv
 	%NEXIAL_BIN%.commons.cmd %*
 
-:reportBadInputAndExit
-	echo.
-	echo ERROR: Required input not found.
-	echo USAGE: %0 [project name] [optional: testcase id, testcase id, ...]
-	echo.
-	echo.
-	goto :exit
-
 :exit
 	endlocal
 	exit /b 1

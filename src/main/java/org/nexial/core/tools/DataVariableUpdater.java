@@ -171,9 +171,10 @@ final public class DataVariableUpdater {
         Options cmdOptions = new Options();
         cmdOptions.addOption(OPT_VERBOSE, "verbose", false, "Turn on verbose logging.");
         cmdOptions.addOption(OPT_DRY_RUN, "preview", false, "Preview changes (will not save to files)");
-        cmdOptions.addOption(newArgOption(OPT_PROJECT_PATH, "target", "Starting location of update data variable."));
+        cmdOptions.addOption(newArgOption(OPT_PROJECT_PATH, "target", "Starting location of update data variable.",
+                                          true));
         cmdOptions.addOption(newArgOption(OPT_VARIABLES_LIST, "data", "Data variables to replace, in the form " +
-                                                                      "old_var=new_var;old_var2=new_var2"));
+                                                                      "old_var=new_var;old_var2=new_var2", true));
 
         final CommandLine cmd = getCommandLine(DataVariableUpdater.class.getName(), args, cmdOptions);
         if (cmd == null) {

@@ -52,6 +52,7 @@ import static java.util.jar.Attributes.Name.MANIFEST_VERSION;
 import static javax.crypto.Cipher.ENCRYPT_MODE;
 import static org.nexial.core.NexialConst.*;
 import static org.nexial.core.NexialConst.ExitStatus.*;
+import static org.nexial.core.tools.CliUtils.newArgOption;
 import static org.nexial.core.utils.ExecUtils.BIN_SCRIPT_EXT;
 
 /**
@@ -224,8 +225,8 @@ public final class NexialSetup {
     @NotNull
     private static Options initCmdOptions() {
         Options cmdOptions = new Options();
-        cmdOptions.addOption(CliUtils.newArgOption(OPT_DATA_FILE, "file", "The file containing key/value pairs."));
-        cmdOptions.addOption(CliUtils.newArgOption(OPT_SETUP_KEY, "key", "The key to encrypt data."));
+        cmdOptions.addOption(newArgOption(OPT_DATA_FILE, "file", "The file containing key/value pairs.", true));
+        cmdOptions.addOption(newArgOption(OPT_SETUP_KEY, "key", "The key to encrypt data.", true));
         return cmdOptions;
     }
 

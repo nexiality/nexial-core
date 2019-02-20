@@ -7,7 +7,7 @@ set NEXIAL_BIN=%~dp0
 call :init
 if NOT ERRORLEVEL 0 goto :exit
 
-call :title "nexial xpath updater"
+call :title "nexial project inspector"
 if NOT ERRORLEVEL 0 goto :exit
 
 call :checkJava
@@ -16,10 +16,10 @@ if NOT ERRORLEVEL 0 goto :exit
 call :resolveEnv
 if NOT ERRORLEVEL 0 goto :exit
 
-echo.
-
 REM run now
-%JAVA% -classpath %NEXIAL_CLASSES%;%NEXIAL_LIB%\nexial*.jar;%NEXIAL_LIB%\* %JAVA_OPT% org.nexial.core.tools.DesktopXpathUpdater %*
+echo.
+%JAVA% -classpath %NEXIAL_CLASSES%;%NEXIAL_LIB%\nexial*.jar;%NEXIAL_LIB%\* %JAVA_OPT% org.nexial.core.tools.inspector.ProjectInspector %*
+
 endlocal
 exit /b 0
 goto :eof
@@ -39,7 +39,3 @@ goto :eof
 :exit
 	endlocal
 	exit /b 1
-
-
-
-
