@@ -101,7 +101,7 @@
     <!--<bean id="mailNotifier" class="org.nexial.core.reports.MailNotifier" lazy-init="true"-->
     <!--p:mailTemplateEngine-ref="mailTemplateEngine"-->
     <!--p:mailTemplate="email_notification"/>-->
-    <bean id="nexialMailer" class="org.nexial.core.reports.NexialMailer" lazy-init="true"
+    <bean id="nexialMailer" class="org.nexial.core.mail.NexialMailer" lazy-init="true"
           p:mailTemplateEngine-ref="htmlTemplateEngine"
           p:mailTemplate="email_notification"/>
 

@@ -18,7 +18,8 @@
 package org.nexial.core.service
 
 import org.nexial.commons.spring.SpringUtils
-import org.nexial.core.service.ServiceLauncher.Companion
+import org.nexial.core.NexialConst.Data.MIME_JSON
+import org.nexial.core.NexialConst.Data.MIME_PLAIN
 import org.slf4j.LoggerFactory
 import org.springframework.web.bind.annotation.RequestMapping
 import org.springframework.web.bind.annotation.RequestMethod.POST
@@ -30,8 +31,8 @@ import javax.annotation.PreDestroy
 @RestController("LifecycleService")
 @RequestMapping(name = "LifecycleService",
                 path = ["/lifecycle"],
-                produces = ["application/json"],
-                consumes = ["application/json", "text/plain"],
+                produces = [MIME_JSON],
+                consumes = [MIME_JSON, MIME_PLAIN],
                 method = [POST])
 @ResponseBody
 open class LifecycleService {

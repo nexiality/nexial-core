@@ -76,11 +76,14 @@ final public class DataVariableUpdater {
     private static final List<String> VAR_WRAPPERS = Arrays.asList("merge", "store", "BAI2", "CONFIG", "CSV", "DATE",
                                                                    "EXCEL", "INI", "JSON", "LIST", "NUMBER", "SQL",
                                                                    "TEXT", "XML");
-    private static final int COLUMN_1_WIDTH = 45;
+    private static final int COLUMN_1_WIDTH = 50;
     private static final int COLUMN_2_WIDTH = 20;
     private static final int COLUMN_3_WIDTH = 10;
     private static final int COLUMN_4_LEFT_MARGIN = (COLUMN_1_WIDTH + COLUMN_2_WIDTH + COLUMN_3_WIDTH);
-    private static final String BECOME_SYMBOL = " => ";
+    private static final String BECOME_SYMBOL =
+        "\n" +
+        StringUtils.repeat(" ", COLUMN_1_WIDTH + COLUMN_2_WIDTH + COLUMN_3_WIDTH - 3) +
+        "=> ";
 
     protected String searchFrom;
     protected File searchPath;
@@ -233,6 +236,7 @@ final public class DataVariableUpdater {
         replaceProperties();
         replaceTextFiles();
         replaceDataFiles();
+        replaceMacros();
         replaceScripts();
 
         String prompt = isDryRun ? " data variable update preview" : " data variable update summary";
@@ -317,7 +321,7 @@ final public class DataVariableUpdater {
      * Replaces all variables in the text file with the form of ${...}, or KEYWORD(...) or `-- sentry:*` (SQL file).
      */
     protected void replaceTextFiles() {
-        List<File> props = FileUtil.listFiles(searchFrom, "(?i).+\\.(txt|json|xml|sql|csv)", true);
+        List<File> props = FileUtil.listFiles(searchFrom, "(?i).+\\.(txt|json|xml|sql|csv|html)", true);
 
         // there should only be 1 artifact/project.properties
         if (CollectionUtils.isEmpty(props)) { return; }
@@ -541,34 +545,43 @@ final public class DataVariableUpdater {
         return hasUpdate;
     }
 
-    /**
-     * This method replaces all the variables specified in the variable list inside the script files.
-     */
-    protected void replaceScripts() {
-        FileUtils.listFiles(searchPath, new String[]{SCRIPT_FILE_SUFFIX}, true).forEach(this::handleScriptFile);
+    /** This method replaces all the variables specified in the variable list inside the macro files. */
+    protected void replaceMacros() {
+        FileUtils.listFiles(searchPath, new String[]{SCRIPT_FILE_SUFFIX}, true)
+                 .stream()
+                 .filter(file -> isTestScriptFile(file) && InputFileUtils.isValidMacro(file.getAbsolutePath()))
+                 .forEach(this::handleMacroFile);
     }
 
-    protected void handleScriptFile(File file) {
-        // sanity check
-        if (file == null ||
-            StringUtils.startsWith(file.getName(), "~") ||
-            StringUtils.endsWith(file.getName(), DATA_FILE_SUFFIX)) {
-            return;
-        }
+    /** This method replaces all the variables specified in the variable list inside the script files. */
+    protected void replaceScripts() {
+        FileUtils.listFiles(searchPath, new String[]{SCRIPT_FILE_SUFFIX}, true)
+                 .stream()
+                 .filter(file -> isTestScriptFile(file) && InputFileUtils.isValidScript(file.getAbsolutePath()))
+                 .forEach(this::handleScriptFile);
+    }
 
+    protected void handleMacroFile(@NotNull File file) { handleTestScriptFile(file, true); }
+
+    protected void handleScriptFile(@NotNull File file) { handleTestScriptFile(file, false); }
+
+    protected void handleTestScriptFile(@NotNull File file, boolean isMacro) {
         log("processing", file);
 
         try {
             Excel script = new Excel(file, false, false);
-            List<Worksheet> worksheets = InputFileUtils.retrieveValidTestScenarios(script);
+            List<Worksheet> worksheets = isMacro ?
+                                         InputFileUtils.retrieveValidMacros(script) :
+                                         InputFileUtils.retrieveValidTestScenarios(script);
             if (CollectionUtils.isEmpty(worksheets)) {
-                log("processed (no valid sheet)", file);
+                log("processed (no valid " + (isMacro ? "macro" : "scenario") + ")", file);
                 return;
             }
 
             boolean hasUpdated = false;
-            for (Worksheet worksheet : worksheets) { if (updateScenario(file, worksheet)) { hasUpdated = true; } }
-
+            for (Worksheet worksheet : worksheets) {
+                if (updateScenario(file, worksheet, isMacro)) { hasUpdated = true; }
+            }
             if (!hasUpdated) {
                 log("processed (no change)", file);
                 return;
@@ -582,12 +595,14 @@ final public class DataVariableUpdater {
         log("processed", file);
     }
 
-    protected boolean updateScenario(File file, Worksheet worksheet) {
+    protected boolean updateScenario(File file, Worksheet worksheet, boolean isMacro) {
         String scenario = file + " [" + worksheet.getName() + "]";
         log("processing scenario", scenario);
 
-        int lastCommandRow = worksheet.findLastDataRow(ADDR_COMMAND_START);
-        ExcelAddress addr = new ExcelAddress(FIRST_STEP_ROW + ":" + COL_REASON + lastCommandRow);
+        ExcelAddress startAddr = isMacro ? ADDR_MACRO_COMMAND_START : ADDR_COMMAND_START;
+        int lastCommandRow = worksheet.findLastDataRow(startAddr);
+        String firstRow = "" + COL_TEST_CASE + (startAddr.getRowStartIndex() + 1);
+        ExcelAddress addr = new ExcelAddress(firstRow + ":" + COL_REASON + lastCommandRow);
         ExcelArea area = new ExcelArea(worksheet, addr, false);
 
         boolean hasUpdate = false;
@@ -764,6 +779,12 @@ final public class DataVariableUpdater {
                 System.err.println("Unable to properly close Excel file " + file + ": " + e.getMessage());
             }
         }
+    }
+
+    private boolean isTestScriptFile(File file) {
+        return !file.getName().startsWith("~") &&
+               !file.getAbsolutePath().contains(separator + "output" + separator) &&
+               !file.getName().contains(DATA_FILE_SUFFIX);
     }
 
     private static String reformatLines(String before, String after, int leftMargin) {

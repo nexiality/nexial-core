@@ -215,7 +215,7 @@ public final class NexialConst {
     public static final String WS_CONTENT_TYPE = "Content-Type";
     public static final String WS_CONTENT_LENGTH = "Content-Length";
     public static final String WS_JSON_CONTENT_TYPE = "application/json";
-    public static final String WS_JSON_CONTENT_TYPE2 = "application/json;charset=UTF-8";
+    public static final String WS_JSON_CONTENT_TYPE2 = WS_JSON_CONTENT_TYPE + ";charset=UTF-8";
     public static final String WS_SOAP_CONTENT_TYPE = "text/xml;charset=UTF-8";
     public static final String WS_FORM_CONTENT_TYPE = "application/x-www-form-urlencoded";
     public static final boolean DEF_WS_REQ_PAYLOAD_COMPACT = false;
@@ -733,6 +733,7 @@ public final class NexialConst {
         public static final String DEF_LAST_PLAN_STEP = "false";
 
         public static final String OPT_CURRENT_ACTIVITY = NAMESPACE + "currentActivity";
+        public static final String OPT_CURRENT_SCENARIO = NAMESPACE + "currentScenario";
 
         // data/variable
         public static final String NAMESPACE_VAR = NAMESPACE + "var.";
@@ -1033,9 +1034,16 @@ public final class NexialConst {
         public static final String CONSOLE_PREFIX = "console:";
         public static final String TTS_PREFIX = "tts:";
         public static final int MAX_TTS_LENGTH = 500;
-
         public static final String NEXIAL_LOG_PREFIX = "nexial-";
+        public static final String EVENT_CONFIG_SEP = "|";
+        public static final String OPT_NOTIFY_WITH_HTML = NAMESPACE + ".notifyAsHTML";
 
+        // common mime types
+        public static final String MIME_PLAIN = "text/plain";
+        public static final String MIME_HTML = "text/html";
+        public static final String MIME_JSON = WS_JSON_CONTENT_TYPE;
+
+        // nexial.scope.*
         public static final Map<String, String> SCOPE_SETTING_DEFAULTS =
             TextUtils.toMap("=",
                             ITERATION + "=1",

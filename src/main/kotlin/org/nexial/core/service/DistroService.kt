@@ -28,6 +28,8 @@ import org.nexial.commons.proc.ProcessInvoker.WORKING_DIRECTORY
 import org.nexial.commons.spring.SpringUtils
 import org.nexial.commons.utils.FileUtil
 import org.nexial.core.NexialConst.DEF_FILE_ENCODING
+import org.nexial.core.NexialConst.Data.MIME_JSON
+import org.nexial.core.NexialConst.Data.MIME_PLAIN
 import org.nexial.core.plugins.ws.WsCommand
 import org.slf4j.LoggerFactory
 import org.springframework.beans.factory.annotation.Autowired
@@ -46,8 +48,8 @@ import javax.annotation.PreDestroy
 @RestController("DistroService")
 @RequestMapping(name = "DistroService",
                 path = ["/distro"],
-                produces = ["application/json"],
-                consumes = ["application/json", "text/plain"],
+                produces = [MIME_JSON],
+                consumes = [MIME_JSON, MIME_PLAIN],
                 method = [POST, GET])
 @ResponseBody
 open class DistroService {

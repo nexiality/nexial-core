@@ -46,7 +46,7 @@ public abstract class Request implements Serializable {
     protected boolean allowRelativeRedirects;
     protected String method;
     protected Map<String, Object> headers = new HashMap<>();
-    protected String contentType = "application/json";
+    protected String contentType = WS_JSON_CONTENT_TYPE;
 
     Request(ExecutionContext context) {
         Map<String, Object> reqHeaders = new HashMap<>();

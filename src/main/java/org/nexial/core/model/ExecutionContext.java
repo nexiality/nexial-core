@@ -45,7 +45,6 @@ import org.apache.poi.xssf.usermodel.XSSFCell;
 import org.nexial.commons.utils.EnvUtils;
 import org.nexial.commons.utils.RegexUtils;
 import org.nexial.commons.utils.TextUtils;
-import org.nexial.core.ExecutionEventListener;
 import org.nexial.core.MemManager;
 import org.nexial.core.TokenReplacementException;
 import org.nexial.core.aws.NexialS3Helper;
@@ -62,7 +61,7 @@ import org.nexial.core.plugins.sound.SoundMachine;
 import org.nexial.core.plugins.web.Browser;
 import org.nexial.core.plugins.web.WebDriverExceptionHelper;
 import org.nexial.core.reports.ExecutionMailConfig;
-import org.nexial.core.reports.NexialMailer;
+import org.nexial.core.mail.NexialMailer;
 import org.nexial.core.utils.ConsoleUtils;
 import org.nexial.core.utils.ExecUtils;
 import org.nexial.core.utils.ExecutionLogger;
@@ -861,6 +860,18 @@ public class ExecutionContext {
 
     public TestProject getProject() { return project; }
 
+    public String getCurrentScenario() {
+        String scenario = getStringData(OPT_CURRENT_SCENARIO);
+        if (StringUtils.isNotBlank(scenario)) { return scenario; }
+
+        try {
+            return currentTestStep != null ? currentTestStep.getTestCase().getTestScenario().getName() : null;
+        } catch (NullPointerException e) {
+            ConsoleUtils.error("Unable to determine current scenario: " + e.getMessage());
+            return null;
+        }
+    }
+
     public TestStep getCurrentTestStep() { return currentTestStep; }
 
     protected void setCurrentTestStep(TestStep testStep) { this.currentTestStep = testStep; }
@@ -905,6 +916,14 @@ public class ExecutionContext {
             removeDataForcefully(OPT_CURRENT_ACTIVITY);
         } else {
             setData(OPT_CURRENT_ACTIVITY, activity.getName());
+        }
+    }
+
+    public void setCurrentScenario(TestScenario scenario) {
+        if (scenario == null) {
+            removeDataForcefully(OPT_CURRENT_SCENARIO);
+        } else {
+            setData(OPT_CURRENT_SCENARIO, scenario.getName());
         }
     }
 

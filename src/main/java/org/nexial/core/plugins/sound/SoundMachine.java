@@ -97,6 +97,7 @@ public class SoundMachine {
 
         requiresNotBlank(audio, "Invalid audio preset or file", audio);
 
+        audio = StringUtils.trim(audio);
         String audioFile = soundResources.getOrDefault(audio, audio);
         if (StringUtils.endsWithIgnoreCase(audioFile, ".mp3")) {
             playMp3(audioFile);
@@ -114,12 +115,14 @@ public class SoundMachine {
     private void playMp3(String audioFile) throws FileNotFoundException, JavaLayerException {
         if (ExecUtils.isRunningInZeroTouchEnv()) { return; }
 
+        String audioResource = StringUtils.trim(audioFile);
+
         BufferedInputStream bis;
-        if (FileUtil.isFileReadable(audioFile, 5)) {
-            bis = new BufferedInputStream(new FileInputStream(audioFile));
+        if (FileUtil.isFileReadable(audioResource, 5)) {
+            bis = new BufferedInputStream(new FileInputStream(audioResource));
         } else {
-            InputStream audioStream = ResourceUtils.getInputStream(audioFile);
-            if (audioStream == null) { throw new FileNotFoundException("No audio resource '" + audioFile + "' found"); }
+            InputStream audioStream = ResourceUtils.getInputStream(audioResource);
+            if (audioStream == null) { throw new FileNotFoundException("No audio resource '" + audioResource + "' found"); }
             bis = new BufferedInputStream(audioStream);
         }
 
@@ -130,13 +133,15 @@ public class SoundMachine {
             try {
                 player.play();
             } catch (JavaLayerException e) {
-                ConsoleUtils.log("Error while playing " + audioFile + ": " + e.getMessage());
+                ConsoleUtils.log("Error while playing " + audioResource + ": " + e.getMessage());
             }
         }).start();
     }
 
     private void playWav(String audioFile) throws IOException, UnsupportedAudioFileException, LineUnavailableException {
         if (ExecUtils.isRunningInZeroTouchEnv()) { return; }
+
+        audioFile = StringUtils.trim(audioFile);
 
         AudioInputStream audioIn;
         if (FileUtil.isFileReadable(audioFile, 5)) {

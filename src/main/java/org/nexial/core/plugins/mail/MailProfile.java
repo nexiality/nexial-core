@@ -27,6 +27,7 @@ import org.nexial.core.ExecutionThread;
 import org.nexial.core.model.ExecutionContext;
 import org.nexial.core.utils.CheckUtils;
 
+import static org.nexial.core.NexialConst.Data.MIME_HTML;
 import static org.nexial.core.NexialConst.Mailer.*;
 import static org.nexial.core.utils.CheckUtils.requiresNotBlank;
 import static org.nexial.core.utils.CheckUtils.requiresNotNull;
@@ -40,7 +41,7 @@ class MailProfile {
     private String from;
     private boolean tls;
     private String protocol = "smtp";
-    private String contentType = "text/html";
+    private String contentType = MIME_HTML;
     private int bufferSize = 512;
 
     public String getHost() { return host;}

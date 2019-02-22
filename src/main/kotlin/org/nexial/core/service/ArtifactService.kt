@@ -22,6 +22,8 @@ import org.apache.commons.io.FileUtils
 import org.apache.commons.lang3.StringUtils
 import org.nexial.commons.spring.SpringUtils
 import org.nexial.commons.utils.FileUtil
+import org.nexial.core.NexialConst.Data.MIME_JSON
+import org.nexial.core.NexialConst.Data.MIME_PLAIN
 import org.nexial.core.excel.Excel
 import org.slf4j.LoggerFactory
 import org.springframework.web.bind.annotation.RequestBody
@@ -37,8 +39,8 @@ import javax.annotation.PreDestroy
 @RestController("ArtifactService")
 @RequestMapping(name = "ArtifactService",
                 path = ["/artifact"],
-                produces = ["application/json"],
-                consumes = ["application/json", "text/plain"],
+                produces = [MIME_JSON],
+                consumes = [MIME_JSON, MIME_PLAIN],
                 method = [POST])
 @ResponseBody
 open class ArtifactService {

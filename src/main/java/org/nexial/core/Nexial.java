@@ -56,7 +56,7 @@ import org.nexial.core.model.*;
 import org.nexial.core.reports.ExecutionMailConfig;
 import org.nexial.core.reports.ExecutionNotifier;
 import org.nexial.core.reports.ExecutionReporter;
-import org.nexial.core.reports.NexialMailer;
+import org.nexial.core.mail.NexialMailer;
 import org.nexial.core.service.EventTracker;
 import org.nexial.core.service.ServiceLauncher;
 import org.nexial.core.utils.ConsoleUtils;

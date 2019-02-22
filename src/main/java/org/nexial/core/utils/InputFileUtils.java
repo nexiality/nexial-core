@@ -275,7 +275,7 @@ public final class InputFileUtils {
             if (!Excel.isRowTextFound(sheet,
                                       Collections.singletonList(HEADER_EXEC_SUMMARY),
                                       ADDR_SCENARIO_EXEC_SUMMARY_HEADER)) {
-                LOGGER.info(errPrefix1 + "required script header not found at " +
+                LOGGER.debug(errPrefix1 + "required script header not found at " +
                             ArrayUtils.toString(ADDR_SCENARIO_EXEC_SUMMARY_HEADER) + "; ignoring this worksheet...");
                 return false;
             }
@@ -359,7 +359,7 @@ public final class InputFileUtils {
 
             // check test script header
             if (!Excel.isRowTextFound(sheet, HEADER_MACRO_TEST_STEPS, ADDR_HEADER_MACRO)) {
-                LOGGER.info(errPrefix1 + "required macro header not found at " +
+                LOGGER.debug(errPrefix1 + "required macro header not found at " +
                             ArrayUtils.toString(HEADER_MACRO_TEST_STEPS) + "; ignoring this worksheet...");
                 return false;
             }

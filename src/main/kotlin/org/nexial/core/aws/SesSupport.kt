@@ -26,6 +26,14 @@ import org.nexial.core.NexialConst.DEF_FILE_ENCODING
 import org.nexial.core.utils.ConsoleUtils
 import javax.validation.constraints.NotNull
 
+private const val MSG_UNVERIFIED_DOMAIN = "\tCheck the target email address(es) and ensure the specified mail\n" +
+                                          "\tdomain has been verified in the corresponding AWS account. For\n" +
+                                          "\tmore details, please check \n" +
+                                          "\thttps://docs.aws.amazon.com/ses/latest/DeveloperGuide/verify-domain-procedure.html"
+private const val ERR_UNVERIFIED_DOMAIN = "Domain contains illegal character"
+private const val HTML_FOOTER_PREFIX = "<br/><br/><br/><div style=\"text-align:right;font-size:9pt;color:#aaa\">"
+private const val HTML_FOOTER_POSTFIX = "</div><br/>"
+
 class SesSupport : AwsSupport() {
 
     class SesConfig {
@@ -71,7 +79,12 @@ class SesSupport : AwsSupport() {
 
         ConsoleUtils.log("scheduling sent-mail via AWS SES...")
         client.sendEmailAsync(request, object : AsyncHandler<SendEmailRequest, SendEmailResult> {
-            override fun onError(e: Exception) = ConsoleUtils.error("FAILED to send email via AWS SES: ${e.message}")
+            override fun onError(e: Exception) {
+                ConsoleUtils.error("FAILED to send email via AWS SES: ${e.message}" +
+                                   if (StringUtils.contains(e.message, ERR_UNVERIFIED_DOMAIN))
+                                       "\n$MSG_UNVERIFIED_DOMAIN"
+                                   else "")
+            }
 
             override fun onSuccess(request: SendEmailRequest, sendEmailResult: SendEmailResult) {
                 ConsoleUtils.log("Email sent via AWS SES: $sendEmailResult")
@@ -83,16 +96,13 @@ class SesSupport : AwsSupport() {
     private fun toMessage(config: SesConfig, subject: Content): Message {
         val body = Body()
 
+        val xmailer = StringUtils.defaultIfEmpty(config.xmailer, "")
         if (StringUtils.isNotBlank(config.html)) {
             body.withHtml(Content().withCharset(DEF_FILE_ENCODING)
-                              .withData("${config.html}\n" +
-                                        "<br/><br/><br/><div style=\"text-align:right;font-size:9pt;color:#aaa\">" +
-                                        "${StringUtils.defaultIfEmpty(config.xmailer, "")}" +
-                                        "</div><br/>"))
+                              .withData("${config.html}\n$HTML_FOOTER_PREFIX$xmailer$HTML_FOOTER_POSTFIX"))
         }
         if (StringUtils.isNotBlank(config.plainText)) {
-            body.withText(Content().withCharset(DEF_FILE_ENCODING)
-                              .withData("${config.plainText}\n\n\n\n${StringUtils.defaultIfEmpty(config.xmailer, "")}"))
+            body.withText(Content().withCharset(DEF_FILE_ENCODING).withData("${config.plainText}\n\n\n\n$xmailer"))
         }
 
         return Message(subject, body)

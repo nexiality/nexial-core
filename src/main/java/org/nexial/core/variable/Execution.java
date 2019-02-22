@@ -24,7 +24,6 @@ import org.nexial.core.ExecutionThread;
 import org.nexial.core.model.ExecutionContext;
 import org.nexial.core.model.ExecutionDefinition;
 import org.nexial.core.model.TestCase;
-import org.nexial.core.model.TestScenario;
 import org.nexial.core.model.TestStep;
 import org.nexial.core.utils.ConsoleUtils;
 import org.nexial.core.utils.ExecUtils;
@@ -88,7 +87,8 @@ public class Execution {
         boolean iterationEnded = context.getTestScript() == null || context.getBooleanData(ITERATION_ENDED, false);
         TestStep currentStep = context.getCurrentTestStep();
 
-        if (iterationEnded && currentStep == null) {
+        if (iterationEnded && currentStep == null &&
+            (Artifact.step == scope || Artifact.activity == scope || Artifact.iteration == scope)) {
             ConsoleUtils.log("Iteration ended; unable to determine " + metaRequest);
             return "N/A";
         }
@@ -107,7 +107,7 @@ public class Execution {
                         return (currentStep.getRowIndex() + 1) + "";
                     case name:
                         return "[" + resolveScriptName(context) + "]" +
-                               "[" + resolveScenario(currentStep) + "]" +
+                               "[" + resolveScenario(context) + "]" +
                                "[" + resolveActivity(currentStep) + "]" +
                                "[ROW " + (currentStep.getRowIndex() + 1) + "]";
                     case script:
@@ -115,7 +115,7 @@ public class Execution {
                     case iteration:
                         return context.getIntData(CURR_ITERATION) + "";
                     case scenario:
-                        return resolveScenario(currentStep);
+                        return resolveScenario(context);
                     case activity:
                         return resolveActivity(currentStep);
                     case description:
@@ -144,7 +144,7 @@ public class Execution {
                     case iteration:
                         return context.getIntData(CURR_ITERATION) + "";
                     case scenario:
-                        return resolveScenario(currentStep);
+                        return resolveScenario(context);
                     case fullpath:
                     case index:
                     case activity:
@@ -157,7 +157,7 @@ public class Execution {
             }
 
             case scenario: {
-                String scenarioName = resolveScenario(currentStep);
+                String scenarioName = resolveScenario(context);
                 if (StringUtils.isBlank(scenarioName)) {
                     ConsoleUtils.error(error + " current scenario cannot be determined");
                     return "";
@@ -165,7 +165,7 @@ public class Execution {
 
                 switch (metadata) {
                     case name:
-                        return resolveScenario(currentStep);
+                        return resolveScenario(context);
                     case script:
                         return resolveScriptName(context);
                     case iteration:
@@ -238,13 +238,7 @@ public class Execution {
     }
 
     @NotNull
-    private String resolveScenario(TestStep step) {
-        TestCase activity = resolveEnclosedActivity(step);
-        if (activity == null) { return ""; }
-
-        TestScenario scenario = activity.getTestScenario();
-        return scenario == null ? "" : scenario.getName();
-    }
+    private String resolveScenario(ExecutionContext context) { return context.getCurrentScenario(); }
 
     @NotNull
     private String resolveActivity(TestStep step) {

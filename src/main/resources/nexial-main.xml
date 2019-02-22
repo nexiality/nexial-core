@@ -64,7 +64,7 @@
           p:notReadMessage="tts not configured. See https://nexiality.github.io/documentation/commands/sound/speak(text).html#setup for setup details."
     />
 
-    <bean id="executionEventListener" class="org.nexial.core.ExecutionEventListener"
+    <bean id="executionEventListener" class="org.nexial.core.model.ExecutionEventListener"
           p:mailTagLine="~ powered by nexial ~"
           p:mailIncludeMeta="true"
           p:smsIncludeMeta="false"

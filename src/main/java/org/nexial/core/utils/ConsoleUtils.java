@@ -30,7 +30,7 @@ import org.apache.commons.lang3.tuple.ImmutablePair;
 import org.apache.commons.lang3.tuple.Pair;
 import org.nexial.commons.logging.LogbackUtils;
 import org.nexial.commons.utils.DateUtility;
-import org.nexial.core.ExecutionEventListener;
+import org.nexial.core.model.ExecutionEventListener;
 import org.nexial.core.model.ExecutionContext;
 import org.nexial.core.model.TestCase;
 import org.nexial.core.model.TestStep;

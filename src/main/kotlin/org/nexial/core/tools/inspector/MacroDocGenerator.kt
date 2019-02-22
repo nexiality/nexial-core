@@ -54,9 +54,9 @@ class MacroDocGenerator(val options: InspectorOptions, val logger: InspectorLogg
                 val filePath = excel.file.absolutePath
 
                 if (!InputFileUtils.isValidMacro(excel)) {
-                    logger.log("ignoring file", "$filePath")
+                    logger.log("ignoring file", filePath)
                 } else {
-                    logger.log("parsing macro", "$filePath")
+                    logger.log("parsing macro", filePath)
 
                     var relativePath = StringUtils.remove(file.parentFile.absolutePath, projectHome.absolutePath)
                     relativePath = StringUtils.replace(relativePath, "\\", "/")
@@ -83,15 +83,15 @@ class MacroDocGenerator(val options: InspectorOptions, val logger: InspectorLogg
         return scannedMacroFiles
     }
 
-    internal fun filterFiles(directory: File, extensions: Array<String>, filter: (file: File) -> Boolean): List<File> =
+    private fun filterFiles(directory: File, extensions: Array<String>, filter: (file: File) -> Boolean): List<File> =
             FileUtils.listFiles(directory, extensions, true)
                 .stream()
                 .filter { filter(it) }
                 .collect(Collectors.toList())
 
-    internal fun isMacroFile(file: File): Boolean = !file.name.startsWith("~") &&
-                                                    !file.absolutePath.contains("${separator}output$separator") &&
-                                                    !file.name.contains(".data.xlsx")
+    private fun isMacroFile(file: File): Boolean = !file.name.startsWith("~") &&
+                                                   !file.absolutePath.contains("${separator}output$separator") &&
+                                                   !file.name.contains(".data.xlsx")
 
     private fun collectMacros(excel: Excel): List<MacroDef> {
         val macros = ArrayList<MacroDef>()

@@ -30,7 +30,6 @@ import org.apache.commons.lang3.math.NumberUtils;
 import org.apache.poi.xssf.usermodel.XSSFCell;
 import org.apache.poi.xssf.usermodel.XSSFSheet;
 import org.apache.poi.xssf.usermodel.XSSFWorkbook;
-import org.nexial.core.ExecutionEventListener;
 import org.nexial.core.excel.Excel;
 import org.nexial.core.excel.Excel.Worksheet;
 import org.nexial.core.excel.ExcelAddress;
@@ -105,6 +104,7 @@ public class TestScenario {
         executionSummary.setStartTime(System.currentTimeMillis());
         executionSummary.setTotalSteps(CollectionUtils.size(allSteps));
 
+        context.setCurrentScenario(this);
         ExecutionEventListener executionEventListener = context.getExecutionEventListener();
         executionEventListener.onScenarioStart();
 

@@ -42,22 +42,16 @@ data class MacroDef(@Expose val sheet: String, @Expose val macro: String) {
     val produces: MutableList<Produces> = ArrayList()
 
     fun addDescription(description: String) {
-        this.description = StringUtils.defaultIfEmpty<String>(this.description, "") + description
+        this.description = (if (StringUtils.isBlank(this.description)) "" else this.description + "\n") + description
     }
 
     fun addExpects(expect: Expects) { this.expects.add(expect) }
+
     fun addProduces(produce: Produces) { this.produces.add(produce) }
-
-//    fun getExpects(): List<Expects> = expects
-//    fun setExpects(expected: MutableList<Expects>) { this.expects = expected }
-
-//    fun getProduces(): List<Produces> = produces
-//    fun setProduces(produces: MutableList<Produces>) { this.produces = produces }
-
 }
 
 data class Expects(@Expose val description: String,
-              @Expose val name: String,
-              @Expose @SerializedName("default") var default: Any?)
+                   @Expose val name: String,
+                   @Expose @SerializedName("default") var default: Any?)
 
 data class Produces(@Expose val description: String, @Expose val name: String)
