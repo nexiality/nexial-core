@@ -272,11 +272,11 @@ final public class DataVariableUpdater {
         log("processing", file);
 
         try {
+            boolean hasUpdate = false;
+
             String content = FileUtils.readFileToString(file, DEF_CHARSET);
             String sep = StringUtils.contains(content, "\r\n") ? "\r\n" : "\n";
-
             StringBuilder replaced = new StringBuilder();
-
             String[] lines = StringUtils.splitByWholeSeparatorPreserveAllTokens(content, sep);
             for (int i = 0; i < lines.length; i++) {
                 String line = lines[i];
@@ -302,16 +302,20 @@ final public class DataVariableUpdater {
                         line = StringUtils.replace(line, oldToken, TOKEN_START + newVar + TOKEN_END);
                     }
                 }
-                if (!StringUtils.equals(oldLine, line)) { updated.add(updateLog.setChange(oldLine, line)); }
+
+                if (!StringUtils.equals(oldLine, line)) {
+                    updated.add(updateLog.setChange(oldLine, line));
+                    hasUpdate = true;
+                }
 
                 replaced.append(line).append(sep);
             }
 
-            if (!isDryRun) {
+            if (!isDryRun && hasUpdate) {
                 FileUtils.writeStringToFile(file, StringUtils.removeEnd(replaced.toString(), sep), DEF_CHARSET);
             }
 
-            log("processed", file);
+            log("processed" + (!hasUpdate ? " (no change)" : ""), file);
         } catch (IOException e) {
             System.err.println("Unable to process " + file + " successfully: " + e.getMessage());
         }
@@ -330,11 +334,11 @@ final public class DataVariableUpdater {
             log("processing", file);
 
             try {
+                boolean hasUpdate = false;
+
                 String content = FileUtils.readFileToString(file, DEF_CHARSET);
                 String sep = StringUtils.contains(content, "\r\n") ? "\r\n" : "\n";
-
                 StringBuilder replaced = new StringBuilder();
-
                 String[] lines = StringUtils.splitByWholeSeparatorPreserveAllTokens(content, sep);
                 for (int i = 0; i < lines.length; i++) {
                     String line = lines[i];
@@ -361,16 +365,20 @@ final public class DataVariableUpdater {
                             line = replaceSqlVars(line, oldVar, newVar);
                         }
                     }
-                    if (!StringUtils.equals(oldLine, line)) { updated.add(updateLog.setChange(oldLine, line)); }
+
+                    if (!StringUtils.equals(oldLine, line)) {
+                        updated.add(updateLog.setChange(oldLine, line));
+                        hasUpdate = true;
+                    }
 
                     replaced.append(line).append(sep);
                 }
 
-                if (!isDryRun) {
+                if (!isDryRun && hasUpdate) {
                     FileUtils.writeStringToFile(file, StringUtils.removeEnd(replaced.toString(), sep), DEF_CHARSET);
                 }
 
-                log("processed", file);
+                log("processed" + (!hasUpdate ? " (no change)" : ""), file);
             } catch (IOException e) {
                 System.err.println("Unable to process " + file + " successfully: " + e.getMessage());
             }

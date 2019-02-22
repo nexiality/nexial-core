@@ -16,10 +16,11 @@
 
 package org.nexial.core.model
 
-import javazoom.jl.decoder.JavaLayerException
 import org.apache.commons.collections4.CollectionUtils
+import org.apache.commons.lang3.BooleanUtils
 import org.apache.commons.lang3.StringUtils
 import org.apache.commons.lang3.SystemUtils.USER_NAME
+import org.jsoup.Jsoup
 import org.nexial.commons.utils.EnvUtils
 import org.nexial.commons.utils.TextUtils
 import org.nexial.core.IntegrationConfigException
@@ -28,6 +29,9 @@ import org.nexial.core.mail.MailData
 import org.nexial.core.model.ExecutionEvent.ExecutionPause
 import org.nexial.core.utils.ConsoleUtils
 import org.nexial.core.utils.ExecUtils
+import org.nexial.core.utils.OutputFileUtils
+import java.util.regex.Pattern
+import java.util.regex.Pattern.DOTALL
 import javax.mail.MessagingException
 
 abstract class EventNotification(val context: ExecutionContext,
@@ -59,8 +63,11 @@ abstract class EventNotification(val context: ExecutionContext,
     internal fun resolveMimeType() = Companion.resolveMimeType(context)
 
     companion object {
-        fun resolveMimeType(context: ExecutionContext) =
-                if (context.getBooleanData(OPT_NOTIFY_WITH_HTML, false)) MIME_HTML else MIME_PLAIN
+        fun resolveMimeType(context: ExecutionContext?): String {
+            val asHtml = context?.getBooleanData(OPT_NOTIFY_AS_HTML, false)
+                         ?: BooleanUtils.toBoolean(System.getProperty(OPT_NOTIFY_AS_HTML, "false"))
+            return if (asHtml) MIME_HTML else MIME_PLAIN
+        }
     }
 }
 
@@ -68,6 +75,7 @@ class EmailNotification(context: ExecutionContext, event: ExecutionEvent, data: 
         EventNotification(context, event, data, true) {
 
     private var mailTagLine = "~ powered by nexial ~"
+    private val patternHasTag: Pattern = Pattern.compile(".*<[^>]+>.*", DOTALL)
     private lateinit var mailData: MailData
 
     fun mailTagLine(mailTagLine: String) = {
@@ -84,14 +92,45 @@ class EmailNotification(context: ExecutionContext, event: ExecutionEvent, data: 
             return
         }
 
-        val mailContent = StringUtils.trim(StringUtils.substringAfter(data, EVENT_CONFIG_SEP)) +
-                          (if (includeExecMeta) "\n" + gatherMeta() else "") + "\n" + mailTagLine + "\n"
+        val content = OutputFileUtils.resolveContent(
+                StringUtils.trim(StringUtils.substringAfter(data, EVENT_CONFIG_SEP)), context, false)
+        if (StringUtils.isBlank(content)) {
+            logSkipping("no content to sent")
+            return
+        }
+
+        val mailContent = handleExecMetadata(content)
 
         mailData = MailData.newInstance(resolveMimeType())
             .setToAddr(recipientList)
             .setSubject(MAIL_NOTIF_SUBJECT_PREFIX + event.description)
             .setContent(mailContent)
-            .setMimeType(resolveMimeType())
+    }
+
+    internal fun handleExecMetadata(content: String): String {
+        val asHTML = context.getBooleanData(OPT_NOTIFY_AS_HTML, false)
+        val execMeta = if (includeExecMeta) {
+            if (asHTML) {
+                "<br/><div style=\"font-weight:10pt\">${gatherMeta()}</div>"
+            } else {
+                gatherMeta()
+            }
+        } else {
+            ""
+        }
+
+        if (!asHTML) return "$content\n$execMeta\n$mailTagLine\n"
+
+        // see if we need to add basic HTML tags
+        val footer = "$execMeta<br/><div style=\"font-size:9pt\">$mailTagLine</div><br/>"
+        return if (patternHasTag.matcher(content).matches()) {
+            val document = Jsoup.parse(content)
+            val body = document.body()
+            body.append(footer)
+            document.html()
+        } else {
+            "<html><body>$content$footer</body></html>"
+        }
     }
 
     override fun perform() {
@@ -169,10 +208,7 @@ class TtsNotification(context: ExecutionContext, event: ExecutionEvent, data: St
 
         try {
             dj.speak(data, true)
-        } catch (e: JavaLayerException) {
-            ConsoleUtils.log(context.runId, "$event - tts not configured correctly: ${e.message}")
-            ConsoleUtils.log(context.runId, "$event - $data")
-        } catch (e: IntegrationConfigException) {
+        } catch (e: Exception) {
             ConsoleUtils.log(context.runId, "$event - tts not configured correctly: ${e.message}")
             ConsoleUtils.log(context.runId, "$event - $data")
         }

@@ -31,7 +31,7 @@ private const val MSG_UNVERIFIED_DOMAIN = "\tCheck the target email address(es) 
                                           "\tmore details, please check \n" +
                                           "\thttps://docs.aws.amazon.com/ses/latest/DeveloperGuide/verify-domain-procedure.html"
 private const val ERR_UNVERIFIED_DOMAIN = "Domain contains illegal character"
-private const val HTML_FOOTER_PREFIX = "<br/><br/><br/><div style=\"text-align:right;font-size:9pt;color:#aaa\">"
+private const val HTML_FOOTER_PREFIX = "<br/><br/><div style=\"text-align:right;font-size:9pt;color:#aaa\">"
 private const val HTML_FOOTER_POSTFIX = "</div><br/>"
 
 class SesSupport : AwsSupport() {

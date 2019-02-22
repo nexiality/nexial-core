@@ -265,6 +265,7 @@ public class ExecutionContext {
         // some data can be overridden by System property
         overrideIfSysPropFound(NEXIAL_HOME);
         overrideIfSysPropFound(ENABLE_EMAIL);
+        overrideIfSysPropFound(OPT_NOTIFY_AS_HTML);
         overrideIfSysPropFound(OPT_OPEN_RESULT);
         overrideIfSysPropFound(ASSISTANT_MODE);
         overrideIfSysPropFound(OPT_EASY_STRING_COMPARE);

@@ -44,7 +44,6 @@ import org.nexial.commons.javamail.MailObjectSupport;
 import org.nexial.commons.utils.TextUtils;
 import org.nexial.core.aws.SesSupport;
 import org.nexial.core.aws.SesSupport.SesConfig;
-import org.nexial.core.model.EventNotification;
 import org.nexial.core.model.ExecutionContext;
 import org.nexial.core.model.ExecutionSummary;
 import org.nexial.core.plugins.aws.AwsSesSettings;
@@ -107,6 +106,11 @@ public class NexialMailer implements ExecutionNotifier {
         // print to console - last SOS attempt
         if (summary.getError() != null) { summary.getError().printStackTrace(); }
 
+        if (!readyToSend()) {
+            ConsoleUtils.log("nexial mailer is not properly configured; SKIPPING...");
+            return;
+        }
+
         // unique set of test names
         StringBuilder subject = new StringBuilder("Execution Result for ");
         Set<String> nestedNames = new HashSet<>();
@@ -117,7 +121,7 @@ public class NexialMailer implements ExecutionNotifier {
         engineContext.setVariable("summary", summary);
 
         MailData mailData =
-            MailData.newInstance(EventNotification.Companion.resolveMimeType(context))
+            MailData.newInstance(MIME_HTML)
                     .setToAddr(resolveRecipients())
                     .setSubject(MAIL_RESULT_SUBJECT_PREFIX + StringUtils.removeEnd(subject.toString(), ", "))
                     .setContent(mailTemplateEngine.process(mailTemplate, engineContext));
@@ -289,11 +293,11 @@ public class NexialMailer implements ExecutionNotifier {
             recipients = context != null ? context.getStringData(MAIL_TO2) : System.getProperty(MAIL_TO2);
         }
 
-        if (StringUtils.isBlank(recipients)) { return mailSupport.getRecipients(); }
-
-        // if (StringUtils.isBlank(recipients)) { return null; }
-
-        return TextUtils.toList(StringUtils.replace(recipients, ";", ","), ",", true);
+        if (StringUtils.isBlank(recipients)) {
+            return mailSupport != null ? mailSupport.getRecipients() : null;
+        } else {
+            return TextUtils.toList(StringUtils.replace(recipients, ";", ","), ",", true);
+        }
     }
 
     private boolean validateMailData(MailData data) {
