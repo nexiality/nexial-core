@@ -19,9 +19,9 @@ package org.nexial.core.tools.inspector
 import org.apache.commons.io.FileUtils
 import org.apache.commons.lang3.StringUtils
 import org.nexial.commons.utils.FileUtil
-import org.nexial.core.tools.inspector.InspectorConst.Advice.MISSING_META_FILE
 import org.nexial.core.tools.inspector.InspectorConst.PROJECT_ID
 import org.nexial.core.tools.inspector.InspectorConst.UTF8
+import org.nexial.core.tools.inspector.ProjectInspector.getMessage
 import java.io.File
 import java.io.File.separator
 import java.io.IOException
@@ -29,7 +29,6 @@ import java.io.IOException
 class ProjectInfoGenerator(val options: InspectorOptions, val logger: InspectorLogger) {
 
     fun generate(): ProjectInfo {
-
         val projectHome = File(options.directory)
         val projectPath = projectHome.absolutePath
         val metaFile = File("$projectPath$separator$PROJECT_ID")
@@ -54,7 +53,7 @@ class ProjectInfoGenerator(val options: InspectorOptions, val logger: InspectorL
         } else {
             // add advice to improve project identification
             logger.log("meta file not found")
-            projectInfo.advices.add(MISSING_META_FILE)
+            projectInfo.advices += getMessage("meta.file.missing")
         }
 
         logger.log("project id", projectId)

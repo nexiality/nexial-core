@@ -302,7 +302,7 @@ public class JsonCommand extends BaseCommand {
         String match = find(json, jsonpath);
         if (match == null) { return StepResult.fail("EXPECTED match against '" + jsonpath + "' was not found"); }
 
-        boolean asIs = context.getBooleanData(TREAT_JSON_AS_IS, DEF_TREAT_JSON_AS_IS);
+        boolean asIs = context.getBooleanData(TREAT_JSON_AS_IS, getDefaultBool(TREAT_JSON_AS_IS));
         if (asIs || !TextUtils.isBetween(match, "[", "]")) {
             context.setData(var, match);
         } else {

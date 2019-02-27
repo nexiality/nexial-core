@@ -136,7 +136,7 @@ public class CrossBrowserTestingHelper extends CloudWebTestingPlatform {
 
     protected void handleLocal(String username, String authkey, Map<String, String> config) {
         boolean enableLocal = config.containsKey(KEY_ENABLE_LOCAL) ?
-                              BooleanUtils.toBoolean(config.remove(KEY_ENABLE_LOCAL)) : DEF_ENABLE_LOCAL;
+                              BooleanUtils.toBoolean(config.remove(KEY_ENABLE_LOCAL)) : false;
         if (!enableLocal) { return; }
 
         try {

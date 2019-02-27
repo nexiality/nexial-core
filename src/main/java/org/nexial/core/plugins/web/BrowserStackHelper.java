@@ -44,6 +44,7 @@ import static org.apache.commons.lang3.SystemUtils.*;
 import static org.nexial.core.NexialConst.BrowserStack.*;
 import static org.nexial.core.NexialConst.BrowserType.*;
 import static org.nexial.core.NexialConst.Data.BROWSER_WINDOW_SIZE;
+import static org.nexial.core.NexialConst.getDefaultBool;
 import static org.nexial.core.plugins.web.WebDriverCapabilityUtils.setCapability;
 import static org.nexial.core.utils.CheckUtils.requiresNotBlank;
 
@@ -131,7 +132,7 @@ public class BrowserStackHelper extends CloudWebTestingPlatform {
     protected void handleLocal(MutableCapabilities capabilities, Map<String, String> config) {
         boolean enableLocal = config.containsKey("local") ?
                               BooleanUtils.toBoolean(config.remove("local")) :
-                              context.getBooleanData(KEY_ENABLE_LOCAL, DEF_ENABLE_LOCAL);
+                              context.getBooleanData(KEY_ENABLE_LOCAL, getDefaultBool(KEY_ENABLE_LOCAL));
         if (!enableLocal) { return; }
 
         String automateKey = context.getStringData(KEY_AUTOMATEKEY);
@@ -276,7 +277,7 @@ public class BrowserStackHelper extends CloudWebTestingPlatform {
     protected void handleOthers(MutableCapabilities capabilities, Map<String, String> config) {
         boolean debug = config.containsKey("debug") ?
                         BooleanUtils.toBoolean(config.remove("debug")) :
-                        context.getBooleanData(KEY_DEBUG, DEF_DEBUG);
+                        context.getBooleanData(KEY_DEBUG, getDefaultBool(KEY_DEBUG));
         setCapability(capabilities, "browserstack.debug", debug);
         if (debug) {
             setCapability(capabilities, "browserstack.console", "verbose");

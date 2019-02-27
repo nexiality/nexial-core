@@ -33,12 +33,11 @@ import org.nexial.core.model.ExecutionDefinition;
 import org.nexial.core.model.TestCase;
 import org.nexial.core.utils.ConsoleUtils;
 
-import static org.nexial.core.NexialConst.DEF_MANAGE_MEM;
-import static org.nexial.core.NexialConst.OPT_MANAGE_MEM;
+import static org.nexial.core.NexialConst.*;
 
 public class MemManager {
     private static final boolean MEM_MGMT_ENABLED =
-        BooleanUtils.toBoolean(System.getProperty(OPT_MANAGE_MEM, DEF_MANAGE_MEM));
+        BooleanUtils.toBoolean(System.getProperty(OPT_MANAGE_MEM, getDefault(OPT_MANAGE_MEM)));
 
     private static final NumberFormat MEM_FORMAT = new DecimalFormat("###,###");
     private static final int MEM_LENGTH = 15;

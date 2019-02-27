@@ -3,15 +3,27 @@
 <head>
     <meta charset="UTF-8">
     <link rel="shortcut icon" type="image/png" href="http://nexiality.github.io/documentation/favicon.ico">
-    <link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.6.1/css/all.css"/>
-    <link rel="stylesheet" href="http://nexiality.github.io/documentation/assets/project/datatables.min.css"/>
-    <link rel="stylesheet" href="http://nexiality.github.io/documentation/assets/report/execution_summary.css"/>
-    <link rel="stylesheet" href="http://nexiality.github.io/documentation/assets/project/project-iceblue.css"/>
+    <script>
+        let loadErrorFound = false;
+        function externalResourceNotFound() {
+            if (!loadErrorFound) {
+                window.alert("Unable to load one or more external web resources needed to display this page.\n\n" +
+                             "Please check/adjust your Internet access and reload this page again.\n\n" +
+                             "Thank you.");
+                loadErrorFound = true;
+            }
+            return false;
+        }
+    </script>
+    <link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.6.1/css/all.css" onerror="externalResourceNotFound()"/>
+    <link rel="stylesheet" href="http://nexiality.github.io/documentation/assets/project/datatables.min.css" onerror="externalResourceNotFound()"/>
+    <link rel="stylesheet" href="http://nexiality.github.io/documentation/assets/report/execution_summary.css" onerror="externalResourceNotFound()"/>
+    <link rel="stylesheet" href="http://nexiality.github.io/documentation/assets/project/project-iceblue.css" onerror="externalResourceNotFound()"/>
     <script type="text/javascript" src="project-inspector.js"></script>
-    <script src="http://nexiality.github.io/documentation/assets/project/clipboard.min.js"></script>
-    <script src="http://nexiality.github.io/documentation/assets/project/datatables.min.js"></script>
-    <script src="http://nexiality.github.io/documentation/assets/project/project.js"></script>
-    <script src="http://nexiality.github.io/documentation/assets/report/execution_summary.js"></script>
+    <script src="http://nexiality.github.io/documentation/assets/project/clipboard.min.js" onerror="externalResourceNotFound()"></script>
+    <script src="http://nexiality.github.io/documentation/assets/project/datatables.min.js" onerror="externalResourceNotFound()"></script>
+    <script src="http://nexiality.github.io/documentation/assets/report/execution_summary.js" onerror="externalResourceNotFound()"></script>
+    <script src="http://nexiality.github.io/documentation/assets/project/project.js" onerror="externalResourceNotFound()"></script>
     <title></title>
 </head>
 <body>
@@ -20,11 +32,43 @@
 <div class="result-controls">
     <i class="fas fa-toggle-off off" id="plan-toggle" title="COMING SOON: toggle the display of test plans"><span>Plans</span></i>
     <i class="fas fa-toggle-off off" id="script-toggle" title="COMING SOON: toggle the display of test scripts"><span>Scripts</span></i>
-    <i class="fas fa-toggle-on on" id="macro-toggle" onclick="toggleMacro(this)" title="toggle the display of macros"><span>Macro Libraries</span></i>
-    <i class="fas fa-toggle-off off" id="data-toggle" title="COMING SOON: toggle the display of test data"><span>Data</span></i>
+    <i class="fas fa-toggle-off off" id="macro-toggle" onclick="toggleMacro(this)" title="toggle the display of macros"><span>Macro Libraries</span></i>
+    <i class="fas fa-toggle-off off" id="data-toggle" onclick="toggleData(this)" title="toggle the display of test data"><span>Data</span></i>
     &nbsp;|&nbsp;&nbsp;
     <i class="fas fa-expand on" id="collapse-toggle" onclick="toggleCategoryExpansion(this)" title="collapse/expand all sections"><span>Collapse/Expand All</span></i>
 </div>
+
+<h1 class="category">
+    Data Variables
+    <div class="showhide" target="data-container">
+        <i class="fas fa-minus-square" onclick="hideSection(this)" title="minimize this section"></i>
+        <i class="fas fa-plus-square" onclick="showSection(this)" title="restore this section"></i>
+    </div>
+</h1>
+<div id="data-container" class="data-container project-container canHide">
+    <div class="instruction">
+        <!--<i class="fas fa-chalkboard-teacher"></i>-->
+
+        <div class="result-controls container-controls">
+            <i class="fas fa-toggle-on on" id="advice-toggle" onclick="toggleAdvice(this,'.data-table')" title="toggle the display of advices"><span>Advices</span></i>
+            |&nbsp;
+            <i class="fas fa-toggle-on on" id="data-step-toggle" onclick="toggleDataDefs(this,'.data-table .data-step')" title="toggle the display of data variables modified in test step"><span>test step</span></i>
+            <i class="fas fa-toggle-on on" id="data-command-toggle" onclick="toggleDataDefs(this,'.data-table .data-command')" title="toggle the display of data variables defined in batch file"><span>batch</span></i>
+            <i class="fas fa-toggle-on on" id="data-project-toggle" onclick="toggleDataDefs(this,'.data-table .data-project')" title="toggle the display of data variables defined in project.properties"><span>project.properties</span></i>
+            <i class="fas fa-toggle-on on" id="data-datasheet-toggle" onclick="toggleDataDefs(this,'.data-table .data-datasheet')" title="toggle the display of data variables defined in datasheet"><span>datasheet</span></i>
+            <i class="fas fa-toggle-on on" id="data-default-toggle" onclick="toggleDataDefs(this,'.data-table .data-default')" title="toggle the display of data variables defined in #default sheet"><span>#default</span></i>
+        </div>
+    </div>
+
+    <table class="data-table project-artifact display" data-page-length="10">
+        <thead><tr><th class="label">Data Variable</th><th class="label">Definition(s)</th></tr></thead>
+        <tbody></tbody>
+    </table>
+
+</div>
+
+<br/>
+
 <h1 class="category">
     Macro Libraries
     <div class="showhide" target="macro-container">
@@ -32,7 +76,17 @@
         <i class="fas fa-plus-square" onclick="showSection(this)" title="restore this section"></i>
     </div>
 </h1>
-<div id="macro-container" class="macro-container canHide"></div>
+<div id="macro-container" class="macro-container project-container canHide">
+    <div class="instruction">
+        <i class="fas fa-chalkboard-teacher"></i> Click on a copy icon <i class="far fa-clipboard"></i> to copy the
+        corresponding macro. After copy, paste (<code>Ctrl-V</code> or <code>Command-V</code>) into the
+        <b>[cmd type]</b> column (Column C) of the target step. Note that the reference to the macro file in
+        <b>[param 1]</b> might not be correct, especially if it is referenced by another project. Please verify macro
+        file location after pasting it to the test script.
+    </div>
+</div>
+
+
 <br/>
 <br/>
 <br/>
@@ -40,9 +94,19 @@
 <div class="footer">powered by <a href="https://nexiality.github.io">NEXIAL</a></div>
 <br/>
 <br/>
+
+<div id="loadError" style="display:none;font-weight:bold;font-size:16pt;color:#800;background:rgba(230,200,200,0.9);border:5px solid;padding:25px;margin:auto;position:fixed;width:500px;height:175px;top:0;left:0;right:0;bottom:0;">
+    Unable to load one or more external web resources needed to display this page.<br/><br/>
+    Please check/adjust your Internet access and reload this page again.<br/><br/>
+    Thank you.
+</div>
+
 <script>
+    if (loadErrorFound) { document.getElementById('loadError').style.display = 'block'; }
+
     $(document).ready(function () {
         displayProject(projectJson);
+        displayDataVariable(projectJson.dataVariables);
         displayMacros(projectJson.macros);
         postInit();
     });

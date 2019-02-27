@@ -30,9 +30,8 @@ import org.openqa.selenium.NoAlertPresentException;
 import org.openqa.selenium.WebDriver;
 import org.openqa.selenium.remote.UnreachableBrowserException;
 
-import static org.nexial.core.NexialConst.*;
-import static org.nexial.core.NexialConst.Data.DEF_PREEMPTIVE_ALERT_CHECK;
 import static org.nexial.core.NexialConst.Data.OPT_PREEMPTIVE_ALERT_CHECK;
+import static org.nexial.core.NexialConst.*;
 import static org.nexial.core.utils.CheckUtils.requires;
 import static org.nexial.core.utils.CheckUtils.requiresValidVariableName;
 
@@ -135,7 +134,8 @@ public class AlertCommand extends BaseCommand implements RequireBrowser {
 
     protected boolean preemptiveCheckAlert() {
         if (browser == null || browser.isRunElectron()) { return false; }
-        return context.getBooleanData(OPT_PREEMPTIVE_ALERT_CHECK, DEF_PREEMPTIVE_ALERT_CHECK) && isDialogPresent();
+        return context.getBooleanData(OPT_PREEMPTIVE_ALERT_CHECK, getDefaultBool(OPT_PREEMPTIVE_ALERT_CHECK)) &&
+               isDialogPresent();
     }
 
     protected String harvestDialogText(Alert alert) {

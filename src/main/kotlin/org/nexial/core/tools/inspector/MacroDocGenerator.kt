@@ -17,22 +17,21 @@
 package org.nexial.core.tools.inspector
 
 import org.apache.commons.collections4.CollectionUtils
-import org.apache.commons.io.FileUtils
 import org.apache.commons.lang3.StringUtils
 import org.nexial.core.NexialConst.Data.SHEET_SYSTEM
 import org.nexial.core.excel.Excel
 import org.nexial.core.excel.ExcelAddress
-import org.nexial.core.tools.inspector.InspectorConst.Advice.MISSING_MACRO_DESC
 import org.nexial.core.tools.inspector.InspectorConst.MACRO_CMDS
 import org.nexial.core.tools.inspector.InspectorConst.MACRO_DESCRIPTION
 import org.nexial.core.tools.inspector.InspectorConst.MACRO_EXPECTS
 import org.nexial.core.tools.inspector.InspectorConst.MACRO_PRODUCES
+import org.nexial.core.tools.inspector.ProjectInspector.filterFiles
+import org.nexial.core.tools.inspector.ProjectInspector.resolveRelativePath
 import org.nexial.core.utils.InputFileUtils
 import java.io.File
 import java.io.File.separator
 import java.io.IOException
 import java.util.*
-import java.util.stream.Collectors
 
 class MacroDocGenerator(val options: InspectorOptions, val logger: InspectorLogger) {
 
@@ -44,7 +43,7 @@ class MacroDocGenerator(val options: InspectorOptions, val logger: InspectorLogg
 
         // find all potential macro files
         val macroFiles = filterFiles(projectHome, arrayOf("xlsx")) { file -> isMacroFile(file) }
-        if (options.verbose) logger.log("found ${macroFiles.size} Excel files")
+        logger.log("found ${macroFiles.size} Excel files")
         if (macroFiles.isEmpty()) return scannedMacroFiles
 
         // scan each potential file for macro-specific header
@@ -53,23 +52,21 @@ class MacroDocGenerator(val options: InspectorOptions, val logger: InspectorLogg
                 val excel = Excel(file)
                 val filePath = excel.file.absolutePath
 
-                if (!InputFileUtils.isValidMacro(excel)) {
-                    logger.log("ignoring file", filePath)
-                } else {
+//                if (!InputFileUtils.isValidMacro(excel)) {
+//                    logger.log("ignoring file", filePath)
+//                } else {
+                if (InputFileUtils.isValidMacro(excel)) {
                     logger.log("parsing macro", filePath)
 
-                    var relativePath = StringUtils.remove(file.parentFile.absolutePath, projectHome.absolutePath)
-                    relativePath = StringUtils.replace(relativePath, "\\", "/")
-                    relativePath = StringUtils.removeStart(relativePath, "/")
-
-                    val macroFile = MacroFile(relativePath, file.name)
+                    val macroFile = MacroFile(resolveRelativePath(projectHome, file), file.name)
 
                     // macro file found, scan every sheet
                     val macros = collectMacros(excel)
                     macroFile.data.addAll(macros)
 
                     // scan for missing description
-                    if (macros.any { StringUtils.isEmpty(it.description) }) macroFile.advices.add(MISSING_MACRO_DESC)
+                    if (macros.any { StringUtils.isEmpty(it.description) })
+                        macroFile.advices += ProjectInspector.getMessage("macro.description.missing")
 
                     // add to intermediary object
                     scannedMacroFiles.add(macroFile)
@@ -82,12 +79,6 @@ class MacroDocGenerator(val options: InspectorOptions, val logger: InspectorLogg
 
         return scannedMacroFiles
     }
-
-    private fun filterFiles(directory: File, extensions: Array<String>, filter: (file: File) -> Boolean): List<File> =
-            FileUtils.listFiles(directory, extensions, true)
-                .stream()
-                .filter { filter(it) }
-                .collect(Collectors.toList())
 
     private fun isMacroFile(file: File): Boolean = !file.name.startsWith("~") &&
                                                    !file.absolutePath.contains("${separator}output$separator") &&

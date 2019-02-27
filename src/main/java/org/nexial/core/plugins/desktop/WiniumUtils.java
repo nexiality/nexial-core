@@ -353,7 +353,7 @@ public final class WiniumUtils {
     protected static boolean isSoloMode() {
         return ExecutionContext.getSystemThenContextBooleanData(WINIUM_SOLO_MODE,
                                                                 ExecutionThread.get(),
-                                                                DEF_WINIUM_SOLO_MODE);
+                                                                getDefaultBool(WINIUM_SOLO_MODE));
     }
 
     protected static boolean terminateRunningInstance(String exeName) {

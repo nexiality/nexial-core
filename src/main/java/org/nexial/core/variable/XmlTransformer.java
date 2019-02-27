@@ -33,9 +33,8 @@ import org.nexial.core.ExecutionThread;
 import org.nexial.core.model.ExecutionContext;
 import org.nexial.core.utils.ConsoleUtils;
 
-import static org.nexial.core.NexialConst.COMPRESSED_XML_OUTPUTTER;
-import static org.nexial.core.NexialConst.Data.DEF_TEXT_DELIM;
-import static org.nexial.core.NexialConst.PRETTY_XML_OUTPUTTER;
+import static org.nexial.core.NexialConst.*;
+import static org.nexial.core.NexialConst.Data.TEXT_DELIM;
 
 public class XmlTransformer<T extends XmlDataType> extends Transformer {
     private static final Map<String, Integer> FUNCTION_TO_PARAM_LIST = discoverFunctions(XmlTransformer.class);
@@ -93,7 +92,7 @@ public class XmlTransformer<T extends XmlDataType> extends Transformer {
             }
 
             ExecutionContext context = ExecutionThread.get();
-            String delim = context != null ? context.getTextDelim() : DEF_TEXT_DELIM;
+            String delim = context != null ? context.getTextDelim() : getDefault(TEXT_DELIM);
             return new ListDataType(TextUtils.toString(list, delim), delim);
         } catch (TypeConversionException e) {
             throw new IllegalArgumentException("Unable to process XML: " + e.getMessage(), e);
@@ -155,7 +154,7 @@ public class XmlTransformer<T extends XmlDataType> extends Transformer {
         });
 
         ExecutionContext context = ExecutionThread.get();
-        String delim = context != null ? context.getTextDelim() : DEF_TEXT_DELIM;
+        String delim = context != null ? context.getTextDelim() : getDefault(TEXT_DELIM);
         return new ListDataType(TextUtils.toString(values, delim), delim);
     }
 
@@ -180,7 +179,7 @@ public class XmlTransformer<T extends XmlDataType> extends Transformer {
         });
 
         ExecutionContext context = ExecutionThread.get();
-        String delim = context != null ? context.getTextDelim() : DEF_TEXT_DELIM;
+        String delim = context != null ? context.getTextDelim() : getDefault(TEXT_DELIM);
         return new ListDataType(TextUtils.toString(values, delim));
     }
 

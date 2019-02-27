@@ -35,9 +35,9 @@ import org.nexial.core.utils.TrackTimeLogs;
 
 import static org.apache.commons.lang3.builder.ToStringStyle.SIMPLE_STYLE;
 import static org.nexial.core.NexialConst.Data.*;
-import static org.nexial.core.NexialConst.FlowControls.DEF_PAUSE_ON_ERROR;
 import static org.nexial.core.NexialConst.FlowControls.OPT_PAUSE_ON_ERROR;
 import static org.nexial.core.NexialConst.OPT_LAST_OUTCOME;
+import static org.nexial.core.NexialConst.getDefaultBool;
 import static org.nexial.core.excel.ExcelConfig.*;
 
 public class CommandRepeater {
@@ -151,7 +151,7 @@ public class CommandRepeater {
                         errorCount++;
                         context.getExecutionEventListener().onError();
 
-                        if (context.getBooleanData(OPT_PAUSE_ON_ERROR, DEF_PAUSE_ON_ERROR)) {
+                        if (context.getBooleanData(OPT_PAUSE_ON_ERROR, getDefaultBool(OPT_PAUSE_ON_ERROR))) {
                             ConsoleUtils.doPause(context,
                                                  "[ERROR] " + errorCount + " in repeat-until, " +
                                                  Math.max(context.getIntData(EXECUTION_FAIL_COUNT), 0) +

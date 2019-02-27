@@ -60,6 +60,7 @@ import static java.util.regex.Pattern.MULTILINE;
 import static org.nexial.core.NexialConst.DEF_CHARSET;
 import static org.nexial.core.NexialConst.Data.*;
 import static org.nexial.core.NexialConst.PdfMeta.*;
+import static org.nexial.core.NexialConst.getDefaultBool;
 import static org.nexial.core.utils.CheckUtils.*;
 
 /**
@@ -593,7 +594,7 @@ public class PdfCommand extends BaseCommand {
         content = StringUtils.replace(content, "\r\n", "\n");
         content = StringUtils.replace(content, "\r", "\n");
 
-        if (context.getBooleanData(PDF_USE_ASCII, DEF_PDF_USE_ASCII)) {
+        if (context.getBooleanData(PDF_USE_ASCII, getDefaultBool(PDF_USE_ASCII))) {
             // ‘ (U+2018) LEFT SINGLE QUOTATION MARK
             // ’ (U+2019) RIGHT SINGLE QUOTATION MARK
             // “ (U+201C) LEFT DOUBLE QUOTATION MARK

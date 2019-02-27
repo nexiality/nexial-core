@@ -265,7 +265,7 @@ public class JsonTransformer<T extends JsonDataType> extends Transformer {
         if (StringUtils.isBlank(compoundJsonPaths)) { return null; }
 
         ExecutionContext context = ExecutionThread.get();
-        String textDelim = context == null ? DEF_TEXT_DELIM : context.getTextDelim();
+        String textDelim = context == null ? getDefault(TEXT_DELIM) : context.getTextDelim();
 
         compoundJsonPaths = StringUtils.replace(compoundJsonPaths, "\\" + textDelim, TEMP_TEXT_DELIM);
         compoundJsonPaths = StringUtils.replace(compoundJsonPaths, textDelim, "\n");
@@ -291,8 +291,8 @@ public class JsonTransformer<T extends JsonDataType> extends Transformer {
             save(${external_csv_file})
         ]
         */
-        boolean jsonAsIs = context == null ?
-                           DEF_TREAT_JSON_AS_IS : context.getBooleanData(TREAT_JSON_AS_IS, DEF_TREAT_JSON_AS_IS);
+        boolean defaultAsIs = getDefaultBool(TREAT_JSON_AS_IS);
+        boolean jsonAsIs = context == null ? defaultAsIs : context.getBooleanData(TREAT_JSON_AS_IS, defaultAsIs);
         JsonElement value = data.getValue();
         jsonpathList.forEach(jsonpath -> {
             jsonpath = StringUtils.trim(StringUtils.replace(jsonpath, TEMP_TEXT_DELIM, textDelim));

@@ -23,10 +23,8 @@ import org.nexial.core.model.ExecutionContext;
 import org.nexial.core.utils.ConsoleUtils;
 import org.openqa.selenium.MutableCapabilities;
 
+import static org.nexial.core.NexialConst.*;
 import static org.nexial.core.NexialConst.Data.BROWSER_ACCEPT_INVALID_CERTS;
-import static org.nexial.core.NexialConst.Data.DEF_BROWSER_ACCEPT_INVALID_CERTS;
-import static org.nexial.core.NexialConst.OPT_ALERT_IGNORE_FLAG;
-import static org.nexial.core.NexialConst.OPT_PROXY_DIRECT;
 import static org.openqa.selenium.UnexpectedAlertBehaviour.ACCEPT;
 import static org.openqa.selenium.UnexpectedAlertBehaviour.IGNORE;
 import static org.openqa.selenium.remote.CapabilityType.*;
@@ -49,7 +47,7 @@ class WebDriverCapabilityUtils {
         capabilities.setCapability(HAS_NATIVE_EVENTS, true);
         capabilities.setCapability(SUPPORTS_LOCATION_CONTEXT, false);
         capabilities.setCapability(ACCEPT_SSL_CERTS, true);
-        if (context.getBooleanData(BROWSER_ACCEPT_INVALID_CERTS, DEF_BROWSER_ACCEPT_INVALID_CERTS)) {
+        if (context.getBooleanData(BROWSER_ACCEPT_INVALID_CERTS, getDefaultBool(BROWSER_ACCEPT_INVALID_CERTS))) {
             capabilities.setCapability(ACCEPT_INSECURE_CERTS, true);
         }
 

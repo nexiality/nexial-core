@@ -66,6 +66,7 @@ import static java.io.File.separator;
 import static java.lang.Integer.MAX_VALUE;
 import static java.lang.System.lineSeparator;
 import static org.nexial.core.NexialConst.Data.*;
+import static org.nexial.core.NexialConst.getDefaultInt;
 import static org.nexial.core.plugins.desktop.DesktopConst.*;
 import static org.nexial.core.plugins.desktop.DesktopNotification.NotificationLevel.info;
 import static org.nexial.core.plugins.desktop.DesktopUtils.*;
@@ -184,7 +185,7 @@ public class DesktopCommand extends BaseCommand
 
     @Override
     public void logExternally(TestStep testStep, String message) {
-        int waitMs = context.getIntData(DESKTOP_NOTIFY_WAITMS, DEF_DESKTOP_NOTIFY_WAITMS);
+        int waitMs = context.getIntData(DESKTOP_NOTIFY_WAITMS, getDefaultInt(DESKTOP_NOTIFY_WAITMS));
 
         Worksheet worksheet = testStep.getWorksheet();
         String msg = "[" + worksheet.getName() + "][ROW " + (testStep.getRow().get(0).getRowIndex() + 1) + "]\n" +
@@ -1333,6 +1334,7 @@ public class DesktopCommand extends BaseCommand
     }
 
     public StepResult closeApplication() {
+        // todo: fix to allow shutting down of winium driver with session as required (useful in the case of xxxByLocator commands)
         if (context != null) {
             CanTakeScreenshot agent = context.findCurrentScreenshotAgent();
             if (agent instanceof DesktopCommand) { context.clearScreenshotAgent(); }

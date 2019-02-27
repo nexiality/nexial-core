@@ -52,11 +52,11 @@ import org.nexial.core.excel.Excel;
 import org.nexial.core.excel.Excel.Worksheet;
 import org.nexial.core.integration.IntegrationManager;
 import org.nexial.core.interactive.NexialInteractive;
+import org.nexial.core.mail.NexialMailer;
 import org.nexial.core.model.*;
 import org.nexial.core.reports.ExecutionMailConfig;
 import org.nexial.core.reports.ExecutionNotifier;
 import org.nexial.core.reports.ExecutionReporter;
-import org.nexial.core.mail.NexialMailer;
 import org.nexial.core.service.EventTracker;
 import org.nexial.core.service.ServiceLauncher;
 import org.nexial.core.utils.ConsoleUtils;
@@ -349,7 +349,7 @@ public class Nexial {
     }
 
     protected List<ExecutionDefinition> parsePlanExecution(CommandLine cmd) throws IOException {
-        List<String> testPlanPathList = TextUtils.toList(cmd.getOptionValue(PLAN), DEF_TEXT_DELIM, true);
+        List<String> testPlanPathList = TextUtils.toList(cmd.getOptionValue(PLAN), getDefault(TEXT_DELIM), true);
         List<ExecutionDefinition> executions = new ArrayList<>();
 
         for (String testPlanPath : testPlanPathList) {
@@ -1117,9 +1117,10 @@ public class Nexial {
             ConsoleUtils.error("Unable to cleanly execute tests; execution summary missing!");
             exitStatus = RC_EXECUTION_SUMMARY_MISSING;
         } else {
+            int defaultSuccessRate = getDefaultInt(MIN_EXEC_SUCCESS_RATE);
             double minExecSuccessRate =
-                NumberUtils.toDouble(System.getProperty(MIN_EXEC_SUCCESS_RATE, DEF_MIN_EXEC_SUCCESS_RATE + ""));
-            if (minExecSuccessRate < 0 || minExecSuccessRate > 100) { minExecSuccessRate = DEF_MIN_EXEC_SUCCESS_RATE; }
+                NumberUtils.toDouble(System.getProperty(MIN_EXEC_SUCCESS_RATE, defaultSuccessRate + ""));
+            if (minExecSuccessRate < 0 || minExecSuccessRate > 100) { minExecSuccessRate = defaultSuccessRate; }
             minExecSuccessRate = minExecSuccessRate / 100;
             String minSuccessRateString = MessageFormat.format(RATE_FORMAT, minExecSuccessRate);
 

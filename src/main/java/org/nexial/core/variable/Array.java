@@ -28,7 +28,8 @@ import org.nexial.commons.utils.TextUtils;
 import org.nexial.core.ExecutionThread;
 import org.nexial.core.model.ExecutionContext;
 
-import static org.nexial.core.NexialConst.Data.DEF_TEXT_DELIM;
+import static org.nexial.core.NexialConst.Data.TEXT_DELIM;
+import static org.nexial.core.NexialConst.getDefault;
 
 public class Array {
 
@@ -265,8 +266,7 @@ public class Array {
 
     protected static String getDelim() {
         ExecutionContext context = ExecutionThread.get();
-        return context == null ? DEF_TEXT_DELIM : context.getTextDelim();
-        // return StringUtils.equals(delim, TOKEN_PARAM_SEP) ? "\\" + delim : delim;
+        return context == null ? getDefault(TEXT_DELIM) : context.getTextDelim();
     }
 
     protected void init() { }

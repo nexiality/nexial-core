@@ -153,7 +153,8 @@ public class TestStep extends TestStepManifest {
         tickTock.start();
 
         context.setCurrentTestStep(this);
-        boolean printStackTrace = context.getBooleanData(OPT_PRINT_ERROR_DETAIL, DEF_PRINT_ERROR_DETAIL);
+        boolean printStackTrace = context.getBooleanData(OPT_PRINT_ERROR_DETAIL,
+                                                         getDefaultBool(OPT_PRINT_ERROR_DETAIL));
 
         // delay is carried out here so that timespan is captured as part of execution
         waitFor(context.getDelayBetweenStep());

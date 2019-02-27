@@ -43,6 +43,7 @@ import static org.apache.commons.lang3.SystemUtils.USER_NAME;
 import static org.nexial.core.NexialConst.AwsSettings.*;
 import static org.nexial.core.NexialConst.Data.*;
 import static org.nexial.core.NexialConst.Mailer.*;
+import static org.nexial.core.NexialConst.getDefault;
 
 /**
  * central object to resolve and avail mail-related configuration for the purpose of sending execution-level report
@@ -81,7 +82,7 @@ public class ExecutionMailConfig {
     public static ExecutionMailConfig get() { return self; }
 
     public boolean isReady() {
-        String enableEmail = MapUtils.getString(configurations, ENABLE_EMAIL, DEF_ENABLE_EMAIL);
+        String enableEmail = MapUtils.getString(configurations, ENABLE_EMAIL, getDefault(ENABLE_EMAIL));
         if (!BooleanUtils.toBoolean(enableEmail)) {
             ConsoleUtils.log(NOT_READY_PREFIX + ENABLE_EMAIL + "=" + enableEmail);
             return false;
@@ -161,9 +162,9 @@ public class ExecutionMailConfig {
         settings.setAssumeRoleArn(StringUtils.defaultString(configurations.get(SES_PREFIX + AWS_STS_ROLE_ARN), ""));
         settings.setAssumeRoleSession(StringUtils.defaultString(configurations.get(SES_PREFIX + AWS_STS_ROLE_SESSION),
                                                                 ""));
-        settings.setAssumeRoleDuration(NumberUtils.toInt(
-            StringUtils.defaultIfBlank(configurations.get(SES_PREFIX + AWS_STS_ROLE_DURATION),
-                                       "" + DEF_AWS_STS_ROLE_DURATION)));
+        settings.setAssumeRoleDuration(
+            NumberUtils.toInt(StringUtils.defaultIfBlank(configurations.get(SES_PREFIX + AWS_STS_ROLE_DURATION),
+                                                         getDefault(AWS_STS_ROLE_DURATION))));
         settings.setReplyTo(StringUtils.defaultString(configurations.get(SES_PREFIX + AWS_SES_REPLY_TO), ""));
         settings.setCc(StringUtils.defaultString(configurations.get(SES_PREFIX + AWS_SES_CC), ""));
         settings.setBcc(StringUtils.defaultString(configurations.get(SES_PREFIX + AWS_SES_BCC), ""));

@@ -32,6 +32,7 @@ import org.nexial.core.variable.Syspath;
 import static java.io.File.separator;
 import static org.nexial.core.NexialConst.Data.*;
 import static org.nexial.core.NexialConst.Project.appendCapture;
+import static org.nexial.core.NexialConst.getDefaultBool;
 
 /**
  * main delegate for various screen recording strategies
@@ -52,7 +53,7 @@ public class ContextScreenRecorder {
     public boolean isRecordingEnabled() { return isRecordingEnabled(context); }
 
     public static boolean isRecordingEnabled(ExecutionContext context) {
-        return context.getBooleanData(RECORDING_ENABLED, DEF_RECORDING_ENABLED);
+        return context.getBooleanData(RECORDING_ENABLED, getDefaultBool(RECORDING_ENABLED));
     }
 
     public void start(TestStep startsFrom) throws IOException {

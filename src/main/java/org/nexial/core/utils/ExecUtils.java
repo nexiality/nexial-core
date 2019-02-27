@@ -37,8 +37,8 @@ import org.nexial.commons.utils.DateUtility;
 import org.nexial.core.Nexial;
 
 import static org.apache.commons.lang3.SystemUtils.IS_OS_WINDOWS;
-import static org.nexial.core.NexialConst.Data.DEF_TEXT_DELIM;
 import static org.nexial.core.NexialConst.Data.SCRIPT_REF_PREFIX;
+import static org.nexial.core.NexialConst.Data.TEXT_DELIM;
 import static org.nexial.core.NexialConst.Integration.*;
 import static org.nexial.core.NexialConst.Jenkins.*;
 import static org.nexial.core.NexialConst.*;
@@ -142,8 +142,8 @@ public final class ExecUtils {
         String argsList = inputArgs.stream().filter(
             arg -> arg.startsWith("-D") &&
                    IGNORED_CLI_OPT.stream()
-                                  .noneMatch(ignored -> StringUtils.startsWith(StringUtils.substring(arg, 2), ignored))
-                                                   ).collect(Collectors.joining(DEF_TEXT_DELIM));
+                                  .noneMatch(ignored -> StringUtils.startsWith(StringUtils.substring(arg, 2), ignored)))
+                                   .collect(Collectors.joining(getDefault(TEXT_DELIM)));
         if (StringUtils.isNotBlank(argsList)) { System.setProperty(SCRIPT_REF_PREFIX + JAVA_OPT, argsList); }
     }
 
@@ -152,7 +152,7 @@ public final class ExecUtils {
 
         String javaOptsString = System.getProperty(SCRIPT_REF_PREFIX + JAVA_OPT);
         if (StringUtils.isNotBlank(javaOptsString)) {
-            Arrays.stream(StringUtils.split(javaOptsString, DEF_TEXT_DELIM)).forEach(opt -> {
+            Arrays.stream(StringUtils.split(javaOptsString, getDefault(TEXT_DELIM))).forEach(opt -> {
                 if (StringUtils.length(opt) > 5 && StringUtils.contains(opt, "=")) {
                     String[] nameValue = StringUtils.removeStart(opt, "-D").split("=");
                     if (nameValue.length == 2) { javaOpts.put(nameValue[0], nameValue[1]); }

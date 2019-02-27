@@ -121,7 +121,7 @@ public final class ExecutionThread extends Thread {
         }
 
         if (execDef.isFailFast() && !context.getBooleanData(OPT_LAST_OUTCOME)) {
-            if (context.getBooleanData(RESET_FAIL_FAST, DEF_RESET_FAIL_FAST)) {
+            if (context.getBooleanData(RESET_FAIL_FAST, getDefaultBool(RESET_FAIL_FAST))) {
                 // reset and pretend nothing's wrong.  Current script will be executed..
                 context.setData(OPT_LAST_OUTCOME, true);
             } else {
@@ -240,7 +240,8 @@ public final class ExecutionThread extends Thread {
                     // }
 
                     if (isAutoOpenResult()) {
-                        String spreadsheetExe = context.getStringData(SPREADSHEET_PROGRAM, DEF_SPREADSHEET);
+                        String spreadsheetExe = context.getStringData(SPREADSHEET_PROGRAM,
+                                                                      getDefault(SPREADSHEET_PROGRAM));
                         System.setProperty(SPREADSHEET_PROGRAM, spreadsheetExe);
 
                         if (StringUtils.equals(spreadsheetExe, SPREADSHEET_PROGRAM_WPS)) {

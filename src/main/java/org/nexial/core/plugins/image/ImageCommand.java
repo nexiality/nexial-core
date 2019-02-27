@@ -28,19 +28,17 @@ import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.math.NumberUtils;
 import org.apache.commons.lang3.time.StopWatch;
 import org.nexial.commons.utils.RegexUtils;
-import org.nexial.core.NexialConst.ImageDiffColor;
-import org.nexial.core.NexialConst.ImageType;
+import org.nexial.core.NexialConst.*;
 import org.nexial.core.model.StepResult;
 import org.nexial.core.plugins.ForcefulTerminate;
 import org.nexial.core.plugins.base.BaseCommand;
 import org.nexial.core.utils.ConsoleUtils;
 
+import static java.awt.RenderingHints.*;
 import static java.awt.image.BufferedImage.*;
 import static java.io.File.separator;
-import static org.nexial.core.NexialConst.ImageDiffColor.DEF_IMAGE_DIFF_COLOR;
 import static org.nexial.core.NexialConst.ImageType.png;
-import static org.nexial.core.NexialConst.OPT_IMAGE_DIFF_COLOR;
-import static org.nexial.core.NexialConst.OPT_IMAGE_TOLERANCE;
+import static org.nexial.core.NexialConst.*;
 import static org.nexial.core.utils.CheckUtils.*;
 
 public class ImageCommand extends BaseCommand implements ForcefulTerminate {
@@ -141,9 +139,9 @@ public class ImageCommand extends BaseCommand implements ForcefulTerminate {
         g.drawImage(img, 0, 0, w, h, null);
         g.dispose();
         g.setComposite(AlphaComposite.Src);
-        g.setRenderingHint(RenderingHints.KEY_INTERPOLATION, RenderingHints.VALUE_INTERPOLATION_BILINEAR);
-        g.setRenderingHint(RenderingHints.KEY_RENDERING, RenderingHints.VALUE_RENDER_QUALITY);
-        g.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+        g.setRenderingHint(KEY_INTERPOLATION, VALUE_INTERPOLATION_BILINEAR);
+        g.setRenderingHint(KEY_RENDERING, VALUE_RENDER_QUALITY);
+        g.setRenderingHint(KEY_ANTIALIASING, VALUE_ANTIALIAS_ON);
 
         String ext = StringUtils.lowerCase(StringUtils.substringAfterLast(image, "."));
         File saveFile = resolveSaveTo(saveTo, StringUtils.substringAfterLast(imageFile.getAbsolutePath(), separator));
@@ -167,7 +165,7 @@ public class ImageCommand extends BaseCommand implements ForcefulTerminate {
         // get test image
         File testFile = new File(actual);
 
-        String colorName = context.getStringData(OPT_IMAGE_DIFF_COLOR, DEF_IMAGE_DIFF_COLOR);
+        String colorName = context.getStringData(OPT_IMAGE_DIFF_COLOR, getDefault(OPT_IMAGE_DIFF_COLOR));
         Color color = ImageDiffColor.toColor(colorName);
 
         StopWatch watch = new StopWatch();

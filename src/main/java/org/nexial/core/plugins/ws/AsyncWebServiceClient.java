@@ -62,7 +62,7 @@ public class AsyncWebServiceClient extends WebServiceClient implements ForcefulT
         super(context);
         // delay shutdown event
         if (context != null) {
-            shutdownTimeout = context.getIntData(WS_ASYNC_SHUTDOWN_TIMEOUT, (int) DEF_ASYNC_SHUTDOWN_TIMEOUT);
+            shutdownTimeout = context.getIntData(WS_ASYNC_SHUTDOWN_TIMEOUT, getDefaultInt(WS_ASYNC_SHUTDOWN_TIMEOUT));
         }
         ShutdownAdvisor.addAdvisor(this);
     }

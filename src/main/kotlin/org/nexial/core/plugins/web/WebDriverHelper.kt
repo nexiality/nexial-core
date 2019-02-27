@@ -36,7 +36,8 @@ import org.nexial.commons.utils.RegexUtils
 import org.nexial.commons.utils.TextUtils
 import org.nexial.core.NexialConst.*
 import org.nexial.core.NexialConst.BrowserType.*
-import org.nexial.core.NexialConst.Data.*
+import org.nexial.core.NexialConst.Data.OPT_FORCE_IE_32
+import org.nexial.core.NexialConst.Data.WIN32_CMD
 import org.nexial.core.model.ExecutionContext
 import org.nexial.core.plugins.ws.WebServiceClient
 import org.nexial.core.plugins.xml.XmlCommand
@@ -633,9 +634,10 @@ class IEDriverHelper(context: ExecutionContext) : WebDriverHelper(context) {
                     "Browser automation for Internet Explorer is only supported on " + "Windows operating system. Sorry...")
         }
 
-        val newConfigHome = context.replaceTokens(config.home) + separator +
-                            (if (EnvUtils.isRunningWindows64bit()
-                                 && !context.getBooleanData(OPT_FORCE_IE_32, DEFAULT_FORCE_IE_32)) "x64" else "win32")
+        val newConfigHome = context.replaceTokens(config.home) + separator + (
+                if (EnvUtils.isRunningWindows64bit() &&
+                    !context.getBooleanData(OPT_FORCE_IE_32, getDefaultBool(OPT_FORCE_IE_32))) "x64"
+                else "win32")
 
         this.driverLocation = newConfigHome
         config.home = newConfigHome

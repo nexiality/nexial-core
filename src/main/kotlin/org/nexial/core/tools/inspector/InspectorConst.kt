@@ -24,7 +24,7 @@ import java.text.SimpleDateFormat
 import java.util.*
 
 object InspectorConst {
-    val GSON: Gson = GsonBuilder().setLenient().setPrettyPrinting().create()
+    val GSON: Gson = GsonBuilder().setLenient().setPrettyPrinting().excludeFieldsWithoutExposeAnnotation().create()
     val UTF8: Charset = Charset.forName("UTF-8")
     val LOG_DATE_FORMAT: DateFormat = SimpleDateFormat("yyyy-MM-dd HH:mm:ss.S")
 
@@ -42,18 +42,6 @@ object InspectorConst {
         const val BAD_OUTPUT = -5
         const val WRITE_FILE = -6
         const val READ_JSON = -7
-    }
-
-    object Advice {
-        const val MISSING_META_FILE = "No <code>.meta/project.id</code> file found in the specified project " +
-                                      "directory. While this file is not necessary, it helps to keep everyone " +
-                                      "in sync in terms of project metadata. For more details, check out " +
-                                      "<a href=\"http://nexiality.github.io/documentation/userguide/UnderstandingProjectStructure#project.id\">Project Structure - project.id</a>."
-        const val MISSING_MACRO_DESC = "One or more macro is found without description. It is recommended for each " +
-                                       "macro implementation to have some usage documentation, along with the data " +
-                                       "variable(s) it expects prior to invocation and the data variable(s) it " +
-                                       "produces after invocation. For more details, please check out " +
-                                       "<a href=\"http://nexiality.github.io/documentation/commands/macro/\">Macro Commands</a>."
     }
 
     fun exit(returnCode: Int) = System.exit(returnCode)

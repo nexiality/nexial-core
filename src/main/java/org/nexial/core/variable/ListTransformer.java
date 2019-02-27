@@ -37,8 +37,8 @@ import org.nexial.commons.utils.RegexUtils;
 import org.nexial.core.ExecutionThread;
 import org.nexial.core.model.ExecutionContext;
 
-import static org.nexial.core.NexialConst.Data.DEF_TEXT_DELIM;
-import static org.nexial.core.NexialConst.Data.treatCommonValueShorthand;
+import static org.nexial.core.NexialConst.Data.*;
+import static org.nexial.core.NexialConst.getDefault;
 import static org.nexial.core.variable.ExpressionConst.ALIAS_EMPTY;
 import static org.nexial.core.variable.ExpressionUtils.fixControlChars;
 import static org.nexial.core.variable.NumberTransformer.DEC_SCALE;
@@ -151,7 +151,7 @@ public class ListTransformer<T extends ListDataType> extends Transformer {
         if (data == null || data.getValue() == null || ArrayUtils.isEmpty(indices)) { return null; }
 
         ExecutionContext context = ExecutionThread.get();
-        String delim = context == null ? DEF_TEXT_DELIM : context.getTextDelim();
+        String delim = context == null ? getDefault(TEXT_DELIM) : context.getTextDelim();
         StringBuilder buffer = new StringBuilder();
 
         for (String index : indices) {

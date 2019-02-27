@@ -54,6 +54,7 @@ import org.nexial.core.excel.Excel.Worksheet;
 import org.nexial.core.excel.ExcelAddress;
 import org.nexial.core.excel.ext.CellTextReader;
 import org.nexial.core.interactive.InteractiveSession;
+import org.nexial.core.mail.NexialMailer;
 import org.nexial.core.plugins.CanTakeScreenshot;
 import org.nexial.core.plugins.NexialCommand;
 import org.nexial.core.plugins.pdf.CommonKeyValueIdentStrategies;
@@ -61,7 +62,6 @@ import org.nexial.core.plugins.sound.SoundMachine;
 import org.nexial.core.plugins.web.Browser;
 import org.nexial.core.plugins.web.WebDriverExceptionHelper;
 import org.nexial.core.reports.ExecutionMailConfig;
-import org.nexial.core.mail.NexialMailer;
 import org.nexial.core.utils.ConsoleUtils;
 import org.nexial.core.utils.ExecUtils;
 import org.nexial.core.utils.ExecutionLogger;
@@ -377,7 +377,7 @@ public class ExecutionContext {
         // DO NOT SET BROWSER TYPE TO SYSTEM PROPS, SINCE THIS WILL PREVENT ITERATION-LEVEL OVERRIDES
         // System.setProperty(BROWSER, browserType);
 
-        return StringUtils.remove(System.getProperty(BROWSER, getStringData(BROWSER, DEF_BROWSER)), ".");
+        return StringUtils.remove(System.getProperty(BROWSER, getStringData(BROWSER, getDefault(BROWSER))), ".");
     }
 
     public Excel getTestScript() { return testScript; }
@@ -398,11 +398,11 @@ public class ExecutionContext {
         return getBooleanData(OPT_INTERACTIVE, false) && !ExecUtils.isRunningInZeroTouchEnv();
     }
 
-    public boolean isFailFast() { return getBooleanData(FAIL_FAST, DEF_FAIL_FAST) && !isInteractiveMode(); }
+    public boolean isFailFast() {return getBooleanData(FAIL_FAST, getDefaultBool(FAIL_FAST)) && !isInteractiveMode();}
 
     /** Evaluate Page Source Stability Required */
     public boolean isPageSourceStabilityEnforced() {
-        return getBooleanData(ENFORCE_PAGE_SOURCE_STABILITY, DEF_ENFORCE_PAGE_SOURCE_STABILITY);
+        return getBooleanData(ENFORCE_PAGE_SOURCE_STABILITY, getDefaultBool(ENFORCE_PAGE_SOURCE_STABILITY));
     }
 
     /**
@@ -428,7 +428,7 @@ public class ExecutionContext {
         // in effect, the `onError()` event works the same way as `pauseOnError`. Nexial supports both stylistic variety
         executionEventListener.onError();
 
-        if (getBooleanData(OPT_PAUSE_ON_ERROR, DEF_PAUSE_ON_ERROR)) {
+        if (getBooleanData(OPT_PAUSE_ON_ERROR, getDefaultBool(OPT_PAUSE_ON_ERROR))) {
             ConsoleUtils.doPause(this, "[ERROR #" + execFailCount + "]: Error found " +
                                        ExecutionLogger.toHeader(getCurrentTestStep()) + " - " +
                                        result.getMessage());
@@ -449,7 +449,7 @@ public class ExecutionContext {
         }
     }
 
-    public int getFailAfter() { return getIntData(FAIL_AFTER, DEF_FAIL_AFTER); }
+    public int getFailAfter() { return getIntData(FAIL_AFTER, getDefaultInt(FAIL_AFTER)); }
 
     public boolean isStepByStep() { return getBooleanData(OPT_STEP_BY_STEP); }
 
@@ -459,7 +459,7 @@ public class ExecutionContext {
 
     public boolean isProxyRequired() { return getBooleanData(OPT_PROXY_REQUIRED, false); }
 
-    public boolean isOutputToCloud() { return getBooleanData(OUTPUT_TO_CLOUD, DEF_OUTPUT_TO_CLOUD); }
+    public boolean isOutputToCloud() { return getBooleanData(OUTPUT_TO_CLOUD, getDefaultBool(OUTPUT_TO_CLOUD)); }
 
     @NotNull
     public String getTextDelim() { return getRawStringData(TEXT_DELIM, ","); }
@@ -467,11 +467,13 @@ public class ExecutionContext {
     @NotNull
     public String getNullValueToken() { return getRawStringData(NULL_VALUE, NULL); }
 
-    public long getPollWaitMs() { return getIntData(POLL_WAIT_MS, DEF_POLL_WAIT_MS); }
+    public long getPollWaitMs() { return getIntData(POLL_WAIT_MS, getDefaultInt(POLL_WAIT_MS)); }
 
     public long getSLAElapsedTimeMs() { return getIntData(OPT_ELAPSED_TIME_SLA); }
 
-    public long getDelayBetweenStep() { return getIntData(DELAY_BETWEEN_STEPS_MS, DEF_DELAY_BETWEEN_STEPS_MS); }
+    public long getDelayBetweenStep() {
+        return getIntData(DELAY_BETWEEN_STEPS_MS, getDefaultInt(DELAY_BETWEEN_STEPS_MS));
+    }
 
     public boolean hasData(String name) { return getObjectData(name) != null; }
 
@@ -704,7 +706,7 @@ public class ExecutionContext {
         if (CollectionUtils.isNotEmpty(ignoredVars)) { tokens.removeAll(ignoredVars); }
 
         boolean allTokenResolvedToNull = CollectionUtils.isNotEmpty(tokens);
-        boolean unresolvedAsIs = DEF_VAR_DEFAULT_AS_IS;
+        boolean unresolvedAsIs = getDefaultBool(OPT_VAR_DEFAULT_AS_IS);
         if (hasData(OPT_VAR_DEFAULT_AS_IS)) {
             Object config = getObjectData(OPT_VAR_DEFAULT_AS_IS);
             if (config != null) { unresolvedAsIs = BooleanUtils.toBoolean(config.toString()); }
@@ -873,6 +875,14 @@ public class ExecutionContext {
         }
     }
 
+    public void setCurrentScenario(TestScenario scenario) {
+        if (scenario == null) {
+            removeDataForcefully(OPT_CURRENT_SCENARIO);
+        } else {
+            setData(OPT_CURRENT_SCENARIO, scenario.getName());
+        }
+    }
+
     public TestStep getCurrentTestStep() { return currentTestStep; }
 
     protected void setCurrentTestStep(TestStep testStep) { this.currentTestStep = testStep; }
@@ -920,14 +930,6 @@ public class ExecutionContext {
         }
     }
 
-    public void setCurrentScenario(TestScenario scenario) {
-        if (scenario == null) {
-            removeDataForcefully(OPT_CURRENT_SCENARIO);
-        } else {
-            setData(OPT_CURRENT_SCENARIO, scenario.getName());
-        }
-    }
-
     public void fillIntraExecutionData(Map<String, Object> intraExecutionData) {
         intraExecutionData.putAll(getDataMap());
         intraExecutionData.put(NAME_PLUGIN_MANAGER, plugins);
@@ -952,7 +954,7 @@ public class ExecutionContext {
         getTrackTimeLogs();
 
         // remember whether we want to track execution completion as a time-track event or not
-        System.setProperty(TRACK_EXECUTION, getStringData(TRACK_EXECUTION, DEF_TRACK_EXECUTION));
+        System.setProperty(TRACK_EXECUTION, getStringData(TRACK_EXECUTION, getDefault(TRACK_EXECUTION)));
 
         ExecutionEventListener eventListener = getExecutionEventListener();
 
@@ -1448,7 +1450,8 @@ public class ExecutionContext {
                         // last resort: treat 'propName' like a real method
                         String args = StringUtils.substringBetween(postToken, TOKEN_ARRAY_START, TOKEN_ARRAY_END);
                         newValue = ObjectUtils.defaultIfNull(
-                            MethodUtils.invokeMethod(value, propName, StringUtils.split(args, DEF_TEXT_DELIM)), "");
+                            MethodUtils.invokeMethod(value, propName, StringUtils.split(args, getDefault(TEXT_DELIM))),
+                            "");
                         if (StringUtils.isNotEmpty(args)) {
                             token += TOKEN_ARRAY_START + args + TOKEN_ARRAY_END;
                             postToken = StringUtils.substringAfter(postToken, args + TOKEN_ARRAY_END);
@@ -1698,13 +1701,13 @@ public class ExecutionContext {
         });
 
         // support dynamic resolution of WPS executable path
-        String spreadsheetProgram = getStringData(SPREADSHEET_PROGRAM, DEF_SPREADSHEET);
+        String spreadsheetProgram = getStringData(SPREADSHEET_PROGRAM, getDefault(SPREADSHEET_PROGRAM));
         if (StringUtils.equals(spreadsheetProgram, SPREADSHEET_PROGRAM_WPS) && IS_OS_WINDOWS) {
             setData(WPS_EXE_LOCATION, Excel.resolveWpsExecutablePath());
         }
 
         if (StringUtils.isBlank(System.getProperty(OPT_OPEN_RESULT))) {
-            boolean openResult = MapUtils.getBoolean(data, OPT_OPEN_RESULT, BooleanUtils.toBoolean(DEF_OPEN_RESULT));
+            boolean openResult = MapUtils.getBoolean(data, OPT_OPEN_RESULT, getDefaultBool(OPT_OPEN_RESULT));
             System.setProperty(OPT_OPEN_RESULT, openResult + "");
         }
 

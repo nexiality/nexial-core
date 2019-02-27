@@ -29,10 +29,10 @@ class MacroCommand : BaseCommand() {
     fun description(): StepResult = StepResult.success()
 
     fun expects(`var`: String, default: String): StepResult = when {
-        StringUtils.isNotEmpty(default) -> assertVarPresent(`var`)
-        context.hasData(`var`)          -> StepResult.success()
+        StringUtils.isEmpty(default) -> assertVarPresent(`var`)
+        context.hasData(`var`)       -> StepResult.success()
 
-        else                            -> {
+        else                         -> {
             context.setData(`var`, default)
             StepResult.success("Data variable '$`var`' set to default value '$default'")
         }

@@ -752,7 +752,7 @@ public class IoCommand extends BaseCommand {
         }
 
         // 4. line-by-line compare here we go!
-        boolean logMatches = context.getBooleanData(LOG_MATCH, DEF_LOG_MATCH);
+        boolean logMatches = context.getBooleanData(LOG_MATCH, getDefaultBool(LOG_MATCH));
         int currentErrorCounter = report.getMismatchCount();
         int aPos = -1;
         int aLastParsed = aPos;
@@ -857,10 +857,10 @@ public class IoCommand extends BaseCommand {
     protected void logComparisonReport(String caption, FileComparisonReport report, String type) {
         if (StringUtils.isBlank(type) || report == null || !report.hasMismatch()) { return; }
 
-        boolean genLogFile = context.getBooleanData(GEN_COMPARE_LOG, DEF_GEN_COMPARE_LOG);
+        boolean genLogFile = context.getBooleanData(GEN_COMPARE_LOG, getDefaultBool(GEN_COMPARE_LOG));
         if (StringUtils.equals(type, COMPARE_LOG_PLAIN) && !genLogFile) { return; }
 
-        boolean genJsonFile = context.getBooleanData(GEN_COMPARE_JSON, DEF_GEN_COMPARE_JSON);
+        boolean genJsonFile = context.getBooleanData(GEN_COMPARE_JSON, getDefaultBool(GEN_COMPARE_JSON));
         if (StringUtils.equals(type, COMPARE_LOG_JSON) && !genJsonFile) { return; }
 
         String stats = null;

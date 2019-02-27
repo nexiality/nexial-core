@@ -390,7 +390,7 @@ final public class DataVariableUpdater {
         // special case for sql statements
         String regexVarName = "^(--\\s?sentry:)(.*)";
         if (RegexUtils.isExact(line, regexVarName)) {
-            line = RegexUtils.replace(line, regexVarName, "-- nexial:" + "$2");
+            line = RegexUtils.replace(line, regexVarName, "-- nexial:$2");
         }
 
         regexVarName = "^(--\\s?nexial:)(" + oldVar + ")";

@@ -35,6 +35,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import static org.nexial.core.NexialConst.Data.*;
+import static org.nexial.core.NexialConst.getDefault;
 import static org.nexial.core.model.FlowControl.Directive.TimeTrackEnd;
 import static org.nexial.core.model.FlowControl.Directive.TimeTrackStart;
 
@@ -113,7 +114,9 @@ public final class TrackTimeLogs {
         String elapsedTime = Long.toString(timeDiff);
 
         String format = System.getProperty(TIMETRACK_FORMAT);
-        if (format == null && context != null) {format = context.getStringData(TIMETRACK_FORMAT, DEF_TIMETRACK_FORMAT);}
+        if (format == null && context != null) {
+            format = context.getStringData(TIMETRACK_FORMAT, getDefault(TIMETRACK_FORMAT));
+        }
 
         String[] replaceList = new String[]{startDateTime[0], startDateTime[1], endDateTime[0], endDateTime[1],
                                             elapsedTime, Thread.currentThread().getName(), label, remark};

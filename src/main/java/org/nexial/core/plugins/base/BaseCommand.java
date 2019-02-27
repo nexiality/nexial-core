@@ -73,7 +73,8 @@ public class BaseCommand implements NexialCommand {
                                                                               "desktop.typeAppendTextBox",
                                                                               "desktop.typeAppendTextArea",
                                                                               "desktop.typeTextArea",
-                                                                              "desktop.sendKeysToTextBox");
+                                                                              "desktop.sendKeysToTextBox",
+                                                                              "macro.expects");
     // "self-derived" means that the command will figure out the appropriate param values for display
     public static final List<String> PARAM_DERIVED_COMMANDS = Collections.singletonList("step.observe");
 
@@ -956,13 +957,12 @@ public class BaseCommand implements NexialCommand {
         }
 
         Method m = commandMethods.get(methodName);
-        int actualParamCount = ArrayUtils.getLength(params);
-        int expectedParamCount = m.getParameterCount();
-
-        if (actualParamCount == expectedParamCount) { return m; }
-
         // fill in null for missing params later
         if (PARAM_AUTO_FILL_COMMANDS.contains(getTarget() + "." + methodName)) { return m; }
+
+        int actualParamCount = ArrayUtils.getLength(params);
+        int expectedParamCount = m.getParameterCount();
+        if (actualParamCount == expectedParamCount) { return m; }
 
         CheckUtils.fail("MISMATCHED parameters - " + getTarget() + "." + methodName +
                         " EXPECTS " + expectedParamCount + " but found " + actualParamCount);

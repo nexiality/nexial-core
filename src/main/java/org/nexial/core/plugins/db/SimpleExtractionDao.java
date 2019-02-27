@@ -241,7 +241,8 @@ public class SimpleExtractionDao extends JdbcDaoSupport {
     }
 
     protected List<Map<String, String>> pack(List<Map<String, String>> results) {
-        if (context == null || !context.getBooleanData(OPT_INCLUDE_PACK_SINGLE_ROW, DEF_INCLUDE_PACK_SINGLE_ROW)) {
+        if (context == null ||
+            !context.getBooleanData(OPT_INCLUDE_PACK_SINGLE_ROW, getDefaultBool(OPT_INCLUDE_PACK_SINGLE_ROW))) {
             return results;
         }
 

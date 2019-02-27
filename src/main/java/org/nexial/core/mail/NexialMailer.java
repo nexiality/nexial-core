@@ -60,6 +60,7 @@ import static javax.mail.Message.RecipientType.*;
 import static org.nexial.core.NexialConst.Data.*;
 import static org.nexial.core.NexialConst.Mailer.MAIL_KEY_CONTENT_TYPE;
 import static org.nexial.core.NexialConst.Mailer.MAIL_KEY_FROM;
+import static org.nexial.core.NexialConst.getDefault;
 
 public class NexialMailer implements ExecutionNotifier {
     private ExecutionContext context;
@@ -96,8 +97,8 @@ public class NexialMailer implements ExecutionNotifier {
         }
 
         boolean enableEmail = BooleanUtils.toBoolean(context != null ?
-                                                     context.getStringData(ENABLE_EMAIL, DEF_ENABLE_EMAIL) :
-                                                     System.getProperty(ENABLE_EMAIL, DEF_ENABLE_EMAIL));
+                                                     context.getStringData(ENABLE_EMAIL, getDefault(ENABLE_EMAIL)) :
+                                                     System.getProperty(ENABLE_EMAIL, getDefault(ENABLE_EMAIL)));
         if (!enableEmail) {
             ConsoleUtils.log("email notification is currently not enabled; SKIPPING...");
             return;

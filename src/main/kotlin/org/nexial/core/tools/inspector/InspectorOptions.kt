@@ -18,9 +18,7 @@ package org.nexial.core.tools.inspector
 
 import java.io.File.separator
 
-class InspectorOptions(val directory: String,
-                       val viewMode: InspectorViewMode,
-                       val verbose: Boolean) {
-
+class InspectorOptions(val directory: String, val viewMode: InspectorViewMode, val verbose: Boolean) {
+    val advices = mutableListOf<String>()
     val outputJson: String = "$directory$separator${viewMode.outputFileName}"
 }

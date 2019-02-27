@@ -23,7 +23,8 @@ import org.apache.commons.lang3.StringUtils;
 import org.nexial.core.ExecutionThread;
 import org.nexial.core.model.ExecutionContext;
 
-import static org.nexial.core.NexialConst.Data.DEF_TEXT_DELIM;
+import static org.nexial.core.NexialConst.Data.TEXT_DELIM;
+import static org.nexial.core.NexialConst.getDefault;
 
 public class ListDataType extends ExpressionDataType<String[]> {
     private ListTransformer transformer = new ListTransformer();
@@ -68,7 +69,7 @@ public class ListDataType extends ExpressionDataType<String[]> {
     protected void parse() {
         if (StringUtils.isEmpty(delim)) {
             ExecutionContext context = ExecutionThread.get();
-            delim = context == null ? DEF_TEXT_DELIM : context.getTextDelim();
+            delim = context == null ? getDefault(TEXT_DELIM) : context.getTextDelim();
         }
         value = Array.toArray(textValue, delim);
         textValue = Array.toString(value);

@@ -32,7 +32,8 @@ import org.nexial.core.ExecutionThread;
 import org.nexial.core.model.ExecutionContext;
 import org.nexial.core.utils.ConsoleUtils;
 
-import static org.nexial.core.NexialConst.Data.DEF_TEXT_DELIM;
+import static org.nexial.core.NexialConst.Data.TEXT_DELIM;
+import static org.nexial.core.NexialConst.getDefault;
 import static org.nexial.core.variable.ExpressionConst.REGEX_VALID_TYPE_PREFIX;
 import static org.nexial.core.variable.ExpressionConst.REGEX_VALID_TYPE_SUFFIX;
 import static org.nexial.core.variable.ExpressionUtils.handleExternal;
@@ -93,7 +94,8 @@ final class ExpressionDataTypeBuilder {
 
     ListDataType newListDataType(String value) {
         ListDataType data = resumeExpression(value, ListDataType.class);
-        return data != null ? data : new ListDataType(value, context != null ? context.getTextDelim() : DEF_TEXT_DELIM);
+        return data != null ?
+               data : new ListDataType(value, context != null ? context.getTextDelim() : getDefault(TEXT_DELIM));
     }
 
     DateDataType newDateDataType(String value) throws TypeConversionException {

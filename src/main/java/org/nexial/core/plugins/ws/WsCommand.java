@@ -362,7 +362,7 @@ public class WsCommand extends BaseCommand {
     }
 
     protected boolean compactRequestPayload() {
-        return context.getBooleanData(WS_REQ_PAYLOAD_COMPACT, DEF_WS_REQ_PAYLOAD_COMPACT);
+        return context.getBooleanData(WS_REQ_PAYLOAD_COMPACT, getDefaultBool(WS_REQ_PAYLOAD_COMPACT));
     }
 
     protected StepResult addAccessTokenToHeader(Map<String, String> oauthResponse, String authPrefix) {

@@ -136,7 +136,7 @@ public class WebCommand extends BaseCommand implements CanTakeScreenshot, CanLog
 
         locatorHelper = new LocatorHelper(this);
 
-        browserStabilityWaitMs = context.getIntData(OPT_UI_RENDER_WAIT_MS, DEF_UI_RENDER_WAIT_MS);
+        browserStabilityWaitMs = context.getIntData(OPT_UI_RENDER_WAIT_MS, getDefaultInt(OPT_UI_RENDER_WAIT_MS));
         log("default browser stability wait time is " + browserStabilityWaitMs + " ms");
 
         // todo: consider this http://seleniumhq.github.io/selenium/docs/api/javascript/module/selenium-webdriver/lib/logging.html
@@ -1047,7 +1047,7 @@ public class WebCommand extends BaseCommand implements CanTakeScreenshot, CanLog
         driver.get("about:blank");
 
         StopWatch stopWatch = StopWatch.createStarted();
-        long maxLoadTime = context.getIntData(OPT_WEB_PAGE_LOAD_WAIT_MS, DEF_WEB_PAGE_LOAD_WAIT_MS);
+        long maxLoadTime = context.getIntData(OPT_WEB_PAGE_LOAD_WAIT_MS, getDefaultInt(OPT_WEB_PAGE_LOAD_WAIT_MS));
 
         url = validateUrl(url);
         String linkToUrl = "var a = document.createElement(\"a\");" +
@@ -1228,7 +1228,7 @@ public class WebCommand extends BaseCommand implements CanTakeScreenshot, CanLog
             // if (browser.isRunSafari()) { focus("//body"); }
 
             // onchange event will not fire until a different element is selected
-            if (context.getBooleanData(WEB_UNFOCUS_AFTER_TYPE, DEF_WEB_UNFOCUS_AFTER_TYPE)) {
+            if (context.getBooleanData(WEB_UNFOCUS_AFTER_TYPE, getDefaultBool(WEB_UNFOCUS_AFTER_TYPE))) {
                 // element.sendKeys();
                 new Actions(driver).moveToElement(element)
                                    .sendKeys(element, value)
@@ -1261,7 +1261,7 @@ public class WebCommand extends BaseCommand implements CanTakeScreenshot, CanLog
 
             Actions actions = WebDriverUtils.toSendKeyAction(driver, element, value);
             if (actions != null) {
-                if (context.getBooleanData(WEB_UNFOCUS_AFTER_TYPE, DEF_WEB_UNFOCUS_AFTER_TYPE)) {
+                if (context.getBooleanData(WEB_UNFOCUS_AFTER_TYPE, getDefaultBool(WEB_UNFOCUS_AFTER_TYPE))) {
                     actions.sendKeys(TAB);
                 }
                 actions.build().perform();
@@ -1494,7 +1494,7 @@ public class WebCommand extends BaseCommand implements CanTakeScreenshot, CanLog
         }
 
         // give it time to settle down
-        wait(context.getIntData(BROWSER_POST_CLOSE_WAIT, DEF_BROWSER_POST_CLOSE_WAIT) + "");
+        wait(context.getIntData(BROWSER_POST_CLOSE_WAIT, getDefaultInt(BROWSER_POST_CLOSE_WAIT)) + "");
 
         if (lastWindow) { return closeAll(); }
 
@@ -1570,10 +1570,11 @@ public class WebCommand extends BaseCommand implements CanTakeScreenshot, CanLog
     }
 
     protected Point deriveDragFrom(WebElement source) {
-        String dragFrom = context.getStringData(OPT_DRAG_FROM, DEF_DRAG_FROM);
+        String defaultDragFrom = getDefault(OPT_DRAG_FROM);
+        String dragFrom = context.getStringData(OPT_DRAG_FROM, defaultDragFrom);
         if (!OPT_DRAG_FROMS.contains(dragFrom)) {
             ConsoleUtils.error("Invalid drag-from value: " + dragFrom + ", use default instead");
-            dragFrom = DEF_DRAG_FROM;
+            dragFrom = defaultDragFrom;
         }
 
         Dimension dimension = source.getSize();
@@ -1603,7 +1604,7 @@ public class WebCommand extends BaseCommand implements CanTakeScreenshot, CanLog
     protected void resizeSafariAfterOpen() {
         if ((browser.isRunBrowserStack() && browser.getBrowserstackHelper().getBrowser() == safari) ||
             (browser.isRunCrossBrowserTesting() && browser.getCbtHelper().getBrowser() == safari)) {
-            if (!context.getBooleanData(SAFARI_RESIZED, DEF_SAFARI_RESIZED)) {
+            if (!context.getBooleanData(SAFARI_RESIZED, getDefaultBool(SAFARI_RESIZED))) {
                 // time to resize it now
                 browser.setWindowSizeForcefully(driver);
                 context.setData(SAFARI_RESIZED, true);
@@ -2471,8 +2472,8 @@ public class WebCommand extends BaseCommand implements CanTakeScreenshot, CanLog
         if (scrollTo((Locatable) we)) {
             int waitMs = context.hasData(HIGHLIGHT_WAIT_MS) ?
                          context.getIntData(HIGHLIGHT_WAIT_MS) :
-                         context.getIntData(HIGHLIGHT_WAIT_MS_OLD, DEF_HIGHLIGHT_WAIT_MS);
-            String highlight = context.getStringData(HIGHLIGHT_STYLE, DEF_HIGHLIGHT_STYLE);
+                         context.getIntData(HIGHLIGHT_WAIT_MS_OLD, getDefaultInt(HIGHLIGHT_WAIT_MS));
+            String highlight = context.getStringData(HIGHLIGHT_STYLE, getDefault(HIGHLIGHT_STYLE));
             jsExecutor.executeScript("var ws = arguments[0];" +
                                      "var oldStyle = arguments[0].getAttribute('style');" +
                                      "ws.setAttribute('style', arguments[1]);" +
@@ -2555,10 +2556,10 @@ public class WebCommand extends BaseCommand implements CanTakeScreenshot, CanLog
         return !browser.getBrowserType().isHeadless() &&
                context.hasData(OPT_DEBUG_HIGHLIGHT) ?
                context.getBooleanData(OPT_DEBUG_HIGHLIGHT) :
-               context.getBooleanData(OPT_DEBUG_HIGHLIGHT_OLD, DEF_DEBUG_HIGHLIGHT);
+               context.getBooleanData(OPT_DEBUG_HIGHLIGHT_OLD, getDefaultBool(OPT_DEBUG_HIGHLIGHT));
     }
 
-    protected boolean shouldWait() { return context.getBooleanData(WEB_ALWAYS_WAIT, DEF_WEB_ALWAYS_WAIT); }
+    protected boolean shouldWait() { return context.getBooleanData(WEB_ALWAYS_WAIT, getDefaultBool(WEB_ALWAYS_WAIT)); }
 
     protected StepResult saveTextSubstring(String var, String locator, String delimStart, String delimEnd) {
         List<WebElement> matches = findElements(locator);

@@ -21,7 +21,8 @@ import org.apache.commons.lang3.StringUtils
 import org.nexial.commons.utils.FileUtil
 import org.nexial.core.ExecutionThread
 import org.nexial.core.NexialConst.DEF_FILE_ENCODING
-import org.nexial.core.NexialConst.Data.DEF_TEXT_DELIM
+import org.nexial.core.NexialConst.Data.TEXT_DELIM
+import org.nexial.core.NexialConst.getDefault
 import org.nexial.core.utils.ConsoleUtils
 import java.io.BufferedReader
 import java.io.FileReader
@@ -46,7 +47,7 @@ class File {
         toFile(file) ?: return ""
 
         val context = ExecutionThread.get()
-        val delim = if (context == null) DEF_TEXT_DELIM else context.textDelim
+        val delim = if (context == null) getDefault(TEXT_DELIM) else context.textDelim
 
         return StringUtils.replace(StringUtils.remove(content(file), "\r"), "\n", delim)
     }

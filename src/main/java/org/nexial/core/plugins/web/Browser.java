@@ -305,14 +305,15 @@ public class Browser implements ForcefulTerminate {
             boolean timeoutChangesEnabled = browserType.isTimeoutChangesEnabled();
             boolean shouldWaitImplicitly = timeoutChangesEnabled &&
                                            pollWaitMs > 0 &&
-                                           !context.getBooleanData(WEB_ALWAYS_WAIT, DEF_WEB_ALWAYS_WAIT);
+                                           !context.getBooleanData(WEB_ALWAYS_WAIT, getDefaultBool(WEB_ALWAYS_WAIT));
             if (shouldWaitImplicitly) {
                 timeouts.implicitlyWait(pollWaitMs, MILLISECONDS);
                 ConsoleUtils.log("setting browser polling wait time to " + pollWaitMs + " ms");
             }
 
             if (timeoutChangesEnabled) {
-                int pageLoadTimeout = context.getIntData(OPT_WEB_PAGE_LOAD_WAIT_MS, DEF_WEB_PAGE_LOAD_WAIT_MS);
+                int pageLoadTimeout = context.getIntData(OPT_WEB_PAGE_LOAD_WAIT_MS,
+                                                         getDefaultInt(OPT_WEB_PAGE_LOAD_WAIT_MS));
                 timeouts.pageLoadTimeout(pageLoadTimeout, MILLISECONDS);
                 ConsoleUtils.log("setting browser page load timeout to " + pageLoadTimeout + " ms");
             }
@@ -350,7 +351,7 @@ public class Browser implements ForcefulTerminate {
 
         // now we need to "remember" the browser type (even if it's default) so that the #data tab of output file will
         // display the browser type used during execution
-        if (!context.hasData(BROWSER)) { context.setData(BROWSER, System.getProperty(BROWSER, DEF_BROWSER)); }
+        if (!context.hasData(BROWSER)) { context.setData(BROWSER, System.getProperty(BROWSER, getDefault(BROWSER)));}
 
         try {
             if (isRunSafari()) { driver = initSafari(); }
@@ -529,7 +530,7 @@ public class Browser implements ForcefulTerminate {
         // options.addArguments("--headless");
 
         Builder cdsBuilder = new Builder();
-        if (context.getBooleanData(LOG_ELECTRON_DRIVER, DEF_LOG_ELECTRON_DRIVER)) {
+        if (context.getBooleanData(LOG_ELECTRON_DRIVER, getDefaultBool(LOG_ELECTRON_DRIVER))) {
             // determine chrome log file
             String appName = clientLocation;
             if (StringUtils.contains(appName, "/")) { appName = StringUtils.substringAfterLast(appName, "/"); }
@@ -547,7 +548,7 @@ public class Browser implements ForcefulTerminate {
 
         resolveChromeDriverLocation();
 
-        if (context.getBooleanData(LOG_CHROME_DRIVER, DEF_LOG_CHROME_DRIVER)) {
+        if (context.getBooleanData(LOG_CHROME_DRIVER, getDefaultBool(LOG_CHROME_DRIVER))) {
             String chromeLog = resolveBrowserLogFile("chrome-browser.log").getAbsolutePath();
             System.setProperty(CHROME_DRIVER_LOG_PROPERTY, chromeLog);
             System.setProperty(CHROME_DRIVER_VERBOSE_LOG_PROPERTY, "true");
@@ -563,7 +564,9 @@ public class Browser implements ForcefulTerminate {
         }
 
         options.addArguments(this.chromeOptions);
-        if (context.getBooleanData(BROWER_INCOGNITO, DEF_BROWSER_INCOGNITO)) { options.addArguments(KEY_INCOGNITO); }
+        if (context.getBooleanData(BROWER_INCOGNITO, getDefaultBool(BROWER_INCOGNITO))) {
+            options.addArguments(KEY_INCOGNITO);
+        }
 
         String binaryLocation = resolveChromeBinLocation();
         if (StringUtils.isNotBlank(binaryLocation)) { options.setBinary(binaryLocation); }
@@ -594,9 +597,9 @@ public class Browser implements ForcefulTerminate {
         String emuUserAgent = context.getStringData(KEY_EMU_USER_AGENT);
         if (StringUtils.isNotBlank(emuUserAgent)) {
             Map<String, Object> deviceMetrics = new HashMap<>();
-            deviceMetrics.put("width", context.getIntData(KEY_EMU_WIDTH, DEF_EMU_WIDTH));
-            deviceMetrics.put("height", context.getIntData(KEY_EMU_HEIGHT, DEF_EMU_HEIGHT));
-            deviceMetrics.put("pixelRatio", context.getDoubleData(KEY_EMU_PIXEL_RATIO, DEF_EMU_PIXEL_RATIO));
+            deviceMetrics.put("width", context.getIntData(KEY_EMU_WIDTH, getDefaultInt(KEY_EMU_WIDTH)));
+            deviceMetrics.put("height", context.getIntData(KEY_EMU_HEIGHT, getDefaultInt(KEY_EMU_HEIGHT)));
+            deviceMetrics.put("pixelRatio", context.getDoubleData(KEY_EMU_PIXEL_RATIO, getDefaultDouble(KEY_EMU_PIXEL_RATIO)));
             deviceMetrics.put("touch", context.getBooleanData(KEY_EMU_TOUCH, true));
 
             Map<String, Object> mobileEmulation = new HashMap<>();
@@ -707,7 +710,7 @@ public class Browser implements ForcefulTerminate {
 
             boolean ignoreAlert = BooleanUtils.toBoolean(context.getBooleanData(OPT_ALERT_IGNORE_FLAG));
             options.setUnhandledPromptBehaviour(ignoreAlert ? IGNORE : ACCEPT);
-            if (context.getBooleanData(BROWSER_ACCEPT_INVALID_CERTS, DEF_BROWSER_ACCEPT_INVALID_CERTS)) {
+            if (context.getBooleanData(BROWSER_ACCEPT_INVALID_CERTS, getDefaultBool(BROWSER_ACCEPT_INVALID_CERTS))) {
                 options.setAcceptInsecureCerts(true);
             }
             options.setPageLoadStrategy(EAGER);
@@ -762,7 +765,8 @@ public class Browser implements ForcefulTerminate {
         boolean runWin64 = EnvUtils.isRunningWindows64bit();
 
         if (System.getProperty(SELENIUM_IE_DRIVER) == null) {
-            runWin64 = EnvUtils.isRunningWindows64bit() && !resolveConfig(OPT_FORCE_IE_32, DEFAULT_FORCE_IE_32);
+            runWin64 = EnvUtils.isRunningWindows64bit() &&
+                       !resolveConfig(OPT_FORCE_IE_32, getDefaultBool(OPT_FORCE_IE_32));
         }
 
         boolean ignoreAlert = resolveConfig(OPT_ALERT_IGNORE_FLAG, false);
@@ -780,7 +784,7 @@ public class Browser implements ForcefulTerminate {
                                    .introduceFlakinessByIgnoringSecurityDomains()
         ;
 
-        if (context.getBooleanData(BROWSER_IE_REQUIRE_WINDOW_FOCUS, DEF_BROWSER_IE_REQUIRE_WINDOW_FOCUS)) {
+        if (context.getBooleanData(IE_REQUIRE_WINDOW_FOCUS, getDefaultBool(IE_REQUIRE_WINDOW_FOCUS))) {
             capabilities.requireWindowFocus();
         }
 
@@ -789,7 +793,7 @@ public class Browser implements ForcefulTerminate {
         capabilities.setCapability(SUPPORTS_WEB_STORAGE, true);
         capabilities.setCapability(SUPPORTS_ALERTS, true);
         capabilities.setCapability(ACCEPT_SSL_CERTS, true);
-        if (context.getBooleanData(BROWSER_ACCEPT_INVALID_CERTS, DEF_BROWSER_ACCEPT_INVALID_CERTS)) {
+        if (context.getBooleanData(BROWSER_ACCEPT_INVALID_CERTS, getDefaultBool(BROWSER_ACCEPT_INVALID_CERTS))) {
             capabilities.setCapability(ACCEPT_INSECURE_CERTS, true);
         }
 
@@ -825,7 +829,7 @@ public class Browser implements ForcefulTerminate {
         // The first is to start your InternetExplorer in private mode. After that InternetExplorer
         // will be started with clean session data and will not save changed session data at quiting.
         // To do so you need to pass 2 specific capabilities to driver: ie.forceCreateProcessApi with true value
-        if (context.getBooleanData(BROWER_INCOGNITO, DEF_BROWSER_INCOGNITO)) {
+        if (context.getBooleanData(BROWER_INCOGNITO, getDefaultBool(BROWER_INCOGNITO))) {
             // capabilities.setCapability(FORCE_CREATE_PROCESS, true);
             // and ie.browserCommandLineSwitches with -private value.
             capabilities.setCapability(IE_SWITCHES, "-private");
@@ -1034,7 +1038,8 @@ public class Browser implements ForcefulTerminate {
         SafariOptions options = new SafariOptions();
 
         // Whether to make sure the session has no cookies, cache entries, local storage, or databases.
-        options.setUseTechnologyPreview(context.getBooleanData(SAFARI_USE_TECH_PREVIEW, DEF_SAFARI_USE_TECH_PREVIEW));
+        options.setUseTechnologyPreview(context.getBooleanData(SAFARI_USE_TECH_PREVIEW,
+                                                               getDefaultBool(SAFARI_USE_TECH_PREVIEW)));
 
         // todo: Create a SafariDriverService to specify what Safari flavour should be used and pass the service instance to a SafariDriver constructor.  When SafariDriver API updates to better code.. can't do this now
         SafariDriver safari = new SafariDriver(options);

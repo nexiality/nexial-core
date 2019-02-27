@@ -34,7 +34,8 @@ import org.nexial.commons.utils.TextUtils;
 import org.nexial.core.ExecutionThread;
 import org.nexial.core.model.ExecutionContext;
 
-import static org.nexial.core.NexialConst.Data.DEF_TEXT_DELIM;
+import static org.nexial.core.NexialConst.Data.TEXT_DELIM;
+import static org.nexial.core.NexialConst.getDefault;
 import static org.nexial.core.utils.CheckUtils.requiresPositiveNumber;
 import static org.nexial.core.variable.ExpressionUtils.fixControlChars;
 
@@ -319,7 +320,7 @@ public class TextTransformer<T extends TextDataType> extends Transformer {
         }
 
         ExecutionContext context = ExecutionThread.get();
-        String delim = context == null ? DEF_TEXT_DELIM : context.getTextDelim();
+        String delim = context == null ? getDefault(TEXT_DELIM) : context.getTextDelim();
 
         StringBuilder csvContent = new StringBuilder();
 

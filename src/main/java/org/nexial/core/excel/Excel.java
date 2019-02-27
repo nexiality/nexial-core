@@ -68,6 +68,7 @@ import static org.apache.poi.ss.usermodel.CellType.*;
 import static org.apache.poi.ss.usermodel.Row.MissingCellPolicy.CREATE_NULL_AS_BLANK;
 import static org.apache.poi.ss.usermodel.Row.MissingCellPolicy.RETURN_BLANK_AS_NULL;
 import static org.nexial.core.NexialConst.Data.*;
+import static org.nexial.core.NexialConst.getDefault;
 import static org.nexial.core.excel.ExcelConfig.*;
 import static org.nexial.core.excel.ExcelConfig.StyleConfig.*;
 
@@ -1153,7 +1154,7 @@ public class Excel {
             if (IS_OS_WINDOWS) {
                 ExecutionContext context = ExecutionThread.get();
                 String spreadsheetExe = context == null ?
-                                        System.getProperty(SPREADSHEET_PROGRAM, DEF_SPREADSHEET) :
+                                        System.getProperty(SPREADSHEET_PROGRAM, getDefault(SPREADSHEET_PROGRAM)) :
                                         context.getStringData(SPREADSHEET_PROGRAM);
                 if (StringUtils.equals(spreadsheetExe, SPREADSHEET_PROGRAM_WPS)) {
                     spreadsheetExe = context == null ? System.getProperty(WPS_EXE_LOCATION) :

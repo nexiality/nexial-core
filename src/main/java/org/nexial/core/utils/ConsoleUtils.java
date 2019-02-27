@@ -39,6 +39,7 @@ import org.slf4j.LoggerFactory;
 import org.slf4j.event.Level;
 
 import static org.nexial.core.NexialConst.FlowControls.*;
+import static org.nexial.core.NexialConst.getDefaultBool;
 import static org.slf4j.event.Level.ERROR;
 import static org.slf4j.event.Level.INFO;
 
@@ -141,7 +142,7 @@ public final class ConsoleUtils {
         System.out.println();
         System.out.println(msg);
 
-        if (context != null && context.getBooleanData(OPT_INSPECT_ON_PAUSE, DEF_INSPECT_ON_PAUSE)) {
+        if (context != null && context.getBooleanData(OPT_INSPECT_ON_PAUSE, getDefaultBool(OPT_INSPECT_ON_PAUSE))) {
             // inspect mode
             System.out.println("/------------------------------------------------------------------------------\\");
             System.out.println(MARGIN_RIGHT + centerPrompt("INSPECT ON PAUSE", PROMPT_LINE_WIDTH - 2) + MARGIN_RIGHT);
