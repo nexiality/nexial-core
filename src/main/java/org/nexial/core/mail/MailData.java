@@ -33,6 +33,15 @@ public class MailData implements Serializable {
     private List<File> attachments;
     private String mimeType;
 
+    private transient boolean footer = true;
+
+    public boolean isFooter() { return footer; }
+
+    public MailData setFooter(boolean footer) {
+        this.footer = footer;
+        return this;
+    }
+
     public static MailData newInstance(String mimeType) {
         MailData data = new MailData();
         data.mimeType = mimeType;

@@ -93,17 +93,60 @@ class EmailNotification(context: ExecutionContext, event: ExecutionEvent, data: 
         }
 
         val content = OutputFileUtils.resolveContent(
-                StringUtils.trim(StringUtils.substringAfter(data, EVENT_CONFIG_SEP)), context, false)
+            StringUtils.trim(StringUtils.substringAfterLast(data, EVENT_CONFIG_SEP)), context, false)
         if (StringUtils.isBlank(content)) {
             logSkipping("no content to sent")
             return
         }
 
-        val mailContent = handleExecMetadata(content)
+        mailData = configureMailData(recipientList, content)
+    }
+
+    private fun configureMailData(recipientList: MutableList<String>, content: String): MailData {
+        val mailConfigs = TextUtils.toList(data, EVENT_CONFIG_SEP, true)
+        var subject = MAIL_NOTIF_SUBJECT_PREFIX + event.description
 
         mailData = MailData.newInstance(resolveMimeType())
-            .setToAddr(recipientList)
-            .setSubject(MAIL_NOTIF_SUBJECT_PREFIX + event.description)
+
+        // not considering recipients and content from mailConfigs
+        for (i in 1 until (mailConfigs.size - 1)) {
+            var mailConfig = mailConfigs[i]
+            when {
+                mailConfig.startsWith("cc=")      -> {
+                    mailData.ccAddr = TextUtils
+                        .toList(StringUtils.substringAfter(mailConfig, "cc="), context.textDelim, true)
+                }
+
+                mailConfig.startsWith("bcc=")     -> {
+                    mailData.bccAddr = TextUtils
+                        .toList(StringUtils.substringAfter(mailConfig, "bcc="), context.textDelim, true)
+                }
+
+                mailConfig.startsWith("subject=") -> {
+                    subject = context.replaceTokens(StringUtils.substringAfter(mailConfig, "subject="))
+                }
+
+                mailConfig.startsWith("from=")    -> {
+                    mailData.fromAddr = StringUtils.substringAfter(mailConfig, "from=")
+                }
+
+                mailConfig.startsWith("html=")    -> {
+                    val asHTML = StringUtils.substringAfter(mailConfig, "html=").toLowerCase() == "yes"
+                    context.setData(OPT_NOTIFY_AS_HTML, asHTML)
+                    mailData.mimeType = if (asHTML) MIME_HTML else MIME_PLAIN
+                }
+
+                mailConfig.startsWith("footer=")  -> {
+                    var addFooter = StringUtils.substringAfter(mailConfig, "footer=")
+                    mailData.isFooter = addFooter.toLowerCase() == "yes"
+                }
+            }
+        }
+
+        val mailContent = handleExecMetadata(content)
+
+        return mailData.setToAddr(recipientList)
+            .setSubject(subject)
             .setContent(mailContent)
     }
 

@@ -272,8 +272,10 @@ public class NexialMailer implements ExecutionNotifier {
         String configSet = sesSettings.getConfigurationSetName();
         if (StringUtils.isNotBlank(configSet)) { sesConfig.setConfigurationSetName(configSet); }
 
-        String xmailer = sesSettings.getXmailer();
-        if (StringUtils.isNotBlank(xmailer)) { sesConfig.setXmailer(xmailer); }
+        if (data.isFooter()) {
+            String xmailer = sesSettings.getXmailer();
+            if (StringUtils.isNotBlank(xmailer)) { sesConfig.setXmailer(xmailer); }
+        }
 
         SesSupport ses = new SesSupport();
         ses.setAccessKey(sesSettings.getAccessKey());
