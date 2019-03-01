@@ -38,6 +38,7 @@ import org.nexial.core.NexialConst.*
 import org.nexial.core.NexialConst.BrowserType.*
 import org.nexial.core.NexialConst.Data.OPT_FORCE_IE_32
 import org.nexial.core.NexialConst.Data.WIN32_CMD
+import org.nexial.core.SystemVariables.getDefaultBool
 import org.nexial.core.model.ExecutionContext
 import org.nexial.core.plugins.ws.WebServiceClient
 import org.nexial.core.plugins.xml.XmlCommand

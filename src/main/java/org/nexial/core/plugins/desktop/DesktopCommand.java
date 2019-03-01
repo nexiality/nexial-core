@@ -66,7 +66,7 @@ import static java.io.File.separator;
 import static java.lang.Integer.MAX_VALUE;
 import static java.lang.System.lineSeparator;
 import static org.nexial.core.NexialConst.Data.*;
-import static org.nexial.core.NexialConst.getDefaultInt;
+import static org.nexial.core.SystemVariables.getDefaultInt;
 import static org.nexial.core.plugins.desktop.DesktopConst.*;
 import static org.nexial.core.plugins.desktop.DesktopNotification.NotificationLevel.info;
 import static org.nexial.core.plugins.desktop.DesktopUtils.*;

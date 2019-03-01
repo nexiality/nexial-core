@@ -44,7 +44,7 @@ import static org.apache.commons.lang3.SystemUtils.*;
 import static org.nexial.core.NexialConst.BrowserStack.*;
 import static org.nexial.core.NexialConst.BrowserType.*;
 import static org.nexial.core.NexialConst.Data.BROWSER_WINDOW_SIZE;
-import static org.nexial.core.NexialConst.getDefaultBool;
+import static org.nexial.core.SystemVariables.getDefaultBool;
 import static org.nexial.core.plugins.web.WebDriverCapabilityUtils.setCapability;
 import static org.nexial.core.utils.CheckUtils.requiresNotBlank;
 

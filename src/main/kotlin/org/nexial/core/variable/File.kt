@@ -22,7 +22,7 @@ import org.nexial.commons.utils.FileUtil
 import org.nexial.core.ExecutionThread
 import org.nexial.core.NexialConst.DEF_FILE_ENCODING
 import org.nexial.core.NexialConst.Data.TEXT_DELIM
-import org.nexial.core.NexialConst.getDefault
+import org.nexial.core.SystemVariables.getDefault
 import org.nexial.core.utils.ConsoleUtils
 import java.io.BufferedReader
 import java.io.FileReader

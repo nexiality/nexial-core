@@ -32,7 +32,7 @@ import org.nexial.core.variable.Syspath;
 import static java.io.File.separator;
 import static org.nexial.core.NexialConst.Data.*;
 import static org.nexial.core.NexialConst.Project.appendCapture;
-import static org.nexial.core.NexialConst.getDefaultBool;
+import static org.nexial.core.SystemVariables.getDefaultBool;
 
 /**
  * main delegate for various screen recording strategies

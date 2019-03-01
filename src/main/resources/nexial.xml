@@ -616,49 +616,6 @@
         as such for Execution Dashboard. Those data variables are listed below.
         -->
         <entry key="nexial.referenceDataForExecution" value="nexial.scriptRef.buildnum,nexial.scriptRef.app,nexial.scriptRef.release"/>
-
-        <!--
-        <entry key="nexial.browser" value="firefox"/>
-        <entry key="nexial.textDelim" value=","/>
-        <entry key="nexial.openResult" value="off"/>
-        <entry key="nexial.pollWaitMs" value="30000"/>
-        <entry key="nexial.delayBetweenStepsMs" value="600"/>
-        <entry key="nexial.desktopNotifyWaitMs" value="5000"/>
-        <entry key="nexial.waitSpeed" value="3"/>
-        <entry key="nexial.highlightWaitMs" value="250"/>
-        <entry key="nexial.lastPlanStep" value="false"/>
-        <entry key="nexial.recordingEnabled" value="true"/>
-        <entry key="nexial.spreadsheet.program" value="excel"/>
-        <entry key="nexial.highlight" value="false"/>“
-        <entry key="nexial.lenientStringCompare" value="true"/>
-        <entry key="nexial.breakCurrentIteration" value="false"/>
-        <entry key="nexial.failImmediate" value="false"/>
-        <entry key="nexial.endImmediate" value="false"/>
-        <entry key="nexial.scope.fallbackToPrevious" value="true"/>
-        <entry key="nexial.failFast" value="false"/>
-        <entry key="nexial.screenshotOnError" value="false"/>
-        <entry key="nexial.desktop.fullScreenCapture" value="false"/>
-        <entry key="nexial.desktop.autoClearModalDialog" value="false"/>
-        <entry key="nexial.web.preemptiveAlertCheck" value="true"/>
-        <entry key="nexial.web.alwaysWait" value="false"/>
-        <entry key="nexial.browser.postCloseWaitMs" value="3000"/>
-        <entry key="nexial.browser..safari.useTechPreview" value="false"/>
-        <entry key="nexial.browser.incognito" value="true"/>
-        <entry key="nexial.browser.ie.requireWindowFocus" value="false"/>
-        <entry key="nexial.browserstack.enablelocal" value="false"/>
-        <entry key="nexial.browserstack.debug" value="true"/>
-        <entry key="nexial.delayBrowser" value="false"/>
-        <entry key="nexial.ws.connectionTimeout" value="300000"/>
-        <entry key="nexial.ws.readTimeout" value="300000"/>
-        <entry key="nexial.ws.enableExpectContinue" value="true"/>
-        <entry key="nexial.ws.enableRedirects" value="true"/>
-        <entry key="nexial.ws.allowCircularRedirects" value="false"/>
-        <entry key="nexial.ws.allowRelativeRedirects" value="true"/>
-        <entry key="nexial.ws.requestPayloadCompact" value="false"/>
-        <entry key="nexial.inspectOnPause" value="false"/>
-        <entry key="nexial.rdbms.packSingleRow" value="false"/>
-        -->
-        <!--<entry key="" value=""/>-->
     </util:map>
 
     <util:list id="readOnlyVars" list-class="java.util.ArrayList">

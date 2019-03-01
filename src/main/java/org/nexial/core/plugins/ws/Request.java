@@ -34,6 +34,8 @@ import org.nexial.core.utils.ExecUtils;
 import org.openqa.selenium.Cookie;
 
 import static org.nexial.core.NexialConst.*;
+import static org.nexial.core.SystemVariables.getDefaultBool;
+import static org.nexial.core.SystemVariables.getDefaultInt;
 import static org.nexial.core.plugins.ws.WebServiceClient.hideAuthDetails;
 
 public abstract class Request implements Serializable {
@@ -51,21 +53,27 @@ public abstract class Request implements Serializable {
     Request(ExecutionContext context) {
         Map<String, Object> reqHeaders = new HashMap<>();
 
+        int defaultWsConnTimeout = getDefaultInt(WS_CONN_TIMEOUT);
+        int defaultWsReadTimeout = getDefaultInt(WS_READ_TIMEOUT);
+        boolean defaultEnableRedirect = getDefaultBool(WS_ENABLE_REDIRECTS);
+        boolean defaultExpectContinue = getDefaultBool(WS_ENABLE_EXPECT_CONTINUE);
+        boolean defaultWsCircularRedirect = getDefaultBool(WS_ALLOW_CIRCULAR_REDIRECTS);
+        boolean defaultWsRelativeRedirects = getDefaultBool(WS_ALLOW_RELATIVE_REDIRECTS);
         if (context == null) {
-            setConnectionTimeout(DEF_WS_CONN_TIMEOUT);
-            setSocketTimeout(DEF_WS_READ_TIMEOUT);
-            setEnableExpectContinue(DEF_WS_ENABLE_EXPECT_CONTINUE);
-            setEnableRedirects(DEF_WS_ENABLE_REDIRECTS);
-            setAllowCircularRedirects(DEF_WS_CIRCULAR_REDIRECTS);
-            setAllowRelativeRedirects(DEF_WS_RELATIVE_REDIRECTS);
+            setConnectionTimeout(defaultWsConnTimeout);
+            setSocketTimeout(defaultWsReadTimeout);
+            setEnableExpectContinue(defaultExpectContinue);
+            setEnableRedirects(defaultEnableRedirect);
+            setAllowCircularRedirects(defaultWsCircularRedirect);
+            setAllowRelativeRedirects(defaultWsRelativeRedirects);
             setHeaders(reqHeaders);
         } else {
-            setConnectionTimeout(context.getIntData(WS_CONN_TIMEOUT, DEF_WS_CONN_TIMEOUT));
-            setSocketTimeout(context.getIntData(WS_READ_TIMEOUT, DEF_WS_READ_TIMEOUT));
-            setEnableExpectContinue(context.getBooleanData(WS_ENABLE_EXPECT_CONTINUE, DEF_WS_ENABLE_EXPECT_CONTINUE));
-            setEnableRedirects(context.getBooleanData(WS_ENABLE_REDIRECTS, DEF_WS_ENABLE_REDIRECTS));
-            setAllowCircularRedirects(context.getBooleanData(WS_ALLOW_CIRCULAR_REDIRECTS, DEF_WS_CIRCULAR_REDIRECTS));
-            setAllowRelativeRedirects(context.getBooleanData(WS_ALLOW_RELATIVE_REDIRECTS, DEF_WS_RELATIVE_REDIRECTS));
+            setConnectionTimeout(context.getIntData(WS_CONN_TIMEOUT, defaultWsConnTimeout));
+            setSocketTimeout(context.getIntData(WS_READ_TIMEOUT, defaultWsReadTimeout));
+            setEnableExpectContinue(context.getBooleanData(WS_ENABLE_EXPECT_CONTINUE, defaultExpectContinue));
+            setEnableRedirects(context.getBooleanData(WS_ENABLE_REDIRECTS, defaultEnableRedirect));
+            setAllowCircularRedirects(context.getBooleanData(WS_ALLOW_CIRCULAR_REDIRECTS, defaultWsCircularRedirect));
+            setAllowRelativeRedirects(context.getBooleanData(WS_ALLOW_RELATIVE_REDIRECTS, defaultWsRelativeRedirects));
 
             // these are the properties we want... however they might not be in the correct object type
             // since execution.getDataByPrefix() converts them to string automatically.

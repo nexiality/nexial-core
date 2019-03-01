@@ -30,7 +30,6 @@ import org.junit.Before;
 import org.junit.Test;
 
 import static org.apache.commons.lang3.builder.ToStringStyle.SHORT_PREFIX_STYLE;
-import static org.nexial.core.NexialConst.Data.START_URL;
 
 public class ExecutionTokenReplacementTest {
     private MockExecutionContext context;
@@ -105,7 +104,6 @@ public class ExecutionTokenReplacementTest {
         String varName = "myData";
 
         context = new MockExecutionContext();
-        context.setData(START_URL, "http://www.google.com");
         context.setData(varName, resultset);
     }
 

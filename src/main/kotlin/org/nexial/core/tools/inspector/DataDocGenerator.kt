@@ -18,21 +18,26 @@ package org.nexial.core.tools.inspector
 
 import org.apache.commons.collections4.CollectionUtils
 import org.apache.commons.collections4.IterableUtils
+import org.apache.commons.io.FileUtils
 import org.apache.commons.lang3.StringUtils
 import org.nexial.commons.utils.RegexUtils
 import org.nexial.commons.utils.ResourceUtils
+import org.nexial.core.NexialConst.DEF_FILE_ENCODING
 import org.nexial.core.NexialConst.Data.SHEET_DEFAULT_DATA
 import org.nexial.core.NexialConst.NAMESPACE
 import org.nexial.core.NexialConst.Project.DEF_REL_LOC_BIN
 import org.nexial.core.NexialConst.Project.DEF_REL_PROJECT_PROPS
-import org.nexial.core.NexialConst.getDefault
+import org.nexial.core.SystemVariables.*
 import org.nexial.core.excel.Excel
 import org.nexial.core.excel.Excel.Worksheet
 import org.nexial.core.excel.ExcelAddress
 import org.nexial.core.excel.ext.CipherHelper.CRYPT_IND
+import org.nexial.core.tools.inspector.DataVariableLocationType.Companion.CommandLineOverride
 import org.nexial.core.tools.inspector.DataVariableLocationType.Companion.DefaultDataSheet
 import org.nexial.core.tools.inspector.DataVariableLocationType.Companion.ProjectProperties
 import org.nexial.core.tools.inspector.DataVariableLocationType.Companion.ScenarioDataSheet
+import org.nexial.core.tools.inspector.DataVariableLocationType.Companion.StepOverride
+import org.nexial.core.tools.inspector.InspectorConst.VAR_CMDS
 import org.nexial.core.tools.inspector.ProjectInspector.filterFiles
 import org.nexial.core.tools.inspector.ProjectInspector.getMessage
 import org.nexial.core.tools.inspector.ProjectInspector.resolveRelativePath
@@ -46,19 +51,13 @@ class DataDocGenerator(val options: InspectorOptions, val logger: InspectorLogge
 
     fun generate(): DataVariableEntity {
         val dataVariables = DataVariableEntity(File(options.directory))
-
         scanDataFiles(dataVariables)
         scanProjectProperties(dataVariables)
-//        scanBatchFiles(dataVariables)
-//        scanScriptFiles(dataVariables)
-//        sortDataVariables(dataVariables)
+        scanBatchFiles(dataVariables)
+        scanScriptFiles(dataVariables)
         analyze(dataVariables)
-
         return dataVariables
     }
-
-    private fun isDataFile(file: File): Boolean =
-            !file.name.startsWith("~") && !file.absolutePath.contains("${separator}output$separator")
 
     private fun scanDataFiles(dataVariables: DataVariableEntity) {
         val projectHome = File(options.directory)
@@ -146,69 +145,186 @@ class DataDocGenerator(val options: InspectorOptions, val logger: InspectorLogge
         logger.log("found ${batchFiles.size} batch files")
         if (batchFiles.isEmpty()) return
 
-//            // look for pattern:
-//            // 1. .+JAVA_OPT.*=.*-D...=... -D...=...
-//            // 2. -override ...=...
-//
-//            try {
-//                val content = FileUtils.readFileToString(file,UTF8)
-//
-//            } catch (e: IOException) {
-//                logger.error("Error reading $file: ${e.message}")
-//            }
-//        }
+        batchFiles.forEach { batch ->
+            val location = "${resolveRelativePath(projectHome, batch)}/${batch.name}"
+
+            val batchContent = FileUtils.readLines(batch, DEF_FILE_ENCODING)
+            for ((index, line) in batchContent.withIndex()) {
+                if (StringUtils.isBlank(line)) continue
+                if (StringUtils.startsWithIgnoreCase(line.trim(), "rem ")) continue
+                if (StringUtils.startsWithIgnoreCase(line.trim(), "# ")) continue
+
+                // compensate for multi-line commands (windows and *nix)
+                val line1 = StringUtils.removeEnd(StringUtils.removeEnd(line, "^"), "\\")
+
+                val position = "line ${(index + 1)}"
+
+                if (RegexUtils.match(line1, ".*\\-D(.+)=(.+).*")) {
+                    val overrides = if (line1.contains("=-D")) line1.substringAfter("=-D") else line1.substringAfter("-D")
+                    handleCommandlineOverrides(dataVariables, overrides, " -D", location, position)
+                    continue
+                }
+
+                if (RegexUtils.match(line1, ".*\\-override\\s+(.+).*")) {
+                    val overrides = line1.substringAfter("-override ")
+                    handleCommandlineOverrides(dataVariables, overrides, " -override ", location, position)
+                }
+            }
+        }
     }
 
-    private fun addToEntity(dataVariables: DataVariableEntity, dvAtom: DataVariableAtom) {
-        if (!dataVariables.containsKey(dvAtom.name)) dataVariables[dvAtom.name] = TreeSet()
-        dataVariables[dvAtom.name]!!.add(dvAtom)
+    private fun scanScriptFiles(dataVariables: DataVariableEntity) {
+        val projectHome = File(options.directory)
+
+        // find all potential data variable files
+        val scriptFiles = filterFiles(projectHome, arrayOf("xlsx")) { file -> isTestScript(file) }
+        logger.log("found ${scriptFiles.size} test scripts")
+        if (scriptFiles.isEmpty()) return
+
+        scriptFiles.forEach { file ->
+            try {
+                val filePath = file.absolutePath
+                logger.log("parsing data file", filePath)
+
+                val location = "${resolveRelativePath(projectHome, file)}/${file.name}"
+                val excel = Excel(file)
+
+                InputFileUtils.retrieveValidTestScenarios(excel).forEach { sheet: Worksheet ->
+                    val sheetName = sheet.name
+
+                    // find the last row
+                    val endRowIndex = sheet.findLastDataRow(ExcelAddress("C5")) + 1
+                    val commandsAndParams = excel.worksheet(sheetName).cells(ExcelAddress("C5:I$endRowIndex"))
+
+                    commandsAndParams.forEach { row ->
+                        val command = "${Excel.getCellValue(row[0])}.${Excel.getCellValue(row[1])}"
+                        if (VAR_CMDS.containsKey(command)) {
+                            val name = Excel.getCellValue(row[2 + VAR_CMDS.getValue(command)])
+                            addToEntity(dataVariables,
+                                        DataVariableAtom(name,
+                                                         command,
+                                                         location,
+                                                         sheetName,
+                                                         "Row ${row[0].rowIndex}",
+                                                         StepOverride))
+                        }
+                    }
+                }
+            } catch (e: IOException) {
+                logger.error("Error parsing $file: ${e.message}")
+            }
+        }
     }
 
     private fun analyze(dataVariables: DataVariableEntity) {
-        // scan Use of the default values.Recommends for in the elimination
-        // scan for duplicate values in multiple sheets
-        // scan for duplicate values in same sheet
 
         dataVariables.forEach { name, defs ->
             if (defs.isEmpty()) {
                 options.advices += getMessage("dv.bad.definition")
             } else {
-                val defCount = defs.size
+                val count = defs.size
                 val firstInstance = IterableUtils.get(defs, 0)
 
-                val uniqueDefinedValues = defs.flatMap { def -> listOf(def.definedAs) }.distinct()
+                val locationTypes = defs.flatMap { listOf(it.type) }.distinct().sortedBy { it.order }
+                val definedInDataSheet = isDefinedInDataSheet(locationTypes)
 
-                if (uniqueDefinedValues.isEmpty()) {
+                val uniqueDefinitions = defs.flatMap { listOf(it.definedAs) }.distinct()
+
+                if (uniqueDefinitions.isEmpty()) {
                     // Rule #3: missing definition
                     firstInstance.advices += getMessage("dv.values.missing")
                 } else {
-                    if (uniqueDefinedValues.size == 1) {
-                        // Rule #1: all defined values are all the same
-                        if (defCount > 1) firstInstance.advices += getMessage("dv.values.same")
+                    if (uniqueDefinitions.size == 1) {
+                        var definedSameAsDefault = false
 
                         // Rule #2: System variable defined with default value.
                         if (name.startsWith(NAMESPACE)) {
                             val defaultValue = getDefault(name) ?: ""
-                            if (uniqueDefinedValues[0] == defaultValue) {
+                            if (uniqueDefinitions[0] == defaultValue && defaultValue.isNotEmpty()) {
                                 firstInstance.advices += getMessage("dv.values.same.as.default", Pair("name", name))
+                                definedSameAsDefault = true
                             }
                         }
+
+                        // Rule #1: all defined values are all the same
+                        if (count > 1 && !definedSameAsDefault && definedInDataSheet)
+                            firstInstance.advices += getMessage("dv.values.same")
                     }
 
                     // Rule #4: missing 1 or more definition
-                    if (uniqueDefinedValues.contains("")) firstInstance.advices += getMessage("dv.value.missing")
+                    if (uniqueDefinitions.isEmpty() || uniqueDefinitions.contains(""))
+                        firstInstance.advices += getMessage("dv.value.missing")
+
+                    // Rule #7: sentry no more!
+                    if (name.toLowerCase().contains("sentry"))
+                        firstInstance.advices += getMessage("dv.name.sentry")
 
                     // Rule #5: sensitive data value
-                    if (isSensitiveDataLikelyExposed(name, uniqueDefinedValues))
+                    if (isSensitiveDataLikelyExposed(name, uniqueDefinitions))
                         firstInstance.advices += getMessage("dv.value.encrypt.sensitive")
 
-                    // Rule #4: already defined (and thus overwritten) in project.properties
+                    // Rule #6: already defined (and thus overwritten) in project.properties
+                    if (uniqueDefinitions.size > 1 && locationTypes.contains(ProjectProperties) && definedInDataSheet)
+                        firstInstance.advices += getMessage("dv.value.overridden")
 
-                    // Rule #5: data variable defined in project.properties has same value as default
+                    // Rule #8: prefer updated System variables
+                    if (name.startsWith(NAMESPACE)) {
+                        val preferredName = getPreferredSystemVariableName(name)
+                        if (preferredName != name)
+                            firstInstance.advices += getMessage("dv.name.outdated", Pair("name", preferredName))
+
+                        // Rule #9: unknown system variable
+                        if (!isRegisteredSystemVariable(name))
+                            firstInstance.advices += getMessage("dv.name.unknown", Pair("name", name))
+                    }
+                }
+            }
+        }
+    }
+
+    private fun isValidTestArtifact(file: File) =
+            !file.name.startsWith("~") && !file.absolutePath.contains("${separator}output$separator")
+
+    private fun isDataFile(file: File): Boolean = isValidTestArtifact(file)
+
+    private fun isTestScript(file: File): Boolean =
+            isValidTestArtifact(file) && InputFileUtils.isValidScript(file.absolutePath)
+
+    private fun isDefinedInDataSheet(locationTypes: List<DataVariableLocationType>) =
+            locationTypes.contains(DefaultDataSheet) || locationTypes.contains(ScenarioDataSheet)
+
+    private fun handleCommandlineOverrides(dataVariables: DataVariableEntity,
+                                           overrides: String,
+                                           overridePrefix: String,
+                                           location: String,
+                                           position: String) {
+        var cmdline = overrides
+        while (cmdline.isNotBlank()) {
+            val moreData = cmdline.contains(overridePrefix)
+            val dvPair = StringUtils.split(if (moreData) cmdline.substringBefore(overridePrefix)
+                                           else cmdline, "=")
+            if (dvPair.isNotEmpty()) {
+                val name = dvPair[0]
+                if (StringUtils.isNotBlank(name)) {
+                    val definedAs = if (dvPair.size > 1) dvPair[1] else ""
+                    println("adding new cmdline data variable override: name=$name, definedAs=$definedAs, line #=$position")
+                    addToEntity(dataVariables,
+                                DataVariableAtom(name = name,
+                                                 definedAs = definedAs,
+                                                 location = location,
+                                                 position = position,
+                                                 type = CommandLineOverride))
                 }
             }
 
+            if (moreData) cmdline = cmdline.substringAfter(overridePrefix)
+            else break
         }
+    }
+
+    private fun addToEntity(dataVariables: DataVariableEntity, dvAtom: DataVariableAtom) {
+        if (!dataVariables.containsKey(dvAtom.name)) dataVariables[dvAtom.name] = TreeSet()
+        dataVariables[dvAtom.name]!!.add(dvAtom)
     }
 
     private fun isSensitiveDataLikelyExposed(name: String, values: List<String>): Boolean {

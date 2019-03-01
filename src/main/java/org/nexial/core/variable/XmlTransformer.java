@@ -35,6 +35,7 @@ import org.nexial.core.utils.ConsoleUtils;
 
 import static org.nexial.core.NexialConst.*;
 import static org.nexial.core.NexialConst.Data.TEXT_DELIM;
+import static org.nexial.core.SystemVariables.getDefault;
 
 public class XmlTransformer<T extends XmlDataType> extends Transformer {
     private static final Map<String, Integer> FUNCTION_TO_PARAM_LIST = discoverFunctions(XmlTransformer.class);

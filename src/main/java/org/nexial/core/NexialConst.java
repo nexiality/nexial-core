@@ -30,7 +30,6 @@ import org.apache.commons.collections4.ListUtils;
 import org.apache.commons.collections4.MapUtils;
 import org.apache.commons.lang3.BooleanUtils;
 import org.apache.commons.lang3.StringUtils;
-import org.apache.commons.lang3.math.NumberUtils;
 import org.jdom2.output.Format;
 import org.jdom2.output.XMLOutputter;
 import org.nexial.commons.utils.RegexUtils;
@@ -55,15 +54,14 @@ import static org.apache.commons.lang3.SystemUtils.JAVA_IO_TMPDIR;
 import static org.nexial.core.NexialConst.AwsSettings.*;
 import static org.nexial.core.NexialConst.Data.*;
 import static org.nexial.core.NexialConst.Integration.MAIL_PREFIX;
+import static org.nexial.core.SystemVariables.*;
 import static org.nexial.core.model.ExecutionEvent.*;
 
 /**
  * constants
  */
 public final class NexialConst {
-
-    // global defaults, to be registered from the definition of each default values
-    private static final Map<String, Object> DEFAULTS = new HashMap<>();
+    // @formatter:off
 
     // default values
     public static final String DATE_FORMAT_NOW = "yyyy-MM-dd-HH-mm-ss.S";
@@ -94,6 +92,7 @@ public final class NexialConst {
     public static final String DEF_SPRING_XML = "/nexial.xml";
     public static final String ENV_NEXIAL_LIB = "NEXIAL_LIB";
     public static final String ENV_NEXIAL_HOME = "NEXIAL_HOME";
+
     // predefined variables/switches
     public static final String NAMESPACE = "nexial.";
     public static final String OPT_OUT_DIR = NAMESPACE + "outBase";
@@ -102,11 +101,13 @@ public final class NexialConst {
     public static final String OPT_SCRIPT_DIR = NAMESPACE + "scriptBase";
     public static final String OPT_PROJECT_BASE = NAMESPACE + "projectBase";
     public static final String OPT_PROJECT_NAME = NAMESPACE + "project";
+
     // special System variable to allow user-defined output directory for ALL executions, except those explicitly
     // stated as commandline argument during execution (i.e. -output ...)
     // this System variable is being set up in nexial.sh|cmd upon detecting an Environment variable named as
     // `NEXIAL_OUTPUT`
     public static final String OPT_DEF_OUT_DIR = NAMESPACE + "defaultOutBase";
+
     // testcase specific
     public static final String TEST_START_TS = "testsuite.startTs";
     public static final String TEST_SUITE_NAME = NAMESPACE + "testsuite.name";
@@ -114,6 +115,7 @@ public final class NexialConst {
     public static final String OPT_EXCEL_FILE = NAMESPACE + "excel";
     public static final String OPT_INPUT_EXCEL_FILE = NAMESPACE + "inputExcel";
     public static final String OPT_INPUT_PLAN_FILE = NAMESPACE + "planFile";
+
     // selenium specific
     public static final String SELENIUM_IE_DRIVER = "webdriver.ie.driver";
     public static final String SELENIUM_EDGE_DRIVER = "webdriver.edge.driver";
@@ -125,38 +127,49 @@ public final class NexialConst {
     public static final String SELENIUM_IE_LOG_LEVEL = "webdriver.ie.driver.loglevel";
     public static final String SELENIUM_IE_LOG_LOGFILE = "webdriver.ie.driver.logfile";
     public static final String SELENIUM_IE_SILENT = "webdriver.ie.driver.silent";
-    public static final String OPT_DELAY_BROWSER = NAMESPACE + "delayBrowser";
-    public static final String OPT_CHROME_PROFILE = NAMESPACE + "chrome.profile";
-    public static final String OPT_EASY_STRING_COMPARE = NAMESPACE + "lenientStringCompare";
+    public static final String OPT_DELAY_BROWSER = registerSystemVariable(NAMESPACE + "delayBrowser", false);
+    public static final String OPT_CHROME_PROFILE = registerSystemVariable(NAMESPACE + "chrome.profile");
+    public static final String OPT_EASY_STRING_COMPARE = registerSystemVariable(NAMESPACE + "lenientStringCompare", true);
     public static final String OPT_HTTP_TTL = NAMESPACE + "httpTTL";
-    public static final String OPT_UI_RENDER_WAIT_MS = registerData(NAMESPACE + "uiRenderWaitMs", 3000);
-    public static final String OPT_WAIT_SPEED = NAMESPACE + "waitSpeed";
-    public static final String OPT_LAST_ALERT_TEXT = NAMESPACE + "lastAlertText";
-    public static final String OPT_ALERT_IGNORE_FLAG = NAMESPACE + "ignoreBrowserAlert";
-    public static final String OPT_PROXY_USER = NAMESPACE + "proxy_user";
-    public static final String OPT_PROXY_PASSWORD = NAMESPACE + "proxy_password";
-    public static final String OPT_PROXY_REQUIRED = NAMESPACE + "proxyRequired";
-    public static final String OPT_PROXY_DIRECT = NAMESPACE + "proxyDirect";
+    public static final String OPT_UI_RENDER_WAIT_MS = registerSystemVariable(NAMESPACE + "uiRenderWaitMs", 3000);
+    public static final String OPT_WAIT_SPEED = registerSystemVariable(NAMESPACE + "waitSpeed", 3);
+    public static final String OPT_LAST_ALERT_TEXT = registerSystemVariable(NAMESPACE + "lastAlertText");
+    public static final String OPT_ALERT_IGNORE_FLAG = registerSystemVariable(NAMESPACE + "ignoreBrowserAlert", false);
+    public static final String OPT_PROXY_USER = registerSystemVariable(NAMESPACE + "proxy_user");
+    public static final String OPT_PROXY_PASSWORD = registerSystemVariable(NAMESPACE + "proxy_password");
+    public static final String OPT_PROXY_REQUIRED = registerSystemVariable(NAMESPACE + "proxyRequired");
+    public static final String OPT_PROXY_DIRECT = registerSystemVariable(NAMESPACE + "proxyDirect");
     public static final int PROXY_PORT = 19850;
-    public static final String OPT_IMAGE_TOLERANCE = NAMESPACE + "imageTolerance";
-    public static final String OPT_IMAGE_DIFF_COLOR = registerData(NAMESPACE + "imageDiffColor", "red");
-    public static final String OPT_SCREENSHOT_ON_ERROR = NAMESPACE + "screenshotOnError";
-    public static final String OPT_LAST_SCREENSHOT_NAME = NAMESPACE + "lastScreenshot";
-    public static final String OPT_LAST_OUTCOME = NAMESPACE + "lastOutcome";
-    public static final String OPT_LAST_OUTPUT_LINK = NAMESPACE + "lastOutputLink";
-    public static final String OPT_PRINT_ERROR_DETAIL = registerData(NAMESPACE + "printErrorDetails", false);
+
+    // image
+    public static final String OPT_IMAGE_TOLERANCE = registerSystemVariable(NAMESPACE + "imageTolerance", 0);
+    public static final String OPT_IMAGE_DIFF_COLOR = registerSystemVariable(NAMESPACE + "imageDiffColor", "red");
+
+    // screenshots
+    public static final String OPT_SCREENSHOT_ON_ERROR = registerSystemVariable(NAMESPACE + "screenshotOnError", false);
+    public static final String OPT_LAST_SCREENSHOT_NAME = registerSystemVariable(NAMESPACE + "lastScreenshot");
+
+    // outcome
+    public static final String OPT_LAST_OUTCOME = registerSystemVariable(NAMESPACE + "lastOutcome");
+    public static final String OPT_LAST_OUTPUT_LINK = registerSystemVariable(NAMESPACE + "lastOutputLink");
+    public static final String OPT_PRINT_ERROR_DETAIL = registerSystemVariable(NAMESPACE + "printErrorDetails", false);
+
     // control verbosity of multi-step commands
-    public static final String OPT_ELAPSED_TIME_SLA = NAMESPACE + "elapsedTimeSLA";
+    public static final String OPT_ELAPSED_TIME_SLA = registerSystemVariable(NAMESPACE + "elapsedTimeSLA");
+
     // allow per-run override for the output directory name
     // nexial.runID is set by castle via Jenkin internal BUILD_ID variable, which reflects build time in
     // the format of YYYY-MM-DD_hh-mm-ss
-    public static final String OPT_RUN_ID = NAMESPACE + "runID";
-    public static final String OPT_RUN_ID_PREFIX = OPT_RUN_ID + ".prefix";
+    public static final String OPT_RUN_ID = registerSystemVariable(NAMESPACE + "runID");
+    public static final String OPT_RUN_ID_PREFIX = registerSystemVariable(OPT_RUN_ID + ".prefix");
+
     // plugin:external
     // store the file name of the output resulted from a `external.runProgram` command
-    public static final String OPT_RUN_PROGRAM_OUTPUT = NAMESPACE + "external.output";
+    public static final String OPT_RUN_PROGRAM_OUTPUT = registerSystemVariable(NAMESPACE + "external.output");
+
     // plugin:rdbms
     public static final String DAO_PREFIX = NAMESPACE + "dao.";
+    public static final String OPT_INCLUDE_PACK_SINGLE_ROW = registerSystemVariable(NAMESPACE + "rdbms.packSingleRow", false);
     public static final String SQL_DELIM = ";";
     public static final String SQL_COMMENT = "--";
     public static final String SQL_VAR = "nexial:";
@@ -168,34 +181,35 @@ public final class NexialConst {
     public static final boolean DEF_AUTOCOMMIT = true;
     public static final String OPT_TREAT_NULL_AS = ".treatNullAs";
     public static final String DEF_TREAT_NULL_AS = "";
-    public static final String OPT_INCLUDE_PACK_SINGLE_ROW = registerData(NAMESPACE + "rdbms.packSingleRow", false);
     public static final String SQL_LINE_SEP = "\n";
     public static final String CSV_ROW_SEP = "\n";
     public static final String CSV_FIELD_DEIM = ",";
+
+    // ws
     public static final String WS_NAMESPACE = NAMESPACE + "ws.";
-    public static final String WS_CONN_TIMEOUT = WS_NAMESPACE + "connectionTimeout";
-    public static final String WS_READ_TIMEOUT = WS_NAMESPACE + "readTimeout";
-    public static final String WS_ENABLE_REDIRECTS = WS_NAMESPACE + "enableRedirects";
-    public static final String WS_ENABLE_EXPECT_CONTINUE = WS_NAMESPACE + "enableExpectContinue";
-    public static final String WS_ALLOW_CIRCULAR_REDIRECTS = WS_NAMESPACE + "allowCircularRedirects";
-    public static final String WS_ALLOW_RELATIVE_REDIRECTS = WS_NAMESPACE + "allowRelativeRedirects";
-    public static final String WS_REQ_PAYLOAD_COMPACT = registerData(WS_NAMESPACE + "requestPayloadCompact", false);
+    public static final String WS_CONN_TIMEOUT = registerSystemVariable(WS_NAMESPACE + "connectionTimeout", 5 * 60 * 1000);
+    public static final String WS_READ_TIMEOUT = registerSystemVariable(WS_NAMESPACE + "readTimeout", 5 * 60 * 1000);
+    public static final String WS_ENABLE_REDIRECTS = registerSystemVariable(WS_NAMESPACE + "enableRedirects", true);
+    public static final String WS_ENABLE_EXPECT_CONTINUE = registerSystemVariable(WS_NAMESPACE + "enableExpectContinue", true);
+    public static final String WS_ALLOW_CIRCULAR_REDIRECTS = registerSystemVariable(WS_NAMESPACE + "allowCircularRedirects", false);
+    public static final String WS_ALLOW_RELATIVE_REDIRECTS = registerSystemVariable(WS_NAMESPACE + "allowRelativeRedirects", true);
+    public static final String WS_REQ_PAYLOAD_COMPACT = registerSystemVariable(WS_NAMESPACE + "requestPayloadCompact", false);
     //public static final String WS_REQ_CONTENT_TYPE = WS_NAMESPACE + "requestContentType";
     //public static final String WS_RES_PAYLOAD_COMPACT = WS_NAMESPACE + "responsePayloadCompact";
     public static final String WS_REQ_HEADER_PREFIX = WS_NAMESPACE + "header.";
-    public static final String WS_PROXY_REQUIRED = WS_NAMESPACE + "proxyRequired";
-    public static final String WS_PROXY_HOST = WS_NAMESPACE + "proxyHost";
-    public static final String WS_PROXY_PORT = WS_NAMESPACE + "proxyPort";
-    public static final String WS_PROXY_USER = WS_NAMESPACE + "proxyUser";
-    public static final String WS_PROXY_PWD = WS_NAMESPACE + "proxyPassword";
+    public static final String WS_PROXY_REQUIRED = registerSystemVariable(WS_NAMESPACE + "proxyRequired");
+    public static final String WS_PROXY_HOST = registerSystemVariable(WS_NAMESPACE + "proxyHost");
+    public static final String WS_PROXY_PORT = registerSystemVariable(WS_NAMESPACE + "proxyPort");
+    public static final String WS_PROXY_USER = registerSystemVariable(WS_NAMESPACE + "proxyUser");
+    public static final String WS_PROXY_PWD = registerSystemVariable(WS_NAMESPACE + "proxyPassword");
     public static final String WS_DIGEST_NAMESPACE = WS_NAMESPACE + "digest.";
-    public static final String WS_DIGEST_USER = WS_DIGEST_NAMESPACE + "user";
-    public static final String WS_DIGEST_PWD = WS_DIGEST_NAMESPACE + "password";
-    public static final String WS_DIGEST_REALM = WS_DIGEST_NAMESPACE + "realm";
-    public static final String WS_DIGEST_NONCE = WS_DIGEST_NAMESPACE + "nonce";
+    public static final String WS_DIGEST_USER = registerSystemVariable(WS_DIGEST_NAMESPACE + "user");
+    public static final String WS_DIGEST_PWD = registerSystemVariable(WS_DIGEST_NAMESPACE + "password");
+    public static final String WS_DIGEST_REALM = registerSystemVariable(WS_DIGEST_NAMESPACE + "realm");
+    public static final String WS_DIGEST_NONCE = registerSystemVariable(WS_DIGEST_NAMESPACE + "nonce");
     public static final String WS_BASIC_NAMESPACE = WS_NAMESPACE + "basic.";
-    public static final String WS_BASIC_USER = WS_BASIC_NAMESPACE + "user";
-    public static final String WS_BASIC_PWD = WS_BASIC_NAMESPACE + "password";
+    public static final String WS_BASIC_USER = registerSystemVariable(WS_BASIC_NAMESPACE + "user");
+    public static final String WS_BASIC_PWD = registerSystemVariable(WS_BASIC_NAMESPACE + "password");
     public static final String WS_USER_AGENT = "User-Agent";
     public static final String WS_CONTENT_TYPE = "Content-Type";
     public static final String WS_CONTENT_LENGTH = "Content-Length";
@@ -203,27 +217,22 @@ public final class NexialConst {
     public static final String WS_JSON_CONTENT_TYPE2 = WS_JSON_CONTENT_TYPE + ";charset=UTF-8";
     public static final String WS_SOAP_CONTENT_TYPE = "text/xml;charset=UTF-8";
     public static final String WS_FORM_CONTENT_TYPE = "application/x-www-form-urlencoded";
-    public static final int DEF_WS_CONN_TIMEOUT = 5 * 60 * 1000;
-    public static final int DEF_WS_READ_TIMEOUT = 5 * 60 * 1000;
-    public static final boolean DEF_WS_ENABLE_REDIRECTS = true;
-    public static final boolean DEF_WS_ENABLE_EXPECT_CONTINUE = true;
-    public static final boolean DEF_WS_CIRCULAR_REDIRECTS = false;
-    public static final boolean DEF_WS_RELATIVE_REDIRECTS = true;
+
     public static final String WS_ASYNC_NAMESPACE = WS_NAMESPACE + "async.";
+
     // default to 3 minutes
-    public static final String WS_ASYNC_SHUTDOWN_TIMEOUT = registerData(WS_ASYNC_NAMESPACE + "shutdownWaitMs",
-                                                                        3 * 60 * 1000);
+    public static final String WS_ASYNC_SHUTDOWN_TIMEOUT = registerSystemVariable(WS_ASYNC_NAMESPACE + "shutdownWaitMs", 3 * 60 * 1000);
+
     //plugin: xml
     public static XMLOutputter COMPRESSED_XML_OUTPUTTER = new XMLOutputter(Format.getCompactFormat());
     public static XMLOutputter PRETTY_XML_OUTPUTTER = new XMLOutputter(Format.getPrettyFormat());
+
     // oauth
     public static final String OAUTH_CLIENT_ID = "client_id";
     public static final String OAUTH_CLIENT_SECRET = "client_secret";
     public static final String OAUTH_SCOPE = "scope";
     public static final String OAUTH_GRANT_TYPE = "grant_type";
-    public static final List<String> OAUTH_REQUIRED_INPUTS = Arrays.asList(OAUTH_CLIENT_ID,
-                                                                           OAUTH_CLIENT_SECRET,
-                                                                           OAUTH_GRANT_TYPE);
+    public static final List<String> OAUTH_REQUIRED_INPUTS = Arrays.asList(OAUTH_CLIENT_ID, OAUTH_CLIENT_SECRET, OAUTH_GRANT_TYPE);
     public static final String OAUTH_ACCESS_TOKEN = "access_token";
     public static final String OAUTH_TOKEN_TYPE = "token_type";
     public static final String OAUTH_TOKEN_TYPE_BEARER = "Bearer";
@@ -232,9 +241,11 @@ public final class NexialConst {
     public static final String OAUTH_TOKEN_TYPE_BASIC = "Basic";
     public static final String DEF_FILE_ENCODING = "UTF-8";
     public static final String DEF_CHARSET = DEF_FILE_ENCODING;
+
     // predefined subdirectories
     public static final String SUBDIR_LOGS = "logs";
     public static final String SUBDIR_CAPTURES = "captures";
+
     // naming scheme
     public static final String PLAN_SCRIPT_SEP = ",";
     public static final String FILE_PART_SEP = ".";
@@ -245,9 +256,11 @@ public final class NexialConst {
     public static final String DEF_PLAN_FAIL_FAST = "true";
     public static final String OPT_EXCEL_VER = NAMESPACE + "excelVer";
     public static final String OPT_INTERACTIVE = NAMESPACE + "interactive";
+
     //browsermob proxy
     public static final String OPT_PROXY_ENABLE = "proxy.enable";
     public static final String OPT_PROXY_LOCALHOST = "localhost:98986";
+
     //browsermob har
     public static final String OPT_HAR_CURRENT = "_harCurrent";
     public static final String OPT_HAR_BASE = "_harBase";
@@ -256,10 +269,12 @@ public final class NexialConst {
     public static final String OPT_HAR_POST_DATA_INTERCEPTED = "_postDataIntercepted.csv";
     public static final String OPT_HAR_POST_DATA_RESULTS = "_postDataResults.csv";
     public static final String OPT_HAR_POST_COLUMN_NAMES = "Post Sequence,URL,Baseline,Current";
+
     //browsermob wsdl
     public static final String OPT_WSDL_BASE = "_WSDLBase.wsdl";
     public static final String OPT_WSDL_CURRENT = "_WSDLCurrent.wsdl";
     public static final String OPT_WSDL_RESULTS = "_WSDLResults.txt";
+
     // token specific
     public static final String TOKEN_START = "${";
     public static final String TOKEN_END = "}";
@@ -269,10 +284,12 @@ public final class NexialConst {
     public static final String DEFERRED_TOKEN_END = "}";
     public static final String CTRL_KEY_START = "{";
     public static final String CTRL_KEY_END = "}";
+
     // filter specific
     public static final String FILTER_REGEX_PATTERN = "\\s+(not in|in|between|match|is|is not)\\s+(\\[.+?\\])";
     public static final String FILTER_TEMP_DELIM1 = "~!2I3&f6n@S#*!~";
     public static final String FILTER_TEMP_DELIM2 = "~!#*2!Fn3&6g@!~";
+
     // regex for built-in function
     public static final String TOKEN_FUNCTION_START = "$(";
     public static final String TOKEN_FUNCTION_END = ")";
@@ -291,6 +308,9 @@ public final class NexialConst {
     public static final String MSG_FAIL = ExcelConfig.MSG_FAIL;
     public static final String MSG_WARN = ExcelConfig.MSG_WARN;
     public static final String MSG_SKIPPED = ExcelConfig.MSG_SKIPPED;
+    public static final String MSG_CHECK_SUPPORT = "Check with Nexial Support Group for details.";
+    public static final String COMMENT_AUTHOR = "NexialBot";
+
     public static final String PREFIX_JAR = "jar:";
 
     // text matching rules
@@ -306,10 +326,12 @@ public final class NexialConst {
 
     // aws related config
     public static final String S3_PUBLIC_URL = "public_url";
-    public static final String OPT_CLOUD_OUTPUT_BASE = NAMESPACE + "outputCloudBase";
-    public static final String OUTPUT_TO_CLOUD = registerData(NAMESPACE + "outputToCloud", false);
+    public static final String OPT_CLOUD_OUTPUT_BASE = registerSystemVariable(NAMESPACE + "outputCloudBase");
+    public static final String OUTPUT_TO_CLOUD = registerSystemVariable(NAMESPACE + "outputToCloud", false);
     public static final String S3_PATH_SEPARATOR = "/";
-    public static final String OPT_MANAGE_MEM = registerData(NAMESPACE + "manageMemory", false);
+
+    // mem mgmt
+    public static final String OPT_MANAGE_MEM = registerSystemVariable(NAMESPACE + "manageMemory", false);
 
     public static final Gson GSON = new GsonBuilder().setPrettyPrinting()
                                                      .disableHtmlEscaping()
@@ -321,8 +343,6 @@ public final class NexialConst {
                                                                 .enableComplexMapKeySerialization()
                                                                 .setLenient()
                                                                 .create();
-    public static final String MSG_CHECK_SUPPORT = "Check with Nexial Support Group for details.";
-    public static final String COMMENT_AUTHOR = "NexialBot";
 
     // browser types
     public enum BrowserType {
@@ -395,6 +415,9 @@ public final class NexialConst {
             return MapUtils.getObject(COLOR_NAMES, colorName, COLOR_NAMES.get(getDefault(OPT_IMAGE_DIFF_COLOR)));
         }
 
+        // reference by enclosing class to force initialization (possibly prior to any reference at runtime)
+        static void init() {}
+
         static {
             COLOR_NAMES.put("red", RED);
             COLOR_NAMES.put("yellow", YELLOW);
@@ -421,9 +444,12 @@ public final class NexialConst {
         // sts / assume-role config
         public static final String AWS_STS_ROLE_ARN = "assumeRoleArn";
         public static final String AWS_STS_ROLE_SESSION = "assumeRoleSession";
-        public static final String AWS_STS_ROLE_DURATION = registerData("assumeRoleDuration", 900);
+        public static final String AWS_STS_ROLE_DURATION = "assumeRoleDuration";
 
         private AwsSettings() {}
+
+        // reference by enclosing class to force initialization (possibly prior to any reference at runtime)
+        static void init() {}
     }
 
     public static class CloudWebTesting {
@@ -442,9 +468,7 @@ public final class NexialConst {
             return StringUtils.equals(scope, SCOPE_EXECUTION) || StringUtils.equals(scope, SCOPE_ITERATION);
         }
 
-        public static boolean isValidReportScope(ExecutionEvent scope) {
-            return SUPPORTED_SCOPES.contains(scope);
-        }
+        public static boolean isValidReportScope(ExecutionEvent scope) { return SUPPORTED_SCOPES.contains(scope); }
     }
 
     // browserstack
@@ -455,24 +479,27 @@ public final class NexialConst {
 
         private static final String NS = NAMESPACE + "browserstack.";
 
-        public static final String KEY_USERNAME = NS + "username";
-        public static final String KEY_AUTOMATEKEY = NS + "automatekey";
+        public static final String KEY_USERNAME = registerSystemVariable(NS + "username");
+        public static final String KEY_AUTOMATEKEY = registerSystemVariable(NS + "automatekey");
 
-        public static final String KEY_BROWSER = NS + "browser";
-        public static final String KEY_BROWSER_VER = NS + "browser.version";
-        public static final String KEY_DEBUG = registerData(NS + "debug", true);
-        public static final String KEY_RESOLUTION = NS + "resolution";
-        public static final String KEY_BUILD_NUM = NS + "app.buildnumber";
-        public static final String KEY_ENABLE_LOCAL = registerData(NS + "enablelocal", false);
-        public static final String KEY_OS = NS + "os";
-        public static final String KEY_OS_VER = NS + "os.version";
+        public static final String KEY_BROWSER = registerSystemVariable(NS + "browser");
+        public static final String KEY_BROWSER_VER = registerSystemVariable(NS + "browser.version");
+        public static final String KEY_DEBUG = registerSystemVariable(NS + "debug", true);
+        public static final String KEY_RESOLUTION = registerSystemVariable(NS + "resolution");
+        public static final String KEY_BUILD_NUM = registerSystemVariable(NS + "app.buildnumber");
+        public static final String KEY_ENABLE_LOCAL = registerSystemVariable(NS + "enablelocal", false);
+        public static final String KEY_OS = registerSystemVariable(NS + "os");
+        public static final String KEY_OS_VER = registerSystemVariable(NS + "os.version");
 
-        public static final String KEY_CAPTURE_CRASH = NS + "captureCrash";
+        public static final String KEY_CAPTURE_CRASH = registerSystemVariable(NS + "captureCrash");
 
         // status report
-        public static final String KEY_STATUS_SCOPE = NS + "reportStatus";
+        public static final String KEY_STATUS_SCOPE = registerSystemVariable(NS + "reportStatus");
 
         private BrowserStack() {}
+
+        // reference by enclosing class to force initialization (possibly prior to any reference at runtime)
+        static void init() {}
     }
 
     public static final class CrossBrowserTesting extends CloudWebTesting {
@@ -531,6 +558,9 @@ public final class NexialConst {
         public static final String KEY_STATUS_SCOPE = NS + "reportStatus";
 
         private CrossBrowserTesting() {}
+
+        // reference by enclosing class to force initialization (possibly prior to any reference at runtime)
+        static void init() {}
     }
 
     public static final class Project {
@@ -592,6 +622,9 @@ public final class NexialConst {
             return project;
         }
 
+        // reference by enclosing class to force initialization (possibly prior to any reference at runtime)
+        static void init() {}
+
         private static String appendSep(String dir) {
             return StringUtils.appendIfMissing(StringUtils.defaultString(dir), separator);
         }
@@ -610,6 +643,9 @@ public final class NexialConst {
         public static final Options OPTIONS = initCmdOptions();
 
         private CLI() { }
+
+        // reference by enclosing class to force initialization (possibly prior to any reference at runtime)
+        static void init() {}
 
         private static Options initCmdOptions() {
             Options cmdOptions = new Options();
@@ -640,65 +676,67 @@ public final class NexialConst {
     }
 
     public static final class Data {
-        public static final String SCOPE = NAMESPACE + "scope.";
+        public static final String SCOPE = registerSystemVariableGroup(NAMESPACE + "scope.");
 
         public static final String HOSTNAME = "os.hostname";
 
         // iteration
         // predefined variable to define the iteration to use
         public static final String ITERATION = SCOPE + "iteration";
+
         // read-only: the iteration counter that just completed
         public static final String LAST_ITERATION = SCOPE + "lastIteration";
+
         // read-only: the currently in-progress iteration (doesn't mean it will or has completed successfully)
         public static final String CURR_ITERATION = SCOPE + "currentIteration";
+
         // read-only: reload data file between iteration or not
-        public static final String REFETCH_DATA_FILE = registerData(SCOPE + "refetchDataFile", true);
+        public static final String REFETCH_DATA_FILE = SCOPE + "refetchDataFile";
+        public static final String FALLBACK_TO_PREVIOUS = SCOPE + "fallbackToPrevious";
         public static final String ITERATION_SEP = ",";
         public static final String ITERATION_RANGE_SEP = "-";
-        public static final String FALLBACK_TO_PREVIOUS = SCOPE + "fallbackToPrevious";
 
-        public static final String DELAY_BETWEEN_STEPS_MS = registerData(NAMESPACE + "delayBetweenStepsMs", 600);
+        public static final String DELAY_BETWEEN_STEPS_MS = registerSystemVariable(NAMESPACE + "delayBetweenStepsMs", 600);
 
-        public static final String FAIL_FAST = registerData(NAMESPACE + "failFast", false);
+        public static final String FAIL_FAST = registerSystemVariable(NAMESPACE + "failFast", false);
 
-        public static final String FAIL_AFTER = registerData(NAMESPACE + "failAfter", -1);
-        public static final String EXECUTION_FAIL_COUNT = NAMESPACE + "executionFailCount";
-        public static final String EXECUTION_SKIP_COUNT = NAMESPACE + "executionSkipCount";
-        public static final String EXECUTION_PASS_COUNT = NAMESPACE + "executionPassCount";
-        public static final String EXECUTION_EXEC_COUNT = NAMESPACE + "executionCount";
+        public static final String FAIL_AFTER = registerSystemVariable(NAMESPACE + "failAfter", -1);
+        public static final String EXECUTION_FAIL_COUNT = registerSystemVariable(NAMESPACE + "executionFailCount");
+        public static final String EXECUTION_SKIP_COUNT = registerSystemVariable(NAMESPACE + "executionSkipCount");
+        public static final String EXECUTION_PASS_COUNT = registerSystemVariable(NAMESPACE + "executionPassCount");
+        public static final String EXECUTION_EXEC_COUNT = registerSystemVariable(NAMESPACE + "executionCount");
 
-        public static final String MIN_EXEC_SUCCESS_RATE = registerData(NAMESPACE + "minExecSuccessRate", 100);
+        public static final String MIN_EXEC_SUCCESS_RATE = registerSystemVariable(NAMESPACE + "minExecSuccessRate", 100);
+
         // determine if we should clear off any fail-fast state at the end of each script
-        public static final String RESET_FAIL_FAST = registerData(NAMESPACE + "resetFailFast", false);
-        public static final String VERBOSE = registerData(NAMESPACE + "verbose", false);
-        public static final String NULL_VALUE = registerData(NAMESPACE + "nullValue", "(null)");
-        public static final String TEXT_DELIM = registerData(NAMESPACE + "textDelim", ",");
-        public static final String POLL_WAIT_MS = registerData(NAMESPACE + "pollWaitMs", 30 * 1000);
+        public static final String RESET_FAIL_FAST = registerSystemVariable(NAMESPACE + "resetFailFast", false);
+        public static final String VERBOSE = registerSystemVariable(NAMESPACE + "verbose", false);
+        public static final String NULL_VALUE = registerSystemVariable(NAMESPACE + "nullValue", "(null)");
+        public static final String TEXT_DELIM = registerSystemVariable(NAMESPACE + "textDelim", ",");
+        public static final String POLL_WAIT_MS = registerSystemVariable(NAMESPACE + "pollWaitMs", 30 * 1000);
 
-        public static final String FAIL_IMMEDIATE = NAMESPACE + "failImmediate";
-        public static final String END_IMMEDIATE = NAMESPACE + "endImmediate";
-        public static final String BREAK_CURRENT_ITERATION = NAMESPACE + "breakCurrentIteration";
-        public static final String LAST_PLAN_STEP = NAMESPACE + "lastPlanStep";
-        public static final String DEF_LAST_PLAN_STEP = "false";
-        public static final String OPT_CURRENT_ACTIVITY = NAMESPACE + "currentActivity";
-        public static final String OPT_CURRENT_SCENARIO = NAMESPACE + "currentScenario";
+        public static final String FAIL_IMMEDIATE = registerSystemVariable(NAMESPACE + "failImmediate", false);
+        public static final String END_IMMEDIATE = registerSystemVariable(NAMESPACE + "endImmediate");
+        public static final String BREAK_CURRENT_ITERATION = registerSystemVariable(NAMESPACE + "breakCurrentIteration");
+        public static final String LAST_PLAN_STEP = registerSystemVariable(NAMESPACE + "lastPlanStep", false);
+        public static final String OPT_CURRENT_ACTIVITY = registerSystemVariable(NAMESPACE + "currentActivity");
+        public static final String OPT_CURRENT_SCENARIO = registerSystemVariable(NAMESPACE + "currentScenario");
 
         // data/variable
         public static final String NAMESPACE_VAR = NAMESPACE + "var.";
-        public static final String OPT_VAR_EXCLUDE_LIST = NAMESPACE_VAR + "ignored";
-        public static final String OPT_VAR_DEFAULT_AS_IS = registerData(NAMESPACE_VAR + "defaultAsIs", false);
-        public static final String OPT_EXPRESSION_READ_FILE_AS_IS =
-            registerData(NAMESPACE + "expression.OpenFileAsIs", false);
+        public static final String OPT_VAR_EXCLUDE_LIST = registerSystemVariable(NAMESPACE_VAR + "ignored");
+        public static final String OPT_VAR_DEFAULT_AS_IS = registerSystemVariable(NAMESPACE_VAR + "defaultAsIs", false);
+        public static final String OPT_EXPRESSION_READ_FILE_AS_IS = registerSystemVariable(NAMESPACE + "expression.OpenFileAsIs", false);
 
         // predefined variable for time tracking of execution levels
         public static final String TIMETRACK = NAMESPACE + "timetrack.";
-        public static final String TRACK_EXECUTION = registerData(TIMETRACK + "trackExecution", false);
-        public static final String TRACK_SCRIPT = TIMETRACK + "trackScript";
-        public static final String TRACK_ITERATION = TIMETRACK + "trackIteration";
-        public static final String TRACK_SCENARIO = TIMETRACK + "trackScenario";
+        public static final String TRACK_EXECUTION = registerSystemVariable(TIMETRACK + "trackExecution", false);
+        public static final String TRACK_SCRIPT = registerSystemVariable(TIMETRACK + "trackScript");
+        public static final String TRACK_ITERATION = registerSystemVariable(TIMETRACK + "trackIteration");
+        public static final String TRACK_SCENARIO = registerSystemVariable(TIMETRACK + "trackScenario");
         public static final String TIMETRACK_FORMAT =
-            registerData(TIMETRACK + "format",
-                         "START_DATE|START_TIME|END_DATE|END_TIME|ELAPSED_TIME|THREAD_NAME|LABEL|REMARK");
+            registerSystemVariable(TIMETRACK + "format",
+                                   "START_DATE|START_TIME|END_DATE|END_TIME|ELAPSED_TIME|THREAD_NAME|LABEL|REMARK");
         public static final String[] TRACKING_DETAIL_TOKENS = new String[]{
             "START_DATE", "START_TIME", "END_DATE", "END_TIME", "ELAPSED_TIME", "THREAD_NAME", "LABEL", "REMARK"};
         public static final String TIMETRACK_DATE_FORMAT = "yyyy-MM-dd HH:mm:ss,SSS";
@@ -711,82 +749,79 @@ public final class NexialConst {
         public static final String THIRD_PARTY_LOG_PATH = NAMESPACE + "3rdparty.logpath";
         public static final String TEST_LOG_PATH = NAMESPACE + "logpath";
 
-        public static final String ASSISTANT_MODE = registerData(NAMESPACE + "assistantMode", false);
+        public static final String ASSISTANT_MODE = registerSystemVariable(NAMESPACE + "assistantMode", false);
         // synonymous to `assistantMode`, but reads better
-        public static final String OPT_OPEN_RESULT = registerData(NAMESPACE + "openResult", false);
-        public static final String OPT_OPEN_EXEC_REPORT = registerData(NAMESPACE + "openExecutionReport", false);
+        public static final String OPT_OPEN_RESULT = registerSystemVariable(NAMESPACE + "openResult", false);
+        public static final String OPT_OPEN_EXEC_REPORT = registerSystemVariable(NAMESPACE + "openExecutionReport", false);
 
         public static final String SPREADSHEET_PROGRAM_EXCEL = "excel";
         public static final String SPREADSHEET_PROGRAM_WPS = "wps";
-        public static final String SPREADSHEET_PROGRAM = registerData(NAMESPACE + "spreadsheet.program",
-                                                                      SPREADSHEET_PROGRAM_EXCEL);
+        public static final String SPREADSHEET_PROGRAM = registerSystemVariable(NAMESPACE + "spreadsheet.program",
+                                                                                SPREADSHEET_PROGRAM_EXCEL);
         public static final String WPS_EXE_LOCATION = "nexialInternal.wpsLocation";
 
         // system-wide enable/disable email notification
         public static final String MAIL_TO = SCOPE + "mailTo";
-        public static final String MAIL_TO2 = NAMESPACE + "mailTo";
-        public static final String ENABLE_EMAIL = registerData(NAMESPACE + "enableEmail", false);
+        public static final String MAIL_TO2 = registerSystemVariable(NAMESPACE + "mailTo");
+        public static final String ENABLE_EMAIL = registerSystemVariable(NAMESPACE + "enableEmail", false);
         public static final String MAIL_NOTIF_SUBJECT_PREFIX = "[nexial-notification] ";
         public static final String MAIL_RESULT_SUBJECT_PREFIX = "[nexial] ";
 
-        public static final String GENERATE_EXEC_REPORT = registerData(NAMESPACE + "generateReport", false);
+        public static final String GENERATE_EXEC_REPORT = registerSystemVariable(NAMESPACE + "generateReport", false);
 
         public static final String WIN32_CMD = "C:\\Windows\\System32\\cmd.exe";
 
-        // web
-        public static final String BROWSER = registerData(NAMESPACE + "browser", "firefox");
-        public static final String BROWSER_LANG = NAMESPACE + "browserLang";
-        public static final String START_URL = NAMESPACE + "startUrl";
-        public static final int BROWSER_STABILITY_COMPARE_TOLERANCE = 3;
-        public static final String OPT_BROWSER_CONSOLE_LOG = NAMESPACE + "browserConsoleLog";
+        // browser
+        public static final String BROWSER = registerSystemVariable(NAMESPACE + "browser", "firefox");
+        public static final String BROWSER_LANG = registerSystemVariable(NAMESPACE + "browserLang");
+        public static final String OPT_BROWSER_CONSOLE_LOG = registerSystemVariable(NAMESPACE + "browserConsoleLog", false);
 
         public static final String KEY_INCOGNITO = "incognito";
-        public static final String BROWER_INCOGNITO = registerData(BROWSER + "." + KEY_INCOGNITO, true);
+        public static final String BROWER_INCOGNITO = registerSystemVariable(BROWSER + "." + KEY_INCOGNITO, true);
 
-        public static final String BROWSER_POST_CLOSE_WAIT = registerData(BROWSER + ".postCloseWaitMs", 3000);
-        public static final String BROWSER_WINDOW_SIZE = BROWSER + ".windowSize";
-        public static final String BROWSER_DEFAULT_WINDOW_SIZE = BROWSER + ".defaultWindowSize";
-        public static final String ENFORCE_PAGE_SOURCE_STABILITY =
-            registerData(NAMESPACE + "enforcePageSourceStability", true);
-        public static final String BROWSER_ACCEPT_INVALID_CERTS = registerData(BROWSER + ".acceptInsecureCerts", false);
+        public static final String BROWSER_POST_CLOSE_WAIT = registerSystemVariable(BROWSER + ".postCloseWaitMs", 3000);
+        public static final String BROWSER_WINDOW_SIZE = registerSystemVariable(BROWSER + ".windowSize");
+        public static final String BROWSER_DEFAULT_WINDOW_SIZE = registerSystemVariable(BROWSER + ".defaultWindowSize");
+        public static final String ENFORCE_PAGE_SOURCE_STABILITY = registerSystemVariable(NAMESPACE + "enforcePageSourceStability", true);
+        public static final String BROWSER_ACCEPT_INVALID_CERTS = registerSystemVariable(BROWSER + ".acceptInsecureCerts", false);
 
-        public static final String FORCE_JS_CLICK = registerData(BROWSER + ".forceJSClick", false);
+        public static final String FORCE_JS_CLICK = registerSystemVariable(BROWSER + ".forceJSClick", false);
 
-        public static final String IE_REQUIRE_WINDOW_FOCUS = registerData(BROWSER + ".ie.requireWindowFocus", false);
+        public static final String IE_REQUIRE_WINDOW_FOCUS = registerSystemVariable(BROWSER + ".ie.requireWindowFocus", false);
 
-        public static final String SAFARI_USE_TECH_PREVIEW = registerData(BROWSER + ".safari.useTechPreview", false);
-        public static final String SAFARI_RESIZED = registerData(BROWSER + ".safari.resizedAfterOpen", false);
+        public static final String SAFARI_USE_TECH_PREVIEW = registerSystemVariable(BROWSER + ".safari.useTechPreview", false);
+        public static final String SAFARI_RESIZED = registerSystemVariable(BROWSER + ".safari.resizedAfterOpen", false);
 
-        public static final String CEF_CLIENT_LOCATION = BROWSER + ".embedded.appLocation";
-        public static final String ELECTRON_CLIENT_LOCATION = BROWSER + ".electron.appLocation";
+        public static final String CEF_CLIENT_LOCATION = registerSystemVariable(BROWSER + ".embedded.appLocation");
+        public static final String ELECTRON_CLIENT_LOCATION = registerSystemVariable(BROWSER + ".electron.appLocation");
 
-        public static final String LOG_ELECTRON_DRIVER = registerData(BROWSER + ".logElectron", false);
-        public static final String LOG_CHROME_DRIVER = registerData(BROWSER + ".logChrome", false);
+        public static final String LOG_ELECTRON_DRIVER = registerSystemVariable(BROWSER + ".logElectron", false);
+        public static final String LOG_CHROME_DRIVER = registerSystemVariable(BROWSER + ".logChrome", false);
 
         public static final String NS_EMULATION = BROWSER + ".emulation.";
-        public static final String KEY_EMU_DEVICE_NAME = NS_EMULATION + "deviceName";
-        public static final String KEY_EMU_WIDTH = registerData(NS_EMULATION + "width", 400);
-        public static final String KEY_EMU_HEIGHT = registerData(NS_EMULATION + "height", 850);
-        public static final String KEY_EMU_PIXEL_RATIO = registerData(NS_EMULATION + "pixelRatio", 3.0);
-        public static final String KEY_EMU_TOUCH = registerData(NS_EMULATION + "touch", true);
-        public static final String KEY_EMU_USER_AGENT = NS_EMULATION + "userAgent";
+        public static final String KEY_EMU_DEVICE_NAME = registerSystemVariable(NS_EMULATION + "deviceName");
+        public static final String KEY_EMU_WIDTH = registerSystemVariable(NS_EMULATION + "width", 400);
+        public static final String KEY_EMU_HEIGHT = registerSystemVariable(NS_EMULATION + "height", 850);
+        public static final String KEY_EMU_PIXEL_RATIO = registerSystemVariable(NS_EMULATION + "pixelRatio", 3.0);
+        public static final String KEY_EMU_TOUCH = registerSystemVariable(NS_EMULATION + "touch", true);
+        public static final String KEY_EMU_USER_AGENT = registerSystemVariable(NS_EMULATION + "userAgent");
 
         public static final String NS_WEB = NAMESPACE + "web.";
-        public static final String OPT_WEB_PAGE_LOAD_WAIT_MS = registerData(NS_WEB + "pageLoadWaitMs", 10000);
-        public static final String WEB_UNFOCUS_AFTER_TYPE = registerData(NS_WEB + "unfocusAfterType", false);
-        public static final String WEB_ALWAYS_WAIT = registerData(NS_WEB + "alwaysWait", false);
-        public static final String OPT_PREEMPTIVE_ALERT_CHECK = registerData(NS_WEB + "preemptiveAlertCheck", false);
+        public static final String OPT_WEB_PAGE_LOAD_WAIT_MS = registerSystemVariable(NS_WEB + "pageLoadWaitMs", 10000);
+        public static final String WEB_UNFOCUS_AFTER_TYPE = registerSystemVariable(NS_WEB + "unfocusAfterType", false);
+        public static final String WEB_ALWAYS_WAIT = registerSystemVariable(NS_WEB + "alwaysWait", false);
+        public static final String OPT_PREEMPTIVE_ALERT_CHECK = registerSystemVariable(NS_WEB + "preemptiveAlertCheck", false);
 
-        public static final String OPT_FORCE_IE_32 = registerData(NAMESPACE + "forceIE32", false);
+        public static final String OPT_FORCE_IE_32 = registerSystemVariable(NAMESPACE + "forceIE32", false);
 
         // web element highlight
-        public static final String OPT_DEBUG_HIGHLIGHT_OLD = registerData(NAMESPACE + "highlight", false);
-        public static final String OPT_DEBUG_HIGHLIGHT = registerData(NS_WEB + "highlight", false);
+        public static final String OPT_DEBUG_HIGHLIGHT_OLD = registerSystemVariable(NAMESPACE + "highlight", false);
+        public static final String OPT_DEBUG_HIGHLIGHT = registerSystemVariable(NS_WEB + "highlight", false);
 
-        public static final String HIGHLIGHT_WAIT_MS = registerData(NS_WEB + "highlight.waitMs", 250);
-        public static final String HIGHLIGHT_WAIT_MS_OLD = registerData(NAMESPACE + "highlightWaitMs", 250);
+        public static final String HIGHLIGHT_WAIT_MS = registerSystemVariable(NS_WEB + "highlight.waitMs", 250);
+        public static final String HIGHLIGHT_WAIT_MS_OLD = registerSystemVariable(NAMESPACE + "highlightWaitMs", 250);
 
-        public static final String HIGHLIGHT_STYLE = registerData(NS_WEB + "highlight.style", "background:#faf557;");
+        public static final String HIGHLIGHT_STYLE = registerSystemVariable(NS_WEB + "highlight.style", "background:#faf557;");
 
         // web drag-and-move config
         public static final String OPT_DRAG_FROM_LEFT_CORNER = "left";
@@ -799,19 +834,19 @@ public final class NexialConst {
                                                                         OPT_DRAG_FROM_TOP_CORNER,
                                                                         OPT_DRAG_FROM_BOTTOM_CORNER,
                                                                         OPT_DRAG_FROM_MIDDLE);
-        public static final String OPT_DRAG_FROM = registerData(NS_WEB + "dragFrom", OPT_DRAG_FROM_MIDDLE);
+        public static final String OPT_DRAG_FROM = registerSystemVariable(NS_WEB + "dragFrom", OPT_DRAG_FROM_MIDDLE);
 
         // desktop
         public static final String WINIUM_EXE = "Winium.Desktop.Driver.exe";
-        public static final String WINIUM_PORT = NAMESPACE + "winiumPort";
-        public static final String WINIUM_JOIN = NAMESPACE + "winiumJoinExisting";
-        public static final String WINIUM_LOG_PATH = NAMESPACE + "winiumLogPath";
-        public static final String WINIUM_SERVICE_RUNNING = NAMESPACE + "winiumServiceActive";
-        public static final String WINIUM_SOLO_MODE = registerData(NAMESPACE + "winiumSoloMode", true);
-        public static final String DESKTOP_NOTIFY_WAITMS = registerData(NAMESPACE + "desktopNotifyWaitMs", 5000);
+        public static final String WINIUM_PORT = registerSystemVariable(NAMESPACE + "winiumPort");
+        public static final String WINIUM_JOIN = registerSystemVariable(NAMESPACE + "winiumJoinExisting", false);
+        public static final String WINIUM_LOG_PATH = registerSystemVariable(NAMESPACE + "winiumLogPath");
+        public static final String WINIUM_SERVICE_RUNNING = registerSystemVariable(NAMESPACE + "winiumServiceActive");
+        public static final String WINIUM_SOLO_MODE = registerSystemVariable(NAMESPACE + "winiumSoloMode", true);
+        public static final String DESKTOP_NOTIFY_WAITMS = registerSystemVariable(NAMESPACE + "desktopNotifyWaitMs", 5000);
 
         // pdf
-        public static final String PDF_USE_ASCII = registerData(NAMESPACE + "pdfUseAscii", true);
+        public static final String PDF_USE_ASCII = registerSystemVariable(NAMESPACE + "pdfUseAscii", true);
         public static final String PDFFORM_UNMATCHED_TEXT = "__UNMATCHED_TEXT";
         public static final String PDFFORM_PREFIX = NAMESPACE + "pdfFormStrategy.";
         public static final String PDFFORM_BASEDON = "basedOn";
@@ -857,32 +892,32 @@ public final class NexialConst {
         public static final String COMPARE_LOG_PLAIN = "log";
         public static final String COMPARE_LOG_JSON = "json";
         public static final String NAMESPACE_COMPARE = NAMESPACE + "compare.";
-        public static final String GEN_COMPARE_LOG = registerData(NAMESPACE_COMPARE + "textReport", true);
-        public static final String GEN_COMPARE_JSON = registerData(NAMESPACE_COMPARE + "jsonReport", false);
-        public static final String LOG_MATCH = registerData(NAMESPACE_COMPARE + "reportMatch", false);
+        public static final String GEN_COMPARE_LOG = registerSystemVariable(NAMESPACE_COMPARE + "textReport", true);
+        public static final String GEN_COMPARE_JSON = registerSystemVariable(NAMESPACE_COMPARE + "jsonReport", false);
+        public static final String LOG_MATCH = registerSystemVariable(NAMESPACE_COMPARE + "reportMatch", false);
         public static final String MAPPING_EXCEL = ".mappingExcel";
         public static final String CONFIG_JSON = ".configJson";
         public static final String REPORT_TYPE = ".reportType";
         // public static final double DEF_COMPARE_TOLERANCE = 0.6;
         public static final String NAMESPACE_IO = NAMESPACE + "io.";
         // todo: need to evaluate how to use these 3 to modify the nexial result and excel output
-        public static final String COMPARE_INCLUDE_MOVED = NAMESPACE_IO + "compareIncludeMoved";
-        public static final String COMPARE_INCLUDE_ADDED = NAMESPACE_IO + "compareIncludeAdded";
-        public static final String COMPARE_INCLUDE_DELETED = NAMESPACE_IO + "compareIncludeRemoved";
-        public static final String OPT_IO_EOL_CONFIG = NAMESPACE_IO + "eolConfig";
+        public static final String COMPARE_INCLUDE_MOVED = registerSystemVariable(NAMESPACE_IO + "compareIncludeMoved");
+        public static final String COMPARE_INCLUDE_ADDED = registerSystemVariable(NAMESPACE_IO + "compareIncludeAdded");
+        public static final String COMPARE_INCLUDE_DELETED = registerSystemVariable(NAMESPACE_IO + "compareIncludeRemoved");
         public static final String EOL_CONFIG_AS_IS = "as is";
         public static final String EOL_CONFIG_PLATFORM = "platform";
         public static final String EOL_CONFIG_WINDOWS = "windows";
         public static final String EOL_CONFIG_UNIX = "unix";
         public static final String EOL_CONFIG_DEF = EOL_CONFIG_PLATFORM;
+        public static final String OPT_IO_EOL_CONFIG = registerSystemVariable(NAMESPACE_IO + "eolConfig", EOL_CONFIG_DEF);
 
         // json
         public static final String NAMESPACE_JSON = NAMESPACE + "json.";
-        public static final String LAST_JSON_COMPARE_RESULT = NAMESPACE_JSON + "lastCompareResults";
-        public static final String TREAT_JSON_AS_IS = registerData(NAMESPACE_JSON + "treatJsonAsIs", true);
+        public static final String LAST_JSON_COMPARE_RESULT = registerSystemVariable(NAMESPACE_JSON + "lastCompareResults");
+        public static final String TREAT_JSON_AS_IS = registerSystemVariable(NAMESPACE_JSON + "treatJsonAsIs", true);
 
         // ssh
-        public static final String SSH_CLIENT_PREFIX = NAMESPACE + "ssh.";
+        public static final String SSH_CLIENT_PREFIX = registerSystemVariableGroup(NAMESPACE + "ssh.");
         public static final String SSH_USERNAME = "username";
         public static final String SSH_PASSWORD = "password";
         public static final String SSH_HOST = "host";
@@ -904,7 +939,8 @@ public final class NexialConst {
          * Note that such data is to be collected at the end of a test execution (not beginning), and all
          * in-execution changes will be reflected as such.
          */
-        public static final String SCENARIO_REF_PREFIX = NAMESPACE + "scenarioRef.";
+        public static final String SCENARIO_REF_PREFIX = registerSystemVariableGroup(NAMESPACE + "scenarioRef.");
+
         /**
          * special prefix to mark certain data as contextual within the execution of a script.  Such data will be
          * displayed in the execution summary to provide as "reference" towards the execution of a script, and any
@@ -919,7 +955,7 @@ public final class NexialConst {
          * Note that such data is to be collected at the end of each iteration (not beginning), and thus all
          * in-iteration changes will be reflected as such.
          */
-        public static final String SCRIPT_REF_PREFIX = NAMESPACE + "scriptRef.";
+        public static final String SCRIPT_REF_PREFIX = registerSystemVariableGroup(NAMESPACE + "scriptRef.");
         public static final String BUILD_NO = "buildnum";
         public static final String DATA_FILE = "Data File";
         public static final String DATA_SHEETS = "DataSheet(s)";
@@ -929,9 +965,30 @@ public final class NexialConst {
         public static final String RECORDER_TYPE = NAMESPACE + "screenRecorder";
         public static final String RECORDER_TYPE_MP4 = "mp4";
         public static final String RECORDER_TYPE_AVI = "avi";
-        public static final String RECORDING_ENABLED = registerData(NAMESPACE + "recordingEnabled", true);
+        public static final String RECORDING_ENABLED = registerSystemVariable(NAMESPACE + "recordingEnabled", true);
 
         // event notification
+        public static final String NOTIFY_ON_EXEC_START = registerSystemVariable(NAMESPACE + "notifyOnExecutionStart");
+        public static final String NOTIFY_ON_EXEC_COMPLETE = registerSystemVariable(NAMESPACE + "notifyOnExecutionComplete");
+        public static final String NOTIFY_ON_SCRIPT_START = registerSystemVariable(NAMESPACE + "notifyOnScriptStart");
+        public static final String NOTIFY_ON_SCRIPT_COMPLETE = registerSystemVariable(NAMESPACE + "notifyOnScriptComplete");
+        public static final String NOTIFY_ON_ITER_START = registerSystemVariable(NAMESPACE + "notifyOnIterationStart");
+        public static final String NOTIFY_ON_ITER_COMPLETE = registerSystemVariable(NAMESPACE + "notifyOnIterationComplete");
+        public static final String NOTIFY_ON_SCN_START = registerSystemVariable(NAMESPACE + "notifyOnScenarioStart");
+        public static final String NOTIFY_ON_SCN_COMPLETE = registerSystemVariable(NAMESPACE + "notifyOnScenarioComplete");
+        public static final String NOTIFY_ON_ERROR = registerSystemVariable(NAMESPACE + "notifyOnError");
+        public static final String NOTIFY_ON_PAUSE = registerSystemVariable(NAMESPACE + "notifyOnPause");
+        public static final String NOTIFY_ON_USE_APP = registerSystemVariable(NAMESPACE + "notifyOnDesktopUseApp");
+        public static final String NOTIFY_ON_USE_FORM = registerSystemVariable(NAMESPACE + "notifyOnDesktopUseForm");
+        public static final String NOTIFY_ON_USE_TABLE = registerSystemVariable(NAMESPACE + "notifyOnDesktopUseTable");
+        public static final String NOTIFY_ON_USE_LIST = registerSystemVariable(NAMESPACE + "notifyOnDesktopUseList");
+        public static final String NOTIFY_ON_WS_START = registerSystemVariable(NAMESPACE + "notifyOnWsStart");
+        public static final String NOTIFY_ON_WS_COMPLETE = registerSystemVariable(NAMESPACE + "notifyOnWsComplete");
+        public static final String NOTIFY_ON_RDBMS_START = registerSystemVariable(NAMESPACE + "notifyOnRdbmsStart");
+        public static final String NOTIFY_ON_RDBMS_COMPLETE = registerSystemVariable(NAMESPACE + "notifyOnRdbmsComplete");
+        public static final String NOTIFY_ON_WEB_OPEN = registerSystemVariable(NAMESPACE + "notifyOnWebOpen");
+        public static final String NOTIFY_ON_BROWSER_COMPLETE = registerSystemVariable(NAMESPACE + "notifyOnBrowserComplete");
+
         public static final String SMS_PREFIX = "sms:";
         public static final String AUDIO_PREFIX = "audio:";
         public static final String EMAIL_PREFIX = "email:";
@@ -940,7 +997,8 @@ public final class NexialConst {
         public static final int MAX_TTS_LENGTH = 500;
         public static final String NEXIAL_LOG_PREFIX = "nexial-";
         public static final String EVENT_CONFIG_SEP = "|";
-        public static final String OPT_NOTIFY_AS_HTML = NAMESPACE + "notifyAsHTML";
+        // todo: remove
+        public static final String OPT_NOTIFY_AS_HTML = registerSystemVariable(NAMESPACE + "notifyAsHTML", false);
 
         // common mime types
         public static final String MIME_PLAIN = "text/plain";
@@ -952,7 +1010,7 @@ public final class NexialConst {
             TextUtils.toMap("=",
                             ITERATION + "=1",
                             FALLBACK_TO_PREVIOUS + "=true",
-                            REFETCH_DATA_FILE + "=" + getDefaultBool(REFETCH_DATA_FILE),
+                            REFETCH_DATA_FILE + "=true",
                             MAIL_TO + "=");
         public static final String NULL = "(null)";
         public static final String EMPTY = "(empty)";
@@ -980,6 +1038,7 @@ public final class NexialConst {
             if (context != null && context.getBooleanData(OPT_OPEN_EXEC_REPORT, getDefaultBool(OPT_OPEN_EXEC_REPORT))) {
                 return true;
             }
+
             if (BooleanUtils.toBoolean(System.getProperty(OPT_OPEN_EXEC_REPORT, getDefault(OPT_OPEN_EXEC_REPORT)))) {
                 return true;
             }
@@ -1034,6 +1093,9 @@ public final class NexialConst {
                    "https://nexiality.github.io/documentation/systemvars/index.html#nexial.outputToCloud " +
                    "for more details.";
         }
+
+        // reference by enclosing class to force initialization (possibly prior to any reference at runtime)
+        static void init() {}
     }
 
     // set by jenkins
@@ -1048,6 +1110,9 @@ public final class NexialConst {
         public static final String OPT_JENKINS_HOME = "JENKINS_HOME";
 
         private Jenkins() { }
+
+        // reference by enclosing class to force initialization (possibly prior to any reference at runtime)
+        static void init() {}
     }
 
     // nexial main exit status
@@ -1069,14 +1134,17 @@ public final class NexialConst {
         public static final String EXIT_STATUS = "nexial.exit.status";
 
         private ExitStatus() { }
+
+        // reference by enclosing class to force initialization (possibly prior to any reference at runtime)
+        static void init() {}
     }
 
     // directives on notes column
     public static final class FlowControls {
         public static final String OPT_STEP_BY_STEP = NAMESPACE + "stepByStep";
-        public static final String OPT_INSPECT_ON_PAUSE = registerData(NAMESPACE + "inspectOnPause", false);
+        public static final String OPT_INSPECT_ON_PAUSE = registerSystemVariable(NAMESPACE + "inspectOnPause", false);
         public static final String RESUME_FROM_PAUSE = ":resume";
-        public static final String OPT_PAUSE_ON_ERROR = registerData(NAMESPACE + "pauseOnError", false);
+        public static final String OPT_PAUSE_ON_ERROR = registerSystemVariable(NAMESPACE + "pauseOnError", false);
 
         public static final String ARG_PREFIX = "(";
         public static final String ARG_SUFFIX = ")";
@@ -1093,6 +1161,9 @@ public final class NexialConst {
             "(true|false|\\$\\{[^\\}]+\\}|\\!\\$\\{[^\\}]+\\}|not\\s+\\$\\{[^\\}]+\\})";
 
         private FlowControls() {}
+
+        // reference by enclosing class to force initialization (possibly prior to any reference at runtime)
+        static void init() {}
     }
 
     public static final class SoapUI {
@@ -1126,6 +1197,9 @@ public final class NexialConst {
         public static final String OPT_SOAPUI_STORE_RESP = NAMESPACE + "soapui.storeResponse";
 
         private SoapUI() {}
+
+        // reference by enclosing class to force initialization (possibly prior to any reference at runtime)
+        static void init() {}
     }
 
     public static final class PdfMeta {
@@ -1145,6 +1219,9 @@ public final class NexialConst {
         public static final String DESCRIPTION = "Description";
 
         private PdfMeta() {}
+
+        // reference by enclosing class to force initialization (possibly prior to any reference at runtime)
+        static void init() {}
     }
 
     public static final class Integration {
@@ -1152,24 +1229,29 @@ public final class NexialConst {
         public static final String TTS_PREFIX = NAMESPACE + "tts.";
         public static final String MAIL_PREFIX = NAMESPACE + "mail.";
         public static final String SMS_PREFIX = NAMESPACE + "sms.";
+
+        private Integration() {}
+
+        // reference by enclosing class to force initialization (possibly prior to any reference at runtime)
+        static void init() {}
     }
 
     public static final class Mailer {
-        public static final String MAIL_KEY_AUTH = MAIL_PREFIX + "smtp.auth";
-        public static final String MAIL_KEY_BCC = MAIL_PREFIX + "smtp.bcc";
-        public static final String MAIL_KEY_BUFF_SIZE = MAIL_PREFIX + "smtp.bufferSize";
-        public static final String MAIL_KEY_CC = MAIL_PREFIX + "smtp.cc";
-        public static final String MAIL_KEY_CONTENT_TYPE = MAIL_PREFIX + "smtp.contentType";
-        public static final String MAIL_KEY_DEBUG = MAIL_PREFIX + "smtp.debug";
-        public static final String MAIL_KEY_FROM = MAIL_PREFIX + "smtp.from";
-        public static final String MAIL_KEY_LOCALHOST = MAIL_PREFIX + "smtp.localhost";
-        public static final String MAIL_KEY_MAIL_HOST = MAIL_PREFIX + "smtp.host";
-        public static final String MAIL_KEY_MAIL_PORT = MAIL_PREFIX + "smtp.port";
-        public static final String MAIL_KEY_PASSWORD = MAIL_PREFIX + "smtp.password";
-        public static final String MAIL_KEY_PROTOCOL = MAIL_PREFIX + "transport.protocol";
-        public static final String MAIL_KEY_TLS_ENABLE = MAIL_PREFIX + "smtp.starttls.enable";
-        public static final String MAIL_KEY_USERNAME = MAIL_PREFIX + "smtp.username";
-        public static final String MAIL_KEY_XMAILER = MAIL_PREFIX + "header.xmail";
+        public static final String MAIL_KEY_AUTH = registerSystemVariable(MAIL_PREFIX + "smtp.auth");
+        public static final String MAIL_KEY_BCC = registerSystemVariable(MAIL_PREFIX + "smtp.bcc");
+        public static final String MAIL_KEY_BUFF_SIZE = registerSystemVariable(MAIL_PREFIX + "smtp.bufferSize");
+        public static final String MAIL_KEY_CC = registerSystemVariable(MAIL_PREFIX + "smtp.cc");
+        public static final String MAIL_KEY_CONTENT_TYPE = registerSystemVariable(MAIL_PREFIX + "smtp.contentType");
+        public static final String MAIL_KEY_DEBUG = registerSystemVariable(MAIL_PREFIX + "smtp.debug");
+        public static final String MAIL_KEY_FROM = registerSystemVariable(MAIL_PREFIX + "smtp.from");
+        public static final String MAIL_KEY_LOCALHOST = registerSystemVariable(MAIL_PREFIX + "smtp.localhost");
+        public static final String MAIL_KEY_MAIL_HOST = registerSystemVariable(MAIL_PREFIX + "smtp.host");
+        public static final String MAIL_KEY_MAIL_PORT = registerSystemVariable(MAIL_PREFIX + "smtp.port");
+        public static final String MAIL_KEY_PASSWORD = registerSystemVariable(MAIL_PREFIX + "smtp.password");
+        public static final String MAIL_KEY_PROTOCOL = registerSystemVariable(MAIL_PREFIX + "transport.protocol");
+        public static final String MAIL_KEY_TLS_ENABLE = registerSystemVariable(MAIL_PREFIX + "smtp.starttls.enable");
+        public static final String MAIL_KEY_USERNAME = registerSystemVariable(MAIL_PREFIX + "smtp.username");
+        public static final String MAIL_KEY_XMAILER = registerSystemVariable(MAIL_PREFIX + "header.xmail");
 
         // standalone smtp config
         public static final List<String> SMTP_KEYS = Arrays.asList(
@@ -1177,7 +1259,7 @@ public final class NexialConst {
             MAIL_KEY_AUTH, MAIL_KEY_DEBUG, MAIL_KEY_CONTENT_TYPE, MAIL_KEY_USERNAME, MAIL_KEY_PASSWORD, MAIL_KEY_FROM,
             MAIL_KEY_CC, MAIL_KEY_BCC, MAIL_KEY_XMAILER);
 
-        public static final String MAIL_KEY_MAIL_JNDI_URL = MAIL_PREFIX + "jndi.url";
+        public static final String MAIL_KEY_MAIL_JNDI_URL = registerSystemVariable(MAIL_PREFIX + "jndi.url");
         // jndi smtp config
         public static final List<String> JNDI_KEYS = Arrays.asList(
             MAIL_KEY_MAIL_JNDI_URL, INITIAL_CONTEXT_FACTORY, OBJECT_FACTORIES, STATE_FACTORIES,
@@ -1206,59 +1288,37 @@ public final class NexialConst {
                                         JNDI_KEYS), SES_KEYS);
 
         public static final String NOT_READY_PREFIX = "nexial mailer not enabled: ";
-        public static final String DOC_REF_SUFFIX = " Please check " +
-                                                    "https://nexiality.github.io/documentation/tipsandtricks/IntegratingNexialWithEmail.html" +
-                                                    " for more details";
-        public static final String JNDI_NOT_READY = NOT_READY_PREFIX + "missing required JNDI configurations." +
-                                                    DOC_REF_SUFFIX;
-        public static final String SMTP_NOT_READY = NOT_READY_PREFIX + "missing required smtp/imap configurations." +
-                                                    DOC_REF_SUFFIX;
-        public static final String SES_NOT_READY = NOT_READY_PREFIX + "missing required AWS SES configurations." +
-                                                   DOC_REF_SUFFIX;
-        public static final String MAILER_NOT_READY = NOT_READY_PREFIX +
-                                                      "unable to resolve any valid mailer configurations." +
-                                                      DOC_REF_SUFFIX;
+        public static final String DOC_REF_SUFFIX = " Please check https://nexiality.github.io/documentation/tipsandtricks/IntegratingNexialWithEmail.html for more details";
+        public static final String JNDI_NOT_READY = NOT_READY_PREFIX + "missing required JNDI configurations." + DOC_REF_SUFFIX;
+        public static final String SMTP_NOT_READY = NOT_READY_PREFIX + "missing required smtp/imap configurations." + DOC_REF_SUFFIX;
+        public static final String SES_NOT_READY = NOT_READY_PREFIX + "missing required AWS SES configurations." + DOC_REF_SUFFIX;
+        public static final String MAILER_NOT_READY = NOT_READY_PREFIX + "unable to resolve any valid mailer configurations." + DOC_REF_SUFFIX;
 
         private Mailer() {}
 
+        // reference by enclosing class to force initialization (possibly prior to any reference at runtime)
+        static void init() {}
     }
+
+    // @formatter:on
 
     private NexialConst() { }
 
-    public static <T> String registerData(String name, T value) {
-        if (StringUtils.isNotBlank(name) && value != null) { DEFAULTS.put(name, value); }
-        return name;
-    }
-
-    public static String getDefault(String name) {
-        return DEFAULTS.containsKey(name) ? String.valueOf(DEFAULTS.get(name)) : null;
-    }
-
-    public static boolean getDefaultBool(String name) {
-        if (!DEFAULTS.containsKey(name)) {
-            throw new IllegalArgumentException("No default configured for '" + name + "'");
-        }
-        return BooleanUtils.toBoolean(String.valueOf(DEFAULTS.get(name)));
-    }
-
-    public static int getDefaultInt(String name) {
-        if (!DEFAULTS.containsKey(name)) {
-            throw new IllegalArgumentException("No default value configured for '" + name + "'");
-        }
-        return NumberUtils.toInt(String.valueOf(DEFAULTS.get(name)));
-    }
-
-    public static long getDefaultLong(String name) {
-        if (!DEFAULTS.containsKey(name)) {
-            throw new IllegalArgumentException("No default configured for '" + name + "'");
-        }
-        return NumberUtils.toLong(String.valueOf(DEFAULTS.get(name)));
-    }
-
-    public static double getDefaultDouble(String name) {
-        if (!DEFAULTS.containsKey(name)) {
-            throw new IllegalArgumentException("No default configured for '" + name + "'");
-        }
-        return NumberUtils.toDouble(String.valueOf(DEFAULTS.get(name)));
+    static {
+        // warm up constant classes
+        ImageDiffColor.init();
+        AwsSettings.init();
+        NexialConst.BrowserStack.init();
+        NexialConst.CrossBrowserTesting.init();
+        Project.init();
+        CLI.init();
+        Data.init();
+        Jenkins.init();
+        ExitStatus.init();
+        FlowControls.init();
+        SoapUI.init();
+        PdfMeta.init();
+        Integration.init();
+        Mailer.init();
     }
 }

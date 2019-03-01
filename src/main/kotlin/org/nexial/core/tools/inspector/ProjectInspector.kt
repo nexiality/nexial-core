@@ -41,7 +41,8 @@ import java.util.stream.Collectors
 
 object ProjectInspector {
     private val md5 = MessageDigest.getInstance("MD5")
-    private val RESOURCES: Properties = ResourceUtils.loadProperties("org/nexial/core/tools/inspector/resources.properties")
+    private val RESOURCES: Properties =
+            ResourceUtils.loadProperties("org/nexial/core/tools/inspector/resources.properties")
 
     @JvmStatic
     fun main(args: Array<String>) {

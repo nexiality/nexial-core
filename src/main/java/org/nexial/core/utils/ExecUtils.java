@@ -43,6 +43,7 @@ import static org.nexial.core.NexialConst.Integration.*;
 import static org.nexial.core.NexialConst.Jenkins.*;
 import static org.nexial.core.NexialConst.*;
 import static org.nexial.core.NexialConst.Project.NEXIAL_HOME;
+import static org.nexial.core.SystemVariables.getDefault;
 
 public final class ExecUtils {
     public static final String PRODUCT = "nexial";

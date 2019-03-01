@@ -26,7 +26,7 @@ import org.nexial.core.utils.CheckUtils;
 import org.nexial.core.utils.OutputFileUtils;
 
 import static org.nexial.core.NexialConst.Data.OPT_EXPRESSION_READ_FILE_AS_IS;
-import static org.nexial.core.NexialConst.getDefaultBool;
+import static org.nexial.core.SystemVariables.getDefaultBool;
 
 public class ExpressionUtils {
     private ExpressionUtils() { }

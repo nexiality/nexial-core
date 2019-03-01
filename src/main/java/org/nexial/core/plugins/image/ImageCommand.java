@@ -28,7 +28,8 @@ import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.math.NumberUtils;
 import org.apache.commons.lang3.time.StopWatch;
 import org.nexial.commons.utils.RegexUtils;
-import org.nexial.core.NexialConst.*;
+import org.nexial.core.NexialConst.ImageDiffColor;
+import org.nexial.core.NexialConst.ImageType;
 import org.nexial.core.model.StepResult;
 import org.nexial.core.plugins.ForcefulTerminate;
 import org.nexial.core.plugins.base.BaseCommand;
@@ -38,7 +39,9 @@ import static java.awt.RenderingHints.*;
 import static java.awt.image.BufferedImage.*;
 import static java.io.File.separator;
 import static org.nexial.core.NexialConst.ImageType.png;
-import static org.nexial.core.NexialConst.*;
+import static org.nexial.core.NexialConst.OPT_IMAGE_DIFF_COLOR;
+import static org.nexial.core.NexialConst.OPT_IMAGE_TOLERANCE;
+import static org.nexial.core.SystemVariables.getDefault;
 import static org.nexial.core.utils.CheckUtils.*;
 
 public class ImageCommand extends BaseCommand implements ForcefulTerminate {
@@ -156,8 +159,7 @@ public class ImageCommand extends BaseCommand implements ForcefulTerminate {
         requiresReadableFile(baseline);
         requiresReadableFile(actual);
 
-        float imageTol = context.hasData(OPT_IMAGE_TOLERANCE) ?
-                         Float.parseFloat(context.getStringData(OPT_IMAGE_TOLERANCE)) : 0;
+        float imageTol = Float.parseFloat(context.getStringData(OPT_IMAGE_TOLERANCE, getDefault(OPT_IMAGE_TOLERANCE)));
 
         // get baseline image
         File baselineFile = new File(baseline);

@@ -68,7 +68,7 @@ import static org.apache.poi.ss.usermodel.CellType.*;
 import static org.apache.poi.ss.usermodel.Row.MissingCellPolicy.CREATE_NULL_AS_BLANK;
 import static org.apache.poi.ss.usermodel.Row.MissingCellPolicy.RETURN_BLANK_AS_NULL;
 import static org.nexial.core.NexialConst.Data.*;
-import static org.nexial.core.NexialConst.getDefault;
+import static org.nexial.core.SystemVariables.getDefault;
 import static org.nexial.core.excel.ExcelConfig.*;
 import static org.nexial.core.excel.ExcelConfig.StyleConfig.*;
 

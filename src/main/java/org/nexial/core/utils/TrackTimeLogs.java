@@ -35,7 +35,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import static org.nexial.core.NexialConst.Data.*;
-import static org.nexial.core.NexialConst.getDefault;
+import static org.nexial.core.SystemVariables.getDefault;
 import static org.nexial.core.model.FlowControl.Directive.TimeTrackEnd;
 import static org.nexial.core.model.FlowControl.Directive.TimeTrackStart;
 

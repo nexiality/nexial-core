@@ -58,7 +58,7 @@ class MD5Test {
         Assert.assertEquals(content, FileUtils.readFileToString(subject, utf8))
 
         // update content, keep length
-        Thread.sleep(minWaitTime)
+        Thread.sleep(minWaitTime * 3)
         FileUtils.write(subject, RandomStringUtils.randomAlphabetic(1024), utf8)
 
         val md5Hex3 = generateMD5(subject)

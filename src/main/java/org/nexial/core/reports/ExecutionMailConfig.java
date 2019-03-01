@@ -43,7 +43,7 @@ import static org.apache.commons.lang3.SystemUtils.USER_NAME;
 import static org.nexial.core.NexialConst.AwsSettings.*;
 import static org.nexial.core.NexialConst.Data.*;
 import static org.nexial.core.NexialConst.Mailer.*;
-import static org.nexial.core.NexialConst.getDefault;
+import static org.nexial.core.SystemVariables.getDefault;
 
 /**
  * central object to resolve and avail mail-related configuration for the purpose of sending execution-level report
@@ -163,8 +163,7 @@ public class ExecutionMailConfig {
         settings.setAssumeRoleSession(StringUtils.defaultString(configurations.get(SES_PREFIX + AWS_STS_ROLE_SESSION),
                                                                 ""));
         settings.setAssumeRoleDuration(
-            NumberUtils.toInt(StringUtils.defaultIfBlank(configurations.get(SES_PREFIX + AWS_STS_ROLE_DURATION),
-                                                         getDefault(AWS_STS_ROLE_DURATION))));
+            NumberUtils.toInt(StringUtils.defaultIfBlank(configurations.get(SES_PREFIX + AWS_STS_ROLE_DURATION), "900")));
         settings.setReplyTo(StringUtils.defaultString(configurations.get(SES_PREFIX + AWS_SES_REPLY_TO), ""));
         settings.setCc(StringUtils.defaultString(configurations.get(SES_PREFIX + AWS_SES_CC), ""));
         settings.setBcc(StringUtils.defaultString(configurations.get(SES_PREFIX + AWS_SES_BCC), ""));

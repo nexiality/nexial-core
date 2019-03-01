@@ -49,6 +49,8 @@ import com.google.gson.stream.MalformedJsonException;
 import static org.json.JSONObject.NULL;
 import static org.nexial.core.NexialConst.*;
 import static org.nexial.core.NexialConst.Data.*;
+import static org.nexial.core.SystemVariables.getDefault;
+import static org.nexial.core.SystemVariables.getDefaultBool;
 
 public class JsonTransformer<T extends JsonDataType> extends Transformer {
     private static final Map<String, Integer> FUNCTION_TO_PARAM_LIST = discoverFunctions(JsonTransformer.class);
