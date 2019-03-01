@@ -114,6 +114,7 @@ public class DesktopCommand extends BaseCommand
 
     @Override
     public boolean mustForcefullyTerminate() {
+        if (winiumDriver == null) { return false;}
         return getDriver() != null && context.getBooleanData(WINIUM_SERVICE_RUNNING);
     }
 
@@ -213,6 +214,7 @@ public class DesktopCommand extends BaseCommand
         try {
             session = DesktopSession.newInstance(appId, configLocation);
             syncSessionDataToContext(session);
+            winiumDriver = session.getDriver();
         } catch (IOException e) {
             return StepResult.fail("Error loading application " + appId + ": " + e.getMessage(), e);
         }
@@ -1334,14 +1336,17 @@ public class DesktopCommand extends BaseCommand
     }
 
     public StepResult closeApplication() {
-        // todo: fix to allow shutting down of winium driver with session as required (useful in the case of xxxByLocator commands)
         if (context != null) {
             CanTakeScreenshot agent = context.findCurrentScreenshotAgent();
             if (agent instanceof DesktopCommand) { context.clearScreenshotAgent(); }
         }
 
         DesktopSession session = getCurrentSession();
-        requiresNotNull(session, "No active desktop session found");
+        if (session == null) {
+            WiniumUtils.shutdownWinium(null, getDriver());
+            winiumDriver = null;
+            return StepResult.success();
+        }
 
         if (!WiniumUtils.isSoloMode()) {
             String msg = "not closing application due solo mode currently in effect";

@@ -279,7 +279,7 @@ public final class WiniumUtils {
     }
 
     public static void shutdownWinium(WiniumDriverService service, WiniumDriver driver) {
-        ConsoleUtils.log("shutdown down Winium...");
+        ConsoleUtils.log("shutdown Winium...");
         if (driver != null) {
             try {
                 driver.close();
