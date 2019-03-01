@@ -43,6 +43,7 @@ import org.springframework.jdbc.core.StatementCallback;
 import org.springframework.jdbc.core.support.JdbcDaoSupport;
 
 import static org.nexial.core.NexialConst.*;
+import static org.nexial.core.SystemVariables.getDefaultBool;
 
 /**
  * a <b>VERY</b> basic and stripped down version of data extraction via SQL statements or stored procedure.  This class

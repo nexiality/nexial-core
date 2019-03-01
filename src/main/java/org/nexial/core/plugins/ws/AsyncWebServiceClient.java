@@ -50,6 +50,7 @@ import org.nexial.core.utils.ConsoleUtils;
 import com.google.gson.JsonObject;
 
 import static org.nexial.core.NexialConst.*;
+import static org.nexial.core.SystemVariables.getDefaultInt;
 import static org.nexial.core.plugins.ws.NaiveConnectionSocketFactory.I_TRUST_EVERYONE;
 import static org.nexial.core.plugins.ws.NaiveConnectionSocketFactory.NOOP_HOST_VERIFIER;
 

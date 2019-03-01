@@ -23,14 +23,14 @@ import org.apache.commons.lang3.StringUtils
 import org.apache.commons.lang3.math.NumberUtils
 import org.nexial.core.IntegrationConfigException
 import org.nexial.core.NexialConst.AwsSettings.*
-import org.nexial.core.NexialConst.getDefaultInt
+import org.nexial.core.SystemVariables.getDefaultInt
 import org.nexial.core.model.ExecutionContext
 import org.nexial.core.utils.ConsoleUtils
 
 open class AwsSettings constructor(val accessKey: String, val secretKey: String, val region: Regions) {
     lateinit var assumeRoleArn: String
     lateinit var assumeRoleSession: String
-    var assumeRoleDuration = getDefaultInt(AWS_STS_ROLE_DURATION)
+    var assumeRoleDuration = 900
 }
 
 class AwsSesSettings constructor(accessKey: String, secretKey: String, region: Regions, val from: String) :
@@ -121,8 +121,7 @@ class AwsUtils {
         private fun <T : AwsSettings> configAssumeRole(settings: T, config: MutableMap<String, String>) {
             settings.assumeRoleArn = config[AWS_STS_ROLE_ARN] ?: ""
             settings.assumeRoleSession = config[AWS_STS_ROLE_SESSION] ?: ""
-            settings.assumeRoleDuration = NumberUtils.toInt(config[AWS_STS_ROLE_DURATION],
-                                                            getDefaultInt(AWS_STS_ROLE_DURATION))
+            settings.assumeRoleDuration = NumberUtils.toInt(config[AWS_STS_ROLE_DURATION], 900)
         }
 
         private fun resolveRegion(config: Map<String, String>) = if (StringUtils.isBlank(config[AWS_REGION])) {

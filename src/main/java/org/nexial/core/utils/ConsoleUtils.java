@@ -39,7 +39,7 @@ import org.slf4j.LoggerFactory;
 import org.slf4j.event.Level;
 
 import static org.nexial.core.NexialConst.FlowControls.*;
-import static org.nexial.core.NexialConst.getDefaultBool;
+import static org.nexial.core.SystemVariables.getDefaultBool;
 import static org.slf4j.event.Level.ERROR;
 import static org.slf4j.event.Level.INFO;
 

@@ -29,7 +29,7 @@ import org.nexial.core.ExecutionThread;
 import org.nexial.core.model.ExecutionContext;
 
 import static org.nexial.core.NexialConst.Data.TEXT_DELIM;
-import static org.nexial.core.NexialConst.getDefault;
+import static org.nexial.core.SystemVariables.getDefault;
 
 public class Array {
 

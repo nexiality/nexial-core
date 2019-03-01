@@ -71,6 +71,8 @@ import static org.nexial.core.NexialConst.*;
 import static org.nexial.core.NexialConst.Data.*;
 import static org.nexial.core.NexialConst.ExitStatus.*;
 import static org.nexial.core.NexialConst.Project.*;
+import static org.nexial.core.SystemVariables.getDefault;
+import static org.nexial.core.SystemVariables.getDefaultInt;
 import static org.nexial.core.excel.Excel.MIN_EXCEL_FILE_SIZE;
 import static org.nexial.core.excel.ExcelConfig.*;
 import static org.nexial.core.model.ExecutionSummary.ExecutionLevel.EXECUTION;
@@ -703,7 +705,7 @@ public class Nexial {
         try {
             for (int i = 0; i < executions.size(); i++) {
                 ExecutionDefinition exec = executions.get(i);
-                if (BooleanUtils.toBoolean(System.getProperty(LAST_PLAN_STEP, DEF_LAST_PLAN_STEP))) { break; }
+                if (BooleanUtils.toBoolean(System.getProperty(LAST_PLAN_STEP, getDefault(LAST_PLAN_STEP)))) { break; }
 
                 exec.setRunId(runId);
 

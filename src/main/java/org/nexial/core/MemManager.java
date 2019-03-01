@@ -34,6 +34,7 @@ import org.nexial.core.model.TestCase;
 import org.nexial.core.utils.ConsoleUtils;
 
 import static org.nexial.core.NexialConst.*;
+import static org.nexial.core.SystemVariables.getDefault;
 
 public class MemManager {
     private static final boolean MEM_MGMT_ENABLED =

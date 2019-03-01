@@ -23,6 +23,7 @@ import org.nexial.core.ExecutionThread;
 import org.nexial.core.model.ExecutionContext;
 
 import static org.nexial.core.NexialConst.OPT_EASY_STRING_COMPARE;
+import static org.nexial.core.SystemVariables.getDefaultBool;
 
 /**
  *
@@ -41,7 +42,8 @@ public abstract class EvaluatorBase implements Evaluator {
 
     protected boolean isLenientStringCompare() {
         ExecutionContext context = ExecutionThread.get();
-        return context != null && context.getBooleanData(OPT_EASY_STRING_COMPARE, false);
+        return context != null &&
+               context.getBooleanData(OPT_EASY_STRING_COMPARE, getDefaultBool(OPT_EASY_STRING_COMPARE));
     }
 
     protected abstract boolean evaluate(double lhs, double rhs) throws IncompatibleTypeException;

@@ -25,6 +25,7 @@
     <script src="http://nexiality.github.io/documentation/assets/report/execution_summary.js" onerror="externalResourceNotFound()"></script>
     <script src="http://nexiality.github.io/documentation/assets/project/project.js" onerror="externalResourceNotFound()"></script>
     <title></title>
+    <style id="nexial-project"></style>
 </head>
 <body>
 <div class="title"></div>
@@ -50,13 +51,14 @@
         <!--<i class="fas fa-chalkboard-teacher"></i>-->
 
         <div class="result-controls container-controls">
-            <i class="fas fa-toggle-on on" id="advice-toggle" onclick="toggleAdvice(this,'.data-table')" title="toggle the display of advices"><span>Advices</span></i>
+            <i class="fas fa-toggle-on on" id="advice-toggle" onclick="toggleAdvice(this)" title="toggle the display of advices"><span>Advices</span></i>
+            <i class="fas fa-toggle-on on" id="sysvar-toggle" onclick="toggleDataDefs(this)" title="toggle the display of System variables"><span>System Variables</span></i>
             |&nbsp;
-            <i class="fas fa-toggle-on on" id="data-step-toggle" onclick="toggleDataDefs(this,'.data-table .data-step')" title="toggle the display of data variables modified in test step"><span>test step</span></i>
-            <i class="fas fa-toggle-on on" id="data-command-toggle" onclick="toggleDataDefs(this,'.data-table .data-command')" title="toggle the display of data variables defined in batch file"><span>batch</span></i>
-            <i class="fas fa-toggle-on on" id="data-project-toggle" onclick="toggleDataDefs(this,'.data-table .data-project')" title="toggle the display of data variables defined in project.properties"><span>project.properties</span></i>
-            <i class="fas fa-toggle-on on" id="data-datasheet-toggle" onclick="toggleDataDefs(this,'.data-table .data-datasheet')" title="toggle the display of data variables defined in datasheet"><span>datasheet</span></i>
-            <i class="fas fa-toggle-on on" id="data-default-toggle" onclick="toggleDataDefs(this,'.data-table .data-default')" title="toggle the display of data variables defined in #default sheet"><span>#default</span></i>
+            <i class="fas fa-toggle-on on" id="data-step-toggle" onclick="toggleDataDefs(this)" title="toggle the display of data variables modified in test step"><span>test step</span></i>
+            <i class="fas fa-toggle-on on" id="data-command-toggle" onclick="toggleDataDefs(this)" title="toggle the display of data variables defined in batch file"><span>batch</span></i>
+            <i class="fas fa-toggle-on on" id="data-project-toggle" onclick="toggleDataDefs(this)" title="toggle the display of data variables defined in project.properties"><span>project.properties</span></i>
+            <i class="fas fa-toggle-on on" id="data-datasheet-toggle" onclick="toggleDataDefs(this)" title="toggle the display of data variables defined in datasheet"><span>datasheet</span></i>
+            <i class="fas fa-toggle-on on" id="data-default-toggle" onclick="toggleDataDefs(this)" title="toggle the display of data variables defined in #default sheet"><span>#default</span></i>
         </div>
     </div>
 

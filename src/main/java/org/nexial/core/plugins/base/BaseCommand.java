@@ -62,6 +62,7 @@ import static java.util.regex.Pattern.CASE_INSENSITIVE;
 import static org.nexial.core.NexialConst.*;
 import static org.nexial.core.NexialConst.Data.NULL;
 import static org.nexial.core.NexialConst.Data.toCloudIntegrationNotReadyMessage;
+import static org.nexial.core.SystemVariables.getDefaultBool;
 import static org.nexial.core.excel.ExcelConfig.MSG_PASS;
 import static org.nexial.core.excel.ext.CipherHelper.CRYPT_IND;
 import static org.nexial.core.plugins.base.IncrementStrategy.ALPHANUM;
@@ -1091,7 +1092,8 @@ public class BaseCommand implements NexialCommand {
         ExecutionContext context = ExecutionThread.get();
 
         boolean equals = seleniumEquals(expected, actual);
-        if (!equals && ExecutionContext.getSystemThenContextBooleanData(OPT_EASY_STRING_COMPARE, context, false)) {
+        if (!equals && ExecutionContext.getSystemThenContextBooleanData(OPT_EASY_STRING_COMPARE, context,
+                                                                        getDefaultBool(OPT_EASY_STRING_COMPARE))) {
             // not so fast.. could be one of those quarky IE issues..
             String lenientExpected = TextUtils.toOneLine(expected, true);
             String lenientActual = TextUtils.toOneLine(actual, true);

@@ -60,7 +60,7 @@ import static java.util.regex.Pattern.MULTILINE;
 import static org.nexial.core.NexialConst.DEF_CHARSET;
 import static org.nexial.core.NexialConst.Data.*;
 import static org.nexial.core.NexialConst.PdfMeta.*;
-import static org.nexial.core.NexialConst.getDefaultBool;
+import static org.nexial.core.SystemVariables.getDefaultBool;
 import static org.nexial.core.utils.CheckUtils.*;
 
 /**

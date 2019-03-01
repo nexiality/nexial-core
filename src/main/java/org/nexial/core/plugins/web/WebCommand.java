@@ -86,6 +86,7 @@ import static org.apache.commons.lang3.SystemUtils.IS_OS_MAC;
 import static org.nexial.core.NexialConst.BrowserType.safari;
 import static org.nexial.core.NexialConst.*;
 import static org.nexial.core.NexialConst.Data.*;
+import static org.nexial.core.SystemVariables.*;
 import static org.nexial.core.plugins.ws.WebServiceClient.hideAuthDetails;
 import static org.nexial.core.utils.CheckUtils.*;
 import static org.openqa.selenium.Keys.TAB;
@@ -129,7 +130,7 @@ public class WebCommand extends BaseCommand implements CanTakeScreenshot, CanLog
             browser.setProxy(proxy);
         }
 
-        if (!context.getBooleanData(OPT_DELAY_BROWSER, false)) { initWebDriver(); }
+        if (!context.getBooleanData(OPT_DELAY_BROWSER, getDefaultBool(OPT_DELAY_BROWSER))) { initWebDriver(); }
 
         ws = (WsCommand) context.findPlugin("ws");
         ws.init(context);
@@ -140,7 +141,8 @@ public class WebCommand extends BaseCommand implements CanTakeScreenshot, CanLog
         log("default browser stability wait time is " + browserStabilityWaitMs + " ms");
 
         // todo: consider this http://seleniumhq.github.io/selenium/docs/api/javascript/module/selenium-webdriver/lib/logging.html
-        logToBrowser = !browser.isRunChrome() && context.getBooleanData(OPT_BROWSER_CONSOLE_LOG, false);
+        logToBrowser = !browser.isRunChrome() &&
+                       context.getBooleanData(OPT_BROWSER_CONSOLE_LOG, getDefaultBool(OPT_BROWSER_CONSOLE_LOG));
 
         if (driver != null) {
             waiter = new FluentWait<>(driver).withTimeout(Duration.ofMillis(browserStabilityWaitMs))
@@ -514,7 +516,7 @@ public class WebCommand extends BaseCommand implements CanTakeScreenshot, CanLog
         }
     }
 
-    public StepResult assertIENavtiveMode() {
+    public StepResult assertIENativeMode() {
         //ie only functionality; not for chrome,ff,safari
         if (!browser.isRunIE()) { return StepResult.success("not applicable to non-IE browser"); }
         if (isIENativeMode()) {
@@ -875,7 +877,7 @@ public class WebCommand extends BaseCommand implements CanTakeScreenshot, CanLog
         String title = driver.getTitle();
         if (!StringUtils.contains(title, "Certificate Error: Navigation Blocked") &&
             !StringUtils.contains(title, "Untrusted Connection")) {
-            return StepResult.success("dismissInvalidCert(): Invalid certificat message not found " +
+            return StepResult.success("dismissInvalidCert(): Invalid certificate message not found " +
                                       browser);
         }
 
@@ -1709,40 +1711,6 @@ public class WebCommand extends BaseCommand implements CanTakeScreenshot, CanLog
         return true;
     }
 
-    // NO LONGER NEEDED SINCE FIREFOX DRIVER FIXED PREVIOUS ISSUE WITH MUTLI-SELECT
-    // protected StepResult jsSelect(String locator, String text) {
-    //     WebElement select = findElement(locator);
-    //
-    //     String msgPrefix = "Select '" + locator + "'";
-    //
-    //     if (select == null) { throw new NoSuchElementException(msgPrefix + " not found."); }
-    //
-    //     ConsoleUtils.log("selecting option via JavaScript because " + browser.getBrowserType() +
-    //                      " does not support native automation on SELECT");
-    //
-    //     if (StringUtils.isBlank(text)) {
-    //         String js = "var options = arguments[0].selectedOptions; " +
-    //                     "for (var i = 0; i < elements.length; i++) { elements[i].selected = false; }";
-    //         jsExecutor.executeScript(js, select);
-    //         return StepResult.success("all options are deselected from " + msgPrefix);
-    //     }
-    //
-    //     List<WebElement> options =
-    //         select.findElements(By.xpath(".//option[normalize-space(.) = " + Quotes.escape(text) + "]"));
-    //     if (CollectionUtils.isEmpty(options)) {
-    //         return StepResult.fail(msgPrefix + " does not contain OPTION '" + text + "'");
-    //     }
-    //
-    //     boolean isMultiple = BooleanUtils.toBoolean(select.getAttribute("multiple"));
-    //     String jsClickOption = "arguments[0].selected = true; arguments[1].dispatchEvent(new Event('change'));";
-    //     for (WebElement option : options) {
-    //         jsExecutor.executeScript(jsClickOption, option, select);
-    //         if (!isMultiple) { break; }
-    //     }
-    //
-    //     return StepResult.success(msgPrefix + " OPTION(s) with text '" + text + "' selected");
-    // }
-
     protected StepResult scrollTo(String locator, Locatable element) {
         try {
             boolean success = scrollTo(element);
@@ -2213,7 +2181,7 @@ public class WebCommand extends BaseCommand implements CanTakeScreenshot, CanLog
         }
 
         int successCount = 0;
-        int speed = context.getIntData(OPT_WAIT_SPEED, BROWSER_STABILITY_COMPARE_TOLERANCE);
+        int speed = context.getIntData(OPT_WAIT_SPEED, getDefaultInt(OPT_WAIT_SPEED));
         long endTime = System.currentTimeMillis() + maxWait;
 
         try {

@@ -60,7 +60,7 @@ import static javax.mail.Message.RecipientType.*;
 import static org.nexial.core.NexialConst.Data.*;
 import static org.nexial.core.NexialConst.Mailer.MAIL_KEY_CONTENT_TYPE;
 import static org.nexial.core.NexialConst.Mailer.MAIL_KEY_FROM;
-import static org.nexial.core.NexialConst.getDefault;
+import static org.nexial.core.SystemVariables.getDefault;
 
 public class NexialMailer implements ExecutionNotifier {
     private ExecutionContext context;

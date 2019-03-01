@@ -63,6 +63,8 @@ import static java.io.File.separatorChar;
 import static java.lang.System.lineSeparator;
 import static org.nexial.core.NexialConst.*;
 import static org.nexial.core.NexialConst.Data.*;
+import static org.nexial.core.SystemVariables.getDefault;
+import static org.nexial.core.SystemVariables.getDefaultBool;
 import static org.nexial.core.plugins.io.ComparisonResult.*;
 import static org.nexial.core.plugins.io.IoAction.copy;
 import static org.nexial.core.plugins.io.IoAction.move;
@@ -933,7 +935,7 @@ public class IoCommand extends BaseCommand {
         if (StringUtils.isEmpty(content)) { return content; }
 
         String eol;
-        String eolConfig = context.getStringData(OPT_IO_EOL_CONFIG, EOL_CONFIG_DEF);
+        String eolConfig = context.getStringData(OPT_IO_EOL_CONFIG, getDefault(OPT_IO_EOL_CONFIG));
         switch (eolConfig) {
             case EOL_CONFIG_AS_IS: {
                 eol = "";

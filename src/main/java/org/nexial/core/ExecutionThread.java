@@ -42,6 +42,8 @@ import org.nexial.core.utils.ExecutionLogger;
 import static org.nexial.core.NexialConst.Data.*;
 import static org.nexial.core.NexialConst.*;
 import static org.nexial.core.NexialConst.Project.appendLog;
+import static org.nexial.core.SystemVariables.getDefault;
+import static org.nexial.core.SystemVariables.getDefaultBool;
 import static org.nexial.core.model.ExecutionEvent.*;
 import static org.nexial.core.model.ExecutionSummary.ExecutionLevel.ITERATION;
 import static org.nexial.core.model.ExecutionSummary.ExecutionLevel.SCRIPT;
@@ -431,7 +433,7 @@ public final class ExecutionThread extends Thread {
         context.getExecutionEventListener().onScriptComplete();
 
         if (context.hasData(LAST_PLAN_STEP)) {
-            System.setProperty(LAST_PLAN_STEP, context.getStringData(LAST_PLAN_STEP, DEF_LAST_PLAN_STEP));
+            System.setProperty(LAST_PLAN_STEP, context.getStringData(LAST_PLAN_STEP, getDefault(LAST_PLAN_STEP)));
         }
 
         if (MapUtils.isNotEmpty(intraExecutionData)) { intraExecutionData.remove(LAST_ITERATION); }

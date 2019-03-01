@@ -82,8 +82,10 @@ import static org.apache.commons.lang3.SystemUtils.USER_NAME;
 import static org.nexial.commons.utils.EnvUtils.enforceUnixEOL;
 import static org.nexial.core.NexialConst.*;
 import static org.nexial.core.NexialConst.Data.*;
-import static org.nexial.core.NexialConst.FlowControls.*;
+import static org.nexial.core.NexialConst.FlowControls.OPT_PAUSE_ON_ERROR;
+import static org.nexial.core.NexialConst.FlowControls.OPT_STEP_BY_STEP;
 import static org.nexial.core.NexialConst.Project.NEXIAL_HOME;
+import static org.nexial.core.SystemVariables.*;
 import static org.nexial.core.excel.ext.CipherHelper.CRYPT_IND;
 
 /**
@@ -386,7 +388,9 @@ public class ExecutionContext {
 
     public ExecutionEventListener getExecutionEventListener() { return executionEventListener; }
 
-    public boolean isScreenshotOnError() { return getBooleanData(OPT_SCREENSHOT_ON_ERROR, false); }
+    public boolean isScreenshotOnError() {
+        return getBooleanData(OPT_SCREENSHOT_ON_ERROR, getDefaultBool(OPT_SCREENSHOT_ON_ERROR));
+    }
 
     public void registerScreenshotAgent(CanTakeScreenshot agent) { screenshotAgent = agent; }
 
@@ -398,7 +402,7 @@ public class ExecutionContext {
         return getBooleanData(OPT_INTERACTIVE, false) && !ExecUtils.isRunningInZeroTouchEnv();
     }
 
-    public boolean isFailFast() {return getBooleanData(FAIL_FAST, getDefaultBool(FAIL_FAST)) && !isInteractiveMode();}
+    public boolean isFailFast() {return getBooleanData(FAIL_FAST, getDefaultBool(FAIL_FAST)) && !isInteractiveMode(); }
 
     /** Evaluate Page Source Stability Required */
     public boolean isPageSourceStabilityEnforced() {
@@ -455,7 +459,9 @@ public class ExecutionContext {
 
     public boolean isVerbose() { return getBooleanData(VERBOSE); }
 
-    public boolean isLenientStringCompare() { return getBooleanData(OPT_EASY_STRING_COMPARE, true); }
+    public boolean isLenientStringCompare() {
+        return getBooleanData(OPT_EASY_STRING_COMPARE, getDefaultBool(OPT_EASY_STRING_COMPARE));
+    }
 
     public boolean isProxyRequired() { return getBooleanData(OPT_PROXY_REQUIRED, false); }
 

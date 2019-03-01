@@ -54,6 +54,7 @@ import static org.nexial.core.NexialConst.*;
 import static org.nexial.core.NexialConst.Data.*;
 import static org.nexial.core.NexialConst.Project.NEXIAL_HOME;
 import static org.nexial.core.NexialConst.Project.NEXIAL_WINDOWS_BIN_REL_PATH;
+import static org.nexial.core.SystemVariables.getDefaultBool;
 import static org.nexial.core.utils.WebDriverUtils.*;
 import static org.openqa.selenium.winium.WiniumDriverService.*;
 
@@ -343,7 +344,8 @@ public final class WiniumUtils {
 
     protected static boolean joinExistingWiniumSession() {
         ExecutionContext context = ExecutionThread.get();
-        boolean joinExisting = ExecutionContext.getSystemThenContextBooleanData(WINIUM_JOIN, context, false);
+        boolean joinExisting = ExecutionContext.getSystemThenContextBooleanData(WINIUM_JOIN, context,
+                                                                                getDefaultBool(WINIUM_JOIN));
         if (!joinExisting) { return false; }
 
         deriveWiniumPort(context);
@@ -484,7 +486,8 @@ public final class WiniumUtils {
 
         //options.setKeyboardSimulator(BasedOnWindowsFormsSendKeysClass);
         ExecutionContext context = ExecutionThread.get();
-        boolean joinExisting = ExecutionContext.getSystemThenContextBooleanData(WINIUM_JOIN, context, false);
+        boolean joinExisting = ExecutionContext.getSystemThenContextBooleanData(WINIUM_JOIN, context,
+                                                                                getDefaultBool(WINIUM_JOIN));
         options.setDebugConnectToRunningApp(joinExisting);
 
         return options;
