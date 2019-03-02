@@ -169,9 +169,9 @@ public class ExecutionMailConfig {
         settings.setBcc(StringUtils.defaultString(configurations.get(SES_PREFIX + AWS_SES_BCC), ""));
         settings.setConfigurationSetName(StringUtils.defaultString(configurations.get(SES_PREFIX + AWS_SES_CONFIG_SET),
                                                                    ""));
-        settings.setXmailer(StringUtils.defaultIfBlank(
-            configurations.get(SES_PREFIX + AWS_XMAILER),
-            ExecUtils.deriveJarManifest() + "/" + USER_NAME + "@" + EnvUtils.getHostName()));
+        settings.setXmailer(
+            StringUtils.defaultIfBlank(configurations.get(SES_PREFIX + AWS_XMAILER),
+                                       ExecUtils.deriveJarManifest() + "/" + USER_NAME + "@" + EnvUtils.getHostName()));
 
         return settings;
     }

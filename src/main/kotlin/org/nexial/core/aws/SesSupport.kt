@@ -22,8 +22,11 @@ import com.amazonaws.services.simpleemail.AmazonSimpleEmailServiceAsyncClientBui
 import com.amazonaws.services.simpleemail.model.*
 import org.apache.commons.collections4.CollectionUtils
 import org.apache.commons.lang3.StringUtils
+import org.jsoup.Jsoup
 import org.nexial.core.NexialConst.DEF_FILE_ENCODING
 import org.nexial.core.utils.ConsoleUtils
+import java.util.regex.Pattern
+import java.util.regex.Pattern.DOTALL
 import javax.validation.constraints.NotNull
 
 private const val MSG_UNVERIFIED_DOMAIN = "\tCheck the target email address(es) and ensure the specified mail\n" +
@@ -33,6 +36,7 @@ private const val MSG_UNVERIFIED_DOMAIN = "\tCheck the target email address(es) 
 private const val ERR_UNVERIFIED_DOMAIN = "Domain contains illegal character"
 private const val HTML_FOOTER_PREFIX = "<br/><br/><div style=\"text-align:right;font-size:9pt;color:#aaa\">"
 private const val HTML_FOOTER_POSTFIX = "</div><br/>"
+private val REGEX_HAS_TAG: Pattern = Pattern.compile(".*<[^>]+>.*", DOTALL)
 
 class SesSupport : AwsSupport() {
 
@@ -56,9 +60,8 @@ class SesSupport : AwsSupport() {
         if (StringUtils.isBlank(config.from)) throw IllegalArgumentException("from address is required")
         if (CollectionUtils.isEmpty(config.to)) throw IllegalArgumentException("to address is required")
         if (StringUtils.isBlank(config.subject)) throw IllegalArgumentException("subject is required")
-        if (StringUtils.isBlank(config.html) && StringUtils.isBlank(config.plainText)) {
+        if (StringUtils.isBlank(config.html) && StringUtils.isBlank(config.plainText))
             throw IllegalArgumentException("Either HTML or plain text email content is required")
-        }
 
         // here we go
         val request = SendEmailRequest(config.from, toDestination(config), toMessage(config, toSubject(config)))
@@ -97,10 +100,20 @@ class SesSupport : AwsSupport() {
         val body = Body()
 
         val xmailer = StringUtils.defaultIfEmpty(config.xmailer, "")
+
         if (StringUtils.isNotBlank(config.html)) {
-            body.withHtml(Content().withCharset(DEF_FILE_ENCODING)
-                              .withData("${config.html}\n$HTML_FOOTER_PREFIX$xmailer$HTML_FOOTER_POSTFIX"))
+            val footer = "$HTML_FOOTER_PREFIX$xmailer$HTML_FOOTER_POSTFIX"
+            val content = if (REGEX_HAS_TAG.matcher(config.html).matches()) {
+                val document = Jsoup.parse(config.html)
+                document.body().append(footer)
+                document.html()
+            } else {
+                "<html><body>${config.html}\n$footer</body></html>"
+            }
+
+            body.withHtml(Content().withCharset(DEF_FILE_ENCODING).withData(content))
         }
+
         if (StringUtils.isNotBlank(config.plainText)) {
             body.withText(Content().withCharset(DEF_FILE_ENCODING).withData("${config.plainText}\n\n\n\n$xmailer"))
         }

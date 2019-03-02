@@ -997,8 +997,6 @@ public final class NexialConst {
         public static final int MAX_TTS_LENGTH = 500;
         public static final String NEXIAL_LOG_PREFIX = "nexial-";
         public static final String EVENT_CONFIG_SEP = "|";
-        // todo: remove
-        public static final String OPT_NOTIFY_AS_HTML = registerSystemVariable(NAMESPACE + "notifyAsHTML", false);
 
         // common mime types
         public static final String MIME_PLAIN = "text/plain";

@@ -43,7 +43,7 @@ class SesCommand : BaseCommand() {
         requiresNotBlank(subject, "Invalid subject", subject)
         requiresNotBlank(body, "Invalid mail content", body)
 
-        var content = OutputFileUtils.resolveContent(body, context, false)
+        val content = OutputFileUtils.resolveContent(body, context, false)
         val delim = context.textDelim
 
         try {

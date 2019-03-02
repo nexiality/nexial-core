@@ -26,7 +26,6 @@ import org.nexial.core.utils.ConsoleUtils
 
 class ExecutionEventListener {
     lateinit var context: ExecutionContext
-    lateinit var mailTagLine: String
     var mailIncludeMeta: Boolean = false
     var smsIncludeMeta: Boolean = false
 
@@ -64,12 +63,11 @@ class ExecutionEventListener {
 
         when (notifyPrefix) {
             TTS_PREFIX     -> TtsNotification(context, event, notifyText).perform()
-            SMS_PREFIX     -> SmsNotification(context,
-                                              event,
-                                              notifyText).includeExecMeta(smsIncludeMeta).invoke().perform()
+            SMS_PREFIX     -> SmsNotification(context, event, notifyText)
+                .includeExecMeta(smsIncludeMeta).invoke().perform()
             AUDIO_PREFIX   -> AudioNotification(context, event, notifyText).perform()
             EMAIL_PREFIX   -> EmailNotification(context, event, notifyText)
-                .mailTagLine(mailTagLine).invoke().includeExecMeta(mailIncludeMeta).invoke().perform()
+                .includeExecMeta(mailIncludeMeta).invoke().perform()
             CONSOLE_PREFIX -> ConsoleNotification(context, event, notifyText).perform()
             else           -> ConsoleUtils.error(context.runId, "Unknown event notification: " + notifyConfig!!)
         }

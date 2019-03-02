@@ -20,7 +20,6 @@ import org.apache.commons.collections4.CollectionUtils
 import org.apache.commons.lang3.BooleanUtils
 import org.apache.commons.lang3.StringUtils
 import org.apache.commons.lang3.SystemUtils.USER_NAME
-import org.jsoup.Jsoup
 import org.nexial.commons.utils.EnvUtils
 import org.nexial.commons.utils.TextUtils
 import org.nexial.core.IntegrationConfigException
@@ -30,8 +29,6 @@ import org.nexial.core.model.ExecutionEvent.ExecutionPause
 import org.nexial.core.utils.ConsoleUtils
 import org.nexial.core.utils.ExecUtils
 import org.nexial.core.utils.OutputFileUtils
-import java.util.regex.Pattern
-import java.util.regex.Pattern.DOTALL
 import javax.mail.MessagingException
 
 abstract class EventNotification(val context: ExecutionContext,
@@ -56,32 +53,15 @@ abstract class EventNotification(val context: ExecutionContext,
         ConsoleUtils.log(msgId, "$event - $data")
     }
 
-    internal fun gatherMeta(): String = "From ${StringUtils.defaultString(USER_NAME, "unknown")}@" +
-                                        "${StringUtils.upperCase(EnvUtils.getHostName())} using " +
-                                        ExecUtils.deriveJarManifest()
-
-    internal fun resolveMimeType() = Companion.resolveMimeType(context)
-
-    companion object {
-        fun resolveMimeType(context: ExecutionContext?): String {
-            val asHtml = context?.getBooleanData(OPT_NOTIFY_AS_HTML, false)
-                         ?: BooleanUtils.toBoolean(System.getProperty(OPT_NOTIFY_AS_HTML, "false"))
-            return if (asHtml) MIME_HTML else MIME_PLAIN
-        }
-    }
+    internal fun gatherMeta(): String =
+            ExecUtils.deriveJarManifest() +
+            "/${StringUtils.defaultString(USER_NAME, "unknown")}@${StringUtils.upperCase(EnvUtils.getHostName())}"
 }
 
 class EmailNotification(context: ExecutionContext, event: ExecutionEvent, data: String) :
         EventNotification(context, event, data, true) {
 
-    private var mailTagLine = "~ powered by nexial ~"
-    private val patternHasTag: Pattern = Pattern.compile(".*<[^>]+>.*", DOTALL)
     private lateinit var mailData: MailData
-
-    fun mailTagLine(mailTagLine: String) = {
-        this.mailTagLine = mailTagLine
-        this
-    }
 
     override fun parse() {
         val recipientList = TextUtils.toList(StringUtils.substringBefore(data, EVENT_CONFIG_SEP),
@@ -93,7 +73,7 @@ class EmailNotification(context: ExecutionContext, event: ExecutionEvent, data: 
         }
 
         val content = OutputFileUtils.resolveContent(
-            StringUtils.trim(StringUtils.substringAfterLast(data, EVENT_CONFIG_SEP)), context, false)
+                StringUtils.trim(StringUtils.substringAfter(data, EVENT_CONFIG_SEP)), context, false)
         if (StringUtils.isBlank(content)) {
             logSkipping("no content to sent")
             return
@@ -103,65 +83,25 @@ class EmailNotification(context: ExecutionContext, event: ExecutionEvent, data: 
     }
 
     private fun configureMailData(recipientList: MutableList<String>, content: String): MailData {
-        val mailConfigs = TextUtils.toMap(data, EVENT_CONFIG_SEP, "=")
-        var content = content
+        var body = content
         var subject = MAIL_NOTIF_SUBJECT_PREFIX + event.description
 
-        mailData = MailData.newInstance(resolveMimeType())
+        mailData = MailData()
 
-        mailConfigs.forEach { (key, value) ->
+        TextUtils.toMap(content, EVENT_CONFIG_SEP, "=").forEach { (key, value) ->
             when (key) {
                 "cc"      -> mailData.ccAddr = TextUtils.toList(value, context.textDelim, true)
-
                 "bcc"     -> mailData.bccAddr = TextUtils.toList(value, context.textDelim, true)
-
                 "subject" -> subject = context.replaceTokens(value)
-
                 "from"    -> mailData.fromAddr = value
-
-                "html"    -> {
-                    val asHTML = value.toLowerCase() == "yes"
-                    context.setData(OPT_NOTIFY_AS_HTML, asHTML)
-                    mailData.mimeType = if (asHTML) MIME_HTML else MIME_PLAIN
-                }
-
-                "footer"  -> mailData.isFooter = value.toLowerCase() == "yes"
-
-                "body"    -> content = OutputFileUtils.resolveContent(StringUtils.trim(value), context, false)
+                "html"    -> mailData.mimeType = if (BooleanUtils.toBoolean(value)) MIME_HTML else MIME_PLAIN
+                "footer"  -> mailData.isFooter = BooleanUtils.toBoolean(value.toLowerCase())
+                "body"    -> body = OutputFileUtils.resolveContent(StringUtils.trim(value), context, false)
+                else      -> ConsoleUtils.error("Unknown configuration for email notification: $key")
             }
         }
 
-        val mailContent = handleExecMetadata(content)
-
-        return mailData.setToAddr(recipientList)
-            .setSubject(subject)
-            .setContent(mailContent)
-    }
-
-    internal fun handleExecMetadata(content: String): String {
-        val asHTML = context.getBooleanData(OPT_NOTIFY_AS_HTML, false)
-        val execMeta = if (includeExecMeta) {
-            if (asHTML) {
-                "<br/><div style=\"font-weight:10pt\">${gatherMeta()}</div>"
-            } else {
-                gatherMeta()
-            }
-        } else {
-            ""
-        }
-
-        if (!asHTML) return "$content\n$execMeta\n$mailTagLine\n"
-
-        // see if we need to add basic HTML tags
-        val footer = "$execMeta<br/><div style=\"font-size:9pt\">$mailTagLine</div><br/>"
-        return if (patternHasTag.matcher(content).matches()) {
-            val document = Jsoup.parse(content)
-            val body = document.body()
-            body.append(footer)
-            document.html()
-        } else {
-            "<html><body>$content$footer</body></html>"
-        }
+        return mailData.setToAddr(recipientList).setSubject(subject).setContent(body)
     }
 
     override fun perform() {
@@ -169,6 +109,11 @@ class EmailNotification(context: ExecutionContext, event: ExecutionEvent, data: 
         val mailer = context.getNexialMailer()
         if (mailer == null) {
             logSkipping("nexial mailer not configured for notification")
+            return
+        }
+
+        if (StringUtils.isBlank(mailData.content)) {
+            logSkipping("no mail content to send")
             return
         }
 
@@ -187,11 +132,34 @@ class SmsNotification(context: ExecutionContext, event: ExecutionEvent, data: St
     private lateinit var text: String
 
     override fun parse() {
-        val phone = StringUtils.substringBefore(data, EVENT_CONFIG_SEP)
-        phones = TextUtils.toList(phone, context.textDelim, true)
+        val sections = TextUtils.toList(data, EVENT_CONFIG_SEP, false)
+        if (sections.isEmpty() || sections.size < 2) {
+            logSkipping("invalid configuration for SMS notification: $data")
+            return
+        }
 
-        text = StringUtils.substringAfter(data, EVENT_CONFIG_SEP) +
-               if (includeExecMeta) "\n\n" + gatherMeta() else ""
+        phones = TextUtils.toList(sections[0], context.textDelim, true)
+
+        if (sections.size == 2) {
+            text = sections[1]
+        } else {
+            sections.removeAt(0)
+            val configs = TextUtils.toMap("=", *sections.toTypedArray())
+            if (configs == null || configs.isEmpty()) {
+                logSkipping("invalid configuration for SMS notification: $data")
+                return
+            }
+
+            configs.forEach { (key, value) ->
+                when (key) {
+                    "footer" -> includeExecMeta = BooleanUtils.toBoolean(value)
+                    "text"   -> text = value
+                    else     -> ConsoleUtils.error("Unknown configuration for SMS notification: $key=$value")
+                }
+            }
+        }
+
+        text += if (includeExecMeta) "\n\n" + gatherMeta() else ""
     }
 
     override fun perform() {

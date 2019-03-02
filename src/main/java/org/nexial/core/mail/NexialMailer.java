@@ -122,10 +122,9 @@ public class NexialMailer implements ExecutionNotifier {
         engineContext.setVariable("summary", summary);
 
         MailData mailData =
-            MailData.newInstance(MIME_HTML)
-                    .setToAddr(resolveRecipients())
-                    .setSubject(MAIL_RESULT_SUBJECT_PREFIX + StringUtils.removeEnd(subject.toString(), ", "))
-                    .setContent(mailTemplateEngine.process(mailTemplate, engineContext));
+            new MailData().setToAddr(resolveRecipients())
+                          .setSubject(MAIL_RESULT_SUBJECT_PREFIX + StringUtils.removeEnd(subject.toString(), ", "))
+                          .setContent(mailTemplateEngine.process(mailTemplate, engineContext));
 
         try {
             sendMail(mailData);

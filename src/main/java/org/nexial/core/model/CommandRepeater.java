@@ -91,6 +91,7 @@ public class CommandRepeater {
 
                 TestStep testStep = steps.get(i);
                 ExecutionContext context = testStep.context;
+                ExecutionLogger logger = context.getLogger();
 
                 TrackTimeLogs trackTimeLogs = context.getTrackTimeLogs();
                 trackTimeLogs.checkStartTracking(context, testStep);
@@ -99,7 +100,8 @@ public class CommandRepeater {
                 try {
                     context.setCurrentTestStep(testStep);
                     result = testStep.invokeCommand();
-                    context.setData(OPT_LAST_OUTCOME, result.isSuccess());
+                    boolean succeed = result.isSuccess();
+                    context.setData(OPT_LAST_OUTCOME, succeed);
 
                     if (context.isBreakCurrentIteration()) {
                         context.logCurrentStep("test stopping due to failure on break-loop condition: " +
@@ -110,12 +112,21 @@ public class CommandRepeater {
                     if (i == 0) {
                         // first command is always an assertion.
                         // if this command PASS, then we've reached the condition to exit the loop
-                        if (result.isSuccess()) {
+                        if (succeed) {
                             result = StepResult.success("repeat-until execution completed");
                             return result;
+                        } else {
+                            // else failure means continue... no sweat
+                            logger.log(testStep, "[repeat-until] condition not met; loop proceeds");
                         }
-                        // else failure means continue... no sweat
                     } else {
+                        logger.log(testStep,
+                                   "[repeat-until] " +
+                                   (succeed ?
+                                    MSG_PASS + result.getMessage() :
+                                    MSG_FAIL + result.getMessage() + "; " + FAIL_FAST + "=" + context.isFailFast() +
+                                    "; " + OPT_LAST_OUTCOME + "=false"));
+
                         // evaluate if this is TRULY a failure, using result.failed() is not accurate
                         // if (result.failed()) {
                         if (result.isError()) {

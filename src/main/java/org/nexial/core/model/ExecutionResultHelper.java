@@ -65,8 +65,26 @@ public final class ExecutionResultHelper {
             String name = Excel.getCellValue(cellName);
 
             XSSFCell cellValue = row.getCell(1, CREATE_NULL_AS_BLANK);
+
             if (context.hasData(name)) {
-                cellValue.setCellValue(CellTextReader.readValue(context.getStringData(name)));
+                // use try-catch here in case we run into NPE or RTE when substituting `name`
+                String value;
+                try {
+                    value = CellTextReader.readValue(context.getStringData(name));
+                } catch (RuntimeException e) {
+                    String error;
+                    if (e.getCause() != null) {
+                        error = e.getCause().getMessage();
+                    } else {
+                        error = e.getMessage();
+                    }
+                    ConsoleUtils.error("Error while evaluating '" + name + "': " + error);
+
+                    value = name;
+                }
+
+                // this might not be fully expanded/substituted as the above try-catch block is prevent RTE to surface
+                cellValue.setCellValue(value);
                 // cellValue.setCellStyle(styleTestDataValue);
             }
         });

@@ -65,7 +65,6 @@
     />
 
     <bean id="executionEventListener" class="org.nexial.core.model.ExecutionEventListener"
-          p:mailTagLine="~ powered by nexial ~"
           p:mailIncludeMeta="false"
           p:smsIncludeMeta="false"
     />

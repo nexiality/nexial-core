@@ -20,7 +20,10 @@ import java.io.File;
 import java.io.Serializable;
 import java.util.List;
 
+import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.builder.ToStringBuilder;
+
+import static org.nexial.core.NexialConst.Data.MIME_HTML;
 
 public class MailData implements Serializable {
     private List<String> toAddr;
@@ -33,19 +36,13 @@ public class MailData implements Serializable {
     private List<File> attachments;
     private String mimeType;
 
-    private transient boolean footer = true;
+    private transient boolean footer = false;
 
     public boolean isFooter() { return footer; }
 
     public MailData setFooter(boolean footer) {
         this.footer = footer;
         return this;
-    }
-
-    public static MailData newInstance(String mimeType) {
-        MailData data = new MailData();
-        data.mimeType = mimeType;
-        return data;
     }
 
     public List<String> getToAddr() { return toAddr; }
@@ -110,6 +107,8 @@ public class MailData implements Serializable {
         this.mimeType = mimeType;
         return this;
     }
+
+    public boolean isHTML() { return StringUtils.equals(MIME_HTML, mimeType); }
 
     @Override
     public String toString() {

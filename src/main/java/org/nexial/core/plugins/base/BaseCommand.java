@@ -510,7 +510,7 @@ public class BaseCommand implements NexialCommand {
             return StepResult.success("All items in 'expected' are found in 'array'");
         }
 
-        return StepResult.fail("Not all items in 'expected' are found in 'array': " + expectedList);
+        return StepResult.fail("Not all items in 'expected' are found in 'array': " + expected);
     }
 
     /** assert that {@code array} DOES NOT contains any items in {@code expected}. */
