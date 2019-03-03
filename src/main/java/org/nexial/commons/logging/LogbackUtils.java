@@ -41,6 +41,7 @@ public final class LogbackUtils {
      * setup env variable for logback configuration so that logs are going to the right file/path.
      */
     public static void registerLogDirectory(String outputPath) {
+        // output path should contain run id now..
         File path = new File(outputPath);
         if (!path.isDirectory() || !path.exists()) { path.mkdirs(); }
 
@@ -49,9 +50,7 @@ public final class LogbackUtils {
         EXEC_LOG_PATH[0] = newLogDirectory;
         if (!StringUtils.equals(currentLogDirectory, newLogDirectory)) {
             System.setProperty(TEST_LOG_PATH, newLogDirectory);
-            if (StringUtils.isBlank(System.getProperty(THIRD_PARTY_LOG_PATH))) {
-                System.setProperty(THIRD_PARTY_LOG_PATH, newLogDirectory);
-            }
+            System.setProperty(THIRD_PARTY_LOG_PATH, newLogDirectory);
             reloadDefaultConfig();
         }
     }

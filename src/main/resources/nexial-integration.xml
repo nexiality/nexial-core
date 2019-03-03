@@ -32,6 +32,7 @@
         <constructor-arg value="true"/>
     </bean>
 
+    <!-- system values derived via setup -->
     <bean id="otc" class="org.nexial.core.aws.NexialS3Helper" init-method="init"
           p:encoding="UTF-8"
           p:outputBase="${nexial.outputCloudBase:}"
@@ -46,6 +47,7 @@
         </property>
     </bean>
 
+    <!-- system values derived via setup -->
     <bean id="tts" class="org.nexial.core.aws.TtsHelper" scope="prototype"
           p:accessKey="${nexial.tts.accessKey:}"
           p:secretKey="${nexial.tts.secretKey:}"
@@ -61,6 +63,7 @@
     </bean>
 
     <!-- The sender ID shown on the device. (shh.. it's 1-NEXIAL-BOTS) -->
+    <!-- system values derived via setup -->
     <bean id="smsHelper" class="org.nexial.core.aws.SmsHelper" scope="prototype" init-method="init"
           p:smsNotReadyMessage-ref="smsNotReadyMessage"
           p:prefix="nexial-bot: "

@@ -297,6 +297,8 @@ public class Nexial {
             // force logs to be pushed into the specified output directory (and not taint other past/concurrent runs)
             String logPath = cmd.getOptionValue(OUTPUT);
             System.setProperty(TEST_LOG_PATH, logPath);
+
+            // we don't have run id at this time... this System property should be updated when run id becomes available
             if (StringUtils.isBlank(System.getProperty(THIRD_PARTY_LOG_PATH))) {
                 System.setProperty(THIRD_PARTY_LOG_PATH, logPath);
             }
@@ -647,10 +649,14 @@ public class Nexial {
     }
 
     protected void deriveOutputDirectory(CommandLine cmd, TestProject project) throws IOException {
-        // command line option - output
+        // this method is designed to be called after standard/conventional directories have been set to `project`
+        // hence these are overrides
+
+        // override default via command line option - output
         String outputPath = cmd.hasOption(OUTPUT) ? cmd.getOptionValue(OUTPUT) : null;
         if (StringUtils.isNotBlank(outputPath)) { project.setOutPath(outputPath); }
 
+        // override via System properties (`-Dnexial.defaultOutBase=...`)
         String outPath = project.getOutPath();
         if (StringUtils.isBlank(outPath)) {
             // one last try: consider environment setup (NEXIAL_OUTPUT), if defined
@@ -666,8 +672,10 @@ public class Nexial {
         if (FileUtil.isFileReadable(outPath)) {
             fail("output location (" + outPath + ") cannot be accessed as a directory.");
         }
+
         if (!FileUtil.isDirectoryReadable(outPath)) { FileUtils.forceMkdir(new File(outPath)); }
 
+        // run id not yet determined... `outPath` does not contain run id in path
         System.setProperty(TEST_LOG_PATH, outPath);
         if (StringUtils.isBlank(System.getProperty(THIRD_PARTY_LOG_PATH))) {
             System.setProperty(THIRD_PARTY_LOG_PATH, outPath);
@@ -912,8 +920,8 @@ public class Nexial {
                 }
 
                 // can't use otc.resolveOutputDir() since we are out of context at this point in time
-                String outputDir = System.getProperty(OPT_CLOUD_OUTPUT_BASE) + "/" + project.getName() + "/" +
-                                   runId;
+                // project.name could be affected by project.id, as designed
+                String outputDir = NexialS3Helper.resolveOutputDir(project.getName(), runId);
 
                 // upload HTML report to cloud
                 if (FileUtil.isFileReadable(htmlReport, 1024)) {

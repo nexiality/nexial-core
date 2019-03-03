@@ -18,6 +18,8 @@
 package org.nexial.core;
 
 import java.awt.*;
+import java.io.File;
+import java.io.IOException;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.util.Arrays;
@@ -28,10 +30,12 @@ import java.util.Map;
 import org.apache.commons.cli.Options;
 import org.apache.commons.collections4.ListUtils;
 import org.apache.commons.collections4.MapUtils;
+import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang3.BooleanUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.jdom2.output.Format;
 import org.jdom2.output.XMLOutputter;
+import org.nexial.commons.utils.FileUtil;
 import org.nexial.commons.utils.RegexUtils;
 import org.nexial.commons.utils.TextUtils;
 import org.nexial.core.excel.ExcelConfig;
@@ -326,6 +330,7 @@ public final class NexialConst {
 
     // aws related config
     public static final String S3_PUBLIC_URL = "public_url";
+    // s3 output directory mapped to setup.properties
     public static final String OPT_CLOUD_OUTPUT_BASE = registerSystemVariable(NAMESPACE + "outputCloudBase");
     public static final String OUTPUT_TO_CLOUD = registerSystemVariable(NAMESPACE + "outputToCloud", false);
     public static final String S3_PATH_SEPARATOR = "/";
@@ -573,6 +578,7 @@ public final class NexialConst {
         public static final String DEF_REL_LOC_OUTPUT = "output" + separator;
         public static final String DEF_PROJECT_PROPS = "project.properties";
         public static final String DEF_REL_PROJECT_PROPS = DEF_REL_LOC_ARTIFACT + DEF_PROJECT_PROPS;
+        public static final String DEF_REL_META_PROJ_ID = ".meta" + separator + "project.id";
 
         public static final String NEXIAL_HOME = NAMESPACE + "home";
         public static final String NEXIAL_BIN_REL_PATH = "bin" + separator;
@@ -610,11 +616,30 @@ public final class NexialConst {
         public static TestProject resolveStandardPaths(TestProject project) {
             if (project.isStandardStructure()) {
                 String projectHome = project.getProjectHome();
-                project.setName(StringUtils.substringAfterLast(projectHome, separator));
+
+                String projectId = null;
+                File metaProjectIdFile = new File(projectHome + separator + DEF_REL_META_PROJ_ID);
+                if (FileUtil.isFileReadable(metaProjectIdFile)) {
+                    try {
+                        projectId = FileUtils.readFileToString(metaProjectIdFile, DEF_FILE_ENCODING);
+                    } catch (IOException e) {
+                        ConsoleUtils.error("Unable to read " + DEF_REL_META_PROJ_ID + ": " + e.getMessage());
+                    }
+                }
+
+                if (StringUtils.isNotBlank(projectId)) {
+                    project.setName(projectId);
+                    project.setBoundProjectId(projectId);
+                } else {
+                    project.setName(StringUtils.substringAfterLast(projectHome, separator));
+                }
+
                 project.setScriptPath(projectHome + separator + DEF_REL_LOC_TEST_SCRIPT);
                 project.setArtifactPath(projectHome + separator + DEF_REL_LOC_ARTIFACT);
                 project.setDataPath(projectHome + separator + DEF_REL_LOC_TEST_DATA);
                 project.setPlanPath(projectHome + separator + DEF_REL_LOC_TEST_PLAN);
+
+                // local output path is not affected by project.id
                 project.setOutPath(StringUtils.defaultIfBlank(System.getProperty(OPT_DEF_OUT_DIR),
                                                               projectHome + separator + DEF_REL_LOC_OUTPUT));
             }

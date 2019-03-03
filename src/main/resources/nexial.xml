@@ -610,13 +610,35 @@
         <!--<entry key="nexial.screenRecorder" value="avi"/>-->
         <entry key="nexial.screenRecorder" value="mp4"/>
         <entry key="nexial.browser.defaultWindowSize" value="1280x960"/>
-
-        <!--
-        some reference data are considered "special" and should be elevated to "execution" level so that they can be
-        as such for Execution Dashboard. Those data variables are listed below.
-        -->
-        <entry key="nexial.referenceDataForExecution" value="nexial.scriptRef.buildnum,nexial.scriptRef.app,nexial.scriptRef.release"/>
     </util:map>
+
+    <!--
+    some reference data are considered "special" and should be elevated to "execution" level so that they can be
+    as such for Execution Dashboard. Those data variables are listed below.
+    -->
+    <util:list id="nexial.referenceDataForExecution" list-class="java.util.ArrayList">
+        <value>nexial-mailer.aws.accessKey</value>
+        <value>nexial-mailer.aws.from</value>
+        <value>nexial-mailer.aws.region</value>
+        <value>nexial-mailer.aws.secretKey</value>
+        <value>nexial.otc.accessKey</value>
+        <value>nexial.otc.region</value>
+        <value>nexial.otc.s3PathStyleAccessEnabled</value>
+        <value>nexial.otc.secretKey</value>
+        <value>nexial.outputCloudBase</value>
+        <value>nexial.scriptRef.app</value>
+        <value>nexial.scriptRef.buildnum</value>
+        <value>nexial.scriptRef.release</value>
+        <value>nexial.sms.accessKey</value>
+        <value>nexial.sms.region</value>
+        <value>nexial.sms.secretKey</value>
+        <value>nexial.tts.accessKey</value>
+        <value>nexial.tts.language</value>
+        <value>nexial.tts.region</value>
+        <value>nexial.tts.sampleRate</value>
+        <value>nexial.tts.secretKey</value>
+        <value>nexial.tts.voiceGender</value>
+    </util:list>
 
     <util:list id="readOnlyVars" list-class="java.util.ArrayList">
         <value>nexial.runID</value>

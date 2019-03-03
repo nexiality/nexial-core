@@ -29,7 +29,6 @@ import org.nexial.core.model.TestProject
 import org.nexial.core.utils.ExecUtils
 import org.springframework.boot.ExitCodeGenerator
 import org.springframework.boot.SpringApplication
-import org.springframework.boot.autoconfigure.EnableAutoConfiguration
 import org.springframework.boot.autoconfigure.SpringBootApplication
 import org.springframework.boot.autoconfigure.jackson.JacksonAutoConfiguration
 import org.springframework.boot.autoconfigure.jdbc.DataSourceAutoConfiguration
@@ -37,20 +36,18 @@ import org.springframework.boot.autoconfigure.jdbc.DataSourceTransactionManagerA
 import org.springframework.boot.builder.SpringApplicationBuilder
 import org.springframework.boot.web.support.SpringBootServletInitializer
 import org.springframework.context.ConfigurableApplicationContext
-import org.springframework.context.annotation.ComponentScan
 import org.springframework.context.annotation.Configuration
 import java.io.File
 import java.io.File.separator
 import java.util.*
 
-@SpringBootApplication
-@EnableAutoConfiguration(exclude = [
-    JacksonAutoConfiguration::class,
-    DataSourceAutoConfiguration::class,
-    DataSourceTransactionManagerAutoConfiguration::class])
-@ComponentScan(basePackages = ["org.nexial.core.service"])
+@SpringBootApplication(scanBasePackages = ["org.nexial.core.service"],
+                       exclude = [JacksonAutoConfiguration::class, DataSourceAutoConfiguration::class, DataSourceTransactionManagerAutoConfiguration::class])
+//@EnableAutoConfiguration()
+//@ComponentScan(basePackages = ["org.nexial.core.service"])
 @Configuration
 open class ServiceLauncher : SpringBootServletInitializer() {
+
     companion object {
         private const val DEF_PROJECT_NAME = "nexial-services"
 
@@ -91,7 +88,7 @@ open class ServiceLauncher : SpringBootServletInitializer() {
         private fun resolveProject(): TestProject {
             var project = TestProject()
             project.projectHome = StringUtils.appendIfMissing(File("").absoluteFile.parent, separator) +
-                DEF_PROJECT_NAME
+                                  DEF_PROJECT_NAME
             project.isStandardStructure = true
             project = resolveStandardPaths(project)
             FileUtils.forceMkdir(File(project.scriptPath))
@@ -121,7 +118,7 @@ open class ServiceLauncher : SpringBootServletInitializer() {
             shutdown()
 
             val temp = args.toArray(Array(
-                args.size, { "" }))
+                    args.size, { "" }))
             args.clear()
             start(temp)
         }
@@ -135,7 +132,7 @@ open class ServiceLauncher : SpringBootServletInitializer() {
     }
 
     override fun configure(app: SpringApplicationBuilder): SpringApplicationBuilder =
-        app.sources(ServiceLauncher::class.java)
+            app.sources(ServiceLauncher::class.java)
 
 //    open fun fowardToIndex(): WebMvcAutoConfigurationAdapter {
 //

@@ -47,6 +47,7 @@ public class TestProject {
     private boolean isStandardStructure;
     private String projectProps;
     private boolean hasProjectProps;
+    private String boundProjectId;
 
     public TestProject() { nexialHome = new File(System.getProperty(NEXIAL_HOME)); }
 
@@ -147,6 +148,10 @@ public class TestProject {
         project.projectProps = projectProps;
         return project;
     }
+
+    public String getBoundProjectId() { return boundProjectId; }
+
+    public void setBoundProjectId(String boundProjectId) { this.boundProjectId = boundProjectId; }
 
     protected void loadProjectProperties() {
         Map<String, String> properties = TextUtils.loadProperties(projectProps);

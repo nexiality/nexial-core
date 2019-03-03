@@ -239,7 +239,8 @@ public class ExecutionContext {
         setData(HOSTNAME, this.hostname, true);
 
         // init data map... something just doesn't make sense not to exist from the get-go
-        data.put(OPT_LAST_OUTCOME, true);
+        setData(OPT_LAST_OUTCOME, true);
+        setData(ITERATION_ENDED, false);
 
         if (MapUtils.isNotEmpty(intraExecutionData)) {
             // reuse existing spring context
@@ -252,6 +253,9 @@ public class ExecutionContext {
             data.putAll(intraExecutionData);
             data.remove(BREAK_CURRENT_ITERATION);
             data.remove(LAST_ITERATION);
+            data.remove(OPT_LAST_SCREENSHOT_NAME);
+            data.remove(OPT_LAST_ALERT_TEXT);
+            data.remove(OPT_LAST_OUTPUT_LINK);
         } else {
             // init spring
             springContext = new ClassPathXmlApplicationContext("classpath:" +
@@ -274,10 +278,6 @@ public class ExecutionContext {
         overrideIfSysPropFound(FAIL_FAST);
         overrideIfSysPropFound(VERBOSE);
         overrideIfSysPropFound(TEXT_DELIM);
-
-        // initSpringBeans();
-
-        setData(ITERATION_ENDED, false);
 
         expression = new ExpressionProcessor(this);
         executionLogger = new ExecutionLogger(this);
@@ -1181,12 +1181,13 @@ public class ExecutionContext {
         // 3) we are currently automating a test scenario/activity/step (ie. currentTestStep != null)
         if (StringUtils.isBlank(name)) { return; }
 
-        if (data.containsKey(name) && value != null) { CellTextReader.unsetValue(Objects.toString(value)); }
+        boolean isNullValue = value == null || isNullValue(Objects.toString(value));
 
-        boolean remove = value == null || StringUtils.isEmpty(Objects.toString(value));
+        if (data.containsKey(name) && isNullValue) { CellTextReader.unsetValue(Objects.toString(value)); }
+
+        boolean remove = isNullValue;
         if (value instanceof Map && MapUtils.isEmpty((Map) value)) { remove = true; }
         if (value instanceof Collection && CollectionUtils.isEmpty((Collection) value)) { remove = true; }
-        if (value instanceof String && isNullValue(Objects.toString(value))) { remove = true; }
 
         if (remove) {
             data.remove(name);
@@ -1641,6 +1642,7 @@ public class ExecutionContext {
     protected void clearCurrentTestStep() { this.currentTestStep = null; }
 
     protected TestProject adjustPath(ExecutionDefinition execDef) {
+        // run id is not determined earlier, hence we are considering it now as part of output path
         TestProject project = execDef.getProject().copy();
         project.setOutPath(StringUtils.appendIfMissing(project.getOutPath(), separator) + execDef.getRunId());
 
@@ -1747,8 +1749,7 @@ public class ExecutionContext {
 
         // default / reference
         defaultContextProps = springContext.getBean("defaultContextProps", new HashMap<String, String>().getClass());
-        referenceDataForExecution =
-            TextUtils.toList(defaultContextProps.get("nexial.referenceDataForExecution"), ",", true);
+        referenceDataForExecution = springContext.getBean("nexial.referenceDataForExecution", List.class);
 
         // web driver
         webdriverHelperConfig =
