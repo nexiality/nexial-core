@@ -846,7 +846,7 @@ final public class DataVariableUpdater {
 
     private static void log(String action, Object subject) { log(StringUtils.rightPad(action, 26) + " " + subject); }
 
-    private static String formatColumns(String file, String worksheet, String position, String updatingVars) {
+    public static String formatColumns(String file, String worksheet, String position, String updatingVars) {
         return StringUtils.rightPad(file, COLUMN_1_WIDTH) +
                StringUtils.rightPad(StringUtils.defaultIfEmpty(worksheet, ""), COLUMN_2_WIDTH) +
                StringUtils.rightPad(position, COLUMN_3_WIDTH) +

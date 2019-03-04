@@ -73,7 +73,7 @@ class EmailNotification(context: ExecutionContext, event: ExecutionEvent, data: 
         }
 
         val content = OutputFileUtils.resolveContent(
-                StringUtils.trim(StringUtils.substringAfter(data, EVENT_CONFIG_SEP)), context, false)
+            StringUtils.trim(StringUtils.substringAfterLast(data, EVENT_CONFIG_SEP)), context, false)
         if (StringUtils.isBlank(content)) {
             logSkipping("no content to sent")
             return
