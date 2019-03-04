@@ -144,6 +144,7 @@ dependencies {
 	compile("com.amazonaws:aws-java-sdk-polly:+")
 	compile("com.amazonaws:aws-java-sdk-sns:+")
 	compile("com.amazonaws:aws-java-sdk-ses:+")
+	compile("com.amazonaws:aws-java-sdk-sqs:+")
 	compile("com.amazonaws:aws-java-sdk-sts:+")
 
 	// support: browsermob

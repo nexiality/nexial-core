@@ -23,7 +23,6 @@ import org.apache.commons.lang3.StringUtils
 import org.apache.commons.lang3.math.NumberUtils
 import org.nexial.core.IntegrationConfigException
 import org.nexial.core.NexialConst.AwsSettings.*
-import org.nexial.core.SystemVariables.getDefaultInt
 import org.nexial.core.model.ExecutionContext
 import org.nexial.core.utils.ConsoleUtils
 
@@ -42,6 +41,9 @@ class AwsSesSettings constructor(accessKey: String, secretKey: String, region: R
     lateinit var configurationSetName: String
     lateinit var xmailer: String
 }
+
+class AwsSqsSettings constructor(accessKey: String, secretKey: String, region: Regions) :
+        AwsSettings(accessKey, secretKey, region)
 
 class AwsUtils {
     companion object {
@@ -118,6 +120,32 @@ class AwsUtils {
             return settings
         }
 
+        @Throws(IntegrationConfigException::class)
+        fun resolveAwSqsSettings(context: ExecutionContext, profile: String): AwsSqsSettings {
+            val prefix = "$profile.$SUFFIX"
+            if (context.hasData(prefix)) {
+                val obj = context.getObjectData(prefix)
+                if (obj is AwsSqsSettings) {
+                    ConsoleUtils.log("reusing established AWS SQS settings '$profile'")
+                    return obj
+                }
+
+                context.removeData(prefix)
+            }
+
+            val config = context.getDataByPrefix("$prefix.")
+            if (MapUtils.isEmpty(config)) {
+                throw IntegrationConfigException("No setting configuration found for '$profile'; Unable to connect.")
+            }
+
+            val settings = AwsSqsSettings(accessKey = getRequiredSetting(config, "$prefix.", AWS_ACCESS_KEY),
+                                          secretKey = getRequiredSetting(config, "$prefix.", AWS_SECRET_KEY),
+                                          region = resolveRegion(config))
+            configAssumeRole(settings, config)
+            context.setData(prefix, settings)
+            return settings
+        }
+
         private fun <T : AwsSettings> configAssumeRole(settings: T, config: MutableMap<String, String>) {
             settings.assumeRoleArn = config[AWS_STS_ROLE_ARN] ?: ""
             settings.assumeRoleSession = config[AWS_STS_ROLE_SESSION] ?: ""
@@ -135,6 +163,6 @@ class AwsUtils {
                 if (StringUtils.isBlank(config[key]))
                     throw IntegrationConfigException.missingConfig(prefix + key)
                 else
-                    config[key]!!
+                    config.getValue(key)
     }
 }
