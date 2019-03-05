@@ -451,6 +451,10 @@ public final class NexialConst {
         public static final String AWS_STS_ROLE_SESSION = "assumeRoleSession";
         public static final String AWS_STS_ROLE_DURATION = "assumeRoleDuration";
 
+        // sqs
+        public static final String AWS_SQS_ASYNC = "async";
+        public static final String AWS_SQS_WAIT_TIME_MS = "waitTimeMs";
+        public static final String AWS_SQS_VISIBILITY_TIMEOUT_MS = "visibilityTimeoutMs";
         private AwsSettings() {}
 
         // reference by enclosing class to force initialization (possibly prior to any reference at runtime)

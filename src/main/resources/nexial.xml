@@ -136,6 +136,9 @@
         <entry key="aws.ses">
             <bean class="org.nexial.core.plugins.aws.SesCommand"/>
         </entry>
+        <entry key="aws.sqs">
+            <bean class="org.nexial.core.plugins.aws.SqsCommand"/>
+        </entry>
         <entry key="base">
             <bean class="org.nexial.core.plugins.base.BaseCommand"/>
         </entry>

@@ -17,17 +17,16 @@
 package org.nexial.core.plugins.aws
 
 import com.amazonaws.services.sqs.AmazonSQS
+import com.amazonaws.services.sqs.AmazonSQSAsync
+import com.amazonaws.services.sqs.AmazonSQSAsyncClientBuilder
 import com.amazonaws.services.sqs.AmazonSQSClientBuilder
 import com.amazonaws.services.sqs.buffered.QueueBufferConfig.MAX_BATCH_SIZE_DEFAULT
-import com.amazonaws.services.sqs.model.Message
-import com.amazonaws.services.sqs.model.MessageAttributeValue
-import com.amazonaws.services.sqs.model.ReceiveMessageRequest
-import com.amazonaws.services.sqs.model.SendMessageRequest
+import com.amazonaws.services.sqs.model.*
 import org.apache.commons.collections4.CollectionUtils
 import org.apache.commons.lang3.StringUtils
 import org.apache.commons.lang3.SystemUtils.USER_NAME
-import org.apache.commons.lang3.math.NumberUtils
 import org.nexial.commons.utils.EnvUtils
+import org.nexial.core.IntegrationConfigException
 import org.nexial.core.aws.AwsSupport
 import org.nexial.core.model.ExecutionContext
 import org.nexial.core.model.StepResult
@@ -41,39 +40,45 @@ class SqsCommand : BaseCommand() {
 
     override fun getTarget(): String = "aws.sqs"
 
-    fun receiveMessage(profile: String, queue: String, timeout: String, `var`: String): StepResult {
+    fun receiveMessage(profile: String, queue: String, `var`: String): StepResult {
         requiresNotBlank(profile, "Invalid profile", profile)
         requiresNotBlank(queue, "Invalid queue", queue)
-        requiresPositiveNumber(timeout, "Invalid timeout (millisecond)", timeout)
         requiresValidVariableName(`var`)
 
-        val sqs = SqsSupport()
-        sqs.setCredentials(resolveSqsSettings(context, profile))
-        val message = sqs.receiveMessage(queue, NumberUtils.toLong(timeout))
-        return if (message == null) {
+        return try {
+            val sqs = SqsSupport()
+            val message = sqs.receiveMessage(resolveSqsSettings(context, profile), queue)
+            if (message == null) {
+                context.removeData(`var`)
+                StepResult.fail("No message found in queue '$queue'")
+            } else {
+                context.setData(`var`, message)
+                StepResult.success("1 message received from queue '$queue'")
+            }
+        } catch (e: AmazonSQSException) {
             context.removeData(`var`)
-            StepResult.fail("No messages found in queue '$queue'")
-        } else {
-            context.setData(`var`, message)
-            StepResult.success("1 message received from queue '$queue'")
+            StepResult.fail("FAILED to receive message from queue '$queue': ${e.errorMessage}")
         }
     }
 
-    fun receiveMessages(profile: String, queue: String, timeout: String, `var`: String): StepResult {
+    fun receiveMessages(profile: String, queue: String, `var`: String): StepResult {
         requiresNotBlank(profile, "Invalid profile", profile)
         requiresNotBlank(queue, "Invalid queue", queue)
-        requiresPositiveNumber(timeout, "Invalid timeout (millisecond)", timeout)
         requiresValidVariableName(`var`)
 
-        val sqs = SqsSupport()
-        sqs.setCredentials(resolveSqsSettings(context, profile))
-        val message = sqs.receiveMessages(queue, NumberUtils.toLong(timeout))
-        return if (message == null) {
+        return try {
+            val sqs = SqsSupport()
+            val message = sqs.receiveMessages(resolveSqsSettings(context, profile), queue)
+            if (message == null) {
+                context.removeData(`var`)
+                StepResult.fail("No messages found in queue '$queue'")
+            } else {
+                context.setData(`var`, message)
+                StepResult.success("${message.size} message(s) received from queue '$queue'")
+            }
+        } catch (e: AmazonSQSException) {
             context.removeData(`var`)
-            StepResult.fail("No messages found in queue '$queue'")
-        } else {
-            context.setData(`var`, message)
-            StepResult.success("${message.size} message(s) received from queue '$queue'")
+            StepResult.fail("FAILED to receive messages from queue '$queue': ${e.errorMessage}")
         }
     }
 
@@ -83,26 +88,47 @@ class SqsCommand : BaseCommand() {
         requiresNotBlank(message, "Invalid message", message)
         requiresValidVariableName(`var`)
 
-        val sqs = SqsSupport()
-        sqs.setCredentials(resolveSqsSettings(context, profile))
-        val response = sqs.sendMessage(queue, message)
-        context.setData(`var`, response)
+        return try {
+            val sqs = SqsSupport()
+            val response = sqs.sendMessage(resolveSqsSettings(context, profile), queue, message)
+            context.setData(`var`, response)
 
-        val messageId = response.id
-        return if (StringUtils.isBlank(messageId)) {
-            StepResult.fail("Unable to send message successfully to queue '$queue'")
-        } else {
-            StepResult.success("Message successfully sent to queue '$queue': $messageId")
+            val messageId = response.id
+            if (StringUtils.isBlank(messageId)) {
+                StepResult.fail("FAILED to send message successfully to queue '$queue'")
+            } else {
+                StepResult.success("Message successfully sent to queue '$queue': $messageId")
+            }
+        } catch (e: InvalidMessageContentsException) {
+            StepResult.fail("FAILED to send message to queue '$queue'; " +
+                            "likely due to invalid characters in message body: ${e.errorMessage}")
+        } catch (e: AmazonSQSException) {
+            StepResult.fail("FAILED to send messages to queue '$queue': ${e.errorMessage}")
         }
     }
 
-    private fun resolveSqsSettings(context: ExecutionContext, profile: String): AwsSqsSettings {
-        return AwsUtils.resolveAwSqsSettings(context, profile)
+    fun deleteMessage(profile: String, queue: String, receiptHandle: String): StepResult {
+        requiresNotBlank(profile, "Invalid profile", profile)
+        requiresNotBlank(queue, "Invalid queue", queue)
+        requiresNotBlank(receiptHandle, "Invalid receipt handle", receiptHandle)
+
+        return try {
+            val sqs = SqsSupport()
+            sqs.deleteMessage(resolveSqsSettings(context, profile), queue, receiptHandle)
+            StepResult.success("Message successfully deleted from queue '$queue'")
+        } catch (e: InvalidIdFormatException) {
+            StepResult.fail("Message not deleted from queue '$queue': ${e.errorMessage}")
+        } catch (e: ReceiptHandleIsInvalidException) {
+            StepResult.fail("Message not deleted from queue '$queue': ${e.errorMessage}")
+        }
     }
 
-//    fun deleteMessage(profile: String, queue: String, id: String, `var`: String): StepResult {
-//        throw RuntimeException("Not yet implemented")
-//    }
+    @Throws(IntegrationConfigException::class)
+    private fun resolveSqsSettings(context: ExecutionContext, profile: String): AwsSqsSettings {
+        val settings = AwsUtils.resolveAwSqsSettings(context, profile)
+        requiresNotNull(settings, "Unable to resolve AWS credentials and/or AWS SES settings.")
+        return settings
+    }
 
     // ??? create queue
     // ??? delete queue
@@ -111,9 +137,11 @@ class SqsCommand : BaseCommand() {
 
 class SqsSupport : AwsSupport() {
 
-    fun sendMessage(queue: String, message: String): QueueReceipt {
+    fun sendMessage(settings: AwsSqsSettings, queue: String, message: String): QueueReceipt {
+        setCredentials(settings)
 
         val sqs = newSQSClient()
+//        val sqs = if (settings.async) newSQSAsyncClient() else newSQSClient()
 
         val queueUrl = sqs.getQueueUrl(queue).queueUrl
         ConsoleUtils.log("sending to SQS queue '$queueUrl'")
@@ -121,7 +149,6 @@ class SqsSupport : AwsSupport() {
         val now = System.currentTimeMillis()
 
         val request = SendMessageRequest(queueUrl, message)
-        request
             .addMessageAttributesEntry("nexial.sendTimestamp", newStringAttrValue("$now"))
             .addMessageAttributesEntry("nexial.version", newStringAttrValue(ExecUtils.deriveJarManifest()))
             .addMessageAttributesEntry("nexial.os.user", newStringAttrValue(USER_NAME))
@@ -132,23 +159,37 @@ class SqsSupport : AwsSupport() {
         return QueueReceipt(response.messageId, now)
     }
 
-    fun receiveMessages(queue: String, timeout: Long): List<QueueMessage>? =
-            receiveMessages(queue, timeout, MAX_BATCH_SIZE_DEFAULT)
+    fun deleteMessage(settings: AwsSqsSettings, queue: String, receiptHandle: String) {
+        setCredentials(settings)
 
-    fun receiveMessage(queue: String, timeout: Long): QueueMessage? {
-        val messages = receiveMessages(queue, timeout, 1)
+        val sqs = newSQSClient()
+//        val sqs = if (settings.async) newSQSAsyncClient() else newSQSClient()
+
+        val queueUrl = sqs.getQueueUrl(queue).queueUrl
+        ConsoleUtils.log("deleting from SQS queue '$queueUrl'")
+        sqs.deleteMessage(queueUrl, receiptHandle)
+    }
+
+    fun receiveMessages(settings: AwsSqsSettings, queue: String): List<QueueMessage>? =
+            receiveMessages(settings, queue, MAX_BATCH_SIZE_DEFAULT)
+
+    fun receiveMessage(settings: AwsSqsSettings, queue: String): QueueMessage? {
+        val messages = receiveMessages(settings, queue, 1)
         return if (messages == null || CollectionUtils.isEmpty(messages)) null else messages[0]
     }
 
-    private fun receiveMessages(queue: String, timeout: Long, size: Int): List<QueueMessage>? {
+    private fun receiveMessages(settings: AwsSqsSettings, queue: String, size: Int): List<QueueMessage>? {
+        setCredentials(settings)
 
         val sqs = newSQSClient()
+//        val sqs = if (settings.async) newSQSAsyncClient() else newSQSClient()
 
         val queueUrl = sqs.getQueueUrl(queue).queueUrl
         ConsoleUtils.log("receiving from SQS queue '$queueUrl'")
         val request = ReceiveMessageRequest(queueUrl)
             .withMaxNumberOfMessages(size)
-            .withWaitTimeSeconds((timeout / 1000).toInt())
+            .withWaitTimeSeconds((settings.waitMs / 1000).toInt())
+            .withVisibilityTimeout(if (settings.visibilityTimeoutMs < 0) -1 else (settings.visibilityTimeoutMs / 1000).toInt())
             .withMessageAttributeNames(".*")
             .withAttributeNames(".*")
 
@@ -156,26 +197,29 @@ class SqsSupport : AwsSupport() {
         return if (receiveMessage == null || CollectionUtils.isEmpty(receiveMessage.messages)) {
             null
         } else {
-            val messages = mutableListOf<QueueMessage>()
-            receiveMessage.messages.forEach { message -> messages.add(toQueueMessage(message)) }
-            return messages
+            receiveMessage.messages.map { message -> toQueueMessage(message) }.toList()
         }
     }
 
-    private fun newSQSClient(): AmazonSQS = AmazonSQSClientBuilder.standard()
-        .withRegion(region)
-        .withCredentials(resolveCredentials(region))
-        .build()
+    private fun newSQSClient(): AmazonSQS = AmazonSQSClientBuilder
+        .standard().withRegion(region).withCredentials(resolveCredentials(region)).build()
+
+    private fun newSQSAsyncClient(): AmazonSQSAsync = AmazonSQSAsyncClientBuilder
+        .standard().withRegion(region).withCredentials(resolveCredentials(region)).build()
 
     private fun toQueueMessage(message: Message): QueueMessage {
         val attributes = mutableMapOf<String, String>()
         message.messageAttributes.forEach { name, attribute -> attributes[name] = attribute.stringValue }
-        return QueueMessage(message.messageId, message.body, attributes)
+        return QueueMessage(message.messageId, message.body, message.receiptHandle, attributes)
     }
 
     private fun newStringAttrValue(value: String) =
             MessageAttributeValue().withStringValue(value).withDataType("String")
 }
 
-data class QueueMessage(val id: String, val body: String, val attributes: Map<String, String>) : Serializable
+data class QueueMessage(val id: String,
+                        val body: String,
+                        val receiptHandle: String,
+                        val attributes: Map<String, String>) : Serializable
+
 data class QueueReceipt(val id: String, val sendTimestamp: Long) : Serializable

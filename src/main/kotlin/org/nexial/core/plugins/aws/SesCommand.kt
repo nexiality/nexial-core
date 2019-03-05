@@ -74,6 +74,6 @@ class SesCommand : BaseCommand() {
     private fun resolveSesSettings(context: ExecutionContext, profile: String): AwsSesSettings {
         val settings = AwsUtils.resolveAwsSesSettings(context, profile)
         requiresNotNull(settings, "Unable to resolve AWS credentials and/or AWS SES settings.")
-        return settings!!
+        return settings
     }
 }

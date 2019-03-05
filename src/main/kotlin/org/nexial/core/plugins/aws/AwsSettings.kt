@@ -18,7 +18,9 @@ package org.nexial.core.plugins.aws
 
 import com.amazonaws.regions.Regions
 import com.amazonaws.regions.Regions.DEFAULT_REGION
+import com.amazonaws.services.sqs.buffered.QueueBufferConfig.LONGPOLL_WAIT_TIMEOUT_SECONDS_DEFAULT
 import org.apache.commons.collections4.MapUtils
+import org.apache.commons.lang3.BooleanUtils
 import org.apache.commons.lang3.StringUtils
 import org.apache.commons.lang3.math.NumberUtils
 import org.nexial.core.IntegrationConfigException
@@ -42,7 +44,12 @@ class AwsSesSettings constructor(accessKey: String, secretKey: String, region: R
     lateinit var xmailer: String
 }
 
-class AwsSqsSettings constructor(accessKey: String, secretKey: String, region: Regions) :
+class AwsSqsSettings constructor(accessKey: String,
+                                 secretKey: String,
+                                 region: Regions = Regions.US_WEST_1,
+                                 val async: Boolean = false,
+                                 val waitMs: Long = LONGPOLL_WAIT_TIMEOUT_SECONDS_DEFAULT * 1000L,
+                                 val visibilityTimeoutMs: Long = -1) :
         AwsSettings(accessKey, secretKey, region)
 
 class AwsUtils {
@@ -81,10 +88,7 @@ class AwsUtils {
         }
 
         @Throws(IntegrationConfigException::class)
-        fun resolveAwsSesSettings(context: ExecutionContext?, profile: String): AwsSesSettings? {
-            if (context == null) return null
-            if (StringUtils.isBlank(profile)) return null
-
+        fun resolveAwsSesSettings(context: ExecutionContext, profile: String): AwsSesSettings {
             val prefix = "$profile.$SUFFIX"
             if (context.hasData(prefix)) {
                 val obj = context.getObjectData(prefix)
@@ -97,17 +101,15 @@ class AwsUtils {
                 context.removeData(prefix)
             }
 
-            val prefix1 = "$prefix."
-            val config = context.getDataByPrefix(prefix1)
+            val config = context.getDataByPrefix("$prefix.")
             if (MapUtils.isEmpty(config)) {
-                context.logCurrentStep("No settings configuration found for '$profile'; Unable to connect.")
-                return null
+                throw IntegrationConfigException("No settings configuration found for '$profile'; Unable to connect.")
             }
 
-            val settings = AwsSesSettings(accessKey = getRequiredSetting(config, prefix1, AWS_ACCESS_KEY),
-                                          secretKey = getRequiredSetting(config, prefix1, AWS_SECRET_KEY),
+            val settings = AwsSesSettings(accessKey = getRequiredSetting(config, "$prefix.", AWS_ACCESS_KEY),
+                                          secretKey = getRequiredSetting(config, "$prefix.", AWS_SECRET_KEY),
                                           region = resolveRegion(config),
-                                          from = getRequiredSetting(config, prefix1, AWS_SES_FROM))
+                                          from = getRequiredSetting(config, "$prefix.", AWS_SES_FROM))
             configAssumeRole(settings, config)
 
             settings.cc = config[AWS_SES_CC] ?: ""
@@ -138,10 +140,15 @@ class AwsUtils {
                 throw IntegrationConfigException("No setting configuration found for '$profile'; Unable to connect.")
             }
 
-            val settings = AwsSqsSettings(accessKey = getRequiredSetting(config, "$prefix.", AWS_ACCESS_KEY),
-                                          secretKey = getRequiredSetting(config, "$prefix.", AWS_SECRET_KEY),
-                                          region = resolveRegion(config))
+            val settings = AwsSqsSettings(
+                    accessKey = getRequiredSetting(config, "$prefix.", AWS_ACCESS_KEY),
+                    secretKey = getRequiredSetting(config, "$prefix.", AWS_SECRET_KEY),
+                    region = resolveRegion(config),
+                    async = BooleanUtils.toBoolean(config[AWS_SQS_ASYNC]),
+                    waitMs = NumberUtils.toLong(config[AWS_SQS_WAIT_TIME_MS] ?: "20000"),
+                    visibilityTimeoutMs = NumberUtils.toLong(config[AWS_SQS_VISIBILITY_TIMEOUT_MS] ?: "30000"))
             configAssumeRole(settings, config)
+
             context.setData(prefix, settings)
             return settings
         }
