@@ -72,8 +72,7 @@ class EmailNotification(context: ExecutionContext, event: ExecutionEvent, data: 
             return
         }
 
-        val content = OutputFileUtils.resolveContent(
-            StringUtils.trim(StringUtils.substringAfterLast(data, EVENT_CONFIG_SEP)), context, false)
+        val content = StringUtils.substringAfter(data, EVENT_CONFIG_SEP)
         if (StringUtils.isBlank(content)) {
             logSkipping("no content to sent")
             return
@@ -96,10 +95,12 @@ class EmailNotification(context: ExecutionContext, event: ExecutionEvent, data: 
                 "from"    -> mailData.fromAddr = value
                 "html"    -> mailData.mimeType = if (BooleanUtils.toBoolean(value)) MIME_HTML else MIME_PLAIN
                 "footer"  -> mailData.isFooter = BooleanUtils.toBoolean(value.toLowerCase())
-                "body"    -> body = OutputFileUtils.resolveContent(StringUtils.trim(value), context, false)
+                "body"    -> body = StringUtils.trim(value)
                 else      -> ConsoleUtils.error("Unknown configuration for email notification: $key")
             }
         }
+
+        if (StringUtils.isNotEmpty(body)) body = OutputFileUtils.resolveContent(StringUtils.trim(body), context, false)
 
         return mailData.setToAddr(recipientList).setSubject(subject).setContent(body)
     }
