@@ -983,7 +983,7 @@ public class XmlCommandTest {
                             "        <COUNTRY>USA</COUNTRY>\n" +
                             "        <COMPANY>Columbia</COMPANY>\n" +
                             "        <PRICE>10.90</PRICE>\n" +
-                            "        <YEAR>UNKNOWN</YEAR>\n" +
+                            "        UNKNOWN\n" +
                             "    </CD>\n" +
                             "    <CD>\n" +
                             "        <TITLE>Eros</TITLE>\n" +
@@ -991,7 +991,7 @@ public class XmlCommandTest {
                             "        <COUNTRY>EU</COUNTRY>\n" +
                             "        <COMPANY>BMG</COMPANY>\n" +
                             "        <PRICE>9.90</PRICE>\n" +
-                            "        <YEAR>UNKNOWN</YEAR>\n" +
+                            "        UNKNOWN\n" +
                             "    </CD>\n" +
                             "</CATALOG>", newXml);
     }
@@ -1095,12 +1095,8 @@ public class XmlCommandTest {
         newXml = context.getStringData("newXml");
         System.out.println("newXml = " + newXml);
         Assert.assertEquals("<CATALOG>\n" +
-                            "    <CD>\n" +
-                            "        <MESSAGE>Not available at this time</MESSAGE>\n" +
-                            "    </CD>\n" +
-                            "    <CD>\n" +
-                            "        <MESSAGE>Not available at this time</MESSAGE>\n" +
-                            "    </CD>\n" +
+                            "    <CD>Not available at this time</CD>\n" +
+                            "    <CD>Not available at this time</CD>\n" +
                             "</CATALOG>", newXml);
 
         result = fixture.replace(newXml, "//CATALOG/CD[position()=1]", "<CD id=\"123\">Not available</CD>", "newXml");
@@ -1111,9 +1107,7 @@ public class XmlCommandTest {
         System.out.println("newXml = " + newXml);
         Assert.assertEquals("<CATALOG>\n" +
                             "    <CD id=\"123\">Not available</CD>\n" +
-                            "    <CD>\n" +
-                            "        <MESSAGE>Not available at this time</MESSAGE>\n" +
-                            "    </CD>\n" +
+                            "    <CD>Not available at this time</CD>\n" +
                             "</CATALOG>", newXml);
     }
 

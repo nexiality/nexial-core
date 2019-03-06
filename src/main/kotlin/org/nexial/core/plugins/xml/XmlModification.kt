@@ -134,7 +134,9 @@ internal class Replace : Modification("replace", true) {
     }
 
     override fun handleModification(target: Element, content: String?) {
-        target.setContent(Text(content))
+        val index = target.parent.content.indexOf(target)
+        target.parent.addContent(index, Text(content))
+        target.parent.removeContent(target)
     }
 
     override fun handleModification(target: Attribute, content: String?) {
