@@ -39,6 +39,7 @@ import org.jdom2.input.SAXBuilder;
 import org.jdom2.input.sax.XMLReaderJDOMFactory;
 import org.jdom2.input.sax.XMLReaderXSDFactory;
 import org.jdom2.output.XMLOutputter;
+import org.jetbrains.annotations.NotNull;
 import org.nexial.commons.utils.CollectionUtil;
 import org.nexial.commons.utils.TextUtils;
 import org.nexial.commons.utils.XmlUtils;
@@ -283,20 +284,24 @@ public class XmlCommand extends BaseCommand {
 
     public StepResult minify(String xml, String var) { return format(xml, var, COMPRESSED_XML_OUTPUTTER); }
 
-    private StepResult format(String xml, String var, XMLOutputter outputter) {
-        requiresValidVariableName(var);
-        requiresNotBlank(xml, "invalid xml", xml);
+    public StepResult append(String xml, String xpath, String content, String var) throws IOException {
+        return modify(xml, xpath, content, var, Modification.Companion.getAppend());
+    }
 
-        Document doc = deriveWellformXml(xml);
-        if (doc == null) { return StepResult.fail("invalid xml: " + xml); }
+    public StepResult prepend(String xml, String xpath, String content, String var) throws IOException {
+        return modify(xml, xpath, content, var, Modification.Companion.getPrepend());
+    }
 
-        String action = "XML " + (outputter == COMPRESSED_XML_OUTPUTTER ? "minification" : "beautification");
+    public StepResult replace(String xml, String xpath, String content, String var) throws IOException {
+        return modify(xml, xpath, content, var, Modification.Companion.getReplace());
+    }
 
-        String outputXml = outputter.outputString(doc);
-        if (StringUtils.isBlank(outputXml)) { return StepResult.fail(action + " failed with blank XML content"); }
+    public StepResult delete(String xml, String xpath, String var) throws IOException {
+        return modify(xml, xpath, null, var, Modification.Companion.getDelete());
+    }
 
-        context.setData(var, outputXml.trim());
-        return StepResult.success(action + " completed and saved to '" + var + "'");
+    public StepResult clear(String xml, String xpath, String var) throws IOException {
+        return modify(xml, xpath, null, var, Modification.Companion.getClear());
     }
 
     public String getValuesByXPath(String xml, String xpath) {
@@ -347,16 +352,41 @@ public class XmlCommand extends BaseCommand {
         // sanity check
         if (StringUtils.isBlank(xml)) { return xml; }
 
-        if (StringUtils.contains(xml, "<") && StringUtils.contains(xml, ">")) {
-            int startOfProlog = StringUtils.indexOf(xml, PROLOG_START);
-            if (startOfProlog > 0) { xml = StringUtils.substring(xml, startOfProlog); }
-            if (!StringUtils.startsWith(xml, PROLOG_START)) { xml = DEFAULT_PROLOG + xml; }
+        String trimmed = StringUtils.trim(xml);
+        if (!StringUtils.contains(trimmed, "<") || !StringUtils.contains(trimmed, ">")) { return xml; }
 
-            int lastCloseTag = StringUtils.lastIndexOf(xml, ">");
-            if (lastCloseTag < StringUtils.length(xml)) { xml = StringUtils.substring(xml, 0, lastCloseTag + 1); }
+        int startOfProlog = StringUtils.indexOf(trimmed, PROLOG_START);
+        if (startOfProlog > 0) { trimmed = StringUtils.substring(trimmed, startOfProlog); }
+        if (!StringUtils.startsWith(trimmed, PROLOG_START)) { trimmed = DEFAULT_PROLOG + trimmed; }
+
+        int lastCloseTag = StringUtils.lastIndexOf(trimmed, ">");
+        if (lastCloseTag < StringUtils.length(trimmed)) {
+            trimmed = StringUtils.substring(trimmed, 0, lastCloseTag + 1);
         }
 
-        return xml;
+        return trimmed;
+    }
+
+    @NotNull
+    protected StepResult modify(String xml, String xpath, String content, String var, Modification modification)
+        throws IOException {
+
+        if (modification == null) { throw new IllegalArgumentException("modification NOT specified!"); }
+
+        requiresNotBlank(xml, "Invalid xml", xml);
+        requiresNotBlank(xpath, "Invalid xpath", xpath);
+        if (modification.getRequireInput()) { requiresNotBlank(content, "Invalid content", content); }
+
+        Document doc = deriveWellformXml(xml);
+        List matches = XmlUtils.findNodes(doc, xpath);
+        if (CollectionUtils.isEmpty(matches)) {
+            return StepResult.fail("No matches found on target XML using xpath '" + xpath + "'");
+        }
+
+        int edits = modification.modify(matches, content);
+        context.setData(var, XmlUtils.toPrettyXml(doc.getRootElement()));
+
+        return StepResult.success(edits + " edit(s) made to XML and save to '" + var + "'");
     }
 
     protected void generateErrorLogs(XmlCommand.SchemaErrorCollector errorHandler) {
@@ -419,7 +449,7 @@ public class XmlCommand extends BaseCommand {
         requires(StringUtils.isNotBlank(xml), "invalid xml", xml);
 
         try {
-            // support path-based content specificaton
+            // support path-based content specification
             xml = cleanXmlContent(OutputFileUtils.resolveContent(xml, context, false));
             if (StringUtils.isBlank(xml)) {
                 ConsoleUtils.log("empty XML found");
@@ -431,6 +461,23 @@ public class XmlCommand extends BaseCommand {
             ConsoleUtils.log("Error reading as file '" + xml + "': " + e.getMessage());
         } catch (JDOMException e) {
             ConsoleUtils.log("Error when validating xml: " + e.getMessage());
+        }
+
+        return null;
+    }
+
+    protected Document deriveWellformXmlQuietly(String xml) {
+        if (StringUtils.isBlank(xml)) { return null; }
+
+        try {
+            // support path-based content specification
+            xml = cleanXmlContent(OutputFileUtils.resolveContent(xml, context, false));
+            if (StringUtils.isBlank(xml)) { return null; }
+            if (!StringUtils.startsWith(xml, "<") || !StringUtils.endsWith(xml, ">")) { return null; }
+
+            return XmlUtils.parse(xml);
+        } catch (IOException | JDOMException e) {
+            // shh.. exit quietly...
         }
 
         return null;
@@ -457,5 +504,21 @@ public class XmlCommand extends BaseCommand {
 
     protected int count(String xml, String xpath) throws JDOMException {
         return XmlUtils.count(resolveDoc(xml, xpath), xpath);
+    }
+
+    private StepResult format(String xml, String var, XMLOutputter outputter) {
+        requiresValidVariableName(var);
+        requiresNotBlank(xml, "invalid xml", xml);
+
+        Document doc = deriveWellformXml(xml);
+        if (doc == null) { return StepResult.fail("invalid xml: " + xml); }
+
+        String action = "XML " + (outputter == COMPRESSED_XML_OUTPUTTER ? "minification" : "beautification");
+
+        String outputXml = outputter.outputString(doc);
+        if (StringUtils.isBlank(outputXml)) { return StepResult.fail(action + " failed with blank XML content"); }
+
+        context.setData(var, outputXml.trim());
+        return StepResult.success(action + " completed and saved to '" + var + "'");
     }
 }

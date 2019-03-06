@@ -43,6 +43,9 @@ object InspectorConst {
             "aws.s3.list(var,profile,remotePath)" to 0,
             "aws.s3.moveFrom(var,profile,remote,local)" to 0,
             "aws.s3.moveTo(var,profile,local,remote)" to 0,
+            "aws.sqs.receiveMessage(profile,queue,var)" to 2,
+            "aws.sqs.receiveMessages(profile,queue,var)" to 2,
+            "aws.sqs.sendMessage(profile,queue,message,var)" to 3,
             "base.appendText(var,appendWith)" to 0,
             "base.prependText(var,prependWith)" to 0,
             "base.incrementChar(var,amount,config)" to 0,
@@ -165,7 +168,12 @@ object InspectorConst {
             "xml.minify(xml,var)" to 1,
             "xml.storeCount(xml,xpath,var)" to 2,
             "xml.storeValue(xml,xpath,var)" to 2,
-            "xml.storeValues(xml,xpath,var)" to 2)
+            "xml.storeValues(xml,xpath,var)" to 2,
+            "xml.append(xml,xpath,content,var)" to 3,
+            "xml.prepend(xml,xpath,content,var)" to 3,
+            "xml.replace(xml,xpath,content,var)" to 3,
+            "xml.clear(xml,xpath,var)" to 2,
+            "xml.delete(xml,xpath,var)" to 2)
 
     val MULTI_VARS_CMDS = mapOf("base.clear(vars)" to 0)
 
