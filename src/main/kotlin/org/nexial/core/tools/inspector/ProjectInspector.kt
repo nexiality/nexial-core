@@ -121,7 +121,9 @@ object ProjectInspector {
         val programExt = if (IS_OS_WINDOWS) ".cmd" else ".sh"
         val cmd = getCommandLine("nexial-project-inspector$programExt", args, cmdOptions)
         if (cmd == null) {
+            println()
             InspectorLogger.error("Unable to proceed, exiting...")
+            println()
             exit(RC_BAD_CLI_ARGS)
         }
 
@@ -132,12 +134,16 @@ object ProjectInspector {
 
         val projectHome = cmd.getOptionValue("t")
         if (StringUtils.isBlank(projectHome)) {
+            println()
             InspectorLogger.error("Missing 'target' parameter")
+            println()
             exit(MISSING_DIRECTORY)
         }
 
         if (!FileUtil.isDirectoryReadable(projectHome)) {
+            println()
             InspectorLogger.error("Invalid 'target' directory: $projectHome")
+            println()
             exit(BAD_DIRECTORY)
         }
 

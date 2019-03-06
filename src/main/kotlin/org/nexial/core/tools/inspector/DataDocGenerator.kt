@@ -20,6 +20,7 @@ import org.apache.commons.collections4.CollectionUtils
 import org.apache.commons.collections4.IterableUtils
 import org.apache.commons.io.FileUtils
 import org.apache.commons.lang3.StringUtils
+import org.nexial.commons.utils.FileUtil
 import org.nexial.commons.utils.RegexUtils
 import org.nexial.commons.utils.ResourceUtils
 import org.nexial.core.NexialConst.DEF_FILE_ENCODING
@@ -122,16 +123,18 @@ class DataDocGenerator(val options: InspectorOptions, val logger: InspectorLogge
     private fun scanProjectProperties(dataVariables: DataVariableEntity) {
         val projectHome = File(options.directory)
         val projectProperties = File("${projectHome.absolutePath}$separator$DEF_REL_PROJECT_PROPS")
-        val projectProps = ResourceUtils.loadProperties(projectProperties)
-        if (projectProps == null || projectProps.isEmpty) return
+        if (FileUtil.isFileReadable(projectProperties,5)) {
+            val projectProps = ResourceUtils.loadProperties(projectProperties)
+            if (projectProps == null || projectProps.isEmpty) return
 
-        projectProps.forEach { prop ->
-            val name = prop.key as String
-            if (StringUtils.isNotEmpty(name)) {
-                addToEntity(dataVariables, DataVariableAtom(name = name,
-                                                            definedAs = prop.value as String,
-                                                            location = DEF_REL_PROJECT_PROPS,
-                                                            type = ProjectProperties))
+            projectProps.forEach { prop ->
+                val name = prop.key as String
+                if (StringUtils.isNotEmpty(name)) {
+                    addToEntity(dataVariables, DataVariableAtom(name = name,
+                                                                definedAs = prop.value as String,
+                                                                location = DEF_REL_PROJECT_PROPS,
+                                                                type = ProjectProperties))
+                }
             }
         }
     }
@@ -307,7 +310,7 @@ class DataDocGenerator(val options: InspectorOptions, val logger: InspectorLogge
                 val name = dvPair[0]
                 if (StringUtils.isNotBlank(name)) {
                     val definedAs = if (dvPair.size > 1) dvPair[1] else ""
-                    println("adding new cmdline data variable override: name=$name, definedAs=$definedAs, line #=$position")
+//                    println("adding new cmdline data variable override: name=$name, definedAs=$definedAs, line #=$position")
                     addToEntity(dataVariables,
                                 DataVariableAtom(name = name,
                                                  definedAs = definedAs,
