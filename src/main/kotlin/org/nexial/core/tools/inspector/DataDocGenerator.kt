@@ -142,6 +142,7 @@ class DataDocGenerator(val options: InspectorOptions, val logger: InspectorLogge
     private fun scanBatchFiles(dataVariables: DataVariableEntity) {
         val projectHome = File(options.directory)
         val bin = File("${projectHome.absolutePath}$separator$DEF_REL_LOC_BIN")
+        if (!FileUtil.isDirectoryReadable(bin)) return
 
         // find all potential batch files
         val batchFiles = filterFiles(bin, arrayOf("bat", "sh", "cmd")) { file -> file.length() > 0 }
