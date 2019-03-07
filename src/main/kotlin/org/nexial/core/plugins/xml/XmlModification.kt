@@ -18,6 +18,7 @@ package org.nexial.core.plugins.xml
 
 import org.apache.commons.lang3.StringUtils
 import org.jdom2.Attribute
+import org.jdom2.Content
 import org.jdom2.Element
 import org.jdom2.JDOMException
 import org.jdom2.Text
@@ -28,9 +29,15 @@ import java.io.IOException
 
 internal val append = Append()
 internal val prepend = Prepend()
+internal val insertAfter = InsertAfter()
+internal val insertBefore = InsertBefore()
+internal val replaceIn = ReplaceIn()
 internal val replace = Replace()
 internal val delete = Delete()
 internal val clear = Clear()
+
+// detaching content from fake root
+internal fun detach(content: Content) = content.clone().detach()
 
 internal abstract class Modification(val action: String,  val requireInput: Boolean) {
 
@@ -40,7 +47,8 @@ internal abstract class Modification(val action: String,  val requireInput: Bool
             return 0
         }
 
-        val childNode = if (requireInput) deriveXmlDocument(content!!)?.detachRootElement() else null
+        // creating fake root element to support multiple elements operations
+        val childNode = if (requireInput) deriveXmlDocument("<root>$content</root>"!!)?.detachRootElement() else null
         var edits = 0
 
         candidates.forEach { match ->
@@ -92,6 +100,9 @@ internal abstract class Modification(val action: String,  val requireInput: Bool
     companion object {
         fun getAppend() = append
         fun getPrepend() = prepend
+        fun getInsertAfter() = insertAfter
+        fun getInsertBefore() = insertBefore
+        fun getReplaceIn() = replaceIn
         fun getReplace() = replace
         fun getDelete() = delete
         fun getClear() = clear
@@ -100,7 +111,7 @@ internal abstract class Modification(val action: String,  val requireInput: Bool
 
 internal class Append : Modification("append", true) {
     override fun handleModification(target: Element, childElement: Element) {
-        target.addContent(childElement)
+        childElement.content.forEach { target.addContent(detach(it)) }
     }
 
     override fun handleModification(target: Element, content: String?) {
@@ -114,7 +125,8 @@ internal class Append : Modification("append", true) {
 
 internal class Prepend : Modification("prepend", true) {
     override fun handleModification(target: Element, childElement: Element) {
-        target.addContent(0, childElement)
+        var index = 0
+        childElement.content.forEach { target.addContent(index++, detach(it)) }
     }
 
     override fun handleModification(target: Element, content: String?) {
@@ -126,10 +138,46 @@ internal class Prepend : Modification("prepend", true) {
     }
 }
 
+internal class InsertAfter : Modification("insertAfter", true) {
+    override fun handleModification(target: Element, childElement: Element) {
+        var index = target.parent.content.indexOf(target)
+        childElement.content.forEach { target.parent.addContent(++index, detach(it)) }
+    }
+
+    override fun handleModification(target: Element, content: String?) {
+        val index = target.parent.content.indexOf(target)
+        target.parent.addContent(index + 1, Text(content))
+    }
+
+    override fun handleModification(target: Attribute, content: String?) {
+        val nameValues = StringUtils.split(content, "=")
+        val value = if (nameValues.size == 2) nameValues[1] else ""
+        target.parent.setAttribute(nameValues[0], value)
+    }
+}
+
+internal class InsertBefore : Modification("insertBefore", true) {
+    override fun handleModification(target: Element, childElement: Element) {
+        var index = target.parent.content.indexOf(target)
+        childElement.content.forEach { target.parent.addContent(index++, detach(it)) }
+    }
+
+    override fun handleModification(target: Element, content: String?) {
+        val index = target.parent.content.indexOf(target)
+        target.parent.addContent(index, Text(content))
+    }
+
+    override fun handleModification(target: Attribute, content: String?) {
+        val nameValues = StringUtils.split(content, "=")
+        val value = if (nameValues.size == 2) nameValues[1] else ""
+        target.parent.setAttribute(nameValues[0], value)
+    }
+}
+
 internal class Replace : Modification("replace", true) {
     override fun handleModification(target: Element, childElement: Element) {
-        val index = target.parent.content.indexOf(target)
-        target.parent.addContent(index, childElement)
+        var index = target.parent.content.indexOf(target)
+        childElement.content.forEach { target.parent.addContent(index++, detach(it)) }
         target.parent.removeContent(target)
     }
 
@@ -137,6 +185,23 @@ internal class Replace : Modification("replace", true) {
         val index = target.parent.content.indexOf(target)
         target.parent.addContent(index, Text(content))
         target.parent.removeContent(target)
+    }
+
+    override fun handleModification(target: Attribute, content: String?) {
+        target.name = content
+    }
+}
+
+internal class ReplaceIn : Modification("replaceIn", true) {
+    override fun handleModification(target: Element, childElement: Element) {
+        var index = 0
+        target.removeContent()
+        childElement.content.forEach { target.addContent(index++, detach(it)) }
+    }
+
+    override fun handleModification(target: Element, content: String?) {
+        target.removeContent()
+        target.addContent(Text(content))
     }
 
     override fun handleModification(target: Attribute, content: String?) {

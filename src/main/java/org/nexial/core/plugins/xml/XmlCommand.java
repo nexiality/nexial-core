@@ -292,6 +292,18 @@ public class XmlCommand extends BaseCommand {
         return modify(xml, xpath, content, var, Modification.Companion.getPrepend());
     }
 
+    public StepResult insertAfter(String xml, String xpath, String content, String var) throws IOException {
+        return modify(xml, xpath, content, var, Modification.Companion.getInsertAfter());
+    }
+
+    public StepResult insertBefore(String xml, String xpath, String content, String var) throws IOException {
+        return modify(xml, xpath, content, var, Modification.Companion.getInsertBefore());
+    }
+
+    public StepResult replaceIn(String xml, String xpath, String content, String var) throws IOException {
+        return modify(xml, xpath, content, var, Modification.Companion.getReplaceIn());
+    }
+
     public StepResult replace(String xml, String xpath, String content, String var) throws IOException {
         return modify(xml, xpath, content, var, Modification.Companion.getReplace());
     }

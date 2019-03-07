@@ -31,10 +31,12 @@ import org.nexial.commons.utils.TextUtils;
 import org.nexial.commons.utils.XmlUtils;
 import org.nexial.core.ExecutionThread;
 import org.nexial.core.model.ExecutionContext;
+import org.nexial.core.plugins.xml.Modification;
 import org.nexial.core.utils.ConsoleUtils;
 
-import static org.nexial.core.NexialConst.*;
+import static org.nexial.core.NexialConst.COMPRESSED_XML_OUTPUTTER;
 import static org.nexial.core.NexialConst.Data.TEXT_DELIM;
+import static org.nexial.core.NexialConst.PRETTY_XML_OUTPUTTER;
 import static org.nexial.core.SystemVariables.getDefault;
 
 public class XmlTransformer<T extends XmlDataType> extends Transformer {
@@ -237,6 +239,54 @@ public class XmlTransformer<T extends XmlDataType> extends Transformer {
 
         String outputXml = outputter.outputString(data.getDocument());
         data.setTextValue(outputXml.trim());
+        return data;
+    }
+
+    public T append(T data, String xpath, String content) throws IOException {
+        return modify(data, xpath, content, Modification.Companion.getAppend());
+    }
+
+    public T prepend(T data, String xpath, String content) throws IOException {
+        return modify(data, xpath, content, Modification.Companion.getPrepend());
+    }
+
+    public T insertBefore(T data, String xpath, String content) throws IOException {
+        return modify(data, xpath, content, Modification.Companion.getInsertBefore());
+    }
+
+    public T insertAfter(T data, String xpath, String content) throws IOException {
+        return modify(data, xpath, content, Modification.Companion.getInsertAfter());
+    }
+
+    public T replace(T data, String xpath, String content) throws IOException {
+        return modify(data, xpath, content, Modification.Companion.getReplace());
+    }
+
+    public T replaceIn(T data, String xpath, String content) throws IOException {
+        return modify(data, xpath, content, Modification.Companion.getReplaceIn());
+    }
+
+    public T delete(T data, String xpath) throws IOException {
+        return modify(data, xpath, null, Modification.Companion.getDelete());
+    }
+
+    public T clear(T data, String xpath) throws IOException {
+        return modify(data, xpath, null, Modification.Companion.getClear());
+    }
+
+    protected T modify(T data, String xpath, String content, Modification modification) throws IOException {
+        if (data == null || data.getDocument() == null || StringUtils.isEmpty(xpath)) { return null; }
+
+        Document doc = data.getDocument();
+        List matches = XmlUtils.findNodes(doc, xpath);
+        if (CollectionUtils.isEmpty(matches)) {
+            ConsoleUtils.error("No matches found on target XML using xpath '" + xpath + "'");
+            return null;
+        }
+
+        int edits = modification.modify(matches, content);
+        ConsoleUtils.log(edits + " edit(s) made to XML");
+        data.setTextValue(XmlUtils.toPrettyXml(doc.getRootElement()));
         return data;
     }
 
