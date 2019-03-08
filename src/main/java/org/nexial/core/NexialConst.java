@@ -865,6 +865,17 @@ public final class NexialConst {
                                                                         OPT_DRAG_FROM_MIDDLE);
         public static final String OPT_DRAG_FROM = registerSystemVariable(NS_WEB + "dragFrom", OPT_DRAG_FROM_MIDDLE);
 
+        // web: scroll into view
+        public static final String SCROLL_INTO_VIEW = registerSystemVariable(NS_WEB + "scrollIntoView", true);
+        public static final String JS_SCROLL_INTO_VIEW =
+            "if (arguments[0]) {" +
+            "   if (argument[0].scrollIntoViewIfNeeded) {" +
+            "       argument[0].scrollIntoViewIfNeeded();" +
+            "   } else {" +
+            "       arguments[0].scrollIntoView(false);" +
+            "   }" +
+            "}";
+
         // desktop
         public static final String WINIUM_EXE = "Winium.Desktop.Driver.exe";
         public static final String WINIUM_PORT = registerSystemVariable(NAMESPACE + "winiumPort");

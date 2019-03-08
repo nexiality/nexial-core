@@ -1238,7 +1238,7 @@ public class WebCommand extends BaseCommand implements CanTakeScreenshot, CanLog
                                    .build()
                                    .perform();
             } else {
-                jsExecutor.executeScript("arguments[0].scrollIntoView(true);", element);
+                scrollIntoView(element);
                 element.sendKeys(value);
             }
         }
@@ -1250,7 +1250,7 @@ public class WebCommand extends BaseCommand implements CanTakeScreenshot, CanLog
     public StepResult typeKeys(String locator, String value) {
         if (StringUtils.isNotBlank(locator)) {
             WebElement element = toElement(locator);
-            jsExecutor.executeScript("arguments[0].scrollIntoView(true);", element);
+            scrollIntoView(element);
 
             if (StringUtils.isBlank(value)) {
                 element.clear();
@@ -1466,9 +1466,9 @@ public class WebCommand extends BaseCommand implements CanTakeScreenshot, CanLog
         String waitMsStr = isNumber ? (long) NumberUtils.toDouble(waitMs) + "" : context.getPollWaitMs() + "";
 
         WebElement element = toElement(locator);
-        jsExecutor.executeScript("arguments[0].scrollIntoView(true);", element);
+        scrollIntoView(element);
         highlight(element);
-        new Actions(driver).doubleClick(element).build().perform();
+        new Actions(driver).moveToElement(element).doubleClick(element).build().perform();
 
         // could have alert text...
         alert.preemptiveDismissAlert();
@@ -1966,9 +1966,8 @@ public class WebCommand extends BaseCommand implements CanTakeScreenshot, CanLog
 
     protected void jsClick(WebElement element) {
         ConsoleUtils.log("click target via JS, @id=" + element.getAttribute("id"));
-        String clickJs = "arguments[0].scrollIntoView(true); arguments[0].click(); return true;";
-        Object retObj = jsExecutor.executeScript(clickJs, element);
-        ConsoleUtils.log("clicked -> " + retObj);
+        scrollIntoView(element);
+        ConsoleUtils.log("clicked -> " + jsExecutor.executeScript("arguments[0].click(); return true;", element));
     }
 
     protected void initWebDriver() {
@@ -2278,6 +2277,12 @@ public class WebCommand extends BaseCommand implements CanTakeScreenshot, CanLog
         }
 
         return false;
+    }
+
+    protected void scrollIntoView(WebElement element) {
+        if (element != null && context.getBooleanData(SCROLL_INTO_VIEW, getDefaultBool(SCROLL_INTO_VIEW))) {
+            jsExecutor.executeScript(JS_SCROLL_INTO_VIEW, element);
+        }
     }
 
     protected boolean scrollTo(Locatable element) throws ElementNotVisibleException {
