@@ -857,6 +857,15 @@ public class DesktopTable extends DesktopElement {
                 // clear existing content first
                 ConsoleUtils.log("clear content on '" + column + "' first");
                 clearCellContent(cellElement);
+            } else {
+                if (isInvokePatternAvailable(cellElement)) {
+                    // the code below is alternative for combo which do not have 'Edit' component under Table even if it is editable.
+                    // This is the case when sometime we can't type text in combo box of table row, need to select from dropdowns
+
+                    ConsoleUtils.log("using shortcut on '" + column + "'");
+                    driver.executeScript(SCRIPT_PREFIX_SHORTCUT + forceShortcutSyntax(value), cellElement);
+                    return true;
+                }
             }
             return typeValueWithFunctionKey(tableRow, cellElement, value, false);
         } else if (isTextPatternAvailable(cellElement)) {
