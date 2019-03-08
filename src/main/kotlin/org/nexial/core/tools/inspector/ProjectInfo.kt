@@ -16,8 +16,12 @@
 
 package org.nexial.core.tools.inspector
 
+import org.nexial.core.NexialConst.ENV_NEXIAL_HOME
+import org.nexial.core.NexialConst.Project.NEXIAL_HOME
+
 data class ProjectInfo(val projectHome: String, val projectId: String) {
 
     var metaFile: String? = null
     val advices = mutableListOf<String>()
+    var nexialHome: String = System.getProperty(NEXIAL_HOME, System.getenv(ENV_NEXIAL_HOME))
 }

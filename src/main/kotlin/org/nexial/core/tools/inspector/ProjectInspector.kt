@@ -54,7 +54,9 @@ object ProjectInspector {
 
         val json = JsonObject()
         val projectInfo = ProjectInfoGenerator(options, logger).generate()
+        json.addProperty("nexialHome", projectInfo.nexialHome)
         json.addProperty("name", projectInfo.projectId)
+        json.addProperty("scanProjectHome", projectInfo.projectHome)
         json.addProperty("scanTime", System.currentTimeMillis())
         json.add("macros", GSON.toJsonTree(MacroDocGenerator(options, logger).generate()))
         json.add("dataVariables", GSON.toJsonTree(DataDocGenerator(options, logger).generate()))

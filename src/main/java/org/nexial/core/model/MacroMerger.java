@@ -28,6 +28,7 @@ import org.apache.poi.xssf.usermodel.XSSFCell;
 import org.apache.poi.xssf.usermodel.XSSFCellStyle;
 import org.apache.poi.xssf.usermodel.XSSFRow;
 import org.apache.poi.xssf.usermodel.XSSFSheet;
+import org.jetbrains.annotations.NotNull;
 import org.nexial.commons.utils.FileUtil;
 import org.nexial.core.ExecutionInputPrep;
 import org.nexial.core.ExecutionThread;
@@ -43,6 +44,7 @@ import static java.io.File.separator;
 import static org.apache.poi.ss.usermodel.CellType.STRING;
 import static org.apache.poi.ss.usermodel.Row.MissingCellPolicy.CREATE_NULL_AS_BLANK;
 import static org.nexial.core.NexialConst.Data.*;
+import static org.nexial.core.excel.Excel.MIN_EXCEL_FILE_SIZE;
 import static org.nexial.core.excel.ExcelConfig.*;
 
 public class MacroMerger {
@@ -98,6 +100,28 @@ public class MacroMerger {
             //     ConsoleUtils.log("macro(s) merged, saving excel " + excel.getFile());
             //     excel.save();
         }
+    }
+
+    /**
+     * A macro library file can be specified as full path or relative path. Relative path may be pivoted at project
+     * home or artifact/script dir
+     */
+    @NotNull
+    public static File resolveMacroFile(TestProject project, String macroFile) throws IOException {
+        // first, try it as is
+        if (FileUtil.isFileReadable(macroFile, MIN_EXCEL_FILE_SIZE)) { return new File(macroFile); }
+
+        // next, try pivoting from artifact/script
+        String macroFilePath = StringUtils.appendIfMissing(project.getScriptPath(), separator) + macroFile;
+        if (!FileUtil.isFileReadable(macroFilePath, MIN_EXCEL_FILE_SIZE)) {
+            // last, try again pivoting now from project home
+            macroFilePath = StringUtils.appendIfMissing(project.getProjectHome(), separator) + macroFile;
+            if (!FileUtil.isFileReadable(macroFilePath, MIN_EXCEL_FILE_SIZE)) {
+                throw new IOException("Unable to read macro file '" + macroFile + "'");
+            }
+        }
+
+        return new File(macroFilePath);
     }
 
     protected boolean expandTestSteps(List<List<String>> allTestSteps) throws IOException {
@@ -254,18 +278,7 @@ public class MacroMerger {
             paramMacro = context.replaceTokens(paramMacro);
         }
 
-        // macro library can be specified as full path or relative path
-        File macroFile;
-        if (FileUtil.isFileReadable(paramFile, 5000)) {
-            macroFile = new File(paramFile);
-        } else {
-            String macroFilePath = StringUtils.appendIfMissing(
-                StringUtils.appendIfMissing(project.getScriptPath(), separator) + paramFile, ".xlsx");
-            if (!FileUtil.isFileReadable(macroFilePath, 5000)) {
-                throw new IOException("Unable to read macro file '" + macroFilePath + "'");
-            }
-            macroFile = new File(macroFilePath);
-        }
+        File macroFile = resolveMacroFile(project, StringUtils.appendIfMissing(paramFile, ".xlsx"));
 
         // (2018/12/9,automike): remove to support dynamic macro changes during execution and interactive mode
         // String macroKey = macroFile + ":" + paramSheet + ":" + paramMacro;
