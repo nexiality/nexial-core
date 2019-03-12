@@ -48,8 +48,8 @@ import java.io.IOException
 import javax.validation.constraints.NotNull
 
 object MacroUpdater {
-    private val DATA_FILE_SUFFIX = "data.xlsx"
-    private val SCRIPT_FILE_SUFFIX = "xlsx"
+    private const val DATA_FILE_SUFFIX = "data.xlsx"
+    private const val SCRIPT_FILE_SUFFIX = "xlsx"
     private var searchFrom = ""
     private val updated = mutableListOf<UpdateLog>()
 
@@ -129,6 +129,7 @@ object MacroUpdater {
             ConsoleUtils.error("Missing 'Macro Sheet' parameter")
             exit(MISSING_OUTPUT)
         }
+
         val macroName = cmd.getOptionValue("m")
         if (StringUtils.isBlank(macroName)) {
             ConsoleUtils.error("Missing 'Macro Name' parameter")
@@ -137,11 +138,15 @@ object MacroUpdater {
 
         val toMap = TextUtils.toMap(macroName, getDefault(TEXT_DELIM), "=")
 
+//        println("target macro file:  $macroFileName")
+//        println("target macro sheet: $macroSheet")
+//        println("target macro names: $toMap")
+
         return MacroUpdater.MacroOptions(macroFileName, macroSheet, toMap)
     }
 
     private fun replaceScript(options: MacroOptions) {
-        FileUtils.listFiles(File("$searchFrom"), Array(1) { "$SCRIPT_FILE_SUFFIX" }, true).stream()
+        FileUtils.listFiles(File(searchFrom), Array(1) { SCRIPT_FILE_SUFFIX }, true).stream()
             .filter { file -> isTestScriptFile(file) && InputFileUtils.isValidScript(file.absolutePath) }
             .forEach { handleScripts(it, options) }
     }
@@ -208,10 +213,10 @@ object MacroUpdater {
     }
 
     private fun replaceMacro(options: MacroOptions) {
-        FileUtils.listFiles(File("$searchFrom"), Array(1) { "$SCRIPT_FILE_SUFFIX" }, true).stream()
+        FileUtils.listFiles(File(searchFrom), Array(1) { SCRIPT_FILE_SUFFIX }, true).stream()
             .filter { file ->
                 isTestScriptFile(file) &&
-                file.name == "${options.macroFile}" &&
+                file.name == options.macroFile &&
                 InputFileUtils.isValidMacro(file.absolutePath)
             }.forEach { handleMacro(it, options) }
     }
@@ -255,6 +260,7 @@ object MacroUpdater {
                 hasUpdate = true
             }
         }
+
         return hasUpdate
     }
 
@@ -262,28 +268,23 @@ object MacroUpdater {
         try {
             Excel.save(file, workBook)
         } catch (e: IOException) {
-            System.err.println(String.format(
-                "\n\nFile %s is either is in use by other process or got deleted. " +
-                "Please close the file if it is open and re run the program\n\n",
-                file))
+            System.err.println("\n\nFile $file is either is in use by other process or got deleted. " +
+                               "Please close the file if it is open and re run the program\n\n")
             System.exit(RC_EXCEL_IN_USE)
         } finally {
             try {
                 workBook.close()
             } catch (e: IOException) {
-                System.err.println("Unable to properly close Excel file " + file + ": " + e.message)
+                System.err.println("Unable to properly close Excel file $file: ${e.message}")
             }
-
         }
     }
 
     private fun isTestScriptFile(file: File): Boolean {
         return !file.name.startsWith("~") &&
                !file.absolutePath.contains(separator + "output" + separator) &&
-               !file.name.contains("$DATA_FILE_SUFFIX")
+               !file.name.contains(DATA_FILE_SUFFIX)
     }
 
-    private fun log(action: String, subject: Any?) {
-        println(" >> ${StringUtils.rightPad(action, 26) + " " + subject}")
-    }
+    private fun log(action: String, subject: Any?) = println(" >> ${StringUtils.rightPad(action, 26) + " " + subject}")
 }

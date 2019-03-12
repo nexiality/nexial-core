@@ -48,7 +48,7 @@ internal abstract class Modification(val action: String,  val requireInput: Bool
         }
 
         // creating fake root element to support multiple elements operations
-        val childNode = if (requireInput) deriveXmlDocument("<root>$content</root>"!!)?.detachRootElement() else null
+        val childNode = if (requireInput) deriveXmlDocument("<root>$content</root>")?.detachRootElement() else null
         var edits = 0
 
         candidates.forEach { match ->

@@ -81,9 +81,7 @@ final public class DataVariableUpdater {
     private static final int COLUMN_3_WIDTH = 10;
     private static final int COLUMN_4_LEFT_MARGIN = (COLUMN_1_WIDTH + COLUMN_2_WIDTH + COLUMN_3_WIDTH);
     private static final String BECOME_SYMBOL =
-        "\n" +
-        StringUtils.repeat(" ", COLUMN_1_WIDTH + COLUMN_2_WIDTH + COLUMN_3_WIDTH - 3) +
-        "=> ";
+        "\n" + StringUtils.repeat(" ", COLUMN_1_WIDTH + COLUMN_2_WIDTH + COLUMN_3_WIDTH - 3) + "=> ";
 
     protected String searchFrom;
     protected File searchPath;
@@ -247,15 +245,23 @@ final public class DataVariableUpdater {
         System.out.println("/" + banner + "\\");
         System.out.println("|" + ConsoleUtils.centerPrompt(prompt, 100) + "|");
         System.out.println("\\" + banner + "/");
-        if (updated.size() == 0) {
-            System.out.println(ConsoleUtils.centerPrompt("There are no matching data variables in the files.", 102));
-            return;
-        }
 
-        System.out.println(formatColumns("File", "DataSheet/Scenario", "Position", "Updating Lines/Cells"));
-        System.out.println(banner + "--");
-        updated.forEach(System.out::println);
-        System.out.println();
+        if (updated.isEmpty()) {
+            System.out.println(ConsoleUtils.centerPrompt("There are no matching data variables in the files.", 102));
+        } else {
+            System.out.println(formatColumns("File", "DataSheet/Scenario", "Position", "Updating Lines/Cells"));
+            System.out.println(banner + "--");
+            updated.forEach(System.out::println);
+            System.out.println();
+        }
+    }
+
+    public static String formatColumns(String file, String worksheet, String position, String updatingVars) {
+        return StringUtils.right(StringUtils.rightPad(file, COLUMN_1_WIDTH), COLUMN_1_WIDTH) +
+               StringUtils.left(StringUtils.rightPad(StringUtils.defaultIfEmpty(worksheet, ""), COLUMN_2_WIDTH),
+                                COLUMN_2_WIDTH) +
+               StringUtils.rightPad(position, COLUMN_3_WIDTH) +
+               updatingVars;
     }
 
     /**
@@ -845,11 +851,4 @@ final public class DataVariableUpdater {
     private static void log(String message) { System.out.println(" >> " + message); }
 
     private static void log(String action, Object subject) { log(StringUtils.rightPad(action, 26) + " " + subject); }
-
-    public static String formatColumns(String file, String worksheet, String position, String updatingVars) {
-        return StringUtils.rightPad(file, COLUMN_1_WIDTH) +
-               StringUtils.rightPad(StringUtils.defaultIfEmpty(worksheet, ""), COLUMN_2_WIDTH) +
-               StringUtils.rightPad(position, COLUMN_3_WIDTH) +
-               updatingVars;
-    }
 }

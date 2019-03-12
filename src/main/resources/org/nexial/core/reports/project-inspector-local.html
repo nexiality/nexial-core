@@ -17,11 +17,14 @@
     </script>
     <link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.6.1/css/all.css" onerror="externalResourceNotFound()"/>
     <link rel="stylesheet" href="http://nexiality.github.io/documentation/assets/project/datatables.min.css" onerror="externalResourceNotFound()"/>
+    <link rel="stylesheet" href="http://nexiality.github.io/documentation/assets/project/w2ui-1.5.rc1.min.css" onerror="externalResourceNotFound()"/>
     <link rel="stylesheet" href="http://nexiality.github.io/documentation/assets/report/execution_summary.css" onerror="externalResourceNotFound()"/>
     <link rel="stylesheet" href="http://nexiality.github.io/documentation/assets/project/project-iceblue.css" onerror="externalResourceNotFound()"/>
+
     <script type="text/javascript" src="project-inspector.js"></script>
     <script src="http://nexiality.github.io/documentation/assets/project/clipboard.min.js" onerror="externalResourceNotFound()"></script>
     <script src="http://nexiality.github.io/documentation/assets/project/datatables.min.js" onerror="externalResourceNotFound()"></script>
+    <script src="http://nexiality.github.io/documentation/assets/project/w2ui-1.5.rc1.min.js" onerror="externalResourceNotFound()"></script>
     <script src="http://nexiality.github.io/documentation/assets/report/execution_summary.js" onerror="externalResourceNotFound()"></script>
     <script src="http://nexiality.github.io/documentation/assets/project/project.js" onerror="externalResourceNotFound()"></script>
     <title></title>
@@ -47,26 +50,33 @@
     </div>
 </h1>
 <div id="data-container" class="data-container project-container canHide">
-    <div class="instruction">
-        <!--<i class="fas fa-chalkboard-teacher"></i>-->
+    <div class="result-controls container-toolbar">
+        <i class="fas fa-toggle-on on" id="advice-toggle" onclick="toggleAdvice(this)" title="toggle the display of advices"><span>Advices</span></i>
+        <i class="fas fa-toggle-on on" id="sysvar-toggle" onclick="toggleDataDefs(this)" title="toggle the display of System variables"><span>System Variables</span></i>
+        |&nbsp;
+        <i class="fas fa-toggle-on on" id="data-step-toggle" onclick="toggleDataDefs(this)" title="toggle the display of data variables modified in test step"><span>test step</span></i>
+        <i class="fas fa-toggle-on on" id="data-command-toggle" onclick="toggleDataDefs(this)" title="toggle the display of data variables defined in batch file"><span>batch</span></i>
+        <i class="fas fa-toggle-on on" id="data-project-toggle" onclick="toggleDataDefs(this)" title="toggle the display of data variables defined in project.properties"><span>project.properties</span></i>
+        <i class="fas fa-toggle-on on" id="data-datasheet-toggle" onclick="toggleDataDefs(this)" title="toggle the display of data variables defined in datasheet"><span>datasheet</span></i>
+        <i class="fas fa-toggle-on on" id="data-default-toggle" onclick="toggleDataDefs(this)" title="toggle the display of data variables defined in #default sheet"><span>#default</span></i>
+    </div>
 
-        <div class="result-controls container-controls">
-            <i class="fas fa-toggle-on on" id="advice-toggle" onclick="toggleAdvice(this)" title="toggle the display of advices"><span>Advices</span></i>
-            <i class="fas fa-toggle-on on" id="sysvar-toggle" onclick="toggleDataDefs(this)" title="toggle the display of System variables"><span>System Variables</span></i>
-            |&nbsp;
-            <i class="fas fa-toggle-on on" id="data-step-toggle" onclick="toggleDataDefs(this)" title="toggle the display of data variables modified in test step"><span>test step</span></i>
-            <i class="fas fa-toggle-on on" id="data-command-toggle" onclick="toggleDataDefs(this)" title="toggle the display of data variables defined in batch file"><span>batch</span></i>
-            <i class="fas fa-toggle-on on" id="data-project-toggle" onclick="toggleDataDefs(this)" title="toggle the display of data variables defined in project.properties"><span>project.properties</span></i>
-            <i class="fas fa-toggle-on on" id="data-datasheet-toggle" onclick="toggleDataDefs(this)" title="toggle the display of data variables defined in datasheet"><span>datasheet</span></i>
-            <i class="fas fa-toggle-on on" id="data-default-toggle" onclick="toggleDataDefs(this)" title="toggle the display of data variables defined in #default sheet"><span>#default</span></i>
-        </div>
+    <div class="instruction">
+        <i class="fas fa-toggle-on on"></i>
+        <div class="instruction-text">Click on one of these icons above to toggle the display of metadata.</div>
+        <i class="far fa-edit refactor"></i>
+        <div class="instruction-text">Click on the icon to manage the corresponding macro.</div>
     </div>
 
     <table class="data-table project-artifact display" data-page-length="10">
-        <thead><tr><th class="label">Data Variable</th><th class="label">Definition(s)</th></tr></thead>
+        <thead>
+        <tr>
+            <th class="label">Data Variable</th>
+            <th class="label">Definition(s)</th>
+        </tr>
+        </thead>
         <tbody></tbody>
     </table>
-
 </div>
 
 <br/>
@@ -80,14 +90,17 @@
 </h1>
 <div id="macro-container" class="macro-container project-container canHide">
     <div class="instruction">
-        <i class="fas fa-chalkboard-teacher"></i> Click on a copy icon <i class="far fa-clipboard"></i> to copy the
-        corresponding macro. After copy, paste (<code>Ctrl-V</code> or <code>Command-V</code>) into the
-        <b>[cmd type]</b> column (Column C) of the target step. Note that the reference to the macro file in
-        <b>[param 1]</b> might not be correct, especially if it is referenced by another project. Please verify macro
-        file location after pasting it to the test script.
+        <i class="far fa-clipboard"></i>
+        <div class="instruction-text">Click to copy the corresponding macro. After copy, paste (<code>Ctrl-V</code>
+            or <code>Command-V</code>) into the <b>[cmd type]</b> column (Column C) of the target step. Note that one
+            should double-check the location of the macro file location, especially if it is referenced by another
+            project. Click <a href="javascript:void(0)" onclick="showHowTo('#howto-copy-macro')">here</a> to see it in
+            action.
+        </div>
+        <i class="far fa-edit refactor"></i>
+        <div class="instruction-text">Click on the icon to manage the corresponding macro.</div>
     </div>
 </div>
-
 
 <br/>
 <br/>
@@ -96,6 +109,12 @@
 <div class="footer">powered by <a href="https://nexiality.github.io">NEXIAL</a></div>
 <br/>
 <br/>
+
+<div id="howto-copy-macro" class="howto-container" title="HOWTO: copy macro to script">
+    <div class="howto" style="background-image: url(http://nexiality.github.io/documentation/commands/macro/image/copy-macro-01.gif);">
+        <div class="caption">Copy macro reference from Project Inspector to test script</div>
+    </div>
+</div>
 
 <div id="loadError" style="display:none;font-weight:bold;font-size:16pt;color:#800;background:rgba(230,200,200,0.9);border:5px solid;padding:25px;margin:auto;position:fixed;width:500px;height:175px;top:0;left:0;right:0;bottom:0;">
     Unable to load one or more external web resources needed to display this page.<br/><br/>
