@@ -26,13 +26,15 @@ import org.nexial.commons.utils.TextUtils
 import org.nexial.core.NexialConst.Data.*
 import org.nexial.core.NexialConst.ExitStatus.RC_BAD_CLI_ARGS
 import org.nexial.core.NexialConst.ExitStatus.RC_EXCEL_IN_USE
-import org.nexial.core.NexialConst.Project.DEF_REL_LOC_ARTIFACT
+import org.nexial.core.NexialConst.Project.*
 import org.nexial.core.SystemVariables.getDefault
 import org.nexial.core.excel.Excel
 import org.nexial.core.excel.Excel.Worksheet
 import org.nexial.core.excel.ExcelAddress
 import org.nexial.core.excel.ExcelArea
 import org.nexial.core.excel.ExcelConfig.*
+import org.nexial.core.model.MacroMerger
+import org.nexial.core.model.TestProject
 import org.nexial.core.tools.CliConst.OPT_VERBOSE
 import org.nexial.core.tools.CliUtils.getCommandLine
 import org.nexial.core.tools.CliUtils.newArgOption
@@ -48,10 +50,10 @@ import java.io.IOException
 import javax.validation.constraints.NotNull
 
 object MacroUpdater {
-    private const val DATA_FILE_SUFFIX = "data.xlsx"
     private const val SCRIPT_FILE_SUFFIX = "xlsx"
     private var searchFrom = ""
     private val updated = mutableListOf<UpdateLog>()
+    private val project = TestProject()
 
     data class MacroOptions(val macroFile: String, val macroSheet: String, val macroMap: MutableMap<String, String>)
 
@@ -65,31 +67,34 @@ object MacroUpdater {
 
     @JvmStatic
     fun main(args: Array<String>) {
-        val cmd = deriveCommandLine(args)
-        val options = deriveMacroOptions(cmd)
-        updateAll(options)
+        resolveProjectMeta()
+        updateAll(deriveMacroOptions(deriveCommandLine(args)))
+    }
+
+    private fun resolveProjectMeta() {
+        project.projectHome = StringUtils.substringBeforeLast(searchFrom, "artifact")
+        project.scriptPath = StringUtils.appendIfMissing(project.projectHome, separator) + DEF_REL_LOC_TEST_SCRIPT
     }
 
     private fun updateAll(options: MacroOptions) {
         replaceMacro(options)
         replaceScript(options)
 
-        val prompt = " macro name update summary"
         val banner = StringUtils.repeat('-', 100)
 
         println()
         println()
         println("/$banner\\")
-        println("|" + ConsoleUtils.centerPrompt(prompt, 100) + "|")
+        println("|" + ConsoleUtils.centerPrompt(" macro name update summary", 100) + "|")
         println("\\$banner/")
         if (updated.size == 0) {
             println(ConsoleUtils.centerPrompt("There are no matching data variables in the files.", 102))
-            return
+        } else {
+            println(DataVariableUpdater.formatColumns("file", "worksheet", "position", "updatingMacros"))
+            println("$banner--")
+            updated.forEach { println(it) }
+            println()
         }
-        println(DataVariableUpdater.formatColumns("file", "worksheet", "position", "updatingMacros"))
-        println("$banner--")
-        updated.forEach { println(it) }
-        println()
     }
 
     private fun deriveCommandLine(args: Array<String>): CommandLine {
@@ -195,9 +200,9 @@ object MacroUpdater {
                 val macroSheet = Excel.getCellValue(row[COL_IDX_PARAMS_START + 1])
                 val macroName = Excel.getCellValue(macroCell)
 
-                macroFile = StringUtils.removeEndIgnoreCase(macroFile, ".$SCRIPT_FILE_SUFFIX")
-                val macroFile1 = StringUtils.removeEndIgnoreCase(options.macroFile, ".$SCRIPT_FILE_SUFFIX")
-                if (StringUtils.endsWith(macroFile, macroFile1)
+                macroFile = MacroMerger.resolveMacroFile(project, macroFile).absolutePath
+                val expectedMacroFile = MacroMerger.resolveMacroFile(project, options.macroFile)
+                if (StringUtils.equals(macroFile, expectedMacroFile.absolutePath)
                     && macroSheet == options.macroSheet
                     && options.macroMap.containsKey(macroName)) {
                     macroCell.setCellValue(options.macroMap[macroName])
@@ -213,10 +218,11 @@ object MacroUpdater {
     }
 
     private fun replaceMacro(options: MacroOptions) {
+        val macroFile = MacroMerger.resolveMacroFile(project, options.macroFile)
         FileUtils.listFiles(File(searchFrom), Array(1) { SCRIPT_FILE_SUFFIX }, true).stream()
             .filter { file ->
                 isTestScriptFile(file) &&
-                file.name == options.macroFile &&
+                file.absolutePath == macroFile.absolutePath &&
                 InputFileUtils.isValidMacro(file.absolutePath)
             }.forEach { handleMacro(it, options) }
     }
@@ -282,8 +288,8 @@ object MacroUpdater {
 
     private fun isTestScriptFile(file: File): Boolean {
         return !file.name.startsWith("~") &&
-               !file.absolutePath.contains(separator + "output" + separator) &&
-               !file.name.contains(DATA_FILE_SUFFIX)
+               !file.absolutePath.contains(separator + DEF_REL_LOC_OUTPUT) &&
+               !file.name.contains(DEF_DATAFILE_SUFFIX)
     }
 
     private fun log(action: String, subject: Any?) = println(" >> ${StringUtils.rightPad(action, 26) + " " + subject}")
