@@ -869,8 +869,8 @@ public final class NexialConst {
         public static final String SCROLL_INTO_VIEW = registerSystemVariable(NS_WEB + "scrollIntoView", true);
         public static final String JS_SCROLL_INTO_VIEW =
             "if (arguments[0]) {" +
-            "   if (argument[0].scrollIntoViewIfNeeded) {" +
-            "       argument[0].scrollIntoViewIfNeeded();" +
+            "   if (arguments[0].scrollIntoViewIfNeeded) {" +
+            "       arguments[0].scrollIntoViewIfNeeded();" +
             "   } else {" +
             "       arguments[0].scrollIntoView(false);" +
             "   }" +
