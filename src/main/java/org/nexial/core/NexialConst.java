@@ -593,7 +593,10 @@ public final class NexialConst {
         public static final String NEXIAL_EXECUTION_TYPE_SCRIPT = "script";
         public static final String NEXIAL_EXECUTION_TYPE_PLAN = "plan";
 
-        public static final String DEF_DATAFILE_SUFFIX = ".data.xlsx";
+        public static final String SCRIPT_FILE_SUFFIX = "xlsx";
+        public static final String SCRIPT_FILE_EXT = "." + SCRIPT_FILE_SUFFIX;
+        public static final String DATA_FILE_SUFFIX = "data." + SCRIPT_FILE_SUFFIX;
+        public static final String DEF_DATAFILE_SUFFIX = "." + DATA_FILE_SUFFIX;
 
         private Project() { }
 

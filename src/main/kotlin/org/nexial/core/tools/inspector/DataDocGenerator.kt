@@ -26,8 +26,7 @@ import org.nexial.commons.utils.ResourceUtils
 import org.nexial.core.NexialConst.DEF_FILE_ENCODING
 import org.nexial.core.NexialConst.Data.SHEET_DEFAULT_DATA
 import org.nexial.core.NexialConst.NAMESPACE
-import org.nexial.core.NexialConst.Project.DEF_REL_LOC_BIN
-import org.nexial.core.NexialConst.Project.DEF_REL_PROJECT_PROPS
+import org.nexial.core.NexialConst.Project.*
 import org.nexial.core.SystemVariables.*
 import org.nexial.core.excel.Excel
 import org.nexial.core.excel.Excel.Worksheet
@@ -64,7 +63,7 @@ class DataDocGenerator(val options: InspectorOptions, val logger: InspectorLogge
         val projectHome = File(options.directory)
 
         // find all potential data variable files
-        val dataFiles = filterFiles(projectHome, arrayOf("data.xlsx")) { file -> isDataFile(file) }
+        val dataFiles = filterFiles(projectHome, arrayOf(DATA_FILE_SUFFIX)) { file -> isDataFile(file) }
         logger.log("found ${dataFiles.size} data files")
         if (dataFiles.isEmpty()) return
 
@@ -181,7 +180,7 @@ class DataDocGenerator(val options: InspectorOptions, val logger: InspectorLogge
         val projectHome = File(options.directory)
 
         // find all potential data variable files
-        val scriptFiles = filterFiles(projectHome, arrayOf("xlsx")) { file -> isTestScript(file) }
+        val scriptFiles = filterFiles(projectHome, arrayOf(SCRIPT_FILE_SUFFIX)) { file -> isTestScript(file) }
         logger.log("found ${scriptFiles.size} test scripts")
         if (scriptFiles.isEmpty()) return
 

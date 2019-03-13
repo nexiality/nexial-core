@@ -44,6 +44,7 @@ import static java.io.File.separator;
 import static org.apache.poi.ss.usermodel.CellType.STRING;
 import static org.apache.poi.ss.usermodel.Row.MissingCellPolicy.CREATE_NULL_AS_BLANK;
 import static org.nexial.core.NexialConst.Data.*;
+import static org.nexial.core.NexialConst.Project.SCRIPT_FILE_EXT;
 import static org.nexial.core.excel.Excel.MIN_EXCEL_FILE_SIZE;
 import static org.nexial.core.excel.ExcelConfig.*;
 
@@ -278,7 +279,7 @@ public class MacroMerger {
             paramMacro = context.replaceTokens(paramMacro);
         }
 
-        File macroFile = resolveMacroFile(project, StringUtils.appendIfMissing(paramFile, ".xlsx"));
+        File macroFile = resolveMacroFile(project, StringUtils.appendIfMissing(paramFile, SCRIPT_FILE_EXT));
 
         // (2018/12/9,automike): remove to support dynamic macro changes during execution and interactive mode
         // String macroKey = macroFile + ":" + paramSheet + ":" + paramMacro;

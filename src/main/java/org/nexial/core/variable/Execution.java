@@ -33,6 +33,7 @@ import static org.apache.commons.lang3.SystemUtils.USER_NAME;
 import static org.nexial.core.NexialConst.Data.CURR_ITERATION;
 import static org.nexial.core.NexialConst.Data.ITERATION_ENDED;
 import static org.nexial.core.NexialConst.OPT_INPUT_EXCEL_FILE;
+import static org.nexial.core.NexialConst.Project.SCRIPT_FILE_EXT;
 
 /**
  * built-in function to expose execution level meta data.  This function expose the "current" or runtime
@@ -234,7 +235,7 @@ public class Execution {
         String testScript = execDef.getTestScript();
         if (testScript == null) { return ""; }
 
-        return StringUtils.removeEndIgnoreCase(new File(testScript).getName(), ".xlsx");
+        return StringUtils.removeEndIgnoreCase(new File(testScript).getName(), SCRIPT_FILE_EXT);
     }
 
     @NotNull

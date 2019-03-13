@@ -38,6 +38,10 @@ import org.nexial.core.model.TestProject
 import org.nexial.core.tools.CliConst.OPT_VERBOSE
 import org.nexial.core.tools.CliUtils.getCommandLine
 import org.nexial.core.tools.CliUtils.newArgOption
+import org.nexial.core.tools.ProjectToolUtils.formatColumns
+import org.nexial.core.tools.ProjectToolUtils.isTestScriptFile
+import org.nexial.core.tools.ProjectToolUtils.listTestScripts
+import org.nexial.core.tools.ProjectToolUtils.log
 import org.nexial.core.tools.inspector.InspectorConst.ReturnCode.MISSING_DIRECTORY
 import org.nexial.core.tools.inspector.InspectorConst.ReturnCode.MISSING_OUTPUT
 import org.nexial.core.tools.inspector.InspectorConst.exit
@@ -50,19 +54,16 @@ import java.io.IOException
 import javax.validation.constraints.NotNull
 
 object MacroUpdater {
-    private const val SCRIPT_FILE_SUFFIX = "xlsx"
     private var searchFrom = ""
     private val updated = mutableListOf<UpdateLog>()
     private val project = TestProject()
 
     data class MacroOptions(val macroFile: String, val macroSheet: String, val macroMap: MutableMap<String, String>)
 
-    private class UpdateLog(var file: String, var worksheet: String, var position: String, var updatingMacros: String) {
+    class UpdateLog(var file: String, var worksheet: String, var position: String, var updatingMacros: String) {
         constructor(file: String, worksheet: String) : this(file, worksheet, "", "")
 
-        override fun toString(): String {
-            return DataVariableUpdater.formatColumns(file, worksheet, position, updatingMacros)
-        }
+        override fun toString() = formatColumns(file, worksheet, position, updatingMacros)
     }
 
     @JvmStatic
@@ -90,7 +91,7 @@ object MacroUpdater {
         if (updated.size == 0) {
             println(ConsoleUtils.centerPrompt("There are no matching data variables in the files.", 102))
         } else {
-            println(DataVariableUpdater.formatColumns("file", "worksheet", "position", "updatingMacros"))
+            println(formatColumns("file", "worksheet", "position", "updatingMacros"))
             println("$banner--")
             updated.forEach { println(it) }
             println()
@@ -147,14 +148,11 @@ object MacroUpdater {
 //        println("target macro sheet: $macroSheet")
 //        println("target macro names: $toMap")
 
-        return MacroUpdater.MacroOptions(macroFileName, macroSheet, toMap)
+        return MacroOptions(macroFileName, macroSheet, toMap)
     }
 
-    private fun replaceScript(options: MacroOptions) {
-        FileUtils.listFiles(File(searchFrom), Array(1) { SCRIPT_FILE_SUFFIX }, true).stream()
-            .filter { file -> isTestScriptFile(file) && InputFileUtils.isValidScript(file.absolutePath) }
-            .forEach { handleScripts(it, options) }
-    }
+    private fun replaceScript(options: MacroOptions) =
+            listTestScripts(File(searchFrom)).forEach { handleScripts(it, options) }
 
     private fun handleScripts(file: File, options: MacroOptions) {
         val excel = Excel(file)
@@ -186,34 +184,39 @@ object MacroUpdater {
         var hasUpdate = false
         if (sheet.name == SHEET_SYSTEM) return hasUpdate
 
+        val expectedMacroFile = MacroMerger.resolveMacroFile(project, options.macroFile)
+
         val lastCommandRow = sheet.findLastDataRow(ADDR_COMMAND_START)
         val firstRow = "" + COL_TEST_CASE + (ADDR_COMMAND_START.rowStartIndex + 1)
-        val addr = ExcelAddress("$firstRow:${COL_COMMAND + 3}$lastCommandRow")
-        val area = ExcelArea(sheet, addr, false)
+        val area = ExcelArea(sheet, ExcelAddress("$firstRow:${COL_COMMAND + 3}$lastCommandRow"), false)
 
         // parse entire area
         for (row in area.wholeArea) {
             val command = Excel.getCellValue(row[COL_IDX_TARGET]) + "." + Excel.getCellValue(row[COL_IDX_COMMAND])
             if (command == CMD_MACRO) {
                 val macroCell = row[COL_IDX_PARAMS_START + 2]
-                var macroFile = Excel.getCellValue(row[COL_IDX_PARAMS_START])
+                val macroFile = Excel.getCellValue(row[COL_IDX_PARAMS_START])
                 val macroSheet = Excel.getCellValue(row[COL_IDX_PARAMS_START + 1])
                 val macroName = Excel.getCellValue(macroCell)
 
-                macroFile = MacroMerger.resolveMacroFile(project, macroFile).absolutePath
-                val expectedMacroFile = MacroMerger.resolveMacroFile(project, options.macroFile)
-                if (StringUtils.equals(macroFile, expectedMacroFile.absolutePath)
-                    && macroSheet == options.macroSheet
-                    && options.macroMap.containsKey(macroName)) {
-                    macroCell.setCellValue(options.macroMap[macroName])
+                try {
+                    val macroFilePath = MacroMerger.resolveMacroFile(project, macroFile).absolutePath
+                    if (StringUtils.equals(macroFilePath, expectedMacroFile.absolutePath) &&
+                        macroSheet == options.macroSheet &&
+                        options.macroMap.containsKey(macroName)) {
+                        macroCell.setCellValue(options.macroMap[macroName])
 
-                    updateLog.position = macroCell.address.formatAsString()
-                    updateLog.updatingMacros = "$macroName => ${options.macroMap[macroName]}"
-                    updated.add(updateLog)
-                    hasUpdate = true
+                        updateLog.position = macroCell.address.formatAsString()
+                        updateLog.updatingMacros = "$macroName => ${options.macroMap[macroName]}"
+                        updated.add(updateLog)
+                        hasUpdate = true
+                    }
+                } catch (e: IOException) {
+                    log("processing ${sheet.name}", "Invalid reference for macro file - $macroFile")
                 }
             }
         }
+
         return hasUpdate
     }
 
@@ -285,12 +288,4 @@ object MacroUpdater {
             }
         }
     }
-
-    private fun isTestScriptFile(file: File): Boolean {
-        return !file.name.startsWith("~") &&
-               !file.absolutePath.contains(separator + DEF_REL_LOC_OUTPUT) &&
-               !file.name.contains(DEF_DATAFILE_SUFFIX)
-    }
-
-    private fun log(action: String, subject: Any?) = println(" >> ${StringUtils.rightPad(action, 26) + " " + subject}")
 }

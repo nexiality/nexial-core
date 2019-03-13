@@ -46,6 +46,7 @@ import static java.lang.System.lineSeparator;
 import static org.apache.poi.ss.usermodel.CellType.NUMERIC;
 import static org.apache.poi.ss.usermodel.CellType.STRING;
 import static org.nexial.core.NexialConst.DEF_CHARSET;
+import static org.nexial.core.NexialConst.Project.SCRIPT_FILE_EXT;
 
 public class ExcelHelper {
     private static final DateFormat DEF_EXCEL_DATE_FORMAT = new SimpleDateFormat("MM/dd/yyyy");
@@ -55,7 +56,7 @@ public class ExcelHelper {
 
     public StepResult saveCsvToFile(File excelFile, String worksheet, String csvFile) {
         String excel = excelFile.getAbsolutePath();
-        boolean newerFormat = StringUtils.endsWith(excel, ".xlsx");
+        boolean newerFormat = StringUtils.endsWith(excel, SCRIPT_FILE_EXT);
         try {
             StringBuilder csv = newerFormat ? xlsx2csv(excelFile, worksheet) : xls2csv(excelFile, worksheet);
             return saveCSVContentToFile(csvFile, csv);

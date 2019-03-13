@@ -23,7 +23,6 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
-import java.util.Objects;
 import java.util.concurrent.atomic.AtomicBoolean;
 import javax.validation.constraints.NotNull;
 
@@ -55,6 +54,7 @@ import static org.nexial.core.NexialConst.Project.DEF_PROJECT_PROPS;
 import static org.nexial.core.excel.ExcelConfig.*;
 import static org.nexial.core.tools.CliUtils.getCommandLine;
 import static org.nexial.core.tools.CliUtils.newArgOption;
+import static org.nexial.core.tools.ProjectToolUtils.*;
 
 /**
  * Utility to rename the variables in the data files, scripts, properties files and sql files within a project.
@@ -66,22 +66,14 @@ final public class DataVariableUpdater {
     private static final String OPT_VERBOSE = "v";
     private static final String OPT_DRY_RUN = "p";
 
-    private static final String DATA_FILE_SUFFIX = "data.xlsx";
-    private static final String SCRIPT_FILE_SUFFIX = "xlsx";
-
     private static final String KEY_VALUE_SEPARATOR = "=";
     private static final String VARIABLE_SEPARATOR = ";";
 
+    // todo: not sustainable. Need to use the same dynamically generated variable-impact commands planned for Project Inspector
     private static final List<String> KEYWORDS_VAR_PARAM = Arrays.asList("var", "saveVar", "profile", "config", "db");
     private static final List<String> VAR_WRAPPERS = Arrays.asList("merge", "store", "BAI2", "CONFIG", "CSV", "DATE",
                                                                    "EXCEL", "INI", "JSON", "LIST", "NUMBER", "SQL",
                                                                    "TEXT", "XML");
-    private static final int COLUMN_1_WIDTH = 50;
-    private static final int COLUMN_2_WIDTH = 20;
-    private static final int COLUMN_3_WIDTH = 10;
-    private static final int COLUMN_4_LEFT_MARGIN = (COLUMN_1_WIDTH + COLUMN_2_WIDTH + COLUMN_3_WIDTH);
-    private static final String BECOME_SYMBOL =
-        "\n" + StringUtils.repeat(" ", COLUMN_1_WIDTH + COLUMN_2_WIDTH + COLUMN_3_WIDTH - 3) + "=> ";
 
     protected String searchFrom;
     protected File searchPath;
@@ -151,7 +143,7 @@ final public class DataVariableUpdater {
 
             position = "[" + StringUtils.leftPad(position, 4) + "]";
 
-            return formatColumns(file, worksheet, position, reformatLines(before, after, COLUMN_4_LEFT_MARGIN));
+            return formatColumns(file, worksheet, position, reformatLines(before, after, column4LeftMargin));
         }
     }
 
@@ -254,14 +246,6 @@ final public class DataVariableUpdater {
             updated.forEach(System.out::println);
             System.out.println();
         }
-    }
-
-    public static String formatColumns(String file, String worksheet, String position, String updatingVars) {
-        return StringUtils.right(StringUtils.rightPad(file, COLUMN_1_WIDTH), COLUMN_1_WIDTH) +
-               StringUtils.left(StringUtils.rightPad(StringUtils.defaultIfEmpty(worksheet, ""), COLUMN_2_WIDTH),
-                                COLUMN_2_WIDTH) +
-               StringUtils.rightPad(position, COLUMN_3_WIDTH) +
-               updatingVars;
     }
 
     /**
@@ -423,9 +407,7 @@ final public class DataVariableUpdater {
      * This method replaces all the variables specified in the variable list inside the data files for the specific
      * project.
      */
-    protected void replaceDataFiles() {
-        FileUtils.listFiles(searchPath, new String[]{DATA_FILE_SUFFIX}, true).forEach(this::handleDataFile);
-    }
+    protected void replaceDataFiles() { listDataFiles(searchPath).forEach(this::handleDataFile); }
 
     protected void handleDataFile(File file) {
         // sanity check
@@ -560,20 +542,10 @@ final public class DataVariableUpdater {
     }
 
     /** This method replaces all the variables specified in the variable list inside the macro files. */
-    protected void replaceMacros() {
-        FileUtils.listFiles(searchPath, new String[]{SCRIPT_FILE_SUFFIX}, true)
-                 .stream()
-                 .filter(file -> isTestScriptFile(file) && InputFileUtils.isValidMacro(file.getAbsolutePath()))
-                 .forEach(this::handleMacroFile);
-    }
+    protected void replaceMacros() { listMacroFiles(this.searchPath).forEach(this::handleMacroFile); }
 
     /** This method replaces all the variables specified in the variable list inside the script files. */
-    protected void replaceScripts() {
-        FileUtils.listFiles(searchPath, new String[]{SCRIPT_FILE_SUFFIX}, true)
-                 .stream()
-                 .filter(file -> isTestScriptFile(file) && InputFileUtils.isValidScript(file.getAbsolutePath()))
-                 .forEach(this::handleScriptFile);
-    }
+    protected void replaceScripts() { listTestScripts(searchPath).forEach(this::handleScriptFile); }
 
     protected void handleMacroFile(@NotNull File file) { handleTestScriptFile(file, true); }
 
@@ -795,46 +767,6 @@ final public class DataVariableUpdater {
         }
     }
 
-    private boolean isTestScriptFile(File file) {
-        return !file.getName().startsWith("~") &&
-               !file.getAbsolutePath().contains(separator + "output" + separator) &&
-               !file.getName().contains(DATA_FILE_SUFFIX);
-    }
-
-    private static String reformatLines(String before, String after, int leftMargin) {
-        if (StringUtils.isBlank(before) && StringUtils.isBlank(after)) { return before + BECOME_SYMBOL + after; }
-
-        final StringBuilder lines = new StringBuilder();
-
-        if (StringUtils.contains(before, "\n")) {
-            toLines(before, leftMargin, lines);
-            lines.append(BECOME_SYMBOL).append("\n");
-        } else {
-            lines.append(before).append(BECOME_SYMBOL);
-        }
-
-        if (StringUtils.contains(after, "\n")) {
-            toLines(after, leftMargin, lines);
-        } else {
-            lines.append(after);
-        }
-
-        return lines.toString();
-    }
-
-    private static void toLines(String text, int leftMargin, StringBuilder newLines) {
-        text = StringUtils.remove(text, "\r");
-        List<String> lines = TextUtils.toList(text, "\n", false);
-
-        String margin = StringUtils.repeat(" ", leftMargin);
-        Objects.requireNonNull(lines).forEach(line -> {
-            if (newLines.length() > 0) { newLines.append(margin); }
-            newLines.append(line).append("\n");
-        });
-
-        newLines.deleteCharAt(newLines.length() - 1);
-    }
-
     private String replaceWildcardVar(String line, String oldVar, String newVar) {
         Pair<String, String> regexes = varNameToRegex(oldVar, newVar);
         if (regexes == null) {
@@ -847,8 +779,4 @@ final public class DataVariableUpdater {
 
         return line;
     }
-
-    private static void log(String message) { System.out.println(" >> " + message); }
-
-    private static void log(String action, Object subject) { log(StringUtils.rightPad(action, 26) + " " + subject); }
 }

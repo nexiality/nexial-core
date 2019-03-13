@@ -457,7 +457,7 @@ public class Nexial {
             fail("Invalid test script specified in ROW " + (row.getRowNum() + 1) + " of " + testPlan + ".");
         }
 
-        testScriptPath = StringUtils.appendIfMissing(testScriptPath, ".xlsx");
+        testScriptPath = StringUtils.appendIfMissing(testScriptPath, SCRIPT_FILE_EXT);
 
         // is the script specified as full path (local PC)?
         if (!RegexUtils.isExact(testScriptPath, "[A-Za-z]\\:\\\\.+") &&
@@ -538,7 +538,7 @@ public class Nexial {
 
             dataFilePath = dataFilePath1;
         } else {
-            dataFilePath = StringUtils.appendIfMissing(dataFilePath, ".xlsx");
+            dataFilePath = StringUtils.appendIfMissing(dataFilePath, SCRIPT_FILE_EXT);
 
             // dataFile is specified as a fully qualified path
             if (!FileUtil.isFileReadable(dataFilePath)) {
@@ -886,7 +886,7 @@ public class Nexial {
         File htmlReport = null;
         try {
             htmlReport = reporter.generateHtml(summary);
-            System.setProperty(EXEC_OUTPUT_PATH, htmlReport.getAbsolutePath());
+            if (htmlReport != null) { System.setProperty(EXEC_OUTPUT_PATH, htmlReport.getAbsolutePath()); }
         } catch (IOException e) {
             ConsoleUtils.error(runId, "Unable to generate HTML report for this execution: " + e.getMessage());
         }
@@ -894,8 +894,8 @@ public class Nexial {
         File junitReport = null;
         try {
             junitReport = reporter.generateJUnitXml(summary);
-            ConsoleUtils.log("Generated JUnit report for this execution: " + junitReport.getAbsolutePath());
-            System.setProperty(JUNIT_XML_LOCATION, junitReport.getAbsolutePath());
+            ConsoleUtils.log("Generated JUnit report for this execution: " + junitReport);
+            if (junitReport != null) { System.setProperty(JUNIT_XML_LOCATION, junitReport.getAbsolutePath()); }
         } catch (IOException e) {
             ConsoleUtils.error(runId, "Unable to generate JUnit report for this execution: " + e.getMessage());
         }
@@ -928,7 +928,7 @@ public class Nexial {
                     String url = otc.importToS3(htmlReport, outputDir, true);
                     ConsoleUtils.log("HTML output for this execution export to " + url);
                     System.setProperty(EXEC_OUTPUT_PATH, url);
-                    if (StringUtils.isNotBlank(url) && autoOpenExecReport) { reporter.openReport(url); }
+                    if (StringUtils.isNotBlank(url) && autoOpenExecReport) { ExecutionReporter.openReport(url); }
                 }
 
                 // upload JSON reports
@@ -946,7 +946,7 @@ public class Nexial {
                 ConsoleUtils.error(toCloudIntegrationNotReadyMessage("execution output") + ": " + e.getMessage());
             }
         } else {
-            if (autoOpenExecReport) { reporter.openReport(htmlReport); }
+            if (autoOpenExecReport) { ExecutionReporter.openReport(htmlReport); }
         }
 
         ExecutionMailConfig mailConfig = ExecutionMailConfig.get();
@@ -1047,7 +1047,7 @@ public class Nexial {
             return validateDataFile(project, dataFilePath);
         }
 
-        dataFilePath = StringUtils.appendIfMissing(dataFilePath, ".xlsx");
+        dataFilePath = StringUtils.appendIfMissing(dataFilePath, SCRIPT_FILE_EXT);
 
         // dataFile is specified as a fully qualified path
         if (FileUtil.isFileReadable(dataFilePath)) { return validateDataFile(project, dataFilePath); }

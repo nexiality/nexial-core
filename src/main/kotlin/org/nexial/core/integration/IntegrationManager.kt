@@ -26,6 +26,7 @@ import org.json.JSONObject
 import org.nexial.core.ExecutionThread
 import org.nexial.core.NexialConst.GSON
 import org.nexial.core.NexialConst.Integration.OTC_PREFIX
+import org.nexial.core.NexialConst.Project.SCRIPT_FILE_EXT
 import org.nexial.core.integration.connection.ConnectionFactory
 import org.nexial.core.integration.jira.JiraHelper
 import org.nexial.core.integration.slack.SlackHelper
@@ -73,7 +74,7 @@ class IntegrationManager {
         }
 
         private fun isExcelFile(file: File) =
-            StringUtils.startsWith(file.name, "~").not() && StringUtils.endsWith(file.name, ".xlsx")
+            StringUtils.startsWith(file.name, "~").not() && StringUtils.endsWith(file.name, SCRIPT_FILE_EXT)
 
         private fun createExecDefinition(): ExecutionDefinition {
             val execDef = ExecutionDefinition()

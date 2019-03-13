@@ -19,6 +19,8 @@ package org.nexial.core.tools.inspector
 import org.apache.commons.collections4.CollectionUtils
 import org.apache.commons.lang3.StringUtils
 import org.nexial.core.NexialConst.Data.SHEET_SYSTEM
+import org.nexial.core.NexialConst.Project.DEF_DATAFILE_SUFFIX
+import org.nexial.core.NexialConst.Project.SCRIPT_FILE_SUFFIX
 import org.nexial.core.excel.Excel
 import org.nexial.core.excel.ExcelAddress
 import org.nexial.core.tools.inspector.InspectorConst.MACRO_CMDS
@@ -42,7 +44,7 @@ class MacroDocGenerator(val options: InspectorOptions, val logger: InspectorLogg
         val projectHome = File(options.directory)
 
         // find all potential macro files
-        val macroFiles = filterFiles(projectHome, arrayOf("xlsx")) { file -> isMacroFile(file) }
+        val macroFiles = filterFiles(projectHome, arrayOf(SCRIPT_FILE_SUFFIX)) { file -> isMacroFile(file) }
         logger.log("found ${macroFiles.size} Excel files")
         if (macroFiles.isEmpty()) return scannedMacroFiles
 
@@ -52,9 +54,6 @@ class MacroDocGenerator(val options: InspectorOptions, val logger: InspectorLogg
                 val excel = Excel(file)
                 val filePath = excel.file.absolutePath
 
-//                if (!InputFileUtils.isValidMacro(excel)) {
-//                    logger.log("ignoring file", filePath)
-//                } else {
                 if (InputFileUtils.isValidMacro(excel)) {
                     logger.log("parsing macro", filePath)
 
@@ -82,7 +81,7 @@ class MacroDocGenerator(val options: InspectorOptions, val logger: InspectorLogg
 
     private fun isMacroFile(file: File): Boolean = !file.name.startsWith("~") &&
                                                    !file.absolutePath.contains("${separator}output$separator") &&
-                                                   !file.name.contains(".data.xlsx")
+                                                   !file.name.contains(DEF_DATAFILE_SUFFIX)
 
     private fun collectMacros(excel: Excel): List<MacroDef> {
         val macros = ArrayList<MacroDef>()

@@ -20,6 +20,7 @@ import com.google.gson.JsonObject
 import org.apache.commons.io.FileUtils
 import org.apache.commons.lang3.StringUtils
 import org.nexial.commons.utils.ResourceUtils
+import org.nexial.core.reports.ExecutionReporter
 import org.nexial.core.tools.inspector.InspectorConst.GSON
 import org.nexial.core.tools.inspector.InspectorConst.LOCAL_HTML_RESOURCE
 import org.nexial.core.tools.inspector.InspectorConst.ReturnCode.WRITE_FILE
@@ -40,18 +41,21 @@ class InspectorOutput(val logger: InspectorLogger) {
             if (options.viewMode == LOCAL) jsonData = "let projectJson = $jsonData;"
 
             FileUtils.writeStringToFile(File(options.outputJson), jsonData, UTF8)
-            logger.log("save macros as JSON", "${options.outputJson}")
+            logger.log("save macros as JSON", options.outputJson)
         } catch (e: IOException) {
             logger.error("Error writing macro(s) to ${options.outputJson}: ${e.message}")
             exit(WRITE_FILE)
         }
 
-        writeOutputHtml(File(options.directory), json)
+        val outputFile = writeOutputHtml(File(options.directory), json)
+        if (options.verbose) {
+            ExecutionReporter.openReport(outputFile)
+        }
     }
 
-    private fun writeOutputHtml(projectHome: File, json: JsonObject) {
+    private fun writeOutputHtml(projectHome: File, json: JsonObject): File {
         // resource could be bundled in JAR, so we can't assume file-copy will always work..
-        val sourcePath = ResourceUtils.getResourceFilePath(LOCAL_HTML_RESOURCE) ?: return
+        val sourcePath = ResourceUtils.getResourceFilePath(LOCAL_HTML_RESOURCE) ?: return projectHome
         val source = File(sourcePath)
         val destination = File(projectHome.absolutePath + separator + source.name)
         val projectId = json.get("name").asString
@@ -66,5 +70,7 @@ class InspectorOutput(val logger: InspectorLogger) {
             logger.error("Error updating HTML in $destination: ${e.message}")
             exit(WRITE_FILE)
         }
+
+        return destination
     }
 }
