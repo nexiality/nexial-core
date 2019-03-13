@@ -27,7 +27,6 @@ import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.nexial.commons.utils.DateUtility;
 import org.nexial.core.plugins.io.ComparisonResult.ResultType;
-import org.nexial.core.utils.ExecUtils;
 
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
@@ -35,6 +34,7 @@ import com.google.gson.JsonArray;
 import com.google.gson.JsonObject;
 
 import static org.nexial.core.plugins.io.ComparisonResult.EOL;
+import static org.nexial.core.utils.ExecUtils.NEXIAL_MANIFEST;
 
 public class FileComparisonReport implements Serializable {
     private static final Map<Integer, Integer> COLUMN_SIZES = initColumnSizes();
@@ -162,7 +162,7 @@ public class FileComparisonReport implements Serializable {
         // 6. sign off
         buffer.append(EOL)
               .append("***** generated on ").append(rightNow()).append(EOL)
-              .append("***** powered by   ").append(ExecUtils.deriveJarManifest()).append(EOL);
+              .append("***** powered by   ").append(NEXIAL_MANIFEST).append(EOL);
 
         // 7. output
         return buffer.toString();
@@ -243,7 +243,7 @@ public class FileComparisonReport implements Serializable {
         }
 
         json.addProperty("generated-on", rightNow());
-        json.addProperty("powered-by", ExecUtils.deriveJarManifest());
+        json.addProperty("powered-by", NEXIAL_MANIFEST);
 
         return GSON.toJson(json);
     }

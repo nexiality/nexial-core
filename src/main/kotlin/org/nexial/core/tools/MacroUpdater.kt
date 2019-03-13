@@ -68,8 +68,9 @@ object MacroUpdater {
 
     @JvmStatic
     fun main(args: Array<String>) {
+        val options = deriveMacroOptions(deriveCommandLine(args))
         resolveProjectMeta()
-        updateAll(deriveMacroOptions(deriveCommandLine(args)))
+        updateAll(options)
     }
 
     private fun resolveProjectMeta() {

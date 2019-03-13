@@ -50,7 +50,6 @@ import org.nexial.core.plugins.aws.AwsSesSettings;
 import org.nexial.core.reports.ExecutionMailConfig;
 import org.nexial.core.reports.ExecutionNotifier;
 import org.nexial.core.utils.ConsoleUtils;
-import org.nexial.core.utils.ExecUtils;
 import org.thymeleaf.TemplateEngine;
 import org.thymeleaf.context.Context;
 
@@ -61,6 +60,7 @@ import static org.nexial.core.NexialConst.Data.*;
 import static org.nexial.core.NexialConst.Mailer.MAIL_KEY_CONTENT_TYPE;
 import static org.nexial.core.NexialConst.Mailer.MAIL_KEY_FROM;
 import static org.nexial.core.SystemVariables.getDefault;
+import static org.nexial.core.utils.ExecUtils.NEXIAL_MANIFEST;
 
 public class NexialMailer implements ExecutionNotifier {
     private ExecutionContext context;
@@ -351,7 +351,7 @@ public class NexialMailer implements ExecutionNotifier {
         String from = mailSupport.getConfiguredProperty(MAIL_KEY_FROM);
 
         Message msg = new MimeMessage(session);
-        msg.addHeader("X-Mailer", ExecUtils.deriveJarManifest());
+        msg.addHeader("X-Mailer", NEXIAL_MANIFEST);
         msg.addHeader("Disposition-Notification-To", from);
         msg.setFrom(new InternetAddress(from));
         msg.setSubject(subject);

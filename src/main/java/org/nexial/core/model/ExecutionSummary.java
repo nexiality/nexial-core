@@ -39,7 +39,6 @@ import org.nexial.core.excel.ExcelAddress;
 import org.nexial.core.excel.ExcelArea;
 import org.nexial.core.excel.ExcelConfig.*;
 import org.nexial.core.utils.ConsoleUtils;
-import org.nexial.core.utils.ExecUtils;
 
 import static java.io.File.separator;
 import static java.lang.System.lineSeparator;
@@ -54,6 +53,7 @@ import static org.nexial.core.excel.ExcelConfig.*;
 import static org.nexial.core.excel.ExcelConfig.StyleConfig.*;
 import static org.nexial.core.model.ExecutionSummary.ExecutionLevel.ITERATION;
 import static org.nexial.core.model.ExecutionSummary.ExecutionLevel.*;
+import static org.nexial.core.utils.ExecUtils.NEXIAL_MANIFEST;
 
 /**
  * serves as the summary of a test execution, which can be scoped into:
@@ -174,7 +174,7 @@ public class ExecutionSummary {
 
     public String getRunUser() { return runUser; }
 
-    public String getManifest() { return ExecUtils.deriveJarManifest(); }
+    public String getManifest() { return NEXIAL_MANIFEST; }
 
     public long getStartTime() { return startTime; }
 
@@ -445,7 +445,7 @@ public class ExecutionSummary {
         map.put("passed", ExecutionSummary.formatStat(summary.passCount, summary.totalSteps));
         map.put("failed", ExecutionSummary.formatStat(summary.failCount, summary.totalSteps));
         map.put("fail-fast", summary.failedFast + "");
-        map.put("nexial version", ExecUtils.deriveJarManifest());
+        map.put("nexial version", NEXIAL_MANIFEST);
         map.put("java version", JAVA_VERSION);
 
         // special case: log file is copied (NOT MOVED) to S3 with a special syntax here (markdown-like)

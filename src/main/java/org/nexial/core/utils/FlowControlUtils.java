@@ -127,7 +127,7 @@ public final class FlowControlUtils {
 
         switch (directive) {
             case FailIf:
-                if (LOGGER.isInfoEnabled()) { LOGGER.info("step " + testStep.showPosition() + " failed: " + flowText); }
+                if (LOGGER.isInfoEnabled()) { LOGGER.info(testStep.showPosition() + " failed: " + flowText); }
                 context.setFailImmediate(true);
                 return StepResult.fail("current step failed: " + flowText);
 
@@ -137,7 +137,7 @@ public final class FlowControlUtils {
                 return StepResult.success("test execution ends here: " + flowText);
 
             case SkipIf:
-                if (LOGGER.isInfoEnabled()) { LOGGER.info("step " + testStep.showPosition() + " skipped: " + flowText);}
+                if (LOGGER.isInfoEnabled()) { LOGGER.info(testStep.showPosition() + " skipped: " + flowText);}
                 return StepResult.skipped("current step skipped: " + flowText);
 
             case EndLoopIf:

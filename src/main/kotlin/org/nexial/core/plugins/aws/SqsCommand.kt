@@ -33,7 +33,7 @@ import org.nexial.core.model.StepResult
 import org.nexial.core.plugins.base.BaseCommand
 import org.nexial.core.utils.CheckUtils.*
 import org.nexial.core.utils.ConsoleUtils
-import org.nexial.core.utils.ExecUtils
+import org.nexial.core.utils.ExecUtils.NEXIAL_MANIFEST
 import java.io.Serializable
 
 class SqsCommand : BaseCommand() {
@@ -150,7 +150,7 @@ class SqsSupport : AwsSupport() {
 
         val request = SendMessageRequest(queueUrl, message)
             .addMessageAttributesEntry("nexial.sendTimestamp", newStringAttrValue("$now"))
-            .addMessageAttributesEntry("nexial.version", newStringAttrValue(ExecUtils.deriveJarManifest()))
+            .addMessageAttributesEntry("nexial.version", newStringAttrValue(NEXIAL_MANIFEST))
             .addMessageAttributesEntry("nexial.os.user", newStringAttrValue(USER_NAME))
             .addMessageAttributesEntry("nexial.os.hostname", newStringAttrValue(EnvUtils.getHostName().toUpperCase()))
 

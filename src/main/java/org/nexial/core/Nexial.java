@@ -76,6 +76,7 @@ import static org.nexial.core.SystemVariables.getDefaultInt;
 import static org.nexial.core.excel.Excel.MIN_EXCEL_FILE_SIZE;
 import static org.nexial.core.excel.ExcelConfig.*;
 import static org.nexial.core.model.ExecutionSummary.ExecutionLevel.EXECUTION;
+import static org.nexial.core.utils.ExecUtils.NEXIAL_MANIFEST;
 
 /**
  * Main class to run nexial from command line:
@@ -282,7 +283,7 @@ public class Nexial {
                                        "unable to proceed");
         }
 
-        ConsoleUtils.log(ExecUtils.deriveJarManifest() + " starting up...");
+        ConsoleUtils.log(NEXIAL_MANIFEST + " starting up...");
 
         CommandLine cmd = new DefaultParser().parse(addMsaOptions(OPTIONS), args);
 
@@ -1138,7 +1139,7 @@ public class Nexial {
             String successRateString = MessageFormat.format(RATE_FORMAT, successRate);
             System.setProperty(SUCCESS_RATE, successRateString);
 
-            String manifest = StringUtils.leftPad(ExecUtils.deriveJarManifest(), 15, "-");
+            String manifest = StringUtils.leftPad(NEXIAL_MANIFEST, 15, "-");
             ConsoleUtils.log(
                 "\n\n" +
                 "/-END OF EXECUTION--------------------------------------------------------------\n" +

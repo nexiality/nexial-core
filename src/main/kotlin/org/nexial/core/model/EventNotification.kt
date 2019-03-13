@@ -27,7 +27,7 @@ import org.nexial.core.NexialConst.Data.*
 import org.nexial.core.mail.MailData
 import org.nexial.core.model.ExecutionEvent.ExecutionPause
 import org.nexial.core.utils.ConsoleUtils
-import org.nexial.core.utils.ExecUtils
+import org.nexial.core.utils.ExecUtils.NEXIAL_MANIFEST
 import org.nexial.core.utils.OutputFileUtils
 import javax.mail.MessagingException
 
@@ -54,7 +54,7 @@ abstract class EventNotification(val context: ExecutionContext,
     }
 
     internal fun gatherMeta(): String =
-            ExecUtils.deriveJarManifest() +
+            NEXIAL_MANIFEST +
             "/${StringUtils.defaultString(USER_NAME, "unknown")}@${StringUtils.upperCase(EnvUtils.getHostName())}"
 }
 

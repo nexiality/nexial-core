@@ -120,12 +120,19 @@ public class CommandRepeater {
                             logger.log(testStep, "[repeat-until] condition not met; loop proceeds");
                         }
                     } else {
-                        logger.log(testStep,
-                                   "[repeat-until] " +
-                                   (succeed ?
-                                    MSG_PASS + result.getMessage() :
-                                    MSG_FAIL + result.getMessage() + "; " + FAIL_FAST + "=" + context.isFailFast() +
-                                    "; " + OPT_LAST_OUTCOME + "=false"));
+                        String message;
+                        if (result.isSuccess()) {
+                            message = MSG_PASS + result.getMessage();
+                        } else if (result.isSkipped()) {
+                            message = MSG_SKIPPED + result.getMessage();
+                        } else {
+                            // fail or warn
+                            message = MSG_FAIL + result.getMessage() + "; " +
+                                      FAIL_FAST + "=" + context.isFailFast() + "; " +
+                                      OPT_LAST_OUTCOME + "=false";
+                        }
+
+                        logger.log(testStep, "[repeat-until] " + message);
 
                         // evaluate if this is TRULY a failure, using result.failed() is not accurate
                         // if (result.failed()) {
@@ -179,11 +186,11 @@ public class CommandRepeater {
             }
         }
 
-        if (maxEndTime != -1 && rightNow >= maxEndTime) {
-            return StepResult.fail("Unable to complete repeat-until execution within " + maxWaitMs + "ms.");
-        } else {
-            return StepResult.success("repeat-until execution completed SUCCESSFULLY");
-        }
+        // if (maxEndTime != -1 && rightNow >= maxEndTime) {
+        return StepResult.fail("Unable to complete repeat-until execution within " + maxWaitMs + "ms.");
+        // } else {
+        //     return StepResult.success("repeat-until execution completed SUCCESSFULLY");
+        // }
     }
 
     @Override

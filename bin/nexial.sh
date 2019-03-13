@@ -44,33 +44,47 @@ if [[ -n "${NEXIAL_MAX_MEM}" ]]; then export MAX_MEM=-Xmx${NEXIAL_MAX_MEM}; fi
 # --------------------------------------------------------------------------------
 echo
 
-# create just-in-time batch file to execute nexial scripts
-if [[ -z ${NEXIAL_OUTPUT} ]] ; then
-    EXEC_SH="${TMPDIR}/${RANDOM}-nexial.sh"
-    export JAVA_OPT="${JAVA_OPT} -Dnexial.script=${EXEC_SH}"
-else
+if [[ ! -z "${NEXIAL_OUTPUT}" ]] ; then
     mkdir -p "${NEXIAL_OUTPUT}"
-    EXEC_SH="${NEXIAL_OUTPUT}/nexial.sh"
-    export JAVA_OPT="${JAVA_OPT} -Dnexial.script=${EXEC_SH}"
     export JAVA_OPT="${JAVA_OPT} -Dnexial.defaultOutBase=${NEXIAL_OUTPUT}"
 fi
 
-echo "#!/bin/sh" > ${EXEC_SH}
-echo -n ${JAVA} \
-    ${MAX_MEM} -classpath "${PROJECT_CLASSPATH}:${NEXIAL_CLASSES}:${NEXIAL_LIB}/nexial*.jar:${NEXIAL_LIB}/*" \
-    -XX:+UnlockExperimentalVMOptions -XX:+ExplicitGCInvokesConcurrent \
+eval ${JAVA} ${MAX_MEM} \
+    -classpath "${PROJECT_CLASSPATH}:${NEXIAL_CLASSES}:${NEXIAL_LIB}/nexial*.jar:${NEXIAL_LIB}/*" \
+    -XX:+UnlockExperimentalVMOptions \
+    -XX:+ExplicitGCInvokesConcurrent \
     -Dwebdriver.chrome.bin="`echo ${CHROME_BIN} | sed 's/\ /\\\ /g'`" \
-    -Dwebdriver.firefox.bin="`echo ${FIREFOX_BIN} | sed 's/\ /\\\ /g'`" >> ${EXEC_SH}
-echo -n " ${JAVA_OPT}" >> ${EXEC_SH}
-echo -n " org.nexial.core.Nexial $*" >> ${EXEC_SH}
+    -Dwebdriver.firefox.bin="`echo ${FIREFOX_BIN} | sed 's/\ /\\\ /g'`" \
+    ${JAVA_OPT} \
+    org.nexial.core.Nexial $*
 
-#cat $EXEC_SH
-chmod -f 755 ${EXEC_SH}
 
-${EXEC_SH}
+# create just-in-time batch file to execute nexial scripts
+# if [[ -z ${NEXIAL_OUTPUT} ]] ; then
+#     EXEC_SH="${TMPDIR}/${RANDOM}-nexial.sh"
+#     export JAVA_OPT="${JAVA_OPT} -Dnexial.script=${EXEC_SH}"
+# else
+#     mkdir -p "${NEXIAL_OUTPUT}"
+#     EXEC_SH="${NEXIAL_OUTPUT}/nexial.sh"
+#     export JAVA_OPT="${JAVA_OPT} -Dnexial.script=${EXEC_SH}"
+#     export JAVA_OPT="${JAVA_OPT} -Dnexial.defaultOutBase=${NEXIAL_OUTPUT}"
+# fi
+
+# echo "#!/bin/sh" > ${EXEC_SH}
+# echo -n ${JAVA} \
+#     ${MAX_MEM} -classpath "${PROJECT_CLASSPATH}:${NEXIAL_CLASSES}:${NEXIAL_LIB}/nexial*.jar:${NEXIAL_LIB}/*" \
+#     -XX:+UnlockExperimentalVMOptions -XX:+ExplicitGCInvokesConcurrent \
+#     -Dwebdriver.chrome.bin="`echo ${CHROME_BIN} | sed 's/\ /\\\ /g'`" \
+#     -Dwebdriver.firefox.bin="`echo ${FIREFOX_BIN} | sed 's/\ /\\\ /g'`" >> ${EXEC_SH}
+# echo -n " ${JAVA_OPT}" >> ${EXEC_SH}
+# echo -n " org.nexial.core.Nexial $*" >> ${EXEC_SH}
+
+# chmod -f 755 ${EXEC_SH}
+
+# ${EXEC_SH}
 rc=$?
 
-rm -f ${EXEC_SH}
+# rm -f ${EXEC_SH}
 
 echo
 echo

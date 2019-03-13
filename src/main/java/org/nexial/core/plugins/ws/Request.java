@@ -30,13 +30,13 @@ import org.apache.http.HttpRequest;
 import org.apache.http.client.config.RequestConfig;
 import org.apache.http.client.methods.HttpUriRequest;
 import org.nexial.core.model.ExecutionContext;
-import org.nexial.core.utils.ExecUtils;
 import org.openqa.selenium.Cookie;
 
 import static org.nexial.core.NexialConst.*;
 import static org.nexial.core.SystemVariables.getDefaultBool;
 import static org.nexial.core.SystemVariables.getDefaultInt;
 import static org.nexial.core.plugins.ws.WebServiceClient.hideAuthDetails;
+import static org.nexial.core.utils.ExecUtils.NEXIAL_MANIFEST;
 
 public abstract class Request implements Serializable {
     protected String url;
@@ -157,7 +157,7 @@ public abstract class Request implements Serializable {
 
     protected void setRequestHeaders(HttpRequest http) {
         addHeaderIfNotSpecified(WS_CONTENT_TYPE, getContentType());
-        addHeaderIfNotSpecified(WS_USER_AGENT, ExecUtils.deriveJarManifest());
+        addHeaderIfNotSpecified(WS_USER_AGENT, NEXIAL_MANIFEST);
 
         Map<String, Object> requestHeaders = getHeaders();
         if (MapUtils.isEmpty(requestHeaders)) { return; }

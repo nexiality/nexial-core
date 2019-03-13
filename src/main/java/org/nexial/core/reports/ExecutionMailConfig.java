@@ -33,7 +33,6 @@ import org.nexial.commons.utils.TextUtils;
 import org.nexial.core.model.ExecutionContext;
 import org.nexial.core.plugins.aws.AwsSesSettings;
 import org.nexial.core.utils.ConsoleUtils;
-import org.nexial.core.utils.ExecUtils;
 
 import com.amazonaws.regions.Regions;
 
@@ -44,6 +43,7 @@ import static org.nexial.core.NexialConst.AwsSettings.*;
 import static org.nexial.core.NexialConst.Data.*;
 import static org.nexial.core.NexialConst.Mailer.*;
 import static org.nexial.core.SystemVariables.getDefault;
+import static org.nexial.core.utils.ExecUtils.NEXIAL_MANIFEST;
 
 /**
  * central object to resolve and avail mail-related configuration for the purpose of sending execution-level report
@@ -171,7 +171,7 @@ public class ExecutionMailConfig {
                                                                    ""));
         settings.setXmailer(
             StringUtils.defaultIfBlank(configurations.get(SES_PREFIX + AWS_XMAILER),
-                                       ExecUtils.deriveJarManifest() + "/" + USER_NAME + "@" + EnvUtils.getHostName()));
+                                       NEXIAL_MANIFEST + "/" + USER_NAME + "@" + EnvUtils.getHostName()));
 
         return settings;
     }

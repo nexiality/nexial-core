@@ -33,12 +33,12 @@ import org.nexial.commons.utils.FileUtil;
 import org.nexial.commons.utils.TextUtils;
 import org.nexial.core.model.ExecutionContext;
 import org.nexial.core.utils.ConsoleUtils;
-import org.nexial.core.utils.ExecUtils;
 
 import static org.apache.http.entity.ContentType.DEFAULT_BINARY;
 import static org.apache.http.entity.mime.HttpMultipartMode.BROWSER_COMPATIBLE;
 import static org.nexial.core.NexialConst.WS_CONTENT_TYPE;
 import static org.nexial.core.NexialConst.WS_USER_AGENT;
+import static org.nexial.core.utils.ExecUtils.NEXIAL_MANIFEST;
 
 public class PostMultipartRequest extends PostRequest {
     private Map<String, ContentBody> contentBodies = new HashMap<>();
@@ -82,7 +82,7 @@ public class PostMultipartRequest extends PostRequest {
     @Override
     protected void setRequestHeaders(HttpRequest http) {
         // must NOT forcefully set content type as multipart; HttpClient framework does the magic
-        addHeaderIfNotSpecified(WS_USER_AGENT, ExecUtils.deriveJarManifest());
+        addHeaderIfNotSpecified(WS_USER_AGENT, NEXIAL_MANIFEST);
 
         Map<String, Object> requestHeaders = new HashMap<>(getHeaders());
         if (MapUtils.isEmpty(requestHeaders)) { return; }
