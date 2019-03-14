@@ -124,7 +124,7 @@ public class CommandRepeater {
                         if (result.isSuccess()) {
                             message = MSG_PASS + result.getMessage();
                         } else if (result.isSkipped()) {
-                            message = MSG_SKIPPED + result.getMessage();
+                            message = result.getMessage();
                         } else {
                             // fail or warn
                             message = MSG_FAIL + result.getMessage() + "; " +

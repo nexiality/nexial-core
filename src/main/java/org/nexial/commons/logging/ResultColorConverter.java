@@ -37,6 +37,7 @@ public class ResultColorConverter extends ForegroundCompositeConverterBase<ILogg
         if (message.contains(" - [repeat-until] " + MSG_FAIL)) { return BOLD + RED_FG; }
         if (message.contains(" - " + MSG_WARN)) { return YELLOW_FG; }
         if (message.contains(" - " + MSG_SKIPPED)) { return MAGENTA_FG; }
+        if (message.contains(" - [repeat-until] " + MSG_SKIPPED)) { return MAGENTA_FG; }
 
         return DEFAULT_FG;
     }
