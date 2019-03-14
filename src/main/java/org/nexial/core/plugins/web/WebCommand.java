@@ -1223,7 +1223,7 @@ public class WebCommand extends BaseCommand implements CanTakeScreenshot, CanLog
             return StepResult.fail(msg);
         }
 
-        element.clear();
+        clearValue(element);
 
         if (StringUtils.isNotEmpty(value)) {
             // was needed for Safari/Windows. We don't need this anymore
@@ -1252,9 +1252,8 @@ public class WebCommand extends BaseCommand implements CanTakeScreenshot, CanLog
             WebElement element = toElement(locator);
             scrollIntoView(element);
 
-            if (StringUtils.isBlank(value)) {
-                element.clear();
-                WebDriverUtils.toSendKeyAction(driver, element, "{BACKSPACE}{TAB}").perform();
+            if (StringUtils.isEmpty(value)) {
+                clearValue(element);
                 return StepResult.success("cleared out value at '" + locator + "'");
             }
 
@@ -1569,6 +1568,25 @@ public class WebCommand extends BaseCommand implements CanTakeScreenshot, CanLog
                            .build().perform();
 
         return StepResult.success("Drag-and-move element '" + fromLocator + "' by (" + moveX + "," + moveY + ")");
+    }
+
+    protected void clearValue(WebElement element) {
+        if (element == null) { return; }
+
+        // prior to clearing
+        String before = element.getAttribute("value");
+
+        element.clear();
+        jsExecutor.executeScript("arguments[0].setAttribute(arguments[1],arguments[2]);", element, "value", "");
+        element.sendKeys("");
+        WebDriverUtils.toSendKeyAction(driver, element, "{BACKSPACE}{TAB}").perform();
+
+        // after clearing
+        String after = element.getAttribute("value");
+
+        if (StringUtils.isNotEmpty(after)) {
+            error("Unable to clear out the value of the target element. [before] " + before + ", [after] " + after);
+        }
     }
 
     protected Point deriveDragFrom(WebElement source) {
