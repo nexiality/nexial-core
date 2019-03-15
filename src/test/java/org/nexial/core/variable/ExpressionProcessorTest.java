@@ -188,7 +188,19 @@ public class ExpressionProcessorTest {
 
         String fixture = "[LIST(1,2,3,4,5,6,7,8,9,10) => sum]";
         String result = subject.process(fixture);
-        Assert.assertEquals("55.0", result);
+        Assert.assertEquals("55", result);
+
+        fixture = "[LIST(2441117.97,4750496.50,890528.83,679465.00,2441117.97,6320490.33,8761608.30) => sum]";
+        result = subject.process(fixture);
+        Assert.assertEquals("26284824.90", result);
+
+        fixture = "[LIST(2441117.97,4750496.50,890528.83,679465.0005,2441117.97,6320490.33,8761608.30) => sum]";
+        result = subject.process(fixture);
+        Assert.assertEquals("26284824.9005", result);
+
+        fixture = "[LIST(2441117.97,4750496.50,890528.83,679465.0005,2441117.97,6320490.3305,8761608.30) => sum]";
+        result = subject.process(fixture);
+        Assert.assertEquals("26284824.9010", result);
 
         fixture = "[LIST(1,0,-1254,14,14.0,13.99999) => max]";
         result = subject.process(fixture);
