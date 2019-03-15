@@ -1579,10 +1579,15 @@ public class WebCommand extends BaseCommand implements CanTakeScreenshot, CanLog
         element.clear();
         jsExecutor.executeScript("arguments[0].setAttribute(arguments[1],arguments[2]);", element, "value", "");
         element.sendKeys("");
-        WebDriverUtils.toSendKeyAction(driver, element, "{BACKSPACE}{TAB}").perform();
 
         // after clearing
-        String after = element.getAttribute("value");
+        String after = null;
+        try {
+            after = element.getAttribute("value");
+        } catch (WebDriverException e) {
+            // hmm... something's afoot.. but we shouldn't alarm the populous...
+            ConsoleUtils.log("Unable to retrieve value from the 'value' attribute after clearing the target element");
+        }
 
         if (StringUtils.isNotEmpty(after)) {
             error("Unable to clear out the value of the target element. [before] " + before + ", [after] " + after);
