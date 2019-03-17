@@ -21,6 +21,7 @@ import com.google.gson.JsonObject
 import org.apache.commons.cli.CommandLine
 import org.apache.commons.cli.Options
 import org.apache.commons.io.FileUtils
+import org.apache.commons.io.filefilter.IOFileFilter
 import org.apache.commons.lang3.StringUtils
 import org.apache.commons.lang3.SystemUtils.IS_OS_WINDOWS
 import org.nexial.commons.utils.FileUtil
@@ -46,33 +47,33 @@ object ProjectInspector {
 
     @JvmStatic
     fun main(args: Array<String>) {
+        val startTime = System.currentTimeMillis()
 
         val cmd = deriveCommandLine(args)
         val options = deriveInspectorOptions(cmd)
-
         val logger = InspectorLogger(options.verbose)
+        val testProject = options.project
 
         val json = JsonObject()
-        val projectInfo = ProjectInfoGenerator(options, logger).generate()
-        json.addProperty("nexialHome", projectInfo.nexialHome)
-        json.addProperty("name", projectInfo.projectId)
-        json.addProperty("scanProjectHome", projectInfo.projectHome)
+        json.addProperty("nexialHome", testProject.nexialHome)
+        json.addProperty("name", testProject.name)
+        json.addProperty("scanProjectHome", testProject.projectHome)
         json.addProperty("scanTime", System.currentTimeMillis())
+        if (options.advices.isNotEmpty()) json.add("advices", GSON.toJsonTree(options.advices).asJsonArray)
         json.add("macros", GSON.toJsonTree(MacroDocGenerator(options, logger).generate()))
         json.add("dataVariables", GSON.toJsonTree(DataDocGenerator(options, logger).generate()))
 
-        if (options.advices.isNotEmpty()) projectInfo.advices.addAll(options.advices)
-
-        if (projectInfo.advices.isNotEmpty()) json.add("advices", GSON.toJsonTree(projectInfo.advices).asJsonArray)
-
+        logger.title("PROCESSING OUTPUT", "generate output")
         InspectorOutput(logger).output(options, json)
+        logger.log("execution time", "${System.currentTimeMillis() - startTime} ms")
     }
 
     internal fun getMessage(key: String): String = RESOURCES.getProperty(key)
 
     internal fun getMessage(key: String, replacement: Pair<String, String>?): String {
         val message = RESOURCES.getProperty(key)
-        return if (StringUtils.isBlank(message) || replacement == null) message
+        return if (StringUtils.isBlank(message) || replacement == null)
+            message
         else
             message.replace("{${replacement.first}}", replacement.second)
     }
@@ -93,12 +94,34 @@ object ProjectInspector {
                 .filter { filter(it) }
                 .collect(Collectors.toList())
 
-    internal fun resolveRelativePath(project: File, file: File): String =
-            StringUtils.removeStart(
-                    StringUtils.replace(
-                            StringUtils.remove(file.parentFile.absolutePath, project.absolutePath),
-                            "\\", "/"),
-                    "/")
+    internal fun resolveRelativePath(project: File, file: File): String = StringUtils.removeStart(
+            StringUtils.replace(StringUtils.remove(file.parentFile.absolutePath, project.absolutePath), "\\", "/"), "/")
+
+    internal fun resolveCacheFile(options: InspectorOptions, target: File): File? {
+        if (!options.useCache) return null
+        val cachePath = options.cacheHome + resolveRelativePath(File(options.directory), target) + File.separator
+        File(cachePath).mkdirs()
+        return File("$cachePath${target.name}.${generateMD5(target)}.json")
+    }
+
+    internal fun expireOutdatedCache(exclude: File) {
+        val cacheName = exclude.name.substringBefore(".")
+        val ext = "." + exclude.name.substringAfterLast(".")
+        fun accept(fileName: String) =
+                fileName.startsWith(cacheName) && fileName.endsWith(ext) && fileName != exclude.name
+
+        FileUtils.listFiles(
+                exclude.parentFile,
+                object : IOFileFilter {
+                    override fun accept(file: File?) = file != null && accept(file.name)
+                    override fun accept(dir: File?, name: String?) = name != null && accept(name)
+                },
+                object : IOFileFilter {
+                    override fun accept(file: File?) = true
+                    override fun accept(dir: File?, name: String?) = true
+                })
+            .parallelStream().forEach { FileUtils.deleteQuietly(it) }
+    }
 
     internal fun generateMD5(subject: File): String {
         // create digest base => filename + lastmod + size
@@ -150,12 +173,9 @@ object ProjectInspector {
         }
 
         val viewModeInput = cmd.getOptionValue("m")
-        val viewMode =
-                if (StringUtils.isBlank(viewModeInput)) LOCAL
-                else InspectorViewMode.valueOf(StringUtils.upperCase(viewModeInput))
+        val viewMode = if (StringUtils.isBlank(viewModeInput)) LOCAL
+        else InspectorViewMode.valueOf(StringUtils.upperCase(viewModeInput))
 
-        return InspectorOptions(directory = projectHome,
-                                viewMode = viewMode,
-                                verbose = cmd.hasOption("v"))
+        return InspectorOptions(directory = projectHome, viewMode = viewMode, verbose = cmd.hasOption("v"))
     }
 }

@@ -38,7 +38,7 @@ data class DataVariableEntity(val projectHome: File) : TreeMap<String, TreeSet<D
  * @property type DataVariableLocationType
  * @constructor
  */
-data class DataVariableAtom(val name: String,
+data class DataVariableAtom(@Expose val name: String,
                             @Expose val definedAs: String,
                             @Expose val location: String,
                             @Expose val dataSheet: String? = "",

@@ -31,37 +31,47 @@ import javax.validation.constraints.NotNull
  */
 object ProjectToolUtils {
 
-    const val column1Width = 50
-    const val column2Width = 20
-    const val column3Width = 10
+    private const val column1Width = 50
+    private const val column2Width = 20
+    private const val column3Width = 10
     const val column4LeftMargin = column1Width + column2Width + column3Width
 
     @JvmField
     val beforeAfterArrow = "\n" + StringUtils.repeat(" ", column1Width + column2Width + column3Width - 3) + "=> "
 
     @JvmStatic
-    fun isTestScriptFile(file: File): Boolean = !file.name.startsWith("~") &&
-                                                !file.absolutePath.contains(separator + DEF_REL_LOC_OUTPUT) &&
-                                                !file.name.contains(DEF_DATAFILE_SUFFIX)
+    fun isValidTestArtifact(file: File) = !file.name.startsWith("~") &&
+                                          !file.absolutePath.contains("$separator$DEF_REL_LOC_OUTPUT")
+
+    @JvmStatic
+    fun isTestScriptFile(file: File) = isValidTestArtifact(file) && !file.name.endsWith(DEF_DATAFILE_SUFFIX)
+
+    @JvmStatic
+    fun isTestScript(file: File) = isValidTestArtifact(file) && InputFileUtils.isValidScript(file.absolutePath)
+
+    @JvmStatic
+    fun isMacroFile(file: File) = isTestScriptFile(file)
+
+    @JvmStatic
+    fun isDataFile(file: File) = isValidTestArtifact(file) && file.name.endsWith(DEF_DATAFILE_SUFFIX)
 
     @JvmStatic
     @NotNull
-    fun listMacroFiles(dir: File): Stream<File> =
-            FileUtils.listFiles(dir, arrayOf(SCRIPT_FILE_SUFFIX), true).stream().filter {
-                isTestScriptFile(it) && InputFileUtils.isValidMacro(it.absolutePath)
-            }
+    fun listMacroFiles(dir: File): Stream<File> = FileUtils.listFiles(dir, arrayOf(SCRIPT_FILE_SUFFIX), true)
+        .stream().filter {
+            isTestScriptFile(it) && InputFileUtils.isValidMacro(it.absolutePath)
+        }
 
     @JvmStatic
     @NotNull
-    fun listTestScripts(searchFrom: File): Stream<File> =
-            FileUtils.listFiles(searchFrom, arrayOf(SCRIPT_FILE_SUFFIX), true).stream().filter {
-                isTestScriptFile(it) && InputFileUtils.isValidScript(it.absolutePath)
-            }
+    fun listTestScripts(dir: File): Stream<File> = FileUtils.listFiles(dir, arrayOf(SCRIPT_FILE_SUFFIX), true)
+        .stream().filter {
+            isTestScriptFile(it) && InputFileUtils.isValidScript(it.absolutePath)
+        }
 
     @JvmStatic
     @NotNull
-    fun listDataFiles(searchPath: File): Collection<File> =
-            FileUtils.listFiles(searchPath, arrayOf(DATA_FILE_SUFFIX), true)
+    fun listDataFiles(dir: File): Collection<File> = FileUtils.listFiles(dir, arrayOf(DATA_FILE_SUFFIX), true)
 
     @JvmStatic
     fun log(action: String, subject: Any) = log(StringUtils.rightPad(action, 26) + " " + subject)

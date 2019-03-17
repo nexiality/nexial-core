@@ -41,16 +41,14 @@ class InspectorOutput(val logger: InspectorLogger) {
             if (options.viewMode == LOCAL) jsonData = "let projectJson = $jsonData;"
 
             FileUtils.writeStringToFile(File(options.outputJson), jsonData, UTF8)
-            logger.log("save macros as JSON", options.outputJson)
+            logger.log("generate output", "save macros as JSON: ${options.outputJson}")
         } catch (e: IOException) {
             logger.error("Error writing macro(s) to ${options.outputJson}: ${e.message}")
             exit(WRITE_FILE)
         }
 
         val outputFile = writeOutputHtml(File(options.directory), json)
-        if (options.verbose) {
-            ExecutionReporter.openReport(outputFile)
-        }
+        if (options.verbose) ExecutionReporter.openReport(outputFile)
     }
 
     private fun writeOutputHtml(projectHome: File, json: JsonObject): File {
@@ -65,7 +63,7 @@ class InspectorOutput(val logger: InspectorLogger) {
                                            "<title></title>",
                                            "<title>Project Inspector for Project $projectId</title>")
             FileUtils.writeStringToFile(destination, html, UTF8)
-            logger.log("created output", "$destination")
+            logger.log("generate output", "created output: $destination")
         } catch (e: IOException) {
             logger.error("Error updating HTML in $destination: ${e.message}")
             exit(WRITE_FILE)

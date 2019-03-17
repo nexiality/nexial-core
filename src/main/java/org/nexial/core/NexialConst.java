@@ -53,8 +53,7 @@ import static java.awt.Color.*;
 import static java.awt.image.BufferedImage.*;
 import static java.io.File.separator;
 import static javax.naming.Context.*;
-import static org.apache.commons.lang3.SystemUtils.IS_OS_WINDOWS;
-import static org.apache.commons.lang3.SystemUtils.JAVA_IO_TMPDIR;
+import static org.apache.commons.lang3.SystemUtils.*;
 import static org.nexial.core.NexialConst.AwsSettings.*;
 import static org.nexial.core.NexialConst.Data.*;
 import static org.nexial.core.NexialConst.Integration.MAIL_PREFIX;
@@ -598,6 +597,11 @@ public final class NexialConst {
         public static final String DATA_FILE_SUFFIX = "data." + SCRIPT_FILE_SUFFIX;
         public static final String DEF_DATAFILE_SUFFIX = "." + DATA_FILE_SUFFIX;
 
+        public static final String PROJECT_CACHE_LOCATION = StringUtils.appendIfMissing(
+            new File(StringUtils.appendIfMissing(USER_HOME, separator) + ".nexial" + separator + "projectCache")
+                .getAbsolutePath(),
+            separator);
+
         private Project() { }
 
         public static String appendCapture(String dir) { return appendSep(dir) + SUBDIR_CAPTURES; }
@@ -628,7 +632,7 @@ public final class NexialConst {
                 File metaProjectIdFile = new File(projectHome + separator + DEF_REL_META_PROJ_ID);
                 if (FileUtil.isFileReadable(metaProjectIdFile)) {
                     try {
-                        projectId = FileUtils.readFileToString(metaProjectIdFile, DEF_FILE_ENCODING);
+                        projectId = StringUtils.trim(FileUtils.readFileToString(metaProjectIdFile, DEF_FILE_ENCODING));
                     } catch (IOException e) {
                         ConsoleUtils.error("Unable to read " + DEF_REL_META_PROJ_ID + ": " + e.getMessage());
                     }

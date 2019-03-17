@@ -20,18 +20,31 @@ import org.apache.commons.lang3.StringUtils
 import org.nexial.core.tools.inspector.InspectorConst.LOG_DATE_FORMAT
 import java.util.*
 
+private const val LABEL_WIDTH = 30
+
 class InspectorLogger(val verbose: Boolean) {
 
     fun log(message: String) {
         if (!verbose) return
         if (StringUtils.isBlank(message)) return
-        println("${LOG_DATE_FORMAT.format(Date())} $message")
+        println("${LOG_DATE_FORMAT.format(Date())}\t$message")
+    }
+
+    fun title(title: String, message: String) {
+        if (!verbose) return
+        if (StringUtils.isBlank(message)) return
+
+        val timestamp = LOG_DATE_FORMAT.format(Date())
+        println("$timestamp\t${StringUtils.repeat("-", 55)}")
+        println("$timestamp\t${StringUtils.rightPad(StringUtils.truncate(title, LABEL_WIDTH), LABEL_WIDTH)} - $message")
+        println("$timestamp\t${StringUtils.repeat("-", 55)}")
     }
 
     fun log(label: String, message: String) {
         if (!verbose) return
         if (StringUtils.isBlank(message)) return
-        println("${LOG_DATE_FORMAT.format(Date())}\t${StringUtils.rightPad(StringUtils.truncate(label, 20),20)} - $message")
+        println("${LOG_DATE_FORMAT.format(Date())}\t" +
+                "${StringUtils.rightPad(StringUtils.truncate(label, LABEL_WIDTH), LABEL_WIDTH)} - $message")
     }
 
     fun error(message: String) = InspectorLogger.error(message)
@@ -39,7 +52,7 @@ class InspectorLogger(val verbose: Boolean) {
     companion object {
         fun error(message: String) {
             if (StringUtils.isBlank(message)) return
-            System.err.println("${LOG_DATE_FORMAT.format(Date())} [ERROR] $message")
+            System.err.println("${LOG_DATE_FORMAT.format(Date())}\t[ERROR] $message")
         }
     }
 }

@@ -36,7 +36,7 @@ import static org.nexial.core.NexialConst.Project.*;
 public class TestProject {
     private static final Map<String, String> PROJECT_PROPERTIES = new LinkedHashMap<>();
 
-    private File nexialHome;
+    private String nexialHome;
     private String name;
     private String projectHome;
     private String artifactPath;
@@ -49,7 +49,7 @@ public class TestProject {
     private boolean hasProjectProps;
     private String boundProjectId;
 
-    public TestProject() { nexialHome = new File(System.getProperty(NEXIAL_HOME)); }
+    public TestProject() { nexialHome = new File(System.getProperty(NEXIAL_HOME)).getAbsolutePath(); }
 
     public static TestProject newInstance(File inputFile) {
         // this file could be a script or a plan
@@ -79,10 +79,10 @@ public class TestProject {
 
     public void setName(String name) { this.name = name; }
 
-    public String getNexialHome() { return nexialHome.getAbsolutePath(); }
+    public String getNexialHome() { return nexialHome; }
 
     public String getBinHome() {
-        return StringUtils.appendIfMissing(nexialHome.getAbsolutePath(), separator) + NEXIAL_BIN_REL_PATH;
+        return StringUtils.appendIfMissing(nexialHome, separator) + NEXIAL_BIN_REL_PATH;
     }
 
     public String getProjectHome() { return projectHome; }

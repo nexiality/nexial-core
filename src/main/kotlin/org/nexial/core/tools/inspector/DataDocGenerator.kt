@@ -19,32 +19,38 @@ package org.nexial.core.tools.inspector
 import org.apache.commons.collections4.CollectionUtils
 import org.apache.commons.collections4.IterableUtils
 import org.apache.commons.io.FileUtils
+import org.apache.commons.lang3.BooleanUtils
 import org.apache.commons.lang3.StringUtils
 import org.nexial.commons.utils.FileUtil
 import org.nexial.commons.utils.RegexUtils
 import org.nexial.commons.utils.ResourceUtils
 import org.nexial.core.NexialConst.DEF_FILE_ENCODING
 import org.nexial.core.NexialConst.Data.SHEET_DEFAULT_DATA
+import org.nexial.core.NexialConst.Data.SHEET_SYSTEM
 import org.nexial.core.NexialConst.NAMESPACE
 import org.nexial.core.NexialConst.Project.*
 import org.nexial.core.SystemVariables.*
 import org.nexial.core.excel.Excel
-import org.nexial.core.excel.Excel.Worksheet
 import org.nexial.core.excel.ExcelAddress
+import org.nexial.core.excel.ExcelConfig.*
 import org.nexial.core.excel.ext.CipherHelper.CRYPT_IND
+import org.nexial.core.tools.ProjectToolUtils.isDataFile
+import org.nexial.core.tools.ProjectToolUtils.isTestScript
+import org.nexial.core.tools.inspector.ArtifactType.ACTIVITY
+import org.nexial.core.tools.inspector.ArtifactType.SCRIPT
 import org.nexial.core.tools.inspector.DataVariableLocationType.Companion.CommandLineOverride
 import org.nexial.core.tools.inspector.DataVariableLocationType.Companion.DefaultDataSheet
 import org.nexial.core.tools.inspector.DataVariableLocationType.Companion.ProjectProperties
 import org.nexial.core.tools.inspector.DataVariableLocationType.Companion.ScenarioDataSheet
 import org.nexial.core.tools.inspector.DataVariableLocationType.Companion.StepOverride
 import org.nexial.core.tools.inspector.InspectorConst.VAR_CMDS
+import org.nexial.core.tools.inspector.ProjectInspector.expireOutdatedCache
 import org.nexial.core.tools.inspector.ProjectInspector.filterFiles
 import org.nexial.core.tools.inspector.ProjectInspector.getMessage
 import org.nexial.core.tools.inspector.ProjectInspector.resolveRelativePath
 import org.nexial.core.utils.InputFileUtils
 import java.io.File
 import java.io.File.separator
-import java.io.IOException
 import java.util.*
 
 class DataDocGenerator(val options: InspectorOptions, val logger: InspectorLogger) {
@@ -64,24 +70,37 @@ class DataDocGenerator(val options: InspectorOptions, val logger: InspectorLogge
 
         // find all potential data variable files
         val dataFiles = filterFiles(projectHome, arrayOf(DATA_FILE_SUFFIX)) { file -> isDataFile(file) }
-        logger.log("found ${dataFiles.size} data files")
+        logger.title("PROCESSING DATA FILES", "found ${dataFiles.size} data files")
+
         if (dataFiles.isEmpty()) return
 
         dataFiles.forEach { file ->
-            try {
-                val filePath = file.absolutePath
+            val filePath = file.absolutePath
+
+            val cacheFile = ProjectInspector.resolveCacheFile(options, file)
+            if (options.useCache && FileUtil.isFileReadable(cacheFile, 2048)) {
+                // use cache instead
+                logger.log(file.name, "reading from cache...")
+                val dataVariableCache = InspectorConst.GSON.fromJson<DataVariableCache>(
+                        FileUtils.readFileToString(cacheFile, DEF_FILE_ENCODING), DataVariableCache::class.java)
+                dataVariableCache.dataVariables.forEach { addToEntity(dataVariables, it) }
+            } else {
+
                 if (InputFileUtils.isValidDataFile(filePath)) {
-                    logger.log("parsing data file", filePath)
+                    val fileName = file.name
+                    logger.log(fileName, "parsing data file")
 
                     val dataFile = Excel(file)
-                    val fileName = file.name
                     val fileRelativePath = resolveRelativePath(projectHome, file)
 
-                    InputFileUtils.filterValidDataSheets(dataFile).forEach { sheet: Worksheet ->
+                    val dataFileCache = DataFileCache(fileName)
+                    val dataVariableCache = DataVariableCache(options.project.name, fileRelativePath, dataFileCache)
+
+                    InputFileUtils.filterValidDataSheets(dataFile).forEach { sheet ->
                         val sheetName = sheet.name
-                        val locationType =
-                                if (StringUtils.equals(sheetName, SHEET_DEFAULT_DATA)) DefaultDataSheet
-                                else ScenarioDataSheet
+                        val locationType = if (sheetName == SHEET_DEFAULT_DATA) DefaultDataSheet else ScenarioDataSheet
+
+                        val dataSheetCache = DataSheetCache(sheetName)
 
                         // find the last row
                         val addr = ExcelAddress("A1")
@@ -100,29 +119,41 @@ class DataDocGenerator(val options: InspectorOptions, val logger: InspectorLogge
                                 val headerCell = row[0][0]
                                 val name = Excel.getCellValue(headerCell)
                                 if (StringUtils.isNotBlank(name)) {
-                                    addToEntity(dataVariables,
-                                                DataVariableAtom(name,
-                                                                 if (row[0].size > 1) Excel.getCellValue(row[0][1]) else "",
-                                                                 "$fileRelativePath/$fileName",
-                                                                 sheetName,
-                                                                 headerCell.reference,
-                                                                 locationType))
+                                    val definedAs = if (row[0].size > 1) Excel.getCellValue(row[0][1]) else ""
+
+                                    dataSheetCache.data += DataCache(position = headerCell.reference,
+                                                                     name = name,
+                                                                     value = definedAs)
+                                    val dvAtom = DataVariableAtom(name = name,
+                                                                  definedAs = definedAs,
+                                                                  location = "$fileRelativePath/$fileName",
+                                                                  dataSheet = sheetName,
+                                                                  position = headerCell.reference,
+                                                                  type = locationType)
+                                    addToEntity(dataVariables, dvAtom)
+                                    dataVariableCache.dataVariables += dvAtom
                                 }
                             }
                         }
 
+                        dataFileCache.dataSheets += dataSheetCache
+                    }
+
+                    if (options.useCache && cacheFile != null) {
+                        logger.log(fileName, "updating cache...")
+                        FileUtils.write(cacheFile, InspectorConst.GSON.toJson(dataVariableCache), DEF_FILE_ENCODING)
                     }
                 }
-            } catch (e: IOException) {
-                logger.error("Error parsing $file: ${e.message}")
             }
+
+            if (options.useCache && cacheFile != null) expireOutdatedCache(cacheFile)
         }
     }
 
     private fun scanProjectProperties(dataVariables: DataVariableEntity) {
         val projectHome = File(options.directory)
         val projectProperties = File("${projectHome.absolutePath}$separator$DEF_REL_PROJECT_PROPS")
-        if (FileUtil.isFileReadable(projectProperties,5)) {
+        if (FileUtil.isFileReadable(projectProperties, 5)) {
             val projectProps = ResourceUtils.loadProperties(projectProperties)
             if (projectProps == null || projectProps.isEmpty) return
 
@@ -145,11 +176,12 @@ class DataDocGenerator(val options: InspectorOptions, val logger: InspectorLogge
 
         // find all potential batch files
         val batchFiles = filterFiles(bin, arrayOf("bat", "sh", "cmd")) { file -> file.length() > 0 }
-        logger.log("found ${batchFiles.size} batch files")
+        logger.title("PROCESSING BATCH FILES", "found ${batchFiles.size} batch files")
         if (batchFiles.isEmpty()) return
 
         batchFiles.forEach { batch ->
             val location = "${resolveRelativePath(projectHome, batch)}/${batch.name}"
+            logger.log(location, "parsing...")
 
             val batchContent = FileUtils.readLines(batch, DEF_FILE_ENCODING)
             for ((index, line) in batchContent.withIndex()) {
@@ -181,41 +213,90 @@ class DataDocGenerator(val options: InspectorOptions, val logger: InspectorLogge
 
         // find all potential data variable files
         val scriptFiles = filterFiles(projectHome, arrayOf(SCRIPT_FILE_SUFFIX)) { file -> isTestScript(file) }
-        logger.log("found ${scriptFiles.size} test scripts")
+        logger.title("PROCESSING DATA VARIABLES", "found ${scriptFiles.size} test scripts")
         if (scriptFiles.isEmpty()) return
 
         scriptFiles.forEach { file ->
-            try {
-                val filePath = file.absolutePath
-                logger.log("parsing data file", filePath)
+
+            val cacheFile = ProjectInspector.resolveCacheFile(options, file)
+            if (options.useCache && FileUtil.isFileReadable(cacheFile, 2048)) {
+                // use cache instead
+                logger.log(file.name, "reading from cache...")
+                val scriptSuiteCache = InspectorConst.GSON.fromJson<ScriptSuiteCache>(
+                        FileUtils.readFileToString(cacheFile, DEF_FILE_ENCODING), ScriptSuiteCache::class.java)
+                scriptSuiteCache.dataVariables.forEach { addToEntity(dataVariables, it) }
+            } else {
+
+                logger.log(file.name, "parsing script file for data variable reference")
 
                 val location = "${resolveRelativePath(projectHome, file)}/${file.name}"
+                val scriptCache = ScriptCache(file.name, SCRIPT)
+                val scriptSuiteCache = ScriptSuiteCache(options.project.name, location, scriptCache)
                 val excel = Excel(file)
 
-                InputFileUtils.retrieveValidTestScenarios(excel).forEach { sheet: Worksheet ->
+                InputFileUtils.retrieveValidTestScenarios(excel).forEach { sheet ->
                     val sheetName = sheet.name
+                    if (sheetName != SHEET_SYSTEM) {
+                        val scenarioCache = ScenarioCache(sheetName, SCRIPT)
+                        var activityCache: SequenceCache? = null
 
-                    // find the last row
-                    val endRowIndex = sheet.findLastDataRow(ExcelAddress("C5")) + 1
-                    val commandsAndParams = excel.worksheet(sheetName).cells(ExcelAddress("C5:I$endRowIndex"))
+                        // find the last row
+                        val step = excel.worksheet(sheetName)
+                            .cells(ExcelAddress("${COL_TEST_CASE}5:$COL_CAPTURE_SCREEN" +
+                                                "${sheet.findLastDataRow(ExcelAddress("${COL_TARGET}5")) + 1}"))
 
-                    commandsAndParams.forEach { row ->
-                        val command = "${Excel.getCellValue(row[0])}.${Excel.getCellValue(row[1])}"
-                        if (VAR_CMDS.containsKey(command)) {
-                            val name = Excel.getCellValue(row[2 + VAR_CMDS.getValue(command)])
-                            addToEntity(dataVariables,
-                                        DataVariableAtom(name,
-                                                         command,
-                                                         location,
-                                                         sheetName,
-                                                         "Row ${row[0].rowIndex}",
-                                                         StepOverride))
+                        step.forEach { row ->
+                            val activity = Excel.getCellValue(row[0])
+                            if (activity.isNotBlank()) {
+                                if (activityCache != null) scenarioCache.sequences += activityCache!!
+                                activityCache = SequenceCache(activity, ACTIVITY, row[0].rowIndex)
+                            }
+
+                            val rowIndex = row[0].rowIndex
+                            val cmdType = Excel.getCellValue(row[2])
+                            val command = Excel.getCellValue(row[3])
+
+                            if (activityCache != null) {
+                                activityCache!!.steps += StepCache(
+                                        row = rowIndex,
+                                        description = Excel.getCellValue(row[1]),
+                                        cmdType = cmdType,
+                                        command = command,
+                                        param1 = Excel.getCellValue(row[4]),
+                                        param2 = Excel.getCellValue(row[5]),
+                                        param3 = Excel.getCellValue(row[6]),
+                                        param4 = Excel.getCellValue(row[7]),
+                                        param5 = Excel.getCellValue(row[8]),
+                                        flowControl = Excel.getCellValue(row[9]),
+                                        screenshot = BooleanUtils.toBoolean(Excel.getCellValue(row[11])))
+                            }
+
+                            val commandFqn = "$cmdType.$command"
+                            if (VAR_CMDS.containsKey(commandFqn)) {
+                                val name = Excel.getCellValue(row[4 + VAR_CMDS.getValue(commandFqn)])
+                                val dv = DataVariableAtom(name = name,
+                                                          definedAs = commandFqn,
+                                                          location = location,
+                                                          dataSheet = sheetName,
+                                                          position = "Row $rowIndex",
+                                                          type = StepOverride)
+                                addToEntity(dataVariables, dv)
+                                scriptSuiteCache.dataVariables += dv
+                            }
                         }
+
+                        if (activityCache != null) scenarioCache.sequences += activityCache!!
+                        scriptCache.scenarios += scenarioCache
                     }
                 }
-            } catch (e: IOException) {
-                logger.error("Error parsing $file: ${e.message}")
+
+                if (options.useCache && cacheFile != null) {
+                    logger.log(location, "updating cache...")
+                    FileUtils.write(cacheFile, InspectorConst.GSON.toJson(scriptSuiteCache), DEF_FILE_ENCODING)
+                }
             }
+
+            if (options.useCache && cacheFile != null) expireOutdatedCache(cacheFile)
         }
     }
 
@@ -285,14 +366,6 @@ class DataDocGenerator(val options: InspectorOptions, val logger: InspectorLogge
         }
     }
 
-    private fun isValidTestArtifact(file: File) =
-            !file.name.startsWith("~") && !file.absolutePath.contains("${separator}output$separator")
-
-    private fun isDataFile(file: File): Boolean = isValidTestArtifact(file)
-
-    private fun isTestScript(file: File): Boolean =
-            isValidTestArtifact(file) && InputFileUtils.isValidScript(file.absolutePath)
-
     private fun isDefinedInDataSheet(locationTypes: List<DataVariableLocationType>) =
             locationTypes.contains(DefaultDataSheet) || locationTypes.contains(ScenarioDataSheet)
 
@@ -310,7 +383,6 @@ class DataDocGenerator(val options: InspectorOptions, val logger: InspectorLogge
                 val name = dvPair[0]
                 if (StringUtils.isNotBlank(name)) {
                     val definedAs = if (dvPair.size > 1) dvPair[1] else ""
-//                    println("adding new cmdline data variable override: name=$name, definedAs=$definedAs, line #=$position")
                     addToEntity(dataVariables,
                                 DataVariableAtom(name = name,
                                                  definedAs = definedAs,
