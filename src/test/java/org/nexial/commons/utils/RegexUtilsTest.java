@@ -157,4 +157,12 @@ public class RegexUtilsTest {
         Assert.assertEquals("12345432100991",
                             RegexUtils.retainMatches("  askdjgh1asdjlkjslksj2345gggn ;;s;4321s.df--00991", "[0-9]"));
     }
+
+    @Test
+    public void firstMatch() {
+        String match = RegexUtils.firstMatches("Can{TAB}ada{ESCAPE}", "(\\{.+?\\})");
+        System.out.println("groups = " + match);
+        Assert.assertNotNull(match);
+        // Assert.assertEquals(groups.size(), 4);
+    }
 }

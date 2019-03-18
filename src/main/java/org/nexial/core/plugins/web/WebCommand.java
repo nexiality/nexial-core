@@ -89,6 +89,9 @@ import static org.nexial.core.NexialConst.Data.*;
 import static org.nexial.core.SystemVariables.*;
 import static org.nexial.core.plugins.ws.WebServiceClient.hideAuthDetails;
 import static org.nexial.core.utils.CheckUtils.*;
+import static org.nexial.core.utils.WebDriverUtils.CONTROL_KEY_MAPPING;
+import static org.nexial.core.utils.WebDriverUtils.KEY_MAPPING;
+import static org.openqa.selenium.Keys.BACK_SPACE;
 import static org.openqa.selenium.Keys.TAB;
 
 public class WebCommand extends BaseCommand implements CanTakeScreenshot, CanLogExternally, RequireBrowser {
@@ -1213,9 +1216,6 @@ public class WebCommand extends BaseCommand implements CanTakeScreenshot, CanLog
     }
 
     public StepResult type(String locator, String value) {
-        // WebElement element = shouldWait() ?
-        //                      findElement(locator) :
-        //                      !isElementPresent(locator) ? null : toElement(locator);
         WebElement element = findElement(locator);
         if (element == null) {
             String msg = "unable to complete type() since locator (" + locator + ") cannot be found.";
@@ -1260,12 +1260,32 @@ public class WebCommand extends BaseCommand implements CanTakeScreenshot, CanLog
             element.click();
             waitFor(MIN_STABILITY_WAIT_MS);
 
-            Actions actions = WebDriverUtils.toSendKeyAction(driver, element, value);
-            if (actions != null) {
-                if (context.getBooleanData(WEB_UNFOCUS_AFTER_TYPE, getDefaultBool(WEB_UNFOCUS_AFTER_TYPE))) {
-                    actions.sendKeys(TAB);
+            if (browser.isRunElectron()) {
+                String text = value;
+                String controlKey = RegexUtils.firstMatches(text, "(\\{.+?\\})");
+                while (StringUtils.isNotEmpty(controlKey)) {
+                    String regularText = StringUtils.substringBefore(text, controlKey);
+                    text = StringUtils.substringAfter(text, controlKey);
+
+                    if (StringUtils.isNotEmpty(regularText)) { element.sendKeys(regularText); }
+                    if (CONTROL_KEY_MAPPING.containsKey(controlKey.toUpperCase())) {
+                        ConsoleUtils.error("control key not supported in Electron application: " + controlKey);
+                    }
+                    if (KEY_MAPPING.containsKey(controlKey.toUpperCase())) {
+                        element.sendKeys(KEY_MAPPING.get(controlKey.toUpperCase()));
+                    }
+
+                    controlKey = RegexUtils.firstMatches(text, "(\\{.+?\\})");
                 }
-                actions.build().perform();
+
+            } else {
+                Actions actions = WebDriverUtils.toSendKeyAction(driver, element, value);
+                if (actions != null) {
+                    if (context.getBooleanData(WEB_UNFOCUS_AFTER_TYPE, getDefaultBool(WEB_UNFOCUS_AFTER_TYPE))) {
+                        actions.sendKeys(TAB);
+                    }
+                    actions.build().perform();
+                }
             }
         } else {
             // no locator
@@ -1576,9 +1596,15 @@ public class WebCommand extends BaseCommand implements CanTakeScreenshot, CanLog
         // prior to clearing
         String before = element.getAttribute("value");
 
-        element.clear();
-        jsExecutor.executeScript("arguments[0].setAttribute(arguments[1],arguments[2]);", element, "value", "");
-        element.sendKeys("");
+        if (browser.isRunElectron()) {
+            if (StringUtils.isNotEmpty(before)) {
+                before.chars().forEach(value -> element.sendKeys(BACK_SPACE));
+            }
+        } else {
+            element.clear();
+            jsExecutor.executeScript("arguments[0].setAttribute(arguments[1],arguments[2]);", element, "value", "");
+            element.sendKeys("");
+        }
 
         // after clearing
         String after = null;
