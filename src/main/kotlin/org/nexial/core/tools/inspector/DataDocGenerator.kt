@@ -24,6 +24,7 @@ import org.apache.commons.lang3.StringUtils
 import org.nexial.commons.utils.FileUtil
 import org.nexial.commons.utils.RegexUtils
 import org.nexial.commons.utils.ResourceUtils
+import org.nexial.commons.utils.TextUtils
 import org.nexial.core.NexialConst.DEF_FILE_ENCODING
 import org.nexial.core.NexialConst.Data.SHEET_DEFAULT_DATA
 import org.nexial.core.NexialConst.Data.SHEET_SYSTEM
@@ -43,6 +44,7 @@ import org.nexial.core.tools.inspector.DataVariableLocationType.Companion.Defaul
 import org.nexial.core.tools.inspector.DataVariableLocationType.Companion.ProjectProperties
 import org.nexial.core.tools.inspector.DataVariableLocationType.Companion.ScenarioDataSheet
 import org.nexial.core.tools.inspector.DataVariableLocationType.Companion.StepOverride
+import org.nexial.core.tools.inspector.InspectorConst.MULTI_VARS_CMDS
 import org.nexial.core.tools.inspector.InspectorConst.VAR_CMDS
 import org.nexial.core.tools.inspector.ProjectInspector.expireOutdatedCache
 import org.nexial.core.tools.inspector.ProjectInspector.filterFiles
@@ -78,7 +80,7 @@ class DataDocGenerator(val options: InspectorOptions, val logger: InspectorLogge
             val filePath = file.absolutePath
 
             val cacheFile = ProjectInspector.resolveCacheFile(options, file)
-            if (options.useCache && FileUtil.isFileReadable(cacheFile, 2048)) {
+            if (options.useCache && FileUtil.isFileReadable(cacheFile, 512)) {
                 // use cache instead
                 logger.log(file.name, "reading from cache...")
                 val dataVariableCache = InspectorConst.GSON.fromJson<DataVariableCache>(
@@ -219,7 +221,7 @@ class DataDocGenerator(val options: InspectorOptions, val logger: InspectorLogge
         scriptFiles.forEach { file ->
 
             val cacheFile = ProjectInspector.resolveCacheFile(options, file)
-            if (options.useCache && FileUtil.isFileReadable(cacheFile, 2048)) {
+            if (options.useCache && FileUtil.isFileReadable(cacheFile, 512)) {
                 // use cache instead
                 logger.log(file.name, "reading from cache...")
                 val scriptSuiteCache = InspectorConst.GSON.fromJson<ScriptSuiteCache>(
@@ -273,15 +275,33 @@ class DataDocGenerator(val options: InspectorOptions, val logger: InspectorLogge
 
                             val commandFqn = "$cmdType.$command"
                             if (VAR_CMDS.containsKey(commandFqn)) {
-                                val name = Excel.getCellValue(row[4 + VAR_CMDS.getValue(commandFqn)])
-                                val dv = DataVariableAtom(name = name,
-                                                          definedAs = commandFqn,
-                                                          location = location,
-                                                          dataSheet = sheetName,
-                                                          position = "Row $rowIndex",
-                                                          type = StepOverride)
-                                addToEntity(dataVariables, dv)
-                                scriptSuiteCache.dataVariables += dv
+                                val varIndices = VAR_CMDS.getValue(commandFqn)
+                                varIndices.forEach {
+                                    val dv = DataVariableAtom(name = Excel.getCellValue(row[4 + it]),
+                                                              definedAs = commandFqn,
+                                                              location = location,
+                                                              dataSheet = sheetName,
+                                                              position = "Row $rowIndex",
+                                                              type = StepOverride)
+                                    addToEntity(dataVariables, dv)
+                                    scriptSuiteCache.dataVariables += dv
+                                }
+                            }
+
+                            if (MULTI_VARS_CMDS.containsKey(commandFqn)) {
+                                val vars = Excel.getCellValue(row[4 + MULTI_VARS_CMDS.getValue(commandFqn)])
+                                if (vars.isNotBlank()) {
+                                    TextUtils.toList(vars, ",", true).forEach {
+                                        val dv = DataVariableAtom(name = it,
+                                                                  definedAs = commandFqn,
+                                                                  location = location,
+                                                                  dataSheet = sheetName,
+                                                                  position = "Row $rowIndex",
+                                                                  type = StepOverride)
+                                        addToEntity(dataVariables, dv)
+                                        scriptSuiteCache.dataVariables += dv
+                                    }
+                                }
                             }
                         }
 

@@ -277,6 +277,7 @@ public final class TextUtils {
      * tranform string to {@link List} (of String).  Use {@code delim} to determine the delimiter and {@code trim}
      * to determine if the delimited list should be trimmed returned.
      */
+    @NotNull
     public static List<String> toList(String text, String delim, boolean trim) {
         List<String> list = new ArrayList<>();
         if (StringUtils.isEmpty(text) || StringUtils.isEmpty(delim)) { return list; }

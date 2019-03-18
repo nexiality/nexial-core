@@ -63,7 +63,7 @@ class MacroDocGenerator(val options: InspectorOptions, val logger: InspectorLogg
             val macroFile = MacroFile(location, file.name)
             val cacheFile = resolveCacheFile(options, file)
 
-            val macroCache = if (options.useCache && FileUtil.isFileReadable(cacheFile, 2048)) {
+            val macroCache = if (options.useCache && FileUtil.isFileReadable(cacheFile, 512)) {
                 // use cache instead
                 logger.log(file.name, "reading from cache...")
                 val macroCache = GSON.fromJson<MacroCache>(
