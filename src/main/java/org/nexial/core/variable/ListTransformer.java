@@ -368,7 +368,7 @@ public class ListTransformer<T extends ListDataType> extends Transformer {
      * replace items that entirely matches {@code searchFor} with {@code replaceWith} (also entirely)
      */
     public T replaceItem(T data, String searchFor, String replaceWith) {
-        if (data == null || data.getValue() == null || StringUtils.isEmpty(searchFor)) { return data; }
+        if (data == null || data.getValue() == null) { return data; }
 
         String replaceBy = treatCommonValueShorthand(fixControlChars(StringUtils.defaultString(replaceWith)));
         String searchBy = treatCommonValueShorthand(fixControlChars(searchFor));

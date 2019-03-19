@@ -280,6 +280,19 @@ public class ExpressionProcessorTest {
                   " => removeItems(CDwindow-51c12978-15c6-4ea2-ab24-9aadefe370a8) text]";
         result = subject.process(fixture);
         Assert.assertEquals("CDwindow-adf7c26d-262e-4a6c-a7a3-1adb5d8406bb", result);
+
+        // support empty item replacement
+        fixture = "[LIST(red,yellow,green,,,white) => replaceItem(\\(empty\\),HELLO) text]";
+        result = subject.process(fixture);
+        Assert.assertEquals("red,yellow,green,HELLO,HELLO,white", result);
+
+        fixture = "[LIST(red,yellow,green,white,,) => replaceItem(\\(empty\\),HELLO) text]";
+        result = subject.process(fixture);
+        Assert.assertEquals("red,yellow,green,white,HELLO,HELLO", result);
+
+        fixture = "[LIST(,red,yellow,green,white,,) => replaceItem(\\(empty\\),HELLO) text]";
+        result = subject.process(fixture);
+        Assert.assertEquals("HELLO,red,yellow,green,white,HELLO,HELLO", result);
     }
 
     @Test

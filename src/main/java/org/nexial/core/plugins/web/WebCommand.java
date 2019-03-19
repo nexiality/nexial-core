@@ -870,6 +870,14 @@ public class WebCommand extends BaseCommand implements CanTakeScreenshot, CanLog
         return StepResult.success("double-clicked '" + locator + "'");
     }
 
+    public StepResult rightClick(String locator) {
+        WebElement element = toElement(locator);
+        scrollIntoView(element);
+        highlight(element);
+        new Actions(driver).moveToElement(element).contextClick(element).build().perform();
+        return StepResult.success("right-clicked on '" + locator + "'");
+    }
+
     public StepResult dismissInvalidCert() {
         wait("2000");
         if (!browser.isRunIE() && !browser.isRunFireFox()) {
