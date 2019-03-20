@@ -89,8 +89,6 @@ import static org.nexial.core.NexialConst.Data.*;
 import static org.nexial.core.SystemVariables.*;
 import static org.nexial.core.plugins.ws.WebServiceClient.hideAuthDetails;
 import static org.nexial.core.utils.CheckUtils.*;
-import static org.nexial.core.utils.WebDriverUtils.CONTROL_KEY_MAPPING;
-import static org.nexial.core.utils.WebDriverUtils.KEY_MAPPING;
 import static org.openqa.selenium.Keys.BACK_SPACE;
 import static org.openqa.selenium.Keys.TAB;
 
@@ -1268,25 +1266,25 @@ public class WebCommand extends BaseCommand implements CanTakeScreenshot, CanLog
             element.click();
             waitFor(MIN_STABILITY_WAIT_MS);
 
-            if (browser.isRunElectron()) {
-                String text = value;
-                String controlKey = RegexUtils.firstMatches(text, "(\\{.+?\\})");
-                while (StringUtils.isNotEmpty(controlKey)) {
-                    String regularText = StringUtils.substringBefore(text, controlKey);
-                    text = StringUtils.substringAfter(text, controlKey);
-
-                    if (StringUtils.isNotEmpty(regularText)) { element.sendKeys(regularText); }
-                    if (CONTROL_KEY_MAPPING.containsKey(controlKey.toUpperCase())) {
-                        ConsoleUtils.error("control key not supported in Electron application: " + controlKey);
-                    }
-                    if (KEY_MAPPING.containsKey(controlKey.toUpperCase())) {
-                        element.sendKeys(KEY_MAPPING.get(controlKey.toUpperCase()));
-                    }
-
-                    controlKey = RegexUtils.firstMatches(text, "(\\{.+?\\})");
-                }
-
-            } else {
+            // if (browser.isRunElectron()) {
+            //     String text = value;
+            //     String controlKey = RegexUtils.firstMatches(text, "(\\{.+?\\})");
+            //     while (StringUtils.isNotEmpty(controlKey)) {
+            //         String regularText = StringUtils.substringBefore(text, controlKey);
+            //         text = StringUtils.substringAfter(text, controlKey);
+            //
+            //         if (StringUtils.isNotEmpty(regularText)) { element.sendKeys(regularText); }
+            //         if (CONTROL_KEY_MAPPING.containsKey(controlKey.toUpperCase())) {
+            //             ConsoleUtils.error("control key not supported in Electron application: " + controlKey);
+            //         }
+            //         if (KEY_MAPPING.containsKey(controlKey.toUpperCase())) {
+            //             element.sendKeys(KEY_MAPPING.get(controlKey.toUpperCase()));
+            //         }
+            //
+            //         controlKey = RegexUtils.firstMatches(text, "(\\{.+?\\})");
+            //     }
+            //
+            // } else {
                 Actions actions = WebDriverUtils.toSendKeyAction(driver, element, value);
                 if (actions != null) {
                     if (context.getBooleanData(WEB_UNFOCUS_AFTER_TYPE, getDefaultBool(WEB_UNFOCUS_AFTER_TYPE))) {
@@ -1294,7 +1292,7 @@ public class WebCommand extends BaseCommand implements CanTakeScreenshot, CanLog
                     }
                     actions.build().perform();
                 }
-            }
+            // }
         } else {
             // no locator
             WebDriverUtils.toSendKeyAction(driver, null, value).build().perform();
