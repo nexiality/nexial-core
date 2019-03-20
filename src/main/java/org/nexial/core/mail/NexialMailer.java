@@ -18,11 +18,10 @@ package org.nexial.core.mail;
 
 import java.io.File;
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.Date;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
 import javax.activation.DataHandler;
 import javax.activation.DataSource;
 import javax.activation.FileDataSource;
@@ -55,10 +54,14 @@ import org.thymeleaf.context.Context;
 
 import com.sun.mail.smtp.SMTPTransport;
 
+import static java.io.File.separator;
 import static javax.mail.Message.RecipientType.*;
 import static org.nexial.core.NexialConst.Data.*;
+import static org.nexial.core.NexialConst.ExitStatus.EXEC_OUTPUT_PATH;
 import static org.nexial.core.NexialConst.Mailer.MAIL_KEY_CONTENT_TYPE;
 import static org.nexial.core.NexialConst.Mailer.MAIL_KEY_FROM;
+import static org.nexial.core.NexialConst.Project.NEXIAL_EXECUTION_TYPE;
+import static org.nexial.core.NexialConst.Project.NEXIAL_EXECUTION_TYPE_PLAN;
 import static org.nexial.core.SystemVariables.getDefault;
 import static org.nexial.core.utils.ExecUtils.NEXIAL_MANIFEST;
 
@@ -113,17 +116,16 @@ public class NexialMailer implements ExecutionNotifier {
         }
 
         // unique set of test names
-        StringBuilder subject = new StringBuilder("Execution Result for ");
-        Set<String> nestedNames = new HashSet<>();
-        summary.getNestedExecutions().forEach(nested -> nestedNames.add(nested.getName()));
-        nestedNames.forEach(name -> subject.append(name).append(", "));
+        StringBuilder subject = getSubject(summary);
 
         Context engineContext = new Context();
         engineContext.setVariable("summary", summary);
+        engineContext.setVariable("executionSummary", System.getProperty(EXEC_OUTPUT_PATH));
 
         MailData mailData =
             new MailData().setToAddr(resolveRecipients())
-                          .setSubject(MAIL_RESULT_SUBJECT_PREFIX + StringUtils.removeEnd(subject.toString(), ", "))
+                          .setSubject(MAIL_RESULT_SUBJECT_PREFIX +
+                                      StringUtils.abbreviate(StringUtils.removeEnd(subject.toString(), ", "), 100))
                           .setContent(mailTemplateEngine.process(mailTemplate, engineContext));
 
         try {
@@ -132,6 +134,35 @@ public class NexialMailer implements ExecutionNotifier {
         } catch (MessagingException e) {
             throw new IOException(e.getMessage(), e);
         }
+    }
+
+    private StringBuilder getSubject(ExecutionSummary summary) {
+        StringBuilder subject = new StringBuilder("Execution Result for ");
+        List<ExecutionSummary> scriptSummary = summary.getNestedExecutions();
+
+        if (StringUtils.equals(System.getProperty(NEXIAL_EXECUTION_TYPE), NEXIAL_EXECUTION_TYPE_PLAN)) {
+            List<String> plans = new ArrayList<>();
+
+            scriptSummary.forEach(script -> {
+                if (script.getPlanFile() == null) { return; }
+                plans.add(StringUtils.removeEnd(StringUtils.substringAfterLast(
+                    script.getPlanFile(), separator), ".xlsx"));
+            });
+            plans.forEach(plan -> subject.append(plan).append(", "));
+
+        } else {
+            List<String> scenarios = new ArrayList<>();
+            ExecutionSummary script = scriptSummary.get(0);
+            script.getNestedExecutions().get(0).getNestedExecutions()
+                  .forEach(scenario -> scenarios.add(scenario.getName()));
+
+            String scenario = StringUtils.removeStart(StringUtils.removeEnd(scenarios.toString(), "]"), "[") + ")";
+
+            subject.append(StringUtils.substringBeforeLast(script.getName(), " (")).append(" (");
+            subject.append(scenario);
+        }
+
+        return subject;
     }
 
     public void sendCidContent(List<String> recipients, String subject, String content, Map<String, File> images)
