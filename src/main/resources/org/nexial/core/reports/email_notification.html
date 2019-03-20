@@ -29,6 +29,15 @@
 		border-bottom:    2px solid #c0c0c0;
 	}
 
+	.executionSummary {
+		font-size:        11pt;
+		font-family:      Tahoma, serif;
+		font-weight:      bold;
+		background-color: #fff;
+		padding-top:      8px;
+		border-top:       2px solid #c0c0c0;
+	}
+
 	.result { font-family: Tahoma, serif; font-size: 10pt; border: none; background: #fff; }
 
 	.result td, .result th { border-bottom: 1px solid #ddd; }
@@ -106,9 +115,38 @@
 		<td nowrap="nowrap" class="execLabel">Executed By:</td>
 		<th class="execValue" data-th-utext="${summary.runUser}">User</th>
 	</tr>
-	<tr data-th-each="reportData : ${summary.referenceData}">
-		<td nowrap="nowrap" class="execLabel" data-th-utext="${reportData.key}">key</td>
-		<th class="execValue" data-th-text="${reportData.value}">value</th>
+	<tr>
+		<td nowrap="nowrap" class="execLabel">time span:</td>
+		<th class="execValue"
+		    data-th-utext="${#dates.format(new java.util.Date(summary.startTime), 'yyyy/MM/dd HH:mm:ss')} + ' - ' + ${#dates.format(new java.util.Date(summary.endTime), 'yyyy/MM/dd HH:mm:ss')}">
+			10/30/2018 01:31:39 - 10/30/2018 01:33:09
+		</th>
+	</tr>
+	<tr>
+		<td nowrap="nowrap" class="execLabel">duration:</td>
+		<th class="execValue"
+		    data-th-utext="${#dates.format(#dates.create(0,0,0,0,0,0,summary.elapsedTime), 'HH:mm:ss.SSS')}">
+			00:01:29.693
+		</th>
+	</tr>
+	<tr>
+		<td nowrap="nowrap" class="execLabel">total steps:</td>
+		<th class="execValue" data-th-utext="${summary.totalSteps}">8</th>
+	</tr>
+	<tr>
+		<td nowrap="nowrap" class="execLabel">executed steps:</td>
+		<th class="execValue" data-th-utext="${summary.executed}">8</th>
+	</tr>
+	<tr>
+		<td nowrap="nowrap" class="execLabel">passed:</td>
+		<th class="execValue"
+		    data-th-utext="${summary.passCount} + ' (' + ${#numbers.formatDecimal(summary.passCount * 100 / summary.totalSteps, 1, 2)}+ '%)'">
+			100%
+		</th>
+	</tr>
+	<tr>
+		<td nowrap="nowrap" class="execLabel">failed:</td>
+		<th class="execValue" data-th-utext="${summary.failCount}">0</th>
 	</tr>
 </tbody>
 </table>
@@ -124,12 +162,20 @@
 	<br/>
 </div>
 
+
+<div data-th-if="${executionSummary}">
+	<div class="executionSummary">
+		<a data-th-href="${executionSummary}">Execution Summary</a>&nbsp;
+	</div>
+	<br/>
+</div>
+
 <div data-th-if="#{summary.nestedExecutions}">
 
 	<table cellpadding="5" cellspacing="2" class="result">
 	<thead>
 		<tr valign="top" class="reportHeader">
-			<th align="left">Test Result/Scenario</th>
+			<th align="left">Test Result</th>
 			<th align="left">Reference</th>
 			<th>Start Date/Time</th>
 			<th>Time (ms)</th>
@@ -140,23 +186,44 @@
 		</tr>
 	</thead>
 	<tbody>
-		<tr valign="top" data-th-each="nested : ${summary.nestedExecutions}">
+	<div data-th-each="script : ${summary.nestedExecutions}">
+		<tr valign="top" data-th-each="iteration : ${script.nestedExecutions}">
 			<th align="left" valign="top" nowrap="nowrap">
-				<a data-th-href="${nested.testScriptLink}" data-th-text="${nested.name}">Script Name</a>&nbsp;
+				<a data-th-href="${iteration.testScriptLink}"
+				   data-th-text="${#strings.substringBefore(script.name,' (')} + '/' + ${iteration.name}">Script
+					Name</a>&nbsp;
 			</th>
-			<th align="left" valign="top" nowrap="nowrap">
-				<div class="resultTestData" data-th-each="data : ${nested.referenceData}">
-					<span class="resultTestDataKey" data-th-text="${data.key}">Name</span>:
+			<th align="left" valign="top" nowrap="nowrap"
+			    data-th-with="ref = ${ {'JAVA_OPT', 'Data File', 'DataSheet(s)', 'runtime args'} }">
+				<div class="resultTestData" data-th-each="data : ${iteration.referenceData}"
+				     data-th-unless="${#lists.contains(ref,data.key)}">
+					<span class="resultTestDataKey" data-th-text="${data.key} + ':'">Name</span>
 					<span data-th-text="${data.value}">Value</span><br/>
 				</div>
 			</th>
-			<td valign="top" data-th-text="${#dates.format(new java.util.Date(nested.startTime), 'yyyy/MM/dd HH:mm:ss')}">start date/time</td>
-			<td align="right" valign="top" class="reportStats" data-th-text="${#dates.format(#dates.create(0,0,0,0,0,0,nested.elapsedTime), 'HH:mm:ss')}">${elapsedTime}</td>
-			<td align="right" valign="top" class="reportStats" data-th-text="${#numbers.formatInteger(nested.executed, 1, 'DEFAULT')}">50</td>
-			<td align="right" valign="top" class="reportStats" data-th-text="${#numbers.formatInteger(nested.passCount, 1, 'DEFAULT')}">49</td>
-			<td align="right" valign="top" class="reportStats" data-th-text="${#numbers.formatInteger(nested.failCount, 1, 'DEFAULT')}">49</td>
-			<td align="right" valign="top" class="reportStats" data-th-text="${#numbers.formatDecimal(nested.successRate * 100, 1, 2, 'DEFAULT')}+ '%'" data-th-class="${nested.successRate >= 1 ? 'allPass' : 'hasFailure'}">100%</td>
+			<td valign="top"
+			    data-th-text="${#dates.format(new java.util.Date(iteration.startTime), 'yyyy/MM/dd HH:mm:ss')}">start
+				date/time
+			</td>
+			<td align="right" valign="top" class="reportStats"
+			    data-th-text="${#dates.format(#dates.create(0,0,0,0,0,0,iteration.elapsedTime), 'HH:mm:ss')}">
+				${elapsedTime}
+			</td>
+			<td align="right" valign="top" class="reportStats"
+			    data-th-text="${#numbers.formatInteger(iteration.executed, 1, 'DEFAULT')}">50
+			</td>
+			<td align="right" valign="top" class="reportStats"
+			    data-th-text="${#numbers.formatInteger(iteration.passCount, 1, 'DEFAULT')}">49
+			</td>
+			<td align="right" valign="top" class="reportStats"
+			    data-th-text="${#numbers.formatInteger(iteration.failCount, 1, 'DEFAULT')}">49
+			</td>
+			<td align="right" valign="top" class="reportStats"
+			    data-th-text="${#numbers.formatDecimal(iteration.successRate * 100, 1, 2, 'DEFAULT')}+ '%'"
+			    data-th-class="${iteration.successRate >= 1 ? 'allPass' : 'hasFailure'}">100%
+			</td>
 		</tr>
+	</div>
 	</tbody>
 	<tfoot>
 		<tr class="reportFooter">
