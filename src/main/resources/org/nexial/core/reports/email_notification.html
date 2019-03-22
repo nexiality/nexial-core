@@ -1,241 +1,222 @@
-<!--
-  ~ Copyright 2012-2018 the original author or authors.
-  ~
-  ~ Licensed under the Apache License, Version 2.0 (the "License");
-  ~ you may not use this file except in compliance with the License.
-  ~ You may obtain a copy of the License at
-  ~
-  ~       http://www.apache.org/licenses/LICENSE-2.0
-  ~
-  ~ Unless required by applicable law or agreed to in writing, software
-  ~ distributed under the License is distributed on an "AS IS" BASIS,
-  ~ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-  ~ See the License for the specific language governing permissions and
-  ~ limitations under the License.
-  -->
-
 <html>
 <head>
-<style>
-	body { font-family: Tahoma, serif; }
+    <style>
+        body { font-family: Tahoma, serif; }
 
-	.title {
-		font-size:        11pt;
-		font-family:      Tahoma, serif;
-		font-weight:      bold;
-		background-color: #d0e0e0;
-		padding:          5px;
-		border-top:       2px solid #c0c0c0;
-		border-bottom:    2px solid #c0c0c0;
-	}
+        .title {
+            font-size:        11pt;
+            font-family:      Tahoma, serif;
+            font-weight:      bold;
+            background-color: #d0e0e0;
+            padding:          5px;
+            border-top:       2px solid #c0c0c0;
+            border-bottom:    2px solid #c0c0c0;
+        }
 
-	.executionSummary {
-		font-size:        11pt;
-		font-family:      Tahoma, serif;
-		font-weight:      bold;
-		background-color: #fff;
-		padding-top:      8px;
-		border-top:       2px solid #c0c0c0;
-	}
+        .executionSummary {
+            font-size:        11pt;
+            font-family:      Tahoma, serif;
+            font-weight:      bold;
+            background-color: #fff;
+            padding-top:      8px;
+            border-top:       2px solid #c0c0c0;
+        }
 
-	.result { font-family: Tahoma, serif; font-size: 10pt; border: none; background: #fff; }
+        .result { font-family: Tahoma, serif; font-size: 10pt; border: none; background: #fff; }
 
-	.result td, .result th { border-bottom: 1px solid #ddd; }
+        .result td, .result th { border-bottom: 1px solid #ddd; }
 
-	.execMeta { font-size: 9pt; background: #f0f0f0; padding: 5px; margin-top: 4px; width: 100%; }
+        .execMeta { font-size: 9pt; background: #f0f0f0; padding: 5px; margin-top: 4px; width: 100%; }
 
-	.execLabel { }
+        .execLabel { }
 
-	.execValue { text-align: left; font-weight: bold; }
+        .execValue { text-align: left; font-weight: bold; }
 
-	.footer {
-		font-size:        8pt; color: #555;
-		font-family:      Consolas, monospace;
-		background-color: #d0e0e0;
-		padding:          5px;
-		text-align:       right;
-		border-top:       2px solid #c0c0c0;
-		border-bottom:    2px solid #c0c0c0;
-		letter-spacing:   0.125em;
-	}
+        .footer {
+            font-size:        8pt; color: #555;
+            font-family:      Consolas, monospace;
+            background-color: #d0e0e0;
+            padding:          5px;
+            text-align:       right;
+            border-top:       2px solid #c0c0c0;
+            border-bottom:    2px solid #c0c0c0;
+            letter-spacing:   0.125em;
+        }
 
-	.errorSection {
-		font-size:        12pt;
-		font-family:      Tahoma, serif;
-		color:            #faa;
-		background-color: #800;
-		padding:          5px;
-		border-top:       2px solid #f00;
-		border-bottom:    2px solid #f00;
-		margin:           4px 0;
-	}
+        .errorSection {
+            font-size:        12pt;
+            font-family:      Tahoma, serif;
+            color:            #faa;
+            background-color: #800;
+            padding:          5px;
+            border-top:       2px solid #f00;
+            border-bottom:    2px solid #f00;
+            margin:           4px 0;
+        }
 
-	.errorPrompt { color: #ccc; font-size: 10pt; }
+        .errorPrompt { color: #ccc; font-size: 10pt; }
 
-	.errorStackTrace {
-		background:  #fdd;
-		padding:     5px;
-		margin:      8px;
-		line-height: 12pt;
-		font-family: Consolas, monospace;
-		font-size:   9pt;
-		color:       #800;
-	}
+        .errorStackTrace {
+            background:  #fdd;
+            padding:     5px;
+            margin:      8px;
+            line-height: 12pt;
+            font-family: Consolas, monospace;
+            font-size:   9pt;
+            color:       #800;
+        }
 
-	.reportFooter { background: #ddd }
+        .reportFooter { background: #ddd }
 
-	.reportHeader { background: #eee }
+        .reportHeader { background: #eee }
 
-	.hasFailure { background: #fdd; font-weight: bold; color: #800; }
+        .hasFailure { background: #fdd; font-weight: bold; color: #800; }
 
-	.allPass { background: #dfd; color: #080; }
+        .allPass { background: #dfd; color: #080; }
 
-	.resultTestData { font-family: Consolas, monospace; padding: 3px; margin: 0; color: #555; }
+        .resultTestData { font-family: Consolas, monospace; padding: 3px; margin: 0; color: #555; }
 
-	.resultTestDataKey { font-weight: normal; color: #999; }
+        .resultTestDataKey { font-weight: normal; color: #999; }
 
-	.reportStats { text-align: right; }
-</style>
+        .reportStats { text-align: right; }
+    </style>
 </head>
 <body>
 
 <div class="title">TEST RESULT - <span data-th-utext="${summary.name}">Test Suite</span></div>
 
 <table class="execMeta">
-<tbody>
-	<tr>
-		<td nowrap="nowrap" class="execLabel">Nexial:</td>
-		<th width="100%" class="execValue" data-th-utext="${summary.manifest}">Nexial v1.0</th>
-	</tr>
-	<tr>
-		<td nowrap="nowrap" class="execLabel">Executed From:</td>
-		<th class="execValue" data-th-utext="${summary.runHost}+' ('+${summary.runHostOs}+')'">Hostname (Windows 2003)</th>
-	</tr>
-	<tr>
-		<td nowrap="nowrap" class="execLabel">Executed By:</td>
-		<th class="execValue" data-th-utext="${summary.runUser}">User</th>
-	</tr>
-	<tr>
-		<td nowrap="nowrap" class="execLabel">time span:</td>
-		<th class="execValue"
-		    data-th-utext="${#dates.format(new java.util.Date(summary.startTime), 'yyyy/MM/dd HH:mm:ss')} + ' - ' + ${#dates.format(new java.util.Date(summary.endTime), 'yyyy/MM/dd HH:mm:ss')}">
-			10/30/2018 01:31:39 - 10/30/2018 01:33:09
-		</th>
-	</tr>
-	<tr>
-		<td nowrap="nowrap" class="execLabel">duration:</td>
-		<th class="execValue"
-		    data-th-utext="${#dates.format(#dates.create(0,0,0,0,0,0,summary.elapsedTime), 'HH:mm:ss.SSS')}">
-			00:01:29.693
-		</th>
-	</tr>
-	<tr>
-		<td nowrap="nowrap" class="execLabel">total steps:</td>
-		<th class="execValue" data-th-utext="${summary.totalSteps}">8</th>
-	</tr>
-	<tr>
-		<td nowrap="nowrap" class="execLabel">executed steps:</td>
-		<th class="execValue" data-th-utext="${summary.executed}">8</th>
-	</tr>
-	<tr>
-		<td nowrap="nowrap" class="execLabel">passed:</td>
-		<th class="execValue"
-		    data-th-utext="${summary.passCount} + ' (' + ${#numbers.formatDecimal(summary.passCount * 100 / summary.totalSteps, 1, 2)}+ '%)'">
-			100%
-		</th>
-	</tr>
-	<tr>
-		<td nowrap="nowrap" class="execLabel">failed:</td>
-		<th class="execValue" data-th-utext="${summary.failCount}">0</th>
-	</tr>
-</tbody>
+    <tbody>
+    <tr>
+        <td nowrap="nowrap" class="execLabel">Nexial Version:</td>
+        <th width="100%" class="execValue" data-th-utext="${summary.manifest}">Nexial v1.0</th>
+    </tr>
+    <tr>
+        <td nowrap="nowrap" class="execLabel">Executed From:</td>
+        <th class="execValue" data-th-utext="${summary.runHost}+' ('+${summary.runHostOs}+')'">Hostname (Windows 7)</th>
+    </tr>
+    <tr>
+        <td nowrap="nowrap" class="execLabel">Executed By:</td>
+        <th class="execValue" data-th-utext="${summary.runUser}">User</th>
+    </tr>
+    <tr>
+        <td nowrap="nowrap" class="execLabel">Time Span:</td>
+        <th class="execValue"
+            data-th-utext="${#dates.format(new java.util.Date(summary.startTime), 'yyyy/MM/dd HH:mm:ss')} + ' - ' + ${#dates.format(new java.util.Date(summary.endTime), 'yyyy/MM/dd HH:mm:ss')} + ' (' + ${#dates.format(#dates.create(0,0,0,0,0,0,summary.elapsedTime), 'HH:mm:ss.SSS')} + ')'">
+            10/30/2018 01:31:39 - 10/30/2018 01:33:09
+        </th>
+    </tr>
+    <tr>
+        <td nowrap="nowrap" class="execLabel">Total Steps:</td>
+        <th class="execValue" data-th-utext="${summary.totalSteps}">8</th>
+    </tr>
+    <tr>
+        <td nowrap="nowrap" class="execLabel">Executed Steps:</td>
+        <th class="execValue" data-th-utext="${summary.executed}">8</th>
+    </tr>
+    <tr>
+        <td nowrap="nowrap" class="execLabel">Passed:</td>
+        <th class="execValue"
+            data-th-utext="${summary.passCount} + ' (' + ${#numbers.formatDecimal(summary.passCount * 100 / summary.totalSteps, 1, 2)}+ '%)'">
+            100%
+        </th>
+    </tr>
+    <tr>
+        <td nowrap="nowrap" class="execLabel">Failed:</td>
+        <th class="execValue" data-th-utext="${summary.failCount}">0</th>
+    </tr>
+    </tbody>
 </table>
 
 <div data-th-if="${summary.error}">
-	<div class="errorSection">
-		<span class="errorPrompt">Test(s) did not complete due to fatal error:</span>
-		<b data-th-utext="${summary.error.message}">Exception</b>
-		<br/>
-		<pre class="errorStackTrace" data-th-utext="${summary.errorStackTrace}">stack trace goes here...</pre>
-		<span class="errorPrompt">Check log file for more details</span>
-	</div>
-	<br/>
+    <div class="errorSection">
+        <span class="errorPrompt">Test(s) did not complete due to fatal error:</span>
+        <b data-th-utext="${summary.error.message}">Exception</b>
+        <br/>
+        <pre class="errorStackTrace" data-th-utext="${summary.errorStackTrace}">stack trace goes here...</pre>
+        <span class="errorPrompt">Check log file for more details</span>
+    </div>
+    <br/>
 </div>
 
-
 <div data-th-if="${executionSummary}">
-	<div class="executionSummary">
-		<a data-th-href="${executionSummary}">Execution Summary</a>&nbsp;
-	</div>
-	<br/>
+    <div class="executionSummary">
+        <a data-th-href="${executionSummary}">Execution Summary</a>&nbsp;
+    </div>
+    <br/>
 </div>
 
 <div data-th-if="#{summary.nestedExecutions}">
 
-	<table cellpadding="5" cellspacing="2" class="result">
-	<thead>
-		<tr valign="top" class="reportHeader">
-			<th align="left">Test Result</th>
-			<th align="left">Reference</th>
-			<th>Start Date/Time</th>
-			<th>Time (ms)</th>
-			<th>Total</th>
-			<th>Pass</th>
-			<th>Fail</th>
-			<th>Success</th>
-		</tr>
-	</thead>
-	<tbody>
-	<div data-th-each="script : ${summary.nestedExecutions}">
-		<tr valign="top" data-th-each="iteration : ${script.nestedExecutions}">
-			<th align="left" valign="top" nowrap="nowrap">
-				<a data-th-href="${iteration.testScriptLink}"
-				   data-th-text="${#strings.substringBefore(script.name,' (')} + '/' + ${iteration.name}">Script
-					Name</a>&nbsp;
-			</th>
-			<th align="left" valign="top" nowrap="nowrap"
-			    data-th-with="ref = ${ {'JAVA_OPT', 'Data File', 'DataSheet(s)', 'runtime args'} }">
-				<div class="resultTestData" data-th-each="data : ${iteration.referenceData}"
-				     data-th-unless="${#lists.contains(ref,data.key)}">
-					<span class="resultTestDataKey" data-th-text="${data.key} + ':'">Name</span>
-					<span data-th-text="${data.value}">Value</span><br/>
-				</div>
-			</th>
-			<td valign="top"
-			    data-th-text="${#dates.format(new java.util.Date(iteration.startTime), 'yyyy/MM/dd HH:mm:ss')}">start
-				date/time
-			</td>
-			<td align="right" valign="top" class="reportStats"
-			    data-th-text="${#dates.format(#dates.create(0,0,0,0,0,0,iteration.elapsedTime), 'HH:mm:ss')}">
-				${elapsedTime}
-			</td>
-			<td align="right" valign="top" class="reportStats"
-			    data-th-text="${#numbers.formatInteger(iteration.executed, 1, 'DEFAULT')}">50
-			</td>
-			<td align="right" valign="top" class="reportStats"
-			    data-th-text="${#numbers.formatInteger(iteration.passCount, 1, 'DEFAULT')}">49
-			</td>
-			<td align="right" valign="top" class="reportStats"
-			    data-th-text="${#numbers.formatInteger(iteration.failCount, 1, 'DEFAULT')}">49
-			</td>
-			<td align="right" valign="top" class="reportStats"
-			    data-th-text="${#numbers.formatDecimal(iteration.successRate * 100, 1, 2, 'DEFAULT')}+ '%'"
-			    data-th-class="${iteration.successRate >= 1 ? 'allPass' : 'hasFailure'}">100%
-			</td>
-		</tr>
-	</div>
-	</tbody>
-	<tfoot>
-		<tr class="reportFooter">
-			<td align="left" colspan="3"><b>Totals</b></td>
-			<td class="reportStats" data-th-text="${#dates.format(#dates.create(0,0,0,0,0,0,summary.elapsedTime), 'HH:mm:ss')}">00:00:00</td>
-			<td class="reportStats" data-th-text="${#numbers.formatInteger(summary.executed, 1, 'DEFAULT')}">0</td>
-			<td class="reportStats" data-th-text="${#numbers.formatInteger(summary.passCount, 1, 'DEFAULT')}">0</td>
-			<td class="reportStats" data-th-text="${#numbers.formatInteger(summary.failCount, 1, 'DEFAULT')}">0</td>
-			<td class="reportStats" data-th-text="${#numbers.formatDecimal(summary.successRate * 100, 1, 2, 'DEFAULT')} + '%'" data-th-class="${summary.successRate >= 1 ? 'allPass' : 'hasFailure'}">100%</td>
-		</tr>
-	</tfoot>
-	</table>
+    <table cellpadding="5" cellspacing="2" class="result">
+        <thead>
+        <tr valign="top" class="reportHeader">
+            <th align="left">Test Result</th>
+            <th align="left">Reference</th>
+            <th>Start Date/Time</th>
+            <th>Time (ms)</th>
+            <th>Total</th>
+            <th>Pass</th>
+            <th>Fail</th>
+            <th>Success</th>
+        </tr>
+        </thead>
+        <tbody>
+        <div data-th-each="script : ${summary.nestedExecutions}">
+            <tr valign="top" data-th-each="iteration : ${script.nestedExecutions}">
+                <th align="left" valign="top" nowrap="nowrap">
+                    <a data-th-href="${iteration.testScriptLink}"
+                       data-th-text="${#strings.substringBefore(script.name,' (')} + '/' + ${iteration.name}">Script
+                        Name</a>&nbsp;
+                </th>
+                <th align="left" valign="top" nowrap="nowrap"
+                    data-th-with="ref = ${ {'JAVA_OPT', 'Data File', 'DataSheet(s)', 'runtime args'} }">
+                    <div class="resultTestData" data-th-each="data : ${iteration.referenceData}"
+                         data-th-unless="${#lists.contains(ref,data.key)}">
+                        <span class="resultTestDataKey" data-th-text="${data.key} + ':'">Name</span>
+                        <span data-th-text="${data.value}">Value</span><br/>
+                    </div>
+                </th>
+                <td valign="top"
+                    data-th-text="${#dates.format(new java.util.Date(iteration.startTime), 'yyyy/MM/dd HH:mm:ss')}">
+                    start date/time
+                </td>
+                <td align="right" valign="top" class="reportStats"
+                    data-th-text="${#dates.format(#dates.create(0,0,0,0,0,0,iteration.elapsedTime), 'HH:mm:ss')}">
+                    ${elapsedTime}
+                </td>
+                <td align="right" valign="top" class="reportStats"
+                    data-th-text="${#numbers.formatInteger(iteration.executed, 1, 'DEFAULT')}">50
+                </td>
+                <td align="right" valign="top" class="reportStats"
+                    data-th-text="${#numbers.formatInteger(iteration.passCount, 1, 'DEFAULT')}">49
+                </td>
+                <td align="right" valign="top" class="reportStats"
+                    data-th-text="${#numbers.formatInteger(iteration.failCount, 1, 'DEFAULT')}">49
+                </td>
+                <td align="right" valign="top" class="reportStats"
+                    data-th-text="${#numbers.formatDecimal(iteration.successRate * 100, 1, 2, 'DEFAULT')}+ '%'"
+                    data-th-class="${iteration.successRate >= 1 ? 'allPass' : 'hasFailure'}">100%
+                </td>
+            </tr>
+        </div>
+        </tbody>
+        <tfoot>
+        <tr class="reportFooter">
+            <td align="left" colspan="3"><b>Totals</b></td>
+            <td class="reportStats"
+                data-th-text="${#dates.format(#dates.create(0,0,0,0,0,0,summary.elapsedTime), 'HH:mm:ss')}">00:00:00
+            </td>
+            <td class="reportStats" data-th-text="${#numbers.formatInteger(summary.executed, 1, 'DEFAULT')}">0</td>
+            <td class="reportStats" data-th-text="${#numbers.formatInteger(summary.passCount, 1, 'DEFAULT')}">0</td>
+            <td class="reportStats" data-th-text="${#numbers.formatInteger(summary.failCount, 1, 'DEFAULT')}">0</td>
+            <td class="reportStats"
+                data-th-text="${#numbers.formatDecimal(summary.successRate * 100, 1, 2, 'DEFAULT')} + '%'"
+                data-th-class="${summary.successRate >= 1 ? 'allPass' : 'hasFailure'}">100%
+            </td>
+        </tr>
+        </tfoot>
+    </table>
 </div>
 
 <br/>

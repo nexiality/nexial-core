@@ -18,10 +18,10 @@ package org.nexial.core.mail;
 
 import java.io.File;
 import java.io.IOException;
-import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 import javax.activation.DataHandler;
 import javax.activation.DataSource;
 import javax.activation.FileDataSource;
@@ -54,14 +54,12 @@ import org.thymeleaf.context.Context;
 
 import com.sun.mail.smtp.SMTPTransport;
 
-import static java.io.File.separator;
 import static javax.mail.Message.RecipientType.*;
 import static org.nexial.core.NexialConst.Data.*;
 import static org.nexial.core.NexialConst.ExitStatus.EXEC_OUTPUT_PATH;
 import static org.nexial.core.NexialConst.Mailer.MAIL_KEY_CONTENT_TYPE;
 import static org.nexial.core.NexialConst.Mailer.MAIL_KEY_FROM;
-import static org.nexial.core.NexialConst.Project.NEXIAL_EXECUTION_TYPE;
-import static org.nexial.core.NexialConst.Project.NEXIAL_EXECUTION_TYPE_PLAN;
+import static org.nexial.core.NexialConst.Project.*;
 import static org.nexial.core.SystemVariables.getDefault;
 import static org.nexial.core.utils.ExecUtils.NEXIAL_MANIFEST;
 
@@ -116,17 +114,15 @@ public class NexialMailer implements ExecutionNotifier {
         }
 
         // unique set of test names
-        StringBuilder subject = getSubject(summary);
+        String subject = deriveSubject(summary);
 
         Context engineContext = new Context();
         engineContext.setVariable("summary", summary);
         engineContext.setVariable("executionSummary", System.getProperty(EXEC_OUTPUT_PATH));
 
-        MailData mailData =
-            new MailData().setToAddr(resolveRecipients())
-                          .setSubject(MAIL_RESULT_SUBJECT_PREFIX +
-                                      StringUtils.abbreviate(StringUtils.removeEnd(subject.toString(), ", "), 100))
-                          .setContent(mailTemplateEngine.process(mailTemplate, engineContext));
+        MailData mailData = new MailData().setToAddr(resolveRecipients())
+                                          .setSubject(MAIL_RESULT_SUBJECT_PREFIX + StringUtils.abbreviate(subject, 100))
+                                          .setContent(mailTemplateEngine.process(mailTemplate, engineContext));
 
         try {
             sendMail(mailData);
@@ -134,35 +130,6 @@ public class NexialMailer implements ExecutionNotifier {
         } catch (MessagingException e) {
             throw new IOException(e.getMessage(), e);
         }
-    }
-
-    private StringBuilder getSubject(ExecutionSummary summary) {
-        StringBuilder subject = new StringBuilder("Execution Result for ");
-        List<ExecutionSummary> scriptSummary = summary.getNestedExecutions();
-
-        if (StringUtils.equals(System.getProperty(NEXIAL_EXECUTION_TYPE), NEXIAL_EXECUTION_TYPE_PLAN)) {
-            List<String> plans = new ArrayList<>();
-
-            scriptSummary.forEach(script -> {
-                if (script.getPlanFile() == null) { return; }
-                plans.add(StringUtils.removeEnd(StringUtils.substringAfterLast(
-                    script.getPlanFile(), separator), ".xlsx"));
-            });
-            plans.forEach(plan -> subject.append(plan).append(", "));
-
-        } else {
-            List<String> scenarios = new ArrayList<>();
-            ExecutionSummary script = scriptSummary.get(0);
-            script.getNestedExecutions().get(0).getNestedExecutions()
-                  .forEach(scenario -> scenarios.add(scenario.getName()));
-
-            String scenario = StringUtils.removeStart(StringUtils.removeEnd(scenarios.toString(), "]"), "[") + ")";
-
-            subject.append(StringUtils.substringBeforeLast(script.getName(), " (")).append(" (");
-            subject.append(scenario);
-        }
-
-        return subject;
     }
 
     public void sendCidContent(List<String> recipients, String subject, String content, Map<String, File> images)
@@ -173,6 +140,10 @@ public class NexialMailer implements ExecutionNotifier {
         }
 
         Session session = mailSupport.getSession();
+
+        /**
+         * can't use try with resources for {@link SMTPTransport} as it doesn't implement {@link AutoCloseable} interface
+         */
         SMTPTransport transport = mailSupport.createTransport(session);
 
         Message msg = prepMessage(session, subject);
@@ -219,6 +190,10 @@ public class NexialMailer implements ExecutionNotifier {
     protected void smtpSendEmail(MailData data) throws MessagingException {
 
         Session session = mailSupport.getSession();
+
+        /**
+         * can't use try with resources for {@link SMTPTransport} as it doesn't implement {@link AutoCloseable} interface
+         */
         SMTPTransport transport = mailSupport.createTransport(session);
 
         Message msg = prepMessage(session, data.getSubject());
@@ -333,6 +308,26 @@ public class NexialMailer implements ExecutionNotifier {
         }
     }
 
+    private String deriveSubject(ExecutionSummary summary) {
+        // StringBuilder subject = new StringBuilder("Execution Result for ");
+        List<ExecutionSummary> scriptSummary = summary.getNestedExecutions();
+
+        if (StringUtils.equals(System.getProperty(NEXIAL_EXECUTION_TYPE), NEXIAL_EXECUTION_TYPE_PLAN)) {
+            List<String> plans = scriptSummary.stream()
+                                              .filter(s -> StringUtils.isNotBlank(s.getPlanName()))
+                                              .map(s -> StringUtils.substringBefore(s.getPlanName(), SCRIPT_FILE_EXT))
+                                              .collect(Collectors.toList());
+            return "Execution Result for " + TextUtils.toString(plans, ", ", "", "");
+        }
+
+        ExecutionSummary script = scriptSummary.get(0);
+        List<String> scenarios = script.getNestedExecutions().get(0).getNestedExecutions().stream()
+                                       .map(ExecutionSummary::getName).collect(Collectors.toList());
+
+        return "Execution Result for " + StringUtils.substringBeforeLast(script.getName(), " (") +
+               " (" + TextUtils.toString(scenarios, ", ", "", "") + ")";
+    }
+
     private boolean validateMailData(MailData data) {
         if (CollectionUtils.isEmpty(data.getToAddr())) {
             ConsoleUtils.log("No email to send since no recipient address provided.");
@@ -401,122 +396,4 @@ public class NexialMailer implements ExecutionNotifier {
             }
         }
     }
-
-    // protected void smtpSendEmail(List<String> recipients, String subject, String content, boolean plaintext)
-    //     throws MessagingException {
-    //
-    //     Session session = mailSupport.getSession();
-    //     SMTPTransport transport = mailSupport.createTransport(session);
-    //
-    //     Message msg = prepMessage(session, subject);
-    //
-    //     try {
-    //         // add to, cc, bcc, from
-    //         for (String recipient : recipients) { msg.addRecipient(TO, new InternetAddress(recipient)); }
-    //
-    //         // content
-    //         MimeBodyPart part = new MimeBodyPart();
-    //         part.setContent(content, plaintext ? "text/plain" : "text/html");
-    //
-    //         Multipart mp = new MimeMultipart();
-    //         mp.addBodyPart(part);
-    //
-    //         // final steps
-    //         msg.setContent(mp);
-    //         msg.setSentDate(new Date());
-    //         msg.saveChanges();
-    //
-    //         // send it!
-    //         transport.sendMessage(msg, msg.getAllRecipients());
-    //     } finally {
-    //         transport.close();
-    //     }
-    // }
-
-    // public void sendResult(List<String> recipients, String content, String testCase) throws MessagingException {
-    //     if (!readyToSend()) {
-    //         ConsoleUtils.log("nexial mailer not properly configured to send execution result");
-    //         return;
-    //     }
-    //
-    //     String subject = MAIL_RESULT_SUBJECT_PREFIX + "Test Result for '" + testCase + "'";
-    //
-    //     if (mailSupport.hasSmtpConfigs() || mailSupport.hasJndiConfigs()) {
-    //         this.smtpSendEmail(recipients, subject, content, null);
-    //         return;
-    //     }
-    //
-    //     if (mailSupport.hasSesSettings()) { sesSendResult(recipients, subject, content); }
-    // }
-
-    // public void sendResult(List<String> recipients, String content, List<File> attachments) throws MessagingException {
-    //     if (!readyToSend()) {
-    //         ConsoleUtils.log("nexial mailer not properly configured to send execution result");
-    //         return;
-    //     }
-    //
-    //     String subject = MAIL_RESULT_SUBJECT_PREFIX + "Test Result for '" + deriveTestName(attachments) + "'";
-    //
-    //     if (mailSupport.hasSmtpConfigs() || mailSupport.hasJndiConfigs()) {
-    //         this.smtpSendEmail(recipients, subject, content, attachments);
-    //         return;
-    //     }
-    //
-    //     if (mailSupport.hasSesSettings()) {
-    //         if (CollectionUtils.isNotEmpty(attachments)) {
-    //             ConsoleUtils.error("AWS SES mailer currently does not support file attachments");
-    //         }
-    //         sesSendResult(recipients, subject, content);
-    //     }
-    // }
-    // protected void sesSendResult(List<String> recipients, String subject, String content) {
-    //     sesSendEmail(recipients, subject, content, false);
-    // }
-
-    // protected void sesSendPlainText(List<String> recipients, String subject, String content) {
-    //     sesSendEmail(recipients, subject, content, true);
-    // }
-
-    // protected void sesSendEmail(List<String> recipients, String subject, String content, boolean plaintext) {
-    //     AwsSesSettings sesSettings = mailSupport.getSesSettings();
-    //
-    //     SesConfig sesConfig = SesSupport.Companion.newConfig();
-    //     sesConfig.setSubject(subject);
-    //
-    //     if (plaintext) {
-    //         sesConfig.setPlainText(content);
-    //     } else {
-    //         sesConfig.setHtml(content);
-    //     }
-    //
-    //     sesConfig.setTo(recipients);
-    //     sesConfig.setFrom(sesSettings.getFrom());
-    //
-    //     String replyTo = sesSettings.getReplyTo();
-    //     if (StringUtils.isNotBlank(replyTo)) { sesConfig.setReplyTo(TextUtils.toList(replyTo, ",", true)); }
-    //
-    //     String cc = sesSettings.getCc();
-    //     if (StringUtils.isNotBlank(cc)) { sesConfig.setCc(TextUtils.toList(cc, ",", true)); }
-    //
-    //     String bcc = sesSettings.getBcc();
-    //     if (StringUtils.isNotBlank(bcc)) { sesConfig.setBcc(TextUtils.toList(bcc, ",", true)); }
-    //
-    //     String configSet = sesSettings.getConfigurationSetName();
-    //     if (StringUtils.isNotBlank(configSet)) { sesConfig.setConfigurationSetName(configSet); }
-    //
-    //     String xmailer = sesSettings.getXmailer();
-    //     if (StringUtils.isNotBlank(xmailer)) { sesConfig.setXmailer(xmailer); }
-    //
-    //     SesSupport ses = new SesSupport();
-    //     ses.setAccessKey(sesSettings.getAccessKey());
-    //     ses.setSecretKey(sesSettings.getSecretKey());
-    //     ses.setRegion(sesSettings.getRegion());
-    //     ses.setAssumeRoleArn(sesSettings.getAssumeRoleArn());
-    //     ses.setAssumeRoleSession(sesSettings.getAssumeRoleSession());
-    //     ses.setAssumeRoleDuration(sesSettings.getAssumeRoleDuration());
-    //
-    //     ses.sendMail(sesConfig);
-    //     try { Thread.sleep(2000);} catch (InterruptedException e) { }
-    // }
-
 }
