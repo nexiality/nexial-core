@@ -1604,7 +1604,10 @@ public class WebCommand extends BaseCommand implements CanTakeScreenshot, CanLog
 
         if (browser.isRunElectron() ||
             context.getBooleanData(OPT_CLEAR_WITH_BACKSPACE, getDefaultBool(OPT_CLEAR_WITH_BACKSPACE))) {
-            if (StringUtils.isNotEmpty(before)) { before.chars().forEach(value -> element.sendKeys(BACK_SPACE)); }
+            if (StringUtils.isNotEmpty(before)) {
+                element.sendKeys(Keys.END);
+                before.chars().forEach(value -> element.sendKeys(BACK_SPACE));
+            }
         } else {
             // try thrice to cover all bases
             element.clear();

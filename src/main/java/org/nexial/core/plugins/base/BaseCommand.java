@@ -208,7 +208,7 @@ public class BaseCommand implements NexialCommand {
 
     public StepResult save(String var, String value) {
         requiresValidVariableName(var);
-        context.setData(var, value);
+        context.setData(var, value, StringUtils.isNotBlank(System.getProperty(var)));
         return StepResult.success("stored '" + CellTextReader.readValue(value) + "' as ${" + var + "}");
     }
 

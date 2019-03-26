@@ -663,6 +663,28 @@ public class ExecutionContext {
         setData(name, value, referenceDataForExecution.contains(name));
     }
 
+    public void setData(String name, String value, boolean updateSysProps) {
+        if (data.containsKey(name)) { CellTextReader.unsetValue(value); }
+        if (isNullValue(value)) {
+            // will remove from both `data` and sysprop
+            removeData(name);
+        } else {
+            value = mergeProperty(value);
+            data.put(name, value);
+
+            // logic updated; see below
+            if (updateSysProps) { System.setProperty(name, value); }
+
+            // we'll update the system property for the same data variable IFF
+            // 1. `updateSysProps` is true  - OR -
+            // 2. the data variable is found as a sysprop AND
+            // 3. the same data variable is not considered as READ-ONLY
+            // if (updateSysProps || (StringUtils.isNotEmpty(System.getProperty(name)) && !isReadOnlyData(name))) {
+            //     System.setProperty(name, value);
+            // }
+        }
+    }
+
     public void setData(String name, int value) { setDataOrSysProp(name, value); }
 
     public void setData(String name, Map<String, String> value) { setDataOrSysProp(name, value); }
@@ -1147,19 +1169,6 @@ public class ExecutionContext {
     public static String escapeToken(String text) {
         return StringUtils.replace(StringUtils.replace(text, TOKEN_START, ESCAPED_TOKEN_START),
                                    TOKEN_END, ESCAPED_TOKEN_END);
-    }
-
-    protected void setData(String name, String value, boolean updateSysProps) {
-        if (data.containsKey(name)) { CellTextReader.unsetValue(value); }
-        if (isNullValue(value)) {
-            // will remove from both `data` and sysprop
-            removeData(name);
-        } else {
-            value = mergeProperty(value);
-            data.put(name, value);
-            boolean isReadOnlySysProp = StringUtils.isNotEmpty(System.getProperty(name)) && isReadOnlyData(name);
-            if (updateSysProps || !isReadOnlySysProp) { System.setProperty(name, value); }
-        }
     }
 
     /**

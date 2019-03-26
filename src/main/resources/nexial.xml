@@ -627,7 +627,7 @@
   </util:map>
 
   <!--
-  some reference data are considered "special" and should be elevated to "execution" level so that they can be
+  some reference data are considered "special" and should be elevated to "execution" level so that they can be used
   as such for Execution Dashboard. Those data variables are listed below.
   -->
   <util:list id="nexial.referenceDataForExecution" list-class="java.util.ArrayList">
@@ -635,6 +635,14 @@
     <value>nexial-mailer.aws.from</value>
     <value>nexial-mailer.aws.region</value>
     <value>nexial-mailer.aws.secretKey</value>
+    <value>nexial.mail.smtp.auth</value>
+    <value>nexial.mail.smtp.from</value>
+    <value>nexial.mail.smtp.host</value>
+    <value>nexial.mail.smtp.localhost</value>
+    <value>nexial.mail.smtp.password</value>
+    <value>nexial.mail.smtp.port</value>
+    <value>nexial.mail.smtp.starttls.enable</value>
+    <value>nexial.mail.smtp.username</value>
     <value>nexial.otc.accessKey</value>
     <value>nexial.otc.region</value>
     <value>nexial.otc.s3PathStyleAccessEnabled</value>
