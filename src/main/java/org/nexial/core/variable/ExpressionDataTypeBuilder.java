@@ -138,6 +138,11 @@ final class ExpressionDataTypeBuilder {
         return data != null ? data : new SqlDataType(handleExternal("SQL", value));
     }
 
+    WebDataType newWebDataType(String value) throws TypeConversionException {
+        WebDataType data = resumeExpression(value, WebDataType.class);
+        return data != null ? data : new WebDataType(handleExternal("WEB", value));
+    }
+
     private static String resolveValidTypeRegex(Map<String, Method> newInstanceMethods) {
         if (MapUtils.isEmpty(newInstanceMethods)) { return ".+"; }
 
