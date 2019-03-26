@@ -114,8 +114,7 @@ public class ScreenshotUtils {
         try {
             FileUtils.writeByteArrayToFile(f, Base64.decodeBase64(screen.getBytes()));
             ExecutionContext context = ExecutionThread.get();
-            if (context != null) { context.setData(OPT_LAST_SCREENSHOT_NAME, f.getName(), true); }
-            //log("screen captured to '" + filename + "'");
+            if (context != null) { context.setData(OPT_LAST_SCREENSHOT_NAME, f.getName()); }
             return f;
         } catch (Exception e) {
             ConsoleUtils.error("failed to save screen capture to '" + filename + "': " + e.getMessage());

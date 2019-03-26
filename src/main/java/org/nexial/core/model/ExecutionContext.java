@@ -659,18 +659,8 @@ public class ExecutionContext {
 
     public void setData(String name, String value) {
         // some reference data are considered "special" and should be elevated to "execution" level so that they can be
-        // as such for Execution Dashboard
+        // used as such for Execution Dashboard
         setData(name, value, referenceDataForExecution.contains(name));
-    }
-
-    public void setData(String name, String value, boolean updateSysProps) {
-        if (data.containsKey(name)) { CellTextReader.unsetValue(value); }
-        if (isNullValue(value)) {
-            removeData(name);
-        } else {
-            data.put(name, mergeProperty(value));
-            if (updateSysProps) { System.setProperty(name, value); }
-        }
     }
 
     public void setData(String name, int value) { setDataOrSysProp(name, value); }
@@ -1157,6 +1147,19 @@ public class ExecutionContext {
     public static String escapeToken(String text) {
         return StringUtils.replace(StringUtils.replace(text, TOKEN_START, ESCAPED_TOKEN_START),
                                    TOKEN_END, ESCAPED_TOKEN_END);
+    }
+
+    protected void setData(String name, String value, boolean updateSysProps) {
+        if (data.containsKey(name)) { CellTextReader.unsetValue(value); }
+        if (isNullValue(value)) {
+            // will remove from both `data` and sysprop
+            removeData(name);
+        } else {
+            value = mergeProperty(value);
+            data.put(name, value);
+            boolean isReadOnlySysProp = StringUtils.isNotEmpty(System.getProperty(name)) && isReadOnlyData(name);
+            if (updateSysProps || !isReadOnlySysProp) { System.setProperty(name, value); }
+        }
     }
 
     /**
