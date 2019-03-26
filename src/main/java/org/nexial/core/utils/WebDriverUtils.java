@@ -120,10 +120,8 @@ public final class WebDriverUtils {
             if (StringUtils.isBlank(nextKeyStroke)) { break; }
 
             String keystrokeId = CTRL_KEY_START + nextKeyStroke + CTRL_KEY_END;
-            if (keystrokeId == null) { throw new RuntimeException("Unsupported/unknown key " + keystrokeId); }
-
             Keys controlKey = CONTROL_KEY_MAPPING.get(keystrokeId);
-            if (controlKey == null) { throw new RuntimeException("Unsuppported/unknown key " + keystrokeId); }
+            if (controlKey == null) { throw new RuntimeException("Unsupported/unknown key " + keystrokeId); }
 
             controlKeys.push(controlKey);
             actions.keyDown(controlKey);

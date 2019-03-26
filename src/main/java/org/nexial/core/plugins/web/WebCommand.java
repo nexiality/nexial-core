@@ -1285,13 +1285,13 @@ public class WebCommand extends BaseCommand implements CanTakeScreenshot, CanLog
             //     }
             //
             // } else {
-                Actions actions = WebDriverUtils.toSendKeyAction(driver, element, value);
-                if (actions != null) {
-                    if (context.getBooleanData(WEB_UNFOCUS_AFTER_TYPE, getDefaultBool(WEB_UNFOCUS_AFTER_TYPE))) {
-                        actions.sendKeys(TAB);
-                    }
-                    actions.build().perform();
+            Actions actions = WebDriverUtils.toSendKeyAction(driver, element, value);
+            if (actions != null) {
+                if (context.getBooleanData(WEB_UNFOCUS_AFTER_TYPE, getDefaultBool(WEB_UNFOCUS_AFTER_TYPE))) {
+                    actions.sendKeys(TAB);
                 }
+                actions.build().perform();
+            }
             // }
         } else {
             // no locator
@@ -1602,14 +1602,14 @@ public class WebCommand extends BaseCommand implements CanTakeScreenshot, CanLog
         // prior to clearing
         String before = element.getAttribute("value");
 
-        if (browser.isRunElectron()) {
-            if (StringUtils.isNotEmpty(before)) {
-                before.chars().forEach(value -> element.sendKeys(BACK_SPACE));
-            }
+        if (browser.isRunElectron() ||
+            context.getBooleanData(OPT_CLEAR_WITH_BACKSPACE, getDefaultBool(OPT_CLEAR_WITH_BACKSPACE))) {
+            if (StringUtils.isNotEmpty(before)) { before.chars().forEach(value -> element.sendKeys(BACK_SPACE)); }
         } else {
+            // try thrice to cover all bases
             element.clear();
             jsExecutor.executeScript("arguments[0].setAttribute(arguments[1],arguments[2]);", element, "value", "");
-            element.sendKeys("");
+            jsExecutor.executeScript("arguments[0].value = '';", element);
         }
 
         // after clearing

@@ -28,7 +28,7 @@ object InspectorConst {
     val UTF8: Charset = Charset.forName("UTF-8")
     val LOG_DATE_FORMAT: DateFormat = SimpleDateFormat("yyyy-MM-dd HH:mm:ss.S")
 
-    const val PROJECT_ID = ".meta/project.id"
+//    const val PROJECT_ID = ".meta/project.id"
     const val LOCAL_HTML_RESOURCE = "/org/nexial/core/reports/project-inspector-local.html"
     const val MACRO_DESCRIPTION = "macro.description()"
     const val MACRO_EXPECTS = "macro.expects(var,default)"

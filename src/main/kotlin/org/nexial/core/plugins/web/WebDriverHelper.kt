@@ -526,7 +526,7 @@ class ElectronDriverHelper(context: ExecutionContext) : WebDriverHelper(context)
 /** webdriver helper for Chrome browser */
 class ChromeDriverHelper(context: ExecutionContext) : WebDriverHelper(context) {
 
-    private val minDriverVersion = "2.35"
+    private val minDriverVersion = "2.46"
 
     override fun resolveLocalDriverPath(): String {
         return StringUtils.appendIfMissing(File(context.replaceTokens(config.home)).absolutePath, separator) +
@@ -543,7 +543,7 @@ class ChromeDriverHelper(context: ExecutionContext) : WebDriverHelper(context) {
         }
         manifest.init()
 
-        val hasDriver = FileUtil.isFileReadable(driverLocation, WebDriverHelper.DRIVER_MIN_SIZE)
+        val hasDriver = FileUtil.isFileReadable(driverLocation, DRIVER_MIN_SIZE)
 
         if (!hasDriver) {
             var driverVersion = minDriverVersion
