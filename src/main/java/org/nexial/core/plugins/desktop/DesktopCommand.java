@@ -404,7 +404,7 @@ public class DesktopCommand extends BaseCommand
         String dialogText = session.clearModalDialog(button);
         if (StringUtils.isNotEmpty(dialogText)) {
             ConsoleUtils.log("saving to var '" + var + "' the text '" + dialogText + "'");
-            context.setData(var, dialogText);
+            updateDataVariable(var, dialogText);
             resultMsg = "Modal dialog text harvested and saved to '" + var + "'.";
         } else {
             ConsoleUtils.error("Unable to save var '" + var + "' since no modal dialog text is found");
@@ -422,7 +422,7 @@ public class DesktopCommand extends BaseCommand
 
         String dialogText = session.collectModalDialogText();
         if (StringUtils.isNotEmpty(dialogText)) {
-            context.setData(var, dialogText);
+            updateDataVariable(var, dialogText);
             return StepResult.success("Modal dialog text saved to '" + var + "'");
         }
 
@@ -551,7 +551,7 @@ public class DesktopCommand extends BaseCommand
 
         String text = getText(name);
         if (StringUtils.isNotEmpty(text)) {
-            context.setData(var, text);
+            updateDataVariable(var, text);
             return StepResult.success("Element '" + name + "' with text '" + text + "' saved to '" + var + "'");
         }
 
@@ -563,7 +563,7 @@ public class DesktopCommand extends BaseCommand
         DesktopElement currentAppWindow = resolveCurrentTopMostWindow();
         String title = getCurrentTopMostWindowTitle(currentAppWindow);
         if (StringUtils.isNotEmpty(title)) {
-            context.setData(var, title);
+            updateDataVariable(var, title);
             return StepResult.success("window title saved to '" + var + "': " + title);
         } else {
             return StepResult.success("No window title found");
@@ -588,7 +588,7 @@ public class DesktopCommand extends BaseCommand
 
         String value = getAttribute(locator, attribute);
         if (value != null) {
-            context.setData(var, value);
+            updateDataVariable(var, value);
             return StepResult.success("Attribute " + attribute + "=" + value + "; saved to data " + var);
         }
 
@@ -655,7 +655,7 @@ public class DesktopCommand extends BaseCommand
     }
 
     public StepResult assertAttribute(String locator, String attribute, String expected) {
-        requires(StringUtils.isNotEmpty(expected), "Expected value must be specifid.", expected);
+        requires(StringUtils.isNotEmpty(expected), "Expected value must be specified.", expected);
 
         String value = getAttribute(locator, attribute);
         if (value != null) { return assertEqual(expected, value); }
@@ -1216,7 +1216,7 @@ public class DesktopCommand extends BaseCommand
             context.removeData(var);
             return StepResult.success("No data found in column '" + column + "'.  Variable '" + var + "' removed.");
         } else {
-            context.setData(var, cellData);
+            updateDataVariable(var, cellData);
             return StepResult.success("Cell data for '" + column + "' saved to variable '" + var + "'");
         }
     }

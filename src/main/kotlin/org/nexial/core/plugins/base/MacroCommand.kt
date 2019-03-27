@@ -33,7 +33,7 @@ class MacroCommand : BaseCommand() {
         context.hasData(`var`)       -> StepResult.success()
 
         else                         -> {
-            context.setData(`var`, default)
+            updateDataVariable(`var`, default)
             StepResult.success("Data variable '$`var`' set to default value '$default'")
         }
     }

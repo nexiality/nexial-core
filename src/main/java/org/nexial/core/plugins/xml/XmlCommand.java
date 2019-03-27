@@ -187,7 +187,7 @@ public class XmlCommand extends BaseCommand {
                 return StepResult.fail("XML does not contain structure as defined by '" + xpath + "'");
             }
 
-            context.setData(var, value);
+            updateDataVariable(var, value);
             return StepResult.success("XML matches saved to '" + var + "'");
         } catch (Exception e) {
             return StepResult.fail("Error while filtering XML via xpath '" + xpath + "': " + e.getMessage());
@@ -203,7 +203,7 @@ public class XmlCommand extends BaseCommand {
                 return StepResult.fail("XML does not contain structure as defined by '" + xpath + "'");
             }
 
-            context.setData(var, values);
+            updateDataVariable(var, values);
             return StepResult.success("XML matches saved to '" + var + "'");
         } catch (Exception e) {
             return StepResult.fail("Error while filtering XML via xpath '" + xpath + "': " + e.getMessage());
@@ -396,7 +396,7 @@ public class XmlCommand extends BaseCommand {
         }
 
         int edits = modification.modify(matches, content);
-        context.setData(var, XmlUtils.toPrettyXml(doc.getRootElement()));
+        updateDataVariable(var, XmlUtils.toPrettyXml(doc.getRootElement()));
 
         return StepResult.success(edits + " edit(s) made to XML and save to '" + var + "'");
     }
@@ -530,7 +530,7 @@ public class XmlCommand extends BaseCommand {
         String outputXml = outputter.outputString(doc);
         if (StringUtils.isBlank(outputXml)) { return StepResult.fail(action + " failed with blank XML content"); }
 
-        context.setData(var, outputXml.trim());
+        updateDataVariable(var, outputXml.trim());
         return StepResult.success(action + " completed and saved to '" + var + "'");
     }
 }

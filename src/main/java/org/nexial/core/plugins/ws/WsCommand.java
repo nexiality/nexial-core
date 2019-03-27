@@ -205,7 +205,7 @@ public class WsCommand extends BaseCommand {
         requires(StringUtils.isNotBlank(payload), "Invalid payload", payload);
 
         String token = Jwts.builder().signWith(HS256, key).setPayload(payload).compact();
-        context.setData(var, token);
+        updateDataVariable(var, token);
         return StepResult.success();
     }
 
@@ -222,7 +222,7 @@ public class WsCommand extends BaseCommand {
             ConsoleUtils.log("parsed JWT header: " + header);
 
             String payload = BASE64URL.decodeToString(StringUtils.substringBetween(token, ".", "."));
-            context.setData(var, payload);
+            updateDataVariable(var, payload);
             return StepResult.success();
         }
 
@@ -232,7 +232,7 @@ public class WsCommand extends BaseCommand {
                 return StepResult.fail("Unable to parse JWT token, invalid payload returned");
             } else {
                 Claims body = parsed.getBody();
-                context.setData(var, GSON_COMPRESSED.toJsonTree(body).toString());
+                updateDataVariable(var, GSON_COMPRESSED.toJsonTree(body).toString());
                 return StepResult.success();
             }
         } catch (ExpiredJwtException e) {
@@ -240,7 +240,7 @@ public class WsCommand extends BaseCommand {
             if (badClaims == null) { return StepResult.fail("Unable to parse JWT token: " + e.getMessage()); }
 
             ConsoleUtils.error("JWT parsing exception: " + e.getMessage());
-            context.setData(var, badClaims.toString());
+            updateDataVariable(var, badClaims.toString());
             return StepResult.success("JWT parsing failed (" + e.getMessage() + ") and ignored.");
         } catch (SignatureException | UnsupportedJwtException | MalformedJwtException | IllegalArgumentException e) {
             return StepResult.fail("Unable to parse JWT token: " + e.getMessage());

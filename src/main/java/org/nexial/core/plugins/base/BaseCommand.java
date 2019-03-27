@@ -201,15 +201,38 @@ public class BaseCommand implements NexialCommand {
         }
 
         String newVal = strategy.increment(current, amountInt);
-        context.setData(var, newVal);
+        updateDataVariable(var, newVal);
 
         return StepResult.success("incremented ${" + var + "} by " + amountInt + " to " + newVal);
     }
 
     public StepResult save(String var, String value) {
         requiresValidVariableName(var);
-        context.setData(var, value, StringUtils.isNotBlank(System.getProperty(var)));
+        updateDataVariable(var, value);
         return StepResult.success("stored '" + CellTextReader.readValue(value) + "' as ${" + var + "}");
+    }
+
+    /**
+     * this method - TO BE USED INTERNALLY ONLY - is created to compensate the data state discrepancy when such is
+     * initially set via `-override` flag or via `-D...` environment variable. When a data variable is defined prior to
+     * Neial execution, for example,
+     * <pre>
+     * ./nexial.sh -script ... ... -override myData=myValue
+     * </pre>
+     *
+     * Such data variable is also added to the System properties. As such, Nexial will not attempt to override the
+     * corresponding System property when the same data value is being manipulated during execution
+     * (e.g. {@link #save(String, String)} or {@link #saveMatches(String, String, String)}). However, when retrieving
+     * data variable, Nexial will (and must) consider the System properties and in fact it does so <b>AHEAD</b> of
+     * its internal memory space for data variables. This can cause confusion since the initially-set data variable
+     * does not appear to be overwritten.  This method is created to overcome such issue. Use this only for the
+     * user-defined data variables. System variables and Java/OS specific ones should not be impacted by this phenomena.
+     * since when
+     * @param var
+     * @param value
+     */
+    protected void updateDataVariable(String var, String value) {
+        context.setData(var, value, StringUtils.isNotBlank(System.getProperty(var)) && !context.isReadOnlyData(var));
     }
 
     /**
@@ -275,13 +298,13 @@ public class BaseCommand implements NexialCommand {
     public StepResult appendText(String var, String appendWith) {
         requiresValidVariableName(var);
         String newValue = StringUtils.defaultString(context.getStringData(var)) + appendWith;
-        context.setData(var, context.isNullValue(newValue) ? null : newValue);
+        updateDataVariable(var, context.isNullValue(newValue) ? null : newValue);
         return StepResult.success("appended '" + appendWith + "' to ${" + var + "}");
     }
 
     public StepResult prependText(String var, String prependWith) {
         requiresValidVariableName(var);
-        context.setData(var, prependWith + StringUtils.defaultString(context.getStringData(var)));
+        updateDataVariable(var, prependWith + StringUtils.defaultString(context.getStringData(var)));
         return StepResult.success("prepend '" + prependWith + " to ${" + var + "}");
     }
 
@@ -315,7 +338,7 @@ public class BaseCommand implements NexialCommand {
             context.removeData(saveVar);
             return StepResult.success("No matches found on text '" + text + "'");
         } else {
-            context.setData(saveVar, JRegexUtils.replace(text, regex, replace));
+            updateDataVariable(saveVar, JRegexUtils.replace(text, regex, replace));
             return StepResult.success("matches replaced and stored to variable " + saveVar);
         }
     }
@@ -733,7 +756,7 @@ public class BaseCommand implements NexialCommand {
             ConsoleUtils.log("No data variable matching to " + regex);
             context.removeData(var);
         } else {
-            context.setData(var, TextUtils.toString(matched, context.getTextDelim()));
+            updateDataVariable(var, TextUtils.toString(matched, context.getTextDelim()));
         }
 
         return StepResult.success(matchCount + " matched variable(s) saved to data variable '" + var + "'");
@@ -1038,7 +1061,7 @@ public class BaseCommand implements NexialCommand {
         String substr = between ? StringUtils.substringBetween(text, delimStart, delimEnd) :
                         before ? StringUtils.substringBefore(text, delimEnd) :
                         StringUtils.substringAfter(text, delimStart);
-        context.setData(var, substr);
+        updateDataVariable(var, substr);
         return StepResult.success("substring '" + substr + "' stored to ${" + var + "}");
     }
 

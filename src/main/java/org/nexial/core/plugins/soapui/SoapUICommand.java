@@ -188,7 +188,7 @@ public class SoapUICommand extends BaseCommand {
                         String contextKey = result.getTestSuiteName() + "." + testCase.getName() + "." + testStep;
                         String outputUrl = context.resolveRunModeSpecificUrl(output);
                         context.getCurrentTestStep().addNestedScreenCapture(outputUrl, contextKey);
-                        context.setData(contextKey, parseResponse(output));
+                        updateDataVariable(contextKey, parseResponse(output));
                     }
                 }
 

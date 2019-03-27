@@ -431,7 +431,7 @@ public class WebCommand extends BaseCommand implements CanTakeScreenshot, CanLog
 
     public StepResult saveValue(String var, String locator) {
         requires(StringUtils.isNotBlank(var) && !StringUtils.startsWith(var, "${"), "invalid variable", var);
-        context.setData(var, getValue(locator));
+        updateDataVariable(var, getValue(locator));
         return StepResult.success("stored value of '" + locator + "' as ${" + var + "}");
     }
 
@@ -446,7 +446,7 @@ public class WebCommand extends BaseCommand implements CanTakeScreenshot, CanLog
         String actual = element.getAttribute(attrName);
         if (actual == null) { ConsoleUtils.log("saving null to variable '" + var + "'"); }
 
-        context.setData(var, actual);
+        updateDataVariable(var, actual);
         return StepResult.success("attribute '" + attrName + "' for '" + locator + "' saved to '" + var + "'");
     }
 
@@ -491,7 +491,7 @@ public class WebCommand extends BaseCommand implements CanTakeScreenshot, CanLog
 
     public StepResult saveText(String var, String locator) {
         requires(StringUtils.isNotBlank(var) && !StringUtils.startsWith(var, "${"), "invalid variable", var);
-        context.setData(var, getElementText(locator));
+        updateDataVariable(var, getElementText(locator));
         return StepResult.success("stored content of '" + locator + "' as ${" + var + "}");
     }
 
@@ -1173,13 +1173,13 @@ public class WebCommand extends BaseCommand implements CanTakeScreenshot, CanLog
 
     public StepResult saveAllWindowNames(String var) {
         String names = TextUtils.toString(getAllWindowNames().toArray(new String[]{}), ",", "", "");
-        context.setData(var, names);
+        updateDataVariable(var, names);
         return StepResult.success("stored existing window names '" + names + "' as ${" + var + "}");
     }
 
     public StepResult saveAllWindowIds(String var) {
         String names = TextUtils.toString(getAllWindowIds().toArray(new String[]{}), ",", "", "");
-        context.setData(var, names);
+        updateDataVariable(var, names);
         return StepResult.success("stored existing window ID '" + names + "' as ${" + var + "}");
     }
 
@@ -1328,7 +1328,7 @@ public class WebCommand extends BaseCommand implements CanTakeScreenshot, CanLog
         String safeUrl = hideAuthDetails(url);
 
         try {
-            context.setData(var, new String(downloadLink(sessionIdName, url)));
+            updateDataVariable(var, new String(downloadLink(sessionIdName, url)));
             return StepResult.success("saved '" + safeUrl + "' as ${" + var + "}");
         } catch (Exception e) {
             String message = "Unable to save link '" + safeUrl + "' as property '" + var + "': " + e.getMessage();
@@ -1361,7 +1361,7 @@ public class WebCommand extends BaseCommand implements CanTakeScreenshot, CanLog
     public StepResult saveLocation(String var) {
         requires(StringUtils.isNotBlank(var) && !StringUtils.startsWith(var, "${"), "invalid variable", var);
 
-        context.setData(var, driver.getCurrentUrl());
+        updateDataVariable(var, driver.getCurrentUrl());
         return StepResult.success("stored current URL as ${" + var + "}");
     }
 
@@ -1605,8 +1605,15 @@ public class WebCommand extends BaseCommand implements CanTakeScreenshot, CanLog
         if (browser.isRunElectron() ||
             context.getBooleanData(OPT_CLEAR_WITH_BACKSPACE, getDefaultBool(OPT_CLEAR_WITH_BACKSPACE))) {
             if (StringUtils.isNotEmpty(before)) {
-                element.sendKeys(Keys.END);
-                before.chars().forEach(value -> element.sendKeys(BACK_SPACE));
+                // persistently delete character.. but if app insist on "autocompleting" then we'll give up
+                String beforeBackspace;
+                String afterBackspace;
+                do {
+                    beforeBackspace = element.getAttribute("value");
+                    element.sendKeys(Keys.END);
+                    before.chars().forEach(value -> element.sendKeys(BACK_SPACE));
+                    afterBackspace = element.getAttribute("value");
+                } while (!StringUtils.equals(afterBackspace, beforeBackspace));
             }
         } else {
             // try thrice to cover all bases

@@ -148,19 +148,19 @@ class NumberCommand : BaseCommand() {
             df.format(Math.round(num / closest) * closest)
         }
 
-        context.setData(Var, rounded)
+        updateDataVariable(Var, rounded)
         return StepResult.success("Variable '$Var' has been rounded down to $rounded")
     }
 
     fun increment(Var: String, amount: String): StepResult {
         val newAmt = numberFormatHelper(Var, amount).addValue(amount).originalFormat
-        context.setData(Var, newAmt)
+        updateDataVariable(Var, newAmt)
         return StepResult.success("incremented \${$Var} by $amount to $newAmt")
     }
 
     fun decrement(Var: String, amount: String): StepResult {
         val newAmt = numberFormatHelper(Var, amount).subtractValue(amount).originalFormat
-        context.setData(Var, newAmt)
+        updateDataVariable(Var, newAmt)
         return StepResult.success("decremented \${$Var} by $amount to $newAmt")
     }
 

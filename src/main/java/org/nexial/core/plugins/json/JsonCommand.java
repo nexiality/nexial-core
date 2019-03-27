@@ -145,7 +145,7 @@ public class JsonCommand extends BaseCommand {
             ConsoleUtils.log("JSON modified to null");
             context.removeData(var);
         } else {
-            context.setData(var, modified.toString());
+            updateDataVariable(var, modified.toString());
         }
 
         return StepResult.success("JSON modified and stored to ${" + var + "}");
@@ -277,7 +277,7 @@ public class JsonCommand extends BaseCommand {
         String compressed = GSON_COMPRESSED.toJson(jsonElement);
         if (StringUtils.isBlank(compressed)) { return StepResult.fail("Unable to minify JSON content"); }
 
-        context.setData(var, compressed);
+        updateDataVariable(var, compressed);
         return StepResult.success("JSON content compressed and saved to '" + var);
     }
 
@@ -293,7 +293,7 @@ public class JsonCommand extends BaseCommand {
         String beautified = GSON.toJson(jsonElement);
         if (StringUtils.isBlank(beautified)) { return StepResult.fail("Unable to beautify JSON content"); }
 
-        context.setData(var, beautified);
+        updateDataVariable(var, beautified);
         return StepResult.success("JSON content beautified and saved to '" + var);
     }
 
@@ -305,11 +305,11 @@ public class JsonCommand extends BaseCommand {
 
         boolean asIs = context.getBooleanData(TREAT_JSON_AS_IS, getDefaultBool(TREAT_JSON_AS_IS));
         if (asIs || !TextUtils.isBetween(match, "[", "]")) {
-            context.setData(var, match);
+            updateDataVariable(var, match);
         } else {
             JSONArray array = new JSONArray(match);
             if (array.length() < 1) {
-                context.setData(var, "[]");
+                updateDataVariable(var, "[]");
             } else {
                 List<String> matches = new ArrayList<>();
                 array.forEach(elem -> matches.add(elem.toString()));

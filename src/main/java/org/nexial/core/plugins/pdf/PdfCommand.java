@@ -412,7 +412,7 @@ public class PdfCommand extends BaseCommand {
         requires(StringUtils.isNotBlank(var) && !StringUtils.startsWith(var, "${"), "invalid variable", var);
         try {
             String content = extractText(pdf);
-            context.setData(var, content);
+            updateDataVariable(var, content);
             return StepResult.success("content extracted from '" + pdf + "'");
         } catch (IOException e) {
             return StepResult.fail("unable to extract content from " + pdf, e);

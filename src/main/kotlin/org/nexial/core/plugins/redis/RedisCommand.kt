@@ -71,7 +71,7 @@ class RedisCommand : BaseCommand(), ForcefulTerminate {
         requiresNotBlank(key, "Invalid key", key)
         resolveConnectionPool(profile).resource.use { jedis ->
             return if (jedis.exists(key)) {
-                context.setData(Var, jedis.get(key))
+                updateDataVariable(Var, jedis.get(key))
                 StepResult.success("value of the specified key $key stored as '$Var'")
             } else {
                 StepResult.fail("specified key $key NOT found")

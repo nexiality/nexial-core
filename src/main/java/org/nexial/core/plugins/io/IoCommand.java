@@ -210,7 +210,7 @@ public class IoCommand extends BaseCommand {
 
         try {
             String content = FileUtils.readFileToString(input, DEF_CHARSET);
-            context.setData(var, content);
+            updateDataVariable(var, content);
             return StepResult.success("Content read from '" + file + "' to ${" + var + "}");
         } catch (IOException e) {
             return StepResult.fail("Error when reading content from '" + file + "': " + e.getMessage());
@@ -245,7 +245,7 @@ public class IoCommand extends BaseCommand {
 
         try {
             Properties props = ResourceUtils.loadProperties(input);
-            context.setData(var, props.getProperty(property));
+            updateDataVariable(var, props.getProperty(property));
             return StepResult.success("Property '" + property + "' read from '" + file + "' to ${" + var + "}");
         } catch (IOException e) {
             return StepResult.fail("Error when reading properties from '" + file + "': " + e.getMessage());
@@ -529,7 +529,7 @@ public class IoCommand extends BaseCommand {
         requiresReadableFile(file);
 
         byte[] content = FileUtils.readFileToByteArray(new File(file));
-        context.setData(var, Base64.getEncoder().encodeToString(content));
+        updateDataVariable(var, Base64.getEncoder().encodeToString(content));
 
         return StepResult.success("File content converted to BASE64 and saved to '" + var + "'");
     }
@@ -926,7 +926,7 @@ public class IoCommand extends BaseCommand {
     protected StepResult createDiff(String var, FileComparisonReport report) {
         requiresValidVariableName(var);
         if (report == null || !report.hasMismatch()) { return StepResult.success("No diff found"); }
-        context.setData(var, report.showDiffs());
+        updateDataVariable(var, report.showDiffs());
         return StepResult.success("File diffs are saved to '" + var + "'");
     }
 
