@@ -36,7 +36,6 @@ import org.nexial.commons.utils.TextUtils;
 import org.nexial.core.excel.Excel;
 import org.nexial.core.excel.Excel.Worksheet;
 import org.nexial.core.excel.ExcelAddress;
-import org.nexial.core.tools.DataVariableUpdater.UpdateLog;
 
 import static java.io.File.separator;
 import static org.nexial.core.NexialConst.DEF_FILE_ENCODING;
@@ -300,7 +299,7 @@ public class DataVariableUpdaterTest {
 
     @Test
     public void replaceVarsInKeywordWrapper() throws Exception {
-        UpdateLog updateLog = updater.new UpdateLog("file1").setPosition("line1");
+        UpdateLog updateLog = new UpdateLog("file1", "", "line1");
 
         // unmatched cases
         Assert.assertNull(updater.replaceVarsInKeywordWrapper(""));
@@ -330,7 +329,7 @@ public class DataVariableUpdaterTest {
 
     @Test
     public void replaceVarTokens() throws Exception {
-        UpdateLog updateLog = updater.new UpdateLog("file1").setPosition("line1");
+        UpdateLog updateLog = new UpdateLog("file1", "", "line1");
 
         // unmatched cases
         Assert.assertNull(updater.replaceVarTokens(""));

@@ -33,7 +33,7 @@ object ProjectToolUtils {
 
     private const val column1Width = 50
     private const val column2Width = 20
-    private const val column3Width = 10
+    private const val column3Width = 11
     const val column4LeftMargin = column1Width + column2Width + column3Width
 
     @JvmField
@@ -80,13 +80,11 @@ object ProjectToolUtils {
     fun log(message: String) = println(" >> $message")
 
     @JvmStatic
-    fun formatColumns(file: String, worksheet: String?, position: String, updatingVars: String): String {
-        return StringUtils.right(StringUtils.rightPad(file, column1Width), column1Width) +
-               StringUtils.left(StringUtils.rightPad(StringUtils.defaultIfEmpty<String>(worksheet, ""), column2Width),
-                                column2Width) +
-               StringUtils.rightPad(position, column3Width) +
-               updatingVars
-    }
+    fun formatColumns(file: String, worksheet: String?, position: String, updatingVars: String) =
+        "${StringUtils.abbreviate(StringUtils.rightPad(file, column1Width - 1), column1Width+1, column1Width - 1)} " +
+        "${StringUtils.abbreviate(StringUtils.rightPad(worksheet ?: "", column2Width - 1), column2Width - 1)} " +
+        "[${StringUtils.rightPad(position, column3Width - 3)}] " +
+        updatingVars
 
     @JvmStatic
     fun reformatLines(before: String, after: String, leftMargin: Int): String {

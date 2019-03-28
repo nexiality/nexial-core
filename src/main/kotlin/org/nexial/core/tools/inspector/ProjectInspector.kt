@@ -26,7 +26,10 @@ import org.apache.commons.lang3.StringUtils
 import org.apache.commons.lang3.SystemUtils.IS_OS_WINDOWS
 import org.nexial.commons.utils.FileUtil
 import org.nexial.commons.utils.ResourceUtils
+import org.nexial.core.NexialConst.DEF_FILE_ENCODING
 import org.nexial.core.NexialConst.ExitStatus.RC_BAD_CLI_ARGS
+import org.nexial.core.NexialConst.Project.DEF_REL_LOC_ARTIFACT
+import org.nexial.core.NexialConst.Project.SCRIPT_FILE_EXT
 import org.nexial.core.tools.CliConst.OPT_VERBOSE
 import org.nexial.core.tools.CliUtils.getCommandLine
 import org.nexial.core.tools.CliUtils.newArgOption
@@ -35,13 +38,14 @@ import org.nexial.core.tools.inspector.InspectorConst.ReturnCode.BAD_DIRECTORY
 import org.nexial.core.tools.inspector.InspectorConst.ReturnCode.MISSING_DIRECTORY
 import org.nexial.core.tools.inspector.InspectorConst.exit
 import org.nexial.core.tools.inspector.InspectorViewMode.LOCAL
+import org.nexial.core.tools.inspector.ProjectInspector.resolveRelativePath
 import java.io.File
+import java.io.File.separator
 import java.security.MessageDigest
 import java.util.*
 import java.util.stream.Collectors
 
 object ProjectInspector {
-    private val md5 = MessageDigest.getInstance("MD5")
     private val RESOURCES: Properties =
             ResourceUtils.loadProperties("org/nexial/core/tools/inspector/resources.properties")
 
@@ -88,52 +92,11 @@ object ProjectInspector {
         }
     }
 
-    internal fun filterFiles(directory: File, extensions: Array<String>, filter: (file: File) -> Boolean): List<File> =
-            FileUtils.listFiles(directory, extensions, true)
-                .stream()
-                .filter { filter(it) }
-                .collect(Collectors.toList())
+    internal fun filterFiles(directory: File, extensions: Array<String>, filter: (file: File) -> Boolean) =
+            FileUtils.listFiles(directory, extensions, true).stream().filter { filter(it) }.collect(Collectors.toList())
 
     internal fun resolveRelativePath(project: File, file: File): String = StringUtils.removeStart(
             StringUtils.replace(StringUtils.remove(file.parentFile.absolutePath, project.absolutePath), "\\", "/"), "/")
-
-    internal fun resolveCacheFile(options: InspectorOptions, target: File): File? {
-        if (!options.useCache) return null
-        val cachePath = options.cacheHome + resolveRelativePath(File(options.directory), target) + File.separator
-        File(cachePath).mkdirs()
-        return File("$cachePath${target.name}.${generateMD5(target)}.json")
-    }
-
-    internal fun expireOutdatedCache(exclude: File) {
-        val cacheName = exclude.name.substringBefore(".")
-        val ext = "." + exclude.name.substringAfterLast(".")
-        fun accept(fileName: String) =
-                fileName.startsWith(cacheName) && fileName.endsWith(ext) && fileName != exclude.name
-
-        FileUtils.listFiles(
-                exclude.parentFile,
-                object : IOFileFilter {
-                    override fun accept(file: File?) = file != null && accept(file.name)
-                    override fun accept(dir: File?, name: String?) = name != null && accept(name)
-                },
-                object : IOFileFilter {
-                    override fun accept(file: File?) = true
-                    override fun accept(dir: File?, name: String?) = true
-                })
-            .parallelStream().forEach { FileUtils.deleteQuietly(it) }
-    }
-
-    internal fun generateMD5(subject: File): String {
-        // create digest base => filename + lastmod + size
-        val base = StringUtils.leftPad(subject.name, 50, "\\") +
-                   StringUtils.leftPad("${subject.lastModified()}", 16, "0") +
-                   StringUtils.leftPad("${subject.length()}", 16, "0")
-
-        // applying md5
-        md5.reset()
-        md5.update(base.toByteArray())
-        return Hex.encodeHex(md5.digest())
-    }
 
     private fun deriveCommandLine(args: Array<String>): CommandLine {
         val cmdOptions = Options()
@@ -156,7 +119,6 @@ object ProjectInspector {
     }
 
     private fun deriveInspectorOptions(cmd: CommandLine): InspectorOptions {
-
         val projectHome = cmd.getOptionValue("t")
         if (StringUtils.isBlank(projectHome)) {
             println()
@@ -177,5 +139,83 @@ object ProjectInspector {
         else InspectorViewMode.valueOf(StringUtils.upperCase(viewModeInput))
 
         return InspectorOptions(directory = projectHome, viewMode = viewMode, verbose = cmd.hasOption("v"))
+    }
+}
+
+class CacheHelper<T>(val options: InspectorOptions, val logger: InspectorLogger) where T : Any {
+
+    internal fun resolveCacheFile(target: File) = if (!options.useCache) {
+        null
+    } else {
+        val cachePath = options.cacheHome + resolveRelativePath(File(options.directory), target) + separator
+        File(cachePath).mkdirs()
+        File("$cachePath${target.name}.${generateMD5(target)}.json")
+    }
+
+    internal fun isUsableCacheFile(cacheFile: File?) = options.useCache && FileUtil.isFileReadable(cacheFile, 512)
+
+    inline fun <reified T> readCache(cacheFile: File?) = if (cacheFile != null) {
+        logger.log(deriveCacheName(cacheFile), "reading from cache...")
+        GSON.fromJson<T>(FileUtils.readFileToString(cacheFile, DEF_FILE_ENCODING), T::class.java)
+    } else null
+
+    internal fun saveCache(cacheObject: Any, cacheFile: File?) {
+        if (cacheFile != null && options.useCache) {
+            logger.log(deriveCacheName(cacheFile), "updating cache...")
+            FileUtils.write(cacheFile, GSON.toJson(cacheObject), DEF_FILE_ENCODING)
+        }
+    }
+
+    fun deriveCacheName(cacheFile: File): String {
+        val name = cacheFile.absolutePath.substringAfter(options.project.name + separator + DEF_REL_LOC_ARTIFACT)
+        return if (name.contains(SCRIPT_FILE_EXT)) name.substringBefore(SCRIPT_FILE_EXT) + SCRIPT_FILE_EXT else name
+    }
+
+    internal fun expireOutdatedCache(exclude: File?) {
+        if (!options.useCache || exclude == null) return
+
+        val cacheName = exclude.name.substringBefore(".")
+        val ext = "." + exclude.name.substringAfterLast(".")
+        fun accept(fileName: String) =
+                fileName.startsWith(cacheName) && fileName.endsWith(ext) && fileName != exclude.name
+
+        FileUtils.listFiles(exclude.parentFile,
+                            object : IOFileFilter {
+                                override fun accept(file: File?) = file != null && accept(file.name)
+                                override fun accept(dir: File?, name: String?) = name != null && accept(name)
+                            },
+                            object : IOFileFilter {
+                                override fun accept(file: File?) = true
+                                override fun accept(dir: File?, name: String?) = true
+                            }).parallelStream().forEach { FileUtils.deleteQuietly(it) }
+    }
+
+    companion object {
+        private val md5 = MessageDigest.getInstance("MD5")
+
+        /**
+         * generate MD5 representation of a file based on the first 64 character of the file name, the file's last
+         * modified epoch time and file size. Note that we can artificially inject "versioning" via altering the MD5
+         * strategy. For example, we can change from<br/>
+         * <code>file-name + last-mod + file-size</code><br/>
+         * to<br/>
+         * <code>file-name + last-mod + file-size + version</code><br/>
+         *
+         * As such we can expire cache files generated by older builds automatically.
+         *
+         * @param subject File
+         * @return String
+         */
+        internal fun generateMD5(subject: File): String {
+            // create digest base => filename + lastmod + size
+            val base = StringUtils.leftPad(subject.name, 64, "\\") +
+                       StringUtils.leftPad("${subject.lastModified()}", 16, "0") +
+                       StringUtils.leftPad("${subject.length()}", 16, "0")
+
+            // applying md5
+            md5.reset()
+            md5.update(base.toByteArray())
+            return Hex.encodeHex(md5.digest())
+        }
     }
 }

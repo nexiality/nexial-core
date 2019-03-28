@@ -22,7 +22,7 @@ import org.apache.commons.lang3.SystemUtils.JAVA_IO_TMPDIR
 import org.junit.After
 import org.junit.Assert
 import org.junit.Test
-import org.nexial.core.tools.inspector.ProjectInspector.generateMD5
+import org.nexial.core.tools.inspector.CacheHelper.Companion.generateMD5
 import java.io.File
 import java.io.File.separator
 import java.nio.charset.Charset

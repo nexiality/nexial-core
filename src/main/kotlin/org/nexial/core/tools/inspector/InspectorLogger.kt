@@ -20,7 +20,7 @@ import org.apache.commons.lang3.StringUtils
 import org.nexial.core.tools.inspector.InspectorConst.LOG_DATE_FORMAT
 import java.util.*
 
-private const val LABEL_WIDTH = 30
+private const val LABEL_WIDTH = 40
 
 class InspectorLogger(val verbose: Boolean) {
 

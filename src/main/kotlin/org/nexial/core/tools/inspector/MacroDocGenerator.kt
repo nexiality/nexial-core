@@ -17,10 +17,7 @@
 package org.nexial.core.tools.inspector
 
 import org.apache.commons.collections4.CollectionUtils
-import org.apache.commons.io.FileUtils
 import org.apache.commons.lang3.StringUtils
-import org.nexial.commons.utils.FileUtil
-import org.nexial.core.NexialConst.DEF_FILE_ENCODING
 import org.nexial.core.NexialConst.Data.SHEET_SYSTEM
 import org.nexial.core.NexialConst.Project.SCRIPT_FILE_SUFFIX
 import org.nexial.core.excel.Excel
@@ -28,14 +25,11 @@ import org.nexial.core.excel.ExcelAddress
 import org.nexial.core.excel.ExcelConfig.*
 import org.nexial.core.tools.ProjectToolUtils.isMacroFile
 import org.nexial.core.tools.inspector.ArtifactType.MACRO
-import org.nexial.core.tools.inspector.InspectorConst.GSON
 import org.nexial.core.tools.inspector.InspectorConst.MACRO_CMDS
 import org.nexial.core.tools.inspector.InspectorConst.MACRO_DESCRIPTION
 import org.nexial.core.tools.inspector.InspectorConst.MACRO_EXPECTS
 import org.nexial.core.tools.inspector.InspectorConst.MACRO_PRODUCES
-import org.nexial.core.tools.inspector.ProjectInspector.expireOutdatedCache
 import org.nexial.core.tools.inspector.ProjectInspector.filterFiles
-import org.nexial.core.tools.inspector.ProjectInspector.resolveCacheFile
 import org.nexial.core.tools.inspector.ProjectInspector.resolveRelativePath
 import org.nexial.core.utils.InputFileUtils
 import java.io.File
@@ -56,35 +50,27 @@ class MacroDocGenerator(val options: InspectorOptions, val logger: InspectorLogg
 
         if (macroFiles.isEmpty()) return scannedMacroFiles
 
+        val cacheHelper = CacheHelper<MacroCache>(options, logger)
+
         // scan each potential file for macro-specific header
         macroFiles.forEach { file ->
 
             val location = resolveRelativePath(projectHome, file)
             val macroFile = MacroFile(location, file.name)
-            val cacheFile = resolveCacheFile(options, file)
 
-            val macroCache = if (options.useCache && FileUtil.isFileReadable(cacheFile, 512)) {
+            val cacheFile = cacheHelper.resolveCacheFile(file)
+            val macroCache = if (cacheHelper.isUsableCacheFile(cacheFile)) {
                 // use cache instead
-                logger.log(file.name, "reading from cache...")
-                val macroCache = GSON.fromJson<MacroCache>(
-                        FileUtils.readFileToString(cacheFile, DEF_FILE_ENCODING), MacroCache::class.java)
-
-                // having the file doesn't it has the macro cached...
-                if (macroCache == null) {
-                    newMacroCacheInstance(file, location)
-                } else {
+                val macroCache = cacheHelper.readCache<MacroCache>(cacheFile)
+                if (macroCache != null) {
                     // while this is not needed for Kotlin code, the loaded JSON might not have "macros", hence the null check
                     if (macroCache.macros != null && macroCache.macros.isNotEmpty()) {
                         macroFile.data += macroCache.macros
                         scannedMacroFiles += macroFile
-                    } else {
-                        macroCache.macros = arrayListOf()
-                    }
+                    } else macroCache.macros = arrayListOf()
                     macroCache
-                }
-            } else {
-                newMacroCacheInstance(file, location)
-            }
+                } else newMacroCacheInstance(file, location)
+            } else newMacroCacheInstance(file, location)
 
             // while this is not needed for Kotlin code, the loaded JSON might not have "macros", hence the null check
             if (macroCache.macros.isEmpty()) {
@@ -106,14 +92,14 @@ class MacroDocGenerator(val options: InspectorOptions, val logger: InspectorLogg
                         // add to intermediary object
                         scannedMacroFiles.add(macroFile)
 
-                        if (options.useCache && cacheFile != null) cacheMacroContent(cacheFile, macroCache)
+                        cacheHelper.saveCache(macroCache, cacheFile)
                     }
                 } catch (e: IOException) {
                     logger.error("Error parsing $file: ${e.message}")
                 }
             }
 
-            if (options.useCache && cacheFile != null) expireOutdatedCache(cacheFile)
+            cacheHelper.expireOutdatedCache(cacheFile)
         }
 
         return scannedMacroFiles
@@ -121,11 +107,6 @@ class MacroDocGenerator(val options: InspectorOptions, val logger: InspectorLogg
 
     private fun newMacroCacheInstance(file: File, location: String): MacroCache {
         return MacroCache(options.project.name, location, ScriptCache(file.name, MACRO))
-    }
-
-    private fun cacheMacroContent(cacheFile: File, macroCache: MacroCache) {
-        logger.log(macroCache.script.filename, "updating cache...")
-        FileUtils.write(cacheFile, GSON.toJson(macroCache), DEF_FILE_ENCODING)
     }
 
     private fun collectMacros(excel: Excel, macroCache: MacroCache) {

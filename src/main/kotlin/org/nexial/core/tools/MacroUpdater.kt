@@ -60,12 +60,6 @@ object MacroUpdater {
 
     data class MacroOptions(val macroFile: String, val macroSheet: String, val macroMap: MutableMap<String, String>)
 
-    class UpdateLog(var file: String, var worksheet: String, var position: String, var updatingMacros: String) {
-        constructor(file: String, worksheet: String) : this(file, worksheet, "", "")
-
-        override fun toString() = formatColumns(file, worksheet, position, updatingMacros)
-    }
-
     @JvmStatic
     fun main(args: Array<String>) {
         val options = deriveMacroOptions(deriveCommandLine(args))
@@ -208,7 +202,8 @@ object MacroUpdater {
                         macroCell.setCellValue(options.macroMap[macroName])
 
                         updateLog.position = macroCell.address.formatAsString()
-                        updateLog.updatingMacros = "$macroName => ${options.macroMap[macroName]}"
+                        updateLog.before = macroName
+                        updateLog.after = "${options.macroMap[macroName]}"
                         updated.add(updateLog)
                         hasUpdate = true
                     }
@@ -264,7 +259,8 @@ object MacroUpdater {
                 cell.setCellValue(toMap[macro])
 
                 updateLog.position = cell.address.formatAsString()
-                updateLog.updatingMacros = "$macro => ${toMap[macro]}"
+                updateLog.before = macro
+                updateLog.after = toMap[macro] ?: ""
                 updated.add(updateLog)
 
                 hasUpdate = true

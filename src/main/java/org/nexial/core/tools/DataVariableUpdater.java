@@ -80,73 +80,6 @@ final public class DataVariableUpdater {
     protected Map<String, String> variableMap;
     protected List<UpdateLog> updated = new ArrayList<>();
 
-    final class UpdateLog {
-        private String file;
-        private String position;
-        private String before;
-        private String after;
-
-        public UpdateLog(String file) { this.file = file; }
-
-        public UpdateLog(File file) { this.file = file.getAbsolutePath(); }
-
-        public String getFile() { return file;}
-
-        public UpdateLog setFile(String file) {
-            this.file = file;
-            return this;
-        }
-
-        public String getPosition() { return position;}
-
-        public UpdateLog setPosition(String position) {
-            this.position = position;
-            return this;
-        }
-
-        public String getBefore() { return before;}
-
-        public UpdateLog setBefore(String before) {
-            this.before = before;
-            return this;
-        }
-
-        public String getAfter() { return after;}
-
-        public UpdateLog setAfter(String after) {
-            this.after = after;
-            return this;
-        }
-
-        public UpdateLog copy() {
-            UpdateLog copy = new UpdateLog(this.file);
-            copy.setPosition(this.position);
-            copy.setBefore(this.before);
-            copy.setAfter(this.after);
-            return copy;
-        }
-
-        public UpdateLog setChange(String before, String after) {
-            this.before = before;
-            this.after = after;
-            return this;
-        }
-
-        @Override
-        public String toString() {
-            String worksheet = StringUtils.substringBetween(file, "[", "]");
-
-            file = StringUtils.substringBefore(this.file, "[");
-            if (StringUtils.startsWith(file, getSearchFrom())) {
-                file = StringUtils.substringAfter(file, getSearchFrom() + separator);
-            }
-
-            position = "[" + StringUtils.leftPad(position, 4) + "]";
-
-            return formatColumns(file, worksheet, position, reformatLines(before, after, column4LeftMargin));
-        }
-    }
-
     /**
      * This is a utility written to rename an existing variable name to some other name. The list of all the
      * variable names to be renamed are sent as key value pairs where key is variable and value is the new name with
@@ -271,7 +204,7 @@ final public class DataVariableUpdater {
             for (int i = 0; i < lines.length; i++) {
                 String line = lines[i];
                 String oldLine = line;
-                UpdateLog updateLog = new UpdateLog(file).setPosition(StringUtils.leftPad(i + 1 + "", 3));
+                UpdateLog updateLog = new UpdateLog(file, "", (i + 1) + "");
 
                 for (String oldVar : variableMap.keySet()) {
                     String newVar = variableMap.get(oldVar);
@@ -294,7 +227,7 @@ final public class DataVariableUpdater {
                 }
 
                 if (!StringUtils.equals(oldLine, line)) {
-                    updated.add(updateLog.setChange(oldLine, line));
+                    updated.add(updateLog.copy().setChange(oldLine, line));
                     hasUpdate = true;
                 }
 
@@ -333,7 +266,7 @@ final public class DataVariableUpdater {
                 for (int i = 0; i < lines.length; i++) {
                     String line = lines[i];
                     String oldLine = line;
-                    UpdateLog updateLog = new UpdateLog(file).setPosition(StringUtils.leftPad(i + 1 + "", 3));
+                    UpdateLog updateLog = new UpdateLog(file, "", StringUtils.leftPad(i + 1 + "", 3));
 
                     for (String oldVar : variableMap.keySet()) {
                         String newVar = variableMap.get(oldVar);
@@ -357,7 +290,7 @@ final public class DataVariableUpdater {
                     }
 
                     if (!StringUtils.equals(oldLine, line)) {
-                        updated.add(updateLog.setChange(oldLine, line));
+                        updated.add(updateLog.copy().setChange(oldLine, line));
                         hasUpdate = true;
                     }
 
@@ -453,7 +386,7 @@ final public class DataVariableUpdater {
         List<List<XSSFCell>> wholeArea = area.getWholeArea();
         wholeArea.forEach(row -> row.forEach(cell -> {
             if (cell != null && StringUtils.isNotBlank(Excel.getCellValue(cell))) {
-                UpdateLog updateLog = new UpdateLog(dataSheet).setPosition(cell.getAddress().toString());
+                UpdateLog updateLog = new UpdateLog(file, sheet.getName(), cell.getAddress().toString());
 
                 int columnIndex = cell.getColumnIndex();
                 if (columnIndex == 0) {
@@ -500,7 +433,7 @@ final public class DataVariableUpdater {
         return hasUpdate;
     }
 
-    protected boolean updateScriptCell(String file, XSSFCell cell, List<Integer> varIndices) {
+    protected boolean updateScriptCell(File file, String scenarioName, XSSFCell cell, List<Integer> varIndices) {
         if (cell == null || StringUtils.isBlank(cell.getRawValue())) { return false; }
 
         String cellValue = Excel.getCellValue(cell);
@@ -509,7 +442,7 @@ final public class DataVariableUpdater {
         if (StringUtils.isBlank(cellValue)) { return false; }
 
         boolean hasUpdate = false;
-        UpdateLog updateLog = new UpdateLog(file).setPosition(cell.getAddress().formatAsString());
+        UpdateLog updateLog = new UpdateLog(file, scenarioName, cell.getAddress().formatAsString());
 
         String cellValueModified = replaceVarTokens(cellValue);
         if (cellValueModified != null) {
@@ -605,7 +538,7 @@ final public class DataVariableUpdater {
                 if (j == COL_IDX_TARGET) { continue; }
                 if (j == COL_IDX_COMMAND) { continue; }
 
-                if (updateScriptCell(scenario, row.get(j), varIndices)) { hasUpdate = true; }
+                if (updateScriptCell(file, worksheet.getName(), row.get(j), varIndices)) { hasUpdate = true; }
             }
         }
 
