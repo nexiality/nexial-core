@@ -28,7 +28,6 @@ import javax.validation.constraints.NotNull;
 
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang3.BooleanUtils;
-import org.apache.commons.lang3.StringUtils;
 import org.nexial.commons.utils.CollectionUtil;
 import org.nexial.core.excel.ExcelAddress;
 import org.nexial.core.tools.ScriptMetadata.Commands;
@@ -39,8 +38,7 @@ import com.google.gson.GsonBuilder;
 
 import static org.nexial.core.NexialConst.DEF_FILE_ENCODING;
 import static org.nexial.core.NexialConst.Data.*;
-import static org.nexial.core.NexialConst.Project.NEXIAL_HOME;
-import static org.nexial.core.NexialConst.Project.appendCommandJson;
+import static org.nexial.core.NexialConst.Project.COMMAND_JSON_FILE;
 
 public final class CommandDiscovery {
     public static final Gson GSON = new GsonBuilder().setPrettyPrinting()
@@ -79,14 +77,8 @@ public final class CommandDiscovery {
     public String printDiscoveredCommands() { return GSON.toJson(toScriptMetadata()); }
 
     public File persistDiscoveredCommands() throws IOException {
-        String nexialHome = System.getProperty(NEXIAL_HOME);
-        if (StringUtils.isBlank(nexialHome)) {
-            throw new IOException("Unable to persist commands: System property " + NEXIAL_HOME + " not defined");
-        }
-
-        File commandJsonFile = new File(appendCommandJson(nexialHome));
-        FileUtils.write(commandJsonFile, GSON.toJson(toScriptMetadata()), DEF_FILE_ENCODING);
-        return commandJsonFile;
+        FileUtils.write(COMMAND_JSON_FILE, GSON.toJson(toScriptMetadata()), DEF_FILE_ENCODING);
+        return COMMAND_JSON_FILE;
     }
 
     @NotNull

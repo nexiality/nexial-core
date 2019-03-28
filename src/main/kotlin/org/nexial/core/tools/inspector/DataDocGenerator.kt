@@ -25,10 +25,9 @@ import org.nexial.commons.utils.FileUtil
 import org.nexial.commons.utils.RegexUtils
 import org.nexial.commons.utils.ResourceUtils
 import org.nexial.commons.utils.TextUtils
-import org.nexial.core.NexialConst.DEF_FILE_ENCODING
+import org.nexial.core.NexialConst.*
 import org.nexial.core.NexialConst.Data.SHEET_DEFAULT_DATA
 import org.nexial.core.NexialConst.Data.SHEET_SYSTEM
-import org.nexial.core.NexialConst.NAMESPACE
 import org.nexial.core.NexialConst.Project.*
 import org.nexial.core.SystemVariables.*
 import org.nexial.core.excel.Excel
@@ -37,6 +36,7 @@ import org.nexial.core.excel.ExcelConfig.*
 import org.nexial.core.excel.ext.CipherHelper.CRYPT_IND
 import org.nexial.core.tools.ProjectToolUtils.isDataFile
 import org.nexial.core.tools.ProjectToolUtils.isTestScript
+import org.nexial.core.tools.VarCommandGenerator.retriveVarCmds
 import org.nexial.core.tools.inspector.ArtifactType.ACTIVITY
 import org.nexial.core.tools.inspector.ArtifactType.SCRIPT
 import org.nexial.core.tools.inspector.DataVariableLocationType.Companion.CommandLineOverride
@@ -45,8 +45,6 @@ import org.nexial.core.tools.inspector.DataVariableLocationType.Companion.Projec
 import org.nexial.core.tools.inspector.DataVariableLocationType.Companion.ScenarioDataSheet
 import org.nexial.core.tools.inspector.DataVariableLocationType.Companion.StepOverride
 import org.nexial.core.tools.inspector.InspectorConst.MULTI_VARS_CMDS
-import org.nexial.core.tools.inspector.InspectorConst.VAR_CMDS
-import org.nexial.core.tools.inspector.ProjectInspector.expireOutdatedCache
 import org.nexial.core.tools.inspector.ProjectInspector.filterFiles
 import org.nexial.core.tools.inspector.ProjectInspector.getMessage
 import org.nexial.core.tools.inspector.ProjectInspector.resolveRelativePath
@@ -76,18 +74,22 @@ class DataDocGenerator(val options: InspectorOptions, val logger: InspectorLogge
 
         if (dataFiles.isEmpty()) return
 
+        val cacheHelper = CacheHelper<DataVariableCache>(options, logger)
+
         dataFiles.forEach { file ->
             val filePath = file.absolutePath
 
-            val cacheFile = ProjectInspector.resolveCacheFile(options, file)
-            if (options.useCache && FileUtil.isFileReadable(cacheFile, 512)) {
+            val cacheFile = cacheHelper.resolveCacheFile(file)
+            val cacheUsed = if (cacheHelper.isUsableCacheFile(cacheFile)) {
                 // use cache instead
-                logger.log(file.name, "reading from cache...")
-                val dataVariableCache = InspectorConst.GSON.fromJson<DataVariableCache>(
-                        FileUtils.readFileToString(cacheFile, DEF_FILE_ENCODING), DataVariableCache::class.java)
-                dataVariableCache.dataVariables.forEach { addToEntity(dataVariables, it) }
-            } else {
+                val dataVariableCache = cacheHelper.readCache<DataVariableCache>(cacheFile)
+                if (dataVariableCache != null && dataVariableCache.dataVariables.isNotEmpty()) {
+                    dataVariableCache.dataVariables.forEach { addToEntity(dataVariables, it) }
+                    true
+                } else false
+            } else false
 
+            if (!cacheUsed) {
                 if (InputFileUtils.isValidDataFile(filePath)) {
                     val fileName = file.name
                     logger.log(fileName, "parsing data file")
@@ -141,14 +143,11 @@ class DataDocGenerator(val options: InspectorOptions, val logger: InspectorLogge
                         dataFileCache.dataSheets += dataSheetCache
                     }
 
-                    if (options.useCache && cacheFile != null) {
-                        logger.log(fileName, "updating cache...")
-                        FileUtils.write(cacheFile, InspectorConst.GSON.toJson(dataVariableCache), DEF_FILE_ENCODING)
-                    }
+                    cacheHelper.saveCache(dataVariableCache, cacheFile)
                 }
             }
 
-            if (options.useCache && cacheFile != null) expireOutdatedCache(cacheFile)
+            cacheHelper.expireOutdatedCache(cacheFile)
         }
     }
 
@@ -213,22 +212,33 @@ class DataDocGenerator(val options: InspectorOptions, val logger: InspectorLogge
     private fun scanScriptFiles(dataVariables: DataVariableEntity) {
         val projectHome = File(options.directory)
 
+        val varCmds = retriveVarCmds()
+
+        if (varCmds == null) {
+            System.err.println("Unable to retrieve var commands: $MSG_CHECK_SUPPORT")
+            return
+        }
+
         // find all potential data variable files
         val scriptFiles = filterFiles(projectHome, arrayOf(SCRIPT_FILE_SUFFIX)) { file -> isTestScript(file) }
         logger.title("PROCESSING DATA VARIABLES", "found ${scriptFiles.size} test scripts")
         if (scriptFiles.isEmpty()) return
 
+        val cacheHelper = CacheHelper<ScriptSuiteCache>(options, logger)
+
         scriptFiles.forEach { file ->
 
-            val cacheFile = ProjectInspector.resolveCacheFile(options, file)
-            if (options.useCache && FileUtil.isFileReadable(cacheFile, 512)) {
+            val cacheFile = cacheHelper.resolveCacheFile(file)
+            val cacheUsed = if (cacheHelper.isUsableCacheFile(cacheFile)) {
                 // use cache instead
-                logger.log(file.name, "reading from cache...")
-                val scriptSuiteCache = InspectorConst.GSON.fromJson<ScriptSuiteCache>(
-                        FileUtils.readFileToString(cacheFile, DEF_FILE_ENCODING), ScriptSuiteCache::class.java)
-                scriptSuiteCache.dataVariables.forEach { addToEntity(dataVariables, it) }
-            } else {
+                val scriptSuiteCache = cacheHelper.readCache<ScriptSuiteCache>(cacheFile)
+                if (scriptSuiteCache != null && scriptSuiteCache.dataVariables.isNotEmpty()) {
+                    scriptSuiteCache.dataVariables.forEach { addToEntity(dataVariables, it) }
+                    true
+                } else false
+            } else false
 
+            if (!cacheUsed) {
                 logger.log(file.name, "parsing script file for data variable reference")
 
                 val location = "${resolveRelativePath(projectHome, file)}/${file.name}"
@@ -260,22 +270,22 @@ class DataDocGenerator(val options: InspectorOptions, val logger: InspectorLogge
 
                             if (activityCache != null) {
                                 activityCache!!.steps += StepCache(
-                                        row = rowIndex,
-                                        description = Excel.getCellValue(row[1]),
-                                        cmdType = cmdType,
-                                        command = command,
-                                        param1 = Excel.getCellValue(row[4]),
-                                        param2 = Excel.getCellValue(row[5]),
-                                        param3 = Excel.getCellValue(row[6]),
-                                        param4 = Excel.getCellValue(row[7]),
-                                        param5 = Excel.getCellValue(row[8]),
-                                        flowControl = Excel.getCellValue(row[9]),
-                                        screenshot = BooleanUtils.toBoolean(Excel.getCellValue(row[11])))
+                                    row = rowIndex,
+                                    description = Excel.getCellValue(row[1]),
+                                    cmdType = cmdType,
+                                    command = command,
+                                    param1 = Excel.getCellValue(row[4]),
+                                    param2 = Excel.getCellValue(row[5]),
+                                    param3 = Excel.getCellValue(row[6]),
+                                    param4 = Excel.getCellValue(row[7]),
+                                    param5 = Excel.getCellValue(row[8]),
+                                    flowControl = Excel.getCellValue(row[9]),
+                                    screenshot = BooleanUtils.toBoolean(Excel.getCellValue(row[11])))
                             }
 
                             val commandFqn = "$cmdType.$command"
-                            if (VAR_CMDS.containsKey(commandFqn)) {
-                                val varIndices = VAR_CMDS.getValue(commandFqn)
+                            if (varCmds.containsKey(commandFqn)) {
+                                val varIndices = varCmds.getValue(commandFqn)
                                 varIndices.forEach {
                                     val dv = DataVariableAtom(name = Excel.getCellValue(row[4 + it]),
                                                               definedAs = commandFqn,
@@ -310,13 +320,10 @@ class DataDocGenerator(val options: InspectorOptions, val logger: InspectorLogge
                     }
                 }
 
-                if (options.useCache && cacheFile != null) {
-                    logger.log(location, "updating cache...")
-                    FileUtils.write(cacheFile, InspectorConst.GSON.toJson(scriptSuiteCache), DEF_FILE_ENCODING)
-                }
+                cacheHelper.saveCache(scriptSuiteCache, cacheFile)
             }
 
-            if (options.useCache && cacheFile != null) expireOutdatedCache(cacheFile)
+            cacheHelper.expireOutdatedCache(cacheFile)
         }
     }
 
@@ -426,10 +433,10 @@ class DataDocGenerator(val options: InspectorOptions, val logger: InspectorLogge
         if (name.isEmpty() || values.isEmpty()) return false
 
         // test data variable name
-        val lname = name.toLowerCase()
-        return if (RegexUtils.match(lname, ".*password.*") ||
-                   RegexUtils.match(lname, ".*secret.*(key|code).*") ||
-                   RegexUtils.match(lname, ".*access.*(key|code).*"))
+        val varName = name.toLowerCase()
+        return if (RegexUtils.match(varName, ".*password.*") ||
+                   RegexUtils.match(varName, ".*secret.*(key|code).*") ||
+                   RegexUtils.match(varName, ".*access.*(key|code).*"))
         // test defined values
             values.any { !it.startsWith(CRYPT_IND) && !it.startsWith("$" + "{") && !it.startsWith("$(") }
         else

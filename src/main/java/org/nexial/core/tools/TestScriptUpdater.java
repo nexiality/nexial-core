@@ -38,7 +38,7 @@ import org.apache.poi.ss.util.CellAddress;
 import org.apache.poi.xssf.usermodel.XSSFCell;
 import org.apache.poi.xssf.usermodel.XSSFSheet;
 import org.apache.poi.xssf.usermodel.XSSFWorkbook;
-import org.nexial.commons.utils.FileUtil;
+import org.nexial.commons.utils.ResourceUtils;
 import org.nexial.commons.utils.TextUtils;
 import org.nexial.core.excel.Excel;
 import org.nexial.core.excel.Excel.Worksheet;
@@ -51,11 +51,10 @@ import org.nexial.core.utils.InputFileUtils;
 import org.slf4j.MDC;
 
 import static java.io.File.separator;
-import static org.nexial.core.NexialConst.DEF_FILE_ENCODING;
 import static org.nexial.core.NexialConst.Data.SHEET_SYSTEM;
 import static org.nexial.core.NexialConst.ExitStatus.RC_BAD_CLI_ARGS;
-import static org.nexial.core.NexialConst.Project.NEXIAL_HOME;
-import static org.nexial.core.NexialConst.Project.appendCommandJson;
+import static org.nexial.core.NexialConst.Project.COMMAND_JSON_FILE_NAME;
+import static org.nexial.core.NexialConst.SCRIPT_UPDATE_ERR_MSG;
 import static org.nexial.core.excel.ExcelConfig.*;
 import static org.nexial.core.plugins.base.BaseCommand.PARAM_AUTO_FILL_COMMANDS;
 import static org.nexial.core.tools.CliConst.OPT_VERBOSE;
@@ -135,20 +134,19 @@ public class TestScriptUpdater {
         }
     }
 
-    protected ScriptMetadata retrieveMetadata() throws IOException {
-        String nexialHome = System.getProperty(NEXIAL_HOME);
-        if (StringUtils.isBlank(nexialHome)) {
-            throw new IOException("Unable to retrieve metadata: System property " + NEXIAL_HOME + " not defined");
+    protected ScriptMetadata retrieveMetadata() {
+        try {
+            String commandJson = ResourceUtils.loadResource("/" + COMMAND_JSON_FILE_NAME);
+            if (StringUtils.isEmpty(commandJson)) {
+                System.err.println(SCRIPT_UPDATE_ERR_MSG);
+                System.exit(-1);
+            }
+            return GSON.fromJson(commandJson, ScriptMetadata.class);
+        } catch (Exception e) {
+            System.err.println(SCRIPT_UPDATE_ERR_MSG);
+            System.exit(-1);
         }
-
-        String metadataPath = appendCommandJson(nexialHome);
-        if (!FileUtil.isFileReadable(metadataPath, 1024)) {
-            throw new IOException("Unable to retrieve metadata from " + metadataPath);
-        }
-
-        String metadata = FileUtils.readFileToString(new File(metadataPath), DEF_FILE_ENCODING);
-
-        return GSON.fromJson(metadata, ScriptMetadata.class);
+        return null;
     }
 
     protected void update(final ScriptMetadata metadata) {

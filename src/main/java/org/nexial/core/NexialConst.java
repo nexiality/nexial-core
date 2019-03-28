@@ -53,7 +53,8 @@ import static java.awt.Color.*;
 import static java.awt.image.BufferedImage.*;
 import static java.io.File.separator;
 import static javax.naming.Context.*;
-import static org.apache.commons.lang3.SystemUtils.*;
+import static org.apache.commons.lang3.SystemUtils.IS_OS_WINDOWS;
+import static org.apache.commons.lang3.SystemUtils.USER_HOME;
 import static org.nexial.core.NexialConst.AwsSettings.*;
 import static org.nexial.core.NexialConst.Data.*;
 import static org.nexial.core.NexialConst.Integration.MAIL_PREFIX;
@@ -95,6 +96,7 @@ public final class NexialConst {
     public static final String DEF_SPRING_XML = "/nexial.xml";
     public static final String ENV_NEXIAL_LIB = "NEXIAL_LIB";
     public static final String ENV_NEXIAL_HOME = "NEXIAL_HOME";
+    public static final String TEMP = StringUtils.appendIfMissing(System.getProperty("java.io.tmpdir"), separator);
 
     // predefined variables/switches
     public static final String NAMESPACE = "nexial.";
@@ -312,6 +314,8 @@ public final class NexialConst {
     public static final String MSG_WARN = ExcelConfig.MSG_WARN;
     public static final String MSG_SKIPPED = ExcelConfig.MSG_SKIPPED;
     public static final String MSG_CHECK_SUPPORT = "Check with Nexial Support Group for details.";
+    public static final String SCRIPT_UPDATE_ERR_MSG = "Error... Unable to update scripts: " +
+                                                       "command meta data not found; " + MSG_CHECK_SUPPORT;
     public static final String COMMENT_AUTHOR = "NexialBot";
 
     public static final String PREFIX_JAR = "jar:";
@@ -529,8 +533,7 @@ public final class NexialConst {
         public static final long DEF_LOCAL_START_WAITMS = 5000;
         public static final long MAX_LOCAL_START_WAITMS = 20000;
         public static final String AUTO_LOCAL_START_WAIT = "auto";
-        public static final String LOCAL_READY_FILE =
-            StringUtils.appendIfMissing(JAVA_IO_TMPDIR, separator) + "nexial.cbtlocal.ready";
+        public static final String LOCAL_READY_FILE = TEMP + "nexial.cbtlocal.ready";
 
         // project meta
         public static final String KEY_NAME = "name";
@@ -597,6 +600,11 @@ public final class NexialConst {
         public static final String DATA_FILE_SUFFIX = "data." + SCRIPT_FILE_SUFFIX;
         public static final String DEF_DATAFILE_SUFFIX = "." + DATA_FILE_SUFFIX;
 
+        // for command json metadata
+        public static final String COMMAND_JSON_FILE_NAME = "nexial.script.metadata.json";
+        public static final String JSON_FOLDER = TEMP + "nexial-json" + separator;
+        public static final File COMMAND_JSON_FILE = new File(JSON_FOLDER + COMMAND_JSON_FILE_NAME);
+
         public static final String PROJECT_CACHE_LOCATION = StringUtils.appendIfMissing(
             new File(StringUtils.appendIfMissing(USER_HOME, separator) + ".nexial" + separator + "projectCache")
                 .getAbsolutePath(),
@@ -619,10 +627,6 @@ public final class NexialConst {
         public static String appendScript(String dir) { return appendSep(dir) + DEF_REL_LOC_TEST_SCRIPT; }
 
         public static String appendOutput(String dir) { return appendSep(dir) + DEF_REL_LOC_OUTPUT; }
-
-        public static String appendCommandJson(String homePath) {
-            return appendSep(homePath) + "template" + separator + "nexial.script.metadata.json";
-        }
 
         public static TestProject resolveStandardPaths(TestProject project) {
             if (project.isStandardStructure()) {

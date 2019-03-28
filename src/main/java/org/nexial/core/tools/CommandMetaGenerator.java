@@ -32,6 +32,7 @@ import static org.nexial.core.NexialConst.DEF_SPRING_XML;
 import static org.nexial.core.NexialConst.Data.COMMAND_DISCOVERY_MODE;
 import static org.nexial.core.NexialConst.ExitStatus.RC_FILE_GEN_FAILED;
 import static org.nexial.core.NexialConst.OPT_SPRING_XML;
+import static org.nexial.core.tools.VarCommandGenerator.generateVarCommands;
 
 public class CommandMetaGenerator {
     private static final Options cmdlineOptions = new Options();
@@ -47,6 +48,7 @@ public class CommandMetaGenerator {
         if (generator == null) { System.exit(-1); }
 
         generator.generate();
+        generateVarCommands();
     }
 
     public void setVerbose(boolean verbose) { this.verbose = verbose;}

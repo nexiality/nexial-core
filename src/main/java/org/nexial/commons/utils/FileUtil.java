@@ -17,6 +17,7 @@
 
 package org.nexial.commons.utils;
 
+import java.io.BufferedInputStream;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
@@ -28,6 +29,8 @@ import java.util.Collection;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Objects;
+import java.util.jar.JarEntry;
+import java.util.jar.JarOutputStream;
 import java.util.stream.Collectors;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipException;
@@ -499,6 +502,44 @@ public final class FileUtil {
             }
         }
     }
+
+    public static void addToJar(File source, JarOutputStream target, String parent)
+        throws IOException {
+        String name =
+            StringUtils.substringAfter(
+                StringUtils.appendIfMissing(source.getPath().replace("\\", "/"), "/").trim(),
+                StringUtils.replace(parent, "\\", "/"));
+
+        BufferedInputStream in = null;
+        try {
+            JarEntry entry = new JarEntry(name);
+            entry.setTime(source.lastModified());
+            target.putNextEntry(entry);
+
+            if (source.isDirectory()) {
+                target.closeEntry();
+                File[] files = source.listFiles();
+                if (files != null && files.length > 0) {
+                    for (File nestedFile : files) { addToJar(nestedFile, target, parent); }
+                }
+                return;
+            }
+
+            in = new BufferedInputStream(new FileInputStream(source));
+
+            byte[] buffer = new byte[1024];
+            while (true) {
+                int count = in.read(buffer);
+                if (count == -1) { break; }
+                target.write(buffer, 0, count);
+            }
+
+            target.closeEntry();
+        } finally {
+            if (in != null) { in.close(); }
+        }
+    }
+
 
     public static boolean isSuitableAsPath(String contentOrFile) {
         return StringUtils.containsNone(contentOrFile, '\n', '\r', '\t', '{', '}', '?', '<', '>', '|');
