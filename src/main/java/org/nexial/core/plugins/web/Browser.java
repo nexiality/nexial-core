@@ -313,8 +313,8 @@ public class Browser implements ForcefulTerminate {
             }
 
             if (timeoutChangesEnabled) {
-                int pageLoadTimeout = context.getIntData(OPT_WEB_PAGE_LOAD_WAIT_MS,
-                                                         getDefaultInt(OPT_WEB_PAGE_LOAD_WAIT_MS));
+                int pageLoadTimeout = context.getIntData(WEB_WEB_PAGE_LOAD_WAIT_MS,
+                                                         getDefaultInt(WEB_WEB_PAGE_LOAD_WAIT_MS));
                 timeouts.pageLoadTimeout(pageLoadTimeout, MILLISECONDS);
                 ConsoleUtils.log("setting browser page load timeout to " + pageLoadTimeout + " ms");
             }

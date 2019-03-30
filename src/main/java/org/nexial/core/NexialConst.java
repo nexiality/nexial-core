@@ -314,8 +314,8 @@ public final class NexialConst {
     public static final String MSG_WARN = ExcelConfig.MSG_WARN;
     public static final String MSG_SKIPPED = ExcelConfig.MSG_SKIPPED;
     public static final String MSG_CHECK_SUPPORT = "Check with Nexial Support Group for details.";
-    public static final String SCRIPT_UPDATE_ERR_MSG = "Error... Unable to update scripts: " +
-                                                       "command meta data not found; " + MSG_CHECK_SUPPORT;
+    public static final String MSG_SCRIPT_UPDATE_ERR = "ERROR: Failed to update scripts due to command metadata " +
+                                                       "missing; " + MSG_CHECK_SUPPORT;
     public static final String COMMENT_AUTHOR = "NexialBot";
 
     public static final String PREFIX_JAR = "jar:";
@@ -847,11 +847,11 @@ public final class NexialConst {
         public static final String KEY_EMU_USER_AGENT = registerSystemVariable(NS_EMULATION + "userAgent");
 
         public static final String NS_WEB = NAMESPACE + "web.";
-        public static final String OPT_WEB_PAGE_LOAD_WAIT_MS = registerSystemVariable(NS_WEB + "pageLoadWaitMs", 10000);
+        public static final String WEB_WEB_PAGE_LOAD_WAIT_MS = registerSystemVariable(NS_WEB + "pageLoadWaitMs", 10000);
         public static final String WEB_UNFOCUS_AFTER_TYPE = registerSystemVariable(NS_WEB + "unfocusAfterType", false);
         public static final String WEB_ALWAYS_WAIT = registerSystemVariable(NS_WEB + "alwaysWait", false);
-        public static final String OPT_PREEMPTIVE_ALERT_CHECK = registerSystemVariable(NS_WEB + "preemptiveAlertCheck", false);
-        public static final String OPT_CLEAR_WITH_BACKSPACE = registerSystemVariable(NS_WEB + "clearWithBackspace", false);
+        public static final String WEB_PREEMPTIVE_ALERT_CHECK = registerSystemVariable(NS_WEB + "preemptiveAlertCheck", false);
+        public static final String WEB_CLEAR_WITH_BACKSPACE = registerSystemVariable(NS_WEB + "clearWithBackspace", false);
 
         public static final String OPT_FORCE_IE_32 = registerSystemVariable(NAMESPACE + "forceIE32", false);
 

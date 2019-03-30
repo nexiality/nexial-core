@@ -1058,7 +1058,7 @@ public class WebCommand extends BaseCommand implements CanTakeScreenshot, CanLog
         driver.get("about:blank");
 
         StopWatch stopWatch = StopWatch.createStarted();
-        long maxLoadTime = context.getIntData(OPT_WEB_PAGE_LOAD_WAIT_MS, getDefaultInt(OPT_WEB_PAGE_LOAD_WAIT_MS));
+        long maxLoadTime = context.getIntData(WEB_WEB_PAGE_LOAD_WAIT_MS, getDefaultInt(WEB_WEB_PAGE_LOAD_WAIT_MS));
 
         url = validateUrl(url);
         String linkToUrl = "var a = document.createElement(\"a\");" +
@@ -1603,7 +1603,7 @@ public class WebCommand extends BaseCommand implements CanTakeScreenshot, CanLog
         String before = element.getAttribute("value");
 
         if (browser.isRunElectron() ||
-            context.getBooleanData(OPT_CLEAR_WITH_BACKSPACE, getDefaultBool(OPT_CLEAR_WITH_BACKSPACE))) {
+            context.getBooleanData(WEB_CLEAR_WITH_BACKSPACE, getDefaultBool(WEB_CLEAR_WITH_BACKSPACE))) {
             if (StringUtils.isNotEmpty(before)) {
                 // persistently delete character.. but if app insist on "autocompleting" then we'll give up
                 String beforeBackspace;

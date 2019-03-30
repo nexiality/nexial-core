@@ -118,6 +118,40 @@ public class ExecutionContextTest {
     }
 
     @Test
+    public void replaceTokens_array_as_string() {
+        MockExecutionContext subject = initMockContext();
+        subject.setData("a", "Hello,World,Johnny boy");
+
+        Assert.assertEquals("Hello", subject.replaceTokens("${a}[0]"));
+        Assert.assertEquals("World", subject.replaceTokens("${a}[1]"));
+        Assert.assertEquals("Johnny boy", subject.replaceTokens("${a}[2]"));
+        Assert.assertEquals("Hello,World,Johnny boy", subject.replaceTokens("${a}"));
+
+        Assert.assertEquals("[1]", subject.replaceTokens("${b}[1]"));
+
+        subject.setData("just a number", 571);
+
+        Assert.assertEquals("571", subject.replaceTokens("${just a number}"));
+        Assert.assertEquals("571", subject.replaceTokens("${just a number}[0]"));
+
+        Assert.assertEquals("Hello World!", subject.replaceTokens("${a}[0] ${a}[1]!"));
+        Assert.assertEquals("Who's Johnny boy? Where in the World is he?",
+                            subject.replaceTokens("Who's ${a}[2]? Where in the ${a}[1] is he?"));
+
+        // invalid ref test
+        Assert.assertEquals("", subject.replaceTokens("${a}[22]"));
+        Assert.assertEquals("571[2]", subject.replaceTokens("${just a number}[2]"));
+        Assert.assertEquals("Who's Johnny boy? Where in the World is he? How about ",
+                            subject.replaceTokens("Who's ${a}[2]? Where in the ${a}[1] is he? How about ${a}[4]"));
+
+        subject.setData(OPT_VAR_DEFAULT_AS_IS, "true");
+        Assert.assertEquals("Who's Johnny boy? Where in the World is he? How about Hello,World,Johnny boy[4]",
+                            subject.replaceTokens("Who's ${a}[2]? Where in the ${a}[1] is he? How about ${a}[4]"));
+
+        subject.cleanProject();
+    }
+
+    @Test
     public void replaceTokens_array() {
         MockExecutionContext subject = initMockContext();
         subject.setData("a", "Hello,World,Johnny boy");

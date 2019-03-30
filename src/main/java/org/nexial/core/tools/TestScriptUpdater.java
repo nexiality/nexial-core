@@ -54,7 +54,7 @@ import static java.io.File.separator;
 import static org.nexial.core.NexialConst.Data.SHEET_SYSTEM;
 import static org.nexial.core.NexialConst.ExitStatus.RC_BAD_CLI_ARGS;
 import static org.nexial.core.NexialConst.Project.COMMAND_JSON_FILE_NAME;
-import static org.nexial.core.NexialConst.SCRIPT_UPDATE_ERR_MSG;
+import static org.nexial.core.NexialConst.MSG_SCRIPT_UPDATE_ERR;
 import static org.nexial.core.excel.ExcelConfig.*;
 import static org.nexial.core.plugins.base.BaseCommand.PARAM_AUTO_FILL_COMMANDS;
 import static org.nexial.core.tools.CliConst.OPT_VERBOSE;
@@ -138,12 +138,12 @@ public class TestScriptUpdater {
         try {
             String commandJson = ResourceUtils.loadResource("/" + COMMAND_JSON_FILE_NAME);
             if (StringUtils.isEmpty(commandJson)) {
-                System.err.println(SCRIPT_UPDATE_ERR_MSG);
+                System.err.println(MSG_SCRIPT_UPDATE_ERR);
                 System.exit(-1);
             }
             return GSON.fromJson(commandJson, ScriptMetadata.class);
         } catch (Exception e) {
-            System.err.println(SCRIPT_UPDATE_ERR_MSG);
+            System.err.println(MSG_SCRIPT_UPDATE_ERR);
             System.exit(-1);
         }
         return null;

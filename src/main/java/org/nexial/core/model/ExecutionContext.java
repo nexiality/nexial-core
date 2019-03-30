@@ -757,6 +757,11 @@ public class ExecutionContext {
 
             allTokenResolvedToNull = false;
 
+            if (value.equals(NULL)) {
+                text = StringUtils.replace(text, tokenized, "");
+                continue;
+            }
+
             if (value.equals(EMPTY)) {
                 text = StringUtils.replace(text, tokenized, "");
                 continue;
@@ -772,14 +777,55 @@ public class ExecutionContext {
                 continue;
             }
 
+            if (value.equals(NL)) {
+                text = StringUtils.replace(text, tokenized, "\t");
+                continue;
+            }
+
             Class valueType = value.getClass();
             if (valueType.isPrimitive() || SIMPLE_VALUES.contains(valueType)) {
-                // if there's substitution for ${...}[] and the `value` can be treated as list
-                // if (isListCompatible(value) && containListAccess(text, tokenized)) {
-                //     collectionValues.put(token, StringUtils.split(value.toString(), getTextDelim()));
-                // } else {
+
+                String stringValue = StringUtils.defaultString(getStringData(token));
+
+                // it's possible that we might get a reference to an item of a string-based array (like "a,b,c,d")
+                // check to see if there's any reference to the ${var}[index] pattern
+                if (isListCompatible(stringValue)) {
+                    String regexIndexRef = "\\$\\{" + token + "\\}\\[\\d+\\]";
+                    boolean hasIndexRef = RegexUtils.match(text, regexIndexRef, true);
+
+                    // if there's substitution for ${...}[#] and the `value` can be treated as list
+                    if (hasIndexRef) {
+                        String beforeIndex = TOKEN_START + token + TOKEN_END + TOKEN_ARRAY_START;
+                        String afterIndex = TOKEN_ARRAY_END;
+
+                        String[] array = StringUtils.split(stringValue, getTextDelim());
+
+                        List<String> indexRefs = RegexUtils.eagerCollectGroups(text, regexIndexRef, false, true);
+                        for (String indexRef : indexRefs) {
+                            String indexStr = StringUtils.substringBetween(indexRef, beforeIndex, afterIndex);
+
+                            if (!NumberUtils.isDigits(indexStr)) { continue; }
+
+                            int index = NumberUtils.toInt(indexStr);
+                            String itemValue;
+                            if (ArrayUtils.isArrayIndexValid(array, index)) {
+                                itemValue = array[index];
+                            } else {
+                                if (unresolvedAsIs) { continue; }
+                                itemValue = "";
+                            }
+                            text = StringUtils.replace(text, beforeIndex + indexStr + afterIndex, itemValue);
+                        }
+                    }
+
+                } else {
+                    // then only ${var}[0] would make sense; single value is the same as the first item
+                    String firstIndexRef = "${" + token + "}[0]";
+                    text = StringUtils.replace(text, firstIndexRef, stringValue);
+                }
+
+                // finally replace token after all index ref's are handled
                 text = StringUtils.replace(text, tokenized, StringUtils.defaultString(getStringData(token)));
-                // }
             } else if (Collection.class.isAssignableFrom(valueType) || valueType.isArray()) {
                 collectionValues.put(token, value);
             } else {
@@ -1227,8 +1273,9 @@ public class ExecutionContext {
         return System.getProperty(name, MapUtils.getString(data, name, def));
     }
 
-    protected boolean isListCompatible(Object value) {
-        return !Objects.isNull(value) && StringUtils.contains(value.toString(), getTextDelim());
+    protected boolean isListCompatible(String value) {
+        @NotNull String delim = getTextDelim();
+        return StringUtils.isNotBlank(value) && !StringUtils.equals(value, delim) && StringUtils.contains(value, delim);
     }
 
     protected boolean containListAccess(String text, String tokenized) {
