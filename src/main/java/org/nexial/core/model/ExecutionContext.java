@@ -1274,7 +1274,7 @@ public class ExecutionContext {
     }
 
     protected boolean isListCompatible(String value) {
-        @NotNull String delim = getTextDelim();
+        String delim = getTextDelim();
         return StringUtils.isNotBlank(value) && !StringUtils.equals(value, delim) && StringUtils.contains(value, delim);
     }
 
