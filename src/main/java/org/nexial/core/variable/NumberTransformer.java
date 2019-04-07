@@ -20,7 +20,6 @@ package org.nexial.core.variable;
 import java.lang.reflect.Method;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
-import java.text.DecimalFormat;
 import java.util.Map;
 import javax.validation.constraints.NotNull;
 
@@ -28,6 +27,7 @@ import org.apache.commons.lang3.ArrayUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.math.NumberUtils;
 import org.nexial.commons.utils.RegexUtils;
+import org.nexial.core.plugins.base.NumberCommand;
 import org.nexial.core.utils.ConsoleUtils;
 
 import static java.math.RoundingMode.UP;
@@ -43,7 +43,7 @@ public class NumberTransformer<T extends NumberDataType> extends Transformer {
 
     public TextDataType text(T data) { return super.text(data); }
 
-    public T round(T data) {
+    public T whole(T data) {
         if (data == null || data.getTextValue() == null) { return data; }
 
         Number number = data.getValue();
@@ -71,34 +71,9 @@ public class NumberTransformer<T extends NumberDataType> extends Transformer {
         if (number == null) { return data; }
 
         double num = number.doubleValue();
+        // String rounded = NumberCommand.roundNum(num, closestDigit);
+        String rounded = NumberCommand.roundTo(num, closestDigit);
 
-        // figure out the specified number of whole numbers and fractional digits
-        int wholeNumberCount = StringUtils.length(StringUtils.substringBefore(closestDigit, "."));
-        int fractionDigitCount = StringUtils.length(StringUtils.substringAfter(closestDigit, "."));
-
-        // we will only use this divisor if there's a whole number or if closestDigit looks like 0.xxx
-        // this means that if user specifies
-        //  - closestDigit = 0.00, then we will round number to closest 2-digit decimal
-        //  - closestDigit = 1.00, then we will round number to closest 2-digit decimal
-        //  - closestDigit =  .00, then we will round number to closest 2-digit decimal
-        //  - closestDigit = 1.0,  then we will round number to closest 1-digit decimal
-        //  - closestDigit = 9.0,  then we will round number to closest 1-digit decimal
-        //  - closestDigit = 5,    then we will round number to closest 1's whole number
-        //  - closestDigit = 10.00, then we will round number to closest 10's whole number
-        //  - closestDigit = 10.99, then we will round number to closest 10's whole number
-        //  - closestDigit = 10.0,  then we will round number to closest 10's whole number
-        double closestWhole = 0;
-        if (wholeNumberCount > 1) {
-            closestWhole = NumberUtils.toDouble("1" + StringUtils.repeat("0", wholeNumberCount - 1));
-            // since we are rounding to closest 10's or higher position, decimal places have no meaning here
-            fractionDigitCount = 0;
-        }
-
-        DecimalFormat df = new DecimalFormat();
-        df.setGroupingUsed(false);
-        df.setMaximumFractionDigits(fractionDigitCount);
-        df.setMinimumFractionDigits(fractionDigitCount);
-        String rounded = df.format(closestWhole == 0 ? num : Math.round(num / closestWhole) * closestWhole);
         data.setTextValue(rounded);
         data.setValue(NumberUtils.createNumber(rounded));
 

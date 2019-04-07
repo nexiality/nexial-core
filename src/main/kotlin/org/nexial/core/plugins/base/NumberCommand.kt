@@ -123,31 +123,28 @@ class NumberCommand : BaseCommand() {
         return StepResult.success("Variable '$Var' has been round down to $floor")
     }
 
-    fun round(Var: String, closestDigit: String): StepResult {
+    fun whole(Var: String): StepResult {
+        requiresValidVariableName(Var)
+
+        val current = StringUtils.defaultString(context.getStringData(Var))
+
+        requires(NumberUtils.isParsable(current), "not valid number", Var)
+
+        val floor = Math.round(NumberUtils.toDouble(current)).toInt()
+
+        context.setData(Var, floor)
+
+        return StepResult.success("Variable '$Var' has been round down to $floor")
+    }
+
+    fun roundTo(Var: String, closestDigit: String): StepResult {
         requiresValidVariableName(Var)
 
         val current = StringUtils.defaultString(context.getStringData(Var))
 
         requires(NumberUtils.isParsable(current), "Variable does not contain correct number format", Var)
 
-        val num = NumberUtils.toDouble(current)
-        var closest = NumberUtils.toDouble(closestDigit)
-        val fractionDigitCount = StringUtils.length(StringUtils.substringAfter(closestDigit + "", "."))
-
-        val rounded: String = if (fractionDigitCount == 0) {
-            (Math.round(num / closest) * closest).toInt().toString() + ""
-        } else {
-            if (closest == 0.0) {
-                closest = NumberUtils.toDouble("0." + (StringUtils.repeat("0", fractionDigitCount - 1) + "1"))
-            }
-
-            val df = DecimalFormat()
-            df.isGroupingUsed = false
-            df.maximumFractionDigits = fractionDigitCount
-            df.minimumFractionDigits = fractionDigitCount
-            df.format(Math.round(num / closest) * closest)
-        }
-
+        val rounded = roundTo(NumberUtils.toDouble(current), closestDigit)
         updateDataVariable(Var, rounded)
         return StepResult.success("Variable '$Var' has been rounded down to $rounded")
     }
@@ -174,5 +171,40 @@ class NumberCommand : BaseCommand() {
         requires(NumberUtils.isParsable(amount), "Variable does not contain correct number format", amount)
 
         return formatHelper
+    }
+
+    companion object {
+        @JvmStatic
+        fun roundTo(num: Double, closestDigit: String): String {
+            // figure out the specified number of whole numbers and fractional digits
+            val wholeNumberCount = StringUtils.length(StringUtils.substringBefore(closestDigit, "."))
+            var fractionDigitCount = StringUtils.length(StringUtils.substringAfter(closestDigit, "."))
+
+            // we will only use this divisor if there's a whole number or if closestDigit looks like 0.xxx
+            // this means that if user specifies
+            //  - closestDigit = 0.00, then we will round number to closest 2-digit decimal
+            //  - closestDigit = 1.00, then we will round number to closest 2-digit decimal
+            //  - closestDigit =  .00, then we will round number to closest 2-digit decimal
+            //  - closestDigit = 1.0,  then we will round number to closest 1-digit decimal
+            //  - closestDigit = 9.0,  then we will round number to closest 1-digit decimal
+            //  - closestDigit = 5,    then we will round number to closest 1's whole number
+            //  - closestDigit = 10.00, then we will round number to closest 10's whole number
+            //  - closestDigit = 10.99, then we will round number to closest 10's whole number
+            //  - closestDigit = 10.0,  then we will round number to closest 10's whole number
+            var closestWhole = 0.0
+            if (wholeNumberCount > 1) {
+                closestWhole = NumberUtils.toDouble("1" + StringUtils.repeat("0", wholeNumberCount - 1))
+                // since we are rounding to closest 10's or higher position, decimal places have no meaning here
+                fractionDigitCount = 0
+            } else if (closestWhole == 0.0) {
+                closestWhole = NumberUtils.toDouble("0." + (StringUtils.repeat("0", fractionDigitCount - 1) + "1"))
+            }
+
+            val df = DecimalFormat()
+            df.isGroupingUsed = false
+            df.maximumFractionDigits = fractionDigitCount
+            df.minimumFractionDigits = fractionDigitCount
+            return df.format(Math.round(num / closestWhole) * closestWhole)
+        }
     }
 }

@@ -35,6 +35,7 @@ import org.nexial.core.excel.ExcelArea
 import org.nexial.core.excel.ExcelConfig.*
 import org.nexial.core.model.MacroMerger
 import org.nexial.core.model.TestProject
+import org.nexial.core.tools.CliConst.OPT_PREVIEW
 import org.nexial.core.tools.CliConst.OPT_VERBOSE
 import org.nexial.core.tools.CliUtils.getCommandLine
 import org.nexial.core.tools.CliUtils.newArgOption
@@ -54,9 +55,10 @@ import java.io.IOException
 import javax.validation.constraints.NotNull
 
 object MacroUpdater {
-    private var searchFrom = ""
     private val updated = mutableListOf<UpdateLog>()
     private val project = TestProject()
+    private var searchFrom = ""
+    private var isDryRun = false
 
     data class MacroOptions(val macroFile: String, val macroSheet: String, val macroMap: MutableMap<String, String>)
 
@@ -77,11 +79,12 @@ object MacroUpdater {
         replaceScript(options)
 
         val banner = StringUtils.repeat('-', 100)
+        val prompt = if (isDryRun) " macro name update preview" else " macro name update summary"
 
         println()
         println()
         println("/$banner\\")
-        println("|" + ConsoleUtils.centerPrompt(" macro name update summary", 100) + "|")
+        println("|" + ConsoleUtils.centerPrompt(prompt, 100) + "|")
         println("\\$banner/")
         if (updated.size == 0) {
             println(ConsoleUtils.centerPrompt("There are no matching data variables in the files.", 102))
@@ -96,6 +99,7 @@ object MacroUpdater {
     private fun deriveCommandLine(args: Array<String>): CommandLine {
         val cmdOptions = Options()
         cmdOptions.addOption(OPT_VERBOSE)
+        cmdOptions.addOption(OPT_PREVIEW)
         cmdOptions.addOption(newArgOption("t", "target", "[REQUIRED] The project home to scan", true))
         cmdOptions.addOption(newArgOption("f", "file", "[REQUIRED] The macro file name to scan", true))
         cmdOptions.addOption(newArgOption("s", "sheet", "[REQUIRED] The macro sheet to search in", false))
@@ -116,6 +120,10 @@ object MacroUpdater {
         if (StringUtils.isBlank(searchFrom)) {
             ConsoleUtils.error("Missing target parameter")
             exit(MISSING_DIRECTORY)
+        }
+
+        if (cmd.hasOption("p")) {
+            isDryRun = true
         }
 
         var macroFileName = cmd.getOptionValue("f")
@@ -199,12 +207,15 @@ object MacroUpdater {
                     if (StringUtils.equals(macroFilePath, expectedMacroFile.absolutePath) &&
                         macroSheet == options.macroSheet &&
                         options.macroMap.containsKey(macroName)) {
-                        macroCell.setCellValue(options.macroMap[macroName])
-
                         updateLog.position = macroCell.address.formatAsString()
                         updateLog.before = macroName
                         updateLog.after = "${options.macroMap[macroName]}"
                         updated.add(updateLog)
+
+                        // don't set value to preview changes
+                        if (isDryRun) continue
+
+                        macroCell.setCellValue(options.macroMap[macroName])
                         hasUpdate = true
                     }
                 } catch (e: IOException) {
@@ -256,13 +267,15 @@ object MacroUpdater {
             val cell = row[COL_IDX_TESTCASE]
             val macro = Excel.getCellValue(cell)
             if (toMap.containsKey(macro)) {
-                cell.setCellValue(toMap[macro])
-
                 updateLog.position = cell.address.formatAsString()
                 updateLog.before = macro
                 updateLog.after = toMap[macro] ?: ""
                 updated.add(updateLog)
 
+                // don't set value to preview changes
+                if (isDryRun) continue
+
+                cell.setCellValue(toMap[macro])
                 hasUpdate = true
             }
         }

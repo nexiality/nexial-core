@@ -366,7 +366,7 @@ class NumberCommandTest {
 
     @Test
     @Throws(Exception::class)
-    fun testRound() {
+    fun testRoundTo() {
         val fixture = NumberCommand()
 
         fixture.init(context)
@@ -376,7 +376,7 @@ class NumberCommandTest {
         // null/empty/blank
         try {
             context.removeData(variableName)
-            fixture.round(variableName, "1")
+            fixture.roundTo(variableName, "1")
             Assert.fail("expected failure due to null value")
         } catch (e: AssertionError) {
         }
@@ -384,7 +384,7 @@ class NumberCommandTest {
 
         try {
             context.setData(variableName, "")
-            fixture.round(variableName, "1")
+            fixture.roundTo(variableName, "1")
             Assert.fail("expected failure due to empty value")
         } catch (e: AssertionError) {
         }
@@ -392,52 +392,135 @@ class NumberCommandTest {
 
         try {
             context.setData(variableName, " ")
-            fixture.round(variableName, "1")
+            fixture.roundTo(variableName, "1")
             Assert.fail("expected failure due to blank value")
         } catch (e: AssertionError) {
         }
 
         try {
             context.setData(variableName, 1)
-            fixture.round(variableName, "")
+            fixture.roundTo(variableName, "")
             Assert.fail("expected failure due to blank value")
         } catch (e: AssertionError) {
         }
 
         // happy path
         context.setData(variableName, 1)
-        Assert.assertTrue(fixture.round(variableName, "1").isSuccess)
+        Assert.assertTrue(fixture.roundTo(variableName, "1").isSuccess)
         Assert.assertEquals(1.0, NumberUtils.toDouble(context.getStringData(variableName)), 0.0)
 
         context.setData(variableName, 1)
-        Assert.assertTrue(fixture.round(variableName, "0.1").isSuccess)
+        Assert.assertTrue(fixture.roundTo(variableName, "0.1").isSuccess)
         Assert.assertEquals(1.0, NumberUtils.toDouble(context.getStringData(variableName)), 0.0)
 
         context.setData(variableName, 1)
-        Assert.assertTrue(fixture.round(variableName, "10").isSuccess)
+        Assert.assertTrue(fixture.roundTo(variableName, "10").isSuccess)
         Assert.assertEquals(0.0, NumberUtils.toDouble(context.getStringData(variableName)), 0.0)
 
         context.setData(variableName, 56.00024)
-        Assert.assertTrue(fixture.round(variableName, "10").isSuccess)
+        Assert.assertTrue(fixture.roundTo(variableName, "10").isSuccess)
         Assert.assertEquals(60.0, NumberUtils.toDouble(context.getStringData(variableName)), 0.0)
 
+        context.setData(variableName, 353.254)
+        Assert.assertTrue(fixture.roundTo(variableName, "90").isSuccess)
+        Assert.assertEquals(350.0, NumberUtils.toDouble(context.getStringData(variableName)), 0.0)
+
+        context.setData(variableName, 353.265)
+        Assert.assertTrue(fixture.roundTo(variableName, "0.00").isSuccess)
+        Assert.assertEquals(353.27, NumberUtils.toDouble(context.getStringData(variableName)), 0.0)
+
+        context.setData(variableName, 353.254)
+        Assert.assertTrue(fixture.roundTo(variableName, "0.01").isSuccess)
+        Assert.assertEquals(353.25, NumberUtils.toDouble(context.getStringData(variableName)), 0.0)
+
+        context.setData(variableName, 353.256)
+        Assert.assertTrue(fixture.roundTo(variableName, "1.00").isSuccess)
+        Assert.assertEquals(353.26, NumberUtils.toDouble(context.getStringData(variableName)), 0.0)
+
         context.setData(variableName, 56.00024)
-        Assert.assertTrue(fixture.round(variableName, "1").isSuccess)
+        Assert.assertTrue(fixture.roundTo(variableName, "1").isSuccess)
         Assert.assertEquals(56.0, NumberUtils.toDouble(context.getStringData(variableName)), 0.0)
 
         context.setData(variableName, 0.0960)
-        Assert.assertTrue(fixture.round(variableName, "0.1").isSuccess)
+        Assert.assertTrue(fixture.roundTo(variableName, "0.1").isSuccess)
         Assert.assertEquals(0.1, NumberUtils.toDouble(context.getStringData(variableName)), 0.0)
 
         // negative
         context.setData(variableName, -503.124)
-        Assert.assertTrue(fixture.round(variableName, "0.001").isSuccess)
+        Assert.assertTrue(fixture.roundTo(variableName, "0.001").isSuccess)
         Assert.assertEquals(-503.124, NumberUtils.toDouble(context.getStringData(variableName)), 0.0)
 
         // NaN
         try {
             context.setData(variableName, "not.a.number")
-            fixture.round(variableName, "1.0")
+            fixture.roundTo(variableName, "1.0")
+            Assert.fail("expected failure due to blank value")
+        } catch (e: AssertionError) {
+        }
+
+    }
+
+    @Test
+    @Throws(Exception::class)
+    fun testWhole() {
+        val fixture = NumberCommand()
+
+        fixture.init(context)
+
+        val variableName = "var1"
+
+        // null/empty/blank
+        try {
+            context.removeData(variableName)
+            fixture.whole(variableName)
+            Assert.fail("expected failure due to null value")
+        } catch (e: AssertionError) {
+        }
+
+        try {
+            context.setData(variableName, "")
+            fixture.whole(variableName)
+            Assert.fail("expected failure due to empty value")
+        } catch (e: AssertionError) {
+        }
+
+        try {
+            context.setData(variableName, " ")
+            fixture.whole(variableName)
+            Assert.fail("expected failure due to blank value")
+        } catch (e: AssertionError) {
+        }
+
+        // happy path
+        context.setData(variableName, 1)
+        Assert.assertTrue(fixture.whole(variableName).isSuccess)
+        Assert.assertEquals(1, NumberUtils.toInt(context.getStringData(variableName)))
+
+        context.setData(variableName, 353.465)
+        Assert.assertTrue(fixture.whole(variableName).isSuccess)
+        Assert.assertEquals(353, NumberUtils.toInt(context.getStringData(variableName)))
+
+        context.setData(variableName, 353.565)
+        Assert.assertTrue(fixture.whole(variableName).isSuccess)
+        Assert.assertEquals(354, NumberUtils.toInt(context.getStringData(variableName)))
+
+        context.setData(variableName, 0.0960)
+        Assert.assertTrue(fixture.whole(variableName).isSuccess)
+        Assert.assertEquals(0, NumberUtils.toInt(context.getStringData(variableName)))
+
+        context.setData(variableName, 0.960)
+        Assert.assertTrue(fixture.whole(variableName).isSuccess)
+        Assert.assertEquals(1, NumberUtils.toInt(context.getStringData(variableName)))
+
+        // negative
+        context.setData(variableName, -503.624)
+        Assert.assertTrue(fixture.whole(variableName).isSuccess)
+        Assert.assertEquals(-504, NumberUtils.toInt(context.getStringData(variableName)))
+
+        // NaN
+        try {
+            context.setData(variableName, "not.a.number")
+            fixture.whole(variableName)
             Assert.fail("expected failure due to blank value")
         } catch (e: AssertionError) {
         }
