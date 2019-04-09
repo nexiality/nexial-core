@@ -19,6 +19,7 @@ package org.nexial.core.plugins.web;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
+import javax.validation.constraints.NotNull;
 
 import org.apache.commons.lang3.ArrayUtils;
 import org.apache.commons.lang3.StringUtils;
@@ -41,9 +42,11 @@ public class WebDriverExceptionHelper {
 
     public String analyzeError(ExecutionContext context, TestStep step, WebDriverException e) {
         if (e == null) { return noException; }
+        return resolveCommandDetail(context, step) + "\n" + resolveErrorMessage(e);
+    }
 
-        String commandDetails = resolveCommandDetail(context, step);
-
+    @NotNull
+    public static String resolveErrorMessage(WebDriverException e) {
         String error = e.getMessage();
         String[] messageLines = StringUtils.split(error, "\n");
         String errorSummary = ArrayUtils.getLength(messageLines) > 2 ?
@@ -59,7 +62,7 @@ public class WebDriverExceptionHelper {
         if (e instanceof ElementNotSelectableException) { errorHeading = "Specified element cannot be selected: "; }
         if (e instanceof ElementNotVisibleException) { errorHeading = "Specified element is not visible: "; }
 
-        return commandDetails + "\n" + errorHeading + errorSummary;
+        return errorHeading + errorSummary;
     }
 
     private String resolveCommandDetail(ExecutionContext context, TestStep step) {

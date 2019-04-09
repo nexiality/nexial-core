@@ -748,6 +748,10 @@ public final class NexialConst {
 
         public static final String MIN_EXEC_SUCCESS_RATE = registerSystemVariable(NAMESPACE + "minExecSuccessRate", 100);
 
+        // determined by nexial.[sh|cmd] file for the purpose of allowing nexial to generate a post-execution shell
+        // script that can expose execution-level environment variables such as output file location, success rate, etc.
+        public static final String POST_EXEC_SCRIPT = registerSystemVariable(NAMESPACE + "postExecEnv");
+
         // determine if we should clear off any fail-fast state at the end of each script
         public static final String RESET_FAIL_FAST = registerSystemVariable(NAMESPACE + "resetFailFast", false);
         public static final String VERBOSE = registerSystemVariable(NAMESPACE + "verbose", false);
@@ -1167,6 +1171,7 @@ public final class NexialConst {
 
     // nexial main exit status
     public static final class ExitStatus {
+        public static final int RC_NORMAL = 0;
         public static final int RC_WARNING_FOUND = -12;
         public static final int RC_NOT_PERFECT_SUCCESS_RATE = -13;
         public static final int RC_FAILURE_FOUND = -14;

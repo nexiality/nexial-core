@@ -21,17 +21,15 @@ import java.awt.*;
 import java.io.File;
 import java.io.IOException;
 import java.time.Duration;
-import java.util.ArrayList;
 import java.util.List;
-import java.util.Objects;
-import java.util.Set;
-import java.util.Stack;
+import java.util.*;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 import javax.validation.constraints.NotNull;
 
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.collections4.IterableUtils;
+import org.apache.commons.collections4.MapUtils;
 import org.apache.commons.collections4.Predicate;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang3.ArrayUtils;
@@ -64,6 +62,7 @@ import org.nexial.core.utils.ConsoleUtils;
 import org.nexial.core.utils.OutputFileUtils;
 import org.nexial.core.utils.WebDriverUtils;
 import org.openqa.selenium.Dimension;
+import org.openqa.selenium.NoSuchElementException;
 import org.openqa.selenium.Point;
 import org.openqa.selenium.*;
 import org.openqa.selenium.WebDriver.Window;
@@ -93,6 +92,7 @@ import static org.openqa.selenium.Keys.BACK_SPACE;
 import static org.openqa.selenium.Keys.TAB;
 
 public class WebCommand extends BaseCommand implements CanTakeScreenshot, CanLogExternally, RequireBrowser {
+    private static final String SUFFIX_LOCATOR = ".locator";
     protected Browser browser;
     protected WebDriver driver;
     protected JavascriptExecutor jsExecutor;
@@ -359,12 +359,86 @@ public class WebCommand extends BaseCommand implements CanTakeScreenshot, CanLog
         return locatorHelper.assertElementCount(locator, count);
     }
 
+    @NotNull
     public StepResult assertElementPresent(String locator) {
         if (isElementPresent(locator)) {
             return StepResult.success("EXPECTED element '" + locator + "' found");
         } else {
             ConsoleUtils.log("Expected element not found at " + locator);
             return StepResult.fail("Expected element not found at " + locator);
+        }
+    }
+
+    /**
+     * assert multiple "element presence" via prefix. So that we can perform multiple validations in one go. For example,
+     * <pre>
+     * LoginForm.username.locator   css=#username
+     * LoginForm.password.locator   css=#password
+     * LoginForm.submit.locator     css=button.loginSubmit
+     * </pre>
+     *
+     * One can invoke validation across all "LoginForm" elements, which in this case would be 3.
+     *
+     * "LoginForm" is custom prefix. ".locator" is the required suffix.
+     */
+    @NotNull
+    public StepResult assertElementsPresent(String prefix) {
+        requiresNotBlank(prefix, "Invalid prefix", prefix);
+
+        Map<String, String> locators = context.getDataByPrefix(prefix);
+        if (MapUtils.isEmpty(locators)) {
+            return StepResult.fail("No data variables found via prefix '" + prefix + "'");
+        }
+
+        Set<String> keys = locators.keySet();
+        for (String key : keys) { if (!key.endsWith(SUFFIX_LOCATOR)) { locators.remove(key); } }
+
+        if (MapUtils.isEmpty(locators)) {
+            return StepResult.fail("No data variables found via prefix '" + prefix + "' contains the required " +
+                                   "'" + SUFFIX_LOCATOR + "' suffix");
+        }
+
+        boolean allPassed = true;
+        StringBuilder logs = new StringBuilder();
+        keys = locators.keySet();
+        for (String key : keys) {
+            String name = StringUtils.substringBefore(key, SUFFIX_LOCATOR);
+            String locator = locators.get(key);
+
+            String message = "[" + name + "] ";
+
+            try {
+                StepResult isPresent = assertElementPresent(locator);
+                if (isPresent.isSuccess()) {
+                    message += "element found via '" + locator + "'";
+                    ConsoleUtils.log(context.getRunId(), message);
+                } else {
+                    allPassed = false;
+                    message += "ELEMENT NOT FOUND via '" + locator + "'";
+                    ConsoleUtils.error(context.getRunId(), message);
+                }
+            } catch (WebDriverException e) {
+                allPassed = false;
+                String error = WebDriverExceptionHelper.resolveErrorMessage(e);
+                message += "ELEMENT NOT FOUND via '" + locator + "': " + error;
+                ConsoleUtils.error(context.getRunId(), message);
+            } catch (Throwable e) {
+                allPassed = false;
+                message += "ELEMENT NOT FOUND via '" + locator + "': " + e.getMessage();
+                ConsoleUtils.error(context.getRunId(), message);
+            }
+
+            logs.append(message).append("\n");
+        }
+
+        String message = logs.toString();
+        if (allPassed) {
+            log(message);
+            ConsoleUtils.log(message);
+            return StepResult.success(message);
+        } else {
+            ConsoleUtils.error(message);
+            return StepResult.fail(message);
         }
     }
 

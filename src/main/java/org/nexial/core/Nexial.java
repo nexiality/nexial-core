@@ -1171,7 +1171,7 @@ public class Nexial {
                         exitStatus = RC_WARNING_FOUND;
                     } else {
                         ConsoleUtils.log("ALL PASSED!");
-                        exitStatus = 0;
+                        exitStatus = RC_NORMAL;
                     }
                 }
             }
@@ -1208,7 +1208,42 @@ public class Nexial {
 
         beforeShutdownMemUsage();
 
+        System.setProperty(EXIT_STATUS, exitStatus + "");
+        ConsoleUtils.log("End of Execution:\n" +
+                         "NEXIAL_OUTPUT:         " + System.getProperty(OUTPUT_LOCATION) + "\n" +
+                         "NEXIAL_EXECUTION_HTML: " + System.getProperty(EXEC_OUTPUT_PATH) + "\n" +
+                         "NEXIAL_JUNIT_XML:      " + System.getProperty(JUNIT_XML_LOCATION) + "\n" +
+                         "NEXIAL_SUCCESS_RATE:   " + System.getProperty(SUCCESS_RATE) + "\n" +
+                         "NEXIAL_EXIT_STATUS:    " + exitStatus);
+
+        postExecBatch(exitStatus);
+
         return exitStatus;
+    }
+
+    private void postExecBatch(int exitStatus) {
+        String postExecScript = System.getProperty(POST_EXEC_SCRIPT);
+        if (StringUtils.isNotBlank(postExecScript)) {
+            Map<String, String> postExecVars =
+                TextUtils.toMap("=",
+                                "${NEXIAL_OUTPUT}=" + System.getProperty(OUTPUT_LOCATION),
+                                "${NEXIAL_EXECUTION_HTML}=" + System.getProperty(EXEC_OUTPUT_PATH),
+                                "${NEXIAL_JUNIT_XML}=" + System.getProperty(JUNIT_XML_LOCATION),
+                                "${NEXIAL_SUCCESS_RATE}=" + System.getProperty(SUCCESS_RATE),
+                                "${NEXIAL_EXIT_STATUS}=" + exitStatus);
+
+            try {
+                String batchTemplate =
+                    ResourceUtils.loadResource("org/nexial/core/postExecution." + (IS_OS_WINDOWS ? "cmd" : "sh"));
+                FileUtils.writeStringToFile(new File(postExecScript),
+                                            TextUtils.replaceStrings(batchTemplate, postExecVars),
+                                            DEF_FILE_ENCODING);
+                ConsoleUtils.log("Nexial post-execution variables (above) are captured in:" +
+                                 lineSeparator() + postExecScript);
+            } catch (IOException e) {
+                ConsoleUtils.error("FAILED to generate post-execution shell script: " + e.getMessage());
+            }
+        }
     }
 
     private static void beforeShutdownMemUsage() {

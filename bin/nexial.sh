@@ -49,6 +49,11 @@ if [[ ! -z "${NEXIAL_OUTPUT}" ]] ; then
     export JAVA_OPT="${JAVA_OPT} -Dnexial.defaultOutBase=${NEXIAL_OUTPUT}"
 fi
 
+if [[ "${NEXIAL_POST_EXEC_SHELL}" = "" ]] ; then
+    echo "setting post exec shell script to ${NEXIAL_POST_EXEC_SHELL}"
+    export JAVA_OPT="${JAVA_OPT} -Dnexial.postExecEnv=${NEXIAL_POST_EXEC_SHELL}"
+fi
+
 eval ${JAVA} ${MAX_MEM} \
     -classpath "${PROJECT_CLASSPATH}:${NEXIAL_CLASSES}:${NEXIAL_LIB}/nexial*.jar:${NEXIAL_LIB}/*" \
     -XX:+UnlockExperimentalVMOptions \
@@ -57,34 +62,7 @@ eval ${JAVA} ${MAX_MEM} \
     -Dwebdriver.firefox.bin="`echo ${FIREFOX_BIN} | sed 's/\ /\\\ /g'`" \
     ${JAVA_OPT} \
     org.nexial.core.Nexial $*
-
-
-# create just-in-time batch file to execute nexial scripts
-# if [[ -z ${NEXIAL_OUTPUT} ]] ; then
-#     EXEC_SH="${TMPDIR}/${RANDOM}-nexial.sh"
-#     export JAVA_OPT="${JAVA_OPT} -Dnexial.script=${EXEC_SH}"
-# else
-#     mkdir -p "${NEXIAL_OUTPUT}"
-#     EXEC_SH="${NEXIAL_OUTPUT}/nexial.sh"
-#     export JAVA_OPT="${JAVA_OPT} -Dnexial.script=${EXEC_SH}"
-#     export JAVA_OPT="${JAVA_OPT} -Dnexial.defaultOutBase=${NEXIAL_OUTPUT}"
-# fi
-
-# echo "#!/bin/sh" > ${EXEC_SH}
-# echo -n ${JAVA} \
-#     ${MAX_MEM} -classpath "${PROJECT_CLASSPATH}:${NEXIAL_CLASSES}:${NEXIAL_LIB}/nexial*.jar:${NEXIAL_LIB}/*" \
-#     -XX:+UnlockExperimentalVMOptions -XX:+ExplicitGCInvokesConcurrent \
-#     -Dwebdriver.chrome.bin="`echo ${CHROME_BIN} | sed 's/\ /\\\ /g'`" \
-#     -Dwebdriver.firefox.bin="`echo ${FIREFOX_BIN} | sed 's/\ /\\\ /g'`" >> ${EXEC_SH}
-# echo -n " ${JAVA_OPT}" >> ${EXEC_SH}
-# echo -n " org.nexial.core.Nexial $*" >> ${EXEC_SH}
-
-# chmod -f 755 ${EXEC_SH}
-
-# ${EXEC_SH}
 rc=$?
-
-# rm -f ${EXEC_SH}
 
 echo
 echo
