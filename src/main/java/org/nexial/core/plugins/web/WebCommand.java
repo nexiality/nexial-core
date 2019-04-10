@@ -509,6 +509,20 @@ public class WebCommand extends BaseCommand implements CanTakeScreenshot, CanLog
         return StepResult.success("stored value of '" + locator + "' as ${" + var + "}");
     }
 
+    public StepResult saveValues(String var, String locator) {
+        requiresValidVariableName(var);
+        requires(StringUtils.isNotBlank(var) && !StringUtils.startsWith(var, "${"), "invalid variable", var);
+
+        String[] values = collectValueList(findElements(locator));
+        if (ArrayUtils.isNotEmpty(values)) {
+            context.setData(var, values);
+        } else {
+            context.removeData(var);
+        }
+
+        return StepResult.success("stored values of '" + locator + "' as ${" + var + "}");
+    }
+
     public StepResult saveAttribute(String var, String locator, String attrName) {
         requiresNotBlank(locator, "invalid locator", locator);
         requiresNotBlank(attrName, "invalid attribute name", attrName);
@@ -1777,6 +1791,12 @@ public class WebCommand extends BaseCommand implements CanTakeScreenshot, CanLog
     protected String[] collectTextList(List<WebElement> matches) {
         if (CollectionUtils.isEmpty(matches)) { return new String[0]; }
         return matches.stream().map(WebElement::getText).toArray(String[]::new);
+    }
+
+    @NotNull
+    protected String[] collectValueList(List<WebElement> matches) {
+        if (CollectionUtils.isEmpty(matches)) { return new String[0]; }
+        return matches.stream().map(elem -> elem.getAttribute("value")).toArray(String[]::new);
     }
 
     @NotNull
