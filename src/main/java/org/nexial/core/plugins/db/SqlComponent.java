@@ -73,7 +73,7 @@ public class SqlComponent implements Serializable {
     private String sql;
 
     public enum Type {
-        SELECT, UPDATE, INSERT, DELETE, COMMIT, ROLLBACK, CALL, WITH;
+        SELECT, UPDATE, INSERT, DELETE, COMMIT, ROLLBACK, CALL, WITH, CREATE, DROP;
 
         public static Type toType(String keyword) { return Type.valueOf(StringUtils.upperCase(keyword)); }
 
@@ -85,7 +85,13 @@ public class SqlComponent implements Serializable {
 
         public boolean isStoredProcedure() { return this == CALL; }
 
-        public boolean isUpdate() { return this == UPDATE || this == INSERT || this == DELETE; }
+        public boolean isUpdate() {
+            return this == UPDATE ||
+                   this == INSERT ||
+                   this == DELETE ||
+                   this == CREATE ||
+                   this == DROP;
+        }
     }
 
     public SqlComponent(String original) {
