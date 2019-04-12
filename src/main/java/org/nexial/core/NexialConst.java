@@ -965,7 +965,13 @@ public final class NexialConst {
         public static final String EOL_CONFIG_WINDOWS = "windows";
         public static final String EOL_CONFIG_UNIX = "unix";
         public static final String EOL_CONFIG_DEF = EOL_CONFIG_PLATFORM;
+        public static final String COPY_CONFIG_OVERRIDE = "override";
+        public static final String COPY_CONFIG_BACKUP = "backup";
+        public static final String COPY_CONFIG_KEEP_ORIGINAL = "keepOriginal";
+        public static final String COPY_CONFIG_DEF = COPY_CONFIG_KEEP_ORIGINAL;
         public static final String OPT_IO_EOL_CONFIG = registerSystemVariable(NAMESPACE_IO + "eolConfig", EOL_CONFIG_DEF);
+        public static final String OPT_IO_COPY_CONFIG = registerSystemVariable(NAMESPACE_IO + "copyConfig",
+                                                                               COPY_CONFIG_DEF);
 
         // json
         public static final String NAMESPACE_JSON = NAMESPACE + "json.";

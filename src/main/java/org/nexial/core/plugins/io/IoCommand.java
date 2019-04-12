@@ -27,6 +27,7 @@ import java.time.format.DateTimeFormatter;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.regex.Pattern;
+import java.util.stream.Collectors;
 import javax.annotation.Nullable;
 import javax.validation.constraints.NotNull;
 
@@ -43,11 +44,7 @@ import org.apache.commons.lang3.time.StopWatch;
 import org.apache.commons.lang3.tuple.ImmutablePair;
 import org.apache.commons.lang3.tuple.Pair;
 import org.apache.commons.text.similarity.LevenshteinDetailedDistance;
-import org.nexial.commons.utils.DateUtility;
-import org.nexial.commons.utils.FileUtil;
-import org.nexial.commons.utils.IOFilePathFilter;
-import org.nexial.commons.utils.ResourceUtils;
-import org.nexial.commons.utils.TextUtils;
+import org.nexial.commons.utils.*;
 import org.nexial.core.model.ExecutionContext;
 import org.nexial.core.model.StepResult;
 import org.nexial.core.plugins.base.BaseCommand;
@@ -61,15 +58,15 @@ import org.nexial.core.utils.OutputFileUtils;
 import static java.io.File.separator;
 import static java.io.File.separatorChar;
 import static java.lang.System.lineSeparator;
+import static org.apache.commons.lang.SystemUtils.IS_OS_WINDOWS;
 import static org.nexial.core.NexialConst.*;
 import static org.nexial.core.NexialConst.Data.*;
 import static org.nexial.core.SystemVariables.getDefault;
 import static org.nexial.core.SystemVariables.getDefaultBool;
 import static org.nexial.core.plugins.io.ComparisonResult.*;
-import static org.nexial.core.plugins.io.IoAction.copy;
-import static org.nexial.core.plugins.io.IoAction.move;
-import static org.nexial.core.plugins.io.IoCommand.CompareMode.FAIL_FAST;
+import static org.nexial.core.plugins.io.IoAction.*;
 import static org.nexial.core.plugins.io.IoCommand.CompareMode.*;
+import static org.nexial.core.plugins.io.IoCommand.CompareMode.FAIL_FAST;
 import static org.nexial.core.utils.CheckUtils.*;
 
 public class IoCommand extends BaseCommand {
@@ -183,6 +180,10 @@ public class IoCommand extends BaseCommand {
     //todo: need to consider target as file name, not just dir. but how to recognize this?
     public StepResult copyFiles(String source, String target) { return doAction(copy, source, target); }
 
+    public StepResult copyFilesByRegex(String sourceDir, String regex, String target) throws IOException {
+        return doAction(copy, sourceDir, regex, target);
+    }
+
     public StepResult makeDirectory(String source) {
         requires(StringUtils.isNotBlank(source), "invalid source", source);
         File dir = new File(source);
@@ -197,10 +198,18 @@ public class IoCommand extends BaseCommand {
     //todo: need to consider target as file name, not just dir. but how to recognize this?
     public StepResult moveFiles(String source, String target) { return doAction(move, source, target); }
 
+    public StepResult moveFilesByRegex(String sourceDir, String regex, String target) throws IOException {
+        return doAction(move, sourceDir, regex, target);
+    }
+
     public StepResult deleteFiles(String location, String recursive) {
         requires(StringUtils.isNotBlank(recursive), "invalid value for recursive", recursive);
         boolean isRecursive = BooleanUtils.toBoolean(recursive);
         return doAction(isRecursive ? IoAction.deleteRecursive : IoAction.delete, location, null);
+    }
+
+    public StepResult deleteFilesByRegex(String sourceDir, String regex) throws IOException {
+        return doAction(delete, sourceDir, regex, null);
     }
 
     public StepResult readFile(String var, String file) {
@@ -607,6 +616,80 @@ public class IoCommand extends BaseCommand {
         } catch (IOException e) {
             return StepResult.fail(errorProlog + e.getMessage(), e);
         }
+    }
+
+    /*
+     * list out files matching given regex pattern and perform IO actions.
+     * */
+    protected StepResult doAction(IoAction action, String source, String regex, String target) throws IOException {
+        requiresNotBlank(source, "invalid source", source);
+        requiresNotBlank(regex, "invalid regex pattern", regex);
+        if (action.isTargetRequired()) { requiresNotBlank(target, "invalid target", target); }
+
+        File sourceDir = new File(source);
+        if (sourceDir.exists()) {
+            if (sourceDir.isFile()) {
+                return StepResult.fail("Source path '" + source + "' must be directory");
+            }
+        } else {
+            return StepResult.fail("Source directory '" + source + "' does not exist");
+        }
+
+        String successMsg = action + " done [source: '" + source +
+                            (action.isTargetRequired() ? "', target: '" + target + "']" : "']");
+        String msg = "No files in " + source + " matched to the specified '" + regex +
+                     "'. Hence no operations was performed";
+
+        if (IS_OS_WINDOWS) {
+            // escaping slash for regex
+            regex = StringUtils.replace(regex, "/", "\\\\");
+            target = StringUtils.replace(target, "/", "\\");
+        }
+
+        String regexPattern = regex;
+        List<File> files = FileUtil.listFiles(source, "", true);
+        List<File> matched = files.stream().filter(file -> RegexUtils.match(file.getAbsolutePath(), regexPattern))
+                                  .collect(Collectors.toList());
+
+        if (CollectionUtils.isEmpty(matched)) {
+            log(msg);
+            return StepResult.success("There is no files matching criteria");
+        }
+
+        // for delete action
+        if (!action.isTargetRequired()) {
+            action.doAction(matched, null);
+            return StepResult.success(successMsg);
+        }
+
+        File targetDir = new File(target);
+        if (matched.size() == 1) {
+            if (!targetDir.exists()) {
+                // How to recognize target is file or folde:-
+                // if target ends with slash, then its directory. e.g. C:/projects/demo/
+                // else if target's parent exist, then its file. else it is directory.
+                if (!StringUtils.endsWith(target, separator)) {
+                    String parent = StringUtils.substringBeforeLast(target, separator);
+                    if (!new File(parent).exists()) {
+                        FileUtils.forceMkdir(targetDir);
+                    }
+                } else {
+                    FileUtils.forceMkdir(targetDir);
+                }
+            }
+        } else {
+            if (!targetDir.exists()) {
+                FileUtils.forceMkdir(targetDir);
+            } else if (targetDir.isFile()) {
+                return StepResult.fail("Files matching specified regex represents multiple files," +
+                                       " hence target must be a directory");
+            }
+        }
+
+        String config = context.getStringData(OPT_IO_COPY_CONFIG, getDefault(OPT_IO_COPY_CONFIG));
+        action.setCopyConfig(config);
+        action.doAction(matched, targetDir);
+        return StepResult.success(successMsg);
     }
 
     /**

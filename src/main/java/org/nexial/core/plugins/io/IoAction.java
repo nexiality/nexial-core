@@ -23,9 +23,11 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.Date;
 
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.io.FileUtils;
+import org.apache.commons.io.FilenameUtils;
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.io.filefilter.RegexFileFilter;
 import org.apache.commons.lang3.StringUtils;
@@ -33,6 +35,8 @@ import org.nexial.core.utils.ConsoleUtils;
 
 import static java.io.File.separator;
 import static org.apache.commons.io.filefilter.DirectoryFileFilter.DIRECTORY;
+import static org.nexial.core.NexialConst.DF_TIMESTAMP;
+import static org.nexial.core.NexialConst.Data.*;
 import static org.nexial.core.NexialConst.PREFIX_JAR;
 
 /**
@@ -43,6 +47,9 @@ enum IoAction {
 
     boolean targetRequired;
     boolean jarSupported;
+    String copyConfig;
+
+    public void setCopyConfig(String copyConfig) { this.copyConfig = copyConfig; }
 
     IoAction(boolean targetRequired) { this.targetRequired = targetRequired; }
 
@@ -93,15 +100,25 @@ enum IoAction {
                             if (out != null) { out.close(); }
                         }
                     } else {
-                        FileUtils.copyFileToDirectory(file, targetDir);
+                        if (targetDir != null && targetDir.isDirectory()) {
+                            File targetFile = new File(targetDir.getAbsoluteFile() + separator + file.getName());
+                            if (!copyByConfig(targetFile)) { return; }
+                            FileUtils.copyFileToDirectory(file, targetDir);
+                        } else {
+                            if (!copyByConfig(targetDir)) { return; }
+                            FileUtils.copyFile(file, targetDir);
+                        }
                     }
                     break;
                 case move:
                     if (targetDir != null && targetDir.isDirectory()) {
+                        File targetFile = new File(targetDir.getAbsoluteFile() + separator + file.getName());
+                        if (!copyByConfig(targetFile)) { return; }
                         FileUtils.moveFileToDirectory(file, targetDir, false);
                     } else {
-                        if (targetDir.exists()) { FileUtils.deleteQuietly(targetDir); }
-                        FileUtils.moveFile(file, targetDir);
+                        if (targetDir.exists() && copyByConfig(targetDir)) {
+                            FileUtils.moveFile(file, targetDir);
+                        }
                     }
                     break;
                 case delete:
@@ -170,5 +187,31 @@ enum IoAction {
         String sourceDirString = StringUtils.substringBeforeLast(dirAndPattern, separator);
         String pattern = StringUtils.substringAfterLast(dirAndPattern, separator);
         return FileUtils.listFiles(new File(sourceDirString), new RegexFileFilter(pattern), DIRECTORY);
+    }
+
+    /*Supports taking backup, overriding files while default is no copy(keep as is)*/
+    boolean copyByConfig(File file) throws IOException {
+        if (!file.exists()) { return true; }
+
+        switch (copyConfig.toLowerCase()) {
+            case COPY_CONFIG_BACKUP:
+                String timestamp = DF_TIMESTAMP.format(new Date());
+                String path = file.getParent() + separator + FilenameUtils.getBaseName(file.getAbsolutePath())
+                              + "- [" + timestamp + "]." + FilenameUtils.getExtension(file.getAbsolutePath());
+                File newTarget = new File(path);
+                if (newTarget.exists()) { FileUtils.forceDelete(newTarget); }
+                file.renameTo(newTarget);
+                ConsoleUtils.log("renamed " + file.getAbsolutePath() + " to " + newTarget.getAbsolutePath());
+                break;
+            case COPY_CONFIG_OVERRIDE:
+                FileUtils.forceDelete(file);
+                break;
+            case COPY_CONFIG_KEEP_ORIGINAL:
+            default:
+                ConsoleUtils.log("There is already a file with path '" + file.getAbsolutePath() +
+                                 "', hence keeping original file");
+                return false;
+        }
+        return true;
     }
 }
