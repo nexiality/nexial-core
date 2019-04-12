@@ -223,6 +223,7 @@ public class IoCommandTest {
 
         IoCommand io = new IoCommand();
         io.init(context);
+        context.setData(OPT_IO_COPY_CONFIG, COPY_CONFIG_OVERRIDE);
 
         String sourcePathPattern = sourceDir + "_E5_test1_step4*.*";
         String destinationDir = testDestination1 + separator + RandomStringUtils.randomAlphanumeric(5);

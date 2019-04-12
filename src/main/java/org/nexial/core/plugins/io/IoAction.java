@@ -116,7 +116,7 @@ enum IoAction {
                         if (!copyByConfig(targetFile)) { return; }
                         FileUtils.moveFileToDirectory(file, targetDir, false);
                     } else {
-                        if (targetDir.exists() && copyByConfig(targetDir)) {
+                        if (targetDir != null && copyByConfig(targetDir)) {
                             FileUtils.moveFile(file, targetDir);
                         }
                     }

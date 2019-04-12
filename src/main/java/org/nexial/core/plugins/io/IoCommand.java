@@ -593,6 +593,8 @@ public class IoCommand extends BaseCommand {
         String prolog = action + " done [source '" + source + "', target '" + target + "']";
         String errorProlog = action + " failed [source '" + source + "', target '" + target + "']: ";
 
+        String config = context.getStringData(OPT_IO_COPY_CONFIG, getDefault(OPT_IO_COPY_CONFIG));
+        action.setCopyConfig(config);
         File targetFile = null;
         if (action.isTargetRequired()) {
             targetFile = new File(target);
