@@ -51,13 +51,13 @@ public class NumberTransformer<T extends NumberDataType> extends Transformer {
 
         if (number instanceof Float) {
             int round = Math.round(((Float) number));
-            data.setTextValue(round + "");
+            data.setTextValue(round);
             data.setValue(round);
         }
 
         if (number instanceof Double) {
             long round = Math.round(((Double) number));
-            data.setTextValue(round + "");
+            data.setTextValue(round);
             data.setValue(round);
         }
 
@@ -91,7 +91,7 @@ public class NumberTransformer<T extends NumberDataType> extends Transformer {
         if (numberObject == null) { return data; }
 
         data.setValue(average(numberObject, numbers));
-        data.setTextValue(data.getValue() + "");
+        data.setTextValue(data.getValue());
         return data;
     }
 
@@ -106,14 +106,14 @@ public class NumberTransformer<T extends NumberDataType> extends Transformer {
         if (numberObject == null) { return data; }
 
         data.setValue(addSequentially(numberObject, numbers));
-        data.setTextValue(data.getValue() + "");
+        data.setTextValue(data.getValue());
         return data;
     }
 
     public T minus(T data, String... numbers) {
         if (data == null || data.getTextValue() == null) { return data; }
         if (ArrayUtils.isEmpty(numbers)) {
-            ConsoleUtils.log(data.getName() + ".minus(): cannot operate on '" + numbers + "'");
+            ConsoleUtils.log(data.getName() + ".minus(): cannot operate on '" + ArrayUtils.toString(numbers) + "'");
             return data;
         }
 
@@ -121,14 +121,14 @@ public class NumberTransformer<T extends NumberDataType> extends Transformer {
         if (numberObject == null) { return data; }
 
         data.setValue(minusSequentially(numberObject, numbers));
-        data.setTextValue(data.getValue() + "");
+        data.setTextValue(data.getValue());
         return data;
     }
 
     public T multiply(T data, String... numbers) {
         if (data == null || data.getTextValue() == null) { return data; }
         if (ArrayUtils.isEmpty(numbers)) {
-            ConsoleUtils.log(data.getName() + ".multiply(): cannot operate on '" + numbers + "'");
+            ConsoleUtils.log(data.getName() + ".multiply(): cannot operate on '" + ArrayUtils.toString(numbers) + "'");
             return data;
         }
 
@@ -136,14 +136,14 @@ public class NumberTransformer<T extends NumberDataType> extends Transformer {
         if (numberObject == null) { return data; }
 
         data.setValue(multiplySequentially(numberObject, numbers));
-        data.setTextValue(data.getValue() + "");
+        data.setTextValue(data.getValue());
         return data;
     }
 
     public T divide(T data, String... numbers) {
         if (data == null || data.getTextValue() == null) { return data; }
         if (ArrayUtils.isEmpty(numbers)) {
-            ConsoleUtils.log(data.getName() + ".divide(): cannot operate on '" + numbers + "'");
+            ConsoleUtils.log(data.getName() + ".divide(): cannot operate on '" + ArrayUtils.toString(numbers) + "'");
             return data;
         }
 
@@ -151,7 +151,7 @@ public class NumberTransformer<T extends NumberDataType> extends Transformer {
         if (numberObject == null) { return data; }
 
         data.setValue(divideSequential(numberObject, numbers));
-        data.setTextValue(data.getValue() + "");
+        data.setTextValue(data.getValue());
         return data;
     }
 
@@ -329,8 +329,5 @@ public class NumberTransformer<T extends NumberDataType> extends Transformer {
     @Override
     Map<String, Method> listSupportedMethods() { return FUNCTIONS; }
 
-    protected static boolean isDecimal(String number) {
-        return RegexUtils.isExact(number, REGEX_DEC_NUM);
-        // && !RegexUtils.isExact(number, REGEX_INT_PRETEND_DOUBLE);
-    }
+    protected static boolean isDecimal(String number) { return RegexUtils.isExact(number, REGEX_DEC_NUM); }
 }

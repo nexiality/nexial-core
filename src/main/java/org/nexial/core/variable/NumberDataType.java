@@ -19,6 +19,7 @@ package org.nexial.core.variable;
 
 import java.math.BigDecimal;
 
+import org.apache.commons.lang3.RegExUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.math.NumberUtils;
 
@@ -31,6 +32,14 @@ public class NumberDataType extends ExpressionDataType<Number> {
 
     @Override
     public String getName() { return "NUMBER"; }
+
+    public void setTextValue(Number value) {
+        if (value instanceof Double || value instanceof Float) {
+            setTextValue(BigDecimal.valueOf(value.doubleValue()).toPlainString());
+        } else {
+            setTextValue(value.longValue() + "");
+        }
+    }
 
     @Override
     Transformer getTransformer() { return transformer; }
@@ -45,7 +54,7 @@ public class NumberDataType extends ExpressionDataType<Number> {
     }
 
     @Override
-    protected void init() throws TypeConversionException {
+    protected void init() {
         String text = StringUtils.trim(textValue);
         if (StringUtils.isBlank(text)) {
             setToZero();
@@ -57,7 +66,7 @@ public class NumberDataType extends ExpressionDataType<Number> {
         text = StringUtils.removeStart(text, "+");
         text = StringUtils.removeStart(text, "-");
 
-        text = StringUtils.removeFirst(text, "^0{1,}");
+        text = RegExUtils.removeFirst(text, "^0{1,}");
         if (StringUtils.isBlank(text)) {
             // all zeros means 0
             setToZero();
