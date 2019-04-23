@@ -70,10 +70,7 @@ public class NumberTransformer<T extends NumberDataType> extends Transformer {
         Number number = data.getValue();
         if (number == null) { return data; }
 
-        double num = number.doubleValue();
-        // String rounded = NumberCommand.roundNum(num, closestDigit);
-        String rounded = NumberCommand.roundTo(num, closestDigit);
-
+        String rounded = NumberCommand.roundTo(number.doubleValue(), closestDigit);
         data.setTextValue(rounded);
         data.setValue(NumberUtils.createNumber(rounded));
 

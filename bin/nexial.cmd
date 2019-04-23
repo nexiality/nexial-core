@@ -54,14 +54,14 @@ if NOT [%FIREFOX_BIN%]==[] (
 	set JAVA_OPT=%JAVA_OPT% -Dwebdriver.firefox.bin=%FIREFOX_BIN%
 )
 
-REM	support environment default for output base directory
-if NOT [%NEXIAL_OUTPUT%]==[] (
-	set JAVA_OPT=%JAVA_OPT% -Dnexial.defaultOutBase=%NEXIAL_OUTPUT%
-)
-
 REM	support JVM max mem config
 if NOT [%NEXIAL_MAX_MEM%]==[] (
 	set MAX_MEM=-Xmx%NEXIAL_MAX_MEM%
+)
+
+REM	support environment default for output base directory
+if NOT [%NEXIAL_OUTPUT%]==[] (
+	set JAVA_OPT=%JAVA_OPT% -Dnexial.defaultOutBase=%NEXIAL_OUTPUT%
 )
 
 REM run nexial now
@@ -81,14 +81,6 @@ goto :exit
 
 :resolveEnv
 	%NEXIAL_BIN%.commons.cmd %*
-
-:reportBadInputAndExit
-	echo.
-	echo ERROR: Required input not found.
-	echo USAGE: %0 [project name] [optional: testcase id, testcase id, ...]
-	echo.
-	echo.
-	goto :exit
 
 :exit
 	endlocal

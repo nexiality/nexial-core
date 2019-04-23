@@ -1,8 +1,6 @@
 #!/bin/bash
 
-# --------------------------------------------------------------------------------
 # environment variable guide
-# --------------------------------------------------------------------------------
 # JAVA_HOME           - home directory of JDK (1.8.0_152 or above)
 # PROJECT_HOME        - home directory of your project.
 # NEXIAL_OUTPUT       - the output directory (optional)
@@ -15,9 +13,7 @@ checkJava
 resolveEnv
 
 
-# --------------------------------------------------------------------------------
 # setting project classpath (classes & lib)
-# --------------------------------------------------------------------------------
 # giving priority to project-specific classpaths
 PROJECT_CLASSPATH=
 if [[ -d "${PROJECT_HOME}" ]]; then
@@ -33,26 +29,26 @@ if [[ "${FIREFOX_BIN}" = "" ]]; then FIREFOX_BIN="${DEFAULT_FIREFOX_BIN}"; fi
 echo "setting FIREFOX_BIN as ${FIREFOX_BIN}"
 
 
-# --------------------------------------------------------------------------------
-# change JVM memory
-# --------------------------------------------------------------------------------
+# support JVM max mem config
 if [[ -n "${NEXIAL_MAX_MEM}" ]]; then export MAX_MEM=-Xmx${NEXIAL_MAX_MEM}; fi
 
 
-# --------------------------------------------------------------------------------
-# run nexial now
-# --------------------------------------------------------------------------------
-echo
-
+# support environment default for output base directory
 if [[ ! -z "${NEXIAL_OUTPUT}" ]] ; then
     mkdir -p "${NEXIAL_OUTPUT}"
     export JAVA_OPT="${JAVA_OPT} -Dnexial.defaultOutBase=${NEXIAL_OUTPUT}"
 fi
 
-if [[ "${NEXIAL_POST_EXEC_SHELL}" = "" ]] ; then
+
+# sync nexial execution stats to environment variables
+if [[ "${NEXIAL_POST_EXEC_SHELL}" != "" ]] ; then
     echo "setting post exec shell script to ${NEXIAL_POST_EXEC_SHELL}"
     export JAVA_OPT="${JAVA_OPT} -Dnexial.postExecEnv=${NEXIAL_POST_EXEC_SHELL}"
 fi
+
+
+# run nexial now
+echo
 
 eval ${JAVA} ${MAX_MEM} \
     -classpath "${PROJECT_CLASSPATH}:${NEXIAL_CLASSES}:${NEXIAL_LIB}/nexial*.jar:${NEXIAL_LIB}/*" \
@@ -64,7 +60,6 @@ eval ${JAVA} ${MAX_MEM} \
     org.nexial.core.Nexial $*
 rc=$?
 
-echo
 echo
 echo
 

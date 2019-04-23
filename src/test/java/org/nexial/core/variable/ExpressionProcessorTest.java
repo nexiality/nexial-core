@@ -45,8 +45,8 @@ import org.nexial.core.plugins.db.DataAccess;
 import org.nexial.core.plugins.db.RdbmsCommand;
 
 import static java.io.File.separator;
+import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.*;
-import static org.junit.Assert.assertThat;
 import static org.junit.runners.MethodSorters.NAME_ASCENDING;
 import static org.nexial.core.NexialConst.DEF_FILE_ENCODING;
 import static org.nexial.core.NexialConst.FlowControls.ANY_FIELD;
@@ -763,6 +763,7 @@ public class ExpressionProcessorTest {
 
         String jsonFile = ResourceUtils.getResourceFilePath(resourcePath + this.getClass().getSimpleName() + "13.json");
         String output = StringUtils.replace(jsonFile, ".json", "-new.json");
+        Assert.assertNotNull(output);
         FileUtils.deleteQuietly(new File(output));
 
         String fixture = "[JSON(" + jsonFile + ") =>" +
@@ -770,7 +771,7 @@ public class ExpressionProcessorTest {
                          " save(" + output + ",true) ]";
 
         // replace string with string
-        String result = subject.process(fixture);
+        subject.process(fixture);
         Assert.assertEquals("{\"office\":{" +
                             "\"code\":\"AEF\"," +
                             "\"address\":\"932b 32nd Street, Big City, State of Confusion\"," +
@@ -781,7 +782,7 @@ public class ExpressionProcessorTest {
         fixture = "[JSON(" + jsonFile + ") =>" +
                   " addOrReplace(office.address,932b 32nd Street\\, Big City\\, State of Confusion)" +
                   " save(" + output + ",true) ]";
-        result = subject.process(fixture);
+        subject.process(fixture);
         Assert.assertEquals("{\"office\":{" +
                             "\"code\":\"AEF\"," +
                             "\"address\":\"932b 32nd Street, Big City, State of Confusion\"," +
@@ -801,17 +802,18 @@ public class ExpressionProcessorTest {
 
         String jsonFile = ResourceUtils.getResourceFilePath(resourcePath + this.getClass().getSimpleName() + "14.json");
         String output = StringUtils.replace(jsonFile, ".json", "-new.json");
+        Assert.assertNotNull(output);
         FileUtils.deleteQuietly(new File(output));
 
         String fixture = "[JSON(" + jsonFile + ") => replace(age,year) save(" + output + ",true) ]";
 
         // replace string with string
-        String result = subject.process(fixture);
+        subject.process(fixture);
         Assert.assertEquals("[{\"Name\":\"Jim\"},{\"Name\":\"Natalie\"},{\"Name\":\"Sam\"}]",
                             FileUtils.readFileToString(new File(output), DEF_FILE_ENCODING));
 
         fixture = "[JSON(" + jsonFile + ") => replace(age,year) save(" + output + ",true) ]";
-        result = subject.process(fixture);
+        subject.process(fixture);
         Assert.assertEquals("[" +
                             "{\"Name\":\"Jim\"},{\"Name\":\"Natalie\"},{\"Name\":\"Sam\"}," +
                             "{\"Name\":\"Jim\"},{\"Name\":\"Natalie\"},{\"Name\":\"Sam\"}" +
@@ -819,7 +821,7 @@ public class ExpressionProcessorTest {
                             FileUtils.readFileToString(new File(output), DEF_FILE_ENCODING));
 
         fixture = "[JSON([59,47,13,1]) => replace(age,year) save(" + output + ",true) ]";
-        result = subject.process(fixture);
+        subject.process(fixture);
         Assert.assertEquals("[" +
                             "{\"Name\":\"Jim\"},{\"Name\":\"Natalie\"},{\"Name\":\"Sam\"}," +
                             "{\"Name\":\"Jim\"},{\"Name\":\"Natalie\"},{\"Name\":\"Sam\"}," +
@@ -975,6 +977,7 @@ public class ExpressionProcessorTest {
 
         // to avoid forceful recompile between tests, let's copy `iniFile` to another as test subject
         String iniFile = ResourceUtils.getResourceFilePath(resourcePath + this.getClass().getSimpleName() + "5.ini");
+        Assert.assertNotNull(iniFile);
         String testFile = iniFile + "COPY";
         FileUtils.copyFile(new File(iniFile), new File(testFile));
 
@@ -993,7 +996,7 @@ public class ExpressionProcessorTest {
         Assert.assertEquals("7", subject.process("[INI(" + testFile + ") => values(COMPANY_NAME) length]"));
 
         fixture = "[INI(" + testFile + ") => remove(PRODUCT_2345,*) save(" + testFile + ")]";
-        Assert.assertTrue(!subject.process(fixture).contains("PRODUCT_2345"));
+        Assert.assertFalse(subject.process(fixture).contains("PRODUCT_2345"));
 
         String newFile = ResourceUtils.getResourceFilePath(resourcePath + this.getClass().getSimpleName() + "6.ini");
         fixture = "[INI(" + testFile + ") => merge(" + newFile + ") save(" + testFile + ")]";
@@ -1003,7 +1006,7 @@ public class ExpressionProcessorTest {
         Assert.assertTrue(subject.process(fixture).contains("TEST"));
 
         fixture = "[INI(" + testFile + ") => remove(PRODUCT_2345,*) save(" + testFile + ")]";
-        Assert.assertTrue(!subject.process(fixture).contains("PRODUCT_2345="));
+        Assert.assertFalse(subject.process(fixture).contains("PRODUCT_2345="));
 
         fixture = "[INI(" + testFile + ") => remove(COMPANY_NAME,NAME)" +
                   "                         save(" + testFile + ")" +
@@ -1026,6 +1029,7 @@ public class ExpressionProcessorTest {
     @Test
     public void processCSV() throws Exception {
         String csvFile = ResourceUtils.getResourceFilePath(resourcePath + this.getClass().getSimpleName() + "7.csv");
+        Assert.assertNotNull(csvFile);
 
         ExpressionProcessor subject = new ExpressionProcessor(context);
 
@@ -1273,6 +1277,7 @@ public class ExpressionProcessorTest {
     @Test
     public void processCSV5() throws Exception {
         String csvFile = ResourceUtils.getResourceFilePath(resourcePath + this.getClass().getSimpleName() + "8.csv");
+        Assert.assertNotNull(csvFile);
 
         ExpressionProcessor subject = new ExpressionProcessor(context);
 
@@ -1300,13 +1305,13 @@ public class ExpressionProcessorTest {
         Assert.assertTrue(tmpFile.length() > 1010);
 
         // transpose back
-        String retranposed = subject.process("[CSV(" + tmp + ") => " +
-                                             " parse(delim=\\,|header=false) " +
-                                             " transpose " +
-                                             " text" +
-                                             "]");
+        String reTransposed = subject.process("[CSV(" + tmp + ") => " +
+                                              " parse(delim=\\,|header=false) " +
+                                              " transpose " +
+                                              " text" +
+                                              "]");
         Assert.assertEquals(StringUtils.replace(FileUtils.readFileToString(new File(csvFile), "UTF-8"), "\r\n", "\n"),
-                            retranposed);
+                            reTransposed);
 
         String output = subject.process("[CSV(" + csvFile + ") => " +
                                         " parse(delim=\\,|header=true)" +
@@ -1429,6 +1434,72 @@ public class ExpressionProcessorTest {
         assertThat(subject.process("[CSV(" + csvFile + ") => " +
                                    " parse(delim=\\,|recordDelim=\n|header=true)" +
                                    " sortDescending(numbers4)" +
+                                   "]"),
+                   allOf(is(not(nullValue())), is(equalTo(expected))));
+
+        String actual = "name,position\n" +
+                        "Joe,13\n" +
+                        "Sammy,9\n" +
+                        "Alice,4\n" +
+                        "Mary,02\n" +
+                        "Bohert,0\n" +
+                        "Igor,14\n" +
+                        "Tihita,10\n" +
+                        "Ragu,10\n" +
+                        "Karthima,8\n" +
+                        "John,4";
+
+        // numeric sort ascending
+        expected = "name,position\n" +
+                   "Bohert,0\n" +
+                   "Mary,02\n" +
+                   "Alice,4\n" +
+                   "John,4\n" +
+                   "Karthima,8\n" +
+                   "Sammy,9\n" +
+                   "Tihita,10\n" +
+                   "Ragu,10\n" +
+                   "Joe,13\n" +
+                   "Igor,14";
+        assertThat(subject.process("[CSV(" + actual + ") => " +
+                                   " parse(delim=\\,|recordDelim=\n|header=true)" +
+                                   " sortAscending(position)" +
+                                   "]"),
+                   allOf(is(not(nullValue())), is(equalTo(expected))));
+
+        // numeric sort descending
+        expected = "name,position\n" +
+                   "Igor,14\n" +
+                   "Joe,13\n" +
+                   "Tihita,10\n" +
+                   "Ragu,10\n" +
+                   "Sammy,9\n" +
+                   "Karthima,8\n" +
+                   "Alice,4\n" +
+                   "John,4\n" +
+                   "Mary,02\n" +
+                   "Bohert,0";
+        assertThat(subject.process("[CSV(" + actual + ") => " +
+                                   " parse(delim=\\,|recordDelim=\n|header=true)" +
+                                   " sortDescending(position)" +
+                                   "]"),
+                   allOf(is(not(nullValue())), is(equalTo(expected))));
+
+        // text sort descending
+        expected = "name,position\n" +
+                   "Tihita,10\n" +
+                   "Sammy,9\n" +
+                   "Ragu,10\n" +
+                   "Mary,02\n" +
+                   "Karthima,8\n" +
+                   "John,4\n" +
+                   "Joe,13\n" +
+                   "Igor,14\n" +
+                   "Bohert,0\n" +
+                   "Alice,4";
+        assertThat(subject.process("[CSV(" + actual + ") => " +
+                                   " parse(delim=\\,|recordDelim=\n|header=true)" +
+                                   " sortDescending(name)" +
                                    "]"),
                    allOf(is(not(nullValue())), is(equalTo(expected))));
     }
@@ -2655,7 +2726,9 @@ public class ExpressionProcessorTest {
         // --------------------------------------------------------------------------------
         // test with existing workbook/worksheet
         // --------------------------------------------------------------------------------
-        File targetSource = new File(ResourceUtils.getResourceFilePath(fixtureBase + "10.xlsx"));
+        String xlsxFile = ResourceUtils.getResourceFilePath(fixtureBase + "10.xlsx");
+        Assert.assertNotNull(xlsxFile);
+        File targetSource = new File(xlsxFile);
 
         String tmpDir = StringUtils.appendIfMissing(SystemUtils.getJavaIoTmpDir().getAbsolutePath(), separator);
         File targetFile = new File(tmpDir + "junk1.xlsx");
@@ -2817,7 +2890,9 @@ public class ExpressionProcessorTest {
         // --------------------------------------------------------------------------------
         // test with existing workbook/worksheet
         // --------------------------------------------------------------------------------
-        File targetSource = new File(ResourceUtils.getResourceFilePath(fixtureBase + "10.xlsx"));
+        String xlsxFile = ResourceUtils.getResourceFilePath(fixtureBase + "10.xlsx");
+        Assert.assertNotNull(xlsxFile);
+        File targetSource = new File(xlsxFile);
 
         String tmpDir = StringUtils.appendIfMissing(SystemUtils.getJavaIoTmpDir().getAbsolutePath(), separator);
         File targetFile = new File(tmpDir + "junk1.xlsx");
@@ -3031,6 +3106,7 @@ public class ExpressionProcessorTest {
         String fixtureBase = resourcePath + this.getClass().getSimpleName();
         String file = ResourceUtils.getResourceFilePath(fixtureBase + "9.xlsx");
         String output = StringUtils.replace(file, ".xlsx", ".csv");
+        Assert.assertNotNull(output);
 
         ExpressionProcessor subject = new ExpressionProcessor(context);
 

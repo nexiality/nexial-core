@@ -18,7 +18,11 @@
 package org.nexial.core.variable;
 
 import java.io.StringReader;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 import javax.validation.constraints.NotNull;
 
 import org.apache.commons.collections4.CollectionUtils;
@@ -26,6 +30,7 @@ import org.apache.commons.collections4.MapUtils;
 import org.apache.commons.collections4.list.TreeList;
 import org.apache.commons.lang3.ArrayUtils;
 import org.apache.commons.lang3.StringUtils;
+import org.apache.commons.lang3.math.NumberUtils;
 import org.nexial.commons.utils.TextUtils;
 import org.nexial.core.plugins.io.CsvCommand;
 import org.nexial.core.utils.ConsoleUtils;
@@ -140,29 +145,9 @@ public class CsvDataType extends ExpressionDataType<List<Record>> {
         resetTextValue();
     }
 
-    public void sortAscending(String column) {
-        if (!headers.contains(column)) {
-            ConsoleUtils.error("Invalid column " + column + "; sorting not performed");
-            return;
-        }
+    public void sortAscending(String column) { sort(column, true); }
 
-        if (CollectionUtils.isEmpty(value)) {
-            ConsoleUtils.log("No data to sort");
-            return;
-        }
-
-        value.sort(Comparator.comparing(o -> o == null ? "" : StringUtils.defaultString(o.getString(column))));
-        resetTextValue();
-    }
-
-    public void sortDescending(String column) {
-        if (!headers.contains(column)) {
-            ConsoleUtils.error("Invalid column " + column + "; sorting not performed");
-            return;
-        }
-        value.sort((o1, o2) -> o2.getString(column).compareTo(o1.getString(column)));
-        resetTextValue();
-    }
+    public void sortDescending(String column) { sort(column, false); }
 
     @NotNull
     @Override
@@ -188,6 +173,32 @@ public class CsvDataType extends ExpressionDataType<List<Record>> {
         snapshot.textValue = textValue;
         snapshot.value = value;
         return snapshot;
+    }
+
+    protected void sort(String column, boolean ascending) {
+        if (!headers.contains(column)) {
+            ConsoleUtils.error("Invalid column " + column + "; sorting not performed");
+            return;
+        }
+
+        if (CollectionUtils.isEmpty(value)) {
+            ConsoleUtils.log("No data to sort");
+            return;
+        }
+
+        value.sort((o1, o2) -> ascending ? compare(o1, o2, column) : compare(o2, o1, column));
+        resetTextValue();
+    }
+
+    protected int compare(Record first, Record second, String columnName) {
+        String value1 = first == null ? "" : StringUtils.defaultString(first.getString(columnName));
+        String value2 = second == null ? "" : StringUtils.defaultString(second.getString(columnName));
+
+        if (NumberUtils.isParsable(value1) && NumberUtils.isParsable(value2)) {
+            return NumberUtils.createBigDecimal(value1).compareTo(NumberUtils.createBigDecimal(value2));
+        } else {
+            return value1.compareTo(value2);
+        }
     }
 
     @Override
