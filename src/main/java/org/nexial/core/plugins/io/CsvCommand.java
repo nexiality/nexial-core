@@ -20,6 +20,8 @@ package org.nexial.core.plugins.io;
 import java.io.File;
 import java.io.IOException;
 import java.io.StringReader;
+import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 import javax.validation.constraints.NotNull;
@@ -166,6 +168,26 @@ public class CsvCommand extends IoCommand {
         requires(excelFile.length() > 1, "excel file is empty", excel);
 
         return excelHelper.saveCsvToFile(excelFile, worksheet, csvFile);
+    }
+
+    public StepResult toExcel(String csvFile, String excel, String worksheet, String startCell) {
+        requiresNotBlank(excel, "invalid excel file", excel);
+        requiresNotBlank(worksheet, "invalid worksheet", worksheet);
+        requiresNotBlank(csvFile, "invalid CSV destination", csvFile);
+
+        try {
+            String csvContent = OutputFileUtils.resolveContent(csvFile, context, false, true);
+            if (StringUtils.isBlank(csvContent)) { return StepResult.fail("No content found in '" + csvFile + "'"); }
+
+            // convert content to list-list-string
+            List<List<String>> rowsAndColumns = new ArrayList<>();
+            parseAsCSV(csvContent, false).forEach(record -> rowsAndColumns.add(Arrays.asList(record)));
+            ExcelHelper.csv2xlsx(excel, worksheet, startCell, rowsAndColumns);
+            return StepResult.success("Successfully saved content from '" + csvFile + "' to '" + excel + "'");
+        } catch (IOException e) {
+            return StepResult.fail("Unable to save content from '" + csvFile + "' to '" + excel + "': " +
+                                   e.getMessage());
+        }
     }
 
     public static CsvParser newCsvParser(String quote,

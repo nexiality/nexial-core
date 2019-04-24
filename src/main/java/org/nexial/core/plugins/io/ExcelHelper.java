@@ -23,6 +23,7 @@ import java.io.IOException;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.util.Iterator;
+import java.util.List;
 
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang3.StringUtils;
@@ -38,6 +39,10 @@ import org.apache.poi.xssf.usermodel.XSSFCell;
 import org.apache.poi.xssf.usermodel.XSSFRow;
 import org.apache.poi.xssf.usermodel.XSSFSheet;
 import org.apache.poi.xssf.usermodel.XSSFWorkbook;
+import org.nexial.commons.utils.FileUtil;
+import org.nexial.core.excel.Excel;
+import org.nexial.core.excel.Excel.Worksheet;
+import org.nexial.core.excel.ExcelAddress;
 import org.nexial.core.model.ExecutionContext;
 import org.nexial.core.model.StepResult;
 import org.nexial.core.utils.ConsoleUtils;
@@ -47,6 +52,7 @@ import static org.apache.poi.ss.usermodel.CellType.NUMERIC;
 import static org.apache.poi.ss.usermodel.CellType.STRING;
 import static org.nexial.core.NexialConst.DEF_CHARSET;
 import static org.nexial.core.NexialConst.Project.SCRIPT_FILE_EXT;
+import static org.nexial.core.excel.Excel.MIN_EXCEL_FILE_SIZE;
 
 public class ExcelHelper {
     private static final DateFormat DEF_EXCEL_DATE_FORMAT = new SimpleDateFormat("MM/dd/yyyy");
@@ -63,6 +69,17 @@ public class ExcelHelper {
         } catch (IOException e) {
             return StepResult.fail("Unable to read excel file '" + excel + "': " + e.getMessage());
         }
+    }
+
+    public static void csv2xlsx(String file, String sheet, String startCell, List<List<String>> rowsAndColumns)
+        throws IOException {
+        // either write access or write down would work.
+        if (StringUtils.isBlank(startCell)) { startCell = "A1"; }
+
+        File f = new File(file);
+        Excel excel = FileUtil.isFileReadable(file, MIN_EXCEL_FILE_SIZE) ? new Excel(f) : Excel.newExcel(f);
+        Worksheet worksheet = excel.worksheet(sheet, true);
+        worksheet.writeAcross(new ExcelAddress(startCell), rowsAndColumns);
     }
 
     protected StringBuilder xlsx2csv(File excelFile, String worksheet) throws IOException {

@@ -415,16 +415,19 @@ public class WebCommand extends BaseCommand implements CanTakeScreenshot, CanLog
                 } else {
                     allPassed = false;
                     message += "ELEMENT NOT FOUND via '" + locator + "'";
+                    ConsoleUtils.log(context.getRunId(), message);
                     ConsoleUtils.error(context.getRunId(), message);
                 }
             } catch (WebDriverException e) {
                 allPassed = false;
                 String error = WebDriverExceptionHelper.resolveErrorMessage(e);
                 message += "ELEMENT NOT FOUND via '" + locator + "': " + error;
+                ConsoleUtils.log(context.getRunId(), message);
                 ConsoleUtils.error(context.getRunId(), message);
             } catch (Throwable e) {
                 allPassed = false;
                 message += "ELEMENT NOT FOUND via '" + locator + "': " + e.getMessage();
+                ConsoleUtils.log(context.getRunId(), message);
                 ConsoleUtils.error(context.getRunId(), message);
             }
 
