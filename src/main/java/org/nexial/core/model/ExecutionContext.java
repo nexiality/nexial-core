@@ -701,7 +701,9 @@ public class ExecutionContext {
         return StringUtils.equals(value, "") || StringUtils.equals(value, EMPTY);
     }
 
-    public String replaceTokens(String text) {
+    public String replaceTokens(String text) { return replaceTokens(text, false); }
+
+    public String replaceTokens(String text, boolean retainCrypt) {
         if (StringUtils.isBlank(text)) { return text; }
         if (StringUtils.equals(text, getNullValueToken())) { return null; }
 
@@ -786,6 +788,12 @@ public class ExecutionContext {
             if (valueType.isPrimitive() || SIMPLE_VALUES.contains(valueType)) {
 
                 String stringValue = StringUtils.defaultString(getStringData(token));
+                // if we need to conceal crypt and this token resolves from a crypt value,
+                // then we'll revert back to its crypt form
+                if (retainCrypt && !StringUtils.equals(stringValue, CellTextReader.readValue(stringValue))) {
+                    // stringValue = CellTextReader.readValue(stringValue);
+                    stringValue = tokenized;
+                }
 
                 // it's possible that we might get a reference to an item of a string-based array (like "a,b,c,d")
                 // check to see if there's any reference to the ${var}[index] pattern
@@ -825,7 +833,7 @@ public class ExecutionContext {
                 }
 
                 // finally replace token after all index ref's are handled
-                text = StringUtils.replace(text, tokenized, StringUtils.defaultString(getStringData(token)));
+                text = StringUtils.replace(text, tokenized, stringValue);
             } else if (Collection.class.isAssignableFrom(valueType) || valueType.isArray()) {
                 collectionValues.put(token, value);
             } else {
@@ -857,7 +865,7 @@ public class ExecutionContext {
         text = handleExpression(text);
 
         // sixth pass: crypt
-        if (StringUtils.startsWith(text, CRYPT_IND)) { text = CellTextReader.getText(text); }
+        if (StringUtils.startsWith(text, CRYPT_IND) && !retainCrypt) { text = CellTextReader.getText(text); }
 
         return enforceUnixEOL(text);
     }

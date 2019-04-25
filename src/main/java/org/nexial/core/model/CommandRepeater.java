@@ -161,7 +161,7 @@ public class CommandRepeater {
                     XSSFCell cellDescription = testStep.getRow().get(COL_IDX_DESCRIPTION);
                     String description = Excel.getCellValue(cellDescription);
                     if (StringUtils.isNotEmpty(description)) {
-                        cellDescription.setCellValue(context.replaceTokens(description));
+                        cellDescription.setCellValue(context.replaceTokens(description, true));
                     }
 
                     // check onError event

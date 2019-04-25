@@ -244,7 +244,7 @@ public final class ExecutionResultHelper {
         if (descriptionCell != null) {
             ExecutionContext context = ExecutionThread.get();
             if (context != null) {
-                descriptionCell.setCellValue(context.replaceTokens(Excel.getCellValue(descriptionCell)));
+                descriptionCell.setCellValue(context.replaceTokens(Excel.getCellRawValue(descriptionCell), true));
             }
         }
 

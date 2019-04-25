@@ -857,38 +857,9 @@ public class Excel {
         return new ArrayList<>(worksheetsStartWith(startsWith));
     }
 
-    public static String getCellValue(XSSFCell cell) {
-        if (cell == null) { return null; }
+    public static String getCellValue(XSSFCell cell) { return getCellValue(cell, false); }
 
-        CellType cellType = cell.getCellTypeEnum();
-        switch (cellType) {
-            case BLANK:
-            case NUMERIC:
-            case BOOLEAN:
-                FormulaEvaluator evaluator = deriveFormulaEvaluator(cell);
-                return new DataFormatter().formatCellValue(cell, evaluator);
-            case FORMULA:
-                FormulaEvaluator evaluator1 = deriveFormulaEvaluator(cell);
-                if (evaluator1 == null) { return new DataFormatter().formatCellValue(cell); }
-
-                // evaluation might fail since not all formulae are implemented by POI
-                try {
-                    CellValue cellValue = evaluator1.evaluate(cell);
-
-                    // special handling for error after formula is evaluated
-                    if (cellValue == null) { return ""; }
-                    if (cellValue.getCellTypeEnum() == ERROR) { return cellValue.formatAsString(); }
-
-                    return new DataFormatter().formatCellValue(cell, evaluator1);
-                } catch (NotImplementedException e) {
-                    return new DataFormatter().formatCellValue(cell);
-                }
-            case ERROR:
-                return cell.getErrorCellString();
-            default:
-                return CellTextReader.getText(cell.getStringCellValue());
-        }
-    }
+    public static String getCellRawValue(XSSFCell cell) { return getCellValue(cell, true); }
 
     public static XSSFCell setHyperlink(XSSFCell cell, String link, String label) {
         if (cell == null) { return cell; }
@@ -1314,6 +1285,40 @@ public class Excel {
     protected static FormulaEvaluator deriveFormulaEvaluator(XSSFCell cell) {
         XSSFWorkbook workbook = cell.getRow().getSheet().getWorkbook();
         return workbook != null ? workbook.getCreationHelper().createFormulaEvaluator() : null;
+    }
+
+    private static String getCellValue(XSSFCell cell, boolean asRaw) {
+        if (cell == null) { return null; }
+
+        CellType cellType = cell.getCellTypeEnum();
+        switch (cellType) {
+            case BLANK:
+            case NUMERIC:
+            case BOOLEAN:
+                FormulaEvaluator evaluator = deriveFormulaEvaluator(cell);
+                return new DataFormatter().formatCellValue(cell, evaluator);
+            case FORMULA:
+                FormulaEvaluator evaluator1 = deriveFormulaEvaluator(cell);
+                if (evaluator1 == null) { return new DataFormatter().formatCellValue(cell); }
+
+                // evaluation might fail since not all formulae are implemented by POI
+                try {
+                    CellValue cellValue = evaluator1.evaluate(cell);
+
+                    // special handling for error after formula is evaluated
+                    if (cellValue == null) { return ""; }
+                    if (cellValue.getCellTypeEnum() == ERROR) { return cellValue.formatAsString(); }
+
+                    return new DataFormatter().formatCellValue(cell, evaluator1);
+                } catch (NotImplementedException e) {
+                    return new DataFormatter().formatCellValue(cell);
+                }
+            case ERROR:
+                return cell.getErrorCellString();
+            default:
+                String cellValue = cell.getStringCellValue();
+                return asRaw ? cellValue : CellTextReader.getText(cellValue);
+        }
     }
 
     private static void createWorkbook(File file) throws IOException {

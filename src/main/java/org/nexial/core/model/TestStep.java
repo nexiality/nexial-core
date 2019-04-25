@@ -32,6 +32,7 @@ import org.apache.poi.ss.usermodel.Comment;
 import org.apache.poi.xssf.usermodel.XSSFCell;
 import org.apache.poi.xssf.usermodel.XSSFCellStyle;
 import org.nexial.commons.utils.FileUtil;
+import org.nexial.commons.utils.RegexUtils;
 import org.nexial.commons.utils.TextUtils;
 import org.nexial.core.excel.Excel;
 import org.nexial.core.excel.Excel.Worksheet;
@@ -347,7 +348,8 @@ public class TestStep extends TestStepManifest {
         ExecutionLogger logger = context.getLogger();
         StringBuilder argText = new StringBuilder();
         for (String arg : args) {
-            argText.append(StringUtils.startsWith(arg, "$(execution") ? context.replaceTokens(arg) : arg).append(", ");
+            argText.append(StringUtils.startsWith(arg, "$(execution") ? context.replaceTokens(arg, true) : arg)
+                   .append(", ");
         }
         logger.log(this, "executing " + command + "(" + StringUtils.removeEnd(argText.toString(), ", ") + ")");
     }
@@ -476,7 +478,7 @@ public class TestStep extends TestStepManifest {
             Excel.createComment(cellDescription, result.getMessage(), COMMENT_AUTHOR);
         }
         // if (result.isSkipped()) { ExcelConfig.formatSkippedStepDescription(this); }
-        cellDescription.setCellValue(context.replaceTokens(description));
+        cellDescription.setCellValue(context.replaceTokens(description, true));
 
         XSSFCellStyle styleTaintedParam = worksheet.getStyle(STYLE_TAINTED_PARAM);
         XSSFCellStyle styleParam = worksheet.getStyle(STYLE_PARAM);
@@ -521,7 +523,7 @@ public class TestStep extends TestStepManifest {
 
             if (i == COL_IDX_PARAMS_START && StringUtils.equals(getCommandFQN(), CMD_VERBOSE)) {
                 if (hasCryptoIdent(origParamValue)) {
-                    paramCell.setCellComment(toSystemComment(paramCell, "detects crypto"));
+                    paramCell.setCellComment(toSystemComment(paramCell, "detected crypto"));
                 } else {
                     if (StringUtils.length(message) > MAX_VERBOSE_CHAR) {
                         message = StringUtils.truncate(message, MAX_VERBOSE_CHAR) + "…";
@@ -536,7 +538,7 @@ public class TestStep extends TestStepManifest {
             if (value != null) {
                 // respect the crypts... if value has crypt:, then keep it as is
                 if (hasCryptoIdent(origParamValue)) {
-                    paramCell.setCellComment(toSystemComment(paramCell, "crypto found; substitution cancelled"));
+                    paramCell.setCellComment(toSystemComment(paramCell, "detected crypto"));
                     continue;
                 }
 
@@ -674,11 +676,12 @@ public class TestStep extends TestStepManifest {
         if (StringUtils.contains(cellValue, CRYPT_IND)) { return true; }
 
         if (TextUtils.isBetween(cellValue, TOKEN_START, TOKEN_END)) {
-            String value = context.getStringData(StringUtils.substringBetween(cellValue, TOKEN_START, TOKEN_END));
-            return StringUtils.contains(value, CRYPT_IND);
+            return StringUtils.contains(CellTextReader.readValue(context.replaceTokens(cellValue)), CRYPT_IND);
         }
 
-        return false;
+        // if we still have ${...} pattern after token replacement, then that's means one or more data variables are
+        // crypted (retainCrypt=true)
+        return RegexUtils.match(context.replaceTokens(cellValue, true), ".*\\$\\{.+\\}.*", true);
     }
 
     private Comment toSystemComment(XSSFCell paramCell, String message) {

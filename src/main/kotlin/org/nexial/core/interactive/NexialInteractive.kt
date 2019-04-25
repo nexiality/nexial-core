@@ -243,7 +243,7 @@ class NexialInteractive {
 
         while (StringUtils.isNotBlank(input)) {
             try {
-                println(session.context.replaceTokens(input))
+                println(session.context.replaceTokens(input, true))
             } catch (e: Throwable) {
                 ConsoleUtils.error("ERROR on '" + input + "' - " + e.message)
             }
@@ -332,7 +332,7 @@ class NexialInteractive {
 
             // re-init scenario ref data
             context.clearScenarioRefData()
-            ref.forEach { name, value -> context.setData(SCENARIO_REF_PREFIX + name, context.replaceTokens(value)) }
+            ref.forEach { (name, value) -> context.setData(SCENARIO_REF_PREFIX + name, context.replaceTokens(value)) }
 
             // reset for this run
             scenarioSummary = resetScenarioExecutionSummary(session, targetScenario)

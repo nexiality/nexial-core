@@ -82,7 +82,7 @@ public class WebDriverExceptionHelper {
         } else {
             final ExecutionContext context1 = context;
             parameters = step.getParams().stream().map(param -> StringUtils.startsWith(param, CRYPT_IND) ?
-                                                                param : context1.replaceTokens(param)
+                                                                param : context1.replaceTokens(param, true)
                                                       )
                              .collect(Collectors.toList());
         }

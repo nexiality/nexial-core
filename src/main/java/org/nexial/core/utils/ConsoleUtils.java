@@ -30,15 +30,16 @@ import org.apache.commons.lang3.tuple.ImmutablePair;
 import org.apache.commons.lang3.tuple.Pair;
 import org.nexial.commons.logging.LogbackUtils;
 import org.nexial.commons.utils.DateUtility;
-import org.nexial.core.model.ExecutionEventListener;
 import org.nexial.core.model.ExecutionContext;
+import org.nexial.core.model.ExecutionEventListener;
 import org.nexial.core.model.TestCase;
 import org.nexial.core.model.TestStep;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.slf4j.event.Level;
 
-import static org.nexial.core.NexialConst.FlowControls.*;
+import static org.nexial.core.NexialConst.FlowControls.OPT_INSPECT_ON_PAUSE;
+import static org.nexial.core.NexialConst.FlowControls.RESUME_FROM_PAUSE;
 import static org.nexial.core.SystemVariables.getDefaultBool;
 import static org.slf4j.event.Level.ERROR;
 import static org.slf4j.event.Level.INFO;
@@ -154,7 +155,7 @@ public final class ConsoleUtils {
             String input = in.nextLine();
 
             while (StringUtils.isNotBlank(input) && !StringUtils.equals(StringUtils.trim(input), RESUME_FROM_PAUSE)) {
-                System.out.println(context.replaceTokens(input));
+                System.out.println(context.replaceTokens(input, true));
                 System.out.println();
                 System.out.print("inspect-> ");
                 input = in.nextLine();
