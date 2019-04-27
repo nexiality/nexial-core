@@ -45,6 +45,7 @@ import org.nexial.core.plugins.base.ScreenshotUtils;
 import org.nexial.core.plugins.desktop.DesktopTable.TableMetaData;
 import org.nexial.core.plugins.desktop.ig.IgExplorerBar;
 import org.nexial.core.plugins.desktop.ig.IgRibbon;
+import org.nexial.core.plugins.web.WebDriverExceptionHelper;
 import org.nexial.core.utils.CheckUtils;
 import org.nexial.core.utils.ConsoleUtils;
 import org.nexial.core.utils.OutputFileUtils;
@@ -536,7 +537,7 @@ public class DesktopCommand extends BaseCommand
     }
 
     public StepResult clickOffset(String locator, String xOffset, String yOffset) {
-        requires(StringUtils.isNotEmpty(locator), "Invalid locator", locator);
+        requiresNotBlank(locator, "Invalid locator", locator);
 
         WebElement elem = findElement(locator);
         if (elem == null) { return StepResult.fail("element NOT found via " + locator);}
@@ -544,6 +545,17 @@ public class DesktopCommand extends BaseCommand
         clickOffset(elem, xOffset, yOffset);
         autoClearModalDialog(locator);
         return StepResult.success("Clicked offset (" + xOffset + "," + yOffset + ") from element " + locator);
+    }
+
+    public StepResult clickElementOffset(String name, String xOffset, String yOffset) {
+        DesktopElement component = getRequiredElement(name, null);
+
+        WebElement element = component.getElement();
+        if (element == null) { return StepResult.fail("element NOT found via '" + name + "'");}
+
+        clickOffset(element, xOffset, yOffset);
+        autoClearModalDialog(component);
+        return StepResult.success("Clicked offset (" + xOffset + "," + yOffset + ") from element '" + name + "'");
     }
 
     public StepResult saveText(String var, String name) {
@@ -556,6 +568,24 @@ public class DesktopCommand extends BaseCommand
         }
 
         return StepResult.fail("No text found for '" + name + "'");
+    }
+
+    public StepResult saveTextByLocator(String var, String locator) {
+        requiresValidVariableName(var);
+        requiresNotBlank(locator, "Invalid locator", locator);
+
+        WebElement element = findElement(locator);
+        if (element == null) { return StepResult.fail("element NOT found via " + locator);}
+
+        try {
+            updateDataVariable(var, StringUtils.defaultIfEmpty(element.getText(), element.getAttribute("Name")));
+            return StepResult.success("text content saved to '" + var + "'");
+        } catch (WebDriverException e) {
+            String msg = "Cannot resolve content for '" + locator + "': " +
+                         WebDriverExceptionHelper.resolveErrorMessage(e);
+            ConsoleUtils.error(context.getRunId(), msg);
+            return StepResult.fail(msg);
+        }
     }
 
     public StepResult saveWindowTitle(String var) {

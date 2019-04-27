@@ -57,5 +57,32 @@ public class NumberDataTypeTest {
         Assert.assertEquals("3.17261524E8", new NumberDataType("3.17261524E8").getValue() + "");
         Assert.assertEquals("317261524", new NumberDataType("3.17261524E8").getTextValue());
 
+        try {
+            System.out.println(new NumberDataType("3.123.567"));
+            Assert.fail("EXPECTED TypeConversionException not thrown");
+        } catch (TypeConversionException e) {
+            // expected
+        }
+
+        try {
+            System.out.println(new NumberDataType("EEE098E765#,11.2.1"));
+            Assert.fail("EXPECTED TypeConversionException not thrown");
+        } catch (TypeConversionException e) {
+            // expected
+        }
+
+        try {
+            System.out.println(new NumberDataType("EEE"));
+            Assert.fail("EXPECTED TypeConversionException not thrown");
+        } catch (TypeConversionException e) {
+            // expected
+        }
+
+        try {
+            System.out.println(new NumberDataType("12E34E56E"));
+            Assert.fail("EXPECTED TypeConversionException not thrown");
+        } catch (TypeConversionException e) {
+            // expected
+        }
     }
 }

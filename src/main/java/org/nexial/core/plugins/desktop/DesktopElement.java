@@ -496,6 +496,7 @@ public class DesktopElement {
     public boolean isSelected() { return element != null && element.isSelected(); }
 
     public String getText() {
+        if (elementType == null || elementType == Any) { return getValue(element); }
         if (!element.isEnabled() && elementType.isTextPatternAvailable()) { return getValue(element); }
 
         if (elementType == SingleSelectList) {
