@@ -67,6 +67,21 @@ public class ExcelTransformer<T extends ExcelDataType> extends Transformer {
         return data;
     }
 
+    // public T read(T data, String sheet, String range) throws TypeConversionException {
+    //     if (data == null) { throw new IllegalArgumentException("data is null"); }
+    //     if (StringUtils.isBlank(sheet)) { throw new IllegalArgumentException("Invalid sheet: " + sheet); }
+    //     if (StringUtils.isBlank(range)) { throw new IllegalArgumentException("Invalid cell range: " + range); }
+    //
+    //     try {
+    //         data.read(sheet, range);
+    //         return data;
+    //     } catch (IOException e) {
+    //         throw new TypeConversionException(data.getName(),
+    //                                           sheet,
+    //                                           "Unable to close underlying Excel file: " + e.getMessage());
+    //     }
+    // }
+
     public T pack(T data) {
         requireAfterRead(data, "pack()");
 
@@ -120,7 +135,7 @@ public class ExcelTransformer<T extends ExcelDataType> extends Transformer {
 
         ExcelAddress addr = toExcelAddress(start);
 
-        if (FileUtil.isFileReadable(file, 5 * 1024)) {
+        if (FileUtil.isFileReadable(file)) {
             ConsoleUtils.log("Overwriting '" + file + "' with current EXCEL content");
         } else {
             FileUtils.forceMkdirParent(new File(file));
@@ -152,9 +167,20 @@ public class ExcelTransformer<T extends ExcelDataType> extends Transformer {
         return data;
     }
 
+    // public T clear(T data, String range) throws TypeConversionException {
+    //     requireAfterRead(data, "clear()");
+    //
+    //     try {
+    //         data.clearCells(range);
+    //         data.read(data.getCurrentSheetName(), data.getCurrentRange());
+    //         return data;
+    //     } catch (IOException e) {
+    //         throw new TypeConversionException(data.getName(), range, "Unable to clear range: " + e.getMessage(), e);
+    //     }
+    // }
+
     public NumberDataType rowCount(T data) throws TypeConversionException {
         requireAfterRead(data, "rowCount()");
-
         return new NumberDataType(CollectionUtils.size(data.getCapturedValues()) + "");
     }
 
@@ -166,8 +192,7 @@ public class ExcelTransformer<T extends ExcelDataType> extends Transformer {
         return new NumberDataType(maxColumn[0] + "");
     }
 
-    public T writeAcross(T data, String... startAndContent)
-        throws TypeConversionException {
+    public T writeAcross(T data, String... startAndContent) throws TypeConversionException {
         requireAfterRead(data, "writeAcross()");
 
         if (ArrayUtils.getLength(startAndContent) < 2) {
@@ -181,6 +206,7 @@ public class ExcelTransformer<T extends ExcelDataType> extends Transformer {
 
         try {
             data.getCurrentSheet().writeAcross(toExcelAddress(start), rows);
+            // data.writeAcross(start, rows);
             return data;
         } catch (IOException e) {
             throw new TypeConversionException(data.getName(), rows.get(0).toString(),
@@ -188,8 +214,7 @@ public class ExcelTransformer<T extends ExcelDataType> extends Transformer {
         }
     }
 
-    public T writeDown(T data, String... startAndContent)
-        throws TypeConversionException {
+    public T writeDown(T data, String... startAndContent) throws TypeConversionException {
         requireAfterRead(data, "writeAcross()");
 
         if (ArrayUtils.getLength(startAndContent) < 2) {
@@ -204,6 +229,7 @@ public class ExcelTransformer<T extends ExcelDataType> extends Transformer {
 
         try {
             data.getCurrentSheet().writeDown(toExcelAddress(start), columns);
+            // data.writeDown(start, columns);
             return data;
         } catch (IOException e) {
             throw new TypeConversionException(data.getName(), columns.get(0).toString(),
@@ -260,6 +286,7 @@ public class ExcelTransformer<T extends ExcelDataType> extends Transformer {
     protected void requireAfterRead(T data, String op) {
         if (data == null) { throw new IllegalArgumentException("data is null"); }
         if (CollectionUtils.isEmpty(data.getCapturedValues()) && data.getCurrentSheet() == null) {
+            // if (CollectionUtils.isEmpty(data.getCapturedValues()) && data.getCurrentSheetName() == null) {
             throw new IllegalArgumentException(op + " can only be performed after a valid read() operation");
         }
     }

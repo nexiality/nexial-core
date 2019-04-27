@@ -43,6 +43,7 @@ import org.nexial.commons.utils.JRegexUtils;
 import org.nexial.commons.utils.RegexUtils;
 import org.nexial.commons.utils.TextUtils;
 import org.nexial.core.ExecutionThread;
+import org.nexial.core.TokenReplacementException;
 import org.nexial.core.excel.ext.CellTextReader;
 import org.nexial.core.model.CommandRepeater;
 import org.nexial.core.model.ExecutionContext;
@@ -64,7 +65,6 @@ import static org.nexial.core.NexialConst.Data.NULL;
 import static org.nexial.core.NexialConst.Data.toCloudIntegrationNotReadyMessage;
 import static org.nexial.core.SystemVariables.getDefaultBool;
 import static org.nexial.core.excel.ExcelConfig.MSG_PASS;
-import static org.nexial.core.excel.ext.CipherHelper.CRYPT_IND;
 import static org.nexial.core.plugins.base.IncrementStrategy.ALPHANUM;
 import static org.nexial.core.utils.CheckUtils.*;
 import static org.nexial.core.utils.OutputFileUtils.CASE_INSENSIVE_SORT;
@@ -125,12 +125,21 @@ public class BaseCommand implements NexialCommand {
         Object[] values = resolveParamValues(m, params);
 
         if (context.isVerbose() && (this instanceof CanLogExternally)) {
-            String displayValues = "";
+            StringBuilder displayValues = new StringBuilder(command + " (");
             for (Object value : values) {
-                displayValues += (value == null ? NULL : CellTextReader.readValue(value.toString())) + ",";
+                if (value == null) {
+                    displayValues.append(NULL).append(",");
+                } else {
+                    String val = value.toString();
+                    if (context.containsCrypt(val)) {
+                        displayValues.append(context.replaceTokens(val, true)).append(",");
+                    } else {
+                        displayValues.append(CellTextReader.readValue(val)).append(",");
+                    }
+                }
             }
-            displayValues = StringUtils.removeEnd(displayValues, ",");
-            ((CanLogExternally) this).logExternally(context.getCurrentTestStep(), command + " (" + displayValues + ")");
+            ((CanLogExternally) this).logExternally(context.getCurrentTestStep(),
+                                                    StringUtils.removeEnd(displayValues.toString(), ",") + ")");
         }
 
         StepResult result = (StepResult) m.invoke(this, values);
@@ -210,29 +219,6 @@ public class BaseCommand implements NexialCommand {
         requiresValidVariableName(var);
         updateDataVariable(var, value);
         return StepResult.success("stored '" + CellTextReader.readValue(value) + "' as ${" + var + "}");
-    }
-
-    /**
-     * this method - TO BE USED INTERNALLY ONLY - is created to compensate the data state discrepancy when such is
-     * initially set via `-override` flag or via `-D...` environment variable. When a data variable is defined prior to
-     * Neial execution, for example,
-     * <pre>
-     * ./nexial.sh -script ... ... -override myData=myValue
-     * </pre>
-     *
-     * Such data variable is also added to the System properties. As such, Nexial will not attempt to override the
-     * corresponding System property when the same data value is being manipulated during execution
-     * (e.g. {@link #save(String, String)} or {@link #saveMatches(String, String, String)}). However, when retrieving
-     * data variable, Nexial will (and must) consider the System properties and in fact it does so <b>AHEAD</b> of
-     * its internal memory space for data variables. This can cause confusion since the initially-set data variable
-     * does not appear to be overwritten.  This method is created to overcome such issue. Use this only for the
-     * user-defined data variables. System variables and Java/OS specific ones should not be impacted by this phenomena.
-     * since when
-     * @param var
-     * @param value
-     */
-    protected void updateDataVariable(String var, String value) {
-        context.setData(var, value, StringUtils.isNotBlank(System.getProperty(var)) && !context.isReadOnlyData(var));
     }
 
     /**
@@ -594,13 +580,10 @@ public class BaseCommand implements NexialCommand {
 
     public StepResult verbose(String text) {
         if (text == null) { text = context.getNullValueToken(); }
-        if (StringUtils.contains(text, CRYPT_IND)) {
-            // we should allow to print this.. security violation
-            return StepResult.fail("crypto found; CANNOT proceed to complete this command");
-        }
+        // we should allow to print this.. security violation
+        if (context.containsCrypt(text)) { return StepResult.fail("crypto found; TERMINATE verbose() command"); }
 
         log(text);
-        // context.getCurrentTestStep().addNestedMessage(text);
         return StepResult.success(text);
     }
 
@@ -747,6 +730,30 @@ public class BaseCommand implements NexialCommand {
                 testStep.addNestedScreenCapture(link, message, label);
             }
         }
+    }
+
+    /**
+     * this method - TO BE USED INTERNALLY ONLY - is created to compensate the data state discrepancy when such is
+     * initially set via `-override` flag or via `-D...` environment variable. When a data variable is defined prior to
+     * Neial execution, for example,
+     * <pre>
+     * ./nexial.sh -script ... ... -override myData=myValue
+     * </pre>
+     *
+     * Such data variable is also added to the System properties. As such, Nexial will not attempt to override the
+     * corresponding System property when the same data value is being manipulated during execution
+     * (e.g. {@link #save(String, String)} or {@link #saveMatches(String, String, String)}). However, when retrieving
+     * data variable, Nexial will (and must) consider the System properties and in fact it does so <b>AHEAD</b> of
+     * its internal memory space for data variables. This can cause confusion since the initially-set data variable
+     * does not appear to be overwritten.  This method is created to overcome such issue. Use this only for the
+     * user-defined data variables. System variables and Java/OS specific ones should not be impacted by this phenomena.
+     * since when
+     */
+    protected void updateDataVariable(String var, String value) {
+        if (context.containsCrypt(var)) {
+            throw new TokenReplacementException("Tampering with encrypted data is NOT permissible");
+        }
+        context.setData(var, value, StringUtils.isNotBlank(System.getProperty(var)) && !context.isReadOnlyData(var));
     }
 
     @NotNull

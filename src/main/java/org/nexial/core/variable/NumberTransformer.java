@@ -49,14 +49,8 @@ public class NumberTransformer<T extends NumberDataType> extends Transformer {
         Number number = data.getValue();
         if (number == null) { return data; }
 
-        if (number instanceof Float) {
-            int round = Math.round(((Float) number));
-            data.setTextValue(round);
-            data.setValue(round);
-        }
-
-        if (number instanceof Double) {
-            long round = Math.round(((Double) number));
+        if (isDecimal(number)) {
+            long round = Math.round(number.doubleValue());
             data.setTextValue(round);
             data.setValue(round);
         }
@@ -179,14 +173,8 @@ public class NumberTransformer<T extends NumberDataType> extends Transformer {
         Number number = data.getValue();
         if (number == null) { return data; }
 
-        if (number instanceof Float) {
-            int floor = (int) Math.floor((Float) number);
-            data.setTextValue(floor + "");
-            data.setValue(floor);
-        }
-
-        if (number instanceof Double) {
-            long floor = (long) Math.floor((Double) number);
+        if (isDecimal(number)) {
+            long floor = (long) Math.floor(number.doubleValue());
             data.setTextValue(floor + "");
             data.setValue(floor);
         }
@@ -200,14 +188,8 @@ public class NumberTransformer<T extends NumberDataType> extends Transformer {
         Number number = data.getValue();
         if (number == null) { return data; }
 
-        if (number instanceof Float) {
-            int ceiling = (int) Math.ceil((Float) number);
-            data.setTextValue(ceiling + "");
-            data.setValue(ceiling);
-        }
-
-        if (number instanceof Double) {
-            long ceiling = (long) Math.ceil((Double) number);
+        if (isDecimal(number)) {
+            long ceiling = (long) Math.ceil(number.doubleValue());
             data.setTextValue(ceiling + "");
             data.setValue(ceiling);
         }
@@ -276,7 +258,7 @@ public class NumberTransformer<T extends NumberDataType> extends Transformer {
                 continue;
             }
 
-            if (isDecimal(number) || base instanceof Double || base instanceof Float) {
+            if (isDecimal(number) || isDecimal(base)) {
                 base = BigDecimal.valueOf(base.doubleValue())
                                  .multiply(BigDecimal.valueOf(NumberUtils.toDouble(number))).doubleValue();
             } else {
@@ -301,7 +283,7 @@ public class NumberTransformer<T extends NumberDataType> extends Transformer {
                 continue;
             }
 
-            if (isDecimal(number) || base instanceof Double || base instanceof Float) {
+            if (isDecimal(number) || isDecimal(base)) {
                 base = BigDecimal.valueOf(base.doubleValue())
                                  .divide(BigDecimal.valueOf(NumberUtils.toDouble(number)), DEC_SCALE, ROUND)
                                  .doubleValue();
@@ -327,4 +309,8 @@ public class NumberTransformer<T extends NumberDataType> extends Transformer {
     Map<String, Method> listSupportedMethods() { return FUNCTIONS; }
 
     protected static boolean isDecimal(String number) { return RegexUtils.isExact(number, REGEX_DEC_NUM); }
+
+    protected static boolean isDecimal(Number number) {
+        return number instanceof BigDecimal || number instanceof Double || number instanceof Float;
+    }
 }

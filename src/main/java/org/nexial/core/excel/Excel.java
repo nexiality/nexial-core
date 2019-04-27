@@ -76,7 +76,7 @@ import static org.nexial.core.excel.ExcelConfig.StyleConfig.*;
  * Wrapper for managing Excel documents.
  */
 public class Excel {
-    public static final int MIN_EXCEL_FILE_SIZE = 5 * 1024;
+    public static final int MIN_EXCEL_FILE_SIZE = 2 * 1024;
     private static boolean verboseInstantiation = false;
 
     // var to support spring-injected value

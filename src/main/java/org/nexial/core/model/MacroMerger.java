@@ -45,6 +45,7 @@ import static org.apache.poi.ss.usermodel.CellType.STRING;
 import static org.apache.poi.ss.usermodel.Row.MissingCellPolicy.CREATE_NULL_AS_BLANK;
 import static org.nexial.core.NexialConst.Data.*;
 import static org.nexial.core.NexialConst.Project.SCRIPT_FILE_EXT;
+import static org.nexial.core.NexialConst.Project.SCRIPT_FILE_SUFFIX;
 import static org.nexial.core.excel.Excel.MIN_EXCEL_FILE_SIZE;
 import static org.nexial.core.excel.ExcelConfig.*;
 
@@ -113,6 +114,7 @@ public class MacroMerger {
         if (FileUtil.isFileReadable(macroFile, MIN_EXCEL_FILE_SIZE)) { return new File(macroFile); }
 
         // next, try pivoting from artifact/script
+        macroFile = StringUtils.appendIfMissing(macroFile, "." + SCRIPT_FILE_SUFFIX);
         String macroFilePath = StringUtils.appendIfMissing(project.getScriptPath(), separator) + macroFile;
         if (!FileUtil.isFileReadable(macroFilePath, MIN_EXCEL_FILE_SIZE)) {
             // last, try again pivoting now from project home
@@ -254,13 +256,19 @@ public class MacroMerger {
         List<List<String>> testStepData = new ArrayList<>();
         if (CollectionUtils.isEmpty(testStepArea)) { return testStepData; }
 
+        ExecutionContext context = ExecutionThread.get();
+
         testStepArea.forEach(row -> {
             List<String> testStepRow = new ArrayList<>();
 
             // check for strikethrough (which means skip)
             if (ExecutionInputPrep.isTestStepDisabled(row)) { addSkipFlowControl(row); }
 
-            row.forEach(cell -> testStepRow.add(Excel.getCellValue(cell)));
+            row.forEach(cell -> {
+                String cellValue = Excel.getCellValue(cell);
+                testStepRow.add(context != null && context.containsCrypt(cellValue) ?
+                                Excel.getCellRawValue(cell) : cellValue);
+            });
             testStepData.add(testStepRow);
         });
 

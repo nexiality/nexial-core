@@ -22,6 +22,7 @@ import java.math.BigDecimal;
 import org.apache.commons.lang3.RegExUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.math.NumberUtils;
+import org.nexial.commons.utils.TextUtils;
 
 public class NumberDataType extends ExpressionDataType<Number> {
     public NumberTransformer transformer = new NumberTransformer();
@@ -54,7 +55,7 @@ public class NumberDataType extends ExpressionDataType<Number> {
     }
 
     @Override
-    protected void init() {
+    protected void init() throws TypeConversionException {
         String text = StringUtils.trim(textValue);
         if (StringUtils.isBlank(text)) {
             setToZero();
@@ -63,8 +64,7 @@ public class NumberDataType extends ExpressionDataType<Number> {
 
         // in case start with - or +
         boolean isNegative = StringUtils.startsWith(text, "-");
-        text = StringUtils.removeStart(text, "+");
-        text = StringUtils.removeStart(text, "-");
+        text = TextUtils.keepOnly(text, "0123456789.E");
 
         text = RegExUtils.removeFirst(text, "^0{1,}");
         if (StringUtils.isBlank(text)) {
@@ -73,17 +73,21 @@ public class NumberDataType extends ExpressionDataType<Number> {
             return;
         }
 
-        if (StringUtils.startsWithIgnoreCase(text, ".")) { text = "0" + text; }
+        if (StringUtils.startsWith(text, ".")) { text = "0" + text; }
         if (isNegative) { text = "-" + text; }
 
+        if (!NumberUtils.isCreatable(text)) {
+            throw new TypeConversionException(getName(), textValue, "Not a valid number");
+        }
+
         if (StringUtils.contains(text, ".")) {
+            // setValue(NumberUtils.createBigDecimal(text));
             setValue(NumberUtils.createDouble(text));
             setTextValue(BigDecimal.valueOf(value.doubleValue()).toPlainString());
         } else {
             setValue(NumberUtils.createLong(text));
             setTextValue(text);
         }
-
     }
 
     private void setToZero() {

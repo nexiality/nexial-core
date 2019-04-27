@@ -56,6 +56,8 @@ public final class CellTextReader {
         return cellString;
     }
 
+    public static boolean isCryptVar(String variable) { return DECRYPT_CRYPT.containsKey(variable); }
+
     public static void unsetValue(String cellString) {
         DECRYPT_CRYPT.remove(cellString);
     }

@@ -125,7 +125,11 @@ public class NexialFilter implements Serializable {
 
         // for Is operator, we will defer the double-quote-wrap until isAtLeastOneMatched()
         String expected = context.replaceTokens(controls);
-        String msg = msgPrefix + "(" + actual + comparator.getSymbol() + expected + ")\t\t=> ";
+        String msg = msgPrefix + "(";
+        msg += context.containsCrypt(subject) ? subject : actual;
+        msg += comparator.getSymbol();
+        msg += context.containsCrypt(controls) ? controls : expected;
+        msg += ")\t\t=> ";
 
         boolean result;
         switch (comparator) {

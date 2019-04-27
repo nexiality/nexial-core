@@ -790,10 +790,8 @@ public class ExecutionContext {
                 String stringValue = StringUtils.defaultString(getStringData(token));
                 // if we need to conceal crypt and this token resolves from a crypt value,
                 // then we'll revert back to its crypt form
-                if (retainCrypt && !StringUtils.equals(stringValue, CellTextReader.readValue(stringValue))) {
-                    // stringValue = CellTextReader.readValue(stringValue);
-                    stringValue = tokenized;
-                }
+                // stringValue = CellTextReader.readValue(stringValue);
+                if (retainCrypt && CellTextReader.isCryptVar(stringValue)) { stringValue = tokenized; }
 
                 // it's possible that we might get a reference to an item of a string-based array (like "a,b,c,d")
                 // check to see if there's any reference to the ${var}[index] pattern
@@ -1193,6 +1191,28 @@ public class ExecutionContext {
     public void markExecutionStart() {
         startTimestamp = System.currentTimeMillis();
         startDateTime = DF_TIMESTAMP.format(startTimestamp);
+    }
+
+    public boolean containsCrypt(String data) {
+        if (StringUtils.contains(data, CRYPT_IND)) { return true; }
+
+        if (TextUtils.isBetween(data, TOKEN_START, TOKEN_END)) {
+            return StringUtils.contains(CellTextReader.readValue(replaceTokens(data)), CRYPT_IND);
+        }
+
+        // if the value can be mapped to a crypted value -OR-
+        // if we still have ${...} pattern after token replacement,
+        // then that's means one or more data variables are crypted (retainCrypt=true)
+
+        // if (!StringUtils.equals(data, CellTextReader.readValue(data))) { return true; }
+        if (CellTextReader.isCryptVar(data)) { return true; }
+
+        // no tokens means no crypt
+        Set<String> tokens = findTokens(data);
+        return CollectionUtils.isNotEmpty(tokens) && tokens.stream().anyMatch(CellTextReader::isCryptVar);
+
+        // return !StringUtils.equals(data, CellTextReader.readValue(data)) ||
+        //        RegexUtils.match(replaceTokens(data, true), ".*\\$\\{.+\\}.*", true);
     }
 
     public static boolean getSystemThenContextBooleanData(String name, ExecutionContext context, boolean def) {

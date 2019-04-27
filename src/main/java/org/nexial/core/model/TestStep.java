@@ -32,7 +32,6 @@ import org.apache.poi.ss.usermodel.Comment;
 import org.apache.poi.xssf.usermodel.XSSFCell;
 import org.apache.poi.xssf.usermodel.XSSFCellStyle;
 import org.nexial.commons.utils.FileUtil;
-import org.nexial.commons.utils.RegexUtils;
 import org.nexial.commons.utils.TextUtils;
 import org.nexial.core.excel.Excel;
 import org.nexial.core.excel.Excel.Worksheet;
@@ -54,7 +53,6 @@ import static org.nexial.core.NexialConst.*;
 import static org.nexial.core.NexialConst.Data.*;
 import static org.nexial.core.SystemVariables.getDefaultBool;
 import static org.nexial.core.excel.ExcelConfig.*;
-import static org.nexial.core.excel.ext.CipherHelper.CRYPT_IND;
 
 public class TestStep extends TestStepManifest {
     protected ExecutionContext context;
@@ -176,7 +174,7 @@ public class TestStep extends TestStepManifest {
                     return result;
                 } else {
                     // assertion error are already account for.. so no need to increment fail test count
-                    if (!(cause instanceof AssertionError)) { ConsoleUtils.error(cause.getMessage()); }
+                    // if (!(cause instanceof AssertionError)) { ConsoleUtils.error(cause.getMessage()); }
                     error = StringUtils.defaultString(cause.getMessage(), cause.toString());
                 }
             }
@@ -478,7 +476,8 @@ public class TestStep extends TestStepManifest {
             Excel.createComment(cellDescription, result.getMessage(), COMMENT_AUTHOR);
         }
         // if (result.isSkipped()) { ExcelConfig.formatSkippedStepDescription(this); }
-        cellDescription.setCellValue(context.replaceTokens(description, true));
+        cellDescription.setCellValue(context.containsCrypt(description) ?
+                                     CellTextReader.readValue(description) : context.replaceTokens(description, true));
 
         XSSFCellStyle styleTaintedParam = worksheet.getStyle(STYLE_TAINTED_PARAM);
         XSSFCellStyle styleParam = worksheet.getStyle(STYLE_PARAM);
@@ -522,7 +521,7 @@ public class TestStep extends TestStepManifest {
             String origParamValue = Excel.getCellValue(paramCell);
 
             if (i == COL_IDX_PARAMS_START && StringUtils.equals(getCommandFQN(), CMD_VERBOSE)) {
-                if (hasCryptoIdent(origParamValue)) {
+                if (context.containsCrypt(origParamValue)) {
                     paramCell.setCellComment(toSystemComment(paramCell, "detected crypto"));
                 } else {
                     if (StringUtils.length(message) > MAX_VERBOSE_CHAR) {
@@ -537,7 +536,7 @@ public class TestStep extends TestStepManifest {
             Object value = ArrayUtils.getLength(paramValues) > paramIdx ? paramValues[paramIdx] : null;
             if (value != null) {
                 // respect the crypts... if value has crypt:, then keep it as is
-                if (hasCryptoIdent(origParamValue)) {
+                if (context.containsCrypt(origParamValue)) {
                     paramCell.setCellComment(toSystemComment(paramCell, "detected crypto"));
                     continue;
                 }
@@ -670,18 +669,6 @@ public class TestStep extends TestStepManifest {
         return !StringUtils.startsWith(param, "[") &&
                StringUtils.countMatches(param, TOKEN_FUNCTION_START + "syspath|") == 1 &&
                StringUtils.countMatches(param, "|name" + TOKEN_FUNCTION_END) == 0;
-    }
-
-    private boolean hasCryptoIdent(String cellValue) {
-        if (StringUtils.contains(cellValue, CRYPT_IND)) { return true; }
-
-        if (TextUtils.isBetween(cellValue, TOKEN_START, TOKEN_END)) {
-            return StringUtils.contains(CellTextReader.readValue(context.replaceTokens(cellValue)), CRYPT_IND);
-        }
-
-        // if we still have ${...} pattern after token replacement, then that's means one or more data variables are
-        // crypted (retainCrypt=true)
-        return RegexUtils.match(context.replaceTokens(cellValue, true), ".*\\$\\{.+\\}.*", true);
     }
 
     private Comment toSystemComment(XSSFCell paramCell, String message) {
