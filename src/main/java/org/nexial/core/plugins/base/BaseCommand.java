@@ -533,7 +533,8 @@ public class BaseCommand implements NexialCommand {
         String delim = context.getTextDelim();
 
         List<String> list = TextUtils.toList(array, delim, false);
-        if (CollectionUtils.isEmpty(list)) { CheckUtils.fail("'array' cannot be parsed: " + array); }
+        // if (CollectionUtils.isEmpty(list)) { CheckUtils.fail("'array' cannot be parsed: " + array); }
+        if (CollectionUtils.isEmpty(list)) { return StepResult.success("empty array found"); }
 
         List<String> unexpectedList = TextUtils.toList(unexpected, delim, false)
                                                .stream()
