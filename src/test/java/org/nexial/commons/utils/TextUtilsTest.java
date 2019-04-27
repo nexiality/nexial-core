@@ -529,7 +529,7 @@ public class TextUtilsTest {
         Assert.assertEquals("09392394", TextUtils.keepOnly("sd0g9w3ihps9g23unap9w4", "0123456789"));
         Assert.assertEquals("0123abbey", TextUtils.keepOnly("0123abbey", "0123abbey"));
         Assert.assertEquals("0123abbey", TextUtils.keepOnly("0@1#2%3^^&*aKLRURTYbZXCBZDFGbWEWRey", "0123abbey"));
-
+        Assert.assertEquals("4567321.004", TextUtils.keepOnly("-$4,567,321.004", "0123456789."));
     }
 
     @Test
