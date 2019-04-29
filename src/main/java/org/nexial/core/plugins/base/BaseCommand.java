@@ -76,6 +76,11 @@ public class BaseCommand implements NexialCommand {
                                                                               "desktop.typeTextArea",
                                                                               "desktop.sendKeysToTextBox",
                                                                               "macro.expects");
+    public static final List<String> CRYPT_RESTRICTED_COMMANDS = Arrays.asList("base.verbose",
+                                                                               "base.prependText",
+                                                                               "base.appendText",
+                                                                               "base.save");
+
     // "self-derived" means that the command will figure out the appropriate param values for display
     public static final List<String> PARAM_DERIVED_COMMANDS = Collections.singletonList("step.observe");
 
@@ -1203,16 +1208,27 @@ public class BaseCommand implements NexialCommand {
         }
     }
 
+    protected boolean isCryptRestricted(Method method) {
+        return method != null && CRYPT_RESTRICTED_COMMANDS.contains(getTarget() + "." + method.getName());
+    }
+
     protected Object[] resolveParamValues(Method m, String... params) {
         int numOfParamSpecified = ArrayUtils.getLength(params);
         int numOfParamExpected = ArrayUtils.getLength(m.getParameterTypes());
+
+        boolean cryptRestricted = isCryptRestricted(m);
 
         Object[] args = new Object[numOfParamExpected];
         for (int i = 0; i < args.length; i++) {
             if (i >= numOfParamSpecified) {
                 args[i] = "";
             } else {
-                args[i] = context.replaceTokens(params[i]);
+                String param = params[i];
+                if (cryptRestricted && context.containsCrypt(param)) {
+                    args[i] = param;
+                } else {
+                    args[i] = context.replaceTokens(param);
+                }
             }
         }
 
