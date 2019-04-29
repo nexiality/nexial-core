@@ -226,9 +226,7 @@ public class BaseCommand implements NexialCommand {
         return StepResult.success("stored '" + CellTextReader.readValue(value) + "' as ${" + var + "}");
     }
 
-    /**
-     * clear data variables by name
-     */
+    /** clear data variables by name */
     public StepResult clear(String vars) {
         requiresNotBlank(vars, "invalid variable(s)", vars);
 

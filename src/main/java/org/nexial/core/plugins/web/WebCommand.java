@@ -440,6 +440,7 @@ public class WebCommand extends BaseCommand implements CanTakeScreenshot, CanLog
             ConsoleUtils.log(message);
             return StepResult.success(message);
         } else {
+            log(message);
             ConsoleUtils.error(message);
             return StepResult.fail(message);
         }
