@@ -192,7 +192,7 @@ public class ExecutionContextTest {
 
         subject.setData("index", 0);
         Assert.assertEquals("Hello", subject.replaceTokens("${a}[${index}]"));
-        Assert.assertEquals("Hello World Johnny boy", subject.replaceTokens("${b}[${index}]"));
+        Assert.assertEquals("Hello World Johnny boy[0]", subject.replaceTokens("${b}[${index}]"));
 
         subject.setData("index", 1);
         Assert.assertEquals("World", subject.replaceTokens("${a}[${index}]"));
