@@ -390,22 +390,19 @@ public class WebCommand extends BaseCommand implements CanTakeScreenshot, CanLog
             return StepResult.fail("No data variables found via prefix '" + prefix + "'");
         }
 
-        Set<String> keys = locators.keySet();
-        for (String key : keys) { if (!key.endsWith(SUFFIX_LOCATOR)) { locators.remove(key); } }
-
-        if (MapUtils.isEmpty(locators)) {
-            return StepResult.fail("No data variables found via prefix '" + prefix + "' contains the required " +
-                                   "'" + SUFFIX_LOCATOR + "' suffix");
-        }
-
         String runId = context.getRunId();
         boolean allPassed = true;
         StringBuilder logs = new StringBuilder();
         StringBuilder errors = new StringBuilder();
-        keys = locators.keySet();
+        int locatorsFound = 0;
+
+        Set<String> keys = locators.keySet();
         for (String key : keys) {
+            if (!key.endsWith(SUFFIX_LOCATOR)) { continue; }
+
             String name = StringUtils.substringBefore(key, SUFFIX_LOCATOR);
             String locator = locators.get(key);
+            locatorsFound++;
 
             boolean found = true;
             String message = "[" + name + "] ";
@@ -435,6 +432,11 @@ public class WebCommand extends BaseCommand implements CanTakeScreenshot, CanLog
                 allPassed = false;
                 errors.append(message).append("\n");
             }
+        }
+
+        if (locatorsFound < 1) {
+            return StepResult.fail("No data variables found via prefix '" + prefix + "' contains the required " +
+                                   "'" + SUFFIX_LOCATOR + "' suffix");
         }
 
         String message = logs.toString();
