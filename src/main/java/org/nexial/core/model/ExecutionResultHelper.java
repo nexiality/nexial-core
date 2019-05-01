@@ -24,6 +24,7 @@ import java.util.Set;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.collections4.MapUtils;
 import org.apache.commons.lang3.StringUtils;
+import org.apache.commons.lang3.math.NumberUtils;
 import org.apache.poi.ss.util.CellRangeAddress;
 import org.apache.poi.xssf.usermodel.XSSFCell;
 import org.apache.poi.xssf.usermodel.XSSFCellStyle;
@@ -52,12 +53,9 @@ public final class ExecutionResultHelper {
 
         XSSFSheet dataSheet = outputFile.getWorkbook().getSheet(SHEET_MERGED_DATA);
 
-        // XSSFWorkbook workbook = dataSheet.getWorkbook();
-        // XSSFCellStyle styleTestDataValue = StyleDecorator.generate(workbook, TEST_DATA_VALUE);
-
         final int[] currentRowIndex = {0};
 
-        dataSheet.forEach(datarow -> {
+        dataSheet.forEach(dataRow -> {
             XSSFRow row = dataSheet.getRow(currentRowIndex[0]++);
             if (row == null) { return; }
 
@@ -105,9 +103,36 @@ public final class ExecutionResultHelper {
         lastRow = handleNestedMessages(worksheet, executionSummary, lastRow);
         mergeVerboseOutput(worksheet, lastRow);
 
+        for (int i = ADDR_COMMAND_START.getRowStartIndex(); i < lastRow; i++) {
+            ExecutionResultHelper.setMinHeight(worksheet, excelSheet.getRow(i));
+        }
+
         String logId = ExecutionLogger.justFileName(worksheet.getFile()) + "|" + worksheet.getName();
         ConsoleUtils.log(logId, "saving test scenario");
         save(worksheet, executionSummary);
+    }
+
+    protected static void setMinHeight(Worksheet worksheet, XSSFRow row) {
+        if (row == null) { return; }
+
+        if (row.getLastCellNum() < COL_IDX_RESULT) {
+            worksheet.setMinHeight(row.getCell(0), 1);
+            return;
+        }
+
+        int maxParamLine = 0;
+        for (int i = COL_IDX_PARAMS_START; i < COL_IDX_PARAMS_END; i++) {
+            maxParamLine = NumberUtils.max(maxParamLine,
+                                           StringUtils.countMatches(Excel.getCellValue(row.getCell(i)), '\n'));
+        }
+
+        XSSFCell cellDescription = row.getCell(COL_IDX_DESCRIPTION);
+        int numOfLines = NumberUtils.max(
+            StringUtils.countMatches(Excel.getCellValue(row.getCell(COL_IDX_TESTCASE)), '\n'),
+            StringUtils.countMatches(Excel.getCellValue(cellDescription), '\n'),
+            maxParamLine,
+            StringUtils.countMatches(Excel.getCellValue(row.getCell(COL_IDX_FLOW_CONTROLS)), '\n')) + 1;
+        worksheet.setMinHeight(cellDescription, numOfLines);
     }
 
     protected static int handleNestedMessages(Worksheet worksheet, ExecutionSummary executionSummary, int lastRow) {
@@ -140,9 +165,6 @@ public final class ExecutionResultHelper {
                 String resultMessage = nestedMessage.getResultMessage();
 
                 XSSFRow row = excelSheet.createRow(currentRow + i);
-
-                if (row.getHeight() < CELL_HEIGHT_DEFAULT) { row.setHeight(CELL_HEIGHT_DEFAULT); }
-
                 XSSFCell cell = row.createCell(COL_IDX_MERGE_RESULT_START);
                 cell.setCellValue(message);
                 cell.setCellStyle(style);

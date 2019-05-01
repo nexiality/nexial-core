@@ -754,7 +754,7 @@ public class BaseCommand implements NexialCommand {
      * since when
      */
     protected void updateDataVariable(String var, String value) {
-        if (context.containsCrypt(var)) {
+        if (context.containsCrypt(TOKEN_START + var + TOKEN_END)) {
             throw new TokenReplacementException("Tampering with encrypted data is NOT permissible");
         }
         context.setData(var, value, StringUtils.isNotBlank(System.getProperty(var)) && !context.isReadOnlyData(var));

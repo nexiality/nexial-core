@@ -320,7 +320,6 @@ public class ExcelConfig {
         public static final StyleConfig SECTION_DESCRIPTION = newSectionDescriptionStyle();
         public static final StyleConfig REPEAT_UNTIL_DESCRIPTION = newRepeatUntilDescriptionStyle();
         public static final StyleConfig FAILED_STEP_DESCRIPTION = newFailedStepDescriptionStyle();
-        // public static final StyleConfig SKIPPED_STEP_DESCRIPTION = newSkippedStepDescriptionStyle();
         public static final StyleConfig SCREENSHOT = newScreenshotStyle();
         public static final StyleConfig ELAPSED_MS = newElapsedMsStyle();
         public static final StyleConfig SUCCESS = newSuccessStyle();
@@ -333,8 +332,6 @@ public class ExcelConfig {
         public static final StyleConfig TAINTED_PARAM = newTaintedParamStyle();
         public static final StyleConfig MSG = newMsgStyle();
 
-        // public static final StyleConfig SETTING_NAME = newSettingNameStyle();
-        // public static final StyleConfig SETTING_VALUE = newSettingValueStyle();
         public static final StyleConfig PREDEF_TEST_DATA_NAME = newPredefTestDataNameStyle();
         public static final StyleConfig TEST_DATA_NAME = newTestDataNameStyle();
         public static final StyleConfig TEST_DATA_VALUE = newTestDataValueStyle();
@@ -650,8 +647,9 @@ public class ExcelConfig {
 
         private static StyleConfig newSkippedStyle() {
             StyleConfig config = new StyleConfig();
+            config.backgroundColor = new XSSFColor(new Color(230, 230, 230));
             config.fontName = FONT_NAME_DEFAULT;
-            config.fontHeight = (short) 10;
+            config.fontHeight = (short) 11;
             config.fontColor = new XSSFColor(new Color(128, 128, 128));
             config.boldFont = false;
             config.verticalAlignment = CENTER;
@@ -1033,6 +1031,7 @@ public class ExcelConfig {
     }
 
     public static void formatActivityCell(Worksheet worksheet, XSSFCell cell) {
+        if (StringUtils.isBlank(Excel.getCellValue(cell))) { return; }
         cell.setCellStyle(worksheet.getStyle(STYLE_TEST_CASE));
         fixCellWidth(worksheet.getSheet(), cell, COL_IDX_TESTCASE, DEF_CHAR_WIDTH_FACTOR_TAHOMA_BOLD);
     }

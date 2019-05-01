@@ -210,8 +210,6 @@ public class MacroMerger {
             int targetRowIdx = ADDR_COMMAND_START.getRowStartIndex() + i;
 
             XSSFRow excelRow = excelSheet.createRow(targetRowIdx);
-            short actualHeight = excelRow.getHeight();
-            if (actualHeight < CELL_HEIGHT_DEFAULT) { excelRow.setHeight(CELL_HEIGHT_DEFAULT); }
 
             for (int j = 0; j < row.size(); j++) {
                 String cellValue = row.get(j);

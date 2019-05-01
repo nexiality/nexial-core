@@ -26,7 +26,6 @@ import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.ArrayUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.builder.ToStringBuilder;
-import org.apache.commons.lang3.math.NumberUtils;
 import org.apache.commons.lang3.time.StopWatch;
 import org.apache.poi.ss.usermodel.Comment;
 import org.apache.poi.xssf.usermodel.XSSFCell;
@@ -451,9 +450,7 @@ public class TestStep extends TestStepManifest {
 
         // test case
         XSSFCell cellTestCase = row.get(COL_IDX_TESTCASE);
-        if (StringUtils.isNotBlank(Excel.getCellValue(cellTestCase))) {
-            ExcelConfig.formatActivityCell(worksheet, cellTestCase);
-        }
+        ExcelConfig.formatActivityCell(worksheet, cellTestCase);
 
         XSSFCell cellTarget = row.get(COL_IDX_TARGET);
         ExcelConfig.formatTargetCell(worksheet, cellTarget);
@@ -578,11 +575,18 @@ public class TestStep extends TestStepManifest {
         }
 
         // result
-        boolean skipped = MessageUtils.isSkipped(message);
         XSSFCell cellResult = row.get(COL_IDX_RESULT);
         cellResult.setCellValue(StringUtils.left(MessageUtils.markResult(message, pass, true), 32767));
-        cellResult.setCellStyle(worksheet.getStyle(skipped ? STYLE_SKIPPED_RESULT :
-                                                   pass ? STYLE_SUCCESS_RESULT : STYLE_FAILED_RESULT));
+
+        boolean skipped = MessageUtils.isSkipped(message);
+        if (skipped) {
+            // paint both result and description the same style to improve readability
+            cellResult.setCellStyle(worksheet.getStyle(STYLE_SKIPPED_RESULT));
+            cellDescription.setCellStyle(worksheet.getStyle(STYLE_SKIPPED_RESULT));
+            Excel.createComment(cellDescription, cellResult.getStringCellValue(), COMMENT_AUTHOR);
+        } else {
+            cellResult.setCellStyle(worksheet.getStyle(pass ? STYLE_SUCCESS_RESULT : STYLE_FAILED_RESULT));
+        }
 
         // reason
         Throwable exception = result.getException();
@@ -593,15 +597,8 @@ public class TestStep extends TestStepManifest {
             cellReason.setCellStyle(worksheet.getStyle(STYLE_MESSAGE));
         }
 
-        int numOfLines = NumberUtils.max(
-            StringUtils.countMatches(Excel.getCellValue(cellTestCase), '\n'),
-            StringUtils.countMatches(Excel.getCellValue(cellDescription), '\n'),
-            ArrayUtils.isNotEmpty(paramValues) ? StringUtils.countMatches(Objects.toString(paramValues[0]), '\n') : 0,
-            StringUtils.countMatches(Excel.getCellValue(cellFlowControl), '\n')) + 1;
-        worksheet.setMinHeight(cellDescription, numOfLines);
-
         if (CollectionUtils.isNotEmpty(nestedTestResults)) {
-            TestStepManifest testStep = this.toTestStepManifest();
+            TestStepManifest testStep = toTestStepManifest();
             testStep.setRowIndex(row.get(0).getRowIndex());
             testCase.getTestScenario().getExecutionSummary().addNestedMessages(testStep, nestedTestResults);
         }

@@ -713,6 +713,10 @@ public class ExecutionContext {
         // for portability
         text = StringUtils.replace(text, NL, lineSeparator());
 
+        // pre-first pass  ;-)
+        // substitute crypt value
+        text = handleCryptValue(text);
+
         // first pass: cycle through the dyn var
         text = handleFunction(text);
 
@@ -791,12 +795,12 @@ public class ExecutionContext {
                 // if we need to conceal crypt and this token resolves from a crypt value,
                 // then we'll revert back to its crypt form
                 // stringValue = CellTextReader.readValue(stringValue);
-                if (retainCrypt && CellTextReader.isCryptVar(stringValue)) { stringValue = tokenized; }
+                if (retainCrypt && CellTextReader.isCrypt(stringValue)) { stringValue = tokenized; }
 
                 // it's possible that we might get a reference to an item of a string-based array (like "a,b,c,d")
                 // check to see if there's any reference to the ${var}[index] pattern
                 if (isListCompatible(stringValue)) {
-                    String regexIndexRef = "\\$\\{" + token + "\\}\\[\\d+\\]";
+                    String regexIndexRef = "\\$\\{" + token + "\\}\\[.+?\\]";
                     boolean hasIndexRef = RegexUtils.match(text, regexIndexRef, true);
 
                     // if there's substitution for ${...}[#] and the `value` can be treated as list
@@ -809,10 +813,18 @@ public class ExecutionContext {
                         List<String> indexRefs = RegexUtils.eagerCollectGroups(text, regexIndexRef, false, true);
                         for (String indexRef : indexRefs) {
                             String indexStr = StringUtils.substringBetween(indexRef, beforeIndex, afterIndex);
+                            String indexStr2;
 
-                            if (!NumberUtils.isDigits(indexStr)) { continue; }
+                            // in-place replacement for possible index value
+                            if (TextUtils.isBetween(indexStr, TOKEN_START, TOKEN_END)) {
+                                indexStr2 = replaceTokens(indexStr);
+                            } else {
+                                indexStr2 = indexStr;
+                            }
 
-                            int index = NumberUtils.toInt(indexStr);
+                            if (!NumberUtils.isDigits(indexStr2)) { continue; }
+
+                            int index = NumberUtils.toInt(indexStr2);
                             String itemValue;
                             if (ArrayUtils.isArrayIndexValid(array, index)) {
                                 itemValue = array[index];
@@ -1205,14 +1217,12 @@ public class ExecutionContext {
         // then that's means one or more data variables are crypted (retainCrypt=true)
 
         // if (!StringUtils.equals(data, CellTextReader.readValue(data))) { return true; }
-        if (CellTextReader.isCryptVar(data)) { return true; }
+        if (CellTextReader.isCrypt(data)) { return true; }
 
-        // no tokens means no crypt
-        Set<String> tokens = findTokens(data);
-        return CollectionUtils.isNotEmpty(tokens) && tokens.stream().anyMatch(CellTextReader::isCryptVar);
-
-        // return !StringUtils.equals(data, CellTextReader.readValue(data)) ||
-        //        RegexUtils.match(replaceTokens(data, true), ".*\\$\\{.+\\}.*", true);
+        // no variables means no crypt
+        Set<String> variables = findTokens(data);
+        return CollectionUtils.isNotEmpty(variables) &&
+               variables.stream().anyMatch(var -> CellTextReader.isCrypt(replaceTokens(TOKEN_START + var + TOKEN_END)));
     }
 
     public static boolean getSystemThenContextBooleanData(String name, ExecutionContext context, boolean def) {
@@ -1243,6 +1253,24 @@ public class ExecutionContext {
     public static String escapeToken(String text) {
         return StringUtils.replace(StringUtils.replace(text, TOKEN_START, ESCAPED_TOKEN_START),
                                    TOKEN_END, ESCAPED_TOKEN_END);
+    }
+
+    protected String handleCryptValue(String text) {
+        if (StringUtils.isBlank(text)) { return text; }
+        if (!StringUtils.contains(text, CRYPT_IND)) { return text; }
+
+        String crypt = RegexUtils.firstMatches(text, "(crypt:[0-9A-Za-z]+)");
+        while (StringUtils.isNotBlank(crypt)) {
+            String decrypt = CellTextReader.getText(crypt);
+            if (StringUtils.isNotBlank(decrypt)) {
+                text = StringUtils.replace(text, crypt, decrypt);
+                crypt = RegexUtils.firstMatches(text, "(crypt:[0-9A-Za-z]+)");
+            } else {
+                break;
+            }
+        }
+
+        return text;
     }
 
     /**

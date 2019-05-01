@@ -231,7 +231,7 @@ public class IoCommand extends BaseCommand {
      */
     public StepResult saveFileMeta(String var, String file) {
         requiresValidVariableName(var);
-        requires(StringUtils.isNotBlank(file), "invalid file", file);
+        requiresNotBlank(file, "invalid file", file);
 
         File f = new File(file);
         if (!f.exists()) { return StepResult.fail("invalid or non-existent file '" + file + "'"); }

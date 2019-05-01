@@ -185,6 +185,20 @@ public class ExecutionContextTest {
     }
 
     @Test
+    public void replaceTokens_array_index() {
+        MockExecutionContext subject = initMockContext();
+        subject.setData("a", "Hello,World,Johnny boy");
+        subject.setData("b", "Hello World Johnny boy");
+
+        subject.setData("index", 0);
+        Assert.assertEquals("Hello", subject.replaceTokens("${a}[${index}]"));
+        Assert.assertEquals("Hello World Johnny boy", subject.replaceTokens("${b}[${index}]"));
+
+        subject.setData("index", 1);
+        Assert.assertEquals("World", subject.replaceTokens("${a}[${index}]"));
+    }
+
+    @Test
     public void replaceTokens_ignored() {
         MockExecutionContext subject = initMockContext();
         subject.setData(OPT_VAR_EXCLUDE_LIST, "username,applications");
