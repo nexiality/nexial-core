@@ -228,6 +228,7 @@ public class MacroMerger {
                 switch (j) {
                     case COL_IDX_TESTCASE:
                         if (hasCellValue) { ExcelConfig.formatActivityCell(sheet, cell); }
+                        break;
                     case COL_IDX_DESCRIPTION:
                         if (hasCellValue) {
                             if (StringUtils.startsWith(cellValue, SECTION_DESCRIPTION_PREFIX)) {
@@ -236,12 +237,16 @@ public class MacroMerger {
                                 ExcelConfig.formatDescription(sheet, cell);
                             }
                         }
+                        break;
                     case COL_IDX_TARGET:
                         cell.setCellStyle(styleTarget);
+                        break;
                     case COL_IDX_COMMAND:
                         cell.setCellStyle(styleCommand);
+                        break;
                     case COL_IDX_FLOW_CONTROLS:
                         if (hasCellValue) { ExcelConfig.formatFlowControlCell(sheet, cell); }
+                        break;
                 }
             }
         }

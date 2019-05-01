@@ -398,52 +398,57 @@ public class WebCommand extends BaseCommand implements CanTakeScreenshot, CanLog
                                    "'" + SUFFIX_LOCATOR + "' suffix");
         }
 
+        String runId = context.getRunId();
         boolean allPassed = true;
         StringBuilder logs = new StringBuilder();
+        StringBuilder errors = new StringBuilder();
         keys = locators.keySet();
         for (String key : keys) {
             String name = StringUtils.substringBefore(key, SUFFIX_LOCATOR);
             String locator = locators.get(key);
 
+            boolean found = true;
             String message = "[" + name + "] ";
 
             try {
                 StepResult isPresent = assertElementPresent(locator);
                 if (isPresent.isSuccess()) {
-                    message += "element found via '" + locator + "'";
-                    ConsoleUtils.log(context.getRunId(), message);
+                    message += "found via '" + locator + "'";
+                    ConsoleUtils.log(runId, message);
                 } else {
-                    allPassed = false;
-                    message += "ELEMENT NOT FOUND via '" + locator + "'";
-                    ConsoleUtils.log(context.getRunId(), message);
-                    ConsoleUtils.error(context.getRunId(), message);
+                    found = false;
+                    message += "NOT FOUND via '" + locator + "'";
+                    ConsoleUtils.error(runId, message);
                 }
             } catch (WebDriverException e) {
-                allPassed = false;
-                String error = WebDriverExceptionHelper.resolveErrorMessage(e);
-                message += "ELEMENT NOT FOUND via '" + locator + "': " + error;
-                ConsoleUtils.log(context.getRunId(), message);
-                ConsoleUtils.error(context.getRunId(), message);
+                found = false;
+                message += "NOT FOUND via '" + locator + "': " + WebDriverExceptionHelper.resolveErrorMessage(e);
+                ConsoleUtils.error(runId, message);
             } catch (Throwable e) {
-                allPassed = false;
-                message += "ELEMENT NOT FOUND via '" + locator + "': " + e.getMessage();
-                ConsoleUtils.log(context.getRunId(), message);
-                ConsoleUtils.error(context.getRunId(), message);
+                found = false;
+                message += "NOT FOUND via '" + locator + "': " + e.getMessage();
+                ConsoleUtils.error(runId, message);
             }
 
             logs.append(message).append("\n");
+            if (!found) {
+                allPassed = false;
+                errors.append(message).append("\n");
+            }
         }
 
         String message = logs.toString();
-        if (allPassed) {
+        String errorsFound = errors.toString();
+
+        // at least print errors.. unless verbose is true
+        if (context.isVerbose()) {
             log(message);
             ConsoleUtils.log(message);
-            return StepResult.success(message);
-        } else {
-            log(message);
-            ConsoleUtils.error(message);
-            return StepResult.fail(message);
+        } else if (!allPassed) {
+            log(errorsFound);
         }
+
+        return allPassed ? StepResult.success(message) : StepResult.fail(errorsFound);
     }
 
     public StepResult saveTextSubstringAfter(String var, String locator, String delim) {
