@@ -468,11 +468,6 @@ public class TestStep extends TestStepManifest {
         } else {
             ExcelConfig.formatDescription(worksheet, cellDescription);
         }
-        if (result.isError()) {
-            ExcelConfig.formatFailedStepDescription(this);
-            Excel.createComment(cellDescription, result.getMessage(), COMMENT_AUTHOR);
-        }
-        // if (result.isSkipped()) { ExcelConfig.formatSkippedStepDescription(this); }
         cellDescription.setCellValue(context.containsCrypt(description) ?
                                      CellTextReader.readValue(description) : context.replaceTokens(description, true));
 
@@ -577,6 +572,11 @@ public class TestStep extends TestStepManifest {
         // result
         XSSFCell cellResult = row.get(COL_IDX_RESULT);
         cellResult.setCellValue(StringUtils.left(MessageUtils.markResult(message, pass, true), 32767));
+
+        if (result.isError()) {
+            ExcelConfig.formatFailedStepDescription(this);
+            Excel.createComment(cellDescription, cellResult.getStringCellValue(), COMMENT_AUTHOR);
+        }
 
         boolean skipped = MessageUtils.isSkipped(message);
         if (skipped) {

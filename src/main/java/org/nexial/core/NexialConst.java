@@ -575,7 +575,8 @@ public final class NexialConst {
     }
 
     public static final class Project {
-        public static final String DEF_REL_LOC_ARTIFACT = "artifact" + separator;
+        public static final String DEF_LOC_ARTIFACT = "artifact";
+        public static final String DEF_REL_LOC_ARTIFACT = DEF_LOC_ARTIFACT + separator;
         public static final String DEF_LOC_TEST_DATA = "data";
         public static final String DEF_REL_LOC_BIN = DEF_REL_LOC_ARTIFACT + "bin" + separator;
         public static final String DEF_REL_LOC_TEST_PLAN = DEF_REL_LOC_ARTIFACT + "plan" + separator;
@@ -724,11 +725,17 @@ public final class NexialConst {
         // predefined variable to define the iteration to use
         public static final String ITERATION = SCOPE + "iteration";
 
-        // read-only: the iteration counter that just completed
+        // read-only iteration-related variables:
+        // the iteration counter that just completed
         public static final String LAST_ITERATION = SCOPE + "lastIteration";
-
-        // read-only: the currently in-progress iteration (doesn't mean it will or has completed successfully)
+        // the currently in-progress iteration index (doesn't mean it will or has completed successfully)
         public static final String CURR_ITERATION = SCOPE + "currentIteration";
+        // current iteration id (not index, this is the actual column position on datasheet)
+        public static final String CURR_ITERATION_ID = SCOPE + "currentIterationId";
+        // is current iteration the first?
+        public static final String IS_FIRST_ITERATION = SCOPE + "isFirstIteration";
+        // is current iteration the last?
+        public static final String IS_LAST_ITERATION = SCOPE + "isLastIteration";
 
         // read-only: reload data file between iteration or not
         public static final String REFETCH_DATA_FILE = SCOPE + "refetchDataFile";
@@ -970,8 +977,7 @@ public final class NexialConst {
         public static final String COPY_CONFIG_KEEP_ORIGINAL = "keepOriginal";
         public static final String COPY_CONFIG_DEF = COPY_CONFIG_KEEP_ORIGINAL;
         public static final String OPT_IO_EOL_CONFIG = registerSystemVariable(NAMESPACE_IO + "eolConfig", EOL_CONFIG_DEF);
-        public static final String OPT_IO_COPY_CONFIG = registerSystemVariable(NAMESPACE_IO + "copyConfig",
-                                                                               COPY_CONFIG_DEF);
+        public static final String OPT_IO_COPY_CONFIG = registerSystemVariable(NAMESPACE_IO + "copyConfig", COPY_CONFIG_DEF);
 
         // json
         public static final String NAMESPACE_JSON = NAMESPACE + "json.";
@@ -1186,6 +1192,7 @@ public final class NexialConst {
         public static final int RC_EXCEL_IN_USE = -17;
         public static final int RC_FILE_GEN_FAILED = -18;
         public static final int RC_FILE_NOT_FOUND = -19;
+        public static final int RC_BAD_BATCH_FILE = -20;
 
         // env. properties (mainly to export to)
         public static final String OUTPUT_LOCATION = "nexial.output";

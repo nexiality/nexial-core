@@ -69,8 +69,8 @@ public final class ExecutionThread extends Thread {
     private ExecutionDefinition execDef;
     private ExecutionSummary executionSummary = new ExecutionSummary();
     private List<File> completedTests = new ArrayList<>();
-    private boolean firstUse;
-    private boolean lastUse;
+    private boolean firstScript;
+    private boolean lastScript;
 
     // capture the data after an execution run (all iteration, all scenarios within 1 file)
     private Map<String, Object> intraExecutionData = new HashMap<>();
@@ -93,9 +93,9 @@ public final class ExecutionThread extends Thread {
         return self;
     }
 
-    public void setFirstUse(boolean firstUse) { this.firstUse = firstUse;}
+    public void setFirstScript(boolean firstScript) { this.firstScript = firstScript;}
 
-    public void setLastUse(boolean lastUse) { this.lastUse = lastUse;}
+    public void setLastScript(boolean lastScript) { this.lastScript = lastScript;}
 
     @Override
     public void run() {
@@ -141,6 +141,9 @@ public final class ExecutionThread extends Thread {
             context.setData(OPT_INPUT_PLAN_FILE, execDef.getPlanFile());
         }
 
+        context.removeDataForcefully(IS_LAST_ITERATION);
+        context.removeDataForcefully(IS_FIRST_ITERATION);
+
         ExecutionThread.set(context);
 
         String scriptName =
@@ -181,7 +184,7 @@ public final class ExecutionThread extends Thread {
                 iterSummary.setTestScript(testScript.getOriginalFile());
                 context.useTestScript(testScript);
 
-                context.startIteration(currIteration, firstUse);
+                context.startIteration(currIteration, iteration, totalIterations, firstScript);
 
                 ExecutionLogger logger = context.getLogger();
                 logger.log(context, "executing iteration #" + currIteration + " of " + totalIterations +
@@ -262,7 +265,7 @@ public final class ExecutionThread extends Thread {
                     completedTests.add(testScriptFile);
                 }
 
-                collectIntraExecutionData(context, currIteration);
+                collectIntraExecutionData(context, iteration);
                 ExecutionMailConfig.configure(context);
 
                 context.endIteration();
@@ -438,7 +441,7 @@ public final class ExecutionThread extends Thread {
 
         if (MapUtils.isNotEmpty(intraExecutionData)) { intraExecutionData.remove(LAST_ITERATION); }
 
-        if (lastUse) {
+        if (lastScript) {
             CloudWebTestingPlatform.reportCloudBrowserStatus(context, executionSummary, ExecutionComplete);
             context.getExecutionEventListener().onExecutionComplete();
         }

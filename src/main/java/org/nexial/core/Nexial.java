@@ -720,8 +720,8 @@ public class Nexial {
                 ConsoleUtils.log(runId, msgPrefix + "resolve RUN ID as " + runId);
 
                 ExecutionThread launcherThread = ExecutionThread.newInstance(exec);
-                if (i == 0) { launcherThread.setFirstUse(true); }
-                if (i == lastUse) { launcherThread.setLastUse(true); }
+                if (i == 0) { launcherThread.setFirstScript(true); }
+                if (i == lastUse) { launcherThread.setLastScript(true); }
                 if (MapUtils.isNotEmpty(intraExecution)) { launcherThread.setIntraExecutionData(intraExecution); }
 
                 ConsoleUtils.log(runId, msgPrefix + "new thread started");
@@ -1118,7 +1118,7 @@ public class Nexial {
         // -- haven't found a way to do this more gracefully yet...
         if (ShutdownAdvisor.mustForcefullyTerminate()) { ShutdownAdvisor.forcefullyTerminate(); }
 
-        if (isIntegrationMode() || isListenMode() || isInteractiveMode()) { return 0; }
+        if (isIntegrationMode() || isReadyMode() || isInteractiveMode()) { return RC_NORMAL; }
 
         // only for normal execution mode
         int exitStatus;

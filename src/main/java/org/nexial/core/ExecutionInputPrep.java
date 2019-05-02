@@ -137,7 +137,7 @@ public class ExecutionInputPrep {
         // we are no longer concerned with remote file access. The best practice to follow is NOT to use remote fs
         TestData testData = execDef.getTestData();
         if (testData == null || testData.getSettingAsBoolean(REFETCH_DATA_FILE)) {testData = execDef.getTestData(true);}
-        mergeTestData(outputExcel, testData, iteration);
+        mergeTestData(outputExcel, testData, testData.getIterationManager().getIterationRef(counter - 1));
         ConsoleUtils.log(runId, "test script and test data merged to " + outputFile);
 
         // 6. now copy tmp to final location

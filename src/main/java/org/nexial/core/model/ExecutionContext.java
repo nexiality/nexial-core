@@ -253,6 +253,8 @@ public class ExecutionContext {
             data.putAll(intraExecutionData);
             data.remove(BREAK_CURRENT_ITERATION);
             data.remove(LAST_ITERATION);
+            data.remove(IS_FIRST_ITERATION);
+            data.remove(IS_LAST_ITERATION);
             data.remove(OPT_LAST_SCREENSHOT_NAME);
             data.remove(OPT_LAST_ALERT_TEXT);
             data.remove(OPT_LAST_OUTPUT_LINK);
@@ -1015,6 +1017,8 @@ public class ExecutionContext {
         intraExecutionData.putAll(getDataMap());
         intraExecutionData.put(NAME_PLUGIN_MANAGER, plugins);
         intraExecutionData.put(NAME_SPRING_CONTEXT, springContext);
+        intraExecutionData.remove(IS_FIRST_ITERATION);
+        intraExecutionData.remove(IS_LAST_ITERATION);
     }
 
     public Map<String, String> gatherScenarioReferenceData() { return gatherReferenceData(SCENARIO_REF_PREFIX); }
@@ -1031,19 +1035,30 @@ public class ExecutionContext {
 
     public void clearScriptRefData() { clearReferenceData(SCRIPT_REF_PREFIX); }
 
-    public void startIteration(int currIteration, boolean firstUse) {
+    public void startIteration(int iterationIndex, int iterationRef, int totalIterationCount, boolean firstUse) {
         getTrackTimeLogs();
 
         // remember whether we want to track execution completion as a time-track event or not
         System.setProperty(TRACK_EXECUTION, getStringData(TRACK_EXECUTION, getDefault(TRACK_EXECUTION)));
 
+        setData(CURR_ITERATION, iterationIndex);
+        setData(CURR_ITERATION_ID, iterationRef);
+        if (iterationIndex == 1) {
+            setData(IS_FIRST_ITERATION, true);
+        } else {
+            removeDataForcefully(IS_FIRST_ITERATION);
+        }
+
+        if (iterationIndex == totalIterationCount) {
+            setData(IS_LAST_ITERATION, true);
+        } else {
+            removeDataForcefully(IS_LAST_ITERATION);
+        }
+
+        // handling events
         ExecutionEventListener eventListener = getExecutionEventListener();
-
-        // handling onExecutionStart
         if (firstUse) { eventListener.onExecutionStart(); }
-
-        setData(CURR_ITERATION, currIteration);
-        if (currIteration == 1) { eventListener.onScriptStart(); }
+        if (iterationIndex == 1) { eventListener.onScriptStart(); }
         eventListener.onIterationStart();
     }
 
