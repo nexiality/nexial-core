@@ -54,7 +54,7 @@ import org.nexial.core.reports.ExecutionMailConfig;
 import org.nexial.core.reports.ExecutionNotifier;
 import org.nexial.core.reports.ExecutionReporter;
 import org.nexial.core.service.EventTracker;
-import org.nexial.core.service.ReadyLauncher;
+import org.nexial.core.service.ServiceLauncher;
 import org.nexial.core.utils.ConsoleUtils;
 import org.nexial.core.utils.ExecUtils;
 import org.nexial.core.utils.InputFileUtils;
@@ -188,9 +188,10 @@ public class Nexial {
     private TestProject project;
     private List<ExecutionDefinition> executions;
     private int threadWaitCounter;
-    private ExecutionMode executionMode;
-
-    enum ExecutionMode {EXECUTE_SCRIPT, EXECUTE_PLAN, INTERACTIVE, INTEGRATION, READY}
+    private int listenPort = -1;
+    private String listenerHandshake;
+    private boolean integrationMode;
+    private boolean interactiveMode;
 
     @SuppressWarnings("PMD.DoNotCallSystemExit")
     public static void main(String[] args) {
@@ -221,9 +222,10 @@ public class Nexial {
             // integration mode, only for metrics and post-exec analysis
             if (main.isIntegrationMode()) { return; }
 
-            // beReady mode, only for studio integration
-            if (main.isReadyMode()) {
-                main.beReady();
+            // listen mode, only for studio integration
+            if (main.isListenMode()) {
+                main.listen();
+                ConsoleUtils.log("Nexial Services ready...");
                 return;
             }
 
@@ -243,22 +245,24 @@ public class Nexial {
             ConsoleUtils.error("Unknown/unexpected error occurred: " + e.getMessage());
             e.printStackTrace();
         } finally {
-            if (!main.isReadyMode()) {
-                ConsoleUtils.log("Exiting Nexial...");
-                System.exit(main.beforeShutdown(summary));
-            }
+            ConsoleUtils.log("Exiting Nexial...");
+            System.exit(main.beforeShutdown(summary));
         }
     }
 
-    protected boolean isReadyMode() { return executionMode == ExecutionMode.READY; }
+    protected void listen() throws Exception { ServiceLauncher.main(new String[]{}); }
 
-    protected boolean isIntegrationMode() { return executionMode == ExecutionMode.INTEGRATION; }
+    protected boolean isListenMode() { return listenPort > 0 && StringUtils.isNotBlank(listenerHandshake); }
 
-    protected boolean isInteractiveMode() { return executionMode == ExecutionMode.INTERACTIVE; }
+    protected boolean isIntegrationMode() { return integrationMode; }
+
+    protected boolean isInteractiveMode() { return interactiveMode; }
 
     protected Options addMsaOptions(Options options) {
         Options optionsAdded = new Options();
         options.getOptions().forEach(optionsAdded::addOption);
+        optionsAdded.addOption("listen", true, "start Nexial in listen mode on the specified port");
+        optionsAdded.addOption("listenCode", true, "establish listener/receiver handshake");
         optionsAdded.addOption(ANNOUNCE, true, "the output directory path to announce the automation " +
                                                "report over collaboration tools");
         return optionsAdded;
@@ -281,9 +285,10 @@ public class Nexial {
 
         CommandLine cmd = new DefaultParser().parse(addMsaOptions(OPTIONS), args);
 
-        // nexial-ready
-        if (cmd.hasOption(READY)) {
-            executionMode = ExecutionMode.READY;
+        // msa treatment
+        if (cmd.hasOption("listen") && cmd.hasOption("listenCode")) {
+            listenPort = NumberUtils.toInt(cmd.getOptionValue("listen"));
+            listenerHandshake = cmd.getOptionValue("listenCode");
             return;
         }
 
@@ -301,36 +306,31 @@ public class Nexial {
         // integration mode
         // integrate or announce or assimilate
         if (cmd.hasOption(ANNOUNCE)) {
-            executionMode = ExecutionMode.INTEGRATION;
+            integrationMode = true;
             String outputDirPath = cmd.getOptionValue(ANNOUNCE);
             initSpringContext();
-            IntegrationManager.manageIntegration(outputDirPath);
+            IntegrationManager.Companion.manageIntegration(outputDirPath);
             return;
+        }
+
+        if (cmd.hasOption(INTERACTIVE)) {
+            interactiveMode = true;
+            System.setProperty(OPT_INTERACTIVE, "true");
+            // proceed to parsing, but only script will be supported
         }
 
         // plan or script?
         if (cmd.hasOption(PLAN)) {
-            // only -script will be supported
-            if (cmd.hasOption(INTERACTIVE)) {
+            if (isInteractiveMode()) {
                 throw new ParseException("Interactive Mode is NOT support with plan files. " +
                                          "Try specifying a script instead");
             }
-
             this.executions = parsePlanExecution(cmd);
             System.setProperty(NEXIAL_EXECUTION_TYPE, NEXIAL_EXECUTION_TYPE_PLAN);
-            executionMode = ExecutionMode.EXECUTE_PLAN;
         } else {
             if (!cmd.hasOption(SCRIPT)) { fail("test script is required but not specified."); }
-
             this.executions = parseScriptExecution(cmd);
-
-            if (cmd.hasOption(INTERACTIVE)) {
-                executionMode = ExecutionMode.INTERACTIVE;
-                System.setProperty(OPT_INTERACTIVE, "true");
-            } else {
-                executionMode = ExecutionMode.EXECUTE_SCRIPT;
-                System.setProperty(NEXIAL_EXECUTION_TYPE, NEXIAL_EXECUTION_TYPE_SCRIPT);
-            }
+            System.setProperty(NEXIAL_EXECUTION_TYPE, NEXIAL_EXECUTION_TYPE_SCRIPT);
         }
 
         // any variable override?
@@ -679,12 +679,6 @@ public class Nexial {
         if (StringUtils.isBlank(System.getProperty(THIRD_PARTY_LOG_PATH))) {
             System.setProperty(THIRD_PARTY_LOG_PATH, outPath);
         }
-    }
-
-    protected void beReady() throws Exception {
-        initSpringContext();
-        ReadyLauncher.main(new String[]{});
-        ConsoleUtils.log("Nexial Ready now accepting connection");
     }
 
     protected void interact() {
@@ -1125,7 +1119,6 @@ public class Nexial {
         if (ShutdownAdvisor.mustForcefullyTerminate()) { ShutdownAdvisor.forcefullyTerminate(); }
 
         if (isIntegrationMode() || isListenMode() || isInteractiveMode()) { return 0; }
-        // if (isIntegrationMode() || isReadyMode() || isInteractiveMode()) { return RC_NORMAL; }
 
         // only for normal execution mode
         int exitStatus;
@@ -1181,6 +1174,14 @@ public class Nexial {
                 }
             }
         }
+
+        System.setProperty(EXIT_STATUS, exitStatus + "");
+        ConsoleUtils.log("End of Execution:\n" +
+                         "OUTPUT:       " + System.getProperty(OUTPUT_LOCATION) + "\n" +
+                         "EXECUTION:    " + System.getProperty(EXEC_OUTPUT_PATH) + "\n" +
+                         "JUNIT XML:    " + System.getProperty(JUNIT_XML_LOCATION) + "\n" +
+                         "SUCCESS RATE: " + System.getProperty(SUCCESS_RATE) + "\n" +
+                         "EXIT STATUS:  " + exitStatus);
 
         // not used at this time
         // File eventPath = new File(EventTracker.INSTANCE.getStorageLocation());
