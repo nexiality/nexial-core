@@ -30,7 +30,6 @@ import javax.validation.constraints.NotNull;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.collections4.IterableUtils;
 import org.apache.commons.collections4.MapUtils;
-import org.apache.commons.collections4.Predicate;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang3.ArrayUtils;
 import org.apache.commons.lang3.BooleanUtils;
@@ -83,8 +82,8 @@ import static java.io.File.separator;
 import static java.lang.Thread.sleep;
 import static org.apache.commons.lang3.SystemUtils.IS_OS_MAC;
 import static org.nexial.core.NexialConst.BrowserType.safari;
-import static org.nexial.core.NexialConst.*;
 import static org.nexial.core.NexialConst.Data.*;
+import static org.nexial.core.NexialConst.*;
 import static org.nexial.core.SystemVariables.*;
 import static org.nexial.core.plugins.ws.WebServiceClient.hideAuthDetails;
 import static org.nexial.core.utils.CheckUtils.*;
@@ -105,11 +104,7 @@ public class WebCommand extends BaseCommand implements CanTakeScreenshot, CanLog
     protected CookieCommand cookie;
     protected WsCommand ws;
     protected TableHelper tableHelper;
-
     protected boolean logToBrowser;
-    protected long browserStabilityWaitMs;
-    protected long pollWaitMs;
-    protected FluentWait<WebDriver> waiter;
 
     @Override
     public Browser getBrowser() { return browser; }
@@ -120,8 +115,6 @@ public class WebCommand extends BaseCommand implements CanTakeScreenshot, CanLog
     @Override
     public void init(ExecutionContext context) {
         super.init(context);
-
-        pollWaitMs = context.getPollWaitMs();
 
         // todo: revisit to handle proxy
         if (context.getBooleanData(OPT_PROXY_ENABLE, false)) {
@@ -138,19 +131,12 @@ public class WebCommand extends BaseCommand implements CanTakeScreenshot, CanLog
 
         locatorHelper = new LocatorHelper(this);
 
-        browserStabilityWaitMs = context.getIntData(OPT_UI_RENDER_WAIT_MS, getDefaultInt(OPT_UI_RENDER_WAIT_MS));
+        long browserStabilityWaitMs = deriveBrowserStabilityWaitMs(context);
         log("default browser stability wait time is " + browserStabilityWaitMs + " ms");
 
         // todo: consider this http://seleniumhq.github.io/selenium/docs/api/javascript/module/selenium-webdriver/lib/logging.html
         logToBrowser = !browser.isRunChrome() &&
                        context.getBooleanData(OPT_BROWSER_CONSOLE_LOG, getDefaultBool(OPT_BROWSER_CONSOLE_LOG));
-
-        if (driver != null) {
-            waiter = new FluentWait<>(driver).withTimeout(Duration.ofMillis(browserStabilityWaitMs))
-                                             .pollingEvery(Duration.ofMillis(10))
-                                             .ignoring(NoSuchElementException.class);
-        }
-
         tableHelper = new TableHelper(this);
     }
 
@@ -237,7 +223,7 @@ public class WebCommand extends BaseCommand implements CanTakeScreenshot, CanLog
         String script = "if (arguments[0].hasAttribute('type','checkbox') && !arguments[0].hasAttribute('checked')) {" +
                         "   arguments[0].click(); " +
                         "}";
-        return execJsOverFreshElements(locator, script, (int) pollWaitMs) ?
+        return execJsOverFreshElements(locator, script, (int) context.getPollWaitMs()) ?
                StepResult.success("CheckBox elements (" + locator + ") are checked") :
                StepResult.fail("Check FAILED on element(s) '" + locator + "'");
     }
@@ -246,7 +232,7 @@ public class WebCommand extends BaseCommand implements CanTakeScreenshot, CanLog
         String script = "if (arguments[0].hasAttribute('type','checkbox') && arguments[0].hasAttribute('checked')) {" +
                         "   arguments[0].click();" +
                         "}";
-        return execJsOverFreshElements(locator, script, (int) pollWaitMs) ?
+        return execJsOverFreshElements(locator, script, (int) context.getPollWaitMs()) ?
                StepResult.success("CheckBox elements (" + locator + ") are unchecked") :
                StepResult.fail("Uncheck FAILED on element(s) '" + locator + "'");
     }
@@ -478,7 +464,7 @@ public class WebCommand extends BaseCommand implements CanTakeScreenshot, CanLog
      * <p/>
      * For example (Java code),
      * <pre>
-     * String nameValues = "@class=dijit*|text()=Save|@id=*save*";
+     * String nameValues = "@class=digit*|text()=Save|@id=*save*";
      * StepResult result = assertElementPresentByAttribs(nameValues);
      * </pre>
      * Same example (spreadsheet),<br/>
@@ -492,7 +478,7 @@ public class WebCommand extends BaseCommand implements CanTakeScreenshot, CanLog
      * <p/>
      * The above code will construct an XPATH as follows:
      * <pre>
-     * //*[ends-with(@class,'dijit') and text()='Save' and contains(@id,'save')]
+     * //*[ends-with(@class,'digit') and text()='Save' and contains(@id,'save')]
      * </pre>
      * <p/>
      * This XPATH is then used to check if the current page contains an element that would satisfy the
@@ -685,8 +671,6 @@ public class WebCommand extends BaseCommand implements CanTakeScreenshot, CanLog
 
         // text might contain single quote; hence use resolveContainLabelXpath()
 
-        // StepResult result = assertElementNotPresent(locatorHelper.resolveContainLabelXpath(text));
-        // if (result.failed()) {
         if (isTextPresent(text)) {
             return StepResult.fail(msgPrefix + "FOUND");
         } else {
@@ -842,10 +826,8 @@ public class WebCommand extends BaseCommand implements CanTakeScreenshot, CanLog
     }
 
     public StepResult assertVisible(String locator) {
-        String msgPrefix = "EXPECTED visible element '" + locator + "'";
-        return isVisible(locator) ?
-               StepResult.success(msgPrefix + " found") :
-               StepResult.fail(msgPrefix + " not found");
+        String prefix = "EXPECTED visible element '" + locator + "'";
+        return isVisible(locator) ? StepResult.success(prefix + " found") : StepResult.fail(prefix + " not found");
     }
 
     public StepResult assertNotVisible(String locator) {
@@ -910,7 +892,7 @@ public class WebCommand extends BaseCommand implements CanTakeScreenshot, CanLog
         }
     }
 
-    public StepResult clickByLabel(String label) { return clickByLabelAndWait(label, pollWaitMs + ""); }
+    public StepResult clickByLabel(String label) { return clickByLabelAndWait(label, context.getPollWaitMs() + ""); }
 
     public StepResult clickByLabelAndWait(String label, String waitMs) {
         String xpath = locatorHelper.resolveLabelXpath(label);
@@ -1098,7 +1080,7 @@ public class WebCommand extends BaseCommand implements CanTakeScreenshot, CanLog
         // dimension unit is point (or px)
         window.setSize(new Dimension(numWidth, numHeight));
 
-        return StepResult.success("browser window resized to " + width + "x" + height);
+        return StepResult.success("browser window resize to " + width + "x" + height);
     }
 
     public StepResult assertScrollbarVPresent(String locator) { return checkScrollbarV(locator, false); }
@@ -1211,7 +1193,7 @@ public class WebCommand extends BaseCommand implements CanTakeScreenshot, CanLog
         requiresNotBlank(text, "invalid title text", text);
 
         ensureReady();
-        Boolean expectedTitleFound = waiter.until(ExpectedConditions.titleIs(text));
+        Boolean expectedTitleFound = newFluentWait().until(ExpectedConditions.titleIs(text));
         return new StepResult(expectedTitleFound, (expectedTitleFound ? "EXPECTED title " : "NOT ") + "found", null);
     }
 
@@ -1364,26 +1346,6 @@ public class WebCommand extends BaseCommand implements CanTakeScreenshot, CanLog
 
             element.click();
             waitFor(MIN_STABILITY_WAIT_MS);
-
-            // if (browser.isRunElectron()) {
-            //     String text = value;
-            //     String controlKey = RegexUtils.firstMatches(text, "(\\{.+?\\})");
-            //     while (StringUtils.isNotEmpty(controlKey)) {
-            //         String regularText = StringUtils.substringBefore(text, controlKey);
-            //         text = StringUtils.substringAfter(text, controlKey);
-            //
-            //         if (StringUtils.isNotEmpty(regularText)) { element.sendKeys(regularText); }
-            //         if (CONTROL_KEY_MAPPING.containsKey(controlKey.toUpperCase())) {
-            //             ConsoleUtils.error("control key not supported in Electron application: " + controlKey);
-            //         }
-            //         if (KEY_MAPPING.containsKey(controlKey.toUpperCase())) {
-            //             element.sendKeys(KEY_MAPPING.get(controlKey.toUpperCase()));
-            //         }
-            //
-            //         controlKey = RegexUtils.firstMatches(text, "(\\{.+?\\})");
-            //     }
-            //
-            // } else {
             Actions actions = WebDriverUtils.toSendKeyAction(driver, element, value);
             if (actions != null) {
                 if (context.getBooleanData(WEB_UNFOCUS_AFTER_TYPE, getDefaultBool(WEB_UNFOCUS_AFTER_TYPE))) {
@@ -1391,7 +1353,6 @@ public class WebCommand extends BaseCommand implements CanTakeScreenshot, CanLog
                 }
                 actions.build().perform();
             }
-            // }
         } else {
             // no locator
             WebDriverUtils.toSendKeyAction(driver, null, value).build().perform();
@@ -1536,7 +1497,7 @@ public class WebCommand extends BaseCommand implements CanTakeScreenshot, CanLog
         }
 
         // proceed... with caution (or not!)
-        waitForBrowserStability(browserStabilityWaitMs);
+        waitForBrowserStability(deriveBrowserStabilityWaitMs(context));
 
         String filename = generateScreenshotFilename(testStep);
         if (StringUtils.isBlank(filename)) {
@@ -1649,7 +1610,6 @@ public class WebCommand extends BaseCommand implements CanTakeScreenshot, CanLog
         // ensureReady();
         browser.shutdown();
         driver = null;
-        waiter = null;
         return StepResult.success("closed last tab/window");
     }
 
@@ -1693,6 +1653,10 @@ public class WebCommand extends BaseCommand implements CanTakeScreenshot, CanLog
                            .build().perform();
 
         return StepResult.success("Drag-and-move element '" + fromLocator + "' by (" + moveX + "," + moveY + ")");
+    }
+
+    protected int deriveBrowserStabilityWaitMs(ExecutionContext context) {
+        return context.getIntData(OPT_UI_RENDER_WAIT_MS, getDefaultInt(OPT_UI_RENDER_WAIT_MS));
     }
 
     protected void clearValue(WebElement element) {
@@ -1761,10 +1725,8 @@ public class WebCommand extends BaseCommand implements CanTakeScreenshot, CanLog
             return new Point(dimension.getWidth() / 2, dimension.getHeight());
         }
 
-        // default
-        // if (StringUtils.equals(dragFrom,OPT_DRAG_FROM_MIDDLE)) {
+        // default - drag from middle
         return new Point(dimension.getWidth() / 2, dimension.getHeight() / 2);
-        // }
     }
 
     protected void resizeSafariAfterOpen() {
@@ -2077,13 +2039,8 @@ public class WebCommand extends BaseCommand implements CanTakeScreenshot, CanLog
 
         WebElement element;
         try {
-            // stupid code! both findElement() and findElements() are using waiter
-            // if (shouldWait()) {
-            //     element = findElement(locator);
-            // } else {
             List<WebElement> matches = findElements(locator);
             element = CollectionUtils.isEmpty(matches) ? null : matches.get(0);
-            // }
         } catch (TimeoutException e) {
             return StepResult.fail("Unable to find element via locator '" + locator + "' within allotted time");
         }
@@ -2157,10 +2114,6 @@ public class WebCommand extends BaseCommand implements CanTakeScreenshot, CanLog
 
         if (driver == null || currentDriver != driver) {
             driver = currentDriver;
-
-            waiter = new FluentWait<>(this.driver).withTimeout(Duration.ofMillis(context.getPollWaitMs()))
-                                                  .pollingEvery(Duration.ofMillis(10))
-                                                  .ignoring(NoSuchElementException.class);
             alert = null;
             cookie = null;
         }
@@ -2188,7 +2141,7 @@ public class WebCommand extends BaseCommand implements CanTakeScreenshot, CanLog
 
     protected void ensureReady() { initWebDriver(); }
 
-    // todo: need to enable proxy capbility across nexial
+    // todo: need to enable proxy capability across nexial
     protected void initProxy() {
         // todo: need to decide key
         ProxyServer proxyServer = WebProxy.getProxyServer();
@@ -2212,6 +2165,13 @@ public class WebCommand extends BaseCommand implements CanTakeScreenshot, CanLog
     }
 
     @NotNull
+    protected FluentWait<WebDriver> newFluentWait() {
+        return new FluentWait<>(driver).withTimeout(Duration.ofMillis(context.getPollWaitMs()))
+                                       .pollingEvery(Duration.ofMillis(10))
+                                       .ignoring(NoSuchElementException.class);
+    }
+
+    @NotNull
     protected Select getSelectElement(String locator) {
         WebElement element = findElement(locator);
         if (element == null) { throw new NoSuchElementException("element '" + locator + "' not found."); }
@@ -2229,10 +2189,8 @@ public class WebCommand extends BaseCommand implements CanTakeScreenshot, CanLog
         ensureReady();
 
         By by = locatorHelper.findBy(locator);
-        boolean wait = shouldWait();
-
         try {
-            return wait ? waiter.until(driver -> driver.findElements(by)) : driver.findElements(by);
+            return shouldWait() ? newFluentWait().until(driver -> driver.findElements(by)) : driver.findElements(by);
         } catch (NoSuchElementException e) {
             return null;
         }
@@ -2242,7 +2200,8 @@ public class WebCommand extends BaseCommand implements CanTakeScreenshot, CanLog
         ensureReady();
 
         By by = locatorHelper.findBy(locator);
-        WebElement target = shouldWait() ? waiter.until(driver -> driver.findElement(by)) : driver.findElement(by);
+        WebElement target = shouldWait() ?
+                            newFluentWait().until(driver -> driver.findElement(by)) : driver.findElement(by);
         if (isHighlightEnabled() && target != null && target.isDisplayed()) { highlight(target); }
         return target;
     }
@@ -2327,7 +2286,6 @@ public class WebCommand extends BaseCommand implements CanTakeScreenshot, CanLog
 
     protected List<String> getAllWindowIds() {
         if (driver == null) { return new ArrayList<>(); }
-        // ensureReady();
         return CollectionUtil.toList(driver.getWindowHandles());
     }
 
@@ -2399,9 +2357,6 @@ public class WebCommand extends BaseCommand implements CanTakeScreenshot, CanLog
 
     protected boolean isBrowserLoadComplete() {
         ensureReady();
-        // boolean timeoutChangesEnabled = browser.getBrowserType().isTimeoutChangesEnabled();
-        // Timeouts timeouts = driver.manage().timeouts();
-        // if (timeoutChangesEnabled) { timeouts.implicitlyWait(pollWaitMs, MILLISECONDS); }
 
         JavascriptExecutor jsExecutor = (JavascriptExecutor) this.driver;
 
@@ -2423,31 +2378,57 @@ public class WebCommand extends BaseCommand implements CanTakeScreenshot, CanLog
         return StringUtils.equals("complete", StringUtils.trim(readyState));
     }
 
-    protected boolean waitForCondition(long maxWaitMs, Predicate condition) {
-        // guaranteed at least 1 cycle of wait
-        if (maxWaitMs < DEF_SLEEP_MS) { maxWaitMs = DEF_SLEEP_MS + 1; }
+    protected boolean waitForCondition(long maxWaitMs, Function<WebDriver, Object> condition) {
+        ensureReady();
 
-        int count = 0;
+        FluentWait<WebDriver> waiter = newFluentWait();
 
-        int maxWaitCycle = (int) (maxWaitMs / DEF_SLEEP_MS);
-        for (int cycle = 0; cycle < maxWaitCycle; cycle++) {
-            try {
-                if (condition.evaluate(driver)) {
-                    count++;
-                    cycle--;
-
-                    // double twice before declaring condition met - confirm stability
-                    if (count >= 2) { return true; }
-                }
-            } catch (Exception e) {
-                log("Error while waiting for browser screen to stabilize: " + e.getMessage());
-            }
-
-            waitFor(DEF_SLEEP_MS);
+        try {
+            Object target = waiter.until(condition);
+            if (target instanceof WebElement) { highlight((WebElement) target); }
+            return target != null;
+        } catch (TimeoutException e) {
+            log("Condition not be met on the current browser within specified wait time of " + maxWaitMs + " ms");
+        } catch (WebDriverException e) {
+            log("Error while waiting for a condition to be met on the current browser: " +
+                WebDriverExceptionHelper.resolveErrorMessage(e));
+        } catch (Exception e) {
+            log("Error while waiting for browser to stabilize: " + e.getMessage());
         }
 
         return false;
     }
+
+    // protected boolean waitForCondition(long maxWaitMs, @NotNull Predicate<WebDriver> condition) {
+    //     // guaranteed at least 1 cycle of wait
+    //     if (maxWaitMs < DEF_SLEEP_MS) { maxWaitMs = DEF_SLEEP_MS + 1; }
+    //
+    //     int count = 0;
+    //
+    //     int maxWaitCycle = (int) (maxWaitMs / DEF_SLEEP_MS);
+    //     for (int cycle = 0; cycle < maxWaitCycle; cycle++) {
+    //         try {
+    //             if (condition.evaluate(driver)) {
+    //                 count++;
+    //                 cycle--;
+    //
+    //                 // double check before declaring condition met - confirm stability
+    //                 if (count >= 2) { return true; }
+    //             }
+    //         // } catch (NoSuchElementException e) {
+    //         //     log("The specified web element cannot be found within the max timeout of " + maxWaitMs + " ms");
+    //         } catch (WebDriverException e) {
+    //             log("Error while waiting for a condition to be met on the current browser: " +
+    //                 WebDriverExceptionHelper.resolveErrorMessage(e));
+    //         } catch (Exception e) {
+    //             log("Error while waiting for browser to stabilize: " + e.getMessage());
+    //         }
+    //
+    //         waitFor(DEF_SLEEP_MS);
+    //     }
+    //
+    //     return false;
+    // }
 
     protected void scrollIntoView(WebElement element) {
         if (element != null && context.getBooleanData(SCROLL_INTO_VIEW, getDefaultBool(SCROLL_INTO_VIEW))) {
@@ -2608,11 +2589,13 @@ public class WebCommand extends BaseCommand implements CanTakeScreenshot, CanLog
         highlight(toElement(context.replaceTokens(locator)));
     }
 
-    protected void highlight(WebElement we) {
+    protected void highlight(WebElement element) {
         if (!isHighlightEnabled()) { return; }
+        if (element == null) { return; }
+        // if (!element.isDisplayed()) { return; }
 
         // if we can't scroll to it, then we won't highlight it
-        if (scrollTo((Locatable) we)) {
+        if (scrollTo((Locatable) element)) {
             int waitMs = context.hasData(HIGHLIGHT_WAIT_MS) ?
                          context.getIntData(HIGHLIGHT_WAIT_MS) :
                          context.getIntData(HIGHLIGHT_WAIT_MS_OLD, getDefaultInt(HIGHLIGHT_WAIT_MS));
@@ -2621,7 +2604,7 @@ public class WebCommand extends BaseCommand implements CanTakeScreenshot, CanLog
                                      "var oldStyle = arguments[0].getAttribute('style');" +
                                      "ws.setAttribute('style', arguments[1]);" +
                                      "setTimeout(function () { ws.setAttribute('style', oldStyle); }, " + waitMs + ");",
-                                     we, highlight);
+                                     element, highlight);
         }
     }
 
