@@ -214,13 +214,15 @@ public class ExecutionInputPrep {
                 return StringUtils.startsWith(key2, NAMESPACE) ? 1 : key1.compareTo(key2);
             }
         });
-        data.putAll(testData.getAllValue(iterationIndex));
+
+        IterationManager iterationManager = testData.getIterationManager();
+        int iterationRef = iterationManager.getIterationRef(iterationIndex - 1);
+
+        data.putAll(testData.getAllValue(iterationRef));
         testData.getAllSettings().forEach(data::put);
         data.putAll(ExecUtils.deriveJavaOpts());
 
-        IterationManager iterationManager = testData.getIterationManager();
         data.put(CURR_ITERATION, iterationIndex + "");
-        int iterationRef = iterationManager.getIterationRef(iterationIndex - 1);
         if (iterationRef != -1) { data.put(CURR_ITERATION_ID, iterationRef + ""); }
         if (iterationIndex > 1) {
             int lastIterationRef = iterationManager.getIterationRef(iterationIndex - 2);
