@@ -161,10 +161,10 @@ public final class ExecutionThread extends Thread {
         executionSummary.setPlanName(execDef.getPlanName());
         executionSummary.setPlanFile(execDef.getPlanFile());
 
-        for (int currIteration = 1; currIteration <= totalIterations; currIteration++) {
+        for (int iterationIndex = 1; iterationIndex <= totalIterations; iterationIndex++) {
             // SINGLE THREAD EXECUTION WITHIN FOR LOOP!
 
-            int iteration = iterationManager.getIterationRef(currIteration - 1);
+            int iterationRef = iterationManager.getIterationRef(iterationIndex - 1);
             Excel testScript = null;
             boolean allPass = true;
 
@@ -172,29 +172,29 @@ public final class ExecutionThread extends Thread {
             execDef.infuseIntraExecutionData(intraExecutionData);
 
             ExecutionSummary iterSummary = new ExecutionSummary();
-            iterSummary.setName(currIteration + " of " + totalIterations);
+            iterSummary.setName(iterationIndex + " of " + totalIterations);
             iterSummary.setExecutionLevel(ITERATION);
             iterSummary.setStartTime(System.currentTimeMillis());
             iterSummary.setScriptFile(scriptLocation);
-            iterSummary.setIterationIndex(currIteration);
+            iterSummary.setIterationIndex(iterationIndex);
             iterSummary.setIterationTotal(totalIterations);
 
             try {
-                testScript = ExecutionInputPrep.prep(runId, execDef, iteration, currIteration);
+                testScript = ExecutionInputPrep.prep(runId, execDef, iterationIndex);
                 iterSummary.setTestScript(testScript.getOriginalFile());
                 context.useTestScript(testScript);
 
-                context.startIteration(currIteration, iteration, totalIterations, firstScript);
+                context.startIteration(iterationIndex, iterationRef, totalIterations, firstScript);
 
                 ExecutionLogger logger = context.getLogger();
-                logger.log(context, "executing iteration #" + currIteration + " of " + totalIterations +
-                                    "; Iteration Index " + iteration);
+                logger.log(context, "executing iteration #" + iterationIndex + " of " + totalIterations +
+                                    "; Iteration Id " + iterationRef);
                 allPass = context.execute();
 
-                onIterationComplete(context, iterSummary, currIteration);
+                onIterationComplete(context, iterSummary, iterationIndex);
                 if (shouldStopNow(context, allPass)) { break; }
             } catch (Throwable e) {
-                onIterationException(context, iterSummary, currIteration, e);
+                onIterationException(context, iterSummary, iterationIndex, e);
                 if (shouldStopNow(context, allPass)) { break; }
             } finally {
                 context.setData(ITERATION_ENDED, true);
@@ -230,7 +230,7 @@ public final class ExecutionThread extends Thread {
                     }
 
                     EventTracker.INSTANCE.track(
-                        new NexialIterationCompleteEvent(scriptLocation, currIteration, iterSummary));
+                        new NexialIterationCompleteEvent(scriptLocation, iterationIndex, iterSummary));
                     executionSummary.addNestSummary(iterSummary);
 
                     // report status at iteration level
@@ -265,7 +265,7 @@ public final class ExecutionThread extends Thread {
                     completedTests.add(testScriptFile);
                 }
 
-                collectIntraExecutionData(context, iteration);
+                collectIntraExecutionData(context, iterationRef);
                 ExecutionMailConfig.configure(context);
 
                 context.endIteration();

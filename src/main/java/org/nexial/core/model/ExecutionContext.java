@@ -1042,7 +1042,7 @@ public class ExecutionContext {
         System.setProperty(TRACK_EXECUTION, getStringData(TRACK_EXECUTION, getDefault(TRACK_EXECUTION)));
 
         setData(CURR_ITERATION, iterationIndex);
-        setData(CURR_ITERATION_ID, iterationRef);
+        if (iterationRef != -1) { setData(CURR_ITERATION_ID, iterationRef); }
         if (iterationIndex == 1) {
             setData(IS_FIRST_ITERATION, true);
         } else {

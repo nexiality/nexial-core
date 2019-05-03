@@ -47,6 +47,7 @@ class IntegrationManager {
     companion object {
         var remoteUrl: String? = null
 
+        @JvmStatic
         fun manageIntegration(remoteUrl: String) {
             val context = ExecutionContext(createExecDefinition())
             ExecutionThread.set(context)

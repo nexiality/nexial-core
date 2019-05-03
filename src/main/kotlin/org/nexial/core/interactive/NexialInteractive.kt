@@ -274,18 +274,18 @@ class NexialInteractive {
         val context = session.context
 
         val runId = context.runId
-        val currIteration = session.iteration
+        val iterationIndex = session.iteration
 
         context.setCurrentActivity(null)
         context.isFailImmediate = false
         context.setData(OPT_LAST_OUTCOME, true)
         context.removeData(BREAK_CURRENT_ITERATION)
-        context.setData(CURR_ITERATION, currIteration)
+        context.setData(CURR_ITERATION, iterationIndex)
 
         val scriptLocation = executionDefinition.testScript
         val testData = executionDefinition.testData
         val iterationManager = testData.iterationManager
-        val iteration = iterationManager.getIterationRef(currIteration - 1)
+        val iteration = iterationManager.getIterationRef(iterationIndex - 1)
 
         ConsoleUtils.log(runId, "executing $scriptLocation. $iterationManager")
 
@@ -300,7 +300,7 @@ class NexialInteractive {
 
             var testScript = session.inflightScript
             if (testScript == null) {
-                testScript = ExecutionInputPrep.prep(runId, executionDefinition, iteration, currIteration)
+                testScript = ExecutionInputPrep.prep(runId, executionDefinition, iterationIndex)
                 context.useTestScript(testScript)
                 session.inflightScript = testScript
             }

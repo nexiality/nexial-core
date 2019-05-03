@@ -76,8 +76,10 @@ public class ExecutionInputPrepTest {
         Map<String, String> iteration1DataMap = new HashMap<>();
         iteration1DataMap.put("nexial.scope.executionMode", "local");
         iteration1DataMap.put("nexial.scope.fallbackToPrevious", "true");
-        iteration1DataMap.put("nexial.scope.iteration", "3");
+        iteration1DataMap.put("nexial.scope.iteration", "1-3");
         iteration1DataMap.put("nexial.scope.currentIteration", "1");
+        iteration1DataMap.put("nexial.scope.currentIterationId", "1");
+        iteration1DataMap.put("nexial.scope.isFirstIteration", "true");
         iteration1DataMap.put("nexial.scope.mailTo", "jumbotron@tiny.corp");
         iteration1DataMap.put("nexial.delayBetweenStepsMs", "600");
         iteration1DataMap.put("nexial.failFast", "false");
@@ -91,9 +93,12 @@ public class ExecutionInputPrepTest {
         Map<String, String> iteration2DataMap = new HashMap<>();
         iteration2DataMap.put("nexial.scope.executionMode", "local");
         iteration2DataMap.put("nexial.scope.fallbackToPrevious", "true");
-        iteration2DataMap.put("nexial.scope.iteration", "3");
+        iteration2DataMap.put("nexial.scope.iteration", "1-3");
         iteration2DataMap.put("nexial.scope.currentIteration", "2");
+        iteration2DataMap.put("nexial.scope.currentIterationId", "2");
         iteration2DataMap.put("nexial.scope.lastIteration", "1");
+        iteration2DataMap.put("nexial.scope.isFirstIteration", "false");
+        iteration2DataMap.put("nexial.scope.isLastIteration", "false");
         iteration2DataMap.put("nexial.scope.mailTo", "jumbotron@tiny.corp");
         iteration2DataMap.put("nexial.delayBetweenStepsMs", "600");
         iteration2DataMap.put("nexial.failFast", "false");
@@ -107,9 +112,12 @@ public class ExecutionInputPrepTest {
         Map<String, String> iteration3DataMap = new HashMap<>();
         iteration3DataMap.put("nexial.scope.executionMode", "local");
         iteration3DataMap.put("nexial.scope.fallbackToPrevious", "true");
-        iteration3DataMap.put("nexial.scope.iteration", "3");
+        iteration3DataMap.put("nexial.scope.iteration", "1-3");
         iteration3DataMap.put("nexial.scope.currentIteration", "3");
+        iteration3DataMap.put("nexial.scope.currentIterationId", "3");
         iteration3DataMap.put("nexial.scope.lastIteration", "2");
+        iteration3DataMap.put("nexial.scope.isFirstIteration", "false");
+        iteration3DataMap.put("nexial.scope.isLastIteration", "true");
         iteration3DataMap.put("nexial.scope.mailTo", "jumbotron@tiny.corp");
         iteration3DataMap.put("nexial.delayBetweenStepsMs", "600");
         iteration3DataMap.put("nexial.failFast", "false");
@@ -159,11 +167,14 @@ public class ExecutionInputPrepTest {
         // ExecutionInputPrep prep = new ExecutionInputPrep();
         String runId = DateUtility.createTimestampString(null);
 
+        // IterationManager iterationManager = execDef.getTestData().getIterationManager();
+
         for (int iterationIndex = 1; iterationIndex <= 3; iterationIndex++) {
-            Excel targetExcel = ExecutionInputPrep.prep(runId, execDef, iterationIndex, iterationIndex);
+            Excel targetExcel = ExecutionInputPrep.prep(runId, execDef, iterationIndex);
             File targetOutputFile = targetExcel.getFile();
 
-            System.out.println("asserting project directories are generated ");
+            String prefix = "iteration " + iterationIndex + ": ";
+            System.out.println(prefix + "asserting project directories are generated");
 
             // check output directories
             String executionOutBase = outBase + separator + runId + separator;
@@ -194,11 +205,11 @@ public class ExecutionInputPrepTest {
                 String name = row.get(0).getStringCellValue();
                 if (!StringUtils.startsWith(name, "java.")) {
                     String value = row.get(1).getStringCellValue();
-                    System.out.print("asserting that data name " + name + " has value " + value + "... ");
+                    System.out.print(prefix + "asserting that data name " + name + " has value " + value + "... ");
                     String expected = MapUtils.getString(expectedData, name, System.getProperty(name));
                     System.out.println("expected=" + expected + ", actual=" + value);
                     Assert.assertEquals(expected, value);
-                    System.out.println("PASSED");
+                    System.out.println(prefix + "PASSED");
                 }
             });
 

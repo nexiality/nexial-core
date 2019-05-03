@@ -32,6 +32,7 @@ import org.nexial.core.excel.Excel.Worksheet;
 import org.nexial.core.excel.ExcelConfig.StyleDecorator;
 import org.nexial.core.excel.ext.CellTextReader;
 import org.nexial.core.model.ExecutionDefinition;
+import org.nexial.core.model.IterationManager;
 import org.nexial.core.model.MacroMerger;
 import org.nexial.core.model.TestData;
 import org.nexial.core.utils.ConsoleUtils;
@@ -63,7 +64,7 @@ import static org.nexial.core.utils.ExecUtils.IGNORED_CLI_OPT;
 public class ExecutionInputPrep {
 
     /** called from {@link ExecutionThread} for each iteration. */
-    public static Excel prep(String runId, ExecutionDefinition execDef, int iteration, int counter) throws IOException {
+    public static Excel prep(String runId, ExecutionDefinition execDef, int counter) throws IOException {
         assert StringUtils.isNotBlank(runId);
         assert execDef != null;
 
@@ -137,7 +138,7 @@ public class ExecutionInputPrep {
         // we are no longer concerned with remote file access. The best practice to follow is NOT to use remote fs
         TestData testData = execDef.getTestData();
         if (testData == null || testData.getSettingAsBoolean(REFETCH_DATA_FILE)) {testData = execDef.getTestData(true);}
-        mergeTestData(outputExcel, testData, testData.getIterationManager().getIterationRef(counter - 1));
+        mergeTestData(outputExcel, testData, counter);
         ConsoleUtils.log(runId, "test script and test data merged to " + outputFile);
 
         // 6. now copy tmp to final location
@@ -198,7 +199,7 @@ public class ExecutionInputPrep {
         return true;
     }
 
-    private static Excel mergeTestData(Excel excel, TestData testData, int iteration) {
+    private static Excel mergeTestData(Excel excel, TestData testData, int iterationIndex) {
         XSSFSheet dataSheet = excel.getWorkbook().createSheet(SHEET_MERGED_DATA);
 
         XSSFWorkbook workbook = dataSheet.getWorkbook();
@@ -213,14 +214,31 @@ public class ExecutionInputPrep {
                 return StringUtils.startsWith(key2, NAMESPACE) ? 1 : key1.compareTo(key2);
             }
         });
-        data.putAll(testData.getAllValue(iteration));
+        data.putAll(testData.getAllValue(iterationIndex));
         testData.getAllSettings().forEach(data::put);
         data.putAll(ExecUtils.deriveJavaOpts());
-        data.put(CURR_ITERATION, iteration + "");
-        if (iteration > 1) {
-            data.put(LAST_ITERATION, (iteration - 1) + "");
+
+        IterationManager iterationManager = testData.getIterationManager();
+        data.put(CURR_ITERATION, iterationIndex + "");
+        int iterationRef = iterationManager.getIterationRef(iterationIndex - 1);
+        if (iterationRef != -1) { data.put(CURR_ITERATION_ID, iterationRef + ""); }
+        if (iterationIndex > 1) {
+            int lastIterationRef = iterationManager.getIterationRef(iterationIndex - 2);
+            if (lastIterationRef != -1) { data.put(LAST_ITERATION, lastIterationRef + ""); }
+            data.remove(IS_FIRST_ITERATION);
+            if (iterationIndex >= iterationManager.getIterationCount()) {
+                data.put(IS_LAST_ITERATION, "true");
+            } else {
+                data.remove(IS_LAST_ITERATION);
+            }
         } else {
             data.remove(LAST_ITERATION);
+            data.put(IS_FIRST_ITERATION, "true");
+            if (iterationIndex == iterationManager.getIterationCount()) {
+                data.put(IS_LAST_ITERATION, "true");
+            } else {
+                data.remove(IS_LAST_ITERATION);
+            }
         }
 
         Properties sysprops = System.getProperties();
