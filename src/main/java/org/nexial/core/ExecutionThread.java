@@ -107,44 +107,25 @@ public final class ExecutionThread extends Thread {
         StopWatch ticktock = new StopWatch();
         ticktock.start();
 
-        IterationManager iterationManager = execDef.getTestData().getIterationManager();
-        String scriptLocation = execDef.getTestScript();
-
         ExecutionContext context = MapUtils.isNotEmpty(intraExecutionData) ?
                                    new ExecutionContext(execDef, intraExecutionData) : new ExecutionContext(execDef);
         context.setCurrentActivity(null);
-
-        // in case there were fail-immediate condition from previous script..
-        if (context.isFailImmediate()) {
-            ConsoleUtils.error("previous test scenario execution failed, and fail-immediate in effect. " +
-                               "Hence all subsequent test scenarios will be skipped");
-            collectIntraExecutionData(context, 0);
-            return;
-        }
-
-        if (execDef.isFailFast() && !context.getBooleanData(OPT_LAST_OUTCOME)) {
-            if (context.getBooleanData(RESET_FAIL_FAST, getDefaultBool(RESET_FAIL_FAST))) {
-                // reset and pretend nothing's wrong.  Current script will be executed..
-                context.setData(OPT_LAST_OUTCOME, true);
-            } else {
-                ConsoleUtils.error("previous test scenario execution failed, and current test script is set to " +
-                                   "fail-fast.  Hence all subsequent test scenarios will be skipped");
-                collectIntraExecutionData(context, 0);
-                return;
-            }
-        }
-
-        int totalIterations = iterationManager.getIterationCount();
-        ConsoleUtils.log(runId, "executing " + scriptLocation + " with " + totalIterations + " iteration(s)");
-
+        context.removeDataForcefully(IS_LAST_ITERATION);
+        context.removeDataForcefully(IS_FIRST_ITERATION);
         if (StringUtils.isNotBlank(execDef.getPlanFile())) {
             context.setData(OPT_INPUT_PLAN_FILE, execDef.getPlanFile());
         }
 
-        context.removeDataForcefully(IS_LAST_ITERATION);
-        context.removeDataForcefully(IS_FIRST_ITERATION);
-
         ExecutionThread.set(context);
+
+        // in case there were fail-immediate condition from previous script..
+        if (shouldFailNow(context)) { return; }
+
+        IterationManager iterationManager = execDef.getTestData().getIterationManager();
+        int totalIterations = iterationManager.getIterationCount();
+
+        String scriptLocation = execDef.getTestScript();
+        ConsoleUtils.log(runId, "executing " + scriptLocation + " with " + totalIterations + " iteration(s)");
 
         String scriptName =
             StringUtils.substringBeforeLast(
@@ -287,6 +268,29 @@ public final class ExecutionThread extends Thread {
     public List<File> getCompletedTests() { return completedTests; }
 
     public ExecutionDefinition getExecDef() { return execDef; }
+
+    protected boolean shouldFailNow(ExecutionContext context) {
+        if (context.isFailImmediate()) {
+            ConsoleUtils.error("previous test scenario execution failed, and fail-immediate in effect. " +
+                               "Hence all subsequent test scenarios will be skipped");
+            collectIntraExecutionData(context, 0);
+            return true;
+        }
+
+        if (execDef.isFailFast() && !context.getBooleanData(OPT_LAST_OUTCOME)) {
+            if (context.getBooleanData(RESET_FAIL_FAST, getDefaultBool(RESET_FAIL_FAST))) {
+                // reset and pretend nothing's wrong.  Current script will be executed..
+                context.setData(OPT_LAST_OUTCOME, true);
+            } else {
+                ConsoleUtils.error("previous test scenario execution failed, and current test script is set to " +
+                                   "fail-fast.  Hence all subsequent test scenarios will be skipped");
+                collectIntraExecutionData(context, 0);
+                return true;
+            }
+        }
+
+        return false;
+    }
 
     protected Map<String, Object> getIntraExecutionData() { return intraExecutionData; }
 

@@ -565,9 +565,10 @@ public class DesktopCommand extends BaseCommand
         if (StringUtils.isNotEmpty(text)) {
             updateDataVariable(var, text);
             return StepResult.success("Element '" + name + "' with text '" + text + "' saved to '" + var + "'");
+        } else {
+            context.removeData(var);
+            return StepResult.success("Element '" + name + "' found with no text; '" + var + "' removed");
         }
-
-        return StepResult.fail("No text found for '" + name + "'");
     }
 
     public StepResult saveTextByLocator(String var, String locator) {

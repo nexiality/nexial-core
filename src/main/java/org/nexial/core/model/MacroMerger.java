@@ -24,6 +24,7 @@ import java.util.Map;
 
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
+import org.apache.commons.lang3.math.NumberUtils;
 import org.apache.poi.xssf.usermodel.XSSFCell;
 import org.apache.poi.xssf.usermodel.XSSFCellStyle;
 import org.apache.poi.xssf.usermodel.XSSFRow;
@@ -79,6 +80,7 @@ public class MacroMerger {
         assert CollectionUtils.isNotEmpty(testSheets) :
             "Specified scenario(s) of " + execDef.getTestScript() + " not found: " + expectedScenarios;
 
+        // ensure that all the sheets found in script file are the same as initially scanned and determined as scenario
         testSheets.forEach(worksheet -> expectedScenarios.remove(worksheet.getName()));
         assert CollectionUtils.isEmpty(expectedScenarios) :
             "Invalid scenario(s) found in " + execDef.getTestScript() + ": " + expectedScenarios;
@@ -130,11 +132,53 @@ public class MacroMerger {
     protected boolean expandTestSteps(List<List<String>> allTestSteps) throws IOException {
         boolean macroExpanded = false;
 
+        // int sectionSteps = 0;
+        int repeatUntilStepIndex = -1;
+        int repeatUntilSteps = -1;
+        int repeatUntilLastStepIndex = -1;
+
         for (int i = 0; i < allTestSteps.size(); i++) {
+            if (i > repeatUntilLastStepIndex) {
+                // we are out of the repeat-until loop
+                repeatUntilStepIndex = -1;
+                repeatUntilSteps = -1;
+                repeatUntilLastStepIndex = -1;
+            }
+
             List<String> row = allTestSteps.get(i);
             String cellTarget = row.get(COL_IDX_TARGET);
             String cellCommand = row.get(COL_IDX_COMMAND);
             String testCommand = cellTarget + "." + cellCommand;
+
+            // look for base.repeatUntil(step,maxWaitMs) so that we can adjust step count to compensate for embedded macro
+            if (StringUtils.equals(testCommand, CMD_REPEAT_UNTIL)) {
+                // scan for presence of macro command within its boundary
+                repeatUntilStepIndex = i;
+                repeatUntilSteps = NumberUtils.toInt(row.get(COL_IDX_PARAMS_START));
+                repeatUntilLastStepIndex = repeatUntilStepIndex + repeatUntilSteps;
+
+                boolean repeatUntilContainsMacro = false;
+                for (int j = i + 1; j < repeatUntilLastStepIndex; j++) {
+                    if (allTestSteps.size() <= j) { break; }
+
+                    List<String> loopStep = allTestSteps.get(j);
+                    String loopCommand = loopStep.get(COL_IDX_TARGET) + "." + loopStep.get(COL_IDX_COMMAND);
+                    if (StringUtils.equals(loopCommand, CMD_MACRO)) {
+                        // found macro in repeat until. Now we mark `repeatUntilSteps` and `repeatUntilStepIndex`
+                        // so that we can further process them when handling macro expansion (below)
+                        repeatUntilContainsMacro = true;
+                        break;
+                    }
+                }
+
+                if (!repeatUntilContainsMacro) {
+                    repeatUntilStepIndex = -1;
+                    repeatUntilSteps = -1;
+                    repeatUntilLastStepIndex = -1;
+                }
+
+                continue;
+            }
 
             // look for base.macro(file,sheet,name) - open macro library as excel
             if (StringUtils.equals(testCommand, CMD_MACRO)) {
@@ -176,6 +220,13 @@ public class MacroMerger {
 
                     i += macroSteps.size();
                     macroExpanded = true;
+                    if (repeatUntilStepIndex > 0) { // && repeatUntilSteps > 0) {
+                        // change repeat-until step count since we have a macro inside a repeat-until block
+                        int newLoopSize = repeatUntilSteps + macroSteps.size();
+                        allTestSteps.get(repeatUntilStepIndex).set(COL_IDX_PARAMS_START, newLoopSize + "");
+                        repeatUntilSteps = newLoopSize;
+                        repeatUntilLastStepIndex = repeatUntilStepIndex + repeatUntilSteps;
+                    }
                 }
             }
         }

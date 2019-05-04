@@ -323,6 +323,10 @@ public class ExpressionProcessorTest {
         result = subject.process(fixture);
         Assert.assertEquals("0", result);
 
+        fixture = "[NUMBER(0) => add(-109264.45,-25553.78,-10573.98,-109264.45,-34541.66,10.00,-290784.42)]";
+        result = subject.process(fixture);
+        Assert.assertEquals("-579972.74", result);
+
         fixture = "[NUMBER(55) => minus(1  ,2, 3 ,4,5,6,7,8,9, 10)]";
         result = subject.process(fixture);
         Assert.assertEquals("0", result);
