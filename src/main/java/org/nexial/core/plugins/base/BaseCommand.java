@@ -736,6 +736,10 @@ public class BaseCommand implements NexialCommand {
         }
     }
 
+    public void logDeprecated(String deprecated, String replacement) {
+        errorToOutput(deprecated + " IS DEPRECATED. PLEASE CONSIDER USING " + replacement + " INSTEAD", null);
+    }
+
     /**
      * this method - TO BE USED INTERNALLY ONLY - is created to compensate the data state discrepancy when such is
      * initially set via `-override` flag or via `-D...` environment variable. When a data variable is defined prior to
@@ -1174,6 +1178,12 @@ public class BaseCommand implements NexialCommand {
         }
     }
 
+    protected void errorToOutput(String message, Throwable e) {
+        if (StringUtils.isNotBlank(message) && context != null && context.getLogger() != null) {
+            context.getLogger().errorToOutput(this, message, e);
+        }
+    }
+
     /**
      * create a file with {@code output} as its text content and its name based on current step and {@code extension}.
      *
@@ -1186,7 +1196,7 @@ public class BaseCommand implements NexialCommand {
             FileUtils.writeStringToFile(new File(outFile), output, DEF_FILE_ENCODING);
             addLinkRef(caption, extension + " report", outFile);
         } catch (IOException e) {
-            error("Unable to write log file to '" + outFile + "': " + e.getMessage(), e);
+            error("Unable to write to '" + outFile + "': " + e.getMessage(), e);
         }
     }
 

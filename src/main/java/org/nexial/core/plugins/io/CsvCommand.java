@@ -151,10 +151,8 @@ public class CsvCommand extends IoCommand {
     }
 
     public StepResult convertExcel(String excel, String worksheet, String csvFile) {
-        String msg = getTarget() + " » convertExcel() is DEPRECATED. PLEASE CONSIDER USING " +
-                     getTarget() + " » fromExcel() INSTEAD";
-        ConsoleUtils.log(msg);
-        log(msg);
+        logDeprecated(getTarget() + " » convertExcel(excel,worksheet,csvFile)",
+                      getTarget() + " » fromExcel(excel,worksheet,csvFile)");
         return fromExcel(excel, worksheet, csvFile);
     }
 

@@ -76,10 +76,10 @@ public class TestScriptUpdater {
         "desktop.getRowCount(var)=desktop.saveRowCount(var)");
     private static final Map<String, String> COMMAND_SUGGESTIONS = TextUtils.toMap(
         "=",
-        "desktop.useTable(var,name)=This command is deprecated and will soon be removed. " +
-        "Consider using desktop » editTableCells(row,nameValues) instead",
-        "desktop.editCurrentRow(nameValues)=This command is deprecated and will soon be removed. " +
-        "Consider using desktop » editTableCells(row,nameValues) instead");
+        "desktop.useTable(var,name)=This command is deprecated and will soon be removed. Consider using desktop » editTableCells(row,nameValues) instead",
+        "desktop.editCurrentRow(nameValues)=This command is deprecated and will soon be removed. Consider using desktop » editTableCells(row,nameValues) instead",
+        "web.scrollLeft(locator,pixel)=This command is deprecated and will soon be removed. Consider using web » scrollElement(locator,xOffset,yOffset) instead",
+        "web.scrollRight(locator,pixel)=This command is deprecated and will soon be removed. Consider using web » scrollElement(locator,xOffset,yOffset) instead");
     private static final Options cmdOptions = new Options();
 
     private boolean verbose;
@@ -143,6 +143,7 @@ public class TestScriptUpdater {
             }
             return GSON.fromJson(commandJson, ScriptMetadata.class);
         } catch (Exception e) {
+            System.err.println(e.getMessage());
             System.err.println(MSG_SCRIPT_UPDATE_ERR);
             System.exit(-1);
         }

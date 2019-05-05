@@ -64,11 +64,20 @@ public class ExecutionLogger {
     public void error(NexialCommand subject, String message) { error(subject, message, null); }
 
     public void error(NexialCommand subject, String message, Throwable exception) {
-        ExecutionContext context = ExecutionThread.get();
-        TestStep testStep = context.getCurrentTestStep();
-        String header = toHeader(testStep);
-        error(header, message, exception);
+        TestStep testStep = ExecutionThread.get().getCurrentTestStep();
+        error(toHeader(testStep), message, exception);
         if (subject instanceof CanLogExternally) { ((CanLogExternally) subject).logExternally(testStep, message); }
+    }
+
+    public void errorToOutput(NexialCommand subject, String message, Throwable exception) {
+        TestStep testStep = ExecutionThread.get().getCurrentTestStep();
+        if (testStep != null) {
+            error(toHeader(testStep), message, exception);
+            testStep.addNestedMessage(message);
+            if (subject instanceof CanLogExternally) { ((CanLogExternally) subject).logExternally(testStep, message); }
+        } else {
+            error(runId, message, exception);
+        }
     }
 
     public void error(TestStep subject, String message) { error(toHeader(subject), message); }

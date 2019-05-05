@@ -1285,20 +1285,46 @@ public class WebCommand extends BaseCommand implements CanTakeScreenshot, CanLog
     public StepResult scrollTo(String locator) { return scrollTo(locator, (Locatable) toElement(locator)); }
 
     public StepResult scrollLeft(String locator, String pixel) {
-        requires(NumberUtils.isDigits(pixel), "invalid number", pixel);
+        requiresInteger(pixel, "invalid number", pixel);
+
+        logDeprecated(getTarget() + " » scrollLeft(locator,pixel)",
+                      getTarget() + " » scrollElement(locator,xOffset,yOffset)");
 
         WebElement element = toElement(locator);
-        jsExecutor.executeScript("arguments[0].scrollLeft=" + pixel, element);
+        jsExecutor.executeScript("arguments[0].scrollBy(" + pixel + ",0)", element);
 
         return scrollTo(locator, (Locatable) element);
     }
 
     public StepResult scrollRight(String locator, String pixel) {
-        requires(NumberUtils.isDigits(pixel), "invalid number", pixel);
+        requiresInteger(pixel, "invalid number", pixel);
+
+        logDeprecated(getTarget() + " » scrollRight(locator,pixel)",
+                      getTarget() + " » scrollElement(locator,xOffset,yOffset)");
 
         WebElement element = toElement(locator);
-        jsExecutor.executeScript("arguments[0].scrollLeft=" + (NumberUtils.toInt(pixel) * -1), element);
+        jsExecutor.executeScript("arguments[0].scrollBy(" + (NumberUtils.toInt(pixel) * -1) + ",0)", element);
 
+        return scrollTo(locator, (Locatable) element);
+    }
+
+    public StepResult scrollPage(String xOffset, String yOffset) {
+        requiresInteger(xOffset, "invalid xOffset", xOffset);
+        requiresInteger(yOffset, "invalid yOffset", yOffset);
+
+        jsExecutor.executeScript("window.scrollBy(" + xOffset + "," + yOffset + ")");
+
+        return StepResult.success("current window/page scrolled by (" + xOffset + "," + yOffset + ")");
+    }
+
+    public StepResult scrollElement(String locator, String xOffset, String yOffset) {
+        requiresInteger(xOffset, "invalid xOffset", xOffset);
+        requiresInteger(yOffset, "invalid yOffset", yOffset);
+
+        WebElement element = toElement(locator);
+        jsExecutor.executeScript("arguments[0].scrollBy(" + xOffset + "," + yOffset + ")", element);
+
+        // return StepResult.success("current window/page scrolled by (" + xOffset + "," + yOffset + ")");
         return scrollTo(locator, (Locatable) element);
     }
 

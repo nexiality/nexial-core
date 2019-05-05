@@ -222,6 +222,7 @@ public class Browser implements ForcefulTerminate {
 
     @Override
     public String toString() {
+        if (browserType == null) { return "Not yet initialized"; }
         int excelVer = NumberUtils.toInt(resolveConfig(OPT_EXCEL_VER, "2007"), 2007);
         if (excelVer >= 2012) {
             StringBuilder sb = new StringBuilder(browserType.toString());
@@ -252,8 +253,7 @@ public class Browser implements ForcefulTerminate {
         String browser = context.getBrowserType();
 
         if (driver != null) {
-            if (LOGGER.isDebugEnabled()) { LOGGER.debug("current browser type - " + browser); }
-
+            if (LOGGER.isDebugEnabled()) { LOGGER.debug("current browser - " + browser); }
             if (browserType != BrowserType.valueOf(browser)) {
                 // browser changed... reinitialize..
                 LOGGER.warn("current browser type (" + browser + ") " +

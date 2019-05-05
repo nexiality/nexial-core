@@ -957,6 +957,8 @@ public class DesktopCommand extends BaseCommand
     }
 
     public StepResult useTable(String var, String name) {
+        logDeprecated(getTarget() + " » useTable(var,name)", getTarget() + " » editTableCells(row,nameValues)");
+
         StepResult result = saveTableMetaData(var, name, true);
         // remove any stale data
         context.removeData(CURRENT_DESKTOP_TABLE_ROW);
@@ -1169,6 +1171,8 @@ public class DesktopCommand extends BaseCommand
     public StepResult editCurrentRow(String nameValues) {
         requiresNotBlank(nameValues, "Invalid name-values", nameValues);
         requires(StringUtils.contains(nameValues, "="), "Name-values MUST be in the form of name=value", nameValues);
+
+        logDeprecated(getTarget() + " » editCurrentRow(nameValues)", getTarget() + " » editTableCells(row,nameValues)");
 
         if (!context.hasData(CURRENT_DESKTOP_TABLE_ROW)) {
             fail("Unable to proceed since no table row in reference.  Check that desktop.useTable() is executed " +
