@@ -71,13 +71,15 @@ class ExpressionParser {
         // text = StringUtils.replace(text, "\\]", "]");
         text = preFunctionParsingSubstitution(text);
 
+        String delim = context.getTextDelim();
+
         List<String> functionGroups = RegexUtils.eagerCollectGroups(text, REGEX_FUNCTION, false, true);
         functionGroups.forEach(group -> {
             group = StringUtils.trim(group);
             String functionName = StringUtils.trim(StringUtils.substringBefore(group, DATATYPE_START));
             String paramList = StringUtils.substringAfter(group, DATATYPE_START);
             paramList = StringUtils.substringBeforeLast(paramList, DATATYPE_END);
-            List<String> params = TextUtils.toList(paramList, ",", false);
+            List<String> params = TextUtils.toList(paramList, delim, false);
             if (CollectionUtils.isNotEmpty(params)) {
                 List<String> substituted = new ArrayList<>();
                 params.forEach(param -> substituted.add(postFunctionParsingSubstitution(param)));

@@ -50,10 +50,13 @@ public class ExcelTransformer<T extends ExcelDataType> extends Transformer {
     public TextDataType text(T data) { return super.text(data); }
 
     public ListDataType worksheets(T data) {
-        ListDataType list = new ListDataType("", ",");
+        ExecutionContext context = ExecutionThread.get();
+        String delim = context == null ? "," : context.getTextDelim();
+
+        ListDataType list = new ListDataType("", delim);
         if (data == null || CollectionUtils.isEmpty(data.getWorksheetNames())) { return list; }
 
-        list.setTextValue(TextUtils.toString(data.getWorksheetNames(), ","));
+        list.setTextValue(TextUtils.toString(data.getWorksheetNames(), delim));
         list.init();
         return list;
     }

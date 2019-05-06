@@ -21,6 +21,7 @@ import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -52,6 +53,8 @@ import static org.nexial.core.NexialConst.ExitStatus.RC_BAD_CLI_ARGS;
 import static org.nexial.core.NexialConst.ExitStatus.RC_EXCEL_IN_USE;
 import static org.nexial.core.NexialConst.Project.DEF_PROJECT_PROPS;
 import static org.nexial.core.excel.ExcelConfig.*;
+import static org.nexial.core.tools.CliConst.OPT_PREVIEW;
+import static org.nexial.core.tools.CliConst.OPT_VERBOSE;
 import static org.nexial.core.tools.CliUtils.getCommandLine;
 import static org.nexial.core.tools.CliUtils.newArgOption;
 import static org.nexial.core.tools.ProjectToolUtils.*;
@@ -60,12 +63,8 @@ import static org.nexial.core.tools.ProjectToolUtils.*;
  * Utility to rename the variables in the data files, scripts, properties files and sql files within a project.
  */
 final public class DataVariableUpdater {
-    protected static boolean isDryRun = false;
     private static final String OPT_PROJECT_PATH = "t";
     private static final String OPT_VARIABLES_LIST = "d";
-    private static final String OPT_VERBOSE = "v";
-    private static final String OPT_DRY_RUN = "p";
-
     private static final String KEY_VALUE_SEPARATOR = "=";
     private static final String VARIABLE_SEPARATOR = ";";
 
@@ -78,6 +77,7 @@ final public class DataVariableUpdater {
     protected String searchFrom;
     protected File searchPath;
     protected Map<String, String> variableMap;
+    protected boolean preview = false;
     protected List<UpdateLog> updated = new ArrayList<>();
 
     /**
@@ -88,21 +88,22 @@ final public class DataVariableUpdater {
      * The renaming happens across data files, scripts, properties file and other sql files.
      * <p>
      * This class accepts two command line {@link Options}:-
-     * <ol><li>{@link DataVariableUpdater#OPT_PROJECT_PATH} project path</li>
-     * <li>{@link DataVariableUpdater#OPT_VARIABLES_LIST} variables list passed as key value pairs.</li></ol>
+     * <ol>
+     * <li>{@link DataVariableUpdater#OPT_PROJECT_PATH} project path</li>
+     * <li>{@link DataVariableUpdater#OPT_VARIABLES_LIST} variables list passed as key value pairs.</li>
+     * </ol>
      *
      * @param args command line arguments as {@link Options}.
      */
     public static void main(String[] args) {
-        Options cmdOptions = new Options();
-        cmdOptions.addOption(OPT_VERBOSE, "verbose", false, "Turn on verbose logging.");
-        cmdOptions.addOption(OPT_DRY_RUN, "preview", false, "Preview changes (will not save to files)");
-        cmdOptions.addOption(newArgOption(OPT_PROJECT_PATH, "target", "Starting location of update data variable.",
-                                          true));
-        cmdOptions.addOption(newArgOption(OPT_VARIABLES_LIST, "data", "Data variables to replace, in the form " +
-                                                                      "old_var=new_var;old_var2=new_var2", true));
+        Options opts = new Options();
+        opts.addOption(OPT_VERBOSE);
+        opts.addOption(OPT_PREVIEW);
+        opts.addOption(newArgOption(OPT_PROJECT_PATH, "target", "Starting location to update data variables.", true));
+        opts.addOption(newArgOption(OPT_VARIABLES_LIST, "data", "Data variables to replace in the form of " +
+                                                                "old_var=new_var;old_var2=new_var2", true));
 
-        final CommandLine cmd = getCommandLine(DataVariableUpdater.class.getName(), args, cmdOptions);
+        final CommandLine cmd = getCommandLine(DataVariableUpdater.class.getName(), args, opts);
         if (cmd == null) {
             System.err.println("Unable to proceed, exiting...");
             System.exit(RC_BAD_CLI_ARGS);
@@ -114,8 +115,26 @@ final public class DataVariableUpdater {
             updater.setVariableMap(TextUtils.toMap(cmd.getOptionValue(OPT_VARIABLES_LIST),
                                                    VARIABLE_SEPARATOR,
                                                    KEY_VALUE_SEPARATOR));
-            if (cmd.hasOption(OPT_DRY_RUN)) { isDryRun = true; }
-            updater.updateAll();
+            if (cmd.hasOption(OPT_PREVIEW.getOpt())) { updater.setPreview(true); }
+
+            String prompt = updater.isPreview() ? " data variable update preview" : " data variable update summary";
+            String banner = StringUtils.repeat('-', 100);
+
+            System.out.println();
+            System.out.println();
+            System.out.println("/" + banner + "\\");
+            System.out.println("|" + ConsoleUtils.centerPrompt(prompt, 100) + "|");
+            System.out.println("\\" + banner + "/");
+
+            List<UpdateLog> updated = updater.updateAll();
+            if (updated.isEmpty()) {
+                System.out.println(ConsoleUtils.centerPrompt("No matching data variables found.", 102));
+            } else {
+                System.out.println(formatColumns("File", "DataSheet/Scenario", "Position", "Updating Lines/Cells"));
+                System.out.println(banner + "--");
+                updated.forEach(System.out::println);
+                System.out.println();
+            }
         } catch (IllegalArgumentException e) {
             System.err.println("Error processing command line arguments: " + e.getMessage());
             System.exit(RC_BAD_CLI_ARGS);
@@ -155,29 +174,74 @@ final public class DataVariableUpdater {
         removalCandidates.forEach(removeKey -> this.variableMap.remove(removeKey));
     }
 
-    public void updateAll() {
+    public boolean isPreview() { return preview; }
+
+    public void setPreview(boolean preview) { this.preview = preview; }
+
+    public List<UpdateLog> updateAll() {
+        replaceBatchFiles();
         replaceProperties();
         replaceTextFiles();
         replaceDataFiles();
         replaceMacros();
         replaceScripts();
+        log(StringUtils.repeat('.', 98));
+        return updated;
+    }
 
-        String prompt = isDryRun ? " data variable update preview" : " data variable update summary";
-        String banner = StringUtils.repeat('-', 100);
+    protected void replaceBatchFiles() {
+        Collection<File> batchFiles = FileUtils.listFiles(new File(searchFrom), new String[]{"bat", "sh", "cmd"}, true);
 
-        System.out.println();
-        System.out.println();
-        System.out.println("/" + banner + "\\");
-        System.out.println("|" + ConsoleUtils.centerPrompt(prompt, 100) + "|");
-        System.out.println("\\" + banner + "/");
+        if (CollectionUtils.isEmpty(batchFiles)) { return; }
 
-        if (updated.isEmpty()) {
-            System.out.println(ConsoleUtils.centerPrompt("There are no matching data variables in the files.", 102));
-        } else {
-            System.out.println(formatColumns("File", "DataSheet/Scenario", "Position", "Updating Lines/Cells"));
-            System.out.println(banner + "--");
-            updated.forEach(System.out::println);
-            System.out.println();
+        for (File batch : batchFiles) {
+            log("processing", batch);
+
+            try {
+                boolean hasUpdate = false;
+
+                String content = FileUtils.readFileToString(batch, DEF_CHARSET);
+                String sep = StringUtils.contains(content, "\r\n") ? "\r\n" : "\n";
+                StringBuilder replaced = new StringBuilder();
+                String[] lines = StringUtils.splitByWholeSeparatorPreserveAllTokens(content, sep);
+                for (int i = 0; i < lines.length; i++) {
+                    String line = lines[i];
+
+                    // compensate for multi-line commands (windows and *nix)
+                    if (StringUtils.isNotBlank(line) &&
+                        !StringUtils.startsWithIgnoreCase(line.trim(), "rem ") &&
+                        !StringUtils.startsWithIgnoreCase(line.trim(), "# ")) {
+
+                        for (String oldVar : variableMap.keySet()) {
+                            String newVar = variableMap.get(oldVar);
+                            String oldLine = line;
+                            line = StringUtils.replace(line, "-D" + oldVar + "=", "-D" + newVar + "=");
+                            line = StringUtils.replace(line,
+                                                       " -override " + oldVar + "=",
+                                                       " -override " + newVar + "=");
+
+                            if (!StringUtils.equals(oldLine, line)) {
+                                updated.add(new UpdateLog(batch.getAbsolutePath(),
+                                                          "",
+                                                          "line " + StringUtils.leftPad((i + 1) + "", 4),
+                                                          oldLine,
+                                                          line));
+                                hasUpdate = true;
+                            }
+                        }
+                    }
+
+                    replaced.append(line).append(sep);
+                }
+
+                if (!preview && hasUpdate) {
+                    FileUtils.writeStringToFile(batch, StringUtils.removeEnd(replaced.toString(), sep), DEF_CHARSET);
+                }
+
+                log("processed" + (!hasUpdate ? " (no change)" : ""), batch);
+            } catch (IOException e) {
+                System.err.println("Unable to process " + batch + " successfully: " + e.getMessage());
+            }
         }
     }
 
@@ -204,7 +268,7 @@ final public class DataVariableUpdater {
             for (int i = 0; i < lines.length; i++) {
                 String line = lines[i];
                 String oldLine = line;
-                UpdateLog updateLog = new UpdateLog(file, "", (i + 1) + "");
+                UpdateLog updateLog = new UpdateLog(file, "", "line " + StringUtils.leftPad((i + 1) + "", 4));
 
                 for (String oldVar : variableMap.keySet()) {
                     String newVar = variableMap.get(oldVar);
@@ -234,7 +298,7 @@ final public class DataVariableUpdater {
                 replaced.append(line).append(sep);
             }
 
-            if (!isDryRun && hasUpdate) {
+            if (!preview && hasUpdate) {
                 FileUtils.writeStringToFile(file, StringUtils.removeEnd(replaced.toString(), sep), DEF_CHARSET);
             }
 
@@ -266,7 +330,7 @@ final public class DataVariableUpdater {
                 for (int i = 0; i < lines.length; i++) {
                     String line = lines[i];
                     String oldLine = line;
-                    UpdateLog updateLog = new UpdateLog(file, "", StringUtils.leftPad(i + 1 + "", 3));
+                    UpdateLog updateLog = new UpdateLog(file, "", "line " + StringUtils.leftPad((i + 1) + "", 4));
 
                     for (String oldVar : variableMap.keySet()) {
                         String newVar = variableMap.get(oldVar);
@@ -297,7 +361,7 @@ final public class DataVariableUpdater {
                     replaced.append(line).append(sep);
                 }
 
-                if (!isDryRun && hasUpdate) {
+                if (!preview && hasUpdate) {
                     FileUtils.writeStringToFile(file, StringUtils.removeEnd(replaced.toString(), sep), DEF_CHARSET);
                 }
 
@@ -330,7 +394,7 @@ final public class DataVariableUpdater {
         if (replaced == null) { return false; }
 
         updated.add(updateLog.copy().setChange(cellValue, replaced));
-        if (isDryRun) { return false; }
+        if (preview) { return false; }
 
         cell.setCellValue(replaced);
         return true;
@@ -426,7 +490,7 @@ final public class DataVariableUpdater {
 
         if (hasUpdate) {
             updated.add(updateLog.copy().setChange(oldCellValue, cellValue));
-            if (isDryRun) { return false; }
+            if (preview) { return false; }
             cell.setCellValue(cellValue);
         }
 
@@ -467,7 +531,7 @@ final public class DataVariableUpdater {
 
         if (hasUpdate) {
             updated.add(updateLog.copy().setChange(oldCellValue, cellValue));
-            if (isDryRun) { return false; }
+            if (preview) { return false; }
             cell.setCellValue(cellValue);
         }
 

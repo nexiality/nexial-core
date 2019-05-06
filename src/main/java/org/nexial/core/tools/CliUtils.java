@@ -68,7 +68,9 @@ final public class CliUtils {
             System.err.println("Unable to parse commandline options: " + e.getMessage());
 
             HelpFormatter formatter = new HelpFormatter();
+            System.out.println();
             formatter.printHelp(name, cmdOptions, true);
+            System.out.println();
 
             return null;
         }

@@ -52,7 +52,6 @@ public class WebTransformer<T extends WebDataType> extends Transformer<WebDataTy
         if (data == null || data.getValue() == null) { return null; }
         ensureWebDriverReady();
 
-        String operation = "type(" + locator + "," + value + ")";
         StepResult stepResult;
         try {
             stepResult = webCommand.type(locator, value);
@@ -64,14 +63,13 @@ public class WebTransformer<T extends WebDataType> extends Transformer<WebDataTy
             }
             stepResult = new StepResult(false, error, null);
         }
-        return saveResult(data, operation, stepResult);
+        return saveResult(data, "type(" + locator + "," + value + ")", stepResult);
     }
 
     public WebDataType typeKeys(T data, String locator, String value) {
         if (data == null || data.getValue() == null) { return null; }
         ensureWebDriverReady();
 
-        String operation = "typeKeys(" + locator + "," + value + ")";
         StepResult stepResult;
         try {
             stepResult = webCommand.typeKeys(locator, value);
@@ -82,7 +80,7 @@ public class WebTransformer<T extends WebDataType> extends Transformer<WebDataTy
             }
             stepResult = new StepResult(false, error, null);
         }
-        return saveResult(data, operation, stepResult);
+        return saveResult(data, "typeKeys(" + locator + "," + value + ")", stepResult);
     }
 
     /* This method supports both click by locator and click by label
@@ -92,7 +90,6 @@ public class WebTransformer<T extends WebDataType> extends Transformer<WebDataTy
         if (data == null || data.getValue() == null) { return null; }
         ensureWebDriverReady();
 
-        String operation = "click(" + locator + ")";
         StepResult stepResult;
         try {
             if (StringUtils.startsWith(locator, LABEL_PREFIX)) {
@@ -103,14 +100,13 @@ public class WebTransformer<T extends WebDataType> extends Transformer<WebDataTy
         } catch (Exception e) {
             stepResult = new StepResult(false, e.getMessage(), null);
         }
-        return saveResult(data, operation, stepResult);
+        return saveResult(data, "click(" + locator + ")", stepResult);
     }
 
     public WebDataType selectWindow(T data, String winId) {
         if (data == null || data.getValue() == null) { return null; }
         ensureWebDriverReady();
 
-        String operation = "selectWindow(" + winId + ")";
         StepResult stepResult;
         try {
             if (NumberUtils.isDigits(winId)) {
@@ -125,7 +121,7 @@ public class WebTransformer<T extends WebDataType> extends Transformer<WebDataTy
             stepResult = new StepResult(false, e.getMessage(), null);
         }
 
-        return saveResult(data, operation, stepResult);
+        return saveResult(data, "selectWindow(" + winId + ")", stepResult);
     }
 
     public CsvDataType fetchAsCsv(T data, String... locators) throws TypeConversionException {
@@ -133,7 +129,6 @@ public class WebTransformer<T extends WebDataType> extends Transformer<WebDataTy
         ensureWebDriverReady();
 
         List<String> list = Arrays.asList(locators);
-        String operation = "fetchAsCsv(" + CollectionUtil.toString(list, textDelim) + ")";
         ExecutionContext context = ExecutionThread.get();
 
         StringBuilder output = new StringBuilder();
@@ -155,12 +150,15 @@ public class WebTransformer<T extends WebDataType> extends Transformer<WebDataTy
             output.append(locator).append(textDelim).append(value);
             context.removeData(TEMP_VAR);
         });
+
         CsvDataType csv = new CsvDataType(output.toString());
         csv.setHeader(false);
         csv.setDelim(textDelim);
         csv.parse();
-        Result res = new Result(operation, "PASS", null);
+
+        Result res = new Result("fetchAsCsv(" + CollectionUtil.toString(list, textDelim) + ")", "PASS", null);
         store(data, true, res);
+
         return csv;
     }
 
@@ -171,10 +169,12 @@ public class WebTransformer<T extends WebDataType> extends Transformer<WebDataTy
         StepResult stepResult;
         List<String> list = new ArrayList<>(Arrays.asList(array));
         String operation = "select(" + CollectionUtil.toString(list, textDelim) + ")";
+
         if (list.size() < 2) {
             stepResult = new StepResult(false, "locator/options missing", null);
             return saveResult(data, operation, stepResult);
         }
+
         String locator = list.remove(0);
         String options = CollectionUtil.toString(list, textDelim);
 
@@ -191,16 +191,19 @@ public class WebTransformer<T extends WebDataType> extends Transformer<WebDataTy
             }
             stepResult = new StepResult(false, error, null);
         }
+
         return saveResult(data, operation, stepResult);
     }
 
     public WebDataType deselect(T data, String... array) {
         if (data == null || data.getValue() == null) { return null; }
+
         ensureWebDriverReady();
 
         StepResult stepResult;
         List<String> list = new ArrayList<>(Arrays.asList(array));
         String operation = "deselect(" + CollectionUtil.toString(list, textDelim) + ")";
+
         if (list.size() < 2) {
             stepResult = new StepResult(false, "locator/options missing", null);
             return saveResult(data, operation, stepResult);
@@ -221,6 +224,7 @@ public class WebTransformer<T extends WebDataType> extends Transformer<WebDataTy
             }
             stepResult = new StepResult(false, error, null);
         }
+
         return saveResult(data, operation, stepResult);
     }
 
@@ -228,8 +232,7 @@ public class WebTransformer<T extends WebDataType> extends Transformer<WebDataTy
         if (data == null || data.getValue() == null) { return null; }
         ensureWebDriverReady();
         StepResult stepResult = webCommand.wait(waitMs);
-        String operation = "wait(" + waitMs + ")";
-        return saveResult(data, operation, stepResult);
+        return saveResult(data, "wait(" + waitMs + ")", stepResult);
     }
 
     public TextDataType text(T data) { return super.text(data); }

@@ -663,13 +663,16 @@ public class CsvTransformer<T extends CsvDataType> extends Transformer {
             return config;
         }
 
+        ExecutionContext context = ExecutionThread.get();
+        String delim = context == null ? "," : context.getTextDelim();
+
         Set<String> columnNames = new HashSet<>(data.getHeaders());
 
         StringBuilder props = new StringBuilder();
         columnNames.forEach(columnName -> {
             List<String> columns = new ArrayList<>();
             data.getValue().forEach(row -> columns.add(row.getString(columnName)));
-            props.append(columnName).append("=").append(TextUtils.toString(columns, ",")).append(lineSeparator());
+            props.append(columnName).append("=").append(TextUtils.toString(columns, delim)).append(lineSeparator());
         });
 
         config.setTextValue(props.toString());
