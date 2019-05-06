@@ -27,9 +27,10 @@ public class CliConst {
     public static final Option OPT_VERBOSE = newNonArgOption("v", "verbose", "Turn on verbose logging.", false);
 
     // data variable updater
-    public static final Option OPT_PREVIEW =
-        newNonArgOption("p", "preview", "Preview actions/changes (will not save to files)", false);
-
+    public static final Option OPT_PREVIEW = newNonArgOption("p",
+                                                             "preview",
+                                                             "Preview changes (will not save to files)",
+                                                             false);
     // public static final Option OPT_DATA = newArgOption("d", "data", "[REQUIRED] Data variables to replace, in the form of old_var=new_var;old_var2=new_var2", true);
     public static final Option OPT_TARGET = newArgOption("t", "target",
                                                          "[REQUIRED] Starting location of update data variable.", true);
