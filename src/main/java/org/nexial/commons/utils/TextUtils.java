@@ -18,7 +18,6 @@
 package org.nexial.commons.utils;
 
 import java.io.File;
-import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.*;
@@ -862,41 +861,56 @@ public final class TextUtils {
     public static Map<String, String> loadProperties(String propFile) {
         if (!FileUtil.isFileReadable(propFile, 5)) { return null; }
 
-        String projectPropsContent;
-        try {
-            projectPropsContent = FileUtils.readFileToString(new File(propFile), DEF_FILE_ENCODING);
-        } catch (IOException e) {
-            ConsoleUtils.error("Unable to read project properties " + propFile + ": " + e.getMessage());
-            return null;
-        }
-
         Map<String, String> properties = new LinkedHashMap<>();
-        try (FileInputStream inStream = FileUtils.openInputStream(new File(propFile))) {
-            final String propsContent = projectPropsContent;
+        // String projectPropsContent;
+        try {
 
-            Properties projectProps = new Properties();
-            projectProps.load(inStream);
+            List<String> lines = FileUtils.readLines(new File(propFile), DEF_FILE_ENCODING);
+            for (int i = 0; i < lines.size(); i++) {
+                String line = lines.get(i);
+                if (StringUtils.isBlank(line)) { continue; }
+                if (StringUtils.startsWith(line.trim(), "#") || StringUtils.startsWith(line.trim(), "!")) { continue; }
 
-            projectProps.forEach((name, value) -> {
-                String strName = (String) name;
-                String strValue = (String) value;
+                if (StringUtils.endsWith(line, "\\")) {
+                    line = StringUtils.removeEnd(line, "\\");
 
-                if (StringUtils.contains(strValue, "=")) {
-                    // this might be a case of original name containing space, like "hello world=goodbye"
-
-                    // let's make sure
-                    if (!StringUtils.contains(propsContent, strName + "=" + strValue)) {
-                        // confirmed!
-                        strName += " " + StringUtils.substringBefore(strValue, "=");
-                        strValue = StringUtils.substringAfter(strValue, "=");
+                    // handle continuation
+                    for (int j = i + 1; j < lines.size(); j++) {
+                        String continuation = StringUtils.stripStart(lines.get(j), " \t");
+                        if (StringUtils.endsWith(continuation, "\\")) {
+                            line += StringUtils.removeEnd(continuation, "\\");
+                        } else {
+                            line += continuation;
+                            i = j;
+                            break;
+                        }
                     }
                 }
 
-                // store for later reference
-                properties.put(strName, strValue);
-            });
+                int posEqual = StringUtils.indexOf(line, "=");
+                int posColon = StringUtils.indexOf(line, ":");
+                if (posEqual == -1) {
+                    if (posColon == -1) {
+                        // not name/value pair
+                        properties.put(line, "");
+                    } else {
+                        properties.put(StringUtils.substringBefore(line, ":"), StringUtils.substringAfter(line, ":"));
+                    }
+                } else {
+                    if (posColon == -1) {
+                        properties.put(StringUtils.substringBefore(line, "="), StringUtils.substringAfter(line, "="));
+                    } else {
+                        String delim = posEqual < posColon ? "=" : ":";
+                        properties.put(StringUtils.substringBefore(line, delim),
+                                       StringUtils.substringAfter(line, delim));
+                    }
+                }
+            }
+
+            // projectPropsContent = FileUtils.readFileToString(new File(propFile), DEF_FILE_ENCODING);
         } catch (IOException e) {
-            ConsoleUtils.error("Unable to load System properties via " + propFile + ": " + e.getMessage());
+            ConsoleUtils.error("Unable to read project properties " + propFile + ": " + e.getMessage());
+            return null;
         }
 
         return properties;
