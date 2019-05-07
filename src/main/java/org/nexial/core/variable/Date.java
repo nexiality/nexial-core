@@ -36,6 +36,26 @@ import static org.nexial.core.NexialConst.*;
 
 public class Date {
 
+    enum DatePrecision {
+        YEAR(1000L * 60 * 60 * 24 * 365),
+        MONTH(1000L * 60 * 60 * 24 * 30),
+        WEEK(1000 * 60 * 60 * 24 * 7),
+        DAY(1000 * 60 * 60 * 24),
+        HOUR(1000 * 60 * 60),
+        MINUTE(1000 * 60),
+        SECOND(1000),
+        MILLISECOND(1);
+
+        private double timestampDivider;
+
+        DatePrecision(double timestampDivider) { this.timestampDivider = timestampDivider; }
+
+        public String format(long timestamp) {
+            double diff = Math.abs(timestamp) / timestampDivider;
+            return diff == (long) diff ? ((long) diff) + "" : diff + "";
+        }
+    }
+
     private abstract class DateTransform {
         abstract Calendar transform(Calendar c);
     }
@@ -103,6 +123,32 @@ public class Date {
     public String setSecond(String date, String seconds) { return setDate(date, SECOND, NumberUtils.toInt(seconds)); }
 
     public String setSecond(String date, int seconds) { return setDate(date, SECOND, seconds); }
+
+    /**
+     * assumed that {@code date1} and {@code date2} are both in the format of <code>MM/dd/yyyy HH:mm:ss</code>.
+     * {@code precision} should match to one of the predefined value in {@link DatePrecision}
+     */
+    public String diff(String date1, String date2, String precision) {
+        java.util.Date d1 = parseDate(date1, STD_DATE_FORMAT);
+        if (d1 == null) {
+            ConsoleUtils.error("Unable to parse date1 in the standard format " + STD_DATE_FORMAT + ": " + date1);
+            return null;
+        }
+
+        java.util.Date d2 = parseDate(date2, STD_DATE_FORMAT);
+        if (d2 == null) {
+            ConsoleUtils.error("Unable to parse date2 in the standard format " + STD_DATE_FORMAT + ": " + date2);
+            return null;
+        }
+
+        try {
+            DatePrecision datePrecision = DatePrecision.valueOf(precision);
+            return datePrecision.format(d1.getTime() - d2.getTime());
+        } catch (IllegalArgumentException e) {
+            ConsoleUtils.error("Unknown precision specified: " + precision);
+            return null;
+        }
+    }
 
     protected java.util.Date parseDate(String date, String format) {
         if (StringUtils.isBlank(date)) { return null; }

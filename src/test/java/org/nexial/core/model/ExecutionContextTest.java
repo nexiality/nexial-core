@@ -224,7 +224,7 @@ public class ExecutionContextTest {
     }
 
     @Test
-    public void handleFunction() {
+    public void handleDateFunctions() {
         MockExecutionContext subject = initMockContext();
         subject.setData("firstDOW", "04/30/2017");
 
@@ -235,6 +235,24 @@ public class ExecutionContextTest {
 
         System.out.println(subject.handleFunction(
             "$(date|format|$(date|addDay|$(sysdate|firstDOW|MM/dd/yyyy)|1)|MM/dd/yyyy|MM/dd/yy)"));
+
+        // diff
+        subject.setData("date1", "04/30/2017 00:00:15");
+        subject.setData("date2", "05/17/2017 21:49:22");
+        Assert.assertEquals("17.91",
+                            subject.handleFunction("$(format|number|$(date|diff|${date1}|${date2}|DAY)|###.00)"));
+        Assert.assertEquals("17.91",
+                            subject.handleFunction("$(format|number|$(date|diff|${date1}|${date2}|DAY)|###.##)"));
+        Assert.assertEquals("2.6", subject.handleFunction("$(format|number|$(date|diff|${date2}|${date1}|WEEK)|0.#)"));
+        Assert.assertEquals("1", subject.handleFunction("$(format|number|$(date|diff|${date2}|${date1}|MONTH)|#)"));
+        Assert.assertEquals("0", subject.handleFunction("$(format|number|$(date|diff|${date2}|${date1}|YEAR)|0)"));
+        Assert.assertEquals("0430",
+                            subject.handleFunction("$(format|number|$(date|diff|${date1}|${date2}|HOUR)|0000)"));
+        Assert.assertEquals("25789.1167",
+                            subject.handleFunction("$(format|number|$(date|diff|${date1}|${date2}|MINUTE)|#.####)"));
+        Assert.assertEquals("1547347", subject.handleFunction("$(date|diff|${date1}|${date2}|SECOND)"));
+        Assert.assertEquals("1547347000",
+                            subject.handleFunction("$(format|number|$(date|diff|${date1}|${date2}|MILLISECOND)|0000)"));
 
         subject.cleanProject();
     }
