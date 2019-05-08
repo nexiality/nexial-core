@@ -189,6 +189,7 @@ public final class NexialConst {
     public static final String SQL_LINE_SEP = "\n";
     public static final String CSV_ROW_SEP = "\n";
     public static final String CSV_FIELD_DEIM = ",";
+    public static final String IMPORT_BUFFER_SIZE = registerSystemVariable(NAMESPACE + "rdbms.importBufferSize", 100);
 
     // ws
     public static final String WS_NAMESPACE = NAMESPACE + "ws.";

@@ -44,6 +44,7 @@ import org.springframework.jdbc.core.support.JdbcDaoSupport;
 
 import static org.nexial.core.NexialConst.*;
 import static org.nexial.core.SystemVariables.getDefaultBool;
+import static org.nexial.core.SystemVariables.getDefaultInt;
 
 /**
  * a <b>VERY</b> basic and stripped down version of data extraction via SQL statements or stored procedure.  This class
@@ -185,8 +186,8 @@ public class SimpleExtractionDao extends JdbcDaoSupport {
                     varName = context.replaceTokens(varName);
                 }
 
-                ConsoleUtils.log("Executing '" + StringUtils.defaultIfEmpty(varName, "UNNAMED QUERY") +
-                                 "' - " + query);
+                ConsoleUtils.log("Executing " + (StringUtils.isNotEmpty(varName) ? "'" + varName + "'" : "") + " - " +
+                                 query);
 
                 JdbcResult result = executeSql(query, null);
 
@@ -259,6 +260,76 @@ public class SimpleExtractionDao extends JdbcDaoSupport {
         return results;
     }
 
+    protected JdbcResult importResults(SqlComponent sql, SimpleExtractionDao dao, TableSqlGenerator tableGenerator) {
+        long startTime = System.currentTimeMillis();
+
+        String query = sql.getSql();
+        JdbcResult result = new JdbcResult(query);
+
+        JdbcTemplate jdbc = getJdbcTemplate();
+        Integer rowsImported = jdbc.query(query, rs -> {
+            if (!rs.next()) {
+                result.setError("Unable to retrieve query resultset; Query execution possibly did not complete");
+                return -1;
+            }
+
+            // 1. generate DDL for target table
+            ResultSetMetaData metaData = rs.getMetaData();
+            String ddl = tableGenerator.generateSql(metaData);
+            JdbcResult ddlResult = dao.executeSql(ddl, null);
+            if (ddlResult.hasError()) {
+                result.setError("Failed to create table via '" + ddl + "': " + ddlResult.getError());
+                return -1;
+            }
+
+            // 2. generate DML to import data to target
+            int rowCount = 0;
+            int rowsAffected = 0;
+            int importBufferSize = context.getIntData(IMPORT_BUFFER_SIZE, getDefaultInt(IMPORT_BUFFER_SIZE));
+            StringBuilder error = new StringBuilder();
+            StringBuilder inserts = new StringBuilder();
+            int numOfColumn = metaData.getColumnCount();
+
+            do {
+                inserts.append("INSERT INTO ").append(tableGenerator.getTable()).append(" VALUES (");
+                for (int i = 1; i <= numOfColumn; i++) {
+                    String data = rs.getString(i);
+                    if (rs.wasNull()) {
+                        data = "NULL";
+                    } else if (tableGenerator.isTextColumnType(metaData.getColumnType(i))) {
+                        data = "'" + StringUtils.replace(data, "'", "''") + "'";
+                    }
+                    inserts.append(data);
+                    if (i < numOfColumn) { inserts.append(","); }
+                }
+
+                inserts.append(");\n");
+
+                rowCount++;
+
+                if (rowCount % importBufferSize == 0) {
+                    JdbcOutcome insertResults = dao.executeSqls(SqlComponent.toList(inserts.toString()));
+                    rowsAffected += insertResults.getRowsAffected();
+                    if (result.hasError()) { error.append(result.getError()).append("\n"); }
+                    inserts = new StringBuilder();
+                }
+            } while (rs.next());
+
+            JdbcOutcome insertResults = dao.executeSqls(SqlComponent.toList(inserts.toString()));
+            rowsAffected += insertResults.getRowsAffected();
+            if (result.hasError()) { error.append(result.getError()).append("\n"); }
+
+            if (error.length() > 0) { result.setError(error.toString()); }
+
+            return rowsAffected;
+        });
+
+        result.setRowCount(rowsImported == null ? -1 : rowsImported);
+        result.setTiming(startTime);
+
+        return result;
+    }
+
     protected void setAutoCommit(Boolean autoCommit) { this.autoCommit = autoCommit; }
 
     protected Boolean isAutoCommit() {
@@ -320,7 +391,7 @@ public class SimpleExtractionDao extends JdbcDaoSupport {
         List<Map<String, String>> rows = new ArrayList<>();
         ResultSetMetaData metaData = rs.getMetaData();
 
-        // recycle through all rows
+        // cycle through all rows
         do {
             Map<String, String> row = new LinkedHashMap<>();
 

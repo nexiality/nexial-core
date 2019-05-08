@@ -129,6 +129,89 @@
   <!-- ##################################### -->
   <!-- ### all plugins                   ### -->
   <!-- ##################################### -->
+  <bean id="rdbms" class="org.nexial.core.plugins.db.RdbmsCommand">
+    <property name="dataAccess">
+      <bean class="org.nexial.core.plugins.db.DataAccess">
+        <!--
+        we want to support ALL types of SQL, including those vendor-specific
+        so for that reason, we are no longer insisting on the use of standard ANSI sql
+        -->
+        <!--<property name="validSQLStartWords">-->
+        <!--<list value-type="java.lang.String">-->
+        <!--<value><![CDATA[SELECT ]]></value>-->
+        <!--<value><![CDATA[WITH ]]></value>-->
+        <!--<value><![CDATA[INSERT ]]></value>-->
+        <!--<value><![CDATA[UPDATE ]]></value>-->
+        <!--<value><![CDATA[DELETE ]]></value>-->
+        <!--<value><![CDATA[{CALL ]]></value>-->
+        <!--<value><![CDATA[CALL ]]></value>-->
+        <!--<value><![CDATA[COMMIT]]></value>-->
+        <!--<value><![CDATA[ROLLBACK]]></value>-->
+        <!--</list>-->
+        <!--</property>-->
+        <property name="dbTypes">
+          <map key-type="java.lang.String" value-type="java.lang.String">
+            <entry key="connx" value="com.Connx.jdbc.TCJdbc.TCJdbcDriver"/>
+            <entry key="db2" value="com.ibm.db2.jcc.DB2Driver"/>
+            <entry key="isam" value="com.Connx.jdbc.TCJdbc.TCJdbcDriver"/>
+            <entry key="mssql" value="com.microsoft.sqlserver.jdbc.SQLServerDriver"/>
+            <entry key="mysql" value="com.mysql.cj.jdbc.Driver"/>
+            <entry key="oracle" value="oracle.jdbc.driver.OracleDriver"/>
+            <entry key="postgresql" value="org.postgresql.Driver"/>
+            <entry key="sqlite" value="org.sqlite.JDBC"/>
+            <entry key="hsqldb" value="org.hsqldb.jdbc.JDBCDriver"/>
+          </map>
+        </property>
+        <property name="dbJarInfo">
+          <map key-type="java.lang.String" value-type="org.nexial.core.plugins.ThirdPartyDriverInfo">
+            <entry key="connx">
+              <bean class="org.nexial.core.plugins.ThirdPartyDriverInfo">
+                <constructor-arg name="jarFilePattern" value="connxjdbc-xxx.jar"/>
+                <constructor-arg name="minVersion" value="4.6"/>
+                <constructor-arg name="url" value="https://www.connx.com/databases/cisam-db.php"/>
+              </bean>
+            </entry>
+            <entry key="isam">
+              <bean class="org.nexial.core.plugins.ThirdPartyDriverInfo">
+                <constructor-arg name="jarFilePattern" value="connxjdbc-xxx.jar"/>
+                <constructor-arg name="minVersion" value="4.6"/>
+                <constructor-arg name="url" value="https://www.connx.com/databases/cisam-db.php"/>
+              </bean>
+            </entry>
+            <entry key="db2">
+              <bean class="org.nexial.core.plugins.ThirdPartyDriverInfo">
+                <constructor-arg name="jarFilePattern" value="db2jcc4.jar, db2jcc_license*.jar"/>
+                <constructor-arg name="minVersion" value="4.8.87"/>
+                <constructor-arg name="url" value="http://www-01.ibm.com/support/docview.wss?uid=swg21363866"/>
+              </bean>
+            </entry>
+            <entry key="oracle">
+              <bean class="org.nexial.core.plugins.ThirdPartyDriverInfo">
+                <constructor-arg name="jarFilePattern" value="ojdbc*.jar"/>
+                <constructor-arg name="minVersion" value="11.2.0.2.0"/>
+                <constructor-arg name="url" value="http://www.oracle.com/technetwork/database/features/jdbc/jdbc-drivers-12c-download-1958347.html"/>
+              </bean>
+            </entry>
+          </map>
+        </property>
+      </bean>
+    </property>
+  </bean>
+
+  <bean id="localdb" class="org.nexial.core.plugins.db.LocalDbCommand"
+        p:dbName="nexial.localdb"
+        p:dbFile="${user.home}/.nexial/localdb/nexial"
+        p:rdbms-ref="rdbms">
+    <property name="connectionProps">
+      <map key-type="java.lang.String" value-type="java.lang.String">
+        <entry key="nexial.localdb.type" value="sqlite"/>
+        <entry key="nexial.localdb.url" value="jdbc:sqlite:${user.home}/.nexial/localdb/nexial"/>
+        <entry key="nexial.localdb.autocommit" value="true"/>
+        <entry key="nexial.localdb.treatNullAs" value="(null)"/>
+      </map>
+    </property>
+  </bean>
+
   <util:map id="plugins" key-type="java.lang.String" value-type="org.nexial.core.plugins.NexialCommand">
     <entry key="aws.s3">
       <bean class="org.nexial.core.plugins.aws.S3Command"/>
@@ -189,88 +272,20 @@
     <entry key="json">
       <bean class="org.nexial.core.plugins.json.JsonCommand"/>
     </entry>
-    <entry key="number">
-      <bean class="org.nexial.core.plugins.base.NumberCommand"/>
-    </entry>
+    <entry key="localdb" value-ref="localdb"/>
     <entry key="macro">
       <bean class="org.nexial.core.plugins.base.MacroCommand"/>
     </entry>
     <entry key="mail">
       <bean class="org.nexial.core.plugins.mail.MailCommand"/>
     </entry>
+    <entry key="number">
+      <bean class="org.nexial.core.plugins.base.NumberCommand"/>
+    </entry>
     <entry key="pdf">
       <bean class="org.nexial.core.plugins.pdf.PdfCommand"/>
     </entry>
-    <entry key="rdbms">
-      <bean class="org.nexial.core.plugins.db.RdbmsCommand">
-        <property name="dataAccess">
-          <bean class="org.nexial.core.plugins.db.DataAccess">
-            <!--
-            we want to support ALL types of SQL, including those vendor-specific
-            so for that reason, we are no longer insisting on the use of standard ANSI sql
-            -->
-            <!--<property name="validSQLStartWords">-->
-            <!--<list value-type="java.lang.String">-->
-            <!--<value><![CDATA[SELECT ]]></value>-->
-            <!--<value><![CDATA[WITH ]]></value>-->
-            <!--<value><![CDATA[INSERT ]]></value>-->
-            <!--<value><![CDATA[UPDATE ]]></value>-->
-            <!--<value><![CDATA[DELETE ]]></value>-->
-            <!--<value><![CDATA[{CALL ]]></value>-->
-            <!--<value><![CDATA[CALL ]]></value>-->
-            <!--<value><![CDATA[COMMIT]]></value>-->
-            <!--<value><![CDATA[ROLLBACK]]></value>-->
-            <!--</list>-->
-            <!--</property>-->
-            <property name="dbTypes">
-              <map key-type="java.lang.String" value-type="java.lang.String">
-                <entry key="connx" value="com.Connx.jdbc.TCJdbc.TCJdbcDriver"/>
-                <entry key="db2" value="com.ibm.db2.jcc.DB2Driver"/>
-                <entry key="isam" value="com.Connx.jdbc.TCJdbc.TCJdbcDriver"/>
-                <entry key="mssql" value="com.microsoft.sqlserver.jdbc.SQLServerDriver"/>
-                <entry key="mysql" value="com.mysql.cj.jdbc.Driver"/>
-                <entry key="oracle" value="oracle.jdbc.driver.OracleDriver"/>
-                <entry key="postgresql" value="org.postgresql.Driver"/>
-                <entry key="sqlite" value="org.sqlite.JDBC"/>
-                <entry key="hsqldb" value="org.hsqldb.jdbc.JDBCDriver"/>
-              </map>
-            </property>
-            <property name="dbJarInfo">
-              <map key-type="java.lang.String" value-type="org.nexial.core.plugins.ThirdPartyDriverInfo">
-                <entry key="connx">
-                  <bean class="org.nexial.core.plugins.ThirdPartyDriverInfo">
-                    <constructor-arg name="jarFilePattern" value="connxjdbc-xxx.jar"/>
-                    <constructor-arg name="minVersion" value="4.6"/>
-                    <constructor-arg name="url" value="https://www.connx.com/databases/cisam-db.php"/>
-                  </bean>
-                </entry>
-                <entry key="isam">
-                  <bean class="org.nexial.core.plugins.ThirdPartyDriverInfo">
-                    <constructor-arg name="jarFilePattern" value="connxjdbc-xxx.jar"/>
-                    <constructor-arg name="minVersion" value="4.6"/>
-                    <constructor-arg name="url" value="https://www.connx.com/databases/cisam-db.php"/>
-                  </bean>
-                </entry>
-                <entry key="db2">
-                  <bean class="org.nexial.core.plugins.ThirdPartyDriverInfo">
-                    <constructor-arg name="jarFilePattern" value="db2jcc4.jar, db2jcc_license*.jar"/>
-                    <constructor-arg name="minVersion" value="4.8.87"/>
-                    <constructor-arg name="url" value="http://www-01.ibm.com/support/docview.wss?uid=swg21363866"/>
-                  </bean>
-                </entry>
-                <entry key="oracle">
-                  <bean class="org.nexial.core.plugins.ThirdPartyDriverInfo">
-                    <constructor-arg name="jarFilePattern" value="ojdbc*.jar"/>
-                    <constructor-arg name="minVersion" value="11.2.0.2.0"/>
-                    <constructor-arg name="url" value="http://www.oracle.com/technetwork/database/features/jdbc/jdbc-drivers-12c-download-1958347.html"/>
-                  </bean>
-                </entry>
-              </map>
-            </property>
-          </bean>
-        </property>
-      </bean>
-    </entry>
+    <entry key="rdbms" value-ref="rdbms"/>
     <entry key="redis">
       <bean class="org.nexial.core.plugins.redis.RedisCommand"/>
     </entry>
