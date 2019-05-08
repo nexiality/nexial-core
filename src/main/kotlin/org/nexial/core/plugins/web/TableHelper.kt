@@ -32,8 +32,8 @@ import java.io.File
 import javax.validation.constraints.NotNull
 
 class TableHelper(private val webCommand: WebCommand) {
-    private val tableHeaderLocators = listOf(".//thead//*[ name() = 'th' or name() = 'td' ]",
-                                             ".//thead//*[ name() = 'TH' or name() = 'TD' ]",
+    private val tableHeaderLocators = listOf(".//thead//*[ name()='th' or name()='td' ]",
+                                             ".//thead//*[ name()='TH' or name()='TD' ]",
                                              ".//tr/th")
 
     fun saveDivsAsCsv(headerCellsLoc: String,
@@ -129,8 +129,11 @@ class TableHelper(private val webCommand: WebCommand) {
         while (true) {
             // table has body?
             var rows: List<WebElement> = table.findElements(By.xpath(".//tbody/tr"))
+
             // table has rows not trapped within tbody?
-            if (CollectionUtils.isEmpty(rows)) rows = table.findElements(By.xpath(".//tr/*[ .[name() = 'TD'] ]"))
+            // but we are not considering TH here because we are not under TBODY. The TH in Table might be header
+            if (CollectionUtils.isEmpty(rows))
+                rows = table.findElements(By.xpath(".//tr/*[name()='TD' or name()='td']"))
             if (CollectionUtils.isEmpty(rows)) {
                 if (pageCount < 1) ConsoleUtils.log("$msgPrefix does not contain usable data cells")
                 break
@@ -140,15 +143,16 @@ class TableHelper(private val webCommand: WebCommand) {
             var hasData = true
 
             for (i in rows.indices) {
-                val cellContent = toCellContent(rows[i], "tag=td")
-                if (CollectionUtils.isEmpty(cellContent)) {
+                // cell can be TD or TH under TBODY
+                val cells = toCellContent(rows[i], "./*[name()='TD' or name()='td' or name()='TH' or name()='th']")
+                if (CollectionUtils.isEmpty(cells)) {
                     writer.writeEmptyRow()
                     break
                 }
 
                 if (i == 0) {
                     // compare the first row of every page after the 1st page
-                    if (pageCount > 0 && StringUtils.equals(firstRow, cellContent.toString())) {
+                    if (pageCount > 0 && StringUtils.equals(firstRow, cells.toString())) {
                         // found duplicate... maybe we have reached the end?
                         ConsoleUtils.log("$msgPrefix reached the end of records.")
                         hasData = false
@@ -156,10 +160,10 @@ class TableHelper(private val webCommand: WebCommand) {
                     }
 
                     // mark first row for comparison against next page
-                    firstRow = cellContent.toString()
+                    firstRow = cells.toString()
                 }
 
-                writer.writeRow(cellContent)
+                writer.writeRow(cells)
             }
 
             if (!hasData) break

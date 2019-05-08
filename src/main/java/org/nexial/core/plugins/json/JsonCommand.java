@@ -295,7 +295,7 @@ public class JsonCommand extends BaseCommand {
         if (StringUtils.isBlank(beautified)) { return StepResult.fail("Unable to beautify JSON content"); }
 
         updateDataVariable(var, beautified);
-        return StepResult.success("JSON content beautified and saved to '" + var);
+        return StepResult.success("JSON content beautified and saved to '" + var + "'");
     }
 
     @NotNull
