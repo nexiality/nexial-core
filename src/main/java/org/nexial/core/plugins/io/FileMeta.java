@@ -27,13 +27,11 @@ import org.apache.commons.lang3.StringUtils;
 import org.nexial.core.utils.ConsoleUtils;
 
 public class FileMeta implements Serializable {
+    protected static final String REGEX_FILE_META = "(name|size|lastMod)\\s+";
     private File fileObject;
     private byte[] rawContent;
-    protected static final String REGEX_FILE_META = "(name|size|lastMod)\\s+";
 
     private enum filter {size, lastMod, name}
-
-    ;
 
     protected FileMeta() { }
 

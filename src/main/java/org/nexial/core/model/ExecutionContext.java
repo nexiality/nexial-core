@@ -1627,7 +1627,7 @@ public class ExecutionContext {
             throw new IllegalArgumentException("reference to a built-in function NOT shown via the $(...|...) format");
         }
 
-        String errorPrefix = "Invalid built-in function " + TOKEN_FUNCTION_START + token + TOKEN_FUNCTION_END;
+        String errorPrefix = "Invalid built-in function " + TOKEN_FUNCTION_START + token + TOKEN_FUNCTION_END + " ";
 
         Function f = null;
 

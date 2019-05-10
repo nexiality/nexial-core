@@ -862,9 +862,7 @@ public class Excel {
     public static String getCellRawValue(XSSFCell cell) { return getCellValue(cell, true); }
 
     public static XSSFCell setHyperlink(XSSFCell cell, String link, String label) {
-        if (cell == null) { return cell; }
-        if (StringUtils.isBlank(link)) { return cell; }
-        if (StringUtils.isBlank(label)) { return cell; }
+        if (cell == null || StringUtils.isBlank(link) || StringUtils.isBlank(label)) { return cell; }
 
         cell.setCellValue(label);
 
@@ -888,9 +886,17 @@ public class Excel {
                 winLink = "C:\\" + StringUtils.replace(StringUtils.substring(link, projectHomeIndex), "/", "\\");
             }
 
-            // =if(info("system")="mac",hyperlink("/Users/lium/tmp/", "Click here"),hyperlink("C:\temp\","Click there"))
-            cell.setCellFormula("HYPERLINK(IF(ISERROR(FIND(\"dos\",INFO(\"system\"))),\"" +
-                                unixLink + "\",\"" + winLink + "\"),\"" + label + "\")");
+            if (StringUtils.length(unixLink) > 254 || StringUtils.length(winLink) > 254) {
+                // we can't create HYPERLINK formula because Excel won't allow string literal longer than 255
+                ConsoleUtils.log("Unable to create HYPERLINK on cell " + cell.getReference() +
+                                 " since the referenced path is too long: " + link);
+                cell.setCellValue(link);
+                return cell;
+            } else {
+                // =if(info("system")="mac",hyperlink("/Users/lium/tmp/", "Click here"),hyperlink("C:\temp\","Click there"))
+                cell.setCellFormula("HYPERLINK(IF(ISERROR(FIND(\"dos\",INFO(\"system\"))),\"" +
+                                    unixLink + "\",\"" + winLink + "\"),\"" + label + "\")");
+            }
         }
 
         XSSFSheet sheet = cell.getSheet();
