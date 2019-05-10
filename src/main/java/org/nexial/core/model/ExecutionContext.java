@@ -1221,23 +1221,28 @@ public class ExecutionContext {
     }
 
     public boolean containsCrypt(String data) {
-        if (StringUtils.contains(data, CRYPT_IND)) { return true; }
+        try {
+            if (StringUtils.contains(data, CRYPT_IND)) { return true; }
 
-        if (TextUtils.isBetween(data, TOKEN_START, TOKEN_END)) {
-            return StringUtils.contains(CellTextReader.readValue(replaceTokens(data)), CRYPT_IND);
+            if (TextUtils.isBetween(data, TOKEN_START, TOKEN_END)) {
+                return StringUtils.contains(CellTextReader.readValue(replaceTokens(data)), CRYPT_IND);
+            }
+
+            // if the value can be mapped to a crypted value -OR-
+            // if we still have ${...} pattern after token replacement,
+            // then that's means one or more data variables are crypted (retainCrypt=true)
+
+            // if (!StringUtils.equals(data, CellTextReader.readValue(data))) { return true; }
+            if (CellTextReader.isCrypt(data)) { return true; }
+
+            // no variables means no crypt
+            Set<String> variables = findTokens(data);
+            return CollectionUtils.isNotEmpty(variables) &&
+                   variables.stream().anyMatch(var -> CellTextReader.isCrypt(replaceTokens(TOKEN_START + var + TOKEN_END)));
+        } catch (RuntimeException e) {
+            // don't worry it now.. Nexial will eventually barf at such exception later on (and probably at a better spot).
+            return false;
         }
-
-        // if the value can be mapped to a crypted value -OR-
-        // if we still have ${...} pattern after token replacement,
-        // then that's means one or more data variables are crypted (retainCrypt=true)
-
-        // if (!StringUtils.equals(data, CellTextReader.readValue(data))) { return true; }
-        if (CellTextReader.isCrypt(data)) { return true; }
-
-        // no variables means no crypt
-        Set<String> variables = findTokens(data);
-        return CollectionUtils.isNotEmpty(variables) &&
-               variables.stream().anyMatch(var -> CellTextReader.isCrypt(replaceTokens(TOKEN_START + var + TOKEN_END)));
     }
 
     public static boolean getSystemThenContextBooleanData(String name, ExecutionContext context, boolean def) {
