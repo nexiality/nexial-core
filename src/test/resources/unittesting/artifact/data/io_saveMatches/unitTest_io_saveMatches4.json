@@ -1,0 +1,81 @@
+{
+    "name": "Sprint14.20190430_175417",
+    "runHost": "ATMECSINLT-488",
+    "runHostOs": "amd64 Windows 10 10.0",
+    "runUser": "Krishnavardhan.G",
+    "startTime": 1556627057265,
+    "endTime": 1556627094284,
+    "totalSteps": 50,
+    "passCount": 50,
+    "failCount": 0,
+    "warnCount": 0,
+    "executed": 50,
+    "failedFast": false,
+    "logs": { },
+    "referenceData": {
+        "Data File": "Task1.data.xlsx",
+        "DataSheet(s)": "data5",
+        "JAVA_OPT": "-Dnexial.runID.prefix=Sprint14",
+        "runtime args": "-script C:\\projects\\Task1\\artifact\\script\\Task1.xlsx -scenario rdbms -datasheets data5"
+    },
+    "nestedExecutions": [
+        {
+            "name": "Task1 (2)",
+            "scriptFile": "C:\\projects\\Task1\\artifact\\script\\Task1.xlsx",
+            "startTime": 1556627058514,
+            "endTime": 1556627093758,
+            "totalSteps": 50,
+            "passCount": 50,
+            "failCount": 0,
+            "warnCount": 0,
+            "executed": 50,
+            "failedFast": false,
+            "executionLog": "C:\\projects\\Task1\\output\\Sprint14.20190430_175417\\logs\\nexial-Sprint14.20190430_175417.log",
+            "logs": { },
+            "nestedExecutions": [
+                {
+                    "name": "1 of 2",
+                    "scriptFile": "C:\\projects\\Task1\\artifact\\script\\Task1.xlsx",
+                    "testScriptLink": "C:\\projects\\Task1\\output\\Sprint14.20190430_175417\\Task1.20190430_175418.001~001.xlsx",
+                    "startTime": 1556627058517,
+                    "endTime": 1556627076894,
+                    "totalSteps": 25,
+                    "passCount": 25,
+                    "failCount": 0,
+                    "warnCount": 0,
+                    "executed": 25,
+                    "failedFast": false,
+                    "executionLog": "C:\\projects\\Task1\\output\\Sprint14.20190430_175417\\logs\\nexial-Sprint14.20190430_175417.log",
+                    "logs": { },
+                    "planSequence": 0,
+                    "iterationIndex": 0,
+                    "iterationTotal": 0
+                },
+                {
+                    "name": "2 of 2",
+                    "scriptFile": "C:\\projects\\Task1\\artifact\\script\\Task1.xlsx",
+                    "testScriptLink": "C:\\projects\\Task1\\output\\Sprint14.20190430_175417\\Task1.20190430_175437.002~002.xlsx",
+                    "startTime": 1556627077241,
+                    "endTime": 1556627093349,
+                    "totalSteps": 25,
+                    "passCount": 25,
+                    "failCount": 0,
+                    "warnCount": 0,
+                    "executed": 25,
+                    "failedFast": false,
+                    "executionLog": "C:\\projects\\Task1\\output\\Sprint14.20190430_175417\\logs\\nexial-Sprint14.20190430_175417.log",
+                    "logs": { },
+                    "planSequence": 0,
+                    "iterationIndex": 0,
+                    "iterationTotal": 0
+                }
+            ],
+            "planSequence": 0,
+            "iterationIndex": 0,
+            "iterationTotal": 0
+        }
+    ],
+    "planSequence": 0,
+    "iterationIndex": 0,
+    "iterationTotal": 0
+}

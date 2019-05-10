@@ -24,10 +24,16 @@ import java.io.Serializable;
 
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang3.StringUtils;
+import org.nexial.core.utils.ConsoleUtils;
 
 public class FileMeta implements Serializable {
     private File fileObject;
     private byte[] rawContent;
+    protected static final String REGEX_FILE_META = "(name|size|lastMod)\\s+";
+
+    private enum filter {size, lastMod, name}
+
+    ;
 
     protected FileMeta() { }
 
@@ -77,5 +83,24 @@ public class FileMeta implements Serializable {
                "lastmod=" + getLastmod() + ", \n" +
                "perm(rwe)=" + getPerm() + "\n" +
                "text=" + (StringUtils.isEmpty(getText()) ? "<EMPTY>" : StringUtils.left(getText(), 500) + "...\n");
+    }
+
+    protected static String findFileMetaData(String subject, File file) {
+        try {
+            switch (filter.valueOf(subject)) {
+                case size:
+                    return Long.toString(file.length());
+                case lastMod:
+                    return Long.toString(file.lastModified());
+                case name:
+                    return file.getName();
+                default:
+                    return null;
+            }
+
+        } catch (IllegalArgumentException e) {
+            ConsoleUtils.error("Unsupported file meta: " + subject);
+            return null;
+        }
     }
 }

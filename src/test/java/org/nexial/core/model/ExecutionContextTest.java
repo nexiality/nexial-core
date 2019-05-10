@@ -540,13 +540,13 @@ public class ExecutionContextTest {
 
         String dataPath = System.getProperty(OPT_PROJECT_BASE) + separator + "artifact" + separator + "data";
         expected = "<logger name=\"ch.qos.logback\" additivity=\"false\" level=\"WARN\">" +
-                   "<appender-ref ref=\"" + dataPath + "/junk1.txt\"/>" +
+                   "<appender-ref ref=\"" + dataPath + separator + "junk1.txt\"/>" +
                    "</logger>" +
                    "<logger name=\"ch.qos.logback.classic.LoggerContext\" additivity=\"false\" level=\"WARN\">" +
-                   "<appender-ref ref=\"console\">" + dataPath + "/junk2.txt</appender>" +
+                   "<appender-ref ref=\"console\">" + dataPath + separator + "junk2.txt</appender>" +
                    "</logger>" +
                    "<logger name=\"ch.qos.logback.core\" additivity=\"false\" level=\"WARN\">" +
-                   dataPath + "/junk3.txt" +
+                   dataPath + separator + "junk3.txt" +
                    "</logger>";
 
         actual = subject.replaceTokens(fixture);

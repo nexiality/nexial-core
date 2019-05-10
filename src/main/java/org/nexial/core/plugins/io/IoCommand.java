@@ -46,6 +46,9 @@ import org.apache.commons.lang3.tuple.Pair;
 import org.apache.commons.text.similarity.LevenshteinDetailedDistance;
 import org.nexial.commons.utils.*;
 import org.nexial.core.model.ExecutionContext;
+import org.nexial.core.model.NexialFilter;
+import org.nexial.core.model.NexialFilterComparator;
+import org.nexial.core.model.NexialFilterList;
 import org.nexial.core.model.StepResult;
 import org.nexial.core.plugins.base.BaseCommand;
 import org.nexial.core.plugins.filevalidation.RecordData;
@@ -64,9 +67,10 @@ import static org.nexial.core.NexialConst.Data.*;
 import static org.nexial.core.SystemVariables.getDefault;
 import static org.nexial.core.SystemVariables.getDefaultBool;
 import static org.nexial.core.plugins.io.ComparisonResult.*;
+import static org.nexial.core.plugins.io.FileMeta.REGEX_FILE_META;
 import static org.nexial.core.plugins.io.IoAction.*;
-import static org.nexial.core.plugins.io.IoCommand.CompareMode.*;
 import static org.nexial.core.plugins.io.IoCommand.CompareMode.FAIL_FAST;
+import static org.nexial.core.plugins.io.IoCommand.CompareMode.*;
 import static org.nexial.core.utils.CheckUtils.*;
 
 public class IoCommand extends BaseCommand {
@@ -78,30 +82,75 @@ public class IoCommand extends BaseCommand {
     enum CompareMode {FAIL_FAST, THOROUGH, DIFF}
 
     @Override
-    public String getTarget() { return "io"; }
+    public String getTarget() {
+        return "io";
+    }
 
     /**
-     * save matching file list to `var`.  The matching logic is derived from `path` and `filePattern` (e.g. a*.txt)
-     *
+     * save matching file list to `var`.  The matching logic is derived from `path` and `filePattern` (e.g. a*.txt or name match .*.log & size>=5669)
+     * <p>
      * special treatment for MS Office files: office temp files will be ignored and removed from any matches
      */
     public StepResult saveMatches(String var, String path, String filePattern) {
         requiresValidVariableName(var);
         requiresReadableDirectory(path, "invalid path", path);
         requiresNotBlank(filePattern, "invalid file pattern", filePattern);
+        boolean hasFilter = false;
+        String pattern;
+        // to support old filePattern ( e.g.  *.text ) check if there is a filter controller present in the filterPattern
+        // (e.g. name match .*.log )
+        if (RegexUtils.isExact(filePattern, NexialFilterComparator.getRegexFilter()) &&
+            RegexUtils.match(filePattern, REGEX_FILE_META)) {
+            pattern = path;
+            hasFilter = true;
+        } else {
+            String slash = StringUtils.contains(path, "\\") ? "\\" : "/";
+            pattern = StringUtils.appendIfMissing(path, slash) + filePattern;
+        }
 
         // list files
-        String slash = StringUtils.contains(path, "\\") ? "\\" : "/";
-        String pattern = StringUtils.appendIfMissing(path, slash) + filePattern;
         List<String> files = new IOFilePathFilter().filterFiles(pattern);
         if (files == null) { files = new ArrayList<>(); }
 
         // filter out office temp files
         files.removeIf(this::isMSOfficeTempFile);
 
+        if (CollectionUtils.isNotEmpty(files) && hasFilter) {
+            NexialFilterList filterList = new NexialFilterList(filePattern);
+            files = filterFiles(files, filterList);
+        }
         // save matches
         context.setData(var, files);
         return StepResult.success("saving matching file list to " + var);
+    }
+
+    /**
+     * "fast" compare between {@code file1} and {@code file2}.
+     * </p>
+     * The "fast" comparision includes file size and fail-fast byte-by-byte comparison without detailed
+     * differential report.
+     * </p>
+     * This method is different than {@link #compare(String, String, String)} in that
+     * {@link #compare(String, String, String)} includes the same "fast" compare, plus: <ol>
+     * <li><code>compare()</code> includes line-by-line comparison and differential report</li>
+     * </ol>
+     *
+     * @see #compare(String, String, String)
+     */
+    public StepResult assertEqual(String expected, String actual) {
+        requiresNotBlank(expected, "invalid expected file", expected);
+        requiresNotBlank(actual, "invalid actual file", actual);
+
+        Pair<File, File> files = prepCompare(expected, actual);
+
+        FileComparisonReport comparisons = new FileComparisonReport();
+        StepResult result = fastCompare(files, comparisons);
+        if (result != null) {
+            return result;
+        }
+
+        return StepResult.fail("expected file '" + files.getLeft().getAbsolutePath() + "' and " +
+                               "actual file '" + files.getRight().getAbsolutePath() + "' are not the same");
     }
 
     /**
@@ -137,31 +186,9 @@ public class IoCommand extends BaseCommand {
         return StepResult.success("search-and-replace completed and saved to '" + saveAs + "'");
     }
 
-    /**
-     * "fast" compare between {@code file1} and {@code file2}.
-     * </p>
-     * The "fast" comparision includes file size and fail-fast byte-by-byte comparison without detailed
-     * differential report.
-     * </p>
-     * This method is different than {@link #compare(String, String, String)} in that
-     * {@link #compare(String, String, String)} includes the same "fast" compare, plus: <ol>
-     * <li><code>compare()</code> includes line-by-line comparison and differential report</li>
-     * </ol>
-     *
-     * @see #compare(String, String, String)
-     */
-    public StepResult assertEqual(String expected, String actual) {
-        requiresNotBlank(expected, "invalid expected file", expected);
-        requiresNotBlank(actual, "invalid actual file", actual);
-
-        Pair<File, File> files = prepCompare(expected, actual);
-
-        FileComparisonReport comparisons = new FileComparisonReport();
-        StepResult result = fastCompare(files, comparisons);
-        if (result != null) { return result; }
-
-        return StepResult.fail("expected file '" + files.getLeft().getAbsolutePath() + "' and " +
-                               "actual file '" + files.getRight().getAbsolutePath() + "' are not the same");
+    //todo: need to consider target as file name, not just dir. but how to recognize this?
+    public StepResult copyFiles(String source, String target) {
+        return doAction(copy, source, target);
     }
 
     public StepResult assertNotEqual(String expected, String actual) {
@@ -178,7 +205,9 @@ public class IoCommand extends BaseCommand {
     }
 
     //todo: need to consider target as file name, not just dir. but how to recognize this?
-    public StepResult copyFiles(String source, String target) { return doAction(copy, source, target); }
+    public StepResult moveFiles(String source, String target) {
+        return doAction(move, source, target);
+    }
 
     public StepResult copyFilesByRegex(String sourceDir, String regex, String target) throws IOException {
         return doAction(copy, sourceDir, regex, target);
@@ -195,8 +224,29 @@ public class IoCommand extends BaseCommand {
         }
     }
 
-    //todo: need to consider target as file name, not just dir. but how to recognize this?
-    public StepResult moveFiles(String source, String target) { return doAction(move, source, target); }
+    /**
+     * save metadata of `file` to `var`
+     */
+    public StepResult saveFileMeta(String var, String file) {
+        requiresValidVariableName(var);
+        requiresNotBlank(file, "invalid file", file);
+
+        File f = new File(file);
+        if (!f.exists()) {
+            return StepResult.fail("invalid or non-existent file '" + file + "'");
+        }
+
+        try {
+            FileMeta fileMeta = new FileMeta(f);
+            context.setData(var, fileMeta);
+            if (context.isVerbose()) {
+                log(file + " --> \n" + fileMeta);
+            }
+            return StepResult.success("file meta for '" + file + "' saved to variable '" + var + "'");
+        } catch (IOException e) {
+            return StepResult.fail("unable to save file meta for '" + file + "': " + e.getMessage());
+        }
+    }
 
     public StepResult moveFilesByRegex(String sourceDir, String regex, String target) throws IOException {
         return doAction(move, sourceDir, regex, target);
@@ -226,23 +276,53 @@ public class IoCommand extends BaseCommand {
         }
     }
 
-    /**
-     * save metadata of `file` to `var`
-     */
-    public StepResult saveFileMeta(String var, String file) {
-        requiresValidVariableName(var);
-        requiresNotBlank(file, "invalid file", file);
+    public StepResult unzip(String zipFile, String target) {
+        requires(StringUtils.isNotBlank(zipFile), "invalid zip file", zipFile);
 
-        File f = new File(file);
-        if (!f.exists()) { return StepResult.fail("invalid or non-existent file '" + file + "'"); }
+        requires(StringUtils.isNotBlank(target), "invalid target location", target);
+        File dir = new File(target);
+        if (dir.isFile()) {
+            return StepResult.fail("target exists as a file: " + target);
+        }
+        if (!dir.exists()) {
+            dir.mkdirs();
+            if (!dir.exists()) {
+                return StepResult.fail("Unable to create specific target location: " + target);
+            }
+        }
+
+        File zip;
+        String tempDest = null;
+        if (StringUtils.startsWith(zipFile, PREFIX_JAR)) {
+            tempDest = FileUtils.getTempDirectoryPath() + separatorChar + RandomStringUtils.randomAlphabetic(5);
+            try {
+                FileUtils.forceMkdir(new File(tempDest));
+            } catch (IOException e) {
+                return StepResult.fail("Error occurred with zip file '" + zipFile + "': " + e.getMessage());
+            }
+
+            StepResult result = copyFiles(zipFile, tempDest);
+            if (result.failed()) {
+                return StepResult.fail("Error occurred with zip file '" + zipFile + "': " + result.getMessage());
+            }
+
+            String resourcePath = StringUtils.substringAfter(zipFile, PREFIX_JAR);
+            zip = new File(tempDest + separatorChar + StringUtils.substringAfterLast(resourcePath, "/"));
+        } else {
+            zip = new File(zipFile);
+        }
+
+        requires(zip.exists() && zip.canRead() && zip.length() > 10, "invalid zip file", zipFile);
 
         try {
-            FileMeta fileMeta = new FileMeta(f);
-            context.setData(var, fileMeta);
-            if (context.isVerbose()) { log(file + " --> \n" + fileMeta); }
-            return StepResult.success("file meta for '" + file + "' saved to variable '" + var + "'");
+            List<File> unzipped = FileUtil.unzip(zip, dir);
+            return StepResult.success("Unzip " + CollectionUtils.size(unzipped) + " files/directories from " + zip);
         } catch (IOException e) {
-            return StepResult.fail("unable to save file meta for '" + file + "': " + e.getMessage());
+            return StepResult.fail("Unable to unzip " + zip + " to " + zip + ": " + e.getMessage());
+        } finally {
+            if (tempDest != null) {
+                FileUtils.deleteQuietly(new File(tempDest));
+            }
         }
     }
 
@@ -344,50 +424,6 @@ public class IoCommand extends BaseCommand {
         }
     }
 
-    public StepResult unzip(String zipFile, String target) {
-        requires(StringUtils.isNotBlank(zipFile), "invalid zip file", zipFile);
-
-        requires(StringUtils.isNotBlank(target), "invalid target location", target);
-        File dir = new File(target);
-        if (dir.isFile()) { return StepResult.fail("target exists as a file: " + target); }
-        if (!dir.exists()) {
-            dir.mkdirs();
-            if (!dir.exists()) { return StepResult.fail("Unable to create specific target location: " + target); }
-        }
-
-        File zip;
-        String tempDest = null;
-        if (StringUtils.startsWith(zipFile, PREFIX_JAR)) {
-            tempDest = FileUtils.getTempDirectoryPath() + separatorChar + RandomStringUtils.randomAlphabetic(5);
-            try {
-                FileUtils.forceMkdir(new File(tempDest));
-            } catch (IOException e) {
-                return StepResult.fail("Error occurred with zip file '" + zipFile + "': " + e.getMessage());
-            }
-
-            StepResult result = copyFiles(zipFile, tempDest);
-            if (result.failed()) {
-                return StepResult.fail("Error occurred with zip file '" + zipFile + "': " + result.getMessage());
-            }
-
-            String resourcePath = StringUtils.substringAfter(zipFile, PREFIX_JAR);
-            zip = new File(tempDest + separatorChar + StringUtils.substringAfterLast(resourcePath, "/"));
-        } else {
-            zip = new File(zipFile);
-        }
-
-        requires(zip.exists() && zip.canRead() && zip.length() > 10, "invalid zip file", zipFile);
-
-        try {
-            List<File> unzipped = FileUtil.unzip(zip, dir);
-            return StepResult.success("Unzip " + CollectionUtils.size(unzipped) + " files/directories from " + zip);
-        } catch (IOException e) {
-            return StepResult.fail("Unable to unzip " + zip + " to " + zip + ": " + e.getMessage());
-        } finally {
-            if (tempDest != null) { FileUtils.deleteQuietly(new File(tempDest)); }
-        }
-    }
-
     public StepResult validate(String var, String profile, String inputFile) {
         requiresValidVariableName(var);
         requiresNotBlank(profile, "Invalid 'profile',", profile);
@@ -439,30 +475,21 @@ public class IoCommand extends BaseCommand {
                              "'. Valid reportType can be Excel or JSON");
         }
 
-        if (reportType.equalsIgnoreCase("Excel")) { results = ErrorReport.createExcel(recordData); }
-        if (reportType.equalsIgnoreCase("JSON")) { results = ErrorReport.createJSON(recordData); }
-        if (results != null) { addLinkRef(caption, reportType + " report", results.getAbsolutePath()); }
+        if (reportType.equalsIgnoreCase("Excel")) {
+            results = ErrorReport.createExcel(recordData);
+        }
+        if (reportType.equalsIgnoreCase("JSON")) {
+            results = ErrorReport.createJSON(recordData);
+        }
+        if (results != null) {
+            addLinkRef(caption, reportType + " report", results.getAbsolutePath());
+        }
         if (recordData.isHasError()) {
             return StepResult.fail("Error in file validation. Refer error report.");
         } else {
             return StepResult.success();
         }
 
-    }
-
-    public StepResult count(String var, String path, String pattern) {
-        requires(StringUtils.isNotBlank(path), "invalid path", path);
-        File base = new File(path);
-        requires(base.exists() && base.isDirectory() && base.canRead(), "unreadable/non-existent path", path);
-
-        requires(StringUtils.isNotBlank(pattern), "invalid pattern", pattern);
-        requiresValidVariableName(var);
-
-        List<File> matches = FileUtil.listFiles(path, pattern, true);
-        int matchCount = CollectionUtils.isEmpty(matches) ? 0 : matches.size();
-        context.setData(var, matchCount);
-
-        return StepResult.success("matched " + matchCount + " and saved to ${" + var + "}");
     }
 
     public StepResult filter(String source, String target, String matchPattern) {
@@ -472,7 +499,9 @@ public class IoCommand extends BaseCommand {
 
         File sourceFile = new File(source);
 
-        if (FileUtil.isDirectoryReadable(target)) { target += separator + sourceFile.getName(); }
+        if (FileUtil.isDirectoryReadable(target)) {
+            target += separator + sourceFile.getName();
+        }
         File targetFile = new File(target);
 
         try (
@@ -499,6 +528,25 @@ public class IoCommand extends BaseCommand {
         } catch (Throwable e) {
             return StepResult.fail(e.getMessage(), e);
         }
+    }
+
+    public StepResult count(String var, String path, String pattern) {
+        requires(StringUtils.isNotBlank(path), "invalid path", path);
+        File base = new File(path);
+        requires(base.exists() && base.isDirectory() && base.canRead(), "unreadable/non-existent path", path);
+
+        requires(StringUtils.isNotBlank(pattern), "invalid pattern", pattern);
+        requiresValidVariableName(var);
+
+        List<File> matches = FileUtil.listFiles(path, pattern, true);
+        int matchCount = CollectionUtils.isEmpty(matches) ? 0 : matches.size();
+        context.setData(var, matchCount);
+
+        return StepResult.success("matched " + matchCount + " and saved to ${" + var + "}");
+    }
+
+    public static String formatPercent(double number) {
+        return PERCENT_FORMAT.format(number);
     }
 
     /**
@@ -543,35 +591,12 @@ public class IoCommand extends BaseCommand {
         return StepResult.success("File content converted to BASE64 and saved to '" + var + "'");
     }
 
-    public static String formatPercent(double number) { return PERCENT_FORMAT.format(number); }
-
-    @NotNull
-    protected StepResult writeFile(String file, String content, String append, boolean replaceTokens) {
-        requires(StringUtils.isNotBlank(file), "invalid file", file);
-        // allow user to write empty content to file (instead of throwing error)
-        // requires(StringUtils.isNotBlank(content), "invalid content", content);
-        requires(StringUtils.isNotBlank(append), "invalid value for append", append);
-
-        boolean isAppend = BooleanUtils.toBoolean(append);
-        File output = new File(file);
-        if (output.isDirectory()) {
-            return StepResult.fail("'" + file + "' is EXPECTED as file, but found directory instead.");
-        }
-
-        try {
-            content = OutputFileUtils.resolveContent(content, context, false, replaceTokens);
-            content = adjustEol(content);
-            FileUtils.writeStringToFile(output, StringUtils.defaultString(content), DEF_CHARSET, isAppend);
-            return StepResult.success("Content " + (isAppend ? "appended" : "written") + " to " + file);
-        } catch (IOException e) {
-            return StepResult.fail("Error occurred when writing to " + file + ": " + e.getMessage());
-        }
-    }
-
     protected StepResult doAction(IoAction action, String source, String target) {
         // sanity check
         requires(StringUtils.isNotBlank(source), "invalid source", source);
-        if (action.isTargetRequired()) { requires(StringUtils.isNotBlank(target), "invalid target", target); }
+        if (action.isTargetRequired()) {
+            requires(StringUtils.isNotBlank(target), "invalid target", target);
+        }
 
         File sourceFile = new File(source);
         if (!sourceFile.isDirectory() && StringUtils.endsWith(source, separator)) {
@@ -620,13 +645,38 @@ public class IoCommand extends BaseCommand {
         }
     }
 
+    @NotNull
+    protected StepResult writeFile(String file, String content, String append, boolean replaceTokens) {
+        requires(StringUtils.isNotBlank(file), "invalid file", file);
+        // allow user to write empty content to file (instead of throwing error)
+        // requires(StringUtils.isNotBlank(content), "invalid content", content);
+        requires(StringUtils.isNotBlank(append), "invalid value for append", append);
+
+        boolean isAppend = BooleanUtils.toBoolean(append);
+        File output = new File(file);
+        if (output.isDirectory()) {
+            return StepResult.fail("'" + file + "' is EXPECTED as file, but found directory instead.");
+        }
+
+        try {
+            content = OutputFileUtils.resolveContent(content, context, false, replaceTokens);
+            content = adjustEol(content);
+            FileUtils.writeStringToFile(output, StringUtils.defaultString(content), DEF_CHARSET, isAppend);
+            return StepResult.success("Content " + (isAppend ? "appended" : "written") + " to " + file);
+        } catch (IOException e) {
+            return StepResult.fail("Error occurred when writing to " + file + ": " + e.getMessage());
+        }
+    }
+
     /*
      * list out files matching given regex pattern and perform IO actions.
      * */
     protected StepResult doAction(IoAction action, String source, String regex, String target) throws IOException {
         requiresNotBlank(source, "invalid source", source);
         requiresNotBlank(regex, "invalid regex pattern", regex);
-        if (action.isTargetRequired()) { requiresNotBlank(target, "invalid target", target); }
+        if (action.isTargetRequired()) {
+            requiresNotBlank(target, "invalid target", target);
+        }
 
         File sourceDir = new File(source);
         if (sourceDir.exists()) {
@@ -695,24 +745,6 @@ public class IoCommand extends BaseCommand {
     }
 
     /**
-     * compare isEmpty
-     */
-    protected Pair<File, File> prepCompare(String expected, String actual) {
-        requires(StringUtils.isNotBlank(expected), "invalid 'expected'", expected);
-        requires(StringUtils.isNotBlank(actual), "invalid 'actual'", actual);
-
-        File expectedFile = new File(expected);
-        requires(expectedFile.canRead(), "expected file is not readable", expected);
-        requires(expectedFile.length() > 0, "expected file is empty", expected);
-
-        File actualFile = new File(actual);
-        requires(actualFile.canRead(), "actual file is not readable", actual);
-        requires(actualFile.length() > 0, "actual file is empty", actual);
-
-        return new ImmutablePair<>(expectedFile, actualFile);
-    }
-
-    /**
      * compare file content without diff details.
      */
     protected StepResult fastCompare(Pair<File, File> files, FileComparisonReport report) {
@@ -733,7 +765,9 @@ public class IoCommand extends BaseCommand {
 
             int expectedLines = CollectionUtils.size(FileUtils.readLines(expectedFile, DEF_CHARSET));
             int actualLines = CollectionUtils.size(FileUtils.readLines(actualFile, DEF_CHARSET));
-            if (expectedLines != actualLines) { report.addFileMismatch(fileLineDiff(expectedLines, actualLines)); }
+            if (expectedLines != actualLines) {
+                report.addFileMismatch(fileLineDiff(expectedLines, actualLines));
+            }
         } catch (IOException e) {
             // unlikely since we've already gone through prepCompare()
             String expected = expectedFile.getAbsolutePath();
@@ -748,11 +782,22 @@ public class IoCommand extends BaseCommand {
         return null;
     }
 
-    protected File toFile(String file) {
-        requires(StringUtils.isNotBlank(file), "invalid file", file);
-        File input = new File(file);
-        requires(input.canRead(), "unreadable file", file);
-        return input;
+    /**
+     * compare isEmpty
+     */
+    protected Pair<File, File> prepCompare(String expected, String actual) {
+        requires(StringUtils.isNotBlank(expected), "invalid 'expected'", expected);
+        requires(StringUtils.isNotBlank(actual), "invalid 'actual'", actual);
+
+        File expectedFile = new File(expected);
+        requires(expectedFile.canRead(), "expected file is not readable", expected);
+        requires(expectedFile.length() > 0, "expected file is empty", expected);
+
+        File actualFile = new File(actual);
+        requires(actualFile.canRead(), "actual file is not readable", actual);
+        requires(actualFile.length() > 0, "actual file is empty", actual);
+
+        return new ImmutablePair<>(expectedFile, actualFile);
     }
 
     protected StepResult compare(String expected, String actual, CompareMode compareMode, String diffVar) {
@@ -805,9 +850,13 @@ public class IoCommand extends BaseCommand {
 
                 int expectedLines = CollectionUtils.size(TextUtils.toListPreserveEmpty(expectedContent, "\n", false));
                 int actualLines = CollectionUtils.size(TextUtils.toListPreserveEmpty(actualContent, "\n", false));
-                if (expectedLines != actualLines) { report.addFileMismatch(fileLineDiff(expectedLines, actualLines)); }
+                if (expectedLines != actualLines) {
+                    report.addFileMismatch(fileLineDiff(expectedLines, actualLines));
+                }
 
-                if (failfast && report.hasMismatch()) { return failContentComparison(report); }
+                if (failfast && report.hasMismatch()) {
+                    return failContentComparison(report);
+                }
             }
         } catch (IOException e) {
             return StepResult.fail("Unable to read content: " + e.getMessage(), e);
@@ -844,7 +893,9 @@ public class IoCommand extends BaseCommand {
         int aPos = -1;
         int aLastParsed = aPos;
         for (int ePos = 0; ePos < expectedRows.size(); ePos++) {
-            if (report.getMismatchCount() > currentErrorCounter && failfast) { return failContentComparison(report); }
+            if (report.getMismatchCount() > currentErrorCounter && failfast) {
+                return failContentComparison(report);
+            }
 
             String eRow = expectedRows.get(ePos);
             int pos = ePos + 1;
@@ -941,14 +992,27 @@ public class IoCommand extends BaseCommand {
         return compareMode == DIFF ? createDiff(diffVar, report) : failContentComparison(report);
     }
 
+    protected File toFile(String file) {
+        requires(StringUtils.isNotBlank(file), "invalid file", file);
+        File input = new File(file);
+        requires(input.canRead(), "unreadable file", file);
+        return input;
+    }
+
     protected void logComparisonReport(String caption, FileComparisonReport report, String type) {
-        if (StringUtils.isBlank(type) || report == null || !report.hasMismatch()) { return; }
+        if (StringUtils.isBlank(type) || report == null || !report.hasMismatch()) {
+            return;
+        }
 
         boolean genLogFile = context.getBooleanData(GEN_COMPARE_LOG, getDefaultBool(GEN_COMPARE_LOG));
-        if (StringUtils.equals(type, COMPARE_LOG_PLAIN) && !genLogFile) { return; }
+        if (StringUtils.equals(type, COMPARE_LOG_PLAIN) && !genLogFile) {
+            return;
+        }
 
         boolean genJsonFile = context.getBooleanData(GEN_COMPARE_JSON, getDefaultBool(GEN_COMPARE_JSON));
-        if (StringUtils.equals(type, COMPARE_LOG_JSON) && !genJsonFile) { return; }
+        if (StringUtils.equals(type, COMPARE_LOG_JSON) && !genJsonFile) {
+            return;
+        }
 
         String stats = null;
         if (report.getMatchCount() != 0 || report.getMismatchCount() != 0) {
@@ -958,11 +1022,19 @@ public class IoCommand extends BaseCommand {
         }
 
         String output = null;
-        if (StringUtils.equals(type, COMPARE_LOG_PLAIN)) { output = report.toPlainTextReport(); }
-        if (StringUtils.equals(type, COMPARE_LOG_JSON)) { output = report.toJsonReport(); }
-        if (StringUtils.isEmpty(output)) { ConsoleUtils.error("logComparisonReport(): INVALID REPORT TYPE " + type); }
+        if (StringUtils.equals(type, COMPARE_LOG_PLAIN)) {
+            output = report.toPlainTextReport();
+        }
+        if (StringUtils.equals(type, COMPARE_LOG_JSON)) {
+            output = report.toJsonReport();
+        }
+        if (StringUtils.isEmpty(output)) {
+            ConsoleUtils.error("logComparisonReport(): INVALID REPORT TYPE " + type);
+        }
 
-        if (stats != null) { caption += lineSeparator() + stats; }
+        if (stats != null) {
+            caption += lineSeparator() + stats;
+        }
         caption += " (click link on the right for details)";
 
         addOutputAsLink(caption, output, type);
@@ -970,14 +1042,29 @@ public class IoCommand extends BaseCommand {
 
     protected int scanForMatchingRow(String matchTo, List<String> matchFrom, int startFrom) {
         // hopeless
-        if (CollectionUtils.isEmpty(matchFrom) || CollectionUtils.size(matchFrom) <= startFrom) { return -1; }
-        if (matchTo == null) { matchTo = ""; }
+        if (CollectionUtils.isEmpty(matchFrom) || CollectionUtils.size(matchFrom) <= startFrom) {
+            return -1;
+        }
+        if (matchTo == null) {
+            matchTo = "";
+        }
 
         // first we match forward
         for (int i = startFrom; i < matchFrom.size(); i++) {
-            if (simpleMatch(matchTo, matchFrom.get(i))) { return i; }
+            if (simpleMatch(matchTo, matchFrom.get(i))) {
+                return i;
+            }
         }
         return startFrom;
+    }
+
+    protected StepResult createDiff(String var, FileComparisonReport report) {
+        requiresValidVariableName(var);
+        if (report == null || !report.hasMismatch()) {
+            return StepResult.success("No diff found");
+        }
+        updateDataVariable(var, report.showDiffs());
+        return StepResult.success("File diffs are saved to '" + var + "'");
     }
 
     protected static boolean simpleMatch(String expected, String actual) {
@@ -1008,16 +1095,30 @@ public class IoCommand extends BaseCommand {
         return StepResult.success(message);
     }
 
-    protected StepResult createDiff(String var, FileComparisonReport report) {
-        requiresValidVariableName(var);
-        if (report == null || !report.hasMismatch()) { return StepResult.success("No diff found"); }
-        updateDataVariable(var, report.showDiffs());
-        return StepResult.success("File diffs are saved to '" + var + "'");
+    private List<String> filterFiles(List<String> files, NexialFilterList filterList) {
+        List<String> result = new ArrayList<>();
+        files.forEach(filePath -> {
+            File file = new File(filePath);
+            boolean flag = true;
+            for (NexialFilter filter : filterList) {
+                if (filter.isMatch(FileMeta.findFileMetaData(filter.getSubject(), file))) {
+                    continue;
+                }
+                flag = false;
+                break;
+            }
+            if (flag) {
+                result.add(filePath);
+            }
+        });
+        return result;
     }
 
     @Nullable
     private String adjustEol(String content) {
-        if (StringUtils.isEmpty(content)) { return content; }
+        if (StringUtils.isEmpty(content)) {
+            return content;
+        }
 
         String eol;
         String eolConfig = context.getStringData(OPT_IO_EOL_CONFIG, getDefault(OPT_IO_EOL_CONFIG));
@@ -1059,10 +1160,14 @@ public class IoCommand extends BaseCommand {
     }
 
     private boolean isMSOfficeTempFile(String filepath) {
-        if (StringUtils.isBlank(filepath)) { return true; }
+        if (StringUtils.isBlank(filepath)) {
+            return true;
+        }
 
         String filename = StringUtils.substringAfterLast(filepath, separator);
-        if (!StringUtils.startsWith(filename, "~")) { return false; }
+        if (!StringUtils.startsWith(filename, "~")) {
+            return false;
+        }
 
         String ext = StringUtils.substringAfterLast(filename, ".");
         return MS_OFFICE_FILE_EXT.contains(StringUtils.lowerCase(ext));
@@ -1100,7 +1205,9 @@ public class IoCommand extends BaseCommand {
                                 String message =
                                     "Moved (From line " + (i + 1) + " to " + (x + 1) + "): " + expectedLines[i];
                                 logs.put((i + 1) + "", message);
-                                if (includeMoved) { error(message); }
+                                if (includeMoved) {
+                                    error(message);
+                                }
                                 match = false;
                                 found = true;
                                 break;
