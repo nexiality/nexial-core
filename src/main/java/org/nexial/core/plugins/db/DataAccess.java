@@ -42,10 +42,11 @@ import static org.nexial.core.utils.CheckUtils.requiresNotNull;
 public class DataAccess implements ApplicationContextAware {
     private static final String ISAM_PROP_DD = "jdbc:connx:DD";
     private static final String ISAM_PROP_GW = "GateWay";
+
     protected Map<String, String> dbTypes;
     protected ApplicationContext spring;
     protected ExecutionContext context;
-    private Map<String, ThirdPartyDriverInfo> dbJarInfo;
+    protected Map<String, ThirdPartyDriverInfo> dbJarInfo;
 
     @Override
     public void setApplicationContext(ApplicationContext ctx) throws BeansException { spring = ctx; }

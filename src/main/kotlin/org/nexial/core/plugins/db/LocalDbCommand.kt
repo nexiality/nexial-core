@@ -91,7 +91,7 @@ class LocalDbCommand : BaseCommand() {
         requiresNotBlank(tables, "invalid table(s)", tables)
 
         val sqls = StringUtils.split(tables, context.textDelim).map { table -> "DROP TABLE $table;\n" }
-        return rdbms.runSQL(`var`, dbName, TextUtils.toString(sqls, "\n", "") + "\nVACUUM;")
+        return rdbms.runSQLs(`var`, dbName, TextUtils.toString(sqls, "\n", "") + "VACUUM;")
     }
 
     fun cloneTable(`var`: String, source: String, target: String): StepResult {

@@ -186,7 +186,7 @@ public class SimpleExtractionDao extends JdbcDaoSupport {
                     varName = context.replaceTokens(varName);
                 }
 
-                ConsoleUtils.log("Executing " + (StringUtils.isNotEmpty(varName) ? "'" + varName + "'" : "") + " - " +
+                ConsoleUtils.log("Executing" + (StringUtils.isNotEmpty(varName) ? " '" + varName + "'" : "") + " - " +
                                  query);
 
                 JdbcResult result = executeSql(query, null);

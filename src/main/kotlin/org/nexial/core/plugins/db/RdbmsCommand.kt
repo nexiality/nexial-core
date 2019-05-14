@@ -84,7 +84,7 @@ class RdbmsCommand : BaseCommand() {
             requires(CollectionUtils.isNotEmpty(qualifiedSqlList), "No valid SQL statements found", sqls)
 
             val qualifiedSqlCount = qualifiedSqlList.size
-            log("found $qualifiedSqlCount qualified query(s) to execute")
+            if (!db.startsWith(NAMESPACE)) log("found $qualifiedSqlCount qualified query(s) to execute")
 
             msgPrefix = "executed $qualifiedSqlCount SQL(s);"
 
@@ -195,7 +195,7 @@ class RdbmsCommand : BaseCommand() {
             requires(CollectionUtils.isNotEmpty(qualifiedSqlList), "No valid SQL statements found", sqls)
 
             val qualifiedSqlCount = qualifiedSqlList.size
-            log("found $qualifiedSqlCount qualified query(s) to execute")
+            if (!db.startsWith(NAMESPACE)) log("found $qualifiedSqlCount qualified query(s) to execute")
 
             msgPrefix = "executed $qualifiedSqlCount SQL(s);"
 
@@ -215,9 +215,7 @@ class RdbmsCommand : BaseCommand() {
                     val result = dataAccess.execute(sql, dao, targetFile) ?: return StepResult
                         .fail("FAILED TO EXECUTE SQL '$printableSql': no result")
 
-                    if (result.hasError()) {
-                        log("ERROR found while executing $printableSql: ${result.error}")
-                    }
+                    if (result.hasError()) log("ERROR found while executing $printableSql: ${result.error}")
 
                     if (FileUtil.isFileReadable(output, 3)) {
                         addLinkRef("Output for $printableSql", outFile, targetFile.absolutePath)
@@ -275,13 +273,9 @@ class RdbmsCommand : BaseCommand() {
         val sb = StringBuilder()
 
         // save header
-        if (printHeader) {
-            sb.append(TextUtils.toString(result.columns, delim)).append(CSV_ROW_SEP)
-        }
+        if (printHeader) sb.append(TextUtils.toString(result.columns, delim)).append(CSV_ROW_SEP)
 
-        for (row in result.getData()) {
-            sb.append(rowToString(row, result.columns, delim)).append(CSV_ROW_SEP)
-        }
+        for (row in result.getData()) sb.append(rowToString(row, result.columns, delim)).append(CSV_ROW_SEP)
 
         return sb.toString()
     }
@@ -291,7 +285,7 @@ class RdbmsCommand : BaseCommand() {
         if (context.hasData(dbKey)) {
             val daoObject = context.getObjectData(dbKey)
             if (daoObject is SimpleExtractionDao) {
-                log("reusing established connection '$db'")
+                if (!db.startsWith(NAMESPACE)) log("reusing established connection '$db'")
                 return daoObject
             }
 
@@ -301,7 +295,7 @@ class RdbmsCommand : BaseCommand() {
 
         val dao = dataAccess.resolveDao(db)
         context.setData(dbKey, dao)
-        log("new connection established for '$db'")
+        if (!db.startsWith(NAMESPACE)) log("new connection established for '$db'")
 
         return dao
     }
@@ -310,12 +304,8 @@ class RdbmsCommand : BaseCommand() {
         val sb = StringBuilder()
         for (columnName in columnNames) {
             var value = row[columnName]
-            if (StringUtils.contains(value, "\"")) {
-                value = StringUtils.replace(value, "\"", "\"\"")
-            }
-            if (StringUtils.contains(value, delim)) {
-                value = TextUtils.wrapIfMissing(value, "\"", "\"")
-            }
+            if (StringUtils.contains(value, "\"")) value = StringUtils.replace(value, "\"", "\"\"")
+            if (StringUtils.contains(value, delim)) value = TextUtils.wrapIfMissing(value, "\"", "\"")
             sb.append(value).append(delim)
         }
 
