@@ -17,6 +17,10 @@
 
 package org.nexial.core.variable;
 
+import java.io.DataOutputStream;
+import java.io.File;
+import java.io.FileOutputStream;
+import java.io.IOException;
 import java.lang.reflect.Method;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -26,6 +30,7 @@ import java.util.Set;
 
 import org.apache.commons.collections4.set.ListOrderedSet;
 import org.apache.commons.lang3.ArrayUtils;
+import org.apache.commons.lang3.BooleanUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.math.NumberUtils;
 import org.apache.commons.text.WordUtils;
@@ -33,6 +38,7 @@ import org.nexial.commons.utils.RegexUtils;
 import org.nexial.commons.utils.TextUtils;
 import org.nexial.core.ExecutionThread;
 import org.nexial.core.model.ExecutionContext;
+import org.nexial.core.utils.ConsoleUtils;
 
 import static org.nexial.core.NexialConst.Data.TEXT_DELIM;
 import static org.nexial.core.SystemVariables.getDefault;
@@ -347,14 +353,44 @@ public class TextTransformer<T extends TextDataType> extends Transformer {
 
     public T base64encode(T data) {
         if (data == null || StringUtils.isEmpty(data.getValue())) { return data; }
-        data.setValue(TextUtils.base64encoding(data.getValue()));
+        data.setValue(TextUtils.base64encode(data.getValue()));
         return data;
     }
 
     public T base64decode(T data) {
         if (data == null || StringUtils.isEmpty(data.getValue())) { return data; }
-        data.setValue(TextUtils.base64decoding(data.getValue()));
+        data.setValue(TextUtils.base64decode(data.getValue()));
         return data;
+    }
+
+    public ExpressionDataType base64decodeThenSave(T data, String path, String append) {
+        if (data == null || data.getValue() == null) { return data; }
+        if (StringUtils.isBlank(path)) { throw new IllegalArgumentException("path is empty/blank"); }
+
+        File target = prepFileForWrite(path);
+        boolean shouldAppend = BooleanUtils.toBoolean(append);
+        byte[] decoded = TextUtils.base64decodeAsBytes(data.getValue());
+
+        DataOutputStream dos = null;
+        try {
+            dos = new DataOutputStream(new FileOutputStream(target, shouldAppend));
+            dos.write(decoded);
+
+            ConsoleUtils.log("content base64 decoded and " + (shouldAppend ? "appended" : "saved") +
+                             " to '" + path + "'");
+            // data's `value` NOT modified
+            return data;
+        } catch (IOException e) {
+            throw new IllegalArgumentException("Unable to write to " + path + ": " + e.getMessage(), e);
+        } finally {
+            if (dos != null) {
+                try {
+                    dos.close();
+                } catch (IOException e) {
+                    ConsoleUtils.error("Error occurred while saving '" + path + "': " + e.getMessage());
+                }
+            }
+        }
     }
 
     @Override

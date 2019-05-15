@@ -205,9 +205,9 @@ public class Format {
         }
     }
 
-    public String base64encode(String text) { return TextUtils.base64encoding(text); }
+    public String base64encode(String text) { return TextUtils.base64encode(text); }
 
-    public String base64decode(String text) { return TextUtils.base64decoding(text); }
+    public String base64decode(String text) { return TextUtils.base64decode(text); }
 
     protected void init() {
         FORMAT_INT.setGroupingUsed(false);

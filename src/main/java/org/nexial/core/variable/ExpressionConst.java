@@ -31,7 +31,7 @@ final class ExpressionConst {
 
     // e.g   max( ${listOfNumbers}   )
     // min function name (aka operation) is 3 character
-    static final String REGEX_FUNCTION = "(\\s*[A-Za-z_\\-]{3,})(\\s*\\([^)]+\\)\\s*)?";
+    static final String REGEX_FUNCTION = "(\\s*[A-Za-z][0-9A-Za-z_\\-]{2,})(\\s*\\([^)]+\\)\\s*)?";
 
     static final String REGEX_VALID_TYPE_PREFIX = ".*\\[(";
     // static final String REGEX_VALID_TYPE_SUFFIX = ")(\\(.+\\))(\\s*\\=\\>\\s*)([^\\]]+)\\].*";

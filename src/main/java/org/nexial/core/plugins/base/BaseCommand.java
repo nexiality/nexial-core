@@ -584,8 +584,13 @@ public class BaseCommand implements NexialCommand {
 
     public StepResult verbose(String text) {
         if (text == null) { text = context.getNullValueToken(); }
-        // we should allow to print this.. security violation
-        if (context.containsCrypt(text)) { return StepResult.fail("crypto found; TERMINATE verbose() command"); }
+
+        // we should not allow to print this.. security violation
+        if (context.containsCrypt(text)) {
+            // but we should still process any functions or expressions
+            context.replaceTokens(text);
+            error("crypto found; no data variable expansion");
+        }
 
         log(text);
         return StepResult.success(text);

@@ -49,6 +49,7 @@ public class HeadlessBaseTests extends ExcelBasedTests {
     @Test
     public void baseCommandTests_part3() throws Exception {
         ExecutionSummary executionSummary = testViaExcel("unitTest_base_part3.xlsx");
+        // ExecutionSummary executionSummary = testViaExcel("unitTest_base_part3.xlsx", "function_format");
         assertPassFail(executionSummary, "function_format", TestOutcomeStats.allPassed());
         assertPassFail(executionSummary, "execution_count", new TestOutcomeStats(2, 9));
     }

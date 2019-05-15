@@ -192,7 +192,10 @@ public class ExecutionContext {
             // e.g. a\|b\|\c|d|2|3  => 3 params, using pipe as nexial.textDelim
 
             // get the rest of token after the first pipe.  this should represent the entirety of all params
-            token = replaceTokens(StringUtils.substringAfter(token, TOKEN_PARAM_SEP));
+            // token = replaceTokens(StringUtils.substringAfter(token, TOKEN_PARAM_SEP));
+
+            // relay token replacement until after `token` is split into its proper parts
+            token = StringUtils.substringAfter(token, TOKEN_PARAM_SEP);
 
             // compensate the use of TOKEN_PARAM_SEP as delimiter
             String delim = getTextDelim();
@@ -222,6 +225,7 @@ public class ExecutionContext {
                 param = StringUtils.replace(param, ESCAPED_DOLLAR, "$");
                 param = StringUtils.replace(param, ESCAPED_OPEN_PARENTHESIS, "(");
                 param = StringUtils.replace(param, ESCAPED_CLOSE_PARENTHESIS, ")");
+                param = replaceTokens(param);
                 parameters[i] = param;
             }
         }
