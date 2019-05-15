@@ -1043,12 +1043,16 @@ public final class TextUtils {
         return csvBuffer.toString();
     }
 
-    public static String base64encoding(String plain) {
+    public static String base64encode(String plain) {
         return StringUtils.isEmpty(plain) ? plain : Base64.getEncoder().encodeToString(plain.getBytes());
     }
 
-    public static String base64decoding(String encoded) {
+    public static String base64decode(String encoded) {
         return StringUtils.isEmpty(encoded) ? encoded : new String(Base64.getDecoder().decode(encoded.getBytes()));
+    }
+
+    public static byte[] base64decodeAsBytes(String encoded) {
+        return StringUtils.isEmpty(encoded) ? new byte[0] : Base64.getDecoder().decode(encoded.getBytes());
     }
 
     public static String demarcate(String text, int markPosition, String delim) {
