@@ -248,8 +248,8 @@ public class ExcelCommand extends BaseCommand {
         requiresNotBlank(range, "Invalid range", range);
         requiresNotBlank(output, "Invalid CSV output", output);
 
-        String[] ranges = StringUtils.split(range, context.getTextDelim());
         FileUtils.deleteQuietly(new File(output));
+        String[] ranges = StringUtils.split(range, context.getTextDelim());
         Arrays.stream(ranges).forEach(r -> context.replaceTokens("[EXCEL(" + file + ") => " +
                                                                  " read(" + worksheet + "," + r + ")" +
                                                                  " csv" +

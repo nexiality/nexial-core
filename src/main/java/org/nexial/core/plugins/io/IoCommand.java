@@ -565,6 +565,23 @@ public class IoCommand extends BaseCommand {
         return StepResult.success("File content converted to BASE64 and saved to '" + var + "'");
     }
 
+    /**
+     * decode the content fo {@code encodedSource} into {@code decodedTarget} as a binary file (to preserve all bit
+     * significance of the decoded form).
+     *
+     * {@code encodedSource} maybe a file or just text. {@code decodedTarget} is assumed as fully qualified file path.
+     * This method will create the necessary (and missing) parent directories of {@code decodedTarget}.
+     */
+    public StepResult writeBase64decode(String encodedSource, String decodedTarget) throws IOException {
+        requiresReadableFile(encodedSource);
+        requiresNotBlank(decodedTarget, "invalid decoded target", decodedTarget);
+
+        String encoded = OutputFileUtils.resolveContent(encodedSource, context, false);
+        byte[] decoded = Base64.getDecoder().decode(encoded);
+        File target = FileUtil.writeBinaryFile(decodedTarget, false, decoded);
+        return StepResult.success("File content BASE64 decoded and saved to '" + target + "'");
+    }
+
     public static String formatPercent(double number) { return PERCENT_FORMAT.format(number); }
 
     @NotNull

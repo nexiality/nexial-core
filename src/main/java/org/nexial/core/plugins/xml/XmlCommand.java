@@ -222,7 +222,7 @@ public class XmlCommand extends BaseCommand {
     }
 
     public StepResult assertCorrectness(String xml, String schema) {
-        Document doc = deriveWellformXml(xml);
+        Document doc = deriveWellformedXml(xml);
         if (doc == null) { return StepResult.fail("invalid xml: " + xml); }
 
         SAXBuilder builder;
@@ -274,7 +274,7 @@ public class XmlCommand extends BaseCommand {
     }
 
     public StepResult assertWellformed(String xml) {
-        Document doc = deriveWellformXml(xml);
+        Document doc = deriveWellformedXml(xml);
         return doc == null ?
                StepResult.fail("invalid xml: " + xml) :
                StepResult.success("xml validated as well-formed");
@@ -387,9 +387,12 @@ public class XmlCommand extends BaseCommand {
 
         requiresNotBlank(xml, "Invalid xml", xml);
         requiresNotBlank(xpath, "Invalid xpath", xpath);
-        if (modification.getRequireInput()) { requiresNotBlank(content, "Invalid content", content); }
+        if (modification.getRequireInput()) {
+            content = OutputFileUtils.resolveContent(content, context, false, true);
+            requiresNotBlank(content, "Invalid content", content);
+        }
 
-        Document doc = deriveWellformXml(xml);
+        Document doc = deriveWellformedXml(xml);
         List matches = XmlUtils.findNodes(doc, xpath);
         if (CollectionUtils.isEmpty(matches)) {
             return StepResult.fail("No matches found on target XML using xpath '" + xpath + "'");
@@ -457,7 +460,7 @@ public class XmlCommand extends BaseCommand {
         return sources.toArray(new Source[sources.size()]);
     }
 
-    protected Document deriveWellformXml(String xml) {
+    protected Document deriveWellformedXml(String xml) {
         requires(StringUtils.isNotBlank(xml), "invalid xml", xml);
 
         try {
@@ -478,7 +481,7 @@ public class XmlCommand extends BaseCommand {
         return null;
     }
 
-    protected Document deriveWellformXmlQuietly(String xml) {
+    protected Document deriveWellformedXmlQuietly(String xml) {
         if (StringUtils.isBlank(xml)) { return null; }
 
         try {
@@ -501,7 +504,7 @@ public class XmlCommand extends BaseCommand {
 
         Document doc = null;
         try {
-            // support file-based content specificaton
+            // support file-based content specification
             xml = cleanXmlContent(OutputFileUtils.resolveContent(xml, context, false));
             requiresNotBlank(xml, "empty XML found");
 
@@ -522,7 +525,7 @@ public class XmlCommand extends BaseCommand {
         requiresValidVariableName(var);
         requiresNotBlank(xml, "invalid xml", xml);
 
-        Document doc = deriveWellformXml(xml);
+        Document doc = deriveWellformedXml(xml);
         if (doc == null) { return StepResult.fail("invalid xml: " + xml); }
 
         String action = "XML " + (outputter == COMPRESSED_XML_OUTPUTTER ? "minification" : "beautification");

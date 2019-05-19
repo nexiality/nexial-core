@@ -70,11 +70,13 @@ import static org.nexial.core.utils.CheckUtils.*;
 import static org.nexial.core.utils.OutputFileUtils.CASE_INSENSIVE_SORT;
 
 public class BaseCommand implements NexialCommand {
-    public static final List<String> PARAM_AUTO_FILL_COMMANDS = Arrays.asList("desktop.typeTextBox",
-                                                                              "desktop.typeAppendTextBox",
+    public static final List<String> PARAM_AUTO_FILL_COMMANDS = Arrays.asList("desktop.sendKeysToTextBox",
                                                                               "desktop.typeAppendTextArea",
+                                                                              "desktop.typeAppendTextBox",
                                                                               "desktop.typeTextArea",
-                                                                              "desktop.sendKeysToTextBox",
+                                                                              "desktop.typeTextBox",
+                                                                              "localdb.exportEXCEL",
+                                                                              "localdb.exportXML",
                                                                               "macro.expects");
     public static final List<String> CRYPT_RESTRICTED_COMMANDS = Arrays.asList("base.verbose",
                                                                                "base.prependText",

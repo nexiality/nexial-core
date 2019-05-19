@@ -1673,6 +1673,8 @@ public class ExpressionProcessorTest {
                             "123456792,Jaime\n" +
                             "567890123,Ladder",
                             subject.process("[CSV(${csv2}) => parse(header=true) store(csv2)]"));
+
+        // todo: WHY THIS TEST FAILED?! CAN'T FIGURE OUT WHAT'S GOING ON
         //
         // System.out.println("csv1 -->\n" + subject.process("[CSV(${csv1}) => parse(header=true) text]"));
         // System.out.println("csv2 -->\n" + subject.process("[CSV(${csv2}) => text]"));

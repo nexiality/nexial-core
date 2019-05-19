@@ -26,7 +26,6 @@ import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import javax.validation.constraints.NotNull;
 
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.collections4.MapUtils;
@@ -137,7 +136,7 @@ public abstract class Transformer<T extends ExpressionDataType> {
         if (data == null || data.getValue() == null) { return data; }
         if (StringUtils.isBlank(path)) { throw new IllegalArgumentException("path is empty/blank"); }
 
-        File target = prepFileForWrite(path);
+        File target = FileUtil.makeParentDir(path);
 
         try {
             boolean shouldAppend = BooleanUtils.toBoolean(append);
@@ -152,19 +151,6 @@ public abstract class Transformer<T extends ExpressionDataType> {
         } catch (IOException e) {
             throw new IllegalArgumentException("Unable to write to " + path + ": " + e.getMessage(), e);
         }
-    }
-
-    @NotNull
-    protected File prepFileForWrite(String path) {
-        File target = new File(path);
-        if (!FileUtil.isDirectoryReadable(path)) {
-            try {
-                FileUtils.forceMkdirParent(target);
-            } catch (IOException e) {
-                throw new IllegalArgumentException("Unable to create directory for '" + path + "'");
-            }
-        }
-        return target;
     }
 
     protected void saveContentAsAppend(ExpressionDataType data, File target) throws IOException {

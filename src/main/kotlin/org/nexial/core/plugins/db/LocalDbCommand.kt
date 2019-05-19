@@ -16,18 +16,21 @@
 
 package org.nexial.core.plugins.db
 
+import com.univocity.parsers.csv.CsvParser
 import org.apache.commons.io.FileUtils
 import org.apache.commons.lang3.StringUtils
 import org.nexial.commons.utils.RegexUtils
 import org.nexial.commons.utils.TextUtils
 import org.nexial.core.NexialConst.DAO_PREFIX
+import org.nexial.core.excel.ExcelConfig.MSG_SCREENCAPTURE
 import org.nexial.core.model.ExecutionContext
 import org.nexial.core.model.StepResult
 import org.nexial.core.plugins.base.BaseCommand
-import org.nexial.core.utils.CheckUtils.requiresNotBlank
-import org.nexial.core.utils.CheckUtils.requiresValidVariableName
+import org.nexial.core.plugins.io.CsvCommand
+import org.nexial.core.utils.CheckUtils.*
 import org.nexial.core.utils.OutputFileUtils
 import java.io.File
+import java.io.StringReader
 import java.sql.SQLException
 
 /**
@@ -116,7 +119,7 @@ class LocalDbCommand : BaseCommand() {
         // 3. execute
         val createResult = rdbms.runSQL(`var`, dbName, ddl)
         if (createResult.isError) return createResult
-        
+
         // 4. copy data
         return rdbms.runSQLs(`var`, dbName, "INSERT INTO $target SELECT * FROM $source;")
     }
@@ -128,7 +131,7 @@ class LocalDbCommand : BaseCommand() {
         requiresNotBlank(table, "invalid target table name", table)
 
         val query = SqlComponent(OutputFileUtils.resolveRawContent(sql, context))
-        if (!query.type.hasResultset()) return StepResult.fail("SQL '$sql' MUST return resultset")
+        if (!query.type.hasResultset()) return StepResult.fail("SQL '$sql' MUST return query result")
 
         val sourceDao = rdbms.dataAccess.resolveDao(sourceDb) ?: return StepResult.fail(
                 "Unable to connection to source database '$sourceDb'")
@@ -137,14 +140,295 @@ class LocalDbCommand : BaseCommand() {
         return StepResult.success("Query result successfully imported from '$sourceDb' to localdb '$table'")
     }
 
+    fun importEXCEL(`var`: String, excel: String, sheet: String, ranges: String, table: String): StepResult {
+        requiresValidVariableName(`var`)
+        requiresReadableFile(excel)
+        requiresNotBlank(sheet, "invalid sheet", sheet)
+        requiresNotBlank(ranges, "invalid ranges", ranges)
+        requiresNotBlank(table, "invalid target table name", table)
+
+        val buffer = StringBuilder()
+        StringUtils.split(ranges, context.textDelim).forEach {
+            buffer.append(context.replaceTokens("[EXCEL($excel) => read($sheet,$it) csv text]\n"))
+        }
+
+        return importCSV(`var`, buffer.toString(), table)
+    }
+
+    /**
+     * import CSV content or file to {@param table}. Assumes that the first line of the {@param csv} is header.
+     * @param `var` String
+     * @param csv String
+     * @param table String
+     */
+    fun importCSV(`var`: String, csv: String, table: String): StepResult {
+        requiresValidVariableName(`var`)
+        requiresNotBlank(csv, "invalid csv", csv)
+        requiresNotBlank(table, "invalid target table name", table)
+
+        // 1. resolve csv content
+        val csvContent = OutputFileUtils.resolveContent(csv, context, false, true)
+        requiresNotBlank(csvContent, "invalid csv content", csv)
+
+        // 2. set up csv parser
+        val settings = CsvCommand.newCsvParserSettings(context.textDelim, null, true, 512)
+        settings.isQuoteDetectionEnabled = true
+        val parser = CsvParser(settings)
+
+        // 3. parse csv and resolve csv metadata
+        val csvRecords = parser.parseAllRecords(StringReader(csvContent))
+        val headers = parser.recordMetadata.headers().asList()
+        // val columnCount = CollectionUtils.size(headers)
+        // val rowCount = CollectionUtils.size(csvRecords)
+
+        val queries = StringBuilder()
+
+        // 4. if target table not exist, create it
+        val tableGenerator = SqliteTableSqlGenerator(table)
+        queries.append(tableGenerator.generateSql(headers)).append("\n")
+
+        // 5. import data via INSERT generator
+        val insertPrefix = "INSERT INTO $table VALUES ("
+        csvRecords.forEach { record ->
+            queries.append(insertPrefix)
+            record.values.forEach { queries.append("\"$it\",") }
+            queries.delete(queries.length - 1, queries.length)
+            queries.append(");\n")
+        }
+
+        // 6. execute generated queries
+        val result = dao.executeSqls(SqlComponent.toList(queries.toString()))
+        context.setData(`var`, result)
+        return if (StringUtils.isNotBlank(result.error)) {
+            if (result[0].hasError()) {
+                StepResult.fail("Error occurred while creating new table '$table': ${result[0].error}")
+            } else {
+                StepResult.fail("Error occurred while importing CSV to '$table': ${result.error}")
+            }
+        } else {
+            val rowsInserted = result.rowsAffected - result[0].rowCount
+            return StepResult.success("Successfully imported $rowsInserted rows from CSV to '$table'")
+        }
+    }
+
     fun exportCSV(sql: String, output: String): StepResult = rdbms.saveResult(dbName, sql, output)
+
+    fun exportJSON(sql: String, output: String, header: String): StepResult {
+        requiresNotBlank(sql, "invalid sql", sql)
+        requiresNotBlank(output, "invalid output", output)
+        return postExport(dao.saveAsJSON(sql, File(output), header.toBoolean()), output)
+    }
+
+    fun exportXML(sql: String, output: String, root: String = "root", row: String = "row", cell: String = "cell"):
+            StepResult {
+        requiresNotBlank(sql, "invalid sql", sql)
+        requiresNotBlank(output, "invalid output", output)
+        return postExport(dao.saveAsXML(sql,
+                                        File(output),
+                                        StringUtils.defaultIfEmpty(root, "root"),
+                                        StringUtils.defaultIfEmpty(row, "row"),
+                                        StringUtils.defaultIfEmpty(cell, "cell")),
+                          output)
+    }
+
+    fun exportEXCEL(sql: String, output: String, sheet: String = "Sheet1", start: String = "A1"): StepResult {
+        requiresNotBlank(sql, "invalid sql", sql)
+        requiresNotBlank(output, "invalid output", output)
+        return postExport(dao.saveAsEXCEL(sql,
+                                          File(output),
+                                          StringUtils.defaultIfEmpty(sheet, "Sheet1"),
+                                          StringUtils.defaultIfEmpty(start, "A1")),
+                          output)
+    }
+
+    private fun postExport(result: JdbcResult, output: String): StepResult {
+        log("exported query result in ${result.elapsedTime} ms with " +
+            if (result.hasError()) "ERROR ${result.error}" else "${result.rowCount} row(s) to $output")
+
+        return if (result.hasError()) {
+            StepResult.fail("Error occurred while exporting query result to '$output'")
+        } else {
+            addLinkRef("${result.rowCount} row(s) exported to '$output'", MSG_SCREENCAPTURE, File(output).absolutePath)
+            StepResult.success("query result exported to '$output'")
+        }
+    }
 
     /*
     importJSON(var,json,table)
     importXML(var,xml,table)
-    importCSV(var,csv,table)
+    */
 
-    exportXML(sql,output)
-    exportJSON(sql,output)
+    // NOT READY; NEED BETTER USECASE AND WE'LL NEED MORE TESTING ON THIS
+    /*
+    fun importJSON(`var`: String, json: String, jsonpath: String, table: String): StepResult {
+        requiresValidVariableName(`var`)
+        requiresNotBlank(jsonpath, "invalid ranges", jsonpath)
+        requiresNotBlank(table, "invalid target table name", table)
+
+        // 1. resolve json content
+        val jsonContent = OutputFileUtils.resolveContent(json, context, false, true)
+        requiresNotBlank(jsonContent, "invalid sheet", json)
+
+        // 2. filter json content by `jsonpath`
+        val matchContent =
+                when (val jsonObject = JsonCommand.resolveToJSONObject(jsonContent)) {
+                    is JSONArray  -> JSONPath.find(jsonObject, jsonpath)
+                    is JSONObject -> JSONPath.find(jsonObject, jsonpath)
+                    else          -> throw IllegalArgumentException("Unsupported data type ${jsonObject.javaClass.simpleName}")
+                } ?: return StepResult.fail("No valid content matched against '$jsonpath' was not found")
+
+            */
+/*
+         * `json` could be:
+         * 1. array of arrays
+         *    [
+         *      [ "header1", "header2", "header3" ],
+         *      [ "col1-1", "col1-2", "col1-3" ],
+         *      [ "col2-1", "col2-2", "col2-3" ]
+         *    ]
+         * 2. array of objects
+         *    [
+         *      { "header1": "col1-1", "header2": "col1-2", "header3": "col1-3" },
+         *      { "header1": "col2-1", "header2": "col2-2", "header3": "col2-3" },
+         *      { "header1": "col3-1", "header2": "col3-2", "header3": "col3-3" }
+         *    ]
+         * 3. objects of array
+         *    {
+         *      "header": [ "header1", "header2", "header3" ],
+         *      "row1": [ "col1-1", "col1-2", "col1-3" ],
+         *      "row2" :[ "col2-1", "col2-2", "col2-3" ]
+         *    }
+         */    /*
+
+
+        // 3. generate INSERT statements
+        // val inserts = generateInserts(match, table)
+        val inserts = when (val match = JsonCommand.resolveToJSONObject(matchContent)) {
+            is JsonArray  -> generateInserts(match, table)
+            is JsonObject -> generateInserts(match, table)
+            else          -> throw IllegalArgumentException("JSON of type ${json.javaClass.simpleName} NOT SUPPORTED")
+        }
+
+        // 4. execute generated queries
+        val result = dao.executeSqls(SqlComponent.toList(inserts))
+        context.setData(`var`, result)
+        return if (result.error.isNotBlank()) {
+            if (result[0].hasError()) {
+                StepResult.fail("Error occurred while creating new table '$table': ${result[0].error}")
+            } else {
+                StepResult.fail("Error occurred while importing CSV to '$table': ${result.error}")
+            }
+        } else {
+            val rowsInserted = result.rowsAffected - result[0].rowCount
+            return StepResult.success("Successfully imported $rowsInserted rows from CSV to '$table'")
+        }
+    }
+
+    private fun generateInserts(json: JsonArray, table: String): String {
+        if (json.size() < 1) throw IllegalArgumentException("Cannot import empty JSON array")
+
+        val statements = StringBuilder()
+
+        // use first object as guide: either this is array of arrays or array of objects
+        return if (json[0].isJsonArray) {
+            // array of arrays
+            // first index is an array of headers
+            val headers = json[0].asJsonArray
+                          ?: throw IllegalArgumentException("No JSON object to represent the column headers")
+            statements.append(SqliteTableSqlGenerator(table).generateSql(headers.map { it.asString })).append("\n")
+
+            val columnCount = headers.size()
+            json.forEachIndexed { index, array ->
+                if (index != 0) statements.append(generateInsertSQL(table, array.asJsonArray, columnCount))
+            }
+
+            statements.toString()
+        } else {
+            // array of objects
+            // first index is an object
+            val firstElement = json[0].asJsonObject ?: throw IllegalArgumentException("No JSON object found")
+            val headers = firstElement.keySet().map { it.toString() }
+            statements.append(SqliteTableSqlGenerator(table).generateSql(headers))
+
+            json.forEach {
+                if (!it.isJsonObject) {
+                    ConsoleUtils.error("Expects each node as JSON Object; unexpected: ${it.javaClass.simpleName}")
+                } else {
+                    val jsonObject = it.asJsonObject
+                    val rowHeaders = jsonObject.keySet().map { key -> key.toString() }
+                    if (headers != rowHeaders) {
+                        ConsoleUtils.error("Expects same definition for all nodes; " +
+                                           "current node ($rowHeaders) NOT compatible with initial node ($headers)")
+                    } else {
+                        val sql = StringBuilder("INSERT INTO $table VALUES (")
+                        rowHeaders.forEach { header ->
+                            val value = jsonObject[header]
+                            if (value.isJsonPrimitive) {
+                                if (value.asJsonPrimitive.isString) {
+                                    sql.append("\"${value.asString}\",")
+                                } else {
+                                    sql.append("${value.asString},")
+                                }
+                            } else {
+                                ConsoleUtils.error("Only simple type is accepted for data import; " +
+                                                   "UNSUPPORTED TYPE: ${it.javaClass.simpleName}")
+                            }
+                        }
+
+                        if (rowHeaders.size < headers.size)
+                            sql.append(StringUtils.repeat(",", headers.size - rowHeaders.size))
+
+                        statements.append(StringUtils.removeEnd(sql.toString(), ",") + ");\n")
+                    }
+                }
+            }
+
+            statements.toString()
+        }
+    }
+
+    private fun generateInserts(json: JsonObject, table: String): String {
+        if (json.size() < 1) throw IllegalArgumentException("Cannot import empty JSON")
+
+        val statements = StringBuilder()
+
+        // first object must be headers
+        val headerKey = json.keySet().first()
+        val headers = json.get(headerKey)?.asJsonArray
+                      ?: throw IllegalArgumentException("No JSON object to represent the column headers")
+        statements.append(SqliteTableSqlGenerator(table).generateSql(headers.map { it.asString })).append("\n")
+
+        // the rest are expected to be array of the same length as the first
+        val columnCount = headers.size()
+        json.keySet().forEachIndexed { index, key ->
+            if (index != 0) {
+                val row = json.get(key)?.asJsonArray
+                          ?: throw IllegalArgumentException("Invalid/incompatible JSON structure found in \"$key\"")
+                statements.append(generateInsertSQL(table, row, columnCount))
+            }
+        }
+
+        return statements.toString()
+    }
+
+    private fun generateInsertSQL(table: String, row: JsonArray, columnCount: Int): String {
+        val sql = StringBuilder("INSERT INTO $table VALUES (")
+        row.forEach {
+            if (it.isJsonPrimitive) {
+                if (it.asJsonPrimitive.isString) {
+                    sql.append("\"${it.asJsonPrimitive.asString}\",")
+                } else {
+                    sql.append("${it.asJsonPrimitive.asString},")
+                }
+            } else {
+                ConsoleUtils.error("Only simple type is accepted for data import; " +
+                                   "UNSUPPORTED TYPE: ${it.javaClass.simpleName}")
+            }
+        }
+
+        if (row.size() < columnCount) sql.append(StringUtils.repeat(",", columnCount - row.size()))
+
+        return StringUtils.removeEnd(sql.toString(), ",") + ");\n"
+    }
     */
 }

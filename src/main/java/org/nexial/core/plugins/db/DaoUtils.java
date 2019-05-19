@@ -182,5 +182,10 @@ public final class DaoUtils {
             return StringUtils.replace(text, delim, "\\" + delim);
         }
     }
+
+    public static String csvFriendly(String text, String delim, boolean useQuote, String nullValue) {
+        if (text == null) { return nullValue; }
+        return csvFriendly(text, delim, useQuote);
+    }
 }
 

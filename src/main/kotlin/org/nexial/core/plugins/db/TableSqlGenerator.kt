@@ -22,6 +22,7 @@ import java.sql.Types.*
 
 abstract class TableSqlGenerator(val table: String) {
     abstract fun generateSql(metadata: ResultSetMetaData): String
+    abstract fun generateSql(headers: List<String>): String
     abstract fun dbSpecificTypeName(type: Int): String
     abstract fun isTextColumnType(type: Int): Boolean
 }
@@ -36,6 +37,12 @@ class SqliteTableSqlGenerator(table: String) : TableSqlGenerator(table = table) 
                 .append(dbSpecificTypeName(metadata.getColumnType(i))).append(",")
         }
 
+        return StringUtils.removeEnd(ddl.toString(), ",") + ");"
+    }
+
+    override fun generateSql(headers: List<String>): String {
+        val ddl = StringBuilder("CREATE TABLE IF NOT EXISTS ").append(table).append("(")
+        headers.forEach { ddl.append("\"$it\" TEXT,") }
         return StringUtils.removeEnd(ddl.toString(), ",") + ");"
     }
 

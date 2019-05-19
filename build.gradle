@@ -16,7 +16,8 @@
  */
 
 buildscript {
-	ext.kotlin_version = '1.3.20'
+	ext.kotlin_version = '1.3.30'
+	ext.springBootVersion = '2.1.4.RELEASE'
 	repositories {
 		mavenLocal()
 		mavenCentral()
@@ -24,12 +25,15 @@ buildscript {
 
 	dependencies {
 		classpath "org.springframework.boot:spring-boot-gradle-plugin:${springBootVersion}"
+		classpath "org.jetbrains.kotlin:kotlin-allopen:$kotlin_version"
 		classpath "org.jetbrains.kotlin:kotlin-gradle-plugin:$kotlin_version"
 	}
 }
 
 plugins {
-	id "org.jetbrains.kotlin.jvm" version "1.3.20"
+	id 'org.springframework.boot' version '2.1.4.RELEASE'
+	id "org.jetbrains.kotlin.jvm" version "1.3.30"
+	id 'org.jetbrains.kotlin.plugin.spring' version '1.3.30'
 }
 
 apply plugin: 'java'
@@ -38,6 +42,11 @@ apply plugin: 'idea'
 apply plugin: 'maven'
 apply plugin: 'org.springframework.boot'
 apply plugin: 'distribution'
+
+// spring 5
+apply plugin: 'kotlin'
+apply plugin: 'kotlin-spring'
+apply plugin: 'io.spring.dependency-management'
 
 group = componentGroup
 
@@ -59,9 +68,10 @@ repositories {
 	//	maven { url 'https://jitpack.io' }
 }
 
-bootRepackage { enabled = false }
-springBoot { mainClass = componentMainClass }
-bootRun { addResources = false }
+// spring 5
+springBoot { mainClassName = componentMainClass }
+//bootJar { mainClassName = componentMainClass }
+bootRun { sourceResources sourceSets.main }
 
 configurations {
 	provided
@@ -93,19 +103,24 @@ dependencies {
 	compile("com.univocity:univocity-parsers:+")
 
 	// spring (forces version unification)
-	compile("org.springframework.boot:spring-boot")
 	compile("org.springframework.boot:spring-boot-starter")
-	compile group: 'org.springframework.boot', name: 'spring-boot-starter-parent', version: '1.5.9.RELEASE', ext: 'pom'
-	compile group: 'org.springframework.boot', name: 'spring-boot-configuration-processor', version: '1.5.9.RELEASE'
+	compile("org.springframework.boot:spring-boot-configuration-processor")
 	compile("org.springframework.boot:spring-boot-starter-jdbc")
-	compile("org.springframework.boot:spring-boot-starter-logging")
 	compile("org.springframework.boot:spring-boot-starter-mail")
+	// note: can't get rid of jackson completely because it's references in tika and aws-* libs. boo!
 	compile("org.springframework.boot:spring-boot-starter-web") {
 		exclude module: "jackson-databind"
 		exclude module: "jackson-annotations"
 		exclude module: "jackson-core"
+		exclude module: "jackson-module-parameter-names"
+		exclude module: "jackson-datatype-jdk8"
+		exclude module: "jackson-datatype-jsr310"
+		exclude module: "spring-boot-starter-json"
 	}
 	compile("org.springframework:spring-tx")
+	compile("org.springframework.boot:spring-boot-starter-websocket")
+	compile("org.springframework.boot:spring-boot-starter-thymeleaf")
+	compile("com.fasterxml.jackson.module:jackson-module-kotlin:2.9.+")
 
 	// unit testing
 	compile("junit:junit:${junitVersion}")
@@ -114,7 +129,7 @@ dependencies {
 	// for IE webdriver: https://developer.microsoft.com/en-us/microsoft-edge/tools/webdriver/
 	compile("org.seleniumhq.selenium:selenium-java:${seleniumVersion}")
 	compile("org.seleniumhq.selenium:selenium-api:${seleniumVersion}")
-	compile("org.seleniumhq.selenium:selenium-server:${seleniumVersion}")
+	// compile("org.seleniumhq.selenium:selenium-server:${seleniumVersion}")
 	compile("org.seleniumhq.selenium:selenium-remote-driver:${seleniumVersion}")
 	compile("org.seleniumhq.selenium:selenium-support:${seleniumVersion}")
 	compile("org.seleniumhq.selenium:selenium-firefox-driver:${seleniumVersion}")
@@ -130,10 +145,10 @@ dependencies {
 	compile("com.github.2gis.winium:winium-webdriver:+")
 	compile("com.github.2gis.winium:winium-elements-desktop:+")
 
-	compile("ch.qos.logback:logback-classic:+")
-	compile("ch.qos.logback:logback-core:+")
+	// logback lib already references in spring boot logging starter
 	compile("ch.qos.logback:logback-access:+")
 	compile("ch.qos.logback.contrib:logback-json-core:+")
+	//	compile("org.logback-extensions:logback-ext-spring:+")
 	compile("org.fusesource.jansi:jansi:1.+")
 
 	//	compile("ch.qos.logback.contrib:logback-mongodb-core:+")
@@ -146,13 +161,19 @@ dependencies {
 	compile("com.amazonaws:aws-java-sdk-ses:+")
 	compile("com.amazonaws:aws-java-sdk-sqs:+")
 	compile("com.amazonaws:aws-java-sdk-sts:+")
+	// compile("com.amazonaws:aws-java-sdk-rekognition:+")
+	compile("com.amazonaws:aws-java-sdk-textract:+")
 
 	// support: browsermob
 	compile("net.lightbody.bmp:browsermob-proxy:+")
 	compile("net.lightbody.bmp:browsermob-core:+")
-	compile("net.lightbody.bmp:browsermob-rest:+")
+	compile("net.lightbody.bmp:browsermob-rest:+") {
+		exclude module: "servlet-api"
+	}
 
 	// support: pdf
+	// https://mvnrepository.com/artifact/com.itextpdf/itext7-core
+	// compile("com.itextpdf:itext7-core:+")
 	compile("com.itextpdf:itextpdf:+")
 	compile("org.apache.pdfbox:pdfbox:+")
 	compile("org.apache.pdfbox:pdfbox-tools:+")
@@ -223,6 +244,8 @@ dependencies {
 	compile("com.jcraft:jsch:+")
 
 	compile("org.jetbrains.kotlin:kotlin-stdlib-jdk8:$kotlin_version")
+	// implementation 'org.jetbrains.kotlin:kotlin-stdlib-jdk8'
+	implementation("org.jetbrains.kotlin:kotlin-reflect:$kotlin_version")
 
 	compile("com.googlecode.soundlibs:jlayer:1.0.1.4")
 
@@ -232,17 +255,19 @@ dependencies {
 	//	non-distributable libs
 	compile fileTree(dir: 'lib', include: '*.jar')
 
-	provided("javax.servlet:javax.servlet-api:${servletApiVersion}") { force = true }
+	// provided("javax.servlet:javax.servlet-api:${servletApiVersion}") { force = true }
+
+	// annotationProcessor "org.springframework.boot:spring-boot-configuration-processor"
 
 	testCompile("org.springframework.boot:spring-boot-starter-test")
 	testCompile("junit:junit:${junitVersion}")
 	testCompile("org.jetbrains.kotlin:kotlin-test")
-	testCompile("org.jetbrains.kotlin:kotlin-test-junit")
+	// testCompile("org.jetbrains.kotlin:kotlin-test-junit")
 }
 
 jar {
+	enabled = true
 	baseName = archivesBaseName
-//	version = version
 	manifest {
 		attributes "Implementation-Title": archivesBaseName,
 		           "Implementation-Version": version,
@@ -269,12 +294,6 @@ test {
 	}
 }
 
-//kotlin {
-//	experimental {
-//		coroutines 'enable'
-//	}
-//}
-
 compileJava.dependsOn(processResources)
 
 tasks.withType(JavaCompile) {
@@ -290,7 +309,6 @@ task singleDependentJar(type: Jar) {
 		           "Main-Class": componentMainClass
 	}
 	baseName = archivesBaseName
-//	version = version
 	from { configurations.compile.collect { it.isDirectory() ? it : zipTree(it) } }
 	with jar
 	zip64 = true

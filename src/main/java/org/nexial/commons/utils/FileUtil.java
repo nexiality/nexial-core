@@ -17,11 +17,7 @@
 
 package org.nexial.commons.utils;
 
-import java.io.BufferedInputStream;
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.FileOutputStream;
-import java.io.IOException;
+import java.io.*;
 import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.util.ArrayList;
@@ -36,6 +32,7 @@ import java.util.zip.ZipEntry;
 import java.util.zip.ZipException;
 import java.util.zip.ZipInputStream;
 import java.util.zip.ZipOutputStream;
+import javax.validation.constraints.NotNull;
 
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.io.FileUtils;
@@ -540,7 +537,6 @@ public final class FileUtil {
         }
     }
 
-
     public static boolean isSuitableAsPath(String contentOrFile) {
         return StringUtils.containsNone(contentOrFile, '\n', '\r', '\t', '{', '}', '?', '<', '>', '|');
     }
@@ -560,4 +556,41 @@ public final class FileUtil {
         return !StringUtils.contains(path, "/") ? path : StringUtils.substringAfterLast(path, "/");
     }
 
+    @NotNull
+    public static File makeParentDir(String path) {
+        File target = new File(path);
+        if (!isDirectoryReadable(path)) {
+            try {
+                FileUtils.forceMkdirParent(target);
+            } catch (IOException e) {
+                throw new IllegalArgumentException("Unable to create directory for '" + path + "'");
+            }
+        }
+        return target;
+    }
+
+    @NotNull
+    public static File writeBinaryFile(String path, boolean append, byte[] bytes) {
+        File target = makeParentDir(path);
+
+        DataOutputStream dos = null;
+        try {
+            dos = new DataOutputStream(new FileOutputStream(target, append));
+            dos.write(bytes);
+
+            ConsoleUtils.log("content base64 decoded and " + (append ? "appended" : "saved") +
+                             " to '" + path + "'");
+            return target;
+        } catch (IOException e) {
+            throw new IllegalArgumentException("Unable to write to " + path + ": " + e.getMessage(), e);
+        } finally {
+            if (dos != null) {
+                try {
+                    dos.close();
+                } catch (IOException e) {
+                    ConsoleUtils.error("Error occurred while saving '" + path + "': " + e.getMessage());
+                }
+            }
+        }
+    }
 }

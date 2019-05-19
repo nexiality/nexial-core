@@ -25,6 +25,7 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicReference;
+import javax.validation.constraints.NotNull;
 
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.dbcp2.BasicDataSource;
@@ -32,6 +33,7 @@ import org.apache.commons.lang3.StringUtils;
 import org.aspectj.util.FileUtil;
 import org.nexial.commons.utils.TextUtils;
 import org.nexial.core.ExecutionThread;
+import org.nexial.core.excel.ExcelAddress;
 import org.nexial.core.model.ExecutionContext;
 import org.nexial.core.plugins.db.SqlComponent.Type;
 import org.nexial.core.utils.ConsoleUtils;
@@ -52,6 +54,8 @@ import static org.nexial.core.SystemVariables.getDefaultInt;
  * fulfillment of requirement.
  */
 public class SimpleExtractionDao extends JdbcDaoSupport {
+    private static final String MSG_NULL_JDBC = "Unable to resolve data access; contain Nexial Support team";
+
     protected String treatNullAs = DEF_TREAT_NULL_AS;
     protected Connection transactedConnection;
     protected Boolean autoCommit;
@@ -61,12 +65,20 @@ public class SimpleExtractionDao extends JdbcDaoSupport {
         implements ResultSetExtractor<JdbcResult>, StatementCallback<JdbcResult> {
         private JdbcResult result;
         private File file;
+        private QueryResultExporter exporter;
 
         public JdbcResultExtractor(JdbcResult result) { this.result = result; }
 
         public JdbcResultExtractor(JdbcResult result, File file) {
             this.result = result;
             this.file = file;
+            // this.exporter = new CsvExporter(context, treatNullAs, true)
+        }
+
+        public JdbcResultExtractor(JdbcResult result, File file, QueryResultExporter exporter) {
+            this.result = result;
+            this.file = file;
+            this.exporter = exporter;
         }
 
         public JdbcResult getResult() { return result; }
@@ -78,14 +90,16 @@ public class SimpleExtractionDao extends JdbcDaoSupport {
             if (result == null) { throw new IllegalArgumentException("null result found"); }
 
             if (rs == null) {
-                result.setError("Unable to retrieve query resultset; Query execution possibly did not complete");
+                result.setError("Unable to retrieve query result; Query execution possibly did not complete");
                 return result;
             }
 
             int rowsAffected = rs.getStatement().getUpdateCount();
             if (rowsAffected != -1) { result.setRowCount(rowsAffected); }
 
-            return (file != null) ? resultToFile(rs, result, file) : resultToListOfMap(rs, result);
+            if (file == null) { return resultToListOfMap(rs, result); }
+            if (exporter == null) { return resultToCSV(rs, result, file); }
+            return exporter.export(rs, result, file);
         }
 
         @Override
@@ -103,7 +117,9 @@ public class SimpleExtractionDao extends JdbcDaoSupport {
             try {
                 if (stmt.execute(sql)) {
                     ResultSet rs = stmt.getResultSet();
-                    return file != null ? resultToFile(rs, result, file) : packData(resultToListOfMap(rs, result));
+                    if (file == null) { return packData(resultToListOfMap(rs, result)); }
+                    if (exporter == null) { return resultToCSV(rs, result, file); }
+                    return exporter.export(rs, result, file);
                 } else {
                     int rowsAffected = stmt.getUpdateCount();
                     if (rowsAffected != -1) { result.setRowCount(rowsAffected); }
@@ -123,26 +139,7 @@ public class SimpleExtractionDao extends JdbcDaoSupport {
     public JdbcResult executeSql(String sql, File saveTo) {
         long startTime = System.currentTimeMillis();
         JdbcResult result = new JdbcResult(sql);
-
-        JdbcTemplate jdbc = getJdbcTemplate();
-        JdbcResultExtractor extractor = new JdbcResultExtractor(result, saveTo);
-
-        if (isAutoCommit()) { return jdbc.execute(extractor).setTiming(startTime); }
-
-        initTransactedConnection();
-
-        // stored procedure?
-        Type sqlType = result.getSqlType();
-        if (sqlType != null && sqlType.isStoredProcedure()) {
-            return executeStoredProcedure(transactedConnection, extractor).setTiming(startTime);
-        }
-
-        try (Statement statement = transactedConnection.createStatement()) {
-            return extractor.doInStatement(statement).setTiming(startTime);
-        } catch (SQLException e) {
-            result.setError("Error executing " + sql + ": " + e.getMessage());
-            return result.setTiming(startTime);
-        }
+        return executeAndExtract(sql, result, new JdbcResultExtractor(result, saveTo)).setTiming(startTime);
     }
 
     protected JdbcResult executeStoredProcedure(Connection connection, JdbcResultExtractor extractor) {
@@ -217,7 +214,7 @@ public class SimpleExtractionDao extends JdbcDaoSupport {
             } catch (SQLException e) {
                 // this might fail since explicit commit/rollback was performed earlier
                 if (explicitCommit.get() || explicitRollback.get()) {
-                    ConsoleUtils.log("Possibly benigh error found when committing current transaction - " +
+                    ConsoleUtils.log("Possibly benign error found when committing current transaction - " +
                                      e.getErrorCode() + " " + e.getMessage() + "\n" +
                                      "An explicit COMMIT or ROLLBACK was PREVIOUSLY EXECUTED IN THIS TRANSACTION");
                 } else {
@@ -267,9 +264,11 @@ public class SimpleExtractionDao extends JdbcDaoSupport {
         JdbcResult result = new JdbcResult(query);
 
         JdbcTemplate jdbc = getJdbcTemplate();
+        if (jdbc == null) { throw new RuntimeException(MSG_NULL_JDBC); }
+
         Integer rowsImported = jdbc.query(query, rs -> {
             if (!rs.next()) {
-                result.setError("Unable to retrieve query resultset; Query execution possibly did not complete");
+                result.setError("Unable to retrieve query result; Query execution possibly did not complete");
                 return -1;
             }
 
@@ -336,7 +335,9 @@ public class SimpleExtractionDao extends JdbcDaoSupport {
         return autoCommit != null ? autoCommit : ((BasicDataSource) getDataSource()).getDefaultAutoCommit();
     }
 
-    protected <T extends JdbcResult> T resultToFile(ResultSet rs, T result, File file) throws SQLException {
+    /** @deprecated use {@link CsvExporter} instead */
+    @Deprecated
+    protected <T extends JdbcResult> T resultToCSV(ResultSet rs, T result, File file) throws SQLException {
         if (rs == null || !rs.next()) { return result; }
 
         ResultSetMetaData metaData = rs.getMetaData();
@@ -409,10 +410,37 @@ public class SimpleExtractionDao extends JdbcDaoSupport {
         return result;
     }
 
+    @NotNull
+    protected JdbcResult saveAsJSON(@NotNull String sql, @NotNull File output, boolean header) {
+        long startTime = System.currentTimeMillis();
+        JdbcResult result = new JdbcResult(sql);
+        JsonExporter exporter = new JsonExporter(context, treatNullAs, header);
+        return executeAndExtract(sql, result, new JdbcResultExtractor(result, output, exporter)).setTiming(startTime);
+    }
+
+    @NotNull
+    protected JdbcResult saveAsXML(@NotNull String sql, @NotNull File output, String root, String row, String cell) {
+        long startTime = System.currentTimeMillis();
+        JdbcResult result = new JdbcResult(sql);
+        XmlExporter exporter = new XmlExporter(context, treatNullAs, root, row, cell);
+        return executeAndExtract(sql, result, new JdbcResultExtractor(result, output, exporter)).setTiming(startTime);
+    }
+
+    @NotNull
+    protected JdbcResult saveAsEXCEL(@NotNull String sql, @NotNull File output, String sheet, String startAddress) {
+        long startTime = System.currentTimeMillis();
+        JdbcResult result = new JdbcResult(sql);
+        ExcelExporter exporter = new ExcelExporter(treatNullAs, true, sheet, new ExcelAddress(startAddress));
+        return executeAndExtract(sql, result, new JdbcResultExtractor(result, output, exporter)).setTiming(startTime);
+    }
+
     protected void initTransactedConnection() {
         try {
             if (transactedConnection == null || transactedConnection.isClosed()) {
-                transactedConnection = getJdbcTemplate().getDataSource().getConnection();
+                JdbcTemplate jdbc = getJdbcTemplate();
+                if (jdbc == null) { throw new RuntimeException(MSG_NULL_JDBC); }
+
+                transactedConnection = jdbc.getDataSource().getConnection();
                 if (transactedConnection == null) {
                     throw new InvalidDataAccessResourceUsageException(
                         "Unable to obtain database connection for transaction: null");
@@ -426,6 +454,29 @@ public class SimpleExtractionDao extends JdbcDaoSupport {
         } catch (SQLException e) {
             throw new InvalidDataAccessResourceUsageException("Unable to obtain database connection for transaction: " +
                                                               e.getMessage(), e);
+        }
+    }
+
+    @NotNull
+    private JdbcResult executeAndExtract(@NotNull String sql, JdbcResult result, JdbcResultExtractor extractor) {
+        JdbcTemplate jdbc = getJdbcTemplate();
+        if (jdbc == null) { throw new RuntimeException(MSG_NULL_JDBC); }
+
+        if (isAutoCommit()) { return jdbc.execute(extractor); }
+
+        initTransactedConnection();
+
+        // stored procedure?
+        Type sqlType = result.getSqlType();
+        if (sqlType != null && sqlType.isStoredProcedure()) {
+            return executeStoredProcedure(transactedConnection, extractor);
+        }
+
+        try (Statement statement = transactedConnection.createStatement()) {
+            return extractor.doInStatement(statement);
+        } catch (SQLException e) {
+            result.setError("Error executing " + sql + ": " + e.getMessage());
+            return result;
         }
     }
 }

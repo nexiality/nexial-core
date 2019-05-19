@@ -121,11 +121,13 @@ public class JsonCommand extends BaseCommand {
     }
 
     /**
-     * add {@code data} to {@code var}, which should represents a JSON object, at a location specified via {@code jsonpath}.
-     *
-     * Optionally, {@code jsonpath} can be empty to represent top level.
+     * add {@code input} to {@code json}, which should represents a JSON object, at a location specified via
+     * {@code jsonpath}.  The final output is captured as {@code var}. Optionally, {@code jsonpath} can be empty to
+     * represent top level.
      */
     public StepResult addOrReplace(String json, String jsonpath, String input, String var) {
+        requiresValidVariableName(var);
+
         try {
             json = OutputFileUtils.resolveContent(json, context, false, true);
         } catch (IOException e) {
@@ -133,8 +135,12 @@ public class JsonCommand extends BaseCommand {
         }
         requiresNotBlank(json, "invalid/malformed json", json);
 
-        requiresNotBlank(input, "Invalid input", json);
-        requiresValidVariableName(var);
+        try {
+            input = OutputFileUtils.resolveContent(input, context, false, true);
+        } catch (IOException e) {
+            ConsoleUtils.log("Unable to read 'input' as a JSON file; considering it as is...");
+        }
+        requiresNotBlank(input, "Invalid input", input);
 
         JsonEditorConfig config = new JsonEditorConfig();
         config.setRemoveNull(true);
@@ -358,8 +364,9 @@ public class JsonCommand extends BaseCommand {
         }
     }
 
-    protected Object toJSONObject(String json) {
-        json = retrieveJsonContent(json);
+    protected Object toJSONObject(String json) { return resolveToJSONObject(retrieveJsonContent(json)); }
+
+    public static Object resolveToJSONObject(String json) {
         if (json == null) { return null; }
 
         if (TextUtils.isBetween(json, "[", "]")) {
