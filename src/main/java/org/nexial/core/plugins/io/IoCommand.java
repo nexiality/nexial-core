@@ -61,7 +61,7 @@ import org.nexial.core.utils.OutputFileUtils;
 import static java.io.File.separator;
 import static java.io.File.separatorChar;
 import static java.lang.System.lineSeparator;
-import static org.apache.commons.lang.SystemUtils.IS_OS_WINDOWS;
+import static org.apache.commons.lang3.SystemUtils.IS_OS_WINDOWS;
 import static org.nexial.core.NexialConst.*;
 import static org.nexial.core.NexialConst.Data.*;
 import static org.nexial.core.SystemVariables.getDefault;
