@@ -50,7 +50,7 @@ class SqsCommand : BaseCommand() {
             val message = sqs.receiveMessage(resolveSqsSettings(context, profile), queue)
             if (message == null) {
                 context.removeData(`var`)
-                StepResult.fail("No message found in queue '$queue'")
+                StepResult.success("No message found in queue '$queue'")
             } else {
                 context.setData(`var`, message)
                 StepResult.success("1 message received from queue '$queue'")
@@ -71,7 +71,7 @@ class SqsCommand : BaseCommand() {
             val message = sqs.receiveMessages(resolveSqsSettings(context, profile), queue)
             if (message == null) {
                 context.removeData(`var`)
-                StepResult.fail("No messages found in queue '$queue'")
+                StepResult.success("No messages found in queue '$queue'")
             } else {
                 context.setData(`var`, message)
                 StepResult.success("${message.size} message(s) received from queue '$queue'")
@@ -79,6 +79,27 @@ class SqsCommand : BaseCommand() {
         } catch (e: AmazonSQSException) {
             context.removeData(`var`)
             StepResult.fail("FAILED to receive messages from queue '$queue': ${e.errorMessage}")
+        }
+    }
+
+    fun purgeQueue(profile: String, queue: String, `var`: String): StepResult {
+        requiresNotBlank(profile, "Invalid profile", profile)
+        requiresNotBlank(queue, "Invalid queue", queue)
+        requiresValidVariableName(`var`)
+
+        return try {
+            val sqs = SqsSupport()
+            val message = sqs.purgeQueue(resolveSqsSettings(context, profile), queue)
+            if (message == null) {
+                context.removeData(`var`)
+                StepResult.fail("No result found when purging queue '$queue'")
+            } else {
+                context.setData(`var`, message.toString())
+                StepResult.success("Purged messages from queue '$queue'")
+            }
+        } catch (e: AmazonSQSException) {
+            context.removeData(`var`)
+            StepResult.fail("FAILED to purge messages from queue '$queue': ${e.errorMessage}")
         }
     }
 
@@ -141,7 +162,6 @@ class SqsSupport : AwsSupport() {
         setCredentials(settings)
 
         val sqs = newSQSClient()
-//        val sqs = if (settings.async) newSQSAsyncClient() else newSQSClient()
 
         val queueUrl = sqs.getQueueUrl(queue).queueUrl
         ConsoleUtils.log("sending to SQS queue '$queueUrl'")
@@ -163,7 +183,6 @@ class SqsSupport : AwsSupport() {
         setCredentials(settings)
 
         val sqs = newSQSClient()
-//        val sqs = if (settings.async) newSQSAsyncClient() else newSQSClient()
 
         val queueUrl = sqs.getQueueUrl(queue).queueUrl
         ConsoleUtils.log("deleting from SQS queue '$queueUrl'")
@@ -178,11 +197,21 @@ class SqsSupport : AwsSupport() {
         return if (messages == null || CollectionUtils.isEmpty(messages)) null else messages[0]
     }
 
+    fun purgeQueue(settings: AwsSqsSettings, queue: String): PurgeQueueResult? {
+        setCredentials(settings)
+
+        val sqs = newSQSClient()
+
+        val queueUrl = sqs.getQueueUrl(queue).queueUrl
+        ConsoleUtils.log("purging SQS queue '$queueUrl'")
+
+        return sqs.purgeQueue(PurgeQueueRequest(queueUrl))
+    }
+
     private fun receiveMessages(settings: AwsSqsSettings, queue: String, size: Int): List<QueueMessage>? {
         setCredentials(settings)
 
         val sqs = newSQSClient()
-//        val sqs = if (settings.async) newSQSAsyncClient() else newSQSClient()
 
         val queueUrl = sqs.getQueueUrl(queue).queueUrl
         ConsoleUtils.log("receiving from SQS queue '$queueUrl'")

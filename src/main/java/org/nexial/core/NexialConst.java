@@ -534,7 +534,7 @@ public final class NexialConst {
         public static final long DEF_LOCAL_START_WAITMS = 5000;
         public static final long MAX_LOCAL_START_WAITMS = 20000;
         public static final String AUTO_LOCAL_START_WAIT = "auto";
-        public static final String LOCAL_READY_FILE = TEMP + "nexial.cbtlocal.ready";
+        public static final String LOCAL_READY_FILE = TEMP + NAMESPACE + "cbtlocal.ready";
 
         // project meta
         public static final String KEY_NAME = "name";
@@ -603,14 +603,16 @@ public final class NexialConst {
         public static final String DEF_DATAFILE_SUFFIX = "." + DATA_FILE_SUFFIX;
 
         // for command json metadata
-        public static final String COMMAND_JSON_FILE_NAME = "nexial.script.metadata.json";
+        public static final String COMMAND_JSON_FILE_NAME = NAMESPACE + "script.metadata.json";
+        public static final String VAR_CMD_JSON = NAMESPACE + "var.command.json";
         public static final String JSON_FOLDER = TEMP + "nexial-json" + separator;
         public static final File COMMAND_JSON_FILE = new File(JSON_FOLDER + COMMAND_JSON_FILE_NAME);
+        public static final File TEMP_JSON_JAR = new File(TEMP + "nexial-json-jar/nexial-json.jar");
 
-        public static final String PROJECT_CACHE_LOCATION = StringUtils.appendIfMissing(
-            new File(StringUtils.appendIfMissing(USER_HOME, separator) + ".nexial" + separator + "projectCache")
-                .getAbsolutePath(),
-            separator);
+        public static final String PROJECT_CACHE_LOCATION =
+            StringUtils.appendIfMissing(new File(StringUtils.appendIfMissing(USER_HOME, separator) +
+                                                 ".nexial" + separator + "projectCache").getAbsolutePath(),
+                                        separator);
 
         private Project() { }
 
@@ -682,6 +684,7 @@ public final class NexialConst {
         public static final String OVERRIDE = "override";
         public static final String ANNOUNCE = "announce";
         public static final String INTERACTIVE = "interactive";
+        public static final String READY = "ready";
         public static final Options OPTIONS = initCmdOptions();
 
         private CLI() { }
@@ -763,6 +766,7 @@ public final class NexialConst {
         // determine if we should clear off any fail-fast state at the end of each script
         public static final String RESET_FAIL_FAST = registerSystemVariable(NAMESPACE + "resetFailFast", false);
         public static final String VERBOSE = registerSystemVariable(NAMESPACE + "verbose", false);
+        public static final String QUIET = registerSystemVariable(NAMESPACE + "quiet", false);
         public static final String NULL_VALUE = registerSystemVariable(NAMESPACE + "nullValue", "(null)");
         public static final String TEXT_DELIM = registerSystemVariable(NAMESPACE + "textDelim", ",");
         public static final String POLL_WAIT_MS = registerSystemVariable(NAMESPACE + "pollWaitMs", 30 * 1000);
@@ -1196,11 +1200,11 @@ public final class NexialConst {
         public static final int RC_BAD_BATCH_FILE = -20;
 
         // env. properties (mainly to export to)
-        public static final String OUTPUT_LOCATION = "nexial.output";
-        public static final String JUNIT_XML_LOCATION = "nexial.junitxml";
-        public static final String EXEC_OUTPUT_PATH = "nexial.execution.output";
-        public static final String SUCCESS_RATE = "nexial.success.rate";
-        public static final String EXIT_STATUS = "nexial.exit.status";
+        public static final String OUTPUT_LOCATION = NAMESPACE + "output";
+        public static final String JUNIT_XML_LOCATION = NAMESPACE + "junitxml";
+        public static final String EXEC_OUTPUT_PATH = NAMESPACE + "execution.output";
+        public static final String SUCCESS_RATE = NAMESPACE + "success.rate";
+        public static final String EXIT_STATUS = NAMESPACE + "exit.status";
 
         private ExitStatus() { }
 

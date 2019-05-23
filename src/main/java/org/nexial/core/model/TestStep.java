@@ -348,7 +348,9 @@ public class TestStep extends TestStepManifest {
             argText.append(StringUtils.startsWith(arg, "$(execution") ? context.replaceTokens(arg, true) : arg)
                    .append(", ");
         }
-        logger.log(this, "executing " + command + "(" + StringUtils.removeEnd(argText.toString(), ", ") + ")");
+
+        // force console logging
+        logger.log(this, "executing " + command + "(" + StringUtils.removeEnd(argText.toString(), ", ") + ")", true);
     }
 
     protected void postExecCommand(StepResult result, long elapsedMs) {

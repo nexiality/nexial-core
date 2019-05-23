@@ -41,6 +41,8 @@ import static org.nexial.core.SystemVariables.getDefaultBool;
 import static org.nexial.core.excel.ExcelConfig.*;
 
 public class CommandRepeater {
+    private static final String TITLE = "[repeat-until] ";
+
     private TestStep initialTestStep;
     private List<TestStep> steps = new ArrayList<>();
     private long maxWaitMs;
@@ -83,6 +85,7 @@ public class CommandRepeater {
         long maxEndTime = maxWaitMs == -1 ? -1 : startTime + maxWaitMs;
         long rightNow = startTime;
         int errorCount = 0;
+        int loopCount = 0;
 
         while (maxEndTime == -1 || rightNow < maxEndTime) {
 
@@ -99,6 +102,12 @@ public class CommandRepeater {
                 StepResult result = null;
                 try {
                     context.setCurrentTestStep(testStep);
+
+                    if (i == 0) {
+                        loopCount++;
+                        logRepeatUntilStart(logger, testStep, loopCount);
+                    }
+
                     result = testStep.invokeCommand();
                     boolean succeed = result.isSuccess();
                     context.setData(OPT_LAST_OUTCOME, succeed);
@@ -117,22 +126,21 @@ public class CommandRepeater {
                             return result;
                         } else {
                             // else failure means continue... no sweat
-                            logger.log(testStep, "[repeat-until] condition not met; loop proceeds");
+                            logger.log(testStep, TITLE + "condition not met; loop proceeds");
                         }
                     } else {
-                        String message;
                         if (result.isSuccess()) {
-                            message = MSG_PASS + result.getMessage();
+                            logger.log(testStep, TITLE + MSG_PASS + result.getMessage());
                         } else if (result.isSkipped()) {
-                            message = result.getMessage();
+                            logger.log(testStep, TITLE + result.getMessage(), true);
                         } else {
                             // fail or warn
-                            message = MSG_FAIL + result.getMessage() + "; " +
-                                      FAIL_FAST + "=" + context.isFailFast() + "; " +
-                                      OPT_LAST_OUTCOME + "=false";
+                            logger.log(testStep,
+                                       TITLE + MSG_FAIL + result.getMessage() + "; " +
+                                       FAIL_FAST + "=" + context.isFailFast() + "; " +
+                                       OPT_LAST_OUTCOME + "=false",
+                                       true);
                         }
-
-                        logger.log(testStep, "[repeat-until] " + message);
 
                         // evaluate if this is TRULY a failure, using result.failed() is not accurate
                         // if (result.failed()) {
@@ -207,6 +215,12 @@ public class CommandRepeater {
             steps.clear();
             steps = null;
         }
+    }
+
+    protected void logRepeatUntilStart(ExecutionLogger logger, TestStep testStep, int loopCount) {
+        String message = "<" + TITLE + "entering loop #" + loopCount + " ";
+        message += StringUtils.repeat("-", 78 - message.length()) + ">";
+        logger.log(testStep, "\n" + message, true);
     }
 
     protected boolean shouldFailFast(ExecutionContext context, TestStep testStep) {

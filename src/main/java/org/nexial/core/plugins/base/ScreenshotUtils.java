@@ -25,6 +25,7 @@ import javax.imageio.ImageIO;
 
 import org.apache.commons.codec.binary.Base64;
 import org.apache.commons.io.FileUtils;
+import org.apache.commons.lang3.BooleanUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.nexial.core.ExecutionThread;
 import org.nexial.core.model.ExecutionContext;
@@ -34,6 +35,7 @@ import org.openqa.selenium.TakesScreenshot;
 import org.openqa.selenium.UnhandledAlertException;
 import org.openqa.selenium.WebDriverException;
 
+import static org.nexial.core.NexialConst.Data.QUIET;
 import static org.nexial.core.NexialConst.OPT_LAST_SCREENSHOT_NAME;
 import static org.nexial.core.NexialConst.SCREENSHOT_EXT;
 import static org.openqa.selenium.OutputType.BASE64;
@@ -124,6 +126,8 @@ public class ScreenshotUtils {
 
     protected static void log(String message) {
         if (StringUtils.isBlank(message)) { return; }
+        if (BooleanUtils.toBoolean(System.getProperty(QUIET))) { return; }
+
         ExecutionContext context = ExecutionThread.get();
         if (context != null) {
             context.getLogger().log(context, message);

@@ -25,6 +25,7 @@ import java.util.Scanner;
 
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.ArrayUtils;
+import org.apache.commons.lang3.BooleanUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.tuple.ImmutablePair;
 import org.apache.commons.lang3.tuple.Pair;
@@ -38,6 +39,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.slf4j.event.Level;
 
+import static org.nexial.core.NexialConst.Data.QUIET;
 import static org.nexial.core.NexialConst.FlowControls.OPT_INSPECT_ON_PAUSE;
 import static org.nexial.core.NexialConst.FlowControls.RESUME_FROM_PAUSE;
 import static org.nexial.core.SystemVariables.getDefaultBool;
@@ -68,33 +70,29 @@ public final class ConsoleUtils {
     private ConsoleUtils() { }
 
     @SuppressWarnings("PMD.SystemPrintln")
-    public static void log(String msg) {
-        if (System.out == null) { throw new RuntimeException("System.out is null!"); }
-        System.out.println(DateUtility.getCurrentTimeForLogging() + " >> " + msg);
-        logAs(INFO, msg);
-    }
-
-    @SuppressWarnings("PMD.SystemPrintln")
-    public static void error(String msg) {
-        if (System.err == null) { throw new RuntimeException("System.err is null!"); }
-        System.err.println(DateUtility.getCurrentTimeForLogging() + " >> " + msg);
-        logAs(ERROR, msg);
-    }
+    public static void log(String msg) { log(null, msg); }
 
     @SuppressWarnings("PMD.SystemPrintln")
     public static void log(String id, String msg) {
-        assert StringUtils.isNotBlank(id);
         if (System.out == null) { throw new RuntimeException("System.out is null!"); }
-        System.out.println(DateUtility.getCurrentTimeForLogging() + " >> [" + id + "] " + msg);
-        logAs(INFO, "[" + id + "] " + msg);
+
+        String label = StringUtils.isNotBlank(id) ? "[" + id + "] " : "";
+        if (!BooleanUtils.toBoolean(System.getProperty(QUIET))) {
+            System.out.println(DateUtility.getCurrentTimeForLogging() + " >> " + label + msg);
+        }
+        logAs(INFO, label + msg);
     }
 
     @SuppressWarnings("PMD.SystemPrintln")
+    public static void error(String msg) { error(null, msg); }
+
+    @SuppressWarnings("PMD.SystemPrintln")
     public static void error(String id, String msg) {
-        assert StringUtils.isNotBlank(id);
         if (System.err == null) { throw new RuntimeException("System.err is null!"); }
-        System.err.println(DateUtility.getCurrentTimeForLogging() + " >> [" + id + "] " + msg);
-        logAs(ERROR, "[" + id + "] " + msg);
+
+        String label = StringUtils.isNotBlank(id) ? "[" + id + "] " : "";
+        System.err.println(DateUtility.getCurrentTimeForLogging() + " >> " + label + msg);
+        logAs(ERROR, label + msg);
     }
 
     @SuppressWarnings("PMD.SystemPrintln")

@@ -35,31 +35,39 @@ public class ExecutionLogger {
     private ExecutionContext context;
     private String runId;
     private Logger logger = LoggerFactory.getLogger(this.getClass());
+    private Logger priorityLogger = LoggerFactory.getLogger(this.getClass().getName() + "-priority");
 
     public ExecutionLogger(ExecutionContext context) {
         this.context = context;
         this.runId = context.getRunId();
     }
 
-    public void log(NexialCommand subject, String message) {
+    public void log(NexialCommand subject, String message) { log(subject, message, false); }
+
+    public void log(NexialCommand subject, String message, boolean priority) {
         TestStep testStep = context.getCurrentTestStep();
         if (testStep != null) {
             // test step undefined could mean that we are in interactive mode, or we are running unit testing
-            log(toHeader(testStep), message);
+            log(toHeader(testStep), message, priority);
             testStep.addNestedMessage(message);
             if (subject instanceof CanLogExternally) { ((CanLogExternally) subject).logExternally(testStep, message); }
         } else {
-            log(runId, message);
+            log(runId, message, priority);
         }
     }
 
-    public void log(TestStep testStep, String message) { log(toHeader(testStep), message);}
+    public void log(TestStep testStep, String message) { log(testStep, message, false);}
 
-    public void log(TestCase subject, String message) { log(toHeader(subject), message); }
+    public void log(TestStep testStep, String message, boolean priority) { log(toHeader(testStep), message, priority);}
 
-    public void log(TestScenario subject, String message) { log(toHeader(subject), message); }
+    // force logging when quiet mode is active
+    public void log(TestCase subject, String message) { log(toHeader(subject), message, true); }
 
-    public void log(ExecutionContext subject, String message) { log(toHeader(subject), message); }
+    // force logging when quiet mode is active
+    public void log(TestScenario subject, String message) { log(toHeader(subject), message, true); }
+
+    // force logging when quiet mode is active
+    public void log(ExecutionContext subject, String message) { log(toHeader(subject), message, true); }
 
     public void error(NexialCommand subject, String message) { error(subject, message, null); }
 
@@ -114,16 +122,21 @@ public class ExecutionLogger {
 
     public static String justFileName(File file) { return StringUtils.substringBeforeLast(file.getName(), "."); }
 
-    private void log(String header, String message) { logger.info(header + " - " + message); }
+    private void log(String header, String message, boolean priority) {
+        if (priority) {
+            priorityLogger.info(header + " - " + message);
+        } else {
+            logger.info(header + " - " + message);
+        }
+    }
 
     private void error(String header, String message) { error(header, message, null); }
 
     private void error(String header, String message, Throwable e) {
-        // Logger logger = LoggerFactory.getLogger(header);
         if (e == null) {
-            logger.error(header + " - " + message);
+            priorityLogger.error(header + " - " + message);
         } else {
-            logger.error(header + " - " + message, e);
+            priorityLogger.error(header + " - " + message, e);
         }
     }
 }

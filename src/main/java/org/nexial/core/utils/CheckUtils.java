@@ -40,7 +40,8 @@ public class CheckUtils {
     }
 
     public static void fail(String message) {
-        ConsoleUtils.error(message);
+        // use `.log()` to comply with quiet mode when activated
+        ConsoleUtils.log(message);
         throw new AssertionError(message);
     }
 

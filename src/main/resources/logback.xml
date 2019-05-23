@@ -310,7 +310,15 @@
         <!--<appender-ref ref="console-execution"/>-->
         <appender-ref ref="file-testexecution"/>
     </logger>
+    <logger name="org.nexial.core.utils.FlowControlUtils" additivity="false" level="INFO">
+        <appender-ref ref="console-execution"/>
+        <appender-ref ref="file-testexecution"/>
+    </logger>
     <logger name="org.nexial.core.utils.ExecutionLogger" additivity="false" level="INFO">
+        <appender-ref ref="console-execution"/>
+        <appender-ref ref="file-testexecution"/>
+    </logger>
+    <logger name="org.nexial.core.utils.ExecutionLogger-priority" additivity="false" level="INFO">
         <appender-ref ref="console-execution"/>
         <appender-ref ref="file-testexecution"/>
     </logger>

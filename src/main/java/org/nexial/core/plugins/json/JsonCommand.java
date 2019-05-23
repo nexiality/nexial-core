@@ -102,7 +102,7 @@ public class JsonCommand extends BaseCommand {
     public StepResult assertElementNotPresent(String json, String jsonpath) {
         String match = find(json, jsonpath);
         boolean isMatched = match != null;
-        String message = "JSON " + (isMatched ? "matches " : " DOES NOT matches ") + jsonpath;
+        String message = "JSON " + (isMatched ? "matches " : " DOES NOT match ") + jsonpath;
         return new StepResult(!isMatched, message, null);
     }
 

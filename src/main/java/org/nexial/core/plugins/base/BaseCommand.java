@@ -594,7 +594,8 @@ public class BaseCommand implements NexialCommand {
             error("crypto found; no data variable expansion");
         }
 
-        log(text);
+        // with priority so that this log will not be silenced
+        context.getLogger().log(this, text, true);
         return StepResult.success(text);
     }
 
@@ -920,11 +921,7 @@ public class BaseCommand implements NexialCommand {
     }
 
     protected void assertTrue(String message, boolean condition) {
-        if (!condition) {
-            CheckUtils.fail(message);
-            // } else {
-            //     log(MSG_PASS + message);
-        }
+        if (!condition) { CheckUtils.fail(message); }
     }
 
     /** Asserts that two objects are not the same (compares using .equals()) */
