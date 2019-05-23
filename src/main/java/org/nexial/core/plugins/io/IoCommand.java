@@ -572,14 +572,14 @@ public class IoCommand extends BaseCommand {
      * {@code encodedSource} maybe a file or just text. {@code decodedTarget} is assumed as fully qualified file path.
      * This method will create the necessary (and missing) parent directories of {@code decodedTarget}.
      */
-    public StepResult writeBase64decode(String encodedSource, String decodedTarget) throws IOException {
+    public StepResult writeBase64decode(String encodedSource, String decodedTarget, String append) throws IOException {
         requiresReadableFile(encodedSource);
         requiresNotBlank(decodedTarget, "invalid decoded target", decodedTarget);
 
-        String encoded = OutputFileUtils.resolveContent(encodedSource, context, false);
-        byte[] decoded = Base64.getDecoder().decode(encoded);
-        File target = FileUtil.writeBinaryFile(decodedTarget, false, decoded);
-        return StepResult.success("File content BASE64 decoded and saved to '" + target + "'");
+        boolean shouldAppend = BooleanUtils.toBoolean(append);
+        byte[] decoded = TextUtils.base64decodeAsBytes(OutputFileUtils.resolveContent(encodedSource, context, false));
+        File target = FileUtil.writeBinaryFile(decodedTarget, shouldAppend, decoded);
+        return StepResult.success("Content BASE64 decoded and saved to '" + target + "'");
     }
 
     public static String formatPercent(double number) { return PERCENT_FORMAT.format(number); }
@@ -594,7 +594,7 @@ public class IoCommand extends BaseCommand {
         boolean isAppend = BooleanUtils.toBoolean(append);
         File output = new File(file);
         if (output.isDirectory()) {
-            return StepResult.fail("'" + file + "' is EXPECTED as file, but found directory instead.");
+            return StepResult.fail("'" + file + "' is EXPECTED as file, but resolved to a directory instead.");
         }
 
         try {
