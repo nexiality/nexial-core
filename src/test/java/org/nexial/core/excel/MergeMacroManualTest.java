@@ -45,7 +45,7 @@ import org.nexial.core.utils.InputFileUtils;
 import static java.io.File.separator;
 import static org.apache.poi.ss.usermodel.CellType.STRING;
 import static org.apache.poi.ss.usermodel.Row.MissingCellPolicy.CREATE_NULL_AS_BLANK;
-import static org.nexial.core.NexialConst.Data.CMD_MACRO;
+import static org.nexial.core.CommandConst.CMD_MACRO;
 import static org.nexial.core.excel.ExcelConfig.*;
 
 public class MergeMacroManualTest {

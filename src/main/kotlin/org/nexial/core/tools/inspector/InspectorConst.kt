@@ -21,7 +21,6 @@ import com.google.gson.GsonBuilder
 import java.nio.charset.Charset
 import java.text.DateFormat
 import java.text.SimpleDateFormat
-import java.util.*
 
 object InspectorConst {
     val GSON: Gson = GsonBuilder().setLenient().setPrettyPrinting().excludeFieldsWithoutExposeAnnotation().create()
@@ -30,12 +29,6 @@ object InspectorConst {
 
 //    const val PROJECT_ID = ".meta/project.id"
     const val LOCAL_HTML_RESOURCE = "/org/nexial/core/reports/project-inspector-local.html"
-    const val MACRO_DESCRIPTION = "macro.description()"
-    const val MACRO_EXPECTS = "macro.expects(var,default)"
-    const val MACRO_PRODUCES = "macro.produces(var,value)"
-    val MACRO_CMDS: MutableList<String> = Arrays.asList(MACRO_DESCRIPTION, MACRO_EXPECTS, MACRO_PRODUCES)
-
-    val MULTI_VARS_CMDS = mapOf("base.clear(vars)" to 0)
 
     object ReturnCode {
         const val MISSING_DIRECTORY = -2

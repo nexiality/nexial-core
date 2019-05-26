@@ -18,6 +18,10 @@ package org.nexial.core.tools.inspector
 
 import org.apache.commons.collections4.CollectionUtils
 import org.apache.commons.lang3.StringUtils
+import org.nexial.core.CommandConst.MACRO_CMDS
+import org.nexial.core.CommandConst.MACRO_DESCRIPTION
+import org.nexial.core.CommandConst.MACRO_EXPECTS
+import org.nexial.core.CommandConst.MACRO_PRODUCES
 import org.nexial.core.NexialConst.Data.SHEET_SYSTEM
 import org.nexial.core.NexialConst.Project.SCRIPT_FILE_SUFFIX
 import org.nexial.core.excel.Excel
@@ -25,10 +29,6 @@ import org.nexial.core.excel.ExcelAddress
 import org.nexial.core.excel.ExcelConfig.*
 import org.nexial.core.tools.ProjectToolUtils.isMacroFile
 import org.nexial.core.tools.inspector.ArtifactType.MACRO
-import org.nexial.core.tools.inspector.InspectorConst.MACRO_CMDS
-import org.nexial.core.tools.inspector.InspectorConst.MACRO_DESCRIPTION
-import org.nexial.core.tools.inspector.InspectorConst.MACRO_EXPECTS
-import org.nexial.core.tools.inspector.InspectorConst.MACRO_PRODUCES
 import org.nexial.core.tools.inspector.ProjectInspector.filterFiles
 import org.nexial.core.tools.inspector.ProjectInspector.resolveRelativePath
 import org.nexial.core.utils.InputFileUtils

@@ -28,7 +28,7 @@ import org.nexial.core.excel.ExcelConfig;
 import org.nexial.core.utils.ExecutionLogger;
 import org.nexial.core.utils.TrackTimeLogs;
 
-import static org.nexial.core.NexialConst.Data.CMD_SECTION;
+import static org.nexial.core.CommandConst.CMD_SECTION;
 import static org.nexial.core.model.ExecutionSummary.ExecutionLevel.ACTIVITY;
 
 /**

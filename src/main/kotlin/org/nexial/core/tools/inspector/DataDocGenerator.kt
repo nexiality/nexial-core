@@ -25,6 +25,7 @@ import org.nexial.commons.utils.FileUtil
 import org.nexial.commons.utils.RegexUtils
 import org.nexial.commons.utils.ResourceUtils
 import org.nexial.commons.utils.TextUtils
+import org.nexial.core.CommandConst.MULTI_VARS_CMDS
 import org.nexial.core.NexialConst.*
 import org.nexial.core.NexialConst.Data.SHEET_DEFAULT_DATA
 import org.nexial.core.NexialConst.Data.SHEET_SYSTEM
@@ -44,7 +45,6 @@ import org.nexial.core.tools.inspector.DataVariableLocationType.Companion.Defaul
 import org.nexial.core.tools.inspector.DataVariableLocationType.Companion.ProjectProperties
 import org.nexial.core.tools.inspector.DataVariableLocationType.Companion.ScenarioDataSheet
 import org.nexial.core.tools.inspector.DataVariableLocationType.Companion.StepOverride
-import org.nexial.core.tools.inspector.InspectorConst.MULTI_VARS_CMDS
 import org.nexial.core.tools.inspector.ProjectInspector.filterFiles
 import org.nexial.core.tools.inspector.ProjectInspector.getMessage
 import org.nexial.core.tools.inspector.ProjectInspector.resolveRelativePath

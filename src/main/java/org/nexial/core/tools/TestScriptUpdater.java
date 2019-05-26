@@ -22,7 +22,6 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
-import java.util.Map;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
@@ -51,10 +50,11 @@ import org.nexial.core.utils.InputFileUtils;
 import org.slf4j.MDC;
 
 import static java.io.File.separator;
+import static org.nexial.core.CommandConst.*;
 import static org.nexial.core.NexialConst.Data.SHEET_SYSTEM;
 import static org.nexial.core.NexialConst.ExitStatus.RC_BAD_CLI_ARGS;
-import static org.nexial.core.NexialConst.Project.COMMAND_JSON_FILE_NAME;
 import static org.nexial.core.NexialConst.MSG_SCRIPT_UPDATE_ERR;
+import static org.nexial.core.NexialConst.Project.COMMAND_JSON_FILE_NAME;
 import static org.nexial.core.excel.ExcelConfig.*;
 import static org.nexial.core.plugins.base.BaseCommand.PARAM_AUTO_FILL_COMMANDS;
 import static org.nexial.core.tools.CliConst.OPT_VERBOSE;
@@ -68,18 +68,6 @@ import static org.nexial.core.tools.CommandDiscovery.GSON;
  * @see CommandMetaGenerator
  */
 public class TestScriptUpdater {
-    private static final List<String> NON_MACRO_COMMANDS = Arrays.asList("macro(file,sheet,name)");
-    private static final Map<String, String> REPLACED_COMMANDS = TextUtils.toMap(
-        "=",
-        "number.assertBetween(num,lower,upper)=number.assertBetween(num,min,max)",
-        "desktop.scanTable(var,name)=desktop.useTable(var,name)",
-        "desktop.getRowCount(var)=desktop.saveRowCount(var)");
-    private static final Map<String, String> COMMAND_SUGGESTIONS = TextUtils.toMap(
-        "=",
-        "desktop.useTable(var,name)=This command is deprecated and will soon be removed. Consider using desktop » editTableCells(row,nameValues) instead",
-        "desktop.editCurrentRow(nameValues)=This command is deprecated and will soon be removed. Consider using desktop » editTableCells(row,nameValues) instead",
-        "web.scrollLeft(locator,pixel)=This command is deprecated and will soon be removed. Consider using web » scrollElement(locator,xOffset,yOffset) instead",
-        "web.scrollRight(locator,pixel)=This command is deprecated and will soon be removed. Consider using web » scrollElement(locator,xOffset,yOffset) instead");
     private static final Options cmdOptions = new Options();
 
     private boolean verbose;
@@ -331,7 +319,7 @@ public class TestScriptUpdater {
                 List<String> macroCommandList = new ArrayList<>(commandList);
                 for (int j = 0; j < macroCommandList.size(); j++) {
                     String command = macroCommandList.get(j);
-                    if (NON_MACRO_COMMANDS.contains(command)) {
+                    if (getNON_MACRO_COMMANDS().contains(command)) {
                         macroCommandList.remove(command);
                         j--;
                     }
@@ -412,9 +400,9 @@ public class TestScriptUpdater {
                 String targetCommand = target + "." + command;
 
                 // check for auto-substitution
-                if (REPLACED_COMMANDS.containsKey(targetCommand)) {
+                if (getREPLACED_COMMANDS().containsKey(targetCommand)) {
                     // found old command, let's replace it with new one
-                    String newCommand = REPLACED_COMMANDS.get(targetCommand);
+                    String newCommand = getREPLACED_COMMANDS().get(targetCommand);
                     if (cellTarget != null) {
                         cellTarget.setCellValue(StringUtils.substringBefore(newCommand, "."));
                     }
@@ -433,8 +421,8 @@ public class TestScriptUpdater {
                 // todo: desktop.get*** --> desktop.save***
 
                 // check for warning/suggest
-                if (COMMAND_SUGGESTIONS.containsKey(targetCommand)) {
-                    String suggestion = COMMAND_SUGGESTIONS.get(targetCommand);
+                if (getCOMMAND_SUGGESTIONS().containsKey(targetCommand)) {
+                    String suggestion = getCOMMAND_SUGGESTIONS().get(targetCommand);
                     System.err.println("\t!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!");
                     System.err.println("\tRow " + rowIndex + ": " + target + " » " + command);
                     System.err.println("\t" + suggestion);

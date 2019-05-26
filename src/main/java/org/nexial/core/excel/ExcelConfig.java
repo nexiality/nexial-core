@@ -232,6 +232,10 @@ public class ExcelConfig {
     public static final int COL_IDX_MERGE_RESULT_START = COL_IDX_PARAMS_START;
     public static final int COL_IDX_MERGE_RESULT_END = COL_IDX_PARAMS_END;
 
+    //testData
+    public static final ExcelAddress ADDR_FIRST_DATA_COL = new ExcelAddress("A1");
+
+    // extract
     public static final ExcelAddress ADDR_COMMAND_START = new ExcelAddress("C5:D5");
     public static final ExcelAddress ADDR_PARAMS_START = new ExcelAddress("E5:I5");
     public static final String FIRST_STEP_ROW = "" + COL_TEST_CASE + (ADDR_COMMAND_START.getRowStartIndex() + 1);
@@ -328,6 +332,7 @@ public class ExcelConfig {
         public static final StyleConfig LINK = newLinkStyle();
         public static final StyleConfig TARGET = newTargetStyle();
         public static final StyleConfig COMMAND = newCommandStyle();
+        public static final StyleConfig STRIKEOUT_COMMAND = newDisabledCommandStyle();
         public static final StyleConfig PARAM = newParamStyle();
         public static final StyleConfig TAINTED_PARAM = newTaintedParamStyle();
         public static final StyleConfig MSG = newMsgStyle();
@@ -370,6 +375,7 @@ public class ExcelConfig {
         private byte underlineStyle = 0;
         private VerticalAlignment verticalAlignment;
         private boolean wrapText;
+        private boolean strikeOut;
         private boolean useSpecialTopAndDoubleBottomBorder;
 
         public XSSFColor getBackgroundColor() { return backgroundColor; }
@@ -401,6 +407,8 @@ public class ExcelConfig {
         public VerticalAlignment getVerticalAlignment() { return verticalAlignment; }
 
         public boolean isWrapText() { return wrapText; }
+
+        public boolean isStrikeOut() { return strikeOut; }
 
         public boolean isUseSpecialTopAndDoubleBottomBorder() { return useSpecialTopAndDoubleBottomBorder; }
 
@@ -482,6 +490,13 @@ public class ExcelConfig {
             config.fontHeight = FONT_HEIGHT_DEFAULT;
             config.fontColor = new XSSFColor(new Color(18, 40, 74));
             config.verticalAlignment = CENTER;
+            return config;
+        }
+
+        private static StyleConfig newDisabledCommandStyle() {
+            StyleConfig config = newCommandStyle();
+            config.fontColor = new XSSFColor(new Color(5, 5, 5));
+            config.strikeOut = true;
             return config;
         }
 
@@ -980,6 +995,7 @@ public class ExcelConfig {
                 font.setBold(config.isBoldFont());
                 font.setItalic(config.isItalicFont());
                 font.setUnderline(config.getUnderlineStyle());
+                font.setStrikeout(config.isStrikeOut());
                 style.setFont(font);
             }
 

@@ -37,7 +37,7 @@ import org.nexial.core.excel.ExcelArea;
 import org.nexial.core.utils.ConsoleUtils;
 import org.nexial.core.utils.ExecutionLogger;
 
-import static org.nexial.core.NexialConst.Data.CMD_REPEAT_UNTIL;
+import static org.nexial.core.CommandConst.CMD_REPEAT_UNTIL;
 import static org.nexial.core.excel.ExcelConfig.*;
 import static org.nexial.core.model.ExecutionSummary.ExecutionLevel.SCENARIO;
 

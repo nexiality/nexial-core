@@ -23,7 +23,9 @@ import org.apache.commons.lang3.StringUtils
 import org.apache.commons.lang3.SystemUtils.IS_OS_WINDOWS
 import org.apache.poi.xssf.usermodel.XSSFWorkbook
 import org.nexial.commons.utils.TextUtils
-import org.nexial.core.NexialConst.Data.*
+import org.nexial.core.CommandConst.CMD_MACRO
+import org.nexial.core.NexialConst.Data.SHEET_SYSTEM
+import org.nexial.core.NexialConst.Data.TEXT_DELIM
 import org.nexial.core.NexialConst.ExitStatus.RC_BAD_CLI_ARGS
 import org.nexial.core.NexialConst.ExitStatus.RC_EXCEL_IN_USE
 import org.nexial.core.NexialConst.Project.*

@@ -35,6 +35,7 @@ object ProjectToolUtils {
     private const val column2Width = 20
     private const val column3Width = 11
     const val column4LeftMargin = column1Width + column2Width + column3Width
+    const val column3LeftMargin = column1Width + column2Width
 
     @JvmField
     val beforeAfterArrow = "\n" + StringUtils.repeat(" ", column1Width + column2Width + column3Width - 3) + "=> "
@@ -53,7 +54,16 @@ object ProjectToolUtils {
     fun isMacroFile(file: File) = isTestScriptFile(file)
 
     @JvmStatic
+    fun isMacro(file: File) = isTestScriptFile(file) && InputFileUtils.isValidMacro(file.absolutePath)
+
+    @JvmStatic
     fun isDataFile(file: File) = isValidTestArtifact(file) && file.name.endsWith(DEF_DATAFILE_SUFFIX)
+
+    @JvmStatic
+    fun isData(file: File) = isDataFile(file) && InputFileUtils.isValidDataFile(file.absolutePath)
+
+    @JvmStatic
+    fun isPlan(file: File) = isTestScriptFile(file) && InputFileUtils.isValidPlanFile(file.absolutePath)
 
     @JvmStatic
     @NotNull
@@ -85,6 +95,20 @@ object ProjectToolUtils {
         "${StringUtils.abbreviate(StringUtils.rightPad(worksheet ?: "", column2Width - 1), column2Width - 1)} " +
         "[${StringUtils.rightPad(position, column3Width - 3)}] " +
         updatingVars
+
+    @JvmStatic
+    fun formatColumns(file: String, processTime: String, newFile: String) =
+        "${StringUtils.rightPad(abbreviate(file, column1Width), column1Width)} " +
+        "${StringUtils.leftPad(processTime, column2Width - 7)} " +
+        abbreviate(newFile, column3LeftMargin)
+
+    @JvmStatic
+    fun abbreviate(text: String, maxWidth: Int): String{
+        val length = text.length
+        if(length <= maxWidth) { return text }
+        val startIndex = length - maxWidth + 3
+        return "...${StringUtils.substring(text, startIndex, length)}"
+    }
 
     @JvmStatic
     fun reformatLines(before: String, after: String, leftMargin: Int): String {

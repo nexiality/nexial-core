@@ -39,9 +39,9 @@ import org.nexial.core.utils.ExecutionLogger;
 
 import static org.apache.poi.ss.usermodel.CellType.STRING;
 import static org.apache.poi.ss.usermodel.Row.MissingCellPolicy.CREATE_NULL_AS_BLANK;
-import static org.nexial.core.NexialConst.Data.CMD_VERBOSE;
+import static org.nexial.core.CommandConst.CMD_VERBOSE;
+import static org.nexial.core.CommandConst.getMERGE_OUTPUTS;
 import static org.nexial.core.NexialConst.Data.SHEET_MERGED_DATA;
-import static org.nexial.core.NexialConst.MERGE_OUTPUTS;
 import static org.nexial.core.excel.ExcelConfig.*;
 import static org.nexial.core.excel.ExcelConfig.StyleConfig.*;
 
@@ -208,7 +208,7 @@ public final class ExecutionResultHelper {
             XSSFCell cellCommand = row.getCell(COL_IDX_COMMAND);
             String command = StringUtils.defaultIfBlank(Excel.getCellValue(cellTarget), "") + "." +
                              StringUtils.defaultIfBlank(Excel.getCellValue(cellCommand), "");
-            if (MERGE_OUTPUTS.contains(command)) { mergeOutput(worksheet, excelSheet, row, i); }
+            if (getMERGE_OUTPUTS().contains(command)) { mergeOutput(worksheet, excelSheet, row, i); }
         }
     }
 

@@ -34,6 +34,7 @@ import org.nexial.core.utils.FlowControlUtils;
 import org.nexial.core.utils.TrackTimeLogs;
 
 import static org.apache.commons.lang3.builder.ToStringStyle.SIMPLE_STYLE;
+import static org.nexial.core.CommandConst.CMD_SECTION;
 import static org.nexial.core.NexialConst.Data.*;
 import static org.nexial.core.NexialConst.FlowControls.OPT_PAUSE_ON_ERROR;
 import static org.nexial.core.NexialConst.OPT_LAST_OUTCOME;

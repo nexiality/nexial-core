@@ -169,8 +169,16 @@ public class ExecutionInputPrep {
         return isCellStrikeOut(row, COL_IDX_COMMAND, "test step");
     }
 
+    public static boolean isTestStepDisabled(XSSFCell cell) {
+        return cell.getColumnIndex() == COL_IDX_COMMAND && isCellStrikeOut(cell, "test step");
+    }
+
     public static boolean isMacroStepDisabled(List<XSSFCell> row) {
         return isCellStrikeOut(row, COL_IDX_COMMAND, "macro step");
+    }
+
+    public static boolean isMacroStepDisabled(XSSFCell cell) {
+        return cell.getColumnIndex() == COL_IDX_COMMAND && isCellStrikeOut(cell, "macro step");
     }
 
     public static boolean isPlanStepDisabled(List<XSSFCell> row) {
@@ -179,6 +187,10 @@ public class ExecutionInputPrep {
 
     public static boolean isPlanStepDisabled(XSSFRow row) {
         return isCellStrikeOut(row.getCell(COL_IDX_PLAN_TEST_SCRIPT), "plan step");
+    }
+
+    public static boolean isPlanStepDisabled(XSSFCell cell) {
+        return cell.getColumnIndex() == COL_IDX_PLAN_TEST_SCRIPT && isCellStrikeOut(cell, "plan step");
     }
 
     protected static boolean isCellStrikeOut(List<XSSFCell> row, int cellIndex, String stepName) {

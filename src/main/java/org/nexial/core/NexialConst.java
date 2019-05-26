@@ -306,7 +306,6 @@ public final class NexialConst {
                                                 "([\\w]+)(\\" + TOKEN_PARAM_SEP + "(.+)+)*";
     public static final String TOKEN_TEMP_DELIM = "~!@1I4n3x@!~";
     public static final String REGEX_VALID_WEB_PROTOCOL = "(http|https|ftp|file|about)\\:.+";
-    public static final List<String> MERGE_OUTPUTS = Arrays.asList(".", CMD_VERBOSE);
     public static final int MAX_VERBOSE_CHAR = 2000;
 
     // predefined messages
@@ -941,12 +940,6 @@ public final class NexialConst {
         public static final String SHEET_MERGED_DATA = "#data";
         public static final String SHEET_DEFAULT_DATA = "#default";
         public static final boolean DEF_OPEN_EXCEL_AS_DUP = IS_OS_WINDOWS;
-
-        // common commands
-        public static final String CMD_VERBOSE = "base.verbose(text)";
-        public static final String CMD_MACRO = "base.macro(file,sheet,name)";
-        public static final String CMD_REPEAT_UNTIL = "base.repeatUntil(steps,maxWaitMs)";
-        public static final String CMD_SECTION = "base.section(steps)";
 
         // step
         public static final String STEP_RESPONSE = NAMESPACE + "step.response";

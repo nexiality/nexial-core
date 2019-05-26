@@ -48,6 +48,8 @@ import org.openqa.selenium.WebDriverException;
 import static java.lang.System.lineSeparator;
 import static org.apache.commons.lang3.builder.ToStringStyle.SIMPLE_STYLE;
 import static org.nexial.commons.utils.EnvUtils.platformSpecificEOL;
+import static org.nexial.core.CommandConst.CMD_REPEAT_UNTIL;
+import static org.nexial.core.CommandConst.CMD_VERBOSE;
 import static org.nexial.core.NexialConst.*;
 import static org.nexial.core.NexialConst.Data.*;
 import static org.nexial.core.SystemVariables.getDefaultBool;
