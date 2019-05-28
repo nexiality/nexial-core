@@ -27,7 +27,7 @@ import org.nexial.core.NexialConst.DF_TIMESTAMP
 import org.nexial.core.excel.Excel
 import org.nexial.core.excel.ExcelConfig.StyleConfig.STRIKEOUT_COMMAND
 import org.nexial.core.excel.ExcelConfig.StyleDecorator
-import org.nexial.core.tools.ProjectToolUtils
+import org.nexial.core.tools.ProjectToolUtils.log
 import org.nexial.core.tools.repairExcel.RepairArtifact.RepairArtifactLog
 import org.nexial.core.tools.repairExcel.RepairExcels.ArtifactType
 import org.nexial.core.tools.repairExcel.RepairExcels.ArtifactType.*
@@ -51,14 +51,12 @@ object ExcelUtils {
      * @return [RepairArtifactLog]
      * */
     fun copyExcel(file: File, targetFile: File, previewLocation: String?, fileType: ArtifactType): RepairArtifactLog? {
-        if (searchFrom == null) {
-            throw IOException("Search directory is not readable or accessible: Unable to proceed")
-        }
+        if (searchFrom == null) throw IOException("Search directory is not readable or accessible: Unable to proceed")
 
-        ProjectToolUtils.log("processing", file)
+        log("processing", file)
         val srcExcel = Excel.asXlsxExcel(file.absolutePath, true, false)
         if (srcExcel == null) {
-            ProjectToolUtils.log("processed (no valid source file)", file)
+            log("processed (no valid source file)", file)
             return null
         }
 
@@ -66,7 +64,7 @@ object ExcelUtils {
         // empty sheets will be ignored
         val sourceSheets = retrieveValidSheet(srcExcel, fileType)
         if (CollectionUtils.isEmpty(sourceSheets)) {
-            ProjectToolUtils.log("processed (no valid sheets)", file)
+            log("processed (no valid sheets)", file)
             return null
         }
 
@@ -74,12 +72,11 @@ object ExcelUtils {
         val targetWorkbook = targetExcel.workbook
         val excelAddress = fileType.excelAddress
         try {
-            for (sourceSheet in sourceSheets) {
-                val lastDataRow = sourceSheet.findLastDataRow(excelAddress)
-                copySheet(sourceSheet.sheet, targetWorkbook, lastDataRow, fileType)
+            sourceSheets.forEach { sheet ->
+                copySheet(sheet.sheet, targetWorkbook, sheet.findLastDataRow(excelAddress), fileType)
             }
         } catch (e: Exception) {
-            ProjectToolUtils.log("Unable to proceed repair file ${file.absolutePath} further due to ${e.message}")
+            log("Unable to proceed repair file ${file.absolutePath} further due to ${e.message}")
         } finally {
             // delete temporary sheet
             targetWorkbook.removeSheetAt(targetWorkbook.getSheetIndex(TEMP_SHEET_NAME))
@@ -96,8 +93,10 @@ object ExcelUtils {
      * @param fileType [ArtifactType] type of excel being copied
      * @return sheet to which data is copied
      * */
-    private fun copySheet(sourceSheet: XSSFSheet, targetWorkbook: XSSFWorkbook,
-                          lastDataRow: Int, fileType: ArtifactType): XSSFSheet? {
+    private fun copySheet(sourceSheet: XSSFSheet,
+                          targetWorkbook: XSSFWorkbook,
+                          lastDataRow: Int,
+                          fileType: ArtifactType): XSSFSheet? {
         val sheetName = sourceSheet.sheetName
         val tempSheetIndex = targetWorkbook.getSheetIndex(TEMP_SHEET_NAME)
         val targetSheet = targetWorkbook.cloneSheet(tempSheetIndex, sheetName)
@@ -109,9 +108,7 @@ object ExcelUtils {
                 // remove rows from data sheets if system variable is read only.
                 // Also update variable name if any
                 if (fileType == DATA && RepairExcels.removeDataVars(sourceRow)) continue
-
-                val destRow = getRow(targetSheet, destRowIndex)
-                copyRow(sourceRow, destRow, fileType)
+                copyRow(sourceRow, getRow(targetSheet, destRowIndex), fileType)
             }
             destRowIndex++
         }
@@ -120,7 +117,7 @@ object ExcelUtils {
 
     /**
      * @param sourceRow [XSSFRow] to copy from source sheet
-     * @param newRow [XSSFRow] new row in the target sheet where source row to be coopied
+     * @param newRow [XSSFRow] new row in the target sheet where source row to be copied
      * @param fileType [ArtifactType] type of file. By default it is [DATA]
      */
     fun copyRow(sourceRow: XSSFRow, newRow: XSSFRow, fileType: ArtifactType = DATA) {
@@ -132,25 +129,27 @@ object ExcelUtils {
 
             // If the old cell is null jump to next cell with new cell as empty
             if (oldCell == null) {
-                newCell = null
+                // newCell = null
                 continue
             } else {
-                newCell = newCell ?: newRow.createCell(columnIndex)
+                if (newCell == null) newCell = newRow.createCell(columnIndex)
             }
 
-            val oldCellType = oldCell.cellTypeEnum
             // set cell value
-            when (oldCellType) {
+            when (oldCell.cellTypeEnum) {
                 BLANK   -> newCell = null
                 FORMULA -> newCell.cellFormula = oldCell.cellFormula
+
                 NUMERIC -> {
                     oldCell.setCellType(STRING)
                     newCell.setCellValue(oldCell.stringCellValue)
                 }
+
                 BOOLEAN -> {
                     oldCell.setCellType(STRING)
                     newCell.setCellValue(oldCell.stringCellValue)
                 }
+
                 else    -> newCell.setCellValue(oldCell.stringCellValue)
             }
 
@@ -187,7 +186,7 @@ object ExcelUtils {
             action = "processed (changed)"
             Excel.save(file, targetWorkbook)
         }
-        ProjectToolUtils.log(action, file)
+        log(action, file)
         return RepairArtifactLog(file, 0, destFile)
     }
 
