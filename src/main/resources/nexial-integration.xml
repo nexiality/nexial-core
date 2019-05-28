@@ -97,7 +97,7 @@
     <bean id="htmlTemplateEngine" class="org.thymeleaf.TemplateEngine" lazy-init="true">
         <property name="templateResolver">
             <bean class="org.thymeleaf.templateresolver.ClassLoaderTemplateResolver"
-                  p:templateMode="HTML5" p:suffix=".html" p:prefix="org/nexial/core/reports/"/>
+                  p:templateMode="HTML" p:suffix=".html" p:prefix="org/nexial/core/reports/"/>
         </property>
     </bean>
 

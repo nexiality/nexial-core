@@ -17,9 +17,7 @@
 
 package org.nexial.core.service
 
-import org.nexial.core.service.ServiceUtils.Companion
 import org.springframework.http.HttpStatus
-
 
 data class ServiceRequestError(val timestamp: Long = System.currentTimeMillis(),
                                val status: HttpStatus? = null,

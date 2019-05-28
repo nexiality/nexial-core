@@ -25,19 +25,15 @@ import org.nexial.core.utils.ConsoleUtils;
 import org.nexial.core.variable.Expression.ExpressionFunction;
 
 public class ExpressionProcessor {
-    private ExecutionContext context;
     private ExpressionParser parser;
 
     // support mock test and ioc
     public ExpressionProcessor() { }
 
-    public ExpressionProcessor(ExecutionContext context) {
-        this.context = context;
-        this.parser = new ExpressionParser(context);
-    }
+    public ExpressionProcessor(ExecutionContext context) { this.parser = new ExpressionParser(context); }
 
     public String process(String text) throws ExpressionException {
-        // in case `text` contains expression that contains escaped "close eangled bracket" as operation parameter
+        // in case `text` contains expression that contains escaped "close angled bracket" as operation parameter
         // text = StringUtils.replace(text, "\\]", ExpressionConst.ALT_CLOSE_ANGLED_BRACKET);
 
         Expression expr = parser.parse(text);
@@ -50,12 +46,12 @@ public class ExpressionProcessor {
             if (data == null) { return text; }
         }
 
-        String stringified = data.stringify();
-        if (stringified == null) {
+        String asString = data.stringify();
+        if (asString == null) {
             if (StringUtils.equals(text, expr.getOriginalExpression())) { return null; }
-            stringified = "";
+            asString = "";
         }
-        text = StringUtils.replace(text, expr.getOriginalExpression(), stringified);
+        text = StringUtils.replace(text, expr.getOriginalExpression(), asString);
         return parser.getTypeBuilder().isValidType(text) ? process(text) : text;
     }
 

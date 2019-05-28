@@ -43,7 +43,6 @@ import com.univocity.parsers.csv.CsvParserSettings;
 import static org.nexial.core.plugins.io.IoCommand.CompareMode.FAIL_FAST;
 import static org.nexial.core.plugins.io.IoCommand.CompareMode.THOROUGH;
 import static org.nexial.core.utils.CheckUtils.*;
-import static org.nexial.core.variable.CsvTransformer.DEF_MAX_COLUMNS;
 
 public class CsvCommand extends IoCommand {
     private ExcelHelper excelHelper;
@@ -234,7 +233,7 @@ public class CsvCommand extends IoCommand {
             settings.setDelimiterDetectionEnabled(true);
         }
 
-        if (maxColumns > DEF_MAX_COLUMNS) { settings.setMaxColumns(maxColumns); }
+        if (maxColumns > 0) { settings.setMaxColumns(maxColumns); }
         return settings;
     }
 

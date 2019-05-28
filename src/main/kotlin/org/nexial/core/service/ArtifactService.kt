@@ -100,7 +100,7 @@ open class ArtifactService {
     }
 
     private fun toRequest(payload: JsonObject): ArtifactRequest {
-        if (logger.isDebugEnabled) logger.debug("payload received: " + payload)
+        if (logger.isDebugEnabled) logger.debug("payload received: $payload")
         if (payload.isJsonNull || payload.size() == 0) throw NullPointerException("empty payload")
 
         val request = ServiceUtils.fromJson(payload,

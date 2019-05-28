@@ -112,21 +112,7 @@ public final class URLEncodingUtils {
         }
     }
 
-    public static String encodeAuth(String plain) {
-        try {
-            return UriUtils.encodeUserInfo(plain, DEF_CHAR_ENCODING);
-        } catch (UnsupportedEncodingException e) {
-            System.err.println("Unable to encode: " + e.getMessage());
-            return plain;
-        }
-    }
+    public static String encodeAuth(String plain) { return UriUtils.encodeUserInfo(plain, DEF_CHAR_ENCODING); }
 
-    public static String decodeAuth(String encoded) {
-        try {
-            return UriUtils.decode(encoded, DEF_CHAR_ENCODING);
-        } catch (UnsupportedEncodingException e) {
-            System.err.println("Unable to decode: " + e.getMessage());
-            return encoded;
-        }
-    }
+    public static String decodeAuth(String encoded) { return UriUtils.decode(encoded, DEF_CHAR_ENCODING); }
 }

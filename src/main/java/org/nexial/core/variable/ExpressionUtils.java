@@ -18,11 +18,16 @@
 package org.nexial.core.variable;
 
 import java.io.IOException;
+import java.util.ArrayList;import java.util.Collection;
+import java.util.List;
 
+import org.apache.commons.lang3.ArrayUtils;
+import org.apache.commons.lang3.ObjectUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.nexial.core.ExecutionThread;
 import org.nexial.core.model.ExecutionContext;
 import org.nexial.core.utils.CheckUtils;
+import org.nexial.core.utils.ConsoleUtils;
 import org.nexial.core.utils.OutputFileUtils;
 
 import static org.nexial.core.NexialConst.Data.OPT_EXPRESSION_READ_FILE_AS_IS;
@@ -65,6 +70,29 @@ public class ExpressionUtils {
         // but simply a variable name (without ${...})
         Object expressionSnapshot = context.getObjectData(value);
         if (expressionSnapshot == null) { return null; }
+
+        // special rule for [LIST(...) => ...] to support array, list, collection data types
+        if (dataType == ListDataType.class) {
+            Class expressionSnapshotClass = expressionSnapshot.getClass();
+            if (Collection.class.isAssignableFrom(expressionSnapshotClass)) {
+                ConsoleUtils.log("converting COLLECTION data variable to LIST expression");
+                Collection collection = (Collection) expressionSnapshot;
+                List<String> list = new ArrayList<>();
+                collection.forEach(item -> list.add(ObjectUtils.defaultIfNull(item, "") + ""));
+                return (T) new ListDataType(list.toArray(new String[list.size()]));
+
+            } else if (expressionSnapshotClass.isArray()) {
+                ConsoleUtils.log("converting ARRAY data variable to LIST expression");
+                int length = ArrayUtils.getLength(expressionSnapshot);
+                String[] array = new String[length];
+                for (int i = 0; i < length; i++) {
+                    array[i] = ObjectUtils.defaultIfNull(java.lang.reflect.Array.get(expressionSnapshot, i), "") + "";
+                }
+
+                return (T) new ListDataType(array);
+            }
+        }
+
         if (!dataType.isAssignableFrom(expressionSnapshot.getClass())) { return null; }
 
         // return a copy, not the actual.  That way, changes made to this instance won't taint the original in context

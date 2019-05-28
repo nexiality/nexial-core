@@ -558,7 +558,7 @@ public class BaseCommand implements NexialCommand {
     public StepResult assertVarPresent(String var) {
         requiresValidVariableName(var);
         boolean found = context.hasData(var);
-        return new StepResult(found, "Variable '" + var + "' " + (found ? "" : "DOES NOT") + " exist", null);
+        return new StepResult(found, "Variable '" + var + "' " + (found ? "" : "DOES NOT ") + "exist", null);
     }
 
     public StepResult assertVarNotPresent(String var) {

@@ -191,6 +191,10 @@ public final class NexialConst {
     public static final String CSV_FIELD_DEIM = ",";
     public static final String IMPORT_BUFFER_SIZE = registerSystemVariable(NAMESPACE + "rdbms.importBufferSize", 100);
 
+    // csv | [CSV(...) => ...]
+    public static final String CSV_MAX_COLUMNS = registerSystemVariable(NAMESPACE + "csv.maxColumns", 512);
+    public static final String CSV_MAX_COLUMN_WIDTH = registerSystemVariable(NAMESPACE + "csv.maxColumnWidth", 4096);
+
     // ws
     public static final String WS_NAMESPACE = NAMESPACE + "ws.";
     public static final String WS_CONN_TIMEOUT = registerSystemVariable(WS_NAMESPACE + "connectionTimeout", 5 * 60 * 1000);
@@ -715,6 +719,7 @@ public final class NexialConst {
                                                  "-" + OVERRIDE + " name=value declarations. Note that variable name " +
                                                  "or value with spaces must be enclosed in double quotes.");
             cmdOptions.addOption(INTERACTIVE, false, "[optional] Run Nexial in Interactive Mode.");
+            // cmdOptions.addOption(READY, false, "[optional] Run Nexial Ready. This option deactivates other options");
             return cmdOptions;
         }
     }

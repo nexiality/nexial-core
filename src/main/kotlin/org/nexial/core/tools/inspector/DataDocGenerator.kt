@@ -16,6 +16,8 @@
 
 package org.nexial.core.tools.inspector
 
+import com.google.gson.JsonArray
+import com.google.gson.JsonObject
 import org.apache.commons.collections4.CollectionUtils
 import org.apache.commons.collections4.IterableUtils
 import org.apache.commons.io.FileUtils
@@ -37,7 +39,6 @@ import org.nexial.core.excel.ExcelConfig.*
 import org.nexial.core.excel.ext.CipherHelper.CRYPT_IND
 import org.nexial.core.tools.ProjectToolUtils.isDataFile
 import org.nexial.core.tools.ProjectToolUtils.isTestScript
-import org.nexial.core.tools.VarCommandGenerator.retriveVarCmds
 import org.nexial.core.tools.inspector.ArtifactType.ACTIVITY
 import org.nexial.core.tools.inspector.ArtifactType.SCRIPT
 import org.nexial.core.tools.inspector.DataVariableLocationType.Companion.CommandLineOverride
@@ -212,10 +213,9 @@ class DataDocGenerator(val options: InspectorOptions, val logger: InspectorLogge
     private fun scanScriptFiles(dataVariables: DataVariableEntity) {
         val projectHome = File(options.directory)
 
-        val varCmds = retriveVarCmds()
-
-        if (varCmds == null) {
-            System.err.println("Unable to retrieve var commands: $MSG_CHECK_SUPPORT")
+        val varCommands = retrieveVarCommands()
+        if (varCommands == null) {
+            System.err.println("Unable to retrieve command variable metadata. $MSG_CHECK_SUPPORT")
             return
         }
 
@@ -284,8 +284,8 @@ class DataDocGenerator(val options: InspectorOptions, val logger: InspectorLogge
                             }
 
                             val commandFqn = "$cmdType.$command"
-                            if (varCmds.containsKey(commandFqn)) {
-                                val varIndices = varCmds.getValue(commandFqn)
+                            if (varCommands.containsKey(commandFqn)) {
+                                val varIndices = varCommands.getValue(commandFqn)
                                 varIndices.forEach {
                                     val dv = DataVariableAtom(name = Excel.getCellValue(row[4 + it]),
                                                               definedAs = commandFqn,
@@ -393,8 +393,25 @@ class DataDocGenerator(val options: InspectorOptions, val logger: InspectorLogge
         }
     }
 
+    private fun retrieveVarCommands(): MutableMap<String, IntArray>? {
+        val varCmdFile = ResourceUtils.loadResource("/$VAR_CMD_JSON") ?: return null
+
+        val varCommands = mutableMapOf<String, IntArray>()
+        val json = GSON.fromJson(varCmdFile, JsonObject::class.java)
+        // json.keySet().forEach { command ->
+        //     val array = json[command] as JsonArray
+        //     val intArray = IntArray(array.count())
+        //     for (i in 0 until array.count()) intArray[i] = array[i].asInt
+        //     varCommands.putIfAbsent(command, intArray)
+        // }
+        json.keySet().forEach {
+            varCommands.putIfAbsent(it, (json[it] as JsonArray).map { num -> num.asInt }.toIntArray())
+        }
+        return varCommands
+    }
+
     private fun isDefinedInDataSheet(locationTypes: List<DataVariableLocationType>) =
-            locationTypes.contains(DefaultDataSheet) || locationTypes.contains(ScenarioDataSheet)
+        locationTypes.contains(DefaultDataSheet) || locationTypes.contains(ScenarioDataSheet)
 
     private fun handleCommandlineOverrides(dataVariables: DataVariableEntity,
                                            overrides: String,

@@ -49,7 +49,7 @@ public class ExecutionHtmlManualTest {
 
     private void testThymeleaf(ExecutionSummary summary) throws Exception {
         ClassLoaderTemplateResolver templateResolver = new ClassLoaderTemplateResolver();
-        templateResolver.setTemplateMode("HTML5");
+        templateResolver.setTemplateMode("HTML");
         templateResolver.setSuffix(".html");
         templateResolver.setPrefix("org/nexial/core/reports/");
 

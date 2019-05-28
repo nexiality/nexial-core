@@ -51,12 +51,11 @@ import com.univocity.parsers.common.record.Record;
 
 import static java.lang.System.lineSeparator;
 import static org.nexial.core.NexialConst.*;
+import static org.nexial.core.SystemVariables.getDefaultInt;
 import static org.nexial.core.model.NexialFilterComparator.Equal;
 import static org.nexial.core.variable.ExpressionUtils.fixControlChars;
 
 public class CsvTransformer<T extends CsvDataType> extends Transformer {
-    public static final int DEF_MAX_COLUMNS = 512;
-
     private static final Map<String, Integer> FUNCTION_TO_PARAM = discoverFunctions(CsvTransformer.class);
     private static final Map<String, Method> FUNCTIONS =
         toFunctionMap(FUNCTION_TO_PARAM, CsvTransformer.class, CsvDataType.class);
@@ -75,6 +74,8 @@ public class CsvTransformer<T extends CsvDataType> extends Transformer {
 
     public T parse(T data, String... configs) {
         if (ArrayUtils.isNotEmpty(configs)) {
+            ExecutionContext context = ExecutionThread.get();
+
             String config = TextUtils.toString(configs, PAIR_DELIM, null, null);
             // escape pipe and comma
             config = StringUtils.replace(config, "\\" + PAIR_DELIM, FILTER_TEMP_DELIM1);
@@ -97,10 +98,23 @@ public class CsvTransformer<T extends CsvDataType> extends Transformer {
             if (configMap.containsKey("indexOn")) {
                 data.addIndices(Array.toArray(fixControlChars(configMap.get("indexOn")), "\\,"));
             }
+
+            // 512 is the default
+            int maxColumns = context.getIntData(CSV_MAX_COLUMNS, getDefaultInt(CSV_MAX_COLUMNS));
             if (configMap.containsKey("maxColumns")) {
-                // 512 is the default
-                data.setMaxColumns(NumberUtils.toInt(configMap.get("maxColumns"), DEF_MAX_COLUMNS));
+                data.setMaxColumns(NumberUtils.toInt(configMap.get("maxColumns"), maxColumns));
+            } else {
+                data.setMaxColumns(maxColumns);
             }
+
+            // 4096 is the default width
+            int maxColumnWidth = context.getIntData(CSV_MAX_COLUMN_WIDTH, getDefaultInt(CSV_MAX_COLUMN_WIDTH));
+            if (configMap.containsKey("maxColumnWidth")) {
+                data.setMaxColumnWidth(NumberUtils.toInt(configMap.get("maxColumnWidth"), maxColumnWidth));
+            } else {
+                data.setMaxColumnWidth(maxColumnWidth);
+            }
+
             if (configMap.containsKey("trim")) { data.setTrimValue(BooleanUtils.toBoolean(configMap.get("trim"))); }
         }
 

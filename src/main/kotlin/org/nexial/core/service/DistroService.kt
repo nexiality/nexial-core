@@ -106,7 +106,7 @@ open class DistroService {
         val distroVersion = StringUtils.substringBeforeLast(distroFilename, ".")
 
         val wsCommand = WsCommand()
-        wsCommand.init(ServiceLauncher.context())
+        wsCommand.init(ReadyLauncher.context())
 
         val saveTo = StringUtils.appendIfMissing(targetDir, separator) + distroFilename
         outcome.info += "downloading $distroUrl to $saveTo"
@@ -141,7 +141,7 @@ open class DistroService {
                                    "mv -fR ../nexial-core ../.archive/\n" +
                                    "mv nexial-core ../\n" +
                                    "cd ../nexial-core/bin\n" +
-                                   "./nexial.sh -listen 38291 -listenCode catepillar\n" +
+                                   "./nexial.sh -ready\n" +
                                    "rm -fR $targetDir"
         val installer = File(StringUtils.appendIfMissing(targetDir, separator) + "install.sh")
         FileUtils.write(installer, batchContent, DEF_FILE_ENCODING)

@@ -23,9 +23,14 @@ import java.util.*
  * Command constants
  */
 object CommandConst {
+
     // repair artifact constants
     val DEPRECATED_VARS: MutableList<String> = Arrays.asList("nexial.scope.executionMode",
                                                              "nexial.safari.cleanSession")
+    val UPDATED_VARS = mapOf(
+        "nexial.highlight" to "nexial.web.highlight",
+        "nexial.highlightWaitMs" to "nexial.web.highlight.waitMs")
+
     val READ_ONLY_VARS: MutableList<String> =
         Arrays.asList("nexial.runID", "nexial.iterationEnded", "nexial.scope.currentIteration",
                       "nexial.scope.lastIteration", "nexial.scope.isLastIteration",
@@ -34,14 +39,13 @@ object CommandConst {
                       "java.home", "java.io.tmpdir", "java.version", "line.separator",
                       "os.arch", "os.name", "os.version", "user.country", "user.dir",
                       "user.home", "user.language", "user.name", "user.timezone")
-    val UPDATED_VARS = mapOf(
-        "nexial.highlight" to "nexial.web.highlight",
-        "nexial.highlightWaitMs" to "nexial.web.highlight.waitMs")
 
     // common commands
     const val CMD_VERBOSE = "base.verbose(text)"
+
     @JvmStatic
     val MERGE_OUTPUTS: MutableList<String> = Arrays.asList(".", CMD_VERBOSE)
+
     const val CMD_MACRO = "base.macro(file,sheet,name)"
     const val CMD_REPEAT_UNTIL = "base.repeatUntil(steps,maxWaitMs)"
     const val CMD_SECTION = "base.section(steps)"

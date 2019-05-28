@@ -17,8 +17,10 @@
 
 package org.nexial.core.service
 
+import com.google.gson.Gson
 import com.google.gson.GsonBuilder
 import com.google.gson.JsonObject
+import com.google.gson.internal.bind.DateTypeAdapter
 import org.apache.commons.lang3.ArrayUtils
 import org.apache.commons.lang3.exception.ExceptionUtils
 import org.json.JSONObject
@@ -27,10 +29,11 @@ import org.springframework.http.HttpStatus
 sealed class ServiceUtils {
 
     companion object {
-        private val gson = GsonBuilder().setPrettyPrinting()
+        val gson: Gson = GsonBuilder().setPrettyPrinting()
             .disableHtmlEscaping()
             .disableInnerClassSerialization()
             .setLenient()
+            .registerTypeAdapterFactory(DateTypeAdapter.FACTORY)
             .create()
 
         fun toJson(obj: Any): String = gson.toJson(obj)
@@ -57,5 +60,3 @@ sealed class ServiceUtils {
                                 debugMessage = ArrayUtils.toString(ExceptionUtils.getRootCauseStackTrace(ex))))
     }
 }
-
-data class SuccessResponse(val timestamp: Long = System.currentTimeMillis(), val message: String)

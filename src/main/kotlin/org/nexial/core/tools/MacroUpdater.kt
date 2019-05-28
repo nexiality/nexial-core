@@ -59,29 +59,26 @@ import javax.validation.constraints.NotNull
 object MacroUpdater {
     private val updated = mutableListOf<UpdateLog>()
     private val project = TestProject()
-    private var searchFrom = ""
-    private var isDryRun = false
+    private var verbose = false
 
-    data class MacroOptions(val macroFile: String, val macroSheet: String, val macroMap: MutableMap<String, String>)
+    data class MacroChange(val fromFile: String, val toFile: String,
+                           val fromSheet: String, val toSheet: String,
+                           val fromName: String, val toName: String)
+
+    data class MacroUpdaterOptions(val searchFrom: String,
+                                   val changes: List<MacroChange>,
+                                   val preview: Boolean = false,
+                                   val verbose: Boolean = false)
 
     @JvmStatic
     fun main(args: Array<String>) {
         val options = deriveMacroOptions(deriveCommandLine(args))
-        resolveProjectMeta()
+        verbose = options.verbose
+        resolveProjectMeta(options)
         updateAll(options)
-    }
-
-    private fun resolveProjectMeta() {
-        project.projectHome = StringUtils.substringBeforeLast(searchFrom, "artifact")
-        project.scriptPath = StringUtils.appendIfMissing(project.projectHome, separator) + DEF_REL_LOC_TEST_SCRIPT
-    }
-
-    private fun updateAll(options: MacroOptions) {
-        replaceMacro(options)
-        replaceScript(options)
 
         val banner = StringUtils.repeat('-', 100)
-        val prompt = if (isDryRun) " macro name update preview" else " macro name update summary"
+        val prompt = if (options.preview) "macro update preview" else "macro update summary"
 
         println()
         println()
@@ -91,11 +88,22 @@ object MacroUpdater {
         if (updated.size == 0) {
             println(ConsoleUtils.centerPrompt("There are no matching data variables in the files.", 102))
         } else {
-            println(formatColumns("file", "worksheet", "position", "updatingMacros"))
+            println(formatColumns("File", "Worksheet", "Position", "Updating Macros"))
             println("$banner--")
             updated.forEach { println(it) }
             println()
         }
+    }
+
+    fun resolveProjectMeta(option: MacroUpdaterOptions) {
+        project.projectHome = StringUtils.substringBeforeLast(option.searchFrom, DEF_LOC_ARTIFACT)
+        project.scriptPath = StringUtils.appendIfMissing(project.projectHome, separator) + DEF_REL_LOC_TEST_SCRIPT
+    }
+
+    fun updateAll(options: MacroUpdaterOptions): List<UpdateLog> {
+        replaceMacro(options)
+        replaceScript(options)
+        return updated
     }
 
     private fun deriveCommandLine(args: Array<String>): CommandLine {
@@ -117,79 +125,78 @@ object MacroUpdater {
         return cmd
     }
 
-    private fun deriveMacroOptions(cmd: CommandLine): MacroOptions {
-        searchFrom = cmd.getOptionValue("t")
+    internal fun deriveMacroOptions(cmd: CommandLine): MacroUpdaterOptions {
+        val searchFrom = cmd.getOptionValue("t")
         if (StringUtils.isBlank(searchFrom)) {
             ConsoleUtils.error("Missing target parameter")
             exit(MISSING_DIRECTORY)
         }
 
-        if (cmd.hasOption("p")) {
-            isDryRun = true
-        }
-
-        var macroFileName = cmd.getOptionValue("f")
+        var macroFileName = StringUtils.trim(cmd.getOptionValue("f"))
         if (StringUtils.isBlank(macroFileName)) {
             ConsoleUtils.error("Missing 'Macro File' parameter")
             exit(MISSING_OUTPUT)
         }
         macroFileName = StringUtils.appendIfMissing(macroFileName, ".$SCRIPT_FILE_SUFFIX")
 
-        val macroSheet = cmd.getOptionValue("s")
+        val macroSheet = StringUtils.trim(cmd.getOptionValue("s"))
         if (StringUtils.isBlank(macroSheet)) {
             ConsoleUtils.error("Missing 'Macro Sheet' parameter")
             exit(MISSING_OUTPUT)
         }
 
-        val macroName = cmd.getOptionValue("m")
+        val macroName = StringUtils.trim(cmd.getOptionValue("m"))
         if (StringUtils.isBlank(macroName)) {
             ConsoleUtils.error("Missing 'Macro Name' parameter")
             exit(MISSING_OUTPUT)
         }
 
-        val toMap = TextUtils.toMap(macroName, getDefault(TEXT_DELIM), "=")
+        val map = TextUtils.toMap(macroName, getDefault(TEXT_DELIM), "=")
+        val options: List<MacroChange> = if (map.isEmpty()) {
+            listOf()
+        } else {
+            map.filter { it.key.isNotBlank() }.map {
+                MacroChange(fromFile = macroFileName, toFile = macroFileName,
+                            fromSheet = macroSheet, toSheet = macroSheet,
+                            fromName = it.key.trim(), toName = it.value.trim())
+            }
+        }
 
-//        println("target macro file:  $macroFileName")
-//        println("target macro sheet: $macroSheet")
-//        println("target macro names: $toMap")
-
-        return MacroOptions(macroFileName, macroSheet, toMap)
+        return MacroUpdaterOptions(searchFrom = searchFrom,
+                                   changes = options,
+                                   preview = cmd.hasOption(OPT_PREVIEW.opt),
+                                   verbose = cmd.hasOption(OPT_VERBOSE.opt))
     }
 
-    private fun replaceScript(options: MacroOptions) =
-            listTestScripts(File(searchFrom)).forEach { handleScripts(it, options) }
+    private fun replaceScript(options: MacroUpdaterOptions) =
+        listTestScripts(File(options.searchFrom)).forEach { handleScripts(it, options) }
 
-    private fun handleScripts(file: File, options: MacroOptions) {
+    private fun handleScripts(file: File, options: MacroUpdaterOptions) {
         val excel = Excel(file)
         var hasUpdate = false
         val worksheets = excel.getWorksheetsStartWith("")
-        log("processing", file)
+        verbose("processing", file)
 
         if (CollectionUtils.isEmpty(worksheets)) {
-            log("processed (no valid sheets)", file)
+            verbose("processed (no valid sheets)", file)
             return
         }
 
-        worksheets.forEach {
-            val filePath = StringUtils.substringAfter(file.absolutePath, DEF_REL_LOC_ARTIFACT)
-            val updateLog = UpdateLog(filePath, it.name)
-            if (updateScenario(it, options, updateLog)) hasUpdate = true
-        }
+        val filePath = StringUtils.substringAfter(file.absolutePath, DEF_REL_LOC_ARTIFACT)
+        worksheets.forEach { if (updateScenario(it, options, UpdateLog(filePath, it.name))) hasUpdate = true }
 
         if (!hasUpdate) {
-            log("processed (no change)", file)
+            verbose("processed (no change)", file)
             return
         }
 
         saveExcel(file, excel.workbook)
-        log("processed", file)
+        verbose("processed", file)
     }
 
-    private fun updateScenario(sheet: Worksheet, options: MacroOptions, updateLog: UpdateLog): Boolean {
+    private fun updateScenario(sheet: Worksheet, options: MacroUpdaterOptions, updateLog: UpdateLog): Boolean {
         var hasUpdate = false
         if (sheet.name == SHEET_SYSTEM) return hasUpdate
-
-        val expectedMacroFile = MacroMerger.resolveMacroFile(project, options.macroFile)
 
         val lastCommandRow = sheet.findLastDataRow(ADDR_COMMAND_START)
         val firstRow = "" + COL_TEST_CASE + (ADDR_COMMAND_START.rowStartIndex + 1)
@@ -204,24 +211,28 @@ object MacroUpdater {
                 val macroSheet = Excel.getCellValue(row[COL_IDX_PARAMS_START + 1])
                 val macroName = Excel.getCellValue(macroCell)
 
-                try {
-                    val macroFilePath = MacroMerger.resolveMacroFile(project, macroFile).absolutePath
-                    if (StringUtils.equals(macroFilePath, expectedMacroFile.absolutePath) &&
-                        macroSheet == options.macroSheet &&
-                        options.macroMap.containsKey(macroName)) {
-                        updateLog.position = macroCell.address.formatAsString()
-                        updateLog.before = macroName
-                        updateLog.after = "${options.macroMap[macroName]}"
-                        updated.add(updateLog)
+                val matched = options.changes.find { change ->
+                    return MacroMerger.resolveMacroFile(project, change.fromFile).absolutePath ==
+                           MacroMerger.resolveMacroFile(project, macroFile).absolutePath &&
+                           macroSheet == change.fromSheet &&
+                           macroName == change.fromName
+                }
 
-                        // don't set value to preview changes
-                        if (isDryRun) continue
+                if (matched != null) {
+                    val log = updateLog.copy()
+                    log.position = macroCell.address.formatAsString()
+                    log.before = macroName
+                    log.after = matched.toName
+                    updated.add(log)
 
-                        macroCell.setCellValue(options.macroMap[macroName])
-                        hasUpdate = true
-                    }
-                } catch (e: IOException) {
-                    log("processing ${sheet.name}", "Invalid reference for macro file - $macroFile")
+                    verbose("macro reference matched", "${sheet.file} / ${sheet.name} / ${log.position}")
+
+                    // don't set value to preview changes
+                    if (options.preview) continue
+
+                    // we only deal with macro name for now
+                    macroCell.setCellValue(log.after)
+                    hasUpdate = true
                 }
             }
         }
@@ -229,35 +240,42 @@ object MacroUpdater {
         return hasUpdate
     }
 
-    private fun replaceMacro(options: MacroOptions) {
-        val macroFile = MacroMerger.resolveMacroFile(project, options.macroFile)
-        FileUtils.listFiles(File(searchFrom), Array(1) { SCRIPT_FILE_SUFFIX }, true).stream()
-            .filter { file ->
-                isTestScriptFile(file) &&
-                file.absolutePath == macroFile.absolutePath &&
-                InputFileUtils.isValidMacro(file.absolutePath)
-            }.forEach { handleMacro(it, options) }
+    private fun replaceMacro(options: MacroUpdaterOptions) {
+        FileUtils.listFiles(File(options.searchFrom), Array(1) { SCRIPT_FILE_SUFFIX }, true)
+            .stream()
+            .filter { isTestScriptFile(it) && InputFileUtils.isValidMacro(it.absolutePath) }
+            .forEach { handleMacro(it, options) }
     }
 
-    private fun handleMacro(file: File, options: MacroOptions) {
-        log("processing macro", file)
+    private fun handleMacro(file: File, options: MacroUpdaterOptions) {
+
+        val macroFilePath = file.absolutePath
         val excel = Excel(file)
-        val worksheet = excel.worksheet(options.macroSheet) ?: return
-
         val filePath = StringUtils.substringAfter(file.absolutePath, DEF_REL_LOC_ARTIFACT)
-        val updateLog = UpdateLog(filePath, worksheet.name)
+        var updated = false
 
-        val hasUpdate = updateMacro(worksheet, options.macroMap, updateLog)
-        if (!hasUpdate) {
-            log("processed (no change)", file)
-            return
+        options.changes.forEach { change ->
+            if (MacroMerger.resolveMacroFile(project, change.fromFile).absolutePath == macroFilePath) {
+                val worksheet = excel.worksheet(change.fromSheet)
+                if (worksheet != null) {
+                    verbose("processing macro", file)
+
+                    val hasUpdate = updateMacro(worksheet, change, UpdateLog(filePath, worksheet.name), options.preview)
+                    if (!hasUpdate) {
+                        verbose("processed (no change)", file)
+                    } else {
+                        verbose("updated macro", file)
+                        updated = true
+                    }
+                }
+            }
         }
 
-        saveExcel(file, excel.workbook)
-        log("processed macro", file)
+        if (updated) saveExcel(file, excel.workbook)
+        verbose("processed macro", file)
     }
 
-    private fun updateMacro(sheet: Worksheet, toMap: MutableMap<String, String>, updateLog: UpdateLog): Boolean {
+    private fun updateMacro(sheet: Worksheet, change: MacroChange, updateLog: UpdateLog, preview: Boolean): Boolean {
         var hasUpdate = false
         val lastCommandRow = sheet.findLastDataRow(ADDR_MACRO_COMMAND_START)
         val firstRow = "" + COL_TEST_CASE + (ADDR_MACRO_COMMAND_START.rowStartIndex + 1)
@@ -268,16 +286,18 @@ object MacroUpdater {
         for (row in area.wholeArea) {
             val cell = row[COL_IDX_TESTCASE]
             val macro = Excel.getCellValue(cell)
-            if (toMap.containsKey(macro)) {
-                updateLog.position = cell.address.formatAsString()
-                updateLog.before = macro
-                updateLog.after = toMap[macro] ?: ""
-                updated.add(updateLog)
+            if (change.fromName == macro) {
+                val log = updateLog.copy()
+                log.position = cell.address.formatAsString()
+                log.before = change.fromName
+                log.after = change.toName
+                updated.add(log)
 
-                // don't set value to preview changes
-                if (isDryRun) continue
+                verbose("macro definition matched", "${sheet.file} / ${sheet.name} / ${log.position}")
 
-                cell.setCellValue(toMap[macro])
+                if (preview) continue
+
+                cell.setCellValue(change.toName)
                 hasUpdate = true
             }
         }
@@ -299,5 +319,9 @@ object MacroUpdater {
                 System.err.println("Unable to properly close Excel file $file: ${e.message}")
             }
         }
+    }
+
+    private fun verbose(action: String, subject: Any) {
+        if (verbose) log(action, subject)
     }
 }

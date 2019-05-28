@@ -111,9 +111,7 @@ class ExpressionParser {
             text = StringUtils.replace(text, subst.getValue(), StringUtils.removeStart(subst.getKey(), "\\"));
         }
 
-        if (StringUtils.equals(text, BLANK)) { return " "; }
-        if (StringUtils.equals(text, EMPTY)) { return ""; }
-        if (StringUtils.equals(text, TAB)) { return "\t"; }
+        if (NON_DISPLAYABLE_REPLACEMENTS.containsKey(text)) { return NON_DISPLAYABLE_REPLACEMENTS.get(text); }
         if (StringUtils.equals(text, NULL)) { return null; }
         return text;
     }

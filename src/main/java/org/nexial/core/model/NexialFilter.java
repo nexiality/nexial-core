@@ -30,6 +30,7 @@ import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.math.NumberUtils;
 import org.apache.commons.lang3.tuple.ImmutablePair;
 import org.apache.commons.lang3.tuple.Pair;
+import org.nexial.commons.utils.FileUtil;
 import org.nexial.commons.utils.RegexUtils;
 import org.nexial.commons.utils.TextUtils;
 import org.nexial.commons.utils.TextUtils.ListItemConverter;
@@ -206,6 +207,19 @@ public class NexialFilter implements Serializable {
                 result = !context.hasData(subject);
                 break;
 
+            case ReadableFile:
+                if (!NumberUtils.isCreatable(expected)) {
+                    ConsoleUtils.error(msgPrefix + "NOT A NUMBER: " + expected);
+                    return false;
+                }
+
+                result = FileUtil.isFileReadable(actual, NumberUtils.toLong(expected));
+                break;
+
+            case ReadablePath:
+                result = FileUtil.isDirectoryReadable(actual);
+                break;
+
             default: {
                 ConsoleUtils.error("Unsupported comparison: " + comparator.getSymbol());
                 result = false;
@@ -308,6 +322,15 @@ public class NexialFilter implements Serializable {
 
             case HasLengthOf:
                 return StringUtils.length(data) == toDouble(controls);
+
+            case ReadableFile:
+                if (!NumberUtils.isCreatable(controls)) {
+                    throw new IllegalArgumentException("NOT A NUMBER: " + controls);
+                }
+                return FileUtil.isFileReadable(data, NumberUtils.toLong(controls));
+
+            case ReadablePath:
+                return FileUtil.isDirectoryReadable(data);
 
             default:
                 throw new IllegalArgumentException("Invalid/unknown comparator: " + comparator.getSymbol());

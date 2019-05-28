@@ -774,23 +774,8 @@ public class ExecutionContext {
                 continue;
             }
 
-            if (value.equals(EMPTY)) {
-                text = StringUtils.replace(text, tokenized, "");
-                continue;
-            }
-
-            if (value.equals(BLANK)) {
-                text = StringUtils.replace(text, tokenized, " ");
-                continue;
-            }
-
-            if (value.equals(TAB)) {
-                text = StringUtils.replace(text, tokenized, "\t");
-                continue;
-            }
-
-            if (value.equals(NL)) {
-                text = StringUtils.replace(text, tokenized, "\t");
+            if (NON_DISPLAYABLE_REPLACEMENTS.containsKey(value.toString())) {
+                text = StringUtils.replace(text, tokenized, NON_DISPLAYABLE_REPLACEMENTS.get(value.toString()));
                 continue;
             }
 

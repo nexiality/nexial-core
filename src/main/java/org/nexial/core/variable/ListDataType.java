@@ -32,6 +32,11 @@ public class ListDataType extends ExpressionDataType<String[]> {
 
     public ListDataType(String textValue) throws TypeConversionException { super(textValue); }
 
+    public ListDataType(String[] value) {
+        this.value = value;
+        this.textValue = Array.toString(value);
+    }
+
     protected ListDataType() { super(); }
 
     public ListDataType(String textValue, String delim) {

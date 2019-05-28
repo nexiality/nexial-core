@@ -159,8 +159,7 @@ public class TestScriptUpdater {
                     excel.getWorksheetsStartWith("").forEach(worksheet -> {
                         if (!StringUtils.equals(worksheet.getName(), SHEET_SYSTEM)) {
                             XSSFSheet sheet = worksheet.getSheet();
-                            System.out.println("\t[" + worksheet.getName() + "] " +
-                                               "setting starting position as A5 and reset zoom to 100%");
+                            // System.out.println("\t[" + worksheet.getName() + "] setting starting position as A5 and reset zoom to 100%");
                             sheet.setActiveCell(new CellAddress("A5"));
                             sheet.setZoom(100);
                         }
@@ -278,7 +277,7 @@ public class TestScriptUpdater {
         plan.setColumnValues(ADD_PLAN_HEADER_FEATURE_AND_TEST,
                              Arrays.asList(PLAN_HEADER_FEATURE_OVERRIDE, PLAN_HEADER_TESTREF_OVERRIDE));
 
-        System.out.println("\t[" + sheetName + "] setting starting position as A5 and reset zoom to 100%");
+        // System.out.println("\t[" + sheetName + "] setting starting position as A5 and reset zoom to 100%");
         sheet.setActiveCell(new CellAddress("A5"));
         sheet.setZoom(100);
         return true;

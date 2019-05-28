@@ -32,6 +32,8 @@ import org.apache.commons.lang3.ArrayUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.math.NumberUtils;
 import org.nexial.commons.utils.TextUtils;
+import org.nexial.core.ExecutionThread;
+import org.nexial.core.model.ExecutionContext;
 import org.nexial.core.plugins.io.CsvCommand;
 import org.nexial.core.utils.ConsoleUtils;
 
@@ -41,6 +43,9 @@ import com.univocity.parsers.csv.CsvParser;
 import com.univocity.parsers.csv.CsvParserSettings;
 
 import static java.lang.System.lineSeparator;
+import static org.nexial.core.NexialConst.CSV_MAX_COLUMNS;
+import static org.nexial.core.NexialConst.CSV_MAX_COLUMN_WIDTH;
+import static org.nexial.core.SystemVariables.getDefaultInt;
 
 public class CsvDataType extends ExpressionDataType<List<Record>> {
     private CsvTransformer transformer = new CsvTransformer();
@@ -50,6 +55,7 @@ public class CsvDataType extends ExpressionDataType<List<Record>> {
     private boolean header = true;
     private boolean trimValue = true;
     private int maxColumns;
+    private int maxColumnWidth;
     private CsvParser parser;
     private List<String> headers;
     private int columnCount;
@@ -136,6 +142,10 @@ public class CsvDataType extends ExpressionDataType<List<Record>> {
 
     public void setMaxColumns(int maxColumns) { this.maxColumns = maxColumns; }
 
+    public int getMaxColumnWidth() { return maxColumnWidth;}
+
+    public void setMaxColumnWidth(int maxColumnWidth) { this.maxColumnWidth = maxColumnWidth;}
+
     public void setReadyToParse(boolean readyToParse) { this.readyToParse = readyToParse; }
 
     public void reset(List<Record> records) {
@@ -163,6 +173,7 @@ public class CsvDataType extends ExpressionDataType<List<Record>> {
         snapshot.recordDelim = recordDelim;
         snapshot.header = header;
         snapshot.maxColumns = maxColumns;
+        snapshot.maxColumnWidth = maxColumnWidth;
         snapshot.parser = parser;
         if (CollectionUtils.isNotEmpty(headers)) { snapshot.headers = new ArrayList<>(headers); }
         snapshot.rowCount = rowCount;
@@ -226,8 +237,15 @@ public class CsvDataType extends ExpressionDataType<List<Record>> {
             value = null;
         }
 
+        ExecutionContext context = ExecutionThread.get();
+        if (maxColumns == 0) { maxColumns = context.getIntData(CSV_MAX_COLUMNS, getDefaultInt(CSV_MAX_COLUMNS)); }
+        if (maxColumnWidth == 0) {
+            maxColumnWidth = context.getIntData(CSV_MAX_COLUMN_WIDTH, getDefaultInt(CSV_MAX_COLUMN_WIDTH));
+        }
+
         CsvParserSettings settings = CsvCommand.newCsvParserSettings(delim, recordDelim, header, maxColumns);
         settings.setQuoteDetectionEnabled(true);
+        settings.setMaxCharsPerColumn(maxColumnWidth);
 
         if (StringUtils.isNotEmpty(quote)) {
             settings.getFormat().setQuote(quote.charAt(0));

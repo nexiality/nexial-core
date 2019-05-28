@@ -19,8 +19,9 @@ package org.nexial.core.service
 
 import org.apache.commons.io.FileUtils
 import org.apache.commons.lang3.StringUtils
-import org.nexial.core.NexialConst
 import org.nexial.core.NexialConst.Data.THIRD_PARTY_LOG_PATH
+import org.nexial.core.NexialConst.Project
+import org.nexial.core.NexialConst.Project.NEXIAL_HOME
 import org.nexial.core.NexialConst.Project.resolveStandardPaths
 import org.nexial.core.NexialConst.SUBDIR_LOGS
 import org.nexial.core.model.ExecutionContext
@@ -34,7 +35,7 @@ import org.springframework.boot.autoconfigure.jackson.JacksonAutoConfiguration
 import org.springframework.boot.autoconfigure.jdbc.DataSourceAutoConfiguration
 import org.springframework.boot.autoconfigure.jdbc.DataSourceTransactionManagerAutoConfiguration
 import org.springframework.boot.builder.SpringApplicationBuilder
-import org.springframework.boot.web.support.SpringBootServletInitializer
+import org.springframework.boot.web.servlet.support.SpringBootServletInitializer
 import org.springframework.context.ConfigurableApplicationContext
 import org.springframework.context.annotation.Configuration
 import java.io.File
@@ -43,15 +44,12 @@ import java.util.*
 
 @SpringBootApplication(scanBasePackages = ["org.nexial.core.service"],
                        exclude = [JacksonAutoConfiguration::class, DataSourceAutoConfiguration::class, DataSourceTransactionManagerAutoConfiguration::class])
-//@EnableAutoConfiguration()
-//@ComponentScan(basePackages = ["org.nexial.core.service"])
 @Configuration
-open class ServiceLauncher : SpringBootServletInitializer() {
+class ReadyLauncher : SpringBootServletInitializer() {
 
     companion object {
-        private const val DEF_PROJECT_NAME = "nexial-services"
 
-        val args = ArrayList<String>()
+        private val args = ArrayList<String>()
         lateinit var springContext: ConfigurableApplicationContext
         lateinit var application: SpringApplication
         private lateinit var context: ExecutionContext
@@ -63,12 +61,16 @@ open class ServiceLauncher : SpringBootServletInitializer() {
         fun start(args: Array<String>) {
             Companion.args += args
 
-            // 1. create `service` project
-            val runId = ExecUtils.deriveRunId()
+            // todo: TO BE REMOVED
+            // 0. set NEXIAL_HOME
+            System.setProperty(NEXIAL_HOME, File("").absolutePath)
             val project = resolveProject()
 
+            // 1. create `service` project
+            val runId = ExecUtils.deriveRunId()
+
             // 2. register log directory and system properties
-            System.setProperty(THIRD_PARTY_LOG_PATH, NexialConst.Project.appendLog(project.outPath) + SUBDIR_LOGS)
+            System.setProperty(THIRD_PARTY_LOG_PATH, Project.appendLog(project.outPath) + SUBDIR_LOGS)
 
             // 3. new context
             val execDef = ExecutionDefinition()
@@ -77,18 +79,20 @@ open class ServiceLauncher : SpringBootServletInitializer() {
             context = ExecutionContext(execDef)
 
             // 4. start spring boot
-            val builder = SpringApplicationBuilder(ServiceLauncher::class.java)
+            val builder = SpringApplicationBuilder(ReadyLauncher::class.java)
             application = builder.application()
             springContext = builder.build().run(*args)
             springContext.registerShutdownHook()
         }
 
+        @Deprecated("to be removed soon")
         fun context() = context
 
         private fun resolveProject(): TestProject {
+            // todo need to revisit this.. do we need it still?
             var project = TestProject()
-            project.projectHome = StringUtils.appendIfMissing(File("").absoluteFile.parent, separator) +
-                                  DEF_PROJECT_NAME
+            project.projectHome =
+                    StringUtils.appendIfMissing(File("").absoluteFile.parent, separator) + "nexial-services"
             project.isStandardStructure = true
             project = resolveStandardPaths(project)
             FileUtils.forceMkdir(File(project.scriptPath))
@@ -117,8 +121,7 @@ open class ServiceLauncher : SpringBootServletInitializer() {
 
             shutdown()
 
-            val temp = args.toArray(Array(
-                    args.size, { "" }))
+            val temp = args.toArray(Array(args.size) { "" })
             args.clear()
             start(temp)
         }
@@ -132,7 +135,7 @@ open class ServiceLauncher : SpringBootServletInitializer() {
     }
 
     override fun configure(app: SpringApplicationBuilder): SpringApplicationBuilder =
-            app.sources(ServiceLauncher::class.java)
+            app.sources(ReadyLauncher::class.java)
 
 //    open fun fowardToIndex(): WebMvcAutoConfigurationAdapter {
 //
