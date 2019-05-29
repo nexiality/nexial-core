@@ -65,7 +65,7 @@ public enum NexialFilterComparator {
     Match(" match ", 1, String.class, 3.8),
     HasLengthOf(" has length of ", 1, Number.class, 3.9),
 
-    ReadableFile(" has file-size", 1, Number.class, 4.0),
+    ReadableFile(" has file-size ", 1, Number.class, 4.0),
     ReadablePath(" is readable-path", 0, Boolean.class, 4.1),
 
     TrueOrFalse(null, 0, Boolean.class, 5.0),

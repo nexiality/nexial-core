@@ -127,7 +127,7 @@ public class CommandRepeater {
                             return result;
                         } else {
                             // else failure means continue... no sweat
-                            logger.log(testStep, TITLE + "condition not met; loop proceeds");
+                            logger.log(testStep, TITLE + "condition not met (" + result.getMessage() + "); loop proceeds");
                         }
                     } else {
                         if (result.isSuccess()) {

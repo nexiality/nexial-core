@@ -24,7 +24,7 @@ import org.nexial.core.model.ExecutionSummary;
 public class HeadlessBaseTests extends ExcelBasedTests {
     @Test
     public void baseCommandTests_part1() throws Exception {
-        // ExecutionSummary executionSummary = testViaExcel("unitTest_base_part1.xlsx", "function_date");
+        // ExecutionSummary executionSummary = testViaExcel("unitTest_base_part1.xlsx", "actual_in_output2");
         ExecutionSummary executionSummary = testViaExcel("unitTest_base_part1.xlsx");
         assertPassFail(executionSummary, "base_showcase", TestOutcomeStats.allPassed());
         assertPassFail(executionSummary, "function_projectfile", TestOutcomeStats.allPassed());
@@ -32,6 +32,7 @@ public class HeadlessBaseTests extends ExcelBasedTests {
         assertPassFail(executionSummary, "function_count", TestOutcomeStats.allPassed());
         assertPassFail(executionSummary, "function_date", TestOutcomeStats.allPassed());
         assertPassFail(executionSummary, "actual_in_output", TestOutcomeStats.allPassed());
+        assertPassFail(executionSummary, "actual_in_output2", TestOutcomeStats.allPassed());
     }
 
     @Test
