@@ -238,9 +238,14 @@ public class CsvDataType extends ExpressionDataType<List<Record>> {
         }
 
         ExecutionContext context = ExecutionThread.get();
-        if (maxColumns == 0) { maxColumns = context.getIntData(CSV_MAX_COLUMNS, getDefaultInt(CSV_MAX_COLUMNS)); }
-        if (maxColumnWidth == 0) {
-            maxColumnWidth = context.getIntData(CSV_MAX_COLUMN_WIDTH, getDefaultInt(CSV_MAX_COLUMN_WIDTH));
+        if (context != null) {
+            if (maxColumns == 0) { maxColumns = context.getIntData(CSV_MAX_COLUMNS, getDefaultInt(CSV_MAX_COLUMNS)); }
+            if (maxColumnWidth == 0) {
+                maxColumnWidth = context.getIntData(CSV_MAX_COLUMN_WIDTH, getDefaultInt(CSV_MAX_COLUMN_WIDTH));
+            }
+        } else {
+            maxColumns = getDefaultInt(CSV_MAX_COLUMNS);
+            maxColumnWidth = getDefaultInt(CSV_MAX_COLUMN_WIDTH);
         }
 
         CsvParserSettings settings = CsvCommand.newCsvParserSettings(delim, recordDelim, header, maxColumns);

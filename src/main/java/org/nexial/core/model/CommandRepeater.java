@@ -133,7 +133,7 @@ public class CommandRepeater {
                         if (result.isSuccess()) {
                             logger.log(testStep, TITLE + MSG_PASS + result.getMessage());
                         } else if (result.isSkipped()) {
-                            logger.log(testStep, TITLE + result.getMessage(), true);
+                            logger.log(testStep, TITLE + result.getMessage());
                         } else {
                             // fail or warn
                             logger.log(testStep,
