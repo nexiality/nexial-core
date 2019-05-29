@@ -51,7 +51,7 @@ public class NexialFilterListTest {
         filter = list.get(0);
         Assert.assertEquals("jambalaya", filter.getSubject());
         Assert.assertEquals(Contain, filter.getComparator());
-        Assert.assertEquals("[shrimp]", filter.getControls());
+        Assert.assertEquals("shrimp", filter.getControls());
 
         list = new NexialFilterList(" pizza is [food,art,happiness]");
         Assert.assertNotNull(list);

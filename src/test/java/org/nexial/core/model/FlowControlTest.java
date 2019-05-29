@@ -214,7 +214,7 @@ public class FlowControlTest {
 
         // chained filters
         fixture.flowControls = FlowControl.parse("EndLoopIf ( ${is_login} is [true] \t&   ${my_color} contain lu   ) ");
-        assertExpectedFilterEval(fixture, "EndLoopIf -> [${is_login} is [true], ${my_color} contain [lu]]");
+        assertExpectedFilterEval(fixture, "EndLoopIf -> [${is_login} is [true], ${my_color} contain lu]");
 
         fixture.flowControls = FlowControl.parse("ProceedIf ( ${my_fruit} match [A-Za-z]{5} \t&   ${my_age} > 25   ) ");
         assertExpectedFilterEval(fixture, "ProceedIf -> [${my_fruit} match [A-Za-z]{5}, ${my_age} > 25]");
