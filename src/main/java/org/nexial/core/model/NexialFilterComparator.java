@@ -59,7 +59,7 @@ public enum NexialFilterComparator {
     NotEndsWith(" not end with ", 1, String.class, 3.3),
 
     Between(" between ", 2, Number.class, 3.4),
-    Contain(" contain ", -1, String.class, 3.5),
+    Contain(" contain ", 1, String.class, 3.5),
     StartsWith(" start with ", 1, String.class, 3.6),
     EndsWith(" end with ", 1, String.class, 3.7),
     Match(" match ", 1, String.class, 3.8),

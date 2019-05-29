@@ -147,6 +147,10 @@ public final class FlowControlUtils {
                 context.setBreakCurrentIteration(true);
                 return StepResult.skipped("current iteration ends here: " + flowText);
 
+            case ProceedIf:
+                if (LOGGER.isInfoEnabled()) { LOGGER.info(testStep.showPosition() + " proceed: " + flowText);}
+                return StepResult.success("current step proceeds on");
+
             default:
                 throw new RuntimeException("Unknown/unsupported directive " + directive);
         }
