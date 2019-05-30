@@ -31,6 +31,7 @@ import org.apache.commons.lang3.StringUtils;
 import org.nexial.core.IntegrationConfigException;
 import org.nexial.core.utils.ConsoleUtils;
 
+import com.univocity.parsers.common.record.RecordMetaData;
 import com.univocity.parsers.csv.CsvParser;
 
 import static org.nexial.core.plugins.io.CsvExtendedComparison.ReportFormat.CSV;
@@ -274,9 +275,8 @@ class CsvExtendedComparison implements Serializable {
         List<String[]> records = parser.parseAll(new StringReader(content));
         if (CollectionUtils.isEmpty(records)) { throw new IOException("No record parsed from content"); }
 
-        if (parser.getRecordMetadata() != null) {
-            fileHeaders.addAll(Arrays.asList(parser.getRecordMetadata().headers()));
-        }
+        RecordMetaData recordMetadata = parser.getRecordMetadata();
+        if (recordMetadata != null) { fileHeaders.addAll(Arrays.asList(recordMetadata.headers())); }
         if (CollectionUtils.isEmpty(fileHeaders)) {
             throw new IOException("Unable to derive column headers from content");
         }
@@ -293,7 +293,11 @@ class CsvExtendedComparison implements Serializable {
         for (int i = 0; i < records.size(); i++) {
             String[] record = records.get(i);
             String identity = identityColumns.stream()
-                                             .map(column -> record[parser.getRecordMetadata().indexOf(column)])
+                                             .map(column -> {
+                                                 if (!recordMetadata.containsColumn(column)) { return ""; }
+                                                 int index = recordMetadata.indexOf(column);
+                                                 return ArrayUtils.getLength(record) > index ? record[index] : "";
+                                             })
                                              .collect(Collectors.joining(identSeparator));
             records.set(i, ArrayUtils.insert(0, record, identity));
         }

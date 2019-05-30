@@ -573,7 +573,7 @@ public class IoCommand extends BaseCommand {
      * This method will create the necessary (and missing) parent directories of {@code decodedTarget}.
      */
     public StepResult writeBase64decode(String encodedSource, String decodedTarget, String append) throws IOException {
-        requiresReadableFile(encodedSource);
+        requiresNotBlank(encodedSource, "invalid encoded source", encodedSource);
         requiresNotBlank(decodedTarget, "invalid decoded target", decodedTarget);
 
         boolean shouldAppend = BooleanUtils.toBoolean(append);

@@ -1211,7 +1211,7 @@ public class WebCommand extends BaseCommand implements CanTakeScreenshot, CanLog
         if (CollectionUtils.isEmpty(handles)) { return StepResult.fail("No window or windows handle found"); }
 
         int handleCount = handles.size();
-        ConsoleUtils.log("found " + handleCount + " window handles...");
+        ConsoleUtils.log("found " + handleCount + " window handle(s)...");
 
         int idx = NumberUtils.toInt(index);
         if (idx >= handleCount) { return StepResult.fail("Window index " + index + " not found"); }

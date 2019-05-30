@@ -95,14 +95,12 @@ public class CsvComparisonResult {
         discrepancies.add(newDiscrepancy(record, field, expected, actual));
     }
 
-    public void addMissingExpected(String[] actualRecord) {
-        discrepancies.add(
-            newDiscrepancy(actualRecord, "RECORD MISSING in '" + expectedField + "'", "", actualRecord[0]));
+    public void addMissingExpected(String[] actual) {
+        discrepancies.add(newDiscrepancy(actual, "RECORD MISSING in '" + expectedField + "'", "", actual[0]));
     }
 
-    public void addMissingActual(String[] expectedRecord) {
-        discrepancies.add(
-            newDiscrepancy(expectedRecord, "RECORD MISSING in '" + actualField + "'", expectedRecord[0], ""));
+    public void addMissingActual(String[] expected) {
+        discrepancies.add(newDiscrepancy(expected, "RECORD MISSING in '" + actualField + "'", expected[0], ""));
     }
 
     @Override
@@ -190,7 +188,7 @@ public class CsvComparisonResult {
         displayFields.forEach(display -> {
             int displayIndex = headers.indexOf(display);
             // not found -> display empty string
-            discrepancy.add(displayIndex == -1 ? "" : record[displayIndex + 1]);
+            discrepancy.add(displayIndex == -1 ? "" : record.length > displayIndex + 1 ? record[displayIndex + 1] : "");
         });
         discrepancy.add(field);
         discrepancy.add(expected);

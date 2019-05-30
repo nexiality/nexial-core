@@ -95,7 +95,7 @@ public class ExcelHelper {
             String value;
             for (int i = 0; i < row.getLastCellNum(); i++) {
                 value = returnCellValue(row.getCell(i));
-                if (StringUtils.isEmpty(value)) { continue; }
+                if (StringUtils.isEmpty(value)) { value = ""; }
                 oneRow += value + ",";
             }
 
@@ -120,8 +120,7 @@ public class ExcelHelper {
             for (int i = 0; i < row.getLastCellNum(); i++) {
                 HSSFCell cell = row.getCell(i);
                 value = returnCellValue(cell);
-                if (StringUtils.isEmpty(value)) { continue; }
-
+                if (StringUtils.isEmpty(value)) { value = ""; }
                 oneRow += value + ",";
             }
 
@@ -135,8 +134,8 @@ public class ExcelHelper {
     protected StepResult saveCSVContentToFile(String file, StringBuilder csv) {
         String content = csv.toString();
         if (context.isVerbose()) {
-            context.getLogger().log(context, "writing " + StringUtils.countMatches(content, "\n")
-                                             + " row(s) to '" + file + "'");
+            context.getLogger().log(context,
+                                    "writing " + StringUtils.countMatches(content, "\n") + " row(s) to '" + file + "'");
         }
 
         File target = new File(file);

@@ -173,6 +173,9 @@ public class TestStep extends TestStepManifest {
                     ConsoleUtils.error(context.getRunId(), error);
                     result = StepResult.fail(error);
                     return result;
+                } else if (cause instanceof ArrayIndexOutOfBoundsException) {
+                    error = "position/index not found: " +
+                            StringUtils.defaultString(cause.getMessage(), cause.toString());
                 } else {
                     // assertion error are already account for.. so no need to increment fail test count
                     // if (!(cause instanceof AssertionError)) { ConsoleUtils.error(cause.getMessage()); }
