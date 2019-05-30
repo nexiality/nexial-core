@@ -41,7 +41,8 @@ public class CheckUtils {
 
     public static void fail(String message) {
         // use `.log()` to comply with quiet mode when activated
-        ConsoleUtils.log(message);
+        // no need to log here. the assertion error will force serr print out anyways..
+        // ConsoleUtils.log(message);
         throw new AssertionError(message);
     }
 

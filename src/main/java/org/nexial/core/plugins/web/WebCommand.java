@@ -40,6 +40,7 @@ import org.apache.commons.lang3.math.NumberUtils;
 import org.apache.commons.lang3.time.StopWatch;
 import org.apache.http.client.methods.HttpRequestBase;
 import org.nexial.commons.utils.CollectionUtil;
+import org.nexial.commons.utils.FileUtil;
 import org.nexial.commons.utils.RegexUtils;
 import org.nexial.commons.utils.TextUtils;
 import org.nexial.commons.utils.web.URLEncodingUtils;
@@ -634,6 +635,14 @@ public class WebCommand extends BaseCommand implements CanTakeScreenshot, CanLog
         }
     }
 
+    public StepResult assertTextNotContains(String locator, String text) {
+        requires(StringUtils.isNotBlank(text), "empty text is not allowed", text);
+        String elementText = getElementText(locator);
+        return elementText == null ?
+               StepResult.fail("Invalid locator '" + locator + "'; no text found") :
+               assertNotContains(elementText, text);
+    }
+
     public StepResult assertNotText(String locator, String text) {
         assertNotEquals(text, getElementText(locator));
         return StepResult.success("validated text '" + text + "' not found in '" + locator + "'");
@@ -1218,7 +1227,7 @@ public class WebCommand extends BaseCommand implements CanTakeScreenshot, CanLog
 
         String handle = IterableUtils.get(handles, idx);
         ConsoleUtils.log("selecting window based on handle " + handle);
-        return selectWindowAndWait(handle, "2000");
+        return selectWindowAndWait(handle, waitMs);
     }
 
     public StepResult selectWindowAndWait(String winId, String waitMs) {
@@ -2540,6 +2549,7 @@ public class WebCommand extends BaseCommand implements CanTakeScreenshot, CanLog
     }
 
     protected String validateUrl(String url) {
+        if (FileUtil.isFileReadable(url)) { url = "file://" + StringUtils.replace(url, "\\", "/"); }
         requires(RegexUtils.isExact(StringUtils.lowerCase(url), REGEX_VALID_WEB_PROTOCOL), "invalid URL", url);
         return fixURL(url);
     }

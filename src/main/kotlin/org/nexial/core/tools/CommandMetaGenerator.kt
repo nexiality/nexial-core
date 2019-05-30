@@ -26,7 +26,6 @@ import org.apache.commons.collections4.MapUtils
 import org.apache.commons.io.FileUtils
 import org.apache.commons.lang3.StringUtils
 import org.nexial.commons.utils.FileUtil
-import org.nexial.commons.utils.ResourceUtils
 import org.nexial.commons.utils.TextUtils
 import org.nexial.core.NexialConst.*
 import org.nexial.core.NexialConst.Data.COMMAND_DISCOVERY_MODE

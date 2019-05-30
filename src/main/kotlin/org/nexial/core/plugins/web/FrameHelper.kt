@@ -30,7 +30,7 @@ internal class FrameHelper(private val webCommand: WebCommand, private var drive
     fun assertFramePresent(frameName: String): StepResult {
         requiresNotBlank(frameName, "invalid frame name", frameName)
 
-        return if (execScript("return window.frames['$frameName']!=null", Boolean::class.java))
+        return if (execScript("return window.frames['$frameName']!=null", java.lang.Boolean::class.java).booleanValue())
             StepResult.success("frame '$frameName' found")
         else
             StepResult.fail("frame '$frameName' DOES NOT exists.")
@@ -39,7 +39,7 @@ internal class FrameHelper(private val webCommand: WebCommand, private var drive
     fun assertFrameCount(count: String): StepResult {
         // ensuring that count can be converted to an integer
         val countInt = webCommand.toInt(count, "count")
-        val frameCount = execScript("return window.frames.length", Long::class.java)
+        val frameCount = execScript("return window.frames.length", java.lang.Long::class.java)
         webCommand.assertEquals(countInt.toString(), frameCount.toString())
         return StepResult.success("EXPECTS $count frame(s); found $frameCount")
     }

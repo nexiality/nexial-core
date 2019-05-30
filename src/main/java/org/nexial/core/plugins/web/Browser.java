@@ -269,17 +269,25 @@ public class Browser implements ForcefulTerminate {
                     }
                     // everything's fine, moving on
                 } catch (Throwable e) {
-                    String error = e.getMessage();
-                    if (StringUtils.contains(error, "unexpected end of stream on Connection") ||
-                        StringUtils.contains(error, "caused connection abort: recv failed")) {
-                        LOGGER.error("webdriver readiness check: " + error);
-                    } else if (StringUtils.contains(error, "window already closed")) {
+                    if (e instanceof NoSuchWindowException) {
+                        // recalibrate window handles
                         shouldInitialize = resolveActiveWindowHandle();
+                        if (shouldInitialize) {
+                            LOGGER.error("last window no longer available; BROWSER MIGHT BE TERMINATED; RESTARTING...");
+                        }
                     } else {
-                        // something's wrong with current browser window or session, need to re-init
-                        shouldInitialize = true;
-                        LOGGER.error("webdriver readiness check: " + error + "\n" +
-                                     "BROWSER MIGHT BE TERMINATED; RESTARTING...");
+                        String error = e.getMessage();
+                        if (StringUtils.contains(error, "unexpected end of stream on Connection") ||
+                            StringUtils.contains(error, "caused connection abort: recv failed")) {
+                            LOGGER.error("webdriver readiness check: " + error);
+                        } else if (StringUtils.contains(error, "window already closed")) {
+                            shouldInitialize = resolveActiveWindowHandle();
+                        } else {
+                            // something's wrong with current browser window or session, need to re-init
+                            shouldInitialize = true;
+                            LOGGER.error("webdriver readiness check: " + error + "\n" +
+                                         "BROWSER MIGHT BE TERMINATED; RESTARTING...");
+                        }
                     }
                 }
             }

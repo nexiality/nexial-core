@@ -65,7 +65,7 @@ abstract class WebDriverHelper protected constructor(protected var context: Exec
         // check if local copy of driver exists
         // if no local driver, poll online for driver
         // if local driver exists, check metadata for need to check for driver update
-        downloadDriver(FileUtil.isFileReadable(driverLocation, DRIVER_MIN_SIZE))
+        downloadDriver(isFileReadable(driverLocation, DRIVER_MIN_SIZE))
 
         val driver = File(driverLocation)
         return if (!driver.exists())
@@ -97,7 +97,7 @@ abstract class WebDriverHelper protected constructor(protected var context: Exec
                 throw IOException("Unable to download driver for $browserType from $driverUrl: ${response.statusText}")
             }
 
-            if (!FileUtil.isFileReadable(downloadTo, DRIVER_MIN_SIZE)) {
+            if (!isFileReadable(downloadTo, DRIVER_MIN_SIZE)) {
                 // download fail? disk out of space?
                 throw IOException("Unable to download/save driver for $browserType from $driverUrl")
             }
@@ -108,7 +108,7 @@ abstract class WebDriverHelper protected constructor(protected var context: Exec
                 StringUtils.endsWith(downloadTo, ".zip")    -> unzip(downloadTo, driverLocation)
             }
 
-            if (!FileUtil.isFileReadable(driverLocation, DRIVER_MIN_SIZE)) {
+            if (!isFileReadable(driverLocation, DRIVER_MIN_SIZE)) {
                 // download fail? disk out of space?
                 throw IOException("Unable to download/save driver for $browserType from $driverUrl")
             }
@@ -185,11 +185,11 @@ abstract class WebDriverHelper protected constructor(protected var context: Exec
         manifest.lastChecked = System.currentTimeMillis()
 
         if (!pollForUpdates || manifest.driverVersionExpanded < latestVersion) {
-            val targetVersion = tagNumbers[latestVersion]!!
+            val targetVersion = tagNumbers[latestVersion]
             manifest.driverVersion = targetVersion
 
             // get latest
-            val driverSearchName = resolveDriverSearchName(targetVersion)
+            val driverSearchName = resolveDriverSearchName(targetVersion!!)
             var driverUrl = JSONPath.find(json,
                                           "[tag_name=$targetVersion].assets[name=$driverSearchName].browser_download_url")
             if (StringUtils.isBlank(driverUrl) && IS_OS_WINDOWS) {
@@ -205,7 +205,7 @@ abstract class WebDriverHelper protected constructor(protected var context: Exec
     protected open fun extractDriverInfo(json: JSONObject, manifest: WebDriverManifest, pollForUpdates: Boolean) {
 
         val tag = JSONPath.find(json, "tag_name")
-        if (!pollForUpdates || manifest.driverVersionExpanded < WebDriverHelper.expandVersion(tag)) {
+        if (!pollForUpdates || manifest.driverVersionExpanded < expandVersion(tag)) {
 
             // persist the date/time when we last checked online
             manifest.lastChecked = System.currentTimeMillis()
@@ -399,7 +399,7 @@ class EdgeDriverHelper(context: ExecutionContext) : WebDriverHelper(context) {
      */
     @Throws(IOException::class)
     override fun resolveDriverManifest(pollForUpdates: Boolean): WebDriverManifest {
-        val manifest: WebDriverManifest = if (FileUtil.isFileReadable(driverManifest, 10)) {
+        val manifest: WebDriverManifest = if (isFileReadable(driverManifest, 10)) {
             GSON.fromJson(FileUtils.readFileToString(driverManifest, DEF_CHARSET), WebDriverManifest::class.java)
         } else {
             // first time
@@ -407,7 +407,7 @@ class EdgeDriverHelper(context: ExecutionContext) : WebDriverHelper(context) {
         }
         manifest.init()
 
-        val hasDriver = FileUtil.isFileReadable(driverLocation, WebDriverHelper.DRIVER_MIN_SIZE)
+        val hasDriver = isFileReadable(driverLocation, DRIVER_MIN_SIZE)
 
         // find current OS build of Windows 10
         var currentOsVer = deriveWin10BuildNumber()
@@ -436,7 +436,7 @@ class EdgeDriverHelper(context: ExecutionContext) : WebDriverHelper(context) {
     }
 
     companion object {
-        // first version of edge browser as min/failback version
+        // first version of edge browser as min/fallback version
         private const val minOsVersionNum = 10240
         private const val minOsVersion = "" + minOsVersionNum
 
@@ -464,15 +464,15 @@ class EdgeDriverHelper(context: ExecutionContext) : WebDriverHelper(context) {
 
         fun deriveWin10BuildNumber(currentOsVer: String, minVersion: Int): String {
             val osVer = StringUtils.trim(
-                    when {
-                        RegexUtils.isExact(currentOsVer, winVerRegex1) ->
-                            RegexUtils.replace(currentOsVer, winVerRegex1, "$1")
-                        RegexUtils.isExact(currentOsVer, winVerRegex2) ->
-                            RegexUtils.replace(currentOsVer, winVerRegex2, "$1")
-                        RegexUtils.isExact(currentOsVer, winVerRegex3) ->
-                            StringUtils.substringAfterLast(currentOsVer, ".")
-                        else                                           -> currentOsVer
-                    })
+                when {
+                    RegexUtils.isExact(currentOsVer, winVerRegex1) ->
+                        RegexUtils.replace(currentOsVer, winVerRegex1, "$1")
+                    RegexUtils.isExact(currentOsVer, winVerRegex2) ->
+                        RegexUtils.replace(currentOsVer, winVerRegex2, "$1")
+                    RegexUtils.isExact(currentOsVer, winVerRegex3) ->
+                        StringUtils.substringAfterLast(currentOsVer, ".")
+                    else                                           -> currentOsVer
+                })
 
             if (!NumberUtils.isDigits(osVer)) return minVersion.toString()
 
@@ -535,7 +535,7 @@ class ChromeDriverHelper(context: ExecutionContext) : WebDriverHelper(context) {
 
     @Throws(IOException::class)
     override fun resolveDriverManifest(pollForUpdates: Boolean): WebDriverManifest {
-        val manifest: WebDriverManifest = if (FileUtil.isFileReadable(driverManifest, 10)) {
+        val manifest: WebDriverManifest = if (isFileReadable(driverManifest, 10)) {
             GSON.fromJson(FileUtils.readFileToString(driverManifest, DEF_CHARSET), WebDriverManifest::class.java)
         } else {
             // first time
@@ -543,7 +543,7 @@ class ChromeDriverHelper(context: ExecutionContext) : WebDriverHelper(context) {
         }
         manifest.init()
 
-        val hasDriver = FileUtil.isFileReadable(driverLocation, DRIVER_MIN_SIZE)
+        val hasDriver = isFileReadable(driverLocation, DRIVER_MIN_SIZE)
 
         if (!hasDriver) {
             var driverVersion = minDriverVersion
@@ -589,7 +589,7 @@ class IEDriverHelper(context: ExecutionContext) : WebDriverHelper(context) {
         }
         manifest.init()
 
-        val hasDriver = FileUtil.isFileReadable(driverLocation, DRIVER_MIN_SIZE)
+        val hasDriver = isFileReadable(driverLocation, DRIVER_MIN_SIZE)
 
         // never check is turned on and we already have a driver, so just keep this one
         if (manifest.neverCheck && hasDriver) return manifest
@@ -620,7 +620,7 @@ class IEDriverHelper(context: ExecutionContext) : WebDriverHelper(context) {
         val key = xmlCommand.getValueByXPath(xmlPayload, xpathKey)
         val tag = key.split("/")[0]
 
-        if (!pollForUpdates || manifest.driverVersionExpanded < WebDriverHelper.expandVersion(tag)) {
+        if (!pollForUpdates || manifest.driverVersionExpanded < expandVersion(tag)) {
             // persist the date/time when we last checked online
             manifest.lastChecked = System.currentTimeMillis()
             manifest.driverVersion = tag
@@ -632,13 +632,13 @@ class IEDriverHelper(context: ExecutionContext) : WebDriverHelper(context) {
     override fun resolveLocalDriverPath(): String {
         if (!IS_OS_WINDOWS) {
             throw RuntimeException(
-                    "Browser automation for Internet Explorer is only supported on " + "Windows operating system. Sorry...")
+                "Browser automation for Internet Explorer is only supported on " + "Windows operating system. Sorry...")
         }
 
         val newConfigHome = context.replaceTokens(config.home) + separator + (
-                if (EnvUtils.isRunningWindows64bit() &&
-                    !context.getBooleanData(OPT_FORCE_IE_32, getDefaultBool(OPT_FORCE_IE_32))) "x64"
-                else "win32")
+            if (EnvUtils.isRunningWindows64bit() &&
+                !context.getBooleanData(OPT_FORCE_IE_32, getDefaultBool(OPT_FORCE_IE_32))) "x64"
+            else "win32")
 
         this.driverLocation = newConfigHome
         config.home = newConfigHome
@@ -654,7 +654,7 @@ class BrowserStackLocalHelper(context: ExecutionContext) : WebDriverHelper(conte
 
     @Throws(IOException::class)
     override fun resolveDriverManifest(pollForUpdates: Boolean): WebDriverManifest {
-        val manifest: WebDriverManifest = if (FileUtil.isFileReadable(driverManifest, 10)) {
+        val manifest: WebDriverManifest = if (isFileReadable(driverManifest, 10)) {
             GSON.fromJson(FileUtils.readFileToString(driverManifest, DEF_CHARSET), WebDriverManifest::class.java)
         } else {
             // first time
@@ -662,7 +662,7 @@ class BrowserStackLocalHelper(context: ExecutionContext) : WebDriverHelper(conte
         }
         manifest.init()
 
-        val hasDriver = FileUtil.isFileReadable(driverLocation, WebDriverHelper.DRIVER_MIN_SIZE)
+        val hasDriver = isFileReadable(driverLocation, DRIVER_MIN_SIZE)
 
         // never check is turned on and we already have a driver, so just keep this one
         if (manifest.neverCheck && hasDriver) return manifest
