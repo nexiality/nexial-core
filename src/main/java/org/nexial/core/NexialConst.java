@@ -171,6 +171,7 @@ public final class NexialConst {
     // plugin:external
     // store the file name of the output resulted from a `external.runProgram` command
     public static final String OPT_RUN_PROGRAM_OUTPUT = registerSystemVariable(NAMESPACE + "external.output");
+    public static final String OPT_RUN_PROGRAM_CONSOLE = registerSystemVariable(NAMESPACE + "external.console", false);
 
     // plugin:rdbms
     public static final String DAO_PREFIX = NAMESPACE + "dao.";

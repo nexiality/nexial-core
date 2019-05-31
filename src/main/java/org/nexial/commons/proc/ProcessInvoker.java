@@ -18,13 +18,18 @@
 package org.nexial.commons.proc;
 
 import java.io.*;
-import java.lang.ProcessBuilder.Redirect;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
 import org.apache.commons.collections4.MapUtils;
+import org.apache.commons.io.FileUtils;
+import org.apache.commons.lang3.BooleanUtils;
+import org.apache.commons.lang3.StringUtils;
 import org.nexial.commons.utils.FileUtil;
+import org.nexial.core.utils.ConsoleUtils;
+
+import static org.nexial.core.NexialConst.DEF_FILE_ENCODING;
 
 /**
  * A fairly straight-forward of invoking another process from current JVM process.  This class assumes 3 arguments,
@@ -45,16 +50,22 @@ import org.nexial.commons.utils.FileUtil;
 public class ProcessInvoker {
     public static final String WORKING_DIRECTORY = "[working.directory]";
     public static final String PROC_REDIRECT_OUT = "[proc.redirect]";
+    public static final String PROC_CONSOLE_OUT = "[proc.console]";
+    public static final String PROC_CONSOLE_ID = "[proc.consoleId]";
+
+    private static final String NL = System.getProperty("line.separator");
 
     @SuppressWarnings("PMD.DoNotUseThreads")
     /** internally class to trap stdout/stderr output. */
     private static class StreamGobbler extends Thread {
         private static final int DEFAULT_SIZE = 32 * 1024;
-        private static final String NL = System.getProperty("line.separator");
+
         private String output;
         private BufferedReader reader;
         private InputStreamReader streamReader;
         private StringWriter stringWriter;
+        private boolean enableConsole;
+        private String consoleId = "";
 
         StreamGobbler(InputStream is) {
             streamReader = new InputStreamReader(is);
@@ -62,10 +73,21 @@ public class ProcessInvoker {
             stringWriter = new StringWriter(DEFAULT_SIZE);
         }
 
+        public StreamGobbler setEnableConsole(boolean enableConsole) {
+            this.enableConsole = enableConsole;
+            return this;
+        }
+
+        public StreamGobbler setConsoleId(String consoleId) {
+            this.consoleId = consoleId;
+            return this;
+        }
+
         public void run() {
             try {
                 String line;
                 while ((line = reader.readLine()) != null) {
+                    if (enableConsole) { ConsoleUtils.log(consoleId, line); }
                     stringWriter.write(line);
                     stringWriter.write(NL);
                 }
@@ -108,16 +130,31 @@ public class ProcessInvoker {
         processArg.add(0, command);
 
         // create processbuilder and mod. environment, if need be
-        ProcessBuilder pb = new ProcessBuilder(processArg);
-        String[] envStrings = prepareEnv(pb, env, outcome);
+        ProcessBuilder pb = new ProcessBuilder(processArg).redirectErrorStream(true);
+
+        boolean enableConsole = false;
+        String consoleId = null;
+        File out = null;
+        if (env != null) {
+            if (env.containsKey(PROC_REDIRECT_OUT)) { out = new File(env.remove(PROC_REDIRECT_OUT)); }
+            enableConsole = BooleanUtils.toBoolean(env.remove(PROC_CONSOLE_OUT));
+            consoleId = env.remove(PROC_CONSOLE_ID);
+        }
+
+        prepareEnv(pb, env, outcome);
 
         // here we go...
         // jdk5-specific...
         Process process = pb.start();
 
-        StreamGobbler stderr = new StreamGobbler(process.getErrorStream());
+        StreamGobbler stderr = new StreamGobbler(process.getErrorStream())
+                                   .setEnableConsole(enableConsole)
+                                   .setConsoleId(consoleId);
         stderr.start();
-        StreamGobbler stdout = new StreamGobbler(process.getInputStream());
+
+        StreamGobbler stdout = new StreamGobbler(process.getInputStream())
+                                   .setEnableConsole(enableConsole)
+                                   .setConsoleId(consoleId);
         stdout.start();
 
         int exitValue = 0;
@@ -131,6 +168,18 @@ public class ProcessInvoker {
             outcome.setStderr(stderr.getOutput());
             outcome.setStdout(stdout.getOutput());
             outcome.setExitStatus(exitValue);
+
+            if (out != null) {
+                FileUtils.writeStringToFile(out, outcome.getStdout(), DEF_FILE_ENCODING);
+                if (StringUtils.isNotBlank(outcome.getStderr())) {
+                    FileUtils.writeStringToFile(out,
+                                                NL + NL +
+                                                "ERROR:" + NL +
+                                                outcome.getStderr(),
+                                                DEF_FILE_ENCODING,
+                                                true);
+                }
+            }
 
             // be a good java citizen
             stderr = null;
@@ -151,13 +200,7 @@ public class ProcessInvoker {
         processArg.add(0, command);
 
         // create processbuilder and mod. environment, if need be
-        ProcessBuilder pb;
-        if (env != null && env.containsKey(PROC_REDIRECT_OUT)) {
-            File out = new File(env.remove(PROC_REDIRECT_OUT));
-            pb = new ProcessBuilder(processArg).redirectErrorStream(true).redirectOutput(Redirect.appendTo(out));
-        } else {
-            pb = new ProcessBuilder(processArg);
-        }
+        ProcessBuilder pb = new ProcessBuilder(processArg).inheritIO();
 
         prepareEnv(pb, env, outcome);
 

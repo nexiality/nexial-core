@@ -42,9 +42,11 @@ object CommandConst {
 
     // common commands
     const val CMD_VERBOSE = "base.verbose(text)"
+    const val CMD_RUN_PROGRAM = "external.runProgram(programPathAndParams)"
+    const val CMD_RUN_PROGRAM_NO_WAIT = "external.runProgramNoWait(programPathAndParams)"
 
     @JvmStatic
-    val MERGE_OUTPUTS: MutableList<String> = Arrays.asList(".", CMD_VERBOSE)
+    val MERGE_OUTPUTS: MutableList<String> = Arrays.asList(".", CMD_VERBOSE, CMD_RUN_PROGRAM, CMD_RUN_PROGRAM_NO_WAIT)
 
     const val CMD_MACRO = "base.macro(file,sheet,name)"
     const val CMD_REPEAT_UNTIL = "base.repeatUntil(steps,maxWaitMs)"
