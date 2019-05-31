@@ -946,6 +946,8 @@ public final class NexialConst {
         public static final String SHEET_MERGED_DATA = "#data";
         public static final String SHEET_DEFAULT_DATA = "#default";
         public static final boolean DEF_OPEN_EXCEL_AS_DUP = IS_OS_WINDOWS;
+        // maximum row-column limit to read/write data
+        public static final int EXCEL_ROW_COL_MAX_LIMIT = 10000;
 
         // step
         public static final String STEP_RESPONSE = NAMESPACE + "step.response";

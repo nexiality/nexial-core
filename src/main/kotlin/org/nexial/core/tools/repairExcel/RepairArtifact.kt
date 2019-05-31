@@ -97,12 +97,13 @@ object RepairArtifact {
         println("|" + ConsoleUtils.centerPrompt(prompt, 120) + "|")
         println("\\$banner/")
         repairArtifact()
+        println()
+        println("$banner--")
 
         if (repaired.isEmpty()) {
             println(ConsoleUtils.centerPrompt("There are no matching files.", 122))
-        } else {
-            println()
             println("$banner--")
+        } else {
             println(formatColumns("File", "Process Time", column3Name))
             println("$banner--")
             repaired.forEach { println(it) }
@@ -167,7 +168,7 @@ object RepairArtifact {
             val sheet = targetSheet.sheet
             val row = sheet.getRow(i)
             val lastColumnIdx = lastColumnIdx(row, fileType)
-            for (cellIndex   in 0 until lastColumnIdx + 1) {
+            for (cellIndex in 0 until lastColumnIdx + 1) {
                 val cell = row.getCell(cellIndex) ?: continue
                 cell.setCellValue("")
             }

@@ -24,6 +24,7 @@ import org.apache.poi.xssf.usermodel.XSSFRow
 import org.apache.poi.xssf.usermodel.XSSFSheet
 import org.apache.poi.xssf.usermodel.XSSFWorkbook
 import org.nexial.core.NexialConst.DF_TIMESTAMP
+import org.nexial.core.NexialConst.Data.EXCEL_ROW_COL_MAX_LIMIT
 import org.nexial.core.excel.Excel
 import org.nexial.core.excel.ExcelConfig.StyleConfig.STRIKEOUT_COMMAND
 import org.nexial.core.excel.ExcelConfig.StyleDecorator
@@ -33,6 +34,7 @@ import org.nexial.core.tools.repairExcel.RepairExcels.ArtifactType
 import org.nexial.core.tools.repairExcel.RepairExcels.ArtifactType.*
 import org.nexial.core.tools.repairExcel.RepairExcels.TEMP_SHEET_NAME
 import org.nexial.core.tools.repairExcel.RepairExcels.retrieveValidSheet
+import org.nexial.core.utils.ConsoleUtils
 import org.springframework.util.CollectionUtils
 import java.io.File
 import java.io.File.separator
@@ -100,6 +102,8 @@ object ExcelUtils {
         val sheetName = sourceSheet.sheetName
         val tempSheetIndex = targetWorkbook.getSheetIndex(TEMP_SHEET_NAME)
         val targetSheet = targetWorkbook.cloneSheet(tempSheetIndex, sheetName)
+        // set maximum row limit to read data
+        val lastDataRow = if (lastDataRow < EXCEL_ROW_COL_MAX_LIMIT) lastDataRow else EXCEL_ROW_COL_MAX_LIMIT
 
         var destRowIndex = 0
         for (rowIndex in 0 until lastDataRow) {
@@ -121,7 +125,11 @@ object ExcelUtils {
      * @param fileType [ArtifactType] type of file. By default it is [DATA]
      */
     fun copyRow(sourceRow: XSSFRow, newRow: XSSFRow, fileType: ArtifactType = DATA) {
-        val lastDataColumn = RepairExcels.lastColumnIdx(sourceRow, fileType)
+        var lastDataColumn = RepairExcels.lastColumnIdx(sourceRow, fileType)
+        // set column index as max limit
+        if (lastDataColumn > EXCEL_ROW_COL_MAX_LIMIT) {
+            lastDataColumn = EXCEL_ROW_COL_MAX_LIMIT
+        }
 
         for (columnIndex in 0 until lastDataColumn + 1) {
             val oldCell = sourceRow.getCell(columnIndex)
@@ -170,7 +178,8 @@ object ExcelUtils {
     @Throws(IOException::class)
     private fun saveFile(file: File, preview: String?, targetWorkbook: XSSFWorkbook): RepairArtifactLog? {
         var action = "processed (not changed)"
-        val destFile: File
+        var destFile = file
+        val backupOrPreviewLoc: File
 
         if (preview != null) {
             // create folder structure as it is from searchFrom
@@ -178,16 +187,31 @@ object ExcelUtils {
             if (file.absolutePath != searchFrom) {
                 fileSuffix = StringUtils.substringAfterLast(file.absolutePath, searchFrom).removePrefix(separator)
             }
-            destFile = File(StringUtils.appendIfMissing(preview, separator) + fileSuffix)
-            Excel.save(destFile, targetWorkbook)
+            backupOrPreviewLoc = File(StringUtils.appendIfMissing(preview, separator) + fileSuffix)
+            destFile = backupOrPreviewLoc
         } else {
-            destFile = File("${file.absolutePath}.$runId")
-            FileUtils.moveFile(file, destFile)
-            action = "processed (changed)"
-            Excel.save(file, targetWorkbook)
+            backupOrPreviewLoc = File("${file.absolutePath}.$runId")
+            try {
+                FileUtils.moveFile(file, backupOrPreviewLoc)
+            } catch (e: IOException) {
+                ConsoleUtils.error("Unable to create backup; File '${file.absolutePath}'" +
+                                   " might being used by another process ")
+                log(action, file)
+                return null
+            }
         }
+
+        val repairArtifactLog: RepairArtifactLog? =
+            try {
+                Excel.save(destFile, targetWorkbook)
+                action = "processed (changed)"
+                RepairArtifactLog(file, 0, backupOrPreviewLoc)
+            } catch (e: IOException) {
+                ConsoleUtils.error("Unable to repair excel as ${e.message}")
+                null
+            }
         log(action, file)
-        return RepairArtifactLog(file, 0, destFile)
+        return repairArtifactLog
     }
 
     private fun getRow(sheet: XSSFSheet, rowNum: Int) = sheet.getRow(rowNum) ?: sheet.createRow(rowNum)
