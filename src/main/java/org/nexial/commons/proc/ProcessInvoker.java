@@ -27,6 +27,7 @@ import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang3.BooleanUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.nexial.commons.utils.FileUtil;
+import org.nexial.core.ShutdownAdvisor;
 import org.nexial.core.utils.ConsoleUtils;
 
 import static org.nexial.core.NexialConst.DEF_FILE_ENCODING;
@@ -146,6 +147,7 @@ public class ProcessInvoker {
         // here we go...
         // jdk5-specific...
         Process process = pb.start();
+        ShutdownAdvisor.addAdvisor(new ExternalProcessTerminator(process));
 
         StreamGobbler stderr = new StreamGobbler(process.getErrorStream())
                                    .setEnableConsole(enableConsole)

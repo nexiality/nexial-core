@@ -17,19 +17,25 @@
 package org.nexial.core.plugins.external
 
 import org.apache.commons.io.IOUtils
+import org.apache.commons.io.input.Tailer
+import org.apache.commons.io.input.TailerListenerAdapter
 import org.apache.commons.lang3.StringUtils
 import org.junit.runner.JUnitCore
-import org.nexial.commons.proc.ProcessInvoker
 import org.nexial.commons.proc.ProcessInvoker.*
 import org.nexial.commons.proc.RuntimeUtils
+import org.nexial.commons.utils.FileUtil
 import org.nexial.commons.utils.TextUtils
 import org.nexial.core.NexialConst.*
+import org.nexial.core.ShutdownAdvisor
 import org.nexial.core.SystemVariables.getDefaultBool
 import org.nexial.core.model.StepResult
+import org.nexial.core.plugins.ForcefulTerminate
 import org.nexial.core.plugins.base.BaseCommand
 import org.nexial.core.utils.CheckUtils.requires
 import org.nexial.core.utils.CheckUtils.requiresNotBlank
+import org.nexial.core.utils.ConsoleUtils
 import org.nexial.core.variable.Syspath
+import java.io.File
 import java.io.File.separator
 import java.io.IOException
 import java.lang.System.lineSeparator
@@ -106,7 +112,7 @@ class ExternalCommand : BaseCommand() {
 
             val env = prepEnv(fileName, currentRow)
 
-            ProcessInvoker.invoke(programAndParams[0], programAndParams.filterIndexed { index, _ -> index > 0 }, env)
+            invoke(programAndParams[0], programAndParams.filterIndexed { index, _ -> index > 0 }, env)
 
             //attach link to results
             addLinkRef("Follow the link to view the output", "output", fileName)
@@ -133,7 +139,7 @@ class ExternalCommand : BaseCommand() {
 
             val env = prepEnv(fileName, currentRow)
 
-            ProcessInvoker.invokeNoWait(programAndParams[0], programAndParams.filterIndexed { index, _ -> index > 0 }, env)
+            invokeNoWait(programAndParams[0], programAndParams.filterIndexed { index, _ -> index > 0 }, env)
 
             //attach link to results
             addLinkRef("Follow the link to view the output", "output", fileName)
@@ -142,6 +148,31 @@ class ExternalCommand : BaseCommand() {
         } catch (e: Exception) {
             return StepResult.fail(e.message)
         }
+    }
+
+    /**
+     * tail a reachable (local or network via shared folder or SMB) file. File does not have to exists when this command
+     * is executed. However, background thread will be issued to watch/display the content of such file.
+     * @param file String
+     * @return StepResult
+     */
+    fun tail(id: String, file: String): StepResult {
+        requiresNotBlank(id, "invalid id", id)
+        requiresNotBlank(file, "invalid file", file)
+
+        if (FileUtil.isFileReadable(file, 1)) {
+            ConsoleUtils.log("File $file not readable at this time. Nexial will display its content when available")
+        }
+
+        val listener = ExternalTailer(id)
+        val tailer = Tailer.create(File(file), listener, 250, true, true)
+
+        val tailThread = Thread(tailer)
+        tailThread.isDaemon = true
+        tailThread.start()
+
+        ShutdownAdvisor.addAdvisor(ExternalTailShutdownHelper(tailThread, tailer))
+        return StepResult.success("tail watch on $file began...")
     }
 
     private fun prepEnv(outputFile: String, currentRow: String): MutableMap<String, String> {
@@ -165,6 +196,34 @@ class ExternalCommand : BaseCommand() {
             // could be "weird batch file with spaces.bat" "blah blah blah" 1 2 3
             val proc = Runtime.getRuntime().exec(RuntimeUtils.formatCommandLine(programPathAndParams))
             return TextUtils.toString(IOUtils.readLines(proc.inputStream, DEF_CHARSET), lineSeparator())
+        }
+    }
+}
+
+class ExternalTailer(val id: String) : TailerListenerAdapter() {
+    override fun handle(line: String?) = ConsoleUtils.log(id, line)
+
+    override fun handle(ex: java.lang.Exception?) {
+        if (ex !is InterruptedException) ConsoleUtils.log(id, "ERROR FOUND:\n$ex")
+    }
+
+    override fun fileNotFound() {
+        super.fileNotFound()
+    }
+}
+
+class ExternalTailShutdownHelper(private var tailThread: Thread?, var tailer: Tailer?) : ForcefulTerminate {
+    override fun mustForcefullyTerminate() = (tailThread != null && tailThread!!.isAlive) || (tailer != null)
+
+    override fun forcefulTerminate() {
+        if (tailer != null) {
+            tailer!!.stop()
+            tailer = null
+        }
+
+        if (tailThread != null) {
+            tailThread!!.interrupt()
+            tailThread = null
         }
     }
 }

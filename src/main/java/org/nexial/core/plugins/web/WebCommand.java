@@ -1217,6 +1217,12 @@ public class WebCommand extends BaseCommand implements CanTakeScreenshot, CanLog
         ensureReady();
 
         Set<String> handles = driver.getWindowHandles();
+        ConsoleUtils.log("found " + CollectionUtils.size(handles) + " window handle(s); recalibrating again...");
+
+        // double check
+        try { Thread.sleep(1000);} catch (InterruptedException e) { }
+        handles = driver.getWindowHandles();
+
         if (CollectionUtils.isEmpty(handles)) { return StepResult.fail("No window or windows handle found"); }
 
         int handleCount = handles.size();

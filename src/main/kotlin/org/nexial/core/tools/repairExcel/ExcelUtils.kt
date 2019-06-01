@@ -74,9 +74,7 @@ object ExcelUtils {
         val targetWorkbook = targetExcel.workbook
         val excelAddress = fileType.excelAddress
         try {
-            sourceSheets.forEach { sheet ->
-                copySheet(sheet.sheet, targetWorkbook, sheet.findLastDataRow(excelAddress), fileType)
-            }
+            sourceSheets.forEach { copySheet(it.sheet, targetWorkbook, it.findLastDataRow(excelAddress), fileType) }
         } catch (e: Exception) {
             log("Unable to proceed repair file ${file.absolutePath} further due to ${e.message}")
         } finally {
@@ -102,11 +100,12 @@ object ExcelUtils {
         val sheetName = sourceSheet.sheetName
         val tempSheetIndex = targetWorkbook.getSheetIndex(TEMP_SHEET_NAME)
         val targetSheet = targetWorkbook.cloneSheet(tempSheetIndex, sheetName)
+
         // set maximum row limit to read data
-        val lastDataRow = if (lastDataRow < EXCEL_ROW_COL_MAX_LIMIT) lastDataRow else EXCEL_ROW_COL_MAX_LIMIT
+        val lastRow = Math.min(lastDataRow, EXCEL_ROW_COL_MAX_LIMIT)
 
         var destRowIndex = 0
-        for (rowIndex in 0 until lastDataRow) {
+        for (rowIndex in 0 until lastRow) {
             if (!RepairExcels.ignoreRowToCopy(fileType, rowIndex)) {
                 val sourceRow = getRow(sourceSheet, rowIndex)
                 // remove rows from data sheets if system variable is read only.
@@ -124,24 +123,18 @@ object ExcelUtils {
      * @param newRow [XSSFRow] new row in the target sheet where source row to be copied
      * @param fileType [ArtifactType] type of file. By default it is [DATA]
      */
-    fun copyRow(sourceRow: XSSFRow, newRow: XSSFRow, fileType: ArtifactType = DATA) {
-        var lastDataColumn = RepairExcels.lastColumnIdx(sourceRow, fileType)
+    private fun copyRow(sourceRow: XSSFRow, newRow: XSSFRow, fileType: ArtifactType = DATA) {
         // set column index as max limit
-        if (lastDataColumn > EXCEL_ROW_COL_MAX_LIMIT) {
-            lastDataColumn = EXCEL_ROW_COL_MAX_LIMIT
-        }
+        val lastColumn = Math.min(RepairExcels.lastColumnIdx(sourceRow, fileType), EXCEL_ROW_COL_MAX_LIMIT)
 
-        for (columnIndex in 0 until lastDataColumn + 1) {
+        for (columnIndex in 0 until lastColumn + 1) {
             val oldCell = sourceRow.getCell(columnIndex)
             var newCell = newRow.getCell(columnIndex)
 
             // If the old cell is null jump to next cell with new cell as empty
-            if (oldCell == null) {
-                // newCell = null
-                continue
-            } else {
-                if (newCell == null) newCell = newRow.createCell(columnIndex)
-            }
+            if (oldCell == null) continue
+
+            if (newCell == null) newCell = newRow.createCell(columnIndex)
 
             // set cell value
             when (oldCell.cellTypeEnum) {
@@ -201,15 +194,15 @@ object ExcelUtils {
             }
         }
 
-        val repairArtifactLog: RepairArtifactLog? =
-            try {
-                Excel.save(destFile, targetWorkbook)
-                action = "processed (changed)"
-                RepairArtifactLog(file, 0, backupOrPreviewLoc)
-            } catch (e: IOException) {
-                ConsoleUtils.error("Unable to repair excel as ${e.message}")
-                null
-            }
+        val repairArtifactLog: RepairArtifactLog? = try {
+            Excel.save(destFile, targetWorkbook)
+            action = "processed (changed)"
+            RepairArtifactLog(file, 0, backupOrPreviewLoc)
+        } catch (e: IOException) {
+            ConsoleUtils.error("Unable to repair excel as ${e.message}")
+            null
+        }
+
         log(action, file)
         return repairArtifactLog
     }
