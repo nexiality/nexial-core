@@ -59,7 +59,7 @@ class RdbmsCommand : BaseCommand() {
         // requires(dataAccess.validSQL(query), "invalid sql", sql);
 
         val result = dataAccess.execute(query, resolveDao(db)) ?: return StepResult.fail(
-                "FAILED TO EXECUTE SQL '$sql': no result found")
+            "FAILED TO EXECUTE SQL '$sql': no result found")
         context.setData(`var`, result)
 
         log("executed query in ${result.elapsedTime} ms with " +
@@ -254,7 +254,7 @@ class RdbmsCommand : BaseCommand() {
             // requires(dataAccess.validSQL(query), "invalid sql", sql);
 
             val result = dataAccess.execute(query, dao, File(outputFile)) ?: return StepResult.fail(
-                    "FAILED TO EXECUTE SQL '$sql': no result found")
+                "FAILED TO EXECUTE SQL '$sql': no result found")
 
             log("executed query in ${result.elapsedTime} ms with " +
                 if (result.hasError()) "ERROR ${result.error}" else "${result.rowCount} row(s)")

@@ -45,6 +45,7 @@ import org.nexial.core.excel.Excel.Worksheet;
 import org.nexial.core.excel.ExcelAddress;
 import org.nexial.core.model.ExecutionContext;
 import org.nexial.core.model.StepResult;
+import org.nexial.core.plugins.db.DaoUtils;
 import org.nexial.core.utils.ConsoleUtils;
 
 import static java.lang.System.lineSeparator;
@@ -87,6 +88,7 @@ public class ExcelHelper {
         XSSFSheet excelSheet = workBook.getSheet(worksheet);
         Iterator rowIterator = excelSheet.rowIterator();
         StringBuilder csv = new StringBuilder();
+        String delim = context.getTextDelim();
 
         while (rowIterator.hasNext()) {
             XSSFRow row = (XSSFRow) rowIterator.next();
@@ -96,10 +98,10 @@ public class ExcelHelper {
             for (int i = 0; i < row.getLastCellNum(); i++) {
                 value = returnCellValue(row.getCell(i));
                 if (StringUtils.isEmpty(value)) { value = ""; }
-                oneRow += value + ",";
+                oneRow += value + delim;
             }
 
-            oneRow = StringUtils.trim(StringUtils.removeEnd(oneRow, ","));
+            oneRow = StringUtils.trim(StringUtils.removeEnd(oneRow, delim));
             if (!oneRow.isEmpty()) { csv.append(oneRow).append(lineSeparator()); }
         }
 
@@ -111,6 +113,7 @@ public class ExcelHelper {
         HSSFSheet excelSheet = workBook.getSheet(worksheet);
         Iterator rowIterator = excelSheet.rowIterator();
         StringBuilder csv = new StringBuilder();
+        String delim = context.getTextDelim();
 
         while (rowIterator.hasNext()) {
             HSSFRow row = (HSSFRow) rowIterator.next();
@@ -121,10 +124,10 @@ public class ExcelHelper {
                 HSSFCell cell = row.getCell(i);
                 value = returnCellValue(cell);
                 if (StringUtils.isEmpty(value)) { value = ""; }
-                oneRow += value + ",";
+                oneRow += value + delim;
             }
 
-            oneRow = StringUtils.trim(StringUtils.removeEnd(oneRow, ","));
+            oneRow = StringUtils.trim(StringUtils.removeEnd(oneRow, delim));
             if (!oneRow.isEmpty()) { csv.append(oneRow).append(lineSeparator()); }
         }
 
@@ -157,24 +160,32 @@ public class ExcelHelper {
 
     protected String returnCellValue(Cell cell) {
         try {
+            String value;
+
             switch (cell.getCellTypeEnum()) {
                 case STRING:
                 case BOOLEAN:
-                    return cell.getRichStringCellValue().toString();
+                    value = cell.getRichStringCellValue().toString();
+                    break;
                 case NUMERIC:
-                    return formattedCellToString(cell);
+                    value = formattedCellToString(cell);
+                    break;
                 case FORMULA:
                     CellType resultType = cell.getCachedFormulaResultTypeEnum();
                     if (resultType == STRING) {
-                        return cell.getRichStringCellValue().toString();
+                        value = cell.getRichStringCellValue().toString();
                     } else if (resultType == NUMERIC) {
-                        return formattedCellToString(cell);
+                        value = formattedCellToString(cell);
                     } else {
-                        return cell.getStringCellValue();
+                        value = cell.getStringCellValue();
                     }
+
+                    break;
                 default:
-                    return cell.getStringCellValue();
+                    value = cell.getStringCellValue();
             }
+
+            return DaoUtils.csvFriendly(value, context.getTextDelim(), true);
         } catch (Exception e) {
             return null;
         }

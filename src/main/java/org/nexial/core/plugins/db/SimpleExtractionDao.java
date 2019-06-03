@@ -378,7 +378,6 @@ public class SimpleExtractionDao extends JdbcDaoSupport {
 
             result.setRowCount(rowCount);
             outputStream.flush();
-            outputStream.close();
         } catch (Throwable e) {
             result.setError(e.getMessage());
         }
