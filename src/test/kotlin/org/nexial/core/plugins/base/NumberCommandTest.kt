@@ -125,10 +125,12 @@ class NumberCommandTest {
 
         // integer
         Assert.assertTrue(fixture.average(varName, "1,2,3").isSuccess)
-        Assert.assertEquals(2.0, NumberUtils.toDouble(context.getStringData(varName)), 0.0)
+        Assert.assertEquals("2.0", NumberUtils.toDouble(context.getStringData(varName)).toString())
+//        Assert.assertEquals(2.0, NumberUtils.toDouble(context.getStringData(varName)), 0.0)
 
         Assert.assertTrue(fixture.average(varName, "1,2,3,4,5,6,7,8,9,10").isSuccess)
-        Assert.assertEquals(5.5, NumberUtils.toDouble(context.getStringData(varName)), 0.0)
+        Assert.assertEquals("5.5", NumberUtils.toDouble(context.getStringData(varName)).toString())
+//        Assert.assertEquals(5.5, NumberUtils.toDouble(context.getStringData(varName)), 0.0)
 
         Assert.assertTrue(fixture.average(varName, "1212, 4, 68, 4, 2, 235, 234, 9, 8, 765, 5, 45, 63, 452").isSuccess)
         Assert.assertEquals(221.857142857143, NumberUtils.toDouble(context.getStringData(varName)), 0.000001)
@@ -187,15 +189,21 @@ class NumberCommandTest {
 
         // integer
         Assert.assertTrue(fixture.max(varName, "1,1,1").isSuccess)
-        Assert.assertEquals(1.0, NumberUtils.toDouble(context.getStringData(varName)), 0.0)
+        Assert.assertEquals("1.0", NumberUtils.toDouble(context.getStringData(varName)).toString())
+        Assert.assertEquals("1.0", context.getStringData(varName))
+//        Assert.assertEquals(1.0, NumberUtils.toDouble(context.getStringData(varName)), 0.0)
 
         // negative
         Assert.assertTrue(fixture.max(varName, "1,-16,5,0,3").isSuccess)
-        Assert.assertEquals(5.0, NumberUtils.toDouble(context.getStringData(varName)), 0.0)
+        Assert.assertEquals("5.0", NumberUtils.toDouble(context.getStringData(varName)).toString())
+        Assert.assertEquals("5.0", context.getStringData(varName))
+//        Assert.assertEquals(5.0, NumberUtils.toDouble(context.getStringData(varName)), 0.0)
 
         // decimals
         Assert.assertTrue(fixture.max(varName, "1,-16,5,0,3.002,-144,5.001").isSuccess)
-        Assert.assertEquals(5.001, NumberUtils.toDouble(context.getStringData(varName)), 0.0)
+        Assert.assertEquals("5.001", NumberUtils.toDouble(context.getStringData(varName)).toString())
+        Assert.assertEquals("5.001", context.getStringData(varName))
+//        Assert.assertEquals(5.001, NumberUtils.toDouble(context.getStringData(varName)), 0.0)
     }
 
     @Test
@@ -209,40 +217,45 @@ class NumberCommandTest {
 
         // empty, null, blank
         try {
-            fixture.max(varName, null)
+            fixture.min(varName, null)
             Assert.fail("expects failure with null array")
         } catch (e: AssertionError) {
         }
 
         try {
-            fixture.max(varName, "")
+            fixture.min(varName, "")
             Assert.fail("expects failure with empty array")
         } catch (e: AssertionError) {
         }
 
         try {
-            fixture.max(varName, " ")
+            fixture.min(varName, " ")
             Assert.fail("expects failure with blank")
         } catch (e: AssertionError) {
         }
 
         try {
-            fixture.max(varName, "\t")
+            fixture.min(varName, "\t")
             Assert.fail("expects failure with only tab")
         } catch (e: AssertionError) {
         }
 
         // integer
         Assert.assertTrue(fixture.min(varName, "1,1,1").isSuccess)
-        Assert.assertEquals(1.0, NumberUtils.toDouble(context.getStringData(varName)), 0.0)
+        Assert.assertEquals("1.0", NumberUtils.toDouble(context.getStringData(varName)).toString())
+        Assert.assertEquals("1.0", context.getStringData(varName))
+//        Assert.assertEquals(1.0, NumberUtils.toDouble(context.getStringData(varName)), 0.0)
 
         // negative
         Assert.assertTrue(fixture.min(varName, "1,-16,5,0,3").isSuccess)
-        Assert.assertEquals(-16.0, NumberUtils.toDouble(context.getStringData(varName)), 0.0)
+        Assert.assertEquals("-16.0", NumberUtils.toDouble(context.getStringData(varName)).toString())
+        Assert.assertEquals("-16.0", context.getStringData(varName))
+//        Assert.assertEquals(-16.0, NumberUtils.toDouble(context.getStringData(varName)), 0.0)
 
         // decimals
         Assert.assertTrue(fixture.min(varName, "1,-16,5,0,3.002,-144,5.001").isSuccess)
-        Assert.assertEquals(-144.0, NumberUtils.toDouble(context.getStringData(varName)), 0.0)
+        Assert.assertEquals("-144.0", NumberUtils.toDouble(context.getStringData(varName)).toString())
+        Assert.assertEquals("-144.0", context.getStringData(varName))
     }
 
     @Test

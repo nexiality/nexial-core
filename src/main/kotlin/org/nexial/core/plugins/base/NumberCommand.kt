@@ -48,11 +48,15 @@ class NumberCommand : BaseCommand() {
 
         val strings = TextUtils.toList(array, context.textDelim, true)
         val average = if (CollectionUtils.isNotEmpty(strings)) {
-            strings.foldRight(0.0) { value: String?, curr: Double -> curr + NumberUtils.toDouble(value) } / strings.size
+            println("list for average $strings")
+            val foldRight = strings
+                .foldRight(0.0) { value: String?, curr: Double -> curr + NumberUtils.toDouble(value) }
+            println("list for average $foldRight")
+            foldRight / strings.size
         } else {
             0.0
         }
-
+        println("average of $strings is $average")
         context.setData(Var, average)
         return StepResult.success("average saved to variable '$Var' as $average")
     }
@@ -66,11 +70,16 @@ class NumberCommand : BaseCommand() {
             StepResult.fail("max NOT saved to variable '$Var' since no valid numbers are given")
         } else {
             var max = MIN_VALUE
+            val tempString = mutableListOf<String>()
             for (string in strings) {
+                tempString.add(string)
                 val num = NumberUtils.toDouble(string)
                 if (num > max) max = num
+                // to Check minimum after each element
+                println("Maximum value among $tempString is $max")
             }
 
+            println("Maximum value from $strings is $max")
             context.setData(Var, max)
             StepResult.success("max saved to variable '$Var' as $max")
         }
@@ -85,11 +94,16 @@ class NumberCommand : BaseCommand() {
             StepResult.fail("min NOT saved to variable '$Var' since no valid numbers are given")
         } else {
             var min = Double.MAX_VALUE
+            var tempString = mutableListOf<String>()
             for (string in strings) {
+                tempString.add(string)
                 val num = NumberUtils.toDouble(string)
                 if (num < min) min = num
+                // to Check minimum after each element
+                println("Minimum value among $tempString is $min")
             }
 
+            println("Minimum value from $strings is $min")
             context.setData(Var, min)
             StepResult.success("min saved to variable '$Var' as $min")
         }
