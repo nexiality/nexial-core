@@ -31,22 +31,25 @@ class ConcurrentModificationTest {
 
     @Before
     fun setUp() {
-        context.referenceDataForExecution.add("nexial.textDelim")
-        context.setData("nexial.textDelim", "#", true)
+        context.referenceDataForExecution.add("nexial.scriptRef.app")
+        context.setData("nexial.scriptRef.app", "nexial unit test", true)
     }
 
     @Test
     @Throws(Exception::class)
     fun initInteractiveSession() {
-        System.setProperty("nexial.textDelim", ";")
+        System.setProperty("nexial.scriptRef.app", "nexial tester")
         val session = InteractiveSession(context)
         // no exception here means that we don't have ConcurrentModification issue
         Assert.assertNotNull(session)
+
+        context.removeData("nexial.scriptRef.app")
+        Assert.assertNull(System.getProperty("nexial.scriptRef.app"))
     }
 
     companion object {
         init {
-            System.setProperty("nexial.textDelim", ":")
+            System.setProperty("nexial.scriptRef.app", "nexial-test")
         }
     }
 }
