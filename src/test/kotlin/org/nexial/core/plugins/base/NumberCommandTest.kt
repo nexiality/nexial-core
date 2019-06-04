@@ -1,5 +1,6 @@
 package org.nexial.core.plugins.base
 
+
 import org.apache.commons.lang3.math.NumberUtils
 import org.junit.After
 import org.junit.Assert
@@ -36,6 +37,7 @@ class NumberCommandTest {
         Assert.assertTrue(fixture.assertEqual("0", "0").isSuccess)
         Assert.assertTrue(fixture.assertEqual("195", "1567").failed())
         Assert.assertTrue(fixture.assertEqual("3451", "152").failed())
+
     }
 
     @Test
@@ -140,7 +142,7 @@ class NumberCommandTest {
         Assert.assertEquals(-1.12689, NumberUtils.toDouble(context.getStringData(varName)), 00.000001)
 
         // wild wild west; expects non-number to be ignored
-        Assert.assertTrue(fixture.average(varName, "1,.2,3.00,004,-105.00,6a,7b,blackness,,,,").isSuccess)
+        Assert.assertTrue(fixture.average(varName, "1,.2,3.00,004,-105.00,6a,7b,blakhas,,,,").isSuccess)
         Assert.assertEquals(-12.1, NumberUtils.toDouble(context.getStringData(varName)), 0.000001)
 
         // mixing number types
@@ -299,6 +301,7 @@ class NumberCommandTest {
             Assert.fail("expected failure due to blank value")
         } catch (e: AssertionError) {
         }
+
     }
 
     @Test
@@ -332,6 +335,7 @@ class NumberCommandTest {
         } catch (e: AssertionError) {
         }
 
+
         // happy path
         context.setData(variableName, 1)
         Assert.assertTrue(fixture.floor(variableName).isSuccess)
@@ -357,6 +361,7 @@ class NumberCommandTest {
             Assert.fail("expected failure due to blank value")
         } catch (e: AssertionError) {
         }
+
     }
 
     @Test
@@ -452,6 +457,7 @@ class NumberCommandTest {
             Assert.fail("expected failure due to blank value")
         } catch (e: AssertionError) {
         }
+
     }
 
     @Test
@@ -518,6 +524,7 @@ class NumberCommandTest {
             Assert.fail("expected failure due to blank value")
         } catch (e: AssertionError) {
         }
+
     }
 
     @Test
@@ -574,6 +581,7 @@ class NumberCommandTest {
         context.setData(variableName, "0")
         Assert.assertTrue(fixture.increment(variableName, "0").isSuccess)
         Assert.assertEquals(0.0, NumberUtils.toDouble(context.getStringData(variableName)), 0.0)
+
     }
 
     @Test
@@ -630,12 +638,14 @@ class NumberCommandTest {
         context.setData(variableName, "0")
         Assert.assertTrue(fixture.decrement(variableName, "0").isSuccess)
         Assert.assertEquals(0.0, NumberUtils.toDouble(context.getStringData(variableName)), 0.0)
+
     }
 
     @Test
     fun testAdd() {
         val strings = TextUtils.toList("1,2,3,4,5,6,7,8,9,10", ",", true)
         val result = strings.foldRight(0.0, { s, acc -> NumberUtils.toDouble(s) + acc })
-        println("result = $result")
+        println("result = ${result}")
     }
+
 }
