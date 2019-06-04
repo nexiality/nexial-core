@@ -112,7 +112,7 @@ class NumberCommandTest {
 
         fixture.init(context)
 
-        val varName = "var1"
+        val varName = "var1.1"
 
         Assert.assertTrue(fixture.average(varName, null).isSuccess)
         Assert.assertEquals(0.0, NumberUtils.toDouble(context.getStringData(varName)), 0.0)
@@ -158,7 +158,7 @@ class NumberCommandTest {
 
         fixture.init(context)
 
-        val varName = "var1"
+        val varName = "var2"
 
         // empty, null, blank
         try {
@@ -205,7 +205,7 @@ class NumberCommandTest {
 
         fixture.init(context)
 
-        val varName = "var1"
+        val varName = "var3"
 
         // empty, null, blank
         try {
@@ -252,7 +252,7 @@ class NumberCommandTest {
 
         fixture.init(context)
 
-        val varName = "var1"
+        val varName = "var4"
 
         // null/empty/blank
         try {
@@ -311,7 +311,7 @@ class NumberCommandTest {
 
         fixture.init(context)
 
-        val variableName = "var1"
+        val variableName = "var5"
 
         // null/empty/blank
         try {
@@ -371,7 +371,7 @@ class NumberCommandTest {
 
         fixture.init(context)
 
-        val variableName = "var1"
+        val variableName = "var6"
 
         // null/empty/blank
         try {
@@ -467,7 +467,7 @@ class NumberCommandTest {
 
         fixture.init(context)
 
-        val variableName = "var1"
+        val variableName = "var7"
 
         // null/empty/blank
         try {
@@ -534,7 +534,7 @@ class NumberCommandTest {
 
         fixture.init(context)
 
-        val variableName = "var1"
+        val variableName = "var8"
 
         // null/empty/blank
         try {
@@ -591,7 +591,7 @@ class NumberCommandTest {
 
         fixture.init(context)
 
-        val variableName = "var1"
+        val variableName = "var9"
 
         // null/empty/blank
         try {
