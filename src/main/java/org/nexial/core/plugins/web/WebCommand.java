@@ -1214,14 +1214,16 @@ public class WebCommand extends BaseCommand implements CanTakeScreenshot, CanLog
         requiresPositiveNumber(index, "window index must be a positive integer (zero-based");
         requiresPositiveNumber(waitMs, "waitMs must be a positive integer", waitMs);
 
+        if (driver != null) {
+            Set<String> handles = driver.getWindowHandles();
+            ConsoleUtils.log("found " + CollectionUtils.size(handles) + " window handle(s); recalibrating again...");
+        }
+
         ensureReady();
 
-        Set<String> handles = driver.getWindowHandles();
-        ConsoleUtils.log("found " + CollectionUtils.size(handles) + " window handle(s); recalibrating again...");
-
         // double check
-        try { Thread.sleep(1000);} catch (InterruptedException e) { }
-        handles = driver.getWindowHandles();
+        try { Thread.sleep(2000);} catch (InterruptedException e) { }
+        Set<String> handles = driver.getWindowHandles();
 
         if (CollectionUtils.isEmpty(handles)) { return StepResult.fail("No window or windows handle found"); }
 

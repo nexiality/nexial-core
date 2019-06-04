@@ -1227,7 +1227,8 @@ public class ExecutionContext {
             // no variables means no crypt
             Set<String> variables = findTokens(data);
             return CollectionUtils.isNotEmpty(variables) &&
-                   variables.stream().anyMatch(var -> CellTextReader.isCrypt(replaceTokens(TOKEN_START + var + TOKEN_END)));
+                   variables.stream()
+                            .anyMatch(var -> CellTextReader.isCrypt(replaceTokens(TOKEN_START + var + TOKEN_END)));
         } catch (RuntimeException e) {
             // don't worry it now.. Nexial will eventually barf at such exception later on (and probably at a better spot).
             return false;

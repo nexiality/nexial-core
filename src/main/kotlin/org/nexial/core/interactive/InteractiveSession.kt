@@ -42,10 +42,14 @@ import java.util.*
 data class InteractiveSession(val context: ExecutionContext) {
 
     init {
-        System.getProperties().forEach { name, value ->
+        // val propKeys = System.getProperties().keys.toTypedArray()
+        // for (name in propKeys) {
+
+        // System.getProperties().forEach { (name, value) ->
+
+        System.getProperties().toMap().forEach { (name, _) ->
             val n = name.toString()
-            val v = value.toString()
-            if (IGNORED_CLI_OPT.none { StringUtils.startsWith(n, it) }) context.setData(n, v)
+            if (IGNORED_CLI_OPT.none { StringUtils.startsWith(n, it) }) context.setData(n, System.getProperty(n))
         }
     }
 
@@ -325,7 +329,7 @@ data class InteractiveSession(val context: ExecutionContext) {
     //    private fun formatActivity(activity: Entry<Int, String>) = "${activity.key}/${activity.value}"
     //    fun formatActivities(activities: MutableMap<Int, String>) = activities.map { activity -> formatActivity(activity) }
     fun formatActivities(activities: MutableList<String>) =
-            activities.map { activity -> "${allActivities.getKey(activity)}/$activity" }
+        activities.map { activity -> "${allActivities.getKey(activity)}/$activity" }
 
     private val activityStepMap: MutableMap<String, MutableList<String>> = mutableMapOf()
 
