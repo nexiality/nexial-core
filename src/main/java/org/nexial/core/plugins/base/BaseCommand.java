@@ -492,7 +492,7 @@ public class BaseCommand implements NexialCommand {
         }
 
         assertEquals(expectedList.toString(), actualList.toString());
-        return StepResult.success("validated " + array1 + "=" + array2 + " as EXPECTED");
+        return StepResult.success("validated ACTUAL [" + array2 + "] = [" + array1 + "] as EXPECTED");
     }
 
     /** assert that {@code array} contains all items in {@code expected}. */
