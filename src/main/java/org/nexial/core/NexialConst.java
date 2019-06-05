@@ -833,33 +833,36 @@ public final class NexialConst {
         public static final String WIN32_CMD = "C:\\Windows\\System32\\cmd.exe";
 
         // browser
-        public static final String BROWSER = registerSystemVariable(NAMESPACE + "browser", "firefox");
+        public static final String NS_BROWSER = NAMESPACE + "browser";
+        public static final String BROWSER = registerSystemVariable(NS_BROWSER, "firefox");
         public static final String BROWSER_LANG = registerSystemVariable(NAMESPACE + "browserLang");
         public static final String OPT_BROWSER_CONSOLE_LOG = registerSystemVariable(NAMESPACE + "browserConsoleLog", false);
 
         public static final String KEY_INCOGNITO = "incognito";
-        public static final String BROWER_INCOGNITO = registerSystemVariable(BROWSER + "." + KEY_INCOGNITO, true);
+        public static final String BROWER_INCOGNITO = registerSystemVariable(NS_BROWSER + "." + KEY_INCOGNITO, true);
 
-        public static final String BROWSER_POST_CLOSE_WAIT = registerSystemVariable(BROWSER + ".postCloseWaitMs", 3000);
-        public static final String BROWSER_WINDOW_SIZE = registerSystemVariable(BROWSER + ".windowSize");
-        public static final String BROWSER_DEFAULT_WINDOW_SIZE = registerSystemVariable(BROWSER + ".defaultWindowSize");
+        public static final String BROWSER_POST_CLOSE_WAIT = registerSystemVariable(NS_BROWSER + ".postCloseWaitMs", 3000);
+        public static final String BROWSER_WINDOW_SIZE = registerSystemVariable(NS_BROWSER + ".windowSize");
+        public static final String BROWSER_DEFAULT_WINDOW_SIZE = registerSystemVariable(NS_BROWSER + ".defaultWindowSize");
         public static final String ENFORCE_PAGE_SOURCE_STABILITY = registerSystemVariable(NAMESPACE + "enforcePageSourceStability", true);
-        public static final String BROWSER_ACCEPT_INVALID_CERTS = registerSystemVariable(BROWSER + ".acceptInsecureCerts", false);
+        public static final String BROWSER_ACCEPT_INVALID_CERTS = registerSystemVariable(NS_BROWSER + ".acceptInsecureCerts", false);
 
-        public static final String FORCE_JS_CLICK = registerSystemVariable(BROWSER + ".forceJSClick", false);
+        public static final String FORCE_JS_CLICK = registerSystemVariable(NS_BROWSER + ".forceJSClick", false);
 
-        public static final String IE_REQUIRE_WINDOW_FOCUS = registerSystemVariable(BROWSER + ".ie.requireWindowFocus", false);
+        public static final String IE_REQUIRE_WINDOW_FOCUS = registerSystemVariable(NS_BROWSER + ".ie.requireWindowFocus", false);
 
-        public static final String SAFARI_USE_TECH_PREVIEW = registerSystemVariable(BROWSER + ".safari.useTechPreview", false);
-        public static final String SAFARI_RESIZED = registerSystemVariable(BROWSER + ".safari.resizedAfterOpen", false);
+        public static final String SAFARI_USE_TECH_PREVIEW = registerSystemVariable(NS_BROWSER + ".safari.useTechPreview", false);
+        public static final String SAFARI_RESIZED = registerSystemVariable(NS_BROWSER + ".safari.resizedAfterOpen", false);
 
-        public static final String CEF_CLIENT_LOCATION = registerSystemVariable(BROWSER + ".embedded.appLocation");
-        public static final String ELECTRON_CLIENT_LOCATION = registerSystemVariable(BROWSER + ".electron.appLocation");
+        public static final String CEF_CLIENT_LOCATION = registerSystemVariable(NS_BROWSER + ".embedded.appLocation");
+        public static final String ELECTRON_CLIENT_LOCATION = registerSystemVariable(NS_BROWSER + ".electron.appLocation");
 
-        public static final String LOG_ELECTRON_DRIVER = registerSystemVariable(BROWSER + ".logElectron", false);
-        public static final String LOG_CHROME_DRIVER = registerSystemVariable(BROWSER + ".logChrome", false);
+        public static final String LOG_ELECTRON_DRIVER = registerSystemVariable(NS_BROWSER + ".logElectron", false);
+        public static final String LOG_ELECTRON_VERBOSE = registerSystemVariable(NS_BROWSER + ".logElectronVerbose", false);
+        public static final String LOG_CHROME_DRIVER = registerSystemVariable(NS_BROWSER + ".logChrome", false);
+        public static final String CHROME_REMOTE_PORT = registerSystemVariable(NS_BROWSER + ".chrome.remote.port");
 
-        public static final String NS_EMULATION = BROWSER + ".emulation.";
+        public static final String NS_EMULATION = NS_BROWSER + ".emulation.";
         public static final String KEY_EMU_DEVICE_NAME = registerSystemVariable(NS_EMULATION + "deviceName");
         public static final String KEY_EMU_WIDTH = registerSystemVariable(NS_EMULATION + "width", 400);
         public static final String KEY_EMU_HEIGHT = registerSystemVariable(NS_EMULATION + "height", 850);

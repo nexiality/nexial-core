@@ -535,6 +535,13 @@ public class Browser implements ForcefulTerminate {
         // options.addArguments("--disable-gpu"); // applicable to windows os only
         options.addArguments("--disable-dev-shm-usage"); // overcome limited resource problems
         options.addArguments("--no-sandbox"); // Bypass OS security model
+
+        if (NumberUtils.isDigits(context.getStringData(CHROME_REMOTE_PORT))) {
+            int port = NumberUtils.toInt(context.getStringData(CHROME_REMOTE_PORT));
+            ConsoleUtils.log("enabling chrome remote port: " + port);
+            options.addArguments("--remote-debugging-port=" + port);
+        }
+
         // options.addArguments("--auto-open-devtools-for-tabs"); // open devtools
         // options.addArguments("--headless");
 
@@ -545,7 +552,11 @@ public class Browser implements ForcefulTerminate {
             if (StringUtils.contains(appName, "/")) { appName = StringUtils.substringAfterLast(appName, "/"); }
             if (StringUtils.contains(appName, "\\")) { appName = StringUtils.substringAfterLast(appName, "\\"); }
             if (StringUtils.contains(appName, ".")) { appName = StringUtils.substringBeforeLast(appName, "."); }
-            cdsBuilder = cdsBuilder.withLogFile(resolveBrowserLogFile("electron-" + appName + ".log"));
+            File logFile = resolveBrowserLogFile("electron-" + appName + ".log");
+            ConsoleUtils.log("enabling logging for Electron: " + logFile.getAbsolutePath());
+
+            boolean verbose = context.getBooleanData(LOG_ELECTRON_VERBOSE, getDefaultBool(LOG_ELECTRON_VERBOSE));
+            cdsBuilder = cdsBuilder.withVerbose(verbose).withLogFile(logFile);
         }
 
         pageSourceSupported = false;
@@ -559,6 +570,7 @@ public class Browser implements ForcefulTerminate {
 
         if (context.getBooleanData(LOG_CHROME_DRIVER, getDefaultBool(LOG_CHROME_DRIVER))) {
             String chromeLog = resolveBrowserLogFile("chrome-browser.log").getAbsolutePath();
+            ConsoleUtils.log("enabling logging for Chrome: " + chromeLog);
             System.setProperty(CHROME_DRIVER_LOG_PROPERTY, chromeLog);
             System.setProperty(CHROME_DRIVER_VERBOSE_LOG_PROPERTY, "true");
         } else {
@@ -575,6 +587,12 @@ public class Browser implements ForcefulTerminate {
         options.addArguments(this.chromeOptions);
         if (context.getBooleanData(BROWER_INCOGNITO, getDefaultBool(BROWER_INCOGNITO))) {
             options.addArguments(KEY_INCOGNITO);
+        }
+
+        if (NumberUtils.isDigits(context.getStringData(CHROME_REMOTE_PORT))) {
+            int port = NumberUtils.toInt(context.getStringData(CHROME_REMOTE_PORT));
+            ConsoleUtils.log("enabling chrome remote port: " + port);
+            options.addArguments("--remote-debugging-port=" + port);
         }
 
         String binaryLocation = resolveChromeBinLocation();
@@ -608,7 +626,8 @@ public class Browser implements ForcefulTerminate {
             Map<String, Object> deviceMetrics = new HashMap<>();
             deviceMetrics.put("width", context.getIntData(KEY_EMU_WIDTH, getDefaultInt(KEY_EMU_WIDTH)));
             deviceMetrics.put("height", context.getIntData(KEY_EMU_HEIGHT, getDefaultInt(KEY_EMU_HEIGHT)));
-            deviceMetrics.put("pixelRatio", context.getDoubleData(KEY_EMU_PIXEL_RATIO, getDefaultDouble(KEY_EMU_PIXEL_RATIO)));
+            deviceMetrics.put("pixelRatio",
+                              context.getDoubleData(KEY_EMU_PIXEL_RATIO, getDefaultDouble(KEY_EMU_PIXEL_RATIO)));
             deviceMetrics.put("touch", context.getBooleanData(KEY_EMU_TOUCH, true));
 
             Map<String, Object> mobileEmulation = new HashMap<>();

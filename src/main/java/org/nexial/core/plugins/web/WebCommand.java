@@ -1221,8 +1221,10 @@ public class WebCommand extends BaseCommand implements CanTakeScreenshot, CanLog
 
         ensureReady();
 
+        // electron app or electron chromedriver tends to be slower... so we need to give some time
+        if (browser.isRunElectron()) { try { Thread.sleep(2000);} catch (InterruptedException e) { } }
+
         // double check
-        try { Thread.sleep(2000);} catch (InterruptedException e) { }
         Set<String> handles = driver.getWindowHandles();
 
         if (CollectionUtils.isEmpty(handles)) { return StepResult.fail("No window or windows handle found"); }
