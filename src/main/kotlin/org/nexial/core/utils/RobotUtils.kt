@@ -21,6 +21,19 @@ import java.awt.event.KeyEvent.*
 import java.util.*
 
 object RobotUtils {
+    private val ROBOT = run {
+        val robot = Robot()
+        robot.autoDelay = 100
+        robot.isAutoWaitForIdle = true
+        robot
+    }
+
+    @JvmStatic
+    fun typeKeys(keyLines: List<String>) =
+        keyLines.forEach { KeystrokeParser.handleKey(ROBOT, KeystrokeParser.toKeystrokes(it)) }
+}
+
+object KeystrokeParser {
     private val MODIFIERS =
         mapOf("{SHIFT}" to VK_SHIFT,
               "{CONTROL}" to VK_CONTROL,
@@ -88,58 +101,43 @@ object RobotUtils {
 
     private val NEED_SHIFT = listOf("%", "|", "?")
 
-    private val ROBOT = run {
-        val robot = Robot()
-        robot.autoDelay = 100
-        robot.isAutoWaitForIdle = true
-        robot
-    }
-
     @JvmStatic
-    fun typeKeys(keyLines: List<String>) {
-        keyLines.forEach {
-            val modifiers = Stack<Int>()
-            val keystrokes = toKeystrokes(it)
-            keystrokes.forEach { key ->
-                ConsoleUtils.log(key)
-                when {
-                    MODIFIERS.containsKey(key)     -> {
-                        val keyCode = MODIFIERS[key] ?: error("Unknown/unsupported modifier: $key")
-                        ConsoleUtils.log("keypress: $key")
-                        ROBOT.keyPress(keyCode)
-                        modifiers.add(keyCode)
+    fun handleKey(robot: Robot, keystrokes: List<String>) {
+        val modifiers = Stack<Int>()
+        keystrokes.forEach { key ->
+            when {
+                MODIFIERS.containsKey(key)     -> {
+                    val keyCode = MODIFIERS[key] ?: error("Unknown/unsupported modifier: $key")
+                    robot.keyPress(keyCode)
+                    modifiers.add(keyCode)
+                }
+
+                FUNCTION_KEYS.containsKey(key) -> {
+                    val keyCode = FUNCTION_KEYS[key] ?: error("Unknown/unsupported function key: $key")
+                    robot.keyPress(keyCode)
+                    robot.keyRelease(keyCode)
+                    while (modifiers.isNotEmpty()) robot.keyRelease(modifiers.pop())
+                }
+
+                KEYS.containsKey(key)          -> {
+                    val keyCode = KEYS[key] ?: error("Unknown/unsupported key: $key")
+                    if (NEED_SHIFT.contains(key)) {
+                        robot.keyPress(VK_SHIFT)
+                        modifiers.add(VK_SHIFT)
                     }
 
-                    FUNCTION_KEYS.containsKey(key) -> {
-                        val keyCode = FUNCTION_KEYS[key] ?: error("Unknown/unsupported function key: $key")
-                        ConsoleUtils.log("keypress/keyrelease: $key")
-                        ROBOT.keyPress(keyCode)
-                        ROBOT.keyRelease(keyCode)
-                        while (modifiers.isNotEmpty()) ROBOT.keyRelease(modifiers.pop())
-                    }
+                    robot.keyPress(keyCode)
+                    robot.keyRelease(keyCode)
+                    while (modifiers.isNotEmpty()) robot.keyRelease(modifiers.pop())
+                }
 
-                    KEYS.containsKey(key)          -> {
-                        val keyCode = KEYS[key] ?: error("Unknown/unsupported key: $key")
-                        if (NEED_SHIFT.contains(key)) {
-                            ConsoleUtils.log("keypress on SHIFT: $key")
-                            ROBOT.keyPress(VK_SHIFT)
-                            modifiers.add(VK_SHIFT)
-                        }
-
-                        ConsoleUtils.log("keypress/keyrelease: $key")
-                        ROBOT.keyPress(keyCode)
-                        ROBOT.keyRelease(keyCode)
-                        while (modifiers.isNotEmpty()) ROBOT.keyRelease(modifiers.pop())
-                    }
-
-                    else                           -> {
-                        error("Unknown/unsupported key: $key")
-                    }
+                else                           -> {
+                    error("Unknown/unsupported key: $key")
                 }
             }
-
-            while (modifiers.isNotEmpty()) ROBOT.keyRelease(modifiers.pop())
         }
+
+        while (modifiers.isNotEmpty()) robot.keyRelease(modifiers.pop())
     }
 
     internal fun toKeystrokes(keys: String): List<String> {

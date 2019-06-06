@@ -25,7 +25,7 @@ class RobotUtilsTest {
     @Throws(Exception::class)
     fun toKeystrokes_mod_1_key() {
         val fixture = "{COMMAND}5"
-        val keystrokes = RobotUtils.toKeystrokes(fixture)
+        val keystrokes = KeystrokeParser.toKeystrokes(fixture)
         println(keystrokes)
 
         Assert.assertNotNull(keystrokes)
@@ -38,7 +38,7 @@ class RobotUtilsTest {
     @Throws(Exception::class)
     fun toKeystrokes_mod_2_keys() {
         val fixture = "{COMMAND}5A"
-        val keystrokes = RobotUtils.toKeystrokes(fixture)
+        val keystrokes = KeystrokeParser.toKeystrokes(fixture)
         println(keystrokes)
 
         Assert.assertNotNull(keystrokes)
@@ -52,7 +52,7 @@ class RobotUtilsTest {
     @Throws(Exception::class)
     fun toKeystrokes_multiple_keys() {
         val fixture = "this is a test"
-        val keystrokes = RobotUtils.toKeystrokes(fixture)
+        val keystrokes = KeystrokeParser.toKeystrokes(fixture)
         println(keystrokes)
 
         Assert.assertNotNull(keystrokes)
@@ -77,7 +77,7 @@ class RobotUtilsTest {
     @Throws(Exception::class)
     fun toKeystrokes_combined() {
         val fixture = "{COMMAND}{SHIFT}6{CONTROL}{ALT}F"
-        val keystrokes = RobotUtils.toKeystrokes(fixture)
+        val keystrokes = KeystrokeParser.toKeystrokes(fixture)
         println(keystrokes)
 
         Assert.assertNotNull(keystrokes)
@@ -94,7 +94,7 @@ class RobotUtilsTest {
     @Throws(Exception::class)
     fun toKeystrokes_combined2() {
         val fixture = "{COMMAND}{F12}F12{ALT}{ESC}!$$%!"
-        val keystrokes = RobotUtils.toKeystrokes(fixture)
+        val keystrokes = KeystrokeParser.toKeystrokes(fixture)
         println(keystrokes)
 
         Assert.assertNotNull(keystrokes)
