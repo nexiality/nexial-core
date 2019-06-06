@@ -174,7 +174,7 @@ fi
 JAVA_OPT="${JAVA_OPT} -ea"
 JAVA_OPT="${JAVA_OPT} -Xss24m"
 JAVA_OPT="${JAVA_OPT} -Dfile.encoding=UTF-8"
-JAVA_OPT="${JAVA_OPT} -Djava.awt.headless=true"
+# JAVA_OPT="${JAVA_OPT} -Djava.awt.headless=true"
 JAVA_OPT="${JAVA_OPT} -Dnexial.home=${NEXIAL_HOME}"
 JAVA_OPT="${JAVA_OPT} -Dwebdriver.winium.verbose=true"
 JAVA_OPT="${JAVA_OPT} -Dwebdriver.winium.silent=false"

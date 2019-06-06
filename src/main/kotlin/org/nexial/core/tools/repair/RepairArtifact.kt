@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package org.nexial.core.tools.repairExcel
+package org.nexial.core.tools.repair
 
 import org.apache.commons.cli.CommandLine
 import org.apache.commons.cli.Options
@@ -34,9 +34,9 @@ import org.nexial.core.tools.CliUtils.getCommandLine
 import org.nexial.core.tools.CliUtils.newArgOption
 import org.nexial.core.tools.ProjectToolUtils.formatColumns
 import org.nexial.core.tools.inspector.InspectorConst.exit
-import org.nexial.core.tools.repairExcel.RepairExcels.ArtifactType
-import org.nexial.core.tools.repairExcel.RepairExcels.getFileType
-import org.nexial.core.tools.repairExcel.RepairExcels.lastColumnIdx
+import org.nexial.core.tools.repair.RepairExcels.ArtifactType
+import org.nexial.core.tools.repair.RepairExcels.getFileType
+import org.nexial.core.tools.repair.RepairExcels.lastColumnIdx
 import org.nexial.core.utils.ConsoleUtils
 import org.springframework.util.CollectionUtils
 import java.io.File
@@ -58,10 +58,8 @@ object RepairArtifact {
     private fun deriveCommandLine(args: Array<String>): CommandLine {
         val cmdOptions = Options()
         cmdOptions.addOption(OPT_VERBOSE)
-
         cmdOptions.addOption(newArgOption("t", "target", "[REQUIRED] File or directory to repair", true))
-        cmdOptions
-            .addOption(newArgOption("d", "destination", "[OPTIONAL] Destination for preview files", false))
+        cmdOptions.addOption(newArgOption("d", "destination", "[OPTIONAL] Destination for preview files", false))
 
         val programExt = if (IS_OS_WINDOWS) ".cmd" else ".sh"
         val cmd = getCommandLine("nexial-artifact-repair$programExt", args, cmdOptions)
@@ -173,37 +171,33 @@ object RepairArtifact {
                 cell.setCellValue("")
             }
         }
+
         // rename default sheet to temporary unique name
         ExcelUtils.renameSheet(targetWorkbook, defSheet)
+
         // save new template to another template location
         Excel.save(File(tempDir + file.name), targetWorkbook)
     }
 
     // get file type of template file
     private fun getArtifactType(file: File): ArtifactType? {
-        RepairExcels.ArtifactType.values().forEach { fileType ->
-            if (file.name == fileType.fileName) {
-                return fileType
-            }
-        }
+        RepairExcels.ArtifactType.values().forEach { fileType -> if (file.name == fileType.fileName) return fileType }
         return null
     }
 
     private fun listFiles(): MutableList<File> {
         return when {
             // recursively search for script file from provided path
-            FileUtil.isDirectoryReadable(searchFrom) -> FileUtils.listFiles(File(searchFrom),
-                                                                            arrayOf(SCRIPT_FILE_SUFFIX),
-                                                                            true) as MutableList<File>
-            FileUtil.isFileReadable(searchFrom)      -> mutableListOf(File(searchFrom))
-            else                                     -> throw IllegalArgumentException(
-                "'$searchFrom' is not a readable directory/file")
+            FileUtil.isDirectoryReadable(searchFrom) ->
+                FileUtils.listFiles(File(searchFrom), arrayOf(SCRIPT_FILE_SUFFIX), true) as MutableList<File>
+            FileUtil.isFileReadable(searchFrom)      ->
+                mutableListOf(File(searchFrom))
+            else                                     ->
+                throw IllegalArgumentException("'$searchFrom' is not a readable directory/file")
         }
     }
 
     data class RepairArtifactLog(var file: File, var processTime: Long, var newFile: File) {
-        override fun toString(): String {
-            return formatColumns(file.absolutePath, "$processTime", newFile.absolutePath)
-        }
+        override fun toString() = formatColumns(file.absolutePath, "$processTime", newFile.absolutePath)
     }
 }

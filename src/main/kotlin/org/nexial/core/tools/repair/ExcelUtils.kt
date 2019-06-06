@@ -12,10 +12,9 @@
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
- *
  */
 
-package org.nexial.core.tools.repairExcel
+package org.nexial.core.tools.repair
 
 import org.apache.commons.io.FileUtils
 import org.apache.commons.lang3.StringUtils
@@ -29,11 +28,11 @@ import org.nexial.core.excel.Excel
 import org.nexial.core.excel.ExcelConfig.StyleConfig.STRIKEOUT_COMMAND
 import org.nexial.core.excel.ExcelConfig.StyleDecorator
 import org.nexial.core.tools.ProjectToolUtils.log
-import org.nexial.core.tools.repairExcel.RepairArtifact.RepairArtifactLog
-import org.nexial.core.tools.repairExcel.RepairExcels.ArtifactType
-import org.nexial.core.tools.repairExcel.RepairExcels.ArtifactType.*
-import org.nexial.core.tools.repairExcel.RepairExcels.TEMP_SHEET_NAME
-import org.nexial.core.tools.repairExcel.RepairExcels.retrieveValidSheet
+import org.nexial.core.tools.repair.RepairArtifact.RepairArtifactLog
+import org.nexial.core.tools.repair.RepairExcels.ArtifactType
+import org.nexial.core.tools.repair.RepairExcels.ArtifactType.*
+import org.nexial.core.tools.repair.RepairExcels.TEMP_SHEET_NAME
+import org.nexial.core.tools.repair.RepairExcels.retrieveValidSheet
 import org.nexial.core.utils.ConsoleUtils
 import org.springframework.util.CollectionUtils
 import java.io.File
@@ -74,7 +73,9 @@ object ExcelUtils {
         val targetWorkbook = targetExcel.workbook
         val excelAddress = fileType.excelAddress
         try {
-            sourceSheets.forEach { copySheet(it.sheet, targetWorkbook, it.findLastDataRow(excelAddress), fileType) }
+            sourceSheets.forEach {
+                copySheet(it.sheet, targetWorkbook, it.findLastDataRow(excelAddress), fileType)
+            }
         } catch (e: Exception) {
             log("Unable to proceed repair file ${file.absolutePath} further due to ${e.message}")
         } finally {
@@ -178,7 +179,8 @@ object ExcelUtils {
             // create folder structure as it is from searchFrom
             var fileSuffix = file.name
             if (file.absolutePath != searchFrom) {
-                fileSuffix = StringUtils.substringAfterLast(file.absolutePath, searchFrom).removePrefix(separator)
+                fileSuffix = StringUtils.substringAfterLast(file.absolutePath,
+                                                            searchFrom).removePrefix(separator)
             }
             backupOrPreviewLoc = File(StringUtils.appendIfMissing(preview, separator) + fileSuffix)
             destFile = backupOrPreviewLoc

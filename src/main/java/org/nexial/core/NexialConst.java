@@ -1377,6 +1377,35 @@ public final class NexialConst {
         static void init() {}
     }
 
+    public static final class OS {
+        private static final String OS_WINDOWS = "WINDOWS";
+        private static final String OS_MAC = "MAC";
+        private static final String OS_MACOS = "MACOS";
+        private static final String OS_MACOSX = "MACOSX";
+        private static final String OS_LINUX = "LINUX";
+
+        private static final List<String> VALID_OS = Arrays.asList(OS_WINDOWS, OS_MAC, OS_MACOS, OS_MACOSX, OS_LINUX);
+
+        public static boolean isValid(String os) {
+            return VALID_OS.contains(StringUtils.remove(StringUtils.upperCase(StringUtils.trim(os)), ' '));
+        }
+
+        public static boolean isWindows(String os) {
+            return StringUtils.equals(OS_WINDOWS, StringUtils.remove(StringUtils.upperCase(StringUtils.trim(os)), ' '));
+        }
+
+        public static boolean isMac(String os) {
+            String os1 = StringUtils.remove(StringUtils.upperCase(StringUtils.trim(os)), ' ');
+            return StringUtils.equals(OS_MAC, os1) ||
+                   StringUtils.equals(OS_MACOS, os1) ||
+                   StringUtils.equals(OS_MACOSX, os1);
+        }
+
+        public static boolean isLinux(String os) {
+            return StringUtils.equals(OS_LINUX, StringUtils.remove(StringUtils.upperCase(StringUtils.trim(os)), ' '));
+        }
+    }
+
     // @formatter:on
 
     private NexialConst() { }

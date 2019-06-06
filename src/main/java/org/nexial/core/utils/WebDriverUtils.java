@@ -141,7 +141,7 @@ public final class WebDriverUtils {
         return actions;
     }
 
-    public static Map<String, Keys> initControlKeyMapping() {
+    private static Map<String, Keys> initControlKeyMapping() {
         Map<String, Keys> map = new HashMap<>();
         map.put("{SHIFT}", SHIFT);
         map.put("{CONTROL}", CONTROL);
@@ -152,7 +152,7 @@ public final class WebDriverUtils {
         return map;
     }
 
-    public static Map<String, Keys> initKeyMapping() {
+    private static Map<String, Keys> initKeyMapping() {
         Map<String, Keys> map = new HashMap<>();
 
         map.put("{TAB}", TAB);

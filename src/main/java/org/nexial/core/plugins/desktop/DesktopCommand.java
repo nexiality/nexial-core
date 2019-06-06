@@ -49,6 +49,7 @@ import org.nexial.core.plugins.web.WebDriverExceptionHelper;
 import org.nexial.core.utils.CheckUtils;
 import org.nexial.core.utils.ConsoleUtils;
 import org.nexial.core.utils.OutputFileUtils;
+import org.nexial.core.utils.RobotUtils;
 import org.nexial.seeknow.SeeknowData;
 import org.openqa.selenium.By;
 import org.openqa.selenium.By.ByClassName;
@@ -66,7 +67,9 @@ import org.openqa.selenium.winium.WiniumDriver;
 import static java.io.File.separator;
 import static java.lang.Integer.MAX_VALUE;
 import static java.lang.System.lineSeparator;
+import static org.apache.commons.lang3.SystemUtils.*;
 import static org.nexial.core.NexialConst.Data.*;
+import static org.nexial.core.NexialConst.OS;
 import static org.nexial.core.SystemVariables.getDefaultInt;
 import static org.nexial.core.plugins.desktop.DesktopConst.*;
 import static org.nexial.core.plugins.desktop.DesktopNotification.NotificationLevel.info;
@@ -115,8 +118,7 @@ public class DesktopCommand extends BaseCommand
 
     @Override
     public boolean mustForcefullyTerminate() {
-        if (winiumDriver == null) { return false;}
-        return getDriver() != null && context.getBooleanData(WINIUM_SERVICE_RUNNING);
+        return winiumDriver != null && getDriver() != null && context.getBooleanData(WINIUM_SERVICE_RUNNING);
     }
 
     @Override
@@ -127,8 +129,10 @@ public class DesktopCommand extends BaseCommand
             if (aut != null && aut.isTerminateExisting()) { closeApplication(); }
         }
 
-        WiniumUtils.shutdownWinium(null, getDriver());
-        winiumDriver = null;
+        if (mustForcefullyTerminate()) {
+            WiniumUtils.shutdownWinium(null, getDriver());
+            winiumDriver = null;
+        }
     }
 
     @Override
@@ -446,12 +450,12 @@ public class DesktopCommand extends BaseCommand
         }
     }
 
-    public StepResult saveModalDialogTextByLocator(String var, String locater) {
+    public StepResult saveModalDialogTextByLocator(String var, String locator) {
         // find dialog
-        WebElement modalDialog = findElement(locater);
+        WebElement modalDialog = findElement(locator);
         if (modalDialog == null) {
             context.removeData(var);
-            return StepResult.success("No modal dialog found under application via " + locater + ".  No text saved");
+            return StepResult.success("No modal dialog found under application via " + locator + ".  No text saved");
         } else {
             String text = saveModalDialogText(modalDialog, var);
             return StepResult.success("Modal text found and saved to '" + var + "': " + text);
@@ -462,6 +466,35 @@ public class DesktopCommand extends BaseCommand
         DesktopElement component = getRequiredElement(name, Textbox);
         if (component == null) { return StepResult.fail("Unable to derive component via '" + name + "'"); }
         return component.typeTextComponent(true, false, text1, text2, text3, text4);
+    }
+
+    /**
+     * send keys via {@link java.awt.Robot}. As such, this is not dependent on Winium driver, and the {@code keystrokes}
+     * can be OS-specific. We use {@code os} to limit some undesired impact, albeit not completely. We use {@code os}
+     * as a condition whether the specified {@code keystrokes} should be exercised.
+     */
+    public StepResult typeKeys(String os, String keystrokes) {
+        requiresNotBlank(os, "invalid os", os);
+        requiresNotBlank(keystrokes, "invalid keystrokes", keystrokes);
+
+        List<String> oses = TextUtils.toList(os, context.getTextDelim(), true);
+        if (CollectionUtils.isEmpty(oses)) { return StepResult.fail("Invalid os specified: '" + os + "'"); }
+
+        boolean supported = false;
+        for (String sys : oses) {
+            if (!OS.isValid(sys)) { return StepResult.fail("Invalid os '" + sys + "'"); }
+
+            if (IS_OS_WINDOWS && OS.isWindows(sys) || IS_OS_MAC && OS.isMac(sys) || IS_OS_LINUX && OS.isLinux(sys)) {
+                supported = true;
+                break;
+            }
+
+        }
+
+        if (!supported) { return StepResult.skipped("current operating system not supported: '" + os + "'"); }
+
+        RobotUtils.typeKeys(TextUtils.toList(StringUtils.remove(keystrokes, "\r"), "\n", false));
+        return StepResult.success("type keys completed for " + keystrokes);
     }
 
     public StepResult typeTextBox(String name, String text1, String text2, String text3, String text4) {
@@ -1388,8 +1421,13 @@ public class DesktopCommand extends BaseCommand
             ConsoleUtils.log(msg);
             return StepResult.skipped(msg);
         }
-        // doing it old school...
+
         Aut aut = session.getConfig().getAut();
+        if (aut == null || winiumDriver == null || getDriver() == null) {
+            return StepResult.success("No desktop application running");
+        }
+
+        // doing it old school...
         boolean closed = WiniumUtils.terminateRunningInstance(aut.getExe());
         String message = "application " + (closed ? "terminated via process termination" : "DID NOT terminate");
 

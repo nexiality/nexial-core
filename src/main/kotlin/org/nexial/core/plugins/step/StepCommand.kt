@@ -31,12 +31,14 @@ class StepCommand : BaseCommand() {
         requiresNotBlank(instructions, "Invalid instruction(s)", instructions)
 
         val comment = ConsoleUtils.pauseForStep(context, instructions)
-        if (StringUtils.isNotBlank(comment)) log(comment);
+        if (StringUtils.isNotBlank(comment)) log(comment)
 
         // supports keyword FAIL
-        return if (StringUtils.isBlank(comment)) StepResult.success("Step(s) performed") else
-            if (StringUtils.startsWith(comment, "FAIL ")) StepResult.fail(comment) else
-                StepResult.success("Response received as '$comment'")
+        return when {
+            StringUtils.isBlank(comment)             -> StepResult.success("Step(s) performed")
+            StringUtils.startsWith(comment, "FAIL ") -> StepResult.fail(comment)
+            else                                     -> StepResult.success("Response received as '$comment'")
+        }
     }
 
     fun validate(prompt: String, responses: String, passResponses: String): StepResult {

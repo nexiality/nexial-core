@@ -42,3 +42,12 @@ if [[ ${build_ret} != 0 ]] ; then
     echo script update failed!
     exit ${build_ret}
 fi
+
+./nexial-script-update.sh -v -t ../../../../template
+
+build_ret=$?
+
+if [[ ${build_ret} != 0 ]] ; then
+    echo script update failed!
+    exit ${build_ret}
+fi

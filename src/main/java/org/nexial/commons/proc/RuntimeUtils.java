@@ -57,7 +57,7 @@ public final class RuntimeUtils {
 
     public static boolean terminateInstance(String exeName) {
         if (IS_OS_WINDOWS) { return terminateInstancesOnWIN(exeName); }
-        if (IS_OS_MAC_OSX || IS_OS_UNIX) { return terminateInstancesOnNIX(exeName);}
+        if (IS_OS_MAC_OSX || IS_OS_UNIX) { return terminateInstancesOnNIX(exeName); }
 
         ConsoleUtils.error("UNSUPPORTED OS: " + OS_NAME + ". No termination for " + exeName);
         return false;
@@ -65,7 +65,7 @@ public final class RuntimeUtils {
 
     public static boolean terminateInstance(int processId) {
         if (IS_OS_WINDOWS) { return terminateInstanceOnWIN(processId); }
-        if (IS_OS_MAC_OSX || IS_OS_UNIX) { return terminateInstanceOnNIX(processId);}
+        if (IS_OS_MAC_OSX || IS_OS_UNIX) { return terminateInstanceOnNIX(processId); }
 
         ConsoleUtils.error("UNSUPPORTED OS: " + OS_NAME + ". No termination for " + processId);
         return false;
