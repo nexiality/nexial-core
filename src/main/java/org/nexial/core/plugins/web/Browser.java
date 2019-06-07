@@ -46,6 +46,7 @@ import org.nexial.core.service.EventTracker;
 import org.nexial.core.utils.ConsoleUtils;
 import org.openqa.selenium.*;
 import org.openqa.selenium.chrome.ChromeDriver;
+import org.openqa.selenium.chrome.ChromeDriverService;
 import org.openqa.selenium.chrome.ChromeDriverService.Builder;
 import org.openqa.selenium.chrome.ChromeOptions;
 import org.openqa.selenium.edge.EdgeDriver;
@@ -405,19 +406,23 @@ public class Browser implements ForcefulTerminate {
 
         EventTracker.INSTANCE.track(new BrowserCompleteEvent(browserType.name()));
 
-        try { Thread.sleep(2000);} catch (InterruptedException e) { }
-
-        if (!isRunFireFox() && !isRunFirefoxHeadless() && !(driver instanceof FirefoxDriver)) {
-            // close before quite doesn't seem to work for firefox driver
-            try { driver.close(); } catch (Throwable e) { }
-        }
-
-        try { driver.quit(); } catch (Throwable e) { }
-
-        try { Thread.sleep(4000);} catch (InterruptedException e) { }
+        // Logs logs = driver.manage().logs();
+        // if (logs != null) {
+        //     LogEntries logEntries = logs.get(LogType.CLIENT);
+        //     if (!IterableUtils.isEmpty(logEntries)) {
+        //         List<LogEntry> allLogs = logEntries.getAll();
+        //         if (CollectionUtils.isNotEmpty(allLogs)) {
+        //             ConsoleUtils.log("client logs: " + allLogs.size() + " 'client' log entries found");
+        //             allLogs.forEach(log -> ConsoleUtils.log(new Date(log.getTimestamp()) + "\t" +
+        //                                                     log.getLevel() + "\t" +
+        //                                                     log.getMessage()));
+        //         }
+        //
+        //         System.out.println();System.out.println();System.out.println();
+        //     }
+        // }
 
         clearWinHandles();
-        driver = null;
 
         if (context != null) {
             CanTakeScreenshot agent = context.findCurrentScreenshotAgent();
@@ -433,6 +438,19 @@ public class Browser implements ForcefulTerminate {
             cbtHelper.terminateLocal();
             cbtHelper = null;
         }
+
+        try { Thread.sleep(2000);} catch (InterruptedException e) { }
+
+        if (!isRunFireFox() && !isRunFirefoxHeadless() && !(driver instanceof FirefoxDriver)) {
+            // close before quite doesn't seem to work for firefox driver
+            try { driver.close(); } catch (Throwable e) { }
+        }
+
+        try {
+            driver.quit();
+            Thread.sleep(3000);
+        } catch (Throwable e) {
+        } finally { driver = null; }
     }
 
     protected String updateWinHandle() {
@@ -568,7 +586,12 @@ public class Browser implements ForcefulTerminate {
 
         resolveChromeDriverLocation();
 
-        if (context.getBooleanData(LOG_CHROME_DRIVER, getDefaultBool(LOG_CHROME_DRIVER))) {
+        ChromeDriverService driverService = ChromeDriverService.createDefaultService();
+        // URL driverUrl = driverService.getUrl();
+        // int driverPort = driverUrl.getPort();
+
+        boolean activateLogging = context.getBooleanData(LOG_CHROME_DRIVER, getDefaultBool(LOG_CHROME_DRIVER));
+        if (activateLogging) {
             String chromeLog = resolveBrowserLogFile("chrome-browser.log").getAbsolutePath();
             ConsoleUtils.log("enabling logging for Chrome: " + chromeLog);
             System.setProperty(CHROME_DRIVER_LOG_PROPERTY, chromeLog);
@@ -637,7 +660,19 @@ public class Browser implements ForcefulTerminate {
             ConsoleUtils.log("setting mobile emulation on Chrome as " + emuUserAgent);
         }
 
-        ChromeDriver chrome = new ChromeDriver(options);
+        // if (activateLogging) {
+        //     LoggingPreferences logOptions = new LoggingPreferences();
+        //     // logOptions.enable(LogType.BROWSER, Level.ALL);
+        //     // logOptions.enable(LogType.PERFORMANCE, Level.INFO);
+        //     logOptions.enable(LogType.CLIENT, Level.ALL);
+        //     // logOptions.enable(LogType.DRIVER, Level.INFO);
+        //     options.setCapability(LOGGING_PREFS, logOptions);
+        // }
+
+        // WebDriver chrome = new Augmenter().augment(new RemoteWebDriver(driverUrl, options));
+        // Capabilities capabilities = ((HasCapabilities) chrome).getCapabilities();
+        // ChromeDriver chrome = new ChromeDriver(options);
+        ChromeDriver chrome = new ChromeDriver(driverService, options);
         Capabilities capabilities = chrome.getCapabilities();
         initCapabilities(context, (MutableCapabilities) capabilities);
 
