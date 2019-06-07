@@ -40,7 +40,7 @@ if "%1"=="" goto :reportBadInputAndExit
         echo ^>^> create %PROJECT_ID%
 		set PROJECT_NAME=
 		for %%F in (%1) do set PROJECT_NAME=%%~nF
-        echo %PROJECT_NAME% > %PROJECT_ID%
+        echo !PROJECT_NAME! > %PROJECT_ID%
     )
 
 	set script_name=%~n1
