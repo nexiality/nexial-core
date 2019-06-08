@@ -28,6 +28,7 @@ import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.math.NumberUtils;
 import org.apache.poi.xssf.usermodel.XSSFCell;
 import org.nexial.commons.utils.CollectionUtil;
+import org.nexial.core.CommandConst;
 import org.nexial.core.excel.Excel;
 import org.nexial.core.excel.Excel.Worksheet;
 import org.nexial.core.excel.ExcelAddress;
@@ -49,7 +50,7 @@ import static org.nexial.core.NexialConst.*;
  * <pre>
  *     nexial.scope.iteration=4                     # define that nexial should loop the specified test 4 times.
  *     nexial.scope.fallbackToPrevious=true         # define that missing data in current iteration should resolve to previous value.
- *     nexial.scope.mailTo=my_email@mycompany.com   # define that the test result should be sent as an email to the specified address.
+ *     nexial.mailTo=my_email@mycompany.com         # define that the test result should be sent as an email to the specified address.
  * </pre></li>
  * <li>Predefined data that could be altered between iterations. Such data names are prefixed with <code>nexial.</code>
  * The value of such data could be altered between iteration, either via data sheet or via variable-related commands, and
@@ -119,7 +120,7 @@ public class TestData {
         System.setProperty(SCRIPT_REF_PREFIX + DATA_FILE, dataFile.getName());
     }
 
-    public String getMailTo() { return getSetting(MAIL_TO); }
+    public String getMailTo() { return getSetting(POST_EXEC_MAIL_TO); }
 
     public int getIteration() {
         String iteration = getSetting(ITERATION);
@@ -279,7 +280,7 @@ public class TestData {
                 throw new IllegalArgumentException(errPrefix + "no data name defined at A" + i);
             }
 
-            if (StringUtils.startsWith(name, SCOPE)) {
+            if (CommandConst.isNonIterableVariable(name)) {
                 XSSFCell dataCell = row.get(0).get(1);
                 String dataCellValue = Excel.getCellValue(dataCell);
                 if (StringUtils.isBlank(dataCellValue)) { continue; }
@@ -299,7 +300,7 @@ public class TestData {
 
             List<XSSFCell> row = sheet.cells(addrThisRow).get(0);
             String name = Excel.getCellValue(row.get(0));
-            if (!StringUtils.startsWith(name, SCOPE)) {
+            if (!CommandConst.isNonIterableVariable(name)) {
                 collectIterationData(row, lastIteration, name, dataMap);
 
                 // keep track of the data specified in #default sheet so that they can be overriden in
@@ -375,15 +376,15 @@ public class TestData {
             // (2018/12/06,automike):             able by all subsequent scripts within same plan.
 
             // if (isDefinedAsDefault(name)) {
-                String stringValue = Objects.toString(value);
+            String stringValue = Objects.toString(value);
 
-                // we should be sync'ing back value to its initial iteration, not the current/latest iteration
-                List<String> data = dataMap.get(name);
-                if (CollectionUtils.size(data) < lastIteration) {
-                    if (CollectionUtils.isEmpty(data)) { data = new ArrayList<>(); }
-                    for (int i = 0; i < lastIteration; i++) { if (data.size() <= i) { data.add(i, null); } }
-                }
-                data.set((lastIteration - 1), stringValue);
+            // we should be sync'ing back value to its initial iteration, not the current/latest iteration
+            List<String> data = dataMap.get(name);
+            if (CollectionUtils.size(data) < lastIteration) {
+                if (CollectionUtils.isEmpty(data)) { data = new ArrayList<>(); }
+                for (int i = 0; i < lastIteration; i++) { if (data.size() <= i) { data.add(i, null); } }
+            }
+            data.set((lastIteration - 1), stringValue);
             // }
         });
     }

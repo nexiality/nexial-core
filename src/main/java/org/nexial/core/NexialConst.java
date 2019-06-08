@@ -822,10 +822,15 @@ public final class NexialConst {
         public static final String WPS_EXE_LOCATION = "nexialInternal.wpsLocation";
 
         // system-wide enable/disable email notification
-        public static final String MAIL_TO = SCOPE + "mailTo";
-        public static final String MAIL_TO2 = registerSystemVariable(NAMESPACE + "mailTo");
         public static final String ENABLE_EMAIL = registerSystemVariable(NAMESPACE + "enableEmail", false);
+        public static final String POST_EXEC_MAIL_TO_OLD = SCOPE + "mailTo";
+        public static final String POST_EXEC_MAIL_TO = registerSystemVariable(NAMESPACE + "mailTo");
+        public static final String POST_EXEC_EMAIL_SUBJECT = registerSystemVariable(NAMESPACE + "mailSubject");
+        public static final String POST_EXEC_EMAIL_HEADER = registerSystemVariable(NAMESPACE + "mailHeader");
+        public static final String POST_EXEC_EMAIL_FOOTER = registerSystemVariable(NAMESPACE + "mailFooter");
+        // email subject prefix only for event notification
         public static final String MAIL_NOTIF_SUBJECT_PREFIX = "[nexial-notification] ";
+        // email subject prefix  only for post-exec result notification
         public static final String MAIL_RESULT_SUBJECT_PREFIX = "[nexial] ";
 
         public static final String GENERATE_EXEC_REPORT = registerSystemVariable(NAMESPACE + "generateReport", false);
@@ -839,7 +844,7 @@ public final class NexialConst {
         public static final String OPT_BROWSER_CONSOLE_LOG = registerSystemVariable(NAMESPACE + "browserConsoleLog", false);
 
         public static final String KEY_INCOGNITO = "incognito";
-        public static final String BROWER_INCOGNITO = registerSystemVariable(NS_BROWSER + "." + KEY_INCOGNITO, true);
+        public static final String BROWSER_INCOGNITO = registerSystemVariable(NS_BROWSER + "." + KEY_INCOGNITO, true);
 
         public static final String BROWSER_POST_CLOSE_WAIT = registerSystemVariable(NS_BROWSER + ".postCloseWaitMs", 3000);
         public static final String BROWSER_WINDOW_SIZE = registerSystemVariable(NS_BROWSER + ".windowSize");
@@ -1086,7 +1091,7 @@ public final class NexialConst {
                             ITERATION + "=1",
                             FALLBACK_TO_PREVIOUS + "=true",
                             REFETCH_DATA_FILE + "=true",
-                            MAIL_TO + "=");
+                            POST_EXEC_MAIL_TO + "=");
         public static final String NULL = "(null)";
         public static final String EMPTY = "(empty)";
         public static final String BLANK = "(blank)";
@@ -1361,8 +1366,12 @@ public final class NexialConst {
 
         // enable for email notification?
         public static final List<String> MAILER_KEYS =
-            ListUtils.sum(ListUtils.sum(ListUtils.sum(Arrays.asList(ENABLE_EMAIL, MAIL_TO, MAIL_TO2), SMTP_KEYS),
-                                        JNDI_KEYS), SES_KEYS);
+            ListUtils.sum(ListUtils.sum(ListUtils.sum(Arrays.asList(ENABLE_EMAIL,
+                                                                    POST_EXEC_MAIL_TO,
+                                                                    POST_EXEC_EMAIL_SUBJECT,
+                                                                    POST_EXEC_EMAIL_HEADER,
+                                                                    POST_EXEC_EMAIL_FOOTER),
+                                                      SMTP_KEYS), JNDI_KEYS), SES_KEYS);
 
         public static final String NOT_READY_PREFIX = "nexial mailer not enabled: ";
         public static final String DOC_REF_SUFFIX = " Please check https://nexiality.github.io/documentation/tipsandtricks/IntegratingNexialWithEmail.html for more details";

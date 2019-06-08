@@ -608,7 +608,7 @@ public class Browser implements ForcefulTerminate {
         }
 
         options.addArguments(this.chromeOptions);
-        if (context.getBooleanData(BROWER_INCOGNITO, getDefaultBool(BROWER_INCOGNITO))) {
+        if (context.getBooleanData(BROWSER_INCOGNITO, getDefaultBool(BROWSER_INCOGNITO))) {
             options.addArguments(KEY_INCOGNITO);
         }
 
@@ -892,7 +892,7 @@ public class Browser implements ForcefulTerminate {
         // The first is to start your InternetExplorer in private mode. After that InternetExplorer
         // will be started with clean session data and will not save changed session data at quiting.
         // To do so you need to pass 2 specific capabilities to driver: ie.forceCreateProcessApi with true value
-        if (context.getBooleanData(BROWER_INCOGNITO, getDefaultBool(BROWER_INCOGNITO))) {
+        if (context.getBooleanData(BROWSER_INCOGNITO, getDefaultBool(BROWSER_INCOGNITO))) {
             // capabilities.setCapability(FORCE_CREATE_PROCESS, true);
             // and ie.browserCommandLineSwitches with -private value.
             capabilities.setCapability(IE_SWITCHES, "-private");

@@ -80,7 +80,7 @@ public class ExecutionInputPrepTest {
         iteration1DataMap.put("nexial.scope.currentIteration", "1");
         iteration1DataMap.put("nexial.scope.currentIterationId", "1");
         iteration1DataMap.put("nexial.scope.isFirstIteration", "true");
-        iteration1DataMap.put("nexial.scope.mailTo", "jumbotron@tiny.corp");
+        iteration1DataMap.put("nexial.mailTo", "jumbotron@tiny.corp");
         iteration1DataMap.put("nexial.delayBetweenStepsMs", "600");
         iteration1DataMap.put("nexial.failFast", "false");
         iteration1DataMap.put("nexial.pollWaitMs", "800");
@@ -99,7 +99,7 @@ public class ExecutionInputPrepTest {
         iteration2DataMap.put("nexial.scope.lastIteration", "1");
         iteration2DataMap.put("nexial.scope.isFirstIteration", "false");
         iteration2DataMap.put("nexial.scope.isLastIteration", "false");
-        iteration2DataMap.put("nexial.scope.mailTo", "jumbotron@tiny.corp");
+        iteration2DataMap.put("nexial.mailTo", "jumbotron@tiny.corp");
         iteration2DataMap.put("nexial.delayBetweenStepsMs", "600");
         iteration2DataMap.put("nexial.failFast", "false");
         iteration2DataMap.put("nexial.pollWaitMs", "800");
@@ -118,7 +118,7 @@ public class ExecutionInputPrepTest {
         iteration3DataMap.put("nexial.scope.lastIteration", "2");
         iteration3DataMap.put("nexial.scope.isFirstIteration", "false");
         iteration3DataMap.put("nexial.scope.isLastIteration", "true");
-        iteration3DataMap.put("nexial.scope.mailTo", "jumbotron@tiny.corp");
+        iteration3DataMap.put("nexial.mailTo", "jumbotron@tiny.corp");
         iteration3DataMap.put("nexial.delayBetweenStepsMs", "600");
         iteration3DataMap.put("nexial.failFast", "false");
         iteration3DataMap.put("nexial.pollWaitMs", "800");

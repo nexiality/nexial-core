@@ -17,6 +17,9 @@
 
 package org.nexial.core
 
+import org.nexial.core.NexialConst.Data.*
+import org.nexial.core.NexialConst.OPT_MANAGE_MEM
+import org.nexial.core.NexialConst.OUTPUT_TO_CLOUD
 import java.util.*
 
 /**
@@ -25,20 +28,34 @@ import java.util.*
 object CommandConst {
 
     // repair artifact constants
-    val DEPRECATED_VARS: MutableList<String> = Arrays.asList("nexial.scope.executionMode",
-                                                             "nexial.safari.cleanSession")
-    val UPDATED_VARS = mapOf(
-        "nexial.highlight" to "nexial.web.highlight",
-        "nexial.highlightWaitMs" to "nexial.web.highlight.waitMs")
+    val DEPRECATED_VARS: MutableList<String> = Arrays.asList(
+        "nexial.scope.executionMode",
+        "nexial.safari.cleanSession")
 
-    val READ_ONLY_VARS: MutableList<String> =
-        Arrays.asList("nexial.runID", "nexial.iterationEnded", "nexial.scope.currentIteration",
-                      "nexial.scope.lastIteration", "nexial.scope.isLastIteration",
-                      "nexial.scope.isFirstIteration", "nexial.scope.currentIterationId",
-                      "nexial.lastScreenshot", "nexial.lastOutcome", "file.separator",
-                      "java.home", "java.io.tmpdir", "java.version", "line.separator",
-                      "os.arch", "os.name", "os.version", "user.country", "user.dir",
-                      "user.home", "user.language", "user.name", "user.timezone")
+    val UPDATED_VARS = mapOf(
+        OPT_DEBUG_HIGHLIGHT_OLD to OPT_DEBUG_HIGHLIGHT,
+        HIGHLIGHT_WAIT_MS_OLD to HIGHLIGHT_WAIT_MS,
+        ASSISTANT_MODE to OPT_OPEN_RESULT,
+        POST_EXEC_MAIL_TO_OLD to POST_EXEC_MAIL_TO)
+
+    private val NON_ITERABLE_VARS = listOf(
+        ENABLE_EMAIL, POST_EXEC_MAIL_TO, POST_EXEC_EMAIL_SUBJECT, POST_EXEC_EMAIL_HEADER, POST_EXEC_EMAIL_FOOTER,
+        OPT_MANAGE_MEM, WPS_EXE_LOCATION, OUTPUT_TO_CLOUD, GENERATE_EXEC_REPORT, OPT_OPEN_RESULT, OPT_OPEN_EXEC_REPORT)
+
+    @JvmStatic
+    fun isNonIterableVariable(name: String) = name.startsWith(SCOPE) || NON_ITERABLE_VARS.contains(name)
+
+    @JvmStatic
+    fun getPreferredSystemVariableName(name: String) = UPDATED_VARS.getOrDefault(name, name)!!
+
+    val READ_ONLY_VARS: MutableList<String> = Arrays.asList(
+        "nexial.runID", "nexial.iterationEnded", "nexial.scope.currentIteration",
+        "nexial.scope.lastIteration", "nexial.scope.isLastIteration",
+        "nexial.scope.isFirstIteration", "nexial.scope.currentIterationId",
+        "nexial.lastScreenshot", "nexial.lastOutcome", "file.separator",
+        "java.home", "java.io.tmpdir", "java.version", "line.separator",
+        "os.arch", "os.name", "os.version", "user.country", "user.dir",
+        "user.home", "user.language", "user.name", "user.timezone")
 
     // common commands
     const val CMD_VERBOSE = "base.verbose(text)"
@@ -72,10 +89,12 @@ object CommandConst {
         "desktop.scanTable(var,name)" to "desktop.useTable(var,name)",
         "desktop.getRowCount(var)" to "desktop.saveRowCount(var)")
 
+    private const val SUGGESTION_PREFIX = "This command is deprecated and will soon be removed. Consider using"
+
     @JvmStatic
     val COMMAND_SUGGESTIONS = mapOf(
-        "desktop.useTable(var,name)" to "This command is deprecated and will soon be removed. Consider using desktop » editTableCells(row,nameValues) instead",
-        "desktop.editCurrentRow(nameValues)" to "This command is deprecated and will soon be removed. Consider using desktop » editTableCells(row,nameValues) instead",
-        "web.scrollLeft(locator,pixel)" to "This command is deprecated and will soon be removed. Consider using web » scrollElement(locator,xOffset,yOffset) instead",
-        "web.scrollRight(locator,pixel)" to "This command is deprecated and will soon be removed. Consider using web » scrollElement(locator,xOffset,yOffset) instead")
+        "desktop.useTable(var,name)" to "$SUGGESTION_PREFIX desktop » editTableCells(row,nameValues) instead",
+        "desktop.editCurrentRow(nameValues)" to "$SUGGESTION_PREFIX desktop » editTableCells(row,nameValues) instead",
+        "web.scrollLeft(locator,pixel)" to "$SUGGESTION_PREFIX web » scrollElement(locator,xOffset,yOffset) instead",
+        "web.scrollRight(locator,pixel)" to "$SUGGESTION_PREFIX web » scrollElement(locator,xOffset,yOffset) instead")
 }

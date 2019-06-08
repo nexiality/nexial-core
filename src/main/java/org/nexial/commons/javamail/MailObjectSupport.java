@@ -21,6 +21,7 @@ import java.util.Arrays;
 import java.util.Hashtable;
 import java.util.List;
 import java.util.Properties;
+import javax.annotation.Nullable;
 import javax.mail.Authenticator;
 import javax.mail.MessagingException;
 import javax.mail.NoSuchProviderException;
@@ -135,7 +136,17 @@ public final class MailObjectSupport {
 
     public boolean hasSesSettings() { return sesSettings != null; }
 
+    @Nullable
     public List<String> getRecipients() { return mailConfig == null ? null : mailConfig.getRecipients(); }
+
+    @Nullable
+    public String getCustomEmailSubject() { return mailConfig == null ? null : mailConfig.getCustomMailSubject(); }
+
+    @Nullable
+    public String getCustomEmailHeader() { return mailConfig == null ? null : mailConfig.getCustomMailHeader(); }
+
+    @Nullable
+    public String getCustomEmailFooter() { return mailConfig == null ? null : mailConfig.getCustomMailFooter(); }
 
     private void createSession() {
         // is javamail session configured in JNDI?

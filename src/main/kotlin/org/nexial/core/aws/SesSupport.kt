@@ -64,8 +64,11 @@ class SesSupport : AwsSupport() {
             throw IllegalArgumentException("Either HTML or plain text email content is required")
 
         // here we go
-        val request = SendEmailRequest(config.from, toDestination(config), toMessage(config, toSubject(config)))
-        request.withConfigurationSetName(config.configurationSetName)
+        val request = SendEmailRequest()
+            .withSource(config.from)
+            .withDestination(toDestination(config))
+            .withMessage(toMessage(config, toSubject(config)))
+            .withConfigurationSetName(config.configurationSetName)
         if (CollectionUtils.isNotEmpty(config.replyTo)) request.withReplyToAddresses(config.replyTo)
 
         sendMail(request)
@@ -80,7 +83,7 @@ class SesSupport : AwsSupport() {
             .withCredentials(resolveCredentials(region))
             .build()
 
-        ConsoleUtils.log("scheduling sent-mail via AWS SES...")
+        ConsoleUtils.log("scheduling sent-mail via AWS SES to ${request.destination.toAddresses}")
         client.sendEmailAsync(request, object : AsyncHandler<SendEmailRequest, SendEmailResult> {
             override fun onError(e: Exception) {
                 ConsoleUtils.error("FAILED to send email via AWS SES: ${e.message}" +
@@ -118,7 +121,7 @@ class SesSupport : AwsSupport() {
             body.withText(Content().withCharset(DEF_FILE_ENCODING).withData("${config.plainText}\n\n\n\n$xmailer"))
         }
 
-        return Message(subject, body)
+        return Message().withSubject(subject).withBody(body)
     }
 
     @NotNull

@@ -54,12 +54,12 @@ abstract class EventNotification(val context: ExecutionContext,
     }
 
     internal fun gatherMeta(): String =
-            NEXIAL_MANIFEST +
-            "/${StringUtils.defaultString(USER_NAME, "unknown")}@${StringUtils.upperCase(EnvUtils.getHostName())}"
+        NEXIAL_MANIFEST +
+        "/${StringUtils.defaultString(USER_NAME, "unknown")}@${StringUtils.upperCase(EnvUtils.getHostName())}"
 }
 
 class EmailNotification(context: ExecutionContext, event: ExecutionEvent, data: String) :
-        EventNotification(context, event, data, true) {
+    EventNotification(context, event, data, true) {
 
     private lateinit var mailData: MailData
 
@@ -127,7 +127,7 @@ class EmailNotification(context: ExecutionContext, event: ExecutionEvent, data: 
 }
 
 class SmsNotification(context: ExecutionContext, event: ExecutionEvent, data: String) :
-        EventNotification(context, event, data) {
+    EventNotification(context, event, data) {
 
     private lateinit var phones: List<String>
     private lateinit var text: String
@@ -191,7 +191,7 @@ class SmsNotification(context: ExecutionContext, event: ExecutionEvent, data: St
 }
 
 class TtsNotification(context: ExecutionContext, event: ExecutionEvent, data: String) :
-        EventNotification(context, event, data) {
+    EventNotification(context, event, data) {
 
     override fun perform() {
         super.perform()
@@ -216,7 +216,7 @@ class TtsNotification(context: ExecutionContext, event: ExecutionEvent, data: St
 }
 
 class AudioNotification(context: ExecutionContext, event: ExecutionEvent, data: String) :
-        EventNotification(context, event, data) {
+    EventNotification(context, event, data) {
 
     override fun perform() {
         super.perform()
@@ -241,7 +241,7 @@ class AudioNotification(context: ExecutionContext, event: ExecutionEvent, data: 
 }
 
 class ConsoleNotification(context: ExecutionContext, event: ExecutionEvent, data: String) :
-        EventNotification(context, event, data) {
+    EventNotification(context, event, data) {
 
     override fun perform() {
         super.perform()

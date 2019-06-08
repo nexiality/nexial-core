@@ -32,8 +32,18 @@
 
         .execValue { text-align: left; font-weight: bold; }
 
+        .customHeader {
+            margin-top:    8px;
+            margin-bottom: 12px;
+            padding:       3px 1px;
+            font-size:     11pt;
+        }
+
+        .customFooter { font-size: 9pt; }
+
         .footer {
-            font-size:        8pt; color: #555;
+            font-size:        8pt;
+            color:            #555;
             font-family:      Consolas, monospace;
             background-color: #d0e0e0;
             padding:          5px;
@@ -82,6 +92,8 @@
     </style>
 </head>
 <body>
+
+<div class="customHeader" data-th-if="${header}" data-th-utext="${header}">Custom Header</div>
 
 <div class="title">TEST RESULT - <span data-th-utext="${summary.name}">Test Suite</span></div>
 
@@ -218,6 +230,9 @@
         </tfoot>
     </table>
 </div>
+
+<br/>
+<div class="customFooter" data-th-if="${footer}" data-th-utext="${footer}">Custom Footer</div>
 
 <br/>
 <div class="footer">powered by NEXIAL</div>

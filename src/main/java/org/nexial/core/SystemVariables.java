@@ -25,9 +25,6 @@ import java.util.stream.Collectors;
 import org.apache.commons.lang3.BooleanUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.math.NumberUtils;
-import org.nexial.commons.utils.TextUtils;
-
-import static org.nexial.core.NexialConst.Data.*;
 
 /**
  * constants repo. to manage/track system variables
@@ -36,13 +33,6 @@ public class SystemVariables {
     // global defaults, to be registered from the definition of each default values
     private static final Map<String, Object> SYSVARS = new HashMap<>();
     private static final List<String> SYSVARGROUPS = new ArrayList<>();
-    private static final Map<String, String> OLD_NEW_SYSTEM_VARIABLE_NAMES =
-        TextUtils.toMap("=",
-                        OPT_DEBUG_HIGHLIGHT_OLD + "=" + OPT_DEBUG_HIGHLIGHT,
-                        HIGHLIGHT_WAIT_MS_OLD + "=" + HIGHLIGHT_WAIT_MS,
-                        ASSISTANT_MODE + "=" + OPT_OPEN_RESULT,
-                        MAIL_TO + "=" + MAIL_TO2
-                       );
 
     private SystemVariables() { }
 
@@ -101,7 +91,7 @@ public class SystemVariables {
     }
 
     public static String getPreferredSystemVariableName(String name) {
-        return OLD_NEW_SYSTEM_VARIABLE_NAMES.getOrDefault(name, name);
+        return CommandConst.getPreferredSystemVariableName(name);
     }
 
     public static boolean isRegisteredSystemVariable(String name) {

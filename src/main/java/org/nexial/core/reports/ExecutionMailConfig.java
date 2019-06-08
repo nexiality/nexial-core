@@ -88,10 +88,15 @@ public class ExecutionMailConfig {
             return false;
         }
 
-        String mailTo = MapUtils.getString(configurations, MAIL_TO);
-        String mailTo2 = MapUtils.getString(configurations, MAIL_TO2);
-        if (StringUtils.isBlank(mailTo) && StringUtils.isBlank(mailTo2)) {
-            ConsoleUtils.log(NOT_READY_PREFIX + MAIL_TO + "=" + mailTo + ", " + MAIL_TO2 + "=" + mailTo2);
+        // String mailTo = MapUtils.getString(configurations, POST_EXEC_MAIL_TO_OLD);
+        String mailTo2 = MapUtils.getString(configurations, POST_EXEC_MAIL_TO);
+        // if (StringUtils.isBlank(mailTo) && StringUtils.isBlank(mailTo2)) {
+        //     ConsoleUtils.log(NOT_READY_PREFIX +
+        //                      POST_EXEC_MAIL_TO_OLD + "=" + mailTo + ", " + POST_EXEC_MAIL_TO + "=" + mailTo2);
+        //     return false;
+        // }
+        if (StringUtils.isBlank(mailTo2)) {
+            ConsoleUtils.log(NOT_READY_PREFIX + POST_EXEC_MAIL_TO + "=" + mailTo2);
             return false;
         }
 
@@ -163,7 +168,8 @@ public class ExecutionMailConfig {
         settings.setAssumeRoleSession(StringUtils.defaultString(configurations.get(SES_PREFIX + AWS_STS_ROLE_SESSION),
                                                                 ""));
         settings.setAssumeRoleDuration(
-            NumberUtils.toInt(StringUtils.defaultIfBlank(configurations.get(SES_PREFIX + AWS_STS_ROLE_DURATION), "900")));
+            NumberUtils
+                .toInt(StringUtils.defaultIfBlank(configurations.get(SES_PREFIX + AWS_STS_ROLE_DURATION), "900")));
         settings.setReplyTo(StringUtils.defaultString(configurations.get(SES_PREFIX + AWS_SES_REPLY_TO), ""));
         settings.setCc(StringUtils.defaultString(configurations.get(SES_PREFIX + AWS_SES_CC), ""));
         settings.setBcc(StringUtils.defaultString(configurations.get(SES_PREFIX + AWS_SES_BCC), ""));
@@ -185,11 +191,21 @@ public class ExecutionMailConfig {
 
     @Nullable
     public List<String> getRecipients() {
-        String recipients = configurations.get(MAIL_TO);
-        if (StringUtils.isBlank(recipients)) { recipients = configurations.get(MAIL_TO2); }
+        // String recipients = configurations.get(POST_EXEC_MAIL_TO_OLD);
+        // if (StringUtils.isBlank(recipients)) { recipients = configurations.get(POST_EXEC_MAIL_TO); }
+        String recipients = configurations.get(POST_EXEC_MAIL_TO);
         if (StringUtils.isBlank(recipients)) { return null; }
         return TextUtils.toList(StringUtils.replace(recipients, ";", ","), ",", true);
     }
+
+    @Nullable
+    public String getCustomMailSubject() { return configurations.get(POST_EXEC_EMAIL_SUBJECT); }
+
+    @Nullable
+    public String getCustomMailHeader() { return configurations.get(POST_EXEC_EMAIL_HEADER); }
+
+    @Nullable
+    public String getCustomMailFooter() { return configurations.get(POST_EXEC_EMAIL_FOOTER); }
 
     protected static boolean isConfigFound(Map<String, String> config, String key) {
         return StringUtils.isNotBlank(MapUtils.getString(config, key));

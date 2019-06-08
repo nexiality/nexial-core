@@ -119,6 +119,8 @@ public class NexialMailer implements ExecutionNotifier {
         Context engineContext = new Context();
         engineContext.setVariable("summary", summary);
         engineContext.setVariable("executionSummary", System.getProperty(EXEC_OUTPUT_PATH));
+        engineContext.setVariable("header", mailSupport != null ? mailSupport.getCustomEmailHeader() : null);
+        engineContext.setVariable("footer", mailSupport != null ? mailSupport.getCustomEmailFooter() : null);
 
         MailData mailData = new MailData().setToAddr(resolveRecipients())
                                           .setSubject(MAIL_RESULT_SUBJECT_PREFIX + StringUtils.abbreviate(subject, 100))
@@ -188,7 +190,6 @@ public class NexialMailer implements ExecutionNotifier {
     }
 
     protected void smtpSendEmail(MailData data) throws MessagingException {
-
         Session session = mailSupport.getSession();
 
         /**
@@ -289,18 +290,15 @@ public class NexialMailer implements ExecutionNotifier {
         ses.setAssumeRoleArn(sesSettings.getAssumeRoleArn());
         ses.setAssumeRoleSession(sesSettings.getAssumeRoleSession());
         ses.setAssumeRoleDuration(sesSettings.getAssumeRoleDuration());
-
         ses.sendMail(sesConfig);
+
         try { Thread.sleep(2000);} catch (InterruptedException e) { }
     }
 
     protected List<String> resolveRecipients() {
-        String recipients = context != null ? context.getStringData(MAIL_TO) : System.getProperty(MAIL_TO);
-
-        if (StringUtils.isBlank(recipients)) {
-            recipients = context != null ? context.getStringData(MAIL_TO2) : System.getProperty(MAIL_TO2);
-        }
-
+        String recipients = context != null ?
+                            context.getStringData(POST_EXEC_MAIL_TO) :
+                            System.getProperty(POST_EXEC_MAIL_TO);
         if (StringUtils.isBlank(recipients)) {
             return mailSupport != null ? mailSupport.getRecipients() : null;
         } else {
@@ -309,7 +307,9 @@ public class NexialMailer implements ExecutionNotifier {
     }
 
     private String deriveSubject(ExecutionSummary summary) {
-        // StringBuilder subject = new StringBuilder("Execution Result for ");
+        String customSubject = mailSupport != null ? mailSupport.getCustomEmailSubject() : null;
+        if (StringUtils.isNotBlank(customSubject)) { return customSubject; }
+
         List<ExecutionSummary> scriptSummary = summary.getNestedExecutions();
 
         if (StringUtils.equals(System.getProperty(NEXIAL_EXECUTION_TYPE), NEXIAL_EXECUTION_TYPE_PLAN)) {
