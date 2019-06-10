@@ -54,7 +54,6 @@ import org.nexial.commons.proc.ProcessOutcome;
 import org.nexial.commons.utils.FileUtil;
 import org.nexial.commons.utils.TextUtils;
 import org.nexial.core.ExecutionThread;
-import org.nexial.core.excel.ExcelConfig.*;
 import org.nexial.core.excel.ext.CellTextReader;
 import org.nexial.core.model.ExecutionContext;
 import org.nexial.core.utils.ConsoleUtils;
@@ -67,10 +66,13 @@ import static org.apache.poi.ss.usermodel.CellType.BLANK;
 import static org.apache.poi.ss.usermodel.CellType.*;
 import static org.apache.poi.ss.usermodel.Row.MissingCellPolicy.CREATE_NULL_AS_BLANK;
 import static org.apache.poi.ss.usermodel.Row.MissingCellPolicy.RETURN_BLANK_AS_NULL;
+import static org.nexial.core.NexialConst.COMMENT_AUTHOR;
 import static org.nexial.core.NexialConst.Data.*;
+import static org.nexial.core.NexialConst.MAX_FORMULA_CHAR;
 import static org.nexial.core.SystemVariables.getDefault;
 import static org.nexial.core.excel.ExcelConfig.*;
-import static org.nexial.core.excel.ExcelConfig.StyleConfig.*;
+import static org.nexial.core.excel.ExcelConfig.StyleConfig.FONT_HEIGHT_DEFAULT;
+import static org.nexial.core.excel.ExcelStyleHelper.*;
 
 /**
  * Wrapper for managing Excel documents.
@@ -545,7 +547,7 @@ public class Excel {
         public XSSFCellStyle newCellStyle() {
             XSSFWorkbook workbook = sheet.getWorkbook();
             XSSFCellStyle style = workbook.createCellStyle();
-            style.setFont(StyleDecorator.newDefaultFont(workbook));
+            style.setFont(newDefaultFont(workbook));
             return style;
         }
 
@@ -869,7 +871,14 @@ public class Excel {
         // if the hyperlink is not HTTP-enabled, then we need to determine OS-specific paths
         if (StringUtils.startsWithIgnoreCase(link, "http")) {
             // simply case: link is a http... something
-            cell.setCellFormula("HYPERLINK(\"" + link + "\", \"" + label + "\")");
+            String formula = "HYPERLINK(\"" + link + "\", \"" + label + "\")";
+            if (StringUtils.length(formula) >= MAX_FORMULA_CHAR) {
+                // formula too long.. switch to just text
+                createComment(cell, link, COMMENT_AUTHOR);
+                return cell;
+            }
+
+            cell.setCellFormula(formula);
         } else {
             String unixLink;
             String winLink;
@@ -890,19 +899,24 @@ public class Excel {
                 // we can't create HYPERLINK formula because Excel won't allow string literal longer than 255
                 ConsoleUtils.log("Unable to create HYPERLINK on cell " + cell.getReference() +
                                  " since the referenced path is too long: " + link);
-                cell.setCellValue(link);
+                createComment(cell, link, COMMENT_AUTHOR);
                 return cell;
-            } else {
-                // =if(info("system")="mac",hyperlink("/Users/lium/tmp/", "Click here"),hyperlink("C:\temp\","Click there"))
-                cell.setCellFormula("HYPERLINK(IF(ISERROR(FIND(\"dos\",INFO(\"system\"))),\"" +
-                                    unixLink + "\",\"" + winLink + "\"),\"" + label + "\")");
             }
+
+            String formula = "HYPERLINK(IF(ISERROR(FIND(\"dos\",INFO(\"system\"))),\"" +
+                             unixLink + "\",\"" + winLink + "\"),\"" + label + "\")";
+            if (StringUtils.length(formula) >= MAX_FORMULA_CHAR) {
+                createComment(cell, IS_OS_WINDOWS ? winLink : unixLink, COMMENT_AUTHOR);
+                return cell;
+            }
+
+            cell.setCellFormula(formula);
         }
 
         XSSFSheet sheet = cell.getSheet();
         // forces recalculation will help the hyperlink cell to format properly
         sheet.setForceFormulaRecalculation(true);
-        cell.setCellStyle(StyleDecorator.generate(sheet.getWorkbook(), LINK));
+        cell.setCellStyle(generate(sheet.getWorkbook(), LINK));
         return cell;
     }
 
@@ -922,25 +936,24 @@ public class Excel {
 
     public void initResultCommonStyles() {
         if (commonStyles == null) { commonStyles = new HashMap<>(); }
-        commonStyles.put(STYLE_EXEC_SUMM_TITLE, StyleDecorator.generate(workbook, EXEC_SUMM_TITLE));
-        commonStyles.put(STYLE_EXEC_SUMM_DATA_HEADER, StyleDecorator.generate(workbook, EXEC_SUMM_DATA_HEADER));
-        commonStyles.put(STYLE_EXEC_SUMM_DATA_NAME, StyleDecorator.generate(workbook, EXEC_SUMM_DATA_NAME));
-        commonStyles.put(STYLE_EXEC_SUMM_DATA_VALUE, StyleDecorator.generate(workbook, EXEC_SUMM_DATA_VALUE));
-        commonStyles.put(STYLE_EXEC_SUMM_EXCEPTION, StyleDecorator.generate(workbook, EXEC_SUMM_EXCEPTION));
-        commonStyles.put(STYLE_EXEC_SUMM_HEADER, StyleDecorator.generate(workbook, EXEC_SUMM_HEADER));
-        commonStyles.put(STYLE_EXEC_SUMM_SCENARIO, StyleDecorator.generate(workbook, EXEC_SUMM_SCENARIO));
-        commonStyles.put(STYLE_EXEC_SUMM_ACTIVITY, StyleDecorator.generate(workbook, EXEC_SUMM_ACTIVITY));
-        commonStyles.put(STYLE_EXEC_SUMM_TIMESPAN, StyleDecorator.generate(workbook, EXEC_SUMM_TIMESPAN));
-        commonStyles.put(STYLE_EXEC_SUMM_DURATION, StyleDecorator.generate(workbook, EXEC_SUMM_DURATION));
-        commonStyles.put(STYLE_EXEC_SUMM_TOTAL, StyleDecorator.generate(workbook, EXEC_SUMM_TOTAL));
-        commonStyles.put(STYLE_EXEC_SUMM_PASS, StyleDecorator.generate(workbook, EXEC_SUMM_PASS));
-        commonStyles.put(STYLE_EXEC_SUMM_FAIL, StyleDecorator.generate(workbook, EXEC_SUMM_FAIL));
-        commonStyles.put(STYLE_EXEC_SUMM_SUCCESS, StyleDecorator.generate(workbook, EXEC_SUMM_SUCCESS));
-        commonStyles.put(STYLE_EXEC_SUMM_NOT_SUCCESS, StyleDecorator.generate(workbook, EXEC_SUMM_NOT_SUCCESS));
-        commonStyles.put(STYLE_EXEC_SUMM_FINAL_SUCCESS, StyleDecorator.generate(workbook, EXEC_SUMM_FINAL_SUCCESS));
-        commonStyles.put(STYLE_EXEC_SUMM_FINAL_NOT_SUCCESS,
-                         StyleDecorator.generate(workbook, EXEC_SUMM_FINAL_NOT_SUCCESS));
-        commonStyles.put(STYLE_EXEC_SUMM_FINAL_TOTAL, StyleDecorator.generate(workbook, EXEC_SUMM_FINAL_TOTAL));
+        commonStyles.put(STYLE_EXEC_SUMM_TITLE, generate(workbook, EXEC_SUMM_TITLE));
+        commonStyles.put(STYLE_EXEC_SUMM_DATA_HEADER, generate(workbook, EXEC_SUMM_DATA_HEADER));
+        commonStyles.put(STYLE_EXEC_SUMM_DATA_NAME, generate(workbook, EXEC_SUMM_DATA_NAME));
+        commonStyles.put(STYLE_EXEC_SUMM_DATA_VALUE, generate(workbook, EXEC_SUMM_DATA_VALUE));
+        commonStyles.put(STYLE_EXEC_SUMM_EXCEPTION, generate(workbook, EXEC_SUMM_EXCEPTION));
+        commonStyles.put(STYLE_EXEC_SUMM_HEADER, generate(workbook, EXEC_SUMM_HEADER));
+        commonStyles.put(STYLE_EXEC_SUMM_SCENARIO, generate(workbook, EXEC_SUMM_SCENARIO));
+        commonStyles.put(STYLE_EXEC_SUMM_ACTIVITY, generate(workbook, EXEC_SUMM_ACTIVITY));
+        commonStyles.put(STYLE_EXEC_SUMM_TIMESPAN, generate(workbook, EXEC_SUMM_TIMESPAN));
+        commonStyles.put(STYLE_EXEC_SUMM_DURATION, generate(workbook, EXEC_SUMM_DURATION));
+        commonStyles.put(STYLE_EXEC_SUMM_TOTAL, generate(workbook, EXEC_SUMM_TOTAL));
+        commonStyles.put(STYLE_EXEC_SUMM_PASS, generate(workbook, EXEC_SUMM_PASS));
+        commonStyles.put(STYLE_EXEC_SUMM_FAIL, generate(workbook, EXEC_SUMM_FAIL));
+        commonStyles.put(STYLE_EXEC_SUMM_SUCCESS, generate(workbook, EXEC_SUMM_SUCCESS));
+        commonStyles.put(STYLE_EXEC_SUMM_NOT_SUCCESS, generate(workbook, EXEC_SUMM_NOT_SUCCESS));
+        commonStyles.put(STYLE_EXEC_SUMM_FINAL_SUCCESS, generate(workbook, EXEC_SUMM_FINAL_SUCCESS));
+        commonStyles.put(STYLE_EXEC_SUMM_FINAL_NOT_SUCCESS, generate(workbook, EXEC_SUMM_FINAL_NOT_SUCCESS));
+        commonStyles.put(STYLE_EXEC_SUMM_FINAL_TOTAL, generate(workbook, EXEC_SUMM_FINAL_TOTAL));
     }
 
     public void close() throws IOException {
@@ -1044,7 +1057,7 @@ public class Excel {
     public static XSSFCellStyle newCellStyleInstance(XSSFSheet sheet) {
         XSSFWorkbook workbook = sheet.getWorkbook();
         XSSFCellStyle style = workbook.createCellStyle();
-        style.setFont(StyleDecorator.newDefaultFont(workbook));
+        style.setFont(newDefaultFont(workbook));
         return style;
     }
 
@@ -1257,6 +1270,14 @@ public class Excel {
         worksheet.setMinHeight(cell, lineCount);
     }
 
+    public static void adjustMergedCellHeight(Worksheet worksheet, XSSFCell cell, int fromCol, int toCol, int rows) {
+        XSSFSheet sheet = worksheet.getSheet();
+        int mergedWidth = 0;
+        for (int j = fromCol; j < toCol + 1; j++) { mergedWidth += sheet.getColumnWidth(j); }
+        int charPerLine = (int) ((mergedWidth - DEF_CHAR_WIDTH) * rows / (DEF_CHAR_WIDTH * FONT_HEIGHT_DEFAULT));
+        adjustCellHeight(worksheet, cell, charPerLine);
+    }
+
     /**
      * if {@code startsWith} is an empty string, then all worksheets will be returned
      */
@@ -1353,23 +1374,23 @@ public class Excel {
         //commonStyles.put(STYLE_JENKINS_REF_LINK, StyleDecorator.generate(workbook, JENKINS_REF_LINK));
         //commonStyles.put(STYLE_JENKINS_REF_PARAM, StyleDecorator.generate(workbook, JENKINS_REF_PARAM));
         // commonStyles.put(STYLE_LINK, StyleDecorator.generate(workbook, LINK));
-        commonStyles.put(STYLE_TEST_CASE, StyleDecorator.generate(workbook, TESTCASE));
-        commonStyles.put(STYLE_DESCRIPTION, StyleDecorator.generate(workbook, DESCRIPTION));
-        commonStyles.put(STYLE_SECTION_DESCRIPTION, StyleDecorator.generate(workbook, SECTION_DESCRIPTION));
-        commonStyles.put(STYLE_REPEAT_UNTIL_DESCRIPTION, StyleDecorator.generate(workbook, REPEAT_UNTIL_DESCRIPTION));
-        commonStyles.put(STYLE_FAILED_STEP_DESCRIPTION, StyleDecorator.generate(workbook, FAILED_STEP_DESCRIPTION));
+        commonStyles.put(STYLE_TEST_CASE, generate(workbook, TESTCASE));
+        commonStyles.put(STYLE_DESCRIPTION, generate(workbook, DESCRIPTION));
+        commonStyles.put(STYLE_SECTION_DESCRIPTION, generate(workbook, SECTION_DESCRIPTION));
+        commonStyles.put(STYLE_REPEAT_UNTIL_DESCRIPTION, generate(workbook, REPEAT_UNTIL_DESCRIPTION));
+        commonStyles.put(STYLE_FAILED_STEP_DESCRIPTION, generate(workbook, FAILED_STEP_DESCRIPTION));
         // commonStyles.put(STYLE_SKIPPED_STEP_DESCRIPTION, StyleDecorator.generate(workbook, SKIPPED_STEP_DESCRIPTION));
-        commonStyles.put(STYLE_TARGET, StyleDecorator.generate(workbook, TARGET));
-        commonStyles.put(STYLE_MESSAGE, StyleDecorator.generate(workbook, MSG));
-        commonStyles.put(STYLE_COMMAND, StyleDecorator.generate(workbook, COMMAND));
-        commonStyles.put(STYLE_PARAM, StyleDecorator.generate(workbook, PARAM));
-        commonStyles.put(STYLE_TAINTED_PARAM, StyleDecorator.generate(workbook, TAINTED_PARAM));
-        commonStyles.put(STYLE_SCREENSHOT, StyleDecorator.generate(workbook, SCREENSHOT));
-        commonStyles.put(STYLE_ELAPSED_MS, StyleDecorator.generate(workbook, ELAPSED_MS));
-        commonStyles.put(STYLE_ELAPSED_MS_BAD_SLA, StyleDecorator.generate(workbook, ELAPSED_MS_BAD_SLA));
-        commonStyles.put(STYLE_SUCCESS_RESULT, StyleDecorator.generate(workbook, SUCCESS));
-        commonStyles.put(STYLE_FAILED_RESULT, StyleDecorator.generate(workbook, FAILED));
-        commonStyles.put(STYLE_SKIPPED_RESULT, StyleDecorator.generate(workbook, SKIPPED));
+        commonStyles.put(STYLE_TARGET, generate(workbook, TARGET));
+        commonStyles.put(STYLE_MESSAGE, generate(workbook, MSG));
+        commonStyles.put(STYLE_COMMAND, generate(workbook, COMMAND));
+        commonStyles.put(STYLE_PARAM, generate(workbook, PARAM));
+        commonStyles.put(STYLE_TAINTED_PARAM, generate(workbook, TAINTED_PARAM));
+        commonStyles.put(STYLE_SCREENSHOT, generate(workbook, SCREENSHOT));
+        commonStyles.put(STYLE_ELAPSED_MS, generate(workbook, ELAPSED_MS));
+        commonStyles.put(STYLE_ELAPSED_MS_BAD_SLA, generate(workbook, ELAPSED_MS_BAD_SLA));
+        commonStyles.put(STYLE_SUCCESS_RESULT, generate(workbook, SUCCESS));
+        commonStyles.put(STYLE_FAILED_RESULT, generate(workbook, FAILED));
+        commonStyles.put(STYLE_SKIPPED_RESULT, generate(workbook, SKIPPED));
 
         // use only once... so maybe don't add to common styles (aka template)
         // initResultCommonStyles();

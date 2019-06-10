@@ -24,11 +24,12 @@ import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.builder.ToStringBuilder;
 import org.nexial.core.excel.Excel.Worksheet;
-import org.nexial.core.excel.ExcelConfig;
 import org.nexial.core.utils.ExecutionLogger;
 import org.nexial.core.utils.TrackTimeLogs;
 
 import static org.nexial.core.CommandConst.CMD_SECTION;
+import static org.nexial.core.excel.ExcelStyleHelper.formatRepeatUntilDescription;
+import static org.nexial.core.excel.ExcelStyleHelper.formatSectionDescription;
 import static org.nexial.core.model.ExecutionSummary.ExecutionLevel.ACTIVITY;
 
 /**
@@ -99,7 +100,7 @@ public class TestCase {
             if (result.isSkipped()) {
                 executionSummary.adjustTotalSteps(-1);
                 if (StringUtils.equals(testStep.getCommandFQN(), CMD_SECTION)) {
-                    ExcelConfig.formatSectionDescription(testStep, false);
+                    formatSectionDescription(testStep, false);
 
                     // `testStep.getParams().get(0)` represents the number of steps of this `section`
                     int steps = Integer.parseInt(testStep.getParams().get(0));
@@ -191,21 +192,21 @@ public class TestCase {
             TestStep testStep = testSteps.get(i);
 
             if (testStep.isCommandRepeater() && testStep.getCommandRepeater() != null) {
-                testStep = ExcelConfig.formatRepeatUntilDescription(testStep, "");
+                testStep = formatRepeatUntilDescription(testStep, "");
                 testStep.getCommandRepeater().formatSteps();
             }
 
             if (StringUtils.equals(testStep.getCommandFQN(), CMD_SECTION)) {
-                ExcelConfig.formatSectionDescription(testStep, false);
+                formatSectionDescription(testStep, false);
 
                 int adjustedStepCount = i + Integer.parseInt(testStep.getParams().get(0));
                 for (int j = i + 1; j <= adjustedStepCount; j++) {
                     if (totalSteps > j) {
                         TestStep sectionStep = testSteps.get(j);
-                        ExcelConfig.formatSectionDescription(sectionStep, true);
+                        formatSectionDescription(sectionStep, true);
 
                         if (sectionStep.isCommandRepeater()) {
-                            ExcelConfig.formatRepeatUntilDescription(sectionStep, "");
+                            formatRepeatUntilDescription(sectionStep, "");
                             sectionStep.getCommandRepeater().formatSteps();
                             adjustedStepCount -= sectionStep.getCommandRepeater().getStepCount();
                         }

@@ -34,7 +34,7 @@ import org.nexial.commons.utils.FileUtil;
 import org.nexial.commons.utils.TextUtils;
 import org.nexial.core.excel.Excel;
 import org.nexial.core.excel.Excel.Worksheet;
-import org.nexial.core.excel.ExcelConfig;
+import org.nexial.core.excel.ExcelStyleHelper;
 import org.nexial.core.excel.ext.CellTextReader;
 import org.nexial.core.plugins.CanTakeScreenshot;
 import org.nexial.core.plugins.NexialCommand;
@@ -457,23 +457,23 @@ public class TestStep extends TestStepManifest {
 
         // test case
         XSSFCell cellTestCase = row.get(COL_IDX_TESTCASE);
-        ExcelConfig.formatActivityCell(worksheet, cellTestCase);
+        ExcelStyleHelper.formatActivityCell(worksheet, cellTestCase);
 
         XSSFCell cellTarget = row.get(COL_IDX_TARGET);
-        ExcelConfig.formatTargetCell(worksheet, cellTarget);
+        ExcelStyleHelper.formatTargetCell(worksheet, cellTarget);
 
         XSSFCell cellCommand = row.get(COL_IDX_COMMAND);
-        ExcelConfig.formatCommandCell(worksheet, cellCommand);
+        ExcelStyleHelper.formatCommandCell(worksheet, cellCommand);
 
         // description
         XSSFCell cellDescription = row.get(COL_IDX_DESCRIPTION);
         String description = Excel.getCellValue(cellDescription);
         if (StringUtils.startsWith(description, SECTION_DESCRIPTION_PREFIX)) {
-            ExcelConfig.formatSectionDescription(worksheet, cellDescription);
+            ExcelStyleHelper.formatSectionDescription(worksheet, cellDescription);
         } else if (StringUtils.contains(description, REPEAT_DESCRIPTION_PREFIX)) {
-            ExcelConfig.formatRepeatUntilDescription(worksheet, cellDescription);
+            ExcelStyleHelper.formatRepeatUntilDescription(worksheet, cellDescription);
         } else {
-            ExcelConfig.formatDescription(worksheet, cellDescription);
+            ExcelStyleHelper.formatDescription(worksheet, cellDescription);
         }
         cellDescription.setCellValue(context.containsCrypt(description) ?
                                      CellTextReader.readValue(description) : context.replaceTokens(description, true));
@@ -529,6 +529,8 @@ public class TestStep extends TestStepManifest {
                     paramCell.setCellValue(platformSpecificEOL(message));
                     paramCell.setCellComment(toSystemComment(paramCell, origParamValue));
                 }
+
+                ExcelStyleHelper.handleTextWrap(paramCell);
                 continue;
             }
 
@@ -543,7 +545,7 @@ public class TestStep extends TestStepManifest {
                 String taintedValue = CellTextReader.getOriginal(origParamValue, Objects.toString(value));
                 boolean tainted = !StringUtils.equals(origParamValue, taintedValue);
                 if (tainted) {
-                    paramCell.setCellValue(StringUtils.truncate(taintedValue, MAX_VERBOSE_CHAR));
+                    paramCell.setCellValue(StringUtils.abbreviate(taintedValue, MAX_VERBOSE_CHAR));
                     if (StringUtils.isNotEmpty(origParamValue)) {
                         paramCell.setCellComment(toSystemComment(paramCell, origParamValue));
                     }
@@ -551,12 +553,13 @@ public class TestStep extends TestStepManifest {
                 } else {
                     paramCell.setCellStyle(styleParam);
                 }
+                ExcelStyleHelper.handleTextWrap(paramCell);
             }
         }
 
         // flow control
         XSSFCell cellFlowControl = row.get(COL_IDX_FLOW_CONTROLS);
-        formatFlowControlCell(worksheet, cellFlowControl);
+        ExcelStyleHelper.formatFlowControlCell(worksheet, cellFlowControl);
 
         // screenshot
         String screenshotLink = handleScreenshot(result);
@@ -581,7 +584,7 @@ public class TestStep extends TestStepManifest {
         cellResult.setCellValue(StringUtils.left(MessageUtils.markResult(message, pass, true), 32767));
 
         if (result.isError()) {
-            ExcelConfig.formatFailedStepDescription(this);
+            ExcelStyleHelper.formatFailedStepDescription(this);
             Excel.createComment(cellDescription, cellResult.getStringCellValue(), COMMENT_AUTHOR);
         }
 
@@ -594,6 +597,7 @@ public class TestStep extends TestStepManifest {
         } else {
             cellResult.setCellStyle(worksheet.getStyle(pass ? STYLE_SUCCESS_RESULT : STYLE_FAILED_RESULT));
         }
+        ExcelStyleHelper.handleTextWrap(cellResult);
 
         // reason
         Throwable exception = result.getException();

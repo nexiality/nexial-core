@@ -29,7 +29,7 @@ import org.apache.poi.xssf.usermodel.*;
 import org.nexial.commons.utils.FileUtil;
 import org.nexial.core.excel.Excel;
 import org.nexial.core.excel.Excel.Worksheet;
-import org.nexial.core.excel.ExcelConfig.StyleDecorator;
+import org.nexial.core.excel.ExcelStyleHelper;
 import org.nexial.core.excel.ext.CellTextReader;
 import org.nexial.core.model.ExecutionDefinition;
 import org.nexial.core.model.IterationManager;
@@ -47,9 +47,7 @@ import static org.nexial.core.NexialConst.NAMESPACE;
 import static org.nexial.core.NexialConst.OPT_INPUT_EXCEL_FILE;
 import static org.nexial.core.NexialConst.Project.appendCapture;
 import static org.nexial.core.NexialConst.Project.appendLog;
-import static org.nexial.core.excel.ExcelConfig.COL_IDX_COMMAND;
-import static org.nexial.core.excel.ExcelConfig.COL_IDX_PLAN_TEST_SCRIPT;
-import static org.nexial.core.excel.ExcelConfig.StyleConfig.*;
+import static org.nexial.core.excel.ExcelConfig.*;
 import static org.nexial.core.utils.ExecUtils.IGNORED_CLI_OPT;
 
 /**
@@ -215,9 +213,9 @@ public class ExecutionInputPrep {
         XSSFSheet dataSheet = excel.getWorkbook().createSheet(SHEET_MERGED_DATA);
 
         XSSFWorkbook workbook = dataSheet.getWorkbook();
-        XSSFCellStyle styleSystemDataName = StyleDecorator.generate(workbook, PREDEF_TEST_DATA_NAME);
-        XSSFCellStyle styleTestDataName = StyleDecorator.generate(workbook, TEST_DATA_NAME);
-        XSSFCellStyle styleTestDataValue = StyleDecorator.generate(workbook, TEST_DATA_VALUE);
+        XSSFCellStyle styleSystemDataName = ExcelStyleHelper.generate(workbook, PREDEF_TEST_DATA_NAME);
+        XSSFCellStyle styleTestDataName = ExcelStyleHelper.generate(workbook, TEST_DATA_NAME);
+        XSSFCellStyle styleTestDataValue = ExcelStyleHelper.generate(workbook, TEST_DATA_VALUE);
 
         SortedMap<String, String> data = new TreeMap<>((key1, key2) -> {
             if (StringUtils.startsWith(key1, NAMESPACE)) {

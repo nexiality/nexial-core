@@ -33,6 +33,7 @@ import org.apache.poi.xssf.usermodel.XSSFSheet;
 import org.nexial.core.ExecutionThread;
 import org.nexial.core.excel.Excel;
 import org.nexial.core.excel.Excel.Worksheet;
+import org.nexial.core.excel.ExcelStyleHelper;
 import org.nexial.core.excel.ext.CellTextReader;
 import org.nexial.core.utils.ConsoleUtils;
 import org.nexial.core.utils.ExecutionLogger;
@@ -43,7 +44,6 @@ import static org.nexial.core.CommandConst.CMD_VERBOSE;
 import static org.nexial.core.CommandConst.getMERGE_OUTPUTS;
 import static org.nexial.core.NexialConst.Data.SHEET_MERGED_DATA;
 import static org.nexial.core.excel.ExcelConfig.*;
-import static org.nexial.core.excel.ExcelConfig.StyleConfig.*;
 
 public final class ExecutionResultHelper {
     private ExecutionResultHelper() { }
@@ -144,8 +144,8 @@ public final class ExecutionResultHelper {
         // prepare to print nested messages
         int forwardRowsBy = 0;
         XSSFCellStyle style = worksheet.getStyle(STYLE_MESSAGE);
-        XSSFCellStyle resultStyle = StyleDecorator.generate(worksheet, RESULT);
-        XSSFCellStyle linkStyle = StyleDecorator.generate(worksheet, SCREENSHOT);
+        XSSFCellStyle resultStyle = ExcelStyleHelper.generate(worksheet, RESULT);
+        XSSFCellStyle linkStyle = ExcelStyleHelper.generate(worksheet, SCREENSHOT);
 
         Set<TestStepManifest> testStepsWithNestMessages = nestMessages.keySet();
         for (TestStepManifest step : testStepsWithNestMessages) {
@@ -216,14 +216,6 @@ public final class ExecutionResultHelper {
         XSSFCell cellMerge = row.getCell(COL_IDX_MERGE_RESULT_START);
         if (cellMerge == null) { return; }
 
-        // determine aggregated column width from 'param 1' to 'flow control'
-        int mergedWidth = 0;
-        for (int j = COL_IDX_MERGE_RESULT_START; j < COL_IDX_MERGE_RESULT_END + 1; j++) {
-            mergedWidth += worksheet.getSheet().getColumnWidth(j);
-        }
-
-        int charPerLine = (int) ((mergedWidth - DEF_CHAR_WIDTH) / (DEF_CHAR_WIDTH * MSG.getFontHeight()));
-
         // make sure we aren't create merged region on existing merged region
         boolean alreadyMerged = false;
         List<CellRangeAddress> mergedRegions = excelSheet.getMergedRegions();
@@ -249,10 +241,9 @@ public final class ExecutionResultHelper {
 
         if (cellMerge.getCellTypeEnum() == STRING) { cellMerge.setCellStyle(worksheet.getStyle(STYLE_MESSAGE)); }
 
-        String mergedContent = Excel.getCellValue(cellMerge);
-        cellMerge.setCellValue(mergedContent);
+        cellMerge.setCellValue(Excel.getCellValue(cellMerge));
 
-        Excel.adjustCellHeight(worksheet, cellMerge, charPerLine);
+        Excel.adjustMergedCellHeight(worksheet, cellMerge, COL_IDX_MERGE_RESULT_START, COL_IDX_MERGE_RESULT_END, 1);
     }
 
     protected static void save(Worksheet worksheet, ExecutionSummary executionSummary) throws IOException {

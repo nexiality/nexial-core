@@ -25,8 +25,8 @@ import org.apache.poi.xssf.usermodel.XSSFWorkbook
 import org.nexial.core.NexialConst.DF_TIMESTAMP
 import org.nexial.core.NexialConst.Data.EXCEL_ROW_COL_MAX_LIMIT
 import org.nexial.core.excel.Excel
-import org.nexial.core.excel.ExcelConfig.StyleConfig.STRIKEOUT_COMMAND
-import org.nexial.core.excel.ExcelConfig.StyleDecorator
+import org.nexial.core.excel.ExcelConfig.STRIKEOUT_COMMAND
+import org.nexial.core.excel.ExcelStyleHelper
 import org.nexial.core.tools.ProjectToolUtils.log
 import org.nexial.core.tools.repair.RepairArtifact.RepairArtifactLog
 import org.nexial.core.tools.repair.RepairExcels.ArtifactType
@@ -157,7 +157,7 @@ object ExcelUtils {
 
             // create styles for cell only if strikethrough is present
             if (RepairExcels.isStrikeOut(oldCell, fileType)) {
-                newCell.cellStyle = StyleDecorator.generate(newRow.sheet.workbook, STRIKEOUT_COMMAND)
+                newCell.cellStyle = ExcelStyleHelper.generate(newRow.sheet.workbook, STRIKEOUT_COMMAND)
             }
         }
     }

@@ -311,7 +311,9 @@ public final class NexialConst {
                                                 "([\\w]+)(\\" + TOKEN_PARAM_SEP + "(.+)+)*";
     public static final String TOKEN_TEMP_DELIM = "~!@1I4n3x@!~";
     public static final String REGEX_VALID_WEB_PROTOCOL = "(http|https|ftp|file|about)\\:.+";
-    public static final int MAX_VERBOSE_CHAR = 2000;
+    // public static final int MAX_VERBOSE_CHAR = 2000;
+    public static final int MAX_VERBOSE_CHAR = 32764;
+    public static final int MAX_FORMULA_CHAR = 8192;
 
     // predefined messages
     public static final String MSG_PASS = ExcelConfig.MSG_PASS;

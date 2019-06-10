@@ -20,29 +20,21 @@ package org.nexial.core.excel;
 import java.awt.*;
 import java.util.Arrays;
 import java.util.List;
-import javax.validation.constraints.NotNull;
 
 import org.apache.commons.lang3.StringUtils;
 import org.apache.poi.ss.usermodel.BorderStyle;
 import org.apache.poi.ss.usermodel.FillPatternType;
 import org.apache.poi.ss.usermodel.HorizontalAlignment;
 import org.apache.poi.ss.usermodel.VerticalAlignment;
-import org.apache.poi.xssf.usermodel.*;
-import org.nexial.core.excel.Excel.Worksheet;
-import org.nexial.core.model.TestStep;
+import org.apache.poi.xssf.usermodel.XSSFCell;
+import org.apache.poi.xssf.usermodel.XSSFColor;
+import org.apache.poi.xssf.usermodel.XSSFSheet;
 
-import static org.apache.poi.ss.usermodel.BorderStyle.MEDIUM;
 import static org.apache.poi.ss.usermodel.BorderStyle.THIN;
-import static org.apache.poi.ss.usermodel.FillPatternType.NO_FILL;
 import static org.apache.poi.ss.usermodel.FillPatternType.SOLID_FOREGROUND;
 import static org.apache.poi.ss.usermodel.VerticalAlignment.CENTER;
-import static org.apache.poi.xssf.usermodel.extensions.XSSFCellBorder.BorderSide.*;
-import static org.nexial.core.NexialConst.Data.SECTION_DESCRIPTION_PREFIX;
-import static org.nexial.core.excel.ExcelConfig.StyleConfig.FONT_NAME_FIXED_DEFAULT;
+import static org.nexial.core.excel.ExcelConfig.StyleConfig.*;
 
-/**
- *
- */
 public class ExcelConfig {
 
     // plan
@@ -99,9 +91,9 @@ public class ExcelConfig {
     public static final int COL_IDX_PLAN_WAIT = 'G' - 'A';
     public static final int COL_IDX_PLAN_LOAD_TEST = 'H' - 'A';
     public static final int COL_IDX_PLAN_LOAD_TEST_SPEC = 'I' - 'A';
-    public static final int COL_IDX_PLAN_ELAPSED_MS = 'K' - 'A';
-    public static final int COL_IDX_PLAN_RESULT = 'L' - 'A';
-    public static final int COL_IDX_PLAN_REASON = 'M' - 'A';
+    // public static final int COL_IDX_PLAN_ELAPSED_MS = 'K' - 'A';
+    // public static final int COL_IDX_PLAN_RESULT = 'L' - 'A';
+    // public static final int COL_IDX_PLAN_REASON = 'M' - 'A';
 
     // test script
     public static final ExcelAddress ADDR_SCENARIO_DESCRIPTION = new ExcelAddress("A2:D2");
@@ -242,8 +234,11 @@ public class ExcelConfig {
 
     // agenda
     public static final int ALPHABET_COUNT = 'Z' - 'A' + 1;
-    public static final short CELL_HEIGHT_DEFAULT = 480;
+
+    // public static final short CELL_HEIGHT_DEFAULT = 480;
     public static final int MAX_CELL_WIDTH = 256 * 255;
+    public static final double DEF_CHAR_WIDTH = 24.7;
+    public static final float EXEC_SUMMARY_HEIGHT = 21f;
 
     // agenda metadata
     public static final String MSG_FAIL = "FAIL ";
@@ -255,23 +250,22 @@ public class ExcelConfig {
     public static final String STYLE_TEST_CASE = "TEST_CASE";
 
     // style names
-    public static final String STYLE_COMMAND = "COMMAND";
-    public static final String STYLE_TARGET = "TARGET";
     public static final String STYLE_DESCRIPTION = "DESCRIPTION";
     public static final String STYLE_SECTION_DESCRIPTION = "SECTION_DESCRIPTION";
     public static final String STYLE_REPEAT_UNTIL_DESCRIPTION = "REPEAT_UNTIL_DESCRIPTION";
     public static final String STYLE_FAILED_STEP_DESCRIPTION = "FAILED_STEP_DESCRIPTION";
     // public static final String STYLE_SKIPPED_STEP_DESCRIPTION = "SKIPPED_STEP_DESCRIPTION";
+    public static final String STYLE_TARGET = "TARGET";
+    public static final String STYLE_COMMAND = "COMMAND";
+    public static final String STYLE_PARAM = "PARAM";
+    public static final String STYLE_TAINTED_PARAM = "TAINTED_PARAM";
+    public static final String STYLE_SCREENSHOT = "SCREENSHOT";
     public static final String STYLE_ELAPSED_MS = "ELAPSED_MS";
     public static final String STYLE_ELAPSED_MS_BAD_SLA = "ELAPSED_MS_BAD_SLA";
     public static final String STYLE_FAILED_RESULT = "FAILED_RESULT";
     public static final String STYLE_MESSAGE = "MESSAGE_STYLE";
-    public static final String STYLE_PARAM = "PARAM";
-    public static final String STYLE_TAINTED_PARAM = "TAINTED_PARAM";
-    public static final String STYLE_SCREENSHOT = "SCREENSHOT";
     public static final String STYLE_SKIPPED_RESULT = "SKIPPED_STYLE";
     public static final String STYLE_SUCCESS_RESULT = "SUCCESS_RESULT";
-
     public static final String STYLE_EXEC_SUMM_TITLE = "EXEC_SUMM_TITLE";
     public static final String STYLE_EXEC_SUMM_DATA_HEADER = "EXEC_SUMM_DATA_HEADER";
     public static final String STYLE_EXEC_SUMM_DATA_NAME = "EXEC_SUMM_DATA_NAME";
@@ -291,74 +285,59 @@ public class ExcelConfig {
     public static final String STYLE_EXEC_SUMM_FINAL_NOT_SUCCESS = "EXEC_SUMM_FINAL_NOT_SUCCESS";
     public static final String STYLE_EXEC_SUMM_FINAL_TOTAL = "EXEC_SUMM_FINAL_TOTAL";
 
-    // color
-    public static final XSSFColor WHITE = new XSSFColor(new Color(255, 255, 255));
-    public static final XSSFColor YELLOW = new XSSFColor(new Color(255, 255, 0));
-    public static final XSSFColor GREEN = new XSSFColor(new Color(0, 255, 0));
-    public static final XSSFColor BLACK = new XSSFColor(new Color(1, 1, 1));
-    public static final XSSFColor BLUE = new XSSFColor(new Color(0, 0, 255));
-    public static final XSSFColor INDIGO = new XSSFColor(new Color(0, 255, 255));
-    public static final XSSFColor ORANGE = new XSSFColor(new Color(255, 128, 0));
-    public static final XSSFColor PURPLE = new XSSFColor(new Color(255, 0, 255));
-    public static final XSSFColor RED = new XSSFColor(new Color(255, 0, 0));
+    // public static final StyleConfig UNSUPPORTED_COMMAND = newUnsupportedCommandStyle();
+    public static final StyleConfig TESTCASE = newTestCaseStyle();
+    public static final StyleConfig DESCRIPTION = newDescriptionStyle();
+    public static final StyleConfig SECTION_DESCRIPTION = newSectionDescriptionStyle();
+    public static final StyleConfig REPEAT_UNTIL_DESCRIPTION = newRepeatUntilDescriptionStyle();
+    public static final StyleConfig FAILED_STEP_DESCRIPTION = newFailedStepDescriptionStyle();
+    public static final StyleConfig TARGET = newTargetStyle();
+    public static final StyleConfig COMMAND = newCommandStyle();
+    public static final StyleConfig STRIKEOUT_COMMAND = newDisabledCommandStyle();
+    public static final StyleConfig PARAM = newParamStyle();
+    public static final StyleConfig TAINTED_PARAM = newTaintedParamStyle();
+    public static final StyleConfig SCREENSHOT = newScreenshotStyle();
+    public static final StyleConfig ELAPSED_MS = newElapsedMsStyle();
+    public static final StyleConfig ELAPSED_MS_BAD_SLA = newElapsedMsBadSlaStyle();
+    public static final StyleConfig SUCCESS = newSuccessStyle();
+    public static final StyleConfig FAILED = newFailedStyle();
+    public static final StyleConfig SKIPPED = newSkippedStyle();
+    public static final StyleConfig RESULT = newResultStyle();
+    public static final StyleConfig LINK = newLinkStyle();
+    public static final StyleConfig MSG = newMsgStyle();
 
-    public static final double DEF_CHAR_WIDTH = 24.7;
-    public static final int DEF_CHAR_WIDTH_FACTOR_TAHOMA = 290;
-    public static final int DEF_CHAR_WIDTH_FACTOR_TAHOMA_BOLD = 337;
-    public static final int DEF_CHAR_WIDTH_FACTOR_CONSOLAS = 273;
-    public static final short INDENT_1 = (short) 1;
-    public static final float EXEC_SUMMARY_HEIGHT = 21f;
+    public static final StyleConfig PREDEF_TEST_DATA_NAME = newPredefTestDataNameStyle();
+    public static final StyleConfig TEST_DATA_NAME = newTestDataNameStyle();
+    public static final StyleConfig TEST_DATA_VALUE = newTestDataValueStyle();
+
+    public static final StyleConfig EXEC_SUMM_TITLE = newExecSummaryTitle();
+    public static final StyleConfig EXEC_SUMM_DATA_HEADER = newExecSummaryDataHeader();
+    public static final StyleConfig EXEC_SUMM_DATA_NAME = newExecSummaryDataName();
+    public static final StyleConfig EXEC_SUMM_DATA_VALUE = newExecSummaryDataValue();
+    public static final StyleConfig EXEC_SUMM_EXCEPTION = newExecSummaryException();
+    public static final StyleConfig EXEC_SUMM_HEADER = newExecSummaryHeader();
+    public static final StyleConfig EXEC_SUMM_SCENARIO = newExecSummaryScenario();
+    public static final StyleConfig EXEC_SUMM_ACTIVITY = newExecSummaryActivity();
+    public static final StyleConfig EXEC_SUMM_TIMESPAN = newExecSummaryTimespan();
+    public static final StyleConfig EXEC_SUMM_DURATION = newExecSummaryDuration();
+    public static final StyleConfig EXEC_SUMM_TOTAL = newExecSummaryTotal();
+    public static final StyleConfig EXEC_SUMM_PASS = newExecSummaryPass();
+    public static final StyleConfig EXEC_SUMM_FAIL = newExecSummaryFail();
+    public static final StyleConfig EXEC_SUMM_SUCCESS = newExecSummarySuccess();
+    public static final StyleConfig EXEC_SUMM_NOT_SUCCESS = newExecSummaryNotSuccess();
+    public static final StyleConfig EXEC_SUMM_FINAL_SUCCESS = newExecSummaryFinalSuccess();
+    public static final StyleConfig EXEC_SUMM_FINAL_NOT_SUCCESS = newExecSummaryFinalNotSuccess();
+    public static final StyleConfig EXEC_SUMM_FINAL_TOTAL = newExecSummaryFinalTotal();
 
     public static class StyleConfig {
         public static final String FONT_NAME_DEFAULT = "Tahoma";
         public static final String FONT_NAME_FIXED_DEFAULT = "Consolas";
 
         public static final short FONT_HEIGHT_DEFAULT = (short) 11;
+        public static final short FONT_HEIGHT_PARAM = (short) 10;
         public static final XSSFColor FG_FAIL = new XSSFColor(new Color(156, 0, 6));
 
-        // public static final StyleConfig UNSUPPORTED_COMMAND = newUnsupportedCommandStyle();
-        public static final StyleConfig ELAPSED_MS_BAD_SLA = newElapsedMsBadSlaStyle();
-        public static final StyleConfig FAILED = newFailedStyle();
-        public static final StyleConfig TESTCASE = newTestCaseStyle();
-        public static final StyleConfig DESCRIPTION = newDescriptionStyle();
-        public static final StyleConfig SECTION_DESCRIPTION = newSectionDescriptionStyle();
-        public static final StyleConfig REPEAT_UNTIL_DESCRIPTION = newRepeatUntilDescriptionStyle();
-        public static final StyleConfig FAILED_STEP_DESCRIPTION = newFailedStepDescriptionStyle();
-        public static final StyleConfig SCREENSHOT = newScreenshotStyle();
-        public static final StyleConfig ELAPSED_MS = newElapsedMsStyle();
-        public static final StyleConfig SUCCESS = newSuccessStyle();
-        public static final StyleConfig RESULT = newResultStyle();
-        public static final StyleConfig SKIPPED = newSkippedStyle();
-        public static final StyleConfig LINK = newLinkStyle();
-        public static final StyleConfig TARGET = newTargetStyle();
-        public static final StyleConfig COMMAND = newCommandStyle();
-        public static final StyleConfig STRIKEOUT_COMMAND = newDisabledCommandStyle();
-        public static final StyleConfig PARAM = newParamStyle();
-        public static final StyleConfig TAINTED_PARAM = newTaintedParamStyle();
-        public static final StyleConfig MSG = newMsgStyle();
-
-        public static final StyleConfig PREDEF_TEST_DATA_NAME = newPredefTestDataNameStyle();
-        public static final StyleConfig TEST_DATA_NAME = newTestDataNameStyle();
-        public static final StyleConfig TEST_DATA_VALUE = newTestDataValueStyle();
-
-        public static final StyleConfig EXEC_SUMM_TITLE = newExecSummaryTitle();
-        public static final StyleConfig EXEC_SUMM_DATA_HEADER = newExecSummaryDataHeader();
-        public static final StyleConfig EXEC_SUMM_DATA_NAME = newExecSummaryDataName();
-        public static final StyleConfig EXEC_SUMM_DATA_VALUE = newExecSummaryDataValue();
-        public static final StyleConfig EXEC_SUMM_EXCEPTION = newExecSummaryException();
-        public static final StyleConfig EXEC_SUMM_HEADER = newExecSummaryHeader();
-        public static final StyleConfig EXEC_SUMM_SCENARIO = newExecSummaryScenario();
-        public static final StyleConfig EXEC_SUMM_ACTIVITY = newExecSummaryActivity();
-        public static final StyleConfig EXEC_SUMM_TIMESPAN = newExecSummaryTimespan();
-        public static final StyleConfig EXEC_SUMM_DURATION = newExecSummaryDuration();
-        public static final StyleConfig EXEC_SUMM_TOTAL = newExecSummaryTotal();
-        public static final StyleConfig EXEC_SUMM_PASS = newExecSummaryPass();
-        public static final StyleConfig EXEC_SUMM_FAIL = newExecSummaryFail();
-        public static final StyleConfig EXEC_SUMM_SUCCESS = newExecSummarySuccess();
-        public static final StyleConfig EXEC_SUMM_NOT_SUCCESS = newExecSummaryNotSuccess();
-        public static final StyleConfig EXEC_SUMM_FINAL_SUCCESS = newExecSummaryFinalSuccess();
-        public static final StyleConfig EXEC_SUMM_FINAL_NOT_SUCCESS = newExecSummaryFinalNotSuccess();
-        public static final StyleConfig EXEC_SUMM_FINAL_TOTAL = newExecSummaryFinalTotal();
+        private static final short INDENT_1 = (short) 1;
 
         private XSSFColor backgroundColor;
         private XSSFColor backgroundFillColor;
@@ -416,30 +395,7 @@ public class ExcelConfig {
             this.useSpecialTopAndDoubleBottomBorder = useSpecialTopAndDoubleBottomBorder;
         }
 
-        private static StyleConfig newTestCaseStyle() {
-            StyleConfig config = new StyleConfig();
-            config.backgroundColor = new XSSFColor(new Color(230, 239, 215));
-            config.borderColor = new XSSFColor(new Color(200, 180, 180));
-            config.fontHeight = FONT_HEIGHT_DEFAULT;
-            config.fontColor = new XSSFColor(new Color(62, 81, 31));
-            config.boldFont = true;
-            config.verticalAlignment = CENTER;
-            return config;
-        }
-
-        private static StyleConfig newSettingNameStyle() {
-            StyleConfig config = new StyleConfig();
-            // BDD7EE
-            config.backgroundColor = new XSSFColor(new Color(189, 215, 238));
-            config.fontHeight = FONT_HEIGHT_DEFAULT;
-            config.fontName = FONT_NAME_DEFAULT;
-            // 2F75B5
-            config.fontColor = new XSSFColor(new Color(47, 117, 181));
-            config.boldFont = true;
-            return config;
-        }
-
-        private static StyleConfig newPredefTestDataNameStyle() {
+        static StyleConfig newPredefTestDataNameStyle() {
             StyleConfig config = new StyleConfig();
             // DDEBF7
             config.backgroundColor = new XSSFColor(new Color(221, 235, 247));
@@ -451,7 +407,7 @@ public class ExcelConfig {
             return config;
         }
 
-        private static StyleConfig newTestDataNameStyle() {
+        static StyleConfig newTestDataNameStyle() {
             StyleConfig config = new StyleConfig();
             // D9D9D9
             config.backgroundColor = new XSSFColor(new Color(217, 217, 217));
@@ -462,20 +418,7 @@ public class ExcelConfig {
             return config;
         }
 
-        private static StyleConfig newSettingValueStyle() {
-            StyleConfig config = new StyleConfig();
-            // F2F2F2
-            config.backgroundColor = new XSSFColor(new Color(242, 242, 242));
-            config.fontHeight = FONT_HEIGHT_DEFAULT;
-            config.fontName = FONT_NAME_FIXED_DEFAULT;
-            // 808080
-            config.fontColor = new XSSFColor(new Color(128, 128, 128));
-            config.boldFont = true;
-            config.italicFont = true;
-            return config;
-        }
-
-        private static StyleConfig newTestDataValueStyle() {
+        static StyleConfig newTestDataValueStyle() {
             StyleConfig config = new StyleConfig();
             config.fontHeight = FONT_HEIGHT_DEFAULT;
             config.fontName = FONT_NAME_FIXED_DEFAULT;
@@ -484,43 +427,18 @@ public class ExcelConfig {
             return config;
         }
 
-        private static StyleConfig newCommandStyle() {
+        static StyleConfig newTestCaseStyle() {
             StyleConfig config = new StyleConfig();
-            config.fontName = FONT_NAME_FIXED_DEFAULT;
+            config.backgroundColor = new XSSFColor(new Color(230, 239, 215));
+            config.borderColor = new XSSFColor(new Color(200, 180, 180));
             config.fontHeight = FONT_HEIGHT_DEFAULT;
-            config.fontColor = new XSSFColor(new Color(18, 40, 74));
-            config.verticalAlignment = CENTER;
-            return config;
-        }
-
-        private static StyleConfig newDisabledCommandStyle() {
-            StyleConfig config = newCommandStyle();
-            config.fontColor = new XSSFColor(new Color(5, 5, 5));
-            config.strikeOut = true;
-            return config;
-        }
-
-        private static StyleConfig newTargetStyle() {
-            StyleConfig config = new StyleConfig();
-            config.fontName = FONT_NAME_FIXED_DEFAULT;
-            config.fontHeight = FONT_HEIGHT_DEFAULT;
-            config.fontColor = new XSSFColor(new Color(5, 5, 5));
-            config.verticalAlignment = CENTER;
-            config.horizontalAlignment = HorizontalAlignment.RIGHT;
-            return config;
-        }
-
-        private static StyleConfig newLinkStyle() {
-            StyleConfig config = new StyleConfig();
-            config.fontName = FONT_NAME_FIXED_DEFAULT;
-            config.fontHeight = (short) 10;
+            config.fontColor = new XSSFColor(new Color(62, 81, 31));
             config.boldFont = true;
-            config.fontColor = BLUE;
             config.verticalAlignment = CENTER;
             return config;
         }
 
-        private static StyleConfig newDescriptionStyle() {
+        static StyleConfig newDescriptionStyle() {
             StyleConfig config = new StyleConfig();
             config.fontHeight = FONT_HEIGHT_DEFAULT;
             config.fontColor = new XSSFColor(new Color(40, 115, 137));
@@ -529,7 +447,7 @@ public class ExcelConfig {
             return config;
         }
 
-        private static StyleConfig newSectionDescriptionStyle() {
+        static StyleConfig newSectionDescriptionStyle() {
             StyleConfig config = new StyleConfig();
             config.backgroundColor = new XSSFColor(new Color(220, 225, 230));
             config.borderColor = new XSSFColor(new Color(190, 200, 205));
@@ -541,7 +459,7 @@ public class ExcelConfig {
             return config;
         }
 
-        private static StyleConfig newRepeatUntilDescriptionStyle() {
+        static StyleConfig newRepeatUntilDescriptionStyle() {
             StyleConfig config = new StyleConfig();
             config.backgroundColor = new XSSFColor(new Color(230, 215, 215));
             config.borderColor = new XSSFColor(new Color(205, 195, 195));
@@ -554,7 +472,7 @@ public class ExcelConfig {
         }
 
         // only additive style updates
-        private static StyleConfig newFailedStepDescriptionStyle() {
+        static StyleConfig newFailedStepDescriptionStyle() {
             StyleConfig config = new StyleConfig();
             config.backgroundColor = new XSSFColor(new Color(255, 199, 206));
             config.fontHeight = FONT_HEIGHT_DEFAULT;
@@ -566,56 +484,67 @@ public class ExcelConfig {
             return config;
         }
 
-        /*
-        // only additive style updates
-        private static StyleConfig newSkippedStepDescriptionStyle() {
+        static StyleConfig newTargetStyle() {
             StyleConfig config = new StyleConfig();
-            // config.backgroundColor = new XSSFColor(new Color(245, 245, 245));
-            config.fontColor = new XSSFColor(new Color(100, 100, 100));
+            config.fontName = FONT_NAME_FIXED_DEFAULT;
             config.fontHeight = FONT_HEIGHT_DEFAULT;
+            config.fontColor = new XSSFColor(new Color(5, 5, 5));
             config.verticalAlignment = CENTER;
-            config.italicFont = true;
-            config.wrapText = true;
-            // config.borderColor = new XSSFColor(new Color(100, 100, 100));
+            config.horizontalAlignment = HorizontalAlignment.RIGHT;
             return config;
         }
-        */
 
-        private static StyleConfig newParamStyle() {
+        static StyleConfig newCommandStyle() {
+            StyleConfig config = new StyleConfig();
+            config.fontName = FONT_NAME_FIXED_DEFAULT;
+            config.fontHeight = FONT_HEIGHT_DEFAULT;
+            config.fontColor = new XSSFColor(new Color(18, 40, 74));
+            config.verticalAlignment = CENTER;
+            return config;
+        }
+
+        static StyleConfig newDisabledCommandStyle() {
+            StyleConfig config = newCommandStyle();
+            config.fontColor = new XSSFColor(new Color(5, 5, 5));
+            config.strikeOut = true;
+            return config;
+        }
+
+        static StyleConfig newParamStyle() {
             StyleConfig config = new StyleConfig();
             config.backgroundColor = new XSSFColor(new Color(250, 250, 250));
             config.borderColor = new XSSFColor(new Color(220, 220, 220));
             config.fontName = FONT_NAME_FIXED_DEFAULT;
-            config.fontHeight = (short) 10;
+            config.fontHeight = FONT_HEIGHT_PARAM;
             config.fontColor = new XSSFColor(new Color(5, 5, 5));
             config.verticalAlignment = CENTER;
             return config;
         }
 
-        private static StyleConfig newTaintedParamStyle() {
+        static StyleConfig newTaintedParamStyle() {
             StyleConfig config = new StyleConfig();
             config.backgroundColor = new XSSFColor(new Color(240, 240, 225));
             config.borderColor = new XSSFColor(new Color(205, 205, 205));
             config.fontName = FONT_NAME_FIXED_DEFAULT;
-            config.fontHeight = (short) 10;
+            config.fontHeight = FONT_HEIGHT_PARAM;
             config.fontColor = new XSSFColor(new Color(5, 5, 5));
             config.verticalAlignment = CENTER;
             return config;
         }
 
-        private static StyleConfig newScreenshotStyle() {
+        static StyleConfig newScreenshotStyle() {
             StyleConfig config = new StyleConfig();
             config.backgroundColor = new XSSFColor(new Color(255, 255, 255));
             config.borderColor = new XSSFColor(new Color(195, 195, 195));
             config.fontName = FONT_NAME_FIXED_DEFAULT;
-            config.fontHeight = (short) 10;
+            config.fontHeight = FONT_HEIGHT_PARAM;
             config.fontColor = new XSSFColor(new Color(0, 0, 255));
             config.boldFont = true;
             config.verticalAlignment = CENTER;
             return config;
         }
 
-        private static StyleConfig newElapsedMsStyle() {
+        static StyleConfig newElapsedMsStyle() {
             StyleConfig config = new StyleConfig();
             config.backgroundColor = new XSSFColor(new Color(255, 255, 255));
             config.borderColor = new XSSFColor(new Color(195, 195, 195));
@@ -625,23 +554,9 @@ public class ExcelConfig {
             return config;
         }
 
-        private static StyleConfig newElapsedMsBadSlaStyle() { return newFailedStyle(); }
+        static StyleConfig newElapsedMsBadSlaStyle() { return newFailedStyle(); }
 
-        private static StyleConfig newMsgStyle() {
-            StyleConfig config = new StyleConfig();
-            config.backgroundColor = new XSSFColor(new Color(236, 236, 232));
-            config.backgroundFillColor = config.backgroundColor;
-            config.backgroundFillPattern = SOLID_FOREGROUND;
-            config.indention = 1;
-            config.fontName = FONT_NAME_FIXED_DEFAULT;
-            config.fontHeight = (short) 10;
-            config.fontColor = new XSSFColor(new Color(90, 90, 50));
-            config.verticalAlignment = CENTER;
-            config.wrapText = true;
-            return config;
-        }
-
-        private static StyleConfig newSuccessStyle() {
+        static StyleConfig newSuccessStyle() {
             StyleConfig config = new StyleConfig();
             config.backgroundColor = new XSSFColor(new Color(198, 239, 206));
             config.fontHeight = FONT_HEIGHT_DEFAULT;
@@ -650,102 +565,59 @@ public class ExcelConfig {
             return config;
         }
 
-        private static StyleConfig newFailedStyle() {
+        static StyleConfig newFailedStyle() {
             StyleConfig config = new StyleConfig();
             config.backgroundColor = new XSSFColor(new Color(255, 199, 206));
-            config.fontHeight = (short) 10;
+            config.fontHeight = FONT_HEIGHT_PARAM;
             config.fontColor = FG_FAIL;
             config.boldFont = true;
             config.verticalAlignment = CENTER;
             return config;
         }
 
-        private static StyleConfig newSkippedStyle() {
+        static StyleConfig newSkippedStyle() {
             StyleConfig config = new StyleConfig();
             config.backgroundColor = new XSSFColor(new Color(230, 230, 230));
             config.fontName = FONT_NAME_DEFAULT;
-            config.fontHeight = (short) 11;
+            config.fontHeight = FONT_HEIGHT_DEFAULT;
             config.fontColor = new XSSFColor(new Color(128, 128, 128));
             config.boldFont = false;
             config.verticalAlignment = CENTER;
             return config;
         }
 
-        private static StyleConfig newJenkinsRefLabelStyle() {
+        static StyleConfig newResultStyle() {
             StyleConfig config = new StyleConfig();
-            config.backgroundColor = new XSSFColor(new Color(216, 229, 188));
-            config.horizontalAlignment = HorizontalAlignment.LEFT;
+            config.fontHeight = FONT_HEIGHT_DEFAULT;
             config.verticalAlignment = CENTER;
-            config.borderColor = new XSSFColor(new Color(184, 208, 138));
-            config.borderStyle = MEDIUM;
-            config.fontName = FONT_NAME_FIXED_DEFAULT;
-            config.fontHeight = (short) 10;
-            config.fontColor = new XSSFColor(new Color(99, 131, 46));
             return config;
         }
 
-        private static StyleConfig newJenkinsRefLinkStyle() {
+        static StyleConfig newMsgStyle() {
             StyleConfig config = new StyleConfig();
-            config.backgroundColor = new XSSFColor(new Color(230, 238, 214));
-            config.horizontalAlignment = HorizontalAlignment.LEFT;
-            config.verticalAlignment = CENTER;
-            config.borderColor = new XSSFColor(new Color(184, 208, 138));
-            config.borderStyle = MEDIUM;
-            config.fontName = FONT_NAME_FIXED_DEFAULT;
-            config.fontHeight = (short) 10;
-            config.fontColor = new XSSFColor(new Color(83, 141, 213));
-            config.boldFont = true;
-            return config;
-        }
-
-        private static StyleConfig newJenkinsRefParamStyle() {
-            StyleConfig config = new StyleConfig();
-            config.backgroundColor = new XSSFColor(new Color(230, 238, 214));
-            config.horizontalAlignment = HorizontalAlignment.LEFT;
-            config.verticalAlignment = CENTER;
+            config.backgroundColor = new XSSFColor(new Color(236, 236, 232));
+            // config.backgroundFillColor = config.backgroundColor;
+            // config.backgroundFillPattern = SOLID_FOREGROUND;
             config.indention = 1;
-            config.wrapText = true;
-            config.borderColor = new XSSFColor(new Color(184, 208, 138));
-            config.borderStyle = MEDIUM;
             config.fontName = FONT_NAME_FIXED_DEFAULT;
-            config.fontHeight = (short) 10;
-            config.fontColor = new XSSFColor(new Color(64, 64, 64));
+            config.fontHeight = FONT_HEIGHT_PARAM;
+            config.fontColor = new XSSFColor(new Color(90, 90, 50));
+            config.verticalAlignment = CENTER;
+            config.wrapText = true;
+            return config;
+        }
+
+        static StyleConfig newLinkStyle() {
+            StyleConfig config = new StyleConfig();
+            config.fontName = FONT_NAME_FIXED_DEFAULT;
+            config.fontHeight = FONT_HEIGHT_PARAM;
             config.boldFont = true;
-            return config;
-        }
-
-        private static StyleConfig newLogLabelStyle() {
-            StyleConfig config = new StyleConfig();
-            config.backgroundColor = new XSSFColor(new Color(240, 240, 220));
-            config.fontHeight = FONT_HEIGHT_DEFAULT;
-            return config;
-        }
-
-        private static StyleConfig newLogLinkStyle() {
-            StyleConfig config = new StyleConfig();
-            config.backgroundColor = new XSSFColor(new Color(240, 240, 220));
-            config.boldFont = true;
-            config.fontHeight = (short) 10;
-            config.fontColor = new XSSFColor(new Color(0, 0, 255));
-            return config;
-        }
-
-        private static StyleConfig newResultStyle() {
-            StyleConfig config = new StyleConfig();
-            config.fontHeight = FONT_HEIGHT_DEFAULT;
+            config.fontColor = ExcelStyleHelper.BLUE;
             config.verticalAlignment = CENTER;
             return config;
         }
 
-        private static StyleConfig newUnsupportedCommandStyle() {
-            StyleConfig config = new StyleConfig();
-            config.italicFont = true;
-            config.boldFont = true;
-            config.fontColor = FG_FAIL;
-            return config;
-        }
-
-        private static StyleConfig newExecSummaryTitle() {
+        static StyleConfig newExecSummaryTitle() {
             StyleConfig config = new StyleConfig();
             config.verticalAlignment = CENTER;
             config.horizontalAlignment = HorizontalAlignment.LEFT;
@@ -759,7 +631,7 @@ public class ExcelConfig {
             return config;
         }
 
-        private static StyleConfig newExecSummaryDataHeader() {
+        static StyleConfig newExecSummaryDataHeader() {
             StyleConfig config = new StyleConfig();
             config.verticalAlignment = CENTER;
             config.horizontalAlignment = HorizontalAlignment.LEFT;
@@ -773,7 +645,7 @@ public class ExcelConfig {
             return config;
         }
 
-        private static StyleConfig newExecSummaryDataName() {
+        static StyleConfig newExecSummaryDataName() {
             StyleConfig config = new StyleConfig();
             config.verticalAlignment = CENTER;
             config.horizontalAlignment = HorizontalAlignment.LEFT;
@@ -786,7 +658,7 @@ public class ExcelConfig {
             return config;
         }
 
-        private static StyleConfig newExecSummaryDataValue() {
+        static StyleConfig newExecSummaryDataValue() {
             StyleConfig config = new StyleConfig();
             config.verticalAlignment = CENTER;
             config.horizontalAlignment = HorizontalAlignment.LEFT;
@@ -799,7 +671,7 @@ public class ExcelConfig {
             return config;
         }
 
-        private static StyleConfig newExecSummaryException() {
+        static StyleConfig newExecSummaryException() {
             StyleConfig config = new StyleConfig();
             config.verticalAlignment = CENTER;
             config.horizontalAlignment = HorizontalAlignment.LEFT;
@@ -813,13 +685,13 @@ public class ExcelConfig {
             return config;
         }
 
-        private static StyleConfig newExecSummaryHeader() {
+        static StyleConfig newExecSummaryHeader() {
             StyleConfig config = newExecSummaryDataHeader();
             config.horizontalAlignment = HorizontalAlignment.CENTER;
             return config;
         }
 
-        private static StyleConfig newExecSummaryScenario() {
+        static StyleConfig newExecSummaryScenario() {
             StyleConfig config = new StyleConfig();
             config.verticalAlignment = CENTER;
             config.horizontalAlignment = HorizontalAlignment.LEFT;
@@ -833,9 +705,9 @@ public class ExcelConfig {
             return config;
         }
 
-        private static StyleConfig newExecSummaryActivity() { return newExecSummaryScenario(); }
+        static StyleConfig newExecSummaryActivity() { return newExecSummaryScenario(); }
 
-        private static StyleConfig newExecSummaryTimespan() {
+        static StyleConfig newExecSummaryTimespan() {
             StyleConfig config = new StyleConfig();
             config.verticalAlignment = CENTER;
             config.horizontalAlignment = HorizontalAlignment.CENTER;
@@ -848,19 +720,19 @@ public class ExcelConfig {
             return config;
         }
 
-        private static StyleConfig newExecSummaryDuration() {
+        static StyleConfig newExecSummaryDuration() {
             StyleConfig config = newExecSummaryTimespan();
             config.horizontalAlignment = HorizontalAlignment.RIGHT;
             return config;
         }
 
-        private static StyleConfig newExecSummaryTotal() { return newExecSummaryDuration(); }
+        static StyleConfig newExecSummaryTotal() { return newExecSummaryDuration(); }
 
-        private static StyleConfig newExecSummaryPass() { return newExecSummaryDuration(); }
+        static StyleConfig newExecSummaryPass() { return newExecSummaryDuration(); }
 
-        private static StyleConfig newExecSummaryFail() { return newExecSummaryDuration(); }
+        static StyleConfig newExecSummaryFail() { return newExecSummaryDuration(); }
 
-        private static StyleConfig newExecSummarySuccess() {
+        static StyleConfig newExecSummarySuccess() {
             StyleConfig config = newExecSummaryTimespan();
             config.horizontalAlignment = HorizontalAlignment.RIGHT;
             config.fontColor = new XSSFColor(new Color(0, 100, 1));
@@ -868,7 +740,7 @@ public class ExcelConfig {
             return config;
         }
 
-        private static StyleConfig newExecSummaryNotSuccess() {
+        static StyleConfig newExecSummaryNotSuccess() {
             StyleConfig config = newExecSummaryTimespan();
             config.horizontalAlignment = HorizontalAlignment.RIGHT;
             config.boldFont = true;
@@ -877,7 +749,7 @@ public class ExcelConfig {
             return config;
         }
 
-        private static StyleConfig newExecSummaryFinalSuccess() {
+        static StyleConfig newExecSummaryFinalSuccess() {
             StyleConfig config = newExecSummarySuccess();
             config.boldFont = true;
             config.borderColor = new XSSFColor(new Color(0, 0, 0));
@@ -885,7 +757,7 @@ public class ExcelConfig {
             return config;
         }
 
-        private static StyleConfig newExecSummaryFinalNotSuccess() {
+        static StyleConfig newExecSummaryFinalNotSuccess() {
             StyleConfig config = newExecSummaryNotSuccess();
             config.boldFont = true;
             config.borderColor = new XSSFColor(new Color(0, 0, 0));
@@ -893,7 +765,7 @@ public class ExcelConfig {
             return config;
         }
 
-        private static StyleConfig newExecSummaryFinalTotal() {
+        static StyleConfig newExecSummaryFinalTotal() {
             StyleConfig config = new StyleConfig();
             config.verticalAlignment = CENTER;
             config.horizontalAlignment = HorizontalAlignment.RIGHT;
@@ -906,123 +778,111 @@ public class ExcelConfig {
             config.backgroundColor = null;
             return config;
         }
-    }
 
-    public static class StyleDecorator {
-        private StyleDecorator() {}
+        // // only additive style updates
+        // private static StyleConfig newSkippedStepDescriptionStyle() {
+        //     StyleConfig config = new StyleConfig();
+        //     // config.backgroundColor = new XSSFColor(new Color(245, 245, 245));
+        //     config.fontColor = new XSSFColor(new Color(100, 100, 100));
+        //     config.fontHeight = FONT_HEIGHT_DEFAULT;
+        //     config.verticalAlignment = CENTER;
+        //     config.italicFont = true;
+        //     config.wrapText = true;
+        //     // config.borderColor = new XSSFColor(new Color(100, 100, 100));
+        //     return config;
+        // }
 
-        public static XSSFCellStyle generate(XSSFWorkbook workbook, StyleConfig config) {
-            assert workbook != null;
-            assert config != null;
+        // static StyleConfig newSettingNameStyle() {
+        //     StyleConfig config = new StyleConfig();
+        //     // BDD7EE
+        //     config.backgroundColor = new XSSFColor(new Color(189, 215, 238));
+        //     config.fontHeight = FONT_HEIGHT_DEFAULT;
+        //     config.fontName = FONT_NAME_DEFAULT;
+        //     // 2F75B5
+        //     config.fontColor = new XSSFColor(new Color(47, 117, 181));
+        //     config.boldFont = true;
+        //     return config;
+        // }
 
-            return decorate(workbook.createCellStyle(), workbook.createFont(), config);
-        }
+        // static StyleConfig newSettingValueStyle() {
+        //     StyleConfig config = new StyleConfig();
+        //     // F2F2F2
+        //     config.backgroundColor = new XSSFColor(new Color(242, 242, 242));
+        //     config.fontHeight = FONT_HEIGHT_DEFAULT;
+        //     config.fontName = FONT_NAME_FIXED_DEFAULT;
+        //     // 808080
+        //     config.fontColor = new XSSFColor(new Color(128, 128, 128));
+        //     config.boldFont = true;
+        //     config.italicFont = true;
+        //     return config;
+        // }
 
-        public static XSSFCellStyle generate(Worksheet worksheet, StyleConfig config) {
-            assert worksheet != null;
-            assert config != null;
+        // static StyleConfig newJenkinsRefLabelStyle() {
+        //     StyleConfig config = new StyleConfig();
+        //     config.backgroundColor = new XSSFColor(new Color(216, 229, 188));
+        //     config.horizontalAlignment = HorizontalAlignment.LEFT;
+        //     config.verticalAlignment = CENTER;
+        //     config.borderColor = new XSSFColor(new Color(184, 208, 138));
+        //     config.borderStyle = MEDIUM;
+        //     config.fontName = FONT_NAME_FIXED_DEFAULT;
+        //     config.fontHeight = FONT_HEIGHT_PARAM;
+        //     config.fontColor = new XSSFColor(new Color(99, 131, 46));
+        //     return config;
+        // }
 
-            return decorate(worksheet, config);
-        }
+        // static StyleConfig newJenkinsRefLinkStyle() {
+        //     StyleConfig config = new StyleConfig();
+        //     config.backgroundColor = new XSSFColor(new Color(230, 238, 214));
+        //     config.horizontalAlignment = HorizontalAlignment.LEFT;
+        //     config.verticalAlignment = CENTER;
+        //     config.borderColor = new XSSFColor(new Color(184, 208, 138));
+        //     config.borderStyle = MEDIUM;
+        //     config.fontName = FONT_NAME_FIXED_DEFAULT;
+        //     config.fontHeight = FONT_HEIGHT_PARAM;
+        //     config.fontColor = new XSSFColor(new Color(83, 141, 213));
+        //     config.boldFont = true;
+        //     return config;
+        // }
 
-        public static XSSFCellStyle decorate(Worksheet worksheet, StyleConfig config) {
-            assert worksheet != null;
-            assert config != null;
+        // static StyleConfig newJenkinsRefParamStyle() {
+        //     StyleConfig config = new StyleConfig();
+        //     config.backgroundColor = new XSSFColor(new Color(230, 238, 214));
+        //     config.horizontalAlignment = HorizontalAlignment.LEFT;
+        //     config.verticalAlignment = CENTER;
+        //     config.indention = 1;
+        //     config.wrapText = true;
+        //     config.borderColor = new XSSFColor(new Color(184, 208, 138));
+        //     config.borderStyle = MEDIUM;
+        //     config.fontName = FONT_NAME_FIXED_DEFAULT;
+        //     config.fontHeight = FONT_HEIGHT_PARAM;
+        //     config.fontColor = new XSSFColor(new Color(64, 64, 64));
+        //     config.boldFont = true;
+        //     return config;
+        // }
 
-            return decorate(worksheet.newCellStyle(), worksheet.createFont(), config);
-        }
+        // static StyleConfig newLogLabelStyle() {
+        //     StyleConfig config = new StyleConfig();
+        //     config.backgroundColor = new XSSFColor(new Color(240, 240, 220));
+        //     config.fontHeight = FONT_HEIGHT_DEFAULT;
+        //     return config;
+        // }
 
-        public static XSSFCellStyle decorate(XSSFCellStyle style, XSSFFont font, StyleConfig config) {
-            assert style != null;
-            assert font != null;
-            assert config != null;
+        // static StyleConfig newLogLinkStyle() {
+        //     StyleConfig config = new StyleConfig();
+        //     config.backgroundColor = new XSSFColor(new Color(240, 240, 220));
+        //     config.boldFont = true;
+        //     config.fontHeight = FONT_HEIGHT_PARAM;
+        //     config.fontColor = new XSSFColor(new Color(0, 0, 255));
+        //     return config;
+        // }
 
-            XSSFColor backgroundColor = config.getBackgroundColor();
-            if (backgroundColor != null) { style.setFillBackgroundColor(backgroundColor); }
-
-            FillPatternType backgroundFillPattern = config.getBackgroundFillPattern();
-            if (backgroundFillPattern == SOLID_FOREGROUND || backgroundFillPattern == NO_FILL) {
-                if (backgroundColor != null) {
-                    style.setFillForegroundColor(backgroundColor);
-                    style.setFillPattern(SOLID_FOREGROUND);
-                }
-            } else {
-                XSSFColor backgroundFillColor = config.getBackgroundFillColor();
-                if (backgroundFillColor != null) {
-                    style.setFillForegroundColor(backgroundFillColor);
-                    style.setFillPattern(backgroundFillPattern);
-                }
-            }
-
-            short indention = config.getIndention();
-            if (indention > 0) { style.setIndention(indention); }
-
-            XSSFColor borderColor = config.getBorderColor();
-            if (borderColor != null) {
-                if (config.isUseSpecialTopAndDoubleBottomBorder()) {
-                    style.setBorderTop(BorderStyle.THIN);
-                    style.setBorderBottom(BorderStyle.DOUBLE);
-                    style.setBorderLeft(BorderStyle.NONE);
-                    style.setBorderRight(BorderStyle.NONE);
-                    style.setBorderColor(TOP, borderColor);
-                    style.setBorderColor(BOTTOM, borderColor);
-                } else {
-                    BorderStyle borderStyle = config.getBorderStyle();
-                    style.setBorderTop(borderStyle);
-                    style.setBorderBottom(borderStyle);
-                    style.setBorderLeft(borderStyle);
-                    style.setBorderRight(borderStyle);
-                    style.setBorderColor(TOP, borderColor);
-                    style.setBorderColor(BOTTOM, borderColor);
-                    style.setBorderColor(LEFT, borderColor);
-                    style.setBorderColor(RIGHT, borderColor);
-                }
-            }
-
-            HorizontalAlignment horizontalAlignment = config.getHorizontalAlignment();
-            if (horizontalAlignment != null) { style.setAlignment(horizontalAlignment); }
-
-            VerticalAlignment verticalAlignment = config.getVerticalAlignment();
-            if (verticalAlignment != null) { style.setVerticalAlignment(verticalAlignment); }
-
-            if (config.isWrapText()) { style.setWrapText(true); }
-
-            String fontName = config.getFontName();
-            if (StringUtils.isNotBlank(fontName)) {
-                font.setFontName(fontName);
-                font.setFontHeightInPoints(config.getFontHeight());
-                font.setColor(config.getFontColor());
-                font.setBold(config.isBoldFont());
-                font.setItalic(config.isItalicFont());
-                font.setUnderline(config.getUnderlineStyle());
-                font.setStrikeout(config.isStrikeOut());
-                style.setFont(font);
-            }
-
-            return style;
-        }
-
-        public static XSSFFont newDefaultFont(XSSFWorkbook workbook) {
-            XSSFFont font = workbook.createFont();
-            font.setFontName(FONT_NAME_FIXED_DEFAULT);
-            font.setFontHeight(9);
-            return font;
-        }
-
-        public static XSSFFont newDefaultHeaderFont(XSSFWorkbook workbook) {
-            XSSFFont font = newDefaultFont(workbook);
-            font.setBold(true);
-            font.setColor(new XSSFColor(new Color(217, 217, 217)));
-            return font;
-        }
-
-        public static XSSFCellStyle newDefaultHeaderStyle(XSSFWorkbook workbook) {
-            XSSFCellStyle style = workbook.createCellStyle();
-            style.setFillForegroundColor(new XSSFColor(new Color(64, 64, 64)));
-            style.setFillPattern(SOLID_FOREGROUND);
-            style.setFont(newDefaultHeaderFont(workbook));
-            return style;
-        }
+        // static StyleConfig newUnsupportedCommandStyle() {
+        //     StyleConfig config = new StyleConfig();
+        //     config.italicFont = true;
+        //     config.boldFont = true;
+        //     config.fontColor = FG_FAIL;
+        //     return config;
+        // }
     }
 
     private ExcelConfig() {}
@@ -1038,103 +898,12 @@ public class ExcelConfig {
                                   .sorted()
                                   .max(Integer::compareTo)
                                   .orElse(commandLength);
+            ExcelStyleHelper.handleTextWrap(cell);
         }
         int expectedCommandCellWidth = commandLength * charWidthFactor;
 
         if (actualCommandCellWidth < expectedCommandCellWidth && expectedCommandCellWidth < MAX_CELL_WIDTH) {
             sheet.setColumnWidth(columnIndex, expectedCommandCellWidth);
         }
-    }
-
-    public static void formatActivityCell(Worksheet worksheet, XSSFCell cell) {
-        if (StringUtils.isBlank(Excel.getCellValue(cell))) { return; }
-        cell.setCellStyle(worksheet.getStyle(STYLE_TEST_CASE));
-        fixCellWidth(worksheet.getSheet(), cell, COL_IDX_TESTCASE, DEF_CHAR_WIDTH_FACTOR_TAHOMA_BOLD);
-    }
-
-    public static void formatDescription(Worksheet worksheet, XSSFCell cell) {
-        cell.setCellStyle(worksheet.getStyle(STYLE_DESCRIPTION));
-        fixCellWidth(cell.getSheet(), cell, COL_IDX_DESCRIPTION, DEF_CHAR_WIDTH_FACTOR_TAHOMA);
-    }
-
-    public static void formatSectionDescription(Worksheet worksheet, XSSFCell cell) {
-        cell.setCellStyle(worksheet.getStyle(STYLE_SECTION_DESCRIPTION));
-        fixCellWidth(cell.getSheet(), cell, COL_IDX_DESCRIPTION, DEF_CHAR_WIDTH_FACTOR_TAHOMA);
-    }
-
-    public static TestStep formatSectionDescription(TestStep testStep, boolean prefix) {
-        return enhanceDescriptionFormat(formatDescriptionCell(testStep,
-                                                              STYLE_SECTION_DESCRIPTION,
-                                                              prefix ? SECTION_DESCRIPTION_PREFIX : ""));
-    }
-
-    public static void formatRepeatUntilDescription(Worksheet worksheet, XSSFCell cell) {
-        cell.setCellStyle(worksheet.getStyle(STYLE_REPEAT_UNTIL_DESCRIPTION));
-        fixCellWidth(cell.getSheet(), cell, COL_IDX_DESCRIPTION, DEF_CHAR_WIDTH_FACTOR_TAHOMA);
-    }
-
-    public static TestStep formatRepeatUntilDescription(TestStep testStep, String prefix) {
-        return enhanceDescriptionFormat(formatDescriptionCell(testStep, STYLE_REPEAT_UNTIL_DESCRIPTION, prefix));
-    }
-
-    public static TestStep formatFailedStepDescription(TestStep testStep) {
-        return formatDescriptionCell(testStep, STYLE_FAILED_STEP_DESCRIPTION, null);
-    }
-
-    public static void formatTargetCell(Worksheet worksheet, XSSFCell cell) {
-        cell.setCellStyle(worksheet.getStyle(STYLE_TARGET));
-        fixCellWidth(worksheet.getSheet(), cell, COL_IDX_TARGET, DEF_CHAR_WIDTH_FACTOR_CONSOLAS);
-    }
-
-    public static void formatCommandCell(Worksheet worksheet, XSSFCell cell) {
-        cell.setCellStyle(worksheet.getStyle(STYLE_COMMAND));
-        fixCellWidth(worksheet.getSheet(), cell, COL_IDX_COMMAND, DEF_CHAR_WIDTH_FACTOR_CONSOLAS);
-    }
-
-    public static TestStep formatParams(TestStep testStep) {
-        XSSFCellStyle style = testStep.getWorksheet().getStyle(STYLE_PARAM);
-        List<XSSFCell> row = testStep.getRow();
-        for (int i = COL_IDX_PARAMS_START; i < COL_IDX_PARAMS_END; i++) { row.get(i).setCellStyle(style); }
-        return testStep;
-    }
-
-    public static void formatFlowControlCell(Worksheet worksheet, XSSFCell cell) {
-        if (cell == null) { return; }
-        String cellValue = Excel.getCellValue(cell);
-        if (StringUtils.isNotBlank(cellValue)) {
-            cell.setCellStyle(worksheet.getStyle(STYLE_PARAM));
-            fixCellWidth(worksheet.getSheet(), cell, COL_IDX_FLOW_CONTROLS, DEF_CHAR_WIDTH_FACTOR_CONSOLAS);
-        }
-    }
-
-    protected static TestStep enhanceDescriptionFormat(TestStep testStep) {
-        String result = Excel.getCellValue(testStep.getRow().get(COL_IDX_RESULT));
-        XSSFCellStyle cellStyle = testStep.getRow().get(COL_IDX_DESCRIPTION).getCellStyle();
-        XSSFFont font = cellStyle.getFont();
-
-        if (StringUtils.startsWith(result, MSG_SKIPPED)) {
-            font.setItalic(true);
-            font.setColor(new XSSFColor(new Color(100, 100, 100)));
-            return testStep;
-        }
-
-        if (StringUtils.startsWith(result, MSG_FAIL)) { return formatFailedStepDescription(testStep); }
-
-        return testStep;
-    }
-
-    @NotNull
-    private static TestStep formatDescriptionCell(TestStep testStep, String styleName, String prefix) {
-        XSSFCell cell = testStep.getRow().get(COL_IDX_DESCRIPTION);
-        if (StringUtils.isNotBlank(prefix)) {
-            String descriptionText = Excel.getCellValue(cell);
-            if (!StringUtils.startsWith(descriptionText, prefix)) { cell.setCellValue(prefix + descriptionText); }
-        }
-
-        Worksheet worksheet = testStep.getWorksheet();
-        cell.setCellStyle(worksheet.getStyle(styleName));
-        fixCellWidth(cell.getSheet(), cell, COL_IDX_DESCRIPTION, DEF_CHAR_WIDTH_FACTOR_TAHOMA);
-
-        return testStep;
     }
 }

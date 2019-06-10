@@ -37,7 +37,7 @@ import org.nexial.core.excel.Excel;
 import org.nexial.core.excel.Excel.Worksheet;
 import org.nexial.core.excel.ExcelAddress;
 import org.nexial.core.excel.ExcelArea;
-import org.nexial.core.excel.ExcelConfig;
+import org.nexial.core.excel.ExcelStyleHelper;
 import org.nexial.core.utils.ConsoleUtils;
 import org.nexial.core.utils.InputFileUtils;
 
@@ -280,14 +280,14 @@ public class MacroMerger {
 
                 switch (j) {
                     case COL_IDX_TESTCASE:
-                        if (hasCellValue) { ExcelConfig.formatActivityCell(sheet, cell); }
+                        if (hasCellValue) { ExcelStyleHelper.formatActivityCell(sheet, cell); }
                         break;
                     case COL_IDX_DESCRIPTION:
                         if (hasCellValue) {
                             if (StringUtils.startsWith(cellValue, SECTION_DESCRIPTION_PREFIX)) {
-                                ExcelConfig.formatSectionDescription(sheet, cell);
+                                ExcelStyleHelper.formatSectionDescription(sheet, cell);
                             } else {
-                                ExcelConfig.formatDescription(sheet, cell);
+                                ExcelStyleHelper.formatDescription(sheet, cell);
                             }
                         }
                         break;
@@ -298,7 +298,7 @@ public class MacroMerger {
                         cell.setCellStyle(styleCommand);
                         break;
                     case COL_IDX_FLOW_CONTROLS:
-                        if (hasCellValue) { ExcelConfig.formatFlowControlCell(sheet, cell); }
+                        if (hasCellValue) { ExcelStyleHelper.formatFlowControlCell(sheet, cell); }
                         break;
                 }
             }

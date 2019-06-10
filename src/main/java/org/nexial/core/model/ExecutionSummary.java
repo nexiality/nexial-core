@@ -38,6 +38,7 @@ import org.nexial.core.excel.Excel.Worksheet;
 import org.nexial.core.excel.ExcelAddress;
 import org.nexial.core.excel.ExcelArea;
 import org.nexial.core.excel.ExcelConfig.*;
+import org.nexial.core.excel.ExcelStyleHelper;
 import org.nexial.core.utils.ConsoleUtils;
 
 import static java.io.File.separator;
@@ -50,7 +51,6 @@ import static org.nexial.core.NexialConst.RATE_FORMAT;
 import static org.nexial.core.NexialConst.TEST_START_TS;
 import static org.nexial.core.excel.Excel.MIN_EXCEL_FILE_SIZE;
 import static org.nexial.core.excel.ExcelConfig.*;
-import static org.nexial.core.excel.ExcelConfig.StyleConfig.*;
 import static org.nexial.core.model.ExecutionSummary.ExecutionLevel.ITERATION;
 import static org.nexial.core.model.ExecutionSummary.ExecutionLevel.*;
 import static org.nexial.core.utils.ExecUtils.NEXIAL_MANIFEST;
@@ -741,7 +741,7 @@ public class ExecutionSummary {
         int startColumnIdx = addr.getColumnStartIndex();
         int endColumnIndex = addr.getColumnEndIndex();
 
-        XSSFCellStyle cellStyle = StyleDecorator.generate(worksheet, styleConfig);
+        XSSFCellStyle cellStyle = ExcelStyleHelper.generate(worksheet, styleConfig);
 
         // force all merge candidate to take on the designated style first so that after merge the style will stick
         for (int i = startRowIdx; i <= endRowIdx; i++) {
@@ -774,11 +774,7 @@ public class ExecutionSummary {
 
             if (cellStyle != null) { cellMerge.setCellStyle(cellStyle); }
 
-            int mergedWidth = 0;
-            for (int j = startColumnIdx; j < endColumnIndex + 1; j++) { mergedWidth += sheet.getColumnWidth(j); }
-            int charPerLine = (int) ((mergedWidth - DEF_CHAR_WIDTH) * addr.getRowCount() /
-                                     (DEF_CHAR_WIDTH * FONT_HEIGHT_DEFAULT));
-            Excel.adjustCellHeight(worksheet, cellMerge, charPerLine);
+            Excel.adjustMergedCellHeight(worksheet, cellMerge, startColumnIdx, endColumnIndex, addr.getRowCount());
         }
 
         return cellMerge;

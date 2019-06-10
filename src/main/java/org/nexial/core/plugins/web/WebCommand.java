@@ -133,7 +133,7 @@ public class WebCommand extends BaseCommand implements CanTakeScreenshot, CanLog
         locatorHelper = new LocatorHelper(this);
 
         long browserStabilityWaitMs = deriveBrowserStabilityWaitMs(context);
-        log("default browser stability wait time is " + browserStabilityWaitMs + " ms");
+        if (context.isVerbose()) { log("default browser stability wait time is " + browserStabilityWaitMs + " ms"); }
 
         // todo: consider this http://seleniumhq.github.io/selenium/docs/api/javascript/module/selenium-webdriver/lib/logging.html
         logToBrowser = !browser.isRunChrome() &&

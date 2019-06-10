@@ -37,10 +37,10 @@ import org.nexial.commons.utils.ResourceUtils;
 import org.nexial.commons.utils.TextUtils;
 import org.nexial.core.excel.Excel.Worksheet;
 import org.nexial.core.excel.ExcelConfig.StyleConfig;
-import org.nexial.core.excel.ExcelConfig.StyleDecorator;
 
 import static java.io.File.separator;
 import static org.apache.poi.ss.usermodel.Row.MissingCellPolicy.CREATE_NULL_AS_BLANK;
+import static org.nexial.core.excel.ExcelConfig.*;
 import static org.nexial.core.excel.ExcelConfig.DEF_CHAR_WIDTH;
 import static org.nexial.core.excel.ExcelConfig.StyleConfig.*;
 
@@ -86,8 +86,7 @@ public class MergingNewExecutionSummarySheet {
         workbook.setActiveSheet(0);
 
         // title
-        XSSFCell mergedCell = mergeCell(new ExcelArea(summary, new ExcelAddress("A1:J1"), false),
-                                        "Execution Summary",
+        XSSFCell mergedCell = mergeCell(new ExcelArea(summary, new ExcelAddress("A1:J1"), false), "Execution Summary",
                                         EXEC_SUMM_TITLE);
         mergedCell.getRow().setHeightInPoints(21f);
 
@@ -205,7 +204,7 @@ public class MergingNewExecutionSummarySheet {
         XSSFCell cell = worksheet.cell(addr);
         if (cell == null) { return null; }
 
-        cell.setCellStyle(StyleDecorator.generate(worksheet, styleConfig));
+        cell.setCellStyle(ExcelStyleHelper.generate(worksheet, styleConfig));
         cell.getRow().setHeightInPoints(21f);
 
         return cell;
@@ -237,7 +236,7 @@ public class MergingNewExecutionSummarySheet {
         if (cellMerge == null) { return null; }
 
         if (StringUtils.isNotEmpty(mergedContent)) { cellMerge.setCellValue(mergedContent); }
-        if (styleConfig != null) { cellMerge.setCellStyle(StyleDecorator.generate(worksheet, styleConfig)); }
+        if (styleConfig != null) { cellMerge.setCellStyle(ExcelStyleHelper.generate(worksheet, styleConfig)); }
         if (StringUtils.isNotEmpty(mergedContent)) {
             int mergedWidth = 0;
             for (int j = startColumnIdx; j < endColumnIndex + 1; j++) { mergedWidth += sheet.getColumnWidth(j); }

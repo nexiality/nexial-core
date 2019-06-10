@@ -27,7 +27,6 @@ import org.apache.commons.lang3.builder.ToStringBuilder;
 import org.apache.poi.xssf.usermodel.XSSFCell;
 import org.nexial.core.excel.Excel;
 import org.nexial.core.excel.Excel.Worksheet;
-import org.nexial.core.excel.ExcelConfig;
 import org.nexial.core.utils.ConsoleUtils;
 import org.nexial.core.utils.ExecutionLogger;
 import org.nexial.core.utils.FlowControlUtils;
@@ -40,6 +39,7 @@ import static org.nexial.core.NexialConst.FlowControls.OPT_PAUSE_ON_ERROR;
 import static org.nexial.core.NexialConst.OPT_LAST_OUTCOME;
 import static org.nexial.core.SystemVariables.getDefaultBool;
 import static org.nexial.core.excel.ExcelConfig.*;
+import static org.nexial.core.excel.ExcelStyleHelper.*;
 
 public class CommandRepeater {
     private static final String TITLE = "[repeat-until] ";
@@ -60,7 +60,7 @@ public class CommandRepeater {
     public int getStepCount() { return steps.size(); }
 
     public void formatSteps() {
-        initialTestStep = ExcelConfig.formatRepeatUntilDescription(initialTestStep, "");
+        initialTestStep = formatRepeatUntilDescription(initialTestStep, "");
 
         if (CollectionUtils.isEmpty(steps)) { return; }
 
@@ -69,13 +69,10 @@ public class CommandRepeater {
         // one loop through to fix all the styles for loop steps
         for (int i = 0; i < steps.size(); i++) {
             TestStep step = steps.get(i);
-            ExcelConfig.formatRepeatUntilDescription(step,
-                                                     i == 0 ?
-                                                     REPEAT_CHECK_DESCRIPTION_PREFIX :
-                                                     REPEAT_DESCRIPTION_PREFIX);
-            ExcelConfig.formatTargetCell(worksheet, step.getRow().get(COL_IDX_TARGET));
-            ExcelConfig.formatCommandCell(worksheet, step.getRow().get(COL_IDX_COMMAND));
-            ExcelConfig.formatParams(step);
+            formatRepeatUntilDescription(step, i == 0 ? REPEAT_CHECK_DESCRIPTION_PREFIX : REPEAT_DESCRIPTION_PREFIX);
+            formatTargetCell(worksheet, step.getRow().get(COL_IDX_TARGET));
+            formatCommandCell(worksheet, step.getRow().get(COL_IDX_COMMAND));
+            formatParams(step);
         }
     }
 
@@ -127,7 +124,8 @@ public class CommandRepeater {
                             return result;
                         } else {
                             // else failure means continue... no sweat
-                            logger.log(testStep, TITLE + "condition not met (" + result.getMessage() + "); loop proceeds");
+                            logger.log(testStep,
+                                       TITLE + "condition not met (" + result.getMessage() + "); loop proceeds");
                         }
                     } else {
                         if (result.isSuccess()) {

@@ -591,7 +591,7 @@ public class BaseCommand implements NexialCommand {
         if (context.containsCrypt(text)) {
             // but we should still process any functions or expressions
             context.replaceTokens(text);
-            error("crypto found; no data variable expansion");
+            log("crypto found; no data variable expansion");
         }
 
         // with priority so that this log will not be silenced
