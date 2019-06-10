@@ -19,6 +19,7 @@ package org.nexial.core.tools.repair
 import org.apache.commons.io.FileUtils
 import org.apache.commons.lang3.StringUtils
 import org.apache.poi.ss.usermodel.CellType.*
+import org.apache.poi.xssf.usermodel.XSSFCell
 import org.apache.poi.xssf.usermodel.XSSFRow
 import org.apache.poi.xssf.usermodel.XSSFSheet
 import org.apache.poi.xssf.usermodel.XSSFWorkbook
@@ -135,11 +136,13 @@ object ExcelUtils {
             // If the old cell is null jump to next cell with new cell as empty
             if (oldCell == null) continue
 
-            if (newCell == null) newCell = newRow.createCell(columnIndex)
+            if (newCell == null) {
+                newCell = createCell(newRow, columnIndex, fileType)
+            }
 
             // set cell value
             when (oldCell.cellTypeEnum) {
-                BLANK   -> newCell = null
+                BLANK   -> newCell.setCellType(BLANK)
                 FORMULA -> newCell.cellFormula = oldCell.cellFormula
 
                 NUMERIC -> {
@@ -160,6 +163,26 @@ object ExcelUtils {
                 newCell.cellStyle = ExcelStyleHelper.generate(newRow.sheet.workbook, STRIKEOUT_COMMAND)
             }
         }
+    }
+
+    // create new cell within given row
+    // format data cells as per the first row's format
+    private fun createCell(row: XSSFRow, columnIndex: Int, fileType: ArtifactType): XSSFCell {
+        val cell = row.createCell(columnIndex, STRING)
+
+        if (fileType == DATA) {
+            val firstRow = row.sheet.getRow(0)
+            if (columnIndex == 0) {
+                // format first column same as first column of first row which is data variable name
+                val dataNameCellStyle = firstRow.getCell(0).cellStyle
+                cell.cellStyle = dataNameCellStyle
+            } else {
+                // format other column same as second column of first row which is data variable value
+                val dataValueCellStyle = firstRow.getCell(1).cellStyle
+                cell.cellStyle = dataValueCellStyle
+            }
+        }
+        return cell
     }
 
     // rename sheet to some unique temporary sheet name

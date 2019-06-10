@@ -23,7 +23,9 @@ import org.apache.commons.lang3.RandomStringUtils
 import org.apache.commons.lang3.StringUtils
 import org.apache.commons.lang3.SystemUtils.IS_OS_WINDOWS
 import org.apache.commons.lang3.time.StopWatch
+import org.apache.poi.ss.usermodel.CellType
 import org.nexial.commons.utils.FileUtil
+import org.nexial.core.NexialConst.Data.EXCEL_ROW_COL_MAX_LIMIT
 import org.nexial.core.NexialConst.ExitStatus.RC_BAD_CLI_ARGS
 import org.nexial.core.NexialConst.Project.NEXIAL_HOME
 import org.nexial.core.NexialConst.Project.SCRIPT_FILE_SUFFIX
@@ -165,10 +167,11 @@ object RepairArtifact {
         for (i in excelAddress.rowStartIndex until lastDataRow) {
             val sheet = targetSheet.sheet
             val row = sheet.getRow(i)
-            val lastColumnIdx = lastColumnIdx(row, fileType)
+            val lastColumnIdx = Math.min(lastColumnIdx(row, fileType), EXCEL_ROW_COL_MAX_LIMIT)
+
             for (cellIndex in 0 until lastColumnIdx + 1) {
                 val cell = row.getCell(cellIndex) ?: continue
-                cell.setCellValue("")
+                cell.setCellType(CellType.BLANK)
             }
         }
 
