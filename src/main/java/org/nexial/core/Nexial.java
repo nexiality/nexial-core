@@ -1268,9 +1268,9 @@ public class Nexial {
         }
     }
 
-    private void trackEvent(NexialEvent event) { EventTracker.INSTANCE.track(event); }
+    private void trackEvent(NexialEvent event) { EventTracker.track(event); }
 
-    private void trackExecution(NexialEnv nexialEnv) { EventTracker.INSTANCE.track(nexialEnv); }
+    private void trackExecution(NexialEnv nexialEnv) { EventTracker.track(nexialEnv); }
 
     /**
      * log {@code msg} to console if the System property {@code nexial.devLogging} is {@code "true"}.

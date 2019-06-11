@@ -81,8 +81,7 @@ public class Excel {
     public static final int MIN_EXCEL_FILE_SIZE = 2 * 1024;
     private static boolean verboseInstantiation = false;
 
-    // var to support spring-injected value
-    float _cellSpacing = 5.2f;
+    float _cellSpacing = 5.3f;
 
     private File file;
     private XSSFWorkbook workbook;
@@ -386,7 +385,7 @@ public class Excel {
         public XSSFCell setMinHeight(XSSFCell cell, int linesToShow) {
             if (cell != null) {
                 float newHeight = linesToShow == 1 ?
-                                  21 :
+                                  23 :
                                   (cell.getCellStyle().getFont().getFontHeightInPoints() + _cellSpacing) * linesToShow;
 
                 XSSFRow row = cell.getRow();

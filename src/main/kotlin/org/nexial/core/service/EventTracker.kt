@@ -41,15 +41,17 @@ object EventTracker {
     private val enableUniversalTracking =
         BooleanUtils.toBoolean(System.getProperty("nexial.universalTracking", "false"))
 
-    fun getStorageLocation() = EventUtils.storageLocation
+    fun getStorageLocation() = storageLocation
 
-    fun getExtension() = EventUtils.postfix
+    fun getExtension() = postfix
 
+    @JvmStatic
     fun track(event: NexialEvent) {
         write(event.eventName, event.json())
         trackEvents(event)
     }
 
+    @JvmStatic
     fun track(env: NexialEnv) = write("env", env.json())
 
     private fun write(type: String, content: String) {

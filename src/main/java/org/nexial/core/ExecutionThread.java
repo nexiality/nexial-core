@@ -210,8 +210,7 @@ public final class ExecutionThread extends Thread {
                         iterSummary.generateExcelReport(testScriptFile);
                     }
 
-                    EventTracker.INSTANCE.track(
-                        new NexialIterationCompleteEvent(scriptLocation, iterationIndex, iterSummary));
+                    EventTracker.track(new NexialIterationCompleteEvent(scriptLocation, iterationIndex, iterSummary));
                     executionSummary.addNestSummary(iterSummary);
 
                     // report status at iteration level
@@ -410,7 +409,7 @@ public final class ExecutionThread extends Thread {
         ticktock.stop();
         summary.setEndTime(System.currentTimeMillis());
         summary.aggregatedNestedExecutions(context);
-        EventTracker.INSTANCE.track(new NexialScriptCompleteEvent(summary.getScriptFile(), summary));
+        EventTracker.track(new NexialScriptCompleteEvent(summary.getScriptFile(), summary));
 
         CloudWebTestingPlatform.reportCloudBrowserStatus(context, summary, ScriptComplete);
 

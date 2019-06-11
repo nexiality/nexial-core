@@ -404,7 +404,7 @@ public class Browser implements ForcefulTerminate {
 
         ConsoleUtils.log("Shutting down '" + browserType.name() + "' webdriver...");
 
-        EventTracker.INSTANCE.track(new BrowserCompleteEvent(browserType.name()));
+        EventTracker.track(new BrowserCompleteEvent(browserType.name()));
 
         // Logs logs = driver.manage().logs();
         // if (logs != null) {

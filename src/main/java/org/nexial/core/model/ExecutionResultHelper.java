@@ -30,6 +30,7 @@ import org.apache.poi.xssf.usermodel.XSSFCell;
 import org.apache.poi.xssf.usermodel.XSSFCellStyle;
 import org.apache.poi.xssf.usermodel.XSSFRow;
 import org.apache.poi.xssf.usermodel.XSSFSheet;
+import org.nexial.core.CommandConst;
 import org.nexial.core.ExecutionThread;
 import org.nexial.core.excel.Excel;
 import org.nexial.core.excel.Excel.Worksheet;
@@ -41,7 +42,6 @@ import org.nexial.core.utils.ExecutionLogger;
 import static org.apache.poi.ss.usermodel.CellType.STRING;
 import static org.apache.poi.ss.usermodel.Row.MissingCellPolicy.CREATE_NULL_AS_BLANK;
 import static org.nexial.core.CommandConst.CMD_VERBOSE;
-import static org.nexial.core.CommandConst.getMERGE_OUTPUTS;
 import static org.nexial.core.NexialConst.Data.SHEET_MERGED_DATA;
 import static org.nexial.core.excel.ExcelConfig.*;
 
@@ -87,6 +87,10 @@ public final class ExecutionResultHelper {
             }
         });
 
+        // adjust width to fit column content
+        dataSheet.autoSizeColumn(0);
+        dataSheet.autoSizeColumn(1);
+
         // save output file with updated data
         // (2018/10/18,automike): omit saving here because this file will be saved later anyways
         // outputFile.save();
@@ -106,6 +110,15 @@ public final class ExecutionResultHelper {
         for (int i = ADDR_COMMAND_START.getRowStartIndex(); i < lastRow; i++) {
             ExecutionResultHelper.setMinHeight(worksheet, excelSheet.getRow(i));
         }
+
+        // adjust width to fit column content
+        excelSheet.autoSizeColumn(COL_IDX_TESTCASE);
+        excelSheet.autoSizeColumn(COL_IDX_DESCRIPTION);
+        excelSheet.autoSizeColumn(COL_IDX_TARGET);
+        excelSheet.autoSizeColumn(COL_IDX_COMMAND);
+        excelSheet.autoSizeColumn(COL_IDX_FLOW_CONTROLS);
+        excelSheet.autoSizeColumn(COL_IDX_ELAPSED_MS);
+        excelSheet.autoSizeColumn(COL_IDX_RESULT);
 
         String logId = ExecutionLogger.justFileName(worksheet.getFile()) + "|" + worksheet.getName();
         ConsoleUtils.log(logId, "saving test scenario");
@@ -204,11 +217,9 @@ public final class ExecutionResultHelper {
             XSSFRow row = excelSheet.getRow(i);
             if (row == null) { continue; }
 
-            XSSFCell cellTarget = row.getCell(COL_IDX_TARGET);
-            XSSFCell cellCommand = row.getCell(COL_IDX_COMMAND);
-            String command = StringUtils.defaultIfBlank(Excel.getCellValue(cellTarget), "") + "." +
-                             StringUtils.defaultIfBlank(Excel.getCellValue(cellCommand), "");
-            if (getMERGE_OUTPUTS().contains(command)) { mergeOutput(worksheet, excelSheet, row, i); }
+            String command = Excel.getCellValue(row.getCell(COL_IDX_TARGET)) + "." +
+                             Excel.getCellValue(row.getCell(COL_IDX_COMMAND));
+            if (CommandConst.shouldMergeCommandParams(command)) { mergeOutput(worksheet, excelSheet, row, i); }
         }
     }
 
@@ -250,7 +261,9 @@ public final class ExecutionResultHelper {
         XSSFCell summaryCell = worksheet.cell(ADDR_SCENARIO_EXEC_SUMMARY);
         if (summaryCell != null) {
             if (executionSummary.getEndTime() == 0) { executionSummary.setEndTime(System.currentTimeMillis()); }
-            summaryCell.setCellValue(executionSummary.toString());
+            String summary = executionSummary.toString();
+            summaryCell.setCellValue(summary);
+            worksheet.setMinHeight(summaryCell, StringUtils.countMatches(summary, '\n'));
         }
 
         XSSFCell descriptionCell = worksheet.cell(ADDR_SCENARIO_DESCRIPTION);

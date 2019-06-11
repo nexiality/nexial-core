@@ -455,15 +455,9 @@ public class TestStep extends TestStepManifest {
     protected void updateResult(StepResult result, long elapsedMs) {
         String message = result.getMessage();
 
-        // test case
-        XSSFCell cellTestCase = row.get(COL_IDX_TESTCASE);
-        ExcelStyleHelper.formatActivityCell(worksheet, cellTestCase);
-
-        XSSFCell cellTarget = row.get(COL_IDX_TARGET);
-        ExcelStyleHelper.formatTargetCell(worksheet, cellTarget);
-
-        XSSFCell cellCommand = row.get(COL_IDX_COMMAND);
-        ExcelStyleHelper.formatCommandCell(worksheet, cellCommand);
+        ExcelStyleHelper.formatActivityCell(worksheet, row.get(COL_IDX_TESTCASE));
+        ExcelStyleHelper.formatTargetCell(worksheet, row.get(COL_IDX_TARGET));
+        ExcelStyleHelper.formatCommandCell(worksheet, row.get(COL_IDX_COMMAND));
 
         // description
         XSSFCell cellDescription = row.get(COL_IDX_DESCRIPTION);
@@ -484,6 +478,7 @@ public class TestStep extends TestStepManifest {
         // update the params that can be expressed as links (file or url)
         for (int i = 0; i < params.size(); i++) {
             String param = params.get(i);
+            if (StringUtils.isBlank(param)) { continue; }
 
             // could be literal syspath - e.g. $(syspath|out|fullpath)/...
             // could be data variable that reference syspath function
@@ -518,6 +513,7 @@ public class TestStep extends TestStepManifest {
             }
 
             String origParamValue = Excel.getCellValue(paramCell);
+            if (StringUtils.isBlank(origParamValue)) { continue; }
 
             if (i == COL_IDX_PARAMS_START && StringUtils.equals(getCommandFQN(), CMD_VERBOSE)) {
                 if (context.containsCrypt(origParamValue)) {
@@ -558,8 +554,7 @@ public class TestStep extends TestStepManifest {
         }
 
         // flow control
-        XSSFCell cellFlowControl = row.get(COL_IDX_FLOW_CONTROLS);
-        ExcelStyleHelper.formatFlowControlCell(worksheet, cellFlowControl);
+        ExcelStyleHelper.formatFlowControlCell(worksheet, row.get(COL_IDX_FLOW_CONTROLS));
 
         // screenshot
         String screenshotLink = handleScreenshot(result);

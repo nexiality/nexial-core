@@ -1113,7 +1113,7 @@ public class WebCommand extends BaseCommand implements CanTakeScreenshot, CanLog
         updateWinHandle();
         resizeSafariAfterOpen();
 
-        EventTracker.INSTANCE.track(new NexialUrlInvokedEvent(browser.getBrowserType().name(), url));
+        EventTracker.track(new NexialUrlInvokedEvent(browser.getBrowserType().name(), url));
 
         return StepResult.success("opened URL " + hideAuthDetails(url));
     }
@@ -1135,7 +1135,7 @@ public class WebCommand extends BaseCommand implements CanTakeScreenshot, CanLog
         updateWinHandle();
         resizeSafariAfterOpen();
 
-        EventTracker.INSTANCE.track(new NexialUrlInvokedEvent(browser.getBrowserType().name(), url));
+        EventTracker.track(new NexialUrlInvokedEvent(browser.getBrowserType().name(), url));
 
         return StepResult.success("opened URL " + hideAuthDetails(urlBasic));
     }
@@ -1174,7 +1174,7 @@ public class WebCommand extends BaseCommand implements CanTakeScreenshot, CanLog
 
         resizeSafariAfterOpen();
 
-        EventTracker.INSTANCE.track(new NexialUrlInvokedEvent(browser.getBrowserType().name(), url));
+        EventTracker.track(new NexialUrlInvokedEvent(browser.getBrowserType().name(), url));
 
         return StepResult.success("opened URL " + hideAuthDetails(url));
     }

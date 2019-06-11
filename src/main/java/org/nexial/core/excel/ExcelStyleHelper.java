@@ -196,7 +196,10 @@ public final class ExcelStyleHelper {
     public static void formatParams(TestStep testStep) {
         XSSFCellStyle style = testStep.getWorksheet().getStyle(STYLE_PARAM);
         List<XSSFCell> row = testStep.getRow();
-        for (int i = COL_IDX_PARAMS_START; i < COL_IDX_PARAMS_END; i++) { row.get(i).setCellStyle(style); }
+        for (int i = COL_IDX_PARAMS_START; i < COL_IDX_PARAMS_END; i++) {
+            XSSFCell cell = row.get(i);
+            if (StringUtils.isNotBlank(Excel.getCellValue(cell))) { cell.setCellStyle(style); }
+        }
     }
 
     public static void formatFlowControlCell(Worksheet worksheet, XSSFCell cell) {
