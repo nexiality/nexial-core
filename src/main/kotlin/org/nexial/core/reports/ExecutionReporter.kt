@@ -22,7 +22,10 @@ import org.apache.commons.lang3.SystemUtils.IS_OS_MAC
 import org.apache.commons.lang3.SystemUtils.IS_OS_WINDOWS
 import org.nexial.commons.proc.ProcessInvoker
 import org.nexial.core.NexialConst.*
-import org.nexial.core.NexialConst.Data.WIN32_CMD
+import org.nexial.core.NexialConst.Data.*
+import org.nexial.core.SystemVariables.getDefault
+import org.nexial.core.excel.Excel
+import org.nexial.core.model.ExecutionContext
 import org.nexial.core.model.ExecutionSummary
 import org.nexial.core.utils.ConsoleUtils
 import org.nexial.core.utils.ExecUtils
@@ -122,8 +125,43 @@ class ExecutionReporter {
         return output
     }
 
-
     companion object {
+        @JvmStatic
+        fun openExecutionResult(context: ExecutionContext?, script: File?) {
+            if (context == null) return
+            if (script == null) return
+
+            if (!isAutoOpenResult() && ExecUtils.isRunningInZeroTouchEnv()) ConsoleUtils.log(MSG_SKIP_AUTO_OPEN_RESULT)
+
+            val spreadsheetExe = context.getStringData(SPREADSHEET_PROGRAM, getDefault(SPREADSHEET_PROGRAM))
+            System.setProperty(SPREADSHEET_PROGRAM, spreadsheetExe)
+
+            if (StringUtils.equals(spreadsheetExe, SPREADSHEET_PROGRAM_WPS)) {
+                if (!context.hasData(WPS_EXE_LOCATION)) {
+                    // lightweight: resolve now to save time later
+                    context.setData(WPS_EXE_LOCATION, Excel.resolveWpsExecutablePath())
+                }
+                if (context.hasData(WPS_EXE_LOCATION)) {
+                    System.setProperty(WPS_EXE_LOCATION, context.getStringData(WPS_EXE_LOCATION)!!)
+                }
+            }
+
+            Excel.openExcel(script)
+        }
+
+        @JvmStatic
+        fun openExecutionSummaryReport(file: File?) {
+            if (file != null) openExecutionSummaryReport(file.absolutePath)
+        }
+
+        @JvmStatic
+        fun openExecutionSummaryReport(location: String) {
+            if (!isAutoOpenExecResult() && ExecUtils.isRunningInZeroTouchEnv())
+                ConsoleUtils.log(MSG_SKIP_AUTO_OPEN_RESULT)
+
+            openReport(location)
+        }
+
         @JvmStatic
         fun openReport(report: File?) {
             if (report != null) openReport(report.absolutePath)
@@ -149,6 +187,5 @@ class ExecutionReporter {
                 ConsoleUtils.error("ERROR!!! Can't open " + reportFile + ": " + e.message)
             }
         }
-
     }
 }

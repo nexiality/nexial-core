@@ -933,7 +933,7 @@ public class Nexial {
                     String url = otc.importToS3(htmlReport, outputDir, true);
                     ConsoleUtils.log("HTML output for this execution export to " + url);
                     System.setProperty(EXEC_OUTPUT_PATH, url);
-                    if (StringUtils.isNotBlank(url) && autoOpenExecReport) { ExecutionReporter.openReport(url); }
+                    if (StringUtils.isNotBlank(url)) { ExecutionReporter.openExecutionSummaryReport(url); }
                 }
 
                 // upload JSON reports
@@ -951,7 +951,7 @@ public class Nexial {
                 ConsoleUtils.error(toCloudIntegrationNotReadyMessage("execution output") + ": " + e.getMessage());
             }
         } else {
-            if (autoOpenExecReport) { ExecutionReporter.openReport(htmlReport); }
+            ExecutionReporter.openExecutionSummaryReport(htmlReport);
         }
 
         ExecutionMailConfig mailConfig = ExecutionMailConfig.get();

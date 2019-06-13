@@ -19,10 +19,8 @@ package org.nexial.core.variable;
 
 import java.math.BigDecimal;
 
-import org.apache.commons.lang3.RegExUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.math.NumberUtils;
-import org.nexial.commons.utils.TextUtils;
 
 public class NumberDataType extends ExpressionDataType<Number> {
     public NumberTransformer transformer = new NumberTransformer();
@@ -56,42 +54,23 @@ public class NumberDataType extends ExpressionDataType<Number> {
 
     @Override
     protected void init() throws TypeConversionException {
-        String text = StringUtils.trim(textValue);
-        if (StringUtils.isBlank(text)) {
-            setToZero();
-            return;
-        }
-
-        // in case start with - or +
-        boolean isNegative = StringUtils.startsWith(text, "-");
-        text = TextUtils.keepOnly(text, "0123456789.E");
-
-        text = RegExUtils.removeFirst(text, "^0{1,}");
-        if (StringUtils.isBlank(text)) {
-            // all zeros means 0
-            setToZero();
-            return;
-        }
-
-        if (StringUtils.startsWith(text, ".")) { text = "0" + text; }
-        if (isNegative) { text = "-" + text; }
-
-        if (!NumberUtils.isCreatable(text)) {
+        try {
+            String text = NumberTransformer.cleanNumber(textValue);
+            if (StringUtils.contains(text, ".")) {
+                // setValue(NumberUtils.createBigDecimal(text));
+                setValue(NumberUtils.createDouble(text));
+                setTextValue(BigDecimal.valueOf(value.doubleValue()).toPlainString());
+            } else {
+                setValue(NumberUtils.createLong(text));
+                setTextValue(text);
+            }
+        } catch (IllegalArgumentException e) {
             throw new TypeConversionException(getName(), textValue, "Not a valid number");
         }
-
-        if (StringUtils.contains(text, ".")) {
-            // setValue(NumberUtils.createBigDecimal(text));
-            setValue(NumberUtils.createDouble(text));
-            setTextValue(BigDecimal.valueOf(value.doubleValue()).toPlainString());
-        } else {
-            setValue(NumberUtils.createLong(text));
-            setTextValue(text);
-        }
     }
 
-    private void setToZero() {
-        setValue(0);
-        setTextValue("0");
-    }
+    // private void setToZero() {
+    //     setValue(0);
+    //     setTextValue("0");
+    // }
 }

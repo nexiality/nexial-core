@@ -323,6 +323,8 @@ public final class NexialConst {
     public static final String MSG_CHECK_SUPPORT = "Check with Nexial Support Group for details.";
     public static final String MSG_SCRIPT_UPDATE_ERR = "ERROR: Failed to update scripts due to command metadata " +
                                                        "missing; " + MSG_CHECK_SUPPORT;
+    public static final String MSG_SKIP_AUTO_OPEN_RESULT = "SKIPPING auto-open-result since Nexial is currently " +
+                                                           "running in non-interactive environment";
     public static final String COMMENT_AUTHOR = "NexialBot";
 
     public static final String PREFIX_JAR = "jar:";
@@ -1110,11 +1112,7 @@ public final class NexialConst {
         private Data() { }
 
         public static boolean isAutoOpenExecResult() {
-            if (ExecUtils.isRunningInZeroTouchEnv()) {
-                ConsoleUtils.log("SKIPPING auto-open-result since Nexial is currently running in non-interactive " +
-                                 "environment");
-                return false;
-            }
+            if (ExecUtils.isRunningInZeroTouchEnv()) { return false; }
 
             ExecutionContext context = ExecutionThread.get();
             if (context != null && context.getBooleanData(OPT_OPEN_EXEC_REPORT, getDefaultBool(OPT_OPEN_EXEC_REPORT))) {
@@ -1129,11 +1127,7 @@ public final class NexialConst {
         }
 
         public static boolean isAutoOpenResult() {
-            if (ExecUtils.isRunningInZeroTouchEnv()) {
-                ConsoleUtils.log("SKIPPING auto-open-result since Nexial is currently running in non-interactive " +
-                                 "environment");
-                return false;
-            }
+            if (ExecUtils.isRunningInZeroTouchEnv()) { return false; }
 
             ExecutionContext context = ExecutionThread.get();
             if (context != null) {

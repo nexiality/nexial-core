@@ -35,6 +35,7 @@ import org.nexial.core.excel.Excel;
 import org.nexial.core.model.*;
 import org.nexial.core.plugins.web.CloudWebTestingPlatform;
 import org.nexial.core.reports.ExecutionMailConfig;
+import org.nexial.core.reports.ExecutionReporter;
 import org.nexial.core.service.EventTracker;
 import org.nexial.core.utils.ConsoleUtils;
 import org.nexial.core.utils.ExecutionLogger;
@@ -224,23 +225,7 @@ public final class ExecutionThread extends Thread {
                     //     ConsoleUtils.error("Error saving execution output: " + e.getMessage());
                     // }
 
-                    if (isAutoOpenResult()) {
-                        String spreadsheetExe = context.getStringData(SPREADSHEET_PROGRAM,
-                                                                      getDefault(SPREADSHEET_PROGRAM));
-                        System.setProperty(SPREADSHEET_PROGRAM, spreadsheetExe);
-
-                        if (StringUtils.equals(spreadsheetExe, SPREADSHEET_PROGRAM_WPS)) {
-                            if (!context.hasData(WPS_EXE_LOCATION)) {
-                                // lightweight: resolve now to save time later
-                                context.setData(WPS_EXE_LOCATION, Excel.resolveWpsExecutablePath());
-                            }
-                            if (context.hasData(WPS_EXE_LOCATION)) {
-                                System.setProperty(WPS_EXE_LOCATION, context.getStringData(WPS_EXE_LOCATION));
-                            }
-                        }
-
-                        Excel.openExcel(testScriptFile);
-                    }
+                    ExecutionReporter.openExecutionResult(context, testScriptFile);
 
                     completedTests.add(testScriptFile);
                 }
@@ -465,8 +450,7 @@ public final class ExecutionThread extends Thread {
             try {
                 NexialS3Helper otc = context.getOtc();
                 // when saving test output to cloud, we might NOT want to remove it locally - esp. when open-result is on
-                String testScriptUrl = otc.importFile(testScript, !isAutoOpenResult());
-                execution.setTestScriptLink(testScriptUrl);
+                execution.setTestScriptLink(otc.importFile(testScript, !isAutoOpenResult()));
             } catch (IOException e) {
                 ConsoleUtils.error(toCloudIntegrationNotReadyMessage(testScript.toString()) + ": " + e.getMessage());
             }

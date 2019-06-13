@@ -239,7 +239,7 @@ public class XmlCommand extends BaseCommand {
                 Throwable t = e.getCause();
                 if (t != null) { error += ", " + t.getMessage(); }
                 ConsoleUtils.log(error);
-                e.printStackTrace();
+                // e.printStackTrace();
                 return StepResult.fail(error);
             }
         } else {

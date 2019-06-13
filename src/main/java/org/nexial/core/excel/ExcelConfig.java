@@ -461,12 +461,12 @@ public class ExcelConfig {
 
         static StyleConfig newRepeatUntilDescriptionStyle() {
             StyleConfig config = new StyleConfig();
-            config.backgroundColor = new XSSFColor(new Color(230, 215, 215));
-            config.borderColor = new XSSFColor(new Color(205, 195, 195));
+            config.backgroundColor = new XSSFColor(new Color(240, 240, 225));
+            config.borderColor = new XSSFColor(new Color(205, 205, 195));
             config.fontHeight = FONT_HEIGHT_DEFAULT;
-            config.fontColor = new XSSFColor(new Color(130, 60, 60));
+            config.fontColor = new XSSFColor(new Color(110, 110, 60));
             config.indention = INDENT_1;
-            config.wrapText = true;
+            config.wrapText = false;
             config.verticalAlignment = CENTER;
             return config;
         }
@@ -474,6 +474,7 @@ public class ExcelConfig {
         // only additive style updates
         static StyleConfig newFailedStepDescriptionStyle() {
             StyleConfig config = new StyleConfig();
+            config.borderColor = new XSSFColor(new Color(205, 190, 190));
             config.backgroundColor = new XSSFColor(new Color(255, 199, 206));
             config.fontHeight = FONT_HEIGHT_DEFAULT;
             config.fontColor = FG_FAIL;
