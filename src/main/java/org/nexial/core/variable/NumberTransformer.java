@@ -277,14 +277,21 @@ public class NumberTransformer<T extends NumberDataType> extends Transformer {
     }
 
     public static Number divideSequential(Number base, String... numbers) {
-        for (String number : numbers) {
+        for (String num : numbers) {
             try {
-                number = cleanNumber(number);
+                String number = cleanNumber(num);
+                if (StringUtils.equals(number, "0") && RegexUtils.match(num, "[A-Za-z]+")) {
+                    // not a number, we want to avoid "divide by zero"
+                    ConsoleUtils.log("[" + num + "] is not a number; ignored...");
+                    continue;
+                }
 
                 if (base == null) {
-                    base = isDecimal(number) ?
-                           BigDecimal.valueOf(NumberUtils.toDouble(number)) : NumberUtils.toLong(number);
-                } else if (isDecimal(number) || isDecimal(base)) {
+                    base = isDecimal(number) ? NumberUtils.toDouble(number) : NumberUtils.toLong(number);
+                    continue;
+                }
+
+                if (isDecimal(number) || isDecimal(base)) {
                     base = BigDecimal.valueOf(base.doubleValue())
                                      .divide(BigDecimal.valueOf(NumberUtils.toDouble(number)), DEC_SCALE, ROUND)
                                      .doubleValue();
@@ -300,7 +307,7 @@ public class NumberTransformer<T extends NumberDataType> extends Transformer {
                     }
                 }
             } catch (IllegalArgumentException e) {
-                ConsoleUtils.log("[" + number + "] is not a number; ignored...");
+                ConsoleUtils.log("[" + num + "] is not a number; ignored...");
             }
         }
 
@@ -333,7 +340,7 @@ public class NumberTransformer<T extends NumberDataType> extends Transformer {
         if (StringUtils.startsWith(text, ".")) { text = "0" + text; }
         if (isNegative) { text = "-" + text; }
 
-        if (!NumberUtils.isCreatable(text)) {
+        if (!NumberUtils.isParsable(text)) {
             throw new IllegalArgumentException("'" +
                                                text +
                                                " is not a valid number");
