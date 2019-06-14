@@ -340,10 +340,8 @@ public class NumberTransformer<T extends NumberDataType> extends Transformer {
         if (StringUtils.startsWith(text, ".")) { text = "0" + text; }
         if (isNegative) { text = "-" + text; }
 
-        if (!NumberUtils.isParsable(text)) {
-            throw new IllegalArgumentException("'" +
-                                               text +
-                                               " is not a valid number");
+        if (!NumberUtils.isCreatable(text)) {
+            throw new IllegalArgumentException("'" + text + " is not a valid number");
         }
 
         return text;
