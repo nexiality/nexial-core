@@ -131,7 +131,10 @@ class ExecutionReporter {
             if (context == null) return
             if (script == null) return
 
-            if (!isAutoOpenResult() && ExecUtils.isRunningInZeroTouchEnv()) ConsoleUtils.log(MSG_SKIP_AUTO_OPEN_RESULT)
+            if (!isAutoOpenResult() || ExecUtils.isRunningInZeroTouchEnv()) {
+                ConsoleUtils.log(MSG_SKIP_AUTO_OPEN_RESULT)
+                return
+            }
 
             val spreadsheetExe = context.getStringData(SPREADSHEET_PROGRAM, getDefault(SPREADSHEET_PROGRAM))
             System.setProperty(SPREADSHEET_PROGRAM, spreadsheetExe)
@@ -156,8 +159,10 @@ class ExecutionReporter {
 
         @JvmStatic
         fun openExecutionSummaryReport(location: String) {
-            if (!isAutoOpenExecResult() && ExecUtils.isRunningInZeroTouchEnv())
+            if (!isAutoOpenExecResult() || ExecUtils.isRunningInZeroTouchEnv()) {
                 ConsoleUtils.log(MSG_SKIP_AUTO_OPEN_RESULT)
+//                return
+            }
 
             openReport(location)
         }
