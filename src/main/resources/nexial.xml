@@ -658,6 +658,7 @@
     <value>nexial.mail.smtp.port</value>
     <value>nexial.mail.smtp.starttls.enable</value>
     <value>nexial.mail.smtp.username</value>
+    <value>nexial.openExecutionReport</value>
     <value>nexial.otc.accessKey</value>
     <value>nexial.otc.region</value>
     <value>nexial.otc.s3PathStyleAccessEnabled</value>

@@ -1114,16 +1114,15 @@ public final class NexialConst {
         public static boolean isAutoOpenExecResult() {
             if (ExecUtils.isRunningInZeroTouchEnv()) { return false; }
 
+            // if we are showing Excel, then we should also show HTML
+            if (isAutoOpenResult()) { return true; }
+
             ExecutionContext context = ExecutionThread.get();
-            if (context != null && context.getBooleanData(OPT_OPEN_EXEC_REPORT, getDefaultBool(OPT_OPEN_EXEC_REPORT))) {
-                return true;
+            if (context != null) {
+                return context.getBooleanData(OPT_OPEN_EXEC_REPORT, getDefaultBool(OPT_OPEN_EXEC_REPORT));
             }
 
-            if (BooleanUtils.toBoolean(System.getProperty(OPT_OPEN_EXEC_REPORT, getDefault(OPT_OPEN_EXEC_REPORT)))) {
-                return true;
-            }
-
-            return isAutoOpenResult();
+            return BooleanUtils.toBoolean(System.getProperty(OPT_OPEN_EXEC_REPORT, getDefault(OPT_OPEN_EXEC_REPORT)));
         }
 
         public static boolean isAutoOpenResult() {
