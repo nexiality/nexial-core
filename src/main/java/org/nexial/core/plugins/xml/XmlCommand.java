@@ -20,26 +20,23 @@ package org.nexial.core.plugins.xml;
 import java.io.ByteArrayInputStream;
 import java.io.File;
 import java.io.IOException;
-import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import javax.validation.constraints.NotNull;
+import javax.xml.parsers.ParserConfigurationException;
 import javax.xml.transform.Source;
 import javax.xml.transform.stream.StreamSource;
 
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.io.FileUtils;
+import org.apache.commons.lang3.ArrayUtils;
 import org.apache.commons.lang3.StringUtils;
-import org.jdom2.Attribute;
-import org.jdom2.Content;
-import org.jdom2.Document;
-import org.jdom2.Element;
-import org.jdom2.JDOMException;
+import org.jdom2.*;
 import org.jdom2.input.SAXBuilder;
-import org.jdom2.input.sax.XMLReaderJDOMFactory;
 import org.jdom2.input.sax.XMLReaderXSDFactory;
 import org.jdom2.output.XMLOutputter;
-import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.nexial.commons.utils.CollectionUtil;
 import org.nexial.commons.utils.TextUtils;
 import org.nexial.commons.utils.XmlUtils;
@@ -47,8 +44,7 @@ import org.nexial.core.model.StepResult;
 import org.nexial.core.plugins.base.BaseCommand;
 import org.nexial.core.utils.ConsoleUtils;
 import org.nexial.core.utils.OutputFileUtils;
-import org.xml.sax.ErrorHandler;
-import org.xml.sax.SAXParseException;
+import org.xml.sax.SAXException;
 
 import static org.jdom2.input.sax.XMLReaders.XSDVALIDATING;
 import static org.nexial.core.NexialConst.*;
@@ -58,49 +54,6 @@ import static org.nexial.core.utils.CheckUtils.*;
 public class XmlCommand extends BaseCommand {
     public static final String PROLOG_START = "<?xml version=";
     public static final String DEFAULT_PROLOG = PROLOG_START + "\"1.0\" encoding=\"utf-8\"?>";
-
-    private static class SchemaError implements Serializable {
-        String severity;
-        int line;
-        int column;
-        String message;
-
-        public static SchemaError toSchemaError(String severity, SAXParseException exception) {
-            if (exception == null) { return null; }
-            SchemaError error = new SchemaError();
-            error.severity = severity;
-            error.line = exception.getLineNumber();
-            error.column = exception.getColumnNumber();
-            error.message = exception.getMessage();
-            return error;
-        }
-    }
-
-    private class SchemaErrorCollector implements ErrorHandler {
-        List<SchemaError> errors = new ArrayList<>();
-        boolean hasErrors;
-
-        @Override
-        public void warning(SAXParseException exception) {
-            errors.add(SchemaError.toSchemaError("warning", exception));
-        }
-
-        @Override
-        public void error(SAXParseException exception) {
-            hasErrors = true;
-            errors.add(SchemaError.toSchemaError("ERROR", exception));
-        }
-
-        @Override
-        public void fatalError(SAXParseException exception) {
-            hasErrors = true;
-            errors.add(SchemaError.toSchemaError("FATAL", exception));
-        }
-
-        public List<SchemaError> getErrors() { return errors; }
-
-        public boolean hasErrors() { return hasErrors; }
-    }
 
     @Override
     public String getTarget() { return "xml"; }
@@ -179,6 +132,76 @@ public class XmlCommand extends BaseCommand {
         }
     }
 
+    public StepResult assertSoap(String wsdl, String xml) {
+        // sanity check
+        requiresNotBlank(wsdl, "invalid WSDL", wsdl);
+        requiresNotBlank(xml, "invalid XML", xml);
+
+        WsdlHelper helper = new WsdlHelper(context);
+
+        // download wsdl
+        File localWsdl;
+        try {
+            localWsdl = helper.download(wsdl);
+        } catch (IOException e) {
+            return StepResult.fail(e.getMessage());
+        }
+
+        // extract schemas from wsdl
+        List<File> xsdFiles;
+        try {
+            xsdFiles = helper.extractSchemas(localWsdl);
+            if (CollectionUtils.isEmpty(xsdFiles)) {
+                return StepResult.fail("Unable to extract schemas from WSDL '" + wsdl + "'");
+            }
+        } catch (IOException | JDOMException | ParserConfigurationException | SAXException e) {
+            return StepResult.fail("Unable to extract schema from WSDL '" + wsdl + "': " + e.getMessage());
+        }
+
+        // extract xml portion from `xml`
+        boolean isSoapFault;
+        String soapContent;
+        try {
+            Element body = helper.deriveSoapBody(xml);
+            soapContent = helper.extractSoapContent(body);
+            isSoapFault = helper.isSoapFault(body);
+            // FileUtils.writeStringToFile(
+            //     new File(StringUtils.appendIfMissing(localWsdl.getParent(), File.separator) + "soap-content.xml"),
+            //     soapContent,
+            //     DEF_FILE_ENCODING);
+        } catch (IOException | JDOMException e) {
+            return StepResult.fail("Unable to parse XML: " + e.getMessage());
+        }
+
+        // validate conformance
+        // line offset by 3 to compensate for the removal of "Envelop", "Header" and "Body" tags from soap xml
+        // line offset by 6 to compensate for the removal of "Envelop", "Body", "Fault" and "detail" tags from soap xml
+        return assertCorrectness(soapContent,
+                                 TextUtils.toString(xsdFiles, context.getTextDelim(), "", ""),
+                                 // xsdFiles.get(1).getAbsolutePath(),
+                                 isSoapFault ? 6 : 3);
+    }
+
+    public StepResult assertSoapFaultCode(String expected, String xml) {
+        return assertSoapFault(expected, xml, "faultcode", "faultCode", "Code");
+    }
+
+    public StepResult assertSoapFaultString(String expected, String xml) {
+        return assertSoapFault(expected, xml, "faultstring", "faultString", "Reason");
+    }
+
+    public StepResult storeSoapFaultCode(String var, String xml) {
+        return storeSoapFault(var, xml, "faultcode", "faultCode", "Code");
+    }
+
+    public StepResult storeSoapFaultString(String var, String xml) {
+        return storeSoapFault(var, xml, "faultstring", "faultString", "Reason");
+    }
+
+    public StepResult storeSoapFaultDetail(String var, String xml) {
+        return storeSoapFault(var, xml, "detail", "Detail");
+    }
+
     public StepResult storeValue(String xml, String xpath, String var) {
         requires(StringUtils.isNotBlank(var), "invalid variable name", var);
         try {
@@ -221,63 +244,11 @@ public class XmlCommand extends BaseCommand {
         }
     }
 
-    public StepResult assertCorrectness(String xml, String schema) {
-        Document doc = deriveWellformedXml(xml);
-        if (doc == null) { return StepResult.fail("invalid xml: " + xml); }
-
-        SAXBuilder builder;
-        if (StringUtils.isNotBlank(schema) && !context.isNullValue(schema)) {
-            try {
-                Source[] schemaSources = getSchemaSources(schema);
-                XMLReaderJDOMFactory schemaFactory = new XMLReaderXSDFactory(schemaSources);
-                builder = new SAXBuilder(schemaFactory);
-            } catch (IOException e) {
-                ConsoleUtils.log("Error reading schema as file '" + schema + "': " + e.getMessage());
-                return StepResult.fail("Error reading as file '" + schema + "': " + e.getMessage());
-            } catch (JDOMException e) {
-                String error = "Error when loading schema: " + e.getMessage();
-                Throwable t = e.getCause();
-                if (t != null) { error += ", " + t.getMessage(); }
-                ConsoleUtils.log(error);
-                // e.printStackTrace();
-                return StepResult.fail(error);
-            }
-        } else {
-            builder = new SAXBuilder(XSDVALIDATING);
-        }
-
-        SchemaErrorCollector errorHandler = new SchemaErrorCollector();
-        builder.setErrorHandler(errorHandler);
-
-        try {
-            xml = cleanXmlContent(OutputFileUtils.resolveContent(xml, context, false));
-            if (StringUtils.isBlank(xml)) { return StepResult.fail("empty XML found"); }
-
-            ByteArrayInputStream input = new ByteArrayInputStream(xml.getBytes());
-            builder.build(input);
-
-            if (errorHandler.hasErrors()) {
-                generateErrorLogs(errorHandler);
-                return StepResult.fail("xml validation failed");
-            } else {
-                return StepResult.success("xml validated successfully");
-            }
-        } catch (IOException e) {
-            String message = "Error reading as file '" + xml + "': " + e.getMessage();
-            ConsoleUtils.log(message);
-            return StepResult.fail(message);
-        } catch (JDOMException e) {
-            String message = "Error when validating xml: " + e.getMessage();
-            ConsoleUtils.log(message);
-            return StepResult.fail(message);
-        }
-    }
+    public StepResult assertCorrectness(String xml, String schema) { return assertCorrectness(xml, schema, 0); }
 
     public StepResult assertWellformed(String xml) {
         Document doc = deriveWellformedXml(xml);
-        return doc == null ?
-               StepResult.fail("invalid xml: " + xml) :
-               StepResult.success("xml validated as well-formed");
+        return doc == null ? StepResult.fail("invalid xml: " + xml) : StepResult.success("xml is well-formed");
     }
 
     public StepResult beautify(String xml, String var) { return format(xml, var, PRETTY_XML_OUTPUTTER); }
@@ -380,6 +351,87 @@ public class XmlCommand extends BaseCommand {
     }
 
     @NotNull
+    protected StepResult assertCorrectness(String xml, String schema, int lineOffset) {
+        Document doc = deriveWellformedXml(xml);
+        if (doc == null) { return StepResult.fail("invalid xml: " + xml); }
+
+        List<SAXBuilder> builders = new ArrayList<>();
+
+        if (StringUtils.isNotBlank(schema) && !context.isNullValue(schema)) {
+            Source[] schemaSources;
+            try {
+                schemaSources = getSchemaSources(schema);
+                // XMLReaderJDOMFactory schemaFactory = new XMLReaderXSDFactory(schemaSources);
+                // builder = new SAXBuilder(schemaFactory);
+            } catch (IOException e) {
+                ConsoleUtils.log("Error reading schema as file '" + schema + "': " + e.getMessage());
+                return StepResult.fail("Error reading as file '" + schema + "': " + e.getMessage());
+            }
+
+            if (ArrayUtils.isEmpty(schemaSources)) {
+                return StepResult.fail("Unable to retrieve any valid schema from '" + schema + "'");
+            }
+
+            for (Source source : schemaSources) {
+                try {
+                    builders.add(new SAXBuilder(new XMLReaderXSDFactory(source)));
+                } catch (JDOMException e) {
+                    String error = "Error when loading schema: " + e.getMessage();
+                    Throwable t = e.getCause();
+                    if (t != null) { error += ", " + t.getMessage(); }
+                    ConsoleUtils.log(error);
+                    e.printStackTrace();
+                    return StepResult.fail(error);
+                }
+            }
+        } else {
+            builders.add(new SAXBuilder(XSDVALIDATING));
+        }
+
+        SchemaErrorCollector lastErrorCollector = null;
+        for (SAXBuilder builder : builders) {
+            SchemaErrorCollector errorHandler = new SchemaErrorCollector(lineOffset);
+            builder.setErrorHandler(errorHandler);
+
+            try {
+                xml = cleanXmlContent(OutputFileUtils.resolveContent(xml, context, false));
+                if (StringUtils.isBlank(xml)) { return StepResult.fail("empty XML found"); }
+
+                ByteArrayInputStream input = new ByteArrayInputStream(xml.getBytes());
+                builder.build(input);
+
+                // need to try with all specified XSD's
+                if (!errorHandler.hasErrors()) { return StepResult.success("xml validated successfully"); }
+
+                if (errorHandler.hasSchemaMismatched()) {
+                    // try the next schema/builder
+                    lastErrorCollector = errorHandler;
+                    continue;
+                }
+
+                generateErrorLogs(errorHandler);
+                return StepResult.fail("xml validation failed");
+            } catch (IOException e) {
+                String message = "Error reading as file '" + xml + "': " + e.getMessage();
+                ConsoleUtils.log(message);
+                return StepResult.fail(message);
+            } catch (JDOMException e) {
+                String message = "Error when validating xml: " + e.getMessage();
+                ConsoleUtils.log(message);
+                return StepResult.fail(message);
+            }
+        }
+
+        if (lastErrorCollector != null) {
+            generateErrorLogs(lastErrorCollector);
+            return StepResult.fail("xml validation failed; no suitable schema found in '" + schema + "'");
+        }
+
+        // no success and no schema mismatch error... hmm
+        return StepResult.fail("xml validation failed; no usable schema found in '" + schema + "'");
+    }
+
+    @NotNull
     protected StepResult modify(String xml, String xpath, String content, String var, Modification modification)
         throws IOException {
 
@@ -404,21 +456,23 @@ public class XmlCommand extends BaseCommand {
         return StepResult.success(edits + " edit(s) made to XML and save to '" + var + "'");
     }
 
-    protected void generateErrorLogs(XmlCommand.SchemaErrorCollector errorHandler) {
+    protected void generateErrorLogs(SchemaErrorCollector errorHandler) {
         String outFile = context.generateTestStepOutput("log");
 
         String output = TextUtils.createAsciiTable(Arrays.asList("severity", "line", "column", "message"),
                                                    errorHandler.getErrors(),
                                                    (row, position) -> {
-                                                       if (position == 0) { return row.severity; }
-                                                       if (position == 1) { return row.line + ""; }
-                                                       if (position == 2) { return row.column + ""; }
-                                                       if (position == 3) { return row.message; }
+                                                       if (position == 0) { return row.getSeverity(); }
+                                                       if (position == 1) { return row.getLine() + ""; }
+                                                       if (position == 2) { return row.getColumn() + ""; }
+                                                       if (position == 3) { return row.getMessage(); }
                                                        return "";
                                                    });
         if (StringUtils.isBlank(output)) {
             ConsoleUtils.error("Unable to generate schema validation log");
         } else {
+            ConsoleUtils.log("\n" + output);
+
             File outputFile = new File(outFile);
             try {
                 FileUtils.writeStringToFile(outputFile, output, DEF_FILE_ENCODING);
@@ -444,7 +498,7 @@ public class XmlCommand extends BaseCommand {
         for (String schemaLocation : schemas) {
             String schemaContent = OutputFileUtils.resolveContent(schemaLocation, context, false);
             if (StringUtils.isNotBlank(schemaContent)) {
-                log("resolving schema content via " + schemaLocation + "...");
+                ConsoleUtils.log("resolving schema content via " + schemaLocation + "...");
                 ByteArrayInputStream schemaStream = new ByteArrayInputStream(schemaContent.getBytes());
                 sources.add(new StreamSource(schemaStream));
             }
@@ -519,6 +573,86 @@ public class XmlCommand extends BaseCommand {
 
     protected int count(String xml, String xpath) throws JDOMException {
         return XmlUtils.count(resolveDoc(xml, xpath), xpath);
+    }
+
+    /**
+     * test each {@literal nodeNames} instance, both with and without parent's namespace.
+     */
+    protected StepResult assertSoapFault(String expected, String xml, String... nodeNames) {
+        requiresNotBlank(xml, "invalid XML", xml);
+
+        boolean expectsNothing = context.isNullValue(expected) || context.isEmptyValue(expected);
+
+        WsdlHelper helper = new WsdlHelper(context);
+        try {
+            Element fault = helper.deriveSoapFault(xml);
+            if (fault == null) {
+                if (expectsNothing) {
+                    return StepResult.success("No SOAP Fault XML found and none expected");
+                } else {
+                    return StepResult.fail("Expected SOAP Fault XML NOT FOUND");
+                }
+            }
+
+            Element faultNode = getFaultNode(fault, nodeNames);
+            if (faultNode == null) {
+                if (expectsNothing) {
+                    return StepResult.success("No SOAP Fault node found and none expected");
+                } else {
+                    return StepResult.fail("Expected SOAP Fault node NOT FOUND");
+                }
+            } else {
+                return assertEqual(expected, faultNode.getTextTrim());
+            }
+        } catch (JDOMException | IOException e) {
+            return StepResult.fail("Unable to parse XML: " + e.getMessage());
+        }
+    }
+
+    /**
+     * test each {@literal nodeNames} instance, both with and without parent's namespace.
+     */
+    protected StepResult storeSoapFault(String var, String xml, String... nodeNames) {
+        requiresValidVariableName(var);
+        requiresNotBlank(xml, "invalid xml", xml);
+
+        WsdlHelper helper = new WsdlHelper(context);
+        try {
+            Element fault = helper.deriveSoapFault(xml);
+            if (fault == null) {
+                context.removeData(var);
+                return StepResult.success("XML is not a SOAP Fault XML; Data variable '" + var + "' cleared");
+            }
+
+            Element faultNode = getFaultNode(fault, nodeNames);
+            if (faultNode == null) {
+                context.removeData(var);
+                return StepResult.success("No SOAP Fault node found; Data variable '" + var + "' cleared");
+            }
+
+            context.setData(var, faultNode.getTextTrim());
+            return StepResult.success("target SOAP Fault node saved to '" + var + "'");
+        } catch (JDOMException | IOException e) {
+            return StepResult.fail("Unable to parse XML: " + e.getMessage());
+        }
+    }
+
+    @Nullable
+    private Element getFaultNode(Element fault, String[] nodeNames) {
+        Namespace namespace = fault.getNamespace();
+
+        Element faultNode = null;
+        for (String nodeName : nodeNames) {
+            faultNode = fault.getChild(nodeName);
+            if (faultNode == null) {
+                faultNode = fault.getChild(nodeName, namespace);
+                if (faultNode == null) { continue; }
+            }
+
+            break;
+        }
+
+        return faultNode;
     }
 
     private StepResult format(String xml, String var, XMLOutputter outputter) {

@@ -17,6 +17,9 @@
 
 package org.nexial.core.plugins.xml;
 
+import java.io.File;
+
+import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.junit.After;
 import org.junit.Assert;
@@ -26,8 +29,11 @@ import org.nexial.commons.utils.ResourceUtils;
 import org.nexial.core.model.MockExecutionContext;
 import org.nexial.core.model.StepResult;
 
+import static java.io.File.separator;
+import static org.apache.commons.lang3.SystemUtils.JAVA_IO_TMPDIR;
+import static org.nexial.core.NexialConst.DEF_FILE_ENCODING;
+
 public class XmlCommandTest {
-    private MockExecutionContext context;
     String xml = "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n" +
                  "<CATALOG>\n" +
                  "    <CD>\n" +
@@ -47,6 +53,7 @@ public class XmlCommandTest {
                  "        <YEAR>1997</YEAR>\n" +
                  "    </CD>\n" +
                  "</CATALOG>\n";
+    private MockExecutionContext context;
 
     @Before
     public void init() {
@@ -901,7 +908,6 @@ public class XmlCommandTest {
                             "</CATALOG>", newXml);
     }
 
-
     @Test
     public void replace_attribute() throws Exception {
         XmlCommand fixture = new XmlCommand();
@@ -1557,5 +1563,411 @@ public class XmlCommandTest {
 
     }
 
+    @Test
+    public void assertSoapFaultCode_simple() throws Exception {
+        XmlCommand fixture = new XmlCommand();
+        fixture.init(context);
+
+        StepResult result = fixture.assertSoapFaultCode("soap:Server",
+                                                        "<soap:Envelope xmlns:soap=\"http://schemas.xmlsoap.org/soap/envelope/\">\n" +
+                                                        "   <soap:Body>" +
+                                                        "       <soap:Fault>\n" +
+                                                        "           <faultcode>soap:Server</faultcode>\n" +
+                                                        "           <faultstring>Conversion to SOAP failed</faultstring>\n" +
+                                                        "           <detail>\n" +
+                                                        "               <CICSFault xmlns:soap=\"http://www.ibm.com/software/htp/cics/WSFault\">\n" +
+                                                        "               DFHPI1008 25/01/2010 14:16:50 IYCWZCFU 00340 XML\n" +
+                                                        "               generation failed because of incorrect input \n" +
+                                                        "               (CONTAINER_NOT_FOUND container name) for WEBSERVICE servicename. \n" +
+                                                        "               </CICSFault> \n" +
+                                                        "           </detail> \n" +
+                                                        "       </soap:Fault>\n" +
+                                                        "   </soap:Body>  \n" +
+                                                        "</soap:Envelope>");
+        System.out.println("result = " + result);
+        Assert.assertTrue(result.isSuccess());
+    }
+
+    @Test
+    public void assertSoapFaultCode_none() throws Exception {
+        XmlCommand fixture = new XmlCommand();
+        fixture.init(context);
+
+        StepResult result = fixture.assertSoapFaultCode("(empty)",
+                                                        "<soap:Envelope xmlns:soap=\"http://schemas.xmlsoap.org/soap/envelope/\">\n" +
+                                                        "   <soap:Body>" +
+                                                        "       <soap:Fault>\n" +
+                                                        "           <detail>\n" +
+                                                        "               <CICSFault xmlns:soap=\"http://www.ibm.com/software/htp/cics/WSFault\">\n" +
+                                                        "               DFHPI1008 25/01/2010 14:16:50 IYCWZCFU 00340 XML\n" +
+                                                        "               generation failed because of incorrect input \n" +
+                                                        "               (CONTAINER_NOT_FOUND container name) for WEBSERVICE servicename. \n" +
+                                                        "               </CICSFault> \n" +
+                                                        "           </detail> \n" +
+                                                        "       </soap:Fault>\n" +
+                                                        "   </soap:Body>  \n" +
+                                                        "</soap:Envelope>");
+        System.out.println("result = " + result);
+        Assert.assertTrue(result.isSuccess());
+
+        result = fixture.assertSoapFaultCode("",
+                                             "<soap:Envelope xmlns:soap=\"http://schemas.xmlsoap.org/soap/envelope/\">\n" +
+                                             "   <soap:Body>" +
+                                             "       <soap:Fault>\n" +
+                                             "           <faultstring>Conversion to SOAP failed</faultstring>\n" +
+                                             "           <detail>\n" +
+                                             "               <CICSFault xmlns:soap=\"http://www.ibm.com/software/htp/cics/WSFault\">\n" +
+                                             "               DFHPI1008 25/01/2010 14:16:50 IYCWZCFU 00340 XML\n" +
+                                             "               generation failed because of incorrect input \n" +
+                                             "               (CONTAINER_NOT_FOUND container name) for WEBSERVICE servicename. \n" +
+                                             "               </CICSFault> \n" +
+                                             "           </detail> \n" +
+                                             "       </soap:Fault>\n" +
+                                             "   </soap:Body>  \n" +
+                                             "</soap:Envelope>");
+        System.out.println("result = " + result);
+        Assert.assertTrue(result.isSuccess());
+
+        result = fixture.assertSoapFaultCode("",
+                                             "<soap:Envelope xmlns:soap=\"http://schemas.xmlsoap.org/soap/envelope/\">\n" +
+                                             "   <soap:Body>" +
+                                             "       <soap:Fault>\n" +
+                                             "           <faultcode></faultcode>\n" +
+                                             "           <detail>\n" +
+                                             "               <CICSFault xmlns:soap=\"http://www.ibm.com/software/htp/cics/WSFault\">\n" +
+                                             "               DFHPI1008 25/01/2010 14:16:50 IYCWZCFU 00340 XML\n" +
+                                             "               generation failed because of incorrect input \n" +
+                                             "               (CONTAINER_NOT_FOUND container name) for WEBSERVICE servicename. \n" +
+                                             "               </CICSFault> \n" +
+                                             "           </detail> \n" +
+                                             "       </soap:Fault>\n" +
+                                             "   </soap:Body>  \n" +
+                                             "</soap:Envelope>");
+        System.out.println("result = " + result);
+        Assert.assertTrue(result.isSuccess());
+
+        result = fixture.assertSoapFaultCode("",
+                                             "<soap:Envelope xmlns:soap=\"http://schemas.xmlsoap.org/soap/envelope/\">\n" +
+                                             "   <soap:Body>" +
+                                             "       <soap:Fault>\n" +
+                                             "           <faultcode><SomeOtherNode></SomeOtherNode></faultcode>\n" +
+                                             "           <faultstring>Conversion to SOAP failed</faultstring>\n" +
+                                             "           <detail>\n" +
+                                             "               <CICSFault xmlns:soap=\"http://www.ibm.com/software/htp/cics/WSFault\">\n" +
+                                             "               DFHPI1008 25/01/2010 14:16:50 IYCWZCFU 00340 XML\n" +
+                                             "               generation failed because of incorrect input \n" +
+                                             "               (CONTAINER_NOT_FOUND container name) for WEBSERVICE servicename. \n" +
+                                             "               </CICSFault> \n" +
+                                             "           </detail> \n" +
+                                             "       </soap:Fault>\n" +
+                                             "   </soap:Body>  \n" +
+                                             "</soap:Envelope>");
+        System.out.println("result = " + result);
+        Assert.assertTrue(result.isSuccess());
+
+    }
+
+    @Test
+    public void assertSoapFaultCode_fail() throws Exception {
+        XmlCommand fixture = new XmlCommand();
+        fixture.init(context);
+
+        try {
+            fixture.assertSoapFaultCode("soap:Server",
+                                        "<soap:Envelope xmlns:soap=\"http://schemas.xmlsoap.org/soap/envelope/\">\n" +
+                                        "   <soap:Body>" +
+                                        "       <soap:Fault>\n" +
+                                        "           <faultcode/>\n" +
+                                        "           <faultstring>Conversion to SOAP failed</faultstring>\n" +
+                                        "           <detail>\n" +
+                                        "               <CICSFault xmlns:soap=\"http://www.ibm.com/software/htp/cics/WSFault\">\n" +
+                                        "               DFHPI1008 25/01/2010 14:16:50 IYCWZCFU 00340 XML\n" +
+                                        "               generation failed because of incorrect input \n" +
+                                        "               (CONTAINER_NOT_FOUND container name) for WEBSERVICE servicename. \n" +
+                                        "               </CICSFault> \n" +
+                                        "           </detail> \n" +
+                                        "       </soap:Fault>\n" +
+                                        "   </soap:Body>  \n" +
+                                        "</soap:Envelope>");
+            Assert.fail("expected AssertionError NOT thrown");
+        } catch (AssertionError e) {
+            System.out.println("EXPECTED: " + e.getMessage());
+        }
+
+        try {
+            fixture.assertSoapFaultCode("Server",
+                                        "<soap:Envelope xmlns:soap=\"http://schemas.xmlsoap.org/soap/envelope/\">\n" +
+                                        "   <soap:Body>" +
+                                        "       <soap:Fault>\n" +
+                                        "           <faultcode>soap:Server</faultcode>\n" +
+                                        "           <faultstring>Conversion to SOAP failed</faultstring>\n" +
+                                        "           <detail>\n" +
+                                        "               <CICSFault xmlns:soap=\"http://www.ibm.com/software/htp/cics/WSFault\">\n" +
+                                        "               DFHPI1008 25/01/2010 14:16:50 IYCWZCFU 00340 XML\n" +
+                                        "               generation failed because of incorrect input \n" +
+                                        "               (CONTAINER_NOT_FOUND container name) for WEBSERVICE servicename. \n" +
+                                        "               </CICSFault> \n" +
+                                        "           </detail> \n" +
+                                        "       </soap:Fault>\n" +
+                                        "   </soap:Body>  \n" +
+                                        "</soap:Envelope>");
+            Assert.fail("expected AssertionError NOT thrown");
+        } catch (AssertionError e) {
+            System.out.println("EXPECTED: " + e.getMessage());
+        }
+    }
+
+    @Test
+    public void assertSoapFaultString_simple() throws Exception {
+        XmlCommand fixture = new XmlCommand();
+        fixture.init(context);
+
+        StepResult result = fixture.assertSoapFaultString("Conversion to SOAP failed",
+                                                          "<soap:Envelope xmlns:soap=\"http://schemas.xmlsoap.org/soap/envelope/\">\n" +
+                                                          "   <soap:Body>" +
+                                                          "       <soap:Fault>\n" +
+                                                          "           <faultcode>soap:Server</faultcode>\n" +
+                                                          "           <faultstring>Conversion to SOAP failed</faultstring>\n" +
+                                                          "           <detail>\n" +
+                                                          "               <CICSFault xmlns:soap=\"http://www.ibm.com/software/htp/cics/WSFault\">\n" +
+                                                          "               DFHPI1008 25/01/2010 14:16:50 IYCWZCFU 00340 XML\n" +
+                                                          "               generation failed because of incorrect input \n" +
+                                                          "               (CONTAINER_NOT_FOUND container name) for WEBSERVICE servicename. \n" +
+                                                          "               </CICSFault> \n" +
+                                                          "           </detail> \n" +
+                                                          "       </soap:Fault>\n" +
+                                                          "   </soap:Body>  \n" +
+                                                          "</soap:Envelope>");
+        System.out.println("result = " + result);
+        Assert.assertTrue(result.isSuccess());
+    }
+
+    @Test
+    public void assertSoapFaultString_none() throws Exception {
+        XmlCommand fixture = new XmlCommand();
+        fixture.init(context);
+
+        StepResult result = fixture.assertSoapFaultString("(empty)",
+                                                          "<soap:Envelope xmlns:soap=\"http://schemas.xmlsoap.org/soap/envelope/\">\n" +
+                                                          "   <soap:Body>" +
+                                                          "       <soap:Fault>\n" +
+                                                          "           <detail>\n" +
+                                                          "               <CICSFault xmlns:soap=\"http://www.ibm.com/software/htp/cics/WSFault\">\n" +
+                                                          "               DFHPI1008 25/01/2010 14:16:50 IYCWZCFU 00340 XML\n" +
+                                                          "               generation failed because of incorrect input \n" +
+                                                          "               (CONTAINER_NOT_FOUND container name) for WEBSERVICE servicename. \n" +
+                                                          "               </CICSFault> \n" +
+                                                          "           </detail> \n" +
+                                                          "       </soap:Fault>\n" +
+                                                          "   </soap:Body>  \n" +
+                                                          "</soap:Envelope>");
+        System.out.println("result = " + result);
+        Assert.assertTrue(result.isSuccess());
+
+        result = fixture.assertSoapFaultString("",
+                                               "<soap:Envelope xmlns:soap=\"http://schemas.xmlsoap.org/soap/envelope/\">\n" +
+                                               "   <soap:Body>" +
+                                               "       <soap:Fault>\n" +
+                                               "           <faultstring></faultstring>\n" +
+                                               "           <detail>\n" +
+                                               "               <CICSFault xmlns:soap=\"http://www.ibm.com/software/htp/cics/WSFault\">\n" +
+                                               "               DFHPI1008 25/01/2010 14:16:50 IYCWZCFU 00340 XML\n" +
+                                               "               generation failed because of incorrect input \n" +
+                                               "               (CONTAINER_NOT_FOUND container name) for WEBSERVICE servicename. \n" +
+                                               "               </CICSFault> \n" +
+                                               "           </detail> \n" +
+                                               "       </soap:Fault>\n" +
+                                               "   </soap:Body>  \n" +
+                                               "</soap:Envelope>");
+        System.out.println("result = " + result);
+        Assert.assertTrue(result.isSuccess());
+
+        result = fixture.assertSoapFaultString("",
+                                               "<soap:Envelope xmlns:soap=\"http://schemas.xmlsoap.org/soap/envelope/\">\n" +
+                                               "   <soap:Body>" +
+                                               "       <soap:Fault>\n" +
+                                               "           <faultstring/>\n" +
+                                               "           <detail>\n" +
+                                               "               <CICSFault xmlns:soap=\"http://www.ibm.com/software/htp/cics/WSFault\">\n" +
+                                               "               DFHPI1008 25/01/2010 14:16:50 IYCWZCFU 00340 XML\n" +
+                                               "               generation failed because of incorrect input \n" +
+                                               "               (CONTAINER_NOT_FOUND container name) for WEBSERVICE servicename. \n" +
+                                               "               </CICSFault> \n" +
+                                               "           </detail> \n" +
+                                               "       </soap:Fault>\n" +
+                                               "   </soap:Body>  \n" +
+                                               "</soap:Envelope>");
+        System.out.println("result = " + result);
+        Assert.assertTrue(result.isSuccess());
+
+        result = fixture.assertSoapFaultString("",
+                                               "<soap:Envelope xmlns:soap=\"http://schemas.xmlsoap.org/soap/envelope/\">\n" +
+                                               "   <soap:Body>" +
+                                               "       <soap:Fault>\n" +
+                                               "           <faultcode>CODE RED</faultcode>\n" +
+                                               "           <faultstring><SomeOtherNode></SomeOtherNode></faultstring>\n" +
+                                               "           <detail>\n" +
+                                               "               <CICSFault xmlns:soap=\"http://www.ibm.com/software/htp/cics/WSFault\">\n" +
+                                               "               DFHPI1008 25/01/2010 14:16:50 IYCWZCFU 00340 XML\n" +
+                                               "               generation failed because of incorrect input \n" +
+                                               "               (CONTAINER_NOT_FOUND container name) for WEBSERVICE servicename. \n" +
+                                               "               </CICSFault> \n" +
+                                               "           </detail> \n" +
+                                               "       </soap:Fault>\n" +
+                                               "   </soap:Body>  \n" +
+                                               "</soap:Envelope>");
+        System.out.println("result = " + result);
+        Assert.assertTrue(result.isSuccess());
+
+    }
+
+    @Test
+    public void assertSoapFaultString_fail() throws Exception {
+        XmlCommand fixture = new XmlCommand();
+        fixture.init(context);
+
+        try {
+            fixture.assertSoapFaultString("soap:Server",
+                                          "<soap:Envelope xmlns:soap=\"http://schemas.xmlsoap.org/soap/envelope/\">\n" +
+                                          "   <soap:Body>" +
+                                          "       <soap:Fault>\n" +
+                                          "           <faultcode/>\n" +
+                                          "           <faultstring/>\n" +
+                                          "           <detail>\n" +
+                                          "               <CICSFault xmlns:soap=\"http://www.ibm.com/software/htp/cics/WSFault\">\n" +
+                                          "               DFHPI1008 25/01/2010 14:16:50 IYCWZCFU 00340 XML\n" +
+                                          "               generation failed because of incorrect input \n" +
+                                          "               (CONTAINER_NOT_FOUND container name) for WEBSERVICE servicename. \n" +
+                                          "               </CICSFault> \n" +
+                                          "           </detail> \n" +
+                                          "       </soap:Fault>\n" +
+                                          "   </soap:Body>  \n" +
+                                          "</soap:Envelope>");
+            Assert.fail("expected AssertionError NOT thrown");
+        } catch (AssertionError e) {
+            System.out.println("EXPECTED: " + e.getMessage());
+        }
+
+        try {
+            fixture.assertSoapFaultString("Server",
+                                          "<soap:Envelope xmlns:soap=\"http://schemas.xmlsoap.org/soap/envelope/\">\n" +
+                                          "   <soap:Body>" +
+                                          "       <soap:Fault>\n" +
+                                          "           <faultcode>soap:Server</faultcode>\n" +
+                                          "           <faultstring>Conversion to SOAP failed</faultstring>\n" +
+                                          "           <detail>\n" +
+                                          "               <CICSFault xmlns:soap=\"http://www.ibm.com/software/htp/cics/WSFault\">\n" +
+                                          "               DFHPI1008 25/01/2010 14:16:50 IYCWZCFU 00340 XML\n" +
+                                          "               generation failed because of incorrect input \n" +
+                                          "               (CONTAINER_NOT_FOUND container name) for WEBSERVICE servicename. \n" +
+                                          "               </CICSFault> \n" +
+                                          "           </detail> \n" +
+                                          "       </soap:Fault>\n" +
+                                          "   </soap:Body>  \n" +
+                                          "</soap:Envelope>");
+            Assert.fail("expected AssertionError NOT thrown");
+        } catch (AssertionError e) {
+            System.out.println("EXPECTED: " + e.getMessage());
+        }
+    }
+
+    @Test
+    public void assertSoap_simple() throws Exception {
+        XmlCommand fixture = new XmlCommand();
+        fixture.init(context);
+
+        String wsdl = "<?xml version=\"1.0\"?>\n" +
+                      "<wsdl:definitions name=\"EndorsementSearch\" targetNamespace=\"http://namespaces.snowboard-info.com\" xmlns:es=\"http://www.snowboard-info.com/EndorsementSearch.wsdl\" xmlns:esxsd=\"http://schemas.snowboard-info.com/EndorsementSearch.xsd\" xmlns:soap=\"http://schemas.xmlsoap.org/wsdl/soap/\" xmlns:wsdl=\"http://schemas.xmlsoap.org/wsdl/\" xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\" xsi:schemaLocation=\"http://www.snowboard-info.com/EndorsementSearch.wsdl\">\n" +
+                      "  <wsdl:types>\n" +
+                      "    <xsd:schema targetNamespace=\"http://namespaces.snowboard-info.com\" xmlns:xsd=\"http://www.w3.org/1999/XMLSchema\" xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\" xsi:schemaLocation=\"http://www.w3.org/1999/XMLSchema \">\n" +
+                      "      <xsd:element name=\"GetEndorsingBoarder\">\n" +
+                      "        <xsd:complexType>\n" +
+                      "          <xsd:sequence>\n" +
+                      "            <xsd:element name=\"manufacturer\" type=\"xsd:string\"/>\n" +
+                      "            <xsd:element name=\"model\" type=\"xsd:string\"/>\n" +
+                      "          </xsd:sequence>\n" +
+                      "        </xsd:complexType>\n" +
+                      "      </xsd:element>\n" +
+                      "      <xsd:element name=\"GetEndorsingBoarderResponse\">\n" +
+                      "        <xsd:complexType>\n" +
+                      "          <xsd:all>\n" +
+                      "            <xsd:element name=\"endorsingBoarder\" type=\"xsd:string\"/>\n" +
+                      "          </xsd:all>\n" +
+                      "        </xsd:complexType>\n" +
+                      "      </xsd:element>\n" +
+                      "      <xsd:element name=\"GetEndorsingBoarderFault\">\n" +
+                      "        <xsd:complexType>\n" +
+                      "          <xsd:all>\n" +
+                      "            <xsd:element name=\"errorMessage\" type=\"xsd:string\"/>\n" +
+                      "          </xsd:all>\n" +
+                      "        </xsd:complexType>\n" +
+                      "      </xsd:element>\n" +
+                      "    </xsd:schema>\n" +
+                      "  </wsdl:types>\n" +
+                      "  <wsdl:message name=\"GetEndorsingBoarderRequest\">\n" +
+                      "    <wsdl:part name=\"body\" element=\"esxsd:GetEndorsingBoarder\"/>\n" +
+                      "  </wsdl:message>\n" +
+                      "  <wsdl:message name=\"GetEndorsingBoarderResponse\">\n" +
+                      "    <wsdl:part name=\"body\" element=\"esxsd:GetEndorsingBoarderResponse\"/>\n" +
+                      "  </wsdl:message>\n" +
+                      "  <wsdl:portType name=\"GetEndorsingBoarderPortType\">\n" +
+                      "    <wsdl:operation name=\"GetEndorsingBoarder\">\n" +
+                      "      <wsdl:input message=\"es:GetEndorsingBoarderRequest\"/>\n" +
+                      "      <wsdl:output message=\"es:GetEndorsingBoarderResponse\"/>\n" +
+                      "      <wsdl:fault message=\"es:GetEndorsingBoarderFault\"/>\n" +
+                      "    </wsdl:operation>\n" +
+                      "  </wsdl:portType>\n" +
+                      "  <wsdl:binding name=\"EndorsementSearchSoapBinding\" type=\"es:GetEndorsingBoarderPortType\">\n" +
+                      "    <soap:binding style=\"document\" transport=\"http://schemas.xmlsoap.org/soap/http\"/>\n" +
+                      "    <wsdl:operation name=\"GetEndorsingBoarder\">\n" +
+                      "      <soap:operation soapAction=\"http://www.snowboard-info.com/EndorsementSearch\"/>\n" +
+                      "      <wsdl:input>\n" +
+                      "        <soap:body use=\"literal\" namespace=\"http://schemas.snowboard-info.com/EndorsementSearch.xsd\"/>\n" +
+                      "      </wsdl:input>\n" +
+                      "      <wsdl:output>\n" +
+                      "        <soap:body use=\"literal\" namespace=\"http://schemas.snowboard-info.com/EndorsementSearch.xsd\"/>\n" +
+                      "      </wsdl:output>\n" +
+                      "      <wsdl:fault>\n" +
+                      "        <soap:body use=\"literal\" namespace=\"http://schemas.snowboard-info.com/EndorsementSearch.xsd\"/>\n" +
+                      "      </wsdl:fault>\n" +
+                      "    </wsdl:operation>\n" +
+                      "  </wsdl:binding>\n" +
+                      "  <wsdl:service name=\"EndorsementSearchService\">\n" +
+                      "    <wsdl:documentation>snowboarding-info.com Endorsement Service</wsdl:documentation>\n" +
+                      "    <wsdl:port name=\"GetEndorsingBoarderPort\" binding=\"es:EndorsementSearchSoapBinding\">\n" +
+                      "      <soap:address location=\"http://www.snowboard-info.com/EndorsementSearch\"/>\n" +
+                      "    </wsdl:port>\n" +
+                      "  </wsdl:service>\n" +
+                      "</wsdl:definitions>\n";
+        File wsdlFile = new File(StringUtils.appendIfMissing(JAVA_IO_TMPDIR, separator) + "myWSDL.xsd");
+        FileUtils.writeStringToFile(wsdlFile, wsdl, DEF_FILE_ENCODING);
+
+        String requestXml =
+            "<soap:Envelope xmlns:soap=\"http://schemas.xmlsoap.org/soap/envelope/\" soap:encodingStyle=\"http://schemas.xmlsoap.org/soap/encoding/\">\n" +
+            "  <soap:Body>\n" +
+            "    <m:GetEndorsingBoarder xmlns:m=\"http://namespaces.snowboard-info.com\">\n" +
+            "      <manufacturer>K2</manufacturer>\n" +
+            "      <model>Fatbob</model>\n" +
+            "    </m:GetEndorsingBoarder>\n" +
+            "  </soap:Body>\n" +
+            "</soap:Envelope>";
+
+        StepResult result = fixture.assertSoap(wsdlFile.getAbsolutePath(), requestXml);
+        System.out.println("result = " + result);
+        Assert.assertTrue(result.isSuccess());
+
+        String responseXml =
+            "<soap:Envelope xmlns:soap=\"http://schemas.xmlsoap.org/soap/envelope/\" soap:encodingStyle=\"http://schemas.xmlsoap.org/soap/encoding/\">\n" +
+            "  <soap:Body>\n" +
+            "    <m:GetEndorsingBoarderResponse xmlns:m=\"http://namespaces.snowboard-info.com\">\n" +
+            "      <endorsingBoarder>Chris Englesmann</endorsingBoarder>\n" +
+            "    </m:GetEndorsingBoarderResponse>\n" +
+            "  </soap:Body>\n" +
+            "</soap:Envelope>";
+
+        result = fixture.assertSoap(wsdlFile.getAbsolutePath(), responseXml);
+        System.out.println("result = " + result);
+        Assert.assertTrue(result.isSuccess());
+    }
 
 }

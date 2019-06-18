@@ -43,7 +43,7 @@ public class XmlTransformer<T extends XmlDataType> extends Transformer {
     private static final Map<String, Integer> FUNCTION_TO_PARAM_LIST = discoverFunctions(XmlTransformer.class);
     private static final Map<String, Method> FUNCTIONS =
         toFunctionMap(FUNCTION_TO_PARAM_LIST, XmlTransformer.class, XmlDataType.class);
-    private static final XMLOutputter outputter = new XMLOutputter();
+    private static final XMLOutputter OUTPUTTER = new XMLOutputter();
     private static final String NODE_EXTRACT = "extracted";
 
     public TextDataType text(T data) { return super.text(data); }
@@ -345,6 +345,6 @@ public class XmlTransformer<T extends XmlDataType> extends Transformer {
 
     protected String toTextValue(Element value) {
         if (value == null) { return null; }
-        return outputter.outputString(value);
+        return OUTPUTTER.outputString(value);
     }
 }

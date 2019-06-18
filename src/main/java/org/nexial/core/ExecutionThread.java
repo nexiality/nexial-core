@@ -241,11 +241,8 @@ public final class ExecutionThread extends Thread {
             }
         }
 
-        boolean autoOpenExecReport = context.getBooleanData(OPT_OPEN_EXEC_REPORT,
-                                                            getDefaultBool(OPT_OPEN_EXEC_REPORT));
-        if(autoOpenExecReport){
-            System.setProperty(OPT_OPEN_EXEC_REPORT, Boolean.toString(autoOpenExecReport));
-        }
+        System.setProperty(OPT_OPEN_EXEC_REPORT,
+                           context.getStringData(OPT_OPEN_EXEC_REPORT, getDefault(OPT_OPEN_EXEC_REPORT)));
 
         onScriptComplete(context, executionSummary, iterationManager, ticktock);
 

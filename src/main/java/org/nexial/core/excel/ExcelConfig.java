@@ -604,7 +604,7 @@ public class ExcelConfig {
             config.fontHeight = FONT_HEIGHT_PARAM;
             config.fontColor = new XSSFColor(new Color(90, 90, 50));
             config.verticalAlignment = CENTER;
-            config.wrapText = true;
+            config.wrapText = false;
             return config;
         }
 

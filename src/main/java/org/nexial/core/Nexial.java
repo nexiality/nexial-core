@@ -886,7 +886,8 @@ public class Nexial {
             }
         }
 
-        boolean autoOpenExecReport = isAutoOpenExecResult();
+        // boolean autoOpenExecReport = isAutoOpenExecResult();
+
 
         File htmlReport = null;
         try {
