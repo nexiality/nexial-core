@@ -22,6 +22,7 @@ import java.awt.image.*;
 import java.io.File;
 import java.io.IOException;
 import java.text.DecimalFormat;
+import java.util.ArrayList;
 import javax.imageio.ImageIO;
 
 import org.apache.commons.lang3.StringUtils;
@@ -96,19 +97,23 @@ public class ImageCommand extends BaseCommand implements ForcefulTerminate {
 
         String delim = context.getTextDelim();
         String reDigits = "\\s*\\d+\\s*";
-        String reDimension = "^" + reDigits + delim + reDigits + delim + reDigits + delim + reDigits + "$";
+        String reDimension = "^" + reDigits + delim + reDigits + delim +
+                             "(" + reDigits + "|\\*)" + delim + "(" + reDigits + "|\\*)" + "$";
         requires(RegexUtils.isExact(dimension, reDimension), "Invalid dimension", dimension);
 
         String[] split = StringUtils.splitByWholeSeparator(dimension, delim);
         int x = NumberUtils.toInt(StringUtils.trim(split[0]));
         int y = NumberUtils.toInt(StringUtils.trim(split[1]));
-        int w = NumberUtils.toInt(StringUtils.trim(split[2]));
-        int h = NumberUtils.toInt(StringUtils.trim(split[3]));
+        String width = StringUtils.trim(split[2]);
+        String height = StringUtils.trim(split[3]);
 
         mustForcefullyTerminate = true;
 
         //fill in the corners of the desired crop location here
         BufferedImage existing = ImageIO.read(imageFile);
+        int w = StringUtils.equals(width, "*") ? existing.getWidth() - x : NumberUtils.toInt(width);
+        int h = StringUtils.equals(height, "*") ? existing.getHeight() - y : NumberUtils.toInt(height);
+
         BufferedImage newImage = existing.getSubimage(x, y, w, h);
         BufferedImage cropped = new BufferedImage(newImage.getWidth(), newImage.getHeight(), TYPE_INT_RGB);
         Graphics g = cropped.createGraphics();
@@ -127,15 +132,17 @@ public class ImageCommand extends BaseCommand implements ForcefulTerminate {
         requiresReadableFile(image);
         File imageFile = new File(image);
 
-        requires(NumberUtils.isDigits(width), "invalid width", width);
-        int w = NumberUtils.toInt(width);
-
-        requires(NumberUtils.isDigits(height), "invalid height", height);
-        int h = NumberUtils.toInt(height);
-
         mustForcefullyTerminate = true;
 
         BufferedImage img = ImageIO.read(imageFile);
+        width = StringUtils.equals(width, "*") ? "" + img.getWidth() : width;
+        requires(NumberUtils.isDigits(width), "invalid width", width);
+        int w = NumberUtils.toInt(width);
+
+        height = StringUtils.equals(height, "*") ? "" + img.getHeight() : height;
+        requires(NumberUtils.isDigits(height), "invalid height", height);
+        int h = NumberUtils.toInt(height);
+
         BufferedImage resizedImage = new BufferedImage(w, h, TYPE_INT_RGB);
 
         Graphics2D g = resizedImage.createGraphics();
@@ -156,6 +163,12 @@ public class ImageCommand extends BaseCommand implements ForcefulTerminate {
     }
 
     public StepResult compare(String baseline, String actual) {
+        logDeprecated(getTarget() + " » compare(baseline,actual)",
+                      getTarget() + " » saveDiff(baseline,actual,var)");
+        return saveDiff("lastImageComparisoneMeta", baseline, actual);
+    }
+
+    public StepResult saveDiff(String var, String baseline, String actual) {
         requiresReadableFile(baseline);
         requiresReadableFile(actual);
 
@@ -176,15 +189,31 @@ public class ImageCommand extends BaseCommand implements ForcefulTerminate {
             ImageComparison imageComparison = new ImageComparison(baselineFile, testFile);
             float matchPercent = imageComparison.getMatchPercent();
             String stats = formatToleranceMessage(matchPercent, imageTol);
-
+            ImageComparisonMeta imageComparisonMeta;
             if ((matchPercent + imageTol) < 100) {
                 BufferedImage outImage = imageComparison.compareImages(color);
+                // find all differences in images
+                imageComparisonMeta = new ImageComparisonMeta(baselineFile.getAbsolutePath(),
+                                                              testFile.getAbsolutePath(),
+                                                              imageComparison.getDifferences(),
+                                                              matchPercent,
+                                                              imageTol);
+                context.setData(var, imageComparisonMeta);
+                log("Image comparison meta is saved to variable '" + var + "'");
+
                 String msg = "Difference between baseline and actual BEYOND tolerance " + stats;
                 addOutputAsLink(msg, outImage, png.toString());
                 return StepResult.fail(msg);
             } else {
                 String msg = "Difference between baseline and actual within tolerance " + stats;
                 log(msg);
+                imageComparisonMeta = new ImageComparisonMeta(baselineFile.getAbsolutePath(),
+                                                              testFile.getAbsolutePath(),
+                                                              new ArrayList<>(),
+                                                              matchPercent,
+                                                              imageTol);
+                context.setData(var, imageComparisonMeta);
+                log("Image comparison meta is saved to variable '" + var + "'");
                 return StepResult.success("baseline and test images are same " + stats);
             }
         } catch (IOException e) {

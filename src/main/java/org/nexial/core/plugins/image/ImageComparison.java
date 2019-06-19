@@ -4,6 +4,7 @@ import java.awt.*;
 import java.awt.image.*;
 import java.io.File;
 import java.io.IOException;
+import java.util.List;
 import javax.imageio.ImageIO;
 
 import static org.nexial.core.plugins.image.BitDepthConversion.changeColorBit;
@@ -31,6 +32,7 @@ public class ImageComparison {
 
     public float getMatchPercent() { return matchPercent; }
 
+    public List<Difference> getDifferences(){ return tools.getDifferences(); }
     /**
      * Draw rectangles which cover the regions of the difference pixels.
      *

@@ -1,6 +1,8 @@
 package org.nexial.core.plugins.image;
 
 import java.awt.*;
+import java.util.ArrayList;
+import java.util.List;
 
 public class ImageDifferenceTools {
 
@@ -14,8 +16,13 @@ public class ImageDifferenceTools {
     private int regionCount = counter;
 
     private int[][] matrix;
+    private List<Difference> differences = new ArrayList<>();
 
     public void setMatrix(int[][] matrix) { this.matrix = matrix; }
+
+    public List<Difference> getDifferences() {
+        return differences;
+    }
 
     /**
      * Group rectangle regions in binary matrix.
@@ -41,7 +48,15 @@ public class ImageDifferenceTools {
 
         Rectangle rectangle = createRectangle(counter);
 
-        graphics.drawRect(rectangle.getMinY(), rectangle.getMinX(), rectangle.getWidth(), rectangle.getHeight());
+        int x = rectangle.getMinY();
+        int y = rectangle.getMinX();
+        int width = rectangle.getWidth();
+        int height = rectangle.getHeight();
+        // return if x or y has not been changed
+        if (x == Integer.MAX_VALUE || y == Integer.MAX_VALUE) { return; }
+
+        graphics.drawRect(x, y, width, height);
+        differences.add(new Difference(x, y, width, height));
         counter++;
         drawRectangles(graphics);
     }
