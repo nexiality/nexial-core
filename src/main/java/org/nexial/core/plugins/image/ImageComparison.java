@@ -7,18 +7,18 @@ import java.io.IOException;
 import java.util.List;
 import javax.imageio.ImageIO;
 
+import org.nexial.core.utils.ConsoleUtils;
+
 import static org.nexial.core.plugins.image.BitDepthConversion.changeColorBit;
 import static org.nexial.core.plugins.image.ImageCommand.IMAGE_PERCENT_FORMAT;
 
 public class ImageComparison {
-
     private static final int DEF_COLOR_BIT = 32;
     private static final int BORDER_WIDTH = 2;
 
     private final BufferedImage image1;
     private final BufferedImage image2;
     private ImageDifferenceTools tools;
-
     private int matchCount = 0;
     private float matchPercent;
 
@@ -26,13 +26,13 @@ public class ImageComparison {
         this.image1 = ImageIO.read(image1);
         this.image2 = ImageIO.read(image2);
         this.tools = new ImageDifferenceTools();
-
         initDiffMatrix();
     }
 
     public float getMatchPercent() { return matchPercent; }
 
-    public List<Difference> getDifferences(){ return tools.getDifferences(); }
+    public List<Difference> getDifferences() { return tools.getDifferences(); }
+
     /**
      * Draw rectangles which cover the regions of the difference pixels.
      *
@@ -87,15 +87,12 @@ public class ImageComparison {
     private void initDiffMatrix() {
         int colorBit1 = image1.getColorModel().getPixelSize();
         int colorBit2 = image2.getColorModel().getPixelSize();
-
-        int colorBit = colorBit1 > colorBit2 ? colorBit2 : colorBit1;
-        colorBit = colorBit > DEF_COLOR_BIT ? DEF_COLOR_BIT : colorBit;
+        int colorBit = Math.min(Math.min(colorBit1, colorBit2), DEF_COLOR_BIT);
 
         BufferedImage convertedImage1 = changeColorBit(image1, colorBit);
         BufferedImage convertedImage2 = changeColorBit(image2, colorBit);
 
-        int[][] matrix = populateMatrixOfDifferences(convertedImage1, convertedImage2);
-        tools.setMatrix(matrix);
+        tools.setMatrix(populateMatrixOfDifferences(convertedImage1, convertedImage2));
 
         float dimensionBase = image1.getWidth() * image1.getHeight();
         //Percentage matching calculation
@@ -137,7 +134,7 @@ public class ImageComparison {
     private static void checkCorrectImageSize(BufferedImage image1, BufferedImage image2) {
         if (image1.getHeight() != image2.getHeight() || image1.getWidth() != image2.getWidth()) {
             // throw new IllegalArgumentException("Images dimensions mismatch");
-            System.out.println("Images dimensions mismatch");
+            ConsoleUtils.log("Image dimensions NOT match");
         }
     }
 }

@@ -165,7 +165,7 @@ public class ImageCommand extends BaseCommand implements ForcefulTerminate {
     public StepResult compare(String baseline, String actual) {
         logDeprecated(getTarget() + " » compare(baseline,actual)",
                       getTarget() + " » saveDiff(baseline,actual,var)");
-        return saveDiff("lastImageComparisoneMeta", baseline, actual);
+        return saveDiff("nexial.lastImageCompare", baseline, actual);
     }
 
     public StepResult saveDiff(String var, String baseline, String actual) {

@@ -5,7 +5,6 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class ImageDifferenceTools {
-
     // The threshold which means the max distance between non-equal pixels.
     private static int threshold = 5;
 
@@ -20,9 +19,7 @@ public class ImageDifferenceTools {
 
     public void setMatrix(int[][] matrix) { this.matrix = matrix; }
 
-    public List<Difference> getDifferences() {
-        return differences;
-    }
+    public List<Difference> getDifferences() { return differences; }
 
     /**
      * Group rectangle regions in binary matrix.
@@ -104,12 +101,12 @@ public class ImageDifferenceTools {
                 if (matrix[y][x] == counter) {
                     if (x < rect.getMinX()) { rect.setMinX(x); }
                     if (x > rect.getMaxX()) { rect.setMaxX(x); }
-
                     if (y < rect.getMinY()) { rect.setMinY(y); }
                     if (y > rect.getMaxY()) { rect.setMaxY(y); }
                 }
             }
         }
+
         return rect;
     }
 }

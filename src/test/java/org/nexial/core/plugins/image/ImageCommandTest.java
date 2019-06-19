@@ -29,6 +29,7 @@ import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
+import org.nexial.commons.utils.FileUtil;
 import org.nexial.commons.utils.ResourceUtils;
 import org.nexial.core.model.MockExecutionContext;
 import org.nexial.core.model.StepResult;
@@ -75,18 +76,23 @@ public class ImageCommandTest {
         String imageFile = ResourceUtils.getResourceFilePath(resourceBasePath + "/overall.png");
         System.out.println("imageFile = " + imageFile);
 
+        String test1 = testDir + "/test1.png";
+        String test2 = testDir + "/test2.png";
+        String test3 = testDir + "/test3.png";
+        String test4 = testDir + "/test4.png";
+
         ImageCommand command = new ImageCommand();
         command.init(context);
-        assertSuccess(command.crop(imageFile, "80,185,892,350", testDir + "/test1.png"));
+        assertSuccess(command.crop(imageFile, "80,185,892,350", test1));
 
         String baselineImage = ResourceUtils.getResourceFilePath(resourceBasePath + "/overall-cropped-baseline.png");
-        assertSuccess(command.compare(baselineImage, testDir + "/test1.png"));
+        assertSuccess(command.compare(baselineImage, test1));
 
-        assertSuccess(command.crop(imageFile, "80,18,*,*", testDir + "/test2.png"));
-        assertSuccess(command.crop(imageFile, "80,18,1190,*", testDir + "/test3.png"));
-        assertSuccess(command.crop(imageFile, "80,18,*,800", testDir + "/test4.png"));
-        assertSuccess(command.compare(testDir + "/test2.png", testDir + "/test3.png"));
-        assertSuccess(command.compare(testDir + "/test3.png", testDir + "/test4.png"));
+        assertSuccess(command.crop(imageFile, "80,18,*,*", test2));
+        assertSuccess(command.crop(imageFile, "80,18,1190,*", test3));
+        assertSuccess(command.crop(imageFile, "80,18,*,800", test4));
+        assertSuccess(command.compare(test2, test3));
+        assertSuccess(command.compare(test3, test4));
     }
 
     @Test
@@ -94,6 +100,7 @@ public class ImageCommandTest {
         String sourceImageFile = ResourceUtils.getResourceFilePath(resourceBasePath + "/overall.png");
         ImageCommand command = new ImageCommand();
         command.init(context);
+
         command.convert(sourceImageFile, "jpg", testDir + "/converted.jpg");
         checkConvertedFile(testDir + "/converted.jpg");
 
@@ -103,31 +110,28 @@ public class ImageCommandTest {
 
     @Test
     public void testResize() throws Exception {
-
         String imageFile = ResourceUtils.getResourceFilePath(resourceBasePath + "/overall.png");
         System.out.println("imageFile = " + imageFile);
 
+        String test1 = testDir + "/test1.png";
+        String test2 = testDir + "/test2.png";
+        String test3 = testDir + "/test3.png";
+
         ImageCommand command = new ImageCommand();
         command.init(context);
-        assertSuccess(command.resize(imageFile, "20", "10", testDir + "/test1.png"));
 
-        File resizedImgFile = new File(testDir + "/test1.png");
-        BufferedImage img = ImageIO.read(resizedImgFile);
-
+        assertSuccess(command.resize(imageFile, "20", "10", test1));
+        BufferedImage img = ImageIO.read(new File(test1));
         Assert.assertEquals(20, img.getWidth());
         Assert.assertEquals(10, img.getHeight());
 
-        assertSuccess(command.resize(imageFile, "20", "*", testDir + "/test2.png"));
-        File resizedImgFile2 = new File(testDir + "/test2.png");
-        BufferedImage img2 = ImageIO.read(resizedImgFile2);
-
+        assertSuccess(command.resize(imageFile, "20", "*", test2));
+        BufferedImage img2 = ImageIO.read(new File(test2));
         Assert.assertEquals(20, img2.getWidth());
         Assert.assertEquals(818, img2.getHeight());
 
-        assertSuccess(command.resize(imageFile, "*", "10", testDir + "/test3.png"));
-        File resizedImgFile3 = new File(testDir + "/test3.png");
-        BufferedImage img3 = ImageIO.read(resizedImgFile3);
-
+        assertSuccess(command.resize(imageFile, "*", "10", test3));
+        BufferedImage img3 = ImageIO.read(new File(test3));
         Assert.assertEquals(1270, img3.getWidth());
         Assert.assertEquals(10, img3.getHeight());
     }
@@ -141,11 +145,8 @@ public class ImageCommandTest {
         ImageCommand command = new ImageCommand();
         command.init(context);
 
-        StepResult result = command.compare(imageFile1, imageFile2);
-        if (!result.isSuccess()) { Assert.assertTrue(true); }
-
-        result = command.compare(imageFile2, imageFile3);
-        if (!result.isSuccess()) { Assert.assertTrue(true); }
+        Assert.assertTrue(command.compare(imageFile1, imageFile2).failed());
+        Assert.assertTrue(command.compare(imageFile2, imageFile3).failed());
     }
 
     @Test
@@ -157,16 +158,14 @@ public class ImageCommandTest {
         ImageCommand command = new ImageCommand();
         command.init(context);
 
-        StepResult result = command.saveDiff("compareMeta1", imageFile1, imageFile2);
-        if (!result.isSuccess()) { Assert.assertTrue(true); }
+        Assert.assertTrue(command.saveDiff("compareMeta1", imageFile1, imageFile2).failed());
         ImageComparisonMeta compareMeta = (ImageComparisonMeta) context.getObjectData("compareMeta1");
-        assert compareMeta != null;
+        Assert.assertNotNull(compareMeta);
         Assert.assertEquals(58, compareMeta.getCount());
 
-        result = command.saveDiff("compareMeta2", imageFile2, imageFile3);
-        if (!result.isSuccess()) { Assert.assertTrue(true); }
+        Assert.assertTrue(command.saveDiff("compareMeta2", imageFile2, imageFile3).failed());
         compareMeta = (ImageComparisonMeta) context.getObjectData("compareMeta2");
-        assert compareMeta != null;
+        Assert.assertNotNull(compareMeta);
         Assert.assertEquals(46, compareMeta.getCount());
     }
 
@@ -176,10 +175,7 @@ public class ImageCommandTest {
     }
 
     protected void checkConvertedFile(String imageFilePath) {
-        File imgFile = new File(imageFilePath);
-        Assert.assertTrue(imgFile.isFile());
-        Assert.assertTrue(imgFile.canRead());
-        Assert.assertTrue(imgFile.length() > 1);
+        Assert.assertTrue(FileUtil.isFileReadable(imageFilePath));
     }
 
 }

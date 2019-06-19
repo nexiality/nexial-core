@@ -19,7 +19,6 @@ package org.nexial.core.plugins.image
 /**
  * image comparison metadata
  */
-
 data class ImageComparisonMeta(val expected: String, val actual: String, val matchPercent: Float,
                                val tolerance: Float, val count: Int, val differences: List<Difference>,
                                val smallest: Difference?, val largest: Difference?) {
@@ -45,7 +44,7 @@ data class ImageComparisonMeta(val expected: String, val actual: String, val mat
         fun sortByArea(differences: List<Difference>): Pair<Difference?, Difference?> {
             val sorted = differences.sortedBy { it.diffArea() }
             // return Pair(smallest, largest)
-            return if(sorted.isNotEmpty()) Pair(sorted[0], sorted[sorted.size - 1]) else Pair(null, null)
+            return if (sorted.isNotEmpty()) Pair(sorted[0], sorted[sorted.size - 1]) else Pair(null, null)
         }
     }
 }
