@@ -1879,7 +1879,7 @@ public class XmlCommandTest {
         String wsdl = "<?xml version=\"1.0\"?>\n" +
                       "<wsdl:definitions name=\"EndorsementSearch\" targetNamespace=\"http://namespaces.snowboard-info.com\" xmlns:es=\"http://www.snowboard-info.com/EndorsementSearch.wsdl\" xmlns:esxsd=\"http://schemas.snowboard-info.com/EndorsementSearch.xsd\" xmlns:soap=\"http://schemas.xmlsoap.org/wsdl/soap/\" xmlns:wsdl=\"http://schemas.xmlsoap.org/wsdl/\" xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\" xsi:schemaLocation=\"http://www.snowboard-info.com/EndorsementSearch.wsdl\">\n" +
                       "  <wsdl:types>\n" +
-                      "    <xsd:schema targetNamespace=\"http://namespaces.snowboard-info.com\" xmlns:xsd=\"http://www.w3.org/1999/XMLSchema\" xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\" xsi:schemaLocation=\"http://www.w3.org/1999/XMLSchema \">\n" +
+                      "    <xsd:schema targetNamespace=\"http://namespaces.snowboard-info.com\" xmlns:xsd=\"http://www.w3.org/2001/XMLSchema\" xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\" xsi:schemaLocation=\"http://www.w3.org/2001/XMLSchema \">\n" +
                       "      <xsd:element name=\"GetEndorsingBoarder\">\n" +
                       "        <xsd:complexType>\n" +
                       "          <xsd:sequence>\n" +

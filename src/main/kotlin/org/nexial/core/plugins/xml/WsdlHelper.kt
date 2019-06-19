@@ -21,7 +21,6 @@ import org.apache.commons.lang3.StringUtils
 import org.jdom2.JDOMException
 import org.nexial.commons.utils.FileUtil
 import org.nexial.commons.utils.RegexUtils
-import org.nexial.commons.utils.TextUtils
 import org.nexial.commons.utils.XmlUtils
 import org.nexial.core.NexialConst.DEF_FILE_ENCODING
 import org.nexial.core.NexialConst.PRETTY_XML_OUTPUTTER
@@ -30,6 +29,7 @@ import org.nexial.core.plugins.ws.WsCommand
 import org.nexial.core.utils.ConsoleUtils
 import org.nexial.core.utils.OutputFileUtils
 import org.nexial.core.variable.Syspath
+import org.w3c.dom.Attr
 import org.w3c.dom.Document
 import org.w3c.dom.Element
 import org.w3c.dom.ls.DOMImplementationLS
@@ -43,9 +43,7 @@ import javax.annotation.Nullable
 import javax.validation.constraints.NotNull
 import javax.xml.parsers.DocumentBuilderFactory
 import javax.xml.parsers.ParserConfigurationException
-import kotlin.streams.toList
 
-const val XML_NS = "http://www.w3.org/2001/XMLSchema"
 const val WSDL_TYPES = "wsdl:types"
 const val SCHEMA1 = "schema"
 const val SCHEMA2 = ":schema"
@@ -100,13 +98,11 @@ class WsdlHelper(val context: ExecutionContext) {
             val wsdlDoc = builder.parse(input)
             if (wsdlDoc == null || !wsdlDoc.hasChildNodes()) return xsdFiles
 
-            val types = wsdlDoc.documentElement.getElementsByTagName(WSDL_TYPES)
-            if (types == null || types.length < 1) return xsdFiles
+            val types = wsdlDoc.documentElement.getElementsByTagName(WSDL_TYPES) ?: return xsdFiles
 
             // only expects one "types" node
             val type = types.item(0) as Element
-            val childNodes = type.childNodes
-            if (childNodes == null || childNodes.length < 1) return xsdFiles
+            val childNodes = type.childNodes ?: return xsdFiles
 
             for (k in 0 until childNodes.length) {
                 val childNode = childNodes.item(k) as? Element ?: continue
@@ -121,15 +117,14 @@ class WsdlHelper(val context: ExecutionContext) {
                 val xsdFileName = deriveSchemaFileName(wsdl, childNode)
 
                 val xsdDoc = builder.newDocument()
-                val root = newSchemaRoot(xsdDoc, childNodeName)
+                val root = newSchemaRoot(xsdDoc, childNode)
 
                 xsdDoc.appendChild(root)
 
                 val xsdNodes = childNode.childNodes
                 for (j in 0 until xsdNodes.length) root.appendChild(xsdDoc.importNode(xsdNodes.item(j), true))
 
-                val xsdFileLocation = workingDir + xsdFileName
-                val xsdFile = File(xsdFileLocation)
+                val xsdFile = File(workingDir + xsdFileName)
                 FileUtils.writeStringToFile(xsdFile, deserialize(xsdDoc), DEF_FILE_ENCODING)
                 xsdFiles.add(xsdFile)
             }
@@ -148,11 +143,8 @@ class WsdlHelper(val context: ExecutionContext) {
         val namespace = root.namespace
         val nsPrefix = namespace.prefix
 
-        val body = root.getChild("Body", namespace)
-        if (body == null || body.contentSize < 1) {
-            throw IOException(PARSE_ERROR_PREFIX + "No valid <" + nsPrefix + ":Body> node")
-        }
-        return body
+        return root.getChild("Body", namespace)
+               ?: throw IOException(PARSE_ERROR_PREFIX + "No valid <" + nsPrefix + ":Body> node")
     }
 
     /** is this a fault xml?  */
@@ -178,12 +170,7 @@ class WsdlHelper(val context: ExecutionContext) {
             body.children[0]
         }) ?: throw IOException(PARSE_ERROR_PREFIX + "No valid content node under <" + prefix + ":Body>")
 
-        // remove namespace
-        var content = PRETTY_XML_OUTPUTTER.outputString(contentNode)
-        content = RegexUtils.replace(content, "\\<[0-9A-Za-z]+\\:", "<")
-        content = RegexUtils.replace(content, "\\<\\/[0-9A-Za-z]+\\:", "</")
-
-        return content
+        return PRETTY_XML_OUTPUTTER.outputString(contentNode)
     }
 
     @Nullable
@@ -193,20 +180,32 @@ class WsdlHelper(val context: ExecutionContext) {
         return if (isSoapFault(body)) {
             val fault = body.getChild("Fault", body.namespace)
             if (fault == null || fault.children.isEmpty()) null else fault
-        } else null
+        } else {
+            null
+        }
     }
 
     @NotNull
-    fun newSchemaRoot(xsdDoc: Document, childNodeName: String): Element {
-        val root: Element
-        if (StringUtils.contains(childNodeName, ":")) {
-            val ns = StringUtils.substringBefore(childNodeName, ":")
-            root = xsdDoc.createElement(ns + SCHEMA2)
-            root.setAttribute("xmlns:$ns", XML_NS)
-        } else {
-            root = xsdDoc.createElement(SCHEMA1)
-            root.setAttribute("xmlns", XML_NS)
+    fun newSchemaRoot(xsdDoc: Document, sourceSchema: Element): Element {
+        val root: Element = if (sourceSchema.namespaceURI != null)
+            xsdDoc.createElementNS(sourceSchema.namespaceURI, sourceSchema.nodeName)
+        else
+            xsdDoc.createElement(sourceSchema.nodeName)
+
+        val sourceAttributes = sourceSchema.attributes
+        for (index in 0 until sourceAttributes.length) {
+            val sourceAttr = sourceAttributes.item(index) as Attr
+            if (sourceAttr.namespaceURI != null) {
+                val attr = xsdDoc.createAttributeNS(sourceAttr.namespaceURI, sourceAttr.name)
+                attr.nodeValue = sourceAttr.nodeValue
+                root.setAttributeNodeNS(attr)
+            } else {
+                val attr = xsdDoc.createAttribute(sourceAttr.name)
+                attr.nodeValue = sourceAttr.nodeValue
+                root.setAttributeNode(attr)
+            }
         }
+
         return root
     }
 
@@ -222,16 +221,7 @@ class WsdlHelper(val context: ExecutionContext) {
     private fun deserialize(document: Document): String {
         val domImplementationLS = document.implementation as DOMImplementationLS
         val lsSerializer = domImplementationLS.createLSSerializer()
-        val xsd = PRETTY_XML_OUTPUTTER.outputString(XmlUtils.parse(lsSerializer.writeToString(document)))
-        return TextUtils.toString(TextUtils.toList(xsd, "\n", false)
-                                      .stream()
-                                      .map {
-                                          if (StringUtils.contains(it, " type=\"xs:") ||
-                                              StringUtils.contains(it, " type=\"xsd:"))
-                                              it
-                                          else
-                                              RegexUtils.replace(it, " type=\"[0-9A-Za-z]+\\:", " type=\"")
-                                      }.toList(), "\n")
+        return PRETTY_XML_OUTPUTTER.outputString(XmlUtils.parse(lsSerializer.writeToString(document)))
     }
 
     @Throws(ParserConfigurationException::class)

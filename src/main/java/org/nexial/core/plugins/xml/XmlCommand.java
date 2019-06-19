@@ -178,7 +178,6 @@ public class XmlCommand extends BaseCommand {
         // line offset by 6 to compensate for the removal of "Envelop", "Body", "Fault" and "detail" tags from soap xml
         return assertCorrectness(soapContent,
                                  TextUtils.toString(xsdFiles, context.getTextDelim(), "", ""),
-                                 // xsdFiles.get(1).getAbsolutePath(),
                                  isSoapFault ? 6 : 3);
     }
 
@@ -355,6 +354,15 @@ public class XmlCommand extends BaseCommand {
         Document doc = deriveWellformedXml(xml);
         if (doc == null) { return StepResult.fail("invalid xml: " + xml); }
 
+        try {
+            xml = cleanXmlContent(OutputFileUtils.resolveContent(xml, context, false));
+            if (StringUtils.isBlank(xml)) { return StepResult.fail("empty XML found"); }
+        } catch (IOException e) {
+            String message = "Error reading as file '" + xml + "': " + e.getMessage();
+            ConsoleUtils.log(message);
+            return StepResult.fail(message);
+        }
+
         List<SAXBuilder> builders = new ArrayList<>();
 
         if (StringUtils.isNotBlank(schema) && !context.isNullValue(schema)) {
@@ -388,16 +396,14 @@ public class XmlCommand extends BaseCommand {
             builders.add(new SAXBuilder(XSDVALIDATING));
         }
 
+        ByteArrayInputStream input = new ByteArrayInputStream(xml.getBytes());
+
         SchemaErrorCollector lastErrorCollector = null;
         for (SAXBuilder builder : builders) {
             SchemaErrorCollector errorHandler = new SchemaErrorCollector(lineOffset);
             builder.setErrorHandler(errorHandler);
 
             try {
-                xml = cleanXmlContent(OutputFileUtils.resolveContent(xml, context, false));
-                if (StringUtils.isBlank(xml)) { return StepResult.fail("empty XML found"); }
-
-                ByteArrayInputStream input = new ByteArrayInputStream(xml.getBytes());
                 builder.build(input);
 
                 // need to try with all specified XSD's
@@ -411,11 +417,7 @@ public class XmlCommand extends BaseCommand {
 
                 generateErrorLogs(errorHandler);
                 return StepResult.fail("xml validation failed");
-            } catch (IOException e) {
-                String message = "Error reading as file '" + xml + "': " + e.getMessage();
-                ConsoleUtils.log(message);
-                return StepResult.fail(message);
-            } catch (JDOMException e) {
+            } catch (IOException | JDOMException e) {
                 String message = "Error when validating xml: " + e.getMessage();
                 ConsoleUtils.log(message);
                 return StepResult.fail(message);
