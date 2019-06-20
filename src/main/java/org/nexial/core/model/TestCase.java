@@ -28,6 +28,7 @@ import org.nexial.core.utils.ExecutionLogger;
 import org.nexial.core.utils.TrackTimeLogs;
 
 import static org.nexial.core.CommandConst.CMD_SECTION;
+import static org.nexial.core.excel.ExcelConfig.MSG_ABORT;
 import static org.nexial.core.excel.ExcelStyleHelper.formatRepeatUntilDescription;
 import static org.nexial.core.excel.ExcelStyleHelper.formatSectionDescription;
 import static org.nexial.core.model.ExecutionSummary.ExecutionLevel.ACTIVITY;
@@ -148,18 +149,18 @@ public class TestCase {
             // whilst executing the activity
             boolean shouldFailFast = context.isFailFast();
             if (shouldFailFast) {
-                logger.log(testStep, "test stopping due to execution failure and fail-fast in effect");
+                logger.log(testStep, MSG_ABORT + "due to execution failure and fail-fast in effect");
                 trackTimeLogs.trackingDetails("Execution Failed");
                 break;
             }
             if (context.isFailFastCommand(testStep)) {
-                logger.log(testStep, "test stopping due to failure on fail-fast command: " + testStep.getCommandFQN());
+                logger.log(testStep, MSG_ABORT + "due to failure on fail-fast command: " + testStep.getCommandFQN());
                 trackTimeLogs.trackingDetails("Execution Failed");
                 context.setFailImmediate(true);
                 break;
             }
             if (context.isFailImmediate()) {
-                logger.log(testStep, "test stopping due fail-immediate in effect");
+                logger.log(testStep, MSG_ABORT + "due fail-immediate in effect");
                 trackTimeLogs.trackingDetails("Execution Failed");
                 break;
             }

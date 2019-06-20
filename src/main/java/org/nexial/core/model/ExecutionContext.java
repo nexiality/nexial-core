@@ -86,6 +86,7 @@ import static org.nexial.core.NexialConst.FlowControls.OPT_PAUSE_ON_ERROR;
 import static org.nexial.core.NexialConst.FlowControls.OPT_STEP_BY_STEP;
 import static org.nexial.core.NexialConst.Project.NEXIAL_HOME;
 import static org.nexial.core.SystemVariables.*;
+import static org.nexial.core.excel.ExcelConfig.MSG_ABORT;
 import static org.nexial.core.excel.ext.CipherHelper.CRYPT_IND;
 
 /**
@@ -1170,25 +1171,27 @@ public class ExecutionContext {
                 allPass = false;
 
                 if (isFailFast()) {
-                    executionLogger.log(testScenario, "test scenario execution failed, and fail-fast in effect. " +
-                                                      "Hence all subsequent test scenarios will be skipped");
+                    executionLogger.log(testScenario, MSG_ABORT + "test scenario execution failed and fail-fast in " +
+                                                      "effect. All subsequent test scenarios will be skipped");
                     break;
                 }
             }
 
             if (isFailImmediate()) {
-                executionLogger.log(testScenario, "test scenario execution failed, and fail-immediate in effect. " +
-                                                  "Hence all subsequent test scenarios will be skipped");
+                executionLogger.log(testScenario, MSG_ABORT + "test scenario execution failed and fail-immediate in " +
+                                                  "effect. All subsequent test scenarios will be skipped");
                 break;
             }
 
             if (isEndImmediate()) {
-                executionLogger.log(testScenario, "test scenario execution ended due to EndIf() flow control");
+                executionLogger.log(testScenario, MSG_ABORT + "test scenario execution ended due to EndIf() " +
+                                                  "flow control");
                 break;
             }
 
             if (isBreakCurrentIteration()) {
-                executionLogger.log(testScenario, "test scenario execution ended due to EndLoopIf() flow control");
+                executionLogger.log(testScenario, MSG_ABORT + "test scenario execution ended due to EndLoopIf() " +
+                                                  "flow control");
                 break;
             }
         }

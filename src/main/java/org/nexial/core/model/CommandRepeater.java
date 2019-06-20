@@ -225,7 +225,7 @@ public class CommandRepeater {
     protected boolean shouldFailFast(ExecutionContext context, TestStep testStep) {
         boolean shouldFailFast = context.isFailFast() || context.isFailFastCommand(testStep);
         if (shouldFailFast) {
-            context.logCurrentStep("test stopping due to failure on fail-fast command: " + testStep.getCommandFQN());
+            context.logCurrentStep(MSG_ABORT + "due to failure on fail-fast command: " + testStep.getCommandFQN());
         }
         return shouldFailFast;
     }

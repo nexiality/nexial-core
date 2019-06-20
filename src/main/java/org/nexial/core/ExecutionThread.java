@@ -45,6 +45,7 @@ import static org.nexial.core.NexialConst.*;
 import static org.nexial.core.NexialConst.Project.appendLog;
 import static org.nexial.core.SystemVariables.getDefault;
 import static org.nexial.core.SystemVariables.getDefaultBool;
+import static org.nexial.core.excel.ExcelConfig.MSG_ABORT;
 import static org.nexial.core.model.ExecutionEvent.*;
 import static org.nexial.core.model.ExecutionSummary.ExecutionLevel.ITERATION;
 import static org.nexial.core.model.ExecutionSummary.ExecutionLevel.SCRIPT;
@@ -258,8 +259,8 @@ public final class ExecutionThread extends Thread {
 
     protected boolean shouldFailNow(ExecutionContext context) {
         if (context.isFailImmediate()) {
-            ConsoleUtils.error("previous test scenario execution failed, and fail-immediate in effect. " +
-                               "Hence all subsequent test scenarios will be skipped");
+            ConsoleUtils.error(MSG_ABORT + "previous test scenario execution failed, and fail-immediate in effect. " +
+                               "All subsequent test scenarios will be skipped");
             collectIntraExecutionData(context, 0);
             return true;
         }
@@ -269,8 +270,8 @@ public final class ExecutionThread extends Thread {
                 // reset and pretend nothing's wrong.  Current script will be executed..
                 context.setData(OPT_LAST_OUTCOME, true);
             } else {
-                ConsoleUtils.error("previous test scenario execution failed, and current test script is set to " +
-                                   "fail-fast.  Hence all subsequent test scenarios will be skipped");
+                ConsoleUtils.error(MSG_ABORT + "previous test scenario execution failed, and current test script is " +
+                                   "set to fail-fast. All subsequent test scenarios will be skipped");
                 collectIntraExecutionData(context, 0);
                 return true;
             }
@@ -298,17 +299,17 @@ public final class ExecutionThread extends Thread {
 
         ExecutionLogger logger = context.getLogger();
         if (!allPass && context.isFailFast()) {
-            logger.log(context, "failure found, fail-fast in effect - test execution will stop now.");
+            logger.log(context, MSG_ABORT + "failure found, fail-fast in effect - test execution will stop now.");
             return true;
         }
 
         if (context.isFailImmediate()) {
-            logger.log(context, "fail-immediate in effect - test execution will stop now.");
+            logger.log(context, MSG_ABORT + "fail-immediate in effect - test execution will stop now.");
             return true;
         }
 
         if (context.isEndImmediate()) {
-            logger.log(context, "test execution ending due to EndIf() flow control activated.");
+            logger.log(context, MSG_ABORT + "test execution ending due to EndIf() flow control activated.");
             return true;
         }
 

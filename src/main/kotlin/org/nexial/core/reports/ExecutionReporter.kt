@@ -132,7 +132,7 @@ class ExecutionReporter {
             if (script == null) return
 
             if (!isAutoOpenResult()) {
-                ConsoleUtils.log(MSG_SKIP_AUTO_OPEN_RESULT)
+                if (ExecUtils.isRunningInZeroTouchEnv()) ConsoleUtils.log(MSG_SKIP_AUTO_OPEN_RESULT)
                 return
             }
 
@@ -160,7 +160,7 @@ class ExecutionReporter {
         @JvmStatic
         fun openExecutionSummaryReport(location: String) {
             if (!isAutoOpenExecResult()) {
-                ConsoleUtils.log(MSG_SKIP_AUTO_OPEN_RESULT)
+                if (ExecUtils.isRunningInZeroTouchEnv()) ConsoleUtils.log(MSG_SKIP_AUTO_OPEN_RESULT);
                 return
             }
 

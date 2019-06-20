@@ -30,6 +30,7 @@ import org.nexial.core.NexialConst.Data.*
 import org.nexial.core.NexialConst.OPT_LAST_OUTCOME
 import org.nexial.core.NexialConst.Project.appendLog
 import org.nexial.core.excel.Excel
+import org.nexial.core.excel.ExcelConfig.MSG_ABORT
 import org.nexial.core.interactive.InteractiveConsole.Commands.ALL_STEP
 import org.nexial.core.interactive.InteractiveConsole.Commands.EXIT
 import org.nexial.core.interactive.InteractiveConsole.Commands.HELP
@@ -439,28 +440,28 @@ class NexialInteractive {
             // this line is added here instead of outside the loop so that we can consider any changes to nexial.failFast
             // whilst executing the activity
             if (context.isFailFast) {
-                logger.log(testStep, "test stopping due to execution failure and fail-fast in effect")
+                logger.log(testStep, "${MSG_ABORT}due to execution failure and fail-fast in effect")
                 break
             }
 
             if (context.isFailFastCommand(testStep)) {
-                logger.log(testStep, "test stopping due to failure on fail-fast command: ${testStep.commandFQN}")
+                logger.log(testStep, "${MSG_ABORT}due to failure on fail-fast command: ${testStep.commandFQN}")
                 context.isFailImmediate = true
                 break
             }
 
             if (context.isFailImmediate) {
-                logger.log(testStep, "test stopping due fail-immediate in effect")
+                logger.log(testStep, "${MSG_ABORT}due fail-immediate in effect")
                 break
             }
 
             if (context.isEndImmediate) {
-                logger.log(testStep, "test scenario execution ended due to EndIf() flow control")
+                logger.log(testStep, "${MSG_ABORT}test scenario execution ended due to EndIf() flow control")
                 break
             }
 
             if (context.isBreakCurrentIteration) {
-                logger.log(testStep, "test scenario execution ended due to EndLoopIf() flow control")
+                logger.log(testStep, "${MSG_ABORT}test scenario execution ended due to EndLoopIf() flow control")
                 break
             }
         }

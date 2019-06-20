@@ -246,6 +246,7 @@ public class ExcelConfig {
     public static final String MSG_SCREENCAPTURE = "Click here";
     public static final String MSG_SKIPPED = "SKIPPED ";
     public static final String MSG_WARN = "WARN ";
+    public static final String MSG_ABORT = "[ABORT] ";
 
     public static final String STYLE_TEST_CASE = "TEST_CASE";
 

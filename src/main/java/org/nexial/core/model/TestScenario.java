@@ -112,17 +112,17 @@ public class TestScenario {
             context.setCurrentActivity(testCase);
 
             if (skipDueToFailFast) {
-                logger.log(this, "skipping test activity due to previous failure");
+                logger.log(this, MSG_ABORT + "skipping test activity due to previous failure");
                 continue;
             }
 
             if (skipDueToEndFast) {
-                logger.log(this, "skipping test activity due to previous end");
+                logger.log(this, MSG_ABORT + "skipping test activity due to previous end");
                 continue;
             }
 
             if (skipDueToEndLoop) {
-                logger.log(this, "skipping test activity due to break-loop in effect");
+                logger.log(this, MSG_ABORT + "skipping test activity due to break-loop in effect");
                 continue;
             }
 
@@ -131,19 +131,19 @@ public class TestScenario {
                 allPass = false;
                 if (shouldFailFast || context.isFailImmediate()) {
                     skipDueToFailFast = true;
-                    logger.log(this, "test activity execution failed. " +
-                                     "Because of this, all subsequent test case will be skipped");
+                    // logger.log(this, MSG_ABORT + "test activity execution failed. " +
+                    //                  "Because of this, all subsequent test case will be skipped");
                 }
             }
 
             if (context.isEndImmediate()) {
                 skipDueToEndFast = true;
-                logger.log(this, "test activity execution ending due to EndIf() flow control activated.");
+                logger.log(this, MSG_ABORT + "test activity execution ending due to EndIf() flow control activated.");
             }
 
             if (context.isBreakCurrentIteration()) {
                 skipDueToEndLoop = true;
-                logger.log(this, "test activity execution ending due to EndLoopIf() flow control activated " +
+                logger.log(this, MSG_ABORT + "test activity execution ending due to EndLoopIf() flow control activated " +
                                  "or unrecoverable execution failure.");
             }
 
