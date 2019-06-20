@@ -1729,8 +1729,7 @@ public class ExecutionContext {
             String var = StringUtils.substring(value, startIdx + TOKEN_START.length(), endIdx);
             String searchFor = TOKEN_START + var + TOKEN_END;
             if (data.containsKey(var)) {
-                String replacedBy = MapUtils.getString(data, var);
-                value = StringUtils.replace(value, searchFor, replacedBy);
+                value = StringUtils.replace(value, searchFor, replaceTokens(searchFor));
             } else {
                 // mark the irreplaceable token so we can put things back later
                 value = StringUtils.replace(value, searchFor, "~[[" + var + "]]~");

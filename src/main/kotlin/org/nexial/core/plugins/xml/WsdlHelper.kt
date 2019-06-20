@@ -158,19 +158,14 @@ class WsdlHelper(val context: ExecutionContext) {
         val prefix = namespace.prefix
 
         // is this a fault xml?
-        val contentNode: org.jdom2.Element = (if (isSoapFault(body)) {
+        return if (isSoapFault(body)) {
             val fault = body.getChild("Fault", namespace)
-            if (fault.getChild("detail") == null) {
-                throw IOException(PARSE_ERROR_PREFIX + "Improper/Invalid <" + prefix + ":Fault> node; " +
-                                  "unable to validate content")
-            }
-
-            fault.getChild("detail").children[0]
+            val detail = fault.getChild("detail")
+                         ?: throw IOException("${PARSE_ERROR_PREFIX}Improper/Invalid <$prefix:Fault> node; unable to validate content")
+            if (detail.contentSize < 1) "" else PRETTY_XML_OUTPUTTER.outputString(detail.children[0])
         } else {
-            body.children[0]
-        }) ?: throw IOException(PARSE_ERROR_PREFIX + "No valid content node under <" + prefix + ":Body>")
-
-        return PRETTY_XML_OUTPUTTER.outputString(contentNode)
+            PRETTY_XML_OUTPUTTER.outputString(body.children[0])
+        } ?: throw IOException(PARSE_ERROR_PREFIX + "No valid content node under <" + prefix + ":Body>")
     }
 
     @Nullable

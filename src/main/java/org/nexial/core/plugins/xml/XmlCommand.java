@@ -173,6 +173,10 @@ public class XmlCommand extends BaseCommand {
             return StepResult.fail("Unable to parse XML: " + e.getMessage());
         }
 
+        if (isSoapFault && StringUtils.isBlank(soapContent)) {
+            return StepResult.skipped("No content found under <detail> node in a SOAP Fault document");
+        }
+
         // validate conformance
         // line offset by 3 to compensate for the removal of "Envelop", "Header" and "Body" tags from soap xml
         // line offset by 6 to compensate for the removal of "Envelop", "Body", "Fault" and "detail" tags from soap xml
