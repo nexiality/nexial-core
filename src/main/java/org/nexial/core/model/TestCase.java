@@ -27,6 +27,7 @@ import org.nexial.core.excel.Excel.Worksheet;
 import org.nexial.core.utils.ExecutionLogger;
 import org.nexial.core.utils.TrackTimeLogs;
 
+import static org.nexial.core.CommandConst.CMD_REPEAT_UNTIL;
 import static org.nexial.core.CommandConst.CMD_SECTION;
 import static org.nexial.core.NexialConst.*;
 import static org.nexial.core.excel.ExcelStyleHelper.formatRepeatUntilDescription;
@@ -128,7 +129,10 @@ public class TestCase {
 
                 if (context.isBreakCurrentIteration()) {
                     // reset it so that we are only performing loop-break one level at a time
-                    context.setBreakCurrentIteration(false);
+                    if (StringUtils.equals(testStep.getCommandFQN(), CMD_REPEAT_UNTIL)) {
+                        context.setBreakCurrentIteration(false);
+                    }
+
                     break;
                 } else {
                     continue;

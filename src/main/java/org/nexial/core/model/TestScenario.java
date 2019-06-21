@@ -138,10 +138,10 @@ public class TestScenario {
                 }
             } else if (context.isEndImmediate()) {
                 skipDueToEndFast = true;
-                logger.log(this, MSG_ACTIVITY_ENDING_IF);
+                logger.log(testCase, MSG_ACTIVITY_ENDING_IF);
             } else if (context.isBreakCurrentIteration()) {
                 skipDueToEndLoop = true;
-                logger.log(this, MSG_ACTIVITY_ENDING_LOOP_IF);
+                logger.log(testCase, MSG_ACTIVITY_ENDING_LOOP_IF);
             }
 
             executionSummary.addNestSummary(testCase.getExecutionSummary());

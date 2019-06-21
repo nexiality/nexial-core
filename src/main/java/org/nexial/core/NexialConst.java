@@ -330,6 +330,7 @@ public final class NexialConst {
     public static final String MSG_ABORT = "[ABORT] ";
     public static final String MSG_ALL_SCENARIOS_SKIPPED = " - subsequent test scenarios will be skipped";
     public static final String MSG_EXEC_STOP = " - test execution will stop now.";
+    public static final String MSG_ITERATION_STOP = " - current iteration will stop now.";
     public static final String MSG_STEP_FAIL_FAST = MSG_ABORT + "due to execution failure and fail-fast in effect";
     public static final String MSG_ACTIVITY_FAIL_FAST = MSG_ABORT + "skipping test activity due to previous failure";
     public static final String MSG_ACTIVITY_FAIL_END = MSG_ABORT + "skipping test activity due to previous end";
@@ -343,6 +344,7 @@ public final class NexialConst {
     public static final String MSG_EXEC_FAIL_FAST = MSG_ABORT + "failure found and fail-fast is in effect" + MSG_EXEC_STOP;
     public static final String MSG_EXEC_FAIL_IMMEDIATE = MSG_ABORT + "fail-immediate in effect" + MSG_EXEC_STOP;
     public static final String MSG_EXEC_END_IF = MSG_ABORT + "EndIf() flow control activated" + MSG_EXEC_STOP;
+    public static final String MSG_EXEC_END_LOOP_IF = MSG_ABORT + "EndLoopIf() flow control activated" + MSG_ITERATION_STOP;
     public static final String MSG_CRITICAL_COMMAND_FAIL = MSG_ABORT + "due to failure on fail-fast command: ";
     public static final String MSG_REPEAT_UNTIL = "[repeat-until] ";
     public static final String MSG_REPEAT_UNTIL_BREAK = MSG_REPEAT_UNTIL + "loop terminating due to break-loop condition";

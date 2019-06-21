@@ -1175,17 +1175,17 @@ public class ExecutionContext {
             }
 
             if (isFailImmediate()) {
-                executionLogger.log(this, MSG_SCENARIO_FAIL_IMMEDIATE);
+                executionLogger.log(this, MSG_EXEC_FAIL_IMMEDIATE);
                 break;
             }
 
             if (isEndImmediate()) {
-                executionLogger.log(this, MSG_SCENARIO_END_IF);
+                executionLogger.log(this, MSG_EXEC_END_IF);
                 break;
             }
 
             if (isBreakCurrentIteration()) {
-                executionLogger.log(this, MSG_SCENARIO_END_LOOP_IF);
+                executionLogger.log(this, MSG_EXEC_END_LOOP_IF);
                 break;
             }
         }

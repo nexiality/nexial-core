@@ -171,6 +171,26 @@ public class BaseCommandTest {
         }
     }
 
+    @Test
+    public void assertArrayContain() throws Exception {
+        BaseCommand subject = new BaseCommand();
+        subject.init(context);
+
+        String expected = "John,Peter,Soma,James";
+        String actual = "Soma";
+        StepResult result = subject.assertArrayContain(expected, actual);
+        System.out.println("result = " + result);
+        Assert.assertTrue(result.isSuccess());
+
+        context.setData("nexial.textDelim", "|");
+        expected = "John|Peter|Soma|James";
+        actual = "Soma";
+        result = subject.assertArrayContain(expected, actual);
+        System.out.println("result = " + result);
+        Assert.assertTrue(result.isSuccess());
+
+    }
+
     static {
         System.setProperty("clear_var2", "I repeat, this is a test.");
         System.setProperty("clear_var3", "System is a go");
