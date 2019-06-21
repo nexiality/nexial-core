@@ -130,6 +130,8 @@ public class TestCase {
                     // reset it so that we are only performing loop-break one level at a time
                     context.setBreakCurrentIteration(false);
                     break;
+                } else {
+                    continue;
                 }
             }
 

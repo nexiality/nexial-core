@@ -170,7 +170,7 @@ public class TestStep extends TestStepManifest {
                 if (cause instanceof WebDriverException) {
                     error = context.getWebDriverExceptionHelper()
                                    .analyzeError(context, this, (WebDriverException) cause);
-                    context.executionLogger.error(this,error);
+                    context.executionLogger.error(this, error);
                     result = StepResult.fail(error);
                     return result;
                 } else if (cause instanceof ArrayIndexOutOfBoundsException) {
