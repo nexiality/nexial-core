@@ -36,14 +36,14 @@ import static org.apache.commons.lang3.builder.ToStringStyle.SIMPLE_STYLE;
 import static org.nexial.core.CommandConst.CMD_SECTION;
 import static org.nexial.core.NexialConst.Data.*;
 import static org.nexial.core.NexialConst.FlowControls.OPT_PAUSE_ON_ERROR;
-import static org.nexial.core.NexialConst.OPT_LAST_OUTCOME;
+import static org.nexial.core.NexialConst.MSG_PASS;
+import static org.nexial.core.NexialConst.*;
 import static org.nexial.core.SystemVariables.getDefaultBool;
+import static org.nexial.core.excel.ExcelConfig.MSG_FAIL;
 import static org.nexial.core.excel.ExcelConfig.*;
 import static org.nexial.core.excel.ExcelStyleHelper.*;
 
 public class CommandRepeater {
-    private static final String TITLE = "[repeat-until] ";
-
     private TestStep initialTestStep;
     private List<TestStep> steps = new ArrayList<>();
     private long maxWaitMs;
@@ -111,8 +111,8 @@ public class CommandRepeater {
                     context.setData(OPT_LAST_OUTCOME, succeed);
 
                     if (context.isBreakCurrentIteration()) {
-                        context.logCurrentStep("test stopping due to failure on break-loop condition: " +
-                                               testStep.getCommandFQN());
+                        logger.log(testStep, MSG_REPEAT_UNTIL_BREAK);
+                        // context.setBreakCurrentIteration(false);
                         return result;
                     }
 
@@ -125,17 +125,18 @@ public class CommandRepeater {
                         } else {
                             // else failure means continue... no sweat
                             logger.log(testStep,
-                                       TITLE + "condition not met (" + result.getMessage() + "); loop proceeds");
+                                       MSG_REPEAT_UNTIL + "condition not met (" + result.getMessage() + "); " +
+                                       "loop proceeds");
                         }
                     } else {
                         if (result.isSuccess()) {
-                            logger.log(testStep, TITLE + MSG_PASS + result.getMessage());
+                            logger.log(testStep, MSG_REPEAT_UNTIL + MSG_PASS + result.getMessage());
                         } else if (result.isSkipped()) {
-                            logger.log(testStep, TITLE + result.getMessage());
+                            logger.log(testStep, MSG_REPEAT_UNTIL + result.getMessage());
                         } else {
                             // fail or warn
                             logger.log(testStep,
-                                       TITLE + MSG_FAIL + result.getMessage() + "; " +
+                                       MSG_REPEAT_UNTIL + MSG_FAIL + result.getMessage() + "; " +
                                        FAIL_FAST + "=" + context.isFailFast() + "; " +
                                        OPT_LAST_OUTCOME + "=false",
                                        true);
@@ -217,16 +218,14 @@ public class CommandRepeater {
     }
 
     protected void logRepeatUntilStart(ExecutionLogger logger, TestStep testStep, int loopCount) {
-        String message = "<" + TITLE + "entering loop #" + loopCount + " ";
+        String message = "<" + MSG_REPEAT_UNTIL + "entering loop #" + loopCount + " ";
         message += StringUtils.repeat("-", 78 - message.length()) + ">";
         logger.log(testStep, "\n" + message, true);
     }
 
     protected boolean shouldFailFast(ExecutionContext context, TestStep testStep) {
         boolean shouldFailFast = context.isFailFast() || context.isFailFastCommand(testStep);
-        if (shouldFailFast) {
-            context.logCurrentStep(MSG_ABORT + "due to failure on fail-fast command: " + testStep.getCommandFQN());
-        }
+        if (shouldFailFast) { context.logCurrentStep(MSG_CRITICAL_COMMAND_FAIL + testStep.getCommandFQN()); }
         return shouldFailFast;
     }
 

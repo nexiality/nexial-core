@@ -28,7 +28,7 @@ import org.nexial.core.utils.ExecutionLogger;
 import org.nexial.core.utils.TrackTimeLogs;
 
 import static org.nexial.core.CommandConst.CMD_SECTION;
-import static org.nexial.core.excel.ExcelConfig.MSG_ABORT;
+import static org.nexial.core.NexialConst.*;
 import static org.nexial.core.excel.ExcelStyleHelper.formatRepeatUntilDescription;
 import static org.nexial.core.excel.ExcelStyleHelper.formatSectionDescription;
 import static org.nexial.core.model.ExecutionSummary.ExecutionLevel.ACTIVITY;
@@ -127,9 +127,9 @@ public class TestCase {
                 }
 
                 if (context.isBreakCurrentIteration()) {
+                    // reset it so that we are only performing loop-break one level at a time
+                    context.setBreakCurrentIteration(false);
                     break;
-                } else {
-                    continue;
                 }
             }
 
@@ -147,20 +147,22 @@ public class TestCase {
             // by default, only fail fast if we are not in interactive mode
             // this line is added here instead of outside the loop so that we can consider any changes to nexial.failFast
             // whilst executing the activity
-            boolean shouldFailFast = context.isFailFast();
-            if (shouldFailFast) {
-                logger.log(testStep, MSG_ABORT + "due to execution failure and fail-fast in effect");
-                trackTimeLogs.trackingDetails("Execution Failed");
-                break;
-            }
             if (context.isFailFastCommand(testStep)) {
-                logger.log(testStep, MSG_ABORT + "due to failure on fail-fast command: " + testStep.getCommandFQN());
+                logger.log(this, MSG_CRITICAL_COMMAND_FAIL + testStep.getCommandFQN());
                 trackTimeLogs.trackingDetails("Execution Failed");
                 context.setFailImmediate(true);
                 break;
             }
+
             if (context.isFailImmediate()) {
-                logger.log(testStep, MSG_ABORT + "due fail-immediate in effect");
+                logger.log(this, MSG_EXEC_FAIL_IMMEDIATE);
+                trackTimeLogs.trackingDetails("Execution Failed");
+                break;
+            }
+
+            boolean shouldFailFast = context.isFailFast();
+            if (shouldFailFast) {
+                logger.log(this, MSG_STEP_FAIL_FAST);
                 trackTimeLogs.trackingDetails("Execution Failed");
                 break;
             }

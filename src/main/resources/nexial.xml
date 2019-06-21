@@ -32,7 +32,7 @@
     <value>web.open</value>
     <value>web.openAndWait</value>
     <value>web.close</value>
-    <value>base.failImmediate</value>
+    <!--<value>base.failImmediate</value>-->
   </util:list>
 
 

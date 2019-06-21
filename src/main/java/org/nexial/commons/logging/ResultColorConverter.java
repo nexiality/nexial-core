@@ -16,6 +16,8 @@
 
 package org.nexial.commons.logging;
 
+import org.nexial.core.NexialConst;
+
 import ch.qos.logback.classic.Level;
 import ch.qos.logback.classic.spi.ILoggingEvent;
 import ch.qos.logback.core.pattern.color.ForegroundCompositeConverterBase;
@@ -38,7 +40,8 @@ public class ResultColorConverter extends ForegroundCompositeConverterBase<ILogg
         if (message.contains(" - " + MSG_WARN)) { return YELLOW_FG; }
         if (message.contains(" - " + MSG_SKIPPED)) { return MAGENTA_FG; }
         if (message.contains(" - [repeat-until] " + MSG_SKIPPED)) { return MAGENTA_FG; }
-        if (message.contains(" - " + MSG_ABORT)) { return BOLD + BLUE_FG; }
+        if (message.contains(" - " + NexialConst.MSG_ABORT)) { return BOLD + BLUE_FG; }
+        if (message.startsWith(NexialConst.MSG_ABORT)) { return BOLD + BLUE_FG; }
 
         return DEFAULT_FG;
     }

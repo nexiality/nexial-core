@@ -170,7 +170,7 @@ public class TestStep extends TestStepManifest {
                 if (cause instanceof WebDriverException) {
                     error = context.getWebDriverExceptionHelper()
                                    .analyzeError(context, this, (WebDriverException) cause);
-                    ConsoleUtils.error(context.getRunId(), error);
+                    context.executionLogger.error(this,error);
                     result = StepResult.fail(error);
                     return result;
                 } else if (cause instanceof ArrayIndexOutOfBoundsException) {
@@ -183,24 +183,16 @@ public class TestStep extends TestStepManifest {
                 }
             }
 
-            if (printStackTrace) {
-                ConsoleUtils.error(context.getRunId(), error, e);
-            } else {
-                ConsoleUtils.error(error);
-            }
+            if (printStackTrace) { ConsoleUtils.error(context.getRunId(), error, e); }
 
             result = StepResult.fail(error);
         } catch (WebDriverException e) {
             String error = context.getWebDriverExceptionHelper().analyzeError(context, this, e);
-            ConsoleUtils.error(context.getRunId(), error);
+            context.executionLogger.error(this, error);
             result = StepResult.fail(error);
         } catch (Throwable e) {
             String error = e.getMessage();
-            if (printStackTrace) {
-                ConsoleUtils.error(context.getRunId(), error, e);
-            } else {
-                ConsoleUtils.error(error);
-            }
+            if (printStackTrace) { ConsoleUtils.error(context.getRunId(), error, e); }
             result = StepResult.fail(error);
         } finally {
             tickTock.stop();

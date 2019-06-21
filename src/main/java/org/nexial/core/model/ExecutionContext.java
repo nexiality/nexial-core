@@ -86,7 +86,6 @@ import static org.nexial.core.NexialConst.FlowControls.OPT_PAUSE_ON_ERROR;
 import static org.nexial.core.NexialConst.FlowControls.OPT_STEP_BY_STEP;
 import static org.nexial.core.NexialConst.Project.NEXIAL_HOME;
 import static org.nexial.core.SystemVariables.*;
-import static org.nexial.core.excel.ExcelConfig.MSG_ABORT;
 import static org.nexial.core.excel.ext.CipherHelper.CRYPT_IND;
 
 /**
@@ -431,8 +430,7 @@ public class ExecutionContext {
         // determine if fail-immediate is eminent
         int failAfter = getFailAfter();
         if (failAfter != -1 && execFailCount >= failAfter) {
-            ConsoleUtils.error("execution fail count (" + execFailCount + ") exceeds fail-after limit (" + failAfter +
-                               "), setting fail-immediate to true");
+            executionLogger.log(getCurrentTestStep(), failAfterReached(execFailCount, failAfter));
             setFailImmediate(true);
         }
 
@@ -1171,27 +1169,23 @@ public class ExecutionContext {
                 allPass = false;
 
                 if (isFailFast()) {
-                    executionLogger.log(testScenario, MSG_ABORT + "test scenario execution failed and fail-fast in " +
-                                                      "effect. All subsequent test scenarios will be skipped");
+                    executionLogger.log(testScenario, MSG_SCENARIO_FAIL_FAST);
                     break;
                 }
             }
 
             if (isFailImmediate()) {
-                executionLogger.log(testScenario, MSG_ABORT + "test scenario execution failed and fail-immediate in " +
-                                                  "effect. All subsequent test scenarios will be skipped");
+                executionLogger.log(this, MSG_SCENARIO_FAIL_IMMEDIATE);
                 break;
             }
 
             if (isEndImmediate()) {
-                executionLogger.log(testScenario, MSG_ABORT + "test scenario execution ended due to EndIf() " +
-                                                  "flow control");
+                executionLogger.log(this, MSG_SCENARIO_END_IF);
                 break;
             }
 
             if (isBreakCurrentIteration()) {
-                executionLogger.log(testScenario, MSG_ABORT + "test scenario execution ended due to EndLoopIf() " +
-                                                  "flow control");
+                executionLogger.log(this, MSG_SCENARIO_END_LOOP_IF);
                 break;
             }
         }
@@ -1231,8 +1225,8 @@ public class ExecutionContext {
             // no variables means no crypt
             Set<String> variables = findTokens(data);
             return CollectionUtils.isNotEmpty(variables) &&
-                   variables.stream().anyMatch(var -> CellTextReader
-                                                          .isCrypt(replaceTokens(TOKEN_START + var + TOKEN_END)));
+                   variables.stream()
+                            .anyMatch(var -> CellTextReader.isCrypt(replaceTokens(TOKEN_START + var + TOKEN_END)));
         } catch (RuntimeException e) {
             // don't worry it now.. Nexial will eventually barf at such exception later on (and probably at a better spot).
             return false;

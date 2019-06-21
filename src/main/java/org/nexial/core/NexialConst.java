@@ -26,6 +26,7 @@ import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import javax.validation.constraints.NotNull;
 
 import org.apache.commons.cli.Options;
 import org.apache.commons.collections4.ListUtils;
@@ -325,6 +326,27 @@ public final class NexialConst {
                                                        "missing; " + MSG_CHECK_SUPPORT;
     public static final String MSG_SKIP_AUTO_OPEN_RESULT = "SKIPPING auto-open-result since Nexial is currently " +
                                                            "running in non-interactive environment";
+
+    public static final String MSG_ABORT = "[ABORT] ";
+    public static final String MSG_ALL_SCENARIOS_SKIPPED = " - subsequent test scenarios will be skipped";
+    public static final String MSG_EXEC_STOP = " - test execution will stop now.";
+    public static final String MSG_STEP_FAIL_FAST = MSG_ABORT + "due to execution failure and fail-fast in effect";
+    public static final String MSG_ACTIVITY_FAIL_FAST = MSG_ABORT + "skipping test activity due to previous failure";
+    public static final String MSG_ACTIVITY_FAIL_END = MSG_ABORT + "skipping test activity due to previous end";
+    public static final String MSG_ACTIVITY_FAIL_END_LOOP = MSG_ABORT + "skipping test activity due to break-loop in effect";
+    public static final String MSG_ACTIVITY_ENDING_IF = MSG_ABORT + "activity ending due to EndIf() flow control activated.";
+    public static final String MSG_ACTIVITY_ENDING_LOOP_IF = MSG_ABORT + "activity ending due to EndLoopIf() flow control activated or unrecoverable execution failure.";
+    public static final String MSG_SCENARIO_FAIL_FAST = MSG_ABORT + "scenario failed and fail-fast is in effect" + MSG_ALL_SCENARIOS_SKIPPED;
+    public static final String MSG_SCENARIO_FAIL_IMMEDIATE = MSG_ABORT + "scenario failed and fail-immediate is in effect" + MSG_ALL_SCENARIOS_SKIPPED;
+    public static final String MSG_SCENARIO_END_IF = MSG_ABORT + "scenario ended due to EndIf() flow control";
+    public static final String MSG_SCENARIO_END_LOOP_IF = MSG_ABORT + "scenario ended due to EndLoopIf() flow control";
+    public static final String MSG_EXEC_FAIL_FAST = MSG_ABORT + "failure found and fail-fast is in effect" + MSG_EXEC_STOP;
+    public static final String MSG_EXEC_FAIL_IMMEDIATE = MSG_ABORT + "fail-immediate in effect" + MSG_EXEC_STOP;
+    public static final String MSG_EXEC_END_IF = MSG_ABORT + "EndIf() flow control activated" + MSG_EXEC_STOP;
+    public static final String MSG_CRITICAL_COMMAND_FAIL = MSG_ABORT + "due to failure on fail-fast command: ";
+    public static final String MSG_REPEAT_UNTIL = "[repeat-until] ";
+    public static final String MSG_REPEAT_UNTIL_BREAK = MSG_REPEAT_UNTIL + "loop terminating due to break-loop condition";
+
     public static final String COMMENT_AUTHOR = "NexialBot";
 
     public static final String PREFIX_JAR = "jar:";
@@ -1413,6 +1435,12 @@ public final class NexialConst {
     // @formatter:on
 
     private NexialConst() { }
+
+    @NotNull
+    public static String failAfterReached(int failCount, int failAfter) {
+        return MSG_ABORT + "execution fail count (" + failCount + ") exceeds fail-after limit (" + failAfter + "); " +
+               "setting fail-immediate to true";
+    }
 
     static {
         // warm up constant classes

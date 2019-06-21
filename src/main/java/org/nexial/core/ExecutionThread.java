@@ -45,7 +45,6 @@ import static org.nexial.core.NexialConst.*;
 import static org.nexial.core.NexialConst.Project.appendLog;
 import static org.nexial.core.SystemVariables.getDefault;
 import static org.nexial.core.SystemVariables.getDefaultBool;
-import static org.nexial.core.excel.ExcelConfig.MSG_ABORT;
 import static org.nexial.core.model.ExecutionEvent.*;
 import static org.nexial.core.model.ExecutionSummary.ExecutionLevel.ITERATION;
 import static org.nexial.core.model.ExecutionSummary.ExecutionLevel.SCRIPT;
@@ -258,9 +257,11 @@ public final class ExecutionThread extends Thread {
     public ExecutionDefinition getExecDef() { return execDef; }
 
     protected boolean shouldFailNow(ExecutionContext context) {
+        if (context == null) { return true; }
+
+        ExecutionLogger logger = context.getLogger();
         if (context.isFailImmediate()) {
-            ConsoleUtils.error(MSG_ABORT + "previous test scenario execution failed, and fail-immediate in effect. " +
-                               "All subsequent test scenarios will be skipped");
+            logger.log(context, MSG_SCENARIO_FAIL_IMMEDIATE);
             collectIntraExecutionData(context, 0);
             return true;
         }
@@ -270,11 +271,32 @@ public final class ExecutionThread extends Thread {
                 // reset and pretend nothing's wrong.  Current script will be executed..
                 context.setData(OPT_LAST_OUTCOME, true);
             } else {
-                ConsoleUtils.error(MSG_ABORT + "previous test scenario execution failed, and current test script is " +
-                                   "set to fail-fast. All subsequent test scenarios will be skipped");
+                logger.log(context, MSG_SCENARIO_FAIL_FAST);
                 collectIntraExecutionData(context, 0);
                 return true;
             }
+        }
+
+        return false;
+    }
+
+    protected boolean shouldStopNow(ExecutionContext context, boolean allPass) {
+        if (context == null) { return true; }
+
+        ExecutionLogger logger = context.getLogger();
+        if (!allPass && context.isFailFast()) {
+            logger.log(context, MSG_EXEC_FAIL_FAST);
+            return true;
+        }
+
+        if (context.isFailImmediate()) {
+            logger.log(context, MSG_EXEC_FAIL_IMMEDIATE);
+            return true;
+        }
+
+        if (context.isEndImmediate()) {
+            logger.log(context, MSG_EXEC_END_IF);
+            return true;
         }
 
         return false;
@@ -292,28 +314,6 @@ public final class ExecutionThread extends Thread {
         context.fillIntraExecutionData(intraExecutionData);
         // override, if found, previous "last completed iteration count"
         intraExecutionData.put(LAST_ITERATION, completeIteration);
-    }
-
-    protected boolean shouldStopNow(ExecutionContext context, boolean allPass) {
-        if (context == null) { return true; }
-
-        ExecutionLogger logger = context.getLogger();
-        if (!allPass && context.isFailFast()) {
-            logger.log(context, MSG_ABORT + "failure found, fail-fast in effect - test execution will stop now.");
-            return true;
-        }
-
-        if (context.isFailImmediate()) {
-            logger.log(context, MSG_ABORT + "fail-immediate in effect - test execution will stop now.");
-            return true;
-        }
-
-        if (context.isEndImmediate()) {
-            logger.log(context, MSG_ABORT + "test execution ending due to EndIf() flow control activated.");
-            return true;
-        }
-
-        return false;
     }
 
     protected void onIterationException(ExecutionContext context,

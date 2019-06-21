@@ -27,10 +27,10 @@ import org.nexial.commons.utils.TextUtils
 import org.nexial.core.ExecutionInputPrep
 import org.nexial.core.ExecutionThread
 import org.nexial.core.NexialConst.Data.*
+import org.nexial.core.NexialConst.MSG_ABORT
 import org.nexial.core.NexialConst.OPT_LAST_OUTCOME
 import org.nexial.core.NexialConst.Project.appendLog
 import org.nexial.core.excel.Excel
-import org.nexial.core.excel.ExcelConfig.MSG_ABORT
 import org.nexial.core.interactive.InteractiveConsole.Commands.ALL_STEP
 import org.nexial.core.interactive.InteractiveConsole.Commands.EXIT
 import org.nexial.core.interactive.InteractiveConsole.Commands.HELP
@@ -445,13 +445,13 @@ class NexialInteractive {
             }
 
             if (context.isFailFastCommand(testStep)) {
-                logger.log(testStep, "${MSG_ABORT}due to failure on fail-fast command: ${testStep.commandFQN}")
+                logger.log(testStep, "${MSG_ABORT}failure on fail-fast command: ${testStep.commandFQN}")
                 context.isFailImmediate = true
                 break
             }
 
             if (context.isFailImmediate) {
-                logger.log(testStep, "${MSG_ABORT}due fail-immediate in effect")
+                logger.log(testStep, "${MSG_ABORT}fail-immediate in effect")
                 break
             }
 

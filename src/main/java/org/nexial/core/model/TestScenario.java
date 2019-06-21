@@ -38,6 +38,7 @@ import org.nexial.core.utils.ConsoleUtils;
 import org.nexial.core.utils.ExecutionLogger;
 
 import static org.nexial.core.CommandConst.CMD_REPEAT_UNTIL;
+import static org.nexial.core.NexialConst.*;
 import static org.nexial.core.excel.ExcelConfig.*;
 import static org.nexial.core.model.ExecutionSummary.ExecutionLevel.SCENARIO;
 
@@ -112,39 +113,35 @@ public class TestScenario {
             context.setCurrentActivity(testCase);
 
             if (skipDueToFailFast) {
-                logger.log(this, MSG_ABORT + "skipping test activity due to previous failure");
+                logger.log(this, MSG_ACTIVITY_FAIL_FAST);
                 continue;
             }
 
             if (skipDueToEndFast) {
-                logger.log(this, MSG_ABORT + "skipping test activity due to previous end");
+                logger.log(this, MSG_ACTIVITY_FAIL_END);
                 continue;
             }
 
             if (skipDueToEndLoop) {
-                logger.log(this, MSG_ABORT + "skipping test activity due to break-loop in effect");
+                logger.log(this, MSG_ACTIVITY_FAIL_END_LOOP);
                 continue;
             }
 
-            boolean pass = testCase.execute();
-            if (!pass) {
+            if (!testCase.execute()) {
                 allPass = false;
                 if (shouldFailFast || context.isFailImmediate()) {
                     skipDueToFailFast = true;
-                    // logger.log(this, MSG_ABORT + "test activity execution failed. " +
-                    //                  "Because of this, all subsequent test case will be skipped");
+                } else if (context.isEndImmediate()) {
+                    skipDueToEndFast = true;
+                } else if (context.isBreakCurrentIteration()) {
+                    skipDueToEndLoop = true;
                 }
-            }
-
-            if (context.isEndImmediate()) {
+            } else if (context.isEndImmediate()) {
                 skipDueToEndFast = true;
-                logger.log(this, MSG_ABORT + "test activity execution ending due to EndIf() flow control activated.");
-            }
-
-            if (context.isBreakCurrentIteration()) {
+                logger.log(this, MSG_ACTIVITY_ENDING_IF);
+            } else if (context.isBreakCurrentIteration()) {
                 skipDueToEndLoop = true;
-                logger.log(this, MSG_ABORT + "test activity execution ending due to EndLoopIf() flow control activated " +
-                                 "or unrecoverable execution failure.");
+                logger.log(this, MSG_ACTIVITY_ENDING_LOOP_IF);
             }
 
             executionSummary.addNestSummary(testCase.getExecutionSummary());
@@ -238,8 +235,8 @@ public class TestScenario {
             boolean hasTestCase = StringUtils.isNotBlank(testCase);
             if (currentTestCase == null && !hasTestCase) {
                 // first row must define test case (hence at least 1 test case is required)
-                throw new RuntimeException("Invalid format found in " + worksheet.getFile() + " (" + name +
-                                           "): Test case not found.");
+                throw new RuntimeException("Invalid format found in " + worksheet.getFile() + " (" + name + "): " +
+                                           "Test case not found.");
             }
 
             if (hasTestCase) {
