@@ -197,8 +197,7 @@ public class FlowControlTest {
 
         // simple test
         fixture.flowControls = FlowControl.parse("SkipIf ( ${my_age} between [21|30] )   \n  \r\n");
-        String expected = "SkipIf -> [${my_age} between [21|30]]";
-        assertExpectedFilterEval(fixture, expected);
+        assertExpectedFilterEval(fixture, "SkipIf -> [${my_age} between [21|30]]");
 
         fixture.flowControls = FlowControl.parse("SkipIf ( ${my_age} between [${min_age}|${max_age}] )   \n  \r\n");
         assertExpectedFilterEval(fixture, "SkipIf -> [${my_age} between [${min_age}|${max_age}]]");

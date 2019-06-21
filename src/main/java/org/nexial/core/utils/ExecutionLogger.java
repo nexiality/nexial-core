@@ -97,17 +97,19 @@ public class ExecutionLogger {
     public void error(ExecutionContext subject, String message) { error(toHeader(subject), message); }
 
     public static String toHeader(TestStep subject) {
-        if (subject == null) { return "UNKNOWN TEST STEP"; }
+        if (subject == null) { return "current step"; }
         return toHeader(subject.getTestCase()) +
                "|#" + StringUtils.leftPad((subject.getRowIndex() + 1) + "", 3) +
                "|" + StringUtils.truncate(subject.getCommandFQN(), 25);
     }
 
     public static String toHeader(TestCase subject) {
-        return subject == null ? "UNKNOWN ACTIVITY" : (toHeader(subject.getTestScenario()) + "|" + subject.getName());
+        return subject == null ? "current activity" : (toHeader(subject.getTestScenario()) + "|" + subject.getName());
     }
 
     public static String toHeader(TestScenario subject) {
+        if (subject == null || subject.getWorksheet() == null) { return "current scenario"; }
+
         Worksheet worksheet = subject.getWorksheet();
         return justFileName(worksheet.getFile()) + "|" + worksheet.getName();
     }
