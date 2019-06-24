@@ -244,7 +244,7 @@ public class Nexial {
             e.printStackTrace();
         } finally {
             if (!main.isReadyMode()) {
-                ConsoleUtils.log("Exiting Nexial...");
+                ConsoleUtils.log("exiting Nexial...");
                 System.exit(main.beforeShutdown(summary));
             }
         }
@@ -752,7 +752,7 @@ public class Nexial {
                     exec = null;
                 } else {
                     executionThreads.add(launcherThread);
-                    ConsoleUtils.log(runId, msgPrefix + "in progress, progressing to next execution");
+                    ConsoleUtils.log(runId, msgPrefix + "in progress, proceed to next execution");
                 }
             }
 
@@ -900,7 +900,7 @@ public class Nexial {
         File junitReport = null;
         try {
             junitReport = reporter.generateJUnitXml(summary);
-            ConsoleUtils.log("Generated JUnit report for this execution: " + junitReport);
+            ConsoleUtils.log("generated JUnit report for this execution: " + junitReport);
             if (junitReport != null) { System.setProperty(JUNIT_XML_LOCATION, junitReport.getAbsolutePath()); }
         } catch (IOException e) {
             ConsoleUtils.error(runId, "Unable to generate JUnit report for this execution: " + e.getMessage());
@@ -1144,16 +1144,16 @@ public class Nexial {
             String successRateString = MessageFormat.format(RATE_FORMAT, successRate);
             System.setProperty(SUCCESS_RATE, successRateString);
 
-            String manifest = StringUtils.leftPad(NEXIAL_MANIFEST, 15, "-");
+            String manifest = NEXIAL_MANIFEST;
             ConsoleUtils.log(
                 "\n\n" +
                 "/-END OF EXECUTION--------------------------------------------------------------\n" +
                 "| » Execution Time: " + (summary.getElapsedTime() / 1000) + " sec.\n" +
-                "| » Test Steps:     " + summary.getExecuted() + "\n" +
-                "| » Passed:         " + summary.getPassCount() + "\n" +
-                "| » Failed:         " + summary.getFailCount() + "\n" +
-                "| » Success Rate:   " + successRateString + "\n" +
-                "\\---------------------------------------------------------------" + manifest + "-" + "\n");
+                "| » Test Steps....: " + summary.getExecuted() + "\n" +
+                "| » Passed........: " + summary.getPassCount() + "\n" +
+                "| » Failed........: " + summary.getFailCount() + "\n" +
+                "| » Success Rate..: " + successRateString + "\n" +
+                "\\" + StringUtils.repeat("-", 80 - 1 - manifest.length() - 1) + manifest + "-" + "\n");
 
             if (successRate != 1) {
                 if (successRate >= minExecSuccessRate) {

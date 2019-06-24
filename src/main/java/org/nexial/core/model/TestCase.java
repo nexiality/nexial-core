@@ -101,6 +101,7 @@ public class TestCase {
 
             if (result.isSkipped()) {
                 executionSummary.adjustTotalSteps(-1);
+
                 if (StringUtils.equals(testStep.getCommandFQN(), CMD_SECTION)) {
                     formatSectionDescription(testStep, false);
 
@@ -131,12 +132,12 @@ public class TestCase {
                     // reset it so that we are only performing loop-break one level at a time
                     if (StringUtils.equals(testStep.getCommandFQN(), CMD_REPEAT_UNTIL)) {
                         context.setBreakCurrentIteration(false);
+                    } else {
+                        break;
                     }
-
-                    break;
-                } else {
-                    continue;
                 }
+
+                continue;
             }
 
             executionSummary.incrementExecuted();

@@ -112,7 +112,6 @@ public class CommandRepeater {
 
                     if (context.isBreakCurrentIteration()) {
                         logger.log(testStep, MSG_REPEAT_UNTIL_BREAK);
-                        // context.setBreakCurrentIteration(false);
                         return result;
                     }
 

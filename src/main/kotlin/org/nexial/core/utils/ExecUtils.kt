@@ -41,29 +41,29 @@ object ExecUtils {
     const val RUNTIME_ARGS = "runtime args"
     @JvmField
     val IGNORED_CLI_OPT = arrayListOf<String>(
-            "awt.", "java.",
-            "idea.test.", "intellij.debug",
-            "org.gradle.",
+        "awt.", "java.",
+        "idea.test.", "intellij.debug",
+        "org.gradle.",
 
-            "file.encoding", "file.separator", "line.separator", "path.separator",
+        "file.encoding", "file.separator", "line.separator", "path.separator",
 
-            "ftp.nonProxyHosts", "gopherProxySet", "http.nonProxyHosts", "socksNonProxyHosts",
+        "ftp.nonProxyHosts", "gopherProxySet", "http.nonProxyHosts", "socksNonProxyHosts",
 
-            "nexial-mailer.", "nexial.3rdparty.logpath", "nexial.jdbc.", NEXIAL_HOME, OPT_DATA_DIR, OPT_DEF_OUT_DIR,
-            OPT_CLOUD_OUTPUT_BASE, OPT_SCRIPT_DIR, OPT_PLAN_DIR, "site-name", SMS_PREFIX, MAIL_PREFIX, OTC_PREFIX,
-            TTS_PREFIX,
+        "nexial-mailer.", "nexial.3rdparty.logpath", "nexial.jdbc.", NEXIAL_HOME, OPT_DATA_DIR, OPT_DEF_OUT_DIR,
+        OPT_CLOUD_OUTPUT_BASE, OPT_SCRIPT_DIR, OPT_PLAN_DIR, "site-name", SMS_PREFIX, MAIL_PREFIX, OTC_PREFIX,
+        TTS_PREFIX,
 
-            "sun.arch", "sun.boot", "sun.cpu", "sun.desktop", "sun.font", "sun.io", "sun.java", "sun.jnu",
-            "sun.management", "sun.os", "sun.stderr.encoding", "sun.stdout.encoding",
+        "sun.arch", "sun.boot", "sun.cpu", "sun.desktop", "sun.font", "sun.io", "sun.java", "sun.jnu",
+        "sun.management", "sun.os", "sun.stderr.encoding", "sun.stdout.encoding",
 
-            "jboss.modules",
+        "jboss.modules",
 
-            "user.country", "user.dir", "user.home", "user.language", "user.variant",
+        "user.country", "user.dir", "user.home", "user.language", "user.variant",
 
-            "webdriver.")
+        "webdriver.")
 
     @JvmField
-    val JUNIT_CLASSES = arrayListOf<String>("org.junit.runner.JUnitCore", "org.junit.runners.ParentRunner")
+    val JUNIT_CLASSES = arrayListOf("org.junit.runner.JUnitCore", "org.junit.runners.ParentRunner")
     @JvmField
     val BIN_SCRIPT_EXT = if (IS_OS_WINDOWS) ".cmd" else ".sh"
     @JvmField
