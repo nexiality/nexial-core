@@ -2105,8 +2105,8 @@ public class WebCommand extends BaseCommand implements CanTakeScreenshot, CanLog
         // Nexial configure "preference" for each browser to use JS click on not. However, we need to honor user's
         // wish NOT to use JS click if they had configured their test as such
         boolean systemFavorJsClick = jsExecutor != null && browser.favorJSClick();
-        boolean forceJSClick = (!context.hasData(FORCE_JS_CLICK) || context.getBooleanData(FORCE_JS_CLICK)) &&
-                               systemFavorJsClick;
+        boolean forceJSClick = systemFavorJsClick;
+        if (context.hasData(FORCE_JS_CLICK)) { forceJSClick = context.getBooleanData(FORCE_JS_CLICK); }
 
         try {
             // @id doesn't matter anymore...
@@ -2117,7 +2117,6 @@ public class WebCommand extends BaseCommand implements CanTakeScreenshot, CanLog
             } else {
                 // better impl. for CI
                 new Actions(driver).moveToElement(element).click(element).build().perform();
-                // element.click();
                 return StepResult.success("clicked on web element");
             }
         } catch (StaleElementReferenceException e) {
