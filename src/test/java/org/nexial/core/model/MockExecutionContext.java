@@ -58,10 +58,10 @@ public class MockExecutionContext extends ExecutionContext {
         super();
 
         hostname = StringUtils.upperCase(EnvUtils.getHostName());
-        executionLogger = new ExecutionLogger(this);
         runId = DateUtility.createTimestampString(System.currentTimeMillis());
         System.setProperty(TEST_LOG_PATH, JAVA_IO_TMPDIR);
         System.setProperty(OPT_OUT_DIR, JAVA_IO_TMPDIR);
+        executionLogger = new ExecutionLogger(this);
 
         if (withSpring) {
             this.springContext = new ClassPathXmlApplicationContext("classpath:/nexial.xml");

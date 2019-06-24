@@ -64,7 +64,7 @@ class ExecutionLogger(private val context: ExecutionContext) {
         if (subject is CanLogExternally) (subject as CanLogExternally).logExternally(testStep, message)
     }
 
-    fun errorToOutput(subject: NexialCommand, message: String, exception: Throwable) {
+    fun errorToOutput(subject: NexialCommand, message: String, exception: Throwable? = null) {
         val testStep = ExecutionThread.get().currentTestStep
         if (testStep != null) {
             error(toHeader(testStep), message, exception)
