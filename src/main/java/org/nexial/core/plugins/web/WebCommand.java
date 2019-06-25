@@ -286,16 +286,7 @@ public class WebCommand extends BaseCommand implements CanTakeScreenshot, CanLog
         return StepResult.success("selected '" + array + "' on widgets matching '" + locator + "'");
     }
 
-    public StepResult selectMultiOptions(String locator) {
-        List<WebElement> elements = findElements(locator);
-        if (CollectionUtils.isEmpty(elements)) {
-            return StepResult.success("none selected since no matches found via '" + locator + "'");
-        }
-
-        for (WebElement elem : elements) { elem.click(); }
-
-        return StepResult.success("selected " + elements.size() + " widgets via '" + locator + "'");
-    }
+    public StepResult selectMultiOptions(String locator) { return clickAll(locator); }
 
     public StepResult deselectMulti(String locator, String array) {
         requires(StringUtils.isNotBlank(array), "invalid text array", array);
@@ -869,6 +860,27 @@ public class WebCommand extends BaseCommand implements CanTakeScreenshot, CanLog
     }
 
     public StepResult click(String locator) { return clickInternal(locator); }
+
+    /**
+     * click on all matching elements. Useful to check/uncheck "fake" options disguised as {@literal <div>} tags.
+     *
+     * Internally used by {@link #selectMultiOptions(String)} since both are functionally equivalent.
+     */
+    public StepResult clickAll(String locator) {
+        List<WebElement> elements;
+        try {
+            elements = findElements(locator);
+            if (CollectionUtils.isEmpty(elements)) {
+                return StepResult.success("No matching element via '" + locator + "'");
+            }
+        } catch (TimeoutException e) {
+            return StepResult.fail("Unable to find element via '" + locator + "' within allotted time");
+        }
+
+        for (WebElement elem : elements) { clickInternal(elem); }
+
+        return StepResult.success("clicked " + elements.size() + " element(s) via '" + locator + "'");
+    }
 
     public StepResult clickWithKeys(String locator, String keys) {
         requiresNotBlank(locator, "locator must not be empty", locator);
@@ -2079,9 +2091,7 @@ public class WebCommand extends BaseCommand implements CanTakeScreenshot, CanLog
         }
     }
 
-    // todo: merge with selectMultiOptions(), which is just a form of clicks
     protected StepResult clickInternal(String locator) {
-
         WebElement element;
         try {
             List<WebElement> matches = findElements(locator);

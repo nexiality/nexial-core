@@ -41,14 +41,13 @@ class TableHelper(private val webCommand: WebCommand) {
                       cellLocator: String,
                       nextPageLocator: String,
                       file: String): StepResult {
-
         requiresNotBlank(rowLocator, "invalid rowLocator", rowLocator)
         requiresNotBlank(cellLocator, "invalid cellLocator", cellLocator)
         requiresNotBlank(file, "invalid file", file)
 
         val writer = newCsvWriter(file)
 
-        val msgPrefix = "DIV table "
+        val msgPrefix = "DIV table"
 
         // header
         if (StringUtils.isNotBlank(headerCellsLoc) && !webCommand.context.isNullValue(headerCellsLoc)) {
@@ -66,7 +65,7 @@ class TableHelper(private val webCommand: WebCommand) {
                 break
             }
 
-            ConsoleUtils.log(msgPrefix + " collecting data for page " + (pageCount + 1))
+            ConsoleUtils.log("$msgPrefix collecting data for page ${pageCount + 1}")
             var hasData = true
 
             for (i in rows.indices) {

@@ -633,7 +633,7 @@ public class ExecutionContext {
     }
 
     public boolean isReadOnlyData(String var) {
-        return StringUtils.isBlank(var) || readOnlyVars.contains(var) || StringUtils.startsWith(var, "java.");
+        return readOnlyVars.contains(var) || StringUtils.startsWith(var, "java.");
     }
 
     /**
