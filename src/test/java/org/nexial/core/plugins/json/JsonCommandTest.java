@@ -798,4 +798,87 @@ public class JsonCommandTest {
         Assert.assertEquals("[Glenoak, Washington]", context.getStringData("dummy"));
 
     }
+
+    @Test
+    public void compact() throws Exception {
+        JsonCommand fixture = new JsonCommand();
+        fixture.init(context);
+
+        String json = "{\n" +
+                      "    \"billing_address\": {\n" +
+                      "        \"street_address\": \"1st Street SE\",\n" +
+                      "        \"city\": \"Washington\",\n" +
+                      "        \"state\": \"DC\"\n" +
+                      "    },\n" +
+                      "     \"glconfig\": []," +
+                      "     \"account\": { \"id\": \"12345\", \"name\": \"\" }" +
+                      "}";
+
+        Assert.assertTrue(fixture.compact("var", json, "true").isSuccess());
+        String compacted = context.getStringData("var");
+        System.out.println(compacted);
+        Assert.assertFalse(compacted.contains("glconfig"));
+        Assert.assertFalse(compacted.contains("name"));
+
+        json = "{\n" +
+               "  \"config\": {\n" +
+               "    \"mainOptions\": [\n" +
+               "      {\n" +
+               "        \"regionCode\": \"CA\",\n" +
+               "        \"state\": \"California\"\n" +
+               "      }\n" +
+               "    ],\n" +
+               "    \"mainLocation\": {\n" +
+               "    },\n" +
+               "    \"shootLocations\": [\n" +
+               "      {\n" +
+               "        \"regionCode\": \"CA\",\n" +
+               "        \"state\": \"California\"\n" +
+               "      }\n" +
+               "    ],\n" +
+               "    \"payrollConfig\": {\n" +
+               "      \"clientId\": 12345,\n" +
+               "      \"isNonUnion\": true\n" +
+               "    },\n" +
+               "    \"glconfig\": [],\n" +
+               "    \"dataListing\": [\"\", \"\", null, \"\", { } ],\n" +
+               "    \"productionInfo\": {\n" +
+               "      \"productionCompanyName\": \"Entertainment Productions\",\n" +
+               "      \"productionTitle\": \"Growing Painelous\",\n" +
+               "      \"productionAddress1\": \"123B Elms Blvd.\",\n" +
+               "      \"productionAddress2\": \"\",\n" +
+               "      \"productionCity\": null,\n" +
+               "      \"productionState\": \"CA\",\n" +
+               "      \"productionZipCode\": \"90010\",\n" +
+               "      \"productionPhoneNumber\": \"323-939-5555\",\n" +
+               "      \"productionEIN\": \"45-4098722\",\n" +
+               "      \"array1\": [ " +
+               "            { " +
+               "                \"inner1\": { }, " +
+               "                \"inner2\": [ " +
+               "                    null," +
+               "                    null, " +
+               "                    { " +
+               "                        \"inner3\": null, " +
+               "                        \"inner4\": { " +
+               "                            \"inner5\":\"\" " +
+               "                        } " +
+               "                    } " +
+               "                ] " +
+               "            } " +
+               "       ]" +
+               "    }\n" +
+               "  }\n" +
+               "}";
+        Assert.assertTrue(fixture.compact("var", json, "true").isSuccess());
+        compacted = context.getStringData("var");
+        System.out.println(compacted);
+        Assert.assertFalse(compacted.contains("glconfig"));
+        Assert.assertFalse(compacted.contains("mainLocation"));
+        Assert.assertFalse(compacted.contains("dataListing"));
+        Assert.assertFalse(compacted.contains("productionAddress2"));
+        Assert.assertFalse(compacted.contains("productionCity"));
+        Assert.assertFalse(compacted.contains("array1"));
+
+    }
 }

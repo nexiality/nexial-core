@@ -659,8 +659,12 @@ public class ExecutionContext {
             removedObj = null;
         }
 
-        String removedFromSys = System.clearProperty(name);
-        return StringUtils.isEmpty(removed) ? removedFromSys : removed;
+        if (StringUtils.isBlank(name)) {
+            return removed;
+        } else {
+            String removedFromSys = System.clearProperty(name);
+            return StringUtils.isEmpty(removed) ? removedFromSys : removed;
+        }
     }
 
     public void setData(String name, String value) {

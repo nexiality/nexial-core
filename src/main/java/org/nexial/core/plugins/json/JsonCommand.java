@@ -26,11 +26,13 @@ import java.util.Comparator;
 import java.util.List;
 import javax.validation.constraints.NotNull;
 
+import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.collections4.IterableUtils;
 import org.apache.commons.lang3.BooleanUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.json.JSONArray;
 import org.json.JSONObject;
+import org.nexial.commons.utils.CollectionUtil;
 import org.nexial.commons.utils.TextUtils;
 import org.nexial.core.model.StepResult;
 import org.nexial.core.plugins.base.BaseCommand;
@@ -45,6 +47,7 @@ import com.github.fge.jsonschema.main.JsonSchema;
 import com.github.fge.jsonschema.main.JsonSchemaFactory;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
+import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 import com.google.gson.JsonSyntaxException;
 
@@ -272,21 +275,7 @@ public class JsonCommand extends BaseCommand {
         return StepResult.success("CSV '" + csv + "' converted to JSON '" + jsonFile + "'");
     }
 
-    public StepResult minify(String json, String var) {
-        requiresValidVariableName(var);
-
-        String jsonContent = retrieveJsonContent(json);
-        if (jsonContent == null) { return StepResult.fail("Unable to parse JSON content: " + json); }
-
-        JsonElement jsonElement = GSON_COMPRESSED.fromJson(jsonContent, JsonElement.class);
-        requiresNotNull(jsonElement, "invalid json", json);
-
-        String compressed = GSON_COMPRESSED.toJson(jsonElement);
-        if (StringUtils.isBlank(compressed)) { return StepResult.fail("Unable to minify JSON content"); }
-
-        updateDataVariable(var, compressed);
-        return StepResult.success("JSON content compressed and saved to '" + var);
-    }
+    public StepResult minify(String json, String var) { return compact(var, json, "false"); }
 
     public StepResult beautify(String json, String var) {
         requiresValidVariableName(var);
@@ -302,6 +291,91 @@ public class JsonCommand extends BaseCommand {
 
         updateDataVariable(var, beautified);
         return StepResult.success("JSON content beautified and saved to '" + var + "'");
+    }
+
+    public StepResult compact(String var, String json, String removeEmpty) {
+        requiresValidVariableName(var);
+
+        String jsonContent = retrieveJsonContent(json);
+        if (jsonContent == null) { return StepResult.fail("Unable to parse JSON content: " + json); }
+
+        JsonElement jsonElement = GSON_COMPRESSED.fromJson(jsonContent, JsonElement.class);
+        requiresNotNull(jsonElement, "invalid json", json);
+
+        if (BooleanUtils.toBoolean(removeEmpty)) { jsonElement = removeEmpty(jsonElement); }
+
+        String compressed = GSON_COMPRESSED.toJson(jsonElement);
+        if (StringUtils.isBlank(compressed)) { return StepResult.fail("Unable to minify/compact JSON content"); }
+
+        updateDataVariable(var, compressed);
+        return StepResult.success("JSON content minify/compacted and saved to '" + var);
+    }
+
+    public static Object resolveToJSONObject(String json) {
+        if (json == null) { return null; }
+
+        if (TextUtils.isBetween(json, "[", "]")) {
+            JSONArray jsonArray = JsonUtils.toJSONArray(json);
+            requiresNotNull(jsonArray, "invalid/malformed json", json);
+            return jsonArray;
+        }
+
+        JSONObject jsonObject = JsonUtils.toJSONObject(json);
+        requiresNotNull(jsonObject, "invalid/malformed json", json);
+        return jsonObject;
+    }
+
+    protected JsonElement removeEmpty(JsonElement json) {
+        if (json == null) { return null; }
+
+        if (json.isJsonNull()) { return null; }
+
+        if (json.isJsonPrimitive() && StringUtils.isEmpty(json.getAsString())) { return null; }
+
+        if (json.isJsonObject()) {
+            JsonObject jsonObject = json.getAsJsonObject();
+            List<String> keys = CollectionUtil.toList(jsonObject.keySet());
+            if (CollectionUtils.isEmpty(keys)) { return null; }
+
+            keys.forEach(childName -> {
+                JsonElement childElement = jsonObject.get(childName);
+                if (childElement.isJsonPrimitive()) {
+                    if (StringUtils.isEmpty(childElement.getAsString())) { jsonObject.remove(childName); }
+                } else {
+                    JsonElement compacted = removeEmpty(childElement);
+                    if (compacted == null) {
+                        jsonObject.remove(childName);
+                    } else {
+                        childElement = compacted;
+                    }
+                }
+            });
+
+            if (jsonObject.isJsonNull() || jsonObject.size() == 0) { return null; }
+        }
+
+        if (json.isJsonArray()) {
+            JsonArray array = json.getAsJsonArray();
+            for (int i = 0; i < array.size(); i++) {
+                JsonElement elem = array.get(i);
+                if (elem.isJsonNull()) {
+                    array.remove(i--);
+                } else if (elem.isJsonPrimitive()) {
+                    if (StringUtils.isEmpty(elem.getAsString())) { array.remove(i--); }
+                } else {
+                    JsonElement compacted = removeEmpty(elem);
+                    if (compacted == null) {
+                        array.remove(i--);
+                    } else {
+                        array.set(i, compacted);
+                    }
+                }
+            }
+
+            if (array.size() < 1) { return null; }
+        }
+
+        return json;
     }
 
     @NotNull
@@ -365,20 +439,6 @@ public class JsonCommand extends BaseCommand {
     }
 
     protected Object toJSONObject(String json) { return resolveToJSONObject(retrieveJsonContent(json)); }
-
-    public static Object resolveToJSONObject(String json) {
-        if (json == null) { return null; }
-
-        if (TextUtils.isBetween(json, "[", "]")) {
-            JSONArray jsonArray = JsonUtils.toJSONArray(json);
-            requiresNotNull(jsonArray, "invalid/malformed json", json);
-            return jsonArray;
-        }
-
-        JSONObject jsonObject = JsonUtils.toJSONObject(json);
-        requiresNotNull(jsonObject, "invalid/malformed json", json);
-        return jsonObject;
-    }
 
     protected Object sanityCheck(String json, String jsonpath) {
         requiresNotBlank(jsonpath, "invalid jsonpath", jsonpath);
