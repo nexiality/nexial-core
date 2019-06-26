@@ -314,6 +314,35 @@ public class NumberTransformer<T extends NumberDataType> extends Transformer {
         return base;
     }
 
+    public static String cleanNumber(String text) { return cleanNumber(text, true); }
+
+    public static String cleanNumber(String text, boolean wipeLetter) {
+        text = StringUtils.trim(text);
+        if (StringUtils.isBlank(text)) { return "0"; }
+
+        // in case start with - or +
+        boolean isNegative = StringUtils.startsWith(text, "-");
+
+        // remove characters not suitable to represent number
+        if (wipeLetter) { text = TextUtils.keepOnly(text, "0123456789.E"); }
+
+        // remove leading zero's
+        text = RegExUtils.removeFirst(text, "^0{1,}");
+        if (StringUtils.isBlank(text)) { return "0"; }
+
+        // transform .001 to 0.001
+        if (StringUtils.startsWith(text, ".")) { text = "0" + text; }
+
+        // put negative sign back
+        if (isNegative) { text = "-" + text; }
+
+        // we still good?
+        if (!NumberUtils.isCreatable(text)) {throw new IllegalArgumentException("'" + text + " is not a valid number");}
+
+        // we good
+        return text;
+    }
+
     @Override
     Map<String, Integer> listSupportedFunctions() { return FUNCTION_TO_PARAM_LIST; }
 
@@ -324,24 +353,5 @@ public class NumberTransformer<T extends NumberDataType> extends Transformer {
 
     protected static boolean isDecimal(Number number) {
         return number instanceof BigDecimal || number instanceof Double || number instanceof Float;
-    }
-
-    protected static String cleanNumber(String text) {
-        text = StringUtils.trim(text);
-        if (StringUtils.isBlank(text)) { return "0"; }
-
-        // in case start with - or +
-        boolean isNegative = StringUtils.startsWith(text, "-");
-        text = TextUtils.keepOnly(text, "0123456789.E");
-
-        text = RegExUtils.removeFirst(text, "^0{1,}");
-        if (StringUtils.isBlank(text)) { return "0"; }
-
-        if (StringUtils.startsWith(text, ".")) { text = "0" + text; }
-        if (isNegative) { text = "-" + text; }
-
-        if (!NumberUtils.isCreatable(text)) {throw new IllegalArgumentException("'" + text + " is not a valid number");}
-
-        return text;
     }
 }

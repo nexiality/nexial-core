@@ -24,6 +24,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import javax.validation.constraints.NotNull;
 
 import org.apache.commons.collections4.CollectionUtils;
@@ -95,27 +96,23 @@ public class CsvCommand extends IoCommand {
 
         CsvExtendedComparison comparison = new CsvExtendedComparison();
         comparison.setDelimiter(textDelim);
-
         comparison.setExpectedContent(expectedContent);
         comparison.setActualContent(actualContent);
 
         // identity column(s) is used to identity the records on both expected and actual CSV file
         // this means that even if the content aren't matching line by line, we can use the identity column(s)
         // to "line them up".. good feature when the expected and actual content aren't sorted the same way.
-        comparison.setExpectedIdentityColumns(
-            TextUtils.toList(context.getStringData(configKey + "expected.identity"), textDelim, true));
-        comparison.setActualIdentityColumns(
-            TextUtils.toList(context.getStringData(configKey + "actual.identity"), textDelim, true));
+        collectFields(configKey + "expected.identity").ifPresent(comparison::setExpectedIdentityColumns);
+        collectFields(configKey + "actual.identity").ifPresent(comparison::setActualIdentityColumns);
 
         // define what fields to display in case mismatches are found.  The display fields provide additional
         // context to the mismatch event so that reader can correctly and easily associate the mismatched records.
-        comparison.setDisplayFields(
-            TextUtils.toList(context.getStringData(configKey + "output.display"), textDelim, true));
+        collectFields(configKey + "output.display").ifPresent(comparison::setDisplayFields);
 
         // labels of the mismatched information
-        comparison.setMismatchedField(context.getStringData(configKey + "output.MISMATCHED"));
-        comparison.setExpectedField(context.getStringData(configKey + "output.EXPECTED"));
-        comparison.setActualField(context.getStringData(configKey + "output.ACTUAL"));
+        collectConfig(configKey + "output.MISMATCHED").ifPresent(comparison::setMismatchedField);
+        collectConfig(configKey + "output.EXPECTED").ifPresent(comparison::setExpectedField);
+        collectConfig(configKey + "output.ACTUAL").ifPresent(comparison::setActualField);
 
         // defines which field(s) to match on.  If none specified, then match on all fields.
         Map<String, String> mapping = context.getDataByPrefix(configKey + "match.");
@@ -130,14 +127,14 @@ public class CsvCommand extends IoCommand {
         // instead of declaring the mapping of each and every field between expected and actual CSV file, one can
         // define just the few fields that are to be ignored.
         // the 'ignore' fields are assumed to be found on expected CSV.
-        List<String> ignoreFields = TextUtils.toList(context.getStringData(configKey + "ignore"), textDelim, true);
-        if (CollectionUtils.isNotEmpty(ignoreFields)) { comparison.setIgnoreFields(ignoreFields); }
+        collectFields(configKey + "ignore").ifPresent(comparison::setIgnoreFields);
+        collectFields(configKey + "matchAsNumber").ifPresent(comparison::setNumberFields);
+        collectFields(configKey + "matchCaseInsensitive").ifPresent(comparison::setCaseInsensitiveFields);
+        collectFields(configKey + "matchAutoTrim").ifPresent(comparison::setAutoTrimFields);
 
         // specifies the delimiter used for identity fields for BOTH the expected and actual CSV files
         // if not specified, then '^' is assumed.
-        if (context.hasData(configKey + "identity.delim")) {
-            comparison.setIdentSeparator(context.getStringData(configKey + "identity.delim"));
-        }
+        collectConfig(configKey + "identity.delim").ifPresent(comparison::setIdentSeparator);
 
         try {
             CsvComparisonResult result = comparison.compare();
@@ -182,8 +179,7 @@ public class CsvCommand extends IoCommand {
             ExcelHelper.csv2xlsx(excel, worksheet, startCell, rowsAndColumns);
             return StepResult.success("Successfully saved content from '" + csvFile + "' to '" + excel + "'");
         } catch (IOException e) {
-            return StepResult.fail("Unable to save content from '" + csvFile + "' to '" + excel + "': " +
-                                   e.getMessage());
+            return StepResult.fail("Unable to save content from '" + csvFile + "' to '" + excel + "': " + e.getMessage());
         }
     }
 
@@ -253,6 +249,16 @@ public class CsvCommand extends IoCommand {
         }
 
         return settings;
+    }
+
+    protected Optional<List<String>> collectFields(String config) {
+        String textDelim = context.getTextDelim();
+        List<String> fields = TextUtils.toList(context.getStringData(config), textDelim, true);
+        return CollectionUtils.isEmpty(fields) ? Optional.empty() : Optional.of(fields);
+    }
+
+    protected Optional<String> collectConfig(String config) {
+        return context.hasData(config) ? Optional.of(context.getStringData(config)) : Optional.empty();
     }
 
     protected List<String[]> parseAsCSV(File file) {

@@ -28,12 +28,15 @@ import org.apache.commons.collections4.MapUtils;
 import org.apache.commons.collections4.map.ListOrderedMap;
 import org.apache.commons.lang3.ArrayUtils;
 import org.apache.commons.lang3.StringUtils;
+import org.apache.commons.lang3.math.NumberUtils;
 import org.nexial.core.IntegrationConfigException;
 import org.nexial.core.utils.ConsoleUtils;
+import org.nexial.core.variable.NumberTransformer;
 
 import com.univocity.parsers.common.record.RecordMetaData;
 import com.univocity.parsers.csv.CsvParser;
 
+import static java.lang.Double.MIN_VALUE;
 import static org.nexial.core.plugins.io.CsvExtendedComparison.ReportFormat.CSV;
 
 class CsvExtendedComparison implements Serializable {
@@ -51,6 +54,9 @@ class CsvExtendedComparison implements Serializable {
     private List<String> actualHeaders;
     private Map<String, String> fieldMapping;
     private List<String> ignoreFields;
+    private List<String> numberFields;
+    private List<String> caseInsensitiveFields;
+    private List<String> autoTrimFields;
     private List<String> displayFields;
     private ReportFormat reportFormat;
     private String mismatchedField = "MISMATCHED FIELD";
@@ -96,6 +102,20 @@ class CsvExtendedComparison implements Serializable {
     public List<String> getIgnoreFields() { return ignoreFields; }
 
     public void setIgnoreFields(List<String> ignoreFields) { this.ignoreFields = ignoreFields; }
+
+    public List<String> getNumberFields() { return numberFields; }
+
+    public void setNumberFields(List<String> numberFields) { this.numberFields = numberFields; }
+
+    public List<String> getCaseInsensitiveFields() { return caseInsensitiveFields; }
+
+    public void setCaseInsensitiveFields(List<String> caseInsensitiveFields) {
+        this.caseInsensitiveFields = caseInsensitiveFields;
+    }
+
+    public List<String> getAutoTrimFields() { return autoTrimFields; }
+
+    public void setAutoTrimFields(List<String> autoTrimFields) { this.autoTrimFields = autoTrimFields; }
 
     public List<String> getExpectedIdentityColumns() { return expectedIdentityColumns; }
 
@@ -185,15 +205,64 @@ class CsvExtendedComparison implements Serializable {
             String actualIdentity = actualRecord[0];
             int identityCompared = expectedIdentity.compareTo(actualIdentity);
 
+            String parseNumMsg = " at Line " + expectedCurrentLine + " is configured for numeric comparison" +
+                                 " but contains non-numeric value: ";
+
             // if identity matched
             if (identityCompared == 0) {
                 // check all other mapped fields
                 fieldMapping.forEach((expectedField, actualField) -> {
                     String expectedValue = expectedRecord[expectedHeaders.indexOf(expectedField) + 1];
                     String actualValue = actualRecord[actualHeaders.indexOf(actualField) + 1];
-                    if (!StringUtils.equals(expectedValue, actualValue)) {
-                        result.addMismatched(expectedRecord, expectedField, expectedValue, actualValue);
+
+                    boolean compareAsText = true;
+
+                    // is this numeric compare?
+                    if (numberFields.contains(expectedField)) {
+                        double expected = MIN_VALUE;
+                        try {
+                            expected = NumberUtils.toDouble(NumberTransformer.cleanNumber(expectedValue, false));
+                        } catch (IllegalArgumentException e) {
+                            ConsoleUtils.error("Field [" + expectedField + "] " + parseNumMsg + expectedValue);
+                        }
+
+                        double actual = MIN_VALUE;
+                        try {
+                            actual = NumberUtils.toDouble(NumberTransformer.cleanNumber(actualValue, false));
+                        } catch (IllegalArgumentException e) {
+                            ConsoleUtils.error("Field [" + actualField + "] " + parseNumMsg + actualValue);
+                        }
+
+                        // if both value are not parsed as number
+                        if (expected == MIN_VALUE || actual == MIN_VALUE) {
+                            compareAsText = true;
+                        } else if (expected != actual) {
+                            compareAsText = false;
+                            result.addMismatched(expectedRecord, expectedField, expectedValue, actualValue);
+                        }
                     }
+
+                    // we are now dealing with text comparison
+                    if (compareAsText) {
+                        // is this auto-trim compare?
+                        boolean autoTrim = autoTrimFields.contains(expectedField);
+                        if (autoTrim) {
+                            expectedValue = StringUtils.trim(expectedField);
+                            actualValue = StringUtils.trim(actualValue);
+                        }
+
+                        // is this case-insensitive compare?
+                        boolean insensitive = caseInsensitiveFields.contains(expectedField);
+                        if (insensitive) {
+                            expectedValue = StringUtils.lowerCase(expectedField);
+                            actualValue = StringUtils.lowerCase(actualValue);
+                        }
+
+                        if (!StringUtils.equals(expectedValue, actualValue)) {
+                            result.addMismatched(expectedRecord, expectedField, expectedValue, actualValue);
+                        }
+                    }
+
                 });
 
                 expectedCurrentLine++;

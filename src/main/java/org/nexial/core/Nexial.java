@@ -886,9 +886,6 @@ public class Nexial {
             }
         }
 
-        // boolean autoOpenExecReport = isAutoOpenExecResult();
-
-
         File htmlReport = null;
         try {
             htmlReport = reporter.generateHtml(summary);
