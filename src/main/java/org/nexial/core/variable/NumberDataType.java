@@ -21,6 +21,9 @@ import java.math.BigDecimal;
 
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.math.NumberUtils;
+import org.nexial.commons.utils.TextUtils;
+
+import static org.nexial.commons.utils.TextUtils.CleanNumberStrategy.REAL;
 
 public class NumberDataType extends ExpressionDataType<Number> {
     public NumberTransformer transformer = new NumberTransformer();
@@ -55,7 +58,7 @@ public class NumberDataType extends ExpressionDataType<Number> {
     @Override
     protected void init() throws TypeConversionException {
         try {
-            String text = NumberTransformer.cleanNumber(textValue);
+            String text = TextUtils.cleanNumber(textValue, REAL);
             if (StringUtils.contains(text, ".")) {
                 // setValue(NumberUtils.createBigDecimal(text));
                 setValue(NumberUtils.createDouble(text));
@@ -68,9 +71,4 @@ public class NumberDataType extends ExpressionDataType<Number> {
             throw new TypeConversionException(getName(), textValue, "Not a valid number");
         }
     }
-
-    // private void setToZero() {
-    //     setValue(0);
-    //     setTextValue("0");
-    // }
 }

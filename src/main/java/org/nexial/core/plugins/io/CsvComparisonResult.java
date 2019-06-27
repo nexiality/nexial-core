@@ -133,9 +133,6 @@ public class CsvComparisonResult {
     public String reportAsCSVWithQuotes() { return externalizeReport(CSV_DOUBLE_QUOTES); }
 
     protected String externalizeReport(ReportFormat format) {
-
-        String content = null;
-
         switch (format) {
             case CSV:
                 return toCSV(false);
@@ -146,8 +143,7 @@ public class CsvComparisonResult {
             case PLAIN:
                 return toPlain();
         }
-
-        return content;
+        return null;
     }
 
     protected String toPlain() {

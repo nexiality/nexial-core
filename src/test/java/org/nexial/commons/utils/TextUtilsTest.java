@@ -533,6 +533,16 @@ public class TextUtilsTest {
     }
 
     @Test
+    public void removeOnly() {
+        Assert.assertEquals("", TextUtils.removeOnly("", ""));
+        Assert.assertEquals("", TextUtils.removeOnly("", "12345"));
+        Assert.assertEquals("12345", TextUtils.removeOnly("12345", ""));
+        Assert.assertEquals("12345", TextUtils.removeOnly("12345", " "));
+        Assert.assertEquals("12345", TextUtils.removeOnly("12345", "abcdef"));
+        Assert.assertEquals("Thatet", TextUtils.removeOnly("This is a test", " is"));
+    }
+
+    @Test
     public void base64() {
         Assert.assertEquals("WVBxVFd6ejlWbkZidGNsNE1hYmpOaDZRRW5nak5OQUg6UlNkRnRSYWdBZmtIZnNPbw==",
                             TextUtils.base64encode("YPqTWzz9VnFbtcl4MabjNh6QEngjNNAH:RSdFtRagAfkHfsOo"));

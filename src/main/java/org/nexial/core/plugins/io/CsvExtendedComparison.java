@@ -24,20 +24,21 @@ import java.util.*;
 import java.util.stream.Collectors;
 
 import org.apache.commons.collections4.CollectionUtils;
+import org.apache.commons.collections4.IterableUtils;
 import org.apache.commons.collections4.MapUtils;
 import org.apache.commons.collections4.map.ListOrderedMap;
 import org.apache.commons.lang3.ArrayUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.math.NumberUtils;
+import org.nexial.commons.utils.TextUtils;
+import org.nexial.commons.utils.TextUtils.CleanNumberStrategy;
 import org.nexial.core.IntegrationConfigException;
 import org.nexial.core.utils.ConsoleUtils;
-import org.nexial.core.variable.NumberTransformer;
 
 import com.univocity.parsers.common.record.RecordMetaData;
 import com.univocity.parsers.csv.CsvParser;
 
 import static java.lang.Double.MIN_VALUE;
-import static org.nexial.core.plugins.io.CsvExtendedComparison.ReportFormat.CSV;
 
 class CsvExtendedComparison implements Serializable {
     private static final Map<String, ReportFormat> TYPES = new HashMap<>();
@@ -129,21 +130,21 @@ class CsvExtendedComparison implements Serializable {
         this.actualIdentityColumns = actualIdentityColumns;
     }
 
-    public CsvParser getExpectedParser() { return expectedParser;}
+    public CsvParser getExpectedParser() { return expectedParser; }
 
-    public void setExpectedParser(CsvParser expectedParser) { this.expectedParser = expectedParser;}
+    public void setExpectedParser(CsvParser expectedParser) { this.expectedParser = expectedParser; }
 
-    public CsvParser getActualParser() { return actualParser;}
+    public CsvParser getActualParser() { return actualParser; }
 
-    public void setActualParser(CsvParser actualParser) { this.actualParser = actualParser;}
+    public void setActualParser(CsvParser actualParser) { this.actualParser = actualParser; }
 
     public List<String> getDisplayFields() { return displayFields; }
 
     public void setDisplayFields(List<String> displayFields) { this.displayFields = displayFields; }
 
-    public ReportFormat getReportFormat() { return reportFormat;}
+    public ReportFormat getReportFormat() { return reportFormat; }
 
-    public void setReportFormat(ReportFormat reportFormat) { this.reportFormat = reportFormat;}
+    public void setReportFormat(ReportFormat reportFormat) { this.reportFormat = reportFormat; }
 
     public String getMismatchedField() { return mismatchedField; }
 
@@ -205,8 +206,7 @@ class CsvExtendedComparison implements Serializable {
             String actualIdentity = actualRecord[0];
             int identityCompared = expectedIdentity.compareTo(actualIdentity);
 
-            String parseNumMsg = " at Line " + expectedCurrentLine + " is configured for numeric comparison" +
-                                 " but contains non-numeric value: ";
+            String parseNumMsg = "resort to text comparison due to non-numeric value found: ";
 
             // if identity matched
             if (identityCompared == 0) {
@@ -218,48 +218,52 @@ class CsvExtendedComparison implements Serializable {
                     boolean compareAsText = true;
 
                     // is this numeric compare?
-                    if (numberFields.contains(expectedField)) {
+                    if (IterableUtils.contains(numberFields, expectedField)) {
                         double expected = MIN_VALUE;
                         try {
-                            expected = NumberUtils.toDouble(NumberTransformer.cleanNumber(expectedValue, false));
+                            expected =
+                                NumberUtils.toDouble(TextUtils.cleanNumber(expectedValue, CleanNumberStrategy.CSV));
                         } catch (IllegalArgumentException e) {
-                            ConsoleUtils.error("Field [" + expectedField + "] " + parseNumMsg + expectedValue);
+                            ConsoleUtils.error("Field [" + expectedField + "]: " + parseNumMsg + expectedValue);
                         }
 
                         double actual = MIN_VALUE;
                         try {
-                            actual = NumberUtils.toDouble(NumberTransformer.cleanNumber(actualValue, false));
+                            actual = NumberUtils.toDouble(TextUtils.cleanNumber(actualValue, CleanNumberStrategy.CSV));
                         } catch (IllegalArgumentException e) {
-                            ConsoleUtils.error("Field [" + actualField + "] " + parseNumMsg + actualValue);
+                            ConsoleUtils.error("Field [" + actualField + "]: " + parseNumMsg + actualValue);
                         }
 
                         // if both value are not parsed as number
                         if (expected == MIN_VALUE || actual == MIN_VALUE) {
                             compareAsText = true;
-                        } else if (expected != actual) {
+                        } else {
                             compareAsText = false;
-                            result.addMismatched(expectedRecord, expectedField, expectedValue, actualValue);
+                            if (expected != actual) {
+                                result.addMismatched(expectedRecord, expectedField, expectedValue, actualValue);
+                            }
                         }
                     }
 
                     // we are now dealing with text comparison
                     if (compareAsText) {
                         // is this auto-trim compare?
-                        boolean autoTrim = autoTrimFields.contains(expectedField);
+                        boolean autoTrim = IterableUtils.contains(autoTrimFields, expectedField);
                         if (autoTrim) {
-                            expectedValue = StringUtils.trim(expectedField);
+                            expectedValue = StringUtils.trim(expectedValue);
                             actualValue = StringUtils.trim(actualValue);
                         }
 
                         // is this case-insensitive compare?
-                        boolean insensitive = caseInsensitiveFields.contains(expectedField);
+                        boolean insensitive = IterableUtils.contains(caseInsensitiveFields, expectedField);
                         if (insensitive) {
-                            expectedValue = StringUtils.lowerCase(expectedField);
-                            actualValue = StringUtils.lowerCase(actualValue);
-                        }
-
-                        if (!StringUtils.equals(expectedValue, actualValue)) {
-                            result.addMismatched(expectedRecord, expectedField, expectedValue, actualValue);
+                            if (!StringUtils.equalsIgnoreCase(expectedValue, actualValue)) {
+                                result.addMismatched(expectedRecord, expectedField, expectedValue, actualValue);
+                            }
+                        } else {
+                            if (!StringUtils.equals(expectedValue, actualValue)) {
+                                result.addMismatched(expectedRecord, expectedField, expectedValue, actualValue);
+                            }
                         }
                     }
 
@@ -397,6 +401,6 @@ class CsvExtendedComparison implements Serializable {
 
         if (actualParser == null) { actualParser = CsvCommand.newCsvParser(null, delimiter, null, true, -1); }
 
-        if (reportFormat == null) { reportFormat = CSV; }
+        if (reportFormat == null) { reportFormat = ReportFormat.CSV; }
     }
 }

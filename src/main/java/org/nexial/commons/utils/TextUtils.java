@@ -29,12 +29,16 @@ import org.apache.commons.collections4.IterableUtils;
 import org.apache.commons.collections4.MapUtils;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang3.ArrayUtils;
+import org.apache.commons.lang3.RegExUtils;
 import org.apache.commons.lang3.StringUtils;
+import org.apache.commons.lang3.math.NumberUtils;
 import org.nexial.core.utils.ConsoleUtils;
 
 import static java.awt.event.KeyEvent.*;
 import static java.lang.Character.UnicodeBlock.SPECIALS;
 import static java.lang.System.lineSeparator;
+import static org.nexial.commons.utils.TextUtils.CleanNumberStrategy.CSV;
+import static org.nexial.commons.utils.TextUtils.CleanNumberStrategy.OCTAL;
 import static org.nexial.core.NexialConst.DEF_FILE_ENCODING;
 
 /**
@@ -87,6 +91,25 @@ public final class TextUtils {
 
             return text;
         }
+    }
+
+    public enum CleanNumberStrategy {
+        CSV(null, "£$%, \t"),
+        REAL("0123456789.E", null),
+        OCTAL("012345678", null),
+        NON_DIGITS("0123456789", null);
+
+        private final String keeps;
+        private final String removes;
+
+        CleanNumberStrategy(String keeps, String removes) {
+            this.keeps = keeps;
+            this.removes = removes;
+        }
+
+        public String getKeeps() { return keeps; }
+
+        public String getRemoves() { return removes; }
     }
 
     /**
@@ -1016,6 +1039,22 @@ public final class TextUtils {
         return phoneNumber;
     }
 
+    public static String removeOnly(String text, String removeTheseOnly) {
+        if (StringUtils.isEmpty(removeTheseOnly)) { return text; }
+        if (StringUtils.isEmpty(text)) { return text; }
+
+        char[] removeChars = removeTheseOnly.toCharArray();
+        Character[] remove = new Character[removeChars.length];
+        Arrays.setAll(remove, i -> removeChars[i]);
+        List<Character> distinctRemove = Arrays.stream(remove).distinct().collect(Collectors.toList());
+
+        StringBuilder buffer = new StringBuilder();
+        char[] chars = text.toCharArray();
+        for (char c : chars) { if (!distinctRemove.contains(c)) { buffer.append(c); } }
+
+        return buffer.toString();
+    }
+
     public static String keepOnly(String text, String keepTheseOnly) {
         if (StringUtils.isEmpty(keepTheseOnly)) { return text; }
         if (StringUtils.isEmpty(text)) { return text; }
@@ -1068,6 +1107,38 @@ public final class TextUtils {
             seekPos += markPosition + delimLength;
         }
 
+        return text;
+    }
+
+    public static String cleanNumber(String text, CleanNumberStrategy howToClean) {
+        text = StringUtils.trim(text);
+        if (StringUtils.isBlank(text)) { return "0"; }
+
+        // in case start with - or +
+        boolean isNegative = StringUtils.startsWith(text, "-");
+
+        // remove characters not suitable to represent number
+        if (howToClean != null) {
+            if (howToClean == CSV) { text = StringUtils.unwrap(StringUtils.unwrap(text, "'"), "\""); }
+            if (howToClean.removes != null) { text = removeOnly(text, howToClean.removes); }
+            if (howToClean.keeps != null) { text = keepOnly(text, howToClean.keeps); }
+        }
+
+        // remove leading zero's
+        if (howToClean != OCTAL) { text = RegExUtils.removeFirst(text, "^0{1,}"); }
+
+        if (StringUtils.isBlank(text)) { return "0"; }
+
+        // transform .001 to 0.001
+        if (StringUtils.startsWith(text, ".")) { text = "0" + text; }
+
+        // put negative sign back
+        if (isNegative) { text = "-" + text; }
+
+        // we still good?
+        if (!NumberUtils.isCreatable(text)) {throw new IllegalArgumentException("'" + text + " is not a valid number");}
+
+        // we good
         return text;
     }
 

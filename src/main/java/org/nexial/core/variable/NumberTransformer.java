@@ -24,7 +24,6 @@ import java.util.Map;
 import javax.validation.constraints.NotNull;
 
 import org.apache.commons.lang3.ArrayUtils;
-import org.apache.commons.lang3.RegExUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.math.NumberUtils;
 import org.nexial.commons.utils.RegexUtils;
@@ -33,6 +32,7 @@ import org.nexial.core.plugins.base.NumberCommand;
 import org.nexial.core.utils.ConsoleUtils;
 
 import static java.math.RoundingMode.UP;
+import static org.nexial.commons.utils.TextUtils.CleanNumberStrategy.REAL;
 import static org.nexial.core.variable.ExpressionConst.REGEX_DEC_NUM;
 
 public class NumberTransformer<T extends NumberDataType> extends Transformer {
@@ -219,7 +219,7 @@ public class NumberTransformer<T extends NumberDataType> extends Transformer {
         if (base == null) { base = 0; }
         for (String number : numbers) {
             try {
-                number = cleanNumber(number);
+                number = TextUtils.cleanNumber(number, REAL);
                 if (isDecimal(number) || base instanceof Double || base instanceof Float) {
                     base = BigDecimal.valueOf(base.doubleValue())
                                      .add(BigDecimal.valueOf(NumberUtils.toDouble(number)))
@@ -239,7 +239,7 @@ public class NumberTransformer<T extends NumberDataType> extends Transformer {
         if (base == null) { base = 0; }
         for (String number : numbers) {
             try {
-                number = cleanNumber(number);
+                number = TextUtils.cleanNumber(number, REAL);
                 if (isDecimal(number) || base instanceof Double || base instanceof Float) {
                     base = BigDecimal.valueOf(base.doubleValue())
                                      .subtract(BigDecimal.valueOf(NumberUtils.toDouble(number))).doubleValue();
@@ -256,8 +256,7 @@ public class NumberTransformer<T extends NumberDataType> extends Transformer {
     public static Number multiplySequentially(Number base, String... numbers) {
         for (String number : numbers) {
             try {
-                number = cleanNumber(number);
-
+                number = TextUtils.cleanNumber(number, REAL);
                 if (base == null) {
                     base = isDecimal(number) ?
                            BigDecimal.valueOf(NumberUtils.toDouble(number)) : NumberUtils.toLong(number);
@@ -279,7 +278,7 @@ public class NumberTransformer<T extends NumberDataType> extends Transformer {
     public static Number divideSequential(Number base, String... numbers) {
         for (String num : numbers) {
             try {
-                String number = cleanNumber(num);
+                String number = TextUtils.cleanNumber(num, REAL);
                 if (StringUtils.equals(number, "0") && RegexUtils.match(num, "[A-Za-z]+")) {
                     // not a number, we want to avoid "divide by zero"
                     ConsoleUtils.log("[" + num + "] is not a number; ignored...");
@@ -312,35 +311,6 @@ public class NumberTransformer<T extends NumberDataType> extends Transformer {
         }
 
         return base;
-    }
-
-    public static String cleanNumber(String text) { return cleanNumber(text, true); }
-
-    public static String cleanNumber(String text, boolean wipeLetter) {
-        text = StringUtils.trim(text);
-        if (StringUtils.isBlank(text)) { return "0"; }
-
-        // in case start with - or +
-        boolean isNegative = StringUtils.startsWith(text, "-");
-
-        // remove characters not suitable to represent number
-        if (wipeLetter) { text = TextUtils.keepOnly(text, "0123456789.E"); }
-
-        // remove leading zero's
-        text = RegExUtils.removeFirst(text, "^0{1,}");
-        if (StringUtils.isBlank(text)) { return "0"; }
-
-        // transform .001 to 0.001
-        if (StringUtils.startsWith(text, ".")) { text = "0" + text; }
-
-        // put negative sign back
-        if (isNegative) { text = "-" + text; }
-
-        // we still good?
-        if (!NumberUtils.isCreatable(text)) {throw new IllegalArgumentException("'" + text + " is not a valid number");}
-
-        // we good
-        return text;
     }
 
     @Override
