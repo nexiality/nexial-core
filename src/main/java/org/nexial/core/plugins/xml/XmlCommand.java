@@ -400,10 +400,9 @@ public class XmlCommand extends BaseCommand {
             builders.add(new SAXBuilder(XSDVALIDATING));
         }
 
-        ByteArrayInputStream input = new ByteArrayInputStream(xml.getBytes());
-
         SchemaErrorCollector lastErrorCollector = null;
         for (SAXBuilder builder : builders) {
+            ByteArrayInputStream input = new ByteArrayInputStream(xml.getBytes());
             SchemaErrorCollector errorHandler = new SchemaErrorCollector(lineOffset);
             builder.setErrorHandler(errorHandler);
 

@@ -21,12 +21,13 @@ import org.xml.sax.ErrorHandler
 import org.xml.sax.SAXParseException
 import java.io.Serializable
 import java.util.*
+import kotlin.math.max
 
 class SchemaError(val severity: String, val line: Int, val column: Int, var message: String?) : Serializable {
     var schemaMismatched = false
 
     init {
-        schemaMismatched = StringUtils.contains(message, "Cannot find the declaration of element '")
+        schemaMismatched = StringUtils.contains(message, "Cannot find the declaration of element")
     }
 
     companion object {
@@ -34,7 +35,7 @@ class SchemaError(val severity: String, val line: Int, val column: Int, var mess
         @JvmStatic
         fun toSchemaError(severity: String, exception: SAXParseException, lineOffset: Int) =
             SchemaError(severity = severity,
-                        line = exception.lineNumber + lineOffset,
+                        line = max(exception.lineNumber + lineOffset, 0),
                         column = exception.columnNumber,
                         message = exception.message)
     }
