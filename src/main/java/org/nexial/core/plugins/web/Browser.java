@@ -554,11 +554,12 @@ public class Browser implements ForcefulTerminate {
         options.addArguments("--disable-dev-shm-usage"); // overcome limited resource problems
         options.addArguments("--no-sandbox"); // Bypass OS security model
 
+        int port = 12209;
         if (NumberUtils.isDigits(context.getStringData(CHROME_REMOTE_PORT))) {
-            int port = NumberUtils.toInt(context.getStringData(CHROME_REMOTE_PORT));
-            ConsoleUtils.log("enabling chrome remote port: " + port);
-            options.addArguments("--remote-debugging-port=" + port);
+            port = NumberUtils.toInt(context.getStringData(CHROME_REMOTE_PORT));
         }
+        ConsoleUtils.log("enabling chrome remote port: " + port);
+        options.addArguments("--remote-debugging-port=" + port);
 
         // options.addArguments("--auto-open-devtools-for-tabs"); // open devtools
         // options.addArguments("--headless");

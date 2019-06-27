@@ -325,7 +325,7 @@ public class JsonCommand extends BaseCommand {
         return jsonObject;
     }
 
-    protected JsonElement removeEmpty(JsonElement json) {
+    public static JsonElement removeEmpty(JsonElement json) {
         if (json == null) { return null; }
 
         if (json.isJsonNull()) { return null; }

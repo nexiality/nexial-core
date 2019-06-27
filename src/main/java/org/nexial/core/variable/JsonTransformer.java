@@ -26,6 +26,7 @@ import java.util.Map;
 
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang3.ArrayUtils;
+import org.apache.commons.lang3.BooleanUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.json.JSONArray;
 import org.json.JSONException;
@@ -34,6 +35,7 @@ import org.nexial.commons.utils.FileUtil;
 import org.nexial.commons.utils.TextUtils;
 import org.nexial.core.ExecutionThread;
 import org.nexial.core.model.ExecutionContext;
+import org.nexial.core.plugins.json.JsonCommand;
 import org.nexial.core.utils.ConsoleUtils;
 import org.nexial.core.utils.JSONPath;
 import org.nexial.core.utils.JsonEditor;
@@ -48,9 +50,11 @@ import com.google.gson.stream.MalformedJsonException;
 
 import static org.json.JSONObject.NULL;
 import static org.nexial.core.NexialConst.*;
-import static org.nexial.core.NexialConst.Data.*;
+import static org.nexial.core.NexialConst.Data.TEXT_DELIM;
+import static org.nexial.core.NexialConst.Data.TREAT_JSON_AS_IS;
 import static org.nexial.core.SystemVariables.getDefault;
 import static org.nexial.core.SystemVariables.getDefaultBool;
+import static org.nexial.core.utils.CheckUtils.requiresNotNull;
 
 public class JsonTransformer<T extends JsonDataType> extends Transformer {
     private static final Map<String, Integer> FUNCTION_TO_PARAM_LIST = discoverFunctions(JsonTransformer.class);
@@ -246,6 +250,20 @@ public class JsonTransformer<T extends JsonDataType> extends Transformer {
         String beautified = GSON.toJson(data.getValue());
         data.setValue(GSON.fromJson(beautified, JsonElement.class));
         data.setTextValue(beautified);
+        return data;
+    }
+
+    public T compact(T data, String removeEmpty) {
+        if (data == null || data.getValue() == null) { return null; }
+
+        JsonElement jsonElement = GSON_COMPRESSED.fromJson(data.getValue(), JsonElement.class);
+        requiresNotNull(jsonElement, "invalid json", data.getValue());
+
+        if (BooleanUtils.toBoolean(removeEmpty)) { jsonElement = JsonCommand.removeEmpty(jsonElement); }
+
+        String compressed = GSON_COMPRESSED.toJson(jsonElement);
+        data.setValue(GSON_COMPRESSED.fromJson(compressed, JsonElement.class));
+        data.setTextValue(compressed);
         return data;
     }
 
