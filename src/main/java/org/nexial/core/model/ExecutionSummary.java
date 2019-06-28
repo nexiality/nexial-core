@@ -47,8 +47,7 @@ import static java.util.Locale.US;
 import static org.apache.commons.lang3.SystemUtils.*;
 import static org.apache.poi.ss.usermodel.Row.MissingCellPolicy.CREATE_NULL_AS_BLANK;
 import static org.nexial.core.NexialConst.Data.*;
-import static org.nexial.core.NexialConst.RATE_FORMAT;
-import static org.nexial.core.NexialConst.TEST_START_TS;
+import static org.nexial.core.NexialConst.*;
 import static org.nexial.core.excel.Excel.MIN_EXCEL_FILE_SIZE;
 import static org.nexial.core.excel.ExcelConfig.*;
 import static org.nexial.core.model.ExecutionSummary.ExecutionLevel.ITERATION;
@@ -96,6 +95,7 @@ public class ExecutionSummary {
     private String runUser;
     private long startTime;
     private long endTime;
+    private int totalLevelPassed;
     private int totalSteps;
     private int passCount;
     private int failCount;
@@ -190,6 +190,8 @@ public class ExecutionSummary {
 
     public void setTotalSteps(int totalSteps) { this.totalSteps = totalSteps; }
 
+    public int getTotalLevelPassed() { return totalLevelPassed; }
+
     /** when a test step is skipped, we would need to adjust the total number of execution */
     public void adjustTotalSteps(int changeBy) { this.totalSteps += changeBy; }
 
@@ -264,7 +266,7 @@ public class ExecutionSummary {
 
     public String getName() { return name; }
 
-    public void setName(String name) { this.name = name; }
+    public void setName(String name) { this.name = handleWindowsChar(name); }
 
     public Map<String, String> getReferenceData() { return referenceData; }
 
@@ -296,6 +298,7 @@ public class ExecutionSummary {
         passCount = 0;
         failCount = 0;
         warnCount = 0;
+        totalLevelPassed = 0;
 
         nestedExecutions.forEach(nested -> {
             if (startTime == 0) { startTime = nested.startTime; }
@@ -309,6 +312,7 @@ public class ExecutionSummary {
             passCount += nested.passCount;
             failCount += nested.failCount;
             warnCount += nested.warnCount;
+            if (nested.executed == nested.passCount && nested.executed != 0) { totalLevelPassed++; }
         });
 
         if (context != null) {
@@ -440,6 +444,7 @@ public class ExecutionSummary {
                                                           DateUtility.formatLongDate(summary.endTime)));
         map.put("duration", ExecutionSummary.formatValue(DateUtility.formatStopWatchTime(summary.endTime -
                                                                                          summary.startTime)));
+        map.put("scenario passed", ExecutionSummary.formatValue(summary.resolveTotalScenariosPassed()));
         map.put("total steps", ExecutionSummary.formatValue(StringUtils.leftPad(summary.totalSteps + "", 4, " ")));
         map.put("executed steps", ExecutionSummary.formatStat(summary.executed, summary.totalSteps));
         map.put("passed", ExecutionSummary.formatStat(summary.passCount, summary.totalSteps));
@@ -804,5 +809,34 @@ public class ExecutionSummary {
         summary.runUser = null;
         summary.scriptFile = source.scriptFile;
         return summary;
+    }
+
+    public String resolveTotalScenariosPassed() {
+        int totalScenarios = 0;
+        int totalScenariosPassed = 0;
+
+        if (executionLevel == EXECUTION) {
+            for (ExecutionSummary nested : nestedExecutions) {
+                //  all scenarios passed in entire execution
+                for (ExecutionSummary nested1 : nested.nestedExecutions) {
+                    totalScenarios += nested1.nestedExecutions.size();
+                    totalScenariosPassed += nested1.totalLevelPassed;
+                }
+            }
+        } else if (executionLevel == SCRIPT) {
+            for (ExecutionSummary nested1 : nestedExecutions) {
+                totalScenarios += nested1.nestedExecutions.size();
+                totalScenariosPassed += nested1.totalLevelPassed;
+            }
+        }
+        return totalScenariosPassed + " / " + totalScenarios;
+    }
+
+    public boolean showPlan(ExecutionSummary executionSummary, int index) {
+        if (StringUtils.isBlank(planFile)) { return false; }
+        if (index == 0) { return true; }
+        // for concurrent script execution in plan
+        ExecutionSummary summary = executionSummary.getNestedExecutions().get(index - 1);
+        return !(StringUtils.equals(planFile, summary.planFile) && StringUtils.equals(planName, summary.planName));
     }
 }

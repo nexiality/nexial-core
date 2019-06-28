@@ -20,6 +20,8 @@ import org.junit.Assert;
 import org.junit.Test;
 import org.nexial.core.NexialConst.Data;
 
+import static org.nexial.core.NexialConst.handleWindowsChar;
+
 public class NexialConstTest {
 
     @Test
@@ -39,5 +41,13 @@ public class NexialConstTest {
 
         Assert.assertEquals("(empty)A", NexialConst.Data.treatCommonValueShorthand("(empty)A"));
         Assert.assertEquals("  A\n  ", NexialConst.Data.treatCommonValueShorthand("  A\n  "));
+    }
+
+    @Test
+    public void replaceWindowsChars() {
+        Assert.assertEquals(
+            handleWindowsChar(
+                "‘Nexial’ – as the name reflects our desire and intention to perfect the “art” and “science” of Software Testing…"),
+            "'Nexial' - as the name reflects our desire and intention to perfect the \"art\" and \"science\" of Software Testing...");
     }
 }

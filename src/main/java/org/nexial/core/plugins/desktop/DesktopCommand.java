@@ -990,8 +990,6 @@ public class DesktopCommand extends BaseCommand
     }
 
     public StepResult useTable(String var, String name) {
-        logDeprecated(getTarget() + " » useTable(var,name)", getTarget() + " » editTableCells(row,nameValues)");
-
         StepResult result = saveTableMetaData(var, name, true);
         // remove any stale data
         context.removeData(CURRENT_DESKTOP_TABLE_ROW);
@@ -1001,7 +999,10 @@ public class DesktopCommand extends BaseCommand
     }
 
     // todo: deprecated; removal candidate for v1.1
-    public StepResult scanTable(String var, String name) { return useTable(var, name); }
+    public StepResult scanTable(String var, String name) {
+        logDeprecated(getTarget() + " » scanTable(var,name)", getTarget() + " » useTable(var,name)");
+        return useTable(var, name);
+    }
 
     public StepResult assertTableRowContains(String row, String contains) {
         requiresPositiveNumber(row, "Invalid row index (zero-based)", row);
