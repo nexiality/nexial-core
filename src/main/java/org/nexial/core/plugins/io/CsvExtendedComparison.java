@@ -328,9 +328,7 @@ class CsvExtendedComparison implements Serializable {
             expectedHeaders.forEach(header -> fieldMapping.put(header, header));
         }
 
-        if (CollectionUtils.isNotEmpty(ignoreFields)) {
-            ignoreFields.forEach(ignore -> fieldMapping.remove(ignore));
-        }
+        if (CollectionUtils.isNotEmpty(ignoreFields)) { ignoreFields.forEach(ignore -> fieldMapping.remove(ignore)); }
     }
 
     private void parseActual() throws IOException {
@@ -367,9 +365,13 @@ class CsvExtendedComparison implements Serializable {
             String[] record = records.get(i);
             String identity = identityColumns.stream()
                                              .map(column -> {
-                                                 if (!recordMetadata.containsColumn(column)) { return ""; }
-                                                 int index = recordMetadata.indexOf(column);
-                                                 return ArrayUtils.getLength(record) > index ? record[index] : "";
+                                                 if (recordMetadata != null) {
+                                                     if (!recordMetadata.containsColumn(column)) { return ""; }
+                                                     int index = recordMetadata.indexOf(column);
+                                                     return ArrayUtils.getLength(record) > index ? record[index] : "";
+                                                 } else {
+                                                     return "";
+                                                 }
                                              })
                                              .collect(Collectors.joining(identSeparator));
             records.set(i, ArrayUtils.insert(0, record, identity));
@@ -395,6 +397,10 @@ class CsvExtendedComparison implements Serializable {
 
         if (CollectionUtils.isEmpty(actualIdentityColumns)) {
             throw new IntegrationConfigException("No identity column(s) specified for actual");
+        }
+
+        if (CollectionUtils.isEmpty(displayFields)) {
+            throw new IntegrationConfigException("No display column(s) specified");
         }
 
         if (expectedParser == null) { expectedParser = CsvCommand.newCsvParser(null, delimiter, null, true, -1); }

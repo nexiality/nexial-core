@@ -31,10 +31,10 @@ import org.nexial.core.plugins.io.CsvExtendedComparison.ReportFormat;
 import static org.nexial.core.plugins.io.CsvExtendedComparison.ReportFormat.*;
 
 public class CsvComparisonResult {
-    private List<String> expectedHeaders;
-    private List<String> actualHeaders;
-    private List<String> identityFields;
-    private List<String> displayFields;
+    private List<String> expectedHeaders = new ArrayList<>();
+    private List<String> actualHeaders = new ArrayList<>();
+    private List<String> identityFields = new ArrayList<>();
+    private List<String> displayFields = new ArrayList<>();
     private String mismatchedField = "MISMATCHED FIELD";
     private String expectedField = "EXPECTED";
     private String actualField = "ACTUAL";

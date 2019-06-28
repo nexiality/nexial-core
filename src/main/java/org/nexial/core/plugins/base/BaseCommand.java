@@ -163,7 +163,9 @@ public class BaseCommand implements NexialCommand {
         if (screenRecorder != null && screenRecorder.isVideoRunning()) {
             // can't support multiple simultaneous video recording
             StepResult result = stopRecording();
-            if (result.failed()) { error("Unable to stop previous recording in progress: " + result.getMessage()); }
+            if (result.failed()) {
+                return StepResult.fail("Unable to stop previous recording in progress: " + result.getMessage());
+            }
         }
 
         try {
