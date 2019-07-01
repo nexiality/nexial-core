@@ -531,16 +531,12 @@ public class BaseCommand implements NexialCommand {
 
     /** assert that {@code array} DOES NOT contains any items in {@code expected}. */
     public StepResult assertArrayNotContain(String array, String unexpected) {
-        requiresNotBlank(array, "array is blank", array);
-        requiresNotBlank(unexpected, "unexpected is blank", unexpected);
-
         // null corner case
         if (areBothEmpty(array, unexpected)) { return StepResult.fail("Both 'array' and 'unexpected' are NULL"); }
 
         String delim = context.getTextDelim();
 
         List<String> list = TextUtils.toList(array, delim, false);
-        // if (CollectionUtils.isEmpty(list)) { CheckUtils.fail("'array' cannot be parsed: " + array); }
         if (CollectionUtils.isEmpty(list)) { return StepResult.success("empty array found"); }
 
         List<String> unexpectedList = TextUtils.toList(unexpected, delim, false)
