@@ -13,7 +13,6 @@
       <th class="stats-label">Legend:</th>
       <td>
         <span class="compare-result-expected">E=EXPECTED</span>
-        &nbsp;
         <span class="compare-result-actual">A=ACTUAL</span>
       </td>
     </tr>
@@ -29,10 +28,10 @@
       </tr>
       </thead>
       <tbody>
-      <th:block th:each="match : ${report.fileMatches}">
-        <tr>
-          <td rowspan="2" class="compare-result-analysis"
-              data-th-utext="${match.message + '<br/>' + @org.nexial.commons.utils.TextUtils@toString(match.additionalMessages, '<br/>', '', '')}">
+      <th:block th:each="match,matchStat : ${report.fileMatches}">
+        <tr data-th-attr="class=${matchStat.index % 2 == 0 ? 'compare-result-row-even' : 'compare-result-row-odd'}">
+          <td rowspan="2" class="compare-result-analysis" data-th-classappend="${match.message == 'content matched exactly' ? 'compare-result-matched' : ''}"
+              data-th-utext="${match.message + '<br/>' + @org.nexial.commons.utils.TextUtils@toString(match.additionalMessages, '<br/>  ', '', '')}">
             MISMATCH DUE TO LETTER CASE
           </td>
           <td class="compare-result-expected">E</td>
@@ -41,23 +40,23 @@
             LINE CONTENT
           </td>
         </tr>
-        <tr>
+        <tr data-th-attr="class=${matchStat.index % 2 == 0 ? 'compare-result-row-even' : 'compare-result-row-odd'}">
           <td class="compare-result-actual">A</td>
           <td class="compare-result-actual-line">&nbsp;</td>
         <td class="compare-result-actual-content" data-th-utext="${'<code>' + match.actual + '</code>'}">CONTENT</td>
         </tr>
       </th:block>
-      <th:block th:each="match : ${report.lineMatches}">
-        <tr>
-          <td rowspan="2" class="compare-result-analysis"
-              data-th-utext="${match.message + '<br/>&nbsp;&nbsp;' + @org.nexial.commons.utils.TextUtils@toString(match.additionalMessages, '<br/>&nbsp;&nbsp;', '', '')}">
+      <th:block th:each="match,matchStat : ${report.lineMatches}">
+        <tr data-th-attr="class=${(report.fileMatches.size + matchStat.index) % 2 == 0 ? 'compare-result-row-even' : 'compare-result-row-odd'}">
+          <td rowspan="2" class="compare-result-analysis" data-th-classappend="${match.message == 'perfect match' ? 'compare-result-matched' : ''}"
+              data-th-utext="${match.message + '<br/>&nbsp;&nbsp;' + @org.nexial.commons.utils.TextUtils@toString(match.additionalMessages, '<br/>  ', '', '')}">
             MISMATCH DUE TO LETTER CASE
           </td>
           <td class="compare-result-expected">E</td>
           <td class="compare-result-expected-line" data-th-utext="${'<code>' + match.expectedLine + '</code>'}">1</td>
           <td class="compare-result-expected-content" data-th-utext="${'<code>' + match.expected + '</code>'}">CONTENT</td>
         </tr>
-        <tr>
+        <tr data-th-attr="class=${(report.fileMatches.size + matchStat.index) % 2 == 0 ? 'compare-result-row-even' : 'compare-result-row-odd'}">
           <td class="compare-result-actual">A</td>
           <td class="compare-result-actual-line" data-th-utext="${'<code>' + match.actualLine + '</code>'}">1</td>
           <td class="compare-result-actual-content" data-th-utext="${'<code>' + match.actual + '</code>'}">CONTENT</td>

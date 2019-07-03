@@ -760,8 +760,8 @@ public class IoCommand extends BaseCommand {
 
         try {
             if (FileUtils.contentEquals(expectedFile, actualFile)) {
-                report.addFileMismatch(file("files matched exactly"));
-                return StepResult.success("files matched exactly");
+                report.addFileMismatch(file(MSG_FILE_EXACT_MATCH));
+                return StepResult.success(MSG_FILE_EXACT_MATCH);
             }
 
             long expectedLength = expectedFile.length();

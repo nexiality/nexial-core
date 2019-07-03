@@ -32,6 +32,15 @@ import com.google.gson.annotations.SerializedName;
 import static org.nexial.core.plugins.io.ComparisonResult.ResultType.*;
 
 public class ComparisonResult implements Serializable {
+    public static final String MSG_FILE_EXACT_MATCH = "files matched exactly";
+    public static final String MSG_PERFECT_MATCH = "perfect match";
+    public static final String MSG_DIFFERENT_NUMBER_OF_LINES = "number of lines are different";
+    public static final String MSG_DIFFERENT_FILE_SIZE = "EXPECTED and ACTUAL sizes are different";
+    public static final String MSG_DIFFERENCE_IN_EOL = "difference in end-of-line characters";
+    public static final String MSG_ACTUAL_EXTRA_LINE = "extra line found in ACTUAL";
+    public static final String MSG_ACTUAL_MISSING_LINE = "missing line in ACTUAL";
+    public static final String MSG_CONTENT_EMPTY = " content is empty/blank";
+
     protected static final String EOL = "\r\n";
     protected static final String MISSING = "***** MISSING";
     protected static final String EOL_WIN = " CRLF (Windows)";
@@ -79,7 +88,7 @@ public class ComparisonResult implements Serializable {
         result.setLine(line);
         result.setExpected(content);
         result.setActual(content);
-        result.setMessage(StringUtils.defaultIfBlank(message, "perfect match"));
+        result.setMessage(StringUtils.defaultIfBlank(message, MSG_PERFECT_MATCH));
         result.setType(MATCHED);
         return result;
     }
@@ -94,10 +103,10 @@ public class ComparisonResult implements Serializable {
         result.setExpected(expected);
         result.setActual(actual);
         if (expected == null) {
-            result.setMessage("extra line found in ACTUAL");
+            result.setMessage(MSG_ACTUAL_EXTRA_LINE);
             result.setType(ADDED);
         } else {
-            result.setMessage("missing line in ACTUAL");
+            result.setMessage(MSG_ACTUAL_MISSING_LINE);
             result.setType(ResultType.MISSING);
         }
 
@@ -150,13 +159,13 @@ public class ComparisonResult implements Serializable {
         result.setLine(-1);
         result.setExpected(expected + " bytes");
         result.setActual(actual + " bytes");
-        result.setMessage("EXPECTED and ACTUAL sizes are different");
+        result.setMessage(MSG_DIFFERENT_FILE_SIZE);
         return result;
     }
 
     public static ComparisonResult contentEmpty(long expected, long actual) {
         ComparisonResult result = fileLineDiff(expected, actual);
-        result.setMessage((expected < 1 ? "EXPECTED" : actual < 1 ? "ACTUAL" : "BOTH ") + " content is empty/blank");
+        result.setMessage((expected < 1 ? "EXPECTED" : actual < 1 ? "ACTUAL" : "BOTH ") + MSG_CONTENT_EMPTY);
         return result;
     }
 
@@ -165,7 +174,7 @@ public class ComparisonResult implements Serializable {
         result.setLine(-1);
         result.setExpected(expected + " line" + (expected > 1 ? "s" : ""));
         result.setActual(actual + " line" + (actual > 1 ? "s" : ""));
-        result.setMessage("number of lines are different");
+        result.setMessage(MSG_DIFFERENT_NUMBER_OF_LINES);
         result.setType(MISMATCH);
         return result;
     }
@@ -181,7 +190,7 @@ public class ComparisonResult implements Serializable {
                          actualNL == 0 ? actualCR + EOL_WIN :
                          actualCR == 0 ? actualNL + EOL_NIX :
                          ("mixed/mostly " + (actualCR > actualNL ? EOL_WIN : EOL_NIX)));
-        result.setMessage("difference in end-of-line characters");
+        result.setMessage(MSG_DIFFERENCE_IN_EOL);
         return result;
     }
 

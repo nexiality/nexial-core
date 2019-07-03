@@ -39,6 +39,7 @@ import org.apache.commons.lang3.ArrayUtils;
 import org.apache.commons.lang3.BooleanUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.math.NumberUtils;
+import org.nexial.commons.utils.FileUtil;
 import org.nexial.commons.utils.JRegexUtils;
 import org.nexial.commons.utils.RegexUtils;
 import org.nexial.commons.utils.TextUtils;
@@ -56,6 +57,7 @@ import org.nexial.core.utils.CheckUtils;
 import org.nexial.core.utils.ConsoleUtils;
 import org.nexial.core.variable.Syspath;
 
+import static java.io.File.separator;
 import static java.lang.Boolean.FALSE;
 import static java.lang.Boolean.TRUE;
 import static java.lang.System.lineSeparator;
@@ -648,6 +650,31 @@ public class BaseCommand implements NexialCommand {
         int stepCount = NumberUtils.toInt(steps);
         requires(stepCount > 0, "At least 1 step is required", steps);
         return StepResult.success();
+    }
+
+    /**
+     * forcefully move a resource in the output directory to the cloud. <B>ONLY WORKS IF
+     * <code>nexial.outputToCloud</code> IS SET TO <code>true</code></B>
+     **/
+    public StepResult outputToCloud(String resource) {
+        requiresNotBlank(resource, "invalid resource", resource);
+
+        if (!context.isOutputToCloud()) { return StepResult.skipped("Execution not configured for cloud-based output");}
+
+        // resource is a fully-qualified file?
+        if (!FileUtil.isFileReadable(resource, 1)) {
+            // resource is relative path?
+            String fqResource = StringUtils.appendIfMissing(new Syspath().out("fullpath"), separator) + resource;
+            if (FileUtil.isFileReadable(fqResource, 1)) {
+                resource = fqResource;
+            } else {
+                return StepResult.fail("resource not found in OUTPUT directory: " + resource);
+            }
+        }
+
+        String msg = "resource move to cloud storage";
+        addLinkRef(msg, "Click here", resource);
+        return StepResult.success(msg);
     }
 
     /** Like JUnit's Assert.assertEquals, but handles "regexp:" strings like HTML Selenese */
