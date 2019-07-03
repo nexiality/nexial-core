@@ -213,7 +213,7 @@ public class TestStep extends TestStepManifest {
     public String generateFilename(String ext) {
         String filename = worksheet.getFile().getName() + "_"
                           + worksheet.getName() + "_"
-                          + getTestCase().getName() + "_"
+                          // + getTestCase().getName() + "_"
                           + getRow().get(0).getReference()
                           + (isExternalProgram() ? "_" + getParams().get(0) : "");
 

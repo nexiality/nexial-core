@@ -74,6 +74,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.slf4j.MDC;
 import org.springframework.context.support.ClassPathXmlApplicationContext;
+import org.thymeleaf.TemplateEngine;
 
 import static java.io.File.separator;
 import static java.lang.System.lineSeparator;
@@ -147,6 +148,7 @@ public class ExecutionContext {
     protected SoundMachine dj;
     protected SmsHelper smsHelper;
     protected NexialMailer nexialMailer;
+    protected TemplateEngine templateEngine;
     protected Map<String, String> defaultContextProps;
     protected List<String> readOnlyVars;
     protected List<String> referenceDataForExecution = new ArrayList<>();
@@ -367,6 +369,8 @@ public class ExecutionContext {
     public SmsHelper getSmsHelper() { return smsHelper; }
 
     public NexialMailer getNexialMailer() { return nexialMailer; }
+
+    public TemplateEngine getTemplateEngine() { return templateEngine; }
 
     public boolean isPluginLoaded(String target) { return plugins.isPluginLoaded(target); }
 
@@ -1881,6 +1885,9 @@ public class ExecutionContext {
         webdriverHelperConfig =
             springContext.getBean("webdriverHelperConfig", new HashMap<BrowserType, String>().getClass());
         webDriverExceptionHelper = springContext.getBean("webdriverExceptionHelper", WebDriverExceptionHelper.class);
+
+        // thymeleaf template engine
+        templateEngine = springContext.getBean("htmlTemplateEngine", TemplateEngine.class);
     }
 
     @NotNull

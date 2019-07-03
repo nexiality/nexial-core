@@ -44,6 +44,7 @@ public final class RegexUtils {
         if (StringUtils.isEmpty(text)) { return text; }
         if (StringUtils.isEmpty(regex)) { return text; }
 
+        replace = StringUtils.defaultString(replace);
         Pattern p = Pattern.compile(regex, REGEX_FLAGS);
 
         StringBuilder sb = new StringBuilder();

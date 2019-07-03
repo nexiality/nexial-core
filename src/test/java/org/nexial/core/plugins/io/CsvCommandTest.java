@@ -128,8 +128,7 @@ public class CsvCommandTest {
         fixture.addFileMismatch(file("file size differences found", "50952 bytes", "50112 bytes"));
         fixture.addFileMismatch(file("line count differences found", "19 lines", "17 lines"));
         fixture.addLineMismatch(line(0, "line difference found", "This is a test.  Do not be alarmed", "huh"));
-        command.logComparisonReport("LOG FILE", fixture, "log");
-        command.logComparisonReport("JSON FILE", fixture, "json");
+        command.logComparisonReport("LOG FILE", fixture);
 
         String logActual = FileUtils.readFileToString(logFile, DEF_FILE_ENCODING);
         logActual = StringUtils.trim(StringUtils.substringBefore(logActual, "*****"));
@@ -224,7 +223,7 @@ public class CsvCommandTest {
         LevenshteinResults lsr = levenshtein.apply(expected, actual);
         fixture.addLineMismatch(lineDiff(12, lsr, expected, actual));
 
-        command.logComparisonReport("LOG FILE", fixture, "log");
+        command.logComparisonReport("LOG FILE", fixture);
         // command.logComparisonReport("JSON FILE", fixture, "json");
 
         String logActual = FileUtils.readFileToString(logFile, DEF_FILE_ENCODING);

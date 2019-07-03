@@ -196,11 +196,11 @@ public class ComparisonResult implements Serializable {
 
     private void setType(ResultType type) { this.type = type; }
 
-    public String getExpected() { return expected; }
+    public String getExpected() { return StringUtils.defaultString(expected); }
 
     private void setExpected(String expected) { this.expected = expected == null ? MISSING : expected; }
 
-    public String getActual() { return actual; }
+    public String getActual() { return StringUtils.defaultString(actual); }
 
     private void setActual(String actual) { this.actual = actual == null ? MISSING : actual; }
 
@@ -225,11 +225,11 @@ public class ComparisonResult implements Serializable {
 
     public List<String> getAdditionalMessages() { return additionalMessages; }
 
-    protected int getExpectedLine() { return expectedLine; }
+    public int getExpectedLine() { return expectedLine; }
 
     private void setExpectedLine(int expectedLine) { this.expectedLine = expectedLine; }
 
-    protected int getActualLine() { return actualLine; }
+    public int getActualLine() { return actualLine; }
 
     private void setActualLine(int actualLine) { this.actualLine = actualLine; }
 

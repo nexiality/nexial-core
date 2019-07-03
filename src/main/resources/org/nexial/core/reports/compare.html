@@ -1,0 +1,70 @@
+<div class="compare-result" xmlns:th="http://www.thymeleaf.org">
+
+  <table class="compare-result-stats">
+    <tr>
+      <th class="stats-label">Generated on:</th>
+      <td class="stats-value" data-th-utext="${@org.nexial.commons.utils.DateUtility@format(@java.lang.System@currentTimeMillis(), 'yyyy-MM-dd HH:mm:ss')}"></td>
+    </tr>
+    <tr>
+      <th class="stats-label">Matches:</th>
+      <td class="stats-value" data-th-utext="${report.matchCount + ' lines matched / ' + report.mismatchCount + ' lines mismatched / ' + @org.nexial.core.plugins.io.IoCommand@formatPercent(report.matchPercent) + ' matched'}"></td>
+    </tr>
+    <tr>
+      <th class="stats-label">Legend:</th>
+      <td>
+        <span class="compare-result-expected">E=EXPECTED</span>
+        &nbsp;
+        <span class="compare-result-actual">A=ACTUAL</span>
+      </td>
+    </tr>
+  </table>
+
+  <th:block th:if="${report.hasMismatch}">
+    <table class="compare-result-table" cellpadding="5" cellspacing="0">
+      <thead>
+      <tr>
+        <th>ANALYSIS</th>
+        <th colspan="2">&nbsp;LINE#&nbsp;</th>
+        <th>CONTENT</th>
+      </tr>
+      </thead>
+      <tbody>
+      <th:block th:each="match : ${report.fileMatches}">
+        <tr>
+          <td rowspan="2" class="compare-result-analysis"
+              data-th-utext="${match.message + '<br/>' + @org.nexial.commons.utils.TextUtils@toString(match.additionalMessages, '<br/>', '', '')}">
+            MISMATCH DUE TO LETTER CASE
+          </td>
+          <td class="compare-result-expected">E</td>
+          <td class="compare-result-expected-line">&nbsp;</td>
+          <td class="compare-result-expected-content" data-th-utext="${'<code>' + match.expected + '</code>'}">EXPECTED
+            LINE CONTENT
+          </td>
+        </tr>
+        <tr>
+          <td class="compare-result-actual">A</td>
+          <td class="compare-result-actual-line">&nbsp;</td>
+        <td class="compare-result-actual-content" data-th-utext="${'<code>' + match.actual + '</code>'}">CONTENT</td>
+        </tr>
+      </th:block>
+      <th:block th:each="match : ${report.lineMatches}">
+        <tr>
+          <td rowspan="2" class="compare-result-analysis"
+              data-th-utext="${match.message + '<br/>&nbsp;&nbsp;' + @org.nexial.commons.utils.TextUtils@toString(match.additionalMessages, '<br/>&nbsp;&nbsp;', '', '')}">
+            MISMATCH DUE TO LETTER CASE
+          </td>
+          <td class="compare-result-expected">E</td>
+          <td class="compare-result-expected-line" data-th-utext="${'<code>' + match.expectedLine + '</code>'}">1</td>
+          <td class="compare-result-expected-content" data-th-utext="${'<code>' + match.expected + '</code>'}">CONTENT</td>
+        </tr>
+        <tr>
+          <td class="compare-result-actual">A</td>
+          <td class="compare-result-actual-line" data-th-utext="${'<code>' + match.actualLine + '</code>'}">1</td>
+          <td class="compare-result-actual-content" data-th-utext="${'<code>' + match.actual + '</code>'}">CONTENT</td>
+        </tr>
+      </th:block>
+      </tbody>
+    </table>
+  </th:block>
+
+</div>

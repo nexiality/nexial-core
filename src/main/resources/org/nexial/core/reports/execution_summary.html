@@ -193,7 +193,7 @@
 
                 <th:block data-th-if="${script.nestedExecutions}" data-th-each="iteration : ${script.nestedExecutions}">
                 <tr data-th-class="'record iter ' + ${iteration.failCount > 0 ? 'hasFailure' : 'noFailure'}">
-                    <td class="value value-title" data-th-attr="title=${iteration.name}" data-th-with="referenceData=${@org.nexial.commons.utils.CollectionUtil@removeEmptyEntries(iteration.referenceData)}">
+                    <td colspan="3" class="value value-title" data-th-attr="title=${iteration.name}" data-th-with="referenceData=${@org.nexial.commons.utils.CollectionUtil@removeEmptyEntries(iteration.referenceData)}">
                         <a target="_nexial_link" data-th-href="${iteration.testScriptLink}" data-th-utext="${'Execution Result (' + iteration.name + ')'}">myscript.001.xlsx</a>
                         <div class="value-scriptRef" data-th-if="${referenceData.size() > 0}">
                             <i class="fas fa-info-circle info" title="Reference Data labeled as nexial.scriptRef.*"></i>
@@ -209,7 +209,6 @@
                             </table>
                         </div>
                     </td>
-                    <td colspan="2" class="value spacer">&nbsp;</td>
                     <td class="value value-scenarioPassed" data-th-utext="${iteration.totalLevelPassed + ' / ' + iteration.nestedExecutions.size()}">1 / 2</td>
                     <td class="value value-datetime" data-th-utext="${#dates.format(new java.util.Date(iteration.startTime), 'yyyy/MM/dd HH:mm:ss')}">2018/12/16 12:53:21</td>
                     <td class="value value-time value-tally" data-th-utext="${#dates.format(#dates.create(0,0,0,0,0,0, (iteration.endTime - iteration.startTime)), 'HH:mm:ss')}">00:42:11</td>
@@ -224,7 +223,7 @@
                 <th:block data-th-if="${iteration.nestedExecutions}" data-th-each="scenario : ${iteration.nestedExecutions}">
                 <tr data-th-class="'record scenario ' + ${scenario.failCount > 0 ? 'hasFailure' : 'noFailure'}">
                     <td class="value spacer2">&nbsp;</td>
-                    <td class="value value-title" data-th-attr="title=${scenario.name}" data-th-with="referenceData=${@org.nexial.commons.utils.CollectionUtil@removeEmptyEntries(scenario.referenceData)}">
+                    <td colspan="3" class="value value-title" data-th-attr="title=${scenario.name}" data-th-with="referenceData=${@org.nexial.commons.utils.CollectionUtil@removeEmptyEntries(scenario.referenceData)}">
                         <th:block data-th-utext="${scenario.name}">Scenario 123.7</th:block>
                         <div class="value-scenarioRef" data-th-if="${referenceData.size() > 0}">
                             <i class="fas fa-info-circle info" title="Reference Data labeled as nexial.scenarioRef.*"></i>
@@ -238,8 +237,6 @@
                             </table>
                         </div>
                     </td>
-                    <td colspan="2" class="value spacer"></td>
-
                     <td class="value value-datetime" data-th-utext="${#dates.format(new java.util.Date(scenario.startTime), 'yyyy/MM/dd HH:mm:ss')}">2018/12/16 12:53:21</td>
                     <td class="value value-time value-tally" data-th-utext="${#dates.format(#dates.create(0,0,0,0,0,0, (scenario.endTime - scenario.startTime)), 'HH:mm:ss')}">00:42:11</td>
                     <td class="value value-num value-tally" data-th-utext="${#numbers.formatInteger(scenario.executed, 1, 'DEFAULT')}">23456</td>
@@ -253,9 +250,7 @@
                 <th:block data-th-if="${scenario.nestedExecutions}" data-th-each="activity : ${scenario.nestedExecutions}">
                 <tr data-th-class="'record activity ' + ${activity.failCount > 0 ? 'hasFailure' : 'noFailure'}">
                     <td colspan="2" class="value spacer2"></td>
-                    <td class="value value-title" data-th-utext="${activity.name}" data-th-attr="title=${activity.name}">Act 1</td>
-                    <td class="value spacer2"></td>
-
+                    <td colspan="2" class="value value-title" data-th-utext="${activity.name}" data-th-attr="title=${activity.name}">Act 1</td>
                     <td class="value value-datetime" data-th-utext="${#dates.format(new java.util.Date(activity.startTime), 'yyyy/MM/dd HH:mm:ss')}">2018/12/16 12:53:21</td>
                     <td class="value value-time" data-th-utext="${#dates.format(#dates.create(0,0,0,0,0,0, (activity.endTime - activity.startTime)), 'HH:mm:ss')}">00:42:11</td>
                     <td class="value value-num" data-th-utext="${#numbers.formatInteger(activity.executed, 1, 'DEFAULT')}">23456</td>

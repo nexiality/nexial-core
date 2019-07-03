@@ -129,6 +129,8 @@ public class ExpressionProcessorTest {
                                                 "                          replace( ,\\,) pack list(\\,)]" +
                                                 " - and they are [TEXT(good for you) => upper]!");
         Assert.assertEquals("I love Apple,Strawberry,Banana - and they are GOOD FOR YOU!", replaced);
+
+        Assert.assertEquals("Rainer", context.replaceTokens("[TEXT(Ra.iner) => replace(.,)]"));
     }
 
     @Test

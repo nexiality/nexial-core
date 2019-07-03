@@ -980,31 +980,35 @@ public class IoCommand extends BaseCommand {
         return compareMode == DIFF ? createDiff(diffVar, report) : failContentComparison(report);
     }
 
-    protected void logComparisonReport(String caption, FileComparisonReport report, String type) {
-        if (StringUtils.isBlank(type) || report == null || !report.hasMismatch()) { return; }
+    protected void logComparisonReport(String caption, FileComparisonReport report) {
+        if (report == null || !report.hasMismatch()) { return; }
 
         boolean genLogFile = context.getBooleanData(GEN_COMPARE_LOG, getDefaultBool(GEN_COMPARE_LOG));
-        if (StringUtils.equals(type, COMPARE_LOG_PLAIN) && !genLogFile) { return; }
-
         boolean genJsonFile = context.getBooleanData(GEN_COMPARE_JSON, getDefaultBool(GEN_COMPARE_JSON));
-        if (StringUtils.equals(type, COMPARE_LOG_JSON) && !genJsonFile) { return; }
+        boolean genHtmlFile = context.getBooleanData(GEN_COMPARE_HTML, getDefaultBool(GEN_COMPARE_HTML));
+        if (!genLogFile && !genJsonFile && !genHtmlFile) { return; }
 
-        String stats = null;
         if (report.getMatchCount() != 0 || report.getMismatchCount() != 0) {
-            stats = "Lines matched: " + report.getMatchCount() + ", " +
-                    "Lines mismatched: " + report.getMismatchCount() + ". " +
-                    "Match percentage: " + IoCommand.formatPercent(report.getMatchPercent());
+            caption += lineSeparator() +
+                       "Lines matched: " + report.getMatchCount() + ", " +
+                       "Lines mismatched: " + report.getMismatchCount() + ". " +
+                       "Match percentage: " + IoCommand.formatPercent(report.getMatchPercent());
         }
-
-        String output = null;
-        if (StringUtils.equals(type, COMPARE_LOG_PLAIN)) { output = report.toPlainTextReport(); }
-        if (StringUtils.equals(type, COMPARE_LOG_JSON)) { output = report.toJsonReport(); }
-        if (StringUtils.isEmpty(output)) { ConsoleUtils.error("logComparisonReport(): INVALID REPORT TYPE " + type); }
-
-        if (stats != null) { caption += lineSeparator() + stats; }
         caption += " (click link on the right for details)";
 
-        addOutputAsLink(caption, output, type);
+        if (genLogFile) { addComparisonReportAsLink(caption, report.toPlainTextReport(), "log"); }
+
+        if (genJsonFile) { addComparisonReportAsLink(caption, report.toJsonReport(), "json"); }
+
+        if (genHtmlFile) { addComparisonReportAsLink(caption, report.toHtmlReport(context), "html"); }
+    }
+
+    protected void addComparisonReportAsLink(String caption, String output, String extension) {
+        if (StringUtils.isEmpty(output)) {
+            ConsoleUtils.error("Unable to generate comparison report. Output not found");
+        } else {
+            addOutputAsLink(caption, output, extension);
+        }
     }
 
     protected int scanForMatchingRow(String matchTo, List<String> matchFrom, int startFrom) {
@@ -1030,20 +1034,12 @@ public class IoCommand extends BaseCommand {
     }
 
     protected StepResult failContentComparison(String message, FileComparisonReport results) {
-        if (results.hasMismatch()) {
-            logComparisonReport(message, results, "log");
-            logComparisonReport(message, results, "json");
-        }
-
+        if (results.hasMismatch()) { logComparisonReport(message, results); }
         return StepResult.fail(message);
     }
 
     protected StepResult passContentComparison(String message, FileComparisonReport results) {
-        if (results != null) {
-            logComparisonReport(message, results, "log");
-            logComparisonReport(message, results, "json");
-        }
-
+        if (results != null) { logComparisonReport(message, results); }
         return StepResult.success(message);
     }
 
@@ -1060,15 +1056,11 @@ public class IoCommand extends BaseCommand {
             File file = new File(filePath);
             boolean flag = true;
             for (NexialFilter filter : filterList) {
-                if (filter.isMatch(FileMeta.findFileMetaData(filter.getSubject(), file))) {
-                    continue;
-                }
+                if (filter.isMatch(FileMeta.findFileMetaData(filter.getSubject(), file))) { continue; }
                 flag = false;
                 break;
             }
-            if (flag) {
-                result.add(filePath);
-            }
+            if (flag) { result.add(filePath); }
         });
         return result;
     }

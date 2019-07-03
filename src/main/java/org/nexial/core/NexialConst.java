@@ -1057,11 +1057,12 @@ public final class NexialConst {
         public static final String REPEAT_DESCRIPTION_PREFIX = "▼ ";
 
         // io
-        public static final String COMPARE_LOG_PLAIN = "log";
-        public static final String COMPARE_LOG_JSON = "json";
+        // public static final String COMPARE_LOG_PLAIN = "log";
+        // public static final String COMPARE_LOG_JSON = "json";
         public static final String NAMESPACE_COMPARE = NAMESPACE + "compare.";
         public static final String GEN_COMPARE_LOG = registerSystemVariable(NAMESPACE_COMPARE + "textReport", true);
         public static final String GEN_COMPARE_JSON = registerSystemVariable(NAMESPACE_COMPARE + "jsonReport", false);
+        public static final String GEN_COMPARE_HTML = registerSystemVariable(NAMESPACE_COMPARE + "htmlReport", false);
         public static final String LOG_MATCH = registerSystemVariable(NAMESPACE_COMPARE + "reportMatch", false);
         public static final String MAPPING_EXCEL = ".mappingExcel";
         public static final String CONFIG_JSON = ".configJson";

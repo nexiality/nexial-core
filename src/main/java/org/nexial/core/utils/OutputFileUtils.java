@@ -35,6 +35,8 @@ import org.nexial.core.model.ExecutionContext;
 import org.nexial.core.model.ExecutionDefinition;
 import org.nexial.core.model.TestStep;
 import org.nexial.core.plugins.web.Browser;
+import org.nexial.core.plugins.ws.Response;
+import org.nexial.core.plugins.ws.WebServiceClient;
 
 import static java.io.File.separator;
 import static org.nexial.core.NexialConst.*;
@@ -182,7 +184,16 @@ public final class OutputFileUtils {
         }
 
         // we can't have NL or CR or TAB character in filename
-        if (!FileUtil.isSuitableAsPath(contentOrFile) || !FileUtil.isFileReadable(contentOrFile)) {
+        boolean mightBeFilePath = FileUtil.isSuitableAsPath(contentOrFile);
+
+        if (mightBeFilePath && RegexUtils.isExact(contentOrFile.toLowerCase(), "^https?\\:\\/\\/(.+)$")) {
+            // must be HTTP-backed file
+            String content = resolveWebContent(contentOrFile);
+            content = compact ? StringUtils.trim(content) : content;
+            return replaceTokens ? context.replaceTokens(content) : content;
+        }
+
+        if (!mightBeFilePath || !FileUtil.isFileReadable(contentOrFile)) {
             // must be just content (not file)
             String content = compact ? StringUtils.trim(contentOrFile) : contentOrFile;
             return replaceTokens ? context.replaceTokens(content) : content;
@@ -308,6 +319,14 @@ public final class OutputFileUtils {
                execDef.getPlanFilename() + DELIM +
                StringUtils.leftPad(execDef.getPlanSequence() + "", 3, "0") + PLAN_SCRIPT_SEP +
                outputFileName;
+    }
+
+    protected static String resolveWebContent(String url) throws IOException {
+        WebServiceClient wsClient = new WebServiceClient(null);
+        Response response = wsClient.get(url, null);
+        int returnCode = response.getReturnCode();
+        if (returnCode > 199 && returnCode < 300) { return response.getBody(); }
+        throw new IOException("Unable to retrieve content from '" + url + "': " + response.getStatusText());
     }
 
     private static String get(String file, int position) {

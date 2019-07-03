@@ -209,7 +209,7 @@ public class TextTransformer<T extends TextDataType> extends Transformer {
         if (data == null || StringUtils.isEmpty(data.getTextValue()) || StringUtils.isEmpty(searchFor)) { return data;}
         data.setValue(StringUtils.replace(data.getTextValue(),
                                           fixControlChars(searchFor),
-                                          fixControlChars(replaceWith)));
+                                          StringUtils.defaultString(fixControlChars(replaceWith))));
         return data;
     }
 
