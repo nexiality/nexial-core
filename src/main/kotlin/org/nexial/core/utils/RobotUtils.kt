@@ -37,7 +37,7 @@ object KeystrokeParser {
     private val MODIFIERS =
         mapOf("{SHIFT}" to VK_SHIFT,
               "{CONTROL}" to VK_CONTROL,
-              "{ALT}" to VK_ALT,
+              "{ALT}" to VK_ALT, "{OPTION}" to VK_ALT,
               "{WINDOWS}" to VK_WINDOWS, "{WIN}" to VK_WINDOWS,
               "{CONTEXT}" to VK_CONTEXT_MENU,
               "{META}" to VK_META, "{COMMAND}" to VK_META)
@@ -72,34 +72,36 @@ object KeystrokeParser {
 
               "+" to VK_ADD, "-" to VK_SUBTRACT, "/" to VK_DIVIDE, "*" to VK_MULTIPLY, "." to VK_DECIMAL,
 
-              "`" to VK_BACK_QUOTE, "~" to VK_DEAD_TILDE,
-              "!" to VK_EXCLAMATION_MARK,
-              "@" to VK_AT,
-              "#" to VK_NUMBER_SIGN,
-              "$" to VK_DOLLAR,
+              "`" to VK_BACK_QUOTE, "~" to VK_BACK_QUOTE,
+              "!" to VK_1,
+              "@" to VK_2,
+              "#" to VK_3,
+              "$" to VK_4,
               "%" to VK_5,
-              "^" to VK_CIRCUMFLEX,
-              "&" to VK_AMPERSAND,
-              "*" to VK_ASTERISK,
-              "(" to VK_LEFT_PARENTHESIS,
-              ")" to VK_RIGHT_PARENTHESIS,
-              "-" to VK_MINUS, "_" to VK_UNDERSCORE,
-              "+" to VK_PLUS, "=" to VK_EQUALS,
+              "^" to VK_6,
+              "&" to VK_7,
+              "*" to VK_8,
+              "(" to VK_9,
+              ")" to VK_0,
+              "-" to VK_MINUS, "_" to VK_MINUS,
+              "=" to VK_EQUALS, "+" to VK_EQUALS,
 
-              "{" to VK_BRACELEFT, "[" to VK_OPEN_BRACKET,
-              "}" to VK_BRACERIGHT, "]" to VK_CLOSE_BRACKET,
-              "|" to VK_BACK_SLASH, "\\" to VK_BACK_SLASH,
+              "[" to VK_OPEN_BRACKET, "{" to VK_OPEN_BRACKET,
+              "]" to VK_CLOSE_BRACKET, "}" to VK_CLOSE_BRACKET,
+              "\\" to VK_BACK_SLASH, "|" to VK_BACK_SLASH,
 
-              ":" to VK_COLON, ";" to VK_SEMICOLON,
-              "\"" to VK_QUOTEDBL, "'" to VK_QUOTE,
+              ";" to VK_SEMICOLON, ":" to VK_SEMICOLON,
+              "'" to VK_QUOTE, "\"" to VK_QUOTE,
 
-              "<" to VK_LESS, "," to VK_COMMA,
-              ">" to VK_GREATER, "." to VK_PERIOD,
-              "?" to VK_SLASH, "/" to VK_SLASH,
+              "," to VK_COMMA, "<" to VK_COMMA,
+              "." to VK_PERIOD, ">" to VK_PERIOD,
+              "/" to VK_SLASH, "?" to VK_SLASH,
+              " " to VK_SPACE,
 
               "€" to VK_EURO_SIGN, "¡" to VK_INVERTED_EXCLAMATION_MARK)
 
-    private val NEED_SHIFT = listOf("%", "|", "?")
+    private val NEED_SHIFT = listOf("~", "!", "@", "#", "$", "%", "^", "&", "*", "(", ")", "_", "+",
+                                    "{", "}", "|", ":", "\"", "<", ">", "?")
 
     @JvmStatic
     fun handleKey(robot: Robot, keystrokes: List<String>) {

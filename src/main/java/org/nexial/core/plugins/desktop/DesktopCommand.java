@@ -38,7 +38,6 @@ import org.nexial.core.model.TestStep;
 import org.nexial.core.plugins.CanLogExternally;
 import org.nexial.core.plugins.CanTakeScreenshot;
 import org.nexial.core.plugins.ForcefulTerminate;
-import org.nexial.core.plugins.RequireWinium;
 import org.nexial.core.plugins.base.BaseCommand;
 import org.nexial.core.plugins.base.NumberCommand;
 import org.nexial.core.plugins.base.ScreenshotUtils;
@@ -77,8 +76,7 @@ import static org.nexial.core.plugins.desktop.DesktopUtils.*;
 import static org.nexial.core.plugins.desktop.ElementType.*;
 import static org.nexial.core.utils.CheckUtils.*;
 
-public class DesktopCommand extends BaseCommand
-    implements RequireWinium, ForcefulTerminate, CanTakeScreenshot, CanLogExternally {
+public class DesktopCommand extends BaseCommand implements ForcefulTerminate, CanTakeScreenshot, CanLogExternally {
 
     protected static final Map<String, Class<? extends By>> SUPPORTED_FIND_BY = initSupportedFindBys();
 
@@ -89,32 +87,11 @@ public class DesktopCommand extends BaseCommand
     public void init(ExecutionContext context) {
         super.init(context);
         ShutdownAdvisor.addAdvisor(this);
-        // todo need a way to load winium driver dynamically. we have that in nextgen, but need one for this class
-        // if (!context.getBooleanData(WINIUM_LAZY_LOAD, DEF_WINIUM_LAZY_LOAD)) { winiumDriver = initWinium(context); }
         numberCommand = (NumberCommand) context.findPlugin("number");
     }
 
     @Override
     public String getTarget() { return "desktop"; }
-
-    @Override
-    public WiniumDriver initWinium(ExecutionContext context) {
-        // String autPath = context.getStringData(TARGET_DESKTOP_APP);
-        // if (StringUtils.isBlank(autPath)) {
-        // 	throw new RuntimeException("No " + TARGET_DESKTOP_APP + " variable defined; cannot continue");
-        // }
-        //
-        // String autParams = context.getStringData(TARGET_DESKTOP_APP_PARAMS);
-        //
-        // try {
-        // 	return context.getWiniumDriver(autPath, autParams);
-        // } catch (IOException e) {
-        // 	throw new RuntimeException("Unable to proceed to due " + e.getMessage(), e);
-        // }
-        ConsoleUtils.error(this.getClass().getSimpleName() + ".initWinium(): unable to resolve winium driver " +
-                           "since AUT information not yet available");
-        return null;
-    }
 
     @Override
     public boolean mustForcefullyTerminate() {
@@ -493,6 +470,7 @@ public class DesktopCommand extends BaseCommand
 
         if (!supported) { return StepResult.skipped("current operating system not supported: '" + os + "'"); }
 
+        ConsoleUtils.log("simulating keystrokes: " + keystrokes);
         RobotUtils.typeKeys(TextUtils.toList(StringUtils.remove(keystrokes, "\r"), "\n", false));
         return StepResult.success("type keys completed for " + keystrokes);
     }

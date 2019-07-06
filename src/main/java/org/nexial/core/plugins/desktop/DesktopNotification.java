@@ -30,6 +30,7 @@ import org.nexial.core.model.TestProject;
 import org.nexial.core.utils.ConsoleUtils;
 
 import static java.io.File.separator;
+import static org.apache.commons.lang3.SystemUtils.IS_OS_WINDOWS;
 import static org.nexial.core.NexialConst.Project.NEXIAL_WINDOWS_BIN_REL_PATH;
 import static org.nexial.core.plugins.desktop.DesktopNotification.NotificationLevel.info;
 
@@ -44,6 +45,7 @@ public class DesktopNotification {
     private DesktopNotification() { }
 
     public static void notify(NotificationLevel level, String message, long autoDismissMs) {
+        if (!IS_OS_WINDOWS) { return; }
         if (StringUtils.isBlank(message)) { return; }
         if (autoDismissMs < 500) { autoDismissMs = DEF_AUTO_DISMISS_MS; }
 
@@ -63,6 +65,7 @@ public class DesktopNotification {
     }
 
     public static void notifyNoAutoDismiss(NotificationLevel level, String message) {
+        if (!IS_OS_WINDOWS) { return; }
         if (StringUtils.isBlank(message)) { return; }
 
         init();
@@ -86,6 +89,7 @@ public class DesktopNotification {
     }
 
     private static void init() {
+        if (!IS_OS_WINDOWS) { return; }
         if (StringUtils.isNotBlank(DesktopNotification.notifierPath)) { return; }
 
         String msgPrefix = "Unable to determine notifier path since ";
