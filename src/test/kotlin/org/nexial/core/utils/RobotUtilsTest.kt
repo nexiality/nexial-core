@@ -51,21 +51,21 @@ class RobotUtilsTest {
     @Test
     @Throws(Exception::class)
     fun toKeystrokes_multiple_keys() {
-        val fixture = "this is a test"
+        val fixture = "this is a TEST"
         val keystrokes = KeystrokeParser.toKeystrokes(fixture)
         println(keystrokes)
 
         Assert.assertNotNull(keystrokes)
         Assert.assertEquals(14, keystrokes.size)
-        Assert.assertEquals("T", keystrokes[0])
-        Assert.assertEquals("H", keystrokes[1])
-        Assert.assertEquals("I", keystrokes[2])
-        Assert.assertEquals("S", keystrokes[3])
+        Assert.assertEquals("t", keystrokes[0])
+        Assert.assertEquals("h", keystrokes[1])
+        Assert.assertEquals("i", keystrokes[2])
+        Assert.assertEquals("s", keystrokes[3])
         Assert.assertEquals(" ", keystrokes[4])
-        Assert.assertEquals("I", keystrokes[5])
-        Assert.assertEquals("S", keystrokes[6])
+        Assert.assertEquals("i", keystrokes[5])
+        Assert.assertEquals("s", keystrokes[6])
         Assert.assertEquals(" ", keystrokes[7])
-        Assert.assertEquals("A", keystrokes[8])
+        Assert.assertEquals("a", keystrokes[8])
         Assert.assertEquals(" ", keystrokes[9])
         Assert.assertEquals("T", keystrokes[10])
         Assert.assertEquals("E", keystrokes[11])
