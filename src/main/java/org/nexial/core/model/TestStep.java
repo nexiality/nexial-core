@@ -433,7 +433,7 @@ public class TestStep extends TestStepManifest {
         try {
             String screenshotPath = agent.takeScreenshot(this);
             if (StringUtils.isBlank(screenshotPath)) {
-                log("Unable to capture screenshot");
+                log("Unable to capture screenshot - " + result.getMessage());
                 return null;
             }
 
@@ -636,9 +636,13 @@ public class TestStep extends TestStepManifest {
                     if (StringUtils.isNotBlank(screenshotPath)) {
                         addNestedScreenCapture(screenshotPath, message);
                     } else {
-                        context.getLogger().error(this, "Unable to capture screenshot");
+                        context.getLogger().error(this, "Unable to capture screenshot - " + message);
                     }
+                } else {
+                    context.getLogger().error(this, message);
                 }
+            } else {
+                addNestedMessage(message);
             }
         } else {
             addNestedMessage(message);

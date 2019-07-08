@@ -768,6 +768,7 @@ public class WebCommand extends BaseCommand implements CanTakeScreenshot, CanLog
     public StepResult assertAttribute(String locator, String attrName, String value) {
         try {
             String actual = getAttributeValue(locator, attrName);
+            ConsoleUtils.log("Element '" + locator + "' attribute '" + attrName + "' yielded '" + actual + "'");
             if (actual == null) {
                 boolean expectsNull = context.isNullValue(value);
                 return new StepResult(expectsNull,

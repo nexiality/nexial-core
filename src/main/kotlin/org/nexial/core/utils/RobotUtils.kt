@@ -63,12 +63,16 @@ object KeystrokeParser {
               "{ENTER}" to VK_ENTER)
 
     private val KEYS =
-        mapOf("0" to VK_0, "1" to VK_1, "2" to VK_2, "3" to VK_3, "4" to VK_4,
-              "5" to VK_5, "6" to VK_6, "7" to VK_7, "8" to VK_8, "9" to VK_9,
+        mapOf("0" to VK_0, "1" to VK_1, "2" to VK_2, "3" to VK_3, "4" to VK_4, "5" to VK_5, "6" to VK_6, "7" to VK_7,
+              "8" to VK_8, "9" to VK_9,
               "A" to VK_A, "B" to VK_B, "C" to VK_C, "D" to VK_D, "E" to VK_E, "F" to VK_F, "G" to VK_G, "H" to VK_H,
               "I" to VK_I, "J" to VK_J, "K" to VK_K, "L" to VK_L, "M" to VK_M, "N" to VK_N, "O" to VK_O, "P" to VK_P,
               "Q" to VK_Q, "R" to VK_R, "S" to VK_S, "T" to VK_T, "U" to VK_U, "V" to VK_V, "W" to VK_W, "X" to VK_X,
               "Y" to VK_Y, "Z" to VK_Z,
+              "a" to VK_A, "b" to VK_B, "c" to VK_C, "d" to VK_D, "e" to VK_E, "f" to VK_F, "g" to VK_G, "h" to VK_H,
+              "i" to VK_I, "j" to VK_J, "k" to VK_K, "l" to VK_L, "m" to VK_M, "n" to VK_N, "o" to VK_O, "p" to VK_P,
+              "q" to VK_Q, "r" to VK_R, "s" to VK_S, "t" to VK_T, "u" to VK_U, "v" to VK_V, "w" to VK_W, "x" to VK_X,
+              "y" to VK_Y, "z" to VK_Z,
 
               "+" to VK_ADD, "-" to VK_SUBTRACT, "/" to VK_DIVIDE, "*" to VK_MULTIPLY, "." to VK_DECIMAL,
 
@@ -101,7 +105,9 @@ object KeystrokeParser {
               "€" to VK_EURO_SIGN, "¡" to VK_INVERTED_EXCLAMATION_MARK)
 
     private val NEED_SHIFT = listOf("~", "!", "@", "#", "$", "%", "^", "&", "*", "(", ")", "_", "+",
-                                    "{", "}", "|", ":", "\"", "<", ">", "?")
+                                    "{", "}", "|", ":", "\"", "<", ">", "?",
+                                    "A", "B", "C", "D", "E", "F", "G", "H", "I", "J", "K", "L", "M",
+                                    "N", "O", "P", "Q", "R", "S", "T", "U", "V", "W", "X", "Y", "Z")
 
     @JvmStatic
     fun handleKey(robot: Robot, keystrokes: List<String>) {
@@ -148,7 +154,7 @@ object KeystrokeParser {
 
         val keystrokes = mutableListOf<String>()
 
-        var allKeys = keys.toUpperCase()
+        var allKeys = keys
         while (allKeys != "") {
             allKeys = if (allKeys.contains(Regex("\\{.+}"))) {
                 val indexStart = allKeys.indexOf("{")

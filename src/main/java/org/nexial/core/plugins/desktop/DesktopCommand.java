@@ -95,7 +95,10 @@ public class DesktopCommand extends BaseCommand implements ForcefulTerminate, Ca
 
     @Override
     public boolean mustForcefullyTerminate() {
-        return winiumDriver != null && getDriver() != null && context.getBooleanData(WINIUM_SERVICE_RUNNING);
+        return IS_OS_WINDOWS &&
+               winiumDriver != null &&
+               getDriver() != null &&
+               context.getBooleanData(WINIUM_SERVICE_RUNNING);
     }
 
     @Override
@@ -1567,6 +1570,11 @@ public class DesktopCommand extends BaseCommand implements ForcefulTerminate, Ca
     }
 
     protected WiniumDriver getDriver() {
+        if (!IS_OS_WINDOWS) {
+            ConsoleUtils.log("Winium requires Windows OS");
+            return null;
+        }
+
         DesktopSession session = getCurrentSession();
         if (session != null) { return session.getDriver(); }
 

@@ -49,6 +49,7 @@ import org.openqa.selenium.winium.WiniumDriverService;
 import com.google.common.collect.ImmutableList;
 
 import static java.io.File.separator;
+import static org.apache.commons.lang3.SystemUtils.IS_OS_WINDOWS;
 import static org.nexial.commons.proc.ProcessInvoker.WORKING_DIRECTORY;
 import static org.nexial.core.NexialConst.*;
 import static org.nexial.core.NexialConst.Data.*;
@@ -94,6 +95,11 @@ public final class WiniumUtils {
     }
 
     public static WiniumDriver newWiniumInstance(Aut aut) throws IOException {
+        if (!IS_OS_WINDOWS) {
+            ConsoleUtils.log("Winium requires Windows OS");
+            return null;
+        }
+
         if (aut == null) { throw new IOException("No AUT defined"); }
         if (StringUtils.isBlank(aut.getPath())) { throw new IOException("EXE path for AUT is missing"); }
         if (StringUtils.isBlank(aut.getExe())) { throw new IOException("EXE name for AUT is missing"); }
@@ -183,13 +189,21 @@ public final class WiniumUtils {
     }
 
     public static WiniumDriver joinRunningApp() {
+        if (!IS_OS_WINDOWS) {
+            ConsoleUtils.log("Winium requires Windows OS");
+            return null;
+        }
+
         DesktopOptions options = new DesktopOptions();
         options.setDebugConnectToRunningApp(true);
         return new WiniumDriver(getWiniumService(), options);
     }
 
     public static WiniumDriver newWiniumInstance(String exePath, String arguments) throws IOException {
-        // assert StringUtils.isNotBlank(exePath);
+        if (!IS_OS_WINDOWS) {
+            ConsoleUtils.log("Winium requires Windows OS");
+            return null;
+        }
 
         if (joinExistingWiniumSession()) {
             return joinCurrentWiniumSession(NumberUtils.toInt(winiumPort), exePath, arguments);
@@ -317,34 +331,10 @@ public final class WiniumUtils {
         }
     }
 
-    // public static Keys findKeys(String key) {
-    // 	return KEY_MAPPING.get(key);
-    // }
-    //
-    // public static WebElement findElement(WebElement startElement, String... locators) {
-    // 	if (startElement == null) { return null; }
-    // 	if (ArrayUtils.isEmpty(locators)) { return null; }
-    //
-    // 	WebElement elem = startElement;
-    // 	for (String locator : locators) {
-    // 		if (StringUtils.isBlank(locator)) { return null; }
-    //
-    // 		By by = DesktopCommand.findBy(locator);
-    // 		if (by == null) {
-    // 			ConsoleUtils.log("Unable to resolve locator '" + locator + "'");
-    // 			return null;
-    // 		}
-    //
-    // 		elem = elem.findElement(by);
-    // 		if (elem == null) { return null; }
-    // 	}
-    //
-    // 	return elem;
-    // }
-
     protected static boolean joinExistingWiniumSession() {
         ExecutionContext context = ExecutionThread.get();
-        boolean joinExisting = ExecutionContext.getSystemThenContextBooleanData(WINIUM_JOIN, context,
+        boolean joinExisting = ExecutionContext.getSystemThenContextBooleanData(WINIUM_JOIN,
+                                                                                context,
                                                                                 getDefaultBool(WINIUM_JOIN));
         if (!joinExisting) { return false; }
 
@@ -378,6 +368,11 @@ public final class WiniumUtils {
     }
 
     protected static WiniumDriverService newWiniumService() {
+        if (!IS_OS_WINDOWS) {
+            ConsoleUtils.log("Winium requires Windows OS");
+            return null;
+        }
+
         File nexialHomeDir = new File(System.getProperty(NEXIAL_HOME));
         String winiumExePath = StringUtils.appendIfMissing(nexialHomeDir.getAbsolutePath(), separator) +
                                NEXIAL_WINDOWS_BIN_REL_PATH + WINIUM_EXE;

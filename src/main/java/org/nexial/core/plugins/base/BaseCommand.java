@@ -1161,7 +1161,7 @@ public class BaseCommand implements NexialCommand {
         boolean equals = seleniumEquals(expected, actual);
         if (!equals && ExecutionContext.getSystemThenContextBooleanData(OPT_EASY_STRING_COMPARE, context,
                                                                         getDefaultBool(OPT_EASY_STRING_COMPARE))) {
-            // not so fast.. could be one of those quarky IE issues..
+            // not so fast.. could be one of those quirky IE issues..
             String lenientExpected = TextUtils.toOneLine(expected, true);
             String lenientActual = TextUtils.toOneLine(actual, true);
             equals = StringUtils.equals(lenientExpected, lenientActual);

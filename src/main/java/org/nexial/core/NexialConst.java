@@ -137,8 +137,7 @@ public final class NexialConst {
     public static final String SELENIUM_IE_SILENT = "webdriver.ie.driver.silent";
     public static final String OPT_DELAY_BROWSER = registerSystemVariable(NAMESPACE + "delayBrowser", false);
     public static final String OPT_CHROME_PROFILE = registerSystemVariable(NAMESPACE + "chrome.profile");
-    public static final String OPT_EASY_STRING_COMPARE = registerSystemVariable(NAMESPACE + "lenientStringCompare",
-                                                                                true);
+    public static final String OPT_EASY_STRING_COMPARE =registerSystemVariable(NAMESPACE + "lenientStringCompare",true);
     public static final String OPT_HTTP_TTL = NAMESPACE + "httpTTL";
     public static final String OPT_UI_RENDER_WAIT_MS = registerSystemVariable(NAMESPACE + "uiRenderWaitMs", 3000);
     public static final String OPT_WAIT_SPEED = registerSystemVariable(NAMESPACE + "waitSpeed", 3);
@@ -416,15 +415,6 @@ public final class NexialConst {
                         "\\u201B=,,",
                         "\\u201C=\"",
                         "\\u201D=\"");
-
-    public static String handleWindowsChar(String name) {
-        name = StringEscapeUtils.escapeJava(name);
-        Set<String> keys = replaceWindowsChars.keySet();
-        for (String key : keys) {
-            name = StringUtils.replace(name, key, replaceWindowsChars.get(key));
-        }
-        return name;
-    }
 
     // browser types
     public enum BrowserType {
@@ -1513,9 +1503,18 @@ public final class NexialConst {
         }
     }
 
+    private NexialConst() { }
+
     // @formatter:on
 
-    private NexialConst() { }
+    public static String handleWindowsChar(String name) {
+        name = StringEscapeUtils.escapeJava(name);
+        Set<String> keys = replaceWindowsChars.keySet();
+        for (String key : keys) {
+            name = StringUtils.replace(name, key, replaceWindowsChars.get(key));
+        }
+        return name;
+    }
 
     @NotNull
     public static String failAfterReached(int failCount, int failAfter) {
