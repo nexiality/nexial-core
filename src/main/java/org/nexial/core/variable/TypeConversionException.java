@@ -28,7 +28,7 @@ public class TypeConversionException extends ExpressionException {
     }
 
     public TypeConversionException(String dataType, String dataValue, String message) {
-        super(message);
+        super("Error when converting as '" + dataType + "' on data '" + dataValue + "': " + message);
         this.dataType = dataType;
         this.dataValue = dataValue;
     }

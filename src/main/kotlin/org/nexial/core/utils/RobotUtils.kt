@@ -23,8 +23,8 @@ import java.util.*
 object RobotUtils {
     private val ROBOT = run {
         val robot = Robot()
-        robot.autoDelay = 100
-        robot.isAutoWaitForIdle = true
+        // robot.autoDelay = 80
+        // robot.isAutoWaitForIdle = true
         robot
     }
 

@@ -18,14 +18,9 @@
 package org.nexial.core.variable;
 
 public class ExpressionException extends Exception {
-    public ExpressionException() {
-    }
+    public ExpressionException() {}
 
-    public ExpressionException(String message) {
-        super(message);
-    }
+    public ExpressionException(String message) { super(message); }
 
-    public ExpressionException(String message, Throwable cause) {
-        super(message, cause);
-    }
+    public ExpressionException(String message, Throwable cause) { super(message, cause); }
 }

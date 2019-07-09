@@ -121,6 +121,7 @@ public class ExecutionContext {
     private static final String ALT_GML_CLOSE_TAG2 = "__%&&*&&$__";
     private static final String ESCAPED_TOKEN_START = "\\$\\{";
     private static final String ESCAPED_TOKEN_END = "\\}";
+    private static final String REGEX_CRYPT = "(crypt:[0-9A-Za-z]+)";
 
     protected Logger logger = LoggerFactory.getLogger(getClass());
     protected ExecutionDefinition execDef;
@@ -887,12 +888,21 @@ public class ExecutionContext {
             return expression.process(text);
         } catch (ExpressionException e) {
             String errorPrefix = "Unable to process expression due to ";
-            for (Throwable throwable : ExceptionUtils.getThrowableList(e.getCause())) {
-                if (throwable instanceof IOException) {
-                    throw new IllegalArgumentException(errorPrefix + throwable.getMessage());
-                }
+            for (Throwable err : ExceptionUtils.getThrowableList(e.getCause())) {
+                // special handling for IOE; probably file/path related issues
+                if (err instanceof IOException) { throw new IllegalArgumentException(errorPrefix + err.getMessage()); }
             }
-            ConsoleUtils.error(getRunId(), errorPrefix + e.getMessage(), e);
+
+            // not IOE
+            String message = errorPrefix + e.getMessage();
+            ExecutionLogger logger = getLogger();
+            TestStep testStep = getCurrentTestStep();
+            if (testStep == null) {
+                logger.error(this, message);
+            } else {
+                logger.error(testStep, message);
+            }
+
             return text;
         }
     }
@@ -1275,12 +1285,12 @@ public class ExecutionContext {
         if (StringUtils.isBlank(text)) { return text; }
         if (!StringUtils.contains(text, CRYPT_IND)) { return text; }
 
-        String crypt = RegexUtils.firstMatches(text, "(crypt:[0-9A-Za-z]+)");
+        String crypt = RegexUtils.firstMatches(text, REGEX_CRYPT);
         while (StringUtils.isNotBlank(crypt)) {
             String decrypt = CellTextReader.getText(crypt);
             if (StringUtils.isNotBlank(decrypt)) {
                 text = StringUtils.replace(text, crypt, decrypt);
-                crypt = RegexUtils.firstMatches(text, "(crypt:[0-9A-Za-z]+)");
+                crypt = RegexUtils.firstMatches(text, REGEX_CRYPT);
             } else {
                 break;
             }

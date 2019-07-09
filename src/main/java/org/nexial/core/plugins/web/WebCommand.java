@@ -568,8 +568,11 @@ public class WebCommand extends BaseCommand implements CanTakeScreenshot, CanLog
 
     public StepResult saveText(String var, String locator) {
         requires(StringUtils.isNotBlank(var) && !StringUtils.startsWith(var, "${"), "invalid variable", var);
-        updateDataVariable(var, getElementText(locator));
-        return StepResult.success("stored content of '" + locator + "' as ${" + var + "}");
+        String text = getElementText(locator);
+        updateDataVariable(var, text);
+        return StepResult.success(StringUtils.isNotEmpty(text) ?
+                                  "no content found via locator '" + locator + "'" :
+                                  "stored content of '" + locator + "' as ${" + var + "}");
     }
 
     public StepResult saveElement(String var, String locator) {
@@ -2282,7 +2285,9 @@ public class WebCommand extends BaseCommand implements CanTakeScreenshot, CanLog
         try {
             return toElement(locator).getText();
         } catch (NoSuchElementException e) {
-            ConsoleUtils.error(e.getMessage());
+            TestStep testStep = context.getCurrentTestStep();
+            String id = testStep == null ? context.getRunId() : testStep.getMessageId();
+            ConsoleUtils.error(id, StringUtils.substringBefore(e.getMessage(), "\n"));
             return null;
         }
     }

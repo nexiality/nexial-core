@@ -68,7 +68,7 @@ public class NumberDataType extends ExpressionDataType<Number> {
                 setTextValue(text);
             }
         } catch (IllegalArgumentException e) {
-            throw new TypeConversionException(getName(), textValue, "Not a valid number");
+            throw new TypeConversionException(getName(), textValue, "not a valid number");
         }
     }
 }
