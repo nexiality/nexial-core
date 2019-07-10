@@ -19,7 +19,9 @@ package org.nexial.core.utils;
 
 import java.io.File;
 import java.io.IOException;
+import java.util.List;
 
+import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang3.ArrayUtils;
 import org.apache.commons.lang3.StringUtils;
@@ -67,6 +69,11 @@ public class CheckUtils {
 
     public static boolean requiresNotBlank(String notBlank, String errorMessage, Object... params) {
         if (StringUtils.isBlank(notBlank)) { fail(errorMessage + ": " + ArrayUtils.toString(params)); }
+        return true;
+    }
+
+    public static boolean requiresNotEmpty(List<?> list, String errorMessage, Object... params) {
+        if (CollectionUtils.isEmpty(list)) { fail(errorMessage + ": " + ArrayUtils.toString(params)); }
         return true;
     }
 

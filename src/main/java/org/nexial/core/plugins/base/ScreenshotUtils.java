@@ -29,7 +29,10 @@ import org.apache.commons.lang3.BooleanUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.nexial.core.ExecutionThread;
 import org.nexial.core.model.ExecutionContext;
+import org.nexial.core.model.TestStep;
+import org.nexial.core.plugins.web.WebDriverExceptionHelper;
 import org.nexial.core.utils.ConsoleUtils;
+import org.nexial.core.utils.ExecutionLogger;
 import org.openqa.selenium.Rectangle;
 import org.openqa.selenium.TakesScreenshot;
 import org.openqa.selenium.UnhandledAlertException;
@@ -57,14 +60,12 @@ public class ScreenshotUtils {
                                                       Math.max(rect.getY(), 0),
                                                       Math.min(rect.getWidth(), image.getWidth()),
                                                       Math.min(rect.getHeight(), image.getHeight()));
-            if (ImageIO.write(cropped, ext, output)) {
-                return output;
-            } else {
-                ConsoleUtils.error("Unable to save cropped screen capture successfully");
-                return imageFile;
-            }
+            if (ImageIO.write(cropped, ext, output)) { return output; }
+
+            error("Unable to save cropped screen capture successfully");
+            return imageFile;
         } catch (Exception e) {
-            ConsoleUtils.error("failed to capture screen capture to '" + filename + "': " + e.getMessage());
+            error("failed to capture screen capture to '" + filename + "': " + e.getMessage());
             return imageFile;
         }
     }
@@ -79,7 +80,7 @@ public class ScreenshotUtils {
             ImageIO.write(image, StringUtils.removeStart(SCREENSHOT_EXT, "."), output);
             return output;
         } catch (HeadlessException | AWTException | IOException e) {
-            ConsoleUtils.error("failed to save screen capture to '" + filename + "': " + e.getMessage());
+            error("failed to save screen capture to '" + filename + "': " + e.getMessage());
             return null;
         }
     }
@@ -99,17 +100,19 @@ public class ScreenshotUtils {
             // if (screenshot instanceof RemoteWebDriver) { ((RemoteWebDriver) screenshot).manage().window().fullscreen();}
             screen = screenshot.getScreenshotAs(BASE64);
         } catch (WebDriverException e) {
-            Throwable cause = e.getCause();
-            if (cause instanceof UnhandledAlertException) {
-                log("screen capture not support when Javascript alert present");
+            if (e instanceof UnhandledAlertException) {
+                error("screen capture not support when Javascript alert present");
             } else {
-                log("Error when performing screen capture: " + e.getMessage());
+                error("Error when performing screen capture - " + WebDriverExceptionHelper.resolveErrorMessage(e));
             }
+            return null;
+        } catch (Throwable e) {
+            error("Error when performing screen capture: " + e.getMessage());
             return null;
         }
 
         if (screen == null) {
-            log("Failed to capture screenshot - null returned.");
+            error("Failed to capture screenshot - null returned.");
             return null;
         }
 
@@ -124,7 +127,7 @@ public class ScreenshotUtils {
         }
     }
 
-    protected static void log(String message) {
+    private static void log(String message) {
         if (StringUtils.isBlank(message)) { return; }
         if (BooleanUtils.toBoolean(System.getProperty(QUIET))) { return; }
 
@@ -134,5 +137,24 @@ public class ScreenshotUtils {
         } else {
             ConsoleUtils.log(message);
         }
+    }
+
+    private static void error(String message) {
+        if (StringUtils.isBlank(message)) { return; }
+
+        ExecutionContext context = ExecutionThread.get();
+        if (context == null) {
+            ConsoleUtils.log(message);
+            return;
+        }
+
+        ExecutionLogger logger = context.getLogger();
+        TestStep currentTestStep = context.getCurrentTestStep();
+        if (currentTestStep == null) {
+            logger.error(context, message);
+            return;
+        }
+
+        logger.error(currentTestStep, message);
     }
 }

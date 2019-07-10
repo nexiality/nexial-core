@@ -48,6 +48,18 @@ public class TextUtilsTest {
     }
 
     @Test
+    public void testSubstringBetweenClosestPair_includeSep() {
+        Assert.assertEquals("(a)", TextUtils.substringBetweenFirstPair("((a))", "(", ")", true));
+        Assert.assertEquals("(jolly good)", TextUtils.substringBetweenFirstPair("((jolly good))", "(", ")", true));
+
+        Assert.assertEquals("[bracket]", TextUtils.substringBetweenFirstPair("[bracket]", "[", "]", true));
+        Assert.assertEquals("[bracket]", TextUtils.substringBetweenFirstPair("[bracket]]]", "[", "]", true));
+        Assert.assertEquals("[bracket]", TextUtils.substringBetweenFirstPair("[[[[bracket]]", "[", "]", true));
+        Assert.assertEquals("[]", TextUtils.substringBetweenFirstPair("[][[[bracket]]", "[", "]", true));
+        Assert.assertNull(TextUtils.substringBetweenFirstPair("bracket]bracket[[[bracket]]", "[", "]", true));
+    }
+
+    @Test
     public void testToString() {
         Map<String, String> fixture = new HashMap<>();
         fixture.put("one", "yee");

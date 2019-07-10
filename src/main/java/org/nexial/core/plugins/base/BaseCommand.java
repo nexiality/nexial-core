@@ -485,10 +485,10 @@ public class BaseCommand implements NexialCommand {
 
         String delim = context.getTextDelim();
         List<String> expectedList = TextUtils.toList(array1, delim, false);
-        if (CollectionUtils.isEmpty(expectedList)) { CheckUtils.fail("EXPECTED array cannot be parsed: " + array1); }
+        requiresNotEmpty(expectedList, "EXPECTED array is empty", array1);
 
         List<String> actualList = TextUtils.toList(array2, delim, false);
-        if (CollectionUtils.isEmpty(actualList)) { CheckUtils.fail("ACTUAL array cannot be parsed: " + array2); }
+        requiresNotEmpty(actualList, "ACTUAL array is empty", array2);
 
         if (!BooleanUtils.toBoolean(exactOrder)) {
             Collections.sort(expectedList);

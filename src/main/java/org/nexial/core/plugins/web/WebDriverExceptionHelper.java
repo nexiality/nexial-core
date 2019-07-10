@@ -28,6 +28,8 @@ import org.nexial.core.ExecutionThread;
 import org.nexial.core.model.ExecutionContext;
 import org.nexial.core.model.TestStep;
 import org.openqa.selenium.*;
+import org.openqa.selenium.interactions.MoveTargetOutOfBoundsException;
+import org.openqa.selenium.remote.ScreenshotException;
 
 import static org.nexial.core.excel.ext.CipherHelper.CRYPT_IND;
 
@@ -53,14 +55,20 @@ public class WebDriverExceptionHelper {
                               messageLines[0] + " " + messageLines[1] + "..." : error;
 
         String errorHeading = "UNKNOWN ERROR: ";
-        if (e instanceof NoSuchElementException) { errorHeading = "Specified element not found: "; }
-        if (e instanceof NoSuchCookieException) { errorHeading = "Specified cookie not found: "; }
-        if (e instanceof NoAlertPresentException) { errorHeading = "Specified alert dialog not found: "; }
-        if (e instanceof NoSuchFrameException) { errorHeading = "Specified frame invalid or not found: "; }
-        if (e instanceof NoSuchWindowException) { errorHeading = "Specified window invalid or not found: "; }
         if (e instanceof ElementNotInteractableException) { errorHeading = "Specified element disable or not ready: "; }
         if (e instanceof ElementNotSelectableException) { errorHeading = "Specified element cannot be selected: "; }
         if (e instanceof ElementNotVisibleException) { errorHeading = "Specified element is not visible: "; }
+        if (e instanceof JavascriptException) { errorHeading = "JavaScript error: "; }
+        if (e instanceof MoveTargetOutOfBoundsException) {
+            errorHeading = "Target element to move is outside of browser window dimension: ";
+        }
+        if (e instanceof NoAlertPresentException) { errorHeading = "Specified alert dialog not found: "; }
+        if (e instanceof NoSuchCookieException) { errorHeading = "Specified cookie not found: "; }
+        if (e instanceof NoSuchElementException) { errorHeading = "Specified element not found: "; }
+        if (e instanceof NoSuchFrameException) { errorHeading = "Specified frame invalid or not found: "; }
+        if (e instanceof NoSuchWindowException) { errorHeading = "Specified window invalid or not found: "; }
+        if (e instanceof ScreenshotException) {errorHeading = "Unable to capture screenshot: "; }
+        if (e instanceof UnhandledAlertException) { errorHeading = "JavaScript alert dialog not properly handled: "; }
 
         return errorHeading + errorSummary;
     }
@@ -81,9 +89,10 @@ public class WebDriverExceptionHelper {
             parameters = new ArrayList<>(step.getParams());
         } else {
             final ExecutionContext context1 = context;
-            parameters = step.getParams().stream().map(param -> StringUtils.startsWith(param, CRYPT_IND) ?
-                                                                param : context1.replaceTokens(param, true)
-                                                      )
+            parameters = step.getParams()
+                             .stream()
+                             .map(param -> StringUtils.startsWith(param, CRYPT_IND) ?
+                                           param : context1.replaceTokens(param, true))
                              .collect(Collectors.toList());
         }
 

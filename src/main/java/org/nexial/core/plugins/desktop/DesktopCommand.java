@@ -472,7 +472,7 @@ public class DesktopCommand extends BaseCommand implements ForcefulTerminate, Ca
         if (!supported) { return StepResult.skipped("current operating system not supported: '" + os + "'"); }
 
         ConsoleUtils.log("simulating keystrokes: " + keystrokes);
-        
+
         NativeInputHelper nativeInputHelper = new NativeInputHelper();
         nativeInputHelper.typeKeys(TextUtils.toList(StringUtils.remove(keystrokes, "\r"), "\n", false));
 
@@ -571,6 +571,78 @@ public class DesktopCommand extends BaseCommand implements ForcefulTerminate, Ca
         clickOffset(element, xOffset, yOffset);
         autoClearModalDialog(component);
         return StepResult.success("Clicked offset (" + xOffset + "," + yOffset + ") from element '" + name + "'");
+    }
+
+    public StepResult clickScreen(String button, String modifiers, String x, String y) {
+        requiresNotBlank(button, "Invalid mouse button", button);
+        requiresPositiveNumber(x, "Invalid x position", x);
+        requiresPositiveNumber(y, "Invalid y position", y);
+
+        List<String> mods = new ArrayList<>();
+        if (!context.isNullValue(modifiers) && !context.isEmptyValue(modifiers)) {
+            while (StringUtils.isNotBlank(modifiers)) {
+                String mod = TextUtils.substringBetweenFirstPair(modifiers, "{", "}", true);
+                if (StringUtils.isEmpty(mod)) {
+                    if (StringUtils.isNotBlank(modifiers)) {
+                        ConsoleUtils.log("ignoring unsupported modifiers: " + modifiers);
+                    }
+                    break;
+                }
+                mods.add(mod);
+
+                String beforeMod = StringUtils.substringBefore(modifiers, mod);
+                if (StringUtils.isNotBlank(beforeMod)) {
+                    ConsoleUtils.log("ignoring unsupported modifiers: " + beforeMod);
+                }
+                modifiers = StringUtils.substringAfter(modifiers, mod);
+            }
+        }
+
+        int posX = NumberUtils.toInt(x);
+        int posY = NumberUtils.toInt(y);
+
+        NativeInputHelper nativeInputHelper = new NativeInputHelper();
+        if (StringUtils.equalsIgnoreCase(button, "left")) {
+            nativeInputHelper.click(mods, posX, posY);
+        } else if (StringUtils.equalsIgnoreCase(button, "middle")) {
+            nativeInputHelper.middleClick(mods, posX, posY);
+        } else if (StringUtils.equalsIgnoreCase(button, "right")) {
+            nativeInputHelper.rightClick(mods, posX, posY);
+        } else {
+            return StepResult.fail("Unknown/unsupported mouse button: " + button);
+        }
+
+        return StepResult.success(button + " mouse button clicked on screen (" + x + "," + y + ")");
+    }
+
+    public StepResult mouseWheel(String amount, String modifiers, String x, String y) {
+        requiresPositiveNumber(amount, "Invalid scroll amount", amount);
+        requiresPositiveNumber(x, "Invalid x position", x);
+        requiresPositiveNumber(y, "Invalid y position", y);
+
+        List<String> mods = new ArrayList<>();
+        if (!context.isNullValue(modifiers) && !context.isEmptyValue(modifiers)) {
+            while (StringUtils.isNotBlank(modifiers)) {
+                String mod = TextUtils.substringBetweenFirstPair(modifiers, "{", "}", true);
+                if (StringUtils.isEmpty(mod)) {
+                    if (StringUtils.isNotBlank(modifiers)) {
+                        ConsoleUtils.log("ignoring unsupported modifiers: " + modifiers);
+                    }
+                    break;
+                }
+                mods.add(mod);
+
+                String beforeMod = StringUtils.substringBefore(modifiers, mod);
+                if (StringUtils.isNotBlank(beforeMod)) {
+                    ConsoleUtils.log("ignoring unsupported modifiers: " + beforeMod);
+                }
+                modifiers = StringUtils.substringAfter(modifiers, mod);
+            }
+        }
+
+        NativeInputHelper nativeInputHelper = new NativeInputHelper();
+        nativeInputHelper.mouseWheel(NumberUtils.toInt(amount), mods, NumberUtils.toInt(x), NumberUtils.toInt(y));
+        return StepResult.success("Mouse wheel moved by " + amount + " notches on screen (" + x + "," + y + ")");
     }
 
     public StepResult saveText(String var, String name) {

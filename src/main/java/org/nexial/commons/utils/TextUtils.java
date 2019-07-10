@@ -572,15 +572,7 @@ public final class TextUtils {
         return StringUtils.replaceEach(text, INLINE_UNFRIENDLY_TEXT, INLINE_BR);
     }
 
-    /**
-     * find the string between the closest pair of <code >open</code> and <code >close</code>.  For example:
-     * <pre>
-     *     String a = "((mary had a ) ((little lamb))";
-     *     String b = TextUtils.substringBetweenClosestPair(a, "(", ")");
-     * </pre>
-     * <code >b</code> would be "mary had a ";
-     */
-    public static String substringBetweenFirstPair(String text, String open, String close) {
+    public static String substringBetweenFirstPair(String text, String open, String close, boolean includeSep) {
         if (StringUtils.isBlank(text)) { return null; }
         if (StringUtils.isEmpty(open)) { return null; }
         if (StringUtils.isEmpty(close)) { return null; }
@@ -591,7 +583,20 @@ public final class TextUtils {
         int indexClosestOpen = StringUtils.lastIndexOf(StringUtils.substring(text, 0, indexFirstClose), open);
         if (indexClosestOpen == -1) { return null; }
 
-        return StringUtils.substring(text, indexClosestOpen + 1, indexFirstClose);
+        String substring = StringUtils.substring(text, indexClosestOpen + 1, indexFirstClose);
+        return includeSep ? open + substring + close : substring;
+    }
+
+    /**
+     * find the string between the closest pair of <code >open</code> and <code >close</code>.  For example:
+     * <pre>
+     *     String a = "((mary had a ) ((little lamb))";
+     *     String b = TextUtils.substringBetweenClosestPair(a, "(", ")");
+     * </pre>
+     * <code >b</code> would be "mary had a ";
+     */
+    public static String substringBetweenFirstPair(String text, String open, String close) {
+        return substringBetweenFirstPair(text, open, close, false);
     }
 
     /**

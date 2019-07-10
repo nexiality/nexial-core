@@ -16,6 +16,7 @@
 
 package org.nexial.core.utils
 
+import org.nexial.core.utils.KeystrokeParser.MODIFIERS
 import java.awt.Robot
 import java.awt.event.KeyEvent.*
 import java.util.*
@@ -30,10 +31,14 @@ class NativeInputHelper {
 
     fun typeKeys(keyLines: List<String>) =
         keyLines.forEach { KeystrokeParser.handleKey(robot, KeystrokeParser.toKeystrokes(it)) }
+    fun click(modifiers: List<String>, x: Int, y: Int) = Mousey.click(robot, BUTTON1_DOWN_MASK, modifiers, x, y)
+    fun middleClick(modifiers: List<String>, x: Int, y: Int) = Mousey.click(robot, BUTTON2_DOWN_MASK, modifiers, x, y)
+    fun rightClick(modifiers: List<String>, x: Int, y: Int) = Mousey.click(robot, BUTTON3_DOWN_MASK, modifiers, x, y)
+    fun mouseWheel(amount: Int, modifiers: List<String>, x: Int, y: Int) = Mousey.wheel(robot, amount, modifiers, x, y)
 }
 
 internal object KeystrokeParser {
-    private val MODIFIERS =
+    internal val MODIFIERS =
         mapOf("{SHIFT}" to VK_SHIFT,
               "{CONTROL}" to VK_CONTROL,
               "{ALT}" to VK_ALT, "{OPTION}" to VK_ALT,
@@ -41,7 +46,7 @@ internal object KeystrokeParser {
               "{CONTEXT}" to VK_CONTEXT_MENU,
               "{META}" to VK_META, "{COMMAND}" to VK_META)
 
-    private val FUNCTION_KEYS =
+    internal val FUNCTION_KEYS =
         mapOf("{ESCAPE}" to VK_ESCAPE, "{ESC}" to VK_ESCAPE,
               "{F1}" to VK_F1, "{F2}" to VK_F2, "{F3}" to VK_F3, "{F4}" to VK_F4, "{F5}" to VK_F5,
               "{F6}" to VK_F6, "{F7}" to VK_F7, "{F8}" to VK_F8, "{F9}" to VK_F9, "{F10}" to VK_F10,
@@ -61,7 +66,7 @@ internal object KeystrokeParser {
               "{SPACE}" to VK_SPACE,
               "{ENTER}" to VK_ENTER)
 
-    private val KEYS =
+    internal val KEYS =
         mapOf("0" to VK_0, "1" to VK_1, "2" to VK_2, "3" to VK_3, "4" to VK_4, "5" to VK_5, "6" to VK_6, "7" to VK_7,
               "8" to VK_8, "9" to VK_9,
               "A" to VK_A, "B" to VK_B, "C" to VK_C, "D" to VK_D, "E" to VK_E, "F" to VK_F, "G" to VK_G, "H" to VK_H,
@@ -103,10 +108,10 @@ internal object KeystrokeParser {
 
               "€" to VK_EURO_SIGN, "¡" to VK_INVERTED_EXCLAMATION_MARK)
 
-    private val NEED_SHIFT = listOf("~", "!", "@", "#", "$", "%", "^", "&", "*", "(", ")", "_", "+",
-                                    "{", "}", "|", ":", "\"", "<", ">", "?",
-                                    "A", "B", "C", "D", "E", "F", "G", "H", "I", "J", "K", "L", "M",
-                                    "N", "O", "P", "Q", "R", "S", "T", "U", "V", "W", "X", "Y", "Z")
+    internal val NEED_SHIFT = listOf("~", "!", "@", "#", "$", "%", "^", "&", "*", "(", ")", "_", "+",
+                                     "{", "}", "|", ":", "\"", "<", ">", "?",
+                                     "A", "B", "C", "D", "E", "F", "G", "H", "I", "J", "K", "L", "M",
+                                     "N", "O", "P", "Q", "R", "S", "T", "U", "V", "W", "X", "Y", "Z")
 
     fun handleKey(robot: Robot, keystrokes: List<String>) {
         val modifiers = Stack<Int>()
@@ -146,42 +151,6 @@ internal object KeystrokeParser {
         while (modifiers.isNotEmpty()) robot.keyRelease(modifiers.pop())
     }
 
-    // fun handleKey(robot: Robotil, keystrokes: List<String>) {
-    //     val modifiers = Stack<Int>()
-    //     keystrokes.forEach { key ->
-    //         when {
-    //             MODIFIERS.containsKey(key)     -> {
-    //                 val keyCode = MODIFIERS[key] ?: error("Unknown/unsupported modifier: $key")
-    //                 robot.pressKey(keyCode)
-    //                 modifiers.add(keyCode)
-    //             }
-    //
-    //             FUNCTION_KEYS.containsKey(key) -> {
-    //                 val keyCode = FUNCTION_KEYS[key] ?: error("Unknown/unsupported function key: $key")
-    //                 robot.pressAndReleaseKey(keyCode)
-    //                 while (modifiers.isNotEmpty()) robot.releaseKey(modifiers.pop())
-    //             }
-    //
-    //             KEYS.containsKey(key)          -> {
-    //                 val keyCode = KEYS[key] ?: error("Unknown/unsupported key: $key")
-    //                 if (NEED_SHIFT.contains(key)) {
-    //                     robot.pressKey(VK_SHIFT)
-    //                     modifiers.add(VK_SHIFT)
-    //                 }
-    //
-    //                 robot.pressAndReleaseKey(keyCode)
-    //                 while (modifiers.isNotEmpty()) robot.releaseKey(modifiers.pop())
-    //             }
-    //
-    //             else                           -> {
-    //                 error("Unknown/unsupported key: $key")
-    //             }
-    //         }
-    //     }
-    //
-    //     while (modifiers.isNotEmpty()) robot.releaseKey(modifiers.pop())
-    // }
-
     internal fun toKeystrokes(keys: String): List<String> {
 
         fun toOneCharKeystrokes(characters: String) = characters.toCharArray().map { it + "" }
@@ -205,5 +174,47 @@ internal object KeystrokeParser {
         }
 
         return keystrokes
+    }
+}
+
+internal object Mousey {
+
+    fun click(robot: Robot, button: Int, modifiers: List<String>, x: Int, y: Int) {
+        val mods = Stack<Int>()
+
+        modifiers.forEach { key ->
+            if (MODIFIERS.containsKey(key)) {
+                val keyCode = MODIFIERS[key] ?: error("Unknown/unsupported modifier: $key")
+                robot.keyPress(keyCode)
+                mods.add(keyCode)
+            } else {
+                error("Unsupported key/modifier for mouse-click: $key")
+            }
+        }
+
+        robot.mouseMove(x, y)
+        robot.mousePress(button)
+        robot.mouseRelease(button)
+
+        while (mods.isNotEmpty()) robot.keyRelease(mods.pop())
+    }
+
+    fun wheel(robot: Robot, amount: Int, modifiers: List<String>, x: Int, y: Int) {
+        val mods = Stack<Int>()
+
+        modifiers.forEach { key ->
+            if (MODIFIERS.containsKey(key)) {
+                val keyCode = MODIFIERS[key] ?: error("Unknown/unsupported modifier: $key")
+                robot.keyPress(keyCode)
+                mods.add(keyCode)
+            } else {
+                error("Unsupported key/modifier for mouse-click: $key")
+            }
+        }
+
+        robot.mouseMove(x, y)
+        robot.mouseWheel(amount)
+
+        while (mods.isNotEmpty()) robot.keyRelease(mods.pop())
     }
 }
