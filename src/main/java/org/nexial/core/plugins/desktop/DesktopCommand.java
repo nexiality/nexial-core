@@ -80,7 +80,6 @@ public class DesktopCommand extends BaseCommand implements ForcefulTerminate, Ca
     protected static final Map<String, Class<? extends By>> SUPPORTED_FIND_BY = initSupportedFindBys();
     protected transient WiniumDriver winiumDriver;
     protected transient NumberCommand numberCommand;
-    protected NativeInputHelper nativeInputHelper = new NativeInputHelper();
 
     @Override
     public void init(ExecutionContext context) {
@@ -473,7 +472,10 @@ public class DesktopCommand extends BaseCommand implements ForcefulTerminate, Ca
         if (!supported) { return StepResult.skipped("current operating system not supported: '" + os + "'"); }
 
         ConsoleUtils.log("simulating keystrokes: " + keystrokes);
+        
+        NativeInputHelper nativeInputHelper = new NativeInputHelper();
         nativeInputHelper.typeKeys(TextUtils.toList(StringUtils.remove(keystrokes, "\r"), "\n", false));
+
         return StepResult.success("type keys completed for " + keystrokes);
     }
 
