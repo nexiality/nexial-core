@@ -35,7 +35,7 @@ import java.text.SimpleDateFormat
 class EventCollector(val url: String, val verbose: Boolean, val enabled: Boolean) : Thread() {
     private val sleepMs = 250L
     private val wsClient = WebServiceClient(null)
-    private val shouldProceed = enabled && !ExecUtils.isRunningInJUnit()
+    private val shouldProceed = enabled && !ExecUtils.IS_RUNNING_IN_JUNIT
     private val filenameDateFormat: DateFormat = SimpleDateFormat("yyyyMMdd_HHmmss_SSS")
 
     init {

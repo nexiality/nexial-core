@@ -28,7 +28,8 @@ import org.nexial.commons.utils.TextUtils;
 import org.nexial.core.model.ExecutionContext;
 import org.nexial.core.variable.Expression.ExpressionFunction;
 
-import static org.nexial.core.NexialConst.Data.*;
+import static org.nexial.core.NexialConst.Data.NON_DISPLAYABLE_REPLACEMENTS;
+import static org.nexial.core.NexialConst.Data.NULL;
 import static org.nexial.core.variable.ExpressionConst.*;
 
 class ExpressionParser {

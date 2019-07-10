@@ -40,6 +40,7 @@ import org.nexial.core.excel.ExcelArea;
 import org.nexial.core.excel.ExcelConfig.*;
 import org.nexial.core.excel.ExcelStyleHelper;
 import org.nexial.core.utils.ConsoleUtils;
+import org.nexial.core.utils.ExecUtils;
 
 import static java.io.File.separator;
 import static java.lang.System.lineSeparator;
@@ -453,6 +454,13 @@ public class ExecutionSummary {
         map.put("nexial version", NEXIAL_MANIFEST);
         map.put("java version", JAVA_VERSION);
 
+        if (ExecUtils.isRunningInCi()) {
+            map.put("JENKINS::build url", ExecUtils.currentCiBuildUrl());
+            map.put("JENKINS::build id", ExecUtils.currentCiBuildId());
+            map.put("JENKINS::build number", ExecUtils.currentCiBuildNumber());
+            map.put("JENKINS::build user", ExecUtils.currentCiBuildUser());
+        }
+
         // special case: log file is copied (NOT MOVED) to S3 with a special syntax here (markdown-like)
         // createCell() function will made regard to this format to create appropriate hyperlink-friendly cells
         StringBuilder allLogs = new StringBuilder();
@@ -503,6 +511,35 @@ public class ExecutionSummary {
 
         // we stop here
         return summary;
+    }
+
+    public String resolveTotalScenariosPassed() {
+        int totalScenarios = 0;
+        int totalScenariosPassed = 0;
+
+        if (executionLevel == EXECUTION) {
+            for (ExecutionSummary nested : nestedExecutions) {
+                //  all scenarios passed in entire execution
+                for (ExecutionSummary nested1 : nested.nestedExecutions) {
+                    totalScenarios += nested1.nestedExecutions.size();
+                    totalScenariosPassed += nested1.totalLevelPassed;
+                }
+            }
+        } else if (executionLevel == SCRIPT) {
+            for (ExecutionSummary nested1 : nestedExecutions) {
+                totalScenarios += nested1.nestedExecutions.size();
+                totalScenariosPassed += nested1.totalLevelPassed;
+            }
+        }
+        return totalScenariosPassed + " / " + totalScenarios;
+    }
+
+    public boolean showPlan(ExecutionSummary executionSummary, int index) {
+        if (StringUtils.isBlank(planFile)) { return false; }
+        if (index == 0) { return true; }
+        // for concurrent script execution in plan
+        ExecutionSummary summary = executionSummary.getNestedExecutions().get(index - 1);
+        return !(StringUtils.equals(planFile, summary.planFile) && StringUtils.equals(planName, summary.planName));
     }
 
     protected int createScenarioExecutionSummary(Worksheet sheet, ExecutionSummary summary, int rowNum) {
@@ -809,34 +846,5 @@ public class ExecutionSummary {
         summary.runUser = null;
         summary.scriptFile = source.scriptFile;
         return summary;
-    }
-
-    public String resolveTotalScenariosPassed() {
-        int totalScenarios = 0;
-        int totalScenariosPassed = 0;
-
-        if (executionLevel == EXECUTION) {
-            for (ExecutionSummary nested : nestedExecutions) {
-                //  all scenarios passed in entire execution
-                for (ExecutionSummary nested1 : nested.nestedExecutions) {
-                    totalScenarios += nested1.nestedExecutions.size();
-                    totalScenariosPassed += nested1.totalLevelPassed;
-                }
-            }
-        } else if (executionLevel == SCRIPT) {
-            for (ExecutionSummary nested1 : nestedExecutions) {
-                totalScenarios += nested1.nestedExecutions.size();
-                totalScenariosPassed += nested1.totalLevelPassed;
-            }
-        }
-        return totalScenariosPassed + " / " + totalScenarios;
-    }
-
-    public boolean showPlan(ExecutionSummary executionSummary, int index) {
-        if (StringUtils.isBlank(planFile)) { return false; }
-        if (index == 0) { return true; }
-        // for concurrent script execution in plan
-        ExecutionSummary summary = executionSummary.getNestedExecutions().get(index - 1);
-        return !(StringUtils.equals(planFile, summary.planFile) && StringUtils.equals(planName, summary.planName));
     }
 }

@@ -47,8 +47,8 @@ import org.nexial.core.plugins.desktop.ig.IgRibbon;
 import org.nexial.core.plugins.web.WebDriverExceptionHelper;
 import org.nexial.core.utils.CheckUtils;
 import org.nexial.core.utils.ConsoleUtils;
+import org.nexial.core.utils.NativeInputHelper;
 import org.nexial.core.utils.OutputFileUtils;
-import org.nexial.core.utils.RobotUtils;
 import org.nexial.seeknow.SeeknowData;
 import org.openqa.selenium.By;
 import org.openqa.selenium.By.ByClassName;
@@ -77,11 +77,10 @@ import static org.nexial.core.plugins.desktop.ElementType.*;
 import static org.nexial.core.utils.CheckUtils.*;
 
 public class DesktopCommand extends BaseCommand implements ForcefulTerminate, CanTakeScreenshot, CanLogExternally {
-
     protected static final Map<String, Class<? extends By>> SUPPORTED_FIND_BY = initSupportedFindBys();
-
     protected transient WiniumDriver winiumDriver;
     protected transient NumberCommand numberCommand;
+    protected NativeInputHelper nativeInputHelper = new NativeInputHelper();
 
     @Override
     public void init(ExecutionContext context) {
@@ -474,7 +473,7 @@ public class DesktopCommand extends BaseCommand implements ForcefulTerminate, Ca
         if (!supported) { return StepResult.skipped("current operating system not supported: '" + os + "'"); }
 
         ConsoleUtils.log("simulating keystrokes: " + keystrokes);
-        RobotUtils.typeKeys(TextUtils.toList(StringUtils.remove(keystrokes, "\r"), "\n", false));
+        nativeInputHelper.typeKeys(TextUtils.toList(StringUtils.remove(keystrokes, "\r"), "\n", false));
         return StepResult.success("type keys completed for " + keystrokes);
     }
 

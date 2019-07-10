@@ -38,7 +38,7 @@ class ExecutionLogger(private val context: ExecutionContext) {
         if (testStep != null) {
             // test step undefined could mean that we are in interactive mode, or we are running unit testing
             log(toHeader(testStep), message, priority)
-            testStep.addNestedMessage(message)
+            if (context.isVerbose) testStep.addNestedMessage(message)
             if (subject is CanLogExternally) (subject as CanLogExternally).logExternally(testStep, message)
         } else {
             log(runId, message, priority)
@@ -109,9 +109,11 @@ class ExecutionLogger(private val context: ExecutionContext) {
             "|#" + StringUtils.leftPad((subject.rowIndex + 1).toString() + "", 3) +
             "|" + StringUtils.truncate(subject.commandFQN, 25)
 
+        @JvmStatic
         fun toHeader(subject: TestCase?) =
             if (subject == null) "current activity" else toHeader(subject.testScenario) + "|" + subject.name
 
+        @JvmStatic
         fun toHeader(subject: TestScenario?): String {
             return if (subject == null || subject.worksheet == null)
                 "current scenario"
@@ -121,6 +123,7 @@ class ExecutionLogger(private val context: ExecutionContext) {
             }
         }
 
+        @JvmStatic
         fun toHeader(subject: ExecutionContext?): String = if (subject != null && subject.testScript != null)
             justFileName(subject.testScript.file)
         else

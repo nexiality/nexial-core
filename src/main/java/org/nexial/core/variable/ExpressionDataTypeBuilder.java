@@ -34,8 +34,7 @@ import org.nexial.core.utils.ConsoleUtils;
 
 import static org.nexial.core.NexialConst.Data.TEXT_DELIM;
 import static org.nexial.core.SystemVariables.getDefault;
-import static org.nexial.core.variable.ExpressionConst.REGEX_VALID_TYPE_PREFIX;
-import static org.nexial.core.variable.ExpressionConst.REGEX_VALID_TYPE_SUFFIX;
+import static org.nexial.core.variable.ExpressionConst.*;
 import static org.nexial.core.variable.ExpressionUtils.handleExternal;
 import static org.nexial.core.variable.ExpressionUtils.resumeExpression;
 

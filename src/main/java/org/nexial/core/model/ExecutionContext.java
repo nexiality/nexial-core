@@ -309,20 +309,11 @@ public class ExecutionContext {
 
     public void logCurrentStep(String message) {
         TestStep currentTestStep = getCurrentTestStep();
-        if (isVerbose()) {
-            executionLogger.log(currentTestStep, message);
-        } else {
-            ConsoleUtils.log(currentTestStep == null ? "unknown test step" : currentTestStep.showPosition(), message);
-        }
+        executionLogger.log(currentTestStep, message);
+        if (isVerbose()) { currentTestStep.addNestedMessage(message); }
     }
 
-    public void logCurrentCommand(NexialCommand command, String message) {
-        if (isVerbose()) {
-            executionLogger.log(command, message);
-        } else {
-            ConsoleUtils.log(command.getTarget(), message);
-        }
-    }
+    public void logCurrentCommand(NexialCommand command, String message) { executionLogger.log(command, message); }
 
     public ExecutionDefinition getExecDef() { return execDef; }
 
@@ -442,7 +433,7 @@ public class ExecutionContext {
         // in effect, the `onError()` event works the same way as `pauseOnError`. Nexial supports both stylistic variety
         executionEventListener.onError();
 
-        if (getBooleanData(OPT_PAUSE_ON_ERROR, getDefaultBool(OPT_PAUSE_ON_ERROR))) {
+        if (isPauseOnError()) {
             ConsoleUtils.doPause(this, "[ERROR #" + execFailCount + "]: Error found " +
                                        ExecutionLogger.toHeader(getCurrentTestStep()) + " - " +
                                        result.getMessage());
@@ -476,6 +467,11 @@ public class ExecutionContext {
     public boolean isProxyRequired() { return getBooleanData(OPT_PROXY_REQUIRED, false); }
 
     public boolean isOutputToCloud() { return getBooleanData(OUTPUT_TO_CLOUD, getDefaultBool(OUTPUT_TO_CLOUD)); }
+
+    public boolean isPauseOnError() {
+        return getBooleanData(OPT_PAUSE_ON_ERROR, getDefaultBool(OPT_PAUSE_ON_ERROR)) &&
+               !ExecUtils.isRunningInZeroTouchEnv();
+    }
 
     @NotNull
     public String getTextDelim() { return getRawStringData(TEXT_DELIM, ","); }

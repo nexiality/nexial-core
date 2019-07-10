@@ -19,7 +19,7 @@ package org.nexial.core.utils
 import org.junit.Assert
 import org.junit.Test
 
-class RobotUtilsTest {
+class NativeInputHelperTest {
 
     @Test
     @Throws(Exception::class)

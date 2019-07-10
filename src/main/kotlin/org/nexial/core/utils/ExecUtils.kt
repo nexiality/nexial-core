@@ -39,6 +39,7 @@ object ExecUtils {
     const val PRODUCT = "nexial"
     const val JAVA_OPT = "JAVA_OPT"
     const val RUNTIME_ARGS = "runtime args"
+
     @JvmField
     val IGNORED_CLI_OPT = arrayListOf<String>(
         "awt.", "java.",
@@ -64,10 +65,15 @@ object ExecUtils {
 
     @JvmField
     val JUNIT_CLASSES = arrayListOf("org.junit.runner.JUnitCore", "org.junit.runners.ParentRunner")
+
     @JvmField
     val BIN_SCRIPT_EXT = if (IS_OS_WINDOWS) ".cmd" else ".sh"
+
     @JvmField
     val NEXIAL_MANIFEST: String = deriveJarManifest()
+
+    @JvmField
+    var IS_RUNNING_IN_JUNIT = isRunningInJUnit()
 
     /** determine if we are running under CI (Jenkins) using current system properties  */
     @JvmStatic
@@ -76,59 +82,20 @@ object ExecUtils {
                                    StringUtils.isNotBlank(System.getenv()[OPT_BUILD_ID]) &&
                                    StringUtils.isNotBlank(System.getenv()[OPT_BUILD_URL])
 
-    /** determine if we are running under JUnit framework  */
-    // am i running via junit?
-    // probably not loaded... ignore error; it's probably not critical...
     @JvmStatic
-    fun isRunningInJUnit(): Boolean {
-        val cl = ClassLoader.getSystemClassLoader()
-        for (junitClass in JUNIT_CLASSES) {
-            try {
-                val m = ClassLoader::class.java.getDeclaredMethod("findLoadedClass", String::class.java)
-                m.isAccessible = true
-                val loaded = m.invoke(cl, junitClass)
-                if (loaded != null) return true
-            } catch (e: NoSuchMethodException) {
-            } catch (e: IllegalAccessException) {
-            } catch (e: InvocationTargetException) {
-            }
-        }
-
-        return false
-    }
+    fun isRunningInZeroTouchEnv(): Boolean = IS_RUNNING_IN_JUNIT || isRunningInCi()
 
     @JvmStatic
-    fun isRunningInZeroTouchEnv(): Boolean = isRunningInCi() || isRunningInJUnit()
+    fun currentCiBuildUrl() = if (!isRunningInCi()) "" else System.getenv(OPT_BUILD_URL)
 
-    @NotNull
-    private fun deriveJarManifest(): String {
-        val pkg = Nexial::class.java.getPackage()
+    @JvmStatic
+    fun currentCiBuildId() = if (!isRunningInCi()) "" else System.getenv(OPT_BUILD_ID)
 
-        // try by jar class loader
-        if (pkg != null) {
-            val implTitle = pkg.implementationTitle
-            val implVersion = pkg.implementationVersion
-            if (StringUtils.isNotBlank(implTitle) && StringUtils.isNotBlank(implVersion)) return "$implTitle $implVersion"
-        }
+    @JvmStatic
+    fun currentCiBuildNumber() = if (!isRunningInCi()) "" else System.getenv(OPT_BUILD_NUMBER)
 
-        val cl = Nexial::class.java.classLoader
-        try {
-            val resources = cl.getResources("META-INF/MANIFEST.MF")
-            while (resources.hasMoreElements()) {
-                val url = resources.nextElement()
-                val manifest = Manifest(url.openStream())
-                val attributes = manifest.mainAttributes
-                val product = attributes.getValue("Implementation-Title")
-                if (StringUtils.equals(product, PRODUCT)) {
-                    return "$PRODUCT ${StringUtils.remove(attributes.getValue("Implementation-Version"), "Build ")}"
-                }
-            }
-        } catch (e: IOException) {
-            ConsoleUtils.error("Unable to derive META-INF/MANIFEST.MF from classloader: " + e.message)
-        }
-
-        return "nexial-DEV"
-    }
+    @JvmStatic
+    fun currentCiBuildUser() = if (!isRunningInCi()) "" else System.getenv(OPT_BUILD_USER_ID)
 
     @JvmStatic
     fun deriveRunId(): String {
@@ -176,5 +143,56 @@ object ExecUtils {
             }
 
         return javaOpts
+    }
+
+    /** determine if we are running under JUnit framework  */
+    // am i running via junit?
+    // probably not loaded... ignore error; it's probably not critical...
+    // @JvmStatic
+    private fun isRunningInJUnit(): Boolean {
+        val cl = ClassLoader.getSystemClassLoader()
+        for (junitClass in JUNIT_CLASSES) {
+            try {
+                val m = ClassLoader::class.java.getDeclaredMethod("findLoadedClass", String::class.java)
+                m.isAccessible = true
+                val loaded = m.invoke(cl, junitClass)
+                if (loaded != null) return true
+            } catch (e: NoSuchMethodException) {
+            } catch (e: IllegalAccessException) {
+            } catch (e: InvocationTargetException) {
+            }
+        }
+
+        return false
+    }
+
+    @NotNull
+    private fun deriveJarManifest(): String {
+        val pkg = Nexial::class.java.getPackage()
+
+        // try by jar class loader
+        if (pkg != null) {
+            val implTitle = pkg.implementationTitle
+            val implVersion = pkg.implementationVersion
+            if (StringUtils.isNotBlank(implTitle) && StringUtils.isNotBlank(implVersion)) return "$implTitle $implVersion"
+        }
+
+        val cl = Nexial::class.java.classLoader
+        try {
+            val resources = cl.getResources("META-INF/MANIFEST.MF")
+            while (resources.hasMoreElements()) {
+                val url = resources.nextElement()
+                val manifest = Manifest(url.openStream())
+                val attributes = manifest.mainAttributes
+                val product = attributes.getValue("Implementation-Title")
+                if (StringUtils.equals(product, PRODUCT)) {
+                    return "$PRODUCT ${StringUtils.remove(attributes.getValue("Implementation-Version"), "Build ")}"
+                }
+            }
+        } catch (e: IOException) {
+            ConsoleUtils.error("Unable to derive META-INF/MANIFEST.MF from classloader: " + e.message)
+        }
+
+        return "nexial-DEV"
     }
 }

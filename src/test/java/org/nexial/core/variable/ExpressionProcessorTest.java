@@ -163,6 +163,27 @@ public class ExpressionProcessorTest {
     }
 
     @Test
+    public void processText_invalid_data() throws Exception {
+        ExpressionProcessor subject = new ExpressionProcessor(context);
+
+        // invalid expression since there's no data assign as data type
+        Assert.assertEquals("[TEXT() => remove(a)]", subject.process("[TEXT() => remove(a)]"));
+
+        // invalid data variable
+        Assert.assertEquals("", subject.process("[TEXT(${no_such_data}) => remove(a)]"));
+
+        // null data variable test
+        context.setData("num1", "10.95");
+        context.setData("null_data", (String) null);
+
+        // empty data begets empty data
+        Assert.assertEquals("", subject.process("[TEXT(${null_data}) => remove(\\,)]"));
+
+        // empty data cannot be used in numeric processing
+        // Assert.assertEquals("10.95", subject.process("[NUMBER(${num1}) => multiply([TEXT(${null_data}) => remove(\\,)])]"));
+    }
+
+    @Test
     public void processTest_regex() throws Exception {
         ExpressionProcessor subject = new ExpressionProcessor(context);
 

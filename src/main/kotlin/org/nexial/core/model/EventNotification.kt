@@ -27,6 +27,7 @@ import org.nexial.core.NexialConst.Data.*
 import org.nexial.core.mail.MailData
 import org.nexial.core.model.ExecutionEvent.ExecutionPause
 import org.nexial.core.utils.ConsoleUtils
+import org.nexial.core.utils.ExecUtils
 import org.nexial.core.utils.ExecUtils.NEXIAL_MANIFEST
 import org.nexial.core.utils.OutputFileUtils
 import javax.mail.MessagingException
@@ -255,7 +256,7 @@ class ConsoleNotification(context: ExecutionContext, event: ExecutionEvent, data
             return
         }
 
-        ConsoleUtils.doPause(context, event.description + " - " + data)
+        if (!ExecUtils.isRunningInZeroTouchEnv()) ConsoleUtils.doPause(context, event.description + " - " + data)
     }
 }
 

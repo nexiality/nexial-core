@@ -38,6 +38,7 @@ import org.nexial.core.excel.ExcelStyleHelper;
 import org.nexial.core.excel.ext.CellTextReader;
 import org.nexial.core.plugins.CanTakeScreenshot;
 import org.nexial.core.plugins.NexialCommand;
+import org.nexial.core.plugins.web.WebDriverExceptionHelper;
 import org.nexial.core.utils.ConsoleUtils;
 import org.nexial.core.utils.ExecutionLogger;
 import org.nexial.core.utils.FlowControlUtils;
@@ -160,6 +161,9 @@ public class TestStep extends TestStepManifest {
         // delay is carried out here so that timespan is captured as part of execution
         waitFor(context.getDelayBetweenStep());
 
+        // ExecutionLogger logger = context.getLogger();
+        WebDriverExceptionHelper webDriverExceptionHelper = context.getWebDriverExceptionHelper();
+
         StepResult result = null;
         try {
             result = invokeCommand();
@@ -168,9 +172,8 @@ public class TestStep extends TestStepManifest {
             Throwable cause = e.getCause();
             if (cause != null) {
                 if (cause instanceof WebDriverException) {
-                    error = context.getWebDriverExceptionHelper()
-                                   .analyzeError(context, this, (WebDriverException) cause);
-                    context.executionLogger.error(this, error);
+                    error = webDriverExceptionHelper.analyzeError(context, this, (WebDriverException) cause);
+                    // logger.error(this, error);
                     result = StepResult.fail(error);
                     return result;
                 } else if (cause instanceof ArrayIndexOutOfBoundsException) {
@@ -183,16 +186,16 @@ public class TestStep extends TestStepManifest {
                 }
             }
 
-            if (printStackTrace) { ConsoleUtils.error(context.getRunId(), error, e); }
+            if (printStackTrace) { ConsoleUtils.error(ExecutionLogger.toHeader(this), error, e); }
 
             result = StepResult.fail(error);
         } catch (WebDriverException e) {
-            String error = context.getWebDriverExceptionHelper().analyzeError(context, this, e);
-            context.executionLogger.error(this, error);
+            String error = webDriverExceptionHelper.analyzeError(context, this, e);
+            // logger.error(this, error);
             result = StepResult.fail(error);
         } catch (Throwable e) {
             String error = e.getMessage();
-            if (printStackTrace) { ConsoleUtils.error(context.getRunId(), error, e); }
+            if (printStackTrace) { ConsoleUtils.error(ExecutionLogger.toHeader(this), error, e); }
             result = StepResult.fail(error);
         } finally {
             tickTock.stop();
@@ -621,7 +624,7 @@ public class TestStep extends TestStepManifest {
 
     protected void error(String message) {
         if (StringUtils.isBlank(message)) { return; }
-        context.getLogger().log(this, message);
+        context.getLogger().error(this, message);
         logToTestScript(message);
     }
 

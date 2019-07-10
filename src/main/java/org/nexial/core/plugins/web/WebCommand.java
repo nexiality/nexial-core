@@ -570,7 +570,7 @@ public class WebCommand extends BaseCommand implements CanTakeScreenshot, CanLog
         requires(StringUtils.isNotBlank(var) && !StringUtils.startsWith(var, "${"), "invalid variable", var);
         String text = getElementText(locator);
         updateDataVariable(var, text);
-        return StepResult.success(StringUtils.isNotEmpty(text) ?
+        return StepResult.success(StringUtils.isEmpty(text) ?
                                   "no content found via locator '" + locator + "'" :
                                   "stored content of '" + locator + "' as ${" + var + "}");
     }
@@ -622,11 +622,14 @@ public class WebCommand extends BaseCommand implements CanTakeScreenshot, CanLog
     public StepResult assertTextContains(String locator, String text) {
         requires(StringUtils.isNotBlank(text), "empty text is not allowed", text);
         String elementText = getElementText(locator);
-        if (lenientContains(elementText, text, false)) {
-            return StepResult.success("validated text '" + elementText + "' contains '" + text + "'");
-        } else {
-            return StepResult.fail("Expects \"" + text + "\" be contained in \"" + elementText + "\"");
-        }
+        return elementText == null ?
+               StepResult.fail("Invalid locator '" + locator + "'; no text found") :
+               assertContains(elementText, text);
+        // if (lenientContains(elementText, text, false)) {
+        //     return StepResult.success("validated text '" + elementText + "' contains '" + text + "'");
+        // } else {
+        //     return StepResult.fail("Expects \"" + text + "\" be contained in \"" + elementText + "\"");
+        // }
     }
 
     public StepResult assertTextNotContains(String locator, String text) {
@@ -2285,9 +2288,13 @@ public class WebCommand extends BaseCommand implements CanTakeScreenshot, CanLog
         try {
             return toElement(locator).getText();
         } catch (NoSuchElementException e) {
+            String error = StringUtils.substringBefore(e.getMessage(), "\n");
             TestStep testStep = context.getCurrentTestStep();
-            String id = testStep == null ? context.getRunId() : testStep.getMessageId();
-            ConsoleUtils.error(id, StringUtils.substringBefore(e.getMessage(), "\n"));
+            if (testStep != null) {
+                context.getLogger().error(this, error);
+            } else {
+                context.getLogger().error(context, error);
+            }
             return null;
         }
     }

@@ -1194,9 +1194,7 @@ public class BaseCommand implements NexialCommand {
     }
 
     protected void log(String message) {
-        if (StringUtils.isNotBlank(message) && context != null && context.getLogger() != null) {
-            context.getLogger().log(this, message);
-        }
+        if (context != null && context.getLogger() != null) { context.getLogger().log(this, message); }
     }
 
     protected void error(String message) { error(message, null); }

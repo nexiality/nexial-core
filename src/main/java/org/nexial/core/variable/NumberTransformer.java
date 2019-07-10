@@ -121,7 +121,7 @@ public class NumberTransformer<T extends NumberDataType> extends Transformer {
     public T multiply(T data, String... numbers) {
         if (data == null || data.getTextValue() == null) { return data; }
         if (ArrayUtils.isEmpty(numbers)) {
-            ConsoleUtils.log(data.getName() + ".multiply(): cannot operate on '" + ArrayUtils.toString(numbers) + "'");
+            ConsoleUtils.log(data.getName() + ".multiply(): cannot operate on empty list of numbers");
             return data;
         }
 
