@@ -22,6 +22,7 @@ import java.awt.image.*;
 import java.io.File;
 import java.io.IOException;
 import javax.imageio.ImageIO;
+import javax.validation.constraints.NotNull;
 
 import org.apache.commons.codec.binary.Base64;
 import org.apache.commons.io.FileUtils;
@@ -72,12 +73,15 @@ public class ScreenshotUtils {
 
     public static File saveDesktopScreenshot(String filename) {
         if (filename == null) { throw new IllegalArgumentException("filename is null"); }
-        File output = new File(filename);
+
+        File output = prepScreenshotFile(filename);
 
         try {
             BufferedImage image =
                 new Robot().createScreenCapture(new java.awt.Rectangle(Toolkit.getDefaultToolkit().getScreenSize()));
             ImageIO.write(image, StringUtils.removeStart(SCREENSHOT_EXT, "."), output);
+            ExecutionContext context = ExecutionThread.get();
+            if (context != null) { context.setData(OPT_LAST_SCREENSHOT_NAME, output.getName()); }
             return output;
         } catch (HeadlessException | AWTException | IOException e) {
             error("failed to save screen capture to '" + filename + "': " + e.getMessage());
@@ -89,11 +93,7 @@ public class ScreenshotUtils {
         if (screenshot == null) { throw new IllegalArgumentException("screenshot object is null"); }
         if (filename == null) { throw new IllegalArgumentException("filename is null"); }
 
-        File f = new File(filename);
-        File dir = f.getParentFile();
-        if (dir != null && !dir.exists() && !dir.mkdirs()) {
-            log("directory creation failed for '" + dir.getAbsolutePath() + "'... this might not work...");
-        }
+        File output = prepScreenshotFile(filename);
 
         String screen;
         try {
@@ -117,30 +117,29 @@ public class ScreenshotUtils {
         }
 
         try {
-            FileUtils.writeByteArrayToFile(f, Base64.decodeBase64(screen.getBytes()));
+            FileUtils.writeByteArrayToFile(output, Base64.decodeBase64(screen.getBytes()));
             ExecutionContext context = ExecutionThread.get();
-            if (context != null) { context.setData(OPT_LAST_SCREENSHOT_NAME, f.getName()); }
-            return f;
+            if (context != null) { context.setData(OPT_LAST_SCREENSHOT_NAME, output.getName()); }
+            return output;
         } catch (Exception e) {
             ConsoleUtils.error("failed to save screen capture to '" + filename + "': " + e.getMessage());
             return null;
         }
     }
 
+    @NotNull
+    protected static File prepScreenshotFile(String filename) {
+        File output = new File(filename);
+        File dir = output.getParentFile();
+        if (dir != null && !dir.exists() && !dir.mkdirs()) {
+            log("directory creation failed for '" + dir.getAbsolutePath() + "'... this might not work...");
+        }
+        return output;
+    }
+
     private static void log(String message) {
         if (StringUtils.isBlank(message)) { return; }
         if (BooleanUtils.toBoolean(System.getProperty(QUIET))) { return; }
-
-        ExecutionContext context = ExecutionThread.get();
-        if (context != null) {
-            context.getLogger().log(context, message);
-        } else {
-            ConsoleUtils.log(message);
-        }
-    }
-
-    private static void error(String message) {
-        if (StringUtils.isBlank(message)) { return; }
 
         ExecutionContext context = ExecutionThread.get();
         if (context == null) {
@@ -149,12 +148,39 @@ public class ScreenshotUtils {
         }
 
         ExecutionLogger logger = context.getLogger();
-        TestStep currentTestStep = context.getCurrentTestStep();
-        if (currentTestStep == null) {
-            logger.error(context, message);
+        if (logger == null) {
+            ConsoleUtils.log(message);
             return;
         }
 
-        logger.error(currentTestStep, message);
+        TestStep currentTestStep = context.getCurrentTestStep();
+        if (currentTestStep == null) {
+            logger.log(context, message);
+        } else {
+            logger.log(currentTestStep, message);
+        }
+    }
+
+    private static void error(String message) {
+        if (StringUtils.isBlank(message)) { return; }
+
+        ExecutionContext context = ExecutionThread.get();
+        if (context == null) {
+            ConsoleUtils.error(message);
+            return;
+        }
+
+        ExecutionLogger logger = context.getLogger();
+        if (logger == null) {
+            ConsoleUtils.error(message);
+            return;
+        }
+
+        TestStep currentTestStep = context.getCurrentTestStep();
+        if (currentTestStep == null) {
+            logger.error(context, message);
+        } else {
+            logger.error(currentTestStep, message);
+        }
     }
 }

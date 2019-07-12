@@ -1556,7 +1556,7 @@ public class WebCommand extends BaseCommand implements CanTakeScreenshot, CanLog
         //if (browser == null || selenium == null || browser.isRunBrowserStack()) {
         if (browser == null) {
             // possibly delayBrowser turned on.. skip screenshot if selenium hasn't been initialized..
-            ConsoleUtils.log("selenium/browser not yet initialized; skip screen capturing");
+            log("selenium/browser not yet initialized; skip screen capturing");
             return null;
         }
 
@@ -1583,7 +1583,7 @@ public class WebCommand extends BaseCommand implements CanTakeScreenshot, CanLog
         }
 
         if (screenshotFile == null) {
-            ConsoleUtils.error("Unable to save screenshot for " + testStep);
+            error("Unable to save screenshot for " + testStep);
             return null;
         }
 

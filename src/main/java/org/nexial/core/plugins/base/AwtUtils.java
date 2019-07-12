@@ -18,15 +18,18 @@
 package org.nexial.core.plugins.base;
 
 import java.awt.*;
-import java.awt.event.*;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicInteger;
+
+import javax.annotation.Nullable;
 
 import org.apache.commons.lang3.ArrayUtils;
 import org.apache.commons.lang3.RandomUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.nexial.core.utils.ConsoleUtils;
+
+import static java.awt.event.KeyEvent.*;
 
 /**
  *
@@ -44,21 +47,6 @@ public final class AwtUtils {
     private static GraphicsDevice graphicDevice;
     private static Robot robot;
     private static GraphicsConfiguration graphicsConfig;
-    private static boolean shouldForcefullyTerminate = false;
-
-    //private enum MetaKey {
-    //	CONTROL(KeyEvent.VK_CONTROL),
-    //	SHIFT(KeyEvent.VK_SHIFT),
-    //	ALT(ALT_DOWN_MASK),
-    //	WIN(META_DOWN_MASK),
-    //	COMMAND(META_DOWN_MASK);
-    //
-    //	private int mask;
-    //
-    //	MetaKey(int mask) { this.mask = mask; }
-    //
-    //	public int getMask() { return mask; }
-    //}
 
     private AwtUtils() { }
 
@@ -77,6 +65,24 @@ public final class AwtUtils {
         return robot;
     }
 
+    @Nullable
+    public static Dimension getScreenDimension(int monitorIndex) {
+        GraphicsEnvironment ge = GraphicsEnvironment.getLocalGraphicsEnvironment();
+        if (ge == null) { return null; }
+
+        GraphicsDevice[] screens = ge.getScreenDevices();
+        if (ArrayUtils.isEmpty(screens)) { return null; }
+
+        if (monitorIndex < 0 || screens.length <= monitorIndex) { monitorIndex = 0; }
+
+        GraphicsConfiguration[] screenConfig = screens[monitorIndex].getConfigurations();
+
+        Dimension allBounds = new Dimension();
+        allBounds.width = screenConfig[0].getBounds().width;
+        allBounds.height = screenConfig[0].getBounds().height;
+        return allBounds;
+    }
+
     public static void typeKey(String text) {
         if (StringUtils.isEmpty(text)) { throw new IllegalArgumentException("text is blank/null"); }
 
@@ -88,27 +94,27 @@ public final class AwtUtils {
         char[] chars = text.toCharArray();
         for (char ch : chars) {
 
-            Integer keycode = SHIFT_NEEDED.get(ch);
-            if (keycode != null) {
-                robot.keyPress(KeyEvent.VK_SHIFT);
-                robot.keyPress(keycode);
-                robot.keyRelease(keycode);
-                robot.keyRelease(KeyEvent.VK_SHIFT);
+            Integer keyCode = SHIFT_NEEDED.get(ch);
+            if (keyCode != null) {
+                robot.keyPress(VK_SHIFT);
+                robot.keyPress(keyCode);
+                robot.keyRelease(keyCode);
+                robot.keyRelease(VK_SHIFT);
                 continue;
             }
 
-            keycode = TRANSLATION_NEEDED.get(ch);
-            if (keycode != null) {
-                robot.keyPress(keycode);
-                robot.keyRelease(keycode);
+            keyCode = TRANSLATION_NEEDED.get(ch);
+            if (keyCode != null) {
+                robot.keyPress(keyCode);
+                robot.keyRelease(keyCode);
                 continue;
             }
 
             boolean isUpper = ch >= 'A' && ch <= 'Z';
-            if (isUpper) { robot.keyPress(KeyEvent.VK_SHIFT); }
+            if (isUpper) { robot.keyPress(VK_SHIFT); }
             robot.keyPress(Character.toUpperCase(ch));
             robot.keyRelease(Character.toUpperCase(ch));
-            if (isUpper) { robot.keyRelease(KeyEvent.VK_SHIFT); }
+            if (isUpper) { robot.keyRelease(VK_SHIFT); }
 
         }
     }
@@ -125,11 +131,11 @@ public final class AwtUtils {
 
         for (String fnKey : fnKeys) {
             if (StringUtils.equals(fnKey, FN_SHIFT)) {
-                robot.keyPress(KeyEvent.VK_SHIFT);
+                robot.keyPress(VK_SHIFT);
             } else if (StringUtils.equals(fnKey, FN_CONTROL)) {
-                robot.keyPress(KeyEvent.VK_CONTROL);
+                robot.keyPress(VK_CONTROL);
             } else if (StringUtils.equals(fnKey, FN_ALT)) {
-                robot.keyPress(KeyEvent.VK_ALT);
+                robot.keyPress(VK_ALT);
             } else {
                 ConsoleUtils.error("Unknown function key: " + fnKey);
             }
@@ -141,11 +147,11 @@ public final class AwtUtils {
         ArrayUtils.reverse(fnKeys);
         for (String fnKey : fnKeys) {
             if (StringUtils.equals(fnKey, FN_SHIFT)) {
-                robot.keyRelease(KeyEvent.VK_SHIFT);
+                robot.keyRelease(VK_SHIFT);
             } else if (StringUtils.equals(fnKey, FN_CONTROL)) {
-                robot.keyRelease(KeyEvent.VK_CONTROL);
+                robot.keyRelease(VK_CONTROL);
             } else if (StringUtils.equals(fnKey, FN_ALT)) {
-                robot.keyRelease(KeyEvent.VK_ALT);
+                robot.keyRelease(VK_ALT);
             } else {
                 ConsoleUtils.error("Unknown function key: " + fnKey);
             }
@@ -162,73 +168,62 @@ public final class AwtUtils {
      * is still running.
      */
     static boolean mustTerminateForcefully() {
-        if (window != null) {
-            Graphics graphics = window.getGraphics();
-            if (graphics != null) { graphics.dispose(); }
+        if (window == null) { return false; }
 
-            Window owner = window.getOwner();
-            if (owner != null) { owner.dispose(); }
+        Graphics graphics = window.getGraphics();
+        if (graphics != null) { graphics.dispose(); }
 
-            window.dispose();
-            return true;
-        }
+        Window owner = window.getOwner();
+        if (owner != null) { owner.dispose(); }
 
-        return shouldForcefullyTerminate;
+        window.dispose();
+        return true;
     }
 
     private static Map<Character, Integer> initShiftNeededMapping() {
         HashMap<Character, Integer> map = new HashMap<>();
-        map.put(':', KeyEvent.VK_SEMICOLON);
-        map.put('~', KeyEvent.VK_BACK_QUOTE);
-        map.put('!', KeyEvent.VK_1);
-        map.put('@', KeyEvent.VK_2);
-        map.put('#', KeyEvent.VK_3);
-        map.put('$', KeyEvent.VK_4);
-        map.put('%', KeyEvent.VK_5);
-        map.put('^', KeyEvent.VK_6);
-        map.put('&', KeyEvent.VK_7);
-        map.put('*', KeyEvent.VK_8);
-        map.put('(', KeyEvent.VK_9);
-        map.put(')', KeyEvent.VK_0);
-        map.put('_', KeyEvent.VK_MINUS);
-        map.put('+', KeyEvent.VK_EQUALS);
-        map.put('{', KeyEvent.VK_OPEN_BRACKET);
-        map.put('}', KeyEvent.VK_CLOSE_BRACKET);
-        map.put('|', KeyEvent.VK_BACK_SLASH);
-        map.put(':', KeyEvent.VK_SEMICOLON);
-        map.put('"', KeyEvent.VK_QUOTE);
-        map.put('<', KeyEvent.VK_COMMA);
-        map.put('>', KeyEvent.VK_PERIOD);
-        map.put('?', KeyEvent.VK_SLASH);
+        map.put('~', VK_BACK_QUOTE);
+        map.put('!', VK_1);
+        map.put('@', VK_2);
+        map.put('#', VK_3);
+        map.put('$', VK_4);
+        map.put('%', VK_5);
+        map.put('^', VK_6);
+        map.put('&', VK_7);
+        map.put('*', VK_8);
+        map.put('(', VK_9);
+        map.put(')', VK_0);
+        map.put('_', VK_MINUS);
+        map.put('+', VK_EQUALS);
+        map.put('{', VK_OPEN_BRACKET);
+        map.put('}', VK_CLOSE_BRACKET);
+        map.put('|', VK_BACK_SLASH);
+        map.put(':', VK_SEMICOLON);
+        map.put('"', VK_QUOTE);
+        map.put('<', VK_COMMA);
+        map.put('>', VK_PERIOD);
+        map.put('?', VK_SLASH);
         return map;
     }
 
     private static Map<Character, Integer> initTranslationNeededMapping() {
         HashMap<Character, Integer> map = new HashMap<>();
-        map.put('\\', KeyEvent.VK_BACK_SLASH);
-        map.put('/', KeyEvent.VK_SLASH);
-        map.put('.', KeyEvent.VK_PERIOD);
-        map.put('-', KeyEvent.VK_MINUS);
-        map.put('`', KeyEvent.VK_BACK_QUOTE);
-        map.put('=', KeyEvent.VK_EQUALS);
-        map.put('[', KeyEvent.VK_OPEN_BRACKET);
-        map.put(']', KeyEvent.VK_CLOSE_BRACKET);
-        map.put(';', KeyEvent.VK_SEMICOLON);
-        map.put('\'', KeyEvent.VK_QUOTE);
-        map.put(',', KeyEvent.VK_COMMA);
-        map.put(' ', KeyEvent.VK_SPACE);
-        map.put('\n', KeyEvent.VK_ENTER);
-        map.put('\t', KeyEvent.VK_TAB);
+        map.put('\\', VK_BACK_SLASH);
+        map.put('/', VK_SLASH);
+        map.put('.', VK_PERIOD);
+        map.put('-', VK_MINUS);
+        map.put('`', VK_BACK_QUOTE);
+        map.put('=', VK_EQUALS);
+        map.put('[', VK_OPEN_BRACKET);
+        map.put(']', VK_CLOSE_BRACKET);
+        map.put(';', VK_SEMICOLON);
+        map.put('\'', VK_QUOTE);
+        map.put(',', VK_COMMA);
+        map.put(' ', VK_SPACE);
+        map.put('\n', VK_ENTER);
+        map.put('\t', VK_TAB);
         return map;
     }
-
-    //public static void click() {
-    //	Robot robot = getRobotInstance();
-    //	robot.mousePress(InputEvent.BUTTON1_MASK);
-    //	robot.mouseRelease(InputEvent.BUTTON1_MASK);
-    //}
-
-    //public static void forceTermination() { shouldForcefullyTerminate = true; }
 
     private static ThreadLocal<Integer> initSemaphore() {
         ThreadLocal<Integer> semaphore = new ThreadLocal<>();
@@ -250,26 +245,11 @@ public final class AwtUtils {
                 if (window == null) { window = new Window(new Frame(graphicsConfig), graphicsConfig); }
                 try {
                     robot = new Robot(graphicDevice);
-                    robot.setAutoDelay(20);
+                    // robot.setAutoDelay(20);
                 } catch (AWTException e) {
                     throw new RuntimeException("Invalid (and possibly headless) environment found: " + e.getMessage());
                 }
             }
         }
-        //
-        //if (graphicsConfig == null) {
-        //	synchronized (SEMAPHORE) {
-        //		graphicsConfig = graphicDevice.getDefaultConfiguration();
-        //		robot = new Robot(graphicDevice);
-        //		robot.setAutoDelay(50);
-        //	}
-        //}
-        //
-        //if (robot == null) {
-        //	synchronized (SEMAPHORE) {
-        //		robot = new Robot(graphicDevice);
-        //		robot.setAutoDelay(50);
-        //	}
-        //}
     }
 }

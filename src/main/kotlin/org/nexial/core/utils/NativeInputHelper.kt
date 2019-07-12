@@ -16,12 +16,21 @@
 
 package org.nexial.core.utils
 
+import org.apache.commons.lang3.StringUtils
+import org.apache.commons.lang3.math.NumberUtils
+import org.nexial.core.NexialConst.SCREENSHOT_EXT
+import org.nexial.core.plugins.base.AwtUtils
 import org.nexial.core.utils.KeystrokeParser.MODIFIERS
+import java.awt.Dimension
+import java.awt.Point
+import java.awt.Rectangle
 import java.awt.Robot
 import java.awt.event.KeyEvent.*
+import java.io.File
 import java.util.*
+import javax.imageio.ImageIO
 
-class NativeInputHelper {
+object NativeInputHelper {
     private val robot = run {
         val robot = Robot()
         // robot.autoDelay = 80
@@ -29,12 +38,114 @@ class NativeInputHelper {
         robot
     }
 
+    @JvmStatic
     fun typeKeys(keyLines: List<String>) =
         keyLines.forEach { KeystrokeParser.handleKey(robot, KeystrokeParser.toKeystrokes(it)) }
+
+    @JvmStatic
     fun click(modifiers: List<String>, x: Int, y: Int) = Mousey.click(robot, BUTTON1_DOWN_MASK, modifiers, x, y)
+
+    @JvmStatic
     fun middleClick(modifiers: List<String>, x: Int, y: Int) = Mousey.click(robot, BUTTON2_DOWN_MASK, modifiers, x, y)
+
+    @JvmStatic
     fun rightClick(modifiers: List<String>, x: Int, y: Int) = Mousey.click(robot, BUTTON3_DOWN_MASK, modifiers, x, y)
+
+    @JvmStatic
     fun mouseWheel(amount: Int, modifiers: List<String>, x: Int, y: Int) = Mousey.wheel(robot, amount, modifiers, x, y)
+
+    @JvmField
+    val screenDimension: Dimension = AwtUtils.getScreenDimension(0)
+                                     ?: throw RuntimeException("Unable to determine current screen dimension")
+
+    @JvmStatic
+    fun resolveScreenPosition(x: String, y: String): Point {
+        val height = screenDimension.height
+        val width = screenDimension.width
+
+        val point = Point()
+
+        when {
+            StringUtils.equalsAnyIgnoreCase(x, "left")   -> point.x = 0
+            StringUtils.equalsAnyIgnoreCase(x, "right")  -> point.x = width
+            StringUtils.equalsAnyIgnoreCase(x, "middle") -> point.x = width / 2
+            StringUtils.equalsAnyIgnoreCase(x, "center") -> point.x = width / 2
+
+            NumberUtils.isDigits(x)                      -> {
+                val ptX = NumberUtils.toInt(x)
+                if (ptX < 0 || ptX > width) throw IllegalArgumentException("$x is off the current screen width")
+                point.x = ptX
+            }
+
+            else                                         -> throw IllegalArgumentException("$x is not a valid 'x' value")
+        }
+
+        when {
+            StringUtils.equalsAnyIgnoreCase(y, "top")    -> point.y = 0
+            StringUtils.equalsAnyIgnoreCase(y, "bottom") -> point.y = height
+            StringUtils.equalsAnyIgnoreCase(y, "middle") -> point.y = height / 2
+            StringUtils.equalsAnyIgnoreCase(y, "center") -> point.y = height / 2
+
+            NumberUtils.isDigits(y)                      -> {
+                val ptY = NumberUtils.toInt(y)
+                point.y = ptY
+                if (ptY < 0 || ptY > width) throw IllegalArgumentException("$y is off the current screen height")
+            }
+
+            else                                         -> throw IllegalArgumentException("$y is not a valid 'y' value")
+        }
+
+        return point
+    }
+
+    @JvmStatic
+    fun captureScreen(x: Int, y: Int, width: Int, height: Int, file: File): Boolean {
+        val screenWidth = screenDimension.width
+        val screenHeight = screenDimension.height
+
+        val captureX = when {
+            x < 0           -> 0
+            x > screenWidth -> screenWidth - 1
+            else            -> x
+        }
+
+        val captureY = when {
+            y < 0            -> 0
+            y > screenHeight -> screenHeight - 1
+            else             -> y
+        }
+
+        val maxWidth = screenWidth - captureX
+        val maxHeight = screenHeight - captureY
+
+        val captureWidth = when {
+            width < 1        -> maxWidth
+
+            width > maxWidth -> {
+                ConsoleUtils.log("$width is reduced to $maxWidth to fit current screen width")
+                maxWidth
+            }
+
+            else             -> width
+        }
+
+        val captureHeight = when {
+            height < 1         -> maxHeight
+
+            height > maxHeight -> {
+                ConsoleUtils.log("$height is reduced to $maxHeight to fit current screen height")
+                maxHeight
+            }
+
+            else               -> height
+        }
+
+        // let screen "settled" down
+        robot.delay(500)
+        val screenshot = robot.createScreenCapture(Rectangle(captureX, captureY, captureWidth, captureHeight))
+        file.parentFile.mkdirs()
+        return ImageIO.write(screenshot, StringUtils.removeStart(SCREENSHOT_EXT, "."), file)
+    }
 }
 
 internal object KeystrokeParser {

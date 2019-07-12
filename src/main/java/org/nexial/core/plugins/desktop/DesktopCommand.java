@@ -17,10 +17,12 @@
 
 package org.nexial.core.plugins.desktop;
 
+import java.awt.*;
 import java.io.File;
 import java.io.IOException;
 import java.lang.reflect.Array;
 import java.lang.reflect.InvocationTargetException;
+import java.util.List;
 import java.util.*;
 
 import org.apache.commons.collections4.CollectionUtils;
@@ -68,6 +70,7 @@ import static java.lang.Integer.MAX_VALUE;
 import static java.lang.System.lineSeparator;
 import static org.apache.commons.lang3.SystemUtils.*;
 import static org.nexial.core.NexialConst.Data.*;
+import static org.nexial.core.NexialConst.OPT_LAST_SCREENSHOT_NAME;
 import static org.nexial.core.NexialConst.OS;
 import static org.nexial.core.SystemVariables.getDefaultInt;
 import static org.nexial.core.plugins.desktop.DesktopConst.*;
@@ -117,39 +120,53 @@ public class DesktopCommand extends BaseCommand implements ForcefulTerminate, Ca
     public String takeScreenshot(TestStep testStep) {
         if (testStep == null) { return null; }
 
-        WiniumDriver driver = getDriver();
-        if (driver == null) {
-            error("driver (screenshot) is not available or not yet initialized.");
-            return null;
-        }
-
-        WebElement application = getApp();
-        if (application == null) {
-            error("target application not available or not yet initialized");
-            return null;
-        }
-
         String filename = generateScreenshotFilename(testStep);
         if (StringUtils.isBlank(filename)) {
             error("Unable to generate screen capture filename!");
             return null;
         }
         filename = context.getProject().getScreenCaptureDir() + separator + filename;
+        File file;
 
-        Rectangle rect = null;
-        if (!context.getBooleanData(DESKTOP_SCREENSHOT_FULLSCREEN, DEF_DESKTOP_SCREENSHOT_FULLSCREEN)) {
-            String[] boundingRectangle = StringUtils.split(application.getAttribute(ATTR_BOUNDING_RECTANGLE), ",");
-            if (ArrayUtils.getLength(boundingRectangle) == 4) {
-                int x = NumberUtils.toInt(boundingRectangle[0]);
-                int y = NumberUtils.toInt(boundingRectangle[1]);
-                int width = NumberUtils.toInt(boundingRectangle[2]);
-                int height = NumberUtils.toInt(boundingRectangle[3]);
-                rect = new Rectangle(x, y, height, width);
+        WiniumDriver driver = getDriver();
+        if (driver == null) {
+
+            log("using native screen capturing approach...");
+            file = new File(filename);
+            if (!NativeInputHelper.captureScreen(0, 0, -1, -1, file)) {
+                error("Unable to capture screenshot via native screen capturing approach");
+                return null;
             }
-        }
 
-        File file = ScreenshotUtils.saveScreenshot(driver, filename, rect);
-        if (file == null) { return null; }
+            context.setData(OPT_LAST_SCREENSHOT_NAME, file.getName());
+
+        } else {
+
+            WebElement application = getApp();
+            if (application == null) {
+                error("target application not available or not yet initialized");
+                return null;
+            }
+
+            Rectangle rect = null;
+            if (!context.getBooleanData(DESKTOP_SCREENSHOT_FULLSCREEN, DEF_DESKTOP_SCREENSHOT_FULLSCREEN)) {
+                String[] boundingRectangle = StringUtils.split(application.getAttribute(ATTR_BOUNDING_RECTANGLE), ",");
+                if (ArrayUtils.getLength(boundingRectangle) == 4) {
+                    int x = NumberUtils.toInt(boundingRectangle[0]);
+                    int y = NumberUtils.toInt(boundingRectangle[1]);
+                    int width = NumberUtils.toInt(boundingRectangle[2]);
+                    int height = NumberUtils.toInt(boundingRectangle[3]);
+                    rect = new Rectangle(x, y, height, width);
+                }
+            }
+
+            file = ScreenshotUtils.saveScreenshot(driver, filename, rect);
+            if (file == null) {
+                error("Unable to capture screenshot via Winium driver");
+                return null;
+            }
+
+        }
 
         if (context.isOutputToCloud()) {
             try {
@@ -472,10 +489,7 @@ public class DesktopCommand extends BaseCommand implements ForcefulTerminate, Ca
         if (!supported) { return StepResult.skipped("current operating system not supported: '" + os + "'"); }
 
         ConsoleUtils.log("simulating keystrokes: " + keystrokes);
-
-        NativeInputHelper nativeInputHelper = new NativeInputHelper();
-        nativeInputHelper.typeKeys(TextUtils.toList(StringUtils.remove(keystrokes, "\r"), "\n", false));
-
+        NativeInputHelper.typeKeys(TextUtils.toList(StringUtils.remove(keystrokes, "\r"), "\n", false));
         return StepResult.success("type keys completed for " + keystrokes);
     }
 
@@ -575,8 +589,6 @@ public class DesktopCommand extends BaseCommand implements ForcefulTerminate, Ca
 
     public StepResult clickScreen(String button, String modifiers, String x, String y) {
         requiresNotBlank(button, "Invalid mouse button", button);
-        requiresPositiveNumber(x, "Invalid x position", x);
-        requiresPositiveNumber(y, "Invalid y position", y);
 
         List<String> mods = new ArrayList<>();
         if (!context.isNullValue(modifiers) && !context.isEmptyValue(modifiers)) {
@@ -598,16 +610,15 @@ public class DesktopCommand extends BaseCommand implements ForcefulTerminate, Ca
             }
         }
 
-        int posX = NumberUtils.toInt(x);
-        int posY = NumberUtils.toInt(y);
-
-        NativeInputHelper nativeInputHelper = new NativeInputHelper();
+        Point screenPoint = NativeInputHelper.resolveScreenPosition(x, y);
+        int posX = screenPoint.x;
+        int posY = screenPoint.y;
         if (StringUtils.equalsIgnoreCase(button, "left")) {
-            nativeInputHelper.click(mods, posX, posY);
+            NativeInputHelper.click(mods, posX, posY);
         } else if (StringUtils.equalsIgnoreCase(button, "middle")) {
-            nativeInputHelper.middleClick(mods, posX, posY);
+            NativeInputHelper.middleClick(mods, posX, posY);
         } else if (StringUtils.equalsIgnoreCase(button, "right")) {
-            nativeInputHelper.rightClick(mods, posX, posY);
+            NativeInputHelper.rightClick(mods, posX, posY);
         } else {
             return StepResult.fail("Unknown/unsupported mouse button: " + button);
         }
@@ -617,8 +628,6 @@ public class DesktopCommand extends BaseCommand implements ForcefulTerminate, Ca
 
     public StepResult mouseWheel(String amount, String modifiers, String x, String y) {
         requiresPositiveNumber(amount, "Invalid scroll amount", amount);
-        requiresPositiveNumber(x, "Invalid x position", x);
-        requiresPositiveNumber(y, "Invalid y position", y);
 
         List<String> mods = new ArrayList<>();
         if (!context.isNullValue(modifiers) && !context.isEmptyValue(modifiers)) {
@@ -640,8 +649,10 @@ public class DesktopCommand extends BaseCommand implements ForcefulTerminate, Ca
             }
         }
 
-        NativeInputHelper nativeInputHelper = new NativeInputHelper();
-        nativeInputHelper.mouseWheel(NumberUtils.toInt(amount), mods, NumberUtils.toInt(x), NumberUtils.toInt(y));
+        Point screenPoint = NativeInputHelper.resolveScreenPosition(x, y);
+        int posX = screenPoint.x;
+        int posY = screenPoint.y;
+        NativeInputHelper.mouseWheel(NumberUtils.toInt(amount), mods, posX, posY);
         return StepResult.success("Mouse wheel moved by " + amount + " notches on screen (" + x + "," + y + ")");
     }
 
@@ -1526,27 +1537,21 @@ public class DesktopCommand extends BaseCommand implements ForcefulTerminate, Ca
         requiresValidVariableName(var);
         requiresNotBlank(matchBy, "Invalid 'matchBy' specified", matchBy);
         requiresNotBlank(fetchColumn, "Invalid 'column' specified", fetchColumn);
+
         List<String> cellData = getHierCellChildData(matchBy, fetchColumn);
-        if (cellData == null) {
-            context.removeData(var);
-            return StepResult.success("No data found in column '" +
-                                      fetchColumn +
-                                      "'.  Variable '" +
-                                      var +
-                                      "' removed.");
-        } else {
+        if (cellData != null) {
             context.setData(var, cellData);
             return StepResult.success("Column data for '" + fetchColumn + "' saved to variable '" + var + "'");
         }
+
+        context.removeData(var);
+        return StepResult.success("No data found in column '" + fetchColumn + "'.  Variable '" + var + "' removed.");
     }
 
-    protected StepResult assertHierCellChildData(
-        String matchBy,
-        String fetchColumn,
-        String expected) {
-
+    protected StepResult assertHierCellChildData(String matchBy, String fetchColumn, String expected) {
         requiresNotBlank(matchBy, "Invalid 'matchBy' specified", matchBy);
         requiresNotBlank(fetchColumn, "Invalid 'column' specified", fetchColumn);
+
         List<String> cellData = getHierCellChildData(matchBy, fetchColumn);
         if (StringUtils.isBlank(expected)) {
             if (!cellData.isEmpty()) {
@@ -1558,6 +1563,7 @@ public class DesktopCommand extends BaseCommand implements ForcefulTerminate, Ca
         if (cellData.isEmpty()) {
             return StepResult.fail("EXPECTS '" + expected + "' but empty row or no match was found");
         }
+
         String delim = context.getTextDelim();
         String[] criterion = StringUtils.contains(expected, delim) ?
                              StringUtils.splitByWholeSeparator(expected, delim) :
@@ -1580,28 +1586,20 @@ public class DesktopCommand extends BaseCommand implements ForcefulTerminate, Ca
     }
 
     protected String getHierCell(String matchBy, String column) {
-
         DesktopHierTable hiertable = getCurrentHierTable();
         requiresNotNull(hiertable, "No Hierarchical Table element referenced or scanned");
 
-        if (!(hiertable.getHeaders().contains(column))) {
-            CheckUtils.fail("Specified column '" +
-                            column +
-                            "' not found.");
-        }
+        if (!hiertable.getHeaders().contains(column)) {CheckUtils.fail("Specified column '" + column + "' not found.");}
         String delim = context.getTextDelim();
         List<String> matchData = TextUtils.toList(matchBy, delim, true);
 
         Map<String, String> row = hiertable.getHierRow(matchData);
+        if (row == null) { CheckUtils.fail("Unable to fetch data from hiertable"); }
 
-        if (row == null) {
-            CheckUtils.fail("Unable to fetch data from hiertable");
-        }
         return String.valueOf(row.get(column));
     }
 
     protected List<String> getHierCellChildData(String matchBy, String fetchColumn) {
-
         DesktopHierTable hiertable = getCurrentHierTable();
         requiresNotNull(hiertable, "No Hierarchical Table element referenced or scanned");
         requires(hiertable.containsHeader(fetchColumn), "Unmatched column specified", fetchColumn);
@@ -1609,10 +1607,8 @@ public class DesktopCommand extends BaseCommand implements ForcefulTerminate, Ca
         List<String> matchData = TextUtils.toList(matchBy, delim, true);
 
         List<String> cellData = hiertable.getHierCellChildData(matchData, fetchColumn);
+        if (cellData == null) { CheckUtils.fail("Unable to fetch data from hiertable"); }
 
-        if (cellData == null) {
-            CheckUtils.fail("Unable to fetch data from hiertable");
-        }
         return cellData;
     }
 
@@ -1644,7 +1640,7 @@ public class DesktopCommand extends BaseCommand implements ForcefulTerminate, Ca
 
     protected WiniumDriver getDriver() {
         if (!IS_OS_WINDOWS) {
-            ConsoleUtils.log("Winium requires Windows OS");
+            log("Winium requires Windows OS");
             return null;
         }
 
@@ -1823,8 +1819,8 @@ public class DesktopCommand extends BaseCommand implements ForcefulTerminate, Ca
     }
 
     protected List<WebElement> findElements(WebElement container, String locator) {
-        requires(container != null, "Invalid container", container);
-        requires(StringUtils.isNotBlank(locator), "invalid locator", locator);
+        requiresNotNull(container, "Invalid container", container);
+        requiresNotBlank(locator, "invalid locator", locator);
 
         By findBy = findBy(locator);
         requires(findBy != null, "Unknown/unsupported locator", locator);
@@ -1839,6 +1835,7 @@ public class DesktopCommand extends BaseCommand implements ForcefulTerminate, Ca
 
     protected List<WebElement> findElements(String locator) {
         requiresNotBlank(locator, "invalid locator", locator);
+
         By findBy = findBy(locator);
         try {
             return findBy != null ? getDriver().findElements(findBy) : null;
