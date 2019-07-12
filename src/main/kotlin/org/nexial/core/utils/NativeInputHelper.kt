@@ -325,6 +325,7 @@ internal object Mousey {
 
         robot.mouseMove(x, y)
         robot.mouseWheel(amount)
+        robot.delay(1000)
 
         while (mods.isNotEmpty()) robot.keyRelease(mods.pop())
     }

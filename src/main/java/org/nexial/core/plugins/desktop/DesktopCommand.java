@@ -128,9 +128,7 @@ public class DesktopCommand extends BaseCommand implements ForcefulTerminate, Ca
         filename = context.getProject().getScreenCaptureDir() + separator + filename;
         File file;
 
-        WiniumDriver driver = getDriver();
-        if (driver == null) {
-
+        if (!IS_OS_WINDOWS || winiumDriver == null) {
             log("using native screen capturing approach...");
             file = new File(filename);
             if (!NativeInputHelper.captureScreen(0, 0, -1, -1, file)) {
@@ -139,9 +137,8 @@ public class DesktopCommand extends BaseCommand implements ForcefulTerminate, Ca
             }
 
             context.setData(OPT_LAST_SCREENSHOT_NAME, file.getName());
-
         } else {
-
+            WiniumDriver driver = getDriver();
             WebElement application = getApp();
             if (application == null) {
                 error("target application not available or not yet initialized");
@@ -160,12 +157,12 @@ public class DesktopCommand extends BaseCommand implements ForcefulTerminate, Ca
                 }
             }
 
+            // also generate `OPT_LAST_SCREENSHOT_NAME` var in context
             file = ScreenshotUtils.saveScreenshot(driver, filename, rect);
             if (file == null) {
                 error("Unable to capture screenshot via Winium driver");
                 return null;
             }
-
         }
 
         if (context.isOutputToCloud()) {
@@ -627,7 +624,9 @@ public class DesktopCommand extends BaseCommand implements ForcefulTerminate, Ca
     }
 
     public StepResult mouseWheel(String amount, String modifiers, String x, String y) {
-        requiresPositiveNumber(amount, "Invalid scroll amount", amount);
+        if (!IS_OS_WINDOWS) { return StepResult.skipped("mouseWheel() currently only works on Windows"); }
+
+        requiresInteger(amount, "Invalid scroll amount", amount);
 
         List<String> mods = new ArrayList<>();
         if (!context.isNullValue(modifiers) && !context.isEmptyValue(modifiers)) {
