@@ -1483,23 +1483,21 @@ public final class NexialConst {
 
         private static final List<String> VALID_OS = Arrays.asList(OS_WINDOWS, OS_MAC, OS_MACOS, OS_MACOSX, OS_LINUX);
 
-        public static boolean isValid(String os) {
-            return VALID_OS.contains(StringUtils.remove(StringUtils.upperCase(StringUtils.trim(os)), ' '));
-        }
+        public static boolean isValid(String os) { return StringUtils.equals(os, "*") || VALID_OS.contains(os); }
 
         public static boolean isWindows(String os) {
-            return StringUtils.equals(OS_WINDOWS, StringUtils.remove(StringUtils.upperCase(StringUtils.trim(os)), ' '));
+            return StringUtils.equals(os, "*") || StringUtils.equals(OS_WINDOWS, os);
         }
 
         public static boolean isMac(String os) {
-            String os1 = StringUtils.remove(StringUtils.upperCase(StringUtils.trim(os)), ' ');
-            return StringUtils.equals(OS_MAC, os1) ||
-                   StringUtils.equals(OS_MACOS, os1) ||
-                   StringUtils.equals(OS_MACOSX, os1);
+            return StringUtils.equals(os, "*") ||
+                   StringUtils.equals(OS_MAC, os) ||
+                   StringUtils.equals(OS_MACOS, os) ||
+                   StringUtils.equals(OS_MACOSX, os);
         }
 
         public static boolean isLinux(String os) {
-            return StringUtils.equals(OS_LINUX, StringUtils.remove(StringUtils.upperCase(StringUtils.trim(os)), ' '));
+            return StringUtils.equals(os, "*") || StringUtils.equals(OS_LINUX, os);
         }
     }
 

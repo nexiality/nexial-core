@@ -24,6 +24,7 @@ import java.lang.reflect.Array;
 import java.lang.reflect.InvocationTargetException;
 import java.util.List;
 import java.util.*;
+import java.util.stream.Collectors;
 
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.collections4.MapUtils;
@@ -472,15 +473,15 @@ public class DesktopCommand extends BaseCommand implements ForcefulTerminate, Ca
         List<String> oses = TextUtils.toList(os, context.getTextDelim(), true);
         if (CollectionUtils.isEmpty(oses)) { return StepResult.fail("Invalid os specified: '" + os + "'"); }
 
+        oses = oses.stream().map(s -> s.trim().toUpperCase().replace(" ", "")).collect(Collectors.toList());
+
         boolean supported = false;
         for (String sys : oses) {
             if (!OS.isValid(sys)) { return StepResult.fail("Invalid os '" + sys + "'"); }
-
             if (IS_OS_WINDOWS && OS.isWindows(sys) || IS_OS_MAC && OS.isMac(sys) || IS_OS_LINUX && OS.isLinux(sys)) {
                 supported = true;
                 break;
             }
-
         }
 
         if (!supported) { return StepResult.skipped("current operating system not supported: '" + os + "'"); }

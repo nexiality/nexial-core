@@ -439,7 +439,7 @@ public class Browser implements ForcefulTerminate {
             cbtHelper = null;
         }
 
-        try { Thread.sleep(2000);} catch (InterruptedException e) { }
+        try { Thread.sleep(1000); } catch (InterruptedException e) { }
 
         if (!isRunFireFox() && !isRunFirefoxHeadless() && !(driver instanceof FirefoxDriver)) {
             // close before quite doesn't seem to work for firefox driver
@@ -448,7 +448,7 @@ public class Browser implements ForcefulTerminate {
 
         try {
             driver.quit();
-            Thread.sleep(3000);
+            Thread.sleep(2000);
         } catch (Throwable e) {
         } finally { driver = null; }
     }
