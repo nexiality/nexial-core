@@ -18,6 +18,7 @@
 package org.nexial.core.model;
 
 import java.io.File;
+import java.io.IOException;
 import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.Set;
@@ -49,11 +50,17 @@ public class TestProject {
     private boolean hasProjectProps;
     private String boundProjectId;
 
-    public TestProject() { nexialHome = new File(System.getProperty(NEXIAL_HOME)).getAbsolutePath(); }
+    public TestProject() {
+        try {
+            nexialHome = new File(System.getProperty(NEXIAL_HOME)).getCanonicalPath();
+        } catch (IOException e) {
+            throw new RuntimeException("Unable to determine the fully qualified path for NEXIAL_HOME", e);
+        }
+    }
 
-    public static TestProject newInstance(File inputFile) {
+    public static TestProject newInstance(File inputFile) throws IOException {
         // this file could be a script or a plan
-        String inputFullPath = inputFile.getAbsolutePath();
+        String inputFullPath = inputFile.getCanonicalPath();
 
         TestProject project = new TestProject();
         // is the test script confined within the standard project structure (i.e. artifact/script/[...].xlsx)?

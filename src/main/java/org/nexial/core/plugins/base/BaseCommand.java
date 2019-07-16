@@ -39,6 +39,8 @@ import org.apache.commons.lang3.ArrayUtils;
 import org.apache.commons.lang3.BooleanUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.math.NumberUtils;
+import org.apache.commons.lang3.tuple.ImmutablePair;
+import org.apache.commons.lang3.tuple.Pair;
 import org.nexial.commons.utils.FileUtil;
 import org.nexial.commons.utils.JRegexUtils;
 import org.nexial.commons.utils.RegexUtils;
@@ -495,7 +497,7 @@ public class BaseCommand implements NexialCommand {
             Collections.sort(actualList);
         }
 
-        assertEquals(expectedList.toString(), actualList.toString());
+        assertEquals(expectedList, actualList);
         return StepResult.success("validated ACTUAL [" + array2 + "] = [" + array1 + "] as EXPECTED");
     }
 
@@ -679,9 +681,92 @@ public class BaseCommand implements NexialCommand {
 
     /** Like JUnit's Assert.assertEquals, but handles "regexp:" strings like HTML Selenese */
     public void assertEquals(String expected, String actual) {
-        String expectedDisplay = expected == null ? null : "\"" + expected + "\"";
-        String actualDisplay = actual == null ? null : "\"" + actual + "\"";
-        assertTrue("Expected=" + expectedDisplay + ", Actual=" + actualDisplay, assertEqualsInternal(expected, actual));
+        assertTrue("\n" + displayForCompare("expected", expected, "actual", actual),
+                   assertEqualsInternal(expected, actual));
+    }
+
+    public static String displayForCompare(String label1, Object data1, String label2, Object data2) {
+        // 1. label treatment
+        if (StringUtils.isBlank(label1)) { label1 = "expected"; }
+        if (StringUtils.isBlank(label2)) { label2 = "actual"; }
+        int labelLength = Math.max(label1.length(), label2.length());
+        label1 = StringUtils.rightPad(label1, labelLength, " ");
+        label2 = StringUtils.rightPad(label2, labelLength, " ");
+
+        // 2. check for special types
+        List<String> data1List = null;
+        List<String> data2List = null;
+        Map<String, String> data1Map = null;
+        Map<String, String> data2Map = null;
+
+        // 3. form display for data1 :: first pass
+        String data1Display = label1;
+        if (data1 == null) {
+            data1Display += "=<null/undefined>";
+        } else if (data1.getClass().isArray()) {
+            data1List = Arrays.asList(TextUtils.toStringArray(data1));
+        } else if (data1 instanceof Collection) {
+            data1List = TextUtils.toStringList(data1);
+        } else if (data1 instanceof Map) {
+            data1Map = TextUtils.toStringMap(data1);
+        } else if (data1 instanceof String) {
+            String data1String = (String) data1;
+            if (StringUtils.isEmpty(data1String)) {
+                data1Display += "=<empty>";
+            } else if (StringUtils.isBlank(data1String)) {
+                data1Display += "=<blank>[" + data1 + "]";
+            } else {
+                data1Display += "=" + data1String;
+            }
+        } else {
+            data1Display += "=" + data1;
+        }
+
+        // 3. form display for data2 :: first pass
+        String data2Display = label2;
+        if (data2 == null) {
+            data2Display += "=<null/undefined>";
+        } else if (data2.getClass().isArray()) {
+            data2List = Arrays.asList(TextUtils.toStringArray(data2));
+        } else if (data2 instanceof Collection) {
+            data2List = TextUtils.toStringList(data2);
+        } else if (data2 instanceof Map) {
+            data2Map = TextUtils.toStringMap(data2);
+        } else if (data2 instanceof String) {
+            String data2String = (String) data2;
+            if (StringUtils.isEmpty(data2String)) {
+                data2Display += "=<empty>";
+            } else if (StringUtils.isBlank(data2String)) {
+                data2Display += "=<blank>[" + data2 + "]";
+            } else {
+                data2Display += "=" + data2String;
+            }
+        } else {
+            data2Display += "=" + data2;
+        }
+
+        if (data1List != null) {
+            if (data2List != null) {
+                Pair<String, String> lines = displayAligned(data1List, data2List);
+                data1Display += "=" + lines.getKey();
+                data2Display += "=" + lines.getValue();
+            } else {
+                data1Display += "=" + TextUtils.toString(data1List, ",");
+            }
+        } else {
+            if (data1Map != null) {
+                if (data2Map != null) {
+                    return displayAsMapDiff(label1, data1Map, label2, data2Map);
+                } else {
+                    data1Display += "=" + data1Map;
+                }
+            } else {
+                if (data2Map != null) { data2Display += "=" + data2Map; }
+                if (data2List != null) { data2Display += "=" + TextUtils.toString(data2List, ","); }
+            }
+        }
+
+        return data1Display + "\n" + data2Display;
     }
 
     public void waitFor(int waitMs) {
@@ -914,7 +999,7 @@ public class BaseCommand implements NexialCommand {
     /** Like JUnit's Assert.assertEquals, but knows how to compare string arrays */
     protected void assertEquals(Object expected, Object actual) {
         if (expected == null) {
-            assertTrue("Expected=null, Actual=\"" + actual + "\"", actual == null);
+            assertTrue("\nexpected=null\nactual  =" + actual, actual == null);
         } else if (expected instanceof String && actual instanceof String) {
             assertEquals((String) expected, (String) actual);
         } else if (expected instanceof String && actual instanceof String[]) {
@@ -926,7 +1011,8 @@ public class BaseCommand implements NexialCommand {
         } else if (expected instanceof String[] && actual instanceof String[]) {
             assertEquals((String[]) expected, (String[]) actual);
         } else {
-            assertTrue("Expected=\"" + expected + "\", Actual=\"" + actual + "\"", expected.equals(actual));
+            assertTrue("\n" + displayForCompare("expected", expected, "actual", actual),
+                       expected.equals(actual));
         }
     }
 
@@ -940,27 +1026,24 @@ public class BaseCommand implements NexialCommand {
     protected void assertEquals(String[] expected, String[] actual) {
         String comparisonDumpIfNotEqual = verifyEqualsAndReturnComparisonDumpIfNot(expected, actual);
         if (comparisonDumpIfNotEqual != null) {
-            error(MSG_FAIL + comparisonDumpIfNotEqual);
+            error(MSG_FAIL + "\n" + comparisonDumpIfNotEqual);
             throw new AssertionError(comparisonDumpIfNotEqual);
         }
     }
 
-    protected void assertTrue(String message, boolean condition) {
-        if (!condition) { CheckUtils.fail(message); }
-    }
+    protected void assertTrue(String message, boolean condition) { if (!condition) { CheckUtils.fail(message); } }
 
     /** Asserts that two objects are not the same (compares using .equals()) */
     protected void assertNotEquals(Object expected, Object actual) {
-        String expectedDisplay = expected == null ? null : "\"" + expected + "\"";
-        String actualDisplay = actual == null ? null : "\"" + actual + "\"";
-
         if (expected == null) {
             // both should be null
-            assertFalse("Expected=null, Actual=" + actualDisplay, actual == null);
+            assertFalse("\nexpected=null\nactual  =" + actual, actual == null);
             return;
         }
 
-        if (expected.equals(actual)) { CheckUtils.fail("Expected=" + expectedDisplay + ", Actual=" + actualDisplay); }
+        if (expected.equals(actual)) {
+            CheckUtils.fail("\n" + displayForCompare("expected", expected, "actual", actual));
+        }
     }
 
     protected void assertTrue(boolean condition) { assertTrue(null, condition); }
@@ -1179,9 +1262,7 @@ public class BaseCommand implements NexialCommand {
             }
         }
 
-        if (misMatch) {
-            return "Expected\"" + stringArrayToString(expected) + "\", Actual=\"" + stringArrayToString(actual) + "\"";
-        }
+        if (misMatch) { return displayForCompare("expected", expected, "actual", actual); }
 
         return null;
     }
@@ -1268,5 +1349,84 @@ public class BaseCommand implements NexialCommand {
         }
 
         return args;
+    }
+
+    private static Pair<String, String> displayAligned(List<String> list1, List<String> list2) {
+        if (CollectionUtils.isEmpty(list1)) { return new ImmutablePair<>("", TextUtils.toString(list2, ",")); }
+        if (CollectionUtils.isEmpty(list2)) { return new ImmutablePair<>(TextUtils.toString(list1, ","), ""); }
+
+        StringBuilder buffer1 = new StringBuilder();
+        StringBuilder buffer2 = new StringBuilder();
+
+        int list1Size = list1.size();
+        int list2Size = list2.size();
+        int commonSize = Math.min(list1Size, list2Size);
+
+        for (int i = 0; i < commonSize; i++) {
+            String item1 = list1.get(i);
+            String item2 = list2.get(i);
+            int maxWidth = Math.max(StringUtils.length(item1), StringUtils.length(item2));
+            buffer1.append(StringUtils.rightPad(item1, maxWidth, " ")).append(",");
+            buffer2.append(StringUtils.rightPad(item2, maxWidth, " ")).append(",");
+        }
+
+        if (list1Size > commonSize) {
+            for (int i = commonSize; i < list1Size; i++) {
+                String item1 = list1.get(i);
+                String item2 = "<missing>";
+                int maxWidth = Math.max(StringUtils.length(item1), StringUtils.length(item2));
+                buffer1.append(StringUtils.rightPad(item1, maxWidth, " ")).append(",");
+                buffer2.append(StringUtils.rightPad(item2, maxWidth, " ")).append(",");
+            }
+        }
+
+        if (list2Size > commonSize) {
+            for (int i = commonSize; i < list2Size; i++) {
+                String item1 = "<missing>";
+                String item2 = list2.get(i);
+                int maxWidth = Math.max(StringUtils.length(item1), StringUtils.length(item2));
+                buffer1.append(StringUtils.rightPad(item1, maxWidth, " ")).append(",");
+                buffer2.append(StringUtils.rightPad(item2, maxWidth, " ")).append(",");
+            }
+        }
+
+        return new ImmutablePair<>(StringUtils.removeEnd(buffer1.toString(), ","),
+                                   StringUtils.removeEnd(buffer2.toString(), ","));
+    }
+
+    private static String displayAsMapDiff(String label1,
+                                           Map<String, String> map1,
+                                           String label2,
+                                           Map<String, String> map2) {
+        List<String> headers = Arrays.asList("key",
+                                             StringUtils.trim(label1) + " value",
+                                             StringUtils.trim(label2) + " value",
+                                             "matched");
+        List<List<String>> records = new ArrayList<>();
+
+        List<String> map1Keys = new ArrayList<>(map1.keySet());
+        List<String> map2Keys = new ArrayList<>(map2.keySet());
+
+        map1Keys.forEach(map1Key -> {
+            List<String> record = new ArrayList<>();
+            record.add(map1Key);
+            record.add(map1.get(map1Key));
+            record.add(StringUtils.defaultString(map2.get(map1Key), "<missing>"));
+            record.add(StringUtils.equals(record.get(1), record.get(2)) ? "yes" : "NO");
+            records.add(record);
+
+            map2Keys.remove(map1Key);
+        });
+
+        map2Keys.forEach(map2Key -> {
+            List<String> record = new ArrayList<>();
+            record.add(map2Key);
+            record.add("<missing>");
+            record.add(map2.get(map2Key));
+            record.add("NO");
+            records.add(record);
+        });
+
+        return TextUtils.createAsciiTable(headers, records, List::get);
     }
 }

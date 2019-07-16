@@ -17,6 +17,10 @@
 
 package org.nexial.core.plugins.base;
 
+import java.util.Date;
+import java.util.LinkedHashMap;
+import java.util.Map;
+
 import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
@@ -60,6 +64,80 @@ public class BaseCommandTest {
             Assert.fail("expect failure");
         } catch (AssertionError e) {
             // it's ok
+        }
+    }
+
+    @Test
+    public void testAssertArrayEquals_long_list() throws Exception {
+        BaseCommand subject = new BaseCommand();
+        subject.init(context);
+
+        try {
+            subject.assertArrayEqual("1,2,301", "301,2,301", "false");
+            Assert.fail("expect failure");
+        } catch (Exception e) {
+            Assert.fail(e.getMessage());
+        } catch (AssertionError e) {
+            System.out.println(e.getMessage());
+        }
+
+        try {
+            subject.assertArrayEqual("1,2,301", "301,2,301", "true");
+            Assert.fail("expect failure");
+        } catch (Exception e) {
+            Assert.fail(e.getMessage());
+        } catch (AssertionError e) {
+            System.out.println(e.getMessage());
+        }
+
+        try {
+            subject.assertArrayEqual("519,23,0.913,587239,42739.187,2364,918.27,36591,82.736492,873,628,374.6",
+                                     "519,23,0.913,58723.9,42739.187001,2364,918.27,36591,82.736492,873,628,374.60",
+                                     "true");
+            Assert.fail("expect failure");
+        } catch (Exception e) {
+            Assert.fail(e.getMessage());
+        } catch (AssertionError e) {
+            System.out.println(e.getMessage());
+        }
+
+        try {
+            subject.assertArrayEqual("now is the,time for,all good men, to, ,come to the aid of his,country",
+                                     "now is the time for,all good men to,come to the,aid of his,country",
+                                     "true");
+            Assert.fail("expect failure");
+        } catch (Exception e) {
+            Assert.fail(e.getMessage());
+        } catch (AssertionError e) {
+            System.out.println(e.getMessage());
+        }
+    }
+
+    @Test
+    public void testAssertEquals_map() throws Exception {
+        BaseCommand subject = new BaseCommand();
+        subject.init(context);
+
+        Map<String,Object> map1 = new LinkedHashMap<>();
+        map1.put("amount", 1523.23d);
+        map1.put("purchase order", "238934SDF23D");
+        map1.put("order date", new Date(12735287394l));
+        map1.put("contact person", "job bbblow");
+
+        Map<String,Object> map2 = new LinkedHashMap<>();
+        map2.put("amount", 1523.23d);
+        map2.put("purchase order", "238934SDF23D");
+        map2.put("contact person", "Joe Brlow");
+        map2.put("currency", "Indian Rupee");
+        map2.put("ship date", "07/19/2019");
+
+        try {
+            subject.assertEquals(map1, map2);
+            Assert.fail("expect failure");
+        } catch (Exception e) {
+            Assert.fail(e.getMessage());
+        } catch (AssertionError e) {
+            System.out.println(e.getMessage());
         }
     }
 

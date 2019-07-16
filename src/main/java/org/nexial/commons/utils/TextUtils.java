@@ -20,6 +20,7 @@ package org.nexial.commons.utils;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
+import java.lang.reflect.Array;
 import java.util.*;
 import java.util.stream.Collectors;
 import javax.validation.constraints.NotNull;
@@ -678,6 +679,49 @@ public final class TextUtils {
         String[] arr = new String[text.length()];
         for (int i = 0; i < arr.length; i++) { arr[i] = text.substring(i, i + 1); }
         return arr;
+    }
+
+    /**
+     * convert {@literal array} into a {@literal String[]}. If {@literal array} is not an array (of any type), this
+     * method will return empty {@literal String[]}.
+     */
+    @NotNull
+    public static String[] toStringArray(Object array) {
+        if (array == null || !array.getClass().isArray()) { return new String[0]; }
+
+        int arrayLength = ArrayUtils.getLength(array);
+        String[] strings = new String[arrayLength];
+        for (int i = 0; i < arrayLength; i++) {
+            strings[i] = Objects.toString(Array.get(array, i));
+        }
+
+        return strings;
+    }
+
+    /**
+     * convert {@literal collection} into a {@literal List<String>}. If {@literal collection} is not a collection (of
+     * any type), this method will return empty {@literal List<String>}.
+     */
+    @NotNull
+    public static List<String> toStringList(Object collection) {
+        if (!(collection instanceof Collection)) { return new ArrayList<>(); }
+
+        List<String> strings = new ArrayList<>();
+        ((Collection) collection).forEach(item -> strings.add(Objects.toString(item)));
+        return strings;
+    }
+
+    /**
+     * convert {@literal map} into a {@literal Map<String,String>}. If {@literal map} is not an array (of any type),
+     * this method will return empty {@literal Map<String,String>}.
+     */
+    @NotNull
+    public static Map<String, String> toStringMap(Object map) {
+        if (!(map instanceof Map)) { return new HashMap<>(); }
+
+        Map<String, String> strings = new LinkedHashMap<>();
+        ((Map) map).forEach((key, value) -> strings.put(Objects.toString(key), Objects.toString(value)));
+        return strings;
     }
 
     public static String removeFirst(String text, String remove) {

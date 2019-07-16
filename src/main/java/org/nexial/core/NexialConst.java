@@ -717,8 +717,8 @@ public final class NexialConst {
                     project.setName(StringUtils.substringAfterLast(projectHome, separator));
                 }
 
-                project.setScriptPath(projectHome + separator + DEF_REL_LOC_TEST_SCRIPT);
                 project.setArtifactPath(projectHome + separator + DEF_REL_LOC_ARTIFACT);
+                project.setScriptPath(projectHome + separator + DEF_REL_LOC_TEST_SCRIPT);
                 project.setDataPath(projectHome + separator + DEF_REL_LOC_TEST_DATA);
                 project.setPlanPath(projectHome + separator + DEF_REL_LOC_TEST_PLAN);
 
