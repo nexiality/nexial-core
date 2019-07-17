@@ -796,7 +796,7 @@ public class ExecutionContext {
                 // it's possible that we might get a reference to an item of a string-based array (like "a,b,c,d")
                 // check to see if there's any reference to the ${var}[index] pattern
                 if (isListCompatible(stringValue)) {
-                    String regexIndexRef = "\\$\\{" + token + "\\}\\[.+?\\]";
+                    String regexIndexRef = ESCAPED_TOKEN_START + token + ESCAPED_TOKEN_END + "\\[.+?\\]";
                     boolean hasIndexRef = RegexUtils.match(text, regexIndexRef, true);
 
                     // if there's substitution for ${...}[#] and the `value` can be treated as list
@@ -804,7 +804,7 @@ public class ExecutionContext {
                         String beforeIndex = TOKEN_START + token + TOKEN_END + TOKEN_ARRAY_START;
                         String afterIndex = TOKEN_ARRAY_END;
 
-                        String[] array = StringUtils.split(stringValue, getTextDelim());
+                        String[] array = StringUtils.splitPreserveAllTokens(stringValue, getTextDelim());
 
                         List<String> indexRefs = RegexUtils.eagerCollectGroups(text, regexIndexRef, false, true);
                         for (String indexRef : indexRefs) {
@@ -1737,6 +1737,7 @@ public class ExecutionContext {
             String var = StringUtils.substring(value, startIdx + TOKEN_START.length(), endIdx);
             String searchFor = TOKEN_START + var + TOKEN_END;
             if (data.containsKey(var)) {
+                searchFor = searchFor + getIndexedRef(value, endIdx + TOKEN_END.length());
                 value = StringUtils.replace(value, searchFor, replaceTokens(searchFor));
             } else {
                 // mark the irreplaceable token so we can put things back later
@@ -1753,6 +1754,21 @@ public class ExecutionContext {
         value = StringUtils.replace(value, "]]~", TOKEN_END);
 
         return value;
+    }
+
+    public static String getIndexedRef(String value, int expectedArrayStartIdx) {
+        // find `[` and `]` after TOKEN End Index
+        int startArrayIdx = StringUtils.indexOf(value, TOKEN_ARRAY_START, expectedArrayStartIdx);
+        int endArrayIdx = StringUtils.indexOf(value, TOKEN_ARRAY_END, expectedArrayStartIdx);
+
+        // Ignore index ref if is not after token
+        if (startArrayIdx != -1 && endArrayIdx != -1 && expectedArrayStartIdx == startArrayIdx) {
+            String listIndex = StringUtils.substring(value, startArrayIdx + TOKEN_ARRAY_START.length(), endArrayIdx);
+            if (NumberUtils.isDigits(listIndex)) {
+                return TOKEN_ARRAY_START + listIndex + TOKEN_ARRAY_END;
+            }
+        }
+        return "";
     }
 
     protected String encodeForUrl(String filename) {
