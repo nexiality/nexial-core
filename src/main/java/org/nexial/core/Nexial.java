@@ -362,7 +362,7 @@ public class Nexial {
                 fail("specified test plan (" + testPlanPath + ") is not readable or does not contain valid format.");
             }
 
-            File testPlanFile = new File(testPlanPath).getCanonicalFile();
+            File testPlanFile = new File(testPlanPath);
 
             // resolve project directory structure based on the {@code testScriptFile} command line input
             project = TestProject.newInstance(testPlanFile);
@@ -592,7 +592,7 @@ public class Nexial {
         if (script == null) { fail("Invalid test script - " + testScriptPath); }
 
         // resolve the standard project structure based on test script input
-        File testScriptFile = script.getFile().getCanonicalFile();
+        File testScriptFile = new File(testScriptPath);
 
         // resolve project directory structure based on the {@code testScriptFile} command line input
         project = TestProject.newInstance(testScriptFile);
@@ -608,7 +608,7 @@ public class Nexial {
         List<String> targetScenarios = resolveScenarios(cmd, script);
 
         // command line option - data. could be fully qualified or relative to script
-        Excel dataFile = resolveDataFile(cmd, artifactPath, testScriptFile.getAbsolutePath());
+        Excel dataFile = resolveDataFile(cmd, artifactPath, testScriptPath);
         if (dataFile == null) {
             String error = "Unable to successfully resolve appropriate data file";
             ConsoleUtils.error(error);
