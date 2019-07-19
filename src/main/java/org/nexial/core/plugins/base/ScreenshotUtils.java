@@ -17,10 +17,8 @@
 
 package org.nexial.core.plugins.base;
 
-import java.awt.*;
 import java.awt.image.*;
 import java.io.File;
-import java.io.IOException;
 import javax.imageio.ImageIO;
 import javax.validation.constraints.NotNull;
 
@@ -41,7 +39,6 @@ import org.openqa.selenium.WebDriverException;
 
 import static org.nexial.core.NexialConst.Data.QUIET;
 import static org.nexial.core.NexialConst.OPT_LAST_SCREENSHOT_NAME;
-import static org.nexial.core.NexialConst.SCREENSHOT_EXT;
 import static org.openqa.selenium.OutputType.BASE64;
 
 public class ScreenshotUtils {
@@ -71,23 +68,23 @@ public class ScreenshotUtils {
         }
     }
 
-    public static File saveDesktopScreenshot(String filename) {
-        if (filename == null) { throw new IllegalArgumentException("filename is null"); }
-
-        File output = prepScreenshotFile(filename);
-
-        try {
-            BufferedImage image =
-                new Robot().createScreenCapture(new java.awt.Rectangle(Toolkit.getDefaultToolkit().getScreenSize()));
-            ImageIO.write(image, StringUtils.removeStart(SCREENSHOT_EXT, "."), output);
-            ExecutionContext context = ExecutionThread.get();
-            if (context != null) { context.setData(OPT_LAST_SCREENSHOT_NAME, output.getName()); }
-            return output;
-        } catch (HeadlessException | AWTException | IOException e) {
-            error("failed to save screen capture to '" + filename + "': " + e.getMessage());
-            return null;
-        }
-    }
+    // public static File saveDesktopScreenshot(String filename) {
+    //     if (filename == null) { throw new IllegalArgumentException("filename is null"); }
+    //
+    //     File output = prepScreenshotFile(filename);
+    //
+    //     try {
+    //         BufferedImage image =
+    //             new Robot().createScreenCapture(new java.awt.Rectangle(Toolkit.getDefaultToolkit().getScreenSize()));
+    //         ImageIO.write(image, StringUtils.removeStart(SCREENSHOT_EXT, "."), output);
+    //         ExecutionContext context = ExecutionThread.get();
+    //         if (context != null) { context.setData(OPT_LAST_SCREENSHOT_NAME, output.getName()); }
+    //         return output;
+    //     } catch (HeadlessException | AWTException | IOException e) {
+    //         error("failed to save screen capture to '" + filename + "': " + e.getMessage());
+    //         return null;
+    //     }
+    // }
 
     public static File saveScreenshot(TakesScreenshot screenshot, String filename) {
         if (screenshot == null) { throw new IllegalArgumentException("screenshot object is null"); }

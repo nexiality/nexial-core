@@ -46,7 +46,7 @@ public class CookieCommand extends BaseCommand implements RequireBrowser {
     public void init(ExecutionContext context) {
         super.init(context);
         driver = null;
-        ensureWebDriver();
+        if (!context.isDelayBrowser()) { ensureWebDriver(); }
     }
 
     public StepResult assertValue(String name, String value) {
@@ -102,23 +102,6 @@ public class CookieCommand extends BaseCommand implements RequireBrowser {
     }
 
     protected WebDriver.Options deriveCookieStore() {
-        //if (context.getBrowser().isRunIE()) {
-        //	// IE-specific support... since IE driver can't focus on window by name
-        //	TargetLocator targetLocator = driver.switchTo();
-        //	Set<String> winHandles = driver.getWindowHandles();
-        //	for (String handle : winHandles) {
-        //		try {
-        //			return targetLocator.window(handle).manage();
-        //		} catch (Throwable e) {
-        //			// keep trying...
-        //			log("Unable to switch to window '" + handle + "': " + e.getMessage());
-        //			log("keep trying...");
-        //		}
-        //	}
-        //
-        //	throw new RuntimeException("Unable to swtich to an active window to retrieve cookies");
-        //}
-
         ensureWebDriver();
         return driver.manage();
     }

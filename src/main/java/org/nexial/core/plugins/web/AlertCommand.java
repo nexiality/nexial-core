@@ -50,7 +50,7 @@ public class AlertCommand extends BaseCommand implements RequireBrowser {
     public void init(ExecutionContext context) {
         super.init(context);
         driver = null;
-        ensureWebDriver();
+        if (!context.isDelayBrowser()) { ensureWebDriver(); }
     }
 
     @Override

@@ -139,7 +139,7 @@ public final class NexialConst {
     public static final String OPT_CHROME_PROFILE = registerSystemVariable(NAMESPACE + "chrome.profile");
     public static final String OPT_EASY_STRING_COMPARE =registerSystemVariable(NAMESPACE + "lenientStringCompare",true);
     public static final String OPT_HTTP_TTL = NAMESPACE + "httpTTL";
-    public static final String OPT_UI_RENDER_WAIT_MS = registerSystemVariable(NAMESPACE + "uiRenderWaitMs", 3000);
+    public static final String OPT_UI_RENDER_WAIT_MS = registerSystemVariable(NAMESPACE + "uiRenderWaitMs", 1500);
     public static final String OPT_WAIT_SPEED = registerSystemVariable(NAMESPACE + "waitSpeed", 3);
     public static final String OPT_LAST_ALERT_TEXT = registerSystemVariable(NAMESPACE + "lastAlertText");
     public static final String OPT_ALERT_IGNORE_FLAG = registerSystemVariable(NAMESPACE + "ignoreBrowserAlert", false);

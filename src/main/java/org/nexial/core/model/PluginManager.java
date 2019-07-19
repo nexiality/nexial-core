@@ -83,7 +83,7 @@ public class PluginManager {
         }
 
         browser.setContext(context);
-        browser.ensureWebDriverReady();
+        if (!context.isDelayBrowser()) { browser.ensureWebDriverReady(); }
         browserInitialized = true;
     }
 

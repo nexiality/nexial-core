@@ -59,6 +59,7 @@ import org.nexial.core.plugins.ws.Response;
 import org.nexial.core.plugins.ws.WsCommand;
 import org.nexial.core.service.EventTracker;
 import org.nexial.core.utils.ConsoleUtils;
+import org.nexial.core.utils.NativeInputHelper;
 import org.nexial.core.utils.OutputFileUtils;
 import org.nexial.core.utils.WebDriverUtils;
 import org.openqa.selenium.Dimension;
@@ -125,7 +126,7 @@ public class WebCommand extends BaseCommand implements CanTakeScreenshot, CanLog
             browser.setProxy(proxy);
         }
 
-        if (!context.getBooleanData(OPT_DELAY_BROWSER, getDefaultBool(OPT_DELAY_BROWSER))) { initWebDriver(); }
+        if (!context.isDelayBrowser()) { initWebDriver(); }
 
         ws = (WsCommand) context.findPlugin("ws");
         ws.init(context);
@@ -1245,7 +1246,6 @@ public class WebCommand extends BaseCommand implements CanTakeScreenshot, CanLog
 
         // double check
         Set<String> handles = driver.getWindowHandles();
-
         if (CollectionUtils.isEmpty(handles)) { return StepResult.fail("No window or windows handle found"); }
 
         int handleCount = handles.size();
@@ -1485,11 +1485,13 @@ public class WebCommand extends BaseCommand implements CanTakeScreenshot, CanLog
     public StepResult saveLocation(String var) {
         requires(StringUtils.isNotBlank(var) && !StringUtils.startsWith(var, "${"), "invalid variable", var);
 
+        ensureReady();
         updateDataVariable(var, driver.getCurrentUrl());
         return StepResult.success("stored current URL as ${" + var + "}");
     }
 
     public StepResult clearLocalStorage() {
+        ensureReady();
         jsExecutor.executeScript("window.localStorage.clear();");
         return StepResult.success("browser's local storage cleared");
     }
@@ -1497,6 +1499,7 @@ public class WebCommand extends BaseCommand implements CanTakeScreenshot, CanLog
     public StepResult editLocalStorage(String key, String value) {
         requiresNotBlank(key, "local storage key must not be null");
 
+        ensureReady();
         if (StringUtils.isBlank(value)) {
             jsExecutor.executeScript("window.localStorage.removeItem('" + key + "');");
         } else {
@@ -1511,6 +1514,7 @@ public class WebCommand extends BaseCommand implements CanTakeScreenshot, CanLog
         requiresValidVariableName(var);
         requiresNotBlank(key, "local storage key must not be null");
 
+        ensureReady();
         Object response = jsExecutor.executeScript("return window.localStorage.getItem('" + key + "')");
         context.setData(var, response);
         return StepResult.success("browser's local storage (" + key + ") stored to " + var + " as " + response);
@@ -1531,6 +1535,8 @@ public class WebCommand extends BaseCommand implements CanTakeScreenshot, CanLog
             ConsoleUtils.log("Unable to resolve JavaScript '" + script + "': " + e.getMessage() + ". Use as is...");
             javascript = script;
         }
+
+        ensureReady();
 
         Object retVal = null;
         try {
@@ -1553,16 +1559,6 @@ public class WebCommand extends BaseCommand implements CanTakeScreenshot, CanLog
     public String takeScreenshot(TestStep testStep) {
         if (testStep == null) { return null; }
 
-        //if (browser == null || selenium == null || browser.isRunBrowserStack()) {
-        if (browser == null) {
-            // possibly delayBrowser turned on.. skip screenshot if selenium hasn't been initialized..
-            log("selenium/browser not yet initialized; skip screen capturing");
-            return null;
-        }
-
-        // proceed... with caution (or not!)
-        waitForBrowserStability(deriveBrowserStabilityWaitMs(context));
-
         String filename = generateScreenshotFilename(testStep);
         if (StringUtils.isBlank(filename)) {
             error("Unable to generate screen capture filename!");
@@ -1570,14 +1566,31 @@ public class WebCommand extends BaseCommand implements CanTakeScreenshot, CanLog
         }
         filename = context.getProject().getScreenCaptureDir() + separator + filename;
 
-        File screenshotFile;
-        if (alert.isDialogPresent()) {
-            if (browser.isRunBrowserStack() || browser.isRunCrossBrowserTesting()) {
-                alert.dismiss();
-                screenshotFile = ScreenshotUtils.saveScreenshot(screenshot, filename);
-            } else {
-                screenshotFile = ScreenshotUtils.saveDesktopScreenshot(filename);
+        boolean useNativeCapture = false;
+        if (browser == null || driver == null) {
+            useNativeCapture = true;
+        } else {
+            // proceed... with caution (or not!)
+            waitForBrowserStability(deriveBrowserStabilityWaitMs(context));
+            if (alert.isDialogPresent()) {
+                if (browser.isRunBrowserStack() || browser.isRunCrossBrowserTesting()) {
+                    alert.dismiss();
+                } else {
+                    useNativeCapture = true;
+                }
             }
+        }
+
+        File screenshotFile;
+        if (useNativeCapture) {
+            log("using native screen capturing approach...");
+            screenshotFile = new File(filename);
+            if (!NativeInputHelper.captureScreen(0, 0, -1, -1, screenshotFile)) {
+                error("Unable to capture screenshot via native screen capturing approach");
+                return null;
+            }
+
+            context.setData(OPT_LAST_SCREENSHOT_NAME, screenshotFile.getName());
         } else {
             screenshotFile = ScreenshotUtils.saveScreenshot(screenshot, filename);
         }
@@ -1672,7 +1685,7 @@ public class WebCommand extends BaseCommand implements CanTakeScreenshot, CanLog
 
     public StepResult closeAll() {
         // ensureReady();
-        browser.shutdown();
+        if (browser != null) { browser.shutdown(); }
         driver = null;
         return StepResult.success("closed last tab/window");
     }
@@ -1838,11 +1851,10 @@ public class WebCommand extends BaseCommand implements CanTakeScreenshot, CanLog
 
     @NotNull
     protected StepResult goBack(boolean wait) {
-        ensureReady();
-
         StepResult failed = notSupportedForElectron();
         if (failed != null) { return failed; }
 
+        ensureReady();
         driver.navigate().back();
         if (wait) { waitForBrowserStability(context.getPollWaitMs()); }
         return StepResult.success("went back previous page");
@@ -1991,9 +2003,7 @@ public class WebCommand extends BaseCommand implements CanTakeScreenshot, CanLog
         return click(submitLocator);
     }
 
-    /**
-     * INTERNAL METHOD; not for public consumption
-     */
+    /** INTERNAL METHOD; not for public consumption */
     protected StepResult assertAttributePresentInternal(String locator, String attrName, boolean expectsFound) {
         try {
             String actual = getAttributeValue(locator, attrName);
@@ -2465,37 +2475,6 @@ public class WebCommand extends BaseCommand implements CanTakeScreenshot, CanLog
 
         return false;
     }
-
-    // protected boolean waitForCondition(long maxWaitMs, @NotNull Predicate<WebDriver> condition) {
-    //     // guaranteed at least 1 cycle of wait
-    //     if (maxWaitMs < DEF_SLEEP_MS) { maxWaitMs = DEF_SLEEP_MS + 1; }
-    //
-    //     int count = 0;
-    //
-    //     int maxWaitCycle = (int) (maxWaitMs / DEF_SLEEP_MS);
-    //     for (int cycle = 0; cycle < maxWaitCycle; cycle++) {
-    //         try {
-    //             if (condition.evaluate(driver)) {
-    //                 count++;
-    //                 cycle--;
-    //
-    //                 // double check before declaring condition met - confirm stability
-    //                 if (count >= 2) { return true; }
-    //             }
-    //         // } catch (NoSuchElementException e) {
-    //         //     log("The specified web element cannot be found within the max timeout of " + maxWaitMs + " ms");
-    //         } catch (WebDriverException e) {
-    //             log("Error while waiting for a condition to be met on the current browser: " +
-    //                 WebDriverExceptionHelper.resolveErrorMessage(e));
-    //         } catch (Exception e) {
-    //             log("Error while waiting for browser to stabilize: " + e.getMessage());
-    //         }
-    //
-    //         waitFor(DEF_SLEEP_MS);
-    //     }
-    //
-    //     return false;
-    // }
 
     protected void scrollIntoView(WebElement element) {
         if (element != null && context.getBooleanData(SCROLL_INTO_VIEW, getDefaultBool(SCROLL_INTO_VIEW))) {

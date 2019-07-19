@@ -384,6 +384,8 @@ public class ExecutionContext {
         return StringUtils.remove(System.getProperty(BROWSER, getStringData(BROWSER, getDefault(BROWSER))), ".");
     }
 
+    public boolean isDelayBrowser() { return getBooleanData(OPT_DELAY_BROWSER, getDefaultBool(OPT_DELAY_BROWSER)); }
+
     public Excel getTestScript() { return testScript; }
 
     public List<TestScenario> getTestScenarios() { return testScenarios; }
@@ -1756,7 +1758,7 @@ public class ExecutionContext {
         return value;
     }
 
-    public static String getIndexedRef(String value, int expectedArrayStartIdx) {
+    protected static String getIndexedRef(String value, int expectedArrayStartIdx) {
         // find `[` and `]` after TOKEN End Index
         int startArrayIdx = StringUtils.indexOf(value, TOKEN_ARRAY_START, expectedArrayStartIdx);
         int endArrayIdx = StringUtils.indexOf(value, TOKEN_ARRAY_END, expectedArrayStartIdx);
@@ -1764,9 +1766,7 @@ public class ExecutionContext {
         // Ignore index ref if is not after token
         if (startArrayIdx != -1 && endArrayIdx != -1 && expectedArrayStartIdx == startArrayIdx) {
             String listIndex = StringUtils.substring(value, startArrayIdx + TOKEN_ARRAY_START.length(), endArrayIdx);
-            if (NumberUtils.isDigits(listIndex)) {
-                return TOKEN_ARRAY_START + listIndex + TOKEN_ARRAY_END;
-            }
+            if (NumberUtils.isDigits(listIndex)) { return TOKEN_ARRAY_START + listIndex + TOKEN_ARRAY_END; }
         }
         return "";
     }

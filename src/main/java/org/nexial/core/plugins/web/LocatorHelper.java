@@ -36,7 +36,6 @@ import org.nexial.core.utils.CheckUtils;
 import org.openqa.selenium.By;
 import org.openqa.selenium.WebElement;
 
-import static org.nexial.core.utils.CheckUtils.requires;
 import static org.nexial.core.utils.CheckUtils.requiresNotBlank;
 import static org.nexial.core.utils.OutputFileUtils.CASE_INSENSIVE_SORT;
 
@@ -138,8 +137,8 @@ class LocatorHelper {
      * attribute where the class name starts with '{@code button}'</li>
      * </ol>
      * <p/>
-     * For example {@code @class=dijit*|text()=Save|@id=*save*} yields the following XPATH:
-     * //*[ends-with(@class,'dijit') and text()='Save' and contains(@id,'save')]
+     * For example {@code @class=blah*|text()=Save|@id=*save*} yields the following XPATH:
+     * //*[ends-with(@class,'blah') and text()='Save' and contains(@id,'save')]
      * </pre>
      */
     protected String resolveFilteringXPath(String nameValues) {
@@ -189,17 +188,13 @@ class LocatorHelper {
         return StringUtils.removeEnd(xpath.toString(), " and ") + "]";
     }
 
-    /** safari doesn't work well with "id=..." locator; we'll convert it to the "xpath=//*[@id='...']" locator */
-    protected String safariFriendly(String locator) {
+    protected String validateLocator(String locator) {
+        if (StringUtils.isBlank(locator)) { CheckUtils.fail("invalid locator"); }
+
         if (StringUtils.startsWithIgnoreCase(locator, "id=") && delegator.browser.isRunSafari()) {
             locator = "//*[@id='" + StringUtils.substring(locator, "id=".length()) + "']";
         }
         return locator;
-    }
-
-    protected String validateLocator(String locator) {
-        if (StringUtils.isBlank(locator)) { CheckUtils.fail("invalid locator"); }
-        return safariFriendly(locator);
     }
 
     protected StepResult assertTextList(String locator, String textList, String ignoreOrder) {
@@ -236,56 +231,19 @@ class LocatorHelper {
                new LinkedList<>();
     }
 
+    @NotNull
     protected StepResult assertElementNotPresent(String locator) {
         return new StepResult(!delegator.isElementPresent(locator));
     }
 
+    @NotNull
     protected StepResult assertContainCount(String locator, String text, String count) {
-        requiresNotBlank(text, "invalid text", text);
-        int countInt = delegator.toPositiveInt(count, "count");
-
-        List<WebElement> matches = delegator.findElements(locator);
-        if (CollectionUtils.isEmpty(matches)) {
-            if (countInt != 0) {
-                return StepResult.fail("No matching elements found by '" + locator + "'");
-            } else {
-                return StepResult.success("EXPECTS zero matches; found zero matches");
-            }
-        }
-
-        List<WebElement> matches2 = new ArrayList<>();
-        for (WebElement element : matches) {
-            String elemText = element.getText();
-            if (StringUtils.contains(elemText, text)) { matches2.add(element); }
-        }
-
-        return new StepResult(matches2.size() == countInt,
-                              "EXPECTS " + countInt + " matches; found " + matches2.size() + " matches",
-                              null);
+        return assertCount(locator, text, count, false);
     }
 
+    @NotNull
     protected StepResult assertTextCount(String locator, String text, String count) {
-        requires(StringUtils.isNotBlank(text), "invalid text", text);
-
-        int countInt = delegator.toPositiveInt(count, "count");
-        List<WebElement> matches = delegator.findElements(locator);
-        if (CollectionUtils.isEmpty(matches)) {
-            if (countInt != 0) {
-                return StepResult.fail("No matching elements found by '" + locator + "'");
-            } else {
-                return StepResult.success("EXPECTS zero matches; found zero matches");
-            }
-        }
-
-        List<WebElement> matches2 = new ArrayList<>();
-        for (WebElement element : matches) {
-            String elemText = element.getText();
-            if (StringUtils.equals(elemText, text)) { matches2.add(element); }
-        }
-
-        return new StepResult(matches2.size() == countInt,
-                              "EXPECTS " + countInt + " matches; found " + matches2.size() + " matches",
-                              null);
+        return assertCount(locator, text, count, true);
     }
 
     protected StepResult assertElementCount(String locator, String count) {
@@ -348,6 +306,34 @@ class LocatorHelper {
 
         // string comparison to determine if both the actual (displayed) list and sorted list is the same
         return delegator.assertEqual(expected.toString(), actual.toString());
+    }
+
+    @NotNull
+    private StepResult assertCount(String locator, String text, String count, boolean exact) {
+        requiresNotBlank(text, "invalid text", text);
+        int countInt = delegator.toPositiveInt(count, "count");
+        List<WebElement> matches = delegator.findElements(locator);
+        if (CollectionUtils.isEmpty(matches)) {
+            if (countInt != 0) {
+                return StepResult.fail("No matching elements found by '" + locator + "'");
+            } else {
+                return StepResult.success("EXPECTS zero matches; found zero matches");
+            }
+        }
+
+        List<WebElement> matches2 = new ArrayList<>();
+        for (WebElement element : matches) {
+            String elemText = element.getText();
+            if (exact) {
+                if (StringUtils.equals(elemText, text)) { matches2.add(element); }
+            } else {
+                if (StringUtils.contains(elemText, text)) { matches2.add(element); }
+            }
+        }
+
+        return new StepResult(matches2.size() == countInt,
+                              "EXPECTS " + countInt + " matches; found " + matches2.size() + " matches",
+                              null);
     }
 
 }
