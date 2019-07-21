@@ -419,6 +419,8 @@ public class TestStep extends TestStepManifest {
     }
 
     protected String handleScreenshot(StepResult result) {
+        if (result == null) { return null; }
+
         // no screenshot specified and no error found (success or skipped)
         if (!captureScreen && (result.isSuccess() || result.isSkipped())) { return null; }
 

@@ -27,10 +27,12 @@ import org.apache.commons.lang3.builder.ToStringBuilder;
 import org.apache.poi.xssf.usermodel.XSSFCell;
 import org.nexial.core.excel.Excel;
 import org.nexial.core.excel.Excel.Worksheet;
+import org.nexial.core.plugins.web.WebDriverExceptionHelper;
 import org.nexial.core.utils.ConsoleUtils;
 import org.nexial.core.utils.ExecutionLogger;
 import org.nexial.core.utils.FlowControlUtils;
 import org.nexial.core.utils.TrackTimeLogs;
+import org.openqa.selenium.WebDriverException;
 
 import static org.apache.commons.lang3.builder.ToStringStyle.SIMPLE_STYLE;
 import static org.nexial.core.CommandConst.CMD_SECTION;
@@ -163,7 +165,8 @@ public class CommandRepeater {
                     trackTimeLogs.checkEndTracking(context, testStep);
 
                     // expand substitution in description column
-                    XSSFCell cellDescription = testStep.getRow().get(COL_IDX_DESCRIPTION);
+                    List<XSSFCell> row = testStep.getRow();
+                    XSSFCell cellDescription = row.get(COL_IDX_DESCRIPTION);
                     String description = Excel.getCellValue(cellDescription);
                     if (StringUtils.isNotEmpty(description)) {
                         cellDescription.setCellValue(context.replaceTokens(description, true));
@@ -181,6 +184,17 @@ public class CommandRepeater {
                                                  " in execution. Error found in " +
                                                  ExecutionLogger.toHeader(testStep) + ": " + result.getMessage());
                         }
+                    }
+
+                    try {
+                        String screenshotLink = testStep.handleScreenshot(result);
+                        Worksheet worksheet = testStep.getWorksheet();
+                        if (StringUtils.isNotBlank(screenshotLink) && worksheet != null) {
+                            worksheet.setScreenCaptureStyle(row.get(COL_IDX_CAPTURE_SCREEN), screenshotLink);
+                        }
+                    } catch (Throwable e) {
+                        ConsoleUtils.error(testStep.messageId, e.getMessage(), e);
+                        // e.printStackTrace();
                     }
 
                     // flow control
@@ -226,26 +240,6 @@ public class CommandRepeater {
         return shouldFailFast;
     }
 
-    protected String resolveRootCause(Throwable e) {
-        if (e == null) { return "UNKNOWN ERROR"; }
-
-        if (e instanceof InvocationTargetException) {
-            Throwable rootCause = ((InvocationTargetException) e).getTargetException();
-            if (rootCause != null) { return rootCause.getMessage(); }
-        }
-
-        String message = StringUtils.defaultString(e.getMessage(), e.toString());
-        Throwable rootCause = e.getCause();
-        if (rootCause != e) {
-            while (rootCause != null) {
-                message = StringUtils.defaultString(rootCause.getMessage(), rootCause.toString());
-                rootCause = rootCause.getCause();
-            }
-        }
-
-        return message;
-    }
-
     private StepResult handleException(TestStep testStep, int stepIndex, Throwable e) {
         if (e == null) { return null; }
 
@@ -267,5 +261,31 @@ public class CommandRepeater {
 
         // else, fail-fast not in effect, so we push on
         return null;
+    }
+
+    private String resolveRootCause(Throwable e) {
+        if (e == null) { return "UNKNOWN ERROR"; }
+
+        Throwable exception = e;
+        if (e instanceof InvocationTargetException) {
+            Throwable rootCause = ((InvocationTargetException) e).getTargetException();
+            exception = rootCause != null ? rootCause : e;
+        }
+
+        String message;
+        if (exception instanceof WebDriverException) {
+            message = WebDriverExceptionHelper.resolveErrorMessage((WebDriverException) exception);
+        } else {
+            message = StringUtils.defaultString(e.getMessage(), e.toString());
+            Throwable rootCause = e.getCause();
+            if (rootCause != e) {
+                while (rootCause != null) {
+                    message = StringUtils.defaultString(rootCause.getMessage(), rootCause.toString());
+                    rootCause = rootCause.getCause();
+                }
+            }
+        }
+
+        return message;
     }
 }
