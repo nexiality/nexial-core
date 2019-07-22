@@ -29,6 +29,7 @@ if "%1"=="" goto :reportBadInputAndExit
 	echo.
 	echo ^>^> (re)creating project home at %PROJECT_HOME%
 	mkdir %PROJECT_HOME%\.meta 2>NUL
+	mkdir %PROJECT_HOME%\artifact\bin 2>NUL
 	mkdir %PROJECT_HOME%\artifact\script 2>NUL
 	mkdir %PROJECT_HOME%\artifact\data 2>NUL
 	mkdir %PROJECT_HOME%\artifact\plan 2>NUL

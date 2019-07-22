@@ -44,6 +44,20 @@ public class RegexUtilsTest {
     }
 
     @Test
+    public void testReplace_partial() {
+        String regex = "(.*)\\%([0-9]{2})(.*)";
+        String replacement = "$1!!-$2-!!$3";
+
+        String fixture = "/A%20B/C%25C/D";
+        while (RegexUtils.match(fixture, regex)) { fixture = RegexUtils.replace(fixture, regex, replacement); }
+        Assert.assertEquals("/A!!-20-!!B/C!!-25-!!C/D", fixture);
+
+        fixture = "/%%20%B/20%2544/%";
+        while (RegexUtils.match(fixture, regex)) { fixture = RegexUtils.replace(fixture, regex, replacement); }
+        Assert.assertEquals("/%!!-20-!!%B/20!!-25-!!44/%", fixture);
+    }
+
+    @Test
     public void testReplaceVarName() {
         Map<String, String> oldAndNew = TextUtils.toMap("John=walker,Sam=ash", ",", "=");
 

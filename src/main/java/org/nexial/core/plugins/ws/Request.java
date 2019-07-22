@@ -25,10 +25,13 @@ import java.util.Map;
 import java.util.Set;
 
 import org.apache.commons.collections4.MapUtils;
+import org.apache.commons.lang3.ArrayUtils;
 import org.apache.commons.lang3.StringUtils;
+import org.apache.http.Header;
 import org.apache.http.HttpRequest;
 import org.apache.http.client.config.RequestConfig;
 import org.apache.http.client.methods.HttpUriRequest;
+import org.nexial.commons.utils.web.URLEncodingUtils;
 import org.nexial.core.model.ExecutionContext;
 import org.openqa.selenium.Cookie;
 
@@ -97,7 +100,7 @@ public abstract class Request implements Serializable {
 
     public String getUrl() { return url; }
 
-    public void setUrl(String url) { this.url = url; }
+    public void setUrl(String url) { this.url = URLEncodingUtils.encodePath(url); }
 
     public int getConnectionTimeout() { return connectionTimeout; }
 
@@ -185,7 +188,7 @@ public abstract class Request implements Serializable {
         }
 
         if (http.containsHeader(name)) {
-            http.addHeader(name, http.getHeaders(name) + "; " + headerValue);
+            http.addHeader(name, toString(http.getHeaders(name)) + "; " + headerValue);
         } else {
             http.addHeader(name, headerValue);
         }
@@ -193,5 +196,13 @@ public abstract class Request implements Serializable {
 
     protected void addHeaderIfNotSpecified(String key, String value) {
         if (StringUtils.isNotBlank(value) && !headers.containsKey(key)) { headers.put(key, value); }
+    }
+
+    private String toString(Header[] headers) {
+        if (ArrayUtils.isEmpty(headers)) { return ""; }
+
+        StringBuilder buffer = new StringBuilder();
+        for (Header header : headers) { buffer.append(header.getName()).append("=").append(header.getValue()); }
+        return buffer.toString();
     }
 }

@@ -58,4 +58,22 @@ public class URLEncodingUtilsTest {
     public void decodeAuth() {
         PLAIN_ENCODED.forEach((plain, encoded) -> Assert.assertEquals(plain, URLEncodingUtils.decodeAuth(encoded)));
     }
+
+    @Test
+    public void encodePath() {
+
+        Assert.assertEquals("http://site.com/a/b", URLEncodingUtils.encodePath("http://site.com/a/b"));
+        Assert.assertEquals("http://site.com/a/b?c=d", URLEncodingUtils.encodePath("http://site.com/a/b?c=d"));
+        Assert.assertEquals("http://site.com/a/b?c+d=e*f", URLEncodingUtils.encodePath("http://site.com/a/b?c d=e*f"));
+
+        Assert.assertEquals("http://site.com/a/b%20x?c+d=e*f",
+                            URLEncodingUtils.encodePath("http://site.com/a/b x?c d=e*f"));
+        Assert.assertEquals("http://site.com/a/b%20x%20%20y$z?c+d=e*f",
+                            URLEncodingUtils.encodePath("http://site.com/a/b x  y$z?c d=e*f"));
+        Assert.assertEquals("http://mywebsite.com/search/JOE's%20PIZZA?data=true",
+                            URLEncodingUtils.encodePath("http://mywebsite.com/search/JOE's PIZZA?data=true"));
+        Assert.assertEquals("http://xyz.com/a/b%20c/A%20%26%20M?last+name=Se&first+name=Jo%27+Anne",
+                            URLEncodingUtils.encodePath("http://xyz.com/a/b c/A & M?last name=Se&first name=Jo' Anne"));
+
+    }
 }

@@ -28,35 +28,63 @@ import org.apache.commons.collections4.MapUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.nexial.commons.utils.RegexUtils;
 import org.nexial.commons.utils.TextUtils;
+import org.nexial.core.utils.ConsoleUtils;
 import org.springframework.web.util.UriUtils;
 
+import static org.nexial.core.NexialConst.DEF_FILE_ENCODING;
+
 public final class URLEncodingUtils {
-    private static final List<Character> ACCEPTABLE_PATH_CHARS =
-        Arrays.asList('/', '?', ':', '@', '-', '.', '_', '~', '!', '$', '&', '\'', '(', ')', '*', '+', ',', ';', '=');
+    private static final List<Character> ACCEPTABLE_PATH_CHARS = Arrays.asList('$', '-', '_', '.', '+', '!', '*',
+                                                                               '\'', '(', ')', ',', '/');
     private static final String TMP_AMPERSAND = "0-_-0";
-    private static final String DEF_CHAR_ENCODING = "UTF-8";
+    private static final String TMP_ENCODED_PREFIX = "$$--";
+    private static final String TMP_ENCODED_POSTFIX = "--$$";
+    private static final String REGEX_URI = "(.*)\\%([0-9]{2})(.*)";
 
     private URLEncodingUtils() { }
 
     public static String encodePath(String url) {
         if (StringUtils.isBlank(url)) { return url; }
 
+        // 1. split off query string
+        String query = StringUtils.substringAfter(url, "?");
+
+        // 2. handle query string
+        if (StringUtils.isNotEmpty(query)) {
+            query = "?" + encodeQueryString(query);
+            url = StringUtils.substringBefore(url, "?");
+        }
+
+        // 3. handle characters after http:// or https://
+        String protocol = StringUtils.substringBefore(url, "://") + "://";
+        url = StringUtils.substringAfter(url, "://");
+
+        // 4. temp. replace %20 or similar so that we can zero in on % character
+        String replacement = "$1" + TMP_ENCODED_PREFIX + "$2" + TMP_ENCODED_POSTFIX + "$3";
+        while (RegexUtils.match(url, REGEX_URI)) { url = RegexUtils.replace(url, REGEX_URI, replacement); }
+
         StringBuilder encoded = new StringBuilder();
         char[] chars = url.toCharArray();
         for (char ch : chars) {
             if (Character.isLetterOrDigit(ch) || ACCEPTABLE_PATH_CHARS.contains(ch)) {
                 encoded.append(ch);
+            } else if (ch == ' ') {
+                encoded.append("%20");
             } else {
                 try {
-                    encoded.append(URLEncoder.encode(ch + "", DEF_CHAR_ENCODING));
+                    encoded.append(URLEncoder.encode(ch + "", DEF_FILE_ENCODING));
                 } catch (UnsupportedEncodingException e) {
-                    System.err.println("Unable to encode character '" + ch + "': " + e.getMessage());
+                    ConsoleUtils.error("Unable to encode character '" + ch + "': " + e.getMessage());
                     encoded.append(ch);
                 }
             }
         }
 
-        return encoded.toString();
+        url = StringUtils.removeEnd(StringUtils.replace(encoded.toString(), TMP_ENCODED_PREFIX, "%"),
+                                    TMP_ENCODED_POSTFIX);
+
+        // 4. join back
+        return protocol + url + query;
     }
 
     public static String encodeQueryString(String queryString) {
@@ -70,7 +98,7 @@ public final class URLEncodingUtils {
 
         if (!StringUtils.contains(queryString, "=")) {
             try {
-                return URLEncoder.encode(queryString, DEF_CHAR_ENCODING);
+                return URLEncoder.encode(queryString, DEF_FILE_ENCODING);
             } catch (UnsupportedEncodingException e) {
                 System.err.println("Unable to encode query string name '" + queryString + "': " + e.getMessage());
                 return queryString;
@@ -86,13 +114,13 @@ public final class URLEncodingUtils {
         params.keySet().forEach(name -> {
             String value = params.get(name);
             try {
-                value = StringUtils.replace(URLEncoder.encode(value, DEF_CHAR_ENCODING), TMP_AMPERSAND, "%26");
+                value = StringUtils.replace(URLEncoder.encode(value, DEF_FILE_ENCODING), TMP_AMPERSAND, "%26");
             } catch (UnsupportedEncodingException e) {
                 System.err.println("Unable to encode query string value '" + value + "': " + e.getMessage());
             }
 
             try {
-                name = StringUtils.replace(URLEncoder.encode(name, DEF_CHAR_ENCODING), TMP_AMPERSAND, "%26");
+                name = StringUtils.replace(URLEncoder.encode(name, DEF_FILE_ENCODING), TMP_AMPERSAND, "%26");
             } catch (UnsupportedEncodingException e) {
                 System.err.println("Unable to encode query string name '" + value + "': " + e.getMessage());
             }
@@ -105,14 +133,14 @@ public final class URLEncodingUtils {
 
     public static String decodeString(String encoded) {
         try {
-            return URLDecoder.decode(encoded, DEF_CHAR_ENCODING);
+            return URLDecoder.decode(encoded, DEF_FILE_ENCODING);
         } catch (UnsupportedEncodingException e) {
             System.err.println("Unable to decode: " + e.getMessage());
             return encoded;
         }
     }
 
-    public static String encodeAuth(String plain) { return UriUtils.encodeUserInfo(plain, DEF_CHAR_ENCODING); }
+    public static String encodeAuth(String plain) { return UriUtils.encodeUserInfo(plain, DEF_FILE_ENCODING); }
 
-    public static String decodeAuth(String encoded) { return UriUtils.decode(encoded, DEF_CHAR_ENCODING); }
+    public static String decodeAuth(String encoded) { return UriUtils.decode(encoded, DEF_FILE_ENCODING); }
 }

@@ -36,6 +36,7 @@ echo "  PROJECT_NAME:   ${PROJECT_NAME}"
 echo
 echo "» (re)creating project home at ${PROJECT_HOME}"
 mkdir -p "${PROJECT_HOME}/.meta" > /dev/null 2>&1
+mkdir -p "${PROJECT_HOME}/artifact/bin" > /dev/null 2>&1
 mkdir -p "${PROJECT_HOME}/artifact/script" > /dev/null 2>&1
 mkdir -p "${PROJECT_HOME}/artifact/data" > /dev/null 2>&1
 mkdir -p "${PROJECT_HOME}/artifact/plan" > /dev/null 2>&1
