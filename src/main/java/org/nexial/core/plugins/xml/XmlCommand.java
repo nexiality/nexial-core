@@ -247,6 +247,8 @@ public class XmlCommand extends BaseCommand {
         }
     }
 
+    // public StepResult storeAttribute(String xml, String xpath, String attribute, String var) { }
+
     public StepResult assertCorrectness(String xml, String schema) { return assertCorrectness(xml, schema, 0); }
 
     public StepResult assertWellformed(String xml) {

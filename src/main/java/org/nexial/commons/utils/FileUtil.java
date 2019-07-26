@@ -277,14 +277,14 @@ public final class FileUtil {
      * is -1, then it's ignored.
      */
     public static boolean isFileReadable(String file, long minFileSize) {
-        return !StringUtils.isBlank(file) && isFileReadable(new File(file), minFileSize);
+        return StringUtils.isNotBlank(file) && isFileReadable(new File(file), minFileSize);
     }
 
     /** return true if {@code file} is readable. */
     public static boolean isFileReadable(String file) { return isFileReadable(file, -1); }
 
     public static boolean isFileExecutable(String file) {
-        return !StringUtils.isBlank(file) && isFileExecutable(new File(file));
+        return StringUtils.isNotBlank(file) && isFileExecutable(new File(file));
     }
 
     public static boolean isFileExecutable(File file) {

@@ -213,7 +213,10 @@ public class NexialFilter implements Serializable {
                     return false;
                 }
 
-                result = FileUtil.isFileReadable(actual, NumberUtils.toLong(expected));
+                long expectedFileLength = NumberUtils.toLong(expected);
+                result = FileUtil.isFileReadable(actual, expectedFileLength);
+                if (expectedFileLength < 1) { result = !result; }
+
                 break;
 
             case ReadablePath:
@@ -312,7 +315,7 @@ public class NexialFilter implements Serializable {
             // not applicable in this case
             case IsDefined:
             case IsUndefined:
-                throw new IllegalArgumentException("Not application filter: " + comparator);
+                throw new IllegalArgumentException("Not applicable filter: " + comparator);
 
             case IsEmpty:
                 return StringUtils.isEmpty(data);
@@ -327,7 +330,11 @@ public class NexialFilter implements Serializable {
                 if (!NumberUtils.isCreatable(controls)) {
                     throw new IllegalArgumentException("NOT A NUMBER: " + controls);
                 }
-                return FileUtil.isFileReadable(data, NumberUtils.toLong(controls));
+
+                long expectedFileLength = NumberUtils.toLong(controls);
+                boolean result = FileUtil.isFileReadable(data, expectedFileLength);
+                if (expectedFileLength < 1) { result = !result; }
+                return result;
 
             case ReadablePath:
                 return FileUtil.isDirectoryReadable(data);

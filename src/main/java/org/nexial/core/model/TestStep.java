@@ -161,9 +161,6 @@ public class TestStep extends TestStepManifest {
         // delay is carried out here so that timespan is captured as part of execution
         waitFor(context.getDelayBetweenStep());
 
-        // ExecutionLogger logger = context.getLogger();
-        WebDriverExceptionHelper webDriverExceptionHelper = context.getWebDriverExceptionHelper();
-
         StepResult result = null;
         try {
             result = invokeCommand();
@@ -172,7 +169,7 @@ public class TestStep extends TestStepManifest {
             Throwable cause = e.getCause();
             if (cause != null) {
                 if (cause instanceof WebDriverException) {
-                    error = webDriverExceptionHelper.analyzeError(context, this, (WebDriverException) cause);
+                    error = WebDriverExceptionHelper.analyzeError(context, this, (WebDriverException) cause);
                     result = StepResult.fail(error);
                     return result;
                 } else if (cause instanceof ArrayIndexOutOfBoundsException) {
@@ -189,7 +186,7 @@ public class TestStep extends TestStepManifest {
 
             result = StepResult.fail(error);
         } catch (WebDriverException e) {
-            String error = webDriverExceptionHelper.analyzeError(context, this, e);
+            String error = WebDriverExceptionHelper.analyzeError(context, this, e);
             // logger.error(this, error);
             result = StepResult.fail(error);
         } catch (Throwable e) {

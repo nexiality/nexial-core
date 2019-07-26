@@ -639,10 +639,6 @@
 
   </util:map>
 
-  <bean id="webdriverExceptionHelper" class="org.nexial.core.plugins.web.WebDriverExceptionHelper">
-    <property name="noException" value="No error or exception found"/>
-  </bean>
-
   <bean id="expressionProcessor" class="org.nexial.core.variable.ExpressionProcessor"/>
 
 

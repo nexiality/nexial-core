@@ -780,7 +780,7 @@ public class WebCommand extends BaseCommand implements CanTakeScreenshot, CanLog
                 boolean expectsNull = context.isNullValue(value);
                 return new StepResult(expectsNull,
                                       "Attribute '" + attrName + "' of element '" + locator + "' is null/missing " +
-                                      (expectsNull ? "as EXPECTED" : " but EXPECTS " + value), null);
+                                      (expectsNull ? "as EXPECTED" : "but EXPECTS " + value), null);
             }
 
             return assertEqual(value, actual);
@@ -2056,8 +2056,8 @@ public class WebCommand extends BaseCommand implements CanTakeScreenshot, CanLog
             }
 
             return new StepResult(success, msg, null);
-        } catch (NoSuchElementException e) {
-            return StepResult.fail(e.getMessage());
+        } catch (WebDriverException e) {
+            return StepResult.fail(WebDriverExceptionHelper.resolveErrorMessage(e));
         }
     }
 
@@ -2147,7 +2147,7 @@ public class WebCommand extends BaseCommand implements CanTakeScreenshot, CanLog
                 return StepResult.success("clicked on web element");
             }
         } catch (StaleElementReferenceException e) {
-            return StepResult.fail(e.getMessage(), e);
+            return StepResult.fail(WebDriverExceptionHelper.resolveErrorMessage(e));
         } catch (Exception e) {
             // try again..
             if (systemFavorJsClick) {

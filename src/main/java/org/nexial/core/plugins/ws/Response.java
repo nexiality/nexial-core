@@ -91,7 +91,7 @@ public class Response implements Serializable {
                "headers=" + headers + "\n" +
                "contentLength=" + contentLength + "\n" +
                "elapsedTime=" + elapsedTime + "\n" +
-               "body='" + (ArrayUtils.isEmpty(rawBody) ? "<NONE>" : StringUtils.left(getBody(), 500) + "...'");
+               "body=" + (ArrayUtils.isEmpty(rawBody) ? "<NONE>" : StringUtils.left(getBody(), 500) + "...'");
     }
 
     protected void harvestCookies(String[] cookieParts) {

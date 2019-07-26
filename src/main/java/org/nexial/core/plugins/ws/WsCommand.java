@@ -195,7 +195,7 @@ public class WsCommand extends BaseCommand {
     public StepResult soap(String action, String url, String payload, String var) {
         requires(StringUtils.isNotBlank(action), "invalid action", action);
         header(WS_CONTENT_TYPE, WS_SOAP_CONTENT_TYPE);
-        header("SOAPAction", "\"" + action + "\"");
+        header("SOAPAction", TextUtils.wrapIfMissing(action, "\"", "\""));
         return post(url, payload, var);
     }
 
@@ -483,6 +483,7 @@ public class WsCommand extends BaseCommand {
 
     protected void logRequestWithBody(String url, String body) {
         ConsoleUtils.log("REQUEST  --> '" + hideAuthDetails(url) + "', body length=" + StringUtils.length(body));
+        if (context.isVerbose() && StringUtils.isNotBlank(body)) { ConsoleUtils.log("REQUEST BODY -->\n" + body); }
     }
 
     protected void logRequest(String url, String queryString) {
