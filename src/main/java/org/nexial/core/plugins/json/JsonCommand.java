@@ -24,6 +24,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Comparator;
 import java.util.List;
+import java.util.Set;
 import javax.validation.constraints.NotNull;
 
 import org.apache.commons.collections4.CollectionUtils;
@@ -123,6 +124,38 @@ public class JsonCommand extends BaseCommand {
         return extractJsonValue(json, jsonpath, var);
     }
 
+    public StepResult storeCount(String json, String jsonpath, String var) {
+        requiresValidVariableName(var);
+        context.setData(var, count(json, jsonpath));
+        return StepResult.success("match count stored to ${" + var + "}");
+    }
+
+    public StepResult storeKeys(String json, String jsonpath, String var) {
+        requiresValidVariableName(var);
+
+        Object obj = toJSONObject(json);
+        if (obj instanceof JSONArray) {
+            context.removeData(var);
+            return StepResult.success("No JSON keys can be retrieved from a JSON array");
+        }
+
+        if (obj instanceof JSONObject) {
+            JSONObject jsonObject = (JSONObject) obj;
+
+            Set<String> keys;
+            if (StringUtils.isEmpty(jsonpath)) {
+                keys = jsonObject.keySet();
+            } else {
+                keys = JSONPath.keys(jsonObject, jsonpath);
+            }
+
+            updateDataVariable(var, TextUtils.toString(keys, context.getTextDelim()));
+            return StepResult.success("JSON keys from " + jsonpath + " stored to data variable '" + var + "'");
+        }
+
+        return StepResult.fail("Specified JSON did not resolve to a valid JSON document");
+    }
+
     /**
      * add {@code input} to {@code json}, which should represents a JSON object, at a location specified via
      * {@code jsonpath}.  The final output is captured as {@code var}. Optionally, {@code jsonpath} can be empty to
@@ -159,12 +192,6 @@ public class JsonCommand extends BaseCommand {
         }
 
         return StepResult.success("JSON modified and stored to ${" + var + "}");
-    }
-
-    public StepResult storeCount(String json, String jsonpath, String var) {
-        requiresNotBlank(var, "invalid variable", var);
-        context.setData(var, count(json, jsonpath));
-        return StepResult.success("match count stored to ${" + var + "}");
     }
 
     public StepResult assertValue(String json, String jsonpath, String expected) {
@@ -380,7 +407,8 @@ public class JsonCommand extends BaseCommand {
 
     @NotNull
     protected StepResult extractJsonValue(String json, String jsonpath, String var) {
-        requiresNotBlank(var, "invalid variable", var);
+        requiresValidVariableName(var);
+
         String match = find(json, jsonpath);
         if (match == null) { return StepResult.fail("EXPECTED match against '" + jsonpath + "' was not found"); }
 

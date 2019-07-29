@@ -21,6 +21,8 @@ import java.lang.reflect.Array;
 import java.math.BigDecimal;
 import java.util.*;
 
+import javax.validation.constraints.NotNull;
+
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.math.NumberUtils;
@@ -288,7 +290,7 @@ public class JSONPath {
         private static boolean isArray(String parsed) { return TextUtils.isBetween(parsed, "[", "]"); }
     }
 
-    private class JSONPathKey {
+    private static class JSONPathKey {
         boolean isIndexOrdinal;
         String nodeName;
         String nodeIndex;
@@ -450,6 +452,17 @@ public class JSONPath {
     public static JSONArray overwriteOrAdd(JSONArray json, String path, String overwriteWith, boolean blankOnly)
         throws JSONException {
         return overwrite(json, path, overwriteWith, OVERWRITE_OR_ADD, blankOnly);
+    }
+
+    @NotNull
+    public static Set<String> keys(JSONObject json, String path) throws JSONException {
+        if (json != null) {
+            JSONPath jsonPath = new JSONPath(json, path);
+            Object result = jsonPath.getNative();
+            if (result instanceof JSONObject) { return ((JSONObject) result).keySet(); }
+        }
+
+        return new HashSet<>();
     }
 
     protected void modify(String modifyWith, Option option) throws JSONException {

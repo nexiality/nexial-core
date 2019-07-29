@@ -17,6 +17,8 @@
 
 package org.nexial.core.utils;
 
+import java.util.Set;
+
 import org.apache.commons.lang3.StringUtils;
 import org.json.JSONArray;
 import org.json.JSONException;
@@ -816,6 +818,172 @@ public class JSONPathTest {
         Assert.assertEquals("[\"Home Improvement\",\"Technology\"]",
                             JSONPath.find(new JSONObject(fixture), "books.category => distinct"));
 
+    }
+
+    @Test
+    public void jsonKeys_happy_path() {
+        JSONObject json = new JSONObject("{\n" +
+                                         "    \"shipping_address\": [\n" +
+                                         "        {\n" +
+                                         "            \"street_address\": \"1600 Pennsylvania Avenue NW\",\n" +
+                                         "            \"city\": \"Washington\",\n" +
+                                         "            \"state\": \"DC\"\n" +
+                                         "        },\n" +
+                                         "        {\n" +
+                                         "            \"country\": \"USA\",\n" +
+                                         "            \"street_address\": \"1733 Washington Avenue\",\n" +
+                                         "            \"city\": \"Glenoak\",\n" +
+                                         "            \"state\": \"CA\"\n" +
+                                         "        }\n" +
+                                         "    ],\n" +
+                                         "    \"billing_address\": {\n" +
+                                         "        \"address1\": \"1st Street SE\",\n" +
+                                         "        \"address2\": null,\n" +
+                                         "        \"city\": \"Seeti\",\n" +
+                                         "        \"county\": \"Abrehiban\",\n" +
+                                         "        \"state\": \"DC\",\n" +
+                                         "        \"zipcode\": \"10541\",\n" +
+                                         "        \"country\": \"USA\"\n" +
+                                         "    }\n" +
+                                         "}");
+
+        Set<String> keys = JSONPath.keys(json, "shipping_address[0]");
+        System.out.println("keys = " + keys);
+        Assert.assertEquals(3, keys.size());
+        Assert.assertTrue(keys.contains("street_address"));
+        Assert.assertTrue(keys.contains("city"));
+        Assert.assertTrue(keys.contains("state"));
+
+        keys = JSONPath.keys(json, "shipping_address[1]");
+        System.out.println("keys = " + keys);
+        Assert.assertEquals(4, keys.size());
+        Assert.assertTrue(keys.contains("country"));
+        Assert.assertTrue(keys.contains("street_address"));
+        Assert.assertTrue(keys.contains("city"));
+        Assert.assertTrue(keys.contains("state"));
+
+        keys = JSONPath.keys(json, "billing_address");
+        System.out.println("keys = " + keys);
+        Assert.assertEquals(7, keys.size());
+        Assert.assertTrue(keys.contains("address1"));
+        Assert.assertTrue(keys.contains("address2"));
+        Assert.assertTrue(keys.contains("city"));
+        Assert.assertTrue(keys.contains("county"));
+        Assert.assertTrue(keys.contains("state"));
+        Assert.assertTrue(keys.contains("zipcode"));
+        Assert.assertTrue(keys.contains("country"));
+    }
+
+    @Test
+    public void jsonKeys_not_found() {
+        JSONObject json = new JSONObject("{\n" +
+                                         "    \"shipping_address\": [\n" +
+                                         "        {\n" +
+                                         "            \"street_address\": \"1600 Pennsylvania Avenue NW\",\n" +
+                                         "            \"city\": \"Washington\",\n" +
+                                         "            \"state\": \"DC\"\n" +
+                                         "        },\n" +
+                                         "        {\n" +
+                                         "            \"country\": \"USA\",\n" +
+                                         "            \"street_address\": \"1733 Washington Avenue\",\n" +
+                                         "            \"city\": \"Glenoak\",\n" +
+                                         "            \"state\": \"CA\"\n" +
+                                         "        }\n" +
+                                         "    ],\n" +
+                                         "    \"billing_address\": {\n" +
+                                         "        \"address1\": \"1st Street SE\",\n" +
+                                         "        \"address2\": null,\n" +
+                                         "        \"city\": \"Seeti\",\n" +
+                                         "        \"county\": \"Abrehiban\",\n" +
+                                         "        \"state\": \"DC\",\n" +
+                                         "        \"zipcode\": \"10541\",\n" +
+                                         "        \"country\": \"USA\"\n" +
+                                         "    }," +
+                                         "    \"tags\": [\"electronics\", \"hi-tech\", \"android\" ]\n" +
+                                         "}");
+
+        Assert.assertTrue(JSONPath.keys(json, null).isEmpty());
+        Assert.assertTrue(JSONPath.keys(json, "").isEmpty());
+        Assert.assertTrue(JSONPath.keys(json, "locations").isEmpty());
+        Assert.assertTrue(JSONPath.keys(json, "shipping_address").isEmpty());
+        Assert.assertTrue(JSONPath.keys(json, "shipping_address.state").isEmpty());
+        Assert.assertTrue(JSONPath.keys(json, "shipping_address[1].state").isEmpty());
+        Assert.assertTrue(JSONPath.keys(json, "tags").isEmpty());
+        Assert.assertTrue(JSONPath.keys(json, "tags[0]").isEmpty());
+        Assert.assertTrue(JSONPath.keys(json, "does.not.exist").isEmpty());
+    }
+
+    @Test
+    public void jsonKeys_nested_keys() {
+        JSONObject json = new JSONObject("{\n" +
+                                         "    \"shipping_address\": [\n" +
+                                         "        {\n" +
+                                         "            \"street_address\": \"1600 Pennsylvania Avenue NW\",\n" +
+                                         "            \"city\": \"Washington\",\n" +
+                                         "            \"state\": \"DC\",\n" +
+                                         "            \"labels\": [ " +
+                                         "              \"east coast\", " +
+                                         "              { \"residents\": [ " +
+                                         "                  { \"name\": \"Mr. President\", \"gender\": \"M\" },\n" +
+                                         "                  { \"name\": \"Mrs. President\", \"gender\": \"F\" },\n" +
+                                         "                  { \"name\": \"First Dog\", \"gender\": \"F\" },\n" +
+                                         "                  null " +
+                                         "              ] }, " +
+                                         "              null,\n" +
+                                         "              \"gated\" " +
+                                         "            ]\n" +
+                                         "        },\n" +
+                                         "        {\n" +
+                                         "            \"country\": \"USA\",\n" +
+                                         "            \"street_address\": \"1733 Washington Avenue\",\n" +
+                                         "            \"city\": \"Glenoak\",\n" +
+                                         "            \"state\": \"CA\"\n" +
+                                         "        }\n" +
+                                         "    ],\n" +
+                                         "    \"billing_address\": {\n" +
+                                         "        \"address1\": \"1st Street SE\",\n" +
+                                         "        \"address2\": null,\n" +
+                                         "        \"city\": \"Seeti\",\n" +
+                                         "        \"county\": \"Abrehiban\",\n" +
+                                         "        \"state\": \"DC\",\n" +
+                                         "        \"zipcode\": \"10541\",\n" +
+                                         "        \"country\": \"USA\"\n" +
+                                         "    }," +
+                                         "    \"tags\": [\"electronics\", \"hi-tech\", \"android\" ]\n" +
+                                         "}");
+
+        Assert.assertTrue(JSONPath.keys(json, "shipping_address.labels").isEmpty());
+        Assert.assertTrue(JSONPath.keys(json, "shipping_address.labels[0]").isEmpty());
+        Assert.assertFalse(JSONPath.keys(json, "shipping_address.labels[1]").isEmpty());
+        Assert.assertTrue(JSONPath.keys(json, "shipping_address.labels[2]").isEmpty());
+        Assert.assertTrue(JSONPath.keys(json, "shipping_address.labels[3]").isEmpty());
+
+        Set<String> keys = JSONPath.keys(json, "shipping_address.labels.residents[0]");
+        System.out.println("keys = " + keys);
+        Assert.assertEquals(2, keys.size());
+        Assert.assertTrue(keys.contains("name"));
+        Assert.assertTrue(keys.contains("gender"));
+
+        keys = JSONPath.keys(json, "shipping_address.labels.residents[1]");
+        System.out.println("keys = " + keys);
+        Assert.assertEquals(2, keys.size());
+        Assert.assertTrue(keys.contains("name"));
+        Assert.assertTrue(keys.contains("gender"));
+
+        keys = JSONPath.keys(json, "shipping_address.labels.residents[2]");
+        System.out.println("keys = " + keys);
+        Assert.assertEquals(2, keys.size());
+        Assert.assertTrue(keys.contains("name"));
+        Assert.assertTrue(keys.contains("gender"));
+
+        keys = JSONPath.keys(json, "shipping_address.labels.residents[3]");
+        System.out.println("keys = " + keys);
+        Assert.assertTrue(keys.isEmpty());
+
+        keys = JSONPath.keys(json, "shipping_address.labels[1]");
+        System.out.println("keys = " + keys);
+        Assert.assertEquals(1, keys.size());
+        Assert.assertTrue(keys.contains("residents"));
     }
 
     private void testPathValue(JSONObject fixture, String path, String expected) {

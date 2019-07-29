@@ -175,7 +175,7 @@ public class WebCommand extends BaseCommand implements CanTakeScreenshot, CanLog
                                        "focused element ID is '" + actual + "'");
             }
         } catch (NoSuchElementException e) {
-            return StepResult.fail(e.getMessage());
+            return StepResult.fail(WebDriverExceptionHelper.resolveErrorMessage(e));
         }
 
         return StepResult.success("validated EXPECTED focus on locator '" + locator + "'");
@@ -193,7 +193,7 @@ public class WebCommand extends BaseCommand implements CanTakeScreenshot, CanLog
                 return StepResult.success("validated no-focus on locator '" + locator + "' as EXPECTED");
             }
         } catch (NoSuchElementException e) {
-            return StepResult.fail(e.getMessage());
+            return StepResult.fail(WebDriverExceptionHelper.resolveErrorMessage(e));
         }
 
         return StepResult.fail("element '" + expected + "' EXPECTS not to be focused but it is.");
@@ -255,6 +255,7 @@ public class WebCommand extends BaseCommand implements CanTakeScreenshot, CanLog
                                   " elements matching locator '" + locator + "'");
     }
 
+    @NotNull
     public StepResult select(String locator, String text) {
         Select select = getSelectElement(locator);
         if (StringUtils.isBlank(text)) {
@@ -266,6 +267,7 @@ public class WebCommand extends BaseCommand implements CanTakeScreenshot, CanLog
         }
     }
 
+    @NotNull
     public StepResult deselect(String locator, String text) {
         Select select = getSelectElement(locator);
         if (StringUtils.isNotBlank(text)) {
@@ -276,6 +278,7 @@ public class WebCommand extends BaseCommand implements CanTakeScreenshot, CanLog
         }
     }
 
+    @NotNull
     public StepResult selectMulti(String locator, String array) {
         requires(StringUtils.isNotBlank(array), "invalid text array", array);
 
@@ -287,8 +290,10 @@ public class WebCommand extends BaseCommand implements CanTakeScreenshot, CanLog
         return StepResult.success("selected '" + array + "' on widgets matching '" + locator + "'");
     }
 
+    @NotNull
     public StepResult selectMultiOptions(String locator) { return clickAll(locator); }
 
+    @NotNull
     public StepResult deselectMulti(String locator, String array) {
         requires(StringUtils.isNotBlank(array), "invalid text array", array);
 
@@ -307,6 +312,7 @@ public class WebCommand extends BaseCommand implements CanTakeScreenshot, CanLog
      * <p/>
      * <b>Note: it is possible to match more than 1 element by using {@code locator} and {@code text} alone</b>
      */
+    @NotNull
     public StepResult assertElementByText(String locator, String text) {
         requires(StringUtils.isNotBlank(locator), "invalid locator", locator);
         requires(StringUtils.isNotBlank(text), "invalid text to search by", text);
@@ -325,6 +331,7 @@ public class WebCommand extends BaseCommand implements CanTakeScreenshot, CanLog
         return StepResult.fail("No element with text '" + text + "' can be found.");
     }
 
+    @NotNull
     public StepResult assertElementNotPresent(String locator) {
         try {
             return locatorHelper.assertElementNotPresent(locator);
@@ -334,6 +341,7 @@ public class WebCommand extends BaseCommand implements CanTakeScreenshot, CanLog
         }
     }
 
+    @NotNull
     public StepResult assertElementCount(String locator, String count) {
         return locatorHelper.assertElementCount(locator, count);
     }
@@ -513,39 +521,48 @@ public class WebCommand extends BaseCommand implements CanTakeScreenshot, CanLog
         return StepResult.success("stored values of '" + locator + "' as ${" + var + "}");
     }
 
+    /**
+     * save the value of {@code attrName} of the element matching {@code locator} to a variable named {@code var}
+     */
     public StepResult saveAttribute(String var, String locator, String attrName) {
+        requiresValidVariableName(var);
         requiresNotBlank(locator, "invalid locator", locator);
         requiresNotBlank(attrName, "invalid attribute name", attrName);
-        requiresValidVariableName(var);
 
         WebElement element = findElement(locator);
         if (element == null) { return StepResult.fail("Element NOT found via '" + locator + "'"); }
 
         String actual = element.getAttribute(attrName);
-        if (actual == null) { ConsoleUtils.log("saving null to variable '" + var + "'"); }
-
-        updateDataVariable(var, actual);
-        return StepResult.success("attribute '" + attrName + "' for '" + locator + "' saved to '" + var + "'");
+        if (actual == null) {
+            context.removeData(var);
+            return StepResult.success("the matching element does not contain attribute '" + attrName + "'");
+        } else {
+            updateDataVariable(var, actual);
+            return StepResult.success("attribute '" + attrName + "' for '" + locator + "' saved to '" + var + "'");
+        }
     }
 
+    /**
+     * save the value of {@code attrName} of all elements matching {@code locator} to a variable named {@code var}
+     */
     public StepResult saveAttributeList(String var, String locator, String attrName) {
+        requiresValidVariableName(var);
         requiresNotBlank(locator, "invalid locator", locator);
         requiresNotBlank(attrName, "invalid attribute name", attrName);
-        requiresValidVariableName(var);
 
         List<WebElement> elements = findElements(locator);
         if (CollectionUtils.isEmpty(elements)) { return StepResult.fail("No element matched to '" + locator + "'"); }
 
         String[] attrValues = elements.stream().map(element -> element.getAttribute(attrName)).toArray(String[]::new);
 
-        if (ArrayUtils.isNotEmpty(attrValues)) {
-            context.setData(var, attrValues);
+        if (ArrayUtils.isEmpty(attrValues)) {
+            context.removeData(var);
+            return StepResult.success("matching elements do not contain attribute '" + attrName + "'");
         } else {
-            ConsoleUtils.log("saving null to variable '" + var + "'");
+            context.setData(var, attrValues);
+            return StepResult.success("attribute '" + attrName + "' for elements that matched '" + locator +
+                                      "' saved to '" + var + "'");
         }
-
-        return StepResult.success("attribute '" + attrName + "' for elements that matched '" + locator +
-                                  "' saved to '" + var + "'");
     }
 
     public StepResult saveCount(String var, String locator) {
@@ -564,7 +581,7 @@ public class WebCommand extends BaseCommand implements CanTakeScreenshot, CanLog
             context.removeData(var);
         }
 
-        return StepResult.success("stored content of '" + locator + "' as ${" + var + "}");
+        return StepResult.success("stored content of '" + locator + "' as '" + var + "'");
     }
 
     public StepResult saveText(String var, String locator) {
@@ -785,7 +802,7 @@ public class WebCommand extends BaseCommand implements CanTakeScreenshot, CanLog
 
             return assertEqual(value, actual);
         } catch (NoSuchElementException e) {
-            return StepResult.fail(e.getMessage());
+            return StepResult.fail(WebDriverExceptionHelper.resolveErrorMessage(e));
         }
     }
 
@@ -950,6 +967,8 @@ public class WebCommand extends BaseCommand implements CanTakeScreenshot, CanLog
             return StepResult.success("clicked on web element at offset (" + x + "," + y + ")");
         } catch (TimeoutException e) {
             return StepResult.fail("Unable to find element via locator '" + locator + "' within allotted time");
+        } catch (WebDriverException e) {
+            return StepResult.fail(WebDriverExceptionHelper.resolveErrorMessage(e));
         } catch (Exception e) {
             return StepResult.fail(e.getMessage(), e);
         } finally {
@@ -1002,6 +1021,8 @@ public class WebCommand extends BaseCommand implements CanTakeScreenshot, CanLog
 
         try {
             driver.get("javascript:document.getElementById('overridelink').click();");
+        } catch (WebDriverException e) {
+            return StepResult.fail(WebDriverExceptionHelper.resolveErrorMessage(e));
         } catch (Exception e) {
             return StepResult.fail(e.getMessage());
         }
@@ -1032,7 +1053,8 @@ public class WebCommand extends BaseCommand implements CanTakeScreenshot, CanLog
             driver.switchTo().window(initialWinHandle);
             waitForBrowserStability(1000);
             waitForTitle(parentTitle);
-
+        } catch (WebDriverException e) {
+            return StepResult.fail(WebDriverExceptionHelper.resolveErrorMessage(e));
         } catch (Exception e) {
             return StepResult.fail(e.getMessage());
         }
@@ -2012,7 +2034,7 @@ public class WebCommand extends BaseCommand implements CanTakeScreenshot, CanLog
                                   "Attribute '" + attrName + "' of element '" + locator + "' is " +
                                   (success ? "found as EXPECTED" : " NOT FOUND"), null);
         } catch (NoSuchElementException e) {
-            return StepResult.fail(e.getMessage());
+            return StepResult.fail(WebDriverExceptionHelper.resolveErrorMessage(e));
         }
     }
 
@@ -2146,7 +2168,7 @@ public class WebCommand extends BaseCommand implements CanTakeScreenshot, CanLog
                 new Actions(driver).moveToElement(element).click(element).build().perform();
                 return StepResult.success("clicked on web element");
             }
-        } catch (StaleElementReferenceException e) {
+        } catch (WebDriverException e) {
             return StepResult.fail(WebDriverExceptionHelper.resolveErrorMessage(e));
         } catch (Exception e) {
             // try again..

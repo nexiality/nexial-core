@@ -329,6 +329,23 @@ public class JsonTransformer<T extends JsonDataType> extends Transformer {
         return returnObj;
     }
 
+    public ListDataType keys(T data, String jsonpath) throws ExpressionException {
+        ListDataType empty = new ListDataType();
+
+        if (data == null) { return empty; }
+
+        try {
+            if (data.getValue() != null && data.getValue() instanceof JsonObject && StringUtils.isBlank(jsonpath)) {
+                return new ListDataType(JSONPath.keys(data.toJSONObject(), jsonpath).toArray(new String[0]));
+            }
+
+            return empty;
+        } catch (JSONException e) {
+            throw new TypeConversionException(data.getName(), data.getTextValue(),
+                                              "Error converting to JSON: " + e.getMessage(), e);
+        }
+    }
+
     @Override
     Map<String, Integer> listSupportedFunctions() { return FUNCTION_TO_PARAM_LIST; }
 
