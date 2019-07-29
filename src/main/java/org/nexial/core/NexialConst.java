@@ -961,6 +961,8 @@ public final class NexialConst {
 
         public static final String OPT_FORCE_IE_32 = registerSystemVariable(NAMESPACE + "forceIE32", false);
 
+
+        public static final String SELECT_ALL = "{ALL}";
         // web element highlight
         public static final String OPT_DEBUG_HIGHLIGHT_OLD = registerSystemVariable(NAMESPACE + "highlight", false);
         public static final String OPT_DEBUG_HIGHLIGHT = registerSystemVariable(NS_WEB + "highlight", false);

@@ -258,11 +258,22 @@ public class WebCommand extends BaseCommand implements CanTakeScreenshot, CanLog
     @NotNull
     public StepResult select(String locator, String text) {
         Select select = getSelectElement(locator);
-        if (StringUtils.isBlank(text)) {
-            select.deselectAll();
-            return StepResult.success("deselected ALL from '" + locator + "' since no text was provided");
+        if (StringUtils.equals(text, SELECT_ALL)) {
+            if (!select.isMultiple()) { return StepResult.fail("Unable to multi-select from a single-select element"); }
+
+            List<WebElement> options = select.getOptions();
+            if (CollectionUtils.isEmpty(options)) {
+                return StepResult.fail("Unable to multi-select as no options " +
+                                       "found in select element '" + locator + "'");
+            }
+            options.forEach(option -> select.selectByVisibleText(option.getText()));
+            return StepResult.success("selected all options from multi-select '" + locator + "'");
         } else {
-            select.selectByVisibleText(text);
+            try {
+                select.selectByVisibleText(text);
+            }catch(NoSuchElementException e){
+                return StepResult.fail("Specified text '" + text + "' not found in select element '" + locator + "'");
+            }
             return StepResult.success("selected '" + text + "' from '" + locator + "'");
         }
     }
@@ -271,8 +282,19 @@ public class WebCommand extends BaseCommand implements CanTakeScreenshot, CanLog
     public StepResult deselect(String locator, String text) {
         Select select = getSelectElement(locator);
         if (StringUtils.isNotBlank(text)) {
-            select.deselectByVisibleText(text);
-            return StepResult.success("deselected '" + text + "' from '" + locator + "'");
+            try {
+                if (StringUtils.equals(text, SELECT_ALL)) {
+                    select.deselectAll();
+                    return StepResult.success("deselected all options from '" + locator + "'");
+                } else {
+                    select.deselectByVisibleText(text);
+                    return StepResult.success("deselected '" + text + "' from '" + locator + "'");
+                }
+            } catch (UnsupportedOperationException e) {
+                return StepResult.fail("Unable to multi-deselect from single-select element " + e.getMessage());
+            } catch (NoSuchElementException e) {
+                return StepResult.fail("Unable deselect as " + e.getMessage());
+            }
         } else {
             return StepResult.success("NO action performed on '" + locator + "' since no text was provided");
         }

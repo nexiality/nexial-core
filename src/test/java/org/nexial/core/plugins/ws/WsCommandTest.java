@@ -71,6 +71,53 @@ public class WsCommandTest {
 
     }
 
+
+    @Test
+    public void testApi_with_special_characters_queryString() {
+        String url = "https://samples.openweathermap.org/data/2.5/forecast/hourly";
+        String queryString = "q=Zuerich (Kreis 3) / Sihlfeld&APPID=50b270e6e8327679f7f34bf2c709e938";
+
+        // context.setData(WS_PROXY_REQUIRED, "true");
+        WsCommand subject = new WsCommand();
+        subject.init(context);
+        StepResult result = subject.get(url, queryString, "response");
+
+        Assert.assertTrue(result.isSuccess());
+
+        Response response = subject.resolveResponseObject("response");;
+        Assert.assertEquals(200, response.returnCode);
+        Assert.assertTrue(response.getContentLength() > 1);
+
+        String jsonContent = new String(response.getRawBody());
+        JSONObject json = new JSONObject(jsonContent);
+        Assert.assertNotNull(json);
+        System.out.println("json = " + json);
+    }
+
+    @Test
+    public void testApi_with_special_characters_url() {
+        String url = "https://samples.openweathermap.org/data/2.5/forecast/hourly?" +
+                     "q=Zuerich (Kreis 3) / Sihlfeld&APPID=50b270e6e8327679f7f34bf2c709e938";
+        String queryString = "";
+
+        // context.setData(WS_PROXY_REQUIRED, "true");
+        WsCommand subject = new WsCommand();
+        subject.init(context);
+        // subject.header("Content-Type", "application/json; charset=utf-8");
+        StepResult result = subject.get(url, queryString, "response");
+
+        Assert.assertTrue(result.isSuccess());
+
+        Response response = subject.resolveResponseObject("response");;
+        Assert.assertEquals(200, response.returnCode);
+        Assert.assertTrue(response.getContentLength() > 1);
+
+        String jsonContent = new String(response.getRawBody());
+        JSONObject json = new JSONObject(jsonContent);
+        Assert.assertNotNull(json);
+        System.out.println("json = " + json);
+    }
+
     @Test
     public void jwtSignHS256() {
         WsCommand subject = new WsCommand();
