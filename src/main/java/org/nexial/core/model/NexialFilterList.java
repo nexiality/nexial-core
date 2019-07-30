@@ -101,7 +101,7 @@ public class NexialFilterList extends ArrayList<NexialFilter> {
             }
 
             String subject = filter.getSubject();
-            if (!StringUtils.isBlank(subject) && !filter.isMatch(context, msgPrefix)) { return false; }
+            if (StringUtils.isNotBlank(subject) && !filter.isMatch(context, msgPrefix)) { return false; }
         }
 
         return true;

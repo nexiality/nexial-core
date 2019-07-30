@@ -214,6 +214,11 @@ public class NexialFilterTest {
         Assert.assertTrue(NexialFilter.newInstance("a contain [calif|lifrag]").isMatch("supercalifragilistic"));
         Assert.assertTrue(NexialFilter.newInstance("a contain [california|supercal]").isMatch("supercalifragilistic"));
 
+        // NotContain("not contain")
+        Assert.assertTrue(NexialFilter.newInstance("x not contain  the time").isMatch("the next time"));
+        Assert.assertTrue(NexialFilter.newInstance("x not contain ,").isMatch("hello world"));
+        Assert.assertFalse(NexialFilter.newInstance("x not contain ,").isMatch("hello, world"));
+
         // StartsWith("start with"),
         Assert.assertTrue(NexialFilter.newInstance("a start with matt").isMatch("matthew"));
         Assert.assertTrue(NexialFilter.newInstance("a start with  ma").isMatch("matthew"));
