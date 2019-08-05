@@ -105,14 +105,14 @@ class LocalDbCommand : BaseCommand() {
         // 1. find DDL SQL for `source`
         val sql = "SELECT sql FROM SQLITE_MASTER WHERE TYPE='table' AND lower(name)='${source.toLowerCase()}';"
         val result = rdbms.dataAccess.execute(sql, dao) ?: return StepResult.fail(
-                "FAILED TO DETERMINE DDL SQL for $source: no result found")
+            "FAILED TO DETERMINE DDL SQL for $source: no result found")
 
         if (result.isEmpty) return StepResult.fail("Source table '$source' not found in localdb")
         if (result.hasError()) return StepResult.fail("Source table '$source' not found in localdb: ${result.error}")
 
         // 2. convert to DDL for `target`
         if (result.data[0]["sql"] == null) return StepResult.fail(
-                "Unable to determine the CREATE SQL for source table '$source'")
+            "Unable to determine the CREATE SQL for source table '$source'")
 
         val ddl = RegexUtils.replace(result.data[0]["sql"], "(CREATE TABLE\\s+)([A-Za-z0-9_]+)(.+)", "\$1$target\$3")
 
@@ -134,7 +134,7 @@ class LocalDbCommand : BaseCommand() {
         if (!query.type.hasResultset()) return StepResult.fail("SQL '$sql' MUST return query result")
 
         val sourceDao = rdbms.dataAccess.resolveDao(sourceDb) ?: return StepResult.fail(
-                "Unable to connection to source database '$sourceDb'")
+            "Unable to connection to source database '$sourceDb'")
 
         context.setData(`var`, sourceDao.importResults(query, dao, SqliteTableSqlGenerator(table)))
         return StepResult.success("Query result successfully imported from '$sourceDb' to localdb '$table'")
@@ -178,20 +178,58 @@ class LocalDbCommand : BaseCommand() {
         // 3. parse csv and resolve csv metadata
         val csvRecords = parser.parseAllRecords(StringReader(csvContent))
         val headers = parser.recordMetadata.headers().asList()
-        // val columnCount = CollectionUtils.size(headers)
-        // val rowCount = CollectionUtils.size(csvRecords)
 
         val queries = StringBuilder()
 
         // 4. if target table not exist, create it
-        val tableGenerator = SqliteTableSqlGenerator(table)
-        queries.append(tableGenerator.generateSql(headers)).append("\n")
+        val tableInfo = dao.executeSqls(SqlComponent.toList(
+            "SELECT name, \"notnull\" AS 'not_null', dflt_value FROM pragma_table_info('$table') ORDER BY cid;" +
+            "SELECT upper(name) || '=' || dflt_value AS 'defaults' FROM pragma_table_info('$table') WHERE dflt_value IS NOT NULL"))
+
+        val columns = if (tableInfo.rowCount < 1) {
+            // target table does not exist, let's create it
+            val tableGenerator = SqliteTableSqlGenerator(table)
+            queries.append(tableGenerator.generateSql(headers)).append("\n")
+            TextUtils.toString(headers, ",")
+        } else {
+            // target table exist, let's map out its columns
+            val definedColumns = tableInfo[0].cells("name")
+            if (definedColumns.size < headers.size) {
+                // there are more columns in CSV than the existing table.. FAIL this
+                throw IllegalArgumentException("Existing table $table has ${definedColumns.size} columns but the specified CSV has ${headers.size} columns")
+            }
+
+            // val normalizedDefinedColumns = TextUtils.toString(definedColumns.map { it.toLowerCase() }.sorted(), ",")
+            // val normalizedCsvHeaders = TextUtils.toString(headers.map { it.toLowerCase() }.sorted(), ",")
+            val normalizedDefinedColumns = definedColumns.map { it.toLowerCase() }.sorted()
+            val normalizedCsvHeaders = headers.map { it.toLowerCase() }.sorted()
+            if (normalizedDefinedColumns.containsAll(normalizedCsvHeaders)) {
+                // all CSV headers are found as column name in the existing table. We'll use name-matching mapping
+                TextUtils.toString(headers, ",")
+            } else {
+                // not all CSV headers are found in existing table as column. We'll use left-to-right mapping
+                TextUtils.toString(definedColumns.subList(0, headers.size), ",")
+            }
+        }
+
+        val defaultValues = if (tableInfo.rowCount < 1)
+            emptyMap()
+        else {
+            if (tableInfo[1].rowCount < 1)
+                emptyMap()
+            else
+                TextUtils.toMap(TextUtils.toString(tableInfo[1].cells("defaults"), ","), ",", "=")
+        }
 
         // 5. import data via INSERT generator
-        val insertPrefix = "INSERT INTO $table VALUES ("
+        val insertPrefix = "INSERT INTO $table ($columns) VALUES ("
         csvRecords.forEach { record ->
             queries.append(insertPrefix)
-            record.values.forEach { queries.append("\"$it\",") }
+            record.values.forEachIndexed { index, value ->
+                val insertValue =
+                    if (StringUtils.isEmpty(value)) defaultValues[headers[index].toUpperCase()] ?: value else value
+                queries.append("\"$insertValue\",")
+            }
             queries.delete(queries.length - 1, queries.length)
             queries.append(");\n")
         }
@@ -206,7 +244,7 @@ class LocalDbCommand : BaseCommand() {
                 StepResult.fail("Error occurred while importing CSV to '$table': ${result.error}")
             }
         } else {
-            val rowsInserted = result.rowsAffected - result[0].rowCount
+            val rowsInserted = result.rowsAffected - if (result.size > csvRecords.size) result[0].rowCount else 0
             return StepResult.success("Successfully imported $rowsInserted rows from CSV to '$table'")
         }
     }
@@ -220,7 +258,7 @@ class LocalDbCommand : BaseCommand() {
     }
 
     fun exportXML(sql: String, output: String, root: String = "root", row: String = "row", cell: String = "cell"):
-            StepResult {
+        StepResult {
         requiresNotBlank(sql, "invalid sql", sql)
         requiresNotBlank(output, "invalid output", output)
         return postExport(dao.saveAsXML(sql,
