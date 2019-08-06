@@ -708,17 +708,19 @@ public final class NexialConst {
                     if (StringUtils.containsIgnoreCase(projectId, "echo is off")) {
                         // need to notify user of this... they would need to upgrade to more recent version of Nexial
                         // (with fix)
-                        String error = "!!!!! ERROR !!!!!\n" +
-                                       "The file " + projectIdFile + " contains " +
-                                       "INCORRECT project id: " + projectId + "\n" +
-                                       "\n" +
-                                       "Nexial execution will stop now.\n" +
-                                       "\n" +
+                        String error = "\n\n" +
+                                       StringUtils.repeat("-", 80) + "\n" +
+                                       "!!!!! ERROR !!!!!\n" +
+                                       "The file " + projectIdFile + " contains INCORRECT project id:\n" +
+                                       "\t" + projectId + "\n\n" +
                                        "Please fix this issue by:\n" +
-                                       "1. running 'nexial-project' batch:\n" +
+                                       "1. Run the 'nexial-project' batch:\n" +
                                        "   cd " + System.getProperty(NEXIAL_HOME) + separator + "bin\n" +
-                                       "   " + (IS_OS_WINDOWS ? "nexial-project.cmd" : "./nexial.project.sh") + " " + projectHome +"\n" +
-                                       "2. update " + projectIdFile + " with the appropriate project ID\n";
+                                       "   " + (IS_OS_WINDOWS ? "nexial-project.cmd" : "./nexial.project.sh") + " " + projectHome +"\n\n" +
+                                       "2. Update " + projectIdFile + " with the appropriate project ID.\n" +
+                                       "   Project ID should be a single word, without spaces.\n\n" +
+                                       "Nexial execution will stop now.\n\n" +
+                                       StringUtils.repeat("-", 80) + "\n\n";
                         throw new ServiceConfigurationError(error);
                     }
 
