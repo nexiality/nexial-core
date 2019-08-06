@@ -105,6 +105,10 @@ public class ExpressionProcessorTest {
         result = subject.process(fixture);
         Assert.assertEquals("If mau're happy  mau know it clap maur hs", result);
 
+        fixture = "[TEXT(-123,45 6.78) => retain(0123456789.)]";
+        result = subject.process(fixture);
+        Assert.assertEquals("123456.78", result);
+
         fixture = "[TEXT(everybody wants to rule the world) => before(the world) after(everybody) trim between(t,l) " +
                   "                                            pack]";
         result = subject.process(fixture);

@@ -22,11 +22,8 @@ import java.io.File;
 import java.io.IOException;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
-import java.util.Arrays;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 import javax.validation.constraints.NotNull;
 
 import org.apache.commons.cli.Options;
@@ -56,8 +53,7 @@ import static java.awt.Color.*;
 import static java.awt.image.BufferedImage.*;
 import static java.io.File.separator;
 import static javax.naming.Context.*;
-import static org.apache.commons.lang3.SystemUtils.IS_OS_WINDOWS;
-import static org.apache.commons.lang3.SystemUtils.USER_HOME;
+import static org.apache.commons.lang3.SystemUtils.*;
 import static org.nexial.core.NexialConst.AwsSettings.*;
 import static org.nexial.core.NexialConst.Data.*;
 import static org.nexial.core.NexialConst.Integration.MAIL_PREFIX;
@@ -478,9 +474,7 @@ public final class NexialConst {
 
         private ImageDiffColor() {}
 
-        /**
-         * default to red
-         */
+        /** default to red */
         public static Color toColor(String colorName) {
             return MapUtils.getObject(COLOR_NAMES, colorName, COLOR_NAMES.get(getDefault(OPT_IMAGE_DIFF_COLOR)));
         }
@@ -697,9 +691,10 @@ public final class NexialConst {
         public static TestProject resolveStandardPaths(TestProject project) {
             if (project.isStandardStructure()) {
                 String projectHome = project.getProjectHome();
+                String projectIdFile = projectHome + separator + DEF_REL_META_PROJ_ID;
 
                 String projectId = null;
-                File metaProjectIdFile = new File(projectHome + separator + DEF_REL_META_PROJ_ID);
+                File metaProjectIdFile = new File(projectIdFile);
                 if (FileUtil.isFileReadable(metaProjectIdFile)) {
                     try {
                         projectId = StringUtils.trim(FileUtils.readFileToString(metaProjectIdFile, DEF_FILE_ENCODING));
@@ -709,6 +704,23 @@ public final class NexialConst {
                 }
 
                 if (StringUtils.isNotBlank(projectId)) {
+                    if (StringUtils.containsIgnoreCase(projectId, "echo is off")) {
+                        // need to notify user of this... they would need to upgrade to more recent version of Nexial
+                        // (with fix)
+                        String error = "!!!!! ERROR !!!!!\n" +
+                                       "The file " + projectIdFile + " contains " +
+                                       "INCORRECT project id: " + projectId + "\n" +
+                                       "\n" +
+                                       "Nexial execution will stop now.\n" +
+                                       "\n" +
+                                       "Please fix this issue by:\n" +
+                                       "1. running 'nexial-project' batch:\n" +
+                                       "   cd " + System.getProperty(NEXIAL_HOME) + separator + "bin\n" +
+                                       "   " + (IS_OS_WINDOWS ? "nexial-project.cmd" : "./nexial.project.sh") + " " + projectHome +"\n" +
+                                       "2. update " + projectIdFile + " with the appropriate project ID\n";
+                        throw new ServiceConfigurationError(error);
+                    }
+
                     project.setName(projectId);
                     project.setBoundProjectId(projectId);
                 } else {
@@ -1314,10 +1326,8 @@ public final class NexialConst {
         public static final String ARG_PREFIX = "(";
         public static final String ARG_SUFFIX = ")";
         public static final String REGEX_ARGS = "\\s*\\" + ARG_PREFIX + "(.*?)\\" + ARG_SUFFIX;
-        // public static final String DELIM_ARGS = "&";
         public static final String FILTER_CHAINING_SEP = " & ";
 
-        public static final String OPERATOR_IS = " is";
         public static final String IS_OPEN_TAG = "[";
         public static final String IS_CLOSE_TAG = "]";
         public static final String ANY_FIELD = "[ANY FIELD]";
@@ -1508,9 +1518,7 @@ public final class NexialConst {
     public static String handleWindowsChar(String name) {
         name = StringEscapeUtils.escapeJava(name);
         Set<String> keys = replaceWindowsChars.keySet();
-        for (String key : keys) {
-            name = StringUtils.replace(name, key, replaceWindowsChars.get(key));
-        }
+        for (String key : keys) { name = StringUtils.replace(name, key, replaceWindowsChars.get(key)); }
         return name;
     }
 

@@ -31,7 +31,27 @@ else
 fi
 PROJECT_NAME="`basename "${PROJECT_HOME}"`"
 echo "  PROJECT_HOME:   ${PROJECT_HOME}"
-echo "  PROJECT_NAME:   ${PROJECT_NAME}"
+#echo "  PROJECT_NAME:   ${PROJECT_NAME}"
+
+# create project.id file to uniquely identify a "project" across enterprise (i.e. same SCM)
+PROJECT_ID="${PROJECT_HOME}/.meta/project.id"
+if [[ -f "${PROJECT_ID}" ]] ; then
+  PROJECT_NAME=$(cat "${PROJECT_ID}")
+fi
+
+echo
+echo "» currently project id is set to '${PROJECT_NAME}'."
+echo "» to change it, enter new project id below or press ENTER to keep it as is"
+if [[ "${NEXIAL_OS}" = "Mac" ]]; then
+    echo -n "  Enter project id [${PROJECT_NAME}]: "
+    read user_project_name
+else
+    read -p "  Enter project id [${PROJECT_NAME}]: " user_project_name
+fi
+
+if [[ "${user_project_name}" != "" ]]; then
+    PROJECT_NAME="${user_project_name}"
+fi
 
 echo
 echo "» (re)creating project home at ${PROJECT_HOME}"
@@ -42,13 +62,8 @@ mkdir -p "${PROJECT_HOME}/artifact/data" > /dev/null 2>&1
 mkdir -p "${PROJECT_HOME}/artifact/plan" > /dev/null 2>&1
 mkdir -p "${PROJECT_HOME}/output" > /dev/null 2>&1
 
-# create project.id file to uniquely identify a "project" across enterprise (i.e. same SCM)
-PROJECT_ID="${PROJECT_HOME}/.meta/project.id"
-if [[ ! -s "${PROJECT_ID}" ]] ; then
-    echo "» create ${PROJECT_ID}"
-    mkdir -p "${PROJECT_HOME}/.meta"
-    echo ${PROJECT_NAME} > "${PROJECT_ID}"
-fi
+echo "» (re)creating ${PROJECT_ID} with ${PROJECT_NAME}"
+echo "${PROJECT_NAME}" > "${PROJECT_ID}"
 
 SKIP_DEF_SCRIPTS=true
 for f in "${PROJECT_HOME}/artifact/script/*.xlsx"; do

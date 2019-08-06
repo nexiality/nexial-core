@@ -94,7 +94,17 @@ function title() {
 }
 
 
+export NEXIAL_OS=
 function resolveEnv() {
+    unameOut="$(uname -s)"
+    case "${unameOut}" in
+        Linux*)     export NEXIAL_OS=Linux;;
+        Darwin*)    export NEXIAL_OS=Mac;;
+        CYGWIN*)    export NEXIAL_OS=Cygwin;;
+        MINGW*)     export NEXIAL_OS=MinGw;;
+        *)          export NEXIAL_OS="UNKNOWN:${unameOut}"
+    esac
+
     JAVA_VERSION=`echo "$(${JAVA} -version 2>&1)" | grep "java version" | awk '{ print substr($3, 2, length($3)-2); }'`
 
     echo "» ENVIRONMENT: "
