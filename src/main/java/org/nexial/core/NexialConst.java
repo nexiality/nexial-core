@@ -53,7 +53,8 @@ import static java.awt.Color.*;
 import static java.awt.image.BufferedImage.*;
 import static java.io.File.separator;
 import static javax.naming.Context.*;
-import static org.apache.commons.lang3.SystemUtils.*;
+import static org.apache.commons.lang3.SystemUtils.IS_OS_WINDOWS;
+import static org.apache.commons.lang3.SystemUtils.USER_HOME;
 import static org.nexial.core.NexialConst.AwsSettings.*;
 import static org.nexial.core.NexialConst.Data.*;
 import static org.nexial.core.NexialConst.Integration.MAIL_PREFIX;
@@ -1324,7 +1325,7 @@ public final class NexialConst {
         public static final String OPT_PAUSE_ON_ERROR = registerSystemVariable(NAMESPACE + "pauseOnError", false);
 
         public static final String ARG_PREFIX = "(";
-        public static final String ARG_SUFFIX = ")";
+        public static final String ARG_SUFFIX = ")\\s*$";
         public static final String REGEX_ARGS = "\\s*\\" + ARG_PREFIX + "(.*?)\\" + ARG_SUFFIX;
         public static final String FILTER_CHAINING_SEP = " & ";
 

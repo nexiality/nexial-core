@@ -17,6 +17,8 @@
 
 package org.nexial.core.model;
 
+import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -27,6 +29,7 @@ import org.apache.commons.lang3.StringUtils;
 import org.nexial.commons.utils.RegexUtils;
 import org.nexial.core.utils.ConsoleUtils;
 
+import static org.nexial.core.NexialConst.FlowControls.ARG_PREFIX;
 import static org.nexial.core.NexialConst.FlowControls.REGEX_ARGS;
 import static org.nexial.core.model.FlowControl.Directive.TimeTrackStart;
 import static org.nexial.core.model.NexialFilterComparator.Any;
@@ -119,15 +122,46 @@ public class FlowControl {
 
         // only supports 1 instance of a directive per flow control cell
         // if multiple condition per directive is needed, use `&` to chain conditions
-        for (Directive d : Directive.values()) {
-            NexialFilterList conditions = parseFlowControl(flowControlText, d);
-            if (CollectionUtils.isEmpty(conditions)) { continue; }
-
-            map.put(d, new FlowControl(d, conditions));
-        }
+        map = getFlowControls(flowControlText);
 
         if (expectedFlowControlGroup != map.size()) {
             ConsoleUtils.error("Possibly invalid flow control found (and IGNORED): " + flowControlText);
+        }
+
+        return map;
+    }
+
+    private static Map<Directive, FlowControl> getFlowControls(String flowControlText) {
+        List<Integer> directivePositions = new ArrayList<>();
+        for (Directive d : Directive.values()) {
+            if (!StringUtils.contains(flowControlText, d.name())) { continue; }
+            directivePositions.add(StringUtils.indexOf(flowControlText, d.name()));
+        }
+
+        Collections.sort(directivePositions);
+        int size = directivePositions.size();
+
+        Map<Directive, FlowControl> map = new HashMap<>();
+        for (int i = 0; i < size; i++) {
+            int startIndex = directivePositions.get(i);
+            int endIndex = i + 1 < size ? directivePositions.get(i + 1) : flowControlText.length();
+
+            String flowControls = StringUtils.substring(flowControlText, startIndex, endIndex);
+            String dir = StringUtils.trim(StringUtils.substringBefore(flowControls, ARG_PREFIX));
+
+            // handle exception if directive doesn't exist unlikely to happen
+            Directive directive;
+            try {
+                directive = Enum.valueOf(Directive.class, dir);
+            } catch (IllegalArgumentException e) {
+                ConsoleUtils.error("Invalid Flow Control " + dir + " found (and IGNORED)");
+                continue;
+            }
+
+            NexialFilterList conditions = parseFlowControl(flowControls, directive);
+            if (CollectionUtils.isEmpty(conditions)) { continue; }
+
+            map.put(directive, new FlowControl(directive, conditions));
         }
 
         return map;
@@ -137,17 +171,13 @@ public class FlowControl {
     public String toString() { return directive + " -> " + conditions; }
 
     @NotNull
-    private static NexialFilterList parseFlowControl(String flowControls, Directive directive) {
+    private static NexialFilterList parseFlowControl(String flowControl, Directive directive) {
         // e.g. SkipIf ( blah... ) or PauseBefore()
-        String regex = ".*(" + directive + REGEX_ARGS + ").*";
-
+        String regex = directive + REGEX_ARGS;
         // if there's no match, then returns empty map
-        if (!RegexUtils.isExact(flowControls, regex)) { return new NexialFilterList(); }
+        if (!RegexUtils.isExact(flowControl, regex)) { return new NexialFilterList(); }
 
-        // e.g. .*(PauseBefore\s*\((.+?)\)).*
-        String flowControl = RegexUtils.replace(flowControls, regex, "$1");
-        String conditions = StringUtils.trim(RegexUtils.replace(flowControl, directive + REGEX_ARGS, "$1"));
-
+        String conditions = StringUtils.trim(RegexUtils.replace(flowControl, regex, "$1"));
         if (directive.equals(TimeTrackStart)) {
             NexialFilterList filters = new NexialFilterList();
             filters.add(new NexialFilter(conditions, Any, "*"));

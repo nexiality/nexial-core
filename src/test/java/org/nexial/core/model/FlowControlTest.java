@@ -116,6 +116,25 @@ public class FlowControlTest {
     }
 
     @Test
+    public void parseToMap_condition_withBrackets() {
+
+        Map<Directive, FlowControl> subjects = FlowControl.parse("FailIf(var1 = \"a\" & var2 = Nexial) " +
+                                                                 "EndIf(var2 match .*(Nexial|nexial).* & var3 != 195)");
+        Assert.assertNotNull(subjects);
+        Assert.assertEquals(2, subjects.size());
+
+        FlowControl subject = subjects.get(EndIf);
+        Assert.assertNotNull(subject);
+        Assert.assertEquals(EndIf, subject.getDirective());
+
+        NexialFilterList conditions = subject.getConditions();
+        Assert.assertNotNull(conditions);
+        Assert.assertEquals(2, conditions.size());
+        Assert.assertEquals("var2 match .*(Nexial|nexial).*", conditions.get(0).toString());
+        Assert.assertEquals("var3 != 195", conditions.get(1).toString());
+    }
+
+    @Test
     public void parseToMap_multi_directives_and_conditions() {
 
         String fixture = "PauseBefore (var1 = \"a\" & var2  =    95)  \n" +
@@ -218,6 +237,10 @@ public class FlowControlTest {
         fixture.flowControls = FlowControl.parse("ProceedIf ( ${my_fruit} match [A-Za-z]{5} \t&   ${my_age} > 25   ) ");
         assertExpectedFilterEval(fixture, "ProceedIf -> [${my_fruit} match [A-Za-z]{5}, ${my_age} > 25]");
 
+        fixture.flowControls = FlowControl.parse(
+            "Proceed ( 1=1 ) ProceedIf ( ${my_fruit} match [A-Za-z]{5} \t&   ${my_age} > 25   ) ");
+        assertExpectedFilterEval(fixture, "ProceedIf -> [${my_fruit} match [A-Za-z]{5}, ${my_age} > 25]");
+
         fixture.flowControls = FlowControl.parse("EndIf ( ${my_color} != red & ${my_name} has length of 8 & " +
                                                  "${min_age} < ${max_age} & " +
                                                  "${my_age} is not [28,27,26,30,49,31,33,45] ) ");
@@ -245,6 +268,11 @@ public class FlowControlTest {
                                                  "\t FailIf ( \t  ${my_fruit} in [banana|apple|mango|chicken] )" +
                                                  "EndLoopIf ( ${is_login} is [true|TRUE|True|yes|Yes|YES] )  \n");
         assertExpectedFilterEval(fixture, "FailIf -> [${my_fruit} in [banana|apple|mango|chicken]]");
+
+        fixture.flowControls = FlowControl.parse("EndIf ( ${my_age} between [21|30] )   \n" +
+                                                 "\t EndLoopIf ( \t  ${my_fruit} in [banana|apple|mango|chicken] )" +
+                                                 "FailIf ( ${is_login} match (true|TRUE|True|yes|Yes|YES) )  \n");
+        assertExpectedFilterEval(fixture, "FailIf -> [${is_login} match (true|TRUE|True|yes|Yes|YES)]");
 
         fixture.flowControls = FlowControl.parse("EndIf ( ${my_age} between [21|30] )   \n" +
                                                  "\t SkipIf ( \t  ${my_fruit} in [banana|apple|mango|chicken] )" +
