@@ -181,6 +181,11 @@ object ExcelUtils {
                 val dataValueCellStyle = firstRow.getCell(1).cellStyle
                 cell.cellStyle = dataValueCellStyle
             }
+        } else {
+            // format script, macro and plan according to first Step row
+            val firstStepRow = if (fileType == MACRO) 1 else 4
+            val commandRow = row.sheet.getRow(firstStepRow)
+            cell.cellStyle = commandRow.getCell(cell.columnIndex).cellStyle
         }
         return cell
     }

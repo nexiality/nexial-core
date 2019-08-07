@@ -738,6 +738,33 @@ public class ExpressionProcessorTest {
     }
 
     @Test
+    public void process_expression_with_square_bracket() throws Exception {
+        ExpressionProcessor subject = new ExpressionProcessor(context);
+        String fixture =
+            "sum = [[LIST(2441117.97,4750496.50,890528.83,679465.00,2441117.97,6320490.33,8761608.30) => sum]]";
+        String result = subject.process(fixture);
+        Assert.assertEquals("sum = [26284824.90]", result);
+
+        fixture = "{\"product\" : [{" +
+                  "   \"name\" : \"Mobiles\"," +
+                  "   \"quantity\" : [LIST(247,475,89,67,17,49, 8) => sum]" +
+                  "}," +
+                  "   \"name\" : \"Laptops\"," +
+                  "   \"quantity\" : [LIST(24,500,78,65,88,100,10) => sum]" +
+                  "}" +
+                  "]}";
+        result = subject.process(fixture);
+        Assert.assertEquals("{\"product\" : [{" +
+                            "   \"name\" : \"Mobiles\"," +
+                            "   \"quantity\" : 952" +
+                            "}," +
+                            "   \"name\" : \"Laptops\"," +
+                            "   \"quantity\" : 865" +
+                            "}" +
+                            "]}", result);
+    }
+
+    @Test
     public void processJsonAdd() throws Exception {
         ExpressionProcessor subject = new ExpressionProcessor(context);
 
@@ -963,9 +990,9 @@ public class ExpressionProcessorTest {
         Assert.assertEquals("2", result);
 
         fixture = "[CONFIG(" + propertiesFile + ") => " +
-                  " set(State,California)] " +
+                  " set(State,California) " +
                   " save(" + propertiesFile + ") " +
-                  " set(State,New York)] " +
+                  " set(State,New York) " +
                   " value(State)" +
                   "]";
         result = subject.process(fixture);
