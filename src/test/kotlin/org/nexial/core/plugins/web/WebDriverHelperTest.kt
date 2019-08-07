@@ -156,18 +156,17 @@ class WebDriverHelperTest {
         context.cleanProject()
     }
 
-    // todo: need to revive when cbt fixes its release page. Currently mac/linux download doesn't resolve to any known file extension (https://github.com/crossbrowsertesting/cbt-tunnel-nodejs/issues/23)
-    // @Test
-    // @Throws(Exception::class)
-    // fun downloadCbtLocalDriver() {
-    //     val driverHome = File("${driverHomeBase}crossbrowsertesting")
-    //     FileUtils.deleteDirectory(driverHome)
-    //
-    //     val context = MockExecutionContext(true)
-    //
-    //     assertDriverExists(newInstance(crossbrowsertesting, context).resolveDriver())
-    //     context.cleanProject()
-    // }
+    @Test
+    @Throws(Exception::class)
+    fun downloadCbtLocalDriver() {
+        val driverHome = File("${driverHomeBase}crossbrowsertesting")
+        FileUtils.deleteDirectory(driverHome)
+
+        val context = MockExecutionContext(true)
+
+        assertDriverExists(newInstance(crossbrowsertesting, context).resolveDriver())
+        context.cleanProject()
+    }
 
     @Test
     @Throws(Exception::class)

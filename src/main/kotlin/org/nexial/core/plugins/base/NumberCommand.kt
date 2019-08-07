@@ -9,6 +9,8 @@ import org.nexial.core.utils.CheckUtils.*
 import java.text.DecimalFormat
 import kotlin.Double.Companion.MAX_VALUE
 import kotlin.Double.Companion.MIN_VALUE
+import kotlin.math.ceil
+import kotlin.math.roundToLong
 
 class NumberCommand : BaseCommand() {
 
@@ -103,7 +105,7 @@ class NumberCommand : BaseCommand() {
 
         requires(NumberUtils.isParsable(current), "not valid number", Var)
 
-        val ceiling = Math.ceil(NumberUtils.toDouble(current)).toInt()
+        val ceiling = ceil(NumberUtils.toDouble(current)).toLong()
 
         context.setData(Var, ceiling)
 
@@ -117,7 +119,7 @@ class NumberCommand : BaseCommand() {
 
         requires(NumberUtils.isParsable(current), "not valid number", Var)
 
-        val floor = Math.floor(NumberUtils.toDouble(current)).toInt()
+        val floor = kotlin.math.floor(NumberUtils.toDouble(current)).toLong()
 
         context.setData(Var, floor)
 
@@ -128,11 +130,9 @@ class NumberCommand : BaseCommand() {
         requiresValidVariableName(Var)
 
         val current = StringUtils.defaultString(context.getStringData(Var))
-
         requires(NumberUtils.isParsable(current), "not valid number", Var)
 
-        val floor = Math.round(NumberUtils.toDouble(current)).toInt()
-
+        val floor = NumberUtils.toDouble(current).toLong()
         context.setData(Var, floor)
 
         return StepResult.success("Variable '$Var' has been round down to $floor")
@@ -205,7 +205,7 @@ class NumberCommand : BaseCommand() {
             df.isGroupingUsed = false
             df.maximumFractionDigits = fractionDigitCount
             df.minimumFractionDigits = fractionDigitCount
-            return df.format(Math.round(num / closestWhole) * closestWhole)
+            return df.format((num / closestWhole).roundToLong() * closestWhole)
         }
     }
 }

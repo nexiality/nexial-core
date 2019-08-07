@@ -39,7 +39,6 @@ public class ExcelDataType extends ExpressionDataType<Excel> {
     private List<String> worksheetNames;
     private List<List<String>> capturedValues;
     private Worksheet currentSheet;
-    // private String currentSheetName;
     private ExcelAddress currentRange;
 
     public ExcelDataType(String textValue) throws TypeConversionException { super(textValue); }
@@ -74,26 +73,9 @@ public class ExcelDataType extends ExpressionDataType<Excel> {
 
     public void setCurrentSheet(Worksheet currentSheet) { this.currentSheet = currentSheet; }
 
-    // public String getCurrentSheetName() { return currentSheetName; }
-    //
-    // public void setCurrentSheetName(String currentSheetName) { this.currentSheetName = currentSheetName; }
-
     public ExcelAddress getCurrentRange() { return currentRange; }
 
     public void setCurrentRange(ExcelAddress currentRange) { this.currentRange = currentRange; }
-
-    // @Override
-    // public Excel getValue() {
-    //     if (StringUtils.isBlank(filePath)) {
-    //         throw new IllegalArgumentException("No valid file specified for current EXCEL expression");
-    //     }
-    //
-    //     try {
-    //         return new Excel(new File(filePath), false, false);
-    //     } catch (IOException e) {
-    //         throw new IllegalArgumentException("Error opening " + filePath + ": " + e.getMessage(), e);
-    //     }
-    // }
 
     @Override
     Transformer getTransformer() { return transformer; }
@@ -131,22 +113,6 @@ public class ExcelDataType extends ExpressionDataType<Excel> {
                 worksheetNames = new ArrayList<>();
                 worksheets.forEach(worksheet -> worksheetNames.add(worksheet.getName()));
             }
-
-            // Excel excel;
-            // if (!FileUtil.isFileReadable(textValue)) {
-            //     excel = Excel.newExcel(new File(textValue));
-            // } else {
-            //     excel = new Excel(new File(textValue), false, false);
-            // }
-            //
-            // filePath = textValue;
-            // List<Worksheet> worksheets = excel.getWorksheetsStartWith("");
-            // if (CollectionUtils.isNotEmpty(worksheets)) {
-            //     worksheetNames = new ArrayList<>();
-            //     worksheets.forEach(worksheet -> worksheetNames.add(worksheet.getName()));
-            // }
-            //
-            // excel.close();
         } catch (IOException e) {
             throw new TypeConversionException(getName(),
                                               textValue,
@@ -161,42 +127,4 @@ public class ExcelDataType extends ExpressionDataType<Excel> {
         currentSheet = worksheet;
         setCapturedValues(worksheet.readRange(range));
     }
-
-    // protected void read(String sheet, String range) throws IOException { read(sheet, new ExcelAddress(range)); }
-    //
-    // protected void read(String sheet, ExcelAddress range) throws IOException {
-    //     Excel excel = getValue();
-    //     excel.getWorkbook().setMissingCellPolicy(CREATE_NULL_AS_BLANK);
-    //
-    //     Worksheet worksheet = excel.worksheet(sheet, true);
-    //     currentRange = range;
-    //     currentSheetName = sheet;
-    //     setCapturedValues(worksheet.readRange(currentRange));
-    //
-    //     excel.close();
-    // }
-    //
-    // protected void clearCells(String range) throws IOException {
-    //     Excel excel = getValue();
-    //     excel.getWorkbook().setMissingCellPolicy(CREATE_NULL_AS_BLANK);
-    //     excel.worksheet(currentSheetName, true).clearCells(new ExcelAddress(range));
-    //     excel.save();
-    //     excel.close();
-    // }
-    //
-    // protected void writeAcross(String startAddr, List<List<String>> rows) throws IOException {
-    //     Excel excel = getValue();
-    //     excel.getWorkbook().setMissingCellPolicy(CREATE_NULL_AS_BLANK);
-    //     excel.worksheet(currentSheetName).writeAcross(new ExcelAddress(StringUtils.trim(startAddr)), rows);
-    //     excel.save();
-    //     excel.close();
-    // }
-    //
-    // protected void writeDown(String startAddr, List<List<String>> columns) throws IOException {
-    //     Excel excel = getValue();
-    //     excel.getWorkbook().setMissingCellPolicy(CREATE_NULL_AS_BLANK);
-    //     excel.worksheet(currentSheetName).writeDown(new ExcelAddress(StringUtils.trim(startAddr)), columns);
-    //     excel.save();
-    //     excel.close();
-    // }
 }

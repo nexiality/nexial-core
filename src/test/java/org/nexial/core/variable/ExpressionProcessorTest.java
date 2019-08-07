@@ -388,7 +388,7 @@ public class ExpressionProcessorTest {
 
         fixture = "[NUMBER(0) => add(7,6) minus(2) multiply(11,51.2251) divide(17.04) whole]";
         result = subject.process(fixture);
-        Assert.assertEquals("364", result);
+        Assert.assertEquals("363", result);
 
         fixture = "[NUMBER(173921.22) => roundTo(1)]";
         result = subject.process(fixture);

@@ -24,6 +24,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 import javax.validation.constraints.NotNull;
 
 import org.apache.commons.collections4.CollectionUtils;
@@ -193,6 +194,21 @@ public class ExcelTransformer<T extends ExcelDataType> extends Transformer {
         final int[] maxColumn = new int[]{0};
         data.getCapturedValues().forEach(row -> maxColumn[0] = Math.max(maxColumn[0], CollectionUtils.size(row)));
         return new NumberDataType(maxColumn[0] + "");
+    }
+
+    public T replace(T data, String search, String replace) {
+        requireAfterRead(data, "writeAcross()");
+
+        if (StringUtils.isEmpty(search)) { throw new IllegalArgumentException("search is empty/null"); }
+        String replaceWith = replace == null ? "" : replace;
+
+        data.setCapturedValues(data.getCapturedValues()
+                                   .parallelStream()
+                                   .map(row -> row.parallelStream()
+                                                  .map(cell -> cell = StringUtils.replace(cell, search, replaceWith))
+                                                  .collect(Collectors.toList()))
+                                   .collect(Collectors.toList()));
+        return data;
     }
 
     public T writeAcross(T data, String... startAndContent) throws TypeConversionException {

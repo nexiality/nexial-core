@@ -481,7 +481,7 @@ class NumberCommandTest {
 
         context.setData(variableName, 353.565)
         Assert.assertTrue(fixture.whole(variableName).isSuccess)
-        Assert.assertEquals(354, NumberUtils.toInt(context.getStringData(variableName)))
+        Assert.assertEquals(353, NumberUtils.toInt(context.getStringData(variableName)))
 
         context.setData(variableName, 0.0960)
         Assert.assertTrue(fixture.whole(variableName).isSuccess)
@@ -489,12 +489,25 @@ class NumberCommandTest {
 
         context.setData(variableName, 0.960)
         Assert.assertTrue(fixture.whole(variableName).isSuccess)
-        Assert.assertEquals(1, NumberUtils.toInt(context.getStringData(variableName)))
+        Assert.assertEquals(0, NumberUtils.toInt(context.getStringData(variableName)))
+
+        // extreme cases
+        context.setData(variableName, 249.9999999)
+        Assert.assertTrue(fixture.whole(variableName).isSuccess)
+        Assert.assertEquals(249, NumberUtils.toInt(context.getStringData(variableName)))
+
+        context.setData(variableName, 249.5000000000001)
+        Assert.assertTrue(fixture.whole(variableName).isSuccess)
+        Assert.assertEquals(249, NumberUtils.toInt(context.getStringData(variableName)))
+
+        context.setData(variableName, 249.00000001)
+        Assert.assertTrue(fixture.whole(variableName).isSuccess)
+        Assert.assertEquals(249, NumberUtils.toInt(context.getStringData(variableName)))
 
         // negative
         context.setData(variableName, -503.624)
         Assert.assertTrue(fixture.whole(variableName).isSuccess)
-        Assert.assertEquals(-504, NumberUtils.toInt(context.getStringData(variableName)))
+        Assert.assertEquals(-503, NumberUtils.toInt(context.getStringData(variableName)))
 
         // NaN
         try {

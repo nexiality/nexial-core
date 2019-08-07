@@ -52,7 +52,7 @@ public class NumberTransformer<T extends NumberDataType> extends Transformer {
         if (number == null) { return data; }
 
         if (isDecimal(number)) {
-            long round = Math.round(number.doubleValue());
+            long round = (long) number.doubleValue();
             data.setTextValue(round);
             data.setValue(round);
         }
