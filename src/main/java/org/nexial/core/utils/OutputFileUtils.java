@@ -40,6 +40,8 @@ import org.nexial.core.plugins.ws.WebServiceClient;
 
 import static java.io.File.separator;
 import static org.nexial.core.NexialConst.*;
+import static org.nexial.core.NexialConst.Data.OPT_EXPRESSION_RESOLVE_URL;
+import static org.nexial.core.SystemVariables.getDefaultBool;
 
 /**
  * dedicated as an utility to decorate Nexial excel files with additional runtime information.
@@ -183,16 +185,25 @@ public final class OutputFileUtils {
             return "";
         }
 
-        // we can't have NL or CR or TAB character in filename
-        boolean mightBeFilePath = FileUtil.isSuitableAsPath(contentOrFile);
+        if (StringUtils.containsNone(contentOrFile, '\n', '\r', '\t') &&
+            RegexUtils.isExact(contentOrFile.toLowerCase(), "^https?\\:\\/\\/(.+)$")) {
 
-        if (mightBeFilePath && RegexUtils.isExact(contentOrFile.toLowerCase(), "^https?\\:\\/\\/(.+)$")) {
-            // must be HTTP-backed file
-            String content = resolveWebContent(contentOrFile);
-            content = compact ? StringUtils.trim(content) : content;
+            String content;
+            boolean resolveUrl = context.getBooleanData(OPT_EXPRESSION_RESOLVE_URL,
+                                                        getDefaultBool(OPT_EXPRESSION_RESOLVE_URL));
+            if (resolveUrl) {
+                // must be HTTP-backed file
+                content = resolveWebContent(contentOrFile);
+                content = compact ? StringUtils.trim(content) : content;
+            } else {
+                content = contentOrFile;
+            }
+
             return replaceTokens ? context.replaceTokens(content) : content;
         }
 
+        // we can't have NL or CR or TAB character in filename
+        boolean mightBeFilePath = FileUtil.isSuitableAsPath(contentOrFile);
         if (!mightBeFilePath || !FileUtil.isFileReadable(contentOrFile)) {
             // must be just content (not file)
             String content = compact ? StringUtils.trim(contentOrFile) : contentOrFile;

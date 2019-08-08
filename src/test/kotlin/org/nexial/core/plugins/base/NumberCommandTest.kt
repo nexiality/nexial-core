@@ -332,6 +332,11 @@ class NumberCommandTest {
         Assert.assertTrue(fixture.floor(variableName).isSuccess)
         Assert.assertEquals("0", context.getStringData(variableName))
 
+        // more test
+        context.setData(variableName, "34086577.45")
+        Assert.assertTrue(fixture.floor(variableName).isSuccess)
+        Assert.assertEquals("34086577", context.getStringData(variableName))
+
         // negative
         context.setData(variableName, -503.124)
         Assert.assertTrue(fixture.floor(variableName).isSuccess)
