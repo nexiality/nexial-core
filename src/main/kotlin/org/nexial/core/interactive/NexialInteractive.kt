@@ -133,8 +133,7 @@ class NexialInteractive {
                     if (StringUtils.isBlank(argument)) {
                         ConsoleUtils.error("No activity assigned")
                     } else {
-                        session.assignActivities(TextUtils.replaceItems(TextUtils.toList(
-                                StringUtils.replace(argument, "\\,", tmpComma), LIST_SEP, true), tmpComma, ","))
+                        session.assignActivities(TextUtils.replaceItems(toSteps(argument), tmpComma, ","))
                     }
                 }
 
