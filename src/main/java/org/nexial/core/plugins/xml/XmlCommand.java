@@ -485,7 +485,7 @@ public class XmlCommand extends BaseCommand {
                 FileUtils.writeStringToFile(outputFile, output, DEF_FILE_ENCODING);
                 if (context.isOutputToCloud()) {
                     try {
-                        outFile = context.getOtc().importMedia(outputFile);
+                        outFile = context.getOtc().importFile(outputFile, true);
                     } catch (IOException e) {
                         log(toCloudIntegrationNotReadyMessage(outFile) + ": " + e.getMessage());
                     }

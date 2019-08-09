@@ -838,7 +838,7 @@ public class BaseCommand implements NexialCommand {
 
         if (context.isOutputToCloud()) {
             try {
-                link = context.getOtc().importMedia(new File(link));
+                link = context.getOtc().importFile(new File(link), true);
             } catch (IOException e) {
                 log(toCloudIntegrationNotReadyMessage(link) + ": " + e.getMessage());
             }

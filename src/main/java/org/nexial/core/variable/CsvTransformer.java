@@ -89,7 +89,7 @@ public class CsvTransformer<T extends CsvDataType> extends Transformer {
                 configMap.put(key, value);
             });
 
-            if (configMap.containsKey("delim")) { data.setDelim(configMap.get("delim")); }
+            data.setDelim(configMap.containsKey("delim") ? configMap.get("delim") : context.getTextDelim());
             if (configMap.containsKey("header")) { data.setHeader(BooleanUtils.toBoolean(configMap.get("header"))); }
             if (configMap.containsKey("quote")) { data.setQuote(configMap.get("quote")); }
             if (configMap.containsKey("recordDelim")) {
@@ -1043,7 +1043,9 @@ public class CsvTransformer<T extends CsvDataType> extends Transformer {
             Record fromRecord = fromRecords.get(i);
             String fromRef = fromRefColumnPos == -1 ? null : fromRecord.getString(refColumn);
             String[] fromValues = fromRecord.getValues();
-            if (ArrayUtils.isEmpty(fromValues)) { continue; }
+            if (ArrayUtils.isEmpty(fromValues) || StringUtils.isEmpty(TextUtils.toString(fromValues, "", "", ""))) {
+                continue;
+            }
 
             if (toRecords.size() <= j) {
                 // no more records in `to` but still some more in `from`
@@ -1054,7 +1056,9 @@ public class CsvTransformer<T extends CsvDataType> extends Transformer {
             }
 
             Record toRecord = toRecords.get(j);
-            if (toRecord == null || ArrayUtils.isEmpty(toRecord.getValues())) {
+            if (toRecord == null ||
+                ArrayUtils.isEmpty(toRecord.getValues()) ||
+                StringUtils.isEmpty(TextUtils.toString(toRecord.getValues(), "", "", ""))) {
                 // skip this line since there's no data here.
                 j++;
                 i--;
@@ -1063,11 +1067,12 @@ public class CsvTransformer<T extends CsvDataType> extends Transformer {
 
             String toRef = toRefColumnPos == -1 ? null : toRecord.getString(refColumn);
             if (StringUtils.equals(toRef, fromRef)) {
-                // we can proceed to next record of `to`
+                // found matching reference data -- we match both rows from `to` and `from`
                 recordBuffer.append(TextUtils.toString(toRecord.getValues(), toDelim, "", ""))
                             .append(toDelim)
                             .append(prepareMergingValues(fromValues, fromRefColumnPos, toDelim));
                 toBuffer.append(recordBuffer.toString()).append(toRecordDelim);
+                // we can proceed to next record of `to`
                 j++;
                 continue;
             }
