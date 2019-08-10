@@ -932,6 +932,7 @@ public final class NexialConst {
         public static final String FORCE_JS_CLICK = registerSystemVariable(NS_BROWSER + ".forceJSClick", false);
 
         public static final String IE_REQUIRE_WINDOW_FOCUS = registerSystemVariable(NS_BROWSER + ".ie.requireWindowFocus", false);
+        public static final String OPT_FORCE_IE_32 = registerSystemVariable(NAMESPACE + "forceIE32", false);
 
         public static final String SAFARI_USE_TECH_PREVIEW = registerSystemVariable(NS_BROWSER + ".safari.useTechPreview", false);
         public static final String SAFARI_RESIZED = registerSystemVariable(NS_BROWSER + ".safari.resizedAfterOpen", false);
@@ -958,18 +959,15 @@ public final class NexialConst {
         public static final String WEB_ALWAYS_WAIT = registerSystemVariable(NS_WEB + "alwaysWait", false);
         public static final String WEB_PREEMPTIVE_ALERT_CHECK = registerSystemVariable(NS_WEB + "preemptiveAlertCheck", false);
         public static final String WEB_CLEAR_WITH_BACKSPACE = registerSystemVariable(NS_WEB + "clearWithBackspace", false);
-
-        public static final String OPT_FORCE_IE_32 = registerSystemVariable(NAMESPACE + "forceIE32", false);
-
+        public static final String WEB_CSV_TRIM = registerSystemVariable(NS_WEB + "csv.trim", true);
 
         public static final String SELECT_ALL = "{ALL}";
+
         // web element highlight
         public static final String OPT_DEBUG_HIGHLIGHT_OLD = registerSystemVariable(NAMESPACE + "highlight", false);
         public static final String OPT_DEBUG_HIGHLIGHT = registerSystemVariable(NS_WEB + "highlight", false);
-
         public static final String HIGHLIGHT_WAIT_MS = registerSystemVariable(NS_WEB + "highlight.waitMs", 250);
         public static final String HIGHLIGHT_WAIT_MS_OLD = registerSystemVariable(NAMESPACE + "highlightWaitMs", 250);
-
         public static final String HIGHLIGHT_STYLE = registerSystemVariable(NS_WEB + "highlight.style", "background:#faf557;");
 
         // web drag-and-move config

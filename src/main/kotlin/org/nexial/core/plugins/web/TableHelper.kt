@@ -20,8 +20,11 @@ import com.univocity.parsers.csv.CsvFormat
 import com.univocity.parsers.csv.CsvWriter
 import com.univocity.parsers.csv.CsvWriterSettings
 import org.apache.commons.collections4.CollectionUtils
+import org.apache.commons.collections4.map.ListOrderedMap
 import org.apache.commons.lang3.StringUtils
 import org.nexial.core.NexialConst.DEF_FILE_ENCODING
+import org.nexial.core.NexialConst.Data.WEB_CSV_TRIM
+import org.nexial.core.SystemVariables.getDefaultBool
 import org.nexial.core.model.StepResult
 import org.nexial.core.utils.CheckUtils.requiresNotBlank
 import org.nexial.core.utils.CheckUtils.requiresPositiveNumber
@@ -35,6 +38,18 @@ class TableHelper(private val webCommand: WebCommand) {
     private val tableHeaderLocators = listOf(".//thead//*[ name()='th' or name()='td' ]",
                                              ".//thead//*[ name()='TH' or name()='TD' ]",
                                              ".//tr/th")
+    private val csvSafeReplacement = ListOrderedMap.listOrderedMap(mapOf(" \n " to " ",
+                                                                         " \r\n " to " ",
+                                                                         " \r " to " ",
+                                                                         " \t " to " ",
+                                                                         " \n" to " ",
+                                                                         " \r\n" to " ",
+                                                                         " \r" to " ",
+                                                                         " \t" to " ",
+                                                                         "\n " to " ",
+                                                                         "\r\n " to " ",
+                                                                         "\r " to " ",
+                                                                         "\t " to " "))
 
     fun saveDivsAsCsv(headerCellsLoc: String,
                       rowLocator: String,
@@ -221,7 +236,7 @@ class TableHelper(private val webCommand: WebCommand) {
         val cellContent = ArrayList<String>()
         if (CollectionUtils.isEmpty(cells)) return cellContent
 
-        cells.forEach { cell -> cellContent.add(cell.text) }
+        cells.forEach { cell -> cellContent.add(csvSafe(cell.text)) }
         return cellContent
     }
 
@@ -230,10 +245,24 @@ class TableHelper(private val webCommand: WebCommand) {
             ConsoleUtils.log("$msgPrefix does not contain usable headers")
         } else {
             val headerNames = ArrayList<String>()
-            headers.forEach { header -> headerNames.add(header.text) }
+            headers.forEach { header -> headerNames.add(csvSafe(header.text)) }
             ConsoleUtils.log("$msgPrefix - collected headers: $headerNames")
             writer.writeHeaders(headerNames)
         }
+    }
+
+    @NotNull
+    internal fun csvSafe(text: String): String {
+        var safe = text
+        csvSafeReplacement.forEach { (search, replace) -> safe = StringUtils.replace(safe, search, replace) }
+        safe = StringUtils.replace(safe, "\r", "")
+        safe = StringUtils.replace(safe, "\n", " ")
+        safe = StringUtils.replace(safe, "\t", " ")
+
+        val trim = webCommand.context.getBooleanData(WEB_CSV_TRIM, getDefaultBool(WEB_CSV_TRIM))
+        if (trim) safe = StringUtils.trim(safe)
+
+        return safe
     }
 
     @NotNull
