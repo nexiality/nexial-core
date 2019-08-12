@@ -153,6 +153,7 @@ public final class NexialConst {
     // screenshots
     public static final String OPT_SCREENSHOT_ON_ERROR = registerSystemVariable(NAMESPACE + "screenshotOnError", false);
     public static final String OPT_LAST_SCREENSHOT_NAME = registerSystemVariable(NAMESPACE + "lastScreenshot");
+    public static final String OPT_NATIVE_SCREENSHOT = registerSystemVariable(NAMESPACE + "screenshotAsDesktop", false);
 
     // outcome
     public static final String OPT_LAST_OUTCOME = registerSystemVariable(NAMESPACE + "lastOutcome");

@@ -271,7 +271,7 @@ public class WebCommand extends BaseCommand implements CanTakeScreenshot, CanLog
         } else {
             try {
                 select.selectByVisibleText(text);
-            }catch(NoSuchElementException e){
+            } catch (NoSuchElementException e) {
                 return StepResult.fail("Specified text '" + text + "' not found in select element '" + locator + "'");
             }
             return StepResult.success("selected '" + text + "' from '" + locator + "'");
@@ -1611,7 +1611,9 @@ public class WebCommand extends BaseCommand implements CanTakeScreenshot, CanLog
         filename = context.getProject().getScreenCaptureDir() + separator + filename;
 
         boolean useNativeCapture = false;
-        if (browser == null || driver == null) {
+        if (browser == null ||
+            driver == null ||
+            context.getBooleanData(OPT_NATIVE_SCREENSHOT, getDefaultBool(OPT_NATIVE_SCREENSHOT))) {
             useNativeCapture = true;
         } else {
             // proceed... with caution (or not!)
