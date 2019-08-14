@@ -1,0 +1,561 @@
+<!DOCTYPE html>
+<html class='v2' dir='ltr' lang="en">
+<head>
+  <meta content='width=1100' name='viewport'/>
+  <meta content='text/html; charset=UTF-8' http-equiv='Content-Type'/>
+  <title>Only Testing: Testing</title>
+  <style type='text/css'>
+    body {
+      font:       normal normal 12px 'Trebuchet MS', Trebuchet, Verdana, sans-serif;
+      color:      #555;
+      background: #fff none repeat scroll top left;
+      padding:    0;
+      min-width:  980px;
+      max-width:  100%;
+      width:      auto;
+    }
+
+    h2 {
+      font-size: 22px;
+    }
+
+    a:link {
+      text-decoration: none;
+      color:           #28b;
+    }
+
+    a:visited {
+      text-decoration: none;
+      color:           #888;
+    }
+
+    a:hover {
+      text-decoration: underline;
+      color:           #3af;
+    }
+
+    .Header h1 {
+      font:        normal normal 40px 'Trebuchet MS', Trebuchet, Verdana, sans-serif;
+      color:       #000;
+      text-shadow: 0 0 0 rgba(0, 0, 0, .2);
+    }
+
+    .Header h1 a {
+      color: #000;
+    }
+
+    .tabs-inner .section:first-child ul {
+      margin-top:   -1px;
+      border-top:   1px solid #ddd;
+      border-left:  1px solid #ddd;
+      border-right: 1px solid #ddd;
+    }
+
+    .tabs-inner .widget ul {
+      background:        transparent none repeat-x scroll 0 -800px;
+      _background-image: none;
+      border-bottom:     1px solid #ddd;
+      margin-top:        0;
+      margin-left:       -30px;
+      margin-right:      -30px;
+    }
+
+    .tabs-inner .widget li a {
+      display:      inline-block;
+      padding:      .6em 1em;
+      font:         normal normal 12px 'Trebuchet MS', Trebuchet, Verdana, sans-serif;
+      color:        #000;
+      border-left:  1px solid #fff;
+      border-right: 1px solid #ddd;
+    }
+
+    .tabs-inner .widget li:first-child a {
+      border-left: none;
+    }
+
+    .tabs-inner .widget li.selected a, .tabs-inner .widget li a:hover {
+      color:            #000;
+      background-color: #eee;
+      text-decoration:  none;
+    }
+
+    .date-header span {
+      background-color: #bbb;
+      color:            #fff;
+      padding:          0.4em;
+      letter-spacing:   3px;
+      margin:           inherit;
+    }
+
+    .post-body img, .Profile img, .Image img, .BlogList .item-thumbnail img {
+      padding:            2px;
+      background:         #fff;
+      border:             1px solid #eee;
+      -moz-box-shadow:    1px 1px 5px rgba(0, 0, 0, .1);
+      -webkit-box-shadow: 1px 1px 5px rgba(0, 0, 0, .1);
+      box-shadow:         1px 1px 5px rgba(0, 0, 0, .1);
+    }
+
+    .post-body .tr-caption-container img {
+      padding:            0;
+      background:         transparent;
+      border:             none;
+      -moz-box-shadow:    0 0 0 rgba(0, 0, 0, .1);
+      -webkit-box-shadow: 0 0 0 rgba(0, 0, 0, .1);
+      box-shadow:         0 0 0 rgba(0, 0, 0, .1);
+    }
+
+    #table1 {
+      width:        400px;
+      float:        left;
+      margin-right: 20px;
+    }
+
+    #table1 thead tr th {
+      background-color: #888;
+      color: #eee;
+    }
+
+    #table2 {
+      width: 500px;
+      float: left;
+    }
+
+    #table2 thead tr th {
+      background-color: #884;
+      color: #eee;
+    }
+
+    .avatar {
+      width:          32px;
+      vertical-align: middle;
+      text-align:     center;
+    }
+  </style>
+  <script>
+    function move(tbFrom, tbTo) {
+      var arrFrom = new Array();
+      var arrTo   = new Array();
+      var arrLU   = new Array();
+      var i;
+      for (i = 0; i < tbTo.options.length; i++) {
+        arrLU[tbTo.options[i].text] = tbTo.options[i].value;
+        arrTo[i]                    = tbTo.options[i].text;
+      }
+      var fLength = 0;
+      var tLength = arrTo.length;
+      for (i = 0; i < tbFrom.options.length; i++) {
+        arrLU[tbFrom.options[i].text] = tbFrom.options[i].value;
+        if (tbFrom.options[i].selected && tbFrom.options[i].value != "") {
+          arrTo[tLength] = tbFrom.options[i].text;
+          tLength++;
+        } else {
+          arrFrom[fLength] = tbFrom.options[i].text;
+          fLength++;
+        }
+      }
+
+      tbFrom.length = 0;
+      tbTo.length   = 0;
+      var ii;
+
+      for (ii = 0; ii < arrFrom.length; ii++) {
+        var no     = new Option();
+        no.value   = arrLU[arrFrom[ii]];
+        no.text    = arrFrom[ii];
+        tbFrom[ii] = no;
+      }
+
+      for (ii = 0; ii < arrTo.length; ii++) {
+        var no   = new Option();
+        no.value = arrLU[arrTo[ii]];
+        no.text  = arrTo[ii];
+        tbTo[ii] = no;
+      }
+    }
+
+    setTimeout(function () { document.getElementById('submitButton').disabled = null; }, 10000);
+  </script>
+</head>
+<body>
+
+<hr/>
+
+<h1>Form Test</h1>
+<form action="about:blank">
+  First name: <input name="fname" type="text"/><br/>
+  Last name: <input disabled="" name="lname" type="text"/><br/>
+  <input id="chk1" name="vehicle" type="checkbox" value="Bike"/> I have a bike<br/>
+  <input id="chk2" name="vehicle" type="checkbox" value="Car"/> I have a car<br/>
+  <input id="chk3" name="vehicle" type="checkbox" value="Boat"/> I have a boat<br/>
+  <input name="gender" type="radio" value="male"/> Male<br/>
+  <input name="gender" type="radio" value="female"/> Female<br/>
+  Select a file: <input name="img" type="file"/>
+</form>
+<br/>
+
+<hr/>
+
+<h2>Select Test</h2>
+Select Box:
+<select>
+  <option value="USA">Volvo</option>
+  <option value="UK">Saab</option>
+  <option value="Singapore">Opel</option>
+  <option value="Russia">Audi</option>
+  <option value="Oct 05 2013">Oct 05 2013</option>
+</select>
+<br/>
+
+<hr/>
+
+<h2>Select Test #2</h2>
+<form name="combo_box">
+  <table>
+    <tr>
+      <td>
+        <select multiple="" name="FromLB" size="10" style="width: 150px;">
+          <option value="USA">USA</option>
+          <option value="Russia">Russia</option>
+          <option value="Japan">Japan</option>
+          <option value="Mexico">Mexico</option>
+          <option value="India">India</option>
+          <option value="Germany">Germany</option>
+          <option value="Italy">Italy</option>
+          <option value="Spain">Spain</option>
+          <option value="Malaysia">Malaysia</option>
+          <option value="Greece">Greece</option>
+        </select>
+      </td>
+      <td align="center" valign="middle">
+        <input onclick="move(this.form.FromLB,this.form.ToLB)" type="button" value="-&gt;"/><br/>
+        <input onclick="move(this.form.ToLB,this.form.FromLB)" type="button" value="&lt;-"/>
+      </td>
+      <td>
+        <select multiple="" name="ToLB" size="10" style="width: 150px;">
+        </select>
+      </td>
+    </tr>
+  </table>
+</form>
+<br/>
+
+<hr/>
+
+<h2>Table Test</h2>
+<table id="table1" cellspacing="0" border="1" cellpadding="5">
+  <thead>
+  <tr>
+    <th>Name</th>
+    <th>Position</th>
+    <th>Office</th>
+    <th>Age</th>
+    <th>Start date</th>
+  </tr>
+  </thead>
+  <tbody>
+  <tr role="row" class="odd">
+    <td tabindex="0" class="sorting_1">Airi Satou</td>
+    <td>Accountant</td>
+    <td>Tokyo</td>
+    <td class=" dt-body-right">33</td>
+    <td>2008/11/28</td>
+    <td class=" dt-body-right" style="display: none;">$162,700</td>
+  </tr>
+  <tr role="row" class="even">
+    <td class="sorting_1" tabindex="0">Angelica Ramos</td>
+    <td>Chief Executive Officer (CEO)</td>
+    <td>London</td>
+    <td class=" dt-body-right">47</td>
+    <td>2009/10/09</td>
+    <td class=" dt-body-right" style="display: none;">$1,200,000</td>
+  </tr>
+  <tr role="row" class="odd">
+    <td tabindex="0" class="sorting_1">Ashton Cox</td>
+    <td>Junior Technical Author</td>
+    <td>San Francisco</td>
+    <td class=" dt-body-right">66</td>
+    <td>2009/01/12</td>
+    <td class=" dt-body-right" style="display: none;">$86,000</td>
+  </tr>
+  <tr role="row" class="even">
+    <td class="sorting_1" tabindex="0">Bradley Greer</td>
+    <td>Software Engineer</td>
+    <td>London</td>
+    <td class=" dt-body-right">41</td>
+    <td>2012/10/13</td>
+    <td class=" dt-body-right" style="display: none;">$132,000</td>
+  </tr>
+  <tr role="row" class="odd">
+    <td class="sorting_1" tabindex="0">Brenden Wagner</td>
+    <td>Software Engineer</td>
+    <td>San Francisco</td>
+    <td class=" dt-body-right">28</td>
+    <td>2011/06/07</td>
+    <td class=" dt-body-right" style="display: none;">$206,850</td>
+  </tr>
+  <tr role="row" class="even">
+    <td tabindex="0" class="sorting_1">Brielle Williamson</td>
+    <td>Integration Specialist</td>
+    <td>New York</td>
+    <td class=" dt-body-right">61</td>
+    <td>2012/12/02</td>
+    <td class=" dt-body-right" style="display: none;">$372,000</td>
+  </tr>
+  <tr role="row" class="odd">
+    <td class="sorting_1" tabindex="0">Bruno Nash</td>
+    <td>Software Engineer</td>
+    <td>London</td>
+    <td class=" dt-body-right">38</td>
+    <td>2011/05/03</td>
+    <td class=" dt-body-right" style="display: none;">$163,500</td>
+  </tr>
+  <tr role="row" class="even">
+    <td class="sorting_1" tabindex="0">Caesar Vance</td>
+    <td>Pre-Sales Support</td>
+    <td>New York</td>
+    <td class=" dt-body-right">21</td>
+    <td>2011/12/12</td>
+    <td class=" dt-body-right" style="display: none;">$106,450</td>
+  </tr>
+  <tr role="row" class="odd">
+    <td class="sorting_1" tabindex="0">Cara Stevens</td>
+    <td>Sales Assistant</td>
+    <td>New York</td>
+    <td class=" dt-body-right">46</td>
+    <td>2011/12/06</td>
+    <td class=" dt-body-right" style="display: none;">$145,600</td>
+  </tr>
+  <tr role="row" class="even">
+    <td tabindex="0" class="sorting_1">Cedric Kelly</td>
+    <td>Senior Javascript Developer</td>
+    <td>Edinburgh</td>
+    <td class=" dt-body-right">22</td>
+    <td>2012/03/29</td>
+    <td class=" dt-body-right" style="display: none;">$433,060</td>
+  </tr>
+  </tbody>
+</table>
+
+<table id="table2" cellspacing="0" border="1" cellpadding="5">
+  <thead>
+  <tr>
+    <th><input type="checkbox" name="select_employee"></th>
+    <th>Name</th>
+    <th>Position</th>
+    <th>Office</th>
+    <th>Age</th>
+    <th>Avatar</th>
+    <th>Employment<br/>Start Date</th>
+    <th>Salary</th>
+    <th>Highest   &nbsp;<br/>&nbsp;&nbsp;Paid</th>
+    <th>Active?</th>
+    <th>Notes</th>
+  </tr>
+  </thead>
+  <tbody>
+  <tr role="row" class="odd">
+    <th><input type="checkbox" name="selected_employee" value="row1"/></th>
+    <td class="sorting_1">Airi<br/>Satou</td>
+    <td><span>Accountant</span></td>
+    <td>Tokyo</td>
+    <td>33</td>
+    <td><div><span><img src="smiley1.png" class="avatar"/></span></div></td>
+    <td>2008/11/28</td>
+    <td>$162,700</td>
+    <td><input type="radio" name="highest" value="employee1"></td>
+    <td>
+      <select name="active_status">
+        <option value="yes" selected="selected">Yes</option>
+        <option value="no">No</option>
+      </select>
+    </td>
+    <td><input type="text" name="notes1" placeholder="Enter notes..." value="notes #1"/></td>
+  </tr>
+  <tr role="row" class="even">
+    <th><input type="checkbox" name="selected_employee" value="row2" checked="checked"></th>
+    <td class="sorting_1">Angelica<br/>Ramos</td>
+    <td>Chief Executive Officer (CEO)</td>
+    <td>London</td>
+    <td>47</td>
+    <td><img src="smiley2.png" class="avatar"/></td>
+    <td>2009/10/09</td>
+    <td>$1,200,000</td>
+    <td><input type="radio" name="highest" value="employee2" checked="checked"></td>
+    <td>
+      <select name="active_status">
+        <option value="yes" selected="selected">Yes</option>
+      </select>
+    </td>
+    <td><input type="text" name="notes2" placeholder="Enter notes..." value="notes #2"/></td>
+  </tr>
+  <tr role="row" class="odd">
+    <th><input type="checkbox" name="selected_employee" value="row3" checked="checked"></th>
+    <td class="sorting_1">Ashton<br/>Cox</td>
+    <td>Junior Technical Author</td>
+    <td>San Francisco</td>
+    <td>66</td>
+    <td><img src="smiley3.png" class="avatar"/></td>
+    <td>2009/01/12</td>
+    <td>$86,000</td>
+    <td><input type="radio" name="highest" value="employee3"></td>
+    <td>
+      <select name="active_status" multiple="multiple">
+        <option value="yes">Yes</option>
+        <option value="no">No</option>
+        <option value="maybe" selected="selected">Maybe</option>
+        <option value="maybe_not" selected="selected">Maybe Not</option>
+      </select>
+    </td>
+    <td><input type="text" name="notes3" placeholder="Enter notes..." value="notes #3"/></td>
+  </tr>
+  <tr role="row" class="even">
+    <th><input type="checkbox" name="selected_employee" value="row4" checked="checked"></th>
+    <td class="sorting_1">Bradley<br/>Greer</td>
+    <td>Software Engineer</td>
+    <td>London</td>
+    <td>41</td>
+    <td><img src="smiley4.png" class="avatar"/></td>
+    <td>2012/10/13</td>
+    <td>$132,000</td>
+    <td><input type="radio" name="highest" value="employee4"></td>
+    <td>
+      <select name="active_status">
+        <option value="yes" selected="selected">Yes</option>
+        <option value="no">No</option>
+      </select>
+    </td>
+    <td><input type="text" name="notes4" placeholder="Enter notes..." value="notes #4"/></td>
+  </tr>
+  <tr role="row" class="odd">
+    <th><input type="checkbox" name="selected_employee" value="row5" checked="checked"></th>
+    <td class="sorting_1">Brenden<br/>Wagner</td>
+    <td>Software Engineer</td>
+    <td>San Francisco</td>
+    <td>28</td>
+    <td><img src="smiley5.png" class="avatar"/></td>
+    <td>2011/06/07</td>
+    <td>$206,850</td>
+    <td><input type="radio" name="highest" value="employee5"></td>
+    <td>
+      <select name="active_status">
+        <option value="yes" selected="selected">Yes</option>
+        <option value="no">No</option>
+      </select>
+    </td>
+    <td><input type="text" name="notes5" placeholder="Enter notes..." value="notes #5"/></td>
+  </tr>
+  <tr role="row" class="even">
+    <th><input type="checkbox" name="selected_employee" value="row6"></th>
+    <td class="sorting_1">Brielle<br/>Williamson</td>
+    <td>Integration Specialist</td>
+    <td>New York</td>
+    <td>61</td>
+    <td><img src="smiley6.png" class="avatar"/></td>
+    <td>2012/12/02</td>
+    <td>$372,000</td>
+    <td><input type="radio" name="highest" value="employee6"></td>
+    <td>
+      <select name="active_status">
+        <option value="yes" selected="selected">Yes</option>
+        <option value="no">No</option>
+      </select>
+    </td>
+    <td><input type="text" name="notes6" placeholder="Enter notes..." value="notes #6"/></td>
+  </tr>
+  <tr role="row" class="odd">
+    <th><input type="checkbox" name="selected_employee" value="row7"></th>
+    <td class="sorting_1">Bruno<br/>Nash</td>
+    <td>Software Engineer</td>
+    <td>London</td>
+    <td>38</td>
+    <td><img src="smiley7.png" class="avatar"/></td>
+    <td>2011/05/03</td>
+    <td>$163,500</td>
+    <td><input type="radio" name="highest" value="employee7"></td>
+    <td>
+      <select name="active_status">
+        <option value="yes">Yes</option>
+        <option value="no" selected="selected">No</option>
+      </select>
+    </td>
+    <td><input type="text" name="notes7" placeholder="Enter notes..." value=""/></td>
+  </tr>
+  <tr role="row" class="even">
+    <th><input type="checkbox" name="selected_employee" value="row8"></th>
+    <td class="sorting_1">Caesar<br/>Vance</td>
+    <td>Pre-Sales Support</td>
+    <td>New York</td>
+    <td>21</td>
+    <td><img src="smiley8.png" class="avatar"/></td>
+    <td>2011/12/12</td>
+    <td>$106,450</td>
+    <td><input type="radio" name="highest" value="employee8"></td>
+    <td>
+      <select name="active_status">
+        <option value="yes" selected="selected">Yes</option>
+        <option value="no">No</option>
+      </select>
+    </td>
+    <td><input type="text" name="notes8" placeholder="Enter notes..." value=""/></td>
+  </tr>
+  <tr role="row" class="odd">
+    <th><input type="checkbox" name="selected_employee" value="row9"></th>
+    <td class="sorting_1">Cara<br/>Stevens</td>
+    <td>Sales Assistant</td>
+    <td>New York</td>
+    <td>46</td>
+    <td><img src="smiley9.png" class="avatar"/></td>
+    <td>2011/12/06</td>
+    <td>$145,600</td>
+    <td><input type="radio" name="highest" value="employee9"></td>
+    <td>
+      <select name="active_status">
+        <option value="yes">Yes</option>
+        <option value="no" selected="selected">No</option>
+      </select>
+    </td>
+    <td><input type="text" name="notes9" placeholder="Enter notes..." value="notes #9"/></td>
+  </tr>
+  <tr role="row" class="even">
+    <th><input type="checkbox" name="selected_employee" value="row10" checked="checked"></th>
+    <td class="sorting_1">Cedric<br/>Kelly</td>
+    <td>Senior Javascript Developer</td>
+    <td>Edinburgh</td>
+    <td>22</td>
+    <td><img src="smiley10.png" class="avatar"/></td>
+    <td>2012/03/29</td>
+    <td>$433,060</td>
+    <td><input type="radio" name="highest" value="employee10"></td>
+    <td>
+      <select name="active_status">
+        <option value="yes" selected="selected">Yes</option>
+        <option value="no">No</option>
+      </select>
+    </td>
+    <td><input type="text" name="notes10" placeholder="Enter notes..." value=""/></td>
+  </tr>
+  </tbody>
+</table>
+
+<br style="clear: both;"/>
+&nbsp;<br/>
+&nbsp;<br/>
+&nbsp;<br/>
+&nbsp;<br/>
+&nbsp;<br/>
+&nbsp;<br/>
+&nbsp;<br/>
+&nbsp;<br/>
+&nbsp;<br/>
+&nbsp;<br/>
+&nbsp;<br/>
+
+<footer>
+  The data, all names, characters, and incidents portrayed in this production are fictitious. No identification with
+  actual persons (living or deceased), places, buildings, and products is intended or should be inferred. No person or
+  entity associated with this page received payment or anything of value, or entered into any agreement, in connection
+  with the depiction of tobacco products. No animals were harmed in the making of this test page. ;-)
+</footer>
+</body>
+</html>

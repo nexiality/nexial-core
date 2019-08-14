@@ -1,0 +1,88 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<html>
+<head>
+</head>
+
+<body>
+<script>
+localStorage.setItem("first","Sentry Automation");
+function comboInit(thelist)
+{
+  theinput = document.getElementById(theinput);  
+  var idx = thelist.selectedIndex;
+  var content = thelist.options[idx].innerHTML;
+  if(theinput.value == "")
+    theinput.value = content;	
+}
+
+function combo(thelist, theinput)
+{
+  theinput = document.getElementById(theinput);  
+  var idx = thelist.selectedIndex;
+  var content = thelist.options[idx].innerHTML;
+  theinput.value = content;	
+}
+function sum() {
+            var txtFirstNumberValue = document.getElementById('txt1').value;
+            var txtSecondNumberValue = document.getElementById('txt2').value;
+            var result = parseInt(txtFirstNumberValue) + parseInt(txtSecondNumberValue);
+            if (!isNaN(result)) {
+                document.getElementById('txt3').value = result;
+            }
+        }
+		function concate() {
+            var txtFirstNumberValue = document.getElementById('txt1').value;
+            var txtSecondNumberValue = document.getElementById('txt2').value;
+            var result = txtFirstNumberValue + txtSecondNumberValue;
+            if (!isNaN(result)) {
+                document.getElementById('txt3').value = result;
+            }
+        }
+</script>
+  
+<style>
+div.vscroll {
+    background-color: #00FFFF;
+    width: 100px;
+    height: 70px;
+    overflow: scroll;
+}
+div.hscroll {
+    background-color: #00FFFF;
+    width: 300px;
+    height: 100px;
+    overflow: scroll;
+}
+</style>
+<p><p>
+<p>Vertical:scrollBar</p>
+<p><p>
+<div class="vscroll">
+  <a href="#home">Java</a>
+  <a href="#news">Python</a>
+  <a href="#contact">Javascript</a>
+  <a href="#contact">Vbscript</a>
+  <a href="#contact">Javascript</a>
+  <a href="#contact">C#</a>
+  </div>
+  <p><p>
+<p>Horizontal:scrollBar</p>
+<p><p>
+ <div class="hscroll" style="white-space: nowrap;">
+	AutomationForAll-AutomationForAll-AutomationForAll-AutomationForAll</br>
+	AutomationForAll-AutomationForAll-AllAutomationForAll </br>
+	AutomationForAllAutomationForAll</br>
+</div>
+<p>ComboBox</p>
+<p><p>
+<select name="thelist" id="sel01" onChange="combo(this, 'theinput')" onMouseOut="comboInit(this, 'theinput')" >
+  <option>1</option>
+  <option>2</option>
+  <option>3</option>
+  <option>4</option>
+</select>
+<p>Concate Text</p>
+<input type="text" id="txt1"  onkeyup="concate();" />
+<input type="text" id="txt2"  onkeyup="concate();" />
+<input type="text" id="txt3" />
+</body>

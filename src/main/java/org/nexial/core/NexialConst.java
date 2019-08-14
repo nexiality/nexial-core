@@ -960,8 +960,6 @@ public final class NexialConst {
         public static final String WEB_ALWAYS_WAIT = registerSystemVariable(NS_WEB + "alwaysWait", false);
         public static final String WEB_PREEMPTIVE_ALERT_CHECK = registerSystemVariable(NS_WEB + "preemptiveAlertCheck", false);
         public static final String WEB_CLEAR_WITH_BACKSPACE = registerSystemVariable(NS_WEB + "clearWithBackspace", false);
-        public static final String WEB_CSV_TRIM = registerSystemVariable(NS_WEB + "csv.trim", true);
-
         public static final String SELECT_ALL = "{ALL}";
 
         // web element highlight
@@ -1184,6 +1182,33 @@ public final class NexialConst {
                             BLANK + "= ",
                             TAB + "=\t",
                             NL + "=\n");
+
+        // saveTableAsCSV and saveDivsAsCSV
+        public static final class SaveGridAsCSV {
+            private static final String _NS = NS_WEB + "saveGrid.";
+
+            public static final String DEEP_SCAN = registerSystemVariable(_NS + "deepScan", false);
+            public static final String HEADER_INPUT = registerSystemVariable(_NS + "header.input",
+                                                                             InputOptions.name.name());
+            public static final String HEADER_IMAGE = registerSystemVariable(_NS + "header.image",
+                                                                             ImageOptions.type.name());
+            public static final String DATA_INPUT = registerSystemVariable(_NS + "data.input",
+                                                                           InputOptions.state.name());
+            public static final String DATA_IMAGE = registerSystemVariable(_NS + "data.image",
+                                                                           ImageOptions.type.name());
+            public static final String DATA_TRIM = registerSystemVariable(_NS + "data.trim", true);
+            public static final String END_TRIM = registerSystemVariable(_NS + "end.trim", false);
+
+            public enum InputOptions {
+                name, type, value, id, state;
+                @Override public String toString() { return name(); }
+            }
+
+            public enum ImageOptions {
+                type, alt, id, filename;
+                @Override public String toString() { return name(); }
+            }
+        }
 
         private Data() { }
 

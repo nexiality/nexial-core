@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <title>Nexial - Local Storage Testing</title>
+  <script type="text/javascript">
+    function html5_storage_support() {
+      //check to see if this browser support local storage: return true if so, false if not
+      try {
+        return 'localStorage' in window && window['localStorage'] !== null;
+      } catch (e) {
+        return false;
+      }
+    }
+
+    function save() {
+      if (html5_storage_support()) {
+        //get the user-entered values from the two text fields:
+        var name1 = document.getElementById("name1").value;
+        var name2 = document.getElementById("name2").value;
+
+        //create two local-storage keys (name1, name2) and assign
+        //each the respective value from the text fields:
+        localStorage.setItem('name1', name1);
+        localStorage.setItem('name2', name2);
+      }
+    }
+
+    function set() {
+      if (html5_storage_support()) {
+        //set the value of each text field from the stored values:
+        document.getElementById('name1').value = localStorage.getItem('name1');
+        document.getElementById('name2').value = localStorage.getItem('name2');
+      }
+    }
+  </script>
+</head>
+
+<body onload="set();">
+<div id="container">
+  <div id="main">
+    <header>
+      <img src="logo.png" alt="Jazz Calendar"/>
+      <h3 id="tagline">Local storage info</h3>
+    </header>
+    <nav>
+      <ul></ul>
+    </nav>
+    <div id="maincontent">
+      <article>
+        <h2>Storage Example</h2>
+        <label for="name1">Name 1</label><br>
+        <input type="text" name="name1" id="name1"><br>
+        <br>
+        <label for="name2">Name 2</label><br>
+        <input type="text" name="name2" id="name2"><br>
+        <br>
+        <button id="save" onclick="save()">Save</button>
+        <button id="update" onclick="set()">Update from Saved</button>
+      </article>
+    </div>
+    <aside id="sidebar">
+      <h3>Signup</h3>
+      <p>Become a member of Jazz Calendar now! <a href="#">Email us</a> to receive frequent notices on upcoming live
+        shows.</p>
+    </aside>
+    <footer id="contactinfo">
+      <p>Jazz Calendar
+        <br/>123 Fake Street, Sometown, USA | 555-123-4567</p>
+    </footer>
+  </div>
+</div>
+
+</body>
+</html>

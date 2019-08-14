@@ -18,7 +18,7 @@ package org.nexial.core.plugins.web
 
 import org.junit.Assert
 import org.junit.Test
-import org.nexial.core.NexialConst.Data.WEB_CSV_TRIM
+import org.nexial.core.NexialConst.Data.SaveGridAsCSV.DATA_TRIM
 import org.nexial.core.model.ExecutionContext
 import org.nexial.core.model.MockExecutionContext
 
@@ -27,7 +27,7 @@ class TableHelperTest {
     @Test
     fun csvSafe() {
         val context = MockExecutionContext(true)
-        context.setData(WEB_CSV_TRIM, true)
+        context.setData(DATA_TRIM, true)
 
         val webCommand = object : WebCommand() {
             override fun getContext(): ExecutionContext = context
@@ -56,7 +56,7 @@ class TableHelperTest {
         Assert.assertEquals("a,b,c, d, e", subject.csvSafe("\ta,b,c,\td,\ne\t\t"))
         Assert.assertEquals("Tom, the \"tom-tom\" guide", subject.csvSafe("\tTom, the \"tom-tom\" guide\t\t"))
 
-        context.setData(WEB_CSV_TRIM, false)
+        context.setData(DATA_TRIM, false)
         Assert.assertEquals(" Tom, the \"tom-tom\" guide  ",
                             subject.csvSafe("\tTom, the \"tom-tom\" guide\t\t"))
         Assert.assertEquals("15,22.1", subject.csvSafe("15,22.1"))

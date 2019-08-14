@@ -1,0 +1,11 @@
+checkbox,Name,Position,Office,Age,Avatar,Employment Start Date,Salary,Highest   Paid,Active?,Notes
+unchecked,Airi Satou,Accountant,Tokyo,33,image,2008/11/28,"$162,700",unselected,Yes,notes #1
+checked,Angelica Ramos,Chief Executive Officer (CEO),London,47,image,2009/10/09,"$1,200,000",selected,Yes,notes #2
+checked,Ashton Cox,Junior Technical Author,San Francisco,66,image,2009/01/12,"$86,000",unselected,"Maybe,Maybe Not",notes #3
+checked,Bradley Greer,Software Engineer,London,41,image,2012/10/13,"$132,000",unselected,Yes,notes #4
+checked,Brenden Wagner,Software Engineer,San Francisco,28,image,2011/06/07,"$206,850",unselected,Yes,notes #5
+unchecked,Brielle Williamson,Integration Specialist,New York,61,image,2012/12/02,"$372,000",unselected,Yes,notes #6
+unchecked,Bruno Nash,Software Engineer,London,38,image,2011/05/03,"$163,500",unselected,No,
+unchecked,Caesar Vance,Pre-Sales Support,New York,21,image,2011/12/12,"$106,450",unselected,Yes,
+unchecked,Cara Stevens,Sales Assistant,New York,46,image,2011/12/06,"$145,600",unselected,No,notes #9
+checked,Cedric Kelly,Senior Javascript Developer,Edinburgh,22,image,2012/03/29,"$433,060",unselected,Yes,

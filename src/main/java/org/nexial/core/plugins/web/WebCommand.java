@@ -313,7 +313,7 @@ public class WebCommand extends BaseCommand implements CanTakeScreenshot, CanLog
     }
 
     @NotNull
-    public StepResult selectMultiOptions(String locator) { return clickAll(locator); }
+    public StepResult selectMultiOptions(String locator) { return select(locator, SELECT_ALL); }
 
     @NotNull
     public StepResult deselectMulti(String locator, String array) {

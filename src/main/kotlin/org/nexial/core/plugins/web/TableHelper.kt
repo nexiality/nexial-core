@@ -22,8 +22,12 @@ import com.univocity.parsers.csv.CsvWriterSettings
 import org.apache.commons.collections4.CollectionUtils
 import org.apache.commons.collections4.map.ListOrderedMap
 import org.apache.commons.lang3.StringUtils
+import org.nexial.commons.utils.FileUtil
+import org.nexial.commons.utils.ResourceUtils
+import org.nexial.commons.utils.TextUtils
 import org.nexial.core.NexialConst.DEF_FILE_ENCODING
-import org.nexial.core.NexialConst.Data.WEB_CSV_TRIM
+import org.nexial.core.NexialConst.Data.SaveGridAsCSV.*
+import org.nexial.core.SystemVariables.getDefault
 import org.nexial.core.SystemVariables.getDefaultBool
 import org.nexial.core.model.StepResult
 import org.nexial.core.utils.CheckUtils.requiresNotBlank
@@ -31,13 +35,24 @@ import org.nexial.core.utils.CheckUtils.requiresPositiveNumber
 import org.nexial.core.utils.ConsoleUtils
 import org.openqa.selenium.By
 import org.openqa.selenium.WebElement
+import org.openqa.selenium.support.ui.Select
 import java.io.File
+import java.util.*
 import javax.validation.constraints.NotNull
+import kotlin.collections.ArrayList
 
 class TableHelper(private val webCommand: WebCommand) {
-    private val tableHeaderLocators = listOf(".//thead//*[ name()='th' or name()='td' ]",
-                                             ".//thead//*[ name()='TH' or name()='TD' ]",
-                                             ".//tr/th")
+    private val tableHeaderLocators = listOf("./thead//*[ name()='th' or name()='td' ]",
+                                             "./thead//*[ name()='TH' or name()='TD' ]",
+                                             "./tr/th")
+    private val formElementLocator = ".//*[" +
+                                     " name()='input' or" +
+                                     " name()='submit' or" +
+                                     " name()='button' or" +
+                                     " name()='textarea' or" +
+                                     " name()='select' or" +
+                                     " name()='img'" +
+                                     "]"
     private val csvSafeReplacement = ListOrderedMap.listOrderedMap(mapOf(" \n " to " ",
                                                                          " \r\n " to " ",
                                                                          " \r " to " ",
@@ -50,6 +65,8 @@ class TableHelper(private val webCommand: WebCommand) {
                                                                          "\r\n " to " ",
                                                                          "\r " to " ",
                                                                          "\t " to " "))
+    private val gridDataMeta = ResourceUtils.loadResource("/org/nexial/core/plugins/web/GridDataInspector.js")
+    private val gridMetaRecSep = "#$#"
 
     fun saveDivsAsCsv(headerCellsLoc: String,
                       rowLocator: String,
@@ -130,9 +147,7 @@ class TableHelper(private val webCommand: WebCommand) {
 
         var headers: List<WebElement> = ArrayList()
         tableHeaderLocators.forEach(fun(locator: String?) {
-            run {
-                if (CollectionUtils.isEmpty(headers)) headers = table.findElements(By.xpath(locator))
-            }
+            run { if (CollectionUtils.isEmpty(headers)) headers = table.findElements(By.xpath(locator)) }
         })
 
         writeCsvHeader(msgPrefix, writer, headers)
@@ -157,6 +172,8 @@ class TableHelper(private val webCommand: WebCommand) {
             var hasData = true
 
             for (i in rows.indices) {
+                // ConsoleUtils.log("$msgPrefix scanning row $i...")
+
                 // cell can be TD or TH under TBODY
                 val cells = toCellContent(rows[i], "./*[name()='TD' or name()='td' or name()='TH' or name()='th']")
                 if (CollectionUtils.isEmpty(cells)) {
@@ -193,10 +210,14 @@ class TableHelper(private val webCommand: WebCommand) {
         writer.flush()
         writer.close()
 
-        val msg = "$msgPrefix scanned and written to $file"
         val targetFile = File(file)
-        val outputPath = targetFile.absolutePath
-        webCommand.addLinkRef(msg, targetFile.name, outputPath)
+        if (webCommand.context.getBooleanData(END_TRIM, getDefaultBool(END_TRIM))) {
+            ConsoleUtils.log("$msgPrefix trimming off end-of-file line feed...")
+            FileUtil.removeFileEndLineFeed(targetFile)
+        }
+
+        val msg = "$msgPrefix scanned and written to $file"
+        webCommand.addLinkRef(msg, targetFile.name, targetFile.absolutePath)
         return StepResult.success(msg)
     }
 
@@ -229,26 +250,167 @@ class TableHelper(private val webCommand: WebCommand) {
         }
     }
 
-    @NotNull
-    private fun toCellContent(row: WebElement, cellLocator: String): List<String> {
-        val cells: List<WebElement> = row.findElements(webCommand.locatorHelper.findBy(cellLocator))
-
-        val cellContent = ArrayList<String>()
-        if (CollectionUtils.isEmpty(cells)) return cellContent
-
-        cells.forEach { cell -> cellContent.add(csvSafe(cell.text)) }
-        return cellContent
-    }
-
     private fun writeCsvHeader(msgPrefix: String, writer: CsvWriter, headers: List<WebElement>?) {
         if (headers == null || CollectionUtils.isEmpty(headers)) {
             ConsoleUtils.log("$msgPrefix does not contain usable headers")
         } else {
+            val deepScan = webCommand.context.getBooleanData(DEEP_SCAN, getDefaultBool(DEEP_SCAN))
             val headerNames = ArrayList<String>()
-            headers.forEach { header -> headerNames.add(csvSafe(header.text)) }
+            headers.forEach { header ->
+                // if (header.isDisplayed) headerNames.add(if (deepScan) resolveDisplayText(header, true) else csvSafe(header.text))
+                if (header.isDisplayed) headerNames.add(if (deepScan) deepScan(header, true) else csvSafe(header.text))
+            }
             ConsoleUtils.log("$msgPrefix - collected headers: $headerNames")
             writer.writeHeaders(headerNames)
         }
+    }
+
+    @NotNull
+    private fun toCellContent(row: WebElement, cellLocator: String): List<String> {
+        val cells: List<WebElement> = row.findElements(By.xpath(cellLocator))
+
+        val cellContent = ArrayList<String>()
+        if (CollectionUtils.isEmpty(cells)) return cellContent
+
+        val deepScan = webCommand.context.getBooleanData(DEEP_SCAN, getDefaultBool(DEEP_SCAN))
+
+        cells.forEach { cell ->
+            run {
+                // if (cell.isDisplayed) cellContent.add(if (deepScan) resolveDisplayText(cell, false) else csvSafe(cell.text))
+                if (cell.isDisplayed) cellContent.add(if (deepScan) deepScan(cell, false) else csvSafe(cell.text))
+            }
+        }
+        return cellContent
+    }
+
+    /**
+     * determine the text for checkbox, radio button, image, button, select, text box, textarea, etc.
+     *
+     * Note that this method only checks for 1 element type.
+     * @param cell WebElement
+     * @return String
+     */
+    private fun deepScan(cell: WebElement, isHeader: Boolean): String {
+        val cellText = cell.text
+
+        // no newline means the cell probably doesn't contain <SELECT> or <TEXTAREA>
+        if (StringUtils.isNotEmpty(cellText) && !StringUtils.contains(cellText, "\n")) return csvSafe(cellText)
+
+        // cover cases for checkbox, radio, submit, button, text box, password, email, upload, input-image, text area
+        val inputs = cell.findElements(By.xpath(formElementLocator))
+        if (inputs.isEmpty()) return csvSafe(cellText)
+
+        val jsExec = webCommand.jsExecutor
+        val context = webCommand.context
+
+        val metadata = Objects.toString(jsExec.executeScript(gridDataMeta, inputs[0], gridMetaRecSep), "")
+        if (StringUtils.isEmpty(metadata)) return csvSafe(cellText)
+
+        val metaMap = TextUtils.toMap(metadata, gridMetaRecSep, "=")
+        return csvSafe(
+            if (metaMap["tag"] == "img") {
+                val imageOption = ImageOptions.valueOf(
+                    if (isHeader) context.getStringData(HEADER_IMAGE, getDefault(HEADER_IMAGE))
+                    else context.getStringData(DATA_IMAGE, getDefault(DATA_IMAGE)))
+                when (imageOption) {
+                    ImageOptions.filename -> {
+                        val src = metaMap["src"] ?: return ""
+                        if (StringUtils.contains(src, "/")) StringUtils.substringAfterLast(src, "/") else src
+                    }
+
+                    ImageOptions.type     -> "image"
+                    else                  -> StringUtils.defaultString(metaMap[imageOption.toString()])
+                }
+            } else {
+                val dataOption = InputOptions.valueOf(
+                    if (isHeader) context.getStringData(HEADER_INPUT, getDefault(HEADER_INPUT))
+                    else context.getStringData(DATA_INPUT, getDefault(DATA_INPUT)))
+                if (metaMap["tag"] == "select")
+                    if (dataOption == InputOptions.state || dataOption == InputOptions.value)
+                        TextUtils.toString(StringUtils.split(metaMap["selected"], "\n"), context.textDelim, "", "")
+                    else
+                        StringUtils.defaultString(metaMap[dataOption.toString()])
+                else if (dataOption == InputOptions.state)
+                    when (metaMap["type"]) {
+                        "checkbox" -> if (StringUtils.equals(metaMap["checked"], "true")) "checked" else "unchecked"
+                        "radio"    -> if (StringUtils.equals(metaMap["checked"], "true")) "selected" else "unselected"
+                        else       -> StringUtils.defaultString(metaMap["value"])
+                    }
+                else
+                    StringUtils.defaultString(metaMap[dataOption.toString()])
+            })
+    }
+
+    /**
+     * determine the text for checkbox, radio button, image, button, select, text box, textarea, etc.
+     *
+     * Note that this method only checks for 1 element type.
+     * @param cell WebElement
+     * @return String
+     */
+    private fun resolveDisplayText(cell: WebElement, isHeader: Boolean): String {
+        val cellText = cell.text
+
+        // no newline means the cell probably doesn't contain <SELECT>
+        if (!StringUtils.contains(cellText, "\n") && StringUtils.isNotEmpty(cellText)) return csvSafe(cellText)
+
+        // now we're not sure.. maybe we need to capture data from <SELECT>
+        val context = webCommand.context
+
+        val dataOption = InputOptions.valueOf(
+            if (isHeader) context.getStringData(HEADER_INPUT, getDefault(HEADER_INPUT))
+            else context.getStringData(DATA_INPUT, getDefault(DATA_INPUT)))
+
+        val selects = cell.findElements(By.xpath(".//select"))
+        if (selects.isNotEmpty()) {
+            // yep... definitely has <SELECT>
+            val firstElement = selects[0]
+            return if (firstElement.isDisplayed)
+                if (dataOption == InputOptions.state || dataOption == InputOptions.value)
+                    Select(firstElement).allSelectedOptions.joinToString(separator = context.textDelim,
+                                                                         transform = { it.text })
+                else StringUtils.defaultString(firstElement.getAttribute(dataOption.toString()))
+            else ""
+        } else if (StringUtils.isNotEmpty(cellText)) return csvSafe(cellText)
+        // nope, we don't have <SELECT>
+
+        // cover cases for checkbox, radio, submit, button, text box, password, email, upload, input-image
+        val locatorInputs = ".//*[ name()='input' or name()='submit' or name()='button' or name()='textarea' ]"
+        val inputs = cell.findElements(By.xpath(locatorInputs))
+        if (inputs.isNotEmpty()) {
+            val firstElement = inputs[0]
+            return if (firstElement.isDisplayed)
+                if (dataOption == InputOptions.state)
+                    when (firstElement.getAttribute("type")) {
+                        "checkbox" -> if (StringUtils.equals(firstElement.getAttribute("checked"),
+                                                             "true")) "checked" else "unchecked"
+                        "radio"    -> if (StringUtils.equals(firstElement.getAttribute("checked"),
+                                                             "true")) "selected" else "unselected"
+                        else       -> StringUtils.defaultString(firstElement.getAttribute("value"))
+                    }
+                else StringUtils.defaultString(firstElement.getAttribute(dataOption.toString()))
+            else ""
+        }
+
+        val images = cell.findElements(By.xpath(".//img"))
+        if (images.isNotEmpty()) {
+            val imageOption = ImageOptions.valueOf(
+                if (isHeader) context.getStringData(HEADER_IMAGE, getDefault(HEADER_IMAGE))
+                else context.getStringData(DATA_IMAGE, getDefault(DATA_IMAGE)))
+            val firstElement = images[0]
+            return if (firstElement.isDisplayed)
+                if (imageOption == ImageOptions.filename) {
+                    val src = firstElement.getAttribute("src")
+                    if (StringUtils.contains(src, "/")) StringUtils.substringAfterLast(src, "/") else src
+                } else if (imageOption == ImageOptions.type)
+                    "image"
+                else
+                    StringUtils.defaultString(firstElement.getAttribute(imageOption.toString()))
+            else ""
+        }
+
+        // finally / give up
+        return ""
     }
 
     @NotNull
@@ -259,7 +421,7 @@ class TableHelper(private val webCommand: WebCommand) {
         safe = StringUtils.replace(safe, "\n", " ")
         safe = StringUtils.replace(safe, "\t", " ")
 
-        val trim = webCommand.context.getBooleanData(WEB_CSV_TRIM, getDefaultBool(WEB_CSV_TRIM))
+        val trim = webCommand.context.getBooleanData(DATA_TRIM, getDefaultBool(DATA_TRIM))
         if (trim) safe = StringUtils.trim(safe)
 
         return safe

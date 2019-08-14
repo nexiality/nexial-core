@@ -244,6 +244,15 @@ public final class FileUtil {
         FileUtils.writeStringToFile(file, buffer.toString(), DEF_CHARSET, false);
     }
 
+    public static void removeFileEndLineFeed(File file) throws IOException {
+        if (!isFileReadable(file, 1)) { return; }
+
+        String content = FileUtils.readFileToString(file, DEF_FILE_ENCODING);
+        while (StringUtils.endsWith(content, "\n")) { content = StringUtils.removeEnd(content, "\n"); }
+        while (StringUtils.endsWith(content, "\r\n")) { content = StringUtils.removeEnd(content, "\r\n"); }
+        FileUtils.writeStringToFile(file, content, DEF_FILE_ENCODING);
+    }
+
     /** return true if {@code path} is a valid directory and readable by the current run user. */
     public static boolean isDirectoryReadable(String path) {
         return !StringUtils.isBlank(path) && isDirectoryReadable(new File(path));
