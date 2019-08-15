@@ -58,6 +58,11 @@ class LocatorHelper {
     // todo: use reflection to simplify code; nested if's are ugly, man
     @NotNull
     protected By findBy(String locator) {
+        return findBy(locator, false);
+    }
+
+    @NotNull
+    protected By findBy(String locator, boolean allowRelative) {
         if (StringUtils.isBlank(locator)) {
             CheckUtils.fail("invalid locator:" + locator);
             throw new IllegalArgumentException("null/blank locator is not allowed!");
@@ -83,10 +88,13 @@ class LocatorHelper {
         }
 
         if (StringUtils.startsWith(locator, "xpath=")) {
-            return By.xpath(StringUtils.substring(locator, "xpath=".length()));
+            String xpath = StringUtils.substring(locator, "xpath=".length());
+            if (allowRelative) { return By.xpath(xpath); }
+            return By.xpath(fixBadXpath(xpath));
         }
 
         for (String startsWith : PATH_STARTS_WITH) {
+            if (allowRelative) { return By.xpath(locator); }
             if (StringUtils.startsWith(locator, startsWith)) { return By.xpath(fixBadXpath(locator)); }
         }
 

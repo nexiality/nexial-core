@@ -190,7 +190,7 @@ class LocalDbCommand : BaseCommand() {
             // target table does not exist, let's create it
             val tableGenerator = SqliteTableSqlGenerator(table)
             queries.append(tableGenerator.generateSql(headers)).append("\n")
-            TextUtils.toString(headers, ",")
+            TextUtils.toString(headers.map { treatColumnName(it) }, ",")
         } else {
             // target table exist, let's map out its columns
             val definedColumns = tableInfo[0].cells("name")
@@ -199,17 +199,18 @@ class LocalDbCommand : BaseCommand() {
                 throw IllegalArgumentException("Existing table $table has ${definedColumns.size} columns but the specified CSV has ${headers.size} columns")
             }
 
-            // val normalizedDefinedColumns = TextUtils.toString(definedColumns.map { it.toLowerCase() }.sorted(), ",")
-            // val normalizedCsvHeaders = TextUtils.toString(headers.map { it.toLowerCase() }.sorted(), ",")
             val normalizedDefinedColumns = definedColumns.map { it.toLowerCase() }.sorted()
             val normalizedCsvHeaders = headers.map { it.toLowerCase() }.sorted()
-            if (normalizedDefinedColumns.containsAll(normalizedCsvHeaders)) {
-                // all CSV headers are found as column name in the existing table. We'll use name-matching mapping
-                TextUtils.toString(headers, ",")
-            } else {
-                // not all CSV headers are found in existing table as column. We'll use left-to-right mapping
-                TextUtils.toString(definedColumns.subList(0, headers.size), ",")
-            }
+
+            TextUtils.toString(
+                if (normalizedDefinedColumns.containsAll(normalizedCsvHeaders)) {
+                    // all CSV headers are found as column name in the existing table. We'll use name-matching mapping
+                    headers
+                } else {
+                    // not all CSV headers are found in existing table as column. We'll use left-to-right mapping
+                    definedColumns.subList(0, headers.size)
+                }.map { treatColumnName(it) }
+                , ",")
         }
 
         val defaultValues = if (tableInfo.rowCount < 1)
@@ -247,6 +248,13 @@ class LocalDbCommand : BaseCommand() {
             val rowsInserted = result.rowsAffected - if (result.size > csvRecords.size) result[0].rowCount else 0
             return StepResult.success("Successfully imported $rowsInserted rows from CSV to '$table'")
         }
+    }
+
+    // handle column names with spaces or commas
+    private fun treatColumnName(column: String) = when {
+        StringUtils.isEmpty(column)           -> "\"\""
+        StringUtils.containsAny(column, " ,") -> TextUtils.wrapIfMissing(column, "\"", "\"")
+        else                                  -> column
     }
 
     fun exportCSV(sql: String, output: String): StepResult = rdbms.saveResult(dbName, sql, output)

@@ -15,7 +15,7 @@
  *
  */
 
-package org.nexial.core.plugins.rdbms
+package org.nexial.core.plugins.db
 
 import org.apache.commons.io.FileUtils
 import org.junit.Test
