@@ -942,13 +942,6 @@ public class ExecutionContext {
         return text;
     }
 
-    public String resolveRunModeSpecificUrl(File file) {
-        if (file == null) { return null; }
-        return resolveRunModeSpecificUrl(file.getAbsolutePath());
-    }
-
-    public String resolveRunModeSpecificUrl(String filename) { return filename; }
-
     public TestProject getProject() { return project; }
 
     public String getCurrentScenario() {

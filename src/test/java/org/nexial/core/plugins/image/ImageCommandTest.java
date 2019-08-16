@@ -137,7 +137,7 @@ public class ImageCommandTest {
     }
 
     @Test
-    public void testImageCompare() {
+    public void testImageCompare() throws Exception {
         String imageFile1 = ResourceUtils.getResourceFilePath(resourceBasePath + "/overall.png");
         String imageFile2 = ResourceUtils.getResourceFilePath(resourceBasePath + "/quality.png");
         String imageFile3 = ResourceUtils.getResourceFilePath(resourceBasePath + "/spider4.png");
@@ -150,7 +150,7 @@ public class ImageCommandTest {
     }
 
     @Test
-    public void testImageSaveDiff() {
+    public void testImageSaveDiff() throws Exception {
         String imageFile1 = ResourceUtils.getResourceFilePath(resourceBasePath + "/overall.png");
         String imageFile2 = ResourceUtils.getResourceFilePath(resourceBasePath + "/quality.png");
         String imageFile3 = ResourceUtils.getResourceFilePath(resourceBasePath + "/spider4.png");

@@ -38,7 +38,6 @@ import org.openqa.selenium.UnhandledAlertException;
 import org.openqa.selenium.WebDriverException;
 
 import static org.nexial.core.NexialConst.Data.QUIET;
-import static org.nexial.core.NexialConst.OPT_LAST_SCREENSHOT_NAME;
 import static org.openqa.selenium.OutputType.BASE64;
 
 public class ScreenshotUtils {
@@ -115,8 +114,6 @@ public class ScreenshotUtils {
 
         try {
             FileUtils.writeByteArrayToFile(output, Base64.decodeBase64(screen.getBytes()));
-            ExecutionContext context = ExecutionThread.get();
-            if (context != null) { context.setData(OPT_LAST_SCREENSHOT_NAME, output.getName()); }
             return output;
         } catch (Exception e) {
             ConsoleUtils.error("failed to save screen capture to '" + filename + "': " + e.getMessage());

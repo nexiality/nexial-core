@@ -234,6 +234,28 @@ public class BaseCommand implements NexialCommand {
         return StepResult.success("stored '" + CellTextReader.readValue(value) + "' as ${" + var + "}");
     }
 
+    protected String postScreenshot(TestStep testStep, File file) {
+        if (file == null) {
+            error("Unable to save screenshot for " + testStep);
+            return null;
+        }
+
+        if (context.isOutputToCloud()) {
+            try {
+                String cloudUrl = context.getOtc().importMedia(file);
+                context.setData(OPT_LAST_SCREENSHOT_NAME, cloudUrl);
+                return cloudUrl;
+            } catch (IOException e) {
+                log(toCloudIntegrationNotReadyMessage(file.toString()) + ": " + e.getMessage());
+            }
+        } else {
+            context.setData(OPT_LAST_SCREENSHOT_NAME, file.getAbsolutePath());
+        }
+
+        // return local file if `output-to-cloud` is disabled or failed to transfer to cloud
+        return file.getAbsolutePath();
+    }
+
     /** clear data variables by name */
     public StepResult clear(String vars) {
         requiresNotBlank(vars, "invalid variable(s)", vars);

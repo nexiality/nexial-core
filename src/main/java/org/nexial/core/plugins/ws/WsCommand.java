@@ -186,8 +186,7 @@ public class WsCommand extends BaseCommand {
             return StepResult.fail("Unable to write to '" + file + "' due to " + e.getMessage());
         }
 
-        String outputUrl = context.resolveRunModeSpecificUrl(f);
-        context.getCurrentTestStep().addNestedScreenCapture(outputUrl, "Follow the link to view content");
+        context.getCurrentTestStep().addNestedScreenCapture(f.getAbsolutePath(), "Follow the link to view content");
 
         return StepResult.success("Response payload (" + var + ") written to '" + file + "'");
     }
@@ -360,6 +359,26 @@ public class WsCommand extends BaseCommand {
         // }
 
         return StepResult.fail(failPrefix + "unknown/unsupported " + OAUTH_TOKEN_TYPE + "found: " + tokenType);
+    }
+
+    /**
+     * download content of {@url}, assuming the content is of text nature.
+     */
+    public static String resolveWebContent(String url) throws IOException {
+        WebServiceClient wsClient = new WebServiceClient(null);
+        Response response = wsClient.get(url, null);
+        int returnCode = response.getReturnCode();
+        if (returnCode > 199 && returnCode < 300) { return response.getBody(); }
+        throw new IOException("Unable to retrieve content from '" + url + "': " + response.getStatusText());
+    }
+
+    /**
+     * save the content of {@code url} to {@code target} -- essentially a download op.
+     */
+    public static File saveWebContent(String url, File target) throws IOException {
+        WebServiceClient wsClient = new WebServiceClient(null);
+        wsClient.download(url, null, target.getAbsolutePath());
+        return target;
     }
 
     protected boolean compactRequestPayload() {

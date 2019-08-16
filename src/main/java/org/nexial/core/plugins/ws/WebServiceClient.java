@@ -486,6 +486,7 @@ public class WebServiceClient {
 
         FileOutputStream fos = null;
         try {
+            // `FileUtils.openOutputStream` will ensure parent directories are available
             fos = FileUtils.openOutputStream(new File(saveTo));
             return IOUtils.copyLarge(responseBody, fos);
         } finally {

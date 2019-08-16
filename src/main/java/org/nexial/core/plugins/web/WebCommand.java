@@ -1643,26 +1643,11 @@ public class WebCommand extends BaseCommand implements CanTakeScreenshot, CanLog
                 error("Unable to capture screenshot via native screen capturing approach");
                 return null;
             }
-
-            context.setData(OPT_LAST_SCREENSHOT_NAME, screenshotFile.getName());
         } else {
             screenshotFile = ScreenshotUtils.saveScreenshot(screenshot, filename);
         }
 
-        if (screenshotFile == null) {
-            error("Unable to save screenshot for " + testStep);
-            return null;
-        }
-
-        if (context.isOutputToCloud()) {
-            try {
-                return context.getOtc().importMedia(screenshotFile);
-            } catch (IOException e) {
-                log(toCloudIntegrationNotReadyMessage(screenshotFile.toString()) + ": " + e.getMessage());
-            }
-        }
-
-        return screenshotFile.getAbsolutePath();
+        return postScreenshot(testStep, screenshotFile);
     }
 
     @Override

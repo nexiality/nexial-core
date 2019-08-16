@@ -71,7 +71,6 @@ import static java.lang.Integer.MAX_VALUE;
 import static java.lang.System.lineSeparator;
 import static org.apache.commons.lang3.SystemUtils.*;
 import static org.nexial.core.NexialConst.Data.*;
-import static org.nexial.core.NexialConst.OPT_LAST_SCREENSHOT_NAME;
 import static org.nexial.core.NexialConst.OS;
 import static org.nexial.core.SystemVariables.getDefaultInt;
 import static org.nexial.core.plugins.desktop.DesktopConst.*;
@@ -127,8 +126,8 @@ public class DesktopCommand extends BaseCommand implements ForcefulTerminate, Ca
             return null;
         }
         filename = context.getProject().getScreenCaptureDir() + separator + filename;
-        File file;
 
+        File file;
         if (!IS_OS_WINDOWS || winiumDriver == null) {
             log("using native screen capturing approach...");
             file = new File(filename);
@@ -136,10 +135,7 @@ public class DesktopCommand extends BaseCommand implements ForcefulTerminate, Ca
                 error("Unable to capture screenshot via native screen capturing approach");
                 return null;
             }
-
-            context.setData(OPT_LAST_SCREENSHOT_NAME, file.getName());
         } else {
-            WiniumDriver driver = getDriver();
             WebElement application = getApp();
             if (application == null) {
                 error("target application not available or not yet initialized");
@@ -159,22 +155,14 @@ public class DesktopCommand extends BaseCommand implements ForcefulTerminate, Ca
             }
 
             // also generate `OPT_LAST_SCREENSHOT_NAME` var in context
-            file = ScreenshotUtils.saveScreenshot(driver, filename, rect);
+            file = ScreenshotUtils.saveScreenshot(getDriver(), filename, rect);
             if (file == null) {
                 error("Unable to capture screenshot via Winium driver");
                 return null;
             }
         }
 
-        if (context.isOutputToCloud()) {
-            try {
-                return context.getOtc().importMedia(file);
-            } catch (IOException e) {
-                log(toCloudIntegrationNotReadyMessage(file.toString()) + ": " + e.getMessage());
-            }
-        }
-
-        return file.getAbsolutePath();
+        return postScreenshot(testStep, file);
     }
 
     @Override

@@ -27,6 +27,7 @@ import org.apache.commons.lang3.ArrayUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.math.NumberUtils;
 import org.nexial.commons.utils.FileUtil;
+import org.nexial.commons.utils.ResourceUtils;
 import org.nexial.commons.utils.TextUtils;
 
 import static java.lang.Integer.MIN_VALUE;
@@ -144,5 +145,9 @@ public class CheckUtils {
 
         for (Class type : types) { if (type != required) { return false;} }
         return true;
+    }
+
+    public static boolean requiresReadableFileOrValidUrl(String resource) {
+        return ResourceUtils.isWebResource(resource) || requiresReadableFile(resource);
     }
 }

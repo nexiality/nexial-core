@@ -87,7 +87,7 @@ public class ContextScreenRecorder {
         if (videoFile != null && context != null) {
             String outputUrl = context.isOutputToCloud() ?
                                context.getOtc().importMedia(new File(videoFile)) :
-                               context.resolveRunModeSpecificUrl(videoFile);
+                               videoFile;
             TestStep currentTestStep = context.getCurrentTestStep();
             if (currentTestStep != null) {
                 currentTestStep.addNestedScreenCapture(outputUrl, "recording from " + startingLocation + " stopped");

@@ -28,17 +28,21 @@ import javax.imageio.ImageIO;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.math.NumberUtils;
 import org.apache.commons.lang3.time.StopWatch;
+import org.jetbrains.annotations.NotNull;
 import org.nexial.commons.utils.RegexUtils;
+import org.nexial.commons.utils.ResourceUtils;
 import org.nexial.core.NexialConst.ImageDiffColor;
 import org.nexial.core.NexialConst.ImageType;
 import org.nexial.core.model.StepResult;
 import org.nexial.core.plugins.ForcefulTerminate;
 import org.nexial.core.plugins.base.BaseCommand;
+import org.nexial.core.plugins.ws.WsCommand;
 import org.nexial.core.utils.ConsoleUtils;
 
 import static java.awt.RenderingHints.*;
 import static java.awt.image.BufferedImage.*;
 import static java.io.File.separator;
+import static org.apache.commons.lang3.SystemUtils.JAVA_IO_TMPDIR;
 import static org.nexial.core.NexialConst.ImageType.png;
 import static org.nexial.core.NexialConst.OPT_IMAGE_DIFF_COLOR;
 import static org.nexial.core.NexialConst.OPT_IMAGE_TOLERANCE;
@@ -54,7 +58,7 @@ public class ImageCommand extends BaseCommand implements ForcefulTerminate {
     public String getTarget() { return "image"; }
 
     public StepResult convert(String source, String format, String saveTo) throws IOException {
-        requiresReadableFile(source);
+        requiresReadableFileOrValidUrl(source);
 
         requires(StringUtils.isNotBlank(format), "missing format", format);
         ImageType type;
@@ -68,7 +72,7 @@ public class ImageCommand extends BaseCommand implements ForcefulTerminate {
         mustForcefullyTerminate = true;
 
         // create a blank, RGB, same width and height, and a white background
-        File srcFile = new File(source);
+        File srcFile = resolveFileResource(source);
         String sourceExt = StringUtils.substringAfterLast(srcFile.getAbsolutePath(), ".");
         String targetExt = type.name();
         if (StringUtils.equalsIgnoreCase(sourceExt, targetExt)) {
@@ -90,9 +94,7 @@ public class ImageCommand extends BaseCommand implements ForcefulTerminate {
     }
 
     public StepResult crop(String image, String dimension, String saveTo) throws IOException {
-        requiresReadableFile(image);
-        File imageFile = new File(image);
-
+        requiresReadableFileOrValidUrl(image);
         requiresNotBlank(dimension, "Invalid dimension", dimension);
 
         String delim = context.getTextDelim();
@@ -110,6 +112,7 @@ public class ImageCommand extends BaseCommand implements ForcefulTerminate {
         mustForcefullyTerminate = true;
 
         //fill in the corners of the desired crop location here
+        File imageFile = resolveFileResource(image);
         BufferedImage existing = ImageIO.read(imageFile);
         int w = StringUtils.equals(width, "*") ? existing.getWidth() - x : NumberUtils.toInt(width);
         int h = StringUtils.equals(height, "*") ? existing.getHeight() - y : NumberUtils.toInt(height);
@@ -129,11 +132,11 @@ public class ImageCommand extends BaseCommand implements ForcefulTerminate {
     }
 
     public StepResult resize(String image, String width, String height, String saveTo) throws IOException {
-        requiresReadableFile(image);
-        File imageFile = new File(image);
+        requiresReadableFileOrValidUrl(image);
 
         mustForcefullyTerminate = true;
 
+        File imageFile = resolveFileResource(image);
         BufferedImage img = ImageIO.read(imageFile);
         width = StringUtils.equals(width, "*") ? "" + img.getWidth() : width;
         requires(NumberUtils.isDigits(width), "invalid width", width);
@@ -162,23 +165,23 @@ public class ImageCommand extends BaseCommand implements ForcefulTerminate {
         return StepResult.success(message);
     }
 
-    public StepResult compare(String baseline, String actual) {
+    public StepResult compare(String baseline, String actual) throws IOException {
         logDeprecated(getTarget() + " » compare(baseline,actual)",
                       getTarget() + " » saveDiff(baseline,actual,var)");
         return saveDiff("nexial.lastImageCompare", baseline, actual);
     }
 
-    public StepResult saveDiff(String var, String baseline, String actual) {
-        requiresReadableFile(baseline);
-        requiresReadableFile(actual);
+    public StepResult saveDiff(String var, String baseline, String actual) throws IOException {
+        requiresReadableFileOrValidUrl(baseline);
+        requiresReadableFileOrValidUrl(actual);
 
         float imageTol = Float.parseFloat(context.getStringData(OPT_IMAGE_TOLERANCE, getDefault(OPT_IMAGE_TOLERANCE)));
 
         // get baseline image
-        File baselineFile = new File(baseline);
+        File baselineFile = resolveFileResource(baseline);
 
         // get test image
-        File testFile = new File(actual);
+        File testFile = resolveFileResource(actual);
 
         String colorName = context.getStringData(OPT_IMAGE_DIFF_COLOR, getDefault(OPT_IMAGE_DIFF_COLOR));
         Color color = ImageDiffColor.toColor(colorName);
@@ -225,14 +228,14 @@ public class ImageCommand extends BaseCommand implements ForcefulTerminate {
     }
 
     public StepResult colorbit(String source, String bit, String saveTo) throws IOException {
-        requiresReadableFile(source);
+        requiresReadableFileOrValidUrl(source);
         requiresPositiveNumber(bit, "invalid value for bit", bit);
         requiresNotBlank(saveTo, "invalid 'saveTo' location", saveTo);
 
         int targetImageBit = NumberUtils.toInt(bit);
 
         // get image
-        File imageFile = new File(source);
+        File imageFile = resolveFileResource(source);
         BufferedImage img;
         try {
             img = ImageIO.read(imageFile);
@@ -265,6 +268,15 @@ public class ImageCommand extends BaseCommand implements ForcefulTerminate {
 
     @Override
     public void forcefulTerminate() { }
+
+    @NotNull
+    protected File resolveFileResource(String baseline) throws IOException {
+        if (!ResourceUtils.isWebResource(baseline)) { return new File(baseline); }
+
+        String target = StringUtils.appendIfMissing(JAVA_IO_TMPDIR, separator) +
+                        StringUtils.substringAfterLast(baseline, "/");
+        return WsCommand.saveWebContent(baseline, new File(target));
+    }
 
     protected static File resolveSaveTo(String saveTo, String defaultFileName) {
         File saveFile = new File(saveTo);

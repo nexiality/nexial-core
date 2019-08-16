@@ -438,7 +438,7 @@ public class TestStep extends TestStepManifest {
                 return null;
             }
 
-            return context.resolveRunModeSpecificUrl(screenshotPath);
+            return screenshotPath;
         } catch (Exception e) {
             ConsoleUtils.error("Unable to capture screenshot: " + e.getMessage());
             return null;
