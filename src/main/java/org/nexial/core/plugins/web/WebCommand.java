@@ -906,6 +906,14 @@ public class WebCommand extends BaseCommand implements CanTakeScreenshot, CanLog
         return result;
     }
 
+    public StepResult assertMultiSelect(String locator) {
+        return new StepResult(isMultiSelect(locator));
+    }
+
+    public StepResult assertSingleSelect(String locator) {
+        return new StepResult(!isMultiSelect(locator));
+    }
+
     public StepResult click(String locator) { return clickInternal(locator); }
 
     /**
@@ -1776,6 +1784,24 @@ public class WebCommand extends BaseCommand implements CanTakeScreenshot, CanLog
                            .build().perform();
 
         return StepResult.success("Drag-and-move element '" + fromLocator + "' by (" + moveX + "," + moveY + ")");
+    }
+
+    public StepResult updateAttribute(String locator, String attrName, String value) {
+        requiresNotBlank(locator, "invalid locator", locator);
+        requiresNotBlank(attrName, "invalid attribute name", attrName);
+        WebElement element = findElement(locator);
+        if (element == null) { return StepResult.fail("No element via locator '" + locator + "'"); }
+
+        if (StringUtils.isEmpty(value)) {
+            jsExecutor.executeScript("arguments[0].removeAttribute(arguments[1])", element, attrName);
+        } else {
+            jsExecutor.executeScript(
+                "arguments[0].setAttribute(arguments[1], arguments[2])",
+                element,
+                attrName,
+                value);
+        }
+        return StepResult.success(attrName + " with value " + value + " updated successfully for '" + locator + "'");
     }
 
     protected int deriveBrowserStabilityWaitMs(ExecutionContext context) {
@@ -2734,6 +2760,8 @@ public class WebCommand extends BaseCommand implements CanTakeScreenshot, CanLog
 
     // todo need to test
     protected boolean isChecked(String locator) { return toElement(locator).isSelected(); }
+
+    protected boolean isMultiSelect(String locator) { return getSelectElement(locator).isMultiple(); }
 
     // todo need to test
     protected boolean isVisible(String locator) {
