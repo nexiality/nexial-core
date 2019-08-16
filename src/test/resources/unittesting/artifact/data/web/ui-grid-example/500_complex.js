@@ -114,7 +114,7 @@ var MyJsonData = [
         "name": "Bishop Carr",
         "gender": "male",
         "company": "Digirang",
-        "email": "<input type='text' value='bishopcarr@digirang.com'/>",
+        "email": "bishopcarr@digirang.com",
         "phone": "+1 (860) 463-2942",
         "address": {
             "street": 824,

@@ -8,7 +8,7 @@ import org.nexial.core.model.ExecutionSummary;
 
 import static org.nexial.core.NexialConst.Data.BROWSER;
 
-public class HeadlessWebUpdateAttributeTest extends ExcelBasedTests {
+public class HeadlessWebUpdateAttributeManualTest extends ExcelBasedTests {
 
     @Test
     public void WebUpdateAttributeTest() throws Exception {

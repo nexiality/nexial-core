@@ -16,19 +16,25 @@
   <link rel="stylesheet" href="ui-grid.css" type="text/css">
   <style>
     body {
-      padding: 10px;
+      padding:     10px;
       font-family: Tahoma, sans-serif;
-      font-size: 11pt;
+      font-size:   11pt;
     }
 
     .grid {
-      width: 960px;
-      height: 400px;
+      width:  100%;
+      height: 450px;
+      margin: 5px 15px 5px 0;
     }
 
-    .header-filtered {
-      color: blue;
+    .header-filtered { color: blue; }
+
+    div.input_email input.input_email {
+      padding: 3px;
+      width:   180px !important;
     }
+
+    .ui-grid-cell { height: 35px !important; }
   </style>
   <script>
     angular.module('app', ['ngAnimate', 'ngTouch', 'ui.grid', 'ui.grid.edit'])
@@ -38,8 +44,8 @@
     MainCtrl.$inject = ['$http', 'uiGridConstants'];
 
     function MainCtrl($http, uiGridConstants) {
-      var vm = this,
-          today = new Date(),
+      var vm       = this,
+          today    = new Date(),
           nextWeek = new Date();
       nextWeek.setDate(nextWeek.getDate() + 7);
 
@@ -49,93 +55,99 @@
 
       vm.gridOptions = {
         enableFiltering: true,
-        onRegisterApi: function(gridApi){
-          vm.gridApi = gridApi;
-        },
-        columnDefs: [
+        onRegisterApi:   function (gridApi) { vm.gridApi = gridApi; },
+        columnDefs:      [
           // default
           { field: 'name', headerCellClass: vm.highlightFilteredHeader },
           // pre-populated search field
-          { field: 'gender', filter: {
-              term: '1',
-              type: uiGridConstants.filter.SELECT,
+          {
+nun            field:      'gender', filter: {
+              term:          '1',
+              type:          uiGridConstants.filter.SELECT,
               selectOptions: [
-                { value: '1', label: 'male' },
-                { value: '2', label: 'female' },
-                { value: '3', label: 'unknown'},
-                { value: '4', label: 'not stated' },
-                { value: '5', label: 'a really long value that extends things' }
-                ]
+                {value: '1', label: 'male'},
+                {value: '2', label: 'female'},
+                {value: '3', label: 'unknown'},
+                {value: '4', label: 'not stated'},
+                {value: '5', label: 'a really long value that extends things'}
+              ]
             },
-            cellFilter: 'mapGender', headerCellClass: vm.highlightFilteredHeader },
+            cellFilter: 'mapGender', headerCellClass: vm.highlightFilteredHeader
+          },
           // no filter input
-          { field: 'company', enableFiltering: false, filter: {
-              noTerm: true,
-              condition: function(searchTerm, cellValue) {
+          {
+            field: 'company', enableFiltering: false, filter: {
+              noTerm:    true,
+              condition: function (searchTerm, cellValue) {
                 return cellValue.match(/a/);
               }
-            }},
+            }
+          },
           // specifies one of the built-in conditions
           // and a placeholder for the input
           {
-            enableCellEdit: true, enableCellEditOnFocus: true,  type: 'string',
-            cellTemplate: '<div class="ui-grid-cell-contents" title="TOOLTIP"><input type="text" value="{{column}}"></div>',
-            field: 'email',
-            filter: {
-              condition: uiGridConstants.filter.ENDS_WITH,
+            width:        '200',
+            cellTemplate: '<div class="ui-grid-cell-contents input_email"><input type="text" name="email" class="input_email" value="{{ COL_FIELD }}"></div>',
+
+            field:              'email',
+            filter:             {
+              condition:   uiGridConstants.filter.ENDS_WITH,
               placeholder: 'ends with'
             }, headerCellClass: vm.highlightFilteredHeader
           },
           // custom condition function
           {
-            field: 'phone',
-            filter: {
-              condition: function(searchTerm, cellValue) {
+            field:              'phone',
+            filter:             {
+              condition: function (searchTerm, cellValue) {
                 var strippedValue = (cellValue + '').replace(/[^\d]/g, '');
                 return strippedValue.indexOf(searchTerm) >= 0;
               }
             }, headerCellClass: vm.highlightFilteredHeader
           },
           // multiple filters
-          { field: 'age', filters: [
+          {
+            field:              'age', filters: [
               {
-                condition: uiGridConstants.filter.GREATER_THAN,
+                condition:   uiGridConstants.filter.GREATER_THAN,
                 placeholder: 'greater than'
               },
               {
-                condition: uiGridConstants.filter.LESS_THAN,
+                condition:   uiGridConstants.filter.LESS_THAN,
                 placeholder: 'less than'
               }
-            ], headerCellClass: vm.highlightFilteredHeader},
+            ], headerCellClass: vm.highlightFilteredHeader
+          },
           // date filter
-          { field: 'mixedDate', cellFilter: 'date', width: '15%', filter: {
-              condition: uiGridConstants.filter.LESS_THAN,
+          {
+            field:              'mixedDate', cellFilter: 'date', width: '15%', filter: {
+              condition:   uiGridConstants.filter.LESS_THAN,
               placeholder: 'less than',
-              term: nextWeek
+              term:        nextWeek
             }, headerCellClass: vm.highlightFilteredHeader
           },
           {
-            field: 'mixedDate',
-            displayName: 'Long Date',
-            cellFilter: 'date:"longDate"',
+            field:              'mixedDate',
+            displayName:        'Long Date',
+            cellFilter:         'date:"longDate"',
             filterCellFiltered: true,
-            width: '15%'
+            width:              '15%'
           }
         ]
       };
 
-      vm.gridOptions.data = MyJsonData;
+      vm.gridOptions.data        = MyJsonData;
       vm.gridOptions.data[0].age = -5;
 
-      MyJsonData.forEach( function addDates( row, index ){
+      MyJsonData.forEach(function addDates(row, index) {
         row.mixedDate = new Date();
-        row.mixedDate.setDate(today.getDate() + ( index % 14 ) );
+        row.mixedDate.setDate(today.getDate() + (index % 14));
         row.gender = row.gender === 'male' ? '1' : '2';
       });
 
-      vm.toggleFiltering = function(){
+      vm.toggleFiltering = function () {
         vm.gridOptions.enableFiltering = !vm.gridOptions.enableFiltering;
-        vm.gridApi.core.notifyDataChange( uiGridConstants.dataChange.COLUMN );
+        vm.gridApi.core.notifyDataChange(uiGridConstants.dataChange.COLUMN);
       };
     }
 
@@ -145,8 +157,8 @@
         2: 'female'
       };
 
-      return function(input) {
-        if (!input){
+      return function (input) {
+        if (!input) {
           return '';
         } else {
           return genderHash[input];
