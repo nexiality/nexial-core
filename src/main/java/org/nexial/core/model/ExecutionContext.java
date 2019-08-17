@@ -282,7 +282,7 @@ public class ExecutionContext {
         overrideIfSysPropFound(OPT_OPEN_RESULT);
         overrideIfSysPropFound(OPT_OPEN_EXEC_REPORT);
         overrideIfSysPropFound(ASSISTANT_MODE);
-        overrideIfSysPropFound(OPT_EASY_STRING_COMPARE);
+        overrideIfSysPropFound(OPT_TEXT_MATCH_LENIENT);
         overrideIfSysPropFound(OUTPUT_TO_CLOUD);
         overrideIfSysPropFound(FAIL_FAST);
         overrideIfSysPropFound(VERBOSE);
@@ -462,8 +462,20 @@ public class ExecutionContext {
 
     public boolean isVerbose() { return getBooleanData(VERBOSE); }
 
-    public boolean isLenientStringCompare() {
-        return getBooleanData(OPT_EASY_STRING_COMPARE, getDefaultBool(OPT_EASY_STRING_COMPARE));
+    public boolean isTextMatchLeniently() {
+        return getBooleanData(OPT_TEXT_MATCH_LENIENT, getDefaultBool(OPT_TEXT_MATCH_LENIENT));
+    }
+
+    public boolean isTextMatchAsNumber() {
+        return getBooleanData(OPT_TEXT_MATCH_AS_NUMBER, getDefaultBool(OPT_TEXT_MATCH_AS_NUMBER));
+    }
+
+    public boolean isTextMatchUseTrim() {
+        return getBooleanData(OPT_TEXT_MATCH_USE_TRIM, getDefaultBool(OPT_TEXT_MATCH_USE_TRIM));
+    }
+
+    public boolean isTextMatchCaseInsensitive() {
+        return getBooleanData(OPT_TEXT_MATCH_CASE_INSENSITIVE, getDefaultBool(OPT_TEXT_MATCH_CASE_INSENSITIVE));
     }
 
     public boolean isProxyRequired() { return getBooleanData(OPT_PROXY_REQUIRED, false); }

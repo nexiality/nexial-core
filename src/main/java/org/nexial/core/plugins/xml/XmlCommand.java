@@ -124,9 +124,14 @@ public class XmlCommand extends BaseCommand {
     }
 
     public StepResult assertElementCount(String xml, String xpath, String count) {
-        int countInt = toPositiveInt(count, "count");
+        int expected = toPositiveInt(count, "count");
         try {
-            return assertEqual(countInt + "", count(xml, xpath) + "");
+            int actual = count(xml, xpath);
+            if (expected == actual) {
+                return StepResult.success("EXPECTED element count found");
+            } else {
+                return StepResult.fail("element count (" + actual + ") DID NOT match expected (" + expected + ")");
+            }
         } catch (JDOMException e) {
             return StepResult.fail("Error while filtering XML via xpath '" + xpath + "': " + e.getMessage());
         }

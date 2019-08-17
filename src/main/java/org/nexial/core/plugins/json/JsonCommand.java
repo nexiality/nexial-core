@@ -99,20 +99,25 @@ public class JsonCommand extends BaseCommand {
     public StepResult assertElementPresent(String json, String jsonpath) {
         String match = find(json, jsonpath);
         boolean isMatched = match != null;
-        String message = "JSON " + (isMatched ? "matches " : " DOES NOT match ") + jsonpath;
+        String message = "JSON " + (isMatched ? "matches " : "DOES NOT match ") + jsonpath;
         return new StepResult(isMatched, message, null);
     }
 
     public StepResult assertElementNotPresent(String json, String jsonpath) {
         String match = find(json, jsonpath);
         boolean isMatched = match != null;
-        String message = "JSON " + (isMatched ? "matches " : " DOES NOT match ") + jsonpath;
+        String message = "JSON " + (isMatched ? "matches " : "DOES NOT match ") + jsonpath;
         return new StepResult(!isMatched, message, null);
     }
 
     public StepResult assertElementCount(String json, String jsonpath, String count) {
-        int countInt = toPositiveInt(count, "count");
-        return super.assertEqual(countInt + "", count(json, jsonpath) + "");
+        int expected = toPositiveInt(count, "count");
+        int actual = count(json, jsonpath);
+        if (expected == actual) {
+            return StepResult.success("EXPECTED element count found");
+        } else {
+            return StepResult.fail("element count (" + actual + ") DID NOT match expected (" + count + ")");
+        }
     }
 
     public StepResult storeValue(String json, String jsonpath, String var) {

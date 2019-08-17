@@ -134,7 +134,6 @@ public final class NexialConst {
     public static final String SELENIUM_IE_SILENT = "webdriver.ie.driver.silent";
     public static final String OPT_DELAY_BROWSER = registerSystemVariable(NAMESPACE + "delayBrowser", false);
     public static final String OPT_CHROME_PROFILE = registerSystemVariable(NAMESPACE + "chrome.profile");
-    public static final String OPT_EASY_STRING_COMPARE =registerSystemVariable(NAMESPACE + "lenientStringCompare",true);
     public static final String OPT_HTTP_TTL = NAMESPACE + "httpTTL";
     public static final String OPT_UI_RENDER_WAIT_MS = registerSystemVariable(NAMESPACE + "uiRenderWaitMs", 1500);
     public static final String OPT_WAIT_SPEED = registerSystemVariable(NAMESPACE + "waitSpeed", 3);
@@ -145,6 +144,13 @@ public final class NexialConst {
     public static final String OPT_PROXY_REQUIRED = registerSystemVariable(NAMESPACE + "proxyRequired");
     public static final String OPT_PROXY_DIRECT = registerSystemVariable(NAMESPACE + "proxyDirect");
     public static final int PROXY_PORT = 19850;
+
+    // text-based assertion and text compare
+    public static final String NS_TEXT_MATCH = NAMESPACE + "assert.";
+    public static final String OPT_TEXT_MATCH_LENIENT = registerSystemVariable(NS_TEXT_MATCH  + "lenient", true);
+    public static final String OPT_TEXT_MATCH_AS_NUMBER = registerSystemVariable(NS_TEXT_MATCH + "asNumber", true);
+    public static final String OPT_TEXT_MATCH_USE_TRIM = registerSystemVariable(NS_TEXT_MATCH + "useTrim", false);
+    public static final String OPT_TEXT_MATCH_CASE_INSENSITIVE = registerSystemVariable(NS_TEXT_MATCH + "caseInsensitive", false);
 
     // image
     public static final String OPT_IMAGE_TOLERANCE = registerSystemVariable(NAMESPACE + "imageTolerance", 0);

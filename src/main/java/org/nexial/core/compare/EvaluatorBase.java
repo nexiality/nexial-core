@@ -22,7 +22,7 @@ import org.apache.commons.lang3.math.NumberUtils;
 import org.nexial.core.ExecutionThread;
 import org.nexial.core.model.ExecutionContext;
 
-import static org.nexial.core.NexialConst.OPT_EASY_STRING_COMPARE;
+import static org.nexial.core.NexialConst.OPT_TEXT_MATCH_LENIENT;
 import static org.nexial.core.SystemVariables.getDefaultBool;
 
 /**
@@ -43,7 +43,7 @@ public abstract class EvaluatorBase implements Evaluator {
     protected boolean isLenientStringCompare() {
         ExecutionContext context = ExecutionThread.get();
         return context != null &&
-               context.getBooleanData(OPT_EASY_STRING_COMPARE, getDefaultBool(OPT_EASY_STRING_COMPARE));
+               context.getBooleanData(OPT_TEXT_MATCH_LENIENT, getDefaultBool(OPT_TEXT_MATCH_LENIENT));
     }
 
     protected abstract boolean evaluate(double lhs, double rhs) throws IncompatibleTypeException;

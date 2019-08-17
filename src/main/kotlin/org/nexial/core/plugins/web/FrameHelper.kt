@@ -40,8 +40,10 @@ internal class FrameHelper(private val webCommand: WebCommand, private var drive
         // ensuring that count can be converted to an integer
         val countInt = webCommand.toInt(count, "count")
         val frameCount = execScript("return window.frames.length", java.lang.Long::class.java)
-        webCommand.assertEquals(countInt.toString(), frameCount.toString())
-        return StepResult.success("EXPECTS $count frame(s); found $frameCount")
+        return if (countInt == frameCount.toInt())
+            StepResult.success("EXPECTED $count frame(s) found")
+        else
+            StepResult.fail("EXPECTS $count frame(s) but found $frameCount")
     }
 
     fun selectFrame(locator: String): StepResult {

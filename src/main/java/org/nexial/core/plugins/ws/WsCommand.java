@@ -122,7 +122,13 @@ public class WsCommand extends BaseCommand {
         try {
             Response response = resolveResponseObject(var);
             if (response == null) { return StepResult.fail("No response variable found using '" + var + "'"); }
-            return assertEqual(returnCode, response.getReturnCode() + "");
+
+            if (statusCode == response.getReturnCode()) {
+                return StepResult.success("EXPECTED return code found");
+            } else {
+                return StepResult.fail("return code (" + response.getReturnCode() + ") DID NOT match expected (" +
+                                       returnCode + ")");
+            }
         } catch (ClassCastException e) {
             return StepResult.fail("Error: " + e.getMessage());
         }

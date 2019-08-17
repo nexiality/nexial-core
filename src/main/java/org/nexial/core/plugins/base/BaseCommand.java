@@ -27,6 +27,7 @@ import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
 import java.lang.reflect.Parameter;
+import java.math.BigDecimal;
 import java.util.*;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
@@ -67,7 +68,6 @@ import static java.util.regex.Pattern.CASE_INSENSITIVE;
 import static org.nexial.core.NexialConst.*;
 import static org.nexial.core.NexialConst.Data.NULL;
 import static org.nexial.core.NexialConst.Data.toCloudIntegrationNotReadyMessage;
-import static org.nexial.core.SystemVariables.getDefaultBool;
 import static org.nexial.core.excel.ExcelConfig.MSG_PASS;
 import static org.nexial.core.plugins.base.IncrementStrategy.ALPHANUM;
 import static org.nexial.core.utils.CheckUtils.*;
@@ -232,28 +232,6 @@ public class BaseCommand implements NexialCommand {
         requiresValidVariableName(var);
         updateDataVariable(var, value);
         return StepResult.success("stored '" + CellTextReader.readValue(value) + "' as ${" + var + "}");
-    }
-
-    protected String postScreenshot(TestStep testStep, File file) {
-        if (file == null) {
-            error("Unable to save screenshot for " + testStep);
-            return null;
-        }
-
-        if (context.isOutputToCloud()) {
-            try {
-                String cloudUrl = context.getOtc().importMedia(file);
-                context.setData(OPT_LAST_SCREENSHOT_NAME, cloudUrl);
-                return cloudUrl;
-            } catch (IOException e) {
-                log(toCloudIntegrationNotReadyMessage(file.toString()) + ": " + e.getMessage());
-            }
-        } else {
-            context.setData(OPT_LAST_SCREENSHOT_NAME, file.getAbsolutePath());
-        }
-
-        // return local file if `output-to-cloud` is disabled or failed to transfer to cloud
-        return file.getAbsolutePath();
     }
 
     /** clear data variables by name */
@@ -452,7 +430,7 @@ public class BaseCommand implements NexialCommand {
     }
 
     public StepResult assertNotContains(String text, String substring) {
-        if (context.isLenientStringCompare()) {
+        if (context.isTextMatchLeniently()) {
             String[] searchFor = {"\r", "\n"};
             String[] replaceWith = {" ", " "};
             text = StringUtils.replaceEach(text, searchFor, replaceWith);
@@ -478,7 +456,7 @@ public class BaseCommand implements NexialCommand {
     public StepResult assertEndsWith(String text, String suffix) {
         boolean contains = StringUtils.endsWith(text, suffix);
         // not so fast.. could be one of those quirky IE issues..
-        if (!contains && context.isLenientStringCompare()) {
+        if (!contains && context.isTextMatchLeniently()) {
             String lenientSuffix = StringUtils.replaceEach(StringUtils.trim(suffix),
                                                            new String[]{"\r", "\n"},
                                                            new String[]{" ", " "});
@@ -880,6 +858,28 @@ public class BaseCommand implements NexialCommand {
         errorToOutput(deprecated + " IS DEPRECATED. PLEASE CONSIDER USING " + replacement + " INSTEAD", null);
     }
 
+    protected String postScreenshot(TestStep testStep, File file) {
+        if (file == null) {
+            error("Unable to save screenshot for " + testStep);
+            return null;
+        }
+
+        if (context.isOutputToCloud()) {
+            try {
+                String cloudUrl = context.getOtc().importMedia(file);
+                context.setData(OPT_LAST_SCREENSHOT_NAME, cloudUrl);
+                return cloudUrl;
+            } catch (IOException e) {
+                log(toCloudIntegrationNotReadyMessage(file.toString()) + ": " + e.getMessage());
+            }
+        } else {
+            context.setData(OPT_LAST_SCREENSHOT_NAME, file.getAbsolutePath());
+        }
+
+        // return local file if `output-to-cloud` is disabled or failed to transfer to cloud
+        return file.getAbsolutePath();
+    }
+
     /**
      * this method - TO BE USED INTERNALLY ONLY - is created to compensate the data state discrepancy when such is
      * initially set via `-override` flag or via `-D...` environment variable. When a data variable is defined prior to
@@ -1005,7 +1005,7 @@ public class BaseCommand implements NexialCommand {
     protected boolean lenientContains(String text, String prefix, boolean startsWith) {
         boolean valid = startsWith ? StringUtils.startsWith(text, prefix) : StringUtils.contains(text, prefix);
         // not so fast.. could be one of those quarky IE issues..
-        if (!valid && context.isLenientStringCompare()) {
+        if (!valid && context.isTextMatchLeniently()) {
             String[] searchFor = {"\r", "\n"};
             String[] replaceWith = {" ", " "};
             String lenientPrefix = StringUtils.replaceEach(StringUtils.trim(prefix), searchFor, replaceWith);
@@ -1256,21 +1256,40 @@ public class BaseCommand implements NexialCommand {
     protected static boolean assertEqualsInternal(String expected, String actual) {
         if (expected == null && actual == null) { return true; }
 
-        if (NumberUtils.isCreatable(expected) && NumberUtils.isCreatable(actual)) {
-            // both are number, then we should assert by double
-            return seleniumEquals(NumberUtils.toDouble(expected), NumberUtils.toDouble(actual));
+        ExecutionContext context = ExecutionThread.get();
+        if (context.isTextMatchUseTrim()) {
+            expected = StringUtils.trim(expected);
+            actual = StringUtils.trim(actual);
         }
 
-        ExecutionContext context = ExecutionThread.get();
+        if (context.isTextMatchAsNumber()) {
+            try {
+                BigDecimal expectedBD = NumberUtils.createBigDecimal(StringUtils.trim(expected));
+                BigDecimal actualBD = NumberUtils.createBigDecimal(StringUtils.trim(actual));
+                if (expectedBD != null && actualBD != null) {
+                    double expectedNum = expectedBD.doubleValue();
+                    double actualNum = actualBD.doubleValue();
+                    // both are number, then we should assert by double
+                    return expectedNum == actualNum;
+                }
+            } catch (NumberFormatException e) {
+                // so one of them is not a number... move on
+            }
+        }
+
+        if (context.isTextMatchCaseInsensitive()) {
+            expected = StringUtils.lowerCase(expected);
+            actual = StringUtils.lowerCase(actual);
+        }
 
         boolean equals = seleniumEquals(expected, actual);
-        if (!equals && ExecutionContext.getSystemThenContextBooleanData(OPT_EASY_STRING_COMPARE, context,
-                                                                        getDefaultBool(OPT_EASY_STRING_COMPARE))) {
+        if (!equals && context.isTextMatchLeniently()) {
             // not so fast.. could be one of those quirky IE issues..
             String lenientExpected = TextUtils.toOneLine(expected, true);
             String lenientActual = TextUtils.toOneLine(actual, true);
             equals = StringUtils.equals(lenientExpected, lenientActual);
         }
+
         return equals;
     }
 

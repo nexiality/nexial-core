@@ -21,6 +21,7 @@ import java.util.Date;
 import java.util.LinkedHashMap;
 import java.util.Map;
 
+import org.apache.commons.lang3.math.NumberUtils;
 import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
@@ -114,7 +115,46 @@ public class BaseCommandTest {
     }
 
     @Test
-    public void testAssertEquals_map() throws Exception {
+    public void assertEquals_number() throws Exception {
+        Assert.assertEquals(1, NumberUtils.createBigDecimal("1").doubleValue(), 0);
+        Assert.assertEquals(1, NumberUtils.createBigDecimal("1.").doubleValue(), 0);
+        Assert.assertEquals(1, NumberUtils.createBigDecimal("01").doubleValue(), 0);
+        Assert.assertEquals(1, NumberUtils.createBigDecimal("01.").doubleValue(), 0);
+        Assert.assertEquals(1, NumberUtils.createBigDecimal("01.0").doubleValue(), 0);
+        Assert.assertEquals(1, NumberUtils.createBigDecimal("01.0000").doubleValue(), 0);
+        Assert.assertEquals(1, NumberUtils.createBigDecimal("000001.0000").doubleValue(), 0);
+
+        try {
+            NumberUtils.createBigDecimal("  1. ");
+            Assert.fail("expected NFE here!");
+        } catch (NumberFormatException e) {
+            // it's fine/expected
+        }
+
+        try {
+            NumberUtils.createBigDecimal("1,000.001");
+            Assert.fail("expected NFE here!");
+        } catch (NumberFormatException e) {
+            // it's fine/expected
+        }
+
+        try {
+            NumberUtils.createBigDecimal("$59");
+            Assert.fail("expected NFE here!");
+        } catch (NumberFormatException e) {
+            // it's fine/expected
+        }
+
+        try {
+            NumberUtils.createBigDecimal("1..0");
+            Assert.fail("expected NFE here!");
+        } catch (NumberFormatException e) {
+            // it's fine/expected
+        }
+    }
+
+    @Test
+    public void assertEquals_map() throws Exception {
         BaseCommand subject = new BaseCommand();
         subject.init(context);
 

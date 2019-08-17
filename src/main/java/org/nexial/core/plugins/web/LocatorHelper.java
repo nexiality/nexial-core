@@ -258,7 +258,11 @@ class LocatorHelper {
         locator = validateLocator(locator);
         int expected = delegator.toPositiveInt(count, "count");
         int actual = delegator.getElementCount(locator);
-        return delegator.assertEqual(expected + "", actual + "");
+        if (expected == actual) {
+            return StepResult.success("EXPECTED element count found");
+        } else {
+            return StepResult.fail("element count (" + actual + ") DID NOT match expected count (" + expected + ")");
+        }
     }
 
     protected StepResult assertTextOrder(String locator, String descending) {
