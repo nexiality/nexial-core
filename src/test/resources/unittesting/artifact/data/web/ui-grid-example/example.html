@@ -44,9 +44,9 @@
     MainCtrl.$inject = ['$http', 'uiGridConstants'];
 
     function MainCtrl($http, uiGridConstants) {
-      var vm       = this,
-          today    = new Date(),
-          nextWeek = new Date();
+      var vm       = this;
+      var today    = new Date();
+      var nextWeek = new Date();
       nextWeek.setDate(nextWeek.getDate() + 7);
 
       vm.highlightFilteredHeader = function (row, rowRenderIndex, col, colRenderIndex) {
@@ -61,7 +61,7 @@
           { field: 'name', headerCellClass: vm.highlightFilteredHeader },
           // pre-populated search field
           {
-nun            field:      'gender', filter: {
+              field:      'gender', filter: {
               term:          '1',
               type:          uiGridConstants.filter.SELECT,
               selectOptions: [
@@ -107,31 +107,30 @@ nun            field:      'gender', filter: {
           },
           // multiple filters
           {
-            field:              'age', filters: [
-              {
-                condition:   uiGridConstants.filter.GREATER_THAN,
-                placeholder: 'greater than'
-              },
-              {
-                condition:   uiGridConstants.filter.LESS_THAN,
-                placeholder: 'less than'
-              }
+            field:              'age',
+            filters: [
+              { condition:   uiGridConstants.filter.GREATER_THAN,  placeholder: 'greater than' },
+              { condition:   uiGridConstants.filter.LESS_THAN, placeholder: 'less than' }
             ], headerCellClass: vm.highlightFilteredHeader
           },
           // date filter
           {
-            field:              'mixedDate', cellFilter: 'date', width: '15%', filter: {
+            field:           'mixedDate',
+            cellFilter:      'date',
+            width:           '200',
+            filter:          {
               condition:   uiGridConstants.filter.LESS_THAN,
               placeholder: 'less than',
               term:        nextWeek
-            }, headerCellClass: vm.highlightFilteredHeader
+            },
+            headerCellClass: vm.highlightFilteredHeader
           },
           {
             field:              'mixedDate',
             displayName:        'Long Date',
             cellFilter:         'date:"longDate"',
             filterCellFiltered: true,
-            width:              '15%'
+            width:              '140'
           }
         ]
       };

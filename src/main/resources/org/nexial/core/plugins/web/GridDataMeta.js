@@ -23,4 +23,4 @@ return 'tag=' + elem.tagName.toLowerCase() + recSep +
        'alt=' + (elem.getAttribute('alt') || '') + recSep +
        'src=' + (elem.getAttribute('src') || '') + recSep +
        'checked=' + (elem.hasAttribute('checked') ? 'true' : 'false') + recSep +
-       'selected=' + (getSelectedOptions(elem)) + recSep;
+       'selected=' + (getSelectedOptions(elem));

@@ -6,4 +6,4 @@ if (!elem) { return ''; }
 var recSep = arguments[1] || '#$#';
 
 return 'top=' + elem.offsetTop + recSep +
-       'height=' + elem.offsetHeight + recSep;
+       'height=' + elem.offsetHeight;

@@ -802,6 +802,8 @@ public class WebCommand extends BaseCommand implements CanTakeScreenshot, CanLog
         return tableHelper.saveDivsAsCsv(headers, rows, cells, nextPage, file);
     }
 
+    public StepResult saveISTDivsAsCsv(String config, String file) { return tableHelper.saveISTDivsAsCsv(config,file); }
+
     public StepResult assertValue(String locator, String value) {
         assertEquals(value, getValue(locator));
         return StepResult.success();

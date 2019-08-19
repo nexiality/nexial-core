@@ -21,8 +21,8 @@ import com.univocity.parsers.csv.CsvWriter
 import com.univocity.parsers.csv.CsvWriterSettings
 import org.apache.commons.collections4.CollectionUtils
 import org.apache.commons.collections4.map.ListOrderedMap
-import org.apache.commons.lang3.NotImplementedException
 import org.apache.commons.lang3.StringUtils
+import org.apache.commons.lang3.math.NumberUtils
 import org.nexial.commons.utils.FileUtil
 import org.nexial.commons.utils.ResourceUtils
 import org.nexial.commons.utils.TextUtils
@@ -31,12 +31,13 @@ import org.nexial.core.NexialConst.Data.SaveGridAsCSV.*
 import org.nexial.core.SystemVariables.getDefault
 import org.nexial.core.SystemVariables.getDefaultBool
 import org.nexial.core.model.StepResult
-import org.nexial.core.utils.CheckUtils.requiresNotBlank
-import org.nexial.core.utils.CheckUtils.requiresPositiveNumber
+import org.nexial.core.utils.CheckUtils.*
 import org.nexial.core.utils.ConsoleUtils
 import org.openqa.selenium.By
 import org.openqa.selenium.JavascriptExecutor
+import org.openqa.selenium.Keys
 import org.openqa.selenium.WebElement
+import org.openqa.selenium.interactions.Actions
 import org.openqa.selenium.support.ui.Select
 import java.io.File
 import java.util.*
@@ -235,126 +236,109 @@ class TableHelper(private val webCommand: WebCommand) {
      * @return StepResult
      */
     fun saveISTDivsAsCsv(config: String, file: String): StepResult {
-        // config:
-        /*
-            header-cell: locator for each header cell (not row)
-            data-row: locator for each data row
-            data-cell: locator for each cell in a data row
-            data-viewport: locator of the viewport for ist data
-            limit: max. number of rows to retrieve
-            nexial.web.saveGrid.*: ... ...
-        */
+        requiresNotBlank(config, "Invalid config", config)
+        requiresNotBlank(file, "Invalid file", file)
 
-        // strategy
-        /*
-            1. collect all header cells, save to csv writer
-            2. figure out all the rows loaded within viewport
-                use `data-row` to get a list of data cells
-                javascript: for every data cell, run `GridDataInspector2.js` (add offset dimension information)
-                keep only those displayed with the height of viewpoint; throw away the rest
-            3. collect data for each found/kept cell, save to csv writer
-            4. focus on first cell of last row
-            5. scroll up to the offsetTop of the first cell of first row
-            6. repeat #2-#5
-        */
+        val configMap = TextUtils.toMap(StringUtils.remove(config, "\r"), "\n", "=")
 
-        // requiresNotBlank(config, "Invalid config", config)
-        // requiresNotBlank(file, "Invalid file", file)
-        //
-        // val configMap = TextUtils.toMap(StringUtils.remove(config, "\r"), "\n", "=")
-        //
-        // // check required configs
-        // requires(configMap.isNotEmpty(), "No valid config found", config)
-        // // requires(configMap.containsKey("header-cell"), "Invalid config; header-cell not found", config)
-        // requires(configMap.containsKey("data-row"), "Invalid config; data-row not found", config)
-        // requires(configMap.containsKey("data-cell"), "Invalid config; data-cell not found", config)
-        // requires(configMap.containsKey("data-viewport"), "Invalid config; data-viewport not found", config)
-        //
-        // val writer = newCsvWriter(file)
-        // val msgPrefix = "Infinite Scrolling DIV"
-        // val context = webCommand.context
-        // val jsExec = webCommand.jsExecutor
-        //
-        // // header
-        // val headerCellsLoc = configMap["header-cell"]
-        // if (StringUtils.isNotBlank(headerCellsLoc) && !context.isNullValue(headerCellsLoc)) {
-        //     writeCsvHeader(msgPrefix, writer, webCommand.findElements(headerCellsLoc))
-        // }
-        //
-        // // viewport
-        // val viewportLoc = configMap["data-viewport"]
-        // val viewport = webCommand.findElements(viewportLoc).firstOrNull()
-        //                ?: return StepResult.fail("Unable to resolve data viewport via '$viewportLoc'")
-        // val viewportMeta = jsElementMeta(jsExec, istDivViewportMeta, viewport)
-        // if (viewportMeta.isEmpty()) return StepResult.fail("Unable to inspect data cell viewpoint via '$viewportLoc'")
-        // val viewportBottomPos = viewportMeta["top"]!!.toInt() + viewportMeta["height"]!!.toInt()
-        // val deepScan = context.getBooleanData(viewportMeta[DEEP_SCAN] ?: DEEP_SCAN, getDefaultBool(DEEP_SCAN))
-        //
-        // var pageCount = 0
-        // var firstRow = ""
-        // val rowLocator = configMap["data-row"]
-        // val cellLocator = configMap["data-cell"]
-        //
-        // while (true) {
-        //     // data rows and cells
-        //     val rows = webCommand.findElements(rowLocator)
-        //     if (rows == null || CollectionUtils.isEmpty(rows)) {
-        //         if (pageCount < 1) ConsoleUtils.log("$msgPrefix does not contain usable data cells")
-        //         break
-        //     }
-        //
-        //     ConsoleUtils.log("$msgPrefix collecting data for page ${pageCount + 1}")
-        //     var hasData = true
-        //
-        //     for (i in rows.indices) {
-        //
-        //         val cellContent = ArrayList<String>()
-        //         val cells: List<WebElement> = rows[i].findElements(webCommand.locatorHelper.findBy(cellLocator, true))
-        //         if (CollectionUtils.isEmpty(cells)) continue
-        //
-        //         cells.forEach { cell ->
-        //             run {
-        //                 // if (cell.isDisplayed) cellContent.add(if (deepScan) resolveDisplayText(cell, false) else csvSafe(cell.text))
-        //                 if (cell.isDisplayed) cellContent.add(if (deepScan) deepScan(cell,
-        //                                                                              false) else csvSafe(cell.text))
-        //             }
-        //         }
-        //         return cellContent
-        //
-        //         // val cellContent = toCellContent(rows[i], cellLocator)
-        //         if (CollectionUtils.isEmpty(cellContent)) {
-        //             writer.writeEmptyRow()
-        //             break
-        //         }
-        //
-        //         if (i == 0) {
-        //             if (pageCount > 0 && StringUtils.equals(firstRow, cellContent.toString())) {
-        //                 // found duplicate... maybe we have reached the end?
-        //                 ConsoleUtils.log("$msgPrefix reached the end of records")
-        //                 hasData = false
-        //                 break
-        //             }
-        //
-        //             // mark first row for comparison against subsequent pages
-        //             firstRow = cellContent.toString()
-        //         }
-        //
-        //         writer.writeRow(cellContent)
-        //     }
-        //
-        //     if (!hasData) break
-        //
-        //     pageCount++
-        //
-        //     if (!clickNextPage(nextPageLocator)) break
-        // }
-        //
-        // writer.flush()
-        // writer.close()
-        //
-        // return StepResult.success("$msgPrefix scanned and written to $file")
+        // check required configs
+        requires(configMap.isNotEmpty(), "No valid config found", config)
+        requires(configMap.containsKey("data-row"), "Invalid config; data-row not found", config)
+        requires(configMap.containsKey("data-cell"), "Invalid config; data-cell not found", config)
+        requires(configMap.containsKey("data-viewport"), "Invalid config; data-viewport not found", config)
 
-        throw  NotImplementedException("no done")
+        val writer = newCsvWriter(file)
+        val msgPrefix = "Infinite Scrolling DIV"
+        val context = webCommand.context
+        val jsExec = webCommand.jsExecutor
+        val webDriver = webCommand.driver
+
+        // header
+        val headerCellsLoc = configMap["header-cell"]
+        if (StringUtils.isNotBlank(headerCellsLoc) && !context.isNullValue(headerCellsLoc)) {
+            writeCsvHeader(msgPrefix, writer, webCommand.findElements(headerCellsLoc))
+        }
+
+        // viewport
+        val viewportLoc = configMap["data-viewport"]
+        val viewport = webCommand.findElements(viewportLoc).firstOrNull()
+                       ?: return StepResult.fail("Unable to resolve data viewport via '$viewportLoc'")
+        val viewportMeta = jsElementMeta(jsExec, istDivViewportMeta, viewport)
+        if (viewportMeta.isEmpty()) return StepResult.fail("Unable to inspect data cell viewport via '$viewportLoc'")
+        if (!NumberUtils.isDigits(viewportMeta["top"]) || !NumberUtils.isDigits(viewportMeta["height"]))
+            return StepResult.fail("Unable to inspect data cell viewport location via '$viewportLoc'")
+        val viewportTop = (viewportMeta["top"] ?: error("No viewport location via '$viewportLoc'")).toInt()
+        val viewportBottom = viewportTop +
+                             (viewportMeta["height"] ?: error("No viewport location via '$viewportLoc'")).toInt()
+
+        // reusable configs
+        val deepScan = context.getBooleanData(viewportMeta[DEEP_SCAN] ?: DEEP_SCAN, getDefaultBool(DEEP_SCAN))
+        val rowLocator = configMap["data-row"]
+        val cellLocator = configMap["data-cell"]
+        val limit = (configMap["limit"] ?: "-1").toInt()
+
+        ConsoleUtils.log("$msgPrefix collecting data")
+        var scannedRowCount = 0
+        var dataRowCount = 0
+
+        while (true) {
+
+            var nextFirstRow: WebElement? = null
+            val rows = webCommand.findElements(rowLocator)
+
+            for (i in rows.indices) {
+                val row = rows[i]
+
+                // after scrolling to the next set of visible rows, we need to make sure we start from the last row
+                // that was outside the viewport area (i.e. `nextFirstRow`)
+                if (nextFirstRow != null && row != nextFirstRow) continue
+
+                val rowLocation = row.location
+                if (rowLocation.y >= viewportBottom) {
+                    // this one is outside of viewport... time to scroll
+                    nextFirstRow = row
+                    Actions(webDriver)
+                        .moveToElement(nextFirstRow)
+                        .click(nextFirstRow)
+                        .sendKeys(nextFirstRow, Keys.PAGE_DOWN)
+                        .pause(2000)
+                        .build().perform()
+                    break
+                }
+
+                // this one is within viewport... track this as the last-known viewable row
+                ConsoleUtils.log("$msgPrefix scanning row $scannedRowCount")
+                scannedRowCount++
+
+                val cells: List<WebElement> = row.findElements(webCommand.locatorHelper.findBy(cellLocator, true))
+                if (CollectionUtils.isNotEmpty(cells)) {
+                    val cellContent = ArrayList<String>()
+                    cells.forEach {
+                        run {
+                            if (it.isDisplayed)
+                                cellContent.add(if (deepScan) deepScan(it, false, viewportMeta) else csvSafe(it.text))
+                        }
+                    }
+
+                    // no data? don't worry, move on
+                    if (CollectionUtils.isEmpty(cellContent))
+                        writer.writeEmptyRow()
+                    else {
+                        dataRowCount++
+                        writer.writeRow(cellContent)
+                        if (limit != -1 && dataRowCount >= limit) break
+                    }
+                }
+            }
+
+            break
+        }
+
+        writer.flush()
+        writer.close()
+
+        if (scannedRowCount == 0) return StepResult.fail("$msgPrefix DOES NOT contain usable data")
+        return StepResult.success("$msgPrefix $scannedRowCount rows scanned and written to $file")
     }
 
     fun assertTable(locator: String, row: String, column: String, text: String): StepResult {
@@ -426,7 +410,7 @@ class TableHelper(private val webCommand: WebCommand) {
      * @param cell WebElement
      * @return String
      */
-    private fun deepScan(cell: WebElement, isHeader: Boolean): String {
+    private fun deepScan(cell: WebElement, isHeader: Boolean, configMap: Map<String, String> = emptyMap()): String {
         val cellText = cell.text
 
         // no newline means the cell probably doesn't contain <SELECT> or <TEXTAREA>
@@ -438,17 +422,20 @@ class TableHelper(private val webCommand: WebCommand) {
 
         val jsExec = webCommand.jsExecutor
         val context = webCommand.context
+        val headerImage = configMap[HEADER_IMAGE] ?: context.getStringData(HEADER_IMAGE, getDefault(HEADER_IMAGE))
+        val dataImage = configMap[DATA_IMAGE] ?: context.getStringData(DATA_IMAGE, getDefault(DATA_IMAGE))
+        val headerInput = configMap[HEADER_INPUT] ?: context.getStringData(HEADER_INPUT, getDefault(HEADER_INPUT))
+        val dataInput = configMap[DATA_INPUT] ?: context.getStringData(DATA_INPUT, getDefault(DATA_INPUT))
 
         val metaMap = jsElementMeta(jsExec, gridDataMeta, inputs[0])
         // <SELECT> element will exhibit newline in it's text representation. So if we are not dealing with
         // <SELECT> then `cellText` should be returned as this point
-        if (metaMap.isEmpty() || metaMap["tag"] != "select") return csvSafe(cellText)
+        if (metaMap.isEmpty() || (StringUtils.isNotEmpty(cellText) && metaMap["tag"] != "select"))
+            return csvSafe(cellText)
 
         return csvSafe(
             if (metaMap["tag"] == "img") {
-                val imageOption = ImageOptions.valueOf(
-                    if (isHeader) context.getStringData(HEADER_IMAGE, getDefault(HEADER_IMAGE))
-                    else context.getStringData(DATA_IMAGE, getDefault(DATA_IMAGE)))
+                val imageOption = ImageOptions.valueOf(if (isHeader) headerImage else dataImage)
                 when (imageOption) {
                     ImageOptions.filename -> {
                         val src = metaMap["src"] ?: return ""
@@ -459,9 +446,7 @@ class TableHelper(private val webCommand: WebCommand) {
                     else                  -> StringUtils.defaultString(metaMap[imageOption.toString()])
                 }
             } else {
-                val dataOption = InputOptions.valueOf(
-                    if (isHeader) context.getStringData(HEADER_INPUT, getDefault(HEADER_INPUT))
-                    else context.getStringData(DATA_INPUT, getDefault(DATA_INPUT)))
+                val dataOption = InputOptions.valueOf(if (isHeader) headerInput else dataInput)
                 if (metaMap["tag"] == "select")
                     if (dataOption == InputOptions.state || dataOption == InputOptions.value)
                         TextUtils.toString(StringUtils.split(metaMap["selected"], "\n"), context.textDelim, "", "")
