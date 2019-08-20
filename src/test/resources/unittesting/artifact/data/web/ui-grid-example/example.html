@@ -13,6 +13,7 @@
   <script src="excel-builder.dist.js"></script>
   <script src="ui-grid.js"></script>
   <script src="500_complex.js"></script>
+
   <link rel="stylesheet" href="ui-grid.css" type="text/css">
   <style>
     body {
@@ -36,6 +37,7 @@
 
     .ui-grid-cell { height: 35px !important; }
   </style>
+
   <script>
     angular.module('app', ['ngAnimate', 'ngTouch', 'ui.grid', 'ui.grid.edit'])
            .controller('MainCtrl', MainCtrl)
@@ -44,110 +46,48 @@
     MainCtrl.$inject = ['$http', 'uiGridConstants'];
 
     function MainCtrl($http, uiGridConstants) {
-      var vm       = this;
-      var today    = new Date();
-      var nextWeek = new Date();
-      nextWeek.setDate(nextWeek.getDate() + 7);
+      var vm    = this;
+      var today = new Date();
+      // var nextWeek = new Date();
+      // nextWeek.setDate(nextWeek.getDate() + 7);
 
       vm.highlightFilteredHeader = function (row, rowRenderIndex, col, colRenderIndex) {
         if (col.filters[0].term) { return 'header-filtered'; } else { return ''; }
       };
 
       vm.gridOptions = {
-        enableFiltering: true,
-        onRegisterApi:   function (gridApi) { vm.gridApi = gridApi; },
-        columnDefs:      [
-          // default
-          { field: 'name', headerCellClass: vm.highlightFilteredHeader },
-          // pre-populated search field
+        onRegisterApi: function (gridApi) { vm.gridApi = gridApi; },
+        columnDefs:    [
+          {field: 'name', headerCellClass: vm.highlightFilteredHeader},
+          {field: 'gender', headerCellClass: vm.highlightFilteredHeader},
+          {field: 'company'},
           {
-              field:      'gender', filter: {
-              term:          '1',
-              type:          uiGridConstants.filter.SELECT,
-              selectOptions: [
-                {value: '1', label: 'male'},
-                {value: '2', label: 'female'},
-                {value: '3', label: 'unknown'},
-                {value: '4', label: 'not stated'},
-                {value: '5', label: 'a really long value that extends things'}
-              ]
-            },
-            cellFilter: 'mapGender', headerCellClass: vm.highlightFilteredHeader
-          },
-          // no filter input
-          {
-            field: 'company', enableFiltering: false, filter: {
-              noTerm:    true,
-              condition: function (searchTerm, cellValue) {
-                return cellValue.match(/a/);
-              }
-            }
-          },
-          // specifies one of the built-in conditions
-          // and a placeholder for the input
-          {
-            width:        '200',
-            cellTemplate: '<div class="ui-grid-cell-contents input_email"><input type="text" name="email" class="input_email" value="{{ COL_FIELD }}"></div>',
-
-            field:              'email',
-            filter:             {
-              condition:   uiGridConstants.filter.ENDS_WITH,
-              placeholder: 'ends with'
-            }, headerCellClass: vm.highlightFilteredHeader
-          },
-          // custom condition function
-          {
-            field:              'phone',
-            filter:             {
-              condition: function (searchTerm, cellValue) {
-                var strippedValue = (cellValue + '').replace(/[^\d]/g, '');
-                return strippedValue.indexOf(searchTerm) >= 0;
-              }
-            }, headerCellClass: vm.highlightFilteredHeader
-          },
-          // multiple filters
-          {
-            field:              'age',
-            filters: [
-              { condition:   uiGridConstants.filter.GREATER_THAN,  placeholder: 'greater than' },
-              { condition:   uiGridConstants.filter.LESS_THAN, placeholder: 'less than' }
-            ], headerCellClass: vm.highlightFilteredHeader
-          },
-          // date filter
-          {
-            field:           'mixedDate',
-            cellFilter:      'date',
             width:           '200',
-            filter:          {
-              condition:   uiGridConstants.filter.LESS_THAN,
-              placeholder: 'less than',
-              term:        nextWeek
-            },
+            cellTemplate:    '<div class="ui-grid-cell-contents input_email"><input type="text" name="email" class="input_email" value="{{ COL_FIELD }}"></div>',
+            field:           'email',
             headerCellClass: vm.highlightFilteredHeader
           },
+          {field: 'phone', headerCellClass: vm.highlightFilteredHeader},
+          {field: 'age', headerCellClass: vm.highlightFilteredHeader},
           {
-            field:              'mixedDate',
-            displayName:        'Long Date',
-            cellFilter:         'date:"longDate"',
-            filterCellFiltered: true,
-            width:              '140'
-          }
+            field:           'mixedDate',
+            width:           '200',
+            headerCellClass: vm.highlightFilteredHeader,
+            cellFilter:      'date:"shortDate"'
+          },
+          {field: 'mixedDate', displayName: 'Long Date', width: '140', cellFilter: 'date:"longDate"'}
         ]
       };
 
-      vm.gridOptions.data        = MyJsonData;
-      vm.gridOptions.data[0].age = -5;
+      console.log('my json data has ' + MyJsonData.length + ' rows');
+      vm.gridOptions.data = MyJsonData;
+      // vm.gridOptions.data[0].age = -5;
 
       MyJsonData.forEach(function addDates(row, index) {
+        console.log(row.name);
         row.mixedDate = new Date();
         row.mixedDate.setDate(today.getDate() + (index % 14));
-        row.gender = row.gender === 'male' ? '1' : '2';
       });
-
-      vm.toggleFiltering = function () {
-        vm.gridOptions.enableFiltering = !vm.gridOptions.enableFiltering;
-        vm.gridApi.core.notifyDataChange(uiGridConstants.dataChange.COLUMN);
-      };
     }
 
     function mapGender() {
@@ -169,14 +109,12 @@
 </head>
 <body>
 <div ng-controller="MainCtrl as $ctrl">
+  <h3>Example:</h3>
   You can use asterisks to fuzz-match, i.e. use "*z*" as your filter to show any row where that column contains a "z".
-  <br>
-  <br>
-  <strong>Note:</strong> The third column has the filter input disabled, but actually has a filter set in code that
-  requires every company to have an 'a' in their name.
-  <br>
-  <br>
-  <button id='toggleFiltering' ng-click="$ctrl.toggleFiltering()" class="btn btn-success">Toggle Filtering</button>
+  <br/>
+  <br/>
+  <!--<button id='toggleFiltering' ng-click="$ctrl.toggleFiltering()" class="btn btn-success">Toggle Filtering</button>-->
+  <br/>
   <div id="grid1" ui-grid="$ctrl.gridOptions" class="grid"></div>
 </div>
 </body>

@@ -168,6 +168,7 @@ public final class NexialConst {
 
     // control verbosity of multi-step commands
     public static final String OPT_ELAPSED_TIME_SLA = registerSystemVariable(NAMESPACE + "elapsedTimeSLA");
+    public static final String OPT_LAST_ELAPSED_TIME = registerSystemVariable(NAMESPACE + "lastElapsedTime");
 
     // allow per-run override for the output directory name
     // nexial.runID is set by castle via Jenkin internal BUILD_ID variable, which reflects build time in

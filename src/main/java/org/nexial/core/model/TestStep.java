@@ -606,6 +606,7 @@ public class TestStep extends TestStepManifest {
     protected boolean updateElapsedTime(long elapsedTime, boolean violateSLA) {
         XSSFCell cellElapsedTime = row.get(COL_IDX_ELAPSED_MS);
         cellElapsedTime.setCellValue(elapsedTime);
+        context.setData(OPT_LAST_ELAPSED_TIME, elapsedTime);
         if (violateSLA) {
             cellElapsedTime.setCellStyle(worksheet.getStyle(STYLE_ELAPSED_MS_BAD_SLA));
             return false;
