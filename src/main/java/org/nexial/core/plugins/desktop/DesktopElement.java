@@ -37,6 +37,8 @@ import org.nexial.core.model.ExecutionContext;
 import org.nexial.core.model.StepResult;
 import org.nexial.core.utils.CheckUtils;
 import org.nexial.core.utils.ConsoleUtils;
+import org.nexial.core.utils.NativeInputHelper;
+import org.nexial.core.utils.NativeInputParser;
 import org.nexial.seeknow.SeeknowData;
 import org.openqa.selenium.By;
 import org.openqa.selenium.InvalidElementStateException;
@@ -1613,19 +1615,27 @@ public class DesktopElement {
     protected StepResult typeTextComponent(boolean useSendKeys, boolean append, String... text) {
         requires(ArrayUtils.isNotEmpty(text), "at least one text parameter is required");
 
-        if (append) {
-            String shortcuts = forceShortcutSyntax("[CTRL-END]") + joinShortcuts(text);
-            if (StringUtils.isNotEmpty(shortcuts)) {
-                try {
-                    driver.executeScript(SCRIPT_PREFIX_SHORTCUT + shortcuts, element);
-                } catch (WebDriverException e) {
-                    ConsoleUtils.error("Error when typing'" + ArrayUtils.toString(text) + "' on '" + label + "': " +
-                                       e.getMessage());
-                }
-            }
+        ExecutionContext context = ExecutionThread.get();
+        if (context != null && context.getBooleanData(DESKTOP_USE_TYPE_KEYS, DEF_DESKTOP_USE_TYPE_KEYS)) {
+            String keystrokes = (append ? "[CTRL-END]\n" : "") + TextUtils.toString(text, "\n", "", "");
+            keystrokes = NativeInputParser.handleKeys(keystrokes);
+            NativeInputHelper.typeKeys(TextUtils.toList(StringUtils.remove(keystrokes, "\r"), "\n", false));
         } else {
-            // join text into 1 string, parse the entire combined string and loop through each token to type
-            parseTextInputWithShortcuts(TextUtils.toString(text, "", "", "")).forEach(txt -> type(txt, useSendKeys));
+            if (append) {
+                String shortcuts = forceShortcutSyntax("[CTRL-END]") + joinShortcuts(text);
+                if (StringUtils.isNotEmpty(shortcuts)) {
+                    try {
+                        driver.executeScript(SCRIPT_PREFIX_SHORTCUT + shortcuts, element);
+                    } catch (WebDriverException e) {
+                        ConsoleUtils.error("Error when typing'" + ArrayUtils.toString(text) + "' on '" + label + "': " +
+                                           e.getMessage());
+                    }
+                }
+            } else {
+                // join text into 1 string, parse the entire combined string and loop through each token to type
+                parseTextInputWithShortcuts(TextUtils.toString(text, "", "", ""))
+                    .forEach(txt -> type(txt, useSendKeys));
+            }
         }
 
         autoClearModalDialog();

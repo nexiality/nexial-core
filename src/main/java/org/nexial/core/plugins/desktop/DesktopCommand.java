@@ -340,6 +340,23 @@ public class DesktopCommand extends BaseCommand implements ForcefulTerminate, Ca
         return new StepResult(found, "Element '" + name + "' " + (found ? "" : "NOT ") + "found", null);
     }
 
+    public StepResult assertElementNotPresent(String name) {
+        requiresNotBlank(name, "Invalid name/label", name);
+
+        boolean found;
+        try {
+            found = getRequiredElement(name, Any) != null;
+        } catch (AssertionError | Exception e) {
+            found = false;
+        }
+
+        return new StepResult(!found,
+                              found ?
+                              "UNEXPECTED element '" + name + "' found" :
+                              "element '" + name + "' not found, as expected",
+                              null);
+    }
+
     public StepResult assertEnabled(String name) {
         requiresNotBlank(name, "Invalid name/label", name);
         DesktopElement component = getRequiredElement(name, Any);
@@ -1465,7 +1482,7 @@ public class DesktopCommand extends BaseCommand implements ForcefulTerminate, Ca
 
         DesktopSession session = getCurrentSession();
         if (session == null) {
-            WiniumUtils.shutdownWinium(null, getDriver());
+            WiniumUtils.shutdownWinium(null, winiumDriver);
             winiumDriver = null;
             return StepResult.success();
         }

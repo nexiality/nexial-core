@@ -151,7 +151,7 @@ object NativeInputHelper {
 internal object KeystrokeParser {
     internal val MODIFIERS =
         mapOf("{SHIFT}" to VK_SHIFT,
-              "{CONTROL}" to VK_CONTROL,
+              "{CONTROL}" to VK_CONTROL, "{CTRL}" to VK_CONTROL,
               "{ALT}" to VK_ALT, "{OPTION}" to VK_ALT,
               "{WINDOWS}" to VK_WINDOWS, "{WIN}" to VK_WINDOWS,
               "{CONTEXT}" to VK_CONTEXT_MENU,
@@ -162,14 +162,15 @@ internal object KeystrokeParser {
               "{F1}" to VK_F1, "{F2}" to VK_F2, "{F3}" to VK_F3, "{F4}" to VK_F4, "{F5}" to VK_F5,
               "{F6}" to VK_F6, "{F7}" to VK_F7, "{F8}" to VK_F8, "{F9}" to VK_F9, "{F10}" to VK_F10,
               "{F11}" to VK_F11, "{F12}" to VK_F12,
-              "{PRINTSCREEN}" to VK_PRINTSCREEN, "{PRNTSCN}" to VK_PRINTSCREEN,
+              "{PRINTSCREEN}" to VK_PRINTSCREEN, "{PRNTSCN}" to VK_PRINTSCREEN, "{PRTSC}" to VK_PRINTSCREEN,
               "{SCROLL_LOCK}" to VK_SCROLL_LOCK,
               "{PAUSE}" to VK_PAUSE,
 
               "{BACKSPACE}" to VK_BACK_SPACE, "{BKSP}" to VK_BACK_SPACE,
               "{INSERT}" to VK_INSERT,
               "{DELETE}" to VK_DELETE, "{DEL}" to VK_DELETE,
-              "{HOME}" to VK_HOME, "{END}" to VK_END, "{PAGEUP}" to VK_PAGE_UP, "{PAGEDOWN}" to VK_PAGE_DOWN,
+              "{HOME}" to VK_HOME, "{END}" to VK_END,
+              "{PAGEUP}" to VK_PAGE_UP, "{PAGEDOWN}" to VK_PAGE_DOWN, "{PGUP}" to VK_PAGE_UP, "{PGDN}" to VK_PAGE_DOWN,
               "{UP}" to VK_UP, "{DOWN}" to VK_DOWN, "{LEFT}" to VK_LEFT, "{RIGHT}" to VK_RIGHT,
               "{NUMLOCK}" to VK_NUM_LOCK,
               "{TAB}" to VK_TAB,

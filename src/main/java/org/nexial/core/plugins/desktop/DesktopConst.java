@@ -76,6 +76,9 @@ public class DesktopConst {
     public static final String DESKTOP_DIALOG_LOOKUP = NS_DESKTOP + "dialogLookup";
     public static final boolean DEF_DESKTOP_DIALOG_LOOKUP = false;
 
+    public static final String DESKTOP_USE_TYPE_KEYS = NS_DESKTOP + "useTypeKeys";
+    public static final boolean DEF_DESKTOP_USE_TYPE_KEYS = false;
+
     public static final String DEF_CONFIG_HOME = "/desktop/";
     public static final String DEF_CONFIG_FILENAME = "application.json";
     public static final String OPT_CONFIG_LOCATION_PREFIX = NS_DESKTOP + "config.";
