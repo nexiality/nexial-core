@@ -21,8 +21,8 @@ import com.univocity.parsers.csv.CsvWriter
 import com.univocity.parsers.csv.CsvWriterSettings
 import org.apache.commons.collections4.CollectionUtils
 import org.apache.commons.collections4.map.ListOrderedMap
+import org.apache.commons.lang3.BooleanUtils
 import org.apache.commons.lang3.StringUtils
-import org.apache.commons.lang3.math.NumberUtils
 import org.nexial.commons.utils.FileUtil
 import org.nexial.commons.utils.ResourceUtils
 import org.nexial.commons.utils.TextUtils
@@ -30,14 +30,13 @@ import org.nexial.core.NexialConst.DEF_FILE_ENCODING
 import org.nexial.core.NexialConst.Data.SaveGridAsCSV.*
 import org.nexial.core.SystemVariables.getDefault
 import org.nexial.core.SystemVariables.getDefaultBool
+import org.nexial.core.model.ExecutionContext
 import org.nexial.core.model.StepResult
 import org.nexial.core.utils.CheckUtils.*
 import org.nexial.core.utils.ConsoleUtils
 import org.openqa.selenium.By
 import org.openqa.selenium.JavascriptExecutor
-import org.openqa.selenium.Keys
 import org.openqa.selenium.WebElement
-import org.openqa.selenium.interactions.Actions
 import org.openqa.selenium.support.ui.Select
 import java.io.File
 import java.util.*
@@ -69,7 +68,8 @@ class TableHelper(private val webCommand: WebCommand) {
                                                                          "\r " to " ",
                                                                          "\t " to " "))
     private val gridDataMeta = ResourceUtils.loadResource("/org/nexial/core/plugins/web/GridDataMeta.js")
-    private val istDivViewportMeta = ResourceUtils.loadResource("/org/nexial/core/plugins/web/ISTDivViewportMeta.js")
+    // private val istDivViewportMeta = ResourceUtils.loadResource("/org/nexial/core/plugins/web/ISTDivViewportMeta.js")
+    private val collectISTGrid = ResourceUtils.loadResource("/org/nexial/core/plugins/web/CollectISTGrid.js")
     private val metaRecSep = "#$#"
 
     fun saveDivsAsCsv(headerCellsLoc: String,
@@ -243,17 +243,16 @@ class TableHelper(private val webCommand: WebCommand) {
 
         // check required configs
         requires(configMap.isNotEmpty(), "No valid config found", config)
-        requires(configMap.containsKey("data-row"), "Invalid config; data-row not found", config)
-        requires(configMap.containsKey("data-cell"), "Invalid config; data-cell not found", config)
         requires(configMap.containsKey("data-viewport"), "Invalid config; data-viewport not found", config)
+        requires(configMap.containsKey("data-row-xpath"), "Invalid config; data-row not found", config)
+        requires(configMap.containsKey("data-cell-xpath"), "Invalid config; data-cell not found", config)
 
-        val writer = newCsvWriter(file)
         val msgPrefix = "Infinite Scrolling DIV"
+        val writer = newCsvWriter(file)
         val context = webCommand.context
         val jsExec = webCommand.jsExecutor
-        val webDriver = webCommand.driver
 
-        // header
+        // header (not required)
         val headerCellsLoc = configMap["header-cell"]
         if (StringUtils.isNotBlank(headerCellsLoc) && !context.isNullValue(headerCellsLoc)) {
             writeCsvHeader(msgPrefix, writer, webCommand.findElements(headerCellsLoc))
@@ -263,82 +262,108 @@ class TableHelper(private val webCommand: WebCommand) {
         val viewportLoc = configMap["data-viewport"]
         val viewport = webCommand.findElements(viewportLoc).firstOrNull()
                        ?: return StepResult.fail("Unable to resolve data viewport via '$viewportLoc'")
-        val viewportMeta = jsElementMeta(jsExec, istDivViewportMeta, viewport)
-        if (viewportMeta.isEmpty()) return StepResult.fail("Unable to inspect data cell viewport via '$viewportLoc'")
-        if (!NumberUtils.isDigits(viewportMeta["top"]) || !NumberUtils.isDigits(viewportMeta["height"]))
-            return StepResult.fail("Unable to inspect data cell viewport location via '$viewportLoc'")
-        val viewportTop = (viewportMeta["top"] ?: error("No viewport location via '$viewportLoc'")).toInt()
-        val viewportBottom = viewportTop +
-                             (viewportMeta["height"] ?: error("No viewport location via '$viewportLoc'")).toInt()
 
         // reusable configs
-        val deepScan = context.getBooleanData(viewportMeta[DEEP_SCAN] ?: DEEP_SCAN, getDefaultBool(DEEP_SCAN))
-        val rowLocator = configMap["data-row"]
-        val cellLocator = configMap["data-cell"]
+        val rowLocator = configMap["data-row-xpath"]
+        val cellLocator = configMap["data-cell-xpath"]
+        val deepScan = resolveConfigBoolean(configMap, context, DEEP_SCAN)
         val limit = (configMap["limit"] ?: "-1").toInt()
 
         ConsoleUtils.log("$msgPrefix collecting data")
-        var scannedRowCount = 0
-        var dataRowCount = 0
+        jsExec.executeScript(collectISTGrid, viewport, rowLocator, cellLocator, deepScan, limit)
 
-        while (true) {
+        // wait for script to finish
+        var collectionInProgress: Any = "true"
+        while (Objects.toString(collectionInProgress) == "true") {
+            Thread.sleep(500)
+            collectionInProgress = jsExec.executeScript("return collectionInProgress;")
+        }
 
-            var nextFirstRow: WebElement? = null
-            val rows = webCommand.findElements(rowLocator)
+        val gridData = jsExec.executeScript("return collectionResults;")
+                       ?: return StepResult.fail("Unable to retrieve any grid data")
 
-            for (i in rows.indices) {
-                val row = rows[i]
+        val gridDataList = mutableListOf<List<Map<String, String>>>()
 
-                // after scrolling to the next set of visible rows, we need to make sure we start from the last row
-                // that was outside the viewport area (i.e. `nextFirstRow`)
-                if (nextFirstRow != null && row != nextFirstRow) continue
+        val gridDataMap: Map<*, *> = gridData as Map<*, *>
+        if (gridDataMap.isEmpty() || !gridDataMap.containsKey("data") || gridDataMap["data"] !is List<*>)
+            return StepResult.fail("No grid data found")
 
-                val rowLocation = row.location
-                if (rowLocation.y >= viewportBottom) {
-                    // this one is outside of viewport... time to scroll
-                    nextFirstRow = row
-                    Actions(webDriver)
-                        .moveToElement(nextFirstRow)
-                        .click(nextFirstRow)
-                        .sendKeys(nextFirstRow, Keys.PAGE_DOWN)
-                        .pause(2000)
-                        .build().perform()
-                    break
-                }
+        val gridDataArray = gridDataMap["data"] as List<*>
+        gridDataArray.forEach { rowData ->
+            if (rowData is List<*>) gridDataList.add(rowData.map { it as Map<String, String> }.toList())
+        }
 
-                // this one is within viewport... track this as the last-known viewable row
-                ConsoleUtils.log("$msgPrefix scanning row $scannedRowCount")
-                scannedRowCount++
+        println("gridData = $gridDataList")
 
-                val cells: List<WebElement> = row.findElements(webCommand.locatorHelper.findBy(cellLocator, true))
-                if (CollectionUtils.isNotEmpty(cells)) {
-                    val cellContent = ArrayList<String>()
-                    cells.forEach {
-                        run {
-                            if (it.isDisplayed)
-                                cellContent.add(if (deepScan) deepScan(it, false, viewportMeta) else csvSafe(it.text))
-                        }
-                    }
+        val dataImage = resolveConfig(configMap, context, DATA_IMAGE)
+        val dataInput = resolveConfig(configMap, context, DATA_INPUT)
+        var rowCount = 0
 
-                    // no data? don't worry, move on
-                    if (CollectionUtils.isEmpty(cellContent))
-                        writer.writeEmptyRow()
+        gridDataList.forEach {
+            val cellContent = ArrayList<String>()
+            it.forEach { row ->
+                run {
+                    val cellText = row["text"] ?: ""
+                    if (!deepScan) cellContent.add(csvSafe(cellText))
+                    else if (StringUtils.isNotEmpty(cellText) &&
+                             (!StringUtils.contains(cellText, "\n") || row["tag"] != "select"))
+                        cellContent.add(csvSafe(cellText))
                     else {
-                        dataRowCount++
-                        writer.writeRow(cellContent)
-                        if (limit != -1 && dataRowCount >= limit) break
+                        val tag = row["tag"]
+                        if (tag == "img") {
+                            val imageOption = ImageOptions.valueOf(dataImage)
+                            cellContent.add(
+                                when (imageOption) {
+                                    ImageOptions.filename -> {
+                                        val src = row["src"] ?: ""
+                                        if (StringUtils.contains(src, "/"))
+                                            StringUtils.substringAfterLast(src, "/")
+                                        else
+                                            src
+                                    }
+
+                                    ImageOptions.type     -> "image"
+                                    else                  -> StringUtils.defaultString(row[imageOption.toString()])
+                                })
+                        } else {
+                            val dataOption = InputOptions.valueOf(dataInput)
+                            cellContent.add(
+                                if (tag == "select")
+                                    if (dataOption == InputOptions.state || dataOption == InputOptions.value)
+                                        TextUtils.toString(StringUtils.split(row["selected"], "\n"),
+                                                           context.textDelim,
+                                                           "",
+                                                           "")
+                                    else
+                                        StringUtils.defaultString(row[dataOption.toString()])
+                                else if (dataOption == InputOptions.state)
+                                    when (row["type"]) {
+                                        "checkbox" -> if (StringUtils.equals(row["checked"], "true")) "checked"
+                                        else "unchecked"
+                                        "radio"    -> if (StringUtils.equals(row["checked"], "true")) "selected"
+                                        else "unselected"
+                                        else       -> StringUtils.defaultString(row["value"])
+                                    }
+                                else
+                                    StringUtils.defaultString(row[dataOption.toString()]))
+                        }
                     }
                 }
             }
 
-            break
+            if (cellContent.isEmpty())
+                writer.writeEmptyRow()
+            else {
+                rowCount++
+                writer.writeRow(cellContent)
+            }
         }
 
         writer.flush()
         writer.close()
 
-        if (scannedRowCount == 0) return StepResult.fail("$msgPrefix DOES NOT contain usable data")
-        return StepResult.success("$msgPrefix $scannedRowCount rows scanned and written to $file")
+        if (rowCount == 0) return StepResult.fail("$msgPrefix DOES NOT contain usable data")
+        return StepResult.success("$msgPrefix $rowCount rows scanned and written to $file")
     }
 
     fun assertTable(locator: String, row: String, column: String, text: String): StepResult {
@@ -461,6 +486,20 @@ class TableHelper(private val webCommand: WebCommand) {
                 else
                     StringUtils.defaultString(metaMap[dataOption.toString()])
             })
+    }
+
+    private fun resolveConfigBoolean(configMap: MutableMap<String, String>,
+                                     context: ExecutionContext,
+                                     key: String): Boolean {
+        return if (configMap.containsKey(key)) {
+            BooleanUtils.toBoolean(configMap[key])
+        } else {
+            context.getBooleanData(key, getDefaultBool(key))
+        }
+    }
+
+    private fun resolveConfig(configMap: MutableMap<String, String>, context: ExecutionContext, key: String): String {
+        return configMap[key] ?: context.getStringData(key, getDefault(key))
     }
 
     private fun jsElementMeta(jsExec: JavascriptExecutor, script: String, element: WebElement): Map<String, String> =
