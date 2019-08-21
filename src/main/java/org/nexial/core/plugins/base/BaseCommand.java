@@ -45,6 +45,7 @@ import org.apache.commons.lang3.tuple.Pair;
 import org.nexial.commons.utils.FileUtil;
 import org.nexial.commons.utils.JRegexUtils;
 import org.nexial.commons.utils.RegexUtils;
+import org.nexial.commons.utils.ResourceUtils;
 import org.nexial.commons.utils.TextUtils;
 import org.nexial.core.ExecutionThread;
 import org.nexial.core.TokenReplacementException;
@@ -55,6 +56,7 @@ import org.nexial.core.model.StepResult;
 import org.nexial.core.model.TestStep;
 import org.nexial.core.plugins.CanLogExternally;
 import org.nexial.core.plugins.NexialCommand;
+import org.nexial.core.plugins.ws.WsCommand;
 import org.nexial.core.tools.CommandDiscovery;
 import org.nexial.core.utils.CheckUtils;
 import org.nexial.core.utils.ConsoleUtils;
@@ -65,6 +67,7 @@ import static java.lang.Boolean.FALSE;
 import static java.lang.Boolean.TRUE;
 import static java.lang.System.lineSeparator;
 import static java.util.regex.Pattern.CASE_INSENSITIVE;
+import static org.apache.commons.lang3.SystemUtils.JAVA_IO_TMPDIR;
 import static org.nexial.core.NexialConst.*;
 import static org.nexial.core.NexialConst.Data.NULL;
 import static org.nexial.core.NexialConst.Data.toCloudIntegrationNotReadyMessage;
@@ -844,7 +847,7 @@ public class BaseCommand implements NexialCommand {
             }
         }
 
-        if (context != null && context.getLogger() != null) {
+        if (context != null) {
             TestStep testStep = context.getCurrentTestStep();
             if (testStep != null && testStep.getWorksheet() != null) {
                 // test step undefined could mean that we are in interactive mode, or we are running unit testing
@@ -1390,6 +1393,27 @@ public class BaseCommand implements NexialCommand {
         }
 
         return args;
+    }
+
+    @NotNull
+    protected File resolveFileResource(String resource) throws IOException {
+        if (!ResourceUtils.isWebResource(resource)) { return new File(resource); }
+
+        String target = StringUtils.appendIfMissing(JAVA_IO_TMPDIR, separator) +
+                        StringUtils.substringAfterLast(resource, "/");
+        return WsCommand.saveWebContent(resource, new File(target));
+    }
+
+    @NotNull
+    protected static File resolveSaveTo(String saveTo, String defaultFileName) {
+        File saveFile = new File(saveTo);
+        if (StringUtils.endsWithAny(saveTo, "/", "\\") || saveFile.isDirectory()) {
+            saveFile.mkdirs();
+            return new File(StringUtils.appendIfMissing(saveTo, separator) + defaultFileName);
+        } else {
+            saveFile.getParentFile().mkdirs();
+            return saveFile;
+        }
     }
 
     private static Pair<String, String> displayAligned(List<String> list1, List<String> list2) {

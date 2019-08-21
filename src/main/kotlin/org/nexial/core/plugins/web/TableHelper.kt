@@ -223,9 +223,7 @@ class TableHelper(private val webCommand: WebCommand) {
             FileUtil.removeFileEndLineFeed(targetFile)
         }
 
-        val msg = "$msgPrefix scanned and written to $file"
-        webCommand.addLinkRef(msg, targetFile.name, targetFile.absolutePath)
-        return StepResult.success(msg)
+        return StepResult.success("$msgPrefix scanned and written to $file")
     }
 
     /**
@@ -268,9 +266,10 @@ class TableHelper(private val webCommand: WebCommand) {
         val cellLocator = configMap["data-cell-xpath"]
         val deepScan = resolveConfigBoolean(configMap, context, DEEP_SCAN)
         val limit = (configMap["limit"] ?: "-1").toInt()
+        val waitBetweenScroll = (configMap["waitBetweenScroll"] ?: "600").toInt()
 
         ConsoleUtils.log("$msgPrefix collecting data")
-        jsExec.executeScript(collectISTGrid, viewport, rowLocator, cellLocator, deepScan, limit)
+        jsExec.executeScript(collectISTGrid, viewport, rowLocator, cellLocator, deepScan, limit, waitBetweenScroll)
 
         // wait for script to finish
         var collectionInProgress: Any = "true"
@@ -293,8 +292,6 @@ class TableHelper(private val webCommand: WebCommand) {
             if (rowData is List<*>) gridDataList.add(rowData.map { it as Map<String, String> }.toList())
         }
 
-        println("gridData = $gridDataList")
-
         val dataImage = resolveConfig(configMap, context, DATA_IMAGE)
         val dataInput = resolveConfig(configMap, context, DATA_INPUT)
         var rowCount = 0
@@ -309,43 +306,10 @@ class TableHelper(private val webCommand: WebCommand) {
                              (!StringUtils.contains(cellText, "\n") || row["tag"] != "select"))
                         cellContent.add(csvSafe(cellText))
                     else {
-                        val tag = row["tag"]
-                        if (tag == "img") {
-                            val imageOption = ImageOptions.valueOf(dataImage)
-                            cellContent.add(
-                                when (imageOption) {
-                                    ImageOptions.filename -> {
-                                        val src = row["src"] ?: ""
-                                        if (StringUtils.contains(src, "/"))
-                                            StringUtils.substringAfterLast(src, "/")
-                                        else
-                                            src
-                                    }
-
-                                    ImageOptions.type     -> "image"
-                                    else                  -> StringUtils.defaultString(row[imageOption.toString()])
-                                })
+                        if (row["tag"] == "img") {
+                            cellContent.add(extractImageData(row, ImageOptions.valueOf(dataImage)))
                         } else {
-                            val dataOption = InputOptions.valueOf(dataInput)
-                            cellContent.add(
-                                if (tag == "select")
-                                    if (dataOption == InputOptions.state || dataOption == InputOptions.value)
-                                        TextUtils.toString(StringUtils.split(row["selected"], "\n"),
-                                                           context.textDelim,
-                                                           "",
-                                                           "")
-                                    else
-                                        StringUtils.defaultString(row[dataOption.toString()])
-                                else if (dataOption == InputOptions.state)
-                                    when (row["type"]) {
-                                        "checkbox" -> if (StringUtils.equals(row["checked"], "true")) "checked"
-                                        else "unchecked"
-                                        "radio"    -> if (StringUtils.equals(row["checked"], "true")) "selected"
-                                        else "unselected"
-                                        else       -> StringUtils.defaultString(row["value"])
-                                    }
-                                else
-                                    StringUtils.defaultString(row[dataOption.toString()]))
+                            cellContent.add(extractInputData(context, row, InputOptions.valueOf(dataInput)))
                         }
                     }
                 }
@@ -362,8 +326,13 @@ class TableHelper(private val webCommand: WebCommand) {
         writer.flush()
         writer.close()
 
-        if (rowCount == 0) return StepResult.fail("$msgPrefix DOES NOT contain usable data")
-        return StepResult.success("$msgPrefix $rowCount rows scanned and written to $file")
+        val targetFile = File(file)
+        if (resolveConfigBoolean(configMap, context, END_TRIM)) {
+            ConsoleUtils.log("$msgPrefix trimming off end-of-file line feed...")
+            FileUtil.removeFileEndLineFeed(targetFile)
+        }
+
+        return StepResult.success("$msgPrefix $rowCount scanned and written to $file")
     }
 
     fun assertTable(locator: String, row: String, column: String, text: String): StepResult {
@@ -402,7 +371,6 @@ class TableHelper(private val webCommand: WebCommand) {
             val deepScan = webCommand.context.getBooleanData(DEEP_SCAN, getDefaultBool(DEEP_SCAN))
             val headerNames = ArrayList<String>()
             headers.forEach { header ->
-                // if (header.isDisplayed) headerNames.add(if (deepScan) resolveDisplayText(header, true) else csvSafe(header.text))
                 if (header.isDisplayed) headerNames.add(if (deepScan) deepScan(header, true) else csvSafe(header.text))
             }
             ConsoleUtils.log("$msgPrefix - collected headers: $headerNames")
@@ -421,7 +389,6 @@ class TableHelper(private val webCommand: WebCommand) {
 
         cells.forEach { cell ->
             run {
-                // if (cell.isDisplayed) cellContent.add(if (deepScan) resolveDisplayText(cell, false) else csvSafe(cell.text))
                 if (cell.isDisplayed) cellContent.add(if (deepScan) deepScan(cell, false) else csvSafe(cell.text))
             }
         }
@@ -435,7 +402,7 @@ class TableHelper(private val webCommand: WebCommand) {
      * @param cell WebElement
      * @return String
      */
-    private fun deepScan(cell: WebElement, isHeader: Boolean, configMap: Map<String, String> = emptyMap()): String {
+    private fun deepScan(cell: WebElement, isHeader: Boolean): String {
         val cellText = cell.text
 
         // no newline means the cell probably doesn't contain <SELECT> or <TEXTAREA>
@@ -447,10 +414,10 @@ class TableHelper(private val webCommand: WebCommand) {
 
         val jsExec = webCommand.jsExecutor
         val context = webCommand.context
-        val headerImage = configMap[HEADER_IMAGE] ?: context.getStringData(HEADER_IMAGE, getDefault(HEADER_IMAGE))
-        val dataImage = configMap[DATA_IMAGE] ?: context.getStringData(DATA_IMAGE, getDefault(DATA_IMAGE))
-        val headerInput = configMap[HEADER_INPUT] ?: context.getStringData(HEADER_INPUT, getDefault(HEADER_INPUT))
-        val dataInput = configMap[DATA_INPUT] ?: context.getStringData(DATA_INPUT, getDefault(DATA_INPUT))
+        val headerImage = context.getStringData(HEADER_IMAGE, getDefault(HEADER_IMAGE))
+        val dataImage = context.getStringData(DATA_IMAGE, getDefault(DATA_IMAGE))
+        val headerInput = context.getStringData(HEADER_INPUT, getDefault(HEADER_INPUT))
+        val dataInput = context.getStringData(DATA_INPUT, getDefault(DATA_INPUT))
 
         val metaMap = jsElementMeta(jsExec, gridDataMeta, inputs[0])
         // <SELECT> element will exhibit newline in it's text representation. So if we are not dealing with
@@ -460,47 +427,47 @@ class TableHelper(private val webCommand: WebCommand) {
 
         return csvSafe(
             if (metaMap["tag"] == "img") {
-                val imageOption = ImageOptions.valueOf(if (isHeader) headerImage else dataImage)
-                when (imageOption) {
-                    ImageOptions.filename -> {
-                        val src = metaMap["src"] ?: return ""
-                        if (StringUtils.contains(src, "/")) StringUtils.substringAfterLast(src, "/") else src
-                    }
-
-                    ImageOptions.type     -> "image"
-                    else                  -> StringUtils.defaultString(metaMap[imageOption.toString()])
-                }
+                extractImageData(metaMap, ImageOptions.valueOf(if (isHeader) headerImage else dataImage))
             } else {
-                val dataOption = InputOptions.valueOf(if (isHeader) headerInput else dataInput)
-                if (metaMap["tag"] == "select")
-                    if (dataOption == InputOptions.state || dataOption == InputOptions.value)
-                        TextUtils.toString(StringUtils.split(metaMap["selected"], "\n"), context.textDelim, "", "")
-                    else
-                        StringUtils.defaultString(metaMap[dataOption.toString()])
-                else if (dataOption == InputOptions.state)
-                    when (metaMap["type"]) {
-                        "checkbox" -> if (StringUtils.equals(metaMap["checked"], "true")) "checked" else "unchecked"
-                        "radio"    -> if (StringUtils.equals(metaMap["checked"], "true")) "selected" else "unselected"
-                        else       -> StringUtils.defaultString(metaMap["value"])
-                    }
-                else
-                    StringUtils.defaultString(metaMap[dataOption.toString()])
+                extractInputData(context, metaMap, InputOptions.valueOf(if (isHeader) headerInput else dataInput))
             })
     }
 
-    private fun resolveConfigBoolean(configMap: MutableMap<String, String>,
-                                     context: ExecutionContext,
-                                     key: String): Boolean {
-        return if (configMap.containsKey(key)) {
+    private fun extractImageData(metaMap: Map<String, String>, imageOption: ImageOptions) =
+        when (imageOption) {
+            ImageOptions.filename -> {
+                val src = metaMap["src"] ?: ""
+                if (StringUtils.contains(src, "/")) StringUtils.substringAfterLast(src, "/") else src
+            }
+
+            ImageOptions.type     -> "image"
+            else                  -> StringUtils.defaultString(metaMap[imageOption.toString()])
+        }
+
+    private fun extractInputData(context: ExecutionContext, row: Map<String, String>, dataOption: InputOptions) =
+        if (row["tag"] == "select")
+            if (dataOption == InputOptions.state || dataOption == InputOptions.value)
+                TextUtils.toString(StringUtils.split(row["selected"], "\n"), context.textDelim, "", "")
+            else
+                StringUtils.defaultString(row[dataOption.toString()])
+        else if (dataOption == InputOptions.state)
+            when (row["type"]) {
+                "checkbox" -> if (StringUtils.equals(row["checked"], "true")) "checked" else "unchecked"
+                "radio"    -> if (StringUtils.equals(row["checked"], "true")) "selected" else "unselected"
+                else       -> StringUtils.defaultString(row["value"])
+            }
+        else
+            StringUtils.defaultString(row[dataOption.toString()])
+
+    private fun resolveConfigBoolean(configMap: MutableMap<String, String>, context: ExecutionContext, key: String) =
+        if (configMap.containsKey(key)) {
             BooleanUtils.toBoolean(configMap[key])
         } else {
             context.getBooleanData(key, getDefaultBool(key))
         }
-    }
 
-    private fun resolveConfig(configMap: MutableMap<String, String>, context: ExecutionContext, key: String): String {
-        return configMap[key] ?: context.getStringData(key, getDefault(key))
-    }
+    private fun resolveConfig(configMap: MutableMap<String, String>, context: ExecutionContext, key: String) =
+        configMap[key] ?: context.getStringData(key, getDefault(key))
 
     private fun jsElementMeta(jsExec: JavascriptExecutor, script: String, element: WebElement): Map<String, String> =
         TextUtils.toMap(Objects.toString(jsExec.executeScript(script, element, metaRecSep), ""), metaRecSep, "=")

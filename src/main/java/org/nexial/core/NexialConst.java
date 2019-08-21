@@ -1195,14 +1195,10 @@ public final class NexialConst {
             private static final String _NS = NS_WEB + "saveGrid.";
 
             public static final String DEEP_SCAN = registerSystemVariable(_NS + "deepScan", false);
-            public static final String HEADER_INPUT = registerSystemVariable(_NS + "header.input",
-                                                                             InputOptions.name.name());
-            public static final String HEADER_IMAGE = registerSystemVariable(_NS + "header.image",
-                                                                             ImageOptions.type.name());
-            public static final String DATA_INPUT = registerSystemVariable(_NS + "data.input",
-                                                                           InputOptions.state.name());
-            public static final String DATA_IMAGE = registerSystemVariable(_NS + "data.image",
-                                                                           ImageOptions.type.name());
+            public static final String HEADER_INPUT = registerSystemVariable(_NS + "header.input", InputOptions.name.name());
+            public static final String HEADER_IMAGE = registerSystemVariable(_NS + "header.image", ImageOptions.type.name());
+            public static final String DATA_INPUT = registerSystemVariable(_NS + "data.input", InputOptions.state.name());
+            public static final String DATA_IMAGE = registerSystemVariable(_NS + "data.image", ImageOptions.type.name());
             public static final String DATA_TRIM = registerSystemVariable(_NS + "data.trim", true);
             public static final String END_TRIM = registerSystemVariable(_NS + "end.trim", false);
 

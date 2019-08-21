@@ -44,7 +44,7 @@ object ExecUtils {
     val IGNORED_CLI_OPT = arrayListOf<String>(
         "awt.", "java.",
         "idea.test.", "intellij.debug",
-        "org.gradle.",
+        "org.gradle.", "org.apache.poi.util.POILogger",
 
         "file.encoding", "file.separator", "line.separator", "path.separator",
 

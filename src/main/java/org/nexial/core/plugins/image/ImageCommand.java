@@ -28,21 +28,17 @@ import javax.imageio.ImageIO;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.math.NumberUtils;
 import org.apache.commons.lang3.time.StopWatch;
-import org.jetbrains.annotations.NotNull;
 import org.nexial.commons.utils.RegexUtils;
-import org.nexial.commons.utils.ResourceUtils;
 import org.nexial.core.NexialConst.ImageDiffColor;
 import org.nexial.core.NexialConst.ImageType;
 import org.nexial.core.model.StepResult;
 import org.nexial.core.plugins.ForcefulTerminate;
 import org.nexial.core.plugins.base.BaseCommand;
-import org.nexial.core.plugins.ws.WsCommand;
 import org.nexial.core.utils.ConsoleUtils;
 
 import static java.awt.RenderingHints.*;
 import static java.awt.image.BufferedImage.*;
 import static java.io.File.separator;
-import static org.apache.commons.lang3.SystemUtils.JAVA_IO_TMPDIR;
 import static org.nexial.core.NexialConst.ImageType.png;
 import static org.nexial.core.NexialConst.OPT_IMAGE_DIFF_COLOR;
 import static org.nexial.core.NexialConst.OPT_IMAGE_TOLERANCE;
@@ -268,26 +264,6 @@ public class ImageCommand extends BaseCommand implements ForcefulTerminate {
 
     @Override
     public void forcefulTerminate() { }
-
-    @NotNull
-    protected File resolveFileResource(String baseline) throws IOException {
-        if (!ResourceUtils.isWebResource(baseline)) { return new File(baseline); }
-
-        String target = StringUtils.appendIfMissing(JAVA_IO_TMPDIR, separator) +
-                        StringUtils.substringAfterLast(baseline, "/");
-        return WsCommand.saveWebContent(baseline, new File(target));
-    }
-
-    protected static File resolveSaveTo(String saveTo, String defaultFileName) {
-        File saveFile = new File(saveTo);
-        if (StringUtils.endsWithAny(saveTo, "/", "\\") || saveFile.isDirectory()) {
-            saveFile.mkdirs();
-            return new File(StringUtils.appendIfMissing(saveTo, separator) + defaultFileName);
-        } else {
-            saveFile.getParentFile().mkdirs();
-            return saveFile;
-        }
-    }
 
     protected String formatToleranceMessage(float match, float tolerance) {
         StringBuilder str = new StringBuilder("(");

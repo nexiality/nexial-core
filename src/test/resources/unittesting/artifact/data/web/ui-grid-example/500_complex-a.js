@@ -78,7 +78,7 @@ var MyJsonData = [
         "age": 20,
         "name": "Terry Clay",
         "gender": "female",
-        "company": "Freakin",
+        "company": "Freakin' Kool  ",
         "email": "terryclay@freakin.com",
         "phone": "+1 (965) 462-3681",
         "address": {
@@ -183,7 +183,7 @@ var MyJsonData = [
         "age": 29,
         "name": "Madge Wilkerson",
         "gender": "female",
-        "company": "Mixers",
+        "company": "  Mixers ",
         "email": "madgewilkerson@mixers.com",
         "phone": "+1 (947) 551-2199",
         "address": {
@@ -218,7 +218,7 @@ var MyJsonData = [
         "age": 30,
         "name": "Harrell Gaines",
         "gender": "male",
-        "company": "Namebox",
+        "company": "        Namebox",
         "email": "harrellgaines@namebox.com",
         "phone": "+1 (902) 410-2375",
         "address": {
@@ -393,7 +393,7 @@ var MyJsonData = [
         "age": 38,
         "name": "Lawson Meyer",
         "gender": "male",
-        "company": "Fuelworks",
+        "company": "Fuel &middot; works  ",
         "email": "lawsonmeyer@fuelworks.com",
         "phone": "+1 (812) 451-2916",
         "address": {

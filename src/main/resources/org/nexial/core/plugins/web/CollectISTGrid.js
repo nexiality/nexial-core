@@ -12,11 +12,12 @@ var cellLocator = arguments[2];
 if (!cellLocator) { return ''; }
 
 var inspectMeta = arguments[3] || true;
-console.log(inspectMeta);
 if (inspectMeta === 'true') { inspectMeta = true; }
 
 var limit            = arguments[4] || -1;
 var cellInputLocator = ".//*[name()='input' or name()='submit' or name()='button' or name()='textarea' or name()='select' or name()='img']";
+var waitBetweenScroll = arguments[5] || 600;
+var debug            = false;
 
 // var rowLocator       = arguments[1] || './/*[contains(@class,"ui-grid-row")]';
 // var cellLocator      = arguments[2] || './/*[contains(@class,"ui-grid-cell-contents")]';
@@ -72,14 +73,14 @@ function collectRows(container, result) {
 
     // we've done this one; skip it
     if (result.rowHashes.includes(rowHash)) {
-      console.log("\t\tfound duplicate at " + row.offsetTop);
+      if (debug) { console.log("\t\tfound duplicate at " + row.offsetTop); }
       row = rows.iterateNext();
       continue;
     }
 
     result.rowHashes.push(rowHash);
     result.collected++;
-    console.log('scanning row ' + (totalCollected + result.collected) + ': ' + row);
+    if (debug) { console.log('scanning row ' + (totalCollected + result.collected) + ': ' + row); }
 
     var rowData = [];
     var cells   = document.evaluate(cellLocator, row, null, XPathResult.ANY_TYPE, null);
@@ -88,7 +89,7 @@ function collectRows(container, result) {
       while (cell !== null) {
         // console.log('\tscanning cell ' + cell);
         var cellData = {text: cell.textContent || ''};
-        if (cellData.text === '' && inspectMeta) {
+        if (cellData.text === '' && inspectMeta === true) {
           var childElements = document.evaluate(cellInputLocator, cell, null, XPathResult.ANY_TYPE, null);
           if (childElements) {
             var child         = childElements.iterateNext();
@@ -122,7 +123,7 @@ function resumeCollection() {
   collectRows(container, collectionResults);
 
   if (collectionResults.collected === 0) {
-    console.log('stopping collection; so far, ' + totalCollected + ' rows were collected');
+    console.log('stopping data grid collection; so far, ' + totalCollected + ' rows were collected');
     collectionInProgress        = false;
     collectionResults.rowHashes = null;
     clearInterval(collector);
@@ -131,15 +132,15 @@ function resumeCollection() {
 
   totalCollected += collectionResults.collected;
   if (limit !== -1 && totalCollected >= limit) {
-    console.log('stopping collection due to limit reached ' + totalCollected);
+    console.log('stopping data grid collection due to limit reached ' + totalCollected);
     collectionInProgress        = false;
     collectionResults.rowHashes = null;
     clearInterval(collector);
     return;
   }
 
-  console.log("restart collection");
+  if (debug) { console.log("restart collection"); }
   container.scroll({top: collectionResults.scannedRowHeights, left: 0, behavior: 'smooth'});
 }
 
-var collector = window.setInterval(resumeCollection, 600);
+var collector = window.setInterval(resumeCollection, waitBetweenScroll);

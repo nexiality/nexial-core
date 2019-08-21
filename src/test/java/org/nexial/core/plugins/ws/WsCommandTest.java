@@ -52,27 +52,6 @@ public class WsCommandTest {
     }
 
     @Test
-    public void assertReturnCode() {
-
-    }
-
-    @Test
-    public void header() {
-
-    }
-
-    @Test
-    public void headerByVar() {
-
-    }
-
-    @Test
-    public void saveResponsePayload() {
-
-    }
-
-
-    @Test
     public void testApi_with_special_characters_queryString() {
         String url = "https://samples.openweathermap.org/data/2.5/forecast/hourly";
         String queryString = "q=Zuerich (Kreis 3) / Sihlfeld&APPID=50b270e6e8327679f7f34bf2c709e938";

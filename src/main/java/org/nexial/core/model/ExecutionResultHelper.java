@@ -263,6 +263,11 @@ public final class ExecutionResultHelper {
             if (executionSummary.getEndTime() == 0) { executionSummary.setEndTime(System.currentTimeMillis()); }
             String summary = executionSummary.toString();
             summaryCell.setCellValue(summary);
+
+            // XSSFCellStyle summaryStyle = worksheet.newCellStyle();
+            // ExcelStyleHelper.setCellBorder(summaryStyle, BorderStyle.MEDIUM, new XSSFColor(new Color(117, 113, 113)));
+            // summaryCell.setCellStyle(summaryStyle);
+
             worksheet.setMinHeight(summaryCell, StringUtils.countMatches(summary, '\n'));
         }
 

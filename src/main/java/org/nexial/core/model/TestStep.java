@@ -17,12 +17,15 @@
 
 package org.nexial.core.model;
 
+import java.io.File;
+import java.io.IOException;
 import java.lang.reflect.InvocationTargetException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 
 import org.apache.commons.collections4.CollectionUtils;
+import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang3.ArrayUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.builder.ToStringBuilder;
@@ -46,6 +49,7 @@ import org.nexial.core.utils.MessageUtils;
 import org.nexial.core.utils.TrackTimeLogs;
 import org.openqa.selenium.WebDriverException;
 
+import static java.io.File.separator;
 import static java.lang.System.lineSeparator;
 import static org.apache.commons.lang3.builder.ToStringStyle.SIMPLE_STYLE;
 import static org.nexial.commons.utils.EnvUtils.platformSpecificEOL;
@@ -501,7 +505,40 @@ public class TestStep extends TestStepManifest {
             String link = CollectionUtils.size(linkableParams) > paramIdx ? linkableParams.get(paramIdx) : null;
             XSSFCell paramCell = row.get(i);
             if (StringUtils.isNotBlank(link)) {
-                worksheet.setHyperlink(paramCell, link, context.replaceTokens(params.get(paramIdx)));
+                // support output to cloud:
+                // - if link is local resource but output-to-cloud is enabled, then copy resource to cloud and update link
+                boolean linkToCloud = false;
+                if (context.isOutputToCloud() &&
+                    !StringUtils.startsWithIgnoreCase(link, "http") &&
+                    !StringUtils.startsWithIgnoreCase(link, "file:")) {
+                    // create new local resource with name matching to current row, so that duplicate use of the
+                    // same name will not result in overriding cloud resource
+
+                    if (FileUtil.isFileReadable(link, 1)) {
+                        // target file should exist with at least 1 byte
+                        File tmpFile = new File(StringUtils.substringBeforeLast(link, separator) + separator +
+                                                row.get(COL_IDX_TESTCASE).getReference() + "_" +
+                                                StringUtils.substringAfterLast(link, separator));
+
+                        try {
+                            ConsoleUtils.log("copy local resource " + link + " to " + tmpFile);
+                            FileUtils.copyFile(new File(link), tmpFile);
+                            String cloudUrl = context.getOtc().importFile(tmpFile, true);
+                            ConsoleUtils.log("output-to-cloud enabled; " + link + " copied to cloud " + cloudUrl);
+                            worksheet.setHyperlink(paramCell, cloudUrl, "(cloud) " + params.get(paramIdx));
+                            linkToCloud = true;
+                        } catch (IOException e) {
+                            ConsoleUtils.log("Unable to copy resource to cloud: " + e.getMessage());
+                            log(toCloudIntegrationNotReadyMessage(link + ": " + e.getMessage()));
+                        }
+                    } else {
+                        ConsoleUtils.log("output-to-cloud enabled; but file " + link + " is empty or unreadable");
+                    }
+                }
+
+                if (!linkToCloud) {
+                    worksheet.setHyperlink(paramCell, link, context.replaceTokens(params.get(paramIdx)));
+                }
                 continue;
             }
 

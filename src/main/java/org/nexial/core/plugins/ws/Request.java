@@ -31,6 +31,7 @@ import org.apache.http.Header;
 import org.apache.http.HttpRequest;
 import org.apache.http.client.config.RequestConfig;
 import org.apache.http.client.methods.HttpUriRequest;
+import org.nexial.commons.utils.RegexUtils;
 import org.nexial.commons.utils.web.URLEncodingUtils;
 import org.nexial.core.model.ExecutionContext;
 import org.openqa.selenium.Cookie;
@@ -100,7 +101,9 @@ public abstract class Request implements Serializable {
 
     public String getUrl() { return url; }
 
-    public void setUrl(String url) { this.url = URLEncodingUtils.encodePath(url); }
+    public void setUrl(String url) {
+        this.url = RegexUtils.match(url, "%[0-9A-F]{2}") ? url : URLEncodingUtils.encodePath(url);
+    }
 
     public int getConnectionTimeout() { return connectionTimeout; }
 

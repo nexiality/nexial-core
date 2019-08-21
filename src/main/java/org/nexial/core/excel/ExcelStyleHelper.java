@@ -264,15 +264,7 @@ public final class ExcelStyleHelper {
                 style.setBorderColor(TOP, borderColor);
                 style.setBorderColor(BOTTOM, borderColor);
             } else {
-                BorderStyle borderStyle = config.getBorderStyle();
-                style.setBorderTop(borderStyle);
-                style.setBorderBottom(borderStyle);
-                style.setBorderLeft(borderStyle);
-                style.setBorderRight(borderStyle);
-                style.setBorderColor(TOP, borderColor);
-                style.setBorderColor(BOTTOM, borderColor);
-                style.setBorderColor(LEFT, borderColor);
-                style.setBorderColor(RIGHT, borderColor);
+                setCellBorder(style, config.getBorderStyle(), borderColor);
             }
         }
 
@@ -297,6 +289,17 @@ public final class ExcelStyleHelper {
         }
 
         return style;
+    }
+
+    public static void setCellBorder(XSSFCellStyle style, BorderStyle borderStyle, XSSFColor borderColor) {
+        style.setBorderTop(borderStyle);
+        style.setBorderBottom(borderStyle);
+        style.setBorderLeft(borderStyle);
+        style.setBorderRight(borderStyle);
+        style.setBorderColor(TOP, borderColor);
+        style.setBorderColor(BOTTOM, borderColor);
+        style.setBorderColor(LEFT, borderColor);
+        style.setBorderColor(RIGHT, borderColor);
     }
 
     public static XSSFCellStyle newDefaultHeaderStyle(XSSFWorkbook workbook) {
