@@ -19,7 +19,6 @@ package org.nexial.core;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Objects;
 
 import org.nexial.core.plugins.ForcefulTerminate;
 import org.nexial.core.utils.ConsoleUtils;
@@ -45,7 +44,12 @@ public final class ShutdownAdvisor {
     public static void forcefullyTerminate() {
         if (ADVISORS.isEmpty()) { return; }
         ConsoleUtils.log("shutdown starts...");
-        ADVISORS.stream().filter(Objects::nonNull).forEach(ForcefulTerminate::forcefulTerminate);
+        while (!ADVISORS.isEmpty()) {
+            synchronized (ADVISORS) {
+                ForcefulTerminate forcefulTerminate = ADVISORS.remove(0);
+                forcefulTerminate.forcefulTerminate();
+            }
+        }
         ConsoleUtils.log("shutdown ends...");
     }
 }

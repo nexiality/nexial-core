@@ -111,7 +111,7 @@ public class DesktopCommand extends BaseCommand implements ForcefulTerminate, Ca
         }
 
         if (mustForcefullyTerminate()) {
-            WiniumUtils.shutdownWinium(null, getDriver());
+            WiniumUtils.shutdownWinium(null, winiumDriver);
             winiumDriver = null;
         }
     }
