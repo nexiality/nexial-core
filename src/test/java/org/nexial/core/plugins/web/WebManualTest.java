@@ -38,7 +38,8 @@ public class WebManualTest extends ExcelBasedTests {
                                                          "LocalStorage",
                                                          "Scroll",
                                                          "SelectMultiOption",
-                                                         "SaveTable");
+                                                         "SaveTable",
+                                                         "SaveTable2");
 
         List<ExecutionSummary> testIterations = executionSummary.getNestedExecutions().get(0).getNestedExecutions();
         for (ExecutionSummary summary : testIterations) {
@@ -49,6 +50,7 @@ public class WebManualTest extends ExcelBasedTests {
             assertPassFail(summary, "Scroll", TestOutcomeStats.allPassed());
             assertPassFail(summary, "SelectMultiOption", TestOutcomeStats.allPassed());
             assertPassFail(summary, "SaveTable", TestOutcomeStats.allPassed());
+            assertPassFail(summary, "SaveTable2", TestOutcomeStats.allPassed());
 
             // assertPassFail(summary, "AssertingAttributes", TestOutcomeStats.allPassed());
             // assertPassFail(summary, "SaveText", TestOutcomeStats.allPassed());

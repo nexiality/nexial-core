@@ -243,10 +243,12 @@ public class Array {
     protected static String[] toArray(String array) { return toArray(array, getDelim()); }
 
     protected static String[] toArray(String array, String delim) {
+        if (!StringUtils.contains(array, delim)) { return new String[]{array}; }
+
         // need special parsing to compensate the case of web elements which looks like [[...]],[[...]],..
         if (TextUtils.isBetween(array, "[", "]")) {
             if (StringUtils.startsWith(array, "[[") && StringUtils.contains(array, "],[[")) {
-                // likely webelement lists.. need special care
+                // likely web element lists.. need special care
                 String[] split = StringUtils.splitByWholeSeparator(array, "],[");
                 return Arrays.stream(split)
                              .map(str -> (StringUtils.startsWith(str, "[[") ? "" : "[") +

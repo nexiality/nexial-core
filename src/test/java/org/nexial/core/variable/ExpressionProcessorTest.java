@@ -323,6 +323,16 @@ public class ExpressionProcessorTest {
     }
 
     @Test
+    public void processList_replica() throws Exception {
+        ExpressionProcessor subject = new ExpressionProcessor(context);
+
+        String fixture = "[LIST({TAB}) => replica(2) text remove(\\,)]";
+        String result = subject.process(fixture);
+        Assert.assertEquals("{TAB}{TAB}", result);
+
+    }
+
+    @Test
     public void processList_empty() throws Exception {
         context.setData("new array", "START");
         ExpressionProcessor subject = new ExpressionProcessor(context);

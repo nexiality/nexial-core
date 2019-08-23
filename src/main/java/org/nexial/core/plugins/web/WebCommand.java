@@ -802,7 +802,9 @@ public class WebCommand extends BaseCommand implements CanTakeScreenshot, CanLog
         return tableHelper.saveDivsAsCsv(headers, rows, cells, nextPage, file);
     }
 
-    public StepResult saveISTDivsAsCsv(String config, String file) { return tableHelper.saveISTDivsAsCsv(config,file); }
+    public StepResult saveInfiniteDivsAsCsv(String config, String file) {
+        return tableHelper.saveInfiniteDivsAsCsv(config, file);
+    }
 
     public StepResult assertValue(String locator, String value) {
         assertEquals(value, getValue(locator));
@@ -895,14 +897,10 @@ public class WebCommand extends BaseCommand implements CanTakeScreenshot, CanLog
         }
 
         // new locator should either add "text() = ..." or concatenate the "text() = ..." clause to existing filter
-        String locatorWithText;
-        if (StringUtils.endsWith(locator, "]")) {
-            locatorWithText = StringUtils.substringBeforeLast(locator, "]") + " and ";
-        } else {
-            locatorWithText = locator + "[";
-        }
-        locatorWithText += "text() = " + locatorHelper.normalizeXpathText(label) + "]";
-
+        String locatorWithText = (StringUtils.endsWith(locator, "]") ?
+                                  StringUtils.substringBeforeLast(locator, "]") + " and " :
+                                  locator + "[") +
+                                 "text() = " + locatorHelper.normalizeXpathText(label) + "]";
         result = click(locatorWithText);
         if (result.failed()) { log("text/label for '" + label + "' not clickable at " + locator); }
         return result;
@@ -1416,17 +1414,12 @@ public class WebCommand extends BaseCommand implements CanTakeScreenshot, CanLog
         WebElement element = toElement(locator);
         jsExecutor.executeScript("arguments[0].scrollBy(" + xOffset + "," + yOffset + ")", element);
 
-        // return StepResult.success("current window/page scrolled by (" + xOffset + "," + yOffset + ")");
         return scrollTo(locator, (Locatable) element);
     }
 
     public StepResult type(String locator, String value) {
         WebElement element = findElement(locator);
-        if (element == null) {
-            String msg = "unable to complete type() since locator (" + locator + ") cannot be found.";
-            error(msg);
-            return StepResult.fail(msg);
-        }
+        if (element == null) { return StepResult.fail("Unable to type since no element matches to " + locator); }
 
         clearValue(element);
 

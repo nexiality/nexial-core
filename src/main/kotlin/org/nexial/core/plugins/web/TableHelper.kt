@@ -233,7 +233,7 @@ class TableHelper(private val webCommand: WebCommand) {
      * @param file String
      * @return StepResult
      */
-    fun saveISTDivsAsCsv(config: String, file: String): StepResult {
+    fun saveInfiniteDivsAsCsv(config: String, file: String): StepResult {
         requiresNotBlank(config, "Invalid config", config)
         requiresNotBlank(file, "Invalid file", file)
 

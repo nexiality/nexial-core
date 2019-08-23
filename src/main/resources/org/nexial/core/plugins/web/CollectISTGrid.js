@@ -1,5 +1,3 @@
-// "use strict";
-
 if (!arguments || arguments.length < 1) { return ''; }
 
 var container = arguments[0];
@@ -14,20 +12,19 @@ if (!cellLocator) { return ''; }
 var inspectMeta = arguments[3] || true;
 if (inspectMeta === 'true') { inspectMeta = true; }
 
-var limit            = arguments[4] || -1;
-var cellInputLocator = ".//*[name()='input' or name()='submit' or name()='button' or name()='textarea' or name()='select' or name()='img']";
+var limit             = arguments[4] || -1;
 var waitBetweenScroll = arguments[5] || 600;
+
+var cellInputLocator = ".//*[name()='input' or name()='submit' or name()='button' or name()='textarea' or name()='select' or name()='img']";
 var debug            = false;
 
-// var rowLocator       = arguments[1] || './/*[contains(@class,"ui-grid-row")]';
-// var cellLocator      = arguments[2] || './/*[contains(@class,"ui-grid-cell-contents")]';
-
 // testing
-// var container   = $$('.ui-grid-viewport')[0];
-// var rowLocator  = './/*[contains(@class,"ui-grid-row")]';
-// var cellLocator = './/*[contains(@class,"ui-grid-cell-contents")]';
-// var inspectMeta = true;
-// var limit = -1;
+// var container         = $$('.ui-grid-viewport')[0];
+// var rowLocator        = './/*[contains(@class,"ui-grid-row")]';
+// var cellLocator       = './/*[contains(@class,"ui-grid-cell-contents")]';
+// var inspectMeta       = true;
+// var limit             = -1;
+// var waitBetweenScroll = 600;
 
 collectionResults    = {data: [], rowHashes: [], scannedRowHeights: 0, collected: 0};
 totalCollected       = 0;
@@ -92,16 +89,18 @@ function collectRows(container, result) {
         if (cellData.text === '' && inspectMeta === true) {
           var childElements = document.evaluate(cellInputLocator, cell, null, XPathResult.ANY_TYPE, null);
           if (childElements) {
-            var child         = childElements.iterateNext();
-            cellData.tag      = child.tagName.toLowerCase();
-            cellData.type     = child.getAttribute('type') || '';
-            cellData.id       = child.getAttribute('id') || '';
-            cellData.name     = child.getAttribute('name') || '';
-            cellData.value    = child.getAttribute('value') || '';
-            cellData.alt      = child.getAttribute('alt') || '';
-            cellData.src      = child.getAttribute('src') || '';
-            cellData.checked  = child.hasAttribute('checked');
-            cellData.selected = getSelectedOptions(child);
+            var child = childElements.iterateNext();
+            if (child) {
+              cellData.tag      = child.tagName.toLowerCase();
+              cellData.type     = child.getAttribute('type') || '';
+              cellData.id       = child.getAttribute('id') || '';
+              cellData.name     = child.getAttribute('name') || '';
+              cellData.value    = child.getAttribute('value') || '';
+              cellData.alt      = child.getAttribute('alt') || '';
+              cellData.src      = child.getAttribute('src') || '';
+              cellData.checked  = child.hasAttribute('checked');
+              cellData.selected = getSelectedOptions(child);
+            }
           }
         }
 

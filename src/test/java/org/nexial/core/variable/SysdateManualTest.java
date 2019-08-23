@@ -84,13 +84,13 @@ public class SysdateManualTest {
     @Test
     public void testFirstDOW() {
         // manual update needed
-        Assert.assertEquals("004", sysdate.firstDOW("ddd"));
+        Assert.assertEquals("018", sysdate.firstDOW("ddd"));
     }
 
     @Test
     public void testLastDOW() {
         // manual update needed
-        Assert.assertEquals("10", sysdate.lastDOW("dd"));
+        Assert.assertEquals("24", sysdate.lastDOW("dd"));
     }
 
     @Test

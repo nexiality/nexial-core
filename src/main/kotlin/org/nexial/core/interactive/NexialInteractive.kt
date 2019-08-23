@@ -392,7 +392,7 @@ class NexialInteractive {
 
         var allPass = true
         for (testStepId in steps) {
-            val testStep = scenario.getTestStepByRowIndex(NumberUtils.toInt(testStepId))
+            val testStep = scenario.getTestStepByRowIndex(NumberUtils.toInt(testStepId)) ?: break
 
             val stepSummary = ExecutionSummary()
             stepSummary.name = "[ROW " + StringUtils.leftPad(testStepId + "", 3) + "]"
