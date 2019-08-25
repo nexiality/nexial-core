@@ -68,8 +68,7 @@ class TableHelper(private val webCommand: WebCommand) {
                                                                          "\r " to " ",
                                                                          "\t " to " "))
     private val gridDataMeta = ResourceUtils.loadResource("/org/nexial/core/plugins/web/GridDataMeta.js")
-    // private val istDivViewportMeta = ResourceUtils.loadResource("/org/nexial/core/plugins/web/ISTDivViewportMeta.js")
-    private val collectISTGrid = ResourceUtils.loadResource("/org/nexial/core/plugins/web/CollectISTGrid.js")
+    private val collectInfiniteGrid = ResourceUtils.loadResource("/org/nexial/core/plugins/web/CollectInfiniteGrid.js")
     private val metaRecSep = "#$#"
 
     fun saveDivsAsCsv(headerCellsLoc: String,
@@ -87,7 +86,8 @@ class TableHelper(private val webCommand: WebCommand) {
 
         // header
         if (StringUtils.isNotBlank(headerCellsLoc) && !webCommand.context.isNullValue(headerCellsLoc)) {
-            writeCsvHeader(msgPrefix, writer, webCommand.findElements(headerCellsLoc))
+            val deepScan = webCommand.context.getBooleanData(DEEP_SCAN, getDefaultBool(DEEP_SCAN))
+            writeCsvHeader(msgPrefix, writer, webCommand.findElements(headerCellsLoc), deepScan)
         }
 
         var pageCount = 0
@@ -157,7 +157,8 @@ class TableHelper(private val webCommand: WebCommand) {
             }
         })
 
-        writeCsvHeader(msgPrefix, writer, headers)
+        val deepScan = webCommand.context.getBooleanData(DEEP_SCAN, getDefaultBool(DEEP_SCAN))
+        writeCsvHeader(msgPrefix, writer, headers, deepScan)
 
         var pageCount = 0
         var firstRow = ""
@@ -227,8 +228,6 @@ class TableHelper(private val webCommand: WebCommand) {
     }
 
     /**
-     * IST stands for "Infinite Scrolling Table".
-     *
      * @param config String
      * @param file String
      * @return StepResult
@@ -249,11 +248,12 @@ class TableHelper(private val webCommand: WebCommand) {
         val writer = newCsvWriter(file)
         val context = webCommand.context
         val jsExec = webCommand.jsExecutor
+        val deepScan = resolveConfigBoolean(configMap, context, DEEP_SCAN)
 
         // header (not required)
         val headerCellsLoc = configMap["header-cell"]
         if (StringUtils.isNotBlank(headerCellsLoc) && !context.isNullValue(headerCellsLoc)) {
-            writeCsvHeader(msgPrefix, writer, webCommand.findElements(headerCellsLoc))
+            writeCsvHeader(msgPrefix, writer, webCommand.findElements(headerCellsLoc), deepScan)
         }
 
         // viewport
@@ -264,12 +264,11 @@ class TableHelper(private val webCommand: WebCommand) {
         // reusable configs
         val rowLocator = configMap["data-row-xpath"]
         val cellLocator = configMap["data-cell-xpath"]
-        val deepScan = resolveConfigBoolean(configMap, context, DEEP_SCAN)
         val limit = (configMap["limit"] ?: "-1").toInt()
         val waitBetweenScroll = (configMap["waitBetweenScroll"] ?: "600").toInt()
 
         ConsoleUtils.log("$msgPrefix collecting data")
-        jsExec.executeScript(collectISTGrid, viewport, rowLocator, cellLocator, deepScan, limit, waitBetweenScroll)
+        jsExec.executeScript(collectInfiniteGrid, viewport, rowLocator, cellLocator, deepScan, limit, waitBetweenScroll)
 
         // wait for script to finish
         var collectionInProgress: Any = "true"
@@ -335,6 +334,15 @@ class TableHelper(private val webCommand: WebCommand) {
         return StepResult.success("$msgPrefix $rowCount scanned and written to $file")
     }
 
+    /**
+     * assume the conventional <pre>&lt;TABLE>, &lt;TR>, &lt;TD></pre> constructs.
+     *
+     * @param config String
+     * @param file String
+     * @return StepResult
+     */
+    fun saveInfiniteTableAsCsv(config: String, file: String): StepResult = saveInfiniteDivsAsCsv(config, file)
+
     fun assertTable(locator: String, row: String, column: String, text: String): StepResult {
         requiresPositiveNumber(row, "invalid row number", row)
         requiresPositiveNumber(column, "invalid column number", column)
@@ -364,13 +372,13 @@ class TableHelper(private val webCommand: WebCommand) {
         }
     }
 
-    private fun writeCsvHeader(msgPrefix: String, writer: CsvWriter, headers: List<WebElement>?) {
+    private fun writeCsvHeader(msgPrefix: String, writer: CsvWriter, headers: List<WebElement>?, deepScan: Boolean) {
         if (headers == null || CollectionUtils.isEmpty(headers)) {
             ConsoleUtils.log("$msgPrefix does not contain usable headers")
         } else {
-            val deepScan = webCommand.context.getBooleanData(DEEP_SCAN, getDefaultBool(DEEP_SCAN))
             val headerNames = ArrayList<String>()
             headers.forEach { header ->
+                webCommand.scrollIntoView(header)
                 if (header.isDisplayed) headerNames.add(if (deepScan) deepScan(header, true) else csvSafe(header.text))
             }
             ConsoleUtils.log("$msgPrefix - collected headers: $headerNames")
@@ -389,6 +397,7 @@ class TableHelper(private val webCommand: WebCommand) {
 
         cells.forEach { cell ->
             run {
+                webCommand.scrollIntoView(cell)
                 if (cell.isDisplayed) cellContent.add(if (deepScan) deepScan(cell, false) else csvSafe(cell.text))
             }
         }
@@ -452,21 +461,23 @@ class TableHelper(private val webCommand: WebCommand) {
                 StringUtils.defaultString(row[dataOption.toString()])
         else if (dataOption == InputOptions.state)
             when (row["type"]) {
-                "checkbox" -> if (StringUtils.equals(row["checked"], "true")) "checked" else "unchecked"
-                "radio"    -> if (StringUtils.equals(row["checked"], "true")) "selected" else "unselected"
+                "checkbox" -> if (StringUtils.equals(Objects.toString(row["checked"]),
+                                                     "true")) "checked" else "unchecked"
+                "radio"    -> if (StringUtils.equals(Objects.toString(row["checked"]),
+                                                     "true")) "selected" else "unselected"
                 else       -> StringUtils.defaultString(row["value"])
             }
         else
             StringUtils.defaultString(row[dataOption.toString()])
 
-    private fun resolveConfigBoolean(configMap: MutableMap<String, String>, context: ExecutionContext, key: String) =
+    private fun resolveConfigBoolean(configMap: Map<String, String>, context: ExecutionContext, key: String) =
         if (configMap.containsKey(key)) {
             BooleanUtils.toBoolean(configMap[key])
         } else {
             context.getBooleanData(key, getDefaultBool(key))
         }
 
-    private fun resolveConfig(configMap: MutableMap<String, String>, context: ExecutionContext, key: String) =
+    private fun resolveConfig(configMap: Map<String, String>, context: ExecutionContext, key: String) =
         configMap[key] ?: context.getStringData(key, getDefault(key))
 
     private fun jsElementMeta(jsExec: JavascriptExecutor, script: String, element: WebElement): Map<String, String> =

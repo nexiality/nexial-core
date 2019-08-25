@@ -252,9 +252,9 @@ class LocalDbCommand : BaseCommand() {
 
     // handle column names with spaces or commas
     private fun treatColumnName(column: String) = when {
-        StringUtils.isEmpty(column)           -> "\"\""
-        StringUtils.containsAny(column, " ,") -> TextUtils.wrapIfMissing(column, "\"", "\"")
-        else                                  -> column
+        StringUtils.isEmpty(column)             -> "\"\""
+        StringUtils.containsAny(column, " ,()") -> TextUtils.wrapIfMissing(column, "\"", "\"")
+        else                                    -> column
     }
 
     fun exportCSV(sql: String, output: String): StepResult = rdbms.saveResult(dbName, sql, output)

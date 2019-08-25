@@ -806,6 +806,10 @@ public class WebCommand extends BaseCommand implements CanTakeScreenshot, CanLog
         return tableHelper.saveInfiniteDivsAsCsv(config, file);
     }
 
+    public StepResult saveInfiniteTableAsCsv(String config, String file) {
+        return tableHelper.saveInfiniteTableAsCsv(config, file);
+    }
+
     public StepResult assertValue(String locator, String value) {
         assertEquals(value, getValue(locator));
         return StepResult.success();
