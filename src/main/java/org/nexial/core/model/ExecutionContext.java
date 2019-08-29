@@ -726,6 +726,8 @@ public class ExecutionContext {
         return StringUtils.equals(value, "") || StringUtils.equals(value, EMPTY);
     }
 
+    public boolean isNullOrEmptyValue(String value) { return isNullValue(value) || isEmptyValue(value); }
+
     public String replaceTokens(String text) { return replaceTokens(text, false); }
 
     public String replaceTokens(String text, boolean retainCrypt) {

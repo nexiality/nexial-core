@@ -330,6 +330,13 @@ public class ExpressionProcessorTest {
         String result = subject.process(fixture);
         Assert.assertEquals("{TAB}{TAB}", result);
 
+        fixture = "[LIST(data [block] ) => replica(3) text remove(\\,) trim]";
+        result = subject.process(fixture);
+        Assert.assertEquals("data [block] data [block] data [block]", result);
+
+        fixture = "[LIST({[.]}) => replica(5) text remove(\\,)]";
+        result = subject.process(fixture);
+        Assert.assertEquals("{[.]}{[.]}{[.]}{[.]}{[.]}", result);
     }
 
     @Test

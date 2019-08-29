@@ -285,7 +285,8 @@ class NexialInteractive {
         val scriptLocation = executionDefinition.testScript
         val testData = executionDefinition.testData
         val iterationManager = testData.iterationManager
-        val iteration = iterationManager.getIterationRef(iterationIndex - 1)
+        // val iteration = iterationManager.getIterationRef(iterationIndex - 1)
+        iterationManager.getIterationRef(iterationIndex - 1)
 
         ConsoleUtils.log(runId, "executing $scriptLocation. $iterationManager")
 

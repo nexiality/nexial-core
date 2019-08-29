@@ -18,6 +18,8 @@
 package org.nexial.core.plugins.web;
 
 import java.awt.*;
+import java.awt.image.*;
+import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.IOException;
 import java.time.Duration;
@@ -25,6 +27,7 @@ import java.util.List;
 import java.util.*;
 import java.util.function.Function;
 import java.util.stream.Collectors;
+import javax.imageio.ImageIO;
 import javax.validation.constraints.NotNull;
 
 import org.apache.commons.collections4.CollectionUtils;
@@ -79,7 +82,12 @@ import net.lightbody.bmp.proxy.ProxyServer;
 import net.lightbody.bmp.proxy.http.RequestInterceptor;
 import net.lightbody.bmp.proxy.jetty.http.HttpMessage;
 import net.lightbody.bmp.proxy.jetty.http.HttpRequest;
+import ru.yandex.qatools.ashot.AShot;
+import ru.yandex.qatools.ashot.Screenshot;
+import ru.yandex.qatools.ashot.coordinates.WebDriverCoordsProvider;
+import ru.yandex.qatools.ashot.shooting.ShootingStrategies;
 
+import static java.awt.Image.*;
 import static java.io.File.separator;
 import static java.lang.Thread.sleep;
 import static org.apache.commons.lang3.SystemUtils.IS_OS_MAC;
@@ -1606,6 +1614,81 @@ public class WebCommand extends BaseCommand implements CanTakeScreenshot, CanLog
         return StepResult.success("script executed");
     }
 
+    /**
+     * save the screenshot of the web element indicated by {@code locator} to {@code file}.
+     *
+     * {@code ignoreLocators} are assumed to relative to {@code locator}.
+     *
+     * This method assumes only the first matching element, and it will forcefully overwrite existing {@code file}.
+     */
+    // public StepResult screenshot(String file, String locator, String ignoreLocators) {
+    public StepResult screenshot(String file, String locator) {
+        requiresNotBlank(file, "invalid file", file);
+        requiresNotBlank(locator, "invalid locator", locator);
+
+        File target = new File(file);
+        target.getParentFile().mkdirs();
+
+        WebElement element = findElement(locator);
+        if (element == null) { return StepResult.fail("No web element can be found via locator '" + locator + "'"); }
+
+        AShot ashot = new AShot().shootingStrategy(ShootingStrategies.viewportPasting(100))
+                                 .coordsProvider(new WebDriverCoordsProvider());
+
+        // if (!context.isNullOrEmptyValue(ignoreLocators)) {
+        //     Point targetXY = element.getLocation();
+        //
+        //     Stream<@NotNull By> locateBy =
+        //         Arrays.stream(StringUtils.split(StringUtils.remove(ignoreLocators, "\r"), "\n"))
+        //               .map(loc -> locatorHelper.findBy(locator + loc));
+        //
+        //     Set<Coords> ignoredCoords = new HashSet<>();
+        //     locateBy.forEach(by -> {
+        //         ashot.addIgnoredElement(by);
+        //         try {
+        //             List<WebElement> ignored = newFluentWait().until(driver -> driver.findElements(by));
+        //             if (CollectionUtils.isNotEmpty(ignored)) {
+        //                 ignored.forEach(elem -> {
+        //                     Rectangle r = elem.getRect();
+        //                     if (r != null) {
+        //                         ignoredCoords.add(new Coords(r.getX() - targetXY.getX(),
+        //                                                      r.getY() - targetXY.getY(),
+        //                                                      r.getWidth(),
+        //                                                      r.getHeight()));
+        //                     }
+        //                 });
+        //             }
+        //         } catch (NoSuchElementException e) {
+        //             // ignore...
+        //         } catch (TimeoutException e) {
+        //             // also ignore..
+        //         }
+        //     });
+        //
+        //     ashot.ignoredAreas(ignoredCoords);
+        // }
+
+        Screenshot screenshot = ashot.takeScreenshot(driver, element);
+        BufferedImage image = screenshot.getImage();
+
+        // Graphics g = image.getGraphics();
+        // screenshot.getIgnoredAreas()
+        //           .forEach(coords -> g.drawImage(newBlankImage((int) coords.getWidth(), (int) coords.getHeight()),
+        //                                          (int) coords.getX(),
+        //                                          (int) coords.getY(),
+        //                                          null));
+        // g.dispose();
+
+        try {
+            ByteArrayOutputStream baos = new ByteArrayOutputStream();
+            ImageIO.write(image, "PNG", baos);
+            FileUtils.writeByteArrayToFile(target, baos.toByteArray());
+            return StepResult.success("Image captured for '" + locator + "' to file '" + file + "'");
+        } catch (IOException e) {
+            return StepResult.fail("Unable to write image data to file " + file + ": " + e.getMessage());
+        }
+    }
+
     @Override
     public String takeScreenshot(TestStep testStep) {
         if (testStep == null) { return null; }
@@ -1786,6 +1869,15 @@ public class WebCommand extends BaseCommand implements CanTakeScreenshot, CanLog
                 value);
         }
         return StepResult.success(attrName + " with value " + value + " updated successfully for '" + locator + "'");
+    }
+
+    @NotNull
+    protected static BufferedImage newBlankImage(int width, int height) {
+        BufferedImage blank = new BufferedImage(width, height, SCALE_DEFAULT);
+        Graphics2D graphics = blank.createGraphics();
+        graphics.setPaint(new Color(255, 255, 255));
+        graphics.fillRect(0, 0, width, height);
+        return blank;
     }
 
     protected int deriveBrowserStabilityWaitMs(ExecutionContext context) {
