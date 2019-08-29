@@ -32,6 +32,7 @@ import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang3.ArrayUtils;
 import org.apache.commons.lang3.BooleanUtils;
 import org.apache.commons.lang3.StringUtils;
+import org.apache.commons.lang3.math.NumberUtils;
 import org.nexial.commons.utils.CollectionUtil;
 import org.nexial.commons.utils.FileUtil;
 import org.nexial.commons.utils.TextUtils;
@@ -70,21 +71,6 @@ public class ExcelTransformer<T extends ExcelDataType> extends Transformer {
         data.read(data.getValue().worksheet(sheet, true), new ExcelAddress(range));
         return data;
     }
-
-    // public T read(T data, String sheet, String range) throws TypeConversionException {
-    //     if (data == null) { throw new IllegalArgumentException("data is null"); }
-    //     if (StringUtils.isBlank(sheet)) { throw new IllegalArgumentException("Invalid sheet: " + sheet); }
-    //     if (StringUtils.isBlank(range)) { throw new IllegalArgumentException("Invalid cell range: " + range); }
-    //
-    //     try {
-    //         data.read(sheet, range);
-    //         return data;
-    //     } catch (IOException e) {
-    //         throw new TypeConversionException(data.getName(),
-    //                                           sheet,
-    //                                           "Unable to close underlying Excel file: " + e.getMessage());
-    //     }
-    // }
 
     public T pack(T data) {
         requireAfterRead(data, "pack()");
@@ -171,18 +157,6 @@ public class ExcelTransformer<T extends ExcelDataType> extends Transformer {
         return data;
     }
 
-    // public T clear(T data, String range) throws TypeConversionException {
-    //     requireAfterRead(data, "clear()");
-    //
-    //     try {
-    //         data.clearCells(range);
-    //         data.read(data.getCurrentSheetName(), data.getCurrentRange());
-    //         return data;
-    //     } catch (IOException e) {
-    //         throw new TypeConversionException(data.getName(), range, "Unable to clear range: " + e.getMessage(), e);
-    //     }
-    // }
-
     public NumberDataType rowCount(T data) throws TypeConversionException {
         requireAfterRead(data, "rowCount()");
         return new NumberDataType(CollectionUtils.size(data.getCapturedValues()) + "");
@@ -194,6 +168,20 @@ public class ExcelTransformer<T extends ExcelDataType> extends Transformer {
         final int[] maxColumn = new int[]{0};
         data.getCapturedValues().forEach(row -> maxColumn[0] = Math.max(maxColumn[0], CollectionUtils.size(row)));
         return new NumberDataType(maxColumn[0] + "");
+    }
+
+    public TextDataType firstCell(T data, String column, String regex, String maxRows) throws TypeConversionException {
+        requireAfterRead(data, "firstCell()");
+
+        if (StringUtils.isBlank(regex)) { throw new IllegalArgumentException("Invalid regex: " + regex); }
+        if (!NumberUtils.isDigits(maxRows)) { throw new IllegalArgumentException("Invalid max-rows: " + maxRows); }
+
+        ExcelAddress cellAddress = data.getCurrentSheet()
+                                       .findFirstMatchingCell(column, regex, NumberUtils.toInt(maxRows));
+
+        TextDataType returnType = new TextDataType("");
+        if (cellAddress != null) { returnType.setValue(cellAddress.getAddr()); }
+        return returnType;
     }
 
     public T replace(T data, String search, String replace) {

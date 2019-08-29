@@ -52,6 +52,7 @@ import org.apache.poi.xssf.usermodel.*;
 import org.nexial.commons.proc.ProcessInvoker;
 import org.nexial.commons.proc.ProcessOutcome;
 import org.nexial.commons.utils.FileUtil;
+import org.nexial.commons.utils.RegexUtils;
 import org.nexial.commons.utils.TextUtils;
 import org.nexial.core.ExecutionThread;
 import org.nexial.core.excel.ext.CellTextReader;
@@ -497,6 +498,22 @@ public class Excel {
 
             // this means every row in this worksheet has data
             return sheet.getLastRowNum() + 1;
+        }
+
+        public ExcelAddress findFirstMatchingCell(String column, String regex, int maxRows) {
+            if (StringUtils.isBlank(column)) { return null; }
+            if (!RegexUtils.isExact(column, "[a-zA-Z]{1,}")) { return null; }
+            if (maxRows < 1) { return null; }
+            if (regex == null) { return null; }
+
+            ExcelAddress range = new ExcelAddress(column.toUpperCase() + "1:" + column.toUpperCase() + maxRows);
+            return new ExcelArea(this, range, false)
+                       .getWholeArea().stream()
+                       .filter(row -> RegexUtils.isExact(Excel.getCellRawValue(row.get(0)), regex))
+                       .limit(1)
+                       .map(row -> new ExcelAddress(row.get(0).getAddress().formatAsString()))
+                       .findFirst()
+                       .orElse(null);
         }
 
         public XSSFCellStyle getStyle(String styleName) { return commonStyles.get(styleName); }

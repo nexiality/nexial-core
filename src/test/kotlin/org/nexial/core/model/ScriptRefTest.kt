@@ -24,6 +24,7 @@ import org.nexial.core.NexialConst.OUTPUT_TO_CLOUD
 import org.nexial.core.excel.Excel
 import org.nexial.core.excel.ExcelAddress
 import kotlin.test.assertEquals
+import kotlin.test.assertNotNull
 
 class ScriptRefTest : ExcelBasedTests() {
 
@@ -40,7 +41,13 @@ class ScriptRefTest : ExcelBasedTests() {
         // plan -> script -> iteration (this one has the output
         val output = executionSummary.nestedExecutions[0].nestedExecutions[0].testScript
         val outputExcel = Excel(output, false, false)
-        val scenarioData = outputExcel.worksheet("#summary").readRange(ExcelAddress("A20:C42"))
+        val summary = outputExcel.worksheet("#summary")
+
+        val firstCell = summary.findFirstMatchingCell("A", "^scenario$", 100)
+        assertNotNull(firstCell)
+
+        val startRow = firstCell.rowStartIndex + 2
+        val scenarioData = summary.readRange(ExcelAddress("A$startRow:C${startRow + 20}"))
         scenarioData.removeIf { it.isEmpty() || it[0] + it[1] + it[2] == "" }
 
         val scenario1 = "${scenarioData[0][1]}=${scenarioData[0][2]};" +
