@@ -77,4 +77,19 @@ public class ArrayTest {
         Assert.assertEquals("a,bc,d,a,bc", subject.replicaUntil("a,bc,d", "5"));
         Assert.assertEquals("a,bc,defg,a,bc", subject.replicaUntil("a,bc,defg", "5"));
     }
+
+    @Test
+    public void sort() {
+        Array subject = new Array();
+
+        Assert.assertEquals("a,d,t,z", subject.ascending("d,a,z,t"));
+        Assert.assertEquals("ak,ap,d,t,z", subject.ascending("d,ak,z,t,ap"));
+        Assert.assertEquals("10,13,20,50", subject.ascending("13,10,20,50"));
+        Assert.assertEquals("2,5,10,13", subject.ascending("13,10,2,5"));
+
+        Assert.assertEquals("z,t,d,a", subject.descending("d,a,z,t"));
+        Assert.assertEquals("Z,T,D,AP,AK", subject.descending("D,AK,Z,T,AP"));
+        Assert.assertEquals("50,20,13,10", subject.descending("13,10,20,50"));
+        Assert.assertEquals("13,10,5,2", subject.descending("13,10,2,5"));
+    }
 }

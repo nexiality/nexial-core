@@ -18,7 +18,6 @@
 package org.nexial.core.variable;
 
 import java.util.Arrays;
-import java.util.Collections;
 import java.util.stream.Stream;
 
 import org.apache.commons.lang3.ArrayUtils;
@@ -63,12 +62,24 @@ public class Array {
 
     public String ascending(String array) {
         if (StringUtils.isEmpty(array)) { return ""; }
-        return toString(Arrays.stream(toArray(array)).sorted());
+        return toString(sort(toArray(array), true));
     }
 
     public String descending(String array) {
         if (StringUtils.isEmpty(array)) { return ""; }
-        return toString(Arrays.stream(toArray(array)).sorted(Collections.reverseOrder()));
+        return toString(sort(toArray(array), false));
+    }
+
+    public static Stream<String> sort(String[] array, boolean ascending){
+        return Arrays.stream(array).sorted((o1, o2) -> ascending ? compare(o1, o2) : compare(o2, o1));
+    }
+
+    protected static int compare(String value1, String value2) {
+        if (NumberUtils.isParsable(value1) && NumberUtils.isParsable(value2)) {
+            return NumberUtils.createBigDecimal(value1).compareTo(NumberUtils.createBigDecimal(value2));
+        } else {
+            return value1.compareTo(value2);
+        }
     }
 
     public String remove(String array, String index) {

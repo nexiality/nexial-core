@@ -30,7 +30,6 @@ import org.apache.commons.collections4.MapUtils;
 import org.apache.commons.collections4.list.TreeList;
 import org.apache.commons.lang3.ArrayUtils;
 import org.apache.commons.lang3.StringUtils;
-import org.apache.commons.lang3.math.NumberUtils;
 import org.nexial.commons.utils.TextUtils;
 import org.nexial.core.ExecutionThread;
 import org.nexial.core.model.ExecutionContext;
@@ -205,11 +204,7 @@ public class CsvDataType extends ExpressionDataType<List<Record>> {
         String value1 = first == null ? "" : StringUtils.defaultString(first.getString(columnName));
         String value2 = second == null ? "" : StringUtils.defaultString(second.getString(columnName));
 
-        if (NumberUtils.isParsable(value1) && NumberUtils.isParsable(value2)) {
-            return NumberUtils.createBigDecimal(value1).compareTo(NumberUtils.createBigDecimal(value2));
-        } else {
-            return value1.compareTo(value2);
-        }
+        return Array.compare(value1, value2);
     }
 
     @Override

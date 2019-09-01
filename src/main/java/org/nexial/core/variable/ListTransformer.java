@@ -21,7 +21,6 @@ import java.lang.reflect.Method;
 import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Stream;
@@ -239,12 +238,12 @@ public class ListTransformer<T extends ListDataType> extends Transformer {
 
     public T ascending(T data) {
         if (data == null || data.getValue() == null) { return data; }
-        return updateValue(data, Arrays.stream(data.getValue()).sorted());
+        return updateValue(data, Array.sort(data.getValue(), true));
     }
 
     public T descending(T data) {
         if (data == null || data.getValue() == null) { return data; }
-        return updateValue(data, Arrays.stream(data.getValue()).sorted(Collections.reverseOrder()));
+        return updateValue(data, Array.sort(data.getValue(), false));
     }
 
     public T remove(T data, String index) {

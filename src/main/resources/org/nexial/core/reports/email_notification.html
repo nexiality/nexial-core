@@ -28,9 +28,15 @@
 
         .execMeta { font-size: 9pt; background: #f0f0f0; padding: 5px; margin-top: 4px; width: 100%; }
 
-        .execLabel { }
+        .execLabel1 { vertical-align: top; width: 110px; }
 
-        .execValue { text-align: left; font-weight: bold; }
+        .execLabel2 { vertical-align: top; width: 150px; }
+
+        .execValue1, .execValue2 { text-align: left; font-weight: bold; }
+
+        .execValue1 { width: 330px; }
+
+        .dateTime, .scenarioPassed { text-align: center !important;  }
 
         .customHeader {
             margin-top:    8px;
@@ -100,42 +106,33 @@
 <table class="execMeta">
     <tbody>
     <tr>
-        <td nowrap="nowrap" class="execLabel">Nexial Version:</td>
-        <th width="100%" class="execValue" data-th-utext="${summary.manifest}">Nexial v1.0</th>
+        <td nowrap="nowrap" class="execLabel1">Nexial Version:</td>
+        <td class="execValue1" data-th-utext="${summary.manifest}">Nexial v1.0</td>
+        <td nowrap="nowrap" class="execLabel2">Total Scripts Executed:</td>
+        <td class="execValue2" data-th-utext="${summary.nestedExecutions.size()}">1</td>
+    <tr>
+        <td nowrap="nowrap" class="execLabel1">Executed From:</td>
+        <td class="execValue1" data-th-utext="${summary.runHost}+' ('+${summary.runHostOs}+')'">Hostname (Windows 7)</td>
+        <td nowrap="nowrap" class="execLabel2">Total Scenarios Executed:</td>
+        <td class="execValue2" data-th-utext="${summary.resolveTotalScenariosPassed()}">1 / 1</td>
     </tr>
     <tr>
-        <td nowrap="nowrap" class="execLabel">Executed From:</td>
-        <th class="execValue" data-th-utext="${summary.runHost}+' ('+${summary.runHostOs}+')'">Hostname (Windows 7)</th>
+        <td nowrap="nowrap" class="execLabel1">Executed By:</td>
+        <td class="execValue1" data-th-utext="${summary.runUser}">User</td>
+        <td nowrap="nowrap" class="execLabel2">Total Steps Executed</td>
+        <td class="execValue2" data-th-utext="${summary.executed} + ' / ' + ${summary.totalSteps}">100%</td>
     </tr>
     <tr>
-        <td nowrap="nowrap" class="execLabel">Executed By:</td>
-        <th class="execValue" data-th-utext="${summary.runUser}">User</th>
-    </tr>
-    <tr>
-        <td nowrap="nowrap" class="execLabel">Time Span:</td>
-        <th class="execValue"
-            data-th-utext="${#dates.format(new java.util.Date(summary.startTime), 'yyyy/MM/dd HH:mm:ss')} + ' - ' + ${#dates.format(new java.util.Date(summary.endTime), 'yyyy/MM/dd HH:mm:ss')} + ' (' + ${#dates.format(#dates.create(0,0,0,0,0,0,summary.elapsedTime), 'HH:mm:ss.SSS')} + ')'">
+        <td nowrap="nowrap" class="execLabel1">Time Span:</td>
+        <td class="execValue1"
+            data-th-utext="${#dates.format(new java.util.Date(summary.startTime), 'yyyy/MM/dd HH:mm:ss')} + ' - ' + ${#dates.format(new java.util.Date(summary.endTime), 'yyyy/MM/dd HH:mm:ss')} + '<br/> (' + ${#dates.format(#dates.create(0,0,0,0,0,0,summary.elapsedTime), 'HH:mm:ss.SSS')} + ')'">
             10/30/2018 01:31:39 - 10/30/2018 01:33:09
-        </th>
-    </tr>
-    <tr>
-        <td nowrap="nowrap" class="execLabel">Total Steps:</td>
-        <th class="execValue" data-th-utext="${summary.totalSteps}">8</th>
-    </tr>
-    <tr>
-        <td nowrap="nowrap" class="execLabel">Executed Steps:</td>
-        <th class="execValue" data-th-utext="${summary.executed}">8</th>
-    </tr>
-    <tr>
-        <td nowrap="nowrap" class="execLabel">Passed:</td>
-        <th class="execValue"
-            data-th-utext="${summary.passCount} + ' (' + ${#numbers.formatDecimal(summary.passCount * 100 / summary.totalSteps, 1, 2)}+ '%)'">
+        </td>
+        <td nowrap="nowrap" class="execLabel2">Pass/Fail:</td>
+        <td class="execValue2"
+            data-th-utext="${summary.passCount} + ' / ' + ${summary.failCount} + ' (' + ${#numbers.formatDecimal(summary.passCount * 100 / summary.totalSteps, 1, 2)}+ '%)'">
             100%
-        </th>
-    </tr>
-    <tr>
-        <td nowrap="nowrap" class="execLabel">Failed:</td>
-        <th class="execValue" data-th-utext="${summary.failCount}">0</th>
+        </td>
     </tr>
     </tbody>
 </table>
@@ -163,6 +160,7 @@
     <table cellpadding="5" cellspacing="2" class="result">
         <thead>
         <tr valign="top" class="reportHeader">
+            <th data-th-if="${isPlanExecution}" align="left">Plan Name/Step</th>
             <th align="left">Test Result</th>
             <th align="left">Reference</th>
             <th>Start Date/Time</th>
@@ -177,12 +175,15 @@
         <tbody>
         <div data-th-each="script : ${summary.nestedExecutions}">
             <tr valign="top" data-th-each="iteration : ${script.nestedExecutions}">
-                <th align="left" valign="top" nowrap="nowrap">
+                <td align="left" data-th-if="${isPlanExecution}" class="planName" data-th-text="${script.planName + '/' + script.planSequence}">
+                    Plan Name
+                </td>
+                <th align="left" valign="top">
                     <a data-th-href="${iteration.testScriptLink}"
                        data-th-text="${#strings.substringBefore(script.name,' (')} + '/' + ${iteration.name}">Script
                         Name</a>&nbsp;
                 </th>
-                <th align="left" valign="top" nowrap="nowrap"
+                <th align="left" valign="top"
                     data-th-with="ref = ${ {'JAVA_OPT', 'Data File', 'DataSheet(s)', 'runtime args'} }">
                     <div class="resultTestData" data-th-each="data : ${iteration.referenceData}"
                          data-th-unless="${#lists.contains(ref,data.key)}">
@@ -190,15 +191,15 @@
                         <span data-th-text="${data.value}">Value</span><br/>
                     </div>
                 </th>
-                <td valign="top"
+                <td valign="top" class="dateTime"
                     data-th-text="${#dates.format(new java.util.Date(iteration.startTime), 'yyyy/MM/dd HH:mm:ss')}">
                     start date/time
                 </td>
-                <td align="right" valign="top" class="reportStats"
+                <td valign="top" class="reportStats dateTime"
                     data-th-text="${#dates.format(#dates.create(0,0,0,0,0,0,iteration.elapsedTime), 'HH:mm:ss')}">
                     ${elapsedTime}
                 </td>
-                <td align="right" valign="top" class="reportStats" data-th-text=
+                <td valign="top" class="reportStats scenarioPassed" data-th-text=
                     "${#numbers.formatInteger(iteration.totalLevelPassed, 1, 'DEFAULT') + ' / ' +
                     iteration.nestedExecutions.size()}">1 / 1
                 </td>
@@ -220,11 +221,12 @@
         </tbody>
         <tfoot>
         <tr class="reportFooter">
-            <td align="left" colspan="3"><b>Totals</b></td>
-            <td class="reportStats"
+            <td align="left" data-th-with="colspan=${isPlanExecution ? '4' : '3'}"
+                data-th-attr="colspan=${colspan}"><b>Totals</b></td>
+            <td class="reportStats dateTime"
                 data-th-text="${#dates.format(#dates.create(0,0,0,0,0,0,summary.elapsedTime), 'HH:mm:ss')}">00:00:00
             </td>
-            <td class="reportStats" data-th-text="${summary.resolveTotalScenariosPassed()}">1 / 1</td>
+            <td class="reportStats scenarioPassed" data-th-text="${summary.resolveTotalScenariosPassed()}">1 / 1</td>
             <td class="reportStats" data-th-text="${#numbers.formatInteger(summary.executed, 1, 'DEFAULT')}">0</td>
             <td class="reportStats" data-th-text="${#numbers.formatInteger(summary.passCount, 1, 'DEFAULT')}">0</td>
             <td class="reportStats" data-th-text="${#numbers.formatInteger(summary.failCount, 1, 'DEFAULT')}">0</td>

@@ -118,6 +118,9 @@ public class NexialMailer implements ExecutionNotifier {
 
         Context engineContext = new Context();
         engineContext.setVariable("summary", summary);
+        engineContext.setVariable("isPlanExecution",
+                                  StringUtils.equals(
+                                      System.getProperty(NEXIAL_EXECUTION_TYPE), NEXIAL_EXECUTION_TYPE_PLAN));
         engineContext.setVariable("executionSummary", System.getProperty(EXEC_OUTPUT_PATH));
         engineContext.setVariable("header", mailSupport != null ? mailSupport.getCustomEmailHeader() : null);
         engineContext.setVariable("footer", mailSupport != null ? mailSupport.getCustomEmailFooter() : null);

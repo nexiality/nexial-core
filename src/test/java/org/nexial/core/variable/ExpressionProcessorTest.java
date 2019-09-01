@@ -257,6 +257,14 @@ public class ExpressionProcessorTest {
         result = subject.process(fixture);
         Assert.assertEquals("3.0", result);
 
+        fixture = "[LIST(102,20,30,30,9,99) => ascending distinct sublist(2,4)]";
+        result = subject.process(fixture);
+        Assert.assertEquals("30,99,102", result);
+
+        fixture = "[LIST(102,20,30,30,9,99) => descending distinct sublist(2,4)]";
+        result = subject.process(fixture);
+        Assert.assertEquals("30,20,9", result);
+
         fixture = "[LIST(,,adam,ada,,,,,mad,ada,,,) => pack reverse]";
         result = subject.process(fixture);
         Assert.assertEquals("ada,mad,ada,adam", result);
