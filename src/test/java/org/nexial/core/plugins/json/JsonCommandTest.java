@@ -944,7 +944,7 @@ public class JsonCommandTest {
                                                  "but ACTUAL contains 54321 of type number\""));
         Assert.assertTrue(compareResult.contains("EXPECTED contains \\\"Magillon\\\" of type text " +
                                                  "but ACTUAL contains \\\"Killian\\\""));
-        Assert.assertTrue(compareResult.contains("ACTUAL node 'middleName' NOT FOUND in EXPECTED"));
+        Assert.assertTrue(compareResult.contains("ACTUAL node 'middleName[3]' NOT FOUND in EXPECTED"));
     }
 
     @Test
