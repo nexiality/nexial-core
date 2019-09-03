@@ -349,7 +349,7 @@ class JsonMetaTest {
         val results = expected.compare(actual)
         println("results = $results")
 
-        assertResultSize(results, 5)
+        assertResultSize(results, 8)
 
         val diff = results.differences[0]
         val message = diff.message
@@ -358,12 +358,24 @@ class JsonMetaTest {
         Assert.assertTrue(message.contains("ACTUAL has 4 nodes"))
 
         assertDiffNodes(results.differences[1], "$.answer", "$.answer")
-        assertDiffNodes(results.differences[2], "$.options", "$.for real")
-        assertDiffNodes(results.differences[3], "$.question", "$.options")
+        assertDiffNodes(results.differences[2], "$.options", "$.options")
+        assertDiffNodes(results.differences[3], "$.options[2]", "$.options[2]")
 
-        val diff5 = results.differences[4]
+        val diff4 = results.differences[4]
+        Assert.assertEquals("$.options[3]", diff4.expectedNode)
+        Assert.assertEquals("$.options[3]", diff4.actualNode)
+
+        val diff5 = results.differences[5]
         Assert.assertNull(diff5.expectedNode)
-        Assert.assertEquals("$.question", diff5.actualNode)
+        Assert.assertEquals("$.options[4]", diff5.actualNode)
+
+        val diff6 = results.differences[6]
+        Assert.assertEquals("$.question", diff6.expectedNode)
+        Assert.assertEquals("$.question", diff6.actualNode)
+
+        val diff7 = results.differences[7]
+        Assert.assertNull(diff7.expectedNode)
+        Assert.assertEquals("$.question", diff7.actualNode)
     }
 
     @Test
@@ -473,7 +485,7 @@ class JsonMetaTest {
             .compare(jsonMetaParser.parse(jsonParser.parse(fixture2)))
         println("results = $results")
 
-        assertResultSize(results, 11)
+        assertResultSize(results, 10)
         assertDiffNodes(results.differences[0], "$[0].q1.options[3]", "$[0].q1.options[3]")
         assertDiffNodes(results.differences[1], "$[1].q2.answer", "$[1].q2.answer")
         assertDiffNodes(results.differences[2], "$[1].q2.options[0]", "$[1].q2.options[0]")
@@ -483,14 +495,13 @@ class JsonMetaTest {
         assertDiffNodes(results.differences[6], "$[1].q2.question", "$[1].q2.question")
         assertDiffNodes(results.differences[7], "$[2].q3", "$[2].q3")
         assertDiffNodes(results.differences[8], "$[2].q3.answer", "$[2].q3.answer")
-        assertDiffNodes(results.differences[9], "$[2].q3.question", "$[2].q3.options")
-        assertDiffNodes(results.differences[10], null, "$[2].q3.question")
+        assertDiffNodes(results.differences[9], null, "$[2].q3.question")
 
         val diffJson = results.toJson()
         println("results = $diffJson")
 
         Assert.assertNotNull(diffJson)
-        Assert.assertEquals(11, diffJson.size())
+        Assert.assertEquals(10, diffJson.size())
     }
 
     private fun assertResultSize(results: JsonComparisonResult, count: Int) {

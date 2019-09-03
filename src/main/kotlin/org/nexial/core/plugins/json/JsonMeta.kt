@@ -137,9 +137,7 @@ data class JsonMeta(val type: Type, var name: String?, var node: String?) {
 
             if (i >= actualSize) {
                 result.addDifference(Difference(expectedMeta.node, null,
-                                                "EXPECTED node '" +
-                                                "${if (isObject) expectedMeta.name else "item $i"}" +
-                                                "' NOT FOUND in ACTUAL"))
+                                                "EXPECTED node '${displayMetaLabel(this, i)}' NOT FOUND in ACTUAL"))
             } else {
                 val actualMeta = actual.children[i]
 
@@ -176,13 +174,25 @@ data class JsonMeta(val type: Type, var name: String?, var node: String?) {
         if (actualSize > expectedSize) {
             for (i in expectedSize until actualSize) {
                 val actualMeta = actual.children[i]
-                result.addDifference(Difference(null, actualMeta.node,
-                                                "ACTUAL node '${actualMeta.name}' NOT FOUND in EXPECTED"))
+                result.addDifference(
+                        Difference(null, actualMeta.node,
+                                   "ACTUAL node '${displayMetaLabel(actualMeta, i)}' NOT FOUND in EXPECTED"))
             }
         }
 
         return result
     }
+
+    private fun displayMetaLabel(meta: JsonMeta, i: Int) =
+            if (meta.isArray)
+                "item $i"
+            else if (meta.isLeaf)
+                if (StringUtils.isEmpty(meta.name))
+                    "${meta.parent!!.name}[$i]"
+                else
+                    "${meta.name}[$i]"
+            else
+                meta.name
 
     private fun findChildNode(nodeName: String) = children.firstOrNull { it.name == nodeName }
 
