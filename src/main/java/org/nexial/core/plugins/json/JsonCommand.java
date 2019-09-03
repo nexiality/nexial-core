@@ -53,14 +53,10 @@ import com.google.gson.JsonParser;
 import com.google.gson.JsonSyntaxException;
 
 import static org.nexial.core.NexialConst.*;
-import static org.nexial.core.NexialConst.Data.LAST_JSON_COMPARE_RESULT;
-import static org.nexial.core.NexialConst.Data.TREAT_JSON_AS_IS;
+import static org.nexial.core.NexialConst.Data.*;
 import static org.nexial.core.SystemVariables.getDefaultBool;
 import static org.nexial.core.utils.CheckUtils.*;
 
-/**
- *
- */
 public class JsonCommand extends BaseCommand {
     private static final JsonSchemaFactory JSON_SCHEMA_FACTORY = JsonSchemaFactory.byDefault();
 
@@ -442,11 +438,7 @@ public class JsonCommand extends BaseCommand {
         JsonComparisonResult results = expectedMeta.compare(actualMeta);
 
         if (results.hasDifferences()) {
-            String differences = GSON.toJson(results.toJson());
-            context.setData(LAST_JSON_COMPARE_RESULT, differences);
-            ConsoleUtils.log("JSON differences found:\n" + differences);
-            addOutputAsLink("JSON comparison resulted in " + results.differenceCount() + " differences",
-                            differences, "json");
+            handleComparisonResults(results);
             return StepResult.fail("EXPECTED json is NOT equivalent to the ACTUAL json");
         } else {
             context.removeData(LAST_JSON_COMPARE_RESULT);
@@ -537,6 +529,33 @@ public class JsonCommand extends BaseCommand {
         if (expectedJson == null || !expectedJson.isJsonArray()) { return null; }
 
         return expectedJson.getAsJsonArray();
+    }
+
+    private void handleComparisonResults(JsonComparisonResult results) {
+        if (results == null) {
+            context.removeData(LAST_JSON_COMPARE_RESULT);
+            return;
+        }
+
+        String differences = GSON.toJson(results.toJson());
+        context.setData(LAST_JSON_COMPARE_RESULT, differences);
+        ConsoleUtils.log("JSON differences found:\n" + differences);
+
+        boolean asJson = context.getBooleanData(COMPARE_RESULT_AS_JSON, getDefaultBool(COMPARE_RESULT_AS_JSON));
+        boolean asCsv = context.getBooleanData(COMPARE_RESULT_AS_CSV, getDefaultBool(COMPARE_RESULT_AS_CSV));
+        boolean asHtml = context.getBooleanData(COMPARE_RESULT_AS_HTML, getDefaultBool(COMPARE_RESULT_AS_HTML));
+
+        String caption = "JSON comparison resulted in " + results.differenceCount() + " differences";
+
+        if (asJson) { addOutputAsLink(caption, differences, "json"); }
+
+        List<String> headers = Arrays.asList("expectedNode", "actualNode", "message");
+        List<List<String>> diffList = results.toList();
+        if (asCsv) { addOutputAsLink(caption, TextUtils.createCsv(headers, diffList, "\r\n", ",", "\""), "csv"); }
+
+        if (asHtml) {
+            addOutputAsLink(caption, TextUtils.createHtmlTable(headers, diffList, "compare-result-table"), "html");
+        }
     }
 
     private JsonNode deriveWellformedJson(String json) {

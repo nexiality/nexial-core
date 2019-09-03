@@ -237,13 +237,11 @@ public class ListTransformer<T extends ListDataType> extends Transformer {
     }
 
     public T ascending(T data) {
-        if (data == null || data.getValue() == null) { return data; }
-        return updateValue(data, Array.sort(data.getValue(), true));
+        return data == null || data.getValue() == null ? data : updateValue(data, Array.sort(data.getValue(), true));
     }
 
     public T descending(T data) {
-        if (data == null || data.getValue() == null) { return data; }
-        return updateValue(data, Array.sort(data.getValue(), false));
+        return data == null || data.getValue() == null ? data : updateValue(data, Array.sort(data.getValue(), false));
     }
 
     public T remove(T data, String index) {

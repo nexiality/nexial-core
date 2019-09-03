@@ -46,6 +46,8 @@ class JsonComparisonResult : Serializable {
             json.addProperty("message", message)
             return json
         }
+
+        fun asList(): List<String?> = listOf(expectedNode, actualNode, message)
     }
 
     fun differenceCount() = differences.size
@@ -73,4 +75,6 @@ class JsonComparisonResult : Serializable {
         differences.forEach { difference -> json.add(difference.toJson()) }
         return json
     }
+
+    fun toList() = differences.map { it.asList() }
 }

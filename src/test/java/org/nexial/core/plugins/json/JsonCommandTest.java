@@ -34,6 +34,7 @@ import com.google.gson.JsonArray;
 
 import static java.io.File.separator;
 import static org.nexial.core.NexialConst.DEF_FILE_ENCODING;
+import static org.nexial.core.NexialConst.Data.LAST_JSON_COMPARE_RESULT;
 import static org.nexial.core.NexialConst.Data.TREAT_JSON_AS_IS;
 import static org.nexial.core.NexialConst.GSON_COMPRESSED;
 
@@ -659,8 +660,9 @@ public class JsonCommandTest {
         Assert.assertTrue(fixture.assertValue(json, "response.jobParameters", null).isSuccess());
 
         Assert.assertTrue(fixture.assertValues(json, "response.jobParameters", "[]", "false").isSuccess());
-        Assert.assertTrue(fixture.assertValues(json, "response.jobParameters", context.replaceTokens("(null)"), "false")
-                                 .isSuccess());
+        Assert.assertTrue(fixture.assertValues(json,
+                                               "response.jobParameters",
+                                               context.replaceTokens("(null)"), "false").isSuccess());
         Assert.assertTrue(fixture.assertValues(json, "response.jobParameters", "", "false").isSuccess());
         Assert.assertTrue(fixture.assertValues(json, "response.jobParameters", null, "false").isSuccess());
         Assert.assertTrue(fixture.assertValues(json,
@@ -881,4 +883,147 @@ public class JsonCommandTest {
         Assert.assertFalse(compacted.contains("array1"));
 
     }
+
+    @Test
+    public void assertEqual_different_order() throws Exception {
+        String testJson1 = "[ { \"firstName\": \"John Mark\", \"id\": 12345, \"lastName\": \"Magillon\" }, {} ]";
+        String testJson2 = "[ { \"id\": 12345, \"lastName\": \"Magillon\", \"firstName\": \"John Mark\" }, {  } ]";
+
+        JsonCommand fixture = new JsonCommand();
+        fixture.init(context);
+
+        StepResult result = fixture.assertEqual(testJson1, testJson2);
+        Assert.assertNotNull(result);
+
+        System.out.println("result = " + result);
+        Assert.assertTrue(result.isSuccess());
+    }
+
+    @Test
+    public void assertEqual_different_order_2() throws Exception {
+        String testJson1 = "[ {}, { \"firstName\": \"John Mark\", \"id\": 12345, \"lastName\": \"Magillon\" } ]";
+        String testJson2 = "[ { \"id\": 12345, \"lastName\": \"Magillon\", \"firstName\": \"John Mark\" }, {  } ]";
+
+        JsonCommand fixture = new JsonCommand();
+        fixture.init(context);
+
+        StepResult result = fixture.assertEqual(testJson1, testJson2);
+        Assert.assertNotNull(result);
+
+        System.out.println("result = " + result);
+        Assert.assertFalse(result.isSuccess());
+
+        String compareResult = context.getStringData(LAST_JSON_COMPARE_RESULT);
+        Assert.assertTrue(compareResult.contains("\"EXPECTED has 3 nodes (firstName,id,lastName) " +
+                                                 "but ACTUAL has 0 node ()\""));
+        Assert.assertTrue(compareResult.contains("\"EXPECTED has 0 node () " +
+                                                 "but ACTUAL has 3 nodes (firstName,id,lastName)\""));
+    }
+
+    @Test
+    public void assertEqual_uneven_nodes() throws Exception {
+        String testJson1 = "[ { \"firstName\": \"John Mark\", \"id\": 12345, \"lastName\": \"Magillon\" }, {} ]";
+        String testJson2 = "[ { \"id\": 54321, \"lastName\": \"Killian\", \"middleName\": \"Mark\", " +
+                           "\"firstName\": \"John\" }, {  } ]";
+
+        JsonCommand fixture = new JsonCommand();
+        fixture.init(context);
+
+        StepResult result = fixture.assertEqual(testJson1, testJson2);
+        Assert.assertNotNull(result);
+
+        System.out.println("result = " + result);
+        Assert.assertFalse(result.isSuccess());
+
+        String compareResult = context.getStringData(LAST_JSON_COMPARE_RESULT);
+        Assert.assertTrue(compareResult.contains("\"EXPECTED has 3 nodes (firstName,id,lastName) " +
+                                                 "but ACTUAL has 4 nodes (firstName,id,lastName,middleName)\""));
+        Assert.assertTrue(compareResult.contains("EXPECTED contains \\\"John Mark\\\" of type text " +
+                                                 "but ACTUAL contains \\\"John\\\""));
+        Assert.assertTrue(compareResult.contains("\"EXPECTED contains 12345 of type number " +
+                                                 "but ACTUAL contains 54321 of type number\""));
+        Assert.assertTrue(compareResult.contains("EXPECTED contains \\\"Magillon\\\" of type text " +
+                                                 "but ACTUAL contains \\\"Killian\\\""));
+        Assert.assertTrue(compareResult.contains("ACTUAL node 'middleName' NOT FOUND in EXPECTED"));
+    }
+
+    @Test
+    public void assertEqual_out_of_order() throws Exception {
+        String testJson1 = "[" +
+                           "  {" +
+                           "    \"id\": \"1491302\"," +
+                           "    \"employeeid\": \"9268gIgEI\"," +
+                           "    \"employeetype\": \"REG\"," +
+                           "    \"employeetypedescription\": \"PWE Employee\"," +
+                           "    \"firstName\": \"MICHAEL\"," +
+                           "    \"middleName\": \"\"," +
+                           "    \"lastname\": \"FRXXX\"," +
+                           "    \"corpName\": \"\"," +
+                           "    \"corpFEIN\": \"\"," +
+                           "    \"address1\": \"C/O EMA TELSTAR PRODUCTIONS AB\"," +
+                           "    \"address2\": \"BOX 1018 CARL MILLES VAG 7\"," +
+                           "    \"city\": \"S-18121 LIDINGO\"," +
+                           "    \"state\": \"FO\"," +
+                           "    \"postalcode\": \"000000000\"," +
+                           "    \"country\": \"UNK\"" +
+                           "  }" +
+                           "]";
+        String testJson2 = "[" +
+                           "  {" +
+                           "    \"lastName\": \"HIRST\"," +
+                           "    \"country\": \"USA\"," +
+                           "    \"address2\": \"\"," +
+                           "    \"city\": \"BEVERLY HILLS\"," +
+                           "    \"address1\": \"% ENDEAVOR              9601 WILSHIRE BL 3RD FL   \"," +
+                           "    \"postalCode\": \"90210\"," +
+                           "    \"employeeId\": \"+876Hy!5s\"," +
+                           "    \"corpName\": \"\"," +
+                           "    \"firstName\": \"MICHAEL\"," +
+                           "    \"employeeType\": \"REG\"," +
+                           "    \"pweTypeDescription\": \"PWE Employee \"," +
+                           "    \"corpFEIN\": \"\"," +
+                           "    \"middleName\": \"\"," +
+                           "    \"id\": 2740263," +
+                           "    \"state\": \"CA\"" +
+                           "  }" +
+                           "]";
+
+        context.setData("nexial.json.compareResultsAsJSON", true);
+        context.setData("nexial.json.compareResultsAsCSV", true);
+        context.setData("nexial.json.compareResultsAsHTML", true);
+
+        JsonCommand fixture = new JsonCommand();
+        fixture.init(context);
+
+        StepResult result = fixture.assertEqual(testJson1, testJson2);
+        Assert.assertNotNull(result);
+
+        System.out.println("result = " + result);
+        Assert.assertFalse(result.isSuccess());
+
+        String compareResult = context.getStringData(LAST_JSON_COMPARE_RESULT);
+        Assert.assertTrue(compareResult.contains("\"EXPECTED contains \\\"C/O EMA TELSTAR PRODUCTIONS AB\\\" of " +
+                                                 "type text but ACTUAL contains " +
+                                                 "\\\"% ENDEAVOR              9601 WILSHIRE BL 3RD FL   \\\" of " +
+                                                 "type text\""));
+        Assert.assertTrue(compareResult.contains("\"EXPECTED contains \\\"BOX 1018 CARL MILLES VAG 7\\\" of " +
+                                                 "type text but ACTUAL contains \\\"\\\" of type text\""));
+        Assert.assertTrue(compareResult.contains("\"EXPECTED contains \\\"S-18121 LIDINGO\\\" of type text but " +
+                                                 "ACTUAL contains \\\"BEVERLY HILLS\\\" of type text\""));
+        Assert.assertTrue(compareResult.contains("\"EXPECTED contains \\\"UNK\\\" of type text " +
+                                                 "but ACTUAL contains \\\"USA\\\" of type text\""));
+        Assert.assertTrue(compareResult.contains("\"EXPECTED node 'employeeid' NOT FOUND in ACTUAL\""));
+        Assert.assertTrue(compareResult.contains("\"ACTUAL node 'employeeId' NOT FOUND in EXPECTED\""));
+        Assert.assertTrue(compareResult.contains("\"EXPECTED node 'employeetype' NOT FOUND in ACTUAL\""));
+        Assert.assertTrue(compareResult.contains("\"ACTUAL node 'employeeType' NOT FOUND in EXPECTED\""));
+        Assert.assertTrue(compareResult.contains("\"EXPECTED node 'employeetypedescription' NOT FOUND in ACTUAL\""));
+        Assert.assertTrue(compareResult.contains("\"EXPECTED contains \\\"1491302\\\" of type text but " +
+                                                 "ACTUAL contains 2740263 of type number\""));
+        Assert.assertTrue(compareResult.contains("\"EXPECTED node 'lastname' NOT FOUND in ACTUAL\""));
+        Assert.assertTrue(compareResult.contains("\"EXPECTED node 'postalcode' NOT FOUND in ACTUAL\""));
+        Assert.assertTrue(compareResult.contains("\"ACTUAL node 'pweTypeDescription' NOT FOUND in EXPECTED\""));
+        Assert.assertTrue(compareResult.contains("\"EXPECTED contains \\\"FO\\\" of type text but " +
+                                                 "ACTUAL contains \\\"CA\\\" of type text\""));
+    }
+
 }

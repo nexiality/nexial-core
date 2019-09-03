@@ -1079,8 +1079,10 @@ public final class NexialConst {
 
         // json
         public static final String NAMESPACE_JSON = NAMESPACE + "json.";
-        public static final String LAST_JSON_COMPARE_RESULT = registerSystemVariable(NAMESPACE_JSON +
-                                                                                     "lastCompareResults");
+        public static final String LAST_JSON_COMPARE_RESULT = registerSystemVariable(NAMESPACE_JSON + "lastCompareResults");
+        public static final String COMPARE_RESULT_AS_JSON = registerSystemVariable(NAMESPACE_JSON + "compareResultsAsJSON", true);
+        public static final String COMPARE_RESULT_AS_CSV = registerSystemVariable(NAMESPACE_JSON + "compareResultsAsCSV", false);
+        public static final String COMPARE_RESULT_AS_HTML = registerSystemVariable(NAMESPACE_JSON + "compareResultsAsHTML", false);
         public static final String TREAT_JSON_AS_IS = registerSystemVariable(NAMESPACE_JSON + "treatJsonAsIs", true);
 
         // ssh

@@ -29,9 +29,7 @@ import org.nexial.core.plugins.json.JsonMeta.Type.*
 import org.nexial.core.utils.JsonUtils
 import java.util.*
 
-/**
- * json elemental structure, either array or name/value pair, and metadata
- */
+/** json elemental structure, either array or name/value pair, and metadata */
 data class JsonMeta(val type: Type, var name: String?, var node: String?) {
 
     enum class Type {
@@ -49,106 +47,144 @@ data class JsonMeta(val type: Type, var name: String?, var node: String?) {
     fun compare(actual: JsonMeta?): JsonComparisonResult {
         val result = JsonComparisonResult()
 
-        if (actual == null) {
+        // first level type checking
+        if (actual == null)
             return result.addDifference(Difference(node, null, "ACTUAL is null/empty but EXPECTED is not"))
-        }
 
-        if (isArray && !actual.isArray) {
+        if (isArray && !actual.isArray)
             return result.addDifference(Difference(node, actual.node, "EXPECTED is an array but ACTUAL is not"))
-        }
 
-        if (isObject && !actual.isObject) {
+        if (isObject && !actual.isObject)
             return result.addDifference(Difference(node, actual.node, "EXPECTED is an object but ACTUAL is not"))
-        }
 
-        if (isLeaf && !actual.isLeaf) {
-            return result.addDifference(Difference(node, actual.node,
-                                                   "EXPECTED is a name/value pair but ACTUAL is not"))
-        }
+        if (isLeaf && !actual.isLeaf)
+            return result.addDifference(Difference(node, actual.node, "EXPECTED is name/value pair but ACTUAL is not"))
 
         // at this point, EXPECTED and ACTUAL are of same type
-        if (isArray || isObject) {
-            val expectedSize = children.size
-            val actualSize = actual.children.size
-            if (expectedSize != actualSize) {
-                val message: String
-                message = if (isObject) {
-                    val expectedNodeNames = mutableListOf<String>()
-                    children.forEach { child ->
-                        if (StringUtils.isNotBlank(child.name)) expectedNodeNames.add(child.name!!)
-                    }
+        if (isArray || isObject) return compareAsObjectOrArray(actual, result)
 
-                    val actualNodeNames = mutableListOf<String>()
-                    actual.children.forEach { child ->
-                        if (StringUtils.isNotBlank(child.name)) actualNodeNames.add(child.name!!)
-                    }
+        // at this point, both are leaves
+        if (isLeaf) return compareAsLeaf(actual, result)
 
-                    "EXPECTED has $expectedSize node${if (expectedSize > 1) "s" else ""}" +
-                    " (${TextUtils.toString(expectedNodeNames, ",")}) but " +
-                    "ACTUAL has $actualSize node${if (actualSize > 1) "s" else ""}" +
-                    " (${TextUtils.toString(actualNodeNames, ",")})"
-                } else {
-                    "EXPECTED has $expectedSize node${if (expectedSize > 1) "s" else ""} but " +
-                    "ACTUAL has $actualSize node${if (actualSize > 1) "s" else ""}"
-                }
+        return result
+    }
 
-                result.addDifference(Difference(node, actual.node, message))
+    private fun compareAsLeaf(actual: JsonMeta, result: JsonComparisonResult): JsonComparisonResult {
+        val actualValue = actual.value
+
+        if (value == null)
+            return if (actualValue == null)
+                result
+            else {
+                result.addDifference(
+                        Difference(node, actual.node, "EXPECTED contains null but ACTUAL contains $actualValue"))
+                return result
             }
 
-            for (i in 0 until expectedSize) {
-                val expectedMeta = children[i]
-                if (i >= actualSize) {
-                    result.addDifference(Difference(expectedMeta.node, null, "No matching node on ACTUAL"))
-                } else {
-                    result.addDifferences(expectedMeta.compare(actual.children[i]))
-                }
-            }
+        if (actualValue == null)
+            return result.addDifference(
+                    Difference(node, actual.node, "EXPECTED contains $value but ACTUAL contains null"))
 
-            if (actualSize > expectedSize) {
-                for (i in expectedSize until actualSize) {
-                    result.addDifference(Difference(null, actual.children[i].node, "No matching node on ACTUAL"))
-                }
+
+        if (value is JsonPrimitive && actualValue is JsonPrimitive) {
+            if (this.value != actualValue) {
+                val expectedType = JsonUtils.getPrimitiveType(value as JsonPrimitive)
+                val actualType = JsonUtils.getPrimitiveType(actualValue)
+                result.addDifference(Difference(node, actual.node,
+                                                "EXPECTED contains $value of type $expectedType " +
+                                                "but ACTUAL contains $actualValue of type $actualType"))
             }
 
             return result
         }
 
-        if (isLeaf) {
-            val actualValue = actual.value
-            if (value == null) {
-                return if (actualValue == null)
-                    result
-                else
-                    result.addDifference(Difference(node, actual.node,
-                                                    "EXPECTED contains null but ACTUAL contains $actualValue"))
+        if (value != actualValue)
+            return result.addDifference(
+                    Difference(node, actual.node, "EXPECTED contains ${revealLeafValue(value as Any)} " +
+                                                  "but ACTUAL contains ${revealLeafValue(actualValue)}"))
+
+        return result
+    }
+
+    private fun compareAsObjectOrArray(actual: JsonMeta,
+                                       result: JsonComparisonResult): JsonComparisonResult {
+        val expectedSize = children.size
+        val actualSize = actual.children.size
+        if (expectedSize != actualSize) {
+            val message: String
+            message = if (isObject) {
+                val expectedNodeNames = mutableListOf<String>()
+                children.forEach { if (StringUtils.isNotBlank(it.name)) expectedNodeNames.add(it.name!!) }
+
+                val actualNodeNames = mutableListOf<String>()
+                actual.children.forEach { if (StringUtils.isNotBlank(it.name)) actualNodeNames.add(it.name!!) }
+
+                "EXPECTED has $expectedSize node${if (expectedSize > 1) "s" else ""}" +
+                " (${TextUtils.toString(expectedNodeNames, ",")}) but " +
+                "ACTUAL has $actualSize node${if (actualSize > 1) "s" else ""}" +
+                " (${TextUtils.toString(actualNodeNames, ",")})"
+            } else {
+                "EXPECTED has $expectedSize node${if (expectedSize > 1) "s" else ""} but " +
+                "ACTUAL has $actualSize node${if (actualSize > 1) "s" else ""}"
             }
 
-            if (actualValue == null) {
-                return result.addDifference(Difference(node, actual.node,
-                                                       "EXPECTED contains $value but ACTUAL contains null"))
-            }
+            result.addDifference(Difference(node, actual.node, message))
+        }
 
-            if (value is JsonPrimitive && actualValue is JsonPrimitive) {
-                if (this.value != actualValue) {
-                    val expectedType = JsonUtils.getPrimitiveType(value as JsonPrimitive)
-                    val actualType = JsonUtils.getPrimitiveType(actualValue)
-                    result.addDifference(Difference(node, actual.node,
-                                                    "EXPECTED contains $value of type $expectedType but " +
-                                                    "ACTUAL contains $actualValue of type $actualType"))
+        // at this point, EXPECTED and ACTUAL has the same number of "children"
+        for (i in 0 until expectedSize) {
+            val expectedMeta = children[i]
+
+            if (i >= actualSize) {
+                result.addDifference(Difference(expectedMeta.node, null,
+                                                "EXPECTED node '" +
+                                                "${if (isObject) expectedMeta.name else "item $i"}" +
+                                                "' NOT FOUND in ACTUAL"))
+            } else {
+                val actualMeta = actual.children[i]
+
+                if (isObject) {
+                    // as JSON objects, we compare each node by name.. first by matching up the node name
+                    val actualMatchedMeta = actual.findChildNode(expectedMeta.name!!)
+                    if (actualMatchedMeta == null) {
+                        // this means that there's a child node in EXPECTED not found in ACTUAL's
+                        result.addDifference(Difference(expectedMeta.node, null,
+                                                        "EXPECTED node '${expectedMeta.name}' NOT FOUND in ACTUAL"))
+
+                        // what about ACTUAL's current node?
+                        val expectedMatchedNode = findChildNode(actualMeta.name!!)
+                        if (expectedMatchedNode == null) {
+                            // this means that there's a child node in ACTUAL not found in EXPECTED's
+                            // this means that there's a child node in EXPECTED not found in ACTUAL's
+                            result.addDifference(Difference(null, actualMeta.node,
+                                                            "ACTUAL node '${actualMeta.name}' NOT FOUND in EXPECTED"))
+                        }
+                    } else {
+                        // at this point, we found matching node name in EXPECTED and ACTUAL's child node
+                        result.addDifferences(expectedMeta.compare(actualMatchedMeta))
+                    }
+                } else {
+                    if (i >= actualSize) {
+                        result.addDifference(Difference(expectedMeta.node, null, "No matching node on ACTUAL"))
+                    } else {
+                        result.addDifferences(expectedMeta.compare(actualMeta))
+                    }
                 }
-
-                return result
             }
+        }
 
-            if (value != actualValue) {
-                return result.addDifference(Difference(node, actual.node,
-                                                       "EXPECTED contains ${revealLeafValue(value as Any)} but " +
-                                                       "ACTUAL contains ${revealLeafValue(actualValue)}"))
+        if (actualSize > expectedSize) {
+            for (i in expectedSize until actualSize) {
+                val actualMeta = actual.children[i]
+                result.addDifference(Difference(null, actualMeta.node,
+                                                "ACTUAL node '${actualMeta.name}' NOT FOUND in EXPECTED"))
             }
         }
 
         return result
     }
+
+    private fun findChildNode(nodeName: String) = children.firstOrNull { it.name == nodeName }
 
     fun getValueString() = if (value == null) {
         null
@@ -209,9 +245,7 @@ class JsonMetaParser {
             return jsonMeta
         }
 
-        if (json.isJsonNull) {
-            return JsonMeta(type = PRIMITIVE, name = name, node = node)
-        }
+        if (json.isJsonNull) return JsonMeta(type = PRIMITIVE, name = name, node = node)
 
         throw IllegalArgumentException("Unknown/Unsupported JSON structure encountered")
     }

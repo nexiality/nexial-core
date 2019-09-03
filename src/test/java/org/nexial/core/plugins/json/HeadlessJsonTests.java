@@ -27,9 +27,9 @@ public class HeadlessJsonTests extends ExcelBasedTests {
         // ExecutionSummary executionSummary = testViaExcel("unitTest_json.xlsx", "jsonpath1");
         ExecutionSummary executionSummary = testViaExcel("unitTest_json.xlsx");
         System.out.println("executionSummary = " + executionSummary);
-        assertPassFail(executionSummary, "jsonpath1", TestOutcomeStats.allPassed());
+        assertPassFail(executionSummary, "validation", TestOutcomeStats.allPassed());
         assertPassFail(executionSummary, "bad_jsonpath", TestOutcomeStats.allPassed());
-        assertPassFail(executionSummary, "json_compare", new TestOutcomeStats(1, 19));
+        assertPassFail(executionSummary, "json_compare", new TestOutcomeStats(2, 23));
         assertPassFail(executionSummary, "read_json", TestOutcomeStats.allPassed());
         assertPassFail(executionSummary, "beautification", TestOutcomeStats.allPassed());
     }

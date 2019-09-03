@@ -1,0 +1,22 @@
+
+table.compare-result-table {
+    font-family:    Tahoma, sans-serif;
+    padding:        5px;
+    margin:         15px 5px;
+    border-spacing: 0;
+}
+
+table.compare-result-table thead th {
+    background-color: #888;
+    padding:          5px;
+    text-align:       left;
+    color:            #eee;
+    box-shadow:       0px 4px 5px rgba(80, 80, 80, 0.5);
+}
+
+.compare-result-table tbody td {
+    white-space:    pre-wrap;
+    padding:        5px;
+    border-bottom:  1px #bbb solid;
+    vertical-align: text-top;
+}

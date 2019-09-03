@@ -33,13 +33,11 @@ import static org.nexial.core.SystemVariables.getDefault;
 public class Array {
 
     public String item(String array, String index) {
-        if (StringUtils.isEmpty(array)) { return ""; }
-        return item(toArray(array), index);
+        return StringUtils.isEmpty(array) ? "" : item(toArray(array), index);
     }
 
     public String length(String array) {
-        if (StringUtils.isEmpty(array)) { return "0"; }
-        return toArray(array).length + "";
+        return StringUtils.isEmpty(array) ? "0" : toArray(array).length + "";
     }
 
     public String reverse(String array) {
@@ -51,23 +49,19 @@ public class Array {
     }
 
     public String subarray(String array, String start, String end) {
-        if (StringUtils.isEmpty(array)) { return ""; }
-        return toString(subarray(toArray(array), start, end));
+        return StringUtils.isEmpty(array) ? "" : toString(subarray(toArray(array), start, end));
     }
 
     public String distinct(String array) {
-        if (StringUtils.isEmpty(array)) { return ""; }
-        return toString(Arrays.stream(toArray(array)).distinct());
+        return StringUtils.isEmpty(array) ? "" : toString(Arrays.stream(toArray(array)).distinct());
     }
 
     public String ascending(String array) {
-        if (StringUtils.isEmpty(array)) { return ""; }
-        return toString(sort(toArray(array), true));
+        return StringUtils.isEmpty(array) ? "" : toString(sort(toArray(array), true));
     }
 
     public String descending(String array) {
-        if (StringUtils.isEmpty(array)) { return ""; }
-        return toString(sort(toArray(array), false));
+        return StringUtils.isEmpty(array) ? "" : toString(sort(toArray(array), false));
     }
 
     public static Stream<String> sort(String[] array, boolean ascending){
@@ -176,9 +170,7 @@ public class Array {
     }
 
     protected static String item(String[] arr, String index) {
-        if (!NumberUtils.isDigits(index)) { return ""; }
-        int idx = NumberUtils.toInt(index);
-        return item(arr, idx);
+        return !NumberUtils.isDigits(index) ? "" : item(arr, NumberUtils.toInt(index));
     }
 
     protected static String item(String[] arr, int idx) {
@@ -189,9 +181,7 @@ public class Array {
         return arr[idx];
     }
 
-    /**
-     * subarray between start and end, both ends inclusively
-     */
+    /** subarray between start and end, both ends inclusively */
     protected static String[] subarray(String[] arr, String start, String end) {
         if (ArrayUtils.isEmpty(arr)) { return null; }
         if (!NumberUtils.isDigits(start)) { return null; }
