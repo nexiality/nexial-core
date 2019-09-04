@@ -93,6 +93,7 @@ public class IoCommand extends BaseCommand {
      */
     public StepResult saveMatches(String var, String path, String filePattern) {
         requiresValidVariableName(var);
+        path = StringUtils.trim(path);
         requiresReadableDirectory(path, "invalid path", path);
         requiresNotBlank(filePattern, "invalid file pattern", filePattern);
         boolean hasFilter = false;

@@ -694,6 +694,9 @@
     <value>nexial.tts.sampleRate</value>
     <value>nexial.tts.secretKey</value>
     <value>nexial.tts.voiceGender</value>
+    <value>nexial.vision.accessKey</value>
+    <value>nexial.vision.region</value>
+    <value>nexial.vision.secretKey</value>
   </util:list>
 
   <!-- system variables that can be set via `-override` or `-D...` but they should not be overridden mid-flight during test -->

@@ -19,7 +19,9 @@ package org.nexial.core.utils;
 
 import java.io.File;
 import java.io.IOException;
+import java.lang.reflect.Array;
 import java.util.List;
+import java.util.Objects;
 
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.io.FileUtils;
@@ -96,7 +98,7 @@ public class CheckUtils {
     public static boolean requiresReadableDirectory(String path, String message, Object... params) {
         requiresNotBlank(path, message, params);
 
-        String msgParams = ArrayUtils.toString(params);
+        String msgParams = Objects.toString(Array.get(params, 0), "");
 
         File dir = new File(path);
         if (!dir.exists()) {
@@ -107,7 +109,7 @@ public class CheckUtils {
             }
         }
 
-        if (!dir.isDirectory() || !dir.canRead()) { fail(message + ": " + msgParams); }
+        if (!dir.isDirectory() || !dir.canRead()) fail(message + ": " + msgParams);
         return true;
     }
 

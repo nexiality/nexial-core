@@ -108,7 +108,7 @@ echo
 
 cd "${PROJECT_HOME}"
 chmod -fR 755 "${PROJECT_HOME}"
-find "${PROJECT_HOME}" | sort -n
+find "${PROJECT_HOME}" -name "*.xlsx" | sort -n
 
 echo
 echo

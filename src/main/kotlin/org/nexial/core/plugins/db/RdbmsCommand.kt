@@ -185,7 +185,9 @@ class RdbmsCommand : BaseCommand() {
     fun saveResults(db: String, sqls: String, outputDir: String): StepResult {
         requiresNotBlank(db, "invalid db", db)
         requiresNotBlank(sqls, "invalid sql", sqls)
-        requiresReadableDirectory(outputDir, "invalid output directory", outputDir)
+
+        val outDir = StringUtils.trim(outputDir)
+        requiresReadableDirectory(outDir, "invalid output directory", outDir)
 
         val dao = resolveDao(db)
         var msgPrefix = "executing SQLs"
@@ -209,7 +211,7 @@ class RdbmsCommand : BaseCommand() {
                 if (StringUtils.isNotBlank(sqlComponent.varName)) {
                     val varName = context.replaceTokens(sqlComponent.varName)
                     val outFile = StringUtils.appendIfMissing(OutputFileUtils.webFriendly(varName), ".csv")
-                    val output = StringUtils.appendIfMissing(File(outputDir).absolutePath, separator) + outFile
+                    val output = StringUtils.appendIfMissing(File(outDir).absolutePath, separator) + outFile
                     val targetFile = File(output)
 
                     val result = dataAccess.execute(sql, dao, targetFile) ?: return StepResult
@@ -232,7 +234,7 @@ class RdbmsCommand : BaseCommand() {
                 }
             }
 
-            return StepResult.success("$msgPrefix output saved to $outputDir")
+            return StepResult.success("$msgPrefix output saved to $outDir")
         } catch (e: Exception) {
             return StepResult.fail("FAIL $msgPrefix: ${e.message}")
         }

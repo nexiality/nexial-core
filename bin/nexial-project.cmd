@@ -86,7 +86,7 @@ if "%1"=="" goto :reportBadInputAndExit
 
 	cd %PROJECT_HOME%
 	cd
-	dir /s /b /on
+	dir /s /b /on *.xlsx
 
 	echo.
 	echo.

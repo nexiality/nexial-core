@@ -18,12 +18,14 @@ package org.nexial.core.plugins.aws
 
 import com.amazonaws.auth.AWSStaticCredentialsProvider
 import com.amazonaws.auth.BasicAWSCredentials
+import com.amazonaws.regions.Regions
 import com.amazonaws.services.rekognition.AmazonRekognitionClientBuilder
 import com.amazonaws.services.rekognition.model.AmazonRekognitionException
 import com.amazonaws.services.rekognition.model.DetectTextRequest
 import com.amazonaws.services.rekognition.model.Image
 import org.apache.commons.collections4.CollectionUtils
 import org.apache.commons.io.IOUtils
+import org.apache.commons.lang3.StringUtils
 import org.nexial.core.IntegrationConfigException
 import org.nexial.core.model.ExecutionContext
 import org.nexial.core.model.StepResult
@@ -33,6 +35,7 @@ import org.nexial.core.utils.ConsoleUtils
 import java.io.File
 import java.io.FileInputStream
 import java.nio.ByteBuffer
+import java.text.DecimalFormat
 
 class VisionCommand : BaseCommand() {
 
@@ -54,7 +57,9 @@ class VisionCommand : BaseCommand() {
 
         try {
             val result = client.detectText(request)
+            // println("result = ${result}")
             val textDetections = result.textDetections
+            // println("textDetections = ${textDetections}")
 
             if (CollectionUtils.isEmpty(textDetections)) {
                 context.removeData(`var`)
@@ -66,8 +71,9 @@ class VisionCommand : BaseCommand() {
             var lastYMarking = 0.0f
             for (text in textDetections) {
                 if (text.type == "WORD") {
-                    val currentYMarking = text.geometry.boundingBox.top + text.geometry.boundingBox.height
-                    val currentHalfHeight = text.geometry.boundingBox.height / 2
+                    val dimension = text.geometry.boundingBox
+                    val currentYMarking = dimension.top + dimension.height
+                    val currentHalfHeight = dimension.height / 2
                     if (lastYMarking == 0f) lastYMarking = currentYMarking
 
                     val item = if (currentYMarking > lastYMarking + currentHalfHeight) {
@@ -78,7 +84,7 @@ class VisionCommand : BaseCommand() {
                         RecognizedText(text.detectedText, text.confidence.toDouble(), text.type)
                     }
 
-                    ConsoleUtils.log("\t${item.text}")
+                    // ConsoleUtils.log("\t${printGeom(dimension.top)}\t${printGeom(dimension.left)}\t${printGeom(dimension.width)}\t${printGeom(dimension.height)}\t${item.text}")
                     items.add(item)
                 }
             }
@@ -90,6 +96,13 @@ class VisionCommand : BaseCommand() {
         } catch (e: AmazonRekognitionException) {
             return StepResult.fail("Error occurred while scanning '$image': ${e.message}")
         }
+    }
+
+    private fun printGeom(geom: Float): String {
+        val df = DecimalFormat.getInstance()
+        df.maximumFractionDigits = 5
+        df.minimumFractionDigits = 5
+        return df.format(geom)
     }
 
     // fun ocr(profile: String, image:String, `var`:String) : StepResult {
@@ -139,7 +152,22 @@ class VisionCommand : BaseCommand() {
 
     @Throws(IntegrationConfigException::class)
     private fun resolveProfile(context: ExecutionContext, profile: String): AwsSettings {
-        val settings = AwsUtils.resolveAwsSettings(context, profile)
+        val settings = if (profile == "system") {
+            val accessKey = System.getProperty("nexial.vision.accessKey")
+            if (StringUtils.isBlank(accessKey))
+                throw IntegrationConfigException("'system' profile not available or not properly set up")
+
+            val secretKey = System.getProperty("nexial.vision.secretKey")
+            if (StringUtils.isBlank(secretKey))
+                throw IntegrationConfigException("'system' profile not available or not properly set up")
+
+            AwsSettings(accessKey,
+                        secretKey,
+                        Regions.fromName(System.getProperty("nexial.vision.region", Regions.DEFAULT_REGION.getName())))
+        } else {
+            AwsUtils.resolveAwsSettings(context, profile)
+        }
+
         requiresNotNull(settings, "Unable to resolve AWS credentials for AWS Computer Vision services")
         return settings!!
     }
