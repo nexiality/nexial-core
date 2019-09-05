@@ -32,6 +32,7 @@ import org.nexial.core.plugins.filevalidation.validators.ValidationsExecutor.Dat
 import org.nexial.core.utils.CheckUtils;
 import org.nexial.core.utils.ConsoleUtils;
 
+import static org.nexial.core.NexialConst.PREFIX_REGEX;
 import static org.nexial.core.plugins.filevalidation.validators.ValidationsExecutor.DataType.*;
 import static org.nexial.core.plugins.filevalidation.validators.ValidationsExecutor.Severity.ERROR;
 import static org.nexial.core.plugins.filevalidation.validators.ValidationsExecutor.Severity.WARNING;
@@ -52,13 +53,11 @@ public class BasicValidator {
         CheckUtils.requiresNotNull(fieldValue, "Invalid field value", fieldValue);
 
         String dataType = StringUtils.trim(config.getDatatype());
-        if (StringUtils.startsWith(dataType, "REGEX:")) {
-            String regex = StringUtils.substringAfter(dataType, "REGEX:");
+        if (StringUtils.startsWith(dataType, PREFIX_REGEX)) {
+            String regex = StringUtils.substringAfter(dataType, PREFIX_REGEX);
             try {
                 final Pattern pattern = Pattern.compile(regex);
-                if (!pattern.matcher(fieldValue).matches()) {
-                    addDataTypeError(field, REGEX);
-                }
+                if (!pattern.matcher(fieldValue).matches()) { addDataTypeError(field, REGEX); }
             } catch (PatternSyntaxException e) {
                 ConsoleUtils.error("Invalid REGEX: " + regex);
                 addDataTypeError(field, REGEX);
@@ -74,53 +73,37 @@ public class BasicValidator {
 
         switch (enumType) {
             case ANY: {
-                if (!StringUtils.isAsciiPrintable(fieldValue)) {
-                    addDataTypeError(field, DataType.ANY);
-                }
+                if (!StringUtils.isAsciiPrintable(fieldValue)) { addDataTypeError(field, DataType.ANY); }
                 break;
             }
             case ALPHA: {
-                if (!StringUtils.isAlphaSpace(fieldValue)) {
-                    addDataTypeError(field, DataType.ALPHA);
-                }
+                if (!StringUtils.isAlphaSpace(fieldValue)) { addDataTypeError(field, DataType.ALPHA); }
                 break;
             }
             case BLANK: {
-                if (StringUtils.isNotBlank(fieldValue)) {
-                    addDataTypeError(field, DataType.BLANK);
-                }
+                if (StringUtils.isNotBlank(fieldValue)) { addDataTypeError(field, DataType.BLANK); }
                 break;
             }
 
             case NUMERIC: {
-                if (!validateNumberDataType(fieldValue)) {
-                    addDataTypeError(field, NUMERIC);
-                }
+                if (!validateNumberDataType(fieldValue)) { addDataTypeError(field, NUMERIC); }
                 break;
             }
             case ALPHALOWER: {
-                if (!StringUtils.isAllLowerCase(fieldValue.trim())) {
-                    addDataTypeError(field, DataType.ALPHALOWER);
-                }
+                if (!StringUtils.isAllLowerCase(fieldValue.trim())) { addDataTypeError(field, DataType.ALPHALOWER); }
                 break;
             }
             case ALPHAUPPER: {
-                if (!StringUtils.isAllUpperCase(fieldValue.trim())) {
-                    addDataTypeError(field, DataType.ALPHAUPPER);
-                }
+                if (!StringUtils.isAllUpperCase(fieldValue.trim())) { addDataTypeError(field, DataType.ALPHAUPPER); }
                 break;
             }
             case PERSONNAME: {
                 final Pattern pattern = Pattern.compile("^[a-zA-Z]+[ ,.'\\-(a-zA-Z)]*$");
-                if (!pattern.matcher(fieldValue).matches()) {
-                    addDataTypeError(field, PERSONNAME);
-                }
+                if (!pattern.matcher(fieldValue).matches()) { addDataTypeError(field, PERSONNAME); }
                 break;
             }
             case ALPHANUMERIC: {
-                if (!StringUtils.isAlphanumericSpace(fieldValue)) {
-                    addDataTypeError(field, ALPHANUMERIC);
-                }
+                if (!StringUtils.isAlphanumericSpace(fieldValue)) { addDataTypeError(field, ALPHANUMERIC); }
                 break;
             }
         }

@@ -27,8 +27,9 @@ import org.openqa.selenium.NoSuchElementException;
 import org.openqa.selenium.WebElement;
 import org.openqa.selenium.support.ui.Select;
 
+import static org.nexial.core.NexialConst.PREFIX_REGEX;
+
 public class RegexAwareSelect extends Select {
-    private static final String PREFIX_REGEX = "REGEX:";
     private WebElement element;
 
     public RegexAwareSelect(WebElement element) {

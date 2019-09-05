@@ -420,6 +420,9 @@ class S3Command : BaseCommand() {
         requiresNotBlank(localPath, "Local path cannot be blank.")
         requiresNotNull(localPath, "Local path cannot be null.")
 
-        if (readWriteDir) requiresReadWritableDirectory(localPath, "read/write permissions required", localPath)
+        if (readWriteDir) {
+            val localDir = StringUtils.trim(localPath)
+            requiresReadWritableDirectory(localDir, "read/write permissions required", localDir)
+        }
     }
 }

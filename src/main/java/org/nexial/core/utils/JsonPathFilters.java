@@ -29,17 +29,17 @@ import org.json.JSONObject;
 import org.nexial.commons.utils.RegexUtils;
 import org.nexial.core.utils.JSONPath.Option;
 
+import static org.nexial.core.NexialConst.PREFIX_REGEX;
 import static org.nexial.core.utils.JsonUtils.isSimpleType;
 
 class JsonPathFilters {
     private static final String CONDITION_AND = " AND ";
-    private static final String REGEX_PREFIX = "REGEX:";
     private static final String EQUAL = "=";
 
     private String original;
     private List<FilterKey> filters = new ArrayList<>();
 
-    private class FilterKey {
+    private static class FilterKey {
         private String original;
         private String key;
         private String value;
@@ -73,13 +73,13 @@ class JsonPathFilters {
         public String toString() { return original; }
 
         protected void parseValue(String value) {
-            regexOnValue = StringUtils.startsWith(value, REGEX_PREFIX);
-            this.value = regexOnValue ? StringUtils.substringAfter(value, REGEX_PREFIX) : value;
+            regexOnValue = StringUtils.startsWith(value, PREFIX_REGEX);
+            this.value = regexOnValue ? StringUtils.substringAfter(value, PREFIX_REGEX) : value;
         }
 
         protected void parseKey(String key) {
-            regexOnKey = StringUtils.startsWith(key, REGEX_PREFIX);
-            this.key = regexOnKey ? StringUtils.substringAfter(key, REGEX_PREFIX) : key;
+            regexOnKey = StringUtils.startsWith(key, PREFIX_REGEX);
+            this.key = regexOnKey ? StringUtils.substringAfter(key, PREFIX_REGEX) : key;
         }
 
         protected boolean accept(String jsonValue) {

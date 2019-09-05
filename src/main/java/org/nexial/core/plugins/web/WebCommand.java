@@ -673,19 +673,14 @@ public class WebCommand extends BaseCommand implements CanTakeScreenshot, CanLog
         return elementText == null ?
                StepResult.fail("Invalid locator '" + locator + "'; no text found") :
                assertContains(elementText, text);
-        // if (lenientContains(elementText, text, false)) {
-        //     return StepResult.success("validated text '" + elementText + "' contains '" + text + "'");
-        // } else {
-        //     return StepResult.fail("Expects \"" + text + "\" be contained in \"" + elementText + "\"");
-        // }
     }
 
-    public StepResult assertTextNotContains(String locator, String text) {
+    public StepResult assertTextNotContain(String locator, String text) {
         requires(StringUtils.isNotBlank(text), "empty text is not allowed", text);
         String elementText = getElementText(locator);
         return elementText == null ?
                StepResult.fail("Invalid locator '" + locator + "'; no text found") :
-               assertNotContains(elementText, text);
+               assertNotContain(elementText, text);
     }
 
     public StepResult assertNotText(String locator, String text) {
@@ -856,7 +851,7 @@ public class WebCommand extends BaseCommand implements CanTakeScreenshot, CanLog
         return assertAttributeContainsInternal(locator, attrName, contains, true);
     }
 
-    public StepResult assertAttributeNotContains(String locator, String attrName, String contains) {
+    public StepResult assertAttributeNotContain(String locator, String attrName, String contains) {
         return assertAttributeContainsInternal(locator, attrName, contains, false);
     }
 
@@ -2171,39 +2166,37 @@ public class WebCommand extends BaseCommand implements CanTakeScreenshot, CanLog
 
         String msg = "Attribute '" + attrName + "' of element '" + locator + "' ";
 
-        boolean success;
         try {
             String actual = getAttributeValue(locator, attrName);
-            if (StringUtils.isBlank(contains) && StringUtils.isBlank(actual)) {
+            if ((StringUtils.isBlank(contains) && StringUtils.isBlank(actual)) ||
+                StringUtils.equals(actual, contains)) {
                 // got a match
-                if (expectsContains) {
-                    success = true;
-                    msg += "CONTAINS blank as EXPECTED";
-                } else {
-                    success = false;
-                    msg += "CONTAINS blank, which is NOT expected";
-                }
-            } else {
-                if (StringUtils.contains(actual, contains)) {
-                    if (expectsContains) {
-                        success = true;
-                        msg += "CONTAINS '" + contains + "' as EXPECTED";
-                    } else {
-                        success = false;
-                        msg += "CONTAINS '" + contains + "', which is NOT as expected";
-                    }
+                if (expectsContains) { return StepResult.success(msg + "CONTAINS blank as EXPECTED"); }
+                return StepResult.fail(msg + "CONTAINS blank, which is NOT expected");
+            }
+
+            if (StringUtils.startsWithIgnoreCase(contains, PREFIX_REGEX)) {
+                boolean matched = RegexUtils.match(actual, StringUtils.substringAfter(contains, PREFIX_REGEX));
+                if (matched) {
+                    if (expectsContains) { return StepResult.success(msg + "CONTAINS " + contains + " as EXPECTED"); }
+                    return StepResult.fail(msg + "CONTAINS " + contains + ", which is NOT as expected");
                 } else {
                     if (expectsContains) {
-                        success = false;
-                        msg += "DOES NOT contains '" + contains + "', which is NOT as expected";
-                    } else {
-                        success = true;
-                        msg += "DOES NOT contains '" + contains + "' as EXPECTED";
+                        return StepResult.fail(msg + "DOES NOT contains " + contains + ", which is NOT as expected");
                     }
+                    return StepResult.success(msg + "DOES NOT contains " + contains + ", as EXPECTED");
                 }
             }
 
-            return new StepResult(success, msg, null);
+            if (StringUtils.contains(actual, contains)) {
+                if (expectsContains) { return StepResult.success(msg + "CONTAINS '" + contains + "', as EXPECTED"); }
+                return StepResult.fail(msg + "CONTAINS '" + contains + "', which is NOT as expected");
+            }
+
+            if (expectsContains) {
+                return StepResult.fail(msg + "DOES NOT contains '" + contains + "', which is NOT as expected");
+            }
+            return StepResult.success(msg + "DOES NOT contains '" + contains + "', as EXPECTED");
         } catch (WebDriverException e) {
             return StepResult.fail(WebDriverExceptionHelper.resolveErrorMessage(e));
         }

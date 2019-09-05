@@ -186,13 +186,13 @@ public class BaseCommandTest {
         BaseCommand subject = new BaseCommand();
         subject.init(context);
 
-        Assert.assertTrue(subject.assertNotContains("Gopi,Ashwin,Nagesh", "Mike").isSuccess());
-        Assert.assertTrue(subject.assertNotContains("", " ").isSuccess());
-        Assert.assertFalse(subject.assertNotContains(" ", " ").isSuccess());
-        Assert.assertFalse(subject.assertNotContains(" ", "").isSuccess());
-        Assert.assertFalse(subject.assertNotContains("Gopi,Ashwin,Nagesh", "").isSuccess());
-        Assert.assertFalse(subject.assertNotContains("Gopi,Ashwin,Nagesh", ",").isSuccess());
-        Assert.assertFalse(subject.assertNotContains("Gopi,Ashwin,Nagesh", "Ashwin").isSuccess());
+        Assert.assertTrue(subject.assertNotContain("Gopi,Ashwin,Nagesh", "Mike").isSuccess());
+        Assert.assertTrue(subject.assertNotContain("", " ").isSuccess());
+        Assert.assertFalse(subject.assertNotContain(" ", " ").isSuccess());
+        Assert.assertFalse(subject.assertNotContain(" ", "").isSuccess());
+        Assert.assertFalse(subject.assertNotContain("Gopi,Ashwin,Nagesh", "").isSuccess());
+        Assert.assertFalse(subject.assertNotContain("Gopi,Ashwin,Nagesh", ",").isSuccess());
+        Assert.assertFalse(subject.assertNotContain("Gopi,Ashwin,Nagesh", "Ashwin").isSuccess());
 
     }
 

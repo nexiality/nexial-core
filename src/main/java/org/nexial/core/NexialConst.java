@@ -35,6 +35,7 @@ import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.text.StringEscapeUtils;
 import org.jdom2.output.Format;
 import org.jdom2.output.XMLOutputter;
+import org.nexial.commons.utils.FilePathFilter;
 import org.nexial.commons.utils.FileUtil;
 import org.nexial.commons.utils.RegexUtils;
 import org.nexial.commons.utils.TextUtils;
@@ -183,8 +184,7 @@ public final class NexialConst {
 
     // plugin:rdbms
     public static final String DAO_PREFIX = NAMESPACE + "dao.";
-    public static final String OPT_INCLUDE_PACK_SINGLE_ROW = registerSystemVariable(NAMESPACE + "rdbms.packSingleRow",
-                                                                                    false);
+    public static final String OPT_INCLUDE_PACK_SINGLE_ROW = registerSystemVariable(NAMESPACE + "rdbms.packSingleRow", false);
     public static final String SQL_DELIM = ";";
     public static final String SQL_COMMENT = "--";
     public static final String SQL_VAR = "nexial:";
@@ -207,18 +207,13 @@ public final class NexialConst {
 
     // ws
     public static final String WS_NAMESPACE = NAMESPACE + "ws.";
-    public static final String WS_CONN_TIMEOUT = registerSystemVariable(WS_NAMESPACE + "connectionTimeout",
-                                                                        5 * 60 * 1000);
+    public static final String WS_CONN_TIMEOUT = registerSystemVariable(WS_NAMESPACE + "connectionTimeout", 5 * 60 * 1000);
     public static final String WS_READ_TIMEOUT = registerSystemVariable(WS_NAMESPACE + "readTimeout", 5 * 60 * 1000);
     public static final String WS_ENABLE_REDIRECTS = registerSystemVariable(WS_NAMESPACE + "enableRedirects", true);
-    public static final String WS_ENABLE_EXPECT_CONTINUE = registerSystemVariable(WS_NAMESPACE + "enableExpectContinue",
-                                                                                  true);
-    public static final String WS_ALLOW_CIRCULAR_REDIRECTS = registerSystemVariable(WS_NAMESPACE +
-                                                                                    "allowCircularRedirects", false);
-    public static final String WS_ALLOW_RELATIVE_REDIRECTS = registerSystemVariable(WS_NAMESPACE +
-                                                                                    "allowRelativeRedirects", true);
-    public static final String WS_REQ_PAYLOAD_COMPACT = registerSystemVariable(WS_NAMESPACE + "requestPayloadCompact",
-                                                                               false);
+    public static final String WS_ENABLE_EXPECT_CONTINUE = registerSystemVariable(WS_NAMESPACE + "enableExpectContinue", true);
+    public static final String WS_ALLOW_CIRCULAR_REDIRECTS = registerSystemVariable(WS_NAMESPACE + "allowCircularRedirects", false);
+    public static final String WS_ALLOW_RELATIVE_REDIRECTS = registerSystemVariable(WS_NAMESPACE + "allowRelativeRedirects", true);
+    public static final String WS_REQ_PAYLOAD_COMPACT = registerSystemVariable(WS_NAMESPACE + "requestPayloadCompact", false);
     //public static final String WS_REQ_CONTENT_TYPE = WS_NAMESPACE + "requestContentType";
     //public static final String WS_RES_PAYLOAD_COMPACT = WS_NAMESPACE + "responsePayloadCompact";
     public static final String WS_REQ_HEADER_PREFIX = WS_NAMESPACE + "header.";
@@ -258,9 +253,7 @@ public final class NexialConst {
     public static final String OAUTH_CLIENT_SECRET = "client_secret";
     public static final String OAUTH_SCOPE = "scope";
     public static final String OAUTH_GRANT_TYPE = "grant_type";
-    public static final List<String> OAUTH_REQUIRED_INPUTS = Arrays.asList(OAUTH_CLIENT_ID,
-                                                                           OAUTH_CLIENT_SECRET,
-                                                                           OAUTH_GRANT_TYPE);
+    public static final List<String> OAUTH_REQUIRED_INPUTS = Arrays.asList(OAUTH_CLIENT_ID, OAUTH_CLIENT_SECRET, OAUTH_GRANT_TYPE);
     public static final String OAUTH_ACCESS_TOKEN = "access_token";
     public static final String OAUTH_TOKEN_TYPE = "token_type";
     public static final String OAUTH_TOKEN_TYPE_BEARER = "Bearer";
@@ -331,6 +324,7 @@ public final class NexialConst {
     // public static final int MAX_VERBOSE_CHAR = 2000;
     public static final int MAX_VERBOSE_CHAR = 32764;
     public static final int MAX_FORMULA_CHAR = 8192;
+    public static final String PREFIX_REGEX = FilePathFilter.REGEX_PREFIX;
 
     // predefined messages
     public static final String MSG_PASS = ExcelConfig.MSG_PASS;
@@ -350,28 +344,20 @@ public final class NexialConst {
     public static final String MSG_STEP_FAIL_FAST = MSG_ABORT + "due to execution failure and fail-fast in effect";
     public static final String MSG_ACTIVITY_FAIL_FAST = MSG_ABORT + "skipping test activity due to previous failure";
     public static final String MSG_ACTIVITY_FAIL_END = MSG_ABORT + "skipping test activity due to previous end";
-    public static final String MSG_ACTIVITY_FAIL_END_LOOP =
-        MSG_ABORT + "skipping test activity due to break-loop in effect";
-    public static final String MSG_ACTIVITY_ENDING_IF =
-        MSG_ABORT + "activity ending due to EndIf() flow control activated.";
-    public static final String MSG_ACTIVITY_ENDING_LOOP_IF =
-        MSG_ABORT + "activity ending due to EndLoopIf() flow control activated or unrecoverable execution failure.";
-    public static final String MSG_SCENARIO_FAIL_FAST =
-        MSG_ABORT + "scenario failed and fail-fast is in effect" + MSG_ALL_SCENARIOS_SKIPPED;
-    public static final String MSG_SCENARIO_FAIL_IMMEDIATE =
-        MSG_ABORT + "scenario failed and fail-immediate is in effect" + MSG_ALL_SCENARIOS_SKIPPED;
+    public static final String MSG_ACTIVITY_FAIL_END_LOOP = MSG_ABORT + "skipping test activity due to break-loop in effect";
+    public static final String MSG_ACTIVITY_ENDING_IF = MSG_ABORT + "activity ending due to EndIf() flow control activated.";
+    public static final String MSG_ACTIVITY_ENDING_LOOP_IF = MSG_ABORT + "activity ending due to EndLoopIf() flow control activated or unrecoverable execution failure.";
+    public static final String MSG_SCENARIO_FAIL_FAST = MSG_ABORT + "scenario failed and fail-fast is in effect" + MSG_ALL_SCENARIOS_SKIPPED;
+    public static final String MSG_SCENARIO_FAIL_IMMEDIATE = MSG_ABORT + "scenario failed and fail-immediate is in effect" + MSG_ALL_SCENARIOS_SKIPPED;
     public static final String MSG_SCENARIO_END_IF = MSG_ABORT + "scenario ended due to EndIf() flow control";
     public static final String MSG_SCENARIO_END_LOOP_IF = MSG_ABORT + "scenario ended due to EndLoopIf() flow control";
-    public static final String MSG_EXEC_FAIL_FAST =
-        MSG_ABORT + "failure found and fail-fast is in effect" + MSG_EXEC_STOP;
+    public static final String MSG_EXEC_FAIL_FAST = MSG_ABORT + "failure found and fail-fast is in effect" + MSG_EXEC_STOP;
     public static final String MSG_EXEC_FAIL_IMMEDIATE = MSG_ABORT + "fail-immediate in effect" + MSG_EXEC_STOP;
     public static final String MSG_EXEC_END_IF = MSG_ABORT + "EndIf() flow control activated" + MSG_EXEC_STOP;
-    public static final String MSG_EXEC_END_LOOP_IF =
-        MSG_ABORT + "EndLoopIf() flow control activated" + MSG_ITERATION_STOP;
+    public static final String MSG_EXEC_END_LOOP_IF = MSG_ABORT + "EndLoopIf() flow control activated" + MSG_ITERATION_STOP;
     public static final String MSG_CRITICAL_COMMAND_FAIL = MSG_ABORT + "due to failure on fail-fast command: ";
     public static final String MSG_REPEAT_UNTIL = "[repeat-until] ";
-    public static final String MSG_REPEAT_UNTIL_BREAK =
-        MSG_REPEAT_UNTIL + "loop terminating due to break-loop condition";
+    public static final String MSG_REPEAT_UNTIL_BREAK = MSG_REPEAT_UNTIL + "loop terminating due to break-loop condition";
 
     public static final String COMMENT_AUTHOR = "NexialBot";
 
@@ -833,8 +819,7 @@ public final class NexialConst {
         public static final String ITERATION_SEP = ",";
         public static final String ITERATION_RANGE_SEP = "-";
 
-        public static final String DELAY_BETWEEN_STEPS_MS = registerSystemVariable(NAMESPACE + "delayBetweenStepsMs",
-                                                                                   600);
+        public static final String DELAY_BETWEEN_STEPS_MS = registerSystemVariable(NAMESPACE + "delayBetweenStepsMs", 600);
 
         public static final String FAIL_FAST = registerSystemVariable(NAMESPACE + "failFast", false);
 
@@ -844,8 +829,7 @@ public final class NexialConst {
         public static final String EXECUTION_PASS_COUNT = registerSystemVariable(NAMESPACE + "executionPassCount");
         public static final String EXECUTION_EXEC_COUNT = registerSystemVariable(NAMESPACE + "executionCount");
 
-        public static final String MIN_EXEC_SUCCESS_RATE = registerSystemVariable(NAMESPACE + "minExecSuccessRate",
-                                                                                  100);
+        public static final String MIN_EXEC_SUCCESS_RATE = registerSystemVariable(NAMESPACE + "minExecSuccessRate", 100);
 
         // determined by nexial.[sh|cmd] file for the purpose of allowing nexial to generate a post-execution shell
         // script that can expose execution-level environment variables such as output file location, success rate, etc.
@@ -861,8 +845,7 @@ public final class NexialConst {
 
         public static final String FAIL_IMMEDIATE = registerSystemVariable(NAMESPACE + "failImmediate", false);
         public static final String END_IMMEDIATE = registerSystemVariable(NAMESPACE + "endImmediate");
-        public static final String BREAK_CURRENT_ITERATION = registerSystemVariable(NAMESPACE +
-                                                                                    "breakCurrentIteration");
+        public static final String BREAK_CURRENT_ITERATION = registerSystemVariable(NAMESPACE + "breakCurrentIteration");
         public static final String LAST_PLAN_STEP = registerSystemVariable(NAMESPACE + "lastPlanStep", false);
         public static final String OPT_CURRENT_ACTIVITY = registerSystemVariable(NAMESPACE + "currentActivity");
         public static final String OPT_CURRENT_SCENARIO = registerSystemVariable(NAMESPACE + "currentScenario");
@@ -880,9 +863,8 @@ public final class NexialConst {
         public static final String TRACK_SCRIPT = registerSystemVariable(TIMETRACK + "trackScript");
         public static final String TRACK_ITERATION = registerSystemVariable(TIMETRACK + "trackIteration");
         public static final String TRACK_SCENARIO = registerSystemVariable(TIMETRACK + "trackScenario");
-        public static final String TIMETRACK_FORMAT =
-            registerSystemVariable(TIMETRACK + "format",
-                                   "START_DATE|START_TIME|END_DATE|END_TIME|ELAPSED_TIME|THREAD_NAME|LABEL|REMARK");
+        public static final String TIMETRACK_FORMAT = registerSystemVariable(TIMETRACK + "format",
+                                                                             "START_DATE|START_TIME|END_DATE|END_TIME|ELAPSED_TIME|THREAD_NAME|LABEL|REMARK");
         public static final String[] TRACKING_DETAIL_TOKENS = new String[]{
             "START_DATE", "START_TIME", "END_DATE", "END_TIME", "ELAPSED_TIME", "THREAD_NAME", "LABEL", "REMARK"};
         public static final String TIMETRACK_DATE_FORMAT = "yyyy-MM-dd HH:mm:ss,SSS";

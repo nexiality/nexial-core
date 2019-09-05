@@ -50,7 +50,7 @@
   <bean id="evaluatorLesserOrEqual" class="org.nexial.core.compare.EvaluateLesserOrEqual"
         parent="evaluatorTemplate"/>
   <bean id="evaluatorContains" class="org.nexial.core.compare.EvaluateContains" parent="evaluatorTemplate"/>
-  <bean id="evaluatorNotContains" class="org.nexial.core.compare.EvaluateNotContains"
+  <bean id="evaluatorNotContain" class="org.nexial.core.compare.EvaluateNotContain"
         parent="evaluatorTemplate"/>
   <bean id="evaluatorTrue" class="org.nexial.core.compare.EvaluateTrue" parent="evaluatorTemplate"/>
   <bean id="evaluatorFalse" class="org.nexial.core.compare.EvaluateFalse" parent="evaluatorTemplate"/>
@@ -66,7 +66,7 @@
     <entry key=">=" value-ref="evaluatorGreaterOrEqual"/>
     <entry key="&lt;=" value-ref="evaluatorLesserOrEqual"/>
     <entry key="in" value-ref="evaluatorContains"/>
-    <entry key="not in" value-ref="evaluatorNotContains"/>
+    <entry key="not in" value-ref="evaluatorNotContain"/>
     <entry key="is true" value-ref="evaluatorTrue"/>
     <entry key="is false" value-ref="evaluatorFalse"/>
   </util:map>

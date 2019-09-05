@@ -432,7 +432,7 @@ public class BaseCommand implements NexialCommand {
         }
     }
 
-    public StepResult assertNotContains(String text, String substring) {
+    public StepResult assertNotContain(String text, String substring) {
         if (context.isTextMatchLeniently()) {
             String[] searchFor = {"\r", "\n"};
             String[] replaceWith = {" ", " "};

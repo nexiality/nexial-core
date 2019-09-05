@@ -24,7 +24,7 @@ import org.apache.commons.lang3.StringUtils;
 /**
  *
  */
-public class EvaluateNotContains extends EvaluatorBase {
+public class EvaluateNotContain extends EvaluatorBase {
     @Override
     protected boolean evaluate(double lhs, double rhs) throws IncompatibleTypeException {
         throw new IncompatibleTypeException(lhs + "", rhs + "", "not in");
