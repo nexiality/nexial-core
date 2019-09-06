@@ -21,12 +21,12 @@ package org.nexial.core.plugins.image
  */
 data class ImageComparisonMeta(val expected: String, val actual: String, val matchPercent: Float,
                                val tolerance: Float, val count: Int, val differences: List<Difference>,
-                               val smallest: Difference?, val largest: Difference?) {
+                               val smallest: Difference?, val largest: Difference?, val trimmed: Boolean) {
 
     constructor(expected: String, actual: String, differences: List<Difference>,
-                matchPercent: Float, tolerance: Float) :
+                matchPercent: Float, tolerance: Float, trimmed: Boolean) :
         this(expected, actual, matchPercent, tolerance, differences.size,
-             differences, sortByArea(differences).first, sortByArea(differences).second)
+             differences, sortByArea(differences).first, sortByArea(differences).second, trimmed)
 
     override fun toString() = "{\n" +
                               "    expected=$expected,\n" +
@@ -37,6 +37,7 @@ data class ImageComparisonMeta(val expected: String, val actual: String, val mat
                               "    smallest=$smallest,\n" +
                               "    largest=$largest,\n" +
                               "    differences=$differences\n" +
+                              "    trimmed=$trimmed\n" +
                               "}"
 
     companion object {

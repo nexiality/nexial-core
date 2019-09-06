@@ -25,12 +25,12 @@ import java.text.DecimalFormat;
 import java.util.ArrayList;
 import javax.imageio.ImageIO;
 
+import org.apache.commons.collections4.MapUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.math.NumberUtils;
 import org.apache.commons.lang3.time.StopWatch;
 import org.nexial.commons.utils.RegexUtils;
-import org.nexial.core.NexialConst.ImageDiffColor;
-import org.nexial.core.NexialConst.ImageType;
+import org.nexial.core.NexialConst.*;
 import org.nexial.core.model.StepResult;
 import org.nexial.core.plugins.ForcefulTerminate;
 import org.nexial.core.plugins.base.BaseCommand;
@@ -39,10 +39,11 @@ import org.nexial.core.utils.ConsoleUtils;
 import static java.awt.RenderingHints.*;
 import static java.awt.image.BufferedImage.*;
 import static java.io.File.separator;
+import static org.nexial.core.NexialConst.ImageDiffColor.getColorNames;
 import static org.nexial.core.NexialConst.ImageType.png;
-import static org.nexial.core.NexialConst.OPT_IMAGE_DIFF_COLOR;
-import static org.nexial.core.NexialConst.OPT_IMAGE_TOLERANCE;
+import static org.nexial.core.NexialConst.*;
 import static org.nexial.core.SystemVariables.getDefault;
+import static org.nexial.core.SystemVariables.getDefaultBool;
 import static org.nexial.core.utils.CheckUtils.*;
 
 public class ImageCommand extends BaseCommand implements ForcefulTerminate {
@@ -164,7 +165,7 @@ public class ImageCommand extends BaseCommand implements ForcefulTerminate {
     public StepResult compare(String baseline, String actual) throws IOException {
         logDeprecated(getTarget() + " » compare(baseline,actual)",
                       getTarget() + " » saveDiff(baseline,actual,var)");
-        return saveDiff("nexial.lastImageCompare", baseline, actual);
+        return saveDiff(OPT_LAST_IMAGES_DIFF, baseline, actual);
     }
 
     public StepResult saveDiff(String var, String baseline, String actual) throws IOException {
@@ -185,7 +186,17 @@ public class ImageCommand extends BaseCommand implements ForcefulTerminate {
         StopWatch watch = new StopWatch();
         watch.start();
         try {
-            ImageComparison imageComparison = new ImageComparison(baselineFile, testFile);
+            BufferedImage image1 = ImageIO.read(baselineFile);
+            BufferedImage image2 = ImageIO.read(testFile);
+
+            boolean trim = context.getBooleanData(OPT_TRIM_BEFORE_DIFF,
+                                                  getDefaultBool(OPT_TRIM_BEFORE_DIFF));
+            if (trim) {
+                image1 = trimImage(image1);
+                image2 = trimImage(image2);
+            }
+
+            ImageComparison imageComparison = new ImageComparison(image1, image2);
             float matchPercent = imageComparison.getMatchPercent();
             String stats = formatToleranceMessage(matchPercent, imageTol);
             ImageComparisonMeta imageComparisonMeta;
@@ -196,7 +207,7 @@ public class ImageCommand extends BaseCommand implements ForcefulTerminate {
                                                               testFile.getAbsolutePath(),
                                                               imageComparison.getDifferences(),
                                                               matchPercent,
-                                                              imageTol);
+                                                              imageTol, trim);
                 context.setData(var, imageComparisonMeta);
                 log("Image comparison meta is saved to variable '" + var + "'");
 
@@ -210,7 +221,7 @@ public class ImageCommand extends BaseCommand implements ForcefulTerminate {
                                                               testFile.getAbsolutePath(),
                                                               new ArrayList<>(),
                                                               matchPercent,
-                                                              imageTol);
+                                                              imageTol, trim);
                 context.setData(var, imageComparisonMeta);
                 log("Image comparison meta is saved to variable '" + var + "'");
                 return StepResult.success("baseline and test images are same " + stats);
@@ -257,6 +268,73 @@ public class ImageCommand extends BaseCommand implements ForcefulTerminate {
         String message = "Image color bit is converted from " + imgBit + " to " + targetImageBit;
         log(message);
         return StepResult.success(message);
+    }
+
+    private BufferedImage trimImage(BufferedImage image) {
+        String colorName = context.getStringData(OPT_IMAGE_TRIM_COLOR, getDefault(OPT_IMAGE_TRIM_COLOR));
+        Color color = MapUtils.getObject(getColorNames(), colorName,
+                                         getColorNames().get(getDefault(OPT_IMAGE_TRIM_COLOR)));
+        int num = 0;
+        // Trimming left side white spaces
+        int height = image.getHeight();
+        int width = image.getWidth();
+        for (int i = 0; i < width; i++) {
+            if (!isMatched1(image, i, color)) { break; }
+            num++;
+        }
+        int x = num < 3 ? 0 : num;
+
+        num = 0;
+        // Trimming top side white spaces
+        for (int j = 0; j < height; j++) {
+            if (!isMatched2(image, j, color)) { break; }
+            num++;
+        }
+        int y = num < 3 ? 0 : num;
+        if (x == width && y == height) {
+            System.out.println("No trimming: There is only empty spaces of provided color " + colorName);
+            return image;
+        }
+
+        num = 0;
+        // Trimming right side white spaces
+        for (int i = width - 1; i >= 0; i--) {
+            if (!isMatched1(image, i, color)) { break; }
+            num++;
+        }
+        width = width - (num < 3 ? 0 : num) - x;
+
+        num = 0;
+        // Trimming bottom side white spaces
+        for (int j = height - 1; j >= 0; j--) {
+            if (!isMatched2(image, j, color)) { break; }
+            num++;
+        }
+        height = height - (num < 3 ? 0 : num) - y;
+        // return cropped image using dimensions
+        return image.getSubimage(x, y, width, height);
+    }
+
+    private boolean isMatched1(BufferedImage image, int i, Color color) {
+        boolean isMatched = true;
+        for (int j = 0; j < image.getHeight(); j++) {
+            if (image.getRGB(i, j) != color.getRGB()) {
+                isMatched = false;
+                break;
+            }
+        }
+        return isMatched;
+    }
+
+    private boolean isMatched2(BufferedImage image, int j, Color color) {
+        boolean isMatched = true;
+        for (int i = 0; i < image.getWidth(); i++) {
+            if (image.getRGB(i, j) != color.getRGB()) {
+                isMatched = false;
+                break;
+            }
+        }
+        return isMatched;
     }
 
     @Override

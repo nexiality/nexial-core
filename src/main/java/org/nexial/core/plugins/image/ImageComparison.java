@@ -29,6 +29,13 @@ public class ImageComparison {
         initDiffMatrix();
     }
 
+    public ImageComparison(BufferedImage image1, BufferedImage image2) throws IOException {
+        this.image1 = image1;
+        this.image2 = image2;
+        this.tools = new ImageDifferenceTools();
+        initDiffMatrix();
+    }
+
     public float getMatchPercent() { return matchPercent; }
 
     public List<Difference> getDifferences() { return tools.getDifferences(); }

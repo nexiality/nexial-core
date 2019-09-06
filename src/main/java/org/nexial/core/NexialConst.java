@@ -154,8 +154,12 @@ public final class NexialConst {
     public static final String OPT_TEXT_MATCH_CASE_INSENSITIVE = registerSystemVariable(NS_TEXT_MATCH + "caseInsensitive", false);
 
     // image
+    public static final String NS_IMAGE = NAMESPACE + "image.";
     public static final String OPT_IMAGE_TOLERANCE = registerSystemVariable(NAMESPACE + "imageTolerance", 0);
     public static final String OPT_IMAGE_DIFF_COLOR = registerSystemVariable(NAMESPACE + "imageDiffColor", "red");
+    public static final String OPT_LAST_IMAGES_DIFF = registerSystemVariable(NS_IMAGE + "lastImagesDiff", "white");
+    public static final String OPT_IMAGE_TRIM_COLOR = registerSystemVariable(NS_IMAGE + "trimColor", "white");
+    public static final String OPT_TRIM_BEFORE_DIFF = registerSystemVariable(NS_IMAGE + "trimBeforeDiff", false);
 
     // screenshots
     public static final String OPT_SCREENSHOT_ON_ERROR = registerSystemVariable(NAMESPACE + "screenshotOnError", false);
@@ -466,6 +470,8 @@ public final class NexialConst {
 
     public static final class ImageDiffColor {
         private static final Map<String, Color> COLOR_NAMES = new HashMap<>();
+
+        public static Map<String, Color> getColorNames() { return COLOR_NAMES; }
 
         private ImageDiffColor() {}
 
