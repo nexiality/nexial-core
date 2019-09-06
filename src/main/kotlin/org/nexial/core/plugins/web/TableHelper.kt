@@ -228,6 +228,20 @@ class TableHelper(private val webCommand: WebCommand) {
     }
 
     /**
+     * `config` contains:
+     * - data-viewport: locator to the scrolling viewport
+     * - data-row-xpath: relative XPATH to each row from its parent grid
+     * - data-cell-xpath: relative XPATH to each cell from its parent row
+     * - header-cell: locator to identify individual header cells
+     * - limit (optional): maximum number of rows to collect. -1 means unlimited
+     * - waitBetweenScroll (optional): milliseconds to wait between each scroll action
+     * - nexial.web.saveGrid.deepScan (optional): override existing setting in context
+     * - nexial.web.saveGrid.header.input (optional): override existing setting in context
+     * - nexial.web.saveGrid.header.image (optional): override existing setting in context
+     * - nexial.web.saveGrid.data.input (optional): override existing setting in context
+     * - nexial.web.saveGrid.data.image (optional): override existing setting in context
+     * - nexial.web.saveGrid.end.trim (optional): override existing setting in context
+     *
      * @param config String
      * @param file String
      * @return StepResult
@@ -340,6 +354,7 @@ class TableHelper(private val webCommand: WebCommand) {
      * @param config String
      * @param file String
      * @return StepResult
+     * @see #saveInfiniteDivsAsCsv
      */
     fun saveInfiniteTableAsCsv(config: String, file: String): StepResult = saveInfiniteDivsAsCsv(config, file)
 
@@ -435,53 +450,53 @@ class TableHelper(private val webCommand: WebCommand) {
             return csvSafe(cellText)
 
         return csvSafe(
-            if (metaMap["tag"] == "img") {
-                extractImageData(metaMap, ImageOptions.valueOf(if (isHeader) headerImage else dataImage))
-            } else {
-                extractInputData(context, metaMap, InputOptions.valueOf(if (isHeader) headerInput else dataInput))
-            })
+                if (metaMap["tag"] == "img") {
+                    extractImageData(metaMap, ImageOptions.valueOf(if (isHeader) headerImage else dataImage))
+                } else {
+                    extractInputData(context, metaMap, InputOptions.valueOf(if (isHeader) headerInput else dataInput))
+                })
     }
 
     private fun extractImageData(metaMap: Map<String, String>, imageOption: ImageOptions) =
-        when (imageOption) {
-            ImageOptions.filename -> {
-                val src = metaMap["src"] ?: ""
-                if (StringUtils.contains(src, "/")) StringUtils.substringAfterLast(src, "/") else src
-            }
+            when (imageOption) {
+                ImageOptions.filename -> {
+                    val src = metaMap["src"] ?: ""
+                    if (StringUtils.contains(src, "/")) StringUtils.substringAfterLast(src, "/") else src
+                }
 
-            ImageOptions.type     -> "image"
-            else                  -> StringUtils.defaultString(metaMap[imageOption.toString()])
-        }
+                ImageOptions.type     -> "image"
+                else                  -> StringUtils.defaultString(metaMap[imageOption.toString()])
+            }
 
     private fun extractInputData(context: ExecutionContext, row: Map<String, String>, dataOption: InputOptions) =
-        if (row["tag"] == "select")
-            if (dataOption == InputOptions.state || dataOption == InputOptions.value)
-                TextUtils.toString(StringUtils.split(row["selected"], "\n"), context.textDelim, "", "")
+            if (row["tag"] == "select")
+                if (dataOption == InputOptions.state || dataOption == InputOptions.value)
+                    TextUtils.toString(StringUtils.split(row["selected"], "\n"), context.textDelim, "", "")
+                else
+                    StringUtils.defaultString(row[dataOption.toString()])
+            else if (dataOption == InputOptions.state)
+                when (row["type"]) {
+                    "checkbox" -> if (StringUtils.equals(Objects.toString(row["checked"]),
+                                                         "true")) "checked" else "unchecked"
+                    "radio"    -> if (StringUtils.equals(Objects.toString(row["checked"]),
+                                                         "true")) "selected" else "unselected"
+                    else       -> StringUtils.defaultString(row["value"])
+                }
             else
                 StringUtils.defaultString(row[dataOption.toString()])
-        else if (dataOption == InputOptions.state)
-            when (row["type"]) {
-                "checkbox" -> if (StringUtils.equals(Objects.toString(row["checked"]),
-                                                     "true")) "checked" else "unchecked"
-                "radio"    -> if (StringUtils.equals(Objects.toString(row["checked"]),
-                                                     "true")) "selected" else "unselected"
-                else       -> StringUtils.defaultString(row["value"])
-            }
-        else
-            StringUtils.defaultString(row[dataOption.toString()])
 
     private fun resolveConfigBoolean(configMap: Map<String, String>, context: ExecutionContext, key: String) =
-        if (configMap.containsKey(key)) {
-            BooleanUtils.toBoolean(configMap[key])
-        } else {
-            context.getBooleanData(key, getDefaultBool(key))
-        }
+            if (configMap.containsKey(key)) {
+                BooleanUtils.toBoolean(configMap[key])
+            } else {
+                context.getBooleanData(key, getDefaultBool(key))
+            }
 
     private fun resolveConfig(configMap: Map<String, String>, context: ExecutionContext, key: String) =
-        configMap[key] ?: context.getStringData(key, getDefault(key))
+            configMap[key] ?: context.getStringData(key, getDefault(key))
 
     private fun jsElementMeta(jsExec: JavascriptExecutor, script: String, element: WebElement): Map<String, String> =
-        TextUtils.toMap(Objects.toString(jsExec.executeScript(script, element, metaRecSep), ""), metaRecSep, "=")
+            TextUtils.toMap(Objects.toString(jsExec.executeScript(script, element, metaRecSep), ""), metaRecSep, "=")
 
     /**
      * determine the text for checkbox, radio button, image, button, select, text box, textarea, etc.
@@ -500,8 +515,8 @@ class TableHelper(private val webCommand: WebCommand) {
         val context = webCommand.context
 
         val dataOption = InputOptions.valueOf(
-            if (isHeader) context.getStringData(HEADER_INPUT, getDefault(HEADER_INPUT))
-            else context.getStringData(DATA_INPUT, getDefault(DATA_INPUT)))
+                if (isHeader) context.getStringData(HEADER_INPUT, getDefault(HEADER_INPUT))
+                else context.getStringData(DATA_INPUT, getDefault(DATA_INPUT)))
 
         val selects = cell.findElements(By.xpath(".//select"))
         if (selects.isNotEmpty()) {
@@ -537,8 +552,8 @@ class TableHelper(private val webCommand: WebCommand) {
         val images = cell.findElements(By.xpath(".//img"))
         if (images.isNotEmpty()) {
             val imageOption = ImageOptions.valueOf(
-                if (isHeader) context.getStringData(HEADER_IMAGE, getDefault(HEADER_IMAGE))
-                else context.getStringData(DATA_IMAGE, getDefault(DATA_IMAGE)))
+                    if (isHeader) context.getStringData(HEADER_IMAGE, getDefault(HEADER_IMAGE))
+                    else context.getStringData(DATA_IMAGE, getDefault(DATA_IMAGE)))
             val firstElement = images[0]
             return if (firstElement.isDisplayed)
                 if (imageOption == ImageOptions.filename) {

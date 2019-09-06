@@ -14,6 +14,8 @@
     "city": "BEVERLY HILLS",
     "state": "FO",
     "postalcode": "000000000",
-    "country": "UNK"
+    "country": "UNK",
+    "favorite": null,
+    "language": "English"
   }
 ]

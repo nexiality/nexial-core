@@ -1191,6 +1191,33 @@ public final class TextUtils {
         return text;
     }
 
+    public static String decorateTextRange(String text,
+                                           String startsFrom,
+                                           String endsWith,
+                                           String decorateStart,
+                                           String decorateEnd) {
+        if (StringUtils.isEmpty(text) ||
+            StringUtils.isEmpty(startsFrom) ||
+            StringUtils.isEmpty(endsWith) ||
+            StringUtils.isEmpty(decorateStart) ||
+            StringUtils.isEmpty(decorateEnd)) { return text; }
+
+        int startPos = text.indexOf(startsFrom);
+        while (startPos != -1) {
+            int endPos = text.indexOf(endsWith, startPos + startsFrom.length());
+            if (endPos == -1) { break; }
+
+            text = text.substring(0, startPos + startsFrom.length()) +
+                   decorateStart +
+                   text.substring(startPos + startsFrom.length(), endPos) +
+                   decorateEnd +
+                   text.substring(endPos);
+            startPos = text.indexOf(startsFrom, endPos + decorateEnd.length() + decorateEnd.length());
+        }
+
+        return text;
+    }
+
     private static Map<String, String> initDefaultEscapeHtmlMapping() {
         Map<String, String> searchReplace = new HashMap<>();
         searchReplace.put("<", "&lt;");

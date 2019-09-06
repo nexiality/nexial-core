@@ -168,9 +168,7 @@ public final class OutputFileUtils {
 
     // todo: test for nested file reference - contentOrFile is a file whose content contains reference to another file
     public static String resolveContent(String contentOrFile, ExecutionContext context, boolean compact)
-        throws IOException {
-        return resolveContent(contentOrFile, context, compact, true);
-    }
+        throws IOException { return resolveContent(contentOrFile, context, compact, true); }
 
     public static String resolveRawContent(String contentOrFile, ExecutionContext context) throws IOException {
         return resolveContent(contentOrFile, context, false, false);
@@ -181,9 +179,7 @@ public final class OutputFileUtils {
                                         boolean compact,
                                         boolean replaceTokens) throws IOException {
 
-        if (StringUtils.isBlank(contentOrFile) || StringUtils.equals(contentOrFile, context.getNullValueToken())) {
-            return "";
-        }
+        if (StringUtils.isBlank(contentOrFile) || context.isNullOrEmptyValue(contentOrFile)) { return ""; }
 
         if (StringUtils.containsNone(contentOrFile, '\n', '\r', '\t') && ResourceUtils.isWebResource(contentOrFile)) {
             String content;
@@ -200,9 +196,7 @@ public final class OutputFileUtils {
             return replaceTokens ? context.replaceTokens(content) : content;
         }
 
-        // we can't have NL or CR or TAB character in filename
-        boolean mightBeFilePath = FileUtil.isSuitableAsPath(contentOrFile);
-        if (!mightBeFilePath || !FileUtil.isFileReadable(contentOrFile)) {
+        if (!isContentReferencedAsFile(contentOrFile, context)) {
             // must be just content (not file)
             String content = compact ? StringUtils.trim(contentOrFile) : contentOrFile;
             return replaceTokens ? context.replaceTokens(content) : content;
@@ -222,13 +216,24 @@ public final class OutputFileUtils {
         return replaceTokens ? context.replaceTokens(content) : content;
     }
 
-    public static boolean isContentReferencedAsFile(String contentOrFile, ExecutionContext context) {
-        if (StringUtils.isBlank(contentOrFile) || StringUtils.equals(contentOrFile, context.getNullValueToken())) {
-            return false;
-        }
+    /**
+     * read {@literal contentOrFile} as raw file content (i.e. byte array) or, if it is not a file, just the
+     * content of {@code contentOrFile} as byte array.
+     */
+    public static byte[] resolveContentBytes(String contentOrFile, ExecutionContext context) throws IOException {
+        return StringUtils.isEmpty(contentOrFile) ?
+               new byte[0] :
+               isContentReferencedAsFile(contentOrFile, context) ?
+               FileUtils.readFileToByteArray(new File(contentOrFile)) :
+               contentOrFile.getBytes();
+    }
 
-        // we can't have NL or CR or TAB character in filename
-        return FileUtil.isSuitableAsPath(contentOrFile) && new File(contentOrFile).canRead();
+    /** we can't have NL or CR or TAB character in filename */
+    public static boolean isContentReferencedAsFile(String contentOrFile, ExecutionContext context) {
+        return !StringUtils.isBlank(contentOrFile) &&
+               !context.isNullOrEmptyValue(contentOrFile) &&
+               FileUtil.isSuitableAsPath(contentOrFile) &&
+               new File(contentOrFile).canRead();
     }
 
     public static boolean isContentReferencedAsClasspathResource(String schemaLocation, ExecutionContext context) {

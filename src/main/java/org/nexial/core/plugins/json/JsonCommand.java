@@ -58,6 +58,11 @@ import static org.nexial.core.SystemVariables.getDefaultBool;
 import static org.nexial.core.utils.CheckUtils.*;
 
 public class JsonCommand extends BaseCommand {
+    private static final String DIFF_HIGHLIGHT_HTML_START = "<span class=\"diff-highlight\"" +
+                                                            " style=\"background:#fee;color:red;font-weight:bold\">";
+    private static final String DIFF_HIGHLIGHT_HTML_END = "</span>";
+    private static final String DIFF_NULL_HTML_START = "<code class=\"diff-null\" style=\"color:#777\">";
+    private static final String DIFF_NULL_HTML_END = "</code>";
     private static final JsonSchemaFactory JSON_SCHEMA_FACTORY = JsonSchemaFactory.byDefault();
 
     @Override
@@ -549,12 +554,35 @@ public class JsonCommand extends BaseCommand {
 
         if (asJson) { addOutputAsLink(caption, differences, "json"); }
 
-        List<String> headers = Arrays.asList("expectedNode", "actualNode", "message");
+        List<String> headers = Arrays.asList("expected", "actual", "message");
         List<List<String>> diffList = results.toList();
         if (asCsv) { addOutputAsLink(caption, TextUtils.createCsv(headers, diffList, "\r\n", ",", "\""), "csv"); }
 
         if (asHtml) {
-            addOutputAsLink(caption, TextUtils.createHtmlTable(headers, diffList, "compare-result-table"), "html");
+            addOutputAsLink(caption,
+                            TextUtils.createHtmlTable(
+                                headers,
+                                diffList,
+                                (row, position) -> {
+                                    String html = row.get(position);
+                                    if (html == null || "null".equals(html)) {
+                                        return DIFF_NULL_HTML_START + "NOT FOUND" + DIFF_NULL_HTML_END;
+                                    }
+
+                                    html = TextUtils.decorateTextRange(html,
+                                                                       "contains ",
+                                                                       " of",
+                                                                       DIFF_HIGHLIGHT_HTML_START,
+                                                                       DIFF_HIGHLIGHT_HTML_END);
+                                    html = TextUtils.decorateTextRange(html,
+                                                                       "node '",
+                                                                       "' ",
+                                                                       DIFF_HIGHLIGHT_HTML_START,
+                                                                       DIFF_HIGHLIGHT_HTML_END);
+                                    return "<code>" + html + "</code>";
+                                },
+                                "compare-result-table"),
+                            "html");
         }
     }
 

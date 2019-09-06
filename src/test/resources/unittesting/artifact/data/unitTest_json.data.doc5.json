@@ -14,6 +14,8 @@
     "corpFEIN": "",
     "middleName": "",
     "id": 2740263,
-    "state": "CA"
+    "favorite": "fried chicken",
+    "state": "CA",
+    "language": ["english", "chinese"]
   }
 ]

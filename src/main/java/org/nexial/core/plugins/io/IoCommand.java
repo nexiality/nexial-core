@@ -670,9 +670,7 @@ public class IoCommand extends BaseCommand {
 
         File sourceDir = new File(source);
         if (sourceDir.exists()) {
-            if (sourceDir.isFile()) {
-                return StepResult.fail("Source path '" + source + "' must be directory");
-            }
+            if (sourceDir.isFile()) { return StepResult.fail("Source path '" + source + "' must be directory"); }
         } else {
             return StepResult.fail("Source directory '" + source + "' does not exist");
         }
@@ -712,9 +710,7 @@ public class IoCommand extends BaseCommand {
                 // else if target's parent exist, then its file. else it is directory.
                 if (!StringUtils.endsWith(target, separator)) {
                     String parent = StringUtils.substringBeforeLast(target, separator);
-                    if (!new File(parent).exists()) {
-                        FileUtils.forceMkdir(targetDir);
-                    }
+                    if (!new File(parent).exists()) { FileUtils.forceMkdir(targetDir); }
                 } else {
                     FileUtils.forceMkdir(targetDir);
                 }

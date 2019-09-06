@@ -77,13 +77,17 @@ data class JsonMeta(val type: Type, var name: String?, var node: String?) {
                 result
             else {
                 result.addDifference(
-                        Difference(node, actual.node, "EXPECTED contains null but ACTUAL contains $actualValue"))
+                        Difference(node, actual.node,
+                                   "EXPECTED is null but ACTUAL contains $actualValue of " +
+                                   "type ${JsonUtils.getPrimitiveType(actualValue as JsonPrimitive)}"))
                 return result
             }
 
         if (actualValue == null)
             return result.addDifference(
-                    Difference(node, actual.node, "EXPECTED contains $value but ACTUAL contains null"))
+                    Difference(node, actual.node,
+                               "EXPECTED contains $value of type ${JsonUtils.getPrimitiveType(value as JsonPrimitive)} " +
+                               "but ACTUAL is null"))
 
 
         if (value is JsonPrimitive && actualValue is JsonPrimitive) {
@@ -136,8 +140,10 @@ data class JsonMeta(val type: Type, var name: String?, var node: String?) {
             val expectedMeta = children[i]
 
             if (i >= actualSize) {
-                result.addDifference(Difference(expectedMeta.node, null,
-                                                "EXPECTED node '${displayMetaLabel(this, i)}' NOT FOUND in ACTUAL"))
+                result.addDifference(Difference(expectedMeta.node,
+                                                null,
+                                                "EXPECTED node '${displayMetaLabel(expectedMeta, i)}' " +
+                                                "NOT FOUND in ACTUAL"))
             } else {
                 val actualMeta = actual.children[i]
 
@@ -187,12 +193,9 @@ data class JsonMeta(val type: Type, var name: String?, var node: String?) {
             if (meta.isArray)
                 "item $i"
             else if (meta.isLeaf)
-                if (StringUtils.isEmpty(meta.name))
-                    "${meta.parent!!.name}[$i]"
-                else
-                    "${meta.name}[$i]"
+                if (StringUtils.isEmpty(meta.name)) "${meta.parent!!.name}[$i]" else "${meta.name}[$i]"
             else
-                meta.name
+                meta.name ?: meta.node
 
     private fun findChildNode(nodeName: String) = children.firstOrNull { it.name == nodeName }
 

@@ -24,7 +24,6 @@ import org.nexial.core.model.ExecutionSummary;
 public class HeadlessJsonTests extends ExcelBasedTests {
     @Test
     public void jsonCommandTests() throws Exception {
-        // ExecutionSummary executionSummary = testViaExcel("unitTest_json.xlsx", "jsonpath1");
         ExecutionSummary executionSummary = testViaExcel("unitTest_json.xlsx");
         System.out.println("executionSummary = " + executionSummary);
         assertPassFail(executionSummary, "validation", TestOutcomeStats.allPassed());

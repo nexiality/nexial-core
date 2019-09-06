@@ -218,8 +218,8 @@ public final class NexialConst {
     public static final String WS_ALLOW_CIRCULAR_REDIRECTS = registerSystemVariable(WS_NAMESPACE + "allowCircularRedirects", false);
     public static final String WS_ALLOW_RELATIVE_REDIRECTS = registerSystemVariable(WS_NAMESPACE + "allowRelativeRedirects", true);
     public static final String WS_REQ_PAYLOAD_COMPACT = registerSystemVariable(WS_NAMESPACE + "requestPayloadCompact", false);
-    //public static final String WS_REQ_CONTENT_TYPE = WS_NAMESPACE + "requestContentType";
-    //public static final String WS_RES_PAYLOAD_COMPACT = WS_NAMESPACE + "responsePayloadCompact";
+    public static final String WS_REQ_FILE_AS_RAW = registerSystemVariable(WS_NAMESPACE + "requestPayloadAsRaw", false);
+
     public static final String WS_REQ_HEADER_PREFIX = WS_NAMESPACE + "header.";
     public static final String WS_PROXY_REQUIRED = registerSystemVariable(WS_NAMESPACE + "proxyRequired");
     public static final String WS_PROXY_HOST = registerSystemVariable(WS_NAMESPACE + "proxyHost");
@@ -471,9 +471,9 @@ public final class NexialConst {
     public static final class ImageDiffColor {
         private static final Map<String, Color> COLOR_NAMES = new HashMap<>();
 
-        public static Map<String, Color> getColorNames() { return COLOR_NAMES; }
-
         private ImageDiffColor() {}
+
+        public static Map<String, Color> getColorNames() { return COLOR_NAMES; }
 
         /** default to red */
         public static Color toColor(String colorName) {
