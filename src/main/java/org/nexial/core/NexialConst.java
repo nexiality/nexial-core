@@ -906,6 +906,7 @@ public final class NexialConst {
         // email subject prefix  only for post-exec result notification
         public static final String MAIL_RESULT_SUBJECT_PREFIX = "[nexial] ";
 
+        // note: only consider sysprop, not data variable
         public static final String GENERATE_EXEC_REPORT = registerSystemVariable(NAMESPACE + "generateReport", false);
 
         public static final String WIN32_CMD = "C:\\Windows\\System32\\cmd.exe";
@@ -934,10 +935,12 @@ public final class NexialConst {
         public static final String SAFARI_RESIZED = registerSystemVariable(NS_BROWSER + ".safari.resizedAfterOpen", false);
 
         public static final String CEF_CLIENT_LOCATION = registerSystemVariable(NS_BROWSER + ".embedded.appLocation");
-        public static final String ELECTRON_CLIENT_LOCATION = registerSystemVariable(NS_BROWSER + ".electron.appLocation");
 
+        public static final String ELECTRON_CLIENT_LOCATION = registerSystemVariable(NS_BROWSER + ".electron.appLocation");
         public static final String LOG_ELECTRON_DRIVER = registerSystemVariable(NS_BROWSER + ".logElectron", false);
         public static final String LOG_ELECTRON_VERBOSE = registerSystemVariable(NS_BROWSER + ".logElectronVerbose", false);
+        public static final String ELECTRON_FORCE_TERMINATE = registerSystemVariable(NS_BROWSER + ".electron.forceTerminate", false);
+
         public static final String LOG_CHROME_DRIVER = registerSystemVariable(NS_BROWSER + ".logChrome", false);
         public static final String CHROME_REMOTE_PORT = registerSystemVariable(NS_BROWSER + ".chrome.remote.port");
 

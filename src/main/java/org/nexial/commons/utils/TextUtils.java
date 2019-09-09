@@ -1165,6 +1165,7 @@ public final class TextUtils {
 
         // in case start with - or +
         boolean isNegative = StringUtils.startsWith(text, "-");
+        if (isNegative) { text = StringUtils.removeStart(text, "-"); }
 
         // remove characters not suitable to represent number
         if (howToClean != null) {

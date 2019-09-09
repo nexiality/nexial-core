@@ -12,21 +12,16 @@
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
- *
  */
 
-package org.nexial.core;
+package org.nexial.core
 
-/**
- *
+class TokenReplacementException : IllegalArgumentException {
+    constructor()
 
- */
-public class TokenReplacementException extends IllegalArgumentException {
-    public TokenReplacementException() { }
+    constructor(s: String) : super(s)
 
-    public TokenReplacementException(String s) { super(s); }
+    constructor(message: String, cause: Throwable) : super(message, cause)
 
-    public TokenReplacementException(String message, Throwable cause) { super(message, cause); }
-
-    public TokenReplacementException(Throwable cause) { super(cause); }
+    constructor(cause: Throwable) : super(cause)
 }

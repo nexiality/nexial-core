@@ -28,11 +28,13 @@ import org.nexial.commons.utils.RegexUtils
 import org.nexial.commons.utils.ResourceUtils
 import org.nexial.commons.utils.TextUtils
 import org.nexial.core.CommandConst.MULTI_VARS_CMDS
+import org.nexial.core.CommandConst.getPreferredSystemVariableName
 import org.nexial.core.NexialConst.*
 import org.nexial.core.NexialConst.Data.SHEET_DEFAULT_DATA
 import org.nexial.core.NexialConst.Data.SHEET_SYSTEM
 import org.nexial.core.NexialConst.Project.*
-import org.nexial.core.SystemVariables.*
+import org.nexial.core.SystemVariables.getDefault
+import org.nexial.core.SystemVariables.isRegisteredSystemVariable
 import org.nexial.core.excel.Excel
 import org.nexial.core.excel.ExcelAddress
 import org.nexial.core.excel.ExcelConfig.*
@@ -270,17 +272,17 @@ class DataDocGenerator(val options: InspectorOptions, val logger: InspectorLogge
 
                             if (activityCache != null) {
                                 activityCache!!.steps += StepCache(
-                                    row = rowIndex,
-                                    description = Excel.getCellValue(row[1]),
-                                    cmdType = cmdType,
-                                    command = command,
-                                    param1 = Excel.getCellValue(row[4]),
-                                    param2 = Excel.getCellValue(row[5]),
-                                    param3 = Excel.getCellValue(row[6]),
-                                    param4 = Excel.getCellValue(row[7]),
-                                    param5 = Excel.getCellValue(row[8]),
-                                    flowControl = Excel.getCellValue(row[9]),
-                                    screenshot = BooleanUtils.toBoolean(Excel.getCellValue(row[11])))
+                                        row = rowIndex,
+                                        description = Excel.getCellValue(row[1]),
+                                        cmdType = cmdType,
+                                        command = command,
+                                        param1 = Excel.getCellValue(row[4]),
+                                        param2 = Excel.getCellValue(row[5]),
+                                        param3 = Excel.getCellValue(row[6]),
+                                        param4 = Excel.getCellValue(row[7]),
+                                        param5 = Excel.getCellValue(row[8]),
+                                        flowControl = Excel.getCellValue(row[9]),
+                                        screenshot = BooleanUtils.toBoolean(Excel.getCellValue(row[11])))
                             }
 
                             val commandFqn = "$cmdType.$command"
@@ -411,7 +413,7 @@ class DataDocGenerator(val options: InspectorOptions, val logger: InspectorLogge
     }
 
     private fun isDefinedInDataSheet(locationTypes: List<DataVariableLocationType>) =
-        locationTypes.contains(DefaultDataSheet) || locationTypes.contains(ScenarioDataSheet)
+            locationTypes.contains(DefaultDataSheet) || locationTypes.contains(ScenarioDataSheet)
 
     private fun handleCommandlineOverrides(dataVariables: DataVariableEntity,
                                            overrides: String,

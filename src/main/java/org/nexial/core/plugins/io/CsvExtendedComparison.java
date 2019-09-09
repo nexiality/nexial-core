@@ -31,7 +31,6 @@ import org.apache.commons.lang3.ArrayUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.math.NumberUtils;
 import org.nexial.commons.utils.TextUtils;
-import org.nexial.commons.utils.TextUtils.CleanNumberStrategy;
 import org.nexial.core.IntegrationConfigException;
 import org.nexial.core.utils.ConsoleUtils;
 
@@ -39,6 +38,7 @@ import com.univocity.parsers.common.record.RecordMetaData;
 import com.univocity.parsers.csv.CsvParser;
 
 import static java.lang.Double.MIN_VALUE;
+import static org.nexial.commons.utils.TextUtils.CleanNumberStrategy.CSV;
 
 class CsvExtendedComparison implements Serializable {
     private static final Map<String, ReportFormat> TYPES = new HashMap<>();
@@ -221,15 +221,14 @@ class CsvExtendedComparison implements Serializable {
                     if (IterableUtils.contains(numberFields, expectedField)) {
                         double expected = MIN_VALUE;
                         try {
-                            expected =
-                                NumberUtils.toDouble(TextUtils.cleanNumber(expectedValue, CleanNumberStrategy.CSV));
+                            expected = NumberUtils.createDouble(TextUtils.cleanNumber(expectedValue, CSV));
                         } catch (IllegalArgumentException e) {
                             ConsoleUtils.error("Field [" + expectedField + "]: " + parseNumMsg + expectedValue);
                         }
 
                         double actual = MIN_VALUE;
                         try {
-                            actual = NumberUtils.toDouble(TextUtils.cleanNumber(actualValue, CleanNumberStrategy.CSV));
+                            actual = NumberUtils.createDouble(TextUtils.cleanNumber(actualValue, CSV));
                         } catch (IllegalArgumentException e) {
                             ConsoleUtils.error("Field [" + actualField + "]: " + parseNumMsg + actualValue);
                         }

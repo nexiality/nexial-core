@@ -42,26 +42,26 @@ object ExecUtils {
 
     @JvmField
     val IGNORED_CLI_OPT = arrayListOf<String>(
-        "awt.", "java.",
-        "idea.test.", "intellij.debug",
-        "org.gradle.", "org.apache.poi.util.POILogger",
+            "awt.", "java.",
+            "idea.test.", "intellij.debug",
+            "org.gradle.", "org.apache.poi.util.POILogger",
 
-        "file.encoding", "file.separator", "line.separator", "path.separator",
+            "file.encoding", "file.separator", "line.separator", "path.separator",
 
-        "ftp.nonProxyHosts", "gopherProxySet", "http.nonProxyHosts", "socksNonProxyHosts",
+            "ftp.nonProxyHosts", "gopherProxySet", "http.nonProxyHosts", "socksNonProxyHosts",
 
-        "nexial-mailer.", "nexial.3rdparty.logpath", "nexial.jdbc.", NEXIAL_HOME, OPT_DATA_DIR, OPT_DEF_OUT_DIR,
-        OPT_CLOUD_OUTPUT_BASE, OPT_SCRIPT_DIR, OPT_PLAN_DIR, "site-name", SMS_PREFIX, MAIL_PREFIX, OTC_PREFIX,
-        TTS_PREFIX,
+            "nexial-mailer.", "nexial.3rdparty.logpath", "nexial.jdbc.", NEXIAL_HOME, OPT_DATA_DIR, OPT_DEF_OUT_DIR,
+            OPT_CLOUD_OUTPUT_BASE, OPT_SCRIPT_DIR, OPT_PLAN_DIR, "site-name", SMS_PREFIX, MAIL_PREFIX, OTC_PREFIX,
+            TTS_PREFIX,
 
-        "sun.arch", "sun.boot", "sun.cpu", "sun.desktop", "sun.font", "sun.io", "sun.java", "sun.jnu",
-        "sun.management", "sun.os", "sun.stderr.encoding", "sun.stdout.encoding",
+            "sun.arch", "sun.boot", "sun.cpu", "sun.desktop", "sun.font", "sun.io", "sun.java", "sun.jnu",
+            "sun.management", "sun.os", "sun.stderr.encoding", "sun.stdout.encoding",
 
-        "jboss.modules",
+            "jboss.modules",
 
-        "user.country", "user.dir", "user.home", "user.language", "user.variant",
+            "user.country", "user.dir", "user.home", "user.language", "user.variant",
 
-        "webdriver.")
+            "webdriver.")
 
     @JvmField
     val JUNIT_CLASSES = arrayListOf("org.junit.runner.JUnitCore", "org.junit.runners.ParentRunner")
@@ -135,7 +135,7 @@ object ExecUtils {
         val javaOptsString = System.getProperty(SCRIPT_REF_PREFIX + JAVA_OPT)
         if (StringUtils.isBlank(javaOptsString)) return javaOpts
 
-        javaOptsString.split(getDefault(TEXT_DELIM))
+        javaOptsString.split(getDefault(TEXT_DELIM)!!)
             .filter { StringUtils.length(it) > 5 && StringUtils.contains(it, "=") }
             .forEach {
                 val nameValue = it.removePrefix("-D").split("=")

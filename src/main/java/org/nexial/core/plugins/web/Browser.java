@@ -32,6 +32,7 @@ import org.apache.commons.collections4.MapUtils;
 import org.apache.commons.lang3.BooleanUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.math.NumberUtils;
+import org.nexial.commons.proc.RuntimeUtils;
 import org.nexial.commons.utils.EnvUtils;
 import org.nexial.commons.utils.FileUtil;
 import org.nexial.core.NexialConst.*;
@@ -451,6 +452,17 @@ public class Browser implements ForcefulTerminate {
             Thread.sleep(2000);
         } catch (Throwable e) {
         } finally { driver = null; }
+
+        // special handling for electron apps
+        if (isRunElectron() &&
+            context.getBooleanData(ELECTRON_FORCE_TERMINATE, getDefaultBool(ELECTRON_FORCE_TERMINATE))) {
+            String clientLocation = context.getStringData(ELECTRON_CLIENT_LOCATION);
+            if (StringUtils.isNotBlank(clientLocation)) {
+                String exeName = StringUtils.substringAfterLast(StringUtils.replace(clientLocation, "\\", "/"), "/");
+                ConsoleUtils.log("forcefully terminating '" + exeName + "'...");
+                RuntimeUtils.terminateInstance(exeName);
+            }
+        }
     }
 
     protected String updateWinHandle() {

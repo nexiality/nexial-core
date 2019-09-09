@@ -27,10 +27,12 @@ import java.util.Map;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.SystemUtils;
+import org.apache.commons.lang3.math.NumberUtils;
 import org.junit.Assert;
 import org.junit.Test;
 
 import static java.io.File.separator;
+import static org.nexial.commons.utils.TextUtils.CleanNumberStrategy.CSV;
 import static org.nexial.core.NexialConst.DEF_FILE_ENCODING;
 
 public class TextUtilsTest {
@@ -585,5 +587,17 @@ public class TextUtilsTest {
                             TextUtils.demarcate("This is a test. Do not be alarmed!!", 5, "<**>"));
         Assert.assertEquals("This is a test.... Do not be alar...med!!",
                             TextUtils.demarcate("This is a test. Do not be alarmed!!", 15, "..."));
+    }
+
+    @Test
+    public void cleanNumber_simple() {
+        Assert.assertEquals(7.7, NumberUtils.createDouble(TextUtils.cleanNumber("7.7", CSV)), 0);
+        Assert.assertEquals(7.7, NumberUtils.createDouble(TextUtils.cleanNumber("7.70", CSV)), 0);
+        Assert.assertEquals(7.7, NumberUtils.createDouble(TextUtils.cleanNumber("7.70000000", CSV)), 0);
+        Assert.assertEquals(-7.7, NumberUtils.createDouble(TextUtils.cleanNumber("-07.7000", CSV)), 0);
+        Assert.assertEquals(-7.700123, NumberUtils.createDouble(TextUtils.cleanNumber("-07.700123", CSV)), 0);
+        Assert.assertEquals(0, NumberUtils.createDouble(TextUtils.cleanNumber("0.00", CSV)), 0);
+        Assert.assertEquals(0, NumberUtils.createDouble(TextUtils.cleanNumber("000.0", CSV)), 0);
+        Assert.assertEquals(0, NumberUtils.createDouble(TextUtils.cleanNumber("-0.00", CSV)), 0);
     }
 }
