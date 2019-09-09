@@ -47,7 +47,7 @@ class NumberCommand : BaseCommand() {
     }
 
     fun average(Var: String, array: String?): StepResult {
-        requiresValidVariableName(Var)
+        requiresValidAndNotReadOnlyVariableName(Var)
 
         val strings = TextUtils.toList(array, context.textDelim, true)
         val average = if (CollectionUtils.isNotEmpty(strings)) {
@@ -61,7 +61,7 @@ class NumberCommand : BaseCommand() {
     }
 
     fun max(Var: String, array: String?): StepResult {
-        requiresValidVariableName(Var)
+        requiresValidAndNotReadOnlyVariableName(Var)
         requiresNotBlank(array, "invalid array", array)
 
         val strings = TextUtils.toList(array, context.textDelim, true)
@@ -80,7 +80,7 @@ class NumberCommand : BaseCommand() {
     }
 
     fun min(Var: String, array: String?): StepResult {
-        requiresValidVariableName(Var)
+        requiresValidAndNotReadOnlyVariableName(Var)
         requiresNotBlank(array, "invalid array", array)
 
         val strings = TextUtils.toList(array, context.textDelim, true)
@@ -99,7 +99,7 @@ class NumberCommand : BaseCommand() {
     }
 
     fun ceiling(Var: String): StepResult {
-        requiresValidVariableName(Var)
+        requiresValidAndNotReadOnlyVariableName(Var)
 
         val current = StringUtils.defaultString(context.getStringData(Var))
 
@@ -113,7 +113,7 @@ class NumberCommand : BaseCommand() {
     }
 
     fun floor(Var: String): StepResult {
-        requiresValidVariableName(Var)
+        requiresValidAndNotReadOnlyVariableName(Var)
 
         val current = StringUtils.defaultString(context.getStringData(Var))
 
@@ -127,7 +127,7 @@ class NumberCommand : BaseCommand() {
     }
 
     fun whole(Var: String): StepResult {
-        requiresValidVariableName(Var)
+        requiresValidAndNotReadOnlyVariableName(Var)
 
         val current = StringUtils.defaultString(context.getStringData(Var))
         requires(NumberUtils.isParsable(current), "not valid number", Var)
@@ -139,7 +139,7 @@ class NumberCommand : BaseCommand() {
     }
 
     fun roundTo(Var: String, closestDigit: String): StepResult {
-        requiresValidVariableName(Var)
+        requiresValidAndNotReadOnlyVariableName(Var)
 
         val current = StringUtils.defaultString(context.getStringData(Var))
 

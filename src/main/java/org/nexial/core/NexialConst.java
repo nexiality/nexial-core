@@ -157,7 +157,7 @@ public final class NexialConst {
     public static final String NS_IMAGE = NAMESPACE + "image.";
     public static final String OPT_IMAGE_TOLERANCE = registerSystemVariable(NAMESPACE + "imageTolerance", 0);
     public static final String OPT_IMAGE_DIFF_COLOR = registerSystemVariable(NAMESPACE + "imageDiffColor", "red");
-    public static final String OPT_LAST_IMAGES_DIFF = registerSystemVariable(NS_IMAGE + "lastImagesDiff", "white");
+    public static final String OPT_LAST_IMAGES_DIFF = registerSystemVariable(NS_IMAGE + "lastImagesDiff");
     public static final String OPT_IMAGE_TRIM_COLOR = registerSystemVariable(NS_IMAGE + "trimColor", "white");
     public static final String OPT_TRIM_BEFORE_DIFF = registerSystemVariable(NS_IMAGE + "trimBeforeDiff", false);
 
@@ -1021,6 +1021,7 @@ public final class NexialConst {
             PDFFORM_TRIM_VALUE, PDFFORM_VALUE_AS_ONE_LINE, PDFFORM_NORMALIZE_VALUE);
 
         // excel
+        public static final String SUMMARY_TAB_NAME = "#summary";
         public static final String SHEET_SYSTEM = "#system";
         public static final String SHEET_MERGED_DATA = "#data";
         public static final String SHEET_DEFAULT_DATA = "#default";
@@ -1113,6 +1114,7 @@ public final class NexialConst {
          * in-iteration changes will be reflected as such.
          */
         public static final String SCRIPT_REF_PREFIX = registerSystemVariableGroup(NAMESPACE + "scriptRef.");
+        public static final String EXEC_REF_PREFIX = registerSystemVariableGroup(NAMESPACE + "executionRef.");
         public static final String BUILD_NO = "buildnum";
         public static final String DATA_FILE = "Data File";
         public static final String DATA_SHEETS = "DataSheet(s)";
@@ -1206,17 +1208,18 @@ public final class NexialConst {
         private Data() { }
 
         public static boolean isAutoOpenExecResult() {
-            if (ExecUtils.isRunningInZeroTouchEnv()) { return false; }
+            if (ExecUtils.isRunningInZeroTouchEnv()) {
+                ConsoleUtils.log(MSG_SKIP_AUTO_OPEN_RESULT);
+                return false;
+            }
 
             // if we are showing Excel, then we should also show HTML
             if (isAutoOpenResult()) { return true; }
 
             ExecutionContext context = ExecutionThread.get();
-            if (context != null) {
-                return context.getBooleanData(OPT_OPEN_EXEC_REPORT, getDefaultBool(OPT_OPEN_EXEC_REPORT));
-            }
-
-            return BooleanUtils.toBoolean(System.getProperty(OPT_OPEN_EXEC_REPORT, getDefault(OPT_OPEN_EXEC_REPORT)));
+            return context != null ?
+                   context.getBooleanData(OPT_OPEN_EXEC_REPORT, getDefaultBool(OPT_OPEN_EXEC_REPORT)) :
+                   BooleanUtils.toBoolean(System.getProperty(OPT_OPEN_EXEC_REPORT, getDefault(OPT_OPEN_EXEC_REPORT)));
         }
 
         public static boolean isAutoOpenResult() {

@@ -656,7 +656,7 @@ public class ExecutionContext {
      */
     public String removeData(String name) {
         if (isReadOnlyData(name)) {
-            ConsoleUtils.error("Removing READ-ONLY variable is not allowed: " + name);
+            ConsoleUtils.error("Removing READ-ONLY variable is not permitted: " + name);
             return null;
         }
 
@@ -698,6 +698,7 @@ public class ExecutionContext {
             data.put(name, value);
 
             // logic updated; see below
+            // if (updateSysProps || referenceDataForExecution.contains(name)) { System.setProperty(name, value); }
             if (updateSysProps) { System.setProperty(name, value); }
 
             // we'll update the system property for the same data variable IFF
@@ -1884,7 +1885,6 @@ public class ExecutionContext {
     }
 
     private void initSpringBeans() {
-        readOnlyVars = springContext.getBean("readOnlyVars", new ArrayList<String>().getClass());
         failfastCommands = springContext.getBean("failfastCommands", new ArrayList<String>().getClass());
 
         // init built-in variables
@@ -1909,6 +1909,7 @@ public class ExecutionContext {
         // default / reference
         defaultContextProps = springContext.getBean("defaultContextProps", new HashMap<String, String>().getClass());
         referenceDataForExecution = springContext.getBean("nexial.referenceDataForExecution", List.class);
+        readOnlyVars = springContext.getBean("readOnlyVars", new ArrayList<String>().getClass());
 
         // web driver
         webdriverHelperConfig =

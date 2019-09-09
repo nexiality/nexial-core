@@ -220,7 +220,7 @@ public class PdfCommand extends BaseCommand {
     //}
 
     public StepResult saveFormValues(String pdf, String var, String pageAndLineStartEnd, String strategy) {
-        requiresValidVariableName(var);
+        requiresValidAndNotReadOnlyVariableName(var);
 
         requiresNotBlank(pageAndLineStartEnd,
                          "Invalid page number, starting line number and ending line number",
@@ -420,7 +420,7 @@ public class PdfCommand extends BaseCommand {
     }
 
     protected Object getFormValue(String var, String name) {
-        requiresValidVariableName(var);
+        requiresValidAndNotReadOnlyVariableName(var);
         requiresNotBlank(name, "Invalid form element", name);
 
         Map formValues = context.getMapData(var);

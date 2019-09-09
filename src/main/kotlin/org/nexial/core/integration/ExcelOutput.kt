@@ -25,6 +25,7 @@ import org.nexial.core.excel.Excel.getCellValue
 import org.nexial.core.excel.ExcelAddress
 import org.nexial.core.excel.ExcelArea
 import org.nexial.core.excel.ExcelConfig
+import org.nexial.core.NexialConst.Data.SUMMARY_TAB_NAME
 import org.nexial.core.model.TestScenarioMeta
 import java.io.File
 
@@ -41,7 +42,7 @@ class ExcelOutput(file: File) {
     fun parse(): IterationOutput {
         val iterationOutput = IterationOutput()
         iterationOutput.fileName = excel!!.file.name
-        val summarySheet: Worksheet = excel!!.worksheet("#summary")
+        val summarySheet: Worksheet = excel!!.worksheet(SUMMARY_TAB_NAME)
         iterationOutput.summary = parseSummaryOutput(summarySheet)
 //         summarySheet.findLastDataRow(ExcelAddress(scenarioStartAddress))
         val scenarioEndRow = summarySheet.sheet.lastRowNum

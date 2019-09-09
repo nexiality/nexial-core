@@ -74,7 +74,7 @@ public class JmsCommand extends BaseCommand {
     }
 
     public StepResult receive(String var, String config, String waitMs) {
-        requiresValidVariableName(var);
+        requiresValidAndNotReadOnlyVariableName(var);
         requiresNotBlank(config, "Invalid config", config);
         long timeout = NumberUtils.isDigits(waitMs) ? NumberUtils.toInt(waitMs) : MS_UNDEFINED;
 

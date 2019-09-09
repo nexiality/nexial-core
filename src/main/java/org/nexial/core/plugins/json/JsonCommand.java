@@ -131,13 +131,13 @@ public class JsonCommand extends BaseCommand {
     }
 
     public StepResult storeCount(String json, String jsonpath, String var) {
-        requiresValidVariableName(var);
+        requiresValidAndNotReadOnlyVariableName(var);
         context.setData(var, count(json, jsonpath));
         return StepResult.success("match count stored to ${" + var + "}");
     }
 
     public StepResult storeKeys(String json, String jsonpath, String var) {
-        requiresValidVariableName(var);
+        requiresValidAndNotReadOnlyVariableName(var);
 
         Object obj = toJSONObject(json);
         if (obj instanceof JSONArray) {
@@ -168,7 +168,7 @@ public class JsonCommand extends BaseCommand {
      * represent top level.
      */
     public StepResult addOrReplace(String json, String jsonpath, String input, String var) {
-        requiresValidVariableName(var);
+        requiresValidAndNotReadOnlyVariableName(var);
 
         try {
             json = OutputFileUtils.resolveContent(json, context, false, true);
@@ -311,7 +311,7 @@ public class JsonCommand extends BaseCommand {
     public StepResult minify(String json, String var) { return compact(var, json, "false"); }
 
     public StepResult beautify(String json, String var) {
-        requiresValidVariableName(var);
+        requiresValidAndNotReadOnlyVariableName(var);
 
         String jsonContent = retrieveJsonContent(json);
         if (jsonContent == null) { return StepResult.fail("Unable to parse JSON content: " + json); }
@@ -327,7 +327,7 @@ public class JsonCommand extends BaseCommand {
     }
 
     public StepResult compact(String var, String json, String removeEmpty) {
-        requiresValidVariableName(var);
+        requiresValidAndNotReadOnlyVariableName(var);
 
         String jsonContent = retrieveJsonContent(json);
         if (jsonContent == null) { return StepResult.fail("Unable to parse JSON content: " + json); }
@@ -413,7 +413,7 @@ public class JsonCommand extends BaseCommand {
 
     @NotNull
     protected StepResult extractJsonValue(String json, String jsonpath, String var) {
-        requiresValidVariableName(var);
+        requiresValidAndNotReadOnlyVariableName(var);
 
         String match = find(json, jsonpath);
         if (match == null) { return StepResult.fail("EXPECTED match against '" + jsonpath + "' was not found"); }

@@ -70,7 +70,7 @@ public class CsvCommand extends IoCommand {
     }
 
     public StepResult compareExtended(String var, String profile, String expected, String actual) {
-        requiresValidVariableName(var);
+        requiresValidAndNotReadOnlyVariableName(var);
         requiresNotBlank(profile, "Missing profile for compareExtended");
 
         // expected can either be a file or content

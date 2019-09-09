@@ -44,7 +44,7 @@ class VisionCommand : BaseCommand() {
     fun saveText(profile: String, image: String, `var`: String): StepResult {
         requiresNotBlank(profile, "Invalid profile", profile)
         requiresReadableFile(image)
-        requiresValidVariableName(`var`)
+        requiresValidAndNotReadOnlyVariableName(`var`)
 
         val settings = resolveProfile(context, profile)
         val client = AmazonRekognitionClientBuilder.standard()

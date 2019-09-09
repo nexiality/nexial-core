@@ -210,7 +210,7 @@ public class BaseCommand implements NexialCommand {
 
     // todo: reconsider command name.  this is not intuitive
     public StepResult incrementChar(String var, String amount, String config) {
-        requiresValidVariableName(var);
+        requiresValidAndNotReadOnlyVariableName(var);
         int amountInt = toInt(amount, "amount");
 
         String current = StringUtils.defaultString(context.getStringData(var));
@@ -232,7 +232,7 @@ public class BaseCommand implements NexialCommand {
     }
 
     public StepResult save(String var, String value) {
-        requiresValidVariableName(var);
+        requiresValidAndNotReadOnlyVariableName(var);
         updateDataVariable(var, value);
         return StepResult.success("stored '" + CellTextReader.readValue(value) + "' as ${" + var + "}");
     }
@@ -282,9 +282,9 @@ public class BaseCommand implements NexialCommand {
 
     public StepResult split(String text, String delim, String saveVar) {
         requires(StringUtils.isNotEmpty(text), "invalid source", text);
-        requiresValidVariableName(saveVar);
+        requiresValidAndNotReadOnlyVariableName(saveVar);
 
-        if (StringUtils.isEmpty(delim) || context.isNullValue(delim)) { delim = context.getTextDelim(); }
+        if (context.isNullOrEmptyValue(delim)) { delim = context.getTextDelim(); }
 
         String targetText = context.hasData(text) ? context.getStringData(text) : text;
 
@@ -296,20 +296,20 @@ public class BaseCommand implements NexialCommand {
     }
 
     public StepResult appendText(String var, String appendWith) {
-        requiresValidVariableName(var);
+        requiresValidAndNotReadOnlyVariableName(var);
         String newValue = StringUtils.defaultString(context.getStringData(var)) + appendWith;
         updateDataVariable(var, context.isNullValue(newValue) ? null : newValue);
         return StepResult.success("appended '" + appendWith + "' to ${" + var + "}");
     }
 
     public StepResult prependText(String var, String prependWith) {
-        requiresValidVariableName(var);
+        requiresValidAndNotReadOnlyVariableName(var);
         updateDataVariable(var, prependWith + StringUtils.defaultString(context.getStringData(var)));
         return StepResult.success("prepend '" + prependWith + " to ${" + var + "}");
     }
 
     public StepResult saveCount(String text, String regex, String saveVar) {
-        requiresValidVariableName(saveVar);
+        requiresValidAndNotReadOnlyVariableName(saveVar);
         List<String> groups = findTextMatches(text, regex);
         int count = CollectionUtils.size(groups);
         context.setData(saveVar, count);
@@ -317,7 +317,7 @@ public class BaseCommand implements NexialCommand {
     }
 
     public StepResult saveMatches(String text, String regex, String saveVar) {
-        requiresValidVariableName(saveVar);
+        requiresValidAndNotReadOnlyVariableName(saveVar);
         List<String> groups = findTextMatches(text, regex);
         if (CollectionUtils.isEmpty(groups)) {
             context.removeData(saveVar);
@@ -329,7 +329,7 @@ public class BaseCommand implements NexialCommand {
     }
 
     public StepResult saveReplace(String text, String regex, String replace, String saveVar) {
-        requiresValidVariableName(saveVar);
+        requiresValidAndNotReadOnlyVariableName(saveVar);
         if (replace == null || context.isNullValue(replace)) { replace = ""; }
 
         // run regex routine
@@ -573,15 +573,21 @@ public class BaseCommand implements NexialCommand {
     }
 
     public StepResult saveVariablesByRegex(String var, String regex) {
-        requiresValidVariableName(var);
+        requiresValidAndNotReadOnlyVariableName(var);
         requiresNotBlank(regex, "invalid regex", regex);
         return saveMatchedVariables(var, regex, context.getDataNamesByRegex(regex));
     }
 
     public StepResult saveVariablesByPrefix(String var, String prefix) {
-        requiresValidVariableName(var);
+        requiresValidAndNotReadOnlyVariableName(var);
         requiresNotBlank(prefix, "invalid prefix", prefix);
         return saveMatchedVariables(var, prefix, context.getDataNames(prefix));
+    }
+
+    protected boolean requiresValidAndNotReadOnlyVariableName(String var) {
+        requires(isValidVariable(var), "Invalid variable name", var);
+        requires(!context.isReadOnlyData(var), "Overriding read-only variable is NOT permitted", var);
+        return true;
     }
 
     public StepResult failImmediate(String text) {
@@ -886,7 +892,7 @@ public class BaseCommand implements NexialCommand {
     /**
      * this method - TO BE USED INTERNALLY ONLY - is created to compensate the data state discrepancy when such is
      * initially set via `-override` flag or via `-D...` environment variable. When a data variable is defined prior to
-     * Neial execution, for example,
+     * Nexial execution, for example,
      * <pre>
      * ./nexial.sh -script ... ... -override myData=myValue
      * </pre>
@@ -904,7 +910,11 @@ public class BaseCommand implements NexialCommand {
         if (context.containsCrypt(TOKEN_START + var + TOKEN_END)) {
             throw new TokenReplacementException("Tampering with encrypted data is NOT permissible");
         }
-        context.setData(var, value, StringUtils.isNotBlank(System.getProperty(var)) && !context.isReadOnlyData(var));
+        // add `var` to context.. also update sys prop if `var` already exists in system and is not a read-only variable
+        // - if sys prop exists means the same var was already declared either in cmdline or in setup.properties
+        // - if same var is a read-only variable, then we don't want to override it
+        // context.setData(var, value, StringUtils.isNotBlank(System.getProperty(var)) && !context.isReadOnlyData(var));
+        context.setData(var, value, StringUtils.isNotBlank(System.getProperty(var)));
     }
 
     @NotNull
@@ -1186,7 +1196,7 @@ public class BaseCommand implements NexialCommand {
 
     protected StepResult saveSubstring(List<String> textArray, String delimStart, String delimEnd, String var) {
         requires(StringUtils.isNotEmpty(delimStart) || StringUtils.isNotEmpty(delimEnd), "invalid delimiter");
-        requiresValidVariableName(var);
+        requiresValidAndNotReadOnlyVariableName(var);
 
         boolean before = StringUtils.isNotEmpty(delimEnd) && StringUtils.isEmpty(delimStart);
         boolean between = StringUtils.isNotEmpty(delimEnd) && StringUtils.isNotEmpty(delimStart);
@@ -1205,7 +1215,7 @@ public class BaseCommand implements NexialCommand {
     protected StepResult saveSubstring(String text, String delimStart, String delimEnd, String var) {
         requiresNotBlank(text, "invalid text", text);
         requires(StringUtils.isNotEmpty(delimStart) || StringUtils.isNotEmpty(delimEnd), "invalid delimiter");
-        requiresValidVariableName(var);
+        requiresValidAndNotReadOnlyVariableName(var);
 
         boolean before = StringUtils.isNotEmpty(delimEnd) && StringUtils.isEmpty(delimStart);
         boolean between = StringUtils.isNotEmpty(delimEnd) && StringUtils.isNotEmpty(delimStart);

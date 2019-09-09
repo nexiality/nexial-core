@@ -69,7 +69,6 @@ import static org.nexial.core.utils.ExecUtils.NEXIAL_MANIFEST;
  */
 public class ExecutionSummary {
     protected static final int LABEL_SIZE = 10;
-    protected static final String SUMMARY_TAB_NAME = "#summary";
     protected static final String MERGE_AREA_TITLE = "A1:J1";
     protected static final double CELL_WIDTH_MULTIPLIER = 275.3;
     protected static final List<Integer> COLUMN_WIDTHS = Arrays.asList(
@@ -281,13 +280,7 @@ public class ExecutionSummary {
 
     public ExecutionLevel getExecutionLevel() { return executionLevel; }
 
-    public void setExecutionLevel(ExecutionLevel executionLevel) {
-        this.executionLevel = executionLevel;
-        if (this.executionLevel == EXECUTION) {
-            Map<String, String> scriptRefs = EnvUtils.getSysPropsByPrefix(SCRIPT_REF_PREFIX);
-            if (MapUtils.isNotEmpty(scriptRefs)) { referenceData.putAll(scriptRefs); }
-        }
-    }
+    public void setExecutionLevel(ExecutionLevel executionLevel) { this.executionLevel = executionLevel; }
 
     public void aggregatedNestedExecutions(ExecutionContext context) {
         if (CollectionUtils.isEmpty(nestedExecutions)) { return; }
@@ -303,7 +296,7 @@ public class ExecutionSummary {
 
         nestedExecutions.forEach(nested -> {
             if (startTime == 0) { startTime = nested.startTime; }
-            if (nested.startTime != 0 && nested.startTime < startTime) {startTime = nested.startTime; }
+            if (nested.startTime != 0 && nested.startTime < startTime) { startTime = nested.startTime; }
 
             if (endTime == 0) { endTime = nested.endTime; }
             if (nested.endTime != 0 && nested.endTime > endTime) { endTime = nested.endTime; }
@@ -315,6 +308,8 @@ public class ExecutionSummary {
             warnCount += nested.warnCount;
             if (nested.executed == nested.passCount && nested.executed != 0) { totalLevelPassed++; }
         });
+
+        importSysProps();
 
         if (context != null) {
             failedFast = context.isFailFast();
@@ -344,11 +339,10 @@ public class ExecutionSummary {
                     return;
                 }
 
+                // export log files to cloud
                 if (MapUtils.isNotEmpty(logs)) {
-                    List<String> otherLogNames = CollectionUtil.toList(logs.keySet());
-                    for (String name : otherLogNames) {
-                        logs.put(name, otc.importLog(new File(logs.get(name)), false));
-                    }
+                    List<String> otherLogs = CollectionUtil.toList(logs.keySet());
+                    for (String name : otherLogs) { logs.put(name, otc.importLog(new File(logs.get(name)), false)); }
                 } else if (FileUtil.isFileReadable(executionLog)) {
                     executionLog = otc.importLog(new File(executionLog), false);
                 }
@@ -363,8 +357,8 @@ public class ExecutionSummary {
 
         text.append(formatLabel("Run From")).append(formatValue(runHost, runHostOs));
         text.append(formatLabel("Run User")).append(formatValue(runUser));
-        text.append(formatLabel("Time Span")).append(
-            formatValue(DateUtility.formatLongDate(startTime) + " - " + DateUtility.formatLongDate(endTime)));
+        text.append(formatLabel("Time Span")).append(formatValue(DateUtility.formatLongDate(startTime) + " - " +
+                                                                 DateUtility.formatLongDate(endTime)));
         text.append(formatLabel("Duration")).append(formatValue(DateUtility.formatStopWatchTime(endTime - startTime)));
         text.append(formatLabel("Steps")).append(formatValue(StringUtils.leftPad(totalSteps + "", 4, " ")));
         text.append(formatLabel("Executed")).append(formatStat(executed, totalSteps));
@@ -820,6 +814,29 @@ public class ExecutionSummary {
         }
 
         return cellMerge;
+    }
+
+    private void importSysProps() {
+        if (this.executionLevel == EXECUTION) {
+            Map<String, String> execRefs = new HashMap<>();
+            collectAllScriptRefs(execRefs);
+
+            // last one wins: sys props override previous script/plan referenceData
+            execRefs.putAll(EnvUtils.getSysPropsByPrefix(SCRIPT_REF_PREFIX));
+
+            // also override any execRefs of the same suffix - by design
+            execRefs.putAll(EnvUtils.getSysPropsByPrefix(EXEC_REF_PREFIX));
+
+            if (MapUtils.isNotEmpty(execRefs)) { referenceData.putAll(execRefs); }
+        }
+    }
+
+    private void collectAllScriptRefs(Map<String, String> scriptRefs) {
+        if (executionLevel == SCENARIO || executionLevel == ACTIVITY) { return; }
+
+        // last one wins: last scriptRef override previous
+        scriptRefs.putAll(referenceData);
+        nestedExecutions.forEach(nested -> nested.collectAllScriptRefs(scriptRefs));
     }
 
     private ExecutionSummary summarized(ExecutionSummary source) {

@@ -36,7 +36,7 @@ public enum IncrementStrategy {
     }
 
     public String increment(String base, int rightMostPos, int nextIndex) {
-        if (nextIndex == 0) { return base; }
+        // if (nextIndex == 0) { return base; }
 
         String leftMost = StringUtils.substring(base, 0, base.length() - rightMostPos);
         String currentChar = StringUtils.substring(base,

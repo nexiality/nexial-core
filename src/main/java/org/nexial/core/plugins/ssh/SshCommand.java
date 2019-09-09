@@ -656,7 +656,7 @@ public class SshCommand extends BaseCommand {
     }
 
     protected void sanityCheckRemote(String var, String profile, String remotePath) {
-        requiresValidVariableName(var);
+        requiresValidAndNotReadOnlyVariableName(var);
         requiresNotBlank(profile, "Invalid profile", profile);
         requiresNotBlank(remotePath, "Invalid remote path", remotePath);
     }

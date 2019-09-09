@@ -676,15 +676,11 @@
     <value>nexial.mail.smtp.port</value>
     <value>nexial.mail.smtp.starttls.enable</value>
     <value>nexial.mail.smtp.username</value>
-    <value>nexial.openExecutionReport</value>
     <value>nexial.otc.accessKey</value>
     <value>nexial.otc.region</value>
     <value>nexial.otc.s3PathStyleAccessEnabled</value>
     <value>nexial.otc.secretKey</value>
     <value>nexial.outputCloudBase</value>
-    <value>nexial.scriptRef.app</value>
-    <value>nexial.scriptRef.buildnum</value>
-    <value>nexial.scriptRef.release</value>
     <value>nexial.sms.accessKey</value>
     <value>nexial.sms.region</value>
     <value>nexial.sms.secretKey</value>
@@ -697,52 +693,63 @@
     <value>nexial.vision.accessKey</value>
     <value>nexial.vision.region</value>
     <value>nexial.vision.secretKey</value>
+    <value>nexial.openExecutionReport</value>
+    <value>nexial.scriptRef.app</value>
+    <value>nexial.scriptRef.buildnum</value>
+    <value>nexial.scriptRef.release</value>
   </util:list>
 
-  <!-- system variables that can be set via `-override` or `-D...` but they should not be overridden mid-flight during test -->
+  <!--
+    system variables that can be set via `-override` or `-D...`
+    but they should not be overridden mid-flight during test because of program initialization or connectivity
+    config (browserstack, e.g.).. Also some of them are meant to be generated via Nexial only
+    (nexial.lastAlertText, e.g.)
+  -->
   <util:list id="readOnlyVars" list-class="java.util.ArrayList">
-    <value>nexial.runID</value>
-    <value>nexial.runID.prefix</value>
-    <value>nexial.iterationEnded</value>
-    <value>nexial.spreadsheet.program</value>
-    <value>nexial.lastScreenshot</value>
-    <value>nexial.lastOutcome</value>
-    <value>nexial.minExecSuccessRate</value>
-    <value>nexial.screenRecorder</value>
-    <value>nexial.scope.iteration</value>
-    <value>nexial.scope.fallbackToPrevious</value>
-    <value>nexial.scope.currentIteration</value>
-    <value>nexial.scope.lastIteration</value>
-    <value>nexial.external.output</value>
-    <value>nexial.browser.windowSize</value>
-    <value>nexial.delayBrowser</value>
-    <value>nexial.browser.ie.requireWindowFocus</value>
-    <value>nexial.lastAlertText</value>
-    <value>nexial.ignoreBrowserAlert</value>
-    <value>nexial.lastAlertText</value>
-    <value>nexial.browser.incognito</value>
-    <value>nexial.browserstack.automatekey</value>
-    <value>nexial.browserstack.username</value>
-    <value>nexial.browserstack.browser</value>
-    <value>nexial.browserstack.browser.version</value>
-    <value>nexial.browserstack.debug</value>
-    <value>nexial.browserstack.resolution</value>
-    <value>nexial.browserstack.app.buildnumber</value>
-    <value>nexial.browserstack.enablelocal</value>
-    <value>nexial.browserstack.os</value>
-    <value>nexial.browserstack.os.version</value>
-    <value>nexial.browser.safari.cleanSession</value>
-    <value>nexial.browser.safari.useTechPreview</value>
-    <value>nexial.forceIE32</value>
-    <value>webdriver.ie.driver</value>
-    <value>webdriver.ie.driver.loglevel</value>
-    <value>webdriver.ie.driver.logfile</value>
-    <value>webdriver.ie.driver.silent</value>
     <value>file.separator</value>
     <value>java.home</value>
     <value>java.io.tmpdir</value>
     <value>java.version</value>
     <value>line.separator</value>
+    <value>nexial.forceIE32</value>
+    <value>nexial.ignoreBrowserAlert</value>
+    <value>nexial.iterationEnded</value>
+    <value>nexial.lastAlertText</value>
+    <value>nexial.lastAlertText</value>
+    <value>nexial.lastAlertText</value>
+    <value>nexial.lastElapsedTime</value>
+    <value>nexial.lastOutcome</value>
+    <value>nexial.lastOutputLink</value>
+    <value>nexial.lastPlanStep</value>
+    <value>nexial.lastScreenshot</value>
+    <value>nexial.minExecSuccessRate</value>
+    <value>nexial.runID.prefix</value>
+    <value>nexial.runID</value>
+    <value>nexial.browser.ie.requireWindowFocus</value>
+    <value>nexial.browser.incognito</value>
+    <value>nexial.browser.safari.cleanSession</value>
+    <value>nexial.browser.safari.useTechPreview</value>
+    <value>nexial.browser.windowSize</value>
+    <value>nexial.browserstack.app.buildnumber</value>
+    <value>nexial.browserstack.automatekey</value>
+    <value>nexial.browserstack.browser.version</value>
+    <value>nexial.browserstack.browser</value>
+    <value>nexial.browserstack.debug</value>
+    <value>nexial.browserstack.enablelocal</value>
+    <value>nexial.browserstack.os.version</value>
+    <value>nexial.browserstack.os</value>
+    <value>nexial.browserstack.resolution</value>
+    <value>nexial.browserstack.username</value>
+    <value>nexial.delayBrowser</value>
+    <value>nexial.external.output</value>
+    <value>nexial.image.lastImagesDiff</value>
+    <value>nexial.json.lastCompareResults</value>
+    <value>nexial.scope.currentIteration</value>
+    <value>nexial.scope.fallbackToPrevious</value>
+    <value>nexial.scope.iteration</value>
+    <value>nexial.scope.lastIteration</value>
+    <value>nexial.screenRecorder</value>
+    <value>nexial.spreadsheet.program</value>
     <value>os.arch</value>
     <value>os.name</value>
     <value>os.version</value>
@@ -752,6 +759,10 @@
     <value>user.language</value>
     <value>user.name</value>
     <value>user.timezone</value>
+    <value>webdriver.ie.driver.logfile</value>
+    <value>webdriver.ie.driver.loglevel</value>
+    <value>webdriver.ie.driver.silent</value>
+    <value>webdriver.ie.driver</value>
   </util:list>
 
 </beans>

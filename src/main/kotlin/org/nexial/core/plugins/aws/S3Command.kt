@@ -100,7 +100,7 @@ class S3Command : BaseCommand() {
      */
     @Throws(IntegrationConfigException::class)
     fun delete(`var`: String, profile: String, remotePath: String): StepResult {
-        requiresValidVariableName(`var`)
+        requiresValidAndNotReadOnlyVariableName(`var`)
 
         val outcome = RemoteFileActionOutcome().setProtocol(AWS).setAction(DELETE).setRemotePath(remotePath)
         val helper = initS3helper(resolveAWSSettings(profile))
@@ -156,7 +156,7 @@ class S3Command : BaseCommand() {
      * @return [StepResult] which specifies success or failure.
      */
     fun list(`var`: String, profile: String, remotePath: String): StepResult {
-        requiresValidVariableName(`var`)
+        requiresValidAndNotReadOnlyVariableName(`var`)
 
         val outcome = RemoteFileActionOutcome().setProtocol(AWS).setAction(LIST).setRemotePath(remotePath)
         val keys: List<String>?

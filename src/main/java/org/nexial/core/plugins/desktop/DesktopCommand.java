@@ -396,7 +396,7 @@ public class DesktopCommand extends BaseCommand implements ForcefulTerminate, Ca
     }
 
     public StepResult clearModalDialog(String var, String button) {
-        requiresValidVariableName(var);
+        requiresValidAndNotReadOnlyVariableName(var);
         requiresNotBlank(button, "invalid button", button);
 
         DesktopSession session = getCurrentSession();
@@ -418,7 +418,7 @@ public class DesktopCommand extends BaseCommand implements ForcefulTerminate, Ca
     }
 
     public StepResult saveModalDialogText(String var) {
-        requiresValidVariableName(var);
+        requiresValidAndNotReadOnlyVariableName(var);
 
         DesktopSession session = getCurrentSession();
         requiresNotNull(session, "No active desktop session found");
@@ -662,7 +662,7 @@ public class DesktopCommand extends BaseCommand implements ForcefulTerminate, Ca
     }
 
     public StepResult saveText(String var, String name) {
-        requiresValidVariableName(var);
+        requiresValidAndNotReadOnlyVariableName(var);
 
         String text = getText(name);
         if (StringUtils.isNotEmpty(text)) {
@@ -675,7 +675,7 @@ public class DesktopCommand extends BaseCommand implements ForcefulTerminate, Ca
     }
 
     public StepResult saveTextByLocator(String var, String locator) {
-        requiresValidVariableName(var);
+        requiresValidAndNotReadOnlyVariableName(var);
         requiresNotBlank(locator, "Invalid locator", locator);
 
         WebElement element = findElement(locator);
@@ -693,7 +693,7 @@ public class DesktopCommand extends BaseCommand implements ForcefulTerminate, Ca
     }
 
     public StepResult saveWindowTitle(String var) {
-        requiresValidVariableName(var);
+        requiresValidAndNotReadOnlyVariableName(var);
         DesktopElement currentAppWindow = resolveCurrentTopMostWindow();
         String title = getCurrentTopMostWindowTitle(currentAppWindow);
         if (StringUtils.isNotEmpty(title)) {
@@ -835,7 +835,7 @@ public class DesktopCommand extends BaseCommand implements ForcefulTerminate, Ca
     }
 
     public StepResult saveFirstMatchedListIndex(String var, String contains) {
-        requiresValidVariableName(var);
+        requiresValidAndNotReadOnlyVariableName(var);
 
         DesktopList list = getCurrentList();
         requiresNotNull(list, "No List element referenced or scanned");
@@ -853,7 +853,7 @@ public class DesktopCommand extends BaseCommand implements ForcefulTerminate, Ca
     }
 
     public StepResult saveFirstListData(String var, String contains) {
-        requiresValidVariableName(var);
+        requiresValidAndNotReadOnlyVariableName(var);
 
         DesktopList list = getCurrentList();
         requiresNotNull(list, "No List element referenced or scanned");
@@ -871,7 +871,7 @@ public class DesktopCommand extends BaseCommand implements ForcefulTerminate, Ca
     }
 
     public StepResult saveListData(String var, String contains) {
-        requiresValidVariableName(var);
+        requiresValidAndNotReadOnlyVariableName(var);
 
         DesktopList list = getCurrentList();
         requiresNotNull(list, "No List element referenced or scanned");
@@ -994,7 +994,7 @@ public class DesktopCommand extends BaseCommand implements ForcefulTerminate, Ca
      * @see #clickTextPane(String, String) for details regarding {@code criteria}
      */
     public StepResult saveTextPane(String var, String name, String criteria) {
-        requiresValidVariableName(var);
+        requiresValidAndNotReadOnlyVariableName(var);
         requiresNotBlank(criteria, "Invalid criteria", criteria);
 
         DesktopElement component = getRequiredElement(name, TextPane);
@@ -1023,7 +1023,7 @@ public class DesktopCommand extends BaseCommand implements ForcefulTerminate, Ca
     }
 
     public StepResult clickTextPaneRow(String var, String index) {
-        requiresValidVariableName(var);
+        requiresValidAndNotReadOnlyVariableName(var);
         requiresPositiveNumber(index, "Invalid row index (zero-based)", index);
 
         if (!context.hasData(var)) { return StepResult.fail("No variable '" + var + "' found"); }
@@ -1144,7 +1144,7 @@ public class DesktopCommand extends BaseCommand implements ForcefulTerminate, Ca
     }
 
     public StepResult saveTableRows(String var, String contains) {
-        requiresValidVariableName(var);
+        requiresValidAndNotReadOnlyVariableName(var);
         requiresNotBlank(contains, "Invalid 'contains' specified", contains);
 
         DesktopTable table = getCurrentTable();
@@ -1162,7 +1162,7 @@ public class DesktopCommand extends BaseCommand implements ForcefulTerminate, Ca
     }
 
     public StepResult saveAllTableRows(String var) {
-        requiresValidVariableName(var);
+        requiresValidAndNotReadOnlyVariableName(var);
         DesktopTable table = getCurrentTable();
         requiresNotNull(table, "No Table element referenced or scanned");
 
@@ -1173,7 +1173,7 @@ public class DesktopCommand extends BaseCommand implements ForcefulTerminate, Ca
     }
 
     public StepResult saveElementCount(String var, String name) {
-        requiresValidVariableName(var);
+        requiresValidAndNotReadOnlyVariableName(var);
         requiresNotBlank(name, "Invalid name", name);
 
         DesktopElement component = getRequiredElement(name, Any);
@@ -1252,7 +1252,7 @@ public class DesktopCommand extends BaseCommand implements ForcefulTerminate, Ca
     }
 
     public StepResult useTableRow(String var, String row) {
-        requiresValidVariableName(var);
+        requiresValidAndNotReadOnlyVariableName(var);
         requiresNotBlank(row, "Invalid row index (zero-based)", row);
         int rowIndex = StringUtils.equals(row, "*") ? MAX_VALUE : NumberUtils.toInt(row);
         requiresPositiveNumber(rowIndex + "", "Invalid row index (zero-based)", row);
@@ -1292,7 +1292,7 @@ public class DesktopCommand extends BaseCommand implements ForcefulTerminate, Ca
     }
 
     public StepResult saveTableRowsRange(String var, String beginRow, String endRow) {
-        requiresValidVariableName(var);
+        requiresValidAndNotReadOnlyVariableName(var);
         requiresPositiveNumber(beginRow, "Invalid beginRow", beginRow);
         requiresPositiveNumber(endRow, "Invalid beginRow", endRow);
 
@@ -1315,7 +1315,7 @@ public class DesktopCommand extends BaseCommand implements ForcefulTerminate, Ca
     public StepResult getRowCount(String var) { return saveRowCount(var); }
 
     public StepResult saveRowCount(String var) {
-        requiresValidVariableName(var);
+        requiresValidAndNotReadOnlyVariableName(var);
         DesktopTable table = getCurrentTable();
         if (table == null) {
             throw new IllegalArgumentException("ERROR: no Table object found. Make sure to run useTable() first");
@@ -1335,14 +1335,14 @@ public class DesktopCommand extends BaseCommand implements ForcefulTerminate, Ca
     }
 
     public StepResult saveHierRow(String var, String matchBy) {
-        requiresValidVariableName(var);
+        requiresValidAndNotReadOnlyVariableName(var);
         Map<String, String> rowData = getHierRow(matchBy);
         context.setData(var, rowData);
         return StepResult.success("Hierarchical table row saved to '" + var + "'");
     }
 
     public StepResult saveHierCells(String var, String matchBy, String column, String nestedOnly) {
-        requiresValidVariableName(var);
+        requiresValidAndNotReadOnlyVariableName(var);
         requiresNotBlank(matchBy, "Invalid 'matchBy' specified", matchBy);
         requiresNotBlank(column, "Invalid 'column' specified", column);
         requiresNotBlank(nestedOnly, "Invalid value specified for nestedOnly", nestedOnly);
@@ -1539,7 +1539,7 @@ public class DesktopCommand extends BaseCommand implements ForcefulTerminate, Ca
     }
 
     protected StepResult saveHierCellChildData(String var, String matchBy, String fetchColumn) {
-        requiresValidVariableName(var);
+        requiresValidAndNotReadOnlyVariableName(var);
         requiresNotBlank(matchBy, "Invalid 'matchBy' specified", matchBy);
         requiresNotBlank(fetchColumn, "Invalid 'column' specified", fetchColumn);
 
@@ -2112,7 +2112,7 @@ public class DesktopCommand extends BaseCommand implements ForcefulTerminate, Ca
     }
 
     protected StepResult saveListMetaData(String var, String name) {
-        requiresValidVariableName(var);
+        requiresValidAndNotReadOnlyVariableName(var);
 
         DesktopList list = resolveListElement(name);
         if (list == null) { return StepResult.fail("Unable to reference '" + name + "' as a list element."); }
@@ -2129,7 +2129,7 @@ public class DesktopCommand extends BaseCommand implements ForcefulTerminate, Ca
      * be stored as {@code var}.
      */
     protected StepResult saveTableMetaData(String var, String name, boolean rescan) {
-        requiresValidVariableName(var);
+        requiresValidAndNotReadOnlyVariableName(var);
 
         DesktopTable table = resolveTableElement(name);
         if (table == null) { return StepResult.fail("Unable to reference '" + name + "' as a table element."); }
@@ -2173,7 +2173,7 @@ public class DesktopCommand extends BaseCommand implements ForcefulTerminate, Ca
      * be stored as {@code var}.
      */
     protected StepResult saveHierTableMetaData(String var, String name) {
-        requiresValidVariableName(var);
+        requiresValidAndNotReadOnlyVariableName(var);
 
         DesktopHierTable table = resolveHierTableElement(name);
         if (table == null) {

@@ -160,11 +160,8 @@ class ExecutionReporter {
         @JvmStatic
         fun openExecutionSummaryReport(location: String) {
             if (!isAutoOpenExecResult()) {
-                if (ExecUtils.isRunningInZeroTouchEnv()) ConsoleUtils.log(MSG_SKIP_AUTO_OPEN_RESULT);
-                return
-            }
-
-            openReport(location)
+                if (ExecUtils.isRunningInZeroTouchEnv()) ConsoleUtils.log(MSG_SKIP_AUTO_OPEN_RESULT)
+            } else openReport(location)
         }
 
         @JvmStatic
@@ -186,8 +183,8 @@ class ExecutionReporter {
                 if (IS_OS_WINDOWS) {
                     // https://superuser.com/questions/198525/how-can-i-execute-a-windows-command-line-in-background
                     // start "" [program]... will cause CMD to exit before program executes.. sorta like running program in background
-                    ProcessInvoker
-                        .invokeNoWait(WIN32_CMD, arrayListOf("/C", "start", "\"\"", "\"" + reportFile + "\""), null)
+                    ProcessInvoker.invokeNoWait(WIN32_CMD, arrayListOf("/C", "start", "\"\"", "\"" + reportFile + "\""),
+                                                null)
                 }
             } catch (e: IOException) {
                 ConsoleUtils.error("ERROR!!! Can't open " + reportFile + ": " + e.message)

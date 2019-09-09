@@ -92,7 +92,7 @@ public class IoCommand extends BaseCommand {
      * special treatment for MS Office files: office temp files will be ignored and removed from any matches
      */
     public StepResult saveMatches(String var, String path, String filePattern) {
-        requiresValidVariableName(var);
+        requiresValidAndNotReadOnlyVariableName(var);
         path = StringUtils.trim(path);
         requiresReadableDirectory(path, "invalid path", path);
         requiresNotBlank(filePattern, "invalid file pattern", filePattern);
@@ -236,7 +236,7 @@ public class IoCommand extends BaseCommand {
     }
 
     public StepResult readFile(String var, String file) {
-        requiresValidVariableName(var);
+        requiresValidAndNotReadOnlyVariableName(var);
 
         File input = toFile(file);
 
@@ -253,7 +253,7 @@ public class IoCommand extends BaseCommand {
      * save metadata of `file` to `var`
      */
     public StepResult saveFileMeta(String var, String file) {
-        requiresValidVariableName(var);
+        requiresValidAndNotReadOnlyVariableName(var);
         requiresNotBlank(file, "invalid file", file);
 
         File f = new File(file);
@@ -329,7 +329,7 @@ public class IoCommand extends BaseCommand {
     }
 
     public StepResult saveDiff(String var, String expected, String actual) {
-        requiresValidVariableName(var);
+        requiresValidAndNotReadOnlyVariableName(var);
         requires(StringUtils.isNotEmpty(expected), "Invalid 'expected'; neither a file or text", expected);
         requires(StringUtils.isNotEmpty(actual), "Invalid 'actual'; neither a file or text", actual);
         return compare(expected, actual, DIFF, var);
@@ -412,7 +412,7 @@ public class IoCommand extends BaseCommand {
     }
 
     public StepResult validate(String var, String profile, String inputFile) {
-        requiresValidVariableName(var);
+        requiresValidAndNotReadOnlyVariableName(var);
         requiresNotBlank(profile, "Invalid 'profile',", profile);
         requiresReadableFile(inputFile);
 
@@ -479,7 +479,7 @@ public class IoCommand extends BaseCommand {
         requires(base.exists() && base.isDirectory() && base.canRead(), "unreadable/non-existent path", path);
 
         requires(StringUtils.isNotBlank(pattern), "invalid pattern", pattern);
-        requiresValidVariableName(var);
+        requiresValidAndNotReadOnlyVariableName(var);
 
         List<File> matches = FileUtil.listFiles(path, pattern, true);
         int matchCount = CollectionUtils.isEmpty(matches) ? 0 : matches.size();
@@ -557,7 +557,7 @@ public class IoCommand extends BaseCommand {
      * read binary content of {@code file} as base64 string and story it to {@code var}.
      */
     public StepResult base64(String var, String file) throws IOException {
-        requiresValidVariableName(var);
+        requiresValidAndNotReadOnlyVariableName(var);
         requiresReadableFile(file);
 
         byte[] content = FileUtils.readFileToByteArray(new File(file));
@@ -1041,7 +1041,7 @@ public class IoCommand extends BaseCommand {
     }
 
     protected StepResult createDiff(String var, FileComparisonReport report) {
-        requiresValidVariableName(var);
+        requiresValidAndNotReadOnlyVariableName(var);
         if (report == null || !report.hasMismatch()) { return StepResult.success("No diff found"); }
         updateDataVariable(var, report.showDiffs());
         return StepResult.success("File diffs are saved to '" + var + "'");
@@ -1116,7 +1116,7 @@ public class IoCommand extends BaseCommand {
     }
 
     private StepResult _saveDiff(String var, String expected, String actual) {
-        requiresValidVariableName(var);
+        requiresValidAndNotReadOnlyVariableName(var);
         requires(FileUtil.isFileReadable(expected, 1), "invalid 'expected' file", expected);
         requires(FileUtil.isFileReadable(actual, 1), "invalid 'actual' file", actual);
 

@@ -34,7 +34,6 @@ import static org.nexial.core.NexialConst.Data.WEB_PREEMPTIVE_ALERT_CHECK;
 import static org.nexial.core.NexialConst.*;
 import static org.nexial.core.SystemVariables.getDefaultBool;
 import static org.nexial.core.utils.CheckUtils.requires;
-import static org.nexial.core.utils.CheckUtils.requiresValidVariableName;
 
 public class AlertCommand extends BaseCommand implements RequireBrowser {
     protected Browser browser;
@@ -73,7 +72,7 @@ public class AlertCommand extends BaseCommand implements RequireBrowser {
     }
 
     public StepResult storeText(String var) {
-        requiresValidVariableName(var);
+        requiresValidAndNotReadOnlyVariableName(var);
 
         // get current alert text (if any)
         String alertText = harvestDialogText();

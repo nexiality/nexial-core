@@ -27,7 +27,6 @@ import org.nexial.core.utils.OutputFileUtils;
 
 import static org.nexial.core.plugins.ws.WebServiceClient.hideAuthDetails;
 import static org.nexial.core.utils.CheckUtils.requiresNotBlank;
-import static org.nexial.core.utils.CheckUtils.requiresValidVariableName;
 
 public class AsyncWsCommand extends WsCommand {
     private AsyncWebServiceClient client;
@@ -47,7 +46,7 @@ public class AsyncWsCommand extends WsCommand {
     @Override
     public StepResult download(String url, String queryString, String saveTo) {
         requiresNotBlank(url, "invalid url", url);
-        requiresValidVariableName(saveTo);
+        requiresValidAndNotReadOnlyVariableName(saveTo);
 
         String request;
         if (StringUtils.isBlank(queryString)) {

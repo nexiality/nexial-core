@@ -101,7 +101,7 @@ public class ExcelCommand extends BaseCommand {
     }
 
     public StepResult saveRange(String var, String file, String worksheet, String range) throws IOException {
-        requiresValidVariableName(var);
+        requiresValidAndNotReadOnlyVariableName(var);
 
         List<List<XSSFCell>> rows = fetchRows(file, worksheet, range);
         Map<String, String> data = new LinkedHashMap<>();
@@ -119,7 +119,7 @@ public class ExcelCommand extends BaseCommand {
     }
 
     public StepResult saveData(String var, String file, String worksheet, String range) throws IOException {
-        requiresValidVariableName(var);
+        requiresValidAndNotReadOnlyVariableName(var);
 
         List<List<XSSFCell>> rows = fetchRows(file, worksheet, range);
         List<List<String>> data = new ArrayList<>();
@@ -169,7 +169,7 @@ public class ExcelCommand extends BaseCommand {
     }
 
     public StepResult writeVar(String var, String file, String worksheet, String startCell) throws IOException {
-        requiresValidVariableName(var);
+        requiresValidAndNotReadOnlyVariableName(var);
         requiresNotBlank(startCell, "invalid cell address", startCell);
 
         Excel excel = deriveExcel(file, true);

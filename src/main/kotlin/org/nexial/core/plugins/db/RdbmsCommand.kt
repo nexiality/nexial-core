@@ -49,7 +49,7 @@ class RdbmsCommand : BaseCommand() {
 
     @Throws(IOException::class)
     fun runSQL(`var`: String, db: String, sql: String): StepResult {
-        requiresValidVariableName(`var`)
+        requiresValidAndNotReadOnlyVariableName(`var`)
         requiresNotBlank(db, "invalid db", db)
         requiresNotBlank(sql, "invalid sql", sql)
 
@@ -73,7 +73,7 @@ class RdbmsCommand : BaseCommand() {
      * (containing a series of SQL).
      */
     fun runSQLs(`var`: String, db: String, sqls: String): StepResult {
-        requiresValidVariableName(`var`)
+        requiresValidAndNotReadOnlyVariableName(`var`)
         requiresNotBlank(db, "invalid db", db)
         requiresNotBlank(sqls, "invalid sql statement(s)", sqls)
 
@@ -115,7 +115,7 @@ class RdbmsCommand : BaseCommand() {
      * todo: need to deprecate since runSQLs does the same thing
      */
     fun runFile(`var`: String, db: String, file: String): StepResult {
-        requiresValidVariableName(`var`)
+        requiresValidAndNotReadOnlyVariableName(`var`)
         requiresNotBlank(db, "invalid db", db)
         requiresReadableFile(file)
 
@@ -124,7 +124,7 @@ class RdbmsCommand : BaseCommand() {
 
     @Throws(IOException::class)
     fun resultToCSV(`var`: String, csvFile: String, delim: String, showHeader: String): StepResult {
-        requiresValidVariableName(`var`)
+        requiresValidAndNotReadOnlyVariableName(`var`)
         requiresNotBlank(csvFile, "invalid target CSV file", csvFile)
 
         val delimiter = if (StringUtils.isBlank(delim)) context.textDelim else delim

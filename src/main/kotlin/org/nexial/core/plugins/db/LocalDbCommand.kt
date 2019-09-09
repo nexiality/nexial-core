@@ -27,7 +27,8 @@ import org.nexial.core.model.ExecutionContext
 import org.nexial.core.model.StepResult
 import org.nexial.core.plugins.base.BaseCommand
 import org.nexial.core.plugins.io.CsvCommand
-import org.nexial.core.utils.CheckUtils.*
+import org.nexial.core.utils.CheckUtils.requiresNotBlank
+import org.nexial.core.utils.CheckUtils.requiresReadableFile
 import org.nexial.core.utils.OutputFileUtils
 import java.io.File
 import java.io.StringReader
@@ -69,7 +70,7 @@ class LocalDbCommand : BaseCommand() {
     }
 
     fun purge(`var`: String): StepResult {
-        requiresValidVariableName(`var`)
+        requiresValidAndNotReadOnlyVariableName(`var`)
 
         try {
             dao.dataSource?.connection?.close()
@@ -90,7 +91,7 @@ class LocalDbCommand : BaseCommand() {
     fun runSQLs(`var`: String, sqls: String): StepResult = rdbms.runSQLs(`var`, dbName, sqls)
 
     fun dropTables(`var`: String, tables: String): StepResult {
-        requiresValidVariableName(`var`)
+        requiresValidAndNotReadOnlyVariableName(`var`)
         requiresNotBlank(tables, "invalid table(s)", tables)
 
         val sqls = StringUtils.split(tables, context.textDelim).map { table -> "DROP TABLE $table;\n" }
@@ -98,7 +99,7 @@ class LocalDbCommand : BaseCommand() {
     }
 
     fun cloneTable(`var`: String, source: String, target: String): StepResult {
-        requiresValidVariableName(`var`)
+        requiresValidAndNotReadOnlyVariableName(`var`)
         requiresNotBlank(source, "invalid source table", source)
         requiresNotBlank(target, "invalid target table", target)
 
@@ -125,7 +126,7 @@ class LocalDbCommand : BaseCommand() {
     }
 
     fun importRecords(`var`: String, sourceDb: String, sql: String, table: String): StepResult {
-        requiresValidVariableName(`var`)
+        requiresValidAndNotReadOnlyVariableName(`var`)
         requiresNotBlank(sourceDb, "invalid source database connection name", sourceDb)
         requiresNotBlank(sql, "invalid SQL", sql)
         requiresNotBlank(table, "invalid target table name", table)
@@ -141,7 +142,7 @@ class LocalDbCommand : BaseCommand() {
     }
 
     fun importEXCEL(`var`: String, excel: String, sheet: String, ranges: String, table: String): StepResult {
-        requiresValidVariableName(`var`)
+        requiresValidAndNotReadOnlyVariableName(`var`)
         requiresReadableFile(excel)
         requiresNotBlank(sheet, "invalid sheet", sheet)
         requiresNotBlank(ranges, "invalid ranges", ranges)
@@ -162,7 +163,7 @@ class LocalDbCommand : BaseCommand() {
      * @param table String
      */
     fun importCSV(`var`: String, csv: String, table: String): StepResult {
-        requiresValidVariableName(`var`)
+        requiresValidAndNotReadOnlyVariableName(`var`)
         requiresNotBlank(csv, "invalid csv", csv)
         requiresNotBlank(table, "invalid target table name", table)
 

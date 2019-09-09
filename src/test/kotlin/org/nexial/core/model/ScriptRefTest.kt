@@ -23,6 +23,7 @@ import org.nexial.core.ExcelBasedTests
 import org.nexial.core.NexialConst.OUTPUT_TO_CLOUD
 import org.nexial.core.excel.Excel
 import org.nexial.core.excel.ExcelAddress
+import org.nexial.core.NexialConst.Data.SUMMARY_TAB_NAME
 import kotlin.test.assertEquals
 import kotlin.test.assertNotNull
 
@@ -41,7 +42,7 @@ class ScriptRefTest : ExcelBasedTests() {
         // plan -> script -> iteration (this one has the output
         val output = executionSummary.nestedExecutions[0].nestedExecutions[0].testScript
         val outputExcel = Excel(output, false, false)
-        val summary = outputExcel.worksheet("#summary")
+        val summary = outputExcel.worksheet(SUMMARY_TAB_NAME)
 
         val firstCell = summary.findFirstMatchingCell("A", "^scenario$", 100)
         assertNotNull(firstCell)

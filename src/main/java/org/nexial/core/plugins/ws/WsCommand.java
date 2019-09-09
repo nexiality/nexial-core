@@ -66,7 +66,7 @@ public class WsCommand extends BaseCommand {
 
     public StepResult download(String url, String queryString, String saveTo) {
         requiresNotBlank(url, "invalid url", url);
-        requiresValidVariableName(saveTo);
+        requiresValidAndNotReadOnlyVariableName(saveTo);
 
         WebServiceClient client = new WebServiceClient(context);
         client.setVerbose(verbose);
@@ -150,7 +150,7 @@ public class WsCommand extends BaseCommand {
 
     public StepResult headerByVar(String name, String var) {
         requiresNotBlank(name, "Invalid HTTP Header name", name);
-        requiresValidVariableName(var);
+        requiresValidAndNotReadOnlyVariableName(var);
 
         String key = WS_REQ_HEADER_PREFIX + name;
         Object value = context.getObjectData(var);
@@ -169,7 +169,7 @@ public class WsCommand extends BaseCommand {
     }
 
     public StepResult saveResponsePayload(String var, String file, String append) {
-        requiresValidVariableName(var);
+        requiresValidAndNotReadOnlyVariableName(var);
         requiresNotBlank(file, "invalid output file", file);
 
         boolean appendRequired = BooleanUtils.toBoolean(append);
@@ -205,7 +205,7 @@ public class WsCommand extends BaseCommand {
     }
 
     public StepResult jwtSignHS256(String var, String payload, String key) {
-        requiresValidVariableName(var);
+        requiresValidAndNotReadOnlyVariableName(var);
         requires(StringUtils.isNotBlank(key), "Invalid key", key);
         requires(StringUtils.isNotBlank(payload), "Invalid payload", payload);
 
@@ -215,7 +215,7 @@ public class WsCommand extends BaseCommand {
     }
 
     public StepResult jwtParse(String var, String token, String key) {
-        requiresValidVariableName(var);
+        requiresValidAndNotReadOnlyVariableName(var);
         requires(StringUtils.isNotBlank(token), "Invalid token", token);
 
         if (StringUtils.isBlank(key)) {
@@ -271,7 +271,7 @@ public class WsCommand extends BaseCommand {
      * ({@literal Authorization}) to access protected resources.
      */
     public StepResult oauth(String var, String url, String auth) {
-        requiresValidVariableName(var);
+        requiresValidAndNotReadOnlyVariableName(var);
         requires(StringUtils.startsWithIgnoreCase(url, "http"), "Invalid url", url);
         requiresNotBlank(auth, "Invalid authentication details", auth);
 
@@ -405,7 +405,7 @@ public class WsCommand extends BaseCommand {
 
     protected StepResult requestNoBody(String url, String queryString, String var, String method) {
         requiresNotBlank(url, "invalid url", url);
-        requiresValidVariableName(var);
+        requiresValidAndNotReadOnlyVariableName(var);
 
         WebServiceClient client = new WebServiceClient(context);
         client.setVerbose(verbose);
@@ -442,7 +442,7 @@ public class WsCommand extends BaseCommand {
 
     protected StepResult requestWithBody(String url, String body, String var, String method) {
         requiresNotBlank(url, "invalid url", url);
-        requiresValidVariableName(var);
+        requiresValidAndNotReadOnlyVariableName(var);
 
         WebServiceClient client = new WebServiceClient(context);
         client.setVerbose(verbose);
@@ -473,7 +473,7 @@ public class WsCommand extends BaseCommand {
 
     protected StepResult requestWithBodyMultipart(String url, String body, String fileParams, String var) {
         requiresNotBlank(url, "invalid url", url);
-        requiresValidVariableName(var);
+        requiresValidAndNotReadOnlyVariableName(var);
 
         WebServiceClient client = new WebServiceClient(context);
         client.setVerbose(verbose);

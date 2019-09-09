@@ -77,22 +77,18 @@ public final class CollectionUtil {
         if (index < 0 || CollectionUtils.size(list) <= index) { return defaultIfNone; }
 
         T item = list.get(index);
-        if (item == null) { return defaultIfNone; }
-
-        return item;
+        return item == null ? defaultIfNone : item;
     }
 
     public static <T> Map<String, T> filterByPrefix(Map<String, T> map, String prefix) {
         Map<String, T> match = new LinkedHashMap<>();
-        if (MapUtils.isEmpty(map)) { return match; }
-        if (StringUtils.isEmpty(prefix)) { return map; }
+        if (MapUtils.isEmpty(map) || StringUtils.isEmpty(prefix)) { return match; }
 
-        map.keySet()
-           .stream()
-           .filter(key -> StringUtils.startsWith(key, prefix))
-           .forEach(key -> match.put(key, map.get(key)));
+        map.forEach((key, value) -> {
+            if (StringUtils.startsWith(key, prefix)) { match.put(StringUtils.substringAfter(key, prefix), value); }
+        });
+
         return match;
-
     }
 
     public static <T extends Iterable> List<List<String>> transpose(List<T> range) {

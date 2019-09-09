@@ -31,7 +31,8 @@ import org.nexial.core.aws.AwsSupport
 import org.nexial.core.model.ExecutionContext
 import org.nexial.core.model.StepResult
 import org.nexial.core.plugins.base.BaseCommand
-import org.nexial.core.utils.CheckUtils.*
+import org.nexial.core.utils.CheckUtils.requiresNotBlank
+import org.nexial.core.utils.CheckUtils.requiresNotNull
 import org.nexial.core.utils.ConsoleUtils
 import org.nexial.core.utils.ExecUtils.NEXIAL_MANIFEST
 import java.io.Serializable
@@ -43,7 +44,7 @@ class SqsCommand : BaseCommand() {
     fun receiveMessage(profile: String, queue: String, `var`: String): StepResult {
         requiresNotBlank(profile, "Invalid profile", profile)
         requiresNotBlank(queue, "Invalid queue", queue)
-        requiresValidVariableName(`var`)
+        requiresValidAndNotReadOnlyVariableName(`var`)
 
         return try {
             val sqs = SqsSupport()
@@ -64,7 +65,7 @@ class SqsCommand : BaseCommand() {
     fun receiveMessages(profile: String, queue: String, `var`: String): StepResult {
         requiresNotBlank(profile, "Invalid profile", profile)
         requiresNotBlank(queue, "Invalid queue", queue)
-        requiresValidVariableName(`var`)
+        requiresValidAndNotReadOnlyVariableName(`var`)
 
         return try {
             val sqs = SqsSupport()
@@ -85,7 +86,7 @@ class SqsCommand : BaseCommand() {
     fun purgeQueue(profile: String, queue: String, `var`: String): StepResult {
         requiresNotBlank(profile, "Invalid profile", profile)
         requiresNotBlank(queue, "Invalid queue", queue)
-        requiresValidVariableName(`var`)
+        requiresValidAndNotReadOnlyVariableName(`var`)
 
         return try {
             val sqs = SqsSupport()
@@ -107,7 +108,7 @@ class SqsCommand : BaseCommand() {
         requiresNotBlank(profile, "Invalid profile", profile)
         requiresNotBlank(queue, "Invalid queue", queue)
         requiresNotBlank(message, "Invalid message", message)
-        requiresValidVariableName(`var`)
+        requiresValidAndNotReadOnlyVariableName(`var`)
 
         return try {
             val sqs = SqsSupport()

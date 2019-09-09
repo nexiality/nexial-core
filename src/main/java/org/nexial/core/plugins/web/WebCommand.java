@@ -538,7 +538,7 @@ public class WebCommand extends BaseCommand implements CanTakeScreenshot, CanLog
     }
 
     public StepResult saveValues(String var, String locator) {
-        requiresValidVariableName(var);
+        requiresValidAndNotReadOnlyVariableName(var);
         requires(StringUtils.isNotBlank(var) && !StringUtils.startsWith(var, "${"), "invalid variable", var);
 
         String[] values = collectValueList(findElements(locator));
@@ -555,7 +555,7 @@ public class WebCommand extends BaseCommand implements CanTakeScreenshot, CanLog
      * save the value of {@code attrName} of the element matching {@code locator} to a variable named {@code var}
      */
     public StepResult saveAttribute(String var, String locator, String attrName) {
-        requiresValidVariableName(var);
+        requiresValidAndNotReadOnlyVariableName(var);
         requiresNotBlank(locator, "invalid locator", locator);
         requiresNotBlank(attrName, "invalid attribute name", attrName);
 
@@ -576,7 +576,7 @@ public class WebCommand extends BaseCommand implements CanTakeScreenshot, CanLog
      * save the value of {@code attrName} of all elements matching {@code locator} to a variable named {@code var}
      */
     public StepResult saveAttributeList(String var, String locator, String attrName) {
-        requiresValidVariableName(var);
+        requiresValidAndNotReadOnlyVariableName(var);
         requiresNotBlank(locator, "invalid locator", locator);
         requiresNotBlank(attrName, "invalid attribute name", attrName);
 
@@ -602,7 +602,7 @@ public class WebCommand extends BaseCommand implements CanTakeScreenshot, CanLog
     }
 
     public StepResult saveTextArray(String var, String locator) {
-        requiresValidVariableName(var);
+        requiresValidAndNotReadOnlyVariableName(var);
 
         String[] textArray = collectTextList(locator);
         if (ArrayUtils.isNotEmpty(textArray)) {
@@ -1565,7 +1565,7 @@ public class WebCommand extends BaseCommand implements CanTakeScreenshot, CanLog
     }
 
     public StepResult saveLocalStorage(String var, String key) {
-        requiresValidVariableName(var);
+        requiresValidAndNotReadOnlyVariableName(var);
         requiresNotBlank(key, "local storage key must not be null");
 
         ensureReady();
@@ -1578,7 +1578,7 @@ public class WebCommand extends BaseCommand implements CanTakeScreenshot, CanLog
      * designed for JS injection / web security testing
      */
     public StepResult executeScript(String var, String script) {
-        requiresValidVariableName(var);
+        requiresValidAndNotReadOnlyVariableName(var);
         requiresNotBlank(script, "Invalid script", script);
 
         String javascript;

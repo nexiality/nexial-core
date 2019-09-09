@@ -43,6 +43,7 @@ import static org.apache.poi.ss.usermodel.Row.MissingCellPolicy.CREATE_NULL_AS_B
 import static org.nexial.core.excel.ExcelConfig.*;
 import static org.nexial.core.excel.ExcelConfig.DEF_CHAR_WIDTH;
 import static org.nexial.core.excel.ExcelConfig.StyleConfig.*;
+import static org.nexial.core.NexialConst.Data.SUMMARY_TAB_NAME;
 
 public class MergingNewExecutionSummarySheet {
     private Map<String, String> testExecutionData = TextUtils.toMap(
@@ -80,7 +81,7 @@ public class MergingNewExecutionSummarySheet {
 
         Excel fixture = new Excel(fixtureFile, false);
         XSSFWorkbook workbook = fixture.getWorkbook();
-        Worksheet summary = fixture.worksheet("#summary", true);
+        Worksheet summary = fixture.worksheet(SUMMARY_TAB_NAME, true);
         workbook.setSheetOrder(summary.getName(), 0);
         workbook.setSelectedTab(0);
         workbook.setActiveSheet(0);

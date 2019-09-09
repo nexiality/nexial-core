@@ -625,7 +625,7 @@ public class XmlCommand extends BaseCommand {
      * test each {@literal nodeNames} instance, both with and without parent's namespace.
      */
     protected StepResult storeSoapFault(String var, String xml, String... nodeNames) {
-        requiresValidVariableName(var);
+        requiresValidAndNotReadOnlyVariableName(var);
         requiresNotBlank(xml, "invalid xml", xml);
 
         WsdlHelper helper = new WsdlHelper(context);
@@ -668,7 +668,7 @@ public class XmlCommand extends BaseCommand {
     }
 
     private StepResult format(String xml, String var, XMLOutputter outputter) {
-        requiresValidVariableName(var);
+        requiresValidAndNotReadOnlyVariableName(var);
         requiresNotBlank(xml, "invalid xml", xml);
 
         Document doc = deriveWellformedXml(xml);
