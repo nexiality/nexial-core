@@ -17,9 +17,9 @@
 
 package org.nexial.core.variable;
 
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
@@ -81,15 +81,22 @@ class ExpressionParser {
             String functionName = StringUtils.trim(StringUtils.substringBefore(group, DATATYPE_START));
             String paramList = StringUtils.substringAfter(group, DATATYPE_START);
             paramList = StringUtils.substringBeforeLast(paramList, DATATYPE_END);
-            List<String> params = TextUtils.toList(paramList, delim, false);
-            if (CollectionUtils.isNotEmpty(params)) {
-                List<String> substituted = new ArrayList<>();
-                params.forEach(param -> substituted.add(postFunctionParsingSubstitution(param, true)));
-                expr.addFunction(new ExpressionFunction(functionName, substituted));
-            } else {
-                expr.addFunction(new ExpressionFunction(functionName, params));
-            }
 
+            // substitute escaped delim with temp char sequence, break paramList into list, and then replace delim back
+            List<String> params =
+                TextUtils.toList(StringUtils.replace(paramList, "\\" + delim, ESCAPE_DELIM_SUBSTITUTION), delim, false)
+                         .stream()
+                         .map(param -> StringUtils.replace(postFunctionParsingSubstitution(param, true),
+                                                           ESCAPE_DELIM_SUBSTITUTION,
+                                                           delim))
+                         .collect(Collectors.toList());
+            // if (CollectionUtils.isNotEmpty(params)) {
+                // List<String> substituted = new ArrayList<>();
+                // params.forEach(param -> substituted.add(postFunctionParsingSubstitution(param, delim, true)));
+                // expr.addFunction(new ExpressionFunction(functionName, substituted));
+            // } else {
+                expr.addFunction(new ExpressionFunction(functionName, params));
+            // }
 
             // recollecting all the functions as for textual representation
 
@@ -106,7 +113,7 @@ class ExpressionParser {
             if (StringUtils.isBlank(text)) {
                 newText.append(text);
                 break;
-            }else if (RegexUtils.isExact(text, EXPRESSION_END_REGEX, true)) {
+            } else if (RegexUtils.isExact(text, EXPRESSION_END_REGEX, true)) {
                 // newText.append(RegexUtils.firstMatches(text, EXPRESSION_END_REGEX));
                 break;
             }
@@ -116,6 +123,7 @@ class ExpressionParser {
         String fragment = typeGrouping.get(0) + typeGrouping.get(1) + typeGrouping.get(2) +
                           postFunctionParsingSubstitution(newText.toString(), false);
         expr.appendOriginalExpression(fragment);
+        // expr.appendOriginalExpression(StringUtils.replace(fragment, ESCAPE_DELIM_SUBSTITUTION, "\\" + delim));
         return expr;
     }
 

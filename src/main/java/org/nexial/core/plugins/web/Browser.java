@@ -398,10 +398,9 @@ public class Browser implements ForcefulTerminate {
             proxy = null;
         }
 
-        if (driver == null) {
-            clearWinHandles();
-            return;
-        }
+        clearWinHandles();
+
+        if (driver == null) { return; }
 
         ConsoleUtils.log("Shutting down '" + browserType.name() + "' webdriver...");
 
@@ -423,7 +422,7 @@ public class Browser implements ForcefulTerminate {
         //     }
         // }
 
-        clearWinHandles();
+        // clearWinHandles();
 
         if (context != null) {
             CanTakeScreenshot agent = context.findCurrentScreenshotAgent();
@@ -442,26 +441,22 @@ public class Browser implements ForcefulTerminate {
 
         try { Thread.sleep(1000); } catch (InterruptedException e) { }
 
+        shutdownElectronApp();
+
         if (!isRunFireFox() && !isRunFirefoxHeadless() && !(driver instanceof FirefoxDriver)) {
-            // close before quite doesn't seem to work for firefox driver
+            // close before quite doesn't seem to work for firefox driver or electron app
+            ConsoleUtils.log("Close the current window, quitting the browser if it's the last window currently open.");
             try { driver.close(); } catch (Throwable e) { }
         }
 
         try {
+            ConsoleUtils.log("Quits this driver, closing every associated window.");
             driver.quit();
             Thread.sleep(2000);
         } catch (Throwable e) {
-        } finally { driver = null; }
-
-        // special handling for electron apps
-        if (isRunElectron() &&
-            context.getBooleanData(ELECTRON_FORCE_TERMINATE, getDefaultBool(ELECTRON_FORCE_TERMINATE))) {
-            String clientLocation = context.getStringData(ELECTRON_CLIENT_LOCATION);
-            if (StringUtils.isNotBlank(clientLocation)) {
-                String exeName = StringUtils.substringAfterLast(StringUtils.replace(clientLocation, "\\", "/"), "/");
-                ConsoleUtils.log("forcefully terminating '" + exeName + "'...");
-                RuntimeUtils.terminateInstance(exeName);
-            }
+            ConsoleUtils.error("Error occurred while shutting down webdriver: " + e.getMessage());
+        } finally {
+            driver = null;
         }
     }
 
@@ -1004,6 +999,21 @@ public class Browser implements ForcefulTerminate {
                                     (isRunCrossBrowserTesting() && cbtHelper.browser == safari);
             Point initialPosition = runningSafari ? INITIAL_POSITION_SAFARI : INITIAL_POSITION;
             window.setPosition(initialPosition);
+        }
+    }
+
+    /**
+     * special handling for electron apps
+     */
+    private void shutdownElectronApp() {
+        if (isRunElectron() &&
+            context.getBooleanData(ELECTRON_FORCE_TERMINATE, getDefaultBool(ELECTRON_FORCE_TERMINATE))) {
+            String clientLocation = context.getStringData(ELECTRON_CLIENT_LOCATION);
+            if (StringUtils.isNotBlank(clientLocation)) {
+                String exeName = StringUtils.substringAfterLast(StringUtils.replace(clientLocation, "\\", "/"), "/");
+                ConsoleUtils.log("forcefully terminating '" + exeName + "'...");
+                RuntimeUtils.terminateInstance(exeName);
+            }
         }
     }
 

@@ -723,11 +723,15 @@ public class ExecutionContext {
 
     public boolean isNullValue(String value) { return value == null || StringUtils.equals(value, getNullValueToken()); }
 
-    public boolean isEmptyValue(String value) {
-        return StringUtils.equals(value, "") || StringUtils.equals(value, EMPTY);
-    }
+    public boolean isEmptyValue(String value) { return StringUtils.isEmpty(value) || StringUtils.equals(value, EMPTY); }
+
+    public boolean isBlankValue(String value) { return StringUtils.isBlank(value) || StringUtils.equals(value, BLANK); }
 
     public boolean isNullOrEmptyValue(String value) { return isNullValue(value) || isEmptyValue(value); }
+
+    public boolean isNullOrEmptyOrBlankValue(String value) {
+        return isBlankValue(value) || isEmptyValue(value) || isNullValue(value);
+    }
 
     public String replaceTokens(String text) { return replaceTokens(text, false); }
 

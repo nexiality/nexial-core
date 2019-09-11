@@ -85,7 +85,7 @@ class TableHelper(private val webCommand: WebCommand) {
         val msgPrefix = "DIV table"
 
         // header
-        if (StringUtils.isNotBlank(headerCellsLoc) && !webCommand.context.isNullValue(headerCellsLoc)) {
+        if (!webCommand.context.isNullOrEmptyOrBlankValue(headerCellsLoc)) {
             val deepScan = webCommand.context.getBooleanData(DEEP_SCAN, getDefaultBool(DEEP_SCAN))
             writeCsvHeader(msgPrefix, writer, webCommand.findElements(headerCellsLoc), deepScan)
         }
@@ -266,9 +266,8 @@ class TableHelper(private val webCommand: WebCommand) {
 
         // header (not required)
         val headerCellsLoc = configMap["header-cell"]
-        if (StringUtils.isNotBlank(headerCellsLoc) && !context.isNullValue(headerCellsLoc)) {
+        if (!context.isNullOrEmptyOrBlankValue(headerCellsLoc))
             writeCsvHeader(msgPrefix, writer, webCommand.findElements(headerCellsLoc), deepScan)
-        }
 
         // viewport
         val viewportLoc = configMap["data-viewport"]
@@ -595,16 +594,12 @@ class TableHelper(private val webCommand: WebCommand) {
     }
 
     private fun clickNextPage(nextPageLocator: String): Boolean {
-        return if (StringUtils.isNotBlank(nextPageLocator) && !webCommand.context.isNullValue(nextPageLocator)) {
+        return if (webCommand.context.isNullOrEmptyOrBlankValue(nextPageLocator)) false else {
             val nextPage = webCommand.findElement(nextPageLocator)
-            if (nextPage != null && nextPage.isDisplayed && nextPage.isEnabled) {
+            if (nextPage == null || !nextPage.isDisplayed || !nextPage.isEnabled) false else {
                 nextPage.click()
                 true
-            } else {
-                false
             }
-        } else {
-            false
         }
     }
 }

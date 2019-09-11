@@ -179,7 +179,7 @@ public final class OutputFileUtils {
                                         boolean compact,
                                         boolean replaceTokens) throws IOException {
 
-        if (StringUtils.isBlank(contentOrFile) || context.isNullOrEmptyValue(contentOrFile)) { return ""; }
+        if (context.isNullOrEmptyValue(contentOrFile)) { return ""; }
 
         if (StringUtils.containsNone(contentOrFile, '\n', '\r', '\t') && ResourceUtils.isWebResource(contentOrFile)) {
             String content;
@@ -230,8 +230,7 @@ public final class OutputFileUtils {
 
     /** we can't have NL or CR or TAB character in filename */
     public static boolean isContentReferencedAsFile(String contentOrFile, ExecutionContext context) {
-        return !StringUtils.isBlank(contentOrFile) &&
-               !context.isNullOrEmptyValue(contentOrFile) &&
+        return !context.isNullOrEmptyOrBlankValue(contentOrFile) &&
                FileUtil.isSuitableAsPath(contentOrFile) &&
                new File(contentOrFile).canRead();
     }

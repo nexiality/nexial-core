@@ -76,8 +76,7 @@ public abstract class Transformer<T extends ExpressionDataType> {
     }
 
     ExpressionDataType transform(T data, ExpressionFunction function) throws ExpressionException {
-        if (data == null) { return data; }
-        if (function == null) { return data; }
+        if (data == null || function == null) { return data; }
 
         String typeName = data.getName();
         String functionName = function.getFunctionName();

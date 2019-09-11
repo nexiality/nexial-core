@@ -78,6 +78,7 @@ public class ExpressionProcessorTest {
         context.setData("testdb.type", "sqlite");
         context.setData("testdb.url", NexialTestUtils.resolveTestDbUrl());
         context.setData("testdb.autocommit", "true");
+        context.setData("nexial.textDelim", ",");
     }
 
     @After
@@ -3607,6 +3608,87 @@ public class ExpressionProcessorTest {
         System.out.println("result = " + result);
         Assert.assertTrue(StringUtils.isNotBlank(result));
         Assert.assertTrue(StringUtils.countMatches(result, "\n") > 1);
+    }
+
+    @Test
+    public void processText_different_delim() throws Exception {
+
+        context.setData("nexial.textDelim", "|");
+
+        ExpressionProcessor subject = new ExpressionProcessor(context);
+
+        // replace character same as delim
+        String fixture = "[TEXT(this line|that line|another line|last line) => replace(\\||\n) ]";
+        String result = subject.process(fixture);
+        Assert.assertEquals("this line\n" +
+                            "that line\n" +
+                            "another line\n" +
+                            "last line",
+                            result);
+
+        // regex-replace character same as delim... no need to double-escape pipe because it's wrapped in [..] as simple class
+        fixture = "[TEXT(this line|that line|another line|last line) => replaceRegex([\\|\\]|\n) ]";
+        result = subject.process(fixture);
+        Assert.assertEquals("this line\n" +
+                            "that line\n" +
+                            "another line\n" +
+                            "last line",
+                            result);
+
+        // regex-replace character same as delim... need to double-escape pipe for grouping
+        fixture = "[TEXT(this line|that line|another line|last line) => replaceRegex(\\(\\\\|\\)|\n) ]";
+        result = subject.process(fixture);
+        Assert.assertEquals("this line\n" +
+                            "that line\n" +
+                            "another line\n" +
+                            "last line",
+                            result);
+
+        // regex-replace character same as delim... need to double-escape pipe
+        fixture = "[TEXT(this line|that line|another line|last line) => replaceRegex(\\\\||\n) ]";
+        result = subject.process(fixture);
+        Assert.assertEquals("this line\n" +
+                            "that line\n" +
+                            "another line\n" +
+                            "last line",
+                            result);
+    }
+
+    @Test
+    public void processText_multi_char_delim() throws Exception {
+
+        context.setData("nexial.textDelim", ",|");
+
+        ExpressionProcessor subject = new ExpressionProcessor(context);
+
+        // replace character same as delim
+        String fixture = "[TEXT(this line,|that line,|another line,|last line) => replace(\\,|,|\n) ]";
+        String result = subject.process(fixture);
+        Assert.assertEquals("this line\n" +
+                            "that line\n" +
+                            "another line\n" +
+                            "last line",
+                            result);
+
+        // regex-replace character same as delim... need to double-escape pipe for grouping
+        fixture = "[TEXT(this line,|that line,|another line,|last line) => replaceRegex(\\(\\,\\|\\),|\n) ]";
+        result = subject.process(fixture);
+        Assert.assertEquals("this line\n" +
+                            "that line\n" +
+                            "another line\n" +
+                            "last line",
+                            result);
+
+        // regex-replace character same as delim... need to double-escape pipe
+        fixture = "[TEXT(this line,|that line,|another line,|last line) => replaceRegex(\\,\\|,|\n) ]";
+        result = subject.process(fixture);
+        Assert.assertEquals("this line\n" +
+                            "that line\n" +
+                            "another line\n" +
+                            "last line",
+                            result);
+
+        // double character delim test
     }
 
     private DataAccess initDataAccess() {

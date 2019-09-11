@@ -39,8 +39,10 @@ final class ExpressionConst {
 
     static final Map<String, String> FUNCTION_PARAM_SUBSTITUTIONS = TextUtils.toMap("\\(=~~9~~|" +
                                                                                     "\\)=~~0~~|" +
-                                                                                    "\\,=~~<~~|",
+                                                                                    "\\,=~~<~~|" +
+                                                                                    "\\]=~~>~~|",
                                                                                     "|", "=");
+    static final String ESCAPE_DELIM_SUBSTITUTION = "~~?~~";
 
     static final List<String> ALIAS_EMPTY = Arrays.asList("", "\"\"", "''");
 
