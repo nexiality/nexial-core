@@ -3687,8 +3687,6 @@ public class ExpressionProcessorTest {
                             "another line\n" +
                             "last line",
                             result);
-
-        // double character delim test
     }
 
     private DataAccess initDataAccess() {
