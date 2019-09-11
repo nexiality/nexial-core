@@ -187,7 +187,7 @@ class WebDriverHelperTest {
         Assert.assertNotNull(driver)
         Assert.assertTrue(driver.exists())
         Assert.assertTrue(driver.canRead())
-        Assert.assertTrue(FileUtil.isFileReadable(driver, 4 * 1024 * 1024))
+        Assert.assertTrue(FileUtil.isFileReadable(driver, 3 * 1024 * 1024))
 
         return driver
     }
