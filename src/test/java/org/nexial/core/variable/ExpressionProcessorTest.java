@@ -361,6 +361,30 @@ public class ExpressionProcessorTest {
     }
 
     @Test
+    public void processList_different_delim() throws Exception {
+
+        context.setData("nexial.textDelim", "|");
+
+        ExpressionProcessor subject = new ExpressionProcessor(context);
+
+        String fixture = "[LIST(John|James|Jim|Jane|Joby|Jacab|Jorem) => replace(J|B)]";
+        String result = subject.process(fixture);
+        Assert.assertEquals("Bohn|Bames|Bim|Bane|Boby|Bacab|Borem", result);
+
+        // using delim as parameter does not increase
+        fixture = "[LIST(Smith, John|Bron, James|Bloc, Jim|Norris, Jane|Chen, Joby|Li, Jacab|Jorem) => replace(, |\\|)]";
+        result = subject.process(fixture);
+        Assert.assertEquals("Smith\\|John|Bron\\|James|Bloc\\|Jim|Norris\\|Jane|Chen\\|Joby|Li\\|Jacab|Jorem", result);
+
+        fixture = "[LIST(Smith, John|Bron, James|Bloc, Jim|Norris, Jane|Chen, Joby|Li, Jacab|Jorem) => " +
+                  " replace(, |\\|)" +
+                  " count" +
+                  "]";
+        result = subject.process(fixture);
+        Assert.assertEquals("7", result);
+    }
+
+    @Test
     public void processNumber() throws Exception {
         ExpressionProcessor subject = new ExpressionProcessor(context);
 
@@ -3687,6 +3711,23 @@ public class ExpressionProcessorTest {
                             "another line\n" +
                             "last line",
                             result);
+    }
+
+    @Test
+    public void processTest_html() throws Exception {
+        ExpressionProcessor subject = new ExpressionProcessor(context);
+
+        String fixture = "\n" +
+                         "<html>\n" +
+                         "<head><title>Index of /clients/</title></head>\n" +
+                         "<body bgcolor=\"white\">\n" +
+                         "<h1>Index of /clients/</h1><hr><pre><a href=\"../\">../</a>\n" +
+                         "<a href=\"MovieMagicBudgeting-dev-682.exe\">MovieMagicBudgeting-dev-682.exe</a>                    09-Sep-2019 18:16            45637168\n" +
+                         "<a href=\"MovieMagicBudgeting-dev-682.zip\">MovieMagicBudgeting-dev-682.zip</a>                    09-Sep-2019 18:16            65351582\n" +
+                         "</pre><hr></body>\n" +
+                         "</html>\n";
+        String result = subject.process("[TEXT(" + fixture + ") => html ]");
+        System.out.println("result = " + result);
     }
 
     private DataAccess initDataAccess() {

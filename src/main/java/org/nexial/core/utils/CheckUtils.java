@@ -20,6 +20,7 @@ package org.nexial.core.utils;
 import java.io.File;
 import java.io.IOException;
 import java.lang.reflect.Array;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Objects;
 
@@ -46,7 +47,7 @@ public class CheckUtils {
 
     public static void fail(String message) {
         // use `.log()` to comply with quiet mode when activated
-        // no need to log here. the assertion error will force serr print out anyways..
+        // no need to log here. the assertion error will force system error print out anyways..
         // ConsoleUtils.log(message);
         throw new AssertionError(message);
     }
@@ -72,6 +73,11 @@ public class CheckUtils {
 
     public static boolean requiresNotBlank(String notBlank, String errorMessage, Object... params) {
         if (StringUtils.isBlank(notBlank)) { fail(errorMessage + ": " + ArrayUtils.toString(params)); }
+        return true;
+    }
+
+    public static boolean requiresNotEmpty(String notBlank, String errorMessage, Object... params) {
+        if (StringUtils.isEmpty(notBlank)) { fail(errorMessage + ": " + ArrayUtils.toString(params)); }
         return true;
     }
 
@@ -109,7 +115,7 @@ public class CheckUtils {
             }
         }
 
-        if (!dir.isDirectory() || !dir.canRead()) fail(message + ": " + msgParams);
+        if (!dir.isDirectory() || !dir.canRead()) { fail(message + ": " + msgParams); }
         return true;
     }
 
@@ -120,6 +126,10 @@ public class CheckUtils {
         if (!dir.canWrite()) { fail(message + ": " + ArrayUtils.toString(params)); }
 
         return true;
+    }
+
+    public static boolean requiresReadableFileOrValidUrl(String resource) {
+        return ResourceUtils.isWebResource(resource) || requiresReadableFile(resource);
     }
 
     public static boolean requiresPositiveNumber(String number, String message, Object... params) {
@@ -149,7 +159,13 @@ public class CheckUtils {
         return true;
     }
 
-    public static boolean requiresReadableFileOrValidUrl(String resource) {
-        return ResourceUtils.isWebResource(resource) || requiresReadableFile(resource);
+    public static boolean requireOneOf(String option, String... options) {
+        if (requiresNotEmpty(option, "Invalid value", option)) {
+            List<String> optionList = Arrays.asList(options);
+            if (!optionList.contains(option)) { fail("Invalid value: " + option + ". Must be one of " + optionList); }
+            return true;
+        } else {
+            return false;
+        }
     }
 }

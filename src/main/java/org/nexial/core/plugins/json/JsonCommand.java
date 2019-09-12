@@ -245,7 +245,7 @@ public class JsonCommand extends BaseCommand {
 
     public StepResult assertCorrectness(String json, String schema) {
         JsonNode jsonNode = deriveWellformedJson(json);
-        if (jsonNode == null) { StepResult.fail("invalid json: " + json); }
+        if (jsonNode == null) { return StepResult.fail("invalid json: " + json); }
 
         requires(StringUtils.isNotBlank(schema) && !context.isNullValue(schema), "empty schema", schema);
 
@@ -258,7 +258,7 @@ public class JsonCommand extends BaseCommand {
                 String schemaLocation = (StringUtils.startsWith(schema, "/") ? "" : "/") + schema;
                 jsonSchema = JSON_SCHEMA_FACTORY.getJsonSchema("resource:" + schemaLocation);
             } else {
-                // support path-based content specificaton
+                // support path-based content specification
                 schema = OutputFileUtils.resolveContent(schema, context, false);
                 if (StringUtils.isBlank(schema)) { return StepResult.fail("invalid schema: " + schema); }
 
@@ -569,16 +569,10 @@ public class JsonCommand extends BaseCommand {
                                         return DIFF_NULL_HTML_START + "NOT FOUND" + DIFF_NULL_HTML_END;
                                     }
 
-                                    html = TextUtils.decorateTextRange(html,
-                                                                       "contains ",
-                                                                       " of",
-                                                                       DIFF_HIGHLIGHT_HTML_START,
-                                                                       DIFF_HIGHLIGHT_HTML_END);
-                                    html = TextUtils.decorateTextRange(html,
-                                                                       "node '",
-                                                                       "' ",
-                                                                       DIFF_HIGHLIGHT_HTML_START,
-                                                                       DIFF_HIGHLIGHT_HTML_END);
+                                    html = TextUtils.decorateTextRange(
+                                        html, "contains ", " of", DIFF_HIGHLIGHT_HTML_START, DIFF_HIGHLIGHT_HTML_END);
+                                    html = TextUtils.decorateTextRange(
+                                        html, "node '", "' ", DIFF_HIGHLIGHT_HTML_START, DIFF_HIGHLIGHT_HTML_END);
                                     return "<code>" + html + "</code>";
                                 },
                                 "compare-result-table"),

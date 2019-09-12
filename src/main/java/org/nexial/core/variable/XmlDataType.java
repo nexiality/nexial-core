@@ -76,7 +76,7 @@ public class XmlDataType extends ExpressionDataType<Element> {
             value = document.getRootElement();
         } catch (JDOMException | IOException e) {
             ConsoleUtils.error(getName(), e.getMessage(), e);
-            throw new TypeConversionException(getName(), getTextValue(), "Error when converting " + textValue);
+            throw new TypeConversionException(getName(), getTextValue(), "Error when converting " + textValue, e);
         }
     }
 }

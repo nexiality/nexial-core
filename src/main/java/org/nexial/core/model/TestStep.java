@@ -536,7 +536,8 @@ public class TestStep extends TestStepManifest {
                     }
                 }
 
-                if (!linkToCloud) {
+                // if `link` contains double quote, it's likely not a link..
+                if (!linkToCloud && !StringUtils.containsAny(link, "\"")) {
                     worksheet.setHyperlink(paramCell, link, context.replaceTokens(params.get(paramIdx)));
                 }
                 continue;

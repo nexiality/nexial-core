@@ -861,7 +861,7 @@ public final class NexialConst {
         public static final String OPT_VAR_EXCLUDE_LIST = registerSystemVariable(NAMESPACE_VAR + "ignored");
         public static final String OPT_VAR_DEFAULT_AS_IS = registerSystemVariable(NAMESPACE_VAR + "defaultAsIs", false);
         public static final String OPT_EXPRESSION_READ_FILE_AS_IS = registerSystemVariable(NAMESPACE + "expression.OpenFileAsIs", false);
-        public static final String OPT_EXPRESSION_RESOLVE_URL = registerSystemVariable(NAMESPACE + "expression.resolveURL", true);
+        public static final String OPT_EXPRESSION_RESOLVE_URL = registerSystemVariable(NAMESPACE + "expression.resolveURL", false);
 
         // predefined variable for time tracking of execution levels
         public static final String TIMETRACK = NAMESPACE + "timetrack.";

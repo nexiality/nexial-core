@@ -51,7 +51,8 @@ import static org.apache.http.HttpHeaders.CONTENT_TYPE;
 import static org.nexial.core.NexialConst.*;
 import static org.nexial.core.SystemVariables.getDefaultBool;
 import static org.nexial.core.plugins.ws.WebServiceClient.hideAuthDetails;
-import static org.nexial.core.utils.CheckUtils.*;
+import static org.nexial.core.utils.CheckUtils.requires;
+import static org.nexial.core.utils.CheckUtils.requiresNotBlank;
 
 public class WsCommand extends BaseCommand {
     protected boolean verbose;
@@ -507,22 +508,24 @@ public class WsCommand extends BaseCommand {
     }
 
     protected void logRequestWithBody(String url, String body) {
-        ConsoleUtils.log("REQUEST  --> '" + hideAuthDetails(url) + "', body length=" + StringUtils.length(body));
-        if (context.isVerbose() && StringUtils.isNotBlank(body)) { ConsoleUtils.log("REQUEST BODY -->\n" + body); }
+        if (context.isVerbose()) {
+            log("REQUEST  --> '" + hideAuthDetails(url) + "', body length=" + StringUtils.length(body));
+            if (StringUtils.isNotBlank(body)) { log("REQUEST BODY -->\n" + body); }
+        }
     }
 
     protected void logRequest(String url, String queryString) {
-        ConsoleUtils.log("REQUEST  --> '" + hideAuthDetails(url) + "', " +
-                         "queryString='" + StringUtils.defaultString(queryString, "<NONE>") + "'");
+        if (context.isVerbose()) {
+            log("REQUEST  --> '" + hideAuthDetails(url) + "', " +
+                "queryString='" + StringUtils.defaultString(queryString, "<NONE>") + "'");
+        }
     }
 
     protected void logResponse(Response response, String saveTo) {
-        if (context.isVerbose()) { log("RESPONSE payload save to '" + saveTo + "' --> \n" + response); }
+        if (context.isVerbose()) { log("RESPONSE payload save to '" + saveTo + "' -->\n" + response); }
     }
 
     protected void logResponseForDownload(Response response, String saveTo) {
-        if (context.isVerbose()) {
-            log("RESPONSE payload save to '" + saveTo + "' --> \n" + response.getContentLength());
-        }
+        if (context.isVerbose()) {log("RESPONSE payload save to '" + saveTo + "' -->\n" + response.getContentLength());}
     }
 }

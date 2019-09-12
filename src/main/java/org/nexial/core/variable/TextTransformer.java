@@ -17,6 +17,7 @@
 
 package org.nexial.core.variable;
 
+import java.io.IOException;
 import java.lang.reflect.Method;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -30,14 +31,26 @@ import org.apache.commons.lang3.BooleanUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.math.NumberUtils;
 import org.apache.commons.text.WordUtils;
+import org.jdom2.JDOMException;
+import org.jsoup.Jsoup;
+import org.jsoup.nodes.Document;
+import org.jsoup.nodes.Document.OutputSettings.Syntax;
 import org.nexial.commons.utils.FileUtil;
 import org.nexial.commons.utils.RegexUtils;
+import org.nexial.commons.utils.ResourceUtils;
 import org.nexial.commons.utils.TextUtils;
+import org.nexial.commons.utils.XmlUtils;
 import org.nexial.core.ExecutionThread;
 import org.nexial.core.model.ExecutionContext;
+import org.nexial.core.plugins.ws.WsCommand;
 
+import com.google.gson.JsonElement;
+
+import static org.nexial.core.NexialConst.Data.OPT_EXPRESSION_RESOLVE_URL;
 import static org.nexial.core.NexialConst.Data.TEXT_DELIM;
+import static org.nexial.core.NexialConst.GSON;
 import static org.nexial.core.SystemVariables.getDefault;
+import static org.nexial.core.SystemVariables.getDefaultBool;
 import static org.nexial.core.utils.CheckUtils.requiresPositiveNumber;
 import static org.nexial.core.variable.ExpressionUtils.fixControlChars;
 
@@ -367,6 +380,73 @@ public class TextTransformer<T extends TextDataType> extends Transformer {
         FileUtil.writeBinaryFile(path, BooleanUtils.toBoolean(append), decoded);
         data.setValue(new String(decoded));
         return data;
+    }
+
+    public XmlDataType xml(T data) throws TypeConversionException {
+        String text = data.value;
+
+        ExecutionContext context = ExecutionThread.get();
+        boolean resolveUrl = context.getBooleanData(OPT_EXPRESSION_RESOLVE_URL,
+                                                    getDefaultBool(OPT_EXPRESSION_RESOLVE_URL));
+
+        // could be a proper XML already
+        org.jdom2.Document xmlDoc;
+        try {
+            xmlDoc = XmlUtils.parse(text);
+            if (xmlDoc != null) { return new XmlDataType(text); }
+        } catch (JDOMException | IOException e) {
+            // nope.. maybe it's a malformed HTML or a URL reference
+            try {
+                Document document = resolveUrl && ResourceUtils.isWebResource(text) ?
+                                    Jsoup.connect(text).get() : Jsoup.parse(text);
+                if (document == null) {
+                    throw new TypeConversionException("XML", text, "No valid XML content found via '" + text + "'");
+                }
+
+                document.outputSettings().prettyPrint(true).syntax(Syntax.xml);
+                String html = StringUtils.trim(document.html());
+                // remove doc declaration since XML parser might not like that
+                // i.e. <!DOCTYPE html PUBLIC "-//W3C//DTD HTML 3.2 Final//EN">
+                if (StringUtils.startsWith(html, "<!")) {
+                    html = StringUtils.trim(StringUtils.substringAfter(html, ">"));
+                }
+
+                xmlDoc = XmlUtils.parse(html);
+                if (xmlDoc != null) { return new XmlDataType(html); }
+            } catch (IOException ex) {
+                // can't get content via URL
+                throw new TypeConversionException("XML", text, "Error downloading '" + text + "': " + e.getMessage());
+            } catch (JDOMException ex) {
+                throw new TypeConversionException("XML", text, "Error parsing '" + text + "': " + e.getMessage());
+            }
+        }
+
+        throw new TypeConversionException("XML", text, "Unable to convert TEXT to XML via '" + text + "'");
+    }
+
+    public JsonDataType jsonDataType(T data) throws TypeConversionException {
+        String text = data.value;
+
+        ExecutionContext context = ExecutionThread.get();
+        boolean resolveUrl = context.getBooleanData(OPT_EXPRESSION_RESOLVE_URL,
+                                                    getDefaultBool(OPT_EXPRESSION_RESOLVE_URL));
+
+        // could be a proper JSON already
+        JsonElement json;
+        try {
+            if (resolveUrl && ResourceUtils.isWebResource(text)) { text = WsCommand.resolveWebContent(text); }
+
+            text = JsonDataType.escapeUnicode(text);
+            json = GSON.fromJson(text, JsonElement.class);
+            if (json != null) { return new JsonDataType(text); }
+        } catch (IOException e) {
+            // nope.. maybe it's a malformed HTML or a URL reference
+            throw new TypeConversionException("JSON",
+                                              data.value,
+                                              "Error downloading '" + data.value + "': " + e.getMessage());
+        }
+
+        throw new TypeConversionException("JSON", text, "Cannot convert TEXT to JSON: " + data.value);
     }
 
     @Override

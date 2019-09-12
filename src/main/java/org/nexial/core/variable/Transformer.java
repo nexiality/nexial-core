@@ -93,7 +93,7 @@ public abstract class Transformer<T extends ExpressionDataType> {
         Object[] args;
         if (paramCount == -1) {
             // varargs means paramCount = -1
-            args = new Object[]{data, function.getParams().toArray(new String[function.getParams().size()])};
+            args = new Object[]{data, function.getParams().toArray(new String[0])};
         } else {
             args = new Object[paramCount + 1];
             args[0] = data;
