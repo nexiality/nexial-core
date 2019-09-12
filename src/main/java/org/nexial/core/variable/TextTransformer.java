@@ -424,7 +424,7 @@ public class TextTransformer<T extends TextDataType> extends Transformer {
         throw new TypeConversionException("XML", text, "Unable to convert TEXT to XML via '" + text + "'");
     }
 
-    public JsonDataType jsonDataType(T data) throws TypeConversionException {
+    public JsonDataType json(T data) throws TypeConversionException {
         String text = data.value;
 
         ExecutionContext context = ExecutionThread.get();
