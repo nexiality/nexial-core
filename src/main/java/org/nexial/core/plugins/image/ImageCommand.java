@@ -17,29 +17,30 @@
 
 package org.nexial.core.plugins.image;
 
-import java.awt.*;
-import java.awt.image.*;
-import java.io.File;
-import java.io.IOException;
-import java.text.DecimalFormat;
-import java.util.ArrayList;
-import javax.imageio.ImageIO;
-
-import org.apache.commons.collections4.MapUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.math.NumberUtils;
 import org.apache.commons.lang3.time.StopWatch;
 import org.nexial.commons.utils.RegexUtils;
+import org.nexial.commons.utils.TextUtils;
 import org.nexial.core.NexialConst.*;
 import org.nexial.core.model.StepResult;
 import org.nexial.core.plugins.ForcefulTerminate;
 import org.nexial.core.plugins.base.BaseCommand;
 import org.nexial.core.utils.ConsoleUtils;
 
+import javax.imageio.ImageIO;
+import java.awt.*;
+import java.awt.image.BufferedImage;
+import java.io.File;
+import java.io.IOException;
+import java.text.DecimalFormat;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.stream.Collectors;
+
 import static java.awt.RenderingHints.*;
-import static java.awt.image.BufferedImage.*;
+import static java.awt.image.BufferedImage.TYPE_INT_RGB;
 import static java.io.File.separator;
-import static org.nexial.core.NexialConst.ImageDiffColor.getColorNames;
 import static org.nexial.core.NexialConst.ImageType.png;
 import static org.nexial.core.NexialConst.*;
 import static org.nexial.core.SystemVariables.getDefault;
@@ -192,8 +193,11 @@ public class ImageCommand extends BaseCommand implements ForcefulTerminate {
             boolean trim = context.getBooleanData(OPT_TRIM_BEFORE_DIFF,
                                                   getDefaultBool(OPT_TRIM_BEFORE_DIFF));
             if (trim) {
-                image1 = trimImage(image1);
-                image2 = trimImage(image2);
+                Color trimColor = getTrimColor();
+                if (trimColor != null) {
+                    image1 = trimImage(image1, trimColor);
+                    image2 = trimImage(image2, trimColor);
+                }
             }
 
             ImageComparison imageComparison = new ImageComparison(image1, image2);
@@ -270,10 +274,19 @@ public class ImageCommand extends BaseCommand implements ForcefulTerminate {
         return StepResult.success(message);
     }
 
-    private BufferedImage trimImage(BufferedImage image) {
-        String colorName = context.getStringData(OPT_IMAGE_TRIM_COLOR, getDefault(OPT_IMAGE_TRIM_COLOR));
-        Color color = MapUtils.getObject(getColorNames(), colorName,
-                                         getColorNames().get(getDefault(OPT_IMAGE_TRIM_COLOR)));
+    // Supported RGB color space as integers only.
+    private Color getTrimColor() {
+        String rgbComponent = context.getStringData(OPT_IMAGE_TRIM_COLOR, getDefault(OPT_IMAGE_TRIM_COLOR));
+        List<Integer> rgbComponentAsList = TextUtils.toList(rgbComponent, ",", true)
+                                                     .stream().map(Integer::parseInt).collect(Collectors.toList());
+        if (rgbComponentAsList.size() != 3) {
+            ConsoleUtils.log("RGB color space for trimming is not specified correctly.");
+            return null;
+        }
+        return new Color(rgbComponentAsList.get(0), rgbComponentAsList.get(1), rgbComponentAsList.get(2));
+    }
+
+    private BufferedImage trimImage(BufferedImage image, Color color) {
         int num = 0;
         // Trimming left side white spaces
         int height = image.getHeight();
@@ -282,7 +295,7 @@ public class ImageCommand extends BaseCommand implements ForcefulTerminate {
             if (!isMatched1(image, i, color)) { break; }
             num++;
         }
-        int x = num < 3 ? 0 : num;
+        int x = num < MIN_TRIM_SPACES ? 0 : num;
 
         num = 0;
         // Trimming top side white spaces
@@ -290,11 +303,8 @@ public class ImageCommand extends BaseCommand implements ForcefulTerminate {
             if (!isMatched2(image, j, color)) { break; }
             num++;
         }
-        int y = num < 3 ? 0 : num;
-        if (x == width && y == height) {
-            System.out.println("No trimming: There is only empty spaces of provided color " + colorName);
-            return image;
-        }
+        int y = num < MIN_TRIM_SPACES ? 0 : num;
+        if (x == width && y == height) { return image; }
 
         num = 0;
         // Trimming right side white spaces
@@ -302,7 +312,7 @@ public class ImageCommand extends BaseCommand implements ForcefulTerminate {
             if (!isMatched1(image, i, color)) { break; }
             num++;
         }
-        width = width - (num < 3 ? 0 : num) - x;
+        width = width - (num < MIN_TRIM_SPACES ? 0 : num) - x;
 
         num = 0;
         // Trimming bottom side white spaces
@@ -310,7 +320,7 @@ public class ImageCommand extends BaseCommand implements ForcefulTerminate {
             if (!isMatched2(image, j, color)) { break; }
             num++;
         }
-        height = height - (num < 3 ? 0 : num) - y;
+        height = height - (num < MIN_TRIM_SPACES ? 0 : num) - y;
         // return cropped image using dimensions
         return image.getSubimage(x, y, width, height);
     }

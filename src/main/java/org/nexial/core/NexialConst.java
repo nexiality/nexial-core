@@ -17,15 +17,8 @@
 
 package org.nexial.core;
 
-import java.awt.*;
-import java.io.File;
-import java.io.IOException;
-import java.text.DateFormat;
-import java.text.SimpleDateFormat;
-import java.util.List;
-import java.util.*;
-import javax.validation.constraints.NotNull;
-
+import com.google.gson.Gson;
+import com.google.gson.GsonBuilder;
 import org.apache.commons.cli.Options;
 import org.apache.commons.collections4.ListUtils;
 import org.apache.commons.collections4.MapUtils;
@@ -47,11 +40,18 @@ import org.nexial.core.model.TestProject;
 import org.nexial.core.utils.ConsoleUtils;
 import org.nexial.core.utils.ExecUtils;
 
-import com.google.gson.Gson;
-import com.google.gson.GsonBuilder;
+import javax.validation.constraints.NotNull;
+import java.awt.*;
+import java.io.File;
+import java.io.IOException;
+import java.text.DateFormat;
+import java.text.SimpleDateFormat;
+import java.util.List;
+import java.util.*;
 
 import static java.awt.Color.*;
-import static java.awt.image.BufferedImage.*;
+import static java.awt.image.BufferedImage.TYPE_INT_ARGB;
+import static java.awt.image.BufferedImage.TYPE_INT_RGB;
 import static java.io.File.separator;
 import static javax.naming.Context.*;
 import static org.apache.commons.lang3.SystemUtils.IS_OS_WINDOWS;
@@ -158,8 +158,9 @@ public final class NexialConst {
     public static final String OPT_IMAGE_TOLERANCE = registerSystemVariable(NAMESPACE + "imageTolerance", 0);
     public static final String OPT_IMAGE_DIFF_COLOR = registerSystemVariable(NAMESPACE + "imageDiffColor", "red");
     public static final String OPT_LAST_IMAGES_DIFF = registerSystemVariable(NS_IMAGE + "lastImagesDiff");
-    public static final String OPT_IMAGE_TRIM_COLOR = registerSystemVariable(NS_IMAGE + "trimColor", "white");
+    public static final String OPT_IMAGE_TRIM_COLOR = registerSystemVariable(NS_IMAGE + "trimColor", "255,255,255");
     public static final String OPT_TRIM_BEFORE_DIFF = registerSystemVariable(NS_IMAGE + "trimBeforeDiff", false);
+    public static final int MIN_TRIM_SPACES = 3;
 
     // screenshots
     public static final String OPT_SCREENSHOT_ON_ERROR = registerSystemVariable(NAMESPACE + "screenshotOnError", false);
