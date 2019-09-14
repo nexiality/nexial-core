@@ -17,11 +17,6 @@
 
 package org.nexial.core.plugins.image;
 
-import java.awt.image.*;
-import java.io.File;
-import java.io.IOException;
-import javax.imageio.ImageIO;
-
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.SystemUtils;
@@ -35,9 +30,14 @@ import org.nexial.core.model.MockExecutionContext;
 import org.nexial.core.model.StepResult;
 import org.nexial.core.model.TestStep;
 
+import javax.imageio.ImageIO;
+import java.awt.image.BufferedImage;
+import java.io.File;
+import java.io.IOException;
+
 import static java.io.File.separator;
 import static org.apache.commons.lang3.SystemUtils.JAVA_IO_TMPDIR;
-import static org.nexial.core.NexialConst.OPT_OUT_DIR;
+import static org.nexial.core.NexialConst.*;
 
 public class ImageCommandTest {
     private static final String CLASSNAME = ImageCommandTest.class.getSimpleName();
@@ -154,6 +154,8 @@ public class ImageCommandTest {
         String imageFile1 = ResourceUtils.getResourceFilePath(resourceBasePath + "/overall.png");
         String imageFile2 = ResourceUtils.getResourceFilePath(resourceBasePath + "/quality.png");
         String imageFile3 = ResourceUtils.getResourceFilePath(resourceBasePath + "/spider4.png");
+        String imageFile4 = ResourceUtils.getResourceFilePath(resourceBasePath + "/saveDiff1.png");
+        String imageFile5 = ResourceUtils.getResourceFilePath(resourceBasePath + "/saveDiff2.png");
 
         ImageCommand command = new ImageCommand();
         command.init(context);
@@ -167,6 +169,11 @@ public class ImageCommandTest {
         compareMeta = (ImageComparisonMeta) context.getObjectData("compareMeta2");
         Assert.assertNotNull(compareMeta);
         Assert.assertEquals(46, compareMeta.getCount());
+
+        Assert.assertTrue(command.saveDiff("compareMeta2", imageFile4, imageFile5).failed());
+        context.setData(OPT_TRIM_BEFORE_DIFF, true);
+        context.setData(OPT_IMAGE_TRIM_COLOR, "201,201,148");
+        Assert.assertFalse(command.saveDiff("compareMeta2", imageFile4, imageFile5).failed());
     }
 
     protected void assertSuccess(StepResult result) {
