@@ -59,6 +59,10 @@ public class AsyncWebServiceClient extends WebServiceClient implements ForcefulT
     private static final Map<Integer, FutureCallback<HttpResponse>> INFLIGHTS = new ConcurrentHashMap<>();
     private long shutdownTimeout = -1;
 
+    public interface ResponseSink<T> {
+        void receive(T response, String error);
+    }
+
     public AsyncWebServiceClient(ExecutionContext context) {
         super(context);
         // delay shutdown event
@@ -69,29 +73,55 @@ public class AsyncWebServiceClient extends WebServiceClient implements ForcefulT
     }
 
     public void get(String url, String queryString, File output) throws IOException {
-        invokeRequest(toGetRequest(url, queryString), output);
+        invokeRequest(new GetRequest(context, url, queryString), output);
     }
 
-    public void head(String url, File output) throws IOException { invokeRequest(toHeadRequest(url), output); }
+    public void head(String url, File output) throws IOException {
+        invokeRequest(new HeadRequest(context, url, null), output);
+    }
 
     public void post(String url, String payload, File output) throws IOException {
-        invokeRequest(toPostRequest(url, payload), output);
+        invokeRequest(new PostRequest(context, url, payload, null), output);
+    }
+
+    public void post(String url, byte[] payload, File output) throws IOException {
+        invokeRequest(new PostRequest(context, url, null, payload), output);
     }
 
     public void delete(String url, String queryString, File output) throws IOException {
-        invokeRequest(toDeleteRequest(url, queryString), output);
+        invokeRequest(new DeleteRequest(context, url, queryString), output);
     }
 
     public void deleteWithPayload(String url, String payload, File output) throws IOException {
-        invokeRequest(toDeleteRequestWithPayload(url, payload), output);
+        invokeRequest(new DeleteWithPayloadRequest(context, url, payload, null), output);
+    }
+
+    public void deleteWithPayload(String url, byte[] payload, File output) throws IOException {
+        invokeRequest(new DeleteWithPayloadRequest(context, url, null, payload), output);
     }
 
     public void patch(String url, String payload, File output) throws IOException {
-        invokeRequest(toPatchRequest(url, payload), output);
+        invokeRequest(new PatchRequest(context, url, payload, null), output);
+    }
+
+    public void patch(String url, byte[] payload, File output) throws IOException {
+        invokeRequest(new PatchRequest(context, url, null, payload), output);
     }
 
     public void put(String url, String payload, File output) throws IOException {
-        invokeRequest(toPutRequest(url, payload), output);
+        invokeRequest(new PutRequest(context, url, payload, null), output);
+    }
+
+    public void put(String url, byte[] payload, File output) throws IOException {
+        invokeRequest(new PutRequest(context, url, null, payload), output);
+    }
+
+    @Override
+    public Response download(String url, String queryString, String saveTo) throws IOException {
+        GetRequest request = new GetRequest(context, url, queryString);
+        request.setPayloadLocation(saveTo);
+        invokeRequest(request, new File(saveTo + ".json"));
+        return null;
     }
 
     @Override
@@ -99,7 +129,7 @@ public class AsyncWebServiceClient extends WebServiceClient implements ForcefulT
 
     @Override
     public void forcefulTerminate() {
-        if (shutdownTimeout> 0) {
+        if (shutdownTimeout > 0) {
             // while system variable is captured in ms, here we are dealing in seconds (easier for display)
             long timeout = shutdownTimeout / 1000;
             long sleep = 1;
@@ -115,14 +145,6 @@ public class AsyncWebServiceClient extends WebServiceClient implements ForcefulT
         }
 
         ASYNC_EXEC_SERVICE.shutdown();
-    }
-
-    @Override
-    public Response download(String url, String queryString, String saveTo) throws IOException {
-        GetRequest request = toGetRequest(url, queryString);
-        request.setPayloadLocation(saveTo);
-        invokeRequest(request, new File(saveTo + ".json"));
-        return null;
     }
 
     public void invokeRequest(@NotNull Request request, @NotNull File output) throws IOException {
@@ -151,11 +173,9 @@ public class AsyncWebServiceClient extends WebServiceClient implements ForcefulT
         });
     }
 
-    /**
-     * invoke HTTP request asynchronously, with option to capture response (via {@link ResponseSink}).
-     */
+    /** invoke HTTP request asynchronously, with option to capture response (via {@link ResponseSink}). */
     public void invokeRequestAsync(@NotNull Request request, ResponseSink<Response> sink) throws IOException {
-        if (ASYNC_EXEC_SERVICE.isTerminated() ||  ASYNC_EXEC_SERVICE.isShutdown()) {
+        if (ASYNC_EXEC_SERVICE.isTerminated() || ASYNC_EXEC_SERVICE.isShutdown()) {
             throw new IOException("Unable to invoke request asynchronously because ws client has been terminated");
         }
 
@@ -252,7 +272,7 @@ public class AsyncWebServiceClient extends WebServiceClient implements ForcefulT
 
             if (context != null) {
                 INFLIGHTS.put(callbackId, collectAllResponseData);
-//                debug("adding " + callbackId + " to inflight list (" + INFLIGHTS.keySet() + ")");
+                //                debug("adding " + callbackId + " to inflight list (" + INFLIGHTS.keySet() + ")");
             }
 
             try {
@@ -282,10 +302,6 @@ public class AsyncWebServiceClient extends WebServiceClient implements ForcefulT
     protected Response invokeRequest(@NotNull Request request) throws IOException {
         invokeRequestAsync(request, null);
         return null;
-    }
-
-    public interface ResponseSink<T> {
-        void receive(T response, String error);
     }
 
 }

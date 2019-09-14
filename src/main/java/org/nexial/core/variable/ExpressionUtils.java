@@ -17,8 +17,8 @@
 
 package org.nexial.core.variable;
 
-import java.io.IOException;
-import java.util.ArrayList;import java.util.Collection;
+import java.util.ArrayList;
+import java.util.Collection;
 import java.util.List;
 
 import org.apache.commons.lang3.ArrayUtils;
@@ -28,7 +28,7 @@ import org.nexial.core.ExecutionThread;
 import org.nexial.core.model.ExecutionContext;
 import org.nexial.core.utils.CheckUtils;
 import org.nexial.core.utils.ConsoleUtils;
-import org.nexial.core.utils.OutputFileUtils;
+import org.nexial.core.utils.OutputResolver;
 
 import static org.nexial.core.NexialConst.Data.OPT_EXPRESSION_READ_FILE_AS_IS;
 import static org.nexial.core.SystemVariables.getDefaultBool;
@@ -45,17 +45,17 @@ public class ExpressionUtils {
         return handleExternal(dataType, value, !openFileAsIs);
     }
 
-    protected static String handleExternal(String dataType, String value, boolean replaceTokens)
-        throws TypeConversionException {
+    protected static String handleExternal(String dataType, String value, boolean replaceTokens) {
         ExecutionContext context = ExecutionThread.get();
         if (context == null) { return value; }
-
-        try {
-            return OutputFileUtils.resolveContent(value, context, false, replaceTokens);
-        } catch (IOException e) {
-            throw new TypeConversionException(dataType, value,
-                                              "Error reading as file '" + value + "': " + e.getMessage(), e);
-        }
+        return new OutputResolver(value, context, true, context.isResolveTextAsURL(), replaceTokens, false, false)
+                   .getContent();
+        // try {
+        //     return OutputFileUtils.resolveContent(value, context, false, replaceTokens);
+        // } catch (Throwable e) {
+        //     throw new TypeConversionException(dataType, value,
+        //                                       "Error reading as file '" + value + "': " + e.getMessage(), e);
+        // }
     }
 
     protected static <T> T resumeExpression(String value, Class<T> dataType) {

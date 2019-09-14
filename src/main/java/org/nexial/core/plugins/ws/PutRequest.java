@@ -31,6 +31,11 @@ public class PutRequest extends PostRequest {
         method = "PUT";
     }
 
+    PutRequest(ExecutionContext context, String url, String payload, byte[] payloadBytes) {
+        super(context, url, payload, payloadBytes);
+        method = "PUT";
+    }
+
     @Override
     protected HttpUriRequest prepRequest(RequestConfig requestConfig) throws UnsupportedEncodingException {
         HttpPut http = new HttpPut(url);

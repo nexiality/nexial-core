@@ -413,6 +413,10 @@ public class ExecutionContext {
         return getBooleanData(ENFORCE_PAGE_SOURCE_STABILITY, getDefaultBool(ENFORCE_PAGE_SOURCE_STABILITY));
     }
 
+    public boolean isResolveTextAsURL() {
+        return getBooleanData(RESOLVE_TEXT_AS_URL, getDefaultBool(RESOLVE_TEXT_AS_URL));
+    }
+
     /**
      * increment current failure count and evaluate if execution failure should be declared since we've passed the
      * failAfter threshold
@@ -581,6 +585,10 @@ public class ExecutionContext {
         return null;
     }
 
+    /**
+     * return a map of name-value pair where the names start with the specified {@code prefix}. Note that the returned
+     * names have the {@code prefix} removed.
+     */
     @NotNull
     public Map<String, String> getDataByPrefix(String prefix) {
         Map<String, String> props = new LinkedHashMap<>();

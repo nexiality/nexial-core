@@ -34,6 +34,13 @@ public class GetRequest extends Request implements Serializable {
         method = "GET";
     }
 
+    GetRequest(ExecutionContext context, String url, String queryString) {
+        super(context);
+        setUrl(url);
+        setQueryString(queryString);
+        method = "GET";
+    }
+
     public String getQueryString() { return queryString; }
 
     public void setQueryString(String queryString) { this.queryString = queryString; }

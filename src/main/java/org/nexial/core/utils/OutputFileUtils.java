@@ -30,13 +30,11 @@ import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.math.NumberUtils;
 import org.nexial.commons.utils.FileUtil;
 import org.nexial.commons.utils.RegexUtils;
-import org.nexial.commons.utils.ResourceUtils;
 import org.nexial.core.NexialConst.*;
 import org.nexial.core.model.ExecutionContext;
 import org.nexial.core.model.ExecutionDefinition;
 import org.nexial.core.model.TestStep;
 import org.nexial.core.plugins.web.Browser;
-import org.nexial.core.plugins.ws.WsCommand;
 
 import static java.io.File.separator;
 import static org.nexial.core.NexialConst.*;
@@ -167,53 +165,55 @@ public final class OutputFileUtils {
     }
 
     // todo: test for nested file reference - contentOrFile is a file whose content contains reference to another file
-    public static String resolveContent(String contentOrFile, ExecutionContext context, boolean compact)
-        throws IOException { return resolveContent(contentOrFile, context, compact, true); }
+    public static String resolveContent(String contentOrFile, ExecutionContext context, boolean compact) {
+        return resolveContent(contentOrFile, context, compact, true);
+    }
 
-    public static String resolveRawContent(String contentOrFile, ExecutionContext context) throws IOException {
+    public static String resolveRawContent(String contentOrFile, ExecutionContext context) {
         return resolveContent(contentOrFile, context, false, false);
     }
 
     public static String resolveContent(String contentOrFile,
                                         ExecutionContext context,
                                         boolean compact,
-                                        boolean replaceTokens) throws IOException {
+                                        boolean replaceTokens) {
+        boolean resolveUrl = context.getBooleanData(OPT_EXPRESSION_RESOLVE_URL,
+                                                    getDefaultBool(OPT_EXPRESSION_RESOLVE_URL));
+        return new OutputResolver(contentOrFile, context, true, resolveUrl, replaceTokens, false, compact).getContent();
 
-        if (context.isNullOrEmptyValue(contentOrFile)) { return ""; }
-
-        if (StringUtils.containsNone(contentOrFile, '\n', '\r', '\t') && ResourceUtils.isWebResource(contentOrFile)) {
-            String content;
-            boolean resolveUrl = context.getBooleanData(OPT_EXPRESSION_RESOLVE_URL,
-                                                        getDefaultBool(OPT_EXPRESSION_RESOLVE_URL));
-            if (resolveUrl) {
-                // must be HTTP-backed file
-                content = WsCommand.resolveWebContent(contentOrFile);
-                content = compact ? StringUtils.trim(content) : content;
-            } else {
-                content = contentOrFile;
-            }
-
-            return replaceTokens ? context.replaceTokens(content) : content;
-        }
-
-        if (!isContentReferencedAsFile(contentOrFile, context)) {
-            // must be just content (not file)
-            String content = compact ? StringUtils.trim(contentOrFile) : contentOrFile;
-            return replaceTokens ? context.replaceTokens(content) : content;
-        }
-
-        File input = new File(contentOrFile);
-        String content;
-        if (compact) {
-            List<String> list = FileUtils.readLines(input, DEF_CHARSET);
-            StringBuilder buffer = new StringBuilder();
-            for (String line : list) { buffer.append(StringUtils.trim(line)); }
-            content = buffer.toString();
-        } else {
-            content = FileUtils.readFileToString(input, DEF_CHARSET);
-        }
-
-        return replaceTokens ? context.replaceTokens(content) : content;
+        // if (context.isNullOrEmptyValue(contentOrFile)) { return ""; }
+        //
+        // if (StringUtils.containsNone(contentOrFile, '\n', '\r', '\t') && ResourceUtils.isWebResource(contentOrFile)) {
+        //     String content;
+        //     if (resolveUrl) {
+        //         // must be HTTP-backed file
+        //         content = WsCommand.resolveWebContent(contentOrFile);
+        //         content = compact ? StringUtils.trim(content) : content;
+        //     } else {
+        //         content = contentOrFile;
+        //     }
+        //
+        //     return replaceTokens ? context.replaceTokens(content) : content;
+        // }
+        //
+        // if (!isContentReferencedAsFile(contentOrFile, context)) {
+        //     // must be just content (not file)
+        //     String content = compact ? StringUtils.trim(contentOrFile) : contentOrFile;
+        //     return replaceTokens ? context.replaceTokens(content) : content;
+        // }
+        //
+        // File input = new File(contentOrFile);
+        // String content;
+        // if (compact) {
+        //     List<String> list = FileUtils.readLines(input, DEF_CHARSET);
+        //     StringBuilder buffer = new StringBuilder();
+        //     for (String line : list) { buffer.append(StringUtils.trim(line)); }
+        //     content = buffer.toString();
+        // } else {
+        //     content = FileUtils.readFileToString(input, DEF_CHARSET);
+        // }
+        //
+        // return replaceTokens ? context.replaceTokens(content) : content;
     }
 
     /**

@@ -237,9 +237,10 @@ public final class NexialConst {
     public static final String WS_USER_AGENT = "User-Agent";
     public static final String WS_CONTENT_TYPE = "Content-Type";
     public static final String WS_CONTENT_LENGTH = "Content-Length";
+    public static final String CONTENT_TYPE_CHARSET = "charset=";
     public static final String WS_JSON_CONTENT_TYPE = "application/json";
-    public static final String WS_JSON_CONTENT_TYPE2 = WS_JSON_CONTENT_TYPE + ";charset=UTF-8";
-    public static final String WS_SOAP_CONTENT_TYPE = "text/xml;charset=UTF-8";
+    public static final String WS_JSON_CONTENT_TYPE2 = WS_JSON_CONTENT_TYPE + ";" + CONTENT_TYPE_CHARSET + "UTF-8";
+    public static final String WS_SOAP_CONTENT_TYPE = "text/xml;" + CONTENT_TYPE_CHARSET + "=UTF-8";
     public static final String WS_FORM_CONTENT_TYPE = "application/x-www-form-urlencoded";
 
     public static final String WS_ASYNC_NAMESPACE = WS_NAMESPACE + "async.";
@@ -856,11 +857,16 @@ public final class NexialConst {
         public static final String OPT_CURRENT_ACTIVITY = registerSystemVariable(NAMESPACE + "currentActivity");
         public static final String OPT_CURRENT_SCENARIO = registerSystemVariable(NAMESPACE + "currentScenario");
 
+        // output
+        // supersede `OPT_EXPRESSION_RESOLVE_URL` for wider coverage
+        public static final String RESOLVE_TEXT_AS_URL = registerSystemVariable(NAMESPACE + "resolveTextAsURL", false);
+
         // data/variable
         public static final String NAMESPACE_VAR = NAMESPACE + "var.";
         public static final String OPT_VAR_EXCLUDE_LIST = registerSystemVariable(NAMESPACE_VAR + "ignored");
         public static final String OPT_VAR_DEFAULT_AS_IS = registerSystemVariable(NAMESPACE_VAR + "defaultAsIs", false);
         public static final String OPT_EXPRESSION_READ_FILE_AS_IS = registerSystemVariable(NAMESPACE + "expression.OpenFileAsIs", false);
+        // outdated - use `TEXT_RESOLVE_AS_URL` instead
         public static final String OPT_EXPRESSION_RESOLVE_URL = registerSystemVariable(NAMESPACE + "expression.resolveURL", false);
 
         // predefined variable for time tracking of execution levels
@@ -1526,6 +1532,16 @@ public final class NexialConst {
     public static String failAfterReached(int failCount, int failAfter) {
         return MSG_ABORT + "execution fail count (" + failCount + ") exceeds fail-after limit (" + failAfter + "); " +
                "setting fail-immediate to true";
+    }
+
+    public static boolean isKnownTextContentType(String contentType) {
+        if (StringUtils.isBlank(contentType) || StringUtils.containsAny(contentType, "stream", "bin", "octet") ||
+            StringUtils.startsWithAny(contentType, "audio","font", "image", "video")) {
+            return false;
+        }
+
+        return StringUtils.startsWithAny(contentType, "text") ||
+               RegexUtils.match(contentType, ".+(xml|XML|json|sgml|html|script|jwt|)$");
     }
 
     static {

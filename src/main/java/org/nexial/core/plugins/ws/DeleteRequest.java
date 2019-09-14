@@ -30,6 +30,11 @@ public class DeleteRequest extends GetRequest {
         method = "DELETE";
     }
 
+    DeleteRequest(ExecutionContext context, String url, String queryString) {
+        super(context, url, queryString);
+        method = "DELETE";
+    }
+
     @Override
     protected HttpUriRequest prepRequest(RequestConfig requestConfig) {
         if (StringUtils.isNotBlank(getQueryString())) { url += "?" + getQueryString(); }

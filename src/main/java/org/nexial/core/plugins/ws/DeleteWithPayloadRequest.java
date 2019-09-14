@@ -29,6 +29,7 @@ import static org.nexial.core.plugins.ws.DeleteWithPayloadRequest.HttpDeleteWith
 
 public class DeleteWithPayloadRequest extends PostRequest {
 
+
     /**
      * Allows for HTTP DELETE requests to contain a body, which the HttpDelete class does not support.
      * Please see: http://stackoverflow.com/a/3820549/581722
@@ -55,6 +56,11 @@ public class DeleteWithPayloadRequest extends PostRequest {
 
     DeleteWithPayloadRequest(ExecutionContext context) {
         super(context);
+        method = METHOD_NAME;
+    }
+
+    DeleteWithPayloadRequest(ExecutionContext context, String url, String payload, byte[] payloadBytes) {
+        super(context, url, payload, payloadBytes);
         method = METHOD_NAME;
     }
 

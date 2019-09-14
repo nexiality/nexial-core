@@ -30,6 +30,11 @@ public class HeadRequest extends GetRequest {
         method = "HEAD";
     }
 
+    HeadRequest(ExecutionContext context, String url, String queryString) {
+        super(context, url, queryString);
+        method = "HEAD";
+    }
+
     @Override
     protected HttpUriRequest prepRequest(RequestConfig requestConfig) {
         if (StringUtils.isNotBlank(getQueryString())) { url += "?" + getQueryString(); }

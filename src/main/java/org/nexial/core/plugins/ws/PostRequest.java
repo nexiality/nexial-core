@@ -26,17 +26,27 @@ import org.apache.http.client.config.RequestConfig;
 import org.apache.http.client.methods.HttpEntityEnclosingRequestBase;
 import org.apache.http.client.methods.HttpPost;
 import org.apache.http.client.methods.HttpUriRequest;
+import org.apache.http.entity.ByteArrayEntity;
+import org.apache.http.entity.ContentType;
 import org.apache.http.entity.StringEntity;
 import org.nexial.core.model.ExecutionContext;
 
-import static org.nexial.core.NexialConst.WS_CONTENT_LENGTH;
-import static org.nexial.core.NexialConst.WS_CONTENT_TYPE;
+import static org.nexial.core.NexialConst.*;
 
 public class PostRequest extends Request implements Serializable {
     protected String payload;
+    protected byte[] payloadBytes;
 
     PostRequest(ExecutionContext context) {
         super(context);
+        method = "POST";
+    }
+
+    PostRequest(ExecutionContext context, String url, String payload, byte[] payloadBytes) {
+        super(context);
+        setUrl(url);
+        setPayload(payload);
+        setPayloadBytes(payloadBytes);
         method = "POST";
     }
 
@@ -44,9 +54,17 @@ public class PostRequest extends Request implements Serializable {
 
     public void setPayload(String payload) { this.payload = payload; }
 
+    public byte[] getPayloadBytes() { return payloadBytes; }
+
+    public void setPayloadBytes(byte[] payloadBytes) { this.payloadBytes = payloadBytes; }
+
     @Override
     public String toString() {
-        return super.toString() + "; " + this.getClass().getSimpleName() + "{payload='" + payload + "'}";
+        return super.toString() + "; " + this.getClass().getSimpleName() + (
+            payload != null ? "{payload='" + payload + "'}" :
+            payloadBytes != null ? "{payload as bytes, length=" + payloadBytes.length + "}" :
+            "no payload"
+        );
     }
 
     @Override
@@ -60,16 +78,24 @@ public class PostRequest extends Request implements Serializable {
         throws UnsupportedEncodingException {
         http.setConfig(requestConfig);
 
-        String charset = (String) getHeaders().get(WS_CONTENT_TYPE);
-        if (StringUtils.contains(charset, "charset=")) {
-            charset = StringUtils.substringAfter(charset, "charset=");
-        } else if (StringUtils.contains(charset, "/")) {
-            charset = null;
+        String charset = null;
+        String contentType = String.valueOf(getHeaders().get(WS_CONTENT_TYPE));
+        if (StringUtils.contains(contentType, CONTENT_TYPE_CHARSET)) {
+            charset = StringUtils.substringAfter(charset, CONTENT_TYPE_CHARSET);
+            if (StringUtils.contains(charset, "/")) { charset = null; }
+
+            contentType = StringUtils.removeEnd(
+                StringUtils.trim(StringUtils.substringBefore(contentType, CONTENT_TYPE_CHARSET)), ";");
         }
 
-        http.setEntity(StringUtils.isNotBlank(charset) ?
-                       new StringEntity(getPayload(), charset) : new StringEntity(getPayload()));
-
+        if (payloadBytes != null) {
+            ContentType ct = contentType == null ? null :
+                             charset == null ? ContentType.create(contentType) :
+                             ContentType.create(contentType, charset);
+            http.setEntity(new ByteArrayEntity(payloadBytes, ct));
+        } else {
+            http.setEntity(charset == null ? new StringEntity(payload, charset) : new StringEntity(payload));
+        }
         setRequestHeaders(http);
     }
 
@@ -77,5 +103,6 @@ public class PostRequest extends Request implements Serializable {
     protected void setRequestHeaders(HttpRequest http) {
         super.setRequestHeaders(http);
         if (StringUtils.isNotBlank(payload)) { addHeaderIfNotSpecified(WS_CONTENT_LENGTH, payload.length() + ""); }
+        if (payloadBytes != null) { addHeaderIfNotSpecified(WS_CONTENT_LENGTH, payloadBytes.length + ""); }
     }
 }

@@ -49,7 +49,8 @@ import org.xml.sax.SAXException;
 import static org.jdom2.input.sax.XMLReaders.XSDVALIDATING;
 import static org.nexial.core.NexialConst.*;
 import static org.nexial.core.NexialConst.Data.toCloudIntegrationNotReadyMessage;
-import static org.nexial.core.utils.CheckUtils.*;
+import static org.nexial.core.utils.CheckUtils.requires;
+import static org.nexial.core.utils.CheckUtils.requiresNotBlank;
 
 public class XmlCommand extends BaseCommand {
     public static final String PROLOG_START = "<?xml version=";
@@ -368,7 +369,7 @@ public class XmlCommand extends BaseCommand {
         try {
             xml = cleanXmlContent(OutputFileUtils.resolveContent(xml, context, false));
             if (StringUtils.isBlank(xml)) { return StepResult.fail("empty XML found"); }
-        } catch (IOException e) {
+        } catch (Throwable e) {
             String message = "Error reading as file '" + xml + "': " + e.getMessage();
             ConsoleUtils.log(message);
             return StepResult.fail(message);

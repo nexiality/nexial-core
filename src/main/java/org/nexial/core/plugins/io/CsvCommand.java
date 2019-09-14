@@ -37,13 +37,15 @@ import org.nexial.core.model.ExecutionContext;
 import org.nexial.core.model.StepResult;
 import org.nexial.core.utils.ConsoleUtils;
 import org.nexial.core.utils.OutputFileUtils;
+import org.nexial.core.utils.OutputResolver;
 
 import com.univocity.parsers.csv.CsvParser;
 import com.univocity.parsers.csv.CsvParserSettings;
 
 import static org.nexial.core.plugins.io.IoCommand.CompareMode.FAIL_FAST;
 import static org.nexial.core.plugins.io.IoCommand.CompareMode.THOROUGH;
-import static org.nexial.core.utils.CheckUtils.*;
+import static org.nexial.core.utils.CheckUtils.requires;
+import static org.nexial.core.utils.CheckUtils.requiresNotBlank;
 
 public class CsvCommand extends IoCommand {
     private ExcelHelper excelHelper;
@@ -73,11 +75,14 @@ public class CsvCommand extends IoCommand {
         requiresValidAndNotReadOnlyVariableName(var);
         requiresNotBlank(profile, "Missing profile for compareExtended");
 
+        boolean textAsURL = context.isResolveTextAsURL();
+
         // expected can either be a file or content
         String expectedContent;
         try {
-            expectedContent = OutputFileUtils.resolveContent(expected, context, false);
-        } catch (IOException e) {
+            // expectedContent = OutputFileUtils.resolveContent(expected, context, false);
+            expectedContent = new OutputResolver(expected, context, true, textAsURL, true, false, false).getContent();
+        } catch (Throwable e) {
             return StepResult.fail("Unable to retrieve content from " + expected + ": " + e.getMessage());
         }
         requiresNotBlank(expectedContent, "No content found for expected", expected);
@@ -85,8 +90,10 @@ public class CsvCommand extends IoCommand {
         // actual can either be a file or content
         String actualContent;
         try {
-            actualContent = OutputFileUtils.resolveContent(actual, context, false);
-        } catch (IOException e) {
+            // actualContent = OutputFileUtils.resolveContent(actual, context, false);
+            actualContent = new OutputResolver(actual, context, true, textAsURL, true, false, false)
+                                .getContent();
+        } catch (Throwable e) {
             return StepResult.fail("Unable to retrieve content from " + actual + ": " + e.getMessage());
         }
         requiresNotBlank(actualContent, "No content found for actual", actual);

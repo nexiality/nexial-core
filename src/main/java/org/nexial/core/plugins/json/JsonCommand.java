@@ -74,15 +74,19 @@ public class JsonCommand extends BaseCommand {
 
         String expectedJson;
         try {
-            expectedJson = OutputFileUtils.resolveContent(expected, context, true, true);
-        } catch (IOException e) {
+            // expectedJson = OutputFileUtils.resolveContent(expected, context, true, true);
+            expectedJson = new OutputResolver(expected, context, true, context.isResolveTextAsURL(), true, false, true)
+                               .getContent();
+        } catch (Throwable e) {
             return StepResult.fail("EXPECTED json is invalid or not readable: " + e.getMessage());
         }
 
         String actualJson;
         try {
-            actualJson = OutputFileUtils.resolveContent(actual, context, true, true);
-        } catch (IOException e) {
+            // actualJson = OutputFileUtils.resolveContent(actual, context, true, true);
+            actualJson = new OutputResolver(actual, context, true, context.isResolveTextAsURL(), true, false, true)
+                             .getContent();
+        } catch (Throwable e) {
             return StepResult.fail("ACTUAL json is invalid or not readable: " + e.getMessage());
         }
 
@@ -171,15 +175,19 @@ public class JsonCommand extends BaseCommand {
         requiresValidAndNotReadOnlyVariableName(var);
 
         try {
-            json = OutputFileUtils.resolveContent(json, context, false, true);
-        } catch (IOException e) {
+            // json = OutputFileUtils.resolveContent(json, context, false, true);
+            json = new OutputResolver(json, context, true, context.isResolveTextAsURL(), true, false, false)
+                       .getContent();
+        } catch (Throwable e) {
             ConsoleUtils.log("Unable to read JSON as a file; considering it as is...");
         }
         requiresNotBlank(json, "invalid/malformed json", json);
 
         try {
-            input = OutputFileUtils.resolveContent(input, context, false, true);
-        } catch (IOException e) {
+            // input = OutputFileUtils.resolveContent(input, context, false, true);
+            input = new OutputResolver(input, context, true, context.isResolveTextAsURL(), true, false, false)
+                        .getContent();
+        } catch (Throwable e) {
             ConsoleUtils.log("Unable to read 'input' as a JSON file; considering it as is...");
         }
         requiresNotBlank(input, "Invalid input", input);
@@ -446,7 +454,7 @@ public class JsonCommand extends BaseCommand {
             handleComparisonResults(results);
             return StepResult.fail("EXPECTED json is NOT equivalent to the ACTUAL json");
         } else {
-            context.removeData(LAST_JSON_COMPARE_RESULT);
+            context.removeDataForcefully(LAST_JSON_COMPARE_RESULT);
             return StepResult.success("EXPECTED json is equivalent to the ACTUAL json");
         }
     }

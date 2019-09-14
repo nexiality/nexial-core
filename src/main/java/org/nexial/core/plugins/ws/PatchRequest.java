@@ -32,6 +32,12 @@ public class PatchRequest extends PostRequest {
         contentType = "application/json-patch";
     }
 
+    PatchRequest(ExecutionContext context, String url, String payload, byte[] payloadBytes) {
+        super(context, url, payload, payloadBytes);
+        method = "PATCH";
+        contentType = "application/json-patch";
+    }
+
     @Override
     protected HttpUriRequest prepRequest(RequestConfig requestConfig) throws UnsupportedEncodingException {
         HttpPatch http = new HttpPatch(url);

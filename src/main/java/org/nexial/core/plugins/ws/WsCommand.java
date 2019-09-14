@@ -28,6 +28,7 @@ import javax.validation.constraints.NotNull;
 import org.apache.commons.codec.binary.Base64;
 import org.apache.commons.collections4.MapUtils;
 import org.apache.commons.io.FileUtils;
+import org.apache.commons.lang3.ArrayUtils;
 import org.apache.commons.lang3.BooleanUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.math.NumberUtils;
@@ -37,7 +38,7 @@ import org.nexial.core.model.ExecutionContext;
 import org.nexial.core.model.StepResult;
 import org.nexial.core.plugins.base.BaseCommand;
 import org.nexial.core.utils.ConsoleUtils;
-import org.nexial.core.utils.OutputFileUtils;
+import org.nexial.core.utils.OutputResolver;
 
 import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
@@ -72,21 +73,17 @@ public class WsCommand extends BaseCommand {
         WebServiceClient client = new WebServiceClient(context);
         client.setVerbose(verbose);
 
-        // is queryString a file?
         try {
-            queryString = OutputFileUtils.resolveContent(queryString, context, compactRequestPayload());
-        } catch (IOException e) {
-            return StepResult.fail("Unable to read input '" + queryString + "' due to " + e.getMessage());
-        }
-
-        logRequest(url, queryString);
-
-        try {
+            if (StringUtils.isNotBlank(queryString)) {
+                @NotNull OutputResolver outputResolver = newOutputResolver(queryString, false);
+                queryString = outputResolver.getContent();
+            }
+            logRequest(url, queryString);
             Response response = client.download(url, queryString, saveTo);
             logResponseForDownload(response, saveTo);
             return StepResult.success("Successfully downloaded '" + hideAuthDetails(url) +
                                       (StringUtils.isBlank(queryString) ? "" : ("?" + queryString)) + "' to " + saveTo);
-        } catch (IOException e) {
+        } catch (Throwable e) {
             return StepResult.fail("FAILED to downloaded from '" + hideAuthDetails(url) +
                                    (StringUtils.isBlank(queryString) ? "" : ("?" + queryString)) +
                                    "': " + e.getMessage());
@@ -139,7 +136,7 @@ public class WsCommand extends BaseCommand {
         requiresNotBlank(name, "Invalid HTTP Header name", name);
 
         String key = WS_REQ_HEADER_PREFIX + name;
-        if (StringUtils.isBlank(value) || StringUtils.equals(value, context.getNullValueToken())) {
+        if (context.isNullOrEmptyOrBlankValue(value)) {
             String previousValue = context.removeData(key);
             ConsoleUtils.log("removed " + name + " as HTTP header; previous value=" + previousValue);
         } else {
@@ -288,7 +285,7 @@ public class WsCommand extends BaseCommand {
         });
         if (errorMessages.length() > 0) { return StepResult.fail(errorMessages.toString()); }
 
-        // establlish headers
+        // establish headers
         String clientId = inputs.get(OAUTH_CLIENT_ID);
         String clientSecret = inputs.get(OAUTH_CLIENT_SECRET);
         String basicHeader = "Basic " + new String(Base64.encodeBase64((clientId + ":" + clientSecret).getBytes()));
@@ -331,7 +328,7 @@ public class WsCommand extends BaseCommand {
         jsonProps.forEach(entry -> {
             String key = entry.getKey();
             JsonElement value = entry.getValue();
-            // accomodate situation where json response contains multi-element array
+            // accommodate situation where json response contains multi-element array
             if (value.isJsonArray()) {
                 JsonArray arrayValue = value.getAsJsonArray();
                 if (arrayValue.size() == 1) {
@@ -368,14 +365,21 @@ public class WsCommand extends BaseCommand {
         return StepResult.fail(failPrefix + "unknown/unsupported " + OAUTH_TOKEN_TYPE + "found: " + tokenType);
     }
 
-    /**
-     * download content of {@url}, assuming the content is of text nature.
-     */
+    /** download content of {@code @url}, assuming the content is of text nature. */
     public static String resolveWebContent(String url) throws IOException {
         WebServiceClient wsClient = new WebServiceClient(null);
         Response response = wsClient.get(url, null);
         int returnCode = response.getReturnCode();
         if (returnCode > 199 && returnCode < 300) { return response.getBody(); }
+        throw new IOException("Unable to retrieve content from '" + url + "': " + response.getStatusText());
+    }
+
+    /** download content of {@code @url}, assuming the content can be text or binary in nature */
+    public static byte[] resolveWebContentBytes(String url) throws IOException {
+        WebServiceClient wsClient = new WebServiceClient(null);
+        Response response = wsClient.get(url, null);
+        int returnCode = response.getReturnCode();
+        if (returnCode > 199 && returnCode < 300) { return response.getRawBody(); }
         throw new IOException("Unable to retrieve content from '" + url + "': " + response.getStatusText());
     }
 
@@ -411,17 +415,13 @@ public class WsCommand extends BaseCommand {
         WebServiceClient client = new WebServiceClient(context);
         client.setVerbose(verbose);
 
-        // is queryString a file?
         try {
-            queryString = OutputFileUtils.resolveContent(queryString, context, compactRequestPayload());
-            queryString = URLEncodingUtils.encodeQueryString(queryString);
-        } catch (IOException e) {
-            return StepResult.fail("Unable to read input '" + queryString + "' due to " + e.getMessage());
-        }
+            if (StringUtils.isNotBlank(queryString)) {
+                @NotNull OutputResolver outputResolver = newOutputResolver(queryString, false);
+                queryString = URLEncodingUtils.encodeQueryString(outputResolver.getContent());
+            }
 
-        logRequest(url, queryString);
-
-        try {
+            logRequest(url, queryString);
             Response response = null;
             if (StringUtils.equals(method, "get")) { response = client.get(url, queryString); }
             if (StringUtils.equals(method, "head")) { response = client.head(url); }
@@ -430,15 +430,9 @@ public class WsCommand extends BaseCommand {
             context.setData(var, response);
             logResponse(response, var);
             return StepResult.success("Successfully invoked web service '" + hideAuthDetails(url) + "'");
-        } catch (IOException e) {
+        } catch (Throwable e) {
             return toFailResult(url, e);
         }
-    }
-
-    @NotNull
-    protected static StepResult toFailResult(String url, IOException e) {
-        String error = e.getCause() != null ? e.getCause().getMessage() : e.getMessage();
-        return StepResult.fail("Unable to invoke '" + hideAuthDetails(url) + "': " + error);
     }
 
     protected StepResult requestWithBody(String url, String body, String var, String method) {
@@ -448,26 +442,29 @@ public class WsCommand extends BaseCommand {
         WebServiceClient client = new WebServiceClient(context);
         client.setVerbose(verbose);
 
-        // is body a file?
         try {
-            body = OutputFileUtils.resolveContent(body, context, compactRequestPayload());
-        } catch (IOException e) {
-            return StepResult.fail("Unable to read input '" + body + "' due to " + e.getMessage());
-        }
-
-        try {
-            logRequestWithBody(url, body);
-
+            OutputResolver outputResolver = newOutputResolver(body);
             Response response = null;
-            if (StringUtils.equals(method, "post")) { response = client.post(url, body); }
-            if (StringUtils.equals(method, "patch")) { response = client.patch(url, body); }
-            if (StringUtils.equals(method, "put")) { response = client.put(url, body); }
-            if (StringUtils.equals(method, "delete")) { response = client.deleteWithPayload(url, body); }
+            if (outputResolver.getAsBinary()) {
+                byte[] payloadBytes = outputResolver.getBytes();
+                logRequestWithBody(url, payloadBytes);
+                if (StringUtils.equals(method, "post")) { response = client.post(url, payloadBytes); }
+                if (StringUtils.equals(method, "patch")) { response = client.patch(url, payloadBytes); }
+                if (StringUtils.equals(method, "put")) { response = client.put(url, payloadBytes); }
+                if (StringUtils.equals(method, "delete")) { response = client.deleteWithPayload(url, payloadBytes); }
+            } else {
+                String payload = outputResolver.getContent();
+                logRequestWithBody(url, payload);
+                if (StringUtils.equals(method, "post")) { response = client.post(url, payload); }
+                if (StringUtils.equals(method, "patch")) { response = client.patch(url, payload); }
+                if (StringUtils.equals(method, "put")) { response = client.put(url, payload); }
+                if (StringUtils.equals(method, "delete")) { response = client.deleteWithPayload(url, payload); }
+            }
 
             context.setData(var, response);
             logResponse(response, var);
             return StepResult.success("Successfully invoked web service '" + hideAuthDetails(url) + "'");
-        } catch (IOException e) {
+        } catch (Throwable e) {
             return toFailResult(url, e);
         }
     }
@@ -479,18 +476,12 @@ public class WsCommand extends BaseCommand {
         WebServiceClient client = new WebServiceClient(context);
         client.setVerbose(verbose);
 
-        // is body a file?
-        try {
-            body = OutputFileUtils.resolveContent(body, context, compactRequestPayload());
-        } catch (IOException e) {
-            return StepResult.fail("Unable to read input '" + body + "' due to " + e.getMessage());
-        }
+        @NotNull OutputResolver outputResolver = newOutputResolver(body, false);
 
         try {
-            logRequestWithBody(url, body);
-
-            Response response = client.postMultipart(url, body, fileParams);
-
+            String content = outputResolver.getContent();
+            logRequestWithBody(url, content);
+            Response response = client.postMultipart(url, content, fileParams);
             context.setData(var, response);
             logResponse(response, var);
             return StepResult.success("Successfully invoked web service '" + hideAuthDetails(url) + "'");
@@ -507,10 +498,24 @@ public class WsCommand extends BaseCommand {
         return (Response) response;
     }
 
-    protected void logRequestWithBody(String url, String body) {
+    @NotNull
+    protected static StepResult toFailResult(String url, Throwable e) {
+        String error = e.getCause() != null ? e.getCause().getMessage() : e.getMessage();
+        return StepResult.fail("Unable to invoke '" + hideAuthDetails(url) + "': " + error);
+    }
+
+    protected void logRequestWithBody(String url, String content) {
         if (context.isVerbose()) {
-            log("REQUEST  --> '" + hideAuthDetails(url) + "', body length=" + StringUtils.length(body));
-            if (StringUtils.isNotBlank(body)) { log("REQUEST BODY -->\n" + body); }
+            log("REQUEST  --> '" + hideAuthDetails(url) + "', body length=" + StringUtils.length(content));
+            if (StringUtils.isNotBlank(content)) {
+                log("REQUEST BODY (1st kilobyte) -->\n" + StringUtils.abbreviate(content, 1024));
+            }
+        }
+    }
+
+    protected void logRequestWithBody(String url, byte[] content) {
+        if (context.isVerbose()) {
+            log("REQUEST  --> '" + hideAuthDetails(url) + "', body length=" + ArrayUtils.getLength(content));
         }
     }
 
@@ -527,5 +532,28 @@ public class WsCommand extends BaseCommand {
 
     protected void logResponseForDownload(Response response, String saveTo) {
         if (context.isVerbose()) {log("RESPONSE payload save to '" + saveTo + "' -->\n" + response.getContentLength());}
+    }
+
+    /**
+     * priority given to `nexial.ws.requestPayloadAsRaw` then predefined HTTP header Content-Type
+     */
+    @NotNull
+    protected OutputResolver newOutputResolver(String body) {
+        return newOutputResolver(body, context.hasData(WS_REQ_FILE_AS_RAW) ?
+                                       context.getBooleanData(WS_REQ_FILE_AS_RAW) :
+                                       BooleanUtils.toBoolean(context.getDataByPrefix(WS_REQ_HEADER_PREFIX)
+                                                                     .get(CONTENT_TYPE)));
+    }
+
+    @NotNull
+    protected OutputResolver newOutputResolver(String body, boolean asBinary) {
+        // is body a file? resolver will figure out
+        return new OutputResolver(body,
+                                  context,
+                                  true,
+                                  context.isResolveTextAsURL(),
+                                  true,
+                                  asBinary,
+                                  compactRequestPayload());
     }
 }

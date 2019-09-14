@@ -57,6 +57,7 @@ import org.nexial.core.plugins.filevalidation.validators.ErrorReport;
 import org.nexial.core.plugins.filevalidation.validators.MasterFileValidator;
 import org.nexial.core.utils.ConsoleUtils;
 import org.nexial.core.utils.OutputFileUtils;
+import org.nexial.core.utils.OutputResolver;
 
 import static java.io.File.separator;
 import static java.io.File.separatorChar;
@@ -795,6 +796,7 @@ public class IoCommand extends BaseCommand {
         FileComparisonReport report = new FileComparisonReport();
 
         boolean failfast = compareMode == FAIL_FAST;
+        boolean textAsURL = context.isResolveTextAsURL();
 
         String expectedContent;
         String actualContent;
@@ -819,12 +821,19 @@ public class IoCommand extends BaseCommand {
                 }
 
                 // not fail fast, so get content and get ready for line-by-line comparison
-                expectedContent = OutputFileUtils.resolveContent(expected, context, false);
-                actualContent = OutputFileUtils.resolveContent(actual, context, false);
+                // expectedContent = OutputFileUtils.resolveContent(expected, context, false);
+                // actualContent = OutputFileUtils.resolveContent(actual, context, false);
+                expectedContent = new OutputResolver(expected, context, true, textAsURL, true, false, false)
+                                      .getContent();
+                actualContent = new OutputResolver(actual, context, true, textAsURL, true, false, false).getContent();
             } else {
                 // 2. compare file size and line counts as string objects
-                expectedContent = OutputFileUtils.resolveContent(expected, context, false);
-                actualContent = OutputFileUtils.resolveContent(actual, context, false);
+                // expectedContent = OutputFileUtils.resolveContent(expected, context, false);
+                // actualContent = OutputFileUtils.resolveContent(actual, context, false);
+                expectedContent = new OutputResolver(expected, context, true, textAsURL, true, false, false)
+                                      .getContent();
+                actualContent = new OutputResolver(actual, context, true, textAsURL, true, false, false)
+                                    .getContent();
 
                 boolean fastCompareSuccess = StringUtils.equals(expectedContent, actualContent);
                 if (fastCompareSuccess) {
@@ -845,7 +854,7 @@ public class IoCommand extends BaseCommand {
 
                 if (failfast && report.hasMismatch()) { return failContentComparison(report); }
             }
-        } catch (IOException e) {
+        } catch (Throwable e) {
             return StepResult.fail("Unable to read content: " + e.getMessage(), e);
         }
 

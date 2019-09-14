@@ -63,7 +63,7 @@ public class WsCommandTest {
 
         Assert.assertTrue(result.isSuccess());
 
-        Response response = subject.resolveResponseObject("response");;
+        Response response = subject.resolveResponseObject("response");
         Assert.assertEquals(200, response.returnCode);
         Assert.assertTrue(response.getContentLength() > 1);
 
@@ -87,7 +87,7 @@ public class WsCommandTest {
 
         Assert.assertTrue(result.isSuccess());
 
-        Response response = subject.resolveResponseObject("response");;
+        Response response = subject.resolveResponseObject("response");
         Assert.assertEquals(200, response.returnCode);
         Assert.assertTrue(response.getContentLength() > 1);
 

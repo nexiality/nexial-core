@@ -17,16 +17,13 @@
 
 package org.nexial.core.plugins.mail;
 
-import java.io.IOException;
-import javax.mail.MessagingException;
-
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.validator.routines.EmailValidator;
 import org.nexial.commons.javamail.MailObjectSupport;
 import org.nexial.commons.javamail.MailSender;
 import org.nexial.core.model.StepResult;
 import org.nexial.core.plugins.base.BaseCommand;
-import org.nexial.core.utils.OutputFileUtils;
+import org.nexial.core.utils.OutputResolver;
 
 import static org.nexial.core.utils.CheckUtils.requiresNotBlank;
 import static org.nexial.core.utils.CheckUtils.requiresNotNull;
@@ -52,10 +49,12 @@ public class MailCommand extends BaseCommand {
         String[] recipients = StringUtils.split(StringUtils.replace(to, ";", ","), ",");
 
         try {
-            body = OutputFileUtils.resolveContent(body, context, false, true);
+            // body = OutputFileUtils.resolveContent(body, context, false, true);
+            body = new OutputResolver(body, context, true, context.isResolveTextAsURL(), true, false, false)
+                       .getContent();
             sender.sendMail(recipients, from, subject, body);
             return StepResult.success("email successfully sent");
-        } catch (MessagingException | IOException e) {
+        } catch (Throwable e) {
             return StepResult.fail("email unsuccessful to be sent: " + e.getMessage());
         }
     }

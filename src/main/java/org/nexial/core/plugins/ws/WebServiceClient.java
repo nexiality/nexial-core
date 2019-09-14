@@ -75,56 +75,69 @@ public class WebServiceClient {
 
     public void setVerbose(boolean verbose) { this.verbose = verbose; }
 
+    @NotNull
     public Response get(String url, String queryString) throws IOException {
-        return invokeRequest(toGetRequest(url, queryString));
+        return invokeRequest(new GetRequest(context, url, queryString));
     }
 
+    @NotNull
     public Response download(String url, String queryString, String saveTo) throws IOException {
-        GetRequest request = toGetRequest(url, queryString);
+        GetRequest request = new GetRequest(context, url, queryString);
         request.setPayloadLocation(saveTo);
         return invokeRequest(request);
     }
 
+    @NotNull
     public Response post(String url, String payload) throws IOException {
-        return invokeRequest(toPostRequest(url, payload));
+        return invokeRequest(new PostRequest(context, url, payload, null));
     }
 
+    @NotNull
+    public Response post(String url, byte[] payload) throws IOException {
+        return invokeRequest(new PostRequest(context, url, null, payload));
+    }
+
+    @NotNull
     public Response postMultipart(String url, String payload, String fileParams) throws IOException {
         return invokeRequest(toPostMultipartRequest(url, payload, fileParams));
     }
 
-    public Response head(String url) throws IOException { return invokeRequest(toHeadRequest(url)); }
+    @NotNull
+    public Response head(String url) throws IOException { return invokeRequest(new HeadRequest(context, url, null)); }
 
+    @NotNull
     public Response delete(String url, String queryString) throws IOException {
-        return invokeRequest(toDeleteRequest(url, queryString));
+        return invokeRequest(new DeleteRequest(context, url, queryString));
     }
 
+    @NotNull
     public Response deleteWithPayload(String url, String payload) throws IOException {
-        return invokeRequest(toDeleteRequestWithPayload(url, payload));
+        return invokeRequest(new DeleteWithPayloadRequest(context, url, payload, null));
     }
 
+    @NotNull
+    public Response deleteWithPayload(String url, byte[] payload) throws IOException {
+        return invokeRequest(new DeleteWithPayloadRequest(context, url, null, payload));
+    }
+
+    @NotNull
     public Response patch(String url, String payload) throws IOException {
-        return invokeRequest(toPatchRequest(url, payload));
+        return invokeRequest(new PatchRequest(context, url, payload, null));
     }
 
+    @NotNull
+    public Response patch(String url, byte[] payload) throws IOException {
+        return invokeRequest(new PatchRequest(context, url, null, payload));
+    }
+
+    @NotNull
     public Response put(String url, String payload) throws IOException {
-        return invokeRequest(toPutRequest(url, payload));
+        return invokeRequest(new PutRequest(context, url, payload, null));
     }
 
     @NotNull
-    public GetRequest toGetRequest(String url, String queryString) {
-        GetRequest request = new GetRequest(context);
-        request.setUrl(url);
-        request.setQueryString(queryString);
-        return request;
-    }
-
-    @NotNull
-    public PostRequest toPostRequest(String url, String payload) {
-        PostRequest request = new PostRequest(context);
-        request.setUrl(url);
-        request.setPayload(payload);
-        return request;
+    public Response put(String url, byte[] payload) throws IOException {
+        return invokeRequest(new PutRequest(context, url, null, payload));
     }
 
     @NotNull
@@ -136,55 +149,18 @@ public class WebServiceClient {
     }
 
     @NotNull
-    public HeadRequest toHeadRequest(String url) {
-        HeadRequest request = new HeadRequest(context);
-        request.setUrl(url);
-        return request;
-    }
-
-    @NotNull
-    public DeleteRequest toDeleteRequest(String url, String queryString) {
-        DeleteRequest request = new DeleteRequest(context);
-        request.setUrl(url);
-        if (StringUtils.isNotEmpty(queryString)) { request.setQueryString(queryString); }
-        return request;
-    }
-
-    @NotNull
-    public DeleteWithPayloadRequest toDeleteRequestWithPayload(String url, String payload) {
-        DeleteWithPayloadRequest request = new DeleteWithPayloadRequest(context);
-        request.setUrl(url);
-        request.setPayload(payload);
-        return request;
-    }
-
-    @NotNull
-    public PatchRequest toPatchRequest(String url, String payload) {
-        PatchRequest request = new PatchRequest(context);
-        request.setUrl(url);
-        request.setPayload(payload);
-        return request;
-    }
-
-    @NotNull
-    public PutRequest toPutRequest(String url, String payload) {
-        PutRequest request = new PutRequest(context);
-        request.setUrl(url);
-        request.setPayload(payload);
-        return request;
-    }
-
     public static String hideAuthDetails(RequestLine requestLine) {
         return requestLine.getMethod() + " " + hideAuthDetails(requestLine.getUri()) + " " +
                requestLine.getProtocolVersion();
     }
 
+    @NotNull
     public static String hideAuthDetails(String url) {
         return RegexUtils.match(url, REGEX_URL_HAS_AUTH) ?
                RegexUtils.replace(url, REGEX_URL_HAS_AUTH, "$1$2://$5") : url;
     }
 
-
+    @NotNull
     protected Response invokeRequest(Request request) throws IOException {
         StopWatch tickTock = new StopWatch();
         tickTock.start();
@@ -212,7 +188,6 @@ public class WebServiceClient {
             } else {
                 httpResponse = client.execute(http);
             }
-
 
             Response response = gatherResponseData(http, request, httpResponse);
 

@@ -64,6 +64,7 @@ import org.nexial.core.service.EventTracker;
 import org.nexial.core.utils.ConsoleUtils;
 import org.nexial.core.utils.NativeInputHelper;
 import org.nexial.core.utils.OutputFileUtils;
+import org.nexial.core.utils.OutputResolver;
 import org.nexial.core.utils.WebDriverUtils;
 import org.openqa.selenium.Dimension;
 import org.openqa.selenium.NoSuchElementException;
@@ -1583,8 +1584,10 @@ public class WebCommand extends BaseCommand implements CanTakeScreenshot, CanLog
 
         String javascript;
         try {
-            javascript = OutputFileUtils.resolveContent(script, context, false, true);
-        } catch (IOException e) {
+            // javascript = OutputFileUtils.resolveContent(script, context, false, true);
+            javascript = new OutputResolver(script, context, true, context.isResolveTextAsURL(), true, false, true)
+                             .getContent();
+        } catch (Throwable e) {
             // can't resolve content.. then we'll leave it be
             ConsoleUtils.log("Unable to resolve JavaScript '" + script + "': " + e.getMessage() + ". Use as is...");
             javascript = script;
@@ -2795,7 +2798,7 @@ public class WebCommand extends BaseCommand implements CanTakeScreenshot, CanLog
                          context.getIntData(HIGHLIGHT_WAIT_MS_OLD, getDefaultInt(HIGHLIGHT_WAIT_MS));
             String highlight = context.getStringData(HIGHLIGHT_STYLE, getDefault(HIGHLIGHT_STYLE));
             jsExecutor.executeScript("var ws = arguments[0];" +
-                                     "var oldStyle = arguments[0].getAttribute('style');" +
+                                     "var oldStyle = arguments[0].getAttribute('style') || '';" +
                                      "ws.setAttribute('style', arguments[1]);" +
                                      "setTimeout(function () { ws.setAttribute('style', oldStyle); }, " + waitMs + ");",
                                      element, highlight);
