@@ -414,7 +414,15 @@ public class ExecutionContext {
     }
 
     public boolean isResolveTextAsURL() {
-        return getBooleanData(RESOLVE_TEXT_AS_URL, getDefaultBool(RESOLVE_TEXT_AS_URL));
+        return hasData(RESOLVE_TEXT_AS_URL) ? getBooleanData(RESOLVE_TEXT_AS_URL) :
+               hasData(OPT_EXPRESSION_RESOLVE_URL) ? getBooleanData(OPT_EXPRESSION_RESOLVE_URL) :
+               getDefaultBool(RESOLVE_TEXT_AS_URL);
+    }
+
+    public boolean isResolveTextAsIs() {
+        return hasData(RESOLVE_TEXT_AS_IS) ? getBooleanData(RESOLVE_TEXT_AS_IS) :
+               hasData(OPT_EXPRESSION_READ_FILE_AS_IS) ? getBooleanData(OPT_EXPRESSION_READ_FILE_AS_IS) :
+               getDefaultBool(RESOLVE_TEXT_AS_IS);
     }
 
     /**

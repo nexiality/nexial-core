@@ -81,7 +81,7 @@ public class CsvCommand extends IoCommand {
         String expectedContent;
         try {
             // expectedContent = OutputFileUtils.resolveContent(expected, context, false);
-            expectedContent = new OutputResolver(expected, context, true, textAsURL, true, false, false).getContent();
+            expectedContent = new OutputResolver(expected, context).getContent();
         } catch (Throwable e) {
             return StepResult.fail("Unable to retrieve content from " + expected + ": " + e.getMessage());
         }
@@ -91,8 +91,7 @@ public class CsvCommand extends IoCommand {
         String actualContent;
         try {
             // actualContent = OutputFileUtils.resolveContent(actual, context, false);
-            actualContent = new OutputResolver(actual, context, true, textAsURL, true, false, false)
-                                .getContent();
+            actualContent = new OutputResolver(actual, context).getContent();
         } catch (Throwable e) {
             return StepResult.fail("Unable to retrieve content from " + actual + ": " + e.getMessage());
         }

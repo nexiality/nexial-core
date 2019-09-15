@@ -548,12 +548,6 @@ public class WsCommand extends BaseCommand {
     @NotNull
     protected OutputResolver newOutputResolver(String body, boolean asBinary) {
         // is body a file? resolver will figure out
-        return new OutputResolver(body,
-                                  context,
-                                  true,
-                                  context.isResolveTextAsURL(),
-                                  true,
-                                  asBinary,
-                                  compactRequestPayload());
+        return new OutputResolver(body, context, asBinary, compactRequestPayload());
     }
 }

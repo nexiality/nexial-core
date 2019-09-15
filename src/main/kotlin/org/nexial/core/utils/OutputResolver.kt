@@ -46,6 +46,19 @@ class OutputResolver(val data: String?,
     val content: String
     val bytes: ByteArray
 
+    /**
+     * convenience with `resolveAsFile` set to true, `replaceTokens` set to true, `asBinary` set to false and
+     * `compact` set to false
+     * @param data String?
+     * @param context ExecutionContext
+     * @constructor
+     */
+    constructor(data: String?, context: ExecutionContext) :
+            this(data, context, true, context.isResolveTextAsURL, !context.isResolveTextAsIs, false, false)
+
+    constructor(data: String?, context: ExecutionContext, asBinary: Boolean = false, compact: Boolean = false) :
+            this(data, context, true, context.isResolveTextAsURL, !context.isResolveTextAsIs, asBinary, compact)
+
     init {
         if (data == null || StringUtils.isBlank(data)) {
             content = StringUtils.defaultString(data, "")

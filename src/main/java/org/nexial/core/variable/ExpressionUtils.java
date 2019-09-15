@@ -30,7 +30,7 @@ import org.nexial.core.utils.CheckUtils;
 import org.nexial.core.utils.ConsoleUtils;
 import org.nexial.core.utils.OutputResolver;
 
-import static org.nexial.core.NexialConst.Data.OPT_EXPRESSION_READ_FILE_AS_IS;
+import static org.nexial.core.NexialConst.Data.RESOLVE_TEXT_AS_IS;
 import static org.nexial.core.SystemVariables.getDefaultBool;
 
 public class ExpressionUtils {
@@ -38,24 +38,23 @@ public class ExpressionUtils {
 
     protected static String handleExternal(String dataType, String value) throws TypeConversionException {
         ExecutionContext context = ExecutionThread.get();
-        boolean defaultAsIs = getDefaultBool(OPT_EXPRESSION_READ_FILE_AS_IS);
-        boolean openFileAsIs = context != null ?
-                               context.getBooleanData(OPT_EXPRESSION_READ_FILE_AS_IS, defaultAsIs) :
-                               defaultAsIs;
+        boolean openFileAsIs = context != null ? context.isResolveTextAsIs() : getDefaultBool(RESOLVE_TEXT_AS_IS);
         return handleExternal(dataType, value, !openFileAsIs);
     }
 
-    protected static String handleExternal(String dataType, String value, boolean replaceTokens) {
+    protected static String handleExternal(String dataType, String value, boolean replaceTokens)
+        throws TypeConversionException {
         ExecutionContext context = ExecutionThread.get();
         if (context == null) { return value; }
-        return new OutputResolver(value, context, true, context.isResolveTextAsURL(), replaceTokens, false, false)
-                   .getContent();
-        // try {
-        //     return OutputFileUtils.resolveContent(value, context, false, replaceTokens);
-        // } catch (Throwable e) {
-        //     throw new TypeConversionException(dataType, value,
-        //                                       "Error reading as file '" + value + "': " + e.getMessage(), e);
-        // }
+
+        try {
+            // return OutputFileUtils.resolveContent(value, context, false, replaceTokens);
+            return new OutputResolver(value, context, true, context.isResolveTextAsURL(), replaceTokens, false, false)
+                       .getContent();
+        } catch (Throwable e) {
+            throw new TypeConversionException(dataType, value,
+                                              "Error reading as file '" + value + "': " + e.getMessage(), e);
+        }
     }
 
     protected static <T> T resumeExpression(String value, Class<T> dataType) {

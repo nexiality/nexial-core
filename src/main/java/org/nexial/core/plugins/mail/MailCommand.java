@@ -50,8 +50,7 @@ public class MailCommand extends BaseCommand {
 
         try {
             // body = OutputFileUtils.resolveContent(body, context, false, true);
-            body = new OutputResolver(body, context, true, context.isResolveTextAsURL(), true, false, false)
-                       .getContent();
+            body = new OutputResolver(body, context).getContent();
             sender.sendMail(recipients, from, subject, body);
             return StepResult.success("email successfully sent");
         } catch (Throwable e) {

@@ -823,17 +823,14 @@ public class IoCommand extends BaseCommand {
                 // not fail fast, so get content and get ready for line-by-line comparison
                 // expectedContent = OutputFileUtils.resolveContent(expected, context, false);
                 // actualContent = OutputFileUtils.resolveContent(actual, context, false);
-                expectedContent = new OutputResolver(expected, context, true, textAsURL, true, false, false)
-                                      .getContent();
-                actualContent = new OutputResolver(actual, context, true, textAsURL, true, false, false).getContent();
+                expectedContent = new OutputResolver(expected, context).getContent();
+                actualContent = new OutputResolver(actual, context).getContent();
             } else {
                 // 2. compare file size and line counts as string objects
                 // expectedContent = OutputFileUtils.resolveContent(expected, context, false);
                 // actualContent = OutputFileUtils.resolveContent(actual, context, false);
-                expectedContent = new OutputResolver(expected, context, true, textAsURL, true, false, false)
-                                      .getContent();
-                actualContent = new OutputResolver(actual, context, true, textAsURL, true, false, false)
-                                    .getContent();
+                expectedContent = new OutputResolver(expected, context).getContent();
+                actualContent = new OutputResolver(actual, context).getContent();
 
                 boolean fastCompareSuccess = StringUtils.equals(expectedContent, actualContent);
                 if (fastCompareSuccess) {

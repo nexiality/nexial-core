@@ -38,8 +38,6 @@ import org.nexial.core.plugins.web.Browser;
 
 import static java.io.File.separator;
 import static org.nexial.core.NexialConst.*;
-import static org.nexial.core.NexialConst.Data.OPT_EXPRESSION_RESOLVE_URL;
-import static org.nexial.core.SystemVariables.getDefaultBool;
 
 /**
  * dedicated as an utility to decorate Nexial excel files with additional runtime information.
@@ -177,9 +175,14 @@ public final class OutputFileUtils {
                                         ExecutionContext context,
                                         boolean compact,
                                         boolean replaceTokens) {
-        boolean resolveUrl = context.getBooleanData(OPT_EXPRESSION_RESOLVE_URL,
-                                                    getDefaultBool(OPT_EXPRESSION_RESOLVE_URL));
-        return new OutputResolver(contentOrFile, context, true, resolveUrl, replaceTokens, false, compact).getContent();
+        return new OutputResolver(contentOrFile,
+                                  context,
+                                  true,
+                                  context.isResolveTextAsURL(),
+                                  replaceTokens,
+                                  false,
+                                  compact)
+                   .getContent();
 
         // if (context.isNullOrEmptyValue(contentOrFile)) { return ""; }
         //

@@ -17,8 +17,15 @@
 
 package org.nexial.core;
 
-import com.google.gson.Gson;
-import com.google.gson.GsonBuilder;
+import java.awt.*;
+import java.io.File;
+import java.io.IOException;
+import java.text.DateFormat;
+import java.text.SimpleDateFormat;
+import java.util.List;
+import java.util.*;
+import javax.validation.constraints.NotNull;
+
 import org.apache.commons.cli.Options;
 import org.apache.commons.collections4.ListUtils;
 import org.apache.commons.collections4.MapUtils;
@@ -40,18 +47,11 @@ import org.nexial.core.model.TestProject;
 import org.nexial.core.utils.ConsoleUtils;
 import org.nexial.core.utils.ExecUtils;
 
-import javax.validation.constraints.NotNull;
-import java.awt.*;
-import java.io.File;
-import java.io.IOException;
-import java.text.DateFormat;
-import java.text.SimpleDateFormat;
-import java.util.List;
-import java.util.*;
+import com.google.gson.Gson;
+import com.google.gson.GsonBuilder;
 
 import static java.awt.Color.*;
-import static java.awt.image.BufferedImage.TYPE_INT_ARGB;
-import static java.awt.image.BufferedImage.TYPE_INT_RGB;
+import static java.awt.image.BufferedImage.*;
 import static java.io.File.separator;
 import static javax.naming.Context.*;
 import static org.apache.commons.lang3.SystemUtils.IS_OS_WINDOWS;
@@ -861,13 +861,16 @@ public final class NexialConst {
         // output
         // supersede `OPT_EXPRESSION_RESOLVE_URL` for wider coverage
         public static final String RESOLVE_TEXT_AS_URL = registerSystemVariable(NAMESPACE + "resolveTextAsURL", false);
+        // supersede `OPT_EXPRESSION_READ_FILE_AS_IS` for wider coverage
+        public static final String RESOLVE_TEXT_AS_IS = registerSystemVariable(NAMESPACE + "resolveTextAsIs", false);
 
         // data/variable
         public static final String NAMESPACE_VAR = NAMESPACE + "var.";
         public static final String OPT_VAR_EXCLUDE_LIST = registerSystemVariable(NAMESPACE_VAR + "ignored");
         public static final String OPT_VAR_DEFAULT_AS_IS = registerSystemVariable(NAMESPACE_VAR + "defaultAsIs", false);
+        // outdated - use `RESOLVE_TEXT_AS_IS` instead
         public static final String OPT_EXPRESSION_READ_FILE_AS_IS = registerSystemVariable(NAMESPACE + "expression.OpenFileAsIs", false);
-        // outdated - use `TEXT_RESOLVE_AS_URL` instead
+        // outdated - use `RESOLVE_TEXT_AS_URL` instead
         public static final String OPT_EXPRESSION_RESOLVE_URL = registerSystemVariable(NAMESPACE + "expression.resolveURL", false);
 
         // predefined variable for time tracking of execution levels

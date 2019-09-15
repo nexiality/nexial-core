@@ -1585,8 +1585,7 @@ public class WebCommand extends BaseCommand implements CanTakeScreenshot, CanLog
         String javascript;
         try {
             // javascript = OutputFileUtils.resolveContent(script, context, false, true);
-            javascript = new OutputResolver(script, context, true, context.isResolveTextAsURL(), true, false, true)
-                             .getContent();
+            javascript = new OutputResolver(script, context, false, true).getContent();
         } catch (Throwable e) {
             // can't resolve content.. then we'll leave it be
             ConsoleUtils.log("Unable to resolve JavaScript '" + script + "': " + e.getMessage() + ". Use as is...");
