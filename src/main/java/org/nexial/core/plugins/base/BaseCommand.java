@@ -240,11 +240,15 @@ public class BaseCommand implements NexialCommand {
     /** clear data variables by name */
     public StepResult clear(String vars) {
         requiresNotBlank(vars, "invalid variable(s)", vars);
+        return clear(TextUtils.toList(vars, context.getTextDelim(), true));
+    }
 
+    @NotNull
+    public StepResult clear(@NotNull List<String> variables) {
         List<String> ignoredVars = new ArrayList<>();
         List<String> removedVars = new ArrayList<>();
 
-        TextUtils.toList(vars, context.getTextDelim(), true).forEach(var -> {
+        variables.forEach(var -> {
             if (context.isReadOnlyData(var)) {
                 ignoredVars.add(var);
             } else if (StringUtils.isNotEmpty(context.removeData(var))) {
@@ -255,11 +259,11 @@ public class BaseCommand implements NexialCommand {
         StringBuilder message = new StringBuilder();
         if (CollectionUtils.isNotEmpty(ignoredVars)) {
             message.append("The following data variable(s) are READ ONLY and ignored: ")
-                   .append(TextUtils.toString(ignoredVars, ",")).append(" ");
+                   .append(TextUtils.toString(ignoredVars, ",")).append("\n");
         }
         if (CollectionUtils.isNotEmpty(removedVars)) {
             message.append("The following data variable(s) are removed from execution: ")
-                   .append(TextUtils.toString(removedVars, ",")).append(" ");
+                   .append(TextUtils.toString(removedVars, ",")).append("\n");
         }
         if (CollectionUtils.isEmpty(ignoredVars) && CollectionUtils.isEmpty(removedVars)) {
             message.append("None of the specified variables are removed since they either are READ-ONLY or not exist");
@@ -584,12 +588,6 @@ public class BaseCommand implements NexialCommand {
         return saveMatchedVariables(var, prefix, context.getDataNames(prefix));
     }
 
-    protected boolean requiresValidAndNotReadOnlyVariableName(String var) {
-        requires(isValidVariable(var), "Invalid variable name", var);
-        requires(!context.isReadOnlyData(var), "Overriding read-only variable is NOT permitted", var);
-        return true;
-    }
-
     public StepResult failImmediate(String text) {
         context.setFailImmediate(true);
         return StepResult.fail(text);
@@ -865,6 +863,12 @@ public class BaseCommand implements NexialCommand {
 
     public void logDeprecated(String deprecated, String replacement) {
         errorToOutput(deprecated + " IS DEPRECATED. PLEASE CONSIDER USING " + replacement + " INSTEAD", null);
+    }
+
+    protected boolean requiresValidAndNotReadOnlyVariableName(String var) {
+        requires(isValidVariable(var), "Invalid variable name", var);
+        requires(!context.isReadOnlyData(var), "Overriding read-only variable is NOT permitted", var);
+        return true;
     }
 
     protected String postScreenshot(TestStep testStep, File file) {

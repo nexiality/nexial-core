@@ -73,6 +73,7 @@ open class InteractiveConsole {
         const val RELOAD_SCRIPT = "7"
         const val RELOAD_DATA = "8"
         const val RELOAD_PROJPROP = "9"
+        const val TOGGLE_RECORDING = "C"
 
         const val RELOAD_MENU = "R"
         const val RUN = "X"
@@ -143,6 +144,7 @@ open class InteractiveConsole {
             printMenu(CMD_START, DIGIT, "$RELOAD_SCRIPT            ${CMD_END}reload assigned test script")
             printMenu(CMD_START, DIGIT, "$RELOAD_DATA            ${CMD_END}reload assigned data file")
             printMenu(CMD_START, DIGIT, "$RELOAD_PROJPROP            ${CMD_END}reload project.properties (if found)")
+            // printMenu(CMD_START, DIGIT, "$TOGGLE_RECORDING            ${CMD_END}start/stop desktop recording")
             printMenu("${CMD_START}action       $CMD_END", UPPERCASE,
                       StringUtils.rightPad("${RELOAD_MENU}eload menu", 15),
                       StringUtils.rightPad("e${RUN}ecute", 18),

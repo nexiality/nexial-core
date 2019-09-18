@@ -55,6 +55,7 @@ import org.nexial.core.model.ExecutionSummary.ExecutionLevel
 import org.nexial.core.model.ExecutionSummary.ExecutionLevel.*
 import org.nexial.core.model.TestCase
 import org.nexial.core.model.TestScenario
+import org.nexial.core.plugins.base.BaseCommand
 import org.nexial.core.utils.ConsoleUtils
 import org.nexial.core.utils.ExecUtils
 import java.io.File
@@ -62,11 +63,15 @@ import java.util.*
 import javax.validation.constraints.NotNull
 
 class NexialInteractive {
-    // todo: disable during jenkins or junit run
     // todo: enable video recording
     // todo: save session
 
     lateinit var executionDefinition: ExecutionDefinition
+    private val tmpComma = "~~!@!~~"
+    private val rangeSeparator = "-"
+    private val listSeparator = ","
+    private val regexSaveVar = "^SAVE\\s*\\(([^\\)]+)\\)\\s*\\=\\s*(.+)$"
+    private val regexClearVar = "^CLEAR\\s*\\(([^\\)]+)\\)\\s*$"
 
     fun startSession() {
         // start of test suite (one per test plan in execution)
@@ -85,8 +90,6 @@ class NexialInteractive {
         InteractiveConsole.showMenu(session)
         processMenu(session)
     }
-
-    private val tmpComma = "~~!@!~~"
 
     private fun processMenu(session: InteractiveSession) {
         var proceed = true
@@ -223,19 +226,21 @@ class NexialInteractive {
             val range = RegexUtils.firstMatches(steps, "(\\d+\\-\\d+)")
             if (StringUtils.isBlank(range)) break
 
-            val startNum = NumberUtils.toInt(StringUtils.substringBefore(range, RANGE_SEP))
-            val endNum = NumberUtils.toInt(StringUtils.substringAfter(range, RANGE_SEP))
+            val startNum = NumberUtils.toInt(StringUtils.substringBefore(range, rangeSeparator))
+            val endNum = NumberUtils.toInt(StringUtils.substringAfter(range, rangeSeparator))
             val numberRange = StringBuilder()
-            for (i in startNum..endNum) numberRange.append(i).append(LIST_SEP)
-            steps = StringUtils.replace(steps, range, StringUtils.removeEnd(numberRange.toString() + "", LIST_SEP))
+            for (i in startNum..endNum) numberRange.append(i).append(listSeparator)
+            steps = StringUtils.replace(steps, range, StringUtils.removeEnd(numberRange.toString() + "", listSeparator))
         }
 
         steps = RegExUtils.removeAll(steps, "\\ \\t\\n\\r")
-        return TextUtils.toList(steps, LIST_SEP, true)
+        return TextUtils.toList(steps, listSeparator, true)
     }
 
     private fun inspect(session: InteractiveSession) {
-        ExecutionThread.set(session.context)
+        val context = session.context
+        ExecutionThread.set(context)
+        val baseCommand = context.findPlugin("base") as BaseCommand
 
         print("> inspect: ")
         val `in` = Scanner(System.`in`)
@@ -243,7 +248,25 @@ class NexialInteractive {
 
         while (StringUtils.isNotBlank(input)) {
             try {
-                println(session.context.replaceTokens(input, true))
+                if (RegexUtils.isExact(input, regexSaveVar)) {
+                    val groups = RegexUtils.collectGroups(input, regexSaveVar)
+                    val dataVariable = groups[0]
+                    val dataValue = context.replaceTokens(groups[1], true)
+                    if (context.hasData(dataVariable)) {
+                        ConsoleUtils.log("updating data variable [$dataVariable] to [$dataValue]")
+                    } else {
+                        ConsoleUtils.log("creating data variable [$dataVariable] to [$dataValue]")
+                    }
+                    baseCommand.save(dataVariable, dataValue)
+                } else if (RegexUtils.isExact(input, regexClearVar)) {
+                    val groups = RegexUtils.collectGroups(input, regexClearVar)
+                    val variables = TextUtils.toList(groups[0], ",", true)
+                    ConsoleUtils.log("removing data variable $variables")
+                    val outcome = baseCommand.clear(variables)
+                    outcome.message.trim().split("\n").forEach { ConsoleUtils.log(it) }
+                } else {
+                    println(context.replaceTokens(input, true))
+                }
             } catch (e: Throwable) {
                 ConsoleUtils.error("ERROR on '" + input + "' - " + e.message)
             }
@@ -292,7 +315,6 @@ class NexialInteractive {
 
         ExecutionThread.set(context)
 
-        var allPass = true
         var targetScenario: TestScenario?
         var scenarioSummary: ExecutionSummary? = null
 
@@ -338,7 +360,7 @@ class NexialInteractive {
             // reset for this run
             scenarioSummary = resetScenarioExecutionSummary(session, targetScenario)
 
-            allPass = if (session.activities.isNotEmpty())
+            if (session.activities.isNotEmpty())
                 executeActivities(session, scenarioSummary)
             else
                 executeSteps(session, scenarioSummary)
@@ -350,11 +372,9 @@ class NexialInteractive {
             context.removeData(BREAK_CURRENT_ITERATION)
 
             context.markExecutionEnd()
-            if (scenarioSummary != null) {
-                scenarioSummary.endTime = context.endTimestamp
-            }
+            if (scenarioSummary != null) scenarioSummary.endTime = context.endTimestamp
 
-            postExecution(allPass, session)
+            postExecution(session)
 
             // context.endIteration();
             ExecutionThread.unset()
@@ -415,11 +435,7 @@ class NexialInteractive {
             if (result.isSkipped) {
                 // parentSummary.adjustTotalSteps(-1);
                 stepSummary.adjustTotalSteps(-1)
-                if (context.isBreakCurrentIteration) {
-                    break
-                } else {
-                    continue
-                }
+                if (context.isBreakCurrentIteration) break else continue
             }
 
             // parentSummary.incrementExecuted();
@@ -488,7 +504,7 @@ class NexialInteractive {
         es.error = null
     }
 
-    private fun postExecution(allPass: Boolean, session: InteractiveSession?) {
+    private fun postExecution(session: InteractiveSession?) {
         if (session == null) return
 
         val context = session.context
@@ -510,10 +526,5 @@ class NexialInteractive {
         val activitySummary = activity.executionSummary
         resetExecutionSummary(session, activitySummary, activity.name, ACTIVITY)
         return activitySummary
-    }
-
-    companion object {
-        private const val RANGE_SEP = "-"
-        private const val LIST_SEP = ","
     }
 }

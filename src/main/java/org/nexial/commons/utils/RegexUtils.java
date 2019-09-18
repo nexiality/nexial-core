@@ -23,6 +23,8 @@ import java.util.regex.MatchResult;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+import javax.validation.constraints.NotNull;
+
 import org.apache.commons.lang3.StringUtils;
 
 import static java.util.regex.Pattern.*;
@@ -121,6 +123,7 @@ public final class RegexUtils {
         return collectGroups(text, regex, acceptBlank, false);
     }
 
+    @NotNull
     public static List<String> collectGroups(String text, String regex, boolean acceptBlank, boolean multiline) {
         List<String> list = new ArrayList<>();
         if (!acceptBlank && StringUtils.isBlank(text)) { return list; }

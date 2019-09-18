@@ -1312,6 +1312,7 @@ public final class NexialConst {
         public static final int RC_FILE_GEN_FAILED = -18;
         public static final int RC_FILE_NOT_FOUND = -19;
         public static final int RC_BAD_BATCH_FILE = -20;
+        public static final int RC_NOT_SUPPORT_ZERO_TOUCH_ENV = -21;
 
         // env. properties (mainly to export to)
         public static final String OUTPUT_LOCATION = NAMESPACE + "output";

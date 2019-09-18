@@ -41,7 +41,6 @@ import org.nexial.core.model.ExecutionContext;
 import org.nexial.core.utils.ConsoleUtils;
 import org.nexial.core.variable.Expression.ExpressionFunction;
 
-import static java.lang.System.lineSeparator;
 import static org.nexial.core.NexialConst.DEF_FILE_ENCODING;
 
 public abstract class Transformer<T extends ExpressionDataType> {
@@ -80,7 +79,7 @@ public abstract class Transformer<T extends ExpressionDataType> {
 
         String typeName = data.getName();
         String functionName = function.getFunctionName();
-        String msgPrefix = StringUtils.rightPad(data.getName() + " => " + functionName + " ", 20);
+        String msgPrefix = StringUtils.rightPad(data.getName(), 7) + " => " + StringUtils.rightPad(functionName, 22);
 
         if (!isValidFunction(function)) {
             throw new ExpressionFunctionException(typeName, functionName, "Not valid function");
@@ -112,7 +111,7 @@ public abstract class Transformer<T extends ExpressionDataType> {
 
             ExecutionContext context = ExecutionThread.get();
             if (context == null || StringUtils.isBlank(context.getRunId()) || context.isVerbose()) {
-                ConsoleUtils.log(msgPrefix + outcome + lineSeparator());
+                ConsoleUtils.log(msgPrefix + outcome);
             }
 
             return (ExpressionDataType) outcome;

@@ -229,6 +229,11 @@ public class Nexial {
 
             // interactive mode, only for stepwise or blockwise execution. to be integrated into studio
             if (main.isInteractiveMode()) {
+                if (ExecUtils.isRunningInZeroTouchEnv()) {
+                    ConsoleUtils.error("\n\nNexial Interactive cannot operate in unit testing or in CI/CD environment");
+                    System.exit(RC_NOT_SUPPORT_ZERO_TOUCH_ENV);
+                    return;
+                }
                 main.interact();
                 return;
             }
