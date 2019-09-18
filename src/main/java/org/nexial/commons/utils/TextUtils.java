@@ -1125,7 +1125,8 @@ public final class TextUtils {
         StringBuilder csvBuffer = new StringBuilder();
         values.forEach(row -> {
             StringBuilder rowBuffer = new StringBuilder();
-            row.forEach(cell -> rowBuffer.append(cell).append(delim));
+            row.forEach(cell -> rowBuffer.append(cell.contains(delim) ? StringUtils.wrapIfMissing(cell, "\"") : cell)
+                                         .append(delim));
             csvBuffer.append(StringUtils.removeEnd(rowBuffer.toString(), delim)).append(recordDelim);
         });
         return csvBuffer.toString();

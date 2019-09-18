@@ -23,6 +23,8 @@ import java.lang.reflect.Method;
 import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+import java.util.stream.Collectors;
+import java.util.stream.IntStream;
 import javax.validation.constraints.NotNull;
 
 import org.apache.commons.collections4.CollectionUtils;
@@ -379,14 +381,14 @@ public class CsvTransformer<T extends CsvDataType> extends Transformer {
         return data;
     }
 
-    public T replaceColumnRegex(T data, String searchFor, String replaceWith, String columnNameOrIndex) {
+    public T replaceColumnRegex(T data, String searchFor, String replaceWith, String columnNameOrIndices) {
         if (data == null || data.getValue() == null ||
             StringUtils.isBlank(searchFor) || StringUtils.isBlank(replaceWith) ||
-            StringUtils.isBlank(columnNameOrIndex)) {
+            StringUtils.isBlank(columnNameOrIndices)) {
             return data;
         }
 
-        Set<Integer> indicesToSearch = toIndices(data, columnNameOrIndex);
+        Set<Integer> indicesToSearch = toIndices(data, columnNameOrIndices);
         if (CollectionUtils.isEmpty(indicesToSearch)) { return data; }
 
         String recordDelim = data.getRecordDelim();
@@ -396,14 +398,14 @@ public class CsvTransformer<T extends CsvDataType> extends Transformer {
         if (data.isHeader()) { csvModified.append(TextUtils.toString(data.getHeaders(), delim)).append(recordDelim); }
 
         List<Record> csvRecords = data.getValue();
-        csvRecords.forEach(one -> {
+        csvRecords.forEach(row -> {
             StringBuilder rowModified = new StringBuilder();
-            String[] values = one.getValues();
-            for (int i = 0; i < values.length; i++) {
-                String value = values[i];
-                rowModified.append(indicesToSearch.contains(i) ?
-                                   RegexUtils.replaceMultiLines(value, searchFor, replaceWith) : value)
-                           .append(delim);
+            String[] cells = row.getValues();
+            for (int i = 0; i < cells.length; i++) {
+                String cell = cells[i];
+                cell = indicesToSearch.contains(i) ? RegexUtils.replace(cell, searchFor, replaceWith) : cell;
+                cell = cell.contains(delim) ? StringUtils.wrapIfMissing(cell, "\"") : cell;
+                rowModified.append(cell).append(delim);
             }
 
             csvModified.append(StringUtils.removeEnd(rowModified.toString(), delim)).append(recordDelim);
@@ -827,6 +829,40 @@ public class CsvTransformer<T extends CsvDataType> extends Transformer {
         return (T) new CsvDataType(StringUtils.removeEnd(groupCsv.toString(), CSV_ROW_SEP));
     }
 
+    public T saveRowData(T data, String rowIndex) throws TypeConversionException {
+        if (data == null || data.getValue() == null) { return data; }
+        if (!data.isHeader()) {
+            ConsoleUtils.error("Unable to perform this operation since the target CSV data does not have header");
+            return data;
+        }
+
+        ExecutionContext context = ExecutionThread.get();
+        if (context == null) {
+            ConsoleUtils.error("Unable to retrieve context");
+            return null;
+        }
+
+        if (!NumberUtils.isDigits(rowIndex)) {
+            ConsoleUtils.error("Unable to perform this operation since 'rowIndex' is not a valid number");
+            return data;
+        }
+
+        int index = NumberUtils.toInt(rowIndex);
+        if (index < 0) {
+            ConsoleUtils.error("Unable to perform this operation since 'rowIndex' is less than zero");
+            return data;
+        }
+        if (index >= data.getRowCount()) {
+            ConsoleUtils.error("Unable to perform this operation since 'rowIndex' is greater than available rows: " +
+                               data.getRowCount());
+            return data;
+        }
+
+        Record row = data.getValue().get(index);
+        data.getHeaders().forEach(header -> context.setData(header, row.getString(header)));
+        return data;
+    }
+
     /**
      * turn a data variable into an instance of CsvDataType, if possible
      */
@@ -910,12 +946,17 @@ public class CsvTransformer<T extends CsvDataType> extends Transformer {
         Set<Integer> indices = new TreeSet<>();
 
         // treat varargs and pipe-delimited list evenly.
-        String[] toRemove = StringUtils.split(TextUtils.toString(columnNamesOrIndices, PAIR_DELIM, "", ""), PAIR_DELIM);
-        if (ArrayUtils.isEmpty(toRemove)) { return indices; }
+        String[] selected = StringUtils.split(TextUtils.toString(columnNamesOrIndices, PAIR_DELIM, "", ""), PAIR_DELIM);
+        if (ArrayUtils.isEmpty(selected)) { return indices; }
 
         int maxColumnIndex = data.getColumnCount() - 1;
 
-        Arrays.stream(toRemove).forEach(column -> {
+        // special case: * means _ALL_ columns
+        if (selected.length == 1 && StringUtils.equals(selected[0], "*")) {
+            return IntStream.range(0, maxColumnIndex).boxed().collect(Collectors.toCollection(TreeSet::new));
+        }
+
+        Arrays.stream(selected).forEach(column -> {
             if (NumberUtils.isDigits(column)) {
                 // expects numeric indices (zero-based)
                 if (!NumberUtils.isDigits(column)) {

@@ -24,8 +24,9 @@ import org.nexial.core.model.ExecutionSummary;
 public class HeadlessExpressionTests extends ExcelBasedTests {
     @Test
     public void testViaExcel() throws Exception {
-        ExecutionSummary executionSummary = testViaExcel("unitTest_expressions.xlsx", "NUMBER", "EXCEL", "XML");
+        ExecutionSummary executionSummary = testViaExcel("unitTest_expressions.xlsx");
         assertPassFail(executionSummary, "NUMBER", TestOutcomeStats.allPassed());
+        assertPassFail(executionSummary, "CSV", TestOutcomeStats.allPassed());
         assertPassFail(executionSummary, "EXCEL", TestOutcomeStats.allPassed());
         assertPassFail(executionSummary, "XML", TestOutcomeStats.allPassed());
     }
