@@ -145,6 +145,13 @@ object ExecUtils {
         return javaOpts
     }
 
+    @JvmStatic
+    fun isSystemVariable(varName: String): Boolean {
+        for (ignored in IGNORED_CLI_OPT)
+            if (StringUtils.startsWith(varName, ignored)) return true
+        return false
+    }
+
     /** determine if we are running under JUnit framework  */
     // am i running via junit?
     // probably not loaded... ignore error; it's probably not critical...

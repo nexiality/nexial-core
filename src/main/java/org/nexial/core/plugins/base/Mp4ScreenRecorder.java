@@ -19,6 +19,7 @@ package org.nexial.core.plugins.base;
 
 import java.awt.*;
 import java.awt.image.*;
+import java.io.File;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 
@@ -76,6 +77,9 @@ public class Mp4ScreenRecorder extends MediaToolAdapter implements Runnable, Scr
     }
 
     @Override
+    public String getVideoFile() { return targetVideoFile; }
+
+    @Override
     public void start() {
         targetVideoFile =
             Project.appendCapture(
@@ -85,6 +89,7 @@ public class Mp4ScreenRecorder extends MediaToolAdapter implements Runnable, Scr
             separator +
             RandomStringUtils.randomAlphabetic(10) +
             "." + RECORDER_TYPE_MP4;
+        new File(targetVideoFile).getParentFile().mkdirs();
         startCapture();
     }
 

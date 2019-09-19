@@ -62,10 +62,10 @@ public class NexialS3Helper extends S3Support {
     @Override
     public boolean isReadyForUse() { return super.isReadyForUse() && StringUtils.isNotBlank(outputBase); }
 
-    public String importMedia(File media) throws IOException {
+    public String importMedia(File media, boolean removeLocal) throws IOException {
         checkContext();
         if (media == null || !context.isOutputToCloud()) { return null; }
-        return importToS3(media, resolveCaptureDir());
+        return importToS3(media, resolveCaptureDir(), removeLocal);
     }
 
     public String importLog(File logFile, boolean removeLocal) throws IOException {

@@ -19,16 +19,19 @@ package org.nexial.core.interactive
 import org.apache.commons.collections4.CollectionUtils
 import org.apache.commons.lang3.RegExUtils
 import org.apache.commons.lang3.StringUtils
+import org.apache.commons.lang3.SystemUtils.*
 import org.apache.commons.lang3.math.NumberUtils
+import org.apache.cxf.helpers.FileUtils
 import org.nexial.commons.logging.LogbackUtils
+import org.nexial.commons.proc.ProcessInvoker
 import org.nexial.commons.proc.RuntimeUtils
 import org.nexial.commons.utils.RegexUtils
+import org.nexial.commons.utils.ResourceUtils
 import org.nexial.commons.utils.TextUtils
 import org.nexial.core.ExecutionInputPrep
 import org.nexial.core.ExecutionThread
+import org.nexial.core.NexialConst.*
 import org.nexial.core.NexialConst.Data.*
-import org.nexial.core.NexialConst.MSG_ABORT
-import org.nexial.core.NexialConst.OPT_LAST_OUTCOME
 import org.nexial.core.NexialConst.Project.appendLog
 import org.nexial.core.excel.Excel
 import org.nexial.core.interactive.InteractiveConsole.Commands.ALL_STEP
@@ -37,6 +40,7 @@ import org.nexial.core.interactive.InteractiveConsole.Commands.HELP
 import org.nexial.core.interactive.InteractiveConsole.Commands.INSPECT
 import org.nexial.core.interactive.InteractiveConsole.Commands.OPEN_DATA
 import org.nexial.core.interactive.InteractiveConsole.Commands.OPEN_SCRIPT
+import org.nexial.core.interactive.InteractiveConsole.Commands.RELOAD_ALL_DATA
 import org.nexial.core.interactive.InteractiveConsole.Commands.RELOAD_DATA
 import org.nexial.core.interactive.InteractiveConsole.Commands.RELOAD_MENU
 import org.nexial.core.interactive.InteractiveConsole.Commands.RELOAD_PROJPROP
@@ -48,6 +52,7 @@ import org.nexial.core.interactive.InteractiveConsole.Commands.SET_ITER
 import org.nexial.core.interactive.InteractiveConsole.Commands.SET_SCENARIO
 import org.nexial.core.interactive.InteractiveConsole.Commands.SET_SCRIPT
 import org.nexial.core.interactive.InteractiveConsole.Commands.SET_STEPS
+import org.nexial.core.interactive.InteractiveConsole.Commands.TOGGLE_RECORDING
 import org.nexial.core.model.ExecutionContext
 import org.nexial.core.model.ExecutionDefinition
 import org.nexial.core.model.ExecutionSummary
@@ -72,6 +77,7 @@ class NexialInteractive {
     private val listSeparator = ","
     private val regexSaveVar = "^SAVE\\s*\\(([^\\)]+)\\)\\s*\\=\\s*(.+)$"
     private val regexClearVar = "^CLEAR\\s*\\(([^\\)]+)\\)\\s*$"
+    private var recordingInSession = false
 
     fun startSession() {
         // start of test suite (one per test plan in execution)
@@ -100,7 +106,7 @@ class NexialInteractive {
             val argument = StringUtils.trim(StringUtils.substringAfter(input, " "))
 
             when (command) {
-                SET_SCRIPT      -> {
+                SET_SCRIPT       -> {
                     if (StringUtils.isBlank(argument)) {
                         ConsoleUtils.error("No test script assigned")
                     } else {
@@ -108,7 +114,7 @@ class NexialInteractive {
                     }
                 }
 
-                SET_DATA        -> {
+                SET_DATA         -> {
                     if (StringUtils.isBlank(argument)) {
                         ConsoleUtils.error("No data file assigned")
                     } else {
@@ -116,7 +122,7 @@ class NexialInteractive {
                     }
                 }
 
-                SET_SCENARIO    -> {
+                SET_SCENARIO     -> {
                     if (StringUtils.isBlank(argument)) {
                         ConsoleUtils.error("No scenario assigned")
                     } else {
@@ -124,7 +130,7 @@ class NexialInteractive {
                     }
                 }
 
-                SET_ITER        -> {
+                SET_ITER         -> {
                     if (StringUtils.isBlank(argument)) {
                         ConsoleUtils.error("No iteration assigned")
                     } else {
@@ -132,7 +138,7 @@ class NexialInteractive {
                     }
                 }
 
-                SET_ACTIVITY    -> {
+                SET_ACTIVITY     -> {
                     if (StringUtils.isBlank(argument)) {
                         ConsoleUtils.error("No activity assigned")
                     } else {
@@ -140,7 +146,7 @@ class NexialInteractive {
                     }
                 }
 
-                SET_STEPS       -> {
+                SET_STEPS        -> {
                     // steps can be range (dash) or comma-separated
                     if (StringUtils.isBlank(argument)) {
                         ConsoleUtils.error("No test step assigned")
@@ -150,41 +156,47 @@ class NexialInteractive {
                     }
                 }
 
-                RELOAD_SCRIPT   -> {
+                RELOAD_SCRIPT    -> {
                     session.reloadTestScript()
                     InteractiveConsole.showMenu(session)
                 }
 
-                RELOAD_DATA     -> {
+                RELOAD_DATA      -> {
                     session.reloadDataFile()
                     InteractiveConsole.showMenu(session)
                 }
 
-                RELOAD_PROJPROP -> {
+                RELOAD_PROJPROP  -> {
                     session.reloadProjectProperties()
                     InteractiveConsole.showMenu(session)
                 }
 
-                RELOAD_MENU     -> {
+                RELOAD_ALL_DATA  -> {
+                    session.reloadDataFile()
+                    session.reloadProjectProperties()
                     InteractiveConsole.showMenu(session)
                 }
 
-                RUN             -> {
+                RELOAD_MENU      -> {
+                    InteractiveConsole.showMenu(session)
+                }
+
+                RUN              -> {
                     execute(session)
                     InteractiveConsole.showMenu(session)
                 }
 
-                INSPECT         -> {
+                INSPECT          -> {
                     inspect(session)
                     InteractiveConsole.showMenu(session)
                 }
 
-                ALL_STEP        -> {
+                ALL_STEP         -> {
                     session.useAllActivities()
                     InteractiveConsole.showMenu(session)
                 }
 
-                OPEN_SCRIPT     -> {
+                OPEN_SCRIPT      -> {
                     if (StringUtils.isBlank(session.script)) {
                         ConsoleUtils.error("No valid test script assigned")
                     } else {
@@ -192,7 +204,7 @@ class NexialInteractive {
                     }
                 }
 
-                OPEN_DATA       -> {
+                OPEN_DATA        -> {
                     if (StringUtils.isBlank(session.dataFile)) {
                         ConsoleUtils.error("No valid data file assigned")
                     } else {
@@ -200,17 +212,22 @@ class NexialInteractive {
                     }
                 }
 
-                HELP            -> {
+                TOGGLE_RECORDING -> {
+                    toggleRecording(session)
+                    InteractiveConsole.showMenu(session)
+                }
+
+                HELP             -> {
                     InteractiveConsole.showHelp(session)
                     InteractiveConsole.showMenu(session)
                 }
 
-                EXIT            -> {
+                EXIT             -> {
                     proceed = false
                     ConsoleUtils.log("Ending Nexial Interactive session...")
                 }
 
-                else            -> {
+                else             -> {
                     ConsoleUtils.error("Unknown command $input. Try again...")
                 }
             }
@@ -263,7 +280,19 @@ class NexialInteractive {
                     val variables = TextUtils.toList(groups[0], ",", true)
                     ConsoleUtils.log("removing data variable $variables")
                     val outcome = baseCommand.clear(variables)
-                    outcome.message.trim().split("\n").forEach { ConsoleUtils.log(it) }
+
+                    // outcome.message.trim().split("\n").forEach { ConsoleUtils.log(it) }
+                    // forgo above simple print out for something more elaborate
+                    // not sure if this is a good idea.. the message itself doesn't have well-defined demarcation of
+                    // data variable list
+                    outcome.message.trim().split("\n").forEach {
+                        if (it.contains(": ")) {
+                            ConsoleUtils.log(it.substringBefore(": ") + ": ")
+                            it.substringAfter(": ").split(",").forEach { item -> ConsoleUtils.log("\t$item") }
+                        } else {
+                            ConsoleUtils.log(it)
+                        }
+                    }
                 } else {
                     println(context.replaceTokens(input, true))
                 }
@@ -274,6 +303,69 @@ class NexialInteractive {
             println()
             print("> inspect: ")
             input = `in`.nextLine()
+        }
+    }
+
+    private fun toggleRecording(session: InteractiveSession) {
+        val context = session.context
+        ExecutionThread.set(context)
+        val baseCommand = context.findPlugin("base") as BaseCommand
+
+        if (recordingInSession) {
+            val outcome = baseCommand.stopRecording()
+            recordingInSession = false
+
+            if (outcome.isSuccess) {
+                val videoLink = context.getStringData(OPT_LAST_OUTPUT_LINK)
+                if (videoLink != null) {
+                    val selection = ConsoleUtils.pauseForInput(null,
+                                                               "Previous desktop recording available at $videoLink\n" +
+                                                               "Would you like to (P)lay it, (S)how it, (D)elete it? ")
+                    if (StringUtils.isBlank(selection)) return
+
+                    when (selection.toUpperCase()) {
+                        "P" -> {    // play it
+                            if (IS_OS_MAC_OSX) {
+                                ProcessInvoker.invokeNoWait("open", Collections.singletonList(videoLink), null)
+                            } else if (IS_OS_WINDOWS) {
+                                ProcessInvoker.invokeNoWait(WIN32_CMD, listOf("/C", "start", "\"\"", videoLink), null)
+                            } else if (IS_OS_LINUX) {
+                                ProcessInvoker.invokeNoWait("/bin/sh -c", Collections.singletonList(videoLink), null)
+                            } else {
+                                ConsoleUtils.error("Unknown O/S; Nexial doesn't know how to open file $videoLink")
+                            }
+                        }
+
+                        "S" -> {    // show it
+                            val path = if (videoLink.contains("\\"))
+                                videoLink.substringBeforeLast("\\")
+                            else
+                                videoLink.substringBeforeLast("/")
+                            if (IS_OS_MAC_OSX) {
+                                ProcessInvoker.invokeNoWait("open", Collections.singletonList(path), null)
+                            } else if (IS_OS_WINDOWS) {
+                                ProcessInvoker.invokeNoWait(WIN32_CMD, listOf("/C", "start", "\"\"", path), null)
+                            } else if (IS_OS_LINUX) {
+                                ProcessInvoker.invokeNoWait("/bin/sh -c", Collections.singletonList(path), null)
+                            } else {
+                                ConsoleUtils.error("Unknown O/S; Nexial doesn't know how to open path $path")
+                            }
+                        }
+
+                        "D" -> {    // delete it (local only)
+                            if (ResourceUtils.isWebResource(videoLink)) {
+                                ConsoleUtils.error("The video file is not currently located in local drive; cancel delete")
+                            } else {
+                                FileUtils.delete(File(videoLink))
+                            }
+                        }
+                    }
+                }
+            }
+        } else {
+            val outcome = baseCommand.startRecording()
+            println(outcome)
+            recordingInSession = true
         }
     }
 

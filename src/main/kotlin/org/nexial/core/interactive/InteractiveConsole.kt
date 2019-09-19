@@ -38,6 +38,7 @@ import org.nexial.core.interactive.InteractiveConsole.Commands.HELP
 import org.nexial.core.interactive.InteractiveConsole.Commands.INSPECT
 import org.nexial.core.interactive.InteractiveConsole.Commands.OPEN_DATA
 import org.nexial.core.interactive.InteractiveConsole.Commands.OPEN_SCRIPT
+import org.nexial.core.interactive.InteractiveConsole.Commands.RELOAD_ALL_DATA
 import org.nexial.core.interactive.InteractiveConsole.Commands.RELOAD_DATA
 import org.nexial.core.interactive.InteractiveConsole.Commands.RELOAD_MENU
 import org.nexial.core.interactive.InteractiveConsole.Commands.RELOAD_PROJPROP
@@ -49,6 +50,7 @@ import org.nexial.core.interactive.InteractiveConsole.Commands.SET_ITER
 import org.nexial.core.interactive.InteractiveConsole.Commands.SET_SCENARIO
 import org.nexial.core.interactive.InteractiveConsole.Commands.SET_SCRIPT
 import org.nexial.core.interactive.InteractiveConsole.Commands.SET_STEPS
+import org.nexial.core.interactive.InteractiveConsole.Commands.TOGGLE_RECORDING
 import org.nexial.core.interactive.InteractiveConsole.MenuIdentifier.DIGIT
 import org.nexial.core.interactive.InteractiveConsole.MenuIdentifier.UPPERCASE
 import org.nexial.core.model.ExecutionSummary
@@ -73,6 +75,7 @@ open class InteractiveConsole {
         const val RELOAD_SCRIPT = "7"
         const val RELOAD_DATA = "8"
         const val RELOAD_PROJPROP = "9"
+        const val RELOAD_ALL_DATA = "L"
         const val TOGGLE_RECORDING = "C"
 
         const val RELOAD_MENU = "R"
@@ -144,7 +147,8 @@ open class InteractiveConsole {
             printMenu(CMD_START, DIGIT, "$RELOAD_SCRIPT            ${CMD_END}reload assigned test script")
             printMenu(CMD_START, DIGIT, "$RELOAD_DATA            ${CMD_END}reload assigned data file")
             printMenu(CMD_START, DIGIT, "$RELOAD_PROJPROP            ${CMD_END}reload project.properties (if found)")
-            // printMenu(CMD_START, DIGIT, "$TOGGLE_RECORDING            ${CMD_END}start/stop desktop recording")
+            printMenu(CMD_START, UPPERCASE, "$RELOAD_ALL_DATA            ${CMD_END}reload data file and project.properties (if found)")
+            printMenu(CMD_START, UPPERCASE, "$TOGGLE_RECORDING            ${CMD_END}start/stop desktop recording")
             printMenu("${CMD_START}action       $CMD_END", UPPERCASE,
                       StringUtils.rightPad("${RELOAD_MENU}eload menu", 15),
                       StringUtils.rightPad("e${RUN}ecute", 18),
@@ -261,18 +265,15 @@ open class InteractiveConsole {
             printConsoleSectionSeparator(out, "~~options", FILLER)
             printHeaderLine(out, "$CMD_START$SET_SCRIPT <script>   $CMD_END", resolveContent("command.script", tokens))
             printHeaderLine(out, "$CMD_START$SET_DATA <data file>$CMD_END", resolveContent("command.data", tokens))
-            printHeaderLine(out, "$CMD_START$SET_SCENARIO <scenario> $CMD_END",
-                            resolveContent("command.scenario", tokens))
+            printHeaderLine(out, "$CMD_START$SET_SCENARIO <scenario> $CMD_END", resolveContent("command.scenario", tokens))
             printHeaderLine(out, "$CMD_START$SET_ITER <iteration>$CMD_END", resolveContent("command.iteration", tokens))
-            printHeaderLine(out, "$CMD_START$SET_ACTIVITY <activity> $CMD_END",
-                            resolveContent("command.activity", tokens))
+            printHeaderLine(out, "$CMD_START$SET_ACTIVITY <activity> $CMD_END", resolveContent("command.activity", tokens))
             printHeaderLine(out, "$CMD_START$SET_STEPS <step>     $CMD_END", resolveContent("command.steps", tokens))
-            printHeaderLine(out, "$CMD_START$RELOAD_SCRIPT            $CMD_END",
-                            resolveContent("command.reloadscript", tokens))
-            printHeaderLine(out, "$CMD_START$RELOAD_DATA            $CMD_END",
-                            resolveContent("command.reloaddata", tokens))
-            printHeaderLine(out, "$CMD_START$RELOAD_PROJPROP            $CMD_END",
-                            resolveContent("command.reloadprojprop", tokens))
+            printHeaderLine(out, "$CMD_START$RELOAD_SCRIPT            $CMD_END", resolveContent("command.reloadscript", tokens))
+            printHeaderLine(out, "$CMD_START$RELOAD_DATA            $CMD_END", resolveContent("command.reloaddata", tokens))
+            printHeaderLine(out, "$CMD_START$RELOAD_PROJPROP            $CMD_END", resolveContent("command.reloadprojprop", tokens))
+            printHeaderLine(out, "$CMD_START$RELOAD_ALL_DATA            $CMD_END", resolveContent("command.reloadalldata", tokens))
+            printHeaderLine(out, "$CMD_START$TOGGLE_RECORDING            $CMD_END", resolveContent("command.togglerecording", tokens))
             printHeaderLine(out, " ($RELOAD_MENU)eload      $CMD_END", resolveContent("command.reloadmenu", tokens))
             printHeaderLine(out, "e($RUN)ecute      $CMD_END", resolveContent("command.run", tokens))
             printHeaderLine(out, " ($INSPECT)nspect     $CMD_END", resolveContent("command.inspect", tokens))

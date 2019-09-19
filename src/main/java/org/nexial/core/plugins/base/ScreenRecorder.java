@@ -30,4 +30,6 @@ public interface ScreenRecorder extends ForcefulTerminate {
     void stop() throws IOException;
 
     void setTitle(String title);
+
+    String getVideoFile();
 }

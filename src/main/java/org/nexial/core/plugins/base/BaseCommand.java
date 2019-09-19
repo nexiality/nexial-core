@@ -60,6 +60,7 @@ import org.nexial.core.plugins.ws.WsCommand;
 import org.nexial.core.tools.CommandDiscovery;
 import org.nexial.core.utils.CheckUtils;
 import org.nexial.core.utils.ConsoleUtils;
+import org.nexial.core.utils.ExecUtils;
 import org.nexial.core.variable.Syspath;
 
 import static java.io.File.separator;
@@ -164,14 +165,14 @@ public class BaseCommand implements NexialCommand {
 
     public StepResult startRecording() {
         if (!ContextScreenRecorder.isRecordingEnabled(context)) {
-            return StepResult.success("Screen recording is currently disabled.");
+            return StepResult.success("desktop recording is currently disabled.");
         }
 
         if (screenRecorder != null && screenRecorder.isVideoRunning()) {
             // can't support multiple simultaneous video recording
             StepResult result = stopRecording();
             if (result.failed()) {
-                return StepResult.fail("Unable to stop previous recording in progress: " + result.getMessage());
+                return StepResult.fail("Unable to stop previous desktop recording in progress: " + result.getMessage());
             }
         }
 
@@ -179,32 +180,51 @@ public class BaseCommand implements NexialCommand {
             // Create a instance of ScreenRecorder with the required configurations
             if (screenRecorder == null) { screenRecorder = ContextScreenRecorder.newInstance(context); }
             screenRecorder.start(context.getCurrentTestStep());
-            return StepResult.success("video recording started");
+            return StepResult.success("desktop recording started; saved " + screenRecorder.getVideoFile());
         } catch (Exception e) {
             e.printStackTrace();
-            return StepResult.fail("Unable to start recording: " + e.getMessage());
+            return StepResult.fail("Unable to start desktop recording: " + e.getMessage());
         }
     }
 
     public StepResult stopRecording() {
         if (screenRecorder == null || !screenRecorder.isVideoRunning()) {
-            return StepResult.success("video recording already stopped (or never ran)");
+            return StepResult.success("desktop recording already stopped (or never ran)");
         }
 
-        ConsoleUtils.log("stopping currently in-progress video recording...");
+        ConsoleUtils.log("stopping currently in-progress desktop recording...");
+
         try {
             screenRecorder.setContext(context);
             screenRecorder.stop();
-            screenRecorder = null;
-            return StepResult.success("previous recording stopped");
-        } catch (IOException e) {
-            String error = "Unable to stop and/or save screen recording" +
-                           (context.isOutputToCloud() ? ", possible due to cloud integration" : "") +
-                           ": " + e.getMessage();
-            log(error);
-            return StepResult.fail(error);
+
+            if (screenRecorder.videoFile != null) {
+                String link = screenRecorder.videoFile;
+                if (context.isOutputToCloud() && context.getOtc() != null) {
+                    try {
+                        link = context.getOtc().importMedia(new File(link), true);
+                    } catch (IOException e) {
+                        log(toCloudIntegrationNotReadyMessage(link) + ": " + e.getMessage());
+                    }
+                }
+
+                context.setData(OPT_LAST_OUTPUT_LINK, link);
+
+                TestStep testStep = context.getCurrentTestStep();
+                if (testStep != null && testStep.getWorksheet() != null) {
+                    // test step undefined could mean that we are in interactive mode, or we are running unit testing
+                    testStep.addNestedScreenCapture(link, "recording from " + screenRecorder.startingLocation);
+                }
+
+                return StepResult.success("previous desktop recording saved and is accessible via " + link);
+            } else {
+                return StepResult.fail("Unable to determine video file used for current desktop recording!");
+            }
+
         } catch (Throwable e) {
-            return StepResult.fail("Unable to stop previous recording: " + e.getMessage());
+            return StepResult.fail("Unable to stop previous desktop recording: " + e.getMessage());
+        } finally {
+            screenRecorder = null;
         }
     }
 
@@ -247,6 +267,21 @@ public class BaseCommand implements NexialCommand {
     public StepResult clear(@NotNull List<String> variables) {
         List<String> ignoredVars = new ArrayList<>();
         List<String> removedVars = new ArrayList<>();
+
+        if (variables.size() == 1 && StringUtils.equals(variables.get(0), "*")) {
+            variables.clear();
+            context.getDataNames("")
+                   .stream()
+                   .filter(varName -> !ExecUtils.isSystemVariable(varName) &&
+                                      !StringUtils.startsWithAny(varName,
+                                                                 "nexial.",
+                                                                 "os.",
+                                                                 "user.",
+                                                                 "oracle.",
+                                                                 "testsuite.startTs") &&
+                                      !System.getProperties().containsKey(varName))
+                   .forEach(variables::add);
+        }
 
         variables.forEach(var -> {
             if (context.isReadOnlyData(var)) {
@@ -879,7 +914,7 @@ public class BaseCommand implements NexialCommand {
 
         if (context.isOutputToCloud()) {
             try {
-                String cloudUrl = context.getOtc().importMedia(file);
+                String cloudUrl = context.getOtc().importMedia(file, true);
                 context.setData(OPT_LAST_SCREENSHOT_NAME, cloudUrl);
                 return cloudUrl;
             } catch (IOException e) {

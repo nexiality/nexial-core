@@ -1134,9 +1134,9 @@ public final class NexialConst {
         public static final String ITERATION_ENDED = NAMESPACE + "iterationEnded";
 
         //screen Recording
-        public static final String RECORDER_TYPE = NAMESPACE + "screenRecorder";
         public static final String RECORDER_TYPE_MP4 = "mp4";
         public static final String RECORDER_TYPE_AVI = "avi";
+        public static final String RECORDER_TYPE = registerSystemVariable(NAMESPACE + "screenRecorder", RECORDER_TYPE_MP4);
         public static final String RECORDING_ENABLED = registerSystemVariable(NAMESPACE + "recordingEnabled", true);
 
         // event notification

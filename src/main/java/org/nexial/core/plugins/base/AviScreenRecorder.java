@@ -69,6 +69,9 @@ class AviScreenRecorder extends org.monte.screenrecorder.ScreenRecorder implemen
     }
 
     @Override
+    public String getVideoFile() { return targetVideoFile; }
+
+    @Override
     public void start(String fullpath) throws IOException {
         targetVideoFile = fullpath;
         super.start();

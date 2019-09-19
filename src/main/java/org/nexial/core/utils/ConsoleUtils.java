@@ -221,17 +221,18 @@ public final class ConsoleUtils {
         // not applicable when running in Jenkins environment
         if (!isPauseReady()) { return null; }
 
-        ExecutionEventListener listener = context.getExecutionEventListener();
-        listener.onPause();
+        ExecutionEventListener listener = null;
+        if (context != null) {
+            listener = context.getExecutionEventListener();
+            listener.onPause();
+            printStepHeader(HDR_START + "OBSERVATION" + HDR_END, context);
+        }
 
-        printStepHeader(HDR_START + "OBSERVATION" + HDR_END, context);
         printStepPrompt(prompt);
-
         System.out.print("> ");
-
         String input = new Scanner(System.in).nextLine();
 
-        listener.afterPause();
+        if (listener != null) { listener.afterPause(); }
 
         return input;
     }
