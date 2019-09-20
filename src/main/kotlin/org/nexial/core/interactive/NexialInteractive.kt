@@ -68,7 +68,6 @@ import java.util.*
 import javax.validation.constraints.NotNull
 
 class NexialInteractive {
-    // todo: enable video recording
     // todo: save session
 
     lateinit var executionDefinition: ExecutionDefinition

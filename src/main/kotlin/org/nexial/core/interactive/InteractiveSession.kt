@@ -150,7 +150,7 @@ data class InteractiveSession(val context: ExecutionContext) {
                 field = value
                 loadDataFile()
             } else {
-                ConsoleUtils.error("Invalid data file specified: $dataFile")
+                ConsoleUtils.error("Invalid data file specified: $value")
             }
         }
 
@@ -247,9 +247,9 @@ data class InteractiveSession(val context: ExecutionContext) {
                 val testData = executionDefinition!!.testData
 
                 val data = TreeMap(testData.getAllValue(iteration))
-                testData.allSettings.forEach { key, testValue -> data[key] = testValue }
+                testData.allSettings.forEach { (key, testValue) -> data[key] = testValue }
                 data.putAll(ExecUtils.deriveJavaOpts())
-                data.forEach { key, dataValue -> context.setData(key, dataValue) }
+                data.forEach { (key, dataValue) -> context.setData(key, dataValue) }
             }
         }
 
