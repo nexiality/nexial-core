@@ -168,8 +168,14 @@ public class CsvTransformer<T extends CsvDataType> extends Transformer {
         return toListDataType(data.getHeaders(), data.getDelim());
     }
 
-    public T filter(T data, String filter) {
+    public T filter(T data, String filter) throws TypeConversionException {
         if (data == null || data.getValue() == null || StringUtils.isBlank(filter)) { return data; }
+
+        if (!data.isHeader()) {
+            throw new TypeConversionException(data.getName(),
+                                              filter,
+                                              "Unable to filter() on CSV data that does not have header");
+        }
 
         filter = getFormattedFilter(filter);
         ListItemConverter<NexialFilter> converter = new ListItemConverterImpl();
@@ -249,14 +255,23 @@ public class CsvTransformer<T extends CsvDataType> extends Transformer {
         return data;
     }
 
-    public T removeRows(T data, String matches) {
-        if (data == null || data.getValue() == null || StringUtils.isBlank(matches)) { return data; }
+    public T removeRows(T data, String... matches) {
+        if (data == null || data.getValue() == null || ArrayUtils.isEmpty(matches)) { return data; }
 
         // todo: support filter by column index (e.g. #2 != 02)
 
-        matches = getFormattedFilter(matches);
+        // could be a list of row indices?
+        if (Arrays.stream(matches).allMatch(NumberUtils::isDigits)) {
+            // all args are integers, so this is a request to remove row by index
+            int[] targetRows = Arrays.stream(matches).mapToInt(NumberUtils::toInt).toArray();
+            data.removeRows(targetRows);
+            return data;
+        }
+
+        // if not row indices, then they must be filters (no varargs here; only first value considered)
+        String filter = getFormattedFilter(matches[0]);
         ListItemConverter<NexialFilter> converter = new ListItemConverterImpl();
-        List<NexialFilter> filters = TextUtils.toList(matches, PAIR_DELIM, converter);
+        List<NexialFilter> filters = TextUtils.toList(filter, PAIR_DELIM, converter);
         if (CollectionUtils.isEmpty(filters)) { return data; }
 
         // short-circuit via flyweight pattern: only if there's only 1 equal-filter

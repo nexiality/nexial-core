@@ -68,10 +68,19 @@ public class ExecutionMailConfig {
     public static ExecutionMailConfig configure(ExecutionContext context) {
         if (self == null) {
             self = new ExecutionMailConfig();
+        }
+
+        // re-read from context.. in case there's update or new information
+        if (context != null) {
             MAILER_KEYS.forEach(key -> {
-                if (!isConfigFound(self.configurations, key) && context.hasData(key)) {
+                if (context.hasData(key)) {
                     self.configurations.put(key, context.getStringData(key));
+                } else {
+                    self.configurations.remove(key);
                 }
+                // if (!isConfigFound(self.configurations, key) && context.hasData(key)) {
+                //     self.configurations.put(key, context.getStringData(key));
+                // }
             });
         }
 

@@ -372,7 +372,8 @@ public class ExpressionProcessorTest {
         Assert.assertEquals("Bohn|Bames|Bim|Bane|Boby|Bacab|Borem", result);
 
         // using delim as parameter does not increase
-        fixture = "[LIST(Smith, John|Bron, James|Bloc, Jim|Norris, Jane|Chen, Joby|Li, Jacab|Jorem) => replace(, |\\|)]";
+        fixture =
+            "[LIST(Smith, John|Bron, James|Bloc, Jim|Norris, Jane|Chen, Joby|Li, Jacab|Jorem) => replace(, |\\|)]";
         result = subject.process(fixture);
         Assert.assertEquals("Smith\\|John|Bron\\|James|Bloc\\|Jim|Norris\\|Jane|Chen\\|Joby|Li\\|Jacab|Jorem", result);
 
@@ -2750,6 +2751,70 @@ public class ExpressionProcessorTest {
                                             " distinct" +
                                             " text]")
                            );
+    }
+
+    @Test
+    public void processCSV_removeRows_by_index() throws Exception {
+        String csvFile = ResourceUtils.getResourceFilePath(resourcePath + this.getClass().getSimpleName() + "8.csv");
+        ExpressionProcessor subject = new ExpressionProcessor(context);
+
+        // CSV with header
+        assertThat(subject.process("[CSV(" + csvFile + ") => " +
+                                   " parse(header=true)" +
+                                   " removeRows(2,3,0)" +
+                                   " row-count]"),
+                   allOf(is(not(nullValue())),
+                         is(equalTo("2"))));
+
+        assertThat(subject.process("[CSV(" + csvFile + ") => " +
+                                   " parse(header=true)" +
+                                   " removeRows(2,3,0)" +
+                                   " text]"),
+                   allOf(is(not(nullValue())),
+                         is(equalTo(
+                             "User Name,First Name,Last Name,Display Name,Job Title,Department,Office Number,Office Phone,Mobile Phone,Fax,Address,City,State or Province,ZIP or Postal Code,Country or Region\n" +
+                             "ben@contoso.com,Ben,Andrews,Ben Andrews,Director,Information Technology,362342,312-492-9910,123-555-6642,123-555-9822,1 Microsoft way,Redmond,WA,98052,United States\n" +
+                             "melissa@contoso.com,Melissa,MacBeth,Melissa MacBeth,Supervisor,Human Resource,345345,312-490-3892,123-555-6645,123-555-9825,1 Microsoft way,Redmond,WA,98052,United States"))));
+
+        assertThat(subject.process("[CSV(" + csvFile + ") => " +
+                                   " parse(header=true)" +
+                                   " removeRows(2,3,0)" +
+                                   " filter(Department = Information Technology)" +
+                                   " removeColumns(Job Title|Department|Office Number|Office Phone|Mobile Phone|Fax)" +
+                                   " removeColumns(Address|City|State or Province|ZIP or Postal Code|Country or Region)" +
+                                   " text]"),
+                   allOf(is(not(nullValue())),
+                         is(equalTo("User Name,First Name,Last Name,Display Name\n" +
+                                    "ben@contoso.com,Ben,Andrews,Ben Andrews"))));
+
+        // CSV with no header
+        assertThat(subject.process("[CSV(" + csvFile + ") => " +
+                                   " parse(header=false)" +
+                                   " removeRows(2,3,0)" +
+                                   " row-count]"),
+                   allOf(is(not(nullValue())),
+                         is(equalTo("3"))));
+
+        assertThat(subject.process("[CSV(" + csvFile + ") => " +
+                                   " parse(header=false)" +
+                                   " removeRows(2,3,0)" +
+                                   " text]"),
+                   allOf(is(not(nullValue())),
+                         is(equalTo(
+                             "chris@contoso.com,Chris,Green,Chris Green,Manager,Finance,234232,312-490-4891,123-555-6641,123-555-9821,1 Microsoft way,Redmond,WA,98052,United States\n" +
+                             "cynthia@contoso.com,Cynthia,Carey,Cynthia Carey,Senior Director,Information Technology,112324,312-490-1192,123-555-6644,123-555-9824,1 Microsoft way,Redmond,WA,98052,United States\n" +
+                             "melissa@contoso.com,Melissa,MacBeth,Melissa MacBeth,Supervisor,Human Resource,345345,312-490-3892,123-555-6645,123-555-9825,1 Microsoft way,Redmond,WA,98052,United States"))));
+
+        assertThat(subject.process("[CSV(" + csvFile + ") => " +
+                                   " parse(header=false)" +
+                                   " removeRows(2,3,0)" +
+                                   " removeColumns(4,5,6,7,8,9,10,11,12,13,14)" +
+                                   " text]"),
+                   allOf(is(not(nullValue())),
+                         is(equalTo("chris@contoso.com,Chris,Green,Chris Green\n" +
+                                    "cynthia@contoso.com,Cynthia,Carey,Cynthia Carey\n" +
+                                    "melissa@contoso.com,Melissa,MacBeth,Melissa MacBeth"))));
+
     }
 
     @Test

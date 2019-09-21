@@ -79,29 +79,6 @@ public class CsvDataType extends ExpressionDataType<List<Record>> {
 
     public boolean isIndexed(String column) { return MapUtils.isNotEmpty(flyweight) && flyweight.containsKey(column); }
 
-    public Record retrieveFromCache(String column, String cacheKey) {
-        if (StringUtils.isBlank(column)) { return null; }
-        if (StringUtils.isEmpty(cacheKey)) { return null; }
-        if (CollectionUtils.isEmpty(headers)) { return null; }
-        if (MapUtils.isEmpty(flyweight)) { return null; }
-
-        Map<String, Record> cache = flyweight.get(column);
-        return MapUtils.isNotEmpty(cache) ? cache.get(cacheKey) : null;
-    }
-
-    public Record remove(String column, String value) {
-        Record matched = retrieveFromCache(column, value);
-        if (matched == null) { return null; }
-
-        ConsoleUtils.log("removing matched record");
-        if (this.value.remove(matched)) { this.rowCount--; }
-
-        ConsoleUtils.log("updating textValue due to record removal");
-        resetTextValue();
-
-        return matched;
-    }
-
     public void addIndices(String... newIndices) {
         if (ArrayUtils.isEmpty(newIndices)) { return; }
         indices.addAll(Arrays.asList(newIndices));
@@ -147,16 +124,51 @@ public class CsvDataType extends ExpressionDataType<List<Record>> {
 
     public void setReadyToParse(boolean readyToParse) { this.readyToParse = readyToParse; }
 
+    public void sortAscending(String column) { sort(column, true); }
+
+    public void sortDescending(String column) { sort(column, false); }
+
+    public Record retrieveFromCache(String column, String cacheKey) {
+        if (StringUtils.isBlank(column)) { return null; }
+        if (StringUtils.isEmpty(cacheKey)) { return null; }
+        if (CollectionUtils.isEmpty(headers)) { return null; }
+        if (MapUtils.isEmpty(flyweight)) { return null; }
+
+        Map<String, Record> cache = flyweight.get(column);
+        return MapUtils.isNotEmpty(cache) ? cache.get(cacheKey) : null;
+    }
+
+    public Record remove(String column, String value) {
+        Record matched = retrieveFromCache(column, value);
+        if (matched == null) { return null; }
+
+        ConsoleUtils.log("removing matched record");
+        if (this.value.remove(matched)) { this.rowCount--; }
+
+        ConsoleUtils.log("updating textValue due to record removal");
+        resetTextValue();
+
+        return matched;
+    }
+
+    public void removeRows(int... rowIndices) {
+        Arrays.sort(rowIndices);
+        ArrayUtils.reverse(rowIndices);
+        List<String> rows = TextUtils.toList(textValue, recordDelim, false);
+        Arrays.stream(rowIndices).forEach(index -> {
+            if (rows.size() > index) { rows.remove(isHeader() ? index + 1 : index); }
+        });
+
+        textValue = TextUtils.toString(rows, recordDelim);
+        parse();
+    }
+
     public void reset(List<Record> records) {
         this.value = records;
         this.rowCount = CollectionUtils.size(this.value);
         if (!header) { columnCount = rowCount == 0 ? 0 : ArrayUtils.getLength(value.get(0).getValues()); }
         resetTextValue();
     }
-
-    public void sortAscending(String column) { sort(column, true); }
-
-    public void sortDescending(String column) { sort(column, false); }
 
     @NotNull
     @Override
@@ -185,6 +197,11 @@ public class CsvDataType extends ExpressionDataType<List<Record>> {
         return snapshot;
     }
 
+    protected List<String> getHeaders() { return headers; }
+
+    @Override
+    protected void init() { parse(); }
+
     protected void sort(String column, boolean ascending) {
         if (!headers.contains(column)) {
             ConsoleUtils.error("Invalid column " + column + "; sorting not performed");
@@ -207,9 +224,6 @@ public class CsvDataType extends ExpressionDataType<List<Record>> {
         return Array.compare(value1, value2);
     }
 
-    @Override
-    protected void init() { parse(); }
-
     protected void resetTextValue() {
         StringBuilder output = new StringBuilder();
 
@@ -220,8 +234,6 @@ public class CsvDataType extends ExpressionDataType<List<Record>> {
         for (Record oneRow : value) { output.append(TextUtils.toCsvLine(oneRow.getValues(), delim, recordDelim)); }
         textValue = StringUtils.removeEnd(output.toString(), recordDelim);
     }
-
-    protected List<String> getHeaders() { return headers; }
 
     protected void parse() {
         if (!readyToParse) { return; }

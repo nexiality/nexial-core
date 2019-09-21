@@ -363,8 +363,11 @@ class NexialInteractive {
             }
         } else {
             val outcome = baseCommand.startRecording()
-            println(outcome)
-            recordingInSession = true
+            if (outcome.isSuccess) {
+                ConsoleUtils.log(outcome.message)
+                recordingInSession = true
+            } else
+                ConsoleUtils.error("FAILED!!! ${outcome.message}")
         }
     }
 
