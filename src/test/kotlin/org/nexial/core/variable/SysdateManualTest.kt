@@ -12,139 +12,68 @@
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
- *
  */
 
-package org.nexial.core.variable;
+package org.nexial.core.variable
 
-import java.text.SimpleDateFormat;
-import java.util.Date;
-
-import org.apache.commons.lang3.time.DateFormatUtils;
-import org.apache.commons.lang3.time.DateUtils;
-import org.junit.Assert;
-import org.junit.Before;
-import org.junit.Test;
-import org.springframework.context.support.ClassPathXmlApplicationContext;
+import org.junit.Assert.assertEquals
+import org.junit.Before
+import org.junit.Test
+import org.springframework.context.support.ClassPathXmlApplicationContext
+import java.text.SimpleDateFormat
+import java.util.Date
 
 // named as manual test since "sysdate" isn't active/defined by default
-public class SysdateManualTest {
-    Sysdate sysdate = new Sysdate();
+class SysdateManualTest {
+
+    private var sysdate = Sysdate()
 
     @Before
-    public void init() {
+    fun init() {
         // EPTestUtils.setupCommonProps();
+        System.setProperty("selenium.host", "localhost")
+        System.setProperty("testsuite.startTs", SimpleDateFormat("yyyyMMddHHmmssS").format(Date()))
 
-        System.setProperty("selenium.host", "localhost");
-        System.setProperty("testsuite.startTs", new SimpleDateFormat("yyyyMMddHHmmssS").format(new Date()));
-
-        ClassPathXmlApplicationContext springContext = new ClassPathXmlApplicationContext("classpath:/nexial.xml");
-        sysdate = springContext.getBean("sysdate", Sysdate.class);
+        val springContext = ClassPathXmlApplicationContext("classpath:/nexial.xml")
+        sysdate = springContext.getBean("sysdate", Sysdate::class.java)
     }
 
     @Test
-    public void testNow() {
-        System.out.println("sysdate.now = " + sysdate.now("yyyy-MM-dd HH:mm:ss"));
-        Assert.assertEquals("2019", sysdate.now("yyyy"));
+    fun testNow() {
+        println("sysdate.now = " + sysdate.now("yyyy-MM-dd HH:mm:ss"))
+        assertEquals("2019", sysdate.now("yyyy"))
     }
 
     @Test
-    public void testYesterday() {
-        Assert.assertEquals(DateFormatUtils.format(DateUtils.addDays(new Date(), -1), "yyyy-MM-dd"),
-                            sysdate.yesterday("yyyy-MM-dd"));
-    }
-
-    @Test
-    public void testTomorrow() {
-        Assert.assertEquals(DateFormatUtils.format(DateUtils.addDays(new Date(), 1), "yyyy-MM-dd"),
-                            sysdate.tomorrow("yyyy-MM-dd"));
-    }
-
-    @Test
-    public void testFirstDOM() {
-        Assert.assertEquals(DateFormatUtils.format(DateUtils.setDays(new Date(), 1), "dd"), sysdate.firstDOM("dd"));
-    }
-
-    @Test
-    public void testLastDOM() {
-        Assert.assertEquals(
-            DateFormatUtils.format(
-                // last day of this month
-                DateUtils.addDays(
-                    // first day of next month
-                    DateUtils.addMonths(
-                        // first day of this month
-                        DateUtils.setDays(new Date(), 1),
-                        1),
-                    -1),
-                "dd"),
-            sysdate.lastDOM("dd"));
-    }
-
-    @Test
-    public void testFirstDOW() {
+    fun testFirstDOW() {
         // manual update needed
-        Assert.assertEquals("018", sysdate.firstDOW("ddd"));
+        assertEquals("018", sysdate.firstDOW("ddd"))
     }
 
     @Test
-    public void testLastDOW() {
+    fun testLastDOW() {
         // manual update needed
-        Assert.assertEquals("24", sysdate.lastDOW("dd"));
+        assertEquals("24", sysdate.lastDOW("dd"))
     }
 
     @Test
-    public void testLastQtr() {
-        Assert.assertEquals("2019-2", sysdate.lastQtr("yyyy-q"));
-        Assert.assertEquals("2019-2", sysdate.lastQtr("yyyy-qqq"));
-        Assert.assertEquals("2", sysdate.lastQtr("qqq"));
+    fun testLastQtr() {
+        assertEquals("2019-2", sysdate.lastQtr("yyyy-q"))
+        assertEquals("2019-2", sysdate.lastQtr("yyyy-qqq"))
+        assertEquals("2", sysdate.lastQtr("qqq"))
     }
 
     @Test
-    public void testCurrentQtr() {
-        Assert.assertEquals("2019-3", sysdate.currentQtr("yyyy-q"));
-        Assert.assertEquals("2019-3", sysdate.currentQtr("yyyy-qqq"));
-        Assert.assertEquals("3", sysdate.currentQtr("qqq"));
+    fun testCurrentQtr() {
+        assertEquals("2019-3", sysdate.currentQtr("yyyy-q"))
+        assertEquals("2019-3", sysdate.currentQtr("yyyy-qqq"))
+        assertEquals("3", sysdate.currentQtr("qqq"))
     }
 
     @Test
-    public void testNextQtr() {
-        Assert.assertEquals("2019-4", sysdate.nextQtr("yyyy-q"));
-        Assert.assertEquals("2019-4", sysdate.nextQtr("yyyy-qqq"));
-        Assert.assertEquals("4", sysdate.nextQtr("qqq"));
-    }
-
-    @Test
-    public void testLastQtr2() {
-        Sysdate sysdate2 = new Sysdate() {
-            @Override
-            protected void init() {
-                currentYear = 2010;
-                currentQtr = 1;
-                derivePrevNextQtr();
-            }
-        };
-        sysdate2.init();
-
-        Assert.assertEquals("2009-4", sysdate2.lastQtr("yyyy-q"));
-        Assert.assertEquals("2009-4", sysdate2.lastQtr("yyyy-qqq"));
-        Assert.assertEquals("4", sysdate2.lastQtr("qqq"));
-    }
-
-    @Test
-    public void testNextQtr2() {
-        Sysdate sysdate2 = new Sysdate() {
-            @Override
-            protected void init() {
-                currentYear = 2009;
-                currentQtr = 4;
-                derivePrevNextQtr();
-            }
-        };
-        sysdate2.init();
-
-        Assert.assertEquals("2010-1", sysdate2.nextQtr("yyyy-q"));
-        Assert.assertEquals("2010-1", sysdate2.nextQtr("yyyy-qqq"));
-        Assert.assertEquals("1", sysdate2.nextQtr("qqq"));
+    fun testNextQtr() {
+        assertEquals("2019-4", sysdate.nextQtr("yyyy-q"))
+        assertEquals("2019-4", sysdate.nextQtr("yyyy-qqq"))
+        assertEquals("4", sysdate.nextQtr("qqq"))
     }
 }

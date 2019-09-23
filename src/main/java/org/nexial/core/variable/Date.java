@@ -84,15 +84,11 @@ public class Date {
 
     public String addHour(String date, int hours) { return modifyDate(date, HOUR_OF_DAY, hours); }
 
-    public String addMinute(String date, String minutes) {
-        return modifyDate(date, MINUTE, NumberUtils.toInt(minutes));
-    }
+    public String addMinute(String date, String minutes) { return modifyDate(date, MINUTE, NumberUtils.toInt(minutes));}
 
     public String addMinute(String date, int minutes) { return modifyDate(date, MINUTE, minutes); }
 
-    public String addSecond(String date, String seconds) {
-        return modifyDate(date, SECOND, NumberUtils.toInt(seconds));
-    }
+    public String addSecond(String date, String seconds) { return modifyDate(date, SECOND, NumberUtils.toInt(seconds));}
 
     public String addSecond(String date, int seconds) { return modifyDate(date, SECOND, seconds); }
 
@@ -108,9 +104,9 @@ public class Date {
 
     public String setDay(String date, int days) { return setDate(date, DAY_OF_MONTH, days); }
 
-    public String setDOW(String date, String days) { return setDate(date, DAY_OF_WEEK, NumberUtils.toInt(days)); }
+    public String setDOW(String date, String day) { return setDate(date, DAY_OF_WEEK, NumberUtils.toInt(day) + 1); }
 
-    public String setDOW(String date, int days) { return setDate(date, DAY_OF_WEEK, days); }
+    public String setDOW(String date, int days) { return setDate(date, DAY_OF_WEEK, days + 1); }
 
     public String setHour(String date, String hours) { return setDate(date, HOUR_OF_DAY, NumberUtils.toInt(hours)); }
 
@@ -249,10 +245,62 @@ public class Date {
 
     protected void init() { }
 
-    private String setDate(String date, final int dateField, final int variant) {
+    private String setDate(String date, final int dateField, int variant) {
+        switch (dateField) {
+            case YEAR: {
+                if (variant < 1970 || variant > 9999) {
+                    throw new IllegalArgumentException("Invalid year: " + variant + ". Consider a year between " +
+                                                       "1970 and 9999.");
+                }
+                break;
+            }
+            // case MONTH: {
+            //     if (variant < 1 || variant > 12) {
+            //         throw new IllegalArgumentException("Invalid month: " + variant + ". Consider a number between " +
+            //                                            "1 and 12.");
+            //     }
+            //     break;
+            // }
+            case DAY_OF_WEEK: {
+                // in Nexial we treat 0 as Sunday, but in java.util.Calendar Sunday is 1
+                // so we need to adjust accordingly
+                if (variant < 1 || variant > 8) {
+                    throw new IllegalArgumentException("Invalid day of the week: " + variant + ". " +
+                                                       "Consider a number from 0 to 7.");
+                }
+                if (variant == 8) { variant = 1; }
+                break;
+            }
+            // case DAY_OF_MONTH: {
+            //     if (variant < 1 || variant > 31) {
+            //         throw new IllegalArgumentException("Invalid day of the month: " + variant + ". " +
+            //                                            "Consider a value between 1 and 31.");
+            //     }
+            //     break;
+            // }
+            // case HOUR_OF_DAY: {
+            //     if (variant < 0 || variant > 24) {
+            //         throw new IllegalArgumentException("Invalid hour of the day: " + variant + ". " +
+            //                                            "Consider a value between 0 and 24.");
+            //     }
+            //     if (variant == 24) { variant = 0; }
+            //     break;
+            // }
+            // case MINUTE:
+            // case SECOND: {
+            //     if (variant < 0 || variant > 60) {
+            //         throw new IllegalArgumentException("Invalid minute: " + variant + ". " +
+            //                                            "Consider a value between 0 and 60.");
+            //     }
+            //     // if (variant == 60) { variant = 0; }
+            //     break;
+            // }
+        }
+
+        final int dateValue = variant;
         return transformDate(date, new DateTransform() {
             Calendar transform(Calendar c) {
-                c.set(dateField, variant);
+                c.set(dateField, dateValue);
                 return c;
             }
         });

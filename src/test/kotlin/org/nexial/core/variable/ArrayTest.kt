@@ -12,84 +12,87 @@
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
- *
  */
 
-package org.nexial.core.variable;
+package org.nexial.core.variable
 
-import org.junit.AfterClass;
-import org.junit.Assert;
-import org.junit.BeforeClass;
-import org.junit.Test;
-import org.nexial.core.ExecutionThread;
-import org.nexial.core.model.MockExecutionContext;
+import org.junit.AfterClass
+import org.junit.Assert.assertEquals
+import org.junit.BeforeClass
+import org.junit.Test
+import org.nexial.core.ExecutionThread
+import org.nexial.core.NexialConst.Data.TEXT_DELIM
+import org.nexial.core.model.MockExecutionContext
 
-import static org.nexial.core.NexialConst.Data.TEXT_DELIM;
+class ArrayTest {
 
-public class ArrayTest {
-    private static MockExecutionContext context;
+    @Test
+    fun pack() {
+        val subject = Array()
 
-    @BeforeClass
-    public static void beforeClass() {
-        MockExecutionContext context = new MockExecutionContext();
-        context.setData(TEXT_DELIM, ",");
-        ExecutionThread.set(context);
-    }
-
-    @AfterClass
-    public static void afterClass() {
-        if (context != null) { context.cleanProject(); }
+        assertEquals("", subject.pack(null as String?))
+        assertEquals("", subject.pack(""))
+        assertEquals("", subject.pack(",,"))
+        assertEquals(" ", subject.pack(", ,"))
+        assertEquals(" ", subject.pack(", ,,"))
+        assertEquals("a,b,c", subject.pack("a,b,c,,,,,,,"))
+        assertEquals("a,b,c", subject.pack("a,b,,,,,c,,,"))
+        assertEquals("a,b,c", subject.pack("a,b,,,,,,,,c"))
     }
 
     @Test
-    public void pack() {
-        Array subject = new Array();
+    fun replica() {
+        val subject = Array()
 
-        Assert.assertEquals("", subject.pack((String) null));
-        Assert.assertEquals("", subject.pack(""));
-        Assert.assertEquals("", subject.pack(",,"));
-        Assert.assertEquals(" ", subject.pack(", ,"));
-        Assert.assertEquals(" ", subject.pack(", ,,"));
-        Assert.assertEquals("a,b,c", subject.pack("a,b,c,,,,,,,"));
-        Assert.assertEquals("a,b,c", subject.pack("a,b,,,,,c,,,"));
-        Assert.assertEquals("a,b,c", subject.pack("a,b,,,,,,,,c"));
+        assertEquals("", subject.replica("", "5"))
+        assertEquals(" , , , , ", subject.replica(" ", "5"))
+        assertEquals("a,a,a,a,a", subject.replica("a", "5"))
+        assertEquals("a,b,c,a,b,c,a,b,c,a,b,c,a,b,c", subject.replica("a,b,c", "5"))
+        assertEquals("a, ,,b,c,a, ,,b,c,a, ,,b,c,a, ,,b,c", subject.replica("a, ,,b,c", "4"))
     }
 
     @Test
-    public void replica() {
-        Array subject = new Array();
+    fun replicaUntil() {
+        val subject = Array()
 
-        Assert.assertEquals("", subject.replica("", "5"));
-        Assert.assertEquals(" , , , , ", subject.replica(" ", "5"));
-        Assert.assertEquals("a,a,a,a,a", subject.replica("a", "5"));
-        Assert.assertEquals("a,b,c,a,b,c,a,b,c,a,b,c,a,b,c", subject.replica("a,b,c", "5"));
-        Assert.assertEquals("a, ,,b,c,a, ,,b,c,a, ,,b,c,a, ,,b,c", subject.replica("a, ,,b,c", "4"));
+        assertEquals("", subject.replicaUntil(null as String?, "5"))
+        assertEquals("", subject.replicaUntil("", "5"))
+        assertEquals("a,a,a,a,a", subject.replicaUntil("a", "5"))
+        assertEquals("a,b,a,b,a", subject.replicaUntil("a,b", "5"))
+        assertEquals("a,bc,d,a,bc", subject.replicaUntil("a,bc,d", "5"))
+        assertEquals("a,bc,defg,a,bc", subject.replicaUntil("a,bc,defg", "5"))
     }
 
     @Test
-    public void replicaUntil() {
-        Array subject = new Array();
+    fun sort() {
+        val subject = Array()
 
-        Assert.assertEquals("", subject.replicaUntil((String) null, "5"));
-        Assert.assertEquals("", subject.replicaUntil("", "5"));
-        Assert.assertEquals("a,a,a,a,a", subject.replicaUntil("a", "5"));
-        Assert.assertEquals("a,b,a,b,a", subject.replicaUntil("a,b", "5"));
-        Assert.assertEquals("a,bc,d,a,bc", subject.replicaUntil("a,bc,d", "5"));
-        Assert.assertEquals("a,bc,defg,a,bc", subject.replicaUntil("a,bc,defg", "5"));
+        assertEquals("a,d,t,z", subject.ascending("d,a,z,t"))
+        assertEquals("ak,ap,d,t,z", subject.ascending("d,ak,z,t,ap"))
+        assertEquals("10,13,20,50", subject.ascending("13,10,20,50"))
+        assertEquals("2,5,10,13", subject.ascending("13,10,2,5"))
+
+        assertEquals("z,t,d,a", subject.descending("d,a,z,t"))
+        assertEquals("Z,T,D,AP,AK", subject.descending("D,AK,Z,T,AP"))
+        assertEquals("50,20,13,10", subject.descending("13,10,20,50"))
+        assertEquals("13,10,5,2", subject.descending("13,10,2,5"))
     }
 
-    @Test
-    public void sort() {
-        Array subject = new Array();
+    companion object {
+        private var context: MockExecutionContext? = null
 
-        Assert.assertEquals("a,d,t,z", subject.ascending("d,a,z,t"));
-        Assert.assertEquals("ak,ap,d,t,z", subject.ascending("d,ak,z,t,ap"));
-        Assert.assertEquals("10,13,20,50", subject.ascending("13,10,20,50"));
-        Assert.assertEquals("2,5,10,13", subject.ascending("13,10,2,5"));
+        @BeforeClass
+        @JvmStatic
+        fun beforeClass() {
+            val context = MockExecutionContext()
+            context.setData(TEXT_DELIM, ",")
+            ExecutionThread.set(context)
+        }
 
-        Assert.assertEquals("z,t,d,a", subject.descending("d,a,z,t"));
-        Assert.assertEquals("Z,T,D,AP,AK", subject.descending("D,AK,Z,T,AP"));
-        Assert.assertEquals("50,20,13,10", subject.descending("13,10,20,50"));
-        Assert.assertEquals("13,10,5,2", subject.descending("13,10,2,5"));
+        @AfterClass
+        @JvmStatic
+        fun afterClass() {
+            context?.cleanProject()
+        }
     }
 }

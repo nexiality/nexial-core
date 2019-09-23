@@ -12,89 +12,95 @@
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
- *
  */
 
-package org.nexial.core.variable;
+package org.nexial.core.variable
 
-import java.io.File;
+import org.apache.commons.io.FileUtils
+import org.apache.commons.lang3.StringUtils
+import org.apache.commons.lang3.SystemUtils
+import org.junit.After
+import org.junit.Assert
+import org.junit.Assert.assertEquals
+import org.junit.Before
+import org.junit.Test
+import org.nexial.core.NexialConst.*
+import java.io.File
+import java.io.File.separator
 
-import org.apache.commons.io.FileUtils;
-import org.apache.commons.lang3.StringUtils;
-import org.apache.commons.lang3.SystemUtils;
-import org.junit.After;
-import org.junit.Assert;
-import org.junit.Before;
-import org.junit.Test;
-
-import static java.io.File.separator;
-import static org.nexial.core.NexialConst.*;
-
-public class SyspathTest {
-    private static final String PROJ_BASE =
-        StringUtils.appendIfMissing(SystemUtils.getJavaIoTmpDir().getAbsolutePath(), separator) +
-        "projects" + separator + "MyProject";
-    private static final String PROJ_REL_BASE = PROJ_BASE + separator + "Release1";
-    private static final String ARTIFACT_BASE = PROJ_REL_BASE + separator + "artifact";
-    private static final String OUT_BASE = PROJ_REL_BASE + separator + "sandbox" + separator + "out";
-
-    private Syspath syspath;
+class SyspathTest {
+    private var syspath: Syspath? = null
 
     @Before
-    public void setUp() throws Exception {
-        System.setProperty(OPT_OUT_DIR, OUT_BASE + separator + "20170106_230142");
-        System.setProperty(OPT_EXCEL_FILE, ARTIFACT_BASE + separator + "MyScript.xlsx");
-        System.setProperty(OPT_INPUT_EXCEL_FILE, ARTIFACT_BASE + separator + "MyScript.xlsx");
-        System.setProperty(OPT_PROJECT_BASE, PROJ_REL_BASE);
-        System.out.println("setting project base as " + PROJ_REL_BASE);
-        syspath = new Syspath();
-        syspath.init();
+    @Throws(Exception::class)
+    fun setUp() {
+        System.setProperty(OPT_OUT_DIR, OUT_BASE + separator + "20170106_230142")
+        System.setProperty(OPT_EXCEL_FILE, ARTIFACT_BASE + separator + "MyScript.xlsx")
+        System.setProperty(OPT_INPUT_EXCEL_FILE, ARTIFACT_BASE + separator + "MyScript.xlsx")
+        System.setProperty(OPT_PROJECT_BASE, PROJ_REL_BASE)
+        println("setting project base as $PROJ_REL_BASE")
+        syspath = Syspath()
+        syspath!!.init()
     }
 
     @After
-    public void tearDown() throws Exception {
-        FileUtils.deleteQuietly(new File(PROJ_BASE));
+    @Throws(Exception::class)
+    fun tearDown() {
+        FileUtils.deleteQuietly(File(PROJ_BASE))
     }
 
     @Test
-    public void testOut() throws Exception {
-        Assert.assertEquals("20170106_230142", syspath.out("name"));
-        Assert.assertEquals(OUT_BASE, syspath.out("base"));
-        Assert.assertEquals(OUT_BASE + separator + "20170106_230142", syspath.out("fullpath"));
+    @Throws(Exception::class)
+    fun testOut() {
+        assertEquals("20170106_230142", syspath!!.out("name"))
+        assertEquals(OUT_BASE, syspath!!.out("base"))
+        assertEquals(OUT_BASE + separator + "20170106_230142", syspath!!.out("fullpath"))
     }
 
     @Test
-    public void testScript() throws Exception {
-        Assert.assertEquals("MyScript.xlsx", syspath.script("name"));
-        Assert.assertEquals(ARTIFACT_BASE, syspath.script("base"));
-        Assert.assertEquals(ARTIFACT_BASE + separator + "MyScript.xlsx", syspath.script("fullpath"));
+    @Throws(Exception::class)
+    fun testScript() {
+        assertEquals("MyScript.xlsx", syspath!!.script("name"))
+        assertEquals(ARTIFACT_BASE, syspath!!.script("base"))
+        assertEquals(ARTIFACT_BASE + separator + "MyScript.xlsx", syspath!!.script("fullpath"))
     }
 
     @Test
-    public void testScreenshot() throws Exception {
-        Assert.assertEquals("captures", syspath.screenshot("name"));
-        Assert.assertEquals(OUT_BASE + separator + "20170106_230142", syspath.screenshot("base"));
-        Assert.assertEquals(OUT_BASE + separator + "20170106_230142" + separator + "captures",
-                            syspath.screenshot("fullpath"));
+    @Throws(Exception::class)
+    fun testScreenshot() {
+        assertEquals("captures", syspath!!.screenshot("name"))
+        assertEquals(OUT_BASE + separator + "20170106_230142", syspath!!.screenshot("base"))
+        assertEquals(OUT_BASE + separator + "20170106_230142" + separator + "captures",
+                     syspath!!.screenshot("fullpath"))
     }
 
     @Test
-    public void testLog() throws Exception {
-        Assert.assertEquals("logs", syspath.log("name"));
-        Assert.assertEquals(OUT_BASE + separator + "20170106_230142", syspath.log("base"));
-        Assert.assertEquals(OUT_BASE + separator + "20170106_230142" + separator + "logs",
-                            syspath.log("fullpath"));
+    @Throws(Exception::class)
+    fun testLog() {
+        assertEquals("logs", syspath!!.log("name"))
+        assertEquals(OUT_BASE + separator + "20170106_230142", syspath!!.log("base"))
+        assertEquals(OUT_BASE + separator + "20170106_230142" + separator + "logs", syspath!!.log("fullpath"))
     }
 
     @Test
-    public void testTemp() throws Exception {
-        Assert.assertNotNull(syspath.temp("name"));
-        Assert.assertNotNull(syspath.temp("base"));
-        Assert.assertNotNull(syspath.temp("fullpath"));
+    @Throws(Exception::class)
+    fun testTemp() {
+        Assert.assertNotNull(syspath!!.temp("name"))
+        Assert.assertNotNull(syspath!!.temp("base"))
+        Assert.assertNotNull(syspath!!.temp("fullpath"))
     }
 
     @Test
-    public void testProject() throws Exception {
-        Assert.assertEquals(syspath.project("name"), "Release1");
+    @Throws(Exception::class)
+    fun testProject() {
+        assertEquals(syspath!!.project("name"), "Release1")
+    }
+
+    companion object {
+        private val PROJ_BASE = StringUtils.appendIfMissing(SystemUtils.getJavaIoTmpDir().absolutePath, separator) +
+                                "projects" + separator + "MyProject"
+        private val PROJ_REL_BASE = PROJ_BASE + separator + "Release1"
+        private val ARTIFACT_BASE = PROJ_REL_BASE + separator + "artifact"
+        private val OUT_BASE = PROJ_REL_BASE + separator + "sandbox" + separator + "out"
     }
 }
