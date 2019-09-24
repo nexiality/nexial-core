@@ -17,10 +17,6 @@
 
 package org.nexial.commons;
 
-/**
- *
-
- */
 public class ServiceException extends AppException {
     private static final long serialVersionUID = -9047901766636337810L;
 

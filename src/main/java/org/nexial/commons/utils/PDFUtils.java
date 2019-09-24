@@ -21,10 +21,6 @@ import java.io.IOException;
 
 import com.itextpdf.text.pdf.PdfReader;
 
-/**
- *
-
- */
 public final class PDFUtils {
 
     private PDFUtils() {}

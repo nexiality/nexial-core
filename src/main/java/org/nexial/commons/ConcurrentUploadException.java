@@ -17,10 +17,6 @@
 
 package org.nexial.commons;
 
-/**
- *
-
- */
 public class ConcurrentUploadException extends RuntimeException {
     public ConcurrentUploadException() { }
 

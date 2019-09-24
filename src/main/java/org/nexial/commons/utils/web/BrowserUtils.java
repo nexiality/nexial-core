@@ -19,10 +19,6 @@ package org.nexial.commons.utils.web;
 
 import javax.servlet.http.HttpServletRequest;
 
-/**
- *
-
- */
 public class BrowserUtils {
     private BrowserUtils() {}
 

@@ -195,7 +195,11 @@ public class TestStep extends TestStepManifest {
             result = StepResult.fail(error);
         } catch (Throwable e) {
             String error = e.getMessage();
-            if (printStackTrace) { ConsoleUtils.error(ExecutionLogger.toHeader(this), error, e); }
+            if (printStackTrace) {
+                ConsoleUtils.error(ExecutionLogger.toHeader(this), error, e);
+            } else {
+                ConsoleUtils.error(error);
+            }
             result = StepResult.fail(error);
         } finally {
             tickTock.stop();

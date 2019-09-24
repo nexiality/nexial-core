@@ -17,9 +17,6 @@
 
 package org.nexial.commons.http;
 
-/**
- *
- */
 public enum HttpStatusCode {
     OK(200, false),
     NOT_CONTENT(204, false),

@@ -42,11 +42,6 @@ import java.util.*
 data class InteractiveSession(val context: ExecutionContext) {
 
     init {
-        // val propKeys = System.getProperties().keys.toTypedArray()
-        // for (name in propKeys) {
-
-        // System.getProperties().forEach { (name, value) ->
-
         System.getProperties().toMap().forEach { (name, _) ->
             val n = name.toString()
             if (IGNORED_CLI_OPT.none { StringUtils.startsWith(n, it) }) context.setData(n, System.getProperty(n))

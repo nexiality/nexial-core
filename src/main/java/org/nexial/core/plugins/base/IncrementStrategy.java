@@ -19,9 +19,6 @@ package org.nexial.core.plugins.base;
 
 import org.apache.commons.lang3.StringUtils;
 
-/**
- *
- */
 public enum IncrementStrategy {
     ALPHANUM("0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz"),
     UPPER("ABCDEFGHIJKLMNOPQRSTUVWXYZ"),

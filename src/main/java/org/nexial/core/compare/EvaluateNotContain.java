@@ -21,9 +21,6 @@ import java.util.Arrays;
 
 import org.apache.commons.lang3.StringUtils;
 
-/**
- *
- */
 public class EvaluateNotContain extends EvaluatorBase {
     @Override
     protected boolean evaluate(double lhs, double rhs) throws IncompatibleTypeException {

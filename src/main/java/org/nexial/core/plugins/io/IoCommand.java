@@ -44,7 +44,11 @@ import org.apache.commons.lang3.time.StopWatch;
 import org.apache.commons.lang3.tuple.ImmutablePair;
 import org.apache.commons.lang3.tuple.Pair;
 import org.apache.commons.text.similarity.LevenshteinDetailedDistance;
+import org.apache.poi.xssf.usermodel.XSSFRow;
+import org.apache.poi.xssf.usermodel.XSSFSheet;
 import org.nexial.commons.utils.*;
+import org.nexial.core.excel.Excel;
+import org.nexial.core.excel.Excel.Worksheet;
 import org.nexial.core.model.ExecutionContext;
 import org.nexial.core.model.NexialFilter;
 import org.nexial.core.model.NexialFilterComparator;
@@ -55,6 +59,7 @@ import org.nexial.core.plugins.filevalidation.RecordData;
 import org.nexial.core.plugins.filevalidation.parser.FileParserFactory;
 import org.nexial.core.plugins.filevalidation.validators.ErrorReport;
 import org.nexial.core.plugins.filevalidation.validators.MasterFileValidator;
+import org.nexial.core.plugins.pdf.PdfTextExtractor;
 import org.nexial.core.utils.ConsoleUtils;
 import org.nexial.core.utils.OutputFileUtils;
 import org.nexial.core.utils.OutputResolver;
@@ -87,40 +92,61 @@ public class IoCommand extends BaseCommand {
     public String getTarget() { return "io"; }
 
     /**
-     * save matching file list to `var`.  The matching logic is derived from `path` and `filePattern` (e.g. a*.txt
-     * or name match .*.log & size >= 5669)
-     *
-     * special treatment for MS Office files: office temp files will be ignored and removed from any matches
+     * save matching file list to <code>var</code>.  The matching logic is derived from <code>path</code> and
+     * <code>fileFilter</code> (e.g. <code>a*.txt</code> or <code>name match .*.log & size >= 5669</code>). <br/>
+     * <br/>
+     * <code>fileFilter</code> can contain <code>name</code>, <code>size</code> and/or <code>lastmod</code>.<br/>
+     * <br/>
+     * Special treatment for MS Office files: office temp files will be ignored and removed from any matches.<br/>
+     * <br/>
+     * Optional parameter on <code>textFilter</code> where one can pass by one or more REGEX (separated by line)
+     * to limit the matches to just files with content that match.
      */
-    public StepResult saveMatches(String var, String path, String filePattern) {
+    public StepResult saveMatches(String var, String path, String fileFilter, String textFilter) {
         requiresValidAndNotReadOnlyVariableName(var);
+
         path = StringUtils.trim(path);
         requiresReadableDirectory(path, "invalid path", path);
-        requiresNotBlank(filePattern, "invalid file pattern", filePattern);
+
+        requiresNotBlank(fileFilter, "invalid file pattern", fileFilter);
+
         boolean hasFilter = false;
         String pattern;
-
-        // to support old filePattern ( e.g.  *.text ) check if there is a filter controller present in the filterPattern
-        // (e.g. name match .*.log )
-        if (RegexUtils.isExact(filePattern, NexialFilterComparator.getRegexFilter()) &&
-            RegexUtils.match(filePattern, REGEX_FILE_META)) {
+        if (RegexUtils.isExact(fileFilter, NexialFilterComparator.getRegexFilter()) &&
+            RegexUtils.match(fileFilter, REGEX_FILE_META)) {
             pattern = path;
             hasFilter = true;
         } else {
+            // to support old fileFilters ( e.g.  *.text ) check if there is a filter controller present in the fileFilters
+            // (e.g. name match .*.log )
             String slash = StringUtils.contains(path, "\\") ? "\\" : "/";
-            pattern = StringUtils.appendIfMissing(path, slash) + filePattern;
+            pattern = StringUtils.appendIfMissing(path, slash) + fileFilter;
         }
 
         // list files
-        List<String> files = new IOFilePathFilter().filterFiles(pattern);
-        if (files == null) { files = new ArrayList<>(); }
+        List<String> files = new IOFilePathFilter(true).filterFiles(pattern);
+        if (files == null) {
+            files = new ArrayList<>();
+        } else {
+            // filter out office temp files
+            files.removeIf(this::isMSOfficeTempFile);
 
-        // filter out office temp files
-        files.removeIf(this::isMSOfficeTempFile);
+            if (CollectionUtils.isNotEmpty(files) && hasFilter) {
+                files = filterFiles(files, new NexialFilterList(fileFilter));
+            }
 
-        if (CollectionUtils.isNotEmpty(files) && hasFilter) {
-            NexialFilterList filterList = new NexialFilterList(filePattern);
-            files = filterFiles(files, filterList);
+            if (CollectionUtils.isNotEmpty(files) && StringUtils.isNotBlank(textFilter)) {
+                List<String> regex = TextUtils.toList(textFilter, "\n", true);
+                files = files.stream().filter(file -> {
+                    try {
+                        String content = toTextContent(file);
+                        return regex.stream().allMatch(contentRegex -> RegexUtils.match(content, contentRegex));
+                    } catch (IOException e) {
+                        ConsoleUtils.error("Unable to read content from " + file + ": " + e.getMessage());
+                        return false;
+                    }
+                }).collect(Collectors.toList());
+            }
         }
 
         // save matches
@@ -574,7 +600,7 @@ public class IoCommand extends BaseCommand {
      * {@code encodedSource} maybe a file or just text. {@code decodedTarget} is assumed as fully qualified file path.
      * This method will create the necessary (and missing) parent directories of {@code decodedTarget}.
      */
-    public StepResult writeBase64decode(String encodedSource, String decodedTarget, String append) throws IOException {
+    public StepResult writeBase64decode(String encodedSource, String decodedTarget, String append) {
         requiresNotBlank(encodedSource, "invalid encoded source", encodedSource);
         requiresNotBlank(decodedTarget, "invalid decoded target", decodedTarget);
 
@@ -585,6 +611,47 @@ public class IoCommand extends BaseCommand {
     }
 
     public static String formatPercent(double number) { return PERCENT_FORMAT.format(number); }
+
+    protected String toTextContent(String file) throws IOException {
+        if (StringUtils.isBlank(file) || !FileUtil.isFileReadable(file, 1)) { return ""; }
+
+        if (StringUtils.endsWithIgnoreCase(file, ".pdf")) {
+            return StringUtils.remove(StringUtils.replace(PdfTextExtractor.extractText(file, context), "\n", " "),
+                                      "\r");
+        }
+
+        if (StringUtils.endsWithIgnoreCase(file, ".xlsx")) {
+            Excel excel = new Excel(new File(file), false, false);
+            List<Worksheet> allWorksheets = excel.getWorksheetsStartWith("");
+            if (CollectionUtils.isEmpty(allWorksheets)) {
+                ConsoleUtils.error("No worksheet found in Excel file: " + file);
+                return "";
+            }
+
+            // String delim = context.getTextDelim();
+            String delim = " ";
+            StringBuilder content = new StringBuilder();
+            allWorksheets.forEach(worksheet -> {
+                XSSFSheet sheet = worksheet.getSheet();
+                int lastRow = sheet.getLastRowNum();
+                for (int i = 0; i <= lastRow; i++) {
+                    XSSFRow row = sheet.getRow(i);
+                    if (row == null) { continue; }
+
+                    short lastCell = row.getLastCellNum();
+                    StringBuilder rowContent = new StringBuilder();
+                    for (int j = 0; j < lastCell; j++) {
+                        rowContent.append(StringUtils.defaultString(Excel.getCellValue(row.getCell(j)))).append(delim);
+                    }
+                    content.append(StringUtils.removeEnd(rowContent.toString(), delim)).append("\n");
+                }
+            });
+
+            return StringUtils.removeEnd(content.toString(), "\n");
+        }
+
+        return FileUtils.readFileToString(new File(file), DEF_FILE_ENCODING);
+    }
 
     @NotNull
     protected StepResult writeFile(String file, String content, String append, boolean replaceTokens) {

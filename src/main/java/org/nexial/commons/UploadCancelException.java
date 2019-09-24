@@ -17,10 +17,6 @@
 
 package org.nexial.commons;
 
-/**
- *
-
- */
 public class UploadCancelException extends RuntimeException {
     public UploadCancelException() { }
 

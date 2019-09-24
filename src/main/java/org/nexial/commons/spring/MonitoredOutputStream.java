@@ -20,10 +20,6 @@ package org.nexial.commons.spring;
 import java.io.IOException;
 import java.io.OutputStream;
 
-/**
- *
-
- */
 public class MonitoredOutputStream extends OutputStream {
     private OutputStream target;
     private OutputStreamListener listener;

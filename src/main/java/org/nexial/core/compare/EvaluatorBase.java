@@ -25,9 +25,6 @@ import org.nexial.core.model.ExecutionContext;
 import static org.nexial.core.NexialConst.OPT_TEXT_MATCH_LENIENT;
 import static org.nexial.core.SystemVariables.getDefaultBool;
 
-/**
- *
- */
 public abstract class EvaluatorBase implements Evaluator {
     @Override
     public boolean proceed(String lhs, String rhs) throws IncompatibleTypeException {

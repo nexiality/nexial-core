@@ -17,10 +17,6 @@
 
 package org.nexial.commons;
 
-/**
- *
-
- */
 public class AppException extends Exception {
     protected String errorCode;
 

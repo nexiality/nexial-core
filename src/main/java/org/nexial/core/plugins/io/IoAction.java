@@ -39,9 +39,6 @@ import static org.nexial.core.NexialConst.DF_TIMESTAMP;
 import static org.nexial.core.NexialConst.Data.*;
 import static org.nexial.core.NexialConst.PREFIX_JAR;
 
-/**
- *
- */
 enum IoAction {
     copy(true, true), move(true), delete(false), deleteRecursive(false);
 

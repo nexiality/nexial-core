@@ -19,10 +19,6 @@ package org.nexial.commons;
 
 import com.itextpdf.text.DocumentException;
 
-/**
- *
-
- */
 public class InvalidTiffContentException extends DocumentException {
     public InvalidTiffContentException() { }
 

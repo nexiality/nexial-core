@@ -23,9 +23,6 @@ import org.junit.Assert;
 import org.junit.Test;
 import org.springframework.util.ClassUtils;
 
-/**
- *
- */
 public class ResourceUtilsTest {
 
 	@Test

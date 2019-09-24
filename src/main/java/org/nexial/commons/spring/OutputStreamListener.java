@@ -17,10 +17,6 @@
 
 package org.nexial.commons.spring;
 
-/**
- *
-
- */
 public interface OutputStreamListener {
     void start();
 

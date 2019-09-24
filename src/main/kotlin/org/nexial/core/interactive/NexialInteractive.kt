@@ -40,7 +40,7 @@ import org.nexial.core.interactive.InteractiveConsole.Commands.HELP
 import org.nexial.core.interactive.InteractiveConsole.Commands.INSPECT
 import org.nexial.core.interactive.InteractiveConsole.Commands.OPEN_DATA
 import org.nexial.core.interactive.InteractiveConsole.Commands.OPEN_SCRIPT
-import org.nexial.core.interactive.InteractiveConsole.Commands.RELOAD_ALL_DATA
+import org.nexial.core.interactive.InteractiveConsole.Commands.RELOAD_ALL
 import org.nexial.core.interactive.InteractiveConsole.Commands.RELOAD_DATA
 import org.nexial.core.interactive.InteractiveConsole.Commands.RELOAD_MENU
 import org.nexial.core.interactive.InteractiveConsole.Commands.RELOAD_PROJPROP
@@ -126,6 +126,7 @@ class NexialInteractive {
                         ConsoleUtils.error("No scenario assigned")
                     } else {
                         session.scenario = argument
+                        session.reloadTestScript()
                     }
                 }
 
@@ -170,9 +171,10 @@ class NexialInteractive {
                     InteractiveConsole.showMenu(session)
                 }
 
-                RELOAD_ALL_DATA  -> {
+                RELOAD_ALL       -> {
                     session.reloadDataFile()
                     session.reloadProjectProperties()
+                    session.reloadTestScript()
                     InteractiveConsole.showMenu(session)
                 }
 

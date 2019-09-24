@@ -30,9 +30,6 @@ import org.nexial.commons.utils.TextUtils;
 
 import static org.nexial.core.NexialConst.DEF_CHARSET;
 
-/**
- *
- */
 public class SqlFileTest {
 	@Test
 	public void testGetStatements() throws Exception {

@@ -29,9 +29,6 @@ import org.junit.Before;
 import org.junit.Test;
 import org.nexial.commons.utils.ResourceUtils;
 
-/**
- *
- */
 public class JSONPathTest {
 
     @Before

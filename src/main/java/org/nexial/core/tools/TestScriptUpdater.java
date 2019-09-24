@@ -39,6 +39,7 @@ import org.apache.poi.xssf.usermodel.XSSFSheet;
 import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 import org.nexial.commons.utils.ResourceUtils;
 import org.nexial.commons.utils.TextUtils;
+import org.nexial.core.CommandConst;
 import org.nexial.core.excel.Excel;
 import org.nexial.core.excel.Excel.Worksheet;
 import org.nexial.core.excel.ExcelAddress;
@@ -50,13 +51,12 @@ import org.nexial.core.utils.InputFileUtils;
 import org.slf4j.MDC;
 
 import static java.io.File.separator;
-import static org.nexial.core.CommandConst.*;
+import static org.nexial.core.CommandConst.PARAM_AUTO_FILL_COMMANDS;
 import static org.nexial.core.NexialConst.Data.SHEET_SYSTEM;
 import static org.nexial.core.NexialConst.ExitStatus.RC_BAD_CLI_ARGS;
 import static org.nexial.core.NexialConst.MSG_SCRIPT_UPDATE_ERR;
 import static org.nexial.core.NexialConst.Project.COMMAND_JSON_FILE_NAME;
 import static org.nexial.core.excel.ExcelConfig.*;
-import static org.nexial.core.plugins.base.BaseCommand.PARAM_AUTO_FILL_COMMANDS;
 import static org.nexial.core.tools.CliConst.OPT_VERBOSE;
 import static org.nexial.core.tools.CliUtils.newArgOption;
 import static org.nexial.core.tools.CommandDiscovery.GSON;
@@ -318,7 +318,7 @@ public class TestScriptUpdater {
                 List<String> macroCommandList = new ArrayList<>(commandList);
                 for (int j = 0; j < macroCommandList.size(); j++) {
                     String command = macroCommandList.get(j);
-                    if (getNON_MACRO_COMMANDS().contains(command)) {
+                    if (CommandConst.getNonMacroCommands().contains(command)) {
                         macroCommandList.remove(command);
                         j--;
                     }
@@ -399,9 +399,9 @@ public class TestScriptUpdater {
                 String targetCommand = target + "." + command;
 
                 // check for auto-substitution
-                if (getREPLACED_COMMANDS().containsKey(targetCommand)) {
+                if (CommandConst.getReplacedCommands().containsKey(targetCommand)) {
                     // found old command, let's replace it with new one
-                    String newCommand = getREPLACED_COMMANDS().get(targetCommand);
+                    String newCommand = CommandConst.getReplacedCommands().get(targetCommand);
                     if (cellTarget != null) {
                         cellTarget.setCellValue(StringUtils.substringBefore(newCommand, "."));
                     }
@@ -420,8 +420,8 @@ public class TestScriptUpdater {
                 // todo: desktop.get*** --> desktop.save***
 
                 // check for warning/suggest
-                if (getCOMMAND_SUGGESTIONS().containsKey(targetCommand)) {
-                    String suggestion = getCOMMAND_SUGGESTIONS().get(targetCommand);
+                if (CommandConst.getCommandSuggestions().containsKey(targetCommand)) {
+                    String suggestion = CommandConst.getCommandSuggestions().get(targetCommand);
                     System.err.println("\t!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!");
                     System.err.println("\tRow " + rowIndex + ": " + target + " » " + command);
                     System.err.println("\t" + suggestion);

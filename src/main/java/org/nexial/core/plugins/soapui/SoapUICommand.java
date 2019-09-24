@@ -48,9 +48,6 @@ import static org.nexial.core.NexialConst.SoapUI.*;
 import static org.nexial.core.utils.CheckUtils.requires;
 import static org.nexial.core.utils.CheckUtils.requiresNotBlank;
 
-/**
- *
- */
 public class SoapUICommand extends BaseCommand {
 
     @Override

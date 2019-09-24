@@ -17,7 +17,11 @@
 
 package org.nexial.core.plugins.pdf;
 
-import java.io.*;
+import java.io.ByteArrayOutputStream;
+import java.io.File;
+import java.io.IOException;
+import java.io.OutputStreamWriter;
+import java.io.Writer;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.util.*;
@@ -32,10 +36,11 @@ import org.apache.commons.lang3.BooleanUtils;
 import org.apache.commons.lang3.RandomStringUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.math.NumberUtils;
-import org.apache.pdfbox.pdmodel.*;
+import org.apache.pdfbox.pdmodel.PDDocument;
+import org.apache.pdfbox.pdmodel.PDDocumentCatalog;
+import org.apache.pdfbox.pdmodel.PDDocumentInformation;
+import org.apache.pdfbox.pdmodel.PDPageTree;
 import org.apache.pdfbox.pdmodel.common.PDMetadata;
-import org.apache.pdfbox.pdmodel.common.filespecification.PDComplexFileSpecification;
-import org.apache.pdfbox.pdmodel.common.filespecification.PDEmbeddedFile;
 import org.apache.pdfbox.text.PDFTextStripper;
 import org.apache.xmpbox.XMPMetadata;
 import org.apache.xmpbox.schema.AdobePDFSchema;
@@ -58,14 +63,10 @@ import static java.io.File.separatorChar;
 import static java.util.regex.Pattern.DOTALL;
 import static java.util.regex.Pattern.MULTILINE;
 import static org.nexial.core.NexialConst.DEF_CHARSET;
-import static org.nexial.core.NexialConst.Data.*;
+import static org.nexial.core.NexialConst.Data.PDFFORM_UNMATCHED_TEXT;
 import static org.nexial.core.NexialConst.PdfMeta.*;
-import static org.nexial.core.SystemVariables.getDefaultBool;
 import static org.nexial.core.utils.CheckUtils.*;
 
-/**
- *
- */
 public class PdfCommand extends BaseCommand {
     protected static final DateFormat PDF_DATE_FORMAT = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
     protected IoCommand io;
@@ -82,7 +83,7 @@ public class PdfCommand extends BaseCommand {
     public StepResult assertPatternPresent(String pdf, String regex) {
         requires(StringUtils.isNotBlank(regex), "invalid text", regex);
 
-        regex = normalizeContent(regex);
+        regex = PdfTextExtractor.normalizeContent(regex, context);
 
         try {
             Pattern pattern = Pattern.compile(regex, MULTILINE | DOTALL);
@@ -125,12 +126,7 @@ public class PdfCommand extends BaseCommand {
         }
 
         String resultVar = RandomStringUtils.randomAlphabetic(5);
-        StepResult jr = io.saveDiff(resultVar, newBaselinePath, newCurrentPath);
-
-        //Map<String, String> results = context.getMapProp(resultVar);
-        // results.get ....
-
-        return jr;
+        return io.saveDiff(resultVar, newBaselinePath, newCurrentPath);
     }
 
     public StepResult assertPatternNotPresent(String pdf, String regex) {
@@ -213,12 +209,6 @@ public class PdfCommand extends BaseCommand {
         }
     }
 
-    //public StepResult imageToPdf(String image, String pdf) {
-    // todo: TO BE IMPLEMENTED!!!
-    //throw new RuntimeException("not yet implemented");
-    // return null;
-    //}
-
     public StepResult saveFormValues(String pdf, String var, String pageAndLineStartEnd, String strategy) {
         requiresValidAndNotReadOnlyVariableName(var);
 
@@ -269,8 +259,7 @@ public class PdfCommand extends BaseCommand {
 
                 // `extracted` may contain name/value already exists in `formValues`
                 String[] extractedKeys = extracted.keySet().toArray(new String[extracted.size()]);
-                for (int i = 0; i < extractedKeys.length; i++) {
-                    String key = extractedKeys[i];
+                for (String key : extractedKeys) {
                     Object value = extracted.get(key);
 
                     if (StringUtils.equals(key, PDFFORM_UNMATCHED_TEXT)) {
@@ -310,6 +299,12 @@ public class PdfCommand extends BaseCommand {
             return StepResult.fail("Unable to extract PDF form: " + e.getMessage());
         }
     }
+
+    //public StepResult imageToPdf(String image, String pdf) {
+    // todo: TO BE IMPLEMENTED!!!
+    //throw new RuntimeException("not yet implemented");
+    // return null;
+    //}
 
     public StepResult assertFormValue(String var, String name, String expected) {
         requiresNotNull(expected, "Invalid expected value", expected);
@@ -386,7 +381,7 @@ public class PdfCommand extends BaseCommand {
             context.setData(var, metadata);
             return StepResult.success("metadata extracted from '" + pdf + "'");
         } catch (Exception e) {
-            return StepResult.fail("error ocurred while extracting metadata from '" + pdf + "': " + e.getMessage());
+            return StepResult.fail("error occurred while extracting metadata from '" + pdf + "': " + e.getMessage());
         }
     }
 
@@ -438,63 +433,13 @@ public class PdfCommand extends BaseCommand {
         return false;
     }
 
-    protected String extractText(String pdf) throws IOException {
-        requires(StringUtils.isNotBlank(pdf), "invalid pdf", pdf);
-        File pdfFile = new File(pdf);
-        requires(pdfFile.exists() && pdfFile.canRead() && pdfFile.length() > 0, "unreadable or empty pdf", pdf);
-
-        ByteArrayOutputStream out = new ByteArrayOutputStream();
-        Writer output = new OutputStreamWriter(out);
-
-        PDDocument document = null;
-        try {
-            document = PDDocument.load(pdfFile);
-
-            //use default encoding
-            PDFTextStripper stripper = new PDFTextStripper();
-            stripper.setSortByPosition(true);
-            //stripper.setShouldSeparateByBeads(true);
-            //stripper.setAddMoreFormatting(false);
-
-            // Extract text for main document:
-            stripper.writeText(document, output);
-
-            // ... also for any embedded PDFs:
-            extractEmbeddedPDFs(document, stripper, output);
-        } finally {
-            try {
-                output.close();
-            } catch (IOException e) {
-                log("Unable to close output stream", e);
-            }
-
-            try {
-                out.close();
-            } catch (IOException e) {
-                log("Unable to close underlying output stream", e);
-            }
-
-            if (document != null) {
-                try {
-                    document.close();
-                } catch (IOException e) {
-                    log("Unable to close PDF document", e);
-                }
-            }
-        }
-
-        String content = normalizePdfText(out.toString());
-        log("extracted " + StringUtils.length(content) + " bytes from '" + pdf + "'");
-        return content;
-    }
-
     protected List<File> extractPages(String pdf, String destination) throws IOException {
         requiresNotBlank(pdf, "invalid pdf", pdf);
         requiresReadableFile(pdf);
 
         File pdfFile = new File(pdf);
 
-        String destionationBaseName = resolvePageBaseName(pdfFile, destination);
+        String destinationBaseName = resolvePageBaseName(pdfFile, destination);
 
         List<File> pages = new ArrayList<>();
         List<Exception> extractionErrors = new ArrayList<>();
@@ -515,12 +460,12 @@ public class PdfCommand extends BaseCommand {
             for (int i = 1; i <= allPages.getCount(); i++) {
                 try {
                     String content = extractPage(document, i);
-                    File page = new File(destionationBaseName + ".page" + i + ".txt");
+                    File page = new File(destinationBaseName + ".page" + i + ".txt");
                     log("extracted " + StringUtils.length(content) + " bytes from " +
                         "Page " + i + " of '" + pdf + "' as saved as '" + page.getAbsolutePath() + "'");
                     FileUtils.write(page, content, DEF_CHARSET);
 
-                    // todo: added hyplink to excel output for the generated page files
+                    // todo: added hyperlink to excel output for the generated page files
                     //if (verbose) {
                     //	command.addLinkableParam();
                     //	String param = params.get(i);
@@ -584,51 +529,10 @@ public class PdfCommand extends BaseCommand {
             }
         }
 
-        return normalizePdfText(out.toString());
+        return PdfTextExtractor.normalizePdfText(out.toString(), context);
     }
 
-    protected String normalizePdfText(String output) { return normalizeContent(StringUtils.trim(output)); }
-
-    protected String normalizeContent(String content) {
-        // let's make sure the test can be platform independent by favoring newline or carriage return
-        content = StringUtils.replace(content, "\r\n", "\n");
-        content = StringUtils.replace(content, "\r", "\n");
-
-        if (context.getBooleanData(PDF_USE_ASCII, getDefaultBool(PDF_USE_ASCII))) {
-            // ‘ (U+2018) LEFT SINGLE QUOTATION MARK
-            // ’ (U+2019) RIGHT SINGLE QUOTATION MARK
-            // “ (U+201C) LEFT DOUBLE QUOTATION MARK
-            // ” (U+201D) RIGHT DOUBLE QUOTATION MARK
-
-            content = StringUtils.replace(content, "\u2013", "-");
-            content = StringUtils.replace(content, "\u2014", "-");
-            content = StringUtils.replace(content, "\u2015", "-");
-
-            content = StringUtils.replace(content, "\u2017", "_");
-
-            content = StringUtils.replace(content, "\u0092", "\"");
-            content = StringUtils.replace(content, "\u0093", "\"");
-            content = StringUtils.replace(content, "\u0094", "\"");
-            content = StringUtils.replace(content, "\u201b", "\"");
-            content = StringUtils.replace(content, "\u201c", "\"");
-            content = StringUtils.replace(content, "\u201d", "\"");
-            content = StringUtils.replace(content, "\u201e", "\"");
-            content = StringUtils.replace(content, "\u2032", "\"");
-            content = StringUtils.replace(content, "\u2033", "\"");
-
-            content = StringUtils.replace(content, "\u201a", "\'");
-            content = StringUtils.replace(content, "\u2018", "\'");
-            content = StringUtils.replace(content, "\u2019", "\'");
-            content = StringUtils.replace(content, "\u2039", "\'");
-            content = StringUtils.replace(content, "\u203a", "\'");
-
-            content = StringUtils.replace(content, "\u201a", ",");
-
-            content = StringUtils.replace(content, "\u2026", "...");
-        }
-
-        return content;
-    }
+    private String extractText(String pdf) throws IOException { return PdfTextExtractor.extractText(pdf, context); }
 
     private String resolvePageBaseName(File pdfFile, String destination) {
         requires(pdfFile != null, "invalid/empty PDF file", pdfFile);
@@ -644,37 +548,6 @@ public class PdfCommand extends BaseCommand {
         if (StringUtils.endsWith(destination, ".txt")) { return StringUtils.substringBeforeLast(destination, ".txt"); }
         if (StringUtils.endsWithAny(destination, "/", "\\")) { return destination + fileName; }
         return destination;
-    }
-
-    private void extractEmbeddedPDFs(PDDocument document, PDFTextStripper stripper, Writer output) throws IOException {
-        if (document == null) { return; }
-        if (stripper == null) { return; }
-        if (output == null) { return; }
-
-        PDDocumentCatalog catalog = document.getDocumentCatalog();
-        PDDocumentNameDictionary names = catalog.getNames();
-        if (names == null) { return; }
-
-        PDEmbeddedFilesNameTreeNode embeddedFiles = names.getEmbeddedFiles();
-        if (embeddedFiles == null) { return; }
-
-        Map<String, PDComplexFileSpecification> embeddedFileNames = embeddedFiles.getNames();
-        if (embeddedFileNames == null) { return; }
-
-        for (Map.Entry<String, PDComplexFileSpecification> ent : embeddedFileNames.entrySet()) {
-            PDComplexFileSpecification spec = ent.getValue();
-            PDEmbeddedFile file = spec.getEmbeddedFile();
-            if (file != null && StringUtils.equals(file.getSubtype(), MIME_PDF)) {
-                log("Found embed PDF: '" + spec.getFilename() + "', size: " + file.getSize());
-                PDDocument subDoc;
-                try (InputStream fis = file.createInputStream()) { subDoc = PDDocument.load(fis); }
-                try {
-                    stripper.writeText(subDoc, output);
-                } finally {
-                    subDoc.close();
-                }
-            }
-        }
     }
 
     private Map<String, String> extractMetadata(String pdf) throws IOException, XmpParsingException {

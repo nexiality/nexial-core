@@ -31,9 +31,6 @@ import org.nexial.core.utils.ConsoleUtils;
 
 import static java.awt.event.KeyEvent.*;
 
-/**
- *
- */
 public final class AwtUtils {
     private static final Map<Character, Integer> SHIFT_NEEDED = initShiftNeededMapping();
     private static final Map<Character, Integer> TRANSLATION_NEEDED = initTranslationNeededMapping();

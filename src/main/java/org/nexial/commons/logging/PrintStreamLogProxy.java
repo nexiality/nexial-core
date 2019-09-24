@@ -20,9 +20,6 @@ package org.nexial.commons.logging;
 // import org.apache.log4j.Logger;
 // import org.apache.log4j.Priority;
 
-/**
- *
- */
 public final class PrintStreamLogProxy {
     // public static final class ProxyPrintStream extends PrintStream {
     //     private Logger logger;

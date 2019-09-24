@@ -25,10 +25,6 @@ import org.nexial.core.model.ExecutionContext;
 import static org.nexial.core.NexialConst.Jenkins.*;
 import static org.nexial.core.NexialConst.*;
 
-/**
- *
-
- */
 public final class JenkinsVariables {
     private static JenkinsVariables self;
 

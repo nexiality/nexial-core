@@ -19,9 +19,6 @@ package org.nexial.core.compare;
 
 import org.apache.commons.lang3.StringUtils;
 
-/**
- *
- */
 public class EvaluateNotEquals extends EvaluatorBase {
     @Override
     protected boolean evaluate(double lhs, double rhs) throws IncompatibleTypeException { return lhs != rhs; }

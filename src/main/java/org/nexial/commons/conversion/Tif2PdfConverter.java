@@ -45,9 +45,6 @@ import com.itextpdf.text.pdf.codec.TiffImage;
 
 import static com.itextpdf.text.PageSize.LETTER;
 
-/**
- *
- */
 public class Tif2PdfConverter {
     private static final Logger LOGGER = LoggerFactory.getLogger(Tif2PdfConverter.class);
 

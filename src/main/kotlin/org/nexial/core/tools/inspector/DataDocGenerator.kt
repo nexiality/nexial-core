@@ -27,7 +27,7 @@ import org.nexial.commons.utils.FileUtil
 import org.nexial.commons.utils.RegexUtils
 import org.nexial.commons.utils.ResourceUtils
 import org.nexial.commons.utils.TextUtils
-import org.nexial.core.CommandConst.MULTI_VARS_CMDS
+import org.nexial.core.CommandConst.MULTI_VARS_COMMANDS
 import org.nexial.core.CommandConst.getPreferredSystemVariableName
 import org.nexial.core.NexialConst.*
 import org.nexial.core.NexialConst.Data.SHEET_DEFAULT_DATA
@@ -300,8 +300,8 @@ class DataDocGenerator(val options: InspectorOptions, val logger: InspectorLogge
                                 }
                             }
 
-                            if (MULTI_VARS_CMDS.containsKey(commandFqn)) {
-                                val vars = Excel.getCellValue(row[4 + MULTI_VARS_CMDS.getValue(commandFqn)])
+                            if (MULTI_VARS_COMMANDS.containsKey(commandFqn)) {
+                                val vars = Excel.getCellValue(row[4 + MULTI_VARS_COMMANDS.getValue(commandFqn)])
                                 if (vars.isNotBlank()) {
                                     TextUtils.toList(vars, ",", true).forEach {
                                         val dv = DataVariableAtom(name = it,

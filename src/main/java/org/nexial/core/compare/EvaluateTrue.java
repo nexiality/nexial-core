@@ -17,9 +17,6 @@
 
 package org.nexial.core.compare;
 
-/**
- *
- */
 public class EvaluateTrue extends EvaluatorBase {
     @Override
     protected boolean evaluate(double lhs, double rhs) throws IncompatibleTypeException {

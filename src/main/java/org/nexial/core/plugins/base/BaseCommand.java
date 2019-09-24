@@ -69,6 +69,7 @@ import static java.lang.Boolean.TRUE;
 import static java.lang.System.lineSeparator;
 import static java.util.regex.Pattern.CASE_INSENSITIVE;
 import static org.apache.commons.lang3.SystemUtils.JAVA_IO_TMPDIR;
+import static org.nexial.core.CommandConst.*;
 import static org.nexial.core.NexialConst.*;
 import static org.nexial.core.NexialConst.Data.NULL;
 import static org.nexial.core.NexialConst.Data.toCloudIntegrationNotReadyMessage;
@@ -78,24 +79,7 @@ import static org.nexial.core.utils.CheckUtils.*;
 import static org.nexial.core.utils.OutputFileUtils.CASE_INSENSIVE_SORT;
 
 public class BaseCommand implements NexialCommand {
-    public static final List<String> PARAM_AUTO_FILL_COMMANDS = Arrays.asList("desktop.sendKeysToTextBox",
-                                                                              "desktop.typeAppendTextArea",
-                                                                              "desktop.typeAppendTextBox",
-                                                                              "desktop.typeTextArea",
-                                                                              "desktop.typeTextBox",
-                                                                              "localdb.exportEXCEL",
-                                                                              "localdb.exportXML",
-                                                                              "macro.expects");
-    public static final List<String> CRYPT_RESTRICTED_COMMANDS = Arrays.asList("base.verbose",
-                                                                               "base.prependText",
-                                                                               "base.appendText",
-                                                                               "base.save");
-
-    // "self-derived" means that the command will figure out the appropriate param values for display
-    public static final List<String> PARAM_DERIVED_COMMANDS = Collections.singletonList("step.observe");
-
     protected static final IncrementStrategy STRATEGY_DEFAULT = ALPHANUM;
-
     protected transient Map<String, Method> commandMethods = new HashMap<>();
     protected transient ExecutionContext context;
     protected long pauseMs;

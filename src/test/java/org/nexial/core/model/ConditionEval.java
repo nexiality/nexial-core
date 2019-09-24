@@ -26,9 +26,6 @@ import org.springframework.context.support.ClassPathXmlApplicationContext;
 
 import static org.nexial.core.NexialConst.DEF_SPRING_XML;
 
-/**
- *
- */
 public class ConditionEval {
     private static ExecutionContext context = new MockExecutionContext();
     private Evaluate evaluate;

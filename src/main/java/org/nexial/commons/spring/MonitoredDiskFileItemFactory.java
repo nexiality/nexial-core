@@ -22,9 +22,6 @@ import java.io.File;
 import org.apache.commons.fileupload.FileItem;
 import org.apache.commons.fileupload.disk.DiskFileItemFactory;
 
-/**
- *
- */
 public class MonitoredDiskFileItemFactory extends DiskFileItemFactory {
     private OutputStreamListener listener = null;
 

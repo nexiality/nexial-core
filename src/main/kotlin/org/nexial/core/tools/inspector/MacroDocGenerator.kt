@@ -18,7 +18,7 @@ package org.nexial.core.tools.inspector
 
 import org.apache.commons.collections4.CollectionUtils
 import org.apache.commons.lang3.StringUtils
-import org.nexial.core.CommandConst.MACRO_CMDS
+import org.nexial.core.CommandConst.MACRO_COMMANDS
 import org.nexial.core.CommandConst.MACRO_DESCRIPTION
 import org.nexial.core.CommandConst.MACRO_EXPECTS
 import org.nexial.core.CommandConst.MACRO_PRODUCES
@@ -151,7 +151,7 @@ class MacroDocGenerator(val options: InspectorOptions, val logger: InspectorLogg
                     val cmdType = row[2].removeSurrounding("\"")
                     val command = row[3].removeSurrounding("\"")
                     val commandFqn = "$cmdType.$command"
-                    if (MACRO_CMDS.contains(commandFqn)) {
+                    if (MACRO_COMMANDS.contains(commandFqn)) {
                         // macro found, scan for macro.definition(), macro.expects() and macro.produces()
                         when (commandFqn) {
                             MACRO_DESCRIPTION -> macroDef.addDescription(description)

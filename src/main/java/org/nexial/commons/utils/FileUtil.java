@@ -53,9 +53,6 @@ import static org.apache.commons.io.comparator.PathFileComparator.PATH_REVERSE;
 import static org.nexial.core.NexialConst.DEF_CHARSET;
 import static org.nexial.core.NexialConst.DEF_FILE_ENCODING;
 
-/**
- *
- */
 public final class FileUtil {
     /**
      * options to sort files in different ways

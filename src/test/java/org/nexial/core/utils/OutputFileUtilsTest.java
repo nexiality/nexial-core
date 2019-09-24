@@ -33,9 +33,6 @@ import org.nexial.core.plugins.web.Browser;
 import static org.nexial.core.NexialConst.DEF_CHARSET;
 import static org.nexial.core.utils.OutputFileUtils.*;
 
-/**
- *
- */
 public class OutputFileUtilsTest {
     private static final SimpleDateFormat DF_TIMESTAMP = new SimpleDateFormat("yyyyMMdd_HHmmss");
     private final String timestamp = DF_TIMESTAMP.format(new Date());

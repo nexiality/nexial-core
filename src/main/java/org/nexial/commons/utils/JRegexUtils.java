@@ -26,9 +26,6 @@ import jregex.Matcher;
 import jregex.Pattern;
 import jregex.Replacer;
 
-/**
- *
- */
 public final class JRegexUtils {
     private JRegexUtils() {}
 

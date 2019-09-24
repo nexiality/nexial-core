@@ -32,9 +32,6 @@ import org.nexial.core.NexialConst.SoapUI;
 
 import static org.nexial.core.NexialConst.SoapUI.*;
 
-/**
- *
- */
 public class SoapUITestResult {
     private String testSuiteName;
     private int testCount;

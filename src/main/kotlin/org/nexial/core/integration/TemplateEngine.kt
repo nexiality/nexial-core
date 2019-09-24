@@ -9,7 +9,7 @@ import java.io.File
 class TemplateEngine {
 
     companion object {
-        val context = ExecutionThread.get()!!
+        private val context = ExecutionThread.get()!!
 
         fun setSlackChatSummary(executionOutput: ExecutionOutput): String {
             var slackSummaryTemplate = StringUtils.replace(getTemplate("slack", COMMENT_ENDPOINT),
