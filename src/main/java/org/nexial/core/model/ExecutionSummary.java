@@ -101,6 +101,8 @@ public class ExecutionSummary {
     private int failCount;
     private int warnCount;
     private int executed;
+    private String customHeader;
+    private String customFooter;
 
     private boolean failedFast;
     private String errorStackTrace;
@@ -231,9 +233,7 @@ public class ExecutionSummary {
 
     public String getTestScriptLink() { return testScriptLink; }
 
-    public void setTestScriptLink(String testScriptLink) {
-        this.testScriptLink = testScriptLink;
-    }
+    public void setTestScriptLink(String testScriptLink) { this.testScriptLink = testScriptLink; }
 
     public String getScriptFile() { return scriptFile; }
 
@@ -281,6 +281,14 @@ public class ExecutionSummary {
     public ExecutionLevel getExecutionLevel() { return executionLevel; }
 
     public void setExecutionLevel(ExecutionLevel executionLevel) { this.executionLevel = executionLevel; }
+
+    public String getCustomHeader() { return customHeader; }
+
+    public void setCustomHeader(String customHeader) { this.customHeader = customHeader; }
+
+    public String getCustomFooter() { return customFooter; }
+
+    public void setCustomFooter(String customFooter) { this.customFooter = customFooter; }
 
     public void aggregatedNestedExecutions(ExecutionContext context) {
         if (CollectionUtils.isEmpty(nestedExecutions)) { return; }

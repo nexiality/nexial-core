@@ -916,6 +916,11 @@ public final class NexialConst {
         // email subject prefix  only for post-exec result notification
         public static final String MAIL_RESULT_SUBJECT_PREFIX = "[nexial] ";
 
+        // system-wide execution summary related props
+        public static final String NS_SUMMARY = NAMESPACE + "summary.";
+        public static final String SUMMARY_CUSTOM_HEADER = registerSystemVariable(NS_SUMMARY + "header");
+        public static final String SUMMARY_CUSTOM_FOOTER = registerSystemVariable(NS_SUMMARY + "footer");
+
         // note: only consider sysprop, not data variable
         public static final String GENERATE_EXEC_REPORT = registerSystemVariable(NAMESPACE + "generateReport", false);
 
@@ -1541,7 +1546,7 @@ public final class NexialConst {
 
     public static boolean isKnownTextContentType(String contentType) {
         if (StringUtils.isBlank(contentType) || StringUtils.containsAny(contentType, "stream", "bin", "octet") ||
-            StringUtils.startsWithAny(contentType, "audio","font", "image", "video")) {
+            StringUtils.startsWithAny(contentType, "audio", "font", "image", "video")) {
             return false;
         }
 

@@ -92,7 +92,9 @@ object CommandConst {
             "number.round(var,closestDigit)" to "number.roundTo(var,closestDigit)",
             "desktop.scanTable(var,name)" to "desktop.useTable(var,name)",
             "desktop.getRowCount(var)" to "desktop.saveRowCount(var)",
-            "io.saveMatches(var,path,filePattern)" to "io.saveMatches(var,path,fileFilter,textFilter)")
+            "io.saveMatches(var,path,filePattern)" to "io.saveMatches(var,path,fileFilter,textFilter)",
+            "base.assertNotContains(text,substring)" to "base.assertNotContain(text,substring)"
+    )
 
     private const val SUGGESTION_PREFIX = "This command is deprecated and will soon be removed. Consider using"
 

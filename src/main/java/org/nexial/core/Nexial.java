@@ -865,6 +865,8 @@ public class Nexial {
 
         summary.setEndTime(stopTimeMs);
         summary.aggregatedNestedExecutions(null);
+        summary.setCustomHeader(System.getProperty(SUMMARY_CUSTOM_HEADER));
+        summary.setCustomFooter(System.getProperty(SUMMARY_CUSTOM_FOOTER));
 
         if (MapUtils.isEmpty(summary.getLogs()) && CollectionUtils.isNotEmpty(summary.getNestedExecutions())) {
             summary.getLogs().putAll(summary.getNestedExecutions().get(0).getLogs());

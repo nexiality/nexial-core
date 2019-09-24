@@ -312,8 +312,19 @@ public final class ExecutionThread extends Thread {
         if (context == null) { return; }
 
         context.fillIntraExecutionData(intraExecutionData);
+
         // override, if found, previous "last completed iteration count"
         intraExecutionData.put(LAST_ITERATION, completeIteration);
+
+        // for last iteration, finalize the execution summary's custom header and footer
+        if (context.getBooleanData(IS_LAST_ITERATION)) {
+            if (context.hasData(SUMMARY_CUSTOM_HEADER)) {
+                System.setProperty(SUMMARY_CUSTOM_HEADER, context.getStringData(SUMMARY_CUSTOM_HEADER));
+            }
+            if (context.hasData(SUMMARY_CUSTOM_FOOTER)) {
+                System.setProperty(SUMMARY_CUSTOM_FOOTER, context.getStringData(SUMMARY_CUSTOM_FOOTER));
+            }
+        }
     }
 
     protected void onIterationException(ExecutionContext context,
