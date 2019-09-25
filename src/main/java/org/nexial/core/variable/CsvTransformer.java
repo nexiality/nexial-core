@@ -319,7 +319,7 @@ public class CsvTransformer<T extends CsvDataType> extends Transformer {
             List<String> modifiedHeaders = new ArrayList<>();
             for (int i = 0; i < data.getHeaders().size(); i++) {
                 if (indicesToRemove.contains(i)) { continue; }
-                modifiedHeaders.add(data.getHeaders().get(i));
+                modifiedHeaders.add(TextUtils.csvSafe(data.getHeaders().get(i), data.getDelim(), true));
             }
 
             csvModified.append(TextUtils.toString(modifiedHeaders, delim)).append(recordDelim);
@@ -331,8 +331,7 @@ public class CsvTransformer<T extends CsvDataType> extends Transformer {
             String[] values = one.getValues();
             for (int i = 0; i < values.length; i++) {
                 if (indicesToRemove.contains(i)) { continue; }
-                String value = values[i];
-                rowModified.append(value).append(delim);
+                rowModified.append(TextUtils.csvSafe(values[i], data.getDelim(), true)).append(delim);
             }
 
             csvModified.append(StringUtils.removeEnd(rowModified.toString(), delim)).append(recordDelim);
@@ -356,7 +355,9 @@ public class CsvTransformer<T extends CsvDataType> extends Transformer {
         if (data.isHeader()) {
             List<String> modifiedHeaders = new ArrayList<>();
             for (int i = 0; i < data.getHeaders().size(); i++) {
-                if (indicesToRetain.contains(i)) { modifiedHeaders.add(data.getHeaders().get(i)); }
+                if (indicesToRetain.contains(i)) {
+                    modifiedHeaders.add(TextUtils.csvSafe(data.getHeaders().get(i), data.getDelim(), true));
+                }
             }
 
             csvModified.append(TextUtils.toString(modifiedHeaders, delim)).append(recordDelim);
@@ -367,7 +368,9 @@ public class CsvTransformer<T extends CsvDataType> extends Transformer {
             StringBuilder rowModified = new StringBuilder();
             String[] values = one.getValues();
             for (int i = 0; i < values.length; i++) {
-                if (indicesToRetain.contains(i)) { rowModified.append(values[i]).append(delim); }
+                if (indicesToRetain.contains(i)) {
+                    rowModified.append(TextUtils.csvSafe(values[i], data.getDelim(), true)).append(delim);
+                }
             }
 
             csvModified.append(StringUtils.removeEnd(rowModified.toString(), delim)).append(recordDelim);
@@ -418,8 +421,10 @@ public class CsvTransformer<T extends CsvDataType> extends Transformer {
             String[] cells = row.getValues();
             for (int i = 0; i < cells.length; i++) {
                 String cell = cells[i];
-                cell = indicesToSearch.contains(i) ? RegexUtils.replace(cell, searchFor, replaceWith) : cell;
-                cell = cell.contains(delim) ? StringUtils.wrapIfMissing(cell, "\"") : cell;
+                cell = TextUtils.csvSafe(indicesToSearch.contains(i) ?
+                                         RegexUtils.replace(cell, searchFor, replaceWith) : cell,
+                                         delim,
+                                         true);
                 rowModified.append(cell).append(delim);
             }
 
@@ -455,7 +460,7 @@ public class CsvTransformer<T extends CsvDataType> extends Transformer {
             } else {
                 parsed.add(combinedValues);
 
-                for (String value : values) { rowModified.append(value).append(delim); }
+                for (String value : values) { rowModified.append(TextUtils.csvSafe(value, delim, true)).append(delim); }
                 csvModified.append(StringUtils.removeEnd(rowModified.toString(), delim)).append(recordDelim);
             }
         });
@@ -583,7 +588,7 @@ public class CsvTransformer<T extends CsvDataType> extends Transformer {
         StringBuilder buffer = new StringBuilder();
         transposed.forEach(rows -> {
             StringBuilder oneRow = new StringBuilder();
-            rows.forEach(cell -> oneRow.append(cell).append(delim));
+            rows.forEach(cell -> oneRow.append(TextUtils.csvSafe(cell, delim, true)).append(delim));
             buffer.append(StringUtils.removeEnd(oneRow.toString(), delim)).append(recordDelim);
         });
 

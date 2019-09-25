@@ -22,6 +22,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.lang.reflect.Array;
 import java.util.*;
+import java.util.concurrent.atomic.AtomicReference;
 import java.util.stream.Collectors;
 import javax.validation.constraints.NotNull;
 
@@ -56,6 +57,19 @@ public final class TextUtils {
     public static final String[] INLINE_BR = new String[]{"<br/>", "<br/>", "<br/>", "<br/>", "<br/>"};
 
     private static final Map<String, String> ESCAPE_HTML_MAP = initDefaultEscapeHtmlMapping();
+    private final static Map<String, String> CSV_SAFE_REPLACEMENT = TextUtils.toMap("=",
+                                                                                    " \n = ",
+                                                                                    " \r\n = ",
+                                                                                    " \r = ",
+                                                                                    " \t = ",
+                                                                                    " \n= ",
+                                                                                    " \r\n= ",
+                                                                                    " \r= ",
+                                                                                    " \t= ",
+                                                                                    "\n = ",
+                                                                                    "\r\n = ",
+                                                                                    "\r = ",
+                                                                                    "\t = ");
 
     /**
      * line break conversion strategies -- currently only two, namely (1)
@@ -1130,6 +1144,29 @@ public final class TextUtils {
             csvBuffer.append(StringUtils.removeEnd(rowBuffer.toString(), delim)).append(recordDelim);
         });
         return csvBuffer.toString();
+    }
+
+    @NotNull
+    public static String csvSafe(String text, String delim, boolean forceOneline) {
+        if (StringUtils.isBlank(text)) { return text; }
+
+        AtomicReference<String> safe = new AtomicReference<>(text);
+        if (forceOneline) {
+            CSV_SAFE_REPLACEMENT.forEach((find, replace) -> safe.set(StringUtils.replace(safe.get(), find, replace)));
+            safe.set(StringUtils.replace(safe.get(), "\r", ""));
+            safe.set(StringUtils.replace(safe.get(), "\n", " "));
+            safe.set(StringUtils.replace(safe.get(), "\t", " "));
+        }
+
+        String safeText = safe.get();
+        if (!TextUtils.isBetween(safeText, "\"", "\"") && StringUtils.contains(safeText, "\"")) {
+            safeText = "\"" + StringUtils.replace(safeText, "\"", "\"\"") + "\"";
+        }
+        if (!TextUtils.isBetween(safeText, "\"", "\"") && StringUtils.contains(safeText, delim)) {
+            safeText = "\"" + safeText + "\"";
+        }
+
+        return safeText;
     }
 
     public static String base64encode(String plain) {

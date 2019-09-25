@@ -1431,6 +1431,31 @@ public class ExpressionProcessorTest {
     }
 
     @Test
+    public void processCSV6() throws Exception {
+        String csvFile = ResourceUtils.getResourceFilePath(resourcePath + this.getClass().getSimpleName() + "9.csv");
+        Assert.assertNotNull(csvFile);
+
+        ExpressionProcessor subject = new ExpressionProcessor(context);
+
+        String fixture = subject.process("[CSV(" + csvFile + ") => " +
+                                         " parse(header=true)" +
+                                         " remove-columns(User Name,Department)" +
+                                         " text" +
+                                         "]");
+        System.out.println("fixture = " + fixture);
+
+        // check that double quotes are retained.
+        Assert.assertEquals(
+            "First Name,Last Name,Display Name,Job Title,Office Number,Office Phone,Mobile Phone,Fax,Address,City,State or Province,ZIP or Postal Code,Country or Region\n" +
+            "Chris,Green,Chris Green,Manager,234232,312-490-4891,123-555-6641,123-555-9821,1 Microsoft way,Redmond,WA,98052,United States\n" +
+            "Ben,Andrews,Ben Andrews,Director,362342,312-492-9910,123-555-6642,123-555-9822,1 Microsoft way,Redmond,WA,98052,United States\n" +
+            "David,Longmuir,David Longmuir,\"Vice President, Quality\",6795647,312-490-5565,312-490-5125,123-555-9823,1 Microsoft way,Redmond,WA,98052,United States\n" +
+            "Cynthia,Carey,Cynthia Carey,Senior Director,112324,312-490-1192,123-555-6644,123-555-9824,1 Microsoft way,Redmond,WA,98052,United States\n" +
+            "Melissa,MacBeth,Melissa MacBeth,Supervisor,345345,312-490-3892,123-555-6645,123-555-9825,1 Microsoft way,Redmond,WA,98052,United States",
+            fixture);
+    }
+
+    @Test
     public void processCSV_with_blank_records() throws Exception {
         String csvFile = ResourceUtils.getResourceFilePath(resourcePath + this.getClass().getSimpleName() + "11.csv");
 
