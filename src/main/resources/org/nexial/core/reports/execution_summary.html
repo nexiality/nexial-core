@@ -38,7 +38,7 @@
     <i class="fas fa-compress on" id="collapse-toggle" onclick="toggleExpansion(this)" title="collapse/expand all sections"><span>Collapse/Expand All</span></i>
 </div>
 
-<th:block data-th-if="#{summary.customHeader}">
+<th:block data-th-if="${summary.customHeader}">
     <div class="custom-header" data-th-utext="${summary.customHeader}">
         Special <a href="https://bit.ly/nexial">data file</a>.<br/>
         The number of transaction completed is <b>15</b>
@@ -275,7 +275,7 @@
     </div>
 </div>
 
-<th:block data-th-if="#{summary.customFooter}">
+<th:block data-th-if="${summary.customFooter}">
     <div class="custom-footer" data-th-utext="${summary.customFooter}">
         Special <a href="https://bit.ly/nexial">data file</a>.<br/>
         The number of transaction completed is <b>15</b>
