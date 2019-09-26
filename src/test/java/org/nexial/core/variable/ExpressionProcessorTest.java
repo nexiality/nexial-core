@@ -1453,6 +1453,29 @@ public class ExpressionProcessorTest {
             "Cynthia,Carey,Cynthia Carey,Senior Director,112324,312-490-1192,123-555-6644,123-555-9824,1 Microsoft way,Redmond,WA,98052,United States\n" +
             "Melissa,MacBeth,Melissa MacBeth,Supervisor,345345,312-490-3892,123-555-6645,123-555-9825,1 Microsoft way,Redmond,WA,98052,United States",
             fixture);
+
+        csvFile = ResourceUtils.getResourceFilePath(resourcePath + this.getClass().getSimpleName() + "10.csv");
+        Assert.assertNotNull(csvFile);
+
+        String outputFile = StringUtils.substringBeforeLast(csvFile, separator) + separator + "output-10.csv";
+        context.setData("output", outputFile);
+        subject = new ExpressionProcessor(context);
+
+        fixture = subject.process("[CSV(" + csvFile + ") => parse(header=true) save(" + outputFile + ")]");
+        System.out.println(fixture);
+        Assert.assertNotNull(fixture);
+        String saved = FileUtils.readFileToString(new File(outputFile), DEF_FILE_ENCODING);
+        Assert.assertEquals("1107-000,WRITERS ASSTS & P.A.'S\n" +
+                            "1204-000,PRODUCER ROYALTY / BONUSES\n" +
+                            "1304-000,DIRECTOR'S ROYALTIES / BONUSES\n" +
+                            "1542-000,CAST HOTEL\n" +
+                            "2129-000,\"BUMPS - WARDROBE, AUTO, SMOKE, ETC\"\n" +
+                            "2195-000,OTHER COSTS\n" +
+                            "2195-000,\"OTHER COSTS \"\n" +
+                            "2195-000,OTHER \"COSTS\"\n" +
+                            "2195-000,OTHER 'COSTS'",
+                            saved);
+        Assert.assertEquals(fixture, saved);
     }
 
     @Test

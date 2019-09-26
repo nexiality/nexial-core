@@ -1147,11 +1147,11 @@ public final class TextUtils {
     }
 
     @NotNull
-    public static String csvSafe(String text, String delim, boolean forceOneline) {
+    public static String csvSafe(String text, String delim, boolean oneLine) {
         if (StringUtils.isBlank(text)) { return text; }
 
         AtomicReference<String> safe = new AtomicReference<>(text);
-        if (forceOneline) {
+        if (oneLine) {
             CSV_SAFE_REPLACEMENT.forEach((find, replace) -> safe.set(StringUtils.replace(safe.get(), find, replace)));
             safe.set(StringUtils.replace(safe.get(), "\r", ""));
             safe.set(StringUtils.replace(safe.get(), "\n", " "));
@@ -1159,9 +1159,6 @@ public final class TextUtils {
         }
 
         String safeText = safe.get();
-        if (!TextUtils.isBetween(safeText, "\"", "\"") && StringUtils.contains(safeText, "\"")) {
-            safeText = "\"" + StringUtils.replace(safeText, "\"", "\"\"") + "\"";
-        }
         if (!TextUtils.isBetween(safeText, "\"", "\"") && StringUtils.contains(safeText, delim)) {
             safeText = "\"" + safeText + "\"";
         }
