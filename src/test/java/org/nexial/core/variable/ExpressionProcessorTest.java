@@ -70,6 +70,7 @@ public class ExpressionProcessorTest {
         }
     };
     private String resourcePath;
+    private String className = this.getClass().getSimpleName();
 
     @Before
     public void setup() throws Exception {
@@ -700,7 +701,7 @@ public class ExpressionProcessorTest {
     public void processJson() throws Exception {
         ExpressionProcessor subject = new ExpressionProcessor(context);
 
-        String jsonFile = ResourceUtils.getResourceFilePath(resourcePath + this.getClass().getSimpleName() + "1.json");
+        String jsonFile = ResourceUtils.getResourceFilePath(resourcePath + className + "1.json");
         String fixture = "[JSON(" + jsonFile + ") => text pack]";
         String result = subject.process(fixture);
         Assert.assertTrue(result.contains("\"GlossTerm\":\"StandardGeneralizedMarkupLanguage\""));
@@ -718,7 +719,7 @@ public class ExpressionProcessorTest {
         result = subject.process(fixture);
         Assert.assertEquals("XML", result);
 
-        jsonFile = ResourceUtils.getResourceFilePath(resourcePath + this.getClass().getSimpleName() + "2.json");
+        jsonFile = ResourceUtils.getResourceFilePath(resourcePath + className + "2.json");
 
         result = subject.process("[JSON(" + jsonFile + ") => extract(gamt)]");
         Assert.assertEquals("3415.829994", result);
@@ -819,7 +820,7 @@ public class ExpressionProcessorTest {
     public void processJsonAdd() throws Exception {
         ExpressionProcessor subject = new ExpressionProcessor(context);
 
-        String jsonFile = ResourceUtils.getResourceFilePath(resourcePath + this.getClass().getSimpleName() + "13.json");
+        String jsonFile = ResourceUtils.getResourceFilePath(resourcePath + className + "13.json");
         String fixture = "[JSON(" + jsonFile + ") =>" +
                          " addOrReplace(office.address,\"932b 32nd Street\\, Big City\\, State of Confusion\")" +
                          " text]";
@@ -870,7 +871,7 @@ public class ExpressionProcessorTest {
     public void processJson_save() throws Exception {
         ExpressionProcessor subject = new ExpressionProcessor(context);
 
-        String jsonFile = ResourceUtils.getResourceFilePath(resourcePath + this.getClass().getSimpleName() + "13.json");
+        String jsonFile = ResourceUtils.getResourceFilePath(resourcePath + className + "13.json");
         String output = StringUtils.replace(jsonFile, ".json", "-new.json");
         Assert.assertNotNull(output);
         FileUtils.deleteQuietly(new File(output));
@@ -909,7 +910,7 @@ public class ExpressionProcessorTest {
     public void processJson_save2() throws Exception {
         ExpressionProcessor subject = new ExpressionProcessor(context);
 
-        String jsonFile = ResourceUtils.getResourceFilePath(resourcePath + this.getClass().getSimpleName() + "14.json");
+        String jsonFile = ResourceUtils.getResourceFilePath(resourcePath + className + "14.json");
         String output = StringUtils.replace(jsonFile, ".json", "-new.json");
         Assert.assertNotNull(output);
         FileUtils.deleteQuietly(new File(output));
@@ -943,7 +944,7 @@ public class ExpressionProcessorTest {
     public void processJsonSelect() throws Exception {
         ExpressionProcessor subject = new ExpressionProcessor(context);
 
-        String jsonFile = ResourceUtils.getResourceFilePath(resourcePath + this.getClass().getSimpleName() + "2.json");
+        String jsonFile = ResourceUtils.getResourceFilePath(resourcePath + className + "2.json");
 
         Assert.assertEquals("details.minutes => sum,4500\r\n" +
                             "details.amt1 => sum,3415.8299937894\r\n" +
@@ -971,7 +972,7 @@ public class ExpressionProcessorTest {
     public void processXml() throws Exception {
         ExpressionProcessor subject = new ExpressionProcessor(context);
 
-        String xmlFile = ResourceUtils.getResourceFilePath(resourcePath + this.getClass().getSimpleName() + "3.xml");
+        String xmlFile = ResourceUtils.getResourceFilePath(resourcePath + className + "3.xml");
         String fixture = "[XML(" + xmlFile + ") => text normalize]";
         String result = subject.process(fixture);
         Assert.assertTrue(result.contains("<description>Microsoft's .NET initiative is explored in detail in this " +
@@ -993,7 +994,7 @@ public class ExpressionProcessorTest {
     public void processXml_with_prolog() throws Exception {
         ExpressionProcessor subject = new ExpressionProcessor(context);
 
-        String xmlFile = ResourceUtils.getResourceFilePath(resourcePath + this.getClass().getSimpleName() + "4.xml");
+        String xmlFile = ResourceUtils.getResourceFilePath(resourcePath + className + "4.xml");
         String fixture = "[XML(" + xmlFile + ") => text normalize]";
         String result = subject.process(fixture);
         Assert.assertTrue(result.contains("<double xmlns=\"http://www.webserviceX.NET/\">212</double>"));
@@ -1027,7 +1028,6 @@ public class ExpressionProcessorTest {
 
     @Test
     public void processConfig() throws Exception {
-        String className = this.getClass().getSimpleName();
         String propertiesFile = ResourceUtils.getResourceFilePath(resourcePath + className + "4.txt");
 
         ExpressionProcessor subject = new ExpressionProcessor(context);
@@ -1085,7 +1085,7 @@ public class ExpressionProcessorTest {
         ExpressionProcessor subject = new ExpressionProcessor(context);
 
         // to avoid forceful recompile between tests, let's copy `iniFile` to another as test subject
-        String iniFile = ResourceUtils.getResourceFilePath(resourcePath + this.getClass().getSimpleName() + "5.ini");
+        String iniFile = ResourceUtils.getResourceFilePath(resourcePath + className + "5.ini");
         Assert.assertNotNull(iniFile);
         String testFile = iniFile + "COPY";
         FileUtils.copyFile(new File(iniFile), new File(testFile));
@@ -1107,7 +1107,7 @@ public class ExpressionProcessorTest {
         fixture = "[INI(" + testFile + ") => remove(PRODUCT_2345,*) save(" + testFile + ")]";
         Assert.assertFalse(subject.process(fixture).contains("PRODUCT_2345"));
 
-        String newFile = ResourceUtils.getResourceFilePath(resourcePath + this.getClass().getSimpleName() + "6.ini");
+        String newFile = ResourceUtils.getResourceFilePath(resourcePath + className + "6.ini");
         fixture = "[INI(" + testFile + ") => merge(" + newFile + ") save(" + testFile + ")]";
         Assert.assertTrue(subject.process(fixture).contains("PRODUCT_2345"));
 
@@ -1137,7 +1137,7 @@ public class ExpressionProcessorTest {
 
     @Test
     public void processCSV() throws Exception {
-        String csvFile = ResourceUtils.getResourceFilePath(resourcePath + this.getClass().getSimpleName() + "7.csv");
+        String csvFile = ResourceUtils.getResourceFilePath(resourcePath + className + "7.csv");
         Assert.assertNotNull(csvFile);
 
         ExpressionProcessor subject = new ExpressionProcessor(context);
@@ -1212,7 +1212,7 @@ public class ExpressionProcessorTest {
 
     @Test
     public void processCSV2() throws Exception {
-        String csvFile = ResourceUtils.getResourceFilePath(resourcePath + this.getClass().getSimpleName() + "8.csv");
+        String csvFile = ResourceUtils.getResourceFilePath(resourcePath + className + "8.csv");
 
         ExpressionProcessor subject = new ExpressionProcessor(context);
 
@@ -1320,7 +1320,7 @@ public class ExpressionProcessorTest {
 
     @Test
     public void processCSV3() throws Exception {
-        String csvFile = ResourceUtils.getResourceFilePath(resourcePath + this.getClass().getSimpleName() + "8.csv");
+        String csvFile = ResourceUtils.getResourceFilePath(resourcePath + className + "8.csv");
 
         ExpressionProcessor subject = new ExpressionProcessor(context);
         assertThat(subject.process("[CSV(" + csvFile + ") => " +
@@ -1339,7 +1339,7 @@ public class ExpressionProcessorTest {
 
     @Test
     public void processCSV4() throws Exception {
-        String csvFile = ResourceUtils.getResourceFilePath(resourcePath + this.getClass().getSimpleName() + "8.csv");
+        String csvFile = ResourceUtils.getResourceFilePath(resourcePath + className + "8.csv");
 
         ExpressionProcessor subject = new ExpressionProcessor(context);
 
@@ -1385,7 +1385,7 @@ public class ExpressionProcessorTest {
 
     @Test
     public void processCSV5() throws Exception {
-        String csvFile = ResourceUtils.getResourceFilePath(resourcePath + this.getClass().getSimpleName() + "8.csv");
+        String csvFile = ResourceUtils.getResourceFilePath(resourcePath + className + "8.csv");
         Assert.assertNotNull(csvFile);
 
         ExpressionProcessor subject = new ExpressionProcessor(context);
@@ -1432,7 +1432,7 @@ public class ExpressionProcessorTest {
 
     @Test
     public void processCSV6() throws Exception {
-        String csvFile = ResourceUtils.getResourceFilePath(resourcePath + this.getClass().getSimpleName() + "9.csv");
+        String csvFile = ResourceUtils.getResourceFilePath(resourcePath + className + "9a.csv");
         Assert.assertNotNull(csvFile);
 
         ExpressionProcessor subject = new ExpressionProcessor(context);
@@ -1454,14 +1454,18 @@ public class ExpressionProcessorTest {
             "Melissa,MacBeth,Melissa MacBeth,Supervisor,345345,312-490-3892,123-555-6645,123-555-9825,1 Microsoft way,Redmond,WA,98052,United States",
             fixture);
 
-        csvFile = ResourceUtils.getResourceFilePath(resourcePath + this.getClass().getSimpleName() + "10.csv");
+        csvFile = ResourceUtils.getResourceFilePath(resourcePath + className + "10.csv");
         Assert.assertNotNull(csvFile);
 
         String outputFile = StringUtils.substringBeforeLast(csvFile, separator) + separator + "output-10.csv";
         context.setData("output", outputFile);
         subject = new ExpressionProcessor(context);
 
-        fixture = subject.process("[CSV(" + csvFile + ") => parse(header=true) save(" + outputFile + ")]");
+        fixture = subject.process("[CSV(" +
+                                  csvFile +
+                                  ") => parse(header=true,keepQuote=true) save(" +
+                                  outputFile +
+                                  ")]");
         System.out.println(fixture);
         Assert.assertNotNull(fixture);
         String saved = FileUtils.readFileToString(new File(outputFile), DEF_FILE_ENCODING);
@@ -1480,7 +1484,7 @@ public class ExpressionProcessorTest {
 
     @Test
     public void processCSV_with_blank_records() throws Exception {
-        String csvFile = ResourceUtils.getResourceFilePath(resourcePath + this.getClass().getSimpleName() + "11.csv");
+        String csvFile = ResourceUtils.getResourceFilePath(resourcePath + className + "11.csv");
 
         ExpressionProcessor subject = new ExpressionProcessor(context);
 
@@ -1514,7 +1518,7 @@ public class ExpressionProcessorTest {
 
     @Test
     public void processCSV_with_quotes() throws Exception {
-        String csvFile = ResourceUtils.getResourceFilePath(resourcePath + this.getClass().getSimpleName() + "12.csv");
+        String csvFile = ResourceUtils.getResourceFilePath(resourcePath + className + "12.csv");
 
         ExpressionProcessor subject = new ExpressionProcessor(context);
 
@@ -1663,7 +1667,7 @@ public class ExpressionProcessorTest {
 
     @Test
     public void processCSV_removeMatchingLines() throws Exception {
-        String csvFile = ResourceUtils.getResourceFilePath(resourcePath + this.getClass().getSimpleName() + "15.csv");
+        String csvFile = ResourceUtils.getResourceFilePath(resourcePath + className + "15.csv");
 
         ExpressionProcessor subject = new ExpressionProcessor(context);
         assertThat(subject.process("[CSV(" + csvFile + ") => " +
@@ -1705,7 +1709,7 @@ public class ExpressionProcessorTest {
 
     @Test
     public void processCSV_filterMatchingLines() throws Exception {
-        String csvFile = ResourceUtils.getResourceFilePath(resourcePath + this.getClass().getSimpleName() + "15.csv");
+        String csvFile = ResourceUtils.getResourceFilePath(resourcePath + className + "15.csv");
 
         ExpressionProcessor subject = new ExpressionProcessor(context);
         assertThat(subject.process("[CSV(" + csvFile + ") => " +
@@ -2123,8 +2127,7 @@ public class ExpressionProcessorTest {
 
     @Test
     public void processCSV_group() throws Exception {
-        String fixtureBase = resourcePath + this.getClass().getSimpleName();
-        String file = ResourceUtils.getResourceFilePath(fixtureBase + "17.csv");
+        String file = ResourceUtils.getResourceFilePath(resourcePath + className + "17.csv");
 
         ExpressionProcessor subject = new ExpressionProcessor(context);
 
@@ -2461,8 +2464,7 @@ public class ExpressionProcessorTest {
 
     @Test
     public void processCSV_sum() throws Exception {
-        String fixtureBase = resourcePath + this.getClass().getSimpleName();
-        String file = ResourceUtils.getResourceFilePath(fixtureBase + "17.csv");
+        String file = ResourceUtils.getResourceFilePath(resourcePath + className + "17.csv");
 
         ExpressionProcessor subject = new ExpressionProcessor(context);
 
@@ -2529,8 +2531,7 @@ public class ExpressionProcessorTest {
 
     @Test
     public void processCSV_retainColumns() throws Exception {
-        String fixtureBase = resourcePath + this.getClass().getSimpleName();
-        String file = ResourceUtils.getResourceFilePath(fixtureBase + "_retainColumns.csv");
+        String file = ResourceUtils.getResourceFilePath(resourcePath + className + "_retainColumns.csv");
 
         ExpressionProcessor subject = new ExpressionProcessor(context);
 
@@ -2643,8 +2644,7 @@ public class ExpressionProcessorTest {
 
     @Test
     public void processCSV_replaceColumnsRegex() throws Exception {
-        String fixtureBase = resourcePath + this.getClass().getSimpleName();
-        String file = ResourceUtils.getResourceFilePath(fixtureBase + "_replaceColumnsRegex.csv");
+        String file = ResourceUtils.getResourceFilePath(resourcePath + className + "_replaceColumnsRegex.csv");
 
         ExpressionProcessor subject = new ExpressionProcessor(context);
 
@@ -2760,8 +2760,7 @@ public class ExpressionProcessorTest {
 
     @Test
     public void processCSV_distinct() throws Exception {
-        String fixtureBase = resourcePath + this.getClass().getSimpleName();
-        String file = ResourceUtils.getResourceFilePath(fixtureBase + "_replaceColumnsRegex.csv");
+        String file = ResourceUtils.getResourceFilePath(resourcePath + className + "_replaceColumnsRegex.csv");
 
         ExpressionProcessor subject = new ExpressionProcessor(context);
 
@@ -2803,7 +2802,7 @@ public class ExpressionProcessorTest {
 
     @Test
     public void processCSV_removeRows_by_index() throws Exception {
-        String csvFile = ResourceUtils.getResourceFilePath(resourcePath + this.getClass().getSimpleName() + "8.csv");
+        String csvFile = ResourceUtils.getResourceFilePath(resourcePath + className + "8.csv");
         ExpressionProcessor subject = new ExpressionProcessor(context);
 
         // CSV with header
@@ -2867,8 +2866,7 @@ public class ExpressionProcessorTest {
 
     @Test
     public void processExcel() throws Exception {
-        String fixtureBase = resourcePath + this.getClass().getSimpleName();
-        String file = ResourceUtils.getResourceFilePath(fixtureBase + "9.xlsx");
+        String file = ResourceUtils.getResourceFilePath(resourcePath + className + "9.xlsx");
 
         ExpressionProcessor subject = new ExpressionProcessor(context);
 
@@ -2948,7 +2946,7 @@ public class ExpressionProcessorTest {
         // --------------------------------------------------------------------------------
         // test with existing workbook/worksheet
         // --------------------------------------------------------------------------------
-        String xlsxFile = ResourceUtils.getResourceFilePath(fixtureBase + "10.xlsx");
+        String xlsxFile = ResourceUtils.getResourceFilePath(resourcePath + className + "10.xlsx");
         Assert.assertNotNull(xlsxFile);
         File targetSource = new File(xlsxFile);
 
@@ -3008,8 +3006,7 @@ public class ExpressionProcessorTest {
 
     @Test
     public void processExcel_worksheets() throws Exception {
-        String fixtureBase = resourcePath + this.getClass().getSimpleName();
-        String file = ResourceUtils.getResourceFilePath(fixtureBase + "9.xlsx");
+        String file = ResourceUtils.getResourceFilePath(resourcePath + className + "9.xlsx");
 
         ExpressionProcessor subject = new ExpressionProcessor(context);
 
@@ -3021,8 +3018,7 @@ public class ExpressionProcessorTest {
 
     @Test
     public void processExcel_read() throws Exception {
-        String fixtureBase = resourcePath + this.getClass().getSimpleName();
-        String file = ResourceUtils.getResourceFilePath(fixtureBase + "9.xlsx");
+        String file = ResourceUtils.getResourceFilePath(resourcePath + className + "9.xlsx");
 
         String expectedCapturedData =
             "number1,numbers3,name,emp type,soc sec no,fso,union,class,addr 1,city,state,postal code,email,fed mar stat,allow/dep,calc type,adj amt,state mar stat,allow/dep,calc type,adj amt,i-9,last year w4,wfr NY,wfr CA,start date,union dues,document id,res state,work state,state of incorporation,employee status,vacation type,holiday type,start memo,gl code,tax waiver,from,to,state,CA,NC,SC,MI,MS,NM,GA,PA,MA,CO,LA\r\n" +
@@ -3039,8 +3035,7 @@ public class ExpressionProcessorTest {
 
     @Test
     public void processExcel_transpose() throws Exception {
-        String fixtureBase = resourcePath + this.getClass().getSimpleName();
-        String file = ResourceUtils.getResourceFilePath(fixtureBase + "9.xlsx");
+        String file = ResourceUtils.getResourceFilePath(resourcePath + className + "9.xlsx");
 
         String expectedCapturedData =
             "number1,69898,69898,28520,15970\r\n" +
@@ -3106,13 +3101,12 @@ public class ExpressionProcessorTest {
 
     @Test
     public void processExcel_save() throws Exception {
-        String fixtureBase = resourcePath + this.getClass().getSimpleName();
-        String file = ResourceUtils.getResourceFilePath(fixtureBase + "9.xlsx");
+        String file = ResourceUtils.getResourceFilePath(resourcePath + className + "9.xlsx");
 
         // --------------------------------------------------------------------------------
         // test with existing workbook/worksheet
         // --------------------------------------------------------------------------------
-        String xlsxFile = ResourceUtils.getResourceFilePath(fixtureBase + "10.xlsx");
+        String xlsxFile = ResourceUtils.getResourceFilePath(resourcePath + className + "10.xlsx");
         Assert.assertNotNull(xlsxFile);
         File targetSource = new File(xlsxFile);
 
@@ -3175,8 +3169,7 @@ public class ExpressionProcessorTest {
 
     @Test
     public void processExcel_pack() throws Exception {
-        String fixtureBase = resourcePath + this.getClass().getSimpleName();
-        String file = ResourceUtils.getResourceFilePath(fixtureBase + "9.xlsx");
+        String file = ResourceUtils.getResourceFilePath(resourcePath + className + "9.xlsx");
 
         String expectedCapturedData =
             "number1,numbers2,fla/flb/flc,numbers3,name,union,work date,document id,comment,wrk state,wk dy,tx dy,sep chk,,gl,pay code,hours,amount,class code\r\n" +
@@ -3212,8 +3205,7 @@ public class ExpressionProcessorTest {
 
     @Test
     public void processExcel_rowCount() throws Exception {
-        String fixtureBase = resourcePath + this.getClass().getSimpleName();
-        String file = ResourceUtils.getResourceFilePath(fixtureBase + "9.xlsx");
+        String file = ResourceUtils.getResourceFilePath(resourcePath + className + "9.xlsx");
 
         ExpressionProcessor subject = new ExpressionProcessor(context);
 
@@ -3227,8 +3219,7 @@ public class ExpressionProcessorTest {
 
     @Test
     public void processExcel_columnCount() throws Exception {
-        String fixtureBase = resourcePath + this.getClass().getSimpleName();
-        String file = ResourceUtils.getResourceFilePath(fixtureBase + "9.xlsx");
+        String file = ResourceUtils.getResourceFilePath(resourcePath + className + "9.xlsx");
 
         ExpressionProcessor subject = new ExpressionProcessor(context);
 
@@ -3242,8 +3233,7 @@ public class ExpressionProcessorTest {
 
     @Test
     public void processExcel_store_restore() throws Exception {
-        String fixtureBase = resourcePath + this.getClass().getSimpleName();
-        String file = ResourceUtils.getResourceFilePath(fixtureBase + "9.xlsx");
+        String file = ResourceUtils.getResourceFilePath(resourcePath + className + "9.xlsx");
 
         ExpressionProcessor subject = new ExpressionProcessor(context);
 
@@ -3286,8 +3276,7 @@ public class ExpressionProcessorTest {
 
     @Test
     public void processExcel_csv() throws Exception {
-        String fixtureBase = resourcePath + this.getClass().getSimpleName();
-        String file = ResourceUtils.getResourceFilePath(fixtureBase + "9.xlsx");
+        String file = ResourceUtils.getResourceFilePath(resourcePath + className + "9.xlsx");
         ExpressionProcessor subject = new ExpressionProcessor(context);
 
         assertThat(subject.process("[EXCEL(" + file + ") => read(list46,A1:F13) csv]"),
@@ -3325,8 +3314,7 @@ public class ExpressionProcessorTest {
 
     @Test
     public void processExcel_csv_append() throws Exception {
-        String fixtureBase = resourcePath + this.getClass().getSimpleName();
-        String file = ResourceUtils.getResourceFilePath(fixtureBase + "9.xlsx");
+        String file = ResourceUtils.getResourceFilePath(resourcePath + className + "9.xlsx");
         String output = StringUtils.replace(file, ".xlsx", ".csv");
         Assert.assertNotNull(output);
 
@@ -3359,8 +3347,7 @@ public class ExpressionProcessorTest {
 
     @Test
     public void processExcel_json() throws Exception {
-        String fixtureBase = resourcePath + this.getClass().getSimpleName();
-        String file = ResourceUtils.getResourceFilePath(fixtureBase + "9.xlsx");
+        String file = ResourceUtils.getResourceFilePath(resourcePath + className + "9.xlsx");
         ExpressionProcessor subject = new ExpressionProcessor(context);
 
         assertThat(subject.process("[EXCEL(" + file + ") => read(list46,A1:F13) json(false)]"),
@@ -3576,7 +3563,7 @@ public class ExpressionProcessorTest {
 
     @Test
     public void processExcel_writes() throws Exception {
-        String file = ResourceUtils.getResourceFilePath(resourcePath + this.getClass().getSimpleName() + "9.xlsx");
+        String file = ResourceUtils.getResourceFilePath(resourcePath + className + "9.xlsx");
 
         ExpressionProcessor subject = new ExpressionProcessor(context);
 
@@ -3613,7 +3600,7 @@ public class ExpressionProcessorTest {
 
         String sqlTemplate = ResourceUtils.getResourceFilePath(resourceBasePath + "12.sql");
         String sqlPath = StringUtils.appendIfMissing(SystemUtils.getJavaIoTmpDir().getAbsolutePath(), separator) +
-                         this.getClass().getSimpleName() + "-rendered.sql";
+                         className + "-rendered.sql";
         expected = "-- nexial:KXY result\n" +
                    "SELECT OFFICELOCATIONDESC AS \"description\", ADDRESSLINE1 || ' ' || ADDRESSLINE2 || ', ' || CITY || ' ' || OFFICELOCATIONSTATE || ' ' || ZIP || ' ' || COUNTRY AS \"fullAddress\" FROM OFFICELOCATIONS WHERE OFFICELOCATIONCODE = 'KXY';\n" +
                    "\n" +
@@ -3679,8 +3666,7 @@ public class ExpressionProcessorTest {
         context.setData("code", "KXY");
         context.setData("min. Location ID", 2);
 
-        String fixtureBase = resourcePath + this.getClass().getSimpleName();
-        String file = ResourceUtils.getResourceFilePath(fixtureBase + "13.sql");
+        String file = ResourceUtils.getResourceFilePath(resourcePath + className + "13.sql");
 
         ExpressionProcessor subject = new ExpressionProcessor(context);
 
@@ -3718,8 +3704,7 @@ public class ExpressionProcessorTest {
         context.setData("Client ID", 73443);
         context.setData("Voucher ID", 541089);
 
-        String fixtureBase = resourcePath + this.getClass().getSimpleName();
-        String file = ResourceUtils.getResourceFilePath(fixtureBase + "14.sql");
+        String file = ResourceUtils.getResourceFilePath(resourcePath + className + "14.sql");
 
         ExpressionProcessor subject = new ExpressionProcessor(context);
 

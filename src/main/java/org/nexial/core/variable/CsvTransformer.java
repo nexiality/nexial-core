@@ -94,6 +94,9 @@ public class CsvTransformer<T extends CsvDataType> extends Transformer {
             data.setDelim(configMap.containsKey("delim") ? configMap.get("delim") : context.getTextDelim());
             if (configMap.containsKey("header")) { data.setHeader(BooleanUtils.toBoolean(configMap.get("header"))); }
             if (configMap.containsKey("quote")) { data.setQuote(configMap.get("quote")); }
+            if (configMap.containsKey("keepQuote")) {
+                data.setKeepQuote(BooleanUtils.toBoolean(configMap.get("keepQuote")));
+            }
             if (configMap.containsKey("recordDelim")) {
                 data.setRecordDelim(fixControlChars(configMap.get("recordDelim")));
             }

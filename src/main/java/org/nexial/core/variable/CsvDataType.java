@@ -62,6 +62,7 @@ public class CsvDataType extends ExpressionDataType<List<Record>> {
     private List<String> indices = new TreeList<>();
     private Map<String, Map<String, Record>> flyweight;
     private boolean readyToParse;
+    private boolean keepQuote;
 
     public CsvDataType(String textValue) throws TypeConversionException { super(textValue); }
 
@@ -170,6 +171,8 @@ public class CsvDataType extends ExpressionDataType<List<Record>> {
         resetTextValue();
     }
 
+    public void setKeepQuote(boolean keepQuote) { this.keepQuote = keepQuote; }
+
     @NotNull
     @Override
     CsvTransformer getTransformer() { return transformer; }
@@ -181,6 +184,7 @@ public class CsvDataType extends ExpressionDataType<List<Record>> {
         snapshot.transformer = transformer;
         snapshot.delim = delim;
         snapshot.quote = quote;
+        snapshot.keepQuote = keepQuote;
         snapshot.recordDelim = recordDelim;
         snapshot.header = header;
         snapshot.maxColumns = maxColumns;
@@ -259,7 +263,7 @@ public class CsvDataType extends ExpressionDataType<List<Record>> {
         settings.setMaxCharsPerColumn(maxColumnWidth);
 
         if (StringUtils.isNotEmpty(quote)) { settings.getFormat().setQuote(quote.charAt(0)); }
-        settings.setKeepQuotes(true);
+        settings.setKeepQuotes(keepQuote);
         // settings.setQuoteDetectionEnabled(true);
 
         if (!trimValue) {
