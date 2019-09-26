@@ -261,9 +261,10 @@ public class CsvDataType extends ExpressionDataType<List<Record>> {
 
         CsvParserSettings settings = CsvCommand.newCsvParserSettings(delim, recordDelim, header, maxColumns);
         settings.setMaxCharsPerColumn(maxColumnWidth);
-
-        if (StringUtils.isNotEmpty(quote)) { settings.getFormat().setQuote(quote.charAt(0)); }
         settings.setKeepQuotes(keepQuote);
+        if (StringUtils.isNotEmpty(quote)) {
+            settings.getFormat().setQuote(quote.charAt(0));
+        }
         // settings.setQuoteDetectionEnabled(true);
 
         if (!trimValue) {
