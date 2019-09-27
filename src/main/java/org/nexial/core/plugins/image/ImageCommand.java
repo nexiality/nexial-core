@@ -17,6 +17,16 @@
 
 package org.nexial.core.plugins.image;
 
+import java.awt.*;
+import java.awt.image.*;
+import java.io.File;
+import java.io.IOException;
+import java.text.DecimalFormat;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.stream.Collectors;
+import javax.imageio.ImageIO;
+
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.math.NumberUtils;
 import org.apache.commons.lang3.time.StopWatch;
@@ -28,18 +38,8 @@ import org.nexial.core.plugins.ForcefulTerminate;
 import org.nexial.core.plugins.base.BaseCommand;
 import org.nexial.core.utils.ConsoleUtils;
 
-import javax.imageio.ImageIO;
-import java.awt.*;
-import java.awt.image.BufferedImage;
-import java.io.File;
-import java.io.IOException;
-import java.text.DecimalFormat;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.stream.Collectors;
-
 import static java.awt.RenderingHints.*;
-import static java.awt.image.BufferedImage.TYPE_INT_RGB;
+import static java.awt.image.BufferedImage.*;
 import static java.io.File.separator;
 import static org.nexial.core.NexialConst.ImageType.png;
 import static org.nexial.core.NexialConst.*;
@@ -280,8 +280,7 @@ public class ImageCommand extends BaseCommand implements ForcefulTerminate {
         List<Integer> rgbComponentAsList = TextUtils.toList(rgbComponent, ",", true)
                                                      .stream().map(Integer::parseInt).collect(Collectors.toList());
         if (rgbComponentAsList.size() != 3) {
-            ConsoleUtils.log("RGB color space for trimming is not specified correctly.");
-            return null;
+           throw new ArrayIndexOutOfBoundsException("RGB color space for trimming is not specified correctly;");
         }
         return new Color(rgbComponentAsList.get(0), rgbComponentAsList.get(1), rgbComponentAsList.get(2));
     }

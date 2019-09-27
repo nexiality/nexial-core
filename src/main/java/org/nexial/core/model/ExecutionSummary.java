@@ -126,6 +126,7 @@ public class ExecutionSummary {
     // only application to plan
     private String planName;
     private String planFile;
+    private String planDescription;
 
     public enum ExecutionLevel {EXECUTION, SCRIPT, ITERATION, SCENARIO, ACTIVITY, STEP}
 
@@ -169,6 +170,10 @@ public class ExecutionSummary {
     public String getPlanFile() { return planFile; }
 
     public void setPlanFile(String planFile) { this.planFile = planFile; }
+
+    public String getPlanDescription() { return planDescription; }
+
+    public void setPlanDescription(String planDescription) { this.planDescription = planDescription; }
 
     public String getRunHost() { return runHost; }
 

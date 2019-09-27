@@ -1558,8 +1558,8 @@ public final class NexialConst {
         // warm up constant classes
         ImageDiffColor.init();
         AwsSettings.init();
-        NexialConst.BrowserStack.init();
-        NexialConst.CrossBrowserTesting.init();
+        BrowserStack.init();
+        CrossBrowserTesting.init();
         Project.init();
         CLI.init();
         Data.init();

@@ -95,6 +95,9 @@
         .resultTestDataKey { font-weight: normal; color: #999; }
 
         .reportStats { text-align: right; }
+
+        .planDescription{ font-size: 7pt; }
+
     </style>
 </head>
 <body>
@@ -175,8 +178,9 @@
         <tbody>
         <div data-th-each="script : ${summary.nestedExecutions}">
             <tr valign="top" data-th-each="iteration : ${script.nestedExecutions}">
-                <td align="left" data-th-if="${isPlanExecution}" class="planName" data-th-text="${script.planName + '/' + script.planSequence}">
-                    Plan Name
+                <td align="left" data-th-if="${isPlanExecution}" class="planName">
+                    <span data-th-text="${script.planName + '/' + script.planSequence}"></span>
+                    <span class="planDescription" data-th-text="${#strings.abbreviate(script.planDescription, 75)}"></span>
                 </td>
                 <th align="left" valign="top">
                     <a data-th-href="${iteration.testScriptLink}"

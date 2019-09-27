@@ -142,6 +142,7 @@ public final class ExecutionThread extends Thread {
         executionSummary.setPlanSequence(execDef.getPlanSequence());
         executionSummary.setPlanName(execDef.getPlanName());
         executionSummary.setPlanFile(execDef.getPlanFile());
+        executionSummary.setPlanDescription(execDef.getDescription());
 
         for (int iterationIndex = 1; iterationIndex <= totalIterations; iterationIndex++) {
             // SINGLE THREAD EXECUTION WITHIN FOR LOOP!
