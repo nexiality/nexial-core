@@ -2865,6 +2865,57 @@ public class ExpressionProcessorTest {
     }
 
     @Test
+    public void processCSV_force_quote_on_text() throws Exception {
+        context.setData("csv1", "SSN,First Name,Job,Age\n" +
+                                "123456789,Jim,Teacher,39\n" +
+                                "234567890,John,Manager,33\n" +
+                                "345678901,\"James P.\",Educator,34\n" +
+                                "456789012,Joe,\"Production Inspector\",41\n" +
+                                "567890123,Jacob,\"Software Developer at \\\"Cool Vibe\\\"\",44\n");
+        ExpressionProcessor subject = new ExpressionProcessor(context);
+
+        Assert.assertEquals("SSN,First Name,Job,Age\n" +
+                            "123456789,\"Jim\",\"Teacher\",39\n" +
+                            "234567890,\"John\",\"Manager\",33\n" +
+                            "345678901,\"James P.\",\"Educator\",34\n" +
+                            "456789012,\"Joe\",\"Production Inspector\",41\n" +
+                            "567890123,\"Jacob\",\"Software Developer at \\\"Cool Vibe\\\"\",44",
+                            subject.process("[CSV(${csv1}) => parse(header=true) surround(\",1,2) text]"));
+
+        Assert.assertEquals("SSN,First Name,Job,Age\n" +
+                            "\"123456789\",\"Jim\",\"Teacher\",\"39\"\n" +
+                            "\"234567890\",\"John\",\"Manager\",\"33\"\n" +
+                            "\"345678901\",\"James P.\",\"Educator\",\"34\"\n" +
+                            "\"456789012\",\"Joe\",\"Production Inspector\",\"41\"\n" +
+                            "\"567890123\",\"Jacob\",\"Software Developer at \\\"Cool Vibe\\\"\",\"44\"",
+                            subject.process("[CSV(${csv1}) => parse(header=true) surround(\",*) text]"));
+
+        Assert.assertEquals("SSN,First Name,Job,Age\n" +
+                            "\"123456789\",Jim,Teacher,39\n" +
+                            "\"234567890\",John,Manager,33\n" +
+                            "\"345678901\",James P.,Educator,34\n" +
+                            "\"456789012\",Joe,Production Inspector,41\n" +
+                            "\"567890123\",Jacob,\"Software Developer at \\\"Cool Vibe\\\"\",44",
+                            subject.process("[CSV(${csv1}) => parse(header=true) surround(\",SSN) text]"));
+
+        Assert.assertEquals("SSN,First Name,Job,Age\n" +
+                            "\"123456789\",Jim,\"Teacher\",39\n" +
+                            "\"234567890\",John,\"Manager\",33\n" +
+                            "\"345678901\",\"James P.\",\"Educator\",34\n" +
+                            "\"456789012\",Joe,\"Production Inspector\",41\n" +
+                            "\"567890123\",Jacob,\"Software Developer at \\\"Cool Vibe\\\"\",44",
+                            subject.process("[CSV(${csv1}) => parse(header=true,keepQuote=true) surround(\",Job,SSN) text]"));
+
+        Assert.assertEquals("SSN,First Name,Job,Age\n" +
+                            " 123456789 ,Jim, Teacher ,39\n" +
+                            " 234567890 ,John, Manager ,33\n" +
+                            " 345678901 ,\"James P.\", Educator ,34\n" +
+                            " 456789012 ,Joe, \"Production Inspector\" ,41\n" +
+                            " 567890123 ,Jacob, \"Software Developer at \\\"Cool Vibe\\\"\" ,44",
+                            subject.process("[CSV(${csv1}) => parse(header=true,keepQuote=true) surround( ,Job,SSN) text]"));
+    }
+
+    @Test
     public void processExcel() throws Exception {
         String file = ResourceUtils.getResourceFilePath(resourcePath + className + "9.xlsx");
 

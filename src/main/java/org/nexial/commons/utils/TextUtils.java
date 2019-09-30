@@ -231,7 +231,7 @@ public final class TextUtils {
     public static String[][] to2dArray(String text, String rowSeparator, String delim) {
         if (StringUtils.isEmpty(text)) { return new String[0][0]; }
 
-        // defautls
+        // defaults
         if (StringUtils.isEmpty(rowSeparator)) { rowSeparator = "\n"; }
         if (StringUtils.isEmpty(delim)) { delim = ","; }
 
@@ -289,7 +289,7 @@ public final class TextUtils {
     }
 
     /**
-     * tranform string to {@link List} (of String).  Use {@code delim} to determine the delimiter and {@code trim}
+     * transform string to {@link List} (of String).  Use {@code delim} to determine the delimiter and {@code trim}
      * to determine if the delimited list should be trimmed returned.
      */
     public static <T> List<T> toList(String text, String delim, ListItemConverter<T> itemConverter) {
@@ -311,7 +311,7 @@ public final class TextUtils {
     }
 
     /**
-     * tranform string to {@link List} (of String).  Use {@code delim} to determine the delimiter and {@code trim}
+     * transform string to {@link List} (of String).  Use {@code delim} to determine the delimiter and {@code trim}
      * to determine if the delimited list should be trimmed returned.
      */
     @NotNull
@@ -372,7 +372,7 @@ public final class TextUtils {
     }
 
     /**
-     * tranform string to {@link List} (of String) without discounting consecutive delimiters.
+     * transform string to {@link List} (of String) without discounting consecutive delimiters.
      * Consecutive delimiters would render empty value instead.
      * Use {@code delim} to determine the delimiter and {@code trim}
      * to determine if the delimited list should be trimmed returned.
@@ -515,8 +515,7 @@ public final class TextUtils {
             sb.append(key).append(nameValueDelim).append(map.get(key)).append(pairDelim);
         }
         // remove last pairDelim
-        sb = sb.deleteCharAt(sb.length() - pairDelim.length());
-        return sb.toString();
+        return sb.deleteCharAt(sb.length() - pairDelim.length()).toString();
     }
 
     @NotNull
@@ -567,8 +566,7 @@ public final class TextUtils {
     public static String defaultIfBlank(String text) { return StringUtils.isBlank(text) ? null : text; }
 
     public static String initCap(String text) {
-        return StringUtils.isNotBlank(text) ?
-               text.substring(0, 1).toUpperCase() + text.substring(1, text.length()).toLowerCase() : "";
+        return StringUtils.isNotBlank(text) ? text.substring(0, 1).toUpperCase() + text.substring(1).toLowerCase() : "";
     }
 
     /**
@@ -752,15 +750,16 @@ public final class TextUtils {
      * remove all extraneous whitespaces, including space, tab, newline, carriage return so that {@code text} would
      * contain NO CONTIGUOUS whitespace.
      *
-     * Note that this method will convert all whitespaces (non-printable) to space (ASCII 20), and remove space dups.
+     * Note that this method will convert all whitespaces (non-printable) to space (ASCII 20), and remove space
+     * duplicates.
      */
     @NotNull
     public static String removeExcessWhitespaces(String text) {
         if (StringUtils.isEmpty(text)) { return ""; }
         if (StringUtils.isBlank(text)) { return " "; }
 
-        text = StringUtils.replaceAll(text, "\\s+", " ");
-        text = StringUtils.replaceAll(text, "  ", " ");
+        text = RegExUtils.replaceAll(text, "\\s+", " ");
+        text = RegExUtils.replaceAll(text, "  ", " ");
 
         return text;
     }
@@ -771,29 +770,28 @@ public final class TextUtils {
         if (!StringUtils.contains(name, "'")) { return "'" + name + "'"; }
         if (!StringUtils.contains(name, "\"")) { return "\"" + name + "\""; }
 
-        String substitue = "concat(";
+        String substitute = "concat(";
 
         while (StringUtils.isNotEmpty(name)) {
             int posStart = StringUtils.indexOfAny(name, '\'', '"');
             if (posStart == -1) {
-                substitue += "'" + name + "',";
+                substitute += "'" + name + "',";
                 break;
             }
 
             String quote = StringUtils.equals(StringUtils.substring(name, posStart, posStart + 1), "'") ?
                            "\"" : "'";
-            substitue += quote + StringUtils.substring(name, 0, posStart + 1) + quote + ",";
+            substitute += quote + StringUtils.substring(name, 0, posStart + 1) + quote + ",";
             name = StringUtils.substring(name, posStart + 1);
         }
 
-        return StringUtils.removeEnd(substitue, ",") + ")";
+        return StringUtils.removeEnd(substitute, ",") + ")";
     }
 
     public static String xpathNormalize(String text) {
         if (StringUtils.isBlank(text)) { return ""; }
 
-        text = StringUtils.trim(text);
-        text = StringUtils.replaceAll(text, "\\p{Space}", " ");
+        text = RegExUtils.replaceAll(StringUtils.trim(text), "\\p{Space}", " ");
         while (StringUtils.contains(text, "  ")) { text = StringUtils.replace(text, "  ", " "); }
 
         return text;

@@ -852,7 +852,7 @@ public class CsvTransformer<T extends CsvDataType> extends Transformer {
         return (T) new CsvDataType(StringUtils.removeEnd(groupCsv.toString(), CSV_ROW_SEP));
     }
 
-    public T saveRowData(T data, String rowIndex) throws TypeConversionException {
+    public T saveRowData(T data, String rowIndex) {
         if (data == null || data.getValue() == null) { return data; }
         if (!data.isHeader()) {
             ConsoleUtils.error("Unable to perform this operation since the target CSV data does not have header");
@@ -884,6 +884,26 @@ public class CsvTransformer<T extends CsvDataType> extends Transformer {
         Record row = data.getValue().get(index);
         data.getHeaders().forEach(header -> context.setData(header, row.getString(header)));
         return data;
+    }
+
+    /**
+     * surround the data of specified columns with specified characters (first element of <code>parameters</code>).
+     * Suppose both column index or column name (starting from second parameters of <code>parameters</code>). Use
+     * <code>*</code> for <b>ALL</b> columns.
+     */
+    public TextDataType surround(T data, String... parameters) throws TypeConversionException {
+        TextDataType text = new TextDataType("");
+
+        if (data == null || data.getValue() == null) { return text; }
+
+        if (ArrayUtils.getLength(parameters) < 2) {
+            text.setValue(data.textValue);
+        } else {
+            String surroundWith = parameters[0];
+            String[] onColumns = ArrayUtils.remove(parameters, 0);
+            text.setValue(data.surround(surroundWith, toIndices(data, onColumns)));
+        }
+        return text;
     }
 
     /**
@@ -976,7 +996,7 @@ public class CsvTransformer<T extends CsvDataType> extends Transformer {
 
         // special case: * means _ALL_ columns
         if (selected.length == 1 && StringUtils.equals(selected[0], "*")) {
-            return IntStream.range(0, maxColumnIndex).boxed().collect(Collectors.toCollection(TreeSet::new));
+            return IntStream.range(0, maxColumnIndex + 1).boxed().collect(Collectors.toCollection(TreeSet::new));
         }
 
         Arrays.stream(selected).forEach(column -> {

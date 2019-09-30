@@ -18,11 +18,7 @@
 package org.nexial.core.variable;
 
 import java.io.StringReader;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import javax.validation.constraints.NotNull;
 
 import org.apache.commons.collections4.CollectionUtils;
@@ -239,6 +235,29 @@ public class CsvDataType extends ExpressionDataType<List<Record>> {
         textValue = StringUtils.removeEnd(output.toString(), recordDelim);
     }
 
+    protected String surround(String surroundWith, Set<Integer> onColumns) {
+        StringBuilder output = new StringBuilder();
+        if (CollectionUtils.isNotEmpty(headers)) {
+            output.append(TextUtils.toString(headers, delim)).append(recordDelim);
+        }
+
+        for (Record row : value) {
+            StringBuilder oneRow = new StringBuilder();
+            String[] columns = row.getValues();
+            for (int i = 0; i < columns.length; i++) {
+                String data = columns[i];
+                if (onColumns.contains(i)) {
+                    oneRow.append(TextUtils.wrapIfMissing(data, surroundWith, surroundWith)).append(delim);
+                } else {
+                    oneRow.append(data).append(delim);
+                }
+            }
+            output.append(StringUtils.removeEnd(oneRow.toString(), delim)).append(recordDelim);
+        }
+
+        return StringUtils.removeEnd(output.toString(), recordDelim);
+    }
+
     protected void parse() {
         if (!readyToParse) { return; }
 
@@ -262,10 +281,7 @@ public class CsvDataType extends ExpressionDataType<List<Record>> {
         CsvParserSettings settings = CsvCommand.newCsvParserSettings(delim, recordDelim, header, maxColumns);
         settings.setMaxCharsPerColumn(maxColumnWidth);
         settings.setKeepQuotes(keepQuote);
-        if (StringUtils.isNotEmpty(quote)) {
-            settings.getFormat().setQuote(quote.charAt(0));
-        }
-        // settings.setQuoteDetectionEnabled(true);
+        if (StringUtils.isNotEmpty(quote)) { settings.getFormat().setQuote(quote.charAt(0)); }
 
         if (!trimValue) {
             settings.setIgnoreLeadingWhitespaces(false);
