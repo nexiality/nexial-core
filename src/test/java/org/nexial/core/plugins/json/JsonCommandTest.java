@@ -914,10 +914,10 @@ public class JsonCommandTest {
         Assert.assertFalse(result.isSuccess());
 
         String compareResult = context.getStringData(LAST_JSON_COMPARE_RESULT);
-        Assert.assertTrue(compareResult.contains("\"EXPECTED has 3 nodes (firstName,id,lastName) " +
-                                                 "but ACTUAL has 0 node ()\""));
-        Assert.assertTrue(compareResult.contains("\"EXPECTED has 0 node () " +
-                                                 "but ACTUAL has 3 nodes (firstName,id,lastName)\""));
+        Assert.assertTrue(compareResult.contains("\"expected\": \"0 element\""));
+        Assert.assertTrue(compareResult.contains("\"actual\": \"3 elements (firstName, id, lastName)\""));
+        Assert.assertTrue(compareResult.contains("\"expected\": \"3 elements (firstName, id, lastName)\""));
+        Assert.assertTrue(compareResult.contains("\"actual\": \"0 element\""));
     }
 
     @Test
@@ -936,15 +936,20 @@ public class JsonCommandTest {
         Assert.assertFalse(result.isSuccess());
 
         String compareResult = context.getStringData(LAST_JSON_COMPARE_RESULT);
-        Assert.assertTrue(compareResult.contains("\"EXPECTED has 3 nodes (firstName,id,lastName) " +
-                                                 "but ACTUAL has 4 nodes (firstName,id,lastName,middleName)\""));
-        Assert.assertTrue(compareResult.contains("EXPECTED contains \\\"John Mark\\\" of type text " +
-                                                 "but ACTUAL contains \\\"John\\\""));
-        Assert.assertTrue(compareResult.contains("\"EXPECTED contains 12345 of type number " +
-                                                 "but ACTUAL contains 54321 of type number\""));
-        Assert.assertTrue(compareResult.contains("EXPECTED contains \\\"Magillon\\\" of type text " +
-                                                 "but ACTUAL contains \\\"Killian\\\""));
-        Assert.assertTrue(compareResult.contains("ACTUAL node 'middleName[3]' NOT FOUND in EXPECTED"));
+        Assert.assertTrue(compareResult.contains("\"expected\": \"3 elements (firstName, id, lastName)\""));
+        Assert.assertTrue(compareResult.contains("\"actual\": \"4 elements (firstName, id, lastName, middleName)\""));
+
+        Assert.assertTrue(compareResult.contains("\"expected\": \"value \\\"John Mark\\\" of type text\""));
+        Assert.assertTrue(compareResult.contains("\"actual\": \"value \\\"John\\\" of type text\""));
+
+        Assert.assertTrue(compareResult.contains("\"expected\": \"value 12345 of type number\""));
+        Assert.assertTrue(compareResult.contains("\"actual\": \"value 54321 of type number\""));
+
+        Assert.assertTrue(compareResult.contains("\"expected\": \"value \\\"Magillon\\\" of type text\""));
+        Assert.assertTrue(compareResult.contains("\"actual\": \"value \\\"Killian\\\" of type text\""));
+
+        Assert.assertTrue(compareResult.contains("\"expected\": \"NOT FOUND\""));
+        Assert.assertTrue(compareResult.contains("\"actual\": \"value \\\"Mark\\\" of type text\""));
     }
 
     @Test
@@ -1002,28 +1007,45 @@ public class JsonCommandTest {
         Assert.assertFalse(result.isSuccess());
 
         String compareResult = context.getStringData(LAST_JSON_COMPARE_RESULT);
-        Assert.assertTrue(compareResult.contains("\"EXPECTED contains \\\"C/O EMA TELSTAR PRODUCTIONS AB\\\" of " +
-                                                 "type text but ACTUAL contains " +
-                                                 "\\\"% ENDEAVOR              9601 WILSHIRE BL 3RD FL   \\\" of " +
-                                                 "type text\""));
-        Assert.assertTrue(compareResult.contains("\"EXPECTED contains \\\"BOX 1018 CARL MILLES VAG 7\\\" of " +
-                                                 "type text but ACTUAL contains \\\"\\\" of type text\""));
-        Assert.assertTrue(compareResult.contains("\"EXPECTED contains \\\"S-18121 LIDINGO\\\" of type text but " +
-                                                 "ACTUAL contains \\\"BEVERLY HILLS\\\" of type text\""));
-        Assert.assertTrue(compareResult.contains("\"EXPECTED contains \\\"UNK\\\" of type text " +
-                                                 "but ACTUAL contains \\\"USA\\\" of type text\""));
-        Assert.assertTrue(compareResult.contains("\"EXPECTED node 'employeeid' NOT FOUND in ACTUAL\""));
-        Assert.assertTrue(compareResult.contains("\"ACTUAL node 'employeeId' NOT FOUND in EXPECTED\""));
-        Assert.assertTrue(compareResult.contains("\"EXPECTED node 'employeetype' NOT FOUND in ACTUAL\""));
-        Assert.assertTrue(compareResult.contains("\"ACTUAL node 'employeeType' NOT FOUND in EXPECTED\""));
-        Assert.assertTrue(compareResult.contains("\"EXPECTED node 'employeetypedescription' NOT FOUND in ACTUAL\""));
-        Assert.assertTrue(compareResult.contains("\"EXPECTED contains \\\"1491302\\\" of type text but " +
-                                                 "ACTUAL contains 2740263 of type number\""));
-        Assert.assertTrue(compareResult.contains("\"EXPECTED node 'lastname' NOT FOUND in ACTUAL\""));
-        Assert.assertTrue(compareResult.contains("\"EXPECTED node 'postalcode' NOT FOUND in ACTUAL\""));
-        Assert.assertTrue(compareResult.contains("\"ACTUAL node 'pweTypeDescription' NOT FOUND in EXPECTED\""));
-        Assert.assertTrue(compareResult.contains("\"EXPECTED contains \\\"FO\\\" of type text but " +
-                                                 "ACTUAL contains \\\"CA\\\" of type text\""));
+        Assert.assertTrue(
+            compareResult.contains("\"expected\": \"value \\\"C/O EMA TELSTAR PRODUCTIONS AB\\\" of type text\""));
+        Assert.assertTrue(
+            compareResult.contains(
+                "\"actual\": \"value \\\"% ENDEAVOR              9601 WILSHIRE BL 3RD FL   \\\" of type text\""));
+
+        Assert.assertTrue(compareResult
+                              .contains("\"expected\": \"value \\\"BOX 1018 CARL MILLES VAG 7\\\" of type text\""));
+        Assert.assertTrue(compareResult.contains("\"actual\": \"value \\\"\\\" of type text\""));
+
+        Assert.assertTrue(compareResult.contains("\"expected\": \"value \\\"S-18121 LIDINGO\\\" of type text\""));
+        Assert.assertTrue(compareResult.contains("\"actual\": \"value \\\"BEVERLY HILLS\\\" of type text\""));
+
+        Assert.assertTrue(compareResult.contains("\"expected\": \"value \\\"UNK\\\" of type text\""));
+        Assert.assertTrue(compareResult.contains("\"actual\": \"value \\\"USA\\\" of type text\""));
+
+        Assert.assertTrue(compareResult.contains("\"expected\": \"value \\\"9268gIgEI\\\" of type text\""));
+        Assert.assertTrue(compareResult.contains("\"actual\": \"NOT FOUND\""));
+
+        Assert.assertTrue(compareResult.contains("\"expected\": \"value \\\"REG\\\" of type text\""));
+        Assert.assertTrue(compareResult.contains("\"actual\": \"NOT FOUND\""));
+
+        Assert.assertTrue(compareResult.contains("\"expected\": \"value \\\"PWE Employee\\\" of type text\""));
+        Assert.assertTrue(compareResult.contains("\"actual\": \"NOT FOUND\""));
+
+        Assert.assertTrue(compareResult.contains("\"expected\": \"NOT FOUND\""));
+        Assert.assertTrue(compareResult.contains("\"actual\": \"value \\\"+876Hy!5s\\\" of type text\""));
+
+        Assert.assertTrue(compareResult.contains("\"expected\": \"NOT FOUND\""));
+        Assert.assertTrue(compareResult.contains("\"actual\": \"value \\\"REG\\\" of type text\""));
+
+        Assert.assertTrue(compareResult.contains("\"expected\": \"NOT FOUND\""));
+        Assert.assertTrue(compareResult.contains("\"actual\": \"value \\\"HIRST\\\" of type text\""));
+
+        Assert.assertTrue(compareResult.contains("\"expected\": \"NOT FOUND\""));
+        Assert.assertTrue(compareResult.contains("\"actual\": \"value \\\"90210\\\" of type text\""));
+
+        Assert.assertTrue(compareResult.contains("\"expected\": \"NOT FOUND\""));
+        Assert.assertTrue(compareResult.contains("\"actual\": \"value \\\"PWE Employee \\\" of type text\""));
     }
 
 }

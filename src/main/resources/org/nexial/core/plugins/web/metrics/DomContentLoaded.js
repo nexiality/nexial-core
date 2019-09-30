@@ -1,0 +1,1 @@
+metrics.DomContentLoaded = JSON.parse(localStorage.getItem('n')).map(x => x.domComplete - x.domLoading).pop();

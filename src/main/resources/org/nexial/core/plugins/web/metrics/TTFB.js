@@ -1,0 +1,1 @@
+metrics.TTFB = JSON.parse(localStorage.getItem('n')).map(x => x.responseStart - x.startTime).pop();

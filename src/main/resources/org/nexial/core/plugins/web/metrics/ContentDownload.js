@@ -1,0 +1,1 @@
+metrics.ContentDownload = JSON.parse(localStorage.getItem('n')).map(x => x.responseEnd - x.responseStart).pop();

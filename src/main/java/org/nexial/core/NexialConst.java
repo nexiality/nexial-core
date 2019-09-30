@@ -968,12 +968,15 @@ public final class NexialConst {
         public static final String KEY_EMU_USER_AGENT = registerSystemVariable(NS_EMULATION + "userAgent");
 
         public static final String NS_WEB = NAMESPACE + "web.";
-        public static final String WEB_WEB_PAGE_LOAD_WAIT_MS = registerSystemVariable(NS_WEB + "pageLoadWaitMs", 10000);
+        public static final String WEB_PAGE_LOAD_WAIT_MS = registerSystemVariable(NS_WEB + "pageLoadWaitMs", 10000);
         public static final String WEB_UNFOCUS_AFTER_TYPE = registerSystemVariable(NS_WEB + "unfocusAfterType", false);
         public static final String WEB_ALWAYS_WAIT = registerSystemVariable(NS_WEB + "alwaysWait", false);
         public static final String WEB_PREEMPTIVE_ALERT_CHECK = registerSystemVariable(NS_WEB + "preemptiveAlertCheck", false);
         public static final String WEB_CLEAR_WITH_BACKSPACE = registerSystemVariable(NS_WEB + "clearWithBackspace", false);
-        public static final String SELECT_ALL = "{ALL}";
+        public static final String DROPDOWN_SELECT_ALL = "{ALL}";
+        public static final String NS_WEB_METRICS = NS_WEB + "metrics.";
+        public static final String WEB_PERF_METRICS_ENABLED = registerSystemVariable(NS_WEB_METRICS + "enabled", false);
+        public static final String WEB_CLIENT_METRICS = "browser_metrics.json";
 
         // web element highlight
         public static final String OPT_DEBUG_HIGHLIGHT_OLD = registerSystemVariable(NAMESPACE + "highlight", false);
@@ -1558,8 +1561,8 @@ public final class NexialConst {
         // warm up constant classes
         ImageDiffColor.init();
         AwsSettings.init();
-        BrowserStack.init();
-        CrossBrowserTesting.init();
+        NexialConst.BrowserStack.init();
+        NexialConst.CrossBrowserTesting.init();
         Project.init();
         CLI.init();
         Data.init();

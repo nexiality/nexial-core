@@ -1,0 +1,1 @@
+metrics.Latency = JSON.parse(localStorage.getItem('n')).map(x => x.responseStart - x.fetchStart).pop();

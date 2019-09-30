@@ -41,6 +41,7 @@ import org.nexial.core.excel.ExcelStyleHelper;
 import org.nexial.core.excel.ext.CellTextReader;
 import org.nexial.core.plugins.CanTakeScreenshot;
 import org.nexial.core.plugins.NexialCommand;
+import org.nexial.core.plugins.web.WebCommand;
 import org.nexial.core.plugins.web.WebDriverExceptionHelper;
 import org.nexial.core.utils.ConsoleUtils;
 import org.nexial.core.utils.ExecutionLogger;
@@ -330,6 +331,14 @@ public class TestStep extends TestStepManifest {
 
             if (plugin instanceof CanTakeScreenshot) { context.registerScreenshotAgent((CanTakeScreenshot) plugin); }
             result = plugin.execute(command, args);
+
+            // web client perf. metrics collection
+            // only if the command is not "assert...", "wait...", "save...", etc.
+            if (context.getBooleanData(WEB_PERF_METRICS_ENABLED, getDefaultBool(WEB_PERF_METRICS_ENABLED)) &&
+                StringUtils.equals("web", plugin.getTarget()) &&
+                !StringUtils.startsWithAny(command, "assert", "wait", "save", "verify")) {
+                ((WebCommand) plugin).collectClientPerfMetrics();
+            }
 
             // todo: resolve soon. we need to stop logging to excel when not running external program
             // if (isExternalProgram) {

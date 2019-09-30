@@ -1,0 +1,1 @@
+metrics.OnLoad = JSON.parse(localStorage.getItem('n')).map(x => x.loadEventEnd - x.loadEventStart).pop();

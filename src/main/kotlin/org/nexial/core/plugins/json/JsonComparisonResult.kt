@@ -25,29 +25,27 @@ import java.io.Serializable
 import java.util.*
 
 class JsonComparisonResult : Serializable {
-    var expected: String? = null
-    var actual: String? = null
-
     val differences: MutableList<Difference> = LinkedList()
 
-    data class Difference(var expectedNode: String?, var actualNode: String?, val message: String) : Serializable {
+    data class Difference(var node: String?, val expected: String, val actual: String) : Serializable {
+
         override fun toString(): String {
             return ToStringBuilder(this, MULTI_LINE_STYLE)
-                .append("expectedNode", expectedNode)
-                .append("actualNode", actualNode)
-                .append("message", message)
+                .append("node", node)
+                .append("expected", expected)
+                .append("actual", actual)
                 .toString()
         }
 
         fun toJson(): JsonObject {
             val json = JsonObject()
-            json.addProperty("expectedNode", expectedNode)
-            json.addProperty("actualNode", actualNode)
-            json.addProperty("message", message)
+            json.addProperty("node", node)
+            json.addProperty("expected", expected)
+            json.addProperty("actual", actual)
             return json
         }
 
-        fun asList(): List<String?> = listOf(expectedNode, actualNode, message)
+        fun asList(): List<String?> = listOf(node, expected, actual)
     }
 
     fun differenceCount() = differences.size
@@ -59,13 +57,9 @@ class JsonComparisonResult : Serializable {
         return this
     }
 
-    fun addDifferences(diffs: List<Difference>): JsonComparisonResult {
-        if (CollectionUtils.isNotEmpty(diffs)) this.differences.addAll(diffs)
-        return this
-    }
-
     fun addDifferences(results: JsonComparisonResult?): JsonComparisonResult {
-        return if (results != null) addDifferences(results.differences) else this
+        if (results != null && CollectionUtils.isNotEmpty(results.differences)) differences.addAll(results.differences)
+        return this
     }
 
     override fun toString() = differences.toString()

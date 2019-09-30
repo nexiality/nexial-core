@@ -558,7 +558,7 @@ public class JsonCommand extends BaseCommand {
 
         if (asJson) { addOutputAsLink(caption, differences, "json"); }
 
-        List<String> headers = Arrays.asList("expected", "actual", "message");
+        List<String> headers = Arrays.asList("node", "expected", "actual");
         List<List<String>> diffList = results.toList();
         if (asCsv) { addOutputAsLink(caption, TextUtils.createCsv(headers, diffList, "\r\n", ",", "\""), "csv"); }
 
@@ -569,12 +569,12 @@ public class JsonCommand extends BaseCommand {
                                 diffList,
                                 (row, position) -> {
                                     String html = row.get(position);
-                                    if (html == null || "null".equals(html)) {
-                                        return DIFF_NULL_HTML_START + "NOT FOUND" + DIFF_NULL_HTML_END;
+                                    if (html == null || "null".equals(html) || "NOT FOUND".equals(html)) {
+                                        return DIFF_NULL_HTML_START + html + DIFF_NULL_HTML_END;
                                     }
 
                                     html = TextUtils.decorateTextRange(
-                                        html, "contains ", " of", DIFF_HIGHLIGHT_HTML_START, DIFF_HIGHLIGHT_HTML_END);
+                                        html, "value ", " of", DIFF_HIGHLIGHT_HTML_START, DIFF_HIGHLIGHT_HTML_END);
                                     html = TextUtils.decorateTextRange(
                                         html, "node '", "' ", DIFF_HIGHLIGHT_HTML_START, DIFF_HIGHLIGHT_HTML_END);
                                     return "<code>" + html + "</code>";

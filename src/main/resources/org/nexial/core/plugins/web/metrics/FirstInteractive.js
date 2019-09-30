@@ -1,0 +1,1 @@
+metrics.FirstInteractive = JSON.parse(localStorage.getItem('n')).map(x => x.domInteractive - x.domLoading).pop();

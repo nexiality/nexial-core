@@ -66,6 +66,7 @@ import org.nexial.core.utils.NativeInputHelper;
 import org.nexial.core.utils.OutputFileUtils;
 import org.nexial.core.utils.OutputResolver;
 import org.nexial.core.utils.WebDriverUtils;
+import org.nexial.core.variable.Syspath;
 import org.openqa.selenium.Dimension;
 import org.openqa.selenium.NoSuchElementException;
 import org.openqa.selenium.Point;
@@ -116,6 +117,7 @@ public class WebCommand extends BaseCommand implements CanTakeScreenshot, CanLog
     protected WsCommand ws;
     protected TableHelper tableHelper;
     protected boolean logToBrowser;
+    protected ClientPerformanceCollector clientPerfCollector;
 
     @Override
     public Browser getBrowser() { return browser; }
@@ -149,6 +151,9 @@ public class WebCommand extends BaseCommand implements CanTakeScreenshot, CanLog
         logToBrowser = !browser.isRunChrome() &&
                        context.getBooleanData(OPT_BROWSER_CONSOLE_LOG, getDefaultBool(OPT_BROWSER_CONSOLE_LOG));
         tableHelper = new TableHelper(this);
+
+        clientPerfCollector = new ClientPerformanceCollector(
+            this, (new Syspath().out("fullpath")) + separator + WEB_CLIENT_METRICS);
     }
 
     @Override
@@ -267,7 +272,7 @@ public class WebCommand extends BaseCommand implements CanTakeScreenshot, CanLog
     @NotNull
     public StepResult select(String locator, String text) {
         Select select = getSelectElement(locator);
-        if (StringUtils.equals(text, SELECT_ALL)) {
+        if (StringUtils.equals(text, DROPDOWN_SELECT_ALL)) {
             if (!select.isMultiple()) { return StepResult.fail("Unable to multi-select from a single-select element"); }
 
             List<WebElement> options = select.getOptions();
@@ -292,7 +297,7 @@ public class WebCommand extends BaseCommand implements CanTakeScreenshot, CanLog
         Select select = getSelectElement(locator);
         if (StringUtils.isNotBlank(text)) {
             try {
-                if (StringUtils.equals(text, SELECT_ALL)) {
+                if (StringUtils.equals(text, DROPDOWN_SELECT_ALL)) {
                     select.deselectAll();
                     return StepResult.success("deselected all options from '" + locator + "'");
                 } else {
@@ -322,7 +327,7 @@ public class WebCommand extends BaseCommand implements CanTakeScreenshot, CanLog
     }
 
     @NotNull
-    public StepResult selectMultiOptions(String locator) { return select(locator, SELECT_ALL); }
+    public StepResult selectMultiOptions(String locator) { return select(locator, DROPDOWN_SELECT_ALL); }
 
     @NotNull
     public StepResult deselectMulti(String locator, String array) {
@@ -1228,7 +1233,7 @@ public class WebCommand extends BaseCommand implements CanTakeScreenshot, CanLog
         driver.get("about:blank");
 
         StopWatch stopWatch = StopWatch.createStarted();
-        long maxLoadTime = context.getIntData(WEB_WEB_PAGE_LOAD_WAIT_MS, getDefaultInt(WEB_WEB_PAGE_LOAD_WAIT_MS));
+        long maxLoadTime = context.getIntData(WEB_PAGE_LOAD_WAIT_MS, getDefaultInt(WEB_PAGE_LOAD_WAIT_MS));
 
         url = validateUrl(url);
         String linkToUrl = "var a = document.createElement(\"a\");" +
@@ -1874,6 +1879,15 @@ public class WebCommand extends BaseCommand implements CanTakeScreenshot, CanLog
         return StepResult.success(attrName + " with value " + value + " updated successfully for '" + locator + "'");
     }
 
+    public void collectClientPerfMetrics() {
+        try {
+            clientPerfCollector.collect();
+        } catch (IOException e) {
+            log("Error when collecting browser performance metrics: " + e.getMessage());
+        }
+    }
+
+    // todo: was called from screenshot().. still need it?
     @NotNull
     protected static BufferedImage newBlankImage(int width, int height) {
         BufferedImage blank = new BufferedImage(width, height, SCALE_DEFAULT);
