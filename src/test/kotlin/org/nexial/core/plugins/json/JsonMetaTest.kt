@@ -512,7 +512,7 @@ class JsonMetaTest {
                         "2 elements (answer, question)", "3 elements (answer, options, question)")
         assertDiffNodes(results.differences[8], "$[2].q3.answer",
                         "value 4 of type number", "value \"4\" of type text")
-        assertDiffNodes(results.differences[9], "$[2].q3.options", "NOT FOUND", "type array")
+        assertDiffNodes(results.differences[9], "$[2].q3.options", "NOT FOUND", "4 elements of type array")
 
         val diffJson = results.toJson()
         println("results = $diffJson")
