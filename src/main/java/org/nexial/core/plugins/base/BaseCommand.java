@@ -244,11 +244,11 @@ public class BaseCommand implements NexialCommand {
     /** clear data variables by name */
     public StepResult clear(String vars) {
         requiresNotBlank(vars, "invalid variable(s)", vars);
-        return clear(TextUtils.toList(vars, context.getTextDelim(), true));
+        return clearVariables(TextUtils.toList(vars, context.getTextDelim(), true));
     }
 
     @NotNull
-    public StepResult clear(@NotNull List<String> variables) {
+    public StepResult clearVariables(@NotNull List<String> variables) {
         List<String> ignoredVars = new ArrayList<>();
         List<String> removedVars = new ArrayList<>();
 

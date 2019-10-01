@@ -1,1 +1,1 @@
-metrics.NetworkOverhead = JSON.parse(localStorage.getItem('n')).map(x => x.domainLookupStart - x.connectEnd).pop();
+metrics.NetworkOverhead = JSON.parse(localStorage.getItem('n')).map(x => x.connectEnd - x.domainLookupStart).pop();

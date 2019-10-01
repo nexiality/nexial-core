@@ -280,7 +280,7 @@ class NexialInteractive {
                     val groups = RegexUtils.collectGroups(input, regexClearVar)
                     val variables = TextUtils.toList(groups[0], ",", true)
                     ConsoleUtils.log("removing data variable $variables")
-                    val outcome = baseCommand.clear(variables)
+                    val outcome = baseCommand.clearVariables(variables)
 
                     // outcome.message.trim().split("\n").forEach { ConsoleUtils.log(it) }
                     // forgo above simple print out for something more elaborate
