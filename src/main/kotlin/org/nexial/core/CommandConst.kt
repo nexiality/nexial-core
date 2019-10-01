@@ -93,7 +93,9 @@ object CommandConst {
             "desktop.scanTable(var,name)" to "desktop.useTable(var,name)",
             "desktop.getRowCount(var)" to "desktop.saveRowCount(var)",
             "io.saveMatches(var,path,filePattern)" to "io.saveMatches(var,path,fileFilter,textFilter)",
-            "base.assertNotContains(text,substring)" to "base.assertNotContain(text,substring)"
+            "base.assertNotContains(text,substring)" to "base.assertNotContain(text,substring)",
+            "web.assertAttributeNotContains(locator,attrName,contains)" to "web.assertAttributeNotContain(locator,attrName,contains)",
+            "web.assertAttributeContains(locator,attrName,contains)" to "web.assertAttributeContain(locator,attrName,contains)"
     )
 
     private const val SUGGESTION_PREFIX = "This command is deprecated and will soon be removed. Consider using"

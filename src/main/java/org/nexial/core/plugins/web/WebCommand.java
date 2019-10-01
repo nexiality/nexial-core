@@ -853,7 +853,7 @@ public class WebCommand extends BaseCommand implements CanTakeScreenshot, CanLog
         return assertAttributePresentInternal(locator, attrName, false);
     }
 
-    public StepResult assertAttributeContains(String locator, String attrName, String contains) {
+    public StepResult assertAttributeContain(String locator, String attrName, String contains) {
         return assertAttributeContainsInternal(locator, attrName, contains, true);
     }
 
