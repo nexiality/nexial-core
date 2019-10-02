@@ -190,6 +190,21 @@ public class ExpressionProcessorTest {
     }
 
     @Test
+    public void processTest_csv() throws Exception {
+        ExpressionProcessor subject = new ExpressionProcessor(context);
+
+        String fixturePath = ResourceUtils.getResourceFilePath(resourcePath + className + "18.txt");
+
+        String fixture = "[TEXT(" + fixturePath + ") => csv(0,6,19) text]";
+        String result = subject.process(fixture);
+        Assert.assertEquals("12345,Johnny Walker,Alcohol\n" +
+                            "4321,\"Jim Carey\",Actor\n" +
+                            "153.1,\"Johnson, K.\",Imposter\n" +
+                            "--102,Adam Scham,Crook",
+                            result);
+    }
+
+    @Test
     public void processTest_regex() throws Exception {
         ExpressionProcessor subject = new ExpressionProcessor(context);
 

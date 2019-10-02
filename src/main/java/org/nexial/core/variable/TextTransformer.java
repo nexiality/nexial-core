@@ -344,7 +344,11 @@ public class TextTransformer<T extends TextDataType> extends Transformer {
             StringBuilder record = new StringBuilder();
             int lastPos = 0;
             for (int pos : positionNums) {
-                record.append(StringUtils.substring(line, lastPos, pos - 1)).append(delim);
+                String extracted = StringUtils.substring(line, lastPos, pos - 1);
+                if (StringUtils.contains(extracted, delim)) {
+                    extracted = TextUtils.wrapIfMissing(StringUtils.trim(extracted), "\"", "\"");
+                }
+                record.append(extracted).append(delim);
                 lastPos = pos - 1;
             }
             record.append(StringUtils.substring(line, lastPos));
@@ -355,6 +359,7 @@ public class TextTransformer<T extends TextDataType> extends Transformer {
         csv.setHeader(false);
         csv.setDelim(delim);
         csv.setRecordDelim("\n");
+        csv.setKeepQuote(true);
         csv.setReadyToParse(true);
         csv.parse();
         return csv;

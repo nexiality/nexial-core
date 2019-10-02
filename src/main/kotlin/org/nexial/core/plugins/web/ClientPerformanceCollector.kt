@@ -19,6 +19,7 @@ package org.nexial.core.plugins.web
 import com.google.gson.JsonArray
 import com.google.gson.JsonObject
 import org.apache.commons.lang3.BooleanUtils
+import org.apache.commons.lang3.StringUtils
 import org.nexial.commons.utils.FileUtil
 import org.nexial.commons.utils.ResourceUtils
 import org.nexial.core.NexialConst.Data.NS_WEB_METRICS
@@ -109,13 +110,13 @@ class ClientPerformanceCollector(val command: WebCommand, private val output: St
     }
 
     private fun newExecution(context: ExecutionContext): JsonObject {
-        val projectName = context.project.name
+        val apikey = System.getProperty("nexial.userstack.apikey")
         val ua = Objects.toString(command.jsExecutor.executeScript("return navigator.userAgent;"))
-        val uaMap = UserStackAPI().detect(ua)
+        val uaMap = (if (StringUtils.isNotBlank(apikey)) UserStackAPI(apikey) else UserStackAPI()).detect(ua)
 
         val execution = JsonObject()
         execution.addProperty("runID", context.runId)
-        execution.addProperty("project", projectName)
+        execution.addProperty("project", context.project.name)
         execution.addProperty("browser", uaMap["browser"])
         execution.addProperty("os", uaMap["os"])
         execution.add("scripts", JsonArray())
@@ -124,6 +125,4 @@ class ClientPerformanceCollector(val command: WebCommand, private val output: St
 
     private fun fetchScript(key: String) = ResourceUtils.loadResource("$resourceBase$key.js")
                                            ?: throw IOException("Unable to fetch content from $resourceBase$key.js")
-
-    // private fun executeScript(key: String): Any? = command.jsExecutor.executeScript(fetchScript(key))
 }
