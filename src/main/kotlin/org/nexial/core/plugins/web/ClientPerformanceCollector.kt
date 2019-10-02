@@ -31,6 +31,7 @@ import java.io.File
 import java.io.FileReader
 import java.io.FileWriter
 import java.io.IOException
+import java.util.*
 
 class ClientPerformanceCollector(val command: WebCommand, private val output: String) {
 
@@ -40,10 +41,13 @@ class ClientPerformanceCollector(val command: WebCommand, private val output: St
     // https://gtmetrix.com/blog/first-contentful-paint-explained/
     // https://www.sitepen.com/blog/improving-performance-with-the-paint-timing-api/
 
+    // recommendation
+    // https://developers.google.com/web/tools/chrome-devtools/network/understanding-resource-timing
+
     private val resourceBase = "/org/nexial/core/plugins/web/metrics/"
     private val initScript = fetchScript("_init") + "\n"
     private val endScript = fetchScript("_return")
-    private val commandRefBaseUrl = "http://nexiality.github.io/documentation/command/"
+    private val commandRefBaseUrl = "http://nexiality.github.io/documentation/commands/"
 
     init {
         ConsoleUtils.log("web metrics collection enabled and will be saved to $output")
@@ -97,16 +101,23 @@ class ClientPerformanceCollector(val command: WebCommand, private val output: St
         metrics.addProperty("row", step.rowIndex.toString())
         metrics.addProperty("description", step.description)
         metrics.addProperty("command", step.target + " >> " + step.command)
-        metrics.addProperty("command-ref", "$commandRefBaseUrl${step.target}${step.command}")
+        metrics.addProperty("command-ref", "$commandRefBaseUrl${step.target}/${step.command}")
         val parameters = JsonArray()
-        step.params.forEach { parameters.add(it) }
+        step.params.forEach { parameters.add(command.context.replaceTokens(it, true)) }
         metrics.add("parameters", parameters)
         return metrics
     }
 
     private fun newExecution(context: ExecutionContext): JsonObject {
+        val projectName = context.project.name
+        val ua = Objects.toString(command.jsExecutor.executeScript("return navigator.userAgent;"))
+        val uaMap = UserStackAPI().detect(ua)
+
         val execution = JsonObject()
         execution.addProperty("runID", context.runId)
+        execution.addProperty("project", projectName)
+        execution.addProperty("browser", uaMap["browser"])
+        execution.addProperty("os", uaMap["os"])
         execution.add("scripts", JsonArray())
         return execution
     }

@@ -976,7 +976,11 @@ public final class NexialConst {
         public static final String DROPDOWN_SELECT_ALL = "{ALL}";
         public static final String NS_WEB_METRICS = NS_WEB + "metrics.";
         public static final String WEB_PERF_METRICS_ENABLED = registerSystemVariable(NS_WEB_METRICS + "enabled", false);
-        public static final String WEB_CLIENT_METRICS = "browser_metrics.json";
+        public static final String WEB_METRICS_JSON = "browser-metrics.json";
+        public static final String WEB_METRICS_HTML = "browser-metrics.html";
+        public static final String WEB_METRICS_TOKEN = "{METRICS}";
+        public static final String WEB_METRICS_HTML_LOC = "/org/nexial/core/reports/";
+        public static final String WEB_METRICS_GENERATED = NS_WEB_METRICS + "generated";
 
         // web element highlight
         public static final String OPT_DEBUG_HIGHLIGHT_OLD = registerSystemVariable(NAMESPACE + "highlight", false);

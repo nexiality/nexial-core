@@ -153,7 +153,7 @@ public class WebCommand extends BaseCommand implements CanTakeScreenshot, CanLog
         tableHelper = new TableHelper(this);
 
         clientPerfCollector = new ClientPerformanceCollector(
-            this, (new Syspath().out("fullpath")) + separator + WEB_CLIENT_METRICS);
+            this, (new Syspath().out("fullpath")) + separator + WEB_METRICS_JSON);
     }
 
     @Override

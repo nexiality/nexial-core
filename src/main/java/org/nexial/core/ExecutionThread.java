@@ -26,10 +26,12 @@ import java.util.Map;
 
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.collections4.MapUtils;
+import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.time.StopWatch;
 import org.nexial.commons.logging.LogbackUtils;
 import org.nexial.commons.utils.FileUtil;
+import org.nexial.commons.utils.ResourceUtils;
 import org.nexial.core.aws.NexialS3Helper;
 import org.nexial.core.excel.Excel;
 import org.nexial.core.model.*;
@@ -39,9 +41,11 @@ import org.nexial.core.reports.ExecutionReporter;
 import org.nexial.core.service.EventTracker;
 import org.nexial.core.utils.ConsoleUtils;
 import org.nexial.core.utils.ExecutionLogger;
+import org.nexial.core.variable.Syspath;
 
-import static org.nexial.core.NexialConst.Data.*;
+import static java.io.File.separator;
 import static org.nexial.core.NexialConst.*;
+import static org.nexial.core.NexialConst.Data.*;
 import static org.nexial.core.NexialConst.Project.appendLog;
 import static org.nexial.core.SystemVariables.getDefault;
 import static org.nexial.core.SystemVariables.getDefaultBool;
@@ -448,6 +452,7 @@ public final class ExecutionThread extends Thread {
         if (lastScript) {
             CloudWebTestingPlatform.reportCloudBrowserStatus(context, executionSummary, ExecutionComplete);
             context.getExecutionEventListener().onExecutionComplete();
+            handleBrowserMetrics(context);
         }
 
         // we don't want the reference data from this script to taint the next
@@ -455,6 +460,29 @@ public final class ExecutionThread extends Thread {
         context.clearScriptRefData();
 
         MemManager.gc(execDef);
+    }
+
+    /** handle browser metrics */
+    private void handleBrowserMetrics(ExecutionContext context) {
+        System.clearProperty(WEB_METRICS_GENERATED);
+        if (!context.getBooleanData(WEB_PERF_METRICS_ENABLED, getDefaultBool(WEB_PERF_METRICS_ENABLED))) { return; }
+        if (context.isInteractiveMode()) { return; }
+
+        String outputBase = (new Syspath().out("fullpath")) + separator;
+        File metricsFile = new File(outputBase + WEB_METRICS_JSON);
+        if (!FileUtil.isFileReadable(metricsFile, 100)) { return; }
+
+        try {
+            String json = FileUtils.readFileToString(metricsFile, DEF_FILE_ENCODING);
+            String html = StringUtils.replace(ResourceUtils.loadResource(WEB_METRICS_HTML_LOC + WEB_METRICS_HTML),
+                                              WEB_METRICS_TOKEN,
+                                              json);
+            FileUtils.writeStringToFile(new File(outputBase + WEB_METRICS_HTML), html, DEF_FILE_ENCODING);
+            System.setProperty(WEB_METRICS_GENERATED, "true");
+        } catch (IOException e) {
+            // unable to read JSON, read HTML or write HTML to output
+            ConsoleUtils.error("Unable to generate browser metrics HTML: " + e.getMessage());
+        }
     }
 
     private static void handleTestScript(ExecutionContext context, ExecutionSummary execution) {

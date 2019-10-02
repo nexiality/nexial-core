@@ -335,6 +335,7 @@ public class TestStep extends TestStepManifest {
             // web client perf. metrics collection
             // only if the command is not "assert...", "wait...", "save...", etc.
             if (context.getBooleanData(WEB_PERF_METRICS_ENABLED, getDefaultBool(WEB_PERF_METRICS_ENABLED)) &&
+                !context.isInteractiveMode() &&
                 StringUtils.equals("web", plugin.getTarget()) &&
                 !StringUtils.startsWithAny(command, "assert", "wait", "save", "verify")) {
                 ((WebCommand) plugin).collectClientPerfMetrics();

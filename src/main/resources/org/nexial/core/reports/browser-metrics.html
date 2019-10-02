@@ -1,0 +1,69 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/html" lang="en">
+<head>
+  <meta charset="UTF-8">
+  <link rel="shortcut icon" type="image/png" href="http://nexiality.github.io/documentation/favicon.ico">
+  <script>
+    let loadErrorFound = false;
+
+    function externalResourceNotFound() {
+      if (!loadErrorFound) {
+        window.alert("Unable to load one or more external web resources needed to display this page.\n\n" +
+                     "Please check/adjust your Internet access and reload this page again.\n\n" +
+                     "Thank you.");
+        loadErrorFound = true;
+      }
+      return false;
+    }
+  </script>
+  <link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.8.1/css/all.css" onerror="externalResourceNotFound()"/>
+  <link rel="stylesheet" href="http://nexiality.github.io/documentation/assets/project/datatables.min.css" onerror="externalResourceNotFound()"/>
+  <link rel="stylesheet" href="http://nexiality.github.io/documentation/assets/project/w2ui-1.5.rc1.min.css" onerror="externalResourceNotFound()"/>
+  <link rel="stylesheet" href="http://nexiality.github.io/documentation/assets/report/execution_summary.css" onerror="externalResourceNotFound()"/>
+  <link rel="stylesheet" href="http://nexiality.github.io/documentation/assets/metrics/browser-metric.glossygreen.css" onerror="externalResourceNotFound()"/>
+
+  <script src="http://nexiality.github.io/documentation/assets/project/datatables.min.js" onerror="externalResourceNotFound()"></script>
+  <script src="http://nexiality.github.io/documentation/assets/project/w2ui-1.5.rc1.min.js" onerror="externalResourceNotFound()"></script>
+  <script src="http://nexiality.github.io/documentation/assets/report/execution_summary.js" onerror="externalResourceNotFound()"></script>
+  <script src="http://nexiality.github.io/documentation/assets/metrics/browser-metrics.js" onerror="externalResourceNotFound()"></script>
+  <title>Browser Performance Metrics</title>
+</head>
+<body>
+<div class="title">
+  <div>Browser Performance Metrics</div>
+</div>
+
+<div class="result-controls">
+  <i class="fas fa-compress on" id="collapse-toggle" onclick="toggleExpansion(this)" title="collapse/expand all sections"><span>Collapse/Expand All</span></i>
+</div>
+
+<div id="app">
+</div>
+
+<br/>
+<br/>
+<br/>
+<br/>
+<div class="footer">powered by <a href="https://nexiality.github.io">NEXIAL</a></div>
+<br/>
+<br/>
+
+<div id="loadError" style="display:none;font-weight:bold;font-size:16pt;color:#800;background:rgba(230,200,200,0.9);border:5px solid;padding:25px;margin:auto;position:fixed;width:500px;height:175px;top:0;left:0;right:0;bottom:0;">
+  Unable to load one or more external web resources needed to display this page.<br/><br/>
+  Please check/adjust your Internet access and reload this page again.<br/><br/>
+  Thank you.
+</div>
+
+<script>
+  if (loadErrorFound) { document.getElementById('loadError').style.display = 'block'; }
+
+  let metrics        = {METRICS};
+  let browserMetrics = new BrowserMetrics(metrics);
+
+  $(document).ready(function () {
+    browserMetrics.renderExecMeta();
+    browserMetrics.renderMetrics();
+  });
+</script>
+</body>
+</html>

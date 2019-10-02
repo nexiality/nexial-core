@@ -113,6 +113,10 @@
             <td nowrap="nowrap" class="execLabel">JAVA_OPT</td>
             <th class="execValue" data-th-utext="${summary.referenceData.get('JAVA_OPT')}">-Dnexial.generateOutput=TRUE -Dnexial.outputToCloud=TRUE</th>
         </tr>
+        <tr data-th-if="${browser_metrics_html}">
+            <td nowrap="nowrap" class="execLabel">browser metrics</td>
+            <th class="execValue"><a data-th-href="${browser_metrics_html}">Browser Metrics</a></th>
+        </tr>
         </tbody>
     </table>
 </div>

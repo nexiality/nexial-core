@@ -200,6 +200,10 @@ public class ExpressionProcessorTest {
         fixture = "[TEXT(showcase) => replaceRegex(\\(.+/.+\\),$1.) replaceRegex(\\(.*[^/].*\\),$1/) ]";
         result = subject.process(fixture);
         Assert.assertEquals("showcase/", result);
+
+        fixture = "[TEXT(\"hello\",\"23.44\",\"My name\",124) => replaceRegex(\"([0-9.]+\\)\",$1)]";
+        result = subject.process(fixture);
+        Assert.assertEquals("\"hello\",23.44,\"My name\",124", result);
     }
 
     @Test

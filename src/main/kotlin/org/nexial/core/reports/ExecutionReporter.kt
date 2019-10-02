@@ -17,6 +17,7 @@
 package org.nexial.core.reports
 
 import org.apache.commons.io.FileUtils
+import org.apache.commons.lang3.BooleanUtils
 import org.apache.commons.lang3.StringUtils
 import org.apache.commons.lang3.SystemUtils.IS_OS_MAC
 import org.apache.commons.lang3.SystemUtils.IS_OS_WINDOWS
@@ -83,6 +84,12 @@ class ExecutionReporter {
         engineContext.setVariable("execution", ExecutionSummary.gatherExecutionData(summary))
         engineContext.setVariable("logs", summary.logs)
         engineContext.setVariable("summary", summary)
+
+        val sysProps = System.getProperties()
+        if (sysProps.containsKey(WEB_METRICS_GENERATED) &&
+            BooleanUtils.toBoolean(sysProps.getProperty(WEB_METRICS_GENERATED))) {
+            engineContext.setVariable("browser_metrics_html", WEB_METRICS_HTML)
+        }
 
         val content = templateEngine!!.process(executionTemplate!!, engineContext)
         return if (StringUtils.isNotBlank(content)) {

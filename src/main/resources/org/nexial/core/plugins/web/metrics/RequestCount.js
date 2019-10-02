@@ -1,0 +1,1 @@
+metrics.RequestCount = JSON.parse(localStorage.getItem('r')).length;
