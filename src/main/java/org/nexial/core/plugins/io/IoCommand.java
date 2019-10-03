@@ -227,7 +227,7 @@ public class IoCommand extends BaseCommand {
         return result != null ? StepResult.fail(msg + "the same") : StepResult.success(msg + "not the same");
     }
 
-    public StepResult assertReadableDirectory(String path) {
+    public StepResult assertPath(String path) {
         requiresNotBlank(path, "invalid file", path);
         boolean passed = FileUtil.isDirectoryReadable(path);
         return new StepResult(passed, "Path (" + path + ") " + (passed ? "exists and is readable" :

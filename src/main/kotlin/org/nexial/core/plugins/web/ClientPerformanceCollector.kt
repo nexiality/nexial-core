@@ -35,16 +35,6 @@ import java.io.IOException
 import java.util.*
 
 class ClientPerformanceCollector(val command: WebCommand, private val output: String) {
-
-    // https://community.akamai.com/customers/s/article/Using-Navigation-Timing-APIs-to-understand-your-webpage?language=en_US
-    // https://developers.google.com/web/fundamentals/performance/critical-rendering-path/measure-crp
-    // https://developers.google.com/web/fundamentals/performance/user-centric-performance-metrics
-    // https://gtmetrix.com/blog/first-contentful-paint-explained/
-    // https://www.sitepen.com/blog/improving-performance-with-the-paint-timing-api/
-
-    // recommendation
-    // https://developers.google.com/web/tools/chrome-devtools/network/understanding-resource-timing
-
     private val resourceBase = "/org/nexial/core/plugins/web/metrics/"
     private val initScript = fetchScript("_init") + "\n"
     private val endScript = fetchScript("_return")
