@@ -227,6 +227,13 @@ public class IoCommand extends BaseCommand {
         return result != null ? StepResult.fail(msg + "the same") : StepResult.success(msg + "not the same");
     }
 
+    public StepResult assertReadableDirectory(String path) {
+        requiresNotBlank(path, "invalid file", path);
+        boolean passed = FileUtil.isDirectoryReadable(path);
+        return new StepResult(passed, "Path (" + path + ") " + (passed ? "exists and is readable" :
+                                                                "either DOES NOT exists or is NOT readable"), null);
+    }
+
     //todo: need to consider target as file name, not just dir. but how to recognize this?
     public StepResult copyFiles(String source, String target) { return doAction(copy, source, target); }
 
