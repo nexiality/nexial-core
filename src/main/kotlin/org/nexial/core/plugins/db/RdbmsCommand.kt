@@ -53,7 +53,8 @@ class RdbmsCommand : BaseCommand() {
         requiresNotBlank(db, "invalid db", db)
         requiresNotBlank(sql, "invalid sql", sql)
 
-        val query = context.replaceTokens(StringUtils.trim(OutputFileUtils.resolveRawContent(sql, context)))
+        // remove any trailing semi-colon, since single query should not have it
+        val query = context.replaceTokens(OutputFileUtils.resolveRawContent(sql, context).trim()).removeSuffix(";")
         // we want to support ALL types of SQL, including those vendor-specific
         // so for that reason, we are no longer insisting on the use of standard ANSI sql
         // requires(dataAccess.validSQL(query), "invalid sql", sql);
