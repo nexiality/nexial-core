@@ -89,7 +89,7 @@ class ClientPerformanceCollector(val command: WebCommand, private val output: St
     }
 
     private fun newStep(step: TestStep, metrics: JsonObject): JsonObject {
-        metrics.addProperty("row", step.rowIndex.toString())
+        metrics.addProperty("row", (step.rowIndex + 1).toString())
         metrics.addProperty("description", step.description)
         metrics.addProperty("command", step.target + " >> " + step.command)
         metrics.addProperty("command-ref", "$commandRefBaseUrl${step.target}/${step.command}")
