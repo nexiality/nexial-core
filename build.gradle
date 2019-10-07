@@ -160,7 +160,7 @@ dependencies {
 	compile("com.amazonaws:aws-java-sdk-polly:+")
 	compile("com.amazonaws:aws-java-sdk-sns:+")
 	compile("com.amazonaws:aws-java-sdk-ses:+")
-	compile("com.amazonaws:aws-java-sdk-sqs:+")
+	compile('com.amazonaws:aws-java-sdk-sqs:1.11.632')
 	compile("com.amazonaws:aws-java-sdk-sts:+")
 	compile("com.amazonaws:aws-java-sdk-textract:+")
 	compile("com.amazonaws:aws-java-sdk-rekognition:+")

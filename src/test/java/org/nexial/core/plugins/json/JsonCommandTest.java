@@ -885,6 +885,45 @@ public class JsonCommandTest {
     }
 
     @Test
+    public void compact2() throws Exception {
+        JsonCommand fixture = new JsonCommand();
+        fixture.init(context);
+
+        String json = "{\n" +
+                      "  \"config\": {\n" +
+                      "    \"location1\": [\n" +
+                      "      { \"code\": \"CA\", \"state\": \"California\" }\n" +
+                      "    ],\n" +
+                      "    \"location2\": { },\n" +
+                      "    \"config1\": {\n" +
+                      "      \"client\": 12345,\n" +
+                      "      \"active\": true\n" +
+                      "    },\n" +
+                      "    \"config\": [],\n" +
+                      "    \"dataListing\": [\"\", \"\", null, \"\", { } ]\n" +
+                      "  }\n" +
+                      "}";
+
+        Assert.assertTrue(fixture.compact("var", json, "false").isSuccess());
+        String compacted = context.getStringData("var");
+        System.out.println("JSONCommand.compact(var,false):");
+        System.out.println(compacted);
+        System.out.println();
+        System.out.println();
+        Assert.assertEquals("{\"config\":{\"location1\":[{\"code\":\"CA\",\"state\":\"California\"}]," +
+                            "\"config1\":{\"client\":12345,\"active\":true},\"dataListing\":[\"\",\"\",\"\"]}}",
+                            compacted);
+
+        Assert.assertTrue(fixture.compact("var", json, "true").isSuccess());
+        compacted = context.getStringData("var");
+        System.out.println("JSONCommand.compact(var,true):");
+        System.out.println(compacted);
+        Assert.assertEquals("{\"config\":{\"location1\":[{\"code\":\"CA\",\"state\":\"California\"}]," +
+                            "\"config1\":{\"client\":12345,\"active\":true}}}",
+                            compacted);
+    }
+
+    @Test
     public void assertEqual_different_order() throws Exception {
         String testJson1 = "[ { \"firstName\": \"John Mark\", \"id\": 12345, \"lastName\": \"Magillon\" }, {} ]";
         String testJson2 = "[ { \"id\": 12345, \"lastName\": \"Magillon\", \"firstName\": \"John Mark\" }, {  } ]";

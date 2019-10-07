@@ -401,7 +401,7 @@ public final class NexialConst {
                                                                 .setLenient()
                                                                 .create();
 
-    // convert windows characters to asciii characters
+    // convert windows characters to ascii characters
     public static final Map<String, String> replaceWindowsChars =
         TextUtils.toMap("=",
                         "\\u2013=-",

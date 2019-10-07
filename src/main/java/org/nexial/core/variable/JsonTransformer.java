@@ -259,7 +259,7 @@ public class JsonTransformer<T extends JsonDataType> extends Transformer {
         JsonElement jsonElement = GSON_COMPRESSED.fromJson(data.getValue(), JsonElement.class);
         requiresNotNull(jsonElement, "invalid json", data.getValue());
 
-        if (BooleanUtils.toBoolean(removeEmpty)) { jsonElement = JsonCommand.removeEmpty(jsonElement); }
+        jsonElement = JsonCommand.removeEmpty(jsonElement, !BooleanUtils.toBoolean(removeEmpty));
 
         String compressed = GSON_COMPRESSED.toJson(jsonElement);
         data.setValue(GSON_COMPRESSED.fromJson(compressed, JsonElement.class));

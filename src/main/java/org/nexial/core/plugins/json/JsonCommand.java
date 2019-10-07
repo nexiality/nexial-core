@@ -339,7 +339,7 @@ public class JsonCommand extends BaseCommand {
         JsonElement jsonElement = GSON_COMPRESSED.fromJson(jsonContent, JsonElement.class);
         requiresNotNull(jsonElement, "invalid json", json);
 
-        if (BooleanUtils.toBoolean(removeEmpty)) { jsonElement = removeEmpty(jsonElement); }
+        jsonElement = removeEmpty(jsonElement, !BooleanUtils.toBoolean(removeEmpty));
 
         String compressed = GSON_COMPRESSED.toJson(jsonElement);
         if (StringUtils.isBlank(compressed)) { return StepResult.fail("Unable to minify/compact JSON content"); }
@@ -362,7 +362,7 @@ public class JsonCommand extends BaseCommand {
         return jsonObject;
     }
 
-    public static JsonElement removeEmpty(JsonElement json) {
+    public static JsonElement removeEmpty(JsonElement json, boolean onlyNull) {
         if (json == null) { return null; }
 
         if (json.isJsonNull()) { return null; }
@@ -376,14 +376,16 @@ public class JsonCommand extends BaseCommand {
 
             keys.forEach(childName -> {
                 JsonElement childElement = jsonObject.get(childName);
-                if (childElement.isJsonPrimitive()) {
-                    if (StringUtils.isEmpty(childElement.getAsString())) { jsonObject.remove(childName); }
+                if (childElement.isJsonNull()) {
+                    jsonObject.remove(childName);
+                } else if (childElement.isJsonPrimitive()) {
+                    if (!onlyNull && StringUtils.isEmpty(childElement.getAsString())) { jsonObject.remove(childName); }
                 } else {
-                    JsonElement compacted = removeEmpty(childElement);
+                    JsonElement compacted = removeEmpty(childElement, onlyNull);
                     if (compacted == null) {
                         jsonObject.remove(childName);
                     } else {
-                        childElement = compacted;
+                        jsonObject.add(childName, compacted);
                     }
                 }
             });
@@ -398,9 +400,9 @@ public class JsonCommand extends BaseCommand {
                 if (elem.isJsonNull()) {
                     array.remove(i--);
                 } else if (elem.isJsonPrimitive()) {
-                    if (StringUtils.isEmpty(elem.getAsString())) { array.remove(i--); }
+                    if (!onlyNull && StringUtils.isEmpty(elem.getAsString())) { array.remove(i--); }
                 } else {
-                    JsonElement compacted = removeEmpty(elem);
+                    JsonElement compacted = removeEmpty(elem, onlyNull);
                     if (compacted == null) {
                         array.remove(i--);
                     } else {
