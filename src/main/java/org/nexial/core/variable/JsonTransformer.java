@@ -335,7 +335,7 @@ public class JsonTransformer<T extends JsonDataType> extends Transformer {
         if (data == null) { return empty; }
 
         try {
-            if (data.getValue() != null && data.getValue() instanceof JsonObject && StringUtils.isBlank(jsonpath)) {
+            if (data.getValue() != null && data.getValue() instanceof JsonObject && StringUtils.isNotBlank(jsonpath)) {
                 return new ListDataType(JSONPath.keys(data.toJSONObject(), jsonpath).toArray(new String[0]));
             }
 

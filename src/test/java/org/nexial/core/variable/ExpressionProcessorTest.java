@@ -988,6 +988,64 @@ public class ExpressionProcessorTest {
     }
 
     @Test
+    public void processJsonKeys() throws Exception {
+        ExpressionProcessor subject = new ExpressionProcessor(context);
+
+        String json = "{\n" +
+                      "  \"shipping_address\": [\n" +
+                      "    {\n" +
+                      "      \"street_address\": \"1600 Pennsylvania Avenue NW\",\n" +
+                      "      \"city\": \"Washington\",\n" +
+                      "      \"state\": \"DC\",\n" +
+                      "      \"labels\": [\n" +
+                      "        \"east coast\",\n" +
+                      "        {\n" +
+                      "          \"residents\": [\n" +
+                      "            { \"name\": \"Mr. President\", \"gender\": \"M\" },\n" +
+                      "            { \"name\": \"Mrs. President\", \"gender\": \"F\" },\n" +
+                      "            { \"name\": \"First Dog\", \"gender\": \"F\" },\n" +
+                      "            null\n" +
+                      "          ]\n" +
+                      "        },\n" +
+                      "        null,\n" +
+                      "        \"gated\"\n" +
+                      "      ]\n" +
+                      "    },\n" +
+                      "    {\n" +
+                      "      \"country\": \"USA\",\n" +
+                      "      \"street_address\": \"1733 Washington Avenue\",\n" +
+                      "      \"city\": \"Glenoak\",\n" +
+                      "      \"state\": \"CA\"\n" +
+                      "    }\n" +
+                      "  ],\n" +
+                      "  \"billing_address\": {\n" +
+                      "    \"address1\": \"1st Street SE\",\n" +
+                      "    \"address2\": null,\n" +
+                      "    \"city\": \"Seeti\",\n" +
+                      "    \"county\": \"Abrehiban\",\n" +
+                      "    \"state\": \"DC\",\n" +
+                      "    \"zipcode\": \"10541\",\n" +
+                      "    \"country\": \"USA\"\n" +
+                      "  },\n" +
+                      "  \"tags\": [ \"electronics\", \"hi-tech\", \"android\" ]\n" +
+                      "}";
+
+        Assert.assertEquals("gender name",
+                            subject.process("[JSON(" + json + ") => " +
+                                            "   keys(shipping_address.labels.residents[2]) " +
+                                            "   ascending " +
+                                            "   combine( )" +
+                                            "]"));
+        Assert.assertEquals("0",
+                            subject.process("[JSON(" + json + ") => keys(shipping_address.labels.residents[3]) size]"));
+        Assert.assertEquals("residents", subject.process("[JSON(" + json + ") => keys(shipping_address.labels[1])]"));
+        Assert.assertEquals("city,country,state,street_address",
+                            subject.process("[JSON(" + json + ") => keys(shipping_address[1]) ascending]"));
+        Assert.assertEquals("address1,address2,city,country,county,state,zipcode",
+                            subject.process("[JSON(" + json + ") => keys(billing_address) ascending]"));
+    }
+
+    @Test
     public void processXml() throws Exception {
         ExpressionProcessor subject = new ExpressionProcessor(context);
 
@@ -2923,7 +2981,8 @@ public class ExpressionProcessorTest {
                             "\"345678901\",\"James P.\",\"Educator\",34\n" +
                             "\"456789012\",Joe,\"Production Inspector\",41\n" +
                             "\"567890123\",Jacob,\"Software Developer at \\\"Cool Vibe\\\"\",44",
-                            subject.process("[CSV(${csv1}) => parse(header=true,keepQuote=true) surround(\",Job,SSN) text]"));
+                            subject
+                                .process("[CSV(${csv1}) => parse(header=true,keepQuote=true) surround(\",Job,SSN) text]"));
 
         Assert.assertEquals("SSN,First Name,Job,Age\n" +
                             " 123456789 ,Jim, Teacher ,39\n" +
@@ -2931,7 +2990,8 @@ public class ExpressionProcessorTest {
                             " 345678901 ,\"James P.\", Educator ,34\n" +
                             " 456789012 ,Joe, \"Production Inspector\" ,41\n" +
                             " 567890123 ,Jacob, \"Software Developer at \\\"Cool Vibe\\\"\" ,44",
-                            subject.process("[CSV(${csv1}) => parse(header=true,keepQuote=true) surround( ,Job,SSN) text]"));
+                            subject
+                                .process("[CSV(${csv1}) => parse(header=true,keepQuote=true) surround( ,Job,SSN) text]"));
     }
 
     @Test
