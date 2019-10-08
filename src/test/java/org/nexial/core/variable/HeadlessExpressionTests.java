@@ -29,6 +29,7 @@ public class HeadlessExpressionTests extends ExcelBasedTests {
         assertPassFail(executionSummary, "CSV", TestOutcomeStats.allPassed());
         assertPassFail(executionSummary, "EXCEL", TestOutcomeStats.allPassed());
         assertPassFail(executionSummary, "XML", TestOutcomeStats.allPassed());
+        assertPassFail(executionSummary, "JSON", TestOutcomeStats.allPassed());
     }
 
     @Test
