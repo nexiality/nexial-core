@@ -124,9 +124,9 @@ class DataDocGenerator(val options: InspectorOptions, val logger: InspectorLogge
                             if (CollectionUtils.isNotEmpty(row)) {
                                 // column A must be defined with data name
                                 val headerCell = row[0][0]
-                                val name = Excel.getCellValue(headerCell)
+                                val name = Excel.getCellRawValue(headerCell)
                                 if (StringUtils.isNotBlank(name)) {
-                                    val definedAs = if (row[0].size > 1) Excel.getCellValue(row[0][1]) else ""
+                                    val definedAs = if (row[0].size > 1) Excel.getCellRawValue(row[0][1]) else ""
 
                                     dataSheetCache.data += DataCache(position = headerCell.reference,
                                                                      name = name,
@@ -260,36 +260,36 @@ class DataDocGenerator(val options: InspectorOptions, val logger: InspectorLogge
                                                 "${sheet.findLastDataRow(ExcelAddress("${COL_TARGET}5")) + 1}"))
 
                         step.forEach { row ->
-                            val activity = Excel.getCellValue(row[0])
+                            val activity = Excel.getCellRawValue(row[0])
                             if (activity.isNotBlank()) {
                                 if (activityCache != null) scenarioCache.sequences += activityCache!!
                                 activityCache = SequenceCache(activity, ACTIVITY, row[0].rowIndex)
                             }
 
                             val rowIndex = row[0].rowIndex
-                            val cmdType = Excel.getCellValue(row[2])
-                            val command = Excel.getCellValue(row[3])
+                            val cmdType = Excel.getCellRawValue(row[2])
+                            val command = Excel.getCellRawValue(row[3])
 
                             if (activityCache != null) {
                                 activityCache!!.steps += StepCache(
                                         row = rowIndex,
-                                        description = Excel.getCellValue(row[1]),
+                                        description = Excel.getCellRawValue(row[1]),
                                         cmdType = cmdType,
                                         command = command,
-                                        param1 = Excel.getCellValue(row[4]),
-                                        param2 = Excel.getCellValue(row[5]),
-                                        param3 = Excel.getCellValue(row[6]),
-                                        param4 = Excel.getCellValue(row[7]),
-                                        param5 = Excel.getCellValue(row[8]),
-                                        flowControl = Excel.getCellValue(row[9]),
-                                        screenshot = BooleanUtils.toBoolean(Excel.getCellValue(row[11])))
+                                        param1 = Excel.getCellRawValue(row[4]),
+                                        param2 = Excel.getCellRawValue(row[5]),
+                                        param3 = Excel.getCellRawValue(row[6]),
+                                        param4 = Excel.getCellRawValue(row[7]),
+                                        param5 = Excel.getCellRawValue(row[8]),
+                                        flowControl = Excel.getCellRawValue(row[9]),
+                                        screenshot = BooleanUtils.toBoolean(Excel.getCellRawValue(row[11])))
                             }
 
                             val commandFqn = "$cmdType.$command"
                             if (varCommands.containsKey(commandFqn)) {
                                 val varIndices = varCommands.getValue(commandFqn)
                                 varIndices.forEach {
-                                    val dv = DataVariableAtom(name = Excel.getCellValue(row[4 + it]),
+                                    val dv = DataVariableAtom(name = Excel.getCellRawValue(row[4 + it]),
                                                               definedAs = commandFqn,
                                                               location = location,
                                                               dataSheet = sheetName,
@@ -301,7 +301,7 @@ class DataDocGenerator(val options: InspectorOptions, val logger: InspectorLogge
                             }
 
                             if (MULTI_VARS_COMMANDS.containsKey(commandFqn)) {
-                                val vars = Excel.getCellValue(row[4 + MULTI_VARS_COMMANDS.getValue(commandFqn)])
+                                val vars = Excel.getCellRawValue(row[4 + MULTI_VARS_COMMANDS.getValue(commandFqn)])
                                 if (vars.isNotBlank()) {
                                     TextUtils.toList(vars, ",", true).forEach {
                                         val dv = DataVariableAtom(name = it,
