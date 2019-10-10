@@ -30,6 +30,7 @@ import org.apache.commons.lang3.ArrayUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.builder.ToStringBuilder;
 import org.apache.commons.lang3.time.StopWatch;
+import org.apache.poi.ss.usermodel.CellType;
 import org.apache.poi.ss.usermodel.Comment;
 import org.apache.poi.xssf.usermodel.XSSFCell;
 import org.apache.poi.xssf.usermodel.XSSFCellStyle;
@@ -513,7 +514,7 @@ public class TestStep extends TestStepManifest {
         Object[] paramValues = result.getParamValues();
 
         // handle linkable params (first priority), verbose (second priority) and params (last)
-        for (int i = COL_IDX_PARAMS_START; i < COL_IDX_PARAMS_END; i++) {
+        for (int i = COL_IDX_PARAMS_START; i <= COL_IDX_PARAMS_END; i++) {
             int paramIdx = i - COL_IDX_PARAMS_START;
 
             String link = CollectionUtils.size(linkableParams) > paramIdx ? linkableParams.get(paramIdx) : null;
@@ -558,7 +559,10 @@ public class TestStep extends TestStepManifest {
             }
 
             String origParamValue = Excel.getCellValue(paramCell);
-            if (StringUtils.isBlank(origParamValue)) { continue; }
+            if (StringUtils.isBlank(origParamValue)) {
+                paramCell.setCellType(CellType.BLANK);
+                continue;
+            }
 
             if (i == COL_IDX_PARAMS_START && StringUtils.equals(getCommandFQN(), CMD_VERBOSE)) {
                 if (context.containsCrypt(origParamValue)) {
@@ -599,7 +603,9 @@ public class TestStep extends TestStepManifest {
         }
 
         // flow control
-        ExcelStyleHelper.formatFlowControlCell(worksheet, row.get(COL_IDX_FLOW_CONTROLS));
+        XSSFCell flowControlCell = row.get(COL_IDX_FLOW_CONTROLS);
+        ExcelStyleHelper.formatFlowControlCell(worksheet, flowControlCell);
+        if (StringUtils.isBlank(Excel.getCellValue(flowControlCell))) { flowControlCell.setCellType(CellType.BLANK); }
 
         // screenshot
         String screenshotLink = handleScreenshot(result);
@@ -650,7 +656,6 @@ public class TestStep extends TestStepManifest {
 
         if (CollectionUtils.isNotEmpty(nestedTestResults)) {
             TestStepManifest testStep = toTestStepManifest();
-            testStep.setRowIndex(row.get(0).getRowIndex());
             testCase.getTestScenario().getExecutionSummary().addNestedMessages(testStep, nestedTestResults);
         }
     }
