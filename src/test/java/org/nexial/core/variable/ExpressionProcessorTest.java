@@ -869,7 +869,10 @@ public class ExpressionProcessorTest {
         String expCompactRemoveEmpty = "[JSON(" + jsonString + ") => compact(true)]";
 
         ExpressionProcessor subject = new ExpressionProcessor(context);
-        assertEquals("{\"name\":\"Me and Myself\",\"data1\":\"\"}", subject.process(expPack));
+        assertEquals("{\n" +
+                     "  \"name\": \"Me and Myself\",\n" +
+                     "  \"data1\": \"\"\n" +
+                     "}", subject.process(expPack));
         assertEquals("{\"name\":\"Me and Myself\",\"data1\":\"\"}", subject.process(expCompactKeepEmpty));
         assertEquals("{\"name\":\"Me and Myself\"}", subject.process(expCompactRemoveEmpty));
 
@@ -882,7 +885,11 @@ public class ExpressionProcessorTest {
         expCompactRemoveEmpty = "[JSON(" + jsonString + ") => compact(true)]";
 
         subject = new ExpressionProcessor(context);
-        assertEquals("{\"name\":\"Me and Myself\",\"data1\":\"\",\"data2\":{}}", subject.process(expPack));
+        assertEquals("{\n" +
+                     "  \"name\": \"Me and Myself\",\n" +
+                     "  \"data1\": \"\",\n" +
+                     "  \"data2\": {}\n" +
+                     "}", subject.process(expPack));
         assertEquals("{\"name\":\"Me and Myself\",\"data1\":\"\"}", subject.process(expCompactKeepEmpty));
         assertEquals("{\"name\":\"Me and Myself\"}", subject.process(expCompactRemoveEmpty));
 
@@ -895,7 +902,11 @@ public class ExpressionProcessorTest {
         expCompactRemoveEmpty = "[JSON(" + jsonString + ") => compact(true)]";
 
         subject = new ExpressionProcessor(context);
-        assertEquals("{\"name\":\"Me and Myself\",\"data1\":\"\",\"data2\":{}}", subject.process(expPack));
+        assertEquals("{\n" +
+                     "  \"name\": \"Me and Myself\",\n" +
+                     "  \"data1\": \"\",\n" +
+                     "  \"data2\": {}\n" +
+                     "}", subject.process(expPack));
         assertEquals("{\"name\":\"Me and Myself\",\"data1\":\"\"}", subject.process(expCompactKeepEmpty));
         assertEquals("{\"name\":\"Me and Myself\"}", subject.process(expCompactRemoveEmpty));
 
@@ -908,7 +919,15 @@ public class ExpressionProcessorTest {
         expCompactRemoveEmpty = "[JSON(" + jsonString + ") => compact(true)]";
 
         subject = new ExpressionProcessor(context);
-        assertEquals("{\"name\":\"Me and Myself\",\"data1\":\"\",\"data2\":{\"data3\":{\"data4\":{}}}}",
+        assertEquals("{\n" +
+                     "  \"name\": \"Me and Myself\",\n" +
+                     "  \"data1\": \"\",\n" +
+                     "  \"data2\": {\n" +
+                     "    \"data3\": {\n" +
+                     "      \"data4\": {}\n" +
+                     "    }\n" +
+                     "  }\n" +
+                     "}",
                      subject.process(expPack));
         assertEquals("{\"name\":\"Me and Myself\",\"data1\":\"\"}", subject.process(expCompactKeepEmpty));
         assertEquals("{\"name\":\"Me and Myself\"}", subject.process(expCompactRemoveEmpty));
@@ -922,7 +941,11 @@ public class ExpressionProcessorTest {
         expCompactRemoveEmpty = "[JSON(" + jsonString + ") => compact(true)]";
 
         subject = new ExpressionProcessor(context);
-        assertEquals("{\"name\":\"Me and Myself\",\"data1\":\"\",\"data2\":[]}", subject.process(expPack));
+        assertEquals("{\n" +
+                     "  \"name\": \"Me and Myself\",\n" +
+                     "  \"data1\": \"\",\n" +
+                     "  \"data2\": []\n" +
+                     "}", subject.process(expPack));
         assertEquals("{\"name\":\"Me and Myself\",\"data1\":\"\"}", subject.process(expCompactKeepEmpty));
         assertEquals("{\"name\":\"Me and Myself\"}", subject.process(expCompactRemoveEmpty));
 
@@ -935,7 +958,14 @@ public class ExpressionProcessorTest {
         expCompactRemoveEmpty = "[JSON(" + jsonString + ") => compact(true)]";
 
         subject = new ExpressionProcessor(context);
-        assertEquals("{\"name\":\"Me and Myself\",\"data1\":\"\",\"data2\":[null,null]}", subject.process(expPack));
+        assertEquals("{\n" +
+                     "  \"name\": \"Me and Myself\",\n" +
+                     "  \"data1\": \"\",\n" +
+                     "  \"data2\": [\n" +
+                     "    null,\n" +
+                     "    null\n" +
+                     "  ]\n" +
+                     "}", subject.process(expPack));
         assertEquals("{\"name\":\"Me and Myself\",\"data1\":\"\"}", subject.process(expCompactKeepEmpty));
         assertEquals("{\"name\":\"Me and Myself\"}", subject.process(expCompactRemoveEmpty));
 
@@ -948,7 +978,15 @@ public class ExpressionProcessorTest {
         expCompactRemoveEmpty = "[JSON(" + jsonString + ") => compact(true)]";
 
         subject = new ExpressionProcessor(context);
-        assertEquals("{\"name\":\"Me and Myself\",\"data1\":\"\",\"data2\":[null,\"\",null]}",
+        assertEquals("{\n" +
+                     "  \"name\": \"Me and Myself\",\n" +
+                     "  \"data1\": \"\",\n" +
+                     "  \"data2\": [\n" +
+                     "    null,\n" +
+                     "    \"\",\n" +
+                     "    null\n" +
+                     "  ]\n" +
+                     "}",
                      subject.process(expPack));
         assertEquals("{\"name\":\"Me and Myself\",\"data1\":\"\",\"data2\":[\"\"]}",
                      subject.process(expCompactKeepEmpty));
