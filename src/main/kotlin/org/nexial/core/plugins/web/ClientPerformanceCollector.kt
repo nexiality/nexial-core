@@ -67,12 +67,23 @@ class ClientPerformanceCollector(val command: WebCommand, private val output: St
             newExecution(context)
         }
 
-        val script = findOrCreateChild(execution, "scripts", Execution().script("name"), "scenarios")
+        val script = findOrCreateScript(execution)
         val scenario = findOrCreateChild(script, "scenarios", context.currentScenario, "activities")
         val activity = findOrCreateChild(scenario, "activities", context.currentActivity, "steps")
         activity.getAsJsonArray("steps").add(stepJson)
 
         FileWriter(jsonFile).use { GSON.toJson(execution, it) }
+    }
+
+    private fun findOrCreateScript(node: JsonObject): JsonObject {
+        val execution = Execution()
+        val planName = execution.plan("name")
+        val planStep = execution.plan("index")
+        val iteration = execution.iteration("index")
+        val scriptName =
+                (if (planName.isNotBlank()) "$planName.$planStep." else "") + execution.script("name") +
+                (if (iteration == "" || iteration == "0") "" else ".${StringUtils.leftPad(iteration + "", 3, "0")}")
+        return findOrCreateChild(node, "scripts", scriptName, "scenarios")
     }
 
     private fun findOrCreateChild(node: JsonObject, childNode: String, childName: String, childArray: String):

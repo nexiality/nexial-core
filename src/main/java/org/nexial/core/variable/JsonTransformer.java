@@ -204,7 +204,7 @@ public class JsonTransformer<T extends JsonDataType> extends Transformer {
 
         String jsonString = GSON.toJson(data.getValue());
         data.setValue(GSON.fromJson(jsonString, JsonElement.class));
-        data.setTextValue(data.getValue().toString());
+        data.setTextValue(GSON.toJson(data.getValue()));
         return data;
     }
 

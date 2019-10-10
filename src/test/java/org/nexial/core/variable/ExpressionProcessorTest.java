@@ -956,6 +956,41 @@ public class ExpressionProcessorTest {
     }
 
     @Test
+    public void processJson_pack2() throws Exception {
+        String jsonString = "{\n" +
+                            "  \"config\": {\n" +
+                            "    \"location1\": [\n" +
+                            "      {\n" +
+                            "        \"code\": \"CA\",\n" +
+                            "        \"state\": \"California\"\n" +
+                            "      }\n" +
+                            "    ],\n" +
+                            "    \"location2\": null,\n" +
+                            "    \"config1\": {\n" +
+                            "      \"client\": 12345,\n" +
+                            "      \"active\": true\n" +
+                            "    },\n" +
+                            "    \"config2\": [ ],\n" +
+                            "    \"dataListing\": [\n" +
+                            "      \"\",\n" +
+                            "      \"\",\n" +
+                            "      null,\n" +
+                            "      { }\n" +
+                            "    ],\n" +
+                            "    \"config3\": null\n" +
+                            "  }\n" +
+                            "}";
+        System.out.println("before pack = " + jsonString);
+
+        ExpressionProcessor subject = new ExpressionProcessor(context);
+        String afterPack = subject.process("[JSON(" + jsonString + ") => pack]");
+        System.out.println("after pack  = " + afterPack);
+
+        assertFalse(afterPack.contains("\"location2\""));
+        assertTrue(afterPack.contains("\n"));
+    }
+
+    @Test
     public void processXml() throws Exception {
         ExpressionProcessor subject = new ExpressionProcessor(context);
 

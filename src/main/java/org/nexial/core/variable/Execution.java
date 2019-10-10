@@ -32,6 +32,7 @@ import static org.apache.commons.lang3.SystemUtils.USER_NAME;
 import static org.nexial.core.NexialConst.Data.CURR_ITERATION;
 import static org.nexial.core.NexialConst.Data.ITERATION_ENDED;
 import static org.nexial.core.NexialConst.OPT_INPUT_EXCEL_FILE;
+import static org.nexial.core.NexialConst.OPT_INPUT_PLAN_FILE;
 import static org.nexial.core.NexialConst.Project.SCRIPT_FILE_EXT;
 import static org.nexial.core.utils.ExecUtils.NEXIAL_MANIFEST;
 
@@ -58,7 +59,9 @@ public class Execution {
         // elapsed, passed, failed, skipped, success
     }
 
-    enum Artifact {script, iteration, scenario, activity, step }
+    enum Artifact {plan, script, iteration, scenario, activity, step}
+
+    public String plan(String scope) { return evaluateExecutionData(Artifact.plan, Metadata.valueOf(scope)); }
 
     public String script(String scope) { return evaluateExecutionData(Artifact.script, Metadata.valueOf(scope)); }
 
@@ -222,9 +225,47 @@ public class Execution {
                         return "";
                 }
             }
+
+            case plan: {
+                switch (metadata) {
+                    case name:
+                        return resolvePlanName(context);
+                    case fullpath: {
+                        String excelFile = context.getStringData(OPT_INPUT_PLAN_FILE);
+                        if (StringUtils.isNotEmpty(excelFile)) { return new File(excelFile).getAbsolutePath(); }
+                    }
+                    case index: {
+                        ExecutionDefinition execDef = context.getExecDef();
+                        if (execDef == null) { return ""; }
+
+                        int planSequence = execDef.getPlanSequence();
+                        return (planSequence < 1) ? "" : planSequence + "";
+                    }
+                    case script:
+                    case iteration:
+                    case scenario:
+                    case activity:
+                    case description:
+                    case command:
+                    default:
+                        ConsoleUtils.error(error);
+                        return "";
+                }
+            }
         }
 
         return null;
+    }
+
+    @NotNull
+    private String resolvePlanName(ExecutionContext context) {
+        ExecutionDefinition execDef = context.getExecDef();
+        if (execDef == null) { return ""; }
+
+        String planFile = execDef.getPlanFile();
+        if (planFile == null) { return ""; }
+
+        return StringUtils.removeEndIgnoreCase(new File(planFile).getName(), SCRIPT_FILE_EXT);
     }
 
     @NotNull
