@@ -700,6 +700,27 @@ public class ExpressionProcessorTest {
     }
 
     @Test
+    public void processJsonAdd_1() throws Exception {
+        ExpressionProcessor subject = new ExpressionProcessor(context);
+
+        String jsonFile = ResourceUtils.getResourceFilePath(resourcePath + className + "13.json");
+        String fixture = "[JSON(" + jsonFile + ") =>" +
+                         " addOrReplace( ,author: me and myself)" +
+                         " text]";
+
+        // replace string with string
+        String result = subject.process(fixture);
+        assertEquals("{" +
+                     "\"author\":\"me and myself\"," +
+                     "\"office\":{" +
+                     "\"code\":\"AEF\"," +
+                     "\"address\":\"123 Outthere Ave, SeeTee\"," +
+                     "\"description\":\"Advanced External Partnership\"" +
+                     "}}",
+                     result);
+    }
+
+    @Test
     public void processJson_save() throws Exception {
         ExpressionProcessor subject = new ExpressionProcessor(context);
 
