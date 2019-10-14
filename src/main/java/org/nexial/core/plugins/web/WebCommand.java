@@ -537,16 +537,22 @@ public class WebCommand extends BaseCommand implements CanTakeScreenshot, CanLog
         return new StepResult(waitForCondition(context.getPollWaitMs(), object -> isElementPresent(locator)));
     }
 
+    public StepResult saveSelectedText(String var, String locator) {
+        return getSelectedOptions(var, locator, true);
+    }
+
+    public StepResult saveSelectedValue(String var, String locator) {
+        return getSelectedOptions(var, locator, false);
+    }
+
     public StepResult saveValue(String var, String locator) {
-        requires(StringUtils.isNotBlank(var) && !StringUtils.startsWith(var, "${"), "invalid variable", var);
+        requiresValidAndNotReadOnlyVariableName(var);
         updateDataVariable(var, getValue(locator));
         return StepResult.success("stored value of '" + locator + "' as ${" + var + "}");
     }
 
     public StepResult saveValues(String var, String locator) {
         requiresValidAndNotReadOnlyVariableName(var);
-        requires(StringUtils.isNotBlank(var) && !StringUtils.startsWith(var, "${"), "invalid variable", var);
-
         String[] values = collectValueList(findElements(locator));
         if (ArrayUtils.isNotEmpty(values)) {
             context.setData(var, values);
@@ -602,7 +608,7 @@ public class WebCommand extends BaseCommand implements CanTakeScreenshot, CanLog
     }
 
     public StepResult saveCount(String var, String locator) {
-        requires(StringUtils.isNotBlank(var) && !StringUtils.startsWith(var, "${"), "invalid variable", var);
+        requiresValidAndNotReadOnlyVariableName(var);
         context.setData(var, getElementCount(locator));
         return StepResult.success("stored matched count of '" + locator + "' as ${" + var + "}");
     }
@@ -621,7 +627,7 @@ public class WebCommand extends BaseCommand implements CanTakeScreenshot, CanLog
     }
 
     public StepResult saveText(String var, String locator) {
-        requires(StringUtils.isNotBlank(var) && !StringUtils.startsWith(var, "${"), "invalid variable", var);
+        requiresValidAndNotReadOnlyVariableName(var);
         String text = getElementText(locator);
         updateDataVariable(var, text);
         return StepResult.success(StringUtils.isEmpty(text) ?
@@ -630,13 +636,13 @@ public class WebCommand extends BaseCommand implements CanTakeScreenshot, CanLog
     }
 
     public StepResult saveElement(String var, String locator) {
-        requires(StringUtils.isNotBlank(var) && !StringUtils.startsWith(var, "${"), "invalid variable", var);
+        requiresValidAndNotReadOnlyVariableName(var);
         context.setData(var, findElement(locator));
         return StepResult.success("element '" + locator + "' found and stored as ${" + var + "}");
     }
 
     public StepResult saveElements(String var, String locator) {
-        requires(StringUtils.isNotBlank(var) && !StringUtils.startsWith(var, "${"), "invalid property", var);
+        requiresValidAndNotReadOnlyVariableName(var);
         context.setData(var, findElements(locator));
         return StepResult.success("elements '" + locator + "' found and stored as ${" + var + "}");
     }
@@ -1543,7 +1549,7 @@ public class WebCommand extends BaseCommand implements CanTakeScreenshot, CanLog
     }
 
     public StepResult saveLocation(String var) {
-        requires(StringUtils.isNotBlank(var) && !StringUtils.startsWith(var, "${"), "invalid variable", var);
+        requiresValidAndNotReadOnlyVariableName(var);
 
         ensureReady();
         updateDataVariable(var, driver.getCurrentUrl());
@@ -2475,6 +2481,20 @@ public class WebCommand extends BaseCommand implements CanTakeScreenshot, CanLog
     protected boolean isTextPresent(String text) {
         ensureReady();
         return StringUtils.contains(driver.findElement(By.tagName("body")).getText(), text);
+    }
+
+    protected StepResult getSelectedOptions(String var, String locator, boolean expectsText) {
+        requiresValidAndNotReadOnlyVariableName(var);
+
+        List<WebElement> selected = getSelectElement(locator).getAllSelectedOptions();
+        String[] values = selected.stream().map(elem -> expectsText ? elem.getText() : elem.getAttribute("value"))
+                                  .toArray(String[]::new);
+        if (ArrayUtils.isNotEmpty(values)) {
+            context.setData(var, values);
+        } else {
+            context.removeData(var);
+        }
+        return StepResult.success("stored selected options of '" + locator + "' as ${" + var + "}");
     }
 
     protected String getValue(String locator) {
