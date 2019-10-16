@@ -298,6 +298,17 @@ public class ExpressionProcessorTest {
     }
 
     @Test
+    public void processTest_resolve_as_url() throws Exception {
+        ExpressionProcessor subject = new ExpressionProcessor(context);
+
+        String fixture = "http://ip.jsontest.com/";
+        assertEquals(fixture, subject.process("[TEXT(" + fixture + ") => text ]"));
+
+        context.setData("nexial.resolveTextAsURL", "true");
+        assertTrue(subject.process("[TEXT(" + fixture + ") => text ]").contains("{"));
+    }
+
+    @Test
     public void processList() throws Exception {
         ExpressionProcessor subject = new ExpressionProcessor(context);
 
@@ -1067,6 +1078,20 @@ public class ExpressionProcessorTest {
                      subject.process(fixture));
 
         assertEquals("12", subject.process("[XML(" + xmlFile + ") => count(//catalog/book)]"));
+
+        result = subject.process("[XML(" + xmlFile + ") => clear(/catalog/book[./genre=\"Fantasy\"]) ]");
+        assertTrue(result.contains("<book id=\"bk102\" />"));
+        assertTrue(result.contains("<book id=\"bk103\" />"));
+        assertTrue(result.contains("<book id=\"bk104\" />"));
+        assertTrue(result.contains("<book id=\"bk105\" />"));
+
+        result = subject.process("[XML(" + xmlFile + ") => remove(/catalog/book[./genre=\"Fantasy\"]) ]");
+        assertFalse(result.contains("id=\"bk102\""));
+        assertFalse(result.contains("id=\"bk103\""));
+        assertFalse(result.contains("id=\"bk104\""));
+        assertFalse(result.contains("id=\"bk105\""));
+
+        assertEquals(result, subject.process("[XML(" + xmlFile + ") => delete(/catalog/book[./genre=\"Fantasy\"]) ]"));
     }
 
     @Test

@@ -75,7 +75,7 @@ public class CsvCommand extends IoCommand {
         requiresValidAndNotReadOnlyVariableName(var);
         requiresNotBlank(profile, "Missing profile for compareExtended");
 
-        boolean textAsURL = context.isResolveTextAsURL();
+        // boolean textAsURL = context.isResolveTextAsURL();
 
         // expected can either be a file or content
         String expectedContent;

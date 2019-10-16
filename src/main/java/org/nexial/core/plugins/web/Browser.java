@@ -53,6 +53,7 @@ import org.openqa.selenium.chrome.ChromeOptions;
 import org.openqa.selenium.edge.EdgeDriver;
 import org.openqa.selenium.firefox.FirefoxDriver;
 import org.openqa.selenium.firefox.FirefoxOptions;
+import org.openqa.selenium.firefox.FirefoxProfile;
 import org.openqa.selenium.ie.InternetExplorerDriver;
 import org.openqa.selenium.ie.InternetExplorerOptions;
 import org.openqa.selenium.remote.DesiredCapabilities;
@@ -560,6 +561,7 @@ public class Browser implements ForcefulTerminate {
         // options.addArguments("--disable-gpu"); // applicable to windows os only
         options.addArguments("--disable-dev-shm-usage"); // overcome limited resource problems
         options.addArguments("--no-sandbox"); // Bypass OS security model
+        handleChromeProfile(options);
 
         int port = 12209;
         if (NumberUtils.isDigits(context.getStringData(CHROME_REMOTE_PORT))) {
@@ -616,9 +618,8 @@ public class Browser implements ForcefulTerminate {
         }
 
         options.addArguments(this.chromeOptions);
-        if (context.getBooleanData(BROWSER_INCOGNITO, getDefaultBool(BROWSER_INCOGNITO))) {
-            options.addArguments(KEY_INCOGNITO);
-        }
+
+        handleChromeProfile(options);
 
         if (NumberUtils.isDigits(context.getStringData(CHROME_REMOTE_PORT))) {
             int port = NumberUtils.toInt(context.getStringData(CHROME_REMOTE_PORT));
@@ -770,6 +771,8 @@ public class Browser implements ForcefulTerminate {
                     options.addPreference("network.proxy.no_proxies_on", "localhost, 127.0.0.1");
                 }
             }
+
+            handleFirefoxProfile(options, capabilities);
 
             if (headless) { options.setHeadless(true); }
 
@@ -999,6 +1002,38 @@ public class Browser implements ForcefulTerminate {
                                     (isRunCrossBrowserTesting() && cbtHelper.browser == safari);
             Point initialPosition = runningSafari ? INITIAL_POSITION_SAFARI : INITIAL_POSITION;
             window.setPosition(initialPosition);
+        }
+    }
+
+    private void handleFirefoxProfile(FirefoxOptions options, DesiredCapabilities capabilities) {
+        if (context.hasData(BROWSER_USER_DATA)) {
+            String userDataDir = context.getStringData(BROWSER_USER_DATA);
+            if (FileUtil.isDirectoryReadable(userDataDir)) {
+                options.setProfile(new FirefoxProfile(new File(userDataDir)));
+                return;
+            }
+
+            ConsoleUtils.error("Unable to add user-data on " + userDataDir + " because it is NOT accessible");
+        }
+
+        if (context.getBooleanData(BROWSER_INCOGNITO, getDefaultBool(BROWSER_INCOGNITO))) {
+            capabilities.setCapability("browser.private.browsing.autostart", true);
+        }
+    }
+
+    private void handleChromeProfile(ChromeOptions options) {
+        if (context.hasData(BROWSER_USER_DATA)) {
+            String userDataDir = context.getStringData(BROWSER_USER_DATA);
+            if (FileUtil.isDirectoryReadable(userDataDir)) {
+                options.addArguments("--user-data-dir=" + userDataDir);
+                return;
+            }
+
+            ConsoleUtils.error("Unable to add user-data on " + userDataDir + " because it is NOT accessible");
+        }
+
+        if (context.getBooleanData(BROWSER_INCOGNITO, getDefaultBool(BROWSER_INCOGNITO))) {
+            options.addArguments(KEY_INCOGNITO);
         }
     }
 

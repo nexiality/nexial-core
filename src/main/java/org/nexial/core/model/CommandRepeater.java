@@ -257,7 +257,15 @@ public class CommandRepeater {
         }
 
         ExecutionContext context = testStep.context;
-        if (shouldFailFast(context, testStep)) { return StepResult.fail(resolveRootCause(e)); }
+
+        String error = resolveRootCause(e);
+        context.getLogger().log(testStep,
+                                MSG_REPEAT_UNTIL + MSG_FAIL + error + "; " +
+                                FAIL_FAST + "=" + context.isFailFast() + "; " +
+                                OPT_LAST_OUTCOME + "=false",
+                                true);
+
+        if (shouldFailFast(context, testStep)) { return StepResult.fail(error); }
 
         // else, fail-fast not in effect, so we push on
         return null;

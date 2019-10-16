@@ -934,6 +934,7 @@ public final class NexialConst {
 
         public static final String KEY_INCOGNITO = "incognito";
         public static final String BROWSER_INCOGNITO = registerSystemVariable(NS_BROWSER + "." + KEY_INCOGNITO, true);
+        public static final String BROWSER_USER_DATA = registerSystemVariable(NS_BROWSER + ".userData");
 
         public static final String BROWSER_POST_CLOSE_WAIT = registerSystemVariable(NS_BROWSER + ".postCloseWaitMs", 3000);
         public static final String BROWSER_WINDOW_SIZE = registerSystemVariable(NS_BROWSER + ".windowSize");

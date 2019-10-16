@@ -39,7 +39,7 @@ internal val clear = Clear()
 // detaching content from fake root
 internal fun detach(content: Content) = content.clone().detach()
 
-internal abstract class Modification(val action: String,  val requireInput: Boolean) {
+internal abstract class Modification(val action: String, val requireInput: Boolean) {
 
     fun modify(candidates: List<Any>, content: String?): Int {
         if (requireInput && StringUtils.isEmpty(content)) {
@@ -210,13 +210,9 @@ internal class ReplaceIn : Modification("replaceIn", true) {
 }
 
 internal class Delete : Modification("delete", false) {
-    override fun handleModification(target: Element, childElement: Element) {
-        delete(target)
-    }
+    override fun handleModification(target: Element, childElement: Element) = delete(target)
 
-    override fun handleModification(target: Element, content: String?) {
-        delete(target)
-    }
+    override fun handleModification(target: Element, content: String?) = delete(target)
 
     override fun handleModification(target: Attribute, content: String?) {
         target.parent.removeAttribute(target)
@@ -228,13 +224,9 @@ internal class Delete : Modification("delete", false) {
 }
 
 internal class Clear : Modification("clear", false) {
-    override fun handleModification(target: Element, childElement: Element) {
-        clear(target)
-    }
+    override fun handleModification(target: Element, childElement: Element) = clear(target)
 
-    override fun handleModification(target: Element, content: String?) {
-        clear(target)
-    }
+    override fun handleModification(target: Element, content: String?) = clear(target)
 
     override fun handleModification(target: Attribute, content: String?) {
         target.detach()

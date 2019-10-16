@@ -870,7 +870,7 @@ public class IoCommand extends BaseCommand {
         FileComparisonReport report = new FileComparisonReport();
 
         boolean failfast = compareMode == FAIL_FAST;
-        boolean textAsURL = context.isResolveTextAsURL();
+        // boolean textAsURL = context.isResolveTextAsURL();
 
         String expectedContent;
         String actualContent;
