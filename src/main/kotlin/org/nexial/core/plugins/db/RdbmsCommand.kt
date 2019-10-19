@@ -220,9 +220,7 @@ class RdbmsCommand : BaseCommand() {
 
                     if (result.hasError()) log("ERROR found while executing $printableSql: ${result.error}")
 
-                    if (FileUtil.isFileReadable(output, 3)) {
-                        addLinkRef("Output for $printableSql", outFile, targetFile.absolutePath)
-                    }
+                    if (FileUtil.isFileReadable(output, 3)) addLinkRef(null, outFile, targetFile.absolutePath)
 
                     log("executed $printableSql in ${result.elapsedTime} ms with " +
                         if (result.hasError()) "ERROR ${result.error}" else "${result.rowCount} row(s)")

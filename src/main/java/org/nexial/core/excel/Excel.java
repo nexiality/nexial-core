@@ -416,10 +416,6 @@ public class Excel {
             return Excel.setHyperlink(cell, link, label);
         }
 
-        public XSSFCell setScreenCaptureStyle(XSSFCell cell, String url) {
-            return setHyperlink(cell, url, MSG_SCREENCAPTURE);
-        }
-
         public XSSFCell setWrapText(ExcelAddress addr, boolean onOff) {
             XSSFCell cell = firstCell(addr);
             if (cell != null) { cell.getCellStyle().setWrapText(onOff); }

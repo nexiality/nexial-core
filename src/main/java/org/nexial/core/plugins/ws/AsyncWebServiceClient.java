@@ -214,29 +214,33 @@ public class AsyncWebServiceClient extends WebServiceClient implements ForcefulT
 
         // either collect all data (if sink is available) or collect nothing
         FutureCallback<HttpResponse> collectAllResponseData = new FutureCallback<HttpResponse>() {
+            private final String safeUrl = hideAuthDetails(request.getUrl());
             private int id = callbackId;
 
             @Override
             public void completed(HttpResponse httpResponse) {
-                tickTock.stop();
-
-                debug(request.getUrl() + ": Response received in " + tickTock.getTime() + "ms");
+                long ttfb = tickTock.getTime();
+                debug(safeUrl + ": Response received in " + ttfb + "ms");
                 if (sink != null) {
                     try {
-                        Response response = gatherResponseData(http, request, httpResponse);
+                        Response response = gatherResponseData(request, httpResponse, ttfb);
+                        tickTock.stop();
+                        response.setRequestTime(tickTock.getStartTime());
                         response.setElapsedTime(tickTock.getTime());
-
                         AsyncResponse asyncResponse = AsyncResponse.toAsyncResponse(response);
                         response = null;
 
-                        ConsoleUtils.log("[ASYNC WS COMPLETED][" + id + "] " + request.getUrl() + ": " +
+                        ConsoleUtils.log("[ASYNC WS COMPLETED][" + id + "] " + safeUrl + ": " +
                                          asyncResponse.getContentLength() + " bytes, " +
                                          asyncResponse.getElapsedTime() + "ms");
+                        logResponse(http, request, httpResponse.getStatusLine(), asyncResponse);
                         sink.receive(asyncResponse, null);
                     } catch (IOException e) {
                         ConsoleUtils.error("Error occurred while handling async HTTP response: " + e.getMessage());
                         sink.receive(null, e.getMessage());
                     }
+                } else {
+                    tickTock.stop();
                 }
 
                 latch.countDown();
@@ -246,7 +250,7 @@ public class AsyncWebServiceClient extends WebServiceClient implements ForcefulT
             @Override
             public void failed(Exception e) {
                 tickTock.stop();
-                ConsoleUtils.error("[ASYNC WS ERROR] " + request.getUrl() + ": " + e.getMessage());
+                ConsoleUtils.error("[ASYNC WS ERROR][" + id + "] " + safeUrl + ": " + e.getMessage());
                 if (sink != null) { sink.receive(null, e.getMessage()); }
                 latch.countDown();
                 INFLIGHTS.remove(id);
@@ -255,14 +259,14 @@ public class AsyncWebServiceClient extends WebServiceClient implements ForcefulT
             @Override
             public void cancelled() {
                 tickTock.stop();
-                ConsoleUtils.error("[ASYNC WS CANCELLED] " + request.getUrl());
+                ConsoleUtils.error("[ASYNC WS CANCELLED][" + id + "] " + safeUrl);
                 if (sink != null) { sink.receive(null, "CANCELLED"); }
                 latch.countDown();
                 INFLIGHTS.remove(id);
             }
         };
 
-        log("Executing request " + hideAuthDetails(http.getRequestLine()));
+        logRequest(http, request, tickTock.getStartTime());
 
         boolean digestAuth = isDigestAuth();
         boolean basicAuth = isBasicAuth();
@@ -270,10 +274,7 @@ public class AsyncWebServiceClient extends WebServiceClient implements ForcefulT
         ASYNC_EXEC_SERVICE.submit(() -> {
             client.start();
 
-            if (context != null) {
-                INFLIGHTS.put(callbackId, collectAllResponseData);
-                //                debug("adding " + callbackId + " to inflight list (" + INFLIGHTS.keySet() + ")");
-            }
+            if (context != null) { INFLIGHTS.put(callbackId, collectAllResponseData); }
 
             try {
                 if (digestAuth || basicAuth) {
@@ -303,5 +304,4 @@ public class AsyncWebServiceClient extends WebServiceClient implements ForcefulT
         invokeRequestAsync(request, null);
         return null;
     }
-
 }

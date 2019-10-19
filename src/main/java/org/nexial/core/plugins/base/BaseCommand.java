@@ -61,6 +61,7 @@ import org.nexial.core.tools.CommandDiscovery;
 import org.nexial.core.utils.CheckUtils;
 import org.nexial.core.utils.ConsoleUtils;
 import org.nexial.core.utils.ExecUtils;
+import org.nexial.core.utils.OutputFileUtils;
 import org.nexial.core.variable.Syspath;
 
 import static java.io.File.separator;
@@ -700,9 +701,8 @@ public class BaseCommand implements NexialCommand {
             }
         }
 
-        String msg = "resource move to cloud storage";
-        addLinkRef(msg, "Click here", resource);
-        return StepResult.success(msg);
+        addLinkRef(null, "Click here", resource);
+        return StepResult.success("resource move to cloud storage " + resource);
     }
 
     /** Like JUnit's Assert.assertEquals, but handles "regexp:" strings like HTML Selenese */
@@ -862,7 +862,7 @@ public class BaseCommand implements NexialCommand {
     public void addLinkRef(String message, String label, String link) {
         if (StringUtils.isBlank(link)) { return; }
 
-        if (context.isOutputToCloud()) {
+        if (context.isOutputToCloud() && OutputFileUtils.isContentReferencedAsFile(link, context)) {
             try {
                 link = context.getOtc().importFile(new File(link), true);
             } catch (IOException e) {
@@ -875,7 +875,13 @@ public class BaseCommand implements NexialCommand {
             if (testStep != null && testStep.getWorksheet() != null) {
                 // test step undefined could mean that we are in interactive mode, or we are running unit testing
                 context.setData(OPT_LAST_OUTPUT_LINK, link);
-                testStep.addNestedScreenCapture(link, message, label);
+
+                // if there's no message, then we'll create link in the screenshot column of the SAME row (as test step)
+                if (StringUtils.isEmpty(message)) {
+                    testStep.addStepOutput(link, label);
+                } else {
+                    testStep.addNestedScreenCapture(link, message, label);
+                }
             }
         }
     }

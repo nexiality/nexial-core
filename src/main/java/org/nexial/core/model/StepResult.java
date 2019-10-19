@@ -79,7 +79,7 @@ public class StepResult {
 
     public boolean isError() { return !success && !isSkipped() && !isWarn(); }
 
-    public String getMessage() { return StringUtils.defaultString(message); }
+    public String getMessage() { return message == null? "null" : StringUtils.defaultString(message, "(empty)"); }
 
     public Throwable getException() { return exception; }
 

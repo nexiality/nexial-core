@@ -37,6 +37,8 @@ public class Response implements Serializable {
     protected int returnCode;
     protected String statusText;
     protected byte[] rawBody;
+    protected long requestTime;
+    protected long ttfb;
     protected long elapsedTime;
     protected long contentLength;
     protected Map<String, String> headers = new HashMap<>();
@@ -57,15 +59,19 @@ public class Response implements Serializable {
 
     public void setRawBody(byte[] rawBody) { this.rawBody = rawBody; }
 
+    public long getRequestTime() { return requestTime; }
+
+    public void setRequestTime(long requestTime) { this.requestTime = requestTime; }
+
+    public long getTtfb() { return ttfb; }
+
+    public void setTtfb(long ttfb) { this.ttfb = ttfb; }
+
     public long getElapsedTime() { return elapsedTime; }
 
     public void setElapsedTime(long elapsedTime) { this.elapsedTime = elapsedTime; }
 
     public Map<String, String> getHeaders() { return headers; }
-
-    public String getPayloadLocation() { return payloadLocation; }
-
-    public void setPayloadLocation(String payloadLocation) { this.payloadLocation = payloadLocation; }
 
     public void setHeaders(Map<String, String> headers) {
         this.headers = headers;
@@ -77,6 +83,10 @@ public class Response implements Serializable {
             }
         }
     }
+
+    public String getPayloadLocation() { return payloadLocation; }
+
+    public void setPayloadLocation(String payloadLocation) { this.payloadLocation = payloadLocation; }
 
     public Map<String, Cookie> getCookies() { return cookies; }
 
@@ -91,7 +101,7 @@ public class Response implements Serializable {
                "headers=" + headers + "\n" +
                "contentLength=" + contentLength + "\n" +
                "elapsedTime=" + elapsedTime + "\n" +
-               "body=" + (ArrayUtils.isEmpty(rawBody) ? "<NONE>" : StringUtils.left(getBody(), 500) + "...'");
+               "body=" + (ArrayUtils.isEmpty(rawBody) ? "<NONE>" : StringUtils.left(getBody(), 500) + "...");
     }
 
     protected void harvestCookies(String[] cookieParts) {
@@ -99,8 +109,9 @@ public class Response implements Serializable {
         for (String cookiePart : cookieParts) {
             Pair<String, String> nameValue;
             if (StringUtils.contains(cookiePart, "=")) {
-                String[] pair = StringUtils.split(cookiePart, "=");
-                nameValue = new ImmutablePair<>(StringUtils.trim(pair[0]), StringUtils.trim(pair[1]));
+                // presence of "=" doesn't mean that there's a valid name/value pair
+                nameValue = new ImmutablePair<>(StringUtils.trim(StringUtils.substringBefore(cookiePart, "=")),
+                                                StringUtils.trim(StringUtils.substringAfter(cookiePart, "=")));
             } else {
                 nameValue = new ImmutablePair<>(cookiePart, null);
             }

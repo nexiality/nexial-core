@@ -28,7 +28,6 @@ import java.io.FileReader
 class JsonMetaTest {
 
     private var jsonMetaParser = JsonMetaParser()
-    private val jsonParser = JsonParser()
 
     @Test
     @Throws(Throwable::class)
@@ -38,7 +37,7 @@ class JsonMetaTest {
         Assert.assertNotNull(resourcePath)
 
         val reader = BufferedReader(FileReader(resourcePath!!))
-        val subject = jsonMetaParser.parse(jsonParser.parse(reader))
+        val subject = jsonMetaParser.parse(JsonParser.parseReader(reader))
         println(subject)
 
         Assert.assertNotNull(subject)
@@ -155,7 +154,7 @@ class JsonMetaTest {
         Assert.assertNotNull(resourcePath)
 
         val reader2 = BufferedReader(FileReader(resourcePath!!))
-        val subject2 = jsonMetaParser.parse(jsonParser.parse(reader2))
+        val subject2 = jsonMetaParser.parse(JsonParser.parseReader(reader2))
         println(subject2)
 
         Assert.assertTrue(subject2.isArray)
@@ -233,8 +232,8 @@ class JsonMetaTest {
                 "answer": "Huston Rocket"
             }"""
 
-        val expected = jsonMetaParser.parse(jsonParser.parse(fixture1))
-        val actual = jsonMetaParser.parse(jsonParser.parse(fixture2))
+        val expected = jsonMetaParser.parse(JsonParser.parseString(fixture1))
+        val actual = jsonMetaParser.parse(JsonParser.parseString(fixture2))
         val results = expected.compare(actual)
         println("results = $results")
         Assert.assertNotNull(results)
@@ -256,8 +255,8 @@ class JsonMetaTest {
                 "question": "Which one is correct team name in NBA?"
             }"""
 
-        val expected = jsonMetaParser.parse(jsonParser.parse(fixture1))
-        val actual = jsonMetaParser.parse(jsonParser.parse(fixture2))
+        val expected = jsonMetaParser.parse(JsonParser.parseString(fixture1))
+        val actual = jsonMetaParser.parse(JsonParser.parseString(fixture2))
         val results = expected.compare(actual)
         println("results = $results")
         Assert.assertNotNull(results)
@@ -289,8 +288,8 @@ class JsonMetaTest {
                 "answer": "Huston Rocket"
             }"""
 
-        val expected = jsonMetaParser.parse(jsonParser.parse(fixture1))
-        val actual = jsonMetaParser.parse(jsonParser.parse(fixture2))
+        val expected = jsonMetaParser.parse(JsonParser.parseString(fixture1))
+        val actual = jsonMetaParser.parse(JsonParser.parseString(fixture2))
         val results = expected.compare(actual)
         println("results = $results")
 
@@ -321,8 +320,8 @@ class JsonMetaTest {
                 "answer": "Huston Rocket"
             }"""
 
-        val expected = jsonMetaParser.parse(jsonParser.parse(fixture1))
-        val actual = jsonMetaParser.parse(jsonParser.parse(fixture2))
+        val expected = jsonMetaParser.parse(JsonParser.parseString(fixture1))
+        val actual = jsonMetaParser.parse(JsonParser.parseString(fixture2))
         val results = expected.compare(actual)
         println("results = $results")
 
@@ -353,8 +352,8 @@ class JsonMetaTest {
                 "for real": false
             }"""
 
-        val expected = jsonMetaParser.parse(jsonParser.parse(fixture1))
-        val actual = jsonMetaParser.parse(jsonParser.parse(fixture2))
+        val expected = jsonMetaParser.parse(JsonParser.parseString(fixture1))
+        val actual = jsonMetaParser.parse(JsonParser.parseString(fixture2))
         val results = expected.compare(actual)
         println("results = $results")
 
@@ -435,8 +434,8 @@ class JsonMetaTest {
                     }
                 }]"""
 
-        val expected = jsonMetaParser.parse(jsonParser.parse(fixture1))
-        val actual = jsonMetaParser.parse(jsonParser.parse(fixture2))
+        val expected = jsonMetaParser.parse(JsonParser.parseString(fixture1))
+        val actual = jsonMetaParser.parse(JsonParser.parseString(fixture2))
         val results = expected.compare(actual)
         println("results = $results")
 
@@ -490,8 +489,8 @@ class JsonMetaTest {
                 }
             ]"""
 
-        val results = jsonMetaParser.parse(jsonParser.parse(fixture1))
-            .compare(jsonMetaParser.parse(jsonParser.parse(fixture2)))
+        val results = jsonMetaParser.parse(JsonParser.parseString(fixture1))
+            .compare(jsonMetaParser.parse(JsonParser.parseString(fixture2)))
         println("results = $results")
 
         assertResultSize(results, 10)

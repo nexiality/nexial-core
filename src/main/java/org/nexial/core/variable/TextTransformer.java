@@ -25,6 +25,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
+import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.collections4.set.ListOrderedSet;
 import org.apache.commons.lang3.ArrayUtils;
 import org.apache.commons.lang3.BooleanUtils;
@@ -54,7 +55,7 @@ import static org.nexial.core.SystemVariables.getDefaultBool;
 import static org.nexial.core.utils.CheckUtils.requiresPositiveNumber;
 import static org.nexial.core.variable.ExpressionUtils.fixControlChars;
 
-public class TextTransformer<T extends TextDataType> extends Transformer {
+public class TextTransformer<T extends TextDataType> extends Transformer<T> {
     private static final Map<String, Integer> FUNCTION_TO_PARAM_LIST = discoverFunctions(TextTransformer.class);
     private static final Map<String, Method> FUNCTIONS =
         toFunctionMap(FUNCTION_TO_PARAM_LIST, TextTransformer.class, TextDataType.class);
@@ -109,7 +110,7 @@ public class TextTransformer<T extends TextDataType> extends Transformer {
     }
 
     public T trim(T data) {
-        if (data == null) { return data; }
+        if (data == null) { return null; }
         data.setValue(StringUtils.trim(data.getValue()));
         return data;
     }
@@ -377,7 +378,7 @@ public class TextTransformer<T extends TextDataType> extends Transformer {
         return data;
     }
 
-    public ExpressionDataType base64decodeThenSave(T data, String path, String append) {
+    public T base64decodeThenSave(T data, String path, String append) {
         if (data == null || data.getValue() == null) { return data; }
         if (StringUtils.isBlank(path)) { throw new IllegalArgumentException("path is empty/blank"); }
 
@@ -452,6 +453,29 @@ public class TextTransformer<T extends TextDataType> extends Transformer {
         }
 
         throw new TypeConversionException("JSON", text, "Cannot convert TEXT to JSON: " + data.value);
+    }
+
+    public ListDataType extract(T data, String beginRegex, String endRegex, String inclusive) {
+        ListDataType list = new ListDataType();
+        if (data == null || data.getValue() == null) { return list; }
+
+        if (StringUtils.isBlank(beginRegex)) { throw new IllegalArgumentException("beginRegex is empty/blank"); }
+        if (StringUtils.isBlank(endRegex)) { throw new IllegalArgumentException("endRegex is empty/blank"); }
+
+        boolean includeBeginEnd = BooleanUtils.toBoolean(inclusive);
+        List<String> matches = RegexUtils.extract(data.getValue(), beginRegex + ".*?" + endRegex);
+        if (CollectionUtils.isEmpty(matches)) { return list; }
+
+        String[] extracted = matches.stream()
+                                    .map(match ->
+                                             includeBeginEnd ?
+                                             match :
+                                             RegexUtils.removeMatches(RegexUtils.removeMatches(match, "^" + beginRegex),
+                                                                      endRegex + "$"))
+                                    .toArray(String[]::new);
+        list.setValue(extracted);
+        list.setTextValue(TextUtils.toString(extracted, list.getDelim(), "", ""));
+        return list;
     }
 
     @Override

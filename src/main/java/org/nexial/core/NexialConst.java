@@ -220,6 +220,8 @@ public final class NexialConst {
     public static final String WS_ALLOW_RELATIVE_REDIRECTS = registerSystemVariable(WS_NAMESPACE + "allowRelativeRedirects", true);
     public static final String WS_REQ_PAYLOAD_COMPACT = registerSystemVariable(WS_NAMESPACE + "requestPayloadCompact", false);
     public static final String WS_REQ_FILE_AS_RAW = registerSystemVariable(WS_NAMESPACE + "requestPayloadAsRaw", false);
+    public static final String WS_LOG_DETAIL = registerSystemVariable(WS_NAMESPACE + "logDetail", false);
+    public static final String WS_LOG_SUMMARY = registerSystemVariable(WS_NAMESPACE + "logSummary", false);
 
     public static final String WS_REQ_HEADER_PREFIX = WS_NAMESPACE + "header.";
     public static final String WS_PROXY_REQUIRED = registerSystemVariable(WS_NAMESPACE + "proxyRequired");

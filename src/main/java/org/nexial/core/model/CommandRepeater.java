@@ -187,14 +187,9 @@ public class CommandRepeater {
                     }
 
                     try {
-                        String screenshotLink = testStep.handleScreenshot(result);
-                        Worksheet worksheet = testStep.getWorksheet();
-                        if (StringUtils.isNotBlank(screenshotLink) && worksheet != null) {
-                            worksheet.setScreenCaptureStyle(row.get(COL_IDX_CAPTURE_SCREEN), screenshotLink);
-                        }
+                        testStep.handleScreenshot(result);
                     } catch (Throwable e) {
                         ConsoleUtils.error(testStep.messageId, e.getMessage(), e);
-                        // e.printStackTrace();
                     }
 
                     // flow control

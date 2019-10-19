@@ -56,8 +56,6 @@ public class AsyncWsCommand extends WsCommand {
             request = url + "?" + queryString;
         }
 
-        logRequest(url, queryString);
-
         try {
             client.download(url, queryString, saveTo);
             return StepResult.success("Successfully requested '" + hideAuthDetails(request) + "' to " + saveTo);
@@ -92,7 +90,6 @@ public class AsyncWsCommand extends WsCommand {
 
         @NotNull OutputResolver outputResolver = newOutputResolver(queryString, false);
         queryString = URLEncodingUtils.encodeQueryString(outputResolver.getContent());
-        logRequest(url, queryString);
 
         try {
             if (StringUtils.equals(method, "get")) { client.get(url, queryString, outputFile); }
@@ -116,14 +113,12 @@ public class AsyncWsCommand extends WsCommand {
         try {
             if (outputResolver.getAsBinary()) {
                 byte[] content = outputResolver.getBytes();
-                logRequestWithBody(url, content);
                 if (StringUtils.equals(method, "post")) { client.post(url, content, outputFile); }
                 if (StringUtils.equals(method, "patch")) { client.patch(url, content, outputFile); }
                 if (StringUtils.equals(method, "put")) { client.put(url, content, outputFile); }
                 if (StringUtils.equals(method, "delete")) { client.deleteWithPayload(url, content, outputFile); }
             } else {
                 String content = outputResolver.getContent();
-                logRequestWithBody(url, content);
                 if (StringUtils.equals(method, "post")) { client.post(url, content, outputFile); }
                 if (StringUtils.equals(method, "patch")) { client.patch(url, content, outputFile); }
                 if (StringUtils.equals(method, "put")) { client.put(url, content, outputFile); }

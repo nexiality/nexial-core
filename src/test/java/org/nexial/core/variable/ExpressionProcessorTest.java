@@ -309,6 +309,37 @@ public class ExpressionProcessorTest {
     }
 
     @Test
+    public void processTest_extract() throws Exception {
+        ExpressionProcessor subject = new ExpressionProcessor(context);
+
+        String fixturePath = ResourceUtils.getResourceFilePath(resourcePath + className + "19.txt");
+        String expected = "Nexial Automation | Test Automation Platform for everyone!\n" +
+                          "Welcome! | Tutorials for Nexial - Nexial Automation\n" +
+                          "nexiality/nexial-core: test automation for everyone ... - GitHub\n" +
+                          "nexiality/documentation: documentation for Nexial ... - GitHub\n" +
+                          "Nexial in Action - YouTube\n" +
+                          "#nexial hashtag on Twitter\n" +
+                          "Pooja Shejawale - Principal Software Engineer - Accion Labs ...";
+
+        assertEquals("7", subject.process("[TEXT(" + fixturePath + ") =>" +
+                                          " extract(<h3 class=\"LC20lb\">,</h3>,false)" +
+                                          " store(extract_list) size" +
+                                          "]"));
+        String extracted = subject.process("[LIST(extract_list) => combine(\n)]");
+        System.out.println();
+        System.out.println(extracted);
+        assertEquals(expected, extracted);
+
+        extracted = subject.process("[TEXT(" + fixturePath + ") =>" +
+                                    " extract(<h3 class=\"[0-9A-Za-z_\\-]{2\\,}?\">,</h3>,false)" +
+                                    " combine(\n)" +
+                                    "]");
+        System.out.println();
+        System.out.println(extracted);
+        assertEquals(expected, extracted);
+    }
+
+    @Test
     public void processList() throws Exception {
         ExpressionProcessor subject = new ExpressionProcessor(context);
 

@@ -24,12 +24,15 @@ import java.io.InputStream;
 import java.net.InetAddress;
 import java.net.MalformedURLException;
 import java.net.URL;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Objects;
 import javax.validation.constraints.NotNull;
 
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.IOUtils;
+import org.apache.commons.lang3.ArrayUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.math.NumberUtils;
 import org.apache.commons.lang3.time.StopWatch;
@@ -57,13 +60,22 @@ import org.apache.http.impl.client.HttpClients;
 import org.apache.http.impl.conn.DefaultProxyRoutePlanner;
 import org.apache.http.impl.nio.client.HttpAsyncClientBuilder;
 import org.apache.http.protocol.HttpContext;
+import org.nexial.commons.utils.DateUtility;
+import org.nexial.commons.utils.FileUtil;
 import org.nexial.commons.utils.RegexUtils;
+import org.nexial.commons.utils.TextUtils;
+import org.nexial.core.ExecutionThread;
 import org.nexial.core.WebProxy;
 import org.nexial.core.model.ExecutionContext;
 import org.nexial.core.model.TestStep;
 import org.nexial.core.utils.ConsoleUtils;
+import org.nexial.core.utils.ExecutionLogger;
+import org.nexial.core.utils.OutputFileUtils;
+import org.nexial.core.variable.Syspath;
 
+import static java.io.File.separator;
 import static org.nexial.core.NexialConst.*;
+import static org.nexial.core.SystemVariables.getDefaultBool;
 
 public class WebServiceClient {
     protected static final SSLConnectionSocketFactory SSL_SF = new NaiveConnectionSocketFactory();
@@ -71,7 +83,10 @@ public class WebServiceClient {
     protected ExecutionContext context;
     protected boolean verbose = true;
 
-    public WebServiceClient(ExecutionContext context) { this.context = context; }
+    public WebServiceClient(ExecutionContext context) {
+        if (context == null) { context = ExecutionThread.get(); }
+        this.context = context;
+    }
 
     public void setVerbose(boolean verbose) { this.verbose = verbose; }
 
@@ -176,7 +191,7 @@ public class WebServiceClient {
         CloseableHttpResponse httpResponse = null;
 
         try {
-            log("Executing request " + hideAuthDetails(http.getRequestLine()));
+            logRequest(http, request, tickTock.getStartTime());
 
             boolean digestAuth = isDigestAuth();
             boolean basicAuth = isBasicAuth();
@@ -189,10 +204,12 @@ public class WebServiceClient {
                 httpResponse = client.execute(http);
             }
 
-            Response response = gatherResponseData(http, request, httpResponse);
+            Response response = gatherResponseData(request, httpResponse, tickTock.getTime());
 
             tickTock.stop();
+            response.setRequestTime(tickTock.getStartTime());
             response.setElapsedTime(tickTock.getTime());
+            logResponse(http, request, httpResponse.getStatusLine(), response);
 
             return response;
         } finally {
@@ -200,24 +217,12 @@ public class WebServiceClient {
         }
     }
 
-    protected void log(String msg) {
-        // ExecutionContext context = ExecutionThread.get();
-        if (context != null) {
-            TestStep testStep = context.getCurrentTestStep();
-            if (testStep != null) { context.getLogger().log(testStep, msg); }
-        }
-
-        debug(msg);
-    }
-
-    protected void debug(String msg) { if (verbose && StringUtils.isNotBlank(msg)) { ConsoleUtils.log(msg); } }
-
-    protected Response gatherResponseData(HttpUriRequest http, Request request, HttpResponse httpResponse)
+    protected Response gatherResponseData(Request request, HttpResponse httpResponse, long ttfb)
         throws IOException {
-        StatusLine statusLine = httpResponse.getStatusLine();
-        log("Executed request " + hideAuthDetails(http.getRequestLine()) + ": " + statusLine);
-
         Response response = new Response();
+        response.setTtfb(ttfb);
+
+        StatusLine statusLine = httpResponse.getStatusLine();
         response.setReturnCode(statusLine.getStatusCode());
         response.setStatusText(statusLine.getReasonPhrase());
 
@@ -236,7 +241,7 @@ public class WebServiceClient {
                 throw new IOException(statusLine + "");
             }
         } else {
-            log("Saving response payload as raw bytes to Response object");
+            log("Saving response payload as raw bytes");
             byte[] rawBody = harvestResponsePayload(responseEntity);
             if (rawBody == null) {
                 response.setRawBody(null);
@@ -252,6 +257,166 @@ public class WebServiceClient {
 
         return response;
     }
+
+    protected void logRequest(HttpUriRequest http, Request request, long requestTimeMs) {
+        if (context == null) { return; }
+
+        String url = hideAuthDetails(http.getURI().toString());
+        String content = null;
+        int contentLength = 0;
+        boolean requestWithBody = request instanceof PostRequest;
+        if (requestWithBody) {
+            content = ((PostRequest) request).getPayload();
+            byte[] contentBytes = ((PostRequest) request).getPayloadBytes();
+            contentLength = StringUtils.length(content);
+            if (contentLength == 0) { ArrayUtils.getLength(contentBytes); }
+        }
+
+        log("Executing request " + hideAuthDetails(http.getRequestLine()));
+
+        if (context.isVerbose()) {
+            if (contentLength > 0) { log("Request Body Length: " + contentLength); }
+            if (StringUtils.isNotEmpty(content)) {
+                log("Request Body (1st kb) -->\n" + StringUtils.abbreviate(content, 1024));
+            }
+        }
+
+        TestStep testStep = context.getCurrentTestStep();
+
+        boolean shouldLogDetail = context.getBooleanData(WS_LOG_DETAIL, getDefaultBool(WS_LOG_DETAIL));
+        if (shouldLogDetail) {
+            StringBuilder details = new StringBuilder();
+            appendLog(details, "Test Step       : ", ExecutionLogger.toHeader(testStep));
+            details.append(StringUtils.repeat("-", 80)).append("\n");
+            appendLog(details, "Request Time    : ", DateUtility.formatLog2Date(requestTimeMs));
+            appendLog(details, "Request URL     : ", url);
+            appendLog(details, "Request Method  : ", http.getMethod());
+            appendLog(details, "Request Headers : ", "{" + TextUtils.toString(request.getHeaders(), ", ", ": ") + "}");
+            if (requestWithBody && contentLength > 0) {
+                appendLog(details, "Request Body    : ",
+                          contentLength + " bytes. " +
+                          (StringUtils.isNotEmpty(content) ? "\n" + content : " (binary content)"));
+            }
+            details.append(StringUtils.repeat("-", 80)).append("\n");
+            writeDetailLog(testStep, details.toString());
+        }
+    }
+
+    protected void logResponse(HttpUriRequest http, Request request, StatusLine statusLine, Response response) {
+        if (context == null) { return; }
+
+        if (!(response instanceof AsyncResponse)) {
+            log("Executed request " + hideAuthDetails(http.getRequestLine()) + ": " + statusLine);
+        }
+
+        long payloadLength = response.getContentLength();
+        String saveTo = response.getPayloadLocation();
+        String payload = response.getBody();
+
+        if (context.isVerbose()) {
+            if (payloadLength > 0) { log("Response Body Length: " + payloadLength); }
+            if (StringUtils.isNotBlank(saveTo)) {
+                log("Response Body saved to " + saveTo);
+            } else if (StringUtils.isNotEmpty(payload)) {
+                log("Response Body -->\n" + payload);
+            }
+        }
+
+        TestStep testStep = context.getCurrentTestStep();
+
+        boolean shouldLogDetail = context.getBooleanData(WS_LOG_DETAIL, getDefaultBool(WS_LOG_DETAIL));
+        if (shouldLogDetail) {
+            StringBuilder details = new StringBuilder();
+            appendLog(details, "Return Code     : ", response.getReturnCode());
+            appendLog(details, "Status Text     : ", response.getStatusText());
+            appendLog(details, "TTFB            : ", response.getTtfb());
+            appendLog(details, "Elapsed Time    : ", response.getElapsedTime());
+            appendLog(details, "Response Headers: ", "{" + TextUtils.toString(response.getHeaders(), ", ", ": ") + "}");
+            if (payloadLength > 0) {
+                appendLog(details, "Request Body    : ",
+                          payloadLength + " bytes. " +
+                          (StringUtils.isNotBlank(saveTo) ? "Saved to " + saveTo : "\n" + payload));
+            }
+            writeDetailLog(testStep, details.toString());
+        }
+
+        boolean shouldLogSummary = context.getBooleanData(WS_LOG_SUMMARY, getDefaultBool(WS_LOG_SUMMARY));
+        if (shouldLogSummary) {
+            int requestBodyLength = 0;
+            boolean requestWithBody = request instanceof PostRequest;
+            if (requestWithBody) {
+                requestBodyLength = StringUtils.length(((PostRequest) request).getPayload());
+                if (requestBodyLength == 0) {
+                    ArrayUtils.getLength(((PostRequest) request).getPayloadBytes());
+                }
+            }
+
+            writeSummaryLog(DateUtility.formatLog2Date(response.getRequestTime()),
+                            ExecutionLogger.toHeader(context),
+                            context.getCurrentScenario(),
+                            "Row " + (testStep.getRowIndex() + 1),
+                            hideAuthDetails(http.getURI().toString()),
+                            http.getMethod(),
+                            requestBodyLength,
+                            response.getReturnCode(),
+                            response.getStatusText(),
+                            response.getTtfb(),
+                            response.getElapsedTime(),
+                            payloadLength);
+        }
+    }
+
+    protected void writeSummaryLog(Object... content) {
+        if (context == null) { return; }
+
+        if (ArrayUtils.isEmpty(content)) { return; }
+
+        File log = new File(new Syspath().log("fullpath") + separator + "nexial-ws-" + context.getRunId() + ".log");
+        try {
+            // for first use, let's add log file header
+            String data = (!FileUtil.isFileReadable(log) ?
+                           "request-time,script,scenario,row-id,url,method,request-body-length," +
+                           "return-code,status-code,ttfb,elapsed-time,response-body-length\n" :
+                           ""
+                          ) +
+                          Arrays.stream(content)
+                                .reduce((previous, next) -> previous + "," +
+                                                            (StringUtils.contains(Objects.toString(next), ",") ?
+                                                             "\"" + next + "\"" : next))
+                                .orElse("") + "";
+            FileUtils.writeStringToFile(log, data + "\n", DEF_CHARSET, true);
+        } catch (IOException e) {
+            ConsoleUtils.error("Unable to log WS detail to " + log.getAbsolutePath() + ": " + e.getMessage());
+        }
+    }
+
+    protected void writeDetailLog(TestStep testStep, String content) {
+        File log = resolveDetailLogFile(testStep);
+        try {
+            FileUtils.writeStringToFile(log, content, DEF_CHARSET, true);
+        } catch (IOException e) {
+            ConsoleUtils.error("Unable to log WS detail to " + log.getAbsolutePath() + ": " + e.getMessage());
+        }
+    }
+
+    @NotNull
+    protected File resolveDetailLogFile(TestStep testStep) {
+        return new File(new Syspath().out("fullpath") + separator +
+                        OutputFileUtils.generateOutputFilename(testStep, ".ws-detail.log"));
+    }
+
+    protected void appendLog(StringBuilder buffer, String name, Object value) {
+        buffer.append(name).append(value).append("\n");
+    }
+
+    protected void log(String msg) {
+        if (context != null) {
+            TestStep testStep = context.getCurrentTestStep();
+            if (testStep != null) { context.getLogger().log(testStep, msg); }
+        }
+    }
+
+    protected void debug(String msg) { if (verbose && StringUtils.isNotBlank(msg)) { ConsoleUtils.log(msg); } }
 
     @NotNull
     protected DefaultProxyRoutePlanner resolveRoutePlanner(Request request, HttpHost proxy) {

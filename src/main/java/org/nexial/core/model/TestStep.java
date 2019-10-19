@@ -19,6 +19,8 @@ package org.nexial.core.model;
 
 import java.io.File;
 import java.io.IOException;
+import java.io.PrintWriter;
+import java.io.StringWriter;
 import java.lang.reflect.InvocationTargetException;
 import java.util.ArrayList;
 import java.util.List;
@@ -34,6 +36,7 @@ import org.apache.poi.ss.usermodel.CellType;
 import org.apache.poi.ss.usermodel.Comment;
 import org.apache.poi.xssf.usermodel.XSSFCell;
 import org.apache.poi.xssf.usermodel.XSSFCellStyle;
+import org.nexial.commons.utils.DateUtility;
 import org.nexial.commons.utils.FileUtil;
 import org.nexial.commons.utils.TextUtils;
 import org.nexial.core.excel.Excel;
@@ -44,11 +47,8 @@ import org.nexial.core.plugins.CanTakeScreenshot;
 import org.nexial.core.plugins.NexialCommand;
 import org.nexial.core.plugins.web.WebCommand;
 import org.nexial.core.plugins.web.WebDriverExceptionHelper;
-import org.nexial.core.utils.ConsoleUtils;
-import org.nexial.core.utils.ExecutionLogger;
-import org.nexial.core.utils.FlowControlUtils;
-import org.nexial.core.utils.MessageUtils;
-import org.nexial.core.utils.TrackTimeLogs;
+import org.nexial.core.utils.*;
+import org.nexial.core.variable.Syspath;
 import org.openqa.selenium.WebDriverException;
 
 import static java.io.File.separator;
@@ -142,6 +142,8 @@ public class TestStep extends TestStepManifest {
         nestedTestResults.add(new NestedScreenCapture(message, link, label));
     }
 
+    public void addStepOutput(String link, String label) { nestedTestResults.add(new StepOutput(label, link)); }
+
     /**
      * added semaphore-like marking as a strategy to avoid duplicating excel-logging when executing runClass().  When
      * commands are executed in a custom test class, some of the Nexial command will provide detailed logging where
@@ -161,8 +163,6 @@ public class TestStep extends TestStepManifest {
         tickTock.start();
 
         context.setCurrentTestStep(this);
-        boolean printStackTrace = context.getBooleanData(OPT_PRINT_ERROR_DETAIL,
-                                                         getDefaultBool(OPT_PRINT_ERROR_DETAIL));
 
         // delay is carried out here so that timespan is captured as part of execution
         waitFor(context.getDelayBetweenStep());
@@ -170,39 +170,8 @@ public class TestStep extends TestStepManifest {
         StepResult result = null;
         try {
             result = invokeCommand();
-        } catch (InvocationTargetException e) {
-            String error = e.getMessage();
-            Throwable cause = e.getCause();
-            if (cause != null) {
-                if (cause instanceof WebDriverException) {
-                    error = WebDriverExceptionHelper.analyzeError(context, this, (WebDriverException) cause);
-                    result = StepResult.fail(error);
-                    return result;
-                } else if (cause instanceof ArrayIndexOutOfBoundsException) {
-                    error = "position/index not found: " +
-                            StringUtils.defaultString(cause.getMessage(), cause.toString());
-                } else {
-                    // assertion error are already account for.. so no need to increment fail test count
-                    // if (!(cause instanceof AssertionError)) { ConsoleUtils.error(cause.getMessage()); }
-                    error = StringUtils.defaultString(cause.getMessage(), cause.toString());
-                }
-            }
-
-            if (printStackTrace) { ConsoleUtils.error(ExecutionLogger.toHeader(this), error, e); }
-
-            result = StepResult.fail(error);
-        } catch (WebDriverException e) {
-            String error = WebDriverExceptionHelper.analyzeError(context, this, e);
-            // logger.error(this, error);
-            result = StepResult.fail(error);
         } catch (Throwable e) {
-            String error = e.getMessage();
-            if (printStackTrace) {
-                ConsoleUtils.error(ExecutionLogger.toHeader(this), error, e);
-            } else {
-                ConsoleUtils.error(error);
-            }
-            result = StepResult.fail(error);
+            result = StepResult.fail(logException(e));
         } finally {
             tickTock.stop();
             trackTimeLogs.checkEndTracking(context, this);
@@ -279,6 +248,58 @@ public class TestStep extends TestStepManifest {
             commandRepeater.close();
             commandRepeater = null;
         }
+    }
+
+    protected String logException(Throwable e) {
+        // step 1: get truth! InvocationTargetException is masking real exception
+        if (e instanceof InvocationTargetException && e.getCause() != null) { e = e.getCause(); }
+
+        // step 2: write error to file for RCA
+        // determine the file to send log
+        File log = new File(new Syspath().log("fullpath") + separator +
+                            OutputFileUtils.generateOutputFilename(this, ".log"));
+
+        // build error content
+        StringBuilder buffer = new StringBuilder();
+        buffer.append("Nexial Version:    ").append(ExecUtils.NEXIAL_MANIFEST).append("\n")
+              .append("Current Timestamp: ").append(DateUtility.formatLog2Date(System.currentTimeMillis())).append("\n")
+              .append("Test Step:         ").append(messageId).append("\n")
+              .append(StringUtils.repeat("-", 80)).append("\n");
+
+        StringWriter writer = new StringWriter();
+        PrintWriter printWriter = new PrintWriter(writer);
+        e.printStackTrace(printWriter);
+        buffer.append(writer.getBuffer().toString()).append("\n");
+        printWriter.close();
+
+        try {
+            FileUtils.writeStringToFile(log, buffer.toString(), DEF_FILE_ENCODING);
+        } catch (IOException ex) {
+            ConsoleUtils.error("Unable to create log file (" + log + ") for the exception thrown: " + ex.getMessage());
+        }
+
+        // step 3: print error to console
+        String error;
+        if (e instanceof WebDriverException) {
+            error = WebDriverExceptionHelper.analyzeError(context, this, (WebDriverException) e);
+        } else if (e instanceof ArrayIndexOutOfBoundsException) {
+            error = "position/index not found: " + StringUtils.defaultString(e.getMessage(), e.toString());
+        } else if (e instanceof NullPointerException) {
+            error = "null pointer exception";
+        } else {
+            error = StringUtils.defaultString(e.getMessage(), e.toString());
+        }
+        error += ". Check corresponding error log for details - " + log.getName();
+
+        // print a lot or a little
+        if (context.getBooleanData(OPT_PRINT_ERROR_DETAIL, getDefaultBool(OPT_PRINT_ERROR_DETAIL))) {
+            ConsoleUtils.error(ExecutionLogger.toHeader(this), error, e);
+        } else {
+            ConsoleUtils.error(error);
+        }
+
+        // step 4: return back the error message for FAIL result instance
+        return error;
     }
 
     protected void waitFor(long waitMs) {
@@ -445,7 +466,7 @@ public class TestStep extends TestStepManifest {
 
         CanTakeScreenshot agent = context.findCurrentScreenshotAgent();
         if (agent == null) {
-            log("No screenshot capability available for command " + getCommandFQN() + "; no screenshot taken");
+            error("No screenshot capability available for command " + getCommandFQN() + "; no screenshot taken");
             return null;
         }
 
@@ -453,13 +474,16 @@ public class TestStep extends TestStepManifest {
         try {
             String screenshotPath = agent.takeScreenshot(this);
             if (StringUtils.isBlank(screenshotPath)) {
-                log("Unable to capture screenshot - " + result.getMessage());
+                error("Unable to capture screenshot - " + result.getMessage());
                 return null;
             }
 
+            if (worksheet != null) {
+                Excel.setHyperlink(row.get(COL_IDX_CAPTURE_SCREEN), screenshotPath, MSG_SCREENCAPTURE);
+            }
             return screenshotPath;
         } catch (Exception e) {
-            ConsoleUtils.error("Unable to capture screenshot: " + e.getMessage());
+            error("Unable to capture screenshot: " + e.getMessage());
             return null;
         }
     }
@@ -608,10 +632,7 @@ public class TestStep extends TestStepManifest {
         if (StringUtils.isBlank(Excel.getCellValue(flowControlCell))) { flowControlCell.setCellType(CellType.BLANK); }
 
         // screenshot
-        String screenshotLink = handleScreenshot(result);
-        if (StringUtils.isNotBlank(screenshotLink)) {
-            worksheet.setScreenCaptureStyle(row.get(COL_IDX_CAPTURE_SCREEN), screenshotLink);
-        }
+        handleScreenshot(result);
 
         boolean pass = result.isSuccess();
 

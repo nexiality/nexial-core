@@ -22,7 +22,6 @@ import java.util.List;
 import java.util.regex.MatchResult;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
-
 import javax.validation.constraints.NotNull;
 
 import org.apache.commons.lang3.StringUtils;
@@ -190,5 +189,19 @@ public final class RegexUtils {
         }
 
         return null;
+    }
+
+    public static List<String> extract(String text, String regex) {
+        List<String> extracted = new ArrayList<>();
+
+        if (StringUtils.isEmpty(text) || StringUtils.isEmpty(regex)) { return extracted; }
+
+        Matcher matcher = Pattern.compile(regex, REGEX_FLAGS).matcher(text);
+        while (matcher.find()) {
+            MatchResult result = matcher.toMatchResult();
+            extracted.add(StringUtils.substring(text, result.start(), result.end()));
+        }
+
+        return extracted;
     }
 }

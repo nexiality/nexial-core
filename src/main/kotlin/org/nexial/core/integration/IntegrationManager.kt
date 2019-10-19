@@ -75,7 +75,7 @@ class IntegrationManager {
         }
 
         private fun isExcelFile(file: File) =
-            StringUtils.startsWith(file.name, "~").not() && StringUtils.endsWith(file.name, SCRIPT_FILE_EXT)
+                StringUtils.startsWith(file.name, "~").not() && StringUtils.endsWith(file.name, SCRIPT_FILE_EXT)
 
         private fun createExecDefinition(): ExecutionDefinition {
             val execDef = ExecutionDefinition()
@@ -165,7 +165,9 @@ class IntegrationManager {
         private fun updateMeta(data: JSONArray, context: ExecutionContext) {
             val jsonFile = "${Syspath().out("fullpath")}${separator}integrationMeta.json"
 
-            FileUtils.write(File(jsonFile), GSON.toJson(JsonParser().parse(data.toString())), Charset.defaultCharset())
+            FileUtils.write(File(jsonFile),
+                            GSON.toJson(JsonParser.parseString(data.toString())),
+                            Charset.defaultCharset())
             val s3Command = S3Command()
             s3Command.init(context)
             val result = s3Command.copyTo("copyMeta", "temp", jsonFile, remoteUrl!!)

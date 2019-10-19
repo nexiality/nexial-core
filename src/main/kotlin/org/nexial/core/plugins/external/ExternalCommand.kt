@@ -115,7 +115,7 @@ class ExternalCommand : BaseCommand() {
             invoke(programAndParams[0], programAndParams.filterIndexed { index, _ -> index > 0 }, env)
 
             //attach link to results
-            addLinkRef("Follow the link to view the output", "output", fileName)
+            addLinkRef(null, "output", fileName)
 
             return StepResult.success()
         } catch (e: Exception) {

@@ -37,6 +37,7 @@ public final class DateUtility {
     private static final String FORMAT_LONG = "MM/dd/yyyy HH:mm:ss";
     private static final String FORMAT_LONG1 = "MM/dd/yyyy hh:mm:ss a";
     private static final String FORMAT_LOG = "yyyy-MM-dd HH:mm:ss,SSS";
+    private static final String FORMAT_LOG2 = "yyyy-MM-dd HH:mm:ss.SSS";
     private static final String FORMAT_SHORT = "MM/dd/yyyy";
     private static final String FORMAT_TIME = "HH:mm:ss";
     private static final String FORMAT_TIME_WITH_MS = "HH:mm:ss.SSS";
@@ -45,6 +46,7 @@ public final class DateUtility {
     private static final DateFormat DATE_FORMAT_LONG = new SimpleDateFormat(FORMAT_LONG);
     private static final DateFormat DATE_FORMAT_LONG1 = new SimpleDateFormat(FORMAT_LONG1);
     private static final DateFormat DATE_FORMAT_LOG = new SimpleDateFormat(FORMAT_LOG);
+    private static final DateFormat DATE_FORMAT_LOG2 = new SimpleDateFormat(FORMAT_LOG2);
     private static final DateFormat DATE_FORMAT_SHORT = new SimpleDateFormat(FORMAT_SHORT);
     private static final DateFormat DATE_FORMAT_TIME = new SimpleDateFormat(FORMAT_TIME);
     private static final DateFormat DATE_FORMAT_TIME_WITH_MS = new SimpleDateFormat(FORMAT_TIME_WITH_MS);
@@ -110,7 +112,7 @@ public final class DateUtility {
         if (StringUtils.isBlank(date)) {
             if (LOGGER.isDebugEnabled()) {
                 LOGGER.debug("Date [" + date + "] could not be formatted from [" + patternFrom + "] to [" +
-                             patternTo + "], because its a blank string. Returning orignial string");
+                             patternTo + "], because its a blank string. Returning original string");
             }
             return date;
         }
@@ -149,17 +151,19 @@ public final class DateUtility {
         return "";
     }
 
+    public static String formatLogDate(long timestamp) { return DATE_FORMAT_LOG.format(new Date(timestamp)); }
+
+    public static String formatLog2Date(long timestamp) { return DATE_FORMAT_LOG2.format(new Date(timestamp)); }
+
     public static String formatLongDate(long timestamp) { return DATE_FORMAT_LONG.format(new Date(timestamp)); }
 
+    // format just the time values
     public static String formatStopWatchTime(long timestamp) {
-        // format just the time values
         return DATE_FORMAT_TIME_WITH_MS.format(addToMidnight(timestamp));
     }
 
-    public static String formatTime(long timestamp) {
-        // format just the time values
-        return DATE_FORMAT_TIME.format(addToMidnight(timestamp));
-    }
+    // format just the time values
+    public static String formatTime(long timestamp) { return DATE_FORMAT_TIME.format(addToMidnight(timestamp)); }
 
     public static Date parseLongDate(String date) throws ParseException { return DATE_FORMAT_LONG.parse(date); }
 
@@ -174,6 +178,8 @@ public final class DateUtility {
     public static String getCurrentDateTime() { return DATE_FORMAT_LONG1.format(new Date()); }
 
     public static String getCurrentTimestampForLogging() { return DATE_FORMAT_LOG.format(new Date()); }
+
+    public static String getCurrentTimestampForLogging2() { return DATE_FORMAT_LOG.format(new Date()); }
 
     public static String getCurrentTimeForLogging() { return DATE_FORMAT_TIME_WITH_MS.format(new Date()); }
 

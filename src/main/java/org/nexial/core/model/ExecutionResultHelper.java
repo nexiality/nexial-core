@@ -151,8 +151,8 @@ public final class ExecutionResultHelper {
     protected static int handleNestedMessages(Worksheet worksheet, ExecutionSummary executionSummary, int lastRow) {
         XSSFSheet excelSheet = worksheet.getSheet();
 
-        Map<TestStepManifest, List<NestedMessage>> nestMessages = executionSummary.getNestMessages();
-        if (MapUtils.isEmpty(nestMessages)) { return lastRow; }
+        Map<TestStepManifest, List<NestedMessage>> nestedMessagesMap = executionSummary.getNestMessages();
+        if (MapUtils.isEmpty(nestedMessagesMap)) { return lastRow; }
 
         // prepare to print nested messages
         int forwardRowsBy = 0;
@@ -160,45 +160,40 @@ public final class ExecutionResultHelper {
         XSSFCellStyle resultStyle = ExcelStyleHelper.generate(worksheet, RESULT);
         XSSFCellStyle linkStyle = ExcelStyleHelper.generate(worksheet, SCREENSHOT);
 
-        Set<TestStepManifest> testStepsWithNestMessages = nestMessages.keySet();
-        for (TestStepManifest step : testStepsWithNestMessages) {
+        Set<TestStepManifest> nestedTestSteps = nestedMessagesMap.keySet();
+        for (TestStepManifest step : nestedTestSteps) {
             if (StringUtils.equals(step.getCommandFQN(), CMD_VERBOSE)) { continue; }
 
-            List<NestedMessage> nestedMessages = nestMessages.get(step);
-            int messageCount = CollectionUtils.size(nestedMessages);
-            if (messageCount < 1) { continue; }
+            List<NestedMessage> nestedMessages = nestedMessagesMap.get(step);
+            if (CollectionUtils.isEmpty(nestedMessages)) { continue; }
 
             int currentRow = step.getRowIndex() + 1 + forwardRowsBy;
-            // +1 if lastRow is the same as currentRow.  Otherwise shiftRow on a single row block causes problem for createRow (later on).
-            worksheet.shiftRows(currentRow, lastRow + (currentRow == lastRow ? 1 : 0), messageCount);
 
+            int messageCount = nestedMessages.size();
             for (int i = 0; i < messageCount; i++) {
                 NestedMessage nestedMessage = nestedMessages.get(i);
-                String message = nestedMessage.getMessage();
-                String resultMessage = nestedMessage.getResultMessage();
+                if (nestedMessage instanceof StepOutput) {
+                    addScreenshotLink(excelSheet.getRow(step.getRowIndex()), linkStyle, (StepOutput) nestedMessage);
+                } else {
+                    // +1 if lastRow is the same as currentRow.  Otherwise shiftRow on a single row block causes problem for createRow (later on).
+                    worksheet.shiftRows(currentRow, lastRow + (currentRow == lastRow ? 1 : 0), messageCount);
 
-                XSSFRow row = excelSheet.createRow(currentRow + i);
-                XSSFCell cell = row.createCell(COL_IDX_MERGE_RESULT_START);
-                cell.setCellValue(message);
-                cell.setCellStyle(style);
+                    XSSFRow row = excelSheet.createRow(currentRow + i);
+                    XSSFCell cell = row.createCell(COL_IDX_MERGE_RESULT_START);
+                    cell.setCellValue(nestedMessage.getMessage());
+                    cell.setCellStyle(style);
 
-                if (StringUtils.isNotBlank(resultMessage)) {
-                    cell = row.createCell(COL_IDX_RESULT);
-                    cell.setCellValue(resultMessage);
-                    cell.setCellStyle(resultStyle);
-                }
+                    String resultMessage = nestedMessage.getResultMessage();
+                    if (StringUtils.isNotBlank(resultMessage)) {
+                        cell = row.createCell(COL_IDX_RESULT);
+                        cell.setCellValue(resultMessage);
+                        cell.setCellStyle(resultStyle);
+                    }
 
-                if (nestedMessage instanceof NestedScreenCapture) {
-                    NestedScreenCapture screenCapture = (NestedScreenCapture) nestedMessage;
-                    String link = screenCapture.getLink();
-                    if (StringUtils.isNotBlank(link)) {
-                        XSSFCell linkCell = Excel.setHyperlink(row.createCell(COL_IDX_CAPTURE_SCREEN),
-                                                               link,
-                                                               screenCapture.getLabel());
-                        linkCell.setCellStyle(linkStyle);
+                    if (nestedMessage instanceof NestedScreenCapture) {
+                        addScreenshotLink(row, linkStyle, (NestedScreenCapture) nestedMessage);
                     }
                 }
-
             }
 
             lastRow += messageCount;
@@ -281,5 +276,13 @@ public final class ExecutionResultHelper {
 
         worksheet.getSheet().setZoom(100);
         worksheet.save();
+    }
+
+    protected static void addScreenshotLink(XSSFRow row, XSSFCellStyle linkStyle, NestedScreenCapture screenCapture) {
+        String link = screenCapture.getLink();
+        if (StringUtils.isNotBlank(link)) {
+            Excel.setHyperlink(row.createCell(COL_IDX_CAPTURE_SCREEN), link, screenCapture.getLabel())
+                 .setCellStyle(linkStyle);
+        }
     }
 }

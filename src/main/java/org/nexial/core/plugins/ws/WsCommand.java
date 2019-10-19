@@ -28,9 +28,9 @@ import javax.validation.constraints.NotNull;
 import org.apache.commons.codec.binary.Base64;
 import org.apache.commons.collections4.MapUtils;
 import org.apache.commons.io.FileUtils;
-import org.apache.commons.lang3.ArrayUtils;
 import org.apache.commons.lang3.BooleanUtils;
 import org.apache.commons.lang3.StringUtils;
+import org.apache.commons.lang3.exception.ExceptionUtils;
 import org.apache.commons.lang3.math.NumberUtils;
 import org.nexial.commons.utils.TextUtils;
 import org.nexial.commons.utils.web.URLEncodingUtils;
@@ -71,16 +71,14 @@ public class WsCommand extends BaseCommand {
         requiresValidAndNotReadOnlyVariableName(saveTo);
 
         WebServiceClient client = new WebServiceClient(context);
-        client.setVerbose(verbose);
+        client.setVerbose(context.isVerbose());
 
         try {
             if (StringUtils.isNotBlank(queryString)) {
                 @NotNull OutputResolver outputResolver = newOutputResolver(queryString, false);
                 queryString = outputResolver.getContent();
             }
-            logRequest(url, queryString);
-            Response response = client.download(url, queryString, saveTo);
-            logResponseForDownload(response, saveTo);
+            client.download(url, queryString, saveTo);
             return StepResult.success("Successfully downloaded '" + hideAuthDetails(url) +
                                       (StringUtils.isBlank(queryString) ? "" : ("?" + queryString)) + "' to " + saveTo);
         } catch (Throwable e) {
@@ -412,8 +410,11 @@ public class WsCommand extends BaseCommand {
         requiresNotBlank(url, "invalid url", url);
         requiresValidAndNotReadOnlyVariableName(var);
 
+        // clear out any existing state of `var`
+        context.removeData(var);
+
         WebServiceClient client = new WebServiceClient(context);
-        client.setVerbose(verbose);
+        client.setVerbose(context.isVerbose());
 
         try {
             if (StringUtils.isNotBlank(queryString)) {
@@ -421,17 +422,17 @@ public class WsCommand extends BaseCommand {
                 queryString = URLEncodingUtils.encodeQueryString(outputResolver.getContent());
             }
 
-            logRequest(url, queryString);
             Response response = null;
             if (StringUtils.equals(method, "get")) { response = client.get(url, queryString); }
             if (StringUtils.equals(method, "head")) { response = client.head(url); }
             if (StringUtils.equals(method, "delete")) { response = client.delete(url, queryString); }
-
             context.setData(var, response);
-            logResponse(response, var);
+
             return StepResult.success("Successfully invoked web service '" + hideAuthDetails(url) + "'");
         } catch (Throwable e) {
             return toFailResult(url, e);
+        } finally {
+            addDetailLogLink(client);
         }
     }
 
@@ -439,22 +440,23 @@ public class WsCommand extends BaseCommand {
         requiresNotBlank(url, "invalid url", url);
         requiresValidAndNotReadOnlyVariableName(var);
 
+        // clear out any existing state of `var`
+        context.removeData(var);
+
         WebServiceClient client = new WebServiceClient(context);
-        client.setVerbose(verbose);
+        client.setVerbose(context.isVerbose());
 
         try {
             OutputResolver outputResolver = newOutputResolver(body);
             Response response = null;
             if (outputResolver.getAsBinary()) {
                 byte[] payloadBytes = outputResolver.getBytes();
-                logRequestWithBody(url, payloadBytes);
                 if (StringUtils.equals(method, "post")) { response = client.post(url, payloadBytes); }
                 if (StringUtils.equals(method, "patch")) { response = client.patch(url, payloadBytes); }
                 if (StringUtils.equals(method, "put")) { response = client.put(url, payloadBytes); }
                 if (StringUtils.equals(method, "delete")) { response = client.deleteWithPayload(url, payloadBytes); }
             } else {
                 String payload = outputResolver.getContent();
-                logRequestWithBody(url, payload);
                 if (StringUtils.equals(method, "post")) { response = client.post(url, payload); }
                 if (StringUtils.equals(method, "patch")) { response = client.patch(url, payload); }
                 if (StringUtils.equals(method, "put")) { response = client.put(url, payload); }
@@ -462,10 +464,12 @@ public class WsCommand extends BaseCommand {
             }
 
             context.setData(var, response);
-            logResponse(response, var);
+
             return StepResult.success("Successfully invoked web service '" + hideAuthDetails(url) + "'");
         } catch (Throwable e) {
             return toFailResult(url, e);
+        } finally {
+            addDetailLogLink(client);
         }
     }
 
@@ -474,19 +478,19 @@ public class WsCommand extends BaseCommand {
         requiresValidAndNotReadOnlyVariableName(var);
 
         WebServiceClient client = new WebServiceClient(context);
-        client.setVerbose(verbose);
+        client.setVerbose(context.isVerbose());
 
         @NotNull OutputResolver outputResolver = newOutputResolver(body, false);
 
         try {
             String content = outputResolver.getContent();
-            logRequestWithBody(url, content);
             Response response = client.postMultipart(url, content, fileParams);
             context.setData(var, response);
-            logResponse(response, var);
             return StepResult.success("Successfully invoked web service '" + hideAuthDetails(url) + "'");
         } catch (IOException e) {
             return toFailResult(url, e);
+        } finally {
+            addDetailLogLink(client);
         }
     }
 
@@ -500,38 +504,15 @@ public class WsCommand extends BaseCommand {
 
     @NotNull
     protected static StepResult toFailResult(String url, Throwable e) {
-        String error = e.getCause() != null ? e.getCause().getMessage() : e.getMessage();
+        String error = StringUtils.defaultString(ExceptionUtils.getRootCauseMessage(e), e.getMessage());
         return StepResult.fail("Unable to invoke '" + hideAuthDetails(url) + "': " + error);
     }
 
-    protected void logRequestWithBody(String url, String content) {
-        if (context.isVerbose()) {
-            log("REQUEST  --> '" + hideAuthDetails(url) + "', body length=" + StringUtils.length(content));
-            if (StringUtils.isNotBlank(content)) {
-                log("REQUEST BODY (1st kilobyte) -->\n" + StringUtils.abbreviate(content, 1024));
-            }
+    protected void addDetailLogLink(WebServiceClient client) {
+        // add detail log as link
+        if (context.getBooleanData(WS_LOG_DETAIL, getDefaultBool(WS_LOG_DETAIL))) {
+            addLinkRef(null, "log", client.resolveDetailLogFile(context.getCurrentTestStep()).getAbsolutePath());
         }
-    }
-
-    protected void logRequestWithBody(String url, byte[] content) {
-        if (context.isVerbose()) {
-            log("REQUEST  --> '" + hideAuthDetails(url) + "', body length=" + ArrayUtils.getLength(content));
-        }
-    }
-
-    protected void logRequest(String url, String queryString) {
-        if (context.isVerbose()) {
-            log("REQUEST  --> '" + hideAuthDetails(url) + "', " +
-                "queryString='" + StringUtils.defaultString(queryString, "<NONE>") + "'");
-        }
-    }
-
-    protected void logResponse(Response response, String saveTo) {
-        if (context.isVerbose()) { log("RESPONSE payload save to '" + saveTo + "' -->\n" + response); }
-    }
-
-    protected void logResponseForDownload(Response response, String saveTo) {
-        if (context.isVerbose()) {log("RESPONSE payload save to '" + saveTo + "' -->\n" + response.getContentLength());}
     }
 
     /**
