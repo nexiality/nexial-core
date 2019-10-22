@@ -47,7 +47,7 @@ import org.nexial.core.plugins.ws.WsCommand;
 
 import com.google.gson.JsonElement;
 
-import static org.nexial.core.NexialConst.Data.OPT_EXPRESSION_RESOLVE_URL;
+import static org.nexial.core.NexialConst.Data.EXPRESSION_RESOLVE_URL;
 import static org.nexial.core.NexialConst.Data.TEXT_DELIM;
 import static org.nexial.core.NexialConst.GSON;
 import static org.nexial.core.SystemVariables.getDefault;
@@ -392,8 +392,7 @@ public class TextTransformer<T extends TextDataType> extends Transformer<T> {
         String text = data.value;
 
         ExecutionContext context = ExecutionThread.get();
-        boolean resolveUrl = context.getBooleanData(OPT_EXPRESSION_RESOLVE_URL,
-                                                    getDefaultBool(OPT_EXPRESSION_RESOLVE_URL));
+        boolean resolveUrl = context.getBooleanData(EXPRESSION_RESOLVE_URL, getDefaultBool(EXPRESSION_RESOLVE_URL));
 
         // could be a proper XML already
         org.jdom2.Document xmlDoc;
@@ -434,8 +433,7 @@ public class TextTransformer<T extends TextDataType> extends Transformer<T> {
         String text = data.value;
 
         ExecutionContext context = ExecutionThread.get();
-        boolean resolveUrl = context.getBooleanData(OPT_EXPRESSION_RESOLVE_URL,
-                                                    getDefaultBool(OPT_EXPRESSION_RESOLVE_URL));
+        boolean resolveUrl = context.getBooleanData(EXPRESSION_RESOLVE_URL, getDefaultBool(EXPRESSION_RESOLVE_URL));
 
         // could be a proper JSON already
         JsonElement json;

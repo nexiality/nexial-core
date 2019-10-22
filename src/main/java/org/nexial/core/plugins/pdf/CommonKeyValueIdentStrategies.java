@@ -26,10 +26,11 @@ import java.util.Map;
 import org.apache.commons.lang3.BooleanUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.nexial.commons.utils.CollectionUtil;
+import org.nexial.core.NexialConst.Pdf;
 import org.nexial.core.model.ExecutionContext;
 import org.thymeleaf.util.ListUtils;
 
-import static org.nexial.core.NexialConst.Data.*;
+import static org.nexial.core.NexialConst.Pdf.*;
 import static org.nexial.core.plugins.pdf.CommonKeyValueIdentStrategies.STRATEGY.*;
 
 public final class CommonKeyValueIdentStrategies implements Serializable {

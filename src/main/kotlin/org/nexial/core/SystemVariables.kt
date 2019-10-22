@@ -31,19 +31,19 @@ object SystemVariables {
     private val SYSVARGROUPS = mutableListOf<String>()
 
     @JvmStatic
-    fun registerSystemVariable(name: String): String {
+    fun registerSysVar(name: String): String {
         if (StringUtils.isNotBlank(name)) SYSVARS[name] = null
         return name
     }
 
     @JvmStatic
-    fun <T> registerSystemVariable(name: String, value: T): String {
+    fun <T> registerSysVar(name: String, value: T): String {
         if (StringUtils.isNotBlank(name)) SYSVARS[name] = value
         return name
     }
 
     @JvmStatic
-    fun registerSystemVariableGroup(group: String): String {
+    fun registerSysVarGroup(group: String): String {
         if (StringUtils.isNotBlank(group) && !SYSVARGROUPS.contains(group)) SYSVARGROUPS.add(group)
         return group
     }
@@ -82,7 +82,7 @@ object SystemVariables {
     }
 
     @JvmStatic
-    fun isRegisteredSystemVariable(name: String): Boolean {
+    fun isRegisteredSysVar(name: String): Boolean {
         if (SYSVARS.containsKey(name)) return true
         for (group in SYSVARGROUPS) {
             if (StringUtils.startsWith(name, group)) return true
@@ -91,7 +91,7 @@ object SystemVariables {
     }
 
     @JvmStatic
-    fun listSystemVariables(): List<String> = SYSVARS.keys.stream().sorted().toList()
+    fun listSysVars(): List<String> = SYSVARS.keys.stream().sorted().toList()
 }
 
 

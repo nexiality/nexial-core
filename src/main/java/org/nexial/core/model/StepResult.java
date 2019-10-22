@@ -25,6 +25,7 @@ import org.openqa.selenium.WebDriver;
 
 import static org.apache.commons.lang3.builder.ToStringStyle.SHORT_PREFIX_STYLE;
 import static org.nexial.core.NexialConst.*;
+import static org.nexial.core.NexialConst.Data.*;
 
 public class StepResult {
     private static final String NOT_SUPPORTED = "()' is not supported by current version of automation driver: ";

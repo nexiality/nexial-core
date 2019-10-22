@@ -48,7 +48,7 @@ import org.xml.sax.SAXException;
 
 import static org.jdom2.input.sax.XMLReaders.XSDVALIDATING;
 import static org.nexial.core.NexialConst.*;
-import static org.nexial.core.NexialConst.Data.toCloudIntegrationNotReadyMessage;
+import static org.nexial.core.NexialConst.toCloudIntegrationNotReadyMessage;
 import static org.nexial.core.utils.CheckUtils.requires;
 import static org.nexial.core.utils.CheckUtils.requiresNotBlank;
 

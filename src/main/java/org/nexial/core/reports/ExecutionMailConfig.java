@@ -40,7 +40,7 @@ import static com.amazonaws.regions.Regions.DEFAULT_REGION;
 import static javax.naming.Context.INITIAL_CONTEXT_FACTORY;
 import static org.apache.commons.lang3.SystemUtils.USER_NAME;
 import static org.nexial.core.NexialConst.AwsSettings.*;
-import static org.nexial.core.NexialConst.Data.*;
+import static org.nexial.core.NexialConst.Exec.*;
 import static org.nexial.core.NexialConst.Mailer.*;
 import static org.nexial.core.SystemVariables.getDefault;
 import static org.nexial.core.utils.ExecUtils.NEXIAL_MANIFEST;

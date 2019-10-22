@@ -22,7 +22,7 @@ import org.apache.commons.lang3.BooleanUtils
 import org.apache.commons.lang3.StringUtils
 import org.nexial.commons.utils.FileUtil
 import org.nexial.commons.utils.ResourceUtils
-import org.nexial.core.NexialConst.Data.NS_WEB_METRICS
+import org.nexial.core.NexialConst.Web.NS_WEB_METRICS
 import org.nexial.core.NexialConst.GSON
 import org.nexial.core.model.ExecutionContext
 import org.nexial.core.model.TestStep

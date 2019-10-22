@@ -46,9 +46,11 @@ import org.openqa.selenium.remote.RemoteWebDriver;
 
 import static org.nexial.core.NexialConst.BrowserType.crossbrowsertesting;
 import static org.nexial.core.NexialConst.CrossBrowserTesting.*;
-import static org.nexial.core.NexialConst.Data.*;
-import static org.nexial.core.NexialConst.WS_BASIC_PWD;
-import static org.nexial.core.NexialConst.WS_BASIC_USER;
+import static org.nexial.core.NexialConst.Data.BUILD_NO;
+import static org.nexial.core.NexialConst.Data.SCRIPT_REF_PREFIX;
+import static org.nexial.core.NexialConst.Web.BROWSER_WINDOW_SIZE;
+import static org.nexial.core.NexialConst.Ws.WS_BASIC_PWD;
+import static org.nexial.core.NexialConst.Ws.WS_BASIC_USER;
 import static org.nexial.core.plugins.web.WebDriverCapabilityUtils.initCapabilities;
 import static org.nexial.core.plugins.web.WebDriverCapabilityUtils.setCapability;
 

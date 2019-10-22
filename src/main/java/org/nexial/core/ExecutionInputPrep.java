@@ -41,8 +41,10 @@ import org.nexial.core.utils.OutputFileUtils;
 
 import static java.io.File.separator;
 import static org.apache.poi.ss.usermodel.Row.MissingCellPolicy.CREATE_NULL_AS_BLANK;
-import static org.nexial.core.NexialConst.Data.*;
+import static org.nexial.core.NexialConst.Data.SHEET_MERGED_DATA;
+import static org.nexial.core.NexialConst.Data.SHEET_SYSTEM;
 import static org.nexial.core.NexialConst.ExitStatus.OUTPUT_LOCATION;
+import static org.nexial.core.NexialConst.Iteration.*;
 import static org.nexial.core.NexialConst.NAMESPACE;
 import static org.nexial.core.NexialConst.OPT_INPUT_EXCEL_FILE;
 import static org.nexial.core.NexialConst.Project.appendCapture;

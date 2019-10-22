@@ -25,7 +25,6 @@ import org.apache.commons.collections4.MapUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.nexial.commons.utils.DateUtility;
 import org.nexial.core.ExecutionThread;
-import org.nexial.core.NexialConst.Data;
 import org.nexial.core.model.ExecutionContext;
 import org.nexial.core.model.FlowControl;
 import org.nexial.core.model.FlowControl.Directive;
@@ -34,7 +33,7 @@ import org.nexial.core.model.TestStep;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import static org.nexial.core.NexialConst.Data.*;
+import static org.nexial.core.NexialConst.TimeTrack.*;
 import static org.nexial.core.SystemVariables.getDefault;
 import static org.nexial.core.model.FlowControl.Directive.TimeTrackEnd;
 import static org.nexial.core.model.FlowControl.Directive.TimeTrackStart;
@@ -120,7 +119,7 @@ public final class TrackTimeLogs {
 
         String[] replaceList = new String[]{startDateTime[0], startDateTime[1], endDateTime[0], endDateTime[1],
                                             elapsedTime, Thread.currentThread().getName(), label, remark};
-        format = StringUtils.replaceEach(format, Data.TRACKING_DETAIL_TOKENS, replaceList);
+        format = StringUtils.replaceEach(format, TRACKING_DETAIL_TOKENS, replaceList);
 
         if (StringUtils.isNotEmpty(format)) { LOGGER.info(format); }
         // setting variable to default value

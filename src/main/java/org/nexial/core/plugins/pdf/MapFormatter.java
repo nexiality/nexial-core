@@ -28,7 +28,7 @@ import org.nexial.core.plugins.pdf.Table.Cell;
 import org.nexial.core.plugins.pdf.Table.Row;
 import org.nexial.core.utils.ConsoleUtils;
 
-import static org.nexial.core.NexialConst.Data.PDFFORM_UNMATCHED_TEXT;
+import static org.nexial.core.NexialConst.Pdf.PDFFORM_UNMATCHED_TEXT;
 import static org.nexial.core.plugins.pdf.CommonKeyValueIdentStrategies.STRATEGY.ALTERNATING_CELL;
 import static org.nexial.core.plugins.pdf.CommonKeyValueIdentStrategies.STRATEGY.ALTERNATING_ROW;
 

@@ -17,9 +17,11 @@
 
 package org.nexial.core
 
-import org.nexial.core.NexialConst.Data.*
+import org.nexial.core.NexialConst.Data.SCOPE
+import org.nexial.core.NexialConst.Exec.*
 import org.nexial.core.NexialConst.OPT_MANAGE_MEM
 import org.nexial.core.NexialConst.OUTPUT_TO_CLOUD
+import org.nexial.core.NexialConst.Web.*
 
 object CommandConst {
 

@@ -25,7 +25,7 @@ import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.builder.ToStringBuilder;
 
 import static org.apache.commons.lang3.builder.ToStringStyle.SIMPLE_STYLE;
-import static org.nexial.core.NexialConst.*;
+import static org.nexial.core.NexialConst.Rdbms.*;
 
 /**
  * Encapsulation of a SQL component, which consists of:

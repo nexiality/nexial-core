@@ -35,8 +35,8 @@ import org.nexial.core.utils.ConsoleUtils;
 
 import static java.io.File.separator;
 import static org.apache.commons.io.filefilter.DirectoryFileFilter.DIRECTORY;
+import static org.nexial.core.NexialConst.Compare.*;
 import static org.nexial.core.NexialConst.DF_TIMESTAMP;
-import static org.nexial.core.NexialConst.Data.*;
 import static org.nexial.core.NexialConst.PREFIX_JAR;
 
 enum IoAction {

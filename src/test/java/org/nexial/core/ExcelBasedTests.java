@@ -35,6 +35,7 @@ import org.nexial.commons.utils.TextUtils;
 import org.nexial.core.model.ExecutionSummary;
 
 import static java.io.File.separator;
+import static org.nexial.core.NexialConst.Data.*;
 import static org.nexial.core.NexialConst.Data.FAIL_FAST;
 import static org.nexial.core.NexialConst.*;
 import static org.nexial.core.model.ExecutionSummary.ExecutionLevel.ITERATION;

@@ -73,7 +73,7 @@ import static org.apache.commons.lang3.SystemUtils.JAVA_IO_TMPDIR;
 import static org.nexial.core.CommandConst.*;
 import static org.nexial.core.NexialConst.*;
 import static org.nexial.core.NexialConst.Data.NULL;
-import static org.nexial.core.NexialConst.Data.toCloudIntegrationNotReadyMessage;
+import static org.nexial.core.NexialConst.toCloudIntegrationNotReadyMessage;
 import static org.nexial.core.excel.ExcelConfig.MSG_PASS;
 import static org.nexial.core.plugins.base.IncrementStrategy.ALPHANUM;
 import static org.nexial.core.utils.CheckUtils.*;

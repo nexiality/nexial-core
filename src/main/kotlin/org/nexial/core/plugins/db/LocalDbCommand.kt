@@ -21,7 +21,7 @@ import org.apache.commons.io.FileUtils
 import org.apache.commons.lang3.StringUtils
 import org.nexial.commons.utils.RegexUtils
 import org.nexial.commons.utils.TextUtils
-import org.nexial.core.NexialConst.DAO_PREFIX
+import org.nexial.core.NexialConst.Rdbms.DAO_PREFIX
 import org.nexial.core.excel.ExcelConfig.MSG_SCREENCAPTURE
 import org.nexial.core.model.ExecutionContext
 import org.nexial.core.model.StepResult

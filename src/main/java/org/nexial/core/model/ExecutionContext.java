@@ -82,9 +82,13 @@ import static org.apache.commons.lang3.SystemUtils.USER_NAME;
 import static org.nexial.commons.utils.EnvUtils.enforceUnixEOL;
 import static org.nexial.core.NexialConst.*;
 import static org.nexial.core.NexialConst.Data.*;
+import static org.nexial.core.NexialConst.Exec.*;
 import static org.nexial.core.NexialConst.FlowControls.OPT_PAUSE_ON_ERROR;
 import static org.nexial.core.NexialConst.FlowControls.OPT_STEP_BY_STEP;
+import static org.nexial.core.NexialConst.Iteration.*;
 import static org.nexial.core.NexialConst.Project.NEXIAL_HOME;
+import static org.nexial.core.NexialConst.TimeTrack.*;
+import static org.nexial.core.NexialConst.Web.*;
 import static org.nexial.core.SystemVariables.*;
 import static org.nexial.core.excel.ext.CipherHelper.CRYPT_IND;
 
@@ -415,13 +419,13 @@ public class ExecutionContext {
 
     public boolean isResolveTextAsURL() {
         return hasData(RESOLVE_TEXT_AS_URL) ? getBooleanData(RESOLVE_TEXT_AS_URL) :
-               hasData(OPT_EXPRESSION_RESOLVE_URL) ? getBooleanData(OPT_EXPRESSION_RESOLVE_URL) :
+               hasData(EXPRESSION_RESOLVE_URL) ? getBooleanData(EXPRESSION_RESOLVE_URL) :
                getDefaultBool(RESOLVE_TEXT_AS_URL);
     }
 
     public boolean isResolveTextAsIs() {
         return hasData(RESOLVE_TEXT_AS_IS) ? getBooleanData(RESOLVE_TEXT_AS_IS) :
-               hasData(OPT_EXPRESSION_READ_FILE_AS_IS) ? getBooleanData(OPT_EXPRESSION_READ_FILE_AS_IS) :
+               hasData(EXPRESSION_OPEN_FILE_AS_IS) ? getBooleanData(EXPRESSION_OPEN_FILE_AS_IS) :
                getDefaultBool(RESOLVE_TEXT_AS_IS);
     }
 
@@ -434,8 +438,8 @@ public class ExecutionContext {
         if (!result.isError()) { return; }
 
         // increment execution fail count
-        int execFailCount = getIntData(EXECUTION_FAIL_COUNT, 0) + 1;
-        setData(EXECUTION_FAIL_COUNT, execFailCount);
+        int execFailCount = getIntData(FAIL_COUNT, 0) + 1;
+        setData(FAIL_COUNT, execFailCount);
 
         // determine if fail-immediate is eminent
         int failAfter = getFailAfter();
@@ -456,13 +460,13 @@ public class ExecutionContext {
 
     public void evaluateResult(StepResult result) {
         if (result.isSkipped()) {
-            setData(EXECUTION_SKIP_COUNT, getIntData(EXECUTION_SKIP_COUNT, 0) + 1);
+            setData(SKIP_COUNT, getIntData(SKIP_COUNT, 0) + 1);
             return;
         }
 
-        setData(EXECUTION_EXEC_COUNT, getIntData(EXECUTION_EXEC_COUNT, 0) + 1);
+        setData(EXEC_COUNT, getIntData(EXEC_COUNT, 0) + 1);
         if (result.isSuccess()) {
-            setData(EXECUTION_PASS_COUNT, getIntData(EXECUTION_PASS_COUNT, 0) + 1);
+            setData(PASS_COUNT, getIntData(PASS_COUNT, 0) + 1);
         } else {
             incrementAndEvaluateFail(result);
         }

@@ -50,6 +50,7 @@ import org.apache.xmpbox.xml.DomXmpParser;
 import org.apache.xmpbox.xml.XmpParsingException;
 import org.nexial.commons.utils.RegexUtils;
 import org.nexial.commons.utils.TextUtils;
+import org.nexial.core.NexialConst.Pdf;
 import org.nexial.core.model.ExecutionContext;
 import org.nexial.core.model.StepResult;
 import org.nexial.core.plugins.base.BaseCommand;
@@ -63,8 +64,8 @@ import static java.io.File.separatorChar;
 import static java.util.regex.Pattern.DOTALL;
 import static java.util.regex.Pattern.MULTILINE;
 import static org.nexial.core.NexialConst.DEF_CHARSET;
-import static org.nexial.core.NexialConst.Data.PDFFORM_UNMATCHED_TEXT;
-import static org.nexial.core.NexialConst.PdfMeta.*;
+import static org.nexial.core.NexialConst.Pdf.*;
+import static org.nexial.core.NexialConst.Pdf.PDFFORM_UNMATCHED_TEXT;
 import static org.nexial.core.utils.CheckUtils.*;
 
 public class PdfCommand extends BaseCommand {

@@ -38,6 +38,7 @@ import org.springframework.core.io.support.PropertiesLoaderUtils;
 import net.lightbody.bmp.proxy.ProxyServer;
 
 import static org.nexial.core.NexialConst.*;
+import static org.nexial.core.NexialConst.Ws.*;
 import static org.openqa.selenium.Proxy.ProxyType.DIRECT;
 
 /**

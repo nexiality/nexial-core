@@ -37,6 +37,7 @@ import org.openqa.selenium.WebDriverException;
 import static org.apache.commons.lang3.builder.ToStringStyle.SIMPLE_STYLE;
 import static org.nexial.core.CommandConst.CMD_SECTION;
 import static org.nexial.core.NexialConst.Data.*;
+import static org.nexial.core.NexialConst.Exec.*;
 import static org.nexial.core.NexialConst.MSG_FAIL;
 import static org.nexial.core.NexialConst.MSG_PASS;
 import static org.nexial.core.NexialConst.*;
@@ -180,7 +181,7 @@ public class CommandRepeater {
                         if (context.isPauseOnError()) {
                             ConsoleUtils.doPause(context,
                                                  "[ERROR] " + errorCount + " in repeat-until, " +
-                                                 Math.max(context.getIntData(EXECUTION_FAIL_COUNT), 0) +
+                                                 Math.max(context.getIntData(FAIL_COUNT), 0) +
                                                  " in execution. Error found in " +
                                                  ExecutionLogger.toHeader(testStep) + ": " + result.getMessage());
                         }

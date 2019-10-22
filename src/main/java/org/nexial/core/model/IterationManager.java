@@ -29,8 +29,8 @@ import org.apache.commons.lang3.math.NumberUtils;
 import org.nexial.core.excel.ExcelAddress;
 import org.nexial.core.utils.ConsoleUtils;
 
-import static org.nexial.core.NexialConst.Data.ITERATION_RANGE_SEP;
-import static org.nexial.core.NexialConst.Data.ITERATION_SEP;
+import static org.nexial.core.NexialConst.Iteration.ITERATION_RANGE_SEP;
+import static org.nexial.core.NexialConst.Iteration.ITERATION_SEP;
 
 public final class IterationManager {
     private String iterationString;

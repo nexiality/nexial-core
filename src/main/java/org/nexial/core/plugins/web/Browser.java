@@ -69,6 +69,7 @@ import static org.apache.commons.lang3.SystemUtils.*;
 import static org.nexial.core.NexialConst.BrowserType.*;
 import static org.nexial.core.NexialConst.Data.*;
 import static org.nexial.core.NexialConst.*;
+import static org.nexial.core.NexialConst.Web.*;
 import static org.nexial.core.SystemVariables.*;
 import static org.nexial.core.plugins.web.WebDriverCapabilityUtils.initCapabilities;
 import static org.nexial.core.utils.CheckUtils.requiresExecutableFile;
@@ -574,7 +575,7 @@ public class Browser implements ForcefulTerminate {
         // options.addArguments("--headless");
 
         Builder cdsBuilder = new Builder();
-        if (context.getBooleanData(LOG_ELECTRON_DRIVER, getDefaultBool(LOG_ELECTRON_DRIVER))) {
+        if (context.getBooleanData(ELECTRON_LOG_ENABLED, getDefaultBool(ELECTRON_LOG_ENABLED))) {
             // determine chrome log file
             String appName = clientLocation;
             if (StringUtils.contains(appName, "/")) { appName = StringUtils.substringAfterLast(appName, "/"); }
@@ -583,7 +584,7 @@ public class Browser implements ForcefulTerminate {
             File logFile = resolveBrowserLogFile("electron-" + appName + ".log");
             ConsoleUtils.log("enabling logging for Electron: " + logFile.getAbsolutePath());
 
-            boolean verbose = context.getBooleanData(LOG_ELECTRON_VERBOSE, getDefaultBool(LOG_ELECTRON_VERBOSE));
+            boolean verbose = context.getBooleanData(ELECTRON_LOG_VERBOSE, getDefaultBool(ELECTRON_LOG_VERBOSE));
             cdsBuilder = cdsBuilder.withVerbose(verbose).withLogFile(logFile);
         }
 
@@ -600,7 +601,7 @@ public class Browser implements ForcefulTerminate {
         // URL driverUrl = driverService.getUrl();
         // int driverPort = driverUrl.getPort();
 
-        boolean activateLogging = context.getBooleanData(LOG_CHROME_DRIVER, getDefaultBool(LOG_CHROME_DRIVER));
+        boolean activateLogging = context.getBooleanData(CHROME_LOG_ENABLED, getDefaultBool(CHROME_LOG_ENABLED));
         if (activateLogging) {
             String chromeLog = resolveBrowserLogFile("chrome-browser.log").getAbsolutePath();
             ConsoleUtils.log("enabling logging for Chrome: " + chromeLog);
@@ -645,7 +646,7 @@ public class Browser implements ForcefulTerminate {
         // ref: https://developers.google.com/web/tools/chrome-devtools/device-mode/?utm_source=dcc&utm_medium=redirect&utm_campaign=2016q3
         // issue: https://bugs.chromium.org/p/chromedriver/issues/detail?id=2144&desc=2
         // devices: https://codesearch.chromium.org/codesearch/f/chromium/src/third_party/blink/renderer/devtools/front_end/emulated_devices/module.json
-        String emuDevice = context.getStringData(KEY_EMU_DEVICE_NAME);
+        String emuDevice = context.getStringData(EMU_DEVICE_NAME);
         if (StringUtils.isNotBlank(emuDevice)) {
             Map<String, String> mobileEmulation = new HashMap<>();
             mobileEmulation.put("deviceName", emuDevice);
@@ -653,14 +654,13 @@ public class Browser implements ForcefulTerminate {
             ConsoleUtils.log("setting mobile emulation on Chrome as " + emuDevice);
         }
 
-        String emuUserAgent = context.getStringData(KEY_EMU_USER_AGENT);
+        String emuUserAgent = context.getStringData(EMU_USER_AGENT);
         if (StringUtils.isNotBlank(emuUserAgent)) {
             Map<String, Object> deviceMetrics = new HashMap<>();
-            deviceMetrics.put("width", context.getIntData(KEY_EMU_WIDTH, getDefaultInt(KEY_EMU_WIDTH)));
-            deviceMetrics.put("height", context.getIntData(KEY_EMU_HEIGHT, getDefaultInt(KEY_EMU_HEIGHT)));
-            deviceMetrics.put("pixelRatio",
-                              context.getDoubleData(KEY_EMU_PIXEL_RATIO, getDefaultDouble(KEY_EMU_PIXEL_RATIO)));
-            deviceMetrics.put("touch", context.getBooleanData(KEY_EMU_TOUCH, true));
+            deviceMetrics.put("width", context.getIntData(EMU_WIDTH, getDefaultInt(EMU_WIDTH)));
+            deviceMetrics.put("height", context.getIntData(EMU_HEIGHT, getDefaultInt(EMU_HEIGHT)));
+            deviceMetrics.put("pixelRatio", context.getDoubleData(EMU_PIXEL_RATIO, getDefaultDouble(EMU_PIXEL_RATIO)));
+            deviceMetrics.put("touch", context.getBooleanData(EMU_TOUCH, true));
 
             Map<String, Object> mobileEmulation = new HashMap<>();
             mobileEmulation.put("deviceMetrics", deviceMetrics);

@@ -37,7 +37,7 @@ import org.nexial.core.ExecutionThread;
 import org.nexial.core.model.ExecutionContext;
 
 import static org.nexial.core.NexialConst.Data.TEXT_DELIM;
-import static org.nexial.core.NexialConst.Data.treatCommonValueShorthand;
+import static org.nexial.core.NexialConst.treatCommonValueShorthand;
 import static org.nexial.core.SystemVariables.getDefault;
 import static org.nexial.core.variable.ExpressionConst.ALIAS_EMPTY;
 import static org.nexial.core.variable.ExpressionUtils.fixControlChars;

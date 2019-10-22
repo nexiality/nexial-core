@@ -23,7 +23,10 @@ import org.apache.commons.lang3.SystemUtils.IS_OS_MAC
 import org.apache.commons.lang3.SystemUtils.IS_OS_WINDOWS
 import org.nexial.commons.proc.ProcessInvoker
 import org.nexial.core.NexialConst.*
-import org.nexial.core.NexialConst.Data.*
+import org.nexial.core.NexialConst.Data.WIN32_CMD
+import org.nexial.core.NexialConst.Exec.*
+import org.nexial.core.NexialConst.Web.WEB_METRICS_GENERATED
+import org.nexial.core.NexialConst.Web.WEB_METRICS_HTML
 import org.nexial.core.SystemVariables.getDefault
 import org.nexial.core.excel.Excel
 import org.nexial.core.model.ExecutionContext

@@ -38,6 +38,7 @@ import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Test;
 import org.nexial.commons.utils.TextUtils;
+import org.nexial.core.NexialConst.Compare;
 import org.nexial.core.model.ExecutionContext;
 import org.nexial.core.model.MockExecutionContext;
 import org.nexial.core.model.StepResult;
@@ -47,8 +48,8 @@ import com.google.gson.JsonObject;
 import com.univocity.parsers.csv.CsvParser;
 
 import static java.io.File.separator;
+import static org.nexial.core.NexialConst.Compare.*;
 import static org.nexial.core.NexialConst.DEF_FILE_ENCODING;
-import static org.nexial.core.NexialConst.Data.*;
 import static org.nexial.core.NexialConst.OPT_OUT_DIR;
 import static org.nexial.core.plugins.io.ComparisonResult.*;
 import static org.nexial.core.plugins.io.FileComparisonReport.GSON;

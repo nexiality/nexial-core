@@ -21,8 +21,7 @@ import org.apache.commons.lang3.SystemUtils.IS_OS_WINDOWS
 import org.nexial.commons.utils.DateUtility
 import org.nexial.core.Nexial
 import org.nexial.core.NexialConst.*
-import org.nexial.core.NexialConst.Data.SCRIPT_REF_PREFIX
-import org.nexial.core.NexialConst.Data.TEXT_DELIM
+import org.nexial.core.NexialConst.Data.*
 import org.nexial.core.NexialConst.Integration.*
 import org.nexial.core.NexialConst.Jenkins.*
 import org.nexial.core.NexialConst.Project.NEXIAL_HOME

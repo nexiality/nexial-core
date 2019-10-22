@@ -24,7 +24,8 @@ import org.nexial.core.utils.ConsoleUtils;
 import org.openqa.selenium.MutableCapabilities;
 
 import static org.nexial.core.NexialConst.*;
-import static org.nexial.core.NexialConst.Data.BROWSER_ACCEPT_INVALID_CERTS;
+import static org.nexial.core.NexialConst.Web.*;
+import static org.nexial.core.NexialConst.Web.BROWSER_ACCEPT_INVALID_CERTS;
 import static org.nexial.core.SystemVariables.getDefaultBool;
 import static org.openqa.selenium.UnexpectedAlertBehaviour.ACCEPT;
 import static org.openqa.selenium.UnexpectedAlertBehaviour.IGNORE;

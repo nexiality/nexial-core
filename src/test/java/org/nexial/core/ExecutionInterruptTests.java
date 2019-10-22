@@ -26,7 +26,7 @@ import org.junit.Before;
 import org.junit.Test;
 import org.nexial.core.model.ExecutionSummary;
 
-import static org.nexial.core.NexialConst.OPT_RUN_ID;
+import static org.nexial.core.NexialConst.Data.OPT_RUN_ID;
 
 public class ExecutionInterruptTests extends ExcelBasedTests {
 

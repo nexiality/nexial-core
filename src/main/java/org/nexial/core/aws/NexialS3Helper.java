@@ -27,6 +27,7 @@ import org.nexial.core.utils.ConsoleUtils;
 
 import static com.amazonaws.regions.Regions.DEFAULT_REGION;
 import static org.nexial.core.NexialConst.*;
+import static org.nexial.core.NexialConst.Data.*;
 
 /**
  * S3 helper specific to Nexial's internal use for transferring execution output to S3

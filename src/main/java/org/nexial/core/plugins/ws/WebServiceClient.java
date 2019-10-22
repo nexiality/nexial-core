@@ -75,6 +75,7 @@ import org.nexial.core.variable.Syspath;
 
 import static java.io.File.separator;
 import static org.nexial.core.NexialConst.*;
+import static org.nexial.core.NexialConst.Ws.*;
 import static org.nexial.core.SystemVariables.getDefaultBool;
 
 public class WebServiceClient {

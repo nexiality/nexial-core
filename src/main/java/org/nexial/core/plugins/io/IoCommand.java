@@ -69,7 +69,7 @@ import static java.io.File.separatorChar;
 import static java.lang.System.lineSeparator;
 import static org.apache.commons.lang3.SystemUtils.IS_OS_WINDOWS;
 import static org.nexial.core.NexialConst.*;
-import static org.nexial.core.NexialConst.Data.*;
+import static org.nexial.core.NexialConst.Compare.*;
 import static org.nexial.core.SystemVariables.getDefault;
 import static org.nexial.core.SystemVariables.getDefaultBool;
 import static org.nexial.core.plugins.io.ComparisonResult.*;

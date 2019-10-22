@@ -34,7 +34,7 @@ import org.nexial.core.NexialConst.Data.SHEET_DEFAULT_DATA
 import org.nexial.core.NexialConst.Data.SHEET_SYSTEM
 import org.nexial.core.NexialConst.Project.*
 import org.nexial.core.SystemVariables.getDefault
-import org.nexial.core.SystemVariables.isRegisteredSystemVariable
+import org.nexial.core.SystemVariables.isRegisteredSysVar
 import org.nexial.core.excel.Excel
 import org.nexial.core.excel.ExcelAddress
 import org.nexial.core.excel.ExcelConfig.*
@@ -387,7 +387,7 @@ class DataDocGenerator(val options: InspectorOptions, val logger: InspectorLogge
                             firstInstance.advices += getMessage("dv.name.outdated", Pair("name", preferredName))
 
                         // Rule #9: unknown system variable
-                        if (!isRegisteredSystemVariable(name))
+                        if (!isRegisteredSysVar(name))
                             firstInstance.advices += getMessage("dv.name.unknown", Pair("name", name))
                     }
                 }

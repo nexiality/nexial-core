@@ -32,6 +32,7 @@ import org.nexial.core.ExecutionInputPrep
 import org.nexial.core.ExecutionThread
 import org.nexial.core.NexialConst.*
 import org.nexial.core.NexialConst.Data.*
+import org.nexial.core.NexialConst.Iteration.*
 import org.nexial.core.NexialConst.Project.appendLog
 import org.nexial.core.excel.Excel
 import org.nexial.core.interactive.InteractiveConsole.Commands.ALL_STEP

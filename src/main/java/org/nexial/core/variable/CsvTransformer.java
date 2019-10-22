@@ -53,6 +53,7 @@ import com.univocity.parsers.common.record.Record;
 
 import static java.lang.System.lineSeparator;
 import static org.nexial.core.NexialConst.*;
+import static org.nexial.core.NexialConst.Rdbms.*;
 import static org.nexial.core.SystemVariables.getDefaultInt;
 import static org.nexial.core.model.NexialFilterComparator.Equal;
 import static org.nexial.core.variable.ExpressionUtils.fixControlChars;

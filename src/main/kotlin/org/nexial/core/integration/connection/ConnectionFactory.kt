@@ -19,6 +19,7 @@ package org.nexial.core.integration.connection
 
 import org.apache.commons.lang3.StringUtils
 import org.nexial.core.NexialConst.*
+import org.nexial.core.NexialConst.Ws.*
 import org.nexial.core.integration.INTEGRATION
 import org.nexial.core.model.ExecutionContext
 import org.nexial.core.plugins.ws.AsyncWebServiceClient

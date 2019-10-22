@@ -31,7 +31,7 @@ import org.apache.http.entity.ContentType;
 import org.apache.http.entity.StringEntity;
 import org.nexial.core.model.ExecutionContext;
 
-import static org.nexial.core.NexialConst.*;
+import static org.nexial.core.NexialConst.Ws.*;
 
 public class PostRequest extends Request implements Serializable {
     protected String payload;

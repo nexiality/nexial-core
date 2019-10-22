@@ -36,7 +36,7 @@ import org.nexial.commons.utils.RegexUtils
 import org.nexial.commons.utils.TextUtils
 import org.nexial.core.NexialConst.*
 import org.nexial.core.NexialConst.BrowserType.*
-import org.nexial.core.NexialConst.Data.OPT_FORCE_IE_32
+import org.nexial.core.NexialConst.Web.OPT_FORCE_IE_32
 import org.nexial.core.NexialConst.Data.WIN32_CMD
 import org.nexial.core.SystemVariables.getDefaultBool
 import org.nexial.core.model.ExecutionContext

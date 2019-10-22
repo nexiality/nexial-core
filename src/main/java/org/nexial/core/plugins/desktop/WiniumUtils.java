@@ -53,6 +53,7 @@ import static org.apache.commons.lang3.SystemUtils.IS_OS_WINDOWS;
 import static org.nexial.commons.proc.ProcessInvoker.WORKING_DIRECTORY;
 import static org.nexial.core.NexialConst.*;
 import static org.nexial.core.NexialConst.Data.*;
+import static org.nexial.core.NexialConst.Desktop.*;
 import static org.nexial.core.NexialConst.Project.NEXIAL_HOME;
 import static org.nexial.core.NexialConst.Project.NEXIAL_WINDOWS_BIN_REL_PATH;
 import static org.nexial.core.SystemVariables.getDefaultBool;

@@ -94,8 +94,9 @@ import static java.io.File.separator;
 import static java.lang.Thread.sleep;
 import static org.apache.commons.lang3.SystemUtils.IS_OS_MAC;
 import static org.nexial.core.NexialConst.BrowserType.safari;
-import static org.nexial.core.NexialConst.Data.*;
 import static org.nexial.core.NexialConst.*;
+import static org.nexial.core.NexialConst.Data.*;
+import static org.nexial.core.NexialConst.Web.*;
 import static org.nexial.core.SystemVariables.*;
 import static org.nexial.core.plugins.ws.WebServiceClient.hideAuthDetails;
 import static org.nexial.core.utils.CheckUtils.*;
@@ -2661,7 +2662,7 @@ public class WebCommand extends BaseCommand implements CanTakeScreenshot, CanLog
 
     protected void scrollIntoView(WebElement element) {
         if (element != null && context.getBooleanData(SCROLL_INTO_VIEW, getDefaultBool(SCROLL_INTO_VIEW))) {
-            jsExecutor.executeScript(JS_SCROLL_INTO_VIEW, element);
+            jsExecutor.executeScript(SCROLL_INTO_VIEW_JS, element);
         }
     }
 

@@ -45,6 +45,7 @@ import org.springframework.jdbc.core.StatementCallback;
 import org.springframework.jdbc.core.support.JdbcDaoSupport;
 
 import static org.nexial.core.NexialConst.*;
+import static org.nexial.core.NexialConst.Rdbms.*;
 import static org.nexial.core.SystemVariables.getDefaultBool;
 import static org.nexial.core.SystemVariables.getDefaultInt;
 

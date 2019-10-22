@@ -50,6 +50,7 @@ import static io.jsonwebtoken.impl.TextCodec.BASE64URL;
 import static org.apache.http.HttpHeaders.AUTHORIZATION;
 import static org.apache.http.HttpHeaders.CONTENT_TYPE;
 import static org.nexial.core.NexialConst.*;
+import static org.nexial.core.NexialConst.Ws.*;
 import static org.nexial.core.SystemVariables.getDefaultBool;
 import static org.nexial.core.plugins.ws.WebServiceClient.hideAuthDetails;
 import static org.nexial.core.utils.CheckUtils.requires;

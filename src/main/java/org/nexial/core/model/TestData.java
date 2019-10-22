@@ -37,6 +37,8 @@ import org.nexial.core.utils.InputFileUtils;
 
 import static org.nexial.core.NexialConst.Data.*;
 import static org.nexial.core.NexialConst.*;
+import static org.nexial.core.NexialConst.Exec.*;
+import static org.nexial.core.NexialConst.Iteration.*;
 
 /**
  * This represents a set of data usable for a specific test execution, which may contain multiple scenarios.

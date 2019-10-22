@@ -55,7 +55,8 @@ import org.thymeleaf.context.Context;
 import com.sun.mail.smtp.SMTPTransport;
 
 import static javax.mail.Message.RecipientType.*;
-import static org.nexial.core.NexialConst.Data.*;
+import static org.nexial.core.NexialConst.Data.MIME_PLAIN;
+import static org.nexial.core.NexialConst.Exec.*;
 import static org.nexial.core.NexialConst.ExitStatus.EXEC_OUTPUT_PATH;
 import static org.nexial.core.NexialConst.Mailer.MAIL_KEY_CONTENT_TYPE;
 import static org.nexial.core.NexialConst.Mailer.MAIL_KEY_FROM;

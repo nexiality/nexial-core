@@ -19,8 +19,8 @@ package org.nexial.core.plugins.pdf
 import org.apache.commons.lang3.StringUtils
 import org.apache.pdfbox.pdmodel.PDDocument
 import org.apache.pdfbox.text.PDFTextStripper
-import org.nexial.core.NexialConst.Data.PDF_USE_ASCII
-import org.nexial.core.NexialConst.PdfMeta.MIME_PDF
+import org.nexial.core.NexialConst.Pdf.PDF_USE_ASCII
+import org.nexial.core.NexialConst.Pdf.MIME_PDF
 import org.nexial.core.SystemVariables.getDefaultBool
 import org.nexial.core.model.ExecutionContext
 import org.nexial.core.utils.CheckUtils.requiresReadableFile

@@ -36,8 +36,8 @@ import org.nexial.core.plugins.db.JdbcOutcome;
 import org.nexial.core.plugins.db.JdbcResult;
 import org.nexial.core.plugins.db.RdbmsCommand;
 
-import static org.nexial.core.NexialConst.CSV_FIELD_DEIM;
-import static org.nexial.core.NexialConst.CSV_ROW_SEP;
+import static org.nexial.core.NexialConst.Rdbms.CSV_FIELD_DEIM;
+import static org.nexial.core.NexialConst.Rdbms.CSV_ROW_SEP;
 
 public class SqlTransformer<T extends SqlDataType> extends Transformer {
     private static final Map<String, Integer> FUNCTION_TO_PARAM = discoverFunctions(SqlTransformer.class);

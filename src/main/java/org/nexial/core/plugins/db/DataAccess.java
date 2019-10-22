@@ -36,6 +36,7 @@ import org.springframework.context.ApplicationContextAware;
 
 import static java.sql.Connection.TRANSACTION_SERIALIZABLE;
 import static org.nexial.core.NexialConst.*;
+import static org.nexial.core.NexialConst.Rdbms.*;
 import static org.nexial.core.utils.CheckUtils.requiresNotBlank;
 import static org.nexial.core.utils.CheckUtils.requiresNotNull;
 

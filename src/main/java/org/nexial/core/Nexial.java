@@ -67,6 +67,7 @@ import static org.apache.commons.lang3.SystemUtils.USER_NAME;
 import static org.nexial.core.NexialConst.CLI.*;
 import static org.nexial.core.NexialConst.*;
 import static org.nexial.core.NexialConst.Data.*;
+import static org.nexial.core.NexialConst.Exec.*;
 import static org.nexial.core.NexialConst.ExitStatus.*;
 import static org.nexial.core.NexialConst.Project.*;
 import static org.nexial.core.SystemVariables.getDefault;

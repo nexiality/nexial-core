@@ -50,7 +50,7 @@ import static java.io.File.separator;
 import static java.lang.System.lineSeparator;
 import static org.apache.commons.lang3.SystemUtils.JAVA_IO_TMPDIR;
 import static org.nexial.core.NexialConst.*;
-import static org.nexial.core.NexialConst.Data.*;
+import static org.nexial.core.NexialConst.Compare.*;
 
 public class IoCommandTest {
 

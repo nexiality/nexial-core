@@ -36,8 +36,8 @@ import org.nexial.core.utils.ConsoleUtils;
 
 import static org.apache.http.entity.ContentType.DEFAULT_BINARY;
 import static org.apache.http.entity.mime.HttpMultipartMode.BROWSER_COMPATIBLE;
-import static org.nexial.core.NexialConst.WS_CONTENT_TYPE;
-import static org.nexial.core.NexialConst.WS_USER_AGENT;
+import static org.nexial.core.NexialConst.Ws.WS_CONTENT_TYPE;
+import static org.nexial.core.NexialConst.Ws.WS_USER_AGENT;
 import static org.nexial.core.utils.ExecUtils.NEXIAL_MANIFEST;
 
 public class PostMultipartRequest extends PostRequest {

@@ -36,7 +36,7 @@ import org.nexial.commons.utils.web.URLEncodingUtils;
 import org.nexial.core.model.ExecutionContext;
 import org.openqa.selenium.Cookie;
 
-import static org.nexial.core.NexialConst.*;
+import static org.nexial.core.NexialConst.Ws.*;
 import static org.nexial.core.SystemVariables.getDefaultBool;
 import static org.nexial.core.SystemVariables.getDefaultInt;
 import static org.nexial.core.plugins.ws.WebServiceClient.hideAuthDetails;

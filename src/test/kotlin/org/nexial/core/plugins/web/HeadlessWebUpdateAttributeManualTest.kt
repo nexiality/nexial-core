@@ -18,7 +18,7 @@ package org.nexial.core.plugins.web
 
 import org.junit.Test
 import org.nexial.core.ExcelBasedTests
-import org.nexial.core.NexialConst.Data.BROWSER
+import org.nexial.core.NexialConst.Web.BROWSER
 
 class HeadlessWebUpdateAttributeManualTest : ExcelBasedTests() {
 

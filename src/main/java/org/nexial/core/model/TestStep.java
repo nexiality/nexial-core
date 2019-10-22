@@ -59,6 +59,7 @@ import static org.nexial.core.CommandConst.CMD_REPEAT_UNTIL;
 import static org.nexial.core.CommandConst.CMD_VERBOSE;
 import static org.nexial.core.NexialConst.*;
 import static org.nexial.core.NexialConst.Data.*;
+import static org.nexial.core.NexialConst.Web.*;
 import static org.nexial.core.SystemVariables.getDefaultBool;
 import static org.nexial.core.excel.ExcelConfig.*;
 

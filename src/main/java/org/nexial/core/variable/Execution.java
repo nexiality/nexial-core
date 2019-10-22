@@ -29,7 +29,7 @@ import org.nexial.core.utils.ConsoleUtils;
 
 import static org.apache.commons.lang3.SystemUtils.JAVA_VERSION;
 import static org.apache.commons.lang3.SystemUtils.USER_NAME;
-import static org.nexial.core.NexialConst.Data.CURR_ITERATION;
+import static org.nexial.core.NexialConst.Iteration.CURR_ITERATION;
 import static org.nexial.core.NexialConst.Data.ITERATION_ENDED;
 import static org.nexial.core.NexialConst.OPT_INPUT_EXCEL_FILE;
 import static org.nexial.core.NexialConst.OPT_INPUT_PLAN_FILE;

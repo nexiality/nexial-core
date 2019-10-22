@@ -24,8 +24,8 @@ import org.apache.commons.lang3.StringUtils
 import org.apache.commons.lang3.SystemUtils
 import org.nexial.core.ExecutionThread
 import org.nexial.core.NexialConst.DEF_FILE_ENCODING
-import org.nexial.core.NexialConst.Data.*
-import org.nexial.core.NexialConst.OPT_RUN_ID
+import org.nexial.core.NexialConst.Data.OPT_RUN_ID
+import org.nexial.core.NexialConst.TimeTrack.*
 import org.nexial.core.model.*
 import org.nexial.core.model.ExecutionEvent.*
 import org.nexial.core.service.EventUtils.postfix
@@ -39,7 +39,7 @@ import java.util.*
 object EventTracker {
     private val eventFileDateFormat = SimpleDateFormat("yyyyMMdd_HHmmss_SSS")
     private val enableUniversalTracking =
-        BooleanUtils.toBoolean(System.getProperty("nexial.universalTracking", "false"))
+            BooleanUtils.toBoolean(System.getProperty("nexial.universalTracking", "false"))
 
     fun getStorageLocation() = storageLocation
 
@@ -102,11 +102,11 @@ object EventTracker {
     }
 
     private fun asLabel(script: String) =
-        StringUtils.substringBeforeLast(StringUtils.substringAfterLast(StringUtils.replace(script, "\\", "/"), "/"),
-                                        ".")
+            StringUtils.substringBeforeLast(StringUtils.substringAfterLast(StringUtils.replace(script, "\\", "/"), "/"),
+                                            ".")
 
     private fun trackEvent(context: ExecutionContext, trackId: String) =
-        BooleanUtils.toBoolean(context.getStringData(trackId))
+            BooleanUtils.toBoolean(context.getStringData(trackId))
 
     private fun trackEvent(trackId: String) = BooleanUtils.toBoolean(System.getProperty(trackId))
 }

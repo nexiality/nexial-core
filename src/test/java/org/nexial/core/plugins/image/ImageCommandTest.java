@@ -38,6 +38,7 @@ import java.io.IOException;
 import static java.io.File.separator;
 import static org.apache.commons.lang3.SystemUtils.JAVA_IO_TMPDIR;
 import static org.nexial.core.NexialConst.*;
+import static org.nexial.core.NexialConst.Image.*;
 
 public class ImageCommandTest {
     private static final String CLASSNAME = ImageCommandTest.class.getSimpleName();

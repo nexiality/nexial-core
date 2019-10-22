@@ -24,6 +24,7 @@ import org.apache.commons.lang3.StringUtils
 import org.nexial.commons.utils.FileUtil
 import org.nexial.commons.utils.TextUtils
 import org.nexial.core.NexialConst.*
+import org.nexial.core.NexialConst.Rdbms.*
 import org.nexial.core.model.ExecutionContext
 import org.nexial.core.model.StepResult
 import org.nexial.core.plugins.base.BaseCommand

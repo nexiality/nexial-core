@@ -19,7 +19,7 @@ package org.nexial.core.model
 import org.apache.commons.collections4.CollectionUtils
 import org.apache.commons.lang3.StringUtils
 import org.nexial.core.ExecutionThread
-import org.nexial.core.NexialConst.Data.*
+import org.nexial.core.NexialConst.Notification.*
 import org.nexial.core.model.ExecutionEvent.*
 import org.nexial.core.service.EventTracker
 import org.nexial.core.utils.ConsoleUtils

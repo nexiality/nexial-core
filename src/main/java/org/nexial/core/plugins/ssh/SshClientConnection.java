@@ -27,10 +27,11 @@ import org.apache.commons.lang3.builder.ToStringBuilder;
 import org.apache.commons.lang3.math.NumberUtils;
 import org.nexial.commons.utils.FileUtil;
 import org.nexial.core.IntegrationConfigException;
+import org.nexial.core.NexialConst.Ssh;
 import org.nexial.core.model.ExecutionContext;
 import org.nexial.core.utils.ConsoleUtils;
 
-import static org.nexial.core.NexialConst.Data.*;
+import static org.nexial.core.NexialConst.Ssh.*;
 
 public class SshClientConnection {
     private String username;
