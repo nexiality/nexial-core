@@ -24,7 +24,6 @@ import org.nexial.core.utils.InputFileUtils
 import java.io.File
 import java.io.File.separator
 import java.util.stream.Stream
-import javax.validation.constraints.NotNull
 
 /**
  * utilities common to the commandline tools, esp. those dealing with project artifacts
@@ -66,21 +65,18 @@ object ProjectToolUtils {
     fun isPlan(file: File) = isTestScriptFile(file) && InputFileUtils.isValidPlanFile(file.absolutePath)
 
     @JvmStatic
-    @NotNull
     fun listMacroFiles(dir: File): Stream<File> = FileUtils.listFiles(dir, arrayOf(SCRIPT_FILE_SUFFIX), true)
         .stream().filter {
             isTestScriptFile(it) && InputFileUtils.isValidMacro(it.absolutePath)
         }
 
     @JvmStatic
-    @NotNull
     fun listTestScripts(dir: File): Stream<File> = FileUtils.listFiles(dir, arrayOf(SCRIPT_FILE_SUFFIX), true)
         .stream().filter {
             isTestScriptFile(it) && InputFileUtils.isValidScript(it.absolutePath)
         }
 
     @JvmStatic
-    @NotNull
     fun listDataFiles(dir: File): Collection<File> = FileUtils.listFiles(dir, arrayOf(DATA_FILE_SUFFIX), true)
 
     @JvmStatic
@@ -91,21 +87,25 @@ object ProjectToolUtils {
 
     @JvmStatic
     fun formatColumns(file: String, worksheet: String?, position: String, updatingVars: String) =
-        "${StringUtils.abbreviate(StringUtils.rightPad(file, column1Width - 1), column1Width+1, column1Width - 1)} " +
-        "${StringUtils.abbreviate(StringUtils.rightPad(worksheet ?: "", column2Width - 1), column2Width - 1)} " +
-        "[${StringUtils.rightPad(position, column3Width - 3)}] " +
-        updatingVars
+            "${StringUtils.abbreviate(StringUtils.rightPad(file, column1Width - 1),
+                                      column1Width + 1,
+                                      column1Width - 1)} " +
+            "${StringUtils.abbreviate(StringUtils.rightPad(worksheet ?: "", column2Width - 1), column2Width - 1)} " +
+            "[${StringUtils.rightPad(position, column3Width - 3)}] " +
+            updatingVars
 
     @JvmStatic
     fun formatColumns(file: String, processTime: String, newFile: String) =
-        "${StringUtils.rightPad(abbreviate(file, column1Width), column1Width)} " +
-        "${StringUtils.leftPad(processTime, column2Width - 7)} " +
-        abbreviate(newFile, column3LeftMargin)
+            "${StringUtils.rightPad(abbreviate(file, column1Width), column1Width)} " +
+            "${StringUtils.leftPad(processTime, column2Width - 7)} " +
+            abbreviate(newFile, column3LeftMargin)
 
     @JvmStatic
-    fun abbreviate(text: String, maxWidth: Int): String{
+    fun abbreviate(text: String, maxWidth: Int): String {
         val length = text.length
-        if(length <= maxWidth) { return text }
+        if (length <= maxWidth) {
+            return text
+        }
         val startIndex = length - maxWidth + 3
         return "...${StringUtils.substring(text, startIndex, length)}"
     }

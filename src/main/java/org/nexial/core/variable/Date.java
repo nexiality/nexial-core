@@ -23,7 +23,6 @@ import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.Calendar;
 import java.util.GregorianCalendar;
-import javax.annotation.Nullable;
 
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.math.NumberUtils;
@@ -187,7 +186,6 @@ public class Date {
         }
     }
 
-    @Nullable
     protected static java.util.Date fromBase10Time(String date) {
         if (StringUtils.isBlank(date)) { return null; }
         if (!NumberUtils.isParsable(date)) { return null; }

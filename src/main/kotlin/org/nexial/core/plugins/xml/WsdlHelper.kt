@@ -39,8 +39,6 @@ import java.io.File.separator
 import java.io.FileInputStream
 import java.io.IOException
 import java.util.*
-import javax.annotation.Nullable
-import javax.validation.constraints.NotNull
 import javax.xml.parsers.DocumentBuilderFactory
 import javax.xml.parsers.ParserConfigurationException
 
@@ -55,7 +53,6 @@ class WsdlHelper(val context: ExecutionContext) {
 
     private var workingDir: String = StringUtils.appendIfMissing(Syspath().out("fullpath"), separator)
 
-    @NotNull
     @Throws(IOException::class)
     fun download(wsdl: String): File {
 
@@ -133,7 +130,6 @@ class WsdlHelper(val context: ExecutionContext) {
         }
     }
 
-    @NotNull
     @Throws(JDOMException::class, IOException::class)
     fun deriveSoapBody(xml: String): org.jdom2.Element {
         val doc = XmlUtils.parse(OutputFileUtils.resolveContent(xml, context, false))
@@ -148,10 +144,8 @@ class WsdlHelper(val context: ExecutionContext) {
     }
 
     /** is this a fault xml?  */
-    @NotNull
     fun isSoapFault(body: org.jdom2.Element) = body.getChild("Fault", body.namespace) != null
 
-    @NotNull
     @Throws(IOException::class)
     fun extractSoapContent(body: org.jdom2.Element): String {
         val namespace = body.namespace
@@ -168,7 +162,6 @@ class WsdlHelper(val context: ExecutionContext) {
         } ?: throw IOException(PARSE_ERROR_PREFIX + "No valid content node under <" + prefix + ":Body>")
     }
 
-    @Nullable
     @Throws(JDOMException::class, IOException::class)
     fun deriveSoapFault(xml: String): org.jdom2.Element? {
         val body = deriveSoapBody(xml)
@@ -180,7 +173,6 @@ class WsdlHelper(val context: ExecutionContext) {
         }
     }
 
-    @NotNull
     fun newSchemaRoot(xsdDoc: Document, sourceSchema: Element): Element {
         val root: Element = if (sourceSchema.namespaceURI != null)
             xsdDoc.createElementNS(sourceSchema.namespaceURI, sourceSchema.nodeName)
@@ -204,14 +196,12 @@ class WsdlHelper(val context: ExecutionContext) {
         return root
     }
 
-    @NotNull
     fun deriveSchemaFileName(wsdl: File, schema: Element): String {
         val xsdFileName = StringUtils.defaultIfBlank(schema.getAttribute("targetNamespace"),
                                                      StringUtils.substringBeforeLast(wsdl.name, "."))
         return StringUtils.removeEnd(RegexUtils.removeMatches(xsdFileName, "https?\\:\\/\\/"), "/") + XSD_EXT
     }
 
-    @NotNull
     @Throws(IOException::class, JDOMException::class)
     private fun deserialize(document: Document): String {
         val domImplementationLS = document.implementation as DOMImplementationLS

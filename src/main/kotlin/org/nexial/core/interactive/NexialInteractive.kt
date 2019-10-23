@@ -32,7 +32,7 @@ import org.nexial.core.ExecutionInputPrep
 import org.nexial.core.ExecutionThread
 import org.nexial.core.NexialConst.*
 import org.nexial.core.NexialConst.Data.*
-import org.nexial.core.NexialConst.Iteration.*
+import org.nexial.core.NexialConst.Iteration.CURR_ITERATION
 import org.nexial.core.NexialConst.Project.appendLog
 import org.nexial.core.excel.Excel
 import org.nexial.core.interactive.InteractiveConsole.Commands.ALL_STEP
@@ -66,7 +66,6 @@ import org.nexial.core.utils.ConsoleUtils
 import org.nexial.core.utils.ExecUtils
 import java.io.File
 import java.util.*
-import javax.validation.constraints.NotNull
 
 class NexialInteractive {
     // todo: save session
@@ -236,7 +235,6 @@ class NexialInteractive {
         }
     }
 
-    @NotNull
     private fun toSteps(argument: String): MutableList<String> {
         if (argument == "*") return mutableListOf("*")
 
@@ -611,14 +609,12 @@ class NexialInteractive {
         InteractiveConsole.showRun(session)
     }
 
-    @NotNull
     private fun resetScenarioExecutionSummary(session: InteractiveSession, scenario: TestScenario): ExecutionSummary {
         val scenarioSummary = scenario.executionSummary
         resetExecutionSummary(session, scenarioSummary, scenario.name, SCENARIO)
         return scenarioSummary
     }
 
-    @NotNull
     private fun resetActivityExecutionSummary(session: InteractiveSession, activity: TestCase): ExecutionSummary {
         val activitySummary = activity.executionSummary
         resetExecutionSummary(session, activitySummary, activity.name, ACTIVITY)

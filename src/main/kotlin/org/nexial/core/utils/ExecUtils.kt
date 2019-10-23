@@ -32,7 +32,6 @@ import java.lang.reflect.InvocationTargetException
 import java.util.*
 import java.util.jar.Manifest
 import java.util.stream.Collectors
-import javax.validation.constraints.NotNull
 
 object ExecUtils {
     const val PRODUCT = "nexial"
@@ -172,7 +171,6 @@ object ExecUtils {
         return false
     }
 
-    @NotNull
     private fun deriveJarManifest(): String {
         val pkg = Nexial::class.java.getPackage()
 

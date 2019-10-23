@@ -29,7 +29,6 @@ import org.openqa.selenium.interactions.MoveTargetOutOfBoundsException
 import org.openqa.selenium.remote.ScreenshotException
 import java.util.*
 import java.util.stream.Collectors
-import javax.validation.constraints.NotNull
 
 /**
  * specialized "interpreter" class to decipher and simplify the more cryptic error messages of Selenium/WebDriver
@@ -38,13 +37,11 @@ import javax.validation.constraints.NotNull
 object WebDriverExceptionHelper {
     private const val noException = "No error or exception found"
 
-    @NotNull
     @JvmStatic
     fun analyzeError(context: ExecutionContext, step: TestStep, e: WebDriverException?): String? {
         return if (e == null) noException else resolveCommandDetail(context, step) + "\n" + resolveErrorMessage(e)
     }
 
-    @NotNull
     @JvmStatic
     fun resolveErrorMessage(e: WebDriverException): String {
         val error = e.message

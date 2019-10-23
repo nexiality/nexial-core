@@ -54,7 +54,6 @@ import org.springframework.util.CollectionUtils
 import java.io.File
 import java.io.File.separator
 import java.io.IOException
-import javax.validation.constraints.NotNull
 
 object MacroUpdater {
     private val updated = mutableListOf<UpdateLog>()
@@ -169,7 +168,7 @@ object MacroUpdater {
     }
 
     private fun replaceScript(options: MacroUpdaterOptions) =
-        listTestScripts(File(options.searchFrom)).forEach { handleScripts(it, options) }
+            listTestScripts(File(options.searchFrom)).forEach { handleScripts(it, options) }
 
     private fun handleScripts(file: File, options: MacroUpdaterOptions) {
         val excel = Excel(file)
@@ -305,7 +304,7 @@ object MacroUpdater {
         return hasUpdate
     }
 
-    private fun saveExcel(@NotNull file: File, @NotNull workBook: XSSFWorkbook) {
+    private fun saveExcel(file: File, workBook: XSSFWorkbook) {
         try {
             Excel.save(file, workBook)
         } catch (e: IOException) {

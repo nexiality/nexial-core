@@ -400,7 +400,6 @@ class TableHelper(private val webCommand: WebCommand) {
         }
     }
 
-    @NotNull
     private fun toCellContent(row: WebElement, cellLocator: String): List<String> {
         val cells: List<WebElement> = row.findElements(webCommand.locatorHelper.findBy(cellLocator, true))
 
@@ -569,7 +568,6 @@ class TableHelper(private val webCommand: WebCommand) {
         return ""
     }
 
-    @NotNull
     internal fun csvSafe(text: String): String {
         var safe = text
         csvSafeReplacement.forEach { (search, replace) -> safe = StringUtils.replace(safe, search, replace) }
@@ -583,7 +581,6 @@ class TableHelper(private val webCommand: WebCommand) {
         return safe
     }
 
-    @NotNull
     private fun newCsvWriter(file: String): CsvWriter {
         val format = CsvFormat()
         format.delimiter = webCommand.context.textDelim[0]

@@ -27,7 +27,6 @@ import org.nexial.core.NexialConst.DEF_FILE_ENCODING
 import org.nexial.core.utils.ConsoleUtils
 import java.util.regex.Pattern
 import java.util.regex.Pattern.DOTALL
-import javax.validation.constraints.NotNull
 
 private const val MSG_UNVERIFIED_DOMAIN = "\tCheck the target email address(es) and ensure the specified mail\n" +
                                           "\tdomain has been verified in the corresponding AWS account. For\n" +
@@ -98,7 +97,6 @@ class SesSupport : AwsSupport() {
         })
     }
 
-    @NotNull
     private fun toMessage(config: SesConfig, subject: Content): Message {
         val body = Body()
 
@@ -124,7 +122,6 @@ class SesSupport : AwsSupport() {
         return Message().withSubject(subject).withBody(body)
     }
 
-    @NotNull
     private fun toDestination(config: SesConfig): Destination {
         val destination = Destination().withToAddresses(config.to)
         if (CollectionUtils.isNotEmpty(config.cc)) destination.withCcAddresses(config.cc)
@@ -132,7 +129,6 @@ class SesSupport : AwsSupport() {
         return destination
     }
 
-    @NotNull
     private fun toSubject(config: SesConfig) = Content().withCharset(DEF_FILE_ENCODING).withData(config.subject)
 
     companion object {

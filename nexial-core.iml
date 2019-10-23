@@ -44,9 +44,5 @@
     </content>
     <orderEntry type="inheritedJdk" />
     <orderEntry type="sourceFolder" forTests="false" />
-    <orderEntry type="library" name="moment" level="application" />
-    <orderEntry type="library" name="numeral" level="application" />
-    <orderEntry type="library" name="vue" level="application" />
-    <orderEntry type="library" name="w2ui-1.5.rc1" level="application" />
   </component>
 </module>
