@@ -1453,7 +1453,7 @@ public final class NexialConst {
     public static class CloudWebTesting {
         public static final String BASE_PROTOCOL = "http://";
 
-        public static final String KEY_SESSION_ID = "sessionId";
+        public static final String SESSION_ID = "sessionId";
 
         public static final String SCOPE_ITERATION = "iteration";
         public static final String SCOPE_SCRIPT = "script";
@@ -1478,7 +1478,7 @@ public final class NexialConst {
         private static final String NS = NAMESPACE + "browserstack.";
 
         public static final String KEY_USERNAME = registerSysVar(NS + "username");
-        public static final String KEY_AUTOMATEKEY = registerSysVar(NS + "automatekey");
+        public static final String AUTOMATEKEY = registerSysVar(NS + "automatekey");
 
         public static final String KEY_BROWSER = registerSysVar(NS + "browser");
         public static final String KEY_BROWSER_VER = registerSysVar(NS + "browser.version");
@@ -1488,6 +1488,7 @@ public final class NexialConst {
         public static final String KEY_ENABLE_LOCAL = registerSysVar(NS + "enablelocal", false);
         public static final String KEY_OS = registerSysVar(NS + "os");
         public static final String KEY_OS_VER = registerSysVar(NS + "os.version");
+        public static final String KEY_TERMINATE_LOCAL = registerSysVar(NS + "terminatelocal", true);
 
         public static final String KEY_CAPTURE_CRASH = registerSysVar(NS + "captureCrash");
 
@@ -1515,6 +1516,7 @@ public final class NexialConst {
         public static final String KEY_AUTHKEY = "authkey";
 
         public static final String KEY_ENABLE_LOCAL = "enablelocal";
+        public static final String KEY_TERMINATE_LOCAL = "terminatelocal";
         public static final String KEY_LOCAL_START_WAITMS = "localStartWaitMs";
         public static final long DEF_LOCAL_START_WAITMS = 5000;
         public static final long MAX_LOCAL_START_WAITMS = 20000;

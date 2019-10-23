@@ -178,7 +178,8 @@ public class CommandRepeater {
                         errorCount++;
                         context.getExecutionEventListener().onError();
 
-                        if (context.isPauseOnError()) {
+                        if (context.isPauseOnError() && i != 0) {
+                            // pause-on-error would work on 2nd step in the loop onwards
                             ConsoleUtils.doPause(context,
                                                  "[ERROR] " + errorCount + " in repeat-until, " +
                                                  Math.max(context.getIntData(FAIL_COUNT), 0) +

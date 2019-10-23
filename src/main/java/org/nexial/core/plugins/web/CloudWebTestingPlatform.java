@@ -33,7 +33,7 @@ import org.openqa.selenium.WebDriver;
 import org.openqa.selenium.remote.RemoteWebDriver;
 
 import static org.nexial.core.NexialConst.CloudWebTesting.*;
-import static org.nexial.core.NexialConst.CrossBrowserTesting.KEY_SESSION_ID;
+import static org.nexial.core.NexialConst.CrossBrowserTesting.SESSION_ID;
 import static org.nexial.core.NexialConst.RATE_FORMAT;
 import static org.nexial.core.model.ExecutionEvent.*;
 
@@ -55,11 +55,14 @@ public abstract class CloudWebTestingPlatform {
     protected boolean isRunningAndroid;
 
     protected boolean isRunningLocal;
+    protected boolean isTerminateLocal;
     protected String localExeName;
 
     protected CloudWebTestingPlatform(ExecutionContext context) { this.context = context; }
 
     public boolean isRunningLocal() { return isRunningLocal; }
+
+    public boolean isTerminateLocal() { return isTerminateLocal; }
 
     public String getLocalExeName() { return localExeName;}
 
@@ -132,7 +135,7 @@ public abstract class CloudWebTestingPlatform {
     }
 
     protected void saveSessionId(RemoteWebDriver driver) {
-        context.addScriptReferenceData(KEY_SESSION_ID, driver.getSessionId().toString());
+        context.addScriptReferenceData(SESSION_ID, driver.getSessionId().toString());
     }
 
     @Nullable
@@ -140,7 +143,7 @@ public abstract class CloudWebTestingPlatform {
 
     @Nullable
     protected static String getSessionId(ExecutionContext context) {
-        String sessionId = context.gatherScriptReferenceData().get(KEY_SESSION_ID);
+        String sessionId = context.gatherScriptReferenceData().get(SESSION_ID);
         if (StringUtils.isBlank(sessionId)) {
             ConsoleUtils.error("Unable to report execution status since session id is blank or cannot be retrieved.");
             return null;

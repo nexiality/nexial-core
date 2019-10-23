@@ -137,17 +137,24 @@ public class CrossBrowserTestingHelper extends CloudWebTestingPlatform {
     }
 
     protected void handleLocal(String username, String authkey, Map<String, String> config) {
-        boolean enableLocal = config.containsKey(KEY_ENABLE_LOCAL) ?
-                              BooleanUtils.toBoolean(config.remove(KEY_ENABLE_LOCAL)) : false;
+        boolean enableLocal = config.containsKey(KEY_ENABLE_LOCAL) &&
+                              BooleanUtils.toBoolean(config.remove(KEY_ENABLE_LOCAL));
         if (!enableLocal) { return; }
 
+        if (!config.containsKey(KEY_TERMINATE_LOCAL)) {
+            // default is true for backward compatibility
+            isTerminateLocal = true;
+        } else {
+            isTerminateLocal = BooleanUtils.toBoolean(config.remove(KEY_TERMINATE_LOCAL));
+        }
+
         try {
-            WebDriverHelper helper = WebDriverHelper.Companion.newInstance(crossbrowsertesting, context);
+            WebDriverHelper helper = WebDriverHelper.newInstance(crossbrowsertesting, context);
             File driver = helper.resolveDriver();
 
             String cbtLocal = helper.config.getBaseName();
 
-            RuntimeUtils.terminateInstance(cbtLocal);
+            if (isTerminateLocal) { RuntimeUtils.terminateInstance(cbtLocal); }
 
             List<String> cmdlineArgs = new ArrayList<>();
             cmdlineArgs.add("--username");
@@ -263,5 +270,7 @@ public class CrossBrowserTestingHelper extends CloudWebTestingPlatform {
     }
 
     @Override
-    protected void terminateLocal() { if (isRunningLocal) { RuntimeUtils.terminateInstance(localExeName); } }
+    protected void terminateLocal() {
+        if (isRunningLocal && isTerminateLocal) { RuntimeUtils.terminateInstance(localExeName); }
+    }
 }

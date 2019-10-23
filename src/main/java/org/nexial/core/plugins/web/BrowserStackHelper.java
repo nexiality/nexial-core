@@ -59,9 +59,9 @@ public class BrowserStackHelper extends CloudWebTestingPlatform {
     @NotNull
     public WebDriver initWebDriver() {
         String username = context.getStringData(KEY_USERNAME);
-        String automateKey = context.getStringData(KEY_AUTOMATEKEY);
+        String automateKey = context.getStringData(AUTOMATEKEY);
         if (StringUtils.isBlank(username) || StringUtils.isBlank(automateKey)) {
-            throw new RuntimeException("Both " + KEY_USERNAME + " and " + KEY_AUTOMATEKEY +
+            throw new RuntimeException("Both " + KEY_USERNAME + " and " + AUTOMATEKEY +
                                        " are required to use BrowserStack");
         }
 
@@ -119,7 +119,7 @@ public class BrowserStackHelper extends CloudWebTestingPlatform {
         if (sessionId == null) { return; }
 
         String url = StringUtils.replace(SESSION_URL, "${username}", context.getStringData(KEY_USERNAME));
-        url = StringUtils.replace(url, "${automatekey}", context.getStringData(KEY_AUTOMATEKEY));
+        url = StringUtils.replace(url, "${automatekey}", context.getStringData(AUTOMATEKEY));
         url = StringUtils.replace(url, "${sessionId}", sessionId);
 
         String payload = "{\"status\":\"" + (summary.getFailCount() > 0 ? "failed" : "passed") +
@@ -135,18 +135,20 @@ public class BrowserStackHelper extends CloudWebTestingPlatform {
                               context.getBooleanData(KEY_ENABLE_LOCAL, getDefaultBool(KEY_ENABLE_LOCAL));
         if (!enableLocal) { return; }
 
-        String automateKey = context.getStringData(KEY_AUTOMATEKEY);
-        requiresNotBlank(automateKey, "BrowserStack Access Key not defined via '" + KEY_AUTOMATEKEY + "'", automateKey);
+        isTerminateLocal = context.getBooleanData(KEY_TERMINATE_LOCAL, getDefaultBool(KEY_TERMINATE_LOCAL));
+
+        String automateKey = context.getStringData(AUTOMATEKEY);
+        requiresNotBlank(automateKey, "BrowserStack Access Key not defined via '" + AUTOMATEKEY + "'", automateKey);
 
         capabilities.setCapability("browserstack.local", true);
 
         try {
-            WebDriverHelper helper = WebDriverHelper.Companion.newInstance(browserstack, context);
+            WebDriverHelper helper = WebDriverHelper.newInstance(browserstack, context);
             File driver = helper.resolveDriver();
 
             String browserstacklocal = helper.config.getBaseName();
 
-            RuntimeUtils.terminateInstance(browserstacklocal);
+            if (isTerminateLocal) { RuntimeUtils.terminateInstance(browserstacklocal); }
 
             // start browserstack local, but wait (3s) for it to start up completely.
             ConsoleUtils.log("starting new instance of " + browserstacklocal + "...");
@@ -291,5 +293,7 @@ public class BrowserStackHelper extends CloudWebTestingPlatform {
     }
 
     @Override
-    protected void terminateLocal() { if (isRunningLocal) { RuntimeUtils.terminateInstance(localExeName); } }
+    protected void terminateLocal() {
+        if (isRunningLocal && isTerminateLocal) { RuntimeUtils.terminateInstance(localExeName); }
+    }
 }

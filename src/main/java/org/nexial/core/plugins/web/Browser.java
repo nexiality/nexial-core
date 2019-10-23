@@ -702,7 +702,7 @@ public class Browser implements ForcefulTerminate {
 
     protected WebDriver initFirefox(boolean headless) throws IOException {
         BrowserType browserType = headless ? firefoxheadless : firefox;
-        WebDriverHelper helper = WebDriverHelper.Companion.newInstance(browserType, context);
+        WebDriverHelper helper = WebDriverHelper.newInstance(browserType, context);
         File driver = helper.resolveDriver();
 
         String driverPath = driver.getAbsolutePath();
@@ -804,7 +804,7 @@ public class Browser implements ForcefulTerminate {
     }
 
     protected WebDriver initEdge() throws IOException {
-        WebDriverHelper helper = WebDriverHelper.Companion.newInstance(edge, context);
+        WebDriverHelper helper = WebDriverHelper.newInstance(edge, context);
         File driver = helper.resolveDriver();
 
         String driverPath = driver.getAbsolutePath();
@@ -1182,7 +1182,7 @@ public class Browser implements ForcefulTerminate {
     }
 
     private void resolveChromeDriverLocation() throws IOException {
-        WebDriverHelper helper = WebDriverHelper.Companion.newInstance(browserType, context);
+        WebDriverHelper helper = WebDriverHelper.newInstance(browserType, context);
         File driver = helper.resolveDriver();
 
         String driverPath = driver.getAbsolutePath();
@@ -1215,7 +1215,7 @@ public class Browser implements ForcefulTerminate {
     }
 
     private void resolveIEDriverLocation() throws IOException {
-        WebDriverHelper helper = WebDriverHelper.Companion.newInstance(ie, context);
+        WebDriverHelper helper = WebDriverHelper.newInstance(ie, context);
         File driver = helper.resolveDriver();
 
         String ieDriverPath = driver.getAbsolutePath();

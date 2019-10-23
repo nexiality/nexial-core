@@ -94,8 +94,9 @@ import static java.io.File.separator;
 import static java.lang.Thread.sleep;
 import static org.apache.commons.lang3.SystemUtils.IS_OS_MAC;
 import static org.nexial.core.NexialConst.BrowserType.safari;
+import static org.nexial.core.NexialConst.Data.OPT_UI_RENDER_WAIT_MS;
+import static org.nexial.core.NexialConst.Data.OPT_WAIT_SPEED;
 import static org.nexial.core.NexialConst.*;
-import static org.nexial.core.NexialConst.Data.*;
 import static org.nexial.core.NexialConst.Web.*;
 import static org.nexial.core.SystemVariables.*;
 import static org.nexial.core.plugins.ws.WebServiceClient.hideAuthDetails;
@@ -152,9 +153,6 @@ public class WebCommand extends BaseCommand implements CanTakeScreenshot, CanLog
         logToBrowser = !browser.isRunChrome() &&
                        context.getBooleanData(OPT_BROWSER_CONSOLE_LOG, getDefaultBool(OPT_BROWSER_CONSOLE_LOG));
         tableHelper = new TableHelper(this);
-
-        clientPerfCollector = new ClientPerformanceCollector(
-            this, (new Syspath().out("fullpath")) + separator + WEB_METRICS_JSON);
     }
 
     @Override
@@ -1888,6 +1886,12 @@ public class WebCommand extends BaseCommand implements CanTakeScreenshot, CanLog
 
     public void collectClientPerfMetrics() {
         try {
+            if (clientPerfCollector == null) {
+                synchronized (this) {
+                    clientPerfCollector = new ClientPerformanceCollector(
+                        this, new Syspath().out("fullpath") + separator + WEB_METRICS_JSON);
+                }
+            }
             clientPerfCollector.collect();
         } catch (IOException e) {
             log("Error when collecting browser performance metrics: " + e.getMessage());

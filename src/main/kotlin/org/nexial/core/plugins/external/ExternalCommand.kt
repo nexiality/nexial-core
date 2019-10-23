@@ -150,6 +150,14 @@ class ExternalCommand : BaseCommand() {
         }
     }
 
+    fun terminate(programName: String): StepResult {
+        requires(StringUtils.isNotBlank(programName), "empty/null programName")
+        return if (RuntimeUtils.terminateInstance(programName))
+            StepResult.success("Program $programName successfully terminated")
+        else
+            StepResult.fail("Program $programName NOT terminated successfully, check log for detail")
+    }
+
     /**
      * tail a reachable (local or network via shared folder or SMB) file. File does not have to exists when this command
      * is executed. However, background thread will be issued to watch/display the content of such file.

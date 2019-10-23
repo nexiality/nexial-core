@@ -36,8 +36,8 @@ import org.nexial.commons.utils.RegexUtils
 import org.nexial.commons.utils.TextUtils
 import org.nexial.core.NexialConst.*
 import org.nexial.core.NexialConst.BrowserType.*
-import org.nexial.core.NexialConst.Web.OPT_FORCE_IE_32
 import org.nexial.core.NexialConst.Data.WIN32_CMD
+import org.nexial.core.NexialConst.Web.OPT_FORCE_IE_32
 import org.nexial.core.SystemVariables.getDefaultBool
 import org.nexial.core.model.ExecutionContext
 import org.nexial.core.plugins.ws.WebServiceClient
@@ -263,6 +263,7 @@ abstract class WebDriverHelper protected constructor(protected var context: Exec
         const val DRIVER_MIN_SIZE: Long = 1024 * 50
         protected const val MANIFEST = ".manifest"
 
+        @JvmStatic
         @Throws(IOException::class)
         fun newInstance(browserType: BrowserType, context: ExecutionContext): WebDriverHelper {
             // sanity check
@@ -299,6 +300,7 @@ abstract class WebDriverHelper protected constructor(protected var context: Exec
             return helper
         }
 
+        @JvmStatic
         @Throws(IOException::class)
         protected fun ungzipThenUntar(gzipFile: String, uncompressedFile: String) {
             if (StringUtils.isBlank(gzipFile)) return
@@ -324,6 +326,7 @@ abstract class WebDriverHelper protected constructor(protected var context: Exec
             FileUtils.deleteQuietly(tarFileObject)
         }
 
+        @JvmStatic
         @Throws(IOException::class)
         protected fun ungzip(gzipFile: String, uncompressedFile: String) {
             if (StringUtils.isBlank(gzipFile)) return
@@ -346,6 +349,7 @@ abstract class WebDriverHelper protected constructor(protected var context: Exec
             FileUtils.deleteQuietly(File(gzipFile))
         }
 
+        @JvmStatic
         @Throws(IOException::class)
         protected fun unzip(zipFile: String, uncompressedFile: String) {
             if (StringUtils.isBlank(zipFile)) return
@@ -358,6 +362,7 @@ abstract class WebDriverHelper protected constructor(protected var context: Exec
         }
 
         // todo: not perfect - does not account for versioning spaning over 3 dots, like v.0.2.7.1
+        @JvmStatic
         fun expandVersion(version: String?): Double {
             if (StringUtils.isBlank(version)) return 0.0
 
