@@ -22,8 +22,8 @@ import org.apache.commons.lang3.BooleanUtils
 import org.apache.commons.lang3.StringUtils
 import org.nexial.commons.utils.FileUtil
 import org.nexial.commons.utils.ResourceUtils
-import org.nexial.core.NexialConst.Web.NS_WEB_METRICS
 import org.nexial.core.NexialConst.GSON
+import org.nexial.core.NexialConst.Web.NS_WEB_METRICS
 import org.nexial.core.model.ExecutionContext
 import org.nexial.core.model.TestStep
 import org.nexial.core.utils.ConsoleUtils
@@ -51,10 +51,10 @@ class ClientPerformanceCollector(val command: WebCommand, private val output: St
         if (metrics.isEmpty()) return
 
         val js = initScript +
-                 metrics
-                     .filter { config -> config.key != "enabled" && BooleanUtils.toBoolean(config.value) }
+                 metrics.filter { config -> config.key != "enabled" && BooleanUtils.toBoolean(config.value) }
                      .map { config -> fetchScript(config.key) }
-                     .reduce { acc, s -> acc + "\n" + s } + "\n" +
+                     .reduce { acc, s -> acc + "\n" + s } +
+                 "\n" +
                  endScript
 
         val result = command.jsExecutor.executeScript(js)

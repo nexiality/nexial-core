@@ -57,6 +57,7 @@ import static javax.naming.Context.*;
 import static org.apache.commons.lang3.SystemUtils.IS_OS_WINDOWS;
 import static org.apache.commons.lang3.SystemUtils.USER_HOME;
 import static org.nexial.core.NexialConst.AwsSettings.*;
+import static org.nexial.core.NexialConst.CommonColor.COLOR_NAMES;
 import static org.nexial.core.NexialConst.Data.SCOPE;
 import static org.nexial.core.NexialConst.Exec.*;
 import static org.nexial.core.NexialConst.Image.OPT_IMAGE_DIFF_COLOR;
@@ -225,7 +226,7 @@ public final class NexialConst {
     public static final String TOKEN_TEMP_DELIM = "~!@1I4n3x@!~";
     public static final String REGEX_VALID_WEB_PROTOCOL = "(http|https|ftp|file|about)\\:.+";
     // public static final int MAX_VERBOSE_CHAR = 2000;
-    public static final int MAX_VERBOSE_CHAR = 32764;
+    public static final int MAX_VERBOSE_CHAR = 32760;
     public static final int MAX_FORMULA_CHAR = 8192;
     public static final String PREFIX_REGEX = FilePathFilter.REGEX_PREFIX;
 
@@ -308,18 +309,6 @@ public final class NexialConst {
                         "\\u201C=\"",
                         "\\u201D=\"");
 
-    public enum ImageType {
-        png(TYPE_INT_RGB),
-        jpg(TYPE_INT_RGB),
-        gif(TYPE_INT_ARGB),
-        bmp(TYPE_INT_ARGB);
-
-        private int imageType;
-
-        ImageType(int imageType) { this.imageType = imageType; }
-
-        public int getImageType() { return imageType; }
-    }
     // @formatter:on
 
     // browser types
@@ -631,28 +620,36 @@ public final class NexialConst {
         static void init() {}
     }
 
-    public static final class ImageDiffColor {
-        private static final Map<String, Color> COLOR_NAMES = new HashMap<>();
+    public static final class CommonColor {
+        static final Map<String, Color> COLOR_NAMES = new HashMap<>();
 
-        private ImageDiffColor() {}
+        private CommonColor() {}
 
         public static Map<String, Color> getColorNames() { return COLOR_NAMES; }
+
+        public static Color toColor(String colorName) { return MapUtils.getObject(COLOR_NAMES, colorName); }
+
+        static {
+            COLOR_NAMES.put("red", RED);
+            COLOR_NAMES.put("orange", ORANGE);
+            COLOR_NAMES.put("yellow", YELLOW);
+            COLOR_NAMES.put("green", GREEN);
+            COLOR_NAMES.put("blue", BLUE);
+            COLOR_NAMES.put("cyan", CYAN);
+            COLOR_NAMES.put("black", BLACK);
+            COLOR_NAMES.put("gray", GRAY);
+            COLOR_NAMES.put("white", WHITE);
+            COLOR_NAMES.put("pink", PINK);
+            COLOR_NAMES.put("magenta", MAGENTA);
+        }
+    }
+
+    public static final class ImageDiffColor {
+        private ImageDiffColor() {}
 
         /** default to red */
         public static Color toColor(String colorName) {
             return MapUtils.getObject(COLOR_NAMES, colorName, COLOR_NAMES.get(getDefault(OPT_IMAGE_DIFF_COLOR)));
-        }
-
-        // reference by enclosing class to force initialization (possibly prior to any reference at runtime)
-        static void init() {}
-
-        static {
-            COLOR_NAMES.put("red", RED);
-            COLOR_NAMES.put("yellow", YELLOW);
-            COLOR_NAMES.put("blue", BLACK);
-            COLOR_NAMES.put("green", GREEN);
-            COLOR_NAMES.put("black", BLACK);
-            COLOR_NAMES.put("white", WHITE);
         }
     }
 
@@ -666,10 +663,53 @@ public final class NexialConst {
         public static final String OPT_IMAGE_DIFF_COLOR = registerSysVar(NAMESPACE + "imageDiffColor", "red");
         public static final int MIN_TRIM_SPACES = 3;
 
+        public enum ImageType {
+            png(TYPE_INT_RGB),
+            jpg(TYPE_INT_RGB),
+            gif(TYPE_INT_ARGB),
+            bmp(TYPE_INT_ARGB);
+
+            private int imageType;
+
+            ImageType(int imageType) { this.imageType = imageType; }
+
+            public int getImageType() { return imageType; }
+        }
+
         private Image() {}
 
         // reference by enclosing class to force initialization (possibly prior to any reference at runtime)
         static void init() {}
+    }
+
+    public static final class ImageCaption {
+        public static final String SCREENSHOT_CAPTION = registerSysVar(NAMESPACE + "screenshot.caption");
+        public static final String SCREENSHOT_CAPTION_COLOR = registerSysVar(SCREENSHOT_CAPTION + ".color");
+
+        public static final String DEF_FONT_FACE = "Arial";
+        public static final int DEF_FONT_SIZE = 14;
+        public static final float DEF_ALPHA = 0.35f;
+        public static final int MIN_WIDTH = 320;
+        public static final int MIN_HEIGHT = 200;
+        public static final int trimIndex = 30;
+        public static final int paddingTopHeight = 20;
+        public static final int paddingBottomHeight = 80;
+        public static final int paddingLeftWidth = 10;
+
+        // Image caption
+        public enum CaptionPositions {
+            TOP_LEFT,
+            TOP_CENTER,
+            TOP_RIGHT,
+            MIDDLE_LEFT,
+            MIDDLE_CENTER,
+            MIDDLE_RIGHT,
+            BOTTOM_CENTER,
+            BOTTOM_LEFT,
+            BOTTOM_RIGHT
+        }
+
+        private ImageCaption() {}
     }
 
     public static final class AwsSettings {
@@ -1701,7 +1741,6 @@ public final class NexialConst {
         Iteration.init();
         FlowControls.init();
         Integration.init();
-        ImageDiffColor.init();
         Image.init();
         AwsSettings.init();
         Project.init();

@@ -56,6 +56,8 @@ import org.nexial.core.model.StepResult;
 import org.nexial.core.model.TestStep;
 import org.nexial.core.plugins.CanLogExternally;
 import org.nexial.core.plugins.NexialCommand;
+import org.nexial.core.plugins.image.ImageCaptionHelper;
+import org.nexial.core.plugins.image.ImageCaptionHelper.CaptionModel;
 import org.nexial.core.plugins.ws.WsCommand;
 import org.nexial.core.tools.CommandDiscovery;
 import org.nexial.core.utils.CheckUtils;
@@ -73,7 +75,9 @@ import static org.apache.commons.lang3.SystemUtils.JAVA_IO_TMPDIR;
 import static org.nexial.core.CommandConst.*;
 import static org.nexial.core.NexialConst.*;
 import static org.nexial.core.NexialConst.Data.NULL;
-import static org.nexial.core.NexialConst.toCloudIntegrationNotReadyMessage;
+import static org.nexial.core.NexialConst.ImageCaption.CaptionPositions.BOTTOM_RIGHT;
+import static org.nexial.core.NexialConst.ImageCaption.SCREENSHOT_CAPTION;
+import static org.nexial.core.NexialConst.ImageCaption.SCREENSHOT_CAPTION_COLOR;
 import static org.nexial.core.excel.ExcelConfig.MSG_PASS;
 import static org.nexial.core.plugins.base.IncrementStrategy.ALPHANUM;
 import static org.nexial.core.utils.CheckUtils.*;
@@ -902,6 +906,17 @@ public class BaseCommand implements NexialCommand {
             return null;
         }
 
+        String caption = context.getStringData(SCREENSHOT_CAPTION);
+        if (StringUtils.isBlank(caption)) {
+            log("No caption configured");
+        } else {
+            CaptionModel model = new CaptionModel();
+            model.addCaption(TextUtils.toList(caption, "\n", true));
+            model.setCaptionColor(context.getStringData(SCREENSHOT_CAPTION_COLOR));
+            model.setPosition(BOTTOM_RIGHT);
+            ImageCaptionHelper.addCaptionToImage(file, model);
+        }
+
         if (context.isOutputToCloud()) {
             try {
                 String cloudUrl = context.getOtc().importMedia(file, true);
@@ -1299,7 +1314,7 @@ public class BaseCommand implements NexialCommand {
         if (expected == null && actual == null) { return true; }
 
         ExecutionContext context = ExecutionThread.get();
-        if (context.isTextMatchUseTrim() || context.isTextMatchAsNumber()) {
+        if (context.isTextMatchUseTrim()) {
             expected = StringUtils.trim(expected);
             actual = StringUtils.trim(actual);
         }
@@ -1311,7 +1326,7 @@ public class BaseCommand implements NexialCommand {
                 expectedBD = NumberUtils.createBigDecimal(StringUtils.trim(expected));
                 isExpectedANumber = true;
             } catch (NumberFormatException e) {
-                ConsoleUtils.log("The 'expected' is expected a number BUT its not: " + expected);
+                // ConsoleUtils.log("The 'expected' is expected a number BUT its not: " + expected);
             }
 
             boolean isActualANumber = false;
@@ -1320,7 +1335,7 @@ public class BaseCommand implements NexialCommand {
                 actualBD = NumberUtils.createBigDecimal(StringUtils.trim(actual));
                 isActualANumber = true;
             } catch (NumberFormatException e) {
-                ConsoleUtils.log("The 'actual' is expected a number BUT its not: " + actual);
+                // ConsoleUtils.log("The 'actual' is expected a number BUT its not: " + actual);
             }
 
             if (isActualANumber && isExpectedANumber) {
@@ -1332,10 +1347,8 @@ public class BaseCommand implements NexialCommand {
                     // both null.. so they matched!
                     return true;
                 }
-            } else {
-                // so one of them is not a number... not matched
-                return false;
             }
+            // ELSE: so one of them is not a number... moving on
         }
 
         if (context.isTextMatchCaseInsensitive()) {

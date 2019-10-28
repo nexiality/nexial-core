@@ -59,7 +59,7 @@ import static org.nexial.core.CommandConst.CMD_REPEAT_UNTIL;
 import static org.nexial.core.CommandConst.CMD_VERBOSE;
 import static org.nexial.core.NexialConst.*;
 import static org.nexial.core.NexialConst.Data.*;
-import static org.nexial.core.NexialConst.Web.*;
+import static org.nexial.core.NexialConst.Web.WEB_PERF_METRICS_ENABLED;
 import static org.nexial.core.SystemVariables.getDefaultBool;
 import static org.nexial.core.excel.ExcelConfig.*;
 
@@ -593,10 +593,11 @@ public class TestStep extends TestStepManifest {
                 if (context.containsCrypt(origParamValue)) {
                     paramCell.setCellComment(toSystemComment(paramCell, "detected crypto"));
                 } else {
+                    message = platformSpecificEOL(message);
                     if (StringUtils.length(message) > MAX_VERBOSE_CHAR) {
                         message = StringUtils.truncate(message, MAX_VERBOSE_CHAR) + "…";
                     }
-                    paramCell.setCellValue(platformSpecificEOL(message));
+                    paramCell.setCellValue(message);
                     paramCell.setCellComment(toSystemComment(paramCell, origParamValue));
                 }
 
