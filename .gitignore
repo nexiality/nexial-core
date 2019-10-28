@@ -172,6 +172,8 @@ dataSources/
 
 # Gradle:
 .idea/gradle.xml
+gradlew
+gradlew.bat
 
 # Mongo Explorer plugin:
 #.idea/mongoSettings.xml

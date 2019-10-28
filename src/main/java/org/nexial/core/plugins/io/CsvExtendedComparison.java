@@ -234,7 +234,7 @@ class CsvExtendedComparison implements Serializable {
                         }
 
                         // if both value are not parsed as number
-                        if (expected == MIN_VALUE || actual == MIN_VALUE) {
+                        if (expected == MIN_VALUE && actual == MIN_VALUE) {
                             compareAsText = true;
                         } else {
                             compareAsText = false;

@@ -1299,23 +1299,42 @@ public class BaseCommand implements NexialCommand {
         if (expected == null && actual == null) { return true; }
 
         ExecutionContext context = ExecutionThread.get();
-        if (context.isTextMatchUseTrim()) {
+        if (context.isTextMatchUseTrim() || context.isTextMatchAsNumber()) {
             expected = StringUtils.trim(expected);
             actual = StringUtils.trim(actual);
         }
 
         if (context.isTextMatchAsNumber()) {
+            boolean isExpectedANumber = false;
+            BigDecimal expectedBD = null;
             try {
-                BigDecimal expectedBD = NumberUtils.createBigDecimal(StringUtils.trim(expected));
-                BigDecimal actualBD = NumberUtils.createBigDecimal(StringUtils.trim(actual));
-                if (expectedBD != null && actualBD != null) {
-                    double expectedNum = expectedBD.doubleValue();
-                    double actualNum = actualBD.doubleValue();
-                    // both are number, then we should assert by double
-                    return expectedNum == actualNum;
-                }
+                expectedBD = NumberUtils.createBigDecimal(StringUtils.trim(expected));
+                isExpectedANumber = true;
             } catch (NumberFormatException e) {
-                // so one of them is not a number... move on
+                ConsoleUtils.log("The 'expected' is expected a number BUT its not: " + expected);
+            }
+
+            boolean isActualANumber = false;
+            BigDecimal actualBD = null;
+            try {
+                actualBD = NumberUtils.createBigDecimal(StringUtils.trim(actual));
+                isActualANumber = true;
+            } catch (NumberFormatException e) {
+                ConsoleUtils.log("The 'actual' is expected a number BUT its not: " + actual);
+            }
+
+            if (isActualANumber && isExpectedANumber) {
+                // number conversion works for both 'expected' and 'actual'
+                if (expectedBD != null && actualBD != null) {
+                    // both are number, then we should assert by double
+                    return expectedBD.doubleValue() == actualBD.doubleValue();
+                } else {
+                    // both null.. so they matched!
+                    return true;
+                }
+            } else {
+                // so one of them is not a number... not matched
+                return false;
             }
         }
 
