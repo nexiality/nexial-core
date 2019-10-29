@@ -1693,8 +1693,10 @@ public class WebCommand extends BaseCommand implements CanTakeScreenshot, CanLog
 
             if (context.isOutputToCloud()) {
                 String cloudUrl = context.getOtc().importMedia(target, true);
+                context.setData(OPT_LAST_OUTPUT_LINK, cloudUrl);
                 return StepResult.success("Image captured for '" + locator + "' to URL " + cloudUrl);
             } else {
+                context.setData(OPT_LAST_OUTPUT_LINK, target.getAbsolutePath());
                 return StepResult.success("Image captured for '" + locator + "' to file '" + file + "'");
             }
         } catch (IOException e) {
