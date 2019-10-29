@@ -1086,7 +1086,6 @@ public final class NexialConst {
         public static final String MAPPING_EXCEL = ".mappingExcel";
         public static final String CONFIG_JSON = ".configJson";
         public static final String REPORT_TYPE = ".reportType";
-        // public static final double DEF_COMPARE_TOLERANCE = 0.6;
 
         public static final String EOL_CONFIG_AS_IS = "as is";
         public static final String EOL_CONFIG_PLATFORM = "platform";

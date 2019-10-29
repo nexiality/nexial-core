@@ -33,7 +33,7 @@ import org.nexial.core.plugins.image.ImageCaptionHelper.CaptionModel;
 import static java.io.File.separator;
 import static org.nexial.core.NexialConst.ImageCaption.CaptionPositions.*;
 
-public class ImageCaptionHelperTest {
+public class ImageCaptionHelperManualTest {
     private String fixture1 = null;
     private String expected1 = null;
     private String expected2 = null;
