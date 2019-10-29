@@ -190,8 +190,7 @@ public class ImageCommand extends BaseCommand implements ForcefulTerminate {
             BufferedImage image1 = ImageIO.read(baselineFile);
             BufferedImage image2 = ImageIO.read(testFile);
 
-            boolean trim = context.getBooleanData(OPT_TRIM_BEFORE_DIFF,
-                                                  getDefaultBool(OPT_TRIM_BEFORE_DIFF));
+            boolean trim = context.getBooleanData(OPT_TRIM_BEFORE_DIFF, getDefaultBool(OPT_TRIM_BEFORE_DIFF));
             if (trim) {
                 Color trimColor = getTrimColor();
                 if (trimColor != null) {

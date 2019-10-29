@@ -2918,10 +2918,10 @@ public class WebCommand extends BaseCommand implements CanTakeScreenshot, CanLog
     }
 
     protected boolean isHighlightEnabled() {
-        return !browser.getBrowserType().isHeadless() &&
-               context.hasData(OPT_DEBUG_HIGHLIGHT) ?
-               context.getBooleanData(OPT_DEBUG_HIGHLIGHT) :
-               context.getBooleanData(OPT_DEBUG_HIGHLIGHT_OLD, getDefaultBool(OPT_DEBUG_HIGHLIGHT));
+        if (browser.getBrowserType().isHeadless()) { return false; }
+        return context.getBooleanData(OPT_DEBUG_HIGHLIGHT,
+                                      context.getBooleanData(OPT_DEBUG_HIGHLIGHT_OLD,
+                                                             getDefaultBool(OPT_DEBUG_HIGHLIGHT)));
     }
 
     protected boolean shouldWait() { return context.getBooleanData(WEB_ALWAYS_WAIT, getDefaultBool(WEB_ALWAYS_WAIT)); }

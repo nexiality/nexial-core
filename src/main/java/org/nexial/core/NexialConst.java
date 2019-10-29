@@ -627,7 +627,9 @@ public final class NexialConst {
 
         public static Map<String, Color> getColorNames() { return COLOR_NAMES; }
 
-        public static Color toColor(String colorName) { return MapUtils.getObject(COLOR_NAMES, colorName); }
+        public static Color toColor(String colorName) {
+            return MapUtils.getObject(COLOR_NAMES, StringUtils.lowerCase(colorName));
+        }
 
         static {
             COLOR_NAMES.put("red", RED);
@@ -688,25 +690,54 @@ public final class NexialConst {
 
         public static final String DEF_FONT_FACE = "Arial";
         public static final int DEF_FONT_SIZE = 14;
-        public static final float DEF_ALPHA = 0.35f;
+        public static final float DEF_ALPHA = 0.5f;
         public static final int MIN_WIDTH = 320;
         public static final int MIN_HEIGHT = 200;
-        public static final int trimIndex = 30;
-        public static final int paddingTopHeight = 20;
-        public static final int paddingBottomHeight = 80;
-        public static final int paddingLeftWidth = 10;
+        public static final int TOP_PADDING = 15;
+        public static final int BOTTOM_PADDING = 0;
+        public static final int LEFT_PADDING = 10;
+        public static final int RIGHT_PADDING = 10;
+        // public static final int trimIndex = 30;
 
         // Image caption
         public enum CaptionPositions {
-            TOP_LEFT,
-            TOP_CENTER,
-            TOP_RIGHT,
-            MIDDLE_LEFT,
-            MIDDLE_CENTER,
-            MIDDLE_RIGHT,
-            BOTTOM_CENTER,
-            BOTTOM_LEFT,
-            BOTTOM_RIGHT
+            TOP_LEFT(true, false, false, true, false, false),
+            TOP_CENTER(true, false, false, false, true, false),
+            TOP_RIGHT(true, false, false, false, false, true),
+            MIDDLE_LEFT(false, true, false, true, false, false),
+            MIDDLE_CENTER(false, true, false, false, true, false),
+            MIDDLE_RIGHT(false, true, false, false, false, true),
+            BOTTOM_LEFT(false, false, true, true, false, false),
+            BOTTOM_CENTER(false, false, true, false, true, false),
+            BOTTOM_RIGHT(false, false, true, false, false, true);
+
+            private boolean top;
+            private boolean middle;
+            private boolean bottom;
+            private boolean left;
+            private boolean center;
+            private boolean right;
+
+            CaptionPositions(boolean top, boolean middle, boolean bottom, boolean left, boolean center, boolean right) {
+                this.top = top;
+                this.middle = middle;
+                this.bottom = bottom;
+                this.left = left;
+                this.center = center;
+                this.right = right;
+            }
+
+            public boolean isTop() { return top; }
+
+            public boolean isMiddle() { return middle; }
+
+            public boolean isBottom() { return bottom; }
+
+            public boolean isLeft() { return left; }
+
+            public boolean isCenter() { return center; }
+
+            public boolean isRight() { return right; }
         }
 
         private ImageCaption() {}
@@ -1452,7 +1483,7 @@ public final class NexialConst {
         public static final String WEB_METRICS_HTML_LOC = "/org/nexial/core/reports/";
 
         // web element highlight
-        public static final String NS_HIGHLIGHT = NS_WEB + ".highlight";
+        public static final String NS_HIGHLIGHT = NS_WEB + "highlight";
         public static final String OPT_DEBUG_HIGHLIGHT = registerSysVar(NS_HIGHLIGHT, false);
         public static final String HIGHLIGHT_STYLE = registerSysVar(NS_HIGHLIGHT + ".style", "background:#faf557;");
         public static final String HIGHLIGHT_WAIT_MS = registerSysVar(NS_HIGHLIGHT + ".waitMs", 250);
