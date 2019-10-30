@@ -14,192 +14,184 @@
  * limitations under the License.
  */
 
-package org.nexial.core.plugins.image;
+package org.nexial.core.plugins.image
 
-import java.io.File;
-import java.io.IOException;
-import javax.imageio.ImageIO;
+import org.apache.commons.io.FileUtils
+import org.apache.commons.lang3.SystemUtils
+import org.junit.After
+import org.junit.Assert
+import org.junit.Before
+import org.junit.Test
+import org.nexial.commons.proc.ProcessInvoker
+import org.nexial.commons.utils.ResourceUtils
+import org.nexial.core.NexialConst.ImageCaption.CaptionPositions.*
+import org.nexial.core.plugins.image.ImageCaptionHelper.CaptionModel
+import org.nexial.core.plugins.image.ImageCaptionHelper.addCaptionToImage
+import org.nexial.core.utils.ExecUtils
+import java.io.File
+import java.io.File.separator
+import java.io.IOException
+import javax.imageio.ImageIO
 
-import org.apache.commons.io.FileUtils;
-import org.apache.commons.lang3.SystemUtils;
-import org.jetbrains.annotations.NotNull;
-import org.junit.After;
-import org.junit.Assert;
-import org.junit.Before;
-import org.junit.Test;
-import org.nexial.commons.utils.ResourceUtils;
-import org.nexial.core.plugins.image.ImageCaptionHelper.CaptionModel;
+class ImageCaptionHelperManualTest {
+    private val showActual = SystemUtils.IS_OS_MAC_OSX && !ExecUtils.isRunningInCi()
+    // private val showActual = false
 
-import static java.io.File.separator;
-import static org.nexial.core.NexialConst.ImageCaption.CaptionPositions.*;
-
-public class ImageCaptionHelperManualTest {
-    private String fixture1 = null;
-    private String expected1 = null;
-    private String expected2 = null;
-    private String expected3 = null;
-    private String expected4 = null;
-    private String expected5 = null;
-    private String expected6 = null;
+    private val fixtureBase = "/unittesting/artifact/data/image/"
+    private val fixture1 = ResourceUtils.getResourceFilePath("${fixtureBase}unitTest_image.test1.jpg")
+    private val expected1 = ResourceUtils.getResourceFilePath("${fixtureBase}expected1.bottom_right.yellow.jpg")
+    private val expected2 = ResourceUtils.getResourceFilePath("${fixtureBase}expected2.bottom_left.orange.jpg")
+    private val expected3 = ResourceUtils.getResourceFilePath("${fixtureBase}expected3.bottom_center_green.jpg")
+    private val expected4 = ResourceUtils.getResourceFilePath("${fixtureBase}expected4.top_center_pink.jpg")
+    private val expected5 = ResourceUtils.getResourceFilePath("${fixtureBase}expected5.middle_center_white.jpg")
+    private val expected6 = ResourceUtils.getResourceFilePath("${fixtureBase}expected6.top_right_gray.jpg")
 
     @Before
-    public void setUp() throws Exception {
-        fixture1 = ResourceUtils.getResourceFilePath("/unittesting/artifact/data/unitTest_image.test1.jpg");
-
-        String expectedBasePath = "/unittesting/artifact/data/image/";
-        expected1 = ResourceUtils.getResourceFilePath(expectedBasePath + "expected1.bottom_right.yellow.jpg");
-        expected2 = ResourceUtils.getResourceFilePath(expectedBasePath + "expected2.bottom_left.orange.jpg");
-        expected3 = ResourceUtils.getResourceFilePath(expectedBasePath + "expected3.bottom_center_green.jpg");
-        expected4 = ResourceUtils.getResourceFilePath(expectedBasePath + "expected4.top_center_pink.jpg");
-        expected5 = ResourceUtils.getResourceFilePath(expectedBasePath + "expected5.middle_center_white.jpg");
-        expected6 = ResourceUtils.getResourceFilePath(expectedBasePath + "expected6.top_right_gray.jpg");
+    fun setUp() {
     }
 
     @After
-    public void tearDown() throws Exception {
+    fun tearDown() {
     }
 
     @Test
-    public void addCaptionToImage() throws Exception {
-        File fixtureFile1 = new File(fixture1);
-        Object[] lines = {
-            "0123456789ABCDEFGIJKLMOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz!@#$%^&*()_+~`{}|\\][",
-            this.getClass().getName(),
-            "supercalifragilisticexpelidocious",
-            "good night, moon"
-        };
-
-        {
-            System.out.print("adding caption text - TEST 1... ");
+    @Throws(Exception::class)
+    fun addCaptionToImage() {
+        val fixtureFile1 = File(fixture1)
+        val lines = listOf<Any>("0123456789ABCDEFGIJKLMOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz!@#$%^&*()_+~`{}|\\][",
+                                 ImageCaptionHelper::class.java.name,
+                                 "supercalifragilisticexpelidocious",
+                                 "good night, moon")
+        run {
+            print("adding caption text - TEST 1... ")
 
             // set up
-            CaptionModel model = new CaptionModel();
-            model.addCaption(lines);
-            model.setPosition(BOTTOM_RIGHT);
-
-            File actual = newBaseFixture(fixtureFile1, "actual1.jpg");
+            val model = CaptionModel()
+            model.addCaptions(lines)
+            model.position = BOTTOM_RIGHT
+            val actual = newBaseFixture(fixtureFile1, "actual1.jpg")
 
             // add caption
-            ImageCaptionHelper.addCaptionToImage(actual, model);
+            addCaptionToImage(actual, model)
+            if (showActual) ProcessInvoker.invoke("open", listOf(actual.absolutePath), null)
 
             // compare against expected
-            assertMatchAgainstExpected(new File(expected1), actual);
-            System.out.println("PASSED");
+            assertMatchAgainstExpected(File(expected1), actual)
+            println("PASSED")
         }
 
-        {
-            System.out.print("adding caption text - TEST 2... ");
+        run {
+            print("adding caption text - TEST 2... ")
 
             // set up
-            CaptionModel model = new CaptionModel();
-            model.addCaption(lines);
-            model.setPosition(BOTTOM_LEFT);
-            model.setCaptionColor("orange");
-            model.setAlpha(1);
-            model.setFontSize(20);
-
-            File actual = newBaseFixture(fixtureFile1, "actual2.jpg");
+            val model = CaptionModel()
+            model.addCaptions(lines)
+            model.position = BOTTOM_LEFT
+            model.setCaptionColor("orange")
+            model.alpha = 1f
+            model.fontSize = 20
+            val actual = newBaseFixture(fixtureFile1, "actual2.jpg")
 
             // add caption
-            ImageCaptionHelper.addCaptionToImage(actual, model);
+            addCaptionToImage(actual, model)
+            if (showActual) ProcessInvoker.invoke("open", listOf(actual.absolutePath), null)
 
             // compare against expected
-            assertMatchAgainstExpected(new File(expected2), actual);
-            System.out.println("PASSED");
+            assertMatchAgainstExpected(File(expected2), actual)
+            println("PASSED")
         }
 
-        {
-            System.out.print("adding caption text - TEST 3... ");
+        run {
+            print("adding caption text - TEST 3... ")
 
             // set up
-            CaptionModel model = new CaptionModel();
-            model.addCaption(lines);
-            model.setPosition(BOTTOM_CENTER);
-            model.setCaptionColor("green");
-
-            File actual = newBaseFixture(fixtureFile1, "actual3.jpg");
+            val model = CaptionModel()
+            model.addCaptions(lines)
+            model.position = BOTTOM_CENTER
+            model.setCaptionColor("green")
+            val actual = newBaseFixture(fixtureFile1, "actual3.jpg")
 
             // add caption
-            ImageCaptionHelper.addCaptionToImage(actual, model);
+            addCaptionToImage(actual, model)
+            if (showActual) ProcessInvoker.invoke("open", listOf(actual.absolutePath), null)
 
             // compare against expected
-            assertMatchAgainstExpected(new File(expected3), actual);
-            System.out.println("PASSED");
+            assertMatchAgainstExpected(File(expected3), actual)
+            println("PASSED")
         }
 
-        {
-            System.out.print("adding caption text - TEST 4... ");
+        run {
+            print("adding caption text - TEST 4... ")
 
             // set up
-            CaptionModel model = new CaptionModel();
-            model.addCaption(lines);
-            model.setPosition(TOP_CENTER);
-            model.setCaptionColor("pink");
-
-            File actual = newBaseFixture(fixtureFile1, "actual4.jpg");
+            val model = CaptionModel()
+            model.addCaptions(lines)
+            model.position = TOP_CENTER
+            model.setCaptionColor("pink")
+            val actual = newBaseFixture(fixtureFile1, "actual4.jpg")
 
             // add caption
-            ImageCaptionHelper.addCaptionToImage(actual, model);
+            addCaptionToImage(actual, model)
+            if (showActual) ProcessInvoker.invoke("open", listOf(actual.absolutePath), null)
 
             // compare against expected
-            assertMatchAgainstExpected(new File(expected4), actual);
-            System.out.println("PASSED");
+            assertMatchAgainstExpected(File(expected4), actual)
+            println("PASSED")
         }
 
-        {
-            System.out.print("adding caption text - TEST 5... ");
+        run {
+            print("adding caption text - TEST 5... ")
 
             // set up
-            CaptionModel model = new CaptionModel();
-            model.addCaption(lines);
-            model.setPosition(MIDDLE_CENTER);
-            model.setCaptionColor("white");
-
-            File actual = newBaseFixture(fixtureFile1, "actual5.jpg");
+            val model = CaptionModel()
+            model.addCaptions(lines)
+            model.position = MIDDLE_CENTER
+            model.setCaptionColor("white")
+            val actual = newBaseFixture(fixtureFile1, "actual5.jpg")
 
             // add caption
-            ImageCaptionHelper.addCaptionToImage(actual, model);
+            addCaptionToImage(actual, model)
+            if (showActual) ProcessInvoker.invoke("open", listOf(actual.absolutePath), null)
 
             // compare against expected
-            assertMatchAgainstExpected(new File(expected5), actual);
-            System.out.println("PASSED");
+            assertMatchAgainstExpected(File(expected5), actual)
+            println("PASSED")
         }
 
-        {
-            System.out.print("adding caption text - TEST 6... ");
+        run {
+            print("adding caption text - TEST 6... ")
 
             // set up
-            CaptionModel model = new CaptionModel();
-            model.addCaption(lines);
-            model.setPosition(TOP_RIGHT);
-            model.setCaptionColor("gray");
-            model.setAlpha(0.8f);
-            model.setWrap(true);
-
-            File actual = newBaseFixture(fixtureFile1, "actual6.jpg");
+            val model = CaptionModel()
+            model.addCaptions(lines)
+            model.position = TOP_RIGHT
+            model.setCaptionColor("gray")
+            model.alpha = 0.8f
+            model.isWrap = true
+            val actual = newBaseFixture(fixtureFile1, "actual6.jpg")
 
             // add caption
-            ImageCaptionHelper.addCaptionToImage(actual, model);
+            addCaptionToImage(actual, model)
+            if (showActual) ProcessInvoker.invoke("open", listOf(actual.absolutePath), null)
 
             // compare against expected
-            assertMatchAgainstExpected(new File(expected6), actual);
-            System.out.println("PASSED");
+            assertMatchAgainstExpected(File(expected6), actual)
+            println("PASSED")
         }
-
-        // ProcessInvoker.invoke("open", Collections.singletonList(img.getAbsolutePath()), null);
     }
 
-    protected ImageComparison assertMatchAgainstExpected(File expected, File actual) throws IOException {
-        ImageComparison imageComparison = new ImageComparison(ImageIO.read(expected), ImageIO.read(actual));
-        float matchPercent = imageComparison.getMatchPercent();
-        Assert.assertEquals(100, matchPercent, 0);
-        return imageComparison;
+    @Throws(IOException::class)
+    private fun assertMatchAgainstExpected(expected: File, actual: File): ImageComparison {
+        val imageComparison = ImageComparison(ImageIO.read(expected), ImageIO.read(actual))
+        val matchPercent = imageComparison.matchPercent
+        Assert.assertEquals(100f, matchPercent, 0f)
+        return imageComparison
     }
 
-    @NotNull
-    protected File newBaseFixture(File baseFixture, String newFileName) throws IOException {
-        File img = new File(SystemUtils.getJavaIoTmpDir() + separator + newFileName);
-        FileUtils.copyFile(baseFixture, img);
-        return img;
+    @Throws(IOException::class)
+    private fun newBaseFixture(baseFixture: File, newFileName: String): File {
+        val img = File(SystemUtils.getJavaIoTmpDir().toString() + separator + newFileName)
+        FileUtils.copyFile(baseFixture, img)
+        return img
     }
 }

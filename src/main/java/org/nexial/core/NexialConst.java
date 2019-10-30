@@ -687,6 +687,9 @@ public final class NexialConst {
     public static final class ImageCaption {
         public static final String SCREENSHOT_CAPTION = registerSysVar(NAMESPACE + "screenshot.caption");
         public static final String SCREENSHOT_CAPTION_COLOR = registerSysVar(SCREENSHOT_CAPTION + ".color");
+        public static final String SCREENSHOT_CAPTION_POSITION = registerSysVar(SCREENSHOT_CAPTION + ".position");
+        public static final String SCREENSHOT_CAPTION_WRAP = registerSysVar(SCREENSHOT_CAPTION + ".wrap");
+        public static final String SCREENSHOT_CAPTION_ALPHA = registerSysVar(SCREENSHOT_CAPTION + ".alpha");
 
         public static final String DEF_FONT_FACE = "Arial";
         public static final int DEF_FONT_SIZE = 14;
@@ -697,7 +700,6 @@ public final class NexialConst {
         public static final int BOTTOM_PADDING = 0;
         public static final int LEFT_PADDING = 10;
         public static final int RIGHT_PADDING = 10;
-        // public static final int trimIndex = 30;
 
         // Image caption
         public enum CaptionPositions {
@@ -738,6 +740,18 @@ public final class NexialConst {
             public boolean isCenter() { return center; }
 
             public boolean isRight() { return right; }
+
+            public static CaptionPositions toCaptionPosition(String vertical, String horizontal) {
+                if (StringUtils.isBlank(vertical) || StringUtils.isBlank(horizontal)) { return null; }
+
+                String position = vertical.toUpperCase() + "_" + horizontal.toUpperCase();
+                try {
+                    return CaptionPositions.valueOf(position);
+                } catch (IllegalArgumentException e) {
+                    ConsoleUtils.error("No caption position named as " + position);
+                    return null;
+                }
+            }
         }
 
         private ImageCaption() {}

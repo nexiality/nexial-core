@@ -75,9 +75,7 @@ import static org.apache.commons.lang3.SystemUtils.JAVA_IO_TMPDIR;
 import static org.nexial.core.CommandConst.*;
 import static org.nexial.core.NexialConst.*;
 import static org.nexial.core.NexialConst.Data.NULL;
-import static org.nexial.core.NexialConst.ImageCaption.CaptionPositions.BOTTOM_RIGHT;
-import static org.nexial.core.NexialConst.ImageCaption.SCREENSHOT_CAPTION;
-import static org.nexial.core.NexialConst.ImageCaption.SCREENSHOT_CAPTION_COLOR;
+import static org.nexial.core.NexialConst.ImageCaption.*;
 import static org.nexial.core.excel.ExcelConfig.MSG_PASS;
 import static org.nexial.core.plugins.base.IncrementStrategy.ALPHANUM;
 import static org.nexial.core.utils.CheckUtils.*;
@@ -907,13 +905,29 @@ public class BaseCommand implements NexialCommand {
         }
 
         String caption = context.getStringData(SCREENSHOT_CAPTION);
-        if (StringUtils.isBlank(caption)) {
-            log("No caption configured");
-        } else {
+        if (StringUtils.isNotBlank(caption)) {
             CaptionModel model = new CaptionModel();
-            model.addCaption(TextUtils.toList(caption, "\n", true));
-            model.setCaptionColor(context.getStringData(SCREENSHOT_CAPTION_COLOR));
-            model.setPosition(BOTTOM_RIGHT);
+            model.addCaptions(TextUtils.toList(caption, "\n", true));
+
+            String color = context.getStringData(SCREENSHOT_CAPTION_COLOR);
+            if (StringUtils.isNotBlank(color)) { model.setCaptionColor(color); }
+
+            String[] position = StringUtils.split(context.getStringData(SCREENSHOT_CAPTION_POSITION),
+                                                  context.getTextDelim());
+            if (ArrayUtils.getLength(position) == 2) {
+                CaptionPositions captionPosition = CaptionPositions.toCaptionPosition(position[0], position[1]);
+                if (captionPosition != null) { model.setPosition(captionPosition); }
+            }
+
+            if (context.hasData(SCREENSHOT_CAPTION_WRAP)) {
+                model.setWrap(context.getBooleanData(SCREENSHOT_CAPTION_WRAP));
+            }
+
+            if (context.hasData(SCREENSHOT_CAPTION_ALPHA)) {
+                double alpha = context.getDoubleData(SCREENSHOT_CAPTION_ALPHA);
+                if (alpha != UNDEFINED_DOUBLE_DATA) { model.setAlpha((float) alpha); }
+            }
+
             ImageCaptionHelper.addCaptionToImage(file, model);
         }
 

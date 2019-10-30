@@ -14,282 +14,219 @@
  * limitations under the License.
  */
 
-package org.nexial.core.plugins.image;
+package org.nexial.core.plugins.image
 
-import java.awt.Rectangle;
-import java.awt.*;
-import java.awt.font.*;
-import java.awt.geom.*;
-import java.awt.image.*;
-import java.io.File;
-import java.io.IOException;
-import java.text.AttributedCharacterIterator;
-import java.text.AttributedString;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
-import javax.imageio.ImageIO;
+import org.apache.commons.lang3.StringUtils
+import org.nexial.commons.utils.TextUtils
+import org.nexial.core.NexialConst.CommonColor
+import org.nexial.core.NexialConst.ImageCaption.*
+import org.nexial.core.NexialConst.ImageCaption.CaptionPositions.*
+import org.nexial.core.utils.ConsoleUtils
+import java.awt.AlphaComposite.SRC_OVER
+import java.awt.AlphaComposite.getInstance
+import java.awt.Color
+import java.awt.Font
+import java.awt.Font.PLAIN
+import java.awt.Graphics2D
+import java.awt.Point
+import java.awt.Rectangle
+import java.awt.font.FontRenderContext
+import java.awt.font.LineBreakMeasurer
+import java.awt.font.TextAttribute.*
+import java.awt.font.TextLayout
+import java.awt.geom.Rectangle2D
+import java.awt.image.BufferedImage
+import java.io.File
+import java.io.IOException
+import java.text.AttributedCharacterIterator
+import java.text.AttributedString
+import javax.imageio.ImageIO
+import kotlin.math.max
+import kotlin.math.min
 
-import org.apache.commons.lang3.ArrayUtils;
-import org.apache.commons.lang3.StringUtils;
-import org.jetbrains.annotations.NotNull;
-import org.nexial.commons.utils.TextUtils;
-import org.nexial.core.NexialConst.CommonColor;
-import org.nexial.core.utils.ConsoleUtils;
+object ImageCaptionHelper {
+    @JvmStatic
+    fun addCaptionToImage(file: File, caption: CaptionModel) {
 
-import static java.awt.AlphaComposite.*;
-import static java.awt.Font.*;
-import static java.awt.font.TextAttribute.*;
-import static org.nexial.core.NexialConst.ImageCaption.*;
-import static org.nexial.core.NexialConst.ImageCaption.CaptionPositions.BOTTOM_RIGHT;
-
-public class ImageCaptionHelper {
-
-    public static class CaptionModel {
-        private List<String> captions;
-        private String captionColorText = "yellow";
-        private Color captionColor = CommonColor.toColor(captionColorText);
-        private CaptionPositions position = BOTTOM_RIGHT;
-        private float alpha = DEF_ALPHA;
-        private String fontFace = DEF_FONT_FACE;
-        private int fontSize = DEF_FONT_SIZE;
-        private boolean wrap;
-
-        public CaptionModel() {}
-
-        public Color getCaptionColor() {
-            if (captionColor != null) { return captionColor; }
-
-            if (StringUtils.isEmpty(captionColorText)) {
-                ConsoleUtils.log("No caption color specified; resorting to default");
-                captionColorText = "yellow";
-            }
-
-            if (alpha < 0) {
-                ConsoleUtils.log("No caption alpha setting found; resorting to default of 100%");
-                alpha = 1;
-            }
-
-            captionColor = CommonColor.toColor(captionColorText);
-            return captionColor;
-        }
-
-        public void setCaptionColor(String captionColor) {
-            this.captionColorText = captionColor;
-            this.captionColor = CommonColor.toColor(captionColorText);
-        }
-
-        public CaptionPositions getPosition() { return position; }
-
-        public void setPosition(CaptionPositions position) {this.position = position; }
-
-        public String getFontFace() {return fontFace; }
-
-        public void setFontFace(String fontFace) {this.fontFace = fontFace; }
-
-        public int getFontSize() {return fontSize; }
-
-        public void setFontSize(int fontSize) {this.fontSize = fontSize; }
-
-        public float getAlpha() {return alpha; }
-
-        public void setAlpha(float alpha) {this.alpha = alpha; }
-
-        public List<String> getCaptions() { return captions; }
-
-        public void setCaptions(List<String> captions) { this.captions = captions; }
-
-        public void addCaption(Object... captions) {
-            if (ArrayUtils.isEmpty(captions)) { return; }
-            if (this.captions == null) { this.captions = new ArrayList<>(); }
-            Arrays.stream(captions).forEach(caption -> this.captions.add(StringUtils.trim(caption.toString())));
-        }
-
-        public boolean isWrap() { return wrap; }
-
-        public void setWrap(boolean wrap) { this.wrap = wrap; }
-    }
-
-    public static void addCaptionToImage(File file, CaptionModel caption) {
-        BufferedImage img;
+        val img: BufferedImage?
         try {
-            img = ImageIO.read(file);
-        } catch (IOException e) {
-            ConsoleUtils.error("Unable to read image " + file + ": " + e.getMessage());
-            return;
+            img = ImageIO.read(file)
+        } catch (e: IOException) {
+            ConsoleUtils.error("Unable to read image " + file.toString() + ": " + e.message)
+            return
         }
 
-        if (img == null) { return; }
+        if (img == null || img.width <= MIN_WIDTH || img.height <= MIN_HEIGHT) return
 
-        int imageWidth = img.getWidth();
-        int imageHeight = img.getHeight();
-        if (imageWidth <= MIN_WIDTH || imageHeight <= MIN_HEIGHT) { return; }
-
-        Graphics2D graphics = prepareGraphicObject(img, caption);
+        val graphics = prepareGraphicObject(img, caption)
         try {
-            renderText(graphics, resolveTextBounds(graphics, img, caption), caption);
-            ImageIO.write(img, StringUtils.lowerCase(StringUtils.substringAfterLast(file.getName(), ".")), file);
-        } catch (Exception e) {
-            ConsoleUtils.error("Unable to add caption to the image", e.getMessage());
+            renderText(graphics, resolveTextBounds(graphics, img, caption), caption)
+            ImageIO.write(img, StringUtils.lowerCase(StringUtils.substringAfterLast(file.name, ".")), file)
+        } catch (e: Exception) {
+            ConsoleUtils.error("Unable to add caption to the image", e.message)
         } finally {
             // ConsoleUtils.log("Caption added to image " + file.getAbsolutePath());
-            graphics.dispose();
+            graphics.dispose()
         }
     }
 
-    @NotNull
-    protected static Rectangle resolveTextBounds(Graphics2D graphics, BufferedImage img, CaptionModel caption) {
-        int imageWidth = img.getWidth();
-        int imageHeight = img.getHeight();
+    private fun resolveTextBounds(graphics: Graphics2D, img: BufferedImage, caption: CaptionModel): Rectangle {
+        val imageWidth = img.width
+        val imageHeight = img.height
 
-        double maxTextBoundWidth = (double) imageWidth / 4;
-        double maxTextBoundHeight = (double) imageHeight / 4;
+        val maxTextBoundWidth = imageWidth.toDouble() / 4
+        val maxTextBoundHeight = imageHeight.toDouble() / 4
 
-        String fullText = TextUtils.toString(caption.getCaptions(), caption.wrap ? " " : "\n");
-        Rectangle2D textBound = graphics.getFontMetrics().getStringBounds(fullText, graphics);
-        double oneLineHeight = textBound.getHeight();
-        double oneLineWidth = textBound.getWidth();
+        val textBound = graphics.fontMetrics.getStringBounds(caption.toText(), graphics)
+        val oneLineHeight = textBound.height
+        val oneLineWidth = textBound.width
 
-        int width = (int) Math.min(maxTextBoundWidth, oneLineWidth);
-        int height = oneLineWidth > maxTextBoundWidth ?
-                     (int) Math.min(maxTextBoundHeight, oneLineHeight * (oneLineWidth / maxTextBoundWidth + 1)) :
-                     (int) oneLineHeight;
+        val width = min(maxTextBoundWidth, oneLineWidth).toInt()
+        val height = if (oneLineWidth > maxTextBoundWidth)
+            min(maxTextBoundHeight, oneLineHeight * (oneLineWidth / maxTextBoundWidth + 1)).toInt()
+        else
+            oneLineHeight.toInt()
 
-        CaptionPositions position = caption.getPosition();
-
-        int x = 0;
-        if (position.isLeft()) { x = LEFT_PADDING; }
-        if (position.isCenter()) { x = (imageWidth - width) / 2; }
-        if (position.isRight()) { x = imageWidth - width - RIGHT_PADDING; }
-
-        int y = 0;
-        if (position.isTop()) { y = TOP_PADDING; }
-        if (position.isMiddle()) { y = (imageHeight - height) / 2; }
-        if (position.isBottom()) { y = imageHeight - height - BOTTOM_PADDING; }
-
-        return new Rectangle(x, y, width, height);
+        val position = caption.position
+        return Rectangle(when {
+                             position.isLeft   -> LEFT_PADDING
+                             position.isCenter -> (imageWidth - width) / 2
+                             position.isRight  -> imageWidth - width - RIGHT_PADDING
+                             else              -> 0
+                         }, when {
+                             position.isTop    -> TOP_PADDING
+                             position.isMiddle -> (imageHeight - height) / 2
+                             position.isBottom -> imageHeight - height - BOTTOM_PADDING
+                             else              -> 0
+                         }, width, height)
     }
 
     /**
-     * render string on the specified {@link Graphics2D} instance. The {@code bounds} parameter specified the x, y,
-     * width, height of the rendering space. The {@link CaptionModel} parameter represents the text and font setting
+     * render string on the specified [Graphics2D] instance. The `bounds` parameter specified the x, y,
+     * width, height of the rendering space. The [CaptionModel] parameter represents the text and font setting
      * to render.
      */
-    protected static Rectangle renderText(Graphics2D g, Rectangle bounds, CaptionModel caption) {
-        if (g == null) { throw new NullPointerException("The image graphics handle is null!"); }
-        if (bounds == null) { throw new NullPointerException("No text bounds found!"); }
+    private fun renderText(g: Graphics2D, bounds: Rectangle, caption: CaptionModel): Rectangle {
+        val text = caption.toText()
+        if (StringUtils.isEmpty(text)) return Rectangle(bounds.x, bounds.y, 0, 0)
 
-        String text = TextUtils.toString(caption.getCaptions(), caption.wrap ? " " : "\n");
-        if (StringUtils.isEmpty(text)) { return new Rectangle(bounds.x, bounds.y, 0, 0); }
+        val lineMeasurer = LineBreakMeasurer(createAttributedText(caption), FontRenderContext(null, true, false))
 
-        LineBreakMeasurer lineMeasurer = new LineBreakMeasurer(createAttributedText(caption),
-                                                               new FontRenderContext(null, true, false));
+        val target = Point(bounds.x, bounds.y)
+        var nextOffset: Int
+        val align = caption.position
 
-        Point targetLocation = new Point(bounds.x, bounds.y);
-        int nextOffset;
+        if (align.isMiddle || align.isBottom) {
+            if (align.isMiddle) target.y = bounds.y + bounds.height / 2
+            if (align.isBottom) target.y = bounds.y + bounds.height
 
-        CaptionPositions align = caption.getPosition();
-        if (align.isMiddle() || align.isBottom()) {
-            if (align.isMiddle()) { targetLocation.y = bounds.y + (bounds.height / 2); }
-            if (align.isBottom()) { targetLocation.y = bounds.y + bounds.height; }
+            while (lineMeasurer.position < text.length) {
+                nextOffset = nextTextIndex(text, lineMeasurer.position, lineMeasurer.nextOffset(bounds.width.toFloat()))
+                val textLayout: TextLayout = lineMeasurer.nextLayout(bounds.width.toFloat(), nextOffset, false)
+                val totalTextHeight = textLayout.ascent + textLayout.leading + textLayout.descent
+                if (align.isMiddle) target.y -= (totalTextHeight / 2).toInt()
+                if (align.isBottom) target.y -= totalTextHeight.toInt()
+            }
+            target.y = Math.max(0, target.y)
+            lineMeasurer.position = 0
+        }
 
-            while (lineMeasurer.getPosition() < text.length()) {
-                nextOffset = nextTextIndex(text, lineMeasurer.getPosition(), lineMeasurer.nextOffset(bounds.width));
+        if (align.isRight || align.isCenter) target.x = bounds.x + bounds.width
+        val consumedBounds = Rectangle(target.x, target.y, 0, 0)
+        while (lineMeasurer.position < text.length) {
+            nextOffset = nextTextIndex(text, lineMeasurer.position, lineMeasurer.nextOffset(bounds.width.toFloat()))
+            val textLayout: TextLayout = lineMeasurer.nextLayout(bounds.width.toFloat(), nextOffset, false)
+            val textBounds: Rectangle2D = textLayout.bounds
+            target.y += textLayout.ascent.toInt()
 
-                TextLayout textLayout = lineMeasurer.nextLayout(bounds.width, nextOffset, false);
-                float totalTextHeight = textLayout.getAscent() + textLayout.getLeading() + textLayout.getDescent();
-                if (align.isMiddle()) { targetLocation.y -= totalTextHeight / 2; }
-                if (align.isBottom()) { targetLocation.y -= totalTextHeight; }
+            consumedBounds.width = max(consumedBounds.width, textBounds.width.toInt())
+            when (align) {
+                TOP_LEFT, MIDDLE_LEFT, BOTTOM_LEFT       -> textLayout.draw(g, target.x.toFloat(), target.y.toFloat())
+
+                TOP_CENTER, MIDDLE_CENTER, BOTTOM_CENTER -> {
+                    target.x = bounds.x + bounds.width / 2 - (textBounds.width / 2).toInt()
+                    consumedBounds.x = min(consumedBounds.x, target.x)
+                    textLayout.draw(g, target.x.toFloat(), target.y.toFloat())
+                }
+
+                TOP_RIGHT, MIDDLE_RIGHT, BOTTOM_RIGHT    -> {
+                    target.x = bounds.x + bounds.width - textBounds.width.toInt()
+                    textLayout.draw(g, target.x.toFloat(), target.y.toFloat())
+                    consumedBounds.x = consumedBounds.x.coerceAtMost(target.x)
+                }
             }
 
-            targetLocation.y = Math.max(0, targetLocation.y);
-            lineMeasurer.setPosition(0);
+            target.y += (textLayout.leading + textLayout.descent.toInt()).toInt()
         }
 
-        if (align.isRight() || align.isCenter()) { targetLocation.x = bounds.x + bounds.width; }
+        consumedBounds.height = target.y - consumedBounds.y
+        return consumedBounds
+    }
 
-        Rectangle consumedBounds = new Rectangle(targetLocation.x, targetLocation.y, 0, 0);
+    private fun prepareGraphicObject(img: BufferedImage, caption: CaptionModel): Graphics2D {
+        val graphics = img.graphics as Graphics2D
+        graphics.composite = getInstance(SRC_OVER, caption.alpha)
+        graphics.color = caption.getCaptionColor()
+        graphics.font = Font(caption.fontFace, PLAIN, caption.fontSize)
+        return graphics
+    }
 
-        while (lineMeasurer.getPosition() < text.length()) {
-            nextOffset = nextTextIndex(text, lineMeasurer.getPosition(), lineMeasurer.nextOffset(bounds.width));
+    private fun createAttributedText(caption: CaptionModel): AttributedCharacterIterator? {
+        val attributedString = AttributedString(caption.toText())
+        attributedString.addAttribute(FOREGROUND, caption.getCaptionColor())
+        attributedString.addAttribute(FONT, Font(caption.fontFace, PLAIN, caption.fontSize))
+        attributedString.addAttribute(BACKGROUND, Color(255, 255, 255, 150))
+        return attributedString.iterator
+    }
 
-            TextLayout textLayout = lineMeasurer.nextLayout(bounds.width, nextOffset, false);
-            Rectangle2D textBounds = textLayout.getBounds();
+    /** Calculates the next maximum index of the string that will be displayed.  */
+    private fun nextTextIndex(text: String, from: Int, until: Int): Int {
+        for (i in from + 1 until until) if (text[i] == '\n') return i
+        return until
+    }
 
-            targetLocation.y += textLayout.getAscent();
-            consumedBounds.width = Math.max(consumedBounds.width, (int) textBounds.getWidth());
+    class CaptionModel {
+        private var captions: MutableList<String>? = null
+        private var captionColorText = "yellow"
+        private var captionColor: Color? = CommonColor.toColor(captionColorText)
+        var position = BOTTOM_RIGHT
+        var alpha = DEF_ALPHA
+        var fontFace = DEF_FONT_FACE
+        var fontSize = DEF_FONT_SIZE
+        var isWrap = false
 
-            switch (align) {
-                case TOP_LEFT:
-                case MIDDLE_LEFT:
-                case BOTTOM_LEFT:
-                    textLayout.draw(g, targetLocation.x, targetLocation.y);
-                    break;
+        fun getCaptionColor(): Color? {
+            if (captionColor != null) return captionColor
 
-                case TOP_CENTER:
-                case MIDDLE_CENTER:
-                case BOTTOM_CENTER:
-                    targetLocation.x = bounds.x + (bounds.width / 2) - (int) (textBounds.getWidth() / 2);
-                    consumedBounds.x = Math.min(consumedBounds.x, targetLocation.x);
-                    textLayout.draw(g, targetLocation.x, targetLocation.y);
-                    break;
-
-                case TOP_RIGHT:
-                case MIDDLE_RIGHT:
-                case BOTTOM_RIGHT:
-                    targetLocation.x = bounds.x + bounds.width - (int) textBounds.getWidth();
-                    textLayout.draw(g, targetLocation.x, targetLocation.y);
-                    consumedBounds.x = Math.min(consumedBounds.x, targetLocation.x);
-                    break;
+            if (StringUtils.isEmpty(captionColorText)) {
+                ConsoleUtils.log("No caption color specified; resorting to default")
+                captionColorText = "yellow"
             }
-
-            targetLocation.y += textLayout.getLeading() + textLayout.getDescent();
+            if (alpha < 0) {
+                ConsoleUtils.log("No caption alpha setting found; resorting to default of 100%")
+                alpha = 1f
+            }
+            captionColor = CommonColor.toColor(captionColorText)
+            return captionColor
         }
 
-        consumedBounds.height = targetLocation.y - consumedBounds.y;
-
-        return consumedBounds;
-    }
-
-    private static Graphics2D prepareGraphicObject(BufferedImage img, CaptionModel caption) {
-        Graphics2D graphics = (Graphics2D) img.getGraphics();
-        graphics.setComposite(AlphaComposite.getInstance(SRC_OVER, caption.getAlpha()));
-        graphics.setColor(caption.getCaptionColor());
-        graphics.setFont(new Font(caption.getFontFace(), PLAIN, caption.getFontSize()));
-        return graphics;
-    }
-
-    private static AttributedCharacterIterator createAttributedText(CaptionModel caption) {
-        AttributedString attributedString =
-            new AttributedString(TextUtils.toString(caption.getCaptions(), caption.wrap ? " " : "\n"));
-        attributedString.addAttribute(FOREGROUND, caption.getCaptionColor());
-        attributedString.addAttribute(FONT, new Font(caption.getFontFace(), PLAIN, caption.getFontSize()));
-        return attributedString.getIterator();
-    }
-
-    /** Calculates the next maximum index of the string that will be displayed. */
-    private static int nextTextIndex(String text, int from, int until) {
-        for (int i = from + 1; i < until; ++i) {
-            if (text.charAt(i) == '\n') { return i; }
+        fun setCaptionColor(captionColor: String) {
+            captionColorText = captionColor
+            this.captionColor = CommonColor.toColor(captionColorText)
         }
-        return until;
-    }
 
-    // private static String wrapCaptionName(int imageWidth, String caption, Graphics2D graphics) {
-    //     Rectangle2D rect = resolveBounds(graphics, caption);
-    //
-    //     // wrap the caption until caption rectangle width less than image width
-    //     if (imageWidth > rect.getWidth()) { return caption; }
-    //
-    //     while (rect.getWidth() > imageWidth) {
-    //         caption = StringUtils.right(caption, caption.length() - trimIndex);
-    //         rect = resolveBounds(graphics, caption);
-    //     }
-    //
-    //     return "…" + caption;
-    // }
-    //
-    // private static Rectangle2D resolveBounds(Graphics2D graphics, String text) {
-    //     return graphics.getFontMetrics().getStringBounds(text, graphics);
-    // }
+        fun getCaptions(): List<String>? = captions
+
+        fun setCaptions(captions: MutableList<String>?) {
+            this.captions = captions
+        }
+
+        fun addCaptions(captions: List<Any>) {
+            if (captions.isEmpty()) return
+            if (this.captions == null) this.captions = mutableListOf()
+            captions.forEach { this.captions!!.add(it.toString().trim()) }
+        }
+
+        fun toText(): String = TextUtils.toString(getCaptions(), if (isWrap) " " else "\n")
+    }
 }
