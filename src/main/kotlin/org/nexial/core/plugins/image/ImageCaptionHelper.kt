@@ -22,19 +22,13 @@ import org.nexial.core.NexialConst.CommonColor
 import org.nexial.core.NexialConst.ImageCaption.*
 import org.nexial.core.NexialConst.ImageCaption.CaptionPositions.*
 import org.nexial.core.utils.ConsoleUtils
+import java.awt.*
 import java.awt.AlphaComposite.SRC_OVER
-import java.awt.AlphaComposite.getInstance
-import java.awt.Color
-import java.awt.Font
 import java.awt.Font.PLAIN
-import java.awt.Graphics2D
-import java.awt.Point
 import java.awt.Rectangle
 import java.awt.font.FontRenderContext
 import java.awt.font.LineBreakMeasurer
 import java.awt.font.TextAttribute.*
-import java.awt.font.TextLayout
-import java.awt.geom.Rectangle2D
 import java.awt.image.BufferedImage
 import java.io.File
 import java.io.IOException
@@ -82,10 +76,10 @@ object ImageCaptionHelper {
         val oneLineWidth = textBound.width
 
         val width = min(maxTextBoundWidth, oneLineWidth).toInt()
-        val height = if (oneLineWidth > maxTextBoundWidth)
-            min(maxTextBoundHeight, oneLineHeight * (oneLineWidth / maxTextBoundWidth + 1)).toInt()
+        val height = (if (oneLineWidth > maxTextBoundWidth)
+            min(maxTextBoundHeight, oneLineHeight * (oneLineWidth / maxTextBoundWidth))
         else
-            oneLineHeight.toInt()
+            oneLineHeight).toInt()
 
         val position = caption.position
         return Rectangle(when {
@@ -96,7 +90,7 @@ object ImageCaptionHelper {
                          }, when {
                              position.isTop    -> TOP_PADDING
                              position.isMiddle -> (imageHeight - height) / 2
-                             position.isBottom -> imageHeight - height - BOTTOM_PADDING
+                             position.isBottom -> imageHeight - height - (LINE_PADDING * 2) - BOTTOM_PADDING
                              else              -> 0
                          }, width, height)
     }
@@ -110,7 +104,7 @@ object ImageCaptionHelper {
         val text = caption.toText()
         if (StringUtils.isEmpty(text)) return Rectangle(bounds.x, bounds.y, 0, 0)
 
-        val lineMeasurer = LineBreakMeasurer(createAttributedText(caption), FontRenderContext(null, true, false))
+        val lineMeasurer = LineBreakMeasurer(createAttributedText(caption), FontRenderContext(null, true, true))
 
         val target = Point(bounds.x, bounds.y)
         var nextOffset: Int
@@ -118,30 +112,35 @@ object ImageCaptionHelper {
 
         if (align.isMiddle || align.isBottom) {
             if (align.isMiddle) target.y = bounds.y + bounds.height / 2
-            if (align.isBottom) target.y = bounds.y + bounds.height
+            if (align.isBottom) target.y = bounds.y + bounds.height - caption.fontSize
 
             while (lineMeasurer.position < text.length) {
                 nextOffset = nextTextIndex(text, lineMeasurer.position, lineMeasurer.nextOffset(bounds.width.toFloat()))
-                val textLayout: TextLayout = lineMeasurer.nextLayout(bounds.width.toFloat(), nextOffset, false)
+                val textLayout = lineMeasurer.nextLayout(bounds.width.toFloat(), nextOffset, false)
                 val totalTextHeight = textLayout.ascent + textLayout.leading + textLayout.descent
                 if (align.isMiddle) target.y -= (totalTextHeight / 2).toInt()
                 if (align.isBottom) target.y -= totalTextHeight.toInt()
             }
-            target.y = Math.max(0, target.y)
+            target.y = max(TOP_PADDING, target.y)
             lineMeasurer.position = 0
         }
 
         if (align.isRight || align.isCenter) target.x = bounds.x + bounds.width
+
         val consumedBounds = Rectangle(target.x, target.y, 0, 0)
         while (lineMeasurer.position < text.length) {
             nextOffset = nextTextIndex(text, lineMeasurer.position, lineMeasurer.nextOffset(bounds.width.toFloat()))
-            val textLayout: TextLayout = lineMeasurer.nextLayout(bounds.width.toFloat(), nextOffset, false)
-            val textBounds: Rectangle2D = textLayout.bounds
-            target.y += textLayout.ascent.toInt()
+            val textLayout = lineMeasurer.nextLayout(bounds.width.toFloat(), nextOffset, false)
+            val textBounds = textLayout.bounds
 
             consumedBounds.width = max(consumedBounds.width, textBounds.width.toInt())
+
+            target.y += textLayout.ascent.toInt() + LINE_PADDING
+
             when (align) {
-                TOP_LEFT, MIDDLE_LEFT, BOTTOM_LEFT       -> textLayout.draw(g, target.x.toFloat(), target.y.toFloat())
+                TOP_LEFT, MIDDLE_LEFT, BOTTOM_LEFT       -> {
+                    textLayout.draw(g, target.x.toFloat(), target.y.toFloat())
+                }
 
                 TOP_CENTER, MIDDLE_CENTER, BOTTOM_CENTER -> {
                     target.x = bounds.x + bounds.width / 2 - (textBounds.width / 2).toInt()
@@ -152,11 +151,11 @@ object ImageCaptionHelper {
                 TOP_RIGHT, MIDDLE_RIGHT, BOTTOM_RIGHT    -> {
                     target.x = bounds.x + bounds.width - textBounds.width.toInt()
                     textLayout.draw(g, target.x.toFloat(), target.y.toFloat())
-                    consumedBounds.x = consumedBounds.x.coerceAtMost(target.x)
+                    consumedBounds.x = max(consumedBounds.x, target.x)
                 }
             }
 
-            target.y += (textLayout.leading + textLayout.descent.toInt()).toInt()
+            target.y += (textLayout.leading + textLayout.descent).toInt() + LINE_PADDING
         }
 
         consumedBounds.height = target.y - consumedBounds.y
@@ -165,8 +164,8 @@ object ImageCaptionHelper {
 
     private fun prepareGraphicObject(img: BufferedImage, caption: CaptionModel): Graphics2D {
         val graphics = img.graphics as Graphics2D
-        graphics.composite = getInstance(SRC_OVER, caption.alpha)
-        graphics.color = caption.getCaptionColor()
+        graphics.composite = AlphaComposite.getInstance(SRC_OVER, caption.alpha)
+        // graphics.color = caption.getCaptionColor()
         graphics.font = Font(caption.fontFace, PLAIN, caption.fontSize)
         return graphics
     }
@@ -175,7 +174,11 @@ object ImageCaptionHelper {
         val attributedString = AttributedString(caption.toText())
         attributedString.addAttribute(FOREGROUND, caption.getCaptionColor())
         attributedString.addAttribute(FONT, Font(caption.fontFace, PLAIN, caption.fontSize))
-        attributedString.addAttribute(BACKGROUND, Color(255, 255, 255, 150))
+        if (caption.withBackground) {
+            attributedString.addAttribute(BACKGROUND,
+                                          CommonColor.toComplementaryBackgroundColor(caption.getCaptionColor()))
+        }
+        attributedString.addAttribute(KERNING, LINE_PADDING)
         return attributedString.iterator
     }
 
@@ -194,6 +197,7 @@ object ImageCaptionHelper {
         var fontFace = DEF_FONT_FACE
         var fontSize = DEF_FONT_SIZE
         var isWrap = false
+        var withBackground = true
 
         fun getCaptionColor(): Color? {
             if (captionColor != null) return captionColor

@@ -622,6 +622,7 @@ public final class NexialConst {
 
     public static final class CommonColor {
         static final Map<String, Color> COLOR_NAMES = new HashMap<>();
+        static final Map<Color, Color> BACKGROUND_COLOR_NAMES = new HashMap<>();
 
         private CommonColor() {}
 
@@ -629,6 +630,10 @@ public final class NexialConst {
 
         public static Color toColor(String colorName) {
             return MapUtils.getObject(COLOR_NAMES, StringUtils.lowerCase(colorName));
+        }
+
+        public static Color toComplementaryBackgroundColor(Color color) {
+            return MapUtils.getObject(BACKGROUND_COLOR_NAMES, color);
         }
 
         static {
@@ -643,6 +648,18 @@ public final class NexialConst {
             COLOR_NAMES.put("white", WHITE);
             COLOR_NAMES.put("pink", PINK);
             COLOR_NAMES.put("magenta", MAGENTA);
+
+            BACKGROUND_COLOR_NAMES.put(RED, new Color(255, 255, 150, 230));
+            BACKGROUND_COLOR_NAMES.put(ORANGE, new Color(0, 10, 35, 220));
+            BACKGROUND_COLOR_NAMES.put(YELLOW, new Color(75, 20, 50, 230));
+            BACKGROUND_COLOR_NAMES.put(GREEN, new Color(0, 0, 0, 220));
+            BACKGROUND_COLOR_NAMES.put(BLUE, new Color(255, 255, 255, 220));
+            BACKGROUND_COLOR_NAMES.put(CYAN, new Color(0, 0, 0, 220));
+            BACKGROUND_COLOR_NAMES.put(BLACK, new Color(255, 255, 255, 220));
+            BACKGROUND_COLOR_NAMES.put(GRAY, new Color(0, 0, 40, 240));
+            BACKGROUND_COLOR_NAMES.put(WHITE, new Color(0, 0, 0, 200));
+            BACKGROUND_COLOR_NAMES.put(PINK, new Color(0, 0, 0, 220));
+            BACKGROUND_COLOR_NAMES.put(MAGENTA, new Color(255, 255, 255, 240));
         }
     }
 
@@ -690,16 +707,18 @@ public final class NexialConst {
         public static final String SCREENSHOT_CAPTION_POSITION = registerSysVar(SCREENSHOT_CAPTION + ".position");
         public static final String SCREENSHOT_CAPTION_WRAP = registerSysVar(SCREENSHOT_CAPTION + ".wrap");
         public static final String SCREENSHOT_CAPTION_ALPHA = registerSysVar(SCREENSHOT_CAPTION + ".alpha");
+        public static final String SCREENSHOT_CAPTION_NO_BKGRD = registerSysVar(SCREENSHOT_CAPTION + ".noBackground");
 
         public static final String DEF_FONT_FACE = "Arial";
         public static final int DEF_FONT_SIZE = 14;
-        public static final float DEF_ALPHA = 0.5f;
+        public static final float DEF_ALPHA = 1f;
         public static final int MIN_WIDTH = 320;
         public static final int MIN_HEIGHT = 200;
         public static final int TOP_PADDING = 15;
-        public static final int BOTTOM_PADDING = 0;
+        public static final int BOTTOM_PADDING = 10;
         public static final int LEFT_PADDING = 10;
         public static final int RIGHT_PADDING = 10;
+        public static final int LINE_PADDING = 2;
 
         // Image caption
         public enum CaptionPositions {

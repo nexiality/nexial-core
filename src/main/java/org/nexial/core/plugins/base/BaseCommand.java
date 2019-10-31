@@ -247,11 +247,11 @@ public class BaseCommand implements NexialCommand {
     /** clear data variables by name */
     public StepResult clear(String vars) {
         requiresNotBlank(vars, "invalid variable(s)", vars);
-        return clearVariables(TextUtils.toList(vars, context.getTextDelim(), true));
+        return StepResult.success(clearVariables(TextUtils.toList(vars, context.getTextDelim(), true)));
     }
 
     @NotNull
-    public StepResult clearVariables(@NotNull List<String> variables) {
+    public String clearVariables(@NotNull List<String> variables) {
         List<String> ignoredVars = new ArrayList<>();
         List<String> removedVars = new ArrayList<>();
 
@@ -281,17 +281,19 @@ public class BaseCommand implements NexialCommand {
         StringBuilder message = new StringBuilder();
         if (CollectionUtils.isNotEmpty(ignoredVars)) {
             message.append("The following data variable(s) are READ ONLY and ignored: ")
-                   .append(TextUtils.toString(ignoredVars, ",")).append("\n");
+                   .append(TextUtils.toString(ignoredVars, ","))
+                   .append("\n");
         }
         if (CollectionUtils.isNotEmpty(removedVars)) {
             message.append("The following data variable(s) are removed from execution: ")
-                   .append(TextUtils.toString(removedVars, ",")).append("\n");
+                   .append(TextUtils.toString(removedVars, ","))
+                   .append("\n");
         }
         if (CollectionUtils.isEmpty(ignoredVars) && CollectionUtils.isEmpty(removedVars)) {
             message.append("None of the specified variables are removed since they either are READ-ONLY or not exist");
         }
 
-        return StepResult.success(message.toString());
+        return message.toString();
     }
 
     public StepResult substringAfter(String text, String delim, String saveVar) {
@@ -926,6 +928,10 @@ public class BaseCommand implements NexialCommand {
             if (context.hasData(SCREENSHOT_CAPTION_ALPHA)) {
                 double alpha = context.getDoubleData(SCREENSHOT_CAPTION_ALPHA);
                 if (alpha != UNDEFINED_DOUBLE_DATA) { model.setAlpha((float) alpha); }
+            }
+
+            if (context.hasData(SCREENSHOT_CAPTION_NO_BKGRD)) {
+                model.setWithBackground(!context.getBooleanData(SCREENSHOT_CAPTION_NO_BKGRD));
             }
 
             ImageCaptionHelper.addCaptionToImage(file, model);

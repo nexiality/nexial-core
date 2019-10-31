@@ -281,11 +281,11 @@ class NexialInteractive {
                     ConsoleUtils.log("removing data variable $variables")
                     val outcome = baseCommand.clearVariables(variables)
 
-                    // outcome.message.trim().split("\n").forEach { ConsoleUtils.log(it) }
+                    // outcome.trim().split("\n").forEach { ConsoleUtils.log(it) }
                     // forgo above simple print out for something more elaborate
                     // not sure if this is a good idea.. the message itself doesn't have well-defined demarcation of
                     // data variable list
-                    outcome.message.trim().split("\n").forEach {
+                    outcome.trim().split("\n").forEach {
                         if (it.contains(": ")) {
                             ConsoleUtils.log(it.substringBefore(": ") + ": ")
                             it.substringAfter(": ").split(",").forEach { item -> ConsoleUtils.log("\t$item") }

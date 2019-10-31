@@ -59,9 +59,9 @@ class ImageCaptionHelperManualTest {
     fun addCaptionToImage() {
         val fixtureFile1 = File(fixture1)
         val lines = listOf<Any>("0123456789ABCDEFGIJKLMOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz!@#$%^&*()_+~`{}|\\][",
-                                 ImageCaptionHelper::class.java.name,
-                                 "supercalifragilisticexpelidocious",
-                                 "good night, moon")
+                                ImageCaptionHelper::class.java.name,
+                                "supercalifragilisticexpelidocious",
+                                "good night, moon")
         run {
             print("adding caption text - TEST 1... ")
 
@@ -177,6 +177,162 @@ class ImageCaptionHelperManualTest {
             // compare against expected
             assertMatchAgainstExpected(File(expected6), actual)
             println("PASSED")
+        }
+    }
+
+    @Test
+    @Throws(Exception::class)
+    fun testCaptionWithBackgroundColor() {
+        val lines = listOf<Any>("0123456789ABCDEFGIJKLMOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz!@#$%^&*()_+~`{}|\\][",
+                                ImageCaptionHelper::class.java.name,
+                                "supercalifragilisticexpelidocious",
+                                "good night, moon")
+        val base = "${fixtureBase}unitTest_image."
+        val baseFixture = File(ResourceUtils.getResourceFilePath("${base}test4.png"))
+
+        run {
+            // set up
+            val model = CaptionModel()
+            model.addCaptions(lines)
+            model.position = BOTTOM_RIGHT
+            model.setCaptionColor("red")
+            val actual = newBaseFixture(baseFixture, "actual21.png")
+
+            // add caption
+            addCaptionToImage(actual, model)
+            if (showActual) ProcessInvoker.invoke("open", listOf(actual.absolutePath), null)
+        }
+
+        run {
+            // set up
+            val model = CaptionModel()
+            model.addCaptions(lines)
+            model.position = BOTTOM_RIGHT
+            model.setCaptionColor("orange")
+            val actual = newBaseFixture(baseFixture, "actual22.png")
+
+            // add caption
+            addCaptionToImage(actual, model)
+            if (showActual) ProcessInvoker.invoke("open", listOf(actual.absolutePath), null)
+        }
+
+        run {
+            // set up
+            val model = CaptionModel()
+            model.addCaptions(lines)
+            model.position = BOTTOM_RIGHT
+            model.setCaptionColor("yellow")
+            val actual = newBaseFixture(baseFixture, "actual23.png")
+
+            // add caption
+            addCaptionToImage(actual, model)
+            if (showActual) ProcessInvoker.invoke("open", listOf(actual.absolutePath), null)
+        }
+
+        run {
+            // set up
+            val model = CaptionModel()
+            model.addCaptions(lines)
+            model.position = BOTTOM_RIGHT
+            model.setCaptionColor("white")
+            val actual = newBaseFixture(baseFixture, "actual24.png")
+
+            // add caption
+            addCaptionToImage(actual, model)
+            if (showActual) ProcessInvoker.invoke("open", listOf(actual.absolutePath), null)
+        }
+
+        run {
+            // set up
+            val model = CaptionModel()
+            model.addCaptions(lines)
+            model.position = BOTTOM_RIGHT
+            model.setCaptionColor("black")
+            val actual = newBaseFixture(baseFixture, "actual25.png")
+
+            // add caption
+            addCaptionToImage(actual, model)
+            if (showActual) ProcessInvoker.invoke("open", listOf(actual.absolutePath), null)
+        }
+
+        run {
+            // set up
+            val model = CaptionModel()
+            model.addCaptions(lines)
+            model.position = BOTTOM_RIGHT
+            model.setCaptionColor("gray")
+            val actual = newBaseFixture(baseFixture, "actual26.png")
+
+            // add caption
+            addCaptionToImage(actual, model)
+            if (showActual) ProcessInvoker.invoke("open", listOf(actual.absolutePath), null)
+        }
+
+        run {
+            // set up
+            val model = CaptionModel()
+            model.addCaptions(lines)
+            model.position = BOTTOM_RIGHT
+            model.setCaptionColor("green")
+            val actual = newBaseFixture(baseFixture, "actual27.png")
+
+            // add caption
+            addCaptionToImage(actual, model)
+            if (showActual) ProcessInvoker.invoke("open", listOf(actual.absolutePath), null)
+        }
+
+        run {
+            // set up
+            val model = CaptionModel()
+            model.addCaptions(lines)
+            model.position = BOTTOM_RIGHT
+            model.setCaptionColor("blue")
+            val actual = newBaseFixture(baseFixture, "actual28.png")
+
+            // add caption
+            addCaptionToImage(actual, model)
+            if (showActual) ProcessInvoker.invoke("open", listOf(actual.absolutePath), null)
+        }
+
+        run {
+            // set up
+            val model = CaptionModel()
+            model.addCaptions(lines)
+            model.position = BOTTOM_RIGHT
+            model.setCaptionColor("cyan")
+            // model.alpha = 1f
+            // model.alpha = 0.8f
+            val actual = newBaseFixture(baseFixture, "actual29.png")
+
+            // add caption
+            addCaptionToImage(actual, model)
+            if (showActual) ProcessInvoker.invoke("open", listOf(actual.absolutePath), null)
+        }
+
+        run {
+            // set up
+            val model = CaptionModel()
+            model.addCaptions(lines)
+            model.position = BOTTOM_RIGHT
+            model.setCaptionColor("pink")
+            val actual = newBaseFixture(baseFixture, "actual30.png")
+
+            // add caption
+            addCaptionToImage(actual, model)
+            if (showActual) ProcessInvoker.invoke("open", listOf(actual.absolutePath), null)
+        }
+
+        run {
+            // set up
+            val model = CaptionModel()
+            model.addCaptions(lines)
+            model.position = BOTTOM_RIGHT
+            model.setCaptionColor("magenta")
+            val actual = newBaseFixture(baseFixture, "actual31.png")
+
+            // add caption
+            addCaptionToImage(actual, model)
+            if (showActual) ProcessInvoker.invoke("open", listOf(actual.absolutePath), null)
         }
     }
 
