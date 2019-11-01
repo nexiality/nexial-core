@@ -320,6 +320,9 @@ public class ExecutionSummary {
             failCount += nested.failCount;
             warnCount += nested.warnCount;
             if (nested.executed == nested.passCount && nested.executed != 0) { totalLevelPassed++; }
+
+            if (nested.error != null && error == null) { error = nested.error; }
+            if (nested.errorStackTrace != null && errorStackTrace == null) { errorStackTrace = nested.errorStackTrace; }
         });
 
         importSysProps();

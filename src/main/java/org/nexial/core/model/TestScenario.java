@@ -49,9 +49,7 @@ public class TestScenario {
     private TestScenarioMeta meta;
     private ExecutionSummary executionSummary = new ExecutionSummary();
 
-    /**
-     * the section with the corresponding worksheet that has test steps
-     */
+    /** the section with the corresponding worksheet that has test steps */
     private ExcelArea area;
 
     private List<TestCase> testCases;
@@ -170,7 +168,7 @@ public class TestScenario {
         List<TestStep> testSteps = new ArrayList<>();
         for (int i = startRow; i <= endRow; i++) {
             TestStep testStep = getTestStepByRowIndex(i);
-            if (testStep != null) {testSteps.add(testStep); }
+            if (testStep != null) { testSteps.add(testStep); }
         }
         return testSteps;
     }
@@ -225,31 +223,42 @@ public class TestScenario {
         allSteps = new ArrayList<>();
         testStepsByRow = new HashMap<>();
 
+        String scenarioRef = "Error found in [" + worksheet.getFile().getName() + "][" + name + "]";
+
         // 3. parse for test steps->test case grouping
-        TestCase currentTestCase = null;
+        TestCase currentActivity = null;
         for (int i = 0; i < area.getWholeArea().size(); i++) {
             List<XSSFCell> row = area.getWholeArea().get(i);
 
-            XSSFCell cellTestCase = row.get(COL_IDX_TESTCASE);
-            String testCase = Excel.getCellValue(cellTestCase);
-            boolean hasTestCase = StringUtils.isNotBlank(testCase);
-            if (currentTestCase == null && !hasTestCase) {
+            XSSFCell cellActivity = row.get(COL_IDX_TESTCASE);
+            String errorPrefix = scenarioRef + "[" + cellActivity.getReference() + "]: ";
+            String activity = Excel.getCellValue(cellActivity);
+            if (StringUtils.isNotEmpty(activity) && StringUtils.isAllBlank(activity)) {
+                throw new RuntimeException(errorPrefix + "Found invalid, space-only activity name");
+            }
+
+            boolean hasActivity = StringUtils.isNotBlank(activity);
+            if (currentActivity == null && !hasActivity) {
                 // first row must define test case (hence at least 1 test case is required)
-                throw new RuntimeException("Invalid format found in " + worksheet.getFile() + " (" + name + "): " +
-                                           "Test case not found.");
+                throw new RuntimeException(errorPrefix + "Invalid format; First row must contain valid activity name");
             }
 
-            if (hasTestCase) {
-                currentTestCase = new TestCase();
-                currentTestCase.setName(testCase);
-                currentTestCase.setTestScenario(this);
-                testCases.add(currentTestCase);
-                testCaseMap.put(currentTestCase.getName(), currentTestCase);
+            if (hasActivity) {
+                if (testCaseMap.containsKey(activity)) {
+                    // found duplicate activity name!
+                    throw new RuntimeException(errorPrefix + "Found duplicate activity name '" + activity + "'");
+                }
+
+                currentActivity = new TestCase();
+                currentActivity.setName(activity);
+                currentActivity.setTestScenario(this);
+                testCases.add(currentActivity);
+                testCaseMap.put(currentActivity.getName(), currentActivity);
             }
 
-            TestStep testStep = new TestStep(currentTestCase, row);
+            TestStep testStep = new TestStep(currentActivity, row);
             if (testStep.isCommandRepeater()) { i += collectRepeatingCommandSet(testStep, area.getWholeArea(), i + 1); }
-            currentTestCase.addTestStep(testStep);
+            currentActivity.addTestStep(testStep);
             allSteps.add(testStep);
             testStepsByRow.put(row.get(0).getRowIndex() + 1, testStep);
         }
@@ -301,7 +310,7 @@ public class TestScenario {
             if (i == startFrom && !StringUtils.startsWith(nextStep.getCommand(), "assert")) {
                 String errMsg1 = "[ROW " + (startFrom + area.getTopLeft().getRowIndex()) + "] " +
                                  "wrong command for the first step.  First command MUST be an assertion " +
-                                 "(assert* command), not " + nextStep.getCommandFQN();
+                                 "(i.e., an assert*() command), not " + nextStep.getCommandFQN();
                 ConsoleUtils.error(errMsg1);
                 throw new RuntimeException(errMsg1);
             }

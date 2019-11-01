@@ -18,8 +18,7 @@ package org.nexial.core.plugins.base
 
 import com.google.gson.JsonObject
 import org.apache.commons.lang3.StringUtils
-import org.junit.Assert.assertEquals
-import org.junit.Assert.assertTrue
+import org.junit.Assert.*
 import org.junit.Test
 import org.nexial.core.ExcelBasedTests
 import org.nexial.core.NexialConst.GSON
@@ -128,6 +127,22 @@ class HeadlessBaseTests : ExcelBasedTests() {
         } finally {
             System.clearProperty("nexial.scriptRef.buildnum")
             System.clearProperty("nexial.generateReport")
+        }
+    }
+
+    @Test
+    @Throws(Exception::class)
+    fun parsingTest() {
+        listOf(Pair("duplicate_activity_name", "[A9]: Found duplicate activity name 'Activity1'"),
+               Pair("empty_activity_name", "[A7]: Found invalid, space-only activity name"),
+               Pair("no_activity_name", "[A5]: Invalid format; First row must contain valid activity name")).forEach {
+            val summary = testViaExcel("unitTest_bad_script.xlsx", it.first)
+            assertNotNull(summary)
+            assertEquals(0, summary.totalSteps)
+            assertEquals(0, summary.executed)
+            assertEquals(0, summary.passCount)
+            assertEquals(0, summary.failCount)
+            assertTrue(StringUtils.contains(summary.errorStackTrace, "[${it.first}]${it.second}"))
         }
     }
 }

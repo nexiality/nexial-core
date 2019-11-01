@@ -201,19 +201,29 @@ data class InteractiveSession(val context: ExecutionContext) {
         val stepArea = ExcelAddress("$FIRST_STEP_ROW:$COL_REASON$lastCommandRow")
         val area = ExcelArea(worksheet, stepArea, false)
 
+        val scenarioRef = "Error found in [${worksheet.file.name}][${worksheet.name}]"
+
         var currentActivity = ""
         var i = 0
         while (i < area.wholeArea.size) {
             val row = area.wholeArea[i]
+            val errorPrefix = "$scenarioRef[${row[COL_IDX_TESTCASE].reference}]: "
             val activityName = Excel.getCellValue(row[COL_IDX_TESTCASE])
             if (i == 0 && StringUtils.isBlank(activityName)) {
-                ConsoleUtils.error("first row in Scenario '$scenario' must contain a valid activity name!")
-                break
+                throw RuntimeException("$errorPrefix Invalid format; First row must contain valid activity name")
+            }
+
+            if (StringUtils.isNotEmpty(activityName) && StringUtils.isAllBlank(activityName)) {
+                throw RuntimeException("$errorPrefix Found invalid, space-only activity name")
             }
 
             val currentRow = "" + (row[COL_IDX_COMMAND].rowIndex + 1)
 
             if (StringUtils.isNotBlank(activityName)) {
+                if (allActivities.containsValue(activityName)) {
+                    throw RuntimeException("$errorPrefix Found duplicate activity name '$activityName'")
+                }
+
                 allActivities[allActivities.size + 1] = activityName
 
                 if (StringUtils.isEmpty(currentActivity)) {
@@ -324,7 +334,7 @@ data class InteractiveSession(val context: ExecutionContext) {
     //    private fun formatActivity(activity: Entry<Int, String>) = "${activity.key}/${activity.value}"
     //    fun formatActivities(activities: MutableMap<Int, String>) = activities.map { activity -> formatActivity(activity) }
     fun formatActivities(activities: MutableList<String>) =
-        activities.map { activity -> "${allActivities.getKey(activity)}/$activity" }
+            activities.map { activity -> "${allActivities.getKey(activity)}/$activity" }
 
     private val activityStepMap: MutableMap<String, MutableList<String>> = mutableMapOf()
 
