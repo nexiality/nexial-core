@@ -24,6 +24,7 @@
 
   <script src="http://nexiality.github.io/documentation/assets/project/datatables.min.js" onerror="externalResourceNotFound()"></script>
   <script src="http://nexiality.github.io/documentation/assets/project/w2ui-1.5.rc1.min.js" onerror="externalResourceNotFound()"></script>
+  <script src="http://nexiality.github.io/documentation/assets/project/Chart.bundle.min.js" onerror="externalResourceNotFound()"></script>
   <script src="http://nexiality.github.io/documentation/assets/report/execution_summary.js" onerror="externalResourceNotFound()"></script>
   <script src="http://nexiality.github.io/documentation/assets/metrics/browser-metrics.js" onerror="externalResourceNotFound()"></script>
   <title>Browser Performance Metrics</title>
@@ -38,6 +39,13 @@
 </div>
 
 <div id="app">
+</div>
+
+<div id="chart_popup" style="display:none;">
+  <div rel="title">Visualization</div>
+  <div rel="body">
+    <canvas id="metrics_chart" class="metrics_chart"></canvas>
+  </div>
 </div>
 
 <br/>

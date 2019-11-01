@@ -402,28 +402,22 @@ public class TestScriptUpdater {
                 if (CommandConst.getReplacedCommands().containsKey(targetCommand)) {
                     // found old command, let's replace it with new one
                     String newCommand = CommandConst.getReplacedCommands().get(targetCommand);
-                    if (cellTarget != null) {
-                        cellTarget.setCellValue(StringUtils.substringBefore(newCommand, "."));
-                    }
-                    if (cellCommand != null) {
-                        cellCommand.setCellValue(StringUtils.substringAfter(newCommand, "."));
-                    }
+                    if (cellTarget != null) { cellTarget.setCellValue(StringUtils.substringBefore(newCommand, ".")); }
+                    if (cellCommand != null) { cellCommand.setCellValue(StringUtils.substringAfter(newCommand, ".")); }
 
                     targetCommand = newCommand;
                     excelUpdated = true;
                 }
 
                 // todo: correct scripts with outdated commands
-                // todo: desktop.scanTable --> desktop.useTable
-                // todo: desktop.useTableRow --> MESSAGE NOT NEED, CHANGE TO USE desktop.editTableCell
-                // todo: desktop.editCurrentRow --> MESSAGE NOT NEED, CHANGE TO USE desktop.editTableCell
                 // todo: desktop.get*** --> desktop.save***
 
                 // check for warning/suggest
+                String commandDisplay = target + " » " + command;
                 if (CommandConst.getCommandSuggestions().containsKey(targetCommand)) {
                     String suggestion = CommandConst.getCommandSuggestions().get(targetCommand);
                     System.err.println("\t!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!");
-                    System.err.println("\tRow " + rowIndex + ": " + target + " » " + command);
+                    System.err.println("\tRow " + rowIndex + ": " + commandDisplay);
                     System.err.println("\t" + suggestion);
                     System.err.println("\t!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!");
                 }
@@ -434,35 +428,30 @@ public class TestScriptUpdater {
                                                                 .findFirst();
                 if (!matchedCommand.isPresent()) {
                     // for every unknown command, spit out an error
-                    System.err.println("\tInvalid command: " + targetCommand);
+                    System.err.println("\tInvalid command: " + commandDisplay);
                     continue;
                 }
 
                 // check param count
-                if (PARAM_AUTO_FILL_COMMANDS.contains(StringUtils.substringBeforeLast(targetCommand, "("))) {
-                    // special case: some commands will automatically fill missing/undefined cells during the call
-                    continue;
-                }
 
-                List<String> paramList = TextUtils.toList(StringUtils.substringBetween(matchedCommand.get(), "(", ")"),
-                                                          ",",
-                                                          true);
+                // special case: some commands will automatically fill missing/undefined cells during the call
+                if (PARAM_AUTO_FILL_COMMANDS.contains(StringUtils.substringBeforeLast(targetCommand, "("))) { continue;}
+
+                List<String> paramList =
+                    TextUtils.toList(StringUtils.substringBetween(matchedCommand.get(), "(", ")"), ",", true);
                 int paramCount = CollectionUtils.size(paramList);
 
                 List<String> paramValues = TestStep.readParamValues(row);
                 int paramValuesCount = CollectionUtils.size(paramValues);
                 if (paramValuesCount != paramCount) {
-                    System.err.println("\tWrong number of parameters for command " + targetCommand +
-                                       ": expected " + paramCount + " parameter(s) but found " + paramValuesCount);
+                    System.err.println("\tPossibly error on the parameter(s) for " + commandDisplay + ": " +
+                                       "expected " + paramCount + " parameter(s) but found " + paramValuesCount);
                 }
 
                 for (int k = 0; k < paramCount; k++) {
                     if (StringUtils.isBlank(Excel.getCellValue(row.get(COL_IDX_PARAMS_START + k)))) {
-                        System.err.println("\tWrong number of parameters for command " +
-                                           targetCommand +
-                                           ": no data/value found for parameter '" +
-                                           IterableUtils.get(paramList, k) +
-                                           "'");
+                        System.err.println("\tPossible error on the parameter(s) for " + commandDisplay + ": " +
+                                           "no value found for parameter '" + IterableUtils.get(paramList, k) + "'");
                     }
                 }
             }

@@ -257,8 +257,8 @@ public class TestStep extends TestStepManifest {
 
         // step 2: write error to file for RCA
         // determine the file to send log
-        File log = new File(new Syspath().log("fullpath") + separator +
-                            OutputFileUtils.generateOutputFilename(this, ".log"));
+        Syspath syspath = new Syspath();
+        File log = new File(syspath.log("fullpath") + separator + OutputFileUtils.generateOutputFilename(this, ".log"));
 
         // build error content
         StringBuilder buffer = new StringBuilder();
@@ -290,7 +290,7 @@ public class TestStep extends TestStepManifest {
         } else {
             error = StringUtils.defaultString(e.getMessage(), e.toString());
         }
-        error += ". Check corresponding error log for details - " + log.getName();
+        error += ". Check corresponding error log for details: " + syspath.log("name") + separator + log.getName();
 
         // print a lot or a little
         if (context.getBooleanData(OPT_PRINT_ERROR_DETAIL, getDefaultBool(OPT_PRINT_ERROR_DETAIL))) {

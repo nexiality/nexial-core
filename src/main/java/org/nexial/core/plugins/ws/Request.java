@@ -46,6 +46,7 @@ public abstract class Request implements Serializable {
     protected String url;
     protected int connectionTimeout;
     protected int socketTimeout;
+    protected boolean keepAlive;
     protected boolean enableRedirects;
     protected boolean enableExpectContinue;
     protected boolean allowCircularRedirects;
@@ -59,6 +60,7 @@ public abstract class Request implements Serializable {
 
         int defaultWsConnTimeout = getDefaultInt(WS_CONN_TIMEOUT);
         int defaultWsReadTimeout = getDefaultInt(WS_READ_TIMEOUT);
+        boolean defaultKeepAlive = getDefaultBool(WS_KEEP_ALIVE);
         boolean defaultEnableRedirect = getDefaultBool(WS_ENABLE_REDIRECTS);
         boolean defaultExpectContinue = getDefaultBool(WS_ENABLE_EXPECT_CONTINUE);
         boolean defaultWsCircularRedirect = getDefaultBool(WS_ALLOW_CIRCULAR_REDIRECTS);
@@ -66,6 +68,7 @@ public abstract class Request implements Serializable {
         if (context == null) {
             setConnectionTimeout(defaultWsConnTimeout);
             setSocketTimeout(defaultWsReadTimeout);
+            setKeepAlive(defaultKeepAlive);
             setEnableExpectContinue(defaultExpectContinue);
             setEnableRedirects(defaultEnableRedirect);
             setAllowCircularRedirects(defaultWsCircularRedirect);
@@ -74,6 +77,7 @@ public abstract class Request implements Serializable {
         } else {
             setConnectionTimeout(context.getIntData(WS_CONN_TIMEOUT, defaultWsConnTimeout));
             setSocketTimeout(context.getIntData(WS_READ_TIMEOUT, defaultWsReadTimeout));
+            setKeepAlive(context.getBooleanData(WS_KEEP_ALIVE, defaultKeepAlive));
             setEnableExpectContinue(context.getBooleanData(WS_ENABLE_EXPECT_CONTINUE, defaultExpectContinue));
             setEnableRedirects(context.getBooleanData(WS_ENABLE_REDIRECTS, defaultEnableRedirect));
             setAllowCircularRedirects(context.getBooleanData(WS_ALLOW_CIRCULAR_REDIRECTS, defaultWsCircularRedirect));
@@ -112,6 +116,10 @@ public abstract class Request implements Serializable {
     public int getSocketTimeout() { return socketTimeout; }
 
     public void setSocketTimeout(int socketTimeout) { this.socketTimeout = socketTimeout; }
+
+    public boolean isKeepAlive() { return keepAlive; }
+
+    public void setKeepAlive(boolean keepAlive) { this.keepAlive = keepAlive; }
 
     public boolean isEnableRedirects() { return enableRedirects; }
 

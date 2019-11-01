@@ -1,1 +1,1 @@
-metrics.FirstResponseTime = JSON.parse(localStorage.getItem('n')).map(x => x.responseStart - x.requestStart).pop();
+metrics.FirstResponseTime = formatPerfNum(JSON.parse(localStorage.getItem('n')).map(x => x.responseStart - x.requestStart).pop());

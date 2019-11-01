@@ -1,1 +1,1 @@
-metrics.TTLB = JSON.parse(localStorage.getItem('n')).map(x => x.responseEnd - x.startTime).pop();
+metrics.TTLB = formatPerfNum(JSON.parse(localStorage.getItem('n')).map(x => x.responseEnd - x.startTime).pop());

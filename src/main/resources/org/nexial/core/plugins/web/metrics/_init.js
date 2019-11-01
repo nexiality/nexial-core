@@ -36,34 +36,20 @@ if (isNavigation) {
   localStorage.setItem('p', JSON.stringify(p.flat()));
 }
 
-var metrics = {};
+function formatPerfNum(/*Number*/num) {
+  if (!num || isNaN(num)) {
+    console.log("situation a: " + num);
+    return num;
+  } else {
+    var num1 = num.toFixed(2);
+    if (num1) {
+      console.log("situation b: " + num);
+      return parseFloat(num1);
+    } else {
+      console.log("situation c: " + num);
+      return num;
+    }
+  }
+}
 
-// var a                 = window.performance.timing;
-// var pageCompleteTime  = a.domComplete - a.navigationStart;
-// var timeToInteractive = a.domInteractive - a.navigationStart;
-// var ttlb              = a.responseEnd - a.navigationStart;
-// var ttfb              = a.responseStart - a.navigationStart;
-// var latency           = a.responseStart - a.fetchStart;
-// var dns               = a.domainLookupEnd - a.domainLookupStart;
-// var tcp               = a.connectEnd - a.connectStart;
-// var firstResponseTime = a.responseStart - a.requestStart;
-// var downloadTime      = a.responseEnd - a.responseStart;
-// var firstInteractive  = a.domInteractive - a.domLoading;
-// var pageReady         = a.domComplete - a.domInteractive;
-// var domContentLoaded  = a.domComplete - a.domLoading;
-// var onloadTime        = a.loadEventEnd - a.loadEventStart;
-//
-// var textContent =
-//       '(loaded) page-complete-time : ' + pageCompleteTime + 'ms\n' +
-//       'time-to-interactive: ' + timeToInteractive + 'ms\n' +
-//       'time-to-last-byte  : ' + ttlb + 'ms\n' +
-//       'time-to-first-byte : ' + ttfb + 'ms\n' +
-//       'latency            : ' + latency + 'ms\n' +
-//       'network-overhead   : ' + (dns + tcp) + 'ms\n' +
-//       'first-response-time: ' + firstResponseTime + 'ms\n' +
-//       'download-time      : ' + downloadTime + 'ms\n' +
-//       'first-interactive  : ' + firstInteractive + 'ms\n' +
-//       'page-ready         : ' + pageReady + 'ms\n' +
-//       'dom-content-loaded : ' + domContentLoaded + 'ms\n' +
-//       'on-load            : ' + onloadTime + 'ms\n';
-// console.log(textContent);
+var metrics = {};

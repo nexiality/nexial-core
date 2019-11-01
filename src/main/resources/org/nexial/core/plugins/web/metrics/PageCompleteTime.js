@@ -1,1 +1,1 @@
-metrics.PageCompleteTime = JSON.parse(localStorage.getItem('n')).map(x => x.domComplete - x.startTime).pop();
+metrics.PageCompleteTime = formatPerfNum(JSON.parse(localStorage.getItem('n')).map(x => x.domComplete - x.startTime).pop());

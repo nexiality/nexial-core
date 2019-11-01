@@ -1,1 +1,1 @@
-metrics.BackendTime = JSON.parse(localStorage.getItem('n')).map(x => x.responseEnd - x.startTime).pop();
+metrics.BackendTime = formatPerfNum(JSON.parse(localStorage.getItem('n')).map(x => x.responseEnd - x.startTime).pop());

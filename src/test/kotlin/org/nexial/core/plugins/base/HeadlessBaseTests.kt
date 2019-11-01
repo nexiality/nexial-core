@@ -133,9 +133,11 @@ class HeadlessBaseTests : ExcelBasedTests() {
     @Test
     @Throws(Exception::class)
     fun parsingTest() {
+
         listOf(Pair("duplicate_activity_name", "[A9]: Found duplicate activity name 'Activity1'"),
                Pair("empty_activity_name", "[A7]: Found invalid, space-only activity name"),
                Pair("no_activity_name", "[A5]: Invalid format; First row must contain valid activity name")).forEach {
+
             val summary = testViaExcel("unitTest_bad_script.xlsx", it.first)
             assertNotNull(summary)
             assertEquals(0, summary.totalSteps)
@@ -143,6 +145,7 @@ class HeadlessBaseTests : ExcelBasedTests() {
             assertEquals(0, summary.passCount)
             assertEquals(0, summary.failCount)
             assertTrue(StringUtils.contains(summary.errorStackTrace, "[${it.first}]${it.second}"))
+
         }
     }
 }

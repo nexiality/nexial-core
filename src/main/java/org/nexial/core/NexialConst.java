@@ -1388,9 +1388,9 @@ public final class NexialConst {
         public static final String WS_LOG_DETAIL = registerSysVar(NS_WS + "logDetail", false);
         public static final String WS_REQ_FILE_AS_RAW = registerSysVar(NS_WS + "requestPayloadAsRaw", false);
         public static final String WS_REQ_PAYLOAD_COMPACT = registerSysVar(NS_WS + "requestPayloadCompact", false);
+        public static final String WS_KEEP_ALIVE = registerSysVar(NS_WS + "keepAlive", true);
         public static final String WS_ALLOW_RELATIVE_REDIRECTS = registerSysVar(NS_WS + "allowRelativeRedirects", true);
-        public static final String WS_ALLOW_CIRCULAR_REDIRECTS = registerSysVar(NS_WS + "allowCircularRedirects",
-                                                                                false);
+        public static final String WS_ALLOW_CIRCULAR_REDIRECTS =registerSysVar(NS_WS + "allowCircularRedirects", false);
         public static final String WS_ENABLE_EXPECT_CONTINUE = registerSysVar(NS_WS + "enableExpectContinue", true);
         public static final String WS_ENABLE_REDIRECTS = registerSysVar(NS_WS + "enableRedirects", true);
         public static final String WS_READ_TIMEOUT = registerSysVar(NS_WS + "readTimeout", 5 * 60 * 1000);
