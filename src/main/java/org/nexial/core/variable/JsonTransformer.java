@@ -55,6 +55,7 @@ import static org.nexial.core.NexialConst.Data.TREAT_JSON_AS_IS;
 import static org.nexial.core.SystemVariables.getDefault;
 import static org.nexial.core.SystemVariables.getDefaultBool;
 import static org.nexial.core.utils.CheckUtils.requiresNotNull;
+import static org.nexial.core.variable.ExpressionUtils.fixControlChars;
 
 public class JsonTransformer<T extends JsonDataType> extends Transformer {
     private static final Map<String, Integer> FUNCTION_TO_PARAM_LIST = discoverFunctions(JsonTransformer.class);
@@ -67,10 +68,15 @@ public class JsonTransformer<T extends JsonDataType> extends Transformer {
     public ListDataType list(T data) {
         if (data == null || data.getValue() == null) { return null; }
 
+        ExecutionContext context = ExecutionThread.get();
+        String delim = fixControlChars(context == null ? getDefault(TEXT_DELIM) : context.getTextDelim());
+
         try {
             if (data.getValue() instanceof JsonArray) {
                 JsonArray array = (JsonArray) data.getValue();
-                return new ListDataType(StringUtils.substringBetween(array.toString(), "[", "]"));
+                StringBuilder value = new StringBuilder();
+                array.forEach(jsonObject -> value.append(jsonObject.toString()).append(delim));
+                return new ListDataType(StringUtils.removeEnd(value.toString(), delim));
             }
 
             if (data.getValue() instanceof JsonPrimitive) {
