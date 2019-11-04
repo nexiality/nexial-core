@@ -32,15 +32,12 @@ import org.apache.commons.lang3.math.NumberUtils;
 import org.apache.commons.lang3.time.StopWatch;
 import org.nexial.commons.utils.RegexUtils;
 import org.nexial.commons.utils.TextUtils;
-import org.nexial.core.NexialConst.*;
+import org.nexial.core.NexialConst.ImageDiffColor;
 import org.nexial.core.model.StepResult;
 import org.nexial.core.plugins.ForcefulTerminate;
 import org.nexial.core.plugins.base.BaseCommand;
 import org.nexial.core.utils.ConsoleUtils;
 
-import static java.awt.RenderingHints.*;
-import static java.awt.image.BufferedImage.*;
-import static java.io.File.separator;
 import static org.nexial.core.NexialConst.Image.*;
 import static org.nexial.core.NexialConst.Image.ImageType.png;
 import static org.nexial.core.SystemVariables.getDefault;
@@ -49,7 +46,6 @@ import static org.nexial.core.utils.CheckUtils.*;
 
 public class ImageCommand extends BaseCommand implements ForcefulTerminate {
     protected static final DecimalFormat IMAGE_PERCENT_FORMAT = new DecimalFormat("##.00");
-
     protected boolean mustForcefullyTerminate;
 
     @Override
@@ -57,38 +53,26 @@ public class ImageCommand extends BaseCommand implements ForcefulTerminate {
 
     public StepResult convert(String source, String format, String saveTo) throws IOException {
         requiresReadableFileOrValidUrl(source);
-
         requires(StringUtils.isNotBlank(format), "missing format", format);
-        ImageType type;
-        try {
-            type = ImageType.valueOf(StringUtils.lowerCase(format));
-        } catch (IllegalArgumentException e) {
-            fail("Invalid/unsupported image format: " + format + ".  Supported formats are png, jpg, gif, bmp");
-            return null;
-        }
 
         mustForcefullyTerminate = true;
 
         // create a blank, RGB, same width and height, and a white background
         File srcFile = resolveFileResource(source);
-        String sourceExt = StringUtils.substringAfterLast(srcFile.getAbsolutePath(), ".");
-        String targetExt = type.name();
-        if (StringUtils.equalsIgnoreCase(sourceExt, targetExt)) {
-            return StepResult.success("source and target format are the same; no conversion needed");
+        try {
+            BufferedImage img = ImageIO.read(srcFile);
+            if (img == null) { return StepResult.fail("File '" + source + "' CANNOT be read as an image"); }
+
+            String srcFileName = srcFile.getName();
+            BufferedImage dest = ImageUtils.convert(img, StringUtils.substringAfterLast(srcFileName, "."), format);
+            File saveFile = writeProcessedImage(dest, saveTo, srcFileName);
+            String message = "image '" + source + "' converted to '" + saveFile.getAbsolutePath() + "'";
+            log(message);
+            return StepResult.success(message);
+        } catch (IllegalArgumentException e) {
+            return StepResult.fail("Invalid/unsupported image format: " + format + ". " +
+                                   "Supported formats are png, jpg, gif, bmp");
         }
-
-        BufferedImage srcImage = ImageIO.read(srcFile);
-        BufferedImage saveImage = new BufferedImage(srcImage.getWidth(), srcImage.getHeight(), type.getImageType());
-        saveImage.createGraphics().drawImage(srcImage, 0, 0, null);
-        // saveImage.createGraphics().drawImage(srcImage, 0, 0, WHITE, null);
-
-        // write to new file
-        File saveFile = resolveSaveTo(saveTo, StringUtils.substringAfterLast(srcFile.getAbsolutePath(), separator));
-        ImageIO.write(saveImage, targetExt, saveFile);
-
-        String message = "image '" + source + "' converted to '" + saveFile.getAbsolutePath() + "'";
-        log(message);
-        return StepResult.success(message);
     }
 
     public StepResult crop(String image, String dimension, String saveTo) throws IOException {
@@ -105,26 +89,18 @@ public class ImageCommand extends BaseCommand implements ForcefulTerminate {
         int x = NumberUtils.toInt(StringUtils.trim(split[0]));
         int y = NumberUtils.toInt(StringUtils.trim(split[1]));
         String width = StringUtils.trim(split[2]);
+        int w = StringUtils.equals(width, "*") ? -1 : NumberUtils.toInt(width);
         String height = StringUtils.trim(split[3]);
+        int h = StringUtils.equals(height, "*") ? -1 : NumberUtils.toInt(height);
 
         mustForcefullyTerminate = true;
 
-        //fill in the corners of the desired crop location here
         File imageFile = resolveFileResource(image);
-        BufferedImage existing = ImageIO.read(imageFile);
-        int w = StringUtils.equals(width, "*") ? existing.getWidth() - x : NumberUtils.toInt(width);
-        int h = StringUtils.equals(height, "*") ? existing.getHeight() - y : NumberUtils.toInt(height);
+        BufferedImage img = ImageIO.read(imageFile);
+        if (img == null) { return StepResult.fail("File '" + image + "' CANNOT be read as an image"); }
 
-        BufferedImage newImage = existing.getSubimage(x, y, w, h);
-        BufferedImage cropped = new BufferedImage(newImage.getWidth(), newImage.getHeight(), TYPE_INT_RGB);
-        Graphics g = cropped.createGraphics();
-        g.drawImage(newImage, 0, 0, null);
-
-        String ext = StringUtils.lowerCase(StringUtils.substringAfterLast(image, "."));
-        File saveFile = resolveSaveTo(saveTo, StringUtils.substringAfterLast(imageFile.getAbsolutePath(), separator));
-        ImageIO.write(cropped, ext, saveFile);
-
-        String message = "image cropped and saved to '" + saveTo + "'";
+        File saveFile = writeProcessedImage(ImageUtils.crop(img, x, y, w, h), saveTo, imageFile.getName());
+        String message = "image cropped and saved to '" + saveFile.getAbsolutePath() + "'";
         log(message);
         return StepResult.success(message);
     }
@@ -132,40 +108,27 @@ public class ImageCommand extends BaseCommand implements ForcefulTerminate {
     public StepResult resize(String image, String width, String height, String saveTo) throws IOException {
         requiresReadableFileOrValidUrl(image);
 
+        width = StringUtils.equals(width, "*") ? "-1" : width;
+        requires(NumberUtils.isDigits(width), "invalid width", width);
+
+        height = StringUtils.equals(height, "*") ? "-1" : height;
+        requires(NumberUtils.isDigits(height), "invalid height", height);
+
         mustForcefullyTerminate = true;
 
         File imageFile = resolveFileResource(image);
         BufferedImage img = ImageIO.read(imageFile);
-        width = StringUtils.equals(width, "*") ? "" + img.getWidth() : width;
-        requires(NumberUtils.isDigits(width), "invalid width", width);
-        int w = NumberUtils.toInt(width);
+        if (img == null) { return StepResult.fail("File '" + image + "' CANNOT be read as an image"); }
 
-        height = StringUtils.equals(height, "*") ? "" + img.getHeight() : height;
-        requires(NumberUtils.isDigits(height), "invalid height", height);
-        int h = NumberUtils.toInt(height);
-
-        BufferedImage resizedImage = new BufferedImage(w, h, TYPE_INT_RGB);
-
-        Graphics2D g = resizedImage.createGraphics();
-        g.drawImage(img, 0, 0, w, h, null);
-        g.dispose();
-        g.setComposite(AlphaComposite.Src);
-        g.setRenderingHint(KEY_INTERPOLATION, VALUE_INTERPOLATION_BILINEAR);
-        g.setRenderingHint(KEY_RENDERING, VALUE_RENDER_QUALITY);
-        g.setRenderingHint(KEY_ANTIALIASING, VALUE_ANTIALIAS_ON);
-
-        String ext = StringUtils.lowerCase(StringUtils.substringAfterLast(image, "."));
-        File saveFile = resolveSaveTo(saveTo, StringUtils.substringAfterLast(imageFile.getAbsolutePath(), separator));
-        ImageIO.write(resizedImage, ext, saveFile);
-
-        String message = "image resized and save to '" + saveTo + "'";
+        BufferedImage resized = ImageUtils.resize(img, NumberUtils.toInt(width), NumberUtils.toInt(height));
+        File saveFile = writeProcessedImage(resized, saveTo, imageFile.getName());
+        String message = "image resized and saved to '" + saveFile.getAbsolutePath() + "'";
         log(message);
         return StepResult.success(message);
     }
 
     public StepResult compare(String baseline, String actual) throws IOException {
-        logDeprecated(getTarget() + " » compare(baseline,actual)",
-                      getTarget() + " » saveDiff(baseline,actual,var)");
+        logDeprecated(getTarget() + " » compare(baseline,actual)", getTarget() + " » saveDiff(baseline,actual,var)");
         return saveDiff(OPT_LAST_IMAGES_DIFF, baseline, actual);
     }
 
@@ -186,32 +149,33 @@ public class ImageCommand extends BaseCommand implements ForcefulTerminate {
 
         StopWatch watch = new StopWatch();
         watch.start();
+
         try {
             BufferedImage image1 = ImageIO.read(baselineFile);
-            BufferedImage image2 = ImageIO.read(testFile);
+            if (image1 == null) { return StepResult.fail("File '" + baseline + "' CANNOT be read as an image"); }
 
-            boolean trim = context.getBooleanData(OPT_TRIM_BEFORE_DIFF, getDefaultBool(OPT_TRIM_BEFORE_DIFF));
-            if (trim) {
-                Color trimColor = getTrimColor();
-                if (trimColor != null) {
-                    image1 = trimImage(image1, trimColor);
-                    image2 = trimImage(image2, trimColor);
-                }
+            BufferedImage image2 = ImageIO.read(testFile);
+            if (image2 == null) { return StepResult.fail("File '" + actual + "' CANNOT be read as an image"); }
+
+            Color trimColor = resolveTrimColor();
+            if (trimColor != null) {
+                image1 = ImageUtils.trimOffOuterColor(image1, trimColor);
+                image2 = ImageUtils.trimOffOuterColor(image2, trimColor);
             }
 
             ImageComparison imageComparison = new ImageComparison(image1, image2);
             float matchPercent = imageComparison.getMatchPercent();
             String stats = formatToleranceMessage(matchPercent, imageTol);
-            ImageComparisonMeta imageComparisonMeta;
             if ((matchPercent + imageTol) < 100) {
                 BufferedImage outImage = imageComparison.compareImages(color);
+
                 // find all differences in images
-                imageComparisonMeta = new ImageComparisonMeta(baselineFile.getAbsolutePath(),
-                                                              testFile.getAbsolutePath(),
-                                                              imageComparison.getDifferences(),
-                                                              matchPercent,
-                                                              imageTol, trim);
-                context.setData(var, imageComparisonMeta);
+                context.setData(var, new ImageComparisonMeta(baselineFile.getAbsolutePath(),
+                                                             testFile.getAbsolutePath(),
+                                                             imageComparison.getDifferences(),
+                                                             matchPercent,
+                                                             imageTol,
+                                                             trimColor != null));
                 log("Image comparison meta is saved to variable '" + var + "'");
 
                 String msg = "Difference between baseline and actual BEYOND tolerance " + stats;
@@ -220,12 +184,13 @@ public class ImageCommand extends BaseCommand implements ForcefulTerminate {
             } else {
                 String msg = "Difference between baseline and actual within tolerance " + stats;
                 log(msg);
-                imageComparisonMeta = new ImageComparisonMeta(baselineFile.getAbsolutePath(),
-                                                              testFile.getAbsolutePath(),
-                                                              new ArrayList<>(),
-                                                              matchPercent,
-                                                              imageTol, trim);
-                context.setData(var, imageComparisonMeta);
+
+                context.setData(var, new ImageComparisonMeta(baselineFile.getAbsolutePath(),
+                                                             testFile.getAbsolutePath(),
+                                                             new ArrayList<>(),
+                                                             matchPercent,
+                                                             imageTol,
+                                                             trimColor != null));
                 log("Image comparison meta is saved to variable '" + var + "'");
                 return StepResult.success("baseline and test images are same " + stats);
             }
@@ -246,103 +211,20 @@ public class ImageCommand extends BaseCommand implements ForcefulTerminate {
 
         // get image
         File imageFile = resolveFileResource(source);
-        BufferedImage img;
         try {
-            img = ImageIO.read(imageFile);
+            BufferedImage img = ImageIO.read(imageFile);
             if (img == null) { return StepResult.fail("File '" + source + "' CANNOT be read as an image"); }
+
+            File saveFile = writeProcessedImage(ImageUtils.convertColorBit(img, targetImageBit),
+                                                saveTo,
+                                                imageFile.getName());
+            String message = "File '" + source + "' color bit converted to " + targetImageBit + " and saved to " +
+                             saveFile.getAbsolutePath();
+            log(message);
+            return StepResult.success(message);
         } catch (IOException e) {
             return StepResult.fail("Unable to read image '" + imageFile.getAbsolutePath() + "': " + e.getMessage());
         }
-
-        int imgBit = img.getColorModel().getPixelSize();
-        if (imgBit <= targetImageBit) {
-            String message = "color bit of source image(" + imgBit + ") is equal/less than target bit("
-                             + targetImageBit + "); no conversion needed";
-            log(message);
-            return StepResult.success(message);
-        }
-
-        String defaultFileName = StringUtils.substringAfterLast(imageFile.getAbsolutePath(), separator);
-        File saveFile = resolveSaveTo(saveTo, defaultFileName);
-
-        String targetExt = StringUtils.lowerCase(StringUtils.substringAfterLast(imageFile.getAbsolutePath(), "."));
-        ImageIO.write(BitDepthConversion.changeColorBit(img, targetImageBit), targetExt, saveFile);
-
-        String message = "Image color bit is converted from " + imgBit + " to " + targetImageBit;
-        log(message);
-        return StepResult.success(message);
-    }
-
-    // Supported RGB color space as integers only.
-    private Color getTrimColor() {
-        String rgbComponent = context.getStringData(OPT_IMAGE_TRIM_COLOR, getDefault(OPT_IMAGE_TRIM_COLOR));
-        List<Integer> rgbComponentAsList = TextUtils.toList(rgbComponent, ",", true)
-                                                     .stream().map(Integer::parseInt).collect(Collectors.toList());
-        if (rgbComponentAsList.size() != 3) {
-           throw new ArrayIndexOutOfBoundsException("RGB color space for trimming is not specified correctly;");
-        }
-        return new Color(rgbComponentAsList.get(0), rgbComponentAsList.get(1), rgbComponentAsList.get(2));
-    }
-
-    private BufferedImage trimImage(BufferedImage image, Color color) {
-        int num = 0;
-        // Trimming left side white spaces
-        int height = image.getHeight();
-        int width = image.getWidth();
-        for (int i = 0; i < width; i++) {
-            if (!isMatched1(image, i, color)) { break; }
-            num++;
-        }
-        int x = num < MIN_TRIM_SPACES ? 0 : num;
-
-        num = 0;
-        // Trimming top side white spaces
-        for (int j = 0; j < height; j++) {
-            if (!isMatched2(image, j, color)) { break; }
-            num++;
-        }
-        int y = num < MIN_TRIM_SPACES ? 0 : num;
-        if (x == width && y == height) { return image; }
-
-        num = 0;
-        // Trimming right side white spaces
-        for (int i = width - 1; i >= 0; i--) {
-            if (!isMatched1(image, i, color)) { break; }
-            num++;
-        }
-        width = width - (num < MIN_TRIM_SPACES ? 0 : num) - x;
-
-        num = 0;
-        // Trimming bottom side white spaces
-        for (int j = height - 1; j >= 0; j--) {
-            if (!isMatched2(image, j, color)) { break; }
-            num++;
-        }
-        height = height - (num < MIN_TRIM_SPACES ? 0 : num) - y;
-        // return cropped image using dimensions
-        return image.getSubimage(x, y, width, height);
-    }
-
-    private boolean isMatched1(BufferedImage image, int i, Color color) {
-        boolean isMatched = true;
-        for (int j = 0; j < image.getHeight(); j++) {
-            if (image.getRGB(i, j) != color.getRGB()) {
-                isMatched = false;
-                break;
-            }
-        }
-        return isMatched;
-    }
-
-    private boolean isMatched2(BufferedImage image, int j, Color color) {
-        boolean isMatched = true;
-        for (int i = 0; i < image.getWidth(); i++) {
-            if (image.getRGB(i, j) != color.getRGB()) {
-                isMatched = false;
-                break;
-            }
-        }
-        return isMatched;
     }
 
     @Override
@@ -350,6 +232,13 @@ public class ImageCommand extends BaseCommand implements ForcefulTerminate {
 
     @Override
     public void forcefulTerminate() { }
+
+    protected File writeProcessedImage(BufferedImage img, String saveTo, String filename) throws IOException {
+        File saveFile = resolveSaveTo(saveTo, filename);
+        ImageType imageType = ImageUtils.toSupportedFormat(StringUtils.substringAfterLast(filename, "."));
+        ImageIO.write(img, imageType.name(), saveFile);
+        return saveFile;
+    }
 
     protected String formatToleranceMessage(float match, float tolerance) {
         StringBuilder str = new StringBuilder("(");
@@ -359,4 +248,19 @@ public class ImageCommand extends BaseCommand implements ForcefulTerminate {
         str.append("Match: ").append(IMAGE_PERCENT_FORMAT.format(match)).append("%)");
         return str.toString();
     }
+
+    // Supported RGB color space as integers only.
+    private Color resolveTrimColor() {
+        boolean trim = context.getBooleanData(OPT_TRIM_BEFORE_DIFF, getDefaultBool(OPT_TRIM_BEFORE_DIFF));
+        if (!trim) { return null; }
+
+        String rgbComponent = context.getStringData(OPT_IMAGE_TRIM_COLOR, getDefault(OPT_IMAGE_TRIM_COLOR));
+        List<Integer> rgb = TextUtils.toList(rgbComponent, ",", true)
+                                     .stream().map(Integer::parseInt).collect(Collectors.toList());
+        if (rgb.size() != 3) {
+            throw new ArrayIndexOutOfBoundsException("RGB color for trimming is not specified correctly");
+        }
+        return new Color(rgb.get(0), rgb.get(1), rgb.get(2));
+    }
+
 }

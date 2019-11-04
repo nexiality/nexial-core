@@ -9,8 +9,8 @@ import javax.imageio.ImageIO;
 
 import org.nexial.core.utils.ConsoleUtils;
 
-import static org.nexial.core.plugins.image.BitDepthConversion.changeColorBit;
 import static org.nexial.core.plugins.image.ImageCommand.IMAGE_PERCENT_FORMAT;
+import static org.nexial.core.plugins.image.ImageUtils.convertColorBit;
 
 public class ImageComparison {
     private static final int DEF_COLOR_BIT = 32;
@@ -94,11 +94,10 @@ public class ImageComparison {
     private void initDiffMatrix() {
         int colorBit1 = image1.getColorModel().getPixelSize();
         int colorBit2 = image2.getColorModel().getPixelSize();
-        int colorBit = Math.min(Math.min(colorBit1, colorBit2), DEF_COLOR_BIT);
+        int colorBit = colorBit1 == colorBit2 ? colorBit1 : Math.min(Math.min(colorBit1, colorBit2), DEF_COLOR_BIT);
 
-        BufferedImage convertedImage1 = changeColorBit(image1, colorBit);
-        BufferedImage convertedImage2 = changeColorBit(image2, colorBit);
-
+        BufferedImage convertedImage1 = colorBit1 != colorBit ? convertColorBit(image1, colorBit) : image1;
+        BufferedImage convertedImage2 = colorBit2 != colorBit ? convertColorBit(image2, colorBit) : image2;
         tools.setMatrix(populateMatrixOfDifferences(convertedImage1, convertedImage2));
 
         float dimensionBase = image1.getWidth() * image1.getHeight();
