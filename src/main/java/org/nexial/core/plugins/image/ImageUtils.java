@@ -27,8 +27,8 @@ public class ImageUtils {
 
         x = Math.max(0, x);
         y = Math.max(0, y);
-        width = width == -1 ? src.getWidth() - x : width;
-        height = height == -1 ? src.getHeight() - y : height;
+        width = width < 1 ? src.getWidth() - x : width;
+        height = height < 1 ? src.getHeight() - y : height;
 
         BufferedImage newImage = src.getSubimage(x, y, width, height);
         BufferedImage cropped = new BufferedImage(newImage.getWidth(), newImage.getHeight(), TYPE_INT_RGB);
@@ -69,8 +69,8 @@ public class ImageUtils {
     }
 
     public static BufferedImage resize(BufferedImage src, int width, int height) {
-        int newWidth = width == -1 ? src.getWidth() : width;
-        int newHeight = height == -1 ? src.getHeight() : height;
+        int newWidth = width < 1 ? src.getWidth() : width;
+        int newHeight = height < 1 ? src.getHeight() : height;
 
         BufferedImage resizedImage = new BufferedImage(newWidth, newHeight, TYPE_INT_RGB);
 

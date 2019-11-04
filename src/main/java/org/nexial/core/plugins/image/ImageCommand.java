@@ -89,9 +89,9 @@ public class ImageCommand extends BaseCommand implements ForcefulTerminate {
         int x = NumberUtils.toInt(StringUtils.trim(split[0]));
         int y = NumberUtils.toInt(StringUtils.trim(split[1]));
         String width = StringUtils.trim(split[2]);
-        int w = StringUtils.equals(width, "*") ? -1 : NumberUtils.toInt(width);
+        int w = StringUtils.equals(width, "*") ? 0 : NumberUtils.toInt(width);
         String height = StringUtils.trim(split[3]);
-        int h = StringUtils.equals(height, "*") ? -1 : NumberUtils.toInt(height);
+        int h = StringUtils.equals(height, "*") ? 0 : NumberUtils.toInt(height);
 
         mustForcefullyTerminate = true;
 
@@ -108,10 +108,10 @@ public class ImageCommand extends BaseCommand implements ForcefulTerminate {
     public StepResult resize(String image, String width, String height, String saveTo) throws IOException {
         requiresReadableFileOrValidUrl(image);
 
-        width = StringUtils.equals(width, "*") ? "-1" : width;
+        width = StringUtils.equals(width, "*") ? "0" : width;
         requires(NumberUtils.isDigits(width), "invalid width", width);
 
-        height = StringUtils.equals(height, "*") ? "-1" : height;
+        height = StringUtils.equals(height, "*") ? "0" : height;
         requires(NumberUtils.isDigits(height), "invalid height", height);
 
         mustForcefullyTerminate = true;
@@ -262,5 +262,4 @@ public class ImageCommand extends BaseCommand implements ForcefulTerminate {
         }
         return new Color(rgb.get(0), rgb.get(1), rgb.get(2));
     }
-
 }
