@@ -175,13 +175,20 @@ public final class ExecutionResultHelper {
                 if (nestedMessage instanceof StepOutput) {
                     addScreenshotLink(excelSheet.getRow(step.getRowIndex()), linkStyle, (StepOutput) nestedMessage);
                 } else {
-                    // +1 if lastRow is the same as currentRow.  Otherwise shiftRow on a single row block causes problem for createRow (later on).
-                    worksheet.shiftRows(currentRow, lastRow + (currentRow == lastRow ? 1 : 0), messageCount);
+                    // shift rows only once by messageCount
+                    if (i == 0) {
+                        // +1 if lastRow is the same as currentRow. Otherwise shiftRow on a single row block
+                        // causes problem for createRow (later on).
+                        worksheet.shiftRows(currentRow, lastRow + (currentRow == lastRow ? 1 : 0), messageCount);
+                    }
 
-                    XSSFRow row = excelSheet.createRow(currentRow + i);
+                    int rowIndex = currentRow + i;
+                    XSSFRow row = excelSheet.createRow(rowIndex);
                     XSSFCell cell = row.createCell(COL_IDX_MERGE_RESULT_START);
                     cell.setCellValue(nestedMessage.getMessage());
                     cell.setCellStyle(style);
+                    // Merge param1 to parma5 cell with some background color
+                    mergeOutput(worksheet, worksheet.getSheet(), row, rowIndex);
 
                     String resultMessage = nestedMessage.getResultMessage();
                     if (StringUtils.isNotBlank(resultMessage)) {
