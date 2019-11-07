@@ -28,6 +28,7 @@ import org.nexial.core.model.ExecutionContext
 import org.nexial.core.model.TestStep
 import org.nexial.core.utils.ConsoleUtils
 import org.nexial.core.variable.Execution
+import org.openqa.selenium.WebDriverException
 import java.io.File
 import java.io.FileReader
 import java.io.FileWriter
@@ -57,22 +58,28 @@ class ClientPerformanceCollector(val command: WebCommand, private val output: St
                  "\n" +
                  endScript
 
-        val result = command.jsExecutor.executeScript(js)
-        val stepJson = newStep(context.currentTestStep, GSON.fromJson(result.toString(), JsonObject::class.java))
+        try {
+            val result = command.jsExecutor.executeScript(js)
+            val stepJson = newStep(context.currentTestStep, GSON.fromJson(result.toString(), JsonObject::class.java))
 
-        val jsonFile = File(output)
-        val execution = if (FileUtil.isFileReadable(output, 5)) {
-            GSON.fromJson(FileReader(jsonFile), JsonObject::class.java)
-        } else {
-            newExecution(context)
+            val jsonFile = File(output)
+            val execution = if (FileUtil.isFileReadable(output, 5)) {
+                GSON.fromJson(FileReader(jsonFile), JsonObject::class.java)
+            } else {
+                newExecution(context)
+            }
+
+            val script = findOrCreateScript(execution)
+            val scenario = findOrCreateChild(script, "scenarios", context.currentScenario, "activities")
+            val activity = findOrCreateChild(scenario, "activities", context.currentActivity, "steps")
+            activity.getAsJsonArray("steps").add(stepJson)
+
+            FileWriter(jsonFile).use { GSON.toJson(execution, it) }
+        } catch (e: WebDriverException) {
+            ConsoleUtils.error("Error occurred while collecting browser performance metrics - " +
+                               "${WebDriverExceptionHelper.analyzeError(context, context.currentTestStep, e)}; " +
+                               "ignoring...")
         }
-
-        val script = findOrCreateScript(execution)
-        val scenario = findOrCreateChild(script, "scenarios", context.currentScenario, "activities")
-        val activity = findOrCreateChild(scenario, "activities", context.currentActivity, "steps")
-        activity.getAsJsonArray("steps").add(stepJson)
-
-        FileWriter(jsonFile).use { GSON.toJson(execution, it) }
     }
 
     private fun findOrCreateScript(node: JsonObject): JsonObject {

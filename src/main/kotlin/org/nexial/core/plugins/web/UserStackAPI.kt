@@ -32,7 +32,9 @@ class UserStackAPI(apiKey: String = "5b71975a107de30d26f3878fa9adbb5e") {
             val json = GSON.fromJson(response.body, JsonObject::class.java)
             map["os"] = json.getAsJsonObject("os").getAsJsonPrimitive("name").asString
             val browser = json.getAsJsonObject("browser")
-            map["browser"] = "${browser.getAsJsonPrimitive("name").asString} ${browser.getAsJsonPrimitive("version").asString}"
+            val name = if (browser.has("name")) browser.getAsJsonPrimitive("name").asString else "NO NAME"
+            val version = if (browser.has("version")) browser.getAsJsonPrimitive("version").asString else "NO VERSION"
+            map["browser"] = "$name $version"
         } else {
             map["error"] = response.statusText
         }
