@@ -39,6 +39,7 @@ import org.nexial.commons.utils.FilePathFilter;
 import org.nexial.commons.utils.FileUtil;
 import org.nexial.commons.utils.RegexUtils;
 import org.nexial.commons.utils.TextUtils;
+import org.nexial.core.NexialConst.Data.SaveGridAsCSV;
 import org.nexial.core.excel.ExcelConfig;
 import org.nexial.core.model.ExecutionContext;
 import org.nexial.core.model.ExecutionDefinition;
@@ -520,7 +521,7 @@ public final class NexialConst {
 
         // saveTableAsCSV and saveDivsAsCSV
         public static final class SaveGridAsCSV {
-            private static final String _NS = Web.NS_WEB + "saveGrid.";
+            private static final String _NS = registerSysVarGroup(Web.NS_WEB + "saveGrid.");
 
             public static final String DEEP_SCAN = registerSysVar(_NS + "deepScan", false);
             public static final String HEADER_INPUT = registerSysVar(_NS + "header.input", InputOptions.name.name());
@@ -543,6 +544,9 @@ public final class NexialConst {
                 @Override
                 public String toString() { return name(); }
             }
+
+            // reference by enclosing class to force initialization (possibly prior to any reference at runtime)
+            static void init() {}
         }
 
         private Data() { }
@@ -585,7 +589,7 @@ public final class NexialConst {
 
     // directives on notes column
     public static final class FlowControls {
-        public static final String OPT_STEP_BY_STEP = NAMESPACE + "stepByStep";
+        public static final String OPT_STEP_BY_STEP = registerSysVar(NAMESPACE + "stepByStep", false);
         public static final String OPT_INSPECT_ON_PAUSE = registerSysVar(NAMESPACE + "inspectOnPause", false);
         public static final String RESUME_FROM_PAUSE = ":resume";
         public static final String OPT_PAUSE_ON_ERROR = registerSysVar(NAMESPACE + "pauseOnError", false);
@@ -774,6 +778,9 @@ public final class NexialConst {
         }
 
         private ImageCaption() {}
+
+        // reference by enclosing class to force initialization (possibly prior to any reference at runtime)
+        static void init() {}
     }
 
     public static final class AwsSettings {
@@ -1390,7 +1397,8 @@ public final class NexialConst {
         public static final String WS_REQ_PAYLOAD_COMPACT = registerSysVar(NS_WS + "requestPayloadCompact", false);
         public static final String WS_KEEP_ALIVE = registerSysVar(NS_WS + "keepAlive", true);
         public static final String WS_ALLOW_RELATIVE_REDIRECTS = registerSysVar(NS_WS + "allowRelativeRedirects", true);
-        public static final String WS_ALLOW_CIRCULAR_REDIRECTS =registerSysVar(NS_WS + "allowCircularRedirects", false);
+        public static final String WS_ALLOW_CIRCULAR_REDIRECTS = registerSysVar(NS_WS + "allowCircularRedirects",
+                                                                                false);
         public static final String WS_ENABLE_EXPECT_CONTINUE = registerSysVar(NS_WS + "enableExpectContinue", true);
         public static final String WS_ENABLE_REDIRECTS = registerSysVar(NS_WS + "enableRedirects", true);
         public static final String WS_READ_TIMEOUT = registerSysVar(NS_WS + "readTimeout", 5 * 60 * 1000);
@@ -1500,7 +1508,7 @@ public final class NexialConst {
         public static final String OPT_ALERT_IGNORE_FLAG = registerSysVar(NAMESPACE + "ignoreBrowserAlert", false);
 
         // metrics
-        public static final String NS_WEB_METRICS = NS_WEB + "metrics.";
+        public static final String NS_WEB_METRICS = registerSysVarGroup(NS_WEB + "metrics.");
         public static final String WEB_METRICS_GENERATED = NS_WEB_METRICS + "generated";
         public static final String WEB_PERF_METRICS_ENABLED = registerSysVar(NS_WEB_METRICS + "enabled", false);
         public static final String WEB_CLEAR_WITH_BACKSPACE = registerSysVar(NS_WEB + "clearWithBackspace", false);
@@ -1669,7 +1677,7 @@ public final class NexialConst {
         /* pdf*/
         public static final String PDF_USE_ASCII = registerSysVar(NAMESPACE + "pdfUseAscii", true);
         public static final String PDFFORM_UNMATCHED_TEXT = "__UNMATCHED_TEXT";
-        public static final String PDFFORM_PREFIX = NAMESPACE + "pdfFormStrategy.";
+        public static final String PDFFORM_PREFIX = registerSysVarGroup(NAMESPACE + "pdfFormStrategy.");
         public static final String PDFFORM_BASEDON = "basedOn";
         public static final String PDFFORM_KEY_THEN_VALUE = "keyThenValue";
         public static final String PDFFORM_KEY_PATTERN = "keyPattern";
@@ -1824,5 +1832,7 @@ public final class NexialConst {
         NexialConst.BrowserStack.init();
         NexialConst.CrossBrowserTesting.init();
         Pdf.init();
+        ImageCaption.init();
+        SaveGridAsCSV.init();
     }
 }

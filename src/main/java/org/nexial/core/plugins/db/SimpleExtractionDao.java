@@ -44,7 +44,6 @@ import org.springframework.jdbc.core.ResultSetExtractor;
 import org.springframework.jdbc.core.StatementCallback;
 import org.springframework.jdbc.core.support.JdbcDaoSupport;
 
-import static org.nexial.core.NexialConst.*;
 import static org.nexial.core.NexialConst.Rdbms.*;
 import static org.nexial.core.SystemVariables.getDefaultBool;
 import static org.nexial.core.SystemVariables.getDefaultInt;
@@ -115,20 +114,25 @@ public class SimpleExtractionDao extends JdbcDaoSupport {
             }
 
             String sql = result.getSql();
+            boolean isRollback = result.getSqlType().isRollback();
             try {
                 if (stmt.execute(sql)) {
                     ResultSet rs = stmt.getResultSet();
                     if (file == null) { return packData(resultToListOfMap(rs, result)); }
                     if (exporter == null) { return resultToCSV(rs, result, file); }
+                    if (isRollback) { result.setRolledBack(true); }
                     return exporter.export(rs, result, file);
                 } else {
                     int rowsAffected = stmt.getUpdateCount();
                     if (rowsAffected != -1) { result.setRowCount(rowsAffected); }
+                    if (isRollback) { result.setRolledBack(true); }
                     return result;
                 }
             } catch (SQLException | DataAccessException e) {
                 result.setError("Error occurred when executing '" + sql + "': " + e.getMessage());
                 return result;
+            } finally {
+                if (isRollback) { stmt.close(); }
             }
         }
     }
@@ -477,6 +481,12 @@ public class SimpleExtractionDao extends JdbcDaoSupport {
         } catch (SQLException e) {
             result.setError("Error executing " + sql + ": " + e.getMessage());
             return result;
+        } finally {
+            try {
+                transactedConnection.close();
+            } catch (SQLException e) {
+                ConsoleUtils.error("Error when closing transaction: " + e.getMessage());
+            }
         }
     }
 }

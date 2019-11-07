@@ -180,6 +180,12 @@ public class TestStep extends TestStepManifest {
             postExecCommand(result, tickTock.getTime());
             FlowControlUtils.checkPauseAfter(context, this);
             context.clearCurrentTestStep();
+
+            // Scanner stdin = new Scanner(System.in);
+            // String requestforPause = stdin.next(" ");
+            // if (StringUtils.isNotEmpty(requestforPause)) {
+            //     ConsoleUtils.pauseForInput(context, "what's up: ");
+            // }
         }
 
         return result;
@@ -426,7 +432,7 @@ public class TestStep extends TestStepManifest {
         XSSFCell cell = row.get(COL_IDX_TARGET);
         if (cell == null || StringUtils.isBlank(cell.toString())) {
             throw new IllegalArgumentException(StringUtils.defaultString(messageId) + " no target specified" +
-                                               (cell != null ? " on ROW " + cell.getRowIndex() : ""));
+                                               (cell != null ? " on ROW " + (cell.getRowIndex() + 1) : ""));
         }
         setTarget(cell.toString());
     }
@@ -435,7 +441,7 @@ public class TestStep extends TestStepManifest {
         XSSFCell cell = row.get(COL_IDX_COMMAND);
         if (cell == null || StringUtils.isBlank(cell.toString())) {
             throw new IllegalArgumentException(StringUtils.defaultString(messageId) + " no command specified" +
-                                               (cell != null ? " on ROW " + cell.getRowIndex() : ""));
+                                               (cell != null ? " on ROW " + (cell.getRowIndex() + 1) : ""));
         }
         setCommand(cell.toString());
     }

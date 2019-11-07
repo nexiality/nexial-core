@@ -35,7 +35,6 @@ import org.springframework.context.ApplicationContext;
 import org.springframework.context.ApplicationContextAware;
 
 import static java.sql.Connection.TRANSACTION_SERIALIZABLE;
-import static org.nexial.core.NexialConst.*;
 import static org.nexial.core.NexialConst.Rdbms.*;
 import static org.nexial.core.utils.CheckUtils.requiresNotBlank;
 import static org.nexial.core.utils.CheckUtils.requiresNotNull;
@@ -142,7 +141,7 @@ public class DataAccess implements ApplicationContextAware {
             // handle auto commit (single transaction or not)
             boolean autocommit = context.getBooleanData(db + OPT_DB_AUTOCOMMIT, DEF_AUTOCOMMIT);
             newDs.setDefaultAutoCommit(autocommit);
-            newDs.setEnableAutoCommitOnReturn(autocommit);
+            newDs.setAutoCommitOnReturn(autocommit);
             if (!autocommit) { newDs.setDefaultTransactionIsolation(TRANSACTION_SERIALIZABLE); }
 
             dao = new SimpleExtractionDao();

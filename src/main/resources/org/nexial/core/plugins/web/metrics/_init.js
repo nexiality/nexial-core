@@ -37,19 +37,11 @@ if (isNavigation) {
 }
 
 function formatPerfNum(/*Number*/num) {
-  if (!num || isNaN(num)) {
-    console.log("situation a: " + num);
-    return num;
-  } else {
-    var num1 = num.toFixed(2);
-    if (num1) {
-      console.log("situation b: " + num);
-      return parseFloat(num1);
-    } else {
-      console.log("situation c: " + num);
-      return num;
-    }
-  }
+  if (!num || isNaN(num)) { return num; }
+
+  if (num < 0) { num = num * -1; }
+  var num1 = num.toFixed(2);
+  return num1 ? parseFloat(num1) : num;
 }
 
 var metrics = {};

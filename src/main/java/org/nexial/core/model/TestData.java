@@ -36,9 +36,9 @@ import org.nexial.core.utils.ConsoleUtils;
 import org.nexial.core.utils.InputFileUtils;
 
 import static org.nexial.core.NexialConst.Data.*;
-import static org.nexial.core.NexialConst.*;
-import static org.nexial.core.NexialConst.Exec.*;
+import static org.nexial.core.NexialConst.Exec.POST_EXEC_MAIL_TO;
 import static org.nexial.core.NexialConst.Iteration.*;
+import static org.nexial.core.NexialConst.*;
 
 /**
  * This represents a set of data usable for a specific test execution, which may contain multiple scenarios.

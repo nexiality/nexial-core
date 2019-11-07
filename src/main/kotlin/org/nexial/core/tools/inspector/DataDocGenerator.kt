@@ -191,12 +191,12 @@ class DataDocGenerator(val options: InspectorOptions, val logger: InspectorLogge
             for ((index, line) in batchContent.withIndex()) {
                 if (StringUtils.isBlank(line)) continue
                 if (StringUtils.startsWithIgnoreCase(line.trim(), "rem ")) continue
-                if (StringUtils.startsWithIgnoreCase(line.trim(), "# ")) continue
+                if (StringUtils.startsWithIgnoreCase(line.trim(), "#")) continue
 
                 // compensate for multi-line commands (windows and *nix)
                 val line1 = StringUtils.removeEnd(StringUtils.removeEnd(line, "^"), "\\")
 
-                val position = "line ${(index + 1)}"
+                val position = "line ${index + 1}"
 
                 if (RegexUtils.match(line1, ".*\\-D(.+)=(.+).*")) {
                     val overrides = if (line1.contains("=-D")) line1.substringAfter("=-D") else line1.substringAfter("-D")
@@ -293,7 +293,7 @@ class DataDocGenerator(val options: InspectorOptions, val logger: InspectorLogge
                                                               definedAs = commandFqn,
                                                               location = location,
                                                               dataSheet = sheetName,
-                                                              position = "Row $rowIndex",
+                                                              position = "Row ${rowIndex + 1}",
                                                               type = StepOverride)
                                     addToEntity(dataVariables, dv)
                                     scriptSuiteCache.dataVariables += dv
@@ -308,7 +308,7 @@ class DataDocGenerator(val options: InspectorOptions, val logger: InspectorLogge
                                                                   definedAs = commandFqn,
                                                                   location = location,
                                                                   dataSheet = sheetName,
-                                                                  position = "Row $rowIndex",
+                                                                  position = "Row ${rowIndex + 1}",
                                                                   type = StepOverride)
                                         addToEntity(dataVariables, dv)
                                         scriptSuiteCache.dataVariables += dv
@@ -400,12 +400,6 @@ class DataDocGenerator(val options: InspectorOptions, val logger: InspectorLogge
 
         val varCommands = mutableMapOf<String, IntArray>()
         val json = GSON.fromJson(varCmdFile, JsonObject::class.java)
-        // json.keySet().forEach { command ->
-        //     val array = json[command] as JsonArray
-        //     val intArray = IntArray(array.count())
-        //     for (i in 0 until array.count()) intArray[i] = array[i].asInt
-        //     varCommands.putIfAbsent(command, intArray)
-        // }
         json.keySet().forEach {
             varCommands.putIfAbsent(it, (json[it] as JsonArray).map { num -> num.asInt }.toIntArray())
         }
