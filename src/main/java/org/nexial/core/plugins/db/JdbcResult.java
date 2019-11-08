@@ -31,6 +31,7 @@ import org.nexial.core.utils.ConsoleUtils;
 
 import static org.apache.commons.lang3.StringUtils.rightPad;
 import static org.nexial.core.NexialConst.DATE_FORMAT_NOW;
+import static org.nexial.core.plugins.db.SqlComponent.Type.UNKNOWN;
 
 public class JdbcResult implements Serializable {
     protected static final int TO_STRING_KEY_LENGTH = 12;
@@ -52,6 +53,7 @@ public class JdbcResult implements Serializable {
             try {
                 sqlType = Type.toType(sqlStart);
             } catch (IllegalArgumentException e) {
+                sqlType = UNKNOWN;
                 ConsoleUtils.log("Unknown SQL type from SQL: '" + sql + "'");
             }
         }

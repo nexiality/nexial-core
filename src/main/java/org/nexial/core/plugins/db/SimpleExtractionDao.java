@@ -114,7 +114,7 @@ public class SimpleExtractionDao extends JdbcDaoSupport {
             }
 
             String sql = result.getSql();
-            boolean isRollback = result.getSqlType().isRollback();
+            boolean isRollback = result.getSqlType() != null && result.getSqlType().isRollback();
             try {
                 if (stmt.execute(sql)) {
                     ResultSet rs = stmt.getResultSet();
@@ -212,10 +212,11 @@ public class SimpleExtractionDao extends JdbcDaoSupport {
         });
 
         if (!isAutoCommit()) {
-            initTransactedConnection();
-
             try {
-                transactedConnection.commit();
+                if (!explicitCommit.get() && !explicitRollback.get()) {
+                    initTransactedConnection();
+                    transactedConnection.commit();
+                }
             } catch (SQLException e) {
                 // this might fail since explicit commit/rollback was performed earlier
                 if (explicitCommit.get() || explicitRollback.get()) {
@@ -482,10 +483,13 @@ public class SimpleExtractionDao extends JdbcDaoSupport {
             result.setError("Error executing " + sql + ": " + e.getMessage());
             return result;
         } finally {
-            try {
-                transactedConnection.close();
-            } catch (SQLException e) {
-                ConsoleUtils.error("Error when closing transaction: " + e.getMessage());
+            // if (sqlType != null && (sqlType.isCommit() || sqlType.isRollback())) {
+            if (sqlType != null && sqlType.isRollback()) {
+                try {
+                    transactedConnection.close();
+                } catch (SQLException e) {
+                    ConsoleUtils.error("Error when closing transaction: " + e.getMessage());
+                }
             }
         }
     }

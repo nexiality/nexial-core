@@ -188,11 +188,15 @@
         <appender-ref ref="file-3rdparty"/>
     </logger>
 
+    <logger name="org.apache.commons.dbcp2.BasicDataSource" additivity="false" level="ERROR">
+        <appender-ref ref="console-catchall"/>
+        <appender-ref ref="file-3rdparty"/>
+    </logger>
+
     <logger name="org.apache.http" level="WARN">
         <appender-ref ref="console-catchall"/>
         <appender-ref ref="file-testexecution"/>
     </logger>
-
     <logger name="org.apache.http.impl.execchain.RetryExec" level="WARN">
         <appender-ref ref="console-catchall"/>
         <appender-ref ref="file-testexecution"/>

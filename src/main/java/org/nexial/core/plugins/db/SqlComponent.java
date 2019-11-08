@@ -73,7 +73,7 @@ public class SqlComponent implements Serializable {
     private String sql;
 
     public enum Type {
-        SELECT, UPDATE, INSERT, DELETE, COMMIT, ROLLBACK, CALL, WITH, CREATE, DROP, VACUUM;
+        SELECT, UPDATE, INSERT, DELETE, COMMIT, ROLLBACK, CALL, WITH, CREATE, DROP, VACUUM, UNKNOWN;
 
         public static Type toType(String keyword) { return Type.valueOf(StringUtils.upperCase(keyword)); }
 

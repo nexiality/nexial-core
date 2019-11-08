@@ -16,6 +16,7 @@
 
 package org.nexial.core.plugins.web
 
+import com.google.gson.JsonNull
 import com.google.gson.JsonObject
 import org.nexial.core.NexialConst.GSON
 import org.nexial.core.plugins.ws.WebServiceClient
@@ -24,21 +25,46 @@ class UserStackAPI(apiKey: String = "5b71975a107de30d26f3878fa9adbb5e") {
     private val apiURL = "http://api.userstack.com/detect?access_key=${apiKey}&ua="
 
     fun detect(ua: String): Map<String, String> {
-        val map = mutableMapOf<String, String>()
         val response = WebServiceClient(null).get(apiURL + ua, null)
-        val returnCode = response.returnCode
-
-        if (returnCode in 200..299) {
-            val json = GSON.fromJson(response.body, JsonObject::class.java)
-            map["os"] = json.getAsJsonObject("os").getAsJsonPrimitive("name").asString
-            val browser = json.getAsJsonObject("browser")
-            val name = if (browser.has("name")) browser.getAsJsonPrimitive("name").asString else "NO NAME"
-            val version = if (browser.has("version")) browser.getAsJsonPrimitive("version").asString else "NO VERSION"
-            map["browser"] = "$name $version"
+        return if (response.returnCode in 200..299) {
+            parseBrowserMeta(response.body)
         } else {
+            val map = mutableMapOf<String, String>()
             map["error"] = response.statusText
+            map
         }
+    }
 
-        return map
+    companion object {
+        @JvmStatic
+        fun parseBrowserMeta(jsonString: String): Map<String, String> {
+            val map = mutableMapOf<String, String>()
+
+            val json = GSON.fromJson(jsonString, JsonObject::class.java)
+            map["os"] = json.getAsJsonObject("os").getAsJsonPrimitive("name").asString
+
+            val browser = json.getAsJsonObject("browser")
+            val name = if (browser.has("name")) {
+                val browserName = browser.get("name")
+                if (browserName == null || browserName is JsonNull) {
+                    "UNKNOWN BROWSER"
+                } else {
+                    browser.getAsJsonPrimitive("name").asString
+                }
+            } else "UNKNOWN BROWSER"
+
+            val version = if (browser.has("version")) {
+                val versionElem = browser.get("version")
+                if (versionElem == null || versionElem is JsonNull) {
+                    ""
+                } else {
+                    " " + browser.getAsJsonPrimitive("version").asString
+                }
+            } else ""
+
+            map["browser"] = "$name$version"
+
+            return map
+        }
     }
 }
