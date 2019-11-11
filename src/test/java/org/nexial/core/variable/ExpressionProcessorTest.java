@@ -1173,6 +1173,15 @@ public class ExpressionProcessorTest {
     }
 
     @Test
+    public void processConfig_keys() throws Exception {
+        String propertiesFile = ResourceUtils.getResourceFilePath(resourcePath + className + "4.txt");
+
+        ExpressionProcessor subject = new ExpressionProcessor(context);
+
+        assertEquals("FirstName,LastName", subject.process("[CONFIG(" + propertiesFile + ") => keys]"));
+    }
+
+    @Test
     public void processINI() throws Exception {
         ExpressionProcessor subject = new ExpressionProcessor(context);
 

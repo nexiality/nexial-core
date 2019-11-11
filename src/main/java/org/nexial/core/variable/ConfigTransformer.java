@@ -32,6 +32,7 @@ import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.nexial.commons.utils.EnvUtils;
 import org.nexial.commons.utils.FileUtil;
+import org.nexial.commons.utils.TextUtils;
 import org.nexial.core.utils.ConsoleUtils;
 
 import static org.nexial.core.NexialConst.DEF_FILE_ENCODING;
@@ -48,14 +49,7 @@ public class ConfigTransformer<T extends ConfigDataType> extends Transformer {
 
     public ListDataType keys(T data) throws TypeConversionException {
         if (data == null || data.getValue() == null) { return null; }
-
-        Properties value = data.getValue();
-        try {
-            return new ListDataType(value.keySet().toString());
-        } catch (TypeConversionException e) {
-            throw new TypeConversionException(data.getName(), data.getTextValue(),
-                                              "Error converting to ListDataType: " + e.getMessage(), e);
-        }
+        return new ListDataType(TextUtils.toStringArray(data.getValue().keySet().toArray()));
     }
 
     public TextDataType value(T data, String key) throws TypeConversionException {
