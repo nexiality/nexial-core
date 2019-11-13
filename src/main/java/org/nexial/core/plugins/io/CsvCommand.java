@@ -42,10 +42,10 @@ import org.nexial.core.utils.OutputResolver;
 import com.univocity.parsers.csv.CsvParser;
 import com.univocity.parsers.csv.CsvParserSettings;
 
+import static org.nexial.core.plugins.io.CsvExtendedComparison.CSV_EXT_COMP_HEADER;
 import static org.nexial.core.plugins.io.IoCommand.CompareMode.FAIL_FAST;
 import static org.nexial.core.plugins.io.IoCommand.CompareMode.THOROUGH;
-import static org.nexial.core.utils.CheckUtils.requires;
-import static org.nexial.core.utils.CheckUtils.requiresNotBlank;
+import static org.nexial.core.utils.CheckUtils.*;
 
 public class CsvCommand extends IoCommand {
     private ExcelHelper excelHelper;
@@ -75,35 +75,45 @@ public class CsvCommand extends IoCommand {
         requiresValidAndNotReadOnlyVariableName(var);
         requiresNotBlank(profile, "Missing profile for compareExtended");
 
-        // boolean textAsURL = context.isResolveTextAsURL();
-
-        // expected can either be a file or content
-        String expectedContent;
-        try {
-            // expectedContent = OutputFileUtils.resolveContent(expected, context, false);
-            expectedContent = new OutputResolver(expected, context).getContent();
-        } catch (Throwable e) {
-            return StepResult.fail("Unable to retrieve content from " + expected + ": " + e.getMessage());
-        }
-        requiresNotBlank(expectedContent, "No content found for expected", expected);
-
-        // actual can either be a file or content
-        String actualContent;
-        try {
-            // actualContent = OutputFileUtils.resolveContent(actual, context, false);
-            actualContent = new OutputResolver(actual, context).getContent();
-        } catch (Throwable e) {
-            return StepResult.fail("Unable to retrieve content from " + actual + ": " + e.getMessage());
-        }
-        requiresNotBlank(actualContent, "No content found for actual", actual);
-
         String configKey = profile + ".compareExt.";
-        String textDelim = context.getTextDelim();
 
         CsvExtendedComparison comparison = new CsvExtendedComparison();
-        comparison.setDelimiter(textDelim);
-        comparison.setExpectedContent(expectedContent);
-        comparison.setActualContent(actualContent);
+        comparison.setDelimiter(context.getTextDelim());
+
+        // expected can either be a file or content
+        boolean expectedAsIs = BooleanUtils.toBoolean(collectConfig(configKey + "expected.readAsIs").orElse("false"));
+        if (expectedAsIs) {
+            File file = OutputResolver.resolveFile(expected);
+            requiresNotNull(file, "Unable to resolve 'expected' as a file");
+            ConsoleUtils.log(CSV_EXT_COMP_HEADER + "read from expected: " + file.length() + " bytes read");
+            comparison.setExpectedFile(file);
+        } else {
+            try {
+                String content = new OutputResolver(expected, context).getContent();
+                requiresNotBlank(content, "No content found for expected", expected);
+                ConsoleUtils.log(CSV_EXT_COMP_HEADER + "read from expected: " + content.length() + " bytes read");
+                comparison.setExpectedField(content);
+            } catch (Throwable e) {
+                return StepResult.fail("Unable to retrieve content from " + expected + ": " + e.getMessage());
+            }
+        }
+
+        // actual can either be a file or content
+        boolean actualAsIs = BooleanUtils.toBoolean(collectConfig(configKey + "actual.readAsIs").orElse("false"));
+        if (actualAsIs) {
+            File file = OutputResolver.resolveFile(actual);
+            ConsoleUtils.log(CSV_EXT_COMP_HEADER + "read from actual:   " + file.length() + " bytes read");
+            comparison.setActualFile(file);
+        } else {
+            try {
+                String content = new OutputResolver(actual, context).getContent();
+                requiresNotBlank(content, "No content found for actual", actual);
+                ConsoleUtils.log(CSV_EXT_COMP_HEADER + "read from actual:   " + content.length() + " bytes read");
+                comparison.setActualContent(content);
+            } catch (Throwable e) {
+                return StepResult.fail("Unable to retrieve content from " + actual + ":   " + e.getMessage());
+            }
+        }
 
         // identity column(s) is used to identity the records on both expected and actual CSV file
         // this means that even if the content aren't matching line by line, we can use the identity column(s)
@@ -123,7 +133,7 @@ public class CsvCommand extends IoCommand {
         // defines which field(s) to match on.  If none specified, then match on all fields.
         Map<String, String> mapping = context.getDataByPrefix(configKey + "match.");
         if (MapUtils.isEmpty(mapping)) {
-            ConsoleUtils.log("No mapping found; ASSUME THE EXACT SAME COLUMNS FOR EXPECTED AND ACTUAL");
+            ConsoleUtils.log(CSV_EXT_COMP_HEADER + "No mapping found; ASSUME SAME COLUMNS FOR EXPECTED AND ACTUAL");
         } else {
             comparison.setFieldMapping(mapping);
         }
@@ -185,7 +195,7 @@ public class CsvCommand extends IoCommand {
             ExcelHelper.csv2xlsx(excel, worksheet, startCell, rowsAndColumns);
             return StepResult.success("Successfully saved content from '" + csvFile + "' to '" + excel + "'");
         } catch (IOException e) {
-            return StepResult.fail("Unable to save content from '" + csvFile + "' to '" + excel + "': " + e.getMessage());
+            return StepResult.fail("Unable to save '" + csvFile + "' to '" + excel + "': " + e.getMessage());
         }
     }
 

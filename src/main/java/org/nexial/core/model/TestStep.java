@@ -569,8 +569,11 @@ public class TestStep extends TestStepManifest {
                         try {
                             ConsoleUtils.log("copy local resource " + link + " to " + tmpFile);
                             FileUtils.copyFile(new File(link), tmpFile);
+
+                            ConsoleUtils.log("output-to-cloud enabled; copying " + link + " cloud...");
                             String cloudUrl = context.getOtc().importFile(tmpFile, true);
-                            ConsoleUtils.log("output-to-cloud enabled; " + link + " copied to cloud " + cloudUrl);
+                            ConsoleUtils.log("output-to-cloud enabled; copied  " + link + " to " + cloudUrl);
+
                             worksheet.setHyperlink(paramCell, cloudUrl, "(cloud) " + params.get(paramIdx));
                             linkToCloud = true;
                         } catch (IOException e) {

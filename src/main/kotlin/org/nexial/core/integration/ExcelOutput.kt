@@ -19,13 +19,13 @@ package org.nexial.core.integration
 
 import org.apache.commons.lang3.StringUtils
 import org.apache.poi.xssf.usermodel.XSSFCell
+import org.nexial.core.NexialConst.Data.SUMMARY_TAB_NAME
 import org.nexial.core.excel.Excel
 import org.nexial.core.excel.Excel.Worksheet
 import org.nexial.core.excel.Excel.getCellValue
 import org.nexial.core.excel.ExcelAddress
 import org.nexial.core.excel.ExcelArea
 import org.nexial.core.excel.ExcelConfig
-import org.nexial.core.NexialConst.Data.SUMMARY_TAB_NAME
 import org.nexial.core.model.TestScenarioMeta
 import java.io.File
 
@@ -61,13 +61,7 @@ class ExcelOutput(file: File) {
         // parse data sheet if needed
         // data = parseDataSheet(excel.worksheet("#data"))
         return iterationOutput
-
     }
-
-    /*private fun parseDataSheet(worksheet: Worksheet): Map<String, String>? {
-        return null
-    }*/
-
 
     private fun parseSummaryOutput(worksheet: Worksheet): SummaryOutput {
         val addrTestCaseName = ExcelAddress("A1")
@@ -81,16 +75,13 @@ class ExcelOutput(file: File) {
         return summaryOutput
     }
 
-
     private fun readExecutionSummary(worksheet: Worksheet): Map<String, String> {
         val cols: List<Char> = listOf('B', 'C')
         val map: MutableMap<String, String> = mutableMapOf()
         // summary rows range (2..12)
         (2..12).forEach { row ->
-            val key = Excel
-                    .getCellValue(worksheet.cell(ExcelAddress("${cols[0]}$row")))
-            val value = Excel
-                    .getCellValue(worksheet.cell(ExcelAddress("${cols[1]}$row")))
+            val key = Excel.getCellValue(worksheet.cell(ExcelAddress("${cols[0]}$row")))
+            val value = Excel.getCellValue(worksheet.cell(ExcelAddress("${cols[1]}$row")))
             map[key] = value
         }
         return map
@@ -115,7 +106,6 @@ class ExcelOutput(file: File) {
         val projectList = mutableListOf<ProjectInfo>()
         val projects = StringUtils.split(meta.project, "\n") ?: return projectList
         projects.forEach { projectKey ->
-
             val key = StringUtils.substringBetween(projectKey, "[", "]")
             val projectProfile = StringUtils.substringBefore(key, ":")
             val project = StringUtils.substringAfter(key, ":")
@@ -152,8 +142,8 @@ class ExcelOutput(file: File) {
         val lastCommandRow = worksheet.findLastDataRow(ExcelConfig.ADDR_COMMAND_START)
         val startRowIndex = ExcelConfig.ADDR_COMMAND_START.rowStartIndex!! + 1
         val area = ExcelArea(worksheet,
-                ExcelAddress("" + ExcelConfig.COL_TEST_CASE + startRowIndex + ":" +
-                        ExcelConfig.COL_REASON + lastCommandRow), false)
+                             ExcelAddress("" + ExcelConfig.COL_TEST_CASE + startRowIndex + ":" +
+                                          ExcelConfig.COL_REASON + lastCommandRow), false)
 
         val steps = mutableMapOf<Int, List<String>>()
 
@@ -177,8 +167,8 @@ class ExcelOutput(file: File) {
                 steps[rowNumber] = step
             }
             if (step.isNotEmpty()) {
-                step.set(0, activity)
-                step.set(1, description)
+                step[0] = activity
+                step[1] = description
             }
             rowNumber++
             i++

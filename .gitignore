@@ -313,3 +313,6 @@ support/sync-src-vm.sh
 
 # Project exclude paths
 /docs/
+NEXIAL_TODO.txt
+backup.db
+test.db

@@ -17,7 +17,9 @@
 package org.nexial.core.utils
 
 import org.apache.commons.io.FileUtils
+import org.apache.commons.lang3.RandomStringUtils
 import org.apache.commons.lang3.StringUtils
+import org.apache.commons.lang3.SystemUtils.JAVA_IO_TMPDIR
 import org.nexial.commons.utils.FileUtil
 import org.nexial.commons.utils.ResourceUtils
 import org.nexial.core.model.ExecutionContext
@@ -55,6 +57,16 @@ class OutputResolver(val data: String?,
      */
     constructor(data: String?, context: ExecutionContext) :
             this(data, context, true, context.isResolveTextAsURL, !context.isResolveTextAsIs, false, false)
+
+    /**
+     * convenience with `resolveAsFile` set to true, `asBinary` set to false and `compact` set to false.
+     * @param data String?
+     * @param context ExecutionContext
+     * @param replaceTokens: Boolean
+     * @constructor
+     */
+    constructor(data: String?, context: ExecutionContext, replaceTokens: Boolean = false) :
+            this(data, context, true, context.isResolveTextAsURL, replaceTokens, false, false)
 
     constructor(data: String?, context: ExecutionContext, asBinary: Boolean = false, compact: Boolean = false) :
             this(data, context, true, context.isResolveTextAsURL, !context.isResolveTextAsIs, asBinary, compact)
@@ -97,5 +109,19 @@ class OutputResolver(val data: String?,
 
         @JvmStatic
         fun isContentReferencedAsFile(data: String) = FileUtil.isSuitableAsPath(data) && File(data).canRead()
+
+        @JvmStatic
+        fun resolveFile(path: String): File? {
+            if (StringUtils.isBlank(path)) return null
+
+            if (ResourceUtils.isWebResource(path)) {
+                val filename = RandomStringUtils.randomAlphabetic(5) + "_" + StringUtils.substringAfterLast(path, "/")
+                return WsCommand.saveWebContent(path, File(JAVA_IO_TMPDIR, filename))
+            }
+
+            if (FileUtil.isFileReadable(path, 1)) return File(path)
+
+            return null
+        }
     }
 }

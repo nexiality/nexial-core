@@ -68,14 +68,13 @@ import static java.io.File.separator;
 import static java.io.File.separatorChar;
 import static java.lang.System.lineSeparator;
 import static org.apache.commons.lang3.SystemUtils.IS_OS_WINDOWS;
-import static org.nexial.core.NexialConst.*;
 import static org.nexial.core.NexialConst.Compare.*;
+import static org.nexial.core.NexialConst.*;
 import static org.nexial.core.SystemVariables.getDefault;
 import static org.nexial.core.SystemVariables.getDefaultBool;
 import static org.nexial.core.plugins.io.ComparisonResult.*;
 import static org.nexial.core.plugins.io.FileMeta.REGEX_FILE_META;
 import static org.nexial.core.plugins.io.IoAction.*;
-import static org.nexial.core.plugins.io.IoCommand.CompareMode.FAIL_FAST;
 import static org.nexial.core.plugins.io.IoCommand.CompareMode.*;
 import static org.nexial.core.utils.CheckUtils.*;
 
@@ -675,7 +674,7 @@ public class IoCommand extends BaseCommand {
 
         try {
             content = OutputFileUtils.resolveContent(content, context, false, replaceTokens);
-            content = adjustEol(content);
+            if (replaceTokens) { content = adjustEol(content); }
             FileUtils.writeStringToFile(output, StringUtils.defaultString(content), DEF_CHARSET, isAppend);
             return StepResult.success("Content " + (isAppend ? "appended" : "written") + " to " + file);
         } catch (IOException e) {

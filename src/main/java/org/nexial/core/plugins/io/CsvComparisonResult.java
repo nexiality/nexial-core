@@ -147,11 +147,11 @@ public class CsvComparisonResult {
     }
 
     protected String toPlain() {
-        return TextUtils.createAsciiTable(resolveDisplyableHeaders(), discrepancies, List::get);
+        return TextUtils.createAsciiTable(resolveDisplayableHeaders(), discrepancies, List::get);
     }
 
     protected String toCSV(boolean wrapValueWithDoubleQuote) {
-        return TextUtils.createCsv(resolveDisplyableHeaders(),
+        return TextUtils.createCsv(resolveDisplayableHeaders(),
                                    discrepancies,
                                    "\r\n",
                                    ",",
@@ -159,11 +159,11 @@ public class CsvComparisonResult {
     }
 
     protected String toHTML() {
-        return TextUtils.createHtmlTable(resolveDisplyableHeaders(), discrepancies, "compare-extended-result-table");
+        return TextUtils.createHtmlTable(resolveDisplayableHeaders(), discrepancies, "compare-extended-result-table");
     }
 
     @NotNull
-    private List<String> resolveDisplyableHeaders() {
+    private List<String> resolveDisplayableHeaders() {
         List<String> headers = new ArrayList<>(displayFields);
         headers.add(mismatchedField);
         headers.add(expectedField);

@@ -1136,6 +1136,7 @@ public final class NexialConst {
         public static final String COPY_CONFIG_BACKUP = "backup";
         public static final String COPY_CONFIG_KEEP_ORIGINAL = "keepOriginal";
         public static final String COPY_CONFIG_DEF = COPY_CONFIG_KEEP_ORIGINAL;
+
         public static final String NS_IO = NAMESPACE + "io.";
         public static final String OPT_IO_EOL_CONFIG = registerSysVar(NS_IO + "eolConfig", EOL_CONFIG_DEF);
         public static final String COMPARE_INCLUDE_DELETED = registerSysVar(NS_IO + "compareIncludeRemoved");

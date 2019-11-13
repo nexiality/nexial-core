@@ -87,7 +87,7 @@ import static org.nexial.core.NexialConst.FlowControls.OPT_PAUSE_ON_ERROR;
 import static org.nexial.core.NexialConst.FlowControls.OPT_STEP_BY_STEP;
 import static org.nexial.core.NexialConst.Iteration.*;
 import static org.nexial.core.NexialConst.Project.NEXIAL_HOME;
-import static org.nexial.core.NexialConst.TimeTrack.*;
+import static org.nexial.core.NexialConst.TimeTrack.TRACK_EXECUTION;
 import static org.nexial.core.NexialConst.Web.*;
 import static org.nexial.core.SystemVariables.*;
 import static org.nexial.core.excel.ext.CipherHelper.CRYPT_IND;
@@ -1722,9 +1722,8 @@ public class ExecutionContext {
         // to its initial form during invokeFunction()
 
         // keep search for $(...) pattern
-        return nextFunctionToken(StringUtils.replace(text,
-                                                     TOKEN_FUNCTION_START + token + TOKEN_FUNCTION_END,
-                                                     TOKEN_DEFUNC_START + token + TOKEN_DEFUNC_END));
+        return nextFunctionToken(text.replace(TOKEN_FUNCTION_START + token + TOKEN_FUNCTION_END,
+                                              TOKEN_DEFUNC_START + token + TOKEN_DEFUNC_END));
     }
 
     protected String resolveDeferredTokens(String text) {
@@ -1759,7 +1758,7 @@ public class ExecutionContext {
         List<String> replaced = new ArrayList<>();
         for (String item : text) { replaced.add(resolveDeferredTokens(item)); }
 
-        return replaced.toArray(new String[replaced.size()]);
+        return replaced.toArray(new String[0]);
     }
 
     protected String mergeProperty(String value) {

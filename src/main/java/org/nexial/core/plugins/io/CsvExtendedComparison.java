@@ -17,6 +17,7 @@
 
 package org.nexial.core.plugins.io;
 
+import java.io.File;
 import java.io.IOException;
 import java.io.Serializable;
 import java.io.StringReader;
@@ -31,17 +32,21 @@ import org.apache.commons.lang3.ArrayUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.math.NumberUtils;
 import org.nexial.commons.utils.TextUtils;
+import org.nexial.commons.utils.TextUtils.CleanNumberStrategy;
 import org.nexial.core.IntegrationConfigException;
+import org.nexial.core.MemManager;
 import org.nexial.core.utils.ConsoleUtils;
 
 import com.univocity.parsers.common.record.RecordMetaData;
 import com.univocity.parsers.csv.CsvParser;
 
 import static java.lang.Double.MIN_VALUE;
-import static org.nexial.commons.utils.TextUtils.CleanNumberStrategy.CSV;
 
 class CsvExtendedComparison implements Serializable {
     private static final Map<String, ReportFormat> TYPES = new HashMap<>();
+
+    static final String CSV_EXT_COMP_HEADER = "[csv >> compareExtended]: ";
+    static final String PARSE_NUM_MSG = "resort to text comparison due to non-numeric value found: ";
 
     private String expectedContent;
     private List<String> expectedIdentityColumns;
@@ -65,6 +70,9 @@ class CsvExtendedComparison implements Serializable {
     private String actualField = "ACTUAL";
     private String identSeparator = "^";
     private String delimiter;
+
+    private File expectedFile;
+    private File actualFile;
 
     public enum ReportFormat {
         CSV(".csv"),
@@ -95,6 +103,14 @@ class CsvExtendedComparison implements Serializable {
     public String getActualContent() { return actualContent; }
 
     public void setActualContent(String actualContent) { this.actualContent = actualContent; }
+
+    public File getExpectedFile() { return expectedFile; }
+
+    public void setExpectedFile(File expectedFile) { this.expectedFile = expectedFile; }
+
+    public File getActualFile() { return actualFile; }
+
+    public void setActualFile(File actualFile) { this.actualFile = actualFile; }
 
     public Map<String, String> getFieldMapping() { return fieldMapping; }
 
@@ -173,15 +189,19 @@ class CsvExtendedComparison implements Serializable {
 
         // parse and sort
         parseExpected();
+        MemManager.gc(this);
+        MemManager.recordMemoryChanges("after parsing expected");
+
         parseActual();
+        MemManager.gc(this);
+        MemManager.recordMemoryChanges("after parsing actual");
 
         // check all the identity and mapping headers
+        ConsoleUtils.log(CSV_EXT_COMP_HEADER + "validate headers");
         validateHeaders();
 
         int expectedLineCount = expectedRecords.size();
-        int expectedCurrentLine = 0;
         int actualLineCount = actualRecords.size();
-        int actualCurrentLine = 0;
 
         CsvComparisonResult result = new CsvComparisonResult();
         result.setExpectedHeaders(expectedHeaders);
@@ -195,9 +215,11 @@ class CsvExtendedComparison implements Serializable {
         result.setExpectedRowCount(expectedLineCount);
 
         // loop through expected
-        ConsoleUtils.log("processing " + expectedLineCount + " rows in expected");
-        ConsoleUtils.log("processing " + actualLineCount + " rows in actual");
+        ConsoleUtils.log(CSV_EXT_COMP_HEADER + "processing " + expectedLineCount + " rows in expected");
+        ConsoleUtils.log(CSV_EXT_COMP_HEADER + "processing " + actualLineCount + " rows in actual");
 
+        int expectedCurrentLine = 0;
+        int actualCurrentLine = 0;
         while (expectedCurrentLine < expectedLineCount && actualCurrentLine < actualLineCount) {
             String[] expectedRecord = expectedRecords.get(expectedCurrentLine);
             String[] actualRecord = actualRecords.get(actualCurrentLine);
@@ -205,8 +227,6 @@ class CsvExtendedComparison implements Serializable {
             String expectedIdentity = expectedRecord[0];
             String actualIdentity = actualRecord[0];
             int identityCompared = expectedIdentity.compareTo(actualIdentity);
-
-            String parseNumMsg = "resort to text comparison due to non-numeric value found: ";
 
             // if identity matched
             if (identityCompared == 0) {
@@ -219,19 +239,8 @@ class CsvExtendedComparison implements Serializable {
 
                     // is this numeric compare?
                     if (IterableUtils.contains(numberFields, expectedField)) {
-                        double expected = MIN_VALUE;
-                        try {
-                            expected = NumberUtils.createDouble(TextUtils.cleanNumber(expectedValue, CSV));
-                        } catch (IllegalArgumentException e) {
-                            ConsoleUtils.error("Field [" + expectedField + "]: " + parseNumMsg + expectedValue);
-                        }
-
-                        double actual = MIN_VALUE;
-                        try {
-                            actual = NumberUtils.createDouble(TextUtils.cleanNumber(actualValue, CSV));
-                        } catch (IllegalArgumentException e) {
-                            ConsoleUtils.error("Field [" + actualField + "]: " + parseNumMsg + actualValue);
-                        }
+                        double expected = toNum(expectedField, expectedValue);
+                        double actual = toNum(actualField, actualValue);
 
                         // if both value are not parsed as number
                         if (expected == MIN_VALUE && actual == MIN_VALUE) {
@@ -268,6 +277,12 @@ class CsvExtendedComparison implements Serializable {
 
                 });
 
+                // give a little feedback; let them know we are working on it
+                if (expectedCurrentLine % 5000 == 0) {
+                    MemManager.gc(this);
+                    ConsoleUtils.log(CSV_EXT_COMP_HEADER + "processed line #" + expectedCurrentLine + "...");
+                }
+
                 expectedCurrentLine++;
                 actualCurrentLine++;
                 continue;
@@ -303,6 +318,17 @@ class CsvExtendedComparison implements Serializable {
         return result;
     }
 
+    protected double toNum(String expectedField, String expectedValue) {
+        double expected = MIN_VALUE;
+        try {
+            expected = NumberUtils.createDouble(TextUtils.cleanNumber(expectedValue,
+                                                                      CleanNumberStrategy.CSV));
+        } catch (IllegalArgumentException e) {
+            ConsoleUtils.error("Field [" + expectedField + "]: " + PARSE_NUM_MSG + expectedValue);
+        }
+        return expected;
+    }
+
     private void validateHeaders() throws IntegrationConfigException {
         // check mapping
         for (String field : fieldMapping.keySet()) {
@@ -321,7 +347,12 @@ class CsvExtendedComparison implements Serializable {
     private void parseExpected() throws IOException {
         expectedHeaders = new ArrayList<>();
         expectedRecords = new ArrayList<>();
-        expectedRecords = parseContent(expectedParser, expectedContent, expectedHeaders, expectedIdentityColumns);
+        if (expectedFile != null) {
+            expectedRecords = parseContent(expectedParser, expectedFile, expectedHeaders, expectedIdentityColumns);
+        } else {
+            expectedRecords = parseContent(expectedParser, expectedContent, expectedHeaders, expectedIdentityColumns);
+        }
+
         if (MapUtils.isEmpty(fieldMapping)) {
             fieldMapping = new ListOrderedMap<>();
             expectedHeaders.forEach(header -> fieldMapping.put(header, header));
@@ -333,25 +364,61 @@ class CsvExtendedComparison implements Serializable {
     private void parseActual() throws IOException {
         actualHeaders = new ArrayList<>();
         actualRecords = new ArrayList<>();
-        actualRecords = parseContent(actualParser, actualContent, actualHeaders, actualIdentityColumns);
+        if (actualFile != null) {
+            actualRecords = parseContent(actualParser, actualFile, actualHeaders, actualIdentityColumns);
+        } else {
+            actualRecords = parseContent(actualParser, actualContent, actualHeaders, actualIdentityColumns);
+        }
     }
 
-    private List<String[]> parseContent(final CsvParser parser,
-                                        final String content,
-                                        final List<String> fileHeaders,
-                                        final List<String> identityColumns)
-        throws IOException {
+    private List<String[]> parseContent(CsvParser parser,
+                                        String content,
+                                        List<String> fileHeaders,
+                                        List<String> identityColumns) throws IOException {
 
-        List<String[]> records = parser.parseAll(new StringReader(content));
+        StringReader reader = new StringReader(content);
+        List<String[]> records = parser.parseAll(reader);
+        reader.close();
         if (CollectionUtils.isEmpty(records)) { throw new IOException("No record parsed from content"); }
 
+        postParsing(parser, records, fileHeaders, identityColumns);
+
+        parser.stopParsing();
+        parser = null;
+        return records;
+    }
+
+    private List<String[]> parseContent(CsvParser parser,
+                                        File file,
+                                        List<String> fileHeaders,
+                                        List<String> identityColumns) throws IOException {
+
+        ConsoleUtils.log(CSV_EXT_COMP_HEADER + "parsing file " + file);
+        List<String[]> records = parser.parseAll(file);
+        ConsoleUtils.log(CSV_EXT_COMP_HEADER + "parsing file " + file + " - DONE");
+
+        if (CollectionUtils.isEmpty(records)) { throw new IOException("No record parsed from content"); }
+
+        postParsing(parser, records, fileHeaders, identityColumns);
+        ConsoleUtils.log(CSV_EXT_COMP_HEADER + "post-parsing - DONE");
+
+        parser.stopParsing();
+        parser = null;
+        return records;
+    }
+
+    private void postParsing(CsvParser parser,
+                             List<String[]> records,
+                             List<String> fileHeaders,
+                             List<String> identityColumns) throws IOException {
+        // check file header
         RecordMetaData recordMetadata = parser.getRecordMetadata();
         if (recordMetadata != null) { fileHeaders.addAll(Arrays.asList(recordMetadata.headers())); }
         if (CollectionUtils.isEmpty(fileHeaders)) {
             throw new IOException("Unable to derive column headers from content");
         }
 
-        ConsoleUtils.log("file header columns resolved to " + fileHeaders);
+        ConsoleUtils.log(CSV_EXT_COMP_HEADER + "file header columns resolved to " + fileHeaders);
 
         // check identity fields
         for (String identColumn : identityColumns) {
@@ -378,16 +445,19 @@ class CsvExtendedComparison implements Serializable {
 
         // position 0 is the identity value
         records.sort(Comparator.comparing(row -> row[0]));
-        return records;
     }
 
     private void sanityChecks() throws IntegrationConfigException {
-        if (StringUtils.isBlank(expectedContent)) { throw new IntegrationConfigException("No content for expected"); }
+        if (StringUtils.isBlank(expectedContent) && expectedFile == null) {
+            throw new IntegrationConfigException("No content for expected");
+        }
 
-        if (StringUtils.isBlank(actualContent)) { throw new IntegrationConfigException("No content for actual"); }
+        if (StringUtils.isBlank(actualContent) && actualFile == null) {
+            throw new IntegrationConfigException("No content for actual");
+        }
 
         if (MapUtils.isEmpty(fieldMapping)) {
-            ConsoleUtils.log("No field mapping found; ASSUME EXPECTED AND ACTUAL WITH SAME COLUMNS");
+            ConsoleUtils.log(CSV_EXT_COMP_HEADER + "No field mapping found; ASSUME SAME COLUMNS FOR EXPECTED/ACTUAL");
         }
 
         if (CollectionUtils.isEmpty(expectedIdentityColumns)) {
