@@ -23,7 +23,7 @@ import org.nexial.commons.utils.FileUtil
 import org.nexial.commons.utils.IOFilePathFilter
 import org.nexial.commons.utils.TextUtils
 import org.nexial.core.IntegrationConfigException
-import org.nexial.core.NexialConst.S3_PATH_SEPARATOR
+import org.nexial.core.NexialConst.S3_PATH_SEP
 import org.nexial.core.aws.AwsS3Helper
 import org.nexial.core.aws.NexialS3Helper
 import org.nexial.core.model.StepResult
@@ -119,7 +119,7 @@ class S3Command : BaseCommand() {
         if (CollectionUtils.isNotEmpty(keys)) {
             // reverse the list so that we can delete the most significant object first
             keys.reverse()
-            val bucketName = StringUtils.substringBefore(remotePath, S3_PATH_SEPARATOR)
+            val bucketName = StringUtils.substringBefore(remotePath, S3_PATH_SEP)
             for (key in keys) {
                 val filePath = "$bucketName/$key"
                 try {

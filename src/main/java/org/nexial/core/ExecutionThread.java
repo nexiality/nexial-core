@@ -32,7 +32,6 @@ import org.apache.commons.lang3.time.StopWatch;
 import org.nexial.commons.logging.LogbackUtils;
 import org.nexial.commons.utils.FileUtil;
 import org.nexial.commons.utils.ResourceUtils;
-import org.nexial.core.aws.NexialS3Helper;
 import org.nexial.core.excel.Excel;
 import org.nexial.core.model.*;
 import org.nexial.core.plugins.web.CloudWebTestingPlatform;
@@ -495,9 +494,8 @@ public final class ExecutionThread extends Thread {
         File testScript = execution.getTestScript();
         if (context.isOutputToCloud()) {
             try {
-                NexialS3Helper otc = context.getOtc();
                 // when saving test output to cloud, we might NOT want to remove it locally - esp. when open-result is on
-                execution.setTestScriptLink(otc.importFile(testScript, !isAutoOpenResult()));
+                execution.setTestScriptLink(context.getOtc().importFile(testScript, !isAutoOpenResult()));
             } catch (IOException e) {
                 ConsoleUtils.error(toCloudIntegrationNotReadyMessage(testScript.toString()) + ": " + e.getMessage());
             }

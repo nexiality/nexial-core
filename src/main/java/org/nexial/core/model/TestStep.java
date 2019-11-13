@@ -36,6 +36,7 @@ import org.apache.poi.ss.usermodel.CellType;
 import org.apache.poi.ss.usermodel.Comment;
 import org.apache.poi.xssf.usermodel.XSSFCell;
 import org.apache.poi.xssf.usermodel.XSSFCellStyle;
+import org.jetbrains.annotations.NotNull;
 import org.nexial.commons.utils.DateUtility;
 import org.nexial.commons.utils.FileUtil;
 import org.nexial.commons.utils.TextUtils;
@@ -263,27 +264,7 @@ public class TestStep extends TestStepManifest {
 
         // step 2: write error to file for RCA
         // determine the file to send log
-        Syspath syspath = new Syspath();
-        File log = new File(syspath.log("fullpath") + separator + OutputFileUtils.generateOutputFilename(this, ".log"));
-
-        // build error content
-        StringBuilder buffer = new StringBuilder();
-        buffer.append("Nexial Version:    ").append(ExecUtils.NEXIAL_MANIFEST).append("\n")
-              .append("Current Timestamp: ").append(DateUtility.formatLog2Date(System.currentTimeMillis())).append("\n")
-              .append("Test Step:         ").append(messageId).append("\n")
-              .append(StringUtils.repeat("-", 80)).append("\n");
-
-        StringWriter writer = new StringWriter();
-        PrintWriter printWriter = new PrintWriter(writer);
-        e.printStackTrace(printWriter);
-        buffer.append(writer.getBuffer().toString()).append("\n");
-        printWriter.close();
-
-        try {
-            FileUtils.writeStringToFile(log, buffer.toString(), DEF_FILE_ENCODING);
-        } catch (IOException ex) {
-            ConsoleUtils.error("Unable to create log file (" + log + ") for the exception thrown: " + ex.getMessage());
-        }
+        File log = generateErrorLog(e);
 
         // step 3: print error to console
         String error;
@@ -296,7 +277,6 @@ public class TestStep extends TestStepManifest {
         } else {
             error = StringUtils.defaultString(e.getMessage(), e.toString());
         }
-        error += ". Check corresponding error log for details: " + syspath.log("name") + separator + log.getName();
 
         // print a lot or a little
         if (context.getBooleanData(OPT_PRINT_ERROR_DETAIL, getDefaultBool(OPT_PRINT_ERROR_DETAIL))) {
@@ -304,6 +284,8 @@ public class TestStep extends TestStepManifest {
         } else {
             ConsoleUtils.error(error);
         }
+
+        ConsoleUtils.error("Check corresponding error log for details: " + log.getAbsolutePath());
 
         // step 4: return back the error message for FAIL result instance
         return error;
@@ -572,6 +554,7 @@ public class TestStep extends TestStepManifest {
 
                             ConsoleUtils.log("output-to-cloud enabled; copying " + link + " cloud...");
                             String cloudUrl = context.getOtc().importFile(tmpFile, true);
+                            context.setData(OPT_LAST_OUTPUT_LINK, cloudUrl);
                             ConsoleUtils.log("output-to-cloud enabled; copied  " + link + " to " + cloudUrl);
 
                             worksheet.setHyperlink(paramCell, cloudUrl, "(cloud) " + params.get(paramIdx));
@@ -753,6 +736,32 @@ public class TestStep extends TestStepManifest {
         lwTestStep.setLogToTestScript(isLogToTestScript());
         lwTestStep.setRowIndex(row.get(0).getRowIndex());
         return lwTestStep;
+    }
+
+    @NotNull
+    private File generateErrorLog(Throwable e) {
+        Syspath syspath = new Syspath();
+        File log = new File(syspath.log("fullpath") + separator + OutputFileUtils.generateOutputFilename(this, ".log"));
+
+        // build error content
+        StringBuilder buffer = new StringBuilder();
+        buffer.append("Nexial Version:    ").append(ExecUtils.NEXIAL_MANIFEST).append("\n")
+              .append("Current Timestamp: ").append(DateUtility.formatLog2Date(System.currentTimeMillis())).append("\n")
+              .append("Test Step:         ").append(messageId).append("\n")
+              .append(StringUtils.repeat("-", 80)).append("\n");
+
+        StringWriter writer = new StringWriter();
+        PrintWriter printWriter = new PrintWriter(writer);
+        e.printStackTrace(printWriter);
+        buffer.append(writer.getBuffer().toString()).append("\n");
+        printWriter.close();
+
+        try {
+            FileUtils.writeStringToFile(log, buffer.toString(), DEF_FILE_ENCODING);
+        } catch (IOException ex) {
+            ConsoleUtils.error("Unable to create log file (" + log + ") for the exception thrown: " + ex.getMessage());
+        }
+        return log;
     }
 
     private boolean isFileLink(String param) {

@@ -284,7 +284,7 @@ public final class NexialConst {
     // s3 output directory mapped to setup.properties
     public static final String OPT_CLOUD_OUTPUT_BASE = registerSysVar(NAMESPACE + "outputCloudBase");
     public static final String OUTPUT_TO_CLOUD = registerSysVar(NAMESPACE + "outputToCloud", false);
-    public static final String S3_PATH_SEPARATOR = "/";
+    public static final String S3_PATH_SEP = "/";
 
     // mem mgmt
     public static final String OPT_MANAGE_MEM = registerSysVar(NAMESPACE + "manageMemory", false);

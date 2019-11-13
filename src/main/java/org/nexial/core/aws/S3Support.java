@@ -29,7 +29,7 @@ import com.amazonaws.services.s3.model.ObjectMetadata;
 import com.amazonaws.services.s3.model.PutObjectResult;
 
 import static com.amazonaws.regions.Regions.DEFAULT_REGION;
-import static org.nexial.core.NexialConst.S3_PATH_SEPARATOR;
+import static org.nexial.core.NexialConst.S3_PATH_SEP;
 import static org.nexial.core.NexialConst.S3_PUBLIC_URL;
 
 public abstract class S3Support extends AwsSupport {
@@ -79,7 +79,7 @@ public abstract class S3Support extends AwsSupport {
     }
 
     public void delete(final @NotNull String bucket, @NotNull final String key) {
-        newAWSS3Helper(bucket + S3_PATH_SEPARATOR + key).deleteS3Object(bucket, key);
+        newAWSS3Helper(bucket + S3_PATH_SEP + key).deleteS3Object(bucket, key);
     }
 
     /**

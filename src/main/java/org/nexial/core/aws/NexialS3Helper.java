@@ -26,8 +26,8 @@ import org.nexial.core.model.ExecutionContext;
 import org.nexial.core.utils.ConsoleUtils;
 
 import static com.amazonaws.regions.Regions.DEFAULT_REGION;
+import static org.nexial.core.NexialConst.Data.OPT_RUN_ID;
 import static org.nexial.core.NexialConst.*;
-import static org.nexial.core.NexialConst.Data.*;
 
 /**
  * S3 helper specific to Nexial's internal use for transferring execution output to S3
@@ -50,14 +50,14 @@ public class NexialS3Helper extends S3Support {
             // no choice but to resolve output dir via System props.
             return resolveOutputDir(System.getProperty(OPT_PROJECT_NAME), System.getProperty(OPT_RUN_ID));
         } else {
-            return context.getStringData(OPT_CLOUD_OUTPUT_BASE, outputBase) + S3_PATH_SEPARATOR +
-                   context.getProject().getName() + S3_PATH_SEPARATOR +
+            return context.getStringData(OPT_CLOUD_OUTPUT_BASE, outputBase) + S3_PATH_SEP +
+                   context.getProject().getName() + S3_PATH_SEP +
                    context.getRunId();
         }
     }
 
     public static String resolveOutputDir(String project, String runId) {
-        return System.getProperty(OPT_CLOUD_OUTPUT_BASE) + S3_PATH_SEPARATOR + project + S3_PATH_SEPARATOR + runId;
+        return System.getProperty(OPT_CLOUD_OUTPUT_BASE) + S3_PATH_SEP + project + S3_PATH_SEP + runId;
     }
 
     @Override
@@ -84,9 +84,9 @@ public class NexialS3Helper extends S3Support {
         if (region == null) { ConsoleUtils.log("region not set; default to " + DEFAULT_REGION); }
     }
 
-    protected String resolveCaptureDir() { return resolveOutputDir() + S3_PATH_SEPARATOR + SUBDIR_CAPTURES; }
+    protected String resolveCaptureDir() { return resolveOutputDir() + S3_PATH_SEP + SUBDIR_CAPTURES; }
 
-    protected String resolveLogDir() { return resolveOutputDir() + S3_PATH_SEPARATOR + SUBDIR_LOGS; }
+    protected String resolveLogDir() { return resolveOutputDir() + S3_PATH_SEP + SUBDIR_LOGS; }
 
     protected void checkContext() {
         if (context == null) {
