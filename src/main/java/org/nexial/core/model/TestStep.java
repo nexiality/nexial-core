@@ -31,6 +31,7 @@ import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang3.ArrayUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.builder.ToStringBuilder;
+import org.apache.commons.lang3.exception.ExceptionUtils;
 import org.apache.commons.lang3.time.StopWatch;
 import org.apache.poi.ss.usermodel.CellType;
 import org.apache.poi.ss.usermodel.Comment;
@@ -173,7 +174,7 @@ public class TestStep extends TestStepManifest {
         try {
             result = invokeCommand();
         } catch (Throwable e) {
-            result = StepResult.fail(logException(e));
+            result = toFailedResult(e);
         } finally {
             tickTock.stop();
             trackTimeLogs.checkEndTracking(context, this);
@@ -258,15 +259,15 @@ public class TestStep extends TestStepManifest {
         }
     }
 
-    protected String logException(Throwable e) {
+    protected StepResult toFailedResult(Throwable e) {
+        // Map<String, String> errorLogs = new HashMap<>();
+        // result = StepResult.fail(logException(e, errorLogs));
+        // if (MapUtils.isNotEmpty(errorLogs)) { result.setErrorLogs(errorLogs); }
+
         // step 1: get truth! InvocationTargetException is masking real exception
         if (e instanceof InvocationTargetException && e.getCause() != null) { e = e.getCause(); }
 
-        // step 2: write error to file for RCA
-        // determine the file to send log
-        File log = generateErrorLog(e);
-
-        // step 3: print error to console
+        // step 2: print error to console
         String error;
         if (e instanceof WebDriverException) {
             error = WebDriverExceptionHelper.analyzeError(context, this, (WebDriverException) e);
@@ -278,17 +279,32 @@ public class TestStep extends TestStepManifest {
             error = StringUtils.defaultString(e.getMessage(), e.toString());
         }
 
+        StepResult result = StepResult.fail(error);
+
         // print a lot or a little
         if (context.getBooleanData(OPT_PRINT_ERROR_DETAIL, getDefaultBool(OPT_PRINT_ERROR_DETAIL))) {
             ConsoleUtils.error(ExecutionLogger.toHeader(this), error, e);
-        } else {
-            ConsoleUtils.error(error);
         }
 
-        ConsoleUtils.error("Check corresponding error log for details: " + log.getAbsolutePath());
+        // step 3: write error to file for RCA
+        // determine the file to send log
+        File log = generateErrorLog(e);
+        String logFqn = log.getAbsolutePath();
+        if (context.isOutputToCloud() && FileUtil.isFileReadable(log, 1)) {
+            try {
+                ConsoleUtils.log("output-to-cloud enabled; copying " + logFqn + " cloud...");
+                logFqn = context.getOtc().importFile(log, true);
+            } catch (IOException ex) {
+                // unable to send log to cloud...
+                ConsoleUtils.log("Unable to copy resource to cloud: " + e.getMessage());
+                log(toCloudIntegrationNotReadyMessage(logFqn + ": " + e.getMessage()));
+            }
+        }
+
+        if (StringUtils.isNotBlank(logFqn)) { result.setDetailedLogLink(logFqn); }
 
         // step 4: return back the error message for FAIL result instance
-        return error;
+        return result;
     }
 
     protected void waitFor(long waitMs) {
@@ -399,6 +415,9 @@ public class TestStep extends TestStepManifest {
             } else {
                 summary.incrementFail();
                 error(MessageUtils.renderAsFail(result.getMessage()));
+                if (StringUtils.isNotBlank(result.getDetailedLogLink())) {
+                    context.getLogger().error(this, "Error log: " + result.getDetailedLogLink());
+                }
             }
         }
 
@@ -661,12 +680,23 @@ public class TestStep extends TestStepManifest {
         ExcelStyleHelper.handleTextWrap(cellResult);
 
         // reason
-        Throwable exception = result.getException();
         XSSFCell cellReason = row.get(COL_IDX_REASON);
-        if (cellReason != null && !pass && exception != null) {
-            String error = exception.getCause() != null ? exception.getCause().getMessage() : exception.getMessage();
-            cellReason.setCellValue(error);
-            cellReason.setCellStyle(worksheet.getStyle(STYLE_MESSAGE));
+        if (cellReason != null && !pass) {
+            if (StringUtils.isNotBlank(result.getDetailedLogLink())) {
+                // currently support just 1 log link
+                String logLink = result.getDetailedLogLink();
+                if (StringUtils.isNotBlank(logLink)) {
+                    Excel.setHyperlink(cellReason, logLink, "details");
+                    ConsoleUtils.error("Check corresponding error log for details: " + logLink);
+                }
+            } else {
+                Throwable exception = result.getException();
+                if (exception != null) {
+                    Throwable rootCause = ExceptionUtils.getRootCause(exception);
+                    cellReason.setCellValue(rootCause == null ? exception.getMessage() : rootCause.getMessage());
+                    cellReason.setCellStyle(worksheet.getStyle(STYLE_MESSAGE));
+                }
+            }
         }
 
         if (CollectionUtils.isNotEmpty(nestedTestResults)) {
@@ -702,25 +732,29 @@ public class TestStep extends TestStepManifest {
     protected void logToTestScript(String message) {
         if (!isLogToTestScript()) { return; }
 
-        if (MessageUtils.isTestResult(message)) {
-            if (context.isScreenshotOnError() && MessageUtils.isFail(message)) {
-                NexialCommand plugin = context.findPlugin(target);
-                if (plugin instanceof CanTakeScreenshot) {
-                    String screenshotPath = ((CanTakeScreenshot) plugin).takeScreenshot(this);
-                    if (StringUtils.isNotBlank(screenshotPath)) {
-                        addNestedScreenCapture(screenshotPath, message);
-                    } else {
-                        context.getLogger().error(this, "Unable to capture screenshot - " + message);
-                    }
-                } else {
-                    context.getLogger().error(this, message);
-                }
-            } else {
-                addNestedMessage(message);
-            }
-        } else {
+        if (!MessageUtils.isTestResult(message)) {
             addNestedMessage(message);
+            return;
         }
+
+        if (!context.isScreenshotOnError() || !MessageUtils.isFail(message)) {
+            addNestedMessage(message);
+            return;
+        }
+
+        NexialCommand plugin = context.findPlugin(target);
+        if (!(plugin instanceof CanTakeScreenshot)) {
+            context.getLogger().error(this, message);
+            return;
+        }
+
+        String screenshotPath = ((CanTakeScreenshot) plugin).takeScreenshot(this);
+        if (StringUtils.isBlank(screenshotPath)) {
+            context.getLogger().error(this, "Unable to capture screenshot - " + message);
+            return;
+        }
+
+        addNestedScreenCapture(screenshotPath, message);
     }
 
     protected TestStepManifest toTestStepManifest() {
@@ -750,11 +784,15 @@ public class TestStep extends TestStepManifest {
               .append("Test Step:         ").append(messageId).append("\n")
               .append(StringUtils.repeat("-", 80)).append("\n");
 
-        StringWriter writer = new StringWriter();
-        PrintWriter printWriter = new PrintWriter(writer);
-        e.printStackTrace(printWriter);
-        buffer.append(writer.getBuffer().toString()).append("\n");
-        printWriter.close();
+        if (e instanceof AssertionError) {
+            buffer.append(e.getMessage()).append("\n");
+        } else {
+            StringWriter writer = new StringWriter();
+            PrintWriter printWriter = new PrintWriter(writer);
+            e.printStackTrace(printWriter);
+            buffer.append(writer.getBuffer().toString()).append("\n");
+            printWriter.close();
+        }
 
         try {
             FileUtils.writeStringToFile(log, buffer.toString(), DEF_FILE_ENCODING);
