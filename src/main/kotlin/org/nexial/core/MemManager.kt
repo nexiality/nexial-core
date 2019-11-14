@@ -49,7 +49,7 @@ object MemManager {
         if (!memManagementEnabled) return
 
         val memUsed = RuntimeUtils.memUsed()
-        var shortenTitle = StringUtils.rightPad(title, logLength)
+        val shortenTitle = StringUtils.rightPad(title, logLength)
         val descriptive = "mem use: " + StringUtils.leftPad(memFormat.format(memUsed), memLength) +
                           if (lastMemUsed != -1L)
                               ", changes: " + StringUtils.leftPad(memFormat.format(memUsed - lastMemUsed), memLength)
@@ -79,9 +79,10 @@ object MemManager {
     fun showUsage(logPrefix: String = ""): String? {
         if (!memManagementEnabled) return null
 
+        val truncateBy = logPrefix.length + 1
         val buffer = StringBuilder()
         memChanges.forEach { (title, log) ->
-            buffer.append(logPrefix).append(title).append(" ").append(log).append("\n")
+            buffer.append(logPrefix).append(StringUtils.left(title, title.length - truncateBy)).append(log).append("\n")
         }
         return buffer.toString()
     }

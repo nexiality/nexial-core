@@ -81,8 +81,7 @@ public class CsvCommand extends IoCommand {
         comparison.setDelimiter(context.getTextDelim());
 
         // expected can either be a file or content
-        boolean expectedAsIs = BooleanUtils.toBoolean(collectConfig(configKey + "expected.readAsIs").orElse("false"));
-        if (expectedAsIs) {
+        if (BooleanUtils.toBoolean(collectConfig(configKey + "expected.readAsIs").orElse("false"))) {
             File file = OutputResolver.resolveFile(expected);
             requiresNotNull(file, "Unable to resolve 'expected' as a file");
             ConsoleUtils.log(CSV_EXT_COMP_HEADER + "read from expected: " + file.length() + " bytes read");
@@ -92,15 +91,14 @@ public class CsvCommand extends IoCommand {
                 String content = new OutputResolver(expected, context).getContent();
                 requiresNotBlank(content, "No content found for expected", expected);
                 ConsoleUtils.log(CSV_EXT_COMP_HEADER + "read from expected: " + content.length() + " bytes read");
-                comparison.setExpectedField(content);
+                comparison.setExpectedContent(content);
             } catch (Throwable e) {
                 return StepResult.fail("Unable to retrieve content from " + expected + ": " + e.getMessage());
             }
         }
 
         // actual can either be a file or content
-        boolean actualAsIs = BooleanUtils.toBoolean(collectConfig(configKey + "actual.readAsIs").orElse("false"));
-        if (actualAsIs) {
+        if (BooleanUtils.toBoolean(collectConfig(configKey + "actual.readAsIs").orElse("false"))) {
             File file = OutputResolver.resolveFile(actual);
             ConsoleUtils.log(CSV_EXT_COMP_HEADER + "read from actual:   " + file.length() + " bytes read");
             comparison.setActualFile(file);

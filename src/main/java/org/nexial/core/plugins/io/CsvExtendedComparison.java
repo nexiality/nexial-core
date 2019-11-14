@@ -303,6 +303,8 @@ class CsvExtendedComparison implements Serializable {
             }
         }
 
+        ConsoleUtils.log(CSV_EXT_COMP_HEADER + "processed all lines");
+
         if (expectedCurrentLine < expectedLineCount) {
             for (int i = expectedCurrentLine; i < expectedLineCount; i++) {
                 result.addMissingActual(expectedRecords.get(i));
