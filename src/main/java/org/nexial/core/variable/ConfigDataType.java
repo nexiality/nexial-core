@@ -20,7 +20,6 @@ package org.nexial.core.variable;
 import java.io.IOException;
 import java.io.Reader;
 import java.io.StringReader;
-import java.util.Properties;
 
 import org.apache.commons.lang3.StringUtils;
 import org.nexial.core.utils.ConsoleUtils;
@@ -30,8 +29,8 @@ import static java.lang.System.lineSeparator;
 /**
  * Created by nv092106 on 7/16/2017.
  */
-public class ConfigDataType extends ExpressionDataType<Properties> {
-    private Transformer transformer = new ConfigTransformer();
+public class ConfigDataType extends ExpressionDataType<OrderedKeyProperties> {
+    private ConfigTransformer<ConfigDataType> transformer = new ConfigTransformer<>();
     private String eol;
 
     public ConfigDataType(String textValue) throws TypeConversionException { super(textValue); }
@@ -44,7 +43,7 @@ public class ConfigDataType extends ExpressionDataType<Properties> {
     public String getEol() { return eol; }
 
     @Override
-    Transformer getTransformer() { return transformer; }
+    ConfigTransformer<ConfigDataType> getTransformer() { return transformer; }
 
     @Override
     ConfigDataType snapshot() {
@@ -60,7 +59,7 @@ public class ConfigDataType extends ExpressionDataType<Properties> {
     protected void init() throws TypeConversionException {
         Reader reader = null;
         try {
-            this.value = new Properties();
+            this.value = new OrderedKeyProperties();
 
             if (StringUtils.isNotBlank(textValue)) {
                 if (StringUtils.contains(textValue, "\r\n")) {

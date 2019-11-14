@@ -32,7 +32,6 @@ import org.apache.commons.collections4.IterableUtils;
 import org.apache.commons.collections4.MapUtils;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang3.ArrayUtils;
-import org.apache.commons.lang3.BooleanUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.math.NumberUtils;
 import org.jdom2.Element;
@@ -52,13 +51,15 @@ import com.google.gson.JsonObject;
 import com.univocity.parsers.common.record.Record;
 
 import static java.lang.System.lineSeparator;
+import static org.apache.commons.lang3.BooleanUtils.toBoolean;
 import static org.nexial.core.NexialConst.*;
-import static org.nexial.core.NexialConst.Rdbms.*;
+import static org.nexial.core.NexialConst.Rdbms.CSV_FIELD_DEIM;
+import static org.nexial.core.NexialConst.Rdbms.CSV_ROW_SEP;
 import static org.nexial.core.SystemVariables.getDefaultInt;
 import static org.nexial.core.model.NexialFilterComparator.Equal;
 import static org.nexial.core.variable.ExpressionUtils.fixControlChars;
 
-public class CsvTransformer<T extends CsvDataType> extends Transformer {
+public class CsvTransformer<T extends CsvDataType> extends Transformer<CsvDataType> {
     private static final Map<String, Integer> FUNCTION_TO_PARAM = discoverFunctions(CsvTransformer.class);
     private static final Map<String, Method> FUNCTIONS =
         toFunctionMap(FUNCTION_TO_PARAM, CsvTransformer.class, CsvDataType.class);
@@ -93,11 +94,9 @@ public class CsvTransformer<T extends CsvDataType> extends Transformer {
             });
 
             data.setDelim(configMap.containsKey("delim") ? configMap.get("delim") : context.getTextDelim());
-            if (configMap.containsKey("header")) { data.setHeader(BooleanUtils.toBoolean(configMap.get("header"))); }
+            if (configMap.containsKey("header")) { data.setHeader(toBoolean(configMap.get("header"))); }
             if (configMap.containsKey("quote")) { data.setQuote(configMap.get("quote")); }
-            if (configMap.containsKey("keepQuote")) {
-                data.setKeepQuote(BooleanUtils.toBoolean(configMap.get("keepQuote")));
-            }
+            if (configMap.containsKey("keepQuote")) { data.setKeepQuote(toBoolean(configMap.get("keepQuote"))); }
             if (configMap.containsKey("recordDelim")) {
                 data.setRecordDelim(fixControlChars(configMap.get("recordDelim")));
             }
@@ -121,7 +120,7 @@ public class CsvTransformer<T extends CsvDataType> extends Transformer {
                 data.setMaxColumnWidth(maxColumnWidth);
             }
 
-            if (configMap.containsKey("trim")) { data.setTrimValue(BooleanUtils.toBoolean(configMap.get("trim"))); }
+            if (configMap.containsKey("trim")) { data.setTrimValue(toBoolean(configMap.get("trim"))); }
         }
 
         data.setReadyToParse(true);

@@ -1174,11 +1174,15 @@ public class ExpressionProcessorTest {
 
     @Test
     public void processConfig_keys() throws Exception {
-        String propertiesFile = ResourceUtils.getResourceFilePath(resourcePath + className + "4.txt");
 
         ExpressionProcessor subject = new ExpressionProcessor(context);
 
+        String propertiesFile = ResourceUtils.getResourceFilePath(resourcePath + className + "4.txt");
         assertEquals("FirstName,LastName", subject.process("[CONFIG(" + propertiesFile + ") => keys]"));
+
+        propertiesFile = ResourceUtils.getResourceFilePath(resourcePath + className + "5.txt");
+        assertEquals("FirstName,LastName,qapay01.url,genre,nexial.assistantMode,nexial.inspectOnPause,mydb.type,mydb.url,mydb.user,mydb.password,mydb.autocommit,mydb.treatNullAs,qapay01.type,qapay01.user,qapay01.password,qapay01.autocommit",
+                     subject.process("[CONFIG(" + propertiesFile + ") => keys]"));
     }
 
     @Test

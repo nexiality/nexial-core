@@ -1,0 +1,25 @@
+FirstName=John
+LastName=Travolta
+
+# media=type=MPEG
+qapay01.url=jdbc:... .. ..
+# album=One
+genre=Jazz
+
+nexial.assistantMode=on
+#core.stepByStep=true
+nexial.inspectOnPause=true
+
+# default sqlite connection
+mydb.type=sqlite
+mydb.url=jdbc:... ...
+mydb.user=(empty)
+mydb.password=(empty)
+mydb.autocommit=true
+mydb.treatNullAs=(blank)
+
+# used by db2_payroll_batch scenario
+qapay01.type=db2
+qapay01.user=(blank)
+qapay01.password=(blank)
+qapay01.autocommit=false

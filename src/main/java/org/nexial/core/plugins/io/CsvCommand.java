@@ -25,7 +25,6 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
-import javax.validation.constraints.NotNull;
 
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.collections4.MapUtils;
@@ -40,8 +39,9 @@ import org.nexial.core.utils.OutputFileUtils;
 import org.nexial.core.utils.OutputResolver;
 
 import com.univocity.parsers.csv.CsvParser;
-import com.univocity.parsers.csv.CsvParserSettings;
 
+import static org.nexial.core.NexialConst.CSV_MAX_COLUMNS;
+import static org.nexial.core.NexialConst.CSV_MAX_COLUMN_WIDTH;
 import static org.nexial.core.plugins.io.CsvExtendedComparison.CSV_EXT_COMP_HEADER;
 import static org.nexial.core.plugins.io.IoCommand.CompareMode.FAIL_FAST;
 import static org.nexial.core.plugins.io.IoCommand.CompareMode.THOROUGH;
@@ -79,6 +79,8 @@ public class CsvCommand extends IoCommand {
 
         CsvExtendedComparison comparison = new CsvExtendedComparison();
         comparison.setDelimiter(context.getTextDelim());
+        comparison.setMaxColumns(context.getIntData(CSV_MAX_COLUMNS, -1));
+        comparison.setMaxColumnWidth(context.getIntData(CSV_MAX_COLUMN_WIDTH, -1));
 
         // expected can either be a file or content
         if (BooleanUtils.toBoolean(collectConfig(configKey + "expected.readAsIs").orElse("false"))) {
@@ -197,73 +199,73 @@ public class CsvCommand extends IoCommand {
         }
     }
 
-    public static CsvParser newCsvParser(String quote,
-                                         String delim,
-                                         String lineSeparator,
-                                         boolean hasHeader,
-                                         int maxColumns) {
-        return newCsvParser(quote, delim, lineSeparator, hasHeader, true, maxColumns);
-    }
-
-    public static CsvParser newCsvParser(String quote,
-                                         String delim,
-                                         String lineSeparator,
-                                         boolean hasHeader,
-                                         boolean keepQuote,
-                                         int maxColumns) {
-        return new CsvParser(newCsvParserSetting(quote, delim, lineSeparator, hasHeader, keepQuote, maxColumns));
-    }
-
-    public static CsvParserSettings newCsvParserSettings(String delim,
-                                                         String lineSeparator,
-                                                         boolean hasHeader,
-                                                         int maxColumns) {
-        /*
-        withDelimiter(',')
-        withQuote('"')
-        withRecordSeparator("\r\n")
-        withIgnoreEmptyLines(false)
-        withAllowMissingColumnNames(true)
-        */
-        CsvParserSettings settings = new CsvParserSettings();
-        settings.setHeaderExtractionEnabled(hasHeader);
-        settings.setSkipEmptyLines(false);
-        settings.setEmptyValue("");
-        settings.setNullValue("");
-        // settings.setKeepEscapeSequences(true);
-        // settings.setEscapeUnquotedValues(true);
-
-        settings.setLineSeparatorDetectionEnabled(true);
-        if (StringUtils.isNotEmpty(lineSeparator)) { settings.getFormat().setLineSeparator(lineSeparator); }
-
-        if (StringUtils.isNotEmpty(delim)) {
-            settings.getFormat().setDelimiter(delim.charAt(0));
-            settings.setDelimiterDetectionEnabled(false);
-        } else {
-            settings.setDelimiterDetectionEnabled(true);
-        }
-
-        if (maxColumns > 0) { settings.setMaxColumns(maxColumns); }
-        return settings;
-    }
-
-    @NotNull
-    public static CsvParserSettings newCsvParserSetting(String quote,
-                                                        String delim,
-                                                        String lineSeparator,
-                                                        boolean hasHeader,
-                                                        boolean keepQuote,
-                                                        int maxColumns) {
-        CsvParserSettings settings = newCsvParserSettings(delim, lineSeparator, hasHeader, maxColumns);
-
-        settings.setQuoteDetectionEnabled(true);
-        if (StringUtils.isNotEmpty(quote)) {
-            settings.getFormat().setQuote(quote.charAt(0));
-            settings.setKeepQuotes(keepQuote);
-        }
-
-        return settings;
-    }
+    // public static CsvParser newCsvParser(String quote,
+    //                                      String delim,
+    //                                      String lineSeparator,
+    //                                      boolean hasHeader,
+    //                                      int maxColumns) {
+    //     return newCsvParser(quote, delim, lineSeparator, hasHeader, true, maxColumns);
+    // }
+    //
+    // public static CsvParser newCsvParser(String quote,
+    //                                      String delim,
+    //                                      String lineSeparator,
+    //                                      boolean hasHeader,
+    //                                      boolean keepQuote,
+    //                                      int maxColumns) {
+    //     return new CsvParser(newCsvParserSetting(quote, delim, lineSeparator, hasHeader, keepQuote, maxColumns));
+    // }
+    //
+    // public static CsvParserSettings newCsvParserSettings(String delim,
+    //                                                      String lineSeparator,
+    //                                                      boolean hasHeader,
+    //                                                      int maxColumns) {
+    //     /*
+    //     withDelimiter(',')
+    //     withQuote('"')
+    //     withRecordSeparator("\r\n")
+    //     withIgnoreEmptyLines(false)
+    //     withAllowMissingColumnNames(true)
+    //     */
+    //     CsvParserSettings settings = new CsvParserSettings();
+    //     settings.setHeaderExtractionEnabled(hasHeader);
+    //     settings.setSkipEmptyLines(false);
+    //     settings.setEmptyValue("");
+    //     settings.setNullValue("");
+    //     // settings.setKeepEscapeSequences(true);
+    //     // settings.setEscapeUnquotedValues(true);
+    //
+    //     settings.setLineSeparatorDetectionEnabled(true);
+    //     if (StringUtils.isNotEmpty(lineSeparator)) { settings.getFormat().setLineSeparator(lineSeparator); }
+    //
+    //     if (StringUtils.isNotEmpty(delim)) {
+    //         settings.getFormat().setDelimiter(delim.charAt(0));
+    //         settings.setDelimiterDetectionEnabled(false);
+    //     } else {
+    //         settings.setDelimiterDetectionEnabled(true);
+    //     }
+    //
+    //     if (maxColumns > 0) { settings.setMaxColumns(maxColumns); }
+    //     return settings;
+    // }
+    //
+    // @NotNull
+    // public static CsvParserSettings newCsvParserSetting(String quote,
+    //                                                     String delim,
+    //                                                     String lineSeparator,
+    //                                                     boolean hasHeader,
+    //                                                     boolean keepQuote,
+    //                                                     int maxColumns) {
+    //     CsvParserSettings settings = newCsvParserSettings(delim, lineSeparator, hasHeader, maxColumns);
+    //
+    //     settings.setQuoteDetectionEnabled(true);
+    //     if (StringUtils.isNotEmpty(quote)) {
+    //         settings.getFormat().setQuote(quote.charAt(0));
+    //         settings.setKeepQuotes(keepQuote);
+    //     }
+    //
+    //     return settings;
+    // }
 
     protected Optional<List<String>> collectFields(String config) {
         String textDelim = context.getTextDelim();
@@ -276,14 +278,21 @@ public class CsvCommand extends IoCommand {
     }
 
     protected List<String[]> parseAsCSV(File file) {
-        CsvParser parser = newCsvParser(null, null, null, false, -1);
+        CsvParser parser = new CsvParserBuilder().setHasHeader(false)
+                                                 .setMaxColumns(context.getIntData(CSV_MAX_COLUMNS, -1))
+                                                 .setMaxColumnWidth(context.getIntData(CSV_MAX_COLUMN_WIDTH, -1))
+                                                 .build();
         List<String[]> records = parser.parseAll(file);
         log("found " + records.size() + " line(s) from '" + file + "'");
         return records;
     }
 
     protected List<String[]> parseAsCSV(String content, boolean hasHeader) {
-        CsvParser parser = newCsvParser(null, null, null, hasHeader, -1);
+        CsvParser parser = new CsvParserBuilder().setHasHeader(hasHeader)
+                                                 .setMaxColumns(context.getIntData(CSV_MAX_COLUMNS, -1))
+                                                 .setMaxColumnWidth(context.getIntData(CSV_MAX_COLUMN_WIDTH, -1))
+                                                 .setQuote("\"")
+                                                 .build();
         List<String[]> records = parser.parseAll(new StringReader(content));
         log("found " + records.size() + " line(s)");
         return records;

@@ -70,6 +70,8 @@ class CsvExtendedComparison implements Serializable {
     private String actualField = "ACTUAL";
     private String identSeparator = "^";
     private String delimiter;
+    private int maxColumns = -1;
+    private int maxColumnWidth = -1;
 
     private File expectedFile;
     private File actualFile;
@@ -167,6 +169,10 @@ class CsvExtendedComparison implements Serializable {
     public void setMismatchedField(String mismatchedField) {
         if (StringUtils.isNotBlank(mismatchedField)) { this.mismatchedField = mismatchedField; }
     }
+
+    public void setMaxColumns(int maxColumns) { this.maxColumns = maxColumns; }
+
+    public void setMaxColumnWidth(int maxColumnWidth) { this.maxColumnWidth = maxColumnWidth; }
 
     public String getExpectedField() { return expectedField; }
 
@@ -474,9 +480,23 @@ class CsvExtendedComparison implements Serializable {
             throw new IntegrationConfigException("No display column(s) specified");
         }
 
-        if (expectedParser == null) { expectedParser = CsvCommand.newCsvParser(null, delimiter, null, true, -1); }
+        if (expectedParser == null) {
+            expectedParser = new CsvParserBuilder().setDelim(delimiter)
+                                                   .setHasHeader(true)
+                                                   .setMaxColumns(maxColumns)
+                                                   .setMaxColumnWidth(maxColumnWidth)
+                                                   .setQuote("\"")
+                                                   .build();
+        }
 
-        if (actualParser == null) { actualParser = CsvCommand.newCsvParser(null, delimiter, null, true, -1); }
+        if (actualParser == null) {
+            actualParser = new CsvParserBuilder().setDelim(delimiter)
+                                                 .setHasHeader(true)
+                                                 .setMaxColumns(maxColumns)
+                                                 .setMaxColumnWidth(maxColumnWidth)
+                                                 .setQuote("\"")
+                                                 .build();
+        }
 
         if (reportFormat == null) { reportFormat = ReportFormat.CSV; }
     }

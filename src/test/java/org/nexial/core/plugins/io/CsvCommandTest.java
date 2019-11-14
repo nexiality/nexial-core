@@ -38,7 +38,6 @@ import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Test;
 import org.nexial.commons.utils.TextUtils;
-import org.nexial.core.NexialConst.Compare;
 import org.nexial.core.model.ExecutionContext;
 import org.nexial.core.model.MockExecutionContext;
 import org.nexial.core.model.StepResult;
@@ -590,7 +589,11 @@ public class CsvCommandTest {
 
     @Test
     public void parseCsv_comma_newline() {
-        CsvParser parser = CsvCommand.newCsvParser("\"", ",", "\n", false, -1);
+        CsvParser parser = new CsvParserBuilder().setQuote("\"")
+                                                 .setDelim(",")
+                                                 .setLineSeparator("\n")
+                                                 .setHasHeader(false)
+                                                 .build();
 
         // test 1: last row has fewer columns
         String fixture = "col1,col2,col3,col3a\n" +
@@ -619,7 +622,12 @@ public class CsvCommandTest {
 
     @Test
     public void parseCsv_comma_newline_quote() {
-        CsvParser parser = CsvCommand.newCsvParser("\"", ",", "\n", false, -1);
+        CsvParser parser = new CsvParserBuilder().setQuote("\"")
+                                                 .setDelim(",")
+                                                 .setLineSeparator("\n")
+                                                 .setHasHeader(false)
+                                                 .setKeepQuote(true)
+                                                 .build();
 
         // test 1: last row has fewer columns AND first row has quoted value
         String fixture = "col1,col2,\"col 3\",col3a\n" +
@@ -660,7 +668,7 @@ public class CsvCommandTest {
 
     @Test
     public void parseCsv_comma_newline_quote_auto() {
-        CsvParser parser = CsvCommand.newCsvParser(null, null, null, false, -1);
+        CsvParser parser = new CsvParserBuilder().setHasHeader(false).build();
 
         // test 1: last row has fewer columns AND first row has quoted value
         String fixture = "col1,col2,\"col 3\",col3a\n" +

@@ -29,13 +29,12 @@ import org.apache.commons.lang3.StringUtils;
 import org.nexial.commons.utils.TextUtils;
 import org.nexial.core.ExecutionThread;
 import org.nexial.core.model.ExecutionContext;
-import org.nexial.core.plugins.io.CsvCommand;
+import org.nexial.core.plugins.io.CsvParserBuilder;
 import org.nexial.core.utils.ConsoleUtils;
 
 import com.univocity.parsers.common.record.Record;
 import com.univocity.parsers.csv.CsvFormat;
 import com.univocity.parsers.csv.CsvParser;
-import com.univocity.parsers.csv.CsvParserSettings;
 
 import static java.lang.System.lineSeparator;
 import static org.nexial.core.NexialConst.CSV_MAX_COLUMNS;
@@ -43,7 +42,7 @@ import static org.nexial.core.NexialConst.CSV_MAX_COLUMN_WIDTH;
 import static org.nexial.core.SystemVariables.getDefaultInt;
 
 public class CsvDataType extends ExpressionDataType<List<Record>> {
-    private CsvTransformer transformer = new CsvTransformer();
+    private CsvTransformer<CsvDataType> transformer = new CsvTransformer<>();
     private String delim;
     private String quote;
     private String recordDelim;
@@ -171,7 +170,7 @@ public class CsvDataType extends ExpressionDataType<List<Record>> {
 
     @NotNull
     @Override
-    CsvTransformer getTransformer() { return transformer; }
+    CsvTransformer<CsvDataType> getTransformer() { return transformer; }
 
     @NotNull
     @Override
@@ -278,19 +277,29 @@ public class CsvDataType extends ExpressionDataType<List<Record>> {
             maxColumnWidth = getDefaultInt(CSV_MAX_COLUMN_WIDTH);
         }
 
-        CsvParserSettings settings = CsvCommand.newCsvParserSettings(delim, recordDelim, header, maxColumns);
-        settings.setMaxCharsPerColumn(maxColumnWidth);
-        settings.setKeepQuotes(keepQuote);
-        if (StringUtils.isNotEmpty(quote)) { settings.getFormat().setQuote(quote.charAt(0)); }
+        // CsvParserSettings settings = CsvCommand.newCsvParserSettings(delim, recordDelim, header, maxColumns);
+        // settings.setMaxCharsPerColumn(maxColumnWidth);
+        // settings.setKeepQuotes(keepQuote);
+        // if (StringUtils.isNotEmpty(quote)) { settings.getFormat().setQuote(quote.charAt(0)); }
+        //
+        // if (!trimValue) {
+        //     settings.setIgnoreLeadingWhitespaces(false);
+        //     settings.setIgnoreLeadingWhitespacesInQuotes(false);
+        //     settings.setIgnoreTrailingWhitespaces(false);
+        //     settings.setIgnoreTrailingWhitespacesInQuotes(false);
+        // }
+        //
+        // parser = new CsvParser(settings);
 
-        if (!trimValue) {
-            settings.setIgnoreLeadingWhitespaces(false);
-            settings.setIgnoreLeadingWhitespacesInQuotes(false);
-            settings.setIgnoreTrailingWhitespaces(false);
-            settings.setIgnoreTrailingWhitespacesInQuotes(false);
-        }
-
-        parser = new CsvParser(settings);
+        parser = new CsvParserBuilder().setDelim(delim)
+                                       .setLineSeparator(recordDelim)
+                                       .setHasHeader(header)
+                                       .setMaxColumns(maxColumns)
+                                       .setMaxColumnWidth(maxColumnWidth)
+                                       .setQuote(quote)
+                                       .setKeepQuote(keepQuote)
+                                       .setTrimValue(trimValue)
+                                       .build();
 
         value = parser.parseAllRecords(new StringReader(textValue));
         rowCount = CollectionUtils.size(value);

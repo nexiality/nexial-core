@@ -24,7 +24,6 @@ import java.io.Writer;
 import java.lang.reflect.Method;
 import java.util.Comparator;
 import java.util.Map;
-import java.util.Properties;
 import java.util.SortedSet;
 import java.util.TreeSet;
 
@@ -40,14 +39,14 @@ import static org.nexial.core.NexialConst.DEF_FILE_ENCODING;
 /**
  * Created by nv092106 on 7/16/2017.
  */
-public class ConfigTransformer<T extends ConfigDataType> extends Transformer {
+public class ConfigTransformer<T extends ConfigDataType> extends Transformer<ConfigDataType> {
     private static final Map<String, Integer> FUNCTION_TO_PARAM_LIST = discoverFunctions(ConfigTransformer.class);
     private static final Map<String, Method> FUNCTIONS =
         toFunctionMap(FUNCTION_TO_PARAM_LIST, ConfigTransformer.class, ConfigDataType.class);
 
     public TextDataType text(T data) { return super.text(data); }
 
-    public ListDataType keys(T data) throws TypeConversionException {
+    public ListDataType keys(T data) {
         if (data == null || data.getValue() == null) { return null; }
         return new ListDataType(TextUtils.toStringArray(data.getValue().keySet().toArray()));
     }
@@ -89,7 +88,7 @@ public class ConfigTransformer<T extends ConfigDataType> extends Transformer {
         }
 
         Writer writer = null;
-        Properties properties = data.getValue();
+        OrderedKeyProperties properties = data.getValue();
         try {
             writer = new FileWriter(file);
             properties.store(writer, "Saving test data");
@@ -155,7 +154,7 @@ public class ConfigTransformer<T extends ConfigDataType> extends Transformer {
             return data;
         }
 
-        Properties props = data.getValue();
+        OrderedKeyProperties props = data.getValue();
         sortedKeys.addAll(props.stringPropertyNames());
 
         String eol = data.getEol();
