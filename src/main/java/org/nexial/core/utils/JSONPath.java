@@ -20,7 +20,6 @@ package org.nexial.core.utils;
 import java.lang.reflect.Array;
 import java.math.BigDecimal;
 import java.util.*;
-
 import javax.validation.constraints.NotNull;
 
 import org.apache.commons.collections4.CollectionUtils;
@@ -176,10 +175,11 @@ public class JSONPath {
         }
 
         static String count(String parsed) {
-            if (StringUtils.isEmpty(parsed)) { return "1"; }
+            if (StringUtils.isEmpty(parsed)) { return "0"; }
 
             // is this array?
-            return TextUtils.isBetween(parsed, "[", "]") ? new JSONArray(parsed).length() + "" : "1";
+            return StringUtils.startsWith(parsed, "[") && StringUtils.endsWith(parsed, "]") ?
+                   new JSONArray(parsed).length() + "" : "1";
         }
 
         static String first(String parsed) {
@@ -361,8 +361,7 @@ public class JSONPath {
 
         if (parsedVal instanceof JSONArray) {
             JSONArray array = (JSONArray) parsedVal;
-            if (array.length() < 1) { return null; }
-            return handleFunctions(simplifyPrimitives(array));
+            return handleFunctions(array.length() < 1 ? "[]" : simplifyPrimitives(array));
         } else {
             return handleFunctions(simplifyPrimitives(parsedVal));
         }

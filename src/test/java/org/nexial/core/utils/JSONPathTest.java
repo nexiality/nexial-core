@@ -65,7 +65,7 @@ public class JSONPathTest {
         testPathValue(fixture1, "a.b", "1234");
         testPathValue(fixture1, "d", "hello");
         testPathValue(fixture1, "e", null);
-        testPathValue(fixture1, "f", null);
+        testPathValue(fixture1, "f", "[]");
         testPathValue(fixture1, "g", "[\"cat\",\"dog\",\"mouse\"]");
         testPathValue(fixture1, "g[2]", "mouse");
         testPathValue(fixture1, "g[0]", "cat");
@@ -795,12 +795,15 @@ public class JSONPathTest {
                          "        { \"title\": \"How to Cook Good Food Cheap\", \"price\": 15.60, \"category\": \"Home Improvement\" },\n" +
                          "        { \"title\": \"Furniture for Harmony\", \"price\": 32.50, \"category\": \"Home Improvement\" }\n" +
                          "    ],\n" +
-                         "    \"published date\": \"2019-01-14\"\n" +
+                         "    \"published date\": \"2019-01-14\",\n" +
+                         "    \"endorsements\": []\n" +
                          "}";
         Assert.assertEquals("1", JSONPath.find(new JSONObject(fixture), "published date => count"));
         Assert.assertEquals("2", JSONPath.find(new JSONObject(fixture), "books[category=Home Improvement] => count"));
         Assert.assertEquals("3", JSONPath.find(new JSONObject(fixture), "books.title => count"));
         Assert.assertEquals("3", JSONPath.find(new JSONObject(fixture), "books => count"));
+        Assert.assertEquals("[]", JSONPath.find(new JSONObject(fixture), "endorsements"));
+        Assert.assertEquals("0", JSONPath.find(new JSONObject(fixture), "endorsements => count"));
         Assert.assertEquals(
             "[\"Furniture for Harmony\",\"How to Cook Good Food Cheap\",\"Introduction to Programming\"]",
             JSONPath.find(new JSONObject(fixture), "books.title => ascending"));

@@ -96,7 +96,7 @@ public class JsonHelperTest {
         Assert.assertEquals("{\"b\":\"1234\"}", JsonHelper.fetchString(json, "a"));
         Assert.assertEquals("1234", JsonHelper.fetchString(json, "a.b"));
         Assert.assertNull(JsonHelper.fetchString(json, "e"));
-        Assert.assertNull(JsonHelper.fetchString(json, "f"));
+        Assert.assertEquals("[]", JsonHelper.fetchString(json, "f"));
         Assert.assertNull(JsonHelper.fetchString(json, "f[0]"));
         Assert.assertNull(JsonHelper.fetchString(json, "f[1]"));
         Assert.assertEquals("[\"cat\",\"dog\",\"mouse\"]", JsonHelper.fetchString(json, "g"));

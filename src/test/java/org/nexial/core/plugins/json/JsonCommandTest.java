@@ -657,7 +657,7 @@ public class JsonCommandTest {
         System.out.println("data = " + fixture.find(json, "response.jobParameters"));
         System.out.println("data = " + fixture.find(json, "response.jobParameters[]"));
 
-        Assert.assertTrue(fixture.assertValue(json, "response.jobParameters", null).isSuccess());
+        Assert.assertTrue(fixture.assertValue(json, "response.jobParameters", "[]").isSuccess());
 
         Assert.assertTrue(fixture.assertValues(json, "response.jobParameters", "[]", "false").isSuccess());
         Assert.assertTrue(fixture.assertValues(json,
