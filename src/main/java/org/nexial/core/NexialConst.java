@@ -1443,6 +1443,9 @@ public final class NexialConst {
         public static final String NS_IE = NS_BROWSER + ".ie.";
         public static final String NS_WEB = NAMESPACE + "web.";
 
+        // default browser
+        public static final String BROWSER = registerSysVar(NS_BROWSER, "firefox");
+
         // emulation
         public static final String EMU_USER_AGENT = registerSysVar(NS_EMU + "userAgent");
 
@@ -1474,23 +1477,20 @@ public final class NexialConst {
         public static final String IE_REQUIRE_WINDOW_FOCUS = registerSysVar(NS_IE + "requireWindowFocus", false);
         public static final String OPT_FORCE_IE_32 = registerSysVar(NAMESPACE + "forceIE32", false);
 
-        // default browser
-        public static final String BROWSER = registerSysVar(NS_BROWSER, "firefox");
-
         // specify user profile per browser instance
         public static final String BROWSER_USER_DATA = registerSysVar(NS_BROWSER + ".userData");
         public static final String OPT_CHROME_PROFILE = registerSysVar(NAMESPACE + "chrome.profile");
+        public static final String OPT_DOWNLOAD_TO = registerSysVar(NS_BROWSER + ".downloadTo");
 
         // web: scroll into view
         public static final String SCROLL_INTO_VIEW = registerSysVar(NS_WEB + "scrollIntoView", true);
-        public static final String SCROLL_INTO_VIEW_JS =
-            "if (arguments[0]) {" +
-            "   if (arguments[0].scrollIntoViewIfNeeded) {" +
-            "       arguments[0].scrollIntoViewIfNeeded();" +
-            "   } else {" +
-            "       arguments[0].scrollIntoView(false);" +
-            "   }" +
-            "}";
+        public static final String SCROLL_INTO_VIEW_JS = "if (arguments[0]) {" +
+                                                         "   if (arguments[0].scrollIntoViewIfNeeded) {" +
+                                                         "       arguments[0].scrollIntoViewIfNeeded();" +
+                                                         "   } else {" +
+                                                         "       arguments[0].scrollIntoView(false);" +
+                                                         "   }" +
+                                                         "}";
         // various browser behavior/settings
         public static final String FORCE_JS_CLICK = registerSysVar(NS_BROWSER + ".forceJSClick", false);
         public static final String BROWSER_ACCEPT_INVALID_CERTS = registerSysVar(NS_BROWSER + ".acceptInsecureCerts",
@@ -1545,13 +1545,13 @@ public final class NexialConst {
                                                                         OPT_DRAG_FROM_MIDDLE);
 
         // selenium specific
-        public static final String SELENIUM_IE_DRIVER = "webdriver.ie.driver";
-        public static final String SELENIUM_EDGE_DRIVER = "webdriver.edge.driver";
         public static final String SELENIUM_CHROME_DRIVER = "webdriver.chrome.driver";
-        public static final String SELENIUM_GECKO_DRIVER = "webdriver.gecko.driver";
         public static final String SELENIUM_CHROME_BIN = "webdriver.chrome.bin";
+        public static final String SELENIUM_GECKO_DRIVER = "webdriver.gecko.driver";
         public static final String SELENIUM_FIREFOX_BIN = "webdriver.firefox.bin";
         public static final String SELENIUM_FIREFOX_PROFILE = "webdriver.firefox.profile";
+        public static final String SELENIUM_EDGE_DRIVER = "webdriver.edge.driver";
+        public static final String SELENIUM_IE_DRIVER = "webdriver.ie.driver";
         public static final String SELENIUM_IE_LOG_LEVEL = "webdriver.ie.driver.loglevel";
         public static final String SELENIUM_IE_LOG_LOGFILE = "webdriver.ie.driver.logfile";
         public static final String SELENIUM_IE_SILENT = "webdriver.ie.driver.silent";

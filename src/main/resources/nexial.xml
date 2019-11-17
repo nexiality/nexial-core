@@ -429,14 +429,17 @@
             reference: http://kb.mozillazine.org/Firefox_:_FAQs_:_About:config_Entries
             -->
             <entry key="browser.download.manager.showWhenStarting" value="false"/>
-            <entry key="browser.download.manager.closeWhenDone" value="true"/>
+            <entry key="browser.download.manager.closeWhenDone" value="false"/>
             <entry key="browser.download.manager.showAlertOnComplete" value="false"/>
+            <entry key="browser.download.manager.alertOnEXEOpen" value="false"/>
+            <entry key="browser.download.manager.focusWhenStarting" value="false"/>
+            <entry key="browser.download.manager.useWindow" value="false"/>
 
             <!--
             A boolean value that indicates whether or not the user's preference is to automatically save files
             into the download directory. If this value is false, the user is asked what to do.
             -->
-            <entry key="browser.download.useDownloadDir" value="false"/>
+            <entry key="browser.download.useDownloadDir" value="true"/>
 
             <!--
             True (default): In the Download Actions dialog, display actions and filetypes associated with installed plugins.
@@ -448,7 +451,8 @@
             True: Always ask what to do with an unknown MIME type, and disable option to remember what to open it with
             False (default): Opposite of above
             -->
-            <entry key="browser.helperApps.alwaysAsk.force" value="true"/>
+            <entry key="browser.helperApps.alwaysAsk.force" value="false"/>
+            <entry key="pdfjs.disabled" value="true"/>
 
             <!--
             https://www.ghacks.net/2015/08/18/a-comprehensive-list-of-firefox-privacy-and-security-settings/
@@ -500,14 +504,16 @@
             A local folder the user may have selected for downloaded files to be saved. Migration of other browser
             settings may also set this path. This folder is enabled when browser.download.folderList equals 2.
             -->
-            <entry key="browser.download.dir" value=""/>
+            <!--<entry key="browser.download.dir" value=""/>-->
 
             <!--
             A comma-separated list of MIME types to save to disk without asking what to use to open the file.
             Default value is an empty string
             -->
             <entry key="browser.helperApps.neverAsk.saveToDisk"
-                   value="text/xml,text/csv,text/plain,text/log,application/zlib,application/x-gzip,application/gzip,application/x-compressed,application/x-gtar,multipart/x-gzip,application/tgz,application/gnutar,application/x-tar"/>
+                   value="text/xml,text/csv,text/html,text/plain,text/log,application/zlib,application/x-gzip,application/gzip,application/x-compressed,application/x-gtar,multipart/x-gzip,application/tgz,application/gnutar,application/x-tar,application/xml,application/x-msexcel,application/excel,application/x-excel,application/vnd.ms-excel,image/png,image/jpeg,application/msword,application/pdf,application/octet-stream,application/x-pdf"/>
+            <entry key="browser.helperApps.neverAsk.openFile"
+                   value="text/xml,text/csv,text/html,text/plain,text/log,application/zlib,application/x-gzip,application/gzip,application/x-compressed,application/x-gtar,multipart/x-gzip,application/tgz,application/gnutar,application/x-tar,application/xml,application/x-msexcel,application/excel,application/x-excel,application/vnd.ms-excel,image/png,image/jpeg,application/msword,application/pdf,application/octet-stream,application/x-pdf"/>
 
             <entry key="security.ssl.errorReporting.url" value=""/>
 

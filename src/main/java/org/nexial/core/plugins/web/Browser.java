@@ -51,6 +51,7 @@ import org.openqa.selenium.chrome.ChromeDriverService;
 import org.openqa.selenium.chrome.ChromeDriverService.Builder;
 import org.openqa.selenium.chrome.ChromeOptions;
 import org.openqa.selenium.edge.EdgeDriver;
+import org.openqa.selenium.edge.EdgeOptions;
 import org.openqa.selenium.firefox.FirefoxDriver;
 import org.openqa.selenium.firefox.FirefoxOptions;
 import org.openqa.selenium.firefox.FirefoxProfile;
@@ -67,7 +68,7 @@ import static java.io.File.separator;
 import static java.util.concurrent.TimeUnit.MILLISECONDS;
 import static org.apache.commons.lang3.SystemUtils.*;
 import static org.nexial.core.NexialConst.BrowserType.*;
-import static org.nexial.core.NexialConst.Data.*;
+import static org.nexial.core.NexialConst.Data.TEST_LOG_PATH;
 import static org.nexial.core.NexialConst.*;
 import static org.nexial.core.NexialConst.Web.*;
 import static org.nexial.core.SystemVariables.*;
@@ -708,18 +709,11 @@ public class Browser implements ForcefulTerminate {
         String driverPath = driver.getAbsolutePath();
         context.setData(SELENIUM_GECKO_DRIVER, driverPath);
         System.setProperty(SELENIUM_GECKO_DRIVER, driverPath);
+        // todo: need them?
         context.setData(MARIONETTE, true);
         System.setProperty(MARIONETTE, "true");
 
         FirefoxOptions options;
-
-        // todo: introduce auto-download feature
-        //firefoxProfile.setPreference("browser.download.dir", SystemUtils.getJavaIoTmpDir().getAbsolutePath());
-
-        // unrelated, added only to improve firefox-pdf perf.
-        //firefoxProfile.setPreference("pdfjs.disabled", true);
-
-        // options.setLogLevel(FirefoxDriverLogLevel.FATAL);
 
         try {
             DesiredCapabilities capabilities;
@@ -745,15 +739,11 @@ public class Browser implements ForcefulTerminate {
                 options.addPreference("network.proxy.http_port", proxyPort);
                 options.addPreference("network.proxy.ssl_port", proxyPort);
                 options.addPreference("network.proxy.no_proxies_on", "");
-
             } else {
                 options = new FirefoxOptions();
                 capabilities = new DesiredCapabilities();
-                // capabilities = DesiredCapabilities.firefox();
                 initCapabilities(context, capabilities);
                 options.merge(capabilities);
-
-                // options = new FirefoxOptions(capabilities);
 
                 Proxy proxy = (Proxy) capabilities.getCapability(PROXY);
                 if (proxy != null) {
@@ -790,6 +780,11 @@ public class Browser implements ForcefulTerminate {
             options.setPageLoadStrategy(EAGER);
             options.setLogLevel(ERROR);
 
+            // set current output directory for download
+            FirefoxProfile profile = options.getProfile();
+            profile.setPreference("browser.download.dir",
+                                  context.getStringData(OPT_DOWNLOAD_TO, context.getProject().getOutPath()));
+
             FirefoxDriver firefox = new FirefoxDriver(options);
 
             browserVersion = capabilities.getVersion();
@@ -798,7 +793,7 @@ public class Browser implements ForcefulTerminate {
             postInit(firefox);
             return firefox;
         } catch (Exception e) {
-            e.printStackTrace();
+            // e.printStackTrace();
             throw new RuntimeException(e);
         }
     }
@@ -811,7 +806,14 @@ public class Browser implements ForcefulTerminate {
         context.setData(SELENIUM_EDGE_DRIVER, driverPath);
         System.setProperty(SELENIUM_EDGE_DRIVER, driverPath);
 
-        EdgeDriver edge = new EdgeDriver();
+        EdgeOptions options = new EdgeOptions();
+        // options.setCapability(PAGE_LOAD_STRATEGY, );
+
+        if (context.getBooleanData(BROWSER_INCOGNITO, getDefaultBool(BROWSER_INCOGNITO))) {
+            options.setCapability("InPrivate", true);
+        }
+
+        EdgeDriver edge = new EdgeDriver(options);
         postInit(edge);
 
         Capabilities capabilities = edge.getCapabilities();
@@ -904,7 +906,7 @@ public class Browser implements ForcefulTerminate {
         // will be started with clean session data and will not save changed session data at quiting.
         // To do so you need to pass 2 specific capabilities to driver: ie.forceCreateProcessApi with true value
         if (context.getBooleanData(BROWSER_INCOGNITO, getDefaultBool(BROWSER_INCOGNITO))) {
-            // capabilities.setCapability(FORCE_CREATE_PROCESS, true);
+            capabilities.setCapability(FORCE_CREATE_PROCESS, true);
             // and ie.browserCommandLineSwitches with -private value.
             capabilities.setCapability(IE_SWITCHES, "-private");
         }
@@ -933,6 +935,38 @@ public class Browser implements ForcefulTerminate {
         ConsoleUtils.log(log.toString());
 
         return ie;
+    }
+
+    private WebDriver initSafari() {
+        // change location of safari's download location to "out" directory
+        if (!IS_OS_MAC_OSX) { throw new RuntimeException("Safari automation is only supported on Mac OSX. Sorry..."); }
+
+        String out = context.getProject().getOutPath();
+        try {
+            ConsoleUtils.log(
+                "modifying safari's download path: \n" +
+                ExternalCommand.Companion.exec("defaults write com.apple.Safari DownloadsPath \"" + out + "\""));
+        } catch (IOException e) {
+            ConsoleUtils.error("Unable to modify safari's download path to " + out + ": " + e);
+        }
+
+        SafariOptions options = new SafariOptions();
+
+        // Whether to make sure the session has no cookies, cache entries, local storage, or databases.
+        options.setUseTechnologyPreview(context.getBooleanData(SAFARI_USE_TECH_PREVIEW,
+                                                               getDefaultBool(SAFARI_USE_TECH_PREVIEW)));
+
+        // todo: Create a SafariDriverService to specify what Safari flavour should be used and pass the service instance to a SafariDriver constructor.  When SafariDriver API updates to better code.. can't do this now
+        SafariDriver safari = new SafariDriver(options);
+        MutableCapabilities capabilities = (MutableCapabilities) safari.getCapabilities();
+        initCapabilities(context, capabilities);
+        // setCapability(capabilities, "javascriptEnabled", true);
+        // setCapability(capabilities, "databaseEnabled", true);
+
+        browserVersion = capabilities.getVersion();
+        browserPlatform = capabilities.getPlatform();
+        postInit(safari);
+        return safari;
     }
 
     protected WebDriver initBrowserStack() {
@@ -1017,7 +1051,7 @@ public class Browser implements ForcefulTerminate {
         }
 
         if (context.getBooleanData(BROWSER_INCOGNITO, getDefaultBool(BROWSER_INCOGNITO))) {
-            capabilities.setCapability("browser.private.browsing.autostart", true);
+            capabilities.setCapability("browser.privatebrowsing.autostart", true);
         }
     }
 
@@ -1141,38 +1175,6 @@ public class Browser implements ForcefulTerminate {
     private void resolveBrowserProfile() {
         if (browserType == firefox) { browserProfile = resolveConfig(SELENIUM_FIREFOX_PROFILE); }
         if (browserType == chrome) { browserProfile = resolveConfig(OPT_CHROME_PROFILE); }
-    }
-
-    private WebDriver initSafari() {
-        // change location of safari's download location to "out" directory
-        if (!IS_OS_MAC_OSX) { throw new RuntimeException("Safari automation is only supported on Mac OSX. Sorry..."); }
-
-        String out = context.getProject().getOutPath();
-        try {
-            ConsoleUtils.log(
-                "modifying safari's download path: \n" +
-                ExternalCommand.Companion.exec("defaults write com.apple.Safari DownloadsPath \"" + out + "\""));
-        } catch (IOException e) {
-            ConsoleUtils.error("Unable to modify safari's download path to " + out + ": " + e);
-        }
-
-        SafariOptions options = new SafariOptions();
-
-        // Whether to make sure the session has no cookies, cache entries, local storage, or databases.
-        options.setUseTechnologyPreview(context.getBooleanData(SAFARI_USE_TECH_PREVIEW,
-                                                               getDefaultBool(SAFARI_USE_TECH_PREVIEW)));
-
-        // todo: Create a SafariDriverService to specify what Safari flavour should be used and pass the service instance to a SafariDriver constructor.  When SafariDriver API updates to better code.. can't do this now
-        SafariDriver safari = new SafariDriver(options);
-        MutableCapabilities capabilities = (MutableCapabilities) safari.getCapabilities();
-        initCapabilities(context, capabilities);
-        // setCapability(capabilities, "javascriptEnabled", true);
-        // setCapability(capabilities, "databaseEnabled", true);
-
-        browserVersion = capabilities.getVersion();
-        browserPlatform = capabilities.getPlatform();
-        postInit(safari);
-        return safari;
     }
 
     @NotNull

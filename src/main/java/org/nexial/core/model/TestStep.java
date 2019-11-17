@@ -784,7 +784,7 @@ public class TestStep extends TestStepManifest {
               .append("Test Step:         ").append(messageId).append("\n")
               .append(StringUtils.repeat("-", 80)).append("\n");
 
-        if (e instanceof AssertionError) {
+        if (e instanceof AssertionError || e instanceof IllegalArgumentException) {
             buffer.append(e.getMessage()).append("\n");
         } else {
             StringWriter writer = new StringWriter();
