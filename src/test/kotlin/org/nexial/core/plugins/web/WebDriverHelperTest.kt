@@ -156,17 +156,17 @@ class WebDriverHelperTest {
         context.cleanProject()
     }
 
-    @Test
-    @Throws(Exception::class)
-    fun downloadCbtLocalDriver() {
-        val driverHome = File("${driverHomeBase}crossbrowsertesting")
-        FileUtils.deleteDirectory(driverHome)
-
-        val context = MockExecutionContext(true)
-
-        assertDriverExists(newInstance(crossbrowsertesting, context).resolveDriver())
-        context.cleanProject()
-    }
+    // @Test
+    // @Throws(Exception::class)
+    // fun downloadCbtLocalDriver() {
+    //     val driverHome = File("${driverHomeBase}crossbrowsertesting")
+    //     FileUtils.deleteDirectory(driverHome)
+    //
+    //     val context = MockExecutionContext(true)
+    //
+    //     assertDriverExists(newInstance(crossbrowsertesting, context).resolveDriver())
+    //     context.cleanProject()
+    // }
 
     @Test
     @Throws(Exception::class)
