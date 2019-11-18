@@ -782,8 +782,12 @@ public class Browser implements ForcefulTerminate {
 
             // set current output directory for download
             FirefoxProfile profile = options.getProfile();
-            profile.setPreference("browser.download.dir",
-                                  context.getStringData(OPT_DOWNLOAD_TO, context.getProject().getOutPath()));
+            if (context != null && context.getProject() != null) {
+                String outPath = context.getProject().getOutPath();
+                if (StringUtils.isNotBlank(outPath)) {
+                    profile.setPreference("browser.download.dir", context.getStringData(OPT_DOWNLOAD_TO, outPath));
+                }
+            }
 
             FirefoxDriver firefox = new FirefoxDriver(options);
 
