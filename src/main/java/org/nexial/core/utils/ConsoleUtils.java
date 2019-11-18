@@ -138,10 +138,16 @@ public final class ConsoleUtils {
 
     @SuppressWarnings("PMD.SystemPrintln")
     public static void doPause(ExecutionContext context, String msg) {
+        pauseAndInspect(context, msg, context != null && context.getBooleanData(OPT_INSPECT_ON_PAUSE,
+                                                                                getDefaultBool(OPT_INSPECT_ON_PAUSE)));
+    }
+
+    @SuppressWarnings("PMD.SystemPrintln")
+    public static void pauseAndInspect(ExecutionContext context, String msg, boolean inspect) {
         System.out.println();
         System.out.println(msg);
 
-        if (context != null && context.getBooleanData(OPT_INSPECT_ON_PAUSE, getDefaultBool(OPT_INSPECT_ON_PAUSE))) {
+        if (inspect) {
             // inspect mode
             System.out.println("/------------------------------------------------------------------------------\\");
             System.out.println(MARGIN_RIGHT + centerPrompt("INSPECT ON PAUSE", PROMPT_LINE_WIDTH - 2) + MARGIN_RIGHT);

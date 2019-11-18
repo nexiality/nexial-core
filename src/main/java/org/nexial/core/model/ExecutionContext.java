@@ -83,8 +83,7 @@ import static org.nexial.commons.utils.EnvUtils.enforceUnixEOL;
 import static org.nexial.core.NexialConst.*;
 import static org.nexial.core.NexialConst.Data.*;
 import static org.nexial.core.NexialConst.Exec.*;
-import static org.nexial.core.NexialConst.FlowControls.OPT_PAUSE_ON_ERROR;
-import static org.nexial.core.NexialConst.FlowControls.OPT_STEP_BY_STEP;
+import static org.nexial.core.NexialConst.FlowControls.*;
 import static org.nexial.core.NexialConst.Iteration.*;
 import static org.nexial.core.NexialConst.Project.NEXIAL_HOME;
 import static org.nexial.core.NexialConst.TimeTrack.TRACK_EXECUTION;
@@ -295,6 +294,12 @@ public class ExecutionContext {
         expression = new ExpressionProcessor(this);
         executionLogger = new ExecutionLogger(this);
         // profileHelper = new ProfileHelper(this);
+
+        if (!ExecUtils.isRunningInZeroTouchEnv() &&
+            getBooleanData(OPT_PAUSE_SIGNAL_ENABLED, getDefaultBool(OPT_PAUSE_SIGNAL_ENABLED))) {
+            PauseSignalDetector.getInstance(this);
+            ConsoleUtils.log("pause-and-inspect detection enabled");
+        }
     }
 
     public void useTestScript(Excel testScript) throws IOException {

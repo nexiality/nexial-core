@@ -181,13 +181,12 @@ public class TestStep extends TestStepManifest {
             if (this.isCommandRepeater()) { context.setCurrentTestStep(this); }
             postExecCommand(result, tickTock.getTime());
             FlowControlUtils.checkPauseAfter(context, this);
-            context.clearCurrentTestStep();
 
-            // Scanner stdin = new Scanner(System.in);
-            // String requestforPause = stdin.next(" ");
-            // if (StringUtils.isNotEmpty(requestforPause)) {
-            //     ConsoleUtils.pauseForInput(context, "what's up: ");
-            // }
+            if (!ExecUtils.isRunningInZeroTouchEnv() && PauseSignalDetector.getInstance(context).detectedPause()) {
+                ConsoleUtils.pauseAndInspect(context, ">>>>> pause-and-inspect detected...", true);
+            }
+
+            context.clearCurrentTestStep();
         }
 
         return result;
