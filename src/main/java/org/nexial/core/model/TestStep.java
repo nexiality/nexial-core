@@ -182,8 +182,9 @@ public class TestStep extends TestStepManifest {
             postExecCommand(result, tickTock.getTime());
             FlowControlUtils.checkPauseAfter(context, this);
 
-            if (!ExecUtils.isRunningInZeroTouchEnv() && PauseSignalDetector.getInstance(context).detectedPause()) {
-                ConsoleUtils.pauseAndInspect(context, ">>>>> pause-and-inspect detected...", true);
+            if (!ExecUtils.isRunningInZeroTouchEnv() &&
+                OnDemandInspectionDetector.getInstance(context).detectedPause()) {
+                ConsoleUtils.pauseAndInspect(context, ">>>>> On-Demand Inspection detected...", true);
             }
 
             context.clearCurrentTestStep();

@@ -16,18 +16,20 @@
 package org.nexial.core.model
 
 import org.apache.commons.lang3.StringUtils
-import org.nexial.core.NexialConst.FlowControls.OPT_PAUSE_SIGNAL
-import org.nexial.core.NexialConst.FlowControls.OPT_PAUSE_SIGNAL_TIMER
+import org.nexial.core.NexialConst.FlowControls.OPT_ODI_KEYS
+import org.nexial.core.NexialConst.FlowControls.OPT_ODI_TIMER
 import org.nexial.core.ShutdownAdvisor
 import org.nexial.core.SystemVariables.getDefault
 import org.nexial.core.SystemVariables.getDefaultInt
 import org.nexial.core.plugins.ForcefulTerminate
+import org.nexial.core.utils.ConsoleUtils
 import java.io.BufferedReader
 import java.io.IOException
 import java.io.InputStreamReader
 import java.util.*
+import kotlin.math.max
 
-class PauseSignalDetector private constructor(private val interval: Long, private val pauseSignal: String) :
+class OnDemandInspectionDetector private constructor(private val interval: Long, private val pauseSignal: String) :
         ForcefulTerminate {
 
     private var stopNow = false
@@ -35,7 +37,9 @@ class PauseSignalDetector private constructor(private val interval: Long, privat
     private var stdinTask: StdinTask? = null
     private var timer = Timer()
 
-    private class StdinTask(private val br: BufferedReader, private val caller: PauseSignalDetector) : TimerTask() {
+    private class StdinTask(private val br: BufferedReader, private val caller: OnDemandInspectionDetector) :
+            TimerTask() {
+
         override fun run() {
             if (caller.stopNow) {
                 cancel()
@@ -45,9 +49,9 @@ class PauseSignalDetector private constructor(private val interval: Long, privat
                     val input = br.readLine()
                     if (StringUtils.isNotEmpty(input)) caller.inputs.add(input)
                 } catch (e: IOException) {
-                    e.printStackTrace()
+                    ConsoleUtils.error("Error when detecting console input for On-Demand Inspection: ${e.message}")
                 } catch (e: InterruptedException) {
-                    e.printStackTrace()
+                    ConsoleUtils.error("Error when detecting console input for On-Demand Inspection: ${e.message}")
                 }
             }
         }
@@ -85,14 +89,14 @@ class PauseSignalDetector private constructor(private val interval: Long, privat
     }
 
     companion object {
-        private var self: PauseSignalDetector? = null
+        private var self: OnDemandInspectionDetector? = null
 
         @JvmStatic
-        fun getInstance(context: ExecutionContext): PauseSignalDetector {
+        fun getInstance(context: ExecutionContext): OnDemandInspectionDetector {
             if (self == null) {
-                val interval = context.getIntData(OPT_PAUSE_SIGNAL_TIMER, getDefaultInt(OPT_PAUSE_SIGNAL_TIMER))
-                val pauseSignal = context.getStringData(OPT_PAUSE_SIGNAL, getDefault(OPT_PAUSE_SIGNAL))
-                self = PauseSignalDetector(interval.toLong(), pauseSignal)
+                val interval = max(context.getIntData(OPT_ODI_TIMER, getDefaultInt(OPT_ODI_TIMER)), 300)
+                val pauseSignal = context.getStringData(OPT_ODI_KEYS, getDefault(OPT_ODI_KEYS))
+                self = OnDemandInspectionDetector(interval.toLong(), pauseSignal)
                 ShutdownAdvisor.addAdvisor(self)
                 self!!.readStdin()
             }

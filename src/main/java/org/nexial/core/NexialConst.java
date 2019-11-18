@@ -593,9 +593,9 @@ public final class NexialConst {
         public static final String OPT_INSPECT_ON_PAUSE = registerSysVar(NAMESPACE + "inspectOnPause", false);
         public static final String RESUME_FROM_PAUSE = ":resume";
         public static final String OPT_PAUSE_ON_ERROR = registerSysVar(NAMESPACE + "pauseOnError", false);
-        public static final String OPT_PAUSE_SIGNAL_ENABLED = registerSysVar(NAMESPACE + "pauseSignalEnabled", true);
-        public static final String OPT_PAUSE_SIGNAL_TIMER = registerSysVar(NAMESPACE + "pauseSignalTimer", 500);
-        public static final String OPT_PAUSE_SIGNAL = registerSysVar(NAMESPACE + "pauseSignal", "!!!");
+        public static final String OPT_ODI_ENABLED = registerSysVar(NAMESPACE + "odiEnabled", true);
+        public static final String OPT_ODI_TIMER = registerSysVar(NAMESPACE + "odiTimer", 500);
+        public static final String OPT_ODI_KEYS = registerSysVar(NAMESPACE + "odiKeys", "!!!");
 
         public static final String ARG_PREFIX = "(";
         public static final String ARG_SUFFIX = ")\\s*$";

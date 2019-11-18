@@ -295,10 +295,9 @@ public class ExecutionContext {
         executionLogger = new ExecutionLogger(this);
         // profileHelper = new ProfileHelper(this);
 
-        if (!ExecUtils.isRunningInZeroTouchEnv() &&
-            getBooleanData(OPT_PAUSE_SIGNAL_ENABLED, getDefaultBool(OPT_PAUSE_SIGNAL_ENABLED))) {
-            PauseSignalDetector.getInstance(this);
-            ConsoleUtils.log("pause-and-inspect detection enabled");
+        if (!ExecUtils.isRunningInZeroTouchEnv() && getBooleanData(OPT_ODI_ENABLED, getDefaultBool(OPT_ODI_ENABLED))) {
+            OnDemandInspectionDetector.getInstance(this);
+            ConsoleUtils.log("On-Demand Inspection detection enabled");
         }
     }
 
