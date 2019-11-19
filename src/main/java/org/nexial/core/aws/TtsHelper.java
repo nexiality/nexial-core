@@ -19,6 +19,7 @@ package org.nexial.core.aws;
 import java.io.InputStream;
 import javax.validation.constraints.NotNull;
 
+import org.apache.commons.lang3.RegExUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.nexial.core.utils.ConsoleUtils;
 import org.nexial.core.utils.ExecUtils;
@@ -150,21 +151,27 @@ public class TtsHelper extends AwsSupport {
     protected String buildSsml(String text) {
         // treat text into SSML for more natural speeches
         // https://docs.aws.amazon.com/polly/latest/dg/supported-ssml.html
-        StringBuilder speechBuffer = new StringBuilder("<speak>");
+
+        String dummyAmpersand = "!@#AMPERSAND#@!";
+
+        text = StringUtils.replace(text, "&amp;", dummyAmpersand);
+        text = StringUtils.replace(text, "&", "&amp;");
+        text = StringUtils.replace(text, "\"", "&quot;");
+        text = StringUtils.replace(text, "'", "&apos;");
+        text = StringUtils.replace(text, "<", "&lt;");
+        text = StringUtils.replace(text, ">", "&gt;");
+        text = StringUtils.replace(text, dummyAmpersand, "&amp;");
 
         text = StringUtils.replace(text, "…", "…" + SSML_PAUSE);
         text = StringUtils.replace(text, "...", "…" + SSML_PAUSE);
 
-        text = StringUtils.replaceAll(text, "\\[([\\w\\d_\\- \\.\\#]+)\\]", "$1" + SSML_SHORT_PAUSE);
+        text = RegExUtils.replaceAll(text, "\\[([\\w\\d_\\- \\.\\#]+)\\]", "$1" + SSML_SHORT_PAUSE);
 
-        text = StringUtils.replaceAll(text, "^([0-9A-Z_\\-]+)$", "<emphasis>$1</emphasis>");
-        text = StringUtils.replaceAll(text, "(\\s)([0-9A-Z_\\-]+)$", " <emphasis>$2</emphasis>");
-        text = StringUtils.replaceAll(text, "^([0-9A-Z_\\-]+)([\\s\\!\\?\\.])", "<emphasis>$1</emphasis>$2");
-        text = StringUtils.replaceAll(text, "([0-9A-Z_\\-]+)([\\s\\!\\?\\.])", "<emphasis>$1</emphasis>$2");
+        text = RegExUtils.replaceAll(text, "^([0-9A-Z_\\-]+)$", "<emphasis>$1</emphasis>");
+        text = RegExUtils.replaceAll(text, "(\\s)([0-9A-Z_\\-]+)$", " <emphasis>$2</emphasis>");
+        text = RegExUtils.replaceAll(text, "^([0-9A-Z_\\-]+)([\\s\\!\\?\\.])", "<emphasis>$1</emphasis>$2");
+        text = RegExUtils.replaceAll(text, "([0-9A-Z_\\-]+)([\\s\\!\\?\\.])", "<emphasis>$1</emphasis>$2");
 
-        speechBuffer.append(text)
-                    .append("</speak>");
-
-        return speechBuffer.toString();
+        return "<speak>" + text + "</speak>";
     }
 }
