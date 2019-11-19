@@ -396,8 +396,9 @@ class NexialInteractive {
 
         context.setCurrentActivity(null)
         context.isFailImmediate = false
+        context.isEndImmediate = false
+        context.isBreakCurrentIteration = false
         context.setData(OPT_LAST_OUTCOME, true)
-        context.removeData(BREAK_CURRENT_ITERATION)
         context.setData(CURR_ITERATION, iterationIndex)
 
         val scriptLocation = executionDefinition.testScript
