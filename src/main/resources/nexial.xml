@@ -485,6 +485,7 @@
             <entry key="datareporting.healthreport.service.enabled" value="false"/>
             <entry key="breakpad.reportURL" value="false"/>
             <entry key="browser.search.suggest.enabled" value="false"/>
+            <entry key="privacy.popups.showBrowserMessage" value="false"/>
 
             <!-- nightly firefox -->
             <entry key="dom.vr.enabled" value="false"/>

@@ -621,6 +621,15 @@ public class Browser implements ForcefulTerminate {
 
         options.addArguments(this.chromeOptions);
 
+        String downloadTo = resolveDownloadTo(context);
+        if (StringUtils.isNotBlank(downloadTo)) {
+            Map<String, Object> prefs = new HashMap<>();
+            prefs.put("download.prompt_for_download", false);
+            prefs.put("download.default_directory", downloadTo);
+            prefs.put("profile.default_content_settings.popups", 0);
+            options.setExperimentalOption("prefs", prefs);
+        }
+
         handleChromeProfile(options);
 
         if (NumberUtils.isDigits(context.getStringData(CHROME_REMOTE_PORT))) {
@@ -781,13 +790,8 @@ public class Browser implements ForcefulTerminate {
             options.setLogLevel(ERROR);
 
             // set current output directory for download
-            FirefoxProfile profile = options.getProfile();
-            if (context != null && context.getProject() != null) {
-                String outPath = context.getProject().getOutPath();
-                if (StringUtils.isNotBlank(outPath)) {
-                    profile.setPreference("browser.download.dir", context.getStringData(OPT_DOWNLOAD_TO, outPath));
-                }
-            }
+            String downloadTo = resolveDownloadTo(context);
+            if (StringUtils.isNotBlank(downloadTo)) { options.addPreference("browser.download.dir", downloadTo); }
 
             FirefoxDriver firefox = new FirefoxDriver(options);
 
@@ -941,7 +945,7 @@ public class Browser implements ForcefulTerminate {
         return ie;
     }
 
-    private WebDriver initSafari() {
+    protected WebDriver initSafari() {
         // change location of safari's download location to "out" directory
         if (!IS_OS_MAC_OSX) { throw new RuntimeException("Safari automation is only supported on Mac OSX. Sorry..."); }
 
@@ -994,6 +998,18 @@ public class Browser implements ForcefulTerminate {
 
         postInit(webDriver);
         return webDriver;
+    }
+
+    protected String resolveDownloadTo(ExecutionContext context) {
+        if (context == null) { return null; }
+
+        String downloadTo = context.getStringData(OPT_DOWNLOAD_TO);
+        if (StringUtils.isNotBlank(downloadTo)) { return downloadTo; }
+
+        return context.getProject() != null &&
+               StringUtils.isNotBlank(context.getProject().getOutPath()) ?
+               context.getProject().getOutPath() :
+               context.getStringData(OPT_OUT_DIR);
     }
 
     protected void setWindowSize(WebDriver driver) {
