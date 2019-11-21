@@ -513,7 +513,7 @@ public class Nexial {
 
             try {
                 // (2018/12/16,automike): memory consumption precaution
-                excel.close();
+                if (excel != null) { excel.close(); }
             } catch (IOException e) {
                 ConsoleUtils.error("Unable to close Excel file (" + testScript + "): " + e.getMessage());
             }

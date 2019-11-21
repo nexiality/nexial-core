@@ -428,6 +428,7 @@ public class ExecutionContextTest {
         Assert.assertEquals("a,is,long,text,this", subject.replaceTokens("$(array|ascending|this,is,a,long,text)"));
         Assert.assertEquals("this,is,text", subject.replaceTokens("$(array|pack|this,is,,,text,,,)"));
         Assert.assertEquals("had,a,little", subject.replaceTokens("$(array|subarray|mary,had,a,little,lamb|1|3)"));
+        Assert.assertEquals("little,lamb", subject.replaceTokens("$(array|subarray|mary,had,a,little,lamb|3|-1)"));
 
         // nested functions
         Assert.assertEquals("HAD,A,LITTLE",

@@ -30,6 +30,7 @@ import org.apache.commons.lang3.math.NumberUtils;
 import org.apache.poi.xssf.usermodel.XSSFCell;
 import org.apache.poi.xssf.usermodel.XSSFSheet;
 import org.apache.poi.xssf.usermodel.XSSFWorkbook;
+import org.nexial.commons.InvalidInputRuntimeException;
 import org.nexial.core.excel.Excel;
 import org.nexial.core.excel.Excel.Worksheet;
 import org.nexial.core.excel.ExcelAddress;
@@ -246,7 +247,10 @@ public class TestScenario {
             if (hasActivity) {
                 if (testCaseMap.containsKey(activity)) {
                     // found duplicate activity name!
-                    throw new RuntimeException(errorPrefix + "Found duplicate activity name '" + activity + "'");
+                    throw new InvalidInputRuntimeException(
+                        errorPrefix + "Found duplicate activity name '" + activity + "'",
+                        System.getProperty(OPT_INPUT_EXCEL_FILE)
+                    );
                 }
 
                 currentActivity = new TestCase();

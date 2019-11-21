@@ -64,16 +64,8 @@ public class Array {
         return StringUtils.isEmpty(array) ? "" : toString(sort(toArray(array), false));
     }
 
-    public static Stream<String> sort(String[] array, boolean ascending){
+    public static Stream<String> sort(String[] array, boolean ascending) {
         return Arrays.stream(array).sorted((o1, o2) -> ascending ? compare(o1, o2) : compare(o2, o1));
-    }
-
-    protected static int compare(String value1, String value2) {
-        if (NumberUtils.isParsable(value1) && NumberUtils.isParsable(value2)) {
-            return NumberUtils.createBigDecimal(value1).compareTo(NumberUtils.createBigDecimal(value2));
-        } else {
-            return value1.compareTo(value2);
-        }
     }
 
     public String remove(String array, String index) {
@@ -169,6 +161,14 @@ public class Array {
         return strings == null ? null : toString(Arrays.stream(strings));
     }
 
+    protected static int compare(String value1, String value2) {
+        if (NumberUtils.isParsable(value1) && NumberUtils.isParsable(value2)) {
+            return NumberUtils.createBigDecimal(value1).compareTo(NumberUtils.createBigDecimal(value2));
+        } else {
+            return value1.compareTo(value2);
+        }
+    }
+
     protected static String item(String[] arr, String index) {
         return !NumberUtils.isDigits(index) ? "" : item(arr, NumberUtils.toInt(index));
     }
@@ -184,15 +184,25 @@ public class Array {
     /** subarray between start and end, both ends inclusively */
     protected static String[] subarray(String[] arr, String start, String end) {
         if (ArrayUtils.isEmpty(arr)) { return null; }
-        if (!NumberUtils.isDigits(start)) { return null; }
-        if (!NumberUtils.isDigits(end)) { return null; }
 
+        if (!NumberUtils.isDigits(start)) { return null; }
         int idxStart = NumberUtils.toInt(start);
         if (idxStart < 0) { return null; }
 
-        int idxEnd = NumberUtils.toInt(end);
-        if (idxEnd <= idxStart) { return null; }
+        int idxEnd;
+        if (StringUtils.isEmpty(end) || end.equals("-1")) {
+            idxEnd = arr.length - 1;
+        } else if (!NumberUtils.isCreatable(end)) {
+            return null;
+        } else {
+            idxEnd = NumberUtils.toInt(end);
+        }
         if (idxEnd >= arr.length) { return arr; }
+        if (idxEnd == -1) {
+            idxEnd = arr.length - 1;
+        } else if (idxEnd <= idxStart) {
+            return null;
+        }
 
         return ArrayUtils.subarray(arr, idxStart, idxEnd + 1);
     }
