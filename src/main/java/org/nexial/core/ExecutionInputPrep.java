@@ -32,6 +32,7 @@ import org.nexial.core.excel.Excel.Worksheet;
 import org.nexial.core.excel.ExcelStyleHelper;
 import org.nexial.core.excel.ext.CellTextReader;
 import org.nexial.core.model.ExecutionDefinition;
+import org.nexial.core.model.ExecutionVariableConsole;
 import org.nexial.core.model.IterationManager;
 import org.nexial.core.model.MacroMerger;
 import org.nexial.core.model.TestData;
@@ -138,6 +139,9 @@ public class ExecutionInputPrep {
         // we are no longer concerned with remote file access. The best practice to follow is NOT to use remote fs
         TestData testData = execDef.getTestData();
         if (testData == null || testData.getSettingAsBoolean(REFETCH_DATA_FILE)) {testData = execDef.getTestData(true);}
+        if (!ExecUtils.isRunningInZeroTouchEnv()) {
+            testData = new ExecutionVariableConsole().processRuntimeVariables(testData, counter);
+        }
         mergeTestData(outputExcel, testData, counter);
         ConsoleUtils.log(runId, "test script and test data merged to " + outputFile);
 

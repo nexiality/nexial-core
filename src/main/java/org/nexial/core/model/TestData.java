@@ -89,6 +89,7 @@ public class TestData {
     private Map<String, String> scopeSettings = new HashMap<>();
     private Map<String, List<String>> dataMap = new HashMap<>();
     private Map<String, List<String>> defaultDataMap = new HashMap<>();
+    private Map<String, List<String>> runtimeDataMap = new HashMap<>();
 
     public TestData(Excel excel, List<String> dataSheetNames) {
         assert excel != null && excel.getFile() != null && CollectionUtils.isNotEmpty(dataSheetNames);
@@ -389,5 +390,34 @@ public class TestData {
             data.set((lastIteration - 1), stringValue);
             // }
         });
+    }
+
+    Map<String, List<String>> getRuntimeDataMap() { return runtimeDataMap; }
+
+    // add existing runtime data from previous iteration if any
+    void addExistingRuntimeData(Map<String, List<String>> runtimeDataMap) {
+        if (runtimeDataMap.size() == 0) { return; }
+
+        runtimeDataMap.forEach((key, value) -> {
+            if (!dataMap.containsKey(key)) { dataMap.put(key, value); }
+            this.runtimeDataMap.put(key, value);
+        });
+    }
+
+    // add runtime data to dataMap when variable is assigned from console
+    void addRuntimeData(String name, String value, int currIteration) {
+        if (isFallbackToPrevious() && dataMap.containsKey(name)) { return; }
+
+        // get dataMap if available
+        List<String> data = dataMap.containsKey(name) ? dataMap.get(name) : new ArrayList<>();
+        int highestIteration = getIterationManager().getHighestIteration();
+
+        data = data.size() == 0 && runtimeDataMap.containsKey(name) ? runtimeDataMap.get(name) : data;
+        while (data.size() < highestIteration) { data.add(""); }
+        data.set(currIteration - 1, value);
+
+        dataMap.put(name, data);
+        // add to runtime data as well to keep track in next iterations
+        runtimeDataMap.put(name, data);
     }
 }

@@ -405,6 +405,9 @@ public final class NexialConst {
         public static final String OPT_VAR_EXCLUDE_LIST = registerSysVar(NS_VAR + "ignored");
         public static final String OPT_VAR_DEFAULT_AS_IS = registerSysVar(NS_VAR + "defaultAsIs", false);
 
+        //runtime data variables
+        public static final String NS_REQUIRED_VAR = SCOPE + "required.variables";
+
         // supersede `OPT_EXPRESSION_RESOLVE_URL` for wider coverage
         public static final String RESOLVE_TEXT_AS_URL = registerSysVar(NAMESPACE + "resolveTextAsURL", false);
         // supersede `OPT_EXPRESSION_READ_FILE_AS_IS` for wider coverage

@@ -19,6 +19,7 @@ package org.nexial.core.model;
 
 import java.io.File;
 import java.io.IOException;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -155,9 +156,11 @@ public class ExecutionDefinition {
         }
 
         Excel dataFile = new Excel(this.dataFile, DEF_OPEN_EXCEL_AS_DUP, false);
+        Map<String, List<String>> runtimeDataMap = testData == null ? new HashMap<>() : testData.getRuntimeDataMap();
 
         // parse and collect all relevant test data so we can merge then into iteration-bound test script
         testData = new TestData(dataFile, dataSheets);
+        testData.addExistingRuntimeData(runtimeDataMap);
 
         // (2018/12/16,automike): memory consumption precaution
         dataFile.close();
