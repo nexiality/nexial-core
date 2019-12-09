@@ -361,6 +361,7 @@
             <value>disable-prompt-on-repost</value>
             <value>disable-smooth-scrolling</value>
             <value>disable-sync</value>
+            <!-- browsing without signing in -->
             <value>bwsi</value>
 
             <value>hide-scrollbars</value>
@@ -370,15 +371,25 @@
             <!-- enable the WebKit page cache -->
             <value>disable-extensions-file-access-check</value>
             <value>no-default-browser-check</value>
-            <value>noerrdialogs</value>
+
+            <!-- disabled as of 2014-11-14 -->
+            <!-- remove error dialog when present -->
+            <!--<value>noerrdialogs</value>-->
 
             <value>ignore-certificate-errors</value>
             <value>mute-audio</value>
-            <value>always-authorize-plugins</value>
+
+            <!-- Prevents Chrome from requiring authorization to run certain widely installed but less commonly used plug-ins. -->
+            <!--<value>always-authorize-plugins</value>-->
+
             <value>disable-resize-lock</value>
             <value>disable-print-preview</value>
             <value>disable-breakpad</value>
-            <value>disable-infobars</value>
+
+            <!-- disabled as of 2014-11-14 -->
+            <!-- Prevent infobars from appearing. -->
+            <!--<value>disable-infobars</value>-->
+
             <value>enable-ui-devtools</value>
 
             <!-- automatically open devtools-->

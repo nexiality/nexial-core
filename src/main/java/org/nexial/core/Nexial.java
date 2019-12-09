@@ -219,6 +219,9 @@ public class Nexial {
 
         ExecutionSummary summary = null;
         try {
+            // shutdown hook for Control-C and SIGTERM
+            Runtime.getRuntime().addShutdownHook(new Thread(ShutdownAdvisor::forcefullyTerminate));
+
             // integration mode, only for metrics and post-exec analysis
             if (main.isIntegrationMode()) { return; }
 

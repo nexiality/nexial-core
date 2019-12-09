@@ -424,12 +424,14 @@ public class BaseCommand implements NexialCommand {
 
     public StepResult assertEmpty(String text) {
         return StringUtils.isEmpty(text) ?
-               StepResult.success() : StepResult.fail("EXPECTS empty but found '" + text + "'");
+               StepResult.success("EXPECTED empty data found") :
+               StepResult.fail("EXPECTS empty but found '" + text + "'");
     }
 
     public StepResult assertNotEmpty(String text) {
         return StringUtils.isNotEmpty(text) ?
-               StepResult.success() : StepResult.fail("EXPECTS non-empty data found empty data instead.");
+               StepResult.success("EXPECTED non-empty data found") :
+               StepResult.fail("EXPECTS non-empty data found empty data instead.");
     }
 
     public StepResult assertEqual(String expected, String actual) {

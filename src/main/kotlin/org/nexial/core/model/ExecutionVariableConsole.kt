@@ -12,26 +12,26 @@ class ExecutionVariableConsole {
         val iterationRef = testData.iterationManager.getIterationRef(currIteration - 1)
         val variableList = retrieveUndefinedVariables(testData, iterationRef)
 
-        if (CollectionUtils.isEmpty(variableList)) return testData
-        return assignValue(testData, variableList, iterationRef)
+        return if (CollectionUtils.isEmpty(variableList))
+            testData
+        else
+            assignValue(testData, variableList, iterationRef)
     }
 
     fun retrieveUndefinedVariables(testData: TestData, iterationRef: Int): List<String> {
         val runtimeVars = testData.getSetting(NS_REQUIRED_VAR) ?: return emptyList()
-        return TextUtils.toList(runtimeVars, ",", false)
-            .filterNot {
-                testData.has(iterationRef, it) ||
-                TestProject.isProjectProperty(it) ||
-                System.getProperty(it) != null
-            }
+        return TextUtils.toList(runtimeVars, ",", false).filterNot {
+            testData.has(iterationRef, it) || TestProject.isProjectProperty(it) || System.getProperty(it) != null
+        }
     }
 
     private fun assignValue(testData: TestData, variableList: List<String>, iterationRef: Int): TestData {
+        val lineMaxLength = PROMPT_LINE_WIDTH - MARGIN_RIGHT.length - MARGIN_LEFT.length
+
         val scanner = Scanner(System.`in`)
         variableList.forEach { key ->
             println("/------------------------------------------------------------------------------\\")
-            println(MARGIN_RIGHT + centerPrompt("Missing Value For Variable [$key]", PROMPT_LINE_WIDTH - 2) +
-                    MARGIN_RIGHT)
+            println(MARGIN_RIGHT + centerPrompt("[$key]: Missing value assignment", lineMaxLength) + MARGIN_RIGHT)
             println("\\------------------------------------------------------------------------------/")
             println("> Assign value and press ENTER")
 
@@ -42,10 +42,11 @@ class ExecutionVariableConsole {
                 if (input != "") break
                 println("> INVALID INPUT!! Please reassign value")
             }
+
             testData.addRuntimeData(key, input, iterationRef)
-            println("\\------------------------------------------------------------------------------/")
+            println()
         }
+
         return testData
     }
-
 }

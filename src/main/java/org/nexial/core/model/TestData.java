@@ -396,7 +396,7 @@ public class TestData {
 
     // add existing runtime data from previous iteration if any
     void addExistingRuntimeData(Map<String, List<String>> runtimeDataMap) {
-        if (runtimeDataMap.size() == 0) { return; }
+        if (runtimeDataMap.isEmpty()) { return; }
 
         runtimeDataMap.forEach((key, value) -> {
             if (!dataMap.containsKey(key)) { dataMap.put(key, value); }

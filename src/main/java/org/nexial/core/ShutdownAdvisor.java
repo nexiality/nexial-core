@@ -44,12 +44,7 @@ public final class ShutdownAdvisor {
     public static void forcefullyTerminate() {
         if (ADVISORS.isEmpty()) { return; }
         ConsoleUtils.log("shutdown starts...");
-        while (!ADVISORS.isEmpty()) {
-            synchronized (ADVISORS) {
-                ForcefulTerminate forcefulTerminate = ADVISORS.remove(0);
-                forcefulTerminate.forcefulTerminate();
-            }
-        }
+        while (!ADVISORS.isEmpty()) { synchronized (ADVISORS) { ADVISORS.remove(0).forcefulTerminate(); } }
         ConsoleUtils.log("shutdown ends...");
     }
 }
