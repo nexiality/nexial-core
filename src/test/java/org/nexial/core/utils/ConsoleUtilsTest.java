@@ -21,6 +21,7 @@ import java.util.Collections;
 import java.util.Map;
 import javax.validation.constraints.NotNull;
 
+import org.junit.Before;
 import org.junit.Test;
 import org.nexial.commons.utils.ResourceUtils;
 import org.nexial.commons.utils.TextUtils;
@@ -30,13 +31,24 @@ import org.nexial.core.model.ExecutionDefinition;
 import org.nexial.core.model.ExecutionSummary;
 import org.nexial.core.model.MockExecutionContext;
 import org.nexial.core.model.TestProject;
+import org.nexial.core.plugins.base.BaseCommand;
 
 public class ConsoleUtilsTest {
+    private MockExecutionContext context;
+
+    @Before
+    public void setUp() throws Exception {
+        context = new MockExecutionContext();
+
+        // add 'base' because we need it for InteractiveSession
+        BaseCommand baseCommand = new BaseCommand();
+        baseCommand.init(context);
+        context.addPlugin("base", baseCommand);
+    }
 
     @Test
     public void showInteractiveMenu() {
         String script = ResourceUtils.getResourceFilePath("/showcase/artifact/script/base-showcase.xlsx");
-        MockExecutionContext context = new MockExecutionContext();
         ExecutionDefinition execDef = prepExecDef(context, script);
 
         InteractiveSession session = new InteractiveSession(context);
@@ -51,8 +63,6 @@ public class ConsoleUtilsTest {
 
     @Test
     public void showInteractiveRun() {
-        MockExecutionContext context = new MockExecutionContext();
-
         ExecutionSummary activity1 = new ExecutionSummary();
         activity1.setName("showcase for $(count)");
         activity1.setStartTime(1541293351459L);
