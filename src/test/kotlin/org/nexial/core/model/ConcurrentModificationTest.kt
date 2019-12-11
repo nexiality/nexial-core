@@ -21,18 +21,25 @@ import org.junit.Assert
 import org.junit.Before
 import org.junit.Test
 import org.nexial.core.interactive.InteractiveSession
+import org.nexial.core.plugins.base.BaseCommand
 
 class ConcurrentModificationTest {
-
-    val context: MockExecutionContext = MockExecutionContext()
+    var context: MockExecutionContext = MockExecutionContext()
 
     @After
     fun tearDown() = context.cleanProject()
 
     @Before
     fun setUp() {
+        context = MockExecutionContext()
         context.referenceDataForExecution.add("nexial.scriptRef.app")
         context.setData("nexial.scriptRef.app", "nexial unit test", true)
+
+        // add 'base' because we need it for InteractiveSession
+        // add 'base' because we need it for InteractiveSession
+        val baseCommand = BaseCommand()
+        baseCommand.init(context)
+        context.addPlugin("base", baseCommand)
     }
 
     @Test
