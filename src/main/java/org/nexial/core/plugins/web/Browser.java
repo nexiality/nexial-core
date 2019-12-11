@@ -349,6 +349,9 @@ public class Browser implements ForcefulTerminate {
     }
 
     public void init() {
+        // if JVM already initiated shutdown sequence, then we need to give up trying as well.
+        if (shutdownStarted) { return; }
+
         ShutdownAdvisor.addAdvisor(this);
 
         System.setProperty("webdriver.reap_profile", "true");
