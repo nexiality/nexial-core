@@ -50,7 +50,6 @@ class ExternalCommand : BaseCommand() {
 
         try {
             val testClass = Class.forName(className)
-//            val testObject = testClass.newInstance()
             log("running external class '$className'")
 
             // save the current tests ran count, tests pass count, tests failed count... so that we can tally the
@@ -97,8 +96,6 @@ class ExternalCommand : BaseCommand() {
         requires(StringUtils.isNotBlank(programPathAndParams), "empty/null programPathAndParams")
 
         try {
-            // val output = exec(programPathAndParams)
-
             val programAndParams = RuntimeUtils.formatCommandLine(programPathAndParams)
             if (programAndParams.isEmpty()) {
                 throw IllegalArgumentException("Unable to parse programPathAndParams: $programAndParams")

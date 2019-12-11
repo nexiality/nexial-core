@@ -22,6 +22,7 @@ import org.apache.commons.lang3.BooleanUtils
 import org.apache.commons.lang3.StringUtils
 import org.nexial.commons.utils.FileUtil
 import org.nexial.commons.utils.ResourceUtils
+import org.nexial.core.NexialConst.Data.USERSTACK_APIKEY
 import org.nexial.core.NexialConst.GSON
 import org.nexial.core.NexialConst.Web.NS_WEB_METRICS
 import org.nexial.core.model.ExecutionContext
@@ -118,9 +119,9 @@ class ClientPerformanceCollector(val command: WebCommand, private val output: St
     }
 
     private fun newExecution(context: ExecutionContext): JsonObject {
-        val apikey = System.getProperty("nexial.userstack.apikey")
+        val apiKey = System.getProperty(USERSTACK_APIKEY)
         val ua = Objects.toString(command.jsExecutor.executeScript("return navigator.userAgent;"))
-        val uaMap = (if (StringUtils.isNotBlank(apikey)) UserStackAPI(apikey) else UserStackAPI()).detect(ua)
+        val uaMap = (if (StringUtils.isNotBlank(apiKey)) UserStackAPI(apiKey) else UserStackAPI()).detect(ua)
 
         val execution = JsonObject()
         execution.addProperty("runID", context.runId)

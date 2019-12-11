@@ -19,20 +19,17 @@ package org.nexial.core.interactive
 import org.apache.commons.collections4.CollectionUtils
 import org.apache.commons.lang3.RegExUtils
 import org.apache.commons.lang3.StringUtils
-import org.apache.commons.lang3.SystemUtils.*
 import org.apache.commons.lang3.math.NumberUtils
-import org.apache.cxf.helpers.FileUtils
 import org.nexial.commons.logging.LogbackUtils
-import org.nexial.commons.proc.ProcessInvoker
 import org.nexial.commons.proc.RuntimeUtils
 import org.nexial.commons.utils.RegexUtils
-import org.nexial.commons.utils.ResourceUtils
 import org.nexial.commons.utils.TextUtils
 import org.nexial.core.ExecutionInputPrep
 import org.nexial.core.ExecutionThread
-import org.nexial.core.NexialConst.*
 import org.nexial.core.NexialConst.Data.*
 import org.nexial.core.NexialConst.Iteration.CURR_ITERATION
+import org.nexial.core.NexialConst.MSG_ABORT
+import org.nexial.core.NexialConst.OPT_LAST_OUTCOME
 import org.nexial.core.NexialConst.Project.appendLog
 import org.nexial.core.excel.Excel
 import org.nexial.core.interactive.InteractiveConsole.Commands.ALL_STEP
@@ -61,22 +58,16 @@ import org.nexial.core.model.ExecutionSummary.ExecutionLevel
 import org.nexial.core.model.ExecutionSummary.ExecutionLevel.*
 import org.nexial.core.model.TestCase
 import org.nexial.core.model.TestScenario
-import org.nexial.core.plugins.base.BaseCommand
 import org.nexial.core.utils.ConsoleUtils
 import org.nexial.core.utils.ExecUtils
 import java.io.File
 import java.util.*
 
 class NexialInteractive {
-    // todo: save session
-
     lateinit var executionDefinition: ExecutionDefinition
     private val tmpComma = "~~!@!~~"
     private val rangeSeparator = "-"
     private val listSeparator = ","
-    private val regexSaveVar = "^SAVE\\s*\\(([^\\)]+)\\)\\s*\\=\\s*(.+)$"
-    private val regexClearVar = "^CLEAR\\s*\\(([^\\)]+)\\)\\s*$"
-    private var recordingInSession = false
 
     fun startSession() {
         // start of test suite (one per test plan in execution)
@@ -254,123 +245,9 @@ class NexialInteractive {
         return TextUtils.toList(steps, listSeparator, true)
     }
 
-    private fun inspect(session: InteractiveSession) {
-        val context = session.context
-        ExecutionThread.set(context)
-        val baseCommand = context.findPlugin("base") as BaseCommand
+    private fun inspect(session: InteractiveSession) = session.executionInspector.inspect()
 
-        print("> inspect: ")
-        val `in` = Scanner(System.`in`)
-        var input = `in`.nextLine()
-
-        while (StringUtils.isNotBlank(input)) {
-            try {
-                if (RegexUtils.isExact(input, regexSaveVar)) {
-                    val groups = RegexUtils.collectGroups(input, regexSaveVar)
-                    val dataVariable = groups[0]
-                    val dataValue = context.replaceTokens(groups[1], true)
-                    if (context.hasData(dataVariable)) {
-                        ConsoleUtils.log("updating data variable [$dataVariable] to [$dataValue]")
-                    } else {
-                        ConsoleUtils.log("creating data variable [$dataVariable] to [$dataValue]")
-                    }
-                    baseCommand.save(dataVariable, dataValue)
-                } else if (RegexUtils.isExact(input, regexClearVar)) {
-                    val groups = RegexUtils.collectGroups(input, regexClearVar)
-                    val variables = TextUtils.toList(groups[0], ",", true)
-                    ConsoleUtils.log("removing data variable $variables")
-                    val outcome = baseCommand.clearVariables(variables)
-
-                    // outcome.trim().split("\n").forEach { ConsoleUtils.log(it) }
-                    // forgo above simple print out for something more elaborate
-                    // not sure if this is a good idea.. the message itself doesn't have well-defined demarcation of
-                    // data variable list
-                    outcome.trim().split("\n").forEach {
-                        if (it.contains(": ")) {
-                            ConsoleUtils.log(it.substringBefore(": ") + ": ")
-                            it.substringAfter(": ").split(",").forEach { item -> ConsoleUtils.log("\t$item") }
-                        } else {
-                            ConsoleUtils.log(it)
-                        }
-                    }
-                } else {
-                    println(context.replaceTokens(input, true))
-                }
-            } catch (e: Throwable) {
-                ConsoleUtils.error("ERROR on '" + input + "' - " + e.message)
-            }
-
-            println()
-            print("> inspect: ")
-            input = `in`.nextLine()
-        }
-    }
-
-    private fun toggleRecording(session: InteractiveSession) {
-        val context = session.context
-        ExecutionThread.set(context)
-        val baseCommand = context.findPlugin("base") as BaseCommand
-
-        if (recordingInSession) {
-            val outcome = baseCommand.stopRecording()
-            recordingInSession = false
-
-            if (outcome.isSuccess) {
-                val videoLink = context.getStringData(OPT_LAST_OUTPUT_LINK)
-                if (videoLink != null) {
-                    val selection = ConsoleUtils.pauseForInput(null,
-                                                               "Previous desktop recording available at $videoLink\n" +
-                                                               "Would you like to (P)lay it, (S)how it, (D)elete it? ")
-                    if (StringUtils.isBlank(selection)) return
-
-                    when (selection.toUpperCase()) {
-                        "P" -> {    // play it
-                            if (IS_OS_MAC_OSX) {
-                                ProcessInvoker.invokeNoWait("open", Collections.singletonList(videoLink), null)
-                            } else if (IS_OS_WINDOWS) {
-                                ProcessInvoker.invokeNoWait(WIN32_CMD, listOf("/C", "start", "\"\"", videoLink), null)
-                            } else if (IS_OS_LINUX) {
-                                ProcessInvoker.invokeNoWait("/bin/sh -c", Collections.singletonList(videoLink), null)
-                            } else {
-                                ConsoleUtils.error("Unknown O/S; Nexial doesn't know how to open file $videoLink")
-                            }
-                        }
-
-                        "S" -> {    // show it
-                            val path = if (videoLink.contains("\\"))
-                                videoLink.substringBeforeLast("\\")
-                            else
-                                videoLink.substringBeforeLast("/")
-                            if (IS_OS_MAC_OSX) {
-                                ProcessInvoker.invokeNoWait("open", Collections.singletonList(path), null)
-                            } else if (IS_OS_WINDOWS) {
-                                ProcessInvoker.invokeNoWait(WIN32_CMD, listOf("/C", "start", "\"\"", path), null)
-                            } else if (IS_OS_LINUX) {
-                                ProcessInvoker.invokeNoWait("/bin/sh -c", Collections.singletonList(path), null)
-                            } else {
-                                ConsoleUtils.error("Unknown O/S; Nexial doesn't know how to open path $path")
-                            }
-                        }
-
-                        "D" -> {    // delete it (local only)
-                            if (ResourceUtils.isWebResource(videoLink)) {
-                                ConsoleUtils.error("The video file is not currently located in local drive; cancel delete")
-                            } else {
-                                FileUtils.delete(File(videoLink))
-                            }
-                        }
-                    }
-                }
-            }
-        } else {
-            val outcome = baseCommand.startRecording()
-            if (outcome.isSuccess) {
-                ConsoleUtils.log(outcome.message)
-                recordingInSession = true
-            } else
-                ConsoleUtils.error("FAILED!!! ${outcome.message}")
-        }
-    }
+    private fun toggleRecording(session: InteractiveSession) = session.executionRecorder.toggleRecording()
 
     private fun execute(session: InteractiveSession) {
         // sanity check
@@ -601,9 +478,7 @@ class NexialInteractive {
     }
 
     private fun postExecution(session: InteractiveSession?) {
-        if (session == null) return
-
-        val context = session.context
+        val context = session?.context ?: return
         val testScenarios = context.testScenarios
         if (CollectionUtils.isEmpty(testScenarios)) return
 

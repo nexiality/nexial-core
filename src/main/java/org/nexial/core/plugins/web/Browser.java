@@ -156,6 +156,8 @@ public class Browser implements ForcefulTerminate {
     protected BrowserStackHelper browserstackHelper;
     protected CrossBrowserTestingHelper cbtHelper;
 
+    protected boolean shutdownStarted;
+
     public void setContext(ExecutionContext context) { this.context = context; }
 
     public void setChromeOptions(List<String> chromeOptions) { this.chromeOptions = chromeOptions; }
@@ -249,7 +251,10 @@ public class Browser implements ForcefulTerminate {
     public boolean mustForcefullyTerminate() { return driver != null; }
 
     @Override
-    public void forcefulTerminate() { if (driver != null) { shutdown(); } }
+    public void forcefulTerminate() {
+        shutdownStarted = true;
+        if (driver != null) { shutdown(); }
+    }
 
     public boolean favorJSClick() { return browserType.isJsEventFavored(); }
 

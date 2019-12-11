@@ -49,8 +49,10 @@ import org.nexial.core.utils.ConsoleUtils;
 
 import com.google.gson.JsonObject;
 
-import static org.nexial.core.NexialConst.*;
-import static org.nexial.core.NexialConst.Ws.*;
+import static org.nexial.core.NexialConst.DEF_FILE_ENCODING;
+import static org.nexial.core.NexialConst.GSON;
+import static org.nexial.core.NexialConst.Ws.WS_ASYNC_SHUTDOWN_TIMEOUT;
+import static org.nexial.core.NexialConst.Ws.WS_PROXY_REQUIRED;
 import static org.nexial.core.SystemVariables.getDefaultInt;
 import static org.nexial.core.plugins.ws.NaiveConnectionSocketFactory.I_TRUST_EVERYONE;
 import static org.nexial.core.plugins.ws.NaiveConnectionSocketFactory.NOOP_HOST_VERIFIER;

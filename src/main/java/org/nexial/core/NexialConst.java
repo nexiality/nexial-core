@@ -488,7 +488,7 @@ public final class NexialConst {
         public static final String DATA_SHEETS = "DataSheet(s)";
         public static final String ITERATION_ENDED = NAMESPACE + "iterationEnded";
 
-        //screen Recording
+        //screen recording
         public static final String RECORDER_TYPE_MP4 = "mp4";
         public static final String RECORDER_TYPE_AVI = "avi";
         public static final String RECORDER_TYPE = registerSysVar(NAMESPACE + "screenRecorder", RECORDER_TYPE_MP4);
@@ -502,6 +502,8 @@ public final class NexialConst {
         public static final String MIME_PLAIN = "text/plain";
         public static final String MIME_HTML = "text/html";
         public static final String MIME_JSON = WS_JSON_CONTENT_TYPE;
+
+        public static final String USERSTACK_APIKEY = "nexial.userstack.apikey";
 
         // nexial.scope.*
         public static final Map<String, String> SCOPE_SETTING_DEFAULTS =

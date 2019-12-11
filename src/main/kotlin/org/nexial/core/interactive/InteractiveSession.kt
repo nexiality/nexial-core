@@ -22,6 +22,7 @@ import org.apache.commons.lang3.StringUtils
 import org.apache.commons.lang3.SystemUtils.USER_NAME
 import org.nexial.commons.utils.EnvUtils
 import org.nexial.commons.utils.FileUtil
+import org.nexial.core.ExecutionThread
 import org.nexial.core.NexialConst.Data.DEF_OPEN_EXCEL_AS_DUP
 import org.nexial.core.excel.Excel
 import org.nexial.core.excel.ExcelAddress
@@ -32,6 +33,7 @@ import org.nexial.core.model.ExecutionDefinition
 import org.nexial.core.model.StepResult
 import org.nexial.core.model.TestProject
 import org.nexial.core.model.TestScenario
+import org.nexial.core.plugins.base.BaseCommand
 import org.nexial.core.utils.ConsoleUtils
 import org.nexial.core.utils.ExecUtils
 import org.nexial.core.utils.ExecUtils.IGNORED_CLI_OPT
@@ -46,6 +48,8 @@ data class InteractiveSession(val context: ExecutionContext) {
             val n = name.toString()
             if (IGNORED_CLI_OPT.none { StringUtils.startsWith(n, it) }) context.setData(n, System.getProperty(n))
         }
+
+        ExecutionThread.set(context)
     }
 
     // system
@@ -54,7 +58,13 @@ data class InteractiveSession(val context: ExecutionContext) {
     val user: String = USER_NAME
     var excel: Excel? = null
 
+    // helpers
+    private val baseCommand = context.findPlugin("base") as BaseCommand
+    val executionInspector = ExecutionInspector(baseCommand)
+    val executionRecorder = ExecutionRecorder(baseCommand)
+
     var executionDefinition: ExecutionDefinition? = null
+        @Throws(IllegalArgumentException::class)
         set(value) {
             if (value == null) throw IllegalArgumentException("ExecutionDefinition MUST not be null")
 
@@ -104,7 +114,7 @@ data class InteractiveSession(val context: ExecutionContext) {
 
     private fun loadTestScript(reloadExcel: Boolean) {
         if (reloadExcel) {
-            excel = Excel(File(script), DEF_OPEN_EXCEL_AS_DUP, false)
+            excel = Excel(File(script!!), DEF_OPEN_EXCEL_AS_DUP, false)
             inflightScript = null
         }
 
@@ -133,7 +143,7 @@ data class InteractiveSession(val context: ExecutionContext) {
         val projectHome = executionDefinition?.project?.projectHome
         if (projectHome != null) {
             executionDefinition?.project?.projectHome = projectHome
-            TestProject.listProjectPropertyKeys().forEach { key: String? ->
+            TestProject.listProjectPropertyKeys().forEach { key ->
                 System.setProperty(key, TestProject.getProjectProperty(key))
             }
         }
@@ -154,7 +164,7 @@ data class InteractiveSession(val context: ExecutionContext) {
 
         val execDef = executionDefinition!!
 
-        val dataFileObj = File(dataFile)
+        val dataFileObj = File(dataFile!!)
         val dataFileOfValue = dataFileObj.absolutePath
         if (execDef.dataFile == null || !StringUtils.equals(execDef.dataFile.absolutePath, dataFileOfValue)) {
             execDef.dataFile = dataFileObj
