@@ -409,6 +409,8 @@ public class Browser implements ForcefulTerminate {
             proxy = null;
         }
 
+        if (context != null) { context.removeData(BROWSER_META); }
+
         clearWinHandles();
 
         if (driver == null) { return; }

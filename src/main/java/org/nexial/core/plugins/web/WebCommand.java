@@ -49,6 +49,7 @@ import org.nexial.commons.utils.TextUtils;
 import org.nexial.commons.utils.web.URLEncodingUtils;
 import org.nexial.core.WebProxy;
 import org.nexial.core.browsermob.ProxyHandler;
+import org.nexial.core.model.BrowserMeta;
 import org.nexial.core.model.ExecutionContext;
 import org.nexial.core.model.NexialUrlInvokedEvent;
 import org.nexial.core.model.StepResult;
@@ -1199,10 +1200,7 @@ public class WebCommand extends BaseCommand implements CanTakeScreenshot, CanLog
         url = validateUrl(url);
         driver.get(url);
         waitForBrowserStability(toPositiveLong(waitMs, "waitMs"));
-        updateWinHandle();
-        resizeSafariAfterOpen();
-
-        EventTracker.track(new NexialUrlInvokedEvent(browser.getBrowserType().name(), url));
+        postOpen(url);
 
         return StepResult.success("opened URL " + hideAuthDetails(url));
     }
@@ -1220,11 +1218,7 @@ public class WebCommand extends BaseCommand implements CanTakeScreenshot, CanLog
                           StringUtils.substringAfter(url, "://");
         driver.get(urlBasic);
         waitForBrowserStability(context.getPollWaitMs());
-
-        updateWinHandle();
-        resizeSafariAfterOpen();
-
-        EventTracker.track(new NexialUrlInvokedEvent(browser.getBrowserType().name(), url));
+        postOpen(url);
 
         return StepResult.success("opened URL " + hideAuthDetails(urlBasic));
     }
@@ -1261,9 +1255,7 @@ public class WebCommand extends BaseCommand implements CanTakeScreenshot, CanLog
 
         stopWatch.stop();
 
-        resizeSafariAfterOpen();
-
-        EventTracker.track(new NexialUrlInvokedEvent(browser.getBrowserType().name(), url));
+        postOpen(url);
 
         return StepResult.success("opened URL " + hideAuthDetails(url));
     }
@@ -1709,14 +1701,23 @@ public class WebCommand extends BaseCommand implements CanTakeScreenshot, CanLog
     public StepResult saveBrowserVersion(String var) {
         requiresValidAndNotReadOnlyVariableName(var);
 
-        String ua = Objects.toString(jsExecutor.executeScript("return navigator.userAgent;"));
+        if (!context.hasData(BROWSER_META)) {
+            syncBrowserMeta();
+            if (!context.hasData(BROWSER_META)) {
+                // we've tried... forget it
+                return StepResult.fail("Unable to fetch browser version; " +
+                                       "browser or underlying webdriver possibly not initialized");
+            }
+        }
 
-        String apiKey = context.getStringData(USERSTACK_APIKEY);
-        UserStackAPI usApi = StringUtils.isNotBlank(apiKey) ? new UserStackAPI(apiKey) : new UserStackAPI();
-        Map<String, String> uaMap = usApi.detect(ua);
-
-        context.setData(var, uaMap.get("browser"));
-        return StepResult.success("Browser version saved to data variable '" + var + "'");
+        BrowserMeta browserMeta = (BrowserMeta) context.getObjectData(BROWSER_META);
+        if (browserMeta != null) {
+            context.setData(var, browserMeta.browser());
+            return StepResult.success("Browser version saved to data variable '" + var + "'");
+        } else {
+            return StepResult.fail("Unable to fetch browser version; " +
+                                   "browser or underlying webdriver possibly not initialized");
+        }
     }
 
     @Override
@@ -1913,6 +1914,30 @@ public class WebCommand extends BaseCommand implements CanTakeScreenshot, CanLog
         } catch (IOException e) {
             log("Error when collecting browser performance metrics: " + e.getMessage());
         }
+    }
+
+    protected void postOpen(String url) {
+        updateWinHandle();
+        resizeSafariAfterOpen();
+        EventTracker.track(new NexialUrlInvokedEvent(browser.getBrowserType().name(), url));
+        syncBrowserMeta();
+    }
+
+    protected void syncBrowserMeta() {
+        Object browserMeta = context.getObjectData(BROWSER_META);
+        if (browserMeta instanceof BrowserMeta) { return; }
+
+        if (jsExecutor == null || driver == null) {
+            ConsoleUtils.error("Browser or webdriver not yet initialized; cancel the fetching of browser meta...");
+            return;
+        }
+
+        // go get it
+        String apiKey = context.getStringData(USERSTACK_APIKEY);
+        UserStackAPI userStackAPI = StringUtils.isNotBlank(apiKey) ? new UserStackAPI(apiKey) : new UserStackAPI();
+        String ua = Objects.toString(jsExecutor.executeScript("return navigator.userAgent;"));
+        browserMeta = userStackAPI.detectAsBrowserMeta(ua);
+        context.setData(BROWSER_META, browserMeta);
     }
 
     // todo: was called from screenshot().. still need it?

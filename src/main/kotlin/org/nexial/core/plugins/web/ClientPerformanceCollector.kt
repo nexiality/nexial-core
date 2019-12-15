@@ -22,9 +22,10 @@ import org.apache.commons.lang3.BooleanUtils
 import org.apache.commons.lang3.StringUtils
 import org.nexial.commons.utils.FileUtil
 import org.nexial.commons.utils.ResourceUtils
-import org.nexial.core.NexialConst.Data.USERSTACK_APIKEY
 import org.nexial.core.NexialConst.GSON
+import org.nexial.core.NexialConst.Web.BROWSER_META
 import org.nexial.core.NexialConst.Web.NS_WEB_METRICS
+import org.nexial.core.model.BrowserMeta
 import org.nexial.core.model.ExecutionContext
 import org.nexial.core.model.TestStep
 import org.nexial.core.utils.ConsoleUtils
@@ -34,7 +35,6 @@ import java.io.File
 import java.io.FileReader
 import java.io.FileWriter
 import java.io.IOException
-import java.util.*
 
 class ClientPerformanceCollector(val command: WebCommand, private val output: String) {
     private val resourceBase = "/org/nexial/core/plugins/web/metrics/"
@@ -119,16 +119,17 @@ class ClientPerformanceCollector(val command: WebCommand, private val output: St
     }
 
     private fun newExecution(context: ExecutionContext): JsonObject {
-        val apiKey = System.getProperty(USERSTACK_APIKEY)
-        val ua = Objects.toString(command.jsExecutor.executeScript("return navigator.userAgent;"))
-        val uaMap = (if (StringUtils.isNotBlank(apiKey)) UserStackAPI(apiKey) else UserStackAPI()).detect(ua)
-
         val execution = JsonObject()
         execution.addProperty("runID", context.runId)
         execution.addProperty("project", context.project.name)
-        execution.addProperty("browser", uaMap["browser"])
-        execution.addProperty("os", uaMap["os"])
         execution.add("scripts", JsonArray())
+
+        if (context.hasData(BROWSER_META)) {
+            val browserMeta = context.getObjectData(BROWSER_META) as BrowserMeta
+            execution.addProperty("browser", "${browserMeta.name} ${browserMeta.version}")
+            execution.addProperty("os", browserMeta.os.name)
+        }
+
         return execution
     }
 

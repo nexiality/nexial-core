@@ -16,26 +16,19 @@
 
 package org.nexial.core.plugins.web
 
-import org.junit.After
+import com.google.gson.JsonObject
 import org.junit.Assert
-import org.junit.Before
 import org.junit.Test
+import org.nexial.core.NexialConst.GSON
 
 class UserStackAPITest {
 
-    @Before
-    fun setUp() {
-    }
-
-    @After
-    fun tearDown() {
-    }
-
     @Test
     fun parseBrowserMeta_electron() {
+        val ua = """Mozilla\/5.0 (Macintosh; Intel Mac OS X 10_14_6) AppleWebKit\/537.36 (KHTML, like Gecko) MovieMagicBudgeting\/0.1.7 Chrome\/76.0.3809.131 Electron\/6.0.4 Safari\/537.36"""
         val fixture = """
             {
-                "ua":"Mozilla\/5.0 (Macintosh; Intel Mac OS X 10_14_6) AppleWebKit\/537.36 (KHTML, like Gecko) MovieMagicBudgeting\/0.1.7 Chrome\/76.0.3809.131 Electron\/6.0.4 Safari\/537.36",
+                "ua":"$ua",
                 "type":"browser",
                 "brand":"Apple",
                 "name":"Mac",
@@ -72,18 +65,18 @@ class UserStackAPITest {
             }
         """.trimIndent()
 
-        val browser = UserStackAPI.parseBrowserMeta(fixture)
-        Assert.assertNotNull(browser)
-        Assert.assertTrue(browser.isNotEmpty())
-        Assert.assertEquals("Electron App", browser["browser"])
-        Assert.assertEquals("macOS 10.14 Mojave", browser["os"])
+        val browserMeta = UserStackAPI().parseBrowserMeta(GSON.fromJson(fixture, JsonObject::class.java), ua)
+        Assert.assertNotNull(browserMeta)
+        Assert.assertEquals("Electron App", browserMeta.browser())
+        Assert.assertEquals("macOS 10.14 Mojave", browserMeta.os.name)
     }
 
     @Test
     fun parseBrowserMeta_chrome() {
+        val ua = """Mozilla\/5.0 (Macintosh; Intel Mac OS X 10_14_6) AppleWebKit\/537.36 (KHTML, like Gecko) Chrome\/78.0.3904.87 Safari\/537.36"""
         val fixture = """
             {
-                "ua":"Mozilla\/5.0 (Macintosh; Intel Mac OS X 10_14_6) AppleWebKit\/537.36 (KHTML, like Gecko) Chrome\/78.0.3904.87 Safari\/537.36",
+                "ua":"$ua",
                 "type":"browser",
                 "brand":"Apple",
                 "name":"Mac",
@@ -120,10 +113,9 @@ class UserStackAPITest {
             }
         """.trimIndent()
 
-        val browser = UserStackAPI.parseBrowserMeta(fixture)
-        Assert.assertNotNull(browser)
-        Assert.assertTrue(browser.isNotEmpty())
-        Assert.assertEquals("Chrome 78.0.3904.87", browser["browser"])
-        Assert.assertEquals("macOS 10.14 Mojave", browser["os"])
+        val browserMeta = UserStackAPI().parseBrowserMeta(GSON.fromJson(fixture, JsonObject::class.java), ua)
+        Assert.assertNotNull(browserMeta)
+        Assert.assertEquals("Chrome 78.0.3904.87", browserMeta.browser())
+        Assert.assertEquals("macOS 10.14 Mojave", browserMeta.os.name)
     }
 }

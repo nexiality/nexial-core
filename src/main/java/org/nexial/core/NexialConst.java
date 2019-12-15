@@ -1515,6 +1515,7 @@ public final class NexialConst {
         public static final String BROWSER_INCOGNITO = registerSysVar(NS_BROWSER + "." + KEY_INCOGNITO, true);
         public static final String OPT_LAST_ALERT_TEXT = registerSysVar(NAMESPACE + "lastAlertText");
         public static final String OPT_ALERT_IGNORE_FLAG = registerSysVar(NAMESPACE + "ignoreBrowserAlert", false);
+        public static final String BROWSER_META = registerSysVar(NS_BROWSER + ".meta");
 
         // metrics
         public static final String NS_WEB_METRICS = registerSysVarGroup(NS_WEB + "metrics.");
