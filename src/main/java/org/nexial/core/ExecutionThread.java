@@ -32,6 +32,7 @@ import org.apache.commons.lang3.time.StopWatch;
 import org.nexial.commons.logging.LogbackUtils;
 import org.nexial.commons.utils.FileUtil;
 import org.nexial.commons.utils.ResourceUtils;
+import org.nexial.core.aws.NexialS3Helper;
 import org.nexial.core.excel.Excel;
 import org.nexial.core.model.*;
 import org.nexial.core.plugins.web.CloudWebTestingPlatform;
@@ -479,8 +480,18 @@ public final class ExecutionThread extends Thread {
             String html = StringUtils.replace(ResourceUtils.loadResource(WEB_METRICS_HTML_LOC + WEB_METRICS_HTML),
                                               WEB_METRICS_TOKEN,
                                               json);
-            FileUtils.writeStringToFile(new File(outputBase + WEB_METRICS_HTML), html, DEF_FILE_ENCODING);
+            File webMetricFile = new File(outputBase + WEB_METRICS_HTML);
+            FileUtils.writeStringToFile(webMetricFile, html, DEF_FILE_ENCODING);
             System.setProperty(WEB_METRICS_GENERATED, "true");
+
+            if (context.isOutputToCloud()) {
+                NexialS3Helper otc = context.getOtc();
+                if (otc != null && otc.isReadyForUse() && FileUtil.isFileReadable(webMetricFile, 1024)) {
+                    // upload HTML report to cloud
+                    String url = otc.importToS3(webMetricFile, otc.resolveOutputDir(), true);
+                    ConsoleUtils.log("Web Performance Metric exported to " + url);
+                }
+            }
         } catch (IOException e) {
             // unable to read JSON, read HTML or write HTML to output
             ConsoleUtils.error("Unable to generate browser metrics HTML: " + e.getMessage());

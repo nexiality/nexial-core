@@ -333,18 +333,15 @@ public class Excel {
         public void setLinkCell(ExcelAddress addr, String link, String text, String styleName, float rowHeight) {
             assert addr != null;
             assert text != null;
-            // assert styleConfig != null;
 
             workbook.setMissingCellPolicy(CREATE_NULL_AS_BLANK);
-            // XSSFCellStyle cellStyle = StyleDecorator.decorate(newCellStyle(), createFont(), styleConfig);
-            XSSFCellStyle cellStyle = commonStyles.get(styleName);
 
             int startRow = addr.getRowStartIndex();
             if (sheet.getRow(startRow) == null) { sheet.createRow(startRow); }
             XSSFRow row = sheet.getRow(startRow);
 
             XSSFCell cell = row.getCell(addr.getColumnStartIndex());
-            cell.setCellStyle(cellStyle);
+            cell.setCellStyle(commonStyles.get(styleName));
             row.setHeightInPoints(rowHeight);
 
             if (StringUtils.isNotBlank(link)) {

@@ -940,7 +940,7 @@ public class Nexial {
                 // upload HTML report to cloud
                 if (FileUtil.isFileReadable(htmlReport, 1024)) {
                     String url = otc.importToS3(htmlReport, outputDir, true);
-                    ConsoleUtils.log("HTML output for this execution export to " + url);
+                    ConsoleUtils.log("HTML output for this execution exported to " + url);
                     System.setProperty(EXEC_OUTPUT_PATH, url);
                     if (StringUtils.isNotBlank(url)) { ExecutionReporter.openExecutionSummaryReport(url); }
                 }
@@ -953,7 +953,7 @@ public class Nexial {
                 // upload junit xml
                 if (FileUtil.isFileReadable(junitReport, 100)) {
                     String url = otc.importToS3(junitReport, outputDir, true);
-                    ConsoleUtils.log("JUnit XML output for this execution export to " + url);
+                    ConsoleUtils.log("JUnit XML output for this execution exported to " + url);
                     System.setProperty(JUNIT_XML_LOCATION, url);
                 }
             } catch (IOException e) {

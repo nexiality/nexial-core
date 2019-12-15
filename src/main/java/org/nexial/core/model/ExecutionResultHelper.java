@@ -172,6 +172,10 @@ public final class ExecutionResultHelper {
             int messageCount = nestedMessages.size();
             for (int i = 0; i < messageCount; i++) {
                 NestedMessage nestedMessage = nestedMessages.get(i);
+
+                // nested screen capture will add to new row (after test step)
+                // step output will output to same row as test step
+
                 if (nestedMessage instanceof StepOutput) {
                     addScreenshotLink(excelSheet.getRow(step.getRowIndex()), linkStyle, (StepOutput) nestedMessage);
                 } else {

@@ -24,7 +24,8 @@ import org.apache.commons.lang3.StringUtils
 import org.nexial.commons.utils.FileUtil
 import org.nexial.commons.utils.TextUtils
 import org.nexial.core.NexialConst.*
-import org.nexial.core.NexialConst.Rdbms.*
+import org.nexial.core.NexialConst.Rdbms.CSV_ROW_SEP
+import org.nexial.core.NexialConst.Rdbms.DAO_PREFIX
 import org.nexial.core.model.ExecutionContext
 import org.nexial.core.model.StepResult
 import org.nexial.core.plugins.base.BaseCommand
@@ -61,7 +62,7 @@ class RdbmsCommand : BaseCommand() {
         // requires(dataAccess.validSQL(query), "invalid sql", sql);
 
         val result = dataAccess.execute(query, resolveDao(db)) ?: return StepResult.fail(
-            "FAILED TO EXECUTE SQL '$sql': no result found")
+                "FAILED TO EXECUTE SQL '$sql': no result found")
         context.setData(`var`, result)
 
         log("executed query in ${result.elapsedTime} ms with " +
@@ -202,6 +203,7 @@ class RdbmsCommand : BaseCommand() {
             if (!db.startsWith(NAMESPACE)) log("found $qualifiedSqlCount qualified query(s) to execute")
 
             msgPrefix = "executed $qualifiedSqlCount SQL(s);"
+            val testStep = context.currentTestStep
 
             for (sqlComponent in qualifiedSqlList) {
                 val sql = context.replaceTokens(StringUtils.trim(sqlComponent.sql))
@@ -221,12 +223,19 @@ class RdbmsCommand : BaseCommand() {
 
                     if (result.hasError()) log("ERROR found while executing $printableSql: ${result.error}")
 
-                    if (FileUtil.isFileReadable(output, 3)) addLinkRef(null, outFile, targetFile.absolutePath)
+                    if (FileUtil.isFileReadable(output, 3)) {
+                        addLinkRef("result saved as $outFile", outFile, targetFile.absolutePath)
+                    }
 
                     log("executed $printableSql in ${result.elapsedTime} ms with " +
                         if (result.hasError()) "ERROR ${result.error}" else "${result.rowCount} row(s)")
 
-                    resultToJson(result, StringUtils.substringBeforeLast(output, ".") + ".json")
+                    val jsonOutput = resultToJson(result, StringUtils.substringBeforeLast(output, ".") + ".json")
+                    if (FileUtil.isFileReadable(jsonOutput, 3)) {
+                        addLinkRef("result metadata saved as ${jsonOutput.name}",
+                                   jsonOutput.name,
+                                   jsonOutput.absolutePath)
+                    }
                 } else {
                     // not saving result anywhere since this SQL is not mapped to any variable
                     log("executing $printableSql without saving its result")
@@ -246,6 +255,7 @@ class RdbmsCommand : BaseCommand() {
         requiresNotBlank(output, "invalid output", output)
 
         val outputFile = if (!StringUtils.endsWithIgnoreCase(output, ".csv")) "$output.csv" else output
+        val targetFile = File(outputFile)
 
         val dao = resolveDao(db)
 
@@ -255,13 +265,22 @@ class RdbmsCommand : BaseCommand() {
             // so for that reason, we are no longer insisting on the use of standard ANSI sql
             // requires(dataAccess.validSQL(query), "invalid sql", sql);
 
-            val result = dataAccess.execute(query, dao, File(outputFile)) ?: return StepResult.fail(
-                "FAILED TO EXECUTE SQL '$sql': no result found")
+            val result = dataAccess.execute(query, dao, targetFile) ?: return StepResult.fail(
+                    "FAILED TO EXECUTE SQL '$sql': no result")
 
             log("executed query in ${result.elapsedTime} ms with " +
                 if (result.hasError()) "ERROR ${result.error}" else "${result.rowCount} row(s)")
 
-            resultToJson(result, StringUtils.substringBeforeLast(outputFile, ".") + ".json")
+            if (FileUtil.isFileReadable(targetFile, 3)) {
+                addLinkRef("result saved as $outputFile", targetFile.name, targetFile.absolutePath)
+            }
+
+            val jsonOutput = resultToJson(result, StringUtils.substringBeforeLast(outputFile, ".") + ".json")
+            if (FileUtil.isFileReadable(jsonOutput, 3)) {
+                addLinkRef("result metadata saved as ${jsonOutput.name}",
+                           jsonOutput.name,
+                           jsonOutput.absolutePath)
+            }
             return StepResult.success("executed SQL '$sql'; stored result to '$outputFile'")
         } catch (e: IOException) {
             return StepResult.fail("Error when executing '$sql': ${e.message}")
@@ -315,7 +334,9 @@ class RdbmsCommand : BaseCommand() {
     }
 
     @Throws(IOException::class)
-    private fun resultToJson(result: JdbcResult, output: String) {
-        FileUtils.writeStringToFile(File(output), GSON.toJson(result), DEF_FILE_ENCODING)
+    private fun resultToJson(result: JdbcResult, output: String): File {
+        val file = File(output)
+        FileUtils.writeStringToFile(file, GSON.toJson(result), DEF_FILE_ENCODING)
+        return file
     }
 }
