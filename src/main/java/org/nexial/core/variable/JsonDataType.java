@@ -20,6 +20,7 @@ package org.nexial.core.variable;
 import java.io.UnsupportedEncodingException;
 
 import org.apache.commons.lang3.StringUtils;
+import org.apache.commons.lang3.exception.ExceptionUtils;
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -28,6 +29,7 @@ import org.nexial.core.utils.ConsoleUtils;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
+import com.google.gson.JsonSyntaxException;
 
 import static java.lang.System.lineSeparator;
 import static org.nexial.core.NexialConst.DEF_CHARSET;
@@ -72,10 +74,18 @@ public class JsonDataType extends ExpressionDataType<JsonElement> {
 
     @Override
     protected void init() throws TypeConversionException {
-        textValue = escapeUnicode(this.textValue);
-        this.value = GSON.fromJson(textValue, JsonElement.class);
-        if (value == null) {
-            throw new TypeConversionException(getName(), this.textValue, "Cannot convert to JSON: " + this.textValue);
+        TypeConversionException badJsonException =
+            new TypeConversionException(getName(), textValue, "Cannot convert to JSON: " + textValue);
+
+        if (StringUtils.isBlank(textValue)) { throw badJsonException; }
+
+        try {
+            textValue = escapeUnicode(textValue);
+            this.value = GSON.fromJson(textValue, JsonElement.class);
+            if (value == null) { throw badJsonException; }
+        } catch (JsonSyntaxException e) {
+            ConsoleUtils.error("Unable to parse as JSON - " + textValue + ": " + ExceptionUtils.getRootCauseMessage(e));
+            throw badJsonException;
         }
     }
 

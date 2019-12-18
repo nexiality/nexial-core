@@ -26,7 +26,6 @@ import java.util.Map;
 
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang3.StringUtils;
-import org.apache.commons.lang3.SystemUtils;
 import org.apache.commons.lang3.math.NumberUtils;
 import org.junit.After;
 import org.junit.Assert;
@@ -45,6 +44,8 @@ import org.nexial.core.plugins.db.DataAccess;
 import org.nexial.core.plugins.db.RdbmsCommand;
 
 import static java.io.File.separator;
+import static org.apache.commons.lang3.SystemUtils.JAVA_IO_TMPDIR;
+import static org.apache.commons.lang3.SystemUtils.getJavaIoTmpDir;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.*;
 import static org.junit.Assert.*;
@@ -1092,6 +1093,21 @@ public class ExpressionProcessorTest {
     }
 
     @Test
+    public void processJson_invalid_json() throws Exception {
+        String invalidPath = StringUtils.appendIfMissing(JAVA_IO_TMPDIR, separator) + "non_existent.json";
+        Assert.assertFalse(new File(invalidPath).exists());
+
+        ExpressionProcessor subject = new ExpressionProcessor(context);
+        try {
+            String extracted = subject.process("[JSON(" + invalidPath + ") => extract(error) ]");
+            System.out.println("extracted = " + extracted);
+            fail("EXPECTED exception not thrown!");
+        } catch (TypeConversionException e) {
+            // expected
+        }
+    }
+
+    @Test
     public void processXml() throws Exception {
         ExpressionProcessor subject = new ExpressionProcessor(context);
 
@@ -1361,7 +1377,7 @@ public class ExpressionProcessorTest {
                          is(equalTo("user,name,Job Title,Department,Office Number,Office Phone,Mobile Phone,Fax," +
                                     "Address,City,state,ZIP or Postal Code,country"))));
 
-        String tmp = StringUtils.appendIfMissing(SystemUtils.getJavaIoTmpDir().getAbsolutePath(), separator) +
+        String tmp = StringUtils.appendIfMissing(getJavaIoTmpDir().getAbsolutePath(), separator) +
                      "junk2.csv";
         assertThat(subject.process("[CSV(" + csvFile + ") => " +
                                    " parse(delim=\\,|recordDelim=\r\n|header=true)" +
@@ -1469,7 +1485,7 @@ public class ExpressionProcessorTest {
                    allOf(is(not(nullValue())),
                          is(equalTo("Chris Green,Ben Andrews,David Longmuir,Cynthia Carey,Melissa MacBeth"))));
 
-        String tmp = StringUtils.appendIfMissing(SystemUtils.getJavaIoTmpDir().getAbsolutePath(), separator) +
+        String tmp = StringUtils.appendIfMissing(getJavaIoTmpDir().getAbsolutePath(), separator) +
                      "junk.csv";
         assertThat(subject.process("[CSV(" + csvFile + ") => " +
                                    " parse(delim=\\,|header=false)" +
@@ -3005,7 +3021,7 @@ public class ExpressionProcessorTest {
                    allOf(is(not(nullValue())), is(equalTo(expected))));
 
         String sqlTemplate = ResourceUtils.getResourceFilePath(resourceBasePath + "12.sql");
-        String sqlPath = StringUtils.appendIfMissing(SystemUtils.getJavaIoTmpDir().getAbsolutePath(), separator) +
+        String sqlPath = StringUtils.appendIfMissing(getJavaIoTmpDir().getAbsolutePath(), separator) +
                          className + "-rendered.sql";
         expected = "-- nexial:KXY result\n" +
                    "SELECT OFFICELOCATIONDESC AS \"description\", ADDRESSLINE1 || ' ' || ADDRESSLINE2 || ', ' || CITY || ' ' || OFFICELOCATIONSTATE || ' ' || ZIP || ' ' || COUNTRY AS \"fullAddress\" FROM OFFICELOCATIONS WHERE OFFICELOCATIONCODE = 'KXY';\n" +
@@ -3152,7 +3168,7 @@ public class ExpressionProcessorTest {
         assertNotNull(xlsxFile);
         File targetSource = new File(xlsxFile);
 
-        String tmpDir = StringUtils.appendIfMissing(SystemUtils.getJavaIoTmpDir().getAbsolutePath(), separator);
+        String tmpDir = StringUtils.appendIfMissing(getJavaIoTmpDir().getAbsolutePath(), separator);
         File targetFile = new File(tmpDir + "junk1.xlsx");
 
         FileUtils.copyFile(targetSource, targetFile);
@@ -3311,7 +3327,7 @@ public class ExpressionProcessorTest {
         assertNotNull(xlsxFile);
         File targetSource = new File(xlsxFile);
 
-        String tmpDir = StringUtils.appendIfMissing(SystemUtils.getJavaIoTmpDir().getAbsolutePath(), separator);
+        String tmpDir = StringUtils.appendIfMissing(getJavaIoTmpDir().getAbsolutePath(), separator);
         File targetFile = new File(tmpDir + "junk1.xlsx");
 
         FileUtils.copyFile(targetSource, targetFile);
