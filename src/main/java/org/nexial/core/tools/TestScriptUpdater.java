@@ -19,10 +19,7 @@ package org.nexial.core.tools;
 
 import java.io.File;
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
-import java.util.Optional;
+import java.util.*;
 import java.util.stream.Collectors;
 
 import org.apache.commons.cli.CommandLine;
@@ -33,10 +30,12 @@ import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.collections4.IterableUtils;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang3.StringUtils;
+import org.apache.commons.lang3.math.NumberUtils;
 import org.apache.poi.ss.util.CellAddress;
 import org.apache.poi.xssf.usermodel.XSSFCell;
 import org.apache.poi.xssf.usermodel.XSSFSheet;
 import org.apache.poi.xssf.usermodel.XSSFWorkbook;
+import org.nexial.commons.utils.RegexUtils;
 import org.nexial.commons.utils.ResourceUtils;
 import org.nexial.commons.utils.TextUtils;
 import org.nexial.core.CommandConst;
@@ -59,6 +58,7 @@ import static org.nexial.core.NexialConst.Project.COMMAND_JSON_FILE_NAME;
 import static org.nexial.core.excel.ExcelConfig.*;
 import static org.nexial.core.tools.CliConst.OPT_VERBOSE;
 import static org.nexial.core.tools.CliUtils.newArgOption;
+import static org.nexial.core.tools.CliUtils.newNonArgOption;
 import static org.nexial.core.tools.CommandDiscovery.GSON;
 
 /**
@@ -72,6 +72,7 @@ public class TestScriptUpdater {
 
     private boolean verbose;
     private List<File> targetFiles;
+    private boolean fixDuplicateActivity;
 
     public static void main(String[] args) throws Exception {
         initOptions();
@@ -101,6 +102,7 @@ public class TestScriptUpdater {
         if (!cmd.hasOption("t")) { throw new RuntimeException("[target] is a required argument and is missing"); }
 
         verbose = cmd.hasOption("v");
+        fixDuplicateActivity = cmd.hasOption("u");
 
         String target = cmd.getOptionValue("t");
         File targetFile = new File(target);
@@ -141,8 +143,10 @@ public class TestScriptUpdater {
     protected void update(final ScriptMetadata metadata) {
         targetFiles.forEach(file -> {
             try {
+                String filePath = file.getAbsolutePath();
+                String fileName = file.getName();
                 Excel excel = new Excel(file);
-                String filePath = excel.getFile().getAbsolutePath();
+                XSSFWorkbook workbook = excel.getWorkbook();
 
                 if (InputFileUtils.isValidScript(excel)) {
                     System.out.println("processing " + filePath);
@@ -155,18 +159,10 @@ public class TestScriptUpdater {
                     scanInvalidCommands(excel, metadata);
                     if (verbose) { System.out.println("\tcompleted script inspection"); }
 
-                    // reset zoom and starting position
-                    excel.getWorksheetsStartWith("").forEach(worksheet -> {
-                        if (!StringUtils.equals(worksheet.getName(), SHEET_SYSTEM)) {
-                            XSSFSheet sheet = worksheet.getSheet();
-                            // System.out.println("\t[" + worksheet.getName() + "] setting starting position as A5 and reset zoom to 100%");
-                            sheet.setActiveCell(new CellAddress("A5"));
-                            sheet.setZoom(100);
-                        }
-                    });
-                    excel.getWorkbook().setActiveSheet(1);
-                    excel.getWorkbook().setFirstVisibleTab(1);
-                    excel.getWorkbook().setSelectedTab(1);
+                    fixDuplicateActivities(excel, ADDR_COMMAND_START);
+
+                    resetZoomAndStartingPosition(excel, 1, "A5");
+
                     excel.save();
 
                 } else if (InputFileUtils.isValidMacro(excel)) {
@@ -178,16 +174,16 @@ public class TestScriptUpdater {
                     scanInvalidMacroCommands(excel, metadata);
                     if (verbose) { System.out.println("\tcompleted macro inspection"); }
 
+                    fixDuplicateActivities(excel, ADDR_MACRO_COMMAND_START);
+                    resetZoomAndStartingPosition(excel, 1, "A2");
+                    excel.save();
                 } else {
                     // remove system sheet, if found..
                     Worksheet worksheet = excel.worksheet(SHEET_SYSTEM);
                     if (worksheet != null) {
-                        if (verbose) {
-                            System.out.println("\tremoving 'system' sheet for non-script file: " +
-                                               excel.getFile().getName());
-                        }
+                        if (verbose) {System.out.println("\tremoving 'system' sheet for non-script file: " + fileName);}
 
-                        XSSFWorkbook workbook = excel.getWorkbook();
+                        // XSSFWorkbook workbook = workbook;
                         for (int i = 0; i < workbook.getNumberOfSheets(); i++) {
                             if (StringUtils.equals(workbook.getSheetAt(i).getSheetName(), SHEET_SYSTEM)) {
                                 System.out.println("\tdeleting sheet #" + i + " for " + file.getAbsolutePath());
@@ -204,7 +200,6 @@ public class TestScriptUpdater {
                         if (verbose) { System.out.println("not recognized as nexial script: " + filePath); }
                     } else {
                         System.out.println("processing " + filePath);
-
                         v2Plans.forEach(plan -> {
                             if (!updateV2Plan(plan)) {
                                 System.err.println("\tUNABLE TO UPDATE TEST PLAN " + plan.getName() +
@@ -212,10 +207,12 @@ public class TestScriptUpdater {
                             }
                         });
 
-                        XSSFWorkbook workbook = excel.getWorkbook();
-                        workbook.setActiveSheet(0);
-                        workbook.setFirstVisibleTab(0);
-                        workbook.setSelectedTab(0);
+                        resetZoomAndStartingPosition(excel, 0, "A2");
+
+                        // XSSFWorkbook workbook = workbook;
+                        // workbook.setActiveSheet(0);
+                        // workbook.setFirstVisibleTab(0);
+                        // workbook.setSelectedTab(0);
                         excel.save();
                     }
                 }
@@ -283,11 +280,34 @@ public class TestScriptUpdater {
         return true;
     }
 
+    private void resetZoomAndStartingPosition(Excel excel, int firstTab, String startingPosition) {
+        XSSFWorkbook workbook = excel.getWorkbook();
+
+        // reset zoom and starting position
+        excel.getWorksheetsStartWith("").forEach(worksheet -> {
+            if (!StringUtils.equals(worksheet.getName(), SHEET_SYSTEM)) {
+                XSSFSheet sheet = worksheet.getSheet();
+                // System.out.println("\t[" + worksheet.getName() + "] setting starting position as A5 and reset zoom to 100%");
+                sheet.setActiveCell(new CellAddress(startingPosition));
+                sheet.setZoom(100);
+            }
+        });
+
+        workbook.setActiveSheet(firstTab);
+        workbook.setFirstVisibleTab(firstTab);
+        workbook.setSelectedTab(firstTab);
+    }
+
     private static void initOptions() {
         cmdOptions.addOption(OPT_VERBOSE);
-        cmdOptions.addOption(newArgOption("t", "target",
+        cmdOptions.addOption(newArgOption("t",
+                                          "target",
                                           "[REQUIRED] Location of a single Excel test script or a directory to update.",
                                           true));
+        cmdOptions.addOption(newNonArgOption("u",
+                                             "unique",
+                                             "attempt to auto-correct duplicate activity names within a scenario",
+                                             false));
     }
 
     private void handleMacroSystemSheet(Excel excel, ScriptMetadata metadata) throws IOException {
@@ -385,14 +405,14 @@ public class TestScriptUpdater {
                 XSSFCell cellTarget = row.get(COL_IDX_TARGET);
                 String target = Excel.getCellValue(cellTarget);
                 if (!targets.contains(target)) {
-                    System.err.println("\tInvalid command target - " + target);
+                    System.err.println("\tInvalid command target:\t" + target);
                     continue;
                 }
 
                 XSSFCell cellCommand = row.get(COL_IDX_COMMAND);
                 String command = Excel.getCellValue(cellCommand);
                 if (StringUtils.isBlank(command)) {
-                    System.err.println("\tInvalid command: " + command);
+                    System.err.println("\tInvalid command:\t" + command);
                     continue;
                 }
 
@@ -416,10 +436,11 @@ public class TestScriptUpdater {
                 String commandDisplay = target + " » " + command;
                 if (CommandConst.getCommandSuggestions().containsKey(targetCommand)) {
                     String suggestion = CommandConst.getCommandSuggestions().get(targetCommand);
-                    System.err.println("\t!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!");
-                    System.err.println("\tRow " + rowIndex + ": " + commandDisplay);
-                    System.err.println("\t" + suggestion);
-                    System.err.println("\t!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!");
+                    System.err.printf("\t!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!\n" +
+                                      "\tRow %s:\t%s\n" +
+                                      "\t%s\n" +
+                                      "\t!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!\n",
+                                      rowIndex, commandDisplay, suggestion);
                 }
 
                 String commandSignature = targetCommand;
@@ -428,7 +449,7 @@ public class TestScriptUpdater {
                                                                 .findFirst();
                 if (!matchedCommand.isPresent()) {
                     // for every unknown command, spit out an error
-                    System.err.println("\tInvalid command: " + commandDisplay);
+                    System.err.println("\tInvalid command:\t" + commandDisplay);
                     continue;
                 }
 
@@ -444,17 +465,69 @@ public class TestScriptUpdater {
                 List<String> paramValues = TestStep.readParamValues(row);
                 int paramValuesCount = CollectionUtils.size(paramValues);
                 if (paramValuesCount != paramCount) {
-                    System.err.println("\tPossibly error on the parameter(s) for " + commandDisplay + ": " +
-                                       "expected " + paramCount + " parameter(s) but found " + paramValuesCount);
+                    System.err.printf("\tPossibly error on parameter(s) for %s: expected %s parameter(s) but found %s",
+                                      commandDisplay, paramCount, paramValuesCount);
                 }
 
                 for (int k = 0; k < paramCount; k++) {
                     if (StringUtils.isBlank(Excel.getCellValue(row.get(COL_IDX_PARAMS_START + k)))) {
-                        System.err.println("\tPossible error on the parameter(s) for " + commandDisplay + ": " +
-                                           "no value found for parameter '" + IterableUtils.get(paramList, k) + "'");
+                        System.err.printf("\tPossible error on parameter(s) for %s: no value found for parameter '%s'",
+                                          commandDisplay, IterableUtils.get(paramList, k));
                     }
                 }
             }
         }
+    }
+
+    private void fixDuplicateActivities(Excel excel, ExcelAddress addrCommandStart) {
+        if (!fixDuplicateActivity) { return; }
+
+        Map<String, String> activityNames = new HashMap<>();
+
+        // find all existing worksheet (minus system sheet)
+        excel.getWorksheetsStartWith("").forEach(sheet -> {
+            String sheetName = sheet.getName();
+            if (!StringUtils.equals(sheetName, SHEET_SYSTEM)) {
+
+                String commandAreaAddr = "" + COL_TEST_CASE + (addrCommandStart.getRowStartIndex() + 1) + ":" +
+                                         COL_CAPTURE_SCREEN + sheet.findLastDataRow(addrCommandStart);
+                ExcelArea area = new ExcelArea(sheet, new ExcelAddress(commandAreaAddr), false);
+                for (int j = 0; j < area.getWholeArea().size(); j++) {
+                    List<XSSFCell> row = area.getWholeArea().get(j);
+                    // int rowIndex = row.get(0).getRowIndex() + 1;
+
+                    // check for activity name duplicates
+                    XSSFCell cellActivity = row.get(COL_IDX_TESTCASE);
+                    String activityName = Excel.getCellValue(cellActivity);
+                    if (StringUtils.isNotBlank(activityName)) {
+                        String newActivityName = findNewActivityName(activityNames, activityName);
+                        String cellAddress = cellActivity.getAddress().formatAsString();
+                        activityNames.put(newActivityName, cellAddress);
+                        if (!StringUtils.equals(activityName, newActivityName)) {
+                            System.out.printf("\t[%s]: duplicate activity name renamed from %s to %s\n",
+                                              cellAddress, activityName, newActivityName);
+                            cellActivity.setCellValue(newActivityName);
+                        }
+                    }
+                }
+            }
+        });
+    }
+
+    /**
+     * either return {@literal activity} as is - if it is an unique name, or rename it to make it unique. The naming
+     * strategy is to add a number to the end of the existing activity name.
+     */
+    private String findNewActivityName(Map<String, String> existingNames, String activity) {
+        if (!existingNames.containsKey(activity)) { return activity; }
+
+        List<String> parts = RegexUtils.collectGroups(activity, "(.+)(\\d+)");
+
+        // activity name doesn't end with number, let's add one
+        // if not, let's increment last number by 1
+        return findNewActivityName(existingNames,
+                                   CollectionUtils.size(parts) != 2 ?
+                                   StringUtils.appendIfMissing(activity, " ") + "1" :
+                                   parts.get(0) + (NumberUtils.toInt(parts.get(1)) + 1));
     }
 }
