@@ -66,7 +66,6 @@ import org.nexial.commons.utils.FileUtil;
 import org.nexial.commons.utils.RegexUtils;
 import org.nexial.commons.utils.TextUtils;
 import org.nexial.core.ExecutionThread;
-import org.nexial.core.WebProxy;
 import org.nexial.core.model.ExecutionContext;
 import org.nexial.core.model.TestStep;
 import org.nexial.core.utils.ConsoleUtils;
@@ -182,12 +181,14 @@ public class WebServiceClient {
         StopWatch tickTock = new StopWatch();
         tickTock.start();
 
-        boolean requireProxy = context != null && context.getBooleanData(WS_PROXY_REQUIRED, false);
-        HttpHost proxy = requireProxy ? WebProxy.getApacheProxy(context) : null;
-        BasicCredentialsProvider credsProvider = requireProxy ? WebProxy.getApacheCredentialProvider(context) : null;
-
-        RequestConfig requestConfig = prepRequestConfig(request, proxy, credsProvider);
-        CloseableHttpClient client = prepHttpClient(request, requestConfig, proxy, credsProvider);
+        // proxy code not ready for prime time...
+        // boolean requireProxy = context != null && context.getBooleanData(WS_PROXY_REQUIRED, false);
+        // HttpHost proxy = requireProxy ? WebProxy.getApacheProxy(context) : null;
+        // BasicCredentialsProvider credsProvider = requireProxy ? WebProxy.getApacheCredentialProvider(context) : null;
+        // RequestConfig requestConfig = prepRequestConfig(request, proxy, credsProvider);
+        // CloseableHttpClient client = prepHttpClient(request, requestConfig, proxy, credsProvider);
+        RequestConfig requestConfig = prepRequestConfig(request, null, null);
+        CloseableHttpClient client = prepHttpClient(request, requestConfig, null, null);
         HttpUriRequest http = request.prepRequest(requestConfig);
 
         CloseableHttpResponse httpResponse = null;

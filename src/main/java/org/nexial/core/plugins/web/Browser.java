@@ -37,7 +37,6 @@ import org.nexial.commons.utils.EnvUtils;
 import org.nexial.commons.utils.FileUtil;
 import org.nexial.core.NexialConst.*;
 import org.nexial.core.ShutdownAdvisor;
-import org.nexial.core.browsermob.ProxyHandler;
 import org.nexial.core.model.BrowserCompleteEvent;
 import org.nexial.core.model.ExecutionContext;
 import org.nexial.core.plugins.CanTakeScreenshot;
@@ -62,7 +61,6 @@ import org.openqa.selenium.safari.SafariDriver;
 import org.openqa.selenium.safari.SafariOptions;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.core.io.support.PropertiesLoaderUtils;
 
 import static java.io.File.separator;
 import static java.util.concurrent.TimeUnit.MILLISECONDS;
@@ -120,7 +118,7 @@ public class Browser implements ForcefulTerminate {
     protected ExecutionContext context;
     protected WebDriver driver;
     // todo: not ready for prime time
-    protected ProxyHandler proxy;
+    // protected ProxyHandler proxy;
     protected List<String> chromeOptions;
     protected BrowserType browserType;
     protected String browserProfile;
@@ -174,9 +172,8 @@ public class Browser implements ForcefulTerminate {
 
     public void setFirefoxBinArgs(List<String> firefoxBinArgs) { this.firefoxBinArgs = firefoxBinArgs; }
 
-    public void setProxy(ProxyHandler proxy) { this.proxy = proxy; }
-
-    public ProxyHandler getProxyHandler() { return proxy; }
+    // public void setProxy(ProxyHandler proxy) { this.proxy = proxy; }
+    // public ProxyHandler getProxyHandler() { return proxy; }
 
     public WebDriver getDriver() { return driver; }
 
@@ -404,10 +401,10 @@ public class Browser implements ForcefulTerminate {
 
     protected void shutdown() {
         // todo: not ready for prime time
-        if (proxy != null) {
-            proxy.stopProxy();
-            proxy = null;
-        }
+        // if (proxy != null) {
+        //     proxy.stopProxy();
+        //     proxy = null;
+        // }
 
         if (context != null) { context.removeData(BROWSER_META); }
 
@@ -738,37 +735,37 @@ public class Browser implements ForcefulTerminate {
             DesiredCapabilities capabilities;
 
             // todo: not ready for prime time
+            // if (proxy != null) {
+            //     Proxy localProxy = proxy.getServer().seleniumProxy();
+            //
+            //     String localHost = InetAddress.getLocalHost().getHostName();
+            //     localProxy.setHttpProxy(localHost);
+            //     localProxy.setSslProxy(localHost);
+            //
+            //     capabilities = new DesiredCapabilities();
+            //     initCapabilities(context, capabilities);
+            //     capabilities.setCapability(PROXY, localProxy);
+            //
+            //     Properties browsermobProps = PropertiesLoaderUtils.loadAllProperties(
+            //         "org/nexial/core/plugins/har/browsermob.properties");
+            //     int proxyPort = Integer.parseInt(browsermobProps.getProperty("browsermob.port"));
+            //
+            //     options = new FirefoxOptions(capabilities);
+            //     options.addPreference("network.proxy.type", 1);
+            //     options.addPreference("network.proxy.http_port", proxyPort);
+            //     options.addPreference("network.proxy.ssl_port", proxyPort);
+            //     options.addPreference("network.proxy.no_proxies_on", "");
+            // } else {
+            options = new FirefoxOptions();
+            capabilities = new DesiredCapabilities();
+            initCapabilities(context, capabilities);
+            options.merge(capabilities);
+
+            Proxy proxy = (Proxy) capabilities.getCapability(PROXY);
             if (proxy != null) {
-                Proxy localProxy = proxy.getServer().seleniumProxy();
-
-                String localHost = InetAddress.getLocalHost().getHostName();
-                localProxy.setHttpProxy(localHost);
-                localProxy.setSslProxy(localHost);
-
-                capabilities = new DesiredCapabilities();
-                initCapabilities(context, capabilities);
-                capabilities.setCapability(PROXY, localProxy);
-
-                Properties browsermobProps = PropertiesLoaderUtils.loadAllProperties(
-                    "org/nexial/core/plugins/har/browsermob.properties");
-                int proxyPort = Integer.parseInt(browsermobProps.getProperty("browsermob.port"));
-
-                options = new FirefoxOptions(capabilities);
                 options.addPreference("network.proxy.type", 1);
-                options.addPreference("network.proxy.http_port", proxyPort);
-                options.addPreference("network.proxy.ssl_port", proxyPort);
-                options.addPreference("network.proxy.no_proxies_on", "");
-            } else {
-                options = new FirefoxOptions();
-                capabilities = new DesiredCapabilities();
-                initCapabilities(context, capabilities);
-                options.merge(capabilities);
 
-                Proxy proxy = (Proxy) capabilities.getCapability(PROXY);
-                if (proxy != null) {
-                    options.addPreference("network.proxy.type", 1);
-
-                    String proxyHostAndPort = proxy.getHttpProxy();
+                String proxyHostAndPort = proxy.getHttpProxy();
                     String proxyHost = StringUtils.substringBefore(proxyHostAndPort, ":");
                     String proxyPort = StringUtils.substringAfter(proxyHostAndPort, ":");
                     options.addPreference("network.proxy.http", proxyHost);
@@ -779,7 +776,7 @@ public class Browser implements ForcefulTerminate {
                     options.addPreference("network.proxy.ftp_port", proxyPort);
                     options.addPreference("network.proxy.no_proxies_on", "localhost, 127.0.0.1");
                 }
-            }
+            // }
 
             handleFirefoxProfile(options, capabilities);
 

@@ -30,19 +30,16 @@ import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang3.RandomUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.time.StopWatch;
-import org.apache.http.HttpHost;
 import org.apache.http.HttpResponse;
 import org.apache.http.client.config.RequestConfig;
 import org.apache.http.client.methods.HttpUriRequest;
 import org.apache.http.client.protocol.HttpClientContext;
 import org.apache.http.concurrent.FutureCallback;
-import org.apache.http.impl.client.BasicCredentialsProvider;
 import org.apache.http.impl.client.LaxRedirectStrategy;
 import org.apache.http.impl.nio.client.CloseableHttpAsyncClient;
 import org.apache.http.impl.nio.client.HttpAsyncClientBuilder;
 import org.apache.http.impl.nio.client.HttpAsyncClients;
 import org.nexial.core.ShutdownAdvisor;
-import org.nexial.core.WebProxy;
 import org.nexial.core.model.ExecutionContext;
 import org.nexial.core.plugins.ForcefulTerminate;
 import org.nexial.core.utils.ConsoleUtils;
@@ -52,7 +49,6 @@ import com.google.gson.JsonObject;
 import static org.nexial.core.NexialConst.DEF_FILE_ENCODING;
 import static org.nexial.core.NexialConst.GSON;
 import static org.nexial.core.NexialConst.Ws.WS_ASYNC_SHUTDOWN_TIMEOUT;
-import static org.nexial.core.NexialConst.Ws.WS_PROXY_REQUIRED;
 import static org.nexial.core.SystemVariables.getDefaultInt;
 import static org.nexial.core.plugins.ws.NaiveConnectionSocketFactory.I_TRUST_EVERYONE;
 import static org.nexial.core.plugins.ws.NaiveConnectionSocketFactory.NOOP_HOST_VERIFIER;
@@ -185,22 +181,23 @@ public class AsyncWebServiceClient extends WebServiceClient implements ForcefulT
         StopWatch tickTock = new StopWatch();
         tickTock.start();
 
-        boolean requireProxy = context != null && context.getBooleanData(WS_PROXY_REQUIRED, false);
-        HttpHost proxy = requireProxy ? WebProxy.getApacheProxy(context) : null;
-        BasicCredentialsProvider credsProvider = requireProxy ? WebProxy.getApacheCredentialProvider(context) : null;
-
-        RequestConfig requestConfig = prepRequestConfig(request, proxy, credsProvider);
+        // proxy code not ready for prime time...
+        // boolean requireProxy = context != null && context.getBooleanData(WS_PROXY_REQUIRED, false);
+        // HttpHost proxy = requireProxy ? WebProxy.getApacheProxy(context) : null;
+        // BasicCredentialsProvider credsProvider = requireProxy ? WebProxy.getApacheCredentialProvider(context) : null;
+        // RequestConfig requestConfig = prepRequestConfig(request, proxy, credsProvider);
+        RequestConfig requestConfig = prepRequestConfig(request, null, null);
 
         HttpAsyncClientBuilder httpClientBuilder = HttpAsyncClients.custom()
                                                                    .setSSLHostnameVerifier(NOOP_HOST_VERIFIER)
                                                                    .setSSLContext(I_TRUST_EVERYONE)
                                                                    .setDefaultRequestConfig(requestConfig)
                                                                    .setRedirectStrategy(LaxRedirectStrategy.INSTANCE);
-        if (proxy != null && credsProvider != null) {
-            httpClientBuilder.setDefaultCredentialsProvider(credsProvider)
-                             .setProxy(proxy)
-                             .setRoutePlanner(resolveRoutePlanner(request, proxy));
-        }
+        // if (proxy != null && credsProvider != null) {
+        //     httpClientBuilder.setDefaultCredentialsProvider(credsProvider)
+        //                      .setProxy(proxy)
+        //                      .setRoutePlanner(resolveRoutePlanner(request, proxy));
+        // }
 
         // add basic auth, if specified
         httpClientBuilder = addBasicAuth(httpClientBuilder, request);

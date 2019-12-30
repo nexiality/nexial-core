@@ -183,23 +183,26 @@ public final class NexialConst {
     public static final String OPT_EXCEL_VER = NAMESPACE + "excelVer";
     public static final String OPT_INTERACTIVE = NAMESPACE + "interactive";
 
+    // proxy code not ready for prime time...
     //browsermob proxy
-    public static final String OPT_PROXY_ENABLE = "proxy.enable";
-    public static final String OPT_PROXY_LOCALHOST = "localhost:98986";
+    // public static final String OPT_PROXY_ENABLE = "proxy.enable";
+    // public static final String OPT_PROXY_LOCALHOST = "localhost:98986";
 
+    // proxy code not ready for prime time...
     //browsermob har
-    public static final String OPT_HAR_CURRENT = "_harCurrent";
-    public static final String OPT_HAR_BASE = "_harBase";
-    public static final String OPT_HAR_POST_DATA_BASE = "_postDataBase.csv";
-    public static final String OPT_HAR_POST_DATA_CURRENT = "_postDataCurrent.csv";
-    public static final String OPT_HAR_POST_DATA_INTERCEPTED = "_postDataIntercepted.csv";
-    public static final String OPT_HAR_POST_DATA_RESULTS = "_postDataResults.csv";
-    public static final String OPT_HAR_POST_COLUMN_NAMES = "Post Sequence,URL,Baseline,Current";
+    // public static final String OPT_HAR_CURRENT = "_harCurrent";
+    // public static final String OPT_HAR_BASE = "_harBase";
+    // public static final String OPT_HAR_POST_DATA_BASE = "_postDataBase.csv";
+    // public static final String OPT_HAR_POST_DATA_CURRENT = "_postDataCurrent.csv";
+    // public static final String OPT_HAR_POST_DATA_INTERCEPTED = "_postDataIntercepted.csv";
+    // public static final String OPT_HAR_POST_DATA_RESULTS = "_postDataResults.csv";
+    // public static final String OPT_HAR_POST_COLUMN_NAMES = "Post Sequence,URL,Baseline,Current";
 
+    // proxy code not ready for prime time...
     //browsermob wsdl
-    public static final String OPT_WSDL_BASE = "_WSDLBase.wsdl";
-    public static final String OPT_WSDL_CURRENT = "_WSDLCurrent.wsdl";
-    public static final String OPT_WSDL_RESULTS = "_WSDLResults.txt";
+    // public static final String OPT_WSDL_BASE = "_WSDLBase.wsdl";
+    // public static final String OPT_WSDL_CURRENT = "_WSDLCurrent.wsdl";
+    // public static final String OPT_WSDL_RESULTS = "_WSDLResults.txt";
 
     // token specific
     public static final String TOKEN_START = "${";

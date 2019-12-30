@@ -18,14 +18,11 @@ package org.nexial.core.plugins.web;
 
 import org.apache.commons.lang3.BooleanUtils;
 import org.apache.commons.lang3.StringUtils;
-import org.nexial.core.WebProxy;
 import org.nexial.core.model.ExecutionContext;
-import org.nexial.core.utils.ConsoleUtils;
 import org.openqa.selenium.MutableCapabilities;
 
-import static org.nexial.core.NexialConst.*;
-import static org.nexial.core.NexialConst.Web.*;
 import static org.nexial.core.NexialConst.Web.BROWSER_ACCEPT_INVALID_CERTS;
+import static org.nexial.core.NexialConst.Web.OPT_ALERT_IGNORE_FLAG;
 import static org.nexial.core.SystemVariables.getDefaultBool;
 import static org.openqa.selenium.UnexpectedAlertBehaviour.ACCEPT;
 import static org.openqa.selenium.UnexpectedAlertBehaviour.IGNORE;
@@ -68,9 +65,9 @@ class WebDriverCapabilityUtils {
         //     capabilities.setCapability(PROXY, WebProxy.getSeleniumProxy());
         // }
 
-        if (context.getBooleanData(OPT_PROXY_DIRECT, false)) {
-            ConsoleUtils.log("setting direct connection for webdriver");
-            capabilities.setCapability(PROXY, WebProxy.getDirect());
-        }
+        // if (context.getBooleanData(OPT_PROXY_DIRECT, false)) {
+        //     ConsoleUtils.log("setting direct connection for webdriver");
+        //     capabilities.setCapability(PROXY, WebProxy.getDirect());
+        // }
     }
 }

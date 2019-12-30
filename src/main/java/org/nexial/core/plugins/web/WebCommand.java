@@ -41,14 +41,11 @@ import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.SystemUtils;
 import org.apache.commons.lang3.math.NumberUtils;
 import org.apache.commons.lang3.time.StopWatch;
-import org.apache.http.client.methods.HttpRequestBase;
 import org.nexial.commons.utils.CollectionUtil;
 import org.nexial.commons.utils.FileUtil;
 import org.nexial.commons.utils.RegexUtils;
 import org.nexial.commons.utils.TextUtils;
 import org.nexial.commons.utils.web.URLEncodingUtils;
-import org.nexial.core.WebProxy;
-import org.nexial.core.browsermob.ProxyHandler;
 import org.nexial.core.model.BrowserMeta;
 import org.nexial.core.model.ExecutionContext;
 import org.nexial.core.model.NexialUrlInvokedEvent;
@@ -81,10 +78,6 @@ import org.openqa.selenium.support.ui.FluentWait;
 import org.openqa.selenium.support.ui.Select;
 import org.openqa.selenium.support.ui.WebDriverWait;
 
-import net.lightbody.bmp.proxy.ProxyServer;
-import net.lightbody.bmp.proxy.http.RequestInterceptor;
-import net.lightbody.bmp.proxy.jetty.http.HttpMessage;
-import net.lightbody.bmp.proxy.jetty.http.HttpRequest;
 import ru.yandex.qatools.ashot.AShot;
 import ru.yandex.qatools.ashot.Screenshot;
 import ru.yandex.qatools.ashot.coordinates.WebDriverCoordsProvider;
@@ -132,12 +125,12 @@ public class WebCommand extends BaseCommand implements CanTakeScreenshot, CanLog
         super.init(context);
 
         // todo: revisit to handle proxy
-        if (context.getBooleanData(OPT_PROXY_ENABLE, false)) {
-            ProxyHandler proxy = new ProxyHandler();
-            proxy.setContext(context);
-            proxy.startProxy();
-            browser.setProxy(proxy);
-        }
+        // if (context.getBooleanData(OPT_PROXY_ENABLE, false)) {
+        //     ProxyHandler proxy = new ProxyHandler();
+        //     proxy.setContext(context);
+        //     proxy.startProxy();
+        //     browser.setProxy(proxy);
+        // }
 
         if (!context.isDelayBrowser()) { initWebDriver(); }
 
@@ -2429,27 +2422,27 @@ public class WebCommand extends BaseCommand implements CanTakeScreenshot, CanLog
     protected void ensureReady() { initWebDriver(); }
 
     // todo: need to enable proxy capability across nexial
-    protected void initProxy() {
-        // todo: need to decide key
-        ProxyServer proxyServer = WebProxy.getProxyServer();
-        if (context.hasData(BROWSER_LANG) && proxyServer != null) {
-            String browserLang = context.getStringData(BROWSER_LANG);
-            proxyServer.addHeader("Accept-Language", browserLang);
-            proxyServer.addRequestInterceptor((RequestInterceptor) (request, har) -> {
-                //Accept-Language: en-US,en;q=0.5
-                //request.addRequestHeader("Accept-Language", getProp(OPT_BROWSER_LANG));
-                HttpRequestBase method = request.getMethod();
-                method.removeHeaders("Accept-Language");
-                method.setHeader("Accept-Language", browserLang);
-
-                HttpRequest proxyRequest = request.getProxyRequest();
-                int oldState = proxyRequest.setState(HttpMessage.__MSG_EDITABLE);
-                proxyRequest.removeField("Accept-Language");
-                proxyRequest.setField("Accept-Language", browserLang);
-                proxyRequest.setState(oldState);
-            });
-        }
-    }
+    // protected void initProxy() {
+    //     // todo: need to decide key
+    //     ProxyServer proxyServer = WebProxy.getProxyServer();
+    //     if (context.hasData(BROWSER_LANG) && proxyServer != null) {
+    //         String browserLang = context.getStringData(BROWSER_LANG);
+    //         proxyServer.addHeader("Accept-Language", browserLang);
+    //         proxyServer.addRequestInterceptor((RequestInterceptor) (request, har) -> {
+    //             //Accept-Language: en-US,en;q=0.5
+    //             //request.addRequestHeader("Accept-Language", getProp(OPT_BROWSER_LANG));
+    //             HttpRequestBase method = request.getMethod();
+    //             method.removeHeaders("Accept-Language");
+    //             method.setHeader("Accept-Language", browserLang);
+    //
+    //             HttpRequest proxyRequest = request.getProxyRequest();
+    //             int oldState = proxyRequest.setState(HttpMessage.__MSG_EDITABLE);
+    //             proxyRequest.removeField("Accept-Language");
+    //             proxyRequest.setField("Accept-Language", browserLang);
+    //             proxyRequest.setState(oldState);
+    //         });
+    //     }
+    // }
 
     @NotNull
     protected FluentWait<WebDriver> newFluentWait() {

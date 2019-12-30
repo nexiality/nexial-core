@@ -89,16 +89,21 @@ dependencies {
 	compile("org.apache.httpcomponents:httpasyncclient:${httpasyncclient}")
 
 	// support: apache commons
-	compile("commons-beanutils:commons-beanutils:+")
+	compile("org.apache.commons:commons-lang3:+")
+	compile("org.apache.commons:commons-collections4:4.3")
+	compile("commons-beanutils:commons-beanutils:+") {
+		exclude module: "commons-collections"
+	}
 	compile("commons-cli:commons-cli:+")
 	compile("commons-fileupload:commons-fileupload:+")
 	compile("commons-io:commons-io:+")
-	compile("commons-validator:commons-validator:+")
-	compile("org.apache.commons:commons-collections4:4.3")
 	compile("org.apache.commons:commons-dbcp2:+")
 	// compile("org.apache.commons:commons-email:+")
-	compile("org.apache.commons:commons-lang3:+")
 	compile("org.apache.commons:commons-text:+")
+	compile("org.apache.commons:commons-compress:+")
+	compile("commons-validator:commons-validator:+") {
+		exclude module: "commons-collections"
+	}
 
 	// csv
 	compile("com.univocity:univocity-parsers:+")
@@ -162,15 +167,15 @@ dependencies {
 	compile("com.amazonaws:aws-java-sdk-ses:+")
 	compile('com.amazonaws:aws-java-sdk-sqs:1.11.632')
 	compile("com.amazonaws:aws-java-sdk-sts:+")
-	compile("com.amazonaws:aws-java-sdk-textract:+")
+	// compile("com.amazonaws:aws-java-sdk-textract:+")
 	compile("com.amazonaws:aws-java-sdk-rekognition:+")
 
 	// support: browsermob
-	compile("net.lightbody.bmp:browsermob-proxy:+")
-	compile("net.lightbody.bmp:browsermob-core:+")
-	compile("net.lightbody.bmp:browsermob-rest:+") {
-		exclude module: "servlet-api"
-	}
+	// compile("net.lightbody.bmp:browsermob-proxy:+")
+	// compile("net.lightbody.bmp:browsermob-core:+")
+	// compile("net.lightbody.bmp:browsermob-rest:+") {
+	// 	exclude module: "servlet-api"
+	// }
 
 	// support: pdf
 	// https://mvnrepository.com/artifact/com.itextpdf/itext7-core
@@ -244,7 +249,6 @@ dependencies {
 
 	compile("org.apache.tika:tika-core:${tikaVersion}")
 	compile("org.apache.tika:tika-parsers:${tikaVersion}")
-	compile("org.apache.commons:commons-compress:+")
 
 	// support: ssh, scp, sftp
 	compile("com.jcraft:jsch:+")
@@ -260,6 +264,11 @@ dependencies {
 
 	// ashot
 	compile("ru.yandex.qatools.ashot:ashot:1.5.4")
+
+	// fmpeg (NOTE: THIS IS IN CONFLICT AGAINST THE SAME isoparser PULLED IN VIA THE TIKA DEPEDNENCIES)
+	// https://mvnrepository.com/artifact/org.bytedeco/ffmpeg
+	// compile group: 'org.bytedeco', name: 'ffmpeg', version: '4.2.1-1.5.2'
+	// compile("org.mp4parser:isoparser:1.9.+")
 
 	//	non-distributable libs
 	compile fileTree(dir: 'lib', include: '*.jar')
