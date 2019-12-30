@@ -91,9 +91,7 @@ dependencies {
 	// support: apache commons
 	compile("org.apache.commons:commons-lang3:+")
 	compile("org.apache.commons:commons-collections4:4.3")
-	compile("commons-beanutils:commons-beanutils:+") {
-		exclude module: "commons-collections"
-	}
+	compile("commons-beanutils:commons-beanutils:+")
 	compile("commons-cli:commons-cli:+")
 	compile("commons-fileupload:commons-fileupload:+")
 	compile("commons-io:commons-io:+")
