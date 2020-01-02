@@ -148,6 +148,11 @@ public class CsvCommand extends IoCommand {
         collectFields(configKey + "matchCaseInsensitive").ifPresent(comparison::setCaseInsensitiveFields);
         collectFields(configKey + "matchAutoTrim").ifPresent(comparison::setAutoTrimFields);
 
+        // support comparing field content as list (ordered or unordered)
+        collectConfig(configKey + "list.delim").ifPresent(comparison::setListDelim);
+        collectFields(configKey + "matchAsOrderedList").ifPresent(comparison::setOrderedListFields);
+        collectFields(configKey + "matchAsUnorderedList").ifPresent(comparison::setUnorderedListFields);
+
         // specifies the delimiter used for identity fields for BOTH the expected and actual CSV files
         // if not specified, then '^' is assumed.
         collectConfig(configKey + "identity.delim").ifPresent(comparison::setIdentSeparator);

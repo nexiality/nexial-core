@@ -20,6 +20,7 @@ import java.util.HashMap;
 import java.util.Map;
 
 import org.apache.commons.collections4.MapUtils;
+import org.apache.commons.lang3.StringUtils;
 import org.nexial.core.plugins.NexialCommand;
 import org.nexial.core.plugins.RequireBrowser;
 import org.nexial.core.plugins.web.Browser;
@@ -45,9 +46,10 @@ public class PluginManager {
 
     public void setPlugins(Map<String, NexialCommand> plugins) { this.plugins = plugins; }
 
-    public boolean isPluginLoaded(String target) { return initialized.containsKey(target); }
+    public boolean isPluginLoaded(String target) { return initialized.containsKey(StringUtils.lowerCase(target)); }
 
     public NexialCommand getPlugin(String target) {
+        target = StringUtils.lowerCase(target);
         boolean isInitialized = false;
 
         NexialCommand nexialCommand;

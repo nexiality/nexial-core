@@ -73,6 +73,11 @@ class CsvExtendedComparison implements Serializable {
     private int maxColumns = -1;
     private int maxColumnWidth = -1;
 
+    // support the comparison of field content as a list (ordered or unordered)
+    private List<String> orderedListFields;
+    private List<String> unorderedListFields;
+    private String listDelim = ",";
+
     private File expectedFile;
     private File actualFile;
 
@@ -190,6 +195,20 @@ class CsvExtendedComparison implements Serializable {
 
     public void setIdentSeparator(String identSeparator) { this.identSeparator = identSeparator; }
 
+    public List<String> getOrderedListFields() { return orderedListFields; }
+
+    public void setOrderedListFields(List<String> orderedListFields) { this.orderedListFields = orderedListFields; }
+
+    public List<String> getUnorderedListFields() { return unorderedListFields; }
+
+    public void setUnorderedListFields(List<String> unorderedListFields) {
+        this.unorderedListFields = unorderedListFields;
+    }
+
+    public String getListDelim() { return listDelim; }
+
+    public void setListDelim(String listDelim) { this.listDelim = listDelim; }
+
     public CsvComparisonResult compare() throws IntegrationConfigException, IOException {
         sanityChecks();
 
@@ -268,15 +287,31 @@ class CsvExtendedComparison implements Serializable {
                             actualValue = StringUtils.trim(actualValue);
                         }
 
-                        // is this case-insensitive compare?
-                        boolean insensitive = IterableUtils.contains(caseInsensitiveFields, expectedField);
-                        if (insensitive) {
-                            if (!StringUtils.equalsIgnoreCase(expectedValue, actualValue)) {
+                        // is this compressed list compare?
+                        boolean asOrderedList = IterableUtils.contains(orderedListFields, expectedField);
+                        boolean asUnorderedList = IterableUtils.contains(unorderedListFields, expectedField);
+                        if (asOrderedList || asUnorderedList) {
+                            List<String> expectedList = TextUtils.toList(expectedValue, listDelim, autoTrim);
+                            List<String> actualList = TextUtils.toList(actualValue, listDelim, autoTrim);
+                            if (asUnorderedList) {
+                                expectedList.sort(Comparator.naturalOrder());
+                                actualList.sort(Comparator.naturalOrder());
+                            }
+
+                            if (!CollectionUtils.isEqualCollection(expectedList, actualList)) {
                                 result.addMismatched(expectedRecord, expectedField, expectedValue, actualValue);
                             }
                         } else {
-                            if (!StringUtils.equals(expectedValue, actualValue)) {
-                                result.addMismatched(expectedRecord, expectedField, expectedValue, actualValue);
+                            // is this case-insensitive compare?
+                            boolean insensitive = IterableUtils.contains(caseInsensitiveFields, expectedField);
+                            if (insensitive) {
+                                if (!StringUtils.equalsIgnoreCase(expectedValue, actualValue)) {
+                                    result.addMismatched(expectedRecord, expectedField, expectedValue, actualValue);
+                                }
+                            } else {
+                                if (!StringUtils.equals(expectedValue, actualValue)) {
+                                    result.addMismatched(expectedRecord, expectedField, expectedValue, actualValue);
+                                }
                             }
                         }
                     }

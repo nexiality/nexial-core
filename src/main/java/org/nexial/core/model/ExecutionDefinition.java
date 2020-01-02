@@ -112,7 +112,7 @@ public class ExecutionDefinition {
     public TestData getTestData(boolean refetch) {
         if (refetch) {
             try {
-                ConsoleUtils.log("refetching data from " + dataFile);
+                ConsoleUtils.log("refetch data from " + dataFile);
                 parse();
             } catch (IOException e) {
                 String error = "Unable to successfully read/parse data file " + dataFile + ": " + e.getMessage();

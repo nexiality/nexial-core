@@ -25,7 +25,10 @@ import org.nexial.core.ExecutionThread;
 import org.nexial.core.model.ExecutionContext;
 import org.nexial.core.utils.ConsoleUtils;
 
+import com.amazonaws.services.s3.model.PutObjectResult;
+
 import static com.amazonaws.regions.Regions.DEFAULT_REGION;
+import static java.io.File.separator;
 import static org.nexial.core.NexialConst.Data.OPT_RUN_ID;
 import static org.nexial.core.NexialConst.*;
 
@@ -75,6 +78,42 @@ public class NexialS3Helper extends S3Support {
 
     public String importFile(File source, boolean removeLocal) throws IOException {
         return importToS3(source, resolveOutputDir(), removeLocal);
+    }
+
+    /**
+     * @param to S3 bucket + folder
+     */
+    @Override
+    protected PutObjectResult copyToS3(File from, String to) {
+        // need to adjust for additional relative path
+        if (context != null) {
+            String outputDir = context.getStringData(OPT_OUT_DIR);
+            if (StringUtils.isNotBlank(outputDir) && StringUtils.startsWith(from.getAbsolutePath(), outputDir)) {
+                String relativePath = StringUtils.removeStart(from.getAbsolutePath(), outputDir);
+                relativePath = StringUtils.replace(StringUtils.removeStart(relativePath, separator), "\\", "/");
+                if (StringUtils.isNotBlank(relativePath)) {
+                    String outputBase = StringUtils.substringAfterLast(outputDir, separator);
+
+                    // conform to URL convention for path separator
+                    to = StringUtils.replace(to, "\\", "/");
+
+                    // adjust for scenario where both `from` and `to` references the same sub-dir.
+                    if (StringUtils.contains(to, outputBase)) {
+                        // if the same sub-dir is found in the beginning of `relativePath`, then we should remove it to
+                        // avoid duplicate paths
+                        String subDir = StringUtils.removeStart(StringUtils.substringAfterLast(to, outputBase), "/");
+                        if (StringUtils.startsWith(relativePath, subDir)) {
+                            relativePath = StringUtils.removeStart(StringUtils.removeStart(relativePath, subDir), "/");
+                        }
+                    }
+
+                    to = StringUtils.appendIfMissing(to, "/") + relativePath;
+                    to = StringUtils.substringBeforeLast(to, "/");
+                }
+            }
+        }
+
+        return super.copyToS3(from, to);
     }
 
     protected void init() {
