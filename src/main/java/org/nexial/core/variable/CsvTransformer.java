@@ -51,80 +51,30 @@ import com.google.gson.JsonObject;
 import com.univocity.parsers.common.record.Record;
 
 import static java.lang.System.lineSeparator;
-import static org.apache.commons.lang3.BooleanUtils.toBoolean;
 import static org.nexial.core.NexialConst.*;
 import static org.nexial.core.NexialConst.Rdbms.CSV_FIELD_DEIM;
 import static org.nexial.core.NexialConst.Rdbms.CSV_ROW_SEP;
-import static org.nexial.core.SystemVariables.getDefaultInt;
 import static org.nexial.core.model.NexialFilterComparator.Equal;
-import static org.nexial.core.variable.ExpressionUtils.fixControlChars;
 
 public class CsvTransformer<T extends CsvDataType> extends Transformer<CsvDataType> {
     private static final Map<String, Integer> FUNCTION_TO_PARAM = discoverFunctions(CsvTransformer.class);
     private static final Map<String, Method> FUNCTIONS =
         toFunctionMap(FUNCTION_TO_PARAM, CsvTransformer.class, CsvDataType.class);
 
-    private static final String PAIR_DELIM = "|";
-    private static final String NAME_VALUE_DELIM = "=";
-    private static final String ATTR_INDEX = "index";
-    private static final String ATTR_NAME = "name";
-    private static final String NODE_ROOT = "rows";
-    private static final String NODE_ROW = "row";
-    private static final String NODE_CELL = "cell";
+    static final String PAIR_DELIM = "|";
+    static final String NAME_VALUE_DELIM = "=";
+    static final String ATTR_INDEX = "index";
+    static final String ATTR_NAME = "name";
+    static final String NODE_ROOT = "rows";
+    static final String NODE_ROW = "row";
+    static final String NODE_CELL = "cell";
 
     private static final Pattern COMPILED_FILTER_REGEX_PATTERN = Pattern.compile(FILTER_REGEX_PATTERN);
 
     public TextDataType text(T data) { return super.text(data); }
 
     public T parse(T data, String... configs) {
-        if (ArrayUtils.isNotEmpty(configs)) {
-            ExecutionContext context = ExecutionThread.get();
-
-            String config = TextUtils.toString(configs, PAIR_DELIM, null, null);
-            // escape pipe and comma
-            config = StringUtils.replace(config, "\\" + PAIR_DELIM, FILTER_TEMP_DELIM1);
-            config = StringUtils.replace(config, "\\,", FILTER_TEMP_DELIM2);
-
-            Map<String, String> configMap = TextUtils.toMap(config, PAIR_DELIM, NAME_VALUE_DELIM);
-            // unescape pipes and comma
-            configMap.forEach((key, value) -> {
-                value = StringUtils.replace(value, FILTER_TEMP_DELIM1, PAIR_DELIM);
-                value = StringUtils.replace(value, FILTER_TEMP_DELIM2, ",");
-                configMap.put(key, value);
-            });
-
-            data.setDelim(configMap.containsKey("delim") ? configMap.get("delim") : context.getTextDelim());
-            if (configMap.containsKey("header")) { data.setHeader(toBoolean(configMap.get("header"))); }
-            if (configMap.containsKey("quote")) { data.setQuote(configMap.get("quote")); }
-            if (configMap.containsKey("keepQuote")) { data.setKeepQuote(toBoolean(configMap.get("keepQuote"))); }
-            if (configMap.containsKey("recordDelim")) {
-                data.setRecordDelim(fixControlChars(configMap.get("recordDelim")));
-            }
-            if (configMap.containsKey("indexOn")) {
-                data.addIndices(Array.toArray(fixControlChars(configMap.get("indexOn")), "\\,"));
-            }
-
-            // 512 is the default
-            int maxColumns = context.getIntData(CSV_MAX_COLUMNS, getDefaultInt(CSV_MAX_COLUMNS));
-            if (configMap.containsKey("maxColumns")) {
-                data.setMaxColumns(NumberUtils.toInt(configMap.get("maxColumns"), maxColumns));
-            } else {
-                data.setMaxColumns(maxColumns);
-            }
-
-            // 4096 is the default width
-            int maxColumnWidth = context.getIntData(CSV_MAX_COLUMN_WIDTH, getDefaultInt(CSV_MAX_COLUMN_WIDTH));
-            if (configMap.containsKey("maxColumnWidth")) {
-                data.setMaxColumnWidth(NumberUtils.toInt(configMap.get("maxColumnWidth"), maxColumnWidth));
-            } else {
-                data.setMaxColumnWidth(maxColumnWidth);
-            }
-
-            if (configMap.containsKey("trim")) { data.setTrimValue(toBoolean(configMap.get("trim"))); }
-        }
-
-        data.setReadyToParse(true);
-        data.parse();
+        if (data != null) { data.configAndParse(configs); }
         return data;
     }
 

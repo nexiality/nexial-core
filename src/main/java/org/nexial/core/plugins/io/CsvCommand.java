@@ -90,7 +90,8 @@ public class CsvCommand extends IoCommand {
             comparison.setExpectedFile(file);
         } else {
             try {
-                String content = new OutputResolver(expected, context).getContent();
+                String content = new OutputResolver(expected, context, true, true, false, false, false)
+                                     .getContent();
                 requiresNotBlank(content, "No content found for expected", expected);
                 ConsoleUtils.log(CSV_EXT_COMP_HEADER + "read from expected: " + content.length() + " bytes read");
                 comparison.setExpectedContent(content);
@@ -106,7 +107,8 @@ public class CsvCommand extends IoCommand {
             comparison.setActualFile(file);
         } else {
             try {
-                String content = new OutputResolver(actual, context).getContent();
+                String content = new OutputResolver(actual, context, true, true, false, false, false)
+                                     .getContent();
                 requiresNotBlank(content, "No content found for actual", actual);
                 ConsoleUtils.log(CSV_EXT_COMP_HEADER + "read from actual:   " + content.length() + " bytes read");
                 comparison.setActualContent(content);

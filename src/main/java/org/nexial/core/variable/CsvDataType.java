@@ -26,6 +26,7 @@ import org.apache.commons.collections4.MapUtils;
 import org.apache.commons.collections4.list.TreeList;
 import org.apache.commons.lang3.ArrayUtils;
 import org.apache.commons.lang3.StringUtils;
+import org.apache.commons.lang3.math.NumberUtils;
 import org.nexial.commons.utils.TextUtils;
 import org.nexial.core.ExecutionThread;
 import org.nexial.core.model.ExecutionContext;
@@ -37,9 +38,12 @@ import com.univocity.parsers.csv.CsvFormat;
 import com.univocity.parsers.csv.CsvParser;
 
 import static java.lang.System.lineSeparator;
-import static org.nexial.core.NexialConst.CSV_MAX_COLUMNS;
-import static org.nexial.core.NexialConst.CSV_MAX_COLUMN_WIDTH;
+import static org.apache.commons.lang3.BooleanUtils.toBoolean;
+import static org.nexial.core.NexialConst.*;
 import static org.nexial.core.SystemVariables.getDefaultInt;
+import static org.nexial.core.variable.CsvTransformer.NAME_VALUE_DELIM;
+import static org.nexial.core.variable.CsvTransformer.PAIR_DELIM;
+import static org.nexial.core.variable.ExpressionUtils.fixControlChars;
 
 public class CsvDataType extends ExpressionDataType<List<Record>> {
     private CsvTransformer<CsvDataType> transformer = new CsvTransformer<>();
@@ -255,6 +259,51 @@ public class CsvDataType extends ExpressionDataType<List<Record>> {
         }
 
         return StringUtils.removeEnd(output.toString(), recordDelim);
+    }
+
+    protected void configAndParse(String... configs) {
+        if (ArrayUtils.isNotEmpty(configs)) {
+            ExecutionContext context = ExecutionThread.get();
+
+            String config = TextUtils.toString(configs, PAIR_DELIM, null, null);
+            // escape pipe and comma
+            config = StringUtils.replace(config, "\\" + PAIR_DELIM, FILTER_TEMP_DELIM1);
+            config = StringUtils.replace(config, "\\,", FILTER_TEMP_DELIM2);
+
+            Map<String, String> configMap = TextUtils.toMap(config, PAIR_DELIM, NAME_VALUE_DELIM);
+            // unescape pipes and comma
+            configMap.forEach((key, value) -> {
+                value = StringUtils.replace(value, FILTER_TEMP_DELIM1, PAIR_DELIM);
+                value = StringUtils.replace(value, FILTER_TEMP_DELIM2, ",");
+                configMap.put(key, value);
+            });
+
+            this.delim = configMap.containsKey("delim") ? configMap.get("delim") : context.getTextDelim();
+            if (configMap.containsKey("header")) { this.header = toBoolean(configMap.get("header")); }
+            if (configMap.containsKey("quote")) { this.quote = configMap.get("quote"); }
+            if (configMap.containsKey("keepQuote")) { this.keepQuote = toBoolean(configMap.get("keepQuote")); }
+            if (configMap.containsKey("recordDelim")) {
+                this.recordDelim = fixControlChars(configMap.get("recordDelim"));
+            }
+            if (configMap.containsKey("indexOn")) {
+                addIndices(Array.toArray(fixControlChars(configMap.get("indexOn")), "\\,"));
+            }
+
+            // 512 is the default
+            int maxColumns = context.getIntData(CSV_MAX_COLUMNS, getDefaultInt(CSV_MAX_COLUMNS));
+            this.maxColumns = configMap.containsKey("maxColumns") ?
+                              NumberUtils.toInt(configMap.get("maxColumns"), maxColumns) : maxColumns;
+
+            // 4096 is the default width
+            int maxColumnWidth = context.getIntData(CSV_MAX_COLUMN_WIDTH, getDefaultInt(CSV_MAX_COLUMN_WIDTH));
+            this.maxColumnWidth = configMap.containsKey("maxColumnWidth") ?
+                                  NumberUtils.toInt(configMap.get("maxColumnWidth"), maxColumnWidth) : maxColumnWidth;
+
+            if (configMap.containsKey("trim")) { this.trimValue = toBoolean(configMap.get("trim")); }
+        }
+
+        this.readyToParse = true;
+        parse();
     }
 
     protected void parse() {

@@ -128,7 +128,7 @@ public class TextTransformer<T extends TextDataType> extends Transformer<T> {
         Set<Character> distinctChars = new ListOrderedSet<>();
         for (char c : chars) { distinctChars.add(c); }
 
-        Character[] characters = distinctChars.toArray(new Character[distinctChars.size()]);
+        Character[] characters = distinctChars.toArray(new Character[0]);
         chars = new char[characters.length];
         for (int i = 0; i < characters.length; i++) { chars[i] = characters[i]; }
         String newValue = new String(chars);
@@ -451,6 +451,19 @@ public class TextTransformer<T extends TextDataType> extends Transformer<T> {
         }
 
         throw new TypeConversionException("JSON", text, "Cannot convert TEXT to JSON: " + data.value);
+    }
+
+    /**
+     * parse current `TEXT` content as a `CSV` expression
+     */
+    public CsvDataType parseAsCsv(T data, String... configs) throws TypeConversionException {
+        if (data == null || StringUtils.isEmpty(data.getValue())) {
+            throw new TypeConversionException("TEXT", "Invalid TEXT expression: null");
+        }
+
+        CsvDataType csv = new CsvDataType(data.value);
+        csv.configAndParse(configs);
+        return csv;
     }
 
     public ListDataType extract(T data, String beginRegex, String endRegex, String inclusive) {
