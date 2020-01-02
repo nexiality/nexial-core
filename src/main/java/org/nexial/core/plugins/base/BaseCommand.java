@@ -196,6 +196,9 @@ public class BaseCommand implements NexialCommand {
                 }
 
                 context.setData(OPT_LAST_OUTPUT_LINK, link);
+                context.setData(OPT_LAST_OUTPUT_PATH, StringUtils.contains(link, "\\") ?
+                                                      StringUtils.substringBeforeLast(link, "\\") :
+                                                      StringUtils.substringBeforeLast(link, "/"));
 
                 TestStep testStep = context.getCurrentTestStep();
                 if (testStep != null && testStep.getWorksheet() != null) {
@@ -881,6 +884,9 @@ public class BaseCommand implements NexialCommand {
             if (testStep != null && testStep.getWorksheet() != null) {
                 // test step undefined could mean that we are in interactive mode, or we are running unit testing
                 context.setData(OPT_LAST_OUTPUT_LINK, link);
+                context.setData(OPT_LAST_OUTPUT_PATH, StringUtils.contains(link, "\\") ?
+                                                      StringUtils.substringBeforeLast(link, "\\") :
+                                                      StringUtils.substringBeforeLast(link, "/"));
 
                 // if there's no message, then we'll create link in the screenshot column of the SAME row (as test step)
                 if (StringUtils.isEmpty(message)) {

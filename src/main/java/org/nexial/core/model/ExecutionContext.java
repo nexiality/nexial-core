@@ -267,6 +267,7 @@ public class ExecutionContext {
             data.remove(OPT_LAST_SCREENSHOT_NAME);
             data.remove(OPT_LAST_ALERT_TEXT);
             data.remove(OPT_LAST_OUTPUT_LINK);
+            data.remove(OPT_LAST_OUTPUT_PATH);
         } else {
             // init spring
             springContext = new ClassPathXmlApplicationContext("classpath:" +

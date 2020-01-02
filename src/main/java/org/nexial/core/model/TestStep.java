@@ -574,6 +574,7 @@ public class TestStep extends TestStepManifest {
                             ConsoleUtils.log("output-to-cloud enabled; copying " + link + " cloud...");
                             String cloudUrl = context.getOtc().importFile(tmpFile, true);
                             context.setData(OPT_LAST_OUTPUT_LINK, cloudUrl);
+                            context.setData(OPT_LAST_OUTPUT_PATH, StringUtils.substringBeforeLast(cloudUrl, "/"));
                             ConsoleUtils.log("output-to-cloud enabled; copied  " + link + " to " + cloudUrl);
 
                             worksheet.setHyperlink(paramCell, cloudUrl, "(cloud) " + params.get(paramIdx));

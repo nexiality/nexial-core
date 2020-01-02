@@ -155,6 +155,7 @@ public final class NexialConst {
     // outcome
     public static final String OPT_LAST_OUTCOME = registerSysVar(NAMESPACE + "lastOutcome");
     public static final String OPT_LAST_OUTPUT_LINK = registerSysVar(NAMESPACE + "lastOutputLink");
+    public static final String OPT_LAST_OUTPUT_PATH = registerSysVar(NAMESPACE + "lastOutputPath");
     public static final String OPT_PRINT_ERROR_DETAIL = registerSysVar(NAMESPACE + "printErrorDetails", false);
 
     // plugin:external
