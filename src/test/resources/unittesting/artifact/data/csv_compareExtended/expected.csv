@@ -9,7 +9,7 @@ index,Agg ,Frin           ,Groups         ,Location,Set ,Description            
 8    ,0.06,SUCA           ,PREP           ,NY      ,7521,8. Combo: 1 applied per tool item (base US)      ,1000,     ,1,1 ,    ,1     ,"1,000.00"
 9    ,0.24,NONAFFIL       ,HOL/HIATUS     ,AZ      ,7520,9. Combo: 1 applied per tool item (Cur: EU)      ,1000,     ,1,1 ,EU  ,1     ,"2,000.00"
 10   ,0.69,"DGADIR, ASAW" ,"NG, QL"       ,TN      ,9005,10. Combo: Multiple Fringes and Groups (Base: US),1000,     ,1,1 ,    ,1     ,"1,000.00"
-11   ,0.17,"ASAD, WGAPH"  ,"NL, EL"       ,CAL     ,7517,11. Combo: Multiple Fringes and Groups (Cur: JPY),1000,     ,1,1 ,JPY ,1     ,"108,440.00"
+11   ,0.17,"ASAD, WGAPH"  ,"EL, NL"       ,CAL     ,7517,11. Combo: Multiple Fringes and Groups (Cur: JPY),1000,     ,1,1 ,JPY ,1     ,"108,440.00"
 12   ,0.00,               ,               ,        ,    ,12. Combo: Multiple Fringes and Groups (US)      ,1000,     ,1,1 ,U   ,1     ,"1,000.00"
 13   ,0.06,FICA1          ,QG             ,NY      ,7522,13. Combo: 1 applied per tool item (base US)     ,111 ,     ,1,1 ,    ,1     ,111.00
 14   ,0.15,"DGACOA, WCCAP",xIncluded      ,        ,    ,                                                 ,1   ,     ,1,1 ,U   ,123551,"123,551.00"

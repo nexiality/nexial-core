@@ -287,12 +287,22 @@ class CsvExtendedComparison implements Serializable {
                             actualValue = StringUtils.trim(actualValue);
                         }
 
+                        // is this case-insensitive compare?
+                        boolean insensitive = IterableUtils.contains(caseInsensitiveFields, expectedField);
+
                         // is this compressed list compare?
                         boolean asOrderedList = IterableUtils.contains(orderedListFields, expectedField);
                         boolean asUnorderedList = IterableUtils.contains(unorderedListFields, expectedField);
+
                         if (asOrderedList || asUnorderedList) {
-                            List<String> expectedList = TextUtils.toList(expectedValue, listDelim, autoTrim);
-                            List<String> actualList = TextUtils.toList(actualValue, listDelim, autoTrim);
+                            List<String> expectedList =
+                                TextUtils.toList(insensitive ? StringUtils.lowerCase(expectedValue) : expectedValue,
+                                                 listDelim,
+                                                 autoTrim);
+                            List<String> actualList =
+                                TextUtils.toList(insensitive ? StringUtils.lowerCase(actualValue) : actualValue,
+                                                 listDelim, autoTrim);
+
                             if (asUnorderedList) {
                                 expectedList.sort(Comparator.naturalOrder());
                                 actualList.sort(Comparator.naturalOrder());
@@ -303,7 +313,6 @@ class CsvExtendedComparison implements Serializable {
                             }
                         } else {
                             // is this case-insensitive compare?
-                            boolean insensitive = IterableUtils.contains(caseInsensitiveFields, expectedField);
                             if (insensitive) {
                                 if (!StringUtils.equalsIgnoreCase(expectedValue, actualValue)) {
                                     result.addMismatched(expectedRecord, expectedField, expectedValue, actualValue);
