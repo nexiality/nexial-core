@@ -629,6 +629,7 @@ public final class NexialConst {
         public static final String TTS_PREFIX = NAMESPACE + "tts.";
         public static final String MAIL_PREFIX = NAMESPACE + "mail.";
         public static final String SMS_PREFIX = NAMESPACE + "sms.";
+        public static final String VISION_PREFIX = NAMESPACE + "vision.";
 
         private Integration() {}
 

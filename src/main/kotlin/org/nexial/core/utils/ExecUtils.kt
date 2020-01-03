@@ -48,9 +48,9 @@ object ExecUtils {
 
             "ftp.nonProxyHosts", "gopherProxySet", "http.nonProxyHosts", "socksNonProxyHosts",
 
-            "nexial-mailer.", "nexial.3rdparty.logpath", "nexial.jdbc.", NEXIAL_HOME, OPT_DATA_DIR, OPT_DEF_OUT_DIR,
-            OPT_CLOUD_OUTPUT_BASE, OPT_SCRIPT_DIR, OPT_PLAN_DIR, "site-name", SMS_PREFIX, MAIL_PREFIX, OTC_PREFIX,
-            TTS_PREFIX,
+            "nexial-mailer.", "nexial.3rdparty.logpath", "nexial.jdbc.", NEXIAL_HOME,
+            OPT_OUT_DIR, OPT_PLAN_DIR, OPT_SCRIPT_DIR, OPT_DATA_DIR, OPT_DEF_OUT_DIR, OPT_CLOUD_OUTPUT_BASE,
+            "site-name", SMS_PREFIX, MAIL_PREFIX, OTC_PREFIX, TTS_PREFIX, VISION_PREFIX, USERSTACK_APIKEY,
 
             "sun.arch", "sun.boot", "sun.cpu", "sun.desktop", "sun.font", "sun.io", "sun.java", "sun.jnu",
             "sun.management", "sun.os", "sun.stderr.encoding", "sun.stdout.encoding",

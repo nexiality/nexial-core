@@ -711,14 +711,18 @@ public class ExecutionSummary {
 
         names = CollectionUtil.toList(data.keySet());
         for (int i = 0; i < names.size(); i++) {
+            int dataRow = i + rowNum;
+
             String name = names.get(i);
-            createCell(sheet, "B" + (i + rowNum), name, STYLE_EXEC_SUMM_DATA_NAME, rowHeight);
+            createCell(sheet, "B" + dataRow, name, STYLE_EXEC_SUMM_DATA_NAME, rowHeight);
 
             String value = data.get(name);
             String[] values = StringUtils.splitByWholeSeparator(value, "\n");
             for (int j = 0; j < values.length; j++) {
                 String dataValue = values[j];
-                createLinkCell(sheet, (char) ('C' + j) + "" + (i + rowNum), dataValue, STYLE_EXEC_SUMM_DATA_VALUE);
+                if (StringUtils.isNotBlank(dataValue)) {
+                    createLinkCell(sheet, (char) ('C' + j) + "" + dataRow, dataValue, STYLE_EXEC_SUMM_DATA_VALUE);
+                }
             }
         }
     }
