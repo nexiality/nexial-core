@@ -67,55 +67,55 @@ public class Date {
         return StringUtils.defaultIfEmpty(fromDate(dateObject, toFormat, fromFormat), date);
     }
 
-    public String addYear(String date, String years) { return modifyDate(date, YEAR, NumberUtils.toInt(years)); }
+    public String addYear(String date, String years) { return addYear(date, NumberUtils.toInt(years)); }
 
     public String addYear(String date, int years) { return modifyDate(date, YEAR, years); }
 
-    public String addMonth(String date, String months) { return modifyDate(date, MONTH, NumberUtils.toInt(months)); }
+    public String addMonth(String date, String months) { return addMonth(date, NumberUtils.toInt(months)); }
 
     public String addMonth(String date, int months) { return modifyDate(date, MONTH, months); }
 
-    public String addDay(String date, String days) { return modifyDate(date, DAY_OF_MONTH, NumberUtils.toInt(days)); }
+    public String addDay(String date, String days) { return addDay(date, NumberUtils.toInt(days)); }
 
     public String addDay(String date, int days) { return modifyDate(date, DAY_OF_MONTH, days); }
 
-    public String addHour(String date, String hours) { return modifyDate(date, HOUR_OF_DAY, NumberUtils.toInt(hours)); }
+    public String addHour(String date, String hours) { return addHour(date, NumberUtils.toInt(hours)); }
 
     public String addHour(String date, int hours) { return modifyDate(date, HOUR_OF_DAY, hours); }
 
-    public String addMinute(String date, String minutes) { return modifyDate(date, MINUTE, NumberUtils.toInt(minutes));}
+    public String addMinute(String date, String minutes) { return addMinute(date, NumberUtils.toInt(minutes));}
 
     public String addMinute(String date, int minutes) { return modifyDate(date, MINUTE, minutes); }
 
-    public String addSecond(String date, String seconds) { return modifyDate(date, SECOND, NumberUtils.toInt(seconds));}
+    public String addSecond(String date, String seconds) { return addSecond(date, NumberUtils.toInt(seconds));}
 
     public String addSecond(String date, int seconds) { return modifyDate(date, SECOND, seconds); }
 
-    public String setYear(String date, String years) { return setDate(date, YEAR, NumberUtils.toInt(years)); }
+    public String setYear(String date, String years) { return setYear(date, NumberUtils.toInt(years)); }
 
     public String setYear(String date, int years) { return setDate(date, YEAR, years); }
 
-    public String setMonth(String date, String months) { return setDate(date, MONTH, NumberUtils.toInt(months) - 1); }
+    public String setMonth(String date, String months) { return setMonth(date, NumberUtils.toInt(months)); }
 
     public String setMonth(String date, int months) { return setDate(date, MONTH, months - 1); }
 
-    public String setDay(String date, String days) { return setDate(date, DAY_OF_MONTH, NumberUtils.toInt(days)); }
+    public String setDay(String date, String days) { return setDay(date, NumberUtils.toInt(days)); }
 
     public String setDay(String date, int days) { return setDate(date, DAY_OF_MONTH, days); }
 
-    public String setDOW(String date, String day) { return setDate(date, DAY_OF_WEEK, NumberUtils.toInt(day) + 1); }
+    public String setDOW(String date, String day) { return setDOW(date, NumberUtils.toInt(day)); }
 
     public String setDOW(String date, int days) { return setDate(date, DAY_OF_WEEK, days + 1); }
 
-    public String setHour(String date, String hours) { return setDate(date, HOUR_OF_DAY, NumberUtils.toInt(hours)); }
+    public String setHour(String date, String hours) { return setHour(date, NumberUtils.toInt(hours)); }
 
     public String setHour(String date, int hours) { return setDate(date, HOUR_OF_DAY, hours); }
 
-    public String setMinute(String date, String minutes) { return setDate(date, MINUTE, NumberUtils.toInt(minutes)); }
+    public String setMinute(String date, String minutes) { return setMinute(date, NumberUtils.toInt(minutes)); }
 
     public String setMinute(String date, int minutes) { return setDate(date, MINUTE, minutes); }
 
-    public String setSecond(String date, String seconds) { return setDate(date, SECOND, NumberUtils.toInt(seconds)); }
+    public String setSecond(String date, String seconds) { return setSecond(date, NumberUtils.toInt(seconds)); }
 
     public String setSecond(String date, int seconds) { return setDate(date, SECOND, seconds); }
 
