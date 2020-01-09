@@ -38,4 +38,27 @@ public class HeadlessExpressionTests extends ExcelBasedTests {
         ExecutionSummary executionSummary = testViaExcel("unitTest_base_macro2.xlsx", "ImportMacro");
         assertPassFail(executionSummary, "ImportMacro", TestOutcomeStats.allPassed());
     }
+
+    @Test
+    public void testViaExcel1() throws Exception {
+        ExecutionSummary executionSummary = testViaExcel("unitTest_expressions1.xlsx");
+        assertPassFail(executionSummary, "TEXT", TestOutcomeStats.allPassed());
+        assertPassFail(executionSummary, "CSV", TestOutcomeStats.allPassed());
+        assertPassFail(executionSummary, "LIST", TestOutcomeStats.allPassed());
+    }
+
+    @Test
+    public void configTestViaExcel() throws Exception {
+        ExecutionSummary executionSummary = testViaExcel("unitTest_config_expression.xlsx");
+        assertPassFail(executionSummary, "CONFIG", TestOutcomeStats.allPassed());
+    }
+
+    @Test
+    public void jsonTestViaExcel() throws Exception {
+        ExecutionSummary executionSummary = testViaExcel("unitTest_json_expression.xlsx");
+        assertPassFail(executionSummary, "Add or Replace-ADD", TestOutcomeStats.allPassed());
+        assertPassFail(executionSummary, "Add or Replace-REPLACE", TestOutcomeStats.allPassed());
+        assertPassFail(executionSummary, "Add or Replace-NONE", TestOutcomeStats.allPassed());
+        assertPassFail(executionSummary, "Other Commands", TestOutcomeStats.allPassed());
+    }
 }
