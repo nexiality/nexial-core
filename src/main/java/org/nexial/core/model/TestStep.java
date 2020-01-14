@@ -474,7 +474,10 @@ public class TestStep extends TestStepManifest {
 
         CanTakeScreenshot agent = context.findCurrentScreenshotAgent();
         if (agent == null) {
-            error("No screenshot capability available for command " + getCommandFQN() + "; no screenshot taken");
+            // No necessity of error log when screenshot-on-error is turned on for commands other than web and desktop
+            if (!context.isScreenshotOnError()) {
+                error("No screenshot capability available for command " + getCommandFQN() + "; no screenshot taken");
+            }
             return null;
         }
 
