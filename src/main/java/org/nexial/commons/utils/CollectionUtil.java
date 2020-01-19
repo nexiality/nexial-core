@@ -22,6 +22,7 @@ import java.util.*;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.collections4.IterableUtils;
 import org.apache.commons.collections4.MapUtils;
+import org.apache.commons.lang3.RandomUtils;
 import org.apache.commons.lang3.StringUtils;
 
 public final class CollectionUtil {
@@ -124,5 +125,14 @@ public final class CollectionUtil {
         });
 
         return map;
+    }
+
+    public static <T> T randomSelectOne(Collection<T> collection) {
+        if (CollectionUtils.isEmpty(collection)) { return null; }
+
+        int size = collection.size();
+        if (size == 1) { return IterableUtils.get(collection, 0); }
+
+        return IterableUtils.get(collection, RandomUtils.nextInt(0, size - 1));
     }
 }

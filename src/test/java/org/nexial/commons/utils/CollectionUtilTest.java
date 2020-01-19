@@ -24,96 +24,106 @@ import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 
+import static org.assertj.core.api.Assertions.assertThat;
+
 public class CollectionUtilTest {
 
-	@Before
-	public void setUp() { }
+    @Before
+    public void setUp() { }
 
-	@Test
-	public void testToList() {
-		Set<String> fixture = new HashSet<>();
-		fixture.add("a");
-		fixture.add("b");
-		fixture.add("c");
-		List<String> list = CollectionUtil.toList(fixture);
-		Assert.assertEquals(3, list.size());
-		Assert.assertTrue(list.contains("a"));
-		Assert.assertTrue(list.contains("b"));
-		Assert.assertTrue(list.contains("c"));
-	}
+    @Test
+    public void testToList() {
+        Set<String> fixture = new HashSet<>();
+        fixture.add("a");
+        fixture.add("b");
+        fixture.add("c");
+        List<String> list = CollectionUtil.toList(fixture);
+        Assert.assertEquals(3, list.size());
+        Assert.assertTrue(list.contains("a"));
+        Assert.assertTrue(list.contains("b"));
+        Assert.assertTrue(list.contains("c"));
+    }
 
-	@Test
-	public void testGenerifyList() {
-		List<Object> fixture = new ArrayList<>();
-		Assert.assertEquals("[]", CollectionUtil.generifyList(fixture, String.class).toString());
+    @Test
+    public void testGenerifyList() {
+        List<Object> fixture = new ArrayList<>();
+        Assert.assertEquals("[]", CollectionUtil.generifyList(fixture, String.class).toString());
 
-		fixture.add("a");
-		fixture.add("b");
-		fixture.add("c");
-		Assert.assertEquals("[a, b, c]", CollectionUtil.generifyList(fixture, String.class).toString());
+        fixture.add("a");
+        fixture.add("b");
+        fixture.add("c");
+        Assert.assertEquals("[a, b, c]", CollectionUtil.generifyList(fixture, String.class).toString());
 
-		fixture = new ArrayList<>();
-		fixture.add(1);
-		fixture.add(14);
-		fixture.add(99);
-		Assert.assertEquals("[1, 14, 99]", CollectionUtil.generifyList(fixture, Integer.class).toString());
+        fixture = new ArrayList<>();
+        fixture.add(1);
+        fixture.add(14);
+        fixture.add(99);
+        Assert.assertEquals("[1, 14, 99]", CollectionUtil.generifyList(fixture, Integer.class).toString());
 
-		try {
-			fixture = new ArrayList<>();
-			fixture.add(true);
-			fixture.add(new Object());
-			fixture.add("Testing");
-			fixture.add(144.22);
-			fixture.add(new String[]{"a", "b"});
-			fixture.add(new JSONObject());
-			CollectionUtil.generifyList(fixture, Object.class);
-		} catch (Throwable e) {
-			Assert.fail("unexpected error: " + e);
-		}
+        try {
+            fixture = new ArrayList<>();
+            fixture.add(true);
+            fixture.add(new Object());
+            fixture.add("Testing");
+            fixture.add(144.22);
+            fixture.add(new String[]{"a", "b"});
+            fixture.add(new JSONObject());
+            CollectionUtil.generifyList(fixture, Object.class);
+        } catch (Throwable e) {
+            Assert.fail("unexpected error: " + e);
+        }
 
-		try {
-			CollectionUtil.generifyList(fixture, String.class);
-			Assert.fail("expected error but not thrown");
-		} catch (Exception e) {
-			// it's ok, expected..
-		}
-	}
+        try {
+            CollectionUtil.generifyList(fixture, String.class);
+            Assert.fail("expected error but not thrown");
+        } catch (Exception e) {
+            // it's ok, expected..
+        }
+    }
 
-	@Test
-	public void testToString() {
-		Assert.assertEquals("", CollectionUtil.toString((List)null, null));
-		Assert.assertEquals("", CollectionUtil.toString((List)null, "blah"));
-		Assert.assertEquals("", CollectionUtil.toString(new ArrayList<String>(), "blah"));
+    @Test
+    public void testToString() {
+        Assert.assertEquals("", CollectionUtil.toString((List) null, null));
+        Assert.assertEquals("", CollectionUtil.toString((List) null, "blah"));
+        Assert.assertEquals("", CollectionUtil.toString(new ArrayList<String>(), "blah"));
 
-		List<String> subject = new ArrayList<>();
-		subject.add("a");
-		subject.add("b");
-		subject.add("c");
-		Assert.assertEquals("a-b-c", CollectionUtil.toString(subject, "-"));
-		Assert.assertEquals("abc", CollectionUtil.toString(subject, null));
+        List<String> subject = new ArrayList<>();
+        subject.add("a");
+        subject.add("b");
+        subject.add("c");
+        Assert.assertEquals("a-b-c", CollectionUtil.toString(subject, "-"));
+        Assert.assertEquals("abc", CollectionUtil.toString(subject, null));
 
-		List<java.io.Serializable> subject2 = new ArrayList<>();
-		subject2.add("a");
-		subject2.add(17);
-		subject2.add(true);
-		subject2.add(new HashMap());
-		Assert.assertEquals("a<>17<>true<>{}", CollectionUtil.toString(subject2, "<>"));
-	}
+        List<java.io.Serializable> subject2 = new ArrayList<>();
+        subject2.add("a");
+        subject2.add(17);
+        subject2.add(true);
+        subject2.add(new HashMap());
+        Assert.assertEquals("a<>17<>true<>{}", CollectionUtil.toString(subject2, "<>"));
+    }
 
-	@Test
-	public void testGetOrDefault() {
-		Assert.assertEquals(CollectionUtil.getOrDefault(null, 5, "Hello"), "Hello");
-		Assert.assertEquals(CollectionUtil.getOrDefault(new ArrayList<>(), 5, "Hello"), "Hello");
-		Assert.assertEquals(CollectionUtil.getOrDefault(Collections.singletonList("a"), 5, "Hello"), "Hello");
-		Assert.assertEquals(CollectionUtil.getOrDefault(Arrays.asList("a", "b", "c"), 5, "Hello"), "Hello");
-		Assert.assertEquals(CollectionUtil.getOrDefault(Arrays.asList("a", "b", "c", "d", "e"), 5, "Hello"), "Hello");
-		Assert.assertEquals(CollectionUtil.getOrDefault(Arrays.asList("a", "b", "c", "d", "e", "f"), 5, "Hello"), "f");
-		Assert.assertEquals(CollectionUtil.getOrDefault(Arrays.asList("a", "b", "c", "d", "e", "f"), 0, "Hello"), "a");
-		Assert.assertEquals(CollectionUtil.getOrDefault(Arrays.asList("a", "b", "c", "d", "e", "f"), -1, "Hello"),
-		                    "Hello");
-		Assert.assertEquals(CollectionUtil.getOrDefault(Arrays.asList("a", "b", "c", "d", null), 4, "Hello"), "Hello");
-		Assert.assertEquals(CollectionUtil.getOrDefault(Arrays.asList("a", "b", "f", ""), 3, "Hello"), "");
-		Assert.assertNull(CollectionUtil.getOrDefault(Collections.singletonList("a"), 2, null));
+    @Test
+    public void testGetOrDefault() {
+        Assert.assertEquals(CollectionUtil.getOrDefault(null, 5, "Hello"), "Hello");
+        Assert.assertEquals(CollectionUtil.getOrDefault(new ArrayList<>(), 5, "Hello"), "Hello");
+        Assert.assertEquals(CollectionUtil.getOrDefault(Collections.singletonList("a"), 5, "Hello"), "Hello");
+        Assert.assertEquals(CollectionUtil.getOrDefault(Arrays.asList("a", "b", "c"), 5, "Hello"), "Hello");
+        Assert.assertEquals(CollectionUtil.getOrDefault(Arrays.asList("a", "b", "c", "d", "e"), 5, "Hello"), "Hello");
+        Assert.assertEquals(CollectionUtil.getOrDefault(Arrays.asList("a", "b", "c", "d", "e", "f"), 5, "Hello"), "f");
+        Assert.assertEquals(CollectionUtil.getOrDefault(Arrays.asList("a", "b", "c", "d", "e", "f"), 0, "Hello"), "a");
+        Assert.assertEquals(CollectionUtil.getOrDefault(Arrays.asList("a", "b", "c", "d", "e", "f"), -1, "Hello"),
+                            "Hello");
+        Assert.assertEquals(CollectionUtil.getOrDefault(Arrays.asList("a", "b", "c", "d", null), 4, "Hello"), "Hello");
+        Assert.assertEquals(CollectionUtil.getOrDefault(Arrays.asList("a", "b", "f", ""), 3, "Hello"), "");
+        Assert.assertNull(CollectionUtil.getOrDefault(Collections.singletonList("a"), 2, null));
 
-	}
+    }
+
+    @Test
+    public void testRandomSelectOne() {
+        Assert.assertNull(CollectionUtil.randomSelectOne(null));
+        Assert.assertEquals(CollectionUtil.randomSelectOne(Collections.singletonList("one")), "one");
+        assertThat(CollectionUtil.randomSelectOne(Arrays.asList("one", "two", "three"))).isIn("one", "two", "three");
+        assertThat(CollectionUtil.randomSelectOne(Arrays.asList("one", "two", "one", "two"))).isIn("one", "two");
+    }
 }

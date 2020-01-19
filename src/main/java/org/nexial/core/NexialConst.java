@@ -65,7 +65,6 @@ import static org.nexial.core.NexialConst.Image.OPT_IMAGE_DIFF_COLOR;
 import static org.nexial.core.NexialConst.Integration.MAIL_PREFIX;
 import static org.nexial.core.NexialConst.Ws.WS_JSON_CONTENT_TYPE;
 import static org.nexial.core.SystemVariables.*;
-import static org.nexial.core.model.ExecutionEvent.*;
 
 /**
  * constants
@@ -508,6 +507,9 @@ public final class NexialConst {
         public static final String MIME_JSON = WS_JSON_CONTENT_TYPE;
 
         public static final String USERSTACK_APIKEY = "nexial.userstack.apikey";
+        public static final String USERSTACK_APIKEYS = "nexial.userstack.rotatingApikeys";
+        public static final String DEF_USERSTACK_APIKEYS =
+            "5b71975a107de30d26f3878fa9adbb5e,278720a8776318f6bee49fe59c517381,30dcc7900c443a279315170afe815bd4,46d1f7737e47ba2525b80f9a5042e212";
 
         // nexial.scope.*
         public static final Map<String, String> SCOPE_SETTING_DEFAULTS =
@@ -1586,7 +1588,9 @@ public final class NexialConst {
         public static final String SCOPE_EXECUTION = "execution";
         public static final String SCOPE_DEFAULT = SCOPE_EXECUTION;
         public static final List<ExecutionEvent> SUPPORTED_SCOPES =
-            Arrays.asList(IterationComplete, ScriptComplete, ExecutionComplete);
+            Arrays.asList(ExecutionEvent.IterationComplete,
+                          ExecutionEvent.ScriptComplete,
+                          ExecutionEvent.ExecutionComplete);
 
         public static boolean isValidReportScope(String scope) {
             return StringUtils.equals(scope, SCOPE_EXECUTION) || StringUtils.equals(scope, SCOPE_ITERATION);

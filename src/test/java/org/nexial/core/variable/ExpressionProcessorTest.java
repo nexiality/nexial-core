@@ -126,6 +126,18 @@ public class ExpressionProcessorTest {
     }
 
     @Test
+    public void length_tests() throws Exception {
+        context.setData("data_here", "Jimmy Cricket");
+        ExpressionProcessor subject = new ExpressionProcessor(context);
+
+        Assert.assertEquals("11", subject.process("[TEXT(hello world)=> length]"));
+        Assert.assertEquals("1", subject.process("[TEXT( )=> length]"));
+        Assert.assertEquals("13", subject.process("[TEXT(${data_here}) => length]"));
+        Assert.assertEquals("0", subject.process("[TEXT(${no_data_here}) => length]"));
+
+    }
+
+    @Test
     public void processText2() throws Exception {
         ExpressionProcessor subject = new ExpressionProcessor(context);
 
