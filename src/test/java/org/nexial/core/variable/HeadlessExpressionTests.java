@@ -29,12 +29,10 @@ public class HeadlessExpressionTests extends ExcelBasedTests {
         assertPassFail(executionSummary, "CSV", TestOutcomeStats.allPassed());
         assertPassFail(executionSummary, "EXCEL", TestOutcomeStats.allPassed());
         assertPassFail(executionSummary, "XML", TestOutcomeStats.allPassed());
-        assertPassFail(executionSummary, "JSON", TestOutcomeStats.allPassed());
     }
 
     @Test
     public void macro() throws Exception {
-        // System.setProperty("nexial.openResult", "true");
         ExecutionSummary executionSummary = testViaExcel("unitTest_base_macro2.xlsx", "ImportMacro");
         assertPassFail(executionSummary, "ImportMacro", TestOutcomeStats.allPassed());
     }
