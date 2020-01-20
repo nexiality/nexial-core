@@ -391,9 +391,9 @@ public class WebCommand extends BaseCommand implements CanTakeScreenshot, CanLog
      * LoginForm.password.locator   css=#password
      * LoginForm.submit.locator     css=button.loginSubmit
      * </pre>
-     *
+     * <p>
      * One can invoke validation across all "LoginForm" elements, which in this case would be 3.
-     *
+     * <p>
      * "LoginForm" is custom prefix. ".locator" is the required suffix.
      */
     @NotNull
@@ -796,12 +796,12 @@ public class WebCommand extends BaseCommand implements CanTakeScreenshot, CanLog
      * conventional HTML table structure. Instead, this method uses {@code headers} to represent the "header"
      * cells, the {@code rows} to represent the pattern of a "data" row and the {@code cells} as the
      * relative path of a "data" cell (hierarchically contained within a row).
-     *
+     * <p>
      * Optionally, the {@code nextPage} is used to forward to the "page" of the table data. If provided, this
      * method will forward to the next page of data AFTER the current page of table data is collected. Furthermore, this
      * method will keep forward to the next page of table data until the element represented by the
      * {@code nextPage} is either disabled or no longer visible.
-     *
+     * <p>
      * Collected table data will be saved as CSV into {@code file}. {@code headers} is optional; if it is not
      * specified, then the target {@code file} will not contain header either.
      */
@@ -929,7 +929,7 @@ public class WebCommand extends BaseCommand implements CanTakeScreenshot, CanLog
 
     /**
      * click on all matching elements. Useful to check/uncheck "fake" options disguised as {@literal <div>} tags.
-     *
+     * <p>
      * Internally used by {@link #selectMultiOptions(String)} since both are functionally equivalent.
      */
     public StepResult clickAll(String locator) {
@@ -1607,9 +1607,9 @@ public class WebCommand extends BaseCommand implements CanTakeScreenshot, CanLog
 
     /**
      * save the screenshot of the web element indicated by {@code locator} to {@code file}.
-     *
+     * <p>
      * {@code ignoreLocators} are assumed to relative to {@code locator}.
-     *
+     * <p>
      * This method assumes only the first matching element, and it will forcefully overwrite existing {@code file}.
      */
     // public StepResult screenshot(String file, String locator, String ignoreLocators) {
@@ -1931,7 +1931,14 @@ public class WebCommand extends BaseCommand implements CanTakeScreenshot, CanLog
         }
 
         // go get it
-        String apiKey = context.getStringData(USERSTACK_APIKEY);
+        String apiKey =
+            // now randomly selected one of the keys
+            CollectionUtil.randomSelectOne(
+                TextUtils.toList(StringUtils.defaultIfBlank(
+                    // first try with the rotating keys
+                    context.getStringData(USERSTACK_APIKEYS, USERSTACK_APIKEY), DEF_USERSTACK_APIKEYS), ",", true));
+        if (StringUtils.isBlank(apiKey)) { return; }
+
         UserStackAPI userStackAPI = StringUtils.isNotBlank(apiKey) ? new UserStackAPI(apiKey) : new UserStackAPI();
         String ua = Objects.toString(jsExecutor.executeScript("return navigator.userAgent;"));
         browserMeta = userStackAPI.detectAsBrowserMeta(ua);
