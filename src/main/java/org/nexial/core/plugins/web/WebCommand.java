@@ -1936,7 +1936,8 @@ public class WebCommand extends BaseCommand implements CanTakeScreenshot, CanLog
             CollectionUtil.randomSelectOne(
                 TextUtils.toList(StringUtils.defaultIfBlank(
                     // first try with the rotating keys
-                    context.getStringData(USERSTACK_APIKEYS, USERSTACK_APIKEY), DEF_USERSTACK_APIKEYS), ",", true));
+                    context.getStringData(USERSTACK_APIKEYS, context.getStringData(USERSTACK_APIKEY)),
+                    DEF_USERSTACK_APIKEYS), ",", true));
         if (StringUtils.isBlank(apiKey)) { return; }
 
         UserStackAPI userStackAPI = StringUtils.isNotBlank(apiKey) ? new UserStackAPI(apiKey) : new UserStackAPI();
