@@ -78,6 +78,7 @@ import org.openqa.selenium.support.ui.FluentWait;
 import org.openqa.selenium.support.ui.Select;
 import org.openqa.selenium.support.ui.WebDriverWait;
 
+import com.google.gson.JsonObject;
 import ru.yandex.qatools.ashot.AShot;
 import ru.yandex.qatools.ashot.Screenshot;
 import ru.yandex.qatools.ashot.coordinates.WebDriverCoordsProvider;
@@ -88,8 +89,8 @@ import static java.io.File.separator;
 import static java.lang.Thread.sleep;
 import static org.apache.commons.lang3.SystemUtils.IS_OS_MAC;
 import static org.nexial.core.NexialConst.BrowserType.safari;
-import static org.nexial.core.NexialConst.Data.*;
 import static org.nexial.core.NexialConst.*;
+import static org.nexial.core.NexialConst.Data.*;
 import static org.nexial.core.NexialConst.Web.*;
 import static org.nexial.core.SystemVariables.*;
 import static org.nexial.core.plugins.ws.WebServiceClient.hideAuthDetails;
@@ -1930,20 +1931,76 @@ public class WebCommand extends BaseCommand implements CanTakeScreenshot, CanLog
             return;
         }
 
-        // go get it
-        String apiKey =
-            // now randomly selected one of the keys
-            CollectionUtil.randomSelectOne(
-                TextUtils.toList(StringUtils.defaultIfBlank(
-                    // first try with the rotating keys
-                    context.getStringData(USERSTACK_APIKEYS, context.getStringData(USERSTACK_APIKEY)),
-                    DEF_USERSTACK_APIKEYS), ",", true));
-        if (StringUtils.isBlank(apiKey)) { return; }
-
-        UserStackAPI userStackAPI = StringUtils.isNotBlank(apiKey) ? new UserStackAPI(apiKey) : new UserStackAPI();
         String ua = Objects.toString(jsExecutor.executeScript("return navigator.userAgent;"));
-        browserMeta = userStackAPI.detectAsBrowserMeta(ua);
+        browserMeta = loadBrowserMetaCache(ua);
+
+        if (browserMeta == null) {
+            // go get it
+            List<String> listKeys = TextUtils.toList(StringUtils.defaultIfBlank(
+                // first try with the rotating keys
+                context.getStringData(USERSTACK_APIKEYS, context.getStringData(USERSTACK_APIKEY)),
+                DEF_USERSTACK_APIKEYS), ",", true);
+            UserStackAPI userStackAPI = CollectionUtils.isNotEmpty(listKeys) ?
+                                        new UserStackAPI(listKeys) : new UserStackAPI();
+            // UserStackAPI userStackAPI = new UserStackAPI(listKeys);
+            // todo if file is empty call apiKey save json data
+            // todo if ua is equal to json key then no call else call detect browser
+            browserMeta = userStackAPI.detectAsBrowserMeta(ua);
+            updateBrowserMetaCache(ua, browserMeta);
+        }
         context.setData(BROWSER_META, browserMeta);
+    }
+
+    /*protected void syncBrowserMeta() {
+        Object browserMeta = context.getObjectData(BROWSER_META);
+        if (browserMeta instanceof BrowserMeta) { return; }
+
+        if (jsExecutor == null || driver == null) {
+            ConsoleUtils.error("Browser or webdriver not yet initialized; cancel the fetching of browser meta...");
+            return;
+        }
+
+
+        String ua = Objects.toString(jsExecutor.executeScript("return navigator.userAgent;"));
+
+        // load cache if browser is not updated i.e. user agent is same we load browsermeta from cache itself.
+        browserMeta = loadBrowserMetaCache(ua);
+        if (browserMeta == null) {
+            // go get it
+            List<String> apiKeys = TextUtils.toList(StringUtils.defaultIfBlank(
+                // first try with the rotating keys
+                context.getStringData(USERSTACK_APIKEYS, context.getStringData(USERSTACK_APIKEY)),
+                DEF_USERSTACK_APIKEYS), ",", true);
+            if (CollectionUtils.isEmpty(apiKeys)) { return; }
+
+            UserStackAPI userStackAPI = CollectionUtils.isEmpty(apiKeys) ? new UserStackAPI(apiKeys) : new UserStackAPI();
+            browserMeta = userStackAPI.detectAsBrowserMeta(ua);
+            updateBrowserMetaCache(ua, browserMeta.toString());
+        }
+        context.setData(BROWSER_META, browserMeta);
+    }
+*/
+    private Object loadBrowserMetaCache(String ua) {
+        File file = new File(BROWSER_META_CACHE_PATH + browser + separator + "browser-meta.json");
+        if (!file.exists()) { return null; }
+        try {
+            String browserMeta = FileUtils.readFileToString(file, DEF_CHARSET);
+            return GSON.fromJson(browserMeta, HashMap.class).get(ua);
+        } catch (IOException e) {
+            ConsoleUtils.log("unable to load browser metadata cache");
+            return null;
+        }
+    }
+
+    private void updateBrowserMetaCache(String ua, Object browserMeta) {
+        JsonObject json = new JsonObject();
+        json.addProperty(ua, browserMeta.toString());
+        File file = new File(BROWSER_META_CACHE_PATH + browser + separator + "browser-meta.json");
+        try {
+            FileUtils.writeStringToFile(file, json.toString(), DEF_FILE_ENCODING);
+        } catch (IOException e) {
+            ConsoleUtils.error("Unable to update browser metadata cache");
+        }
     }
 
     // todo: was called from screenshot().. still need it?

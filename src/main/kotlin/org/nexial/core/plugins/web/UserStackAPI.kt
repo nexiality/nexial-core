@@ -17,6 +17,7 @@
 package org.nexial.core.plugins.web
 
 import com.google.gson.JsonObject
+import org.nexial.commons.utils.CollectionUtil
 import org.nexial.core.NexialConst.GSON
 import org.nexial.core.model.BrowserDevice
 import org.nexial.core.model.BrowserDeviceType
@@ -24,15 +25,24 @@ import org.nexial.core.model.BrowserMeta
 import org.nexial.core.model.BrowserOS
 import org.nexial.core.plugins.ws.WebServiceClient
 
-class UserStackAPI(apiKey: String = "5b71975a107de30d26f3878fa9adbb5e") {
-    private val apiURL = "http://api.userstack.com/detect?access_key=${apiKey}&ua="
+class UserStackAPI(apiKeys: MutableList<String> = mutableListOf("5b71975a107de30d26f3878fa9adbb5e")) {
+    private val keys = apiKeys
 
     @Throws(IllegalArgumentException::class)
     fun detectAsBrowserMeta(ua: String): BrowserMeta {
-        val response = WebServiceClient(null).get(apiURL + ua, null)
+        if (keys.isEmpty()) throw IllegalArgumentException(
+            "Monthly userstack API request volume has been reached or No userstack API key specified.")
+        val apiKey = CollectionUtil.randomSelectOne(keys)
+        val apiURL = "http://api.userstack.com/detect?access_key=${apiKey}&ua=${ua}"
+        val response = WebServiceClient(null).get(apiURL, null)
         return if (response.returnCode == 200) {
             val json = GSON.fromJson(response.body, JsonObject::class.java)
-            parseBrowserMeta(json, ua)
+            if (json.has("error") && (json.getAsJsonObject("error").get("code").asInt == 104)) {
+                keys.remove(apiKey)
+                detectAsBrowserMeta(ua)
+            } else {
+                parseBrowserMeta(json, ua)
+            }
         } else {
             throw IllegalArgumentException(response.statusText)
         }
@@ -44,7 +54,8 @@ class UserStackAPI(apiKey: String = "5b71975a107de30d26f3878fa9adbb5e") {
         val browser = json.getAsJsonObject("browser")
 
         val version = if (browser.get("version").isJsonNull) "" else browser.getAsJsonPrimitive("version").asString
-        val deviceBrand = if (jsonDevice.get("brand").isJsonNull) "" else jsonDevice.getAsJsonPrimitive("brand").asString
+        val deviceBrand = if (jsonDevice.get("brand").isJsonNull) "" else jsonDevice.getAsJsonPrimitive(
+            "brand").asString
         val deviceName = if (jsonDevice.get("name").isJsonNull) "" else jsonDevice.getAsJsonPrimitive("name").asString
 
         return BrowserMeta(browser.getAsJsonPrimitive("name").asString, version, ua,
