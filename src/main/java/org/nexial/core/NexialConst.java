@@ -861,10 +861,10 @@ public final class NexialConst {
         public static final File COMMAND_JSON_FILE = new File(JSON_FOLDER + COMMAND_JSON_FILE_NAME);
         public static final File TEMP_JSON_JAR = new File(TEMP + "nexial-json-jar/nexial-json.jar");
 
-        public static final String PROJECT_CACHE_LOCATION =
-            StringUtils.appendIfMissing(new File(StringUtils.appendIfMissing(USER_HOME, separator) +
-                                                 ".nexial" + separator + "projectCache").getAbsolutePath(),
-                                        separator);
+        public static final String USER_NEXIAL_HOME =
+            StringUtils.appendIfMissing(new File(USER_HOME).getAbsolutePath(), separator) + ".nexial" + separator;
+        public static final String PROJECT_CACHE_LOCATION = USER_NEXIAL_HOME + "projectCache" + separator;
+        public static final String BROWSER_META_CACHE_PATH = USER_NEXIAL_HOME + "browser-meta.json";
 
         private Project() { }
 
@@ -1523,7 +1523,6 @@ public final class NexialConst {
         public static final String OPT_LAST_ALERT_TEXT = registerSysVar(NAMESPACE + "lastAlertText");
         public static final String OPT_ALERT_IGNORE_FLAG = registerSysVar(NAMESPACE + "ignoreBrowserAlert", false);
         public static final String BROWSER_META = registerSysVar(NS_BROWSER + ".meta");
-        public static final String BROWSER_META_CACHE_PATH = USER_HOME + separator + ".nexial" + separator;
 
         // metrics
         public static final String NS_WEB_METRICS = registerSysVarGroup(NS_WEB + "metrics.");

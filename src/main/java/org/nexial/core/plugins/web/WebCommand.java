@@ -91,6 +91,7 @@ import static org.apache.commons.lang3.SystemUtils.IS_OS_MAC;
 import static org.nexial.core.NexialConst.BrowserType.safari;
 import static org.nexial.core.NexialConst.*;
 import static org.nexial.core.NexialConst.Data.*;
+import static org.nexial.core.NexialConst.Project.BROWSER_META_CACHE_PATH;
 import static org.nexial.core.NexialConst.Web.*;
 import static org.nexial.core.SystemVariables.*;
 import static org.nexial.core.plugins.ws.WebServiceClient.hideAuthDetails;
@@ -1932,6 +1933,8 @@ public class WebCommand extends BaseCommand implements CanTakeScreenshot, CanLog
         }
 
         String ua = Objects.toString(jsExecutor.executeScript("return navigator.userAgent;"));
+        if (StringUtils.isBlank(ua)) { return; }
+
         browserMeta = loadBrowserMetaCache(ua);
 
         if (browserMeta == null) {
@@ -1946,61 +1949,9 @@ public class WebCommand extends BaseCommand implements CanTakeScreenshot, CanLog
             // todo if file is empty call apiKey save json data
             // todo if ua is equal to json key then no call else call detect browser
             browserMeta = userStackAPI.detectAsBrowserMeta(ua);
-            updateBrowserMetaCache(ua, browserMeta);
+            updateBrowserMetaCache(ua, (BrowserMeta) browserMeta);
         }
         context.setData(BROWSER_META, browserMeta);
-    }
-
-    /*protected void syncBrowserMeta() {
-        Object browserMeta = context.getObjectData(BROWSER_META);
-        if (browserMeta instanceof BrowserMeta) { return; }
-
-        if (jsExecutor == null || driver == null) {
-            ConsoleUtils.error("Browser or webdriver not yet initialized; cancel the fetching of browser meta...");
-            return;
-        }
-
-
-        String ua = Objects.toString(jsExecutor.executeScript("return navigator.userAgent;"));
-
-        // load cache if browser is not updated i.e. user agent is same we load browsermeta from cache itself.
-        browserMeta = loadBrowserMetaCache(ua);
-        if (browserMeta == null) {
-            // go get it
-            List<String> apiKeys = TextUtils.toList(StringUtils.defaultIfBlank(
-                // first try with the rotating keys
-                context.getStringData(USERSTACK_APIKEYS, context.getStringData(USERSTACK_APIKEY)),
-                DEF_USERSTACK_APIKEYS), ",", true);
-            if (CollectionUtils.isEmpty(apiKeys)) { return; }
-
-            UserStackAPI userStackAPI = CollectionUtils.isEmpty(apiKeys) ? new UserStackAPI(apiKeys) : new UserStackAPI();
-            browserMeta = userStackAPI.detectAsBrowserMeta(ua);
-            updateBrowserMetaCache(ua, browserMeta.toString());
-        }
-        context.setData(BROWSER_META, browserMeta);
-    }
-*/
-    private Object loadBrowserMetaCache(String ua) {
-        File file = new File(BROWSER_META_CACHE_PATH + browser + separator + "browser-meta.json");
-        if (!file.exists()) { return null; }
-        try {
-            String browserMeta = FileUtils.readFileToString(file, DEF_CHARSET);
-            return GSON.fromJson(browserMeta, HashMap.class).get(ua);
-        } catch (IOException e) {
-            ConsoleUtils.log("unable to load browser metadata cache");
-            return null;
-        }
-    }
-
-    private void updateBrowserMetaCache(String ua, Object browserMeta) {
-        JsonObject json = new JsonObject();
-        json.addProperty(ua, browserMeta.toString());
-        File file = new File(BROWSER_META_CACHE_PATH + browser + separator + "browser-meta.json");
-        try {
-            FileUtils.writeStringToFile(file, json.toString(), DEF_FILE_ENCODING);
-        } catch (IOException e) {
-            ConsoleUtils.error("Unable to update browser metadata cache");
-        }
     }
 
     // todo: was called from screenshot().. still need it?
@@ -2491,6 +2442,20 @@ public class WebCommand extends BaseCommand implements CanTakeScreenshot, CanLog
 
     protected void ensureReady() { initWebDriver(); }
 
+    @NotNull
+    protected FluentWait<WebDriver> newFluentWait() {
+        return new FluentWait<>(driver).withTimeout(Duration.ofMillis(context.getPollWaitMs()))
+                                       .pollingEvery(Duration.ofMillis(10))
+                                       .ignoring(NoSuchElementException.class);
+    }
+
+    @NotNull
+    protected Select getSelectElement(String locator) {
+        WebElement element = findElement(locator);
+        if (element == null) { throw new NoSuchElementException("element '" + locator + "' not found."); }
+        return new RegexAwareSelect(element);
+    }
+
     // todo: need to enable proxy capability across nexial
     // protected void initProxy() {
     //     // todo: need to decide key
@@ -2513,20 +2478,6 @@ public class WebCommand extends BaseCommand implements CanTakeScreenshot, CanLog
     //         });
     //     }
     // }
-
-    @NotNull
-    protected FluentWait<WebDriver> newFluentWait() {
-        return new FluentWait<>(driver).withTimeout(Duration.ofMillis(context.getPollWaitMs()))
-                                       .pollingEvery(Duration.ofMillis(10))
-                                       .ignoring(NoSuchElementException.class);
-    }
-
-    @NotNull
-    protected Select getSelectElement(String locator) {
-        WebElement element = findElement(locator);
-        if (element == null) { throw new NoSuchElementException("element '" + locator + "' not found."); }
-        return new RegexAwareSelect(element);
-    }
 
     protected int getElementCount(String locator) {
         List<WebElement> elements = findElements(locator);
@@ -3041,5 +2992,72 @@ public class WebCommand extends BaseCommand implements CanTakeScreenshot, CanLog
         List<String> textArray = matches.stream().map(WebElement::getText).collect(Collectors.toList());
 
         return saveSubstring(textArray, delimStart, delimEnd, var);
+    }
+
+    /*protected void syncBrowserMeta() {
+        Object browserMeta = context.getObjectData(BROWSER_META);
+        if (browserMeta instanceof BrowserMeta) { return; }
+
+        if (jsExecutor == null || driver == null) {
+            ConsoleUtils.error("Browser or webdriver not yet initialized; cancel the fetching of browser meta...");
+            return;
+        }
+
+
+        String ua = Objects.toString(jsExecutor.executeScript("return navigator.userAgent;"));
+
+        // load cache if browser is not updated i.e. user agent is same we load browsermeta from cache itself.
+        browserMeta = loadBrowserMetaCache(ua);
+        if (browserMeta == null) {
+            // go get it
+            List<String> apiKeys = TextUtils.toList(StringUtils.defaultIfBlank(
+                // first try with the rotating keys
+                context.getStringData(USERSTACK_APIKEYS, context.getStringData(USERSTACK_APIKEY)),
+                DEF_USERSTACK_APIKEYS), ",", true);
+            if (CollectionUtils.isEmpty(apiKeys)) { return; }
+
+            UserStackAPI userStackAPI = CollectionUtils.isEmpty(apiKeys) ? new UserStackAPI(apiKeys) : new UserStackAPI();
+            browserMeta = userStackAPI.detectAsBrowserMeta(ua);
+            updateBrowserMetaCache(ua, browserMeta.toString());
+        }
+        context.setData(BROWSER_META, browserMeta);
+    }
+*/
+
+    private Object loadBrowserMetaCache(String ua) {
+        File file = new File(BROWSER_META_CACHE_PATH);
+        if (!file.exists()) { return null; }
+
+        try {
+            JsonObject cache = GSON.fromJson(FileUtils.readFileToString(file, DEF_CHARSET), JsonObject.class);
+            if (cache.isJsonNull() || cache.size() < 1 || !cache.has(ua)) { return null; }
+
+            return BrowserMeta.toBrowserMeta(cache.getAsJsonObject(ua));
+        } catch (IOException e) {
+            ConsoleUtils.log("unable to load browser metadata cache: " + e.getMessage());
+            return null;
+        }
+    }
+
+    private void updateBrowserMetaCache(String ua, BrowserMeta browserMeta) {
+        JsonObject root;
+        File file = new File(BROWSER_META_CACHE_PATH);
+        if (!file.exists() || file.length() < 5) {
+            root = new JsonObject();
+        } else {
+            try {
+                root = GSON.fromJson(FileUtils.readFileToString(file, DEF_CHARSET), JsonObject.class);
+            } catch (IOException e) {
+                ConsoleUtils.log("unable to read from '" + file + "', recreating...");
+                root = new JsonObject();
+            }
+        }
+
+        root.add(ua, BrowserMeta.fromBrowserMeta(browserMeta));
+        try {
+            FileUtils.writeStringToFile(file, GSON.toJson(root, JsonObject.class), DEF_FILE_ENCODING);
+        } catch (IOException e) {
+            ConsoleUtils.error("Unable to update browser metadata cache: " + e.getMessage());
+        }
     }
 }

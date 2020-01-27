@@ -13,6 +13,7 @@ function resolveOSXAppPath() {
 
     IFS=$'\n'
 
+    # todo: need alternative from `locate` since it requires local sudo rights.
     for p in `locate "MacOS/${appExec}" | grep -E "${appExec}$"`; do
         if [[ "$path" = "" ]]; then
             # first time.. just use what we found
@@ -151,6 +152,7 @@ function resolveAppPath() {
 
 
 # utilities to be invoked by other frontend scripts
+mkdir -p "$HOME/.nexial"
 export PROJECT_BASE=~/projects
 export NEXIAL_HOME=$(cd `dirname $0`/..; pwd -P)
 export NEXIAL_LIB=${NEXIAL_HOME}/lib

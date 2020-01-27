@@ -24,20 +24,24 @@ import org.nexial.core.model.BrowserDeviceType
 import org.nexial.core.model.BrowserMeta
 import org.nexial.core.model.BrowserOS
 import org.nexial.core.plugins.ws.WebServiceClient
+import org.nexial.core.utils.ConsoleUtils
 
 class UserStackAPI(apiKeys: MutableList<String> = mutableListOf("5b71975a107de30d26f3878fa9adbb5e")) {
     private val keys = apiKeys
 
     @Throws(IllegalArgumentException::class)
     fun detectAsBrowserMeta(ua: String): BrowserMeta {
-        if (keys.isEmpty()) throw IllegalArgumentException(
-            "Monthly userstack API request volume has been reached or No userstack API key specified.")
+        if (keys.isEmpty())
+            throw IllegalArgumentException("Unable to integrate with UserStack. Check previous logs for details")
+
         val apiKey = CollectionUtil.randomSelectOne(keys)
-        val apiURL = "http://api.userstack.com/detect?access_key=${apiKey}&ua=${ua}"
-        val response = WebServiceClient(null).get(apiURL, null)
+        val response = WebServiceClient(null).get("http://api.userstack.com/detect?access_key=${apiKey}&ua=${ua}", null)
         return if (response.returnCode == 200) {
             val json = GSON.fromJson(response.body, JsonObject::class.java)
-            if (json.has("error") && (json.getAsJsonObject("error").get("code").asInt == 104)) {
+            if (json.has("error")) {
+                val error = json.getAsJsonObject("error")
+                ConsoleUtils.log("Error when invoking UserStack: " +
+                                 if (error.has("info")) error.get("info").asString else error.toString())
                 keys.remove(apiKey)
                 detectAsBrowserMeta(ua)
             } else {
@@ -49,21 +53,16 @@ class UserStackAPI(apiKeys: MutableList<String> = mutableListOf("5b71975a107de30
     }
 
     internal fun parseBrowserMeta(json: JsonObject, ua: String): BrowserMeta {
-        val jsonOS = json.getAsJsonObject("os")
-        val jsonDevice = json.getAsJsonObject("device")
+        val os = json.getAsJsonObject("os")
+        val device = json.getAsJsonObject("device")
         val browser = json.getAsJsonObject("browser")
 
         val version = if (browser.get("version").isJsonNull) "" else browser.getAsJsonPrimitive("version").asString
-        val deviceBrand = if (jsonDevice.get("brand").isJsonNull) "" else jsonDevice.getAsJsonPrimitive(
-            "brand").asString
-        val deviceName = if (jsonDevice.get("name").isJsonNull) "" else jsonDevice.getAsJsonPrimitive("name").asString
+        val divBrand = if (device.get("brand").isJsonNull) "" else device.getAsJsonPrimitive("brand").asString
+        val devName = if (device.get("name").isJsonNull) "" else device.getAsJsonPrimitive("name").asString
 
-        return BrowserMeta(browser.getAsJsonPrimitive("name").asString, version, ua,
-                           BrowserOS(jsonOS.getAsJsonPrimitive("name").asString,
-                                     jsonOS.getAsJsonPrimitive("code").asString,
-                                     jsonOS.getAsJsonPrimitive("family").asString),
-                           BrowserDevice(BrowserDeviceType.valueOf(jsonDevice.getAsJsonPrimitive("type").asString),
-                                         deviceBrand,
-                                         deviceName))
+        return BrowserMeta(browser.get("name").asString, version, ua,
+                           BrowserOS(os.get("name").asString, os.get("code").asString, os.get("family").asString),
+                           BrowserDevice(BrowserDeviceType.valueOf(device.get("type").asString), divBrand, devName))
     }
 }

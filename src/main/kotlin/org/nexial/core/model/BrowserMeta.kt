@@ -16,6 +16,9 @@
 
 package org.nexial.core.model
 
+import com.google.gson.JsonObject
+import org.nexial.core.NexialConst.GSON
+
 /**
  * encapsulation of what userstack returns back based on user-agent string. We are cherry-picking only the meaningful
  * ones, which will be stored in ExecutionContent
@@ -27,6 +30,14 @@ data class BrowserMeta(val name: String,
                        val device: BrowserDevice) {
 
     fun browser() = ("$name $version").trim()
+
+    companion object {
+        @JvmStatic
+        fun toBrowserMeta(json: JsonObject) = GSON.fromJson(json, BrowserMeta::class.java)
+
+        @JvmStatic
+        fun fromBrowserMeta(browserMeta: BrowserMeta) = GSON.fromJson(GSON.toJson(browserMeta), JsonObject::class.java)
+    }
 }
 
 data class BrowserOS(val name: String, val code: String, val family: String)
