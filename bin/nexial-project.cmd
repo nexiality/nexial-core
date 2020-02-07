@@ -56,6 +56,13 @@ if "%1"=="" goto :reportBadInputAndExit
 	mkdir %PROJECT_HOME%\artifact\plan 2>NUL
 	mkdir %PROJECT_HOME%\output 2>NUL
 
+	REM create empty project.properties file if it does not exist
+	if exist %PROJECT_HOME%\artifact\project.properties (
+		echo ^>^> skip over the creation of project.properties
+	) else (
+		type NUL > %PROJECT_HOME%\artifact\project.properties
+	)
+
     REM create project.id file to uniquely identify a "project" across enterprise (i.e. same SCM)
     echo ^>^> (re)creating %PROJECT_ID% with %PROJECT_NAME%"
     echo !PROJECT_NAME!> %PROJECT_ID%
@@ -86,7 +93,7 @@ if "%1"=="" goto :reportBadInputAndExit
 
 	cd %PROJECT_HOME%
 	cd
-	dir /s /b /on *.xlsx
+	dir /s /b /on *.xlsx *.properties
 
 	echo.
 	echo.

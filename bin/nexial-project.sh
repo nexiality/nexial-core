@@ -65,6 +65,13 @@ mkdir -p "${PROJECT_HOME}/output" > /dev/null 2>&1
 echo "» (re)creating ${PROJECT_ID} with ${PROJECT_NAME}"
 echo "${PROJECT_NAME}" > "${PROJECT_ID}"
 
+## create empty project.properties file if it does not exist
+if [[ -e "${PROJECT_HOME}/artifact/project.properties" ]]; then
+ echo "» skip over the creation of project.properties"
+else
+ touch "${PROJECT_HOME}/artifact/project.properties"
+fi
+
 SKIP_DEF_SCRIPTS=true
 for f in "${PROJECT_HOME}/artifact/script/*.xlsx"; do
     ## Check if the glob gets expanded to existing files.
@@ -108,7 +115,7 @@ echo
 
 cd "${PROJECT_HOME}"
 chmod -fR 755 "${PROJECT_HOME}"
-find "${PROJECT_HOME}" -name "*.xlsx" | sort -n
+find "${PROJECT_HOME}" -name "*.xlsx" -o -name "*.properties" | sort -n
 
 echo
 echo

@@ -71,6 +71,7 @@ import static java.lang.Integer.MAX_VALUE;
 import static java.lang.System.lineSeparator;
 import static org.apache.commons.lang3.SystemUtils.*;
 import static org.nexial.core.NexialConst.Data.BUILD_NO;
+import static org.nexial.core.NexialConst.Data.SCRIPT_REF_PREFIX;
 import static org.nexial.core.NexialConst.Desktop.DESKTOP_NOTIFY_WAITMS;
 import static org.nexial.core.NexialConst.Desktop.WINIUM_SERVICE_RUNNING;
 import static org.nexial.core.NexialConst.OS;
@@ -2048,8 +2049,13 @@ public class DesktopCommand extends BaseCommand implements ForcefulTerminate, Ca
         context.setData(DESKTOP_APPLICATION, session.getApp());
         context.setData(DESKTOP_PROCESS_ID, session.getProcessId());
         context.addScriptReferenceData("process id", session.getProcessId());
-        context.addScriptReferenceData("app version", StringUtils.defaultString(session.getApplicationVersion()));
-        context.addScriptReferenceData(BUILD_NO, StringUtils.defaultString(session.getApplicationVersion()));
+
+        String appVersion = StringUtils.defaultString(session.getApplicationVersion());
+        String buildnum = context.getStringData(SCRIPT_REF_PREFIX + BUILD_NO, appVersion);
+
+        if (StringUtils.isNotBlank(appVersion)) { context.addScriptReferenceData("app version", appVersion); }
+        if (StringUtils.isNotBlank(buildnum)) { context.addScriptReferenceData(BUILD_NO, buildnum); }
+
         context.addScriptReferenceData("app", session.getAppId());
     }
 
