@@ -74,6 +74,7 @@ import static java.util.regex.Pattern.CASE_INSENSITIVE;
 import static org.apache.commons.lang3.SystemUtils.JAVA_IO_TMPDIR;
 import static org.nexial.core.CommandConst.*;
 import static org.nexial.core.NexialConst.*;
+import static org.nexial.core.NexialConst.Data.CMD_PROFILE_DEFAULT;
 import static org.nexial.core.NexialConst.Data.NULL;
 import static org.nexial.core.NexialConst.ImageCaption.*;
 import static org.nexial.core.excel.ExcelConfig.MSG_PASS;
@@ -88,6 +89,7 @@ public class BaseCommand implements NexialCommand {
     protected long pauseMs;
     protected transient ContextScreenRecorder screenRecorder;
     protected Syspath syspath = new Syspath();
+    protected String profile = CMD_PROFILE_DEFAULT;
 
     public BaseCommand() {
         collectCommandMethods();
@@ -107,6 +109,12 @@ public class BaseCommand implements NexialCommand {
 
     @Override
     public String getTarget() { return "base"; }
+
+    @Override
+    public String getProfile() { return profile; }
+
+    @Override
+    public void setProfile(String profile) { this.profile = profile; }
 
     @Override
     public boolean isValidCommand(String command, String... params) {
@@ -671,7 +679,7 @@ public class BaseCommand implements NexialCommand {
      * @param file the full path of the macro library.
      * @param name the name of the macro to invoke
      * @return pass/fail based on the validity of the referenced macro/file.  If macro {@code name} or library
-     * ({@code file}) is not found, a failure is returned with fail-immediate in effect.
+     *     ({@code file}) is not found, a failure is returned with fail-immediate in effect.
      */
     public StepResult macro(String file, String sheet, String name) {
         return failImmediate("Runtime error: Macro reference (" + file + "," + sheet + "," + name + ") not expanded");
@@ -968,7 +976,7 @@ public class BaseCommand implements NexialCommand {
      * <pre>
      * ./nexial.sh -script ... ... -override myData=myValue
      * </pre>
-     *
+     * <p>
      * Such data variable is also added to the System properties. As such, Nexial will not attempt to override the
      * corresponding System property when the same data value is being manipulated during execution
      * (e.g. {@link #save(String, String)} or {@link #saveMatches(String, String, String)}). However, when retrieving
@@ -1437,7 +1445,7 @@ public class BaseCommand implements NexialCommand {
 
     /**
      * create a file with {@code output} as its text content and its name based on current step and {@code extension}.
-     *
+     * <p>
      * to improve readability and user experience, use {@code caption} to describe such file on the execution output.
      */
     protected void addOutputAsLink(String caption, String output, String extension) {
@@ -1453,7 +1461,7 @@ public class BaseCommand implements NexialCommand {
 
     /**
      * create a file with {@code output} as its content and its name based on current step and {@code extension}.
-     *
+     * <p>
      * to improve readability and user experience, use {@code caption} to describe such file on the execution output.
      */
     protected void addOutputAsLink(String caption, BufferedImage output, String extension) {

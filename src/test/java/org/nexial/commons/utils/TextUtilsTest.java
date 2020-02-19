@@ -564,9 +564,11 @@ public class TextUtilsTest {
                             TextUtils.base64encode("QRGgkBD3YHzvHgA0eaIh2XGxGeA3AGoY:UUuAHNcLeoM2e0Vf"));
 
         Assert.assertEquals("YPqTWzz9VnFbtcl4MabjNh6QEngjNNAH:RSdFtRagAfkHfsOo",
-                            TextUtils.base64decode("WVBxVFd6ejlWbkZidGNsNE1hYmpOaDZRRW5nak5OQUg6UlNkRnRSYWdBZmtIZnNPbw=="));
+                            TextUtils
+                                .base64decode("WVBxVFd6ejlWbkZidGNsNE1hYmpOaDZRRW5nak5OQUg6UlNkRnRSYWdBZmtIZnNPbw=="));
         Assert.assertEquals("QRGgkBD3YHzvHgA0eaIh2XGxGeA3AGoY:UUuAHNcLeoM2e0Vf",
-                            TextUtils.base64decode("UVJHZ2tCRDNZSHp2SGdBMGVhSWgyWEd4R2VBM0FHb1k6VVV1QUhOY0xlb00yZTBWZg=="));
+                            TextUtils
+                                .base64decode("UVJHZ2tCRDNZSHp2SGdBMGVhSWgyWEd4R2VBM0FHb1k6VVV1QUhOY0xlb00yZTBWZg=="));
     }
 
     @Test
@@ -599,5 +601,17 @@ public class TextUtilsTest {
         Assert.assertEquals(0, NumberUtils.createDouble(TextUtils.cleanNumber("0.00", CSV)), 0);
         Assert.assertEquals(0, NumberUtils.createDouble(TextUtils.cleanNumber("000.0", CSV)), 0);
         Assert.assertEquals(0, NumberUtils.createDouble(TextUtils.cleanNumber("-0.00", CSV)), 0);
+    }
+
+    @Test
+    public void insertAfter() {
+        Assert.assertNull(TextUtils.insertAfter(null, "a", "b"));
+        Assert.assertEquals("", TextUtils.insertAfter("", "a", "b"));
+        Assert.assertEquals("abc", TextUtils.insertAfter("abc", "", "b"));
+        Assert.assertEquals("abc", TextUtils.insertAfter("abc", "a", ""));
+        Assert.assertEquals("abbc", TextUtils.insertAfter("abc", "a", "b"));
+        Assert.assertEquals("abbc", TextUtils.insertAfter("abc", "ab", "b"));
+        Assert.assertEquals("nexial.browser.MY_PROFILE.command",
+                            TextUtils.insertAfter("nexial.browser.command", "nexial.browser", ".MY_PROFILE"));
     }
 }

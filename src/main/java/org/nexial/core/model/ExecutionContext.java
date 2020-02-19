@@ -22,6 +22,7 @@ import java.io.IOException;
 import java.io.UnsupportedEncodingException;
 import java.lang.reflect.Array;
 import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.TypeVariable;
 import java.net.URLEncoder;
 import java.util.*;
 import java.util.stream.Collectors;
@@ -109,6 +110,7 @@ public class ExecutionContext {
     private static final String NAME_SPRING_CONTEXT = "nexialInternal.springContext";
     private static final String NAME_PLUGIN_MANAGER = "nexialInternal.pluginManager";
     private static final String NAME_TRACK_TIME_LOGS = "nexialInternal.trackTimeLogs";
+    private static final String NAME_CURRENT_COMMAND_PROFILES = "nexialInternal.currentCommandProfiles";
 
     // function parsing
     private static final String ESCAPED_DOLLAR = "\\$";
@@ -162,6 +164,7 @@ public class ExecutionContext {
     protected ExecutionEventListener executionEventListener;
     protected CanTakeScreenshot screenshotAgent;
     protected Syspath syspath;
+    protected Map<String, String> currentCommandProfiles = new HashMap<>();
     // protected ProfileHelper profileHelper;
 
     // spring-managed map of webdriver related configs.
@@ -258,6 +261,8 @@ public class ExecutionContext {
 
             plugins = (PluginManager) intraExecutionData.remove(NAME_PLUGIN_MANAGER);
             plugins.setContext(this);
+
+            currentCommandProfiles = (Map<String, String>) intraExecutionData.remove(NAME_CURRENT_COMMAND_PROFILES);
 
             data.putAll(intraExecutionData);
             data.remove(BREAK_CURRENT_ITERATION);
@@ -375,8 +380,17 @@ public class ExecutionContext {
 
     public boolean isPluginLoaded(String target) { return plugins.isPluginLoaded(target); }
 
-    public NexialCommand findPlugin(String target) { return plugins.getPlugin(target); }
+    public NexialCommand findPlugin(String target) {
+        if (currentCommandProfiles.containsKey(target)) {
+            return plugins.getPlugin(target + CMD_PROFILE_SEP + currentCommandProfiles.get(target));
+        } else {
+            return plugins.getPlugin(target);
+        }
+    }
 
+    /**
+     * return {@link Data#CMD_PROFILE_DEFAULT default} profile browser
+     */
     public Browser getBrowser() { return plugins.getBrowser(); }
 
     @NotNull
@@ -390,7 +404,11 @@ public class ExecutionContext {
         // DO NOT SET BROWSER TYPE TO SYSTEM PROPS, SINCE THIS WILL PREVENT ITERATION-LEVEL OVERRIDES
         // System.setProperty(BROWSER, browserType);
 
-        return StringUtils.remove(System.getProperty(BROWSER, getStringData(BROWSER, getDefault(BROWSER))), ".");
+        // browser is all about web commands...
+        Map<String, String> config = getProfileConfig("web", currentCommandProfiles.get("web"));
+        return StringUtils.remove(
+            config.getOrDefault(BROWSER, System.getProperty(BROWSER, getStringData(BROWSER, getDefault(BROWSER)))),
+            ".");
     }
 
     public boolean isDelayBrowser() { return getBooleanData(OPT_DELAY_BROWSER, getDefaultBool(OPT_DELAY_BROWSER)); }
@@ -416,11 +434,6 @@ public class ExecutionContext {
     }
 
     public boolean isFailFast() {return getBooleanData(FAIL_FAST, getDefaultBool(FAIL_FAST)) && !isInteractiveMode(); }
-
-    /** Evaluate Page Source Stability Required */
-    public boolean isPageSourceStabilityEnforced() {
-        return getBooleanData(ENFORCE_PAGE_SOURCE_STABILITY, getDefaultBool(ENFORCE_PAGE_SOURCE_STABILITY));
-    }
 
     public boolean isResolveTextAsURL() {
         return hasData(RESOLVE_TEXT_AS_URL) ? getBooleanData(RESOLVE_TEXT_AS_URL) :
@@ -1059,6 +1072,7 @@ public class ExecutionContext {
         intraExecutionData.putAll(getDataMap());
         intraExecutionData.put(NAME_PLUGIN_MANAGER, plugins);
         intraExecutionData.put(NAME_SPRING_CONTEXT, springContext);
+        intraExecutionData.put(NAME_CURRENT_COMMAND_PROFILES, currentCommandProfiles);
         intraExecutionData.remove(IS_FIRST_ITERATION);
         intraExecutionData.remove(IS_LAST_ITERATION);
     }
@@ -1316,6 +1330,104 @@ public class ExecutionContext {
                                    TOKEN_END, ESCAPED_TOKEN_END);
     }
 
+    /**
+     * resolve a set of name-value configuration, based on a "profile", and store it in the current
+     * {@link ExecutionContext context}. This is useful for profile-aware commands where multiple instances of the
+     * same command co-exist and distinguish by the associated "profile".
+     */
+    public Map<String, String> updateProfileConfig(String command, String profile, String config) {
+        Map<String, String> configMap = getProfileConfig(command, profile);
+
+        if (StringUtils.isNotBlank(config)) {
+            // replace , with newline, except if comma is escaped.
+            config = StringUtils.remove(config, "\r");
+            config = StringUtils.replace(config, "\\,", "!@#>>*<<#@!");
+            config = StringUtils.replace(config, ",", "\n");
+            config = StringUtils.replace(config, "!@#>>*<<#@!", ",");
+            configMap.putAll(TextUtils.toMap(config, "\n", "="));
+        }
+
+        // config map is updated and ready for use
+        setData(resolveProfileConfigKey(command, profile), configMap);
+
+        // if (StringUtils.isNotBlank(profile) && !StringUtils.equals(profile, CMD_PROFILE_DEFAULT)) {
+        // init command, if needed
+        // setData(resolveProfileCommandKey(command, profile), findPlugin(command + CMD_PROFILE_SEP + profile));
+        // }
+
+        // remember the current profile
+        currentCommandProfiles.put(command, profile);
+
+        return configMap;
+    }
+
+    public Map<String, String> getProfileConfig(String command, String profile) {
+        if (StringUtils.isEmpty(profile)) { profile = CMD_PROFILE_DEFAULT; }
+        String configMapKey = resolveProfileConfigKey(command, profile);
+
+        Map<String, String> config = new HashMap<>();
+        if (!hasData(configMapKey)) { return config; }
+        if (!(getObjectData(configMapKey) instanceof Map)) { return config; }
+
+        Map mapData = getMapData(configMapKey);
+        TypeVariable<? extends Class<? extends Map>>[] mapTypes = mapData.getClass().getTypeParameters();
+        if (mapTypes.length != 2) { return config; }
+        // if (!StringUtils.contains(mapTypes[0].getTypeName(), "String") ||
+        //     !StringUtils.contains(mapTypes[1].getTypeName(), "String")) { return config; }
+
+        return (Map<String, String>) mapData;
+    }
+
+    public String getStringConfig(String command, String profile, String key) {
+        Map<String, String> config = getProfileConfig(command, profile);
+        String contextValue = getStringData(key, getDefault(key));
+        if (MapUtils.isEmpty(config)) { return contextValue; }
+        return config.getOrDefault(key, contextValue);
+    }
+
+    public int getIntConfig(String command, String profile, String key) {
+        Map<String, String> config = getProfileConfig(command, profile);
+        int contextValue = getIntData(key, getDefaultInt(key));
+        if (MapUtils.isEmpty(config) || StringUtils.isBlank(profile)) { return contextValue; }
+        String configValue = config.get(key);
+        if (StringUtils.isBlank(configValue)) { return contextValue; }
+        return NumberUtils.toInt(configValue, contextValue);
+    }
+
+    public double getDoubleConfig(String command, String profile, String key) {
+        Map<String, String> config = getProfileConfig(command, profile);
+        double contextValue = getDoubleData(key, getDefaultDouble(key));
+        if (MapUtils.isEmpty(config) || StringUtils.isBlank(profile)) { return contextValue; }
+        String configValue = config.get(withProfile(profile, key));
+        if (StringUtils.isBlank(configValue)) { return contextValue; }
+        return NumberUtils.toDouble(configValue, contextValue);
+    }
+
+    public boolean getBooleanConfig(String command, String profile, String key) {
+        Map<String, String> config = getProfileConfig(command, profile);
+        boolean contextValue = getBooleanData(key, getDefaultBool(key));
+        if (MapUtils.isEmpty(config) || StringUtils.isBlank(profile)) { return contextValue; }
+        String configValue = config.get(withProfile(profile, key));
+        if (StringUtils.isBlank(configValue)) { return contextValue; }
+        return BooleanUtils.toBoolean(configValue);
+    }
+
+    public boolean hasConfig(String command, String profile, String key) {
+        Map<String, String> config = getProfileConfig(command, profile);
+        if (config.containsKey(key)) { return true; }
+        return hasData(key);
+    }
+
+    @NotNull
+    protected static String resolveProfileConfigKey(String command, String profile) {
+        return "nexial.config" + CMD_PROFILE_SEP + command + "." + profile;
+    }
+
+    @NotNull
+    protected static String resolveProfileCommandKey(String command, String profile) {
+        return "nexial.command" + CMD_PROFILE_SEP + command + "." + profile;
+    }
+
     protected String handleCryptValue(String text) {
         if (StringUtils.isBlank(text)) { return text; }
         if (!StringUtils.contains(text, CRYPT_IND)) { return text; }
@@ -1341,7 +1453,7 @@ public class ExecutionContext {
      * <code>project.properties</code> are kept as System properties. Suppose the same data variable is updated with
      * new value during execution, then we need to update both the data variable repo ({@link #data}) and System
      * properties to keep the same data variable in sync.
-     *
+     * <p>
      * Note that System properties will be updating <b>ONLY</b> IF:
      * <ol>
      * <li>{@code name} is valid (not null)</li>

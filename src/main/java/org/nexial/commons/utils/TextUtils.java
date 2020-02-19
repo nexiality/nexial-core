@@ -613,6 +613,18 @@ public final class TextUtils {
     }
 
     /**
+     * return new String that has {@code insert} after the {@code startWith} in {@code text}. Note that
+     * {@code startWith} must be the found from the beginning of {@code text}.
+     */
+    public static String insertAfter(String text, String startWith, String insert) {
+        if (StringUtils.isEmpty(text)) { return text; }
+        if (StringUtils.isEmpty(startWith)) { return text; }
+        if (StringUtils.isEmpty(insert)) { return text; }
+        return StringUtils.startsWith(text, startWith) ?
+               startWith + insert + StringUtils.substringAfter(text, startWith) : text;
+    }
+
+    /**
      * determine if {@code text} is between {@code start} and {@code end}
      */
     public static boolean isBetween(String text, String start, String end) {
@@ -749,7 +761,7 @@ public final class TextUtils {
     /**
      * remove all extraneous whitespaces, including space, tab, newline, carriage return so that {@code text} would
      * contain NO CONTIGUOUS whitespace.
-     *
+     * <p>
      * Note that this method will convert all whitespaces (non-printable) to space (ASCII 20), and remove space
      * duplicates.
      */
@@ -860,7 +872,7 @@ public final class TextUtils {
 
     /**
      * create HTML table with optional {@code tableStyleClass}.
-     *
+     * <p>
      * This implementation requires the same size of {@code headers} and {@code records}.  {@code headers} is thus
      * expected to <b>NOT TO BE EMPTY</b>, or no table HTML would be generated.
      */
@@ -1005,7 +1017,7 @@ public final class TextUtils {
      * <li>It starts with '+' symbol, follow by country code (i.e. '1' for US)</li>
      * <li>All letters are converted to number, according to traditional phone number dial pad</li>
      * </ol>
-     *
+     * <p>
      * In addition, it checks that {@literal phoneNumber} must be 10 characters or more.
      */
     @NotNull

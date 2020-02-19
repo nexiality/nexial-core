@@ -343,218 +343,108 @@
     </entry>
   </util:map>
 
+  <bean id="browserTemplate" class="org.nexial.core.plugins.web.Browser" scope="prototype">
+    <property name="chromeOptions">
+      <array>
+        <value>disable-component-update</value>
+        <value>disable-default-apps</value>
+        <value>disable-login-animations</value>
+        <value>disable-popup-blocking</value>
+        <value>disable-prompt-on-repost</value>
+        <value>disable-smooth-scrolling</value>
+        <value>disable-sync</value>
+        <value>bwsi</value>
+        <value>hide-scrollbars</value>
+        <value>allow-http-screen-capture</value>
+        <value>allow-insecure-localhost</value>
+        <value>disable-extensions-file-access-check</value>
+        <value>no-default-browser-check</value>
+        <value>ignore-certificate-errors</value>
+        <value>mute-audio</value>
+        <value>disable-resize-lock</value>
+        <value>disable-print-preview</value>
+        <value>disable-breakpad</value>
+        <value>enable-ui-devtools</value>
+      </array>
+    </property>
+    <property name="firefoxBinArgs">
+      <list value-type="java.lang.String">
+        <value>-purgecaches</value>
+        <value>-foreground</value>
+      </list>
+    </property>
+    <property name="firefoxBooleanPrefs">
+      <map key-type="java.lang.String" value-type="java.lang.Boolean">
+        <entry key="browser.dom.window.dump.enabled" value="false"/>
+        <entry key="extensions.blocklist.enabled" value="false"/>
+        <entry key="app.update.service.enabled" value="false"/>
+        <entry key="extensions.update.enabled" value="false"/>
+        <entry key="extensions.update.autoUpdateDefault" value="false"/>
+        <entry key="general.smoothScroll" value="false"/>
+        <entry key="general.autoScroll" value="true"/>
+        <entry key="browser.download.manager.showWhenStarting" value="false"/>
+        <entry key="browser.download.manager.closeWhenDone" value="false"/>
+        <entry key="browser.download.manager.showAlertOnComplete" value="false"/>
+        <entry key="browser.download.manager.alertOnEXEOpen" value="false"/>
+        <entry key="browser.download.manager.focusWhenStarting" value="false"/>
+        <entry key="browser.download.manager.useWindow" value="false"/>
+        <entry key="browser.download.useDownloadDir" value="true"/>
+        <entry key="browser.download.show_plugins_in_list" value="false"/>
+        <entry key="browser.helperApps.alwaysAsk.force" value="false"/>
+        <entry key="pdfjs.disabled" value="true"/>
+        <entry key="security.ssl.errorReporting.automatic" value="false"/>
+        <entry key="security.ssl.errorReporting.enabled" value="false"/>
+        <entry key="browser.tabs.closeWindowWithLastTab" value="true"/>
+        <entry key="browser.tabs.crashReporting.sendReport" value="false"/>
+        <entry key="browser.urlbar.openintab" value="false"/>
+        <entry key="dom.clients.openwindow_favors_same_process" value="true"/>
+        <entry key="security.csp.enable" value="false"/>
+        <entry key="security.ssl.enable_ocsp_stapling" value="false"/>
+        <entry key="security.ssl.enable_ocsp_must_staple" value="false"/>
+        <entry key="services.sync.prefs.sync.security.OCSP.enabled" value="false"/>
+        <entry key="services.sync.prefs.sync.security.OCSP.require" value="false"/>
+        <entry key="webdriver_accept_untrusted_certs" value="true"/>
+        <entry key="webdriver_assume_untrusted_issuer" value="false"/>
+        <entry key="datareporting.healthreport.uploadEnabled" value="false"/>
+        <entry key="datareporting.healthreport.service.enabled" value="false"/>
+        <entry key="breakpad.reportURL" value="false"/>
+        <entry key="browser.search.suggest.enabled" value="false"/>
+        <entry key="privacy.popups.showBrowserMessage" value="false"/>
+        <entry key="dom.vr.enabled" value="false"/>
+        <entry key="dom.vr.oculus.enabled" value="false"/>
+        <entry key="dom.vr.openvr.enabled" value="false"/>
+        <entry key="dom.vr.osvr.enabled" value="false"/>
+        <entry key="dom.vr.poseprediction.enabled" value="false"/>
+        <entry key="dom.allow_scripts_to_close_windows" value="true"/>
+      </map>
+    </property>
+    <property name="firefoxStringPrefs">
+      <map key-type="java.lang.String" value-type="java.lang.String">
+        <entry key="extensions.firebug.allPagesActivation" value="on"/>
+        <entry key="browser.helperApps.neverAsk.saveToDisk" value="text/xml,text/csv,text/html,text/plain,text/log,application/zlib,application/x-gzip,application/gzip,application/x-compressed,application/x-gtar,multipart/x-gzip,application/tgz,application/gnutar,application/x-tar,application/xml,application/x-msexcel,application/excel,application/x-excel,application/vnd.ms-excel,image/png,image/jpeg,application/msword,application/pdf,application/octet-stream,application/x-pdf"/>
+        <entry key="browser.helperApps.neverAsk.openFile" value="text/xml,text/csv,text/html,text/plain,text/log,application/zlib,application/x-gzip,application/gzip,application/x-compressed,application/x-gtar,multipart/x-gzip,application/tgz,application/gnutar,application/x-tar,application/xml,application/x-msexcel,application/excel,application/x-excel,application/vnd.ms-excel,image/png,image/jpeg,application/msword,application/pdf,application/octet-stream,application/x-pdf"/>
+        <entry key="security.ssl.errorReporting.url" value=""/>
+        <entry key="marionette.log.level" value="off"/>
+        <entry key="marionette.logging" value="off"/>
+      </map>
+    </property>
+    <property name="firefoxIntPrefs">
+      <map key-type="java.lang.String" value-type="java.lang.Integer">
+        <entry key="browser.link.open_newwindow" value="3"/>
+        <entry key="browser.link.open_newwindow.restriction" value="0"/>
+        <entry key="browser.download.folderList" value="2"/>
+        <entry key="security.cert_pinning.enforcement_level" value="0"/>
+        <entry key="security.OCSP.enabled" value="0"/>
+      </map>
+    </property>
+  </bean>
+
 
   <!-- ####################################### -->
   <!-- ### command targets / plugins       ### -->
   <!-- ####################################### -->
   <bean id="pluginManager" class="org.nexial.core.model.PluginManager">
     <property name="plugins" ref="plugins"/>
-    <property name="browser">
-      <bean class="org.nexial.core.plugins.web.Browser">
-        <property name="chromeOptions">
-          <!-- http://peter.sh/experiments/chromium-command-line-switches/ -->
-          <array>
-            <value>disable-component-update</value>
-            <value>disable-default-apps</value>
-            <value>disable-login-animations</value>
-            <value>disable-popup-blocking</value>
-            <value>disable-prompt-on-repost</value>
-            <value>disable-smooth-scrolling</value>
-            <value>disable-sync</value>
-            <!-- browsing without signing in -->
-            <value>bwsi</value>
-
-            <value>hide-scrollbars</value>
-            <value>allow-http-screen-capture</value>
-            <value>allow-insecure-localhost</value>
-
-            <!-- enable the WebKit page cache -->
-            <value>disable-extensions-file-access-check</value>
-            <value>no-default-browser-check</value>
-
-            <!-- disabled as of 2014-11-14 -->
-            <!-- remove error dialog when present -->
-            <!--<value>noerrdialogs</value>-->
-
-            <value>ignore-certificate-errors</value>
-            <value>mute-audio</value>
-
-            <!-- Prevents Chrome from requiring authorization to run certain widely installed but less commonly used plug-ins. -->
-            <!--<value>always-authorize-plugins</value>-->
-
-            <value>disable-resize-lock</value>
-            <value>disable-print-preview</value>
-            <value>disable-breakpad</value>
-
-            <!-- disabled as of 2014-11-14 -->
-            <!-- Prevent infobars from appearing. -->
-            <!--<value>disable-infobars</value>-->
-
-            <value>enable-ui-devtools</value>
-
-            <!-- automatically open devtools-->
-            <!--<value>auto-open-devtools-for-tabs</value>-->
-
-            <!-- disable devtools-->
-            <!--<value>devtools-flags</value>-->
-
-            <!-- possibly help with the infamous DevToolsActivePort error -->
-            <!--<value>disable-gpu</value>-->
-            <!--<value>no-sandbox</value>-->
-            <!--<value>disable-dev-shm-usage</value>-->
-            <!--<value>disable-extensions</value>-->
-          </array>
-        </property>
-
-        <property name="firefoxBinArgs">
-          <list value-type="java.lang.String">
-            <value>-purgecaches</value>
-            <value>-foreground</value>
-          </list>
-        </property>
-
-        <property name="firefoxBooleanPrefs">
-          <map key-type="java.lang.String" value-type="java.lang.Boolean">
-            <entry key="browser.dom.window.dump.enabled" value="false"/>
-
-            <!-- enable outdated flash-->
-            <entry key="extensions.blocklist.enabled" value="false"/>
-
-            <!--
-            disable ALL updates
-            // firefoxProfile.setPreference("app.update.auto", false);
-            // firefoxProfile.setPreference("app.update.enabled", false);
-            -->
-            <entry key="app.update.service.enabled" value="false"/>
-
-            <!-- firefoxProfile.setPreference("browser.search.update", false);-->
-            <entry key="extensions.update.enabled" value="false"/>
-            <entry key="extensions.update.autoUpdateDefault" value="false"/>
-
-            <!-- disable smooth scroll (faster)-->
-            <entry key="general.smoothScroll" value="false"/>
-            <entry key="general.autoScroll" value="true"/>
-
-            <!--
-            forces download to ask for Save As
-            reference: http://kb.mozillazine.org/Firefox_:_FAQs_:_About:config_Entries
-            -->
-            <entry key="browser.download.manager.showWhenStarting" value="false"/>
-            <entry key="browser.download.manager.closeWhenDone" value="false"/>
-            <entry key="browser.download.manager.showAlertOnComplete" value="false"/>
-            <entry key="browser.download.manager.alertOnEXEOpen" value="false"/>
-            <entry key="browser.download.manager.focusWhenStarting" value="false"/>
-            <entry key="browser.download.manager.useWindow" value="false"/>
-
-            <!--
-            A boolean value that indicates whether or not the user's preference is to automatically save files
-            into the download directory. If this value is false, the user is asked what to do.
-            -->
-            <entry key="browser.download.useDownloadDir" value="true"/>
-
-            <!--
-            True (default): In the Download Actions dialog, display actions and filetypes associated with installed plugins.
-            False: Opposite of the above.
-            -->
-            <entry key="browser.download.show_plugins_in_list" value="false"/>
-
-            <!--
-            True: Always ask what to do with an unknown MIME type, and disable option to remember what to open it with
-            False (default): Opposite of above
-            -->
-            <entry key="browser.helperApps.alwaysAsk.force" value="false"/>
-            <entry key="pdfjs.disabled" value="true"/>
-
-            <!--
-            https://www.ghacks.net/2015/08/18/a-comprehensive-list-of-firefox-privacy-and-security-settings/
-            // firefoxProfile.setPreference("browser.shell.checkDefaultBrowser", false"/>
-            -->
-            <entry key="security.ssl.errorReporting.automatic" value="false"/>
-            <entry key="security.ssl.errorReporting.enabled" value="false"/>
-
-            <!--
-            // firefoxProfile.setPreference("security.tls.unrestricted_rc4_fallback", true);
-            // firefoxProfile.setPreference("security.ssl.treat_unsafe_negotiation_as_broken", false);
-            // firefoxProfile.setPreference("browser.tabs.warnOnClose", false);
-            // firefoxProfile.setPreference("browser.tabs.warnOnCloseOtherTabs", false);
-            -->
-            <entry key="browser.tabs.closeWindowWithLastTab" value="true"/>
-            <entry key="browser.tabs.crashReporting.sendReport" value="false"/>
-            <entry key="browser.urlbar.openintab" value="false"/>
-            <entry key="dom.clients.openwindow_favors_same_process" value="true"/>
-
-            <entry key="security.csp.enable" value="false"/>
-            <entry key="security.ssl.enable_ocsp_stapling" value="false"/>
-            <entry key="security.ssl.enable_ocsp_must_staple" value="false"/>
-            <entry key="services.sync.prefs.sync.security.OCSP.enabled" value="false"/>
-            <entry key="services.sync.prefs.sync.security.OCSP.require" value="false"/>
-
-            <entry key="webdriver_accept_untrusted_certs" value="true"/>
-            <entry key="webdriver_assume_untrusted_issuer" value="false"/>
-
-            <entry key="datareporting.healthreport.uploadEnabled" value="false"/>
-            <entry key="datareporting.healthreport.service.enabled" value="false"/>
-            <entry key="breakpad.reportURL" value="false"/>
-            <entry key="browser.search.suggest.enabled" value="false"/>
-            <entry key="privacy.popups.showBrowserMessage" value="false"/>
-
-            <!-- nightly firefox -->
-            <entry key="dom.vr.enabled" value="false"/>
-            <entry key="dom.vr.oculus.enabled" value="false"/>
-            <entry key="dom.vr.openvr.enabled" value="false"/>
-            <entry key="dom.vr.osvr.enabled" value="false"/>
-            <entry key="dom.vr.poseprediction.enabled" value="false"/>
-
-            <entry key="dom.allow_scripts_to_close_windows" value="true"/>
-          </map>
-        </property>
-        <property name="firefoxStringPrefs">
-          <map key-type="java.lang.String" value-type="java.lang.String">
-            <entry key="extensions.firebug.allPagesActivation" value="on"/>
-
-            <!--
-            A local folder the user may have selected for downloaded files to be saved. Migration of other browser
-            settings may also set this path. This folder is enabled when browser.download.folderList equals 2.
-            -->
-            <!--<entry key="browser.download.dir" value=""/>-->
-
-            <!--
-            A comma-separated list of MIME types to save to disk without asking what to use to open the file.
-            Default value is an empty string
-            -->
-            <entry key="browser.helperApps.neverAsk.saveToDisk"
-                   value="text/xml,text/csv,text/html,text/plain,text/log,application/zlib,application/x-gzip,application/gzip,application/x-compressed,application/x-gtar,multipart/x-gzip,application/tgz,application/gnutar,application/x-tar,application/xml,application/x-msexcel,application/excel,application/x-excel,application/vnd.ms-excel,image/png,image/jpeg,application/msword,application/pdf,application/octet-stream,application/x-pdf"/>
-            <entry key="browser.helperApps.neverAsk.openFile"
-                   value="text/xml,text/csv,text/html,text/plain,text/log,application/zlib,application/x-gzip,application/gzip,application/x-compressed,application/x-gtar,multipart/x-gzip,application/tgz,application/gnutar,application/x-tar,application/xml,application/x-msexcel,application/excel,application/x-excel,application/vnd.ms-excel,image/png,image/jpeg,application/msword,application/pdf,application/octet-stream,application/x-pdf"/>
-
-            <entry key="security.ssl.errorReporting.url" value=""/>
-
-            <entry key="marionette.log.level" value="off"/>
-            <entry key="marionette.logging" value="off"/>
-          </map>
-        </property>
-        <property name="firefoxIntPrefs">
-          <map key-type="java.lang.String" value-type="java.lang.Integer">
-            <!-- new window instead of tab -->
-            <!--<entry key="browser.link.open_newwindow" value="2"/>-->
-            <!--<entry key="browser.link.open_newwindow.override.external" value="2"/>-->
-            <!--<entry key="browser.link.open_newwindow.restriction" value="2"/>-->
-            <!-- open to tab -->
-            <entry key="browser.link.open_newwindow" value="3"/>
-            <entry key="browser.link.open_newwindow.restriction" value="0"/>
-
-            <!--
-            indicates the default folder to download a file to. 0 indicates the Desktop; 1 indicates the systems
-            default downloads location; 2 indicates a custom (see: browser.download.dir) folder.
-            -->
-            <entry key="browser.download.folderList" value="2"/>
-
-            <entry key="security.cert_pinning.enforcement_level" value="0"/>
-            <entry key="security.OCSP.enabled" value="0"/>
-          </map>
-        </property>
-      </bean>
-    </property>
   </bean>
 
   <util:map id="webdriverHelperConfig" key-type="org.nexial.core.NexialConst$BrowserType" value-type="java.lang.String">

@@ -469,15 +469,15 @@ class EdgeDriverHelper(context: ExecutionContext) : WebDriverHelper(context) {
 
         fun deriveWin10BuildNumber(currentOsVer: String, minVersion: Int): String {
             val osVer = StringUtils.trim(
-                when {
-                    RegexUtils.isExact(currentOsVer, winVerRegex1) ->
-                        RegexUtils.replace(currentOsVer, winVerRegex1, "$1")
-                    RegexUtils.isExact(currentOsVer, winVerRegex2) ->
-                        RegexUtils.replace(currentOsVer, winVerRegex2, "$1")
-                    RegexUtils.isExact(currentOsVer, winVerRegex3) ->
-                        StringUtils.substringAfterLast(currentOsVer, ".")
-                    else                                           -> currentOsVer
-                })
+                    when {
+                        RegexUtils.isExact(currentOsVer, winVerRegex1) ->
+                            RegexUtils.replace(currentOsVer, winVerRegex1, "$1")
+                        RegexUtils.isExact(currentOsVer, winVerRegex2) ->
+                            RegexUtils.replace(currentOsVer, winVerRegex2, "$1")
+                        RegexUtils.isExact(currentOsVer, winVerRegex3) ->
+                            StringUtils.substringAfterLast(currentOsVer, ".")
+                        else                                           -> currentOsVer
+                    })
 
             if (!NumberUtils.isDigits(osVer)) return minVersion.toString()
 
@@ -636,14 +636,14 @@ class IEDriverHelper(context: ExecutionContext) : WebDriverHelper(context) {
 
     override fun resolveLocalDriverPath(): String {
         if (!IS_OS_WINDOWS) {
-            throw RuntimeException(
-                "Browser automation for Internet Explorer is only supported on " + "Windows operating system. Sorry...")
+            throw RuntimeException("Browser automation for Internet Explorer is only supported on " +
+                                   "Windows operating system. Sorry...")
         }
 
         val newConfigHome = context.replaceTokens(config.home) + separator + (
-            if (EnvUtils.isRunningWindows64bit() &&
-                !context.getBooleanData(OPT_FORCE_IE_32, getDefaultBool(OPT_FORCE_IE_32))) "x64"
-            else "win32")
+                if (EnvUtils.isRunningWindows64bit() &&
+                    !context.getBooleanData(OPT_FORCE_IE_32, getDefaultBool(OPT_FORCE_IE_32))) "x64"
+                else "win32")
 
         this.driverLocation = newConfigHome
         config.home = newConfigHome

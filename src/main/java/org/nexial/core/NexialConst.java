@@ -63,6 +63,8 @@ import static org.nexial.core.NexialConst.Data.SCOPE;
 import static org.nexial.core.NexialConst.Exec.*;
 import static org.nexial.core.NexialConst.Image.OPT_IMAGE_DIFF_COLOR;
 import static org.nexial.core.NexialConst.Integration.MAIL_PREFIX;
+import static org.nexial.core.NexialConst.Web.NS_BROWSER;
+import static org.nexial.core.NexialConst.Web.NS_WEB;
 import static org.nexial.core.NexialConst.Ws.WS_JSON_CONTENT_TYPE;
 import static org.nexial.core.SystemVariables.*;
 
@@ -315,52 +317,6 @@ public final class NexialConst {
 
     // @formatter:on
 
-    // browser types
-    public enum BrowserType {
-        firefox(true, true, true, true, true),
-        firefoxheadless(true, true, true, true, true),
-        safari(false, true, true, true, true),
-        chrome(true, false, true, true, true),
-        chromeheadless(true, false, true, true, true),
-        ie(false, false, true, false, true),
-        edge(false, false, true, false, false),
-        iphone(false, false, false, false, true),
-        browserstack(false, false, false, true, true),
-        chromeembedded(false, false, true, true, true),
-        electron(false, false, true, false, true),
-        crossbrowsertesting(false, false, false, true, true);
-
-        private boolean profileSupported;
-        private boolean consoleLoggingEnabled;
-        private boolean timeoutChangesEnabled;
-        private boolean jsEventFavored;
-        private boolean switchWindowSupported;
-
-        BrowserType(boolean profileSupported,
-                    boolean consoleLoggingEnabled,
-                    boolean timeoutChangesEnabled,
-                    boolean jsEventFavored,
-                    boolean switchWindowSupported) {
-            this.profileSupported = profileSupported;
-            this.consoleLoggingEnabled = consoleLoggingEnabled;
-            this.timeoutChangesEnabled = timeoutChangesEnabled;
-            this.jsEventFavored = jsEventFavored;
-            this.switchWindowSupported = switchWindowSupported;
-        }
-
-        public boolean isProfileSupported() { return profileSupported; }
-
-        public boolean isConsoleLoggingEnabled() { return consoleLoggingEnabled; }
-
-        public boolean isTimeoutChangesEnabled() { return timeoutChangesEnabled; }
-
-        public boolean isJsEventFavored() { return jsEventFavored; }
-
-        public boolean isSwitchWindowSupported() { return switchWindowSupported; }
-
-        public boolean isHeadless() { return this == firefoxheadless || this == chromeheadless; }
-    }
-
     public static final class Data {
         public static final String SCOPE = registerSysVarGroup(NAMESPACE + "scope.");
 
@@ -461,10 +417,10 @@ public final class NexialConst {
          * nexial.scenarioRef.browser=chrome
          * nexial.scenarioRef.environment=QA
          * nexial.scenarioRef.appVersion=1.6.235.1
-         *
+         * <p>
          * Hence one could conclude that the associated test execution uses 'chrome' to test the application of
          * version '1.6.235.1' in the 'QA' environment.
-         *
+         * <p>
          * Note that such data is to be collected at the end of a test execution (not beginning), and all
          * in-execution changes will be reflected as such.
          */
@@ -477,10 +433,10 @@ public final class NexialConst {
          * nexial.scriptRef.user=User1
          * nexial.scriptRef.taxState=CA
          * nexial.scriptRef.company=Johnson Co & Ltd</pre>
-         *
+         * <p>
          * Hence one could conclude that the execution of the associated script uses 'User1' to login to application,
          * and test 'CA' as the state for tax rules and 'Johnson Co & Ltd' as the target company.
-         *
+         * <p>
          * Note that such data is to be collected at the end of each iteration (not beginning), and thus all
          * in-iteration changes will be reflected as such.
          */
@@ -529,10 +485,12 @@ public final class NexialConst {
                                                                                                BLANK + "= ",
                                                                                                TAB + "=\t",
                                                                                                NL + "=\n");
+        public static final String CMD_PROFILE_SEP = "::";
+        public static final String CMD_PROFILE_DEFAULT = "DEFAULT";
 
         // saveTableAsCSV and saveDivsAsCSV
         public static final class SaveGridAsCSV {
-            private static final String _NS = registerSysVarGroup(Web.NS_WEB + "saveGrid.");
+            private static final String _NS = registerSysVarGroup(NS_WEB + "saveGrid.");
 
             public static final String DEEP_SCAN = registerSysVar(_NS + "deepScan", false);
             public static final String HEADER_INPUT = registerSysVar(_NS + "header.input", InputOptions.name.name());
@@ -561,6 +519,13 @@ public final class NexialConst {
         }
 
         private Data() { }
+
+        public static final String withProfile(String profile, String key) {
+            if (StringUtils.isBlank(profile) || StringUtils.equals(profile, CMD_PROFILE_DEFAULT)) { return key; }
+            if (StringUtils.startsWith(key, NS_BROWSER)) {return TextUtils.insertAfter(key, NS_BROWSER, "." + profile);}
+            if (StringUtils.startsWith(key, NS_WEB)) { return TextUtils.insertAfter(key, NS_WEB, "." + profile); }
+            return key + CMD_PROFILE_SEP + profile;
+        }
 
         // reference by enclosing class to force initialization (possibly prior to any reference at runtime)
         static void init() {}
@@ -1508,8 +1473,8 @@ public final class NexialConst {
                                                          "}";
         // various browser behavior/settings
         public static final String FORCE_JS_CLICK = registerSysVar(NS_BROWSER + ".forceJSClick", false);
-        public static final String BROWSER_ACCEPT_INVALID_CERTS = registerSysVar(NS_BROWSER + ".acceptInsecureCerts",
-                                                                                 false);
+        public static final String BROWSER_ACCEPT_INVALID_CERTS =
+            registerSysVar(NS_BROWSER + ".acceptInsecureCerts", false);
         public static final String BROWSER_POST_CLOSE_WAIT = registerSysVar(NS_BROWSER + ".postCloseWaitMs", 3000);
         public static final String ENFORCE_PAGE_SOURCE_STABILITY =
             registerSysVar(NAMESPACE + "enforcePageSourceStability", true);
@@ -1523,6 +1488,7 @@ public final class NexialConst {
         public static final String OPT_LAST_ALERT_TEXT = registerSysVar(NAMESPACE + "lastAlertText");
         public static final String OPT_ALERT_IGNORE_FLAG = registerSysVar(NAMESPACE + "ignoreBrowserAlert", false);
         public static final String BROWSER_META = registerSysVar(NS_BROWSER + ".meta");
+        public static final String PROFILE_WEB_COMMAND = NS_BROWSER + ".command";
 
         // metrics
         public static final String NS_WEB_METRICS = registerSysVarGroup(NS_WEB + "metrics.");
@@ -1739,6 +1705,52 @@ public final class NexialConst {
 
         // reference by enclosing class to force initialization (possibly prior to any reference at runtime)
         static void init() {}
+    }
+
+    // browser types
+    public enum BrowserType {
+        firefox(true, true, true, true, true),
+        firefoxheadless(true, true, true, true, true),
+        safari(false, true, true, true, true),
+        chrome(true, false, true, true, true),
+        chromeheadless(true, false, true, true, true),
+        ie(false, false, true, false, true),
+        edge(false, false, true, false, false),
+        iphone(false, false, false, false, true),
+        browserstack(false, false, false, true, true),
+        chromeembedded(false, false, true, true, true),
+        electron(false, false, true, false, true),
+        crossbrowsertesting(false, false, false, true, true);
+
+        private boolean profileSupported;
+        private boolean consoleLoggingEnabled;
+        private boolean timeoutChangesEnabled;
+        private boolean jsEventFavored;
+        private boolean switchWindowSupported;
+
+        BrowserType(boolean profileSupported,
+                    boolean consoleLoggingEnabled,
+                    boolean timeoutChangesEnabled,
+                    boolean jsEventFavored,
+                    boolean switchWindowSupported) {
+            this.profileSupported = profileSupported;
+            this.consoleLoggingEnabled = consoleLoggingEnabled;
+            this.timeoutChangesEnabled = timeoutChangesEnabled;
+            this.jsEventFavored = jsEventFavored;
+            this.switchWindowSupported = switchWindowSupported;
+        }
+
+        public boolean isProfileSupported() { return profileSupported; }
+
+        public boolean isConsoleLoggingEnabled() { return consoleLoggingEnabled; }
+
+        public boolean isTimeoutChangesEnabled() { return timeoutChangesEnabled; }
+
+        public boolean isJsEventFavored() { return jsEventFavored; }
+
+        public boolean isSwitchWindowSupported() { return switchWindowSupported; }
+
+        public boolean isHeadless() { return this == firefoxheadless || this == chromeheadless; }
     }
 
     private NexialConst() { }

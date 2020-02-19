@@ -37,6 +37,14 @@ public interface NexialCommand {
 
     String getTarget();
 
+    /**
+     * a "profile" allows multiple instances of the same command to reside in context so that they can be swapped
+     * during execution to serve specific target.
+     */
+    String getProfile();
+
+    void setProfile(String profile);
+
     boolean isValidCommand(String command, String... params);
 
     StepResult execute(String command, String... params) throws InvocationTargetException, IllegalAccessException;

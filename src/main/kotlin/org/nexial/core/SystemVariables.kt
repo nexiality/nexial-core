@@ -49,7 +49,8 @@ object SystemVariables {
     }
 
     @JvmStatic
-    fun getDefault(name: String) = if (SYSVARS.containsKey(name)) SYSVARS[name].toString() else null
+    fun getDefault(name: String): String? =
+            if (SYSVARS.containsKey(name)) if (SYSVARS[name] == null) null else SYSVARS[name].toString() else null
 
     @JvmStatic
     fun getDefaultBool(name: String): Boolean {

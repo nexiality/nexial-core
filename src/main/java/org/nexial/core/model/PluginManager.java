@@ -21,16 +21,27 @@ import java.util.Map;
 
 import org.apache.commons.collections4.MapUtils;
 import org.apache.commons.lang3.StringUtils;
+import org.jetbrains.annotations.NotNull;
 import org.nexial.core.plugins.NexialCommand;
 import org.nexial.core.plugins.RequireBrowser;
 import org.nexial.core.plugins.web.Browser;
+import org.nexial.core.utils.ConsoleUtils;
+import org.springframework.beans.BeansException;
+import org.springframework.context.ApplicationContext;
+import org.springframework.context.ApplicationContextAware;
 
-public class PluginManager {
+import static org.nexial.core.NexialConst.Data.CMD_PROFILE_DEFAULT;
+import static org.nexial.core.NexialConst.Data.CMD_PROFILE_SEP;
+
+public class PluginManager implements ApplicationContextAware {
+    protected ApplicationContext springContext;
     protected ExecutionContext context;
     protected Map<String, NexialCommand> plugins;
     protected Map<String, NexialCommand> initialized = new HashMap<>();
-    protected Browser browser;
-    protected boolean browserInitialized;
+    protected Map<String, Browser> profileBrowsers = new HashMap<>();
+
+    @Override
+    public void setApplicationContext(@NotNull ApplicationContext ctx) throws BeansException { springContext = ctx; }
 
     public void init() {
         assert context != null;
@@ -41,55 +52,95 @@ public class PluginManager {
         this.context = context;
         // needed when the same context instance is used for another script (in the same test plan)
         if (MapUtils.isNotEmpty(initialized)) { initialized.forEach((name, plugin) -> plugin.init(context)); }
-        if (browser != null) { browser.setContext(context); }
     }
 
     public void setPlugins(Map<String, NexialCommand> plugins) { this.plugins = plugins; }
 
     public boolean isPluginLoaded(String target) { return initialized.containsKey(StringUtils.lowerCase(target)); }
 
+    /**
+     * as of 2020-02-16/v3, "target" can contain "profile" for "profile-aware" commands. The idea is to allow for
+     * multiple instances of the same command so that they can automate specific targets. For example, there could be
+     * a WebCommand instance for Chrome browser and another one for Firefox.
+     * <p>
+     * A "profile named" target has the pattern of "target::profile". The default profile is "DEFAULT"
+     * (e.g. web::DEFAULT)
+     */
     public NexialCommand getPlugin(String target) {
-        target = StringUtils.lowerCase(target);
-        boolean isInitialized = false;
+        String nsTarget;
+        String profile = CMD_PROFILE_DEFAULT;
+        if (StringUtils.contains(target, CMD_PROFILE_SEP)) {
+            // profile-named target
+            profile = StringUtils.substringAfter(target, CMD_PROFILE_SEP);
+            target = StringUtils.substringBefore(target, CMD_PROFILE_SEP);
+        }
 
+        target = StringUtils.lowerCase(target);
+
+        // check if command exist
+        if (!plugins.containsKey(target)) {
+            ConsoleUtils.error("No command target found: " + target);
+            return null;
+        }
+
+        nsTarget = target + CMD_PROFILE_SEP + profile;
+        boolean isInitialized = false;
         NexialCommand nexialCommand;
-        if (initialized.containsKey(target)) {
-            nexialCommand = initialized.get(target);
-            isInitialized = true;
+
+        if (StringUtils.equals(profile, CMD_PROFILE_DEFAULT)) {
+            if (initialized.containsKey(target)) {
+                nexialCommand = initialized.get(target);
+                isInitialized = true;
+            } else {
+                nexialCommand = plugins.get(target);
+            }
         } else {
-            nexialCommand = plugins.get(target);
+            if (initialized.containsKey(nsTarget)) {
+                nexialCommand = initialized.get(nsTarget);
+                isInitialized = true;
+            } else {
+                // command not yet initialized or was never referenced (until now)
+                try {
+                    // new instance based on the original command copy
+                    nexialCommand = plugins.get(target).getClass().newInstance();
+                } catch (InstantiationException | IllegalAccessException e) {
+                    // unlikely... but we must keep compiler happy
+                    String error = "Unable to create another instance of '" + target + "' for profile '" +
+                                   profile + "': " + e.getMessage();
+                    ConsoleUtils.error(error);
+                    throw new RuntimeException(error);
+                }
+                nexialCommand.setProfile(profile);
+            }
         }
 
         if (nexialCommand instanceof RequireBrowser) {
-            initBrowser();
-            ((RequireBrowser) nexialCommand).setBrowser(browser);
+            ((RequireBrowser) nexialCommand).setBrowser(initBrowser(profile));
         }
-
-        // todo: fix this when proxy code is ready for use
-        //if (nexialCommand instanceof ProxyAware && context.isProxyRequired()) {
-        //	((ProxyAware) nexialCommand).setProxy(proxy);
-        //}
 
         if (!isInitialized) {
             nexialCommand.init(context);
-            initialized.put(target, nexialCommand);
+            if (StringUtils.equals(profile, CMD_PROFILE_DEFAULT)) {
+                initialized.put(target, nexialCommand);
+            } else {
+                initialized.put(nsTarget, nexialCommand);
+            }
         }
 
         return nexialCommand;
     }
 
-    protected void initBrowser() {
-        if (browser == null) {
-            browser = new Browser();
-            browserInitialized = false;
-        }
+    protected Browser initBrowser(String profile) {
+        if (profileBrowsers.containsKey(profile)) { return profileBrowsers.get(profile); }
 
+        // create new Browser instance for "prototype-scoped" bean
+        Browser browser = springContext.getBean("browserTemplate", Browser.class);
+        browser.setProfile(profile);
         browser.setContext(context);
         if (!context.isDelayBrowser()) { browser.ensureWebDriverReady(); }
-        browserInitialized = true;
+        profileBrowsers.put(profile, browser);
+        return browser;
     }
 
-    protected Browser getBrowser() { return browser; }
-
-    public void setBrowser(Browser browser) { this.browser = browser; }
+    protected Browser getBrowser() { return initBrowser(CMD_PROFILE_DEFAULT); }
 }

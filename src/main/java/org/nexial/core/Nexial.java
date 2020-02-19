@@ -978,6 +978,7 @@ public class Nexial {
     }
 
     /**
+     * todo: not used?
      * resolve data file and standard "data" directory based on either data-related commandline input or
      * {@code testScriptFile} commandline input.
      */

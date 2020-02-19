@@ -1810,7 +1810,7 @@ public class WebCommand extends BaseCommand implements CanTakeScreenshot, CanLog
         }
 
         // give it time to settle down
-        wait(context.getIntData(BROWSER_POST_CLOSE_WAIT, getDefaultInt(BROWSER_POST_CLOSE_WAIT)) + "");
+        wait(context.getIntConfig(getTarget(), getProfile(), BROWSER_POST_CLOSE_WAIT) + "");
 
         if (lastWindow) { return closeAll(); }
 
@@ -1842,7 +1842,6 @@ public class WebCommand extends BaseCommand implements CanTakeScreenshot, CanLog
         return StepResult.success("closed last tab/window");
     }
 
-    // todo need to test
     public StepResult mouseOver(String locator) {
         new Actions(driver).moveToElement(toElement(locator)).build().perform();
 
@@ -1900,6 +1899,34 @@ public class WebCommand extends BaseCommand implements CanTakeScreenshot, CanLog
                 value);
         }
         return StepResult.success(attrName + " with value " + value + " updated successfully for '" + locator + "'");
+    }
+
+    /**
+     * switch to another browser whilst maintain the current browser automation. For example,
+     * <pre>
+     *     web >> open >> http://... ...
+     *     ... ...
+     *     ... ...
+     *     web >> switchBrowser >> 2nd_browser | nexial.browser=chrome,nexial.browser.windowSize=1280x1078,nexial.browser.copyCookies=true
+     *     ... ...
+     *     web >> switchBrowser >> DEFAULT
+     *     ... ...
+     *     web >> switchBrowser >> 2nd_browser
+     *     ... ...
+     * </pre>
+     * <p>
+     * once the secondary profile is established, one can switch between that and the "default" (the initial one) back
+     * and forth.
+     * <p>
+     * the "config" can contain a list of browser-related System properties, also a new one -
+     * <code>nexial.browser.copyCookies</code> - copy cookies from current browser to the next one.
+     */
+    public StepResult switchBrowser(String profile, String config) {
+        if (StringUtils.isBlank(profile)) { profile = CMD_PROFILE_DEFAULT; }
+
+        context.updateProfileConfig(getTarget(), profile, config);
+
+        return StepResult.success("switched to another browser profiled under '" + profile + "'");
     }
 
     public void collectClientPerfMetrics() {
@@ -2010,7 +2037,7 @@ public class WebCommand extends BaseCommand implements CanTakeScreenshot, CanLog
 
     protected Point deriveDragFrom(WebElement source) {
         String defaultDragFrom = getDefault(OPT_DRAG_FROM);
-        String dragFrom = context.getStringData(OPT_DRAG_FROM, defaultDragFrom);
+        String dragFrom = context.getStringConfig(getTarget(), getProfile(), OPT_DRAG_FROM);
         if (!OPT_DRAG_FROMS.contains(dragFrom)) {
             ConsoleUtils.error("Invalid drag-from value: " + dragFrom + ", use default instead");
             dragFrom = defaultDragFrom;
@@ -2363,7 +2390,9 @@ public class WebCommand extends BaseCommand implements CanTakeScreenshot, CanLog
         // wish NOT to use JS click if they had configured their test as such
         boolean systemFavorJsClick = jsExecutor != null && browser.favorJSClick();
         boolean forceJSClick = systemFavorJsClick;
-        if (context.hasData(FORCE_JS_CLICK)) { forceJSClick = context.getBooleanData(FORCE_JS_CLICK); }
+        if (context.hasConfig(getTarget(), getProfile(), FORCE_JS_CLICK)) {
+            forceJSClick = context.getBooleanConfig(getTarget(), getProfile(), FORCE_JS_CLICK);
+        }
 
         try {
             // @id doesn't matter anymore...
@@ -2425,19 +2454,23 @@ public class WebCommand extends BaseCommand implements CanTakeScreenshot, CanLog
 
         if (alert == null) {
             alert = (AlertCommand) context.findPlugin("webalert");
+            alert.setBrowser(browser);
+            alert.driver = driver;
             alert.init(context);
         } else {
-            alert.driver = this.driver;
+            alert.setBrowser(browser);
+            alert.driver = driver;
         }
-        alert.setBrowser(browser);
 
         if (cookie == null) {
             cookie = (CookieCommand) context.findPlugin("webcookie");
+            cookie.setBrowser(browser);
+            cookie.driver = driver;
             cookie.init(context);
         } else {
+            cookie.setBrowser(browser);
             cookie.driver = this.driver;
         }
-        cookie.setBrowser(browser);
     }
 
     protected void ensureReady() { initWebDriver(); }
@@ -2616,7 +2649,7 @@ public class WebCommand extends BaseCommand implements CanTakeScreenshot, CanLog
         // for firefox we can't be calling driver.getPageSource() or driver.findElement() when alert dialog is present
         if (alert.preemptiveCheckAlert()) { return true; }
         if (alert.isDialogPresent()) { return false; }
-        if (!context.isPageSourceStabilityEnforced()) { return false; }
+        if (!context.getBooleanConfig(getTarget(), getProfile(), ENFORCE_PAGE_SOURCE_STABILITY)) { return false; }
 
         // force at least 1 compare
         if (maxWait < MIN_STABILITY_WAIT_MS) { maxWait = MIN_STABILITY_WAIT_MS + 1; }
@@ -2721,7 +2754,9 @@ public class WebCommand extends BaseCommand implements CanTakeScreenshot, CanLog
     }
 
     protected void scrollIntoView(WebElement element) {
-        if (element != null && context.getBooleanData(SCROLL_INTO_VIEW, getDefaultBool(SCROLL_INTO_VIEW))) {
+        if (element == null) { return; }
+
+        if (context.getBooleanConfig(getTarget(), getProfile(), SCROLL_INTO_VIEW)) {
             jsExecutor.executeScript(SCROLL_INTO_VIEW_JS, element);
         }
     }
@@ -2887,10 +2922,8 @@ public class WebCommand extends BaseCommand implements CanTakeScreenshot, CanLog
 
         // if we can't scroll to it, then we won't highlight it
         if (scrollTo((Locatable) element)) {
-            int waitMs = context.hasData(HIGHLIGHT_WAIT_MS) ?
-                         context.getIntData(HIGHLIGHT_WAIT_MS) :
-                         context.getIntData(HIGHLIGHT_WAIT_MS_OLD, getDefaultInt(HIGHLIGHT_WAIT_MS));
-            String highlight = context.getStringData(HIGHLIGHT_STYLE, getDefault(HIGHLIGHT_STYLE));
+            int waitMs = context.getIntConfig(getTarget(), getProfile(), HIGHLIGHT_WAIT_MS);
+            String highlight = context.getStringConfig(getTarget(), getProfile(), HIGHLIGHT_STYLE);
             jsExecutor.executeScript("var ws = arguments[0];" +
                                      "var oldStyle = arguments[0].getAttribute('style') || '';" +
                                      "ws.setAttribute('style', arguments[1]);" +
@@ -2973,9 +3006,7 @@ public class WebCommand extends BaseCommand implements CanTakeScreenshot, CanLog
 
     protected boolean isHighlightEnabled() {
         if (browser.getBrowserType().isHeadless()) { return false; }
-        return context.getBooleanData(OPT_DEBUG_HIGHLIGHT,
-                                      context.getBooleanData(OPT_DEBUG_HIGHLIGHT_OLD,
-                                                             getDefaultBool(OPT_DEBUG_HIGHLIGHT)));
+        return context.getBooleanConfig(getTarget(), getProfile(), OPT_DEBUG_HIGHLIGHT);
     }
 
     protected boolean shouldWait() { return context.getBooleanData(WEB_ALWAYS_WAIT, getDefaultBool(WEB_ALWAYS_WAIT)); }
