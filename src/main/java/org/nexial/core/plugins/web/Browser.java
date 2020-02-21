@@ -89,30 +89,6 @@ public class Browser implements ForcefulTerminate {
     private static final int MIN_WIDTH_OR_HEIGHT = 100;
     private static final Point INITIAL_POSITION = new Point(0, 0);
     private static final Point INITIAL_POSITION_SAFARI = new Point(2, 2);
-    private static final String USERHOME = StringUtils.appendIfMissing(USER_HOME, separator);
-    private static final List<String> POSSIBLE_NIX_CHROME_BIN_LOCATIONS = Arrays.asList(
-        "/usr/bin/google-chrome",
-        "/usr/bin/google-chrome-stable",
-        "/usr/bin/chrome",
-        "/bin/google-chrome",
-        "/bin/google-chrome-stable",
-        "/bin/chrome",
-        "/etc/alternatives/google-chrome",
-        "/etc/alternatives/google-chrome-stable",
-        "/etc/alternatives/chrome",
-        "/usr/bin/chromium-browser");
-    private static final List<String> POSSIBLE_OSX_CHROME_BIN_LOCATIONS = Arrays.asList(
-        "/Applications/Google Chrome.app/Contents/MacOS/Google Chrome",
-        USERHOME + "/Applications/Google Chrome.app/Contents/MacOS/Google Chrome",
-        USERHOME + "/tools/Google Chrome.app/Contents/MacOS/Google Chrome");
-    private static final List<String> POSSIBLE_WIN_CHROME_BIN_LOCATIONS = Arrays.asList(
-        "C:\\Program Files (x86)\\Google\\Application\\chrome.exe",
-        "C:\\Program Files (x86)\\Google\\Chrome\\Application\\chrome.exe",
-        "C:\\Program Files\\Google\\Application\\chrome.exe",
-        "C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe",
-        USERHOME + "AppData\\Local\\Google\\Chrome\\Application\\chrome.exe",
-        USERHOME + "AppDataLocal\\Google\\Chrome\\chrome.exe",
-        USERHOME + "Local Settings\\Application Data\\Google\\Chrome\\chrome.exe");
 
     protected ExecutionContext context;
     // not browser profile; this is nexial-specific profile to allow for multiple instances of the same command
@@ -157,6 +133,9 @@ public class Browser implements ForcefulTerminate {
 
     protected boolean shutdownStarted;
 
+    protected Map<String, List<String>> chromeBinLocations;
+    protected Map<String, List<String>> firefoxBinLocations;
+
     public void setContext(ExecutionContext context) { this.context = context; }
 
     public void setProfile(String profile) { this.profile = profile; }
@@ -170,6 +149,10 @@ public class Browser implements ForcefulTerminate {
     public void setFirefoxStringPrefs(Map<String, String> prefs) { this.firefoxStringPrefs = prefs; }
 
     public void setFirefoxBinArgs(List<String> firefoxBinArgs) { this.firefoxBinArgs = firefoxBinArgs; }
+
+    public void setChromeBinLocations(Map<String, List<String>> locations) { this.chromeBinLocations = locations; }
+
+    public void setFirefoxBinLocations(Map<String, List<String>> locations) { this.firefoxBinLocations = locations; }
 
     // public void setProxy(ProxyHandler proxy) { this.proxy = proxy; }
     // public ProxyHandler getProxyHandler() { return proxy; }
@@ -774,6 +757,9 @@ public class Browser implements ForcefulTerminate {
             }
             // }
 
+            String binaryLocation = resolveFirefoxBinLocation();
+            if (StringUtils.isNotBlank(binaryLocation)) { options.setBinary(binaryLocation); }
+
             handleFirefoxProfile(options, capabilities);
 
             if (headless) { options.setHeadless(true); }
@@ -818,7 +804,6 @@ public class Browser implements ForcefulTerminate {
         System.setProperty(SELENIUM_EDGE_DRIVER, driverPath);
 
         EdgeOptions options = new EdgeOptions();
-        // options.setCapability(PAGE_LOAD_STRATEGY, );
 
         if (context.getBooleanConfig("web", profile, BROWSER_INCOGNITO)) { options.setCapability("InPrivate", true); }
 
@@ -1218,9 +1203,9 @@ public class Browser implements ForcefulTerminate {
                                "search for alternative...");
         }
 
-        List<String> possibleLocations = IS_OS_WINDOWS ? POSSIBLE_WIN_CHROME_BIN_LOCATIONS :
-                                         IS_OS_MAC ? POSSIBLE_OSX_CHROME_BIN_LOCATIONS :
-                                         IS_OS_LINUX ? POSSIBLE_NIX_CHROME_BIN_LOCATIONS : null;
+        List<String> possibleLocations = IS_OS_WINDOWS ? chromeBinLocations.get("windows") :
+                                         IS_OS_MAC ? chromeBinLocations.get("mac") :
+                                         IS_OS_LINUX ? chromeBinLocations.get("linux") : null;
         if (CollectionUtils.isEmpty(possibleLocations)) {
             ConsoleUtils.error("Unable to derive alternative Chrome binary... ");
             return null;
@@ -1231,6 +1216,30 @@ public class Browser implements ForcefulTerminate {
         }
 
         ConsoleUtils.error("Unable to derive alternative Chrome binary... ");
+        return null;
+    }
+
+    private String resolveFirefoxBinLocation() {
+        String configuredPath = resolveConfig(SELENIUM_FIREFOX_BIN);
+        if (StringUtils.isNotBlank(configuredPath)) {
+            if (FileUtil.isFileExecutable(configuredPath)) { return configuredPath; }
+            ConsoleUtils.error("Configured Firefox binary '" + configuredPath + "' is not executable; " +
+                               "search for alternative...");
+        }
+
+        List<String> possibleLocations = IS_OS_WINDOWS ? firefoxBinLocations.get("windows") :
+                                         IS_OS_MAC ? firefoxBinLocations.get("mac") :
+                                         IS_OS_LINUX ? firefoxBinLocations.get("linux") : null;
+        if (CollectionUtils.isEmpty(possibleLocations)) {
+            ConsoleUtils.error("Unable to derive alternative Firefox binary... ");
+            return null;
+        }
+
+        for (String location : possibleLocations) {
+            if (FileUtil.isFileExecutable(location)) { return new File(location).getAbsolutePath(); }
+        }
+
+        ConsoleUtils.error("Unable to derive alternative Firefox binary... ");
         return null;
     }
 

@@ -549,10 +549,10 @@ public final class FileUtil {
 
     /**
      * extract just the file name portion of a path.
-     *
+     * <p>
      * The reason for this method is to allow for discovery of the "file name" without going to underlying OS.  The
      * {@code path} in question could represent a remote path, which cannot be validated locally.
-     *
+     * <p>
      * If {@code path} ends with path separator (/ or \), then an empty string is returned.
      */
     public static String extractFilename(String path) {
