@@ -1972,12 +1972,10 @@ public class WebCommand extends BaseCommand implements CanTakeScreenshot, CanLog
                 DEF_USERSTACK_APIKEYS), ",", true);
             UserStackAPI userStackAPI = CollectionUtils.isNotEmpty(listKeys) ?
                                         new UserStackAPI(listKeys) : new UserStackAPI();
-            // UserStackAPI userStackAPI = new UserStackAPI(listKeys);
-            // todo if file is empty call apiKey save json data
-            // todo if ua is equal to json key then no call else call detect browser
             browserMeta = userStackAPI.detectAsBrowserMeta(ua);
             updateBrowserMetaCache(ua, (BrowserMeta) browserMeta);
         }
+
         context.setData(BROWSER_META, browserMeta);
     }
 
@@ -3025,36 +3023,6 @@ public class WebCommand extends BaseCommand implements CanTakeScreenshot, CanLog
         return saveSubstring(textArray, delimStart, delimEnd, var);
     }
 
-    /*protected void syncBrowserMeta() {
-        Object browserMeta = context.getObjectData(BROWSER_META);
-        if (browserMeta instanceof BrowserMeta) { return; }
-
-        if (jsExecutor == null || driver == null) {
-            ConsoleUtils.error("Browser or webdriver not yet initialized; cancel the fetching of browser meta...");
-            return;
-        }
-
-
-        String ua = Objects.toString(jsExecutor.executeScript("return navigator.userAgent;"));
-
-        // load cache if browser is not updated i.e. user agent is same we load browsermeta from cache itself.
-        browserMeta = loadBrowserMetaCache(ua);
-        if (browserMeta == null) {
-            // go get it
-            List<String> apiKeys = TextUtils.toList(StringUtils.defaultIfBlank(
-                // first try with the rotating keys
-                context.getStringData(USERSTACK_APIKEYS, context.getStringData(USERSTACK_APIKEY)),
-                DEF_USERSTACK_APIKEYS), ",", true);
-            if (CollectionUtils.isEmpty(apiKeys)) { return; }
-
-            UserStackAPI userStackAPI = CollectionUtils.isEmpty(apiKeys) ? new UserStackAPI(apiKeys) : new UserStackAPI();
-            browserMeta = userStackAPI.detectAsBrowserMeta(ua);
-            updateBrowserMetaCache(ua, browserMeta.toString());
-        }
-        context.setData(BROWSER_META, browserMeta);
-    }
-*/
-
     private Object loadBrowserMetaCache(String ua) {
         File file = new File(BROWSER_META_CACHE_PATH);
         if (!file.exists()) { return null; }
@@ -3071,6 +3039,8 @@ public class WebCommand extends BaseCommand implements CanTakeScreenshot, CanLog
     }
 
     private void updateBrowserMetaCache(String ua, BrowserMeta browserMeta) {
+        if (browserMeta == null || StringUtils.equals(browserMeta.getName(), "UNABLE TO DETERMINE")) { return; }
+
         JsonObject root;
         File file = new File(BROWSER_META_CACHE_PATH);
         if (!file.exists() || file.length() < 5) {

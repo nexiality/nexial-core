@@ -17,10 +17,13 @@
 package org.nexial.core.plugins.web
 
 import com.google.gson.JsonObject
+import org.apache.commons.lang3.SystemUtils.OS_ARCH
+import org.apache.commons.lang3.SystemUtils.OS_NAME
 import org.nexial.commons.utils.CollectionUtil
 import org.nexial.core.NexialConst.GSON
 import org.nexial.core.model.BrowserDevice
 import org.nexial.core.model.BrowserDeviceType
+import org.nexial.core.model.BrowserDeviceType.unknown
 import org.nexial.core.model.BrowserMeta
 import org.nexial.core.model.BrowserOS
 import org.nexial.core.plugins.ws.WebServiceClient
@@ -29,10 +32,11 @@ import org.nexial.core.utils.ConsoleUtils
 class UserStackAPI(apiKeys: MutableList<String> = mutableListOf("5b71975a107de30d26f3878fa9adbb5e")) {
     private val keys = apiKeys
 
-    @Throws(IllegalArgumentException::class)
+    // @Throws(IllegalArgumentException::class)
     fun detectAsBrowserMeta(ua: String): BrowserMeta {
-        if (keys.isEmpty())
-            throw IllegalArgumentException("Unable to integrate with UserStack. Check previous logs for details")
+        // could fail.. if all the available keys are invalid.. or network issue
+        // but we mustn't hold up the execution
+        if (keys.isEmpty()) return newDummyBrowserMeta(ua)
 
         val apiKey = CollectionUtil.randomSelectOne(keys)
         val response = WebServiceClient(null).get("http://api.userstack.com/detect?access_key=${apiKey}&ua=${ua}", null)
@@ -48,9 +52,18 @@ class UserStackAPI(apiKeys: MutableList<String> = mutableListOf("5b71975a107de30
                 parseBrowserMeta(json, ua)
             }
         } else {
-            throw IllegalArgumentException(response.statusText)
+            // could fail.. if all the available keys are invalid.. or network issue
+            // but we mustn't hold up the execution
+            newDummyBrowserMeta(ua)
         }
     }
+
+    private fun newDummyBrowserMeta(ua: String): BrowserMeta =
+            BrowserMeta("UNABLE TO DETERMINE",
+                        "???",
+                        ua,
+                        BrowserOS(OS_NAME, OS_NAME, OS_ARCH),
+                        BrowserDevice(unknown, "UNKNOWN", "UNKNOWN"))
 
     internal fun parseBrowserMeta(json: JsonObject, ua: String): BrowserMeta {
         val os = json.getAsJsonObject("os")
