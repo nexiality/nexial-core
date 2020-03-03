@@ -2908,10 +2908,7 @@ public class WebCommand extends BaseCommand implements CanTakeScreenshot, CanLog
         return matched;
     }
 
-    protected void highlight(String locator) {
-        if (!isHighlightEnabled()) { return; }
-        highlight(toElement(context.replaceTokens(locator)));
-    }
+    protected void highlight(String locator) { highlight(toElement(context.replaceTokens(locator))); }
 
     protected void highlight(WebElement element) {
         if (!isHighlightEnabled()) { return; }
@@ -2919,14 +2916,24 @@ public class WebCommand extends BaseCommand implements CanTakeScreenshot, CanLog
         // if (!element.isDisplayed()) { return; }
 
         // if we can't scroll to it, then we won't highlight it
-        if (scrollTo((Locatable) element)) {
-            int waitMs = context.getIntConfig(getTarget(), getProfile(), HIGHLIGHT_WAIT_MS);
-            String highlight = context.getStringConfig(getTarget(), getProfile(), HIGHLIGHT_STYLE);
-            jsExecutor.executeScript("var ws = arguments[0];" +
-                                     "var oldStyle = arguments[0].getAttribute('style') || '';" +
-                                     "ws.setAttribute('style', arguments[1]);" +
-                                     "setTimeout(function () { ws.setAttribute('style', oldStyle); }, " + waitMs + ");",
-                                     element, highlight);
+        try {
+            if (scrollTo((Locatable) element)) {
+                int waitMs = context.getIntConfig(getTarget(), getProfile(), HIGHLIGHT_WAIT_MS);
+                String highlight = context.getStringConfig(getTarget(), getProfile(), HIGHLIGHT_STYLE);
+                jsExecutor.executeScript("var ws = arguments[0];" +
+                                         "var oldStyle = arguments[0].getAttribute('style') || '';" +
+                                         "ws.setAttribute('style', arguments[1]);" +
+                                         "setTimeout(function () { ws.setAttribute('style', oldStyle); }, " +
+                                         waitMs +
+                                         ");",
+                                         element, highlight);
+            }
+        } catch (WebDriverException e) {
+            // ideally we should be able to scroll and perform highlighting... but some (misbehaving) apps
+            // might prevent either the scrolling (webdriver internally uses `scrollIntoView()` JS function) or
+            // highlighting to work properly.. might even through exception
+            // if we run into error here... just silently ignore it for now. We must proceed on with the execution!
+            if (context.isVerbose()) { ConsoleUtils.log("unable to highlight element; ignoring..."); }
         }
     }
 
