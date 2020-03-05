@@ -1088,6 +1088,9 @@ public final class NexialConst {
         public static final String DESKTOP_NOTIFY_WAITMS = registerSysVar(NAMESPACE + "desktopNotifyWaitMs",
                                                                           5000);
 
+        public static final String CLEAR_TABLE_CELL_BEFORE_EDIT = registerSysVar(NAMESPACE + "clearTableCellBeforeEdit",
+                                                                                 false);
+
         private Desktop() {}
 
         // reference by enclosing class to force initialization (possibly prior to any reference at runtime)

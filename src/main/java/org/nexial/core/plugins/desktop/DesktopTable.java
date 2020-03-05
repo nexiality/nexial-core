@@ -47,6 +47,8 @@ import org.openqa.selenium.NoSuchElementException;
 import org.openqa.selenium.WebElement;
 import org.openqa.selenium.interactions.Actions;
 
+import static org.nexial.core.NexialConst.Desktop.CLEAR_TABLE_CELL_BEFORE_EDIT;
+import static org.nexial.core.SystemVariables.getDefaultBool;
 import static org.nexial.core.plugins.desktop.DesktopConst.*;
 import static org.nexial.core.plugins.desktop.DesktopUtils.*;
 import static org.nexial.core.plugins.desktop.ElementType.*;
@@ -766,7 +768,15 @@ public class DesktopTable extends DesktopElement {
             if (StringUtils.isNotBlank(value1)) { setValue(cellElement, value1); }
             // used actions.sendKeys to support key event driven data cells
             new Actions(getDriver()).moveToElement(cellElement).sendKeys(value2).perform();
-        } else { cellElement.sendKeys(value); }
+        } else {
+            ExecutionContext context = ExecutionThread.get();
+            // sometimes no-formatted textbox cells required to be cleared
+            // might need rework
+            if (context.getBooleanData(CLEAR_TABLE_CELL_BEFORE_EDIT, getDefaultBool(CLEAR_TABLE_CELL_BEFORE_EDIT))) {
+                setValue(cellElement, "");
+            }
+            cellElement.sendKeys(value);
+        }
     }
 
     private List<WebElement> getRowElements() {
