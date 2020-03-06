@@ -65,7 +65,7 @@ import static org.nexial.core.utils.ExecUtils.IGNORED_CLI_OPT;
 public class ExecutionInputPrep {
 
     /** called from {@link ExecutionThread} for each iteration. */
-    public static Excel prep(String runId, ExecutionDefinition execDef, int counter) throws IOException {
+    public static Excel prep(String runId, ExecutionDefinition execDef, int iterationIndex) throws IOException {
         assert StringUtils.isNotBlank(runId);
         assert execDef != null;
 
@@ -90,7 +90,7 @@ public class ExecutionInputPrep {
         // 2.1. decorate output file name based on runtime information
         String outputFileName = StringUtils.appendIfMissing(outBase, separator) + filename;
         outputFileName = OutputFileUtils.addStartDateTime(outputFileName, new Date());
-        outputFileName = OutputFileUtils.addIteration(outputFileName, StringUtils.leftPad(counter + "", 3, "0"));
+        outputFileName = OutputFileUtils.addIteration(outputFileName, StringUtils.leftPad(iterationIndex + "", 3, "0"));
 
         // if script are executed as part of test plan, then the naming convention is:
         // [test plan file name w/o ext][SEP][test plan sheet name][SEP][sequence#][SEP][test script name w/o ext][SEP][start date yyyyMMdd_HHmmss][SEP][iteration#].xlsx
@@ -125,7 +125,7 @@ public class ExecutionInputPrep {
         // merge macros
         // todo: better instantiation so that we can reuse in-class cache (inside MacroMerger)
         MacroMerger macroMerger = new MacroMerger();
-        macroMerger.setCurrentIteration(counter);
+        macroMerger.setCurrentIteration(iterationIndex);
         macroMerger.setExecDef(execDef);
         macroMerger.setProject(execDef.getProject());
         macroMerger.setExcel(outputExcel);
@@ -140,9 +140,9 @@ public class ExecutionInputPrep {
         TestData testData = execDef.getTestData();
         if (testData == null || testData.getSettingAsBoolean(REFETCH_DATA_FILE)) {testData = execDef.getTestData(true);}
         if (!ExecUtils.isRunningInZeroTouchEnv()) {
-            testData = new ExecutionVariableConsole().processRuntimeVariables(testData, counter);
+            testData = new ExecutionVariableConsole().processRuntimeVariables(testData, iterationIndex);
         }
-        mergeTestData(outputExcel, testData, counter);
+        mergeTestData(outputExcel, testData, iterationIndex);
         ConsoleUtils.log(runId, "test script and test data merged to " + outputFile);
 
         // 6. now copy tmp to final location

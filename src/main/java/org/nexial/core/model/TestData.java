@@ -43,7 +43,7 @@ import static org.nexial.core.NexialConst.*;
 /**
  * This represents a set of data usable for a specific test execution, which may contain multiple scenarios.
  * <p/>
- *
+ * <p>
  * Within the context of Nexial, there are 3 types of data definitions:
  * <ol>
  * <li>Predefined data that remains constant throughout an entire test execution (which could be multiple scenarios and
@@ -67,13 +67,13 @@ import static org.nexial.core.NexialConst.*;
  * <code>nexial.</code>  Nexial users are free to define any names or values.  Using <code>nexial.scope.iteration</code>
  * and <code>nexial.scope.fallbackToPrevious</code> one can control how Nexial handle data values between iterations.</li>
  * </ol>
- *
+ * <p>
  * It is noteworthy that non-scoped data can be altered as a test execution progresses.  The altered data would impacting
  * the subsequent test scenarios/cases/steps.  The progressive data management is by design. The ability to "remember" data
  * states would allow a more meaningful and dynamic way to execute tests, esp. for tests that spread across multiple
  * scenarios. However data changes and the transitive behavior will not persists between test execution.
  * <p/>
- *
+ * <p>
  * In addition, it is possible to specify multiple data sheets where the latter overrides the former.  All the data sheets
  * are read and parsed in the beginning of a test execution.  Hence it is possible to alter the behavior of a test without
  * modifying existing test scripts or test data.
@@ -132,7 +132,10 @@ public class TestData {
                NumberUtils.toInt(StringUtils.substringBefore(iteration, "-"));
     }
 
-    public IterationManager getIterationManager() { return IterationManager.newInstance(getSetting(ITERATION)); }
+    public IterationManager getIterationManager() {
+        // can't save as instance variable due to the nature of how scopeSetting is collected in constructor...
+        return IterationManager.newInstance(getSetting(ITERATION));
+    }
 
     public boolean isFallbackToPrevious() { return getSettingAsBoolean(FALLBACK_TO_PREVIOUS); }
 
@@ -146,7 +149,7 @@ public class TestData {
 
     /**
      * favor system property over scope settings.  that way we can create just-in-time override from commandline.
-     *
+     * <p>
      * Order:
      * <ol>
      * <li>System property</li>
@@ -243,6 +246,35 @@ public class TestData {
         scopeSettings.put(OPT_SCRIPT_DIR, project.getScriptPath());
         scopeSettings.put(OPT_DATA_DIR, project.getDataPath());
         scopeSettings.put(OPT_PLAN_DIR, project.getPlanPath());
+    }
+
+    Map<String, List<String>> getRuntimeDataMap() { return runtimeDataMap; }
+
+    // add existing runtime data from previous iteration if any
+    void addExistingRuntimeData(Map<String, List<String>> runtimeDataMap) {
+        if (runtimeDataMap.isEmpty()) { return; }
+
+        runtimeDataMap.forEach((key, value) -> {
+            if (!dataMap.containsKey(key)) { dataMap.put(key, value); }
+            this.runtimeDataMap.put(key, value);
+        });
+    }
+
+    // add runtime data to dataMap when variable is assigned from console
+    void addRuntimeData(String name, String value, int currIteration) {
+        if (isFallbackToPrevious() && dataMap.containsKey(name)) { return; }
+
+        // get dataMap if available
+        List<String> data = dataMap.containsKey(name) ? dataMap.get(name) : new ArrayList<>();
+        int highestIteration = getIterationManager().getHighestIteration();
+
+        data = data.size() == 0 && runtimeDataMap.containsKey(name) ? runtimeDataMap.get(name) : data;
+        while (data.size() < highestIteration) { data.add(""); }
+        data.set(currIteration - 1, value);
+
+        dataMap.put(name, data);
+        // add to runtime data as well to keep track in next iterations
+        runtimeDataMap.put(name, data);
     }
 
     protected void collectData(Worksheet sheet) {
@@ -390,34 +422,5 @@ public class TestData {
             data.set((lastIteration - 1), stringValue);
             // }
         });
-    }
-
-    Map<String, List<String>> getRuntimeDataMap() { return runtimeDataMap; }
-
-    // add existing runtime data from previous iteration if any
-    void addExistingRuntimeData(Map<String, List<String>> runtimeDataMap) {
-        if (runtimeDataMap.isEmpty()) { return; }
-
-        runtimeDataMap.forEach((key, value) -> {
-            if (!dataMap.containsKey(key)) { dataMap.put(key, value); }
-            this.runtimeDataMap.put(key, value);
-        });
-    }
-
-    // add runtime data to dataMap when variable is assigned from console
-    void addRuntimeData(String name, String value, int currIteration) {
-        if (isFallbackToPrevious() && dataMap.containsKey(name)) { return; }
-
-        // get dataMap if available
-        List<String> data = dataMap.containsKey(name) ? dataMap.get(name) : new ArrayList<>();
-        int highestIteration = getIterationManager().getHighestIteration();
-
-        data = data.size() == 0 && runtimeDataMap.containsKey(name) ? runtimeDataMap.get(name) : data;
-        while (data.size() < highestIteration) { data.add(""); }
-        data.set(currIteration - 1, value);
-
-        dataMap.put(name, data);
-        // add to runtime data as well to keep track in next iterations
-        runtimeDataMap.put(name, data);
     }
 }

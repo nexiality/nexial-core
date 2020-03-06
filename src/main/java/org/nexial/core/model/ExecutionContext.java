@@ -406,8 +406,9 @@ public class ExecutionContext {
 
         // browser is all about web commands...
         Map<String, String> config = getProfileConfig("web", currentCommandProfiles.get("web"));
+        String systemBrowser = System.getProperty(BROWSER, getStringData(BROWSER, getDefault(BROWSER)));
         return StringUtils.remove(
-            config.getOrDefault(BROWSER, System.getProperty(BROWSER, getStringData(BROWSER, getDefault(BROWSER)))),
+            MapUtils.isEmpty(config) ? systemBrowser : config.getOrDefault(BROWSER, systemBrowser),
             ".");
     }
 
