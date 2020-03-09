@@ -259,8 +259,7 @@ public class WebCommand extends BaseCommand implements CanTakeScreenshot, CanLog
             element.click();
         }
 
-        return StepResult.success("Successfully toggled " + elements.size() +
-                                  " elements matching locator '" + locator + "'");
+        return StepResult.success("Successfully toggled %s elements matching locator '%s'", elements.size(), locator);
     }
 
     @NotNull
@@ -271,16 +270,15 @@ public class WebCommand extends BaseCommand implements CanTakeScreenshot, CanLog
 
             List<WebElement> options = select.getOptions();
             if (CollectionUtils.isEmpty(options)) {
-                return StepResult.fail("Unable to multi-select as no options " +
-                                       "found in select element '" + locator + "'");
+                return StepResult.fail("Unable to multi-select as no options found in select element '%s", locator);
             }
             options.forEach(option -> select.selectByVisibleText(option.getText()));
-            return StepResult.success("selected all options from multi-select '" + locator + "'");
+            return StepResult.success("selected all options from multi-select '%s'", locator);
         } else {
             try {
                 select.selectByVisibleText(text);
             } catch (NoSuchElementException e) {
-                return StepResult.fail("Specified text '" + text + "' not found in select element '" + locator + "'");
+                return StepResult.fail("Specified text '%s' not found in select element '%s'", text, locator);
             }
             return StepResult.success("selected '" + text + "' from '" + locator + "'");
         }
@@ -288,23 +286,23 @@ public class WebCommand extends BaseCommand implements CanTakeScreenshot, CanLog
 
     @NotNull
     public StepResult deselect(String locator, String text) {
-        Select select = getSelectElement(locator);
         if (StringUtils.isNotBlank(text)) {
+            Select select = getSelectElement(locator);
             try {
                 if (StringUtils.equals(text, DROPDOWN_SELECT_ALL)) {
                     select.deselectAll();
-                    return StepResult.success("deselected all options from '" + locator + "'");
+                    return StepResult.success("deselected all options from '%s'", locator);
                 } else {
                     select.deselectByVisibleText(text);
-                    return StepResult.success("deselected '" + text + "' from '" + locator + "'");
+                    return StepResult.success("deselected '%s' from '%s'", text, locator);
                 }
             } catch (UnsupportedOperationException e) {
-                return StepResult.fail("Unable to multi-deselect from single-select element " + e.getMessage());
+                return StepResult.fail("Unable to multi-deselect from single-select element: %s", e.getMessage());
             } catch (NoSuchElementException e) {
-                return StepResult.fail("Unable deselect as " + e.getMessage());
+                return StepResult.fail("Unable deselect '%s':", locator, e.getMessage());
             }
         } else {
-            return StepResult.success("NO action performed on '" + locator + "' since no text was provided");
+            return StepResult.success("NO action performed on '%s' since no text was provided", locator);
         }
     }
 
@@ -314,14 +312,48 @@ public class WebCommand extends BaseCommand implements CanTakeScreenshot, CanLog
 
         Select select = getSelectElement(locator);
 
-        List<String> labels = TextUtils.toList(array, context.getTextDelim(), true);
-        for (String label : labels) { select.selectByVisibleText(label); }
+        List<String> list = paramToList(array);
+        if (CollectionUtils.isEmpty(list)) {
+            return StepResult.success("NO selection made on '%s' since no text was provided", locator);
+        }
 
-        return StepResult.success("selected '" + array + "' on widgets matching '" + locator + "'");
+        if (!select.isMultiple()) {
+            select.selectByVisibleText(list.get(0));
+            return StepResult.success("selected option with text '%s' from '%s'", list.get(0), locator);
+        }
+
+        list.forEach(select::selectByVisibleText);
+        return StepResult.success("selected <OPTION> from <SELECT> '%s' with text '%s'", locator, array);
     }
 
     @NotNull
-    public StepResult selectMultiOptions(String locator) { return select(locator, DROPDOWN_SELECT_ALL); }
+    public StepResult selectMultiByValue(String locator, String array) {
+        requires(StringUtils.isNotBlank(array), "invalid text array", array);
+
+        Select select = getSelectElement(locator);
+
+        List<String> values = paramToList(array);
+        if (CollectionUtils.isEmpty(values)) {
+            return StepResult.success("NO selection made on '%s' since no value was provided", locator);
+        }
+
+        if (!select.isMultiple()) {
+            select.selectByValue(values.get(0));
+            return StepResult.success("selected option with value '%s' from '%s'", values.get(0), locator);
+        }
+
+        values.forEach(select::selectByValue);
+        return StepResult.success("selected <OPTION> from <SELECT> '%s' with value '%s'", locator, array);
+    }
+
+    @NotNull
+    public StepResult selectMultiOptions(String locator) {
+        logDeprecated(getTarget() + " » selectMultiOptions(locator)", getTarget() + " » selectAllOptions(locator)");
+        return selectAllOptions(locator);
+    }
+
+    @NotNull
+    public StepResult selectAllOptions(String locator) { return select(locator, DROPDOWN_SELECT_ALL); }
 
     @NotNull
     public StepResult deselectMulti(String locator, String array) {

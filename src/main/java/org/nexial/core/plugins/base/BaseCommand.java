@@ -84,6 +84,7 @@ import static org.nexial.core.utils.OutputFileUtils.CASE_INSENSIVE_SORT;
 
 public class BaseCommand implements NexialCommand {
     protected static final IncrementStrategy STRATEGY_DEFAULT = ALPHANUM;
+    private static final String TMP_DELIM = "<--~.$.~-->";
     protected transient Map<String, Method> commandMethods = new HashMap<>();
     protected transient ExecutionContext context;
     protected long pauseMs;
@@ -1521,6 +1522,22 @@ public class BaseCommand implements NexialCommand {
             saveFile.getParentFile().mkdirs();
             return saveFile;
         }
+    }
+
+    @NotNull
+    protected List<String> paramToList(String array) {
+        List<String> list = new ArrayList<>();
+        if (StringUtils.isEmpty(array)) { return list; }
+
+        String delim = context.getTextDelim();
+
+        array = StringUtils.remove(array, "\r");
+        array = StringUtils.replace(array, "\\" + delim, TMP_DELIM);
+        if (!StringUtils.equals(delim, "\n")) { array = StringUtils.replace(array, delim, "\n"); }
+        List<String> values = TextUtils.toList(array, "\n", false);
+        values.forEach(v -> list.add(StringUtils.replace(v, TMP_DELIM, delim)));
+
+        return list;
     }
 
     private static Pair<String, String> displayAligned(List<String> list1, List<String> list2) {

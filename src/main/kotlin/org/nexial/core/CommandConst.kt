@@ -98,7 +98,8 @@ object CommandConst {
             "base.assertNotContains(text,substring)" to "base.assertNotContain(text,substring)",
             "web.assertAttributeNotContains(locator,attrName,contains)" to "web.assertAttributeNotContain(locator,attrName,contains)",
             "web.assertAttributeContains(locator,attrName,contains)" to "web.assertAttributeContain(locator,attrName,contains)",
-            "web.screenshot(file,locator,ignoreLocators)" to "web.screenshot(file,locator)"
+            "web.screenshot(file,locator,ignoreLocators)" to "web.screenshot(file,locator)",
+            "web.selectMultiOptions(locator)" to "web.selectAllOptions(locator)"
     )
 
     private const val SUGGESTION_PREFIX = "This command is deprecated and will soon be removed. Consider using"

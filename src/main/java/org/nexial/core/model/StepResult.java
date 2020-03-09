@@ -50,7 +50,15 @@ public class StepResult {
 
     public static StepResult success(String message) { return new StepResult(true, message, null); }
 
+    public static StepResult success(String format, Object... args) {
+        return new StepResult(true, String.format(format, args), null);
+    }
+
     public static StepResult fail(String message) { return new StepResult(false, message, null); }
+
+    public static StepResult fail(String format, Object... args) {
+        return new StepResult(false, String.format(format, args), null);
+    }
 
     public static StepResult fail(String message, Throwable exception) {
         return new StepResult(false, message, exception);
