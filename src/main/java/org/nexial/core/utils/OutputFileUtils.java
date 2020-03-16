@@ -19,6 +19,8 @@ package org.nexial.core.utils;
 
 import java.io.File;
 import java.io.IOException;
+import java.io.PrintWriter;
+import java.io.StringWriter;
 import java.util.Comparator;
 import java.util.Date;
 import java.util.List;
@@ -28,6 +30,8 @@ import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang3.ArrayUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.math.NumberUtils;
+import org.jetbrains.annotations.NotNull;
+import org.nexial.commons.utils.DateUtility;
 import org.nexial.commons.utils.FileUtil;
 import org.nexial.commons.utils.RegexUtils;
 import org.nexial.core.NexialConst.*;
@@ -35,6 +39,7 @@ import org.nexial.core.model.ExecutionContext;
 import org.nexial.core.model.ExecutionDefinition;
 import org.nexial.core.model.TestStep;
 import org.nexial.core.plugins.web.Browser;
+import org.nexial.core.variable.Syspath;
 
 import static java.io.File.separator;
 import static org.nexial.core.NexialConst.*;
@@ -253,7 +258,7 @@ public final class OutputFileUtils {
     }
 
     /**
-     * Need to handle both types of file naming schemes (single run and test plan run).  The differentiator would
+     * Need to handle both types of file naming schemes (single run and test plan run).  The differentiators would
      * be the pattern recognized via the {@code file} parameter.
      * <br/><br/>
      * <b>Single Run:</b><br/>
@@ -305,7 +310,7 @@ public final class OutputFileUtils {
                 fp.stepIter = sanitize(data);
                 break;
             default:
-                throw new RuntimeException("Unsupport position for " + NAME + ": " + position);
+                throw new RuntimeException("Unsupported position for " + NAME + ": " + position);
         }
 
         return path +
@@ -368,8 +373,69 @@ public final class OutputFileUtils {
             case POS_EXT:
                 return fp.ext;
             default:
-                throw new RuntimeException("Unsupport position for " + NAME + ": " + position);
+                throw new RuntimeException("Unsupported position for " + NAME + ": " + position);
         }
+    }
+
+    @NotNull
+    public static String generateErrorLog(TestStep testStep, Throwable e) {
+        File log = OutputFileUtils.generateErrorFile(testStep, e);
+        String logFqn = log.getAbsolutePath();
+        ExecutionContext context = testStep.getContext();
+        if (context.isOutputToCloud() && FileUtil.isFileReadable(log, 1)) {
+            try {
+                ConsoleUtils.log("output-to-cloud enabled; copying " + logFqn + " cloud...");
+                logFqn = context.getOtc().importFile(log, true);
+            } catch (IOException ex) {
+                // unable to send log to cloud...
+                ConsoleUtils.log("Unable to copy resource to cloud: " + e.getMessage());
+                context.getLogger().log(testStep, toCloudIntegrationNotReadyMessage(logFqn + ": " + e.getMessage()));
+            }
+        }
+        return logFqn;
+    }
+
+    @NotNull
+    public static File generateErrorFile(TestStep testStep, Throwable e) {
+        Syspath syspath = new Syspath();
+        String logPath = syspath.log("fullpath") + separator + generateOutputFilename(testStep, ".log");
+        File log = new File(logPath);
+        int currentCounter = 1;
+        do {
+            if (log.exists() && log.canRead() && log.length() > 5) {
+                if (currentCounter == 1) {
+                    logPath = StringUtils.replace(logPath, ".log", currentCounter + ".log");
+                } else {
+                    logPath = StringUtils.replace(logPath, (currentCounter - 1) + ".log", currentCounter + ".log");
+                }
+                currentCounter++;
+                log = new File(logPath);
+            }
+        } while (currentCounter > 10);
+
+        // build error content
+        StringBuilder buffer = new StringBuilder();
+        buffer.append("Nexial Version:    ").append(ExecUtils.NEXIAL_MANIFEST).append("\n")
+              .append("Current Timestamp: ").append(DateUtility.formatLog2Date(System.currentTimeMillis())).append("\n")
+              .append("Test Step:         ").append(testStep.getMessageId()).append("\n")
+              .append(StringUtils.repeat("-", 80)).append("\n");
+
+        if (e instanceof AssertionError || e instanceof IllegalArgumentException) {
+            buffer.append(e.getMessage()).append("\n");
+        } else {
+            StringWriter writer = new StringWriter();
+            PrintWriter printWriter = new PrintWriter(writer);
+            e.printStackTrace(printWriter);
+            buffer.append(writer.getBuffer().toString()).append("\n");
+            printWriter.close();
+        }
+
+        try {
+            FileUtils.writeStringToFile(log, buffer.toString(), DEF_FILE_ENCODING);
+        } catch (IOException ex) {
+            ConsoleUtils.error("Unable to create log file (" + log + ") for the exception thrown: " + ex.getMessage());
+        }
+        return log;
     }
 
     /** could be timestamp, browser or step-n-iteration */

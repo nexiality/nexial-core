@@ -956,7 +956,8 @@ public class ExecutionContext {
             if (testStep == null) {
                 logger.error(this, message);
             } else {
-                logger.error(testStep, message);
+                String errorLog = OutputFileUtils.generateErrorLog(testStep, e);
+                logger.error(testStep, message + "\nError log: " + errorLog);
             }
 
             return text;

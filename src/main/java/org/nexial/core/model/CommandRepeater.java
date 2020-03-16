@@ -37,7 +37,7 @@ import org.openqa.selenium.WebDriverException;
 import static org.apache.commons.lang3.builder.ToStringStyle.SIMPLE_STYLE;
 import static org.nexial.core.CommandConst.CMD_SECTION;
 import static org.nexial.core.NexialConst.Data.*;
-import static org.nexial.core.NexialConst.Exec.*;
+import static org.nexial.core.NexialConst.Exec.FAIL_COUNT;
 import static org.nexial.core.NexialConst.MSG_FAIL;
 import static org.nexial.core.NexialConst.MSG_PASS;
 import static org.nexial.core.NexialConst.*;
@@ -138,7 +138,7 @@ public class CommandRepeater {
                             logger.log(testStep,
                                        MSG_REPEAT_UNTIL + MSG_FAIL + result.getMessage() + "; " +
                                        FAIL_FAST + "=" + context.isFailFast() + "; " +
-                                       OPT_LAST_OUTCOME + "=false",
+                                       OPT_LAST_OUTCOME + "=" + context.getBooleanData(OPT_LAST_OUTCOME),
                                        true);
                         }
 
@@ -254,12 +254,13 @@ public class CommandRepeater {
         }
 
         ExecutionContext context = testStep.context;
+        context.setData(OPT_LAST_OUTCOME, false);
 
         String error = resolveRootCause(e);
         context.getLogger().log(testStep,
                                 MSG_REPEAT_UNTIL + MSG_FAIL + error + "; " +
                                 FAIL_FAST + "=" + context.isFailFast() + "; " +
-                                OPT_LAST_OUTCOME + "=false",
+                                OPT_LAST_OUTCOME + "=" + context.getBooleanData(OPT_LAST_OUTCOME),
                                 true);
 
         if (shouldFailFast(context, testStep)) { return StepResult.fail(error); }

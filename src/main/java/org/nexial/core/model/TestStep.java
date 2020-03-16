@@ -19,8 +19,6 @@ package org.nexial.core.model;
 
 import java.io.File;
 import java.io.IOException;
-import java.io.PrintWriter;
-import java.io.StringWriter;
 import java.lang.reflect.InvocationTargetException;
 import java.util.ArrayList;
 import java.util.List;
@@ -37,8 +35,6 @@ import org.apache.poi.ss.usermodel.CellType;
 import org.apache.poi.ss.usermodel.Comment;
 import org.apache.poi.xssf.usermodel.XSSFCell;
 import org.apache.poi.xssf.usermodel.XSSFCellStyle;
-import org.jetbrains.annotations.NotNull;
-import org.nexial.commons.utils.DateUtility;
 import org.nexial.commons.utils.FileUtil;
 import org.nexial.commons.utils.TextUtils;
 import org.nexial.core.excel.Excel;
@@ -50,7 +46,6 @@ import org.nexial.core.plugins.NexialCommand;
 import org.nexial.core.plugins.web.WebCommand;
 import org.nexial.core.plugins.web.WebDriverExceptionHelper;
 import org.nexial.core.utils.*;
-import org.nexial.core.variable.Syspath;
 import org.openqa.selenium.WebDriverException;
 
 import static java.io.File.separator;
@@ -119,6 +114,8 @@ public class TestStep extends TestStepManifest {
     public List<NestedMessage> getNestedTestResults() { return nestedTestResults; }
 
     public String showPosition() { return messageId; }
+
+    public ExecutionContext getContext() { return context; }
 
     @Override
     public String toString() {
@@ -260,9 +257,7 @@ public class TestStep extends TestStepManifest {
     }
 
     protected StepResult toFailedResult(Throwable e) {
-        // Map<String, String> errorLogs = new HashMap<>();
-        // result = StepResult.fail(logException(e, errorLogs));
-        // if (MapUtils.isNotEmpty(errorLogs)) { result.setErrorLogs(errorLogs); }
+        context.setData(OPT_LAST_OUTCOME, false);
 
         // step 1: get truth! InvocationTargetException is masking real exception
         if (e instanceof InvocationTargetException && e.getCause() != null) { e = e.getCause(); }
@@ -288,19 +283,7 @@ public class TestStep extends TestStepManifest {
 
         // step 3: write error to file for RCA
         // determine the file to send log
-        File log = generateErrorLog(e);
-        String logFqn = log.getAbsolutePath();
-        if (context.isOutputToCloud() && FileUtil.isFileReadable(log, 1)) {
-            try {
-                ConsoleUtils.log("output-to-cloud enabled; copying " + logFqn + " cloud...");
-                logFqn = context.getOtc().importFile(log, true);
-            } catch (IOException ex) {
-                // unable to send log to cloud...
-                ConsoleUtils.log("Unable to copy resource to cloud: " + e.getMessage());
-                log(toCloudIntegrationNotReadyMessage(logFqn + ": " + e.getMessage()));
-            }
-        }
-
+        String logFqn = OutputFileUtils.generateErrorLog(this, e);
         if (StringUtils.isNotBlank(logFqn)) { result.setDetailedLogLink(logFqn); }
 
         // step 4: return back the error message for FAIL result instance
@@ -774,36 +757,6 @@ public class TestStep extends TestStepManifest {
         lwTestStep.setLogToTestScript(isLogToTestScript());
         lwTestStep.setRowIndex(row.get(0).getRowIndex());
         return lwTestStep;
-    }
-
-    @NotNull
-    private File generateErrorLog(Throwable e) {
-        Syspath syspath = new Syspath();
-        File log = new File(syspath.log("fullpath") + separator + OutputFileUtils.generateOutputFilename(this, ".log"));
-
-        // build error content
-        StringBuilder buffer = new StringBuilder();
-        buffer.append("Nexial Version:    ").append(ExecUtils.NEXIAL_MANIFEST).append("\n")
-              .append("Current Timestamp: ").append(DateUtility.formatLog2Date(System.currentTimeMillis())).append("\n")
-              .append("Test Step:         ").append(messageId).append("\n")
-              .append(StringUtils.repeat("-", 80)).append("\n");
-
-        if (e instanceof AssertionError || e instanceof IllegalArgumentException) {
-            buffer.append(e.getMessage()).append("\n");
-        } else {
-            StringWriter writer = new StringWriter();
-            PrintWriter printWriter = new PrintWriter(writer);
-            e.printStackTrace(printWriter);
-            buffer.append(writer.getBuffer().toString()).append("\n");
-            printWriter.close();
-        }
-
-        try {
-            FileUtils.writeStringToFile(log, buffer.toString(), DEF_FILE_ENCODING);
-        } catch (IOException ex) {
-            ConsoleUtils.error("Unable to create log file (" + log + ") for the exception thrown: " + ex.getMessage());
-        }
-        return log;
     }
 
     private boolean isFileLink(String param) {
