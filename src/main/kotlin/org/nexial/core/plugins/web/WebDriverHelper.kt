@@ -81,7 +81,7 @@ abstract class WebDriverHelper protected constructor(protected var context: Exec
         // no url to download or no need to download... so we are done
         if (StringUtils.isNotBlank(manifest.driverUrl)) {
             // download driver to driver home (local)
-            val wsClient = WebServiceClient(context)
+            val wsClient = newIsolatedWsClient()
 
             // download url might not be the actual driver, but zip or gzip
             val driverUrl = manifest.driverUrl!!
@@ -152,7 +152,7 @@ abstract class WebDriverHelper protected constructor(protected var context: Exec
         // else, need to check online, poll online for newer driver
 
         // first ws call to check existing/available versions of this driver
-        val wsClient = WebServiceClient(context)
+        val wsClient = newIsolatedWsClient()
         val response = wsClient.get(config.checkUrlBase, null)
         if (response.returnCode >= 400) {
             // error in checking online
@@ -256,6 +256,8 @@ abstract class WebDriverHelper protected constructor(protected var context: Exec
         Arrays.stream(tagStrings).forEach { tag -> map[expandVersion(tag)] = StringUtils.unwrap(tag, "\"") }
         return map
     }
+
+    protected fun newIsolatedWsClient() = WebServiceClient(context).configureAsQuiet().disableContextConfiguration()
 
     protected abstract fun resolveLocalDriverPath(): String
 
@@ -419,7 +421,7 @@ class EdgeDriverHelper(context: ExecutionContext) : WebDriverHelper(context) {
 
         if (!hasDriver || !StringUtils.equals(manifest.driverVersion, currentOsVer)) {
             // gotta download; doesn't matter if current is greater or lesser than manifest's
-            val wsClient = WebServiceClient(context)
+            val wsClient = newIsolatedWsClient()
             var lookupResponse = wsClient.get("${config.checkUrlBase}$currentOsVer.txt", "")
             if (lookupResponse.returnCode != 200) {
                 // something's wrong... maybe we don't have any driver for current OS build
@@ -553,7 +555,7 @@ class ChromeDriverHelper(context: ExecutionContext) : WebDriverHelper(context) {
         if (!hasDriver) {
             var driverVersion = minDriverVersion
 
-            val wsClient = WebServiceClient(context)
+            val wsClient = newIsolatedWsClient()
             val lookupResponse = wsClient.get("${config.checkUrlBase}/LATEST_RELEASE", "")
             if (lookupResponse.returnCode != 200) {
                 // something's wrong...
@@ -606,7 +608,7 @@ class IEDriverHelper(context: ExecutionContext) : WebDriverHelper(context) {
         // else, need to check online, poll online for newer driver
 
         // first ws call to check existing/available versions of this driver
-        val wsClient = WebServiceClient(context)
+        val wsClient = newIsolatedWsClient()
         val response = wsClient.get(config.checkUrlBase, null)
         val xmlPayload = response.body
         val archKey = if (StringUtils.contains(driverLocation, "win32")) "Win32" else "x64"

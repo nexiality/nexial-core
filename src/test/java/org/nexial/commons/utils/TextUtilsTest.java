@@ -493,6 +493,22 @@ public class TextUtilsTest {
     }
 
     @Test
+    public void testLoadPropertiesFileWithSpacesInValues() throws Exception {
+        String testFixture = ResourceUtils.getResourceFilePath("/dummy-test.project.properties");
+
+        Map<String, String> propMap = TextUtils.loadProperties(testFixture);
+        assert propMap != null;
+        Assert.assertEquals(propMap.size(), 7);
+        Assert.assertEquals(propMap.get("environment"), "PROD");
+        Assert.assertEquals(propMap.get("mySite.url"), "https://abcdefg.qwertyu.com/user21/logon.aspx?key1=Integon&key2=63befb2pdosk8e358adf39f95e63700e&partnerId=qpwoslkgRater&redirectUrl=~/rating/Default.aspx ");
+        Assert.assertEquals(propMap.get("yoursite.url"), "http://1qazxswedfg.xvbghy.com/PolicyReview/ ");
+        Assert.assertEquals(propMap.get("theirSite.url"), "https://rfgthyuj.mvncbxvs.com/09sidu7/logon.aspx?key1=Integon&key2=63befb211f2cfe358w23er455e63700e&partnerId=asdfrtyu7890jhg&redirectUrl=~//rating/search/quotesearch.aspx \t\t\t\t\t");
+        Assert.assertEquals(propMap.get("username"), "tech21					");
+        Assert.assertEquals(propMap.get("passwordClue"), "agency19	");
+        Assert.assertEquals(propMap.get("mySuperDuperDB.url"), "jdbc:sqlserver://myserver09sdb04:1433;databaseName=dbase21;integratedSecurity=true;authenticationScheme=JavaKerberos");
+    }
+
+    @Test
     public void removeExcessWhitespaces() throws Exception {
         Assert.assertEquals("", TextUtils.removeExcessWhitespaces(null));
         Assert.assertEquals("", TextUtils.removeExcessWhitespaces(""));

@@ -28,8 +28,10 @@ import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Objects;
+import javax.annotation.Nullable;
 import javax.validation.constraints.NotNull;
 
+import org.apache.commons.collections4.MapUtils;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang3.ArrayUtils;
@@ -81,36 +83,64 @@ import static org.nexial.core.SystemVariables.getDefaultBool;
 public class WebServiceClient {
     protected static final SSLConnectionSocketFactory SSL_SF = new NaiveConnectionSocketFactory();
     protected static final String REGEX_URL_HAS_AUTH = "(.+\\ )?(http[s]?)\\:\\/\\/(.+)\\:(.+)\\@(.+)";
+    protected static final String WS_DISABLE_CONTEXT = "__DISABLE_CONTEXT_AS_CONFIG__";
+
     protected ExecutionContext context;
     protected boolean verbose = true;
+    protected Map<String, String> priorityConfigs = new HashMap<>();
 
     public WebServiceClient(ExecutionContext context) {
         if (context == null) { context = ExecutionThread.get(); }
         this.context = context;
     }
 
+    @NotNull
+    public WebServiceClient disableContextConfiguration() {
+        priorityConfigs.put(WS_DISABLE_CONTEXT, "true");
+        return this;
+    }
+
+    /**
+     * fluid setter to muzzle additional/unnecessary log incurred during execution
+     */
+    @NotNull
+    public WebServiceClient configureAsQuiet() {
+        priorityConfigs.put(WS_LOG_DETAIL, "false");
+        priorityConfigs.put(WS_LOG_SUMMARY, "false");
+        return this;
+    }
+
+    /**
+     * fluid setter to add priority configuration that would override those set at the context level or env. level
+     */
+    @NotNull
+    public WebServiceClient setPriorityConfiguration(String name, String value) {
+        priorityConfigs.put(name, value);
+        return this;
+    }
+
     public void setVerbose(boolean verbose) { this.verbose = verbose; }
 
     @NotNull
     public Response get(String url, String queryString) throws IOException {
-        return invokeRequest(new GetRequest(context, url, queryString));
+        return invokeRequest(new GetRequest(resolveContextForRequest(), url, queryString));
     }
 
     @NotNull
     public Response download(String url, String queryString, String saveTo) throws IOException {
-        GetRequest request = new GetRequest(context, url, queryString);
+        GetRequest request = new GetRequest(resolveContextForRequest(), url, queryString);
         request.setPayloadLocation(saveTo);
         return invokeRequest(request);
     }
 
     @NotNull
     public Response post(String url, String payload) throws IOException {
-        return invokeRequest(new PostRequest(context, url, payload, null));
+        return invokeRequest(new PostRequest(resolveContextForRequest(), url, payload, null));
     }
 
     @NotNull
     public Response post(String url, byte[] payload) throws IOException {
-        return invokeRequest(new PostRequest(context, url, null, payload));
+        return invokeRequest(new PostRequest(resolveContextForRequest(), url, null, payload));
     }
 
     @NotNull
@@ -119,46 +149,48 @@ public class WebServiceClient {
     }
 
     @NotNull
-    public Response head(String url) throws IOException { return invokeRequest(new HeadRequest(context, url, null)); }
+    public Response head(String url) throws IOException {
+        return invokeRequest(new HeadRequest(resolveContextForRequest(), url, null));
+    }
 
     @NotNull
     public Response delete(String url, String queryString) throws IOException {
-        return invokeRequest(new DeleteRequest(context, url, queryString));
+        return invokeRequest(new DeleteRequest(resolveContextForRequest(), url, queryString));
     }
 
     @NotNull
     public Response deleteWithPayload(String url, String payload) throws IOException {
-        return invokeRequest(new DeleteWithPayloadRequest(context, url, payload, null));
+        return invokeRequest(new DeleteWithPayloadRequest(resolveContextForRequest(), url, payload, null));
     }
 
     @NotNull
     public Response deleteWithPayload(String url, byte[] payload) throws IOException {
-        return invokeRequest(new DeleteWithPayloadRequest(context, url, null, payload));
+        return invokeRequest(new DeleteWithPayloadRequest(resolveContextForRequest(), url, null, payload));
     }
 
     @NotNull
     public Response patch(String url, String payload) throws IOException {
-        return invokeRequest(new PatchRequest(context, url, payload, null));
+        return invokeRequest(new PatchRequest(resolveContextForRequest(), url, payload, null));
     }
 
     @NotNull
     public Response patch(String url, byte[] payload) throws IOException {
-        return invokeRequest(new PatchRequest(context, url, null, payload));
+        return invokeRequest(new PatchRequest(resolveContextForRequest(), url, null, payload));
     }
 
     @NotNull
     public Response put(String url, String payload) throws IOException {
-        return invokeRequest(new PutRequest(context, url, payload, null));
+        return invokeRequest(new PutRequest(resolveContextForRequest(), url, payload, null));
     }
 
     @NotNull
     public Response put(String url, byte[] payload) throws IOException {
-        return invokeRequest(new PutRequest(context, url, null, payload));
+        return invokeRequest(new PutRequest(resolveContextForRequest(), url, null, payload));
     }
 
     @NotNull
     public PostRequest toPostMultipartRequest(String url, String payload, String fileParams) {
-        PostMultipartRequest request = new PostMultipartRequest(context);
+        PostMultipartRequest request = new PostMultipartRequest(resolveContextForRequest());
         request.setUrl(url);
         request.setPayload(payload, StringUtils.split(fileParams, context.getTextDelim()));
         return request;
@@ -290,8 +322,7 @@ public class WebServiceClient {
 
         TestStep testStep = context.getCurrentTestStep();
 
-        boolean shouldLogDetail = context.getBooleanData(WS_LOG_DETAIL, getDefaultBool(WS_LOG_DETAIL));
-        if (shouldLogDetail) {
+        if (shouldLogDetail()) {
             StringBuilder details = new StringBuilder();
             appendLog(details, "Test Step       : ", ExecutionLogger.toHeader(testStep));
             details.append(StringUtils.repeat("-", 80)).append("\n");
@@ -318,16 +349,14 @@ public class WebServiceClient {
 
         TestStep testStep = context.getCurrentTestStep();
 
-        boolean shouldLogDetail = context.getBooleanData(WS_LOG_DETAIL, getDefaultBool(WS_LOG_DETAIL));
-        if (shouldLogDetail) {
+        if (shouldLogDetail()) {
             StringBuilder details = new StringBuilder();
             appendLog(details, "ERROR           : ", error);
             appendLog(details, "Exception       : ", ExceptionUtils.getStackTrace(e));
             writeDetailLog(testStep, details.toString());
         }
 
-        boolean shouldLogSummary = context.getBooleanData(WS_LOG_SUMMARY, getDefaultBool(WS_LOG_SUMMARY));
-        if (shouldLogSummary) {
+        if (shouldLogSummary()) {
             int requestBodyLength = 0;
             boolean requestWithBody = request instanceof PostRequest;
             if (requestWithBody) {
@@ -372,8 +401,7 @@ public class WebServiceClient {
 
         TestStep testStep = context.getCurrentTestStep();
 
-        boolean shouldLogDetail = context.getBooleanData(WS_LOG_DETAIL, getDefaultBool(WS_LOG_DETAIL));
-        if (shouldLogDetail) {
+        if (shouldLogDetail()) {
             StringBuilder details = new StringBuilder();
             appendLog(details, "Return Code     : ", response.getReturnCode());
             appendLog(details, "Status Text     : ", response.getStatusText());
@@ -388,8 +416,7 @@ public class WebServiceClient {
             writeDetailLog(testStep, details.toString());
         }
 
-        boolean shouldLogSummary = context.getBooleanData(WS_LOG_SUMMARY, getDefaultBool(WS_LOG_SUMMARY));
-        if (shouldLogSummary) {
+        if (shouldLogSummary()) {
             int requestBodyLength = 0;
             boolean requestWithBody = request instanceof PostRequest;
             if (requestWithBody) {
@@ -552,8 +579,7 @@ public class WebServiceClient {
 
     protected boolean isBasicAuth() {
         if (context == null) { return false; }
-        return StringUtils.isNotBlank(context.getStringData(WS_BASIC_USER)) &&
-               StringUtils.isNotBlank(context.getStringData(WS_BASIC_PWD));
+        return StringUtils.isNotBlank(getBasicUsername()) && StringUtils.isNotBlank(getBasicPassword());
     }
 
     protected HttpClientBuilder addBasicAuth(HttpClientBuilder httpClientBuilder, Request request)
@@ -587,9 +613,9 @@ public class WebServiceClient {
 
     protected boolean isDigestAuth() {
         if (context == null) { return false; }
-        return StringUtils.isNotBlank(context.getStringData(WS_DIGEST_USER)) &&
-               StringUtils.isNotBlank(context.getStringData(WS_DIGEST_PWD)) &&
-               StringUtils.isNotBlank(context.getStringData(WS_DIGEST_REALM));
+        return StringUtils.isNotBlank(getConfiguration(WS_DIGEST_USER)) &&
+               StringUtils.isNotBlank(getConfiguration(WS_DIGEST_PWD)) &&
+               StringUtils.isNotBlank(getConfiguration(WS_DIGEST_REALM));
     }
 
     protected HttpClientBuilder addDigestAuth(HttpClientBuilder httpClientBuilder, Request request)
@@ -612,8 +638,8 @@ public class WebServiceClient {
         throws MalformedURLException {
         if (context == null) { return null; }
 
-        String digestUser = context.getStringData(userVar);
-        String digestPwd = context.getStringData(passwordVar);
+        String digestUser = getConfiguration(userVar);
+        String digestPwd = getConfiguration(passwordVar);
 
         URL url = new URL(request.getUrl());
 
@@ -627,8 +653,8 @@ public class WebServiceClient {
     protected HttpClientContext newDigestEnabledHttpContext(Request request) throws MalformedURLException {
         if (context == null) { return null; }
 
-        String realm = context.getStringData(WS_DIGEST_REALM);
-        String nounce = context.getStringData(WS_DIGEST_NONCE);
+        String realm = getConfiguration(WS_DIGEST_REALM);
+        String nounce = getConfiguration(WS_DIGEST_NONCE);
 
         // Generate DIGEST scheme object, initialize it and add it to the local auth cache
         DigestScheme digestAuth = new DigestScheme();
@@ -691,4 +717,36 @@ public class WebServiceClient {
         }
         return headers;
     }
+
+    protected boolean shouldLogDetail() {
+        return MapUtils.getBoolean(priorityConfigs, WS_LOG_DETAIL,
+                                   context.getBooleanData(WS_LOG_DETAIL, getDefaultBool(WS_LOG_DETAIL)));
+    }
+
+    protected boolean shouldLogSummary() {
+        return MapUtils.getBoolean(priorityConfigs, WS_LOG_SUMMARY,
+                                   context.getBooleanData(WS_LOG_SUMMARY, getDefaultBool(WS_LOG_SUMMARY)));
+    }
+
+    protected String getBasicUsername() { return getConfiguration(WS_BASIC_USER); }
+
+    protected String getBasicPassword() { return getConfiguration(WS_BASIC_PWD); }
+
+    protected String getConfiguration(String key) {
+        return MapUtils.getString(priorityConfigs, key, context.getStringData(key));
+    }
+
+    protected boolean isContextAsConfigDisabled() {
+        return MapUtils.getBoolean(priorityConfigs, WS_DISABLE_CONTEXT, false);
+    }
+
+    /**
+     * for internal use, Nexial should not utilize WebClient (and its dependent Request classes) using ExecutionContext,
+     * which contains user-specified settings that might affect Nexial's internal use of web services (such as
+     * downloading webdriver).
+     * @return
+     */
+    @Nullable
+    protected ExecutionContext resolveContextForRequest() { return isContextAsConfigDisabled() ? null : context; }
+
 }

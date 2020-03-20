@@ -31,6 +31,7 @@ import org.nexial.core.utils.ConsoleUtils
 
 class UserStackAPI(apiKeys: MutableList<String> = mutableListOf("5b71975a107de30d26f3878fa9adbb5e")) {
     private val keys = apiKeys
+    private val urlTemplate = "http://api.userstack.com/detect?access_key=%s&ua=%s"
 
     // @Throws(IllegalArgumentException::class)
     fun detectAsBrowserMeta(ua: String): BrowserMeta {
@@ -39,7 +40,8 @@ class UserStackAPI(apiKeys: MutableList<String> = mutableListOf("5b71975a107de30
         if (keys.isEmpty()) return newDummyBrowserMeta(ua)
 
         val apiKey = CollectionUtil.randomSelectOne(keys)
-        val response = WebServiceClient(null).get("http://api.userstack.com/detect?access_key=${apiKey}&ua=${ua}", null)
+        val response = WebServiceClient(null).configureAsQuiet().disableContextConfiguration()
+                .get(urlTemplate.format(apiKey, ua), null)
         return if (response.returnCode == 200) {
             val json = GSON.fromJson(response.body, JsonObject::class.java)
             if (json.has("error")) {

@@ -42,7 +42,7 @@ class ConnectionFactory {
 
         fun getWebServiceClient(profile: String): WebServiceClient {
             setWsData(profile)
-            return WebServiceClient(context)
+            return WebServiceClient(context).disableContextConfiguration().configureAsQuiet();
         }
 
         private fun setWsData(profile: String) {
