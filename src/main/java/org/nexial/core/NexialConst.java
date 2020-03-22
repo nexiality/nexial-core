@@ -467,6 +467,9 @@ public final class NexialConst {
         public static final String DEF_USERSTACK_APIKEYS =
             "5b71975a107de30d26f3878fa9adbb5e,278720a8776318f6bee49fe59c517381,30dcc7900c443a279315170afe815bd4,46d1f7737e47ba2525b80f9a5042e212";
 
+        // overrun text
+        public static final String MAX_CONSOLE_DISPLAY = registerSysVar(NAMESPACE + "maxConsoleDisplay", 500);
+
         // nexial.scope.*
         public static final Map<String, String> SCOPE_SETTING_DEFAULTS =
             TextUtils.toMap("=",

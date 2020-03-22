@@ -17,9 +17,12 @@
 
 package org.nexial.core.plugins.web;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Set;
 
 import org.apache.commons.lang3.StringUtils;
+import org.nexial.commons.utils.TextUtils;
 import org.nexial.core.model.ExecutionContext;
 import org.nexial.core.model.StepResult;
 import org.nexial.core.plugins.RequireBrowser;
@@ -34,9 +37,6 @@ public class CookieCommand extends BaseCommand implements RequireBrowser {
     protected WebDriver driver;
 
     @Override
-    public String getTarget() { return "webcookie"; }
-
-    @Override
     public Browser getBrowser() { return browser; }
 
     @Override
@@ -47,6 +47,16 @@ public class CookieCommand extends BaseCommand implements RequireBrowser {
         super.init(context);
         driver = null;
         if (!context.isDelayBrowser()) { ensureWebDriver(); }
+    }
+
+    @Override
+    public String getTarget() { return "webcookie"; }
+
+    public StepResult save(String var, String name) {
+        requires(StringUtils.isNotBlank(var), "invalid variable name", var);
+        Cookie cookie = getCookie(name);
+        if (cookie != null) { context.setData(var, cookie); }
+        return StepResult.success("bound cookie named '" + name + "' saved as '" + var + "'");
     }
 
     public StepResult assertValue(String name, String value) {
@@ -71,18 +81,26 @@ public class CookieCommand extends BaseCommand implements RequireBrowser {
                               null);
     }
 
-    public StepResult save(String var, String name) {
-        requires(StringUtils.isNotBlank(var), "invalid variable name", var);
-        Cookie cookie = getCookie(name);
-        if (cookie != null) { context.setData(var, cookie); }
-        return StepResult.success("bound cookie named '" + name + "' saved as '" + var + "'");
-    }
-
     public StepResult saveAll(String var) {
         requires(StringUtils.isNotBlank(var), "invalid variable name", var);
         Set<Cookie> cookies = deriveCookieStore().getCookies();
         context.setData(var, cookies);
         return StepResult.success("all bound cookies saved to " + var);
+    }
+
+    public StepResult saveAllAsText(String var, String exclude) {
+        requires(StringUtils.isNotBlank(var), "invalid variable name", var);
+
+        List<String> excludedNames = context.isNullOrEmptyOrBlankValue(exclude) ?
+                                     TextUtils.toList(exclude, context.getTextDelim(), true) : new ArrayList<>();
+        context.setData(var, deriveCookieStore().getCookies()
+                                                .stream()
+                                                .filter(cookie -> !excludedNames.contains(cookie.getName()))
+                                                .map(Cookie::toString)
+                                                .reduce((cookie, cookie2) -> cookie + "; " + cookie2)
+                                                .get()
+                                                .replace(";;", ";"));
+        return StepResult.success("all bound cookies saved as text to %s, excluding %s", var, excludedNames);
     }
 
     public StepResult delete(String name) {

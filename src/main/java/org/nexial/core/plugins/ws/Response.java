@@ -29,9 +29,13 @@ import org.apache.commons.lang3.tuple.Pair;
 import org.apache.http.cookie.Cookie;
 import org.apache.http.impl.cookie.BasicClientCookie;
 import org.nexial.commons.utils.DateUtility;
+import org.nexial.core.ExecutionThread;
+import org.nexial.core.model.ExecutionContext;
 
 import static org.nexial.core.NexialConst.COOKIE_DATE_FORMAT;
 import static org.nexial.core.NexialConst.COOKIE_DATE_FORMAT2;
+import static org.nexial.core.NexialConst.Data.MAX_CONSOLE_DISPLAY;
+import static org.nexial.core.SystemVariables.getDefaultInt;
 
 public class Response implements Serializable {
     protected int returnCode;
@@ -96,12 +100,22 @@ public class Response implements Serializable {
 
     @Override
     public String toString() {
-        return "returnCode=" + returnCode + "\n" +
-               "statusText=" + statusText + "\n" +
-               "headers=" + headers + "\n" +
-               "contentLength=" + contentLength + "\n" +
-               "elapsedTime=" + elapsedTime + "\n" +
-               "body=" + (ArrayUtils.isEmpty(rawBody) ? "<NONE>" : StringUtils.left(getBody(), 500) + "...");
+        String toString = "returnCode=" + returnCode + "\n" +
+                          "statusText=" + statusText + "\n" +
+                          "headers=" + headers + "\n" +
+                          "contentLength=" + contentLength + "\n" +
+                          "elapsedTime=" + elapsedTime + "\n" +
+                          "body=";
+
+        if (ArrayUtils.isEmpty(rawBody)) { return toString + "<NONE>"; }
+
+        String body = getBody();
+        int defaultMaxLength = getDefaultInt(MAX_CONSOLE_DISPLAY);
+
+        ExecutionContext context = ExecutionThread.get();
+        return toString + (context == null ?
+                           ExecutionContext.truncateForDisplay(body, defaultMaxLength) :
+                           context.truncateForDisplay(body));
     }
 
     protected void harvestCookies(String[] cookieParts) {

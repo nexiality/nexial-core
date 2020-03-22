@@ -49,7 +49,7 @@ class BaseCommandTest {
 
     @Test
     @Throws(Exception::class)
-    fun testAssertArrayEquals() {
+    fun assertArrayEquals() {
         // technically testing base command. But we are doing the test this way to verify that WebCommand can
         // invoke BaseCommand methods without issues.
         val subject = BaseCommand()
@@ -73,7 +73,7 @@ class BaseCommandTest {
 
     @Test
     @Throws(Exception::class)
-    fun testAssertArrayEquals_long_list() {
+    fun assertArrayEquals_long_list() {
         val subject = BaseCommand()
         subject.init(context)
 
@@ -189,7 +189,7 @@ class BaseCommandTest {
 
     @Test
     @Throws(Exception::class)
-    fun testNotContain() {
+    fun notContain() {
         val subject = BaseCommand()
         subject.init(context)
 
@@ -312,6 +312,22 @@ class BaseCommandTest {
         expected = "John|Peter|Soma|James"
         actual = "Soma"
         result = subject.assertArrayContain(expected, actual)
+        println("result = $result")
+        Assert.assertTrue(result.isSuccess)
+    }
+
+    @Test
+    @Throws(Exception::class)
+    fun assertArrayContain_withExpression() {
+        context.setData("suggestions", "[\"croissant\",\"croissant\",\"croissant\"]");
+        context.setData("search_term", "croissant");
+
+        val subject = BaseCommand()
+        subject.init(context)
+
+        val array = context.replaceTokens("[TEXT(\${suggestions}) => removeStart([) removeEnd(]) remove(\") text]")
+        val expected = context.replaceTokens("\${search_term}")
+        var result = subject.assertArrayContain(array, expected)
         println("result = $result")
         Assert.assertTrue(result.isSuccess)
     }

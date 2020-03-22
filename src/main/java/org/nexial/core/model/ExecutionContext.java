@@ -1421,6 +1421,17 @@ public class ExecutionContext {
     }
 
     @NotNull
+    public String truncateForDisplay(String text) {
+        return truncateForDisplay(text, getIntData(MAX_CONSOLE_DISPLAY, getDefaultInt(MAX_CONSOLE_DISPLAY)));
+    }
+
+    @NotNull
+    public static String truncateForDisplay(String text, int maxLength) {
+        if (StringUtils.isBlank(text) || maxLength < 1) { return text; }
+        return text.length() <= maxLength ? text : StringUtils.left(text, maxLength) + "...";
+    }
+
+    @NotNull
     protected static String resolveProfileConfigKey(String command, String profile) {
         return "nexial.config" + CMD_PROFILE_SEP + command + "." + profile;
     }

@@ -555,6 +555,16 @@ public class ExecutionContextTest {
 
     }
 
+    @Test
+    public void handleExpression() throws Exception {
+        MockExecutionContext subject = initMockContext();
+        subject.setData("suggestions", "[\"croissant\",\"croissant\",\"croissant\"]");
+
+        String result =
+            subject.replaceTokens("[TEXT(${suggestions}) =>  removeStart([) removeEnd(]) remove(\") replace(\\,,~)]");
+        Assert.assertEquals(result, "croissant~croissant~croissant");
+    }
+
     @NotNull
     private Function toFunction(ExecutionContext subject, String token) {
         Function f = subject.new Function();

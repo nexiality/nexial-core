@@ -120,7 +120,8 @@ object CommandConst {
                                           "localdb.exportEXCEL",
                                           "localdb.exportXML",
                                           "io.saveMatches",
-                                          "macro.expects")
+                                          "macro.expects",
+                                          "webcookie.saveAllAsText")
 
     @JvmField
     val CRYPT_RESTRICTED_COMMANDS = listOf("base.verbose",

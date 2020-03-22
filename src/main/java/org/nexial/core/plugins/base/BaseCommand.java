@@ -450,8 +450,9 @@ public class BaseCommand implements NexialCommand {
         assertEquals(context.isNullValue(expected) ? null : expected, context.isNullValue(actual) ? null : actual);
 
         String nullValue = context.getNullValueToken();
-        return StepResult.success("validated EXPECTED = ACTUAL; '" + StringUtils.defaultString(expected, nullValue) +
-                                  "' = '" + StringUtils.defaultString(actual, nullValue) + "'");
+        String expectedForDisplay = context.truncateForDisplay(StringUtils.defaultString(expected, nullValue));
+        String actualForDisplay = context.truncateForDisplay(StringUtils.defaultString(actual, nullValue));
+        return StepResult.success("validated EXPECTED = ACTUAL; '%s' = '%s'", expectedForDisplay, actualForDisplay);
     }
 
     public StepResult assertNotEqual(String expected, String actual) {
@@ -460,17 +461,19 @@ public class BaseCommand implements NexialCommand {
         assertNotEquals(StringUtils.equals(expected, nullValue) ? null : expected,
                         StringUtils.equals(actual, nullValue) ? null : actual);
 
-        return StepResult.success("validated EXPECTED not equal to ACTUAL; '" +
-                                  StringUtils.defaultString(expected, nullValue) + "' not equals to '" +
-                                  StringUtils.defaultString(actual, nullValue) + "'");
+        String expectedForDisplay = context.truncateForDisplay(StringUtils.defaultString(expected, nullValue));
+        String actualForDisplay = context.truncateForDisplay(StringUtils.defaultString(actual, nullValue));
+        return StepResult.success("validated EXPECTED not equal to ACTUAL; '%s' not equal to '%s'",
+                                  expectedForDisplay,
+                                  actualForDisplay);
     }
 
     public StepResult assertContains(String text, String substring) {
-        boolean contains = lenientContains(text, substring, false);
-        if (contains) {
-            return StepResult.success("validated text '" + text + "' contains '" + substring + "'");
+        @NotNull String textForDisplay = context.truncateForDisplay(text);
+        if (lenientContains(text, substring, false)) {
+            return StepResult.success("validated text '%s' contains '%s'", textForDisplay, substring);
         } else {
-            return StepResult.fail("Expects \"" + substring + "\" be contained in \"" + text + "\"");
+            return StepResult.fail("'%s' NOT contained in '%s'", substring, textForDisplay);
         }
     }
 
@@ -482,19 +485,20 @@ public class BaseCommand implements NexialCommand {
             substring = StringUtils.replaceEach(substring, searchFor, replaceWith);
         }
 
+        @NotNull String textForDisplay = context.truncateForDisplay(text);
         if (!StringUtils.contains(text, substring)) {
-            return StepResult.success("validated text '" + text + "' does NOT contains '" + substring + "'");
+            return StepResult.success("validated text '%s' does NOT contain '%s'", textForDisplay, substring);
         } else {
-            return StepResult.fail("Expects \"" + substring + "\" be NOT to be found in \"" + text + "\"");
+            return StepResult.fail("Expects '%s' NOT to be found in '%s'", substring, textForDisplay);
         }
     }
 
     public StepResult assertStartsWith(String text, String prefix) {
-        boolean valid = lenientContains(text, prefix, true);
-        if (valid) {
-            return StepResult.success("'" + text + "' starts with '" + prefix + "' as EXPECTED");
+        @NotNull String textForDisplay = context.truncateForDisplay(text);
+        if (lenientContains(text, prefix, true)) {
+            return StepResult.success("'%s' starts with '%s'", textForDisplay, prefix);
         } else {
-            return StepResult.fail("EXPECTS '" + text + "' to start with '" + prefix + "'");
+            return StepResult.fail("EXPECTS '%s' to start with '%s' but it is NOT", textForDisplay, prefix);
         }
     }
 
@@ -511,10 +515,11 @@ public class BaseCommand implements NexialCommand {
             contains = StringUtils.endsWith(lenientText, lenientSuffix);
         }
 
+        @NotNull String textForDisplay = context.truncateForDisplay(text);
         if (contains) {
-            return StepResult.success("'" + text + "' ends with '" + suffix + "' as EXPECTED");
+            return StepResult.success("'%s' ends with '%s' as EXPECTED", textForDisplay, suffix);
         } else {
-            return StepResult.fail("EXPECTS '" + text + "' to end with '" + suffix + "'");
+            return StepResult.fail("EXPECTS '%s' to end with '%s' but it is NOT", textForDisplay, suffix);
         }
     }
 
@@ -570,8 +575,17 @@ public class BaseCommand implements NexialCommand {
 
         if (CollectionUtils.isEmpty(expectedList)) { CheckUtils.fail("'expected' cannot be parsed: " + expected); }
 
+        if (context.isVerbose()) {
+            ConsoleUtils.log("asserting that array (size " + list.size() + ") " + list + " contains " + expectedList);
+        }
+
         // all all items in `expectedList` is removed due to match against `list`, then all items in `expected` matched
-        if (expectedList.removeIf(list::contains) && expectedList.isEmpty()) {
+        boolean containsAll = expectedList.removeIf(list::contains);
+        if (context.isVerbose()) {
+            ConsoleUtils.log("All expected items matched: " + containsAll + ", remaining unmatched: " + expectedList);
+        }
+
+        if (containsAll && expectedList.isEmpty()) {
             return StepResult.success("All items in 'expected' are found in 'array'");
         }
 
