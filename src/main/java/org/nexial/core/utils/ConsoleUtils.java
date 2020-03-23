@@ -67,6 +67,8 @@ public final class ConsoleUtils {
     private static final Logger LOGGER = LoggerFactory.getLogger(ConsoleUtils.class);
     private static final List<Pair<Level, String>> PRE_EXEC_READY_BUFFER = new ArrayList<>();
 
+    public enum LogType {LOG, ERROR}
+
     private ConsoleUtils() { }
 
     @SuppressWarnings("PMD.SystemPrintln")
@@ -102,6 +104,15 @@ public final class ConsoleUtils {
             e.printStackTrace(System.err);
             System.err.print("\n\n");
             logAs(ERROR, "[" + id + "] " + msg + e.getMessage());
+        }
+    }
+
+    public static void log(LogType type, String id, String format, Object... args) {
+        switch (type) {
+            case LOG:
+                log(id, String.format(format, args));
+            case ERROR:
+                error(id, String.format(format, args));
         }
     }
 

@@ -665,6 +665,15 @@ public class Browser implements ForcefulTerminate {
             ConsoleUtils.log("setting mobile emulation on Chrome as " + emuUserAgent);
         }
 
+        // starting from chrome 80, samesite is enforced by default... we need to workaround it
+        List<String> experimentalFlags = new ArrayList<>();
+        experimentalFlags.add("same-site-by-default-cookies@1");
+        experimentalFlags.add("enable-removing-all-third-party-cookies@2");
+        experimentalFlags.add("cookies-without-same-site-must-be-secure@1");
+        Map<String, Object> localState = new HashMap<>();
+        localState.put("browser.enabled_labs_experiments", experimentalFlags);
+        options.setExperimentalOption("localState", localState);
+
         // if (activateLogging) {
         //     LoggingPreferences logOptions = new LoggingPreferences();
         //     // logOptions.enable(LogType.BROWSER, Level.ALL);

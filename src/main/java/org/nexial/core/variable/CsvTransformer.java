@@ -55,12 +55,14 @@ import static org.nexial.core.NexialConst.*;
 import static org.nexial.core.NexialConst.Rdbms.CSV_FIELD_DEIM;
 import static org.nexial.core.NexialConst.Rdbms.CSV_ROW_SEP;
 import static org.nexial.core.model.NexialFilterComparator.Equal;
+import static org.nexial.core.utils.ConsoleUtils.LogType.ERROR;
+import static org.nexial.core.utils.ConsoleUtils.LogType.LOG;
 
 public class CsvTransformer<T extends CsvDataType> extends Transformer<CsvDataType> {
     private static final Map<String, Integer> FUNCTION_TO_PARAM = discoverFunctions(CsvTransformer.class);
     private static final Map<String, Method> FUNCTIONS =
         toFunctionMap(FUNCTION_TO_PARAM, CsvTransformer.class, CsvDataType.class);
-
+    private static final Pattern COMPILED_FILTER_REGEX_PATTERN = Pattern.compile(FILTER_REGEX_PATTERN);
     static final String PAIR_DELIM = "|";
     static final String NAME_VALUE_DELIM = "=";
     static final String ATTR_INDEX = "index";
@@ -68,8 +70,6 @@ public class CsvTransformer<T extends CsvDataType> extends Transformer<CsvDataTy
     static final String NODE_ROOT = "rows";
     static final String NODE_ROW = "row";
     static final String NODE_CELL = "cell";
-
-    private static final Pattern COMPILED_FILTER_REGEX_PATTERN = Pattern.compile(FILTER_REGEX_PATTERN);
 
     public TextDataType text(T data) { return super.text(data); }
 
@@ -91,8 +91,9 @@ public class CsvTransformer<T extends CsvDataType> extends Transformer<CsvDataTy
         // if no header specified, then we can only use index (not column name)
         if (!data.isHeader()) {
             if (!NumberUtils.isDigits(column)) {
-                ConsoleUtils.log("Invalid column " + column + ".  Columns of a CSV without header can only be " +
-                                 "referenced via index");
+                ConsoleUtils.log(ERROR, null,
+                                 "Invalid column '%s'. Columns of a CSV without header can be referenced via its index",
+                                 column);
                 return null;
             }
 
@@ -102,7 +103,7 @@ public class CsvTransformer<T extends CsvDataType> extends Transformer<CsvDataTy
         }
 
         if (index < 0 || index >= data.getColumnCount()) {
-            ConsoleUtils.log("Invalid column " + column);
+            ConsoleUtils.log(ERROR, null, "Invalid column '%s'", column);
             return null;
         }
 
@@ -409,7 +410,7 @@ public class CsvTransformer<T extends CsvDataType> extends Transformer<CsvDataTy
             String[] values = one.getValues();
             String combinedValues = TextUtils.toString(values, "|", "", "");
             if (parsed.contains(combinedValues)) {
-                ConsoleUtils.log("[CSV] skipping duplicate row: " + combinedValues);
+                ConsoleUtils.log(LOG, null, "[CSV] skipping duplicate row: %s", combinedValues);
             } else {
                 parsed.add(combinedValues);
 
@@ -884,7 +885,7 @@ public class CsvTransformer<T extends CsvDataType> extends Transformer<CsvDataTy
 
                 listOfList.forEach(innerList -> text.append(TextUtils.toString(innerList, delim)).append(recordDelim));
             } catch (ClassCastException e) {
-                ConsoleUtils.log(msgPrefix + "is not of type List<List<String>>");
+                ConsoleUtils.error(msgPrefix + "is not of type List<List<String>>");
                 // nope that's not it...
                 return null;
             }
@@ -908,12 +909,12 @@ public class CsvTransformer<T extends CsvDataType> extends Transformer<CsvDataTy
                 csv.parse();
                 return csv;
             } catch (TypeConversionException e) {
-                ConsoleUtils.log(msgPrefix + "contains unparseable data: " + e.getMessage());
+                ConsoleUtils.error(msgPrefix + "contains unparseable data: " + e.getMessage());
                 return null;
             }
         }
 
-        ConsoleUtils.log(msgPrefix + "is of unsupported type: " + mergeFromObj.getClass());
+        ConsoleUtils.error(msgPrefix + "is of unsupported type: " + mergeFromObj.getClass());
         return null;
     }
 
