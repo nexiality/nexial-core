@@ -772,6 +772,16 @@ public class ExecutionContext {
         return isBlankValue(value) || isEmptyValue(value) || isNullValue(value);
     }
 
+    public static boolean asNull(String value) { return value == null || StringUtils.equals(value, NULL); }
+
+    public static boolean asEmpty(String value) {return StringUtils.isEmpty(value) || StringUtils.equals(value, EMPTY);}
+
+    public static boolean asBlank(String value) {return StringUtils.isBlank(value) || StringUtils.equals(value, BLANK);}
+
+    public static boolean asNullOrEmpty(String value) { return asNull(value) || asEmpty(value); }
+
+    public static boolean asNullOrEmptyOrBlank(String value) {return asBlank(value) || asEmpty(value) || asNull(value);}
+
     public String replaceTokens(String text) { return replaceTokens(text, false); }
 
     public String replaceTokens(String text, boolean retainCrypt) {

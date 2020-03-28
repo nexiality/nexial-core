@@ -185,6 +185,25 @@ public class ExpressionProcessorTest {
     }
 
     @Test
+    public void processTest_csv_parse_no_header() throws Exception {
+        String fixture = "SSN,Name,Position,Age\n" +
+                         "234567890,Jim,Educator,42\n" +
+                         "123456789,James,Accountant,41\n" +
+                         "567890123,Jon,Manager,41\n" +
+                         "345678901,\"Johnson, Adam\",Inspector General,23\n" +
+                         "456789012,Jenny,Cashier,33";
+
+        ExpressionProcessor subject = new ExpressionProcessor(context);
+        assertEquals("SSN,Name,Position,Age\n" +
+                     "234567890,Jim,Educator,42\n" +
+                     "123456789,James,Accountant,41\n" +
+                     "567890123,Jon,Manager,41\n" +
+                     "345678901,\"Johnson, Adam\",Inspector General,23\n" +
+                     "456789012,Jenny,Cashier,33",
+                     subject.process("[CSV(" + fixture + ") => parse(header=false,keepQuote=true)]"));
+    }
+
+    @Test
     public void processTest_regex() throws Exception {
         ExpressionProcessor subject = new ExpressionProcessor(context);
 
@@ -1209,8 +1228,9 @@ public class ExpressionProcessorTest {
         assertEquals("FirstName,LastName", subject.process("[CONFIG(" + propertiesFile + ") => keys]"));
 
         propertiesFile = ResourceUtils.getResourceFilePath(resourcePath + className + "5.txt");
-        assertEquals("FirstName,LastName,qapay01.url,genre,nexial.assistantMode,nexial.inspectOnPause,mydb.type,mydb.url,mydb.user,mydb.password,mydb.autocommit,mydb.treatNullAs,qapay01.type,qapay01.user,qapay01.password,qapay01.autocommit",
-                     subject.process("[CONFIG(" + propertiesFile + ") => keys]"));
+        assertEquals(
+            "FirstName,LastName,qapay01.url,genre,nexial.assistantMode,nexial.inspectOnPause,mydb.type,mydb.url,mydb.user,mydb.password,mydb.autocommit,mydb.treatNullAs,qapay01.type,qapay01.user,qapay01.password,qapay01.autocommit",
+            subject.process("[CONFIG(" + propertiesFile + ") => keys]"));
     }
 
     @Test
@@ -2113,6 +2133,7 @@ public class ExpressionProcessorTest {
                                 "123456789,Hanson\n" +
                                 "456789012,Smoe\n" +
                                 "567890123,Ladder");
+
         ExpressionProcessor subject = new ExpressionProcessor(context);
         assertEquals("Phone,Last Name\n" +
                      "345678901,Taylor\n" +
@@ -2219,6 +2240,33 @@ public class ExpressionProcessorTest {
                                      "                 merge(csv2,SSN)" +
                                      "                 merge(csv3,SSN)" +
                                      "                 merge(csv4,SSN)]"));
+    }
+
+    @Test
+    public void processCSV_merge_multiple_key_columns() throws Exception {
+        context.setData("csv1", "SSN,First Name,Last Name,Age,Years of Service,City,Title\n" +
+                                "111223335,Jacob,Aeons,17,1,Anaheim,Trainee\n" +
+                                "111223333,John,Adams,36,15,Brea,Manager\n" +
+                                "111223334,James,Atopas,22,4,Fullerton,Supervisor\n");
+        context.setData("csv2", "SSN,First Name,Last Name,Education,Office #,Team Size\n" +
+                                "111223334,James,Atopas,Bba,22-112,3\n" +
+                                "111223333,John,Adams,Bsc,36-A,16\n" +
+                                "111223335,Jacob,Aeons,High School,19-02,0\n");
+
+        ExpressionProcessor subject = new ExpressionProcessor(context);
+        subject.process("[CSV(${csv2}) => parse(header=true) store(csv2)]");
+
+        assertEquals("SSN,First Name,Last Name,Age,Years of Service,City,Title,Education,Office #,Team Size\n" +
+                     "111223333,John,Adams,36,15,Brea,Manager,Bsc,36-A,16\n" +
+                     "111223334,James,Atopas,22,4,Fullerton,Supervisor,Bba,22-112,3\n" +
+                     "111223335,Jacob,Aeons,17,1,Anaheim,Trainee,High School,19-02,0",
+                     subject.process("[CSV(${csv1}) => parse(header=true) merge(csv2,SSN,First Name,Last Name)]"));
+
+        assertEquals("SSN,First Name,Last Name,Age,Years of Service,City,Title,Education,Office #,Team Size\n" +
+                     "111223333,John,Adams,36,15,Brea,Manager,Bsc,36-A,16\n" +
+                     "111223335,Jacob,Aeons,17,1,Anaheim,Trainee,High School,19-02,0\n" +
+                     "111223334,James,Atopas,22,4,Fullerton,Supervisor,Bba,22-112,3",
+                     subject.process("[CSV(${csv1}) => parse(header=true) merge(csv2,Last Name,First Name,SSN)]"));
     }
 
     @Test

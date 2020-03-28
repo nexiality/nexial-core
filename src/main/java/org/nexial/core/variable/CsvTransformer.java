@@ -49,6 +49,7 @@ import org.nexial.core.utils.ConsoleUtils;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonObject;
 import com.univocity.parsers.common.record.Record;
+import com.univocity.parsers.common.record.RecordMetaData;
 
 import static java.lang.System.lineSeparator;
 import static org.nexial.core.NexialConst.*;
@@ -63,6 +64,7 @@ public class CsvTransformer<T extends CsvDataType> extends Transformer<CsvDataTy
     private static final Map<String, Method> FUNCTIONS =
         toFunctionMap(FUNCTION_TO_PARAM, CsvTransformer.class, CsvDataType.class);
     private static final Pattern COMPILED_FILTER_REGEX_PATTERN = Pattern.compile(FILTER_REGEX_PATTERN);
+
     static final String PAIR_DELIM = "|";
     static final String NAME_VALUE_DELIM = "=";
     static final String ATTR_INDEX = "index";
@@ -697,12 +699,12 @@ public class CsvTransformer<T extends CsvDataType> extends Transformer<CsvDataTy
     }
 
     /**
-     * merge the CSV data as represented via {@code csvVariable} to current CSV instance.  The {@code refColumn}, if
+     * merge the CSV data as represented via {@code csvVariable} to current CSV instance.  The {@code refColumns}, if
      * specified, will be used as the basis of the merge so that rows with the same value (of the specified reference
      * column) will be merged together.  Consequently this is sort the current CSV instance as a side effect.  If
-     * {@code refColumn} is not specified, then the merge will be done in the line-by-line basis.
+     * {@code refColumns} is not specified, then the merge will be done in the line-by-line basis.
      */
-    public T merge(T data, String csvVariable, String refColumn) throws TypeConversionException {
+    public T merge(T data, String csvVariable, String... refColumns) throws TypeConversionException {
         if (StringUtils.isBlank(csvVariable)) { return data; }
 
         CsvDataType mergeFrom = resolveExpressionTypeInContext(csvVariable);
@@ -719,11 +721,64 @@ public class CsvTransformer<T extends CsvDataType> extends Transformer<CsvDataTy
         if (!data.isHeader()) { return mergeWithoutHeaders(data, mergeFrom); }
 
         // both with header
-        // check that we don't have conflicting header (except `refColumn`)
+        // check that we don't have conflicting header (except `refColumns`)
+        List<String> keyColumns = Arrays.asList(refColumns);
         List<String> toHeaders = data.getHeaders();
         List<String> fromHeaders = mergeFrom.getHeaders();
+        int keyColumnCount = CollectionUtils.size(keyColumns);
+
+        if (keyColumnCount == 0 || (keyColumnCount == 1 && ExecutionContext.asNullOrEmpty(refColumns[0]))) {
+            return mergeWithHeader(data, mergeFrom, "");
+        }
+
+        if (keyColumnCount == 1) {
+            String refColumn = keyColumns.get(0);
+            if (!toHeaders.contains(refColumn)) {
+                throw new TypeConversionException("CSV", refColumn,
+                                                  "Unable to merge because the specified reference column does not " +
+                                                  "exists in the 'MERGED TO' CSV");
+            }
+
+            if (!fromHeaders.contains(refColumn)) {
+                throw new TypeConversionException("CSV", refColumn,
+                                                  "Unable to merge because the specified reference column does not " +
+                                                  "exists in the 'MERGED FROM' CSV");
+            }
+
+            // if a column in `toHeader` is not the `refColumn`, then it MUST not also exist in the `fromHeader`
+            // essentially `refColumn` should be the only column that appears on both `to` and `from` CSV
+            // otherwise we won't know which column to use as the resulting merged CSV
+            for (String column : toHeaders) {
+                if (StringUtils.equals(column, refColumn)) { continue; }
+                if (fromHeaders.contains(column)) {
+                    throw new TypeConversionException("CSV", column,
+                                                      "Unable to merge from variable '" + csvVariable +
+                                                      "' because of conflicting column '" + column + "'");
+                }
+            }
+
+            return mergeWithHeader(data, mergeFrom, refColumn);
+        }
+
+        for (String refColumn : refColumns) {
+            if (!toHeaders.contains(refColumn)) {
+                throw new TypeConversionException("CSV", refColumn,
+                                                  "Unable to merge because the specified reference column does not " +
+                                                  "exists in the 'MERGED TO' CSV");
+            }
+
+            if (!fromHeaders.contains(refColumn)) {
+                throw new TypeConversionException("CSV", refColumn,
+                                                  "Unable to merge because the specified reference column does not " +
+                                                  "exists in the 'MERGED FROM' CSV");
+            }
+        }
+
+        // if a column in `toHeader` is not the `refColumn`, then it MUST not also exist in the `fromHeader`
+        // essentially `refColumn` should be the only column that appears on both `to` and `from` CSV
+        // otherwise we won't know which column to use as the resulting merged CSV
         for (String column : toHeaders) {
-            if (StringUtils.equals(column, refColumn)) { continue; }
+            if (keyColumns.contains(column)) { continue; }
             if (fromHeaders.contains(column)) {
                 throw new TypeConversionException("CSV", column,
                                                   "Unable to merge from variable '" + csvVariable +
@@ -731,7 +786,7 @@ public class CsvTransformer<T extends CsvDataType> extends Transformer<CsvDataTy
             }
         }
 
-        return mergeWithHeader(data, mergeFrom, refColumn);
+        return mergeWithHeader(data, mergeFrom, keyColumns);
     }
 
     public T groupCount(T data, String... columns) throws TypeConversionException {
@@ -1029,18 +1084,7 @@ public class CsvTransformer<T extends CsvDataType> extends Transformer<CsvDataTy
 
     protected T mergeWithHeader(T to, CsvDataType from, String refColumn) throws TypeConversionException {
         List<String> toHeaders = to.getHeaders();
-        if (StringUtils.isNotEmpty(refColumn) && !toHeaders.contains(refColumn)) {
-            throw new TypeConversionException("CSV", refColumn,
-                                              "Unable to merge because the specified reference column does not " +
-                                              "exists in the 'MERGED TO' CSV");
-        }
-
         List<String> fromHeaders = from.getHeaders();
-        if (StringUtils.isNotEmpty(refColumn) && !fromHeaders.contains(refColumn)) {
-            throw new TypeConversionException("CSV", refColumn,
-                                              "Unable to merge because the specified reference column does not " +
-                                              "exists in the 'MERGED FROM' CSV");
-        }
 
         // sort both `to` and `from` so we can merge them correctly
         int toRefColumnPos = -1;
@@ -1152,12 +1196,161 @@ public class CsvTransformer<T extends CsvDataType> extends Transformer<CsvDataTy
         return to;
     }
 
+    protected T mergeWithHeader(T to, CsvDataType from, List<String> refColumns) {
+        String toDelim = to.getDelim();
+        String toRecordDelim = to.getRecordDelim();
+
+        // 0. prep the buffer for the "new" merged CSV
+        // create a copy so that we aren't tainted by the adding of `refColumns` into header later on
+        List<String> mergedHeaders = mergeHeaders(to, from, refColumns);
+
+        // header should always be the first line
+        StringBuilder toBuffer = new StringBuilder(TextUtils.toString(mergedHeaders, toDelim, "", "") + toRecordDelim);
+
+        // 1. create new composite column made up of the reference columns
+        to = (T) appendCompositeColumn(to, refColumns);
+        from = appendCompositeColumn(from, refColumns);
+
+        // 2. track the position of the new composite column
+        // 3. sort based on the new composite column
+        String compositeColumn = to.getHeaders().get(to.getHeaders().size() - 1);
+        to = sortAscending(to, compositeColumn);
+        from = sortAscending((T) from, compositeColumn);
+
+        List<Record> toRecords = to.getValue();
+        List<Record> fromRecords = from.getValue();
+
+        // slap the data from `mergedFrom` - except that of the `refColumn` - to data
+        // merge all `mergeFrom` records into `data`
+        int j = 0;
+        for (int i = 0; i < fromRecords.size(); i++) {
+            Record fromRecord = fromRecords.get(i);
+
+            // `to` record missing; `to` file too short
+            if (toRecords.size() <= j) {
+                toBuffer.append(mergeRecordsWithBlank(mergedHeaders, fromRecord, toDelim)).append(toRecordDelim);
+                continue;
+            }
+
+            Record toRecord = toRecords.get(j);
+            if (toRecord == null ||
+                ArrayUtils.isEmpty(toRecord.getValues()) ||
+                StringUtils.isEmpty(TextUtils.toString(toRecord.getValues(), "", "", ""))) {
+                // skip this line since there's no data here.
+                j++;
+                i--;
+                continue;
+            }
+
+            String fromRef = fromRecord.getString(compositeColumn);
+            String toRef = toRecord.getString(compositeColumn);
+
+            if (StringUtils.equals(toRef, fromRef)) {
+                // found matching reference data -- we match both rows from `to` and `from`
+                toBuffer.append(mergeToRecords(mergedHeaders, toRecord, fromRecord, toDelim)).append(toRecordDelim);
+                j++;
+                continue;
+            }
+
+            if (StringUtils.isEmpty(toRef) || StringUtils.compare(toRef, fromRef) > 0) {
+                toBuffer.append(mergeRecordsWithBlank(mergedHeaders, fromRecord, toDelim)).append(toRecordDelim);
+                continue;
+            }
+
+            // if (StringUtils.compare(toRef, fromRef) < 0) {
+            toBuffer.append(mergeRecordsWithBlank(mergedHeaders, toRecord, toDelim)).append(toRecordDelim);
+            j++;
+            i--;
+        }
+
+        // need to catch all the additional rows in `from` records
+        if (toRecords.size() > fromRecords.size()) {
+            for (int i = fromRecords.size() + 1; i < toRecords.size(); i++) {
+                Record record = toRecords.get(i);
+                toBuffer.append(mergeRecordsWithBlank(mergedHeaders, record, toDelim))
+                        .append(toRecordDelim);
+            }
+        }
+
+        to.setTextValue(StringUtils.removeEnd(toBuffer.toString(), toRecordDelim));
+        to.parse();
+        return to;
+    }
+
+    @NotNull
+    protected List<String> mergeHeaders(T to, CsvDataType from, List<String> refColumns) {
+        List<String> mergedHeaders = new ArrayList<>(to.getHeaders());
+
+        // merge headers, except those already used as `refColumns`
+        for (String fromHeader : from.getHeaders()) {
+            if (!refColumns.contains(fromHeader)) { mergedHeaders.add(fromHeader); }
+        }
+
+        return mergedHeaders;
+    }
+
+    @NotNull
+    protected String mergeRecordsWithBlank(List<String> headers, Record record, String delim) {
+        StringBuilder buffer = new StringBuilder();
+        RecordMetaData metaData = record.getMetaData();
+
+        for (int i = 0; i < headers.size(); i++) {
+            buffer.append(metaData.containsColumn(headers.get(i)) ? record.getString(i) : "").append(delim);
+        }
+
+        return StringUtils.removeEnd(buffer.toString(), delim);
+    }
+
+    @NotNull
+    protected String mergeToRecords(List<String> headers, Record record1, Record record2, String delim) {
+        StringBuilder buffer = new StringBuilder();
+        RecordMetaData metaData1 = record1.getMetaData();
+        RecordMetaData metaData2 = record2.getMetaData();
+
+        for (String header : headers) {
+            buffer.append(metaData1.containsColumn(header) ? record1.getString(header) :
+                          metaData2.containsColumn(header) ? record2.getString(header) : "")
+                  .append(delim);
+        }
+
+        return StringUtils.removeEnd(buffer.toString(), delim);
+    }
+
+    @NotNull
+    protected CsvDataType appendCompositeColumn(CsvDataType csv, List<String> columnsToCombine) {
+        if (CollectionUtils.isEmpty(columnsToCombine)) { return csv; }
+
+        String delim = csv.getDelim();
+        String recordDelim = csv.getRecordDelim();
+
+        List<String> newHeaders = new ArrayList<>(csv.getHeaders());
+        newHeaders.add(TextUtils.toString(columnsToCombine, "_"));
+
+        StringBuilder buffer = new StringBuilder();
+        buffer.append(TextUtils.toString(newHeaders, delim)).append(recordDelim);
+
+        csv.getValue().forEach(record -> {
+            List<String> compositeData = new ArrayList<>();
+            columnsToCombine.forEach(ref -> compositeData.add(record.getString(ref)));
+            buffer.append(TextUtils.toCsvLine(ArrayUtils.add(record.getValues(),
+                                                             TextUtils.toString(compositeData, "_")),
+                                              delim, recordDelim));
+        });
+
+        CsvDataType newCsv = csv.snapshot();
+        newCsv.setTextValue(buffer.toString());
+        newCsv.parse();
+        return newCsv;
+    }
+
+    @NotNull
     protected String createBlankToPortion(int expectedColumnCount, int refColumnPos, String refValue, String delim) {
         StringBuilder blank = new StringBuilder();
         for (int i = 0; i < expectedColumnCount; i++) { blank.append(i == refColumnPos ? refValue : "").append(delim); }
         return blank.toString();
     }
 
+    @NotNull
     protected String prepareMergingValues(String[] values, int ignoreColumnPosition, String delim) {
         StringBuilder recordBuffer = new StringBuilder();
         for (int k = 0; k < values.length; k++) {
