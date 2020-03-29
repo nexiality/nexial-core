@@ -97,11 +97,13 @@ object ExecUtils {
 
     @JvmStatic
     fun deriveRunId(): String {
-        val runIdPrefix = StringUtils.defaultString(StringUtils.trim(System.getProperty(OPT_RUN_ID_PREFIX)))
+        var runId = System.getProperty(OPT_RUN_ID)
+        if (StringUtils.isNotBlank(runId)) return runId
 
         val rightNow = System.currentTimeMillis()
-        var runId = System.getProperty(OPT_RUN_ID)
-        if (StringUtils.isEmpty(runId)) runId = DateUtility.createTimestampString(rightNow)
+        runId = DateUtility.createTimestampString(rightNow)
+
+        val runIdPrefix = StringUtils.defaultString(StringUtils.trim(System.getProperty(OPT_RUN_ID_PREFIX)))
         if (StringUtils.isNotBlank(runIdPrefix) && !StringUtils.startsWith(runId, "$runIdPrefix.")) {
             runId = "$runIdPrefix.$runId"
         }
@@ -118,10 +120,10 @@ object ExecUtils {
         System.setProperty(SCRIPT_REF_PREFIX + RUNTIME_ARGS, args.joinToString(" "))
 
         val argsList = ManagementFactory.getRuntimeMXBean().inputArguments.stream()
-            .filter { arg ->
-                arg.startsWith("-D") &&
-                IGNORED_CLI_OPT.none { StringUtils.startsWith(StringUtils.substring(arg, 2), it) }
-            }.collect(Collectors.joining(getDefault(TEXT_DELIM)!!))
+                .filter { arg ->
+                    arg.startsWith("-D") &&
+                    IGNORED_CLI_OPT.none { StringUtils.startsWith(StringUtils.substring(arg, 2), it) }
+                }.collect(Collectors.joining(getDefault(TEXT_DELIM)!!))
 
         if (argsList.isNotBlank()) System.setProperty(SCRIPT_REF_PREFIX + JAVA_OPT, argsList)
     }
@@ -134,11 +136,11 @@ object ExecUtils {
         if (StringUtils.isBlank(javaOptsString)) return javaOpts
 
         javaOptsString.split(getDefault(TEXT_DELIM)!!)
-            .filter { StringUtils.length(it) > 5 && StringUtils.contains(it, "=") }
-            .forEach {
-                val nameValue = it.removePrefix("-D").split("=")
-                if (nameValue.size == 2) javaOpts[nameValue[0]] = nameValue[1]
-            }
+                .filter { StringUtils.length(it) > 5 && StringUtils.contains(it, "=") }
+                .forEach {
+                    val nameValue = it.removePrefix("-D").split("=")
+                    if (nameValue.size == 2) javaOpts[nameValue[0]] = nameValue[1]
+                }
 
         return javaOpts
     }

@@ -24,12 +24,12 @@ import org.apache.commons.lang3.StringUtils
 import org.apache.commons.lang3.SystemUtils
 import org.nexial.core.ExecutionThread
 import org.nexial.core.NexialConst.DEF_FILE_ENCODING
-import org.nexial.core.NexialConst.Data.OPT_RUN_ID
 import org.nexial.core.NexialConst.TimeTrack.*
 import org.nexial.core.model.*
 import org.nexial.core.model.ExecutionEvent.*
 import org.nexial.core.service.EventUtils.postfix
 import org.nexial.core.service.EventUtils.storageLocation
+import org.nexial.core.utils.ExecUtils.deriveRunId
 import org.nexial.core.utils.TrackTimeLogs
 import java.io.File
 import java.io.File.separator
@@ -74,7 +74,7 @@ object EventTracker {
 
         when {
             eventName == ExecutionComplete.eventName && trackEvent(TRACK_EXECUTION)        -> {
-                trackTimeLogs.trackExecutionLevels(System.getProperty(OPT_RUN_ID), startTime, endTime, "Execution")
+                trackTimeLogs.trackExecutionLevels(deriveRunId(), startTime, endTime, "Execution")
             }
 
             eventName == ScriptComplete.eventName && trackEvent(context, TRACK_SCRIPT)     -> {

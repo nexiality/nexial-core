@@ -85,6 +85,8 @@ class ExecutionLogger(private val context: ExecutionContext) {
 
     fun error(subject: ExecutionContext, message: String) = error(toHeader(subject), message)
 
+    fun error(subject: ExecutionContext, message: String, e: Throwable) = error(toHeader(subject), message, e)
+
     private fun log(header: String, message: String, priority: Boolean) {
         if (priority) {
             priorityLogger.info("$header - $message")
@@ -113,7 +115,7 @@ class ExecutionLogger(private val context: ExecutionContext) {
 
         @JvmStatic
         fun toHeader(subject: TestCase?) =
-            if (subject == null) "current activity" else toHeader(subject.testScenario) + "|" + subject.name
+                if (subject == null) "current activity" else toHeader(subject.testScenario) + "|" + subject.name
 
         @JvmStatic
         fun toHeader(subject: TestScenario?): String {

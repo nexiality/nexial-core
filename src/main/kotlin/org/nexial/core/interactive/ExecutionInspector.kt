@@ -19,6 +19,7 @@ package org.nexial.core.interactive
 import org.apache.commons.lang3.StringUtils
 import org.nexial.commons.utils.RegexUtils
 import org.nexial.commons.utils.TextUtils
+import org.nexial.core.ExecutionThread
 import org.nexial.core.plugins.base.BaseCommand
 import org.nexial.core.utils.ConsoleUtils
 import java.util.*
@@ -31,6 +32,9 @@ class ExecutionInspector(private val baseCommand: BaseCommand) {
 
     fun inspect() {
         val context = baseCommand.context
+        // just in case
+        if (ExecutionThread.get() == null) ExecutionThread.set(context)
+
         print(prompt)
 
         val stdin = Scanner(System.`in`)

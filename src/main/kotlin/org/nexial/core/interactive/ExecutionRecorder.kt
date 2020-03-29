@@ -21,6 +21,7 @@ import org.apache.commons.lang3.SystemUtils.*
 import org.apache.cxf.helpers.FileUtils
 import org.nexial.commons.proc.ProcessInvoker
 import org.nexial.commons.utils.ResourceUtils
+import org.nexial.core.ExecutionThread
 import org.nexial.core.NexialConst.Data.WIN32_CMD
 import org.nexial.core.NexialConst.OPT_LAST_OUTPUT_LINK
 import org.nexial.core.plugins.base.BaseCommand
@@ -33,6 +34,10 @@ class ExecutionRecorder(private val baseCommand: BaseCommand) {
     fun toggleRecording() = if (recordingInSession) stopRecording() else startRecording()
 
     private fun startRecording() {
+        // just in case
+        val context = baseCommand.context
+        if (ExecutionThread.get() == null && context != null) ExecutionThread.set(context)
+
         val outcome = baseCommand.startRecording()
         if (outcome.isSuccess) {
             ConsoleUtils.log(outcome.message)
@@ -42,6 +47,10 @@ class ExecutionRecorder(private val baseCommand: BaseCommand) {
     }
 
     private fun stopRecording() {
+        // just in case
+        val context = baseCommand.context
+        if (ExecutionThread.get() == null && context != null) ExecutionThread.set(context)
+
         val outcome = baseCommand.stopRecording()
         recordingInSession = false
 

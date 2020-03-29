@@ -123,7 +123,6 @@ class ExpressionParser {
         String fragment = typeGrouping.get(0) + typeGrouping.get(1) + typeGrouping.get(2) +
                           postFunctionParsingSubstitution(newText.toString(), false);
         expr.appendOriginalExpression(fragment);
-        // expr.appendOriginalExpression(StringUtils.replace(fragment, ESCAPE_DELIM_SUBSTITUTION, "\\" + delim));
         return expr;
     }
 

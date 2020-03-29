@@ -24,12 +24,12 @@ import org.apache.commons.lang3.StringUtils;
 import org.nexial.core.ExecutionThread;
 import org.nexial.core.model.ExecutionContext;
 import org.nexial.core.utils.ConsoleUtils;
+import org.nexial.core.utils.ExecUtils;
 
 import com.amazonaws.services.s3.model.PutObjectResult;
 
 import static com.amazonaws.regions.Regions.DEFAULT_REGION;
 import static java.io.File.separator;
-import static org.nexial.core.NexialConst.Data.OPT_RUN_ID;
 import static org.nexial.core.NexialConst.*;
 
 /**
@@ -51,7 +51,7 @@ public class NexialS3Helper extends S3Support {
     public String resolveOutputDir() {
         if (context == null) {
             // no choice but to resolve output dir via System props.
-            return resolveOutputDir(System.getProperty(OPT_PROJECT_NAME), System.getProperty(OPT_RUN_ID));
+            return resolveOutputDir(System.getProperty(OPT_PROJECT_NAME), ExecUtils.deriveRunId());
         } else {
             return context.getStringData(OPT_CLOUD_OUTPUT_BASE, outputBase) + S3_PATH_SEP +
                    context.getProject().getName() + S3_PATH_SEP +

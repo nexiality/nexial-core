@@ -310,7 +310,7 @@ public class CsvDataType extends ExpressionDataType<List<Record>> {
         if (!readyToParse) { return; }
 
         if (StringUtils.isBlank(textValue)) {
-            // csvFormat = null;
+            ConsoleUtils.log("Unable to generate CSV content from empty/blank text...");
             headers = null;
             value = null;
         }

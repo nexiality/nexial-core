@@ -953,23 +953,26 @@ public class ExecutionContext {
         try {
             return expression.process(text);
         } catch (ExpressionException e) {
-            String errorPrefix = "Unable to process expression due to ";
-            for (Throwable err : ExceptionUtils.getThrowableList(e.getCause())) {
-                // special handling for IOE; probably file/path related issues
-                if (err instanceof IOException) { throw new IllegalArgumentException(errorPrefix + err.getMessage()); }
-            }
+            Throwable cause = ExceptionUtils.getRootCause(e);
+            String errorMessage = "Unable to process expression due to " +
+                                  (cause instanceof NullPointerException ?
+                                   cause.getClass().getSimpleName() :
+                                   cause.getMessage());
 
-            // not IOE
-            String message = errorPrefix + e.getMessage();
             ExecutionLogger logger = getLogger();
             TestStep testStep = getCurrentTestStep();
             if (testStep == null) {
-                logger.error(this, message);
+                logger.error(this, errorMessage, cause);
             } else {
-                String errorLog = OutputFileUtils.generateErrorLog(testStep, e);
-                logger.error(testStep, message + "\nError log: " + errorLog);
+                logger.error(testStep,
+                             errorMessage + "\nError log: " + OutputFileUtils.generateErrorLog(testStep, cause));
             }
 
+            if (cause instanceof IOException) {
+                throw new IllegalArgumentException("Unable to process expression due to " + cause.getMessage());
+            }
+
+            // not IOE
             return text;
         }
     }
