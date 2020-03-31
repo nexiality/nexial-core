@@ -45,6 +45,25 @@ public class NumberTransformer<T extends NumberDataType> extends Transformer {
 
     public TextDataType text(T data) { return super.text(data); }
 
+    public T abs(T data) {
+        if (data == null || data.getTextValue() == null) { return data; }
+
+        Number number = data.getValue();
+        if (number == null) { return data; }
+
+        if (isDecimal(number)) {
+            double abs = Math.abs(number.doubleValue());
+            data.setTextValue(abs);
+            data.setValue(abs);
+        } else {
+            long abs = Math.abs((long) number.doubleValue());
+            data.setTextValue(abs);
+            data.setValue(abs);
+        }
+
+        return data;
+    }
+
     public T whole(T data) {
         if (data == null || data.getTextValue() == null) { return data; }
 

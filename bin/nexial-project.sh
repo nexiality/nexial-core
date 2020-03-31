@@ -36,7 +36,7 @@ echo "  PROJECT_HOME:   ${PROJECT_HOME}"
 # create project.id file to uniquely identify a "project" across enterprise (i.e. same SCM)
 PROJECT_ID="${PROJECT_HOME}/.meta/project.id"
 if [[ -f "${PROJECT_ID}" ]] ; then
-  PROJECT_NAME=$(cat "${PROJECT_ID}")
+  PROJECT_NAME=$(cat "${PROJECT_ID}" | tr -dc '[[:print:]]')
 fi
 
 echo

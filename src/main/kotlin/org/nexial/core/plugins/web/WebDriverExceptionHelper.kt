@@ -35,6 +35,7 @@ import java.util.stream.Collectors
  * so that Nexial users can better understand the underlying root cause and take appropriate actions.
  */
 object WebDriverExceptionHelper {
+
     private const val noException = "No error or exception found"
 
     @JvmStatic
