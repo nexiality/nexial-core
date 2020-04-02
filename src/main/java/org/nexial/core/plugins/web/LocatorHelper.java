@@ -87,6 +87,14 @@ class LocatorHelper {
             return By.linkText(StringUtils.substring(locator, "link=".length()));
         }
 
+        if (StringUtils.startsWith(locator, "partial=")) {
+            return By.partialLinkText(StringUtils.substring(locator, "partial=".length()));
+        }
+
+        if (StringUtils.startsWith(locator, "partialLinkText=")) {
+            return By.partialLinkText(StringUtils.substring(locator, "partialLinkText=".length()));
+        }
+
         if (StringUtils.startsWith(locator, "xpath=")) {
             String xpath = StringUtils.substring(locator, "xpath=".length());
             if (allowRelative) { return By.xpath(xpath); }

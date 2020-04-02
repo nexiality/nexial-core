@@ -1314,6 +1314,13 @@ public class WebCommand extends BaseCommand implements CanTakeScreenshot, CanLog
         return new StepResult(expectedTitleFound, (expectedTitleFound ? "EXPECTED title " : "NOT ") + "found", null);
     }
 
+    public StepResult saveTitle(String var) {
+        requiresValidVariableName(var);
+        ensureReady();
+        updateDataVariable(var, driver.getTitle());
+        return StepResult.success();
+    }
+
     public StepResult selectWindow(String winId) { return selectWindowAndWait(winId, "2000"); }
 
     public StepResult selectWindowByIndex(String index) { return selectWindowByIndexAndWait(index, "2000"); }
