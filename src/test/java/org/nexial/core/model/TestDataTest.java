@@ -40,7 +40,7 @@ public class TestDataTest {
         TestData testData = new TestData(excel, Collections.singletonList("new_test1"));
 
         Assert.assertTrue(testData.isFallbackToPrevious());
-        Assert.assertEquals(testData.getIteration(), 3);
+        Assert.assertEquals(testData.getIteration(), "3");
         Assert.assertEquals(testData.getMailTo(), "nobody@nowhere.com");
 
         Assert.assertEquals(testData.getIntValue(1, "nexial.delayBetweenStepsMs"), 1200);
@@ -94,7 +94,7 @@ public class TestDataTest {
 
         // inherit from new_test1
         Assert.assertTrue(testData.isFallbackToPrevious());
-        Assert.assertEquals(testData.getIteration(), 3);
+        Assert.assertEquals(testData.getIteration(), "3");
 
         // overridden from new_test2
         Assert.assertEquals(testData.getMailTo(), "johnny@bgood.com");

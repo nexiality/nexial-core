@@ -125,12 +125,7 @@ public class TestData {
 
     public String getMailTo() { return getSetting(POST_EXEC_MAIL_TO); }
 
-    public int getIteration() {
-        String iteration = getSetting(ITERATION);
-        return NumberUtils.isDigits(iteration) ?
-               NumberUtils.toInt(iteration) :
-               NumberUtils.toInt(StringUtils.substringBefore(iteration, "-"));
-    }
+    public String getIteration() { return getSetting(ITERATION); }
 
     public IterationManager getIterationManager() {
         // can't save as instance variable due to the nature of how scopeSetting is collected in constructor...

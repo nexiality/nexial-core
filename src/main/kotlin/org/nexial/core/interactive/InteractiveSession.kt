@@ -20,6 +20,7 @@ import org.apache.commons.collections4.BidiMap
 import org.apache.commons.collections4.bidimap.DualLinkedHashBidiMap
 import org.apache.commons.lang3.StringUtils
 import org.apache.commons.lang3.SystemUtils.USER_NAME
+import org.apache.commons.lang3.math.NumberUtils
 import org.nexial.commons.utils.EnvUtils
 import org.nexial.commons.utils.FileUtil
 import org.nexial.core.ExecutionThread
@@ -171,7 +172,16 @@ data class InteractiveSession(val context: ExecutionContext) {
         }
 
         execDef.getTestData(true)
-        this.iteration = if (this.iteration == 0) execDef.testData.iteration else this.iteration
+        this.iteration = if (this.iteration == 0) {
+            val iterationValue = execDef.testData.iteration
+            if (NumberUtils.isDigits(iterationValue)) {
+                NumberUtils.toInt(iterationValue)
+            } else {
+                NumberUtils.toInt(StringUtils.substringBefore(iterationValue, "-"))
+            }
+        } else {
+            this.iteration
+        }
     }
 
     fun reloadDataFile() {
