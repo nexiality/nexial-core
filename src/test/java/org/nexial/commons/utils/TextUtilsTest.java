@@ -472,6 +472,7 @@ public class TextUtilsTest {
                              "all.the.kings.horse=and king's men\n" +
                              "couldn't put=Humpty Dumpty together again\n" +
                              "\n" +
+                             "my.datasource.url=jdbc://myserver:1099/dbname;prop1=value1;prop2=#hash2;prop3=!what\n" +
                              "broken==\n" +
                              "rotten=\n" +
                              "gotten=";
@@ -488,6 +489,8 @@ public class TextUtilsTest {
         Assert.assertEquals("=", propMap.get("broken"));
         Assert.assertEquals("", propMap.get("gotten"));
         Assert.assertEquals("${nexial.web.alwaysWait}", propMap.get("nexial.lenientStringCompare"));
+        Assert.assertEquals("jdbc://myserver:1099/dbname;prop1=value1;prop2=#hash2;prop3=!what",
+                            propMap.get("my.datasource.url"));
 
         FileUtils.deleteQuietly(tmpProp);
     }

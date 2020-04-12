@@ -52,8 +52,9 @@ import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 import com.google.gson.JsonSyntaxException;
 
-import static org.nexial.core.NexialConst.*;
+import static org.nexial.core.NexialConst.DEF_CHARSET;
 import static org.nexial.core.NexialConst.Data.*;
+import static org.nexial.core.NexialConst.GSON;
 import static org.nexial.core.SystemVariables.getDefaultBool;
 import static org.nexial.core.utils.CheckUtils.*;
 
@@ -320,10 +321,7 @@ public class JsonCommand extends BaseCommand {
         String jsonContent = retrieveJsonContent(json);
         if (jsonContent == null) { return StepResult.fail("Unable to parse JSON content: " + json); }
 
-        JsonElement jsonElement = GSON.fromJson(jsonContent, JsonElement.class);
-        requiresNotNull(jsonElement, "invalid json", json);
-
-        String beautified = GSON.toJson(jsonElement);
+        String beautified = JsonUtils.beautify(jsonContent);
         if (StringUtils.isBlank(beautified)) { return StepResult.fail("Unable to beautify JSON content"); }
 
         updateDataVariable(var, beautified);
@@ -336,12 +334,7 @@ public class JsonCommand extends BaseCommand {
         String jsonContent = retrieveJsonContent(json);
         if (jsonContent == null) { return StepResult.fail("Unable to parse JSON content: " + json); }
 
-        JsonElement jsonElement = GSON_COMPRESSED.fromJson(jsonContent, JsonElement.class);
-        requiresNotNull(jsonElement, "invalid json", json);
-
-        jsonElement = removeEmpty(jsonElement, !BooleanUtils.toBoolean(removeEmpty));
-
-        String compressed = GSON_COMPRESSED.toJson(jsonElement);
+        String compressed = JsonUtils.compact(jsonContent, BooleanUtils.toBoolean(removeEmpty));
         if (StringUtils.isBlank(compressed)) { return StepResult.fail("Unable to minify/compact JSON content"); }
 
         updateDataVariable(var, compressed);

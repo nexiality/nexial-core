@@ -1114,17 +1114,8 @@ public class ExecutionContext {
 
         setData(CURR_ITERATION, iterationIndex);
         if (iterationRef != -1) { setData(CURR_ITERATION_ID, iterationRef); }
-        if (iterationIndex == 1) {
-            setData(IS_FIRST_ITERATION, true);
-        } else {
-            removeDataForcefully(IS_FIRST_ITERATION);
-        }
-
-        if (iterationIndex == totalIterationCount) {
-            setData(IS_LAST_ITERATION, true);
-        } else {
-            removeDataForcefully(IS_LAST_ITERATION);
-        }
+        setData(IS_FIRST_ITERATION, iterationIndex == 1);
+        setData(IS_LAST_ITERATION, iterationIndex == totalIterationCount);
 
         // handling events
         ExecutionEventListener eventListener = getExecutionEventListener();

@@ -1349,6 +1349,11 @@ public final class NexialConst {
         public static final String CSV_ROW_SEP = "\n";
         public static final String CSV_FIELD_DEIM = ",";
         public static final String IMPORT_BUFFER_SIZE = registerSysVar(NAMESPACE + "rdbms.importBufferSize", 100);
+        // to overcome unknown but valid JDBC drivers
+        public static final String OPT_DB_CLASSNAME = ".JavaClassName";
+        // for mongodb jdbc connection only
+        public static final String OPT_DB_EXPAND_DOC = ".expandDocument";
+        public static final String URL_OPT_EXPAND_DOC = "expand=true";
 
         private Rdbms() {}
 
@@ -1495,6 +1500,9 @@ public final class NexialConst {
         public static final String OPT_ALERT_IGNORE_FLAG = registerSysVar(NAMESPACE + "ignoreBrowserAlert", false);
         public static final String BROWSER_META = registerSysVar(NS_BROWSER + ".meta");
         public static final String PROFILE_WEB_COMMAND = NS_BROWSER + ".command";
+
+        public static final String BROWSER_OPENED = registerSysVar(NS_BROWSER + ".isOpen", false);
+        public static final String CURRENT_BROWSER = registerSysVar(NS_BROWSER + ".current");
 
         // metrics
         public static final String NS_WEB_METRICS = registerSysVarGroup(NS_WEB + "metrics.");
@@ -1871,5 +1879,8 @@ public final class NexialConst {
         Pdf.init();
         ImageCaption.init();
         SaveGridAsCSV.init();
+
+        // don't need this unnecessary noise
+        System.setProperty("nashorn.args", "--no-deprecation-warning");
     }
 }

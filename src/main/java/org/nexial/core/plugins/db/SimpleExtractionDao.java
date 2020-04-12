@@ -61,8 +61,7 @@ public class SimpleExtractionDao extends JdbcDaoSupport {
     protected Boolean autoCommit;
     protected ExecutionContext context;
 
-    protected class JdbcResultExtractor
-        implements ResultSetExtractor<JdbcResult>, StatementCallback<JdbcResult> {
+    protected class JdbcResultExtractor implements ResultSetExtractor<JdbcResult>, StatementCallback<JdbcResult> {
         private JdbcResult result;
         private File file;
         private QueryResultExporter exporter;
@@ -118,15 +117,16 @@ public class SimpleExtractionDao extends JdbcDaoSupport {
             try {
                 if (stmt.execute(sql)) {
                     ResultSet rs = stmt.getResultSet();
+
+                    // esp. treatment when there's no resultset to process
+                    if (rs == null || rs.isClosed()) { return processNoResultset(stmt, isRollback); }
+
                     if (file == null) { return packData(resultToListOfMap(rs, result)); }
                     if (exporter == null) { return resultToCSV(rs, result, file); }
                     if (isRollback) { result.setRolledBack(true); }
                     return exporter.export(rs, result, file);
                 } else {
-                    int rowsAffected = stmt.getUpdateCount();
-                    if (rowsAffected != -1) { result.setRowCount(rowsAffected); }
-                    if (isRollback) { result.setRolledBack(true); }
-                    return result;
+                    return processNoResultset(stmt, isRollback);
                 }
             } catch (SQLException | DataAccessException e) {
                 result.setError("Error occurred when executing '" + sql + "': " + e.getMessage());
@@ -134,6 +134,13 @@ public class SimpleExtractionDao extends JdbcDaoSupport {
             } finally {
                 if (isRollback) { stmt.close(); }
             }
+        }
+
+        protected JdbcResult processNoResultset(Statement stmt, boolean isRollback) throws SQLException {
+            int rowsAffected = stmt.getUpdateCount();
+            if (rowsAffected != -1) { result.setRowCount(rowsAffected); }
+            if (isRollback) { result.setRolledBack(true); }
+            return result;
         }
     }
 
@@ -463,7 +470,7 @@ public class SimpleExtractionDao extends JdbcDaoSupport {
     }
 
     @NotNull
-    private JdbcResult executeAndExtract(@NotNull String sql, JdbcResult result, JdbcResultExtractor extractor) {
+    protected JdbcResult executeAndExtract(@NotNull String sql, JdbcResult result, JdbcResultExtractor extractor) {
         JdbcTemplate jdbc = getJdbcTemplate();
         if (jdbc == null) { throw new RuntimeException(MSG_NULL_JDBC); }
 

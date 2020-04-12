@@ -37,11 +37,13 @@ import org.nexial.commons.AppException;
 import org.nexial.commons.BusinessException;
 import org.nexial.commons.utils.RegexUtils;
 import org.nexial.commons.utils.TextUtils;
+import org.nexial.core.plugins.json.JsonCommand;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.cedarsoftware.util.io.JsonReader;
 import com.cedarsoftware.util.io.JsonWriter;
+import com.google.gson.JsonElement;
 import com.google.gson.JsonPrimitive;
 import com.jayway.jsonpath.Configuration;
 import com.jayway.jsonpath.Configuration.Defaults;
@@ -51,6 +53,10 @@ import com.jayway.jsonpath.spi.json.GsonJsonProvider;
 import com.jayway.jsonpath.spi.json.JsonProvider;
 import com.jayway.jsonpath.spi.mapper.GsonMappingProvider;
 import com.jayway.jsonpath.spi.mapper.MappingProvider;
+
+import static org.nexial.core.NexialConst.GSON;
+import static org.nexial.core.NexialConst.GSON_COMPRESSED;
+import static org.nexial.core.utils.CheckUtils.requiresNotNull;
 
 /**
  * @author Mike Liu
@@ -238,6 +244,24 @@ public final class JsonUtils {
         if (value.isJsonArray()) { return "array"; }
         if (value.isJsonObject()) { return "object"; }
         return "unknown";
+    }
+
+    public static String beautify(String content) {
+        if (StringUtils.isBlank(content)) { return StringUtils.trim(content); }
+
+        JsonElement jsonElement = GSON.fromJson(content, JsonElement.class);
+        requiresNotNull(jsonElement, "invalid json", content);
+        return GSON.toJson(jsonElement);
+    }
+
+    public static String compact(String content, boolean removeEmpty) {
+        if (StringUtils.isBlank(content)) { return StringUtils.trim(content); }
+
+        JsonElement jsonElement = GSON_COMPRESSED.fromJson(content, JsonElement.class);
+        requiresNotNull(jsonElement, "invalid json", content);
+
+        jsonElement = JsonCommand.removeEmpty(jsonElement, !removeEmpty);
+        return GSON_COMPRESSED.toJson(jsonElement);
     }
 
     protected static boolean isSimpleType(Object struct) {

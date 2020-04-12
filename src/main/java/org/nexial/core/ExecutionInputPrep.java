@@ -243,21 +243,11 @@ public class ExecutionInputPrep {
         if (iterationIndex > 1) {
             int lastIterationRef = iterationManager.getIterationRef(iterationIndex - 2);
             if (lastIterationRef != -1) { data.put(LAST_ITERATION, lastIterationRef + ""); }
-            data.remove(IS_FIRST_ITERATION);
-            if (iterationIndex >= iterationManager.getIterationCount()) {
-                data.put(IS_LAST_ITERATION, "true");
-            } else {
-                data.remove(IS_LAST_ITERATION);
-            }
+            data.put(IS_FIRST_ITERATION, "false");
         } else {
-            data.remove(LAST_ITERATION);
             data.put(IS_FIRST_ITERATION, "true");
-            if (iterationIndex == iterationManager.getIterationCount()) {
-                data.put(IS_LAST_ITERATION, "true");
-            } else {
-                data.remove(IS_LAST_ITERATION);
-            }
         }
+        data.put(IS_LAST_ITERATION, iterationIndex == iterationManager.getIterationCount() ? "true" : "false");
 
         Properties sysprops = System.getProperties();
         if (MapUtils.isNotEmpty(sysprops)) {

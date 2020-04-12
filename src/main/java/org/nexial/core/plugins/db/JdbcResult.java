@@ -34,7 +34,7 @@ import static org.nexial.core.NexialConst.DATE_FORMAT_NOW;
 import static org.nexial.core.plugins.db.SqlComponent.Type.UNKNOWN;
 
 public class JdbcResult implements Serializable {
-    protected static final int TO_STRING_KEY_LENGTH = 12;
+    protected static final int TO_STRING_KEY_LENGTH = 14;
 
     protected String sql;
     protected long startTime;
@@ -64,6 +64,8 @@ public class JdbcResult implements Serializable {
         this.sql = sql;
         this.rowCount = rowCount;
     }
+
+    protected JdbcResult() { }
 
     public Type getSqlType() { return sqlType; }
 

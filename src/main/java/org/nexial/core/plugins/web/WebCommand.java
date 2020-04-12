@@ -1983,6 +1983,8 @@ public class WebCommand extends BaseCommand implements CanTakeScreenshot, CanLog
     }
 
     protected void postOpen(String url) {
+        context.setData(BROWSER_OPENED, true);
+        context.setData(CURRENT_BROWSER, browser.getBrowserType().name());
         updateWinHandle();
         resizeSafariAfterOpen();
         EventTracker.track(new NexialUrlInvokedEvent(browser.getBrowserType().name(), url));
@@ -2508,6 +2510,8 @@ public class WebCommand extends BaseCommand implements CanTakeScreenshot, CanLog
             cookie.setBrowser(browser);
             cookie.driver = this.driver;
         }
+
+        context.setData(CURRENT_BROWSER, browser.getBrowserType().name());
     }
 
     protected void ensureReady() { initWebDriver(); }
