@@ -274,9 +274,10 @@ class RdbmsCommand : BaseCommand() {
         // csv file will get the `nexial.lastOutputLink` ref, not json file
         if (FileUtil.isFileReadable(saveTo, 3)) {
             addLinkRef("result saved as ${saveTo.name}", saveTo.name, saveTo.absolutePath)
+            return true
         }
 
-        return true
+        return false
     }
 
     fun executeSQLs(db: String, sqls: List<SqlComponent>): JdbcOutcome = resolveDao(db).executeSqls(sqls)

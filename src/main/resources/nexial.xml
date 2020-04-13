@@ -160,6 +160,7 @@
                         <entry key="postgresql" value="org.postgresql.Driver"/>
                         <entry key="sqlite" value="org.sqlite.JDBC"/>
                         <entry key="hsqldb" value="org.hsqldb.jdbc.JDBCDriver"/>
+                        <!-- https://bitbucket.org/dbschema/mongodb-jdbc-driver/src/master/ -->
                         <entry key="mongodb" value="com.dbschema.MongoJdbcDriver"/>
                     </map>
                 </property>
