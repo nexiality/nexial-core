@@ -80,6 +80,7 @@ public class ExecutionInputPrepTest {
         iteration1DataMap.put("nexial.scope.currentIteration", "1");
         iteration1DataMap.put("nexial.scope.currentIterationId", "1");
         iteration1DataMap.put("nexial.scope.isFirstIteration", "true");
+        iteration1DataMap.put("nexial.scope.isLastIteration", "false");
         iteration1DataMap.put("nexial.mailTo", "jumbotron@tiny.corp");
         iteration1DataMap.put("nexial.delayBetweenStepsMs", "600");
         iteration1DataMap.put("nexial.failFast", "false");

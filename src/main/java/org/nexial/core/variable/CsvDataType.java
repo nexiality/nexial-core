@@ -352,7 +352,7 @@ public class CsvDataType extends ExpressionDataType<List<Record>> {
 
         value = parser.parseAllRecords(new StringReader(textValue));
         rowCount = CollectionUtils.size(value);
-        if (header) {
+        if (header && ArrayUtils.isNotEmpty(parser.getRecordMetadata().headers())) {
             headers = new ArrayList<>(Arrays.asList(parser.getRecordMetadata().headers()));
             columnCount = CollectionUtils.size(headers);
         } else {
