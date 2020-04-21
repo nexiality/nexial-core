@@ -444,6 +444,10 @@ public final class ExecutionThread extends Thread {
                          //"» Warnings:       " + summary.getWarnCount() + "\n" +
                          StringUtils.defaultIfBlank(cloudOutputBuffer.toString(), "") + "\n\n");
 
+        // special handling of mail config, make sure we get latest/greatest from context
+        ExecutionMailConfig mailConfig = ExecutionMailConfig.get();
+        if (mailConfig != null && mailConfig.isReady()) { ExecutionMailConfig.configure(context); }
+
         context.getExecutionEventListener().onScriptComplete();
 
         if (context.hasData(LAST_PLAN_STEP)) {
