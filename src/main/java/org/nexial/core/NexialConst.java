@@ -1354,6 +1354,8 @@ public final class NexialConst {
         // for mongodb jdbc connection only
         public static final String OPT_DB_EXPAND_DOC = ".expandDocument";
         public static final String URL_OPT_EXPAND_DOC = "expand=true";
+        public static final String OPT_DB_TRUST_STORE = ".trustStore";
+        public static final String OPT_DB_TRUST_STORE_PWD = ".trustStorePassword";
 
         private Rdbms() {}
 

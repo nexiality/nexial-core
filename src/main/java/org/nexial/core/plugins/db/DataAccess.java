@@ -216,6 +216,23 @@ public class DataAccess implements ApplicationContextAware {
             props.put("password", password);
         }
 
+        // additional security consideration when connecting to database... mostly for cloud/SaaS -based db
+        String trustStore = context.getStringData(OPT_DB_TRUST_STORE);
+        if (StringUtils.isNotBlank(trustStore)) {
+            System.setProperty("javax.net.ssl.trustStore", trustStore);
+
+            Map<String, String> urlOptions = TextUtils.toMap(StringUtils.substringAfter(url, "?"), "&", "");
+            urlOptions.put("ssl", "true");
+            urlOptions.put("sslInvalidHostNameAllowed", "true");
+            url = StringUtils.substringBefore(url, "?") + "?" + TextUtils.toString(urlOptions, "&", "=");
+
+        }
+
+        String trustStorePassword = context.getStringData(OPT_DB_TRUST_STORE_PWD);
+        if (StringUtils.isNotBlank(trustStorePassword)) {
+            System.setProperty("javax.net.ssl.trustStorePassword", trustStorePassword);
+        }
+
         try {
             Connection connection = DriverManager.getConnection(url, props);
             connection.setAutoCommit(true);
