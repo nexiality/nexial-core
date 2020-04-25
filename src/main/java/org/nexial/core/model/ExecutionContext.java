@@ -546,6 +546,18 @@ public class ExecutionContext {
         return MapUtils.getObject(data, name);
     }
 
+    @Nullable
+    public <T> T getObjectData(String name, Class<T> expectedType) {
+        if (StringUtils.isBlank(name)) { return null; }
+        if (!hasData(name)) { return null; }
+
+        Object obj = MapUtils.getObject(data, name);
+        if (obj == null) { return null; }
+        if (expectedType.isAssignableFrom(obj.getClass())) { return expectedType.cast(obj); }
+
+        return null;
+    }
+
     public String getStringData(String name) {
         String rawValue = getRawStringData(name);
         if (StringUtils.isBlank(rawValue)) { return rawValue; }
