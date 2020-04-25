@@ -35,7 +35,7 @@ import static org.nexial.core.NexialConst.DEF_FILE_ENCODING;
 
 public final class URLEncodingUtils {
     private static final List<Character> ACCEPTABLE_PATH_CHARS = Arrays.asList('$', '-', '_', '.', '+', '!', '*',
-                                                                               '\'', '(', ')', ',', '/');
+                                                                               '\'', '(', ')', ',', '/', ';', '=');
     private static final String TMP_AMPERSAND = "0-_-0";
     private static final String TMP_ENCODED_PREFIX = "$$--";
     private static final String TMP_ENCODED_POSTFIX = "--$$";
