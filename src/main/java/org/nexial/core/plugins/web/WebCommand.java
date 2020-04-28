@@ -270,7 +270,7 @@ public class WebCommand extends BaseCommand implements CanTakeScreenshot, CanLog
 
             List<WebElement> options = select.getOptions();
             if (CollectionUtils.isEmpty(options)) {
-                return StepResult.fail("Unable to multi-select as no options found in select element '%s", locator);
+                return StepResult.fail("Unable to multi-select as no options found in select element '%s'", locator);
             }
             options.forEach(option -> select.selectByVisibleText(option.getText()));
             return StepResult.success("selected all options from multi-select '%s'", locator);
@@ -297,7 +297,7 @@ public class WebCommand extends BaseCommand implements CanTakeScreenshot, CanLog
                     return StepResult.success("deselected '%s' from '%s'", text, locator);
                 }
             } catch (UnsupportedOperationException e) {
-                return StepResult.fail("Unable to multi-deselect from single-select element: %s", e.getMessage());
+                return StepResult.fail("Unable to multi-deselect from single-select element '%s'", e.getMessage());
             } catch (NoSuchElementException e) {
                 return StepResult.fail("Unable deselect '%s':", locator, e.getMessage());
             }
@@ -386,11 +386,11 @@ public class WebCommand extends BaseCommand implements CanTakeScreenshot, CanLog
         for (WebElement elem : matches) {
             String actual = StringUtils.trim(elem.getText());
             if (StringUtils.equals(expected, actual)) {
-                return StepResult.success("validated locator '" + locator + "' by text '" + text + "' as EXPECTED");
+                return StepResult.success("validated locator '%s' by text '%s' as EXPECTED", locator, text);
             }
         }
 
-        return StepResult.fail("No element with text '" + text + "' can be found.");
+        return StepResult.fail("No element with text '%s' can be found.", text);
     }
 
     @NotNull
@@ -399,7 +399,7 @@ public class WebCommand extends BaseCommand implements CanTakeScreenshot, CanLog
             return locatorHelper.assertElementNotPresent(locator);
         } catch (NoSuchElementException | TimeoutException e) {
             // that's fine.  we expected that..
-            return StepResult.success("Element as represented by " + locator + " is not available");
+            return StepResult.success("Element '%s' is not available", locator);
         }
     }
 
@@ -411,10 +411,11 @@ public class WebCommand extends BaseCommand implements CanTakeScreenshot, CanLog
     @NotNull
     public StepResult assertElementPresent(String locator) {
         if (isElementPresent(locator)) {
-            return StepResult.success("EXPECTED element '" + locator + "' found");
+            return StepResult.success("EXPECTED element '%s' found", locator);
         } else {
-            ConsoleUtils.log("Expected element not found at " + locator);
-            return StepResult.fail("Expected element not found at " + locator);
+            String msg = String.format("Expected element not found at '%s'", locator);
+            ConsoleUtils.log(msg);
+            return StepResult.fail(msg);
         }
     }
 
@@ -563,18 +564,36 @@ public class WebCommand extends BaseCommand implements CanTakeScreenshot, CanLog
         return new StepResult(waitForCondition(context.getPollWaitMs(), object -> isElementPresent(locator)));
     }
 
-    public StepResult saveSelectedText(String var, String locator) {
-        return getSelectedOptions(var, locator, true);
+    public StepResult assertElementEnabled(final String locator) {
+        WebElement element = findElement(locator);
+        if (element == null) {
+            String msg = String.format("Element not found at '%s'", locator);
+            ConsoleUtils.log(msg);
+            return StepResult.fail(msg);
+        }
+
+        try {
+            if (element.isEnabled() && element.isDisplayed()) {
+                return StepResult.success("Element '%s' found to be enabled as expected", locator);
+            } else {
+                return StepResult.fail("Element '%s' is NOT enabled", locator);
+            }
+        } catch (StaleElementReferenceException e) {
+            // oops.. it ran/went away...
+            String msg = String.format("element '%s' is not longer available or attached to this locator", locator);
+            ConsoleUtils.log(msg);
+            return StepResult.fail(msg);
+        }
     }
 
-    public StepResult saveSelectedValue(String var, String locator) {
-        return getSelectedOptions(var, locator, false);
-    }
+    public StepResult saveSelectedText(String var, String locator) { return getSelectedOptions(var, locator, true); }
+
+    public StepResult saveSelectedValue(String var, String locator) { return getSelectedOptions(var, locator, false); }
 
     public StepResult saveValue(String var, String locator) {
         requiresValidAndNotReadOnlyVariableName(var);
         updateDataVariable(var, getValue(locator));
-        return StepResult.success("stored value of '" + locator + "' as ${" + var + "}");
+        return StepResult.success("stored value of '%s' as ${%s}", locator, var);
     }
 
     public StepResult saveValues(String var, String locator) {
@@ -586,7 +605,7 @@ public class WebCommand extends BaseCommand implements CanTakeScreenshot, CanLog
             context.removeData(var);
         }
 
-        return StepResult.success("stored values of '" + locator + "' as ${" + var + "}");
+        return StepResult.success("stored values of '%s' as ${%s}", locator, var);
     }
 
     /**
@@ -628,8 +647,8 @@ public class WebCommand extends BaseCommand implements CanTakeScreenshot, CanLog
             return StepResult.success("matching elements do not contain attribute '" + attrName + "'");
         } else {
             context.setData(var, attrValues);
-            return StepResult.success("attribute '" + attrName + "' for elements that matched '" + locator +
-                                      "' saved to '" + var + "'");
+            return StepResult.success("attribute '%s' for elements that matched '%s' saved to '%s'",
+                                      attrName, locator, var);
         }
     }
 

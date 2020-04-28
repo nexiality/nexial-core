@@ -169,6 +169,7 @@ dataSources/
 .idea/sqlDataSources.xml
 .idea/dynamic.xml
 *.ipr
+*.iml
 
 # Gradle:
 .idea/gradle.xml
@@ -296,24 +297,9 @@ $RECYCLE.BIN/
 # extra
 classes/
 logs/
-/nexial-core_main.iml
-/nexial-core_test.iml
 src/test/resources/showcase/output/
 src/test/resources/unittesting/output/
-support/mongodb-start.sh
-support/sync-src-vm.sh
 
 /.archive/
 /build
 /logs
-/src/test/resources/showcase/artifact/data/image1-1.png
-/src/test/resources/showcase/artifact/data/image1-2.png
-/src/test/resources/showcase/artifact/data/image2-2.png
-/src/test/resources/showcase/artifact/data/image2-1.png
-/src/test/resources/showcase/artifact/data/image1-3.png
-
-# Project exclude paths
-/docs/
-NEXIAL_TODO.txt
-backup.db
-test.db
