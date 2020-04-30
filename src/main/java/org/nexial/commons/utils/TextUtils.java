@@ -198,6 +198,7 @@ public final class TextUtils {
         return StringUtils.substring(text, 0, position) + extra + StringUtils.substring(text, position);
     }
 
+    @NotNull
     public static Map<String, String> toMap(String delim, String... pairs) {
         Map<String, String> map = new LinkedHashMap<>();
 
@@ -211,6 +212,7 @@ public final class TextUtils {
         return map;
     }
 
+    @NotNull
     public static Map<String, String> toMap(String text, String pairDelim, String nameValueDelim) {
         Map<String, String> map = new LinkedHashMap<>();
 

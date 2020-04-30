@@ -24,14 +24,17 @@ import org.nexial.commons.logging.LogbackUtils
 import org.nexial.commons.proc.RuntimeUtils
 import org.nexial.commons.utils.RegexUtils
 import org.nexial.commons.utils.TextUtils
+import org.nexial.core.CommandConst.CMD_REPEAT_UNTIL
+import org.nexial.core.CommandConst.CMD_SECTION
 import org.nexial.core.ExecutionInputPrep
 import org.nexial.core.ExecutionThread
+import org.nexial.core.NexialConst.*
 import org.nexial.core.NexialConst.Data.*
 import org.nexial.core.NexialConst.Iteration.CURR_ITERATION
-import org.nexial.core.NexialConst.MSG_ABORT
-import org.nexial.core.NexialConst.OPT_LAST_OUTCOME
 import org.nexial.core.NexialConst.Project.appendLog
 import org.nexial.core.excel.Excel
+import org.nexial.core.excel.ExcelConfig.MSG_SKIPPED
+import org.nexial.core.excel.ExcelStyleHelper
 import org.nexial.core.interactive.InteractiveConsole.Commands.ALL_STEP
 import org.nexial.core.interactive.InteractiveConsole.Commands.EXIT
 import org.nexial.core.interactive.InteractiveConsole.Commands.HELP
@@ -382,9 +385,20 @@ class NexialInteractive {
         val steps = session.steps
         parentSummary!!.totalSteps = steps.size
 
+        val sectionStepsToSkip = mutableListOf<Int>()
+
         var allPass = true
         for (testStepId in steps) {
-            val testStep = scenario.getTestStepByRowIndex(NumberUtils.toInt(testStepId)) ?: break
+            val rowIndex = NumberUtils.toInt(testStepId)
+
+            // perhaps the current step is marked as SKIP due to its enclosing "section" being skipped
+            if (sectionStepsToSkip.contains(rowIndex)) {
+                val skipStep = scenario.getTestStepByRowIndex(rowIndex)
+                if (skipStep != null) context.logger.log(skipStep, "$MSG_SKIPPED $NESTED_SECTION_STEP_SKIPPED")
+                continue
+            }
+
+            val testStep = scenario.getTestStepByRowIndex(rowIndex) ?: break
 
             val stepSummary = ExecutionSummary()
             stepSummary.name = "[ROW " + StringUtils.leftPad(testStepId + "", 3) + "]"
@@ -398,22 +412,38 @@ class NexialInteractive {
             parentSummary.addNestSummary(stepSummary)
 
             if (context.isEndImmediate) {
-                // parentSummary.adjustTotalSteps(-1);
                 stepSummary.adjustTotalSteps(-1)
                 break
             }
 
+            val commandFQN = testStep.commandFQN
             if (result.isSkipped) {
-                // parentSummary.adjustTotalSteps(-1);
                 stepSummary.adjustTotalSteps(-1)
-                if (context.isBreakCurrentIteration) break else continue
+
+                // special treatment for `base.section()`
+                if (StringUtils.equals(commandFQN, CMD_SECTION)) {
+                    ExcelStyleHelper.formatSectionDescription(testStep, false)
+
+                    // now, jolt down all the steps we need to skip since this section is now SKIPPED
+                    // `testStep.getParams().get(0)` represents the number of steps of this `section`
+                    val stepsToSkip = testStep.params[0].toInt()
+                    for (j in (rowIndex + 1)..(rowIndex + stepsToSkip)) sectionStepsToSkip.add(j)
+                }
+
+                if (context.isBreakCurrentIteration) {
+                    if (StringUtils.equals(commandFQN, CMD_REPEAT_UNTIL)) {
+                        context.isBreakCurrentIteration = false
+                    } else {
+                        break
+                    }
+                } else {
+                    continue
+                }
             }
 
-            // parentSummary.incrementExecuted();
             stepSummary.incrementExecuted()
 
             if (result.isSuccess) {
-                // parentSummary.incrementPass();
                 stepSummary.incrementPass()
                 continue
             }
@@ -432,7 +462,7 @@ class NexialInteractive {
             }
 
             if (context.isFailFastCommand(testStep)) {
-                logger.log(testStep, "${MSG_ABORT}failure on fail-fast command: ${testStep.commandFQN}")
+                logger.log(testStep, "${MSG_ABORT}failure on fail-fast command: $commandFQN")
                 context.isFailImmediate = true
                 break
             }

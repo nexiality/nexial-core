@@ -268,6 +268,8 @@ public final class NexialConst {
     public static final String MSG_CRITICAL_COMMAND_FAIL = MSG_ABORT + "due to failure on fail-fast command: ";
     public static final String MSG_REPEAT_UNTIL = "[repeat-until] ";
     public static final String MSG_REPEAT_UNTIL_BREAK = MSG_REPEAT_UNTIL + "loop terminating due to break-loop condition";
+    public static final String NESTED_SECTION_STEP_SKIPPED = "current step skipped due to the enclosing section command being skipped";
+
 
     public static final String COMMENT_AUTHOR = "NexialBot";
 
@@ -1356,6 +1358,7 @@ public final class NexialConst {
         public static final String URL_OPT_EXPAND_DOC = "expand=true";
         public static final String OPT_DB_TRUST_STORE = ".trustStore";
         public static final String OPT_DB_TRUST_STORE_PWD = ".trustStorePassword";
+        public static final String OPT_IS_DOCUMENTDB = ".isDocumentDB";
 
         private Rdbms() {}
 

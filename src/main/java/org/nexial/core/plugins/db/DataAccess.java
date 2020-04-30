@@ -29,7 +29,6 @@ import javax.sql.DataSource;
 import org.apache.commons.beanutils.BeanUtils;
 import org.apache.commons.collections4.MapUtils;
 import org.apache.commons.dbcp2.BasicDataSource;
-import org.apache.commons.lang3.BooleanUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.nexial.commons.utils.TextUtils;
 import org.nexial.core.model.ExecutionContext;
@@ -40,6 +39,7 @@ import org.springframework.context.ApplicationContext;
 import org.springframework.context.ApplicationContextAware;
 import org.springframework.jdbc.datasource.SingleConnectionDataSource;
 
+import static java.io.File.separator;
 import static java.sql.Connection.TRANSACTION_SERIALIZABLE;
 import static org.nexial.core.NexialConst.Rdbms.*;
 import static org.nexial.core.utils.CheckUtils.requiresNotBlank;
@@ -202,36 +202,66 @@ public class DataAccess implements ApplicationContextAware {
         String url = context.getStringData(db + OPT_DB_URL);
         url = StringUtils.prependIfMissing(url, "jdbc:");
 
-        boolean expandDoc = BooleanUtils.toBoolean(context.getStringData(db + OPT_DB_EXPAND_DOC));
-        if (expandDoc && !StringUtils.contains(url, URL_OPT_EXPAND_DOC)) {
-            url = StringUtils.appendIfMissing(url, "?") + URL_OPT_EXPAND_DOC;
-        }
-
+        // https://bitbucket.org/dbschema/mongodb-jdbc-driver/src/master/
+        // handle credential
+        Properties props = new Properties();
         String username = context.getStringData(db + OPT_DB_USER);
         String password = context.getStringData(db + OPT_DB_PASSWORD);
-
-        Properties props = new Properties();
         if (StringUtils.isNotBlank(username) && StringUtils.isNotBlank(password)) {
             props.put("user", username);
             props.put("password", password);
         }
 
+        Map<String, String> urlOptions = TextUtils.toMap(StringUtils.substringAfter(url, "?"), "&", "=");
+
+        // special config to expand result JSON into columns
+        boolean expandDoc = context.getBooleanData(db + OPT_DB_EXPAND_DOC, false);
+        if (expandDoc) { urlOptions.put("expand", "true"); }
+
         // additional security consideration when connecting to database... mostly for cloud/SaaS -based db
         String trustStore = context.getStringData(OPT_DB_TRUST_STORE);
-        if (StringUtils.isNotBlank(trustStore)) {
-            System.setProperty("javax.net.ssl.trustStore", trustStore);
+        String trustStorePassword = context.getStringData(OPT_DB_TRUST_STORE_PWD);
 
-            Map<String, String> urlOptions = TextUtils.toMap(StringUtils.substringAfter(url, "?"), "&", "");
+        // special treatment for AWS DocumentDB
+        // https://docs.aws.amazon.com/documentdb/latest/developerguide/connect_programmatically.html#connect_programmatically-tls_enabled
+        boolean isDocumentDB = context.getBooleanData(db + OPT_IS_DOCUMENTDB, false);
+        if (isDocumentDB) {
+            String jksLocation;
+            String jksPassword;
+            if (StringUtils.isNotBlank(trustStore)) {
+                jksLocation = trustStore;
+                jksPassword = trustStorePassword;
+            } else {
+                jksLocation = StringUtils.appendIfMissing(context.getProject().getNexialHome(), separator) +
+                              "bin" + separator + "rds-truststore.jks";
+                jksPassword = "nexial_mongo";
+            }
+
+            ConsoleUtils.log("detect use of DocumentDB; adding AWS JKS to trust store: " + jksLocation);
+            System.setProperty("javax.net.ssl.trustStore", jksLocation);
+            if (StringUtils.isNotBlank(jksPassword)) {
+                System.setProperty("javax.net.ssl.trustStorePassword", jksPassword);
+            }
+
             urlOptions.put("ssl", "true");
             urlOptions.put("sslInvalidHostNameAllowed", "true");
+        } else if (StringUtils.isNotBlank(trustStore)) {
+            ConsoleUtils.log("adding to trust store: " + trustStore);
+            System.setProperty("javax.net.ssl.trustStore", trustStore);
+
+            if (StringUtils.isNotBlank(trustStorePassword)) {
+                System.setProperty("javax.net.ssl.trustStorePassword", trustStorePassword);
+            }
+
+            urlOptions.put("ssl", "true");
+            urlOptions.put("sslInvalidHostNameAllowed", "true");
+        }
+
+        if (!urlOptions.isEmpty()) {
             url = StringUtils.substringBefore(url, "?") + "?" + TextUtils.toString(urlOptions, "&", "=");
-
         }
 
-        String trustStorePassword = context.getStringData(OPT_DB_TRUST_STORE_PWD);
-        if (StringUtils.isNotBlank(trustStorePassword)) {
-            System.setProperty("javax.net.ssl.trustStorePassword", trustStorePassword);
-        }
+        ConsoleUtils.log("connecting to MongoDB: " + url);
 
         try {
             Connection connection = DriverManager.getConnection(url, props);

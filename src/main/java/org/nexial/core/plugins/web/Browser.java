@@ -674,6 +674,17 @@ public class Browser implements ForcefulTerminate {
         localState.put("browser.enabled_labs_experiments", experimentalFlags);
         options.setExperimentalOption("localState", localState);
 
+        // strategy to instruct chromedriver not to wait for full page load
+        // https://stackoverflow.com/questions/44770796/how-to-make-selenium-not-wait-till-full-page-load-which-has-a-slow-script/44771628#44771628
+        // but this doesn't work for older driver... so we need to catch exception
+        try {
+            options.setPageLoadStrategy(EAGER);
+        } catch (WebDriverException e) {
+            // oh well... i tried
+            // never mind...
+            ConsoleUtils.log("unable to page load strategy to EAGER; resetting back to default");
+        }
+
         // if (activateLogging) {
         //     LoggingPreferences logOptions = new LoggingPreferences();
         //     // logOptions.enable(LogType.BROWSER, Level.ALL);
