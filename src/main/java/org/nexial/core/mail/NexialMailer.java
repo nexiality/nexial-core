@@ -382,7 +382,7 @@ public class NexialMailer implements ExecutionNotifier {
 
         Message msg = new MimeMessage(session);
         msg.addHeader("X-Mailer", NEXIAL_MANIFEST);
-        msg.addHeader("Disposition-Notification-To", from);
+        // msg.addHeader("Disposition-Notification-To", from);
         msg.setFrom(new InternetAddress(from));
         msg.setSubject(subject);
         return msg;
