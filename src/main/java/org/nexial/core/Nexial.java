@@ -21,11 +21,8 @@ import java.io.File;
 import java.io.IOException;
 import java.security.Security;
 import java.text.MessageFormat;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
+import java.util.stream.Collectors;
 import javax.annotation.Nullable;
 import javax.validation.constraints.NotNull;
 
@@ -364,6 +361,14 @@ public class Nexial {
         List<String> testPlanPathList = TextUtils.toList(cmd.getOptionValue(PLAN), getDefault(TEXT_DELIM), true);
         List<ExecutionDefinition> executions = new ArrayList<>();
 
+        if (cmd.hasOption(SUBPLANS) && testPlanPathList.size() > 1) {
+            fail("The " + SUBPLANS + " does't work with multiple test plans. Please try with single plan.");
+        }
+
+        List<String> subplans = cmd.hasOption(SUBPLANS) ?
+                                TextUtils.toList(cmd.getOptionValue(SUBPLANS), ",", true) :
+                                new ArrayList<>();
+
         for (String testPlanPath : testPlanPathList) {
             // String testPlanPath = cmd.getOptionValue(PLAN);
             // 1. based on plan location, determine script, data, output and artifact directory
@@ -384,8 +389,7 @@ public class Nexial {
 
             // 2. parse plan file to determine number of executions (1 row per execution)
             Excel excel = new Excel(testPlanFile, DEF_OPEN_EXCEL_AS_DUP, false);
-            List<Worksheet> plans = InputFileUtils.retrieveValidPlanSequence(excel);
-            if (CollectionUtils.isEmpty(plans)) { return executions; }
+            List<Worksheet> plans = retrieveValidPlans(subplans, excel);
 
             plans.forEach(testPlan -> {
                 int rowStartIndex = ADDR_PLAN_EXECUTION_START.getRowStartIndex();
@@ -457,6 +461,37 @@ public class Nexial {
 
         // 4. return a list of scripts mixin data
         return executions;
+    }
+
+    private List<Worksheet> retrieveValidPlans(List<String> subplans, Excel excel) {
+        List<Worksheet> plans = InputFileUtils.retrieveValidPlanSequence(excel);
+        // system variable for subplans included
+
+        // filter out subplans to execute if any
+        if (CollectionUtils.isEmpty(subplans)) { return plans; }
+
+        // checking for invalid subplans
+        List<String> planNames = plans.stream().map(Worksheet::getName).collect(Collectors.toList());
+        List<String> invalidSubplans = subplans.stream().filter(testPlan -> !planNames.contains(testPlan)).collect(
+            Collectors.toList());
+
+        // system variable for subplans ommitted
+        System.setProperty(SUBPLANS_OMITTED, TextUtils.toString(invalidSubplans, ","));
+
+        if (invalidSubplans.size() != 0) {
+            fail("The plan " + excel.getFile().getAbsolutePath() + " doesn't contain worksheet/s named " +
+                 invalidSubplans + ".");
+        }
+
+        List<Worksheet> validPlans = new ArrayList<>(Collections.nCopies(subplans.size(), null));
+
+        plans.stream().filter(testPlan -> subplans.contains(testPlan.getName()))
+             .forEach(testPlan -> validPlans.set(subplans.indexOf(testPlan.getName()), testPlan));
+
+        // system variable for subplans included
+        System.setProperty(SUBPLANS_INCLUDED, TextUtils.toString(subplans, ","));
+
+        return validPlans;
     }
 
     protected File deriveScriptFromPlan(XSSFRow row, TestProject project, String testPlan) {

@@ -1575,7 +1575,7 @@ public class ExpressionProcessorTest {
         csvFile = ResourceUtils.getResourceFilePath(resourcePath + className + "10.csv");
         assertNotNull(csvFile);
 
-        String outputFile = StringUtils.substringBeforeLast(csvFile, separator) + separator + "output-10.csv";
+        String outputFile = StringUtils.substringBeforeLast(csvFile, "/") + "/" + "output-10.csv";
         context.setData("output", outputFile);
         subject = new ExpressionProcessor(context);
 

@@ -185,8 +185,8 @@ public class ExecutionInputPrep {
         return cell.getColumnIndex() == COL_IDX_COMMAND && isCellStrikeOut(cell, "macro step");
     }
 
-    public static boolean isPlanStepDisabled(List<XSSFCell> row) {
-        return isCellStrikeOut(row, COL_IDX_PLAN_TEST_SCRIPT, "plan step");
+    public static boolean isDataStepDisabled(XSSFCell cell) {
+        return isCellStrikeOut(cell, "data name");
     }
 
     public static boolean isPlanStepDisabled(XSSFRow row) {

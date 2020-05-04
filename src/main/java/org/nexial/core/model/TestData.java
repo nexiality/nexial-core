@@ -29,6 +29,7 @@ import org.apache.commons.lang3.math.NumberUtils;
 import org.apache.poi.xssf.usermodel.XSSFCell;
 import org.nexial.commons.utils.CollectionUtil;
 import org.nexial.core.CommandConst;
+import org.nexial.core.ExecutionInputPrep;
 import org.nexial.core.excel.Excel;
 import org.nexial.core.excel.Excel.Worksheet;
 import org.nexial.core.excel.ExcelAddress;
@@ -294,24 +295,28 @@ public class TestData {
             int endColumnIndex = sheet.findLastDataColumn(new ExcelAddress("A" + i));
             String endColumn = ExcelAddress.toLetterCellRef(endColumnIndex);
             ExcelAddress addrThisRow = new ExcelAddress("A" + i + ":" + endColumn + i);
-            List<List<XSSFCell>> row = sheet.cells(addrThisRow);
+            List<List<XSSFCell>> rows = sheet.cells(addrThisRow);
 
             // capture only nexial scope data
-            if (CollectionUtils.isEmpty(row) || CollectionUtils.isEmpty(row.get(0))) {
+            List<XSSFCell> row = rows.get(0);
+            if (CollectionUtils.isEmpty(rows) || CollectionUtils.isEmpty(row)) {
                 throw new IllegalArgumentException(errPrefix + "no data or no wrong format found at " + addrThisRow);
             }
 
-            if (CollectionUtils.size(row.get(0)) < 2) { continue; }
+            if (CollectionUtils.size(row) < 2) { continue; }
 
             // column A must be defined with data name
-            XSSFCell headerCell = row.get(0).get(0);
+            XSSFCell headerCell = row.get(0);
+
+            if (ExecutionInputPrep.isDataStepDisabled(headerCell)) { continue; }
+
             String name = Excel.getCellValue(headerCell);
             if (StringUtils.isBlank(name)) {
                 throw new IllegalArgumentException(errPrefix + "no data name defined at A" + i);
             }
 
             if (CommandConst.isNonIterableVariable(name)) {
-                XSSFCell dataCell = row.get(0).get(1);
+                XSSFCell dataCell = row.get(1);
                 String dataCellValue = Excel.getCellValue(dataCell);
                 if (StringUtils.isBlank(dataCellValue)) { continue; }
                 scopeSettings.put(name, dataCellValue);
@@ -329,7 +334,10 @@ public class TestData {
             // no need for empty/bad row checks since we did it in the first pass
 
             List<XSSFCell> row = sheet.cells(addrThisRow).get(0);
-            String name = Excel.getCellValue(row.get(0));
+            XSSFCell headerCell = row.get(0);
+            if (ExecutionInputPrep.isDataStepDisabled(headerCell)) { continue; }
+
+            String name = Excel.getCellValue(headerCell);
             if (!CommandConst.isNonIterableVariable(name)) {
                 collectIterationData(row, lastIteration, name, dataMap);
 

@@ -456,7 +456,7 @@ public final class InputFileUtils {
         List<Worksheet> allSheets = excel.getWorksheetsStartWith("");
         if (CollectionUtils.isEmpty(allSheets)) {
             if (LOGGER.isInfoEnabled()) { LOGGER.info(deriveFileErrorPrefix(excel) + "is missing test plans."); }
-            return null;
+            return new ArrayList<>();
         }
 
         // check that every test scenario is of right format (warn only if format is wrong)

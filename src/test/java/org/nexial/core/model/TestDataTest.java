@@ -151,6 +151,31 @@ public class TestDataTest {
         Assert.assertEquals(testData.getValue(3, "userType"), "admin");
     }
 
+    //Strikethrough data test
+    @Test
+    public void collectStrikthroughDataSet() throws Exception {
+
+        String excelFile = getPath("TestScenarioTest2" + DEF_DATAFILE_SUFFIX);
+        System.out.println("excelFile = " + excelFile);
+
+        Excel excel = new Excel(new File(excelFile));
+        TestData testData = new TestData(excel, Arrays.asList("skippedDataTest"));
+
+        Assert.assertArrayEquals(testData.getAllValue("username").toArray(new String[3]),
+                                 new String[]{"", "janson", ""});
+        Assert.assertArrayEquals(testData.getAllValue("rememberMe").toArray(new String[3]),
+                                 new String[]{"false", "false", ""});
+        Assert.assertArrayEquals(testData.getAllValue("name").toArray(new String[3]),
+                                 new String[]{"abc", "", "xyz"});
+
+        // 'email' Defined in default sheet but has strikethrough in scenario sheet
+        Assert.assertArrayEquals(testData.getAllValue("email").toArray(new String[3]),
+                                 new String[]{"abc@gmail.com", "", ""});
+
+        // only described in scenario sheets
+        Assert.assertEquals(testData.getAllValue("password").size(), 0);
+    }
+
     public String getPath(String filename) throws FileNotFoundException {
         return ResourceUtils.getFile("classpath:" +
                                      StringUtils.replace(this.getClass().getPackage().getName(), ".", "/") + "/" +

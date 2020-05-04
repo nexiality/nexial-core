@@ -101,7 +101,7 @@ object RepairExcels {
             SCRIPT -> ExecutionInputPrep.isTestStepDisabled(oldCell)
             MACRO  -> ExecutionInputPrep.isMacroStepDisabled(oldCell)
             PLAN   -> ExecutionInputPrep.isPlanStepDisabled(oldCell)
-            DATA   -> false
+            DATA   -> ExecutionInputPrep.isDataStepDisabled(oldCell)
         }
     }
 
