@@ -115,6 +115,9 @@ public final class NexialConst {
     public static final String OPT_PROJECT_BASE = NAMESPACE + "projectBase";
     public static final String OPT_PROJECT_NAME = NAMESPACE + "project";
 
+    public static final String SUBPLANS_OMITTED = NAMESPACE + "subplansOmitted";
+    public static final String SUBPLANS_INCLUDED = NAMESPACE + "subplansIncluded";
+
     // predefined subdirectories
     public static final String SUBDIR_LOGS = "logs";
     public static final String SUBDIR_CAPTURES = "captures";
@@ -923,6 +926,7 @@ public final class NexialConst {
         public static final String DATA = "data";
         public static final String DATASHEETS = "datasheets";
         public static final String PLAN = "plan";
+        public static final String SUBPLANS = "subplans";
         public static final String OUTPUT = "output";
         public static final String OVERRIDE = "override";
         public static final String ANNOUNCE = "announce";
@@ -954,6 +958,9 @@ public final class NexialConst {
             cmdOptions.addOption(PLAN, true, "[REQUIRED if -" + SCRIPT + " is missing] The fully qualified path of a " +
                                              "test plan (or plans). Multiple plans can be specified using comma as " +
                                              "separator. The use of this argument will disable the other arguments.");
+            cmdOptions.addOption(SUBPLANS, true, "[optional] Comma separated list of the subplans" +
+                                                 "(worksheets) of a test plan. The use of this argument will be only " +
+                                                 " enabled for single " + PLAN + " execution.");
             cmdOptions.addOption(OVERRIDE, true, "[optional] Add or override data variables in the form of " +
                                                  "name=value. Multiple overrides are supported via multiple " +
                                                  "-" + OVERRIDE + " name=value declarations. Note that variable name " +
