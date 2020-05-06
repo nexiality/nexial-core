@@ -564,6 +564,24 @@ public class WebCommand extends BaseCommand implements CanTakeScreenshot, CanLog
         return new StepResult(waitForCondition(context.getPollWaitMs(), object -> isElementPresent(locator)));
     }
 
+    public StepResult waitForElementsPresent(String locators) {
+        requiresNotBlank(locators, "invalid locators", locators);
+        locators = StringUtils.remove(locators, "\r");
+
+        long maxWaitMs = context.getPollWaitMs();
+        List<String> notPresent =
+            TextUtils.toList(locators, "\n", true)
+                     .stream()
+                     .filter(locator -> !waitForCondition(maxWaitMs, object -> isElementPresent(locator)))
+                     .collect(Collectors.toList());
+        if (CollectionUtils.isEmpty(notPresent)) {
+            return StepResult.success("All specified locators are present within %s ms (each)", maxWaitMs);
+        } else {
+            return StepResult.fail("Not all locators are present within %s ms (each): %s",
+                                   maxWaitMs, TextUtils.toString(notPresent, "\n", "", ""));
+        }
+    }
+
     public StepResult assertElementEnabled(final String locator) {
         WebElement element = findElement(locator);
         if (element == null) {
@@ -2446,11 +2464,10 @@ public class WebCommand extends BaseCommand implements CanTakeScreenshot, CanLog
 
         // Nexial configure "preference" for each browser to use JS click on not. However, we need to honor user's
         // wish NOT to use JS click if they had configured their test as such
-        boolean systemFavorJsClick = jsExecutor != null && browser.favorJSClick();
-        boolean forceJSClick = systemFavorJsClick;
-        if (context.hasConfig(getTarget(), getProfile(), FORCE_JS_CLICK)) {
-            forceJSClick = context.getBooleanConfig(getTarget(), getProfile(), FORCE_JS_CLICK);
-        }
+        boolean forceJSClick = context.hasConfig(getTarget(), getProfile(), FORCE_JS_CLICK) ?
+                               context.getBooleanConfig(getTarget(), getProfile(), FORCE_JS_CLICK) :
+                               browser.favorJSClick();
+        if (jsExecutor == null) { forceJSClick = false; }
 
         try {
             // @id doesn't matter anymore...
@@ -2467,7 +2484,7 @@ public class WebCommand extends BaseCommand implements CanTakeScreenshot, CanLog
             return StepResult.fail(WebDriverExceptionHelper.resolveErrorMessage(e));
         } catch (Exception e) {
             // try again..
-            if (systemFavorJsClick) {
+            if (forceJSClick) {
                 jsClick(element);
                 return StepResult.success("second attempt click via JS event");
             }

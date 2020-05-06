@@ -152,7 +152,7 @@ public class TestData {
      * <li>scope setting (i.e. <code>nexial.scope.*</code>, <code>nexial.project</code>,
      * <code>nexial.projectBase</code>, <code>nexial.outBase</code>, <code>nexial.scriptBase</code>,
      * <code>nexial.dataBase</code>, <code>nexial.planBase</code>)</li>
-     * <li>default scope settings (@link #SCOPE_SETTING_DEFAULTS)</li>
+     * <li>default scope settings ({@link #SCOPE_SETTING_DEFAULTS})</li>
      * </ol>
      */
     public String getSetting(String name) {
@@ -298,11 +298,11 @@ public class TestData {
             List<List<XSSFCell>> rows = sheet.cells(addrThisRow);
 
             // capture only nexial scope data
-            List<XSSFCell> row = rows.get(0);
-            if (CollectionUtils.isEmpty(rows) || CollectionUtils.isEmpty(row)) {
+            if (CollectionUtils.isEmpty(rows) || CollectionUtils.isEmpty(rows.get(0))) {
                 throw new IllegalArgumentException(errPrefix + "no data or no wrong format found at " + addrThisRow);
             }
 
+            List<XSSFCell> row = rows.get(0);
             if (CollectionUtils.size(row) < 2) { continue; }
 
             // column A must be defined with data name

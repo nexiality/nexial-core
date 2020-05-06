@@ -299,26 +299,33 @@ public class Browser implements ForcefulTerminate {
             // if browser supports implicit wait and we are not using explicit wait (`WEB_ALWAYS_WAIT`), then
             // we'll change timeout's implicit wait time
             Timeouts timeouts = driver.manage().timeouts();
-            long pollWaitMs = context.getPollWaitMs();
             boolean timeoutChangesEnabled = browserType.isTimeoutChangesEnabled();
-            boolean alwaysWait = context.getBooleanConfig("web", profile, WEB_ALWAYS_WAIT);
-            boolean shouldWaitImplicitly = timeoutChangesEnabled && pollWaitMs > 0 && !alwaysWait;
-            if (shouldWaitImplicitly) {
-                timeouts.implicitlyWait(pollWaitMs, MILLISECONDS);
-                ConsoleUtils.log("setting browser polling wait time to " + pollWaitMs + " ms");
-            }
-
             if (timeoutChangesEnabled) {
                 int loadWaitMs = context.getIntConfig("web", profile, WEB_PAGE_LOAD_WAIT_MS);
                 timeouts.pageLoadTimeout(loadWaitMs, MILLISECONDS);
                 ConsoleUtils.log("setting browser page load timeout to " + loadWaitMs + " ms");
+            }
+
+            long pollWaitMs = context.getPollWaitMs();
+            boolean alwaysWait = context.getBooleanConfig("web", profile, WEB_ALWAYS_WAIT);
+            if (alwaysWait) {
+                ConsoleUtils.log("detected " + WEB_ALWAYS_WAIT + "; " +
+                                 "use fluent-wait (up to " + pollWaitMs + " ms) during web automation");
+            } else {
+                boolean shouldWaitImplicitly = timeoutChangesEnabled && pollWaitMs > 0;
+                if (shouldWaitImplicitly) {
+                    timeouts.implicitlyWait(pollWaitMs, MILLISECONDS);
+                    ConsoleUtils.log("setting browser polling wait time to " + pollWaitMs + " ms");
+                } else {
+                    ConsoleUtils.log("implicit-wait might not be supported by the current browser " + browser);
+                }
             }
         }
 
         if (StringUtils.isBlank(initialWinHandle)) {
             initialWinHandle = driver.getWindowHandle();
             lastWinHandles.clear();
-            lastWinHandles.push(initialWinHandle);
+            if (StringUtils.isNotBlank(initialWinHandle)) { lastWinHandles.push(initialWinHandle); }
         }
 
         if (LOGGER.isDebugEnabled()) { LOGGER.debug("webdriver ready for " + browser); }
