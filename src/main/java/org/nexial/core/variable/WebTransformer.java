@@ -235,6 +235,14 @@ public class WebTransformer<T extends WebDataType> extends Transformer<WebDataTy
         return saveResult(data, "wait(" + waitMs + ")", stepResult);
     }
 
+    public WebDataType waitFor(T data, String locator) {
+        if (data == null || data.getValue() == null) { return null; }
+        ensureWebDriverReady();
+
+        StepResult stepResult = webCommand.waitForElementPresent(locator);
+        return saveResult(data, "waitFor(" + locator + ")", stepResult);
+    }
+
     public TextDataType text(T data) { return super.text(data); }
 
     @Override

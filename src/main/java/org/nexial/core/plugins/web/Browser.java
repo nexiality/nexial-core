@@ -681,6 +681,16 @@ public class Browser implements ForcefulTerminate {
         localState.put("browser.enabled_labs_experiments", experimentalFlags);
         options.setExperimentalOption("localState", localState);
 
+        // get rid of the infobar on top of the browser window
+        //  Disable a few things considered not appropriate for automation.
+        //     - disables the password saving UI (which covers the usecase of the removed `disable-save-password-bubble` flag)
+        //     - disables infobar animations
+        //     - disables dev mode extension bubbles (?), and doesn't show some other info bars
+        //     - disables auto-reloading on network errors (source)
+        //     - means the default browser check prompt isn't shown
+        //     - avoids showing these 3 infobars: ShowBadFlagsPrompt, GoogleApiKeysInfoBarDelegate, ObsoleteSystemInfoBarDelegate
+        options.setExperimentalOption("excludeSwitches", new String[]{"enable-automation", "load-extension"});
+
         // strategy to instruct chromedriver not to wait for full page load
         // https://stackoverflow.com/questions/44770796/how-to-make-selenium-not-wait-till-full-page-load-which-has-a-slow-script/44771628#44771628
         // but this doesn't work for older driver... so we need to catch exception

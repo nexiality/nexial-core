@@ -325,6 +325,10 @@
         <!--    </property>-->
         <!--  </bean>-->
         <!--</entry>-->
+        <!-- need to use dot (".") here because Excel is mistaking this as a cell reference -->
+        <!--<entry key="tn.5250">-->
+        <!--    <bean class="org.nexial.core.plugins.tn5250.Tn5250Command"/>-->
+        <!--</entry>-->
         <entry key="web">
             <bean class="org.nexial.core.plugins.web.WebCommand"/>
         </entry>
@@ -348,18 +352,27 @@
     <bean id="browserTemplate" class="org.nexial.core.plugins.web.Browser" scope="prototype">
         <property name="chromeOptions">
             <array>
+                <!-- more on https://github.com/GoogleChrome/chrome-launcher/blob/master/docs/chrome-flags-for-tools.md -->
+
                 <value>disable-component-update</value>
+                <!-- Disable installation of default apps on first run -->
                 <value>disable-default-apps</value>
                 <value>disable-login-animations</value>
+                <!-- Disable popup blocking. `block-new-web-contents` is the strict version of this. -->
                 <value>disable-popup-blocking</value>
+                <!-- Reloading a page that came from a POST normally prompts the user. -->
                 <value>disable-prompt-on-repost</value>
                 <value>disable-smooth-scrolling</value>
+                <!-- Disable syncing to a Google account -->
                 <value>disable-sync</value>
-                <value>bwsi</value>
+                <!--<value>bwsi</value>-->
                 <value>hide-scrollbars</value>
                 <value>allow-http-screen-capture</value>
                 <value>allow-insecure-localhost</value>
+                <!-- Disable all chrome extensions -->
+                <value>disable-extensions</value>
                 <value>disable-extensions-file-access-check</value>
+                <!-- Disable the default browser check, do not prompt to set it as such -->
                 <value>no-default-browser-check</value>
                 <value>ignore-certificate-errors</value>
                 <value>mute-audio</value>
@@ -367,6 +380,21 @@
                 <value>disable-print-preview</value>
                 <value>disable-breakpad</value>
                 <value>enable-ui-devtools</value>
+
+                <!-- Disable some built-in extensions that aren't affected by `disable-extensions` -->
+                <value>disable-component-extensions-with-background-pages</value>
+
+                <!-- Disable various background network services, including extension updating, safe browsing service, upgrade detector, translate, UMA -->
+                <value>disable-background-networking</value>
+
+                <!-- Skip first run wizards -->
+                <value>no-first-run</value>
+
+                <!-- Disable timers being throttled in background pages/tabs -->
+                <value>disable-background-timer-throttling</value>
+
+                <!-- Disables client-side phishing detection. -->
+                <value>disable-client-side-phishing-detection</value>
             </array>
         </property>
         <property name="firefoxBinArgs">

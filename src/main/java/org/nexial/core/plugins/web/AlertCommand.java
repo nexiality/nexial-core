@@ -77,10 +77,13 @@ public class AlertCommand extends BaseCommand implements RequireBrowser {
 
         // get current alert text (if any)
         String alertText = harvestDialogText();
-        if (StringUtils.isEmpty(alertText)) { return StepResult.fail("No dialog found"); }
-
-        context.setData(var, alertText);
-        return StepResult.success("stored dialog text '" + alertText + "' to ${" + var + "}");
+        if (StringUtils.isEmpty(alertText)) {
+            context.removeData(var);
+            return StepResult.success("No dialog found or it contains no content");
+        } else {
+            context.setData(var, alertText);
+            return StepResult.success("stored dialog text '" + alertText + "' to ${" + var + "}");
+        }
     }
 
     @NotNull
