@@ -74,6 +74,7 @@ import static org.nexial.core.NexialConst.Data.BUILD_NO;
 import static org.nexial.core.NexialConst.Data.SCRIPT_REF_PREFIX;
 import static org.nexial.core.NexialConst.Desktop.DESKTOP_NOTIFY_WAITMS;
 import static org.nexial.core.NexialConst.Desktop.WINIUM_SERVICE_RUNNING;
+import static org.nexial.core.NexialConst.NL;
 import static org.nexial.core.NexialConst.OS;
 import static org.nexial.core.SystemVariables.getDefaultInt;
 import static org.nexial.core.plugins.desktop.DesktopConst.*;
@@ -178,7 +179,7 @@ public class DesktopCommand extends BaseCommand implements ForcefulTerminate, Ca
         int waitMs = context.getIntData(DESKTOP_NOTIFY_WAITMS, getDefaultInt(DESKTOP_NOTIFY_WAITMS));
 
         Worksheet worksheet = testStep.getWorksheet();
-        String msg = "[" + worksheet.getName() + "][ROW " + (testStep.getRow().get(0).getRowIndex() + 1) + "]\n" +
+        String msg = "[" + worksheet.getName() + "][ROW " + (testStep.getRow().get(0).getRowIndex() + 1) + "]" + NL +
                      message;
         DesktopNotification.notify(info, msg, waitMs);
     }
@@ -894,7 +895,7 @@ public class DesktopCommand extends BaseCommand implements ForcefulTerminate, Ca
             ConsoleUtils.log("No matched row found.");
         } else {
             context.setData(var, matches);
-            ConsoleUtils.log("saved matched list rows (" + matches.size() + ") to variable '" + var + "'\n" + matches);
+            ConsoleUtils.log("saved matched list rows (" + matches.size() + ") to variable '" + var + "'" + NL + matches);
         }
 
         return StepResult.success();

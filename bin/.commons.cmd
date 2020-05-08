@@ -100,7 +100,7 @@ REM # Make sure prerequisite environment variables are set
 :resolveEnv
 	set NEXIAL_LIB=%NEXIAL_HOME%\lib
 	set CLASSES_PATH=%NEXIAL_HOME%\classes
-	set datestr=%date:~10,4%-%date:~4,2%-%date:~7,2% %time%
+	set datestr=%date:~6,4%-%date:~0,2%-%date:~3,2% %time%
 
 	echo ENVIRONMENT:
 	echo   CURRENT TIME:   %datestr%

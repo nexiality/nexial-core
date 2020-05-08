@@ -86,6 +86,7 @@ import static org.nexial.core.NexialConst.Data.*;
 import static org.nexial.core.NexialConst.Exec.*;
 import static org.nexial.core.NexialConst.FlowControls.*;
 import static org.nexial.core.NexialConst.Iteration.*;
+import static org.nexial.core.NexialConst.NL;
 import static org.nexial.core.NexialConst.Project.NEXIAL_HOME;
 import static org.nexial.core.NexialConst.TimeTrack.TRACK_EXECUTION;
 import static org.nexial.core.NexialConst.Web.*;
@@ -513,7 +514,7 @@ public class ExecutionContext {
         return getBooleanData(OPT_TEXT_MATCH_CASE_INSENSITIVE, getDefaultBool(OPT_TEXT_MATCH_CASE_INSENSITIVE));
     }
 
-    public boolean isProxyRequired() { return getBooleanData(OPT_PROXY_REQUIRED, false); }
+    // public boolean isProxyRequired() { return getBooleanData(OPT_PROXY_REQUIRED, false); }
 
     public boolean isOutputToCloud() { return getBooleanData(OUTPUT_TO_CLOUD, getDefaultBool(OUTPUT_TO_CLOUD)); }
 
@@ -977,7 +978,7 @@ public class ExecutionContext {
                 logger.error(this, errorMessage, cause);
             } else {
                 logger.error(testStep,
-                             errorMessage + "\nError log: " + OutputFileUtils.generateErrorLog(testStep, cause));
+                             errorMessage + NL + "Error log: " + OutputFileUtils.generateErrorLog(testStep, cause));
             }
 
             if (cause instanceof IOException) {

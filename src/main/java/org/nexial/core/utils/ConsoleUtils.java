@@ -42,6 +42,7 @@ import org.slf4j.event.Level;
 import static org.nexial.core.NexialConst.Data.QUIET;
 import static org.nexial.core.NexialConst.FlowControls.OPT_INSPECT_ON_PAUSE;
 import static org.nexial.core.NexialConst.FlowControls.RESUME_FROM_PAUSE;
+import static org.nexial.core.NexialConst.NL;
 import static org.nexial.core.SystemVariables.getDefaultBool;
 import static org.slf4j.event.Level.ERROR;
 import static org.slf4j.event.Level.INFO;
@@ -102,7 +103,7 @@ public final class ConsoleUtils {
         error(id, msg);
         if (e != null) {
             e.printStackTrace(System.err);
-            System.err.print("\n\n");
+            System.err.print(NL + NL);
             logAs(ERROR, "[" + id + "] " + msg + e.getMessage());
         }
     }
@@ -164,7 +165,7 @@ public final class ConsoleUtils {
             System.out.println(MARGIN_RIGHT + centerPrompt("INSPECT ON PAUSE", PROMPT_LINE_WIDTH - 2) + MARGIN_RIGHT);
             System.out.println("\\------------------------------------------------------------------------------/");
             System.out.println("> Enter statement to inspect.  Press ENTER or " + RESUME_FROM_PAUSE + " to resume " +
-                               "execution\n");
+                               "execution" + NL);
             System.out.print("inspect-> ");
             Scanner in = new Scanner(System.in);
             String input = in.nextLine();

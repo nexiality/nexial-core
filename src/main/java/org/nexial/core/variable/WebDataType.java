@@ -20,6 +20,8 @@ package org.nexial.core.variable;
 import java.util.ArrayList;
 import java.util.List;
 
+import static org.nexial.core.NexialConst.NL;
+
 public class WebDataType extends ExpressionDataType<String> {
     private Transformer transformer = new WebTransformer();
     private boolean allPass;
@@ -44,10 +46,10 @@ public class WebDataType extends ExpressionDataType<String> {
 
         @Override
         public String toString() {
-            return "{\n" +
-                   "    operation=" + operation + ",\n" +
-                   "    result=" + result + ",\n" +
-                   "    error=" + error + "\n" +
+            return "{" + NL +
+                   "    operation=" + operation + "," + NL +
+                   "    result=" + result + "," + NL +
+                   "    error=" + error + NL +
                    "  }";
         }
     }
@@ -76,9 +78,9 @@ public class WebDataType extends ExpressionDataType<String> {
 
     @Override
     public String toString() {
-        return "{\n" +
-               "  allPass=" + allPass + ",\n" +
-               "  results=" + results + "\n" +
+        return "{" + NL +
+               "  allPass=" + allPass + "," + NL +
+               "  results=" + results + NL +
                "}";
     }
 

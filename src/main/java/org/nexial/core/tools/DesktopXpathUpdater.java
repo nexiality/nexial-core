@@ -42,6 +42,7 @@ import com.google.gson.JsonObject;
 
 import static java.io.File.separator;
 import static org.nexial.core.NexialConst.GSON;
+import static org.nexial.core.NexialConst.NL;
 import static org.nexial.core.tools.CliConst.OPT_VERBOSE;
 import static org.nexial.core.tools.CliUtils.newArgOption;
 
@@ -182,7 +183,7 @@ public class DesktopXpathUpdater {
             updater.parseCLIOptions(args);
             return updater;
         } catch (Exception e) {
-            System.err.println("\nERROR: " + e.getMessage() + "\n");
+            System.err.println(NL + "ERROR: " + e.getMessage() + NL);
             HelpFormatter formatter = new HelpFormatter();
             formatter.printHelp(DesktopXpathUpdater.class.getName(), updater.cmdOptions, true);
             return null;

@@ -28,6 +28,7 @@ import org.apache.commons.lang3.StringUtils;
 import org.nexial.commons.utils.TextUtils;
 import org.nexial.core.plugins.io.CsvExtendedComparison.ReportFormat;
 
+import static org.nexial.core.NexialConst.NL;
 import static org.nexial.core.plugins.io.CsvExtendedComparison.ReportFormat.*;
 
 public class CsvComparisonResult {
@@ -109,19 +110,19 @@ public class CsvComparisonResult {
                                  CollectionUtils.isNotEmpty(failedIdentities);
         String readyVerbiage = readyForReport ? "READY" : "none";
 
-        return "expectedHeaders=" + expectedHeaders + "\n" +
-               "actualHeaders=" + actualHeaders + "\n" +
-               "displayFields=" + displayFields + "\n" +
-               "identityFields=" + identityFields + "\n" +
-               "failedIdentities=<" + CollectionUtils.size(failedIdentities) + " found>\n" +
-               "failCount=" + getFailCount() + "\n" +
-               "expectedRowCount=" + expectedRowCount + "\n" +
-               "actualRowCount=" + actualRowCount + "\n" +
-               "successRate=" + getSuccessRate() + "\n" +
-               "reportAsHTML=<" + readyVerbiage + ">\n" +
-               "reportAsText=<" + readyVerbiage + ">\n" +
-               "reportAsCSV=<" + readyVerbiage + ">\n" +
-               "reportAsCSVWithQuotes=<" + readyVerbiage + ">\n";
+        return "expectedHeaders=" + expectedHeaders + NL +
+               "actualHeaders=" + actualHeaders + NL +
+               "displayFields=" + displayFields + NL +
+               "identityFields=" + identityFields + NL +
+               "failedIdentities=<" + CollectionUtils.size(failedIdentities) + " found>" + NL +
+               "failCount=" + getFailCount() + NL +
+               "expectedRowCount=" + expectedRowCount + NL +
+               "actualRowCount=" + actualRowCount + NL +
+               "successRate=" + getSuccessRate() + NL +
+               "reportAsHTML=<" + readyVerbiage + ">" + NL +
+               "reportAsText=<" + readyVerbiage + ">" + NL +
+               "reportAsCSV=<" + readyVerbiage + ">" + NL +
+               "reportAsCSVWithQuotes=<" + readyVerbiage + ">" + NL;
     }
 
     public String reportAsHTML() { return externalizeReport(HTML); }

@@ -279,7 +279,7 @@ public class WsCommand extends BaseCommand {
         StringBuilder errorMessages = new StringBuilder();
         OAUTH_REQUIRED_INPUTS.forEach(inputName -> {
             if (StringUtils.isBlank(inputs.get(inputName))) {
-                errorMessages.append("'auth' missing required '").append(inputName).append("' input!").append("\n");
+                errorMessages.append("'auth' missing required '").append(inputName).append("' input!").append(NL);
             }
         });
         if (errorMessages.length() > 0) { return StepResult.fail(errorMessages.toString()); }

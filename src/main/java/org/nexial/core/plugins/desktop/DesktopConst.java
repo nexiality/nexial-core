@@ -34,6 +34,7 @@ import com.google.gson.GsonBuilder;
 import com.google.gson.typeadapters.RuntimeTypeAdapterFactory;
 
 import static org.nexial.core.NexialConst.NAMESPACE;
+import static org.nexial.core.NexialConst.NL;
 import static org.nexial.core.plugins.desktop.DesktopUtils.printDetails;
 import static org.nexial.core.plugins.desktop.ElementType.*;
 
@@ -275,10 +276,10 @@ public class DesktopConst {
     public static void debug(String msg) { if (AUTOSCAN_DEBUG) { ConsoleUtils.log(msg); } }
 
     public static void debug(String msg, DesktopElement element) {
-        if (AUTOSCAN_DEBUG) { ConsoleUtils.log(msg + "\n" + printDetails(element)); }
+        if (AUTOSCAN_DEBUG) { ConsoleUtils.log(msg + NL + printDetails(element)); }
     }
 
     public static void debug(String msg, WebElement element) {
-        if (AUTOSCAN_DEBUG) { ConsoleUtils.log(msg + "\n" + printDetails(element)); }
+        if (AUTOSCAN_DEBUG) { ConsoleUtils.log(msg + NL + printDetails(element)); }
     }
 }

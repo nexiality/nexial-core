@@ -17,11 +17,13 @@
 package org.nexial.core.plugins.base
 
 import com.google.gson.JsonObject
+import org.apache.commons.io.FileUtils
 import org.apache.commons.lang3.StringUtils
 import org.junit.Assert.*
 import org.junit.Test
 import org.nexial.core.ExcelBasedTests
 import org.nexial.core.NexialConst.GSON
+import java.io.File
 import java.io.File.separator
 import java.io.FileReader
 
@@ -82,6 +84,19 @@ class HeadlessBaseTests : ExcelBasedTests() {
     fun repeatUntilTests() {
         val executionSummary = testViaExcel("unitTest_repeatUntil.xlsx")
         assertPassFail(executionSummary, "repeatUntil_take1", TestOutcomeStats.allPassed())
+    }
+
+    @Test
+    @Throws(Exception::class)
+    fun repeatUntilAssetTests() {
+        val executionSummary = testViaExcel("unitTest_repeatUntil_assert.xlsx")
+        assertPassFail(executionSummary, "Scenario", TestOutcomeStats.allPassed())
+
+        // in this test, we expects no screenshot to be generated
+        val outputDir = System.getProperty("nexial.outBase")
+        val captureDir = File(StringUtils.appendIfMissing(outputDir, "/") + "captures/")
+        val screenshots = FileUtils.listFiles(captureDir, arrayOf("png"), false)
+        assertTrue(screenshots == null || screenshots.isEmpty())
     }
 
     @Test

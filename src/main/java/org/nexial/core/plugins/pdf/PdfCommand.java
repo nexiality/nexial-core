@@ -50,7 +50,6 @@ import org.apache.xmpbox.xml.DomXmpParser;
 import org.apache.xmpbox.xml.XmpParsingException;
 import org.nexial.commons.utils.RegexUtils;
 import org.nexial.commons.utils.TextUtils;
-import org.nexial.core.NexialConst.Pdf;
 import org.nexial.core.model.ExecutionContext;
 import org.nexial.core.model.StepResult;
 import org.nexial.core.plugins.base.BaseCommand;
@@ -64,8 +63,8 @@ import static java.io.File.separatorChar;
 import static java.util.regex.Pattern.DOTALL;
 import static java.util.regex.Pattern.MULTILINE;
 import static org.nexial.core.NexialConst.DEF_CHARSET;
+import static org.nexial.core.NexialConst.NL;
 import static org.nexial.core.NexialConst.Pdf.*;
-import static org.nexial.core.NexialConst.Pdf.PDFFORM_UNMATCHED_TEXT;
 import static org.nexial.core.utils.CheckUtils.*;
 
 public class PdfCommand extends BaseCommand {
@@ -294,7 +293,7 @@ public class PdfCommand extends BaseCommand {
             }
 
             context.setData(var, formValues);
-            if (context.isVerbose()) { log("PDF Form Elements mapped to '" + var + "':\n" + formValues); }
+            if (context.isVerbose()) { log("PDF Form Elements mapped to '" + var + "':" + NL + formValues); }
             return StepResult.success("PDF form extracted as specified");
         } catch (IOException e) {
             return StepResult.fail("Unable to extract PDF form: " + e.getMessage());

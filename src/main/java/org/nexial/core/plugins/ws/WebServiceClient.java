@@ -77,6 +77,7 @@ import org.nexial.core.variable.Syspath;
 
 import static java.io.File.separator;
 import static org.nexial.core.NexialConst.DEF_CHARSET;
+import static org.nexial.core.NexialConst.NL;
 import static org.nexial.core.NexialConst.Ws.*;
 import static org.nexial.core.SystemVariables.getDefaultBool;
 
@@ -316,7 +317,7 @@ public class WebServiceClient {
         if (context.isVerbose()) {
             if (contentLength > 0) { log("Request Body Length: " + contentLength); }
             if (StringUtils.isNotEmpty(content)) {
-                log("Request Body (1st kb) -->\n" + StringUtils.abbreviate(content, 1024));
+                log("Request Body (1st kb) -->" + NL + StringUtils.abbreviate(content, 1024));
             }
         }
 
@@ -325,7 +326,7 @@ public class WebServiceClient {
         if (shouldLogDetail()) {
             StringBuilder details = new StringBuilder();
             appendLog(details, "Test Step       : ", ExecutionLogger.toHeader(testStep));
-            details.append(StringUtils.repeat("-", 80)).append("\n");
+            details.append(StringUtils.repeat("-", 80)).append(NL);
             appendLog(details, "Request Time    : ", DateUtility.formatLog2Date(requestTimeMs));
             appendLog(details, "Request URL     : ", url);
             appendLog(details, "Request Method  : ", http.getMethod());
@@ -333,9 +334,9 @@ public class WebServiceClient {
             if (requestWithBody && contentLength > 0) {
                 appendLog(details, "Request Body    : ",
                           contentLength + " bytes. " +
-                          (StringUtils.isNotEmpty(content) ? "\n" + content : " (binary content)"));
+                          (StringUtils.isNotEmpty(content) ? NL + content : " (binary content)"));
             }
-            details.append(StringUtils.repeat("-", 80)).append("\n");
+            details.append(StringUtils.repeat("-", 80)).append(NL);
             writeDetailLog(testStep, details.toString());
         }
     }
@@ -395,7 +396,7 @@ public class WebServiceClient {
             if (StringUtils.isNotBlank(saveTo)) {
                 log("Response Body saved to " + saveTo);
             } else if (StringUtils.isNotEmpty(payload)) {
-                log("Response Body -->\n" + payload);
+                log("Response Body -->" + NL + payload);
             }
         }
 
@@ -411,7 +412,7 @@ public class WebServiceClient {
             if (payloadLength > 0) {
                 appendLog(details, "Request Body    : ",
                           payloadLength + " bytes. " +
-                          (StringUtils.isNotBlank(saveTo) ? "Saved to " + saveTo : "\n" + payload));
+                          (StringUtils.isNotBlank(saveTo) ? "Saved to " + saveTo : NL + payload));
             }
             writeDetailLog(testStep, details.toString());
         }
@@ -451,7 +452,7 @@ public class WebServiceClient {
             // for first use, let's add log file header
             String data = (!FileUtil.isFileReadable(log) ?
                            "request-time,script,scenario,row-id,url,method,request-body-length," +
-                           "return-code,status-code,ttfb,elapsed-time,response-body-length\n" :
+                           "return-code,status-code,ttfb,elapsed-time,response-body-length" + NL :
                            "") +
                           Arrays.stream(content)
                                 .reduce((previous, next) -> previous + "," +
@@ -481,7 +482,7 @@ public class WebServiceClient {
     }
 
     protected void appendLog(StringBuilder buffer, String name, Object value) {
-        buffer.append(name).append(value).append("\n");
+        buffer.append(name).append(value).append(NL);
     }
 
     protected void log(String msg) {

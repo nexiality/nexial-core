@@ -48,6 +48,7 @@ import static org.nexial.core.NexialConst.*;
 import static org.nexial.core.NexialConst.Data.*;
 import static org.nexial.core.NexialConst.Exec.*;
 import static org.nexial.core.NexialConst.Iteration.*;
+import static org.nexial.core.NexialConst.NL;
 import static org.nexial.core.NexialConst.Project.appendLog;
 import static org.nexial.core.NexialConst.Web.*;
 import static org.nexial.core.SystemVariables.getDefault;
@@ -373,11 +374,11 @@ public final class ExecutionThread extends Thread {
         }
 
         ConsoleUtils.error(runId,
-                           "\n" +
-                           "/-TEST FAILED!!-----------------------------------------------------------------\n" +
-                           "| Test Output:    " + testScript + "\n" +
-                           "| Iteration:      " + iteration + "\n" +
-                           "\\-------------------------------------------------------------------------------\n" +
+                           NL +
+                           "/-TEST FAILED!!-----------------------------------------------------------------" + NL +
+                           "| Test Output:    " + testScript + NL +
+                           "| Iteration:      " + iteration + NL +
+                           "\\-------------------------------------------------------------------------------" + NL +
                            (e != null ? "» Error:          " + e.getMessage() : ""),
                            (e instanceof AssertionError) ? null : e);
     }
@@ -399,14 +400,14 @@ public final class ExecutionThread extends Thread {
         });
 
         ConsoleUtils.log(context.getRunId(),
-                         "\n" +
-                         "/-TEST COMPLETE-----------------------------------------------------------------\n" +
-                         "| Test Output:    " + context.getTestScript().getFile() + "\n" +
-                         "| Iteration:      " + iteration + "\n" +
-                         "\\-------------------------------------------------------------------------------\n" +
-                         "» Execution Time: " + (context.getEndTimestamp() - context.getStartTimestamp()) + " ms\n" +
-                         "» Test Steps:     " + total[0] + "\n" +
-                         "» Error(s):       " + failCount[0] + "\n\n\n");
+                         NL +
+                         "/-TEST COMPLETE-----------------------------------------------------------------" + NL +
+                         "| Test Output:    " + context.getTestScript().getFile() + NL +
+                         "| Iteration:      " + iteration + NL +
+                         "\\-------------------------------------------------------------------------------" + NL +
+                         "» Execution Time: " + (context.getEndTimestamp() - context.getStartTimestamp()) + " ms" + NL +
+                         "» Test Steps:     " + total[0] + NL +
+                         "» Error(s):       " + failCount[0] + NL + NL + NL);
         MemManager.gc(this);
     }
 
@@ -428,21 +429,21 @@ public final class ExecutionThread extends Thread {
         summary.getNestedExecutions().forEach(nested -> {
             handleTestScript(context, nested);
             cloudOutputBuffer.append("» Iteration ").append(nested.getName()).append(": ")
-                             .append(nested.getTestScriptLink()).append("\n");
+                             .append(nested.getTestScriptLink()).append(NL);
         });
 
         ConsoleUtils.log(context.getRunId(),
-                         "\n" +
-                         "/-TEST COMPLETE-----------------------------------------------------------------\n" +
-                         "| Test Script:    " + execDef.getTestScript() + "\n" +
-                         "\\-------------------------------------------------------------------------------\n" +
-                         "» Execution Time: " + (ticktock.getTime()) + " ms\n" +
-                         "» Iterations:     " + iterationManager + "\n" +
-                         "» Test Steps:     " + summary.getTotalSteps() + "\n" +
-                         "» Passed:         " + summary.getPassCount() + "\n" +
-                         "» Error(s):       " + summary.getFailCount() + "\n" +
-                         //"» Warnings:       " + summary.getWarnCount() + "\n" +
-                         StringUtils.defaultIfBlank(cloudOutputBuffer.toString(), "") + "\n\n");
+                         NL +
+                         "/-TEST COMPLETE-----------------------------------------------------------------" + NL +
+                         "| Test Script:    " + execDef.getTestScript() + NL +
+                         "\\-------------------------------------------------------------------------------" + NL +
+                         "» Execution Time: " + (ticktock.getTime()) + " ms" + NL +
+                         "» Iterations:     " + iterationManager + NL +
+                         "» Test Steps:     " + summary.getTotalSteps() + NL +
+                         "» Passed:         " + summary.getPassCount() + NL +
+                         "» Error(s):       " + summary.getFailCount() + NL +
+                         //"» Warnings:       " + summary.getWarnCount() + NL +
+                         StringUtils.defaultIfBlank(cloudOutputBuffer.toString(), "") + NL + NL);
 
         // special handling of mail config, make sure we get latest/greatest from context
         ExecutionMailConfig mailConfig = ExecutionMailConfig.get();

@@ -63,11 +63,10 @@ import org.slf4j.LoggerFactory;
 import static java.io.File.separator;
 import static java.util.concurrent.TimeUnit.MILLISECONDS;
 import static org.apache.commons.lang3.SystemUtils.*;
+import static org.nexial.core.NexialConst.*;
 import static org.nexial.core.NexialConst.BrowserType.*;
 import static org.nexial.core.NexialConst.Data.TEST_LOG_PATH;
 import static org.nexial.core.NexialConst.Data.withProfile;
-import static org.nexial.core.NexialConst.OPT_EXCEL_VER;
-import static org.nexial.core.NexialConst.OPT_OUT_DIR;
 import static org.nexial.core.NexialConst.Web.*;
 import static org.nexial.core.SystemVariables.getDefaultBool;
 import static org.nexial.core.plugins.web.WebDriverCapabilityUtils.initCapabilities;
@@ -274,7 +273,7 @@ public class Browser implements ForcefulTerminate {
                         } else {
                             // something's wrong with current browser window or session, need to re-init
                             shouldInitialize = true;
-                            LOGGER.error("webdriver readiness check: " + error + "\n" +
+                            LOGGER.error("webdriver readiness check: " + error + NL +
                                          "BROWSER MIGHT BE TERMINATED; RESTARTING...");
                         }
                     }
@@ -852,9 +851,9 @@ public class Browser implements ForcefulTerminate {
         browserPlatform = capabilities.getPlatform();
         pageSourceSupported = false;
 
-        StringBuilder log = new StringBuilder("Edge WebDriver capabilities:\n");
-        capabilities.asMap().forEach((key, val) -> log.append("\t").append(key).append("\t=").append(val).append("\n"));
-        ConsoleUtils.log(log.toString() + "\n");
+        StringBuilder log = new StringBuilder("Edge WebDriver capabilities:" + NL);
+        capabilities.asMap().forEach((key, val) -> log.append("\t").append(key).append("\t=").append(val).append(NL));
+        ConsoleUtils.log(log.toString() + NL);
 
         return edge;
     }
@@ -954,11 +953,11 @@ public class Browser implements ForcefulTerminate {
         browserPlatform = ie.getCapabilities().getPlatform();
         postInit(ie);
 
-        StringBuilder log = new StringBuilder("IEDriverServer capabilities:\n");
+        StringBuilder log = new StringBuilder("IEDriverServer capabilities:" + NL);
         ie.getCapabilities().asMap().forEach((key, val) -> log.append("\t")
                                                               .append(key).append("\t= ").append(val)
-                                                              .append("\n"));
-        log.append("\n");
+                                                              .append(NL));
+        log.append(NL);
         ConsoleUtils.log(log.toString());
 
         return ie;
@@ -971,7 +970,7 @@ public class Browser implements ForcefulTerminate {
         String out = context.getProject().getOutPath();
         try {
             ConsoleUtils.log(
-                "modifying safari's download path: \n" +
+                "modifying safari's download path:" + NL +
                 ExternalCommand.Companion.exec("defaults write com.apple.Safari DownloadsPath \"" + out + "\""));
         } catch (IOException e) {
             ConsoleUtils.error("Unable to modify safari's download path to " + out + ": " + e);
@@ -1174,7 +1173,8 @@ public class Browser implements ForcefulTerminate {
 
         // exhausted all possibilities..
         if (LOGGER.isDebugEnabled()) {
-            LOGGER.error("webdriver readiness check: no windows available\nBROWSER MIGHT BE TERMINATED; RESTARTING...");
+            LOGGER.error("webdriver readiness check: no windows available" + NL +
+                         "BROWSER MIGHT BE TERMINATED; RESTARTING...");
         }
 
         return true;

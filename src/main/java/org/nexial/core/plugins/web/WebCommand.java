@@ -477,10 +477,10 @@ public class WebCommand extends BaseCommand implements CanTakeScreenshot, CanLog
                 ConsoleUtils.error(runId, message);
             }
 
-            logs.append(message).append("\n");
+            logs.append(message).append(NL);
             if (!found) {
                 allPassed = false;
-                errors.append(message).append("\n");
+                errors.append(message).append(NL);
             }
         }
 
@@ -578,7 +578,7 @@ public class WebCommand extends BaseCommand implements CanTakeScreenshot, CanLog
             return StepResult.success("All specified locators are present within %s ms (each)", maxWaitMs);
         } else {
             return StepResult.fail("Not all locators are present within %s ms (each): %s",
-                                   maxWaitMs, TextUtils.toString(notPresent, "\n", "", ""));
+                                   maxWaitMs, TextUtils.toString(notPresent, NL, "", ""));
         }
     }
 

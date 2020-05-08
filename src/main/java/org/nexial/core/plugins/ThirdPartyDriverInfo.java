@@ -18,6 +18,8 @@ package org.nexial.core.plugins;
 
 import java.io.Serializable;
 
+import static org.nexial.core.NexialConst.NL;
+
 public class ThirdPartyDriverInfo implements Serializable {
     private String jarFilePattern;
     private String minDriverVersion;
@@ -37,13 +39,8 @@ public class ThirdPartyDriverInfo implements Serializable {
 
     @Override
     public String toString() {
-        return "Unable to load the required driver/3rd-party library.\n" +
-               "Make sure " +
-               jarFilePattern +
-               " (at least " +
-               minDriverVersion +
-               ") is/are added to lib/ directory.\n" +
-               "For more information, visit " +
-               url;
+        return "Unable to load the required driver/3rd-party library." + NL +
+               "Make sure " + jarFilePattern + " (at least " + minDriverVersion + ") is added to lib/ directory." + NL +
+               "For more information, visit " + url;
     }
 }

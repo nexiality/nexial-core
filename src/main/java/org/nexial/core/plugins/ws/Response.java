@@ -32,8 +32,7 @@ import org.nexial.commons.utils.DateUtility;
 import org.nexial.core.ExecutionThread;
 import org.nexial.core.model.ExecutionContext;
 
-import static org.nexial.core.NexialConst.COOKIE_DATE_FORMAT;
-import static org.nexial.core.NexialConst.COOKIE_DATE_FORMAT2;
+import static org.nexial.core.NexialConst.*;
 import static org.nexial.core.NexialConst.Data.MAX_CONSOLE_DISPLAY;
 import static org.nexial.core.SystemVariables.getDefaultInt;
 
@@ -100,11 +99,11 @@ public class Response implements Serializable {
 
     @Override
     public String toString() {
-        String toString = "returnCode=" + returnCode + "\n" +
-                          "statusText=" + statusText + "\n" +
-                          "headers=" + headers + "\n" +
-                          "contentLength=" + contentLength + "\n" +
-                          "elapsedTime=" + elapsedTime + "\n" +
+        String toString = "returnCode=" + returnCode + NL +
+                          "statusText=" + statusText + NL +
+                          "headers=" + headers + NL +
+                          "contentLength=" + contentLength + NL +
+                          "elapsedTime=" + elapsedTime + NL +
                           "body=";
 
         if (ArrayUtils.isEmpty(rawBody)) { return toString + "<NONE>"; }

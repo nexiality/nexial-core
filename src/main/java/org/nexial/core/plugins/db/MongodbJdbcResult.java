@@ -19,6 +19,7 @@ package org.nexial.core.plugins.db;
 import org.nexial.core.plugins.db.SqlComponent.Type;
 
 import static org.apache.commons.lang3.StringUtils.rightPad;
+import static org.nexial.core.NexialConst.NL;
 
 public class MongodbJdbcResult extends JdbcResult {
     private boolean expanded;
@@ -57,10 +58,10 @@ public class MongodbJdbcResult extends JdbcResult {
     @Override
     public String toString() {
         return super.toString() +
-               rightPad("expanded", TO_STRING_KEY_LENGTH) + "=" + expanded + "\n" +
-               rightPad("deletedCount", TO_STRING_KEY_LENGTH) + "=" + deletedCount + "\n" +
-               rightPad("matchedCount", TO_STRING_KEY_LENGTH) + "=" + matchedCount + "\n" +
-               rightPad("modifiedCount", TO_STRING_KEY_LENGTH) + "=" + modifiedCount + "\n" +
+               rightPad("expanded", TO_STRING_KEY_LENGTH) + "=" + expanded + NL +
+               rightPad("deletedCount", TO_STRING_KEY_LENGTH) + "=" + deletedCount + NL +
+               rightPad("matchedCount", TO_STRING_KEY_LENGTH) + "=" + matchedCount + NL +
+               rightPad("modifiedCount", TO_STRING_KEY_LENGTH) + "=" + modifiedCount + NL +
                rightPad("acknowledged", TO_STRING_KEY_LENGTH) + "=" + acknowledged;
     }
 

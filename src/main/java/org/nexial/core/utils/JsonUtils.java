@@ -54,8 +54,7 @@ import com.jayway.jsonpath.spi.json.JsonProvider;
 import com.jayway.jsonpath.spi.mapper.GsonMappingProvider;
 import com.jayway.jsonpath.spi.mapper.MappingProvider;
 
-import static org.nexial.core.NexialConst.GSON;
-import static org.nexial.core.NexialConst.GSON_COMPRESSED;
+import static org.nexial.core.NexialConst.*;
 import static org.nexial.core.utils.CheckUtils.requiresNotNull;
 
 /**
@@ -81,7 +80,7 @@ public final class JsonUtils {
             return new JSONObject(jsonString);
         } catch (JSONException e) {
             LOGGER.error("Error converting string to JSON object: " + e.getMessage(), e);
-            LOGGER.error("JSON string in error is as follows:\n" + jsonString);
+            LOGGER.error("JSON string in error is as follows:" + NL + jsonString);
             return newExceptionJSONObject(e);
         }
     }
@@ -91,7 +90,7 @@ public final class JsonUtils {
             return new JSONArray(jsonString);
         } catch (JSONException e) {
             LOGGER.error("Error converting string to JSON object: " + e.getMessage(), e);
-            LOGGER.error("JSON string in error is as follows:\n" + jsonString);
+            LOGGER.error("JSON string in error is as follows:" + NL + jsonString);
             return null;
         }
     }

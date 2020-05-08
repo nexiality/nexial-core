@@ -48,6 +48,7 @@ import org.openqa.selenium.WebElement;
 import org.openqa.selenium.interactions.Actions;
 
 import static org.nexial.core.NexialConst.Desktop.CLEAR_TABLE_CELL_BEFORE_EDIT;
+import static org.nexial.core.NexialConst.NL;
 import static org.nexial.core.SystemVariables.getDefaultBool;
 import static org.nexial.core.plugins.desktop.DesktopConst.*;
 import static org.nexial.core.plugins.desktop.DesktopUtils.*;
@@ -57,7 +58,7 @@ import static org.nexial.core.utils.CheckUtils.requiresNotNull;
 /**
  * capture both behavior and data of a {@link ElementType#Table} element (the corresponding @ControlType is
  * {@link ElementType#TABLE}).
- *
+ * <p>
  * Instance of this element may be stored in session ({@link DesktopSession}) so that its content and state can be
  * retained for the span of an execution cycle.
  */
@@ -448,12 +449,12 @@ public class DesktopTable extends DesktopElement {
                 }
 
                 if (checkboxElement == null) {
-                    messageBuffer.append(msgPrefix2).append("contains NO checkbox or radio element \n");
+                    messageBuffer.append(msgPrefix2).append("contains NO checkbox or radio element" + NL);
                     return StepResult.fail(messageBuffer.toString());
                 }
 
                 if (!checkboxElement.isEnabled()) {
-                    messageBuffer.append(msgPrefix2).append("is NOT ENABLED \n");
+                    messageBuffer.append(msgPrefix2).append("is NOT ENABLED" + NL);
                     return StepResult.fail(messageBuffer.toString());
                 }
 
@@ -468,7 +469,7 @@ public class DesktopTable extends DesktopElement {
                             setFocusOut = true;
                         }
 
-                        messageBuffer.append(msgPrefix2).append("unchecked \n");
+                        messageBuffer.append(msgPrefix2).append("unchecked").append(NL);
                     }
                 } else {
                     if (StringUtils.equals(value, TABLE_CELL_CHECK)) {
@@ -481,16 +482,16 @@ public class DesktopTable extends DesktopElement {
                             setFocusOut = true;
                         }
 
-                        messageBuffer.append(msgPrefix2).append("checked \n");
+                        messageBuffer.append(msgPrefix2).append("checked").append(NL);
                     }
                 }
             } else if (StringUtils.isEmpty(value) || StringUtils.equals(value, TABLE_CELL_CLEAR)) {
                 clearCellContent(cellElement);
-                messageBuffer.append(msgPrefix2).append("content cleared \n");
+                messageBuffer.append(msgPrefix2).append("content cleared").append(NL);
             } else {
                 // focused would be false if shortcut key is used
                 focused = typeCellContent(tableRow, cellElement, column, value);
-                messageBuffer.append(msgPrefix2).append("entered text '").append(value).append("' \n");
+                messageBuffer.append(msgPrefix2).append("entered text '").append(value).append("'").append(NL);
             }
         }
 
@@ -502,8 +503,7 @@ public class DesktopTable extends DesktopElement {
             } else if (context.getBooleanData(
                 CURRENT_DESKTOP_TABLE_EDITABLE_COLUMN_FOUND)) {
                 WebElement editColumn = tableRow.getColumns()
-                                                .get(context
-                                                         .getStringData(CURRENT_DESKTOP_TABLE_EDITABLE_COLUMN_NAME));
+                                                .get(context.getStringData(CURRENT_DESKTOP_TABLE_EDITABLE_COLUMN_NAME));
                 // using click action on editable column helps the driver find child elements
                 editColumn.click();
 

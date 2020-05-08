@@ -415,18 +415,18 @@ public final class OutputFileUtils {
 
         // build error content
         StringBuilder buffer = new StringBuilder();
-        buffer.append("Nexial Version:    ").append(ExecUtils.NEXIAL_MANIFEST).append("\n")
-              .append("Current Timestamp: ").append(DateUtility.formatLog2Date(System.currentTimeMillis())).append("\n")
-              .append("Test Step:         ").append(testStep.getMessageId()).append("\n")
-              .append(StringUtils.repeat("-", 80)).append("\n");
+        buffer.append("Nexial Version:    ").append(ExecUtils.NEXIAL_MANIFEST).append(NL)
+              .append("Current Timestamp: ").append(DateUtility.formatLog2Date(System.currentTimeMillis())).append(NL)
+              .append("Test Step:         ").append(testStep.getMessageId()).append(NL)
+              .append(StringUtils.repeat("-", 80)).append(NL);
 
         if (e instanceof AssertionError || e instanceof IllegalArgumentException) {
-            buffer.append(e.getMessage()).append("\n");
+            buffer.append(e.getMessage()).append(NL);
         } else {
             StringWriter writer = new StringWriter();
             PrintWriter printWriter = new PrintWriter(writer);
             e.printStackTrace(printWriter);
-            buffer.append(writer.getBuffer().toString()).append("\n");
+            buffer.append(writer.getBuffer().toString()).append(NL);
             printWriter.close();
         }
 

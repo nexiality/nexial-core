@@ -739,7 +739,7 @@ public class BaseCommand implements NexialCommand {
 
     /** Like JUnit's Assert.assertEquals, but handles "regexp:" strings like HTML Selenese */
     public void assertEquals(String expected, String actual) {
-        assertTrue("\n" + displayForCompare("expected", expected, "actual", actual),
+        assertTrue(NL + displayForCompare("expected", expected, "actual", actual),
                    assertEqualsInternal(expected, actual));
     }
 
@@ -824,7 +824,7 @@ public class BaseCommand implements NexialCommand {
             }
         }
 
-        return data1Display + "\n" + data2Display;
+        return data1Display + NL + data2Display;
     }
 
     public void waitFor(int waitMs) {
@@ -1129,7 +1129,7 @@ public class BaseCommand implements NexialCommand {
     /** Like JUnit's Assert.assertEquals, but knows how to compare string arrays */
     protected void assertEquals(Object expected, Object actual) {
         if (expected == null) {
-            assertTrue("\nexpected=null\nactual  =" + actual, actual == null);
+            assertTrue(NL + "expected=null" + NL + "actual  =" + actual, actual == null);
         } else if (expected instanceof String && actual instanceof String) {
             assertEquals((String) expected, (String) actual);
         } else if (expected instanceof String && actual instanceof String[]) {
@@ -1141,8 +1141,7 @@ public class BaseCommand implements NexialCommand {
         } else if (expected instanceof String[] && actual instanceof String[]) {
             assertEquals((String[]) expected, (String[]) actual);
         } else {
-            assertTrue("\n" + displayForCompare("expected", expected, "actual", actual),
-                       expected.equals(actual));
+            assertTrue(NL + displayForCompare("expected", expected, "actual", actual), expected.equals(actual));
         }
     }
 
@@ -1156,7 +1155,7 @@ public class BaseCommand implements NexialCommand {
     protected void assertEquals(String[] expected, String[] actual) {
         String comparisonDumpIfNotEqual = verifyEqualsAndReturnComparisonDumpIfNot(expected, actual);
         if (comparisonDumpIfNotEqual != null) {
-            error(MSG_FAIL + "\n" + comparisonDumpIfNotEqual);
+            error(MSG_FAIL + NL + comparisonDumpIfNotEqual);
             throw new AssertionError(comparisonDumpIfNotEqual);
         }
     }
@@ -1167,13 +1166,11 @@ public class BaseCommand implements NexialCommand {
     protected void assertNotEquals(Object expected, Object actual) {
         if (expected == null) {
             // both should be null
-            assertFalse("\nexpected=null\nactual  =" + actual, actual == null);
+            assertFalse(NL + "expected=null " + NL + "actual  =" + actual, actual == null);
             return;
         }
 
-        if (expected.equals(actual)) {
-            CheckUtils.fail("\n" + displayForCompare("expected", expected, "actual", actual));
-        }
+        if (expected.equals(actual)) { CheckUtils.fail(NL + displayForCompare("expected", expected, "actual", actual));}
     }
 
     protected void assertTrue(boolean condition) { assertTrue(null, condition); }

@@ -752,8 +752,11 @@ final public class DataVariableUpdater {
         try {
             Excel.save(file, workBook);
         } catch (IOException e) {
-            System.err.println(String.format("\n\nFile %s is either is in use by other process or got deleted. " +
-                                             "Please close the file if it is open and re run the program\n\n", file));
+            System.err.println(String.format(NL + NL +
+                                             "File %s is either is in use by other process or got deleted. " +
+                                             "Please close the file if it is open and re run the program" +
+                                             NL + NL,
+                                             file));
             System.exit(RC_EXCEL_IN_USE);
         } finally {
             try {

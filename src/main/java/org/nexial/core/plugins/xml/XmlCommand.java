@@ -484,7 +484,7 @@ public class XmlCommand extends BaseCommand {
         if (StringUtils.isBlank(output)) {
             ConsoleUtils.error("Unable to generate schema validation log");
         } else {
-            ConsoleUtils.log("\n" + output);
+            ConsoleUtils.log(NL + output);
 
             File outputFile = new File(outFile);
             try {

@@ -300,15 +300,15 @@ public final class WiniumUtils {
             try {
                 driver.close();
             } catch (Throwable e) {
-                ConsoleUtils.log("Unable to close desktop application: \n" + e.getMessage() +
-                                 "\nContinue on quit Winium Driver");
+                ConsoleUtils.log("Unable to close desktop application:" + NL + e.getMessage() + NL +
+                                 "Continue on quit Winium Driver");
             }
 
             try {
                 driver.quit();
             } catch (Throwable e) {
-                ConsoleUtils.log("Unable to close Winium Driver: \n" + e.getMessage() +
-                                 "\nContinue on shut down Winium Driver Service");
+                ConsoleUtils.log("Unable to close Winium Driver:" + NL + e.getMessage() + NL +
+                                 "Continue on shut down Winium Driver Service");
             } finally {
                 driver = null;
             }
@@ -362,7 +362,7 @@ public final class WiniumUtils {
         try {
             service.stop();
         } catch (Throwable e) {
-            ConsoleUtils.log("Unable to close Winium Driver Service: \n" + e.getMessage());
+            ConsoleUtils.log("Unable to close Winium Driver Service:" + NL + e.getMessage());
         } finally {
             service = null;
         }

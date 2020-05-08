@@ -28,6 +28,7 @@ import org.nexial.core.utils.ConsoleUtils;
 
 import static org.apache.commons.lang3.builder.ToStringStyle.JSON_STYLE;
 import static org.nexial.core.NexialConst.GSON;
+import static org.nexial.core.NexialConst.NL;
 
 public class IgRibbon extends ThirdPartyComponent {
     protected transient String currentModule;
@@ -120,5 +121,5 @@ public class IgRibbon extends ThirdPartyComponent {
     }
 
     @Override
-    public String toString() { return "currentModule=" + currentModule + "\n" + GSON.toJson(this); }
+    public String toString() { return "currentModule=" + currentModule + NL + GSON.toJson(this); }
 }

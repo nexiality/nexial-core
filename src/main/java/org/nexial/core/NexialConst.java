@@ -319,6 +319,12 @@ public final class NexialConst {
                         "\\u2026=...",
                         "\\u201C=\"",
                         "\\u201D=\"");
+    // we MUST not use OS-specific separator because the same log file MUST be usable for all OS;
+    // the same log file may be viewed on different systems. As such, the `\n` approach seems to be the best option
+    // since it's usable on all OSes. On Windows, user should be using notepad++ (or similar) instead of the standard
+    // notepad so that they can get the same viewing experience as Mac or *NIX users.
+    //public static final String NL = System.lineSeparator();
+    public static final String NL = "\n";
 
     // @formatter:on
 
@@ -486,13 +492,13 @@ public final class NexialConst {
         public static final String EMPTY = "(empty)";
         public static final String BLANK = "(blank)";
         public static final String TAB = "(tab)";
-        public static final String NL = "(eol)";
+        public static final String EOL = "(eol)";
         public static final String REGEX_ONLY_NON_DISPLAYABLES = "(\\(blank\\)|\\(empty\\)|\\(tab\\)|\\(eol\\))+";
         public static final Map<String, String> NON_DISPLAYABLE_REPLACEMENTS = TextUtils.toMap("=",
                                                                                                EMPTY + "=",
                                                                                                BLANK + "= ",
                                                                                                TAB + "=\t",
-                                                                                               NL + "=\n");
+                                                                                               EOL + "=\n");
         public static final String CMD_PROFILE_SEP = "::";
         public static final String CMD_PROFILE_DEFAULT = "DEFAULT";
 
@@ -876,20 +882,20 @@ public final class NexialConst {
                     if (StringUtils.containsIgnoreCase(projectId, "echo is off")) {
                         // need to notify user of this... they would need to upgrade to more recent version of Nexial
                         // (with fix)
-                        String error = "\n\n" +
-                                       StringUtils.repeat("-", 80) + "\n" +
-                                       "!!!!! ERROR !!!!!\n" +
-                                       "The file " + projectIdFile + " contains INCORRECT project id:\n" +
-                                       "\t" + projectId + "\n\n" +
-                                       "Please fix this issue by:\n" +
-                                       "1. Run the 'nexial-project' batch:\n" +
-                                       "   cd " + System.getProperty(NEXIAL_HOME) + separator + "bin\n" +
+                        String error = NL + NL +
+                                       StringUtils.repeat("-", 80) + NL +
+                                       "!!!!! ERROR !!!!!" + NL +
+                                       "The file " + projectIdFile + " contains INCORRECT project id:" + NL +
+                                       "\t" + projectId + NL + NL +
+                                       "Please fix this issue by:" + NL +
+                                       "1. Run the 'nexial-project' batch:" + NL +
+                                       "   cd " + System.getProperty(NEXIAL_HOME) + separator + "bin" + NL +
                                        "   " + (IS_OS_WINDOWS ? "nexial-project.cmd" : "./nexial.project.sh") + " " +
-                                       projectHome + "\n\n" +
-                                       "2. Update " + projectIdFile + " with the appropriate project ID.\n" +
-                                       "   Project ID should be a single word, without spaces.\n\n" +
-                                       "Nexial execution will stop now.\n\n" +
-                                       StringUtils.repeat("-", 80) + "\n\n";
+                                       projectHome + NL + NL +
+                                       "2. Update " + projectIdFile + " with the appropriate project ID." + NL +
+                                       "   Project ID should be a single word, without spaces." + NL + NL +
+                                       "Nexial execution will stop now." + NL + NL +
+                                       StringUtils.repeat("-", 80) + NL + NL;
                         throw new ServiceConfigurationError(error);
                     }
 
@@ -1524,7 +1530,7 @@ public final class NexialConst {
         public static final String WEB_PREEMPTIVE_ALERT_CHECK = registerSysVar(NS_WEB + "preemptiveAlertCheck", false);
         public static final String WEB_ALWAYS_WAIT = registerSysVar(NS_WEB + "alwaysWait", false);
         public static final String WEB_UNFOCUS_AFTER_TYPE = registerSysVar(NS_WEB + "unfocusAfterType", false);
-        public static final String WEB_PAGE_LOAD_WAIT_MS = registerSysVar(NS_WEB + "pageLoadWaitMs", 10000);
+        public static final String WEB_PAGE_LOAD_WAIT_MS = registerSysVar(NS_WEB + "pageLoadWaitMs", 15000);
         public static final String DROPDOWN_SELECT_ALL = "{ALL}";
         public static final String WEB_METRICS_JSON = "browser-metrics.json";
         public static final String WEB_METRICS_HTML = "browser-metrics.html";
@@ -1779,6 +1785,15 @@ public final class NexialConst {
         public boolean isHeadless() { return this == firefoxheadless || this == chromeheadless; }
     }
 
+    public static final class Tn5250 {
+        public static final String NS = NAMESPACE + "ts5250.";
+        public static final String FILLER = registerSysVar(NS + "filler", " .");
+
+        private Tn5250() {}
+
+        static void init() { }
+    }
+
     private NexialConst() { }
 
     public static String handleWindowsChar(String name) {
@@ -1891,6 +1906,7 @@ public final class NexialConst {
         Pdf.init();
         ImageCaption.init();
         SaveGridAsCSV.init();
+        Tn5250.init();
 
         // don't need this unnecessary noise
         System.setProperty("nashorn.args", "--no-deprecation-warning");

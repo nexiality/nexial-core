@@ -25,6 +25,7 @@ import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.builder.ToStringBuilder;
 
 import static org.apache.commons.lang3.builder.ToStringStyle.SIMPLE_STYLE;
+import static org.nexial.core.NexialConst.NL;
 
 public class JdbcOutcome extends ArrayList<JdbcResult> {
     private long startTime;
@@ -54,7 +55,7 @@ public class JdbcOutcome extends ArrayList<JdbcResult> {
         if (StringUtils.isBlank(this.error)) {
             this.error = error;
         } else {
-            this.error += "\n" + error;
+            this.error += NL + error;
         }
     }
 

@@ -181,15 +181,15 @@ public final class NexialSetup {
             FileUtils.deleteQuietly(targetJar);
             FileUtils.moveFile(new File(CLASS_FOLDER + SETUP_JAR), targetJar);
 
-            System.out.println("\n\n" +
-                               "Setup complete.\n\n" +
-                               "IMPORTANT NOTE:\n" +
-                               "> It is now safe to delete " + dataFilePath + "\n" +
-                               "> to keep it out of prying eyes.\n" +
-                               "> You can zip up " + System.getenv(ENV_NEXIAL_HOME) + " for distribution.\n" +
-                               "\n");
+            System.out.println(NL + NL +
+                               "Setup complete." + NL + NL +
+                               "IMPORTANT NOTE:" + NL +
+                               "> It is now safe to delete " + dataFilePath + NL +
+                               "> to keep it out of prying eyes." + NL +
+                               "> You can zip up " + System.getenv(ENV_NEXIAL_HOME) + " for distribution." + NL +
+                               NL);
         } catch (ParseException e) {
-            System.err.println("\nERROR: " + e.getMessage() + "\n");
+            System.err.println(NL + "ERROR: " + e.getMessage() + NL);
             HelpFormatter formatter = new HelpFormatter();
             formatter.printHelp(NexialSetup.class.getName(), cmdOptions, true);
             System.exit(RC_BAD_CLI_ARGS);

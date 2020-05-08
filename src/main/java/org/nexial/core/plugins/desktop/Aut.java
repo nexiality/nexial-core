@@ -19,6 +19,8 @@ package org.nexial.core.plugins.desktop;
 
 import java.io.Serializable;
 
+import static org.nexial.core.NexialConst.NL;
+
 /**
  * aka Application Under Test.
  */
@@ -63,11 +65,11 @@ class Aut implements Serializable {
 
     @Override
     public String toString() {
-        return "path='" + path + "', \n" +
-               "exe='" + exe + "', \n" +
-               "dotnetConfig='" + dotnetConfig + "', \n" +
-               "args='" + args + "', \n" +
-               "terminateExisting=" + terminateExisting + ", \n" +
+        return "path='" + path + "'," + NL +
+               "exe='" + exe + "'," + NL +
+               "dotnetConfig='" + dotnetConfig + "'," + NL +
+               "args='" + args + "'," + NL +
+               "terminateExisting=" + terminateExisting + "," + NL +
                "runFromWorkingDirectory=" + runFromWorkingDirectory;
     }
 }

@@ -30,6 +30,7 @@ import org.openqa.selenium.By;
 import org.openqa.selenium.WebElement;
 import org.openqa.selenium.winium.WiniumDriver;
 
+import static org.nexial.core.NexialConst.NL;
 import static org.nexial.core.plugins.desktop.DesktopConst.*;
 
 final class DesktopUtils {
@@ -39,25 +40,25 @@ final class DesktopUtils {
         if (element == null) { return null; }
 
         return StringUtils.rightPad("@AutomationId=", DEF_OUTPUT_LABEL_WIDTH) +
-               element.getAttribute("AutomationId") + "\n" +
-               StringUtils.rightPad("@Name=", DEF_OUTPUT_LABEL_WIDTH) + element.getAttribute("Name") + "\n" +
+               element.getAttribute("AutomationId") + NL +
+               StringUtils.rightPad("@Name=", DEF_OUTPUT_LABEL_WIDTH) + element.getAttribute("Name") + NL +
                StringUtils.rightPad("@ControlType=", DEF_OUTPUT_LABEL_WIDTH) +
-               element.getAttribute("ControlType") + "\n" +
+               element.getAttribute("ControlType") + NL +
                StringUtils.rightPad("@BoundingRectangle=", DEF_OUTPUT_LABEL_WIDTH) +
-               element.getAttribute("BoundingRectangle") + "\n";
+               element.getAttribute("BoundingRectangle") + NL;
     }
 
     protected static String printDetails(DesktopElement element) {
         if (element == null) { return null; }
 
-        return StringUtils.rightPad("element type=", DEF_OUTPUT_LABEL_WIDTH) + element.elementType + "\n" +
-               StringUtils.rightPad("editable=", DEF_OUTPUT_LABEL_WIDTH) + element.editable + "\n" +
-               StringUtils.rightPad("label=", DEF_OUTPUT_LABEL_WIDTH) + element.label + "\n" +
-               StringUtils.rightPad("name=", DEF_OUTPUT_LABEL_WIDTH) + element.name + "\n" +
-               StringUtils.rightPad("control type=", DEF_OUTPUT_LABEL_WIDTH) + element.controlType + "\n" +
-               StringUtils.rightPad("automation id=", DEF_OUTPUT_LABEL_WIDTH) + element.automationId + "\n" +
+        return StringUtils.rightPad("element type=", DEF_OUTPUT_LABEL_WIDTH) + element.elementType + NL +
+               StringUtils.rightPad("editable=", DEF_OUTPUT_LABEL_WIDTH) + element.editable + NL +
+               StringUtils.rightPad("label=", DEF_OUTPUT_LABEL_WIDTH) + element.label + NL +
+               StringUtils.rightPad("name=", DEF_OUTPUT_LABEL_WIDTH) + element.name + NL +
+               StringUtils.rightPad("control type=", DEF_OUTPUT_LABEL_WIDTH) + element.controlType + NL +
+               StringUtils.rightPad("automation id=", DEF_OUTPUT_LABEL_WIDTH) + element.automationId + NL +
                StringUtils.rightPad("bound=", DEF_OUTPUT_LABEL_WIDTH) +
-               (element.element == null ? "UNKNOWN" : element.element.getAttribute("BoundingRectangle") + "\n");
+               (element.element == null ? "UNKNOWN" : element.element.getAttribute("BoundingRectangle") + NL);
     }
 
     protected static String toShortcutText(String text) {

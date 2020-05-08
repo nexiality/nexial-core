@@ -295,7 +295,7 @@ public class IoCommand extends BaseCommand {
         try {
             FileMeta fileMeta = new FileMeta(f);
             context.setData(var, fileMeta);
-            if (context.isVerbose()) { log(file + " --> \n" + fileMeta); }
+            if (context.isVerbose()) { log(file + " -->" + NL + fileMeta); }
             return StepResult.success("file meta for '" + file + "' saved to variable '" + var + "'");
         } catch (IOException e) {
             return StepResult.fail("unable to save file meta for '" + file + "': " + e.getMessage());

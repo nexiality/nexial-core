@@ -41,6 +41,7 @@ import static org.nexial.core.NexialConst.Exec.FAIL_COUNT;
 import static org.nexial.core.NexialConst.MSG_FAIL;
 import static org.nexial.core.NexialConst.MSG_PASS;
 import static org.nexial.core.NexialConst.*;
+import static org.nexial.core.NexialConst.NL;
 import static org.nexial.core.excel.ExcelConfig.*;
 import static org.nexial.core.excel.ExcelStyleHelper.*;
 
@@ -189,7 +190,8 @@ public class CommandRepeater {
                     }
 
                     try {
-                        testStep.handleScreenshot(result);
+                        // [NEX023] first command is always an assertion. So FAIL shouldn't trigger screenshot as error
+                        if (i != 0 || testStep.isCaptureScreen()) { testStep.handleScreenshot(result); }
                     } catch (Throwable e) {
                         ConsoleUtils.error(testStep.messageId, e.getMessage(), e);
                     }
@@ -228,7 +230,7 @@ public class CommandRepeater {
     protected void logRepeatUntilStart(ExecutionLogger logger, TestStep testStep, int loopCount) {
         String message = "<" + MSG_REPEAT_UNTIL + "entering loop #" + loopCount + " ";
         message += StringUtils.repeat("-", 78 - message.length()) + ">";
-        logger.log(testStep, "\n" + message, true);
+        logger.log(testStep, NL + message, true);
     }
 
     protected boolean shouldFailFast(ExecutionContext context, TestStep testStep) {

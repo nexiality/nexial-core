@@ -36,6 +36,7 @@ import org.nexial.core.utils.JsonUtils;
 
 import static org.apache.commons.lang3.StringUtils.rightPad;
 import static org.json.JSONObject.NULL;
+import static org.nexial.core.NexialConst.NL;
 
 public class TableData {
     private static final String REGEX_LOWER_UPPER = "[0-9a-z]\\s[A-Z]";
@@ -128,7 +129,8 @@ public class TableData {
         try {
             if (jsonObject.has("error")) { CheckUtils.fail(jsonObject.getString("error")); }
         } catch (JSONException e) {
-            throw new IllegalStateException("ERROR: Unable to retrieve data from Table.\nException: " + e.getMessage());
+            throw new IllegalStateException("ERROR: Unable to retrieve data from Table." + NL +
+                                            "Exception: " + e.getMessage());
         }
 
         List<TableRow> rows = new ArrayList<>();

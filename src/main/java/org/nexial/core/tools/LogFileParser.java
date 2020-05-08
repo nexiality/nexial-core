@@ -19,6 +19,7 @@ import org.springframework.util.CollectionUtils;
 
 import static org.nexial.core.NexialConst.DEF_FILE_ENCODING;
 import static org.nexial.core.NexialConst.ExitStatus.RC_BAD_CLI_ARGS;
+import static org.nexial.core.NexialConst.NL;
 
 public class LogFileParser {
     private static final String FORMAT_LOG = "yyyy-MM-dd HH:mm:ss,SSS";
@@ -106,7 +107,7 @@ public class LogFileParser {
             parser.parseCLIOptions(new DefaultParser().parse(cmdOptions, args));
             return parser;
         } catch (Exception e) {
-            System.err.println("\nERROR: " + e.getMessage() + "\n");
+            System.err.println(NL + "ERROR: " + e.getMessage() + NL);
             HelpFormatter formatter = new HelpFormatter();
             formatter.printHelp(LogFileParser.class.getName(), cmdOptions, true);
             return null;

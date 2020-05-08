@@ -44,6 +44,7 @@ import org.springframework.jdbc.core.ResultSetExtractor;
 import org.springframework.jdbc.core.StatementCallback;
 import org.springframework.jdbc.core.support.JdbcDaoSupport;
 
+import static org.nexial.core.NexialConst.NL;
 import static org.nexial.core.NexialConst.Rdbms.*;
 import static org.nexial.core.SystemVariables.getDefaultBool;
 import static org.nexial.core.SystemVariables.getDefaultInt;
@@ -228,7 +229,7 @@ public class SimpleExtractionDao extends JdbcDaoSupport {
                 // this might fail since explicit commit/rollback was performed earlier
                 if (explicitCommit.get() || explicitRollback.get()) {
                     ConsoleUtils.log("Possibly benign error found when committing current transaction - " +
-                                     e.getErrorCode() + " " + e.getMessage() + "\n" +
+                                     e.getErrorCode() + " " + e.getMessage() + NL +
                                      "An explicit COMMIT or ROLLBACK was PREVIOUSLY EXECUTED IN THIS TRANSACTION");
                 } else {
                     outcome.setError(e.getErrorCode() + " " + e.getMessage());
@@ -315,21 +316,21 @@ public class SimpleExtractionDao extends JdbcDaoSupport {
                     if (i < numOfColumn) { inserts.append(","); }
                 }
 
-                inserts.append(");\n");
+                inserts.append(");").append(NL);
 
                 rowCount++;
 
                 if (rowCount % importBufferSize == 0) {
                     JdbcOutcome insertResults = dao.executeSqls(SqlComponent.toList(inserts.toString()));
                     rowsAffected += insertResults.getRowsAffected();
-                    if (result.hasError()) { error.append(result.getError()).append("\n"); }
+                    if (result.hasError()) { error.append(result.getError()).append(NL); }
                     inserts = new StringBuilder();
                 }
             } while (rs.next());
 
             JdbcOutcome insertResults = dao.executeSqls(SqlComponent.toList(inserts.toString()));
             rowsAffected += insertResults.getRowsAffected();
-            if (result.hasError()) { error.append(result.getError()).append("\n"); }
+            if (result.hasError()) { error.append(result.getError()).append(NL); }
 
             if (error.length() > 0) { result.setError(error.toString()); }
 

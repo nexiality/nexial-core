@@ -66,11 +66,10 @@ import static org.apache.poi.ss.SpreadsheetVersion.EXCEL2007;
 import static org.apache.poi.ss.usermodel.CellType.*;
 import static org.apache.poi.ss.usermodel.Row.MissingCellPolicy.CREATE_NULL_AS_BLANK;
 import static org.apache.poi.ss.usermodel.Row.MissingCellPolicy.RETURN_BLANK_AS_NULL;
-import static org.nexial.core.NexialConst.COMMENT_AUTHOR;
+import static org.nexial.core.NexialConst.*;
 import static org.nexial.core.NexialConst.Data.DEF_OPEN_EXCEL_AS_DUP;
 import static org.nexial.core.NexialConst.Data.WIN32_CMD;
 import static org.nexial.core.NexialConst.Exec.*;
-import static org.nexial.core.NexialConst.MAX_FORMULA_CHAR;
 import static org.nexial.core.SystemVariables.getDefault;
 import static org.nexial.core.excel.ExcelConfig.*;
 import static org.nexial.core.excel.ExcelConfig.StyleConfig.FONT_HEIGHT_DEFAULT;
@@ -1012,13 +1011,13 @@ public class Excel {
             }
 
             // not excel-2007 or above
-            ConsoleUtils.error("\n\n\n" +
-                               StringUtils.repeat("!", 80) + "\n" +
-                               "File (" + excelFile + ")\n" +
-                               "is either unreadable, not of version Excel 2007 or above, or is currently open.\n" +
-                               "If this file is currently open, please close it before retrying again.\n" +
-                               StringUtils.repeat("!", 80) + "\n" +
-                               "\n\n");
+            ConsoleUtils.error(NL + NL + NL +
+                               StringUtils.repeat("!", 80) + NL +
+                               "File (" + excelFile + ")" + NL +
+                               "is either unreadable, not of version Excel 2007 or above, or is currently open." + NL +
+                               "If this file is currently open, please close it before retrying again." + NL +
+                               StringUtils.repeat("!", 80) + NL +
+                               NL + NL);
             return null;
         } catch (InvalidFormatException | OLE2NotOfficeXmlFileException e) {
             ConsoleUtils.error("Unable to open workbook (" + file + "): " + e.getMessage());
@@ -1189,7 +1188,7 @@ public class Excel {
                 return null;
             }
 
-            String[] output = StringUtils.split(outcome.getStdout(), "\r\n");
+            String[] output = StringUtils.split(outcome.getStdout(), "\n");
             if (ArrayUtils.isEmpty(output)) {
                 ConsoleUtils.error("ERROR!!! Unable to determine WPS spreadsheet program location: NO OUTPUT");
                 return null;

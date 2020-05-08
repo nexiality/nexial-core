@@ -54,6 +54,7 @@ import static org.nexial.core.CommandConst.PARAM_AUTO_FILL_COMMANDS;
 import static org.nexial.core.NexialConst.Data.SHEET_SYSTEM;
 import static org.nexial.core.NexialConst.ExitStatus.RC_BAD_CLI_ARGS;
 import static org.nexial.core.NexialConst.MSG_SCRIPT_UPDATE_ERR;
+import static org.nexial.core.NexialConst.NL;
 import static org.nexial.core.NexialConst.Project.COMMAND_JSON_FILE_NAME;
 import static org.nexial.core.excel.ExcelConfig.*;
 import static org.nexial.core.tools.CliConst.OPT_VERBOSE;
@@ -91,7 +92,7 @@ public class TestScriptUpdater {
             updater.parseCLIOptions(new DefaultParser().parse(cmdOptions, args));
             return updater;
         } catch (Exception e) {
-            System.err.println("\nERROR: " + e.getMessage() + "\n");
+            System.err.println(NL + "ERROR: " + e.getMessage() + NL);
             HelpFormatter formatter = new HelpFormatter();
             formatter.printHelp(TestScriptUpdater.class.getName(), cmdOptions, true);
             return null;
@@ -436,10 +437,10 @@ public class TestScriptUpdater {
                 String commandDisplay = target + " » " + command;
                 if (CommandConst.getCommandSuggestions().containsKey(targetCommand)) {
                     String suggestion = CommandConst.getCommandSuggestions().get(targetCommand);
-                    System.err.printf("\t!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!\n" +
-                                      "\tRow %s:\t%s\n" +
-                                      "\t%s\n" +
-                                      "\t!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!\n",
+                    System.err.printf("\t!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!" + NL +
+                                      "\tRow %s:\t%s" + NL +
+                                      "\t%s" + NL +
+                                      "\t!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!" + NL,
                                       rowIndex, commandDisplay, suggestion);
                 }
 
@@ -504,7 +505,7 @@ public class TestScriptUpdater {
                         String cellAddress = cellActivity.getAddress().formatAsString();
                         activityNames.put(newActivityName, cellAddress);
                         if (!StringUtils.equals(activityName, newActivityName)) {
-                            System.out.printf("\t[%s]: duplicate activity name renamed from %s to %s\n",
+                            System.out.printf("\t[%s]: duplicate activity name renamed from %s to %s" + NL,
                                               cellAddress, activityName, newActivityName);
                             cellActivity.setCellValue(newActivityName);
                         }

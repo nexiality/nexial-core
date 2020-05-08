@@ -50,6 +50,7 @@ import org.openqa.selenium.winium.WiniumDriver;
 
 import winium.elements.desktop.ComboBox;
 
+import static org.nexial.core.NexialConst.NL;
 import static org.nexial.core.plugins.desktop.DesktopConst.*;
 import static org.nexial.core.plugins.desktop.DesktopUtils.*;
 import static org.nexial.core.plugins.desktop.ElementType.*;
@@ -57,10 +58,10 @@ import static org.nexial.core.utils.AssertUtils.requires;
 
 /**
  * Object representataion of a UI element in a desktop (native) application (Windows only).
- *
+ * <p>
  * A {@code DesktopElement} can be a textbox, checkbox, combo box, table, a container (see below) that can more
  * {@code DesktopElement}, etc.
- *
+ * <p>
  * A "container" may reference a UI element whose ControlType attribute could be <ul>
  * <li>ControlType.Pane</li>
  * <li>ControlType.Window</li>
@@ -138,7 +139,7 @@ public class DesktopElement {
      * <li>custom/dynamic element that mimic one of the above</li>
      * <li>a vertical or horizontal scrollbar (ControlType.ScrollBar)</li>
      * </ul>
-     *
+     * <p>
      * for dynamic element, its ControlType attribute will likely be ControlType.Custom or ControlType.Pane.  As such,
      * Nexial will derive the most appropriate type inference via inspection of its other attributes and inner elements
      */
@@ -1193,7 +1194,7 @@ public class DesktopElement {
     protected boolean noChildElementFound() {
         this.elementType = SingleSelectComboNotEditable;
         ConsoleUtils.log("Found a " + controlType + " element with xpath as " + xpath +
-                         " without child elements: \n" + printDetails(element));
+                         " without child elements" + NL + printDetails(element));
         return true;
     }
 
@@ -1298,7 +1299,7 @@ public class DesktopElement {
 
             if (desktopElement.isContainer()) {
                 if (StringUtils.isBlank(desktopElement.getLabel())) {
-                    DesktopConst.debug("NAMELESS CONTAINER: INSPECT DEEPER:\n" + desktopElement.getXpath() + "\n");
+                    DesktopConst.debug("NAMELESS CONTAINER: INSPECT DEEPER:" + NL + desktopElement.getXpath() + NL);
                     // let this nameless container temporarily inherit the components of its parent so that we can
                     // match up all the defined elements against disovered elements.
                     desktopElement.inheritParentCompoents(getComponents());
@@ -1453,8 +1454,8 @@ public class DesktopElement {
             if (layout.isTwoLines()) { bounds.sort((o1, o2) -> ((Integer) o1.getY()).compareTo(o2.getY())); }
         });
 
-        groups.forEach(group -> DesktopConst.debug("\nGroup [" + group + "] Bounds:\n\t" +
-                                                   TextUtils.toString(boundGroups.get(group), "\n\t")));
+        groups.forEach(group -> DesktopConst.debug(NL + "Group [" + group + "] Bounds:" + NL + "\t" +
+                                                   TextUtils.toString(boundGroups.get(group), NL + "\t")));
 
         return boundGroups;
     }

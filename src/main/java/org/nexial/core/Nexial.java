@@ -65,6 +65,7 @@ import static org.nexial.core.NexialConst.CLI.*;
 import static org.nexial.core.NexialConst.*;
 import static org.nexial.core.NexialConst.Data.*;
 import static org.nexial.core.NexialConst.Exec.*;
+import static org.nexial.core.NexialConst.NL;
 import static org.nexial.core.NexialConst.ExitStatus.*;
 import static org.nexial.core.NexialConst.Project.*;
 import static org.nexial.core.SystemVariables.getDefault;
@@ -231,7 +232,7 @@ public class Nexial {
             // interactive mode, only for stepwise or blockwise execution. to be integrated into studio
             if (main.isInteractiveMode()) {
                 if (ExecUtils.isRunningInZeroTouchEnv()) {
-                    ConsoleUtils.error("\n\nNexial Interactive cannot operate in unit testing or in CI/CD environment");
+                    ConsoleUtils.error(NL + NL + "Nexial Interactive is disabled unit testing or in CI/CD environment");
                     System.exit(RC_NOT_SUPPORT_ZERO_TOUCH_ENV);
                     return;
                 }
@@ -1190,14 +1191,14 @@ public class Nexial {
 
             String manifest = NEXIAL_MANIFEST;
             ConsoleUtils.log(
-                "\n\n" +
-                "/-END OF EXECUTION--------------------------------------------------------------\n" +
-                "| » Execution Time: " + (summary.getElapsedTime() / 1000) + " sec.\n" +
-                "| » Test Steps....: " + summary.getExecuted() + "\n" +
-                "| » Passed........: " + summary.getPassCount() + "\n" +
-                "| » Failed........: " + summary.getFailCount() + "\n" +
-                "| » Success Rate..: " + successRateString + "\n" +
-                "\\" + StringUtils.repeat("-", 80 - 1 - manifest.length() - 1) + manifest + "-" + "\n");
+                NL + NL +
+                "/-END OF EXECUTION--------------------------------------------------------------" + NL +
+                "| » Execution Time: " + (summary.getElapsedTime() / 1000) + " sec." + NL +
+                "| » Test Steps....: " + summary.getExecuted() + NL +
+                "| » Passed........: " + summary.getPassCount() + NL +
+                "| » Failed........: " + summary.getFailCount() + NL +
+                "| » Success Rate..: " + successRateString + NL +
+                "\\" + StringUtils.repeat("-", 80 - 1 - manifest.length() - 1) + manifest + "-" + NL);
 
             if (successRate != 1) {
                 if (successRate >= minExecSuccessRate) {
@@ -1250,11 +1251,11 @@ public class Nexial {
         beforeShutdownMemUsage();
 
         System.setProperty(EXIT_STATUS, exitStatus + "");
-        ConsoleUtils.log("End of Execution:\n" +
-                         "NEXIAL_OUTPUT:         " + System.getProperty(OUTPUT_LOCATION) + "\n" +
-                         "NEXIAL_EXECUTION_HTML: " + System.getProperty(EXEC_OUTPUT_PATH) + "\n" +
-                         "NEXIAL_JUNIT_XML:      " + System.getProperty(JUNIT_XML_LOCATION) + "\n" +
-                         "NEXIAL_SUCCESS_RATE:   " + System.getProperty(SUCCESS_RATE) + "\n" +
+        ConsoleUtils.log("End of Execution:" + NL +
+                         "NEXIAL_OUTPUT:         " + System.getProperty(OUTPUT_LOCATION) + NL +
+                         "NEXIAL_EXECUTION_HTML: " + System.getProperty(EXEC_OUTPUT_PATH) + NL +
+                         "NEXIAL_JUNIT_XML:      " + System.getProperty(JUNIT_XML_LOCATION) + NL +
+                         "NEXIAL_SUCCESS_RATE:   " + System.getProperty(SUCCESS_RATE) + NL +
                          "NEXIAL_EXIT_STATUS:    " + exitStatus);
 
         postExecBatch(exitStatus);
@@ -1292,8 +1293,8 @@ public class Nexial {
         MemManager.recordMemoryChanges("just before exit");
         String memUsage = MemManager.showUsage("| »      ");
         if (StringUtils.isNotBlank(memUsage)) {
-            ConsoleUtils.log("\n" +
-                             "/-MEMORY-USAGE------------------------------------------------------------------\n" +
+            ConsoleUtils.log(NL +
+                             "/-MEMORY-USAGE------------------------------------------------------------------" + NL +
                              memUsage +
                              "\\-------------------------------------------------------------------------------");
         }

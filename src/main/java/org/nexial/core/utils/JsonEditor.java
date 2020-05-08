@@ -28,6 +28,7 @@ import org.nexial.commons.utils.RegexUtils;
 import org.nexial.commons.utils.TextUtils;
 
 import static org.json.JSONObject.NULL;
+import static org.nexial.core.NexialConst.NL;
 import static org.nexial.core.NexialConst.PREFIX_REGEX;
 
 /**
@@ -91,22 +92,22 @@ public final class JsonEditor {
             // regex is too complicated for now.. maybe later
             // todo: future -> we can enhance this method to support regex filter
             String regex = StringUtils.removeStart(filter, PREFIX_REGEX);
-            throw new RuntimeException("NOT YET IMPLEMENTED for REGEX filter\n" +
-                                       "\tjson=" + json + "\n" +
-                                       "\tnodeName=" + nodeName + "\n" +
-                                       "\tfilter=" + filter + "\n" +
-                                       "\tregex-filter=" + regex + "\n" +
-                                       "\tjsonPath=" + jsonPath + "\n" +
+            throw new RuntimeException("NOT YET IMPLEMENTED for REGEX filter" + NL +
+                                       "\tjson=" + json + NL +
+                                       "\tnodeName=" + nodeName + NL +
+                                       "\tfilter=" + filter + NL +
+                                       "\tregex-filter=" + regex + NL +
+                                       "\tjsonPath=" + jsonPath + NL +
                                        "\tdata=" + data);
         }
 
         // 5 filter is not ordinal, not single node and not REGEX
         // it must be equality filter
-        throw new RuntimeException("NOT YET IMPLEMENTED for REGEX filter\n" +
-                                   "\tjson=" + json + "\n" +
-                                   "\tnodeName=" + nodeName + "\n" +
-                                   "\tfilter=" + filter + "\n" +
-                                   "\tjsonPath=" + jsonPath + "\n" +
+        throw new RuntimeException("NOT YET IMPLEMENTED for REGEX filter" + NL +
+                                   "\tjson=" + json + NL +
+                                   "\tnodeName=" + nodeName + NL +
+                                   "\tfilter=" + filter + NL +
+                                   "\tjsonPath=" + jsonPath + NL +
                                    "\tdata=" + data);
     }
 
