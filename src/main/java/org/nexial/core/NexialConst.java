@@ -1785,14 +1785,14 @@ public final class NexialConst {
         public boolean isHeadless() { return this == firefoxheadless || this == chromeheadless; }
     }
 
-    public static final class Tn5250 {
-        public static final String NS = NAMESPACE + "ts5250.";
-        public static final String FILLER = registerSysVar(NS + "filler", " .");
-
-        private Tn5250() {}
-
-        static void init() { }
-    }
+    // public static final class Tn5250 {
+    //     public static final String NS = NAMESPACE + "ts5250.";
+    //     public static final String FILLER = registerSysVar(NS + "filler", " .");
+    //
+    //     private Tn5250() {}
+    //
+    //     static void init() { }
+    // }
 
     private NexialConst() { }
 
@@ -1906,7 +1906,7 @@ public final class NexialConst {
         Pdf.init();
         ImageCaption.init();
         SaveGridAsCSV.init();
-        Tn5250.init();
+        //        Tn5250.init();
 
         // don't need this unnecessary noise
         System.setProperty("nashorn.args", "--no-deprecation-warning");
