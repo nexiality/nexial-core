@@ -805,7 +805,7 @@ public class ExecutionContext {
         if (text == null) { return null; }
 
         // for portability
-        text = StringUtils.replace(text, NL, lineSeparator());
+        text = StringUtils.replace(text, EOL, lineSeparator());
 
         // pre-first pass  ;-)
         // substitute crypt value

@@ -299,7 +299,8 @@ classes/
 logs/
 src/test/resources/showcase/output/
 src/test/resources/unittesting/output/
-
 /.archive/
 /build
 /logs
+backup.db
+test.db

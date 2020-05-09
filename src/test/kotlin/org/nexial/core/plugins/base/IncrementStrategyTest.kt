@@ -21,6 +21,7 @@ import org.junit.Assert.assertEquals
 import org.junit.Test
 import org.nexial.commons.utils.ResourceUtils
 import org.nexial.core.plugins.base.IncrementStrategy.*
+import java.lang.System.lineSeparator
 
 class IncrementStrategyTest {
     private val resourcePath = StringUtils.replace(this.javaClass.`package`.name, ".", "/") + "/"
@@ -125,17 +126,17 @@ class IncrementStrategyTest {
     fun testIncrement2() {
         assertEquals(retrieveExpectedValue("IncrementStrategyTest-Increment2-expected1.txt"),
                      (0..1499).fold("", { value, i ->
-                         value + StringUtils.leftPad("" + i, 5) + " " + UPPER.increment("A", 1, i) + "\n"
+                         value + StringUtils.leftPad("" + i, 5) + " " + UPPER.increment("A", 1, i) + lineSeparator()
                      }))
 
         assertEquals(retrieveExpectedValue("IncrementStrategyTest-Increment2-expected2.txt"),
                      (0..1499).fold("", { value, i ->
-                         value + StringUtils.leftPad("" + i, 5) + " " + LOWER.increment("A", 1, i) + "\n"
+                         value + StringUtils.leftPad("" + i, 5) + " " + LOWER.increment("A", 1, i) + lineSeparator()
                      }))
 
         assertEquals(retrieveExpectedValue("IncrementStrategyTest-Increment2-expected3.txt"),
                      (0..1499).fold("", { value, i ->
-                         value + StringUtils.leftPad("" + i, 5) + " " + ALPHANUM.increment("A", 1, i) + "\n"
+                         value + StringUtils.leftPad("" + i, 5) + " " + ALPHANUM.increment("A", 1, i) + lineSeparator()
                      }))
 
         assertEquals("18279 aaab", "18279 " + LOWER.increment("P102", 1, 18279))
