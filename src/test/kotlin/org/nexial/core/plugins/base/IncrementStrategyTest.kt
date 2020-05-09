@@ -126,17 +126,17 @@ class IncrementStrategyTest {
     fun testIncrement2() {
         assertEquals(retrieveExpectedValue("IncrementStrategyTest-Increment2-expected1.txt"),
                      (0..1499).fold("", { value, i ->
-                         value + StringUtils.leftPad("" + i, 5) + " " + UPPER.increment("A", 1, i) + lineSeparator()
+                         value + StringUtils.leftPad("" + i, 5) + " " + UPPER.increment("A", 1, i) + "\n"
                      }))
 
         assertEquals(retrieveExpectedValue("IncrementStrategyTest-Increment2-expected2.txt"),
                      (0..1499).fold("", { value, i ->
-                         value + StringUtils.leftPad("" + i, 5) + " " + LOWER.increment("A", 1, i) + lineSeparator()
+                         value + StringUtils.leftPad("" + i, 5) + " " + LOWER.increment("A", 1, i) + "\n"
                      }))
 
         assertEquals(retrieveExpectedValue("IncrementStrategyTest-Increment2-expected3.txt"),
                      (0..1499).fold("", { value, i ->
-                         value + StringUtils.leftPad("" + i, 5) + " " + ALPHANUM.increment("A", 1, i) + lineSeparator()
+                         value + StringUtils.leftPad("" + i, 5) + " " + ALPHANUM.increment("A", 1, i) + "\n"
                      }))
 
         assertEquals("18279 aaab", "18279 " + LOWER.increment("P102", 1, 18279))
