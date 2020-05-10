@@ -14,7 +14,8 @@ if NOT ERRORLEVEL 0 goto :exit
 call :resolveEnv
 if NOT ERRORLEVEL 0 goto :exit
 
-%JAVA% -classpath %NEXIAL_CLASSES%;%NEXIAL_LIB%\* %JAVA_OPT% org.nexial.core.tools.CommandMetaGenerator
+REM -v for verbose, -p for preview
+%JAVA% -classpath %NEXIAL_CLASSES%;%NEXIAL_LIB%\* %JAVA_OPT% org.nexial.core.tools.CommandMetaGenerator %*
 endlocal
 exit /b 0
 goto :eof

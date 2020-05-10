@@ -347,7 +347,8 @@ public class TestScriptUpdater {
                 commandList = macroCommandList;
             }
 
-            worksheet.setRowValues(new ExcelAddress(((char) ('B' + i)) + "2"), commandList);
+            String columnIndex = ExcelAddress.toLetterCellRef(('B' - 'A') + 1 + i);
+            worksheet.setRowValues(new ExcelAddress(columnIndex + "2"), commandList);
         }
 
         names.forEach(namedRange -> worksheet.createName(namedRange.getName(), namedRange.getReference()));
@@ -388,9 +389,6 @@ public class TestScriptUpdater {
             MDC.put("script.file", excel.getFile().getName());
             MDC.put("script.scenario", sheetName);
 
-            // start from row 5, scan for each command
-            // if (verbose && logger.isInfoEnabled()) { System.out.println("\tinspecting " + sheetName); }
-
             Worksheet worksheet = excel.worksheet(sheetName);
             int lastCommandRow = worksheet.findLastDataRow(addrCommandStart);
             String commandAreaAddr = "" + COL_TEST_CASE + (addrCommandStart.getRowStartIndex() + 1) + ":" +
@@ -429,9 +427,6 @@ public class TestScriptUpdater {
                     targetCommand = newCommand;
                     excelUpdated = true;
                 }
-
-                // todo: correct scripts with outdated commands
-                // todo: desktop.get*** --> desktop.save***
 
                 // check for warning/suggest
                 String commandDisplay = target + " » " + command;
@@ -495,7 +490,6 @@ public class TestScriptUpdater {
                 ExcelArea area = new ExcelArea(sheet, new ExcelAddress(commandAreaAddr), false);
                 for (int j = 0; j < area.getWholeArea().size(); j++) {
                     List<XSSFCell> row = area.getWholeArea().get(j);
-                    // int rowIndex = row.get(0).getRowIndex() + 1;
 
                     // check for activity name duplicates
                     XSSFCell cellActivity = row.get(COL_IDX_TESTCASE);

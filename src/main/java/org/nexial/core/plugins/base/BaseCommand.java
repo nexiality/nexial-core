@@ -26,7 +26,6 @@ import java.lang.reflect.Array;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
-import java.lang.reflect.Parameter;
 import java.math.BigDecimal;
 import java.util.*;
 import java.util.regex.Pattern;
@@ -1332,16 +1331,14 @@ public class BaseCommand implements NexialCommand {
                 commandMethods.put(m.getName(), m);
 
                 if (CommandDiscovery.isInDiscoveryMode()) {
-                    String command = m.getName() + "(";
-
-                    Parameter[] parameters = m.getParameters();
-                    for (Parameter param : parameters) {
-                        // workaround for kotlin (var is reserved in kotlin)
-                        String paramName = StringUtils.equals(param.getName(), "Var") ? "var" : param.getName();
-                        command += paramName + ",";
-                    }
-
-                    discovery.addCommand(getTarget(), StringUtils.removeEnd(command, ",") + ")");
+                    // workaround for kotlin (var is reserved in kotlin)
+                    discovery.addCommand(getTarget(),
+                                         m.getName() + "(" +
+                                         Arrays.stream(m.getParameters())
+                                               .map(param -> StringUtils.equals(param.getName(), "Var") ?
+                                                             "var" : param.getName())
+                                               .collect(Collectors.joining(",")) +
+                                         ")");
                 }
             }
         });
