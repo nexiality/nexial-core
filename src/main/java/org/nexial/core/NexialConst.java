@@ -32,6 +32,7 @@ import org.apache.commons.collections4.MapUtils;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang3.BooleanUtils;
 import org.apache.commons.lang3.StringUtils;
+import org.apache.commons.lang3.SystemUtils;
 import org.apache.commons.text.StringEscapeUtils;
 import org.jdom2.output.Format;
 import org.jdom2.output.XMLOutputter;
@@ -1909,6 +1910,9 @@ public final class NexialConst {
         //        Tn5250.init();
 
         // don't need this unnecessary noise
-        System.setProperty("nashorn.args", "--no-deprecation-warning");
+        // BUT WE CANNOT TURN THIS ONE FOR JAVA 8 (IT DOESN'T KNOW ANYTHING ABOUT THIS ARG!)
+        if (!StringUtils.contains(SystemUtils.JAVA_VERSION, "8")) {
+            System.setProperty("nashorn.args", "--no-deprecation-warning");
+        }
     }
 }

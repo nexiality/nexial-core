@@ -30,6 +30,7 @@ import javax.validation.constraints.NotNull;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.dbcp2.BasicDataSource;
 import org.apache.commons.lang3.StringUtils;
+import org.apache.commons.lang3.exception.ExceptionUtils;
 import org.aspectj.util.FileUtil;
 import org.nexial.commons.utils.TextUtils;
 import org.nexial.core.ExecutionThread;
@@ -130,7 +131,11 @@ public class SimpleExtractionDao extends JdbcDaoSupport {
                     return processNoResultset(stmt, isRollback);
                 }
             } catch (SQLException | DataAccessException e) {
-                result.setError("Error occurred when executing '" + sql + "': " + e.getMessage());
+                if (context.isVerbose()) { e.printStackTrace(); }
+                result.setError("Error occurred when executing '" +
+                                sql +
+                                "': " +
+                                ExceptionUtils.getRootCauseMessage(e));
                 return result;
             } finally {
                 if (isRollback) { stmt.close(); }

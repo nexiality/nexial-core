@@ -29,11 +29,12 @@ import org.apache.commons.collections4.IterableUtils;
 import org.apache.commons.collections4.MapUtils;
 import org.apache.commons.lang3.BooleanUtils;
 import org.apache.commons.lang3.StringUtils;
+import org.apache.commons.lang3.exception.ExceptionUtils;
 import org.apache.commons.lang3.math.NumberUtils;
 import org.nexial.commons.proc.RuntimeUtils;
 import org.nexial.commons.utils.EnvUtils;
 import org.nexial.commons.utils.FileUtil;
-import org.nexial.core.NexialConst.BrowserType;
+import org.nexial.core.NexialConst.*;
 import org.nexial.core.ShutdownAdvisor;
 import org.nexial.core.model.BrowserCompleteEvent;
 import org.nexial.core.model.ExecutionContext;
@@ -63,10 +64,10 @@ import org.slf4j.LoggerFactory;
 import static java.io.File.separator;
 import static java.util.concurrent.TimeUnit.MILLISECONDS;
 import static org.apache.commons.lang3.SystemUtils.*;
-import static org.nexial.core.NexialConst.*;
 import static org.nexial.core.NexialConst.BrowserType.*;
 import static org.nexial.core.NexialConst.Data.TEST_LOG_PATH;
 import static org.nexial.core.NexialConst.Data.withProfile;
+import static org.nexial.core.NexialConst.*;
 import static org.nexial.core.NexialConst.Web.*;
 import static org.nexial.core.SystemVariables.getDefaultBool;
 import static org.nexial.core.plugins.web.WebDriverCapabilityUtils.initCapabilities;
@@ -379,7 +380,7 @@ public class Browser implements ForcefulTerminate {
 
             syncContextPropToSystem(BROWSER);
         } catch (Throwable e) {
-            String msg = "Error initializing browser '" + browser + "': " + e.getMessage();
+            String msg = "Error initializing browser '" + browser + "': " + ExceptionUtils.getRootCauseMessage(e);
             ConsoleUtils.error(msg);
             throw new RuntimeException(msg, e);
         }
@@ -450,7 +451,7 @@ public class Browser implements ForcefulTerminate {
             driver.quit();
             Thread.sleep(2000);
         } catch (Throwable e) {
-            ConsoleUtils.error("Error occurred while shutting down webdriver: " + e.getMessage());
+            ConsoleUtils.error("Error occurred while shutting down webdriver:" + ExceptionUtils.getRootCauseMessage(e));
         } finally {
             driver = null;
         }
@@ -826,7 +827,6 @@ public class Browser implements ForcefulTerminate {
             postInit(firefox);
             return firefox;
         } catch (Exception e) {
-            // e.printStackTrace();
             throw new RuntimeException(e);
         }
     }

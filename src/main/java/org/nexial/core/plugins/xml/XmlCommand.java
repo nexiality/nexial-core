@@ -32,6 +32,7 @@ import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang3.ArrayUtils;
 import org.apache.commons.lang3.StringUtils;
+import org.apache.commons.lang3.exception.ExceptionUtils;
 import org.jdom2.*;
 import org.jdom2.input.SAXBuilder;
 import org.jdom2.input.sax.XMLReaderXSDFactory;
@@ -48,7 +49,6 @@ import org.xml.sax.SAXException;
 
 import static org.jdom2.input.sax.XMLReaders.XSDVALIDATING;
 import static org.nexial.core.NexialConst.*;
-import static org.nexial.core.NexialConst.toCloudIntegrationNotReadyMessage;
 import static org.nexial.core.utils.CheckUtils.requires;
 import static org.nexial.core.utils.CheckUtils.requiresNotBlank;
 
@@ -396,11 +396,11 @@ public class XmlCommand extends BaseCommand {
                 try {
                     builders.add(new SAXBuilder(new XMLReaderXSDFactory(source)));
                 } catch (JDOMException e) {
-                    String error = "Error when loading schema: " + e.getMessage();
+                    String error = "Error when loading schema: " + ExceptionUtils.getRootCauseMessage(e);
                     Throwable t = e.getCause();
                     if (t != null) { error += ", " + t.getMessage(); }
                     ConsoleUtils.log(error);
-                    e.printStackTrace();
+                    if (context.isVerbose()) { e.printStackTrace(); }
                     return StepResult.fail(error);
                 }
             }

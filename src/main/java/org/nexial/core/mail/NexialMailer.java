@@ -107,7 +107,9 @@ public class NexialMailer implements ExecutionNotifier {
         }
 
         // print to console - last SOS attempt
-        if (summary.getError() != null) { summary.getError().printStackTrace(); }
+        if (summary.getError() != null && (context != null && context.isVerbose())) {
+            summary.getError().printStackTrace();
+        }
 
         if (!readyToSend()) {
             ConsoleUtils.log("nexial mailer is not properly configured; SKIPPING...");

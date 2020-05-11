@@ -177,7 +177,7 @@ public class BaseCommand implements NexialCommand {
             screenRecorder.start(context.getCurrentTestStep());
             return StepResult.success("desktop recording started; saved " + screenRecorder.getVideoFile());
         } catch (Exception e) {
-            e.printStackTrace();
+            if (context.isVerbose()) { e.printStackTrace(); }
             return StepResult.fail("Unable to start desktop recording: " + e.getMessage());
         }
     }

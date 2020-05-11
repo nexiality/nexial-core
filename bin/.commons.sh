@@ -106,7 +106,7 @@ function resolveEnv() {
         *)          export NEXIAL_OS="UNKNOWN:${unameOut}"
     esac
 
-    JAVA_VERSION=`echo "$(${JAVA} -version 2>&1)" | grep "java version" | awk '{ print substr($3, 2, length($3)-2); }'`
+    JAVA_VERSION=`echo "$(${JAVA} -version 2>&1)" | grep " version" | awk '{ print substr($3, 2, length($3)-2); }'`
 
     echo "» ENVIRONMENT: "
     echo "  CURRENT TIME:   `date \"+%Y-%m-%d %H:%M%:%S\"`"

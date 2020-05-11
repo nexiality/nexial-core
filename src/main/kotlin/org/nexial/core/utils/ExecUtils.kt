@@ -61,7 +61,7 @@ object ExecUtils {
 
         "webdriver.",
 
-        "nashorn.*"
+        "nashorn."
     )
 
     @JvmField

@@ -38,6 +38,7 @@ import org.apache.commons.io.LineIterator;
 import org.apache.commons.lang3.BooleanUtils;
 import org.apache.commons.lang3.RandomStringUtils;
 import org.apache.commons.lang3.StringUtils;
+import org.apache.commons.lang3.exception.ExceptionUtils;
 import org.apache.commons.lang3.math.NumberUtils;
 import org.apache.commons.lang3.time.DateFormatUtils;
 import org.apache.commons.lang3.time.StopWatch;
@@ -335,8 +336,8 @@ public class IoCommand extends BaseCommand {
             props = input.exists() && input.canRead() && input.length() > 1 ?
                     ResourceUtils.loadProperties(input) : new Properties();
         } catch (IOException e) {
-            // e.printStackTrace();
-            return StepResult.fail("Error when reading properties from '" + file + "': " + e.getMessage());
+            return StepResult.fail("Error when reading properties from '" + file + "': " +
+                                   ExceptionUtils.getRootCauseMessage(e));
         }
 
         if (StringUtils.isBlank(value)) {
