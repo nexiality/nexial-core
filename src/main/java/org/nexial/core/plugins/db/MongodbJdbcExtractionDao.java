@@ -27,7 +27,6 @@ import java.util.Map;
 
 import org.apache.commons.lang3.StringUtils;
 import org.bson.Document;
-import org.nexial.core.utils.ConsoleUtils;
 import org.nexial.core.utils.JsonUtils;
 
 import com.dbschema.resultSet.ObjectAsResultSet;
@@ -53,7 +52,7 @@ public class MongodbJdbcExtractionDao extends SimpleExtractionDao {
     protected <T extends JdbcResult> T resultToListOfMap(ResultSet rs, T result) throws SQLException {
         if (rs == null || !rs.next()) { return result; }
 
-        if (rs instanceof ObjectAsResultSet) { return resultToListOfMap(rs.getObject(1), result); }
+        if (rs instanceof ObjectAsResultSet) { return handleObjectResultSet((ObjectAsResultSet) rs, result); }
 
         if (rs instanceof OkResultSet) {
             result.setRowCount(0);
@@ -86,19 +85,20 @@ public class MongodbJdbcExtractionDao extends SimpleExtractionDao {
         return result;
     }
 
-    protected <T extends JdbcResult> T resultToListOfMap(Object rs, T result) {
+    protected <T extends JdbcResult> T handleObjectResultSet(ObjectAsResultSet rs, T result) throws SQLException {
         MongodbJdbcResult mongoResult = (MongodbJdbcResult) result;
+        Object firstRecord = rs.getObject(1);
 
-        if (rs instanceof DeleteResult) {
+        if (firstRecord instanceof DeleteResult) {
             mongoResult.updateSqlType(DELETE);
-            DeleteResult deleteRs = (DeleteResult) rs;
+            DeleteResult deleteRs = (DeleteResult) firstRecord;
             mongoResult.setDeletedCount(deleteRs.getDeletedCount());
             mongoResult.setAcknowledged(deleteRs.wasAcknowledged());
             return (T) mongoResult;
         }
 
-        if (rs instanceof UpdateResult) {
-            UpdateResult updateRs = (UpdateResult) rs;
+        if (firstRecord instanceof UpdateResult) {
+            UpdateResult updateRs = (UpdateResult) firstRecord;
             mongoResult.updateSqlType(UPDATE);
             mongoResult.setModifiedCount(updateRs.getModifiedCount());
             mongoResult.setMatchedCount(updateRs.getMatchedCount());
@@ -106,9 +106,9 @@ public class MongodbJdbcExtractionDao extends SimpleExtractionDao {
             return (T) mongoResult;
         }
 
-        if (rs instanceof Document) {
+        if (firstRecord instanceof Document) {
             Map<String, String> row = new LinkedHashMap<>();
-            row.put("document", JsonUtils.compact(((Document) rs).toJson(), false));
+            row.put("document", JsonUtils.compact(((Document) firstRecord).toJson(), false));
             List<Map<String, String>> rows = new ArrayList<>();
             rows.add(row);
             mongoResult.setData(rows);
@@ -116,8 +116,20 @@ public class MongodbJdbcExtractionDao extends SimpleExtractionDao {
             return (T) mongoResult;
         }
 
-        ConsoleUtils.error("Unknown/unsupported result type: " + rs.getClass());
-        return null;
+        // ConsoleUtils.error("Unknown/unsupported result type: " + rs.getClass());
+        // return null;
+        List<Map<String, String>> rows = new ArrayList<>();
+        do {
+            ResultSetMetaData rsMetaData = rs.getMetaData();
+            for (int i = 1; i <= rsMetaData.getColumnCount(); i++) {
+                Map<String, String> row = new LinkedHashMap<>();
+                row.put(rsMetaData.getColumnLabel(i), String.valueOf(rs.getObject(i)));
+                rows.add(row);
+            }
+        } while (rs.next());
+
+        mongoResult.setData(rows);
+        return (T) mongoResult;
     }
 
     protected static String stringify(Object value) {
