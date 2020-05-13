@@ -19,6 +19,7 @@ echo "post-build start"
 xcopy /E support\nexial*.* build\install\nexial-core\support\
 
 REM # generate the latest command listing
+del build\install\nexial-core\lib\nexial-json.jar
 cd build\install\nexial-core\support\
 call nexial-command-generator.cmd
 

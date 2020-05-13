@@ -17,11 +17,7 @@
 
 package org.nexial.core.plugins.pdf;
 
-import java.io.ByteArrayOutputStream;
-import java.io.File;
-import java.io.IOException;
-import java.io.OutputStreamWriter;
-import java.io.Writer;
+import java.io.*;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.util.*;
@@ -35,6 +31,7 @@ import org.apache.commons.io.FilenameUtils;
 import org.apache.commons.lang3.BooleanUtils;
 import org.apache.commons.lang3.RandomStringUtils;
 import org.apache.commons.lang3.StringUtils;
+import org.apache.commons.lang3.exception.ExceptionUtils;
 import org.apache.commons.lang3.math.NumberUtils;
 import org.apache.pdfbox.pdmodel.PDDocument;
 import org.apache.pdfbox.pdmodel.PDDocumentCatalog;
@@ -51,19 +48,27 @@ import org.apache.xmpbox.xml.XmpParsingException;
 import org.nexial.commons.utils.RegexUtils;
 import org.nexial.commons.utils.TextUtils;
 import org.nexial.core.model.ExecutionContext;
+import org.nexial.core.model.PdfOutputProfile;
+import org.nexial.core.model.ServiceProfile;
 import org.nexial.core.model.StepResult;
 import org.nexial.core.plugins.base.BaseCommand;
 import org.nexial.core.plugins.io.IoCommand;
 import org.nexial.core.plugins.pdf.PdfTableExtractor.LineRange;
+import org.nexial.core.utils.ConsoleUtils;
+import org.nexial.core.utils.OutputFileUtils;
 import org.thymeleaf.util.ArrayUtils;
 import org.thymeleaf.util.ListUtils;
+
+import com.itextpdf.text.Document;
+import com.itextpdf.text.DocumentException;
+import com.itextpdf.text.pdf.PdfWriter;
+import com.itextpdf.tool.xml.XMLWorkerHelper;
 
 import static java.io.File.separator;
 import static java.io.File.separatorChar;
 import static java.util.regex.Pattern.DOTALL;
 import static java.util.regex.Pattern.MULTILINE;
-import static org.nexial.core.NexialConst.DEF_CHARSET;
-import static org.nexial.core.NexialConst.NL;
+import static org.nexial.core.NexialConst.*;
 import static org.nexial.core.NexialConst.Pdf.*;
 import static org.nexial.core.utils.CheckUtils.*;
 
@@ -170,7 +175,7 @@ public class PdfCommand extends BaseCommand {
     }
 
     public StepResult assertTextPresent(String pdf, String text) {
-        requires(StringUtils.isNotBlank(text), "invalid text", text);
+        requiresNotBlank(text, "invalid text", text);
         try {
             String content = extractText(pdf);
             boolean found = StringUtils.contains(content, text);
@@ -183,7 +188,7 @@ public class PdfCommand extends BaseCommand {
     }
 
     public StepResult assertTextNotPresent(String pdf, String text) {
-        requires(StringUtils.isNotBlank(text), "invalid text", text);
+        requiresNotBlank(text, "invalid text", text);
         try {
             String content = extractText(pdf);
             boolean notFound = !StringUtils.contains(content, text);
@@ -196,7 +201,7 @@ public class PdfCommand extends BaseCommand {
     }
 
     public StepResult count(String pdf, String text, String var) {
-        requires(StringUtils.isNotBlank(text), "invalid text", text);
+        requiresNotBlank(text, "invalid text", text);
         requires(StringUtils.isNotBlank(var) && !StringUtils.startsWith(var, "${"), "invalid variable", var);
 
         try {
@@ -411,6 +416,76 @@ public class PdfCommand extends BaseCommand {
             return StepResult.success("content extracted from '" + pdf + "'");
         } catch (IOException e) {
             return StepResult.fail("unable to extract content from " + pdf, e);
+        }
+    }
+
+    public StepResult saveAsPdf(String profile, String content, String file) {
+        requiresNotBlank(profile, "Invalid profile", profile);
+        requiresNotBlank(content, "Invalid content", profile);
+        requiresNotBlank(file, "Invalid file", profile);
+
+        content = OutputFileUtils.resolveContent(content, context, false, true);
+        file = StringUtils.appendIfMissingIgnoreCase(file, ".pdf");
+
+        // we don't really want to save this in context.. it would not allow for stepwise override/customization
+        PdfOutputProfile outputProfile = ServiceProfile.resolve(context, profile, PdfOutputProfile.class);
+        context.removeData(NAMESPACE + "profile." + profile);
+
+        // support page size and custom margins
+        // change page size to simulate orientation
+        Float[] margins = outputProfile.getMargins();
+        Document document = margins.length == 4 ?
+                            new Document(outputProfile.getPageSize(), margins[0], margins[1], margins[2], margins[3]) :
+                            new Document(outputProfile.getPageSize());
+
+        PdfWriter writer;
+        try {
+            writer = PdfWriter.getInstance(document, new FileOutputStream(file));
+        } catch (DocumentException | IOException e) {
+            if (context.isVerbose()) { e.printStackTrace(); }
+            String error = "Unable to save content as PDF ('" + file + "'): " + ExceptionUtils.getRootCauseMessage(e);
+            ConsoleUtils.error(error);
+            return StepResult.fail(error);
+        }
+
+        document.open();
+        document.addAuthor(outputProfile.getAuthor());
+        document.addCreator(outputProfile.getCreator());
+        document.addCreationDate();
+
+        String title = outputProfile.getTitle();
+        if (!context.isNullOrEmptyOrBlankValue(title)) { document.addTitle(title); }
+
+        String subject = outputProfile.getSubject();
+        if (!context.isNullOrEmptyOrBlankValue(subject)) { document.addSubject(subject); }
+
+        String keywords = outputProfile.getKeywords();
+        if (!context.isNullOrEmptyOrBlankValue(keywords)) { document.addKeywords(keywords); }
+
+        Map<String, String> customProps = outputProfile.getCustomProperties();
+        if (MapUtils.isNotEmpty(customProps)) { customProps.forEach(document::addHeader); }
+
+        StringBuilder buffer = new StringBuilder();
+        if (outputProfile.getMonospaced()) {
+            buffer.append("<html>")
+                  .append("<head>").append(!context.isNullOrEmptyOrBlankValue(title) ? title : "").append("</head>")
+                  .append("<body>").append("<pre>").append(content).append("</pre>")
+                  .append("</body></html>");
+        } else {
+            buffer.append(content);
+        }
+
+        try {
+            XMLWorkerHelper worker = XMLWorkerHelper.getInstance();
+            worker.parseXHtml(writer, document, new StringReader(buffer.toString()));
+            return StepResult.success("content saved to '%s'", file);
+        } catch (IOException e) {
+            if (context.isVerbose()) { e.printStackTrace(); }
+            String error = "Unable to save content as PDF ('" + file + "'): " + ExceptionUtils.getRootCauseMessage(e);
+            ConsoleUtils.error(error);
+            return StepResult.fail(error);
+        } finally {
+            document.close();
         }
     }
 

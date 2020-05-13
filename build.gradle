@@ -178,7 +178,9 @@ dependencies {
 	// support: pdf
 	// https://mvnrepository.com/artifact/com.itextpdf/itext7-core
 	// compile("com.itextpdf:itext7-core:+")
-	compile("com.itextpdf:itextpdf:+")
+	compile("com.itextpdf:itextpdf:${itextVersion}")
+	compile("com.itextpdf.tool:xmlworker:${itextVersion}")
+
 	compile("org.apache.pdfbox:pdfbox:+")
 	compile("org.apache.pdfbox:pdfbox-tools:+")
 	compile("org.apache.pdfbox:fontbox:+")
