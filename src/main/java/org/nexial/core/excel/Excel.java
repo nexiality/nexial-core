@@ -367,7 +367,12 @@ public class Excel {
 
         public XSSFCell setValue(XSSFCell cell, String text, boolean matchExistingType) {
             assert cell != null;
-            assert StringUtils.isNotBlank(text);
+            // assert StringUtils.isNotBlank(text);
+
+            if (StringUtils.isEmpty(text)) {
+                cell.setCellValue(text);
+                return cell;
+            }
 
             XSSFRichTextString richText = new XSSFRichTextString(text);
             if (!matchExistingType) {
@@ -663,12 +668,14 @@ public class Excel {
 
         public void save() throws IOException {
             File file = getFile();
+            // XSSFWorkbook workbook = getWorkbook();
+            XSSFWorkbook workbook = sheet.getWorkbook();
             if (recalcBeforeSave) {
                 ConsoleUtils.log("performing formula recalculation on '" + file + "'");
-                XSSFFormulaEvaluator.evaluateAllFormulaCells(getWorkbook());
+                XSSFFormulaEvaluator.evaluateAllFormulaCells(workbook);
             }
 
-            Excel.save(file, sheet.getWorkbook());
+            Excel.save(file, workbook);
         }
 
         @NotNull
