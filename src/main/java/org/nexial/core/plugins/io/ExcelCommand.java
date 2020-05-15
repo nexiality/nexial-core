@@ -41,6 +41,7 @@ import org.nexial.commons.utils.TextUtils;
 import org.nexial.core.excel.Excel;
 import org.nexial.core.excel.Excel.*;
 import org.nexial.core.excel.ExcelAddress;
+import org.nexial.core.model.ExecutionContext;
 import org.nexial.core.model.StepResult;
 import org.nexial.core.plugins.base.BaseCommand;
 
@@ -51,6 +52,9 @@ import static org.apache.poi.poifs.filesystem.FileMagic.OLE2;
 import static org.apache.poi.poifs.filesystem.FileMagic.OOXML;
 import static org.apache.poi.ss.usermodel.Row.MissingCellPolicy.CREATE_NULL_AS_BLANK;
 import static org.nexial.core.NexialConst.*;
+import static org.nexial.core.NexialConst.Data.OPT_RECALC_BEFORE_SAVE;
+import static org.nexial.core.NexialConst.Data.OPT_RETAIN_CELL_TYPE;
+import static org.nexial.core.SystemVariables.getDefaultBool;
 import static org.nexial.core.excel.Excel.*;
 import static org.nexial.core.utils.CheckUtils.*;
 
@@ -165,6 +169,15 @@ public class ExcelCommand extends BaseCommand {
         File excelFile = deriveReadableFile(file);
         if (Excel.isPasswordSet(excelFile)) { return StepResult.success("Password set to " + file); }
         return StepResult.fail("Password NOT set to " + file);
+    }
+
+    public static void postCreate(ExecutionContext context, Excel excel) {
+        if (context.getBooleanData(OPT_RECALC_BEFORE_SAVE, getDefaultBool(OPT_RECALC_BEFORE_SAVE))) {
+            excel.enableRecalcBeforeSave();
+        }
+        if (context.getBooleanData(OPT_RETAIN_CELL_TYPE, getDefaultBool(OPT_RETAIN_CELL_TYPE))) {
+            excel.enableRetainCellType();
+        }
     }
 
     public StepResult writeVar(String var, String file, String worksheet, String startCell) throws IOException {
@@ -333,6 +346,17 @@ public class ExcelCommand extends BaseCommand {
         return StepResult.success("Excel content from " + worksheet + "," + range + " saved to " + output);
     }
 
+    public StepResult saveTotalDataCount(String file, String worksheet, String saveVar) {
+        requiresReadableFile(file);
+        requiresNotBlank(worksheet, "Invalid worksheet", worksheet);
+        requiresValidVariableName(saveVar);
+
+        String rowCount = context.replaceTokens("[EXCEL(" + file + ") =>  read(" + worksheet + ",A1) totalDataRow]");
+        context.setData(saveVar, rowCount);
+
+        return StepResult.success("Saved total data row count to '" + saveVar + "'");
+    }
+
     protected List<List<XSSFCell>> fetchRows(String file, String worksheet, String range) throws IOException {
         Excel excel = deriveExcel(file);
         Worksheet sheet = excel.worksheet(worksheet);
@@ -344,12 +368,16 @@ public class ExcelCommand extends BaseCommand {
     }
 
     protected Excel deriveExcel(String file) throws IOException {
-        return new Excel(deriveReadableFile(file), false, false);
+        Excel excel = new Excel(deriveReadableFile(file), false, false);
+        postCreate(context, excel);
+        return excel;
     }
 
     protected Excel deriveExcel(String file, boolean create) throws IOException {
         if (!FileUtil.isFileReadable(file, MIN_EXCEL_FILE_SIZE) && create) { return Excel.newExcel(new File(file)); }
-        return new Excel(deriveReadableFile(file), false, false);
+        Excel excel = new Excel(deriveReadableFile(file), false, false);
+        postCreate(context, excel);
+        return excel;
     }
 
     protected static File deriveReadableFile(String file) {

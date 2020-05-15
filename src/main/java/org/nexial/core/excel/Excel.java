@@ -28,11 +28,7 @@ import javax.validation.constraints.NotNull;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.collections4.IterableUtils;
 import org.apache.commons.io.FileUtils;
-import org.apache.commons.lang3.ArrayUtils;
-import org.apache.commons.lang3.ObjectUtils;
-import org.apache.commons.lang3.RandomStringUtils;
-import org.apache.commons.lang3.StringUtils;
-import org.apache.commons.lang3.SystemUtils;
+import org.apache.commons.lang3.*;
 import org.apache.commons.lang3.math.NumberUtils;
 import org.apache.commons.lang3.tuple.Pair;
 import org.apache.poi.openxml4j.exceptions.InvalidFormatException;
@@ -66,6 +62,7 @@ import static org.apache.poi.ss.SpreadsheetVersion.EXCEL2007;
 import static org.apache.poi.ss.usermodel.CellType.*;
 import static org.apache.poi.ss.usermodel.Row.MissingCellPolicy.CREATE_NULL_AS_BLANK;
 import static org.apache.poi.ss.usermodel.Row.MissingCellPolicy.RETURN_BLANK_AS_NULL;
+import static org.nexial.commons.utils.TextUtils.CleanNumberStrategy.REAL;
 import static org.nexial.core.NexialConst.*;
 import static org.nexial.core.NexialConst.Data.DEF_OPEN_EXCEL_AS_DUP;
 import static org.nexial.core.NexialConst.Data.WIN32_CMD;
@@ -93,6 +90,8 @@ public class Excel {
     private Map<String, XSSFCellStyle> commonStyles;
     // in case of `dupThenOpen` it's a good idea to track the actual target file
     private File originalFile;
+    private boolean recalcBeforeSave;
+    private boolean retainCellType;
 
     public class Worksheet {
         private XSSFSheet sheet;
@@ -202,9 +201,9 @@ public class Excel {
          * write across (horizontally) an Excel spreadsheet, starting from {@code startCell}.  The {@code data} is
          * represented as "list of list of string", where the outer list represents "rows" and inner list represents
          * "columns".
-         *
+         * <p>
          * Excel rows are automatically created as needed.
-         *
+         * <p>
          * If {@code data} is a list of list of 1 item, it would essentially function as
          * {@link #writeDown(ExcelAddress, List)}.
          */
@@ -223,7 +222,8 @@ public class Excel {
                 if (row == null) { row = sheet.createRow(startRowIndex[0]); }
 
                 for (int i = startColIndex; i < endColIndex; i++) {
-                    row.getCell(i, CREATE_NULL_AS_BLANK).setCellValue(IterableUtils.get(data, i - startColIndex));
+                    XSSFCell cell = row.getCell(i, CREATE_NULL_AS_BLANK);
+                    setValue(cell, IterableUtils.get(data, i - startColIndex), retainCellType);
                 }
 
                 startRowIndex[0]++;
@@ -237,9 +237,9 @@ public class Excel {
          * write down (vertically) an Excel spreadsheet, starting from {@code startCell}.  The {@code data} is
          * represented as "list of list of string", where the outer list represents "columns" and inner list represents
          * "rows".
-         *
+         * <p>
          * Excel rows are automatically created as needed.
-         *
+         * <p>
          * If {@code data} is a list of list of 1 item, it would essentially function as
          * {@link #writeAcross(ExcelAddress, List)}.
          */
@@ -258,8 +258,8 @@ public class Excel {
                     XSSFRow row = sheet.getRow(i);
                     if (row == null) { row = sheet.createRow(i); }
 
-                    row.getCell(startColIndex[0], CREATE_NULL_AS_BLANK)
-                       .setCellValue(IterableUtils.get(data, i - startRowIndex));
+                    XSSFCell cell = row.getCell(startColIndex[0], CREATE_NULL_AS_BLANK);
+                    setValue(cell, IterableUtils.get(data, i - startRowIndex), retainCellType);
                 }
 
                 startColIndex[0]++;
@@ -362,7 +362,38 @@ public class Excel {
             if (row == null) { row = sheet.createRow(rowIndex); }
 
             XSSFRow targetRow = row;
-            values.forEach(value -> targetRow.getCell(columnIndex[0]++).setCellValue(value));
+            values.forEach(value -> setValue(targetRow.getCell(columnIndex[0]++), value, retainCellType));
+        }
+
+        public XSSFCell setValue(XSSFCell cell, String text, boolean matchExistingType) {
+            assert cell != null;
+            assert StringUtils.isNotBlank(text);
+
+            XSSFRichTextString richText = new XSSFRichTextString(text);
+            if (!matchExistingType) {
+                cell.setCellValue(richText);
+                return cell;
+            }
+
+            CellType cellType = cell.getCellTypeEnum();
+            switch (cellType) {
+                case NUMERIC: {
+                    if (NumberUtils.isDigits(text) || NumberUtils.isCreatable(text)) {
+                        cell.setCellValue(NumberUtils.createDouble(TextUtils.cleanNumber(text, REAL)));
+                    } else {
+                        cell.setCellValue(richText);
+                    }
+                    break;
+                }
+                case BOOLEAN: {
+                    cell.setCellValue(BooleanUtils.toBoolean(text));
+                    break;
+                }
+                default: {
+                    cell.setCellValue(richText);
+                }
+            }
+            return cell;
         }
 
         public XSSFCell setValue(XSSFCell cell, String text, Style style) {
@@ -630,7 +661,15 @@ public class Excel {
             }
         }
 
-        public void save() throws IOException { Excel.save(getFile(), sheet.getWorkbook()); }
+        public void save() throws IOException {
+            File file = getFile();
+            if (recalcBeforeSave) {
+                ConsoleUtils.log("performing formula recalculation on '" + file + "'");
+                XSSFFormulaEvaluator.evaluateAllFormulaCells(getWorkbook());
+            }
+
+            Excel.save(file, sheet.getWorkbook());
+        }
 
         @NotNull
         public List<List<String>> readRange(ExcelAddress range) {
@@ -795,7 +834,6 @@ public class Excel {
         assert file != null && file.canRead();
 
         if (verboseInstantiation) {
-            // SimpleBenchmarker.start();
             StackTraceElement[] stackTrace = Thread.currentThread().getStackTrace();
             System.out.println(">>>>> new Excel(" + file + "," + dupThenOpen + "," + initCommonStyles + ") from");
             int max = NumberUtils.min(5, stackTrace.length - 1);
@@ -822,11 +860,15 @@ public class Excel {
         workbookStyles = gatherCellStyles();
 
         if (initCommonStyles) { initCommonStyles(); }
-
-        // SimpleBenchmarker.logEnd(logger, "new Excel(file=" + file +
-        //                                  ",dupThenOpen=" + dupThenOpen +
-        //                                  ",initCommonStyles=" + initCommonStyles);
     }
+
+    public void enableRecalcBeforeSave() { recalcBeforeSave = true; }
+
+    public void disableRecalcBeforeSave() { recalcBeforeSave = false; }
+
+    public void enableRetainCellType() { retainCellType = true; }
+
+    public void disableRetainCellType() { retainCellType = false; }
 
     public Worksheet worksheet(String name) { return worksheet(name, false); }
 
@@ -978,8 +1020,6 @@ public class Excel {
     public void save() throws IOException { save(file, workbook); }
 
     public static void save(File excelFile, XSSFWorkbook excelWorkbook) throws IOException {
-        // SimpleBenchmarker.start();
-
         OutputStream out = null;
         try {
             out = FileUtils.openOutputStream(excelFile);
@@ -989,8 +1029,6 @@ public class Excel {
                 out.flush();
                 out.close();
             }
-
-            // SimpleBenchmarker.logEnd(logger, "Excel.save(excelFile=" + excelFile);
         }
     }
 

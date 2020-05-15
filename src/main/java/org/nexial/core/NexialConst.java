@@ -407,6 +407,10 @@ public final class NexialConst {
         // maximum row-column limit to read/write data
         public static final int EXCEL_ROW_COL_MAX_LIMIT = 10000;
 
+        // excel command
+        public static final String OPT_RECALC_BEFORE_SAVE = registerSysVar(NAMESPACE + "excel.recalcBeforeSave", false);
+        public static final String OPT_RETAIN_CELL_TYPE = registerSysVar(NAMESPACE + "excel.retainCellType", false);
+
         // step
         public static final String STEP_RESPONSE = NAMESPACE + "step.response";
 

@@ -249,6 +249,11 @@ public class ExcelTransformer<T extends ExcelDataType> extends Transformer {
         return data;
     }
 
+    public NumberDataType totalDataRow(T data) throws TypeConversionException {
+        return new NumberDataType((data == null || data.getCurrentSheet() == null ?
+                                   0 : data.getCurrentSheet().getSheet().getPhysicalNumberOfRows()) + "");
+    }
+
     @Override
     Map<String, Integer> listSupportedFunctions() { return FUNCTION_TO_PARAM; }
 

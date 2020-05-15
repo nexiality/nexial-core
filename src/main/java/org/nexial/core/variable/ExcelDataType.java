@@ -26,9 +26,11 @@ import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.nexial.commons.utils.FileUtil;
 import org.nexial.commons.utils.TextUtils;
+import org.nexial.core.ExecutionThread;
 import org.nexial.core.excel.Excel;
 import org.nexial.core.excel.Excel.Worksheet;
 import org.nexial.core.excel.ExcelAddress;
+import org.nexial.core.plugins.io.ExcelCommand;
 
 import static java.lang.System.lineSeparator;
 import static org.apache.poi.ss.usermodel.Row.MissingCellPolicy.CREATE_NULL_AS_BLANK;
@@ -106,6 +108,8 @@ public class ExcelDataType extends ExpressionDataType<Excel> {
             } else {
                 value = new Excel(new File(textValue), false, false);
             }
+
+            ExcelCommand.postCreate(ExecutionThread.get(), value);
 
             filePath = textValue;
             List<Worksheet> worksheets = value.getWorksheetsStartWith("");
