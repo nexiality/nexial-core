@@ -123,6 +123,10 @@ public class ExpressionProcessorTest {
                                            " - and they are [TEXT(good for you) => upper]!"));
 
         assertEquals("Rainer", context.replaceTokens("[TEXT(Ra.iner) => replace(.,)]"));
+
+        assertEquals("629", context.replaceTokens("[TEXT(0629) => number]"));
+        assertEquals("628", context.replaceTokens("[TEXT(0628) => number]"));
+        assertEquals("999", context.replaceTokens("[TEXT(0999) => number]"));
     }
 
     @Test

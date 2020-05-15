@@ -44,6 +44,7 @@ import org.nexial.commons.utils.XmlUtils;
 import org.nexial.core.ExecutionThread;
 import org.nexial.core.model.ExecutionContext;
 import org.nexial.core.plugins.ws.WsCommand;
+import org.nexial.core.utils.ConsoleUtils;
 
 import com.google.gson.JsonElement;
 
@@ -165,12 +166,16 @@ public class TextTransformer<T extends TextDataType> extends Transformer<T> {
     }
 
     public NumberDataType number(T data) {
-        if (data == null || StringUtils.isBlank(data.getValue()) || !NumberUtils.isCreatable(data.getValue())) {
+        if (data == null || StringUtils.isBlank(data.getValue())) { return null; }
+
+        String text = data.getValue();
+        if (!NumberUtils.isDigits(text) && !NumberUtils.isCreatable(data.getValue())) {
+            ConsoleUtils.log("Unable to convert '" + text + "' into number");
             return null;
         }
 
         try {
-            return new NumberDataType(data.getValue());
+            return new NumberDataType(text);
         } catch (TypeConversionException e) {
             throw new IllegalArgumentException("Unable to create number: " + e.getMessage(), e);
         }
