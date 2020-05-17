@@ -250,8 +250,20 @@ public class ExcelTransformer<T extends ExcelDataType> extends Transformer {
     }
 
     public NumberDataType totalDataRow(T data) throws TypeConversionException {
+        requireAfterRead(data, "totalDataRow");
         return new NumberDataType((data == null || data.getCurrentSheet() == null ?
                                    0 : data.getCurrentSheet().getSheet().getPhysicalNumberOfRows()) + "");
+    }
+
+    public NumberDataType totalDataColumn(T data, String row) throws TypeConversionException {
+        requireAfterRead(data, "totalDataColumn");
+
+        if (data == null || data.getCurrentSheet() == null || StringUtils.isBlank(row) || !NumberUtils.isDigits(row)) {
+            return new NumberDataType("0");
+        }
+
+        short lastCellNum = data.getCurrentSheet().getSheet().getRow(NumberUtils.toInt(row)).getLastCellNum();
+        return new NumberDataType(lastCellNum + "");
     }
 
     @Override

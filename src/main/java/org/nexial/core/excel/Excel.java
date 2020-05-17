@@ -366,39 +366,7 @@ public class Excel {
         }
 
         public XSSFCell setValue(XSSFCell cell, String text, boolean matchExistingType) {
-            assert cell != null;
-            // assert StringUtils.isNotBlank(text);
-
-            if (StringUtils.isEmpty(text)) {
-                cell.setCellValue(text);
-                return cell;
-            }
-
-            XSSFRichTextString richText = new XSSFRichTextString(text);
-            if (!matchExistingType) {
-                cell.setCellValue(richText);
-                return cell;
-            }
-
-            CellType cellType = cell.getCellTypeEnum();
-            switch (cellType) {
-                case NUMERIC: {
-                    if (NumberUtils.isDigits(text) || NumberUtils.isCreatable(text)) {
-                        cell.setCellValue(NumberUtils.createDouble(TextUtils.cleanNumber(text, REAL)));
-                    } else {
-                        cell.setCellValue(richText);
-                    }
-                    break;
-                }
-                case BOOLEAN: {
-                    cell.setCellValue(BooleanUtils.toBoolean(text));
-                    break;
-                }
-                default: {
-                    cell.setCellValue(richText);
-                }
-            }
-            return cell;
+            return setCellValue(cell, text, matchExistingType);
         }
 
         public XSSFCell setValue(XSSFCell cell, String text, Style style) {
@@ -723,6 +691,49 @@ public class Excel {
         }
 
         private XSSFCellStyle newCellStyle(XSSFCell cell) { return cell.getSheet().getWorkbook().createCellStyle(); }
+    }
+
+    @NotNull
+    public static XSSFCell setCellValue(XSSFCell cell, String text, boolean matchExistingType) {
+        assert cell != null;
+
+        if (StringUtils.isEmpty(text)) {
+            cell.setCellValue(text);
+            return cell;
+        }
+
+        // XSSFRichTextString richText = new XSSFRichTextString(text);
+        if (!matchExistingType) {
+            cell.setCellValue(text);
+            return cell;
+        }
+
+        boolean isNumericInput = NumberUtils.isDigits(text) || NumberUtils.isCreatable(text);
+        CellType cellType = cell.getCellTypeEnum();
+        switch (cellType) {
+            case NUMERIC: {
+                if (isNumericInput) {
+                    cell.setCellValue(NumberUtils.createDouble(TextUtils.cleanNumber(text, REAL)));
+                } else {
+                    cell.setCellValue(text);
+                }
+                break;
+            }
+            case BOOLEAN: {
+                cell.setCellValue(BooleanUtils.toBoolean(text));
+                break;
+            }
+            default: {
+                String cellValue = StringUtils.trim(cell.getStringCellValue());
+                if (isNumericInput && (NumberUtils.isDigits(cellValue) || NumberUtils.isCreatable(cellValue))) {
+                    cell.setCellValue(NumberUtils.createDouble(TextUtils.cleanNumber(text, REAL)));
+                } else {
+                    cell.setCellValue(text);
+                }
+            }
+        }
+
+        return cell;
     }
 
     public class Style {

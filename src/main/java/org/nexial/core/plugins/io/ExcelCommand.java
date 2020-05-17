@@ -175,9 +175,11 @@ public class ExcelCommand extends BaseCommand {
         if (context.getBooleanData(OPT_RECALC_BEFORE_SAVE, getDefaultBool(OPT_RECALC_BEFORE_SAVE))) {
             excel.enableRecalcBeforeSave();
         }
-        if (context.getBooleanData(OPT_RETAIN_CELL_TYPE, getDefaultBool(OPT_RETAIN_CELL_TYPE))) {
-            excel.enableRetainCellType();
-        }
+        if (isRetainCellType(context)) { excel.enableRetainCellType(); }
+    }
+
+    public static boolean isRetainCellType(ExecutionContext context) {
+        return context.getBooleanData(OPT_RETAIN_CELL_TYPE, getDefaultBool(OPT_RETAIN_CELL_TYPE));
     }
 
     public StepResult writeVar(String var, String file, String worksheet, String startCell) throws IOException {
@@ -346,15 +348,28 @@ public class ExcelCommand extends BaseCommand {
         return StepResult.success("Excel content from " + worksheet + "," + range + " saved to " + output);
     }
 
-    public StepResult saveTotalDataCount(String file, String worksheet, String saveVar) {
+    public StepResult saveTotalRowCount(String file, String worksheet, String saveVar) {
         requiresReadableFile(file);
         requiresNotBlank(worksheet, "Invalid worksheet", worksheet);
         requiresValidVariableName(saveVar);
 
-        String rowCount = context.replaceTokens("[EXCEL(" + file + ") =>  read(" + worksheet + ",A1) totalDataRow]");
+        String rowCount = context.replaceTokens("[EXCEL(" + file + ") => read(" + worksheet + ",A1) totalDataRow]");
         context.setData(saveVar, rowCount);
 
         return StepResult.success("Saved total data row count to '" + saveVar + "'");
+    }
+
+    public StepResult saveTotalColumnCount(String file, String worksheet, String row, String saveVar) {
+        requiresReadableFile(file);
+        requiresNotBlank(worksheet, "Invalid worksheet", worksheet);
+        requiresValidVariableName(saveVar);
+        requiresInteger(row, "Invalid row", row);
+
+        context.setData(saveVar,
+                        context.replaceTokens("[EXCEL(" + file + ") => " +
+                                              "read(" + worksheet + ",A1) totalDataColumn(" + row + ")]"));
+
+        return StepResult.success("Saved total data column count to '" + saveVar + "'");
     }
 
     protected List<List<XSSFCell>> fetchRows(String file, String worksheet, String range) throws IOException {
@@ -399,7 +414,7 @@ public class ExcelCommand extends BaseCommand {
             int endColIndex = startColIndex + data.size();
             for (int j = startColIndex; j < endColIndex; j++) {
                 XSSFCell cell = row.getCell(j, CREATE_NULL_AS_BLANK);
-                cell.setCellValue(data.get(j - startColIndex));
+                Excel.setCellValue(cell, data.get(j - startColIndex), isRetainCellType(context));
             }
         }
     }
