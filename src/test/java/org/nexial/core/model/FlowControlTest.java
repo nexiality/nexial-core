@@ -20,6 +20,7 @@ package org.nexial.core.model;
 import java.lang.reflect.InvocationTargetException;
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.List;
 import java.util.Map;
 import javax.validation.constraints.NotNull;
 
@@ -211,6 +212,8 @@ public class FlowControlTest {
         context.setData("is_login", true);
         context.setData("min_age", 21);
         context.setData("max_age", 30);
+        List<String> myList = Arrays.asList(new String[]{"Mumbai", "Delhi", "Agra"});
+        context.setData("myList", myList);
 
         TestStep fixture = createMockTestStep(context);
 
@@ -304,6 +307,23 @@ public class FlowControlTest {
                                                  "        )                          ");
         assertExpectedFilterEval(fixture, "SkipIf -> [" +
                                           "my_age is defined, ${my_age} is not empty, ${my_age} has length of 2]");
+
+        //test expressions
+        fixture.flowControls = FlowControl.parse("ProceedIf([TEXT(${my_color}) => upper] = BLUE)");
+        assertExpectedFilterEval(fixture, "ProceedIf -> [[TEXT(${my_color}) => upper] = BLUE]");
+
+        //both side expression
+        fixture.flowControls = FlowControl.parse("ProceedIf([TEXT(${my_color}) => upper] contain" +
+                                                 " [TEXT(${my_color}) => upper])");
+        assertExpectedFilterEval(fixture, "ProceedIf -> [[TEXT(${my_color}) => upper] contain" +
+                                          " [TEXT(${my_color}) => upper]]");
+
+        //nested expression
+        fixture.flowControls = FlowControl.parse(
+            "ProceedIf([TEXT([LIST(${myList}) => distinct ascending item(0)]) => lower] = agra)");
+        assertExpectedFilterEval(fixture,
+                                 "ProceedIf -> [[TEXT([LIST(${myList}) => distinct ascending item(0)])" +
+                                 " => lower] = agra]");
 
         context.cleanProject();
     }

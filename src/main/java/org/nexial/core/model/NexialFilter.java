@@ -20,7 +20,9 @@ package org.nexial.core.model;
 import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.stream.Stream;
 import javax.validation.constraints.NotNull;
 
@@ -34,9 +36,13 @@ import org.nexial.commons.utils.FileUtil;
 import org.nexial.commons.utils.RegexUtils;
 import org.nexial.commons.utils.TextUtils;
 import org.nexial.commons.utils.TextUtils.ListItemConverter;
+import org.nexial.core.ExecutionThread;
 import org.nexial.core.utils.CheckUtils;
 import org.nexial.core.utils.ConsoleUtils;
 import org.nexial.core.variable.CsvTransformer;
+import org.nexial.core.variable.Expression;
+import org.nexial.core.variable.ExpressionParser;
+import org.nexial.core.variable.TypeConversionException;
 
 import static org.nexial.core.NexialConst.Data.NULL;
 import static org.nexial.core.NexialConst.FILTER_TEMP_DELIM1;
@@ -55,6 +61,7 @@ public class NexialFilter implements Serializable {
     protected String controls;
     protected List<String> controlList;
     static final String ITEM_SEP = "|";
+    static final String PREFIX_KEY = "^^^";
 
     public static class ListItemConverterImpl implements ListItemConverter<NexialFilter> {
         @Override
@@ -83,6 +90,26 @@ public class NexialFilter implements Serializable {
 
         if (StringUtils.isBlank(filterText)) { throw new IllegalArgumentException(errPrefix + "null"); }
 
+        //identify expression
+        ExecutionContext context = ExecutionThread.get();
+        ExpressionParser expressionParser = new ExpressionParser(context);
+        Expression ex = null;
+        Map<String, String> expressionMap = new HashMap<>();
+        String changedFilterText = filterText;
+        try {
+            int i = 0;
+            while (changedFilterText.contains("[")) {
+                ex = expressionParser.parse(changedFilterText, true);
+                if (ex == null) { break; }
+                String expText = ex.getOriginalExpression();
+                changedFilterText = changedFilterText.replace(expText, PREFIX_KEY + i);
+                expressionMap.put(PREFIX_KEY + i, expText);
+                i++;
+            }
+        } catch (TypeConversionException | NullPointerException e) {
+            e.getCause();
+        }
+
         // check for unary filter: true|false|!${var}|${var}
         String unaryFilter = filterText.trim();
         if (RegexUtils.isExact(unaryFilter, REGEX_IS_UNARY_FILTER)) {
@@ -93,11 +120,11 @@ public class NexialFilter implements Serializable {
 
         // general pattern: [subject] [comparator] [control]
         String regexFilter = NexialFilterComparator.getRegexFilter();
-        if (!RegexUtils.isExact(filterText, regexFilter, true)) {
+        if (!RegexUtils.isExact(changedFilterText, regexFilter, true)) {
             throw new IllegalArgumentException(errPrefix + "does not match required format");
         }
 
-        List<String> parts = RegexUtils.collectGroups(filterText, regexFilter, false, true);
+        List<String> parts = RegexUtils.collectGroups(changedFilterText, regexFilter, false, true);
         if (CollectionUtils.size(parts) != 3) {
             throw new IllegalArgumentException(errPrefix + "does not contain the required 3 parts of a valid filter");
         }
@@ -106,8 +133,31 @@ public class NexialFilter implements Serializable {
         if (StringUtils.isBlank(subject)) { throw new IllegalArgumentException(errPrefix + "empty/blank subject"); }
 
         NexialFilterComparator operator = NexialFilterComparator.findComparator(parts.get(1));
-        Pair<String, List<String>> controlValues = operator.formatControlValues(StringUtils.trim(parts.get(2)));
+        String contValue = StringUtils.trim(parts.get(2));
+
+        //revert replaced expression
+        if (expressionMap.size() > 0) {
+            subject = replaceKey(expressionMap, subject);
+            contValue = replaceKey(expressionMap, contValue);
+        }
+
+        Pair<String, List<String>> controlValues = operator.formatControlValues(contValue);
+
         return new NexialFilter(subject, operator, controlValues);
+    }
+
+    @NotNull
+    private static String replaceKey(final Map<String, String> expressionMap, String text) {
+        if (text.contains(PREFIX_KEY)) {
+            for (String key : expressionMap.keySet()) {
+                if (text.contains(key)) {
+                    String value = expressionMap.get(key);
+                    text = text.replace(key, value);
+                    text = replaceKey(expressionMap, text);
+                }
+            }
+        }
+        return text;
     }
 
     public String getSubject() { return subject; }
