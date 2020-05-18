@@ -125,7 +125,7 @@ public class FlowControl {
         map = getFlowControls(flowControlText);
 
         if (expectedFlowControlGroup != map.size()) {
-            ConsoleUtils.error("Possibly invalid flow control found (and IGNORED): " + flowControlText);
+            ConsoleUtils.log("Possibly invalid flow control found: " + flowControlText);
         }
 
         return map;

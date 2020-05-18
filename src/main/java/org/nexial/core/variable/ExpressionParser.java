@@ -32,7 +32,7 @@ import static org.nexial.core.NexialConst.Data.NON_DISPLAYABLE_REPLACEMENTS;
 import static org.nexial.core.NexialConst.Data.NULL;
 import static org.nexial.core.variable.ExpressionConst.*;
 
-class ExpressionParser {
+public class ExpressionParser {
     private static final String EXPRESSION_END_REGEX = "(\\s*)\\].*";
     private ExecutionContext context;
     private ExpressionDataTypeBuilder typeBuilder;
@@ -42,7 +42,11 @@ class ExpressionParser {
         this.typeBuilder = new ExpressionDataTypeBuilder(context);
     }
 
-    Expression parse(String text) throws TypeConversionException {
+    public Expression parse(String text) throws TypeConversionException {
+        return parse(text, false);
+    }
+
+    public Expression parse(String text, boolean syntaxOnly) throws TypeConversionException {
         if (StringUtils.isBlank(text)) { return null; }
         if (!typeBuilder.isValidType(text)) { return null; }
 
@@ -55,7 +59,12 @@ class ExpressionParser {
         datavalue = StringUtils.removeStart(datavalue, DATATYPE_START);
         datavalue = StringUtils.removeEnd(datavalue, DATATYPE_END);
         if (StringUtils.equals(datavalue, "null")) { datavalue = null; }
-        ExpressionDataType dataType = typeBuilder.newDataType(datatype, datavalue);
+        ExpressionDataType dataType = null;
+        try {
+            dataType = typeBuilder.newDataType(datatype, datavalue);
+        } catch (TypeConversionException e) {
+            if (!syntaxOnly) { throw e; }
+        }
 
         Expression expr = new Expression();
         expr.setDataType(dataType);
@@ -91,11 +100,11 @@ class ExpressionParser {
                                                            delim))
                          .collect(Collectors.toList());
             // if (CollectionUtils.isNotEmpty(params)) {
-                // List<String> substituted = new ArrayList<>();
-                // params.forEach(param -> substituted.add(postFunctionParsingSubstitution(param, delim, true)));
-                // expr.addFunction(new ExpressionFunction(functionName, substituted));
+            // List<String> substituted = new ArrayList<>();
+            // params.forEach(param -> substituted.add(postFunctionParsingSubstitution(param, delim, true)));
+            // expr.addFunction(new ExpressionFunction(functionName, substituted));
             // } else {
-                expr.addFunction(new ExpressionFunction(functionName, params));
+            expr.addFunction(new ExpressionFunction(functionName, params));
             // }
 
             // recollecting all the functions as for textual representation
