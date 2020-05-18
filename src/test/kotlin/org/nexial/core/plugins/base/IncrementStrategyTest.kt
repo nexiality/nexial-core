@@ -25,6 +25,7 @@ import java.lang.System.lineSeparator
 
 class IncrementStrategyTest {
     private val resourcePath = StringUtils.replace(this.javaClass.`package`.name, ".", "/") + "/"
+    private val nl = lineSeparator()
 
     @Test
     fun testIncrement() {
@@ -126,26 +127,25 @@ class IncrementStrategyTest {
     fun testIncrement2() {
         assertEquals(retrieveExpectedValue("IncrementStrategyTest-Increment2-expected1.txt"),
                      (0..1499).fold("", { value, i ->
-                         value + StringUtils.leftPad("" + i, 5) + " " + UPPER.increment("A", 1, i) + "\n"
+                         value + StringUtils.leftPad("" + i, 5) + " " + UPPER.increment("A", 1, i) + nl
                      }))
 
         assertEquals(retrieveExpectedValue("IncrementStrategyTest-Increment2-expected2.txt"),
                      (0..1499).fold("", { value, i ->
-                         value + StringUtils.leftPad("" + i, 5) + " " + LOWER.increment("A", 1, i) + "\n"
+                         value + StringUtils.leftPad("" + i, 5) + " " + LOWER.increment("A", 1, i) + nl
                      }))
 
         assertEquals(retrieveExpectedValue("IncrementStrategyTest-Increment2-expected3.txt"),
                      (0..1499).fold("", { value, i ->
-                         value + StringUtils.leftPad("" + i, 5) + " " + ALPHANUM.increment("A", 1, i) + "\n"
+                         value + StringUtils.leftPad("" + i, 5) + " " + ALPHANUM.increment("A", 1, i) + nl
                      }))
 
         assertEquals("18279 aaab", "18279 " + LOWER.increment("P102", 1, 18279))
 
-        assertEquals("35852 pzzy\n" +
-                     "35853 pzzz\n" +
-                     "35854 qaaa\n",
-                     (35852..35854).fold("",
-                                         { value, i -> value + "" + i + " " + LOWER.increment("p102", 1, i) + "\n" }))
+        assertEquals("35852 pzzy${nl}35853 pzzz${nl}35854 qaaa$nl",
+                     (35852..35854).fold("", { value, i ->
+                         value + "" + i + " " + LOWER.increment("p102", 1, i) + nl
+                     }))
     }
 
     private fun retrieveExpectedValue(resource: String) = ResourceUtils.loadResource(resourcePath + resource)
