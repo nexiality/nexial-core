@@ -119,10 +119,6 @@
         <property name="poolPreparedStatements" value="${nexial.jdbc.poolPreparedStatements}"/>
         <property name="defaultAutoCommit" value="${nexial.jdbc.defaultAutoCommit}"/>
         <property name="accessToUnderlyingConnectionAllowed" value="${nexial.jdbc.accessToUnderlyingConnectionAllowed}"/>
-        <!--<property name="driverClassName" value="${XYZ.db.driverClass}"/>-->
-        <!--<property name="url" value="${url}"/>-->
-        <!--<property name="username" value="${username}"/>-->
-        <!--<property name="password" value="${password}"/>-->
     </bean>
 
 

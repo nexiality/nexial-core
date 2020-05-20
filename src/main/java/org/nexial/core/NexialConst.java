@@ -478,10 +478,15 @@ public final class NexialConst {
         public static final String MIME_HTML = "text/html";
         public static final String MIME_JSON = WS_JSON_CONTENT_TYPE;
 
-        public static final String USERSTACK_APIKEY = "nexial.userstack.apikey";
-        public static final String USERSTACK_APIKEYS = "nexial.userstack.rotatingApikeys";
-        public static final String DEF_USERSTACK_APIKEYS =
-            "5b71975a107de30d26f3878fa9adbb5e,278720a8776318f6bee49fe59c517381,30dcc7900c443a279315170afe815bd4,46d1f7737e47ba2525b80f9a5042e212";
+        public static final List<String> APIKEYS_USERSTACK = Arrays.asList("5b71975a107de30d26f3878fa9adbb5e",
+                                                                           "278720a8776318f6bee49fe59c517381",
+                                                                           "30dcc7900c443a279315170afe815bd4",
+                                                                           "46d1f7737e47ba2525b80f9a5042e212");
+        public static final List<String> APIKEYS_OCRSPACE = Arrays.asList("5a64d478-9c89-43d8-88e3-c65de9999580",
+                                                                          "f2c4a3c04788957",
+                                                                          "cfe984f88088957",
+                                                                          "cedc8a5d2d88957",
+                                                                          "e5f2913cc388957");
 
         // overrun text
         public static final String MAX_CONSOLE_DISPLAY = registerSysVar(NAMESPACE + "maxConsoleDisplay", 500);
@@ -1911,7 +1916,7 @@ public final class NexialConst {
         Pdf.init();
         ImageCaption.init();
         SaveGridAsCSV.init();
-        //        Tn5250.init();
+        // Tn5250.init();
 
         // don't need this unnecessary noise
         // BUT WE CANNOT TURN THIS ONE FOR JAVA 8 (IT DOESN'T KNOW ANYTHING ABOUT THIS ARG!)

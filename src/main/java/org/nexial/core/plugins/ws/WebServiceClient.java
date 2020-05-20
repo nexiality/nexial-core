@@ -127,6 +127,17 @@ public class WebServiceClient {
         return invokeRequest(new GetRequest(resolveContextForRequest(), url, queryString));
     }
 
+    /**
+     * extension method to allow for beter internal code-level integration. The other {@link #get(String, String)}
+     * method is designed for {@link org.nexial.core.plugins.web.WebCommand}; this one is designed for internal use.
+     */
+    @NotNull
+    public Response get(String url, String queryString, Map<String, Object> headers) throws IOException {
+        GetRequest request = new GetRequest(resolveContextForRequest(), url, queryString);
+        request.setHeaders(headers);
+        return invokeRequest(request);
+    }
+
     @NotNull
     public Response download(String url, String queryString, String saveTo) throws IOException {
         GetRequest request = new GetRequest(resolveContextForRequest(), url, queryString);
@@ -137,6 +148,17 @@ public class WebServiceClient {
     @NotNull
     public Response post(String url, String payload) throws IOException {
         return invokeRequest(new PostRequest(resolveContextForRequest(), url, payload, null));
+    }
+
+    /**
+     * extension method to allow for beter internal code-level integration. The other {@link #post(String, String)}
+     * method is designed for {@link org.nexial.core.plugins.web.WebCommand}; this one is designed for internal use.
+     */
+    @NotNull
+    public Response post(String url, String payload, Map<String, Object> headers) throws IOException {
+        PostRequest request = new PostRequest(resolveContextForRequest(), url, payload, null);
+        request.setHeaders(headers);
+        return invokeRequest(request);
     }
 
     @NotNull
@@ -745,7 +767,6 @@ public class WebServiceClient {
      * for internal use, Nexial should not utilize WebClient (and its dependent Request classes) using ExecutionContext,
      * which contains user-specified settings that might affect Nexial's internal use of web services (such as
      * downloading webdriver).
-     * @return
      */
     @Nullable
     protected ExecutionContext resolveContextForRequest() { return isContextAsConfigDisabled() ? null : context; }

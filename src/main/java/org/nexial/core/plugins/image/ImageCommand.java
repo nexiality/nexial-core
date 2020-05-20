@@ -30,12 +30,14 @@ import javax.imageio.ImageIO;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.math.NumberUtils;
 import org.apache.commons.lang3.time.StopWatch;
+import org.nexial.commons.ServiceException;
 import org.nexial.commons.utils.RegexUtils;
 import org.nexial.commons.utils.TextUtils;
 import org.nexial.core.NexialConst.ImageDiffColor;
 import org.nexial.core.model.StepResult;
 import org.nexial.core.plugins.ForcefulTerminate;
 import org.nexial.core.plugins.base.BaseCommand;
+import org.nexial.core.service.external.ImageOcrApi;
 import org.nexial.core.utils.ConsoleUtils;
 
 import static org.nexial.core.NexialConst.Image.*;
@@ -202,29 +204,36 @@ public class ImageCommand extends BaseCommand implements ForcefulTerminate {
         }
     }
 
-    public StepResult colorbit(String source, String bit, String saveTo) throws IOException {
-        requiresReadableFileOrValidUrl(source);
+    public StepResult colorbit(String image, String bit, String saveTo) throws IOException {
+        requiresReadableFileOrValidUrl(image);
         requiresPositiveNumber(bit, "invalid value for bit", bit);
         requiresNotBlank(saveTo, "invalid 'saveTo' location", saveTo);
 
         int targetImageBit = NumberUtils.toInt(bit);
 
         // get image
-        File imageFile = resolveFileResource(source);
+        File imageFile = resolveFileResource(image);
         try {
             BufferedImage img = ImageIO.read(imageFile);
-            if (img == null) { return StepResult.fail("File '" + source + "' CANNOT be read as an image"); }
+            if (img == null) { return StepResult.fail("File '" + image + "' CANNOT be read as an image"); }
 
             File saveFile = writeProcessedImage(ImageUtils.convertColorBit(img, targetImageBit),
                                                 saveTo,
                                                 imageFile.getName());
-            String message = "File '" + source + "' color bit converted to " + targetImageBit + " and saved to " +
+            String message = "File '" + image + "' color bit converted to " + targetImageBit + " and saved to " +
                              saveFile.getAbsolutePath();
             log(message);
             return StepResult.success(message);
         } catch (IOException e) {
             return StepResult.fail("Unable to read image '" + imageFile.getAbsolutePath() + "': " + e.getMessage());
         }
+    }
+
+    public StepResult ocr(String image, String saveVar) throws IOException, ServiceException {
+        requiresReadableFileOrValidUrl(image);
+        context.removeData(saveVar);
+        context.setData(saveVar, new ImageOcrApi().ocr(resolveFileResource(image)));
+        return StepResult.success("image '" + image + "' OCR'd to data variable '" + saveVar + "'");
     }
 
     @Override

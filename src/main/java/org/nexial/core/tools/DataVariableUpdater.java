@@ -72,7 +72,7 @@ final public class DataVariableUpdater {
     private static final List<String> KEYWORDS_VAR_PARAM = Arrays.asList("var", "saveVar", "profile", "config", "db");
     private static final List<String> VAR_WRAPPERS = Arrays.asList("merge", "store", "BAI2", "CONFIG", "CSV", "DATE",
                                                                    "EXCEL", "INI", "JSON", "LIST", "NUMBER", "SQL",
-                                                                   "TEXT", "XML");
+                                                                   "TEXT", "WEB", "XML");
 
     protected String searchFrom;
     protected File searchPath;

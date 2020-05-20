@@ -59,6 +59,7 @@ import org.nexial.core.plugins.base.ScreenshotUtils;
 import org.nexial.core.plugins.ws.Response;
 import org.nexial.core.plugins.ws.WsCommand;
 import org.nexial.core.service.EventTracker;
+import org.nexial.core.service.external.UserStackAPI;
 import org.nexial.core.utils.ConsoleUtils;
 import org.nexial.core.utils.NativeInputHelper;
 import org.nexial.core.utils.OutputFileUtils;
@@ -2044,12 +2045,7 @@ public class WebCommand extends BaseCommand implements CanTakeScreenshot, CanLog
 
         if (browserMeta == null) {
             // go get it
-            List<String> listKeys = TextUtils.toList(StringUtils.defaultIfBlank(
-                // first try with the rotating keys
-                context.getStringData(USERSTACK_APIKEYS, context.getStringData(USERSTACK_APIKEY)),
-                DEF_USERSTACK_APIKEYS), ",", true);
-            UserStackAPI userStackAPI = CollectionUtils.isNotEmpty(listKeys) ?
-                                        new UserStackAPI(listKeys) : new UserStackAPI();
+            UserStackAPI userStackAPI = new UserStackAPI();
             browserMeta = userStackAPI.detectAsBrowserMeta(ua);
             updateBrowserMetaCache(ua, (BrowserMeta) browserMeta);
         }

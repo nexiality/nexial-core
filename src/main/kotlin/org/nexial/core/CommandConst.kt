@@ -89,17 +89,18 @@ object CommandConst {
 
     @JvmStatic
     val replacedCommands = mapOf(
-            "number.assertBetween(num,lower,upper)" to "number.assertBetween(num,min,max)",
-            "number.assertBetween(num,min,max)" to "number.assertBetween(num,minNum,maxNum)",
-            "number.round(var,closestDigit)" to "number.roundTo(var,closestDigit)",
-            "desktop.scanTable(var,name)" to "desktop.useTable(var,name)",
-            "desktop.getRowCount(var)" to "desktop.saveRowCount(var)",
-            "io.saveMatches(var,path,filePattern)" to "io.saveMatches(var,path,fileFilter,textFilter)",
-            "base.assertNotContains(text,substring)" to "base.assertNotContain(text,substring)",
-            "web.assertAttributeNotContains(locator,attrName,contains)" to "web.assertAttributeNotContain(locator,attrName,contains)",
-            "web.assertAttributeContains(locator,attrName,contains)" to "web.assertAttributeContain(locator,attrName,contains)",
-            "web.screenshot(file,locator,ignoreLocators)" to "web.screenshot(file,locator)",
-            "web.selectMultiOptions(locator)" to "web.selectAllOptions(locator)"
+        "number.assertBetween(num,lower,upper)" to "number.assertBetween(num,min,max)",
+        "number.assertBetween(num,min,max)" to "number.assertBetween(num,minNum,maxNum)",
+        "number.round(var,closestDigit)" to "number.roundTo(var,closestDigit)",
+        "desktop.scanTable(var,name)" to "desktop.useTable(var,name)",
+        "desktop.getRowCount(var)" to "desktop.saveRowCount(var)",
+        "io.saveMatches(var,path,filePattern)" to "io.saveMatches(var,path,fileFilter,textFilter)",
+        "image.colorbit(source,bit,saveTo)" to "image.colorbit(image,bit,saveTo)",
+        "base.assertNotContains(text,substring)" to "base.assertNotContain(text,substring)",
+        "web.assertAttributeNotContains(locator,attrName,contains)" to "web.assertAttributeNotContain(locator,attrName,contains)",
+        "web.assertAttributeContains(locator,attrName,contains)" to "web.assertAttributeContain(locator,attrName,contains)",
+        "web.screenshot(file,locator,ignoreLocators)" to "web.screenshot(file,locator)",
+        "web.selectMultiOptions(locator)" to "web.selectAllOptions(locator)"
     )
 
     private const val SUGGESTION_PREFIX = "This command is deprecated and will soon be removed. Consider using"
