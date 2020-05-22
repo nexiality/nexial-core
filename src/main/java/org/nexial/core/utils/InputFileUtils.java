@@ -419,14 +419,12 @@ public final class InputFileUtils {
                    .stream()
                    .filter(cell -> StringUtils.isNotBlank(Excel.getCellValue(cell)))
                    .forEach(cell -> targets.add(Excel.getCellValue(cell)));
-        //if (LOGGER.isDebugEnabled()) { LOGGER.debug(errPrefix + "has commands of type: " + targets); }
 
         List<String> targets2 = new ArrayList<>();
         systemSheet.cells(new ExcelAddress("A2:A" + (lastColumn + 2)))
                    .stream()
                    .filter(row -> row != null && StringUtils.isNotBlank(Excel.getCellValue(row.get(0))))
                    .forEach(row -> targets2.add(Excel.getCellValue(row.get(0))));
-        //if (LOGGER.isDebugEnabled()) { LOGGER.debug(errPrefix + "has targets: " + targets2); }
 
         if (!CollectionUtils.isEqualCollection(targets, targets2)) {
             if (LOGGER.isInfoEnabled()) { LOGGER.info(errPrefix + "missing target(s) or command(s)."); }

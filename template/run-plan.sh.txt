@@ -1,0 +1,40 @@
+#!/bin/bash
+
+# -----------------------------------------------------------------------------
+# Nexial Automation Platform (https://nexiality.github.io/documentation/)
+# This is a starter shell script to simplify the task of automating Nexial
+# script. To use it, simply supply your script filename, like this:
+#
+# cd ~/projects/%PROJECT_NAME%/bin
+# run-plan.sh [plan filename]
+#
+# -----------------------------------------------------------------------------
+
+if [[ "$1" = "" ]] ; then
+    echo
+    echo --------------------------------------------------
+    echo ERROR: No plan file specified!
+    echo --------------------------------------------------
+    echo Usage: %0 [plan file]
+    echo This script will exit now.
+    echo
+    echo
+    exit -1
+fi
+
+if [[ "${NEXIAL_HOME}" = "" ]] ; then
+    NEXIAL_HOME=~/projects/nexial-core
+fi
+echo "setting NEXIAL_HOME    as ${NEXIAL_HOME}"
+
+if [[ "${PROJECT_HOME}" = "" ]] ; then
+    PROJECT_HOME=~/projects/%PROJECT_NAME%
+fi
+echo "setting PROJECT_HOME   as ${PROJECT_HOME}"
+
+CURRENT_PLAN=${PROJECT_HOME}/artifact/plan/$1
+echo setting CURRENT_PLAN    as ${CURRENT_PLAN}
+
+echo
+cd ${NEXIAL_HOME$}/bin
+nexial.sh -plan ${CURRENT_PLAN}

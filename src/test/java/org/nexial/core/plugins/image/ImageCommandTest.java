@@ -17,6 +17,11 @@
 
 package org.nexial.core.plugins.image;
 
+import java.awt.image.*;
+import java.io.File;
+import java.io.IOException;
+import javax.imageio.ImageIO;
+
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.SystemUtils;
@@ -30,15 +35,11 @@ import org.nexial.core.model.MockExecutionContext;
 import org.nexial.core.model.StepResult;
 import org.nexial.core.model.TestStep;
 
-import javax.imageio.ImageIO;
-import java.awt.image.BufferedImage;
-import java.io.File;
-import java.io.IOException;
-
 import static java.io.File.separator;
 import static org.apache.commons.lang3.SystemUtils.JAVA_IO_TMPDIR;
-import static org.nexial.core.NexialConst.*;
-import static org.nexial.core.NexialConst.Image.*;
+import static org.nexial.core.NexialConst.Image.OPT_IMAGE_TRIM_COLOR;
+import static org.nexial.core.NexialConst.Image.OPT_TRIM_BEFORE_DIFF;
+import static org.nexial.core.NexialConst.OPT_OUT_DIR;
 
 public class ImageCommandTest {
     private static final String CLASSNAME = ImageCommandTest.class.getSimpleName();

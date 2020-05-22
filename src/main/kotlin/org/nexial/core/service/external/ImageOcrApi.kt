@@ -39,6 +39,8 @@ class ImageOcrApi(lang: String = "eng",
                   detectCheckbox: Boolean = true) {
 
     private val apiKeys = APIKEYS_OCRSPACE.toMutableList()
+
+    // https://ocr.space/OCRAPI
     private val url = "https://api.ocr.space/parse/image"
     private val payloadPattern = "language=${lang}&" +
                                  "isOverlayRequired=true&" +

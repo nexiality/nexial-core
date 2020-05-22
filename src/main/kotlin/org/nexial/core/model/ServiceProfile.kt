@@ -97,18 +97,20 @@ class Tn5250ServiceProfile(name: String, profileData: Map<String, String>) : Ser
     val codePage = profileData.getOrDefault("codePage", "Cp037")
     val display = assertValidDisplay(profileData.getOrDefault("displaySize", "24x80"))
     val deviceName = profileData.getOrDefault("deviceName", EnvUtils.getHostName())
-    val windowWidth = "780"
-    val windowHeight = "600"
+    val windowWidth = "900"
+    val windowHeight = "650"
 
     init {
         // write settings to tn5250 config
         FileUtils.write(File("${USER_NEXIAL_HOME}tn5250/sessions"),
                         "emul.restricted=\n" +
-                        "emul.logLevel=0\n" +
+                        "emul.logLevel=2\n" +
                         "emul.view=-s $name \n" +
                         "emul.width=$windowWidth\n" +
                         "emul.height=$windowHeight\n" +
                         "emul.frame0=0,0,$windowWidth,$windowHeight\n" +
+                        "emul.frame1=0,0,$windowWidth,$windowHeight\n" +
+                        "emul.frame2=0,0,$windowWidth,$windowHeight\n" +
                         "$name=$host -p $port -cp $codePage -dn $deviceName -e -t -noembed -MDI -nc\n",
                         DEF_FILE_ENCODING
         )

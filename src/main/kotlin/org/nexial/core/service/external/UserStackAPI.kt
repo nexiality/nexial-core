@@ -33,7 +33,7 @@ import org.nexial.core.utils.ConsoleUtils
 
 class UserStackAPI() {
     private val keys = APIKEYS_USERSTACK.toMutableList()
-    private val urlTemplate = "https://api.userstack.com/detect?access_key=%s&ua=%s"
+    private val urlTemplate = "http://api.userstack.com/detect?access_key=%s&ua=%s"
 
     fun detectAsBrowserMeta(ua: String): BrowserMeta {
         // could fail.. if all the available keys are invalid.. or network issue
