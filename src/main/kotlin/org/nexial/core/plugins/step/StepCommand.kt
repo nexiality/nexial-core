@@ -30,7 +30,7 @@ class StepCommand : BaseCommand() {
     fun perform(instructions: String): StepResult {
         requiresNotBlank(instructions, "Invalid instruction(s)", instructions)
 
-        val comment = ConsoleUtils.pauseForStep(context, instructions)
+        val comment = ConsoleUtils.pauseForStep(context, instructions, "PERFORM ACTION")
         if (StringUtils.isNotBlank(comment)) log(comment)
 
         // supports keyword FAIL
@@ -44,7 +44,7 @@ class StepCommand : BaseCommand() {
     fun validate(prompt: String, responses: String, passResponses: String): StepResult {
         requiresNotBlank(prompt, "Invalid prompt(s)", prompt)
 
-        val validationResponses = ConsoleUtils.pauseToValidate(context, prompt, responses)
+        val validationResponses = ConsoleUtils.pauseToValidate(context, prompt, responses, "VALIDATION")
         val response = validationResponses?.get(0)
         val comment = validationResponses?.get(1)
 
@@ -66,7 +66,7 @@ class StepCommand : BaseCommand() {
     fun observe(prompt: String): StepResult {
         requiresNotBlank(prompt, "Invalid prompt(s)", prompt)
 
-        val response = ConsoleUtils.pauseForInput(context, prompt)
+        val response = ConsoleUtils.pauseForInput(context, prompt, "OBSERVATION")
         context.setData(STEP_RESPONSE, response)
 
         // supports keyword FAIL | PASS

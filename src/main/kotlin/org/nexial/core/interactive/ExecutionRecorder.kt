@@ -60,7 +60,8 @@ class ExecutionRecorder(private val baseCommand: BaseCommand) {
             if (videoLink != null) {
                 val selection = ConsoleUtils.pauseForInput(null,
                                                            "Previous desktop recording available at $videoLink\n" +
-                                                           "Would you like to (P)lay it, (S)how it, (D)elete it? ")
+                                                           "Would you like to (P)lay it, (S)how it, (D)elete it? ",
+                                                           "INPUT REQUEST")
                 if (StringUtils.isBlank(selection)) return
 
                 when (selection.toUpperCase()) {

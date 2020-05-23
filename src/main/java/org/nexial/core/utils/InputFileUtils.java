@@ -276,7 +276,7 @@ public final class InputFileUtils {
                                       Collections.singletonList(HEADER_EXEC_SUMMARY),
                                       ADDR_SCENARIO_EXEC_SUMMARY_HEADER)) {
                 LOGGER.debug(errPrefix1 + "required script header not found at " +
-                            ArrayUtils.toString(ADDR_SCENARIO_EXEC_SUMMARY_HEADER) + "; ignoring this worksheet...");
+                             ArrayUtils.toString(ADDR_SCENARIO_EXEC_SUMMARY_HEADER) + "; ignoring this worksheet...");
                 return false;
             }
 
@@ -360,7 +360,7 @@ public final class InputFileUtils {
             // check test script header
             if (!Excel.isRowTextFound(sheet, HEADER_MACRO_TEST_STEPS, ADDR_HEADER_MACRO)) {
                 LOGGER.debug(errPrefix1 + "required macro header not found at " +
-                            ArrayUtils.toString(HEADER_MACRO_TEST_STEPS) + "; ignoring this worksheet...");
+                             ArrayUtils.toString(HEADER_MACRO_TEST_STEPS) + "; ignoring this worksheet...");
                 return false;
             }
 
@@ -414,7 +414,7 @@ public final class InputFileUtils {
         }
 
         List<String> targets = new ArrayList<>();
-        systemSheet.cells(new ExcelAddress("B1:" + (char) ('A' + lastColumn - 1) + "1"))
+        systemSheet.cells(new ExcelAddress("B1:" + getColumnName(lastColumn) + "1"))
                    .get(0)
                    .stream()
                    .filter(cell -> StringUtils.isNotBlank(Excel.getCellValue(cell)))
@@ -432,6 +432,15 @@ public final class InputFileUtils {
         }
 
         return true;
+    }
+
+    public static String getColumnName(int columnNumber) {
+        String res = "";
+        while (columnNumber > 0) {
+            res += ((char) ((columnNumber - 1) % 26 + 'A'));
+            columnNumber = (columnNumber - 1) / 26;
+        }
+        return StringUtils.reverse(res);
     }
 
     public static boolean isValidPlanFile(String file) {

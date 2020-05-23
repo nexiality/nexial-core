@@ -343,6 +343,9 @@
         <entry key="xml">
             <bean class="org.nexial.core.plugins.xml.XmlCommand"/>
         </entry>
+        <entry key="step.inTime">
+            <bean class="org.nexial.core.plugins.step.InTimeCommand"/>
+        </entry>
     </util:map>
 
     <bean id="browserTemplate" class="org.nexial.core.plugins.web.Browser" scope="prototype">

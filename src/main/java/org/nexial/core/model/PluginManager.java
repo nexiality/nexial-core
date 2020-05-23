@@ -75,8 +75,6 @@ public class PluginManager implements ApplicationContextAware {
             target = StringUtils.substringBefore(target, CMD_PROFILE_SEP);
         }
 
-        target = StringUtils.lowerCase(target);
-
         // check if command exist
         if (!plugins.containsKey(target)) {
             ConsoleUtils.error("No command target found: " + target);

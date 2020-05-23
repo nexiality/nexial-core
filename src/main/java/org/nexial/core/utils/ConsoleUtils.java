@@ -17,6 +17,9 @@
 
 package org.nexial.core.utils;
 
+import java.io.BufferedReader;
+import java.io.IOException;
+import java.io.InputStreamReader;
 import java.io.PrintStream;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -184,18 +187,19 @@ public final class ConsoleUtils {
     }
 
     @SuppressWarnings("PMD.SystemPrintln")
-    public static String pauseForStep(ExecutionContext context, String instructions) {
+    public static String pauseForStep(ExecutionContext context, String instructions, String header)
+        throws InterruptedException {
         // not applicable when running in Jenkins environment
         if (!isPauseReady()) { return null; }
 
         ExecutionEventListener listener = context.getExecutionEventListener();
         listener.onPause();
 
-        printStepHeader(HDR_START + "PERFORM ACTION" + HDR_END, context);
+        printStepHeader(HDR_START + header + HDR_END, context);
         printStepPrompt(instructions);
 
         System.out.println("> When complete, enter your comment or press ENTER to continue ");
-        String comment = new Scanner(System.in).nextLine();
+        String comment = readInput();
 
         listener.afterPause();
 
@@ -205,14 +209,15 @@ public final class ConsoleUtils {
     @SuppressWarnings("PMD.SystemPrintln")
     public static List<String> pauseToValidate(ExecutionContext context,
                                                String instructions,
-                                               String possibleResponses) {
+                                               String possibleResponses,
+                                               String header) throws InterruptedException {
         // not applicable when running in Jenkins environment
         if (!isPauseReady()) { return null; }
 
         ExecutionEventListener listener = context.getExecutionEventListener();
         listener.onPause();
 
-        printStepHeader(HDR_START + "VALIDATION" + HDR_END, context);
+        printStepHeader(HDR_START + header + HDR_END, context);
         printStepPrompt(instructions);
 
         List<String> responses = new ArrayList<>();
@@ -224,18 +229,31 @@ public final class ConsoleUtils {
         }
 
         System.out.printf("> %s: ", responses);
-        String input = new Scanner(System.in).nextLine();
+        String input = readInput();
 
         System.out.print("> Comment: ");
-        String comment = new Scanner(System.in).nextLine();
+        String comment = readInput();
 
         listener.afterPause();
 
         return Arrays.asList(input, comment);
     }
 
+    public static String readInput() throws InterruptedException {
+        BufferedReader br = new BufferedReader(new InputStreamReader(System.in));
+        try {
+            while (!br.ready()) {
+                Thread.sleep(5);
+            }
+            return br.readLine();
+        } catch (IOException e) {
+            return null;
+        }
+    }
+
     @SuppressWarnings("PMD.SystemPrintln")
-    public static String pauseForInput(ExecutionContext context, String prompt) {
+    public static String pauseForInput(ExecutionContext context, String prompt,
+                                       String header) throws InterruptedException {
         // not applicable when running in Jenkins environment
         if (!isPauseReady()) { return null; }
 
@@ -243,12 +261,12 @@ public final class ConsoleUtils {
         if (context != null) {
             listener = context.getExecutionEventListener();
             listener.onPause();
-            printStepHeader(HDR_START + "OBSERVATION" + HDR_END, context);
+            printStepHeader(HDR_START + header + HDR_END, context);
         }
 
         printStepPrompt(prompt);
         System.out.print("> ");
-        String input = new Scanner(System.in).nextLine();
+        String input = readInput();
 
         if (listener != null) { listener.afterPause(); }
 
