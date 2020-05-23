@@ -19,10 +19,12 @@ package org.nexial.core.plugins.base
 import org.apache.commons.lang3.math.NumberUtils
 import org.junit.After
 import org.junit.Assert
+import org.junit.Assert.fail
 import org.junit.Before
 import org.junit.Test
 import org.nexial.core.model.MockExecutionContext
 import java.util.*
+import kotlin.test.assertTrue
 
 class BaseCommandTest {
     private val context = MockExecutionContext(true)
@@ -115,6 +117,104 @@ class BaseCommandTest {
             Assert.fail(e.message)
         } catch (e: AssertionError) {
             println(e.message)
+        }
+    }
+
+    @Test
+    @Throws(Exception::class)
+    fun assertEquals_null() {
+        val subject = BaseCommand()
+        subject.init(context)
+
+        try {
+            subject.assertEqual("11.25", "(null)")
+            Assert.fail("Expected failure did not happened..")
+        } catch (e: AssertionError) {
+            // expected
+        }
+
+        try {
+            subject.assertEqual("(null)", "-91.001")
+            Assert.fail("Expected failure did not happened..")
+        } catch (e: AssertionError) {
+            // expected
+        }
+
+        try {
+            subject.assertEqual("(blank)", "(null)")
+            Assert.fail("Expected failure did not happened..")
+        } catch (e: AssertionError) {
+            // expected
+        }
+
+        try {
+            subject.assertEqual("(blank)", "(empty)")
+            Assert.fail("Expected failure did not happened..")
+        } catch (e: AssertionError) {
+            // expected
+        }
+
+        try {
+            subject.assertEqual("null", "(null)")
+            Assert.fail("Expected failure did not happened..")
+        } catch (e: AssertionError) {
+            // expected
+        }
+
+        try {
+            subject.assertEqual("1992", "(empty)")
+            Assert.fail("Expected failure did not happened..")
+        } catch (e: AssertionError) {
+            // expected
+        }
+    }
+
+    @Test
+    @Throws(Exception::class)
+    fun assertEquals_special_markers() {
+        val subject = BaseCommand()
+        subject.init(context)
+
+        try {
+            val result = subject.assertEqual("(null)", "(null)")
+            assertTrue { result.isSuccess }
+        } catch (e: AssertionError) {
+            fail(e.message)
+        }
+
+        try {
+            val result = subject.assertEqual("(blank)", "(blank)")
+            assertTrue { result.isSuccess }
+        } catch (e: AssertionError) {
+            fail(e.message)
+        }
+
+        try {
+            val result = subject.assertEqual("(empty)", "(empty)")
+            assertTrue { result.isSuccess }
+        } catch (e: AssertionError) {
+            fail(e.message)
+        }
+
+        try {
+            val result = subject.assertEqual("(blank)", " ")
+            assertTrue { result.isSuccess }
+        } catch (e: AssertionError) {
+            fail(e.message)
+        }
+
+        try {
+            val result = subject.assertEqual("", "(empty)")
+            assertTrue { result.isSuccess }
+        } catch (e: AssertionError) {
+            fail(e.message)
+        }
+
+        try {
+            val result = subject.assertEqual("19", "19.000")
+            assertTrue { result.isSuccess }
+        } catch (e: AssertionError) {
+            fail(e.message)
         }
     }
 

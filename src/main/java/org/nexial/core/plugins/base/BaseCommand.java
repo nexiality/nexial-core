@@ -41,6 +41,7 @@ import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.math.NumberUtils;
 import org.apache.commons.lang3.tuple.ImmutablePair;
 import org.apache.commons.lang3.tuple.Pair;
+import org.jetbrains.annotations.Nullable;
 import org.nexial.commons.utils.FileUtil;
 import org.nexial.commons.utils.JRegexUtils;
 import org.nexial.commons.utils.RegexUtils;
@@ -446,7 +447,7 @@ public class BaseCommand implements NexialCommand {
     }
 
     public StepResult assertEqual(String expected, String actual) {
-        assertEquals(context.isNullValue(expected) ? null : expected, context.isNullValue(actual) ? null : actual);
+        assertEquals(handleSpecialMarkers(expected), handleSpecialMarkers(actual));
 
         String nullValue = context.getNullValueToken();
         String expectedForDisplay = context.truncateForDisplay(StringUtils.defaultString(expected, nullValue));
@@ -454,12 +455,17 @@ public class BaseCommand implements NexialCommand {
         return StepResult.success("validated EXPECTED = ACTUAL; '%s' = '%s'", expectedForDisplay, actualForDisplay);
     }
 
+    @Nullable
+    protected String handleSpecialMarkers(String value) {
+        return context.isNullValue(value) ? null :
+               context.isEmptyValue(value) ? "" :
+               context.isBlankValue(value) ? " " : value;
+    }
+
     public StepResult assertNotEqual(String expected, String actual) {
+        assertNotEquals(handleSpecialMarkers(expected), handleSpecialMarkers(actual));
+
         String nullValue = context.getNullValueToken();
-
-        assertNotEquals(StringUtils.equals(expected, nullValue) ? null : expected,
-                        StringUtils.equals(actual, nullValue) ? null : actual);
-
         String expectedForDisplay = context.truncateForDisplay(StringUtils.defaultString(expected, nullValue));
         String actualForDisplay = context.truncateForDisplay(StringUtils.defaultString(actual, nullValue));
         return StepResult.success("validated EXPECTED not equal to ACTUAL; '%s' not equal to '%s'",
@@ -523,8 +529,6 @@ public class BaseCommand implements NexialCommand {
     }
 
     public StepResult assertArrayEqual(String array1, String array2, String exactOrder) {
-        // requires(StringUtils.isNotEmpty(array1), "first array is empty", array1);
-        // requires(StringUtils.isNotEmpty(array2), "second array is empty", array2);
         requires(StringUtils.isNotEmpty(exactOrder), "invalid value for exactOrder", exactOrder);
 
         // null corner case
@@ -1071,12 +1075,7 @@ public class BaseCommand implements NexialCommand {
 
         expectedGlob = expectedGlob.replaceAll("\\*", ".*");
         expectedGlob = expectedGlob.replaceAll("\\?", ".");
-        if (!Pattern.compile(expectedGlob, Pattern.DOTALL).matcher(actual).matches()) {
-            // ConsoleUtils.log("expected \"" + actual + "\" to match glob \"" + expectedPattern
-            //                  + "\" (had transformed the glob into regexp \"" + expectedGlob + "\"");
-            return false;
-        }
-        return true;
+        return Pattern.compile(expectedGlob, Pattern.DOTALL).matcher(actual).matches();
     }
 
     /**
@@ -1357,6 +1356,8 @@ public class BaseCommand implements NexialCommand {
 
     protected static boolean assertEqualsInternal(String expected, String actual) {
         if (expected == null && actual == null) { return true; }
+        if (expected != null && actual == null) { return false; }
+        if (expected == null && actual != null) { return false; }
 
         ExecutionContext context = ExecutionThread.get();
         if (context.isTextMatchUseTrim()) {
