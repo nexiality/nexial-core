@@ -158,6 +158,7 @@
                         <entry key="hsqldb" value="org.hsqldb.jdbc.JDBCDriver"/>
                         <!-- https://bitbucket.org/dbschema/mongodb-jdbc-driver/src/master/ -->
                         <entry key="mongodb" value="com.dbschema.MongoJdbcDriver"/>
+                        <entry key="mariadb" value="org.mariadb.jdbc.Driver"/>
                     </map>
                 </property>
                 <property name="dbJarInfo">
@@ -743,5 +744,73 @@
         <value>webdriver.ie.driver.silent</value>
         <value>webdriver.ie.driver</value>
     </util:list>
+
+    <!--Configuration for db driver download-->
+    <util:map id="dbdriverHelperConfig" key-type="java.lang.String" value-type="java.lang.String">
+        <entry key="postgresql">
+            <value><![CDATA[
+            {
+                "home": "${user.home}/.nexial/rdbms/postgresql",
+                "fileName": "postgresql-42.2.12.jar",
+                "checkUrlBase" : "https://repo1.maven.org/maven2/org/postgresql/postgresql/42.2.12/postgresql-42.2.12.jar"
+            }
+          ]]></value>
+        </entry>
+        <entry key="mssql"> <!-- also set dir of mssql-jdbc_auth-8.2.2.x64.dll file in system environment variable or -Djava.library.path -->
+            <value><![CDATA[
+            {
+                "home": "${user.home}/.nexial/rdbms/mssql",
+                "fileName": "mssql-jdbc-8.2.2.jre8.jar",
+                "checkUrlBase" : "https://go.microsoft.com/fwlink/?linkid=2122433"
+            }
+          ]]></value>
+        </entry>
+        <entry key="mariadb">
+            <value><![CDATA[
+            {
+                "home": "${user.home}/.nexial/rdbms/mariadb",
+                "fileName": "mariadb-java-client-2.6.0.jar",
+                "checkUrlBase" : "https://repo1.maven.org/maven2/org/mariadb/jdbc/mariadb-java-client/2.6.0/mariadb-java-client-2.6.0.jar"
+            }
+          ]]></value>
+        </entry>
+        <entry key="oracle"> <!--check -->
+            <value><![CDATA[
+            {
+                "home": "${user.home}/.nexial/rdbms/oracle",
+                "fileName": "ojdbc8-19.3.0.0.jar",
+                "checkUrlBase" : "https://repo1.maven.org/maven2/com/oracle/ojdbc/ojdbc8/19.3.0.0/ojdbc8-19.3.0.0.jar"
+            }
+          ]]></value>
+        </entry>
+        <entry key="db2"> <!--check -->
+            <value><![CDATA[
+            {
+                "home": "${user.home}/.nexial/rdbms/db2",
+                "fileName": "db2jcc-db2jcc4.jar",
+                "checkUrlBase" : "https://repo1.maven.org/maven2/com/ibm/db2/jcc/db2jcc/db2jcc4/db2jcc-db2jcc4.jar"
+            }
+          ]]></value>
+        </entry>
+        <entry key="mysql">
+            <value><![CDATA[
+            {
+                "home": "${user.home}/.nexial/rdbms/mysql",
+                "fileName": "mysql-connector-java-8.0.19.jar",
+                "checkUrlBase" : "https://repo1.maven.org/maven2/mysql/mysql-connector-java/8.0.19/mysql-connector-java-8.0.19.jar"
+            }
+          ]]></value>
+        </entry>
+        <entry key="hsqldb">
+            <value><![CDATA[
+            {
+                "home": "${user.home}/.nexial/rdbms/hsqldb",
+                "fileName": "hsqldb-2.5.0.jar",
+                "checkUrlBase" : "https://repo1.maven.org/maven2/org/hsqldb/hsqldb/2.5.0/hsqldb-2.5.0.jar"
+            }
+          ]]></value>
+        </entry>
+        <!--error for mongo db when removing gradle dependency-->
+    </util:map>
 
 </beans>

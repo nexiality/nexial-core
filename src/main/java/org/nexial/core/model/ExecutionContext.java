@@ -172,6 +172,8 @@ public class ExecutionContext {
     // spring-managed map of webdriver related configs.
     protected Map<BrowserType, String> webdriverHelperConfig;
 
+    protected Map<String, String> dbdriverHelperConfig;
+
     static final String KEY_COMPLEX = "__lAIxEn__";
     static final String DOT_LITERAL_REPLACER = "__53n7ry_4h34d__";
 
@@ -362,6 +364,8 @@ public class ExecutionContext {
     public long getEndTimestamp() { return endTimestamp; }
 
     public Map<BrowserType, String> getWebdriverHelperConfig() { return webdriverHelperConfig; }
+
+    public Map<String, String> getDbdriverHelperConfig() { return dbdriverHelperConfig; }
 
     public NexialS3Helper getOtc() throws IOException {
         // check that the required properties are set
@@ -2087,6 +2091,10 @@ public class ExecutionContext {
         // web driver
         webdriverHelperConfig =
             springContext.getBean("webdriverHelperConfig", new HashMap<BrowserType, String>().getClass());
+
+        // db driver
+        dbdriverHelperConfig =
+            springContext.getBean("dbdriverHelperConfig", new HashMap<String, String>().getClass());
 
         // thymeleaf template engine
         templateEngine = springContext.getBean("htmlTemplateEngine", TemplateEngine.class);

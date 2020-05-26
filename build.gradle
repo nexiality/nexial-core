@@ -211,11 +211,7 @@ dependencies {
 	// support: data sources
 	// compile("org.mongodb:mongodb-driver-async:${mongoDriverVersion}")
 	compile("org.mongodb:mongo-java-driver:${mongoDriverVersion}")
-	compile("mysql:mysql-connector-java:${mysqlVersion}")
-	compile("org.postgresql:postgresql:+")
-	compile("com.microsoft.sqlserver:mssql-jdbc:${mssqlVersion}")
 	compile("org.xerial:sqlite-jdbc:${sqliteVersion}")
-	compile("org.hsqldb:hsqldb:${hsqldbVersion}")
 
 	// support: redis
 	compile("redis.clients:jedis:${jedisVersion}")

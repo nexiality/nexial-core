@@ -18,8 +18,12 @@
 package org.nexial.core.plugins.db;
 
 import java.io.File;
+import java.io.IOException;
 import java.lang.reflect.InvocationTargetException;
+import java.net.URL;
+import java.net.URLClassLoader;
 import java.sql.Connection;
+import java.sql.Driver;
 import java.sql.DriverManager;
 import java.sql.SQLException;
 import java.util.Map;
@@ -30,6 +34,7 @@ import org.apache.commons.beanutils.BeanUtils;
 import org.apache.commons.collections4.MapUtils;
 import org.apache.commons.dbcp2.BasicDataSource;
 import org.apache.commons.lang3.StringUtils;
+import org.apache.commons.lang3.SystemUtils;
 import org.nexial.commons.utils.TextUtils;
 import org.nexial.core.model.ExecutionContext;
 import org.nexial.core.plugins.ThirdPartyDriverInfo;
@@ -100,7 +105,19 @@ public class DataAccess implements ApplicationContextAware {
     //         " ";
     // }
 
+    protected String resolveDBDriverLocation(String dbType) throws IOException {
+        DBDriverHelper helper = DBDriverHelper.newInstance(dbType, context);
+        File driver = helper.resolveDriver();
+        return driver.getPath();
+    }
+
     protected SimpleExtractionDao resolveDao(String db) {
+        Driver d = null;
+        boolean isCustomDB = false;
+        Map<String, String> configs = context.getDbdriverHelperConfig();
+        boolean isDriverConfiguredForDownload;
+        String userHome = SystemUtils.USER_HOME;
+
         String dbType = context.getStringData(db + OPT_DB_TYPE);
         requiresNotBlank(dbType, "database '" + db + "' is not defined; unable to proceed");
 
@@ -109,16 +126,33 @@ public class DataAccess implements ApplicationContextAware {
                            dbTypes.get(dbType) : context.getStringData(db + OPT_DB_CLASSNAME);
         requiresNotBlank(className, "no or invalid JDBC driver defined", dbType);
 
+        if (!dbTypes.containsKey(dbType)) { isCustomDB = true; }
+        isDriverConfiguredForDownload = StringUtils.isNotBlank(configs.get(dbType));
+
         try {
-            // make sure required class/jar exists
-            Class.forName(className).getDeclaredConstructor().newInstance();
+            try {
+                Class.forName(className).getDeclaredConstructor().newInstance();
+            } catch (ClassNotFoundException e) {
+                if (isDriverConfiguredForDownload) {
+                    String driverJarfilePath = resolveDBDriverLocation(dbType);
+                    URL jarUrl = new URL("jar:file:" + driverJarfilePath + "!/");
+                    URLClassLoader ucl = new URLClassLoader(new URL[]{jarUrl});
+                    d = (Driver) Class.forName(className, true, ucl).newInstance();
+                    DriverManager.registerDriver(new DBDriver(d));
+                } else { throw e; }
+            }
         } catch (Exception e) {
             String message;
             ThirdPartyDriverInfo driverInfo = dbJarInfo.get(dbType);
             if (driverInfo != null) {
                 message = driverInfo.toString();
+            } else if (isCustomDB || isDriverConfiguredForDownload) {
+                message =
+                    "Fail to load the request database driver. Plz download the jar manually and add to " +
+                    userHome +
+                    "/.nexial/jar directory";
             } else {
-                message = "Fail to load the request database driver.  Make sure the appropriate jar is added to lib/.";
+                message = "Fail to load the request database driver. Make sure the appropriate jar is added to lib/.";
             }
 
             ConsoleUtils.showMissingLibraryError(message);
@@ -153,6 +187,11 @@ public class DataAccess implements ApplicationContextAware {
             newDs.setDefaultAutoCommit(autocommit);
             newDs.setAutoCommitOnReturn(autocommit);
             if (!autocommit) { newDs.setDefaultTransactionIsolation(TRANSACTION_SERIALIZABLE); }
+
+            //set driver from downloaded driver jar
+            if (isDriverConfiguredForDownload) {
+                newDs.setDriver(d);
+            }
 
             dao = new SimpleExtractionDao();
             dao.setDataSource(newDs);

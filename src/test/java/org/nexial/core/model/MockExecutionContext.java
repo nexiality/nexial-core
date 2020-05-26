@@ -75,6 +75,9 @@ public class MockExecutionContext extends ExecutionContext {
                 TextUtils.toList(defaultContextProps.get("nexial.referenceDataForExecution"), ",", true);
             this.webdriverHelperConfig =
                 springContext.getBean("webdriverHelperConfig", new HashMap<BrowserType, String>().getClass());
+
+            this.dbdriverHelperConfig =
+                springContext.getBean("dbdriverHelperConfig", new HashMap<String, String>().getClass());
         } else {
             readOnlyVars = Arrays.asList("nexial.runID", "nexial.runID.prefix", "nexial.iterationEnded",
                                          "nexial.spreadsheet.program", "nexial.lastScreenshot", "nexial.lastOutcome",

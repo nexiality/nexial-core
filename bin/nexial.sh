@@ -51,11 +51,12 @@ fi
 echo
 
 eval ${JAVA} ${MAX_MEM} \
-    -classpath "${PROJECT_CLASSPATH}:${NEXIAL_CLASSES}:${NEXIAL_LIB}/nexial*.jar:${NEXIAL_LIB}/*" \
+    -classpath "${PROJECT_CLASSPATH}:${NEXIAL_CLASSES}:${NEXIAL_LIB}/nexial*.jar:${NEXIAL_LIB}/*:~/.nexial/jar/*" \
     -XX:+UnlockExperimentalVMOptions \
     -XX:+ExplicitGCInvokesConcurrent \
     -Dwebdriver.chrome.bin="`echo ${CHROME_BIN} | sed 's/\ /\\\ /g'`" \
     -Dwebdriver.firefox.bin="`echo ${FIREFOX_BIN} | sed 's/\ /\\\ /g'`" \
+    -Djava.library.path="~/.nexial/dll" \
     ${JAVA_OPT} \
     org.nexial.core.Nexial $*
 rc=$?

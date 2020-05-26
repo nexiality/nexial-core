@@ -107,6 +107,7 @@ public class NexialFilter implements Serializable {
                 i++;
             }
         } catch (TypeConversionException | NullPointerException e) {
+            //No error handling case
             e.getCause();
         }
 
