@@ -4,6 +4,7 @@ package org.nexial.core.plugins.db
 import org.apache.commons.io.FileUtils
 import org.apache.commons.io.filefilter.TrueFileFilter
 import org.apache.commons.lang3.SystemUtils
+import org.apache.commons.lang3.SystemUtils.JAVA_VERSION
 import org.junit.Assert
 import org.junit.Test
 import org.nexial.commons.utils.FileUtil
@@ -14,7 +15,7 @@ class DBDriverHelperTest {
 
     private val driverHomeBase = "${SystemUtils.USER_HOME}${File.separator}.nexial${File.separator}rdbms${File.separator}"
 
-/*    @Test
+    @Test
     @Throws(Exception::class)
     fun downloadDBDrivers() {
         val context = MockExecutionContext(true)
@@ -24,13 +25,12 @@ class DBDriverHelperTest {
             assertDriverExists(DBDriverHelper.newInstance(dbType, context).resolveDriver())
         }
         context.cleanProject()
-    }*/
+    }
 
     @Test
     @Throws(Exception::class)
     fun downloadDBDriver_mssql_with_diff_jre() {
         val dbType = "mssql"
-        val actualJavaVersion = SystemUtils.USER_HOME
         val context = MockExecutionContext(true)
         for (i in 9..14) {
             System.setProperty("java.version", i.toString() + ".x.xx")
@@ -42,7 +42,7 @@ class DBDriverHelperTest {
                                                                   TrueFileFilter.TRUE)
         Assert.assertTrue(expectedFiles.size >= 2)
 
-        System.setProperty("java.version", actualJavaVersion)
+        System.setProperty("java.version", "$JAVA_VERSION")
         context.cleanProject()
     }
 
