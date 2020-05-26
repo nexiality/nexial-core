@@ -17,7 +17,6 @@
 package org.nexial.core.plugins.base
 
 import org.apache.commons.lang3.StringUtils
-import org.apache.commons.lang3.SystemUtils.IS_OS_WINDOWS
 import org.junit.Assert.assertEquals
 import org.junit.Test
 import org.nexial.commons.utils.ResourceUtils
@@ -126,44 +125,29 @@ class IncrementStrategyTest {
 
     @Test
     fun testIncrement2() {
-        assertEquals(replaceNewLineChar("IncrementStrategyTest-Increment2-expected1.txt"),
-                (0..1499).fold("", { value, i ->
-                    value + StringUtils.leftPad("" + i, 5) + " " + UPPER.increment("A", 1, i) + nl
-                }))
+        assertEquals(retrieveExpectedValue("IncrementStrategyTest-Increment2-expected1.txt"),
+                     (0..1499).fold("", { value, i ->
+                         value + StringUtils.leftPad("" + i, 5) + " " + UPPER.increment("A", 1, i) + nl
+                     }))
 
-        assertEquals(replaceNewLineChar("IncrementStrategyTest-Increment2-expected2.txt"),
-                (0..1499).fold("", { value, i ->
-                    value + StringUtils.leftPad("" + i, 5) + " " + LOWER.increment("A", 1, i) + nl
-                }))
+        assertEquals(retrieveExpectedValue("IncrementStrategyTest-Increment2-expected2.txt"),
+                     (0..1499).fold("", { value, i ->
+                         value + StringUtils.leftPad("" + i, 5) + " " + LOWER.increment("A", 1, i) + nl
+                     }))
 
-        assertEquals(replaceNewLineChar("IncrementStrategyTest-Increment2-expected3.txt"),
-                (0..1499).fold("", { value, i ->
-                    value + StringUtils.leftPad("" + i, 5) + " " + ALPHANUM.increment("A", 1, i) + nl
-                }))
+        assertEquals(retrieveExpectedValue("IncrementStrategyTest-Increment2-expected3.txt"),
+                     (0..1499).fold("", { value, i ->
+                         value + StringUtils.leftPad("" + i, 5) + " " + ALPHANUM.increment("A", 1, i) + nl
+                     }))
 
         assertEquals("18279 aaab", "18279 " + LOWER.increment("P102", 1, 18279))
 
         assertEquals("35852 pzzy${nl}35853 pzzz${nl}35854 qaaa$nl",
-                (35852..35854).fold("", { value, i ->
-                    value + "" + i + " " + LOWER.increment("p102", 1, i) + nl
-                }))
+                     (35852..35854).fold("", { value, i ->
+                         value + "" + i + " " + LOWER.increment("p102", 1, i) + nl
+                     }))
     }
 
-    private fun replaceNewLineChar(resource: String): String? {
-        var expected = retrieveExpectedValue(resource)
-        return if (IS_OS_WINDOWS) {
-            // can check if line is ending with \n or \r\n
-            expected = StringUtils.replace(expected, nl, TEMP_REPLACEMENT)
-            expected = StringUtils.replace(expected, "\n", nl)
-            StringUtils.replace(expected, TEMP_REPLACEMENT, nl)
-        } else {
-            StringUtils.replace(expected, "\r\n", nl)
-        }
-    }
-
-    private fun retrieveExpectedValue(resource: String) = ResourceUtils.loadResource(resourcePath + resource)
-
-    companion object {
-        private const val TEMP_REPLACEMENT = "@#$%@"
-    }
+    private fun retrieveExpectedValue(resource: String) =
+            StringUtils.replace(StringUtils.remove(ResourceUtils.loadResource(resourcePath + resource), "\r"), "\n", nl)
 }

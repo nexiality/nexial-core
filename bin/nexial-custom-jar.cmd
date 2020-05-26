@@ -3,11 +3,12 @@
 setlocal enableextensions enabledelayedexpansion
 
 set NEXIAL_BIN=%~dp0
+set NEXIAL_JAR="%USERPROFILE%\.nexial\jar"
 
 call :init
 if NOT ERRORLEVEL 0 goto :exit
 
-call :title "^copy nexial custom jars"
+call :title "nexial custom library setup"
 if NOT ERRORLEVEL 0 goto :exit
 
 call :checkJava
@@ -18,27 +19,22 @@ if NOT ERRORLEVEL 0 goto :exit
 
 if "%1"=="" goto :reportBadInputAndExit
 
-REM find %USER_HOME%\.nexial\jar
-set NEXIAL_JAR="%homepath%\.nexial\jar"
-
 :createDir
 	if not exist "%NEXIAL_JAR%" (
-		echo ^>^> Directory %NEXIAL_JAR% doesn't exist
-		echo ^>^> Creating %NEXIAL_JAR% directory
+	    echo.
+		echo ^>^> create missing directory - %NEXIAL_JAR%
 		mkdir %NEXIAL_JAR% 2>NUL
-	)else (
-		echo ^>^> Skip creation of the directory %NEXIAL_JAR%
 	)
 
 :copyJars
     if "%~n1"=="" goto :eof
-    echo /--------------------------------------------------------------------------------\
-    echo ^>^> Following files/directory will be copied
-    echo \--------------------------------------------------------------------------------/
+
+    echo.
+    echo ^>^> following files/directories will be copied to %NEXIAL_JAR%
     dir /b %1
-    echo /--------------------------------------------------------------------------------\
-    set /p response="Do you still want to continue copy (Y/N)?"
-    echo \--------------------------------------------------------------------------------/
+
+    echo.
+    set /p response="proceed with the copying (existing files will overwritten)? (Y/N) "
 
     if "%response%"=="N" goto :cancelCopy
     if "%response%"=="n" goto :cancelCopy
@@ -46,17 +42,16 @@ set NEXIAL_JAR="%homepath%\.nexial\jar"
     if "%response%"=="Y" goto :doCopy
 
 :cancelCopy
-     echo ^>^> ^Copy Cancelled..
+     echo ^>^> copy cancelled...
      echo.
      shift
      goto :copyJars
 
 :doCopy
-    echo ^>^> copying custom jars/files/directories from "%1"
+    echo ^>^> copying from %1
     echo --------------------------------------------------------------------------------
-    xcopy /S /Y "%1" "%homepath%\.nexial\jar"
+    xcopy /S /Y /V /Z /F "%1" "%NEXIAL_JAR%"
     echo --------------------------------------------------------------------------------
-    echo ^>^> ^Copy Done..
     echo.
     shift
     goto :copyJars
@@ -76,10 +71,12 @@ set NEXIAL_JAR="%homepath%\.nexial\jar"
 :reportBadInputAndExit
 	echo.
 	echo ERROR: Required input not found.
-	echo USAGE: %0 [source directory/file]
+	echo USAGE: %0 [directory^|file]
+	echo        %0 [directory^|file] [directory^|file] [...]
 	echo.
-	echo This command will copy files/directories from source location to ${NEXIAL_JAR}.
-    echo You can also provide one or more source locations as like $0 [source directory/file] [source directory/file]
+	echo Files copied from the specified location to %NEXIAL_JAR%
+	echo will be used as additional libraries (jars) in your Nexial execution.
     echo.
 	exit /b -1
-	goto :eof
+
+goto :eof

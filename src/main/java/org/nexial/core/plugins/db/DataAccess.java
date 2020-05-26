@@ -34,7 +34,7 @@ import org.apache.commons.beanutils.BeanUtils;
 import org.apache.commons.collections4.MapUtils;
 import org.apache.commons.dbcp2.BasicDataSource;
 import org.apache.commons.lang3.StringUtils;
-import org.apache.commons.lang3.SystemUtils;
+import org.apache.commons.lang3.exception.ExceptionUtils;
 import org.nexial.commons.utils.TextUtils;
 import org.nexial.core.model.ExecutionContext;
 import org.nexial.core.plugins.ThirdPartyDriverInfo;
@@ -46,6 +46,7 @@ import org.springframework.jdbc.datasource.SingleConnectionDataSource;
 
 import static java.io.File.separator;
 import static java.sql.Connection.TRANSACTION_SERIALIZABLE;
+import static org.apache.commons.lang3.SystemUtils.USER_HOME;
 import static org.nexial.core.NexialConst.Rdbms.*;
 import static org.nexial.core.utils.CheckUtils.requiresNotBlank;
 import static org.nexial.core.utils.CheckUtils.requiresNotNull;
@@ -82,29 +83,6 @@ public class DataAccess implements ApplicationContextAware {
         return dao.executeSql(query, saveTo);
     }
 
-    // public Class getDriverClass(String db) { return dbTypes.get(context.getStringData(db + OPT_DB_TYPE)); }
-    //
-    // protected static boolean isStartedWith(String query, List<String> startWords) {
-    //     if (CollectionUtils.isEmpty(startWords)) { return false; }
-    //
-    //     String query1 = StringUtils.upperCase(query);
-    //     for (String startWord : startWords) { if (StringUtils.startsWith(query1, startWord)) { return true; } }
-    //
-    //     return false;
-    // }
-    //
-    // protected boolean requires(boolean condition, String errorMessage, Object... params) {
-    //     if (!condition) { throw new IllegalArgumentException(errorMessage + ": " + ArrayUtils.toString(params)); }
-    //     return true;
-    // }
-    //
-    // protected String fetchStartKeyword(String query) {
-    //     return
-    //         StringUtils.trim(
-    //             StringUtils.upperCase(StringUtils.substringBefore(StringUtils.replaceAll(query, "[\r\n]", " "), " "))) +
-    //         " ";
-    // }
-
     protected String resolveDBDriverLocation(String dbType) throws IOException {
         DBDriverHelper helper = DBDriverHelper.newInstance(dbType, context);
         File driver = helper.resolveDriver();
@@ -113,10 +91,6 @@ public class DataAccess implements ApplicationContextAware {
 
     protected SimpleExtractionDao resolveDao(String db) {
         Driver d = null;
-        boolean isCustomDB = false;
-        Map<String, String> configs = context.getDbdriverHelperConfig();
-        boolean isDriverConfiguredForDownload;
-        String userHome = SystemUtils.USER_HOME;
 
         String dbType = context.getStringData(db + OPT_DB_TYPE);
         requiresNotBlank(dbType, "database '" + db + "' is not defined; unable to proceed");
@@ -126,8 +100,9 @@ public class DataAccess implements ApplicationContextAware {
                            dbTypes.get(dbType) : context.getStringData(db + OPT_DB_CLASSNAME);
         requiresNotBlank(className, "no or invalid JDBC driver defined", dbType);
 
-        if (!dbTypes.containsKey(dbType)) { isCustomDB = true; }
-        isDriverConfiguredForDownload = StringUtils.isNotBlank(configs.get(dbType));
+        // boolean isCustomDB = !dbTypes.containsKey(dbType);
+        Map<String, String> configs = context.getDbdriverHelperConfig();
+        boolean isDriverConfiguredForDownload = StringUtils.isNotBlank(configs.get(dbType));
 
         try {
             try {
@@ -135,9 +110,8 @@ public class DataAccess implements ApplicationContextAware {
             } catch (ClassNotFoundException e) {
                 if (isDriverConfiguredForDownload) {
                     String driverJarfilePath = resolveDBDriverLocation(dbType);
-                    URL jarUrl = new URL("jar:file:" + driverJarfilePath + "!/");
-                    URLClassLoader ucl = new URLClassLoader(new URL[]{jarUrl});
-                    d = (Driver) Class.forName(className, true, ucl).newInstance();
+                    URLClassLoader ucl = new URLClassLoader(new URL[]{new URL("jar:file:" + driverJarfilePath + "!/")});
+                    d = (Driver) Class.forName(className, true, ucl).getDeclaredConstructor().newInstance();
                     DriverManager.registerDriver(new DBDriver(d));
                 } else { throw e; }
             }
@@ -146,13 +120,10 @@ public class DataAccess implements ApplicationContextAware {
             ThirdPartyDriverInfo driverInfo = dbJarInfo.get(dbType);
             if (driverInfo != null) {
                 message = driverInfo.toString();
-            } else if (isCustomDB || isDriverConfiguredForDownload) {
-                message =
-                    "Fail to load the request database driver. Plz download the jar manually and add to " +
-                    userHome +
-                    "/.nexial/jar directory";
             } else {
-                message = "Fail to load the request database driver. Make sure the appropriate jar is added to lib/.";
+                message = "Unable to load the requested database driver (" + dbType + ") - " +
+                          ExceptionUtils.getRootCauseMessage(e) + ".\n" +
+                          "Please download the appropriate JDBC jar and place it in the " + USER_HOME + "/.nexial/jar/";
             }
 
             ConsoleUtils.showMissingLibraryError(message);
@@ -189,9 +160,7 @@ public class DataAccess implements ApplicationContextAware {
             if (!autocommit) { newDs.setDefaultTransactionIsolation(TRANSACTION_SERIALIZABLE); }
 
             //set driver from downloaded driver jar
-            if (isDriverConfiguredForDownload) {
-                newDs.setDriver(d);
-            }
+            if (isDriverConfiguredForDownload) { newDs.setDriver(d); }
 
             dao = new SimpleExtractionDao();
             dao.setDataSource(newDs);
@@ -200,7 +169,6 @@ public class DataAccess implements ApplicationContextAware {
         // allow dao to treat 'true null' as empty string, or whatever user decides
         dao.setTreatNullAs(context.getStringData(db + OPT_TREAT_NULL_AS, DEF_TREAT_NULL_AS));
         dao.setContext(context);
-
         dao.afterPropertiesSet();
 
         return dao;

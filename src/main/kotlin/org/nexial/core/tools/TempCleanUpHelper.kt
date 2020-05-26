@@ -32,8 +32,9 @@ object TempCleanUpHelper {
     private val cleanUpManifest = File("$USER_HOME$separator.nexial${separator}config.json")
 
     // 1 day(24 hrs) => 86400000L milliseconds
-    private const val dayInMilliseconds = 86400000L;
+    private const val dayInMilliseconds = 86400000L
 
+    @JvmStatic
     fun cleanUpTemp() {
         var json = JSONObject()
         val manifest = if (cleanUpManifest.exists() && cleanUpManifest.canRead()) {

@@ -16,7 +16,7 @@ set NEXIAL_BIN=%~dp0
 call :init
 if NOT ERRORLEVEL 0 goto :exit
 
-call :title "nexial Log Parser"
+call :title "nexial log parser"
 if NOT ERRORLEVEL 0 goto :exit
 
 call :checkJava

@@ -20,11 +20,10 @@ import org.apache.commons.collections4.MapUtils
 import org.apache.commons.io.FileExistsException
 import org.apache.commons.io.FileUtils
 import org.apache.commons.io.filefilter.IOFileFilter
-import org.apache.commons.io.filefilter.TrueFileFilter
+import org.apache.commons.io.filefilter.TrueFileFilter.TRUE
 import org.apache.commons.io.filefilter.WildcardFileFilter
 import org.apache.commons.lang3.StringUtils
-import org.apache.commons.lang3.SystemUtils
-import org.apache.commons.lang3.SystemUtils.JAVA_VERSION
+import org.apache.commons.lang3.SystemUtils.USER_HOME
 import org.nexial.commons.utils.FileUtil
 import org.nexial.commons.utils.FileUtil.isFileReadable
 import org.nexial.core.NexialConst.GSON
@@ -34,7 +33,6 @@ import org.nexial.core.utils.ConsoleUtils
 import java.io.File
 import java.io.File.separator
 import java.io.IOException
-
 
 abstract class DBDriverHelper protected constructor(protected var context: ExecutionContext) {
     protected lateinit var dbType: String
@@ -47,7 +45,7 @@ abstract class DBDriverHelper protected constructor(protected var context: Execu
         // check if local copy of driver exists
         // if no local driver, poll online for driver
         // if local driver exists, check metadata for need to check for driver update
-        driverFilePath = StringUtils.appendIfMissing(driverLocation, separator) + config.fileName;
+        driverFilePath = StringUtils.appendIfMissing(driverLocation, separator) + config.fileName
         downloadDriver()
 
         //resolve driver version as per jdk
@@ -63,8 +61,7 @@ abstract class DBDriverHelper protected constructor(protected var context: Execu
     private fun resolveDriverVersion() {
         if (dbType == "mssql") {
             val fileFilter: IOFileFilter = WildcardFileFilter(listOf("mssql-jdbc*.jar"))
-            val availableDrivers: Collection<File> = FileUtils.listFiles(File(driverLocation), fileFilter,
-                                                                         TrueFileFilter.TRUE)
+            val availableDrivers: Collection<File> = FileUtils.listFiles(File(driverLocation), fileFilter, TRUE)
             val javaVersion = System.getProperty("java.version") //"${JAVA_VERSION}"
             val javaVersionStartsWith = javaVersion.substringBefore(".") + "."
             driverFilePath = if (javaVersion.startsWith("1.")) {
@@ -78,34 +75,32 @@ abstract class DBDriverHelper protected constructor(protected var context: Execu
 
     private fun getDriverFilePathByJreVersion(availableDrivers: Collection<File>, jreVersion: String): String {
         var driverFilePathIfExist = ""
-        var jreVersionList: MutableList<Int> = ArrayList()
-        var requiredDriverJreVer: Int
 
         //exact match
-        for (file: File in availableDrivers) {
-            if (file.name.endsWith(jreVersion)) {
-                return file.absolutePath
-            }
-            jreVersionList.add(file.name.substringAfter(".jre").substringBefore(".jar").toInt())
+        val jreVersionList = mutableListOf<Int>()
+        for (file in availableDrivers) {
+            val fileName = file.name
+            if (fileName.endsWith(jreVersion)) return file.absolutePath
+            jreVersionList.add(extractJreVersion(fileName))
         }
 
         //if exact match not found then find closest match
         if (StringUtils.isBlank(driverFilePathIfExist)) {
-            requiredDriverJreVer = jreVersion.substringAfter(".jre").substringBefore(".jar").toInt()
-            val bestMatDriverVersion = jreVersionList
-                .stream()
+            val requiredDriverJreVer = extractJreVersion(jreVersion)
+            val bestMatchDriverVersion = jreVersionList.stream()
                 .filter { num -> num <= requiredDriverJreVer }
                 .max(Comparator.naturalOrder())
                 .get()
 
+            // driverFilePathIfExist = availableDrivers.find { it.name.endsWith(".jre$bestMatchDriverVersion.jar") }?.absolutePath ?: ""
             for (file: File in availableDrivers) {
-                if (file.name.endsWith(".jre" + bestMatDriverVersion + ".jar")) {
-                    driverFilePathIfExist = file.absolutePath
-                }
+                if (file.name.endsWith(".jre$bestMatchDriverVersion.jar")) driverFilePathIfExist = file.absolutePath
             }
         }
         return driverFilePathIfExist
     }
+
+    private fun extractJreVersion(fileName: String) = fileName.substringAfter(".jre").substringBefore(".jar").toInt()
 
     @Throws(IOException::class)
     protected fun downloadDriver() {
@@ -113,9 +108,7 @@ abstract class DBDriverHelper protected constructor(protected var context: Execu
         val driverUrl = config.checkUrlBase!!
 
         // no url to download or no need to download... so we are done
-        if (StringUtils.isBlank(driverUrl)) {
-            throw IOException("Url to download driver is empty.")
-        }
+        if (StringUtils.isBlank(driverUrl)) throw IOException("Url to download driver is empty.")
 
         if (!hasDriver) {
             // download driver to driver home (local)
@@ -129,7 +122,7 @@ abstract class DBDriverHelper protected constructor(protected var context: Execu
             // download url might not be the actual driver, but zip or gzip
             val downloadTo = when {
                 driverUrl.endsWith(".zip") -> "$driverLocation/driver.zip"
-                driverUrl.endsWith(".jar") -> "$driverFilePath"
+                driverUrl.endsWith(".jar") -> driverFilePath
                 else                       -> StringUtils.appendIfMissing(driverLocation, separator) + "driver.zip"
             }
             val response = wsClient.download(driverUrl, null, downloadTo)
@@ -150,7 +143,6 @@ abstract class DBDriverHelper protected constructor(protected var context: Execu
             ConsoleUtils.log("[DBDriverHelper] for $dbType downloaded to $driverLocation")
         }
     }
-
 
     protected fun initConfig(): DBDriverConfig {
         val configs = context.dbdriverHelperConfig
@@ -175,7 +167,6 @@ abstract class DBDriverHelper protected constructor(protected var context: Execu
         return config
     }
 
-
     protected fun newIsolatedWsClient() = WebServiceClient(context).configureAsQuiet().disableContextConfiguration()
 
     protected abstract fun resolveLocalDriverPath(): String
@@ -198,7 +189,6 @@ abstract class DBDriverHelper protected constructor(protected var context: Execu
             return helper
         }
 
-
         @JvmStatic
         @Throws(IOException::class)
         protected fun unzip(zipFile: String, uncompressTo: String, dbType: String) {
@@ -206,25 +196,21 @@ abstract class DBDriverHelper protected constructor(protected var context: Execu
             if (StringUtils.isBlank(uncompressTo)) return
 
             FileUtil.unzip(File(zipFile), File(uncompressTo))
-            if (dbType == "mssql") {
-                extractMSSqlJarsDlls(uncompressTo)
-            }
+            if (dbType == "mssql") extractMSSqlJarsDlls(uncompressTo)
             FileUtils.deleteQuietly(File(zipFile))
         }
 
         private fun extractMSSqlJarsDlls(uncompressTo: String) {
             val fileFilter: IOFileFilter = WildcardFileFilter(listOf("*.jar", "*.dll"))
-            val expectedFiles: Collection<File> = FileUtils.listFiles(File(uncompressTo), fileFilter,
-                                                                      TrueFileFilter.TRUE)
+            val expectedFiles: Collection<File> = FileUtils.listFiles(File(uncompressTo), fileFilter, TRUE)
 
-            val dllFolder: String = "${SystemUtils.USER_HOME}$separator.nexial$separator" + "dll"
+            val dllFolder = "$USER_HOME${separator}.nexial${separator}dll"
 
             for (file in expectedFiles) {
                 try {
-                    if (file.name.endsWith(".dll")) {
-                        FileUtils.moveFileToDirectory(file, File(dllFolder), true)
-                    } else if (file.name.endsWith(".jar")) {
-                        FileUtils.moveFileToDirectory(file, File(uncompressTo), true)
+                    when {
+                        file.name.endsWith(".dll") -> FileUtils.moveFileToDirectory(file, File(dllFolder), true)
+                        file.name.endsWith(".jar") -> FileUtils.moveFileToDirectory(file, File(uncompressTo), true)
                     }
                 } catch (e: FileExistsException) {
                     //No Need to throw or log
@@ -232,14 +218,13 @@ abstract class DBDriverHelper protected constructor(protected var context: Execu
             }
 
             //delete uncompressed folder
-            for (file: File in File(uncompressTo).listFiles()) {
-                if (file.isDirectory) FileUtils.deleteQuietly(file)
+            val uncompressedFiles = File(uncompressTo).listFiles()
+            if (uncompressedFiles != null && uncompressedFiles.size > 0) {
+                for (file in uncompressedFiles) if (file.isDirectory) FileUtils.deleteQuietly(file)
             }
         }
-
     }
 }
-
 
 /** db driver helper for postgresql/mariadb/mssql/hsqldb/mysql/oracle/db2 db */
 class DBDriverHelperImpl(context: ExecutionContext) : DBDriverHelper(context) {

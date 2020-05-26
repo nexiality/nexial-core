@@ -93,13 +93,12 @@ public class NexialFilter implements Serializable {
         //identify expression
         ExecutionContext context = ExecutionThread.get();
         ExpressionParser expressionParser = new ExpressionParser(context);
-        Expression ex = null;
         Map<String, String> expressionMap = new HashMap<>();
         String changedFilterText = filterText;
         try {
             int i = 0;
             while (changedFilterText.contains("[")) {
-                ex = expressionParser.parse(changedFilterText, true);
+                Expression ex = expressionParser.parse(changedFilterText, true);
                 if (ex == null) { break; }
                 String expText = ex.getOriginalExpression();
                 changedFilterText = changedFilterText.replace(expText, PREFIX_KEY + i);
@@ -107,8 +106,7 @@ public class NexialFilter implements Serializable {
                 i++;
             }
         } catch (TypeConversionException | NullPointerException e) {
-            //No error handling case
-            e.getCause();
+            // No error handling case
         }
 
         // check for unary filter: true|false|!${var}|${var}

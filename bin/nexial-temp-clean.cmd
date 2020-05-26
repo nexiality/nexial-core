@@ -7,7 +7,7 @@ set NEXIAL_BIN=%~dp0
 call :init
 if NOT ERRORLEVEL 0 goto :exit
 
-call :title "nexial temp cleaner"
+call :title "nexial temp file cleaner"
 if NOT ERRORLEVEL 0 goto :exit
 
 call :checkJava
@@ -40,7 +40,3 @@ goto :eof
 :exit
 	endlocal
 	exit /b 1
-
-
-
-

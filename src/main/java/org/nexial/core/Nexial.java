@@ -17,6 +17,15 @@
 
 package org.nexial.core;
 
+import java.io.File;
+import java.io.IOException;
+import java.security.Security;
+import java.text.MessageFormat;
+import java.util.*;
+import java.util.stream.Collectors;
+import javax.annotation.Nullable;
+import javax.validation.constraints.NotNull;
+
 import org.apache.commons.cli.CommandLine;
 import org.apache.commons.cli.DefaultParser;
 import org.apache.commons.cli.HelpFormatter;
@@ -48,15 +57,6 @@ import org.nexial.core.utils.ConsoleUtils;
 import org.nexial.core.utils.ExecUtils;
 import org.nexial.core.utils.InputFileUtils;
 import org.springframework.context.support.ClassPathXmlApplicationContext;
-
-import javax.annotation.Nullable;
-import javax.validation.constraints.NotNull;
-import java.io.File;
-import java.io.IOException;
-import java.security.Security;
-import java.text.MessageFormat;
-import java.util.*;
-import java.util.stream.Collectors;
 
 import static java.io.File.separator;
 import static java.lang.System.lineSeparator;
@@ -298,15 +298,15 @@ public class Nexial {
         boolean isInteractive = cmd.hasOption(INTERACTIVE);
 
         // check for clean up temp directory
-        ConsoleUtils.log("Checking for temp clean up");
-        TempCleanUpHelper.INSTANCE.cleanUpTemp();
+        ConsoleUtils.log("cleaning up irrelevant temp files...");
+        TempCleanUpHelper.cleanUpTemp();
 
         // plan or script?
         if (cmd.hasOption(PLAN)) {
             // only -script will be supported
             if (isInteractive) {
                 throw new ParseException("Interactive Mode is NOT supported with plan files. " +
-                        "Try specifying a script instead");
+                                         "Try specifying a script instead");
             }
 
             this.executions = parsePlanExecution(cmd);

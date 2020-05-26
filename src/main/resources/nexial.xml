@@ -774,7 +774,7 @@
             }
           ]]></value>
         </entry>
-        <entry key="oracle"> <!--check -->
+        <entry key="oracle">
             <value><![CDATA[
             {
                 "home": "${user.home}/.nexial/rdbms/oracle",
@@ -783,7 +783,7 @@
             }
           ]]></value>
         </entry>
-        <entry key="db2"> <!--check -->
+        <entry key="db2">
             <value><![CDATA[
             {
                 "home": "${user.home}/.nexial/rdbms/db2",
@@ -810,7 +810,6 @@
             }
           ]]></value>
         </entry>
-        <!--error for mongo db when removing gradle dependency-->
     </util:map>
 
 </beans>

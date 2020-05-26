@@ -2,7 +2,7 @@
 
 NEXIAL_HOME=$(cd `dirname $0`/..; pwd -P)
 . ${NEXIAL_HOME}/bin/.commons.sh
-title "nexial Log Parser"
+title "nexial log parser"
 checkJava
 resolveEnv
 
