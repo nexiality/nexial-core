@@ -148,5 +148,6 @@ class IncrementStrategyTest {
                      }))
     }
 
-    private fun retrieveExpectedValue(resource: String) = ResourceUtils.loadResource(resourcePath + resource)
+    private fun retrieveExpectedValue(resource: String) =
+            StringUtils.replace(StringUtils.remove(ResourceUtils.loadResource(resourcePath + resource), "\r"), "\n", nl)
 }

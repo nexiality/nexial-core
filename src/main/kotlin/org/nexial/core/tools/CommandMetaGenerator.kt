@@ -33,6 +33,8 @@ import org.nexial.core.NexialConst.ExitStatus.RC_BAD_BATCH_FILE
 import org.nexial.core.NexialConst.ExitStatus.RC_FILE_GEN_FAILED
 import org.nexial.core.NexialConst.Project.*
 import org.nexial.core.SystemVariables
+import org.nexial.core.spi.NexialExecutionEvent
+import org.nexial.core.spi.NexialListenerFactory
 import org.nexial.core.tools.CliConst.OPT_PREVIEW
 import org.nexial.core.tools.CliConst.OPT_VERBOSE
 import org.nexial.core.tools.ProjectToolUtils.log
@@ -111,6 +113,9 @@ object CommandMetaGenerator {
         }
 
         verbose("Command types found", plugins.size)
+
+        // allow for extension
+        NexialListenerFactory.fireEvent(NexialExecutionEvent.newCommandListingEvent(springContext))
 
         val discovery = CommandDiscovery.getInstance()
 

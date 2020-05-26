@@ -302,29 +302,6 @@
         <entry key="ssh">
             <bean class="org.nexial.core.plugins.ssh.SshCommand"/>
         </entry>
-        <!--<entry key="text">-->
-        <!--  <bean class="org.nexial.core.plugins.text.TextCommand" p:language="en-US">-->
-        <!--    <property name="apiKeys">-->
-        <!--      <map key-type="java.lang.String" value-type="java.util.List">-->
-        <!--        <entry key="GrammarBot">-->
-        <!--          <list value-type="java.lang.String">-->
-        <!--            <value>AF5B9M2X</value>-->
-        <!--            <value>XYZ</value>-->
-        <!--          </list>-->
-        <!--        </entry>-->
-        <!--      </map>-->
-        <!--    </property>-->
-        <!--    <property name="apiMapping">-->
-        <!--      <map key-type="java.lang.String" value-type="java.lang.String">-->
-        <!--        <entry key="GrammarBot" value="http://api.grammarbot.io/v2/check?api_key={apiKey}&amp;language={language}&amp;text={text}"/>-->
-        <!--      </map>-->
-        <!--    </property>-->
-        <!--  </bean>-->
-        <!--</entry>-->
-        <!-- need to use dot (".") here because Excel is mistaking this as a cell reference -->
-        <!--<entry key="tn.5250">-->
-        <!--    <bean class="org.nexial.core.plugins.tn5250.Tn5250Command"/>-->
-        <!--</entry>-->
         <entry key="web">
             <bean class="org.nexial.core.plugins.web.WebCommand"/>
         </entry>

@@ -38,7 +38,8 @@ import org.nexial.core.model.*;
 import org.nexial.core.plugins.web.CloudWebTestingPlatform;
 import org.nexial.core.reports.ExecutionMailConfig;
 import org.nexial.core.reports.ExecutionReporter;
-import org.nexial.core.service.EventTracker;
+import org.nexial.core.spi.NexialExecutionEvent;
+import org.nexial.core.spi.NexialListenerFactory;
 import org.nexial.core.utils.ConsoleUtils;
 import org.nexial.core.utils.ExecutionLogger;
 import org.nexial.core.variable.Syspath;
@@ -48,7 +49,6 @@ import static org.nexial.core.NexialConst.*;
 import static org.nexial.core.NexialConst.Data.*;
 import static org.nexial.core.NexialConst.Exec.*;
 import static org.nexial.core.NexialConst.Iteration.*;
-import static org.nexial.core.NexialConst.NL;
 import static org.nexial.core.NexialConst.Project.appendLog;
 import static org.nexial.core.NexialConst.Web.*;
 import static org.nexial.core.SystemVariables.getDefault;
@@ -76,8 +76,8 @@ public final class ExecutionThread extends Thread {
     private static final ThreadLocal<ExecutionContext> THREAD_LOCAL = new ThreadLocal<>();
 
     private ExecutionDefinition execDef;
-    private ExecutionSummary executionSummary = new ExecutionSummary();
-    private List<File> completedTests = new ArrayList<>();
+    private final ExecutionSummary executionSummary = new ExecutionSummary();
+    private final List<File> completedTests = new ArrayList<>();
     private boolean firstScript;
     private boolean lastScript;
 
@@ -220,19 +220,13 @@ public final class ExecutionThread extends Thread {
                         iterSummary.generateExcelReport(testScriptFile);
                     }
 
-                    EventTracker.track(new NexialIterationCompleteEvent(scriptLocation, iterationIndex, iterSummary));
+                    NexialListenerFactory.fireEvent(NexialExecutionEvent.newIterationEndEvent(scriptLocation,
+                                                                                              iterationIndex,
+                                                                                              iterSummary));
                     executionSummary.addNestSummary(iterSummary);
 
                     // report status at iteration level
                     CloudWebTestingPlatform.reportCloudBrowserStatus(context, iterSummary, IterationComplete);
-
-                    // try {
-                    // save it before use it
-                    // testScript.save();
-                    // testScript = new Excel(testScriptFile, false, true);
-                    // } catch (IOException e) {
-                    //     ConsoleUtils.error("Error saving execution output: " + e.getMessage());
-                    // }
 
                     ExecutionReporter.openExecutionResult(context, testScriptFile);
 
@@ -418,7 +412,7 @@ public final class ExecutionThread extends Thread {
         ticktock.stop();
         summary.setEndTime(System.currentTimeMillis());
         summary.aggregatedNestedExecutions(context);
-        EventTracker.track(new NexialScriptCompleteEvent(summary.getScriptFile(), summary));
+        NexialListenerFactory.fireEvent(NexialExecutionEvent.newScriptEndEvent(summary.getScriptFile(), summary));
 
         CloudWebTestingPlatform.reportCloudBrowserStatus(context, summary, ScriptComplete);
 

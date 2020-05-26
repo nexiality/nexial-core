@@ -23,20 +23,15 @@ import com.itextpdf.text.Rectangle
 import com.itextpdf.text.RectangleReadOnly
 import org.apache.commons.collections4.CollectionUtils
 import org.apache.commons.collections4.MapUtils
-import org.apache.commons.io.FileUtils
 import org.apache.commons.lang3.StringUtils
 import org.apache.commons.lang3.SystemUtils.USER_NAME
-import org.nexial.commons.utils.EnvUtils
 import org.nexial.commons.utils.RegexUtils
 import org.nexial.core.NexialConst.AwsSettings.*
-import org.nexial.core.NexialConst.DEF_FILE_ENCODING
 import org.nexial.core.NexialConst.NAMESPACE
-import org.nexial.core.NexialConst.Project.USER_NEXIAL_HOME
 import org.nexial.core.utils.CheckUtils.requiresNotBlank
 import org.nexial.core.utils.CheckUtils.requiresNotNull
 import org.nexial.core.utils.ConsoleUtils
 import org.nexial.core.utils.ExecUtils.NEXIAL_MANIFEST
-import java.io.File
 
 abstract class ServiceProfile(val name: String, val profileData: Map<String, String>) {
 
@@ -87,43 +82,6 @@ abstract class ServiceProfile(val name: String, val profileData: Map<String, Str
             }
 
             return true
-        }
-    }
-}
-
-class Tn5250ServiceProfile(name: String, profileData: Map<String, String>) : ServiceProfile(name, profileData) {
-    val host = profileData.getOrElse("host") { throw IllegalArgumentException("Missing profile data: '${name}.host'") }
-    val port = profileData.getOrDefault("port", "23").toInt()
-    val codePage = profileData.getOrDefault("codePage", "Cp037")
-    val display = assertValidDisplay(profileData.getOrDefault("displaySize", "24x80"))
-    val deviceName = profileData.getOrDefault("deviceName", EnvUtils.getHostName())
-    val windowWidth = "900"
-    val windowHeight = "650"
-
-    init {
-        // write settings to tn5250 config
-        FileUtils.write(File("${USER_NEXIAL_HOME}tn5250/sessions"),
-                        "emul.restricted=\n" +
-                        "emul.logLevel=2\n" +
-                        "emul.view=-s $name \n" +
-                        "emul.width=$windowWidth\n" +
-                        "emul.height=$windowHeight\n" +
-                        "emul.frame0=0,0,$windowWidth,$windowHeight\n" +
-                        "emul.frame1=0,0,$windowWidth,$windowHeight\n" +
-                        "emul.frame2=0,0,$windowWidth,$windowHeight\n" +
-                        "$name=$host -p $port -cp $codePage -dn $deviceName -e -t -noembed -MDI -nc\n",
-                        DEF_FILE_ENCODING
-        )
-    }
-
-    fun toCmdLineArgs(): Array<String> = arrayOf("-s", name)
-
-    companion object {
-        private val VALID_DISPLAYS = listOf("24x80", "27x132")
-
-        private fun assertValidDisplay(display: String): String {
-            if (VALID_DISPLAYS.contains(display)) return display
-            throw java.lang.IllegalArgumentException("Invalid display value: $display")
         }
     }
 }

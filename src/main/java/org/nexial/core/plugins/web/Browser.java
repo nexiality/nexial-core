@@ -36,12 +36,12 @@ import org.nexial.commons.utils.EnvUtils;
 import org.nexial.commons.utils.FileUtil;
 import org.nexial.core.NexialConst.*;
 import org.nexial.core.ShutdownAdvisor;
-import org.nexial.core.model.BrowserCompleteEvent;
 import org.nexial.core.model.ExecutionContext;
 import org.nexial.core.plugins.CanTakeScreenshot;
 import org.nexial.core.plugins.ForcefulTerminate;
 import org.nexial.core.plugins.external.ExternalCommand;
-import org.nexial.core.service.EventTracker;
+import org.nexial.core.spi.NexialExecutionEvent;
+import org.nexial.core.spi.NexialListenerFactory;
 import org.nexial.core.utils.ConsoleUtils;
 import org.openqa.selenium.*;
 import org.openqa.selenium.chrome.ChromeDriver;
@@ -401,25 +401,7 @@ public class Browser implements ForcefulTerminate {
 
         ConsoleUtils.log("Shutting down '" + browserType.name() + "' webdriver...");
 
-        EventTracker.track(new BrowserCompleteEvent(browserType.name()));
-
-        // Logs logs = driver.manage().logs();
-        // if (logs != null) {
-        //     LogEntries logEntries = logs.get(LogType.CLIENT);
-        //     if (!IterableUtils.isEmpty(logEntries)) {
-        //         List<LogEntry> allLogs = logEntries.getAll();
-        //         if (CollectionUtils.isNotEmpty(allLogs)) {
-        //             ConsoleUtils.log("client logs: " + allLogs.size() + " 'client' log entries found");
-        //             allLogs.forEach(log -> ConsoleUtils.log(new Date(log.getTimestamp()) + "\t" +
-        //                                                     log.getLevel() + "\t" +
-        //                                                     log.getMessage()));
-        //         }
-        //
-        //         System.out.println();System.out.println();System.out.println();
-        //     }
-        // }
-
-        // clearWinHandles();
+        NexialListenerFactory.fireEvent(NexialExecutionEvent.newBrowserEndEvent(browserType.name()));
 
         if (context != null) {
             CanTakeScreenshot agent = context.findCurrentScreenshotAgent();

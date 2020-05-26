@@ -111,7 +111,7 @@ dist/*
 ehthumbs.db
 fabric.properties
 gradle-app.setting
-gradle/wrapper/
+gradle/
 gradlew
 gradlew.bat
 hs_err_pid*

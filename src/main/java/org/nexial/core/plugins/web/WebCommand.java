@@ -48,7 +48,6 @@ import org.nexial.commons.utils.TextUtils;
 import org.nexial.commons.utils.web.URLEncodingUtils;
 import org.nexial.core.model.BrowserMeta;
 import org.nexial.core.model.ExecutionContext;
-import org.nexial.core.model.NexialUrlInvokedEvent;
 import org.nexial.core.model.StepResult;
 import org.nexial.core.model.TestStep;
 import org.nexial.core.plugins.CanLogExternally;
@@ -58,8 +57,9 @@ import org.nexial.core.plugins.base.BaseCommand;
 import org.nexial.core.plugins.base.ScreenshotUtils;
 import org.nexial.core.plugins.ws.Response;
 import org.nexial.core.plugins.ws.WsCommand;
-import org.nexial.core.service.EventTracker;
 import org.nexial.core.service.external.UserStackAPI;
+import org.nexial.core.spi.NexialExecutionEvent;
+import org.nexial.core.spi.NexialListenerFactory;
 import org.nexial.core.utils.ConsoleUtils;
 import org.nexial.core.utils.NativeInputHelper;
 import org.nexial.core.utils.OutputFileUtils;
@@ -1502,12 +1502,20 @@ public class WebCommand extends BaseCommand implements CanTakeScreenshot, CanLog
         WebElement element = findElement(locator);
         if (element == null) { return StepResult.fail("Unable to type since no element matches to " + locator); }
 
-        clearValue(element);
+        try {
+            clearValue(element);
+        } catch (WebDriverException e) {
+            // sometimes the `clear` invokes page action such as reload, in which case the target element might no longer
+            // available (aka NoSuchElementException or StaleElementException)
+            // ignore this... move on.
+            ConsoleUtils.log("Unable to reference target element; the containing page possibly reloaded");
+            if (waitForElementPresent(locator).failed()) {
+                error("Web element '" + value + "' no longer available after its value is cleared");
+            }
+            // proceed anyways...
+        }
 
         if (StringUtils.isNotEmpty(value)) {
-            // was needed for Safari/Windows. We don't need this anymore
-            // if (browser.isRunSafari()) { focus("//body"); }
-
             // onchange event will not fire until a different element is selected
             if (context.getBooleanData(WEB_UNFOCUS_AFTER_TYPE, getDefaultBool(WEB_UNFOCUS_AFTER_TYPE))) {
                 // element.sendKeys();
@@ -2025,7 +2033,7 @@ public class WebCommand extends BaseCommand implements CanTakeScreenshot, CanLog
         context.setData(CURRENT_BROWSER, browser.getBrowserType().name());
         updateWinHandle();
         resizeSafariAfterOpen();
-        EventTracker.track(new NexialUrlInvokedEvent(browser.getBrowserType().name(), url));
+        NexialListenerFactory.fireEvent(NexialExecutionEvent.newUrlInvokedEvent(browser.getBrowserType().name(), url));
         syncBrowserMeta();
     }
 

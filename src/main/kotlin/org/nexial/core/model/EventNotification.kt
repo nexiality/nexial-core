@@ -24,8 +24,7 @@ import org.nexial.commons.utils.EnvUtils
 import org.nexial.commons.utils.TextUtils
 import org.nexial.core.IntegrationConfigException
 import org.nexial.core.NexialConst.Data.*
-import org.nexial.core.NexialConst.Exec
-import org.nexial.core.NexialConst.Exec.*
+import org.nexial.core.NexialConst.Exec.MAIL_NOTIF_SUBJECT_PREFIX
 import org.nexial.core.mail.MailData
 import org.nexial.core.model.ExecutionEvent.ExecutionPause
 import org.nexial.core.utils.ConsoleUtils
@@ -43,7 +42,7 @@ abstract class EventNotification(val context: ExecutionContext,
         this.parse()
     }
 
-    fun includeExecMeta(includeExecMeta: Boolean) = {
+    fun with(includeExecMeta: Boolean) = {
         this.includeExecMeta = includeExecMeta
         this
     }

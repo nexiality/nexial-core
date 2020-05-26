@@ -16,59 +16,8 @@
 
 package org.nexial.core.model
 
-import org.apache.commons.cli.CommandLine
-import org.apache.commons.lang3.StringUtils
-import org.apache.commons.lang3.SystemUtils.*
-import org.nexial.commons.utils.EnvUtils
 import org.nexial.core.NexialConst.GSON_COMPRESSED
-import org.nexial.core.NexialConst.Project.NEXIAL_HOME
 import org.nexial.core.model.ExecutionEvent.*
-import org.nexial.core.utils.ExecUtils
-import org.nexial.core.utils.ExecUtils.NEXIAL_MANIFEST
-import java.io.Serializable
-
-class NexialEnv(@Transient val commandline: CommandLine) : Serializable {
-
-    data class OperatingSystem(val name: String = OS_NAME, val version: String = OS_VERSION, val arch: String = OS_ARCH)
-
-    data class JVM(val vendor: String = JAVA_VENDOR,
-                   val version: String = JAVA_VERSION,
-                   val bits: Int = EnvUtils.getOsArchBit())
-
-    data class Env(val host: String = EnvUtils.getHostName(),
-                   val user: String = USER_NAME,
-                   val country: String = USER_COUNTRY,
-                   val timezone: String = USER_TIMEZONE,
-                   val language: String = USER_LANGUAGE,
-                   val isRunningInCI: Boolean = ExecUtils.isRunningInCi())
-
-    data class Execution(val manifest: String = NEXIAL_MANIFEST,
-                         val home: String = System.getProperty(NEXIAL_HOME, "UNKNOWN"),
-                         val cmdOption: String,
-                         val runPlan: Boolean)
-
-    val id = Utils.eventId
-    val timestamp = System.currentTimeMillis()
-
-    // what sort of physical environment was it?
-    val env = Env()
-
-    // what system is used to run this execution?
-    val os = OperatingSystem()
-
-    // which Java was used for this?
-    val java = JVM()
-
-    // which version of Nexial was used?
-    // what was entered on command line to start this execution
-    val nexial = Execution(
-            cmdOption = commandline.options.joinToString(
-                    separator = "",
-                    transform = { option -> "-${option.opt} ${option.value} " }).trim(),
-            runPlan = commandline.options.any { opt -> StringUtils.equals(opt.opt, "plan") })
-
-    fun json(): String = GSON_COMPRESSED.toJson(this)
-}
 
 open class NexialEvent(val eventName: String, val startTime: Long) {
     val id: String = Utils.eventId

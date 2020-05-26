@@ -29,7 +29,6 @@ import javax.validation.constraints.NotNull;
 import org.apache.commons.cli.CommandLine;
 import org.apache.commons.cli.DefaultParser;
 import org.apache.commons.cli.HelpFormatter;
-import org.apache.commons.cli.Options;
 import org.apache.commons.cli.ParseException;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.collections4.MapUtils;
@@ -43,15 +42,16 @@ import org.nexial.commons.utils.*;
 import org.nexial.core.aws.NexialS3Helper;
 import org.nexial.core.excel.Excel;
 import org.nexial.core.excel.Excel.Worksheet;
-import org.nexial.core.integration.IntegrationManager;
 import org.nexial.core.interactive.NexialInteractive;
 import org.nexial.core.mail.NexialMailer;
-import org.nexial.core.model.*;
+import org.nexial.core.model.ExecutionDefinition;
+import org.nexial.core.model.ExecutionSummary;
+import org.nexial.core.model.TestProject;
 import org.nexial.core.reports.ExecutionMailConfig;
 import org.nexial.core.reports.ExecutionNotifier;
 import org.nexial.core.reports.ExecutionReporter;
-import org.nexial.core.service.EventTracker;
-import org.nexial.core.service.ReadyLauncher;
+import org.nexial.core.spi.NexialExecutionEvent;
+import org.nexial.core.spi.NexialListenerFactory;
 import org.nexial.core.utils.ConsoleUtils;
 import org.nexial.core.utils.ExecUtils;
 import org.nexial.core.utils.InputFileUtils;
@@ -61,11 +61,12 @@ import static java.io.File.separator;
 import static java.lang.System.lineSeparator;
 import static org.apache.commons.lang3.SystemUtils.IS_OS_WINDOWS;
 import static org.apache.commons.lang3.SystemUtils.USER_NAME;
+import static org.nexial.core.Nexial.ExecutionMode.*;
+import static org.nexial.core.NexialConst.CLI.INTERACTIVE;
 import static org.nexial.core.NexialConst.CLI.*;
 import static org.nexial.core.NexialConst.*;
 import static org.nexial.core.NexialConst.Data.*;
 import static org.nexial.core.NexialConst.Exec.*;
-import static org.nexial.core.NexialConst.NL;
 import static org.nexial.core.NexialConst.ExitStatus.*;
 import static org.nexial.core.NexialConst.Project.*;
 import static org.nexial.core.SystemVariables.getDefault;
@@ -209,7 +210,9 @@ public class Nexial {
                 System.err.println(e.getMessage());
             }
 
-            if (main != null) { main.trackEvent(new NexialCmdErrorEvent(Arrays.asList(args), e.getMessage())); }
+            if (main != null) {
+                NexialListenerFactory.fireEvent(NexialExecutionEvent.newNexialCmdError(main, args, e));
+            }
 
             usage();
             System.exit(-1);
@@ -219,15 +222,6 @@ public class Nexial {
         try {
             // shutdown hook for Control-C and SIGTERM
             Runtime.getRuntime().addShutdownHook(new Thread(ShutdownAdvisor::forcefullyTerminate));
-
-            // integration mode, only for metrics and post-exec analysis
-            if (main.isIntegrationMode()) { return; }
-
-            // beReady mode, only for studio integration
-            if (main.isReadyMode()) {
-                main.beReady();
-                return;
-            }
 
             // interactive mode, only for stepwise or blockwise execution. to be integrated into studio
             if (main.isInteractiveMode()) {
@@ -241,35 +235,36 @@ public class Nexial {
             }
 
             // normal execution
-            MemManager.recordMemoryChanges("before execution");
-            summary = main.execute();
-            main.trackEvent(new NexialExecutionCompleteEvent(summary));
-            MemManager.recordMemoryChanges("after execution");
+            if (isActiveExecution(main)) {
+                MemManager.recordMemoryChanges("before execution");
+                summary = main.execute();
+                MemManager.recordMemoryChanges("after execution");
+            }
 
         } catch (Throwable e) {
             ConsoleUtils.error("Unknown/unexpected error occurred: " + e.getMessage());
             e.printStackTrace();
         } finally {
-            if (!main.isReadyMode()) {
+            if (isActiveExecution(main)) {
                 ConsoleUtils.log("exiting Nexial...");
                 System.exit(main.beforeShutdown(summary));
             }
         }
     }
 
+    protected void setExecutionMode(ExecutionMode mode) { this.executionMode = mode; }
+
     protected boolean isReadyMode() { return executionMode == ExecutionMode.READY; }
 
-    protected boolean isIntegrationMode() { return executionMode == ExecutionMode.INTEGRATION; }
+    protected boolean isIntegrationMode() { return executionMode == INTEGRATION; }
 
     protected boolean isInteractiveMode() { return executionMode == ExecutionMode.INTERACTIVE; }
 
-    protected Options addMsaOptions(Options options) {
-        Options optionsAdded = new Options();
-        options.getOptions().forEach(optionsAdded::addOption);
-        optionsAdded.addOption(ANNOUNCE, true, "the output directory path to announce the automation " +
-                                               "report over collaboration tools");
-        return optionsAdded;
-    }
+    protected boolean isExecutePlan() { return executionMode == EXECUTE_PLAN; }
+
+    protected boolean isExecuteScript() { return executionMode == EXECUTE_SCRIPT; }
+
+    protected static boolean isActiveExecution(Nexial main) { return main.isExecutePlan() || main.isExecuteScript(); }
 
     /** read from the commandline and derive the intended execution order. */
     protected void init(String[] args) throws IOException, ParseException {
@@ -286,13 +281,7 @@ public class Nexial {
 
         ConsoleUtils.log(NEXIAL_MANIFEST + " starting up...");
 
-        CommandLine cmd = new DefaultParser().parse(addMsaOptions(OPTIONS), args);
-
-        // nexial-ready
-        if (cmd.hasOption(READY)) {
-            executionMode = ExecutionMode.READY;
-            return;
-        }
+        CommandLine cmd = new DefaultParser().parse(OPTIONS, args);
 
         if (cmd.hasOption(OUTPUT)) {
             // force logs to be pushed into the specified output directory (and not taint other past/concurrent runs)
@@ -305,38 +294,28 @@ public class Nexial {
             }
         }
 
-        // integration mode
-        // integrate or announce or assimilate
-        if (cmd.hasOption(ANNOUNCE)) {
-            executionMode = ExecutionMode.INTEGRATION;
-            String outputDirPath = cmd.getOptionValue(ANNOUNCE);
-            initSpringContext();
-            IntegrationManager.manageIntegration(outputDirPath);
-            return;
-        }
+        boolean isInteractive = cmd.hasOption(INTERACTIVE);
 
         // plan or script?
         if (cmd.hasOption(PLAN)) {
             // only -script will be supported
-            if (cmd.hasOption(INTERACTIVE)) {
-                throw new ParseException("Interactive Mode is NOT support with plan files. " +
+            if (isInteractive) {
+                throw new ParseException("Interactive Mode is NOT supported with plan files. " +
                                          "Try specifying a script instead");
             }
 
             this.executions = parsePlanExecution(cmd);
             System.setProperty(NEXIAL_EXECUTION_TYPE, NEXIAL_EXECUTION_TYPE_PLAN);
-            executionMode = ExecutionMode.EXECUTE_PLAN;
-        } else {
-            if (!cmd.hasOption(SCRIPT)) { fail("test script is required but not specified."); }
-
+            executionMode = EXECUTE_PLAN;
+        } else if (cmd.hasOption(SCRIPT)) {
             this.executions = parseScriptExecution(cmd);
+            System.setProperty(NEXIAL_EXECUTION_TYPE, NEXIAL_EXECUTION_TYPE_SCRIPT);
 
-            if (cmd.hasOption(INTERACTIVE)) {
+            if (isInteractive) {
                 executionMode = ExecutionMode.INTERACTIVE;
                 System.setProperty(OPT_INTERACTIVE, "true");
             } else {
-                executionMode = ExecutionMode.EXECUTE_SCRIPT;
-                System.setProperty(NEXIAL_EXECUTION_TYPE, NEXIAL_EXECUTION_TYPE_SCRIPT);
+                executionMode = EXECUTE_SCRIPT;
             }
         }
 
@@ -355,7 +334,7 @@ public class Nexial {
 
         ConsoleUtils.log("input files and output directory resolved...");
 
-        trackExecution(new NexialEnv(cmd));
+        NexialListenerFactory.fireEvent(NexialExecutionEvent.newNexialStartEvent(this, args, cmd));
     }
 
     protected List<ExecutionDefinition> parsePlanExecution(CommandLine cmd) throws IOException {
@@ -726,12 +705,6 @@ public class Nexial {
         }
     }
 
-    protected void beReady() throws Exception {
-        initSpringContext();
-        ReadyLauncher.main(new String[]{});
-        ConsoleUtils.log("Nexial Ready now accepting connection");
-    }
-
     protected void interact() {
         // there should only be 1 execution (ie script) since we've checked this earlier
         if (CollectionUtils.isEmpty(executions)) {
@@ -1005,6 +978,8 @@ public class Nexial {
         } else {
             ConsoleUtils.log("skipped email notification as configured");
         }
+
+        NexialListenerFactory.fireEvent(NexialExecutionEvent.newExecutionEndEvent(runId, summary));
     }
 
     protected void initSpringContext() {
@@ -1227,6 +1202,8 @@ public class Nexial {
             }
         }
 
+        NexialListenerFactory.fireEvent(NexialExecutionEvent.newNexialEndEvent(this, ExecUtils.deriveRunId(), summary));
+
         // not used at this time
         // File eventPath = new File(EventTracker.INSTANCE.getStorageLocation());
         // if (FileUtil.isDirectoryReadable(eventPath)) {
@@ -1313,10 +1290,6 @@ public class Nexial {
             ConsoleUtils.error("Unable to send out notification email: " + e.getMessage());
         }
     }
-
-    private void trackEvent(NexialEvent event) { EventTracker.track(event); }
-
-    private void trackExecution(NexialEnv nexialEnv) { EventTracker.track(nexialEnv); }
 
     /**
      * log {@code msg} to console if the System property {@code nexial.devLogging} is {@code "true"}.

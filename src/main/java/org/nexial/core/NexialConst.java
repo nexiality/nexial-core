@@ -696,7 +696,7 @@ public final class NexialConst {
             gif(TYPE_INT_ARGB),
             bmp(TYPE_INT_ARGB);
 
-            private int imageType;
+            private final int imageType;
 
             ImageType(int imageType) { this.imageType = imageType; }
 
@@ -740,12 +740,12 @@ public final class NexialConst {
             BOTTOM_CENTER(false, false, true, false, true, false),
             BOTTOM_RIGHT(false, false, true, false, false, true);
 
-            private boolean top;
-            private boolean middle;
-            private boolean bottom;
-            private boolean left;
-            private boolean center;
-            private boolean right;
+            private final boolean top;
+            private final boolean middle;
+            private final boolean bottom;
+            private final boolean left;
+            private final boolean center;
+            private final boolean right;
 
             CaptionPositions(boolean top, boolean middle, boolean bottom, boolean left, boolean center, boolean right) {
                 this.top = top;
@@ -1764,11 +1764,11 @@ public final class NexialConst {
         electron(false, false, true, false, true),
         crossbrowsertesting(false, false, false, true, true);
 
-        private boolean profileSupported;
-        private boolean consoleLoggingEnabled;
-        private boolean timeoutChangesEnabled;
-        private boolean jsEventFavored;
-        private boolean switchWindowSupported;
+        private final boolean profileSupported;
+        private final boolean consoleLoggingEnabled;
+        private final boolean timeoutChangesEnabled;
+        private final boolean jsEventFavored;
+        private final boolean switchWindowSupported;
 
         BrowserType(boolean profileSupported,
                     boolean consoleLoggingEnabled,
@@ -1794,15 +1794,6 @@ public final class NexialConst {
 
         public boolean isHeadless() { return this == firefoxheadless || this == chromeheadless; }
     }
-
-    // public static final class Tn5250 {
-    //     public static final String NS = NAMESPACE + "ts5250.";
-    //     public static final String FILLER = registerSysVar(NS + "filler", " .");
-    //
-    //     private Tn5250() {}
-    //
-    //     static void init() { }
-    // }
 
     private NexialConst() { }
 
@@ -1916,7 +1907,6 @@ public final class NexialConst {
         Pdf.init();
         ImageCaption.init();
         SaveGridAsCSV.init();
-        // Tn5250.init();
 
         // don't need this unnecessary noise
         // BUT WE CANNOT TURN THIS ONE FOR JAVA 8 (IT DOESN'T KNOW ANYTHING ABOUT THIS ARG!)

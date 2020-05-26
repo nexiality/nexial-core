@@ -21,7 +21,8 @@ import org.apache.commons.lang3.StringUtils
 import org.nexial.core.ExecutionThread
 import org.nexial.core.NexialConst.Notification.*
 import org.nexial.core.model.ExecutionEvent.*
-import org.nexial.core.service.EventTracker
+import org.nexial.core.spi.NexialExecutionEvent
+import org.nexial.core.spi.NexialListenerFactory
 import org.nexial.core.utils.ConsoleUtils
 
 class ExecutionEventListener {
@@ -31,16 +32,20 @@ class ExecutionEventListener {
 
     fun onExecutionStart() = handleEvent(ExecutionStart)
     fun onExecutionComplete() = handleEvent(ExecutionComplete)
+
     fun onScriptStart() = handleEvent(ScriptStart)
     fun onScriptComplete() = handleEvent(ScriptComplete)
+
     fun onIterationStart() = handleEvent(IterationStart)
     fun onIterationComplete() = handleEvent(IterationComplete)
-    fun onScenarioStart() = handleEvent(ScenarioStart)
 
+    fun onScenarioStart() = handleEvent(ScenarioStart)
     fun onScenarioComplete(executionSummary: ExecutionSummary) {
         handleEvent(ScenarioComplete)
         // summary and context are null in Interactive Mode
-        if (ExecutionThread.get() != null) EventTracker.track(NexialScenarioCompleteEvent(executionSummary))
+        if (ExecutionThread.get() != null) {
+            NexialListenerFactory.fireEvent(NexialExecutionEvent.newScenarioEndEvent(executionSummary))
+        }
     }
 
     fun onError() = handleEvent(ErrorOccurred)
@@ -63,11 +68,9 @@ class ExecutionEventListener {
 
         when (notifyPrefix) {
             TTS_PREFIX     -> TtsNotification(context, event, notifyText).perform()
-            SMS_PREFIX     -> SmsNotification(context, event, notifyText)
-                .includeExecMeta(smsIncludeMeta).invoke().perform()
+            SMS_PREFIX     -> SmsNotification(context, event, notifyText).with(smsIncludeMeta).invoke().perform()
             AUDIO_PREFIX   -> AudioNotification(context, event, notifyText).perform()
-            EMAIL_PREFIX   -> EmailNotification(context, event, notifyText)
-                .includeExecMeta(mailIncludeMeta).invoke().perform()
+            EMAIL_PREFIX   -> EmailNotification(context, event, notifyText).with(mailIncludeMeta).invoke().perform()
             CONSOLE_PREFIX -> ConsoleNotification(context, event, notifyText).perform()
             else           -> ConsoleUtils.error(context.runId, "Unknown event notification: " + notifyConfig!!)
         }

@@ -62,6 +62,8 @@ import org.nexial.core.plugins.pdf.CommonKeyValueIdentStrategies;
 import org.nexial.core.plugins.sound.SoundMachine;
 import org.nexial.core.plugins.web.Browser;
 import org.nexial.core.reports.ExecutionMailConfig;
+import org.nexial.core.spi.NexialExecutionEvent;
+import org.nexial.core.spi.NexialListenerFactory;
 import org.nexial.core.utils.ConsoleUtils;
 import org.nexial.core.utils.ExecUtils;
 import org.nexial.core.utils.ExecutionLogger;
@@ -86,7 +88,6 @@ import static org.nexial.core.NexialConst.Data.*;
 import static org.nexial.core.NexialConst.Exec.*;
 import static org.nexial.core.NexialConst.FlowControls.*;
 import static org.nexial.core.NexialConst.Iteration.*;
-import static org.nexial.core.NexialConst.NL;
 import static org.nexial.core.NexialConst.Project.NEXIAL_HOME;
 import static org.nexial.core.NexialConst.TimeTrack.TRACK_EXECUTION;
 import static org.nexial.core.NexialConst.Web.*;
@@ -306,6 +307,8 @@ public class ExecutionContext {
             OnDemandInspectionDetector.getInstance(this);
             ConsoleUtils.log("On-Demand Inspection detection enabled");
         }
+
+        NexialListenerFactory.fireEvent(NexialExecutionEvent.newExecutionStartEvent(this));
     }
 
     public void useTestScript(Excel testScript) throws IOException {
