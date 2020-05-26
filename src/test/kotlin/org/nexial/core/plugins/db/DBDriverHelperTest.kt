@@ -14,7 +14,7 @@ class DBDriverHelperTest {
 
     private val driverHomeBase = "${SystemUtils.USER_HOME}${File.separator}.nexial${File.separator}rdbms${File.separator}"
 
-    @Test
+/*    @Test
     @Throws(Exception::class)
     fun downloadDBDrivers() {
         val context = MockExecutionContext(true)
@@ -24,7 +24,7 @@ class DBDriverHelperTest {
             assertDriverExists(DBDriverHelper.newInstance(dbType, context).resolveDriver())
         }
         context.cleanProject()
-    }
+    }*/
 
     @Test
     @Throws(Exception::class)
