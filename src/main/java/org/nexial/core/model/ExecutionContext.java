@@ -697,6 +697,11 @@ public class ExecutionContext {
         return names;
     }
 
+    /**
+     * return all objects from context that share the same {@literal prefix}.
+     * <p>
+     * Note that the keys of the returning map are _WITHOUT_ {@literal prefix}.
+     */
     @NotNull
     public Map<String, Object> getObjectByPrefix(String prefix) {
         Map<String, Object> props = new LinkedHashMap<>(EnvUtils.getSysPropsByPrefix(prefix));

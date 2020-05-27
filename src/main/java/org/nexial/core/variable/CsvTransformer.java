@@ -20,6 +20,8 @@ package org.nexial.core.variable;
 import java.io.File;
 import java.io.IOException;
 import java.lang.reflect.Method;
+import java.math.BigDecimal;
+import java.math.BigInteger;
 import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -827,8 +829,9 @@ public class CsvTransformer<T extends CsvDataType> extends Transformer<CsvDataTy
 
         Map<String, Number> sums = new TreeMap<>();
         data.getValue().forEach(record -> {
-            Number sumValue = NumberUtils.createNumber(
-                StringUtils.trim(StringUtils.replaceChars(record.getString(sumColumn), "\"'$,", "")));
+            String sumValueText = StringUtils.trim(StringUtils.replaceChars(record.getString(sumColumn), "\"'$,", ""));
+            Number sumValue = StringUtils.contains(sumValueText, ".") ?
+                              new BigDecimal(sumValueText).doubleValue() : new BigInteger(sumValueText).intValue();
 
             String value = "";
             for (String column : groupColumns) {
