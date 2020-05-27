@@ -21,7 +21,6 @@ import org.apache.commons.lang3.SystemUtils.USER_HOME
 import org.json.JSONObject
 import org.nexial.core.NexialConst.DEF_CHARSET
 import org.nexial.core.NexialConst.GSON
-import org.nexial.core.utils.ConsoleUtils
 import org.nexial.core.utils.JsonUtils
 import java.io.File
 import java.io.File.separator
@@ -29,7 +28,7 @@ import java.io.File.separator
 data class TempCleanUpManifest(var lastChecked: Long = 0, val checkFrequencyDay: Int = 6)
 
 object TempCleanUpHelper {
-    private val cleanUpManifest = File("$USER_HOME$separator.nexial${separator}config.json")
+    private val cleanUpManifest = File("$USER_HOME${separator}.nexial${separator}config.json")
 
     // 1 day(24 hrs) => 86400000L milliseconds
     private const val dayInMilliseconds = 86400000L
@@ -50,9 +49,7 @@ object TempCleanUpHelper {
         }
 
         if (isCleanUpNeeded(manifest)) {
-            ConsoleUtils.log("Cleaning up the temp files")
             TempCleanUp.cleanTempFiles(false)
-
             manifest.lastChecked = System.currentTimeMillis()
             updateConfig(json, manifest)
         }
@@ -60,7 +57,7 @@ object TempCleanUpHelper {
 
     private fun isCleanUpNeeded(manifest: TempCleanUpManifest): Boolean {
         return manifest.lastChecked == 0L ||
-                ((System.currentTimeMillis() - manifest.lastChecked) > (dayInMilliseconds * manifest.checkFrequencyDay))
+               ((System.currentTimeMillis() - manifest.lastChecked) > (dayInMilliseconds * manifest.checkFrequencyDay))
     }
 
     private fun updateConfig(json: JSONObject, manifest: TempCleanUpManifest) {
@@ -68,4 +65,3 @@ object TempCleanUpHelper {
         FileUtils.writeStringToFile(cleanUpManifest, JsonUtils.beautify(json.toString()), DEF_CHARSET)
     }
 }
-

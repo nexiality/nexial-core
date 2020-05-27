@@ -417,6 +417,13 @@ class NexialInteractive {
             }
 
             val commandFQN = testStep.commandFQN
+            if (StringUtils.equals(commandFQN, CMD_REPEAT_UNTIL)) {
+                // now, jolt down all the steps we need to skip since this section is now SKIPPED
+                // `testStep.getParams().get(0)` represents the number of steps of this `repeat-until` section
+                val stepsToSkip = testStep.params[0].toInt()
+                for (j in (rowIndex + 1)..(rowIndex + stepsToSkip)) sectionStepsToSkip.add(j)
+            }
+
             if (result.isSkipped) {
                 stepSummary.adjustTotalSteps(-1)
 

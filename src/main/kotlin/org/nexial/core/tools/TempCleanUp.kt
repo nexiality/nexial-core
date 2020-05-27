@@ -62,16 +62,12 @@ object TempCleanUp {
     fun cleanTempFiles(verbose: Boolean) {
         IOFilePathFilter(true).filterFiles(TEMP).filter {
             // filter directory with pattern `(_nexial_)?[a-zA-Z]{5}`
-            RegexUtils.isExact(StringUtils.substringBetween(it, TEMP, separator), filePattern)
-                    && isModifiedOneDayBefore(Date(File(it).lastModified()))
+            RegexUtils.isExact(StringUtils.substringBetween(it, TEMP, separator), filePattern) &&
+            isModifiedOneDayBefore(Date(File(it).lastModified()))
         }.forEach {
             val file = File(TEMP + StringUtils.substringBetween(it, TEMP, separator))
-            if (verbose) {
-                log("delete", file.absolutePath)
-                if (!FileUtils.deleteQuietly(file)) {
-                    ConsoleUtils.error("Unable to delete directory: ${file.absolutePath}")
-                }
-            }
+            if (verbose) log("delete", file.absolutePath)
+            if (!FileUtils.deleteQuietly(file)) ConsoleUtils.error("unable to delete directory: ${file.absolutePath}")
         }
     }
 

@@ -246,7 +246,7 @@ public class Nexial {
             ConsoleUtils.error("Unknown/unexpected error occurred: " + e.getMessage());
             e.printStackTrace();
         } finally {
-            if (isActiveExecution(main)) {
+            if (isActiveExecution(main) || main.isInteractiveMode()) {
                 ConsoleUtils.log("exiting Nexial...");
                 System.exit(main.beforeShutdown(summary));
             }
@@ -298,7 +298,7 @@ public class Nexial {
         boolean isInteractive = cmd.hasOption(INTERACTIVE);
 
         // check for clean up temp directory
-        ConsoleUtils.log("cleaning up irrelevant temp files...");
+        ConsoleUtils.log("cleaning up outdated temp files...");
         TempCleanUpHelper.cleanUpTemp();
 
         // plan or script?
