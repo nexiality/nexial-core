@@ -255,10 +255,9 @@ public class WebServiceClient {
             boolean digestAuth = isDigestAuth();
             boolean basicAuth = isBasicAuth();
             if (digestAuth || basicAuth) {
-                HttpClientContext httpContext = digestAuth ?
-                                                newDigestEnabledHttpContext(request) :
-                                                newBasicEnabledHttpContext(request);
-                httpResponse = client.execute(http, httpContext);
+                httpResponse = client.execute(http, digestAuth ?
+                                                    newDigestEnabledHttpContext(request) :
+                                                    newBasicEnabledHttpContext(request));
             } else {
                 httpResponse = client.execute(http);
             }
@@ -508,7 +507,7 @@ public class WebServiceClient {
     }
 
     protected void log(String msg) {
-        if (context != null) {
+        if (context != null && !isContextAsConfigDisabled()) {
             TestStep testStep = context.getCurrentTestStep();
             if (testStep != null) { context.getLogger().log(testStep, msg); }
         }

@@ -232,6 +232,7 @@ public class ImageCommand extends BaseCommand implements ForcefulTerminate {
     public StepResult ocr(String image, String saveVar) throws IOException, ServiceException {
         requiresReadableFileOrValidUrl(image);
         context.removeData(saveVar);
+        log("performing OCR on '" + image + "'");
         context.setData(saveVar, new ImageOcrApi().ocr(resolveFileResource(image)));
         return StepResult.success("image '" + image + "' OCR'd to data variable '" + saveVar + "'");
     }
