@@ -55,8 +55,8 @@ import static org.nexial.core.NexialConst.FlowControls.ANY_FIELD;
 
 @FixMethodOrder(value = NAME_ASCENDING)
 public class ExpressionProcessorTest {
-    private DataAccess da = initDataAccess();
-    private ExecutionContext context = new MockExecutionContext(true) {
+    private final DataAccess da = initDataAccess();
+    private final ExecutionContext context = new MockExecutionContext(true) {
 
         @Override
         public NexialCommand findPlugin(String target) {
@@ -72,7 +72,7 @@ public class ExpressionProcessorTest {
         }
     };
     private String resourcePath;
-    private String className = this.getClass().getSimpleName();
+    private final String className = this.getClass().getSimpleName();
 
     @Before
     public void setup() throws Exception {
@@ -2675,6 +2675,19 @@ public class ExpressionProcessorTest {
                      "United States,750000",
                      subject.process("[CSV(" + file + ") => parse(header=true) groupSum(Country,Price) text]")
                     );
+    }
+
+    @Test
+    public void processCSV_sum2() throws Exception {
+        String file = ResourceUtils.getResourceFilePath(resourcePath + className + "18.csv");
+
+        ExpressionProcessor subject = new ExpressionProcessor(context);
+
+        assertEquals("Product,Sum\n" +
+                     "Product1,1028418.669\n" +
+                     "Product2,478851.208\n" +
+                     "Product3,112500",
+                     subject.process("[CSV(" + file + ") => parse(header=true) groupSum(Product,Price) text]"));
     }
 
     @Test

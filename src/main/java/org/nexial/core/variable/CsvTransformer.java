@@ -358,7 +358,7 @@ public class CsvTransformer<T extends CsvDataType> extends Transformer<CsvDataTy
 
     public T replaceColumnRegex(T data, String searchFor, String replaceWith, String columnNameOrIndices) {
         if (data == null || data.getValue() == null ||
-            StringUtils.isBlank(searchFor) || StringUtils.isBlank(replaceWith) ||
+            StringUtils.isBlank(searchFor) ||
             StringUtils.isBlank(columnNameOrIndices)) {
             return data;
         }
@@ -832,7 +832,7 @@ public class CsvTransformer<T extends CsvDataType> extends Transformer<CsvDataTy
             BigDecimal sumValBD = new BigDecimal(sumValueText);
             Number sumValue;
             if (NumberTransformer.isDecimal(sumValueText)) {
-                sumValue = sumValBD.doubleValue();
+                sumValue = sumValBD;
             } else {
                 sumValue = sumValBD.intValue();
             }
@@ -845,7 +845,12 @@ public class CsvTransformer<T extends CsvDataType> extends Transformer<CsvDataTy
                     if (currentSum instanceof Integer && sumValue instanceof Integer) {
                         sums.put(value, sumValue.intValue() + currentSum.intValue());
                     } else {
-                        sums.put(value, sumValue.doubleValue() + currentSum.doubleValue());
+                        if (sumValue instanceof BigDecimal) {
+                            sums.put(value, ((BigDecimal) sumValue).add(BigDecimal.valueOf(currentSum.doubleValue())));
+                        } else {
+                            sums.put(value, BigDecimal.valueOf(sumValue.doubleValue())
+                                                      .add(BigDecimal.valueOf(currentSum.doubleValue())));
+                        }
                     }
                 } else {
                     sums.put(value, sumValue);
@@ -858,7 +863,8 @@ public class CsvTransformer<T extends CsvDataType> extends Transformer<CsvDataTy
         sums.forEach((value, sum) -> {
             int numMissingDelim = groupColumns.length - StringUtils.countMatches(value, CSV_FIELD_DEIM) - 1;
             String sumString = sum + "";
-            groupCsv.append(value).append(StringUtils.repeat(CSV_FIELD_DEIM, numMissingDelim)).append(CSV_FIELD_DEIM)
+            groupCsv.append(value).append(StringUtils.repeat(CSV_FIELD_DEIM, numMissingDelim))
+                    .append(CSV_FIELD_DEIM)
                     .append(sumString).append(CSV_ROW_SEP);
         });
 
