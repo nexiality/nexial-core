@@ -40,7 +40,6 @@ class RdbmsCommand : BaseCommand() {
     private val maxSqlDisplayLength = 200
 
     lateinit var dataAccess: DataAccess
-    // var verbose: Boolean = false
 
     override fun init(context: ExecutionContext) {
         super.init(context)
@@ -61,12 +60,17 @@ class RdbmsCommand : BaseCommand() {
         // so for that reason, we are no longer insisting on the use of standard ANSI sql
         // requires(dataAccess.validSQL(query), "invalid sql", sql);
 
-        val result = dataAccess.execute(query, resolveDao(db)) ?: return StepResult.fail(
+        try {
+            val result = dataAccess.execute(query, resolveDao(db)) ?: return StepResult.fail(
                 "FAILED TO EXECUTE SQL '$sql': no result found")
-        context.setData(`var`, result)
+            context.setData(`var`, result)
 
-        log("executed query in ${result.elapsedTime} ms with " +
-            if (result.hasError()) "ERROR ${result.error}" else "${result.rowCount} row(s)")
+            log("executed query in ${result.elapsedTime} ms with " +
+                if (result.hasError()) "ERROR ${result.error}" else "${result.rowCount} row(s)")
+        } finally {
+            // done with connection... probably good idea to remove mongo-specific trust store to avoid SSL issue elsewhere
+            System.clearProperty("javax.net.ssl.trustStore")
+        }
 
         return StepResult.success("executed SQL '$sql'; stored result as \${$`var`}")
     }
@@ -111,6 +115,9 @@ class RdbmsCommand : BaseCommand() {
             return StepResult.success("${msgPrefix}no result saved")
         } catch (e: Exception) {
             return StepResult.fail("FAIL $msgPrefix: ${e.message}")
+        } finally {
+            // done with connection... probably good idea to remove mongo-specific trust store to avoid SSL issue elsewhere
+            System.clearProperty("javax.net.ssl.trustStore")
         }
     }
 
@@ -228,6 +235,9 @@ class RdbmsCommand : BaseCommand() {
             return StepResult.success("$msgPrefix output saved to $outDir")
         } catch (e: Exception) {
             return StepResult.fail("FAIL $msgPrefix: ${e.message}")
+        } finally {
+            // done with connection... probably good idea to remove mongo-specific trust store to avoid SSL issue elsewhere
+            System.clearProperty("javax.net.ssl.trustStore")
         }
     }
 
@@ -250,6 +260,9 @@ class RdbmsCommand : BaseCommand() {
             return StepResult.success("executed SQL '$sql'; stored result to '$outputFile'")
         } catch (e: IOException) {
             return StepResult.fail("Error when executing '$sql': ${e.message}")
+        } finally {
+            // done with connection... probably good idea to remove mongo-specific trust store to avoid SSL issue elsewhere
+            System.clearProperty("javax.net.ssl.trustStore")
         }
     }
 

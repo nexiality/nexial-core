@@ -18,12 +18,12 @@
 package org.nexial.core.variable;
 
 import java.util.*;
+import javax.validation.constraints.NotNull;
 
 import org.apache.commons.collections4.set.ListOrderedSet;
-import org.jetbrains.annotations.NotNull;
 
 public class OrderedKeyProperties extends Properties {
-    private ListOrderedSet<String> keys = new ListOrderedSet<>();
+    private final ListOrderedSet<String> keys = new ListOrderedSet<>();
 
     public static class KeyEnumeration<E> implements Enumeration<E> {
         private final Iterator<E> iterator;

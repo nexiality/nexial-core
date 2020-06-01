@@ -527,6 +527,19 @@ public class TextUtilsTest {
     }
 
     @Test
+    public void removeEndRepeatedly() throws Exception {
+        Assert.assertEquals("", TextUtils.removeEndRepeatedly(null, null));
+        Assert.assertEquals("", TextUtils.removeEndRepeatedly(null, ""));
+        Assert.assertEquals("", TextUtils.removeEndRepeatedly("", null));
+        Assert.assertEquals("", TextUtils.removeEndRepeatedly("", " "));
+        Assert.assertEquals("", TextUtils.removeEndRepeatedly("", "\t"));
+        Assert.assertEquals("\t", TextUtils.removeEndRepeatedly("\t", " "));
+        Assert.assertEquals("", TextUtils.removeEndRepeatedly("     ", " "));
+        Assert.assertEquals("Username", TextUtils.removeEndRepeatedly("Username . . . . . .", " ."));
+        Assert.assertEquals("Username . . . . . .:", TextUtils.removeEndRepeatedly("Username . . . . . .:", " ."));
+    }
+
+    @Test
     public void sanitizePhoneNumber() throws Exception {
         try {
             TextUtils.sanitizePhoneNumber(null);

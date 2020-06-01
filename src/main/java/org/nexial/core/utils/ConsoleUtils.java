@@ -90,6 +90,12 @@ public final class ConsoleUtils {
     }
 
     @SuppressWarnings("PMD.SystemPrintln")
+    public static void log(String id, String format, Object... args) {
+        if (System.out == null) { throw new RuntimeException("System.out is null!"); }
+        log(id, String.format(format, args));
+    }
+
+    @SuppressWarnings("PMD.SystemPrintln")
     public static void error(String msg) { error(null, msg); }
 
     @SuppressWarnings("PMD.SystemPrintln")
@@ -99,6 +105,12 @@ public final class ConsoleUtils {
         String label = StringUtils.isNotBlank(id) ? "[" + id + "] " : "";
         System.err.println(DateUtility.getCurrentTimeForLogging() + " >> " + label + msg);
         logAs(ERROR, label + msg);
+    }
+
+    @SuppressWarnings("PMD.SystemPrintln")
+    public static void error(String id, String format, Object... args) {
+        if (System.err == null) { throw new RuntimeException("System.err is null!"); }
+        error(id, String.format(format, args));
     }
 
     @SuppressWarnings("PMD.SystemPrintln")

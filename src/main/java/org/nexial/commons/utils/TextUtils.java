@@ -778,6 +778,15 @@ public final class TextUtils {
         return text;
     }
 
+    @NotNull
+    public static String removeEndRepeatedly(String text, String endWith) {
+        if (StringUtils.isEmpty(text)) { return ""; }
+        if (StringUtils.isEmpty(endWith)) { return ""; }
+
+        while (StringUtils.endsWith(text, endWith)) { text = StringUtils.removeEnd(text, endWith); }
+        return text;
+    }
+
     public static String xpathFriendlyQuotes(String name) {
         if (name == null) { return "''"; }
         if (StringUtils.isBlank(name)) { return "'" + name + "'"; }

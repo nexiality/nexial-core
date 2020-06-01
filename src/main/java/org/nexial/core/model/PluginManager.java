@@ -18,10 +18,10 @@ package org.nexial.core.model;
 
 import java.util.HashMap;
 import java.util.Map;
+import javax.validation.constraints.NotNull;
 
 import org.apache.commons.collections4.MapUtils;
 import org.apache.commons.lang3.StringUtils;
-import org.jetbrains.annotations.NotNull;
 import org.nexial.core.plugins.NexialCommand;
 import org.nexial.core.plugins.RequireBrowser;
 import org.nexial.core.plugins.web.Browser;
@@ -97,6 +97,10 @@ public class PluginManager implements ApplicationContextAware {
                 nexialCommand = initialized.get(nsTarget);
                 isInitialized = true;
             } else {
+                nexialCommand = plugins.get(target);
+
+                // not sure why we need to (re)initialize command instance again?
+                /*
                 // command not yet initialized or was never referenced (until now)
                 try {
                     // new instance based on the original command copy
@@ -108,6 +112,7 @@ public class PluginManager implements ApplicationContextAware {
                     ConsoleUtils.error(error);
                     throw new RuntimeException(error);
                 }
+                */
                 nexialCommand.setProfile(profile);
             }
         }
