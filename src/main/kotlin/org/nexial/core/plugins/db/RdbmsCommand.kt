@@ -70,6 +70,7 @@ class RdbmsCommand : BaseCommand() {
         } finally {
             // done with connection... probably good idea to remove mongo-specific trust store to avoid SSL issue elsewhere
             System.clearProperty("javax.net.ssl.trustStore")
+            System.clearProperty("javax.net.ssl.trustStorePassword")
         }
 
         return StepResult.success("executed SQL '$sql'; stored result as \${$`var`}")
@@ -118,6 +119,7 @@ class RdbmsCommand : BaseCommand() {
         } finally {
             // done with connection... probably good idea to remove mongo-specific trust store to avoid SSL issue elsewhere
             System.clearProperty("javax.net.ssl.trustStore")
+            System.clearProperty("javax.net.ssl.trustStorePassword")
         }
     }
 
@@ -238,6 +240,7 @@ class RdbmsCommand : BaseCommand() {
         } finally {
             // done with connection... probably good idea to remove mongo-specific trust store to avoid SSL issue elsewhere
             System.clearProperty("javax.net.ssl.trustStore")
+            System.clearProperty("javax.net.ssl.trustStorePassword")
         }
     }
 
@@ -263,6 +266,7 @@ class RdbmsCommand : BaseCommand() {
         } finally {
             // done with connection... probably good idea to remove mongo-specific trust store to avoid SSL issue elsewhere
             System.clearProperty("javax.net.ssl.trustStore")
+            System.clearProperty("javax.net.ssl.trustStorePassword")
         }
     }
 

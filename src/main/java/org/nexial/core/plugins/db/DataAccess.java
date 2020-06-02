@@ -226,8 +226,8 @@ public class DataAccess implements ApplicationContextAware {
         if (expandDoc) { urlOptions.put("expand", "true"); }
 
         // additional security consideration when connecting to database... mostly for cloud/SaaS -based db
-        String trustStore = context.getStringData(OPT_DB_TRUST_STORE);
-        String trustStorePassword = context.getStringData(OPT_DB_TRUST_STORE_PWD);
+        String trustStore = context.getStringData(db + OPT_DB_TRUST_STORE);
+        String trustStorePassword = context.getStringData(db + OPT_DB_TRUST_STORE_PWD);
 
         // special treatment for AWS DocumentDB
         // https://docs.aws.amazon.com/documentdb/latest/developerguide/connect_programmatically.html#connect_programmatically-tls_enabled
@@ -240,8 +240,8 @@ public class DataAccess implements ApplicationContextAware {
                 jksPassword = trustStorePassword;
             } else {
                 jksLocation = StringUtils.appendIfMissing(context.getProject().getNexialHome(), separator) +
-                              "bin" + separator + "rds-truststore.jks";
-                jksPassword = "nexial_mongo";
+                              DEF_DOCUMENTDB_JKS_RELPATH;
+                jksPassword = DEF_DOCUMENTDB_JKS_PWD;
             }
 
             ConsoleUtils.log("detect use of DocumentDB; adding AWS JKS to trust store: " + jksLocation);

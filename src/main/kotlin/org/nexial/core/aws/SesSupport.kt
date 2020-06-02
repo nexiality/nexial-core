@@ -21,9 +21,12 @@ import com.amazonaws.regions.Regions.DEFAULT_REGION
 import com.amazonaws.services.simpleemail.AmazonSimpleEmailServiceAsyncClientBuilder
 import com.amazonaws.services.simpleemail.model.*
 import org.apache.commons.collections4.CollectionUtils
+import org.apache.commons.lang3.BooleanUtils
 import org.apache.commons.lang3.StringUtils
 import org.jsoup.Jsoup
 import org.nexial.core.NexialConst.DEF_FILE_ENCODING
+import org.nexial.core.NexialConst.Mailer.SES_ENFORCE_NO_CERT
+import org.nexial.core.SystemVariables.getDefaultBool
 import org.nexial.core.utils.ConsoleUtils
 import java.util.regex.Pattern
 import java.util.regex.Pattern.DOTALL
@@ -77,6 +80,11 @@ class SesSupport : AwsSupport() {
         val region = if (this.region == null) DEFAULT_REGION else this.region
         ConsoleUtils.log("invoking AWS SES on ${region.description}")
 
+        if (BooleanUtils.toBoolean(System.getProperty(SES_ENFORCE_NO_CERT, "${getDefaultBool(SES_ENFORCE_NO_CERT)}"))) {
+            System.clearProperty("javax.net.ssl.trustStore")
+            System.clearProperty("javax.net.ssl.trustStorePassword")
+        }
+
         val client = AmazonSimpleEmailServiceAsyncClientBuilder.standard()
             .withRegion(region)
             .withCredentials(resolveCredentials(region))
@@ -86,9 +94,10 @@ class SesSupport : AwsSupport() {
         client.sendEmailAsync(request, object : AsyncHandler<SendEmailRequest, SendEmailResult> {
             override fun onError(e: Exception) {
                 ConsoleUtils.error("FAILED to send email via AWS SES: ${e.message}" +
-                                   if (StringUtils.contains(e.message, ERR_UNVERIFIED_DOMAIN))
-                                       "\n$MSG_UNVERIFIED_DOMAIN"
+                                   if (StringUtils.contains(e.message,
+                                                            ERR_UNVERIFIED_DOMAIN)) "\n$MSG_UNVERIFIED_DOMAIN"
                                    else "")
+                e.printStackTrace()
             }
 
             override fun onSuccess(request: SendEmailRequest, sendEmailResult: SendEmailResult) {

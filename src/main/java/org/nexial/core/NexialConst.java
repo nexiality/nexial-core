@@ -1077,6 +1077,7 @@ public final class NexialConst {
             SES_PREFIX + AWS_SES_BCC,
             SES_PREFIX + AWS_SES_CONFIG_SET,
             SES_PREFIX + AWS_XMAILER);
+        public static final String SES_ENFORCE_NO_CERT = registerSysVar(NAMESPACE + "sesNoCert", true);
 
         // enable for email notification?
         public static final List<String> MAILER_KEYS =
@@ -1382,6 +1383,8 @@ public final class NexialConst {
         public static final String OPT_DB_TRUST_STORE = ".trustStore";
         public static final String OPT_DB_TRUST_STORE_PWD = ".trustStorePassword";
         public static final String OPT_IS_DOCUMENTDB = ".isDocumentDB";
+        public static final String DEF_DOCUMENTDB_JKS_RELPATH = "bin" + separator + "rds-truststore.jks";
+        public static final String DEF_DOCUMENTDB_JKS_PWD = "nexial_mongo";
 
         private Rdbms() {}
 
