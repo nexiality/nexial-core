@@ -230,20 +230,24 @@ public class WebCommand extends BaseCommand implements CanTakeScreenshot, CanLog
 
     public StepResult assertNotChecked(String locator) { return new StepResult(!isChecked(locator)); }
 
-    public StepResult checkAll(String locator) {
+    public StepResult checkAll(String locator, String waitMs) {
+        requiresInteger(waitMs, "invalid waitMs", waitMs);
         String script = "if (arguments[0].hasAttribute('type','checkbox') && !arguments[0].hasAttribute('checked')) {" +
                         "   arguments[0].click(); " +
                         "}";
-        return execJsOverFreshElements(locator, script, (int) context.getPollWaitMs()) ?
+        int waitTime = NumberUtils.toInt(waitMs);
+        return execJsOverFreshElements(locator, script, waitTime) ?
                StepResult.success("CheckBox elements (" + locator + ") are checked") :
                StepResult.fail("Check FAILED on element(s) '" + locator + "'");
     }
 
-    public StepResult uncheckAll(String locator) {
+    public StepResult uncheckAll(String locator, String waitMs) {
+        requiresInteger(waitMs, "invalid waitMs", waitMs);
         String script = "if (arguments[0].hasAttribute('type','checkbox') && arguments[0].hasAttribute('checked')) {" +
                         "   arguments[0].click();" +
                         "}";
-        return execJsOverFreshElements(locator, script, (int) context.getPollWaitMs()) ?
+        int waitTime = NumberUtils.toInt(waitMs);
+        return execJsOverFreshElements(locator, script, waitTime) ?
                StepResult.success("CheckBox elements (" + locator + ") are unchecked") :
                StepResult.fail("Uncheck FAILED on element(s) '" + locator + "'");
     }
@@ -2222,7 +2226,8 @@ public class WebCommand extends BaseCommand implements CanTakeScreenshot, CanLog
             if (CollectionUtils.size(elements) > i) {
                 ConsoleUtils.log("\t...executing JavaScript over element " + (i + 1));
                 jsExecutor.executeScript(script, elements.get(i));
-                waitFor(inBetweenWaitMs);
+                // less than 100 ms is not waiting...
+                if (inBetweenWaitMs > 100) { waitFor(inBetweenWaitMs); }
             }
         }
 

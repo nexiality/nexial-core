@@ -2673,8 +2673,7 @@ public class ExpressionProcessorTest {
                      "United Arab Emirates,12000\n" +
                      "United Kingdom,144000\n" +
                      "United States,750000",
-                     subject.process("[CSV(" + file + ") => parse(header=true) groupSum(Country,Price) text]")
-                    );
+                     subject.process("[CSV(" + file + ") => parse(header=true) groupSum(Country,Price) text]"));
     }
 
     @Test
