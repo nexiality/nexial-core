@@ -28,7 +28,10 @@ import javax.validation.constraints.NotNull;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.collections4.IterableUtils;
 import org.apache.commons.io.FileUtils;
-import org.apache.commons.lang3.*;
+import org.apache.commons.lang3.ArrayUtils;
+import org.apache.commons.lang3.BooleanUtils;
+import org.apache.commons.lang3.ObjectUtils;
+import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.math.NumberUtils;
 import org.apache.commons.lang3.tuple.Pair;
 import org.apache.poi.openxml4j.exceptions.InvalidFormatException;
@@ -54,8 +57,8 @@ import org.nexial.core.ExecutionThread;
 import org.nexial.core.excel.ext.CellTextReader;
 import org.nexial.core.model.ExecutionContext;
 import org.nexial.core.utils.ConsoleUtils;
+import org.nexial.core.utils.OutputFileUtils;
 
-import static java.io.File.separator;
 import static org.apache.commons.lang3.SystemUtils.*;
 import static org.apache.poi.poifs.filesystem.FileMagic.OLE2;
 import static org.apache.poi.ss.SpreadsheetVersion.EXCEL2007;
@@ -77,12 +80,12 @@ import static org.nexial.core.excel.ExcelStyleHelper.*;
  */
 public class Excel {
     public static final int MIN_EXCEL_FILE_SIZE = 2 * 1024;
-    private static boolean verboseInstantiation = false;
+    private static final boolean verboseInstantiation = false;
 
     float _cellSpacing = 5.3f;
 
     private File file;
-    private XSSFWorkbook workbook;
+    private final XSSFWorkbook workbook;
     /** all worksheets in the excel represented by the file parameter */
     private List<XSSFSheet> allsheets;
     /** list all existing cell styles in the excel file */
@@ -94,8 +97,8 @@ public class Excel {
     private boolean retainCellType;
 
     public class Worksheet {
-        private XSSFSheet sheet;
-        private String name;
+        private final XSSFSheet sheet;
+        private final String name;
 
         Worksheet(XSSFSheet sheet) {
             assert sheet != null;
@@ -737,7 +740,7 @@ public class Excel {
     }
 
     public class Style {
-        private XSSFFont font;
+        private final XSSFFont font;
 
         public Style(XSSFFont font) { this.font = font; }
 
@@ -1421,11 +1424,7 @@ public class Excel {
     private static File duplicateInTemp(File file) throws IOException {
         if (file == null || !file.exists() || !file.canRead()) { return null; }
 
-        File tmpDir = SystemUtils.getJavaIoTmpDir();
-        // use random alphabetic to avoid collision in parallel processing
-        File tmpFile = new File((tmpDir.getAbsolutePath() + separator +
-                                 RandomStringUtils.randomAlphabetic(5)) + separator +
-                                file.getName());
+        File tmpFile = OutputFileUtils.prependRandomizedTempDirectory(file.getName());
 
         if (StringUtils.equals(file.getAbsolutePath(), tmpFile.getAbsolutePath())) { return file; }
 

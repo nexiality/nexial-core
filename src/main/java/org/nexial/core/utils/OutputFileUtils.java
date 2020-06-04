@@ -29,7 +29,9 @@ import javax.validation.constraints.NotNull;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang3.ArrayUtils;
+import org.apache.commons.lang3.RandomStringUtils;
 import org.apache.commons.lang3.StringUtils;
+import org.apache.commons.lang3.SystemUtils;
 import org.apache.commons.lang3.math.NumberUtils;
 import org.nexial.commons.utils.DateUtility;
 import org.nexial.commons.utils.FileUtil;
@@ -436,6 +438,16 @@ public final class OutputFileUtils {
             ConsoleUtils.error("Unable to create log file (" + log + ") for the exception thrown: " + ex.getMessage());
         }
         return log;
+    }
+
+    @NotNull
+    public static File prependRandomizedTempDirectory(String filename) {
+        if (StringUtils.isBlank(filename)) { throw new IllegalArgumentException("Invalid filename '" + filename + "'");}
+
+        File tmpDir = SystemUtils.getJavaIoTmpDir();
+        // use random alphabetic to avoid collision in parallel processing
+        return new File((tmpDir.getAbsolutePath() + separator + RandomStringUtils.randomAlphabetic(5)) + separator +
+                        filename);
     }
 
     /** could be timestamp, browser or step-n-iteration */

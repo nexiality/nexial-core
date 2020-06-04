@@ -609,6 +609,28 @@ public class WebCommand extends BaseCommand implements CanTakeScreenshot, CanLog
         }
     }
 
+    public StepResult assertElementDisabled(final String locator) {
+        WebElement element = findElement(locator);
+        if (element == null) {
+            String msg = String.format("Element not found at '%s'", locator);
+            ConsoleUtils.log(msg);
+            return StepResult.fail(msg);
+        }
+
+        try {
+            if (!element.isEnabled() || !element.isDisplayed()) {
+                return StepResult.success("Element '%s' found to be disabled as expected", locator);
+            } else {
+                return StepResult.fail("Element '%s' is NOT disabled", locator);
+            }
+        } catch (StaleElementReferenceException e) {
+            // oops.. it ran/went away...
+            String msg = String.format("element '%s' is not longer available or attached to this locator", locator);
+            ConsoleUtils.log(msg);
+            return StepResult.fail(msg);
+        }
+    }
+
     public StepResult saveSelectedText(String var, String locator) { return getSelectedOptions(var, locator, true); }
 
     public StepResult saveSelectedValue(String var, String locator) { return getSelectedOptions(var, locator, false); }

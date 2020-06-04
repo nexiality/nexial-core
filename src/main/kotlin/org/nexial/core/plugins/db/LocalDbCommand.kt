@@ -18,10 +18,10 @@ package org.nexial.core.plugins.db
 
 import org.apache.commons.io.FileUtils
 import org.apache.commons.lang3.StringUtils
+import org.nexial.commons.utils.FileUtil
 import org.nexial.commons.utils.RegexUtils
 import org.nexial.commons.utils.TextUtils
-import org.nexial.core.NexialConst.CSV_MAX_COLUMNS
-import org.nexial.core.NexialConst.CSV_MAX_COLUMN_WIDTH
+import org.nexial.core.NexialConst.*
 import org.nexial.core.NexialConst.Rdbms.DAO_PREFIX
 import org.nexial.core.excel.ExcelConfig.MSG_SCREENCAPTURE
 import org.nexial.core.model.ExecutionContext
@@ -107,14 +107,14 @@ class LocalDbCommand : BaseCommand() {
         // 1. find DDL SQL for `source`
         val sql = "SELECT sql FROM SQLITE_MASTER WHERE TYPE='table' AND lower(name)='${source.toLowerCase()}';"
         val result = rdbms.dataAccess.execute(sql, dao) ?: return StepResult.fail(
-                "FAILED TO DETERMINE DDL SQL for $source: no result found")
+            "FAILED TO DETERMINE DDL SQL for $source: no result found")
 
         if (result.isEmpty) return StepResult.fail("Source table '$source' not found in localdb")
         if (result.hasError()) return StepResult.fail("Source table '$source' not found in localdb: ${result.error}")
 
         // 2. convert to DDL for `target`
         if (result.data[0]["sql"] == null) return StepResult.fail(
-                "Unable to determine the CREATE SQL for source table '$source'")
+            "Unable to determine the CREATE SQL for source table '$source'")
 
         val ddl = RegexUtils.replace(result.data[0]["sql"], "(CREATE TABLE\\s+)([A-Za-z0-9_]+)(.+)", "\$1$target\$3")
 
@@ -136,7 +136,7 @@ class LocalDbCommand : BaseCommand() {
         if (!query.type.hasResultset()) return StepResult.fail("SQL '$sql' MUST return query result")
 
         val sourceDao = rdbms.dataAccess.resolveDao(sourceDb) ?: return StepResult.fail(
-                "Unable to connection to source database '$sourceDb'")
+            "Unable to connection to source database '$sourceDb'")
 
         context.setData(`var`, sourceDao.importResults(query, dao, SqliteTableSqlGenerator(table)))
         return StepResult.success("Query result successfully imported from '$sourceDb' to localdb '$table'")
@@ -188,8 +188,8 @@ class LocalDbCommand : BaseCommand() {
 
         // 4. if target table not exist, create it
         val tableInfo = dao.executeSqls(SqlComponent.toList(
-                "SELECT name, \"notnull\" AS 'not_null', dflt_value FROM pragma_table_info('$table') ORDER BY cid;" +
-                "SELECT upper(name) || '=' || dflt_value AS 'defaults' FROM pragma_table_info('$table') WHERE dflt_value IS NOT NULL"))
+            "SELECT name, \"notnull\" AS 'not_null', dflt_value FROM pragma_table_info('$table') ORDER BY cid;" +
+            "SELECT upper(name) || '=' || dflt_value AS 'defaults' FROM pragma_table_info('$table') WHERE dflt_value IS NOT NULL"))
 
         val columns = if (tableInfo.rowCount < 1) {
             // target table does not exist, let's create it
@@ -208,14 +208,14 @@ class LocalDbCommand : BaseCommand() {
             val normalizedCsvHeaders = headers.map { it.toLowerCase() }.sorted()
 
             TextUtils.toString(
-                    if (normalizedDefinedColumns.containsAll(normalizedCsvHeaders)) {
-                        // all CSV headers are found as column name in the existing table. We'll use name-matching mapping
-                        headers
-                    } else {
-                        // not all CSV headers are found in existing table as column. We'll use left-to-right mapping
-                        definedColumns.subList(0, headers.size)
-                    }.map { treatColumnName(it) }
-                    , ",")
+                if (normalizedDefinedColumns.containsAll(normalizedCsvHeaders)) {
+                    // all CSV headers are found as column name in the existing table. We'll use name-matching mapping
+                    headers
+                } else {
+                    // not all CSV headers are found in existing table as column. We'll use left-to-right mapping
+                    definedColumns.subList(0, headers.size)
+                }.map { treatColumnName(it) }
+                , ",")
         }
 
         val defaultValues = if (tableInfo.rowCount < 1)
@@ -264,6 +264,33 @@ class LocalDbCommand : BaseCommand() {
 
     fun exportCSV(sql: String, output: String): StepResult = rdbms.saveResult(dbName, sql, output)
 
+    fun queryAsCSV(`var`: String, sql: String): StepResult {
+        requiresValidAndNotReadOnlyVariableName(`var`)
+        requiresNotBlank(sql, "invalid sql", sql)
+
+        // prevent previous `var` content shown as current
+        context.removeData(`var`)
+
+        // export to CSV file
+        val output = OutputFileUtils.prependRandomizedTempDirectory("$target.toCSV.csv")
+        val result = rdbms.saveResult(dbName, sql, output.absolutePath)
+        if (result.failed()) {
+            return StepResult.fail("Unable to transform query result to CSV: " + result.message)
+        }
+
+        if (!FileUtil.isFileReadable(output, 5)) {
+            return StepResult.fail("Unable to transform query result to CSV")
+        }
+
+        // then read it back as var
+        context.setData(`var`, FileUtils.readFileToString(output, DEF_CHARSET))
+
+        // before return, remove CSV file (cover our tracks)
+        FileUtils.deleteDirectory(output.parentFile)
+
+        return StepResult.success("Query result saved to $`var`")
+    }
+
     fun exportJSON(sql: String, output: String, header: String): StepResult {
         requiresNotBlank(sql, "invalid sql", sql)
         requiresNotBlank(output, "invalid output", output)
@@ -274,22 +301,13 @@ class LocalDbCommand : BaseCommand() {
             StepResult {
         requiresNotBlank(sql, "invalid sql", sql)
         requiresNotBlank(output, "invalid output", output)
-        return postExport(dao.saveAsXML(sql,
-                                        File(output),
-                                        StringUtils.defaultIfEmpty(root, "root"),
-                                        StringUtils.defaultIfEmpty(row, "row"),
-                                        StringUtils.defaultIfEmpty(cell, "cell")),
-                          output)
+        return postExport(dao.saveAsXML(sql, File(output), root, row, cell), output)
     }
 
     fun exportEXCEL(sql: String, output: String, sheet: String = "Sheet1", start: String = "A1"): StepResult {
         requiresNotBlank(sql, "invalid sql", sql)
         requiresNotBlank(output, "invalid output", output)
-        return postExport(dao.saveAsEXCEL(sql,
-                                          File(output),
-                                          StringUtils.defaultIfEmpty(sheet, "Sheet1"),
-                                          StringUtils.defaultIfEmpty(start, "A1")),
-                          output)
+        return postExport(dao.saveAsEXCEL(sql, File(output), sheet, start), output)
     }
 
     private fun postExport(result: JdbcResult, output: String): StepResult {
