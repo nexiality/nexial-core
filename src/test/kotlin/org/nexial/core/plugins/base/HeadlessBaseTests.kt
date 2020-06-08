@@ -89,14 +89,24 @@ class HeadlessBaseTests : ExcelBasedTests() {
     @Test
     @Throws(Exception::class)
     fun repeatUntilAssetTests() {
-        val executionSummary = testViaExcel("unitTest_repeatUntil_assert.xlsx")
-        assertPassFail(executionSummary, "Scenario", TestOutcomeStats.allPassed())
+        val executionSummary = testViaExcel("unitTest_repeatUntil_assert.xlsx", "repeatUntil")
+        assertPassFail(executionSummary, "repeatUntil", TestOutcomeStats.allPassed())
 
         // in this test, we expects no screenshot to be generated
         val outputDir = System.getProperty("nexial.outBase")
         val captureDir = File(StringUtils.appendIfMissing(outputDir, "/") + "captures/")
         val screenshots = FileUtils.listFiles(captureDir, arrayOf("png"), false)
         assertTrue(screenshots == null || screenshots.isEmpty())
+    }
+
+    /**
+     * test that the combination of section and repeat-until won't throw off the correct number of steps to skip
+     */
+    @Test
+    @Throws(Exception::class)
+    fun repeatUntilInsideSectionAssetTests() {
+        val executionSummary = testViaExcel("unitTest_repeatUntil_assert.xlsx", "section_with_repeatUntil")
+        assertPassFail(executionSummary, "section_with_repeatUntil", TestOutcomeStats.allPassed())
     }
 
     @Test

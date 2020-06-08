@@ -1434,6 +1434,8 @@ public class WebCommand extends BaseCommand implements CanTakeScreenshot, CanLog
 
         ensureReady();
 
+        alert.preemptiveDismissAlert();
+
         if (browser.isRunIE()) {
             return StepResult.warnUnsupportedFeature("waitForPopUp", driver);
             // todo IE fix? need more testing
@@ -2842,6 +2844,8 @@ public class WebCommand extends BaseCommand implements CanTakeScreenshot, CanLog
 
     protected boolean waitForCondition(long maxWaitMs, Function<WebDriver, Object> condition) {
         ensureReady();
+
+        alert.preemptiveDismissAlert();
 
         FluentWait<WebDriver> waiter = newFluentWait();
 
