@@ -66,7 +66,7 @@ if NOT [%NEXIAL_OUTPUT%]==[] (
 
 REM run nexial now
 echo.
-%JAVA% -classpath %PROJECT_CLASSPATH%;%NEXIAL_CLASSES%;%NEXIAL_LIB%\nexial*.jar;%NEXIAL_LIB%\*;%USERPROFILE%\.nexial\jar\* %MAX_MEM% %JAVA_OPT% -Djava.library.path=%USERPROFILE%\.nexial\dll org.nexial.core.Nexial %*
+%JAVA% -classpath %PROJECT_CLASSPATH%;%NEXIAL_CLASSES%;%NEXIAL_LIB%\nexial*.jar;%NEXIAL_LIB%\*;"%USERPROFILE%\.nexial\jar\*" %MAX_MEM% %JAVA_OPT% -Djava.library.path="%USERPROFILE%\.nexial\dll" org.nexial.core.Nexial %*
 set NEXIAL_RC=%ERRORLEVEL%
 goto :exit
 
