@@ -238,9 +238,9 @@ public class AwsS3Helper {
         // assumes that the path before first / is the bucket
         bucketName = StringUtils.substringBefore(s3Path, S3_PATH_SEP);
         String path = StringUtils.substringAfter(s3Path, S3_PATH_SEP);
-        subDir = StringUtils.substringBefore(StringUtils.substringBefore(path, PREFIX_REGEX), "*");
+        subDir = StringUtils.substringBefore(StringUtils.substringBefore(path, REGEX_PREFIX), "*");
 
-        if (!StringUtils.contains(path, PREFIX_REGEX)) {
+        if (!StringUtils.contains(path, REGEX_PREFIX)) {
             // [bucket]
             // [bucket]/
             // [bucket]/subdir
@@ -267,7 +267,7 @@ public class AwsS3Helper {
     public static String toPattern(String path) {
         if (StringUtils.isEmpty(path)) { return StringUtils.defaultString(path); }
 
-        String delim = (StringUtils.startsWith(path, PREFIX_REGEX)) ? PREFIX_REGEX : (S3_PATH_SEP + PREFIX_REGEX);
+        String delim = (StringUtils.startsWith(path, REGEX_PREFIX)) ? REGEX_PREFIX : (S3_PATH_SEP + REGEX_PREFIX);
         int delimLength = delim.length();
 
         int regexStartPos = StringUtils.indexOf(path, delim);

@@ -32,7 +32,7 @@ import org.nexial.core.plugins.filevalidation.validators.ValidationsExecutor.Dat
 import org.nexial.core.utils.CheckUtils;
 import org.nexial.core.utils.ConsoleUtils;
 
-import static org.nexial.core.NexialConst.PREFIX_REGEX;
+import static org.nexial.core.NexialConst.REGEX_PREFIX;
 import static org.nexial.core.plugins.filevalidation.validators.ValidationsExecutor.DataType.*;
 import static org.nexial.core.plugins.filevalidation.validators.ValidationsExecutor.Severity.ERROR;
 import static org.nexial.core.plugins.filevalidation.validators.ValidationsExecutor.Severity.WARNING;
@@ -53,8 +53,8 @@ public class BasicValidator {
         CheckUtils.requiresNotNull(fieldValue, "Invalid field value", fieldValue);
 
         String dataType = StringUtils.trim(config.getDatatype());
-        if (StringUtils.startsWith(dataType, PREFIX_REGEX)) {
-            String regex = StringUtils.substringAfter(dataType, PREFIX_REGEX);
+        if (StringUtils.startsWith(dataType, REGEX_PREFIX)) {
+            String regex = StringUtils.substringAfter(dataType, REGEX_PREFIX);
             try {
                 final Pattern pattern = Pattern.compile(regex);
                 if (!pattern.matcher(fieldValue).matches()) { addDataTypeError(field, REGEX); }

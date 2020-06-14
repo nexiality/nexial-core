@@ -30,9 +30,10 @@ import org.apache.commons.io.filefilter.TrueFileFilter;
 import static java.io.File.separator;
 import static java.util.stream.Collectors.toList;
 import static org.apache.commons.lang3.StringUtils.*;
+import static org.nexial.core.NexialConst.REGEX_PREFIX;
 
 public class IOFilePathFilter implements FilePathFilter {
-    private IOFileFilter subDirFilter;
+    private final IOFileFilter subDirFilter;
 
     public IOFilePathFilter() { this(false); }
 
@@ -42,9 +43,7 @@ public class IOFilePathFilter implements FilePathFilter {
 
     @Override
     public List<String> filterFiles(String pattern) {
-        if (isBlank(pattern)) {
-            return null;
-        }
+        if (isBlank(pattern)) { return null;}
 
         File genericFile = new File(pattern);
 
@@ -54,11 +53,8 @@ public class IOFilePathFilter implements FilePathFilter {
                             .stream().map(File::getAbsolutePath).collect(toList());
         }
 
-        if (genericFile.isFile()) { // when the pattern is a complete file name like c:/xyz/abc/blah_doc.txt
-            return new ArrayList<String>() {{
-                add(pattern);
-            }};
-        }
+        // when the pattern is a complete file name like c:/xyz/abc/blah_doc.txt
+        if (genericFile.isFile()) { return new ArrayList<String>() {{ add(pattern); }}; }
 
         final String dir = substringBeforeLast(pattern, separator);
         final String lastElementOfPath = substringAfterLast(pattern, separator);

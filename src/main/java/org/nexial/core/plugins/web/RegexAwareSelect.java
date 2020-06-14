@@ -27,10 +27,10 @@ import org.openqa.selenium.NoSuchElementException;
 import org.openqa.selenium.WebElement;
 import org.openqa.selenium.support.ui.Select;
 
-import static org.nexial.core.NexialConst.PREFIX_REGEX;
+import static org.nexial.core.NexialConst.REGEX_PREFIX;
 
 public class RegexAwareSelect extends Select {
-    private WebElement element;
+    private final WebElement element;
 
     public RegexAwareSelect(WebElement element) {
         super(element);
@@ -39,14 +39,14 @@ public class RegexAwareSelect extends Select {
 
     @Override
     public void selectByVisibleText(String text) {
-        if (StringUtils.startsWith(text, PREFIX_REGEX)) {
+        if (StringUtils.startsWith(text, REGEX_PREFIX)) {
             List<WebElement> options = element.findElements(By.tagName("option"));
             if (CollectionUtils.isEmpty(options)) {
                 ConsoleUtils.log("target SELECT element contains NO child OPTION elements");
                 return;
             }
 
-            String regex = StringUtils.removeStart(text, PREFIX_REGEX);
+            String regex = StringUtils.removeStart(text, REGEX_PREFIX);
             if (StringUtils.isNotBlank(regex)) {
                 boolean matched = false;
                 for (WebElement option : options) {
@@ -80,14 +80,14 @@ public class RegexAwareSelect extends Select {
     public void deselectByVisibleText(String text) {
         if (!isMultiple()) {throw new UnsupportedOperationException("You may only deselect options of a multi-select");}
 
-        if (StringUtils.startsWith(text, PREFIX_REGEX)) {
+        if (StringUtils.startsWith(text, REGEX_PREFIX)) {
             List<WebElement> options = element.findElements(By.tagName("option"));
             if (CollectionUtils.isEmpty(options)) {
                 ConsoleUtils.log("target SELECT element contains NO child OPTION elements");
                 return;
             }
 
-            String regex = StringUtils.removeStart(text, PREFIX_REGEX);
+            String regex = StringUtils.removeStart(text, REGEX_PREFIX);
             if (StringUtils.isNotBlank(regex)) {
                 boolean matched = false;
                 for (WebElement option : options) {

@@ -29,18 +29,18 @@ import org.json.JSONObject;
 import org.nexial.commons.utils.RegexUtils;
 import org.nexial.core.utils.JSONPath.Option;
 
-import static org.nexial.core.NexialConst.PREFIX_REGEX;
+import static org.nexial.core.NexialConst.REGEX_PREFIX;
 import static org.nexial.core.utils.JsonUtils.isSimpleType;
 
 class JsonPathFilters {
     private static final String CONDITION_AND = " AND ";
     private static final String EQUAL = "=";
 
-    private String original;
-    private List<FilterKey> filters = new ArrayList<>();
+    private final String original;
+    private final List<FilterKey> filters = new ArrayList<>();
 
     private static class FilterKey {
-        private String original;
+        private final String original;
         private String key;
         private String value;
         private boolean regexOnKey;
@@ -73,13 +73,13 @@ class JsonPathFilters {
         public String toString() { return original; }
 
         protected void parseValue(String value) {
-            regexOnValue = StringUtils.startsWith(value, PREFIX_REGEX);
-            this.value = regexOnValue ? StringUtils.substringAfter(value, PREFIX_REGEX) : value;
+            regexOnValue = StringUtils.startsWith(value, REGEX_PREFIX);
+            this.value = regexOnValue ? StringUtils.substringAfter(value, REGEX_PREFIX) : value;
         }
 
         protected void parseKey(String key) {
-            regexOnKey = StringUtils.startsWith(key, PREFIX_REGEX);
-            this.key = regexOnKey ? StringUtils.substringAfter(key, PREFIX_REGEX) : key;
+            regexOnKey = StringUtils.startsWith(key, REGEX_PREFIX);
+            this.key = regexOnKey ? StringUtils.substringAfter(key, REGEX_PREFIX) : key;
         }
 
         protected boolean accept(String jsonValue) {
@@ -90,9 +90,9 @@ class JsonPathFilters {
         protected boolean accept(JSONObject json) {
             if (json == null) { return false; }
 
-            Iterator childKeys = json.keys();
+            Iterator<String> childKeys = json.keys();
             while (childKeys.hasNext()) {
-                String childKey = (String) childKeys.next();
+                String childKey = childKeys.next();
 
                 if (regexOnKey && RegexUtils.isExact(childKey, key) ||
                     !regexOnKey && StringUtils.equals(childKey, key)) {
@@ -222,9 +222,9 @@ class JsonPathFilters {
     }
 
     protected Object find(JSONObject json, JSONArray matched) {
-        Iterator childKeys = json.keys();
+        Iterator<String> childKeys = json.keys();
         while (childKeys.hasNext()) {
-            String childKey = (String) childKeys.next();
+            String childKey = childKeys.next();
             Object childValue = json.opt(childKey);
             if (isMatched(childKey, childValue)) { matched.put(childValue); }
         }
@@ -300,9 +300,9 @@ class JsonPathFilters {
     protected JSONObject removeMatches(JSONObject json) {
         if (json == null) { return json; }
 
-        Iterator childKeys = json.keys();
+        Iterator<String> childKeys = json.keys();
         while (childKeys.hasNext()) {
-            String childKey = (String) childKeys.next();
+            String childKey = childKeys.next();
             Object childValue = json.opt(childKey);
             if (isMatched(childKey, childValue)) { json.remove(childKey);}
         }

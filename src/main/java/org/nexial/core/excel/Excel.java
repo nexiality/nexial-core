@@ -1213,7 +1213,7 @@ public class Excel {
                 ExecutionContext context = ExecutionThread.get();
                 String spreadsheetExe = context == null ?
                                         System.getProperty(SPREADSHEET_PROGRAM, getDefault(SPREADSHEET_PROGRAM)) :
-                                        context.getStringData(SPREADSHEET_PROGRAM);
+                                        context.getStringData(SPREADSHEET_PROGRAM, getDefault(SPREADSHEET_PROGRAM));
                 if (StringUtils.equals(spreadsheetExe, SPREADSHEET_PROGRAM_WPS)) {
                     spreadsheetExe = context == null ? System.getProperty(WPS_EXE_LOCATION) :
                                      context.getStringData(WPS_EXE_LOCATION);

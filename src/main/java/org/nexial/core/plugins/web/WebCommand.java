@@ -2400,8 +2400,8 @@ public class WebCommand extends BaseCommand implements CanTakeScreenshot, CanLog
                 return StepResult.fail(msg + "CONTAINS blank, which is NOT expected");
             }
 
-            if (StringUtils.startsWithIgnoreCase(contains, PREFIX_REGEX)) {
-                boolean matched = RegexUtils.match(actual, StringUtils.substringAfter(contains, PREFIX_REGEX));
+            if (StringUtils.startsWithIgnoreCase(contains, REGEX_PREFIX)) {
+                boolean matched = RegexUtils.match(actual, StringUtils.substringAfter(contains, REGEX_PREFIX));
                 if (matched) {
                     if (expectsContains) { return StepResult.success(msg + "CONTAINS " + contains + " as EXPECTED"); }
                     return StepResult.fail(msg + "CONTAINS " + contains + ", which is NOT as expected");

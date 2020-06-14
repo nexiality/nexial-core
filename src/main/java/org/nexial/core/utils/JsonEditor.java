@@ -29,7 +29,7 @@ import org.nexial.commons.utils.TextUtils;
 
 import static org.json.JSONObject.NULL;
 import static org.nexial.core.NexialConst.NL;
-import static org.nexial.core.NexialConst.PREFIX_REGEX;
+import static org.nexial.core.NexialConst.REGEX_PREFIX;
 
 /**
  * Helper class to add or replace an existing JSON Document (JSONObject or JSONArray) via JSON Path.
@@ -56,7 +56,7 @@ public final class JsonEditor {
 
     /**
      * using {@code jsonPath}, find the appropriate position in {@code json} to add {@code data} into it.
-     *
+     * <p>
      * In some cases, the "add" operation would end up like an
      */
     public Object add(String json, String jsonPath, String data) {
@@ -87,11 +87,11 @@ public final class JsonEditor {
         }
 
         // 4 filter is not ordinal or single node; therefore it could be equality filter or REGEX filter
-        boolean regexFilter = StringUtils.startsWith(filter, PREFIX_REGEX);
+        boolean regexFilter = StringUtils.startsWith(filter, REGEX_PREFIX);
         if (regexFilter) {
             // regex is too complicated for now.. maybe later
             // todo: future -> we can enhance this method to support regex filter
-            String regex = StringUtils.removeStart(filter, PREFIX_REGEX);
+            String regex = StringUtils.removeStart(filter, REGEX_PREFIX);
             throw new RuntimeException("NOT YET IMPLEMENTED for REGEX filter" + NL +
                                        "\tjson=" + json + NL +
                                        "\tnodeName=" + nodeName + NL +
@@ -114,7 +114,7 @@ public final class JsonEditor {
     /**
      * add {@code data} to the {@code nodeName} of {@code json}.  Optionally, {@code jsonPath} will further the
      * traversal further down the hierarchy of the node value corresponding to {@code nodeName}.
-     *
+     * <p>
      * Note that {@code nodeName} does not contain filter
      */
     protected Object addToNode(String json, String nodeName, String jsonPath, String data) {
@@ -313,7 +313,7 @@ public final class JsonEditor {
      * <li>primitive - {@code boolean} if it's {@code true|false}, {@code number} if it can convert as a number,
      * and {@code string} otherwise.</li>
      * </ul>
-     *
+     * <p>
      * If {@code data} does not conform to the above expected, {@link RuntimeException} will be thrown.
      */
     protected Object addData(String jsonString, String data) {

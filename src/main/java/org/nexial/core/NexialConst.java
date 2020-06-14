@@ -36,7 +36,6 @@ import org.apache.commons.lang3.SystemUtils;
 import org.apache.commons.text.StringEscapeUtils;
 import org.jdom2.output.Format;
 import org.jdom2.output.XMLOutputter;
-import org.nexial.commons.utils.FilePathFilter;
 import org.nexial.commons.utils.FileUtil;
 import org.nexial.commons.utils.RegexUtils;
 import org.nexial.commons.utils.TextUtils;
@@ -238,7 +237,8 @@ public final class NexialConst {
     // public static final int MAX_VERBOSE_CHAR = 2000;
     public static final int MAX_VERBOSE_CHAR = 32760;
     public static final int MAX_FORMULA_CHAR = 8192;
-    public static final String PREFIX_REGEX = FilePathFilter.REGEX_PREFIX;
+    public static final String REGEX_PREFIX = "REGEX:";
+    public static final String CONTAIN_PREFIX = "CONTAIN:";
 
     // predefined messages
     public static final String MSG_PASS = ExcelConfig.MSG_PASS;

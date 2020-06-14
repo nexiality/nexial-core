@@ -30,7 +30,6 @@ import javax.validation.constraints.NotNull;
 @FunctionalInterface
 public interface FilePathFilter {
     String REGEX_FOR_ANY = ".*";
-    String REGEX_PREFIX = "REGEX:";
 
     /**
      * Filters the files based on the pattern provided.
@@ -58,19 +57,18 @@ public interface FilePathFilter {
     static String getRegexPatternForWildCardCriteria(final String criteria) {
         String filePattern = criteria;
         char[] chars = filePattern.toCharArray();
-        Set<Character> uniqueChars = new LinkedHashSet<>();
-        for (char c : chars) {
-            uniqueChars.add(c);
-        }
 
-        final Set<Character> nonAlphaNumericAndStar = uniqueChars.stream()
-                                                                 .filter(x -> !Character.isLetter(x)
-                                                                              && !Character.isDigit(x)
-                                                                              && !new HashSet<Character>() {{
-                                                                     add('*');
-                                                                     add('^');
-                                                                 }}.contains(x))
-                                                                 .collect(Collectors.toSet());
+        Set<Character> uniqueChars = new LinkedHashSet<>();
+        for (char c : chars) { uniqueChars.add(c); }
+
+        HashSet<Character> filter = new HashSet<Character>() {{
+            add('*');
+            add('^');
+        }};
+        final Set<Character> nonAlphaNumericAndStar =
+            uniqueChars.stream()
+                       .filter(x -> !Character.isLetter(x) && !Character.isDigit(x) && !filter.contains(x))
+                       .collect(Collectors.toSet());
 
         for (final Character x : nonAlphaNumericAndStar) {
             filePattern = filePattern.replace(String.valueOf(x),
@@ -79,7 +77,6 @@ public interface FilePathFilter {
 
         filePattern = filePattern.replace("^", String.format("[%s]{1}", "\\^"));
         filePattern = filePattern.replaceAll("\\*", REGEX_FOR_ANY);
-
         return filePattern;
     }
 }
