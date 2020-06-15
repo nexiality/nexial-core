@@ -2622,6 +2622,16 @@ public class WebCommand extends BaseCommand implements CanTakeScreenshot, CanLog
     //     }
     // }
 
+    protected List<WebElement> findElements(WebDriver driver, By by) {
+        alert.preemptiveDismissAlert();
+        return driver.findElements(by);
+    }
+
+    protected WebElement findElement(WebDriver driver, By by) {
+        alert.preemptiveDismissAlert();
+        return driver.findElement(by);
+    }
+
     protected int getElementCount(String locator) {
         List<WebElement> elements = findElements(locator);
         return CollectionUtils.isEmpty(elements) ? 0 : elements.size();
@@ -2634,7 +2644,7 @@ public class WebCommand extends BaseCommand implements CanTakeScreenshot, CanLog
 
         By by = locatorHelper.findBy(locator);
         try {
-            return shouldWait() ? newFluentWait().until(driver -> driver.findElements(by)) : driver.findElements(by);
+            return shouldWait() ? newFluentWait().until(driver -> findElements(driver, by)) : findElements(driver, by);
         } catch (NoSuchElementException e) {
             return null;
         }
@@ -2645,7 +2655,7 @@ public class WebCommand extends BaseCommand implements CanTakeScreenshot, CanLog
 
         By by = locatorHelper.findBy(locator);
         WebElement target = shouldWait() ?
-                            newFluentWait().until(driver -> driver.findElement(by)) : driver.findElement(by);
+                            newFluentWait().until(driver -> findElement(driver, by)) : findElement(driver, by);
         if (isHighlightEnabled() && target != null && target.isDisplayed()) { highlight(target); }
         return target;
     }
@@ -2684,15 +2694,16 @@ public class WebCommand extends BaseCommand implements CanTakeScreenshot, CanLog
 
     protected boolean isTextPresent(String text) {
         ensureReady();
-        return StringUtils.contains(driver.findElement(By.tagName("body")).getText(), text);
+        return StringUtils.contains(findElement(driver, By.tagName("body")).getText(), text);
     }
 
     protected StepResult getSelectedOptions(String var, String locator, boolean expectsText) {
         requiresValidAndNotReadOnlyVariableName(var);
 
-        List<WebElement> selected = getSelectElement(locator).getAllSelectedOptions();
-        String[] values = selected.stream().map(elem -> expectsText ? elem.getText() : elem.getAttribute("value"))
-                                  .toArray(String[]::new);
+        String[] values = getSelectElement(locator).getAllSelectedOptions()
+                                                   .stream()
+                                                   .map(ele -> expectsText ? ele.getText() : ele.getAttribute("value"))
+                                                   .toArray(String[]::new);
         if (ArrayUtils.isNotEmpty(values)) {
             context.setData(var, values);
         } else {
@@ -2780,7 +2791,7 @@ public class WebCommand extends BaseCommand implements CanTakeScreenshot, CanLog
 
             do {
                 sleep(MIN_STABILITY_WAIT_MS);
-
+                alert.preemptiveCheckAlert();
                 String newSource = driver.getPageSource();
 
                 if (isBrowserLoadComplete() && StringUtils.equals(oldSource, newSource)) {
@@ -2844,8 +2855,6 @@ public class WebCommand extends BaseCommand implements CanTakeScreenshot, CanLog
 
     protected boolean waitForCondition(long maxWaitMs, Function<WebDriver, Object> condition) {
         ensureReady();
-
-        alert.preemptiveDismissAlert();
 
         FluentWait<WebDriver> waiter = newFluentWait();
 
