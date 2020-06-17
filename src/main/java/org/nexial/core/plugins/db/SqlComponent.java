@@ -66,14 +66,14 @@ import static org.nexial.core.NexialConst.Rdbms.*;
  * </ul>
  */
 public class SqlComponent implements Serializable {
-    private String original;
+    private final String original;
     private Type type;
     private String comments;
     private String varName;
     private String sql;
 
     public enum Type {
-        SELECT, UPDATE, INSERT, DELETE, COMMIT, ROLLBACK, CALL, WITH, CREATE, DROP, VACUUM, UNKNOWN;
+        SELECT, UPDATE, INSERT, DELETE, COMMIT, ROLLBACK, CALL, WITH, CREATE, DROP, VACUUM, UNKNOWN, EXEC;
 
         public static Type toType(String keyword) { return Type.valueOf(StringUtils.upperCase(keyword)); }
 
@@ -83,7 +83,7 @@ public class SqlComponent implements Serializable {
 
         public boolean isRollback() { return this == ROLLBACK; }
 
-        public boolean isStoredProcedure() { return this == CALL; }
+        public boolean isStoredProcedure() { return this == CALL || this == EXEC; }
 
         public boolean isUpdate() {
             return this == UPDATE ||

@@ -61,8 +61,8 @@ class RdbmsCommand : BaseCommand() {
         // requires(dataAccess.validSQL(query), "invalid sql", sql);
 
         try {
-            val result = dataAccess.execute(query, resolveDao(db)) ?: return StepResult.fail(
-                "FAILED TO EXECUTE SQL '$sql': no result found")
+            val result = dataAccess.execute(query, resolveDao(db)) ?:
+                         return StepResult.fail("FAILED TO EXECUTE SQL '$sql': no result found")
             context.setData(`var`, result)
 
             log("executed query in ${result.elapsedTime} ms with " +
