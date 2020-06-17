@@ -23,9 +23,11 @@ import java.util.List;
 
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.builder.ToStringBuilder;
+import org.nexial.core.utils.ConsoleUtils;
 
 import static org.apache.commons.lang3.builder.ToStringStyle.SIMPLE_STYLE;
 import static org.nexial.core.NexialConst.Rdbms.*;
+import static org.nexial.core.plugins.db.SqlComponent.Type.UNKNOWN;
 
 /**
  * Encapsulation of a SQL component, which consists of:
@@ -153,6 +155,14 @@ public class SqlComponent implements Serializable {
         sql = StringUtils.trim(sqlBuffer.toString());
         sql = StringUtils.removeEnd(sql, ";");
         String sqlStart = StringUtils.upperCase(StringUtils.substringBefore(sql, " "));
-        if (StringUtils.isNotBlank(sqlStart)) { type = Type.toType(sqlStart); }
+        if (StringUtils.isNotBlank(sqlStart)) {
+            try {
+                type = Type.toType(sqlStart);
+            } catch (IllegalArgumentException e) {
+                type = UNKNOWN;
+                ConsoleUtils.log("Unknown SQL type from SQL: '" + sql + "'");
+            }
+
+        }
     }
 }
