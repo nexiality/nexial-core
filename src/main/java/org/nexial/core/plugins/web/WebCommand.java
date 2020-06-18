@@ -232,7 +232,7 @@ public class WebCommand extends BaseCommand implements CanTakeScreenshot, CanLog
 
     public StepResult checkAll(String locator, String waitMs) {
         requiresInteger(waitMs, "invalid waitMs", waitMs);
-        String script = "if (arguments[0].hasAttribute('type','checkbox') && !arguments[0].hasAttribute('checked')) {" +
+        String script = "if (arguments[0].hasAttribute('type','checkbox') && !arguments[0].checked) {" +
                         "   arguments[0].click(); " +
                         "}";
         int waitTime = NumberUtils.toInt(waitMs);
@@ -243,7 +243,7 @@ public class WebCommand extends BaseCommand implements CanTakeScreenshot, CanLog
 
     public StepResult uncheckAll(String locator, String waitMs) {
         requiresInteger(waitMs, "invalid waitMs", waitMs);
-        String script = "if (arguments[0].hasAttribute('type','checkbox') && arguments[0].hasAttribute('checked')) {" +
+        String script = "if (arguments[0].hasAttribute('type','checkbox') && arguments[0].checked) {" +
                         "   arguments[0].click();" +
                         "}";
         int waitTime = NumberUtils.toInt(waitMs);
