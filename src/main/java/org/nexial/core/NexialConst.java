@@ -413,6 +413,7 @@ public final class NexialConst {
 
         // step
         public static final String STEP_RESPONSE = NAMESPACE + "step.response";
+        public static final String STEP_COMMENT = NAMESPACE + "step.comment";
 
         // section
         public static final String SECTION_DESCRIPTION_PREFIX = "► ";

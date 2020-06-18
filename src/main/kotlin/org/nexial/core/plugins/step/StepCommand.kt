@@ -16,63 +16,87 @@
 
 package org.nexial.core.plugins.step
 
-import org.apache.commons.lang3.StringUtils
+import org.apache.commons.lang3.StringUtils.*
+import org.nexial.core.NexialConst.Data.STEP_COMMENT
 import org.nexial.core.NexialConst.Data.STEP_RESPONSE
 import org.nexial.core.model.StepResult
 import org.nexial.core.plugins.base.BaseCommand
 import org.nexial.core.utils.CheckUtils.requiresNotBlank
 import org.nexial.core.utils.ConsoleUtils
+import java.util.function.Function
 
-class StepCommand : BaseCommand() {
+open class StepCommand : BaseCommand() {
 
     override fun getTarget() = "step"
 
     fun perform(instructions: String): StepResult {
-        requiresNotBlank(instructions, "Invalid instruction(s)", instructions)
-
-        val comment = ConsoleUtils.pauseForStep(context, instructions, "PERFORM ACTION")
-        if (StringUtils.isNotBlank(comment)) log(comment)
-
-        // supports keyword FAIL
-        return when {
-            StringUtils.isBlank(comment)             -> StepResult.success("Step(s) performed")
-            StringUtils.startsWith(comment, "FAIL ") -> StepResult.fail(comment)
-            else                                     -> StepResult.success("Response received as '$comment'")
-        }
+        return performHelper(instructions, "PERFORM ACTION")
     }
 
     fun validate(prompt: String, responses: String, passResponses: String): StepResult {
-        requiresNotBlank(prompt, "Invalid prompt(s)", prompt)
-
-        val validationResponses = ConsoleUtils.pauseToValidate(context, prompt, responses, "VALIDATION")
-        val response = validationResponses?.get(0)
-        val comment = validationResponses?.get(1)
-
-        context.setData(STEP_RESPONSE, response)
-        if (StringUtils.isNotBlank(comment)) log(comment)
-
-        return if (StringUtils.isBlank(response)) {
-            StepResult.success("Empty response " +
-                               "${if (StringUtils.isBlank(passResponses)) "accepted as PASS" else "found"}. " +
-                               if (comment != null) "Comment: $comment" else "")
-        } else {
-            val pass = passResponses.split(context.textDelim).contains(response)
-            StepResult(pass,
-                       "Response is '$response'. ${if (comment != null) "Comment: $comment" else ""}",
-                       null)
-        }
+        return validateHelper(prompt, responses, passResponses, "VALIDATION")
     }
 
     fun observe(prompt: String): StepResult {
+        return observeHelper(prompt, "OBSERVATION")
+    }
+
+    protected fun performHelper(instructions: String, header: String): StepResult {
+        clearContextData()
+        requiresNotBlank(instructions, "Invalid instruction(s)", instructions)
+
+        val comment = ConsoleUtils.pauseForStep(context, instructions, header)
+
+        if (isBlank(comment)) log("Step(s) performed")
+        return computeStepResult("", comment, isBlank(comment) || !startsWith(comment, "FAIL "), "")
+    }
+
+    protected fun validateHelper(prompt: String, responses: String, passResponses: String, header: String): StepResult {
+        clearContextData()
         requiresNotBlank(prompt, "Invalid prompt(s)", prompt)
 
-        val response = ConsoleUtils.pauseForInput(context, prompt, "OBSERVATION")
-        context.setData(STEP_RESPONSE, response)
+        val validationResponses = ConsoleUtils.pauseToValidate(context, prompt, responses, header)
+        val response = validationResponses?.get(0)
+        val comment = validationResponses?.get(1)
 
-        // supports keyword FAIL | PASS
-        val result = if (StringUtils.startsWith(response, "FAIL ")) StepResult.fail(response) else
-            StepResult.success("Response received as '$response'")
+        if (isBlank(response)) log("Empty response accepted as PASS.")
+        return computeStepResult(response + "", comment + "",
+                                 isBlank(response) || passResponses.split(context.textDelim).contains(response), "")
+    }
+
+    protected fun observeHelper(prompt: String, header: String): StepResult {
+        clearContextData()
+        requiresNotBlank(prompt, "Invalid prompt(s)", prompt)
+
+        val response = ConsoleUtils.pauseForInput(context, prompt, header)
+
+        if (isBlank(response)) log("Empty response accepted as PASS.")
+        val result = computeStepResult(response, "", !startsWith(response, "FAIL "), "")
         result.paramValues = arrayOf<Any>(prompt, response)
         return result
     }
+
+    private val commentFormat = Function { c: String -> if (isNotEmpty(c)) "[comment]: $c" else "" }
+    private val responseFormat = Function { r: String -> if (isNotEmpty(r)) "[response]: $r " else "" }
+
+    protected fun computeStepResult(response: String, comment: String, pass: Boolean, defaultMsg: String): StepResult {
+
+        setContextData(response, comment)
+        var msg = "";
+        if (isNotEmpty(defaultMsg)) msg += "($defaultMsg) ";
+        msg += responseFormat.apply(response) + commentFormat.apply(comment)
+
+        return if (pass) StepResult.success(msg) else StepResult.fail(msg);
+    }
+
+    private fun setContextData(response: String, comment: String) {
+        if (isNotBlank(response)) context.setData(STEP_RESPONSE, response)
+        if (isNotBlank(comment)) context.setData(STEP_COMMENT, comment)
+    }
+
+    private fun clearContextData() {
+        context.removeData(STEP_RESPONSE)
+        context.removeData(STEP_COMMENT)
+    }
+
 }
