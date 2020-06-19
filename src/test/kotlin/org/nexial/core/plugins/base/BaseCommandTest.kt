@@ -16,6 +16,7 @@
 
 package org.nexial.core.plugins.base
 
+import org.apache.commons.lang3.StringUtils
 import org.apache.commons.lang3.math.NumberUtils
 import org.junit.After
 import org.junit.Assert
@@ -430,5 +431,24 @@ class BaseCommandTest {
         var result = subject.assertArrayContain(array, expected)
         println("result = $result")
         Assert.assertTrue(result.isSuccess)
+    }
+
+    @Test
+    fun clipboardTest() {
+        val subject = BaseCommand()
+        subject.init(context)
+
+        //verify clipboard copy paste
+        val clipboardData = "assign this to clipboard"
+        subject.copyIntoClipboard(clipboardData)
+        subject.copyFromClipboard("c-data")
+        val cData = context.getStringData("c-data")
+        Assert.assertEquals(clipboardData, cData)
+
+        //clear clipboard testing
+        subject.clearClipboard()
+        subject.copyFromClipboard("var1")
+        val var1 = context.getStringData("var1")
+        Assert.assertTrue(StringUtils.isEmpty(var1))
     }
 }

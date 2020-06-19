@@ -444,6 +444,18 @@
                 <entry key="security.OCSP.enabled" value="0"/>
             </map>
         </property>
+
+        <!-- firefox driver mapping with browser version. https://firefox-source-docs.mozilla.org/testing/geckodriver/Support.html -->
+        <property name="firefoxDriverVersionMapping">
+            <map key-type="java.lang.String" value-type="java.lang.String">
+                <!--<entry key="min.browser.version_max.browser.version" value="driver.version"/>-->
+                <entry key="60-999" value="0.26.0"/>
+                <entry key="57-59" value="0.25.0"/>
+                <entry key="55-56" value="0.20.1"/>
+                <entry key="53-54" value="0.18.0"/>
+                <entry key="1-52" value="0.17.0"/>
+            </map>
+        </property>
         <property name="chromeBinLocations">
             <map key-type="java.lang.String" value-type="java.util.List">
                 <entry key="windows">
@@ -527,7 +539,7 @@
                 "baseName": "geckodriver",
                 "checkFrequency": 1209600000,
                 "checkFrequencyDescription": "Every 2 weeks",
-                "checkUrlBase" : "https://api.github.com/repos/mozilla/geckodriver/releases/latest"
+                "checkUrlBase" : "https://api.github.com/repos/mozilla/geckodriver/releases"
             }
           ]]></value>
         </entry>
@@ -538,7 +550,7 @@
                 "baseName": "geckodriver",
                 "checkFrequency": 1209600000,
                 "checkFrequencyDescription": "Every 2 weeks",
-                "checkUrlBase" : "https://api.github.com/repos/mozilla/geckodriver/releases/latest"
+                "checkUrlBase" : "https://api.github.com/repos/mozilla/geckodriver/releases"
             }
           ]]></value>
         </entry>
