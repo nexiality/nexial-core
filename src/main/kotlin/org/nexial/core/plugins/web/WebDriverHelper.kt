@@ -45,20 +45,20 @@ import org.nexial.core.plugins.xml.XmlCommand
 import org.nexial.core.utils.ConsoleUtils
 import org.nexial.core.utils.ExecUtils.NEXIAL_MANIFEST
 import org.nexial.core.utils.JSONPath
-import java.io.*
+import java.io.File
 import java.io.File.separator
+import java.io.FileInputStream
+import java.io.FileOutputStream
+import java.io.IOException
 import java.math.BigInteger
 import java.util.*
 import java.util.zip.GZIPInputStream
-import javax.validation.constraints.NotNull
 
 abstract class WebDriverHelper protected constructor(protected var context: ExecutionContext) {
     protected lateinit var browserType: BrowserType
     protected lateinit var config: WebDriverConfig
     protected lateinit var driverLocation: String
     protected lateinit var driverManifest: File
-    lateinit var browserBinLocation: String
-    var firefoxDriverVersionMapping: Map<String, String>? = null
 
     @Throws(IOException::class)
     fun resolveDriver(): File {
@@ -132,7 +132,15 @@ abstract class WebDriverHelper protected constructor(protected var context: Exec
      */
     @Throws(IOException::class)
     protected open fun resolveDriverManifest(pollForUpdates: Boolean): WebDriverManifest {
-        val (manifest: WebDriverManifest, hasDriver) = initManifestAndCheckDriver()
+        val manifest: WebDriverManifest = if (driverManifest.canRead() && driverManifest.length() > 10) {
+            GSON.fromJson(FileUtils.readFileToString(driverManifest, DEF_CHARSET), WebDriverManifest::class.java)
+        } else {
+            // first time
+            WebDriverManifest()
+        }
+        manifest.init()
+
+        val hasDriver = isFileReadable(driverLocation, DRIVER_MIN_SIZE)
 
         // never check is turned on and we already have a driver, so just keep this one
         if (manifest.neverCheck && hasDriver) return manifest
@@ -173,157 +181,40 @@ abstract class WebDriverHelper protected constructor(protected var context: Exec
         tagNumbersSorted.sortWith(comparator = Comparator.reverseOrder())
         val latestVersion = tagNumbersSorted[0]
 
+        // persist the date/time when we last checked online
+        manifest.lastChecked = System.currentTimeMillis()
+
         if (!pollForUpdates || manifest.driverVersionExpanded < latestVersion) {
             val targetVersion = tagNumbers[latestVersion]
-            resolveDownloadUrlFromJSONArray(manifest, targetVersion, json)
+            manifest.driverVersion = targetVersion
+
+            // get latest
+            val driverSearchName = resolveDriverSearchName(targetVersion!!)
+            var driverUrl = JSONPath.find(json,
+                                          "[tag_name=$targetVersion].assets[name=$driverSearchName].browser_download_url")
+            if (StringUtils.isBlank(driverUrl) && IS_OS_WINDOWS) {
+                // [corner case] try again with Win32
+                driverUrl = JSONPath.find(json,
+                                          "[tag_name=$targetVersion].assets[name=REGEX:.+win32.+].browser_download_url")
+            }
+
+            manifest.driverUrl = driverUrl
         }
-    }
-
-
-    protected fun updateManifestProperties(manifest: WebDriverManifest, driverUrl: String?,
-                                         targetVersion: String?) {
-        manifest.driverUrl = driverUrl
-        manifest.lastChecked = System.currentTimeMillis()
-        manifest.driverVersion = targetVersion
-        manifest.compatibleDriverVersion = null
-    }
-
-    protected fun resolveDownloadUrlFromJSONArray(manifest: WebDriverManifest,
-                                                targetVersion: String?, json: JSONArray) {
-        // get latest
-        val driverSearchName = resolveDriverSearchName(targetVersion!!)
-        var driverUrl = JSONPath.find(json,
-                                      "[tag_name=$targetVersion].assets[name=$driverSearchName].browser_download_url")
-        if (StringUtils.isBlank(driverUrl) && IS_OS_WINDOWS) {
-            // [corner case] try again with Win32
-            driverUrl = JSONPath.find(json,
-                                      "[tag_name=$targetVersion].assets[name=REGEX:.+win32.+].browser_download_url")
-        }
-        updateManifestProperties(manifest, driverUrl, targetVersion)
     }
 
     protected open fun extractDriverInfo(json: JSONObject, manifest: WebDriverManifest, pollForUpdates: Boolean) {
+
         val tag = JSONPath.find(json, "tag_name")
         if (!pollForUpdates || manifest.driverVersionExpanded < expandVersion(tag)) {
-            resolveDownloadUrlFromJSONObject(manifest, tag, json)
+
+            // persist the date/time when we last checked online
+            manifest.lastChecked = System.currentTimeMillis()
+            manifest.driverVersion = tag
+
+            val driverSearchName = resolveDriverSearchName(tag)
+            manifest.driverUrl = JSONPath.find(json, "assets[name=$driverSearchName].browser_download_url")
         }
     }
-
-    protected fun resolveDownloadUrlFromJSONObject(manifest: WebDriverManifest, tag: String, json: JSONObject) {
-        val driverSearchName = resolveDriverSearchName(tag)
-        val driverUrl = JSONPath.find(json, "assets[name=$driverSearchName].browser_download_url")
-        updateManifestProperties(manifest, driverUrl, tag)
-    }
-
-    @Throws(IOException::class)
-    open fun updateCompatibleDriverVersion(): Boolean {
-        val currentBrowserType = context.browserType
-
-        if (StringUtils.isNotBlank(browserBinLocation)) {
-            var driverVersion: String?
-            if (currentBrowserType.startsWith("chrome")) {
-                driverVersion = execCommandForBrowserVersion(getChromeVerCommand(browserBinLocation))
-                driverVersion = driverVersion!!
-                    .replace("Version=", "").replace("Google Chrome ", "").trim { it <= ' ' }
-            } else if (currentBrowserType.startsWith("firefox")) {
-                driverVersion = execCommandForBrowserVersion(getFirefoxVerCommand(browserBinLocation))
-                driverVersion = driverVersion!!
-                    .replace("Mozilla Firefox ", "")
-                    .replace("Firefox ", "")
-                    .trim { it <= ' ' }
-                val firefoxBrowserVer = StringUtils
-                    .substringBefore(driverVersion, ".")
-                    .toInt()
-
-                //find driver mapping configuration in nexial.xml
-                for ((minMaxRange, value) in firefoxDriverVersionMapping!!.entries) {
-                    val minBrowserVer = StringUtils
-                        .substringBefore(minMaxRange, "-")
-                        .toInt()
-                    val maxBrowserVer = StringUtils
-                        .substringAfter(minMaxRange, "-")
-                        .toInt()
-                    if (firefoxBrowserVer in minBrowserVer..maxBrowserVer) {
-                        driverVersion = value
-                        break
-                    }
-                }
-            } else {
-                ConsoleUtils.error("Invalid browser type for compatible driver mapping")
-                return false
-            }
-            //var manifest: WebDriverManifest = initWebDriverManifest()
-            val (manifest: WebDriverManifest, hasDriver) = initManifestAndCheckDriver()
-
-            //if old & new both driver are same than stop execution
-            //maybe something went wrong with browser initialization
-            val manifestDriverVer = manifest.driverVersion
-            if (hasDriver && manifestDriverVer != null
-                && (manifestDriverVer.contains(driverVersion!!)
-                    || StringUtils.substringBeforeLast(manifestDriverVer, ".")
-                        .contains(StringUtils.substringBeforeLast(driverVersion,
-                                                                  ".")))) {
-                ConsoleUtils.log("Current web driver is compatible with the browser. No need to update.")
-                return false
-            }
-            manifest.compatibleDriverVersion = driverVersion
-            ConsoleUtils.log("required driver version : $driverVersion")
-            FileUtils.writeStringToFile(driverManifest, GSON.toJson(manifest, WebDriverManifest::class.java),
-                                        DEF_CHARSET)
-        } else {
-            ConsoleUtils.error("Could not find the $currentBrowserType browser.")
-        }
-        return true
-    }
-
-    private fun execCommandForBrowserVersion(
-        cmd: Array<String>?): String? {
-        var browserVersion: String? = ""
-        try {
-            val process = Runtime.getRuntime().exec(cmd)
-            try {
-                val reader = BufferedReader(InputStreamReader(process.inputStream))
-                var line: String?
-                while (reader.readLine().also { line = it } != null) {
-                    if (!StringUtils.isBlank(line)) {
-                        browserVersion = line
-                    }
-                }
-            } catch (e: Exception) {
-                ConsoleUtils.error("Error while finding browser version: $e")
-            }
-        } catch (e: Exception) {
-            ConsoleUtils.error("Error while executing command to find browser version: $e")
-        }
-        return browserVersion
-    }
-
-    private fun getChromeVerCommand(binaryLocation: String?): Array<String>? {
-        var cmd: Array<String>? = null
-        if (IS_OS_WINDOWS) {
-            cmd = arrayOf("cmd.exe", "/C",
-                          "wmic datafile where name=\"" +
-                          binaryLocation!!.replace("\\", "\\\\") +
-                          "\" get Version /value")
-        } else if (IS_OS_LINUX || IS_OS_MAC) {
-            cmd = arrayOf("bash", "-c", "google-chrome --version")
-        }
-        return cmd
-    }
-
-    private fun getFirefoxVerCommand(binaryLocation: String?): Array<String>? {
-        var cmd: Array<String>? = null
-        if (IS_OS_WINDOWS) {
-            cmd = arrayOf("cmd.exe", "/C",
-                          "wmic datafile where name=\"" +
-                          binaryLocation!!.replace("\\", "\\\\") +
-                          "\" get version")
-        } else if (IS_OS_LINUX || IS_OS_MAC) {
-            cmd = arrayOf("bash", "-c", "firefox --version")
-        }
-        return cmd
-    }
-
 
     protected open fun resolveDriverSearchName(tag: String): String {
         val assetRegex = when {
@@ -367,21 +258,6 @@ abstract class WebDriverHelper protected constructor(protected var context: Exec
     }
 
     protected fun newIsolatedWsClient() = WebServiceClient(context).configureAsQuiet().disableContextConfiguration()
-
-    protected fun initManifestAndCheckDriver(): Pair<WebDriverManifest, Boolean> {
-        return Pair(initWebDriverManifest(), isFileReadable(driverLocation, DRIVER_MIN_SIZE))
-    }
-
-    protected fun initWebDriverManifest(): WebDriverManifest {
-        val manifest: WebDriverManifest = if (driverManifest.canRead() && driverManifest.length() > 10) {
-            GSON.fromJson(FileUtils.readFileToString(driverManifest, DEF_CHARSET), WebDriverManifest::class.java)
-        } else {
-            // first time
-            WebDriverManifest()
-        }
-        manifest.init()
-        return manifest
-    }
 
     protected abstract fun resolveLocalDriverPath(): String
 
@@ -530,7 +406,15 @@ class EdgeDriverHelper(context: ExecutionContext) : WebDriverHelper(context) {
      */
     @Throws(IOException::class)
     override fun resolveDriverManifest(pollForUpdates: Boolean): WebDriverManifest {
-        val (manifest: WebDriverManifest, hasDriver) = initManifestAndCheckDriver()
+        val manifest: WebDriverManifest = if (isFileReadable(driverManifest, 10)) {
+            GSON.fromJson(FileUtils.readFileToString(driverManifest, DEF_CHARSET), WebDriverManifest::class.java)
+        } else {
+            // first time
+            WebDriverManifest()
+        }
+        manifest.init()
+
+        val hasDriver = isFileReadable(driverLocation, DRIVER_MIN_SIZE)
 
         // find current OS build of Windows 10
         var currentOsVer = deriveWin10BuildNumber()
@@ -549,7 +433,10 @@ class EdgeDriverHelper(context: ExecutionContext) : WebDriverHelper(context) {
 
             val downloadUrl = StringUtils.trim(lookupResponse.body)
             ConsoleUtils.log("[EDGE] derived download URL as $downloadUrl")
-            updateManifestProperties(manifest, downloadUrl, currentOsVer)
+
+            manifest.driverUrl = downloadUrl
+            manifest.driverVersion = currentOsVer
+            manifest.lastChecked = System.currentTimeMillis()
         }
 
         return manifest
@@ -612,62 +499,6 @@ class FirefoxDriverHelper(context: ExecutionContext) : WebDriverHelper(context) 
         return StringUtils.appendIfMissing(File(context.replaceTokens(config.home)).absolutePath, separator) +
                config.baseName + if (IS_OS_WINDOWS) ".exe" else ""
     }
-
-    @Throws(IOException::class)
-    override fun resolveDriverManifest(pollForUpdates: Boolean): WebDriverManifest {
-        var (manifest: WebDriverManifest, hasDriver) = initManifestAndCheckDriver()
-
-        // never check is turned on and we already have a driver, so just keep this one
-        if (manifest.neverCheck && hasDriver) return manifest
-
-        //first time driver download
-         if (!hasDriver) {
-             updateCompatibleDriverVersion()
-             manifest = initWebDriverManifest()
-         }
-
-        var driverVersion = manifest.compatibleDriverVersion
-        if (!StringUtils.isBlank(driverVersion)) {
-            driverVersion = "v$driverVersion"
-        } else if (hasDriver && manifest.lastChecked + config.checkFrequency >= System.currentTimeMillis()) {
-            //No need to update still have time
-            return manifest
-        }
-
-        // first ws call to check existing/available versions of this driver
-        val wsClient = newIsolatedWsClient()
-        val response = wsClient.get(config.checkUrlBase, null)
-        if (response.returnCode >= 400) {
-            // error in checking online
-            throw IOException("Error when accessing ${config.checkUrlBase}: ${response.statusText}")
-        }
-        FileUtils.deleteQuietly(File(File(driverLocation).parent))
-        val availableDriverContent = StringUtils.trim(response.body)
-        when {
-            TextUtils.isBetween(availableDriverContent, "[", "]") -> {
-                if (StringUtils.isBlank(driverVersion)) {
-                    extractDriverInfos(JSONArray(availableDriverContent), manifest,
-                                       pollForUpdates)
-                } else {
-                    resolveDownloadUrlFromJSONArray(
-                        manifest, driverVersion, JSONArray(availableDriverContent))
-                }
-            }
-            TextUtils.isBetween(availableDriverContent, "{", "}") -> {
-                if (StringUtils.isBlank(driverVersion)) {
-                    extractDriverInfo(JSONObject(availableDriverContent), manifest, pollForUpdates)
-                } else {
-                    resolveDownloadUrlFromJSONObject(manifest, driverVersion!!,
-                                                     JSONObject(availableDriverContent))
-                }
-            }
-            else                                                  ->
-                ConsoleUtils.error("Unknown content downloaded from ${config.checkUrlBase}; IGNORED...")
-        }
-
-        return manifest
-    }
-
 }
 
 /**
@@ -711,36 +542,27 @@ class ChromeDriverHelper(context: ExecutionContext) : WebDriverHelper(context) {
 
     @Throws(IOException::class)
     override fun resolveDriverManifest(pollForUpdates: Boolean): WebDriverManifest {
-
-        var (manifest: WebDriverManifest, hasDriver) = initManifestAndCheckDriver()
-
-        // never check is turned on and we already have a driver, so just keep this one
-        if (manifest.neverCheck && hasDriver) return manifest
-
-        //first time driver download
-        if (!hasDriver) {
-            updateCompatibleDriverVersion()
-            manifest = initWebDriverManifest()
+        val manifest: WebDriverManifest = if (isFileReadable(driverManifest, 10)) {
+            GSON.fromJson(FileUtils.readFileToString(driverManifest, DEF_CHARSET), WebDriverManifest::class.java)
+        } else {
+            // first time
+            WebDriverManifest()
         }
+        manifest.init()
 
-        //Fetch installed chrome version and prepare url for download
-        val (compatibleDriverVersion, isUpdateRequired) = isBrowserUpdated(manifest, hasDriver)
+        val hasDriver = isFileReadable(driverLocation, DRIVER_MIN_SIZE)
 
-        if (!hasDriver || isUpdateRequired) {
+        if (!hasDriver) {
             var driverVersion = minDriverVersion
-            val wsClient = newIsolatedWsClient()
-            val lookupResponse =
-                if (StringUtils.isBlank(compatibleDriverVersion)) {
-                    wsClient.get("${config.checkUrlBase}/LATEST_RELEASE", "")
-                } else wsClient.get("${config.checkUrlBase}/LATEST_RELEASE_$compatibleDriverVersion", "")
 
+            val wsClient = newIsolatedWsClient()
+            val lookupResponse = wsClient.get("${config.checkUrlBase}/LATEST_RELEASE", "")
             if (lookupResponse.returnCode != 200) {
                 // something's wrong...
                 ConsoleUtils.log("[Chrome] unable to resolve latest version for $browserType. " +
                                  "Use min. driver version instead...")
             } else {
                 driverVersion = lookupResponse.body
-                FileUtils.deleteQuietly(File(File(driverLocation).parent))
             }
 
             val env = when {
@@ -752,36 +574,29 @@ class ChromeDriverHelper(context: ExecutionContext) : WebDriverHelper(context) {
 
             val downloadUrl = "${config.checkUrlBase}/$driverVersion/${config.baseName}_$env.zip"
             ConsoleUtils.log("[Chrome] derived download URL as $downloadUrl")
-            updateManifestProperties(manifest, downloadUrl, driverVersion)
+
+            manifest.driverUrl = downloadUrl
+            manifest.driverVersion = driverVersion
+            manifest.lastChecked = System.currentTimeMillis()
         }
 
         return manifest
     }
-
-    private fun isBrowserUpdated(manifest: WebDriverManifest,
-                                   hasDriver: Boolean): Pair<String?, Boolean> {
-        var browserVersion = manifest.compatibleDriverVersion
-        var isUpdateRequired = false
-        if (!StringUtils.isBlank(browserVersion)) {
-            browserVersion = browserVersion?.substringBeforeLast(".")
-            if (hasDriver && (StringUtils.isBlank(manifest.driverVersion) || !manifest.driverVersion?.startsWith(
-                    browserVersion!!)!!)) {
-                isUpdateRequired = true
-            }
-        } else if (manifest.lastChecked + config.checkFrequency <= System.currentTimeMillis()) {
-            isUpdateRequired = true
-        }
-
-        return Pair(browserVersion, isUpdateRequired)
-    }
-
 }
 
 /** webdriver helper for IE browser */
 class IEDriverHelper(context: ExecutionContext) : WebDriverHelper(context) {
 
     override fun resolveDriverManifest(pollForUpdates: Boolean): WebDriverManifest {
-        val (manifest: WebDriverManifest, hasDriver) = initManifestAndCheckDriver()
+        val manifest: WebDriverManifest = if (driverManifest.canRead() && driverManifest.length() > 10) {
+            GSON.fromJson(FileUtils.readFileToString(driverManifest, DEF_CHARSET), WebDriverManifest::class.java)
+        } else {
+            // first time
+            WebDriverManifest()
+        }
+        manifest.init()
+
+        val hasDriver = isFileReadable(driverLocation, DRIVER_MIN_SIZE)
 
         // never check is turned on and we already have a driver, so just keep this one
         if (manifest.neverCheck && hasDriver) return manifest
@@ -846,7 +661,15 @@ class BrowserStackLocalHelper(context: ExecutionContext) : WebDriverHelper(conte
 
     @Throws(IOException::class)
     override fun resolveDriverManifest(pollForUpdates: Boolean): WebDriverManifest {
-        val (manifest: WebDriverManifest, hasDriver) = initManifestAndCheckDriver()
+        val manifest: WebDriverManifest = if (isFileReadable(driverManifest, 10)) {
+            GSON.fromJson(FileUtils.readFileToString(driverManifest, DEF_CHARSET), WebDriverManifest::class.java)
+        } else {
+            // first time
+            WebDriverManifest()
+        }
+        manifest.init()
+
+        val hasDriver = isFileReadable(driverLocation, DRIVER_MIN_SIZE)
 
         // never check is turned on and we already have a driver, so just keep this one
         if (manifest.neverCheck && hasDriver) return manifest
