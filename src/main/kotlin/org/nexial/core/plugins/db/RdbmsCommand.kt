@@ -22,6 +22,8 @@ import org.apache.commons.io.FileUtils
 import org.apache.commons.lang3.BooleanUtils
 import org.apache.commons.lang3.StringUtils
 import org.nexial.commons.utils.FileUtil
+import org.nexial.commons.utils.RegexUtils
+import org.nexial.commons.utils.ResourceUtils
 import org.nexial.commons.utils.TextUtils
 import org.nexial.core.NexialConst.*
 import org.nexial.core.NexialConst.Rdbms.CSV_ROW_SEP
@@ -34,6 +36,7 @@ import org.nexial.core.utils.OutputFileUtils
 import java.io.File
 import java.io.File.separator
 import java.io.IOException
+import java.lang.AssertionError
 
 class RdbmsCommand : BaseCommand() {
 
@@ -41,12 +44,12 @@ class RdbmsCommand : BaseCommand() {
 
     lateinit var dataAccess: DataAccess
 
+    override fun getTarget() = "rdbms"
+
     override fun init(context: ExecutionContext) {
         super.init(context)
         dataAccess.setContext(context)
     }
-
-    override fun getTarget() = "rdbms"
 
     @Throws(IOException::class)
     fun runSQL(`var`: String, db: String, sql: String): StepResult {
@@ -54,23 +57,19 @@ class RdbmsCommand : BaseCommand() {
         requiresNotBlank(db, "invalid db", db)
         requiresNotBlank(sql, "invalid sql", sql)
 
-        // remove any trailing semi-colon, since single query should not have it
-        val query = context.replaceTokens(OutputFileUtils.resolveRawContent(sql, context).trim()).removeSuffix(";")
-        // we want to support ALL types of SQL, including those vendor-specific
-        // so for that reason, we are no longer insisting on the use of standard ANSI sql
-        // requires(dataAccess.validSQL(query), "invalid sql", sql);
+        val query = parseSQL(db, sql)
 
         try {
-            val result = dataAccess.execute(query, resolveDao(db)) ?:
-                         return StepResult.fail("FAILED TO EXECUTE SQL '$sql': no result found")
+            val result = dataAccess.execute(query, resolveDao(db))
+                         ?: return StepResult.fail("FAILED TO EXECUTE SQL '$query': no result found")
             context.setData(`var`, result)
 
-            log("executed query in ${result.elapsedTime} ms with " +
-                if (result.hasError()) "ERROR ${result.error}" else "${result.rowCount} row(s)")
+            log("executed query '$query':\n" +
+                "\t- elapsed time: ${result.elapsedTime} ms\n" +
+                "\t- ${if (result.hasError()) "ERROR: ${result.error}" else "row count: ${result.rowCount}"}\n" +
+                "\t- result saved as \${${`var`}}")
         } finally {
-            // done with connection... probably good idea to remove mongo-specific trust store to avoid SSL issue elsewhere
-            System.clearProperty("javax.net.ssl.trustStore")
-            System.clearProperty("javax.net.ssl.trustStorePassword")
+            unsetSslCert()
         }
 
         return StepResult.success("executed SQL '$sql'; stored result as \${$`var`}")
@@ -85,41 +84,27 @@ class RdbmsCommand : BaseCommand() {
         requiresNotBlank(db, "invalid db", db)
         requiresNotBlank(sqls, "invalid sql statement(s)", sqls)
 
-        var msgPrefix = "executing SQLs"
+        val qualifiedSqlList = parseSQLs(db, sqls)
+        val msgPrefix = "executed ${qualifiedSqlList.size} SQL(s);"
 
-        try {
-            val qualifiedSqlList = SqlComponent.toList(OutputFileUtils.resolveRawContent(sqls, context))
-            requires(CollectionUtils.isNotEmpty(qualifiedSqlList), "No valid SQL statements found", sqls)
-
-            val qualifiedSqlCount = qualifiedSqlList.size
-            if (!db.startsWith(NAMESPACE)) log("found $qualifiedSqlCount qualified query(s) to execute")
-
-            msgPrefix = "executed $qualifiedSqlCount SQL(s);"
-
+        return try {
             val outcome = executeSQLs(db, qualifiedSqlList)
-
             if (CollectionUtils.isNotEmpty(outcome)) {
                 context.setData(`var`, outcome)
                 if (MapUtils.isNotEmpty(outcome.namedOutcome)) {
                     outcome.namedOutcome.forEach { (name, result) -> context.setData(name, result) }
-                    return StepResult.success("$msgPrefix result saved as ${outcome.namedOutcome.keys}")
-                }
-
-                if (outcome.size == 1) {
+                    StepResult.success("$msgPrefix result saved as \${${outcome.namedOutcome.keys}}")
+                } else if (outcome.size == 1) {
                     context.setData(`var`, outcome[0])
-                    return StepResult.success("$msgPrefix single result stored as \${$`var`}")
-                }
-
-                return StepResult.success("$msgPrefix ${outcome.size} results stored as \${$`var`}")
-            }
-
-            return StepResult.success("${msgPrefix}no result saved")
+                    StepResult.success("$msgPrefix single result stored as \${$`var`}}")
+                } else
+                    StepResult.success("$msgPrefix ${outcome.size} results stored as \${$`var`}")
+            } else
+                StepResult.success("$msgPrefix no result saved")
         } catch (e: Exception) {
-            return StepResult.fail("FAIL $msgPrefix: ${e.message}")
+            StepResult.fail("Error executing runSQLs(${`var`}, $sqls): ${e.message}")
         } finally {
-            // done with connection... probably good idea to remove mongo-specific trust store to avoid SSL issue elsewhere
-            System.clearProperty("javax.net.ssl.trustStore")
-            System.clearProperty("javax.net.ssl.trustStorePassword")
+            unsetSslCert()
         }
     }
 
@@ -130,8 +115,78 @@ class RdbmsCommand : BaseCommand() {
         requiresValidAndNotReadOnlyVariableName(`var`)
         requiresNotBlank(db, "invalid db", db)
         requiresReadableFile(file)
-
         return runSQLs(`var`, db, file)
+    }
+
+    /**
+     * execute multiple SQL statements and save the corresponding output (as CSV) to the specific `outputDir`
+     * directory. Note that only SQL with matching Nexial variable will result in its associated output saved to the
+     * specific `outputDir` directory - the associate variable name will be used as the output CSV file name.
+     */
+    fun saveResults(db: String, sqls: String, outputDir: String): StepResult {
+        requiresNotBlank(db, "invalid db", db)
+        requiresNotBlank(sqls, "invalid sql", sqls)
+
+        val outDir = StringUtils.trim(outputDir)
+        requiresReadableDirectory(outDir, "invalid output directory", outDir)
+
+        val dao = resolveDao(db)
+
+        val qualifiedSqlList = parseSQLs(db, sqls)
+        val msgPrefix = "executed ${qualifiedSqlList.size} SQL(s);"
+
+        try {
+            for (sqlComponent in qualifiedSqlList) {
+                val sql = context.replaceTokens(StringUtils.trim(sqlComponent.sql))
+                val printableSql = if (StringUtils.length(sql) > maxSqlDisplayLength)
+                    StringUtils.right(sql, maxSqlDisplayLength) + "..."
+                else
+                    sql
+
+                if (StringUtils.isNotBlank(sqlComponent.varName)) {
+                    val varName = context.replaceTokens(sqlComponent.varName)
+                    val outFile = StringUtils.appendIfMissing(OutputFileUtils.webFriendly(varName), ".csv")
+                    val targetFile = File(StringUtils.appendIfMissing(File(outDir).absolutePath, separator) + outFile)
+                    if (!handleResult(dao, sql, targetFile))
+                        return StepResult.fail("FAILED TO EXECUTE SQL '$printableSql': no result")
+                } else {
+                    // not saving result anywhere since this SQL is not mapped to any variable
+                    log("executing $printableSql without saving its result")
+                    dao.executeSql(sql, null)
+                }
+            }
+
+            return StepResult.success("$msgPrefix output saved to $outDir")
+        } catch (e: Exception) {
+            return StepResult.fail("Error executing saveResults($db, $sqls, $outputDir): ${e.message}")
+        } finally {
+            unsetSslCert()
+        }
+    }
+
+    fun saveResult(db: String, sql: String, output: String): StepResult {
+        requiresNotBlank(db, "invalid db", db)
+        requiresNotBlank(sql, "invalid sql", sql)
+        requiresNotBlank(output, "invalid output", output)
+
+        val outputFile = if (!StringUtils.endsWithIgnoreCase(output, ".csv")) "$output.csv" else output
+        val dao = resolveDao(db)
+        val query = parseSQL(db, sql)
+
+        // we want to support ALL types of SQL, including those vendor-specific
+        // so for that reason, we are no longer insisting on the use of standard ANSI sql
+        // requires(dataAccess.validSQL(query), "invalid sql", sql);
+
+        return try {
+            if (!handleResult(dao, query, File(outputFile)))
+                StepResult.fail("FAILED TO EXECUTE SQL '$sql': no result")
+            else
+                StepResult.success("executed SQL '$sql'; stored result to '$outputFile'")
+        } catch (e: IOException) {
+            StepResult.fail("Error executing saveResult($db, $sql, $output): ${e.message}")
+        } finally {
+            unsetSslCert()
+        }
     }
 
     @Throws(IOException::class)
@@ -189,85 +244,126 @@ class RdbmsCommand : BaseCommand() {
         return StepResult.fail("Unknown type found for variable '$`var`': ${resultObj!!.javaClass.name}")
     }
 
-    /**
-     * execute multiple SQL statements and save the corresponding output (as CSV) to the specific `outputDir`
-     * directory. Note that only SQL with matching Nexial variable will result in its associated output saved to the
-     * specific `outputDir` directory - the associate variable name will be used as the output CSV file name.
-     */
-    fun saveResults(db: String, sqls: String, outputDir: String): StepResult {
-        requiresNotBlank(db, "invalid db", db)
-        requiresNotBlank(sqls, "invalid sql", sqls)
+    fun assertResultMatch(`var`: String, columns: String, search: String): StepResult {
+        requiresValidAndNotReadOnlyVariableName(`var`)
+        requiresNotBlank(columns, "Invalid columns", columns)
+        requiresNotEmpty(search, "Invalid search term", search)
 
-        val outDir = StringUtils.trim(outputDir)
-        requiresReadableDirectory(outDir, "invalid output directory", outDir)
+        val resultObj = context.getObjectData(`var`, JdbcResult::class.java)
+                        ?: throw AssertionError("Unable to resolve \${${`var`} to a valid query result")
+        requiresNotNull(resultObj, "specified variable was either not found or was the incorrect type", `var`)
+        if (resultObj.rowCount < 1) return StepResult.fail("Query result \${${`var`}} contains no row")
+        if (resultObj.columnCount() < 1) return StepResult.fail("Query result \${${`var`}} contains no column")
 
-        val dao = resolveDao(db)
-        var msgPrefix = "executing SQLs"
+        val searchColumns = TextUtils.toList(columns, context.textDelim, true)
+        if (searchColumns.isEmpty()) return StepResult.fail("No columns specified")
 
-        try {
-            val qualifiedSqlList = SqlComponent.toList(OutputFileUtils.resolveRawContent(sqls, context))
-            requires(CollectionUtils.isNotEmpty(qualifiedSqlList), "No valid SQL statements found", sqls)
+        val regex = if (search.startsWith(REGEX_PREFIX)) search.substringAfter(REGEX_PREFIX).trim() else null
+        val contains = if (search.startsWith(CONTAIN_PREFIX)) search.substringAfter(CONTAIN_PREFIX).trim() else null
 
-            val qualifiedSqlCount = qualifiedSqlList.size
-            if (!db.startsWith(NAMESPACE)) log("found $qualifiedSqlCount qualified query(s) to execute")
+        val found = searchColumns.firstOrNull { col -> cellMatches(resultObj.cells(col), regex, contains, search) }
+        return if (found != null)
+            StepResult.success("match found in \${${`var`}} on '${search}' against columns '${columns}'")
+        else
+            StepResult.fail("match NOT found in \${${`var`}} on '${search}' against columns '${columns}'")
+    }
 
-            msgPrefix = "executed $qualifiedSqlCount SQL(s);"
-            // val testStep = context.currentTestStep
+    fun assertResultNotMatch(`var`: String, columns: String, search: String): StepResult {
+        requiresValidAndNotReadOnlyVariableName(`var`)
+        requiresNotBlank(columns, "Invalid columns", columns)
+        requiresNotEmpty(search, "Invalid search term", search)
 
-            for (sqlComponent in qualifiedSqlList) {
-                val sql = context.replaceTokens(StringUtils.trim(sqlComponent.sql))
-                val printableSql = if (StringUtils.length(sql) > maxSqlDisplayLength)
-                    StringUtils.right(sql, maxSqlDisplayLength) + "..."
-                else
-                    sql
+        val resultObj = context.getObjectData(`var`, JdbcResult::class.java)
+                        ?: throw AssertionError("Unable to resolve \${${`var`} to a valid query result")
+        requiresNotNull(resultObj, "specified variable was either not found or was the incorrect type", `var`)
+        if (resultObj.rowCount < 1) return StepResult.fail("Query result \${${`var`}} contains no row")
+        if (resultObj.columnCount() < 1) return StepResult.fail("Query result \${${`var`}} contains no column")
 
-                if (StringUtils.isNotBlank(sqlComponent.varName)) {
-                    val varName = context.replaceTokens(sqlComponent.varName)
-                    val outFile = StringUtils.appendIfMissing(OutputFileUtils.webFriendly(varName), ".csv")
-                    val targetFile = File(StringUtils.appendIfMissing(File(outDir).absolutePath, separator) + outFile)
-                    if (!handleResult(dao, sql, targetFile))
-                        return StepResult.fail("FAILED TO EXECUTE SQL '$printableSql': no result")
-                } else {
-                    // not saving result anywhere since this SQL is not mapped to any variable
-                    log("executing $printableSql without saving its result")
-                    dao.executeSql(sql, null)
-                }
-            }
+        val searchColumns = TextUtils.toList(columns, context.textDelim, true)
+        if (searchColumns.isEmpty()) return StepResult.fail("No columns specified")
 
-            return StepResult.success("$msgPrefix output saved to $outDir")
-        } catch (e: Exception) {
-            return StepResult.fail("FAIL $msgPrefix: ${e.message}")
-        } finally {
-            // done with connection... probably good idea to remove mongo-specific trust store to avoid SSL issue elsewhere
-            System.clearProperty("javax.net.ssl.trustStore")
-            System.clearProperty("javax.net.ssl.trustStorePassword")
+        val regex = if (search.startsWith(REGEX_PREFIX)) search.substringAfter(REGEX_PREFIX).trim() else null
+        val contains = if (search.startsWith(CONTAIN_PREFIX)) search.substringAfter(CONTAIN_PREFIX).trim() else null
+
+        val found = searchColumns.firstOrNull { col -> cellMatches(resultObj.cells(col), regex, contains, search) }
+        return if (found != null)
+            StepResult.fail("match FOUND in \${${`var`}} on '${search}' against columns '${columns}'")
+        else
+            StepResult.success("match not found in \${${`var`}} on '${search}' against columns '${columns}'")
+    }
+
+    private fun cellMatches(cells: List<String>, regex: String?, contains: String?, exact: String): Boolean {
+        return when {
+            cells.isEmpty()  -> StringUtils.isEmpty(exact)
+            regex != null    -> cells.firstOrNull { RegexUtils.match(it, regex) } != null
+            contains != null -> cells.firstOrNull { StringUtils.contains(it, contains) } != null
+            else             -> cells.firstOrNull { it == exact } != null
         }
     }
 
-    fun saveResult(db: String, sql: String, output: String): StepResult {
-        requiresNotBlank(db, "invalid db", db)
-        requiresNotBlank(sql, "invalid sql", sql)
-        requiresNotBlank(output, "invalid output", output)
+    private fun cellMatches(cellData: String?, regex: String?, contains: String?, exact: String): Boolean {
+        if (StringUtils.isEmpty(cellData) && StringUtils.isEmpty(exact)) return true
 
-        val outputFile = if (!StringUtils.endsWithIgnoreCase(output, ".csv")) "$output.csv" else output
-        val targetFile = File(outputFile)
-        val dao = resolveDao(db)
+        if (regex != null) return RegexUtils.match(cellData, regex)
+        if (contains != null) return StringUtils.contains(cellData, contains)
+        return StringUtils.equals(cellData, exact)
+    }
 
-        try {
-            val query = context.replaceTokens(StringUtils.trim(OutputFileUtils.resolveRawContent(sql, context)))
-            // we want to support ALL types of SQL, including those vendor-specific
-            // so for that reason, we are no longer insisting on the use of standard ANSI sql
-            // requires(dataAccess.validSQL(query), "invalid sql", sql);
+    fun executeSQLs(db: String, sqls: List<SqlComponent>): JdbcOutcome = resolveDao(db).executeSqls(sqls)
 
-            if (!handleResult(dao, query, targetFile)) return StepResult.fail("FAILED TO EXECUTE SQL '$sql': no result")
-            return StepResult.success("executed SQL '$sql'; stored result to '$outputFile'")
-        } catch (e: IOException) {
-            return StepResult.fail("Error when executing '$sql': ${e.message}")
-        } finally {
-            // done with connection... probably good idea to remove mongo-specific trust store to avoid SSL issue elsewhere
-            System.clearProperty("javax.net.ssl.trustStore")
-            System.clearProperty("javax.net.ssl.trustStorePassword")
+    fun rowToString(row: Map<String, String>, columnNames: List<String>, delim: String): String {
+        val sb = StringBuilder()
+        for (columnName in columnNames) {
+            var value = row[columnName]
+            if (StringUtils.contains(value, "\"")) value = StringUtils.replace(value, "\"", "\"\"")
+            if (StringUtils.contains(value, delim)) value = TextUtils.wrapIfMissing(value, "\"", "\"")
+            sb.append(value).append(delim)
         }
+
+        return StringUtils.removeEnd(sb.toString(), delim)
+    }
+
+    fun toCSV(result: JdbcResult, delim: String, printHeader: Boolean): String {
+        // test along way... good luck
+        val sb = StringBuilder()
+
+        // save header
+        if (printHeader) sb.append(TextUtils.toString(result.columns, delim)).append(CSV_ROW_SEP)
+
+        for (row in result.getData()) sb.append(rowToString(row, result.columns, delim)).append(CSV_ROW_SEP)
+
+        return sb.toString()
+    }
+
+    private fun parseSQLs(db: String, sqls: String): List<SqlComponent> {
+        val rawContent = resolveRawSqlContent(sqls)
+        val qualifiedSqlList = SqlComponent.toList(rawContent)
+        requires(CollectionUtils.isNotEmpty(qualifiedSqlList), "No valid SQL statements found", sqls)
+
+        val qualifiedSqlCount = qualifiedSqlList.size
+        if (!db.startsWith(NAMESPACE)) log("found $qualifiedSqlCount qualified query(s) to execute")
+
+        return qualifiedSqlList
+    }
+
+    private fun parseSQL(db: String, sql: String): String {
+        val rawContent = resolveRawSqlContent(sql)
+
+        // remove any trailing semi-colon, since single query should not have it
+        val query = context.replaceTokens(StringUtils.trim(rawContent)).removeSuffix(";")
+        if (!db.startsWith(NAMESPACE)) log("parsed for execution: $query")
+
+        // we want to support ALL types of SQL, including those vendor-specific
+        // so for that reason, we are no longer insisting on the use of standard ANSI sql
+        // requires(dataAccess.validSQL(query), "invalid sql", sql);
+
+        return query
+    }
+
+    private fun resolveRawSqlContent(fileOrContent: String): String {
+        if (FileUtil.isFileReadable(fileOrContent, 15) || ResourceUtils.isWebResource(fileOrContent))
+            log("parsing SQL statement(s) in $fileOrContent")
+        return OutputFileUtils.resolveRawContent(fileOrContent, context)
     }
 
     private fun handleResult(dao: SimpleExtractionDao, query: String?, saveTo: File): Boolean {
@@ -282,33 +378,15 @@ class RdbmsCommand : BaseCommand() {
             if (result.hasError()) "ERROR ${result.error}" else "${result.rowCount} row(s)")
 
         val jsonOutput = resultToJson(result, StringUtils.substringBeforeLast(saveTo.absolutePath, ".") + ".json")
-        if (FileUtil.isFileReadable(jsonOutput, 3)) {
-            addLinkRef("result metadata saved as ${jsonOutput.name}",
-                       jsonOutput.name,
-                       jsonOutput.absolutePath)
-        }
+        if (FileUtil.isFileReadable(jsonOutput, 3))
+            addLinkRef("result metadata saved as ${jsonOutput.name}", jsonOutput.name, jsonOutput.absolutePath)
 
         // csv file will get the `nexial.lastOutputLink` ref, not json file
-        if (FileUtil.isFileReadable(saveTo, 3)) {
+        return if (FileUtil.isFileReadable(saveTo, 3)) {
             addLinkRef("result saved as ${saveTo.name}", saveTo.name, saveTo.absolutePath)
-            return true
-        }
-
-        return false
-    }
-
-    fun executeSQLs(db: String, sqls: List<SqlComponent>): JdbcOutcome = resolveDao(db).executeSqls(sqls)
-
-    fun toCSV(result: JdbcResult, delim: String, printHeader: Boolean): String {
-        // test along way... good luck
-        val sb = StringBuilder()
-
-        // save header
-        if (printHeader) sb.append(TextUtils.toString(result.columns, delim)).append(CSV_ROW_SEP)
-
-        for (row in result.getData()) sb.append(rowToString(row, result.columns, delim)).append(CSV_ROW_SEP)
-
-        return sb.toString()
+            true
+        } else
+            false
     }
 
     private fun resolveDao(db: String): SimpleExtractionDao {
@@ -331,22 +409,16 @@ class RdbmsCommand : BaseCommand() {
         return dao
     }
 
-    fun rowToString(row: Map<String, String>, columnNames: List<String>, delim: String): String {
-        val sb = StringBuilder()
-        for (columnName in columnNames) {
-            var value = row[columnName]
-            if (StringUtils.contains(value, "\"")) value = StringUtils.replace(value, "\"", "\"\"")
-            if (StringUtils.contains(value, delim)) value = TextUtils.wrapIfMissing(value, "\"", "\"")
-            sb.append(value).append(delim)
-        }
-
-        return StringUtils.removeEnd(sb.toString(), delim)
-    }
-
     @Throws(IOException::class)
     private fun resultToJson(result: JdbcResult, output: String): File {
         val file = File(output)
         FileUtils.writeStringToFile(file, GSON.toJson(result), DEF_FILE_ENCODING)
         return file
+    }
+
+    private fun unsetSslCert() {
+        // done with connection... probably good idea to remove mongo-specific trust store to avoid SSL issue elsewhere
+        System.clearProperty("javax.net.ssl.trustStore")
+        System.clearProperty("javax.net.ssl.trustStorePassword")
     }
 }

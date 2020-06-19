@@ -126,9 +126,7 @@ public class SqlComponent implements Serializable {
 
     @Override
     public String toString() {
-        return new ToStringBuilder(this, SIMPLE_STYLE).append("varName", varName)
-                                                      .append("sql", sql)
-                                                      .toString();
+        return new ToStringBuilder(this, SIMPLE_STYLE).append("varName", varName).append("sql", sql).toString();
     }
 
     private void parse() {
@@ -162,7 +160,6 @@ public class SqlComponent implements Serializable {
                 type = UNKNOWN;
                 ConsoleUtils.log("Unknown SQL type from SQL: '" + sql + "'");
             }
-
         }
     }
 }

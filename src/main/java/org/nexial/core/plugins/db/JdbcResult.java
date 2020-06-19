@@ -134,7 +134,8 @@ public class JdbcResult implements Serializable {
 
     @Override
     public String toString() {
-        return rightPad("sql", TO_STRING_KEY_LENGTH) + "=" + sql + NL +
+        return NL +
+               rightPad("sql", TO_STRING_KEY_LENGTH) + "=" + sql + NL +
                rightPad("startTime", TO_STRING_KEY_LENGTH) + "=" + formatStartTime(startTime) + NL +
                rightPad("elapsedTime", TO_STRING_KEY_LENGTH) + "=" + elapsedTime + " ms" + NL +
                (StringUtils.isNotBlank(error) ? rightPad("error", TO_STRING_KEY_LENGTH) + "=" + error + NL : "") +
