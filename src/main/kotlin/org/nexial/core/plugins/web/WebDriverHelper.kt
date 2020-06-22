@@ -231,10 +231,15 @@ abstract class WebDriverHelper protected constructor(protected var context: Exec
                     .replace("Mozilla Firefox ", "")
                     .replace("Firefox ", "")
                     .trim { it <= ' ' }
-                val firefoxBrowserVer = StringUtils
-                    .substringBefore(driverVersion, ".")
-                    .toInt()
 
+                var firefoxBrowserVer = 0
+                if (StringUtils.isNotBlank(driverVersion) && driverVersion.contains(".")) {
+                    firefoxBrowserVer = StringUtils
+                        .substringBefore(driverVersion, ".").toInt()
+                } else {
+                    ConsoleUtils.error("Invalid driver version :$driverVersion")
+                    return false;
+                }
                 //find driver mapping configuration in nexial.xml
                 for ((minMaxRange, value) in firefoxDriverVersionMapping!!.entries) {
                     val minBrowserVer = StringUtils
