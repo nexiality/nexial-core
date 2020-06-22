@@ -34,7 +34,7 @@ import org.apache.commons.lang3.math.NumberUtils;
 import org.nexial.commons.proc.RuntimeUtils;
 import org.nexial.commons.utils.EnvUtils;
 import org.nexial.commons.utils.FileUtil;
-import org.nexial.core.NexialConst.*;
+import org.nexial.core.NexialConst.BrowserType;
 import org.nexial.core.ShutdownAdvisor;
 import org.nexial.core.model.ExecutionContext;
 import org.nexial.core.plugins.CanTakeScreenshot;
@@ -64,6 +64,7 @@ import org.slf4j.LoggerFactory;
 import static java.io.File.separator;
 import static java.util.concurrent.TimeUnit.MILLISECONDS;
 import static org.apache.commons.lang3.SystemUtils.*;
+import static org.nexial.commons.utils.FileUtil.isFileReadable;
 import static org.nexial.core.NexialConst.BrowserType.*;
 import static org.nexial.core.NexialConst.Data.TEST_LOG_PATH;
 import static org.nexial.core.NexialConst.Data.withProfile;
@@ -106,6 +107,7 @@ public class Browser implements ForcefulTerminate {
     protected Map<String, Integer> firefoxIntPrefs;
     protected Map<String, Boolean> firefoxBooleanPrefs;
     protected Map<String, String> firefoxStringPrefs;
+    protected Map<String, String> firefoxDriverVersionMapping;
     protected List<String> firefoxBinArgs;
 
     protected String initialWinHandle;
@@ -153,6 +155,9 @@ public class Browser implements ForcefulTerminate {
     public void setChromeBinLocations(Map<String, List<String>> locations) { this.chromeBinLocations = locations; }
 
     public void setFirefoxBinLocations(Map<String, List<String>> locations) { this.firefoxBinLocations = locations; }
+
+    public void setFirefoxDriverVersionMapping(Map<String, String> firefoxDriverVersionMapping) {this.firefoxDriverVersionMapping =
+                                                                                                     firefoxDriverVersionMapping; }
 
     // public void setProxy(ProxyHandler proxy) { this.proxy = proxy; }
     // public ProxyHandler getProxyHandler() { return proxy; }
@@ -510,14 +515,38 @@ public class Browser implements ForcefulTerminate {
         String clientLocation = context.getStringData(CEF_CLIENT_LOCATION);
         requiresExecutableFile(clientLocation);
 
-        resolveChromeDriverLocation();
-
-        ChromeDriver chrome = new ChromeDriver(new ChromeOptions().addArguments(this.chromeOptions)
-                                                                  .setBinary(clientLocation));
+        WebDriverHelper helper = resolveChromeDriverLocation();
+        ChromeDriver chrome;
+        ChromeOptions options = new ChromeOptions().addArguments(this.chromeOptions).setBinary(clientLocation);
+        try {
+            chrome = new ChromeDriver(options);
+        } catch (Exception e) {
+            chrome = initChromeWithUpdatedDriver(helper, options, true, e);
+        }
         Capabilities capabilities = chrome.getCapabilities();
         initCapabilities(context, (MutableCapabilities) capabilities);
 
         postInit(chrome);
+        return chrome;
+    }
+
+    @NotNull
+    private ChromeDriver initChromeWithUpdatedDriver(WebDriverHelper helper,
+                                                     ChromeOptions options,
+                                                     boolean isEmbeddedChrome,
+                                                     Exception e)
+        throws IOException {
+        ChromeDriver chrome;
+        ConsoleUtils.log("Possibly browser has been updated. Stop the the web driver in use " +
+                         "and start the process to update the web driver.");
+        RuntimeUtils.terminateInstance(new File(helper.getDriverLocation()).getName());
+        if (helper.updateCompatibleDriverVersion()) {
+            helper.resolveDriver();
+            chrome = isEmbeddedChrome ? new ChromeDriver(options) : new ChromeDriver(ChromeDriverService
+                                                                                         .createDefaultService(),
+                                                                                     options);
+
+        } else { throw new RuntimeException(e); }
         return chrome;
     }
 
@@ -569,11 +598,7 @@ public class Browser implements ForcefulTerminate {
     protected WebDriver initChrome(boolean headless) throws IOException {
         // check https://github.com/SeleniumHQ/selenium/wiki/ChromeDriver for details
 
-        resolveChromeDriverLocation();
-
-        ChromeDriverService driverService = ChromeDriverService.createDefaultService();
-        // URL driverUrl = driverService.getUrl();
-        // int driverPort = driverUrl.getPort();
+        WebDriverHelper helper = resolveChromeDriverLocation();
 
         boolean activateLogging = context.getBooleanConfig("web", profile, CHROME_LOG_ENABLED);
         if (activateLogging) {
@@ -696,7 +721,14 @@ public class Browser implements ForcefulTerminate {
         // WebDriver chrome = new Augmenter().augment(new RemoteWebDriver(driverUrl, options));
         // Capabilities capabilities = ((HasCapabilities) chrome).getCapabilities();
         // ChromeDriver chrome = new ChromeDriver(options);
-        ChromeDriver chrome = new ChromeDriver(driverService, options);
+        ChromeDriver chrome;
+        ChromeDriverService driverService;
+        try {
+            driverService = ChromeDriverService.createDefaultService();
+            chrome = new ChromeDriver(driverService, options);
+        } catch (Exception e) {
+            chrome = initChromeWithUpdatedDriver(helper, options, false, e);
+        }
         Capabilities capabilities = chrome.getCapabilities();
         initCapabilities(context, (MutableCapabilities) capabilities);
 
@@ -715,9 +747,14 @@ public class Browser implements ForcefulTerminate {
         return chrome;
     }
 
+
+
     protected WebDriver initFirefox(boolean headless) throws IOException {
         BrowserType browserType = headless ? firefoxheadless : firefox;
+        String binaryLocation = resolveFirefoxBinLocation();
         WebDriverHelper helper = WebDriverHelper.newInstance(browserType, context);
+        helper.setFirefoxDriverVersionMapping(this.firefoxDriverVersionMapping);
+        helper.setBrowserBinLocation(binaryLocation);
         File driver = helper.resolveDriver();
 
         String driverPath = driver.getAbsolutePath();
@@ -776,7 +813,7 @@ public class Browser implements ForcefulTerminate {
             }
             // }
 
-            String binaryLocation = resolveFirefoxBinLocation();
+
             if (StringUtils.isNotBlank(binaryLocation)) { options.setBinary(binaryLocation); }
 
             handleFirefoxProfile(options, capabilities);
@@ -801,8 +838,18 @@ public class Browser implements ForcefulTerminate {
             String downloadTo = resolveDownloadTo(context);
             if (StringUtils.isNotBlank(downloadTo)) { options.addPreference("browser.download.dir", downloadTo); }
 
-            FirefoxDriver firefox = new FirefoxDriver(options);
-
+            FirefoxDriver firefox;
+            try {
+                firefox = new FirefoxDriver(options);
+            } catch (Exception e) {
+                ConsoleUtils.log("Possibly browser has been updated. Stop the the web driver in use " +
+                                 "and start the process to update the web driver.");
+                RuntimeUtils.terminateInstance(driver.getName());
+                if (helper.updateCompatibleDriverVersion()) {
+                    helper.resolveDriver();
+                    firefox = new FirefoxDriver(options);
+                } else { throw new RuntimeException(e); }
+            }
             browserVersion = capabilities.getVersion();
             browserPlatform = capabilities.getPlatform();
 
@@ -1192,7 +1239,7 @@ public class Browser implements ForcefulTerminate {
                                                                              defaultValue + ""))));
     }
 
-    private String resolveConfig(String propName) { return resolveConfig(propName, null); }
+    public String resolveConfig(String propName) { return resolveConfig(propName, null); }
 
     private void resolveBrowserProfile() {
         if (browserType == firefox) { browserProfile = resolveConfig(SELENIUM_FIREFOX_PROFILE); }
@@ -1205,13 +1252,15 @@ public class Browser implements ForcefulTerminate {
                         logFileName);
     }
 
-    private void resolveChromeDriverLocation() throws IOException {
+    private WebDriverHelper resolveChromeDriverLocation() throws IOException {
         WebDriverHelper helper = WebDriverHelper.newInstance(browserType, context);
+        helper.setBrowserBinLocation(resolveChromeBinLocation());
         File driver = helper.resolveDriver();
 
         String driverPath = driver.getAbsolutePath();
         context.setData(SELENIUM_CHROME_DRIVER, driverPath);
         System.setProperty(SELENIUM_CHROME_DRIVER, driverPath);
+        return helper;
     }
 
     private String resolveChromeBinLocation() {

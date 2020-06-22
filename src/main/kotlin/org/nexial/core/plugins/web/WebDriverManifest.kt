@@ -38,6 +38,8 @@ class WebDriverManifest : Serializable {
 
     var neverCheck: Boolean = false
 
+    var compatibleDriverVersion: String? = null
+
     @Transient
     var driverUrl: String? = null
 

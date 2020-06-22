@@ -61,6 +61,7 @@ import org.nexial.core.plugins.image.ImageCaptionHelper.CaptionModel;
 import org.nexial.core.plugins.ws.WsCommand;
 import org.nexial.core.tools.CommandDiscovery;
 import org.nexial.core.utils.CheckUtils;
+import org.nexial.core.utils.ClipboardUtils;
 import org.nexial.core.utils.ConsoleUtils;
 import org.nexial.core.utils.ExecUtils;
 import org.nexial.core.utils.OutputFileUtils;
@@ -254,6 +255,29 @@ public class BaseCommand implements NexialCommand {
         requiresValidAndNotReadOnlyVariableName(var);
         updateDataVariable(var, value);
         return StepResult.success("stored '" + CellTextReader.readValue(value) + "' as ${" + var + "}");
+    }
+
+    public StepResult copyFromClipboard(String var) {
+        String value;
+        try {
+            value = ClipboardUtils.getInstance().getClipboardContents();
+        } catch (Exception e) {
+            ConsoleUtils.log("Error while copying data from clipboard " + e);
+            return StepResult.fail("Failed to copy clipboard data");
+        }
+        requiresValidAndNotReadOnlyVariableName(var);
+        updateDataVariable(var, value);
+        return StepResult.success("clipboard content stored as ${" + var + "}");
+    }
+
+    public StepResult copyIntoClipboard(String text) {
+        ClipboardUtils.getInstance().setClipboardContents(text);
+        return StepResult.success("clipboard content updated");
+    }
+
+    public StepResult clearClipboard() {
+        ClipboardUtils.getInstance().setClipboardContents(null);
+        return StepResult.success("clipboard cleared");
     }
 
     /** clear data variables by name */
