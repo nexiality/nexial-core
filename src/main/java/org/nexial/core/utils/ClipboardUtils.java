@@ -9,7 +9,7 @@ import org.apache.commons.lang3.StringUtils;
 
 public final class ClipboardUtils implements ClipboardOwner {
 
-    private Clipboard clipboard = Toolkit.getDefaultToolkit().getSystemClipboard();
+    private static final Clipboard clipboard = Toolkit.getDefaultToolkit().getSystemClipboard();
     private static ClipboardUtils clipboardUtils = null;
 
     public static ClipboardUtils getInstance() {
@@ -32,9 +32,10 @@ public final class ClipboardUtils implements ClipboardOwner {
     }
 
     public void setClipboardContents(String value) {
-        StringSelection stringSelection = new StringSelection(value);
-        clipboard.setContents(stringSelection, this);
-        if (StringUtils.isBlank(value)) {
+        if (StringUtils.isNotBlank(value)) {
+            StringSelection stringSelection = new StringSelection(value);
+            clipboard.setContents(stringSelection, this);
+        } else {
             clipboard.setContents(new Transferable() {
                 public DataFlavor[] getTransferDataFlavors() {
                     return new DataFlavor[0];

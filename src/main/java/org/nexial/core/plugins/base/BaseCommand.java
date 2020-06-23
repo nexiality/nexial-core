@@ -272,7 +272,8 @@ public class BaseCommand implements NexialCommand {
 
     public StepResult copyIntoClipboard(String text) {
         ClipboardUtils.getInstance().setClipboardContents(text);
-        return StepResult.success("clipboard content updated");
+        String msg = StringUtils.isNotBlank(text) ? "clipboard content updated" : "no content found";
+        return StepResult.success(msg);
     }
 
     public StepResult clearClipboard() {
