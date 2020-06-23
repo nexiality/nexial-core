@@ -39,6 +39,7 @@ import org.nexial.commons.utils.FileUtil;
 import org.nexial.commons.utils.TextUtils;
 import org.nexial.core.excel.Excel;
 import org.nexial.core.excel.Excel.Worksheet;
+import org.nexial.core.excel.ExcelConfig;
 import org.nexial.core.excel.ExcelStyleHelper;
 import org.nexial.core.excel.ext.CellTextReader;
 import org.nexial.core.plugins.CanTakeScreenshot;
@@ -52,12 +53,12 @@ import static java.io.File.separator;
 import static java.lang.System.lineSeparator;
 import static org.apache.commons.lang3.builder.ToStringStyle.SIMPLE_STYLE;
 import static org.nexial.commons.utils.EnvUtils.platformSpecificEOL;
-import static org.nexial.core.CommandConst.CMD_REPEAT_UNTIL;
-import static org.nexial.core.CommandConst.CMD_VERBOSE;
+import static org.nexial.core.CommandConst.*;
 import static org.nexial.core.NexialConst.*;
 import static org.nexial.core.NexialConst.Data.*;
 import static org.nexial.core.NexialConst.Web.WEB_PERF_METRICS_ENABLED;
 import static org.nexial.core.SystemVariables.getDefaultBool;
+import static org.nexial.core.excel.ExcelConfig.MSG_PASS;
 import static org.nexial.core.excel.ExcelConfig.*;
 
 public class TestStep extends TestStepManifest {
@@ -648,7 +649,13 @@ public class TestStep extends TestStepManifest {
 
         // result
         XSSFCell cellResult = row.get(COL_IDX_RESULT);
-        cellResult.setCellValue(StringUtils.left(MessageUtils.markResult(message, pass, true), 32767));
+        if (MESSAGE_REQUIRED_COMMANDS.contains(row.get(2).toString() + "." + row.get(3).toString()) &&
+            (result.isSuccess() || result.isError())) {
+            cellResult.setCellValue(StringUtils
+                                        .left((result.isSuccess() ? MSG_PASS : ExcelConfig.MSG_FAIL) + message, 32767));
+        } else {
+            cellResult.setCellValue(StringUtils.left(MessageUtils.markResult(message, pass, true), 32767));
+        }
 
         if (result.isError()) {
             ExcelStyleHelper.formatFailedStepDescription(this);
