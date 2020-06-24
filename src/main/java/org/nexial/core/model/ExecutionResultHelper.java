@@ -43,6 +43,7 @@ import static org.apache.poi.ss.usermodel.CellType.STRING;
 import static org.apache.poi.ss.usermodel.Row.MissingCellPolicy.CREATE_NULL_AS_BLANK;
 import static org.nexial.core.CommandConst.CMD_VERBOSE;
 import static org.nexial.core.NexialConst.Data.SHEET_MERGED_DATA;
+import static org.nexial.core.NexialConst.MAX_VERBOSE_CHAR;
 import static org.nexial.core.excel.ExcelConfig.*;
 
 public final class ExecutionResultHelper {
@@ -82,7 +83,7 @@ public final class ExecutionResultHelper {
                 }
 
                 // this might not be fully expanded/substituted as the above try-catch block is prevent RTE to surface
-                cellValue.setCellValue(value);
+                cellValue.setCellValue(StringUtils.abbreviate(value, MAX_VERBOSE_CHAR));
                 // cellValue.setCellStyle(styleTestDataValue);
             }
         });
