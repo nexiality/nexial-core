@@ -38,6 +38,7 @@
           p:outputBase="${nexial.outputCloudBase:}"
           p:accessKey="${nexial.otc.accessKey:}"
           p:secretKey="${nexial.otc.secretKey:}"
+          p:url="${nexial.otc.url:}"
           p:s3PathStyleAccessEnabled="${nexial.otc.s3PathStyleAccessEnabled:true}"
           p:verbose="false">
         <property name="region">

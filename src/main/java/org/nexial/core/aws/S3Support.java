@@ -115,7 +115,7 @@ public abstract class S3Support extends AwsSupport {
         AwsS3Helper s3 = new AwsS3Helper();
         if (StringUtils.isNotBlank(accessKey)) { s3.setAccessKey(accessKey); }
         if (StringUtils.isNotBlank(secretKey)) { s3.setSecretKey(secretKey); }
-
+        s3.setUrl(url);
         s3.setRegion((region == null) ? DEFAULT_REGION : region);
 
         if (StringUtils.isNotBlank(s3path)) {

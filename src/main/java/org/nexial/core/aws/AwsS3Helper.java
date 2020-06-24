@@ -36,6 +36,7 @@ import org.nexial.commons.utils.RegexUtils;
 import org.nexial.core.plugins.aws.AwsSettings;
 
 import com.amazonaws.auth.AWSCredentialsProvider;
+import com.amazonaws.client.builder.AwsClientBuilder.EndpointConfiguration;
 import com.amazonaws.regions.Regions;
 import com.amazonaws.services.s3.AmazonS3;
 import com.amazonaws.services.s3.AmazonS3ClientBuilder;
@@ -61,6 +62,7 @@ public class AwsS3Helper {
     private String bucketName;
     private String subDir;
     private boolean s3PathStyleAccessEnabled = true;
+    private String url;
 
     public static class PutOption {
         private boolean publiclyReadable;
@@ -81,6 +83,8 @@ public class AwsS3Helper {
 
     public void setRegion(Regions region) { this.region = region;}
 
+    public void setUrl(String url) { this.url = url; }
+
     public void setBucketName(String bucketName) { this.bucketName = bucketName;}
 
     public void setSubDir(String subDir) { this.subDir = subDir;}
@@ -99,6 +103,7 @@ public class AwsS3Helper {
         setAccessKey(settings.getAccessKey());
         setSecretKey(settings.getSecretKey());
         setRegion(settings.getRegion());
+        setUrl(settings.getAwsUrl());
         setAssumeRoleArn(settings.getAssumeRoleArn());
         setAssumeRoleSession(settings.getAssumeRoleSession());
         setAssumeRoleDuration(settings.getAssumeRoleDuration());
@@ -359,11 +364,22 @@ public class AwsS3Helper {
     private AmazonS3 newS3Client(@NotNull final Regions region) {
         // added "PathStyleAccessEnabled() to avoid SSL certificate issue since the adding bucket as subdomain to
         // Amazon's SSL cert would result in cert to domain name mismatch
+
+        final AmazonS3ClientBuilder s3ClientBuilder = s3ClientBuilder();
+        if (StringUtils.isNotEmpty(this.url)) { s3ClientBuilder.withEndpointConfiguration(getEndpointConfig()); } else {
+            s3ClientBuilder.withRegion(region);
+        }
+        return s3ClientBuilder.build();
+    }
+
+    private AmazonS3ClientBuilder s3ClientBuilder() {
         return AmazonS3ClientBuilder.standard()
-                                    .withRegion(region)
                                     .withCredentials(resolveCredentials(region))
-                                    .withPathStyleAccessEnabled(s3PathStyleAccessEnabled)
-                                    .build();
+                                    .withPathStyleAccessEnabled(s3PathStyleAccessEnabled);
+    }
+
+    private EndpointConfiguration getEndpointConfig() {
+        return new EndpointConfiguration(this.url, region.getName());
     }
 
     private AWSCredentialsProvider resolveCredentials(Regions region) {

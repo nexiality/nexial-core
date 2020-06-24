@@ -16,6 +16,7 @@
 
 package org.nexial.core.plugins.aws
 
+import com.amazonaws.client.builder.AwsClientBuilder.EndpointConfiguration
 import com.amazonaws.services.sqs.AmazonSQS
 import com.amazonaws.services.sqs.AmazonSQSAsync
 import com.amazonaws.services.sqs.AmazonSQSAsyncClientBuilder
@@ -231,8 +232,10 @@ class SqsSupport : AwsSupport() {
         }
     }
 
-    private fun newSQSClient(): AmazonSQS = AmazonSQSClientBuilder
-        .standard().withRegion(region).withCredentials(resolveCredentials(region)).build()
+    private fun newSQSClient(): AmazonSQS =
+        if (StringUtils.isNotEmpty(url)) AmazonSQSClientBuilder
+            .standard().withEndpointConfiguration(EndpointConfiguration(url, region.getName())).build()
+        else AmazonSQSClientBuilder.standard().withRegion(region).withCredentials(resolveCredentials(region)).build()
 
     private fun newSQSAsyncClient(): AmazonSQSAsync = AmazonSQSAsyncClientBuilder
         .standard().withRegion(region).withCredentials(resolveCredentials(region)).build()

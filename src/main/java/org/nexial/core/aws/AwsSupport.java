@@ -39,6 +39,7 @@ public abstract class AwsSupport {
     protected boolean verbose;
     protected String accessKey;
     protected String secretKey;
+    protected String url;
     protected Regions region;
     protected String assumeRoleArn;
     protected String assumeRoleSession;
@@ -49,6 +50,8 @@ public abstract class AwsSupport {
     public void setAccessKey(String accessKey) { this.accessKey = accessKey;}
 
     public void setSecretKey(String secretKey) { this.secretKey = secretKey;}
+
+    public void setUrl(String url) { this.url = url; }
 
     public void setRegion(Regions region) { this.region = region;}
 
@@ -62,6 +65,7 @@ public abstract class AwsSupport {
         setAccessKey(settings.getAccessKey());
         setSecretKey(settings.getSecretKey());
         setRegion(settings.getRegion());
+        setUrl(settings.getAwsUrl());
         setAssumeRoleArn(settings.getAssumeRoleArn());
         setAssumeRoleSession(settings.getAssumeRoleSession());
         setAssumeRoleDuration(settings.getAssumeRoleDuration());

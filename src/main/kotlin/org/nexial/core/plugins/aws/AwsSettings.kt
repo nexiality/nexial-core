@@ -32,6 +32,7 @@ open class AwsSettings constructor(val accessKey: String, val secretKey: String,
     lateinit var assumeRoleArn: String
     lateinit var assumeRoleSession: String
     var assumeRoleDuration = 900
+    var awsUrl = ""
 }
 
 class AwsSesSettings constructor(accessKey: String, secretKey: String, region: Regions, val from: String) :
@@ -81,6 +82,7 @@ class AwsUtils {
             val settings = AwsSettings(getRequiredSetting(config, prefix1, AWS_ACCESS_KEY),
                                        getRequiredSetting(config, prefix1, AWS_SECRET_KEY),
                                        resolveRegion(config))
+            settings.awsUrl = config.getOrDefault(AWS_URL, "")
             configAssumeRole(settings, config)
 
             context.setData(prefix, settings)
@@ -110,6 +112,7 @@ class AwsUtils {
                                           secretKey = getRequiredSetting(config, "$prefix.", AWS_SECRET_KEY),
                                           region = resolveRegion(config),
                                           from = getRequiredSetting(config, "$prefix.", AWS_SES_FROM))
+            settings.awsUrl = config.getOrDefault(AWS_URL, "")
             configAssumeRole(settings, config)
 
             settings.cc = config[AWS_SES_CC] ?: ""
@@ -147,6 +150,7 @@ class AwsUtils {
                     async = BooleanUtils.toBoolean(config[AWS_SQS_ASYNC]),
                     waitMs = NumberUtils.toLong(config[AWS_SQS_WAIT_TIME_MS] ?: "20000"),
                     visibilityTimeoutMs = NumberUtils.toLong(config[AWS_SQS_VISIBILITY_TIMEOUT_MS] ?: "30000"))
+            settings.awsUrl = config.getOrDefault(AWS_URL, "")
             configAssumeRole(settings, config)
 
             context.setData(prefix, settings)

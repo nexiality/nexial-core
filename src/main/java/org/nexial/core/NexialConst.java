@@ -791,6 +791,7 @@ public final class NexialConst {
     public static final class AwsSettings {
         public static final String SUFFIX = "aws";
 
+        public static final String AWS_URL = "url";
         public static final String AWS_ACCESS_KEY = "accessKey";
         public static final String AWS_SECRET_KEY = "secretKey";
         public static final String AWS_REGION = "region";
