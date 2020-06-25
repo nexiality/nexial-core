@@ -1923,9 +1923,11 @@ public class WebCommand extends BaseCommand implements CanTakeScreenshot, CanLog
         }
 
         // give it time to settle down
-        wait(context.getIntConfig(getTarget(), getProfile(), BROWSER_POST_CLOSE_WAIT) + "");
-
-        if (lastWindow) { return closeAll(); }
+        // BUT only for the last window
+        if (lastWindow) {
+            wait(context.getIntConfig(getTarget(), getProfile(), BROWSER_POST_CLOSE_WAIT) + "");
+            return closeAll();
+        }
 
         browser.removeWinHandle(activeWindowHandle);
 
@@ -1949,7 +1951,6 @@ public class WebCommand extends BaseCommand implements CanTakeScreenshot, CanLog
     }
 
     public StepResult closeAll() {
-        // ensureReady();
         if (browser != null) { browser.shutdown(); }
         driver = null;
         return StepResult.success("closed last tab/window");

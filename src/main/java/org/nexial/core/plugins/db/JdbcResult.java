@@ -26,12 +26,11 @@ import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.nexial.commons.utils.CollectionUtil;
 import org.nexial.commons.utils.DateUtility;
+import org.nexial.commons.utils.TextUtils;
 import org.nexial.core.plugins.db.SqlComponent.Type;
 import org.nexial.core.utils.ConsoleUtils;
 
-import static org.apache.commons.lang3.StringUtils.rightPad;
 import static org.nexial.core.NexialConst.DATE_FORMAT_NOW;
-import static org.nexial.core.NexialConst.NL;
 import static org.nexial.core.plugins.db.SqlComponent.Type.UNKNOWN;
 
 public class JdbcResult implements Serializable {
@@ -134,14 +133,13 @@ public class JdbcResult implements Serializable {
 
     @Override
     public String toString() {
-        return NL +
-               rightPad("sql", TO_STRING_KEY_LENGTH) + "=" + sql + NL +
-               rightPad("startTime", TO_STRING_KEY_LENGTH) + "=" + formatStartTime(startTime) + NL +
-               rightPad("elapsedTime", TO_STRING_KEY_LENGTH) + "=" + elapsedTime + " ms" + NL +
-               (StringUtils.isNotBlank(error) ? rightPad("error", TO_STRING_KEY_LENGTH) + "=" + error + NL : "") +
-               rightPad("rowCount", TO_STRING_KEY_LENGTH) + "=" + rowCount + NL +
-               (CollectionUtils.isNotEmpty(data) ? rightPad("data", TO_STRING_KEY_LENGTH) + "=" + data + NL : "") +
-               (isRolledBack() ? "TRANSACTION ROLLBACKED" + NL : "");
+        return TextUtils.prettyToString("sql=" + sql,
+                                        "startTime=" + formatStartTime(startTime),
+                                        "elapsedTime=" + elapsedTime + " ms",
+                                        StringUtils.isNotBlank(error) ? "error=" + error : "",
+                                        "rowCount=" + rowCount,
+                                        CollectionUtils.isNotEmpty(data) ? "data=" + data : "",
+                                        isRolledBack() ? "TRANSACTION ROLLBACKED=yes" : "");
     }
 
     protected <T extends JdbcResult> T setTiming(long startTime) {

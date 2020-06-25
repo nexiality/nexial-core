@@ -42,6 +42,7 @@ import static java.lang.System.lineSeparator;
 import static org.nexial.commons.utils.TextUtils.CleanNumberStrategy.CSV;
 import static org.nexial.commons.utils.TextUtils.CleanNumberStrategy.OCTAL;
 import static org.nexial.core.NexialConst.DEF_FILE_ENCODING;
+import static org.nexial.core.NexialConst.NL;
 
 /**
  * @author Mike Liu
@@ -70,6 +71,7 @@ public final class TextUtils {
                                                                                     "\r\n = ",
                                                                                     "\r = ",
                                                                                     "\t = ");
+    private static final int TO_STRING_KEY_LENGTH = 14;
 
     /**
      * line break conversion strategies -- currently only two, namely (1)
@@ -1273,6 +1275,21 @@ public final class TextUtils {
         }
 
         return text;
+    }
+
+    @NotNull
+    public static String prettyToString(String... keyValues) {
+        if (ArrayUtils.isEmpty(keyValues)) {
+            return "";
+        } else {
+            return NL +
+                   Arrays.stream(keyValues).map(pair -> {
+                       String key = StringUtils.substringBefore(pair, "=");
+                       String value = StringUtils.substringAfter(pair, "=");
+                       return StringUtils.isBlank(key) ?
+                              "" : StringUtils.rightPad(key, TO_STRING_KEY_LENGTH) + "=" + value + NL;
+                   }).collect(Collectors.joining(""));
+        }
     }
 
     private static Map<String, String> initDefaultEscapeHtmlMapping() {

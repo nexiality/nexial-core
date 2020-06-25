@@ -5,7 +5,7 @@
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
- *       http://www.apache.org/licenses/LICENSE-2.0
+ * 	http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -15,7 +15,7 @@
  *
  */
 
-package org.nexial.core.plugins;
+package org.nexial.core.model;
 
 import java.io.Serializable;
 import java.util.Arrays;
@@ -24,6 +24,7 @@ import java.util.List;
 import org.apache.commons.collections4.list.TreeList;
 import org.apache.commons.lang3.ArrayUtils;
 import org.apache.commons.lang3.StringUtils;
+import org.nexial.commons.utils.TextUtils;
 
 import static java.lang.System.lineSeparator;
 
@@ -48,7 +49,7 @@ public class RemoteFileActionOutcome implements Serializable {
         LIST("list"),
         DELETE("delete");
 
-        private String description;
+        private final String description;
 
         TransferAction(String description) { this.description = description; }
 
@@ -162,14 +163,15 @@ public class RemoteFileActionOutcome implements Serializable {
 
     @Override
     public String toString() {
-        return "protocol=" + protocol + "\n" +
-               "action=" + action + "\n" +
-               "remotePath=" + remotePath + "\n" +
-               "localPath=" + localPath + "\n" +
-               "startTime=" + startTime + "\n" +
-               "elapsedTime=" + elapsedTime + "\n" +
-               "affected=" + affected + "\n" +
-               "failed=" + failed + "\n" +
-               "errors=" + errors + "\n";
+        return TextUtils.prettyToString("protocol=" + protocol,
+                                        "action=" + action,
+                                        "startTime=" + startTime,
+                                        "elapsedTime=" + elapsedTime,
+                                        "remotePath=" + StringUtils.defaultString(remotePath),
+                                        "localPath=" + StringUtils.defaultString(localPath),
+                                        "affected=" + affected,
+                                        "=londa",
+                                        "failed=" + failed,
+                                        "errors=" + StringUtils.defaultString(errors));
     }
 }

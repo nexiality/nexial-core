@@ -30,8 +30,8 @@ import org.apache.commons.lang3.tuple.Pair;
 import org.nexial.commons.utils.FileUtil;
 import org.nexial.core.IntegrationConfigException;
 import org.nexial.core.model.StepResult;
-import org.nexial.core.plugins.RemoteFileActionOutcome;
-import org.nexial.core.plugins.RemoteFileActionOutcome.TransferAction;
+import org.nexial.core.model.RemoteFileActionOutcome;
+import org.nexial.core.model.RemoteFileActionOutcome.TransferAction;
 import org.nexial.core.plugins.base.BaseCommand;
 import org.nexial.core.utils.ConsoleUtils;
 
@@ -40,9 +40,9 @@ import com.jcraft.jsch.ChannelSftp.*;
 
 import static com.jcraft.jsch.ChannelSftp.*;
 import static java.io.File.separator;
-import static org.nexial.core.plugins.RemoteFileActionOutcome.TransferAction.*;
-import static org.nexial.core.plugins.RemoteFileActionOutcome.TransferProtocol.SCP;
-import static org.nexial.core.plugins.RemoteFileActionOutcome.TransferProtocol.SFTP;
+import static org.nexial.core.model.RemoteFileActionOutcome.TransferAction.*;
+import static org.nexial.core.model.RemoteFileActionOutcome.TransferProtocol.SCP;
+import static org.nexial.core.model.RemoteFileActionOutcome.TransferProtocol.SFTP;
 import static org.nexial.core.utils.CheckUtils.*;
 
 public class SshCommand extends BaseCommand {
@@ -619,7 +619,7 @@ public class SshCommand extends BaseCommand {
         }
         if (!dirOK && StringUtils.endsWithAny(remotePath, "\\", "/")) {
             return StepResult.fail("remote path " + remotePath +
-                                   " is a directory, but corrent command does NOT SUPPORT remote directory");
+                                   " is a directory, but current command does NOT SUPPORT remote directory");
         }
         if (!wildcardOK && hasWildcard(remotePath)) {
             return StepResult.fail("remote path " + remotePath +

@@ -27,9 +27,9 @@ import org.nexial.core.NexialConst.S3_PATH_SEP
 import org.nexial.core.aws.AwsS3Helper
 import org.nexial.core.aws.NexialS3Helper
 import org.nexial.core.model.StepResult
-import org.nexial.core.plugins.RemoteFileActionOutcome
-import org.nexial.core.plugins.RemoteFileActionOutcome.TransferAction.*
-import org.nexial.core.plugins.RemoteFileActionOutcome.TransferProtocol.AWS
+import org.nexial.core.model.RemoteFileActionOutcome
+import org.nexial.core.model.RemoteFileActionOutcome.TransferAction.*
+import org.nexial.core.model.RemoteFileActionOutcome.TransferProtocol.AWS
 import org.nexial.core.plugins.base.BaseCommand
 import org.nexial.core.utils.CheckUtils.*
 import org.nexial.core.utils.ConsoleUtils

@@ -33,10 +33,10 @@ import org.nexial.core.utils.ConsoleUtils
 import java.io.File
 import java.io.File.separator
 import java.util.*
+import java.util.Calendar.HOUR
 
 object TempCleanUp {
     private const val filePattern = "(_nexial_)?[a-zA-Z]{5}"
-    private val cal = Calendar.getInstance()
 
     @JvmStatic
     fun main(args: Array<String>) {
@@ -60,19 +60,21 @@ object TempCleanUp {
     }
 
     fun cleanTempFiles(verbose: Boolean) {
+        val cal = Calendar.getInstance()
+        cal.add(HOUR, -24)
+        val oneDayAgo = cal.time
+
         IOFilePathFilter(true).filterFiles(TEMP).filter {
             // filter directory with pattern `(_nexial_)?[a-zA-Z]{5}`
-            RegexUtils.isExact(StringUtils.substringBetween(it, TEMP, separator), filePattern) &&
-            isModifiedOneDayBefore(Date(File(it).lastModified()))
+            val dir = StringUtils.substringBetween(it, TEMP, separator)
+            RegexUtils.isExact(dir, filePattern) &&
+            isBefore(Date(File(TEMP + dir + separator).lastModified()), oneDayAgo)
         }.forEach {
-            val file = File(TEMP + StringUtils.substringBetween(it, TEMP, separator))
-            if (verbose) log("delete", file.absolutePath)
-            if (!FileUtils.deleteQuietly(file)) ConsoleUtils.error("unable to delete directory: ${file.absolutePath}")
+            val dir = File(TEMP + StringUtils.substringBetween(it, TEMP, separator))
+            if (verbose) log("delete", dir.absolutePath)
+            if (!FileUtils.deleteQuietly(dir)) ConsoleUtils.error("unable to delete directory: ${dir.absolutePath}")
         }
     }
 
-    private fun isModifiedOneDayBefore(modifiedDate: Date): Boolean {
-        cal.add(Calendar.HOUR, -24)
-        return modifiedDate.before(cal.time)
-    }
+    private fun isBefore(modifiedDate: Date, beforeDate: Date) = modifiedDate.before(beforeDate)
 }
