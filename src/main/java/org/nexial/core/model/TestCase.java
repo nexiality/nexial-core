@@ -102,21 +102,7 @@ public class TestCase {
                 if (StringUtils.equals(testStep.getCommandFQN(), CMD_SECTION)) {
                     formatSectionDescription(testStep, false);
 
-                    // `testStep.getParams().get(0)` represents the number of steps of this `section`
-                    int steps = Integer.parseInt(testStep.getParams().get(0));
-                    for (int j = 0; j < steps; j++) {
-                        int sectionStepIndex = i + j + 1;
-                        if (testSteps.size() > sectionStepIndex) {
-                            TestStep step = testSteps.get(sectionStepIndex);
-                            step.postExecCommand(StepResult.skipped(NESTED_SECTION_STEP_SKIPPED), 0);
-
-                            // reduce the number of steps for repeatUntil command
-                            if (step.isCommandRepeater()) { steps -= Integer.parseInt(step.getParams().get(0)); }
-                        } else {
-                            steps = j - 1;
-                            break;
-                        }
-                    }
+                    int steps = formatSkippedSections(i, testStep);
 
                     i += steps;
                     executionSummary.adjustTotalSteps(-steps);
@@ -175,6 +161,31 @@ public class TestCase {
         executionSummary.setFailedFast(context.isFailFast());
         executionSummary.aggregatedNestedExecutions(context);
         return allPassed;
+    }
+
+    private int formatSkippedSections(int i, TestStep testStep) {
+        // `testStep.getParams().get(0)` represents the number of steps of this `section`
+        int steps = Integer.parseInt(testStep.getParams().get(0));
+
+        for (int j = 0; j < steps; j++) {
+            int sectionStepIndex = i + j + 1;
+            if (testSteps.size() > sectionStepIndex) {
+                TestStep step = testSteps.get(sectionStepIndex);
+                step.postExecCommand(StepResult.skipped(NESTED_SECTION_STEP_SKIPPED), 0);
+
+                // reduce the number of steps for repeatUntil command
+                if (step.isCommandRepeater()) { steps -= Integer.parseInt(step.getParams().get(0)); }
+
+                // add the number of steps for section commands
+                if (StringUtils.equals(step.getCommandFQN(), CMD_SECTION)) {
+                    steps += formatSkippedSections(sectionStepIndex, step);
+                }
+            } else {
+                steps = j - 1;
+                break;
+            }
+        }
+        return steps;
     }
 
     public void close() {

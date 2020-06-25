@@ -188,6 +188,15 @@ public class MacroMerger {
                 String paramSheet = row.get(COL_IDX_PARAMS_START + 1);
                 String paramMacro = row.get(COL_IDX_PARAMS_START + 2);
 
+                ExecutionContext context = ExecutionThread.get();
+                if (context != null) {
+                    Map<String, String> iterationData = execDef.getTestData().getAllValue(currentIteration);
+                    iterationData.forEach(context::setData);
+                    paramFile = context.replaceTokens(paramFile);
+                    paramSheet = context.replaceTokens(paramSheet);
+                    paramMacro = context.replaceTokens(paramMacro);
+                }
+
                 // use macro cache if possible
                 // expand macro test steps, add them to cache
                 List<List<String>> macroSteps = harvestMacroSteps(paramFile, paramSheet, paramMacro);
@@ -202,6 +211,12 @@ public class MacroMerger {
                     row.set(COL_IDX_PARAMS_START + 1, "");
                     row.set(COL_IDX_PARAMS_START + 2, "");
 
+                    ConsoleUtils.log("Total step count for macro '" + paramFile + ":" + paramSheet + ":" + paramMacro +
+                                     "' :: " + stepSize);
+
+                    int repeatUntilEndCount = -1;
+                    int newStepSize = stepSize;
+
                     // replace macro invocation step with expanded macro test steps
                     for (int j = 0; j < stepSize; j++) {
                         List<String> macroStep = new ArrayList<>(macroSteps.get(j));
@@ -215,6 +230,28 @@ public class MacroMerger {
                         String description = macroStep.get(COL_IDX_DESCRIPTION);
                         if (!StringUtils.startsWith(description, SECTION_DESCRIPTION_PREFIX)) {
                             macroStep.set(COL_IDX_DESCRIPTION, SECTION_DESCRIPTION_PREFIX + description);
+                        }
+
+                        String commandFQn = macroStep.get(COL_IDX_TARGET) + "." + macroStep.get(COL_IDX_COMMAND);
+                        if(StringUtils.equals(commandFQn, CMD_REPEAT_UNTIL)){
+                            repeatUntilEndCount = Integer.parseInt(row.get(COL_IDX_PARAMS_START));
+                        }
+
+                        // to check section is not part of repeatUntil
+                        boolean notPartOfRepeatUntil = repeatUntilEndCount == -1 || i > repeatUntilEndCount;
+                        if(StringUtils.equals(commandFQn, CMD_SECTION)){
+                            int sectionSteps = Integer.parseInt(macroStep.get(COL_IDX_PARAMS_START));
+                            // checking all section commands count in a macro
+                            if(sectionSteps + j > stepSize) {
+                                throw new IllegalArgumentException("Wrong section step count " + sectionSteps);
+                            }
+
+                            if (notPartOfRepeatUntil)  {
+                                newStepSize -= sectionSteps;
+                                row.set(COL_IDX_PARAMS_START, newStepSize + "");
+                                ConsoleUtils.log("Macro Step count has been changed from " + stepSize +
+                                                 " to " + newStepSize);
+                            }
                         }
 
                         allTestSteps.add(i + j + 1, macroStep);
@@ -333,15 +370,6 @@ public class MacroMerger {
 
     protected List<List<String>> harvestMacroSteps(String paramFile, String paramSheet, String paramMacro)
         throws IOException {
-
-        ExecutionContext context = ExecutionThread.get();
-        if (context != null) {
-            Map<String, String> iterationData = execDef.getTestData().getAllValue(currentIteration);
-            iterationData.forEach(context::setData);
-            paramFile = context.replaceTokens(paramFile);
-            paramSheet = context.replaceTokens(paramSheet);
-            paramMacro = context.replaceTokens(paramMacro);
-        }
 
         File macroFile = resolveMacroFile(project, StringUtils.appendIfMissing(paramFile, SCRIPT_FILE_EXT));
 
