@@ -21,12 +21,15 @@ import java.io.Serializable;
 import java.util.Arrays;
 import java.util.List;
 
+import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.collections4.list.TreeList;
 import org.apache.commons.lang3.ArrayUtils;
 import org.apache.commons.lang3.StringUtils;
+import org.nexial.commons.utils.DateUtility;
 import org.nexial.commons.utils.TextUtils;
 
 import static java.lang.System.lineSeparator;
+import static org.nexial.core.NexialConst.DATE_FORMAT_NOW;
 
 public class RemoteFileActionOutcome implements Serializable {
     private List<String> affected = new TreeList<>();
@@ -163,15 +166,15 @@ public class RemoteFileActionOutcome implements Serializable {
 
     @Override
     public String toString() {
-        return TextUtils.prettyToString("protocol=" + protocol,
-                                        "action=" + action,
-                                        "startTime=" + startTime,
-                                        "elapsedTime=" + elapsedTime,
-                                        "remotePath=" + StringUtils.defaultString(remotePath),
-                                        "localPath=" + StringUtils.defaultString(localPath),
-                                        "affected=" + affected,
-                                        "=londa",
-                                        "failed=" + failed,
-                                        "errors=" + StringUtils.defaultString(errors));
+        return TextUtils.prettyToString(
+            "protocol=" + protocol,
+            "action=" + action,
+            "startTime=" + DateUtility.format(startTime, DATE_FORMAT_NOW),
+            "elapsedTime=" + elapsedTime,
+            "remotePath=" + StringUtils.defaultString(remotePath),
+            "localPath=" + StringUtils.defaultString(localPath),
+            (CollectionUtils.isNotEmpty(affected) ? "affected=" + affected : ""),
+            (CollectionUtils.isNotEmpty(failed) ? "failed=" + failed : ""),
+            (StringUtils.isNotBlank(errors) ? "errors=" + StringUtils.defaultString(errors) : ""));
     }
 }
