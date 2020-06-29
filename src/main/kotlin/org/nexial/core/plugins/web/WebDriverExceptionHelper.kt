@@ -63,6 +63,7 @@ object WebDriverExceptionHelper {
             is NoSuchElementException          -> "Specified element not found: "
             is NoSuchFrameException            -> "Specified frame invalid or not found: "
             is NoSuchWindowException           -> "Specified window invalid or not found: "
+            is NotFoundException               -> "Specified web element/window not found: "
             is ScreenshotException             -> "Unable to capture screenshot: "
             is UnhandledAlertException         -> "JavaScript alert dialog not properly handled: "
             is StaleElementReferenceException  -> "Referenced element is either not longer available or attached to the specified locator"

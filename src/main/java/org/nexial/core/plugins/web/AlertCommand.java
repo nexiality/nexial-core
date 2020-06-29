@@ -26,7 +26,7 @@ import org.nexial.core.plugins.RequireBrowser;
 import org.nexial.core.plugins.base.BaseCommand;
 import org.nexial.core.utils.ConsoleUtils;
 import org.openqa.selenium.Alert;
-import org.openqa.selenium.NoAlertPresentException;
+import org.openqa.selenium.NotFoundException;
 import org.openqa.selenium.TimeoutException;
 import org.openqa.selenium.WebDriver;
 import org.openqa.selenium.remote.UnreachableBrowserException;
@@ -128,7 +128,7 @@ public class AlertCommand extends BaseCommand implements RequireBrowser {
                 alert.dismiss();
                 return StepResult.success("dismissed dialog '" + msg + "'");
             }
-        } catch (NoAlertPresentException e) {
+        } catch (NotFoundException e) {
             return StepResult.fail("No dialog was present");
         } catch (UnreachableBrowserException e) {
             return StepResult.fail("browser already closed");
@@ -159,7 +159,7 @@ public class AlertCommand extends BaseCommand implements RequireBrowser {
             Alert alert = driver.switchTo().alert();
             if (alert == null) { return null; }
             return harvestDialogText(alert);
-        } catch (NoAlertPresentException e) {
+        } catch (NotFoundException e) {
             ConsoleUtils.log("No dialog was present");
         } catch (UnreachableBrowserException e) {
             ConsoleUtils.log("browser already closed: " + e);
@@ -176,7 +176,7 @@ public class AlertCommand extends BaseCommand implements RequireBrowser {
         try {
             driver.switchTo().alert();
             return true;
-        } catch (NoAlertPresentException | UnreachableBrowserException | TimeoutException e) {
+        } catch (NotFoundException | UnreachableBrowserException | TimeoutException e) {
             return false;
         }
     }
