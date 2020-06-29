@@ -40,7 +40,7 @@ import static org.nexial.core.NexialConst.TOKEN_START;
 public class CheckUtils {
 
     public static boolean isValidVariable(String var) {
-        return !StringUtils.isBlank(var) &&
+        return StringUtils.isNotBlank(var) &&
                !TextUtils.isBetween(var, TOKEN_START, TOKEN_END) &&
                !StringUtils.containsAny(var, "$", "{", "}", "[", "]");
     }

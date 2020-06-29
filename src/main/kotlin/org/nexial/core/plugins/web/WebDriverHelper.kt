@@ -179,9 +179,7 @@ abstract class WebDriverHelper protected constructor(protected var context: Exec
         }
     }
 
-
-    protected fun updateManifestProperties(manifest: WebDriverManifest, driverUrl: String?,
-                                         targetVersion: String?) {
+    protected fun updateManifestProperties(manifest: WebDriverManifest, driverUrl: String?, targetVersion: String?) {
         manifest.driverUrl = driverUrl
         manifest.lastChecked = System.currentTimeMillis()
         manifest.driverVersion = targetVersion
@@ -189,7 +187,8 @@ abstract class WebDriverHelper protected constructor(protected var context: Exec
     }
 
     protected fun resolveDownloadUrlFromJSONArray(manifest: WebDriverManifest,
-                                                targetVersion: String?, json: JSONArray) {
+                                                  targetVersion: String?,
+                                                  json: JSONArray) {
         // get latest
         val driverSearchName = resolveDriverSearchName(targetVersion!!)
         var driverUrl = JSONPath.find(json,
@@ -238,7 +237,7 @@ abstract class WebDriverHelper protected constructor(protected var context: Exec
                         .substringBefore(driverVersion, ".").toInt()
                 } else {
                     ConsoleUtils.error("Invalid driver version :$driverVersion")
-                    return false;
+                    return false
                 }
                 //find driver mapping configuration in nexial.xml
                 for ((minMaxRange, value) in firefoxDriverVersionMapping!!.entries) {
@@ -290,9 +289,7 @@ abstract class WebDriverHelper protected constructor(protected var context: Exec
                 val reader = BufferedReader(InputStreamReader(process.inputStream))
                 var line: String?
                 while (reader.readLine().also { line = it } != null) {
-                    if (!StringUtils.isBlank(line)) {
-                        browserVersion = line
-                    }
+                    if (StringUtils.isNotBlank(line)) browserVersion = line
                 }
             } catch (e: Exception) {
                 ConsoleUtils.error("Error while finding browser version: $e")
@@ -328,7 +325,6 @@ abstract class WebDriverHelper protected constructor(protected var context: Exec
         }
         return cmd
     }
-
 
     protected open fun resolveDriverSearchName(tag: String): String {
         val assetRegex = when {
@@ -589,15 +585,15 @@ class EdgeDriverHelper(context: ExecutionContext) : WebDriverHelper(context) {
 
         fun deriveWin10BuildNumber(currentOsVer: String, minVersion: Int): String {
             val osVer = StringUtils.trim(
-                    when {
-                        RegexUtils.isExact(currentOsVer, winVerRegex1) ->
-                            RegexUtils.replace(currentOsVer, winVerRegex1, "$1")
-                        RegexUtils.isExact(currentOsVer, winVerRegex2) ->
-                            RegexUtils.replace(currentOsVer, winVerRegex2, "$1")
-                        RegexUtils.isExact(currentOsVer, winVerRegex3) ->
-                            StringUtils.substringAfterLast(currentOsVer, ".")
-                        else                                           -> currentOsVer
-                    })
+                when {
+                    RegexUtils.isExact(currentOsVer, winVerRegex1) ->
+                        RegexUtils.replace(currentOsVer, winVerRegex1, "$1")
+                    RegexUtils.isExact(currentOsVer, winVerRegex2) ->
+                        RegexUtils.replace(currentOsVer, winVerRegex2, "$1")
+                    RegexUtils.isExact(currentOsVer, winVerRegex3) ->
+                        StringUtils.substringAfterLast(currentOsVer, ".")
+                    else                                           -> currentOsVer
+                })
 
             if (!NumberUtils.isDigits(osVer)) return minVersion.toString()
 
@@ -626,13 +622,13 @@ class FirefoxDriverHelper(context: ExecutionContext) : WebDriverHelper(context) 
         if (manifest.neverCheck && hasDriver) return manifest
 
         //first time driver download
-         if (!hasDriver) {
-             updateCompatibleDriverVersion()
-             manifest = initWebDriverManifest()
-         }
+        if (!hasDriver) {
+            updateCompatibleDriverVersion()
+            manifest = initWebDriverManifest()
+        }
 
         var driverVersion = manifest.compatibleDriverVersion
-        if (!StringUtils.isBlank(driverVersion)) {
+        if (StringUtils.isNotBlank(driverVersion)) {
             driverVersion = "v$driverVersion"
         } else if (hasDriver && manifest.lastChecked + config.checkFrequency >= System.currentTimeMillis()) {
             //No need to update still have time
@@ -658,6 +654,7 @@ class FirefoxDriverHelper(context: ExecutionContext) : WebDriverHelper(context) 
                         manifest, driverVersion, JSONArray(availableDriverContent))
                 }
             }
+
             TextUtils.isBetween(availableDriverContent, "{", "}") -> {
                 if (StringUtils.isBlank(driverVersion)) {
                     extractDriverInfo(JSONObject(availableDriverContent), manifest, pollForUpdates)
@@ -666,13 +663,13 @@ class FirefoxDriverHelper(context: ExecutionContext) : WebDriverHelper(context) 
                                                      JSONObject(availableDriverContent))
                 }
             }
+
             else                                                  ->
                 ConsoleUtils.error("Unknown content downloaded from ${config.checkUrlBase}; IGNORED...")
         }
 
         return manifest
     }
-
 }
 
 /**
@@ -735,9 +732,9 @@ class ChromeDriverHelper(context: ExecutionContext) : WebDriverHelper(context) {
             var driverVersion = minDriverVersion
             val wsClient = newIsolatedWsClient()
             val lookupResponse =
-                if (StringUtils.isBlank(compatibleDriverVersion)) {
-                    wsClient.get("${config.checkUrlBase}/LATEST_RELEASE", "")
-                } else wsClient.get("${config.checkUrlBase}/LATEST_RELEASE_$compatibleDriverVersion", "")
+                    if (StringUtils.isBlank(compatibleDriverVersion)) {
+                        wsClient.get("${config.checkUrlBase}/LATEST_RELEASE", "")
+                    } else wsClient.get("${config.checkUrlBase}/LATEST_RELEASE_$compatibleDriverVersion", "")
 
             if (lookupResponse.returnCode != 200) {
                 // something's wrong...
@@ -763,11 +760,10 @@ class ChromeDriverHelper(context: ExecutionContext) : WebDriverHelper(context) {
         return manifest
     }
 
-    private fun isBrowserUpdated(manifest: WebDriverManifest,
-                                   hasDriver: Boolean): Pair<String?, Boolean> {
+    private fun isBrowserUpdated(manifest: WebDriverManifest, hasDriver: Boolean): Pair<String?, Boolean> {
         var browserVersion = manifest.compatibleDriverVersion
         var isUpdateRequired = false
-        if (!StringUtils.isBlank(browserVersion)) {
+        if (StringUtils.isNotBlank(browserVersion)) {
             browserVersion = browserVersion?.substringBeforeLast(".")
             if (hasDriver && (StringUtils.isBlank(manifest.driverVersion) || !manifest.driverVersion?.startsWith(
                     browserVersion!!)!!)) {
@@ -779,7 +775,6 @@ class ChromeDriverHelper(context: ExecutionContext) : WebDriverHelper(context) {
 
         return Pair(browserVersion, isUpdateRequired)
     }
-
 }
 
 /** webdriver helper for IE browser */

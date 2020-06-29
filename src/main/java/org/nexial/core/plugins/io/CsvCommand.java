@@ -67,7 +67,7 @@ public class CsvCommand extends IoCommand {
         requiresNotBlank(actual, "actual is empty/blank");
         return compare(expected,
                        actual,
-                       !StringUtils.isBlank(failFast) && BooleanUtils.toBoolean(failFast) ? FAIL_FAST : THOROUGH,
+                       StringUtils.isNotBlank(failFast) && BooleanUtils.toBoolean(failFast) ? FAIL_FAST : THOROUGH,
                        null);
     }
 

@@ -66,7 +66,7 @@ public final class FileUtil {
         FILENAME_DESC(NAME_REVERSE),
         LASTMODIFIED_ASC(LASTMODIFIED_COMPARATOR),
         LASTMODIFIED_DESC(LASTMODIFIED_REVERSE);
-        private Comparator<File> comparator;
+        private final Comparator<File> comparator;
 
         SortBy(Comparator<File> comparator) { this.comparator = comparator; }
 
@@ -252,7 +252,7 @@ public final class FileUtil {
 
     /** return true if {@code path} is a valid directory and readable by the current run user. */
     public static boolean isDirectoryReadable(String path) {
-        return !StringUtils.isBlank(path) && isDirectoryReadable(new File(path));
+        return StringUtils.isNotBlank(path) && isDirectoryReadable(new File(path));
     }
 
     public static boolean isDirectoryReadable(File dir) {
@@ -261,11 +261,15 @@ public final class FileUtil {
 
     /** return true if {@code path} is a valid directory and read/writable by the current run user. */
     public static boolean isDirectoryReadWritable(String path) {
-        return !StringUtils.isBlank(path) && isDirectoryReadWritable(new File(path));
+        return StringUtils.isNotBlank(path) && isDirectoryReadWritable(new File(path));
     }
 
     public static boolean isDirectoryReadWritable(File dir) {
         return dir != null && dir.exists() && dir.isDirectory() && dir.canRead() && dir.canWrite();
+    }
+
+    public static boolean isEmptyDirectory(String path) {
+        return isDirectoryReadable(path) && CollectionUtils.isEmpty(FileUtils.listFiles(new File(path), null, true));
     }
 
     public static boolean isFileReadable(File file, long minFileSize) {

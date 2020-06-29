@@ -47,12 +47,22 @@ public enum NexialFilterComparator {
 
     NotIn(" not in ", -1, String.class, 2.0),
     In(" in ", -1, String.class, 2.1),
-    IsNotEmpty(" is not empty", 0, null, 2.2),
-    IsEmpty(" is empty", 0, null, 2.3),
-    IsNot(" is not ", -1, String.class, 2.4),
-    IsDefined(" is defined", 0, null, 2.5),
-    IsUndefined(" is undefined", 0, null, 2.6),
-    Is(" is ", -1, String.class, 2.7),
+
+    // all the "is not" must be listed before `IsNote` comparator to avoid parsing error
+    NotReadableFile(" is not readable-file", 0, Boolean.class, 2.2),
+    NotReadablePath(" is not readable-path", 0, Boolean.class, 2.21),
+    NotEmptyPath(" is not empty-path", 0, Boolean.class, 2.22),
+    IsNotEmpty(" is not empty", 0, null, 2.23),
+    IsNot(" is not ", -1, String.class, 2.24),
+
+    // all the "is" must be listed before `Is` comparator to avoid parsing error,
+    IsDefined(" is defined", 0, null, 2.3),
+    IsUndefined(" is undefined", 0, null, 2.31),
+    ReadableFile(" is readable-file", 0, Boolean.class, 2.32),
+    ReadablePath(" is readable-path", 0, Boolean.class, 2.33),
+    EmptyPath(" is empty-path", 0, Boolean.class, 2.34),
+    IsEmpty(" is empty", 0, null, 2.35),
+    Is(" is ", -1, String.class, 2.36),
 
     NotContain(" not contain ", -1, String.class, 3.1),
     NotStartsWith(" not start with ", 1, String.class, 3.2),
@@ -65,8 +75,7 @@ public enum NexialFilterComparator {
     Match(" match ", 1, String.class, 3.8),
     HasLengthOf(" has length of ", 1, Number.class, 3.9),
 
-    ReadableFile(" has file-size ", 1, Number.class, 4.0),
-    ReadablePath(" is readable-path", 0, Boolean.class, 4.1),
+    ReadableFileWithSize(" has file-size ", 1, Number.class, 4.0),
 
     TrueOrFalse(null, 0, Boolean.class, 5.0),
 
@@ -76,10 +85,10 @@ public enum NexialFilterComparator {
     private static final String REGEX_CONTROLS = "(\".+?\"|.+?)?";
     private static final String REGEX_FILTER = initRegexFilter();
 
-    private String symbol;
-    private int expectedControlSize;
-    private Class expectedType;
-    private double order;
+    private final String symbol;
+    private final int expectedControlSize;
+    private final Class expectedType;
+    private final double order;
 
     interface InternalMappings {
         Map<String, NexialFilterComparator> COMPARATOR_MAP = new HashMap<>();

@@ -16,6 +16,7 @@
 
 package org.nexial.core.model;
 
+import org.apache.commons.lang3.StringUtils;
 import org.junit.Assert;
 import org.junit.Test;
 
@@ -73,5 +74,36 @@ public class NexialFilterListTest {
         Assert.assertEquals("${fruits}", filter.getSubject());
         Assert.assertEquals(StartsWith, filter.getComparator());
         Assert.assertEquals("ban", filter.getControls());
+    }
+
+    @Test
+    public void parsingIOFilter() throws Exception {
+        NexialFilterList list;
+        NexialFilter filter;
+
+        list = new NexialFilterList("file1 has file-size 5");
+        Assert.assertNotNull(list);
+        Assert.assertEquals(1, list.size());
+        filter = list.get(0);
+        Assert.assertEquals("file1", filter.getSubject());
+        Assert.assertEquals(ReadableFileWithSize.toString(), filter.getComparator().toString());
+        Assert.assertEquals("5", filter.getControls());
+
+        assertFilter(new NexialFilterList("file1 is not readable-file"), NotReadableFile);
+        assertFilter(new NexialFilterList("file1 is readable-file"), ReadableFile);
+        assertFilter(new NexialFilterList("file1 is not readable-path"), NotReadablePath);
+        assertFilter(new NexialFilterList("file1 is readable-path"), ReadablePath);
+        assertFilter(new NexialFilterList("file1 is not empty-path"), NotEmptyPath);
+        assertFilter(new NexialFilterList("file1 is empty-path"), EmptyPath);
+    }
+
+    protected void assertFilter(NexialFilterList list, NexialFilterComparator expectedComparator) {
+        NexialFilter filter;
+        Assert.assertNotNull(list);
+        Assert.assertEquals(1, list.size());
+        filter = list.get(0);
+        Assert.assertEquals("file1", filter.getSubject());
+        Assert.assertEquals(expectedComparator.toString(), filter.getComparator().toString());
+        Assert.assertTrue(StringUtils.isEmpty(filter.getControls()));
     }
 }

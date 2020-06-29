@@ -357,7 +357,7 @@ public class IoCommand extends BaseCommand {
     public StepResult compare(String expected, String actual, String failFast) {
         requires(StringUtils.isNotEmpty(expected), "Invalid 'expected'; neither a file or text", expected);
         requires(StringUtils.isNotEmpty(actual), "Invalid 'actual'; neither a file or text", actual);
-        CompareMode compareMode = !StringUtils.isBlank(failFast) && BooleanUtils.toBoolean(failFast) ?
+        CompareMode compareMode = StringUtils.isNotBlank(failFast) && BooleanUtils.toBoolean(failFast) ?
                                   FAIL_FAST : THOROUGH;
         return compare(expected, actual, compareMode, null);
     }

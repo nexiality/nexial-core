@@ -256,7 +256,7 @@ public class NexialFilter implements Serializable {
                 result = !context.hasData(subject);
                 break;
 
-            case ReadableFile:
+            case ReadableFileWithSize:
                 if (!NumberUtils.isCreatable(expected)) {
                     ConsoleUtils.error(msgPrefix + "NOT A NUMBER: " + expected);
                     return false;
@@ -264,12 +264,32 @@ public class NexialFilter implements Serializable {
 
                 long expectedFileLength = NumberUtils.toLong(expected);
                 result = FileUtil.isFileReadable(actual, expectedFileLength);
-                if (expectedFileLength < 1) { result = !result; }
+                if (expectedFileLength < 0) { result = !result; }
 
+                break;
+
+            case NotReadableFile:
+                result = !FileUtil.isFileReadable(actual);
+                break;
+
+            case ReadableFile:
+                result = FileUtil.isFileReadable(actual);
+                break;
+
+            case NotReadablePath:
+                result = !FileUtil.isDirectoryReadable(actual);
                 break;
 
             case ReadablePath:
                 result = FileUtil.isDirectoryReadable(actual);
+                break;
+
+            case NotEmptyPath:
+                result = !FileUtil.isEmptyDirectory(actual);
+                break;
+
+            case EmptyPath:
+                result = FileUtil.isEmptyDirectory(actual);
                 break;
 
             default: {
@@ -375,18 +395,33 @@ public class NexialFilter implements Serializable {
             case HasLengthOf:
                 return StringUtils.length(data) == toDouble(controls);
 
-            case ReadableFile:
+            case ReadableFileWithSize:
                 if (!NumberUtils.isCreatable(controls)) {
                     throw new IllegalArgumentException("NOT A NUMBER: " + controls);
                 }
 
                 long expectedFileLength = NumberUtils.toLong(controls);
                 boolean result = FileUtil.isFileReadable(data, expectedFileLength);
-                if (expectedFileLength < 1) { result = !result; }
+                if (expectedFileLength < 0) { result = !result; }
                 return result;
+
+            case NotReadableFile:
+                return !FileUtil.isFileReadable(data);
+
+            case ReadableFile:
+                return FileUtil.isFileReadable(data);
+
+            case NotReadablePath:
+                return !FileUtil.isDirectoryReadable(data);
 
             case ReadablePath:
                 return FileUtil.isDirectoryReadable(data);
+
+            case NotEmptyPath:
+                return !FileUtil.isEmptyDirectory(data);
+
+            case EmptyPath:
+                return FileUtil.isEmptyDirectory(data);
 
             default:
                 throw new IllegalArgumentException("Invalid/unknown comparator: " + comparator.getSymbol());

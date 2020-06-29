@@ -36,7 +36,7 @@ public final class ComponentScanStrategy {
     }
 
     public static boolean isOnlySingleInstanceAllowed(String hint) {
-        return !StringUtils.isBlank(hint) && ONLY_ALLOW_ONE.contains(hint);
+        return StringUtils.isNotBlank(hint) && ONLY_ALLOW_ONE.contains(hint);
     }
 
     private static Map<String, Class> initStrategies() {

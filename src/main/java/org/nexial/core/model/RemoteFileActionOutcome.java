@@ -29,6 +29,7 @@ import org.nexial.commons.utils.DateUtility;
 import org.nexial.commons.utils.TextUtils;
 
 import static java.lang.System.lineSeparator;
+import static org.apache.commons.lang3.SystemUtils.IS_OS_WINDOWS;
 import static org.nexial.core.NexialConst.DATE_FORMAT_NOW;
 
 public class RemoteFileActionOutcome implements Serializable {
@@ -160,7 +161,11 @@ public class RemoteFileActionOutcome implements Serializable {
     public String getLocalPath() { return localPath; }
 
     public RemoteFileActionOutcome setLocalPath(String localPath) {
-        this.localPath = localPath;
+        if (IS_OS_WINDOWS) {
+            this.localPath = StringUtils.replace(localPath, "/", "\\");
+        } else {
+            this.localPath = StringUtils.replace(localPath, "\\", "/");
+        }
         return this;
     }
 

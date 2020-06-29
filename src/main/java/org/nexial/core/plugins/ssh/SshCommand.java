@@ -29,9 +29,9 @@ import org.apache.commons.lang3.tuple.ImmutablePair;
 import org.apache.commons.lang3.tuple.Pair;
 import org.nexial.commons.utils.FileUtil;
 import org.nexial.core.IntegrationConfigException;
-import org.nexial.core.model.StepResult;
 import org.nexial.core.model.RemoteFileActionOutcome;
 import org.nexial.core.model.RemoteFileActionOutcome.TransferAction;
+import org.nexial.core.model.StepResult;
 import org.nexial.core.plugins.base.BaseCommand;
 import org.nexial.core.utils.ConsoleUtils;
 
@@ -43,9 +43,17 @@ import static java.io.File.separator;
 import static org.nexial.core.model.RemoteFileActionOutcome.TransferAction.*;
 import static org.nexial.core.model.RemoteFileActionOutcome.TransferProtocol.SCP;
 import static org.nexial.core.model.RemoteFileActionOutcome.TransferProtocol.SFTP;
-import static org.nexial.core.utils.CheckUtils.*;
+import static org.nexial.core.utils.CheckUtils.requiresNotBlank;
+import static org.nexial.core.utils.CheckUtils.requiresNotNull;
 
 public class SshCommand extends BaseCommand {
+
+    private static final String MSG_MISMATCH_SIZE =
+        "[%s] FAILED to transfer successfully: Local file size (%s) is different than remote file size (%s)";
+    public static final String MSG_CANT_REMOVE = "[%s] FAILED to transfer successfully: Unable to remove remotely - %s";
+    public static final String MSG_MOVED_SUCCESS = "[%s] moved (sftp) to %s - SUCCESS";
+    public static final String MSG_FAILED =
+        "Not all files were successfully processed. Check data variable '%s' for more details";
 
     @Override
     public String getTarget() { return "ssh"; }
@@ -140,39 +148,91 @@ public class SshCommand extends BaseCommand {
             session = connect(connection);
             channel = openSftpChannel(session);
 
-            // 1. get remote file attr
             Vector remoteFileList = channel.ls(remote);
             if (CollectionUtils.isEmpty(remoteFileList)) {
                 return failSingleFile(var, remote, outcome, "Remote file " + remote + " cannot be found or is invalid");
             }
-            if (CollectionUtils.size(remoteFileList) > 1) {
-                return failSingleFile(var, remote, outcome, "Remote path " + remote + " represents multiple files, " +
-                                                            "but only single file is supported at this time");
+
+            String logPrefix = resolveLogPrefix(outcome);
+
+            if (CollectionUtils.size(remoteFileList) == 1) {
+                LsEntry remoteFile = (LsEntry) remoteFileList.get(0);
+
+                // 1. get remote file attr
+                SftpATTRS fileAttrs = remoteFile.getAttrs();
+                long remoteFileSize = fileAttrs.getSize();
+
+                // 2. get remote file
+                channel.get(remote, local);
+
+                if (!FileUtil.isFileReadable(local)) {
+                    return failSingleFile(var, remote, outcome, "Local file " + local + " is not accessible");
+                }
+
+                // check local file matching remote file size
+                File localFile = new File(local);
+                if (localFile.length() != remoteFileSize) {
+                    return failSingleFile(var, remote, outcome,
+                                          "Local file size (" + localFile.length() +
+                                          ") is different than remote file size (" + remoteFileSize + ")");
+                }
+
+                try {
+                    // remove remote file
+                    channel.rm(remote);
+                    return succeedSingleFile(var, local, outcome, "move from (sftp) " + remote + " to " + local);
+                } catch (SftpException e) {
+                    String reason = String.format(MSG_CANT_REMOVE, remote, e.getMessage());
+                    ConsoleUtils.error(logPrefix + reason);
+                    outcome.addFailed(remote).appendError(reason);
+                }
+            } else {
+                String remoteBasePath = StringUtils.substringBeforeLast(remote, "/") + "/";
+                String localBasePath = StringUtils.appendIfMissing(local, separator);
+
+                for (Object o : remoteFileList) {
+                    LsEntry remoteFile = (LsEntry) o;
+
+                    // 1. get remote file attr
+                    SftpATTRS fileAttrs = remoteFile.getAttrs();
+                    if (fileAttrs.isDir()) { continue; }
+                    String remoteFilePath = remoteBasePath + remoteFile.getFilename();
+                    long remoteFileSize = fileAttrs.getSize();
+
+                    // 2. get remote file
+                    String localFilePath = localBasePath + remoteFile.getFilename();
+                    channel.get(remoteFilePath, localFilePath);
+
+                    File localFile = new File(localFilePath);
+                    if (localFile.length() != remoteFileSize) {
+                        String reason = String.format(MSG_MISMATCH_SIZE,
+                                                      remoteFilePath, localFile.length(), remoteFileSize);
+                        ConsoleUtils.error(logPrefix + reason);
+                        outcome.addFailed(remoteFilePath).appendError(reason);
+                    } else {
+                        try {
+                            // remove remote file
+                            channel.rm(remoteFilePath);
+
+                            ConsoleUtils.log(logPrefix + String.format(MSG_MOVED_SUCCESS,
+                                                                       remoteFilePath, localFilePath));
+                            outcome.addAffected(remoteFile.getFilename());
+                        } catch (SftpException e) {
+                            String reason = String.format(MSG_CANT_REMOVE, remoteFilePath, e.getMessage());
+                            ConsoleUtils.error(logPrefix + reason);
+                            outcome.addFailed(remoteFilePath).appendError(reason);
+                        }
+                    }
+                }
             }
 
-            // only interested in 1 file
-            LsEntry remoteFile = (LsEntry) remoteFileList.get(0);
-            SftpATTRS fileAttrs = remoteFile.getAttrs();
-            long remoteFileSize = fileAttrs.getSize();
-
-            // 2. get remote file
-            channel.get(remote, local);
-
-            // check local file matching remote file size
-            if (!FileUtil.isFileReadable(local)) {
-                return failSingleFile(var, remote, outcome, "Local file " + local + " is not accessible");
+            RemoteFileActionOutcome finalOutcome = outcome.end();
+            context.setData(var, finalOutcome);
+            if (CollectionUtils.isEmpty(finalOutcome.getFailed())) {
+                return StepResult.success(String.format(MSG_MOVED_SUCCESS, remote, remote, local));
+            } else {
+                return StepResult.fail(String.format(MSG_FAILED, var));
             }
-            File localFile = new File(local);
-            if (localFile.length() != remoteFileSize) {
-                return failSingleFile(var, local, outcome,
-                                      "Local file size (" + localFile.length() + ") is different than " +
-                                      "remote file size (" + remoteFileSize + ")");
-            }
-
-            // remove remote file
-            channel.rm(remote);
-
-            return succeedSingleFile(var, local, outcome, "move from (sftp) " + remote + " to " + local);
         } catch (JSchException | SftpException e) {
             return failSingleFile(var, remote, outcome, e);
         } finally {
@@ -396,7 +456,8 @@ public class SshCommand extends BaseCommand {
         String remotePath = outcome.getRemotePath();
 
         StepResult result;
-        if (action == COPY_FROM || action == MOVE_FROM) {
+        // if (action == COPY_FROM || action == MOVE_FROM) {
+        if (action == COPY_FROM) {
             // so we are copying from remote to local
             if ((result = requireValidRemotePath(remotePath, false, false)) != null) { return result; }
 
@@ -532,13 +593,15 @@ public class SshCommand extends BaseCommand {
     }
 
     protected StepResult succeedSingleFile(String var, String file, RemoteFileActionOutcome outcome, String message) {
-        ConsoleUtils.log(resolveLogPrefix(outcome) + "[" + file + "] " + message + " - SUCCESS");
+        ConsoleUtils.log(resolveLogPrefix(outcome) + (StringUtils.isNotBlank(file) ? "[" + file + "]" : "") +
+                         " " + message + " - SUCCESS");
         context.setData(var, outcome.addAffected(file).end());
         return StepResult.success(message);
     }
 
     protected StepResult failSingleFile(String var, String file, RemoteFileActionOutcome outcome, String message) {
-        ConsoleUtils.error(resolveLogPrefix(outcome) + "[" + file + "] FAIL: " + message);
+        ConsoleUtils.error(resolveLogPrefix(outcome) + (StringUtils.isNotBlank(file) ? "[" + file + "]" : "") +
+                           " FAIL: " + message);
         context.setData(var, outcome.addFailed(file).appendError(message).end());
         return StepResult.fail(message);
     }
