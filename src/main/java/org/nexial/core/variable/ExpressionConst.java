@@ -37,7 +37,8 @@ final class ExpressionConst {
                                                                                     "\\(=§•9•§",
                                                                                     "\\)=§•0•§",
                                                                                     "\\,=§•<•§",
-                                                                                    "\\]=§•>•§");
+                                                                                    "\\]=§•>•§",
+                                                                                    "\\\\=§•*•§");
     static final String ESCAPE_DELIM_SUBSTITUTION = "§•?•§";
     static final List<String> ALIAS_EMPTY = Arrays.asList("", "\"\"", "''");
 

@@ -67,7 +67,7 @@ public class FileUtilTest {
     }
 
     @Test
-    public void extractFilename()throws Exception {
+    public void extractFilename() throws Exception {
         Assert.assertEquals("", FileUtil.extractFilename(null));
         Assert.assertEquals("", FileUtil.extractFilename(""));
         Assert.assertEquals("a.txt", FileUtil.extractFilename("a.txt"));
