@@ -178,7 +178,9 @@ public class TestCase {
 
                 // add the number of steps for section commands
                 if (StringUtils.equals(step.getCommandFQN(), CMD_SECTION)) {
-                    steps += formatSkippedSections(sectionStepIndex, step);
+                    int stepCount = formatSkippedSections(sectionStepIndex, step);
+                    steps += stepCount;
+                    j += stepCount;
                 }
             } else {
                 steps = j - 1;

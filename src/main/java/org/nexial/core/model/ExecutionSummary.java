@@ -51,7 +51,6 @@ import static org.nexial.core.NexialConst.Data.*;
 import static org.nexial.core.NexialConst.*;
 import static org.nexial.core.excel.Excel.MIN_EXCEL_FILE_SIZE;
 import static org.nexial.core.excel.ExcelConfig.*;
-import static org.nexial.core.model.ExecutionSummary.ExecutionLevel.ITERATION;
 import static org.nexial.core.model.ExecutionSummary.ExecutionLevel.*;
 import static org.nexial.core.utils.ExecUtils.NEXIAL_MANIFEST;
 
@@ -540,6 +539,10 @@ public class ExecutionSummary {
                 totalScenarios += nested1.nestedExecutions.size();
                 totalScenariosPassed += nested1.totalLevelPassed;
             }
+        } else if (executionLevel == ITERATION) {
+            // added for the excel output
+            totalScenarios = nestedExecutions.size();
+            totalScenariosPassed = totalLevelPassed;
         }
         return totalScenariosPassed + " / " + totalScenarios;
     }
