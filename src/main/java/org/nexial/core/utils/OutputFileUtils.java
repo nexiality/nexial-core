@@ -418,7 +418,7 @@ public final class OutputFileUtils {
         // build error content
         StringBuilder buffer = new StringBuilder();
         buffer.append("Nexial Version:    ").append(ExecUtils.NEXIAL_MANIFEST).append(NL)
-              .append("Current Timestamp: ").append(DateUtility.formatLog2Date(System.currentTimeMillis())).append(NL)
+              .append("Current Timestamp: ").append(DateUtility.formatLogDate(System.currentTimeMillis())).append(NL)
               .append("Test Step:         ").append(testStep.getMessageId()).append(NL)
               .append(StringUtils.repeat("-", 80)).append(NL);
 

@@ -41,12 +41,17 @@ public class TestStepManifest {
     protected Map<Directive, FlowControl> flowControls;
     protected boolean captureScreen;
     protected boolean logToTestScript;
+    // runtime row index (possibly tainted by macro expansion)
     protected int rowIndex;
+    // original row index (without tainting from macro expansion)
+    protected int scriptRowIndex;
     protected boolean isExternalProgram;
 
     public int getRowIndex() { return rowIndex; }
 
     protected void setRowIndex(int rowIndex) { this.rowIndex = rowIndex; }
+
+    public int getScriptRowIndex() { return scriptRowIndex; }
 
     public String getDescription() { return description; }
 

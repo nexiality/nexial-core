@@ -565,8 +565,110 @@ public class WebCommand extends BaseCommand implements CanTakeScreenshot, CanLog
         return assertElementPresent(locatorHelper.resolveFilteringXPath(nameValues));
     }
 
-    public StepResult waitForElementPresent(final String locator) {
-        return new StepResult(waitForCondition(context.getPollWaitMs(), object -> isElementPresent(locator)));
+    public StepResult waitForElementPresent(final String locator, String waitMs) {
+        requiresPositiveNumber(waitMs, "invalid max wait time", waitMs);
+        long maxWait = (long) NumberUtils.toDouble(waitMs);
+        boolean outcome = waitForCondition(maxWait, object -> isElementPresent(locator));
+        if (outcome) {
+            return StepResult.success("Element by locator '" + locator + "' is present");
+        } else {
+            return StepResult.fail("Element by locator '" + locator + "' is NOT present within " + waitMs + "ms");
+        }
+    }
+
+    public StepResult waitUntilVisible(String locator, String waitMs) {
+        requiresNotBlank(locator, "invalid locator", locator);
+        requiresPositiveNumber(waitMs, "invalid max wait time", waitMs);
+
+        long maxWait = (long) NumberUtils.toDouble(waitMs);
+        String jsScript = "var style = window.getComputedStyle(arguments[0]);" +
+                          "return style.visibility === 'visible' && style.display !== 'none';";
+        By by = locatorHelper.findBy(locator);
+        boolean outcome = waitForCondition(maxWait, object ->
+        {
+            WebElement elem = driver.findElement(by);
+            if (elem == null || !elem.isDisplayed()) { return false; }
+
+            Object isVisible = jsExecutor.executeScript(jsScript, elem);
+            return (isVisible != null && StringUtils.equals(isVisible.toString(), "true"));
+        });
+
+        if (outcome) {
+            return StepResult.success("Element by locator '" + locator + "' is visible");
+        } else {
+            return StepResult.fail("Element by locator '" + locator + "' is NOT visible within " + waitMs + "ms");
+        }
+    }
+
+    public StepResult waitUntilHidden(String locator, String waitMs) {
+        requiresNotBlank(locator, "invalid locator", locator);
+        requiresPositiveNumber(waitMs, "invalid max wait time", waitMs);
+
+        long maxWait = (long) NumberUtils.toDouble(waitMs);
+        String jsScript = "var style = window.getComputedStyle(arguments[0]);" +
+                          "return style.visibility !== 'visible' || style.display === 'none';";
+        By by = locatorHelper.findBy(locator);
+        boolean outcome = waitForCondition(maxWait, object ->
+        {
+            WebElement elem = driver.findElement(by);
+            if (elem == null) { return false; }
+            if (!elem.isDisplayed()) { return true; }
+
+            Object isNotVisible = jsExecutor.executeScript(jsScript, elem);
+            return (isNotVisible != null && StringUtils.equals(isNotVisible.toString(), "true"));
+        });
+
+        String prefix = "Element by locator '" + locator + "' ";
+        if (!outcome) {
+            // perhaps the element is not available anyways... in this case, we'll treat it the same as being "hidden"
+            ConsoleUtils.log("waitUntilHidden(): condition not met, checking if element exists...");
+            if (!isElementPresent(locator)) {
+                ConsoleUtils.log("waitUntilHidden(): element '" + locator + "' not present; consider element hidden");
+                return StepResult.success(prefix + "not found; considered as hidden");
+            } else {
+                return StepResult.fail(prefix + "not hidden");
+            }
+        } else {
+            return StepResult.success(prefix + "found hidden within time limit of " + waitMs + "ms");
+        }
+    }
+
+    public StepResult waitUntilEnabled(String locator, String waitMs) {
+        requiresNotBlank(locator, "invalid locator", locator);
+        requiresPositiveNumber(waitMs, "invalid max wait time", waitMs);
+
+        long maxWait = (long) NumberUtils.toDouble(waitMs);
+        By by = locatorHelper.findBy(locator);
+        boolean outcome = waitForCondition(maxWait, object ->
+        {
+            WebElement elem = driver.findElement(by);
+            return elem != null && elem.isEnabled();
+        });
+
+        if (outcome) {
+            return StepResult.success("Element by locator '" + locator + "' is enabled");
+        } else {
+            return StepResult.fail("Element by locator '" + locator + "' is NOT enabled within " + waitMs + "ms");
+        }
+    }
+
+    public StepResult waitUntilDisabled(String locator, String waitMs) {
+        requiresNotBlank(locator, "invalid locator", locator);
+        requiresPositiveNumber(waitMs, "invalid max wait time", waitMs);
+
+        long maxWait = (long) NumberUtils.toDouble(waitMs);
+        By by = locatorHelper.findBy(locator);
+        boolean outcome = waitForCondition(maxWait, object ->
+        {
+            WebElement elem = driver.findElement(by);
+            return elem != null && !elem.isEnabled();
+        });
+
+        if (outcome) {
+            return StepResult.success("Element by locator '" + locator + "' is disabled");
+        } else {
+            return StepResult.fail("Element by locator '" + locator + "' is NOT disabled within " + waitMs + "ms");
+        }
     }
 
     public StepResult waitForElementsPresent(String locators) {
@@ -1537,7 +1639,7 @@ public class WebCommand extends BaseCommand implements CanTakeScreenshot, CanLog
             // available (aka NoSuchElementException or StaleElementException)
             // ignore this... move on.
             ConsoleUtils.log("Unable to reference target element; the containing page possibly reloaded");
-            if (waitForElementPresent(locator).failed()) {
+            if (waitForElementPresent(locator, context.getPollWaitMs() + "").failed()) {
                 error("Web element '" + value + "' no longer available after its value is cleared");
             }
             // proceed anyways...
@@ -2587,10 +2689,13 @@ public class WebCommand extends BaseCommand implements CanTakeScreenshot, CanLog
     protected void ensureReady() { initWebDriver(); }
 
     @NotNull
-    protected FluentWait<WebDriver> newFluentWait() {
-        return new FluentWait<>(driver).withTimeout(Duration.ofMillis(context.getPollWaitMs()))
+    protected FluentWait<WebDriver> newFluentWait() { return newFluentWait(context.getPollWaitMs()); }
+
+    @NotNull
+    protected FluentWait<WebDriver> newFluentWait(long waitMs) {
+        return new FluentWait<>(driver).withTimeout(Duration.ofMillis(waitMs))
                                        .pollingEvery(Duration.ofMillis(10))
-                                       .ignoring(NoSuchElementException.class);
+                                       .ignoring(NoSuchElementException.class, StaleElementReferenceException.class);
     }
 
     @NotNull
@@ -2669,7 +2774,7 @@ public class WebCommand extends BaseCommand implements CanTakeScreenshot, CanLog
 
     protected boolean isIENativeMode() {
         ensureReady();
-        Object ret = jsExecutor.executeScript("javascript:document.documentMode");
+        Object ret = jsExecutor.executeScript("document.documentMode");
         if (ret == null) { throw new NotFoundException("Unable to determine IE native mode"); }
 
         String ieDocMode = (String) ret;
@@ -2857,7 +2962,7 @@ public class WebCommand extends BaseCommand implements CanTakeScreenshot, CanLog
     protected boolean waitForCondition(long maxWaitMs, Function<WebDriver, Object> condition) {
         ensureReady();
 
-        FluentWait<WebDriver> waiter = newFluentWait();
+        FluentWait<WebDriver> waiter = newFluentWait(maxWaitMs);
 
         try {
             Object target = waiter.until(condition);

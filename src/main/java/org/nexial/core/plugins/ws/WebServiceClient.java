@@ -348,7 +348,7 @@ public class WebServiceClient {
             StringBuilder details = new StringBuilder();
             appendLog(details, "Test Step       : ", ExecutionLogger.toHeader(testStep));
             details.append(StringUtils.repeat("-", 80)).append(NL);
-            appendLog(details, "Request Time    : ", DateUtility.formatLog2Date(requestTimeMs));
+            appendLog(details, "Request Time    : ", DateUtility.formatLogDate(requestTimeMs));
             appendLog(details, "Request URL     : ", url);
             appendLog(details, "Request Method  : ", http.getMethod());
             appendLog(details, "Request Headers : ", "{" + TextUtils.toString(request.getHeaders(), ", ", ": ") + "}");
@@ -386,7 +386,7 @@ public class WebServiceClient {
                 if (requestBodyLength == 0) { ArrayUtils.getLength(((PostRequest) request).getPayloadBytes()); }
             }
 
-            writeSummaryLog(DateUtility.formatLog2Date(requestStartTime),
+            writeSummaryLog(DateUtility.formatLogDate(requestStartTime),
                             ExecutionLogger.toHeader(context),
                             context.getCurrentScenario(),
                             "Row " + (testStep.getRowIndex() + 1),
@@ -448,7 +448,7 @@ public class WebServiceClient {
                 }
             }
 
-            writeSummaryLog(DateUtility.formatLog2Date(response.getRequestTime()),
+            writeSummaryLog(DateUtility.formatLogDate(response.getRequestTime()),
                             ExecutionLogger.toHeader(context),
                             context.getCurrentScenario(),
                             "Row " + (testStep.getRowIndex() + 1),

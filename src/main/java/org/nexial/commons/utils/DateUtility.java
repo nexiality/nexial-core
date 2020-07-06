@@ -34,19 +34,23 @@ import static org.nexial.core.NexialConst.DF_TIMESTAMP;
 public final class DateUtility {
     private static final Logger LOGGER = LoggerFactory.getLogger(DateUtility.class);
 
-    private static final String FORMAT_LONG = "MM/dd/yyyy HH:mm:ss";
-    private static final String FORMAT_LONG1 = "MM/dd/yyyy hh:mm:ss a";
-    private static final String FORMAT_LOG = "yyyy-MM-dd HH:mm:ss,SSS";
-    private static final String FORMAT_LOG2 = "yyyy-MM-dd HH:mm:ss.SSS";
-    private static final String FORMAT_SHORT = "MM/dd/yyyy";
     private static final String FORMAT_TIME = "HH:mm:ss";
     private static final String FORMAT_TIME_WITH_MS = "HH:mm:ss.SSS";
+
+    private static final String FORMAT_SHORT = "MM/dd/yyyy";
     private static final String FORMAT_DB2_DATE = "yyyy-MM-dd";
-    private static final String FORMAT_ISO8601_DATE = "yyyy-MM-dd'T'HH:mm:ss";
+
+    private static final String FORMAT_LONG = FORMAT_SHORT + " " + FORMAT_TIME;
+    private static final String FORMAT_LONG1 = FORMAT_SHORT + " hh:mm:ss a";
+    private static final String FORMAT_ISO8601_DATE = FORMAT_DB2_DATE + "'T'" + FORMAT_TIME;
+    private static final String FORMAT_LOG = FORMAT_DB2_DATE + " " + FORMAT_TIME_WITH_MS;
+
+    // private static final String FORMAT_LOG = "yyyy-MM-dd HH:mm:ss,SSS";
+    // private static final DateFormat DATE_FORMAT_LOG = new SimpleDateFormat(FORMAT_LOG);
+
     private static final DateFormat DATE_FORMAT_LONG = new SimpleDateFormat(FORMAT_LONG);
     private static final DateFormat DATE_FORMAT_LONG1 = new SimpleDateFormat(FORMAT_LONG1);
     private static final DateFormat DATE_FORMAT_LOG = new SimpleDateFormat(FORMAT_LOG);
-    private static final DateFormat DATE_FORMAT_LOG2 = new SimpleDateFormat(FORMAT_LOG2);
     private static final DateFormat DATE_FORMAT_SHORT = new SimpleDateFormat(FORMAT_SHORT);
     private static final DateFormat DATE_FORMAT_TIME = new SimpleDateFormat(FORMAT_TIME);
     private static final DateFormat DATE_FORMAT_TIME_WITH_MS = new SimpleDateFormat(FORMAT_TIME_WITH_MS);
@@ -123,7 +127,7 @@ public final class DateUtility {
             return dfTo.format(dfFrom.parse(date));
         } catch (Exception e) {
             LOGGER.warn("Date [" + date + "] could not be formatted from [" + patternFrom + "] to [" + patternTo +
-                        "], returning orignal string: " + e.getMessage());
+                        "], returning original string: " + e.getMessage());
             return date;
         }
     }
@@ -153,7 +157,7 @@ public final class DateUtility {
 
     public static String formatLogDate(long timestamp) { return DATE_FORMAT_LOG.format(new Date(timestamp)); }
 
-    public static String formatLog2Date(long timestamp) { return DATE_FORMAT_LOG2.format(new Date(timestamp)); }
+    public static long toLogTimestamp(String logDate) { return formatTo(logDate, FORMAT_LOG); }
 
     public static String formatLongDate(long timestamp) { return DATE_FORMAT_LONG.format(new Date(timestamp)); }
 
@@ -178,8 +182,6 @@ public final class DateUtility {
     public static String getCurrentDateTime() { return DATE_FORMAT_LONG1.format(new Date()); }
 
     public static String getCurrentTimestampForLogging() { return DATE_FORMAT_LOG.format(new Date()); }
-
-    public static String getCurrentTimestampForLogging2() { return DATE_FORMAT_LOG.format(new Date()); }
 
     public static String getCurrentTimeForLogging() { return DATE_FORMAT_TIME_WITH_MS.format(new Date()); }
 

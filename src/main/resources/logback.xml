@@ -24,17 +24,17 @@
 
     <appender name="console" class="ch.qos.logback.core.ConsoleAppender">
         <encoder>
-            <pattern>%d|%.-1p|%t|%m%n</pattern>
+            <pattern>%d{yyyy-MM-dd HH:mm:ss.SSS}|%.-1p|%t|%m%n</pattern>
         </encoder>
     </appender>
     <appender name="console-catchall" class="ch.qos.logback.core.ConsoleAppender">
         <encoder>
-            <pattern>[OTH] %d|%1p|%t|%-25c{3}|%m%n</pattern>
+            <pattern>[OTH] %d{yyyy-MM-dd HH:mm:ss.SSS}|%1p|%t|%-25c{3}|%m%n</pattern>
         </encoder>
     </appender>
     <appender name="console-webcontainer" class="ch.qos.logback.core.ConsoleAppender">
         <encoder>
-            <pattern>[NXL] %color(%d|%-5p|%t|%-25c|%m){yellow}%n</pattern>
+            <pattern>[NXL] %color(%d{yyyy-MM-dd HH:mm:ss.SSS}|%-5p|%t|%-25c|%m){yellow}%n</pattern>
         </encoder>
     </appender>
     <appender name="console-execution" class="ch.qos.logback.core.ConsoleAppender">
@@ -51,7 +51,7 @@
     <!--</appender>-->
     <appender name="console-tools" class="ch.qos.logback.core.ConsoleAppender">
         <encoder>
-            <pattern>%color(%d|%m){faint}%n</pattern>
+            <pattern>%color(%d{yyyy-MM-dd HH:mm:ss.SSS}|%m){faint}%n</pattern>
         </encoder>
     </appender>
     <appender name="console-tools-error" class="ch.qos.logback.core.ConsoleAppender">
@@ -61,7 +61,7 @@
             <onMismatch>DENY</onMismatch>
         </filter>
         <encoder>
-            <pattern>%color(%d|[%X{script.file}][%X{script.scenario}][%X{script.position}]|%m){red}%n</pattern>
+            <pattern>%color(%d{yyyy-MM-dd HH:mm:ss.SSS}|[%X{script.file}][%X{script.scenario}][%X{script.position}]|%m){red}%n</pattern>
         </encoder>
     </appender>
     <appender name="console-execution-fail" class="ch.qos.logback.core.ConsoleAppender">
@@ -69,7 +69,7 @@
             <level>ERROR</level>
         </filter>
         <encoder>
-            <pattern>%color(%d|%.-1p|%t|%m){red}%n</pattern>
+            <pattern>%color(%d{yyyy-MM-dd HH:mm:ss.SSS}|%.-1p|%t|%m){red}%n</pattern>
         </encoder>
     </appender>
 
@@ -86,7 +86,7 @@
             <cleanHistoryOnStart>true</cleanHistoryOnStart>
         </rollingPolicy>
         <encoder>
-            <pattern>%d|%.-1p|%t|%m%n</pattern>
+            <pattern>%d{yyyy-MM-dd HH:mm:ss.SSS}|%.-1p|%t|%m%n</pattern>
         </encoder>
     </appender>
     <appender name="file-tracktime" class="ch.qos.logback.core.FileAppender">
@@ -102,7 +102,7 @@
         <append>true</append>
         <prudent>true</prudent>
         <encoder>
-            <pattern>%d|%.-1p|%t|%c|${PID:- }|%X{requestId:- }|%m%n</pattern>
+            <pattern>%d{yyyy-MM-dd HH:mm:ss.SSS}|%.-1p|%t|%c|${PID:- }|%X{requestId:- }|%m%n</pattern>
         </encoder>
     </appender>
     <appender name="file-tools-error" class="ch.qos.logback.core.rolling.RollingFileAppender">
@@ -122,7 +122,7 @@
             <cleanHistoryOnStart>true</cleanHistoryOnStart>
         </rollingPolicy>
         <encoder>
-            <pattern>%d|[%X{script.file}][%X{script.scenario}][%X{script.position}]|%m%n</pattern>
+            <pattern>%d{yyyy-MM-dd HH:mm:ss.SSS}|[%X{script.file}][%X{script.scenario}][%X{script.position}]|%m%n</pattern>
         </encoder>
     </appender>
 

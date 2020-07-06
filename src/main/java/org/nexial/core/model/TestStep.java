@@ -35,7 +35,9 @@ import org.apache.poi.ss.usermodel.CellType;
 import org.apache.poi.ss.usermodel.Comment;
 import org.apache.poi.xssf.usermodel.XSSFCell;
 import org.apache.poi.xssf.usermodel.XSSFCellStyle;
+import org.nexial.commons.utils.DateUtility;
 import org.nexial.commons.utils.FileUtil;
+import org.nexial.commons.utils.RegexUtils;
 import org.nexial.commons.utils.TextUtils;
 import org.nexial.core.excel.Excel;
 import org.nexial.core.excel.Excel.Worksheet;
@@ -47,6 +49,7 @@ import org.nexial.core.plugins.NexialCommand;
 import org.nexial.core.plugins.web.WebCommand;
 import org.nexial.core.plugins.web.WebDriverExceptionHelper;
 import org.nexial.core.utils.*;
+import org.nexial.core.variable.Syspath;
 import org.openqa.selenium.WebDriverException;
 
 import static java.io.File.separator;
@@ -69,6 +72,7 @@ public class TestStep extends TestStepManifest {
     protected List<NestedMessage> nestedTestResults;
     protected boolean isCommandRepeater;
     protected CommandRepeater commandRepeater;
+    protected boolean hasErrorScreenshot;
 
     // support testing
     protected TestStep() { }
@@ -85,7 +89,9 @@ public class TestStep extends TestStepManifest {
         assert context != null && StringUtils.isNotBlank(context.getId());
         assert worksheet != null && worksheet.getFile() != null;
 
-        setRowIndex(row.get(0).getRowIndex());
+        int rowIndex = row.get(0).getRowIndex();
+        setRowIndex(rowIndex);
+        scriptRowIndex = rowIndex;
         readDescriptionCell(row);
         readTargetCell(row);
         readCommandCell(row);
@@ -93,10 +99,20 @@ public class TestStep extends TestStepManifest {
         readFlowControlsCell(row);
         readCaptureScreenCell(row);
 
-        setMessageId("[" + worksheet.getFile().getName() + "]" +
-                     "[" + worksheet.getName() + "][" + testCase.getName() + "]" +
-                     "[ROW " + StringUtils.leftPad((getRowIndex() + 1) + "", 3) + "]" +
-                     "[" + target + "][" + command + "]");
+        // setMessageId("[" + worksheet.getFile().getName() + "]" +
+        //              "[" + worksheet.getName() + "][" + testCase.getName() + "]" +
+        //              "[ROW " + StringUtils.leftPad((getRowIndex() + 1) + "", 3) + "]" +
+        //              "[" + target + "][" + command + "]");
+        setMessageId(String.format("[%s][%s][%s][STEP %s]%s[%s][%s]",
+                                   worksheet.getFile().getName(),
+                                   worksheet.getName(),
+                                   testCase.getName(),
+                                   StringUtils.left((getRowIndex() + 1) + "", 3),
+                                   (scriptRowIndex != 0 && scriptRowIndex != rowIndex ?
+                                    "[ROW " + (scriptRowIndex + 1) :
+                                    ""),
+                                   target,
+                                   command));
 
         nestedTestResults = new ArrayList<>();
         setExternalProgram(StringUtils.containsAny(target, "external", "junit"));
@@ -133,6 +149,13 @@ public class TestStep extends TestStepManifest {
             MessageUtils.isSkipped(message)) { return; }
         if (worksheet == null) { return; }
         nestedTestResults.add(new NestedMessage(message));
+    }
+
+    public boolean hasErrorScreenshot() { return hasErrorScreenshot; }
+
+    public void addErrorScreenCapture(String link, String message) {
+        addNestedScreenCapture(link, message);
+        hasErrorScreenshot = true;
     }
 
     public void addNestedScreenCapture(String link, String message) {
@@ -196,11 +219,10 @@ public class TestStep extends TestStepManifest {
     public void setCommandRepeater(CommandRepeater commandRepeater) { this.commandRepeater = commandRepeater;}
 
     public String generateFilename(String ext) {
-        String filename = worksheet.getFile().getName() + "_"
-                          + worksheet.getName() + "_"
-                          // + getTestCase().getName() + "_"
-                          + getRow().get(0).getReference()
-                          + (isExternalProgram() ? "_" + getParams().get(0) : "");
+        String filename = worksheet.getFile().getName() + "_" +
+                          worksheet.getName() + "_" +
+                          getRow().get(0).getReference() +
+                          (isExternalProgram() ? "_" + getParams().get(0) : "");
 
         List<NestedMessage> nestedTestResults = getNestedTestResults();
         if (CollectionUtils.isNotEmpty(nestedTestResults)) {
@@ -273,6 +295,9 @@ public class TestStep extends TestStepManifest {
             error = "null pointer exception";
         } else {
             error = StringUtils.defaultString(e.getMessage(), e.toString());
+            // minor formatting adjustment for better error output
+            List<String> errorParts = RegexUtils.collectGroups(error, "^.+Exception\\:\\s*(.+)$");
+            if (CollectionUtils.isNotEmpty(errorParts)) { error = errorParts.get(0); }
         }
 
         StepResult result = StepResult.fail(error);
@@ -379,6 +404,7 @@ public class TestStep extends TestStepManifest {
     }
 
     protected void postExecCommand(StepResult result, long elapsedMs) {
+        // also include screenshot-on-error handling
         updateResult(result, elapsedMs);
 
         ExecutionSummary summary = testCase.getTestScenario().getExecutionSummary();
@@ -402,10 +428,34 @@ public class TestStep extends TestStepManifest {
                 if (StringUtils.isNotBlank(result.getDetailedLogLink())) {
                     context.getLogger().error(this, "Error log: " + result.getDetailedLogLink());
                 }
+                trackExecutionError(result);
             }
         }
 
         context.evaluateResult(result);
+    }
+
+    protected void trackExecutionError(StepResult result) {
+        context.setData(OPT_LAST_ERROR, result.getMessage());
+        if (context.getBooleanData(OPT_ERROR_TRACKER, getDefaultBool(OPT_ERROR_TRACKER))) {
+            // 1. derive log file path
+            String fullpath = StringUtils.appendIfMissing(new Syspath().log("fullpath"), separator) + ERROR_TRACKER;
+            File logFile = new File(fullpath);
+
+            // 2. append to log
+            String log = "[" + DateUtility.formatLogDate(System.currentTimeMillis()) + "]" +
+                         getMessageId() +
+                         ("[" + (hasErrorScreenshot ? context.getStringData(OPT_LAST_SCREENSHOT_NAME) : "-") + "]") +
+                         ("[" + StringUtils.defaultIfBlank(result.getDetailedLogLink(), "-") + "]") + ": " +
+                         result.getMessage() + NL;
+            try {
+                FileUtils.writeStringToFile(logFile, log, DEF_FILE_ENCODING, true);
+            } catch (IOException e) {
+                ConsoleUtils.log("Unable to track errors to " + ERROR_TRACKER + ": " + e.getMessage());
+            }
+
+            // otc integration will occur at the end of execution
+        }
     }
 
     protected void readDescriptionCell(List<XSSFCell> row) {
@@ -456,14 +506,9 @@ public class TestStep extends TestStepManifest {
         // no screenshot specified and screenshot-on-error is turned off
         if (!captureScreen && !context.isScreenshotOnError()) { return null; }
 
+        // screenshot agent is registered at the start of a test step (only web or desktop command would qualify)
         CanTakeScreenshot agent = context.findCurrentScreenshotAgent();
-        if (agent == null) {
-            // No necessity of error log when screenshot-on-error is turned on for commands other than web and desktop
-            if (!context.isScreenshotOnError()) {
-                error("No screenshot capability available for command " + getCommandFQN() + "; no screenshot taken");
-            }
-            return null;
-        }
+        if (agent == null) { return null; }
 
         // screenshot failure shouldn't cause exception to offset execution pass/fail percentage
         try {
@@ -473,9 +518,12 @@ public class TestStep extends TestStepManifest {
                 return null;
             }
 
-            if (worksheet != null) {
-                Excel.setHyperlink(row.get(COL_IDX_CAPTURE_SCREEN), screenshotPath, MSG_SCREENCAPTURE);
+            if (result.failed()) {
+                addErrorScreenCapture(screenshotPath, result.getMessage());
+            } else {
+                addNestedScreenCapture(screenshotPath, MSG_SCREENCAPTURE);
             }
+
             return screenshotPath;
         } catch (Exception e) {
             error("Unable to capture screenshot: " + e.getMessage());
@@ -731,24 +779,9 @@ public class TestStep extends TestStepManifest {
             return;
         }
 
-        if (!context.isScreenshotOnError() || !MessageUtils.isFail(message)) {
-            addNestedMessage(message);
-            return;
-        }
+        if (!context.isScreenshotOnError() || !MessageUtils.isFail(message)) { addNestedMessage(message); }
 
-        NexialCommand plugin = context.findPlugin(target);
-        if (!(plugin instanceof CanTakeScreenshot)) {
-            context.getLogger().error(this, message);
-            return;
-        }
-
-        String screenshotPath = ((CanTakeScreenshot) plugin).takeScreenshot(this);
-        if (StringUtils.isBlank(screenshotPath)) {
-            context.getLogger().error(this, "Unable to capture screenshot - " + message);
-            return;
-        }
-
-        addNestedScreenCapture(screenshotPath, message);
+        // screenshot-on-error already handled in `postExecCommand()` method; no need to capture error screenshot here
     }
 
     protected TestStepManifest toTestStepManifest() {
@@ -763,6 +796,7 @@ public class TestStep extends TestStepManifest {
         lwTestStep.setCaptureScreen(isCaptureScreen());
         lwTestStep.setLogToTestScript(isLogToTestScript());
         lwTestStep.setRowIndex(row.get(0).getRowIndex());
+        if (scriptRowIndex != 0) { lwTestStep.scriptRowIndex = scriptRowIndex; }
         return lwTestStep;
     }
 

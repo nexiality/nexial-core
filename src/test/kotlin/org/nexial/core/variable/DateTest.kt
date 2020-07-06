@@ -34,14 +34,17 @@ class DateTest {
                      d.format("2011/10/11 14:22:19", "yyyy/dd/MM mm:HH:ss", "M/dd/yyyy HH:mm:ss"))
     }
 
+    private val logTimeFormat = "HH:mm:ss.SSS"
+    private val logDateFormat = "yyyy/MM/dd $logTimeFormat"
+
     @Test
     fun testFormat2() {
         println("System.currentTimeMillis() = " + System.currentTimeMillis())
 
         val d = Date()
-        assertEquals("0000/00/00 00:01:12,000", d.format("72000", EPOCH, "yyyy/MM/dd HH:mm:ss,SSS"))
-        assertEquals("2018/05/24 18:46:36,917", d.format("1527212796917", EPOCH, "yyyy/MM/dd HH:mm:ss,SSS"))
-        assertEquals("00:00:07,461", d.format("7461", EPOCH, "HH:mm:ss,SSS"))
+        assertEquals("0000/00/00 00:01:12.000", d.format("72000", EPOCH, logDateFormat))
+        assertEquals("2018/05/24 18:46:36.917", d.format("1527212796917", EPOCH, logDateFormat))
+        assertEquals("00:00:07.461", d.format("7461", EPOCH, logTimeFormat))
         assertEquals("00:00:07", d.format("7461", EPOCH, "HH:mm:ss"))
         assertEquals("0:0:7", d.format("7461", EPOCH, "h:m:s"))
         assertEquals("0", d.format("7461", EPOCH, "y"))

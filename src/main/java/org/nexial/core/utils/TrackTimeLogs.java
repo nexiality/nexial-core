@@ -17,7 +17,6 @@
 
 package org.nexial.core.utils;
 
-import java.util.Date;
 import java.util.Map;
 
 import org.apache.commons.collections4.CollectionUtils;
@@ -33,7 +32,8 @@ import org.nexial.core.model.TestStep;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import static org.nexial.core.NexialConst.TimeTrack.*;
+import static org.nexial.core.NexialConst.TimeTrack.TIMETRACK_FORMAT;
+import static org.nexial.core.NexialConst.TimeTrack.TRACKING_DETAIL_TOKENS;
 import static org.nexial.core.SystemVariables.getDefault;
 import static org.nexial.core.model.FlowControl.Directive.TimeTrackEnd;
 import static org.nexial.core.model.FlowControl.Directive.TimeTrackStart;
@@ -45,7 +45,7 @@ public final class TrackTimeLogs {
     private String trackStartDate;
     private String trackEndDate;
     private String label;
-    private ExecutionContext context;
+    private final ExecutionContext context;
 
     // used for forcefully end tracking
     private String trackStartDate1;
@@ -108,8 +108,7 @@ public final class TrackTimeLogs {
 
         String[] startDateTime = StringUtils.split(trackStartDate, " ");
         String[] endDateTime = StringUtils.split(trackEndDate, " ");
-        long timeDiff = DateUtility.formatTo(trackEndDate, TIMETRACK_DATE_FORMAT) -
-                        DateUtility.formatTo(trackStartDate, TIMETRACK_DATE_FORMAT);
+        long timeDiff = DateUtility.toLogTimestamp(trackEndDate) - DateUtility.toLogTimestamp(trackStartDate);
         String elapsedTime = Long.toString(timeDiff);
 
         String format = System.getProperty(TIMETRACK_FORMAT);
@@ -127,8 +126,8 @@ public final class TrackTimeLogs {
     }
 
     public void trackExecutionLevels(String label, Long startTime, Long endTime, String executionLevel) {
-        setTrackStartDate(formatDate(startTime));
-        setTrackEndDate(formatDate(endTime));
+        setTrackStartDate(DateUtility.formatLogDate(startTime));
+        setTrackEndDate(DateUtility.formatLogDate(endTime));
         setLabel(label);
         trackingDetails(executionLevel + " ended");
     }
@@ -139,8 +138,6 @@ public final class TrackTimeLogs {
         setLabel(label1);
         trackingDetails("Execution ended");
     }
-
-    private String formatDate(Long timestampMillis) { return TIMETRACK_LOG_DATE_FORMAT.format(new Date(timestampMillis)); }
 
     private void unset() {
         setTrackStartDate(EMPTY);

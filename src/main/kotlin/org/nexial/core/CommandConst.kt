@@ -100,7 +100,8 @@ object CommandConst {
         "web.assertAttributeNotContains(locator,attrName,contains)" to "web.assertAttributeNotContain(locator,attrName,contains)",
         "web.assertAttributeContains(locator,attrName,contains)" to "web.assertAttributeContain(locator,attrName,contains)",
         "web.screenshot(file,locator,ignoreLocators)" to "web.screenshot(file,locator)",
-        "web.selectMultiOptions(locator)" to "web.selectAllOptions(locator)"
+        "web.selectMultiOptions(locator)" to "web.selectAllOptions(locator)",
+        "web.waitForElementPresent(locator)" to "web.waitForElementPresent(locator,maxWaitMs)"
     )
 
     private const val SUGGESTION_PREFIX = "This command is deprecated and will soon be removed. Consider using"

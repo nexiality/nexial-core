@@ -22,18 +22,17 @@ import static org.nexial.core.NexialConst.ExitStatus.RC_BAD_CLI_ARGS;
 import static org.nexial.core.NexialConst.NL;
 
 public class LogFileParser {
-    private static final String FORMAT_LOG = "yyyy-MM-dd HH:mm:ss,SSS";
     private static final String PIPE_SEP = "|";
     private static final String SPACE_SEP = " ";
 
-    private static Options cmdOptions = new Options();
+    private static final Options cmdOptions = new Options();
     private static String targetLogFilePath;
     private static String newLogFilePath;
     private static String regexCriteria = "";
     private static List<String> contentToList;
 
     // anonymous inner class for sorting.
-    private static Comparator<String> comparator = (o1, o2) -> {
+    private static final Comparator<String> comparator = (o1, o2) -> {
         String threadNum1 = StringUtils.substringBetween(o1, "Thread-", PIPE_SEP);
         String threadNum2 = StringUtils.substringBetween(o2, "Thread-", PIPE_SEP);
         return Integer.valueOf(threadNum1).compareTo(Integer.valueOf(threadNum2));
@@ -47,8 +46,8 @@ public class LogFileParser {
 
         private static final String REGEX_PATTERN = "\\d{4}-\\d{2}-\\d{2}\\s\\d{2}:\\d{2}:\\d{2},\\d{3}" +
                                                     "\\|I\\|Thread-.*\\|.*\\|.*\\|.*\\|#\\s{0,2}\\d{1,3}\\|";
-        private String regexStart;
-        private String regexEnd;
+        private final String regexStart;
+        private final String regexEnd;
 
         LogRangeRegex(String regexStart, String regexEnd) {
             this.regexStart = REGEX_PATTERN + regexStart;
@@ -176,8 +175,7 @@ public class LogFileParser {
 
                     String startTime = requestLogsToList.get(0);
                     String endTime = responseLogsToList.get(0);
-                    Long elapsedTime = DateUtility.formatTo(endTime, FORMAT_LOG) -
-                                       DateUtility.formatTo(startTime, FORMAT_LOG);
+                    long elapsedTime = DateUtility.toLogTimestamp(endTime) - DateUtility.toLogTimestamp(startTime);
                     String executionScript = requestLogsToList.get(3);
 
                     String content = startTime + PIPE_SEP + endTime + PIPE_SEP + elapsedTime + PIPE_SEP +

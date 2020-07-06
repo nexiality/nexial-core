@@ -45,8 +45,8 @@ public class WebTransformer<T extends WebDataType> extends Transformer<WebDataTy
     private static final String LABEL_PREFIX = "text=";
 
     private WebCommand webCommand = null;
-    private String textDelim = getDefault(TEXT_DELIM);
-    private ExecutionContext context = ExecutionThread.get();
+    private final String textDelim = getDefault(TEXT_DELIM);
+    private final ExecutionContext context = ExecutionThread.get();
 
     public WebDataType type(T data, String locator, String value) {
         if (data == null || data.getValue() == null) { return null; }
@@ -239,7 +239,7 @@ public class WebTransformer<T extends WebDataType> extends Transformer<WebDataTy
         if (data == null || data.getValue() == null) { return null; }
         ensureWebDriverReady();
 
-        StepResult stepResult = webCommand.waitForElementPresent(locator);
+        StepResult stepResult = webCommand.waitForElementPresent(locator, context.getPollWaitMs() + "");
         return saveResult(data, "waitFor(" + locator + ")", stepResult);
     }
 

@@ -63,7 +63,7 @@ import static org.nexial.core.utils.ExecUtils.NEXIAL_MANIFEST;
  * <li>a test script - one or more iteration.</li>
  * <li>a test execution - execution of 1 or more test scripts.</li>
  * </ul>
- *
+ * <p>
  * at the end of each 'scope', test summary are aggregated upward to its parent summary information.
  */
 public class ExecutionSummary {
@@ -92,6 +92,9 @@ public class ExecutionSummary {
     private String runHost;
     private String runHostOs;
     private String runUser;
+    private final String triggerUser;
+    private final String triggerUrl;
+    private final String triggerId;
     private long startTime;
     private long endTime;
     private int totalLevelPassed;
@@ -107,7 +110,7 @@ public class ExecutionSummary {
     private String errorStackTrace;
     private Throwable error;
     private String executionLog;
-    private Map<String, String> logs = new TreeMap<>();
+    private final Map<String, String> logs = new TreeMap<>();
 
     // optional
     private Map<String, String> referenceData = new TreeMap<>();
@@ -115,7 +118,7 @@ public class ExecutionSummary {
     private List<ExecutionSummary> nestedExecutions = new ArrayList<>();
 
     // not persisted to JSON
-    private transient Map<TestStepManifest, List<NestedMessage>> nestMessages = new LinkedHashMap<>();
+    private final transient Map<TestStepManifest, List<NestedMessage>> nestMessages = new LinkedHashMap<>();
 
     // only applicable to script in plan
     private int planSequence;
@@ -130,6 +133,13 @@ public class ExecutionSummary {
     public enum ExecutionLevel {EXECUTION, SCRIPT, ITERATION, SCENARIO, ACTIVITY, STEP}
 
     public ExecutionSummary() {
+        // support "build-user-vars" plugin (Jenkins)
+        // https://plugins.jenkins.io/build-user-vars-plugin/
+        triggerUser = StringUtils.defaultString(System.getenv("BUILD_USER_ID"));
+        // use standard Jenkins vars (other CI/CD may be supported in the future)
+        triggerUrl = StringUtils.defaultString(System.getenv("BUILD_URL"));
+        triggerId = StringUtils.trim(StringUtils.defaultString(System.getenv("JOB_NAME")) + " " +
+                                     StringUtils.defaultString(System.getenv("BUILD_ID")));
         runUser = USER_NAME;
         runHostOs = OS_ARCH + " " + OS_NAME + " " + OS_VERSION;
         runHost = StringUtils.upperCase(EnvUtils.getHostName());
@@ -179,6 +189,12 @@ public class ExecutionSummary {
     public String getRunHostOs() { return runHostOs; }
 
     public String getRunUser() { return runUser; }
+
+    public String getTriggerUser() { return triggerUser; }
+
+    public String getTriggerUrl() { return triggerUrl; }
+
+    public String getTriggerId() { return triggerId; }
 
     public String getManifest() { return NEXIAL_MANIFEST; }
 

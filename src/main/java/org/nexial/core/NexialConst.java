@@ -59,6 +59,7 @@ import static org.apache.commons.lang3.SystemUtils.IS_OS_WINDOWS;
 import static org.apache.commons.lang3.SystemUtils.USER_HOME;
 import static org.nexial.core.NexialConst.AwsSettings.*;
 import static org.nexial.core.NexialConst.CommonColor.COLOR_NAMES;
+import static org.nexial.core.NexialConst.Data.NEXIAL_LOG_PREFIX;
 import static org.nexial.core.NexialConst.Data.SCOPE;
 import static org.nexial.core.NexialConst.Exec.*;
 import static org.nexial.core.NexialConst.Image.OPT_IMAGE_DIFF_COLOR;
@@ -161,6 +162,9 @@ public final class NexialConst {
     public static final String OPT_LAST_OUTPUT_LINK = registerSysVar(NAMESPACE + "lastOutputLink");
     public static final String OPT_LAST_OUTPUT_PATH = registerSysVar(NAMESPACE + "lastOutputPath");
     public static final String OPT_PRINT_ERROR_DETAIL = registerSysVar(NAMESPACE + "printErrorDetails", false);
+    public static final String OPT_LAST_ERROR = registerSysVar(NAMESPACE + "lastError");
+    public static final String OPT_ERROR_TRACKER = registerSysVar(NAMESPACE + "trackErrors", false);
+    public static final String ERROR_TRACKER = NEXIAL_LOG_PREFIX + "execution-errors.log";
 
     // plugin:external
     // store the file name of the output resulted from a `external.runProgram` command
@@ -1331,8 +1335,6 @@ public final class NexialConst {
                                                                            "THREAD_NAME",
                                                                            "LABEL",
                                                                            "REMARK"};
-        public static final String TIMETRACK_DATE_FORMAT = "yyyy-MM-dd HH:mm:ss,SSS";
-        public static final DateFormat TIMETRACK_LOG_DATE_FORMAT = new SimpleDateFormat(TIMETRACK_DATE_FORMAT);
 
         private TimeTrack() {}
 

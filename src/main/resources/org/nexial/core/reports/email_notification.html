@@ -1,4 +1,4 @@
-<html>
+<html xmlns:th="http://www.thymeleaf.org">
 <head>
     <style>
         body { font-family: Tahoma, serif; }
@@ -26,9 +26,9 @@
 
         .result td, .result th { border-bottom: 1px solid #ddd; }
 
-        .execMeta { font-size: 9pt; background: #f0f0f0; padding: 5px; margin-top: 4px; width: 100%; }
+        .execMeta { font-size: 9pt; background: #f0f0f0; margin-top: 4px; width: 100%; }
 
-        .execLabel1 { vertical-align: top; width: 110px; }
+        .execLabel1 { vertical-align: top; width: 100px; }
 
         .execLabel2 { vertical-align: top; width: 150px; }
 
@@ -120,7 +120,7 @@
         <td class="execValue2" data-th-utext="${summary.resolveTotalScenariosPassed()}">1 / 1</td>
     </tr>
     <tr>
-        <td nowrap="nowrap" class="execLabel1">Executed By:</td>
+        <td nowrap="nowrap" class="execLabel1">Execution User:</td>
         <td class="execValue1" data-th-utext="${summary.runUser}">User</td>
         <td nowrap="nowrap" class="execLabel2">Total Steps Executed</td>
         <td class="execValue2" data-th-utext="${summary.executed} + ' / ' + ${summary.totalSteps}">100%</td>
@@ -151,13 +151,18 @@
     <br/>
 </div>
 
-<div data-th-if="${executionSummary}">
-    <div class="executionSummary">
-        <a data-th-href="${executionSummary}">Execution Summary</a>&nbsp;
-    </div>
-    <br/>
+<div class="executionSummary">
+    <th:block th:if="${summary.triggerId != '' && summary.triggerUrl != ''}">
+        <a data-th-href="${summary.triggerUrl}">
+            <span data-th-utext="${summary.triggerId}">JobName 123</span>
+            <span th:if="${summary.triggerUser != ''}" data-th-utext="${' by ' + summary.triggerUser}"> by USER</span>
+        </a>
+        &nbsp;|&nbsp;
+    </th:block>
+    <a data-th-if="${executionSummary}" data-th-href="${executionSummary}">Execution Summary</a>&nbsp;
 </div>
 
+<br/>
 <div data-th-if="#{summary.nestedExecutions}">
 
     <table cellpadding="5" cellspacing="2" class="result">
