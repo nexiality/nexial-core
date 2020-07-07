@@ -29,23 +29,23 @@ object CommandConst {
     val DEPRECATED_VARS = listOf("nexial.scope.executionMode", "nexial.safari.cleanSession")
 
     val UPDATED_VARS = mapOf(
-            OPT_DEBUG_HIGHLIGHT_OLD to OPT_DEBUG_HIGHLIGHT,
-            HIGHLIGHT_WAIT_MS_OLD to HIGHLIGHT_WAIT_MS,
-            ASSISTANT_MODE to OPT_OPEN_RESULT,
-            POST_EXEC_MAIL_TO_OLD to POST_EXEC_MAIL_TO)
+        OPT_DEBUG_HIGHLIGHT_OLD to OPT_DEBUG_HIGHLIGHT,
+        HIGHLIGHT_WAIT_MS_OLD to HIGHLIGHT_WAIT_MS,
+        ASSISTANT_MODE to OPT_OPEN_RESULT,
+        POST_EXEC_MAIL_TO_OLD to POST_EXEC_MAIL_TO)
 
     private val NON_ITERABLE_VARS = listOf(
-            ENABLE_EMAIL,
-            POST_EXEC_MAIL_TO,
-            POST_EXEC_EMAIL_SUBJECT,
-            POST_EXEC_EMAIL_HEADER,
-            POST_EXEC_EMAIL_FOOTER,
-            OPT_MANAGE_MEM,
-            WPS_EXE_LOCATION,
-            OUTPUT_TO_CLOUD,
-            GENERATE_EXEC_REPORT,
-            OPT_OPEN_RESULT,
-            OPT_OPEN_EXEC_REPORT)
+        ENABLE_EMAIL,
+        POST_EXEC_MAIL_TO,
+        POST_EXEC_EMAIL_SUBJECT,
+        POST_EXEC_EMAIL_HEADER,
+        POST_EXEC_EMAIL_FOOTER,
+        OPT_MANAGE_MEM,
+        WPS_EXE_LOCATION,
+        OUTPUT_TO_CLOUD,
+        GENERATE_EXEC_REPORT,
+        OPT_OPEN_RESULT,
+        OPT_OPEN_EXEC_REPORT)
 
     @JvmStatic
     fun isNonIterableVariable(name: String) = name.startsWith(SCOPE) || NON_ITERABLE_VARS.contains(name)
@@ -54,13 +54,13 @@ object CommandConst {
     fun getPreferredSystemVariableName(name: String) = UPDATED_VARS.getOrDefault(name, name)!!
 
     val READ_ONLY_VARS = listOf(
-            "nexial.runID", "nexial.iterationEnded", "nexial.scope.currentIteration",
-            "nexial.scope.lastIteration", "nexial.scope.isLastIteration",
-            "nexial.scope.isFirstIteration", "nexial.scope.currentIterationId",
-            "nexial.lastScreenshot", "nexial.lastOutcome", "file.separator",
-            "java.home", "java.io.tmpdir", "java.version", "line.separator",
-            "os.arch", "os.name", "os.version", "user.country", "user.dir",
-            "user.home", "user.language", "user.name", "user.timezone")
+        "nexial.runID", "nexial.iterationEnded", "nexial.scope.currentIteration",
+        "nexial.scope.lastIteration", "nexial.scope.isLastIteration",
+        "nexial.scope.isFirstIteration", "nexial.scope.currentIterationId",
+        "nexial.lastScreenshot", "nexial.lastOutcome", "file.separator",
+        "java.home", "java.io.tmpdir", "java.version", "line.separator",
+        "os.arch", "os.name", "os.version", "user.country", "user.dir",
+        "user.home", "user.language", "user.name", "user.timezone")
 
     // common commands
     const val CMD_VERBOSE = "base.verbose(text)"
@@ -108,10 +108,10 @@ object CommandConst {
 
     @JvmStatic
     val commandSuggestions = mapOf(
-            "desktop.useTable(var,name)" to "$SUGGESTION_PREFIX desktop » editTableCells(row,nameValues) instead",
-            "desktop.editCurrentRow(nameValues)" to "$SUGGESTION_PREFIX desktop » editTableCells(row,nameValues) instead",
-            "web.scrollLeft(locator,pixel)" to "$SUGGESTION_PREFIX web » scrollElement(locator,xOffset,yOffset) instead",
-            "web.scrollRight(locator,pixel)" to "$SUGGESTION_PREFIX web » scrollElement(locator,xOffset,yOffset) instead")
+        "desktop.useTable(var,name)" to "$SUGGESTION_PREFIX desktop » editTableCells(row,nameValues) instead",
+        "desktop.editCurrentRow(nameValues)" to "$SUGGESTION_PREFIX desktop » editTableCells(row,nameValues) instead",
+        "web.scrollLeft(locator,pixel)" to "$SUGGESTION_PREFIX web » scrollElement(locator,xOffset,yOffset) instead",
+        "web.scrollRight(locator,pixel)" to "$SUGGESTION_PREFIX web » scrollElement(locator,xOffset,yOffset) instead")
 
     @JvmField
     val PARAM_AUTO_FILL_COMMANDS = listOf("desktop.sendKeysToTextBox",
@@ -123,6 +123,11 @@ object CommandConst {
                                           "localdb.exportXML",
                                           "io.saveMatches",
                                           "macro.expects",
+                                          "web.waitForElementPresent",
+                                          "web.waitUntilVisible",
+                                          "web.waitUntilHidden",
+                                          "web.waitUntilEnabled",
+                                          "web.waitUntilDisabled",
                                           "webcookie.saveAllAsText")
 
     @JvmField
@@ -142,5 +147,4 @@ object CommandConst {
                                            "step.inTime.observeInTime(prompt,waitMs)",
                                            "step.perform(instructions)",
                                            "step.inTime.perform(instructions,waitMs)")
-
 }

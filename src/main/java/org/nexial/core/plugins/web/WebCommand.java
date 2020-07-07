@@ -566,8 +566,8 @@ public class WebCommand extends BaseCommand implements CanTakeScreenshot, CanLog
     }
 
     public StepResult waitForElementPresent(final String locator, String waitMs) {
-        requiresPositiveNumber(waitMs, "invalid max wait time", waitMs);
-        long maxWait = (long) NumberUtils.toDouble(waitMs);
+        requiresNotBlank(locator, "invalid locator", locator);
+        long maxWait = deriveMaxWaitMs(waitMs);
         boolean outcome = waitForCondition(maxWait, object -> isElementPresent(locator));
         if (outcome) {
             return StepResult.success("Element by locator '" + locator + "' is present");
@@ -576,11 +576,16 @@ public class WebCommand extends BaseCommand implements CanTakeScreenshot, CanLog
         }
     }
 
+    protected long deriveMaxWaitMs(String waitMs) {
+        long maxWait = StringUtils.isBlank(waitMs) ? context.getPollWaitMs() : (long) NumberUtils.toDouble(waitMs);
+        if (maxWait < 1) { maxWait = context.getPollWaitMs(); }
+        return maxWait;
+    }
+
     public StepResult waitUntilVisible(String locator, String waitMs) {
         requiresNotBlank(locator, "invalid locator", locator);
-        requiresPositiveNumber(waitMs, "invalid max wait time", waitMs);
 
-        long maxWait = (long) NumberUtils.toDouble(waitMs);
+        long maxWait = deriveMaxWaitMs(waitMs);
         String jsScript = "var style = window.getComputedStyle(arguments[0]);" +
                           "return style.visibility === 'visible' && style.display !== 'none';";
         By by = locatorHelper.findBy(locator);
@@ -602,9 +607,8 @@ public class WebCommand extends BaseCommand implements CanTakeScreenshot, CanLog
 
     public StepResult waitUntilHidden(String locator, String waitMs) {
         requiresNotBlank(locator, "invalid locator", locator);
-        requiresPositiveNumber(waitMs, "invalid max wait time", waitMs);
 
-        long maxWait = (long) NumberUtils.toDouble(waitMs);
+        long maxWait = deriveMaxWaitMs(waitMs);
         String jsScript = "var style = window.getComputedStyle(arguments[0]);" +
                           "return style.visibility !== 'visible' || style.display === 'none';";
         By by = locatorHelper.findBy(locator);
@@ -635,9 +639,8 @@ public class WebCommand extends BaseCommand implements CanTakeScreenshot, CanLog
 
     public StepResult waitUntilEnabled(String locator, String waitMs) {
         requiresNotBlank(locator, "invalid locator", locator);
-        requiresPositiveNumber(waitMs, "invalid max wait time", waitMs);
 
-        long maxWait = (long) NumberUtils.toDouble(waitMs);
+        long maxWait = deriveMaxWaitMs(waitMs);
         By by = locatorHelper.findBy(locator);
         boolean outcome = waitForCondition(maxWait, object ->
         {
@@ -654,9 +657,8 @@ public class WebCommand extends BaseCommand implements CanTakeScreenshot, CanLog
 
     public StepResult waitUntilDisabled(String locator, String waitMs) {
         requiresNotBlank(locator, "invalid locator", locator);
-        requiresPositiveNumber(waitMs, "invalid max wait time", waitMs);
 
-        long maxWait = (long) NumberUtils.toDouble(waitMs);
+        long maxWait = deriveMaxWaitMs(waitMs);
         By by = locatorHelper.findBy(locator);
         boolean outcome = waitForCondition(maxWait, object ->
         {
