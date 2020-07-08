@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="utf-8"?>
+<soap:Envelope xmlns:soap="http://schemas.xmlsoap.org/soap/envelope/" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:xsd="http://www.w3.org/2001/XMLSchema">
+    <soap:Body>
+        <NewDataSet xmlns="http://localhost/NetTiersAccountingWebServices">
+            <Table>
+                <Dummy>I am a dummy</Dummy>
+                <sourceSystem>XYZ</sourceSystem>
+                <COMP_x0023_>bingo</COMP_x0023_>
+            </Table>
+            <Table>
+                <Dummy>I am another dummy</Dummy>
+                <sourceSystem>ABC</sourceSystem>
+                <COMP_x0023_>splat</COMP_x0023_>
+            </Table>
+            <Table>
+                <Dummy>stop calling me a dummy!</Dummy>
+                <sourceSystem>1_2_3</sourceSystem>
+                <COMP_x0023_>kablunka</COMP_x0023_>
+            </Table>
+        </NewDataSet>
+    </soap:Body>
+</soap:Envelope>

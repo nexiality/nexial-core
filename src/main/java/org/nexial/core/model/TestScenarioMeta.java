@@ -33,7 +33,7 @@ public class TestScenarioMeta {
     private static final ExcelAddress ADDR_TESTID = new ExcelAddress("H2");
     private static final ExcelAddress ADDR_AUTHOR = new ExcelAddress("I2");
 
-    private Worksheet worksheet;
+    private final Worksheet worksheet;
     private String description;
     private String project;
     private String release;
@@ -73,25 +73,18 @@ public class TestScenarioMeta {
     public void setAuthor(String author) { this.author = author; }
 
     public void save() throws IOException {
-        XSSFCell cell = worksheet.cell(ADDR_DESCRIPTION);
-        if (cell != null) { cell.setCellValue(description); }
-
-        cell = worksheet.cell(ADDR_PROJECT);
-        if (cell != null) { cell.setCellValue(project); }
-
-        cell = worksheet.cell(ADDR_RELEASE);
-        if (cell != null) { cell.setCellValue(release); }
-
-        cell = worksheet.cell(ADDR_FEATURE);
-        if (cell != null) { cell.setCellValue(featureRef); }
-
-        cell = worksheet.cell(ADDR_TESTID);
-        if (cell != null) { cell.setCellValue(testRef); }
-
-        cell = worksheet.cell(ADDR_AUTHOR);
-        if (cell != null) { cell.setCellValue(author); }
-
+        setValue(worksheet, ADDR_DESCRIPTION, description);
+        setValue(worksheet, ADDR_PROJECT, project);
+        setValue(worksheet, ADDR_RELEASE, release);
+        setValue(worksheet, ADDR_FEATURE, featureRef);
+        setValue(worksheet, ADDR_TESTID, testRef);
+        setValue(worksheet, ADDR_AUTHOR, author);
         worksheet.save();
+    }
+
+    private void setValue(Worksheet worksheet, ExcelAddress addr, String value) {
+        XSSFCell cell = worksheet.cell(addr);
+        if (cell != null) { cell.setCellValue(value); }
     }
 
     private void parse() {

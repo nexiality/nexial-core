@@ -28,13 +28,11 @@ import java.util.List;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.poi.hssf.usermodel.HSSFCell;
-import org.apache.poi.hssf.usermodel.HSSFDateUtil;
 import org.apache.poi.hssf.usermodel.HSSFRow;
 import org.apache.poi.hssf.usermodel.HSSFSheet;
 import org.apache.poi.hssf.usermodel.HSSFWorkbook;
 import org.apache.poi.poifs.filesystem.POIFSFileSystem;
 import org.apache.poi.ss.usermodel.Cell;
-import org.apache.poi.ss.usermodel.CellType;
 import org.apache.poi.xssf.usermodel.XSSFCell;
 import org.apache.poi.xssf.usermodel.XSSFRow;
 import org.apache.poi.xssf.usermodel.XSSFSheet;
@@ -49,15 +47,13 @@ import org.nexial.core.plugins.db.DaoUtils;
 import org.nexial.core.utils.ConsoleUtils;
 
 import static java.lang.System.lineSeparator;
-import static org.apache.poi.ss.usermodel.CellType.NUMERIC;
-import static org.apache.poi.ss.usermodel.CellType.STRING;
 import static org.nexial.core.NexialConst.DEF_CHARSET;
 import static org.nexial.core.NexialConst.Project.SCRIPT_FILE_EXT;
 import static org.nexial.core.excel.Excel.MIN_EXCEL_FILE_SIZE;
 
 public class ExcelHelper {
     private static final DateFormat DEF_EXCEL_DATE_FORMAT = new SimpleDateFormat("MM/dd/yyyy");
-    private ExecutionContext context;
+    private final ExecutionContext context;
 
     public ExcelHelper(ExecutionContext context) { this.context = context; }
 
@@ -159,43 +155,44 @@ public class ExcelHelper {
     protected String returnCellValue(XSSFCell cell) { return returnCellValue(((Cell) cell)); }
 
     protected String returnCellValue(Cell cell) {
-        try {
-            String value;
+        return DaoUtils.csvFriendly(Excel.getCellValue(cell, false), context.getTextDelim(), true);
+        // try {
+        // String value = Excel.getCellValue(cell, false);
+        //
+        // switch (cell.getCellTypeEnum()) {
+        //     case STRING:
+        //     case BOOLEAN:
+        //         value = cell.getRichStringCellValue().toString();
+        //         break;
+        //     case NUMERIC:
+        //         value = formattedCellToString(cell);
+        //         break;
+        //     case FORMULA:
+        //         CellType resultType = cell.getCachedFormulaResultTypeEnum();
+        //         if (resultType == STRING) {
+        //             value = cell.getRichStringCellValue().toString();
+        //         } else if (resultType == NUMERIC) {
+        //             value = formattedCellToString(cell);
+        //         } else {
+        //             value = cell.getStringCellValue();
+        //         }
+        //
+        //         break;
+        //     default:
+        //         value = cell.getStringCellValue();
+        // }
 
-            switch (cell.getCellTypeEnum()) {
-                case STRING:
-                case BOOLEAN:
-                    value = cell.getRichStringCellValue().toString();
-                    break;
-                case NUMERIC:
-                    value = formattedCellToString(cell);
-                    break;
-                case FORMULA:
-                    CellType resultType = cell.getCachedFormulaResultTypeEnum();
-                    if (resultType == STRING) {
-                        value = cell.getRichStringCellValue().toString();
-                    } else if (resultType == NUMERIC) {
-                        value = formattedCellToString(cell);
-                    } else {
-                        value = cell.getStringCellValue();
-                    }
-
-                    break;
-                default:
-                    value = cell.getStringCellValue();
-            }
-
-            return DaoUtils.csvFriendly(value, context.getTextDelim(), true);
-        } catch (Exception e) {
-            return null;
-        }
+        // return DaoUtils.csvFriendly(value, context.getTextDelim(), true);
+        // } catch (Exception e) {
+        //     return null;
+        // }
     }
 
-    protected String formattedCellToString(Cell cell) {
-        if (HSSFDateUtil.isCellDateFormatted(cell)) {
-            return DEF_EXCEL_DATE_FORMAT.format(cell.getDateCellValue());
-        } else {
-            return String.valueOf(cell.getNumericCellValue());
-        }
-    }
+    // protected String formattedCellToString(Cell cell) {
+    //     if (HSSFDateUtil.isCellDateFormatted(cell)) {
+    //         return DEF_EXCEL_DATE_FORMAT.format(cell.getDateCellValue());
+    //     } else {
+    //         return String.valueOf(cell.getNumericCellValue());
+    //     }
+    // }
 }

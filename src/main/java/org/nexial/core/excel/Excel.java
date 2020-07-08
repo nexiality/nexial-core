@@ -74,6 +74,7 @@ import static org.nexial.core.SystemVariables.getDefault;
 import static org.nexial.core.excel.ExcelConfig.*;
 import static org.nexial.core.excel.ExcelConfig.StyleConfig.FONT_HEIGHT_DEFAULT;
 import static org.nexial.core.excel.ExcelStyleHelper.*;
+import static org.nexial.core.excel.ext.CipherHelper.CRYPT_IND;
 
 /**
  * Wrapper for managing Excel documents.
@@ -81,6 +82,7 @@ import static org.nexial.core.excel.ExcelStyleHelper.*;
 public class Excel {
     public static final int MIN_EXCEL_FILE_SIZE = 2 * 1024;
     private static final boolean verboseInstantiation = false;
+    public static final String REGEX_UTF_DECODE = "_x[\\d]{4}_";
 
     float _cellSpacing = 5.3f;
 
@@ -1377,12 +1379,14 @@ public class Excel {
     }
 
     @Nullable
-    protected static FormulaEvaluator deriveFormulaEvaluator(XSSFCell cell) {
-        XSSFWorkbook workbook = cell.getRow().getSheet().getWorkbook();
+    protected static FormulaEvaluator deriveFormulaEvaluator(Cell cell) {
+        if (cell == null) { return null; }
+
+        Workbook workbook = cell.getRow().getSheet().getWorkbook();
         return workbook != null ? workbook.getCreationHelper().createFormulaEvaluator() : null;
     }
 
-    private static String getCellValue(XSSFCell cell, boolean asRaw) {
+    public static String getCellValue(Cell cell, boolean asRaw) {
         if (cell == null) { return null; }
 
         CellType cellType = cell.getCellTypeEnum();
@@ -1409,11 +1413,29 @@ public class Excel {
                     return new DataFormatter().formatCellValue(cell);
                 }
             case ERROR:
-                return cell.getErrorCellString();
+                if (cell instanceof XSSFCell) { return ((XSSFCell) cell).getErrorCellString(); }
+                return cell.getErrorCellValue() + "";
             default:
-                String cellValue = cell.getStringCellValue();
-                return asRaw ? cellValue : CellTextReader.getText(cellValue);
+                return escapeUtfDecode(cell, asRaw);
         }
+    }
+
+    @Nullable
+    private static String escapeUtfDecode(Cell cell, boolean asRaw) {
+        String cellValue = cell.getStringCellValue();
+        if (StringUtils.isBlank(cellValue)) { return cellValue; }
+        if (StringUtils.startsWith(cellValue, CRYPT_IND)) { return cellValue; }
+
+        if (RegexUtils.match(cellValue, REGEX_UTF_DECODE)) { return cellValue; }
+
+        if (cell instanceof XSSFCell) {
+            String storedValue = ((XSSFCell) cell).getRichStringCellValue().getCTRst().getT();
+            if (StringUtils.isNotBlank(storedValue) && RegexUtils.match(storedValue, REGEX_UTF_DECODE)) {
+                cellValue = storedValue;
+            }
+        }
+
+        return asRaw ? cellValue : CellTextReader.getText(cellValue);
     }
 
     private static void createWorkbook(File file) throws IOException {

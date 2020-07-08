@@ -41,7 +41,6 @@ import org.nexial.commons.utils.RegexUtils;
 import org.nexial.commons.utils.TextUtils;
 import org.nexial.core.excel.Excel;
 import org.nexial.core.excel.Excel.Worksheet;
-import org.nexial.core.excel.ExcelConfig;
 import org.nexial.core.excel.ExcelStyleHelper;
 import org.nexial.core.excel.ext.CellTextReader;
 import org.nexial.core.plugins.CanTakeScreenshot;
@@ -58,6 +57,7 @@ import static org.apache.commons.lang3.builder.ToStringStyle.SIMPLE_STYLE;
 import static org.nexial.commons.utils.EnvUtils.platformSpecificEOL;
 import static org.nexial.core.CommandConst.*;
 import static org.nexial.core.NexialConst.*;
+import static org.nexial.core.NexialConst.MSG_FAIL;
 import static org.nexial.core.NexialConst.Data.*;
 import static org.nexial.core.NexialConst.Web.WEB_PERF_METRICS_ENABLED;
 import static org.nexial.core.SystemVariables.getDefaultBool;
@@ -253,9 +253,7 @@ public class TestStep extends TestStepManifest {
 
         // SECOND PASS: push data to params
         for (int i = COL_IDX_PARAMS_START; i < idxLastCell; i++) {
-            cell = row.get(i);
-            String cellValue = treatCommonValueShorthand(cell.toString());
-            params.add(cellValue);
+            params.add(treatCommonValueShorthand(Excel.getCellValue(row.get(i))));
         }
         return params;
     }
@@ -489,7 +487,7 @@ public class TestStep extends TestStepManifest {
 
     protected void readFlowControlsCell(List<XSSFCell> row) {
         XSSFCell cell = row.get(COL_IDX_FLOW_CONTROLS);
-        setFlowControls(FlowControl.parse(cell != null ? StringUtils.defaultString(cell.toString(), "") : ""));
+        setFlowControls(FlowControl.parse(cell != null ? StringUtils.defaultString(Excel.getCellValue(cell), "") : ""));
     }
 
     protected void readCaptureScreenCell(List<XSSFCell> row) {
@@ -697,13 +695,11 @@ public class TestStep extends TestStepManifest {
 
         // result
         XSSFCell cellResult = row.get(COL_IDX_RESULT);
-        if (MESSAGE_REQUIRED_COMMANDS.contains(row.get(2).toString() + "." + row.get(3).toString()) &&
-            (result.isSuccess() || result.isError())) {
-            cellResult.setCellValue(StringUtils
-                                        .left((result.isSuccess() ? MSG_PASS : ExcelConfig.MSG_FAIL) + message, 32767));
-        } else {
-            cellResult.setCellValue(StringUtils.left(MessageUtils.markResult(message, pass, true), 32767));
-        }
+        String resultMsg = MESSAGE_REQUIRED_COMMANDS.contains(row.get(2).toString() + "." + row.get(3).toString()) &&
+                           (result.isSuccess() || result.isError()) ?
+                           (result.isSuccess() ? MSG_PASS : MSG_FAIL) + message :
+                           MessageUtils.markResult(message, pass, true);
+        cellResult.setCellValue(StringUtils.left(resultMsg, MAX_VERBOSE_CHAR));
 
         if (result.isError()) {
             ExcelStyleHelper.formatFailedStepDescription(this);

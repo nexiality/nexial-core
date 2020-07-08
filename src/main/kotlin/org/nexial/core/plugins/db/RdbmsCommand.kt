@@ -382,11 +382,10 @@ class RdbmsCommand : BaseCommand() {
             addLinkRef("result metadata saved as ${jsonOutput.name}", jsonOutput.name, jsonOutput.absolutePath)
 
         // csv file will get the `nexial.lastOutputLink` ref, not json file
-        return if (FileUtil.isFileReadable(saveTo, 3)) {
+        if (result.rowCount > 0 && FileUtil.isFileReadable(saveTo, 3))
             addLinkRef("result saved as ${saveTo.name}", saveTo.name, saveTo.absolutePath)
-            true
-        } else
-            false
+
+        return !result.hasError()
     }
 
     private fun resolveDao(db: String): SimpleExtractionDao {

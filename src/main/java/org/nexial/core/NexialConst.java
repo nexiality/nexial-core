@@ -59,8 +59,7 @@ import static org.apache.commons.lang3.SystemUtils.IS_OS_WINDOWS;
 import static org.apache.commons.lang3.SystemUtils.USER_HOME;
 import static org.nexial.core.NexialConst.AwsSettings.*;
 import static org.nexial.core.NexialConst.CommonColor.COLOR_NAMES;
-import static org.nexial.core.NexialConst.Data.NEXIAL_LOG_PREFIX;
-import static org.nexial.core.NexialConst.Data.SCOPE;
+import static org.nexial.core.NexialConst.Data.*;
 import static org.nexial.core.NexialConst.Exec.*;
 import static org.nexial.core.NexialConst.Image.OPT_IMAGE_DIFF_COLOR;
 import static org.nexial.core.NexialConst.Integration.MAIL_PREFIX;
@@ -1872,7 +1871,7 @@ public final class NexialConst {
 
         // only `EMPTY`, `BLANK`, `TAB` or `NL` or combination of these are found
         if (RegexUtils.isExact(text1[0], Data.REGEX_ONLY_NON_DISPLAYABLES)) {
-            Data.NON_DISPLAYABLE_REPLACEMENTS.forEach(
+            NON_DISPLAYABLE_REPLACEMENTS.forEach(
                 (shorthand, replacement) -> text1[0] = StringUtils.replace(text1[0], shorthand, replacement));
         }
 
