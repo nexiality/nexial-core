@@ -1634,6 +1634,7 @@ public class WebCommand extends BaseCommand implements CanTakeScreenshot, CanLog
         WebElement element = findElement(locator);
         if (element == null) { return StepResult.fail("Unable to type since no element matches to " + locator); }
 
+        scrollIntoView(element);
         try {
             clearValue(element);
         } catch (WebDriverException e) {
@@ -1653,11 +1654,11 @@ public class WebCommand extends BaseCommand implements CanTakeScreenshot, CanLog
                 // element.sendKeys();
                 new Actions(driver).moveToElement(element)
                                    .sendKeys(element, value)
+                                   .pause(500)
                                    .sendKeys(TAB)
                                    .build()
                                    .perform();
             } else {
-                scrollIntoView(element);
                 element.sendKeys(value);
             }
         }

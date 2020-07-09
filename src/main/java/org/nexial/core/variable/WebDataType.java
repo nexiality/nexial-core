@@ -20,17 +20,19 @@ package org.nexial.core.variable;
 import java.util.ArrayList;
 import java.util.List;
 
+import org.nexial.commons.utils.TextUtils;
+
 import static org.nexial.core.NexialConst.NL;
 
 public class WebDataType extends ExpressionDataType<String> {
-    private Transformer transformer = new WebTransformer();
+    private WebTransformer transformer = new WebTransformer();
     private boolean allPass;
     private List<Result> results;
 
     public static class Result {
-        private String operation;
-        private String result;
-        private String error;
+        private final String operation;
+        private final String result;
+        private final String error;
 
         public Result(String operation, String result, String error) {
             this.operation = operation;
@@ -46,11 +48,7 @@ public class WebDataType extends ExpressionDataType<String> {
 
         @Override
         public String toString() {
-            return "{" + NL +
-                   "    operation=" + operation + "," + NL +
-                   "    result=" + result + "," + NL +
-                   "    error=" + error + NL +
-                   "  }";
+            return "\t{operation=" + operation + "}\t{result=" + result + "}\t{error=" + error + "}";
         }
     }
 
@@ -70,18 +68,14 @@ public class WebDataType extends ExpressionDataType<String> {
     public void setResults(List<Result> results) { this.results = results; }
 
     public void addResults(Result result) {
-        if (results == null) {
-            results = new ArrayList<>();
-        }
+        if (results == null) { results = new ArrayList<>(); }
         results.add(result);
     }
 
     @Override
     public String toString() {
-        return "{" + NL +
-               "  allPass=" + allPass + "," + NL +
-               "  results=" + results + NL +
-               "}";
+        return TextUtils.prettyToString("allPass=" + allPass,
+                                        "results=[" + NL + TextUtils.toString(results, NL) + NL + "]");
     }
 
     @Override
@@ -94,7 +88,7 @@ public class WebDataType extends ExpressionDataType<String> {
     public String getName() { return "WEB"; }
 
     @Override
-    Transformer getTransformer() { return transformer; }
+    WebTransformer getTransformer() { return transformer; }
 
     @Override
     WebDataType snapshot() {

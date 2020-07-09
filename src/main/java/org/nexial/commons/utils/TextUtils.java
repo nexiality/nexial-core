@@ -1278,18 +1278,19 @@ public final class TextUtils {
     }
 
     @NotNull
-    public static String prettyToString(String... keyValues) {
-        if (ArrayUtils.isEmpty(keyValues)) {
-            return "";
-        } else {
-            return NL +
-                   Arrays.stream(keyValues).map(pair -> {
-                       String key = StringUtils.substringBefore(pair, "=");
-                       String value = StringUtils.substringAfter(pair, "=");
-                       return StringUtils.isBlank(key) ?
-                              "" : StringUtils.rightPad(key, TO_STRING_KEY_LENGTH) + "=" + value + NL;
-                   }).collect(Collectors.joining(""));
-        }
+    public static String prettyToString(String... keyValues) { return prettyToStringWithDelim(NL, keyValues); }
+
+    @NotNull
+    public static String prettyToStringWithDelim(String delimiter, String... keyValues) {
+        if (ArrayUtils.isEmpty(keyValues)) { return ""; }
+
+        return NL +
+               Arrays.stream(keyValues).map(pair -> {
+                   String key = StringUtils.substringBefore(pair, "=");
+                   String value = StringUtils.substringAfter(pair, "=");
+                   return StringUtils.isBlank(key) ?
+                          "" : StringUtils.rightPad(key, TO_STRING_KEY_LENGTH) + "=" + value + delimiter;
+               }).collect(Collectors.joining(""));
     }
 
     private static Map<String, String> initDefaultEscapeHtmlMapping() {
