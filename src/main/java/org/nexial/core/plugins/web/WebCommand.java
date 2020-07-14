@@ -57,7 +57,7 @@ import org.nexial.core.plugins.base.BaseCommand;
 import org.nexial.core.plugins.base.ScreenshotUtils;
 import org.nexial.core.plugins.ws.Response;
 import org.nexial.core.plugins.ws.WsCommand;
-import org.nexial.core.service.external.UserStackAPI;
+import org.nexial.core.services.external.UserStackAPI;
 import org.nexial.core.spi.NexialExecutionEvent;
 import org.nexial.core.spi.NexialListenerFactory;
 import org.nexial.core.utils.ConsoleUtils;

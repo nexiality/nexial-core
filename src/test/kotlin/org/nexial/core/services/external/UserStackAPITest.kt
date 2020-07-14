@@ -15,7 +15,7 @@
  *
  */
 
-package org.nexial.core.service.external
+package org.nexial.core.services.external
 
 import com.google.gson.JsonObject
 import org.junit.Assert

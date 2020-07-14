@@ -101,7 +101,7 @@ class NexialInteractive {
             when (command) {
                 SET_SCRIPT       -> {
                     if (StringUtils.isBlank(argument)) {
-                        ConsoleUtils.error("No test script assigned")
+                        error("No test script assigned")
                     } else {
                         session.script = argument
                     }
@@ -109,7 +109,7 @@ class NexialInteractive {
 
                 SET_DATA         -> {
                     if (StringUtils.isBlank(argument)) {
-                        ConsoleUtils.error("No data file assigned")
+                        error("No data file assigned")
                     } else {
                         session.dataFile = argument
                     }
@@ -117,7 +117,7 @@ class NexialInteractive {
 
                 SET_SCENARIO     -> {
                     if (StringUtils.isBlank(argument)) {
-                        ConsoleUtils.error("No scenario assigned")
+                        error("No scenario assigned")
                     } else {
                         session.scenario = argument
                         session.reloadTestScript()
@@ -126,7 +126,7 @@ class NexialInteractive {
 
                 SET_ITER         -> {
                     if (StringUtils.isBlank(argument)) {
-                        ConsoleUtils.error("No iteration assigned")
+                        error("No iteration assigned")
                     } else {
                         session.iteration = NumberUtils.createInteger(argument)
                     }
@@ -134,7 +134,7 @@ class NexialInteractive {
 
                 SET_ACTIVITY     -> {
                     if (StringUtils.isBlank(argument)) {
-                        ConsoleUtils.error("No activity assigned")
+                        error("No activity assigned")
                     } else {
                         session.assignActivities(TextUtils.replaceItems(toSteps(argument), tmpComma, ","))
                     }
@@ -143,7 +143,7 @@ class NexialInteractive {
                 SET_STEPS        -> {
                     // steps can be range (dash) or comma-separated
                     if (StringUtils.isBlank(argument)) {
-                        ConsoleUtils.error("No test step assigned")
+                        error("No test step assigned")
                     } else {
                         session.steps = toSteps(argument)
                         session.clearActivities()
@@ -193,7 +193,7 @@ class NexialInteractive {
 
                 OPEN_SCRIPT      -> {
                     if (StringUtils.isBlank(session.script)) {
-                        ConsoleUtils.error("No valid test script assigned")
+                        error("No valid test script assigned")
                     } else {
                         Excel.openExcel(File(session.script!!))
                     }
@@ -201,7 +201,7 @@ class NexialInteractive {
 
                 OPEN_DATA        -> {
                     if (StringUtils.isBlank(session.dataFile)) {
-                        ConsoleUtils.error("No valid data file assigned")
+                        error("No valid data file assigned")
                     } else {
                         Excel.openExcel(File(session.dataFile!!))
                     }
@@ -223,7 +223,7 @@ class NexialInteractive {
                 }
 
                 else             -> {
-                    ConsoleUtils.error("Unknown command $input. Try again...")
+                    error("Unknown command $input. Try again...\n")
                 }
             }
         }
@@ -255,17 +255,17 @@ class NexialInteractive {
     private fun execute(session: InteractiveSession) {
         // sanity check
         if (StringUtils.isBlank(session.script)) {
-            ConsoleUtils.error("No test script assigned")
+            error("No test script assigned")
             return
         }
 
         if (StringUtils.isBlank(session.scenario)) {
-            ConsoleUtils.error("No test scenario assigned")
+            error("No test scenario assigned")
             return
         }
 
         if (session.activities.isEmpty() && session.steps.isEmpty()) {
-            ConsoleUtils.error("No activity or test step assigned")
+            error("No activity or test step assigned")
             return
         }
 
@@ -314,7 +314,7 @@ class NexialInteractive {
                 }
 
                 if (targetScenario == null) {
-                    ConsoleUtils.error("Invalid test scenario assigned: ${session.script!!}")
+                    error("Invalid test scenario assigned: ${session.script!!}")
                     return
                 }
 
@@ -531,4 +531,6 @@ class NexialInteractive {
         resetExecutionSummary(session, activitySummary, activity.name, ACTIVITY)
         return activitySummary
     }
+
+    private fun error(message: Any) = println("\n\b[ERROR] >>\t$message")
 }

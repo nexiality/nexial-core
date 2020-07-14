@@ -19,7 +19,7 @@ package org.nexial.core.spi;
 
 public enum NexialEventType {
 
-    NexialStart, NexialEnd, CmdError,
+    NexialPreStart, NexialStart, NexialEnd, CmdError,
     ExecutionStart, ExecutionEnd,
 
     PlanStart, PlanEnd,

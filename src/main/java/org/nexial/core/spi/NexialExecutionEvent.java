@@ -43,6 +43,13 @@ public class NexialExecutionEvent {
     private String browser;
     private String targetUrl;
 
+    public static NexialExecutionEvent newNexialPreStartEvent(Nexial nexial, String[] args) {
+        NexialExecutionEvent event = new NexialExecutionEvent(NexialPreStart);
+        event.nexial = nexial;
+        event.args = args;
+        return event;
+    }
+
     public static NexialExecutionEvent newNexialStartEvent(Nexial nexial, String[] args, CommandLine commandLine) {
         NexialExecutionEvent event = new NexialExecutionEvent(NexialStart);
         event.nexial = nexial;

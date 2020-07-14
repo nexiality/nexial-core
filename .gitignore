@@ -1,5 +1,4 @@
 !gradle-wrapper.jar
-$RECYCLE.BIN/
 *.DS_Store
 *.bak
 *.cab
@@ -44,21 +43,14 @@ $RECYCLE.BIN/
 .classpath
 .com.apple.timemachine.donotpresent
 .cproject
-.externalToolBuilders/
 .factorypath
 .fseventsd
-.gradle
 .gradletasknamecache
 .grunt
 .history
-.idea/
-.ideaDataSources/
-.idea_modules/
-.lib/
 .loadpath
 .lock-wscript
 .metadata
-.mtj.tmp/
 .mvn/timing.properties
 .netrwhist
 .node_repl_history
@@ -66,27 +58,20 @@ $RECYCLE.BIN/
 .nyc_output
 .project
 .recommenders
-.recommenders/
 .scala_dependencies
-.settings/
 .springBeans
-.svn/
 .target
 .tern-project
 .texlipse
 .worksheet
-/.archive/
-/build
-/logs
-/out/
+/lib/nexial-json.jar
+/lib/setup.jar
 Desktop.ini
 GitHub.sublime-settings
 Icon
 Network Trash Folder
 Package Control.ca-bundle
-Package Control.ca-certs/
 Package Control.ca-list
-Package Control.cache/
 Package Control.last-run
 Package Control.system-ca-bundle
 Session.vim
@@ -97,30 +82,23 @@ Thumbs.db
 atlassian-ide-plugin.xml
 backup.db
 bh_unicode_properties.cache
-build/
 build/Release
 buildNumber.properties
-classes/
 com_crashlytics_export_strings.xml
 coverage
 crashlytics-build.properties
 crashlytics.properties
-dataSources/
 dependency-reduced-pom.xml
 dist/*
 ehthumbs.db
 fabric.properties
 gradle-app.setting
-gradle/
 gradlew
 gradlew.bat
 hs_err_pid*
 jspm_packages
 lib-cov
-lib_managed/
 local.properties
-logs
-logs/
 node_modules
 npm-debug.log*
 pids
@@ -128,17 +106,42 @@ pom.xml.next
 pom.xml.releaseBackup
 pom.xml.tag
 pom.xml.versionsBackup
-project/boot/
-project/plugins/project/
 release.properties
 sftp-config.json
+test.db
+~$*.doc*
+~$*.ppt*
+~$*.xls*
+
+$RECYCLE.BIN/
+.externalToolBuilders/
+.gradle
+.idea/
+.ideaDataSources/
+.idea_modules/
+.lib/
+.mtj.tmp/
+.recommenders/
+.settings/
+.svn/
+/.archive/
+/build
+/logs/
+/out/
+Package Control.ca-certs/
+Package Control.cache/
+build/
+classes/
+dataSources/
+gradle/
+lib_managed/
+logs
+logs/
+project/boot/
+project/plugins/project/
 src/test/resources/showcase/output/
 src/test/resources/unittesting/output/
 src_managed/
 tags
 target/
-test.db
 tmp/
-~$*.doc*
-~$*.ppt*
-~$*.xls*

@@ -15,7 +15,7 @@
  *
  */
 
-package org.nexial.core.service.external
+package org.nexial.core.services.external
 
 import org.apache.commons.io.FileUtils
 import org.apache.commons.lang3.StringUtils

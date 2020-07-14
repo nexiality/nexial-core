@@ -19,6 +19,8 @@ package org.nexial.core.spi;
 
 public interface NexialListener {
 
+    void onNexialPreStart(NexialExecutionEvent event);
+
     void onNexialStart(NexialExecutionEvent event);
 
     void onNexialEnd(NexialExecutionEvent event);
@@ -86,4 +88,8 @@ public interface NexialListener {
     void onSmsNotificationSent(NexialExecutionEvent event);
 
     void onCommandListing(NexialExecutionEvent event);
+
+    void onBrowserEnd(NexialExecutionEvent event);
+
+    void onUrlInvoked(NexialExecutionEvent event);
 }

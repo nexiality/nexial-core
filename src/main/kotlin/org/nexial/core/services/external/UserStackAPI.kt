@@ -15,7 +15,7 @@
  *
  */
 
-package org.nexial.core.service.external
+package org.nexial.core.services.external
 
 import com.google.gson.JsonObject
 import org.apache.commons.lang3.SystemUtils.OS_ARCH
@@ -31,7 +31,7 @@ import org.nexial.core.model.BrowserOS
 import org.nexial.core.plugins.ws.WebServiceClient
 import org.nexial.core.utils.ConsoleUtils
 
-class UserStackAPI() {
+class UserStackAPI {
     private val keys = APIKEYS_USERSTACK.toMutableList()
     private val urlTemplate = "http://api.userstack.com/detect?access_key=%s&ua=%s"
 

@@ -37,7 +37,7 @@ import org.nexial.core.NexialConst.ImageDiffColor;
 import org.nexial.core.model.StepResult;
 import org.nexial.core.plugins.ForcefulTerminate;
 import org.nexial.core.plugins.base.BaseCommand;
-import org.nexial.core.service.external.ImageOcrApi;
+import org.nexial.core.services.external.ImageOcrApi;
 import org.nexial.core.utils.ConsoleUtils;
 
 import static org.nexial.core.NexialConst.Image.*;

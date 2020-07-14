@@ -117,9 +117,11 @@ object ExecUtils {
         return runId
     }
 
+    /**
+     * collect execution-time arguments so that we can display them in output
+     */
     @JvmStatic
     fun collectCliProps(args: Array<String>) {
-        // collect execution-time arguments so that we can display them in output
         System.setProperty(SCRIPT_REF_PREFIX + RUNTIME_ARGS, args.joinToString(" "))
 
         val argsList = ManagementFactory.getRuntimeMXBean().inputArguments.stream()
@@ -127,7 +129,6 @@ object ExecUtils {
                 arg.startsWith("-D") &&
                 IGNORED_CLI_OPT.none { StringUtils.startsWith(StringUtils.substring(arg, 2), it) }
             }.collect(Collectors.joining(getDefault(TEXT_DELIM)!!))
-
         if (argsList.isNotBlank()) System.setProperty(SCRIPT_REF_PREFIX + JAVA_OPT, argsList)
     }
 

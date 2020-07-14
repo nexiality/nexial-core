@@ -269,6 +269,8 @@ public class Nexial {
 
     /** read from the commandline and derive the intended execution order. */
     protected void init(String[] args) throws IOException, ParseException {
+        NexialListenerFactory.fireEvent(NexialExecutionEvent.newNexialPreStartEvent(this, args));
+
         ExecUtils.collectCliProps(args);
 
         // first things first -- do we have all the required system properties?

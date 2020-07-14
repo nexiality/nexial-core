@@ -952,7 +952,6 @@ public final class NexialConst {
         public static final String OVERRIDE = "override";
         public static final String ANNOUNCE = "announce";
         public static final String INTERACTIVE = "interactive";
-        public static final String READY = "ready";
         public static final Options OPTIONS = initCmdOptions();
 
         private CLI() { }
@@ -987,7 +986,6 @@ public final class NexialConst {
                                                  "-" + OVERRIDE + " name=value declarations. Note that variable name " +
                                                  "or value with spaces must be enclosed in double quotes.");
             cmdOptions.addOption(INTERACTIVE, false, "[optional] Run Nexial in Interactive Mode.");
-            // cmdOptions.addOption(READY, false, "[optional] Run Nexial Ready. This option deactivates other options");
             return cmdOptions;
         }
     }

@@ -28,7 +28,6 @@ public class NexialListenerFactory {
 
     private static NexialListener initLoad(ServiceLoader<NexialListenerProvider> loader) {
         Iterator<NexialListenerProvider> iterator = loader.iterator();
-
         if (!iterator.hasNext()) { return null; }
 
         NexialListenerProvider provider = iterator.next();
@@ -42,70 +41,119 @@ public class NexialListenerFactory {
 
         NexialEventType eventType = event.getEventType();
         switch (eventType) {
-            case NexialStart: {
+            case NexialPreStart:
+                LISTENER.onNexialPreStart(event);
+                break;
+            case NexialStart:
                 LISTENER.onNexialStart(event);
                 break;
-            }
-
-            case NexialEnd: {
+            case NexialEnd:
                 LISTENER.onNexialEnd(event);
                 break;
-            }
-
-            case CmdError: {
+            case CmdError:
                 LISTENER.onNexialCmdError(event);
                 break;
-            }
-
-            case ExecutionStart: {
+            case ExecutionStart:
                 LISTENER.onExecutionStart(event);
                 break;
-            }
-
-            case ExecutionEnd: {
+            case ExecutionEnd:
                 LISTENER.onExecutionEnd(event);
                 break;
-            }
-
-            case CommandListing: {
+            case CommandListing:
                 LISTENER.onCommandListing(event);
                 break;
-            }
-
             case PlanStart:
+                LISTENER.onPlanStart(event);
+                break;
             case PlanEnd:
+                LISTENER.onPlanEnd(event);
+                break;
             case SubPlanStart:
+                LISTENER.onSubPlanStart(event);
+                break;
             case SubPlanEnd:
+                LISTENER.onSubPlanEnd(event);
+                break;
             case ScriptParsed:
+                LISTENER.onScriptParsed(event);
+                break;
             case DataFileParsed:
+                LISTENER.onDataFileParsed(event);
+                break;
             case ProjectPropertiesParsed:
+                LISTENER.onProjectPropertiesParsed(event);
+                break;
             case ScriptStart:
+                LISTENER.onScriptStart(event);
+                break;
             case ScriptEnd:
+                LISTENER.onScriptEnd(event);
+                break;
             case IterationStart:
+                LISTENER.onIterationStart(event);
+                break;
             case IterationEnd:
+                LISTENER.onIterationEnd(event);
+                break;
             case ScenarioStart:
+                LISTENER.onScenarioStart(event);
+                break;
             case ScenarioEnd:
+                LISTENER.onScenarioEnd(event);
+                break;
             case ActivityStart:
+                LISTENER.onActivityStart(event);
+                break;
             case ActivityEnd:
+                LISTENER.onActivityEnd(event);
+                break;
             case RepeatUntilStart:
+                LISTENER.onRepeatUntilStart(event);
+                break;
             case RepeatUntilEnd:
+                LISTENER.onRepeatUntilEnd(event);
+                break;
             case StepStart:
+                LISTENER.onStepStart(event);
+                break;
             case StepSucceed:
+                LISTENER.onStepSucceed(event);
+                break;
             case StepFailed:
+                LISTENER.onStepFailed(event);
+                break;
             case StepSkipped:
+                LISTENER.onStepSkipped(event);
+                break;
             case StepPaused:
-
+                LISTENER.onStepPaused(event);
+                break;
             case ScreenshotCaptured:
+                LISTENER.onScreenshotCaptured(event);
+                break;
             case RecordStart:
+                LISTENER.onRecordStart(event);
+                break;
             case RecordEnd:
+                LISTENER.onRecordEnd(event);
+                break;
             case OutputCaptured:
+                LISTENER.onOutputCaptured(event);
+                break;
             case EmailNotificationSent:
+                LISTENER.onEmailNotificationSent(event);
+                break;
             case SmsNotificationSent:
+                LISTENER.onSmsNotificationSent(event);
+                break;
+            case BrowserEnd:
+                LISTENER.onBrowserEnd(event);
+                break;
+            case UrlInvoked:
+                LISTENER.onUrlInvoked(event);
+                break;
 
-            default: {
-
-            }
+            default:
         }
-
     }
 }
