@@ -67,6 +67,7 @@ object WebDriverExceptionHelper {
             is ScreenshotException             -> "Unable to capture screenshot: "
             is UnhandledAlertException         -> "JavaScript alert dialog not properly handled: "
             is StaleElementReferenceException  -> "Referenced element is either not longer available or attached to the specified locator"
+            is TimeoutException                -> "Timed out while referencing web element(s): "
             else                               -> "UNKNOWN ERROR: "
         }
 

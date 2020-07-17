@@ -36,7 +36,7 @@ import org.nexial.core.excel.Excel.Worksheet;
 import org.nexial.core.excel.ExcelAddress;
 import org.nexial.core.excel.ExcelArea;
 import org.nexial.core.utils.ConsoleUtils;
-import org.nexial.core.utils.ExecutionLogger;
+import org.nexial.core.logs.ExecutionLogger;
 
 import static org.nexial.core.CommandConst.CMD_REPEAT_UNTIL;
 import static org.nexial.core.NexialConst.*;
@@ -44,11 +44,11 @@ import static org.nexial.core.excel.ExcelConfig.*;
 import static org.nexial.core.model.ExecutionSummary.ExecutionLevel.SCENARIO;
 
 public class TestScenario {
-    private ExecutionContext context;
-    private String name;
+    private final ExecutionContext context;
+    private final String name;
     private Worksheet worksheet;
     private TestScenarioMeta meta;
-    private ExecutionSummary executionSummary = new ExecutionSummary();
+    private final ExecutionSummary executionSummary = new ExecutionSummary();
 
     /** the section with the corresponding worksheet that has test steps */
     private ExcelArea area;

@@ -684,7 +684,7 @@ public class BaseCommand implements NexialCommand {
         }
 
         // with priority so that this log will not be silenced
-        context.getLogger().log(this, text, true);
+        context.getLogger().log(this, StringUtils.prependIfMissing(text, "\n"), true);
         return StepResult.success(text);
     }
 

@@ -1314,7 +1314,7 @@ public class WebCommand extends BaseCommand implements CanTakeScreenshot, CanLog
         if (StringUtils.isBlank(elem.getText())) { return StepResult.fail("Element found without text to select."); }
 
         String id = elem.getAttribute("id");
-        if (StringUtils.isBlank(id)) { return StepResult.fail("Element found without 'id';REQUIRED"); }
+        if (StringUtils.isBlank(id)) { return StepResult.fail("Element found without 'id'; REQUIRED"); }
 
         jsExecutor.executeScript("window.getSelection().selectAllChildren(document.getElementById('" + id + "'));");
         return StepResult.success("selected text at '" + locator + "'");
@@ -1478,8 +1478,17 @@ public class WebCommand extends BaseCommand implements CanTakeScreenshot, CanLog
         requiresNotBlank(text, "invalid title text", text);
 
         ensureReady();
-        Boolean expectedTitleFound = newFluentWait().until(ExpectedConditions.titleIs(text));
-        return new StepResult(expectedTitleFound, (expectedTitleFound ? "EXPECTED title " : "NOT ") + "found", null);
+        try {
+            Boolean expectedTitleFound = newFluentWait().until(ExpectedConditions.titleIs(text));
+            return new StepResult(expectedTitleFound,
+                                  (expectedTitleFound ? "EXPECTED title " : "NOT ") + "found",
+                                  null);
+        } catch (TimeoutException e) {
+            String err = "Timed out while waiting for page title to match '" + text + "'; " +
+                         "${nexial.pollWaitMs}=" + context.getPollWaitMs();
+            log(err);
+            throw new NoSuchElementException(err);
+        }
     }
 
     public StepResult saveTitle(String var) {
@@ -2754,6 +2763,11 @@ public class WebCommand extends BaseCommand implements CanTakeScreenshot, CanLog
         By by = locatorHelper.findBy(locator);
         try {
             return shouldWait() ? newFluentWait().until(driver -> findElements(driver, by)) : findElements(driver, by);
+        } catch (TimeoutException e) {
+            String err = "Timed out while looking for web element(s) that match '" + locator + "'; " +
+                         "${nexial.pollWaitMs}=" + context.getPollWaitMs();
+            log(err);
+            return null;
         } catch (NoSuchElementException e) {
             return null;
         }
@@ -2761,12 +2775,19 @@ public class WebCommand extends BaseCommand implements CanTakeScreenshot, CanLog
 
     protected WebElement findElement(String locator) {
         ensureReady();
-
         By by = locatorHelper.findBy(locator);
-        WebElement target = shouldWait() ?
-                            newFluentWait().until(driver -> findElement(driver, by)) : findElement(driver, by);
-        if (isHighlightEnabled() && target != null && target.isDisplayed()) { highlight(target); }
-        return target;
+
+        try {
+            WebElement target = shouldWait() ?
+                                newFluentWait().until(driver -> findElement(driver, by)) : findElement(driver, by);
+            if (isHighlightEnabled() && target != null && target.isDisplayed()) { highlight(target); }
+            return target;
+        } catch (TimeoutException e) {
+            String err = "Timed out while looking for web element(s) that match '" + locator + "'; " +
+                         "${nexial.pollWaitMs}=" + context.getPollWaitMs();
+            log(err);
+            throw new NoSuchElementException(err);
+        }
     }
 
     protected WebElement toElement(String locator) {

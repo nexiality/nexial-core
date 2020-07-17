@@ -46,6 +46,7 @@ import java.sql.SQLException
  */
 class LocalDbCommand : BaseCommand() {
 
+    lateinit var conflictingColumnNames: List<String>
     lateinit var dbName: String
     lateinit var dbFile: String
     lateinit var rdbms: RdbmsCommand
@@ -74,6 +75,7 @@ class LocalDbCommand : BaseCommand() {
         requiresValidAndNotReadOnlyVariableName(`var`)
 
         try {
+            context.removeData(DAO_PREFIX + dbName)
             dao.dataSource?.connection?.close()
         } catch (e: SQLException) {
             // probably not yet connected.. ignore
@@ -95,8 +97,9 @@ class LocalDbCommand : BaseCommand() {
         requiresValidAndNotReadOnlyVariableName(`var`)
         requiresNotBlank(tables, "invalid table(s)", tables)
 
-        val sqls = StringUtils.split(tables, context.textDelim).map { table -> "DROP TABLE $table;\n" }
-        return rdbms.runSQLs(`var`, dbName, TextUtils.toString(sqls, "\n", "") + "VACUUM;")
+        val sqls = StringUtils.split(tables, context.textDelim)
+                       .joinToString(separator = "\n") { table -> "DROP TABLE $table;" } + "\nVACUUM;"
+        return rdbms.runSQLs(`var`, dbName, sqls)
     }
 
     fun cloneTable(`var`: String, source: String, target: String): StepResult {
@@ -106,15 +109,15 @@ class LocalDbCommand : BaseCommand() {
 
         // 1. find DDL SQL for `source`
         val sql = "SELECT sql FROM SQLITE_MASTER WHERE TYPE='table' AND lower(name)='${source.toLowerCase()}';"
-        val result = rdbms.dataAccess.execute(sql, dao) ?: return StepResult.fail(
-            "FAILED TO DETERMINE DDL SQL for $source: no result found")
+        val result = rdbms.dataAccess.execute(sql, dao)
+                     ?: return StepResult.fail("FAILED TO DETERMINE DDL SQL for $source: no result found")
 
         if (result.isEmpty) return StepResult.fail("Source table '$source' not found in localdb")
         if (result.hasError()) return StepResult.fail("Source table '$source' not found in localdb: ${result.error}")
 
         // 2. convert to DDL for `target`
-        if (result.data[0]["sql"] == null) return StepResult.fail(
-            "Unable to determine the CREATE SQL for source table '$source'")
+        if (result.data[0]["sql"] == null)
+            return StepResult.fail("Unable to determine the CREATE SQL for source table '$source'")
 
         val ddl = RegexUtils.replace(result.data[0]["sql"], "(CREATE TABLE\\s+)([A-Za-z0-9_]+)(.+)", "\$1$target\$3")
 
@@ -135,8 +138,8 @@ class LocalDbCommand : BaseCommand() {
         val query = SqlComponent(OutputFileUtils.resolveRawContent(sql, context))
         if (!query.type.hasResultset()) return StepResult.fail("SQL '$sql' MUST return query result")
 
-        val sourceDao = rdbms.dataAccess.resolveDao(sourceDb) ?: return StepResult.fail(
-            "Unable to connection to source database '$sourceDb'")
+        val sourceDao = rdbms.dataAccess.resolveDao(sourceDb)
+                        ?: return StepResult.fail("Unable to connection to source database '$sourceDb'")
 
         context.setData(`var`, sourceDao.importResults(query, dao, SqliteTableSqlGenerator(table)))
         return StepResult.success("Query result successfully imported from '$sourceDb' to localdb '$table'")
@@ -199,10 +202,10 @@ class LocalDbCommand : BaseCommand() {
         } else {
             // target table exist, let's map out its columns
             val definedColumns = tableInfo[0].cells("name")
-            if (definedColumns.size < headers.size) {
-                // there are more columns in CSV than the existing table.. FAIL this
-                throw IllegalArgumentException("Existing table $table has ${definedColumns.size} columns but the specified CSV has ${headers.size} columns")
-            }
+            // there are more columns in CSV than the existing table.. FAIL this
+            if (definedColumns.size < headers.size)
+                throw IllegalArgumentException("Existing table $table has ${definedColumns.size} columns " +
+                                               "but the specified CSV has ${headers.size} columns")
 
             val normalizedDefinedColumns = definedColumns.map { it.toLowerCase() }.sorted()
             val normalizedCsvHeaders = headers.map { it.toLowerCase() }.sorted()
@@ -214,8 +217,7 @@ class LocalDbCommand : BaseCommand() {
                 } else {
                     // not all CSV headers are found in existing table as column. We'll use left-to-right mapping
                     definedColumns.subList(0, headers.size)
-                }.map { treatColumnName(it) }
-                , ",")
+                }.map { treatColumnName(it) }, ",")
         }
 
         val defaultValues = if (tableInfo.rowCount < 1)
@@ -244,11 +246,10 @@ class LocalDbCommand : BaseCommand() {
         val result = dao.executeSqls(SqlComponent.toList(queries.toString()))
         context.setData(`var`, result)
         return if (StringUtils.isNotBlank(result.error)) {
-            if (result[0].hasError()) {
+            if (result[0].hasError())
                 StepResult.fail("Error occurred while creating new table '$table': ${result[0].error}")
-            } else {
+            else
                 StepResult.fail("Error occurred while importing CSV to '$table': ${result.error}")
-            }
         } else {
             val rowsInserted = result.rowsAffected - if (result.size > csvRecords.size) result[0].rowCount else 0
             return StepResult.success("Successfully imported $rowsInserted rows from CSV to '$table'")
@@ -257,9 +258,10 @@ class LocalDbCommand : BaseCommand() {
 
     // handle column names with spaces or commas
     private fun treatColumnName(column: String) = when {
-        StringUtils.isEmpty(column)             -> "\"\""
-        StringUtils.containsAny(column, " ,()") -> TextUtils.wrapIfMissing(column, "\"", "\"")
-        else                                    -> column
+        StringUtils.isEmpty(column)                           -> "\"\""
+        StringUtils.containsAny(column, " ,()")               -> TextUtils.wrapIfMissing(column, "\"", "\"")
+        conflictingColumnNames.contains(column.toLowerCase()) -> TextUtils.wrapIfMissing(column, "\"", "\"")
+        else                                                  -> column
     }
 
     fun exportCSV(sql: String, output: String): StepResult = rdbms.saveResult(dbName, sql, output)
@@ -274,13 +276,9 @@ class LocalDbCommand : BaseCommand() {
         // export to CSV file
         val output = OutputFileUtils.prependRandomizedTempDirectory("$target.toCSV.csv")
         val result = rdbms.saveResult(dbName, sql, output.absolutePath)
-        if (result.failed()) {
-            return StepResult.fail("Unable to transform query result to CSV: " + result.message)
-        }
+        if (result.failed()) return StepResult.fail("Unable to transform query result to CSV: " + result.message)
 
-        if (!FileUtil.isFileReadable(output, 5)) {
-            return StepResult.fail("Unable to transform query result to CSV")
-        }
+        if (!FileUtil.isFileReadable(output, 5)) return StepResult.fail("Unable to transform query result to CSV")
 
         // then read it back as var
         context.setData(`var`, FileUtils.readFileToString(output, DEF_CHARSET))
@@ -314,9 +312,9 @@ class LocalDbCommand : BaseCommand() {
         log("exported query result in ${result.elapsedTime} ms with " +
             if (result.hasError()) "ERROR ${result.error}" else "${result.rowCount} row(s) to $output")
 
-        return if (result.hasError()) {
+        return if (result.hasError())
             StepResult.fail("Error occurred while exporting query result to '$output'")
-        } else {
+        else {
             addLinkRef("${result.rowCount} row(s) exported to '$output'", MSG_SCREENCAPTURE, File(output).absolutePath)
             StepResult.success("query result exported to '$output'")
         }

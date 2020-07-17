@@ -24,8 +24,8 @@ import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.builder.ToStringBuilder;
 import org.nexial.core.excel.Excel.Worksheet;
-import org.nexial.core.utils.ExecutionLogger;
-import org.nexial.core.utils.TrackTimeLogs;
+import org.nexial.core.logs.ExecutionLogger;
+import org.nexial.core.logs.TrackTimeLogs;
 
 import static org.nexial.core.CommandConst.CMD_REPEAT_UNTIL;
 import static org.nexial.core.CommandConst.CMD_SECTION;

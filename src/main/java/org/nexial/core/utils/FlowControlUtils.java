@@ -22,6 +22,7 @@ import java.util.Map;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.collections4.MapUtils;
 import org.apache.commons.lang3.StringUtils;
+import org.nexial.core.logs.ExecutionLogger;
 import org.nexial.core.model.ExecutionContext;
 import org.nexial.core.model.FlowControl;
 import org.nexial.core.model.FlowControl.Directive;

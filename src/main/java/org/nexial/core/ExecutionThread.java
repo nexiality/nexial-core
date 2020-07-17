@@ -41,7 +41,7 @@ import org.nexial.core.reports.ExecutionReporter;
 import org.nexial.core.spi.NexialExecutionEvent;
 import org.nexial.core.spi.NexialListenerFactory;
 import org.nexial.core.utils.ConsoleUtils;
-import org.nexial.core.utils.ExecutionLogger;
+import org.nexial.core.logs.ExecutionLogger;
 import org.nexial.core.variable.Syspath;
 
 import static java.io.File.separator;

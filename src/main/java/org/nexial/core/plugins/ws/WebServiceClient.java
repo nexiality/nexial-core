@@ -71,7 +71,7 @@ import org.nexial.core.ExecutionThread;
 import org.nexial.core.model.ExecutionContext;
 import org.nexial.core.model.TestStep;
 import org.nexial.core.utils.ConsoleUtils;
-import org.nexial.core.utils.ExecutionLogger;
+import org.nexial.core.logs.ExecutionLogger;
 import org.nexial.core.utils.OutputFileUtils;
 import org.nexial.core.variable.Syspath;
 

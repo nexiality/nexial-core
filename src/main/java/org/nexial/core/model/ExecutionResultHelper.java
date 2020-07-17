@@ -37,7 +37,7 @@ import org.nexial.core.excel.Excel.Worksheet;
 import org.nexial.core.excel.ExcelStyleHelper;
 import org.nexial.core.excel.ext.CellTextReader;
 import org.nexial.core.utils.ConsoleUtils;
-import org.nexial.core.utils.ExecutionLogger;
+import org.nexial.core.logs.ExecutionLogger;
 
 import static org.apache.poi.ss.usermodel.CellType.STRING;
 import static org.apache.poi.ss.usermodel.Row.MissingCellPolicy.CREATE_NULL_AS_BLANK;

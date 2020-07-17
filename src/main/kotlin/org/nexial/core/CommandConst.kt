@@ -101,6 +101,7 @@ object CommandConst {
         "web.assertAttributeContains(locator,attrName,contains)" to "web.assertAttributeContain(locator,attrName,contains)",
         "web.screenshot(file,locator,ignoreLocators)" to "web.screenshot(file,locator)",
         "web.selectMultiOptions(locator)" to "web.selectAllOptions(locator)",
+        "web.uncheckAll(locator)" to "web.uncheckAll(locator,waitMs)",
         "web.waitForElementPresent(locator)" to "web.waitForElementPresent(locator,maxWaitMs)"
     )
 

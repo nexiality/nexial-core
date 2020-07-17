@@ -36,7 +36,7 @@ import org.nexial.core.NexialConst.BrowserType;
 import org.nexial.core.aws.NexialS3Helper;
 import org.nexial.core.plugins.NexialCommand;
 import org.nexial.core.plugins.web.Browser;
-import org.nexial.core.utils.ExecutionLogger;
+import org.nexial.core.logs.ExecutionLogger;
 import org.nexial.core.variable.ExpressionProcessor;
 import org.springframework.context.support.ClassPathXmlApplicationContext;
 

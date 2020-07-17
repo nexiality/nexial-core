@@ -209,6 +209,21 @@
                 <entry key="nexial.localdb.treatNullAs" value="(null)"/>
             </map>
         </property>
+        <property name="conflictingColumnNames">
+            <list value-type="java.lang.String">
+                <value>index</value>
+                <value>select</value>
+                <value>update</value>
+                <value>insert</value>
+                <value>delete</value>
+                <value>from</value>
+                <value>where</value>
+                <value>order</value>
+                <value>commit</value>
+                <value>rollback</value>
+                <value>drop</value>
+            </list>
+        </property>
     </bean>
 
     <util:map id="plugins" key-type="java.lang.String" value-type="org.nexial.core.plugins.NexialCommand">

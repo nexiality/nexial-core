@@ -325,7 +325,7 @@
         <appender-ref ref="console-execution"/>
         <appender-ref ref="file-testexecution"/>
     </logger>
-    <logger name="org.nexial.core.utils.ExecutionLogger" additivity="false" level="INFO">
+    <logger name="org.nexial.core.logs.ExecutionLogger" additivity="false" level="INFO">
         <appender-ref ref="console-execution"/>
         <appender-ref ref="file-testexecution"/>
     </logger>
@@ -337,7 +337,7 @@
         <appender-ref ref="console-execution"/>
         <appender-ref ref="file-testexecution"/>
     </logger>
-    <logger name="org.nexial.core.utils.TrackTimeLogs" additivity="false" level="INFO">
+    <logger name="org.nexial.core.logs.TrackTimeLogs" additivity="false" level="INFO">
         <appender-ref ref="file-tracktime"/>
     </logger>
 

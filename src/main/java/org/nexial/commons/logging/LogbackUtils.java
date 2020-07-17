@@ -70,7 +70,7 @@ public final class LogbackUtils {
                 quietLogger("org.nexial.seeknow");
                 quietLogger("org.nexial.core");
                 quietLogger("org.nexial.core.aws.S3Support");
-                quietLogger("org.nexial.core.utils.ExecutionLogger");
+                quietLogger("org.nexial.core.logs.ExecutionLogger");
                 quietLogger("org.nexial.core.model.ExecutionContext");
                 quietLogger("org.openqa.selenium");
                 quietLogger("org.springframework.web.servlet.mvc.method.annotation");
@@ -78,7 +78,7 @@ public final class LogbackUtils {
                 quietLogger(Logger.ROOT_LOGGER_NAME);
 
                 // we need to omit ExecutionLogger's logger due to its use by base.verbose()
-                // quietLogger("org.nexial.core.utils.ExecutionLogger-priority");
+                // quietLogger("org.nexial.core.logs.ExecutionLogger-priority");
             }
 
         } catch (JoranException e) {

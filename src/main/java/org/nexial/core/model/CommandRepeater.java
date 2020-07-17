@@ -29,9 +29,9 @@ import org.nexial.core.excel.Excel;
 import org.nexial.core.excel.Excel.Worksheet;
 import org.nexial.core.plugins.web.WebDriverExceptionHelper;
 import org.nexial.core.utils.ConsoleUtils;
-import org.nexial.core.utils.ExecutionLogger;
+import org.nexial.core.logs.ExecutionLogger;
 import org.nexial.core.utils.FlowControlUtils;
-import org.nexial.core.utils.TrackTimeLogs;
+import org.nexial.core.logs.TrackTimeLogs;
 import org.openqa.selenium.WebDriverException;
 
 import static org.apache.commons.lang3.builder.ToStringStyle.SIMPLE_STYLE;
@@ -48,7 +48,7 @@ import static org.nexial.core.excel.ExcelStyleHelper.*;
 public class CommandRepeater {
     private TestStep initialTestStep;
     private List<TestStep> steps = new ArrayList<>();
-    private long maxWaitMs;
+    private final long maxWaitMs;
 
     public CommandRepeater(TestStep testStep, long maxWait) {
         this.initialTestStep = testStep;
