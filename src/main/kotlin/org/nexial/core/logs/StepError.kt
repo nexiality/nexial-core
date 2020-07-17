@@ -128,6 +128,7 @@ data class StepErrors(val logFile: File) {
             "<td><pre>${it.message}</pre></td>" +
             "</tr>"
         })
+        html.append("</tbody></table>")
         html.append(footer)
         return html.toString()
     }
