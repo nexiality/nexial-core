@@ -110,6 +110,12 @@ public class IoCommand extends BaseCommand {
 
         requiresNotBlank(fileFilter, "invalid file pattern", fileFilter);
 
+        // save matches
+        context.setData(var, listMatchingFiles(path, fileFilter, textFilter));
+        return StepResult.success("saving matching file list to " + var);
+    }
+
+    public List<String> listMatchingFiles(String path, String fileFilter, String textFilter) {
         boolean hasFilter = false;
         String pattern;
         if (RegexUtils.isExact(fileFilter, NexialFilterComparator.getRegexFilter()) &&
@@ -148,10 +154,7 @@ public class IoCommand extends BaseCommand {
                 }).collect(Collectors.toList());
             }
         }
-
-        // save matches
-        context.setData(var, files);
-        return StepResult.success("saving matching file list to " + var);
+        return files;
     }
 
     /**

@@ -21,8 +21,10 @@ import java.io.*;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.util.*;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+import java.util.stream.Collectors;
 
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.collections4.MapUtils;
@@ -61,6 +63,9 @@ import org.thymeleaf.util.ListUtils;
 
 import com.itextpdf.text.Document;
 import com.itextpdf.text.DocumentException;
+import com.itextpdf.text.pdf.BadPdfFormatException;
+import com.itextpdf.text.pdf.PdfReader;
+import com.itextpdf.text.pdf.PdfSmartCopy;
 import com.itextpdf.text.pdf.PdfWriter;
 import com.itextpdf.tool.xml.XMLWorkerHelper;
 
@@ -305,12 +310,6 @@ public class PdfCommand extends BaseCommand {
         }
     }
 
-    //public StepResult imageToPdf(String image, String pdf) {
-    // todo: TO BE IMPLEMENTED!!!
-    //throw new RuntimeException("not yet implemented");
-    // return null;
-    //}
-
     public StepResult assertFormValue(String var, String name, String expected) {
         requiresNotNull(expected, "Invalid expected value", expected);
 
@@ -425,7 +424,10 @@ public class PdfCommand extends BaseCommand {
         requiresNotBlank(file, "Invalid file", profile);
 
         content = OutputFileUtils.resolveContent(content, context, false, true);
-        file = StringUtils.appendIfMissingIgnoreCase(file, ".pdf");
+
+        File target = new File(StringUtils.appendIfMissingIgnoreCase(file, ".pdf"));
+        File targetPath = target.getParentFile();
+        if (targetPath != null) { targetPath.mkdirs(); }
 
         // we don't really want to save this in context.. it would not allow for stepwise override/customization
         PdfOutputProfile outputProfile = ServiceProfile.resolve(context, profile, PdfOutputProfile.class);
@@ -440,10 +442,10 @@ public class PdfCommand extends BaseCommand {
 
         PdfWriter writer;
         try {
-            writer = PdfWriter.getInstance(document, new FileOutputStream(file));
+            writer = PdfWriter.getInstance(document, new FileOutputStream(target));
         } catch (DocumentException | IOException e) {
             if (context.isVerbose()) { e.printStackTrace(); }
-            String error = "Unable to save content as PDF ('" + file + "'): " + ExceptionUtils.getRootCauseMessage(e);
+            String error = "Unable to save content as PDF ('" + target + "'): " + ExceptionUtils.getRootCauseMessage(e);
             ConsoleUtils.error(error);
             return StepResult.fail(error);
         }
@@ -478,16 +480,109 @@ public class PdfCommand extends BaseCommand {
         try {
             XMLWorkerHelper worker = XMLWorkerHelper.getInstance();
             worker.parseXHtml(writer, document, new StringReader(buffer.toString()));
-            return StepResult.success("content saved to '%s'", file);
+            return StepResult.success("content saved to '%s'", target);
         } catch (IOException e) {
             if (context.isVerbose()) { e.printStackTrace(); }
-            String error = "Unable to save content as PDF ('" + file + "'): " + ExceptionUtils.getRootCauseMessage(e);
+            String error = "Unable to save content as PDF ('" + target + "'): " + ExceptionUtils.getRootCauseMessage(e);
             ConsoleUtils.error(error);
             return StepResult.fail(error);
         } finally {
             document.close();
         }
     }
+
+    /**
+     * combine all the PDF files found in {@literal path} that matches the specified {@literal filterFilter} filter
+     * and save the combined PDF to {@literal saveTo}.
+     */
+    public StepResult combine(String path, String fileFilter, String saveTo) {
+        requiresReadableDirectory(path, "Invalid/Unreadable path", path);
+        requiresNotBlank(saveTo, "Invalid destination to save to", saveTo);
+
+        File to = new File(saveTo);
+        to.getParentFile().mkdirs();
+
+        IoCommand io = new IoCommand();
+        List<String> pdfFiles = io.listMatchingFiles(path, fileFilter, null)
+                                  .stream()
+                                  .filter(file -> StringUtils.endsWithIgnoreCase(file, ".pdf"))
+                                  .collect(Collectors.toList());
+        long matchedFileCount = pdfFiles.size();
+        log("Found " + matchedFileCount + " matching PDF files to combine");
+
+        if (matchedFileCount < 1) { return StepResult.success("No suitable PDF files found"); }
+
+        StringBuilder errors = new StringBuilder();
+        AtomicInteger totalPagesAdded = new AtomicInteger();
+
+        Document document = new Document();
+        try {
+            PdfSmartCopy copy = new PdfSmartCopy(document, new FileOutputStream(to));
+            document.open();
+
+            pdfFiles.forEach(pdf -> {
+                try {
+                    PdfReader reader = new PdfReader(pdf);
+                    int pages = reader.getNumberOfPages();
+                    for (int page = 1; page <= pages; page++) {
+                        copy.addPage(copy.getImportedPage(reader, page));
+                        totalPagesAdded.getAndIncrement();
+                    }
+                    copy.freeReader(reader);
+                } catch (IOException | BadPdfFormatException e) {
+                    errors.append("Error occurred when adding ").append(pdf)
+                          .append(" to ").append(to).append(": ").append(e.getMessage());
+                }
+            });
+        } catch (DocumentException | IOException e) {
+            errors.append("Error occurred when preparing ").append(to).append(": ").append(e.getMessage());
+        } finally {
+            if (totalPagesAdded.get() < 1) {
+                document = null;
+            } else {
+                try { document.close();} catch (Exception e) { }
+            }
+        }
+
+        if (errors.length() < 1) {
+            return StepResult.success("%s page(s) added from file in %s to %s", totalPagesAdded, matchedFileCount, to);
+        } else {
+            return StepResult.fail(errors.toString());
+        }
+    }
+
+    // public StepResult addPages(String from, String to, String onPage) {
+    //     requires(StringUtils.endsWithIgnoreCase(to, ".pdf"), "Invalid 'to' file; must be PDF", to);
+    //     requires(StringUtils.endsWithIgnoreCase(from, ".pdf"), "Invalid 'from' file; must be PDF", from);
+    //     requiresReadableFile(from);
+    //     requiresReadableFile(to);
+    //     requiresInteger(onPage, "Must be an integer", onPage);
+    //
+    //     int onPageNumber = NumberUtils.toInt(onPage);
+    //
+    //     Document document = new Document();
+    //
+    //     int totalPagesToAdd = 0;
+    //     try {
+    //         PdfSmartCopy copy = new PdfSmartCopy(document, new FileOutputStream(to));
+    //         document.open();
+    //
+    //         PdfReader reader = new PdfReader(from);
+    //         totalPagesToAdd = reader.getNumberOfPages();
+    //         for (int page = 1; page <= totalPagesToAdd; page++) {
+    //             copy.addPage(copy.getImportedPage(reader, page));
+    //         }
+    //         copy.freeReader(reader);
+    //     } catch (DocumentException e) {
+    //         return StepResult.fail("Error when adding pages from %s to %s: %s", from, to, e.getMessage());
+    //     } catch (IOException e) {
+    //         return StepResult.fail("Error when adding pages from %s to %s: %s", from, to, e.getMessage());
+    //     } finally {
+    //         document.close();
+    //     }
+    //
+    //     return StepResult.success("%s page(s) from %s added to %s", totalPagesToAdd, from, to);
+    // }
 
     protected Object getFormValue(String var, String name) {
         requiresValidAndNotReadOnlyVariableName(var);
