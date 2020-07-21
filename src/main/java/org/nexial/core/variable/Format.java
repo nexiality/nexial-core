@@ -30,6 +30,7 @@ import org.nexial.commons.utils.RegexUtils;
 import org.nexial.commons.utils.TextUtils;
 import org.nexial.core.utils.ConsoleUtils;
 
+import static java.io.File.separator;
 import static java.lang.Double.MIN_VALUE;
 import static org.nexial.core.NexialConst.*;
 
@@ -203,6 +204,26 @@ public class Format {
             ConsoleUtils.error("Unable to url-encode " + text + ": " + e.getMessage());
             return text;
         }
+    }
+
+    /**
+     * convert a fully qualified local path to a file URI (i.e. file://...).
+     * <p>
+     * Invalid or unresolved path will resort to using the current project directory.
+     */
+    public String fileURI(String text) {
+        if (StringUtils.isBlank(text)) { return text; }
+
+        java.io.File f = new java.io.File(text);
+        String normalized = f.exists() ?
+                            f.getAbsolutePath() :
+                            new java.io.File(
+                                StringUtils.appendIfMissing(new Syspath().project("fullpath"), separator) + text
+                            ).getAbsolutePath();
+        normalized = StringUtils.replace(normalized, " ", "%20");
+        normalized = StringUtils.replace(normalized, "\\", "/");
+        if (RegexUtils.isExact(normalized, "^[A-Za-z]\\:.+$")) { normalized = "/" + normalized; }
+        return "file://" + normalized;
     }
 
     public String base64encode(String text) { return TextUtils.base64encode(text); }
