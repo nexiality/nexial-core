@@ -39,7 +39,7 @@ import org.jdom2.output.XMLOutputter;
 import org.nexial.commons.utils.FileUtil;
 import org.nexial.commons.utils.RegexUtils;
 import org.nexial.commons.utils.TextUtils;
-import org.nexial.core.NexialConst.Data.SaveGridAsCSV;
+import org.nexial.core.NexialConst.Data.*;
 import org.nexial.core.excel.ExcelConfig;
 import org.nexial.core.model.ExecutionContext;
 import org.nexial.core.model.ExecutionDefinition;
@@ -145,15 +145,19 @@ public final class NexialConst {
 
     // text-based assertion and text compare
     public static final String NS_TEXT_MATCH = NAMESPACE + "assert.";
-    public static final String OPT_TEXT_MATCH_LENIENT = registerSysVar(NS_TEXT_MATCH  + "lenient", true);
+    public static final String OPT_TEXT_MATCH_LENIENT = registerSysVar(NS_TEXT_MATCH + "lenient", true);
     public static final String OPT_TEXT_MATCH_AS_NUMBER = registerSysVar(NS_TEXT_MATCH + "asNumber", true);
     public static final String OPT_TEXT_MATCH_USE_TRIM = registerSysVar(NS_TEXT_MATCH + "useTrim", false);
-    public static final String OPT_TEXT_MATCH_CASE_INSENSITIVE = registerSysVar(NS_TEXT_MATCH + "caseInsensitive", false);
+    public static final String OPT_TEXT_MATCH_CASE_INSENSITIVE = registerSysVar(NS_TEXT_MATCH + "caseInsensitive",
+                                                                                false);
 
     // screenshots
     public static final String OPT_SCREENSHOT_ON_ERROR = registerSysVar(NAMESPACE + "screenshotOnError", false);
     public static final String OPT_LAST_SCREENSHOT_NAME = registerSysVar(NAMESPACE + "lastScreenshot");
     public static final String OPT_NATIVE_SCREENSHOT = registerSysVar(NAMESPACE + "screenshotAsDesktop", false);
+    public static final String OPT_SCREENSHOT_FULL = registerSysVar(NAMESPACE + "screenshotInFull", false);
+    public static final String OPT_SCREENSHOT_FULL_TIMEOUT = registerSysVar(NAMESPACE + "screenshotInFullTimeout",
+                                                                            5000);
     public static final String SCREENSHOT_EXT = ".png";
 
     // outcome

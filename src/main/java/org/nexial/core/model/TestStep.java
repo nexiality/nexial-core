@@ -49,7 +49,11 @@ import org.nexial.core.plugins.CanTakeScreenshot;
 import org.nexial.core.plugins.NexialCommand;
 import org.nexial.core.plugins.web.WebCommand;
 import org.nexial.core.plugins.web.WebDriverExceptionHelper;
-import org.nexial.core.utils.*;
+import org.nexial.core.utils.ConsoleUtils;
+import org.nexial.core.utils.ExecUtils;
+import org.nexial.core.utils.FlowControlUtils;
+import org.nexial.core.utils.MessageUtils;
+import org.nexial.core.utils.OutputFileUtils;
 import org.nexial.core.variable.Syspath;
 import org.openqa.selenium.WebDriverException;
 
@@ -568,9 +572,11 @@ public class TestStep extends TestStepManifest {
                 if (pathObj != null && isFileLink(pathObj.toString())) { hasPath = true; }
             }
 
+            String value = context.replaceTokens(param);
+            if ((!hasPath && value != null && new File(value).isFile()) || isFile(value)) { hasPath = true; }
+
             // create hyperlink for syspath when path is referenced
             if (hasPath) {
-                String value = context.replaceTokens(param);
                 // gotta make sure it's a file/path
                 if (FileUtil.isSuitableAsPath(value) && StringUtils.containsAny(value, "\\/")) {
                     linkableParams.set(i, value);
@@ -590,9 +596,7 @@ public class TestStep extends TestStepManifest {
                 // support output to cloud:
                 // - if link is local resource but output-to-cloud is enabled, then copy resource to cloud and update link
                 boolean linkToCloud = false;
-                if (context.isOutputToCloud() &&
-                    !StringUtils.startsWithIgnoreCase(link, "http") &&
-                    !StringUtils.startsWithIgnoreCase(link, "file:")) {
+                if (context.isOutputToCloud() && !isFile(link)) {
                     // create new local resource with name matching to current row, so that duplicate use of the
                     // same name will not result in overriding cloud resource
 
@@ -802,6 +806,11 @@ public class TestStep extends TestStepManifest {
         return !StringUtils.startsWith(param, "[") &&
                StringUtils.countMatches(param, TOKEN_FUNCTION_START + "syspath|") == 1 &&
                StringUtils.countMatches(param, "|name" + TOKEN_FUNCTION_END) == 0;
+    }
+
+    private boolean isFile(String link) {
+        return StringUtils.startsWithIgnoreCase(link, "http") ||
+               StringUtils.startsWithIgnoreCase(link, "file:");
     }
 
     private Comment toSystemComment(XSSFCell paramCell, String message) {

@@ -1904,22 +1904,100 @@ public class WebCommand extends BaseCommand implements CanTakeScreenshot, CanLog
             ImageIO.write(image, "PNG", baos);
             FileUtils.writeByteArrayToFile(target, baos.toByteArray());
 
-            if (context.isOutputToCloud()) {
-                String cloudUrl = context.getOtc().importMedia(target, true);
-                context.setData(OPT_LAST_OUTPUT_LINK, cloudUrl);
-                context.setData(OPT_LAST_OUTPUT_PATH, StringUtils.substringBeforeLast(cloudUrl, "/"));
-                return StepResult.success("Image captured for '" + locator + "' to URL " + cloudUrl);
-            } else {
-                String link = target.getAbsolutePath();
-                context.setData(OPT_LAST_OUTPUT_LINK, link);
-                context.setData(OPT_LAST_OUTPUT_PATH, StringUtils.contains(link, "\\") ?
-                                                      StringUtils.substringBeforeLast(link, "\\") :
-                                                      StringUtils.substringBeforeLast(link, "/"));
-                return StepResult.success("Image captured for '" + locator + "' to file '" + file + "'");
-            }
+            return getScreenshotResult(target, file, locator);
         } catch (IOException e) {
             return StepResult.fail("Unable to write image data to file " + file + ": " + e.getMessage());
         }
+    }
+
+    /**
+     * save the screenshot of the entire web page with scroll time out by {@code timeout} to {@code file}.
+     * <p>
+     * This method capture entire web page with scrolling timeout and it will forcefully overwrite existing {@code file}.
+     */
+    public StepResult screenshotInFull(String file, String timeout) {
+        requiresNotBlank(file, "invalid file", file);
+        requiresInteger(timeout, "invalid timeout duration", timeout);
+        int time = Integer.parseInt(timeout);
+
+        File target = new File(file);
+        target.getParentFile().mkdirs();
+
+        try {
+            Screenshot screenshot = new AShot().shootingStrategy(ShootingStrategies.viewportPasting(time))
+                                               .takeScreenshot(driver);
+            boolean screenshotTaken = ImageIO.write(screenshot.getImage(), "PNG", target);
+            if (!screenshotTaken) { return StepResult.fail("Unable to write image data to file " + file); }
+
+            return getScreenshotResult(target, file, "web page");
+        } catch (IOException e) {
+            return StepResult.fail("Unable to write image data to file " + file + ": " + e.getMessage());
+        }
+    }
+
+    @Override
+    public String takeScreenshot(TestStep testStep) {
+        if (testStep == null) { return null; }
+
+        String filename = generateScreenshotFilename(testStep);
+        if (StringUtils.isBlank(filename)) {
+            error("Unable to generate screen capture filename!");
+            return null;
+        }
+        filename = context.getProject().getScreenCaptureDir() + separator + filename;
+        File screenshotFile = new File(filename);
+
+        if (browser != null && driver != null && context.getBooleanData(OPT_SCREENSHOT_FULL,
+                                                                        getDefaultBool(OPT_SCREENSHOT_FULL))) {
+            int timeout = context.getIntData(OPT_SCREENSHOT_FULL_TIMEOUT, getDefaultInt(OPT_SCREENSHOT_FULL_TIMEOUT));
+            log("using full screen capturing approach with scroll timeout " + timeout + "...");
+            Screenshot screenshot = new AShot()
+                                        .shootingStrategy(ShootingStrategies.viewportPasting(timeout))
+                                        .takeScreenshot(driver);
+            try {
+                boolean screenshotTaken = ImageIO.write(screenshot.getImage(), "PNG", screenshotFile);
+                if (screenshotTaken) {
+                    return postScreenshot(testStep, screenshotFile);
+                } else {
+                    error("Unable to capture screenshot via full screen capturing approach");
+                    return null;
+                }
+            } catch (IOException e) {
+                error("Unable to capture screenshot via full screen capturing approach");
+                return null;
+            }
+
+        }
+
+        boolean useNativeCapture = false;
+        if (browser == null ||
+            driver == null ||
+            context.getBooleanData(OPT_NATIVE_SCREENSHOT, getDefaultBool(OPT_NATIVE_SCREENSHOT))) {
+            useNativeCapture = true;
+        } else {
+            // proceed... with caution (or not!)
+            waitForBrowserStability(deriveBrowserStabilityWaitMs(context));
+            if (alert.isDialogPresent()) {
+                if (browser.isRunBrowserStack() || browser.isRunCrossBrowserTesting()) {
+                    alert.dismiss();
+                } else {
+                    useNativeCapture = true;
+                }
+            }
+        }
+
+        if (useNativeCapture) {
+            log("using native screen capturing approach...");
+            screenshotFile = new File(filename);
+            if (!NativeInputHelper.captureScreen(0, 0, -1, -1, screenshotFile)) {
+                error("Unable to capture screenshot via native screen capturing approach");
+                return null;
+            }
+        } else {
+            screenshotFile = ScreenshotUtils.saveScreenshot(screenshot, filename);
+        }
+
+        return postScreenshot(testStep, screenshotFile);
     }
 
     /**
@@ -1947,47 +2025,20 @@ public class WebCommand extends BaseCommand implements CanTakeScreenshot, CanLog
         }
     }
 
-    @Override
-    public String takeScreenshot(TestStep testStep) {
-        if (testStep == null) { return null; }
-
-        String filename = generateScreenshotFilename(testStep);
-        if (StringUtils.isBlank(filename)) {
-            error("Unable to generate screen capture filename!");
-            return null;
-        }
-        filename = context.getProject().getScreenCaptureDir() + separator + filename;
-
-        boolean useNativeCapture = false;
-        if (browser == null ||
-            driver == null ||
-            context.getBooleanData(OPT_NATIVE_SCREENSHOT, getDefaultBool(OPT_NATIVE_SCREENSHOT))) {
-            useNativeCapture = true;
+    private StepResult getScreenshotResult(File target, String file, String locator) throws IOException {
+        if (context.isOutputToCloud()) {
+            String cloudUrl = context.getOtc().importMedia(target, true);
+            context.setData(OPT_LAST_OUTPUT_LINK, cloudUrl);
+            context.setData(OPT_LAST_OUTPUT_PATH, StringUtils.substringBeforeLast(cloudUrl, "/"));
+            return StepResult.success("Image captured for '" + locator + "' to URL " + cloudUrl);
         } else {
-            // proceed... with caution (or not!)
-            waitForBrowserStability(deriveBrowserStabilityWaitMs(context));
-            if (alert.isDialogPresent()) {
-                if (browser.isRunBrowserStack() || browser.isRunCrossBrowserTesting()) {
-                    alert.dismiss();
-                } else {
-                    useNativeCapture = true;
-                }
-            }
+            String link = target.getAbsolutePath();
+            context.setData(OPT_LAST_OUTPUT_LINK, link);
+            context.setData(OPT_LAST_OUTPUT_PATH, StringUtils.contains(link, "\\") ?
+                                                  StringUtils.substringBeforeLast(link, "\\") :
+                                                  StringUtils.substringBeforeLast(link, "/"));
+            return StepResult.success("Image captured for '" + locator + "' to file '" + file + "'");
         }
-
-        File screenshotFile;
-        if (useNativeCapture) {
-            log("using native screen capturing approach...");
-            screenshotFile = new File(filename);
-            if (!NativeInputHelper.captureScreen(0, 0, -1, -1, screenshotFile)) {
-                error("Unable to capture screenshot via native screen capturing approach");
-                return null;
-            }
-        } else {
-            screenshotFile = ScreenshotUtils.saveScreenshot(screenshot, filename);
-        }
-
-        return postScreenshot(testStep, screenshotFile);
     }
 
     @Override
