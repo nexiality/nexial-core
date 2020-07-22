@@ -572,7 +572,7 @@ public class WebCommand extends BaseCommand implements CanTakeScreenshot, CanLog
         if (outcome) {
             return StepResult.success("Element by locator '" + locator + "' is present");
         } else {
-            return StepResult.fail("Element by locator '" + locator + "' is NOT present within " + waitMs + "ms");
+            return StepResult.fail("Element by locator '" + locator + "' is NOT present within " + maxWait + "ms");
         }
     }
 
@@ -601,7 +601,7 @@ public class WebCommand extends BaseCommand implements CanTakeScreenshot, CanLog
         if (outcome) {
             return StepResult.success("Element by locator '" + locator + "' is visible");
         } else {
-            return StepResult.fail("Element by locator '" + locator + "' is NOT visible within " + waitMs + "ms");
+            return StepResult.fail("Element by locator '" + locator + "' is NOT visible within " + maxWait + "ms");
         }
     }
 
@@ -633,7 +633,7 @@ public class WebCommand extends BaseCommand implements CanTakeScreenshot, CanLog
                 return StepResult.fail(prefix + "not hidden");
             }
         } else {
-            return StepResult.success(prefix + "found hidden within time limit of " + waitMs + "ms");
+            return StepResult.success(prefix + "found hidden within time limit of " + maxWait + "ms");
         }
     }
 
@@ -651,7 +651,7 @@ public class WebCommand extends BaseCommand implements CanTakeScreenshot, CanLog
         if (outcome) {
             return StepResult.success("Element by locator '" + locator + "' is enabled");
         } else {
-            return StepResult.fail("Element by locator '" + locator + "' is NOT enabled within " + waitMs + "ms");
+            return StepResult.fail("Element by locator '" + locator + "' is NOT enabled within " + maxWait + "ms");
         }
     }
 
@@ -669,7 +669,7 @@ public class WebCommand extends BaseCommand implements CanTakeScreenshot, CanLog
         if (outcome) {
             return StepResult.success("Element by locator '" + locator + "' is disabled");
         } else {
-            return StepResult.fail("Element by locator '" + locator + "' is NOT disabled within " + waitMs + "ms");
+            return StepResult.fail("Element by locator '" + locator + "' is NOT disabled within " + maxWait + "ms");
         }
     }
 
@@ -1903,8 +1903,7 @@ public class WebCommand extends BaseCommand implements CanTakeScreenshot, CanLog
             ByteArrayOutputStream baos = new ByteArrayOutputStream();
             ImageIO.write(image, "PNG", baos);
             FileUtils.writeByteArrayToFile(target, baos.toByteArray());
-
-            return getScreenshotResult(target, file, locator);
+            return postScreenshot(target, locator);
         } catch (IOException e) {
             return StepResult.fail("Unable to write image data to file " + file + ": " + e.getMessage());
         }
@@ -1928,10 +1927,25 @@ public class WebCommand extends BaseCommand implements CanTakeScreenshot, CanLog
                                                .takeScreenshot(driver);
             boolean screenshotTaken = ImageIO.write(screenshot.getImage(), "PNG", target);
             if (!screenshotTaken) { return StepResult.fail("Unable to write image data to file " + file); }
-
-            return getScreenshotResult(target, file, "web page");
+            return postScreenshot(target, "entire web page");
         } catch (IOException e) {
             return StepResult.fail("Unable to write image data to file " + file + ": " + e.getMessage());
+        }
+    }
+
+    protected StepResult postScreenshot(File target, String locator) throws IOException {
+        if (context.isOutputToCloud()) {
+            String cloudUrl = context.getOtc().importMedia(target, true);
+            context.setData(OPT_LAST_OUTPUT_LINK, cloudUrl);
+            context.setData(OPT_LAST_OUTPUT_PATH, StringUtils.substringBeforeLast(cloudUrl, "/"));
+            return StepResult.success("Image captured for '" + locator + "' to URL " + cloudUrl);
+        } else {
+            String link = target.getAbsolutePath();
+            context.setData(OPT_LAST_OUTPUT_LINK, link);
+            context.setData(OPT_LAST_OUTPUT_PATH, StringUtils.contains(link, "\\") ?
+                                                  StringUtils.substringBeforeLast(link, "\\") :
+                                                  StringUtils.substringBeforeLast(link, "/"));
+            return StepResult.success("Image captured for '" + locator + "' to file '" + target + "'");
         }
     }
 
@@ -1947,10 +1961,13 @@ public class WebCommand extends BaseCommand implements CanTakeScreenshot, CanLog
         filename = context.getProject().getScreenCaptureDir() + separator + filename;
         File screenshotFile = new File(filename);
 
-        if (browser != null && driver != null && context.getBooleanData(OPT_SCREENSHOT_FULL,
-                                                                        getDefaultBool(OPT_SCREENSHOT_FULL))) {
+        if (browser != null &&
+            driver != null &&
+            context.getBooleanData(OPT_SCREENSHOT_FULL, getDefaultBool(OPT_SCREENSHOT_FULL))) {
+
             int timeout = context.getIntData(OPT_SCREENSHOT_FULL_TIMEOUT, getDefaultInt(OPT_SCREENSHOT_FULL_TIMEOUT));
             log("using full screen capturing approach with scroll timeout " + timeout + "...");
+
             Screenshot screenshot = new AShot()
                                         .shootingStrategy(ShootingStrategies.viewportPasting(timeout))
                                         .takeScreenshot(driver);
@@ -1963,10 +1980,9 @@ public class WebCommand extends BaseCommand implements CanTakeScreenshot, CanLog
                     return null;
                 }
             } catch (IOException e) {
-                error("Unable to capture screenshot via full screen capturing approach");
+                error("Unable to capture screenshot via full screen capturing approach: " + e.getMessage());
                 return null;
             }
-
         }
 
         boolean useNativeCapture = false;
@@ -2022,22 +2038,6 @@ public class WebCommand extends BaseCommand implements CanTakeScreenshot, CanLog
         } else {
             return StepResult.fail("Unable to fetch browser version; " +
                                    "browser or underlying webdriver possibly not initialized");
-        }
-    }
-
-    private StepResult getScreenshotResult(File target, String file, String locator) throws IOException {
-        if (context.isOutputToCloud()) {
-            String cloudUrl = context.getOtc().importMedia(target, true);
-            context.setData(OPT_LAST_OUTPUT_LINK, cloudUrl);
-            context.setData(OPT_LAST_OUTPUT_PATH, StringUtils.substringBeforeLast(cloudUrl, "/"));
-            return StepResult.success("Image captured for '" + locator + "' to URL " + cloudUrl);
-        } else {
-            String link = target.getAbsolutePath();
-            context.setData(OPT_LAST_OUTPUT_LINK, link);
-            context.setData(OPT_LAST_OUTPUT_PATH, StringUtils.contains(link, "\\") ?
-                                                  StringUtils.substringBeforeLast(link, "\\") :
-                                                  StringUtils.substringBeforeLast(link, "/"));
-            return StepResult.success("Image captured for '" + locator + "' to file '" + file + "'");
         }
     }
 
@@ -2758,7 +2758,7 @@ public class WebCommand extends BaseCommand implements CanTakeScreenshot, CanLog
     protected FluentWait<WebDriver> newFluentWait(long waitMs) {
         return new FluentWait<>(driver).withTimeout(Duration.ofMillis(waitMs))
                                        .pollingEvery(Duration.ofMillis(10))
-                                       .ignoring(NoSuchElementException.class, StaleElementReferenceException.class);
+                                       .ignoring(NotFoundException.class, StaleElementReferenceException.class);
     }
 
     @NotNull

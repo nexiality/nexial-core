@@ -573,7 +573,7 @@ public class TestStep extends TestStepManifest {
             }
 
             String value = context.replaceTokens(param);
-            if ((!hasPath && value != null && new File(value).isFile()) || isFile(value)) { hasPath = true; }
+            if ((!hasPath && value != null && new File(value).isFile()) || isURL(value)) { hasPath = true; }
 
             // create hyperlink for syspath when path is referenced
             if (hasPath) {
@@ -596,7 +596,7 @@ public class TestStep extends TestStepManifest {
                 // support output to cloud:
                 // - if link is local resource but output-to-cloud is enabled, then copy resource to cloud and update link
                 boolean linkToCloud = false;
-                if (context.isOutputToCloud() && !isFile(link)) {
+                if (context.isOutputToCloud() && !isURL(link)) {
                     // create new local resource with name matching to current row, so that duplicate use of the
                     // same name will not result in overriding cloud resource
 
@@ -808,7 +808,7 @@ public class TestStep extends TestStepManifest {
                StringUtils.countMatches(param, "|name" + TOKEN_FUNCTION_END) == 0;
     }
 
-    private boolean isFile(String link) {
+    private boolean isURL(String link) {
         return StringUtils.startsWithIgnoreCase(link, "http") ||
                StringUtils.startsWithIgnoreCase(link, "file:");
     }

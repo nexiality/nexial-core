@@ -125,7 +125,7 @@ data class StepErrors(val logFile: File) {
             "<td nowrap>${it.commandType} &raquo; ${it.commandName}</td>" +
             "<td>${toHtmlAnchor("screenshot", it.screenshot)}</td>" +
             "<td>${toHtmlAnchor("details", it.detailLog)}</td>" +
-            "<td><pre>${it.message}</pre></td>" +
+            "<td width=\"100%\"><pre>${StringUtils.trim(it.message)}</pre></td>" +
             "</tr>"
         })
         html.append("</tbody></table>")
