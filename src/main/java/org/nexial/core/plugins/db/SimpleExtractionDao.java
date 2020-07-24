@@ -25,6 +25,7 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicReference;
+import javax.sql.DataSource;
 import javax.validation.constraints.NotNull;
 
 import org.apache.commons.collections4.CollectionUtils;
@@ -64,7 +65,7 @@ public class SimpleExtractionDao extends JdbcDaoSupport {
     protected ExecutionContext context;
 
     protected class JdbcResultExtractor implements ResultSetExtractor<JdbcResult>, StatementCallback<JdbcResult> {
-        private JdbcResult result;
+        private final JdbcResult result;
         private File file;
         private QueryResultExporter exporter;
 
@@ -132,10 +133,7 @@ public class SimpleExtractionDao extends JdbcDaoSupport {
                 }
             } catch (SQLException | DataAccessException e) {
                 if (context.isVerbose()) { e.printStackTrace(); }
-                result.setError("Error occurred when executing '" +
-                                sql +
-                                "': " +
-                                ExceptionUtils.getRootCauseMessage(e));
+                result.setError("Error occurred when executing '" + sql + "':" + ExceptionUtils.getRootCauseMessage(e));
                 return result;
             } finally {
                 if (isRollback) { stmt.close(); }
@@ -160,6 +158,27 @@ public class SimpleExtractionDao extends JdbcDaoSupport {
         return executeAndExtract(sql, result, new JdbcResultExtractor(result, saveTo)).setTiming(startTime);
     }
 
+    protected JdbcResult executeStoredProcedure(JdbcTemplate jdbc, JdbcResultExtractor extractor) {
+        Connection connection = null;
+
+        String error = "";
+        DataSource dataSource = jdbc.getDataSource();
+        try {
+            connection = dataSource.getConnection();
+            if (connection == null) { error = "Unable to obtain underlying database connection"; }
+        } catch (SQLException e) {
+            error = "Unable to obtain underlying database connection; " + e.getMessage();
+        }
+
+        if (StringUtils.isNotBlank(error) || connection == null) {
+            JdbcResult result = extractor.getResult();
+            result.setError(error + "; no SQL was executed");
+            return result;
+        } else {
+            return executeStoredProcedure(connection, extractor);
+        }
+    }
+
     protected JdbcResult executeStoredProcedure(Connection connection, JdbcResultExtractor extractor) {
         JdbcResult result = extractor.getResult();
         String sql = result.getSql();
@@ -168,13 +187,18 @@ public class SimpleExtractionDao extends JdbcDaoSupport {
             //callStmt.setString(1, "...");
             //callStmt.registerOutParameter(2, OracleTypes.CURSOR);
 
-            boolean hasResult = callStmt.execute();
-            if (hasResult) {
-                return packData(extractor.extractData(callStmt.getResultSet()));
-            } else {
-                result.setRowCount(callStmt.getUpdateCount());
-                return result;
-            }
+            // it seems that calling executeQuery() works better than calling execute()...
+            // extractor.exetractData() will handle situation where only update count is available (no rs)
+            ResultSet rs = callStmt.executeQuery();
+            return packData(extractor.extractData(rs));
+
+            // boolean hasResult = callStmt.execute();
+            // if (hasResult) {
+            //     return packData(extractor.extractData(callStmt.getResultSet()));
+            // } else {
+            //     result.setRowCount(callStmt.getUpdateCount());
+            //     return result;
+            // }
         } catch (SQLException e) {
             result.setError("Error executing stored procedure '" + sql + "': " + e.getMessage());
             return result;
@@ -480,15 +504,21 @@ public class SimpleExtractionDao extends JdbcDaoSupport {
         JdbcTemplate jdbc = getJdbcTemplate();
         if (jdbc == null) { throw new RuntimeException(MSG_NULL_JDBC); }
 
-        if (isAutoCommit()) { return jdbc.execute(extractor); }
+        Type sqlType = result.getSqlType();
+        boolean isSP = sqlType != null && sqlType.isStoredProcedure();
+
+        if (isAutoCommit()) {
+            if (isSP) {
+                return executeStoredProcedure(jdbc, extractor);
+            } else {
+                return jdbc.execute(extractor);
+            }
+        }
 
         initTransactedConnection();
 
         // stored procedure?
-        Type sqlType = result.getSqlType();
-        if (sqlType != null && sqlType.isStoredProcedure()) {
-            return executeStoredProcedure(transactedConnection, extractor);
-        }
+        if (isSP) { return executeStoredProcedure(transactedConnection, extractor); }
 
         try (Statement statement = transactedConnection.createStatement()) {
             return extractor.doInStatement(statement);
@@ -496,7 +526,6 @@ public class SimpleExtractionDao extends JdbcDaoSupport {
             result.setError("Error executing " + sql + ": " + e.getMessage());
             return result;
         } finally {
-            // if (sqlType != null && (sqlType.isCommit() || sqlType.isRollback())) {
             if (sqlType != null && sqlType.isRollback()) {
                 try {
                     transactedConnection.close();

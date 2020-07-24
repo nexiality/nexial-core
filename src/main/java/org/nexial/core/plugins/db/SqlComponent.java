@@ -27,7 +27,6 @@ import org.nexial.core.utils.ConsoleUtils;
 
 import static org.apache.commons.lang3.builder.ToStringStyle.SIMPLE_STYLE;
 import static org.nexial.core.NexialConst.Rdbms.*;
-import static org.nexial.core.plugins.db.SqlComponent.Type.UNKNOWN;
 
 /**
  * Encapsulation of a SQL component, which consists of:
@@ -38,12 +37,12 @@ import static org.nexial.core.plugins.db.SqlComponent.Type.UNKNOWN;
  * <li>varName - any Nexial-specific comment that signified as a variable for the result of the associated SQL</li>
  * <li>sql - parsed version, which collapsed all line breaks and removed all comments</li>
  * </ol>
- *
+ * <p>
  * To qualify as a variable reference, the comment should look something like this:
  * <pre>
  *  -- nexial:my_variable
  * </pre>
- *
+ * <p>
  * Example: suppose this is the SQL string used ('original'):
  * <pre>
  * -- get all the office locations greater than 15743 (all in Seattle)
@@ -51,7 +50,7 @@ import static org.nexial.core.plugins.db.SqlComponent.Type.UNKNOWN;
  * SELECT street_1, street_2, city, state, zip_code
  * FROM offices WHERE id > 15743;
  * </pre>
- *
+ * <p>
  * After parsing, the associated {@literal SqlComponent} instance would contain the following properties:
  * <ul>
  * <li>original - <br/><code>
@@ -77,8 +76,6 @@ public class SqlComponent implements Serializable {
     public enum Type {
         SELECT, UPDATE, INSERT, DELETE, COMMIT, ROLLBACK, CALL, WITH, CREATE, DROP, VACUUM, UNKNOWN, EXEC;
 
-        public static Type toType(String keyword) { return Type.valueOf(StringUtils.upperCase(keyword)); }
-
         public boolean hasResultset() { return this == SELECT || this == WITH; }
 
         public boolean isCommit() { return this == COMMIT; }
@@ -93,6 +90,22 @@ public class SqlComponent implements Serializable {
                    this == DELETE ||
                    this == CREATE ||
                    this == DROP;
+        }
+
+        public static Type resolveFromSql(String sql) {
+            if (StringUtils.isBlank(sql)) { return null; }
+
+            String sqlStart = StringUtils.trim(StringUtils.removeStartIgnoreCase(sql, "{"));
+            sqlStart = StringUtils.trim(StringUtils.substringBefore(sqlStart, " "));
+            sqlStart = StringUtils.upperCase(sqlStart);
+            if (StringUtils.isBlank(sqlStart)) { return null; }
+
+            try {
+                return Type.valueOf(StringUtils.upperCase(sqlStart));
+            } catch (IllegalArgumentException e) {
+                ConsoleUtils.log("Unknown SQL type from SQL: '" + sql + "'");
+                return UNKNOWN;
+            }
         }
     }
 
@@ -137,8 +150,7 @@ public class SqlComponent implements Serializable {
         for (String line : lines) {
             // has comment?
             String lineComment = StringUtils.trim(StringUtils.substringAfter(line, SQL_COMMENT));
-            if (StringUtils.isNotBlank(lineComment)) { // || StringUtils.equals(SQL_COMMENT, StringUtils.trim(line))) {
-
+            if (StringUtils.isNotBlank(lineComment)) {
                 String varName = StringUtils.substringAfter(lineComment, SQL_VAR);
                 if (StringUtils.isNotBlank(varName)) { this.varName = StringUtils.trim(varName);}
 
@@ -152,14 +164,6 @@ public class SqlComponent implements Serializable {
         comments = StringUtils.trim(commentBuffer.toString());
         sql = StringUtils.trim(sqlBuffer.toString());
         sql = StringUtils.removeEnd(sql, ";");
-        String sqlStart = StringUtils.upperCase(StringUtils.substringBefore(sql, " "));
-        if (StringUtils.isNotBlank(sqlStart)) {
-            try {
-                type = Type.toType(sqlStart);
-            } catch (IllegalArgumentException e) {
-                type = UNKNOWN;
-                ConsoleUtils.log("Unknown SQL type from SQL: '" + sql + "'");
-            }
-        }
+        type = Type.resolveFromSql(sql);
     }
 }

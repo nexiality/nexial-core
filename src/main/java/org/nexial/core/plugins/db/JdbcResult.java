@@ -28,10 +28,8 @@ import org.nexial.commons.utils.CollectionUtil;
 import org.nexial.commons.utils.DateUtility;
 import org.nexial.commons.utils.TextUtils;
 import org.nexial.core.plugins.db.SqlComponent.Type;
-import org.nexial.core.utils.ConsoleUtils;
 
 import static org.nexial.core.NexialConst.DATE_FORMAT_NOW;
-import static org.nexial.core.plugins.db.SqlComponent.Type.UNKNOWN;
 
 public class JdbcResult implements Serializable {
     protected static final int TO_STRING_KEY_LENGTH = 14;
@@ -48,15 +46,7 @@ public class JdbcResult implements Serializable {
 
     public JdbcResult(String sql) {
         this.sql = sql;
-        String sqlStart = StringUtils.upperCase(StringUtils.substringBefore(sql, " "));
-        if (StringUtils.isNotBlank(sqlStart)) {
-            try {
-                sqlType = Type.toType(sqlStart);
-            } catch (IllegalArgumentException e) {
-                sqlType = UNKNOWN;
-                ConsoleUtils.log("Unknown SQL type from SQL: '" + sql + "'");
-            }
-        }
+        this.sqlType = Type.resolveFromSql(sql);
     }
 
     public JdbcResult(String sql, int rowCount) {
