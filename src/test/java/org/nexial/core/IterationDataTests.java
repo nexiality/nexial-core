@@ -46,4 +46,10 @@ public class IterationDataTests extends ExcelBasedTests {
         assertPassFail(executionSummary, "fallback_false_split_iter", TestOutcomeStats.allPassed());
         Assert.assertEquals(0, executionSummary.getFailCount());
     }
+
+    @Test
+    public void dynamic_datasheet() throws Exception {
+        ExecutionSummary executionSummary = testPlanViaExcel("unitTest_Iteration_Dynamic_DataSheet.xlsx");
+        Assert.assertEquals(0, executionSummary.getFailCount());
+    }
 }

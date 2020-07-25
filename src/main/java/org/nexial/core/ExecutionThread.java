@@ -138,8 +138,7 @@ public final class ExecutionThread extends Thread {
 
         String scriptName =
             StringUtils.substringBeforeLast(
-                StringUtils.substringAfterLast(
-                    StringUtils.replace(scriptLocation, "\\", "/"), "/"), ".") +
+                StringUtils.substringAfterLast(StringUtils.replace(scriptLocation, "\\", "/"), "/"), ".") +
             " (" + totalIterations + ")";
         executionSummary.setName(scriptName);
         executionSummary.setExecutionLevel(SCRIPT);

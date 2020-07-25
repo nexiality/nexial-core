@@ -374,6 +374,7 @@ public final class NexialConst {
         public static final String FAIL_IMMEDIATE = registerSysVar(NAMESPACE + "failImmediate", false);
         public static final String END_IMMEDIATE = registerSysVar(NAMESPACE + "endImmediate");
         public static final String BREAK_CURRENT_ITERATION = registerSysVar(NAMESPACE + "breakCurrentIteration");
+        // controlled by user's script/data to end plan earlier than designed.
         public static final String LAST_PLAN_STEP = registerSysVar(NAMESPACE + "lastPlanStep", false);
         public static final String OPT_CURRENT_ACTIVITY = registerSysVar(NAMESPACE + "currentActivity");
         public static final String OPT_CURRENT_SCENARIO = registerSysVar(NAMESPACE + "currentScenario");

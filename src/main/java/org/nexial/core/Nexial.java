@@ -742,9 +742,11 @@ public class Nexial {
         int lastUse = executions.size() - 1;
         try {
             for (int i = 0; i < executions.size(); i++) {
-                ExecutionDefinition exec = executions.get(i);
                 if (BooleanUtils.toBoolean(System.getProperty(LAST_PLAN_STEP, getDefault(LAST_PLAN_STEP)))) { break; }
 
+                ExecutionDefinition exec = executions.get(i);
+                // re-read data sheets to ensure latest data being considered
+                exec.getTestData(true);
                 exec.setRunId(runId);
 
                 String msgPrefix = "[" + exec.getTestScript() + "] ";

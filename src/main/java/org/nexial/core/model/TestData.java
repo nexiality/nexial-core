@@ -85,12 +85,12 @@ import static org.nexial.core.NexialConst.*;
  * <p/>
  */
 public class TestData {
-    private File dataFile;
-    private List<String> dataSheetNames;
-    private Map<String, String> scopeSettings = new HashMap<>();
-    private Map<String, List<String>> dataMap = new HashMap<>();
-    private Map<String, List<String>> defaultDataMap = new HashMap<>();
-    private Map<String, List<String>> runtimeDataMap = new HashMap<>();
+    private final File dataFile;
+    private final List<String> dataSheetNames;
+    private final Map<String, String> scopeSettings = new HashMap<>();
+    private final Map<String, List<String>> dataMap = new HashMap<>();
+    private final Map<String, List<String>> defaultDataMap = new HashMap<>();
+    private final Map<String, List<String>> runtimeDataMap = new HashMap<>();
 
     public TestData(Excel excel, List<String> dataSheetNames) {
         assert excel != null && excel.getFile() != null && CollectionUtils.isNotEmpty(dataSheetNames);
@@ -152,7 +152,7 @@ public class TestData {
      * <li>scope setting (i.e. <code>nexial.scope.*</code>, <code>nexial.project</code>,
      * <code>nexial.projectBase</code>, <code>nexial.outBase</code>, <code>nexial.scriptBase</code>,
      * <code>nexial.dataBase</code>, <code>nexial.planBase</code>)</li>
-     * <li>default scope settings ({@link #SCOPE_SETTING_DEFAULTS})</li>
+     * <li>default scope settings ({@link Data#SCOPE_SETTING_DEFAULTS})</li>
      * </ol>
      */
     public String getSetting(String name) {
