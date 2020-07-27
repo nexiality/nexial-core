@@ -19,11 +19,7 @@ package org.nexial.core.reports
 import org.apache.commons.io.FileUtils
 import org.apache.commons.lang3.BooleanUtils
 import org.apache.commons.lang3.StringUtils
-import org.apache.commons.lang3.SystemUtils.IS_OS_MAC
-import org.apache.commons.lang3.SystemUtils.IS_OS_WINDOWS
-import org.nexial.commons.proc.ProcessInvoker
 import org.nexial.core.NexialConst.*
-import org.nexial.core.NexialConst.Data.WIN32_CMD
 import org.nexial.core.NexialConst.Exec.*
 import org.nexial.core.NexialConst.Web.WEB_METRICS_GENERATED
 import org.nexial.core.NexialConst.Web.WEB_METRICS_HTML
@@ -171,34 +167,8 @@ class ExecutionReporter {
         fun openExecutionSummaryReport(location: String) {
             if (!isAutoOpenExecResult()) {
                 if (ExecUtils.isRunningInZeroTouchEnv()) ConsoleUtils.log(MSG_SKIP_AUTO_OPEN_RESULT)
-            } else openReport(location)
+            } else ExecUtils.openFile(location)
         }
 
-        @JvmStatic
-        fun openReport(report: File?) {
-            if (report != null) openReport(report.absolutePath)
-        }
-
-        @JvmStatic
-        fun openReport(reportFile: String) {
-            if (StringUtils.isBlank(reportFile)) return
-            if (ExecUtils.isRunningInZeroTouchEnv()) return
-
-            try {
-                if (IS_OS_MAC) {
-                    ProcessInvoker.invokeNoWait("open", listOf(reportFile), null)
-                    return
-                }
-
-                if (IS_OS_WINDOWS) {
-                    // https://superuser.com/questions/198525/how-can-i-execute-a-windows-command-line-in-background
-                    // start "" [program]... will cause CMD to exit before program executes.. sorta like running program in background
-                    ProcessInvoker.invokeNoWait(WIN32_CMD, arrayListOf("/C", "start", "\"\"", "\"" + reportFile + "\""),
-                                                null)
-                }
-            } catch (e: IOException) {
-                ConsoleUtils.error("ERROR!!! Can't open " + reportFile + ": " + e.message)
-            }
-        }
     }
 }

@@ -17,7 +17,8 @@
 package org.nexial.core.utils
 
 import org.apache.commons.lang3.StringUtils
-import org.apache.commons.lang3.SystemUtils.IS_OS_WINDOWS
+import org.apache.commons.lang3.SystemUtils.*
+import org.nexial.commons.proc.ProcessInvoker
 import org.nexial.commons.utils.DateUtility
 import org.nexial.core.Nexial
 import org.nexial.core.NexialConst.*
@@ -204,5 +205,32 @@ object ExecUtils {
         }
 
         return "nexial-DEV"
+    }
+
+
+    @JvmStatic
+    fun openFile(reportFile: String) {
+        if (StringUtils.isBlank(reportFile) || isRunningInZeroTouchEnv()) return
+
+        try {
+            if (IS_OS_MAC) {
+                ProcessInvoker.invokeNoWait("open", listOf(reportFile), null)
+                return
+            }
+
+            if (IS_OS_LINUX) {
+                ProcessInvoker.invokeNoWait("xdg-open", listOf(reportFile), null)
+                return
+            }
+
+            if (IS_OS_WINDOWS) {
+                // https://superuser.com/questions/198525/how-can-i-execute-a-windows-command-line-in-background
+                // start "" [program]... will cause CMD to exit before program executes.. sorta like running program in background
+                ProcessInvoker.invokeNoWait(WIN32_CMD, arrayListOf("/C", "start", "\"\"", "\"" + reportFile + "\""),
+                                            null)
+            }
+        } catch (e: IOException) {
+            ConsoleUtils.error("ERROR!!! Can't open " + reportFile + ": " + e.message)
+        }
     }
 }

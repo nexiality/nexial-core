@@ -20,13 +20,13 @@ import com.google.gson.JsonObject
 import org.apache.commons.io.FileUtils
 import org.apache.commons.lang3.StringUtils
 import org.nexial.commons.utils.ResourceUtils
-import org.nexial.core.reports.ExecutionReporter
 import org.nexial.core.tools.inspector.InspectorConst.GSON
 import org.nexial.core.tools.inspector.InspectorConst.LOCAL_HTML_RESOURCE
 import org.nexial.core.tools.inspector.InspectorConst.ReturnCode.WRITE_FILE
 import org.nexial.core.tools.inspector.InspectorConst.UTF8
 import org.nexial.core.tools.inspector.InspectorConst.exit
 import org.nexial.core.tools.inspector.InspectorViewMode.LOCAL
+import org.nexial.core.utils.ExecUtils
 import java.io.File
 import java.io.File.separator
 import java.io.IOException
@@ -48,7 +48,7 @@ class InspectorOutput(val logger: InspectorLogger) {
         }
 
         val outputFile = writeOutputHtml(File(options.directory), json)
-        if (options.verbose) ExecutionReporter.openReport(outputFile)
+        if (options.verbose) ExecUtils.openFile(outputFile.absolutePath)
     }
 
     private fun writeOutputHtml(projectHome: File, json: JsonObject): File {
