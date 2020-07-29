@@ -2970,6 +2970,14 @@ public class WebCommand extends BaseCommand implements CanTakeScreenshot, CanLog
     protected boolean waitForBrowserStability(long maxWait) {
         if (browser == null || browser.isRunElectron()) { return false; }
 
+        try {
+            // test if this window has no URL or HTML, such as new window popup for downloading file.
+            driver.getCurrentUrl();
+        } catch (TimeoutException e) {
+            // no URL on this window?
+            return false;
+        }
+
         // for firefox we can't be calling driver.getPageSource() or driver.findElement() when alert dialog is present
         if (alert.preemptiveCheckAlert()) { return true; }
         if (alert.isDialogPresent()) { return false; }
