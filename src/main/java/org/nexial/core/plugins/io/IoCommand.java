@@ -606,7 +606,7 @@ public class IoCommand extends BaseCommand {
     /**
      * decode the content fo {@code encodedSource} into {@code decodedTarget} as a binary file (to preserve all bit
      * significance of the decoded form).
-     *
+     * <p>
      * {@code encodedSource} maybe a file or just text. {@code decodedTarget} is assumed as fully qualified file path.
      * This method will create the necessary (and missing) parent directories of {@code decodedTarget}.
      */
@@ -618,6 +618,55 @@ public class IoCommand extends BaseCommand {
         byte[] decoded = TextUtils.base64decodeAsBytes(OutputFileUtils.resolveContent(encodedSource, context, false));
         File target = FileUtil.writeBinaryFile(decodedTarget, shouldAppend, decoded);
         return StepResult.success("Content BASE64 decoded and saved to '" + target + "'");
+    }
+
+    /**
+     * wait until the specified {@literal file}:
+     * <ol>
+     *     <li>has at least file size greater or equal to {@literal minFileSize}</li>
+     *     <li>(implied) is readable</li>
+     *     <li>is stabilized in term of file size and lastmod before {@literal maxWaitMs} time is reached</li>
+     * </ol>
+     * <p>
+     * Nexial will check for file size and lastmod every {@literal waitMs} ms.
+     */
+    public StepResult waitForFile(String file, String minFileSize, String waitMs, String maxWaitMs) {
+        requiresNotBlank(file, "invalid file", file);
+        requiresPositiveNumber(minFileSize, "invalid minimum file size", minFileSize);
+        requiresPositiveNumber(waitMs, "invalid wait time", waitMs);
+        requiresPositiveNumber(maxWaitMs, "invalid max wait time", maxWaitMs);
+
+        long fileLastMod = -1;
+        long fileSize = -1;
+        long fileSizeAtLeast = NumberUtils.toLong(minFileSize);
+        long sleepTime = NumberUtils.toLong(waitMs);
+        long startTime = System.currentTimeMillis();
+        long mustEndBy = startTime + NumberUtils.toLong(maxWaitMs);
+        boolean stabilized = false;
+
+        while (System.currentTimeMillis() < mustEndBy) {
+            if (FileUtil.isFileReadable(file, fileSizeAtLeast)) {
+                File f = new File(file);
+                long newFileSize = f.length();
+                long newFileLastMod = f.lastModified();
+
+                if (fileSize == newFileSize && fileLastMod == newFileLastMod) {
+                    stabilized = true;
+                    break;
+                } else {
+                    fileSize = newFileSize;
+                    fileLastMod = newFileLastMod;
+                }
+            }
+
+            try { Thread.sleep(sleepTime); } catch (InterruptedException e) { }
+        }
+
+        if (stabilized) {
+            return StepResult.success("File '" + file + "' stabilized within max time " + maxWaitMs);
+        } else {
+            return StepResult.fail("Unable to stabilize file '" + file + "' within max time " + maxWaitMs);
+        }
     }
 
     public static String formatPercent(double number) { return PERCENT_FORMAT.format(number); }

@@ -1368,13 +1368,34 @@ public class WebCommand extends BaseCommand implements CanTakeScreenshot, CanLog
         requiresPositiveNumber(height, "invalid value for height", height);
 
         ensureReady();
+        Window window = driver.manage().window();
+        if (window == null) { return StepResult.fail("Unable to obtain/reference current browser window"); }
+
         int numWidth = NumberUtils.toInt(width);
         int numHeight = NumberUtils.toInt(height);
-        Window window = driver.manage().window();
         // dimension unit is point (or px)
         window.setSize(new Dimension(numWidth, numHeight));
 
-        return StepResult.success("browser window resize to " + width + "x" + height);
+        return StepResult.success("current browser window resized to %s x %s", width, height);
+    }
+
+    /**
+     * move current browser window to position (x,y) of the primary display.
+     */
+    public StepResult moveTo(String x, String y) {
+        requiresInteger(x, "invalid value for x", x);
+        requiresInteger(y, "invalid value for y", y);
+
+        ensureReady();
+        Window window = driver.manage().window();
+        if (window == null) { return StepResult.fail("Unable to obtain/reference current browser window"); }
+
+        int posX = NumberUtils.toInt(x);
+        int posY = NumberUtils.toInt(y);
+        // dimension unit is point (or px)
+        window.setPosition(new Point(posX, posY));
+
+        return StepResult.success("current browser window moved to to position (%s, %s)", x, y);
     }
 
     public StepResult assertScrollbarVPresent(String locator) { return checkScrollbarV(locator, false); }
