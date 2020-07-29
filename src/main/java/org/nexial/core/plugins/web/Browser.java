@@ -27,6 +27,7 @@ import javax.validation.constraints.NotNull;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.collections4.IterableUtils;
 import org.apache.commons.collections4.MapUtils;
+import org.apache.commons.lang3.ArrayUtils;
 import org.apache.commons.lang3.BooleanUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.exception.ExceptionUtils;
@@ -34,7 +35,7 @@ import org.apache.commons.lang3.math.NumberUtils;
 import org.nexial.commons.proc.RuntimeUtils;
 import org.nexial.commons.utils.EnvUtils;
 import org.nexial.commons.utils.FileUtil;
-import org.nexial.core.NexialConst.BrowserType;
+import org.nexial.core.NexialConst.*;
 import org.nexial.core.ShutdownAdvisor;
 import org.nexial.core.model.ExecutionContext;
 import org.nexial.core.plugins.CanTakeScreenshot;
@@ -64,7 +65,6 @@ import org.slf4j.LoggerFactory;
 import static java.io.File.separator;
 import static java.util.concurrent.TimeUnit.MILLISECONDS;
 import static org.apache.commons.lang3.SystemUtils.*;
-import static org.nexial.commons.utils.FileUtil.isFileReadable;
 import static org.nexial.core.NexialConst.BrowserType.*;
 import static org.nexial.core.NexialConst.Data.TEST_LOG_PATH;
 import static org.nexial.core.NexialConst.Data.withProfile;
@@ -156,8 +156,9 @@ public class Browser implements ForcefulTerminate {
 
     public void setFirefoxBinLocations(Map<String, List<String>> locations) { this.firefoxBinLocations = locations; }
 
-    public void setFirefoxDriverVersionMapping(Map<String, String> firefoxDriverVersionMapping) {this.firefoxDriverVersionMapping =
-                                                                                                     firefoxDriverVersionMapping; }
+    public void setFirefoxDriverVersionMapping(Map<String, String> firefoxDriverVersionMapping) {
+        this.firefoxDriverVersionMapping = firefoxDriverVersionMapping;
+    }
 
     // public void setProxy(ProxyHandler proxy) { this.proxy = proxy; }
     // public ProxyHandler getProxyHandler() { return proxy; }
@@ -622,8 +623,13 @@ public class Browser implements ForcefulTerminate {
         String downloadTo = resolveDownloadTo(context);
         if (StringUtils.isNotBlank(downloadTo)) {
             Map<String, Object> prefs = new HashMap<>();
+            // allow PDF to be downloaded instead of displayed (pretty much useless)
+            if (context.getBooleanConfig("web", profile, OPT_DOWNLOAD_PDF)) {
+                prefs.put("plugins.always_open_pdf_externally", true);
+            }
             prefs.put("download.prompt_for_download", false);
             prefs.put("download.default_directory", downloadTo);
+            // prefs.put("download.extensions_to_open", "application/pdf");
             prefs.put("profile.default_content_settings.popups", 0);
             options.setExperimentalOption("prefs", prefs);
         }
@@ -747,8 +753,6 @@ public class Browser implements ForcefulTerminate {
         return chrome;
     }
 
-
-
     protected WebDriver initFirefox(boolean headless) throws IOException {
         BrowserType browserType = headless ? firefoxheadless : firefox;
         String binaryLocation = resolveFirefoxBinLocation();
@@ -812,7 +816,6 @@ public class Browser implements ForcefulTerminate {
                 options.addPreference("network.proxy.no_proxies_on", "localhost, 127.0.0.1");
             }
             // }
-
 
             if (StringUtils.isNotBlank(binaryLocation)) { options.setBinary(binaryLocation); }
 
@@ -1096,13 +1099,35 @@ public class Browser implements ForcefulTerminate {
 
             Window window = driver.manage().window();
             window.setSize(new Dimension(width, height));
-
-            boolean runningSafari = isRunSafari() ||
-                                    (isRunBrowserStack() && browserstackHelper.browser == safari) ||
-                                    (isRunCrossBrowserTesting() && cbtHelper.browser == safari);
-            Point initialPosition = runningSafari ? INITIAL_POSITION_SAFARI : INITIAL_POSITION;
-            window.setPosition(initialPosition);
         }
+    }
+
+    protected void setWindowPosition(WebDriver driver) {
+        if (driver == null) { return; }
+
+        Window window = driver.manage().window();
+        if (window == null) { return; }
+
+        boolean runningSafari = isRunSafari() ||
+                                (isRunBrowserStack() && browserstackHelper.browser == safari) ||
+                                (isRunCrossBrowserTesting() && cbtHelper.browser == safari);
+
+        Point position = null;
+        String windowPosition = context.getStringConfig("web", profile, OPT_POSITION);
+        if (StringUtils.isBlank(windowPosition)) {
+            position = runningSafari ? INITIAL_POSITION_SAFARI : INITIAL_POSITION;
+        } else {
+            String[] coordinates = StringUtils.split(windowPosition, context.getTextDelim());
+            if (ArrayUtils.getLength(coordinates) != 2 ||
+                !NumberUtils.isCreatable(coordinates[0]) ||
+                !NumberUtils.isCreatable(coordinates[1])) {
+                ConsoleUtils.error("Invalid driver position: " + windowPosition + "; default to 0,0");
+            } else {
+                position = new Point(NumberUtils.toInt(coordinates[0]), NumberUtils.toInt(coordinates[1]));
+            }
+        }
+
+        window.setPosition(position);
     }
 
     private void handleFirefoxProfile(FirefoxOptions options, DesiredCapabilities capabilities) {
@@ -1221,6 +1246,7 @@ public class Browser implements ForcefulTerminate {
         }
 
         setWindowSize(driver);
+        setWindowPosition(driver);
     }
 
     private String resolveConfig(String propName, String defaultValue) {

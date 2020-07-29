@@ -2345,6 +2345,7 @@ public class WebCommand extends BaseCommand implements CanTakeScreenshot, CanLog
             if (!context.getBooleanData(SAFARI_RESIZED, getDefaultBool(SAFARI_RESIZED))) {
                 // time to resize it now
                 browser.setWindowSizeForcefully(driver);
+                browser.setWindowPosition(driver);
                 context.setData(SAFARI_RESIZED, true);
             }
         }
