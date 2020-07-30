@@ -464,7 +464,8 @@
         <property name="firefoxDriverVersionMapping">
             <map key-type="java.lang.String" value-type="java.lang.String">
                 <!--<entry key="min.browser.version_max.browser.version" value="driver.version"/>-->
-                <entry key="60-999" value="0.26.0"/>
+                <entry key="80-999" value="0.27.0"/>
+                <entry key="60-79" value="0.26.0"/>
                 <entry key="57-59" value="0.25.0"/>
                 <entry key="55-56" value="0.20.1"/>
                 <entry key="53-54" value="0.18.0"/>
