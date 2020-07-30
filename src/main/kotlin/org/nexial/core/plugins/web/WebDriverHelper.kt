@@ -50,7 +50,6 @@ import java.io.File.separator
 import java.math.BigInteger
 import java.util.*
 import java.util.zip.GZIPInputStream
-import javax.validation.constraints.NotNull
 
 abstract class WebDriverHelper protected constructor(protected var context: ExecutionContext) {
     protected lateinit var browserType: BrowserType
@@ -198,6 +197,13 @@ abstract class WebDriverHelper protected constructor(protected var context: Exec
             driverUrl = JSONPath.find(json,
                                       "[tag_name=$targetVersion].assets[name=REGEX:.+win32.+].browser_download_url")
         }
+
+        if (TextUtils.isBetween(driverUrl, "[", "]")) {
+            // [corner case] multiple matches found.. most likely one with ".tar.gz" and the other one ".tar.gz.asc"
+            val driverUrlList = JSONArray(driverUrl).map { it.toString() }.filter { !it.endsWith(".asc") }
+            driverUrl = driverUrlList[0]
+        }
+
         updateManifestProperties(manifest, driverUrl, targetVersion)
     }
 
