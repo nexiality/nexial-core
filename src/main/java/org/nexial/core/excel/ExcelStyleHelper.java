@@ -28,14 +28,12 @@ import org.apache.poi.ss.usermodel.BorderStyle;
 import org.apache.poi.ss.usermodel.FillPatternType;
 import org.apache.poi.ss.usermodel.HorizontalAlignment;
 import org.apache.poi.ss.usermodel.VerticalAlignment;
-import org.apache.poi.xssf.usermodel.XSSFCell;
-import org.apache.poi.xssf.usermodel.XSSFCellStyle;
-import org.apache.poi.xssf.usermodel.XSSFColor;
-import org.apache.poi.xssf.usermodel.XSSFFont;
-import org.apache.poi.xssf.usermodel.XSSFWorkbook;
+import org.apache.poi.xssf.usermodel.*;
 import org.nexial.core.excel.Excel.Worksheet;
 import org.nexial.core.model.TestStep;
+import org.nexial.core.utils.MessageUtils;
 
+import static org.apache.poi.ss.usermodel.CellType.BLANK;
 import static org.apache.poi.ss.usermodel.FillPatternType.NO_FILL;
 import static org.apache.poi.ss.usermodel.FillPatternType.SOLID_FOREGROUND;
 import static org.apache.poi.xssf.usermodel.extensions.XSSFCellBorder.BorderSide.*;
@@ -87,8 +85,8 @@ public final class ExcelStyleHelper {
         HIDDEN("hidden", Boolean.class),
         LOCKED("locked", Boolean.class);
 
-        private String name;
-        private Class<?> type;
+        private final String name;
+        private final Class<?> type;
 
         StyleName(String name, Class<?> type) {
             this.name = name;
@@ -194,21 +192,38 @@ public final class ExcelStyleHelper {
     }
 
     public static void formatParams(TestStep testStep) {
-        XSSFCellStyle style = testStep.getWorksheet().getStyle(STYLE_PARAM);
+        Worksheet worksheet = testStep.getWorksheet();
+        XSSFCellStyle style = worksheet.getStyle(STYLE_PARAM);
         List<XSSFCell> row = testStep.getRow();
         for (int i = COL_IDX_PARAMS_START; i < COL_IDX_PARAMS_END; i++) {
             XSSFCell cell = row.get(i);
-            if (StringUtils.isNotBlank(Excel.getCellValue(cell))) { cell.setCellStyle(style); }
+            if (isStepSkipped(cell.getRow())) {
+                cell.setCellStyle(worksheet.getStyle(STYLE_PARAM_SKIPPED));
+            } else if (StringUtils.isNotBlank(Excel.getCellValue(cell))) {
+                cell.setCellStyle(style);
+            }
         }
     }
 
     public static void formatFlowControlCell(Worksheet worksheet, XSSFCell cell) {
         if (cell == null) { return; }
-        String cellValue = Excel.getCellValue(cell);
-        if (StringUtils.isNotBlank(cellValue)) {
-            cell.setCellStyle(worksheet.getStyle(STYLE_PARAM));
-            fixCellWidth(worksheet.getSheet(), cell, COL_IDX_FLOW_CONTROLS, DEF_CHAR_WIDTH_FACTOR_CONSOLAS);
+        if (isStepSkipped(cell.getRow())) {
+            cell.setCellStyle(worksheet.getStyle(STYLE_PARAM_SKIPPED));
+        } else {
+            String cellValue = Excel.getCellValue(cell);
+            if (StringUtils.isNotBlank(cellValue)) {
+                cell.setCellStyle(worksheet.getStyle(STYLE_PARAM));
+                fixCellWidth(worksheet.getSheet(), cell, COL_IDX_FLOW_CONTROLS, DEF_CHAR_WIDTH_FACTOR_CONSOLAS);
+            } else {
+                cell.setCellType(BLANK);
+            }
         }
+    }
+
+    public static boolean isStepSkipped(XSSFRow stepRow) {
+        if (stepRow == null) { return false; }
+        XSSFCell resultCell = stepRow.getCell(COL_IDX_RESULT);
+        return resultCell != null && MessageUtils.isSkipped(Excel.getCellValue(resultCell));
     }
 
     public static XSSFCellStyle generate(XSSFWorkbook workbook, StyleConfig config) {

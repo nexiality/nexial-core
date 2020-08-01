@@ -258,6 +258,7 @@ public class ExcelConfig {
     public static final String STYLE_TARGET = "TARGET";
     public static final String STYLE_COMMAND = "COMMAND";
     public static final String STYLE_PARAM = "PARAM";
+    public static final String STYLE_PARAM_SKIPPED = "PARAM_SKIPPED";
     public static final String STYLE_TAINTED_PARAM = "TAINTED_PARAM";
     public static final String STYLE_SCREENSHOT = "SCREENSHOT";
     public static final String STYLE_ELAPSED_MS = "ELAPSED_MS";
@@ -295,6 +296,7 @@ public class ExcelConfig {
     public static final StyleConfig COMMAND = newCommandStyle();
     public static final StyleConfig STRIKEOUT_COMMAND = newDisabledCommandStyle();
     public static final StyleConfig PARAM = newParamStyle();
+    public static final StyleConfig PARAM_SKIPPED = newParamSkippedStyle();
     public static final StyleConfig TAINTED_PARAM = newTaintedParamStyle();
     public static final StyleConfig SCREENSHOT = newScreenshotStyle();
     public static final StyleConfig ELAPSED_MS = newElapsedMsStyle();
@@ -308,6 +310,7 @@ public class ExcelConfig {
 
     public static final StyleConfig PREDEF_TEST_DATA_NAME = newPredefTestDataNameStyle();
     public static final StyleConfig TEST_DATA_NAME = newTestDataNameStyle();
+    public static final StyleConfig TEST_DATA_NAME_DISABLED = newTestDataNameDisabledStyle();
     public static final StyleConfig TEST_DATA_VALUE = newTestDataValueStyle();
 
     public static final StyleConfig EXEC_SUMM_TITLE = newExecSummaryTitle();
@@ -341,7 +344,7 @@ public class ExcelConfig {
 
         private XSSFColor backgroundColor;
         private XSSFColor backgroundFillColor;
-        private FillPatternType backgroundFillPattern = SOLID_FOREGROUND;
+        private final FillPatternType backgroundFillPattern = SOLID_FOREGROUND;
         private boolean boldFont;
         private XSSFColor borderColor;
         private BorderStyle borderStyle = THIN;
@@ -351,7 +354,7 @@ public class ExcelConfig {
         private HorizontalAlignment horizontalAlignment;
         private short indention;
         private boolean italicFont;
-        private byte underlineStyle = 0;
+        private final byte underlineStyle = 0;
         private VerticalAlignment verticalAlignment;
         private boolean wrapText;
         private boolean strikeOut;
@@ -404,6 +407,7 @@ public class ExcelConfig {
             // 2F75B5
             config.fontColor = new XSSFColor(new Color(47, 117, 181));
             config.boldFont = true;
+            config.verticalAlignment = CENTER;
             return config;
         }
 
@@ -415,6 +419,20 @@ public class ExcelConfig {
             config.fontName = FONT_NAME_DEFAULT;
             config.fontColor = new XSSFColor(new Color(0, 0, 0));
             config.boldFont = true;
+            config.verticalAlignment = CENTER;
+            return config;
+        }
+
+        static StyleConfig newTestDataNameDisabledStyle() {
+            StyleConfig config = new StyleConfig();
+            config.backgroundColor = new XSSFColor(new Color(231, 230, 230));
+            config.fontHeight = FONT_HEIGHT_DEFAULT;
+            config.fontName = FONT_NAME_DEFAULT;
+            config.fontColor = new XSSFColor(new Color(166, 166, 166));
+            config.boldFont = false;
+            config.italicFont = true;
+            config.wrapText = true;
+            config.verticalAlignment = CENTER;
             return config;
         }
 
@@ -424,6 +442,8 @@ public class ExcelConfig {
             config.fontName = FONT_NAME_FIXED_DEFAULT;
             config.fontColor = new XSSFColor(new Color(0, 0, 0));
             config.boldFont = false;
+            config.wrapText = true;
+            config.verticalAlignment = CENTER;
             return config;
         }
 
@@ -518,6 +538,20 @@ public class ExcelConfig {
             config.fontName = FONT_NAME_FIXED_DEFAULT;
             config.fontHeight = FONT_HEIGHT_PARAM;
             config.fontColor = new XSSFColor(new Color(5, 5, 5));
+            config.wrapText = true;
+            config.verticalAlignment = CENTER;
+            return config;
+        }
+
+        static StyleConfig newParamSkippedStyle() {
+            StyleConfig config = new StyleConfig();
+            config.backgroundColor = new XSSFColor(new Color(230, 230, 230));
+            config.borderColor = new XSSFColor(new Color(220, 220, 220));
+            config.fontName = FONT_NAME_FIXED_DEFAULT;
+            config.fontHeight = FONT_HEIGHT_PARAM;
+            config.fontColor = new XSSFColor(new Color(128, 128, 128));
+            config.boldFont = false;
+            config.wrapText = true;
             config.verticalAlignment = CENTER;
             return config;
         }
@@ -529,6 +563,7 @@ public class ExcelConfig {
             config.fontName = FONT_NAME_FIXED_DEFAULT;
             config.fontHeight = FONT_HEIGHT_PARAM;
             config.fontColor = new XSSFColor(new Color(5, 5, 5));
+            config.wrapText = true;
             config.verticalAlignment = CENTER;
             return config;
         }
@@ -604,7 +639,7 @@ public class ExcelConfig {
             config.fontHeight = FONT_HEIGHT_PARAM;
             config.fontColor = new XSSFColor(new Color(90, 90, 50));
             config.verticalAlignment = CENTER;
-            config.wrapText = false;
+            config.wrapText = true;
             return config;
         }
 
@@ -899,7 +934,7 @@ public class ExcelConfig {
                                   .sorted()
                                   .max(Integer::compareTo)
                                   .orElse(commandLength);
-            ExcelStyleHelper.handleTextWrap(cell);
+            // ExcelStyleHelper.handleTextWrap(cell);
         }
         int expectedCommandCellWidth = commandLength * charWidthFactor;
 

@@ -30,18 +30,19 @@ import org.apache.poi.xssf.usermodel.XSSFCell;
 import org.apache.poi.xssf.usermodel.XSSFCellStyle;
 import org.apache.poi.xssf.usermodel.XSSFRow;
 import org.apache.poi.xssf.usermodel.XSSFSheet;
-import org.nexial.core.CommandConst;
 import org.nexial.core.ExecutionThread;
 import org.nexial.core.excel.Excel;
 import org.nexial.core.excel.Excel.Worksheet;
 import org.nexial.core.excel.ExcelStyleHelper;
 import org.nexial.core.excel.ext.CellTextReader;
-import org.nexial.core.utils.ConsoleUtils;
 import org.nexial.core.logs.ExecutionLogger;
+import org.nexial.core.utils.ConsoleUtils;
+import org.nexial.core.utils.MessageUtils;
 
 import static org.apache.poi.ss.usermodel.CellType.STRING;
 import static org.apache.poi.ss.usermodel.Row.MissingCellPolicy.CREATE_NULL_AS_BLANK;
 import static org.nexial.core.CommandConst.CMD_VERBOSE;
+import static org.nexial.core.CommandConst.shouldMergeCommandParams;
 import static org.nexial.core.NexialConst.Data.SHEET_MERGED_DATA;
 import static org.nexial.core.NexialConst.MAX_VERBOSE_CHAR;
 import static org.nexial.core.excel.ExcelConfig.*;
@@ -108,9 +109,9 @@ public final class ExecutionResultHelper {
         lastRow = handleNestedMessages(worksheet, executionSummary, lastRow);
         mergeVerboseOutput(worksheet, lastRow);
 
-        for (int i = ADDR_COMMAND_START.getRowStartIndex(); i < lastRow; i++) {
-            ExecutionResultHelper.setMinHeight(worksheet, excelSheet.getRow(i));
-        }
+        // for (int i = ADDR_COMMAND_START.getRowStartIndex(); i < lastRow; i++) {
+        //     ExecutionResultHelper.setMinHeight(worksheet, excelSheet.getRow(i));
+        // }
 
         // adjust width to fit column content
         excelSheet.autoSizeColumn(COL_IDX_TESTCASE);
@@ -226,13 +227,17 @@ public final class ExecutionResultHelper {
 
             String command = Excel.getCellValue(row.getCell(COL_IDX_TARGET)) + "." +
                              Excel.getCellValue(row.getCell(COL_IDX_COMMAND));
-            if (CommandConst.shouldMergeCommandParams(command)) { mergeOutput(worksheet, excelSheet, row, i); }
+            if (shouldMergeCommandParams(command)) { mergeOutput(worksheet, excelSheet, row, i); }
         }
     }
 
     protected static void mergeOutput(Worksheet worksheet, XSSFSheet excelSheet, XSSFRow row, int rowIndex) {
         XSSFCell cellMerge = row.getCell(COL_IDX_MERGE_RESULT_START);
         if (cellMerge == null) { return; }
+
+        XSSFCell cellResult = row.getCell(COL_IDX_RESULT);
+        // skip the SKIPPED steps
+        if (cellResult != null && MessageUtils.isSkipped(cellResult.getStringCellValue())) { return; }
 
         // make sure we aren't create merged region on existing merged region
         boolean alreadyMerged = false;
@@ -261,7 +266,7 @@ public final class ExecutionResultHelper {
 
         cellMerge.setCellValue(Excel.getCellValue(cellMerge));
 
-        Excel.adjustMergedCellHeight(worksheet, cellMerge, COL_IDX_MERGE_RESULT_START, COL_IDX_MERGE_RESULT_END, 1);
+        Excel.adjustCellHeight(worksheet, cellMerge);
     }
 
     protected static void save(Worksheet worksheet, ExecutionSummary executionSummary) throws IOException {

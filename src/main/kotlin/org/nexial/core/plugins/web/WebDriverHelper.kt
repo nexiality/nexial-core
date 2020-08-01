@@ -64,7 +64,11 @@ abstract class WebDriverHelper protected constructor(protected var context: Exec
         // check if local copy of driver exists
         // if no local driver, poll online for driver
         // if local driver exists, check metadata for need to check for driver update
-        downloadDriver(isFileReadable(driverLocation, DRIVER_MIN_SIZE))
+        try {
+            downloadDriver(isFileReadable(driverLocation, DRIVER_MIN_SIZE))
+        } catch (e: IOException) {
+            ConsoleUtils.log("Unable to resolve or download webdriver: ${e.message}")
+        }
 
         val driver = File(driverLocation)
         return if (!driver.exists())

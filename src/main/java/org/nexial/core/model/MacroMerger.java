@@ -293,6 +293,7 @@ public class MacroMerger {
         XSSFCellStyle styleTarget = sheet.getStyle(STYLE_TARGET);
         XSSFCellStyle styleCommand = sheet.getStyle(STYLE_COMMAND);
         XSSFCellStyle styleParam = sheet.getStyle(STYLE_PARAM);
+        XSSFCellStyle styleParamSkipped = sheet.getStyle(STYLE_PARAM_SKIPPED);
 
         // push expanded test steps back to scenario sheet
         for (int i = 0; i < allTestSteps.size(); i++) {
@@ -300,6 +301,7 @@ public class MacroMerger {
             int targetRowIdx = ADDR_COMMAND_START.getRowStartIndex() + i;
 
             XSSFRow excelRow = excelSheet.createRow(targetRowIdx);
+            boolean isSkipped = ExcelStyleHelper.isStepSkipped(excelRow);
 
             for (int j = 0; j < row.size(); j++) {
                 String cellValue = row.get(j);
@@ -310,8 +312,12 @@ public class MacroMerger {
                 boolean hasCellValue = StringUtils.isNotBlank(cellValue);
 
                 // set style for all known cells
-                if (j >= COL_IDX_PARAMS_START && j <= COL_IDX_PARAMS_END && hasCellValue) {
-                    cell.setCellStyle(styleParam);
+                if (j >= COL_IDX_PARAMS_START && j <= COL_IDX_PARAMS_END) {
+                    if (isSkipped) {
+                        cell.setCellStyle(styleParamSkipped);
+                    } else if (hasCellValue) {
+                        cell.setCellStyle(styleParam);
+                    }
                     continue;
                 }
 
@@ -335,7 +341,7 @@ public class MacroMerger {
                         cell.setCellStyle(styleCommand);
                         break;
                     case COL_IDX_FLOW_CONTROLS:
-                        if (hasCellValue) { ExcelStyleHelper.formatFlowControlCell(sheet, cell); }
+                        ExcelStyleHelper.formatFlowControlCell(sheet, cell);
                         break;
                 }
             }

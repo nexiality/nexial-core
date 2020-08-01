@@ -72,7 +72,6 @@ import static org.nexial.core.NexialConst.Data.WIN32_CMD;
 import static org.nexial.core.NexialConst.Exec.*;
 import static org.nexial.core.SystemVariables.getDefault;
 import static org.nexial.core.excel.ExcelConfig.*;
-import static org.nexial.core.excel.ExcelConfig.StyleConfig.FONT_HEIGHT_DEFAULT;
 import static org.nexial.core.excel.ExcelStyleHelper.*;
 import static org.nexial.core.excel.ext.CipherHelper.CRYPT_IND;
 
@@ -1323,29 +1322,17 @@ public class Excel {
      * adjust cell height to fit (visibly) its content. {@literal charPerLine} indicates the number of characters each
      * line should have within said cell.
      */
-    public static void adjustCellHeight(Worksheet worksheet, XSSFCell cell, int charPerLine) {
+    public static void adjustCellHeight(Worksheet worksheet, XSSFCell cell) {
         if (worksheet == null) { return; }
 
         String content = Excel.getCellValue(cell);
         if (StringUtils.isBlank(content)) { return; }
 
         int lineCount = StringUtils.countMatches(content, "\n") + 1;
-        String[] lines = StringUtils.split(content, "\n");
-        if (ArrayUtils.isEmpty(lines)) { lines = new String[]{content}; }
-        for (String line : lines) { lineCount += Math.ceil((double) StringUtils.length(line) / charPerLine) - 1; }
-
-        // lineCount should always be at least 1. otherwise this row will not be rendered with height 0
-        if (lineCount < 1) { lineCount = 1; }
-
         worksheet.setMinHeight(cell, lineCount);
-    }
-
-    public static void adjustMergedCellHeight(Worksheet worksheet, XSSFCell cell, int fromCol, int toCol, int rows) {
-        XSSFSheet sheet = worksheet.getSheet();
-        int mergedWidth = 0;
-        for (int j = fromCol; j < toCol + 1; j++) { mergedWidth += sheet.getColumnWidth(j); }
-        int charPerLine = (int) ((mergedWidth - DEF_CHAR_WIDTH) * rows / (DEF_CHAR_WIDTH * FONT_HEIGHT_DEFAULT));
-        adjustCellHeight(worksheet, cell, charPerLine);
+        // worksheet.sheet.setDefaultRowHeight((short)(lineCount * 16.3));
+        // doesn't work; cause Excel to hang!
+        // worksheet.sheet.setDefaultRowHeightInPoints(lineCount * worksheet.sheet.getDefaultRowHeightInPoints());
     }
 
     /**
@@ -1470,6 +1457,7 @@ public class Excel {
         commonStyles.put(STYLE_MESSAGE, generate(workbook, MSG));
         commonStyles.put(STYLE_COMMAND, generate(workbook, COMMAND));
         commonStyles.put(STYLE_PARAM, generate(workbook, PARAM));
+        commonStyles.put(STYLE_PARAM_SKIPPED, generate(workbook, PARAM_SKIPPED));
         commonStyles.put(STYLE_TAINTED_PARAM, generate(workbook, TAINTED_PARAM));
         commonStyles.put(STYLE_SCREENSHOT, generate(workbook, SCREENSHOT));
         commonStyles.put(STYLE_ELAPSED_MS, generate(workbook, ELAPSED_MS));

@@ -849,7 +849,7 @@ public class ExecutionSummary {
 
             if (cellStyle != null) { cellMerge.setCellStyle(cellStyle); }
 
-            Excel.adjustMergedCellHeight(worksheet, cellMerge, startColumnIdx, endColumnIndex, addr.getRowCount());
+            Excel.adjustCellHeight(worksheet, cellMerge);
         }
 
         return cellMerge;

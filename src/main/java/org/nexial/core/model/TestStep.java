@@ -502,10 +502,10 @@ public class TestStep extends TestStepManifest {
     }
 
     protected String handleScreenshot(StepResult result) {
-        if (result == null) { return null; }
+        if (result == null || result.isSkipped()) { return null; }
 
         // no screenshot specified and no error found (success or skipped)
-        if (!captureScreen && (result.isSuccess() || result.isSkipped())) { return null; }
+        if (!captureScreen && result.isSuccess()) { return null; }
 
         // no screenshot specified and screenshot-on-error is turned off
         if (!captureScreen && !context.isScreenshotOnError()) { return null; }
@@ -536,11 +536,7 @@ public class TestStep extends TestStepManifest {
     }
 
     protected void updateResult(StepResult result, long elapsedMs) {
-        String message = result.getMessage();
-
         ExcelStyleHelper.formatActivityCell(worksheet, row.get(COL_IDX_TESTCASE));
-        ExcelStyleHelper.formatTargetCell(worksheet, row.get(COL_IDX_TARGET));
-        ExcelStyleHelper.formatCommandCell(worksheet, row.get(COL_IDX_COMMAND));
 
         // description
         XSSFCell cellDescription = row.get(COL_IDX_DESCRIPTION);
@@ -552,140 +548,152 @@ public class TestStep extends TestStepManifest {
         } else {
             ExcelStyleHelper.formatDescription(worksheet, cellDescription);
         }
-        cellDescription.setCellValue(context.containsCrypt(description) ?
-                                     CellTextReader.readValue(description) : context.replaceTokens(description, true));
 
-        XSSFCellStyle styleTaintedParam = worksheet.getStyle(STYLE_TAINTED_PARAM);
-        XSSFCellStyle styleParam = worksheet.getStyle(STYLE_PARAM);
+        ExcelStyleHelper.formatTargetCell(worksheet, row.get(COL_IDX_TARGET));
+        ExcelStyleHelper.formatCommandCell(worksheet, row.get(COL_IDX_COMMAND));
 
-        // update the params that can be expressed as links (file or url)
-        for (int i = 0; i < params.size(); i++) {
-            String param = params.get(i);
-            if (StringUtils.isBlank(param)) { continue; }
+        String message = result.getMessage();
 
-            // could be literal syspath - e.g. $(syspath|out|fullpath)/...
-            // could be data variable that reference syspath function
-            boolean hasPath = isFileLink(param);
-            if (!hasPath && TextUtils.isBetween(param, TOKEN_START, TOKEN_END)) {
-                // param is a data variable... so it might be referencing a syspath function
-                Object pathObj = context.getObjectData(StringUtils.substringBetween(param, TOKEN_START, TOKEN_END));
-                if (pathObj != null && isFileLink(pathObj.toString())) { hasPath = true; }
+        boolean isSkipped = result.isSkipped();
+        if (isSkipped) {
+            XSSFCellStyle styleSkipped = worksheet.getStyle(STYLE_PARAM_SKIPPED);
+            for (int i = COL_IDX_PARAMS_START; i <= COL_IDX_PARAMS_END; i++) {
+                XSSFCell paramCell = row.get(i);
+                paramCell.setCellStyle(styleSkipped);
             }
+        } else {
+            cellDescription.setCellValue(context.containsCrypt(description) ?
+                                         CellTextReader.readValue(description) :
+                                         context.replaceTokens(description, true));
 
-            String value = context.replaceTokens(param);
-            if ((!hasPath && value != null && new File(value).isFile()) || isURL(value)) { hasPath = true; }
+            XSSFCellStyle styleParam = worksheet.getStyle(STYLE_PARAM);
+            XSSFCellStyle styleTaintedParam = worksheet.getStyle(STYLE_TAINTED_PARAM);
 
-            // create hyperlink for syspath when path is referenced
-            if (hasPath) {
-                // gotta make sure it's a file/path
-                if (FileUtil.isSuitableAsPath(value) && StringUtils.containsAny(value, "\\/")) {
-                    linkableParams.set(i, value);
+            // update the params that can be expressed as links (file or url)
+            for (int i = 0; i < params.size(); i++) {
+                String param = params.get(i);
+                if (StringUtils.isBlank(param)) { continue; }
+
+                // could be literal syspath - e.g. $(syspath|out|fullpath)/...
+                // could be data variable that reference syspath function
+                boolean hasPath = isFileLink(param);
+                if (!hasPath && TextUtils.isBetween(param, TOKEN_START, TOKEN_END)) {
+                    // param is a data variable... so it might be referencing a syspath function
+                    Object pathObj = context.getObjectData(StringUtils.substringBetween(param, TOKEN_START, TOKEN_END));
+                    if (pathObj != null && isFileLink(pathObj.toString())) { hasPath = true; }
+                }
+
+                String value = context.replaceTokens(param);
+                if ((!hasPath && value != null && new File(value).isFile()) || isURL(value)) { hasPath = true; }
+
+                // create hyperlink for syspath when path is referenced
+                if (hasPath) {
+                    // gotta make sure it's a file/path
+                    if (FileUtil.isSuitableAsPath(value) && StringUtils.containsAny(value, "\\/")) {
+                        linkableParams.set(i, value);
+                    }
                 }
             }
-        }
 
-        Object[] paramValues = result.getParamValues();
+            Object[] paramValues = result.getParamValues();
 
-        // handle linkable params (first priority), verbose (second priority) and params (last)
-        for (int i = COL_IDX_PARAMS_START; i <= COL_IDX_PARAMS_END; i++) {
-            int paramIdx = i - COL_IDX_PARAMS_START;
+            // handle linkable params (first priority), verbose (second priority) and params (last)
+            for (int i = COL_IDX_PARAMS_START; i <= COL_IDX_PARAMS_END; i++) {
+                int paramIdx = i - COL_IDX_PARAMS_START;
 
-            String link = CollectionUtils.size(linkableParams) > paramIdx ? linkableParams.get(paramIdx) : null;
-            XSSFCell paramCell = row.get(i);
-            if (StringUtils.isNotBlank(link)) {
-                // support output to cloud:
-                // - if link is local resource but output-to-cloud is enabled, then copy resource to cloud and update link
-                boolean linkToCloud = false;
-                if (context.isOutputToCloud() && !isURL(link)) {
-                    // create new local resource with name matching to current row, so that duplicate use of the
-                    // same name will not result in overriding cloud resource
+                String link = CollectionUtils.size(linkableParams) > paramIdx ? linkableParams.get(paramIdx) : null;
+                XSSFCell paramCell = row.get(i);
+                if (StringUtils.isNotBlank(link)) {
+                    // support output to cloud:
+                    // - if link is local resource but output-to-cloud is enabled, then copy resource to cloud and update link
+                    boolean linkToCloud = false;
+                    if (context.isOutputToCloud() && !isURL(link)) {
+                        // create new local resource with name matching to current row, so that duplicate use of the
+                        // same name will not result in overriding cloud resource
 
-                    if (FileUtil.isFileReadable(link, 1)) {
-                        // target file should exist with at least 1 byte
-                        File tmpFile = new File(StringUtils.substringBeforeLast(link, separator) + separator +
-                                                row.get(COL_IDX_TESTCASE).getReference() + "_" +
-                                                StringUtils.substringAfterLast(link, separator));
+                        if (FileUtil.isFileReadable(link, 1)) {
+                            // target file should exist with at least 1 byte
+                            File tmpFile = new File(StringUtils.substringBeforeLast(link, separator) + separator +
+                                                    row.get(COL_IDX_TESTCASE).getReference() + "_" +
+                                                    StringUtils.substringAfterLast(link, separator));
 
-                        try {
-                            ConsoleUtils.log("copy local resource " + link + " to " + tmpFile);
-                            FileUtils.copyFile(new File(link), tmpFile);
+                            try {
+                                ConsoleUtils.log("copy local resource " + link + " to " + tmpFile);
+                                FileUtils.copyFile(new File(link), tmpFile);
 
-                            ConsoleUtils.log("output-to-cloud enabled; copying " + link + " cloud...");
-                            String cloudUrl = context.getOtc().importFile(tmpFile, true);
-                            context.setData(OPT_LAST_OUTPUT_LINK, cloudUrl);
-                            context.setData(OPT_LAST_OUTPUT_PATH, StringUtils.substringBeforeLast(cloudUrl, "/"));
-                            ConsoleUtils.log("output-to-cloud enabled; copied  " + link + " to " + cloudUrl);
+                                ConsoleUtils.log("output-to-cloud enabled; copying " + link + " cloud...");
+                                String cloudUrl = context.getOtc().importFile(tmpFile, true);
+                                context.setData(OPT_LAST_OUTPUT_LINK, cloudUrl);
+                                context.setData(OPT_LAST_OUTPUT_PATH, StringUtils.substringBeforeLast(cloudUrl, "/"));
+                                ConsoleUtils.log("output-to-cloud enabled; copied  " + link + " to " + cloudUrl);
 
-                            worksheet.setHyperlink(paramCell, cloudUrl, "(cloud) " + params.get(paramIdx));
-                            linkToCloud = true;
-                        } catch (IOException e) {
-                            ConsoleUtils.log("Unable to copy resource to cloud: " + e.getMessage());
-                            log(toCloudIntegrationNotReadyMessage(link + ": " + e.getMessage()));
+                                worksheet.setHyperlink(paramCell, cloudUrl, "(cloud) " + params.get(paramIdx));
+                                linkToCloud = true;
+                            } catch (IOException e) {
+                                ConsoleUtils.log("Unable to copy resource to cloud: " + e.getMessage());
+                                log(toCloudIntegrationNotReadyMessage(link + ": " + e.getMessage()));
+                            }
+                        } else {
+                            ConsoleUtils.log("output-to-cloud enabled; but file " + link + " is empty or unreadable");
                         }
-                    } else {
-                        ConsoleUtils.log("output-to-cloud enabled; but file " + link + " is empty or unreadable");
                     }
-                }
 
-                // if `link` contains double quote, it's likely not a link..
-                if (!linkToCloud && !StringUtils.containsAny(link, "\"")) {
-                    worksheet.setHyperlink(paramCell, link, context.replaceTokens(params.get(paramIdx)));
-                }
-                continue;
-            }
-
-            String origParamValue = Excel.getCellValue(paramCell);
-            if (StringUtils.isBlank(origParamValue)) {
-                paramCell.setCellType(CellType.BLANK);
-                continue;
-            }
-
-            if (i == COL_IDX_PARAMS_START && StringUtils.equals(getCommandFQN(), CMD_VERBOSE)) {
-                if (context.containsCrypt(origParamValue)) {
-                    paramCell.setCellComment(toSystemComment(paramCell, "detected crypto"));
-                } else {
-                    message = platformSpecificEOL(message);
-                    if (StringUtils.length(message) > MAX_VERBOSE_CHAR) {
-                        message = StringUtils.truncate(message, MAX_VERBOSE_CHAR) + "…";
+                    // if `link` contains double quote, it's likely not a link..
+                    if (!linkToCloud && !StringUtils.containsAny(link, "\"")) {
+                        worksheet.setHyperlink(paramCell, link, context.replaceTokens(params.get(paramIdx)));
                     }
-                    paramCell.setCellValue(message);
-                    paramCell.setCellComment(toSystemComment(paramCell, origParamValue));
-                }
-
-                ExcelStyleHelper.handleTextWrap(paramCell);
-                continue;
-            }
-
-            Object value = ArrayUtils.getLength(paramValues) > paramIdx ? paramValues[paramIdx] : null;
-            if (value != null) {
-                // respect the crypts... if value has crypt:, then keep it as is
-                if (context.containsCrypt(origParamValue)) {
-                    paramCell.setCellComment(toSystemComment(paramCell, "detected crypto"));
                     continue;
                 }
 
-                String taintedValue = CellTextReader.getOriginal(origParamValue, Objects.toString(value));
-                boolean tainted = !StringUtils.equals(origParamValue, taintedValue);
-                if (tainted) {
-                    paramCell.setCellValue(StringUtils.abbreviate(taintedValue, MAX_VERBOSE_CHAR));
-                    if (StringUtils.isNotEmpty(origParamValue)) {
+                String origParamValue = Excel.getCellValue(paramCell);
+                if (StringUtils.isBlank(origParamValue)) {
+                    paramCell.setCellType(CellType.BLANK);
+                    continue;
+                }
+
+                if (i == COL_IDX_PARAMS_START && StringUtils.equals(getCommandFQN(), CMD_VERBOSE)) {
+                    if (context.containsCrypt(origParamValue)) {
+                        paramCell.setCellComment(toSystemComment(paramCell, "detected crypto"));
+                    } else {
+                        message = StringUtils.trim(platformSpecificEOL(message));
+                        if (StringUtils.length(message) > MAX_VERBOSE_CHAR) {
+                            message = StringUtils.truncate(message, MAX_VERBOSE_CHAR) + "…";
+                        }
+                        paramCell.setCellValue(message);
                         paramCell.setCellComment(toSystemComment(paramCell, origParamValue));
                     }
-                    paramCell.setCellStyle(styleTaintedParam);
-                } else {
-                    paramCell.setCellStyle(styleParam);
+                    continue;
                 }
-                ExcelStyleHelper.handleTextWrap(paramCell);
+
+                Object value = ArrayUtils.getLength(paramValues) > paramIdx ? paramValues[paramIdx] : null;
+                if (value != null) {
+                    // respect the crypts... if value has crypt:, then keep it as is
+                    if (context.containsCrypt(origParamValue)) {
+                        paramCell.setCellComment(toSystemComment(paramCell, "detected crypto"));
+                        continue;
+                    }
+
+                    String taintedValue = CellTextReader.getOriginal(origParamValue, Objects.toString(value));
+                    boolean tainted = !StringUtils.equals(origParamValue, taintedValue);
+                    if (tainted) {
+                        paramCell.setCellValue(StringUtils.abbreviate(taintedValue, MAX_VERBOSE_CHAR));
+                        if (StringUtils.isNotEmpty(origParamValue)) {
+                            paramCell.setCellComment(toSystemComment(paramCell, origParamValue));
+                        }
+                        paramCell.setCellStyle(styleTaintedParam);
+                    } else {
+                        paramCell.setCellStyle(styleParam);
+                    }
+                    // ExcelStyleHelper.handleTextWrap(paramCell);
+                }
             }
         }
 
         // flow control
-        XSSFCell flowControlCell = row.get(COL_IDX_FLOW_CONTROLS);
-        ExcelStyleHelper.formatFlowControlCell(worksheet, flowControlCell);
-        if (StringUtils.isBlank(Excel.getCellValue(flowControlCell))) { flowControlCell.setCellType(CellType.BLANK); }
+        ExcelStyleHelper.formatFlowControlCell(worksheet, row.get(COL_IDX_FLOW_CONTROLS));
 
         // screenshot
-        handleScreenshot(result);
+        if (!isSkipped) { handleScreenshot(result); }
 
         boolean pass = result.isSuccess();
 
@@ -721,7 +729,7 @@ public class TestStep extends TestStepManifest {
         } else {
             cellResult.setCellStyle(worksheet.getStyle(pass ? STYLE_SUCCESS_RESULT : STYLE_FAILED_RESULT));
         }
-        ExcelStyleHelper.handleTextWrap(cellResult);
+        // ExcelStyleHelper.handleTextWrap(cellResult);
 
         // reason
         XSSFCell cellReason = row.get(COL_IDX_REASON);

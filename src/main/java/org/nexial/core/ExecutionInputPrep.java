@@ -221,6 +221,7 @@ public class ExecutionInputPrep {
         XSSFWorkbook workbook = dataSheet.getWorkbook();
         XSSFCellStyle styleSystemDataName = ExcelStyleHelper.generate(workbook, PREDEF_TEST_DATA_NAME);
         XSSFCellStyle styleTestDataName = ExcelStyleHelper.generate(workbook, TEST_DATA_NAME);
+        XSSFCellStyle styleTestDataNameDisabled = ExcelStyleHelper.generate(workbook, TEST_DATA_NAME_DISABLED);
         XSSFCellStyle styleTestDataValue = ExcelStyleHelper.generate(workbook, TEST_DATA_VALUE);
 
         SortedMap<String, String> data = new TreeMap<>((key1, key2) -> {
@@ -267,7 +268,9 @@ public class ExecutionInputPrep {
 
             XSSFCell cellName = row.getCell(0, CREATE_NULL_AS_BLANK);
             cellName.setCellValue(name);
-            cellName.setCellStyle(StringUtils.startsWith(name, NAMESPACE) ? styleSystemDataName : styleTestDataName);
+            cellName.setCellStyle(StringUtils.startsWith(name, NAMESPACE) ?
+                                  styleSystemDataName :
+                                  StringUtils.startsWith(name, "//") ? styleTestDataNameDisabled: styleTestDataName);
 
             XSSFCell cellValue = row.getCell(1, CREATE_NULL_AS_BLANK);
             cellValue.setCellValue(CellTextReader.readValue(value));

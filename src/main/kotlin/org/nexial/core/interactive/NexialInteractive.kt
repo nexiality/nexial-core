@@ -377,7 +377,6 @@ class NexialInteractive {
     }
 
     private fun executeSteps(session: InteractiveSession, parentSummary: ExecutionSummary?): Boolean {
-
         val context = session.context
         val logger = context.logger
         val scenario = context.testScenarios[0]
