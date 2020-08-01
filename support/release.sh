@@ -9,20 +9,20 @@
 #   PROJECT_NAME: default nexial-core
 
 if [[ -v ${GITHUB_TOKEN} ]]; then
-    echo ** MISSING REQUIRED ENVIRONMENT VARIABLE
-    echo ** ${GITHUB_TOKEN}
-    echo **
-    echo ** UNABLE TO CONTINUE, EXITING...
-    exit -1
+    echo "** MISSING REQUIRED ENVIRONMENT VARIABLE"
+    echo "** ${GITHUB_TOKEN}"
+    echo "**"
+    echo "** UNABLE TO CONTINUE, EXITING..."
+    exit 16
 fi
 
 GITHUB_REPO=${GITHUB_PROJECT:-nexiality/nexial-core}
 NEXIAL_HOME=${WORKSPACE}
 NEXIAL_DIST_HOME=${WORKSPACE}/build/install/${PROJECT_NAME:-nexial-core}
-TARGET_VERSION=v`cat ${NEXIAL_HOME}/support/target_version.txt`
-RELEASE_DATE=`date +%Y/%m/%d`
-RELEASE_TAG=nexial-core-${TARGET_VERSION}_`printf %04d ${BUILD_NUMBER}`
-RELEASE_ASSET=nexial-core-${RELEASE_VERSION:-dev}_`printf %04d ${BUILD_NUMBER}`.zip
+TARGET_VERSION=v$(cat ${NEXIAL_HOME}/support/target_version.txt)
+RELEASE_DATE=$(date +%Y/%m/%d)
+RELEASE_TAG=nexial-core-${TARGET_VERSION}_$(printf %04d ${BUILD_NUMBER})
+RELEASE_ASSET=nexial-core-${RELEASE_VERSION:-dev}_$(printf %04d ${BUILD_NUMBER}).zip
 
 IS_PRERELEASE="false"
 if [ -z $RELEASE_VERSION ]; then
@@ -71,6 +71,7 @@ fi
 # -----------------------------------------------------------------------------
 echo creating distribution ${NEXIAL_DIST_HOME}/${RELEASE_ASSET}
 cd ${NEXIAL_DIST_HOME}
+echo ${RELEASE_TAG} > ${NEXIAL_DIST_HOME}/version.txt
 zip -9 -r ${NEXIAL_DIST_HOME}/${RELEASE_ASSET} *
 
 # -----------------------------------------------------------------------------
