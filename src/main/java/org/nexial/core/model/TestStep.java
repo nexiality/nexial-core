@@ -518,8 +518,8 @@ public class TestStep extends TestStepManifest {
 
             boolean lastOutcome = result.isSuccess();
 
-            // if macro expanded, then consider last outcome from macrosteps
-            if (!isMacroExpander && macroExecutor != null) { context.setData(OPT_LAST_OUTCOME, lastOutcome); }
+            // if macro expanded, then consider last outcome from macro steps
+            if (!isMacroExpander || macroExecutor == null) { context.setData(OPT_LAST_OUTCOME, lastOutcome); }
 
             if (lastOutcome) {
                 summary.incrementPass();
@@ -576,12 +576,6 @@ public class TestStep extends TestStepManifest {
             error("Unable to capture screenshot: " + e.getMessage());
             return null;
         }
-    }
-
-    protected void readFlowControlsCell(List<XSSFCell> row) {
-        addSkipFlowControl();
-        XSSFCell cell = row.get(COL_IDX_FLOW_CONTROLS);
-        setFlowControls(FlowControl.parse(cell != null ? StringUtils.defaultString(Excel.getCellValue(cell), "") : ""));
     }
 
     protected void updateResult(StepResult result, long elapsedMs) {
@@ -889,6 +883,12 @@ public class TestStep extends TestStepManifest {
                              "[NAME] :" + macro.getMacroName();
             Excel.createComment(cellDescription, comment, COMMENT_AUTHOR);
         }
+    }
+
+    protected void readFlowControlsCell(List<XSSFCell> row) {
+        addSkipFlowControl();
+        XSSFCell cell = row.get(COL_IDX_FLOW_CONTROLS);
+        setFlowControls(FlowControl.parse(cell != null ? StringUtils.defaultString(Excel.getCellValue(cell), "") : ""));
     }
 
     private void addSkipFlowControl() {

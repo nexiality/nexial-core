@@ -74,6 +74,13 @@ class HeadlessBaseTests : ExcelBasedTests() {
 
     @Test
     @Throws(Exception::class)
+    fun baseCommandTests_macroFlex() {
+        val executionSummary = testViaExcel("unitTest_base_macroFlex.xlsx")
+        assertPassFail(executionSummary, "macroFlex", TestOutcomeStats.allPassed())
+    }
+
+    @Test
+    @Throws(Exception::class)
     fun numberCommandTests() {
         val executionSummary = testViaExcel("unitTest_numberCommand.xlsx")
         assertPassFail(executionSummary, "Number_Command_Validation", TestOutcomeStats.allPassed())

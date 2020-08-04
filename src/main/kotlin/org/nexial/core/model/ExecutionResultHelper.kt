@@ -29,7 +29,6 @@ import org.nexial.core.CommandConst.CMD_SECTION
 import org.nexial.core.CommandConst.shouldMergeCommandParams
 import org.nexial.core.ExecutionThread
 import org.nexial.core.NexialConst
-import org.nexial.core.NexialConst.Data
 import org.nexial.core.NexialConst.Data.*
 import org.nexial.core.excel.Excel
 import org.nexial.core.excel.Excel.Worksheet
@@ -72,25 +71,25 @@ class ExecutionResultHelper(private val allSteps: List<TestStep>, val worksheet:
             currentRow++
         }
 
-        formatTestScenario(ADDR_COMMAND_START.rowStartIndex, lastRow)
+        formatDescriptionCell(ADDR_COMMAND_START.rowStartIndex, lastRow)
         // update execution summary in the scenario sheet
         writeTestScenarioResult(worksheet, executionSummary)
     }
 
-    private fun formatTestScenario(startRow: Int, lastRow: Int): Int {
+    private fun formatDescriptionCell(startRow: Int, lastRow: Int): Int {
         val excelSheet = worksheet.sheet
         var i = startRow
         while (true) {
             if (i > lastRow) break
-            i += formatCells(excelSheet, i, "", lastRow)
+            i += formatDescriptionCell(excelSheet, i, "", lastRow)
             i++
         }
         return lastRow
     }
 
-    private fun formatCells(sheet: XSSFSheet, startRow: Int, prefix: String, lastRow: Int): Int {
-        val row = sheet.getRow(startRow)
+    private fun formatDescriptionCell(sheet: XSSFSheet, startRow: Int, prefix: String, lastRow: Int): Int {
         if (lastRow < startRow) return 0
+        val row = sheet.getRow(startRow) ?: return 0
 
         var prefix1 = prefix
 
@@ -121,7 +120,7 @@ class ExecutionResultHelper(private val allSteps: List<TestStep>, val worksheet:
                         StringUtils.replace(prefix1, REPEAT_CHECK_DESCRIPTION_PREFIX, REPEAT_DESCRIPTION_PREFIX)
 
                     }
-                    val num = formatCells(sheet, startRow + j + 1, prefix1, lastRow)
+                    val num = formatDescriptionCell(sheet, startRow + j + 1, prefix1, lastRow)
                     numOfSteps += num
                     j += num
                     j++
@@ -139,7 +138,7 @@ class ExecutionResultHelper(private val allSteps: List<TestStep>, val worksheet:
                 var j = 0
                 while (true) {
                     if (j == numOfSteps) break
-                    val num = formatCells(sheet, startRow + j + 1, prefix1, lastRow)
+                    val num = formatDescriptionCell(sheet, startRow + j + 1, prefix1, lastRow)
                     numOfSteps += num
                     j += num
                     j++
@@ -332,8 +331,7 @@ class ExecutionResultHelper(private val allSteps: List<TestStep>, val worksheet:
                 // +1 if lastRow is the same as currentRow. Otherwise shiftRow on a single row block
                 // causes problem for createRow (later on).
                 worksheet.shiftRows(currentRowIdx, lastDataRow + if (currentRowIdx == lastDataRow) 1 else 0, 1)
-//                }
-                val rowIndex = currentRowIdx + i
+                val rowIndex = currentRowIdx
                 val row = excelSheet.createRow(rowIndex)
                 var cell = row.createCell(COL_IDX_MERGE_RESULT_START)
                 cell.setCellValue(nestedMessage.message)
@@ -476,9 +474,9 @@ class ExecutionResultHelper(private val allSteps: List<TestStep>, val worksheet:
 
     companion object {
         @JvmStatic
-        fun updateOutputDataSheet(context: ExecutionContext, outputFile: Excel): Excel? {
+        fun updateOutputDataSheet(context: ExecutionContext?, outputFile: Excel): Excel? {
             if (context == null) return null
-            val dataSheet = outputFile.workbook.getSheet(Data.SHEET_MERGED_DATA)
+            val dataSheet = outputFile.workbook.getSheet(SHEET_MERGED_DATA)
             val currentRowIndex = intArrayOf(0)
 
             dataSheet.forEach(Consumer forEach@{
