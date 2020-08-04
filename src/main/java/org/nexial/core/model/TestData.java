@@ -36,10 +36,10 @@ import org.nexial.core.excel.ExcelAddress;
 import org.nexial.core.utils.ConsoleUtils;
 import org.nexial.core.utils.InputFileUtils;
 
+import static org.nexial.core.NexialConst.*;
 import static org.nexial.core.NexialConst.Data.*;
 import static org.nexial.core.NexialConst.Exec.POST_EXEC_MAIL_TO;
 import static org.nexial.core.NexialConst.Iteration.*;
-import static org.nexial.core.NexialConst.*;
 
 /**
  * This represents a set of data usable for a specific test execution, which may contain multiple scenarios.
@@ -328,7 +328,11 @@ public class TestData {
 
         // second pass: read all non "nexial scope" data, up to specified iteration
         for (int i = startRowIndex; i < endRowIndex; i++) {
-            String endColumn = ExcelAddress.toLetterCellRef(lastIteration + 1);
+            // shouldn't use lastIteration since by doing so we might not be able to capture iteration data that
+            // might be needed by other overriding scenarios
+            // String endColumn = ExcelAddress.toLetterCellRef(lastIteration + 1);
+            int lastColumn = Math.max(sheet.getSheet().getRow(i - 1).getLastCellNum(), lastIteration);
+            String endColumn = ExcelAddress.toLetterCellRef(lastColumn);
             ExcelAddress addrThisRow = new ExcelAddress("A" + i + ":" + endColumn + i);
 
             // no need for empty/bad row checks since we did it in the first pass
@@ -339,12 +343,18 @@ public class TestData {
 
             String name = Excel.getCellValue(headerCell);
             if (!CommandConst.isNonIterableVariable(name)) {
-                collectIterationData(row, lastIteration, name, dataMap);
+                // shouldn't use lastIteration since by doing so we might not be able to capture iteration data that
+                // might be needed by other overriding scenarios
+                // collectIterationData(row, lastIteration, name, dataMap);
+                collectIterationData(row, lastColumn, name, dataMap);
 
                 // keep track of the data specified in #default sheet so that they can be overriden in
                 // cross-execution scenarios (i.e. test plan).
                 if (isDefault) {
-                    collectIterationData(row, lastIteration, name, defaultDataMap);
+                    // shouldn't use lastIteration since by doing so we might not be able to capture iteration data that
+                    // might be needed by other overriding scenarios
+                    // collectIterationData(row, lastIteration, name, defaultDataMap);
+                    collectIterationData(row, lastColumn, name, defaultDataMap);
                 } else {
                     eliminateFromDefaultDataMap(name);
                 }

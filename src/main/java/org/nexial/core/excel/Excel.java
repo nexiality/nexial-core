@@ -1154,7 +1154,8 @@ public class Excel {
             anchor.setCol1(column);
             anchor.setCol2(column + 1);
             anchor.setRow1(rowNum);
-            anchor.setRow2(rowNum + Math.max(StringUtils.split(comment, System.lineSeparator()).length, 3));
+            // anchor.setRow2(rowNum + Math.max(StringUtils.split(comment, System.lineSeparator()).length, 3));
+            anchor.setRow2(rowNum + 3);
 
             XSSFDrawing drawing = sheet.createDrawingPatriarch();
             commentCell = drawing.createCellComment(anchor);
