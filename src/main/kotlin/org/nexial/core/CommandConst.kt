@@ -71,7 +71,11 @@ object CommandConst {
     @JvmStatic
     fun shouldMergeCommandParams(command: String) = MERGE_READY.contains(command)
 
-    const val CMD_MACRO = "base.macro(file,sheet,name)"
+    private const val MACRO_COMMAND = "macro(file,sheet,name)"
+    private const val MACRO_FLEX_COMMAND = "macroFlex(macro,input,output)"
+
+    const val CMD_MACRO = "base.$MACRO_COMMAND"
+    const val CMD_MACRO_FLEX = "base.$MACRO_FLEX_COMMAND"
     const val CMD_REPEAT_UNTIL = "base.repeatUntil(steps,maxWaitMs)"
     const val CMD_SECTION = "base.section(steps)"
 
@@ -85,7 +89,7 @@ object CommandConst {
 
     // test script updater commands
     @JvmStatic
-    val nonMacroCommands = listOf("macro(file,sheet,name)")
+    val nonMacroCommands = listOf(MACRO_COMMAND, MACRO_FLEX_COMMAND)
 
     @JvmStatic
     val replacedCommands = mapOf(

@@ -39,6 +39,7 @@ import org.nexial.commons.utils.DateUtility;
 import org.nexial.commons.utils.FileUtil;
 import org.nexial.commons.utils.RegexUtils;
 import org.nexial.commons.utils.TextUtils;
+import org.nexial.core.ExecutionInputPrep;
 import org.nexial.core.excel.Excel;
 import org.nexial.core.excel.Excel.Worksheet;
 import org.nexial.core.excel.ExcelStyleHelper;
@@ -63,8 +64,9 @@ import static org.apache.commons.lang3.builder.ToStringStyle.SIMPLE_STYLE;
 import static org.nexial.commons.utils.EnvUtils.platformSpecificEOL;
 import static org.nexial.core.CommandConst.*;
 import static org.nexial.core.NexialConst.*;
-import static org.nexial.core.NexialConst.MSG_FAIL;
 import static org.nexial.core.NexialConst.Data.*;
+import static org.nexial.core.NexialConst.MSG_FAIL;
+import static org.nexial.core.NexialConst.FlowControls.CONDITION_DISABLE;
 import static org.nexial.core.NexialConst.Web.WEB_PERF_METRICS_ENABLED;
 import static org.nexial.core.SystemVariables.getDefaultBool;
 import static org.nexial.core.excel.ExcelConfig.MSG_PASS;
@@ -79,17 +81,21 @@ public class TestStep extends TestStepManifest {
     protected boolean isCommandRepeater;
     protected CommandRepeater commandRepeater;
     protected boolean hasErrorScreenshot;
+    protected boolean isMacroExpander;
+    protected MacroExecutor macroExecutor;
+    protected boolean macroPartOfRepeatUntil;
+    protected String macroName;
 
     // support testing
     protected TestStep() { }
 
-    public TestStep(TestCase testCase, List<XSSFCell> row) {
+    public TestStep(TestCase testCase, List<XSSFCell> row, Worksheet worksheet) {
         assert testCase != null;
         assert CollectionUtils.isNotEmpty(row);
 
         this.testCase = testCase;
         this.row = row;
-        this.worksheet = testCase.getTestScenario().getWorksheet();
+        this.worksheet = worksheet;
         this.context = testCase.getTestScenario().getContext();
 
         assert context != null && StringUtils.isNotBlank(context.getId());
@@ -124,6 +130,9 @@ public class TestStep extends TestStepManifest {
         setExternalProgram(StringUtils.containsAny(target, "external", "junit"));
         setLogToTestScript(isExternalProgram);
         isCommandRepeater = StringUtils.equals(target + "." + command, CMD_REPEAT_UNTIL);
+        isMacroExpander = StringUtils.equalsAny(target + "." + command, CMD_MACRO, CMD_MACRO_FLEX);
+        macroPartOfRepeatUntil = false;
+        macroName = StringUtils.EMPTY;
     }
 
     public Worksheet getWorksheet() { return worksheet; }
@@ -139,6 +148,14 @@ public class TestStep extends TestStepManifest {
     public String showPosition() { return messageId; }
 
     public ExecutionContext getContext() { return context; }
+
+    public boolean isMacroExpander() { return isMacroExpander; }
+
+    public MacroExecutor getMacroExecutor() { return macroExecutor; }
+
+    public void setMacroExecutor(MacroExecutor macroExecutor) { this.macroExecutor = macroExecutor;}
+
+    public String getMacroName() { return macroName; }
 
     @Override
     public String toString() {
@@ -407,36 +424,33 @@ public class TestStep extends TestStepManifest {
         logger.log(this, "executing " + command + "(" + StringUtils.removeEnd(argText.toString(), ", ") + ")", true);
     }
 
-    protected void postExecCommand(StepResult result, long elapsedMs) {
-        // also include screenshot-on-error handling
-        updateResult(result, elapsedMs);
+    public int formatSkippedSections(List<TestStep> testSteps, int i, boolean updateResult) {
+        // `params.get(0)` represents the number of steps of this `section`
+        int steps = Integer.parseInt(params.get(0));
 
-        ExecutionSummary summary = testCase.getTestScenario().getExecutionSummary();
-        if (result.isSkipped()) {
-            summary.adjustTotalSteps(-1);
-            log(MessageUtils.renderAsSkipped(result.getMessage()));
-        } else {
-            summary.incrementExecuted();
-
-            boolean lastOutcome = result.isSuccess();
-            context.setData(OPT_LAST_OUTCOME, lastOutcome);
-
-            if (lastOutcome) {
-                summary.incrementPass();
-                // avoid printing verbose() message to avoid leaking of sensitive information on log
-                log(MessageUtils.renderAsPass(StringUtils.equals(getCommandFQN(), CMD_VERBOSE) ?
-                                              "" : result.getMessage()));
-            } else {
-                summary.incrementFail();
-                error(MessageUtils.renderAsFail(result.getMessage()));
-                if (StringUtils.isNotBlank(result.getDetailedLogLink())) {
-                    context.getLogger().error(this, "Error log: " + result.getDetailedLogLink());
+        for (int j = 0; j < steps; j++) {
+            int sectionStepIndex = i + j + 1;
+            if (testSteps.size() > sectionStepIndex) {
+                TestStep step = testSteps.get(sectionStepIndex);
+                if (updateResult) {
+                    step.postExecCommand(StepResult.skipped(NESTED_SECTION_STEP_SKIPPED), 0);
                 }
-                trackExecutionError(result);
+
+                // reduce the number of steps for repeatUntil command
+                if (step.isCommandRepeater()) { steps -= Integer.parseInt(step.getParams().get(0)); }
+
+                // add the number of steps for section commands
+                if (StringUtils.equals(step.getCommandFQN(), CMD_SECTION)) {
+                    int stepCount = step.formatSkippedSections(testSteps, sectionStepIndex, updateResult);
+                    steps += stepCount;
+                    j += stepCount;
+                }
+            } else {
+                steps = j - 1;
+                break;
             }
         }
-
-        context.evaluateResult(result);
+        return steps;
     }
 
     protected void trackExecutionError(StepResult result) {
@@ -491,9 +505,38 @@ public class TestStep extends TestStepManifest {
         for (int i = 0; i < this.params.size(); i++) { linkableParams.add(i, null); }
     }
 
-    protected void readFlowControlsCell(List<XSSFCell> row) {
-        XSSFCell cell = row.get(COL_IDX_FLOW_CONTROLS);
-        setFlowControls(FlowControl.parse(cell != null ? StringUtils.defaultString(Excel.getCellValue(cell), "") : ""));
+    protected void postExecCommand(StepResult result, long elapsedMs) {
+        // also include screenshot-on-error handling
+        updateResult(result, elapsedMs);
+
+        ExecutionSummary summary = testCase.getTestScenario().getExecutionSummary();
+        if (result.isSkipped()) {
+            summary.adjustTotalSteps(-1);
+            log(MessageUtils.renderAsSkipped(result.getMessage()));
+        } else {
+            summary.incrementExecuted();
+
+            boolean lastOutcome = result.isSuccess();
+
+            // if macro expanded, then consider last outcome from macrosteps
+            if (!isMacroExpander && macroExecutor != null) { context.setData(OPT_LAST_OUTCOME, lastOutcome); }
+
+            if (lastOutcome) {
+                summary.incrementPass();
+                // avoid printing verbose() message to avoid leaking of sensitive information on log
+                log(MessageUtils.renderAsPass(StringUtils.equals(getCommandFQN(), CMD_VERBOSE) ?
+                                              "" : result.getMessage()));
+            } else {
+                summary.incrementFail();
+                error(MessageUtils.renderAsFail(result.getMessage()));
+                if (StringUtils.isNotBlank(result.getDetailedLogLink())) {
+                    context.getLogger().error(this, "Error log: " + result.getDetailedLogLink());
+                }
+                trackExecutionError(result);
+            }
+        }
+
+        context.evaluateResult(result);
     }
 
     protected void readCaptureScreenCell(List<XSSFCell> row) {
@@ -533,6 +576,12 @@ public class TestStep extends TestStepManifest {
             error("Unable to capture screenshot: " + e.getMessage());
             return null;
         }
+    }
+
+    protected void readFlowControlsCell(List<XSSFCell> row) {
+        addSkipFlowControl();
+        XSSFCell cell = row.get(COL_IDX_FLOW_CONTROLS);
+        setFlowControls(FlowControl.parse(cell != null ? StringUtils.defaultString(Excel.getCellValue(cell), "") : ""));
     }
 
     protected void updateResult(StepResult result, long elapsedMs) {
@@ -707,6 +756,8 @@ public class TestStep extends TestStepManifest {
             // exception = result.getException();
         }
 
+        createCommentForMacro(cellDescription, pass);
+
         // result
         XSSFCell cellResult = row.get(COL_IDX_RESULT);
         String resultMsg = MESSAGE_REQUIRED_COMMANDS.contains(row.get(2).toString() + "." + row.get(3).toString()) &&
@@ -725,7 +776,7 @@ public class TestStep extends TestStepManifest {
             // paint both result and description the same style to improve readability
             cellResult.setCellStyle(worksheet.getStyle(STYLE_SKIPPED_RESULT));
             cellDescription.setCellStyle(worksheet.getStyle(STYLE_SKIPPED_RESULT));
-            Excel.createComment(cellDescription, cellResult.getStringCellValue(), COMMENT_AUTHOR);
+            Excel.createComment(cellDescription, message, COMMENT_AUTHOR);
         } else {
             cellResult.setCellStyle(worksheet.getStyle(pass ? STYLE_SUCCESS_RESULT : STYLE_FAILED_RESULT));
         }
@@ -826,4 +877,33 @@ public class TestStep extends TestStepManifest {
     }
 
     private String toSystemComment(String message) { return "test script:" + lineSeparator() + message; }
+
+    // add macro name as a comment for description of section command
+    protected void createCommentForMacro(XSSFCell cellDescription, boolean pass) {
+        if (pass && isMacroExpander && macroExecutor != null) {
+            Macro macro = macroExecutor.getMacro();
+            String comment = "imported from: " + lineSeparator() +
+                             "[FROM]: ROW #" + (rowIndex + 1) + lineSeparator() +
+                             "[FILE]: " + macro.getFile() + lineSeparator() +
+                             "[SHEET] :" + macro.getSheet() + lineSeparator() +
+                             "[NAME] :" + macro.getMacroName();
+            Excel.createComment(cellDescription, comment, COMMENT_AUTHOR);
+        }
+    }
+
+    private void addSkipFlowControl() {
+        if (!ExecutionInputPrep.isTestStepDisabled(row)) { return; }
+
+        setFlowControls(FlowControl.parse("SkipIf(true)"));
+
+        // add SkipIf(true) condition to flow control cell
+        XSSFCell cellFlowControls = row.get(COL_IDX_FLOW_CONTROLS);
+        cellFlowControls.setCellValue(CONDITION_DISABLE);
+
+        // (2018/12/28,automike): we MUST NOT prepend or append since other flow control may supersede the flow
+        // control we are adding here to "disable" a command
+        // String currentFlowControls = Excel.getCellValue(cellFlowControls);
+        // currentFlowControls = StringUtils.prependIfMissing(currentFlowControls, CONDITION_DISABLE);
+        // cellFlowControls.setCellValue(currentFlowControls);
+    }
 }

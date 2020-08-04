@@ -34,7 +34,6 @@ import org.nexial.core.excel.ext.CellTextReader;
 import org.nexial.core.model.ExecutionDefinition;
 import org.nexial.core.model.ExecutionVariableConsole;
 import org.nexial.core.model.IterationManager;
-import org.nexial.core.model.MacroMerger;
 import org.nexial.core.model.TestData;
 import org.nexial.core.utils.ConsoleUtils;
 import org.nexial.core.utils.ExecUtils;
@@ -123,13 +122,13 @@ public class ExecutionInputPrep {
         }
 
         // merge macros
-        // todo: better instantiation so that we can reuse in-class cache (inside MacroMerger)
+        /*  // todo: better instantiation so that we can reuse in-class cache (inside MacroMerger)
         MacroMerger macroMerger = new MacroMerger();
         macroMerger.setCurrentIteration(iterationIndex);
         macroMerger.setExecDef(execDef);
         macroMerger.setProject(execDef.getProject());
         macroMerger.setExcel(outputExcel);
-        macroMerger.mergeMacro();
+        // macroMerger.mergeMacro();*/
 
         // 4. merge expanded test data to output file
         // this is necessary since the output directory (and final output file) could be remote

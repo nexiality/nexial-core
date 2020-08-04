@@ -37,7 +37,6 @@ import static org.apache.poi.ss.usermodel.CellType.BLANK;
 import static org.apache.poi.ss.usermodel.FillPatternType.NO_FILL;
 import static org.apache.poi.ss.usermodel.FillPatternType.SOLID_FOREGROUND;
 import static org.apache.poi.xssf.usermodel.extensions.XSSFCellBorder.BorderSide.*;
-import static org.nexial.core.NexialConst.Data.SECTION_DESCRIPTION_PREFIX;
 import static org.nexial.core.excel.ExcelConfig.*;
 import static org.nexial.core.excel.ExcelConfig.StyleConfig.FONT_NAME_FIXED_DEFAULT;
 import static org.nexial.core.excel.ExcelStyleHelper.StyleName.*;
@@ -163,9 +162,7 @@ public final class ExcelStyleHelper {
     }
 
     public static void formatSectionDescription(TestStep testStep, boolean prefix) {
-        enhanceDescriptionFormat(formatDescriptionCell(testStep,
-                                                       STYLE_SECTION_DESCRIPTION,
-                                                       prefix ? SECTION_DESCRIPTION_PREFIX : ""));
+        enhanceDescriptionFormat(formatDescriptionCell(testStep, STYLE_SECTION_DESCRIPTION));
     }
 
     public static void formatRepeatUntilDescription(Worksheet worksheet, XSSFCell cell) {
@@ -173,12 +170,12 @@ public final class ExcelStyleHelper {
         fixCellWidth(cell.getSheet(), cell, COL_IDX_DESCRIPTION, DEF_CHAR_WIDTH_FACTOR_TAHOMA);
     }
 
-    public static TestStep formatRepeatUntilDescription(TestStep testStep, String prefix) {
-        return enhanceDescriptionFormat(formatDescriptionCell(testStep, STYLE_REPEAT_UNTIL_DESCRIPTION, prefix));
+    public static TestStep formatRepeatUntilDescription(TestStep testStep) {
+        return enhanceDescriptionFormat(formatDescriptionCell(testStep, STYLE_REPEAT_UNTIL_DESCRIPTION));
     }
 
     public static TestStep formatFailedStepDescription(TestStep testStep) {
-        return formatDescriptionCell(testStep, STYLE_FAILED_STEP_DESCRIPTION, null);
+        return formatDescriptionCell(testStep, STYLE_FAILED_STEP_DESCRIPTION);
     }
 
     public static void formatTargetCell(Worksheet worksheet, XSSFCell cell) {
@@ -356,14 +353,17 @@ public final class ExcelStyleHelper {
         return testStep;
     }
 
-    @NotNull
-    private static TestStep formatDescriptionCell(TestStep testStep, String styleName, String prefix) {
-        XSSFCell cell = testStep.getRow().get(COL_IDX_DESCRIPTION);
+    // add prefix to dscription
+    public static void formatDescriptionCell(XSSFCell cell, String prefix) {
         if (StringUtils.isNotBlank(prefix)) {
             String descriptionText = Excel.getCellValue(cell);
-            if (!StringUtils.startsWith(descriptionText, prefix)) { cell.setCellValue(prefix + descriptionText); }
+            cell.setCellValue(prefix + descriptionText);
         }
+    }
 
+    @NotNull
+    private static TestStep formatDescriptionCell(TestStep testStep, String styleName) {
+        XSSFCell cell = testStep.getRow().get(COL_IDX_DESCRIPTION);
         Worksheet worksheet = testStep.getWorksheet();
         cell.setCellStyle(worksheet.getStyle(styleName));
         fixCellWidth(cell.getSheet(), cell, COL_IDX_DESCRIPTION, DEF_CHAR_WIDTH_FACTOR_TAHOMA);

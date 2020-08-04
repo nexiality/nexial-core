@@ -55,6 +55,8 @@ import org.nexial.core.excel.Excel.Worksheet;
 import org.nexial.core.excel.ExcelAddress;
 import org.nexial.core.excel.ext.CellTextReader;
 import org.nexial.core.interactive.InteractiveSession;
+import org.nexial.core.logs.ExecutionLogger;
+import org.nexial.core.logs.TrackTimeLogs;
 import org.nexial.core.mail.NexialMailer;
 import org.nexial.core.plugins.CanTakeScreenshot;
 import org.nexial.core.plugins.NexialCommand;
@@ -66,9 +68,7 @@ import org.nexial.core.spi.NexialExecutionEvent;
 import org.nexial.core.spi.NexialListenerFactory;
 import org.nexial.core.utils.ConsoleUtils;
 import org.nexial.core.utils.ExecUtils;
-import org.nexial.core.logs.ExecutionLogger;
 import org.nexial.core.utils.OutputFileUtils;
-import org.nexial.core.logs.TrackTimeLogs;
 import org.nexial.core.variable.ExpressionException;
 import org.nexial.core.variable.ExpressionProcessor;
 import org.nexial.core.variable.Syspath;
@@ -176,6 +176,14 @@ public class ExecutionContext {
 
     static final String KEY_COMPLEX = "__lAIxEn__";
     static final String DOT_LITERAL_REPLACER = "__53n7ry_4h34d__";
+
+    // variables which should not be changed during macroFlex command
+    private static final List<String> MACRO_FLEX_EXCLUDE_VAR = Arrays.asList(END_IMMEDIATE, FAIL_IMMEDIATE,
+                                                                             BREAK_CURRENT_ITERATION,
+                                                                             MACRO_STEP_FAILED,
+                                                                             MACRO_BREAK_CURRENT_ITERATION,
+                                                                             FAIL_FAST);
+    protected boolean isInMacro = false;
 
     class Function {
         String functionName;
@@ -567,6 +575,9 @@ public class ExecutionContext {
     }
 
     public String getStringData(String name) {
+        // for macroFlex command search for 'Macro::name' first, if not defined search for 'name'
+        name = ((isInMacro && hasData(MACRO_FLEX_PREFIX + name)) ? MACRO_FLEX_PREFIX : "") + name;
+
         String rawValue = getRawStringData(name);
         if (StringUtils.isBlank(rawValue)) { return rawValue; }
         String resolved = replaceTokens(rawValue);
@@ -746,6 +757,13 @@ public class ExecutionContext {
         }
     }
 
+    public void removeDataByPrefix(String prefix) {
+        List<String> collectData = data.keySet().stream()
+                                       .filter(key -> StringUtils.startsWith(key, prefix))
+                                       .collect(Collectors.toList());
+        collectData.forEach(this::removeData);
+    }
+
     public void setData(String name, String value) {
         // some reference data are considered "special" and should be elevated to "execution" level so that they can be
         // used as such for Execution Dashboard
@@ -759,7 +777,11 @@ public class ExecutionContext {
             removeData(name);
         } else {
             value = mergeProperty(value);
-            data.put(name, value);
+            if (isInMacro && !MACRO_FLEX_EXCLUDE_VAR.contains(name)) {
+                data.put(MACRO_FLEX_PREFIX + name, value);
+            } else {
+                data.put(name, value);
+            }
 
             // logic updated; see below
             // if (updateSysProps || referenceDataForExecution.contains(name)) { System.setProperty(name, value); }
@@ -1223,11 +1245,23 @@ public class ExecutionContext {
     // support flow controls - EndIf()
     public boolean isEndImmediate() { return getBooleanData(END_IMMEDIATE, false); }
 
+    // support flow controls - EndIf()
+    public boolean isMacroStepFailed() { return getBooleanData(MACRO_STEP_FAILED, false); }
+
+    public void setMacroStepFailed(boolean stepFailed) { data.put(MACRO_STEP_FAILED, stepFailed); }
+
+    public void setInMacroFlex(boolean isInMacro) { this.isInMacro = isInMacro; }
+
+    // support flow controls - EndIf()
+    public boolean isMacroBreakIteration() { return getBooleanData(MACRO_BREAK_CURRENT_ITERATION, false); }
+
+    public void setMacroBreakIteration(boolean isMacroBreak) { data.put(MACRO_BREAK_CURRENT_ITERATION, isMacroBreak); }
+
     public void setEndImmediate(boolean endImmediate) { data.put(END_IMMEDIATE, endImmediate); }
 
     // support flow control - EndLoopIf()
     public boolean isBreakCurrentIteration() {
-        return getBooleanData(BREAK_CURRENT_ITERATION, false) || isFailImmediate();
+        return getBooleanData(BREAK_CURRENT_ITERATION, false) || isFailImmediate() || isEndImmediate();
     }
 
     public void setBreakCurrentIteration(boolean breakLoop) { setData(BREAK_CURRENT_ITERATION, breakLoop); }
@@ -1525,7 +1559,11 @@ public class ExecutionContext {
         }
 
         if (StringUtils.isEmpty(System.getProperty(name))) {
-            data.put(name, value);
+            if (isInMacro && !MACRO_FLEX_EXCLUDE_VAR.contains(name)) {
+                data.put(MACRO_FLEX_PREFIX + name, value);
+            } else {
+                data.put(name, value);
+            }
 
             // some reference data are considered "special" and should be elevated to "execution" level so that they
             // can be used as such for Execution Dashboard

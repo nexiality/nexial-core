@@ -27,21 +27,20 @@ import org.apache.commons.lang3.builder.ToStringBuilder;
 import org.apache.poi.xssf.usermodel.XSSFCell;
 import org.nexial.core.excel.Excel;
 import org.nexial.core.excel.Excel.Worksheet;
+import org.nexial.core.logs.ExecutionLogger;
+import org.nexial.core.logs.TrackTimeLogs;
 import org.nexial.core.plugins.web.WebDriverExceptionHelper;
 import org.nexial.core.utils.ConsoleUtils;
-import org.nexial.core.logs.ExecutionLogger;
 import org.nexial.core.utils.FlowControlUtils;
-import org.nexial.core.logs.TrackTimeLogs;
 import org.openqa.selenium.WebDriverException;
 
 import static org.apache.commons.lang3.builder.ToStringStyle.SIMPLE_STYLE;
 import static org.nexial.core.CommandConst.CMD_SECTION;
-import static org.nexial.core.NexialConst.Data.*;
+import static org.nexial.core.NexialConst.Data.FAIL_FAST;
 import static org.nexial.core.NexialConst.Exec.FAIL_COUNT;
 import static org.nexial.core.NexialConst.MSG_FAIL;
 import static org.nexial.core.NexialConst.MSG_PASS;
 import static org.nexial.core.NexialConst.*;
-import static org.nexial.core.NexialConst.NL;
 import static org.nexial.core.excel.ExcelConfig.*;
 import static org.nexial.core.excel.ExcelStyleHelper.*;
 
@@ -61,8 +60,10 @@ public class CommandRepeater {
 
     public int getStepCount() { return steps.size(); }
 
+    public List<TestStep> getSteps() { return steps; }
+
     public void formatSteps() {
-        initialTestStep = formatRepeatUntilDescription(initialTestStep, "");
+        initialTestStep = formatRepeatUntilDescription(initialTestStep);
 
         if (CollectionUtils.isEmpty(steps)) { return; }
 
@@ -71,7 +72,7 @@ public class CommandRepeater {
         // one loop through to fix all the styles for loop steps
         for (int i = 0; i < steps.size(); i++) {
             TestStep step = steps.get(i);
-            formatRepeatUntilDescription(step, i == 0 ? REPEAT_CHECK_DESCRIPTION_PREFIX : REPEAT_DESCRIPTION_PREFIX);
+            formatRepeatUntilDescription(step);
             formatTargetCell(worksheet, step.getRow().get(COL_IDX_TARGET));
             formatCommandCell(worksheet, step.getRow().get(COL_IDX_COMMAND));
             formatParams(step);
@@ -156,7 +157,7 @@ public class CommandRepeater {
                     // special case for base.section()
                     if (result.isSkipped() && StringUtils.equals(testStep.getCommandFQN(), CMD_SECTION)) {
                         // add the steps specified for the section command
-                        i += Integer.parseInt(testStep.getParams().get(0));
+                        i += testStep.formatSkippedSections(steps, i, false);
                     }
 
                 } catch (Throwable e) {

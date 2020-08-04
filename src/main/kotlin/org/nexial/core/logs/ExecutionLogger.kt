@@ -19,10 +19,7 @@ package org.nexial.core.logs
 
 import org.apache.commons.lang3.StringUtils
 import org.nexial.core.ExecutionThread
-import org.nexial.core.model.ExecutionContext
-import org.nexial.core.model.TestCase
-import org.nexial.core.model.TestScenario
-import org.nexial.core.model.TestStep
+import org.nexial.core.model.*
 import org.nexial.core.plugins.CanLogExternally
 import org.nexial.core.plugins.NexialCommand
 import org.slf4j.LoggerFactory
@@ -107,12 +104,14 @@ class ExecutionLogger(private val context: ExecutionContext) {
     companion object {
 
         @JvmStatic
-        fun toHeader(subject: TestStep?) = if (subject == null)
-            "current  step"
-        else
-            toHeader(subject.testCase) +
-            "|#" + StringUtils.leftPad((subject.rowIndex + 1).toString() + "", 3) +
-            "|" + StringUtils.truncate(subject.commandFQN, 25)
+        fun toHeader(subject: TestStep?) = if (subject == null) "current  step"
+        else {
+            var macroName = subject.macroName
+            macroName = if (StringUtils.isNotBlank(macroName)) "($macroName)" else ""
+            toHeader(subject.testCase) + "|$macroName#" + StringUtils.leftPad((subject.rowIndex + 1).toString() + "",
+                                                                              3) + "|" + StringUtils.truncate(
+                subject.commandFQN, 25)
+        }
 
         @JvmStatic
         fun toHeader(subject: TestCase?) =

@@ -217,6 +217,10 @@ public class ExecutionSummary {
     /** when a test step is skipped, we would need to adjust the total number of execution */
     public void adjustTotalSteps(int changeBy) { this.totalSteps += changeBy; }
 
+    public void adjustPassCount(int changeBy) { this.passCount += changeBy; }
+
+    public void adjustExecutedSteps(int changeBy) { this.executed += changeBy; }
+
     public int getPassCount() { return passCount; }
 
     public void setPassCount(int passCount) { this.passCount = passCount; }

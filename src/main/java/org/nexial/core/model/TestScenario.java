@@ -35,10 +35,11 @@ import org.nexial.core.excel.Excel;
 import org.nexial.core.excel.Excel.Worksheet;
 import org.nexial.core.excel.ExcelAddress;
 import org.nexial.core.excel.ExcelArea;
-import org.nexial.core.utils.ConsoleUtils;
 import org.nexial.core.logs.ExecutionLogger;
+import org.nexial.core.utils.ConsoleUtils;
 
 import static org.nexial.core.CommandConst.CMD_REPEAT_UNTIL;
+import static org.nexial.core.CommandConst.CMD_SECTION;
 import static org.nexial.core.NexialConst.*;
 import static org.nexial.core.excel.ExcelConfig.*;
 import static org.nexial.core.model.ExecutionSummary.ExecutionLevel.SCENARIO;
@@ -49,9 +50,6 @@ public class TestScenario {
     private Worksheet worksheet;
     private TestScenarioMeta meta;
     private final ExecutionSummary executionSummary = new ExecutionSummary();
-
-    /** the section with the corresponding worksheet that has test steps */
-    private ExcelArea area;
 
     private List<TestCase> testCases;
     private Map<String, TestCase> testCaseMap;
@@ -152,7 +150,9 @@ public class TestScenario {
         executionSummary.setFailedFast(shouldFailFast);
         executionSummary.aggregatedNestedExecutions(context);
 
-        ExecutionResultHelper.writeTestScenarioResult(worksheet, executionSummary);
+        // refill macro steps
+        ExecutionResultHelper helper = new ExecutionResultHelper(allSteps, worksheet, executionSummary);
+        helper.updateScenarioResults();
 
         executionEventListener.onScenarioComplete(executionSummary);
 
@@ -218,7 +218,11 @@ public class TestScenario {
 
         // 2. find last command
         int lastCommandRow = worksheet.findLastDataRow(ADDR_COMMAND_START);
-        area = new ExcelArea(worksheet, new ExcelAddress(FIRST_STEP_ROW + ":" + COL_REASON + lastCommandRow), false);
+
+        // the section with the corresponding worksheet that has test steps
+        ExcelArea area = new ExcelArea(worksheet,
+                                       new ExcelAddress(FIRST_STEP_ROW + ":" + COL_REASON + lastCommandRow),
+                                       false);
         testCases = new ArrayList<>();
         testCaseMap = new HashMap<>();
         allSteps = new ArrayList<>();
@@ -260,23 +264,25 @@ public class TestScenario {
                 testCaseMap.put(currentActivity.getName(), currentActivity);
             }
 
-            TestStep testStep = new TestStep(currentActivity, row);
-            if (testStep.isCommandRepeater()) { i += collectRepeatingCommandSet(testStep, area.getWholeArea(), i + 1); }
+            TestStep testStep = new TestStep(currentActivity, row, worksheet);
+            if (testStep.isCommandRepeater()) { i += collectRepeatingCommandSet(testStep, area, i + 1); }
             currentActivity.addTestStep(testStep);
             allSteps.add(testStep);
             testStepsByRow.put(row.get(0).getRowIndex() + 1, testStep);
         }
     }
 
-    protected int collectRepeatingCommandSet(TestStep testStep, List<List<XSSFCell>> allSteps, int startFrom) {
+    protected int collectRepeatingCommandSet(TestStep testStep, ExcelArea area, int startFrom) {
+        List<List<XSSFCell>> wholeArea = area.getWholeArea();
         if (testStep == null || !testStep.isCommandRepeater() ||
-            CollectionUtils.isEmpty(allSteps) || startFrom < 1) {
+            CollectionUtils.isEmpty(wholeArea) || startFrom < 1) {
             return 0;
         }
 
         // expectation: first parameter is the number of test steps for the repeats
         // expectation: second parameter is the max. wait time in ms
-        String errMsg = "[ROW " + (startFrom + ADDR_COMMAND_START.getRowStartIndex()) + "]" +
+        String errMsg = "[ROW " + (startFrom + ADDR_COMMAND_START.getRowStartIndex()) + "] from worksheet "
+                        + testStep.getWorksheet().getName() +
                         " wrong parameters specified for " + CMD_REPEAT_UNTIL + ": " + testStep.getParams();
         if (CollectionUtils.size(testStep.getParams()) != 2) {
             ConsoleUtils.error(errMsg);
@@ -290,7 +296,7 @@ public class TestScenario {
             throw new RuntimeException(errMsg);
         }
 
-        if ((startFrom + numOfStepsIncluded) > allSteps.size()) {
+        if ((startFrom + numOfStepsIncluded) > wholeArea.size()) {
             String errMsg1 = errMsg + " - number of steps specified greater than available in this test scenario";
             ConsoleUtils.error(errMsg1);
             throw new RuntimeException(errMsg1);
@@ -307,8 +313,14 @@ public class TestScenario {
         CommandRepeater commandRepeater = new CommandRepeater(testStep, maxWait);
         TestCase currentTestCase = testStep.getTestCase();
         for (int i = startFrom; i < (startFrom + numOfStepsIncluded); i++) {
-            List<XSSFCell> row = area.getWholeArea().get(i);
-            TestStep nextStep = new TestStep(currentTestCase, row);
+            List<XSSFCell> row = wholeArea.get(i);
+            TestStep nextStep = new TestStep(currentTestCase, row, testStep.getWorksheet());
+            if (nextStep.isMacroExpander()) { nextStep.macroPartOfRepeatUntil = true; }
+
+                /*// To nested repeatuntil command
+                if(nextStep.isCommandRepeater()) {
+                    i += collectRepeatingCommandSet(nextStep, area, nextStep.rowIndex + 1);
+                }*/
 
             // check that first step is an assertion - REQUIRED
             if (i == startFrom && !StringUtils.startsWith(nextStep.getCommand(), "assert")) {
@@ -320,9 +332,51 @@ public class TestScenario {
             }
 
             commandRepeater.addStep(nextStep);
+
+            // to collect nested section commands
+            int num = collectSectionCommands(nextStep, i, commandRepeater, wholeArea, currentTestCase);
+            numOfStepsIncluded += num;
+            i += num;
         }
 
         testStep.setCommandRepeater(commandRepeater);
         return (numOfStepsIncluded);
     }
+
+    private int collectSectionCommands(TestStep testStep, int startFrom,
+                                       CommandRepeater commandRepeater,
+                                       List<List<XSSFCell>> wholeArea,
+                                       TestCase currentTestCase) {
+
+        if (!StringUtils.equals(testStep.getCommandFQN(), CMD_SECTION)) { return 0; }
+        String errMsg = "[ROW " + (startFrom + ADDR_COMMAND_START.getRowStartIndex()) + "] from worksheet "
+                        + testStep.getWorksheet().getName() +
+                        " wrong parameters specified for " + CMD_SECTION + ": " + testStep.getParams();
+        String steps = context.replaceTokens(testStep.getParams().get(0));
+        int numOfStepsIncluded = NumberUtils.toInt(steps);
+        if (numOfStepsIncluded < 1) {
+            ConsoleUtils.error(errMsg);
+            throw new RuntimeException(errMsg);
+        }
+
+        if ((startFrom + numOfStepsIncluded) > wholeArea.size()) {
+            String errMsg1 = errMsg + " - number of steps specified greater than available in this test scenario";
+            ConsoleUtils.error(errMsg1);
+            throw new RuntimeException(errMsg1);
+        }
+
+        for (int i = startFrom + 1; i <= (startFrom + numOfStepsIncluded); i++) {
+            List<XSSFCell> row = wholeArea.get(i);
+            TestStep nextStep = new TestStep(currentTestCase, row, testStep.getWorksheet());
+            if (nextStep.isMacroExpander()) { nextStep.macroPartOfRepeatUntil = true; }
+            commandRepeater.addStep(nextStep);
+            if (StringUtils.equals(nextStep.getCommandFQN(), CMD_SECTION)) {
+                int stepCount = collectSectionCommands(nextStep, i, commandRepeater, wholeArea, currentTestCase);
+                numOfStepsIncluded += stepCount;
+                i += stepCount;
+            }
+        }
+        return numOfStepsIncluded;
+    }
+
 }

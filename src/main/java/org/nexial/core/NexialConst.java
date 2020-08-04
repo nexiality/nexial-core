@@ -247,6 +247,9 @@ public final class NexialConst {
     public static final String REGEX_PREFIX = "REGEX:";
     public static final String CONTAIN_PREFIX = "CONTAIN:";
 
+    // Macro Flex var prefix
+    public static final String MACRO_FLEX_PREFIX = "MACRO::";
+
     // predefined messages
     public static final String MSG_PASS = ExcelConfig.MSG_PASS;
     public static final String MSG_FAIL = ExcelConfig.MSG_FAIL;
@@ -374,6 +377,9 @@ public final class NexialConst {
         public static final String FAIL_IMMEDIATE = registerSysVar(NAMESPACE + "failImmediate", false);
         public static final String END_IMMEDIATE = registerSysVar(NAMESPACE + "endImmediate");
         public static final String BREAK_CURRENT_ITERATION = registerSysVar(NAMESPACE + "breakCurrentIteration");
+        public static final String MACRO_STEP_FAILED = registerSysVar(NAMESPACE + "macroStepFailed");
+        public static final String MACRO_BREAK_CURRENT_ITERATION = registerSysVar(NAMESPACE +
+                                                                                  "macroBreakCurrentIteration");
         // controlled by user's script/data to end plan earlier than designed.
         public static final String LAST_PLAN_STEP = registerSysVar(NAMESPACE + "lastPlanStep", false);
         public static final String OPT_CURRENT_ACTIVITY = registerSysVar(NAMESPACE + "currentActivity");
@@ -614,6 +620,7 @@ public final class NexialConst {
         public static final String IS_OPEN_TAG = "[";
         public static final String IS_CLOSE_TAG = "]";
         public static final String ANY_FIELD = "[ANY FIELD]";
+        public static final String CONDITION_DISABLE = "SkipIf(true) ";
 
         public static final String REGEX_IS_UNARY_FILTER =
             "(true|false|\\$\\{[^\\}]+\\}|\\!\\$\\{[^\\}]+\\}|not\\s+\\$\\{[^\\}]+\\})";

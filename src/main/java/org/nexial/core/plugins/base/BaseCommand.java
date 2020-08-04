@@ -50,10 +50,7 @@ import org.nexial.commons.utils.TextUtils;
 import org.nexial.core.ExecutionThread;
 import org.nexial.core.TokenReplacementException;
 import org.nexial.core.excel.ext.CellTextReader;
-import org.nexial.core.model.CommandRepeater;
-import org.nexial.core.model.ExecutionContext;
-import org.nexial.core.model.StepResult;
-import org.nexial.core.model.TestStep;
+import org.nexial.core.model.*;
 import org.nexial.core.plugins.CanLogExternally;
 import org.nexial.core.plugins.NexialCommand;
 import org.nexial.core.plugins.image.ImageCaptionHelper;
@@ -722,10 +719,26 @@ public class BaseCommand implements NexialCommand {
      * @param file the full path of the macro library.
      * @param name the name of the macro to invoke
      * @return pass/fail based on the validity of the referenced macro/file.  If macro {@code name} or library
-     *     ({@code file}) is not found, a failure is returned with fail-immediate in effect.
+     * ({@code file}) is not found, a failure is returned with fail-immediate in effect.
      */
     public StepResult macro(String file, String sheet, String name) {
-        return failImmediate("Runtime error: Macro reference (" + file + "," + sheet + "," + name + ") not expanded");
+        Macro macro = new Macro(file, sheet, name);
+        return executeMacro(macro, "", "");
+    }
+
+    /**
+     * invoke a set of test steps stored in {@code file}, referenced by {@code name}.  {@code file} must be
+     * fully qualified, whilst Nexial function may be used (e.g. {@code $(syspath)}).
+     *
+     * @return pass/fail based on the validity of the referenced macro/file.  If macro {@code name} or library
+     * ({@code file}) is not found, a failure is returned with fail-immediate in effect.
+     */
+    public StepResult macroFlex(String macro, String input, String output) {
+        context.setInMacroFlex(true);
+        List<String> macroList = TextUtils.toList(macro, "::", false);
+        Macro macro1 = new Macro(macroList.get(0), macroList.get(1), macroList.get(2));
+
+        return executeMacro(macro1, input, output);
     }
 
     /**
@@ -1010,6 +1023,16 @@ public class BaseCommand implements NexialCommand {
 
         // return local file if `output-to-cloud` is disabled or failed to transfer to cloud
         return file.getAbsolutePath();
+    }
+
+    private StepResult executeMacro(Macro macro, String input, String output) {
+        TestStep currentTestStep = context.getCurrentTestStep();
+        Map<String, String> inputMap = TextUtils.toMap(input, "\n", "=");
+        Map<String, String> outputMap = TextUtils.toMap(output, "\n", "=");
+
+        MacroExecutor macroExecutor = new MacroExecutor(currentTestStep, macro, inputMap, outputMap);
+        currentTestStep.setMacroExecutor(macroExecutor);
+        return macroExecutor.start();
     }
 
     /**

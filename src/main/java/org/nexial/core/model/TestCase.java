@@ -27,8 +27,7 @@ import org.nexial.core.excel.Excel.Worksheet;
 import org.nexial.core.logs.ExecutionLogger;
 import org.nexial.core.logs.TrackTimeLogs;
 
-import static org.nexial.core.CommandConst.CMD_REPEAT_UNTIL;
-import static org.nexial.core.CommandConst.CMD_SECTION;
+import static org.nexial.core.CommandConst.*;
 import static org.nexial.core.NexialConst.*;
 import static org.nexial.core.excel.ExcelStyleHelper.formatRepeatUntilDescription;
 import static org.nexial.core.excel.ExcelStyleHelper.formatSectionDescription;
@@ -90,6 +89,9 @@ public class TestCase {
             TestStep testStep = testSteps.get(i);
             StepResult result = testStep.execute();
 
+            // again setting it to false as out of macroFlex
+            if (StringUtils.equals(testStep.getCommandFQN(), CMD_MACRO_FLEX)) { context.setInMacroFlex(false); }
+
             if (context.isEndImmediate()) {
                 executionSummary.adjustTotalSteps(-1);
                 trackTimeLogs.trackingDetails("Execution Interrupted");
@@ -102,7 +104,7 @@ public class TestCase {
                 if (StringUtils.equals(testStep.getCommandFQN(), CMD_SECTION)) {
                     formatSectionDescription(testStep, false);
 
-                    int steps = formatSkippedSections(i, testStep);
+                    int steps = testStep.formatSkippedSections(testSteps, i, true);
 
                     i += steps;
                     executionSummary.adjustTotalSteps(-steps);
@@ -124,6 +126,25 @@ public class TestCase {
 
             if (result.isSuccess()) {
                 executionSummary.incrementPass();
+                // for macro steps
+                if (testStep.isMacroExpander()) {
+                    // for failed macro step
+                    if (context.isMacroStepFailed()) {
+                        allPassed = false;
+                        // set it back to false for further macro step iteration
+                        context.setMacroStepFailed(false);
+                        // break in case of fail immediate in action
+                        if (context.isFailImmediate()) { break; }
+                    }
+                }
+
+                // break current loop for macro step break iteration
+                if (testStep.isMacroExpander() && context.isMacroBreakIteration()) {
+                    context.setBreakCurrentIteration(true);
+                    // set it back to false for further macro step iteration
+                    context.setMacroBreakIteration(false);
+                    break;
+                }
                 continue;
             }
 
@@ -163,33 +184,6 @@ public class TestCase {
         return allPassed;
     }
 
-    private int formatSkippedSections(int i, TestStep testStep) {
-        // `testStep.getParams().get(0)` represents the number of steps of this `section`
-        int steps = Integer.parseInt(testStep.getParams().get(0));
-
-        for (int j = 0; j < steps; j++) {
-            int sectionStepIndex = i + j + 1;
-            if (testSteps.size() > sectionStepIndex) {
-                TestStep step = testSteps.get(sectionStepIndex);
-                step.postExecCommand(StepResult.skipped(NESTED_SECTION_STEP_SKIPPED), 0);
-
-                // reduce the number of steps for repeatUntil command
-                if (step.isCommandRepeater()) { steps -= Integer.parseInt(step.getParams().get(0)); }
-
-                // add the number of steps for section commands
-                if (StringUtils.equals(step.getCommandFQN(), CMD_SECTION)) {
-                    int stepCount = formatSkippedSections(sectionStepIndex, step);
-                    steps += stepCount;
-                    j += stepCount;
-                }
-            } else {
-                steps = j - 1;
-                break;
-            }
-        }
-        return steps;
-    }
-
     public void close() {
         if (CollectionUtils.isNotEmpty(testSteps)) {
             testSteps.forEach(TestStep::close);
@@ -209,7 +203,7 @@ public class TestCase {
             TestStep testStep = testSteps.get(i);
 
             if (testStep.isCommandRepeater() && testStep.getCommandRepeater() != null) {
-                testStep = formatRepeatUntilDescription(testStep, "");
+                testStep = formatRepeatUntilDescription(testStep);
                 testStep.getCommandRepeater().formatSteps();
             }
 
@@ -223,7 +217,7 @@ public class TestCase {
                         formatSectionDescription(sectionStep, true);
 
                         if (sectionStep.isCommandRepeater()) {
-                            formatRepeatUntilDescription(sectionStep, "");
+                            formatRepeatUntilDescription(sectionStep);
                             sectionStep.getCommandRepeater().formatSteps();
                             adjustedStepCount -= sectionStep.getCommandRepeater().getStepCount();
                         }

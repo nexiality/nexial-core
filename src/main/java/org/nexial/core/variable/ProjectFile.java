@@ -27,6 +27,7 @@ import org.nexial.commons.utils.FileUtil;
 import org.nexial.core.ExecutionThread;
 import org.nexial.core.logs.StepErrors;
 import org.nexial.core.model.ExecutionContext;
+import org.nexial.core.model.Macro;
 import org.nexial.core.utils.ConsoleUtils;
 
 import static java.io.File.separator;
@@ -50,6 +51,12 @@ public class ProjectFile {
             ConsoleUtils.log("Unable to read " + f.getAbsolutePath() + ": " + e.getMessage());
             return null;
         }
+    }
+
+    // ${projectfile|macro|file|sheet|name)
+    public Macro macro(String file, String sheet, String name) {
+        // File macroFile = resolveMacroFile(StringUtils.appendIfMissing(file, SCRIPT_FILE_EXT));
+        return new Macro(file, sheet, name);
     }
 
     public String executionErrorsAsHtml(String tableOnly) {
