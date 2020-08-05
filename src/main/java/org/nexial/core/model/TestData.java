@@ -106,12 +106,16 @@ public class TestData {
             if (StringUtils.equals(validDataSheet.getName(), SHEET_DEFAULT_DATA)) { collectData(validDataSheet); }
         });
 
+        packUnusedIterationData();
+
         this.dataSheetNames.forEach(targetSheetName -> validDataSheets.forEach(validDataSheet -> {
             if (!StringUtils.equals(targetSheetName, SHEET_DEFAULT_DATA) &&
                 StringUtils.equals(validDataSheet.getName(), targetSheetName)) {
                 collectData(validDataSheet);
             }
         }));
+
+        packUnusedIterationData();
 
         // to be added/displayed in execution output #summary
         System.setProperty(SCRIPT_REF_PREFIX + DATA_SHEETS,
@@ -242,6 +246,16 @@ public class TestData {
         scopeSettings.put(OPT_SCRIPT_DIR, project.getScriptPath());
         scopeSettings.put(OPT_DATA_DIR, project.getDataPath());
         scopeSettings.put(OPT_PLAN_DIR, project.getPlanPath());
+    }
+
+    public void packUnusedIterationData() {
+        IterationManager iterationManager = getIterationManager();
+        int lastIteration = iterationManager.getHighestIteration();
+        Set<String> dataNames = dataMap.keySet();
+        dataNames.forEach(name -> {
+            List<String> values = dataMap.get(name);
+            if (CollectionUtils.size(values) > lastIteration) { dataMap.put(name, values.subList(0, lastIteration)); }
+        });
     }
 
     Map<String, List<String>> getRuntimeDataMap() { return runtimeDataMap; }

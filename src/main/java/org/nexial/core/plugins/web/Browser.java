@@ -517,8 +517,8 @@ public class Browser implements ForcefulTerminate {
         requiresExecutableFile(clientLocation);
 
         WebDriverHelper helper = resolveChromeDriverLocation();
-        ChromeDriver chrome;
         ChromeOptions options = new ChromeOptions().addArguments(this.chromeOptions).setBinary(clientLocation);
+        ChromeDriver chrome;
         try {
             chrome = new ChromeDriver(options);
         } catch (Exception e) {
@@ -535,20 +535,18 @@ public class Browser implements ForcefulTerminate {
     private ChromeDriver initChromeWithUpdatedDriver(WebDriverHelper helper,
                                                      ChromeOptions options,
                                                      boolean isEmbeddedChrome,
-                                                     Exception e)
-        throws IOException {
-        ChromeDriver chrome;
+                                                     Exception e) throws IOException {
         ConsoleUtils.log("Possibly browser has been updated. Stop the the web driver in use " +
                          "and start the process to update the web driver.");
         RuntimeUtils.terminateInstance(new File(helper.getDriverLocation()).getName());
         if (helper.updateCompatibleDriverVersion()) {
             helper.resolveDriver();
-            chrome = isEmbeddedChrome ? new ChromeDriver(options) : new ChromeDriver(ChromeDriverService
-                                                                                         .createDefaultService(),
-                                                                                     options);
-
-        } else { throw new RuntimeException(e); }
-        return chrome;
+            return isEmbeddedChrome ?
+                   new ChromeDriver(options) :
+                   new ChromeDriver(ChromeDriverService.createDefaultService(), options);
+        } else {
+            throw new RuntimeException(e);
+        }
     }
 
     protected WebDriver initElectron() throws IOException {
