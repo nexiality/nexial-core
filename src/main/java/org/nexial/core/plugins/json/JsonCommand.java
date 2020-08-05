@@ -44,7 +44,6 @@ import org.nexial.core.utils.JsonEditor.JsonEditorConfig;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.github.fge.jackson.JsonLoader;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
@@ -578,7 +577,7 @@ public class JsonCommand extends BaseCommand {
         try {
             // support path-based content specification
             json = OutputFileUtils.resolveContent(json, context, false);
-            if (StringUtils.isNotBlank(json)) { jsonNode = JsonLoader.fromString(json); }
+            if (StringUtils.isNotBlank(json)) { jsonNode = new ObjectMapper().readTree(json); }
         } catch (IOException e) {
             String msg = "Error reading '" + json + "': " + e.getMessage();
             ConsoleUtils.log(msg);
