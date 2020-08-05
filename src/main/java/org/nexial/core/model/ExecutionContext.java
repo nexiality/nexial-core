@@ -26,6 +26,7 @@ import java.lang.reflect.TypeVariable;
 import java.net.URLEncoder;
 import java.util.*;
 import java.util.stream.Collectors;
+import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 import javax.validation.constraints.NotNull;
 
@@ -557,6 +558,8 @@ public class ExecutionContext {
     @Nullable
     public Object getObjectData(String name) {
         if (StringUtils.isBlank(name)) { return null; }
+
+        name = adjustForMacroFlex(name);
         String sysProp = System.getProperty(name);
         if (StringUtils.isNotEmpty(sysProp)) { return sysProp; }
         return MapUtils.getObject(data, name);
@@ -567,6 +570,7 @@ public class ExecutionContext {
         if (StringUtils.isBlank(name)) { return null; }
         if (!hasData(name)) { return null; }
 
+        name = adjustForMacroFlex(name);
         Object obj = MapUtils.getObject(data, name);
         if (obj == null) { return null; }
         if (expectedType.isAssignableFrom(obj.getClass())) { return expectedType.cast(obj); }
@@ -576,7 +580,7 @@ public class ExecutionContext {
 
     public String getStringData(String name) {
         // for macroFlex command search for 'Macro::name' first, if not defined search for 'name'
-        name = ((isInMacro && hasData(MACRO_FLEX_PREFIX + name)) ? MACRO_FLEX_PREFIX : "") + name;
+        name = adjustForMacroFlex(name);
 
         String rawValue = getRawStringData(name);
         if (StringUtils.isBlank(rawValue)) { return rawValue; }
@@ -602,6 +606,7 @@ public class ExecutionContext {
     public int getIntData(String name, int def) { return NumberUtils.toInt(getStringData(name), def); }
 
     public double getDoubleData(String name) {
+        name = adjustForMacroFlex(name);
         return ObjectUtils.defaultIfNull(MapUtils.getDouble(data, name), UNDEFINED_DOUBLE_DATA);
     }
 
@@ -627,6 +632,7 @@ public class ExecutionContext {
     }
 
     public Map getMapData(String name) {
+        name = adjustForMacroFlex(name);
         if (!data.containsKey(name)) { return null; }
 
         Object value = data.get(name);
@@ -637,6 +643,7 @@ public class ExecutionContext {
     }
 
     public List getListData(String name) {
+        name = adjustForMacroFlex(name);
         if (!data.containsKey(name)) { return null; }
 
         Object value = data.get(name);
@@ -730,6 +737,7 @@ public class ExecutionContext {
      * remove data variable both from context and system
      */
     public String removeData(String name) {
+        name = adjustForMacroFlex(name);
         if (isReadOnlyData(name)) {
             ConsoleUtils.error("Removing READ-ONLY variable is not permitted: " + name);
             return null;
@@ -739,6 +747,7 @@ public class ExecutionContext {
     }
 
     public String removeDataForcefully(String name) {
+        name = adjustForMacroFlex(name);
         Object removedObj = data.remove(name);
         String removed;
         if (removedObj == null) {
@@ -777,7 +786,7 @@ public class ExecutionContext {
             removeData(name);
         } else {
             value = mergeProperty(value);
-            if (isInMacro && !MACRO_FLEX_EXCLUDE_VAR.contains(name)) {
+            if (prefixedForMacroFlex(name)) {
                 data.put(MACRO_FLEX_PREFIX + name, value);
             } else {
                 data.put(name, value);
@@ -1559,7 +1568,7 @@ public class ExecutionContext {
         }
 
         if (StringUtils.isEmpty(System.getProperty(name))) {
-            if (isInMacro && !MACRO_FLEX_EXCLUDE_VAR.contains(name)) {
+            if (prefixedForMacroFlex(name)) {
                 data.put(MACRO_FLEX_PREFIX + name, value);
             } else {
                 data.put(name, value);
@@ -2323,4 +2332,15 @@ public class ExecutionContext {
             }
         }
     }
+
+    @Nonnull
+    private String adjustForMacroFlex(String name) {
+        if (!isInMacro) { return name; }
+        if (StringUtils.startsWith(name, NAMESPACE)) { return name; }
+        if (System.getProperties().containsKey(MACRO_FLEX_PREFIX + name)) { return MACRO_FLEX_PREFIX + name; }
+        if (data.containsKey(MACRO_FLEX_PREFIX + name)) { return MACRO_FLEX_PREFIX + name; }
+        return name;
+    }
+
+    private boolean prefixedForMacroFlex(String name) { return !StringUtils.startsWith(name, NAMESPACE) && isInMacro; }
 }
