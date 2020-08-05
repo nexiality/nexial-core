@@ -25,6 +25,7 @@ import java.util.Arrays;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Set;
+import java.util.stream.Collectors;
 import javax.validation.constraints.NotNull;
 
 import org.apache.commons.collections4.CollectionUtils;
@@ -34,6 +35,7 @@ import org.apache.commons.lang3.StringUtils;
 import org.json.JSONArray;
 import org.json.JSONObject;
 import org.nexial.commons.utils.CollectionUtil;
+import org.nexial.commons.utils.ResourceUtils;
 import org.nexial.commons.utils.TextUtils;
 import org.nexial.core.model.StepResult;
 import org.nexial.core.plugins.base.BaseCommand;
@@ -41,16 +43,17 @@ import org.nexial.core.utils.*;
 import org.nexial.core.utils.JsonEditor.JsonEditorConfig;
 
 import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.github.fge.jackson.JsonLoader;
-import com.github.fge.jsonschema.core.exceptions.ProcessingException;
-import com.github.fge.jsonschema.core.report.ProcessingReport;
-import com.github.fge.jsonschema.main.JsonSchema;
-import com.github.fge.jsonschema.main.JsonSchemaFactory;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 import com.google.gson.JsonSyntaxException;
+import com.networknt.schema.JsonSchema;
+import com.networknt.schema.JsonSchemaFactory;
+import com.networknt.schema.SpecVersionDetector;
+import com.networknt.schema.ValidationMessage;
 
 import static org.nexial.core.NexialConst.DEF_CHARSET;
 import static org.nexial.core.NexialConst.Data.*;
@@ -64,7 +67,6 @@ public class JsonCommand extends BaseCommand {
     private static final String DIFF_HIGHLIGHT_HTML_END = "</span>";
     private static final String DIFF_NULL_HTML_START = "<code class=\"diff-null\" style=\"color:#777\">";
     private static final String DIFF_NULL_HTML_END = "</code>";
-    private static final JsonSchemaFactory JSON_SCHEMA_FACTORY = JsonSchemaFactory.byDefault();
 
     @Override
     public String getTarget() { return "json"; }
@@ -92,8 +94,7 @@ public class JsonCommand extends BaseCommand {
         // maybe expected or actual are NOT json doc or array...
         if ((TextUtils.isBetween(expectedJson, "{", "}") || TextUtils.isBetween(expectedJson, "[", "]")) &&
             (TextUtils.isBetween(actualJson, "{", "}") || TextUtils.isBetween(actualJson, "[", "]"))) {
-            JsonParser jsonParser = new JsonParser();
-            return assertEqual(jsonParser.parse(expectedJson), jsonParser.parse(actualJson));
+            return assertEqual(JsonParser.parseString(expectedJson), JsonParser.parseString(actualJson));
         } else {
             // one or both of expected and actual is not json.. unlikely equal
             return super.assertEqual(expectedJson, actualJson);
@@ -254,35 +255,28 @@ public class JsonCommand extends BaseCommand {
 
         requires(StringUtils.isNotBlank(schema) && !context.isNullValue(schema), "empty schema", schema);
 
-        JsonSchema jsonSchema;
+        ObjectMapper mapper = new ObjectMapper();
         try {
-            if (OutputFileUtils.isContentReferencedAsFile(schema, context)) {
-                String schemaLocation = new File(schema).toURI().toURL().toString();
-                jsonSchema = JSON_SCHEMA_FACTORY.getJsonSchema(schemaLocation);
-            } else if (OutputFileUtils.isContentReferencedAsClasspathResource(schema, context)) {
-                String schemaLocation = (StringUtils.startsWith(schema, "/") ? "" : "/") + schema;
-                jsonSchema = JSON_SCHEMA_FACTORY.getJsonSchema("resource:" + schemaLocation);
+            String jsonSchemaContent;
+            if (OutputFileUtils.isContentReferencedAsClasspathResource(schema, context)) {
+                jsonSchemaContent = ResourceUtils.loadResource(schema);
             } else {
                 // support path-based content specification
-                schema = OutputFileUtils.resolveContent(schema, context, false);
-                if (StringUtils.isBlank(schema)) { return StepResult.fail("invalid schema: " + schema); }
-
-                JsonNode schemaNode = JsonLoader.fromString(schema);
-                if (schemaNode == null) { return StepResult.fail("invalid schema: " + schema); }
-
-                jsonSchema = JSON_SCHEMA_FACTORY.getJsonSchema(schemaNode);
+                jsonSchemaContent = OutputFileUtils.resolveContent(schema, context, false);
             }
 
-            ProcessingReport report = jsonSchema.validate(jsonNode);
-            return report.isSuccess() ?
+            if (StringUtils.isBlank(jsonSchemaContent)) { return StepResult.fail("invalid schema: " + schema); }
+            JsonNode jsonSchemaNode = mapper.readTree(jsonSchemaContent);
+            JsonSchemaFactory factory = JsonSchemaFactory.getInstance(SpecVersionDetector.detect(jsonSchemaNode));
+            JsonSchema jsonSchema = factory.getSchema(jsonSchemaNode);
+
+            Set<ValidationMessage> report = jsonSchema.validate(jsonNode);
+            return CollectionUtils.isEmpty(report) ?
                    StepResult.success("json validated successfully against schema") :
                    StepResult.fail(parseSchemaValidationError(report));
         } catch (IOException e) {
             ConsoleUtils.log("Error reading as file '" + schema + "': " + e.getMessage());
             return StepResult.fail("Unable to retrieve JSON schema: " + e.getMessage());
-        } catch (ProcessingException e) {
-            ConsoleUtils.log("Error processing schema '" + schema + "': " + e.getMessage());
-            return StepResult.fail("Unable to process JSON schema: " + e.getMessage());
         }
     }
 
@@ -509,12 +503,10 @@ public class JsonCommand extends BaseCommand {
     protected static JsonArray toJsonArray(String array, String delimiter) {
         if (StringUtils.isEmpty(array)) { return new JsonArray(); }
 
-        JsonParser jsonParser = new JsonParser();
         JsonElement expectedJson;
-
         try {
             // case 1: expected is good/parsable JSON
-            expectedJson = jsonParser.parse(TextUtils.wrapIfMissing(array, "[", "]"));
+            expectedJson = JsonParser.parseString(TextUtils.wrapIfMissing(array, "[", "]"));
         } catch (JsonSyntaxException e) {
             // nope, not valid json.. move on to next evaluation...
             // case 2: delimiter string with spaces (string with no spaces should be parsed in case 1)
@@ -522,7 +514,7 @@ public class JsonCommand extends BaseCommand {
                 Arrays.asList(StringUtils.splitByWholeSeparator(array, delimiter)), ",", "\"", "\"");
 
             try {
-                expectedJson = jsonParser.parse(TextUtils.wrapIfMissing(fixed, "[", "]"));
+                expectedJson = JsonParser.parseString(TextUtils.wrapIfMissing(fixed, "[", "]"));
             } catch (JsonSyntaxException e1) {
                 // report the original `array` as error
                 ConsoleUtils.error("Unable to parse array '" + array + "': " + e1.getMessage());
@@ -598,12 +590,57 @@ public class JsonCommand extends BaseCommand {
         return jsonNode;
     }
 
-    private String parseSchemaValidationError(ProcessingReport report) {
+    private String parseSchemaValidationError(Set<ValidationMessage> report) {
         if (report == null) { return "Unknown error - null report object"; }
-
-        String reportText = report.toString();
-        reportText = StringUtils.substringAfter(reportText, "--- BEGIN MESSAGES ---");
-        reportText = StringUtils.substringBefore(reportText, "---  END MESSAGES  ---");
-        return StringUtils.trim(reportText);
+        if (CollectionUtils.size(report) < 1) { return "No schema validation error found"; }
+        return report.stream().map(ValidationMessage::toString).collect(Collectors.joining("\n")).trim();
     }
+
+    // private static final JsonSchemaFactory JSON_SCHEMA_FACTORY = JsonSchemaFactory.byDefault();
+    // protected StepResult assertCorrectness_fge(String json, String schema) {
+    //     JsonNode jsonNode = deriveWellformedJson(json);
+    //     if (jsonNode == null) { return StepResult.fail("invalid json: " + json); }
+    //
+    //     requires(StringUtils.isNotBlank(schema) && !context.isNullValue(schema), "empty schema", schema);
+    //
+    //     JsonSchema jsonSchema;
+    //     try {
+    //         if (OutputFileUtils.isContentReferencedAsFile(schema, context)) {
+    //             String schemaLocation = new File(schema).toURI().toURL().toString();
+    //             jsonSchema = JSON_SCHEMA_FACTORY.getJsonSchema(schemaLocation);
+    //         } else if (OutputFileUtils.isContentReferencedAsClasspathResource(schema, context)) {
+    //             String schemaLocation = (StringUtils.startsWith(schema, "/") ? "" : "/") + schema;
+    //             jsonSchema = JSON_SCHEMA_FACTORY.getJsonSchema("resource:" + schemaLocation);
+    //         } else {
+    //             // support path-based content specification
+    //             schema = OutputFileUtils.resolveContent(schema, context, false);
+    //             if (StringUtils.isBlank(schema)) { return StepResult.fail("invalid schema: " + schema); }
+    //
+    //             JsonNode schemaNode = JsonLoader.fromString(schema);
+    //             if (schemaNode == null) { return StepResult.fail("invalid schema: " + schema); }
+    //
+    //             jsonSchema = JSON_SCHEMA_FACTORY.getJsonSchema(schemaNode);
+    //         }
+    //
+    //         ProcessingReport report = jsonSchema.validate(jsonNode, true);
+    //         return report.isSuccess() ?
+    //                StepResult.success("json validated successfully against schema") :
+    //                StepResult.fail(parseSchemaValidationError(report));
+    //     } catch (IOException e) {
+    //         ConsoleUtils.log("Error reading as file '" + schema + "': " + e.getMessage());
+    //         return StepResult.fail("Unable to retrieve JSON schema: " + e.getMessage());
+    //     } catch (ProcessingException e) {
+    //         ConsoleUtils.log("Error processing schema '" + schema + "': " + e.getMessage());
+    //         return StepResult.fail("Unable to process JSON schema: " + e.getMessage());
+    //     }
+    // }
+    //
+    // private String parseSchemaValidationError(ProcessingReport report) {
+    //     if (report == null) { return "Unknown error - null report object"; }
+    //
+    //     String reportText = report.toString();
+    //     reportText = StringUtils.substringAfter(reportText, "--- BEGIN MESSAGES ---");
+    //     reportText = StringUtils.substringBefore(reportText, "---  END MESSAGES  ---");
+    //     return StringUtils.trim(reportText);
+    // }
 }

@@ -194,9 +194,10 @@ dependencies {
 	compile("org.json:json:${jsonVersion}")
 	compile("com.cedarsoftware:java-util:+")
 	compile("com.cedarsoftware:json-io:+")
-	compile("com.github.fge:json-schema-validator:+") {
-		exclude module: "mailapi"
-	}
+	// compile("com.github.fge:json-schema-validator:+") {
+	// 	exclude module: "mailapi"
+	// }
+	compile("com.networknt:json-schema-validator:1+")
 	compile("com.google.code.gson:gson:${gsonVersion}")
 	compile("org.danilopianini:gson-extras:+")
 	compile("com.jayway.jsonpath:json-path:+")

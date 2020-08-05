@@ -21,6 +21,7 @@ import java.io.File;
 import java.io.IOException;
 import java.io.PrintWriter;
 import java.io.StringWriter;
+import java.net.URL;
 import java.util.Comparator;
 import java.util.Date;
 import java.util.List;
@@ -245,17 +246,19 @@ public final class OutputFileUtils {
                new File(contentOrFile).canRead();
     }
 
-    public static boolean isContentReferencedAsClasspathResource(String schemaLocation, ExecutionContext context) {
-        if (StringUtils.isBlank(schemaLocation) || StringUtils.equals(schemaLocation, context.getNullValueToken())) {
+    public static boolean isContentReferencedAsClasspathResource(String resource, ExecutionContext context) {
+        if (StringUtils.isBlank(resource) || StringUtils.equals(resource, context.getNullValueToken())) {
             return false;
         }
 
         // we can't have NL or CR or TAB character in filename
-        if (!FileUtil.isSuitableAsPath(schemaLocation)) { return false; }
+        if (!FileUtil.isSuitableAsPath(resource)) { return false; }
 
-        String classpathResource = (StringUtils.startsWith(schemaLocation, "/") ? "" : "/") + schemaLocation;
-        classpathResource = OutputFileUtils.class.getResource(classpathResource).getFile();
-        File f = new File(classpathResource);
+        String classpathResource = (StringUtils.startsWith(resource, "/") ? "" : "/") + resource;
+        URL url = OutputFileUtils.class.getResource(classpathResource);
+        if (url == null) { return false; }
+
+        File f = new File(url.getFile());
         return f.canRead();
     }
 
