@@ -499,11 +499,12 @@ public class PdfCommand extends BaseCommand {
         requiresReadableDirectory(path, "Invalid/Unreadable path", path);
         requiresNotBlank(saveTo, "Invalid destination to save to", saveTo);
 
+        File from = new File(path);
         File to = new File(saveTo);
         to.getParentFile().mkdirs();
 
         IoCommand io = new IoCommand();
-        List<String> pdfFiles = io.listMatchingFiles(path, fileFilter, null)
+        List<String> pdfFiles = io.listMatchingFiles(from, fileFilter, null)
                                   .stream()
                                   .filter(file -> StringUtils.endsWithIgnoreCase(file, ".pdf"))
                                   .collect(Collectors.toList());

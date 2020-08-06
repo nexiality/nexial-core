@@ -111,22 +111,22 @@ public class IoCommand extends BaseCommand {
         requiresNotBlank(fileFilter, "invalid file pattern", fileFilter);
 
         // save matches
-        context.setData(var, listMatchingFiles(path, fileFilter, textFilter));
-        return StepResult.success("saving matching file list to " + var);
+        File searchPah = new File(path);
+        context.setData(var, listMatchingFiles(searchPah, fileFilter, textFilter));
+        return StepResult.success("saving matching file list to ${" + var + "}");
     }
 
-    public List<String> listMatchingFiles(String path, String fileFilter, String textFilter) {
+    public List<String> listMatchingFiles(File path, String fileFilter, String textFilter) {
         boolean hasFilter = false;
         String pattern;
         if (RegexUtils.isExact(fileFilter, NexialFilterComparator.getRegexFilter()) &&
             RegexUtils.match(fileFilter, REGEX_FILE_META)) {
-            pattern = path;
+            pattern = path.getAbsolutePath();
             hasFilter = true;
         } else {
             // to support old fileFilters ( e.g.  *.text ) check if there is a filter controller present in the fileFilters
             // (e.g. name match .*.log )
-            String slash = StringUtils.contains(path, "\\") ? "\\" : "/";
-            pattern = StringUtils.appendIfMissing(path, slash) + fileFilter;
+            pattern = StringUtils.appendIfMissing(path.getAbsolutePath(), separator) + fileFilter;
         }
 
         // list files
