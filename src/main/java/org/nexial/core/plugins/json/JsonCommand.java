@@ -51,6 +51,7 @@ import com.google.gson.JsonParser;
 import com.google.gson.JsonSyntaxException;
 import com.networknt.schema.JsonSchema;
 import com.networknt.schema.JsonSchemaFactory;
+import com.networknt.schema.SpecVersion.VersionFlag;
 import com.networknt.schema.SpecVersionDetector;
 import com.networknt.schema.ValidationMessage;
 
@@ -266,7 +267,11 @@ public class JsonCommand extends BaseCommand {
 
             if (StringUtils.isBlank(jsonSchemaContent)) { return StepResult.fail("invalid schema: " + schema); }
             JsonNode jsonSchemaNode = mapper.readTree(jsonSchemaContent);
-            JsonSchemaFactory factory = JsonSchemaFactory.getInstance(SpecVersionDetector.detect(jsonSchemaNode));
+            // if schema is not found, default to latest
+            VersionFlag versionFlag = StringUtils.contains(jsonSchemaContent, "$schema") ?
+                                      SpecVersionDetector.detect(jsonSchemaNode) :
+                                      VersionFlag.V201909;
+            JsonSchemaFactory factory = JsonSchemaFactory.getInstance(versionFlag);
             JsonSchema jsonSchema = factory.getSchema(jsonSchemaNode);
 
             Set<ValidationMessage> report = jsonSchema.validate(jsonNode);
