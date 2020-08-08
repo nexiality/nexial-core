@@ -149,7 +149,7 @@ enum IoAction {
             case move:
                 if (sourceDir.isFile()) {
                     if (targetDir.isDirectory()) {
-                        FileUtils.moveFileToDirectory(sourceDir, targetDir, false);
+                        FileUtils.moveFileToDirectory(sourceDir, targetDir, true);
                     } else {
                         FileUtils.moveFile(sourceDir, targetDir);
                     }

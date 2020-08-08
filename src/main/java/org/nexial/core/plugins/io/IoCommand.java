@@ -765,6 +765,8 @@ public class IoCommand extends BaseCommand {
         File targetFile = null;
         if (action.isTargetRequired()) {
             targetFile = new File(target);
+            // if user intends for `target` to be directory, then let's make sure it's a directory
+            if (StringUtils.endsWithAny(target, "/", "\\") && !targetFile.exists()) { targetFile.mkdirs(); }
             if (sourceFile.isDirectory()) {
                 try {
                     action.doAction(sourceFile, targetFile);

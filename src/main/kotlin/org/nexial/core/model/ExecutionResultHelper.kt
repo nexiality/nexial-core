@@ -310,14 +310,14 @@ class ExecutionResultHelper(private val allSteps: List<TestStep>, val worksheet:
 
         val messageCount = nestedTestResults.size
         for (i in 0 until messageCount) {
-            currentRowIdx++
             val nestedMessage = nestedTestResults[i]
 
-            // nested screen capture will add to new row (after test step)
-            // step output will output to same row as test step
             if (nestedMessage is StepOutput) {
+                // step output will output to same row as test step
                 addScreenshotLink(excelSheet.getRow(currentRowIdx), linkStyle, nestedMessage)
             } else {
+                currentRowIdx++
+                // nested screen capture will add to new row (after test step)
                 // shift rows only once by messageCount
                 // if (i == 0) {
                 // +1 if lastRow is the same as currentRow. Otherwise shiftRow on a single row block
@@ -339,6 +339,7 @@ class ExecutionResultHelper(private val allSteps: List<TestStep>, val worksheet:
                 }
                 if (nestedMessage is NestedScreenCapture) addScreenshotLink(row, linkStyle, nestedMessage)
             }
+
             lastDataRow++
         }
 

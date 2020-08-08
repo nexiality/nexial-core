@@ -27,10 +27,13 @@ import org.nexial.core.CommandConst.CMD_SECTION
 import org.nexial.core.ExecutionThread
 import org.nexial.core.NexialConst.*
 import org.nexial.core.NexialConst.Data.DEF_OPEN_EXCEL_AS_DUP
-import org.nexial.core.excel.*
+import org.nexial.core.excel.Excel
 import org.nexial.core.excel.Excel.MIN_EXCEL_FILE_SIZE
 import org.nexial.core.excel.Excel.Worksheet
+import org.nexial.core.excel.ExcelAddress
+import org.nexial.core.excel.ExcelArea
 import org.nexial.core.excel.ExcelConfig.*
+import org.nexial.core.excel.ExcelStyleHelper
 import org.nexial.core.utils.ConsoleUtils
 import org.nexial.core.utils.ExecUtils.isRunningInZeroTouchEnv
 import org.nexial.core.utils.FlowControlUtils
@@ -88,10 +91,6 @@ class MacroExecutor(private val initialTestStep: TestStep, val macro: Macro,
 
             val succeed = result.isSuccess
             context.setData(OPT_LAST_OUTCOME, succeed)
-
-            /*if (testStep.isCommandRepeater) {
-                testStep.commandRepeater.formatSteps()
-            }*/
 
             if (initialTestStep.macroPartOfRepeatUntil) {
                 // if repeat until contains repeat until commands
@@ -315,19 +314,20 @@ class MacroExecutor(private val initialTestStep: TestStep, val macro: Macro,
             result = testStep.toFailedResult(e)
         } finally {
             tickTock.stop()
-            if (initialTestStep.macroPartOfRepeatUntil) return result
 
             // time tracking
             trackTimeLogs.checkEndTracking(context, testStep)
-            if (testStep.isCommandRepeater()) {
-                context.setCurrentTestStep(testStep)
-            }
 
             testStep.postExecCommand(result, tickTock.time)
             FlowControlUtils.checkPauseAfter(context, testStep)
             if (!isRunningInZeroTouchEnv() && OnDemandInspectionDetector.getInstance(context).detectedPause()) {
                 ConsoleUtils.pauseAndInspect(context, ">>>>> On-Demand Inspection detected...", true)
             }
+
+            if (initialTestStep.macroPartOfRepeatUntil) return result
+
+            if (testStep.isCommandRepeater()) context.setCurrentTestStep(testStep)
+
             context.clearCurrentTestStep()
         }
         // macroExcel?.close()

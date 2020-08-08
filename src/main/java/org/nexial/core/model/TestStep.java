@@ -379,13 +379,6 @@ public class TestStep extends TestStepManifest {
             NexialCommand plugin = context.findPlugin(target);
             if (plugin == null) { return StepResult.fail("Unknown/unsupported command target " + target); }
 
-            // todo: resolve soon. we need to log to excel when running external programs
-            // if (isExternalProgram) {
-            //	 start excel logging
-            //context.setCurrentCommand(testStep);
-            //context.setLogToExcel(true);
-            // }
-
             if (plugin instanceof CanTakeScreenshot) { context.registerScreenshotAgent((CanTakeScreenshot) plugin); }
             result = plugin.execute(command, args);
 
@@ -397,15 +390,6 @@ public class TestStep extends TestStepManifest {
                 !StringUtils.startsWithAny(command, "assert", "wait", "save", "verify")) {
                 ((WebCommand) plugin).collectClientPerfMetrics();
             }
-
-            // todo: resolve soon. we need to stop logging to excel when not running external program
-            // if (isExternalProgram) {
-            //	// stop excel logging
-            //	context.setCurrentCommand(null);
-            //	context.setLogToExcel(false);
-            //	MDC.put(NexialConst.TEST_SUITE_NAME, context.name);
-            //	MDC.put(NexialConst.TEST_NAME, context.name);
-            // }
         }
 
         return result;
@@ -568,7 +552,7 @@ public class TestStep extends TestStepManifest {
             if (result.failed()) {
                 addErrorScreenCapture(screenshotPath, result.getMessage());
             } else {
-                addNestedScreenCapture(screenshotPath, MSG_SCREENCAPTURE);
+                addStepOutput(screenshotPath, MSG_SCREENCAPTURE);
             }
 
             return screenshotPath;
