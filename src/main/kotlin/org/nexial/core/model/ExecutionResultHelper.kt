@@ -54,24 +54,22 @@ class ExecutionResultHelper(private val allSteps: List<TestStep>, val worksheet:
 
         for (index in allSteps.indices) {
             val testStep: TestStep = allSteps[index]
+
+            val pair = writeTestResults(testStep, false, currentRow, lastRow)
+            currentRow = pair.first
+            lastRow = pair.second
+            currentRow++
+
             if (testStep.commandFQN == CMD_REPEAT_UNTIL) {
                 val commandRepeater = testStep.getCommandRepeater()
                 val repeatUntilSteps = commandRepeater.steps
                 val stepCount = commandRepeater.stepCount
                 for (j in 0 until stepCount) {
                     val pair = writeTestResults(repeatUntilSteps[j], true, currentRow, lastRow)
-                    currentRow = pair.first
+                    currentRow = pair.first + 1
                     lastRow = pair.second
-                    if (j != stepCount - 1) {
-                        currentRow++
-                    }
                 }
-            } else {
-                val pair = writeTestResults(testStep, false, currentRow, lastRow)
-                currentRow = pair.first
-                lastRow = pair.second
             }
-            currentRow++
         }
 
         formatDescriptionCell(ADDR_COMMAND_START.rowStartIndex, lastRow)
@@ -314,7 +312,7 @@ class ExecutionResultHelper(private val allSteps: List<TestStep>, val worksheet:
 
             if (nestedMessage is StepOutput) {
                 // step output will output to same row as test step
-                addScreenshotLink(excelSheet.getRow(currentRowIdx), linkStyle, nestedMessage)
+                addScreenshotLink(excelSheet.getRow(currentRow), linkStyle, nestedMessage)
             } else {
                 currentRowIdx++
                 // nested screen capture will add to new row (after test step)
