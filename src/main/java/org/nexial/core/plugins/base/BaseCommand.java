@@ -359,8 +359,7 @@ public class BaseCommand implements NexialCommand {
 
     public StepResult appendText(String var, String appendWith) {
         requiresValidAndNotReadOnlyVariableName(var);
-        String newValue = StringUtils.defaultString(context.getStringData(var)) + appendWith;
-        updateDataVariable(var, context.isNullValue(newValue) ? null : newValue);
+        updateDataVariable(var, StringUtils.defaultString(context.getStringData(var)) + appendWith);
         return StepResult.success("appended '" + appendWith + "' to ${" + var + "}");
     }
 

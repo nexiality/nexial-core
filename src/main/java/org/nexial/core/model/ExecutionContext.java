@@ -780,17 +780,14 @@ public class ExecutionContext {
     }
 
     public void setData(String name, String value, boolean updateSysProps) {
+        name = enforceForMacroFlex(name);
         if (data.containsKey(name)) { CellTextReader.unsetValue(value); }
         if (isNullValue(value)) {
             // will remove from both `data` and sysprop
             removeData(name);
         } else {
             value = mergeProperty(value);
-            if (prefixedForMacroFlex(name)) {
-                data.put(MACRO_FLEX_PREFIX + name, value);
-            } else {
-                data.put(name, value);
-            }
+            data.put(name, value);
 
             // logic updated; see below
             // if (updateSysProps || referenceDataForExecution.contains(name)) { System.setProperty(name, value); }
@@ -2335,11 +2332,16 @@ public class ExecutionContext {
 
     @Nonnull
     private String adjustForMacroFlex(String name) {
-        if (!isInMacro) { return name; }
         if (StringUtils.startsWith(name, NAMESPACE)) { return name; }
+        if (!isInMacro) { return name; }
         if (System.getProperties().containsKey(MACRO_FLEX_PREFIX + name)) { return MACRO_FLEX_PREFIX + name; }
         if (data.containsKey(MACRO_FLEX_PREFIX + name)) { return MACRO_FLEX_PREFIX + name; }
         return name;
+    }
+
+    @Nonnull
+    public String enforceForMacroFlex(String name) {
+        return StringUtils.startsWith(name, NAMESPACE) || !isInMacro ? name : MACRO_FLEX_PREFIX + name;
     }
 
     private boolean prefixedForMacroFlex(String name) { return !StringUtils.startsWith(name, NAMESPACE) && isInMacro; }
