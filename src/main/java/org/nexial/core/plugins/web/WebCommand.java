@@ -19,7 +19,6 @@ package org.nexial.core.plugins.web;
 
 import java.awt.*;
 import java.awt.image.*;
-import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.IOException;
 import java.time.Duration;
@@ -1862,72 +1861,8 @@ public class WebCommand extends BaseCommand implements CanTakeScreenshot, CanLog
      * <p>
      * This method assumes only the first matching element, and it will forcefully overwrite existing {@code file}.
      */
-    // public StepResult screenshot(String file, String locator, String ignoreLocators) {
-    public StepResult screenshot(String file, String locator) {
-        requiresNotBlank(file, "invalid file", file);
-        requiresNotBlank(locator, "invalid locator", locator);
-
-        File target = new File(file);
-        target.getParentFile().mkdirs();
-
-        WebElement element = findElement(locator);
-        if (element == null) { return StepResult.fail("No web element can be found via locator '" + locator + "'"); }
-
-        AShot ashot = new AShot().shootingStrategy(ShootingStrategies.viewportPasting(100))
-                                 .coordsProvider(new WebDriverCoordsProvider());
-
-        // if (!context.isNullOrEmptyValue(ignoreLocators)) {
-        //     Point targetXY = element.getLocation();
-        //
-        //     Stream<@NotNull By> locateBy =
-        //         Arrays.stream(StringUtils.split(StringUtils.remove(ignoreLocators, "\r"), "\n"))
-        //               .map(loc -> locatorHelper.findBy(locator + loc));
-        //
-        //     Set<Coords> ignoredCoords = new HashSet<>();
-        //     locateBy.forEach(by -> {
-        //         ashot.addIgnoredElement(by);
-        //         try {
-        //             List<WebElement> ignored = newFluentWait().until(driver -> driver.findElements(by));
-        //             if (CollectionUtils.isNotEmpty(ignored)) {
-        //                 ignored.forEach(elem -> {
-        //                     Rectangle r = elem.getRect();
-        //                     if (r != null) {
-        //                         ignoredCoords.add(new Coords(r.getX() - targetXY.getX(),
-        //                                                      r.getY() - targetXY.getY(),
-        //                                                      r.getWidth(),
-        //                                                      r.getHeight()));
-        //                     }
-        //                 });
-        //             }
-        //         } catch (NoSuchElementException e) {
-        //             // ignore...
-        //         } catch (TimeoutException e) {
-        //             // also ignore..
-        //         }
-        //     });
-        //
-        //     ashot.ignoredAreas(ignoredCoords);
-        // }
-
-        Screenshot screenshot = ashot.takeScreenshot(driver, element);
-        BufferedImage image = screenshot.getImage();
-
-        // Graphics g = image.getGraphics();
-        // screenshot.getIgnoredAreas()
-        //           .forEach(coords -> g.drawImage(newBlankImage((int) coords.getWidth(), (int) coords.getHeight()),
-        //                                          (int) coords.getX(),
-        //                                          (int) coords.getY(),
-        //                                          null));
-        // g.dispose();
-
-        try {
-            ByteArrayOutputStream baos = new ByteArrayOutputStream();
-            ImageIO.write(image, "PNG", baos);
-            FileUtils.writeByteArrayToFile(target, baos.toByteArray());
-            return postScreenshot(target, locator);
-        } catch (IOException e) {
-            return StepResult.fail("Unable to write image data to file " + file + ": " + e.getMessage());
-        }
+    public StepResult screenshot(String file, String locator, String removeFixed) {
+        return screenshot(file, locator, "100", removeFixed);
     }
 
     /**
@@ -1935,22 +1870,49 @@ public class WebCommand extends BaseCommand implements CanTakeScreenshot, CanLog
      * <p>
      * This method capture entire web page with scrolling timeout and it will forcefully overwrite existing {@code file}.
      */
-    public StepResult screenshotInFull(String file, String timeout) {
+    public StepResult screenshotInFull(String file, String timeout, String removeFixed) {
+        return screenshot(file, null, timeout, removeFixed);
+    }
+
+    protected StepResult screenshot(String file, String locator, String timeout, String removeFixed) {
         requiresNotBlank(file, "invalid file", file);
         requiresInteger(timeout, "invalid timeout duration", timeout);
+
+        WebElement element = null;
+        if (StringUtils.isNotBlank(locator)) {
+            element = findElement(locator);
+            if (element == null) {
+                return StepResult.fail("No web element can be found via locator '" + locator + "'");
+            }
+        }
+
         int time = Integer.parseInt(timeout);
+        boolean forceCssChange = BooleanUtils.toBoolean(removeFixed);
 
         File target = new File(file);
         target.getParentFile().mkdirs();
 
+        // adjust css for possibly conflicting elements
+        List<WebElement> cssTargets = findCssMatchingElements("position", "fixed");
+        if (forceCssChange && CollectionUtils.isNotEmpty(cssTargets)) {
+            updateCssAttribute(cssTargets, "position", "absolute");
+        }
+
         try {
-            Screenshot screenshot = new AShot().shootingStrategy(ShootingStrategies.viewportPasting(time))
-                                               .takeScreenshot(driver);
+            AShot ashot = new AShot().shootingStrategy(ShootingStrategies.viewportPasting(time))
+                                     .coordsProvider(new WebDriverCoordsProvider());
+            Screenshot screenshot = element != null ?
+                                    ashot.takeScreenshot(driver, element) : ashot.takeScreenshot(driver);
             boolean screenshotTaken = ImageIO.write(screenshot.getImage(), "PNG", target);
             if (!screenshotTaken) { return StepResult.fail("Unable to write image data to file " + file); }
-            return postScreenshot(target, "entire web page");
+            return postScreenshot(target, locator);
         } catch (IOException e) {
             return StepResult.fail("Unable to write image data to file " + file + ": " + e.getMessage());
+        } finally {
+            // adjust css back for possibly conflicting elements
+            if (forceCssChange && CollectionUtils.isNotEmpty(cssTargets)) {
+                updateCssAttribute(cssTargets, "position", "fixed");
+            }
         }
     }
 
@@ -1968,6 +1930,31 @@ public class WebCommand extends BaseCommand implements CanTakeScreenshot, CanLog
                                                   StringUtils.substringBeforeLast(link, "/"));
             return StepResult.success("Image captured for '" + locator + "' to file '" + target + "'");
         }
+    }
+
+    protected void updateCssAttribute(List<WebElement> targets, String attribute, String value) {
+        jsExecutor.executeScript("arguments[0].forEach(" +
+                                 "function(elem,index) { elem.style." + attribute + " = '" + value + "'; }" +
+                                 ");",
+                                 targets);
+    }
+
+    protected List<WebElement> findCssMatchingElements(String attribute, String value) {
+        Object returnObject = jsExecutor.executeScript(
+            "var targets = Array(); " +
+            "document.querySelectorAll(\"*\").forEach(function(elem, index) { " +
+            "   if (elem.style." + attribute + " === '" + value + "' || " +
+            "       window.getComputedStyle(elem).getPropertyValue(\"" + attribute + "\") === '" + value + "') { " +
+            "       targets.push(elem); " +
+            "   }" +
+            "});" +
+            "return targets;");
+        if (returnObject == null) { return null; }
+
+        if (returnObject instanceof List) { return (List<WebElement>) returnObject; }
+
+        ConsoleUtils.log("Unable to obtain matching elements: " + returnObject);
+        return null;
     }
 
     @Override

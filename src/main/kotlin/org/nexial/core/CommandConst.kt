@@ -106,7 +106,9 @@ object CommandConst {
         "web.screenshot(file,locator,ignoreLocators)" to "web.screenshot(file,locator)",
         "web.selectMultiOptions(locator)" to "web.selectAllOptions(locator)",
         "web.uncheckAll(locator)" to "web.uncheckAll(locator,waitMs)",
-        "web.waitForElementPresent(locator)" to "web.waitForElementPresent(locator,maxWaitMs)"
+        "web.waitForElementPresent(locator)" to "web.waitForElementPresent(locator,maxWaitMs)",
+        "web.screenshot(file,locator)" to "web.screenshot(file,locator,removeFixed)",
+        "screenshotInFull(file,timeout)" to "screenshotInFull(file,timeout,removeFixed)"
     )
 
     private const val SUGGESTION_PREFIX = "This command is deprecated and will soon be removed. Consider using"
@@ -116,7 +118,8 @@ object CommandConst {
         "desktop.useTable(var,name)" to "$SUGGESTION_PREFIX desktop » editTableCells(row,nameValues) instead",
         "desktop.editCurrentRow(nameValues)" to "$SUGGESTION_PREFIX desktop » editTableCells(row,nameValues) instead",
         "web.scrollLeft(locator,pixel)" to "$SUGGESTION_PREFIX web » scrollElement(locator,xOffset,yOffset) instead",
-        "web.scrollRight(locator,pixel)" to "$SUGGESTION_PREFIX web » scrollElement(locator,xOffset,yOffset) instead")
+        "web.scrollRight(locator,pixel)" to "$SUGGESTION_PREFIX web » scrollElement(locator,xOffset,yOffset) instead"
+    )
 
     @JvmField
     val PARAM_AUTO_FILL_COMMANDS = listOf("desktop.sendKeysToTextBox",
