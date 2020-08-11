@@ -23,12 +23,10 @@ import org.apache.poi.ss.usermodel.CellCopyPolicy
 import org.apache.poi.ss.usermodel.CellType.STRING
 import org.apache.poi.ss.usermodel.Row.MissingCellPolicy.CREATE_NULL_AS_BLANK
 import org.apache.poi.ss.util.CellRangeAddress
-import org.apache.poi.xssf.usermodel.XSSFCell
-import org.apache.poi.xssf.usermodel.XSSFCellStyle
-import org.apache.poi.xssf.usermodel.XSSFRow
-import org.apache.poi.xssf.usermodel.XSSFSheet
+import org.apache.poi.xssf.usermodel.*
 import org.nexial.core.CommandConst.CMD_REPEAT_UNTIL
 import org.nexial.core.CommandConst.CMD_SECTION
+import org.nexial.core.CommandConst.CMD_VERBOSE
 import org.nexial.core.CommandConst.shouldMergeCommandParams
 import org.nexial.core.ExecutionThread
 import org.nexial.core.NexialConst.Data.*
@@ -174,22 +172,23 @@ class ExecutionResultHelper(private val allSteps: List<TestStep>, val worksheet:
 
         if (CollectionUtils.isNotEmpty(testStep.nestedTestResults)) {
             // return current row and lastRow...
-            val pair = handleNestedMessages(worksheet, testStep.nestedTestResults, currentRow, lastDataRow)
+            val pair = handleNestedMessages(worksheet, testStep, currentRow, lastDataRow)
             currentRow = pair.first
             lastDataRow = pair.second
         }
 
+        // go ahead if command base.macro() or base.macroFlex()
         if (!testStep.isMacroExpander()) return Pair(currentRow, lastDataRow)
 
-        val macroExecutor = testStep.getMacroExecutor() ?: return Pair(currentRow + if (isRepeatUntil) 1 else 0,
-                                                                       lastDataRow)
+        val macroExecutor = testStep.getMacroExecutor() ?: return Pair(currentRow, lastDataRow)
         val macroSteps = macroExecutor.testSteps
         if (CollectionUtils.isNotEmpty(macroSteps)) {
             val stepSize = macroSteps.size
+            if (lastDataRow == currentRow) lastDataRow++
 
             // replace macro invocation step with expanded macro test steps
             // replace existing macro() command to section() command
-            val commandRow = if (isRepeatUntil) currentRow++ + 1 else currentRow
+            val macroCommandRow = currentRow
             var nestedSteps = 0
             // added to check if any repeat until contains section
             // might think about different approach
@@ -219,12 +218,12 @@ class ExecutionResultHelper(private val allSteps: List<TestStep>, val worksheet:
 
                 lastDataRow++
 
-                val pair = handleNestedMessages(worksheet, macroStep.nestedTestResults, currentRow, lastDataRow)
+                val pair = handleNestedMessages(worksheet, macroStep, currentRow, lastDataRow)
                 currentRow = pair.first
                 lastDataRow = pair.second
             }
             // refactor macro to section command
-            refactorMacroCommand(testStep, stepSize - nestedSteps, commandRow, isRepeatUntil)
+            refactorMacroCommand(testStep, stepSize - nestedSteps, macroCommandRow, isRepeatUntil)
         }
         // close excel here
         macroExecutor.macroExcel?.close()
@@ -289,9 +288,12 @@ class ExecutionResultHelper(private val allSteps: List<TestStep>, val worksheet:
         }
     }
 
-    private fun handleNestedMessages(worksheet: Worksheet, nestedTestResults: List<NestedMessage>, currentRow: Int,
+    private fun handleNestedMessages(worksheet: Worksheet, testStep: TestStep, currentRow: Int,
                                      lastRow: Int): Pair<Int, Int> {
-        if (CollectionUtils.isEmpty(nestedTestResults)) return Pair(currentRow, lastRow)
+        val nestedTestResults = testStep.nestedTestResults
+
+        if (testStep.commandFQN == CMD_VERBOSE || CollectionUtils.isEmpty(nestedTestResults)) return Pair(currentRow,
+                                                                                                          lastRow)
 
         var lastDataRow = lastRow
         val excelSheet = worksheet.sheet

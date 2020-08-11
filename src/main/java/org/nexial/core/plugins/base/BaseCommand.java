@@ -733,8 +733,12 @@ public class BaseCommand implements NexialCommand {
      * ({@code file}) is not found, a failure is returned with fail-immediate in effect.
      */
     public StepResult macroFlex(String macro, String input, String output) {
+        requiresNotBlank(macro, "macro parameter is empty", "");
         context.setInMacroFlex(true);
         List<String> macroList = TextUtils.toList(macro, "::", false);
+        if (macroList.size() != 3) {
+            return StepResult.fail("Invalid macro parameter: " + macro);
+        }
         Macro macro1 = new Macro(macroList.get(0), macroList.get(1), macroList.get(2));
 
         return executeMacro(macro1, input, output);

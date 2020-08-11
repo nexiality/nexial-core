@@ -122,17 +122,10 @@ object CommandConst {
     )
 
     @JvmField
-    val PARAM_AUTO_FILL_COMMANDS = listOf("desktop.sendKeysToTextBox",
-                                          "desktop.typeAppendTextArea",
-                                          "desktop.typeAppendTextBox",
-                                          "desktop.typeTextArea",
-                                          "desktop.typeTextBox",
-                                          "localdb.exportEXCEL",
-                                          "localdb.exportXML",
-                                          "io.saveMatches",
-                                          "macro.expects",
-                                          "web.waitForElementPresent",
-                                          "web.waitUntilVisible",
+    val PARAM_AUTO_FILL_COMMANDS = listOf("base.macroFlex", "desktop.sendKeysToTextBox", "desktop.typeAppendTextArea",
+                                          "desktop.typeAppendTextBox", "desktop.typeTextArea", "desktop.typeTextBox",
+                                          "localdb.exportEXCEL", "localdb.exportXML", "io.saveMatches", "macro.expects",
+                                          "web.waitForElementPresent", "web.waitUntilVisible",
                                           "web.waitUntilHidden",
                                           "web.waitUntilEnabled",
                                           "web.waitUntilDisabled",

@@ -219,7 +219,7 @@ public class TestCase {
                         if (sectionStep.isCommandRepeater()) {
                             formatRepeatUntilDescription(sectionStep);
                             sectionStep.getCommandRepeater().formatSteps();
-                            adjustedStepCount -= sectionStep.getCommandRepeater().getStepCount();
+                            adjustedStepCount += sectionStep.getCommandRepeater().getStepCount();
                         }
                     } else {
                         break;
@@ -230,5 +230,4 @@ public class TestCase {
             }
         }
     }
-
 }
