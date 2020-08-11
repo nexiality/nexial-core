@@ -182,6 +182,13 @@ class WebDriverHelperTest {
     @Test
     @Throws(Exception::class)
     fun downloadCbtLocalDriver() {
+        val osArch = System.getProperty("os.arch")
+        if (StringUtils.equals(osArch, "aarch64")) {
+            // skipping this test for ARM64 because we can't get the driver from the same driver download page
+            println("skipping downloadCbtLocalDriver() test for $osArch system since we can't auto-download driver")
+            return
+        }
+
         val driverHome = File("${driverHomeBase}crossbrowsertesting")
         FileUtils.deleteDirectory(driverHome)
 
