@@ -145,3 +145,4 @@ src_managed/
 tags
 target/
 tmp/
+/src/test/resources/unittesting/artifact/data/XMLOutput.xml

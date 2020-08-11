@@ -892,7 +892,8 @@ class CrossBrowserTestingLocalHelper(context: ExecutionContext) : WebDriverHelpe
 
     override fun resolveDriverSearchName(tag: String): String {
         val fileType = when {
-            IS_OS_WINDOWS -> ".zip"
+            // changed from `.zip` to `.exe.zip` from GitHub repo crossbrowsertesting/cbt-tunnel-nodejs, as of Nov 2019
+            IS_OS_WINDOWS -> ".exe.zip"
             IS_OS_LINUX   -> ".zip"
             IS_OS_MAC     -> ".zip"
             else          -> ""

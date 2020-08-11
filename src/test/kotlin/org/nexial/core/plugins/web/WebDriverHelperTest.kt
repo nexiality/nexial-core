@@ -136,7 +136,7 @@ class WebDriverHelperTest {
         if (StringUtils.equals(osArch, "aarch64")) {
             // skipping this test for ARM64 because we can't get the driver from the same driver download page
             println("skipping resolveChromeDriver() test for $osArch system since we can't auto-download driver")
-            return;
+            return
         }
 
         val driverHome = File("${driverHomeBase}chrome")
@@ -179,17 +179,17 @@ class WebDriverHelperTest {
         context.cleanProject()
     }
 
-    // @Test
-    // @Throws(Exception::class)
-    // fun downloadCbtLocalDriver() {
-    //     val driverHome = File("${driverHomeBase}crossbrowsertesting")
-    //     FileUtils.deleteDirectory(driverHome)
-    //
-    //     val context = MockExecutionContext(true)
-    //
-    //     assertDriverExists(newInstance(crossbrowsertesting, context).resolveDriver())
-    //     context.cleanProject()
-    // }
+    @Test
+    @Throws(Exception::class)
+    fun downloadCbtLocalDriver() {
+        val driverHome = File("${driverHomeBase}crossbrowsertesting")
+        FileUtils.deleteDirectory(driverHome)
+
+        val context = MockExecutionContext(true)
+
+        assertDriverExists(newInstance(crossbrowsertesting, context).resolveDriver())
+        context.cleanProject()
+    }
 
     @Test
     @Throws(Exception::class)
@@ -198,7 +198,7 @@ class WebDriverHelperTest {
         if (StringUtils.equals(osArch, "aarch64")) {
             // skipping this test for ARM64 because we can't get the driver from the same driver download page
             println("skipping resolveChromeDriver() test for $osArch system since we can't auto-download driver")
-            return;
+            return
         }
 
         val driverHome = File("${driverHomeBase}chrome")
