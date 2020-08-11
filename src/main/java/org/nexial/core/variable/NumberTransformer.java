@@ -20,6 +20,7 @@ package org.nexial.core.variable;
 import java.lang.reflect.Method;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
+import java.util.Arrays;
 import java.util.Map;
 import javax.validation.constraints.NotNull;
 
@@ -228,6 +229,7 @@ public class NumberTransformer<T extends NumberDataType> extends Transformer {
         if (ArrayUtils.isEmpty(numbers)) { return base; }
 
         // +1 because of base
+        numbers = Arrays.stream(numbers).filter(StringUtils::isNotBlank).toArray(String[]::new);
         int count = numbers.length + (base == null ? 0 : 1);
         return BigDecimal.valueOf(addSequentially(base, numbers).doubleValue())
                          .divide(BigDecimal.valueOf(count), DEC_SCALE, ROUND)
@@ -237,6 +239,7 @@ public class NumberTransformer<T extends NumberDataType> extends Transformer {
     public static Number addSequentially(Number base, String... numbers) {
         if (base == null) { base = 0; }
         for (String number : numbers) {
+            if (StringUtils.isBlank(number)) { continue; }
             try {
                 number = TextUtils.cleanNumber(number, REAL);
                 if (isDecimal(number) || base instanceof Double || base instanceof Float) {
@@ -257,6 +260,7 @@ public class NumberTransformer<T extends NumberDataType> extends Transformer {
     public static Number minusSequentially(Number base, String... numbers) {
         if (base == null) { base = 0; }
         for (String number : numbers) {
+            if (StringUtils.isBlank(number)) { continue; }
             try {
                 number = TextUtils.cleanNumber(number, REAL);
                 if (isDecimal(number) || base instanceof Double || base instanceof Float) {
@@ -274,6 +278,7 @@ public class NumberTransformer<T extends NumberDataType> extends Transformer {
 
     public static Number multiplySequentially(Number base, String... numbers) {
         for (String number : numbers) {
+            if (StringUtils.isBlank(number)) { continue; }
             try {
                 number = TextUtils.cleanNumber(number, REAL);
                 if (base == null) {
@@ -296,6 +301,7 @@ public class NumberTransformer<T extends NumberDataType> extends Transformer {
 
     public static Number divideSequential(Number base, String... numbers) {
         for (String num : numbers) {
+            if (StringUtils.isBlank(num)) { continue; }
             try {
                 String number = TextUtils.cleanNumber(num, REAL);
                 if (StringUtils.equals(number, "0") && RegexUtils.match(num, "[A-Za-z]+")) {

@@ -222,7 +222,7 @@ public final class TextUtils {
         if (StringUtils.isEmpty(pairDelim)) { return map; }
         if (StringUtils.isEmpty(nameValueDelim)) { return map; }
 
-        String[] pairs = StringUtils.splitByWholeSeparator(text, pairDelim);
+        String[] pairs = StringUtils.splitByWholeSeparatorPreserveAllTokens(text, pairDelim);
         for (String pair : pairs) {
             String key = StringUtils.substringBefore(pair, nameValueDelim);
             String value = StringUtils.substringAfter(pair, nameValueDelim);
@@ -239,12 +239,12 @@ public final class TextUtils {
         if (StringUtils.isEmpty(rowSeparator)) { rowSeparator = "\n"; }
         if (StringUtils.isEmpty(delim)) { delim = ","; }
 
-        String[] rows = StringUtils.splitByWholeSeparator(text, rowSeparator);
+        String[] rows = StringUtils.splitByWholeSeparatorPreserveAllTokens(text, rowSeparator);
         if (ArrayUtils.getLength(rows) < 1) { return new String[0][0]; }
 
         String[][] twoD = new String[rows.length][];
         for (int i = 0; i < rows.length; i++) {
-            twoD[i] = StringUtils.split(rows[i], delim);
+            twoD[i] = StringUtils.splitPreserveAllTokens(rows[i], delim);
         }
 
         return twoD;
@@ -267,7 +267,7 @@ public final class TextUtils {
         String tempRowSep = "@!@[ROW]@!@";
         if (StringUtils.length(rowSep) == 1) { text = StringUtils.replace(text, "\\" + rowSep, tempRowSep); }
 
-        String[] rows = StringUtils.splitByWholeSeparator(text, rowSep);
+        String[] rows = StringUtils.splitByWholeSeparatorPreserveAllTokens(text, rowSep);
         if (ArrayUtils.getLength(rows) < 1) { return twoD; }
 
         String delimiter = delim;
@@ -304,7 +304,7 @@ public final class TextUtils {
         if (StringUtils.isBlank(delim)) {
             items = text.split("(" + delim + ")+");
         } else {
-            items = StringUtils.splitByWholeSeparator(text, delim);
+            items = StringUtils.splitByWholeSeparatorPreserveAllTokens(text, delim);
         }
 
         if (items == null) { return null; }
@@ -328,7 +328,8 @@ public final class TextUtils {
             items = text.split("(" + delim + ")+");
         } else {
             items = StringUtils.length(delim) == 1 ?
-                    StringUtils.split(text, delim) : StringUtils.splitByWholeSeparator(text, delim);
+                    StringUtils.splitPreserveAllTokens(text, delim) :
+                    StringUtils.splitByWholeSeparatorPreserveAllTokens(text, delim);
         }
 
         if (items == null) { return list; }

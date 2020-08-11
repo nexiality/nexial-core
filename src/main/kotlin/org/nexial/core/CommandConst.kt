@@ -144,6 +144,11 @@ object CommandConst {
                                            "base.appendText",
                                            "base.save")
 
+    // SLA not applicable to macro, section or repeat-until since they are composite steps
+    // also, we need to exempt all wait* commands
+    @JvmField
+    val SLA_EXEMPT_COMMANDS = listOf("base.macro","base.macroFlex", "base.repeatUntil", "base.section")
+
     // "self-derived" means that the command will figure out the appropriate param values for display
     @JvmField
     val PARAM_DERIVED_COMMANDS = listOf("step.observe")

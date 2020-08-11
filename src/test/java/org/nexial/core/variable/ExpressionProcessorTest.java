@@ -248,6 +248,74 @@ public class ExpressionProcessorTest {
     }
 
     @Test
+    public void processText_padLeft() throws Exception {
+        ExpressionProcessor subject = new ExpressionProcessor(context);
+
+        String fixture = "this is [TEXT(the best opportunity of your life) => padLeft(,8) upper] burger!";
+        assertEquals("this is THE BEST burger!", subject.process(fixture));
+
+        fixture = "[TEXT(xyz) => padLeft(zyx,9)]";
+        assertEquals("zyxzyxxyz", subject.process(fixture));
+
+        fixture = "[TEXT(xyz) => padLeft(a b c,11)]";
+        assertEquals("a b ca bxyz", subject.process(fixture));
+
+        fixture = "[TEXT(xyz) => padLeft(abcdefg,5)]";
+        assertEquals("abxyz", subject.process(fixture));
+    }
+
+    @Test
+    public void processText_padRight() throws Exception {
+        ExpressionProcessor subject = new ExpressionProcessor(context);
+
+        String fixture = "this is [TEXT(the best opportunity of your life) => padRight(,8) upper]!";
+        assertEquals("this is THE BEST!", subject.process(fixture));
+
+        fixture = "[TEXT(xyz) => padRight(zyx,9)]";
+        assertEquals("xyzzyxzyx", subject.process(fixture));
+
+        fixture = "[TEXT(xyz) => padRight(a b c,11)]";
+        assertEquals("xyza b ca b", subject.process(fixture));
+
+        fixture = "[TEXT(xyz) => padRight(abcdefg,5)]";
+        assertEquals("xyzab", subject.process(fixture));
+    }
+
+    @Test
+    public void processText_leftMost() throws Exception {
+        ExpressionProcessor subject = new ExpressionProcessor(context);
+
+        String fixture = "this is [TEXT(the best opportunity of your life) => leftMost(8) upper]!";
+        assertEquals("this is THE BEST!", subject.process(fixture));
+
+        fixture = "[TEXT(xyz) => leftMost(9)]";
+        assertEquals("xyz", subject.process(fixture));
+
+        fixture = "[TEXT(xyz123456789osdfkj) => leftMost(11)]";
+        assertEquals("xyz12345678", subject.process(fixture));
+
+        fixture = "[TEXT(xyz) => leftMost(0)]";
+        assertEquals("", subject.process(fixture));
+    }
+
+    @Test
+    public void processText_rightMost() throws Exception {
+        ExpressionProcessor subject = new ExpressionProcessor(context);
+
+        String fixture = "this is [TEXT(the best opportunity of your life) => rightMost(9) upper]!";
+        assertEquals("this is YOUR LIFE!", subject.process(fixture));
+
+        fixture = "[TEXT(xyz) => rightMost(9)]";
+        assertEquals("xyz", subject.process(fixture));
+
+        fixture = "[TEXT(xyz123456789osdfkj) => rightMost(11)]";
+        assertEquals("56789osdfkj", subject.process(fixture));
+
+        fixture = "[TEXT(xyz) => rightMost(0)]";
+        assertEquals("", subject.process(fixture));
+    }
+
+    @Test
     public void processText_different_delim() throws Exception {
 
         context.setData("nexial.textDelim", "|");

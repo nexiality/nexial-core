@@ -51,7 +51,8 @@ class NumberCommand : BaseCommand() {
 
         val strings = TextUtils.toList(array, context.textDelim, true)
         val average = if (CollectionUtils.isNotEmpty(strings)) {
-            strings.foldRight(0.0) { value, curr -> curr + NumberUtils.toDouble(value) } / strings.size
+            val noBlanks = strings.filter { StringUtils.isNotBlank(it) }
+            noBlanks.foldRight(0.0) { value, curr -> curr + NumberUtils.toDouble(value) } / noBlanks.size
         } else {
             0.0
         }

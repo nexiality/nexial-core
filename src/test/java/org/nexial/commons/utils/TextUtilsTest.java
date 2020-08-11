@@ -101,11 +101,13 @@ public class TextUtilsTest {
         Assert.assertEquals(fixture, actual.get(0));
 
         actual = TextUtils.toList(fixture, ",", true);
-        Assert.assertEquals(actual.size(), 4);
+        Assert.assertEquals(actual.size(), 6);
         Assert.assertEquals(actual.get(0), "a");
-        Assert.assertEquals(actual.get(1), "b");
-        Assert.assertEquals(actual.get(2), "c");
-        Assert.assertEquals(actual.get(3), "d");
+        Assert.assertEquals(actual.get(1), "");
+        Assert.assertEquals(actual.get(2), "b");
+        Assert.assertEquals(actual.get(3), "");
+        Assert.assertEquals(actual.get(4), "c");
+        Assert.assertEquals(actual.get(5), "d");
     }
 
     @Test

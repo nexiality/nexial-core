@@ -137,7 +137,7 @@ class NumberCommandTest {
 
         // mixing number types
         Assert.assertTrue(fixture.average(varName, "1,.2,3.0,004,-105.00,,,  ,52.214123,0,00.0,1,1.00,").isSuccess)
-        Assert.assertEquals(-3.871443364, context.getDoubleData(varName), 0.00001)
+        Assert.assertEquals(-4.2585877, context.getDoubleData(varName), 0.00001)
     }
 
     @Test

@@ -240,6 +240,52 @@ public class TextTransformer<T extends TextDataType> extends Transformer<T> {
         return data;
     }
 
+    public T leftMost(T data, String length) {
+        requiresPositiveNumber(length, "invalid length", length);
+        if (data != null) { data.setValue(StringUtils.left(data.getTextValue(), NumberUtils.toInt(length))); }
+        return data;
+    }
+
+    public T rightMost(T data, String length) {
+        requiresPositiveNumber(length, "invalid length", length);
+        if (data != null) { data.setValue(StringUtils.right(data.getTextValue(), NumberUtils.toInt(length))); }
+        return data;
+    }
+
+    public T padLeft(T data, String padWith, String maxLength) {
+        requiresPositiveNumber(maxLength, "invalid maxLength", maxLength);
+        if (data == null) { return data; }
+
+        int max = NumberUtils.toInt(maxLength);
+        String textValue = data.getTextValue();
+
+        // if text is already too long, then we'll return truncated version
+        if (StringUtils.isEmpty(padWith) || StringUtils.length(textValue) > max) {
+            data.setValue(StringUtils.truncate(textValue, max));
+            return data;
+        }
+
+        data.setValue(StringUtils.leftPad(textValue, max, padWith));
+        return data;
+    }
+
+    public T padRight(T data, String padWith, String maxLength) {
+        requiresPositiveNumber(maxLength, "invalid maxLength", maxLength);
+        if (data == null) { return data; }
+
+        int max = NumberUtils.toInt(maxLength);
+        String textValue = data.getTextValue();
+
+        // if text is already too long, then we'll return truncated version
+        if (StringUtils.isEmpty(padWith) || StringUtils.length(textValue) > max) {
+            data.setValue(StringUtils.truncate(textValue, max));
+            return data;
+        }
+
+        data.setValue(StringUtils.rightPad(textValue, max, padWith));
+        return data;
+    }
+
     public T prepend(T data, String... text) {
         if (data == null || ArrayUtils.isEmpty(text)) { return data; }
         data.setValue(fixControlChars(TextUtils.toString(text, null, null, null)) +
@@ -301,8 +347,8 @@ public class TextTransformer<T extends TextDataType> extends Transformer<T> {
     /**
      * convert text ({@code data}) into a CSV instance by separating each line in {@code data} via the specified
      * {@code positions}.  This method assumes NO COLUMN HEADER to the target CSV instance.  It will use system line
-     * separator ({@link System#lineSeparator}) to split multiple lines (into multiple CSV records). If {@code data}
-     * is without any line separator ({@link System#lineSeparator}, then it would be treated as a single CSV record.
+     * separator ({@link System#lineSeparator()}) to split multiple lines (into multiple CSV records). If {@code data}
+     * is without any line separator ({@link System#lineSeparator()}, then it would be treated as a single CSV record.
      */
     public CsvDataType csv(T data, String... positions) throws TypeConversionException {
         CsvDataType csv = new CsvDataType("");
@@ -475,8 +521,8 @@ public class TextTransformer<T extends TextDataType> extends Transformer<T> {
         ListDataType list = new ListDataType();
         if (data == null || data.getValue() == null) { return list; }
 
-        if (StringUtils.isBlank(beginRegex)) { throw new IllegalArgumentException("beginRegex is empty/blank"); }
-        if (StringUtils.isBlank(endRegex)) { throw new IllegalArgumentException("endRegex is empty/blank"); }
+        if (StringUtils.isEmpty(beginRegex)) { throw new IllegalArgumentException("beginRegex is empty/blank"); }
+        if (StringUtils.isEmpty(endRegex)) { throw new IllegalArgumentException("endRegex is empty/blank"); }
 
         boolean includeBeginEnd = BooleanUtils.toBoolean(inclusive);
         List<String> matches = RegexUtils.extract(data.getValue(), beginRegex + ".*?" + endRegex);

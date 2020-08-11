@@ -579,6 +579,7 @@ public class TestStep extends TestStepManifest {
         ExcelStyleHelper.formatTargetCell(worksheet, row.get(COL_IDX_TARGET));
         ExcelStyleHelper.formatCommandCell(worksheet, row.get(COL_IDX_COMMAND));
 
+        String commandName = row.get(COL_IDX_TARGET).toString() + "." + row.get(COL_IDX_COMMAND).toString();
         String message = result.getMessage();
 
         boolean isSkipped = result.isSkipped();
@@ -726,19 +727,21 @@ public class TestStep extends TestStepManifest {
 
         // elapsed time
         row.get(COL_IDX_ELAPSED_MS).setCellStyle(worksheet.getStyle(STYLE_ELAPSED_MS));
-        long elapsedTimeSLA = context.getSLAElapsedTimeMs();
-        if (!updateElapsedTime(elapsedMs, elapsedTimeSLA > 0 && elapsedTimeSLA < elapsedMs)) {
-            result.markElapsedTimeSlaNotMet();
-            pass = false;
-            message = result.getMessage();
-            // exception = result.getException();
+        if (!isSkipped && !SLA_EXEMPT_COMMANDS.contains(commandName) && !StringUtils.contains(commandName, ".wait")) {
+            // SLA not applicable to composite commands and all wait* commands
+            long elapsedTimeSLA = context.getSLAElapsedTimeMs();
+            if (!updateElapsedTime(elapsedMs, elapsedTimeSLA > 0 && elapsedTimeSLA < elapsedMs)) {
+                result.markElapsedTimeSlaNotMet();
+                pass = false;
+                message = result.getMessage();
+            }
         }
 
         createCommentForMacro(cellDescription, pass);
 
         // result
         XSSFCell cellResult = row.get(COL_IDX_RESULT);
-        String resultMsg = MESSAGE_REQUIRED_COMMANDS.contains(row.get(2).toString() + "." + row.get(3).toString()) &&
+        String resultMsg = MESSAGE_REQUIRED_COMMANDS.contains(commandName) &&
                            (result.isSuccess() || result.isError()) ?
                            (result.isSuccess() ? MSG_PASS : MSG_FAIL) + message :
                            MessageUtils.markResult(message, pass, true);
