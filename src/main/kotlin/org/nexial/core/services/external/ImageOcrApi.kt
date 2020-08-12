@@ -22,10 +22,12 @@ import org.apache.commons.lang3.StringUtils
 import org.json.JSONArray
 import org.json.JSONObject
 import org.nexial.commons.ServiceException
+import org.nexial.commons.utils.FileUtil
 import org.nexial.commons.utils.TextUtils
 import org.nexial.core.NexialConst.DEF_CHARSET
 import org.nexial.core.NexialConst.Data.APIKEYS_OCRSPACE
 import org.nexial.core.plugins.ws.WebServiceClient
+import org.nexial.core.utils.ConsoleUtils
 import org.nexial.core.utils.JSONPath
 import java.io.File
 import java.net.URLEncoder
@@ -36,9 +38,11 @@ class ImageOcrApi(lang: String = "eng",
                   detectOrientation: Boolean = false,
                   isTable: Boolean = true,
                   autoscale: Boolean = false,
-                  detectCheckbox: Boolean = true) {
+                  detectCheckbox: Boolean = true,
+                  val retry: Int = 3) {
 
     private val apiKeys = APIKEYS_OCRSPACE.toMutableList()
+    private val delayBetweenRetries = 5000L
 
     // https://ocr.space/OCRAPI
     private val url = "https://api.ocr.space/parse/image"
@@ -56,48 +60,78 @@ class ImageOcrApi(lang: String = "eng",
 
     @Throws(ServiceException::class)
     fun ocr(srcFile: File): String {
+        val errorPrefix = "Unable to parse '${srcFile.name}': "
+
         // step 1: retrieve image content
+        if (!FileUtil.isFileReadable(srcFile)) throw ServiceException(errorPrefix + "file is not readable or is empty")
         val content = FileUtils.readFileToByteArray(srcFile)
 
         // step 2: convert image to base64
         val base64 = URLEncoder.encode(Base64.getEncoder().encodeToString(content), DEF_CHARSET)
+        val payload = String.format(payloadPattern, toMimeType(srcFile), base64)
 
-        // step 3: randomize api key
-        val apiKey = apiKeys.random(Random(System.currentTimeMillis()))
+        val wsClient = WebServiceClient(null).configureAsQuiet().disableContextConfiguration()
 
-        // step 4: invoke ocr api
-        val response = WebServiceClient(null).configureAsQuiet().disableContextConfiguration().post(
-            url,
-            String.format(payloadPattern, toMimeType(srcFile), base64),
-            headers.plus("apikey" to apiKey))
+        // support reties, in case ext api is acting up
+        for (i in 1..retry) {
+            // step 3: randomize api key
+            // step 4: invoke ocr api
+            val response = wsClient.post(url,
+                                         payload,
+                                         headers.plus("apikey" to apiKeys.random(Random(System.currentTimeMillis()))))
 
-        // step 5: check response
-        val errorPrefix = "Unable to parse '$srcFile': "
-        if (response.returnCode != 200) {
-            throw ServiceException(errorPrefix + response.statusText +
-                                   if (StringUtils.isNotBlank(response.body)) "; ${response.body}" else "")
-        }
+            // step 5: check response
+            if (response.returnCode == 200) {
+                // step 6: fetch response text
+                val json = JSONObject(response.body)
 
-        // step 6: fetch response text
-        val json = JSONObject(response.body)
-        val exitCode = JSONPath.find(json, "OCRExitCode")
-        if (!StringUtils.equals(exitCode, "1")) {
-            var error = errorPrefix
-            var errorMessage = JSONPath.find(json, "ErrorMessage")
-            if (TextUtils.isBetween(errorMessage, "[", "]")) {
-                errorMessage = JSONPath.find(json, "ErrorMessage", JSONArray::class.java).toList()
-                    .joinToString(separator = ". ")
+                // 1 is good - SUCCESS!
+                // parsed successfully, let's fetch text
+                if (JSONPath.find(json, "OCRExitCode") == "1") return JSONPath.find(json, "ParsedResults.ParsedText")
+
+                val error = collectResponseError(errorPrefix, json)
+                if (i == retry)
+                    throw ServiceException(errorPrefix + error)
+                else
+                    ConsoleUtils.log("OCR API responded with error: ${error}, wait and retrying...")
+            } else {
+                // HTTP 5xx... give up
+                // last retry... give up
+                if (response.returnCode >= 500 || i == retry)
+                    throw ServiceException(errorPrefix + response.statusText +
+                                           if (StringUtils.isNotBlank(response.body)) "; ${response.body}" else "")
+                else
+                    ConsoleUtils.log(when (response.returnCode) {
+                                         // handle HTTP 403 - Forbidden
+                                         // e.g. Forbidden; "For this API KEY only 3 concurrent connections at the same time allowed. Contact support if you need more."
+                                         403  -> "Concurrent OCR use detected..."
+
+                                         // handle HTTP 408 - Timeout response status code
+                                         // e.g. Timed out waiting for results
+                                         408  -> "OCR API timed out..."
+                                         else -> "OCR API return unknown error - ${response.returnCode}"
+                                     } + " wait and retry...")
             }
-            if (StringUtils.isNotBlank(errorMessage)) error += errorMessage
 
-            val errorDetails = JSONPath.find(json, "ErrorDetails")
-            if (StringUtils.isNotBlank(errorDetails)) error += ". $errorDetails"
-
-            throw ServiceException(error)
+            // wait and retry
+            Thread.sleep(delayBetweenRetries)
         }
 
-        // parsed successfully, let's fetch text
-        return JSONPath.find(json, "ParsedResults.ParsedText")
+        // give up
+        throw ServiceException(errorPrefix + "Unknown error even after retries")
+    }
+
+    private fun collectResponseError(errorPrefix: String, json: JSONObject): String {
+        var errorMessage = JSONPath.find(json, "ErrorMessage")
+        if (TextUtils.isBetween(errorMessage, "[", "]")) {
+            errorMessage = JSONPath.find(json, "ErrorMessage", JSONArray::class.java).joinToString(separator = ". ")
+        }
+
+        val errorDetails = JSONPath.find(json, "ErrorDetails")
+
+        return errorPrefix +
+               (if (StringUtils.isNotBlank(errorMessage)) errorMessage else "") +
+               (if (StringUtils.isNotBlank(errorDetails)) ". $errorDetails" else "")
     }
 
     private fun toMimeType(imageFile: File) = when (imageFile.extension.toLowerCase()) {
