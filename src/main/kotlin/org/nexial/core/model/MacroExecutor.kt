@@ -27,10 +27,13 @@ import org.nexial.core.CommandConst.CMD_SECTION
 import org.nexial.core.ExecutionThread
 import org.nexial.core.NexialConst.*
 import org.nexial.core.NexialConst.Data.DEF_OPEN_EXCEL_AS_DUP
-import org.nexial.core.excel.*
+import org.nexial.core.excel.Excel
 import org.nexial.core.excel.Excel.MIN_EXCEL_FILE_SIZE
 import org.nexial.core.excel.Excel.Worksheet
+import org.nexial.core.excel.ExcelAddress
+import org.nexial.core.excel.ExcelArea
 import org.nexial.core.excel.ExcelConfig.*
+import org.nexial.core.excel.ExcelStyleHelper
 import org.nexial.core.utils.ConsoleUtils
 import org.nexial.core.utils.ExecUtils.isRunningInZeroTouchEnv
 import org.nexial.core.utils.FlowControlUtils
@@ -87,7 +90,8 @@ class MacroExecutor(private val initialTestStep: TestStep, val macro: Macro,
             val result = execute(testStep) ?: return StepResult.fail("Unable to execute step ${testStep.commandFQN}")
 
             val succeed = result.isSuccess
-            context.setData(OPT_LAST_OUTCOME, succeed)
+            // skip should not be considered as failure, but "inconclusive"
+            if (!result.isSkipped) context.setData(OPT_LAST_OUTCOME, succeed)
 
             if (initialTestStep.macroPartOfRepeatUntil) {
                 // if repeat until contains repeat until commands

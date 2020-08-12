@@ -111,7 +111,8 @@ public class CommandRepeater {
 
                     result = testStep.invokeCommand();
                     boolean succeed = result.isSuccess();
-                    context.setData(OPT_LAST_OUTCOME, succeed);
+                    // skip should not be considered as failure, but "inconclusive"
+                    if (!result.isSkipped()) { context.setData(OPT_LAST_OUTCOME, succeed); }
 
                     if (context.isBreakCurrentIteration()) {
                         logger.log(testStep, MSG_REPEAT_UNTIL_BREAK);
