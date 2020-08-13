@@ -130,12 +130,9 @@ public final class RegexUtils {
 
         Pattern pattern = multiline ? Pattern.compile(regex, REGEX_FLAGS) : Pattern.compile(regex);
         Matcher matcher = pattern.matcher(text);
-        if (!matcher.find()) { return list; }
-
-        while (matcher.groupCount() > 0) {
+        if (matcher.matches() && matcher.groupCount() > 0) {
             // always starts with 1 since group 0 represents the "entire" match
             for (int i = 1; i <= matcher.groupCount(); i++) { list.add(matcher.group(i)); }
-            if (!matcher.find()) { break; }
         }
 
         return list;
