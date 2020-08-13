@@ -42,7 +42,7 @@ class ImageOcrApi(lang: String = "eng",
                   val retry: Int = 3) {
 
     private val apiKeys = APIKEYS_OCRSPACE.toMutableList()
-    private val delayBetweenRetries = 5000L
+    private val delayBetweenRetries = 3000L
 
     // https://ocr.space/OCRAPI
     private val url = "https://api.ocr.space/parse/image"
@@ -71,6 +71,7 @@ class ImageOcrApi(lang: String = "eng",
         val payload = String.format(payloadPattern, toMimeType(srcFile), base64)
 
         val wsClient = WebServiceClient(null).configureAsQuiet().disableContextConfiguration()
+        var waitMs = delayBetweenRetries
 
         // support reties, in case ext api is acting up
         for (i in 1..retry) {
@@ -114,7 +115,8 @@ class ImageOcrApi(lang: String = "eng",
             }
 
             // wait and retry
-            Thread.sleep(delayBetweenRetries)
+            Thread.sleep(waitMs)
+            waitMs += Random.nextLong(1000L, delayBetweenRetries)
         }
 
         // give up
