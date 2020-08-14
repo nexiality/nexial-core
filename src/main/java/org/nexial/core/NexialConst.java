@@ -380,6 +380,10 @@ public final class NexialConst {
         public static final String MACRO_STEP_FAILED = registerSysVar(NAMESPACE + "macroStepFailed");
         public static final String MACRO_BREAK_CURRENT_ITERATION = registerSysVar(NAMESPACE +
                                                                                   "macroBreakCurrentIteration");
+        public static final String REPEAT_UNTIL_LOOP_INDEX = registerSysVar(NAMESPACE + "repeatUntil.index");
+        public static final String REPEAT_UNTIL_START_TIME = registerSysVar(NAMESPACE + "repeatUntil.startTime");
+        public static final String REPEAT_UNTIL_END_TIME = registerSysVar(NAMESPACE + "repeatUntil.endTime");
+
         // controlled by user's script/data to end plan earlier than designed.
         public static final String LAST_PLAN_STEP = registerSysVar(NAMESPACE + "lastPlanStep", false);
         public static final String OPT_CURRENT_ACTIVITY = registerSysVar(NAMESPACE + "currentActivity");

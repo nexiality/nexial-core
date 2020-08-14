@@ -36,7 +36,7 @@ import org.openqa.selenium.WebDriverException;
 
 import static org.apache.commons.lang3.builder.ToStringStyle.SIMPLE_STYLE;
 import static org.nexial.core.CommandConst.CMD_SECTION;
-import static org.nexial.core.NexialConst.Data.FAIL_FAST;
+import static org.nexial.core.NexialConst.Data.*;
 import static org.nexial.core.NexialConst.Exec.FAIL_COUNT;
 import static org.nexial.core.NexialConst.MSG_FAIL;
 import static org.nexial.core.NexialConst.MSG_PASS;
@@ -70,8 +70,7 @@ public class CommandRepeater {
         Worksheet worksheet = initialTestStep.getWorksheet();
 
         // one loop through to fix all the styles for loop steps
-        for (int i = 0; i < steps.size(); i++) {
-            TestStep step = steps.get(i);
+        for (TestStep step : steps) {
             formatRepeatUntilDescription(step);
             formatTargetCell(worksheet, step.getRow().get(COL_IDX_TARGET));
             formatCommandCell(worksheet, step.getRow().get(COL_IDX_COMMAND));
@@ -106,6 +105,7 @@ public class CommandRepeater {
 
                     if (i == 0) {
                         loopCount++;
+                        context.setData(REPEAT_UNTIL_LOOP_INDEX, loopCount);
                         logRepeatUntilStart(logger, testStep, loopCount);
                     }
 

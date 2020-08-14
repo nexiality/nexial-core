@@ -72,8 +72,7 @@ import static java.util.regex.Pattern.CASE_INSENSITIVE;
 import static org.apache.commons.lang3.SystemUtils.JAVA_IO_TMPDIR;
 import static org.nexial.core.CommandConst.*;
 import static org.nexial.core.NexialConst.*;
-import static org.nexial.core.NexialConst.Data.CMD_PROFILE_DEFAULT;
-import static org.nexial.core.NexialConst.Data.NULL;
+import static org.nexial.core.NexialConst.Data.*;
 import static org.nexial.core.NexialConst.ImageCaption.*;
 import static org.nexial.core.excel.ExcelConfig.MSG_PASS;
 import static org.nexial.core.plugins.base.IncrementStrategy.ALPHANUM;
@@ -708,7 +707,12 @@ public class BaseCommand implements NexialCommand {
             return StepResult.fail("Unable to gather the appropriate commands to perform repeat-until execution");
         }
 
-        return commandRepeater.start();
+        context.removeData(REPEAT_UNTIL_END_TIME);
+        context.removeData(REPEAT_UNTIL_LOOP_INDEX);
+        context.setData(REPEAT_UNTIL_START_TIME, System.currentTimeMillis());
+        StepResult result = commandRepeater.start();
+        context.setData(REPEAT_UNTIL_END_TIME, System.currentTimeMillis());
+        return result;
     }
 
     /**
