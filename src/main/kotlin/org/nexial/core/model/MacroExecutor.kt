@@ -99,9 +99,9 @@ class MacroExecutor(private val initialTestStep: TestStep, val macro: Macro,
                 if (testStep.isCommandRepeater) context.isBreakCurrentIteration = false
 
                 // todo endImmediate working for repeat until
-                if (context.isBreakCurrentIteration || (result.isError && shouldFailFast(context, testStep))) {
+                if (context.isBreakCurrentIteration || (result.isError && shouldFailFast(context, testStep)))
                     return result
-                }
+
                 i++
                 continue
             }
@@ -119,10 +119,8 @@ class MacroExecutor(private val initialTestStep: TestStep, val macro: Macro,
                 activitySummary.adjustTotalSteps(-1)
                 if (testStep.commandFQN == CMD_SECTION) {
                     ExcelStyleHelper.formatSectionDescription(testStep, false)
-
                     val numOfSteps = testStep.formatSkippedSections(testSteps, i, true)
                     i += numOfSteps
-
                     activitySummary.adjustTotalSteps(-numOfSteps)
                 }
 
@@ -168,12 +166,12 @@ class MacroExecutor(private val initialTestStep: TestStep, val macro: Macro,
                 break
             }
 
-            val shouldFailFast = context.isFailFast
-            if (shouldFailFast) {
+            if (shouldFailFast(context, testStep)) {
                 logger.log(testStep, MSG_STEP_FAIL_FAST)
                 trackTimeLogs.trackingDetails("Execution Failed")
                 break
             }
+
             i++
         }
 
@@ -231,7 +229,6 @@ class MacroExecutor(private val initialTestStep: TestStep, val macro: Macro,
             }
         }
 
-        // (2018/12/16,automike): memory consumption precaution
         return testSteps
 
         // (2018/12/9,automike): remove to support dynamic macro changes during execution and interactive mode
@@ -271,7 +268,7 @@ class MacroExecutor(private val initialTestStep: TestStep, val macro: Macro,
 
         output.forEach {
             if (it.key == "") return@forEach
-            outputValueMap[it.value] = context.getStringData(it.key)
+            outputValueMap[it.value] = context.getObjectData(it.key) as Any
         }
         // Now going outside this macro
         context.isInMacro = false
@@ -335,11 +332,10 @@ class MacroExecutor(private val initialTestStep: TestStep, val macro: Macro,
     }
 
     private fun shouldFailFast(context: ExecutionContext, testStep: TestStep): Boolean {
-        val shouldFailFast = context.isFailFast || context.isFailFastCommand(testStep)
-        if (shouldFailFast) {
+        return if (context.isFailFast || context.isFailFastCommand(testStep)) {
             context.logCurrentStep(MSG_CRITICAL_COMMAND_FAIL + testStep.commandFQN)
-        }
-        return shouldFailFast
+            true
+        } else false
     }
 
     override fun toString(): String {

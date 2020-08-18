@@ -33,8 +33,7 @@ public class StepResult {
 
     private boolean success;
     private String message;
-    private boolean skipped;
-    private Throwable exception;
+    private final Throwable exception;
     private Object[] paramValues;
     private String detailedLogLink;
 

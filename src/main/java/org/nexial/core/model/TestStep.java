@@ -503,10 +503,8 @@ public class TestStep extends TestStepManifest {
             boolean lastOutcome = result.isSuccess();
 
             // if macro expanded, then consider last outcome from macro steps
-            // skip should not be considered as failure, but "inconclusive"
-            if (!isMacroExpander || macroExecutor == null || !result.isSkipped()) {
-                context.setData(OPT_LAST_OUTCOME, lastOutcome);
-            }
+            // "skipped" result already check in the above if-else block
+            if (!isMacroExpander || macroExecutor == null) { context.setData(OPT_LAST_OUTCOME, lastOutcome); }
 
             if (lastOutcome) {
                 summary.incrementPass();

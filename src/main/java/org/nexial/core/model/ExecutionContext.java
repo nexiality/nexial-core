@@ -451,7 +451,10 @@ public class ExecutionContext {
         return getBooleanData(OPT_INTERACTIVE, false) && !ExecUtils.isRunningInZeroTouchEnv();
     }
 
-    public boolean isFailFast() {return getBooleanData(FAIL_FAST, getDefaultBool(FAIL_FAST)) && !isInteractiveMode(); }
+    /**
+     * "fail-fast" is stiffled for Nexial Interactive so that we can uncover more issues during interactive mode.
+     */
+    public boolean isFailFast() { return getBooleanData(FAIL_FAST, getDefaultBool(FAIL_FAST)) && !isInteractiveMode(); }
 
     public boolean isResolveTextAsURL() {
         return hasData(RESOLVE_TEXT_AS_URL) ? getBooleanData(RESOLVE_TEXT_AS_URL) :
