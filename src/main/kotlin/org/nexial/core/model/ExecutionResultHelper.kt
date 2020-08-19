@@ -19,7 +19,6 @@ package org.nexial.core.model
 import org.apache.commons.collections4.CollectionUtils
 import org.apache.commons.lang3.StringUtils
 import org.apache.commons.lang3.math.NumberUtils
-import org.apache.poi.ss.usermodel.CellCopyPolicy
 import org.apache.poi.ss.usermodel.CellType.STRING
 import org.apache.poi.ss.usermodel.Row.MissingCellPolicy.CREATE_NULL_AS_BLANK
 import org.apache.poi.ss.util.CellRangeAddress
@@ -272,10 +271,13 @@ class ExecutionResultHelper(private val allSteps: List<TestStep>, val worksheet:
             val cellComment = oldCell.cellComment
             if (cellComment != null) Excel.createComment(newCell, cellComment.string.string, cellComment.author)
 
-            // cell copy policy to copy value and formula
-            val cellCopyPolicy = CellCopyPolicy().createBuilder().cellStyle(false).build()
+            /*// cell copy policy to copy value and formula
+            val cellCopyPolicy = CellCopyPolicy().createBuilder().copyHyperlink(false).cellStyle(false).build()
+            newCell.copyCellFrom(oldCell, cellCopyPolicy)*/
 
-            newCell.copyCellFrom(oldCell, cellCopyPolicy)
+            // to avoid copying hyperlink
+            Excel.copyCellValue(oldCell, newCell)
+
             if (i == COL_IDX_DESCRIPTION) formatDescriptionCell(newCell, isRepeatUntil)
         }
     }

@@ -710,8 +710,10 @@ public class BaseCommand implements NexialCommand {
         context.removeData(REPEAT_UNTIL_END_TIME);
         context.removeData(REPEAT_UNTIL_LOOP_INDEX);
         context.setData(REPEAT_UNTIL_START_TIME, System.currentTimeMillis());
+        context.setData(REPEAT_UNTIL_LOOP_IN, true);
         StepResult result = commandRepeater.start();
         context.setData(REPEAT_UNTIL_END_TIME, System.currentTimeMillis());
+        context.removeData(REPEAT_UNTIL_LOOP_IN);
         return result;
     }
 
@@ -1038,6 +1040,7 @@ public class BaseCommand implements NexialCommand {
 
         MacroExecutor macroExecutor = new MacroExecutor(currentTestStep, macro, inputMap, outputMap);
         currentTestStep.setMacroExecutor(macroExecutor);
+        context.setData(MACRO_INVOKED_FROM, currentTestStep.getRow().get(0).getReference());
         return macroExecutor.start();
     }
 

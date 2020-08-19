@@ -1485,4 +1485,28 @@ public class Excel {
         return styles;
     }
 
+    public static void copyCellValue(XSSFCell oldCell, XSSFCell newCell) {
+        switch (oldCell.getCellTypeEnum()) {
+            case STRING:
+                newCell.setCellValue(oldCell.getStringCellValue());
+                break;
+            case BLANK:
+                newCell.setCellType(BLANK);
+                break;
+            case NUMERIC:
+                newCell.setCellValue(oldCell.getNumericCellValue());
+                break;
+            case BOOLEAN:
+                newCell.setCellValue(oldCell.getBooleanCellValue());
+                break;
+            case FORMULA:
+                newCell.setCellFormula(oldCell.getCellFormula());
+                break;
+            case ERROR:
+                newCell.setCellValue(oldCell.getErrorCellValue());
+                break;
+            default:
+                throw new IllegalArgumentException("Invalid cell type");
+        }
+    }
 }

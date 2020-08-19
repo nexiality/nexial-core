@@ -380,7 +380,9 @@ public final class NexialConst {
         public static final String MACRO_STEP_FAILED = registerSysVar(NAMESPACE + "macroStepFailed");
         public static final String MACRO_BREAK_CURRENT_ITERATION = registerSysVar(NAMESPACE +
                                                                                   "macroBreakCurrentIteration");
+        public static final String MACRO_INVOKED_FROM = registerSysVar(NAMESPACE + "macro.invokedFrom");
         public static final String REPEAT_UNTIL_LOOP_INDEX = registerSysVar(NAMESPACE + "repeatUntil.index");
+        public static final String REPEAT_UNTIL_LOOP_IN = registerSysVar(NAMESPACE + "repeatUntil");
         public static final String REPEAT_UNTIL_START_TIME = registerSysVar(NAMESPACE + "repeatUntil.startTime");
         public static final String REPEAT_UNTIL_END_TIME = registerSysVar(NAMESPACE + "repeatUntil.endTime");
 

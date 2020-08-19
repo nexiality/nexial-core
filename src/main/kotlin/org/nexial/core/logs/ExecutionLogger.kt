@@ -106,10 +106,9 @@ class ExecutionLogger(private val context: ExecutionContext) {
         @JvmStatic
         fun toHeader(subject: TestStep?) = if (subject == null) "current  step"
         else {
-            var macroName = subject.macroName
-            macroName = if (StringUtils.isNotBlank(macroName)) "($macroName)" else ""
-            toHeader(subject.testCase) + "|$macroName#" + StringUtils.leftPad((subject.rowIndex + 1).toString() + "",
-                                                                              3) + "|" + StringUtils.truncate(
+            val macro = subject.macro
+            val macroName = if (macro != null) "(${macro.macroName})" else ""
+            toHeader(subject.testCase) + "|$macroName#" + StringUtils.leftPad((subject.rowIndex + 1).toString() + "", 3) + "|" + StringUtils.truncate(
                 subject.commandFQN, 25)
         }
 

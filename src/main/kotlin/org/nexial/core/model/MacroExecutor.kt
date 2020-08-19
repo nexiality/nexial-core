@@ -27,13 +27,11 @@ import org.nexial.core.CommandConst.CMD_SECTION
 import org.nexial.core.ExecutionThread
 import org.nexial.core.NexialConst.*
 import org.nexial.core.NexialConst.Data.DEF_OPEN_EXCEL_AS_DUP
-import org.nexial.core.excel.Excel
+import org.nexial.core.NexialConst.Data.MACRO_INVOKED_FROM
+import org.nexial.core.excel.*
 import org.nexial.core.excel.Excel.MIN_EXCEL_FILE_SIZE
 import org.nexial.core.excel.Excel.Worksheet
-import org.nexial.core.excel.ExcelAddress
-import org.nexial.core.excel.ExcelArea
 import org.nexial.core.excel.ExcelConfig.*
-import org.nexial.core.excel.ExcelStyleHelper
 import org.nexial.core.utils.ConsoleUtils
 import org.nexial.core.utils.ExecUtils.isRunningInZeroTouchEnv
 import org.nexial.core.utils.FlowControlUtils
@@ -60,14 +58,14 @@ class MacroExecutor(private val initialTestStep: TestStep, val macro: Macro,
         // todo check for repeatUntil macro
         val testCase = initialTestStep.testCase
 
-        // pre-process input parameter
-        if (MapUtils.isNotEmpty(input)) updateInputToContext()
-
         // harvest all macro steps
         testSteps = harvestSteps(macro)
         val size = testSteps.size
         stepCount = size
         if (size == 0) throw Exception("There is no steps detected in $macro ; so can not be extended")
+
+        // pre-process input parameter
+        if (MapUtils.isNotEmpty(input)) updateInputToContext()
 
         // for macro outside repeatUntil loop
         // add macro steps count into total step count for activity and scenario
@@ -87,7 +85,13 @@ class MacroExecutor(private val initialTestStep: TestStep, val macro: Macro,
                 i += collectRepeatingCommand(testStep, activitySummary, scenarioSummary)
             }
 
-            val result = execute(testStep) ?: return StepResult.fail("Unable to execute step ${testStep.commandFQN}")
+            val result = execute(testStep)
+
+            if (result == null) {
+                // just to be safe  for upcoming macros
+                updateOutputToContext()
+                return StepResult.fail("Unable to execute step ${testStep.commandFQN}")
+            }
 
             val succeed = result.isSuccess
             // skip should not be considered as failure, but "inconclusive"
@@ -98,10 +102,11 @@ class MacroExecutor(private val initialTestStep: TestStep, val macro: Macro,
                 // if nested repeat until has EndLoopIf() so setting back to normal again
                 if (testStep.isCommandRepeater) context.isBreakCurrentIteration = false
 
-                // todo endImmediate working for repeat until
-                if (context.isBreakCurrentIteration || (result.isError && shouldFailFast(context, testStep)))
+                if (context.isBreakCurrentIteration || (result.isError && shouldFailFast(context, testStep))) {
+                    // just to be safe for upcoming macro
+                    updateOutputToContext()
                     return result
-
+                }
                 i++
                 continue
             }
@@ -197,6 +202,9 @@ class MacroExecutor(private val initialTestStep: TestStep, val macro: Macro,
         // try stylesheet to false
         macroExcel = Excel(macroFile, DEF_OPEN_EXCEL_AS_DUP, true)
         macroSheet = macroExcel!!.worksheet(macro.sheet)
+        if (macroSheet == null) {
+            throw IOException("Unable to read macro sheet '${macro.sheet}' from file '${macroFile.absolutePath}'")
+        }
         val lastMacroRow = macroSheet!!.findLastDataRow(ADDR_MACRO_COMMAND_START)
         val macroArea = ExcelArea(macroSheet, ExcelAddress("A2:O$lastMacroRow"), false)
         val macroStepArea = macroArea.wholeArea
@@ -210,13 +218,15 @@ class MacroExecutor(private val initialTestStep: TestStep, val macro: Macro,
             val macroName = macro.macroName
             if (currentMacroName == macroName) {
                 macroFound = true
-                testStep.macroName = macroName
+                testStep.macro = macro
+                // setting macro name to empty for the first cell so that activity cell formatting avoided
+                testStep.row[COL_IDX_TESTCASE].setCellValue("")
                 testSteps.add(testStep)
                 continue
             }
             if (macroFound) {
                 if (StringUtils.isBlank(currentMacroName)) {
-                    testStep.macroName = macroName
+                    testStep.macro = macro
                     testSteps.add(testStep)
                 } else {
                     return testSteps
@@ -227,6 +237,10 @@ class MacroExecutor(private val initialTestStep: TestStep, val macro: Macro,
                     // break;
                 }
             }
+        }
+        if (!macroFound) {
+            throw IOException(
+                "Unable to read macro '${macro.macroName}' in sheet " + "'${macro.sheet}'" + " from file " + "'${macroFile.absolutePath}'")
         }
 
         return testSteps
@@ -263,11 +277,14 @@ class MacroExecutor(private val initialTestStep: TestStep, val macro: Macro,
     private fun updateInputToContext() = input.forEach { context.setData(it.key, it.value, false) }
 
     private fun updateOutputToContext() {
-        // Adding output data to map before removing Macro Flex data
+        // remove macro reference index
+        context.removeData(MACRO_INVOKED_FROM)
         val outputValueMap = hashMapOf<String, Any>()
 
+        // Adding output data to map before removing Macro Flex data
         output.forEach {
-            if (it.key == "") return@forEach
+            // don't update if key is empty or has null value
+            if (StringUtils.isBlank(it.key) || !context.hasData(it.key)) return@forEach
             outputValueMap[it.value] = context.getObjectData(it.key) as Any
         }
         // Now going outside this macro
@@ -285,7 +302,7 @@ class MacroExecutor(private val initialTestStep: TestStep, val macro: Macro,
         val area = ExcelArea(macroSheet, excelAddress, false)
         val numOfStepIncluded = step.testCase.testScenario.collectRepeatingCommandSet(step, area, step.rowIndex + 1)
 
-        step.commandRepeater.steps.forEach { it.macroName = step.macroName }
+        step.commandRepeater.steps.forEach { it.macro = step.macro }
 
         stepCount -= numOfStepIncluded
 
@@ -321,7 +338,10 @@ class MacroExecutor(private val initialTestStep: TestStep, val macro: Macro,
                 ConsoleUtils.pauseAndInspect(context, ">>>>> On-Demand Inspection detected...", true)
             }
 
-            if (initialTestStep.macroPartOfRepeatUntil) return result
+            if (initialTestStep.macroPartOfRepeatUntil) {
+                testStep.handleScreenshot(result)
+                return result
+            }
             testStep.postExecCommand(result, tickTock.time)
             if (testStep.isCommandRepeater()) context.setCurrentTestStep(testStep)
 

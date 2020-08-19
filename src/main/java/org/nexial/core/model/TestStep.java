@@ -84,7 +84,9 @@ public class TestStep extends TestStepManifest {
     protected boolean isMacroExpander;
     protected MacroExecutor macroExecutor;
     protected boolean macroPartOfRepeatUntil;
-    protected String macroName;
+
+    // added if macro file/sheet needed for particular testStep in future
+    protected Macro macro;
 
     // support testing
     protected TestStep() { }
@@ -132,7 +134,6 @@ public class TestStep extends TestStepManifest {
         isCommandRepeater = StringUtils.equals(target + "." + command, CMD_REPEAT_UNTIL);
         isMacroExpander = StringUtils.equalsAny(target + "." + command, CMD_MACRO, CMD_MACRO_FLEX);
         macroPartOfRepeatUntil = false;
-        macroName = StringUtils.EMPTY;
     }
 
     public Worksheet getWorksheet() { return worksheet; }
@@ -155,7 +156,7 @@ public class TestStep extends TestStepManifest {
 
     public void setMacroExecutor(MacroExecutor macroExecutor) { this.macroExecutor = macroExecutor;}
 
-    public String getMacroName() { return macroName; }
+    public Macro getMacro() { return macro; }
 
     @Override
     public String toString() {
@@ -242,10 +243,7 @@ public class TestStep extends TestStepManifest {
     public void setCommandRepeater(CommandRepeater commandRepeater) { this.commandRepeater = commandRepeater;}
 
     public String generateFilename(String ext) {
-        String filename = worksheet.getFile().getName() + "_" +
-                          worksheet.getName() + "_" +
-                          getRow().get(0).getReference() +
-                          (isExternalProgram() ? "_" + getParams().get(0) : "");
+        String filename = generateFileName();
 
         List<NestedMessage> nestedTestResults = getNestedTestResults();
         if (CollectionUtils.isNotEmpty(nestedTestResults)) {
@@ -258,6 +256,20 @@ public class TestStep extends TestStepManifest {
 
         // make sure we don't have funky characters in the file name
         return filename + StringUtils.prependIfMissing(ext, ".");
+    }
+
+    private String generateFileName() {
+        String repeatUntilIndex = context != null && context.hasData(REPEAT_UNTIL_LOOP_IN) ?
+                                  "_" + StringUtils.leftPad(context.getStringData(REPEAT_UNTIL_LOOP_INDEX), 3, '0') :
+                                  "";
+        String stepIndex = row.get(0).getReference();
+        Worksheet worksheet = testCase.getTestScenario().getWorksheet();
+        if (context != null && context.hasData(MACRO_INVOKED_FROM)) {
+            stepIndex = context.getStringData(MACRO_INVOKED_FROM) + "." + stepIndex;
+        }
+
+        return worksheet.getFile().getName() + "_" + worksheet.getName() + "_" + stepIndex + repeatUntilIndex +
+               (isExternalProgram() ? "_" + getParams().get(0) : "");
     }
 
     public static List<String> readParamValues(List<XSSFCell> row) {
