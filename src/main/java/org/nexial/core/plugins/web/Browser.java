@@ -740,7 +740,13 @@ public class Browser implements ForcefulTerminate {
         //prefs.put("download.prompt_for_download", "true");
         prefs.put("profile.content_settings.pattern_pairs.*.multiple-automatic-downloads", "1");
         prefs.put("profile.content_settings.pattern_pairs.,.multiple-automatic-downloads", 1);
+        prefs.put("profile.default_content_settings.multiple-automatic-downloads", "1");
+        prefs.put("profile.default_content_setting_values.automatic_downloads", "1");
         prefs.put("multiple-automatic-downloads", "1");
+        prefs.put("profile.default_content_settings.popups", 0);
+        //Turns off download prompt
+        prefs.put("download.prompt_for_download", false);
+
         ((MutableCapabilities) capabilities).setCapability("chrome.prefs", prefs);
 
         browserVersion = capabilities.getVersion();

@@ -113,18 +113,13 @@ public class TestStep extends TestStepManifest {
         readFlowControlsCell(row);
         readCaptureScreenCell(row);
 
-        // setMessageId("[" + worksheet.getFile().getName() + "]" +
-        //              "[" + worksheet.getName() + "][" + testCase.getName() + "]" +
-        //              "[ROW " + StringUtils.leftPad((getRowIndex() + 1) + "", 3) + "]" +
-        //              "[" + target + "][" + command + "]");
-        setMessageId(String.format("[%s][%s][%s][STEP %s]%s[%s][%s]",
+        setMessageId(String.format("[%s][%s][%s][STEP %s][%s][%s]",
                                    worksheet.getFile().getName(),
                                    worksheet.getName(),
-                                   testCase.getName(),
-                                   StringUtils.left((getRowIndex() + 1) + "", 3),
-                                   (scriptRowIndex != 0 && scriptRowIndex != rowIndex ?
-                                    "[ROW " + (scriptRowIndex + 1) :
-                                    ""),
+                                   testCase.getName() + (macro == null ? "" : " (" + macro.getMacroName() + ")"),
+                                   StringUtils.leftPad((getRowIndex() + 1) + "", 3),
+                                   // (scriptRowIndex != 0 && scriptRowIndex != rowIndex ? // todo: huh?
+                                   //  "[ROW " + (scriptRowIndex + 1) : ""),
                                    target,
                                    command));
 

@@ -19,13 +19,17 @@ package org.nexial.core.logs
 
 import org.apache.commons.lang3.StringUtils
 import org.nexial.core.ExecutionThread
-import org.nexial.core.model.*
+import org.nexial.core.model.ExecutionContext
+import org.nexial.core.model.TestCase
+import org.nexial.core.model.TestScenario
+import org.nexial.core.model.TestStep
 import org.nexial.core.plugins.CanLogExternally
 import org.nexial.core.plugins.NexialCommand
 import org.slf4j.LoggerFactory
 import java.io.File
 
 class ExecutionLogger(private val context: ExecutionContext) {
+
     private val runId: String = context.runId
     private val logger = LoggerFactory.getLogger(this.javaClass)
     private val priorityLogger = LoggerFactory.getLogger(this.javaClass.name + "-priority")
@@ -107,9 +111,9 @@ class ExecutionLogger(private val context: ExecutionContext) {
         fun toHeader(subject: TestStep?) = if (subject == null) "current  step"
         else {
             val macro = subject.macro
-            val macroName = if (macro != null) "(${macro.macroName})" else ""
-            toHeader(subject.testCase) + "|$macroName#" + StringUtils.leftPad((subject.rowIndex + 1).toString() + "", 3) + "|" + StringUtils.truncate(
-                subject.commandFQN, 25)
+            toHeader(subject.testCase) + "${if (macro != null) " (${macro.macroName})" else ""}|" +
+            "#" + StringUtils.leftPad((subject.rowIndex + 1).toString() + "", 3) + "|" +
+            StringUtils.truncate(subject.commandFQN, 25)
         }
 
         @JvmStatic
