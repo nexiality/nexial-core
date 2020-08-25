@@ -23,6 +23,7 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import javax.annotation.Nullable;
 import javax.validation.constraints.NotNull;
 import javax.xml.parsers.ParserConfigurationException;
 import javax.xml.transform.Source;
@@ -37,7 +38,6 @@ import org.jdom2.*;
 import org.jdom2.input.SAXBuilder;
 import org.jdom2.input.sax.XMLReaderXSDFactory;
 import org.jdom2.output.XMLOutputter;
-import org.jetbrains.annotations.Nullable;
 import org.nexial.commons.utils.CollectionUtil;
 import org.nexial.commons.utils.TextUtils;
 import org.nexial.commons.utils.XmlUtils;
@@ -91,22 +91,10 @@ public class XmlCommand extends BaseCommand {
         requiresNotBlank(xml, "invalid xml", xml);
         requiresNotBlank(xpath, "invalid xpath", xpath);
 
-        // requiresNotBlank(expected, "invalid expected value", expected);
         try {
             String value = getValueByXPath(xml, xpath);
-            if (value == null) {
-                if (StringUtils.equals(context.getNullValueToken(), expected)) {
-                    return StepResult.success("EXPECTED null value via xpath '" + xpath + "' found");
-                } else {
-                    return StepResult.fail("XML does not contain structure as defined by '" + xpath + "'");
-                }
-            }
-
-            if (StringUtils.isEmpty(value) && context.isEmptyValue(expected)) {
-                return StepResult.success("EXPECTED empty value via xpath '" + xpath + "' found");
-            }
-
-            return assertEqual(expected, value);
+            StepResult result = assertEmpty(expected, value, xpath);
+            return result != null ? result : assertEqual(expected, value);
         } catch (Exception e) {
             return StepResult.fail("Error while filtering XML via xpath '" + xpath + "': " + e.getMessage());
         }
@@ -115,19 +103,11 @@ public class XmlCommand extends BaseCommand {
     public StepResult assertValues(String xml, String xpath, String array, String exactOrder) {
         requiresNotBlank(xml, "invalid xml", xml);
         requiresNotBlank(xpath, "invalid xpath", xpath);
-        requires(StringUtils.isNotBlank(array), "invalid array", array);
 
         try {
             String values = getValuesByXPath(xml, xpath);
-            if (values == null) {
-                if (StringUtils.equals(context.getNullValueToken(), array)) {
-                    return StepResult.success("EXPECTED null value via xpath '" + xpath + "' found");
-                } else {
-                    return StepResult.fail("XML does not contain structure as defined by '" + xpath + "'");
-                }
-            }
-
-            return assertArrayEqual(array, values, exactOrder);
+            StepResult result = assertEmpty(array, values, xpath);
+            return result != null ? result : assertArrayEqual(array, values, exactOrder);
         } catch (Exception e) {
             return StepResult.fail("Error while filtering XML via xpath '" + xpath + "': " + e.getMessage());
         }
@@ -657,6 +637,22 @@ public class XmlCommand extends BaseCommand {
         } catch (JDOMException | IOException e) {
             return StepResult.fail("Unable to parse XML: " + e.getMessage());
         }
+    }
+
+    @Nullable
+    private StepResult assertEmpty(String expected, String actual, String xpath) {
+        if (actual == null) {
+            if (StringUtils.equals(context.getNullValueToken(), expected)) {
+                return StepResult.success("EXPECTED null value via xpath '" + xpath + "' found");
+            } else {
+                return StepResult.fail("XML does not contain structure as defined by '" + xpath + "'");
+            }
+        }
+
+        if (StringUtils.isEmpty(actual) && context.isEmptyValue(expected)) {
+            return StepResult.success("EXPECTED empty value via xpath '" + xpath + "' found");
+        }
+        return null;
     }
 
     @Nullable
