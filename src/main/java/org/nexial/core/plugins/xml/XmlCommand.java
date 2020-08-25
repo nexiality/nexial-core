@@ -88,7 +88,10 @@ public class XmlCommand extends BaseCommand {
     }
 
     public StepResult assertValue(String xml, String xpath, String expected) {
-        requiresNotBlank(expected, "invalid expected value", expected);
+        requiresNotBlank(xml, "invalid xml", xml);
+        requiresNotBlank(xpath, "invalid xpath", xpath);
+
+        // requiresNotBlank(expected, "invalid expected value", expected);
         try {
             String value = getValueByXPath(xml, xpath);
             if (value == null) {
@@ -99,6 +102,10 @@ public class XmlCommand extends BaseCommand {
                 }
             }
 
+            if (StringUtils.isEmpty(value) && context.isEmptyValue(expected)) {
+                return StepResult.success("EXPECTED empty value via xpath '" + xpath + "' found");
+            }
+
             return assertEqual(expected, value);
         } catch (Exception e) {
             return StepResult.fail("Error while filtering XML via xpath '" + xpath + "': " + e.getMessage());
@@ -106,6 +113,8 @@ public class XmlCommand extends BaseCommand {
     }
 
     public StepResult assertValues(String xml, String xpath, String array, String exactOrder) {
+        requiresNotBlank(xml, "invalid xml", xml);
+        requiresNotBlank(xpath, "invalid xpath", xpath);
         requires(StringUtils.isNotBlank(array), "invalid array", array);
 
         try {
@@ -125,6 +134,8 @@ public class XmlCommand extends BaseCommand {
     }
 
     public StepResult assertElementCount(String xml, String xpath, String count) {
+        requiresNotBlank(xml, "invalid xml", xml);
+        requiresNotBlank(xpath, "invalid xpath", xpath);
         int expected = toPositiveInt(count, "count");
         try {
             int actual = count(xml, xpath);
@@ -328,9 +339,7 @@ public class XmlCommand extends BaseCommand {
         return buffer;
     }
 
-    public String getValueByXPath(String xml, String xpath) {
-        return getValueByXPath(resolveDoc(xml, xpath), xpath);
-    }
+    public String getValueByXPath(String xml, String xpath) { return getValueByXPath(resolveDoc(xml, xpath), xpath); }
 
     public static String getValueByXPath(Document doc, String xpath) {
         Object match = XmlUtils.findNode(doc, xpath);
