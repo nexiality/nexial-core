@@ -431,7 +431,7 @@ public class WebServiceClient {
             appendLog(details, "Elapsed Time    : ", response.getElapsedTime());
             appendLog(details, "Response Headers: ", "{" + TextUtils.toString(response.getHeaders(), ", ", ": ") + "}");
             if (payloadLength > 0) {
-                appendLog(details, "Request Body    : ",
+                appendLog(details, "Response Body   : ",
                           payloadLength + " bytes. " +
                           (StringUtils.isNotBlank(saveTo) ? "Saved to " + saveTo : NL + payload));
             }
@@ -769,5 +769,4 @@ public class WebServiceClient {
      */
     @Nullable
     protected ExecutionContext resolveContextForRequest() { return isContextAsConfigDisabled() ? null : context; }
-
 }
