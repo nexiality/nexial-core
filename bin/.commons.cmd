@@ -83,6 +83,9 @@ REM # Make sure prerequisite environment variables are set
 		)
 	)
 
+REM finding java version
+REM for /f tokens^=2-5^ delims^=.-_^" %%j in ('java -fullversion 2^>^&1') do set "jver=%%j%%k%%l%%m"
+
 	REM echo setting JAVA as %JAVA%
 	goto :eof
 
@@ -100,7 +103,7 @@ REM # Make sure prerequisite environment variables are set
 :resolveEnv
 	set NEXIAL_LIB=%NEXIAL_HOME%\lib
 	set CLASSES_PATH=%NEXIAL_HOME%\classes
-	set datestr=%date:~6,4%-%date:~0,2%-%date:~3,2% %time%
+	set datestr=%date% %time%
 
 	echo ENVIRONMENT:
 	echo   CURRENT TIME:   %datestr%
