@@ -340,6 +340,10 @@
     <logger name="org.nexial.core.logs.TrackTimeLogs" additivity="false" level="INFO">
         <appender-ref ref="file-tracktime"/>
     </logger>
+    <logger name="com.keanlight" additivity="false" level="INFO">
+        <appender-ref ref="console-execution"/>
+        <appender-ref ref="file-testexecution"/>
+    </logger>
 
     <!-- catch-all -->
     <root level="INFO">

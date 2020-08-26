@@ -18,6 +18,7 @@
 package org.nexial.core.logs
 
 import org.apache.commons.lang3.StringUtils
+import org.nexial.commons.utils.TextUtils
 import org.nexial.core.ExecutionThread
 import org.nexial.core.model.ExecutionContext
 import org.nexial.core.model.TestCase
@@ -118,7 +119,7 @@ class ExecutionLogger(private val context: ExecutionContext) {
 
         @JvmStatic
         fun toHeader(subject: TestCase?) =
-                if (subject == null) "current activity" else toHeader(subject.testScenario) + "|" + subject.name
+                if (subject == null) "current activity" else toHeader(subject.testScenario) + "|" + TextUtils.toOneLine(subject.name, true)
 
         @JvmStatic
         fun toHeader(subject: TestScenario?): String {
