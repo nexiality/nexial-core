@@ -689,6 +689,34 @@ public class BaseCommand implements NexialCommand {
         return StepResult.success();
     }
 
+    public StepResult waitForCondition(String conditions, String maxWaitMs) {
+        requiresNotBlank(maxWaitMs, "invalid condition", maxWaitMs);
+        requiresPositiveNumber(maxWaitMs, "invalid max wait time", maxWaitMs);
+        String msg = "evaluating filters: (" + conditions + ") => ";
+
+        long mustEndBy = System.currentTimeMillis() + NumberUtils.toLong(maxWaitMs);
+        NexialFilterList filterList = new NexialFilterList(conditions);
+        if (filterList.size() == 0) {
+            return StepResult.fail("Invalid filter condition " + filterList.getFilterText());
+        }
+        boolean isMatch = false;
+        while (System.currentTimeMillis() < mustEndBy) {
+            if (filterList.isMatched(context, null)) {
+                isMatch = true;
+                break;
+            }
+            try { Thread.sleep(300); } catch (InterruptedException e) { }
+        }
+
+        if (isMatch) {
+            log(msg + "MATCHED");
+            return StepResult.success("Matched conditions within max time " + maxWaitMs);
+        } else {
+            log(msg + "NOT MATCHED");
+            return StepResult.fail("Unable to match conditions within max time " + maxWaitMs);
+        }
+    }
+
     public StepResult repeatUntil(String steps, String maxWaitMs) {
         requiresPositiveNumber(steps, "Invalid step count", steps);
         int stepCount = NumberUtils.toInt(steps);

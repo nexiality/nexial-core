@@ -603,4 +603,20 @@ public final class FileUtil {
             }
         }
     }
+
+    public static boolean isContentMatched(String path, String content, boolean isPattern) {
+        File file = new File(path);
+        if (!isFileReadable(file)) {
+            ConsoleUtils.error("File " + path + "doesn't exist or is not readable");
+            return false;
+        }
+
+        try {
+            String fileContent = FileUtils.readFileToString(file, DEF_CHARSET);
+            return isPattern ? RegexUtils.isExact(fileContent, content) : StringUtils.contains(fileContent, content);
+        } catch (IOException e) {
+            ConsoleUtils.error("Unable to read file " + file.getAbsolutePath());
+            return false;
+        }
+    }
 }

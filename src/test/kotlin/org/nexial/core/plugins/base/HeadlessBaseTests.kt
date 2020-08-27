@@ -62,6 +62,7 @@ class HeadlessBaseTests : ExcelBasedTests() {
         // ExecutionSummary executionSummary = testViaExcel("unitTest_base_part3.xlsx", "function_format");
         assertPassFail(executionSummary, "function_format", TestOutcomeStats.allPassed())
         assertPassFail(executionSummary, "execution_count", TestOutcomeStats(2, 9))
+        assertPassFail(executionSummary, "waitForCondition", TestOutcomeStats(1, 6))
     }
 
     @Test

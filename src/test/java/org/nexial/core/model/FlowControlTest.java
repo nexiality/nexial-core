@@ -325,6 +325,24 @@ public class FlowControlTest {
                                  "ProceedIf -> [[TEXT([LIST(${myList}) => distinct ascending item(0)])" +
                                  " => lower] = agra]");
 
+        //multiple expression
+        fixture.flowControls = FlowControl.parse("ProceedIf ( ${file} contain file tmpFile.txt &" +
+                                                 " ${file} is readable-file & ${file} has file-size 1 &" +
+                                                 " ${file} has lastmod > 12345 ) ");
+        assertExpectedFilterEval(fixture, "ProceedIf -> [${file} contain file tmpFile.txt, " +
+                                          "${file} is readable-file, " +
+                                          "${file} has file-size 1, " +
+                                          "${file} has lastmod > 12345]");
+        //multiple expression
+        fixture.flowControls = FlowControl.parse("ProceedIf ( ${file} contain file pattern .*.txt &" +
+                                                 " ${file} has file content abc &" +
+                                                 " ${file} has file content pattern .*abc &" +
+                                                 " ${file} has lastmod = 12345 ) ");
+        assertExpectedFilterEval(fixture, "ProceedIf -> [${file} contain file pattern .*.txt, " +
+                                          "${file} has file content abc, " +
+                                          "${file} has file content pattern .*abc, " +
+                                          "${file} has lastmod = 12345]");
+
         context.cleanProject();
     }
 

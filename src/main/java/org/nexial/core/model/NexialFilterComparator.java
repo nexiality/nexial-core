@@ -68,6 +68,9 @@ public enum NexialFilterComparator {
     NotStartsWith(" not start with ", 1, String.class, 3.2),
     NotEndsWith(" not end with ", 1, String.class, 3.3),
 
+    ContainFilePattern(" contain file pattern ", 1, String.class, 3.34),
+    ContainFile(" contain file ", 1, String.class, 3.35),
+
     Between(" between ", 2, Number.class, 3.4),
     Contain(" contain ", 1, String.class, 3.5),
     StartsWith(" start with ", 1, String.class, 3.6),
@@ -76,6 +79,11 @@ public enum NexialFilterComparator {
     HasLengthOf(" has length of ", 1, Number.class, 3.9),
 
     ReadableFileWithSize(" has file-size ", 1, Number.class, 4.0),
+    HasFileContentPattern(" has file content pattern ", 1, Number.class, 4.1),
+    HasFileContent(" has file content ", 1, Number.class, 4.2),
+    LastModifiedGreater(" has lastmod > ", 1, Number.class, 4.3),
+    LastModifiedLesser(" has lastmod < ", 1, Number.class, 4.4),
+    LastModifiedEqual(" has lastmod = ", 1, Number.class, 4.5),
 
     TrueOrFalse(null, 0, Boolean.class, 5.0),
 

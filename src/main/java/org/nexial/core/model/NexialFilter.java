@@ -17,6 +17,7 @@
 
 package org.nexial.core.model;
 
+import java.io.File;
 import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -175,11 +176,20 @@ public class NexialFilter implements Serializable {
 
         // for Is operator, we will defer the double-quote-wrap until isAtLeastOneMatched()
         String expected = context.replaceTokens(controls);
-        String msg = msgPrefix + "(";
-        msg += context.containsCrypt(subject) ? subject : actual;
-        msg += comparator.getSymbol();
-        msg += context.containsCrypt(controls) ? controls : expected;
-        msg += ")\t\t=> ";
+
+        String msg;
+
+        if (msgPrefix == null) {
+            msg = null;
+            // assign empty for msgPrefix for some methods to avoid null pointer exception
+            msgPrefix = "";
+        } else {
+            msg = msgPrefix + "(";
+            msg += context.containsCrypt(subject) ? subject : actual;
+            msg += comparator.getSymbol();
+            msg += context.containsCrypt(controls) ? controls : expected;
+            msg += ")\t\t=> ";
+        }
 
         boolean result;
         switch (comparator) {
@@ -292,13 +302,32 @@ public class NexialFilter implements Serializable {
                 result = FileUtil.isEmptyDirectory(actual);
                 break;
 
+            case ContainFilePattern:
+            case ContainFile:
+                result = FileUtil.isDirectoryReadable(actual) && FileUtil.listFiles(actual, expected, false).size() > 0;
+                break;
+
+            case HasFileContentPattern:
+                result = FileUtil.isContentMatched(actual, expected, true);
+                break;
+
+            case HasFileContent:
+                result = FileUtil.isContentMatched(actual, expected, false);
+                break;
+
+            case LastModifiedGreater:
+            case LastModifiedLesser:
+            case LastModifiedEqual:
+                result = compareLastModified(actual, expected);
+                break;
+
             default: {
                 ConsoleUtils.error("Unsupported comparison: " + comparator.getSymbol());
                 result = false;
             }
         }
 
-        ConsoleUtils.log(msg + (!result ? "NOT " : "") + "MATCHED");
+        if (msg != null) { ConsoleUtils.log(msg + (!result ? "NOT " : "") + "MATCHED"); }
         return result;
     }
 
@@ -575,6 +604,30 @@ public class NexialFilter implements Serializable {
 
     protected boolean isNoneMatched(String actual, ExecutionContext context) {
         return !toSubstitutedControlList(context).contains(actual);
+    }
+
+    protected boolean compareLastModified(String path, String lastModified) {
+        if (!(FileUtil.isFileReadable(path) || FileUtil.isDirectoryReadable(path))) {
+            ConsoleUtils.error("File/directory " + path + " doesn't exist or is not readable");
+            return false;
+        }
+
+        long actualLastModified = new File(path).lastModified();
+        long expectedLastModified = Long.parseLong(lastModified);
+        boolean result = false;
+
+        switch (comparator) {
+            case LastModifiedGreater:
+                result = actualLastModified > expectedLastModified;
+                break;
+            case LastModifiedLesser:
+                result = actualLastModified < expectedLastModified;
+                break;
+            case LastModifiedEqual:
+                result = actualLastModified == expectedLastModified;
+                break;
+        }
+        return result;
     }
 
     protected boolean isNumericMatch(String actual, ExecutionContext context, String msgPrefix) {
