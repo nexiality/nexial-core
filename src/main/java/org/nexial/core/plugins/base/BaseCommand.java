@@ -36,7 +36,6 @@ import javax.validation.constraints.NotNull;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang3.ArrayUtils;
-import org.apache.commons.lang3.BooleanUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.math.NumberUtils;
 import org.apache.commons.lang3.tuple.ImmutablePair;
@@ -448,7 +447,7 @@ public class BaseCommand implements NexialCommand {
         // now make 'expected' organized as expected - but applying case insensitive sort
         expected.sort(CASE_INSENSIVE_SORT);
 
-        if (BooleanUtils.toBoolean(descending)) { Collections.reverse(expected); }
+        if (CheckUtils.toBoolean(descending)) { Collections.reverse(expected); }
 
         // string comparison to determine if both the actual (displayed) list and sorted list is the same
         return assertEqual(expected.toString(), actual.toString());
@@ -565,7 +564,7 @@ public class BaseCommand implements NexialCommand {
         List<String> actualList = TextUtils.toList(array2, delim, false);
         requiresNotEmpty(actualList, "ACTUAL array is empty", array2);
 
-        if (!BooleanUtils.toBoolean(exactOrder)) {
+        if (!CheckUtils.toBoolean(exactOrder)) {
             Collections.sort(expectedList);
             Collections.sort(actualList);
         }

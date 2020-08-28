@@ -72,10 +72,6 @@ public final class TextUtils {
                                                                                     "\r = ",
                                                                                     "\t = ");
     private static final int TO_STRING_KEY_LENGTH = 14;
-    public final static Map<String, String> NEW_LINE_CHAR_REPLACEMENT = TextUtils.toMap("=",
-                                                                                        "\\n= ",
-                                                                                        "\\r= ",
-                                                                                        "\\t= ");
 
     /**
      * line break conversion strategies -- currently only two, namely (1)

@@ -926,7 +926,6 @@ public class Nexial {
 
         File junitReport = null;
         try {
-            updateActivityName(summary);
             junitReport = reporter.generateJUnitXml(summary);
             ConsoleUtils.log("generated JUnit report for this execution: " + junitReport);
             if (junitReport != null) { System.setProperty(JUNIT_XML_LOCATION, junitReport.getAbsolutePath()); }
@@ -991,16 +990,6 @@ public class Nexial {
         }
 
         NexialListenerFactory.fireEvent(NexialExecutionEvent.newExecutionEndEvent(runId, summary));
-    }
-
-    private void updateActivityName(ExecutionSummary summary) {
-        for (ExecutionSummary es : summary.getNestedExecutions()) {
-            if (es.getExecutionLevel() != null && es.getExecutionLevel().equals(ExecutionLevel.ACTIVITY)) {
-                es.setName(TextUtils
-                               .replaceStrings(es.getName(),
-                                               TextUtils.NEW_LINE_CHAR_REPLACEMENT));
-            } else { updateActivityName(es); }
-        }
     }
 
     protected void initSpringContext() {

@@ -59,11 +59,7 @@ import org.nexial.core.plugins.ws.WsCommand;
 import org.nexial.core.services.external.UserStackAPI;
 import org.nexial.core.spi.NexialExecutionEvent;
 import org.nexial.core.spi.NexialListenerFactory;
-import org.nexial.core.utils.ConsoleUtils;
-import org.nexial.core.utils.NativeInputHelper;
-import org.nexial.core.utils.OutputFileUtils;
-import org.nexial.core.utils.OutputResolver;
-import org.nexial.core.utils.WebDriverUtils;
+import org.nexial.core.utils.*;
 import org.nexial.core.variable.Syspath;
 import org.openqa.selenium.Dimension;
 import org.openqa.selenium.NoSuchElementException;
@@ -938,7 +934,7 @@ public class WebCommand extends BaseCommand implements CanTakeScreenshot, CanLog
 
         String locator = locatorHelper.resolveContainLabelXpath(text);
         int atLeast = NumberUtils.toInt(minMatch);
-        boolean alsoScrollTo = BooleanUtils.toBoolean(scrollTo);
+        boolean alsoScrollTo = CheckUtils.toBoolean(scrollTo);
 
         List<WebElement> matches = findElements(locator);
         if (CollectionUtils.isEmpty(matches) && atLeast > 0) {
@@ -1887,7 +1883,7 @@ public class WebCommand extends BaseCommand implements CanTakeScreenshot, CanLog
         }
 
         int time = Integer.parseInt(timeout);
-        boolean forceCssChange = BooleanUtils.toBoolean(removeFixed);
+        boolean forceCssChange = CheckUtils.toBoolean(removeFixed);
 
         File target = new File(file);
         target.getParentFile().mkdirs();

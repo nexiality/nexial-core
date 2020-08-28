@@ -31,6 +31,7 @@ import org.apache.poi.xssf.usermodel.XSSFCell;
 import org.apache.poi.xssf.usermodel.XSSFSheet;
 import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 import org.nexial.commons.InvalidInputRuntimeException;
+import org.nexial.commons.utils.TextUtils;
 import org.nexial.core.excel.Excel;
 import org.nexial.core.excel.Excel.Worksheet;
 import org.nexial.core.excel.ExcelAddress;
@@ -258,7 +259,7 @@ public class TestScenario {
                 }
 
                 currentActivity = new TestCase();
-                currentActivity.setName(activity);
+                currentActivity.setName(TextUtils.toOneLine(activity, true));
                 currentActivity.setTestScenario(this);
                 testCases.add(currentActivity);
                 testCaseMap.put(currentActivity.getName(), currentActivity);

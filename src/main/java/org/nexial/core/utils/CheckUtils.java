@@ -34,6 +34,7 @@ import org.nexial.commons.utils.ResourceUtils;
 import org.nexial.commons.utils.TextUtils;
 
 import static java.lang.Integer.MIN_VALUE;
+import static org.apache.commons.lang3.BooleanUtils.toBooleanObject;
 import static org.nexial.core.NexialConst.TOKEN_END;
 import static org.nexial.core.NexialConst.TOKEN_START;
 
@@ -167,5 +168,13 @@ public class CheckUtils {
         } else {
             return false;
         }
+    }
+
+    public static boolean toBoolean(final String str) {
+        Boolean retVal = toBooleanObject(str);
+        if (retVal == null) {
+            throw new AssertionError("Invalid input, expected boolean but found " + str);
+        }
+        return retVal == Boolean.TRUE;
     }
 }

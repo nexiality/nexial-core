@@ -28,7 +28,6 @@ import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.collections4.MapUtils;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang3.ArrayUtils;
-import org.apache.commons.lang3.BooleanUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.text.StrTokenizer;
 import org.apache.poi.poifs.filesystem.FileMagic;
@@ -44,6 +43,7 @@ import org.nexial.core.excel.ExcelAddress;
 import org.nexial.core.model.ExecutionContext;
 import org.nexial.core.model.StepResult;
 import org.nexial.core.plugins.base.BaseCommand;
+import org.nexial.core.utils.CheckUtils;
 
 import com.univocity.parsers.common.record.Record;
 import com.univocity.parsers.csv.CsvParser;
@@ -342,7 +342,7 @@ public class ExcelCommand extends BaseCommand {
 
         context.replaceTokens("[EXCEL(" + file + ") => " +
                               " read(" + worksheet + "," + range + ")" +
-                              " json(" + BooleanUtils.toBoolean(header) + ")" +
+                              " json(" + CheckUtils.toBoolean(header) + ")" +
                               " save(" + output + ")" +
                               "]");
         return StepResult.success("Excel content from " + worksheet + "," + range + " saved to " + output);

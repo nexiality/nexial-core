@@ -30,7 +30,6 @@ import javax.validation.constraints.NotNull;
 
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.collections4.IterableUtils;
-import org.apache.commons.lang3.BooleanUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.json.JSONArray;
 import org.json.JSONObject;
@@ -214,7 +213,7 @@ public class JsonCommand extends BaseCommand {
         requiresNotBlank(json, "Invalid JSON", json);
         requiresNotBlank(jsonpath, "Invalid JsonPath", jsonpath);
 
-        boolean isExactOrder = BooleanUtils.toBoolean(exactOrder);
+        boolean isExactOrder = CheckUtils.toBoolean(exactOrder);
 
         // could be an array of 1 item
         JsonArray expectedArray = toJsonArray(array, context.getTextDelim());
@@ -305,7 +304,7 @@ public class JsonCommand extends BaseCommand {
 
         // these lines might have \r still; we need to remove them before field-level parsing
         JsonHelper.fromCsv(TextUtils.to2dList(StringUtils.remove(csvContent, "\r"), "\n", context.getTextDelim()),
-                           BooleanUtils.toBoolean(header),
+                           CheckUtils.toBoolean(header),
                            new FileWriter(jsonFile));
 
         return StepResult.success("CSV '" + csv + "' converted to JSON '" + jsonFile + "'");
@@ -332,7 +331,7 @@ public class JsonCommand extends BaseCommand {
         String jsonContent = retrieveJsonContent(json);
         if (jsonContent == null) { return StepResult.fail("Unable to parse JSON content: " + json); }
 
-        String compressed = JsonUtils.compact(jsonContent, BooleanUtils.toBoolean(removeEmpty));
+        String compressed = JsonUtils.compact(jsonContent, CheckUtils.toBoolean(removeEmpty));
         if (StringUtils.isBlank(compressed)) { return StepResult.fail("Unable to minify/compact JSON content"); }
 
         updateDataVariable(var, compressed);

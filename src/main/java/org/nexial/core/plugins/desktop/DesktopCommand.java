@@ -29,7 +29,6 @@ import java.util.stream.Collectors;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.collections4.MapUtils;
 import org.apache.commons.lang3.ArrayUtils;
-import org.apache.commons.lang3.BooleanUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.math.NumberUtils;
 import org.nexial.commons.utils.TextUtils;
@@ -1349,8 +1348,7 @@ public class DesktopCommand extends BaseCommand implements ForcefulTerminate, Ca
         requiresValidAndNotReadOnlyVariableName(var);
         requiresNotBlank(matchBy, "Invalid 'matchBy' specified", matchBy);
         requiresNotBlank(column, "Invalid 'column' specified", column);
-        requiresNotBlank(nestedOnly, "Invalid value specified for nestedOnly", nestedOnly);
-        if (BooleanUtils.toBoolean(nestedOnly)) {
+        if (CheckUtils.toBoolean(nestedOnly)) {
             return saveHierCellChildData(var, matchBy, column);
         }
 
@@ -1391,8 +1389,7 @@ public class DesktopCommand extends BaseCommand implements ForcefulTerminate, Ca
     public StepResult assertHierCells(String matchBy, String column, String expected, String nestedOnly) {
         requiresNotBlank(matchBy, "Invalid 'matchBy' specified", matchBy);
         requiresNotBlank(column, "Invalid 'column' specified", column);
-        requiresNotBlank(nestedOnly, "Invalid value specified for nestedOnly", nestedOnly);
-        if (BooleanUtils.toBoolean(nestedOnly)) {
+        if (CheckUtils.toBoolean(nestedOnly)) {
             return assertHierCellChildData(matchBy, column, expected);
         }
         String cellData = getHierCell(matchBy, column);

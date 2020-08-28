@@ -35,7 +35,6 @@ import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.collections4.MapUtils;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.LineIterator;
-import org.apache.commons.lang3.BooleanUtils;
 import org.apache.commons.lang3.RandomStringUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.exception.ExceptionUtils;
@@ -61,6 +60,7 @@ import org.nexial.core.plugins.filevalidation.parser.FileParserFactory;
 import org.nexial.core.plugins.filevalidation.validators.ErrorReport;
 import org.nexial.core.plugins.filevalidation.validators.MasterFileValidator;
 import org.nexial.core.plugins.pdf.PdfTextExtractor;
+import org.nexial.core.utils.CheckUtils;
 import org.nexial.core.utils.ConsoleUtils;
 import org.nexial.core.utils.OutputFileUtils;
 import org.nexial.core.utils.OutputResolver;
@@ -264,7 +264,7 @@ public class IoCommand extends BaseCommand {
 
     public StepResult deleteFiles(String location, String recursive) {
         requires(StringUtils.isNotBlank(recursive), "invalid value for recursive", recursive);
-        boolean isRecursive = BooleanUtils.toBoolean(recursive);
+        boolean isRecursive = CheckUtils.toBoolean(recursive);
         return doAction(isRecursive ? IoAction.deleteRecursive : IoAction.delete, location, null);
     }
 
@@ -360,8 +360,7 @@ public class IoCommand extends BaseCommand {
     public StepResult compare(String expected, String actual, String failFast) {
         requires(StringUtils.isNotEmpty(expected), "Invalid 'expected'; neither a file or text", expected);
         requires(StringUtils.isNotEmpty(actual), "Invalid 'actual'; neither a file or text", actual);
-        CompareMode compareMode = StringUtils.isNotBlank(failFast) && BooleanUtils.toBoolean(failFast) ?
-                                  FAIL_FAST : THOROUGH;
+        CompareMode compareMode = CheckUtils.toBoolean(failFast) ? FAIL_FAST : THOROUGH;
         return compare(expected, actual, compareMode, null);
     }
 
@@ -614,7 +613,7 @@ public class IoCommand extends BaseCommand {
         requiresNotBlank(encodedSource, "invalid encoded source", encodedSource);
         requiresNotBlank(decodedTarget, "invalid decoded target", decodedTarget);
 
-        boolean shouldAppend = BooleanUtils.toBoolean(append);
+        boolean shouldAppend = CheckUtils.toBoolean(append);
         byte[] decoded = TextUtils.base64decodeAsBytes(OutputFileUtils.resolveContent(encodedSource, context, false));
         File target = FileUtil.writeBinaryFile(decodedTarget, shouldAppend, decoded);
         return StepResult.success("Content BASE64 decoded and saved to '" + target + "'");
@@ -717,9 +716,8 @@ public class IoCommand extends BaseCommand {
         requires(StringUtils.isNotBlank(file), "invalid file", file);
         // allow user to write empty content to file (instead of throwing error)
         // requires(StringUtils.isNotBlank(content), "invalid content", content);
-        requires(StringUtils.isNotBlank(append), "invalid value for append", append);
 
-        boolean isAppend = BooleanUtils.toBoolean(append);
+        boolean isAppend = CheckUtils.toBoolean(append);
         File output = new File(file);
         if (output.isDirectory()) {
             return StepResult.fail("'" + file + "' is EXPECTED as file, but resolved to a directory instead.");

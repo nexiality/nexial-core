@@ -34,6 +34,7 @@ import org.nexial.commons.utils.TextUtils;
 import org.nexial.core.IntegrationConfigException;
 import org.nexial.core.model.ExecutionContext;
 import org.nexial.core.model.StepResult;
+import org.nexial.core.utils.CheckUtils;
 import org.nexial.core.utils.ConsoleUtils;
 import org.nexial.core.utils.OutputFileUtils;
 import org.nexial.core.utils.OutputResolver;
@@ -67,7 +68,7 @@ public class CsvCommand extends IoCommand {
         requiresNotBlank(actual, "actual is empty/blank");
         return compare(expected,
                        actual,
-                       StringUtils.isNotBlank(failFast) && BooleanUtils.toBoolean(failFast) ? FAIL_FAST : THOROUGH,
+                       CheckUtils.toBoolean(failFast) ? FAIL_FAST : THOROUGH,
                        null);
     }
 

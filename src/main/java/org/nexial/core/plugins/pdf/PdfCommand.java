@@ -30,7 +30,6 @@ import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.collections4.MapUtils;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.FilenameUtils;
-import org.apache.commons.lang3.BooleanUtils;
 import org.apache.commons.lang3.RandomStringUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.exception.ExceptionUtils;
@@ -56,6 +55,7 @@ import org.nexial.core.model.StepResult;
 import org.nexial.core.plugins.base.BaseCommand;
 import org.nexial.core.plugins.io.IoCommand;
 import org.nexial.core.plugins.pdf.PdfTableExtractor.LineRange;
+import org.nexial.core.utils.CheckUtils;
 import org.nexial.core.utils.ConsoleUtils;
 import org.nexial.core.utils.OutputFileUtils;
 import org.thymeleaf.util.ArrayUtils;
@@ -157,7 +157,7 @@ public class PdfCommand extends BaseCommand {
     public StepResult assertTextArray(String pdf, String textArray, String ordered) {
         requires(StringUtils.isNotBlank(textArray), "invalid text array", textArray);
 
-        boolean order = BooleanUtils.toBoolean(ordered);
+        boolean order = CheckUtils.toBoolean(ordered);
         String[] array = StringUtils.splitByWholeSeparator(textArray, context.getTextDelim());
 
         try {

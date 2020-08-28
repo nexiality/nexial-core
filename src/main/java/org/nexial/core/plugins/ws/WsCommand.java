@@ -37,6 +37,7 @@ import org.nexial.commons.utils.web.URLEncodingUtils;
 import org.nexial.core.model.ExecutionContext;
 import org.nexial.core.model.StepResult;
 import org.nexial.core.plugins.base.BaseCommand;
+import org.nexial.core.utils.CheckUtils;
 import org.nexial.core.utils.ConsoleUtils;
 import org.nexial.core.utils.OutputResolver;
 
@@ -49,7 +50,8 @@ import static io.jsonwebtoken.SignatureAlgorithm.HS256;
 import static io.jsonwebtoken.impl.TextCodec.BASE64URL;
 import static org.apache.http.HttpHeaders.AUTHORIZATION;
 import static org.apache.http.HttpHeaders.CONTENT_TYPE;
-import static org.nexial.core.NexialConst.*;
+import static org.nexial.core.NexialConst.GSON_COMPRESSED;
+import static org.nexial.core.NexialConst.NL;
 import static org.nexial.core.NexialConst.Ws.*;
 import static org.nexial.core.SystemVariables.getDefaultBool;
 import static org.nexial.core.plugins.ws.WebServiceClient.hideAuthDetails;
@@ -169,7 +171,7 @@ public class WsCommand extends BaseCommand {
         requiresValidAndNotReadOnlyVariableName(var);
         requiresNotBlank(file, "invalid output file", file);
 
-        boolean appendRequired = BooleanUtils.toBoolean(append);
+        boolean appendRequired = CheckUtils.toBoolean(append);
 
         File f = new File(file);
         if (f.isDirectory()) { return StepResult.fail("file cannot be a directory: '" + file + "'"); }
