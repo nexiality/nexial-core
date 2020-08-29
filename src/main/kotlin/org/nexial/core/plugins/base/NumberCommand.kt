@@ -4,8 +4,11 @@ import org.apache.commons.collections4.CollectionUtils
 import org.apache.commons.lang3.StringUtils
 import org.apache.commons.lang3.math.NumberUtils
 import org.nexial.commons.utils.TextUtils
+import org.nexial.core.NexialConst.*
+import org.nexial.core.model.ExecutionContext
 import org.nexial.core.model.StepResult
 import org.nexial.core.utils.CheckUtils.*
+import java.math.RoundingMode
 import java.text.DecimalFormat
 import kotlin.Double.Companion.MAX_VALUE
 import kotlin.Double.Companion.MIN_VALUE
@@ -146,7 +149,7 @@ class NumberCommand : BaseCommand() {
 
         requires(NumberUtils.isParsable(current), "Variable does not contain correct number format", Var)
 
-        val rounded = roundTo(NumberUtils.toDouble(current), closestDigit)
+        val rounded = roundTo(NumberUtils.toDouble(current), closestDigit, toRoundingMode(context))
         updateDataVariable(Var, rounded)
         return StepResult.success("Variable '$Var' has been rounded down to $rounded")
     }
@@ -177,7 +180,15 @@ class NumberCommand : BaseCommand() {
 
     companion object {
         @JvmStatic
-        fun roundTo(num: Double, closestDigit: String): String {
+        fun toRoundingMode(context: ExecutionContext): RoundingMode {
+            val roundingMode = context.getStringData(OPT_ROUNDING_MODE)
+            return VALID_ROUNDING_MODES[
+                    if (VALID_ROUNDING_MODES.containsKey(roundingMode)) roundingMode else DEF_ROUNDING_MODE
+            ]!!
+        }
+
+        @JvmStatic
+        fun roundTo(num: Double, closestDigit: String, roundingMode: RoundingMode): String {
             // figure out the specified number of whole numbers and fractional digits
             val wholeNumberCount = StringUtils.length(StringUtils.substringBefore(closestDigit, "."))
             var fractionDigitCount = StringUtils.length(StringUtils.substringAfter(closestDigit, "."))
@@ -203,6 +214,7 @@ class NumberCommand : BaseCommand() {
             }
 
             val df = DecimalFormat()
+            df.roundingMode = roundingMode
             df.isGroupingUsed = false
             df.maximumFractionDigits = fractionDigitCount
             df.minimumFractionDigits = fractionDigitCount

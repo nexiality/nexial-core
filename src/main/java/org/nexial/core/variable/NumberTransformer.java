@@ -29,11 +29,14 @@ import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.math.NumberUtils;
 import org.nexial.commons.utils.RegexUtils;
 import org.nexial.commons.utils.TextUtils;
+import org.nexial.core.ExecutionThread;
+import org.nexial.core.model.ExecutionContext;
 import org.nexial.core.plugins.base.NumberCommand;
 import org.nexial.core.utils.ConsoleUtils;
 
 import static java.math.RoundingMode.UP;
 import static org.nexial.commons.utils.TextUtils.CleanNumberStrategy.REAL;
+import static org.nexial.core.plugins.base.NumberCommand.toRoundingMode;
 import static org.nexial.core.variable.ExpressionConst.REGEX_DEC_NUM;
 
 public class NumberTransformer<T extends NumberDataType> extends Transformer {
@@ -86,7 +89,8 @@ public class NumberTransformer<T extends NumberDataType> extends Transformer {
         Number number = data.getValue();
         if (number == null) { return data; }
 
-        String rounded = NumberCommand.roundTo(number.doubleValue(), closestDigit);
+        ExecutionContext context = ExecutionThread.get();
+        String rounded = NumberCommand.roundTo(number.doubleValue(), closestDigit, toRoundingMode(context));
         data.setTextValue(rounded);
         data.setValue(NumberUtils.createNumber(rounded));
 

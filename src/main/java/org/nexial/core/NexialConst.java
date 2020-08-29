@@ -20,6 +20,7 @@ package org.nexial.core;
 import java.awt.*;
 import java.io.File;
 import java.io.IOException;
+import java.math.RoundingMode;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.util.List;
@@ -54,6 +55,7 @@ import com.google.gson.GsonBuilder;
 import static java.awt.Color.*;
 import static java.awt.image.BufferedImage.*;
 import static java.io.File.separator;
+import static java.math.RoundingMode.*;
 import static javax.naming.Context.*;
 import static org.apache.commons.lang3.SystemUtils.IS_OS_WINDOWS;
 import static org.apache.commons.lang3.SystemUtils.USER_HOME;
@@ -150,6 +152,12 @@ public final class NexialConst {
     public static final String OPT_TEXT_MATCH_USE_TRIM = registerSysVar(NS_TEXT_MATCH + "useTrim", false);
     public static final String OPT_TEXT_MATCH_CASE_INSENSITIVE = registerSysVar(NS_TEXT_MATCH + "caseInsensitive",
                                                                                 false);
+
+    // number related operations
+    public static final String NS_NUMBER = NAMESPACE + "number";
+    public static final String DEF_ROUNDING_MODE = "ROUND_UP";
+    public static final Map<String,RoundingMode> VALID_ROUNDING_MODES = initValidRoundingModes();
+    public static final String OPT_ROUNDING_MODE = registerSysVar(NS_NUMBER + "rounding", DEF_ROUNDING_MODE);
 
     // screenshots
     public static final String OPT_SCREENSHOT_ON_ERROR = registerSysVar(NAMESPACE + "screenshotOnError", false);
@@ -336,6 +344,14 @@ public final class NexialConst {
     // notepad so that they can get the same viewing experience as Mac or *NIX users.
     //public static final String NL = System.lineSeparator();
     public static final String NL = "\n";
+
+    private static Map<String,RoundingMode> initValidRoundingModes() {
+        Map<String,RoundingMode> map = new HashMap<>();
+        map.put(DEF_ROUNDING_MODE, HALF_UP);
+        map.put("ROUND_DOWN", HALF_DOWN);
+        map.put("ROUND_EVEN", HALF_EVEN);
+        return map;
+    }
 
     // @formatter:on
 

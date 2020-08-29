@@ -421,9 +421,8 @@ public class TestScriptUpdater {
                 if (CommandConst.getReplacedCommands().containsKey(targetCommand)) {
                     // found old command, let's replace it with new one
                     String newCommand = CommandConst.getReplacedCommands().get(targetCommand);
-                    if (cellTarget != null) { cellTarget.setCellValue(StringUtils.substringBefore(newCommand, ".")); }
-                    if (cellCommand != null) { cellCommand.setCellValue(StringUtils.substringAfter(newCommand, ".")); }
-
+                    cellTarget.setCellValue(StringUtils.substringBeforeLast(newCommand, "."));
+                    cellCommand.setCellValue(StringUtils.substringBeforeLast(newCommand, "."));
                     targetCommand = newCommand;
                     excelUpdated = true;
                 }

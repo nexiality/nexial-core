@@ -108,7 +108,8 @@ object CommandConst {
         "web.uncheckAll(locator)" to "web.uncheckAll(locator,waitMs)",
         "web.waitForElementPresent(locator)" to "web.waitForElementPresent(locator,maxWaitMs)",
         "web.screenshot(file,locator)" to "web.screenshot(file,locator,removeFixed)",
-        "screenshotInFull(file,timeout)" to "screenshotInFull(file,timeout,removeFixed)"
+        "web.screenshotInFull(file,timeout)" to "web.screenshotInFull(file,timeout,removeFixed)",
+        "tn.5250.saveTableAsCSV(csv)" to "tn.5250.saveTableAsCSV(csv,maxPage)"
     )
 
     private const val SUGGESTION_PREFIX = "This command is deprecated and will soon be removed. Consider using"
@@ -122,14 +123,24 @@ object CommandConst {
     )
 
     @JvmField
-    val PARAM_AUTO_FILL_COMMANDS = listOf("base.macroFlex", "desktop.sendKeysToTextBox", "desktop.typeAppendTextArea",
-                                          "desktop.typeAppendTextBox", "desktop.typeTextArea", "desktop.typeTextBox",
-                                          "localdb.exportEXCEL", "localdb.exportXML", "io.saveMatches", "macro.expects",
-                                          "web.waitForElementPresent", "web.waitUntilVisible",
-                                          "web.waitUntilHidden",
-                                          "web.waitUntilEnabled",
+    val PARAM_AUTO_FILL_COMMANDS = listOf("base.macroFlex",
+                                          "desktop.sendKeysToTextBox",
+                                          "desktop.typeAppendTextArea",
+                                          "desktop.typeAppendTextBox",
+                                          "desktop.typeTextArea",
+                                          "desktop.typeTextBox",
+                                          "io.saveMatches",
+                                          "localdb.exportEXCEL",
+                                          "localdb.exportXML",
+                                          "macro.expects",
+                                          "tn.5250.saveTableAsCSV",
+                                          "web.waitForElementPresent",
                                           "web.waitUntilDisabled",
-                                          "webcookie.saveAllAsText")
+                                          "web.waitUntilEnabled",
+                                          "web.waitUntilHidden",
+                                          "web.waitUntilVisible",
+                                          "webcookie.saveAllAsText"
+    )
 
     @JvmField
     val CRYPT_RESTRICTED_COMMANDS = listOf("base.verbose",
@@ -140,7 +151,7 @@ object CommandConst {
     // SLA not applicable to macro, section or repeat-until since they are composite steps
     // also, we need to exempt all wait* commands
     @JvmField
-    val SLA_EXEMPT_COMMANDS = listOf("base.macro","base.macroFlex", "base.repeatUntil", "base.section")
+    val SLA_EXEMPT_COMMANDS = listOf("base.macro", "base.macroFlex", "base.repeatUntil", "base.section")
 
     // "self-derived" means that the command will figure out the appropriate param values for display
     @JvmField
