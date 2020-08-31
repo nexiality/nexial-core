@@ -36,6 +36,7 @@ import org.nexial.core.utils.ExecUtils.NEXIAL_MANIFEST
 abstract class ServiceProfile(val name: String, val profileData: Map<String, String>) {
 
     companion object {
+
         @JvmStatic
         fun <ServiceProfiler> resolve(context: ExecutionContext, name: String, expectedType: Class<ServiceProfiler>):
                 ServiceProfiler {
@@ -44,12 +45,11 @@ abstract class ServiceProfile(val name: String, val profileData: Map<String, Str
             val profileVar = NAMESPACE + "profile." + name
             if (context.hasData(profileVar)) {
                 val profileObj = context.getObjectData(profileVar)
-                if (profileObj != null && expectedType.isAssignableFrom(profileObj.javaClass)) {
-                    ConsoleUtils.log("found profile '$name' for reuse")
+                if (profileObj != null && expectedType.isAssignableFrom(profileObj.javaClass))
                     return expectedType.cast(profileObj)
-                }
 
                 // remove erroneous data or wrong type
+                ConsoleUtils.log("found invalid profile '$name'; delete and re-create")
                 context.removeData(profileVar)
             }
 
@@ -87,6 +87,7 @@ abstract class ServiceProfile(val name: String, val profileData: Map<String, Str
 }
 
 class AwsServiceProfile(name: String, profileData: Map<String, String>) : ServiceProfile(name, profileData) {
+
     val accessKey = profileData.getOrElse(AWS_ACCESS_KEY) {
         profileData.getOrElse("aws.${AWS_ACCESS_KEY}") {
             throw IllegalArgumentException("Missing profile data: '${name}.${AWS_ACCESS_KEY}'")
@@ -104,6 +105,7 @@ class AwsServiceProfile(name: String, profileData: Map<String, String>) : Servic
 }
 
 class PdfOutputProfile(name: String, profileData: Map<String, String>) : ServiceProfile(name, profileData) {
+
     val pageSize = initPageSize(profileData.getOrDefault(PAGE_SIZE, "LETTER"))
     val margins = initMargins(profileData.getOrDefault(MARGIN, "0.5,0.5,0.5,0.5"))
     val author = profileData.getOrDefault("author", USER_NAME)
@@ -115,6 +117,7 @@ class PdfOutputProfile(name: String, profileData: Map<String, String>) : Service
     val customProperties = filterProps(profileData)
 
     companion object {
+
         // common PDF properties
         private const val PAGE_SIZE = "pagesize"
         private const val MARGIN = "margins"

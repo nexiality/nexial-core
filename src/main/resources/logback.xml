@@ -151,12 +151,6 @@
         </appender>
     -->
 
-    <!-- web container logger -->
-    <logger name="org.apache.catalina.core.ContainerBase.[Tomcat].[localhost].[/]" level="INFO" additivity="false">
-        <appender-ref ref="console-webcontainer"/>
-        <appender-ref ref="file-3rdparty"/>
-    </logger>
-
     <!-- logback log appenders -->
     <logger name="ch.qos.logback" additivity="false" level="WARN">
         <appender-ref ref="console-catchall"/>
@@ -171,14 +165,8 @@
         <appender-ref ref="file-3rdparty"/>
     </logger>
 
-    <!-- Oracle log appenders -->
-    <logger name="oracle" additivity="false" level="WARN">
-        <appender-ref ref="console-catchall"/>
-        <appender-ref ref="file-3rdparty"/>
-    </logger>
-
-    <!-- websphere -->
-    <logger name="com.ibm.mq" additivity="false" level="ERROR">
+    <!-- generic commericial library log appenders -->
+    <logger name="com" level="WARN">
         <appender-ref ref="console-catchall"/>
         <appender-ref ref="file-3rdparty"/>
     </logger>
@@ -189,8 +177,37 @@
         <appender-ref ref="file-3rdparty"/>
     </logger>
 
+    <!-- websphere -->
+    <logger name="com.ibm" additivity="false" level="ERROR">
+        <appender-ref ref="console-catchall"/>
+        <appender-ref ref="file-3rdparty"/>
+    </logger>
+
+    <logger name="com.keanlight" additivity="false" level="INFO">
+        <appender-ref ref="console-execution"/>
+        <appender-ref ref="file-testexecution"/>
+    </logger>
+
+    <!-- Oracle log appenders -->
+    <logger name="oracle" additivity="false" level="WARN">
+        <appender-ref ref="console-catchall"/>
+        <appender-ref ref="file-3rdparty"/>
+    </logger>
+
     <!-- generic log appenders for open-source libraries -->
     <logger name="org" level="WARN">
+        <appender-ref ref="console-catchall"/>
+        <appender-ref ref="file-3rdparty"/>
+    </logger>
+
+    <!-- web container logger -->
+    <logger name="org.apache.catalina.core.ContainerBase.[Tomcat].[localhost].[/]" level="INFO" additivity="false">
+        <appender-ref ref="console-webcontainer"/>
+        <appender-ref ref="file-3rdparty"/>
+    </logger>
+
+    <!-- Apache-Commons log appenders -->
+    <logger name="org.apache.commons.beanutils" additivity="false" level="INFO">
         <appender-ref ref="console-catchall"/>
         <appender-ref ref="file-3rdparty"/>
     </logger>
@@ -198,15 +215,6 @@
     <logger name="org.apache.commons.dbcp2.BasicDataSource" additivity="false" level="ERROR">
         <appender-ref ref="console-catchall"/>
         <appender-ref ref="file-3rdparty"/>
-    </logger>
-
-    <logger name="org.apache.http" level="WARN">
-        <appender-ref ref="console-catchall"/>
-        <appender-ref ref="file-testexecution"/>
-    </logger>
-    <logger name="org.apache.http.impl.execchain.RetryExec" level="WARN">
-        <appender-ref ref="console-catchall"/>
-        <appender-ref ref="file-testexecution"/>
     </logger>
 
     <!-- tika / pdfbox specific; suppress warning about font loading errors -->
@@ -229,6 +237,15 @@
     <logger name="org.apache.pdfbox.pdmodel.font" level="ERROR">
         <appender-ref ref="console-catchall"/>
         <appender-ref ref="file-3rdparty"/>
+    </logger>
+
+    <logger name="org.apache.http" level="WARN">
+        <appender-ref ref="console-catchall"/>
+        <appender-ref ref="file-testexecution"/>
+    </logger>
+    <logger name="org.apache.http.impl.execchain.RetryExec" level="WARN">
+        <appender-ref ref="console-catchall"/>
+        <appender-ref ref="file-testexecution"/>
     </logger>
 
     <!-- selenium -->
@@ -271,18 +288,6 @@
         <appender-ref ref="file-testexecution"/>
     </logger>
     <logger name="org.springframework.web.servlet.mvc.method.annotation" additivity="false" level="INFO">
-        <appender-ref ref="console-catchall"/>
-        <appender-ref ref="file-3rdparty"/>
-    </logger>
-
-    <!-- Apache-Commons log appenders -->
-    <logger name="org.apache.commons.beanutils" additivity="false" level="INFO">
-        <appender-ref ref="console-catchall"/>
-        <appender-ref ref="file-3rdparty"/>
-    </logger>
-
-    <!-- generic commericial library log appenders -->
-    <logger name="com" level="WARN">
         <appender-ref ref="console-catchall"/>
         <appender-ref ref="file-3rdparty"/>
     </logger>
@@ -340,7 +345,9 @@
     <logger name="org.nexial.core.logs.TrackTimeLogs" additivity="false" level="INFO">
         <appender-ref ref="file-tracktime"/>
     </logger>
-    <logger name="com.keanlight" additivity="false" level="INFO">
+
+    <!--tn.5250 -->
+    <logger name="org.tn5250j" additivity="false" level="INFO">
         <appender-ref ref="console-execution"/>
         <appender-ref ref="file-testexecution"/>
     </logger>
