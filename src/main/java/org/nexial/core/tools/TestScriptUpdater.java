@@ -422,7 +422,7 @@ public class TestScriptUpdater {
                     // found old command, let's replace it with new one
                     String newCommand = CommandConst.getReplacedCommands().get(targetCommand);
                     cellTarget.setCellValue(StringUtils.substringBeforeLast(newCommand, "."));
-                    cellCommand.setCellValue(StringUtils.substringBeforeLast(newCommand, "."));
+                    cellCommand.setCellValue(StringUtils.substringAfterLast(newCommand, "."));
                     targetCommand = newCommand;
                     excelUpdated = true;
                 }
