@@ -46,7 +46,6 @@ import org.nexial.core.interactive.NexialInteractive;
 import org.nexial.core.mail.NexialMailer;
 import org.nexial.core.model.ExecutionDefinition;
 import org.nexial.core.model.ExecutionSummary;
-import org.nexial.core.model.ExecutionSummary.ExecutionLevel;
 import org.nexial.core.model.TestProject;
 import org.nexial.core.reports.ExecutionMailConfig;
 import org.nexial.core.reports.ExecutionNotifier;
@@ -350,12 +349,15 @@ public class Nexial {
         List<ExecutionDefinition> executions = new ArrayList<>();
 
         if (cmd.hasOption(SUBPLANS) && testPlanPathList.size() > 1) {
-            fail("The " + SUBPLANS + " does't work with multiple test plans. Please try with single plan.");
+            fail("The " + SUBPLANS + " doesn't work with multiple test plans. Please try with single plan.");
         }
 
         List<String> subplans = cmd.hasOption(SUBPLANS) ?
                                 TextUtils.toList(cmd.getOptionValue(SUBPLANS), ",", true) :
                                 new ArrayList<>();
+        if (CollectionUtils.isNotEmpty(subplans)) {
+            ConsoleUtils.log("Executing the following sub-plan(s) from " + testPlanPathList + ": " + subplans);
+        }
 
         for (String testPlanPath : testPlanPathList) {
             // String testPlanPath = cmd.getOptionValue(PLAN);
@@ -378,6 +380,10 @@ public class Nexial {
             // 2. parse plan file to determine number of executions (1 row per execution)
             Excel excel = new Excel(testPlanFile, DEF_OPEN_EXCEL_AS_DUP, false);
             List<Worksheet> plans = retrieveValidPlans(subplans, excel);
+            ConsoleUtils.log("found plans in " + testPlanFile + ": " + System.getProperty(SUBPLANS_INCLUDED));
+
+            Map<File, List<String>> scriptToScenarioCache = new HashMap<>();
+            List<File> dataFileCache = new ArrayList<>();
 
             plans.forEach(testPlan -> {
                 int rowStartIndex = ADDR_PLAN_EXECUTION_START.getRowStartIndex();
@@ -390,21 +396,42 @@ public class Nexial {
                     if (ExecutionInputPrep.isPlanStepDisabled(row)) { continue; }
 
                     File testScript = deriveScriptFromPlan(row, project, testPlanPath);
-                    List<String> scenarios = deriveScenarioFromPlan(row, testScript);
-                    Excel dataFile = deriveDataFileFromPlan(row, project, testPlanFile, testScript);
-                    if (dataFile == null) {
-                        fail("Unable to resolve data file for the test plan specified in ROW " +
-                             (row.getRowNum() + 1) + " of " + testPlanFile + ".");
+                    if (!scriptToScenarioCache.containsKey(testScript)) {
+                        ConsoleUtils.log("validating test script as " + testScript);
+                        if (!InputFileUtils.isValidScript(testScript.getAbsolutePath())) {
+                            // could be abs. path or relative path based on current project
+                            fail("Invalid/unreadable test script specified in ROW " + (row.getRowNum() + 1) + " of " +
+                                 testPlan + ".");
+                        }
+                        // cache this to improve perf.
+                        scriptToScenarioCache.put(testScript, deriveScenarios(testScript));
                     }
-                    File dataFilePath = dataFile.getOriginalFile();
+                    List<String> scenarios = deriveScenarioFromPlan(row, scriptToScenarioCache.get(testScript));
 
-                    // (2018/12/16,automike): memory consumption precaution
-                    try {
-                        dataFile.close();
-                    } catch (IOException e) {
-                        ConsoleUtils.error("Unable to close data file (" + dataFilePath + "): " + e.getMessage());
-                    } finally {
-                        dataFile = null;
+                    File dataFilePath = deriveDataFileFromPlan(row, project, testPlanFile, testScript);
+                    if (dataFilePath == null) {
+                        fail("Unable to resolve data file for the test plan specified in ROW " +
+                             (row.getRowNum() + 1) + " of " + testPlan + ".");
+                    }
+
+                    if (!dataFileCache.contains(dataFilePath)) {
+                        ConsoleUtils.log("validating data file as " + dataFilePath);
+                        Excel dataFile = InputFileUtils.asDataFile(dataFilePath.getAbsolutePath());
+                        if (dataFile == null) {
+                            fail("Invalid/unreadable data file specified in ROW " +
+                                 (row.getRowNum() + 1) + " of " + testPlan + ".");
+                        }
+
+                        // (2018/12/16,automike): memory consumption precaution
+                        try {
+                            dataFile.close();
+                        } catch (IOException e) {
+                            ConsoleUtils.error("Unable to close data file (" + dataFilePath + "): " + e.getMessage());
+                        } finally {
+                            dataFile = null;
+                        }
+
+                        dataFileCache.add(dataFilePath);
                     }
 
                     List<String> dataSheets = deriveDataSheetsFromPlan(row, scenarios);
@@ -508,29 +535,25 @@ public class Nexial {
             }
         }
 
-        ConsoleUtils.log("validating test script as " + testScriptPath);
-        if (!InputFileUtils.isValidScript(testScriptPath)) {
-            // could be abs. path or relative path based on current project
-            fail("Invalid/unreadable test script specified in ROW " + (row.getRowNum() + 1) + " of " + testPlan + ".");
-        }
-
         return new File(testScriptPath);
     }
 
-    protected List<String> deriveScenarioFromPlan(XSSFRow row, File testScript) {
+    protected List<String> deriveScenarioFromPlan(XSSFRow row, List<String> validScenarios) {
         List<String> scenarios = TextUtils.toList(readCellValue(row, COL_IDX_PLAN_SCENARIOS), ",", true);
-        if (CollectionUtils.isNotEmpty(scenarios)) { return scenarios; }
+        return (CollectionUtils.isNotEmpty(scenarios)) ? scenarios : validScenarios;
+    }
+
+    protected List<String> deriveScenarios(File testScript) {
+        List<String> scenarios = new ArrayList<>();
 
         Excel excel = null;
-
         try {
             excel = new Excel(testScript, DEF_OPEN_EXCEL_AS_DUP);
             List<Worksheet> validScenarios = InputFileUtils.retrieveValidTestScenarios(excel);
             if (CollectionUtils.isEmpty(validScenarios)) {
                 fail("No valid scenario found in script " + testScript + ".");
             } else {
-                scenarios = new ArrayList<>();
-                for (Worksheet scenario : validScenarios) { scenarios.add(scenario.getName()); }
+                validScenarios.forEach(worksheet -> scenarios.add(worksheet.getName()));
             }
         } catch (IOException e) {
             fail("Unable to collect scenarios from " + testScript + ".");
@@ -548,7 +571,7 @@ public class Nexial {
         return scenarios;
     }
 
-    protected Excel deriveDataFileFromPlan(XSSFRow row, TestProject project, File testPlan, File testScript) {
+    protected File deriveDataFileFromPlan(XSSFRow row, TestProject project, File testPlan, File testScript) {
         String dataFilePath = readCellValue(row, COL_IDX_PLAN_TEST_DATA);
 
         if (StringUtils.isBlank(dataFilePath)) {
@@ -604,12 +627,7 @@ public class Nexial {
             }
         }
 
-        ConsoleUtils.log("validating data file as " + dataFilePath);
-        Excel dataFile = InputFileUtils.asDataFile(dataFilePath);
-        if (dataFile != null) { return dataFile; }
-
-        fail("Invalid/unreadable data file specified in ROW " + (row.getRowNum() + 1) + " of " + testPlan + ".");
-        return null;
+        return new File(dataFilePath);
     }
 
     protected List<String> deriveDataSheetsFromPlan(XSSFRow row, List<String> scenarios) {

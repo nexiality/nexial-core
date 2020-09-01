@@ -416,8 +416,12 @@ public class ExecutionSummary {
     }
 
     public void generateExcelReport(Excel testScript) {
-        if (testScript == null || !FileUtil.isFileReadable(testScript.getFile(), MIN_EXCEL_FILE_SIZE)) {
-            ConsoleUtils.error("Unable to generate Excel report because file " + testScript + " is not readable");
+        if (testScript == null) {
+            ConsoleUtils.error("Unable to generate Excel report because test script is null");
+            return;
+        }
+        if (!FileUtil.isFileReadable(testScript.getFile(), MIN_EXCEL_FILE_SIZE)) {
+            ConsoleUtils.error("Unable to generate Excel report because " + testScript.getFile() + " is not readable");
             return;
         }
 
