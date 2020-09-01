@@ -154,7 +154,7 @@ public final class NexialConst {
                                                                                 false);
 
     // number related operations
-    public static final String NS_NUMBER = NAMESPACE + "number";
+    public static final String NS_NUMBER = NAMESPACE + "number.";
     public static final String DEF_ROUNDING_MODE = "ROUND_UP";
     public static final Map<String,RoundingMode> VALID_ROUNDING_MODES = initValidRoundingModes();
     public static final String OPT_ROUNDING_MODE = registerSysVar(NS_NUMBER + "rounding", DEF_ROUNDING_MODE);
