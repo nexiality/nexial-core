@@ -28,10 +28,13 @@ import org.nexial.core.ExecutionThread
 import org.nexial.core.NexialConst.*
 import org.nexial.core.NexialConst.Data.DEF_OPEN_EXCEL_AS_DUP
 import org.nexial.core.NexialConst.Data.MACRO_INVOKED_FROM
-import org.nexial.core.excel.*
+import org.nexial.core.excel.Excel
 import org.nexial.core.excel.Excel.MIN_EXCEL_FILE_SIZE
 import org.nexial.core.excel.Excel.Worksheet
+import org.nexial.core.excel.ExcelAddress
+import org.nexial.core.excel.ExcelArea
 import org.nexial.core.excel.ExcelConfig.*
+import org.nexial.core.excel.ExcelStyleHelper
 import org.nexial.core.utils.ConsoleUtils
 import org.nexial.core.utils.ExecUtils.isRunningInZeroTouchEnv
 import org.nexial.core.utils.FlowControlUtils
@@ -123,7 +126,7 @@ class MacroExecutor(private val initialTestStep: TestStep, val macro: Macro,
             if (result.isSkipped) {
                 activitySummary.adjustTotalSteps(-1)
                 if (testStep.commandFQN == CMD_SECTION) {
-                    ExcelStyleHelper.formatSectionDescription(testStep, false)
+                    ExcelStyleHelper.formatSectionDescription(testStep)
                     val numOfSteps = testStep.formatSkippedSections(testSteps, i, true)
                     i += numOfSteps
                     activitySummary.adjustTotalSteps(-numOfSteps)

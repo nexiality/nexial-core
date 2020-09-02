@@ -161,7 +161,7 @@ public final class ExcelStyleHelper {
         fixCellWidth(cell.getSheet(), cell, COL_IDX_DESCRIPTION, DEF_CHAR_WIDTH_FACTOR_TAHOMA);
     }
 
-    public static void formatSectionDescription(TestStep testStep, boolean prefix) {
+    public static void formatSectionDescription(TestStep testStep) {
         enhanceDescriptionFormat(formatDescriptionCell(testStep, STYLE_SECTION_DESCRIPTION));
     }
 
@@ -353,7 +353,7 @@ public final class ExcelStyleHelper {
         return testStep;
     }
 
-    // add prefix to dscription
+    // add prefix to description
     public static void formatDescriptionCell(XSSFCell cell, String prefix) {
         if (StringUtils.isNotBlank(prefix)) {
             String descriptionText = Excel.getCellValue(cell);
@@ -367,7 +367,6 @@ public final class ExcelStyleHelper {
         Worksheet worksheet = testStep.getWorksheet();
         cell.setCellStyle(worksheet.getStyle(styleName));
         fixCellWidth(cell.getSheet(), cell, COL_IDX_DESCRIPTION, DEF_CHAR_WIDTH_FACTOR_TAHOMA);
-
         return testStep;
     }
 }

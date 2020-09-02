@@ -269,7 +269,7 @@ public class ExecutionInputPrep {
             cellName.setCellValue(name);
             cellName.setCellStyle(StringUtils.startsWith(name, NAMESPACE) ?
                                   styleSystemDataName :
-                                  StringUtils.startsWith(name, "//") ? styleTestDataNameDisabled: styleTestDataName);
+                                  StringUtils.startsWith(name, "//") ? styleTestDataNameDisabled : styleTestDataName);
 
             XSSFCell cellValue = row.getCell(1, CREATE_NULL_AS_BLANK);
             cellValue.setCellValue(CellTextReader.readValue(value));

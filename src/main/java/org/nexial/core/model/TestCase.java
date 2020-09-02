@@ -102,7 +102,7 @@ public class TestCase {
                 executionSummary.adjustTotalSteps(-1);
 
                 if (StringUtils.equals(testStep.getCommandFQN(), CMD_SECTION)) {
-                    formatSectionDescription(testStep, false);
+                    formatSectionDescription(testStep);
 
                     int steps = testStep.formatSkippedSections(testSteps, i, true);
 
@@ -208,13 +208,13 @@ public class TestCase {
             }
 
             if (StringUtils.equals(testStep.getCommandFQN(), CMD_SECTION)) {
-                formatSectionDescription(testStep, false);
+                formatSectionDescription(testStep);
 
                 int adjustedStepCount = i + Integer.parseInt(testStep.getParams().get(0));
                 for (int j = i + 1; j <= adjustedStepCount; j++) {
                     if (totalSteps > j) {
                         TestStep sectionStep = testSteps.get(j);
-                        formatSectionDescription(sectionStep, true);
+                        formatSectionDescription(sectionStep);
 
                         if (sectionStep.isCommandRepeater()) {
                             formatRepeatUntilDescription(sectionStep);

@@ -428,7 +428,7 @@ class NexialInteractive {
 
                 // special treatment for `base.section()`
                 if (StringUtils.equals(commandFQN, CMD_SECTION)) {
-                    ExcelStyleHelper.formatSectionDescription(testStep, false)
+                    ExcelStyleHelper.formatSectionDescription(testStep)
 
                     // now, jolt down all the steps we need to skip since this section is now SKIPPED
                     // `testStep.getParams().get(0)` represents the number of steps of this `section`

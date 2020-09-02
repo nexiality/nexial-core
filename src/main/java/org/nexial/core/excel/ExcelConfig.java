@@ -450,7 +450,7 @@ public class ExcelConfig {
         static StyleConfig newTestCaseStyle() {
             StyleConfig config = new StyleConfig();
             config.backgroundColor = new XSSFColor(new Color(230, 239, 215));
-            config.borderColor = new XSSFColor(new Color(200, 180, 180));
+            // config.borderColor = new XSSFColor(new Color(200, 180, 180));
             config.fontHeight = FONT_HEIGHT_DEFAULT;
             config.fontColor = new XSSFColor(new Color(62, 81, 31));
             config.boldFont = true;
@@ -470,7 +470,7 @@ public class ExcelConfig {
         static StyleConfig newSectionDescriptionStyle() {
             StyleConfig config = new StyleConfig();
             config.backgroundColor = new XSSFColor(new Color(220, 225, 230));
-            config.borderColor = new XSSFColor(new Color(190, 200, 205));
+            // config.borderColor = new XSSFColor(new Color(190, 200, 205));
             config.fontHeight = FONT_HEIGHT_DEFAULT;
             config.fontColor = new XSSFColor(new Color(40, 115, 137));
             config.indention = INDENT_1;
@@ -482,7 +482,7 @@ public class ExcelConfig {
         static StyleConfig newRepeatUntilDescriptionStyle() {
             StyleConfig config = new StyleConfig();
             config.backgroundColor = new XSSFColor(new Color(240, 240, 225));
-            config.borderColor = new XSSFColor(new Color(205, 205, 195));
+            // config.borderColor = new XSSFColor(new Color(205, 205, 195));
             config.fontHeight = FONT_HEIGHT_DEFAULT;
             config.fontColor = new XSSFColor(new Color(110, 110, 60));
             config.indention = INDENT_1;
@@ -494,14 +494,14 @@ public class ExcelConfig {
         // only additive style updates
         static StyleConfig newFailedStepDescriptionStyle() {
             StyleConfig config = new StyleConfig();
-            config.borderColor = new XSSFColor(new Color(205, 190, 190));
+            // config.borderColor = new XSSFColor(new Color(205, 190, 190));
             config.backgroundColor = new XSSFColor(new Color(255, 199, 206));
             config.fontHeight = FONT_HEIGHT_DEFAULT;
             config.fontColor = FG_FAIL;
             config.boldFont = true;
             config.verticalAlignment = CENTER;
             config.wrapText = true;
-            config.borderColor = new XSSFColor(new Color(205, 195, 195));
+            // config.borderColor = new XSSFColor(new Color(205, 195, 195));
             return config;
         }
 
@@ -534,7 +534,7 @@ public class ExcelConfig {
         static StyleConfig newParamStyle() {
             StyleConfig config = new StyleConfig();
             config.backgroundColor = new XSSFColor(new Color(250, 250, 250));
-            config.borderColor = new XSSFColor(new Color(220, 220, 220));
+            // config.borderColor = new XSSFColor(new Color(220, 220, 220));
             config.fontName = FONT_NAME_FIXED_DEFAULT;
             config.fontHeight = FONT_HEIGHT_PARAM;
             config.fontColor = new XSSFColor(new Color(5, 5, 5));
@@ -546,7 +546,7 @@ public class ExcelConfig {
         static StyleConfig newParamSkippedStyle() {
             StyleConfig config = new StyleConfig();
             config.backgroundColor = new XSSFColor(new Color(230, 230, 230));
-            config.borderColor = new XSSFColor(new Color(220, 220, 220));
+            // config.borderColor = new XSSFColor(new Color(220, 220, 220));
             config.fontName = FONT_NAME_FIXED_DEFAULT;
             config.fontHeight = FONT_HEIGHT_PARAM;
             config.fontColor = new XSSFColor(new Color(128, 128, 128));
@@ -559,7 +559,7 @@ public class ExcelConfig {
         static StyleConfig newTaintedParamStyle() {
             StyleConfig config = new StyleConfig();
             config.backgroundColor = new XSSFColor(new Color(240, 240, 225));
-            config.borderColor = new XSSFColor(new Color(205, 205, 205));
+            // config.borderColor = new XSSFColor(new Color(205, 205, 205));
             config.fontName = FONT_NAME_FIXED_DEFAULT;
             config.fontHeight = FONT_HEIGHT_PARAM;
             config.fontColor = new XSSFColor(new Color(5, 5, 5));
@@ -570,8 +570,8 @@ public class ExcelConfig {
 
         static StyleConfig newScreenshotStyle() {
             StyleConfig config = new StyleConfig();
-            config.backgroundColor = new XSSFColor(new Color(255, 255, 255));
-            config.borderColor = new XSSFColor(new Color(195, 195, 195));
+            // config.backgroundColor = new XSSFColor(new Color(255, 255, 255));
+            // config.borderColor = new XSSFColor(new Color(195, 195, 195));
             config.fontName = FONT_NAME_FIXED_DEFAULT;
             config.fontHeight = FONT_HEIGHT_PARAM;
             config.fontColor = new XSSFColor(new Color(0, 0, 255));
@@ -582,8 +582,8 @@ public class ExcelConfig {
 
         static StyleConfig newElapsedMsStyle() {
             StyleConfig config = new StyleConfig();
-            config.backgroundColor = new XSSFColor(new Color(255, 255, 255));
-            config.borderColor = new XSSFColor(new Color(195, 195, 195));
+            // config.backgroundColor = new XSSFColor(new Color(255, 255, 255));
+            // config.borderColor = new XSSFColor(new Color(195, 195, 195));
             config.fontHeight = FONT_HEIGHT_DEFAULT;
             config.fontColor = new XSSFColor(new Color(5, 5, 5));
             config.verticalAlignment = CENTER;
@@ -814,111 +814,6 @@ public class ExcelConfig {
             config.backgroundColor = null;
             return config;
         }
-
-        // // only additive style updates
-        // private static StyleConfig newSkippedStepDescriptionStyle() {
-        //     StyleConfig config = new StyleConfig();
-        //     // config.backgroundColor = new XSSFColor(new Color(245, 245, 245));
-        //     config.fontColor = new XSSFColor(new Color(100, 100, 100));
-        //     config.fontHeight = FONT_HEIGHT_DEFAULT;
-        //     config.verticalAlignment = CENTER;
-        //     config.italicFont = true;
-        //     config.wrapText = true;
-        //     // config.borderColor = new XSSFColor(new Color(100, 100, 100));
-        //     return config;
-        // }
-
-        // static StyleConfig newSettingNameStyle() {
-        //     StyleConfig config = new StyleConfig();
-        //     // BDD7EE
-        //     config.backgroundColor = new XSSFColor(new Color(189, 215, 238));
-        //     config.fontHeight = FONT_HEIGHT_DEFAULT;
-        //     config.fontName = FONT_NAME_DEFAULT;
-        //     // 2F75B5
-        //     config.fontColor = new XSSFColor(new Color(47, 117, 181));
-        //     config.boldFont = true;
-        //     return config;
-        // }
-
-        // static StyleConfig newSettingValueStyle() {
-        //     StyleConfig config = new StyleConfig();
-        //     // F2F2F2
-        //     config.backgroundColor = new XSSFColor(new Color(242, 242, 242));
-        //     config.fontHeight = FONT_HEIGHT_DEFAULT;
-        //     config.fontName = FONT_NAME_FIXED_DEFAULT;
-        //     // 808080
-        //     config.fontColor = new XSSFColor(new Color(128, 128, 128));
-        //     config.boldFont = true;
-        //     config.italicFont = true;
-        //     return config;
-        // }
-
-        // static StyleConfig newJenkinsRefLabelStyle() {
-        //     StyleConfig config = new StyleConfig();
-        //     config.backgroundColor = new XSSFColor(new Color(216, 229, 188));
-        //     config.horizontalAlignment = HorizontalAlignment.LEFT;
-        //     config.verticalAlignment = CENTER;
-        //     config.borderColor = new XSSFColor(new Color(184, 208, 138));
-        //     config.borderStyle = MEDIUM;
-        //     config.fontName = FONT_NAME_FIXED_DEFAULT;
-        //     config.fontHeight = FONT_HEIGHT_PARAM;
-        //     config.fontColor = new XSSFColor(new Color(99, 131, 46));
-        //     return config;
-        // }
-
-        // static StyleConfig newJenkinsRefLinkStyle() {
-        //     StyleConfig config = new StyleConfig();
-        //     config.backgroundColor = new XSSFColor(new Color(230, 238, 214));
-        //     config.horizontalAlignment = HorizontalAlignment.LEFT;
-        //     config.verticalAlignment = CENTER;
-        //     config.borderColor = new XSSFColor(new Color(184, 208, 138));
-        //     config.borderStyle = MEDIUM;
-        //     config.fontName = FONT_NAME_FIXED_DEFAULT;
-        //     config.fontHeight = FONT_HEIGHT_PARAM;
-        //     config.fontColor = new XSSFColor(new Color(83, 141, 213));
-        //     config.boldFont = true;
-        //     return config;
-        // }
-
-        // static StyleConfig newJenkinsRefParamStyle() {
-        //     StyleConfig config = new StyleConfig();
-        //     config.backgroundColor = new XSSFColor(new Color(230, 238, 214));
-        //     config.horizontalAlignment = HorizontalAlignment.LEFT;
-        //     config.verticalAlignment = CENTER;
-        //     config.indention = 1;
-        //     config.wrapText = true;
-        //     config.borderColor = new XSSFColor(new Color(184, 208, 138));
-        //     config.borderStyle = MEDIUM;
-        //     config.fontName = FONT_NAME_FIXED_DEFAULT;
-        //     config.fontHeight = FONT_HEIGHT_PARAM;
-        //     config.fontColor = new XSSFColor(new Color(64, 64, 64));
-        //     config.boldFont = true;
-        //     return config;
-        // }
-
-        // static StyleConfig newLogLabelStyle() {
-        //     StyleConfig config = new StyleConfig();
-        //     config.backgroundColor = new XSSFColor(new Color(240, 240, 220));
-        //     config.fontHeight = FONT_HEIGHT_DEFAULT;
-        //     return config;
-        // }
-
-        // static StyleConfig newLogLinkStyle() {
-        //     StyleConfig config = new StyleConfig();
-        //     config.backgroundColor = new XSSFColor(new Color(240, 240, 220));
-        //     config.boldFont = true;
-        //     config.fontHeight = FONT_HEIGHT_PARAM;
-        //     config.fontColor = new XSSFColor(new Color(0, 0, 255));
-        //     return config;
-        // }
-
-        // static StyleConfig newUnsupportedCommandStyle() {
-        //     StyleConfig config = new StyleConfig();
-        //     config.italicFont = true;
-        //     config.boldFont = true;
-        //     config.fontColor = FG_FAIL;
-        //     return config;
-        // }
     }
 
     private ExcelConfig() {}
