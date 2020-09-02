@@ -59,6 +59,7 @@ public final class URLEncodingUtils {
 
         // 3. handle characters after http:// or https://
         String protocolAndHostAndPort = RegexUtils.firstMatches(url, "^https?://.*?/+?");
+        if (protocolAndHostAndPort == null) { protocolAndHostAndPort = RegexUtils.firstMatches(url, "^https?://.+"); }
         url = StringUtils.substringAfter(url, protocolAndHostAndPort);
 
         // 4. temp. replace %20 or similar so that we can zero in on % character
