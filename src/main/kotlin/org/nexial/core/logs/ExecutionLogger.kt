@@ -51,7 +51,7 @@ class ExecutionLogger(private val context: ExecutionContext) {
     }
 
     @JvmOverloads
-    fun log(testStep: TestStep, message: String, priority: Boolean = false) = log(toHeader(testStep), message, priority)
+    fun log(testStep: TestStep?, message: String, priority: Boolean = false) = log(toHeader(testStep), message, priority)
 
     // force logging when quiet mode is active
     fun log(subject: TestCase, message: String) = log(toHeader(subject), message, true)
@@ -80,7 +80,7 @@ class ExecutionLogger(private val context: ExecutionContext) {
         }
     }
 
-    fun error(subject: TestStep, message: String) = error(toHeader(subject), message)
+    fun error(subject: TestStep?, message: String) = error(toHeader(subject), message)
 
     fun error(subject: TestCase, message: String) = error(toHeader(subject), message)
 

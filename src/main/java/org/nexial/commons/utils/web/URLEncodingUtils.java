@@ -46,6 +46,8 @@ public final class URLEncodingUtils {
     public static String encodePath(String url) {
         if (StringUtils.isBlank(url)) { return url; }
 
+        url = StringUtils.trim(url);
+
         // 1. split off query string
         String query = StringUtils.substringAfter(url, "?");
 
@@ -56,8 +58,8 @@ public final class URLEncodingUtils {
         }
 
         // 3. handle characters after http:// or https://
-        String protocol = StringUtils.substringBefore(url, "://") + "://";
-        url = StringUtils.substringAfter(url, "://");
+        String protocolAndHostAndPort = RegexUtils.firstMatches(url, "^https?://.*?/+?");
+        url = StringUtils.substringAfter(url, protocolAndHostAndPort);
 
         // 4. temp. replace %20 or similar so that we can zero in on % character
         String replacement = "$1" + TMP_ENCODED_PREFIX + "$2" + TMP_ENCODED_POSTFIX + "$3";
@@ -84,7 +86,7 @@ public final class URLEncodingUtils {
                                     TMP_ENCODED_POSTFIX);
 
         // 4. join back
-        return protocol + url + query;
+        return protocolAndHostAndPort + url + query;
     }
 
     public static String encodeQueryString(String queryString) {
