@@ -21,7 +21,6 @@ import java.util.List;
 
 import org.junit.Assert;
 import org.junit.Test;
-import org.nexial.core.plugins.db.SqlComponent;
 import org.nexial.core.plugins.db.SqlComponent.Type;
 
 
@@ -67,7 +66,8 @@ public class SqlComponentTest {
 
         SqlComponent sql1 = sqls.get(0);
         Assert.assertNotNull(sql1);
-        Assert.assertEquals("$Id: SqlComponentTest.java 729 1995-12-13 06:51:47Z Lium $ nexial:r1", sql1.getComments());
+        Assert.assertEquals("$Id: SqlComponentTest.java 729 1995-12-13 06:51:47Z Lium $\n" +
+                            "nexial:r1", sql1.getComments());
         Assert.assertEquals("INSERT INTO REF_PROPS (PROP_TYPE, PROP_NAME, PROP_VAL, USAGE, UPDATED_BY, UPDATED_ON) " +
                             "VALUES ('JUNK', 'TMP1', 'VAL1', '', 'SYSTEM', current timestamp)",
                             sql1.getSql());

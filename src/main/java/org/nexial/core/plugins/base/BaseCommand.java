@@ -771,6 +771,7 @@ public class BaseCommand implements NexialCommand {
         List<String> macroList = TextUtils.toList(macro, "::", false);
         if (macroList.size() != 3) { return StepResult.fail("Invalid macro parameter: " + macro); }
 
+        context.setInMacroFlex(true);
         return executeMacro(new Macro(macroList.get(0), macroList.get(1), macroList.get(2)), input, output);
     }
 
@@ -1065,7 +1066,6 @@ public class BaseCommand implements NexialCommand {
 
         MacroExecutor macroExecutor = new MacroExecutor(currentTestStep, macro, inputMap, outputMap);
         currentTestStep.setMacroExecutor(macroExecutor);
-        context.setInMacroFlex(true);
         context.setData(MACRO_INVOKED_FROM, currentTestStep.getRow().get(0).getReference());
         return macroExecutor.start();
     }
