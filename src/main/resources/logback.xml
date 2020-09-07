@@ -347,7 +347,7 @@
     </logger>
 
     <!--tn.5250 -->
-    <logger name="org.tn5250j" additivity="false" level="INFO">
+    <logger name="org.tn5250j" additivity="false" level="WARN">
         <appender-ref ref="console-execution"/>
         <appender-ref ref="file-testexecution"/>
     </logger>

@@ -24,6 +24,7 @@ import org.apache.commons.lang3.time.StopWatch
 import org.nexial.commons.utils.FileUtil
 import org.nexial.core.CommandConst.CMD_REPEAT_UNTIL
 import org.nexial.core.CommandConst.CMD_SECTION
+import org.nexial.core.CommandConst.CMD_VERBOSE
 import org.nexial.core.ExecutionThread
 import org.nexial.core.NexialConst.*
 import org.nexial.core.NexialConst.Data.DEF_OPEN_EXCEL_AS_DUP
@@ -38,10 +39,12 @@ import org.nexial.core.excel.ExcelStyleHelper
 import org.nexial.core.utils.ConsoleUtils
 import org.nexial.core.utils.ExecUtils.isRunningInZeroTouchEnv
 import org.nexial.core.utils.FlowControlUtils
+import org.nexial.core.utils.MessageUtils
 import java.io.File
 import java.io.IOException
 
 data class Macro(val file: String, val sheet: String, val macroName: String) {
+
     override fun toString(): String = "$file::$sheet::$macroName"
 }
 
@@ -287,7 +290,7 @@ class MacroExecutor(private val initialTestStep: TestStep, val macro: Macro,
         // Adding output data to map before removing Macro Flex data
         output.forEach {
             // don't update if key is empty or has null value
-            if (StringUtils.isBlank(it.key) || !context.hasData(it.key)) return@forEach
+            if (StringUtils.isBlank(it.key) || !context.hasData(it.key) || StringUtils.isBlank(it.value)) return@forEach
             outputValueMap[it.value] = context.getObjectData(it.key) as Any
         }
         // Now going outside this macro
@@ -342,6 +345,7 @@ class MacroExecutor(private val initialTestStep: TestStep, val macro: Macro,
             }
 
             if (initialTestStep.macroPartOfRepeatUntil) {
+                log(testStep, result!!)
                 testStep.handleScreenshot(result)
                 return result
             }
@@ -352,6 +356,29 @@ class MacroExecutor(private val initialTestStep: TestStep, val macro: Macro,
         }
         // macroExcel?.close()
         return result
+    }
+
+    private fun log(testStep: TestStep, result: StepResult) {
+        val logger = context.getLogger()
+        val message = result.message
+
+        if (result.isSuccess) {
+            // avoid printing verbose() message to avoid leaking of sensitive information on log
+            logger.log(testStep,
+                       MessageUtils.renderAsPass(if (StringUtils.equals(testStep.commandFQN,
+                                                                        CMD_VERBOSE)) "" else message))
+            return
+        }
+
+        if (result.isSkipped) {
+            logger.log(testStep, MessageUtils.renderAsSkipped(result.message))
+            return
+        }
+
+        logger.error(testStep, MessageUtils.renderAsFail(message))
+        if (StringUtils.isNotBlank(result.detailedLogLink))
+            logger.error(testStep, "Error log: " + result.detailedLogLink)
+        testStep.trackExecutionError(result)
     }
 
     private fun shouldFailFast(context: ExecutionContext, testStep: TestStep): Boolean {

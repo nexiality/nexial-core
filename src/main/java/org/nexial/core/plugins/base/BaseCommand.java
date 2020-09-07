@@ -751,7 +751,7 @@ public class BaseCommand implements NexialCommand {
      * @param file the full path of the macro library.
      * @param name the name of the macro to invoke
      * @return pass/fail based on the validity of the referenced macro/file.  If macro {@code name} or library
-     * ({@code file}) is not found, a failure is returned with fail-immediate in effect.
+     *     ({@code file}) is not found, a failure is returned with fail-immediate in effect.
      */
     public StepResult macro(String file, String sheet, String name) {
         Macro macro = new Macro(file, sheet, name);
@@ -763,7 +763,7 @@ public class BaseCommand implements NexialCommand {
      * fully qualified, whilst Nexial function may be used (e.g. {@code $(syspath)}).
      *
      * @return pass/fail based on the validity of the referenced macro/file.  If macro {@code name} or library
-     * ({@code file}) is not found, a failure is returned with fail-immediate in effect.
+     *     ({@code file}) is not found, a failure is returned with fail-immediate in effect.
      */
     public StepResult macroFlex(String macro, String input, String output) {
         requiresNotBlank(macro, "macro parameter is empty", "");
@@ -771,9 +771,7 @@ public class BaseCommand implements NexialCommand {
         List<String> macroList = TextUtils.toList(macro, "::", false);
         if (macroList.size() != 3) { return StepResult.fail("Invalid macro parameter: " + macro); }
 
-        context.setInMacroFlex(true);
-        Macro macro1 = new Macro(macroList.get(0), macroList.get(1), macroList.get(2));
-        return executeMacro(macro1, input, output);
+        return executeMacro(new Macro(macroList.get(0), macroList.get(1), macroList.get(2)), input, output);
     }
 
     /**
@@ -1067,6 +1065,7 @@ public class BaseCommand implements NexialCommand {
 
         MacroExecutor macroExecutor = new MacroExecutor(currentTestStep, macro, inputMap, outputMap);
         currentTestStep.setMacroExecutor(macroExecutor);
+        context.setInMacroFlex(true);
         context.setData(MACRO_INVOKED_FROM, currentTestStep.getRow().get(0).getReference());
         return macroExecutor.start();
     }

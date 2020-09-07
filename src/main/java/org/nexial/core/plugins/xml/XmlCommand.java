@@ -489,7 +489,7 @@ public class XmlCommand extends BaseCommand {
                 String caption = "Validation error(s) found (click link on the right for details)";
                 addLinkRef(caption, "errors", outFile);
             } catch (IOException e) {
-                error("Unable to write log file to '" + outFile + "': " + e.getMessage(), e);
+                error("Unable to write log file to '" + outFile + "': " + e.getMessage());
             }
         }
     }

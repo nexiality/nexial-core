@@ -149,12 +149,13 @@ public class SqlComponent implements Serializable {
         String[] lines = StringUtils.split(original, SQL_LINE_SEP);
         for (String line : lines) {
             // has comment?
+            if (StringUtils.equals(StringUtils.trim(line), SQL_COMMENT)) { continue; }
             String lineComment = StringUtils.trim(StringUtils.substringAfter(line, SQL_COMMENT));
             if (StringUtils.isNotBlank(lineComment)) {
                 String varName = StringUtils.substringAfter(lineComment, SQL_VAR);
                 if (StringUtils.isNotBlank(varName)) { this.varName = StringUtils.trim(varName);}
 
-                commentBuffer.append(lineComment).append(" ");
+                commentBuffer.append(lineComment).append(SQL_LINE_SEP);
                 sqlBuffer.append(StringUtils.trim(StringUtils.substringBefore(line, SQL_COMMENT))).append(" ");
             } else {
                 sqlBuffer.append(StringUtils.trim(line)).append(" ");
