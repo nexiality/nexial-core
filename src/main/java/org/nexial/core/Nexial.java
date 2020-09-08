@@ -282,6 +282,8 @@ public class Nexial {
                                        "unable to proceed");
         }
 
+        NexialUpdate.checkAndrun();
+
         ConsoleUtils.log(NEXIAL_MANIFEST + " starting up...");
 
         CommandLine cmd = new DefaultParser().parse(OPTIONS, args);

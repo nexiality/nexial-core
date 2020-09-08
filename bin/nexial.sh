@@ -50,15 +50,48 @@ fi
 # run nexial now
 echo
 
-eval ${JAVA} ${MAX_MEM} \
+runNexial='${JAVA} ${MAX_MEM} \
     -classpath "${PROJECT_CLASSPATH}:${NEXIAL_CLASSES}:${NEXIAL_LIB}/nexial*.jar:${NEXIAL_LIB}/*:~/.nexial/jar/*" \
     -XX:+UnlockExperimentalVMOptions \
     -XX:+ExplicitGCInvokesConcurrent \
-    -Dwebdriver.chrome.bin="`echo ${CHROME_BIN} | sed 's/\ /\\\ /g'`" \
-    -Dwebdriver.firefox.bin="`echo ${FIREFOX_BIN} | sed 's/\ /\\\ /g'`" \
+    -Dwebdriver.chrome.bin="`echo ${CHROME_BIN} | sed '"'s/\ /\\\ /g'"'`" \
+    -Dwebdriver.firefox.bin="`echo ${FIREFOX_BIN} | sed '"'s/\ /\\\ /g'"'`" \
     -Djava.library.path="~/.nexial/dll" \
     ${JAVA_OPT} \
-    org.nexial.core.Nexial $*
+    org.nexial.core.Nexial $*'
+
+#echo "$runNexial"
+
+eval "$runNexial"
+
+
+
+USER_NEXIAL_HOME="$HOME/.nexial"
+USER_NEXIAL_INSTALL="$USER_NEXIAL_HOME/install"
+NEXIAL_INSTALLER_HOME="$HOME/projects/nexial-installer"
+
+# run nexial update now
+echo
+
+UPDATE_AGREED=${USER_NEXIAL_INSTALL}/update-now
+if test -f "$UPDATE_AGREED"; then
+    presentDir=eval "pwd"
+    echo "Updating nexial-core..."
+    rm -rf "$UPDATE_AGREED"
+    eval "${JAVA} -jar $NEXIAL_INSTALLER_HOME/lib/nexial-installer.jar upgradeNexial"
+    cd "$presentDir"
+fi
+
+RESUME_FILE=${USER_NEXIAL_INSTALL}/resume-after-update
+if test -f "$RESUME_FILE"; then
+    echo "Resuming nexial-core executution."
+    rm -rf "$RESUME_FILE"
+    eval "$NEXIAL_HOME/bin/nexial.sh $*"
+fi
+
+echo
+echo
+
 rc=$?
 
 echo

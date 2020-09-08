@@ -891,6 +891,9 @@ public final class NexialConst {
 
         public static final String USER_NEXIAL_HOME =
             StringUtils.appendIfMissing(new File(USER_HOME).getAbsolutePath(), separator) + ".nexial" + separator;
+        public static final String USER_NEXIAL_INSTALL_HOME = USER_NEXIAL_HOME + "install" + separator;
+        public static final String USER_PROJECTS_DIR =
+            IS_OS_WINDOWS ? "C:\\projects" + separator : USER_HOME + "/projects" + separator;
         public static final String PROJECT_CACHE_LOCATION = USER_NEXIAL_HOME + "projectCache" + separator;
         public static final String BROWSER_META_CACHE_PATH = USER_NEXIAL_HOME + "browser-meta.json";
 
