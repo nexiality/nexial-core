@@ -19,6 +19,7 @@ package org.nexial.core.utils;
 
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 import java.util.function.Function;
@@ -211,6 +212,58 @@ public final class InputFileUtils {
         }
 
         return true;
+    }
+
+    public static boolean isMacroFile(Excel excel) {
+        if (!hasValidSystemSheet(excel)) { return false; }
+        final ExcelAddress ea = new ExcelAddress("" + COL_TEST_CASE + ADDR_MACRO_COMMAND_START.getRowStartIndex());
+        return excel.getWorksheetsStartWith("").stream()
+                    .filter(s -> !SHEET_SYSTEM.equals(s.getName()))
+                    .filter(s -> Excel.isRowTextFound(s, HEADER_MACRO_TEST_STEPS, ADDR_HEADER_MACRO))
+                    .filter(s -> s.findLastDataRow(ADDR_MACRO_COMMAND_START) -
+                                 ADDR_MACRO_COMMAND_START.getRowStartIndex() > 0)
+                    .anyMatch(s -> StringUtils.isNotBlank(Excel.getCellValue(s.cell(ea))));
+    }
+
+    public static boolean isScriptFile(Excel excel) {
+        if (!hasValidSystemSheet(excel)) { return false; }
+        final List<String> summaryHeader = Collections.singletonList(HEADER_EXEC_SUMMARY);
+        return excel.getWorksheetsStartWith("").stream()
+                    .filter(s -> !SHEET_SYSTEM.equals(s.getName()))
+                    .filter(s -> Excel.isRowTextFound(s, summaryHeader, ADDR_SCENARIO_EXEC_SUMMARY_HEADER))
+                    .filter(s -> Excel.isRowTextFound(s, HEADER_SCENARIO_INFO_V1, ADDR_HEADER_SCENARIO_INFO1,
+                                                      ADDR_HEADER_SCENARIO_INFO2) ||
+                                 Excel.isRowTextFound(s, HEADER_SCENARIO_INFO, ADDR_HEADER_SCENARIO_INFO1,
+                                                      ADDR_HEADER_SCENARIO_INFO2))
+                    .anyMatch(s -> Excel.isRowTextFound(s, HEADER_TEST_STEP_LIST_V2, ADDR_HEADER_TEST_STEP));
+    }
+
+    public static boolean isDataFile(Excel excel) {
+        final ExcelAddress addrMinimumData = new ExcelAddress("A1:B1");
+        Function<Worksheet, ExcelAddress> dataBlock =
+            s -> new ExcelAddress("A1:A" + s.findLastDataRow(new ExcelAddress("A1:A1")));
+        return excel.getWorksheetsStartWith("").stream()
+                    .filter(s -> s.cells(addrMinimumData).stream()
+                                  .flatMap(Collection::stream)
+                                  .anyMatch(c -> StringUtils.isNotBlank(Excel.getCellValue(c))))
+                    .map(s -> s.cells(dataBlock.apply(s)))
+                    .flatMap(Collection::stream)
+                    .map(c -> c.get(0))
+                    .map((c -> c.getCellTypeEnum() == STRING ? c.getStringCellValue() : c.getRawValue()))
+                    .noneMatch(StringUtils::isBlank);
+    }
+
+    public static boolean isPlanFile(Excel excel) {
+        return excel.getWorksheetsStartWith("").stream()
+                    .filter(s -> Excel.isRowTextFound(s,
+                                                      PLAN_HEADER_SEQUENCE,
+                                                      ADDR_PLAN_HEADER_SEQUENCE1,
+                                                      ADDR_PLAN_HEADER_SEQUENCE2))
+                    .filter(s -> Excel.isRowTextFound(s, Collections.singletonList(HEADER_EXEC_SUMMARY),
+                                                      ADDR_PLAN_HEADER_EXEC_SUMMARY_HEADER))
+                    .filter(s -> Excel.isRowTextFound(s, PLAN_HEADER_EXECUTION, ADDR_PLAN_HEADER_EXECUTION))
+                    .anyMatch(s -> s.findLastDataRow(ADDR_PLAN_EXECUTION_START) -
+                                   ADDR_PLAN_EXECUTION_START.getRowStartIndex() > 0);
     }
 
     public static Excel resolveValidScript(String file) {
