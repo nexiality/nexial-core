@@ -172,6 +172,47 @@ public class NumberTransformer<T extends NumberDataType> extends Transformer {
         return data;
     }
 
+    public T mod(T data, String divisor) {
+        if (data == null || data.getTextValue() == null) { return data; }
+        if (StringUtils.isEmpty(divisor)) {
+            ConsoleUtils.log(data.getName() + ".mod(): cannot operate on a blank/empty value");
+            return data;
+        }
+
+        Number numberObject = data.getValue();
+        if (numberObject == null) { return data; }
+
+        try {
+            String number = TextUtils.cleanNumber(divisor, REAL);
+            if (StringUtils.equals(number, "0") && RegexUtils.match(divisor, "[A-Za-z]+")) {
+                // not a number, we want to avoid "divide by zero"
+                ConsoleUtils.log("[" + divisor + "] is not a number; ignored...");
+                return data;
+            }
+
+            if (isDecimal(number) || isDecimal(numberObject)) {
+                numberObject = BigDecimal.valueOf(numberObject.doubleValue())
+                                         .remainder(BigDecimal.valueOf(NumberUtils.toDouble(number)))
+                                         .doubleValue();
+            } else {
+                BigDecimal result = BigDecimal.valueOf(numberObject.longValue())
+                                              .remainder(BigDecimal.valueOf(NumberUtils.toLong(number)));
+                if (result.doubleValue() == result.longValue()) {
+                    // maintain current "whole number" representation
+                    numberObject = result.longValue();
+                } else {
+                    numberObject = result.doubleValue();
+                }
+            }
+        } catch (IllegalArgumentException e) {
+            ConsoleUtils.log("[" + divisor + "] is not a number; ignored...");
+        }
+
+        data.setValue(numberObject);
+        data.setTextValue(data.getValue());
+        return data;
+    }
+
     public T randomDigits(T data, String length) {
         String rand = randomHelper.integer(length);
         data.setTextValue(rand);

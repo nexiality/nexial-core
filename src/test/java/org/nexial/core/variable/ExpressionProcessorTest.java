@@ -622,6 +622,14 @@ public class ExpressionProcessorTest {
                                                " divide( 5.0190 , 0.07092  )]"));
     }
 
+
+    @Test
+    public void processNumber3() throws Exception {
+        ExpressionProcessor subject = new ExpressionProcessor(context);
+        assertEquals("4", subject.process("[NUMBER(92) => mod(44)]"));
+        assertEquals("16.96", subject.process("[NUMBER(92.02) => mod(37.53)]"));
+    }
+
     @Test
     public void processDate() throws Exception {
         ExpressionProcessor subject = new ExpressionProcessor(context);

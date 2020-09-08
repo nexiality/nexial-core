@@ -233,9 +233,7 @@ public class TextTransformer<T extends TextDataType> extends Transformer<T> {
     }
 
     public T replaceRegex(T data, String regexSearch, String replaceWith) {
-        if (data == null || StringUtils.isEmpty(data.getTextValue()) || StringUtils.isEmpty(regexSearch)) {
-            return data;
-        }
+        if (data == null || StringUtils.isEmpty(data.getTextValue()) || StringUtils.isEmpty(regexSearch)) {return data;}
         data.setValue(RegexUtils.replace(data.getTextValue(), regexSearch, replaceWith));
         return data;
     }
