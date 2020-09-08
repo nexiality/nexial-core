@@ -59,12 +59,8 @@ runNexial='${JAVA} ${MAX_MEM} \
     -Djava.library.path="~/.nexial/dll" \
     ${JAVA_OPT} \
     org.nexial.core.Nexial $*'
-
-#echo "$runNexial"
-
 eval "$runNexial"
-
-
+rc=$?
 
 USER_NEXIAL_HOME="$HOME/.nexial"
 USER_NEXIAL_INSTALL="$USER_NEXIAL_HOME/install"
@@ -84,15 +80,11 @@ fi
 
 RESUME_FILE=${USER_NEXIAL_INSTALL}/resume-after-update
 if test -f "$RESUME_FILE"; then
-    echo "Resuming nexial-core executution."
+    echo "Resuming nexial-core execution."
     rm -rf "$RESUME_FILE"
     eval "$NEXIAL_HOME/bin/nexial.sh $*"
+    rc=$?
 fi
-
-echo
-echo
-
-rc=$?
 
 echo
 echo
