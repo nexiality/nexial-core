@@ -37,17 +37,13 @@ public class NexialUpdate {
                         final int choice = Integer.parseInt(promptUserForInstallation());
                         if (choice > 0 && choice < 4) { shouldPrompt = false; }
                         if (choice == 1) {
-                            ConsoleUtils.log("Install & Restart.");
                             saveUpdatePreferenceChoice(true);
                             System.exit(0);
-                            // return; // exit the program
                         } else if (choice == 2) {
-                            ConsoleUtils.log("Install only.");
                             saveUpdatePreferenceChoice(false);
                             System.exit(0);
-                            // return; // exit the program
                         } else if (choice == 3) {
-                            ConsoleUtils.log("Ignore this time, ask me next time.");
+                            return;
                         } else { throw new NumberFormatException(); }
                     } catch (NumberFormatException nfe) {
                         ConsoleUtils.error("Please choose valid option.");
@@ -66,14 +62,8 @@ public class NexialUpdate {
         } else {
             ConsoleUtils.log("Nexial Installer is not Present. Downloading..");
             try {
-                // CompletableFuture
-                //     .supplyAsync(NexialUpdate::downloadNexialInstaller)
-                //     .thenAccept(NexialUpdate::installNexialInstaller)
-                //     .get();
-
-                String val = downloadNexialInstaller();
-                installNexialInstaller(val);
-
+                String version = downloadNexialInstaller();
+                installNexialInstaller(version);
             } catch (Exception e) {
                 ConsoleUtils.log("Failed to download Nexial-Installer. Reason: " + e.getMessage());
             }
@@ -195,7 +185,6 @@ public class NexialUpdate {
     }
 
     public static boolean isInstallerPresent() {
-        //String userHomeProject = IS_OS_WINDOWS ? "C:\\projects" : USER_HOME +"/projects";
         try {
             return Files.list(Paths.get(USER_PROJECTS_DIR))
                         .map(Path::toFile)
