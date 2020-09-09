@@ -1256,7 +1256,7 @@ public class ExecutionContext {
 
     public void setEndImmediate(boolean endImmediate) {
         data.put(END_IMMEDIATE, endImmediate);
-        System.setProperty(END_SCRIPT_IMMEDIATE, "true");
+        System.setProperty(END_SCRIPT_IMMEDIATE, "false");
     }
 
     // support flow controls - EndIf()
