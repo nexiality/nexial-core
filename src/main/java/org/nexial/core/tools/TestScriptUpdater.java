@@ -460,14 +460,16 @@ public class TestScriptUpdater {
                 List<String> paramValues = TestStep.readParamValues(row);
                 int paramValuesCount = CollectionUtils.size(paramValues);
                 if (paramValuesCount != paramCount) {
-                    System.err.printf("\tPossibly error on parameter(s) for %s: expected %s parameter(s) but found %s",
-                                      commandDisplay, paramCount, paramValuesCount);
+                    System.err.printf(
+                        "\tPossibly error on parameter(s) for %s: expected %s parameter(s) but found %s" + NL,
+                        commandDisplay, paramCount, paramValuesCount);
                 }
 
                 for (int k = 0; k < paramCount; k++) {
                     if (StringUtils.isBlank(Excel.getCellValue(row.get(COL_IDX_PARAMS_START + k)))) {
-                        System.err.printf("\tPossible error on parameter(s) for %s: no value found for parameter '%s'",
-                                          commandDisplay, IterableUtils.get(paramList, k));
+                        System.err.printf(
+                            "\tPossible error on parameter(s) for %s: no value found for parameter '%s'" + NL,
+                            commandDisplay, IterableUtils.get(paramList, k));
                     }
                 }
             }

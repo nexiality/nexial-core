@@ -1468,7 +1468,7 @@ public final class NexialConst {
         public static final String WS_CONTENT_TYPE = "Content-Type";
         public static final String WS_CONTENT_LENGTH = "Content-Length";
         public static final String CONTENT_TYPE_CHARSET = "charset=";
-        public static final String WS_SOAP_CONTENT_TYPE = "text/xml;" + CONTENT_TYPE_CHARSET + "=UTF-8";
+        public static final String WS_SOAP_CONTENT_TYPE = "text/xml;" + CONTENT_TYPE_CHARSET + "UTF-8";
         public static final String WS_JSON_CONTENT_TYPE = "application/json";
         public static final String WS_JSON_CONTENT_TYPE2 = WS_JSON_CONTENT_TYPE + ";" + CONTENT_TYPE_CHARSET + "UTF-8";
         public static final String WS_FORM_CONTENT_TYPE = "application/x-www-form-urlencoded";
