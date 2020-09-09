@@ -283,7 +283,7 @@ public final class NexialConst {
     public static final String MSG_SCENARIO_FAIL_FAST = MSG_ABORT + "scenario failed and fail-fast is in effect" + MSG_ALL_SCENARIOS_SKIPPED;
     public static final String MSG_SCENARIO_FAIL_IMMEDIATE = MSG_ABORT + "scenario failed and fail-immediate is in effect" + MSG_ALL_SCENARIOS_SKIPPED;
     public static final String MSG_SCENARIO_END_IF = MSG_ABORT + "scenario ended due to EndIf() flow control";
-    public static final String MSG_SCRIPT_END_IF = MSG_ABORT + "script execution ended due to end immediate in effect";
+    public static final String MSG_SCRIPT_END_IF = "script execution ended due to end immediate in effect";
     public static final String MSG_SCENARIO_END_LOOP_IF = MSG_ABORT + "scenario ended due to EndLoopIf() flow control";
     public static final String MSG_EXEC_FAIL_FAST = MSG_ABORT + "failure found and fail-fast is in effect" + MSG_EXEC_STOP;
     public static final String MSG_EXEC_FAIL_IMMEDIATE = MSG_ABORT + "fail-immediate in effect" + MSG_EXEC_STOP;
