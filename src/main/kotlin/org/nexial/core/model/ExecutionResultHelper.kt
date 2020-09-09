@@ -52,7 +52,7 @@ class ExecutionResultHelper(private val allSteps: List<TestStep>, val worksheet:
         for (index in allSteps.indices) {
             val testStep: TestStep = allSteps[index]
 
-            val pair = writeTestResults(testStep, false, currentRow, lastRow)
+            var pair = writeTestResults(testStep, false, currentRow, lastRow)
             currentRow = pair.first
             lastRow = pair.second
             currentRow++
@@ -62,7 +62,7 @@ class ExecutionResultHelper(private val allSteps: List<TestStep>, val worksheet:
                 val repeatUntilSteps = commandRepeater.steps
                 val stepCount = commandRepeater.stepCount
                 for (j in 0 until stepCount) {
-                    val pair = writeTestResults(repeatUntilSteps[j], true, currentRow, lastRow)
+                    pair = writeTestResults(repeatUntilSteps[j], true, currentRow, lastRow)
                     currentRow = pair.first + 1
                     lastRow = pair.second
                 }
@@ -248,14 +248,12 @@ class ExecutionResultHelper(private val allSteps: List<TestStep>, val worksheet:
 
     private fun copyMacroSteps(macroStep: TestStep?, startRow: Int, endRowIndex: Int, isRepeatUntil: Boolean) {
         worksheet.shiftRows(startRow, endRowIndex, 1)
-        val sheet: XSSFSheet = worksheet.sheet
+        val sheet = worksheet.sheet
+        val workbook = sheet.workbook
         val oldRow = macroStep!!.getRow() ?: return
-        var newRow = sheet.getRow(startRow)
-        if (newRow == null) newRow = sheet.createRow(startRow)
+        val newRow = sheet.getRow(startRow) ?: sheet.createRow(startRow)
 
         for (i in 0 until COL_IDX_REASON) {
-            val newWb = sheet.workbook
-            val newCellStyle = newWb.createCellStyle()
             var newCell = newRow.getCell(i)
             val oldCell = oldRow[i] ?: continue
 
@@ -264,8 +262,7 @@ class ExecutionResultHelper(private val allSteps: List<TestStep>, val worksheet:
 
             if (newCell == null) newCell = newRow.createCell(i)
 
-            newCellStyle.cloneStyleFrom(oldCell.cellStyle)
-            newCell.cellStyle = newCellStyle
+            newCell.cellStyle = ExcelStyleHelper.cloneCellStyle(oldCell.cellStyle, workbook)
 
             // add comment to cells if any
             val cellComment = oldCell.cellComment

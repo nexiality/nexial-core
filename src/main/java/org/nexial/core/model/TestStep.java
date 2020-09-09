@@ -504,7 +504,7 @@ public class TestStep extends TestStepManifest {
         if (result.isSkipped()) {
             summary.adjustTotalSteps(-1);
             log(MessageUtils.renderAsSkipped(result.getMessage()));
-        } else {
+        } else if (!result.isEnded()) {
             summary.incrementExecuted();
 
             boolean lastOutcome = result.isSuccess();
@@ -591,13 +591,14 @@ public class TestStep extends TestStepManifest {
         String message = result.getMessage();
 
         boolean isSkipped = result.isSkipped();
+        boolean isEnded = result.isEnded();
         if (isSkipped) {
             XSSFCellStyle styleSkipped = worksheet.getStyle(STYLE_PARAM_SKIPPED);
             for (int i = COL_IDX_PARAMS_START; i <= COL_IDX_PARAMS_END; i++) {
                 XSSFCell paramCell = row.get(i);
                 paramCell.setCellStyle(styleSkipped);
             }
-        } else {
+        } else if (!isEnded) {
             cellDescription.setCellValue(context.containsCrypt(description) ?
                                          CellTextReader.readValue(description) :
                                          context.replaceTokens(description, true));
@@ -729,13 +730,17 @@ public class TestStep extends TestStepManifest {
         ExcelStyleHelper.formatFlowControlCell(worksheet, row.get(COL_IDX_FLOW_CONTROLS));
 
         // screenshot
-        if (!isSkipped) { handleScreenshot(result); }
+        if (!isSkipped || !isEnded) {
+            // don't capture screenshot if step skipped or ended by endIf
+            handleScreenshot(result);
+            // elapsed time
+            row.get(COL_IDX_ELAPSED_MS).setCellStyle(worksheet.getStyle(STYLE_ELAPSED_MS));
+        }
 
         boolean pass = result.isSuccess();
 
-        // elapsed time
-        row.get(COL_IDX_ELAPSED_MS).setCellStyle(worksheet.getStyle(STYLE_ELAPSED_MS));
-        if (!isSkipped && !SLA_EXEMPT_COMMANDS.contains(commandName) && !StringUtils.contains(commandName, ".wait")) {
+        if ((!isSkipped && !isEnded) && !SLA_EXEMPT_COMMANDS.contains(commandName) && !StringUtils.contains(commandName,
+                                                                                                            ".wait")) {
             // SLA not applicable to composite commands and all wait* commands
             long elapsedTimeSLA = context.getSLAElapsedTimeMs();
             if (!updateElapsedTime(elapsedMs, elapsedTimeSLA > 0 && elapsedTimeSLA < elapsedMs)) {
@@ -760,11 +765,15 @@ public class TestStep extends TestStepManifest {
             Excel.createComment(cellDescription, cellResult.getStringCellValue(), COMMENT_AUTHOR);
         }
 
-        boolean skipped = MessageUtils.isSkipped(message);
-        if (skipped) {
+        if (isSkipped) {
             // paint both result and description the same style to improve readability
             cellResult.setCellStyle(worksheet.getStyle(STYLE_SKIPPED_RESULT));
             cellDescription.setCellStyle(worksheet.getStyle(STYLE_SKIPPED_RESULT));
+            Excel.createComment(cellDescription, message, COMMENT_AUTHOR);
+        } else if (isEnded) {
+            // paint both result and description the same style to improve readability
+            cellResult.setCellStyle(ExcelStyleHelper.generate(worksheet, TERMINATED));
+            cellDescription.setCellStyle(ExcelStyleHelper.generate(worksheet, TERMINATED));
             Excel.createComment(cellDescription, message, COMMENT_AUTHOR);
         } else {
             cellResult.setCellStyle(worksheet.getStyle(pass ? STYLE_SUCCESS_RESULT : STYLE_FAILED_RESULT));

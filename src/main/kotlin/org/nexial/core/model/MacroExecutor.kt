@@ -17,6 +17,7 @@
 package org.nexial.core.model
 
 import org.apache.commons.collections4.MapUtils
+import org.apache.commons.lang3.BooleanUtils
 import org.apache.commons.lang3.StringUtils
 import org.apache.commons.lang3.builder.ToStringBuilder
 import org.apache.commons.lang3.builder.ToStringStyle.SIMPLE_STYLE
@@ -29,17 +30,12 @@ import org.nexial.core.ExecutionThread
 import org.nexial.core.NexialConst.*
 import org.nexial.core.NexialConst.Data.DEF_OPEN_EXCEL_AS_DUP
 import org.nexial.core.NexialConst.Data.MACRO_INVOKED_FROM
-import org.nexial.core.excel.Excel
+import org.nexial.core.excel.*
 import org.nexial.core.excel.Excel.MIN_EXCEL_FILE_SIZE
 import org.nexial.core.excel.Excel.Worksheet
-import org.nexial.core.excel.ExcelAddress
-import org.nexial.core.excel.ExcelArea
 import org.nexial.core.excel.ExcelConfig.*
-import org.nexial.core.excel.ExcelStyleHelper
-import org.nexial.core.utils.ConsoleUtils
+import org.nexial.core.utils.*
 import org.nexial.core.utils.ExecUtils.isRunningInZeroTouchEnv
-import org.nexial.core.utils.FlowControlUtils
-import org.nexial.core.utils.MessageUtils
 import java.io.File
 import java.io.IOException
 
@@ -84,6 +80,11 @@ class MacroExecutor(private val initialTestStep: TestStep, val macro: Macro,
 
         var i = 0
         while (i < size) {
+            if (BooleanUtils.toBoolean(System.getProperty(Data.END_SCRIPT_IMMEDIATE, "false"))) {
+                trackTimeLogs.trackingDetails("Execution Interrupted")
+                break
+            }
+
             val testStep = testSteps[i]
 
             // check for repeat until

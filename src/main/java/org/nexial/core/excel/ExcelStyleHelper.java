@@ -369,4 +369,77 @@ public final class ExcelStyleHelper {
         fixCellWidth(cell.getSheet(), cell, COL_IDX_DESCRIPTION, DEF_CHAR_WIDTH_FACTOR_TAHOMA);
         return testStep;
     }
+
+    public static XSSFCellStyle cloneCellStyle(XSSFCellStyle oldCellStyle, XSSFWorkbook workbook) {
+        XSSFCellStyle newCellStyle = workbook.createCellStyle();
+        newCellStyle.setIndention(oldCellStyle.getIndention());
+        newCellStyle.setWrapText(oldCellStyle.getWrapText());
+        newCellStyle.setAlignment(oldCellStyle.getAlignmentEnum());
+        newCellStyle.setVerticalAlignment(oldCellStyle.getVerticalAlignmentEnum());
+        newCellStyle.setDataFormat(workbook.getCreationHelper().createDataFormat()
+                                           .getFormat(oldCellStyle.getDataFormatString()));
+        setBackgroundColor(newCellStyle, oldCellStyle);
+        XSSFFont font = createFont(workbook.createFont(), oldCellStyle.getFont());
+        newCellStyle.setFont(font);
+
+        return newCellStyle;
+    }
+
+    public static XSSFCellStyle copyCellBorder(XSSFCellStyle newCellStyle, XSSFCellStyle oldCellStyle) {
+        BorderStyle borderTopEnum = oldCellStyle.getBorderTopEnum();
+        if (borderTopEnum != BorderStyle.NONE) {
+            newCellStyle.setBorderTop(borderTopEnum);
+        }
+        BorderStyle borderBottomEnum = oldCellStyle.getBorderBottomEnum();
+        if (borderBottomEnum != BorderStyle.NONE) {
+            newCellStyle.setBorderBottom(borderBottomEnum);
+        }
+        BorderStyle borderLeftEnum = oldCellStyle.getBorderLeftEnum();
+        if (borderLeftEnum != BorderStyle.NONE) {
+            newCellStyle.setBorderLeft(borderLeftEnum);
+        }
+
+        BorderStyle borderRightEnum = oldCellStyle.getBorderRightEnum();
+        if (borderRightEnum != BorderStyle.NONE) {
+            newCellStyle.setBorderRight(borderRightEnum);
+        }
+
+        newCellStyle.setBorderColor(TOP, oldCellStyle.getTopBorderXSSFColor());
+        newCellStyle.setBorderColor(BOTTOM, oldCellStyle.getBottomBorderXSSFColor());
+        newCellStyle.setBorderColor(LEFT, oldCellStyle.getLeftBorderXSSFColor());
+        newCellStyle.setBorderColor(RIGHT, oldCellStyle.getRightBorderXSSFColor());
+        return newCellStyle;
+    }
+
+    private static void setBackgroundColor(XSSFCellStyle newCellStyle, XSSFCellStyle oldCellStyle) {
+        XSSFColor backgroundColor = oldCellStyle.getFillBackgroundXSSFColor();
+        if (backgroundColor != null) { newCellStyle.setFillBackgroundColor(backgroundColor); }
+
+        FillPatternType backgroundFillPattern = oldCellStyle.getFillPatternEnum();
+        if (backgroundFillPattern == SOLID_FOREGROUND || backgroundFillPattern == NO_FILL) {
+            if (backgroundColor != null) {
+                newCellStyle.setFillForegroundColor(backgroundColor);
+                newCellStyle.setFillPattern(SOLID_FOREGROUND);
+            }
+        }
+
+        XSSFColor foregroundXSSFColor = oldCellStyle.getFillForegroundXSSFColor();
+        if (foregroundXSSFColor != null) {
+            newCellStyle.setFillForegroundColor(foregroundXSSFColor);
+            newCellStyle.setFillPattern(backgroundFillPattern);
+        }
+    }
+
+    private static XSSFFont createFont(XSSFFont newFont, XSSFFont oldFont) {
+        String fontName = oldFont.getFontName();
+        newFont.setFontName(fontName);
+        newFont.setFontHeight(oldFont.getFontHeight());
+        newFont.setBold(oldFont.getBold());
+        newFont.setUnderline(oldFont.getUnderline());
+        newFont.setColor(oldFont.getXSSFColor());
+        newFont.setFamily(oldFont.getFamily());
+        newFont.setItalic(oldFont.getItalic());
+        newFont.setStrikeout(oldFont.getStrikeout());
+        return newFont;
+    }
 }

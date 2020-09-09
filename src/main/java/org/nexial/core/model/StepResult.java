@@ -25,8 +25,7 @@ import org.openqa.selenium.WebDriver;
 
 import static org.apache.commons.lang3.builder.ToStringStyle.SHORT_PREFIX_STYLE;
 import static org.nexial.core.NexialConst.Data.OPT_ELAPSED_TIME_SLA;
-import static org.nexial.core.NexialConst.MSG_SKIPPED;
-import static org.nexial.core.NexialConst.MSG_WARN;
+import static org.nexial.core.NexialConst.*;
 
 public class StepResult {
     private static final String NOT_SUPPORTED = "()' is not supported by current version of automation driver: ";
@@ -79,15 +78,23 @@ public class StepResult {
                               null);
     }
 
+    public static StepResult ended(String message) {
+        return new StepResult(false,
+                              !StringUtils.startsWith(message, MSG_TERMINATED) ? MSG_TERMINATED + message : message,
+                              null);
+    }
+
     public boolean isSuccess() { return success; }
 
     public boolean failed() { return !success; }
 
     public boolean isSkipped() { return MessageUtils.isSkipped(message); }
 
+    public boolean isEnded() { return MessageUtils.isEnded(message); }
+
     public boolean isWarn() { return MessageUtils.isWarn(message); }
 
-    public boolean isError() { return !success && !isSkipped() && !isWarn(); }
+    public boolean isError() { return !success && !isSkipped() && !isWarn() && !isEnded(); }
 
     public String getMessage() { return message == null ? "null" : StringUtils.defaultString(message, "(empty)"); }
 

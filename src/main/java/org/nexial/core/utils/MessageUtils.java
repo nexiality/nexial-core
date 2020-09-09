@@ -35,6 +35,8 @@ public final class MessageUtils {
 
     public static boolean isSkipped(String message) { return StringUtils.startsWith(message, MSG_SKIPPED); }
 
+    public static boolean isEnded(String message) { return StringUtils.startsWith(message, MSG_ENDED); }
+
     public static boolean isTestResult(String message) { return isPass(message) || isFail(message) || isWarn(message); }
 
     public static void logAsPass(Logger logger, String message) { logger.info(renderAsPass(message)); }
@@ -78,7 +80,7 @@ public final class MessageUtils {
     public static String markResult(String message, boolean pass, boolean simplePass) {
         message = StringUtils.defaultString(message, "");
 
-        if (isSkipped(message)) { return message; }
+        if (isSkipped(message) || isEnded(message)) { return message; }
 
         if (pass) {
             if (simplePass) { return MSG_PASS; }

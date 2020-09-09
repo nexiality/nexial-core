@@ -765,6 +765,11 @@ public class Nexial {
             for (int i = 0; i < executions.size(); i++) {
                 if (BooleanUtils.toBoolean(System.getProperty(LAST_PLAN_STEP, getDefault(LAST_PLAN_STEP)))) { break; }
 
+                if (BooleanUtils.toBoolean(System.getProperty(END_SCRIPT_IMMEDIATE, "false"))) {
+                    ConsoleUtils.log(runId, MSG_SCRIPT_END_IF);
+                    continue;
+                }
+
                 ExecutionDefinition exec = executions.get(i);
                 // re-read data sheets to ensure latest data being considered
                 exec.getTestData(true);

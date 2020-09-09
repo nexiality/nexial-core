@@ -263,6 +263,7 @@ public final class NexialConst {
     public static final String MSG_FAIL = ExcelConfig.MSG_FAIL;
     public static final String MSG_WARN = ExcelConfig.MSG_WARN;
     public static final String MSG_SKIPPED = ExcelConfig.MSG_SKIPPED;
+    public static final String MSG_TERMINATED = ExcelConfig.MSG_ENDED;
     public static final String MSG_CHECK_SUPPORT = "Check with Nexial Support Group for details.";
     public static final String MSG_SCRIPT_UPDATE_ERR = "ERROR: Failed to update scripts due to command metadata " +
                                                        "missing; " + MSG_CHECK_SUPPORT;
@@ -282,6 +283,7 @@ public final class NexialConst {
     public static final String MSG_SCENARIO_FAIL_FAST = MSG_ABORT + "scenario failed and fail-fast is in effect" + MSG_ALL_SCENARIOS_SKIPPED;
     public static final String MSG_SCENARIO_FAIL_IMMEDIATE = MSG_ABORT + "scenario failed and fail-immediate is in effect" + MSG_ALL_SCENARIOS_SKIPPED;
     public static final String MSG_SCENARIO_END_IF = MSG_ABORT + "scenario ended due to EndIf() flow control";
+    public static final String MSG_SCRIPT_END_IF = MSG_ABORT + "script execution ended due to end immediate in effect";
     public static final String MSG_SCENARIO_END_LOOP_IF = MSG_ABORT + "scenario ended due to EndLoopIf() flow control";
     public static final String MSG_EXEC_FAIL_FAST = MSG_ABORT + "failure found and fail-fast is in effect" + MSG_EXEC_STOP;
     public static final String MSG_EXEC_FAIL_IMMEDIATE = MSG_ABORT + "fail-immediate in effect" + MSG_EXEC_STOP;
@@ -392,6 +394,7 @@ public final class NexialConst {
 
         public static final String FAIL_IMMEDIATE = registerSysVar(NAMESPACE + "failImmediate", false);
         public static final String END_IMMEDIATE = registerSysVar(NAMESPACE + "endImmediate");
+        public static final String END_SCRIPT_IMMEDIATE = registerSysVar(NAMESPACE + "endScriptImmediate");
         public static final String BREAK_CURRENT_ITERATION = registerSysVar(NAMESPACE + "breakCurrentIteration");
         public static final String MACRO_STEP_FAILED = registerSysVar(NAMESPACE + "macroStepFailed");
         public static final String MACRO_BREAK_CURRENT_ITERATION = registerSysVar(NAMESPACE +

@@ -1254,6 +1254,11 @@ public class ExecutionContext {
     // support flow controls - EndIf()
     public boolean isEndImmediate() { return getBooleanData(END_IMMEDIATE, false); }
 
+    public void setEndImmediate(boolean endImmediate) {
+        data.put(END_IMMEDIATE, endImmediate);
+        System.setProperty(END_SCRIPT_IMMEDIATE, "true");
+    }
+
     // support flow controls - EndIf()
     public boolean isMacroStepFailed() { return getBooleanData(MACRO_STEP_FAILED, false); }
 
@@ -1266,14 +1271,14 @@ public class ExecutionContext {
 
     public void setMacroBreakIteration(boolean isMacroBreak) { data.put(MACRO_BREAK_CURRENT_ITERATION, isMacroBreak); }
 
-    public void setEndImmediate(boolean endImmediate) { data.put(END_IMMEDIATE, endImmediate); }
-
     // support flow control - EndLoopIf()
     public boolean isBreakCurrentIteration() {
         return getBooleanData(BREAK_CURRENT_ITERATION, false) || isFailImmediate() || isEndImmediate();
     }
 
     public void setBreakCurrentIteration(boolean breakLoop) { setData(BREAK_CURRENT_ITERATION, breakLoop); }
+
+    public boolean isInMacro() { return isInMacro; }
 
     @NotNull
     public TrackTimeLogs getTrackTimeLogs() {
@@ -1302,6 +1307,10 @@ public class ExecutionContext {
         Map<String, String> ref = gatherScenarioReferenceData();
 
         for (TestScenario testScenario : testScenarios) {
+            if (BooleanUtils.toBoolean(System.getProperty(END_SCRIPT_IMMEDIATE, "false"))) {
+                executionLogger.log(this, MSG_EXEC_END_IF);
+                break;
+            }
             // re-init scenario ref data
             clearScenarioRefData();
             ref.forEach((name, value) -> data.put(SCENARIO_REF_PREFIX + name, replaceTokens(value)));

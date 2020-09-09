@@ -151,14 +151,14 @@ public class FlowControlUtilsTest {
 
         StepResult result = FlowControlUtils.checkEndIf(context, fixture);
         Assert.assertNotNull(result);
-        Assert.assertTrue(result.isSuccess());
+        Assert.assertFalse(result.isSuccess());
 
         flowControl = new FlowControl(EndIf, new NexialFilterList("${condition2} = red & ${condition3} = coffee"));
         fixture = new DummyTestStep(EndIf, flowControl);
 
         result = FlowControlUtils.checkEndIf(context, fixture);
         Assert.assertNotNull(result);
-        Assert.assertTrue(result.isSuccess());
+        Assert.assertFalse(result.isSuccess());
     }
 
 }

@@ -82,6 +82,7 @@ public class ExcelConfig {
                                                                            PLAN_HEADER_RESULT,
                                                                            PLAN_HEADER_REASON);
     public static final ExcelAddress ADDR_PLAN_EXECUTION_START = new ExcelAddress("B5:B5");
+    public static final int PLAN_ROW_START_INDEX = new ExcelAddress("B5:B5").getRowStartIndex();
     public static final int COL_IDX_PLAN_DESCRIPTION = 'A' - 'A';
     public static final int COL_IDX_PLAN_TEST_SCRIPT = 'B' - 'A';
     public static final int COL_IDX_PLAN_SCENARIOS = 'C' - 'A';
@@ -245,6 +246,7 @@ public class ExcelConfig {
     public static final String MSG_PASS = "PASS ";
     public static final String MSG_SCREENCAPTURE = "Click here";
     public static final String MSG_SKIPPED = "SKIPPED ";
+    public static final String MSG_ENDED = "TERMINATED ";
     public static final String MSG_WARN = "WARN ";
 
     public static final String STYLE_TEST_CASE = "TEST_CASE";
@@ -304,6 +306,7 @@ public class ExcelConfig {
     public static final StyleConfig SUCCESS = newSuccessStyle();
     public static final StyleConfig FAILED = newFailedStyle();
     public static final StyleConfig SKIPPED = newSkippedStyle();
+    public static final StyleConfig TERMINATED = newTerminatedStyle();
     public static final StyleConfig RESULT = newResultStyle();
     public static final StyleConfig LINK = newLinkStyle();
     public static final StyleConfig MSG = newMsgStyle();
@@ -617,6 +620,17 @@ public class ExcelConfig {
             config.fontName = FONT_NAME_DEFAULT;
             config.fontHeight = FONT_HEIGHT_DEFAULT;
             config.fontColor = new XSSFColor(new Color(128, 128, 128));
+            config.boldFont = false;
+            config.verticalAlignment = CENTER;
+            return config;
+        }
+
+        static StyleConfig newTerminatedStyle() {
+            StyleConfig config = new StyleConfig();
+            config.backgroundColor = new XSSFColor(new Color(214, 213, 212));
+            config.fontName = FONT_NAME_DEFAULT;
+            config.fontHeight = FONT_HEIGHT_DEFAULT;
+            config.fontColor = new XSSFColor(new Color(146, 16, 16));
             config.boldFont = false;
             config.verticalAlignment = CENTER;
             return config;

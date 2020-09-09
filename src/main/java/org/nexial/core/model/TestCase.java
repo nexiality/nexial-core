@@ -21,6 +21,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 import org.apache.commons.collections4.CollectionUtils;
+import org.apache.commons.lang3.BooleanUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.builder.ToStringBuilder;
 import org.nexial.core.excel.Excel.Worksheet;
@@ -28,6 +29,7 @@ import org.nexial.core.logs.ExecutionLogger;
 import org.nexial.core.logs.TrackTimeLogs;
 
 import static org.nexial.core.CommandConst.*;
+import static org.nexial.core.NexialConst.Data.END_SCRIPT_IMMEDIATE;
 import static org.nexial.core.NexialConst.*;
 import static org.nexial.core.excel.ExcelStyleHelper.formatRepeatUntilDescription;
 import static org.nexial.core.excel.ExcelStyleHelper.formatSectionDescription;
@@ -86,6 +88,11 @@ public class TestCase {
         logger.log(this, "executing activity");
 
         for (int i = 0; i < testSteps.size(); i++) {
+            if (BooleanUtils.toBoolean(System.getProperty(END_SCRIPT_IMMEDIATE, "false"))) {
+                trackTimeLogs.trackingDetails("Execution Interrupted");
+                break;
+            }
+
             TestStep testStep = testSteps.get(i);
             StepResult result = testStep.execute();
 

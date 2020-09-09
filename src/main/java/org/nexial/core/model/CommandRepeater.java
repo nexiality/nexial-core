@@ -36,7 +36,8 @@ import org.openqa.selenium.WebDriverException;
 
 import static org.apache.commons.lang3.builder.ToStringStyle.SIMPLE_STYLE;
 import static org.nexial.core.CommandConst.CMD_SECTION;
-import static org.nexial.core.NexialConst.Data.*;
+import static org.nexial.core.NexialConst.Data.FAIL_FAST;
+import static org.nexial.core.NexialConst.Data.REPEAT_UNTIL_LOOP_INDEX;
 import static org.nexial.core.NexialConst.Exec.FAIL_COUNT;
 import static org.nexial.core.NexialConst.MSG_FAIL;
 import static org.nexial.core.NexialConst.MSG_PASS;
@@ -165,7 +166,7 @@ public class CommandRepeater {
                     result = handleException(testStep, i, e);
                     if (result != null) { return result; }
                 } finally {
-                    boolean isSkipped = result!=null  && result.isSkipped();
+                    boolean isSkipped = result != null && result.isSkipped();
 
                     // time tracking
                     if (!isSkipped) { trackTimeLogs.checkEndTracking(context, testStep); }

@@ -247,15 +247,15 @@ public class FlowControlTest {
         fixture.flowControls = FlowControl.parse("EndIf ( ${my_color} != red & ${my_name} has length of 8 & " +
                                                  "${min_age} < ${max_age} & " +
                                                  "${my_age} is not [28,27,26,30,49,31,33,45] ) ");
-        assertExpectedFilterEval(fixture, "EndIf -> [${my_color} != red, ${my_name} has length of 8, " +
-                                          "${min_age} < ${max_age}, " +
-                                          "${my_age} is not [28,27,26,30,49,31,33,45]]");
+        assertEndExpectedFilterEval(fixture, "TERMINATED EndIf -> [${my_color} != red, ${my_name} has length of 8, " +
+                                             "${min_age} < ${max_age}, " +
+                                             "${my_age} is not [28,27,26,30,49,31,33,45]]");
 
         // compound flow control, test for precedence
         fixture.flowControls = FlowControl.parse("SkipIf ( ${my_age} between [21|30] )   \n" +
                                                  "PauseAfter ( ${is_login} is [true|TRUE|True|yes|Yes|YES] )  \n" +
                                                  "\t EndIf ( \t  ${my_fruit} not in [banana,apple,chicken] )");
-        assertExpectedFilterEval(fixture, "EndIf -> [${my_fruit} not in [banana,apple,chicken]]");
+        assertEndExpectedFilterEval(fixture, "TERMINATED EndIf -> [${my_fruit} not in [banana,apple,chicken]]");
 
         fixture.flowControls = FlowControl.parse("SkipIf ( ${my_age} between [21|30] )   \n" +
                                                  "PauseAfter ( ${is_login} is [true|TRUE|True|yes|Yes|YES] )  \n" +
@@ -365,6 +365,16 @@ public class FlowControlTest {
         System.out.println("--------------------------------------------------\n");
     }
 
+    protected void assertEndExpectedFilterEval(TestStep fixture, String expected)
+        throws InvocationTargetException, IllegalAccessException {
+        StepResult actual = fixture.invokeCommand();
+        System.out.println(actual);
+        Assert.assertNotNull(actual);
+        Assert.assertFalse(actual.isSuccess());
+        Assert.assertEquals(expected, actual.getMessage());
+        System.out.println("--------------------------------------------------\n");
+    }
+
     @NotNull
     protected TestStep createMockTestStep(MockExecutionContext context) {
         TestCase testCase = new TestCase();
@@ -394,7 +404,7 @@ public class FlowControlTest {
                     }
 
                     if (FlowControlUtils.checkEndIf(context, this) != null) {
-                        return StepResult.success(flowControls.get(EndIf).toString());
+                        return StepResult.ended(flowControls.get(EndIf).toString());
                     }
 
                     if (FlowControlUtils.checkSkipIf(context, this) != null) {

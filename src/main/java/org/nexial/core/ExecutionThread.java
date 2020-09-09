@@ -27,6 +27,7 @@ import java.util.Map;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.collections4.MapUtils;
 import org.apache.commons.io.FileUtils;
+import org.apache.commons.lang3.BooleanUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.time.StopWatch;
 import org.nexial.commons.logging.LogbackUtils;
@@ -34,6 +35,7 @@ import org.nexial.commons.utils.FileUtil;
 import org.nexial.commons.utils.ResourceUtils;
 import org.nexial.core.aws.NexialS3Helper;
 import org.nexial.core.excel.Excel;
+import org.nexial.core.logs.ExecutionLogger;
 import org.nexial.core.model.*;
 import org.nexial.core.plugins.web.CloudWebTestingPlatform;
 import org.nexial.core.reports.ExecutionMailConfig;
@@ -41,7 +43,6 @@ import org.nexial.core.reports.ExecutionReporter;
 import org.nexial.core.spi.NexialExecutionEvent;
 import org.nexial.core.spi.NexialListenerFactory;
 import org.nexial.core.utils.ConsoleUtils;
-import org.nexial.core.logs.ExecutionLogger;
 import org.nexial.core.variable.Syspath;
 
 import static java.io.File.separator;
@@ -53,6 +54,7 @@ import static org.nexial.core.NexialConst.Project.appendLog;
 import static org.nexial.core.NexialConst.Web.*;
 import static org.nexial.core.SystemVariables.getDefault;
 import static org.nexial.core.SystemVariables.getDefaultBool;
+import static org.nexial.core.excel.ExcelConfig.PLAN_ROW_START_INDEX;
 import static org.nexial.core.model.ExecutionEvent.*;
 import static org.nexial.core.model.ExecutionSummary.ExecutionLevel.ITERATION;
 import static org.nexial.core.model.ExecutionSummary.ExecutionLevel.SCRIPT;
@@ -127,8 +129,10 @@ public final class ExecutionThread extends Thread {
 
         ExecutionThread.set(context);
 
-        // in case there were fail-immediate condition from previous script..
-        if (shouldFailNow(context)) { return; }
+        // in case there were fail-immediate condition from previous script.. or end-immediate condition
+        if (shouldFailNow(context) || BooleanUtils.toBoolean(System.getProperty(END_SCRIPT_IMMEDIATE, "false"))) {
+            return;
+        }
 
         IterationManager iterationManager = execDef.getTestData().getIterationManager();
         int totalIterations = iterationManager.getIterationCount();
@@ -153,6 +157,7 @@ public final class ExecutionThread extends Thread {
 
         for (int iterationIndex = 1; iterationIndex <= totalIterations; iterationIndex++) {
             // SINGLE THREAD EXECUTION WITHIN FOR LOOP!
+            if (BooleanUtils.toBoolean(System.getProperty(END_SCRIPT_IMMEDIATE, "false"))) { break; }
 
             int iterationRef = iterationManager.getIterationRef(iterationIndex - 1);
             Excel testScript = null;
@@ -177,6 +182,8 @@ public final class ExecutionThread extends Thread {
                 context.startIteration(iterationIndex, iterationRef, totalIterations, firstScript);
 
                 ExecutionLogger logger = context.getLogger();
+                logPlan(context, scriptLocation, iterationIndex);
+
                 logger.log(context, "executing iteration #" + iterationIndex + " of " + totalIterations +
                                     "; Iteration Id " + iterationRef);
                 allPass = context.execute();
@@ -250,6 +257,14 @@ public final class ExecutionThread extends Thread {
 
         ExecutionThread.unset();
         MemManager.recordMemoryChanges(scriptName + " completed");
+    }
+
+    private void logPlan(ExecutionContext context, String scriptLocation, int iterationIndex) {
+        if (iterationIndex == 1 && execDef.getPlanFile() != null) {
+            ExecutionLogger logger = context.getLogger();
+            logger.log(context, "executing '" + scriptLocation + "' from '" + execDef.getPlanName() +
+                                "' step " + (execDef.getPlanSequence() + PLAN_ROW_START_INDEX));
+        }
     }
 
     public ExecutionSummary getExecutionSummary() { return executionSummary; }

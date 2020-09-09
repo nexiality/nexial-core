@@ -31,6 +31,7 @@ import org.nexial.core.model.TestStep;
 import org.nexial.core.plugins.desktop.DesktopNotification;
 
 import static org.apache.commons.lang3.SystemUtils.IS_OS_WINDOWS;
+import static org.nexial.core.NexialConst.Data.REPEAT_UNTIL_LOOP_IN;
 import static org.nexial.core.NexialConst.MSG_ABORT;
 import static org.nexial.core.model.FlowControl.Directive.*;
 import static org.nexial.core.plugins.desktop.DesktopNotification.NotificationLevel.warn;
@@ -133,7 +134,13 @@ public final class FlowControlUtils {
             case EndIf:
                 logger.log(testStep, MSG_ABORT + "due to flow control " + flowControlText);
                 context.setEndImmediate(true);
-                return StepResult.success("test execution ends here: " + flowControlText);
+
+                String stepDetails =
+                    context.hasData(REPEAT_UNTIL_LOOP_IN) ? " at row " + (testStep.getRowIndex() + 1) : "";
+                if (context.isInMacro()) {
+                    stepDetails = " at macro (" + testStep.getMacro().getSheet() + ") " + stepDetails;
+                }
+                return StepResult.ended("Execution ends" + stepDetails + ": " + flowControlText);
 
             case SkipIf:
                 // logger.log(testStep, "skipped due to flow control " + flowControlText);

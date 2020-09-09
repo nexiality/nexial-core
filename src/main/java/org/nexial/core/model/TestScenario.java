@@ -25,6 +25,7 @@ import java.util.Map;
 
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.collections4.MapUtils;
+import org.apache.commons.lang3.BooleanUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.math.NumberUtils;
 import org.apache.poi.xssf.usermodel.XSSFCell;
@@ -41,6 +42,7 @@ import org.nexial.core.utils.ConsoleUtils;
 
 import static org.nexial.core.CommandConst.CMD_REPEAT_UNTIL;
 import static org.nexial.core.CommandConst.CMD_SECTION;
+import static org.nexial.core.NexialConst.Data.END_SCRIPT_IMMEDIATE;
 import static org.nexial.core.NexialConst.*;
 import static org.nexial.core.excel.ExcelConfig.*;
 import static org.nexial.core.model.ExecutionSummary.ExecutionLevel.SCENARIO;
@@ -109,6 +111,11 @@ public class TestScenario {
 
         for (TestCase testCase : testCases) {
             context.setCurrentActivity(testCase);
+
+            if (BooleanUtils.toBoolean(System.getProperty(END_SCRIPT_IMMEDIATE, "false"))) {
+                logger.log(testCase, MSG_ACTIVITY_ENDING_IF);
+                break;
+            }
 
             if (skipDueToFailFast) {
                 logger.log(this, MSG_ACTIVITY_FAIL_FAST);
