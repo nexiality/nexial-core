@@ -23,6 +23,7 @@ import com.google.gson.JsonArray;
 import static java.io.File.separator;
 import static org.nexial.core.NexialConst.GSON;
 import static org.nexial.core.NexialConst.Project.*;
+import static org.nexial.core.utils.ConsoleUtils.centerPrompt;
 
 public class NexialUpdate {
 
@@ -58,16 +59,62 @@ public class NexialUpdate {
         ConsoleUtils.log("Nexial Current Version: '" + getVersion(System.getProperty(NEXIAL_HOME)) + "'");
 
         if (isInstallerPresent()) {
-            ConsoleUtils.log("Nexial Installer is Present");
+            String nexialInstallerVersion = getNexialInstallerVersion();
+            if (StringUtils.isBlank(nexialInstallerVersion)) {
+                ConsoleUtils.log("Current Nexial Installer version is: " + nexialInstallerVersion);
+            }
+            if (isNexailInstallerOlder(nexialInstallerVersion)) {
+                showNexialInstallerBanner(true);
+            }
         } else {
-            ConsoleUtils.log("Nexial Installer is not Present. Downloading..");
-            try {
+            showNexialInstallerBanner(false);
+            /*try {
                 String version = downloadNexialInstaller();
                 installNexialInstaller(version);
             } catch (Exception e) {
                 ConsoleUtils.log("Failed to download Nexial-Installer. Reason: " + e.getMessage());
-            }
+            }*/
         }
+    }
+
+    ;
+
+    public static void showNexialInstallerBanner(boolean isUpdate) {
+        String message =
+            isUpdate ? "Looks like you have an outdated version of Nexial Installer. Please install the latest" :
+            "Looks like Nexial Installer is not found on your system. Please install the latest";
+        System.err
+            .println("/----------------------------------------------------------------------------------------\\");
+        System.err.println("|" + centerPrompt("MISSING NEW VERSION OF NEXIAL-INSTALLER", 88) + "|");
+        System.err
+            .println("|----------------------------------------------------------------------------------------|");
+        System.err.println("|" + centerPrompt(message, 88) + "|");
+        System.err
+            .println("\\----------------------------------------------------------------------------------------/");
+    }
+
+    public static String getNexialInstallerVersion() {
+        Path nexialInstallerFingerprint = Paths.get(USER_PROJECTS_DIR, "nexial-installer", "version.txt");
+        try {
+            return new String(Files.readAllBytes(nexialInstallerFingerprint)).trim();
+        } catch (Exception ignored) {
+            return null;
+        }
+    }
+
+    public static boolean isUpdateReadyForInstallation() {
+        try {
+            final Map<String, String> propertiesMap = new HashMap<>();
+            Files.readAllLines(Paths.get(USER_NEXIAL_INSTALL_HOME + "update.nx"))
+                 .stream().filter(l -> l.length() > 0).map(l -> l.split("="))
+                 .forEach(s -> propertiesMap.put(s[0], s[1]));
+            if (StringUtils.isNotEmpty(propertiesMap.get("updateLocation"))) {
+                return true;
+            }
+        } catch (IOException e) {
+            ConsoleUtils.log("Last update status not found.");
+        }
+        return false;
     }
 
     public static void updateSilently() {
@@ -87,7 +134,6 @@ public class NexialUpdate {
         final String nexialInstallerJar = nexialInstallerDir.getAbsolutePath() + separator + "lib"
                                           + separator + "nexial-installer.jar";
         final String command = "java -jar " + nexialInstallerJar + " SU";
-        ConsoleUtils.log("Calling command " + command);
         try {
             Runtime.getRuntime().exec(command);
         } catch (IOException e) {
@@ -104,17 +150,12 @@ public class NexialUpdate {
         }
     }
 
-    public static boolean isUpdateReadyForInstallation() {
-        try {
-            final Map<String, String> propertiesMap = new HashMap<>();
-            Files.readAllLines(Paths.get(USER_NEXIAL_INSTALL_HOME + "update.nx"))
-                 .stream().filter(l -> l.length() > 0).map(l -> l.split("="))
-                 .forEach(s -> propertiesMap.put(s[0], s[1]));
-            if (StringUtils.isNotEmpty(propertiesMap.get("updateLocation"))) {
-                return true;
-            }
-        } catch (IOException e) {
-            ConsoleUtils.error("Cloud not load status of last update check. Reason: " + e.getMessage());
+    private static final boolean isNexailInstallerOlder(String version) {
+        String[] versionNumbers = version.split("v")[1].split("\\.");
+        String[] minimumNumbers = NEXIAL_INSTALLER_MIN_VERSION.split("\\.");
+
+        for (int i = 0; i < versionNumbers.length; i++) {
+            if (Integer.parseInt(minimumNumbers[i]) > Integer.parseInt(versionNumbers[i])) { return true; }
         }
         return false;
     }
