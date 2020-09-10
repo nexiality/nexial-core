@@ -10,7 +10,9 @@ import java.util.Map;
 import java.util.concurrent.CompletableFuture;
 
 import org.apache.commons.io.FileUtils;
+import org.apache.commons.lang3.ArrayUtils;
 import org.apache.commons.lang3.StringUtils;
+import org.apache.commons.lang3.math.NumberUtils;
 import org.nexial.commons.utils.FileUtil;
 import org.nexial.core.utils.ConsoleUtils;
 import org.nexial.core.utils.ExecUtils;
@@ -145,14 +147,24 @@ public class NexialUpdate {
     private static boolean isNexialInstallerOlder(String version) {
         if (StringUtils.isBlank(version)) { return true; }
 
-        String[] versionNumbers = version.split("v")[1].split("\\.");
+        String[] versionNumbers = StringUtils.split(version, ".");
+        if (ArrayUtils.isEmpty(versionNumbers)) { return true; }
+
         String[] minimumNumbers = NEXIAL_INSTALLER_MIN_VERSION.split("\\.");
+        // just in case...
+        if (ArrayUtils.isEmpty(minimumNumbers)) { return false; }
 
-        for (int i = 0; i < versionNumbers.length; i++) {
-            if (Integer.parseInt(minimumNumbers[i]) > Integer.parseInt(versionNumbers[i])) { return true; }
+        try {
+            long currentVersionNum = (NumberUtils.toInt(versionNumbers[0]) * 10000) +
+                                     (versionNumbers.length > 1 ? NumberUtils.toInt(versionNumbers[1]) + 100 : 0) +
+                                     (versionNumbers.length > 2 ? NumberUtils.toInt(versionNumbers[2]) : 0);
+            long minVersionNum = (NumberUtils.toInt(minimumNumbers[0]) * 10000) +
+                                 (minimumNumbers.length > 1 ? NumberUtils.toInt(minimumNumbers[1]) + 100 : 0) +
+                                 (minimumNumbers.length > 2 ? NumberUtils.toInt(minimumNumbers[2]) : 0);
+            return currentVersionNum < minVersionNum;
+        } catch (Exception e) {
+            return false;
         }
-
-        return false;
     }
 
     private static String promptUserForInstallation() {

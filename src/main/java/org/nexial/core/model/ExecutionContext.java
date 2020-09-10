@@ -1256,7 +1256,7 @@ public class ExecutionContext {
 
     public void setEndImmediate(boolean endImmediate) {
         data.put(END_IMMEDIATE, endImmediate);
-        if (!ExecUtils.IS_RUNNING_IN_JUNIT) { System.setProperty(END_SCRIPT_IMMEDIATE, "true"); }
+        if (!ExecUtils.IS_RUNNING_IN_JUNIT) { System.setProperty(END_SCRIPT_IMMEDIATE, endImmediate + ""); }
     }
 
     // support flow controls - EndIf()
