@@ -282,7 +282,7 @@ public class Nexial {
                                        "unable to proceed");
         }
 
-        NexialUpdate.checkAndrun();
+        NexialUpdate.checkAndRun();
 
         ConsoleUtils.log(NEXIAL_MANIFEST + " starting up...");
 
