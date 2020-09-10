@@ -60,11 +60,8 @@ public class NexialUpdate {
 
         if (isInstallerPresent()) {
             String nexialInstallerVersion = getNexialInstallerVersion();
-            if (StringUtils.isBlank(nexialInstallerVersion)) {
-                ConsoleUtils.log("Current Nexial Installer version is: " + nexialInstallerVersion);
-            }
             if (isNexailInstallerOlder(nexialInstallerVersion)) {
-                showNexialInstallerBanner(true);
+                    showNexialInstallerBanner(true);
             }
         } else {
             showNexialInstallerBanner(false);
@@ -151,7 +148,11 @@ public class NexialUpdate {
     }
 
     private static final boolean isNexailInstallerOlder(String version) {
-        String[] versionNumbers = version.split("v")[1].split("\\.");
+        if (StringUtils.isBlank(version)) {
+            return true;
+        }
+        ConsoleUtils.log("Current Nexial Installer version is: " + version);
+        String[] versionNumbers = version.split("\\.");
         String[] minimumNumbers = NEXIAL_INSTALLER_MIN_VERSION.split("\\.");
 
         for (int i = 0; i < versionNumbers.length; i++) {
