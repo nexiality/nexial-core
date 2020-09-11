@@ -25,9 +25,19 @@ import org.nexial.core.utils.ConsoleUtils
 import java.util.*
 
 class ExecutionInspector(private val baseCommand: BaseCommand) {
+
     private val regexSaveVar = "^SAVE\\s*\\(([^\\)]+)\\)\\s*\\=\\s*(.+)$"
     private val regexClearVar = "^CLEAR\\s*\\(([^\\)]+)\\)\\s*$"
-    // private val prompt = "> inspect (enter HELP for options): "
+    private val quickHelp = "\nUse:\n" +
+                            "> SAVE(variable-name)=... - (re)create a data variable. Example: SAVE(a)=Hello\n" +
+                            "> CLEAR(variable-name)    - clear data variable. Example: CLEAR(a)\n" +
+                            "> \${...}                  - inspect data variable. Example: \${var1}, \${nexial.textDelim}\n" +
+                            "> \$(...)                  - inspect built-in function. Example: $(random|integer|5)\n" +
+                            "> [EXPR(...) => ...]      - execute Nexial Expression. Example: [TEXT(Hello) => lower]\n" +
+                            "> Press [Enter]           - quit Inspect and return back to Nexial Interactive\n" +
+                            "\n" +
+                            "Data variable, built-in function and Nexial Expression can be used in combination.\n" +
+                            "\n"
     private val prompt = "> inspect: "
 
     fun inspect() {
@@ -35,6 +45,7 @@ class ExecutionInspector(private val baseCommand: BaseCommand) {
         // just in case
         if (ExecutionThread.get() == null) ExecutionThread.set(context)
 
+        print(quickHelp)
         print(prompt)
 
         val stdin = Scanner(System.`in`)

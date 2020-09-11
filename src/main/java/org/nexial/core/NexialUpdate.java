@@ -24,13 +24,16 @@ import static org.nexial.core.utils.ConsoleUtils.centerPrompt;
 
 public class NexialUpdate {
 
+    private static final String REL_PATH_INSTALLER_JAR = separator + "lib" + separator + "nexial-installer.jar";
+    private static final String INSTALLER_DIR_NAME = "nexial-installer";
+
     public static void checkAndRun() {
         if (ExecUtils.isRunningInZeroTouchEnv()) { return; }
 
         installNexialInstallerIfNotPresent();
+
         if (isUpdateReadyForInstallation()) {
-            boolean shouldPrompt = true;
-            while (shouldPrompt) {
+            while (true) {
                 try {
                     final int choice = Integer.parseInt(StringUtils.trim(promptUserForInstallation()));
                     switch (choice) {
@@ -43,11 +46,9 @@ public class NexialUpdate {
                             System.exit(0);
                         }
                         case 3:
-                            shouldPrompt = false;
                             return;
-                        default: {
+                        default:
                             System.out.println("Please choose valid option.\n");
-                        }
                     }
                 } catch (NumberFormatException nfe) {
                     System.out.println("Please choose valid option.\n");
@@ -59,8 +60,6 @@ public class NexialUpdate {
     }
 
     public static void installNexialInstallerIfNotPresent() {
-        // ConsoleUtils.log("Nexial Current Version: '" + getVersion(System.getProperty(NEXIAL_HOME)) + "'");
-
         if (isInstallerPresent()) {
             String nexialInstallerVersion = getNexialInstallerVersion();
             if (isNexialInstallerOlder(nexialInstallerVersion)) { showNexialInstallerBanner(true); }
@@ -80,12 +79,14 @@ public class NexialUpdate {
                          "Looks like you have an outdated version of Nexial Installer." :
                          "Looks like Nexial Installer is not found on your system.";
         System.out.println(
+            "\n\n" +
             "/------------------------------------------------------------------------------\\\n" +
-            "|" + centerPrompt("WARNING :: NEXIAL INSTALLER", 78) + "|\n" +
+            "| " + centerPrompt("WARNING :: NEXIAL INSTALLER", 76) + " |\n" +
             "|------------------------------------------------------------------------------|\n" +
-            "|" + StringUtils.rightPad(message, 78, " ") + "|\n" +
-            "|" + StringUtils.rightPad("Please install the latest version.", 78, " ") + "|\n" +
-            "\\------------------------------------------------------------------------------/");
+            "| " + StringUtils.rightPad(message, 76, " ") + " |\n" +
+            "| " + StringUtils.rightPad("Please install the latest version.", 76, " ") + " |\n" +
+            "\\------------------------------------------------------------------------------/" +
+            "\n\n");
     }
 
     private static String getNexialInstallerVersion() {
@@ -125,8 +126,7 @@ public class NexialUpdate {
     }
 
     private static void triggerUpdateCheckProcess(File nexialInstallerDir) {
-        final String nexialInstallerJar = nexialInstallerDir.getAbsolutePath() + separator + "lib"
-                                          + separator + "nexial-installer.jar";
+        final String nexialInstallerJar = nexialInstallerDir.getAbsolutePath() + REL_PATH_INSTALLER_JAR;
         final String command = "java -jar " + nexialInstallerJar + " SU";
         try {
             Runtime.getRuntime().exec(command);
@@ -192,7 +192,7 @@ public class NexialUpdate {
         }
     }
 
-    private static boolean isInstallDirectory(File f) { return f.getName().matches("nexial-installer"); }
+    private static boolean isInstallDirectory(File f) { return f.getName().matches(INSTALLER_DIR_NAME); }
 
     // private static String downloadNexialInstaller() {
     //
