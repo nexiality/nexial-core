@@ -35,6 +35,7 @@ import java.util.jar.Manifest
 import java.util.stream.Collectors
 
 object ExecUtils {
+
     const val PRODUCT = "nexial"
     const val JAVA_OPT = "JAVA_OPT"
     const val RUNTIME_ARGS = "runtime args"
@@ -206,7 +207,6 @@ object ExecUtils {
 
         return "nexial-DEV"
     }
-
 
     @JvmStatic
     fun openFile(reportFile: String) {

@@ -286,7 +286,7 @@ public class ExecutionInputPrep {
         return excel;
     }
 
-    private static boolean shouldExcludeDataVariable(String varName) {
+    public static boolean shouldExcludeDataVariable(String varName) {
         for (String ignored : IGNORED_CLI_OPT) { if (StringUtils.startsWith(varName, ignored)) { return true; } }
         return false;
     }

@@ -31,6 +31,7 @@ import org.nexial.core.ExecutionThread
 import org.nexial.core.NexialConst.*
 import org.nexial.core.NexialConst.Data.*
 import org.nexial.core.NexialConst.Iteration.CURR_ITERATION
+import org.nexial.core.NexialConst.Iteration.ITERATION
 import org.nexial.core.NexialConst.Project.appendLog
 import org.nexial.core.excel.Excel
 import org.nexial.core.excel.ExcelConfig.MSG_SKIPPED
@@ -67,6 +68,7 @@ import java.io.File
 import java.util.*
 
 class NexialInteractive {
+
     lateinit var executionDefinition: ExecutionDefinition
     private val tmpComma = "~~!@!~~"
     private val rangeSeparator = "-"
@@ -151,21 +153,25 @@ class NexialInteractive {
                 }
 
                 RELOAD_SCRIPT    -> {
+                    System.setProperty(ITERATION, session.iteration.toString())
                     session.reloadTestScript()
                     InteractiveConsole.showMenu(session)
                 }
 
                 RELOAD_DATA      -> {
+                    System.setProperty(ITERATION, session.iteration.toString())
                     session.reloadDataFile()
                     InteractiveConsole.showMenu(session)
                 }
 
                 RELOAD_PROJPROP  -> {
+                    System.setProperty(ITERATION, session.iteration.toString())
                     session.reloadProjectProperties()
                     InteractiveConsole.showMenu(session)
                 }
 
                 RELOAD_ALL       -> {
+                    System.setProperty(ITERATION, session.iteration.toString())
                     session.reloadDataFile()
                     session.reloadProjectProperties()
                     session.reloadTestScript()
@@ -270,21 +276,18 @@ class NexialInteractive {
         }
 
         val context = session.context
-
         val runId = context.runId
-        val iterationRef = session.iteration
 
         context.setCurrentActivity(null)
         context.isFailImmediate = false
         context.isEndImmediate = false
         context.isBreakCurrentIteration = false
         context.setData(OPT_LAST_OUTCOME, true)
-        context.setData(CURR_ITERATION, iterationRef)
+        context.setData(CURR_ITERATION, 1)
 
         val scriptLocation = executionDefinition.testScript
         val testData = executionDefinition.testData
-        val iterationManager = testData.iterationManager
-        ConsoleUtils.log(runId, "executing $scriptLocation. $iterationManager")
+        ConsoleUtils.log(runId, "executing $scriptLocation. ${testData.iterationManager}")
 
         ExecutionThread.set(context)
 
@@ -296,6 +299,7 @@ class NexialInteractive {
 
             var testScript = session.inflightScript
             if (testScript == null) {
+                System.setProperty(ITERATION, session.iteration.toString())
                 // always running only 1 iteration.
                 testScript = ExecutionInputPrep.prep(runId, executionDefinition, 1)
                 context.useTestScript(testScript)

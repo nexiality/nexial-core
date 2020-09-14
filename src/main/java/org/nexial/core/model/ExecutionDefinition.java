@@ -109,10 +109,10 @@ public class ExecutionDefinition {
 
     public String getOutPath() { return project.getOutPath(); }
 
-    public TestData getTestData(boolean refetch) {
-        if (refetch) {
+    public TestData getTestData(boolean fetch) {
+        if (fetch) {
             try {
-                ConsoleUtils.log("refetch data from " + dataFile);
+                ConsoleUtils.log("re-fetching data from " + dataFile);
                 parse();
             } catch (IOException e) {
                 String error = "Unable to successfully read/parse data file " + dataFile + ": " + e.getMessage();

@@ -17,14 +17,17 @@
 package org.nexial.core.interactive
 
 import org.apache.commons.collections4.BidiMap
+import org.apache.commons.collections4.MapUtils
 import org.apache.commons.collections4.bidimap.DualLinkedHashBidiMap
 import org.apache.commons.lang3.StringUtils
 import org.apache.commons.lang3.SystemUtils.USER_NAME
 import org.apache.commons.lang3.math.NumberUtils
 import org.nexial.commons.utils.EnvUtils
 import org.nexial.commons.utils.FileUtil
+import org.nexial.core.ExecutionInputPrep
 import org.nexial.core.ExecutionThread
 import org.nexial.core.NexialConst.Data.DEF_OPEN_EXCEL_AS_DUP
+import org.nexial.core.NexialConst.Iteration.*
 import org.nexial.core.excel.Excel
 import org.nexial.core.excel.ExcelAddress
 import org.nexial.core.excel.ExcelArea
@@ -36,8 +39,8 @@ import org.nexial.core.model.TestProject
 import org.nexial.core.model.TestScenario
 import org.nexial.core.plugins.base.BaseCommand
 import org.nexial.core.utils.ConsoleUtils
-import org.nexial.core.utils.ExecUtils
 import org.nexial.core.utils.ExecUtils.IGNORED_CLI_OPT
+import org.nexial.core.utils.ExecUtils.deriveJavaOpts
 import org.nexial.core.utils.InputFileUtils
 import java.io.File
 import java.util.*
@@ -172,15 +175,13 @@ data class InteractiveSession(val context: ExecutionContext) {
         }
 
         execDef.getTestData(true)
-        this.iteration = if (this.iteration == 0) {
+        if (this.iteration == 0) {
             val iterationValue = execDef.testData.iteration
-            if (NumberUtils.isDigits(iterationValue)) {
+            this.iteration = if (NumberUtils.isDigits(iterationValue)) {
                 NumberUtils.toInt(iterationValue)
             } else {
                 NumberUtils.toInt(StringUtils.substringBefore(iterationValue, "-"))
             }
-        } else {
-            this.iteration
         }
     }
 
@@ -269,11 +270,41 @@ data class InteractiveSession(val context: ExecutionContext) {
             field = value
 
             if (executionDefinition != null && executionDefinition!!.testData != null) {
+                System.setProperty(ITERATION, field.toString())
+                executionDefinition!!.parse()
                 val testData = executionDefinition!!.testData
 
-                val data = TreeMap(testData.getAllValue(iteration))
-                testData.allSettings.forEach { (key, testValue) -> data[key] = testValue }
-                data.putAll(ExecUtils.deriveJavaOpts())
+                // handle iteration config/data
+                testData.allSettings[ITERATION] = field.toString()
+                val iterationManager = testData.iterationManager
+                val iterationRef = iterationManager.getIterationRef(field - 1)
+
+                val data = TreeMap(testData.getAllValue(field))
+                data[ITERATION] = field.toString()
+                testData.allSettings.forEach { (key, value) -> data[key] = value }
+                data.putAll(deriveJavaOpts())
+
+                data[CURR_ITERATION] = "1"
+                if (iterationRef != -1) data[CURR_ITERATION_ID] = iterationRef.toString() + ""
+                if (field > 1) {
+                    val lastIterationRef = iterationManager.getIterationRef(field - 2)
+                    if (lastIterationRef != -1) data[LAST_ITERATION] = lastIterationRef.toString()
+                    data[IS_FIRST_ITERATION] = "false"
+                } else {
+                    data[IS_FIRST_ITERATION] = "true"
+                }
+                data[IS_LAST_ITERATION] = if (field == iterationManager.iterationCount) "true" else "false"
+
+                val sysProps = System.getProperties()
+                if (MapUtils.isNotEmpty(sysProps))
+                    sysProps.forEach { name, value -> data[name.toString()] = value.toString() }
+
+                // remove all excluded data variables
+                val dataNames = data.keys.toTypedArray()
+                Arrays.stream(dataNames).forEach {
+                    if (StringUtils.isBlank(it) || ExecutionInputPrep.shouldExcludeDataVariable(it)) data.remove(it)
+                }
+
                 data.forEach { (key, dataValue) -> context.setData(key, dataValue) }
             }
         }
