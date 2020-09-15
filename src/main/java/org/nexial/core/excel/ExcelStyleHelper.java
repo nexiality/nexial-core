@@ -386,23 +386,17 @@ public final class ExcelStyleHelper {
     }
 
     public static XSSFCellStyle copyCellBorder(XSSFCellStyle newCellStyle, XSSFCellStyle oldCellStyle) {
-        BorderStyle borderTopEnum = oldCellStyle.getBorderTopEnum();
-        if (borderTopEnum != BorderStyle.NONE) {
-            newCellStyle.setBorderTop(borderTopEnum);
-        }
-        BorderStyle borderBottomEnum = oldCellStyle.getBorderBottomEnum();
-        if (borderBottomEnum != BorderStyle.NONE) {
-            newCellStyle.setBorderBottom(borderBottomEnum);
-        }
-        BorderStyle borderLeftEnum = oldCellStyle.getBorderLeftEnum();
-        if (borderLeftEnum != BorderStyle.NONE) {
-            newCellStyle.setBorderLeft(borderLeftEnum);
-        }
+        BorderStyle topBorder = oldCellStyle.getBorderTopEnum();
+        if (topBorder != null && topBorder != BorderStyle.NONE) { newCellStyle.setBorderTop(topBorder); }
 
-        BorderStyle borderRightEnum = oldCellStyle.getBorderRightEnum();
-        if (borderRightEnum != BorderStyle.NONE) {
-            newCellStyle.setBorderRight(borderRightEnum);
-        }
+        BorderStyle bottomBorder = oldCellStyle.getBorderBottomEnum();
+        if (bottomBorder != null && bottomBorder != BorderStyle.NONE) { newCellStyle.setBorderBottom(bottomBorder); }
+
+        BorderStyle leftBorder = oldCellStyle.getBorderLeftEnum();
+        if (leftBorder != null && leftBorder != BorderStyle.NONE) { newCellStyle.setBorderLeft(leftBorder); }
+
+        BorderStyle rightBorder = oldCellStyle.getBorderRightEnum();
+        if (rightBorder != null && rightBorder != BorderStyle.NONE) { newCellStyle.setBorderRight(rightBorder); }
 
         newCellStyle.setBorderColor(TOP, oldCellStyle.getTopBorderXSSFColor());
         newCellStyle.setBorderColor(BOTTOM, oldCellStyle.getBottomBorderXSSFColor());

@@ -18,15 +18,10 @@ package org.nexial.core.tools.repair
 
 import org.apache.commons.io.FileUtils
 import org.apache.commons.lang3.StringUtils
-import org.apache.poi.ss.usermodel.CellType.*
-import org.apache.poi.xssf.usermodel.XSSFCell
-import org.apache.poi.xssf.usermodel.XSSFRow
-import org.apache.poi.xssf.usermodel.XSSFSheet
-import org.apache.poi.xssf.usermodel.XSSFWorkbook
+import org.apache.poi.xssf.usermodel.*
 import org.nexial.core.NexialConst.DF_TIMESTAMP
 import org.nexial.core.NexialConst.Data.EXCEL_ROW_COL_MAX_LIMIT
 import org.nexial.core.excel.Excel
-import org.nexial.core.excel.ExcelConfig.STRIKEOUT_COMMAND
 import org.nexial.core.excel.ExcelStyleHelper
 import org.nexial.core.tools.ProjectToolUtils.log
 import org.nexial.core.tools.repair.RepairArtifact.RepairArtifactLog
@@ -84,6 +79,8 @@ object ExcelUtils {
             targetWorkbook.removeSheetAt(targetWorkbook.getSheetIndex(TEMP_SHEET_NAME))
             val updateLog = saveFile(file, previewLocation, targetWorkbook)
             targetWorkbook.close()
+            srcExcel.close()
+            targetExcel.close()
             return updateLog
         }
     }
@@ -95,16 +92,13 @@ object ExcelUtils {
      * @param fileType [ArtifactType] type of excel being copied
      * @return sheet to which data is copied
      * */
-    private fun copySheet(sourceSheet: XSSFSheet,
-                          targetWorkbook: XSSFWorkbook,
-                          lastDataRow: Int,
+    private fun copySheet(sourceSheet: XSSFSheet, targetWorkbook: XSSFWorkbook, lastDataRow: Int,
                           fileType: ArtifactType): XSSFSheet? {
-        val sheetName = sourceSheet.sheetName
         val tempSheetIndex = targetWorkbook.getSheetIndex(TEMP_SHEET_NAME)
-        val targetSheet = targetWorkbook.cloneSheet(tempSheetIndex, sheetName)
+        val targetSheet = targetWorkbook.cloneSheet(tempSheetIndex, sourceSheet.sheetName)
 
         // set maximum row limit to read data
-        val lastRow = Math.min(lastDataRow, EXCEL_ROW_COL_MAX_LIMIT)
+        val lastRow = lastDataRow.coerceAtMost(EXCEL_ROW_COL_MAX_LIMIT)
 
         var destRowIndex = 0
         for (rowIndex in 0 until lastRow) {
@@ -117,77 +111,40 @@ object ExcelUtils {
             }
             destRowIndex++
         }
+        Excel.addMergedRegions(sourceSheet, targetSheet)
         return targetSheet
     }
 
     /**
      * @param sourceRow [XSSFRow] to copy from source sheet
-     * @param newRow [XSSFRow] new row in the target sheet where source row to be copied
+     * @param targetRow [XSSFRow] new row in the target sheet where source row to be copied
      * @param fileType [ArtifactType] type of file. By default it is [DATA]
      */
-    private fun copyRow(sourceRow: XSSFRow, newRow: XSSFRow, fileType: ArtifactType = DATA) {
+    private fun copyRow(sourceRow: XSSFRow, targetRow: XSSFRow, fileType: ArtifactType = DATA) {
+        val workbook = targetRow.sheet.workbook
+
         // set column index as max limit
-        val lastColumn = Math.min(RepairExcels.lastColumnIdx(sourceRow, fileType), EXCEL_ROW_COL_MAX_LIMIT)
+        val lastColumn = RepairExcels.lastColumnIdx(sourceRow, fileType).coerceAtMost(EXCEL_ROW_COL_MAX_LIMIT)
+        targetRow.height = sourceRow.height
 
         for (columnIndex in 0 until lastColumn + 1) {
-            val oldCell = sourceRow.getCell(columnIndex)
-            var newCell = newRow.getCell(columnIndex)
+            // set column width for one row only its enough
+            if (sourceRow.rowNum == 1) {
+                targetRow.sheet.setColumnWidth(columnIndex, sourceRow.sheet.getColumnWidth(columnIndex))
+            }
 
             // If the old cell is null jump to next cell with new cell as empty
-            if (oldCell == null) continue
+            val sourceCell = sourceRow.getCell(columnIndex) ?: continue
 
-            if (newCell == null) {
-                newCell = createCell(newRow, columnIndex, fileType)
-            }
+            val targetCell = targetRow.getCell(columnIndex) ?: targetRow.createCell(columnIndex,
+                                                                                    sourceCell.cellTypeEnum)
 
-            // set cell value
-            when (oldCell.cellTypeEnum) {
-                BLANK   -> newCell.setCellType(BLANK)
-                FORMULA -> newCell.cellFormula = oldCell.cellFormula
+            val newCellStyle = ExcelStyleHelper.cloneCellStyle(sourceCell.cellStyle, workbook)
+            ExcelStyleHelper.copyCellBorder(newCellStyle, sourceCell.cellStyle)
+            targetCell.cellStyle = newCellStyle
 
-                NUMERIC -> {
-                    oldCell.setCellType(STRING)
-                    newCell.setCellValue(oldCell.stringCellValue)
-                }
-
-                BOOLEAN -> {
-                    oldCell.setCellType(STRING)
-                    newCell.setCellValue(oldCell.stringCellValue)
-                }
-
-                else    -> newCell.setCellValue(oldCell.stringCellValue)
-            }
-
-            // create styles for cell only if strikethrough is present
-            if (RepairExcels.isStrikeOut(oldCell, fileType)) {
-                newCell.cellStyle = ExcelStyleHelper.generate(newRow.sheet.workbook, STRIKEOUT_COMMAND)
-            }
+            Excel.copyCellValue(sourceCell, targetCell)
         }
-    }
-
-    // create new cell within given row
-    // format data cells as per the first row's format
-    private fun createCell(row: XSSFRow, columnIndex: Int, fileType: ArtifactType): XSSFCell {
-        val cell = row.createCell(columnIndex, STRING)
-
-        if (fileType == DATA) {
-            val firstRow = row.sheet.getRow(0)
-            if (columnIndex == 0) {
-                // format first column same as first column of first row which is data variable name
-                val dataNameCellStyle = firstRow.getCell(0).cellStyle
-                cell.cellStyle = dataNameCellStyle
-            } else {
-                // format other column same as second column of first row which is data variable value
-                val dataValueCellStyle = firstRow.getCell(1).cellStyle
-                cell.cellStyle = dataValueCellStyle
-            }
-        } else {
-            // format script, macro and plan according to first Step row
-            val firstStepRow = if (fileType == MACRO) 1 else 4
-            val commandRow = row.sheet.getRow(firstStepRow)
-            cell.cellStyle = commandRow.getCell(cell.columnIndex).cellStyle
-        }
-        return cell
     }
 
     // rename sheet to some unique temporary sheet name
@@ -207,8 +164,7 @@ object ExcelUtils {
             // create folder structure as it is from searchFrom
             var fileSuffix = file.name
             if (file.absolutePath != searchFrom) {
-                fileSuffix = StringUtils.substringAfterLast(file.absolutePath,
-                                                            searchFrom).removePrefix(separator)
+                fileSuffix = StringUtils.substringAfterLast(file.absolutePath, searchFrom).removePrefix(separator)
             }
             backupOrPreviewLoc = File(StringUtils.appendIfMissing(preview, separator) + fileSuffix)
             destFile = backupOrPreviewLoc
@@ -217,8 +173,8 @@ object ExcelUtils {
             try {
                 FileUtils.moveFile(file, backupOrPreviewLoc)
             } catch (e: IOException) {
-                ConsoleUtils.error("Unable to create backup; File '${file.absolutePath}'" +
-                                   " might being used by another process ")
+                ConsoleUtils.error(
+                    "Unable to create backup; File '${file.absolutePath}'" + " might being used by another process ")
                 log(action, file)
                 return null
             }

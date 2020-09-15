@@ -1509,4 +1509,18 @@ public class Excel {
                 throw new IllegalArgumentException("Invalid cell type");
         }
     }
+
+    public static void addMergedRegions(XSSFSheet sourceSheet, XSSFSheet targetSheet) {
+        sourceSheet.getMergedRegions().forEach(region -> {
+            boolean alreadyMerged = false;
+            for (CellRangeAddress reg : targetSheet.getMergedRegions()) {
+                //todo need to rethink logic again
+                if (reg.getFirstRow() >= region.getFirstRow() && reg.getFirstRow() <= region.getLastRow()) {
+                    alreadyMerged = true;
+                    break;
+                }
+            }
+            if (!alreadyMerged) { targetSheet.addMergedRegion(region); }
+        });
+    }
 }
