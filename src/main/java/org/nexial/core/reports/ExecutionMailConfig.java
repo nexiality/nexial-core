@@ -66,9 +66,7 @@ public class ExecutionMailConfig {
 
     @NotNull
     public static ExecutionMailConfig configure(ExecutionContext context) {
-        if (self == null) {
-            self = new ExecutionMailConfig();
-        }
+        if (self == null) { self = new ExecutionMailConfig(); }
 
         // re-read from context.. in case there's update or new information
         if (context != null) {
@@ -78,9 +76,6 @@ public class ExecutionMailConfig {
                 } else {
                     self.configurations.remove(key);
                 }
-                // if (!isConfigFound(self.configurations, key) && context.hasData(key)) {
-                //     self.configurations.put(key, context.getStringData(key));
-                // }
             });
         }
 
@@ -97,13 +92,7 @@ public class ExecutionMailConfig {
             return false;
         }
 
-        // String mailTo = MapUtils.getString(configurations, POST_EXEC_MAIL_TO_OLD);
         String mailTo2 = MapUtils.getString(configurations, POST_EXEC_MAIL_TO);
-        // if (StringUtils.isBlank(mailTo) && StringUtils.isBlank(mailTo2)) {
-        //     ConsoleUtils.log(NOT_READY_PREFIX +
-        //                      POST_EXEC_MAIL_TO_OLD + "=" + mailTo + ", " + POST_EXEC_MAIL_TO + "=" + mailTo2);
-        //     return false;
-        // }
         if (StringUtils.isBlank(mailTo2)) {
             ConsoleUtils.log(NOT_READY_PREFIX + POST_EXEC_MAIL_TO + "=" + mailTo2);
             return false;
@@ -200,8 +189,6 @@ public class ExecutionMailConfig {
 
     @Nullable
     public List<String> getRecipients() {
-        // String recipients = configurations.get(POST_EXEC_MAIL_TO_OLD);
-        // if (StringUtils.isBlank(recipients)) { recipients = configurations.get(POST_EXEC_MAIL_TO); }
         String recipients = configurations.get(POST_EXEC_MAIL_TO);
         if (StringUtils.isBlank(recipients)) { return null; }
         return TextUtils.toList(StringUtils.replace(recipients, ";", ","), ",", true);

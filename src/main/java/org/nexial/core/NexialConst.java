@@ -1036,6 +1036,7 @@ public final class NexialConst {
         public static final String SKIP_COUNT = registerSysVar(NAMESPACE + "executionSkipCount");
         public static final String PASS_COUNT = registerSysVar(NAMESPACE + "executionPassCount");
         public static final String EXEC_COUNT = registerSysVar(NAMESPACE + "executionCount");
+        public static final String EXEC_SYNOPSIS = registerSysVar(NAMESPACE + "executionSynopsis");
         public static final String MIN_EXEC_SUCCESS_RATE = registerSysVar(NAMESPACE + "minExecSuccessRate", 100);
 
         // system-wide enable/disable email notification
@@ -1045,6 +1046,8 @@ public final class NexialConst {
         public static final String POST_EXEC_EMAIL_SUBJECT = registerSysVar(NAMESPACE + "mailSubject");
         public static final String POST_EXEC_EMAIL_HEADER = registerSysVar(NAMESPACE + "mailHeader");
         public static final String POST_EXEC_EMAIL_FOOTER = registerSysVar(NAMESPACE + "mailFooter");
+        public static final String POST_EXEC_WITH_SYNOPSIS = registerSysVar(NAMESPACE + "mailSubject.withSynopsis",
+                                                                            true);
 
         // email subject prefix only for event notification
         public static final String MAIL_NOTIF_SUBJECT_PREFIX = "[nexial-notification] ";

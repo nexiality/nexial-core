@@ -915,6 +915,12 @@ public class Nexial {
         summary.setCustomHeader(System.getProperty(SUMMARY_CUSTOM_HEADER));
         summary.setCustomFooter(System.getProperty(SUMMARY_CUSTOM_FOOTER));
 
+        // execution summary should be complete now.. time to generate execution synopsis
+        double successRate = summary.getSuccessRate();
+        String successRateString = MessageFormat.format(RATE_FORMAT, successRate);
+        System.setProperty(EXEC_SYNOPSIS,
+                           successRate == 1 ? "ALL PASS" : "FAIL (" + successRateString + " success)");
+
         if (MapUtils.isEmpty(summary.getLogs()) && CollectionUtils.isNotEmpty(summary.getNestedExecutions())) {
             summary.getLogs().putAll(summary.getNestedExecutions().get(0).getLogs());
         }
@@ -1036,7 +1042,6 @@ public class Nexial {
             // could be fully qualified or relative to script
             dataFile = cmd.getOptionValue(DATA);
             if (!FileUtil.isFileReadable(dataFile)) {
-
                 if (testScriptFile == null) {
                     fail("data file (" + cmd.getOptionValue(DATA) + ") cannot be resolved; test script not specified.");
                 }
@@ -1318,8 +1323,7 @@ public class Nexial {
 
     private void notifyCompletion(ExecutionSummary summary) {
         try {
-            ExecutionNotifier nexialMailer = springContext.getBean("nexialMailer", ExecutionNotifier.class);
-            nexialMailer.notify(summary);
+            springContext.getBean("nexialMailer", ExecutionNotifier.class).notify(summary);
         } catch (IntegrationConfigException | IOException e) {
             ConsoleUtils.error("Unable to send out notification email: " + e.getMessage());
         }

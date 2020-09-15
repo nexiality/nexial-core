@@ -33,6 +33,7 @@ import javax.mail.internet.InternetAddress;
 import javax.mail.internet.MimeBodyPart;
 import javax.mail.internet.MimeMessage;
 import javax.mail.internet.MimeMultipart;
+import javax.validation.constraints.NotNull;
 
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.collections4.MapUtils;
@@ -62,6 +63,7 @@ import static org.nexial.core.NexialConst.Mailer.MAIL_KEY_CONTENT_TYPE;
 import static org.nexial.core.NexialConst.Mailer.MAIL_KEY_FROM;
 import static org.nexial.core.NexialConst.Project.*;
 import static org.nexial.core.SystemVariables.getDefault;
+import static org.nexial.core.SystemVariables.getDefaultBool;
 import static org.nexial.core.utils.ExecUtils.NEXIAL_MANIFEST;
 
 public class NexialMailer implements ExecutionNotifier {
@@ -312,9 +314,13 @@ public class NexialMailer implements ExecutionNotifier {
         }
     }
 
-    private String deriveSubject(ExecutionSummary summary) {
+    private String deriveSubject(@NotNull ExecutionSummary summary) {
+        boolean withSynopsis = BooleanUtils.toBoolean(System.getProperty(POST_EXEC_WITH_SYNOPSIS,
+                                                                         "" + getDefaultBool(POST_EXEC_WITH_SYNOPSIS)));
+        String postfix = withSynopsis ? " - " + System.getProperty(EXEC_SYNOPSIS) : "";
+
         String customSubject = mailSupport != null ? mailSupport.getCustomEmailSubject() : null;
-        if (StringUtils.isNotBlank(customSubject)) { return customSubject; }
+        if (StringUtils.isNotBlank(customSubject)) { return StringUtils.trim(customSubject + postfix); }
 
         List<ExecutionSummary> scriptSummary = summary.getNestedExecutions();
 
@@ -323,15 +329,16 @@ public class NexialMailer implements ExecutionNotifier {
                                               .filter(s -> StringUtils.isNotBlank(s.getPlanName()))
                                               .map(s -> StringUtils.substringBefore(s.getPlanName(), SCRIPT_FILE_EXT))
                                               .collect(Collectors.toList());
-            return "Execution Result for " + TextUtils.toString(plans, ", ", "", "");
+            return StringUtils.trim("Execution Result for " + TextUtils.toString(plans, ", ", "", "") + postfix);
         }
 
         ExecutionSummary script = scriptSummary.get(0);
         List<String> scenarios = script.getNestedExecutions().get(0).getNestedExecutions().stream()
                                        .map(ExecutionSummary::getName).collect(Collectors.toList());
 
-        return "Execution Result for " + StringUtils.substringBeforeLast(script.getName(), " (") +
-               " (" + TextUtils.toString(scenarios, ", ", "", "") + ")";
+        return StringUtils.trim("Execution Result for " + StringUtils.substringBeforeLast(script.getName(), " (") +
+                                " (" + TextUtils.toString(scenarios, ", ", "", "") + ")" +
+                                postfix);
     }
 
     private boolean validateMailData(MailData data) {
