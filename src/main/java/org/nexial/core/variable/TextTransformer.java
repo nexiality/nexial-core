@@ -421,10 +421,10 @@ public class TextTransformer<T extends TextDataType> extends Transformer<T> {
         return data;
     }
 
-    public BinaryDataType base64decode(T data) {
-        return data == null || StringUtils.isEmpty(data.getValue()) ?
-               new BinaryDataType() :
-               new BinaryDataType(TextUtils.base64decodeAsBytes(data.getValue()));
+    public T base64decode(T data) {
+        if (data == null || StringUtils.isEmpty(data.getValue())) { return data; }
+        data.setValue(TextUtils.base64decode(data.getValue()));
+        return data;
     }
 
     public T base64decodeThenSave(T data, String path, String append) {
