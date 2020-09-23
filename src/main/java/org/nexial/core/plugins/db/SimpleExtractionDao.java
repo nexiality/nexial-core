@@ -21,6 +21,7 @@ import java.io.BufferedOutputStream;
 import java.io.File;
 import java.sql.*;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -46,6 +47,7 @@ import org.springframework.jdbc.core.ResultSetExtractor;
 import org.springframework.jdbc.core.StatementCallback;
 import org.springframework.jdbc.core.support.JdbcDaoSupport;
 
+import static java.sql.Types.*;
 import static org.nexial.core.NexialConst.NL;
 import static org.nexial.core.NexialConst.Rdbms.*;
 import static org.nexial.core.SystemVariables.getDefaultBool;
@@ -58,6 +60,8 @@ import static org.nexial.core.SystemVariables.getDefaultInt;
  */
 public class SimpleExtractionDao extends JdbcDaoSupport {
     private static final String MSG_NULL_JDBC = "Unable to resolve data access; contain Nexial Support team";
+    private static final List<Integer> BINARY_SQL_TYPES =
+        Arrays.asList(BINARY, VARBINARY, LONGVARBINARY, JAVA_OBJECT, BLOB);
 
     protected String treatNullAs = DEF_TREAT_NULL_AS;
     protected Connection transactedConnection;
@@ -276,22 +280,20 @@ public class SimpleExtractionDao extends JdbcDaoSupport {
 
     protected JdbcResult packData(JdbcResult result) {
         if (result == null || CollectionUtils.isEmpty(result.getData())) { return result; }
-
-        List<Map<String, String>> results = pack(result.getData());
-        result.setData(results);
+        result.setData(pack(result.getData()));
         return result;
     }
 
-    protected List<Map<String, String>> pack(List<Map<String, String>> results) {
+    protected List<Map<String, Object>> pack(List<Map<String, Object>> results) {
         if (context == null ||
             !context.getBooleanData(OPT_INCLUDE_PACK_SINGLE_ROW, getDefaultBool(OPT_INCLUDE_PACK_SINGLE_ROW))) {
             return results;
         }
 
         if (CollectionUtils.size(results) == 1) {
-            Map<String, String> newRow = new LinkedHashMap<>();
+            Map<String, Object> newRow = new LinkedHashMap<>();
             results.get(0).forEach((column, value) -> {
-                if (value != null && !StringUtils.equals(value, treatNullAs)) { newRow.put(column, value); }
+                if (value != null && !StringUtils.equals(value.toString(), treatNullAs)) { newRow.put(column, value); }
             });
             results.remove(0);
             results.add(newRow);
@@ -431,16 +433,18 @@ public class SimpleExtractionDao extends JdbcDaoSupport {
     protected <T extends JdbcResult> T resultToListOfMap(ResultSet rs, T result) throws SQLException {
         if (rs == null || !rs.next()) { return result; }
 
-        List<Map<String, String>> rows = new ArrayList<>();
+        List<Map<String, Object>> rows = new ArrayList<>();
         ResultSetMetaData metaData = rs.getMetaData();
 
         // cycle through all rows
         do {
-            Map<String, String> row = new LinkedHashMap<>();
+            Map<String, Object> row = new LinkedHashMap<>();
 
             for (int i = 1; i <= metaData.getColumnCount(); i++) {
+                int columnType = metaData.getColumnType(i);
+
                 // rs.getString(): String representation of column value, or null if the column is SQL NULL.
-                String value = rs.getString(i);
+                Object value = BINARY_SQL_TYPES.contains(columnType) ? rs.getBytes(i) : rs.getString(i);
                 if (value == null && treatNullAs != null) { value = treatNullAs; }
                 row.put(StringUtils.trim(metaData.getColumnLabel(i)), value);
             }

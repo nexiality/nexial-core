@@ -177,11 +177,6 @@ public final class NexialConst {
     public static final String OPT_ERROR_TRACKER = registerSysVar(NAMESPACE + "trackErrors", false);
     public static final String ERROR_TRACKER = NEXIAL_LOG_PREFIX + "execution-errors.log";
 
-    // plugin:external
-    // store the file name of the output resulted from a `external.runProgram` command
-    public static final String OPT_RUN_PROGRAM_OUTPUT = registerSysVar(NAMESPACE + "external.output");
-    public static final String OPT_RUN_PROGRAM_CONSOLE = registerSysVar(NAMESPACE + "external.console", false);
-
     // csv | [CSV(...) => ...]
     public static final String CSV_MAX_COLUMNS = registerSysVar(NAMESPACE + "csv.maxColumns", 512);
     public static final String CSV_MAX_COLUMN_WIDTH = registerSysVar(NAMESPACE + "csv.maxColumnWidth", 4096);
@@ -712,6 +707,16 @@ public final class NexialConst {
         }
     }
 
+    public static final class External {
+        private static final String NS = NAMESPACE + "external.";
+
+        // plugin:external
+        // store the file name of the output resulted from a `external.runProgram` command
+        public static final String OPT_RUN_PROGRAM_OUTPUT = registerSysVar(NS + "output");
+        public static final String OPT_RUN_PROGRAM_CONSOLE = registerSysVar(NS + "console", false);
+        public static final String OPT_RUN_FROM = registerSysVar(NS + "workingDirectory");
+    }
+
     public static final class ImageDiffColor {
         private ImageDiffColor() {}
 
@@ -946,7 +951,7 @@ public final class NexialConst {
                                        "Please fix this issue by:" + NL +
                                        "1. Run the 'nexial-project' batch:" + NL +
                                        "   cd " + System.getProperty(NEXIAL_HOME) + separator + "bin" + NL +
-                                       "   " + (IS_OS_WINDOWS ? "nexial-project.cmd" : "./nexial.project.sh") + " " +
+                                       "   " + (IS_OS_WINDOWS ? "nexial-project.cmd" : "./nexial-project.sh") + " " +
                                        projectHome + NL + NL +
                                        "2. Update " + projectIdFile + " with the appropriate project ID." + NL +
                                        "   Project ID should be a single word, without spaces." + NL + NL +

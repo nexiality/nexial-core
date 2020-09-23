@@ -40,7 +40,7 @@ public class JdbcResult implements Serializable {
     protected String error;
     protected int rowCount = 0;
     protected List<String> columns;
-    protected List<Map<String, String>> data;
+    protected List<Map<String, Object>> data;
     protected boolean rolledBack;
     protected Type sqlType;
 
@@ -85,9 +85,9 @@ public class JdbcResult implements Serializable {
 
     public boolean hasData() { return CollectionUtils.isNotEmpty(data) && rowCount > 0; }
 
-    public List<Map<String, String>> getData() { return data; }
+    public List<Map<String, Object>> getData() { return data; }
 
-    protected void setData(List<Map<String, String>> results) {
+    protected void setData(List<Map<String, Object>> results) {
         if (CollectionUtils.isEmpty(results)) {
             rowCount = 0;
             return;
@@ -101,8 +101,8 @@ public class JdbcResult implements Serializable {
 
     public boolean isEmpty() { return getRowCount() < 1; }
 
-    public List<String> cells(String column) {
-        List<String> cells = new ArrayList<>();
+    public List<Object> cells(String column) {
+        List<Object> cells = new ArrayList<>();
 
         if (StringUtils.isBlank(column)) { return cells; }
         if (CollectionUtils.isEmpty(data)) { return cells; }

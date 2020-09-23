@@ -30,12 +30,18 @@ import org.nexial.core.ExecutionThread
 import org.nexial.core.NexialConst.*
 import org.nexial.core.NexialConst.Data.DEF_OPEN_EXCEL_AS_DUP
 import org.nexial.core.NexialConst.Data.MACRO_INVOKED_FROM
-import org.nexial.core.excel.*
+import org.nexial.core.excel.Excel
 import org.nexial.core.excel.Excel.MIN_EXCEL_FILE_SIZE
 import org.nexial.core.excel.Excel.Worksheet
+import org.nexial.core.excel.ExcelAddress
+import org.nexial.core.excel.ExcelArea
 import org.nexial.core.excel.ExcelConfig.*
-import org.nexial.core.utils.*
+import org.nexial.core.excel.ExcelStyleHelper
+import org.nexial.core.model.OnDemandInspectionDetector.Companion.getInstance
+import org.nexial.core.utils.ConsoleUtils
 import org.nexial.core.utils.ExecUtils.isRunningInZeroTouchEnv
+import org.nexial.core.utils.FlowControlUtils
+import org.nexial.core.utils.MessageUtils
 import java.io.File
 import java.io.IOException
 
@@ -322,40 +328,45 @@ class MacroExecutor(private val initialTestStep: TestStep, val macro: Macro,
     }
 
     private fun execute(testStep: TestStep): StepResult? {
-        val tickTock = StopWatch()
         val trackTimeLogs = context.trackTimeLogs
-        var result: StepResult? = null
-
-        context.setCurrentTestStep(testStep)
         trackTimeLogs.checkStartTracking(context, testStep)
 
+        // clock's ticking
+        val tickTock = StopWatch()
         tickTock.start()
+
+        context.setCurrentTestStep(testStep)
+
+        // delay is carried out here so that timespan is captured as part of execution
+        testStep.waitFor(context.delayBetweenStep)
+
+        var result: StepResult? = null
         try {
             result = testStep.invokeCommand()
         } catch (e: Throwable) {
             result = testStep.toFailedResult(e)
         } finally {
             tickTock.stop()
-
-            // time tracking
             trackTimeLogs.checkEndTracking(context, testStep)
-
-            FlowControlUtils.checkPauseAfter(context, testStep)
-            if (!isRunningInZeroTouchEnv() && OnDemandInspectionDetector.getInstance(context).detectedPause()) {
-                ConsoleUtils.pauseAndInspect(context, ">>>>> On-Demand Inspection detected...", true)
-            }
 
             if (initialTestStep.macroPartOfRepeatUntil) {
                 log(testStep, result!!)
                 testStep.handleScreenshot(result)
                 return result
             }
+
             testStep.postExecCommand(result, tickTock.time)
+            FlowControlUtils.checkPauseAfter(context, testStep)
+
+            if (!isRunningInZeroTouchEnv() && getInstance(context).detectedPause()) {
+                ConsoleUtils.pauseAndInspect(context, ">>>>> On-Demand Inspection detected...", true)
+            }
+
             if (testStep.isCommandRepeater()) context.setCurrentTestStep(testStep)
 
             context.clearCurrentTestStep()
         }
-        // macroExcel?.close()
+
         return result
     }
 
@@ -365,9 +376,7 @@ class MacroExecutor(private val initialTestStep: TestStep, val macro: Macro,
 
         if (result.isSuccess) {
             // avoid printing verbose() message to avoid leaking of sensitive information on log
-            logger.log(testStep,
-                       MessageUtils.renderAsPass(if (StringUtils.equals(testStep.commandFQN,
-                                                                        CMD_VERBOSE)) "" else message))
+            logger.log(testStep, MessageUtils.renderAsPass(if (testStep.commandFQN == CMD_VERBOSE) "" else message))
             return
         }
 
@@ -378,7 +387,7 @@ class MacroExecutor(private val initialTestStep: TestStep, val macro: Macro,
 
         logger.error(testStep, MessageUtils.renderAsFail(message))
         if (StringUtils.isNotBlank(result.detailedLogLink))
-            logger.error(testStep, "Error log: " + result.detailedLogLink)
+            logger.error(testStep, "Error log: ${result.detailedLogLink}")
         testStep.trackExecutionError(result)
     }
 

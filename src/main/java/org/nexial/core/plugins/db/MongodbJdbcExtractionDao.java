@@ -59,12 +59,12 @@ public class MongodbJdbcExtractionDao extends SimpleExtractionDao {
             return result;
         }
 
-        List<Map<String, String>> rows = new ArrayList<>();
+        List<Map<String, Object>> rows = new ArrayList<>();
         ResultSetMetaData metaData = rs.getMetaData();
 
         // cycle through all rows
         do {
-            Map<String, String> row = new LinkedHashMap<>();
+            Map<String, Object> row = new LinkedHashMap<>();
 
             ((MongodbJdbcResult) result).setExpanded(expandDoc);
             if (!expandDoc) {
@@ -107,9 +107,9 @@ public class MongodbJdbcExtractionDao extends SimpleExtractionDao {
         }
 
         if (firstRecord instanceof Document) {
-            Map<String, String> row = new LinkedHashMap<>();
+            Map<String, Object> row = new LinkedHashMap<>();
             row.put("document", JsonUtils.compact(((Document) firstRecord).toJson(), false));
-            List<Map<String, String>> rows = new ArrayList<>();
+            List<Map<String, Object>> rows = new ArrayList<>();
             rows.add(row);
             mongoResult.setData(rows);
             mongoResult.updateSqlType(SELECT);
@@ -118,11 +118,11 @@ public class MongodbJdbcExtractionDao extends SimpleExtractionDao {
 
         // ConsoleUtils.error("Unknown/unsupported result type: " + rs.getClass());
         // return null;
-        List<Map<String, String>> rows = new ArrayList<>();
+        List<Map<String, Object>> rows = new ArrayList<>();
         do {
             ResultSetMetaData rsMetaData = rs.getMetaData();
             for (int i = 1; i <= rsMetaData.getColumnCount(); i++) {
-                Map<String, String> row = new LinkedHashMap<>();
+                Map<String, Object> row = new LinkedHashMap<>();
                 row.put(rsMetaData.getColumnLabel(i), String.valueOf(rs.getObject(i)));
                 rows.add(row);
             }

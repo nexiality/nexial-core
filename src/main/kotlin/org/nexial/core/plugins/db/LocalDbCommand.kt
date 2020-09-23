@@ -119,7 +119,9 @@ class LocalDbCommand : BaseCommand() {
         if (result.data[0]["sql"] == null)
             return StepResult.fail("Unable to determine the CREATE SQL for source table '$source'")
 
-        val ddl = RegexUtils.replace(result.data[0]["sql"], "(CREATE TABLE\\s+)([A-Za-z0-9_]+)(.+)", "\$1$target\$3")
+        val ddl = RegexUtils.replace(result.data[0]["sql"] as String,
+                                     "(CREATE TABLE\\s+)([A-Za-z0-9_]+)(.+)",
+                                     "\$1$target\$3")
 
         // 3. execute
         val createResult = rdbms.runSQL(`var`, dbName, ddl)
@@ -207,7 +209,7 @@ class LocalDbCommand : BaseCommand() {
                 throw IllegalArgumentException("Existing table $table has ${definedColumns.size} columns " +
                                                "but the specified CSV has ${headers.size} columns")
 
-            val normalizedDefinedColumns = definedColumns.map { it.toLowerCase() }.sorted()
+            val normalizedDefinedColumns = definedColumns.map { it.toString().toLowerCase() }.sorted()
             val normalizedCsvHeaders = headers.map { it.toLowerCase() }.sorted()
 
             TextUtils.toString(
@@ -217,7 +219,7 @@ class LocalDbCommand : BaseCommand() {
                 } else {
                     // not all CSV headers are found in existing table as column. We'll use left-to-right mapping
                     definedColumns.subList(0, headers.size)
-                }.map { treatColumnName(it) }, ",")
+                }.map { treatColumnName(it.toString()) }, ",")
         }
 
         val defaultValues = if (tableInfo.rowCount < 1)

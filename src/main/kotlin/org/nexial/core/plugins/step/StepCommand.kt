@@ -29,26 +29,23 @@ open class StepCommand : BaseCommand() {
 
     override fun getTarget() = "step"
 
-    fun perform(instructions: String): StepResult {
-        return performHelper(instructions, "PERFORM ACTION")
-    }
+    fun perform(instructions: String) = performHelper(instructions, "PERFORM ACTION")
 
-    fun validate(prompt: String, responses: String, passResponses: String): StepResult {
-        return validateHelper(prompt, responses, passResponses, "VALIDATION")
-    }
+    fun validate(prompt: String, responses: String, passResponses: String) =
+            validateHelper(prompt, responses, passResponses, "VALIDATION")
 
-    fun observe(prompt: String): StepResult {
-        return observeHelper(prompt, "OBSERVATION")
-    }
+    fun observe(prompt: String) = observeHelper(prompt, "OBSERVATION")
 
     protected fun performHelper(instructions: String, header: String): StepResult {
         clearContextData()
         requiresNotBlank(instructions, "Invalid instruction(s)", instructions)
 
         val comment = ConsoleUtils.pauseForStep(context, instructions, header)
-
         if (isBlank(comment)) log("Step(s) performed")
-        return computeStepResult("", comment, isBlank(comment) || !startsWith(comment, "FAIL "), "")
+
+        val result = computeStepResult("", comment, isBlank(comment) || !startsWith(comment, "FAIL "), "")
+        result.paramValues = arrayOf(instructions, header, comment)
+        return result
     }
 
     protected fun validateHelper(prompt: String, responses: String, passResponses: String, header: String): StepResult {
@@ -58,10 +55,13 @@ open class StepCommand : BaseCommand() {
         val validationResponses = ConsoleUtils.pauseToValidate(context, prompt, responses, header)
         val response = validationResponses?.get(0)
         val comment = validationResponses?.get(1)
-
         if (isBlank(response)) log("Empty response accepted as PASS.")
-        return computeStepResult(response + "", comment + "",
-                                 isBlank(response) || passResponses.split(context.textDelim).contains(response), "")
+
+        val result = computeStepResult(response + "", comment + "",
+                                       isBlank(response) || passResponses.split(context.textDelim).contains(response),
+                                       "")
+        result.paramValues = arrayOf(prompt, passResponses, header, comment ?: "")
+        return result
     }
 
     protected fun observeHelper(prompt: String, header: String): StepResult {
@@ -80,13 +80,13 @@ open class StepCommand : BaseCommand() {
     private val responseFormat = Function { r: String -> if (isNotEmpty(r)) "[response]: $r " else "" }
 
     protected fun computeStepResult(response: String, comment: String, pass: Boolean, defaultMsg: String): StepResult {
-
         setContextData(response, comment)
-        var msg = "";
-        if (isNotEmpty(defaultMsg)) msg += "($defaultMsg) ";
+
+        var msg = ""
+        if (isNotEmpty(defaultMsg)) msg += "($defaultMsg) "
         msg += responseFormat.apply(response) + commentFormat.apply(comment)
 
-        return if (pass) StepResult.success(msg) else StepResult.fail(msg);
+        return if (pass) StepResult.success(msg) else StepResult.fail(msg)
     }
 
     private fun setContextData(response: String, comment: String) {
@@ -98,5 +98,4 @@ open class StepCommand : BaseCommand() {
         context.removeData(STEP_RESPONSE)
         context.removeData(STEP_COMMENT)
     }
-
 }

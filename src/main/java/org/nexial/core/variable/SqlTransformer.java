@@ -39,7 +39,7 @@ import org.nexial.core.plugins.db.RdbmsCommand;
 import static org.nexial.core.NexialConst.Rdbms.CSV_FIELD_DEIM;
 import static org.nexial.core.NexialConst.Rdbms.CSV_ROW_SEP;
 
-public class SqlTransformer<T extends SqlDataType> extends Transformer {
+public class SqlTransformer<T extends SqlDataType> extends Transformer<T> {
     private static final Map<String, Integer> FUNCTION_TO_PARAM = discoverFunctions(SqlTransformer.class);
     private static final Map<String, Method> FUNCTIONS =
         toFunctionMap(FUNCTION_TO_PARAM, SqlTransformer.class, SqlDataType.class);
@@ -156,11 +156,11 @@ public class SqlTransformer<T extends SqlDataType> extends Transformer {
         int row = NumberUtils.createInteger(rowIndex);
         if (result.getRowCount() <= row) { return list; }
 
-        Map<String, String> rowData = result.getData().get(row);
+        Map<String, Object> rowData = result.getData().get(row);
         if (MapUtils.isEmpty(rowData)) { return list; }
 
         List<String> oneRow = new ArrayList<>();
-        rowData.forEach((column, value) -> oneRow.add(value));
+        rowData.forEach((column, value) -> oneRow.add((value instanceof byte[]) ? "<binary>" : value.toString()));
         if (CollectionUtils.isEmpty(oneRow)) { return list; }
 
         list.setValue(oneRow.toArray(new String[0]));
@@ -173,17 +173,48 @@ public class SqlTransformer<T extends SqlDataType> extends Transformer {
         if (StringUtils.isBlank(column)) { throw new IllegalArgumentException("column is invalid: " + column); }
 
         ListDataType list = new ListDataType("");
-        if (isEmptyDataType(data)) { return list;}
+        if (isEmptyDataType(data)) { return list; }
 
         JdbcResult result = data.getResult(resultName);
         if (result == null || !result.hasData()) { return list; }
 
-        List<String> cells = result.cells(column);
+        List<Object> cells = result.cells(column);
         if (CollectionUtils.isEmpty(cells)) { return list; }
 
-        list.setValue(cells.toArray(new String[0]));
+        String[] values = new String[cells.size()];
+        for (int i = 0; i < cells.size(); i++) {
+            Object value = cells.get(i);
+            values[i] = (value instanceof byte[]) ? "<binary>" : value.toString();
+        }
+
+        list.setValue(values);
         list.setTextValue(TextUtils.toString(cells, list.getDelim()));
         return list;
+    }
+
+    public ExpressionDataType cell(T data, String resultName, String row, String column)
+        throws TypeConversionException {
+        if (isEmptyDataType(data)) { throw new IllegalArgumentException("null or invalid expression"); }
+        if (StringUtils.isBlank(resultName)) { throw new IllegalArgumentException("resultName is empty/blank"); }
+        if (!NumberUtils.isDigits(row)) { throw new IllegalArgumentException("row is invalid: " + row); }
+        if (StringUtils.isBlank(column)) { throw new IllegalArgumentException("column is invalid: " + column); }
+
+        JdbcResult result = data.getResult(resultName);
+        if (result == null || !result.hasData()) {
+            throw new IllegalArgumentException("null or invalid resultName '" + resultName + "'");
+        }
+
+        int rowId = NumberUtils.createInteger(row);
+        List<Map<String, Object>> rows = result.getData();
+        if (rowId < 0 || rowId >= rows.size()) { throw new IllegalArgumentException("invalid row: " + row); }
+
+        Map<String, Object> columns = rows.get(rowId);
+        Object value = columns.get(column);
+        if (value == null) { throw new IllegalArgumentException("column not found: " + column); }
+
+        if (value instanceof byte[]) { return new BinaryDataType((byte[]) value); }
+        if (value instanceof Number) { return new NumberDataType(value.toString()); }
+        return new TextDataType(value.toString());
     }
 
     public CsvDataType csv(T data, String resultName) throws TypeConversionException {

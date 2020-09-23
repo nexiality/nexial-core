@@ -528,7 +528,6 @@ public class NexialFilter implements Serializable {
     }
 
     protected boolean isMatchingStringCompare(String actual, ExecutionContext context) {
-        // String expected = context.replaceTokens(controls);
         String expected =
             context.replaceTokens(CollectionUtils.isNotEmpty(controlList) ? controlList.get(0) : controls);
 
@@ -542,17 +541,9 @@ public class NexialFilter implements Serializable {
             case NotEndsWith:
                 return !StringUtils.endsWith(actual, expected);
             case Contain: {
-                // for (String contain : controlList) {
-                //     if (StringUtils.contains(actual, context.replaceTokens(contain))) { return true; }
-                // }
-                // return false;
                 return StringUtils.contains(actual, expected);
             }
             case NotContain: {
-                // for (String contain : controlList) {
-                //     if (StringUtils.contains(actual, context.replaceTokens(contain))) { return false; }
-                // }
-                // return true;
                 return !StringUtils.contains(actual, expected);
             }
             default: {

@@ -25,7 +25,8 @@ import org.nexial.commons.proc.ProcessInvoker.*
 import org.nexial.commons.proc.RuntimeUtils
 import org.nexial.commons.utils.FileUtil
 import org.nexial.commons.utils.TextUtils
-import org.nexial.core.NexialConst.*
+import org.nexial.core.NexialConst.DEF_CHARSET
+import org.nexial.core.NexialConst.External.*
 import org.nexial.core.ShutdownAdvisor
 import org.nexial.core.SystemVariables.getDefaultBool
 import org.nexial.core.model.StepResult
@@ -41,6 +42,7 @@ import java.io.IOException
 import java.lang.System.lineSeparator
 
 class ExternalCommand : BaseCommand() {
+
     override fun getTarget() = "external"
 
     fun runJUnit(className: String): StepResult {
@@ -188,13 +190,16 @@ class ExternalCommand : BaseCommand() {
         val consoleOut = context.getBooleanData(OPT_RUN_PROGRAM_CONSOLE, getDefaultBool(OPT_RUN_PROGRAM_CONSOLE))
         if (consoleOut) {
             env[PROC_CONSOLE_OUT] = "true"
-            env[PROC_CONSOLE_ID] = "${context.runId}][$currentRow"
+            env[PROC_CONSOLE_ID] = "${context.runId}][$currentRow]"
         }
+
+        if (context.hasData(OPT_RUN_FROM)) env[WORKING_DIRECTORY] = context.getStringData(OPT_RUN_FROM)
 
         return env
     }
 
     companion object {
+
         @Throws(IOException::class)
         fun exec(programPathAndParams: String): String {
             // could be xyz.cmd "long parameter with spaces" "and another one"
@@ -206,18 +211,16 @@ class ExternalCommand : BaseCommand() {
 }
 
 class ExternalTailer(val id: String) : TailerListenerAdapter() {
+
     override fun handle(line: String?) = ConsoleUtils.log(id, line)
 
     override fun handle(ex: java.lang.Exception?) {
         if (ex !is InterruptedException) ConsoleUtils.log(id, "ERROR FOUND:\n$ex")
     }
-
-    override fun fileNotFound() {
-        super.fileNotFound()
-    }
 }
 
 class ExternalTailShutdownHelper(private var tailThread: Thread?, var tailer: Tailer?) : ForcefulTerminate {
+
     override fun mustForcefullyTerminate() = (tailThread != null && tailThread!!.isAlive) || (tailer != null)
 
     override fun forcefulTerminate() {

@@ -36,7 +36,6 @@ import org.nexial.core.utils.OutputFileUtils
 import java.io.File
 import java.io.File.separator
 import java.io.IOException
-import java.lang.AssertionError
 
 class RdbmsCommand : BaseCommand() {
 
@@ -292,29 +291,29 @@ class RdbmsCommand : BaseCommand() {
             StepResult.success("match not found in \${${`var`}} on '${search}' against columns '${columns}'")
     }
 
-    private fun cellMatches(cells: List<String>, regex: String?, contains: String?, exact: String): Boolean {
+    private fun cellMatches(cells: List<Any>, regex: String?, contains: String?, exact: String): Boolean {
         return when {
             cells.isEmpty()  -> StringUtils.isEmpty(exact)
-            regex != null    -> cells.firstOrNull { RegexUtils.match(it, regex) } != null
-            contains != null -> cells.firstOrNull { StringUtils.contains(it, contains) } != null
-            else             -> cells.firstOrNull { it == exact } != null
+            regex != null    -> cells.firstOrNull { it is String && RegexUtils.match(it, regex) } != null
+            contains != null -> cells.firstOrNull { it is String && StringUtils.contains(it, contains) } != null
+            else             -> cells.firstOrNull { it is String && it == exact } != null
         }
     }
 
-    private fun cellMatches(cellData: String?, regex: String?, contains: String?, exact: String): Boolean {
-        if (StringUtils.isEmpty(cellData) && StringUtils.isEmpty(exact)) return true
+    private fun cellMatches(cellData: Any?, regex: String?, contains: String?, exact: String): Boolean {
+        if (cellData == null || StringUtils.isEmpty(cellData.toString()) && StringUtils.isEmpty(exact)) return true
 
-        if (regex != null) return RegexUtils.match(cellData, regex)
-        if (contains != null) return StringUtils.contains(cellData, contains)
-        return StringUtils.equals(cellData, exact)
+        if (regex != null) return cellData is String && RegexUtils.match(cellData, regex)
+        if (contains != null) return cellData is String && StringUtils.contains(cellData, contains)
+        return cellData is String && StringUtils.equals(cellData, exact)
     }
 
     fun executeSQLs(db: String, sqls: List<SqlComponent>): JdbcOutcome = resolveDao(db).executeSqls(sqls)
 
-    fun rowToString(row: Map<String, String>, columnNames: List<String>, delim: String): String {
+    fun rowToString(row: Map<String, Any>, columnNames: List<String>, delim: String): String {
         val sb = StringBuilder()
         for (columnName in columnNames) {
-            var value = row[columnName]
+            var value = row[columnName].toString()
             if (StringUtils.contains(value, "\"")) value = StringUtils.replace(value, "\"", "\"\"")
             if (StringUtils.contains(value, delim)) value = TextUtils.wrapIfMissing(value, "\"", "\"")
             sb.append(value).append(delim)

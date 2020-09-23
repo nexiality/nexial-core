@@ -62,9 +62,9 @@ public class ProcessInvoker {
         private static final int DEFAULT_SIZE = 32 * 1024;
 
         private String output;
-        private BufferedReader reader;
-        private InputStreamReader streamReader;
-        private StringWriter stringWriter;
+        private final BufferedReader reader;
+        private final InputStreamReader streamReader;
+        private final StringWriter stringWriter;
         private boolean enableConsole;
         private String consoleId = "";
 
@@ -175,9 +175,7 @@ public class ProcessInvoker {
                 FileUtils.writeStringToFile(out, outcome.getStdout(), DEF_FILE_ENCODING);
                 if (StringUtils.isNotBlank(outcome.getStderr())) {
                     FileUtils.writeStringToFile(out,
-                                                NL + NL +
-                                                "ERROR:" + NL +
-                                                outcome.getStderr(),
+                                                NL + NL + "ERROR:" + NL + outcome.getStderr(),
                                                 DEF_FILE_ENCODING,
                                                 true);
                 }

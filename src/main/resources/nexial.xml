@@ -786,8 +786,8 @@
             <value><![CDATA[
             {
                 "home": "${user.home}/.nexial/rdbms/mssql",
-                "fileName": "mssql-jdbc-8.2.2.jre8.jar",
-                "checkUrlBase" : "https://go.microsoft.com/fwlink/?linkid=2122433"
+                "fileName": "mssql-jdbc-8.4.1.jre8.jar",
+                "checkUrlBase" : "https://go.microsoft.com/fwlink/?linkid=2137600"
             }
           ]]></value>
         </entry>

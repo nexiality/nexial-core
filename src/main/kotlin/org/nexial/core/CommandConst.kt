@@ -151,7 +151,12 @@ object CommandConst {
 
     // "self-derived" means that the command will figure out the appropriate param values for display
     @JvmField
-    val PARAM_DERIVED_COMMANDS = listOf("step.observe")
+    val PARAM_DERIVED_COMMANDS = listOf("step.validate",
+                                        "step.inTime.validate",
+                                        "step.observe",
+                                        "step.inTime.observeInTime",
+                                        "step.perform",
+                                        "step.inTime.perform")
 
     @JvmField
     val MESSAGE_REQUIRED_COMMANDS = listOf("step.validate(prompt,responses,passResponses)",

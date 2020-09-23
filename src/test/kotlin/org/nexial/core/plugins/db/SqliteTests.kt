@@ -36,6 +36,9 @@ class SqliteTests {
                                                    "backup to backup.db")
         statements.forEach { statement: String -> stmt.execute(statement) }
 
-        FileUtils.listFiles(File("."), arrayOf("db"), false).forEach { db: File? -> println(db?.absolutePath) }
+        FileUtils.listFiles(File("."), arrayOf("db"), false).forEach { db ->
+            println(db?.absolutePath)
+            db?.delete()
+        }
     }
 }

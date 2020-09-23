@@ -28,7 +28,6 @@ import org.apache.http.HttpRequest;
 import org.apache.http.client.config.RequestConfig;
 import org.apache.http.client.methods.HttpEntityEnclosingRequestBase;
 import org.apache.http.entity.mime.MultipartEntityBuilder;
-import org.apache.http.entity.mime.content.ContentBody;
 import org.nexial.commons.utils.FileUtil;
 import org.nexial.commons.utils.TextUtils;
 import org.nexial.core.model.ExecutionContext;
@@ -41,7 +40,6 @@ import static org.nexial.core.NexialConst.Ws.WS_USER_AGENT;
 import static org.nexial.core.utils.ExecUtils.NEXIAL_MANIFEST;
 
 public class PostMultipartRequest extends PostRequest {
-    private Map<String, ContentBody> contentBodies = new HashMap<>();
     private HttpEntity entity;
 
     PostMultipartRequest(ExecutionContext context) { super(context); }

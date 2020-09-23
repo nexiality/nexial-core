@@ -23,15 +23,14 @@ import java.lang.reflect.InvocationTargetException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
+import javax.annotation.Nullable;
 
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.io.FileUtils;
-import org.apache.commons.lang3.ArrayUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.builder.ToStringBuilder;
 import org.apache.commons.lang3.exception.ExceptionUtils;
 import org.apache.commons.lang3.time.StopWatch;
-import org.apache.poi.ss.usermodel.CellType;
 import org.apache.poi.ss.usermodel.Comment;
 import org.apache.poi.xssf.usermodel.XSSFCell;
 import org.apache.poi.xssf.usermodel.XSSFCellStyle;
@@ -51,16 +50,18 @@ import org.nexial.core.plugins.NexialCommand;
 import org.nexial.core.plugins.web.WebCommand;
 import org.nexial.core.plugins.web.WebDriverExceptionHelper;
 import org.nexial.core.utils.ConsoleUtils;
-import org.nexial.core.utils.ExecUtils;
 import org.nexial.core.utils.FlowControlUtils;
 import org.nexial.core.utils.MessageUtils;
 import org.nexial.core.utils.OutputFileUtils;
+import org.nexial.core.utils.OutputResolver;
 import org.nexial.core.variable.Syspath;
 import org.openqa.selenium.WebDriverException;
 
 import static java.io.File.separator;
 import static java.lang.System.lineSeparator;
 import static org.apache.commons.lang3.builder.ToStringStyle.SIMPLE_STYLE;
+import static org.apache.poi.ss.usermodel.CellType.BLANK;
+import static org.apache.tika.utils.SystemUtils.*;
 import static org.nexial.commons.utils.EnvUtils.platformSpecificEOL;
 import static org.nexial.core.CommandConst.*;
 import static org.nexial.core.NexialConst.*;
@@ -71,6 +72,8 @@ import static org.nexial.core.NexialConst.Web.WEB_PERF_METRICS_ENABLED;
 import static org.nexial.core.SystemVariables.getDefaultBool;
 import static org.nexial.core.excel.ExcelConfig.MSG_PASS;
 import static org.nexial.core.excel.ExcelConfig.*;
+import static org.nexial.core.model.OnDemandInspectionDetector.getInstance;
+import static org.nexial.core.utils.ExecUtils.isRunningInZeroTouchEnv;
 
 public class TestStep extends TestStepManifest {
     protected ExecutionContext context;
@@ -222,8 +225,7 @@ public class TestStep extends TestStepManifest {
             postExecCommand(result, tickTock.getTime());
             FlowControlUtils.checkPauseAfter(context, this);
 
-            if (!ExecUtils.isRunningInZeroTouchEnv() &&
-                OnDemandInspectionDetector.getInstance(context).detectedPause()) {
+            if (!isRunningInZeroTouchEnv() && getInstance(context).detectedPause()) {
                 ConsoleUtils.pauseAndInspect(context, ">>>>> On-Demand Inspection detected...", true);
             }
 
@@ -594,10 +596,7 @@ public class TestStep extends TestStepManifest {
         boolean isEnded = result.isEnded();
         if (isSkipped) {
             XSSFCellStyle styleSkipped = worksheet.getStyle(STYLE_PARAM_SKIPPED);
-            for (int i = COL_IDX_PARAMS_START; i <= COL_IDX_PARAMS_END; i++) {
-                XSSFCell paramCell = row.get(i);
-                paramCell.setCellStyle(styleSkipped);
-            }
+            for (int i = COL_IDX_PARAMS_START; i <= COL_IDX_PARAMS_END; i++) { row.get(i).setCellStyle(styleSkipped); }
         } else if (!isEnded) {
             cellDescription.setCellValue(context.containsCrypt(description) ?
                                          CellTextReader.readValue(description) :
@@ -606,45 +605,51 @@ public class TestStep extends TestStepManifest {
             XSSFCellStyle styleParam = worksheet.getStyle(STYLE_PARAM);
             XSSFCellStyle styleTaintedParam = worksheet.getStyle(STYLE_TAINTED_PARAM);
 
-            // update the params that can be expressed as links (file or url)
-            for (int i = 0; i < params.size(); i++) {
-                String param = params.get(i);
-                if (StringUtils.isBlank(param)) { continue; }
-
-                // could be literal syspath - e.g. $(syspath|out|fullpath)/...
-                // could be data variable that reference syspath function
-                boolean hasPath = isFileLink(param);
-                if (!hasPath && TextUtils.isBetween(param, TOKEN_START, TOKEN_END)) {
-                    // param is a data variable... so it might be referencing a syspath function
-                    Object pathObj = context.getObjectData(StringUtils.substringBetween(param, TOKEN_START, TOKEN_END));
-                    if (pathObj != null && isFileLink(pathObj.toString())) { hasPath = true; }
+            // mergine resolved parameter value (what's evaluated) and parameter template (what's written)
+            List<String> mergedParams = params == null ? new ArrayList<>() : params;
+            Object[] paramValues = result.getParamValues();
+            if (paramValues != null) {
+                for (int i = 0; i < mergedParams.size(); i++) {
+                    if (paramValues.length > i) {
+                        mergedParams.set(i, Objects.toString(paramValues[i], ""));
+                    }
                 }
 
-                String value = context.replaceTokens(param);
-                if ((!hasPath && value != null && new File(value).isFile()) || isURL(value)) { hasPath = true; }
-
-                // create hyperlink for syspath when path is referenced
-                if (hasPath) {
-                    // gotta make sure it's a file/path
-                    if (FileUtil.isSuitableAsPath(value) && StringUtils.containsAny(value, "\\/")) {
-                        linkableParams.set(i, value);
+                if (paramValues.length > mergedParams.size()) {
+                    int startFrom = mergedParams.size();
+                    for (int i = startFrom; i < paramValues.length; i++) {
+                        mergedParams.add(Objects.toString(paramValues[i], ""));
                     }
                 }
             }
 
-            Object[] paramValues = result.getParamValues();
+            if (linkableParams == null) {
+                linkableParams = new ArrayList<>(this.params.size());
+                for (int i = 0; i < mergedParams.size(); i++) { linkableParams.add(i, null); }
+            }
 
-            // handle linkable params (first priority), verbose (second priority) and params (last)
+            // update the params that can be expressed as links (file or url)
             for (int i = COL_IDX_PARAMS_START; i <= COL_IDX_PARAMS_END; i++) {
                 int paramIdx = i - COL_IDX_PARAMS_START;
-
-                String link = CollectionUtils.size(linkableParams) > paramIdx ? linkableParams.get(paramIdx) : null;
+                if (mergedParams.size() <= paramIdx) { break; }
                 XSSFCell paramCell = row.get(i);
-                if (StringUtils.isNotBlank(link)) {
+
+                String param = mergedParams.get(paramIdx);
+                if (StringUtils.isBlank(param)) { continue; }
+
+                String link = resolveParamAsLink(param);
+                if (link != null) {
+                    // create hyperlink where path is referenced
+                    linkableParams.set(paramIdx, link);
+
+                    if (isURL(link)) {
+                        worksheet.setHyperlink(paramCell, link, param);
+                        continue;
+                    }
+
                     // support output to cloud:
                     // - if link is local resource but output-to-cloud is enabled, then copy resource to cloud and update link
-                    boolean linkToCloud = false;
-                    if (context.isOutputToCloud() && !isURL(link)) {
+                    if (context.isOutputToCloud()) {
                         // create new local resource with name matching to current row, so that duplicate use of the
                         // same name will not result in overriding cloud resource
 
@@ -655,7 +660,7 @@ public class TestStep extends TestStepManifest {
                                                     StringUtils.substringAfterLast(link, separator));
 
                             try {
-                                ConsoleUtils.log("copy local resource " + link + " to " + tmpFile);
+                                // ConsoleUtils.log("copy local resource " + link + " to " + tmpFile);
                                 FileUtils.copyFile(new File(link), tmpFile);
 
                                 ConsoleUtils.log("output-to-cloud enabled; copying " + link + " cloud...");
@@ -664,8 +669,8 @@ public class TestStep extends TestStepManifest {
                                 context.setData(OPT_LAST_OUTPUT_PATH, StringUtils.substringBeforeLast(cloudUrl, "/"));
                                 ConsoleUtils.log("output-to-cloud enabled; copied  " + link + " to " + cloudUrl);
 
-                                worksheet.setHyperlink(paramCell, cloudUrl, "(cloud) " + params.get(paramIdx));
-                                linkToCloud = true;
+                                worksheet.setHyperlink(paramCell, cloudUrl, "(cloud) " + param);
+                                continue;
                             } catch (IOException e) {
                                 ConsoleUtils.log("Unable to copy resource to cloud: " + e.getMessage());
                                 log(toCloudIntegrationNotReadyMessage(link + ": " + e.getMessage()));
@@ -676,15 +681,13 @@ public class TestStep extends TestStepManifest {
                     }
 
                     // if `link` contains double quote, it's likely not a link..
-                    if (!linkToCloud && !StringUtils.containsAny(link, "\"")) {
-                        worksheet.setHyperlink(paramCell, link, context.replaceTokens(params.get(paramIdx)));
-                    }
+                    if (!StringUtils.containsAny(link, "\"")) { worksheet.setHyperlink(paramCell, link, param); }
                     continue;
                 }
 
                 String origParamValue = Excel.getCellValue(paramCell);
                 if (StringUtils.isBlank(origParamValue)) {
-                    paramCell.setCellType(CellType.BLANK);
+                    paramCell.setCellType(BLANK);
                     continue;
                 }
 
@@ -694,7 +697,7 @@ public class TestStep extends TestStepManifest {
                     } else {
                         message = StringUtils.trim(platformSpecificEOL(message));
                         if (StringUtils.length(message) > MAX_VERBOSE_CHAR) {
-                            message = StringUtils.truncate(message, MAX_VERBOSE_CHAR) + "…";
+                            message = StringUtils.abbreviate(message, MAX_VERBOSE_CHAR);
                         }
                         paramCell.setCellValue(message);
                         paramCell.setCellComment(toSystemComment(paramCell, origParamValue));
@@ -702,26 +705,22 @@ public class TestStep extends TestStepManifest {
                     continue;
                 }
 
-                Object value = ArrayUtils.getLength(paramValues) > paramIdx ? paramValues[paramIdx] : null;
-                if (value != null) {
-                    // respect the crypts... if value has crypt:, then keep it as is
-                    if (context.containsCrypt(origParamValue)) {
-                        paramCell.setCellComment(toSystemComment(paramCell, "detected crypto"));
-                        continue;
-                    }
+                // respect the crypts... if value has crypt:, then keep it as is
+                if (context.containsCrypt(origParamValue)) {
+                    paramCell.setCellComment(toSystemComment(paramCell, "detected crypto"));
+                    continue;
+                }
 
-                    String taintedValue = CellTextReader.getOriginal(origParamValue, Objects.toString(value));
-                    boolean tainted = !StringUtils.equals(origParamValue, taintedValue);
-                    if (tainted) {
-                        paramCell.setCellValue(StringUtils.abbreviate(taintedValue, MAX_VERBOSE_CHAR));
-                        if (StringUtils.isNotEmpty(origParamValue)) {
-                            paramCell.setCellComment(toSystemComment(paramCell, origParamValue));
-                        }
-                        paramCell.setCellStyle(styleTaintedParam);
-                    } else {
-                        paramCell.setCellStyle(styleParam);
+                String taintedValue = CellTextReader.getOriginal(origParamValue, param);
+                boolean tainted = !StringUtils.equals(origParamValue, taintedValue);
+                if (tainted) {
+                    paramCell.setCellValue(StringUtils.abbreviate(taintedValue, MAX_VERBOSE_CHAR));
+                    if (StringUtils.isNotEmpty(origParamValue)) {
+                        paramCell.setCellComment(toSystemComment(paramCell, origParamValue));
                     }
-                    // ExcelStyleHelper.handleTextWrap(paramCell);
+                    paramCell.setCellStyle(styleTaintedParam);
+                } else {
+                    paramCell.setCellStyle(styleParam);
                 }
             }
         }
@@ -739,8 +738,9 @@ public class TestStep extends TestStepManifest {
 
         boolean pass = result.isSuccess();
 
-        if ((!isSkipped && !isEnded) && !SLA_EXEMPT_COMMANDS.contains(commandName) && !StringUtils.contains(commandName,
-                                                                                                            ".wait")) {
+        if ((!isSkipped && !isEnded) &&
+            !SLA_EXEMPT_COMMANDS.contains(commandName) &&
+            !StringUtils.contains(commandName, ".wait")) {
             // SLA not applicable to composite commands and all wait* commands
             long elapsedTimeSLA = context.getSLAElapsedTimeMs();
             if (!updateElapsedTime(elapsedMs, elapsedTimeSLA > 0 && elapsedTimeSLA < elapsedMs)) {
@@ -754,8 +754,7 @@ public class TestStep extends TestStepManifest {
 
         // result
         XSSFCell cellResult = row.get(COL_IDX_RESULT);
-        String resultMsg = MESSAGE_REQUIRED_COMMANDS.contains(commandName) &&
-                           (result.isSuccess() || result.isError()) ?
+        String resultMsg = MESSAGE_REQUIRED_COMMANDS.contains(commandName) && (result.isSuccess() || result.isError()) ?
                            (result.isSuccess() ? MSG_PASS : MSG_FAIL) + message :
                            MessageUtils.markResult(message, pass, true);
         cellResult.setCellValue(StringUtils.left(resultMsg, MAX_VERBOSE_CHAR));
@@ -804,6 +803,36 @@ public class TestStep extends TestStepManifest {
             TestStepManifest testStep = toTestStepManifest();
             testCase.getTestScenario().getExecutionSummary().addNestedMessages(testStep, nestedTestResults);
         }
+    }
+
+    @Nullable
+    private String resolveParamAsLink(String param) {
+        // could be literal syspath - e.g. $(syspath|out|fullpath)/...
+        // could be data variable that reference syspath function
+        // OR
+        // param is a data variable... so it might be referencing a syspath function
+        String link = param;
+        if (isFileLink(param) || TextUtils.isBetween(param, TOKEN_START, TOKEN_END)) {
+            link = context.replaceTokens(param);
+        }
+
+        if (!FileUtil.isSuitableAsPath(link)) { return null; }
+
+        if (isURL(link)) { return link; }
+
+        if (IS_OS_WINDOWS) {
+            link = StringUtils.replace(link, "/", "\\");
+            if (RegexUtils.isExact(link, "^[A-Za-z]\\:\\\\.+$") ||
+                RegexUtils.isExact(link, "^\\\\\\\\[0-9A-Za-z_\\.\\-]+\\\\.+$")) {
+                return link;
+            } else {
+                return null;
+            }
+        }
+
+        if (IS_OS_MAC || IS_OS_LINUX) { return RegexUtils.isExact(link, "/.+") ? link : null; }
+
+        return OutputResolver.isContentReferencedAsFile(link) ? link : null;
     }
 
     protected boolean updateElapsedTime(long elapsedTime, boolean violateSLA) {
