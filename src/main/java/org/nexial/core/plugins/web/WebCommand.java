@@ -65,6 +65,7 @@ import org.openqa.selenium.Dimension;
 import org.openqa.selenium.NoSuchElementException;
 import org.openqa.selenium.Point;
 import org.openqa.selenium.*;
+import org.openqa.selenium.WebDriver.Timeouts;
 import org.openqa.selenium.WebDriver.Window;
 import org.openqa.selenium.interactions.Actions;
 import org.openqa.selenium.interactions.Coordinates;
@@ -83,6 +84,7 @@ import ru.yandex.qatools.ashot.shooting.ShootingStrategies;
 import static java.awt.Image.*;
 import static java.io.File.separator;
 import static java.lang.Thread.sleep;
+import static java.util.concurrent.TimeUnit.MILLISECONDS;
 import static org.apache.commons.lang3.SystemUtils.IS_OS_MAC;
 import static org.nexial.core.NexialConst.BrowserType.safari;
 import static org.nexial.core.NexialConst.*;
@@ -1162,17 +1164,26 @@ public class WebCommand extends BaseCommand implements CanTakeScreenshot, CanLog
     }
 
     public StepResult clickAndWait(String locator, String waitMs) {
-        boolean isNumber = NumberUtils.isDigits(waitMs);
-        long waitMs1 = isNumber ? (long) NumberUtils.toDouble(waitMs) : context.getPollWaitMs();
+        requiresPositiveNumber(waitMs, "invalid waitMs", waitMs);
 
-        StepResult result = clickInternal(locator);
-        if (result.failed()) { return result; }
+        long waitMs1 = NumberUtils.toInt(waitMs);
 
-        waitForBrowserStability(waitMs1);
-        if (!isNumber) {
-            return StepResult.warn("invalid waitMs: " + waitMs + ", default to " + waitMs1);
-        } else {
-            return StepResult.success("clicked-and-waited '" + locator + "'");
+        Timeouts timeouts = driver.manage().timeouts();
+        boolean timeoutChangesEnabled = browser.browserType.isTimeoutChangesEnabled();
+
+        // if browser supports implicit wait and we are not using explicit wait (`WEB_ALWAYS_WAIT`), then
+        // we'll change timeout's implicit wait time
+        if (timeoutChangesEnabled) { timeouts.pageLoadTimeout(waitMs1, MILLISECONDS); }
+
+        try {
+            StepResult result = clickInternal(locator);
+            return result.failed() ? result : StepResult.success("clicked-and-waited '" + locator + "'");
+        } finally {
+            if (timeoutChangesEnabled) {
+                timeouts.pageLoadTimeout(context.getIntConfig("web", profile, WEB_PAGE_LOAD_WAIT_MS), MILLISECONDS);
+            } else {
+                waitForBrowserStability(waitMs1);
+            }
         }
     }
 
@@ -1181,9 +1192,7 @@ public class WebCommand extends BaseCommand implements CanTakeScreenshot, CanLog
     public StepResult clickByLabelAndWait(String label, String waitMs) {
         String xpath = locatorHelper.resolveLabelXpath(label);
         StepResult result = assertOneMatch(xpath);
-        if (result.failed()) { return result; }
-
-        return clickAndWait(xpath, waitMs);
+        return result.failed() ? result : clickAndWait(xpath, waitMs);
     }
 
     public StepResult clickOffset(String locator, String x, String y) {
@@ -1224,9 +1233,7 @@ public class WebCommand extends BaseCommand implements CanTakeScreenshot, CanLog
 
         String xpath = locatorHelper.resolveLabelXpath(label);
         StepResult result = assertOneMatch(xpath);
-        if (result.failed()) { return result; }
-
-        return doubleClickAndWait(xpath, waitMs);
+        return result.failed() ? result : doubleClickAndWait(xpath, waitMs);
     }
 
     public StepResult doubleClick(String locator) {
@@ -2058,22 +2065,34 @@ public class WebCommand extends BaseCommand implements CanTakeScreenshot, CanLog
 
     // todo need to test
     public StepResult doubleClickAndWait(String locator, String waitMs) {
-        boolean isNumber = NumberUtils.isDigits(waitMs);
-        String waitMsStr = isNumber ? (long) NumberUtils.toDouble(waitMs) + "" : context.getPollWaitMs() + "";
+        requiresPositiveNumber(waitMs, "invalid waitMs", waitMs);
 
-        WebElement element = toElement(locator);
-        scrollIntoView(element);
-        highlight(element);
-        new Actions(driver).moveToElement(element).doubleClick(element).build().perform();
+        long waitMs1 = NumberUtils.toInt(waitMs);
 
-        // could have alert text...
-        alert.preemptiveDismissAlert();
-        waitForBrowserStability(Long.parseLong(waitMsStr));
+        Timeouts timeouts = driver.manage().timeouts();
+        boolean timeoutChangesEnabled = browser.browserType.isTimeoutChangesEnabled();
 
-        if (!isNumber) {
-            return StepResult.warn("invalid waitMs: " + waitMs + ", default to " + waitMsStr);
-        } else {
-            return StepResult.success("double-clicked-and-waited '" + locator + "'");
+        // if browser supports implicit wait and we are not using explicit wait (`WEB_ALWAYS_WAIT`), then
+        // we'll change timeout's implicit wait time
+        if (timeoutChangesEnabled) { timeouts.pageLoadTimeout(waitMs1, MILLISECONDS); }
+
+        try {
+            WebElement element = toElement(locator);
+            scrollIntoView(element);
+            highlight(element);
+            new Actions(driver).moveToElement(element).doubleClick(element).build().perform();
+
+            StepResult result = clickInternal(locator);
+            return result.failed() ? result : StepResult.success("double-clicked-and-waited '" + locator + "'");
+        } finally {
+            if (timeoutChangesEnabled) {
+                timeouts.pageLoadTimeout(context.getIntConfig("web", profile, WEB_PAGE_LOAD_WAIT_MS), MILLISECONDS);
+            } else {
+                waitForBrowserStability(waitMs1);
+            }
+
+            // could have alert text...
+            alert.preemptiveDismissAlert();
         }
     }
 
