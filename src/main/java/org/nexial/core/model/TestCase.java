@@ -85,7 +85,7 @@ public class TestCase {
         executionSummary.setStartTime(System.currentTimeMillis());
         executionSummary.setTotalSteps(CollectionUtils.size(testSteps));
 
-        logger.log(this, "executing activity");
+        logger.log(this, LogMessage.EXECUTING_ACTIVITY);
 
         for (int i = 0; i < testSteps.size(); i++) {
             if (BooleanUtils.toBoolean(System.getProperty(END_SCRIPT_IMMEDIATE, "false"))) {

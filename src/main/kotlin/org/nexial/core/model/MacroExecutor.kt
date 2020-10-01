@@ -30,6 +30,7 @@ import org.nexial.core.ExecutionThread
 import org.nexial.core.NexialConst.*
 import org.nexial.core.NexialConst.Data.DEF_OPEN_EXCEL_AS_DUP
 import org.nexial.core.NexialConst.Data.MACRO_INVOKED_FROM
+import org.nexial.core.NexialConst.LogMessage.ERROR_LOG
 import org.nexial.core.excel.Excel
 import org.nexial.core.excel.Excel.MIN_EXCEL_FILE_SIZE
 import org.nexial.core.excel.Excel.Worksheet
@@ -387,7 +388,7 @@ class MacroExecutor(private val initialTestStep: TestStep, val macro: Macro,
 
         logger.error(testStep, MessageUtils.renderAsFail(message))
         if (StringUtils.isNotBlank(result.detailedLogLink))
-            logger.error(testStep, "Error log: ${result.detailedLogLink}")
+            logger.error(testStep, "$ERROR_LOG${result.detailedLogLink}")
         testStep.trackExecutionError(result)
     }
 

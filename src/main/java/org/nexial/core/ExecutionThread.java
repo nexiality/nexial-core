@@ -50,6 +50,8 @@ import static org.nexial.core.NexialConst.*;
 import static org.nexial.core.NexialConst.Data.*;
 import static org.nexial.core.NexialConst.Exec.*;
 import static org.nexial.core.NexialConst.Iteration.*;
+import static org.nexial.core.NexialConst.LogMessage.TEST_COMPLETE;
+import static org.nexial.core.NexialConst.LogMessage.TEST_FAILED;
 import static org.nexial.core.NexialConst.Project.appendLog;
 import static org.nexial.core.NexialConst.Web.*;
 import static org.nexial.core.SystemVariables.getDefault;
@@ -184,7 +186,7 @@ public final class ExecutionThread extends Thread {
                 ExecutionLogger logger = context.getLogger();
                 logPlan(context, scriptLocation, iterationIndex);
 
-                logger.log(context, "executing iteration #" + iterationIndex + " of " + totalIterations +
+                logger.log(context, LogMessage.EXECUTING_ITERATION + iterationIndex + " of " + totalIterations +
                                     "; Iteration Id " + iterationRef);
                 allPass = context.execute();
 
@@ -383,7 +385,7 @@ public final class ExecutionThread extends Thread {
 
         ConsoleUtils.error(runId,
                            NL +
-                           "/-TEST FAILED!!-----------------------------------------------------------------" + NL +
+                           "/-" + TEST_FAILED + "!!------------------------------------------------------------" + NL +
                            "| Test Output:    " + testScript + NL +
                            "| Iteration:      " + iteration + NL +
                            "\\-------------------------------------------------------------------------------" + NL +
@@ -409,7 +411,7 @@ public final class ExecutionThread extends Thread {
 
         ConsoleUtils.log(context.getRunId(),
                          NL +
-                         "/-TEST COMPLETE-----------------------------------------------------------------" + NL +
+                         "/-" + TEST_COMPLETE + "---------------------------------------------------------------" + NL +
                          "| Test Output:    " + context.getTestScript().getFile() + NL +
                          "| Iteration:      " + iteration + NL +
                          "\\-------------------------------------------------------------------------------" + NL +
@@ -442,7 +444,7 @@ public final class ExecutionThread extends Thread {
 
         ConsoleUtils.log(context.getRunId(),
                          NL +
-                         "/-TEST COMPLETE-----------------------------------------------------------------" + NL +
+                         "/-" + TEST_COMPLETE + "---------------------------------------------------------------" + NL +
                          "| Test Script:    " + execDef.getTestScript() + NL +
                          "\\-------------------------------------------------------------------------------" + NL +
                          "» Execution Time: " + (ticktock.getTime()) + " ms" + NL +

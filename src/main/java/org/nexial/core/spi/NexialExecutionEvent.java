@@ -23,6 +23,8 @@ import org.nexial.core.model.ExecutionContext;
 import org.nexial.core.model.ExecutionSummary;
 import org.springframework.context.support.ClassPathXmlApplicationContext;
 
+import ch.qos.logback.classic.spi.ILoggingEvent;
+
 import static org.nexial.core.spi.NexialEventType.*;
 
 public class NexialExecutionEvent {
@@ -42,6 +44,7 @@ public class NexialExecutionEvent {
     private int iterationIndex;
     private String browser;
     private String targetUrl;
+    private ILoggingEvent loggingEvent;
 
     public static NexialExecutionEvent newNexialPreStartEvent(Nexial nexial, String[] args) {
         NexialExecutionEvent event = new NexialExecutionEvent(NexialPreStart);
@@ -136,6 +139,12 @@ public class NexialExecutionEvent {
         this.eventType = eventType;
     }
 
+    public static NexialExecutionEvent newLogInvokedEvent(ILoggingEvent event) {
+        NexialExecutionEvent nexialExecutionEvent = new NexialExecutionEvent(LogInvoked);
+        nexialExecutionEvent.loggingEvent = event;
+        return nexialExecutionEvent;
+    }
+
     public NexialEventType getEventType() { return eventType; }
 
     public ExecutionContext getContext() { return context; }
@@ -163,4 +172,8 @@ public class NexialExecutionEvent {
     public String getBrowser() {return browser;}
 
     public String getTargetUrl() {return targetUrl;}
+
+    public ILoggingEvent getLoggingEvent() {
+        return loggingEvent;
+    }
 }

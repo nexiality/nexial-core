@@ -590,6 +590,26 @@ public final class NexialConst {
         static void init() {}
     }
 
+    public static final class LogMessage {
+        public static final String EXECUTING_ITERATION = "executing iteration #";
+        public static final String EXECUTING_TEST_SCENARIO = "executing test scenario";
+        public static final String EXECUTING_ACTIVITY = "executing activity";
+        public static final String SAVING_TEST_SCENARIO = "saving test scenario";
+        public static final String TEST_COMPLETE = "TEST COMPLETE";
+        public static final String END_OF_EXECUTION = "END OF EXECUTION";
+        public static final String END_OF_EXECUTION2 = "End of Execution";
+        public static final String TEST_FAILED = "TEST FAILED";
+        public static final String STARTS = "STARTS";
+        public static final String FOUND_PLANS = "found plans in ";
+        public static final String VALIDATE_TEST_SCRIPT = "validating test script as ";
+        public static final String MSG_THREAD_TERMINATED = "all execution thread(s) have terminated";
+        public static final String MSG_CLEANUP = "cleaning up outdated temp files...";
+        public static final String RESOLVE_RUN_ID = "resolve RUN ID as ";
+        public static final String ERROR_LOG = "Error log: ";
+        public static final String SCREENSHOT_CAPTURED_LOG = "output/screenshot captured to file ";
+        public static final String CURRENT_SCRIPT = "current script";
+    }
+
     public static final class Iteration {
         // predefined variable to define the iteration to use
         public static final String ITERATION = SCOPE + "iteration";

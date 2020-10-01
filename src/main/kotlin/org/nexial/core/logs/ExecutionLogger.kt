@@ -20,6 +20,7 @@ package org.nexial.core.logs
 import org.apache.commons.lang3.StringUtils
 import org.nexial.commons.utils.TextUtils
 import org.nexial.core.ExecutionThread
+import org.nexial.core.NexialConst.LogMessage.CURRENT_SCRIPT
 import org.nexial.core.model.ExecutionContext
 import org.nexial.core.model.TestCase
 import org.nexial.core.model.TestScenario
@@ -135,7 +136,7 @@ class ExecutionLogger(private val context: ExecutionContext) {
         fun toHeader(subject: ExecutionContext?): String = if (subject != null && subject.testScript != null)
             justFileName(subject.testScript.file)
         else
-            "current script"
+            CURRENT_SCRIPT
 
         @JvmStatic
         fun justFileName(file: File): String = StringUtils.substringBeforeLast(file.name, ".")

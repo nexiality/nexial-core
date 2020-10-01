@@ -110,8 +110,8 @@ public class RuntimeUtilsManualTest {
         Assert.assertTrue(tailPids.size() >= 3);
 
         // kill 'em
-        Assert.assertTrue(RuntimeUtils.terminateInstanceOnNIX(tailPids.get(0)));
-        Assert.assertTrue(RuntimeUtils.terminateInstancesOnNIX("tail"));
+        Assert.assertTrue(RuntimeUtils.terminateInstance(tailPids.get(0)));
+        Assert.assertTrue(RuntimeUtils.terminateInstance("tail"));
 
         // look for them again.. they should be gone
         List<Integer> newTailPids = RuntimeUtils.findRunningInstancesOnNIX("tail");

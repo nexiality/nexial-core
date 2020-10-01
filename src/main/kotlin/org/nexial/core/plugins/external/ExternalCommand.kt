@@ -35,6 +35,7 @@ import org.nexial.core.plugins.base.BaseCommand
 import org.nexial.core.utils.CheckUtils.requires
 import org.nexial.core.utils.CheckUtils.requiresNotBlank
 import org.nexial.core.utils.ConsoleUtils
+import org.nexial.core.utils.ExecUtils
 import org.nexial.core.variable.Syspath
 import java.io.File
 import java.io.File.separator
@@ -196,6 +197,16 @@ class ExternalCommand : BaseCommand() {
         if (context.hasData(OPT_RUN_FROM)) env[WORKING_DIRECTORY] = context.getStringData(OPT_RUN_FROM)
 
         return env
+    }
+
+    fun openFile(filePath: String): StepResult {
+        requires(StringUtils.isNotBlank(filePath), "empty/null programName")
+        try {
+            ExecUtils.openAnyFile(filePath)
+            return StepResult.success()
+        } catch (e: Exception) {
+            return StepResult.fail(e.message)
+        }
     }
 
     companion object {

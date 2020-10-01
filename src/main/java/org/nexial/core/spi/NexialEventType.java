@@ -35,6 +35,6 @@ public enum NexialEventType {
     BrowserEnd, UrlInvoked,
     ScreenshotCaptured, RecordStart, RecordEnd, OutputCaptured,
     EmailNotificationSent, SmsNotificationSent,
-    CommandListing
+    CommandListing, LogInvoked
 
 }

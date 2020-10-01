@@ -213,24 +213,23 @@ object ExecUtils {
         if (StringUtils.isBlank(reportFile) || isRunningInZeroTouchEnv()) return
 
         try {
-            if (IS_OS_MAC) {
-                ProcessInvoker.invokeNoWait("open", listOf(reportFile), null)
-                return
-            }
-
-            if (IS_OS_LINUX) {
-                ProcessInvoker.invokeNoWait("xdg-open", listOf(reportFile), null)
-                return
-            }
-
-            if (IS_OS_WINDOWS) {
-                // https://superuser.com/questions/198525/how-can-i-execute-a-windows-command-line-in-background
-                // start "" [program]... will cause CMD to exit before program executes.. sorta like running program in background
-                ProcessInvoker.invokeNoWait(WIN32_CMD, arrayListOf("/C", "start", "\"\"", "\"" + reportFile + "\""),
-                                            null)
-            }
+            openAnyFile(reportFile)
         } catch (e: IOException) {
             ConsoleUtils.error("ERROR!!! Can't open " + reportFile + ": " + e.message)
+        }
+    }
+
+    @JvmStatic
+    fun openAnyFile(filePath: String) {
+        if (IS_OS_MAC) {
+            ProcessInvoker.invokeNoWait("open", listOf(filePath), null)
+        } else if (IS_OS_LINUX) {
+            ProcessInvoker.invokeNoWait("xdg-open", listOf(filePath), null)
+        } else if (IS_OS_WINDOWS) {
+            // https://superuser.com/questions/198525/how-can-i-execute-a-windows-command-line-in-background
+            // start "" [program]... will cause CMD to exit before program executes.. sorta like running program in background
+            ProcessInvoker.invokeNoWait(WIN32_CMD, arrayListOf("/C", "start", "\"\"", "\"" + filePath + "\""),
+                                        null)
         }
     }
 }

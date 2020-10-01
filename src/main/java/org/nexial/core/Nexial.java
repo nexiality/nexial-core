@@ -69,6 +69,7 @@ import static org.nexial.core.NexialConst.*;
 import static org.nexial.core.NexialConst.Data.*;
 import static org.nexial.core.NexialConst.Exec.*;
 import static org.nexial.core.NexialConst.ExitStatus.*;
+import static org.nexial.core.NexialConst.LogMessage.*;
 import static org.nexial.core.NexialConst.Project.*;
 import static org.nexial.core.SystemVariables.getDefault;
 import static org.nexial.core.SystemVariables.getDefaultInt;
@@ -302,7 +303,7 @@ public class Nexial {
         boolean isInteractive = cmd.hasOption(INTERACTIVE);
 
         // check for clean up temp directory
-        ConsoleUtils.log("cleaning up outdated temp files...");
+        ConsoleUtils.log(MSG_CLEANUP);
         TempCleanUpHelper.cleanUpTemp();
 
         // plan or script?
@@ -382,7 +383,7 @@ public class Nexial {
             // 2. parse plan file to determine number of executions (1 row per execution)
             Excel excel = new Excel(testPlanFile, DEF_OPEN_EXCEL_AS_DUP, false);
             List<Worksheet> plans = retrieveValidPlans(subplans, excel);
-            ConsoleUtils.log("found plans in " + testPlanFile + ": " + System.getProperty(SUBPLANS_INCLUDED));
+            ConsoleUtils.log(FOUND_PLANS + testPlanFile + ": " + System.getProperty(SUBPLANS_INCLUDED));
 
             Map<File, List<String>> scriptToScenarioCache = new HashMap<>();
             List<File> dataFileCache = new ArrayList<>();
@@ -399,7 +400,7 @@ public class Nexial {
 
                     File testScript = deriveScriptFromPlan(row, project, testPlanPath);
                     if (!scriptToScenarioCache.containsKey(testScript)) {
-                        ConsoleUtils.log("validating test script as " + testScript);
+                        ConsoleUtils.log(VALIDATE_TEST_SCRIPT + testScript);
                         if (!InputFileUtils.isValidScript(testScript.getAbsolutePath())) {
                             // could be abs. path or relative path based on current project
                             fail("Invalid/unreadable test script specified in ROW " + (row.getRowNum() + 1) + " of " +
@@ -775,7 +776,7 @@ public class Nexial {
                 exec.setRunId(runId);
 
                 String msgPrefix = "[" + exec.getTestScript() + "] ";
-                ConsoleUtils.log(runId, msgPrefix + "resolve RUN ID as " + runId);
+                ConsoleUtils.log(runId, msgPrefix + RESOLVE_RUN_ID + runId);
 
                 ExecutionThread launcherThread = ExecutionThread.newInstance(exec);
                 if (i == 0) { launcherThread.setFirstScript(true); }
@@ -830,7 +831,7 @@ public class Nexial {
                 Thread.sleep(LAUNCHER_THREAD_COMPLETION_WAIT_MS);
             }
 
-            ConsoleUtils.log(runId, "all execution thread(s) have terminated");
+            ConsoleUtils.log(runId, MSG_THREAD_TERMINATED);
         } catch (Throwable e) {
             ConsoleUtils.error(e.getMessage());
             e.printStackTrace();
@@ -1206,7 +1207,7 @@ public class Nexial {
             String manifest = NEXIAL_MANIFEST;
             ConsoleUtils.log(
                 NL + NL +
-                "/-END OF EXECUTION--------------------------------------------------------------" + NL +
+                "/-"+END_OF_EXECUTION+"--------------------------------------------------------------" + NL +
                 "| » Execution Time: " + (summary.getElapsedTime() / 1000) + " sec." + NL +
                 "| » Test Steps....: " + summary.getExecuted() + NL +
                 "| » Passed........: " + summary.getPassCount() + NL +
@@ -1267,7 +1268,7 @@ public class Nexial {
         beforeShutdownMemUsage();
 
         System.setProperty(EXIT_STATUS, exitStatus + "");
-        ConsoleUtils.log("End of Execution:" + NL +
+        ConsoleUtils.log(END_OF_EXECUTION2 + ":" + NL +
                          "NEXIAL_OUTPUT:         " + System.getProperty(OUTPUT_LOCATION) + NL +
                          "NEXIAL_EXECUTION_HTML: " + System.getProperty(EXEC_OUTPUT_PATH) + NL +
                          "NEXIAL_JUNIT_XML:      " + System.getProperty(JUNIT_XML_LOCATION) + NL +

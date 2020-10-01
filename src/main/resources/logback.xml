@@ -28,6 +28,7 @@
         </encoder>
     </appender>
     <appender name="console-catchall" class="ch.qos.logback.core.ConsoleAppender">
+        <filter class="org.nexial.commons.logging.LogEventFilter" />
         <encoder>
             <pattern>[OTH] %d{yyyy-MM-dd HH:mm:ss.SSS}|%1p|%t|%-25c{3}|%m%n</pattern>
         </encoder>
@@ -38,6 +39,7 @@
         </encoder>
     </appender>
     <appender name="console-execution" class="ch.qos.logback.core.ConsoleAppender">
+        <filter class="org.nexial.commons.logging.LogEventFilter" />
         <withJansi>true</withJansi>
         <encoder>
             <pattern>%resultColor(%d{HH:mm:ss.SSS}|%m%n)</pattern>
@@ -75,6 +77,7 @@
 
     <!-- file appenders -->
     <appender name="file-testexecution" class="ch.qos.logback.core.rolling.RollingFileAppender">
+        <filter class="org.nexial.commons.logging.LogEventFilter" />
         <file>${nexial.logpath:-${java.io.tmpdir}}/nexial-${nexial.runID:-test}.log</file>
         <append>true</append>
         <prudent>true</prudent>
@@ -249,7 +252,7 @@
     </logger>
 
     <!-- selenium -->
-    <logger name="org.openqa.selenium" additivity="false" level="DEBUG">
+    <logger name="org.openqa.selenium" additivity="false" level="WARN">
         <appender-ref ref="console-catchall"/>
         <appender-ref ref="file-testexecution"/>
     </logger>
@@ -293,7 +296,7 @@
     </logger>
 
     <!-- seeknow -->
-    <logger name="org.nexial.seeknow" additivity="false" level="DEBUG">
+    <logger name="org.nexial.seeknow" additivity="false" level="INFO">
         <appender-ref ref="console-execution"/>
         <appender-ref ref="file-testexecution"/>
     </logger>

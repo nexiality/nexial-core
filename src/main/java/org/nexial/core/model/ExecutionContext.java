@@ -89,6 +89,8 @@ import static org.nexial.core.NexialConst.Data.*;
 import static org.nexial.core.NexialConst.Exec.*;
 import static org.nexial.core.NexialConst.FlowControls.*;
 import static org.nexial.core.NexialConst.Iteration.*;
+import static org.nexial.core.NexialConst.LogMessage.ERROR_LOG;
+import static org.nexial.core.NexialConst.LogMessage.STARTS;
 import static org.nexial.core.NexialConst.Project.NEXIAL_HOME;
 import static org.nexial.core.NexialConst.TimeTrack.TRACK_EXECUTION;
 import static org.nexial.core.NexialConst.Web.*;
@@ -328,7 +330,7 @@ public class ExecutionContext {
 
         MDC.put(TEST_SUITE_NAME, getRunId());
         MDC.put(TEST_NAME, getId());
-        if (logger.isInfoEnabled()) { logger.info("STARTS"); }
+        if (logger.isInfoEnabled()) { logger.info(STARTS); }
 
         // parse merged test script
         parse();
@@ -1021,7 +1023,7 @@ public class ExecutionContext {
                 logger.error(this, errorMessage, cause);
             } else {
                 logger.error(testStep,
-                             errorMessage + NL + "Error log: " + OutputFileUtils.generateErrorLog(testStep, cause));
+                             errorMessage + NL + ERROR_LOG + OutputFileUtils.generateErrorLog(testStep, cause));
             }
 
             if (cause instanceof IOException) {

@@ -29,6 +29,7 @@ import org.nexial.core.CommandConst.CMD_VERBOSE
 import org.nexial.core.CommandConst.shouldMergeCommandParams
 import org.nexial.core.ExecutionThread
 import org.nexial.core.NexialConst.Data.*
+import org.nexial.core.NexialConst.LogMessage.SAVING_TEST_SCENARIO
 import org.nexial.core.NexialConst.MAX_VERBOSE_CHAR
 import org.nexial.core.excel.Excel
 import org.nexial.core.excel.Excel.Worksheet
@@ -427,7 +428,7 @@ class ExecutionResultHelper(private val allSteps: List<TestStep>, val worksheet:
         excelSheet.autoSizeColumn(COL_IDX_RESULT)
 
         val logId: String = ExecutionLogger.justFileName(worksheet.file) + "|" + worksheet.name
-        ConsoleUtils.log(logId, "saving test scenario")
+        ConsoleUtils.log(logId, SAVING_TEST_SCENARIO)
         save(worksheet, executionSummary)
     }
 

@@ -90,7 +90,7 @@ public class TestScenario {
 
     public boolean execute() throws IOException {
         ExecutionLogger logger = context.getLogger();
-        logger.log(this, "executing test scenario");
+        logger.log(this, LogMessage.EXECUTING_TEST_SCENARIO);
 
         // by default, only fail fast if we are not in interactive mode
         boolean shouldFailFast = context.isFailFast();

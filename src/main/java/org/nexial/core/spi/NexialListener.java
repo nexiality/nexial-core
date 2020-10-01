@@ -92,4 +92,6 @@ public interface NexialListener {
     void onBrowserEnd(NexialExecutionEvent event);
 
     void onUrlInvoked(NexialExecutionEvent event);
+
+    void onLogInvoked(NexialExecutionEvent event);
 }

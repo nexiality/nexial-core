@@ -57,19 +57,47 @@ public final class RuntimeUtils {
     }
 
     public static boolean terminateInstance(String exeName) {
-        if (IS_OS_WINDOWS) { return terminateInstancesOnWIN(exeName); }
-        if (IS_OS_MAC_OSX || IS_OS_UNIX) { return terminateInstancesOnNIX(exeName); }
+        try {
+            ConsoleUtils.log("terminating any leftover instance of " + exeName);
+            ProcessOutcome outcome;
+            if (IS_OS_WINDOWS) {
+                outcome = ProcessInvoker.invoke(
+                    WIN32_CMD, Arrays.asList("/C", "taskkill", "/IM", exeName + "*", "/T", "/F"), null);
+            } else if (IS_OS_MAC_OSX || IS_OS_UNIX) {
+                outcome = ProcessInvoker.invoke("pkill", Collections.singletonList(exeName), null);
+            } else {
+                ConsoleUtils.error("UNSUPPORTED OS: " + OS_NAME + ". No termination for " + exeName);
+                return false;
+            }
+            ConsoleUtils.log(outcome.getStdout());
+            try { Thread.sleep(2000); } catch (InterruptedException e) { }
+        } catch (IOException | InterruptedException e) {
+            ConsoleUtils.error("Unable to terminate any running " + exeName + ": " + e.getMessage());
+            return false;
+        }
 
-        ConsoleUtils.error("UNSUPPORTED OS: " + OS_NAME + ". No termination for " + exeName);
-        return false;
+        return true;
     }
 
     public static boolean terminateInstance(int processId) {
-        if (IS_OS_WINDOWS) { return terminateInstanceOnWIN(processId); }
-        if (IS_OS_MAC_OSX || IS_OS_UNIX) { return terminateInstanceOnNIX(processId); }
-
-        ConsoleUtils.error("UNSUPPORTED OS: " + OS_NAME + ". No termination for " + processId);
-        return false;
+        ConsoleUtils.log("terminating process with process id " + processId);
+        try {
+            if (IS_OS_WINDOWS) {
+                ProcessInvoker.invokeNoWait(WIN32_CMD,
+                                            Arrays.asList("/C", "start", "\"\"",
+                                                          "taskkill", "/pid", processId + "", "/T", "/F"),
+                                            null);
+            } else if (IS_OS_MAC_OSX || IS_OS_UNIX) {
+                ProcessInvoker.invokeNoWait("kill", Arrays.asList("-s", "QUIT", processId + ""), null);
+            } else {
+                ConsoleUtils.error("UNSUPPORTED OS: " + OS_NAME + ". No termination for " + processId);
+                return false;
+            }
+        } catch (IOException e) {
+            ConsoleUtils.error("Unable to terminate process with process id " + processId + ": " + e.getMessage());
+            return false;
+        }
+        return true;
     }
 
     public static void runAppNoWait(String exePath, String exeName, List<String> args) throws IOException {
@@ -231,57 +259,4 @@ public final class RuntimeUtils {
         }
     }
 
-    protected static boolean terminateInstancesOnNIX(String exeName) {
-        try {
-            ConsoleUtils.log("terminating any leftover instance of " + exeName);
-            // ProcessOutcome outcome = ProcessInvoker.invoke(NIX_SHELL, Arrays.asList("-c", "\"pkill " + exeName + "\""), null);
-            ProcessOutcome outcome = ProcessInvoker.invoke("pkill", Collections.singletonList(exeName), null);
-            ConsoleUtils.log(outcome.getStdout());
-            try { Thread.sleep(2000); } catch (InterruptedException e) { }
-            return true;
-        } catch (IOException | InterruptedException e) {
-            ConsoleUtils.error("Unable to terminate any running " + exeName + ": " + e.getMessage());
-            return false;
-        }
-    }
-
-    protected static boolean terminateInstancesOnWIN(String exeName) {
-        try {
-            ConsoleUtils.log("terminating any leftover instance of " + exeName);
-            ProcessOutcome outcome = ProcessInvoker.invoke(
-                WIN32_CMD, Arrays.asList("/C", "taskkill", "/IM", exeName + "*", "/T", "/F"), null);
-            ConsoleUtils.log(outcome.getStdout());
-            try { Thread.sleep(2000); } catch (InterruptedException e) { }
-            return true;
-        } catch (IOException | InterruptedException e) {
-            ConsoleUtils.error("Unable to terminate any running " + exeName + ": " + e.getMessage());
-            return false;
-        }
-    }
-
-    protected static boolean terminateInstanceOnNIX(int processId) {
-        try {
-            ConsoleUtils.log("terminating process with process id " + processId);
-            // ProcessInvoker.invokeNoWait(NIX_SHELL, Arrays.asList("-c", "\"kill -s QUIT " + processId + "\""), null);
-            ProcessInvoker.invokeNoWait("kill", Arrays.asList("-s", "QUIT", processId + ""), null);
-            return true;
-        } catch (IOException e) {
-            ConsoleUtils.error("Unable to terminate process with process id " + processId + ": " + e.getMessage());
-            return false;
-        }
-    }
-
-    protected static boolean terminateInstanceOnWIN(int processId) {
-        try {
-            ConsoleUtils.log("terminating process with process id " + processId);
-            ProcessInvoker.invokeNoWait(WIN32_CMD,
-                                        Arrays.asList("/C", "start", "\"\"",
-                                                      "taskkill", "/pid", processId + "", "/T", "/F"),
-                                        null);
-            return true;
-        } catch (IOException e) {
-            ConsoleUtils.error("Unable to terminate process with process id " + processId + ": " + e.getMessage());
-            return false;
-        }
-    }
 }

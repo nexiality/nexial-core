@@ -66,8 +66,9 @@ import static org.nexial.commons.utils.EnvUtils.platformSpecificEOL;
 import static org.nexial.core.CommandConst.*;
 import static org.nexial.core.NexialConst.*;
 import static org.nexial.core.NexialConst.Data.*;
-import static org.nexial.core.NexialConst.MSG_FAIL;
 import static org.nexial.core.NexialConst.FlowControls.CONDITION_DISABLE;
+import static org.nexial.core.NexialConst.MSG_FAIL;
+import static org.nexial.core.NexialConst.LogMessage.ERROR_LOG;
 import static org.nexial.core.NexialConst.Web.WEB_PERF_METRICS_ENABLED;
 import static org.nexial.core.SystemVariables.getDefaultBool;
 import static org.nexial.core.excel.ExcelConfig.MSG_PASS;
@@ -524,7 +525,7 @@ public class TestStep extends TestStepManifest {
                 summary.incrementFail();
                 error(MessageUtils.renderAsFail(result.getMessage()));
                 if (StringUtils.isNotBlank(result.getDetailedLogLink())) {
-                    context.getLogger().error(this, "Error log: " + result.getDetailedLogLink());
+                    context.getLogger().error(this, ERROR_LOG + result.getDetailedLogLink());
                 }
                 trackExecutionError(result);
             }
@@ -802,6 +803,12 @@ public class TestStep extends TestStepManifest {
         if (CollectionUtils.isNotEmpty(nestedTestResults)) {
             TestStepManifest testStep = toTestStepManifest();
             testCase.getTestScenario().getExecutionSummary().addNestedMessages(testStep, nestedTestResults);
+
+            for(NestedMessage nm: nestedTestResults) {
+                if (nm instanceof NestedScreenCapture) {
+                    log(LogMessage.SCREENSHOT_CAPTURED_LOG + ((NestedScreenCapture) nm).getLink());
+                }
+            }
         }
     }
 

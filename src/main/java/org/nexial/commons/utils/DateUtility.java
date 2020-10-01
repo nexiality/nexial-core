@@ -185,6 +185,8 @@ public final class DateUtility {
 
     public static String getCurrentTimeForLogging() { return DATE_FORMAT_TIME_WITH_MS.format(new Date()); }
 
+    public static String getCurrentTimeForLogging(Date date) { return DATE_FORMAT_TIME_WITH_MS.format(date); }
+
     public static long formatTo(String date, String format) {
         if (StringUtils.isBlank(date)) {
             if (LOGGER.isDebugEnabled()) {

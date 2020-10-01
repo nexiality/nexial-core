@@ -152,6 +152,9 @@ public class NexialListenerFactory {
             case UrlInvoked:
                 LISTENER.onUrlInvoked(event);
                 break;
+            case LogInvoked:
+                LISTENER.onLogInvoked(event);
+                break;
 
             default:
         }
