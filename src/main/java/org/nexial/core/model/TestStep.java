@@ -804,11 +804,12 @@ public class TestStep extends TestStepManifest {
             TestStepManifest testStep = toTestStepManifest();
             testCase.getTestScenario().getExecutionSummary().addNestedMessages(testStep, nestedTestResults);
 
-            for(NestedMessage nm: nestedTestResults) {
-                if (nm instanceof NestedScreenCapture) {
-                    log(LogMessage.SCREENSHOT_CAPTURED_LOG + ((NestedScreenCapture) nm).getLink());
-                }
-            }
+            // todo: unacceptable; we shouldn't be incurring more logs just to expose the capture screenshot links
+            // for (NestedMessage nm : nestedTestResults) {
+            //     if (nm instanceof NestedScreenCapture) {
+            //         log(LogMessage.SCREENSHOT_CAPTURED_LOG + ((NestedScreenCapture) nm).getLink());
+            //     }
+            // }
         }
     }
 
