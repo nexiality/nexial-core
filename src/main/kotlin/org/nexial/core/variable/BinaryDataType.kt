@@ -25,7 +25,6 @@ class BinaryDataType : ExpressionDataType<ByteArray> {
     constructor(textValue: String?) {
         if (textValue == null || textValue.isEmpty()) {
             this.textValue = textValue
-            init()
         } else {
             this.value = OutputResolver(data = textValue,
                                         context = ExecutionThread.get(),
@@ -34,8 +33,8 @@ class BinaryDataType : ExpressionDataType<ByteArray> {
                                         replaceTokens = false,
                                         asBinary = true,
                                         compact = false).bytes
-            init()
         }
+        init()
     }
 
     constructor(value: ByteArray) {

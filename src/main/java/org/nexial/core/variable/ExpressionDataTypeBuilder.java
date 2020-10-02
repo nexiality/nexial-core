@@ -43,7 +43,7 @@ import static org.nexial.core.variable.ExpressionUtils.resumeExpression;
 final class ExpressionDataTypeBuilder {
     private static final Map<String, Method> NEW_INSTANCE_METHODS = initNewInstanceMethods();
     private static final String REGEX_VALID_TYPE = resolveValidTypeRegex(NEW_INSTANCE_METHODS);
-    private ExecutionContext context;
+    private final ExecutionContext context;
 
     public ExpressionDataTypeBuilder(ExecutionContext context) { this.context = context; }
 
@@ -141,6 +141,11 @@ final class ExpressionDataTypeBuilder {
     WebDataType newWebDataType(String value) throws TypeConversionException {
         WebDataType data = resumeExpression(value, WebDataType.class);
         return data != null ? data : new WebDataType(handleExternal("WEB", value));
+    }
+
+    BinaryDataType newBinaryDataType(String value) throws TypeConversionException {
+        BinaryDataType data = resumeExpression(value, BinaryDataType.class);
+        return data != null ? data : new BinaryDataType(handleExternal("BINARY", value));
     }
 
     private static String resolveValidTypeRegex(Map<String, Method> newInstanceMethods) {

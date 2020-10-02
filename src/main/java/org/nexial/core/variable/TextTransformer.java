@@ -250,6 +250,21 @@ public class TextTransformer<T extends TextDataType> extends Transformer<T> {
         return data;
     }
 
+    public T removeLeft(T data, String length) {
+        requiresPositiveNumber(length, "invalid length", length);
+        if (data != null) { data.setValue(StringUtils.substring(data.getTextValue(), NumberUtils.toInt(length))); }
+        return data;
+    }
+
+    public T removeRight(T data, String length) {
+        requiresPositiveNumber(length, "invalid length", length);
+        if (data != null) {
+            String text = data.getTextValue();
+            data.setValue(StringUtils.substring(text, 0, Math.max(text.length() - NumberUtils.toInt(length), 0)));
+        }
+        return data;
+    }
+
     public T padLeft(T data, String padWith, String maxLength) {
         requiresPositiveNumber(maxLength, "invalid maxLength", maxLength);
         if (data == null) { return data; }
@@ -504,8 +519,7 @@ public class TextTransformer<T extends TextDataType> extends Transformer<T> {
 
     public BinaryDataType binary(T data) {
         return data == null || StringUtils.isEmpty(data.getValue()) ?
-               new BinaryDataType() :
-               new BinaryDataType(data.getValue().getBytes());
+               new BinaryDataType() : new BinaryDataType(data.getValue().getBytes());
     }
 
     /**

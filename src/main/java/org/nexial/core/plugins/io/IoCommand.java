@@ -410,7 +410,7 @@ public class IoCommand extends BaseCommand {
         File dir = new File(target);
         if (dir.isFile()) { return StepResult.fail("target exists as a file: " + target); }
         if (!dir.exists()) {
-            dir.mkdirs();
+            if (!dir.mkdirs()) { ConsoleUtils.error("Unable to create directory '" + dir + "'"); }
             if (!dir.exists()) { return StepResult.fail("Unable to create specific target location: " + target); }
         }
 

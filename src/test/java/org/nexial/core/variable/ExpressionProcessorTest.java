@@ -316,6 +316,66 @@ public class ExpressionProcessorTest {
     }
 
     @Test
+    public void processText_removeLeft() throws Exception {
+        ExpressionProcessor subject = new ExpressionProcessor(context);
+
+        String fixture = "this is [TEXT(the best opportunity of your life) => removeLeft(9) upper]!";
+        assertEquals("this is OPPORTUNITY OF YOUR LIFE!", subject.process(fixture));
+
+        fixture = "[TEXT(xyz) => removeLeft(9)]";
+        assertEquals("", subject.process(fixture));
+
+        fixture = "[TEXT(xyz123456789osdfkj) => removeLeft(11)]";
+        assertEquals("9osdfkj", subject.process(fixture));
+
+        fixture = "[TEXT(xyz) => removeLeft(0)]";
+        assertEquals("xyz", subject.process(fixture));
+
+        fixture = "[TEXT(xyz) => removeLeft(3)]";
+        assertEquals("", subject.process(fixture));
+
+        fixture = "[TEXT(xyz) => removeLeft(4)]";
+        assertEquals("", subject.process(fixture));
+
+        try {
+            subject.process("[TEXT(xyz) => removeLeft(-2)]");
+            fail("Expected exception not thrown");
+        } catch (ExpressionException e) {
+            // it's ok... expected
+        }
+    }
+
+    @Test
+    public void processText_removeRight() throws Exception {
+        ExpressionProcessor subject = new ExpressionProcessor(context);
+
+        String fixture = "this is [TEXT(the best opportunity of your life) => removeRight(13) upper]!";
+        assertEquals("this is THE BEST OPPORTUNITY!", subject.process(fixture));
+
+        fixture = "[TEXT(xyz) => removeRight(9)]";
+        assertEquals("", subject.process(fixture));
+
+        fixture = "[TEXT(xyz123456789osdfkj) => removeRight(11)]";
+        assertEquals("xyz1234", subject.process(fixture));
+
+        fixture = "[TEXT(xyz) => removeRight(0)]";
+        assertEquals("xyz", subject.process(fixture));
+
+        fixture = "[TEXT(xyz) => removeRight(3)]";
+        assertEquals("", subject.process(fixture));
+
+        fixture = "[TEXT(xyz) => removeRight(4)]";
+        assertEquals("", subject.process(fixture));
+
+        try {
+            subject.process("[TEXT(xyz) => removeRight(-2)]");
+            fail("Expected exception not thrown");
+        } catch (ExpressionException e) {
+            // it's ok... expected
+        }
+    }
+
+    @Test
     public void processText_different_delim() throws Exception {
 
         context.setData("nexial.textDelim", "|");
@@ -405,7 +465,7 @@ public class ExpressionProcessorTest {
     public void processTest_resolve_as_url() throws Exception {
         ExpressionProcessor subject = new ExpressionProcessor(context);
 
-        String fixture = "https://api.ipify.org?format=json";
+        String fixture = "https://api6.ipify.org?format=json";
         assertEquals(fixture, subject.process("[TEXT(" + fixture + ") => text ]"));
 
         context.setData("nexial.resolveTextAsURL", "true");

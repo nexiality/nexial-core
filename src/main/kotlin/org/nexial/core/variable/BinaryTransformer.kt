@@ -72,6 +72,8 @@ class BinaryTransformer<T : BinaryDataType> : Transformer<T>() {
 
     override fun text(data: ExpressionDataType<*>?) = TextDataType(data?.textValue)
 
+    fun text(data: T) = TextDataType(data.textValue)
+
     private fun loadExternal(data: T, file: String, binary: Boolean): T {
         if (!FileUtil.isFileReadable(file)) {
             ConsoleUtils.error("Unreadable/invalid file: $file")

@@ -33,8 +33,10 @@ import org.apache.commons.lang3.ArrayUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.math.NumberUtils;
 import org.nexial.commons.utils.RegexUtils;
+import org.nexial.commons.utils.TextUtils;
 import org.nexial.core.ExecutionThread;
 import org.nexial.core.model.ExecutionContext;
+import org.nexial.core.utils.ConsoleUtils;
 
 import static org.nexial.core.NexialConst.Data.TEXT_DELIM;
 import static org.nexial.core.NexialConst.treatCommonValueShorthand;
@@ -402,6 +404,30 @@ public class ListTransformer<T extends ListDataType> extends Transformer {
 
     public T store(T data, String var) {
         snapshot(var, data);
+        return data;
+    }
+
+    public T saveItems(T data, String... indexAndVar) {
+        if (data == null || ArrayUtils.isEmpty(data.value)) { return data; }
+        if (ArrayUtils.isEmpty(indexAndVar)) { return data; }
+
+        ExecutionContext context = ExecutionThread.get();
+
+        Map<String, String> mapping = TextUtils.toMap("=", indexAndVar);
+        mapping.forEach((index, var) -> {
+            if (!NumberUtils.isDigits(StringUtils.trim(index))) {
+                ConsoleUtils.log(index + " is not a valid index for current LIST");
+            } else {
+                int idx = NumberUtils.toInt(StringUtils.trim(index));
+                int listSize = data.value.length;
+                if (idx < 0 || idx >= listSize) {
+                    ConsoleUtils.log(index + " is not a valid index for current LIST (size=" + listSize + ")");
+                } else {
+                    context.setData(StringUtils.trim(var), data.value[idx]);
+                }
+            }
+        });
+
         return data;
     }
 

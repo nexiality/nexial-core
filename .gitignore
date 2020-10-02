@@ -148,3 +148,7 @@ tmp/
 /src/test/resources/unittesting/artifact/data/XMLOutput.xml
 .DS_Store
 *.iml
+/src/test/resources/unittesting/artifact/bin/run-plan.cmd
+/src/test/resources/unittesting/artifact/bin/run-script.cmd
+/src/test/resources/unittesting/artifact/data/binary_test_baseline.png
+/src/test/resources/unittesting/artifact/script/unittesting.macro.xlsx
