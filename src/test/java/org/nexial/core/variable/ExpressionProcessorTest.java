@@ -465,7 +465,7 @@ public class ExpressionProcessorTest {
     public void processTest_resolve_as_url() throws Exception {
         ExpressionProcessor subject = new ExpressionProcessor(context);
 
-        String fixture = "https://api6.ipify.org?format=json";
+        String fixture = "https://api.ipify.org?format=json";
         assertEquals(fixture, subject.process("[TEXT(" + fixture + ") => text ]"));
 
         context.setData("nexial.resolveTextAsURL", "true");
