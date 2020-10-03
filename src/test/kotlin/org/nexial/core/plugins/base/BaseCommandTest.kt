@@ -19,7 +19,7 @@ package org.nexial.core.plugins.base
 import org.apache.commons.lang3.math.NumberUtils
 import org.junit.After
 import org.junit.Assert
-import org.junit.Assert.fail
+import org.junit.Assert.*
 import org.junit.Before
 import org.junit.Test
 import org.nexial.core.model.MockExecutionContext
@@ -59,15 +59,15 @@ class BaseCommandTest {
 
         try {
             val result = subject.assertArrayEqual("1,2,3", "3,2,1", "false")
-            Assert.assertNotNull(result)
+            assertNotNull(result)
             Assert.assertTrue(result.isSuccess)
         } catch (e: Exception) {
-            Assert.fail(e.message)
+            fail(e.message)
         }
 
         try {
             subject.assertArrayEqual("1,2,3", "3,2,1,0", "false")
-            Assert.fail("expect failure")
+            fail("expect failure")
         } catch (e: AssertionError) {
             // it's ok
         }
@@ -81,18 +81,18 @@ class BaseCommandTest {
 
         try {
             subject.assertArrayEqual("1,2,301", "301,2,301", "false")
-            Assert.fail("expect failure")
+            fail("expect failure")
         } catch (e: Exception) {
-            Assert.fail(e.message)
+            fail(e.message)
         } catch (e: AssertionError) {
             println(e.message)
         }
 
         try {
             subject.assertArrayEqual("1,2,301", "301,2,301", "true")
-            Assert.fail("expect failure")
+            fail("expect failure")
         } catch (e: Exception) {
-            Assert.fail(e.message)
+            fail(e.message)
         } catch (e: AssertionError) {
             println(e.message)
         }
@@ -101,9 +101,9 @@ class BaseCommandTest {
             subject.assertArrayEqual("519,23,0.913,587239,42739.187,2364,918.27,36591,82.736492,873,628,374.6",
                                      "519,23,0.913,58723.9,42739.187001,2364,918.27,36591,82.736492,873,628,374.60",
                                      "true")
-            Assert.fail("expect failure")
+            fail("expect failure")
         } catch (e: Exception) {
-            Assert.fail(e.message)
+            fail(e.message)
         } catch (e: AssertionError) {
             println(e.message)
         }
@@ -112,9 +112,9 @@ class BaseCommandTest {
             subject.assertArrayEqual("now is the,time for,all good men, to, ,come to the aid of his,country",
                                      "now is the time for,all good men to,come to the,aid of his,country",
                                      "true")
-            Assert.fail("expect failure")
+            fail("expect failure")
         } catch (e: Exception) {
-            Assert.fail(e.message)
+            fail(e.message)
         } catch (e: AssertionError) {
             println(e.message)
         }
@@ -128,42 +128,42 @@ class BaseCommandTest {
 
         try {
             subject.assertEqual("11.25", "(null)")
-            Assert.fail("Expected failure did not happened..")
+            fail("Expected failure did not happened..")
         } catch (e: AssertionError) {
             // expected
         }
 
         try {
             subject.assertEqual("(null)", "-91.001")
-            Assert.fail("Expected failure did not happened..")
+            fail("Expected failure did not happened..")
         } catch (e: AssertionError) {
             // expected
         }
 
         try {
             subject.assertEqual("(blank)", "(null)")
-            Assert.fail("Expected failure did not happened..")
+            fail("Expected failure did not happened..")
         } catch (e: AssertionError) {
             // expected
         }
 
         try {
             subject.assertEqual("(blank)", "(empty)")
-            Assert.fail("Expected failure did not happened..")
+            fail("Expected failure did not happened..")
         } catch (e: AssertionError) {
             // expected
         }
 
         try {
             subject.assertEqual("null", "(null)")
-            Assert.fail("Expected failure did not happened..")
+            fail("Expected failure did not happened..")
         } catch (e: AssertionError) {
             // expected
         }
 
         try {
             subject.assertEqual("1992", "(empty)")
-            Assert.fail("Expected failure did not happened..")
+            fail("Expected failure did not happened..")
         } catch (e: AssertionError) {
             // expected
         }
@@ -221,41 +221,85 @@ class BaseCommandTest {
     @Test
     @Throws(Exception::class)
     fun assertEquals_number() {
-        Assert.assertEquals(1.0, NumberUtils.createBigDecimal("1").toDouble(), 0.0)
-        Assert.assertEquals(1.0, NumberUtils.createBigDecimal("1.").toDouble(), 0.0)
-        Assert.assertEquals(1.0, NumberUtils.createBigDecimal("01").toDouble(), 0.0)
-        Assert.assertEquals(1.0, NumberUtils.createBigDecimal("01.").toDouble(), 0.0)
-        Assert.assertEquals(1.0, NumberUtils.createBigDecimal("01.0").toDouble(), 0.0)
-        Assert.assertEquals(1.0, NumberUtils.createBigDecimal("01.0000").toDouble(), 0.0)
-        Assert.assertEquals(1.0, NumberUtils.createBigDecimal("000001.0000").toDouble(), 0.0)
+        assertEquals(1.0, NumberUtils.createBigDecimal("1").toDouble(), 0.0)
+        assertEquals(1.0, NumberUtils.createBigDecimal("1.").toDouble(), 0.0)
+        assertEquals(1.0, NumberUtils.createBigDecimal("01").toDouble(), 0.0)
+        assertEquals(1.0, NumberUtils.createBigDecimal("01.").toDouble(), 0.0)
+        assertEquals(1.0, NumberUtils.createBigDecimal("01.0").toDouble(), 0.0)
+        assertEquals(1.0, NumberUtils.createBigDecimal("01.0000").toDouble(), 0.0)
+        assertEquals(1.0, NumberUtils.createBigDecimal("000001.0000").toDouble(), 0.0)
 
         try {
             NumberUtils.createBigDecimal("  1. ")
-            Assert.fail("expected NFE here!")
+            fail("expected NFE here!")
         } catch (e: NumberFormatException) {
             // it's fine/expected
         }
 
         try {
             NumberUtils.createBigDecimal("1,000.001")
-            Assert.fail("expected NFE here!")
+            fail("expected NFE here!")
         } catch (e: NumberFormatException) {
             // it's fine/expected
         }
 
         try {
             NumberUtils.createBigDecimal("$59")
-            Assert.fail("expected NFE here!")
+            fail("expected NFE here!")
         } catch (e: NumberFormatException) {
             // it's fine/expected
         }
 
         try {
             NumberUtils.createBigDecimal("1..0")
-            Assert.fail("expected NFE here!")
+            fail("expected NFE here!")
         } catch (e: NumberFormatException) {
             // it's fine/expected
         }
+    }
+
+    @Test
+    @Throws(Exception::class)
+    fun assertMatch() {
+        val subject = BaseCommand()
+        subject.init(context)
+
+        assertTrue(subject.assertMatch(" ", ".+").isSuccess)
+        assertTrue(subject.assertMatch("abc", ".+").isSuccess)
+        assertTrue(subject.assertMatch(".", ".+").isSuccess)
+        assertTrue(subject.assertMatch("..", ".+").isSuccess)
+        assertTrue(subject.assertMatch("KHJGF", "[A-Z]{5,6}").isSuccess)
+        assertTrue(subject.assertMatch("KHJGFS", "[A-Z]{5,6}").isSuccess)
+        assertTrue(subject.assertMatch("2KHJGFSa", "\\d[A-Z]{5,6}[a-z]").isSuccess)
+
+        try {
+            subject.assertMatch("", "")
+            fail("expected exception here!")
+        } catch (e: Throwable) {
+            // it's fine/expected
+        }
+
+        try {
+            subject.assertMatch("", null)
+            fail("expected exception here!")
+        } catch (e: Throwable) {
+            // it's fine/expected
+        }
+
+        try {
+            subject.assertMatch("", null)
+            fail("expected exception here!")
+        } catch (e: Throwable) {
+            // it's fine/expected
+        }
+
+        try {
+            subject.assertMatch(null, ".*")
+            fail("expected exception here!")
+        } catch (e: Throwable) {
+            // it's fine/expected
+        }
+
     }
 
     @Test
@@ -279,9 +323,9 @@ class BaseCommandTest {
 
         try {
             subject.assertEquals(map1, map2)
-            Assert.fail("expect failure")
+            fail("expect failure")
         } catch (e: Exception) {
-            Assert.fail(e.message)
+            fail(e.message)
         } catch (e: AssertionError) {
             println(e.message)
         }
@@ -295,11 +339,11 @@ class BaseCommandTest {
 
         Assert.assertTrue(subject.assertNotContain("Gopi,Ashwin,Nagesh", "Mike").isSuccess)
         Assert.assertTrue(subject.assertNotContain("", " ").isSuccess)
-        Assert.assertFalse(subject.assertNotContain(" ", " ").isSuccess)
-        Assert.assertFalse(subject.assertNotContain(" ", "").isSuccess)
-        Assert.assertFalse(subject.assertNotContain("Gopi,Ashwin,Nagesh", "").isSuccess)
-        Assert.assertFalse(subject.assertNotContain("Gopi,Ashwin,Nagesh", ",").isSuccess)
-        Assert.assertFalse(subject.assertNotContain("Gopi,Ashwin,Nagesh", "Ashwin").isSuccess)
+        assertFalse(subject.assertNotContain(" ", " ").isSuccess)
+        assertFalse(subject.assertNotContain(" ", "").isSuccess)
+        assertFalse(subject.assertNotContain("Gopi,Ashwin,Nagesh", "").isSuccess)
+        assertFalse(subject.assertNotContain("Gopi,Ashwin,Nagesh", ",").isSuccess)
+        assertFalse(subject.assertNotContain("Gopi,Ashwin,Nagesh", "Ashwin").isSuccess)
     }
 
     @Test
@@ -309,23 +353,23 @@ class BaseCommandTest {
         subject.init(context)
 
         // first, all clear_varX variables should be available
-        Assert.assertEquals("152", subject.getContextValueAsString("clear_var1"))
+        assertEquals("152", subject.getContextValueAsString("clear_var1"))
         // context var is overshadowed by system property
-        Assert.assertEquals("I repeat, this is a test.", subject.getContextValueAsString("clear_var2"))
-        Assert.assertEquals("I repeat, this is a test.", System.getProperty("clear_var2"))
-        Assert.assertEquals("System is a go", subject.getContextValueAsString("clear_var3"))
-        Assert.assertNotNull(subject.getContextValueAsString("os.name"))
+        assertEquals("I repeat, this is a test.", subject.getContextValueAsString("clear_var2"))
+        assertEquals("I repeat, this is a test.", System.getProperty("clear_var2"))
+        assertEquals("System is a go", subject.getContextValueAsString("clear_var3"))
+        assertNotNull(subject.getContextValueAsString("os.name"))
 
         // let's remove them
         val result = subject.clear("clear_var1,clear_var2,os.name,clear_var3")
         Assert.assertTrue(result.isSuccess)
 
-        Assert.assertNull(subject.getContextValueAsString("clear_var1"))
-        Assert.assertNull(subject.getContextValueAsString("clear_var2"))
-        Assert.assertNull(subject.getContextValueAsString("clear_var3"))
-        Assert.assertNull(System.getProperty("clear_var3"))
-        Assert.assertNotNull(subject.getContextValueAsString("os.name"))
-        Assert.assertNotNull(System.getProperty("os.name"))
+        assertNull(subject.getContextValueAsString("clear_var1"))
+        assertNull(subject.getContextValueAsString("clear_var2"))
+        assertNull(subject.getContextValueAsString("clear_var3"))
+        assertNull(System.getProperty("clear_var3"))
+        assertNotNull(subject.getContextValueAsString("os.name"))
+        assertNotNull(System.getProperty("os.name"))
     }
 
     @Test
@@ -336,7 +380,7 @@ class BaseCommandTest {
 
         try {
             subject.saveCount("", "", "")
-            Assert.fail("expected assertion error NOT thrown")
+            fail("expected assertion error NOT thrown")
         } catch (e: AssertionError) {
             // expected
         }
@@ -344,39 +388,39 @@ class BaseCommandTest {
         // count just the letters
         var result = subject.saveCount("a0b1c2d3e4f5g6h7i8j9k0l1m2n3o4p5q6r7s8t9u0v1w2x3y4z5", "[a-z]", "count")
         Assert.assertTrue(result.isSuccess)
-        Assert.assertEquals(26, context.getIntData("count").toLong())
+        assertEquals(26, context.getIntData("count").toLong())
 
         // count just the numbers
         result = subject.saveCount("a0b1c2d3e4f5g6h7i8j9k0l1m2n3o4p5q6r7s8t9u0v1w2x3y4z5", "[0-9]", "count")
         Assert.assertTrue(result.isSuccess)
-        Assert.assertEquals(26, context.getIntData("count").toLong())
+        assertEquals(26, context.getIntData("count").toLong())
 
         // count the sequence of letter-number-letter
         result = subject.saveCount("a0b1c2d3e4f5g6h7i8j9k0l1m2n3o4p5q6r7s8t9u0v1w2x3y4z5", "[a-z][0-9][a-z]", "count")
         Assert.assertTrue(result.isSuccess)
-        Assert.assertEquals(13, context.getIntData("count").toLong())
+        assertEquals(13, context.getIntData("count").toLong())
 
         // same, but number should be 0, 1, 2, 3, 4, or 5
         result = subject.saveCount("a0b1c2d3e4f5g6h7i8j9k0l1m2n3o4p5q6r7s8t9u0v1w2x3y4z5", "[a-z][0-5][a-z]", "count")
         Assert.assertTrue(result.isSuccess)
-        Assert.assertEquals(9, context.getIntData("count").toLong())
+        assertEquals(9, context.getIntData("count").toLong())
 
         // count just the 5's
         result = subject.saveCount("a0b1c2d3e4f5g6h7i8j9k0l1m2n3o4p5q6r7s8t9u0v1w2x3y4z5", "5", "count")
         Assert.assertTrue(result.isSuccess)
-        Assert.assertEquals(3, context.getIntData("count").toLong())
+        assertEquals(3, context.getIntData("count").toLong())
 
         // count all the spaces
         result = subject.saveCount("Now is the time for all good men to come to the aid of his country",
                                    "\\s", "count")
         Assert.assertTrue(result.isSuccess)
-        Assert.assertEquals(15, context.getIntData("count").toLong())
+        assertEquals(15, context.getIntData("count").toLong())
 
         // count all the, a, to, of, for, is, are
         result = subject.saveCount("Now is the time for all good men to come to the aid of his country",
                                    "the | a | to | of | for | is | are ", "count")
         Assert.assertTrue(result.isSuccess)
-        Assert.assertEquals(7, context.getIntData("count").toLong())
+        assertEquals(7, context.getIntData("count").toLong())
     }
 
     @Test
@@ -390,7 +434,7 @@ class BaseCommandTest {
 
         try {
             val result = subject.assertTextOrder(`var`, "true")
-            Assert.assertFalse(result.isSuccess)
+            assertFalse(result.isSuccess)
         } catch (e: AssertionError) {
             // expected
         }
@@ -419,8 +463,8 @@ class BaseCommandTest {
     @Test
     @Throws(Exception::class)
     fun assertArrayContain_withExpression() {
-        context.setData("suggestions", "[\"croissant\",\"croissant\",\"croissant\"]");
-        context.setData("search_term", "croissant");
+        context.setData("suggestions", "[\"croissant\",\"croissant\",\"croissant\"]")
+        context.setData("search_term", "croissant")
 
         val subject = BaseCommand()
         subject.init(context)

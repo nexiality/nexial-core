@@ -474,6 +474,12 @@ public class BaseCommand implements NexialCommand {
         return StepResult.success("validated EXPECTED = ACTUAL; '%s' = '%s'", expectedForDisplay, actualForDisplay);
     }
 
+    public StepResult assertMatch(String text, String regex) {
+        requiresNotBlank(regex, "invalid regex", regex);
+        boolean matched = RegexUtils.isExact(text, regex, true);
+        return new StepResult(matched, "'%s' " + (matched? "matches" : "does not match") + " '%s'", null);
+    }
+
     @Nullable
     protected String handleSpecialMarkers(String value) {
         return context.isNullValue(value) ? null :
