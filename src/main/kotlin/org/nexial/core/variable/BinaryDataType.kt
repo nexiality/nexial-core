@@ -44,7 +44,7 @@ class BinaryDataType : ExpressionDataType<ByteArray> {
 
     private var transformer: BinaryTransformer<BinaryDataType> = BinaryTransformer()
 
-    override fun getName() = "BINARY"
+    override fun getName() = BINARY
 
     override fun getTransformer() = transformer
 
@@ -62,5 +62,10 @@ class BinaryDataType : ExpressionDataType<ByteArray> {
         } else if (textValue.isNotEmpty()) {
             value = textValue.toByteArray()
         }
+    }
+
+    companion object {
+        // @JvmStatic
+        const val BINARY = "BINARY"
     }
 }

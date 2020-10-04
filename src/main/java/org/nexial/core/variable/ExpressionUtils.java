@@ -32,14 +32,20 @@ import org.nexial.core.utils.OutputResolver;
 
 import static org.nexial.core.NexialConst.Data.RESOLVE_TEXT_AS_IS;
 import static org.nexial.core.SystemVariables.getDefaultBool;
+import static org.nexial.core.variable.BinaryDataType.BINARY;
 
 public class ExpressionUtils {
     private ExpressionUtils() { }
 
     protected static String handleExternal(String dataType, String value) throws TypeConversionException {
         ExecutionContext context = ExecutionThread.get();
-        boolean openFileAsIs = context != null ? context.isResolveTextAsIs() : getDefaultBool(RESOLVE_TEXT_AS_IS);
-        return handleExternal(dataType, value, !openFileAsIs);
+        if (StringUtils.equals(dataType, BINARY)) {
+            // file content resolved by BinaryDataType itself
+            return value;
+        } else {
+            boolean openFileAsIs = context != null ? context.isResolveTextAsIs() : getDefaultBool(RESOLVE_TEXT_AS_IS);
+            return handleExternal(dataType, value, !openFileAsIs);
+        }
     }
 
     protected static String handleExternal(String dataType, String value, boolean replaceTokens)

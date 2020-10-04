@@ -60,13 +60,13 @@ public class HeadlessExpressionTests extends ExcelBasedTests {
         assertPassFail(executionSummary, "Other Commands", TestOutcomeStats.allPassed());
     }
 
-    // @Test
-    // public void binary() throws Exception {
-    //     ExecutionSummary executionSummary = testViaExcel("unitTest_binary_expression.xlsx");
-    //     assertPassFail(executionSummary, "Add or Replace-ADD", TestOutcomeStats.allPassed());
+    @Test
+    public void binary() throws Exception {
+        ExecutionSummary executionSummary = testViaExcel("unitTest_binary_expression.xlsx");
+        assertPassFail(executionSummary, "Scenario", TestOutcomeStats.allPassed());
     //     assertPassFail(executionSummary, "Add or Replace-REPLACE", TestOutcomeStats.allPassed());
     //     assertPassFail(executionSummary, "Add or Replace-NONE", TestOutcomeStats.allPassed());
     //     assertPassFail(executionSummary, "Other Commands", TestOutcomeStats.allPassed());
-    // }
+    }
 
 }

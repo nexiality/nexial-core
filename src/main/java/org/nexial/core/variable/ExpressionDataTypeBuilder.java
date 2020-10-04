@@ -35,6 +35,7 @@ import org.nexial.core.utils.ConsoleUtils;
 
 import static org.nexial.core.NexialConst.Data.TEXT_DELIM;
 import static org.nexial.core.SystemVariables.getDefault;
+import static org.nexial.core.variable.BinaryDataType.BINARY;
 import static org.nexial.core.variable.ExpressionConst.REGEX_VALID_TYPE_PREFIX;
 import static org.nexial.core.variable.ExpressionConst.REGEX_VALID_TYPE_SUFFIX;
 import static org.nexial.core.variable.ExpressionUtils.handleExternal;
@@ -145,7 +146,7 @@ final class ExpressionDataTypeBuilder {
 
     BinaryDataType newBinaryDataType(String value) throws TypeConversionException {
         BinaryDataType data = resumeExpression(value, BinaryDataType.class);
-        return data != null ? data : new BinaryDataType(handleExternal("BINARY", value));
+        return data != null ? data : new BinaryDataType(handleExternal(BINARY, value));
     }
 
     private static String resolveValidTypeRegex(Map<String, Method> newInstanceMethods) {

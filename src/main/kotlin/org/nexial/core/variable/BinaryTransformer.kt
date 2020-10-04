@@ -62,7 +62,7 @@ class BinaryTransformer<T : BinaryDataType> : Transformer<T>() {
         return data
     }
 
-    fun encodeBase64(data: T) = TextDataType(Base64.getEncoder().encodeToString(data.getValue()))
+    fun base64encode(data: T) = TextDataType(Base64.getEncoder().encodeToString(data.getValue()))
 
     fun size(data: T) = NumberDataType(if (data.value == null) "0" else data.value.size.toString())
 
