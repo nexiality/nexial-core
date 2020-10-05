@@ -291,7 +291,7 @@ public final class NexialConst {
     public static final String MSG_BAD_ACTIVITY_NAME = "non-printable characters found in Activity name '%s' " +
                                                        "will likely cause issue. Please ensure that the start/end of " +
                                                        "your Activity name does not contain whitespaces, tabs or " +
-                                                       "newline characters.";
+                                                       "newline characters.\n\n";
 
 
     public static final String COMMENT_AUTHOR = "NexialBot";
