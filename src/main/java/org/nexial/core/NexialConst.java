@@ -288,11 +288,9 @@ public final class NexialConst {
     public static final String MSG_REPEAT_UNTIL = "[repeat-until] ";
     public static final String MSG_REPEAT_UNTIL_BREAK = MSG_REPEAT_UNTIL + "loop terminating due to break-loop condition";
     public static final String NESTED_SECTION_STEP_SKIPPED = "current step skipped due to the enclosing section command being skipped";
-    public static final String MSG_BAD_ACTIVITY_NAME = "non-printable characters found in Activity name '%s' " +
-                                                       "will likely cause issue. Please ensure that the start/end of " +
-                                                       "your Activity name does not contain whitespaces, tabs or " +
-                                                       "newline characters.\n\n";
-
+    public static final String MSG_PROBLMATIC_NAME = "leading/trailing non-printable characters (whitespaces, tabs " +
+                                                     "or newlines) found in %s name '%s' will likely cause " +
+                                                     "execution-time issue.";
 
     public static final String COMMENT_AUTHOR = "NexialBot";
 

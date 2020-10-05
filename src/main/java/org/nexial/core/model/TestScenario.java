@@ -247,14 +247,14 @@ public class TestScenario {
             String errorPrefix = scenarioRef + "[" + cellActivity.getReference() + "]: ";
             String activity = Excel.getCellValue(cellActivity);
 
-            // detect space only activity anems
+            // detect space only activity name
             if (StringUtils.isNotEmpty(activity) && StringUtils.isAllBlank(activity)) {
                 throw new RuntimeException(errorPrefix + "Found invalid, space-only activity name");
             }
 
             // detect leading/trailing non-printable characters
             if (!StringUtils.equals(activity, StringUtils.trim(activity))) {
-                throw new RuntimeException(String.format(errorPrefix + MSG_BAD_ACTIVITY_NAME, activity));
+                throw new RuntimeException(String.format(errorPrefix + MSG_PROBLMATIC_NAME, activity));
             }
 
             boolean hasActivity = StringUtils.isNotBlank(activity);

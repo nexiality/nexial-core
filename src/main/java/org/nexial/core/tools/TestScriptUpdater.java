@@ -159,7 +159,7 @@ public class TestScriptUpdater {
                     scanInvalidCommands(excel, metadata);
                     if (verbose) { System.out.println("\tcompleted script inspection"); }
 
-                    findBadActivityName(excel, ADDR_COMMAND_START);
+                    findProblematicNames(excel, ADDR_COMMAND_START);
                     fixDuplicateActivities(excel, ADDR_COMMAND_START);
                     resetZoomAndStartingPosition(excel, 1, "A5");
                     excel.save();
@@ -173,7 +173,7 @@ public class TestScriptUpdater {
                     scanInvalidMacroCommands(excel, metadata);
                     if (verbose) { System.out.println("\tcompleted macro inspection"); }
 
-                    findBadActivityName(excel, ADDR_MACRO_COMMAND_START);
+                    findProblematicNames(excel, ADDR_MACRO_COMMAND_START);
                     fixDuplicateActivities(excel, ADDR_MACRO_COMMAND_START);
                     resetZoomAndStartingPosition(excel, 1, "A2");
                     excel.save();
@@ -475,11 +475,20 @@ public class TestScriptUpdater {
         }
     }
 
-    private void findBadActivityName(Excel excel, ExcelAddress addrCommandStart) {
+    private void findProblematicNames(Excel excel, ExcelAddress addrCommandStart) {
+        String filename = excel.getFile().getName();
+
         // find all existing worksheet (minus system sheet)
         excel.getWorksheetsStartWith("").forEach(sheet -> {
             String sheetName = sheet.getName();
             if (StringUtils.equals(sheetName, SHEET_SYSTEM)) { return; }
+
+            String sheetNameTrimmed = StringUtils.trim(sheetName);
+            if (!StringUtils.equals(sheetName, sheetNameTrimmed)) {
+                System.err.printf("\t[%s]: " + MSG_PROBLMATIC_NAME + "\n", filename, "sheet", sheetName);
+                System.out.printf("\t[%s]: fixing sheet name now...\n\n", filename);
+                sheet.setSheetName(sheetNameTrimmed);
+            }
 
             String commandAreaAddr = "" + COL_TEST_CASE + (addrCommandStart.getRowStartIndex() + 1) + ":" +
                                      COL_CAPTURE_SCREEN + sheet.findLastDataRow(addrCommandStart);
@@ -493,9 +502,12 @@ public class TestScriptUpdater {
                 if (StringUtils.isEmpty(activityName)) { continue; }
 
                 // detect non-printable characters in activity name -- WARN
-                if (!StringUtils.equals(activityName, StringUtils.trim(activityName))) {
+                String activityNameTrimmed = StringUtils.trim(activityName);
+                if (!StringUtils.equals(activityName, activityNameTrimmed)) {
                     String cellAddress = cellActivity.getAddress().formatAsString();
-                    System.err.printf("\t[%s]: " + MSG_BAD_ACTIVITY_NAME, cellAddress, activityName);
+                    System.err.printf("\t[%s]: " + MSG_PROBLMATIC_NAME + "\n", cellAddress, "Activity", activityName);
+                    System.out.printf("\t[%s]: fixing activity name now...\n\n", cellAddress);
+                    cellActivity.setCellValue(activityNameTrimmed);
                 }
             }
         });
