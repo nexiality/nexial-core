@@ -53,8 +53,7 @@ import static java.io.File.separator;
 import static org.nexial.core.CommandConst.PARAM_AUTO_FILL_COMMANDS;
 import static org.nexial.core.NexialConst.Data.SHEET_SYSTEM;
 import static org.nexial.core.NexialConst.ExitStatus.RC_BAD_CLI_ARGS;
-import static org.nexial.core.NexialConst.MSG_SCRIPT_UPDATE_ERR;
-import static org.nexial.core.NexialConst.NL;
+import static org.nexial.core.NexialConst.*;
 import static org.nexial.core.NexialConst.Project.COMMAND_JSON_FILE_NAME;
 import static org.nexial.core.excel.ExcelConfig.*;
 import static org.nexial.core.tools.CliConst.OPT_VERBOSE;
@@ -160,10 +159,9 @@ public class TestScriptUpdater {
                     scanInvalidCommands(excel, metadata);
                     if (verbose) { System.out.println("\tcompleted script inspection"); }
 
+                    findBadActivityName(excel, ADDR_COMMAND_START);
                     fixDuplicateActivities(excel, ADDR_COMMAND_START);
-
                     resetZoomAndStartingPosition(excel, 1, "A5");
-
                     excel.save();
 
                 } else if (InputFileUtils.isValidMacro(excel)) {
@@ -175,6 +173,7 @@ public class TestScriptUpdater {
                     scanInvalidMacroCommands(excel, metadata);
                     if (verbose) { System.out.println("\tcompleted macro inspection"); }
 
+                    findBadActivityName(excel, ADDR_MACRO_COMMAND_START);
                     fixDuplicateActivities(excel, ADDR_MACRO_COMMAND_START);
                     resetZoomAndStartingPosition(excel, 1, "A2");
                     excel.save();
@@ -476,6 +475,32 @@ public class TestScriptUpdater {
         }
     }
 
+    private void findBadActivityName(Excel excel, ExcelAddress addrCommandStart) {
+        // find all existing worksheet (minus system sheet)
+        excel.getWorksheetsStartWith("").forEach(sheet -> {
+            String sheetName = sheet.getName();
+            if (StringUtils.equals(sheetName, SHEET_SYSTEM)) { return; }
+
+            String commandAreaAddr = "" + COL_TEST_CASE + (addrCommandStart.getRowStartIndex() + 1) + ":" +
+                                     COL_CAPTURE_SCREEN + sheet.findLastDataRow(addrCommandStart);
+            ExcelArea area = new ExcelArea(sheet, new ExcelAddress(commandAreaAddr), false);
+            for (int j = 0; j < area.getWholeArea().size(); j++) {
+                List<XSSFCell> row = area.getWholeArea().get(j);
+
+                XSSFCell cellActivity = row.get(COL_IDX_TESTCASE);
+
+                String activityName = Excel.getCellValue(cellActivity);
+                if (StringUtils.isEmpty(activityName)) { continue; }
+
+                // detect non-printable characters in activity name -- WARN
+                if (!StringUtils.equals(activityName, StringUtils.trim(activityName))) {
+                    String cellAddress = cellActivity.getAddress().formatAsString();
+                    System.err.printf("\t[%s]: " + MSG_BAD_ACTIVITY_NAME, cellAddress, activityName);
+                }
+            }
+        });
+    }
+
     private void fixDuplicateActivities(Excel excel, ExcelAddress addrCommandStart) {
         if (!fixDuplicateActivity) { return; }
 
@@ -484,27 +509,28 @@ public class TestScriptUpdater {
         // find all existing worksheet (minus system sheet)
         excel.getWorksheetsStartWith("").forEach(sheet -> {
             String sheetName = sheet.getName();
-            if (!StringUtils.equals(sheetName, SHEET_SYSTEM)) {
+            if (StringUtils.equals(sheetName, SHEET_SYSTEM)) { return; }
 
-                String commandAreaAddr = "" + COL_TEST_CASE + (addrCommandStart.getRowStartIndex() + 1) + ":" +
-                                         COL_CAPTURE_SCREEN + sheet.findLastDataRow(addrCommandStart);
-                ExcelArea area = new ExcelArea(sheet, new ExcelAddress(commandAreaAddr), false);
-                for (int j = 0; j < area.getWholeArea().size(); j++) {
-                    List<XSSFCell> row = area.getWholeArea().get(j);
+            String commandAreaAddr = "" + COL_TEST_CASE + (addrCommandStart.getRowStartIndex() + 1) + ":" +
+                                     COL_CAPTURE_SCREEN + sheet.findLastDataRow(addrCommandStart);
+            ExcelArea area = new ExcelArea(sheet, new ExcelAddress(commandAreaAddr), false);
+            for (int j = 0; j < area.getWholeArea().size(); j++) {
+                List<XSSFCell> row = area.getWholeArea().get(j);
 
-                    // check for activity name duplicates
-                    XSSFCell cellActivity = row.get(COL_IDX_TESTCASE);
-                    String activityName = Excel.getCellValue(cellActivity);
-                    if (StringUtils.isNotBlank(activityName)) {
-                        String newActivityName = findNewActivityName(activityNames, activityName);
-                        String cellAddress = cellActivity.getAddress().formatAsString();
-                        activityNames.put(newActivityName, cellAddress);
-                        if (!StringUtils.equals(activityName, newActivityName)) {
-                            System.out.printf("\t[%s]: duplicate activity name renamed from %s to %s" + NL,
-                                              cellAddress, activityName, newActivityName);
-                            cellActivity.setCellValue(newActivityName);
-                        }
-                    }
+                XSSFCell cellActivity = row.get(COL_IDX_TESTCASE);
+
+                String activityName = Excel.getCellValue(cellActivity);
+                if (StringUtils.isEmpty(activityName)) { continue; }
+
+                String cellAddress = cellActivity.getAddress().formatAsString();
+                String newActivityName = findNewActivityName(activityNames, activityName);
+                activityNames.put(newActivityName, cellAddress);
+
+                // check for activity name duplicates
+                if (!StringUtils.equals(activityName, newActivityName)) {
+                    System.out.printf("\t[%s]: duplicate activity name renamed from %s to %s" + NL,
+                                      cellAddress, activityName, newActivityName);
+                    cellActivity.setCellValue(newActivityName);
                 }
             }
         });
