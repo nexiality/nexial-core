@@ -254,7 +254,7 @@ public class TestScenario {
 
             // detect leading/trailing non-printable characters
             if (!StringUtils.equals(activity, StringUtils.trim(activity))) {
-                throw new RuntimeException(String.format(errorPrefix + MSG_PROBLMATIC_NAME, activity));
+                throw new RuntimeException(String.format(errorPrefix + MSG_PROBLMATIC_NAME, "activity", activity));
             }
 
             boolean hasActivity = StringUtils.isNotBlank(activity);

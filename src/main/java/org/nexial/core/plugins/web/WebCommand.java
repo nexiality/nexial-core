@@ -26,6 +26,7 @@ import java.util.List;
 import java.util.*;
 import java.util.function.Function;
 import java.util.stream.Collectors;
+import javax.annotation.Nullable;
 import javax.imageio.ImageIO;
 import javax.validation.constraints.NotNull;
 
@@ -1225,26 +1226,42 @@ public class WebCommand extends BaseCommand implements CanTakeScreenshot, CanLog
     }
 
     public StepResult doubleClickByLabel(String label) {
-        return doubleClickByLabelAndWait(label, context.getPollWaitMs() + "");
+        if (browser.isRunSafari()) { return StepResult.fail("double-click not supported by Safari"); }
+        return doubleClickInternal(locatorHelper.resolveLabelXpath(label));
     }
 
     public StepResult doubleClickByLabelAndWait(String label, String waitMs) {
         if (browser.isRunSafari()) { return StepResult.fail("double-click not supported by Safari"); }
-
-        String xpath = locatorHelper.resolveLabelXpath(label);
-        StepResult result = assertOneMatch(xpath);
-        return result.failed() ? result : doubleClickAndWait(xpath, waitMs);
+        return doubleClickAndWait(locatorHelper.resolveLabelXpath(label), waitMs);
     }
 
-    public StepResult doubleClick(String locator) {
-        StepResult result = doubleClickAndWait(locator, context.getPollWaitMs() + "");
-        if (result.failed()) { return result; }
-        return StepResult.success("double-clicked '" + locator + "'");
+    public StepResult doubleClick(String locator) { return doubleClickInternal(locator); }
+
+    public StepResult doubleClickAndWait(String locator, String waitMs) {
+        requiresPositiveNumber(waitMs, "invalid waitMs", waitMs);
+
+        long waitMs1 = NumberUtils.toInt(waitMs);
+
+        Timeouts timeouts = driver.manage().timeouts();
+        boolean timeoutChangesEnabled = browser.browserType.isTimeoutChangesEnabled();
+
+        // if browser supports implicit wait and we are not using explicit wait (`WEB_ALWAYS_WAIT`), then
+        // we'll change timeout's implicit wait time
+        if (timeoutChangesEnabled) { timeouts.pageLoadTimeout(waitMs1, MILLISECONDS); }
+
+        try {
+            return doubleClickInternal(locator);
+        } finally {
+            if (timeoutChangesEnabled) {
+                timeouts.pageLoadTimeout(context.getIntConfig("web", profile, WEB_PAGE_LOAD_WAIT_MS), MILLISECONDS);
+            } else {
+                waitForBrowserStability(waitMs1);
+            }
+        }
     }
 
     public StepResult rightClick(String locator) {
         WebElement element = toElement(locator);
-        scrollIntoView(element);
         highlight(element);
         new Actions(driver).moveToElement(element).contextClick(element).build().perform();
         return StepResult.success("right-clicked on '" + locator + "'");
@@ -2063,39 +2080,6 @@ public class WebCommand extends BaseCommand implements CanTakeScreenshot, CanLog
         logToBrowserConsole(testStep.showPosition() + " " + message);
     }
 
-    // todo need to test
-    public StepResult doubleClickAndWait(String locator, String waitMs) {
-        requiresPositiveNumber(waitMs, "invalid waitMs", waitMs);
-
-        long waitMs1 = NumberUtils.toInt(waitMs);
-
-        Timeouts timeouts = driver.manage().timeouts();
-        boolean timeoutChangesEnabled = browser.browserType.isTimeoutChangesEnabled();
-
-        // if browser supports implicit wait and we are not using explicit wait (`WEB_ALWAYS_WAIT`), then
-        // we'll change timeout's implicit wait time
-        if (timeoutChangesEnabled) { timeouts.pageLoadTimeout(waitMs1, MILLISECONDS); }
-
-        try {
-            WebElement element = toElement(locator);
-            scrollIntoView(element);
-            highlight(element);
-            new Actions(driver).moveToElement(element).doubleClick(element).build().perform();
-
-            StepResult result = clickInternal(locator);
-            return result.failed() ? result : StepResult.success("double-clicked-and-waited '" + locator + "'");
-        } finally {
-            if (timeoutChangesEnabled) {
-                timeouts.pageLoadTimeout(context.getIntConfig("web", profile, WEB_PAGE_LOAD_WAIT_MS), MILLISECONDS);
-            } else {
-                waitForBrowserStability(waitMs1);
-            }
-
-            // could have alert text...
-            alert.preemptiveDismissAlert();
-        }
-    }
-
     public StepResult close() {
         ensureReady();
 
@@ -2664,19 +2648,33 @@ public class WebCommand extends BaseCommand implements CanTakeScreenshot, CanLog
         }
     }
 
-    protected StepResult clickInternal(String locator) {
+    protected void jsClick(WebElement element) {
+        ConsoleUtils.log("click target via JS, @id=" + element.getAttribute("id"));
+        scrollIntoView(element);
+        ConsoleUtils.log("clicked -> " + jsExecutor.executeScript("arguments[0].click(); return true;", element));
+    }
+
+    @Nullable
+    protected WebElement findFirstMatchedElement(String locator) {
         WebElement element;
         try {
             List<WebElement> matches = findElements(locator);
             element = CollectionUtils.isEmpty(matches) ? null : matches.get(0);
+            if (element == null) { throw new IllegalArgumentException("No element via locator '" + locator + "'"); }
+            return element;
         } catch (TimeoutException e) {
-            return StepResult.fail("Unable to find element via locator '" + locator + "' within allotted time");
+            throw new IllegalArgumentException("Timed out while finding element via locator '" + locator + "'");
         }
+    }
 
-        if (element == null) { return StepResult.fail("No element via locator '" + locator + "'"); }
-
-        ConsoleUtils.log("clicking '" + locator + "'...");
-        return clickInternal(element);
+    protected StepResult clickInternal(String locator) {
+        try {
+            WebElement element = findFirstMatchedElement(locator);
+            ConsoleUtils.log("clicking '" + locator + "'...");
+            return clickInternal(element);
+        } catch (IllegalArgumentException e) {
+            return StepResult.fail(e.getMessage());
+        }
     }
 
     /** internal impl. to handle browser-specific behavior regarding click */
@@ -2719,10 +2717,23 @@ public class WebCommand extends BaseCommand implements CanTakeScreenshot, CanLog
         }
     }
 
-    protected void jsClick(WebElement element) {
-        ConsoleUtils.log("click target via JS, @id=" + element.getAttribute("id"));
-        scrollIntoView(element);
-        ConsoleUtils.log("clicked -> " + jsExecutor.executeScript("arguments[0].click(); return true;", element));
+    protected StepResult doubleClickInternal(String locator) {
+        try {
+            WebElement element = findFirstMatchedElement(locator);
+            ConsoleUtils.log("double-clicking '" + locator + "'...");
+            highlight(element);
+            new Actions(driver).moveToElement(element).doubleClick(element).build().perform();
+            return StepResult.success("double-clicked on web element '" + locator + "'");
+        } catch (IllegalArgumentException e) {
+            return StepResult.fail(e.getMessage());
+        } catch (WebDriverException e) {
+            return StepResult.fail(WebDriverExceptionHelper.resolveErrorMessage(e));
+        } catch (Exception e) {
+            return StepResult.fail(e.getMessage(), e);
+        } finally {
+            // could have alert text...
+            alert.preemptiveDismissAlert();
+        }
     }
 
     protected void initWebDriver() {

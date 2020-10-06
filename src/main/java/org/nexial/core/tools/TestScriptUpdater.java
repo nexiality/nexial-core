@@ -505,7 +505,7 @@ public class TestScriptUpdater {
                 String activityNameTrimmed = StringUtils.trim(activityName);
                 if (!StringUtils.equals(activityName, activityNameTrimmed)) {
                     String cellAddress = cellActivity.getAddress().formatAsString();
-                    System.err.printf("\t[%s]: " + MSG_PROBLMATIC_NAME + "\n", cellAddress, "Activity", activityName);
+                    System.err.printf("\t[%s]: " + MSG_PROBLMATIC_NAME + "\n", cellAddress, "activity", activityName);
                     System.out.printf("\t[%s]: fixing activity name now...\n\n", cellAddress);
                     cellActivity.setCellValue(activityNameTrimmed);
                 }
