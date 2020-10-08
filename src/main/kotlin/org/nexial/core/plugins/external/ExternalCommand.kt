@@ -201,12 +201,14 @@ class ExternalCommand : BaseCommand() {
 
     fun openFile(filePath: String): StepResult {
         requires(StringUtils.isNotBlank(filePath), "empty/null programName")
-        try {
-            ExecUtils.openAnyFile(filePath)
-            return StepResult.success()
-        } catch (e: Exception) {
-            return StepResult.fail(e.message)
-        }
+        val outcome = ExecUtils.openFileWaitForStatus(filePath)
+
+        return if (outcome.exitStatus == 0)
+            StepResult.success("file opened successfully")
+        else if (StringUtils.isNotBlank(outcome.stderr))
+            StepResult.fail(outcome.stderr)
+        else
+            StepResult.fail("system could not open the file")
     }
 
     companion object {

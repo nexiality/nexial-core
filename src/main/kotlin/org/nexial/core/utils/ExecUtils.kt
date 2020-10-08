@@ -19,6 +19,7 @@ package org.nexial.core.utils
 import org.apache.commons.lang3.StringUtils
 import org.apache.commons.lang3.SystemUtils.*
 import org.nexial.commons.proc.ProcessInvoker
+import org.nexial.commons.proc.ProcessOutcome
 import org.nexial.commons.utils.DateUtility
 import org.nexial.core.Nexial
 import org.nexial.core.NexialConst.*
@@ -213,14 +214,14 @@ object ExecUtils {
         if (StringUtils.isBlank(reportFile) || isRunningInZeroTouchEnv()) return
 
         try {
-            openAnyFile(reportFile)
+            openFileNoWait(reportFile)
         } catch (e: IOException) {
             ConsoleUtils.error("ERROR!!! Can't open " + reportFile + ": " + e.message)
         }
     }
 
     @JvmStatic
-    fun openAnyFile(filePath: String) {
+    fun openFileNoWait(filePath: String) {
         if (IS_OS_MAC) {
             ProcessInvoker.invokeNoWait("open", listOf(filePath), null)
         } else if (IS_OS_LINUX) {
@@ -230,6 +231,25 @@ object ExecUtils {
             // start "" [program]... will cause CMD to exit before program executes.. sorta like running program in background
             ProcessInvoker.invokeNoWait(WIN32_CMD, arrayListOf("/C", "start", "\"\"", "\"" + filePath + "\""),
                                         null)
+        }
+    }
+
+    @JvmStatic
+    fun openFileWaitForStatus(filePath: String): ProcessOutcome {
+        return if (IS_OS_MAC) {
+            ProcessInvoker.invoke("open", listOf(filePath), null)
+        } else if (IS_OS_LINUX) {
+            ProcessInvoker.invoke("xdg-open", listOf(filePath), null)
+        } else if (IS_OS_WINDOWS) {
+            // https://superuser.com/questions/198525/how-can-i-execute-a-windows-command-line-in-background
+            // start "" [program]... will cause CMD to exit before program executes.. sorta like running program in background
+            ProcessInvoker.invoke(WIN32_CMD, arrayListOf("/C", "start", "\"\"", "\"" + filePath + "\""),
+                                  null)
+        } else {
+            val outcome = ProcessOutcome()
+            outcome.exitStatus = 1
+            outcome.stderr = "OS not supported"
+            outcome
         }
     }
 }
