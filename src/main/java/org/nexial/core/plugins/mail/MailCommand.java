@@ -171,7 +171,7 @@ public class MailCommand extends BaseCommand {
     }
 
     /**
-     * Command to delete the email configuration variable passed in. The variable will be deleted in case if it exists.
+     * Command to delete the email configuration variable passed in as `var`. The variable will be deleted in case if it exists.
      * If not it will give a failure message.
      *
      * @param var the name of the mail configuration variable.
