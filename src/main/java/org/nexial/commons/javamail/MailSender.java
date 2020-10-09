@@ -18,10 +18,7 @@
 package org.nexial.commons.javamail;
 
 import java.io.File;
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.Date;
-import java.util.List;
+import java.util.*;
 import javax.activation.DataHandler;
 import javax.activation.DataSource;
 import javax.activation.FileDataSource;
@@ -89,29 +86,14 @@ public final class MailSender {
                          File... attachments) throws MessagingException {
 
         if (mail == null) { throw new RuntimeException("Mail instance not set/found"); }
-
         Session session = mail.getSession();
-        SMTPTransport transport = mail.createTransport(session);
-        String contentType = mail.getConfiguredProperty(MAIL_KEY_CONTENT_TYPE);
 
+        String contentType = mail.getConfiguredProperty(MAIL_KEY_CONTENT_TYPE);
         Message msg = new MimeMessage(session);
 
-        try {
+        try (SMTPTransport transport = mail.createTransport(session)) {
             // to, cc, bcc, from
-            for (String addr : to) { msg.addRecipient(TO, new InternetAddress(addr)); }
-            if (cc != null) { for (String addr : cc) { msg.addRecipient(CC, new InternetAddress(addr)); } }
-            if (bcc != null) { for (String addr : bcc) { msg.addRecipient(BCC, new InternetAddress(addr)); } }
-            msg.setFrom(new InternetAddress(from));
-
-            // subject
-            msg.setSubject(subject);
-
-            Multipart mp = new MimeMultipart();
-
-            // content
-            MimeBodyPart part = new MimeBodyPart();
-            part.setContent(content, contentType);
-            mp.addBodyPart(part);
+            Multipart mp = getMultipart(to, cc, bcc, from, subject, content, contentType, msg);
 
             // attachments
             if (attachments != null) {
@@ -125,14 +107,84 @@ public final class MailSender {
             }
 
             // final steps
-            msg.setContent(mp);
-            msg.setSentDate(new Date());
-            msg.saveChanges();
-
-            // send it!
-            transport.sendMessage(msg, msg.getAllRecipients());
-        } finally {
-            transport.close();
+            sendMessage(transport, msg, mp);
         }
     }
+
+    public void sendMail(List<String> to,
+                         List<String> cc,
+                         List<String> bcc,
+                         String from,
+                         String subject,
+                         String content,
+                         Map<String, File> attachments) throws MessagingException {
+
+        if (mail == null) {
+            throw new RuntimeException("Mail instance not set/found");
+        }
+
+        Session session = mail.getSession();
+        String contentType = mail.getConfiguredProperty(MAIL_KEY_CONTENT_TYPE);
+        Message msg = new MimeMessage(session);
+
+        try (SMTPTransport transport = mail.createTransport(session)) {
+            // to, cc, bcc, from
+            Multipart mp = getMultipart(to, cc, bcc, from, subject, content, contentType, msg);
+
+            // attachments
+            if (attachments != null) {
+                for (String attachment : attachments.keySet()) {
+                    MimeBodyPart messageBodyPart = new MimeBodyPart();
+                    DataSource source = new FileDataSource(attachments.get(attachment));
+                    messageBodyPart.setDataHandler(new DataHandler(source));
+                    messageBodyPart.setFileName(attachment);
+                    mp.addBodyPart(messageBodyPart);
+                }
+            }
+            sendMessage(transport, msg, mp);
+
+        }
+    }
+
+    private Multipart getMultipart(List<String> to, List<String> cc, List<String> bcc, String from, String subject, String content, String contentType, Message msg) throws MessagingException {
+        for (String addr : to) {
+            msg.addRecipient(TO, new InternetAddress(addr));
+        }
+
+        if (cc != null) {
+            for (String addr : cc) {
+                msg.addRecipient(CC, new InternetAddress(addr));
+            }
+        }
+
+        if (bcc != null) {
+            for (String addr : bcc) {
+                msg.addRecipient(BCC, new InternetAddress(addr));
+            }
+        }
+
+        msg.setFrom(new InternetAddress(from));
+
+        // subject
+        msg.setSubject(subject);
+
+        Multipart mp = new MimeMultipart();
+
+        // content
+        MimeBodyPart part = new MimeBodyPart();
+        part.setContent(content, contentType);
+        mp.addBodyPart(part);
+        return mp;
+    }
+
+    private void sendMessage(SMTPTransport transport, Message msg, Multipart mp) throws MessagingException {
+        // final steps
+        msg.setContent(mp);
+        msg.setSentDate(new Date());
+        msg.saveChanges();
+
+        // send it!
+        transport.sendMessage(msg, msg.getAllRecipients());
+    }
+
 }
