@@ -343,6 +343,7 @@ public final class OutputFileUtils {
 
         return path +
                execDef.getPlanFilename() + DELIM +
+               webFriendly(execDef.getPlanName()) + DELIM +
                StringUtils.leftPad(execDef.getPlanSequence() + "", 3, "0") + PLAN_SCRIPT_SEP +
                outputFileName;
     }

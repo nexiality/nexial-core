@@ -77,6 +77,7 @@ public final class NexialConst {
     // @formatter:off
 
     // default values
+    public static final String DOCUMENTATION_SYSTEM_VAR_URL = "https://nexiality.github.io/documentation/systemvars/";
     public static final String DATE_FORMAT_NOW = "yyyy-MM-dd-HH-mm-ss.S";
     public static final String COOKIE_DATE_FORMAT = "EEE, dd MMM yyyy HH:mm:ss ZZZ";
     public static final String COOKIE_DATE_FORMAT2 = "EEE, dd-MMM-yyyy HH:mm:ss ZZZ";
@@ -896,7 +897,11 @@ public final class NexialConst {
         public static final String DEF_REL_LOC_OUTPUT = "output" + separator;
         public static final String DEF_PROJECT_PROPS = "project.properties";
         public static final String DEF_REL_PROJECT_PROPS = DEF_REL_LOC_ARTIFACT + DEF_PROJECT_PROPS;
-        public static final String DEF_REL_META_PROJ_ID = ".meta" + separator + "project.id";
+        public static final String DEF_REL_META = ".meta" + separator;
+        public static final String DEF_REL_META_PROJ_ID = DEF_REL_META + "project.id";
+        public static final String DEF_REL_META_EXECUTION = DEF_REL_META + "execution";
+
+
 
         public static final String NEXIAL_HOME = NAMESPACE + "home";
         public static final String NEXIAL_BIN_REL_PATH = "bin" + separator;
