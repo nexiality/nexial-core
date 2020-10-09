@@ -204,11 +204,11 @@ class ExternalCommand : BaseCommand() {
         val outcome = ExecUtils.openFileWaitForStatus(filePath)
 
         return if (outcome.exitStatus == 0)
-            StepResult.success("file opened successfully")
+            StepResult.success("Successfully opened $filePath")
         else if (StringUtils.isNotBlank(outcome.stderr))
             StepResult.fail(outcome.stderr)
         else
-            StepResult.fail("system could not open the file")
+            StepResult.fail("Unable to open $filePath")
     }
 
     companion object {
