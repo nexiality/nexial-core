@@ -21,6 +21,8 @@ import java.io.File;
 import java.util.List;
 import java.util.Map;
 
+import org.apache.commons.lang3.builder.ToStringBuilder;
+
 /**
  * This is a class for setting the Email configurations on the fly.
  */
@@ -33,72 +35,46 @@ public class EmailSettings {
     private Map<String, File> attachments;
     private String failure;
 
-    public List<String> getToRecipients() {
-        return toRecipients;
-    }
+    public List<String> getToRecipients() { return toRecipients; }
 
-    public void setToRecipients(List<String> toRecipients) {
-        this.toRecipients = toRecipients;
-    }
+    public void setToRecipients(List<String> toRecipients) { this.toRecipients = toRecipients; }
 
-    public List<String> getCcRecipients() {
-        return ccRecipients;
-    }
+    public List<String> getCcRecipients() {return ccRecipients; }
 
-    public void setCcRecipients(List<String> ccRecipients) {
-        this.ccRecipients = ccRecipients;
-    }
+    public void setCcRecipients(List<String> ccRecipients) { this.ccRecipients = ccRecipients; }
 
-    public List<String> getBccRecipients() {
-        return bccRecipients;
-    }
+    public List<String> getBccRecipients() {return bccRecipients; }
 
-    public void setBccRecipients(List<String> bccRecipients) {
-        this.bccRecipients = bccRecipients;
-    }
+    public void setBccRecipients(List<String> bccRecipients) { this.bccRecipients = bccRecipients; }
 
-    public String getSubject() {
-        return subject;
-    }
+    public String getSubject() {return subject; }
 
-    public void setSubject(String subject) {
-        this.subject = subject;
-    }
+    public void setSubject(String subject) { this.subject = subject; }
 
-    public String getBody() {
-        return body;
-    }
+    public String getBody() {return body; }
 
-    public void setBody(String body) {
-        this.body = body;
-    }
+    public void setBody(String body) { this.body = body; }
 
-    public String getFailure() {
-        return failure;
-    }
+    public String getFailure() {return failure; }
 
-    public void setFailure(String failure) {
-        this.failure = failure;
-    }
+    public void setFailure(String failure) { this.failure = failure; }
 
-    public Map<String, File> getAttachments() {
-        return attachments;
-    }
+    public void clearFailure() { this.failure = null; }
 
-    public void setAttachments(Map<String, File> attachments) {
-        this.attachments = attachments;
-    }
+    public Map<String, File> getAttachments() {return attachments; }
+
+    public void setAttachments(Map<String, File> attachments) { this.attachments = attachments; }
 
     @Override
     public String toString() {
-        return "EmailSettings{" +
-                "toRecipients=" + toRecipients +
-                ", ccRecipients=" + ccRecipients +
-                ", bccRecipients=" + bccRecipients +
-                ", subject='" + subject + '\'' +
-                ", body='" + body + '\'' +
-                ", attachments=" + attachments +
-                ", failure='" + failure + '\'' +
-                '}';
+        return new ToStringBuilder(this)
+                   .append("toRecipients", toRecipients)
+                   .append("ccRecipients", ccRecipients)
+                   .append("bccRecipients", bccRecipients)
+                   .append("subject", subject)
+                   .append("body", body)
+                   .append("attachments", attachments)
+                   .append("failure", failure)
+                   .toString();
     }
 }

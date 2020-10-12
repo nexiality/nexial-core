@@ -44,27 +44,27 @@ class MailProfile {
     private String contentType = MIME_HTML;
     private int bufferSize = 512;
 
-    public String getHost() { return host;}
+    public String getHost() { return host; }
 
-    public int getPort() { return port;}
+    public int getPort() { return port; }
 
-    public boolean isAuth() { return auth;}
+    public boolean isAuth() { return auth; }
 
-    public String getUsername() { return username;}
+    public String getUsername() { return username; }
 
-    public String getPassword() { return password;}
+    public String getPassword() { return password; }
 
-    public String getFrom() { return from;}
+    public String getFrom() { return from; }
 
-    public boolean isTls() { return tls;}
+    public boolean isTls() { return tls; }
 
-    public String getProtocol() { return protocol;}
+    public String getProtocol() { return protocol; }
 
-    public String getContentType() { return contentType;}
+    public String getContentType() { return contentType; }
 
-    public int getBufferSize() { return bufferSize;}
+    public int getBufferSize() { return bufferSize; }
 
-    public Properties toProperties() {
+    protected Properties toProperties() {
         Properties properties = new Properties();
         properties.setProperty(MAIL_KEY_MAIL_HOST, host);
         properties.setProperty(MAIL_KEY_MAIL_PORT, port + "");
@@ -78,7 +78,7 @@ class MailProfile {
         return properties;
     }
 
-    static MailProfile newInstance(String profile) {
+    protected static MailProfile newInstance(String profile) {
         requiresNotBlank(profile, "Invalid profile", profile);
 
         ExecutionContext context = ExecutionThread.get();
