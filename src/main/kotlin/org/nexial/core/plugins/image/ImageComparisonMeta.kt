@@ -19,14 +19,31 @@ package org.nexial.core.plugins.image
 /**
  * image comparison metadata
  */
-data class ImageComparisonMeta(val expected: String, val actual: String, val matchPercent: Float,
-                               val tolerance: Float, val count: Int, val differences: List<Difference>,
-                               val smallest: Difference?, val largest: Difference?, val trimmed: Boolean) {
+data class ImageComparisonMeta(val expected: String,
+                               val actual: String,
+                               val matchPercent: Float,
+                               val tolerance: Float,
+                               val count: Int,
+                               val differences: List<Difference>,
+                               val smallest: Difference?,
+                               val largest: Difference?,
+                               val trimmed: Boolean) {
 
-    constructor(expected: String, actual: String, differences: List<Difference>,
-                matchPercent: Float, tolerance: Float, trimmed: Boolean) :
-        this(expected, actual, matchPercent, tolerance, differences.size,
-             differences, sortByArea(differences).first, sortByArea(differences).second, trimmed)
+    constructor(expected: String,
+                actual: String,
+                differences: List<Difference>,
+                matchPercent: Float,
+                tolerance: Float,
+                trimmed: Boolean) :
+            this(expected,
+                 actual,
+                 matchPercent,
+                 tolerance,
+                 differences.size,
+                 differences,
+                 sortByArea(differences).first,
+                 sortByArea(differences).second,
+                 trimmed)
 
     override fun toString() = "{\n" +
                               "    expected=$expected,\n" +
@@ -41,6 +58,7 @@ data class ImageComparisonMeta(val expected: String, val actual: String, val mat
                               "}"
 
     companion object {
+
         // find smallest and largest difference in pair after sorting by area
         fun sortByArea(differences: List<Difference>): Pair<Difference?, Difference?> {
             val sorted = differences.sortedBy { it.diffArea() }
@@ -51,6 +69,7 @@ data class ImageComparisonMeta(val expected: String, val actual: String, val mat
 }
 
 data class Difference(val x: Int, val y: Int, val width: Int, val height: Int) {
+
     override fun toString() = "\n{\n" +
                               "    x=$x,\n" +
                               "    y=$y,\n" +

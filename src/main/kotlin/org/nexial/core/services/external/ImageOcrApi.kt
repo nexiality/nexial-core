@@ -17,29 +17,39 @@
 
 package org.nexial.core.services.external
 
+import com.google.gson.JsonIOException
+import com.google.gson.JsonObject
 import org.apache.commons.io.FileUtils
 import org.apache.commons.lang3.StringUtils
 import org.json.JSONArray
 import org.json.JSONObject
 import org.nexial.commons.ServiceException
+import org.nexial.commons.utils.DateUtility
 import org.nexial.commons.utils.FileUtil
 import org.nexial.commons.utils.TextUtils
 import org.nexial.core.NexialConst.DEF_CHARSET
 import org.nexial.core.NexialConst.Data.APIKEYS_OCRSPACE
+import org.nexial.core.NexialConst.GSON
+import org.nexial.core.NexialConst.Project.PROJECT_CACHE_LOCATION
+import org.nexial.core.plugins.io.IoCommand
 import org.nexial.core.plugins.ws.WebServiceClient
 import org.nexial.core.utils.ConsoleUtils
 import org.nexial.core.utils.JSONPath
 import java.io.File
+import java.io.FileReader
+import java.io.FileWriter
 import java.net.URLEncoder
 import java.util.*
 import kotlin.random.Random
 
-class ImageOcrApi(lang: String = "eng",
-                  detectOrientation: Boolean = false,
-                  isTable: Boolean = true,
-                  autoscale: Boolean = false,
-                  detectCheckbox: Boolean = true,
-                  val retry: Int = 3) {
+class ImageOcrApi(
+    lang: String = "eng",
+    detectOrientation: Boolean = false,
+    isTable: Boolean = true,
+    autoscale: Boolean = false,
+    detectCheckbox: Boolean = true,
+    val retry: Int = 3
+) {
 
     private val apiKeys = APIKEYS_OCRSPACE.toMutableList()
     private val delayBetweenRetries = 3000L
@@ -58,6 +68,8 @@ class ImageOcrApi(lang: String = "eng",
                                  "base64Image=data:%s;base64,%s"
     private val headers: Map<String, Any> = mutableMapOf("Content-Type" to "application/x-www-form-urlencoded")
 
+    private val ocrCache = PROJECT_CACHE_LOCATION + "ocr.cache"
+
     @Throws(ServiceException::class)
     fun ocr(srcFile: File): String {
         val errorPrefix = "Unable to parse '${srcFile.name}': "
@@ -65,6 +77,11 @@ class ImageOcrApi(lang: String = "eng",
         // step 1: retrieve image content
         if (!FileUtil.isFileReadable(srcFile)) throw ServiceException(errorPrefix + "file is not readable or is empty")
         val content = FileUtils.readFileToByteArray(srcFile)
+
+        // step 1: check for cached ocr (if any)
+        val imageChecksum = IoCommand.checksum(content)
+        val cachedOcrText = deriveCachedOcrText(imageChecksum)
+        if (cachedOcrText != null) { return cachedOcrText }
 
         // step 2: convert image to base64
         val base64 = URLEncoder.encode(Base64.getEncoder().encodeToString(content), DEF_CHARSET)
@@ -88,7 +105,8 @@ class ImageOcrApi(lang: String = "eng",
 
                 // 1 is good - SUCCESS!
                 // parsed successfully, let's fetch text
-                if (JSONPath.find(json, "OCRExitCode") == "1") return JSONPath.find(json, "ParsedResults.ParsedText")
+                if (JSONPath.find(json, "OCRExitCode") == "1")
+                    return cacheOcrText(imageChecksum, JSONPath.find(json, "ParsedResults.ParsedText"))
 
                 val error = collectResponseError(errorPrefix, json)
                 if (i == retry)
@@ -121,6 +139,49 @@ class ImageOcrApi(lang: String = "eng",
 
         // give up
         throw ServiceException(errorPrefix + "Unknown error even after retries")
+    }
+
+    private fun deriveCachedOcrText(checksum: String): String? {
+        return if (!FileUtil.isFileReadable(ocrCache, 5))
+            null
+        else {
+            val json = GSON.fromJson<JsonObject>(FileReader(ocrCache), JsonObject::class.java)
+            if (json == null || json.isJsonNull || json.size() < 1)
+                null
+            else {
+                val cache = json.getAsJsonObject(checksum)
+                if (cache == null || cache.isJsonNull || cache.size() < 1)
+                    null
+                else {
+                    val jsonText = cache.get("text")
+                    if (jsonText == null || jsonText.isJsonNull || !jsonText.isJsonPrimitive)
+                        null
+                    else
+                        jsonText.asString
+                }
+            }
+        }
+    }
+
+    private fun cacheOcrText(checksum: String, ocrText: String): String {
+        val cache = JsonObject()
+        cache.addProperty("text", ocrText)
+        cache.addProperty("since", DateUtility.formatLogDate(System.currentTimeMillis()))
+
+        val root = if (!FileUtil.isFileReadable(ocrCache, 5))
+            JsonObject()
+        else
+            GSON.fromJson<JsonObject>(FileReader(ocrCache), JsonObject::class.java)
+        root.add(checksum, cache)
+
+        val writer = GSON.newJsonWriter(FileWriter(ocrCache))
+        try {
+            GSON.toJson(root, writer)
+        } finally {
+            writer?.close()
+        }
+
+        return ocrText
     }
 
     private fun collectResponseError(errorPrefix: String, json: JSONObject): String {

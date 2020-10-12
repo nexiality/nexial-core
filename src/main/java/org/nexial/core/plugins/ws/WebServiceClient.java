@@ -23,6 +23,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.net.InetAddress;
 import java.net.MalformedURLException;
+import java.net.SocketException;
 import java.net.URL;
 import java.util.Arrays;
 import java.util.HashMap;
@@ -68,10 +69,10 @@ import org.nexial.commons.utils.FileUtil;
 import org.nexial.commons.utils.RegexUtils;
 import org.nexial.commons.utils.TextUtils;
 import org.nexial.core.ExecutionThread;
+import org.nexial.core.logs.ExecutionLogger;
 import org.nexial.core.model.ExecutionContext;
 import org.nexial.core.model.TestStep;
 import org.nexial.core.utils.ConsoleUtils;
-import org.nexial.core.logs.ExecutionLogger;
 import org.nexial.core.utils.OutputFileUtils;
 import org.nexial.core.variable.Syspath;
 
@@ -85,6 +86,8 @@ public class WebServiceClient {
     protected static final SSLConnectionSocketFactory SSL_SF = new NaiveConnectionSocketFactory();
     protected static final String REGEX_URL_HAS_AUTH = "(.+\\ )?(http[s]?)\\:\\/\\/(.+)\\:(.+)\\@(.+)";
     protected static final String WS_DISABLE_CONTEXT = "__DISABLE_CONTEXT_AS_CONFIG__";
+    protected static final String RETRY_COUNT = "__RETRY_COUNT__";
+    protected static final long WAIT_BETWEEN_RETRIES = 10000;
 
     protected ExecutionContext context;
     protected boolean verbose = true;
@@ -112,6 +115,16 @@ public class WebServiceClient {
     }
 
     /**
+     * support retries per client instance. Retry only in the context of time out or network exception
+     */
+    @NotNull
+    public WebServiceClient enableRetry(int retry) {
+        if (retry < 0) { throw new IllegalArgumentException("retry must be a positive number: " + retry); }
+        priorityConfigs.put(RETRY_COUNT, "" + retry);
+        return this;
+    }
+
+    /**
      * fluid setter to add priority configuration that would override those set at the context level or env. level
      */
     @NotNull
@@ -128,7 +141,7 @@ public class WebServiceClient {
     }
 
     /**
-     * extension method to allow for beter internal code-level integration. The other {@link #get(String, String)}
+     * extension method to allow for better internal code-level integration. The other {@link #get(String, String)}
      * method is designed for {@link org.nexial.core.plugins.web.WebCommand}; this one is designed for internal use.
      */
     @NotNull
@@ -151,7 +164,7 @@ public class WebServiceClient {
     }
 
     /**
-     * extension method to allow for beter internal code-level integration. The other {@link #post(String, String)}
+     * extension method to allow for better internal code-level integration. The other {@link #post(String, String)}
      * method is designed for {@link org.nexial.core.plugins.web.WebCommand}; this one is designed for internal use.
      */
     @NotNull
@@ -246,36 +259,58 @@ public class WebServiceClient {
         CloseableHttpClient client = prepHttpClient(request, requestConfig, null, null);
         HttpUriRequest http = request.prepRequest(requestConfig);
 
-        CloseableHttpResponse httpResponse = null;
+        String url = request.getUrl();
+        int maxRetry = Math.max(retryCount(), 1);
+        int retried = 0;
         long requestStartTime = tickTock.getStartTime();
+        logRequest(http, request, requestStartTime);
 
         try {
-            logRequest(http, request, requestStartTime);
 
-            boolean digestAuth = isDigestAuth();
-            boolean basicAuth = isBasicAuth();
-            if (digestAuth || basicAuth) {
-                httpResponse = client.execute(http, digestAuth ?
-                                                    newDigestEnabledHttpContext(request) :
-                                                    newBasicEnabledHttpContext(request));
-            } else {
-                httpResponse = client.execute(http);
+            CloseableHttpResponse httpResponse = null;
+            while (retried < maxRetry) {
+                retried++;
+                try {
+                    httpResponse = invokeRequest(request, client, http);
+                    break;
+                } catch (SocketException e) {
+                    // oops... shall we try again?
+                    log("Error while invoking request " + url + ": " + e.getMessage());
+                    if (retried < maxRetry) {
+                        log("Retry " + retried + " of " + maxRetry + "...");
+                        try { Thread.sleep(WAIT_BETWEEN_RETRIES); } catch (InterruptedException e1) { }
+                    } else {
+                        // time's up
+                        throw e;
+                    }
+                }
             }
 
+            if (httpResponse == null) {
+                throw new IOException("Unable to invoke " + url + " after " + maxRetry + " retry");
+            }
+
+            StatusLine statusLine = httpResponse.getStatusLine();
             Response response = gatherResponseData(request, httpResponse, tickTock.getTime());
+            try { httpResponse.close(); } catch (IOException e) { }
 
             tickTock.stop();
             response.setRequestTime(requestStartTime);
             response.setElapsedTime(tickTock.getTime());
-            logResponse(http, request, httpResponse.getStatusLine(), response);
+            logResponse(http, request, statusLine, response);
 
             return response;
         } catch (IOException e) {
             logResponse(requestStartTime, http, request, e);
             throw e;
-        } finally {
-            if (httpResponse != null) { try { httpResponse.close(); } catch (IOException e) { } }
         }
+    }
+
+    private CloseableHttpResponse invokeRequest(Request request, CloseableHttpClient client, HttpUriRequest http)
+        throws IOException {
+        if (isDigestAuth()) { return client.execute(http, newDigestEnabledHttpContext(request)); }
+        if (isBasicAuth()) { return client.execute(http, newBasicEnabledHttpContext(request)); }
+        return client.execute(http);
     }
 
     protected Response gatherResponseData(Request request, HttpResponse httpResponse, long ttfb)
@@ -328,9 +363,11 @@ public class WebServiceClient {
         boolean requestWithBody = request instanceof PostRequest;
         if (requestWithBody) {
             content = ((PostRequest) request).getPayload();
-            byte[] contentBytes = ((PostRequest) request).getPayloadBytes();
             contentLength = StringUtils.length(content);
-            if (contentLength == 0) { ArrayUtils.getLength(contentBytes); }
+            if (contentLength == 0) {
+                byte[] contentBytes = ((PostRequest) request).getPayloadBytes();
+                contentLength = ArrayUtils.getLength(contentBytes);
+            }
         }
 
         log("Executing request " + hideAuthDetails(http.getRequestLine()));
@@ -749,6 +786,8 @@ public class WebServiceClient {
         return MapUtils.getBoolean(priorityConfigs, WS_LOG_SUMMARY,
                                    context.getBooleanData(WS_LOG_SUMMARY, getDefaultBool(WS_LOG_SUMMARY)));
     }
+
+    protected int retryCount() { return MapUtils.getInteger(priorityConfigs, RETRY_COUNT, 0); }
 
     protected String getBasicUsername() { return getConfiguration(WS_BASIC_USER); }
 

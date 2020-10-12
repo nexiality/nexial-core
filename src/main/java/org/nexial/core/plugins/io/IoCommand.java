@@ -21,6 +21,8 @@ import java.io.File;
 import java.io.FileOutputStream;
 import java.io.FileWriter;
 import java.io.IOException;
+import java.security.MessageDigest;
+import java.security.NoSuchAlgorithmException;
 import java.text.NumberFormat;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
@@ -28,6 +30,7 @@ import java.util.*;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
+import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 import javax.validation.constraints.NotNull;
 
@@ -85,11 +88,52 @@ public class IoCommand extends BaseCommand {
     private static final String TMP_EOL = "~~~5EntrY.w4z.hErE~~~";
     private static final List<String> MS_OFFICE_FILE_EXT = Arrays.asList("xlsx", "xls", "doc", "docx", "ppt", "pptx");
     private static final NumberFormat PERCENT_FORMAT = NumberFormat.getPercentInstance();
+    private static final String CHECKSUM_ALGO = "SHA-256";
 
     enum CompareMode {FAIL_FAST, THOROUGH, DIFF}
 
     @Override
     public String getTarget() { return "io"; }
+
+    /**
+     * "fast" compare between {@code file1} and {@code file2}.
+     * </p>
+     * The "fast" comparision includes file size and fail-fast byte-by-byte comparison without detailed
+     * differential report.
+     * </p>
+     * This method is different than {@link #compare(String, String, String)} in that
+     * {@link #compare(String, String, String)} includes the same "fast" compare, plus: <ol>
+     * <li><code>compare()</code> includes line-by-line comparison and differential report</li>
+     * </ol>
+     *
+     * @see #compare(String, String, String)
+     */
+    public StepResult assertEqual(String expected, String actual) {
+        requiresNotBlank(expected, "invalid expected file", expected);
+        requiresNotBlank(actual, "invalid actual file", actual);
+
+        Pair<File, File> files = prepCompare(expected, actual);
+
+        FileComparisonReport comparisons = new FileComparisonReport();
+        StepResult result = fastCompare(files, comparisons);
+        if (result != null) { return result; }
+
+        return StepResult.fail("expected file '" + files.getLeft().getAbsolutePath() + "' and " +
+                               "actual file '" + files.getRight().getAbsolutePath() + "' are not the same");
+    }
+
+    public StepResult assertNotEqual(String expected, String actual) {
+        requires(StringUtils.isNotBlank(expected), "invalid expected file", expected);
+        requires(StringUtils.isNotBlank(actual), "invalid actual file", actual);
+
+        Pair<File, File> files = prepCompare(expected, actual);
+
+        FileComparisonReport comparisons = new FileComparisonReport();
+        StepResult result = fastCompare(files, comparisons);
+        String msg = "expected file '" + files.getLeft().getAbsolutePath() + "' and " +
+                     "actual file '" + files.getRight().getAbsolutePath() + "' are ";
+        return result != null ? StepResult.fail(msg + "the same") : StepResult.success(msg + "not the same");
+    }
 
     /**
      * save matching file list to <code>var</code>.  The matching logic is derived from <code>path</code> and
@@ -188,46 +232,6 @@ public class IoCommand extends BaseCommand {
         FileUtils.writeStringToFile(new File(saveAs), content.get(), DEF_FILE_ENCODING);
 
         return StepResult.success("search-and-replace completed and saved to '" + saveAs + "'");
-    }
-
-    /**
-     * "fast" compare between {@code file1} and {@code file2}.
-     * </p>
-     * The "fast" comparision includes file size and fail-fast byte-by-byte comparison without detailed
-     * differential report.
-     * </p>
-     * This method is different than {@link #compare(String, String, String)} in that
-     * {@link #compare(String, String, String)} includes the same "fast" compare, plus: <ol>
-     * <li><code>compare()</code> includes line-by-line comparison and differential report</li>
-     * </ol>
-     *
-     * @see #compare(String, String, String)
-     */
-    public StepResult assertEqual(String expected, String actual) {
-        requiresNotBlank(expected, "invalid expected file", expected);
-        requiresNotBlank(actual, "invalid actual file", actual);
-
-        Pair<File, File> files = prepCompare(expected, actual);
-
-        FileComparisonReport comparisons = new FileComparisonReport();
-        StepResult result = fastCompare(files, comparisons);
-        if (result != null) { return result; }
-
-        return StepResult.fail("expected file '" + files.getLeft().getAbsolutePath() + "' and " +
-                               "actual file '" + files.getRight().getAbsolutePath() + "' are not the same");
-    }
-
-    public StepResult assertNotEqual(String expected, String actual) {
-        requires(StringUtils.isNotBlank(expected), "invalid expected file", expected);
-        requires(StringUtils.isNotBlank(actual), "invalid actual file", actual);
-
-        Pair<File, File> files = prepCompare(expected, actual);
-
-        FileComparisonReport comparisons = new FileComparisonReport();
-        StepResult result = fastCompare(files, comparisons);
-        String msg = "expected file '" + files.getLeft().getAbsolutePath() + "' and " +
-                     "actual file '" + files.getRight().getAbsolutePath() + "' are ";
-        return result != null ? StepResult.fail(msg + "the same") : StepResult.success(msg + "not the same");
     }
 
     public StepResult assertPath(String path) {
@@ -382,13 +386,11 @@ public class IoCommand extends BaseCommand {
             passed = FileUtil.isFileReadable(file, NumberUtils.toInt(minByte));
         }
 
-        return new StepResult(passed,
-                              "File (" + file + ") is " +
-                              (passed ?
-                               "readable and meet size requirement" :
-                               "NOT readable or less than specified size"
-                              ),
-                              null);
+        return new StepResult(
+            passed,
+            "File (" + file + ") is " +
+            (passed ? "readable and meet size requirement" : "NOT readable or less than specified size"),
+            null);
     }
 
     public StepResult zip(String filePattern, String zipFile) {
@@ -666,6 +668,33 @@ public class IoCommand extends BaseCommand {
         } else {
             return StepResult.fail("Unable to stabilize file '" + file + "' within max time " + maxWaitMs);
         }
+    }
+
+    public StepResult checksum(String var, String file) {
+        requiresValidVariableName(var);
+
+        try {
+            context.setData(var, checksum(file));
+            return StepResult.success("checksum for '%s' saved to '%s'", file, var);
+        } catch (NoSuchAlgorithmException | IOException e) {
+            return StepResult.fail("FAILED to perform checksum for '%s': %s", file, e.getMessage());
+        }
+    }
+
+    @Nonnull
+    public static String checksum(String file) throws NoSuchAlgorithmException, IOException {
+        requiresReadableFile(file);
+        return checksum(FileUtils.readFileToByteArray(new File(file)));
+    }
+
+    @Nonnull
+    public static String checksum(byte[] content) throws NoSuchAlgorithmException {
+        MessageDigest md = MessageDigest.getInstance(CHECKSUM_ALGO);
+        md.update(content);
+        byte[] digest = md.digest();
+        StringBuilder buffer = new StringBuilder();
+        for (byte b : digest) { buffer.append(Integer.toString((b & 0xff) + 0x100, 16).substring(1)); }
+        return buffer.toString();
     }
 
     public static String formatPercent(double number) { return PERCENT_FORMAT.format(number); }
@@ -947,14 +976,10 @@ public class IoCommand extends BaseCommand {
                 }
 
                 // not fail fast, so get content and get ready for line-by-line comparison
-                // expectedContent = OutputFileUtils.resolveContent(expected, context, false);
-                // actualContent = OutputFileUtils.resolveContent(actual, context, false);
                 expectedContent = new OutputResolver(expected, context).getContent();
                 actualContent = new OutputResolver(actual, context).getContent();
             } else {
                 // 2. compare file size and line counts as string objects
-                // expectedContent = OutputFileUtils.resolveContent(expected, context, false);
-                // actualContent = OutputFileUtils.resolveContent(actual, context, false);
                 expectedContent = new OutputResolver(expected, context).getContent();
                 actualContent = new OutputResolver(actual, context).getContent();
 

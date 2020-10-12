@@ -49,22 +49,23 @@ import org.nexial.core.variable.Syspath;
 import static java.io.File.separator;
 import static java.lang.System.lineSeparator;
 import static org.apache.commons.lang3.SystemUtils.JAVA_IO_TMPDIR;
-import static org.nexial.core.NexialConst.*;
+import static org.junit.Assert.assertEquals;
 import static org.nexial.core.NexialConst.Compare.*;
+import static org.nexial.core.NexialConst.*;
 
 public class IoCommandTest {
 
-    private String tmpOutdir = StringUtils.appendIfMissing(SystemUtils.getJavaIoTmpDir().getAbsolutePath(), separator) +
-                               IoCommandTest.class.getSimpleName();
-    private String baseLocation = StringUtils.appendIfMissing(FileUtils.getTempDirectoryPath(), separator);
-    private String testFile1 = baseLocation + "dummy1";
-    private String testFile2 = baseLocation + "dummy2";
-    private String testDestination1 = baseLocation + "newloc";
-    private String basePath = StringUtils.appendIfMissing(SystemUtils.getJavaIoTmpDir().getAbsolutePath(), separator) +
-                              this.getClass().getSimpleName() + separator;
-    private String dummyPng = StringUtils.appendIfMissing(JAVA_IO_TMPDIR, separator) + "dummy.png";
+    private final String tmpOutdir = StringUtils.appendIfMissing(SystemUtils.getJavaIoTmpDir().getAbsolutePath(), separator) +
+                                     IoCommandTest.class.getSimpleName();
+    private final String baseLocation = StringUtils.appendIfMissing(FileUtils.getTempDirectoryPath(), separator);
+    private final String testFile1 = baseLocation + "dummy1";
+    private final String testFile2 = baseLocation + "dummy2";
+    private final String testDestination1 = baseLocation + "newloc";
+    private final String basePath = StringUtils.appendIfMissing(SystemUtils.getJavaIoTmpDir().getAbsolutePath(), separator) +
+                                    this.getClass().getSimpleName() + separator;
+    private final String dummyPng = StringUtils.appendIfMissing(JAVA_IO_TMPDIR, separator) + "dummy.png";
 
-    private ExecutionContext context = new MockExecutionContext() {
+    private final ExecutionContext context = new MockExecutionContext() {
         @Override
         public String replaceTokens(String text) {
             builtinFunctions = new HashedMap<>();
@@ -116,7 +117,7 @@ public class IoCommandTest {
         Assert.assertNotNull(result);
         Assert.assertTrue(result.isSuccess());
         Assert.assertTrue(destinationFile.length() >= expectedFileSize);
-        Assert.assertEquals(FileUtils.readFileToString(sourceFile, DEF_CHARSET),
+        assertEquals(FileUtils.readFileToString(sourceFile, DEF_CHARSET),
                             FileUtils.readFileToString(destinationFile, DEF_CHARSET));
     }
 
@@ -130,7 +131,7 @@ public class IoCommandTest {
         StepResult result = io.copyFiles("jar:/org/openqa/selenium/firefox/webdriver.xpi", testDestination1);
 
         File destinationFile = new File(testDestination1 + separator + "webdriver.xpi");
-        long expectedFileSize = (long) (685 * 1024);
+        long expectedFileSize = 685 * 1024;
 
         Assert.assertNotNull(result);
         Assert.assertTrue(result.isSuccess());
@@ -163,7 +164,7 @@ public class IoCommandTest {
         }, null);
 
         Assert.assertNotNull(destinationFiles);
-        Assert.assertEquals(3, destinationFiles.size());
+        assertEquals(3, destinationFiles.size());
         List<String> destinationPaths = new ArrayList<>();
 
         destinationFiles.forEach(f -> destinationPaths.add(f.getAbsolutePath()));
@@ -200,7 +201,7 @@ public class IoCommandTest {
         }, null);
 
         Assert.assertNotNull(destinationFiles);
-        Assert.assertEquals(3, destinationFiles.size());
+        assertEquals(3, destinationFiles.size());
         List<String> destinationPaths = new ArrayList<>();
 
         destinationFiles.forEach(f -> destinationPaths.add(f.getAbsolutePath()));
@@ -240,7 +241,7 @@ public class IoCommandTest {
         }, null);
 
         Assert.assertNotNull(destinationFiles);
-        Assert.assertEquals(1, destinationFiles.size());
+        assertEquals(1, destinationFiles.size());
         List<String> destinationPaths = new ArrayList<>();
 
         destinationFiles.forEach(f -> destinationPaths.add(f.getAbsolutePath()));
@@ -310,7 +311,7 @@ public class IoCommandTest {
 
         Assert.assertTrue(targetFile.exists());
         Assert.assertTrue(targetFile.canRead());
-        Assert.assertEquals(expectedFileLength, targetFile.length());
+        assertEquals(expectedFileLength, targetFile.length());
 
         Assert.assertFalse(sourceFile.exists());
 
@@ -341,7 +342,7 @@ public class IoCommandTest {
 
         dir = new File(testDestination1 + separator + "sub");
         files = FileUtils.listFiles(dir, TrueFileFilter.INSTANCE, FalseFileFilter.INSTANCE);
-        Assert.assertEquals(CollectionUtils.size(files), 2);
+        assertEquals(CollectionUtils.size(files), 2);
     }
 
     @Test
@@ -388,7 +389,7 @@ public class IoCommandTest {
         String fileContent = context.getStringData(varName);
         System.out.println("fileContent = " + fileContent);
         Assert.assertNotNull(fileContent);
-        Assert.assertEquals(expectedLength, fileContent.length());
+        assertEquals(expectedLength, fileContent.length());
         Assert.assertTrue(fileContent.length() > 1000);
     }
 
@@ -431,14 +432,14 @@ public class IoCommandTest {
         File file = new File(myTestFile);
         FileMeta filemeta = new FileMeta(file);
 
-        Assert.assertEquals(myTestFile, filemeta.getFullpath());
-        Assert.assertEquals(42, filemeta.getSize());
-        Assert.assertEquals(enteredText, filemeta.getText());
+        assertEquals(myTestFile, filemeta.getFullpath());
+        assertEquals(42, filemeta.getSize());
+        assertEquals(enteredText, filemeta.getText());
 
-        Assert.assertEquals(filemeta.isReadable(), file.canRead());
-        Assert.assertEquals(filemeta.isWritable(), file.canWrite());
-        Assert.assertEquals(filemeta.isExecutable(), file.canExecute());
-        Assert.assertEquals(filemeta.getLastmod(), file.lastModified());
+        assertEquals(filemeta.isReadable(), file.canRead());
+        assertEquals(filemeta.isWritable(), file.canWrite());
+        assertEquals(filemeta.isExecutable(), file.canExecute());
+        assertEquals(filemeta.getLastmod(), file.lastModified());
 
         //Update same file and validate the changes
         String updateText = "623132658,20130318,ANDERSON/UPDATED,5271.01";
@@ -451,14 +452,14 @@ public class IoCommandTest {
         FileMeta updatedMeta = new FileMeta(updatedFile);
         Assert.assertNotEquals(filemeta.getText(), updatedMeta.getText());
 
-        Assert.assertEquals(myTestFile, updatedMeta.getFullpath());
-        Assert.assertEquals(43, filemeta.getSize());
-        Assert.assertEquals(updateText, updatedMeta.getText());
+        assertEquals(myTestFile, updatedMeta.getFullpath());
+        assertEquals(43, filemeta.getSize());
+        assertEquals(updateText, updatedMeta.getText());
 
-        Assert.assertEquals(updatedMeta.isReadable(), updatedFile.canRead());
-        Assert.assertEquals(updatedMeta.isWritable(), updatedFile.canWrite());
-        Assert.assertEquals(updatedMeta.isExecutable(), updatedFile.canExecute());
-        Assert.assertEquals(updatedMeta.getLastmod(), updatedFile.lastModified());
+        assertEquals(updatedMeta.isReadable(), updatedFile.canRead());
+        assertEquals(updatedMeta.isWritable(), updatedFile.canWrite());
+        assertEquals(updatedMeta.isExecutable(), updatedFile.canExecute());
+        assertEquals(updatedMeta.getLastmod(), updatedFile.lastModified());
 
     }
 
@@ -476,17 +477,17 @@ public class IoCommandTest {
         StepResult result = io.readProperty("prop1", testFile1, "prop1");
         Assert.assertNotNull(result);
         Assert.assertTrue(result.isSuccess());
-        Assert.assertEquals("a", context.getStringData("prop1"));
+        assertEquals("a", context.getStringData("prop1"));
 
         result = io.readProperty("prop2", testFile1, "prop2");
         Assert.assertNotNull(result);
         Assert.assertTrue(result.isSuccess());
-        Assert.assertEquals("b", context.getStringData("prop2"));
+        assertEquals("b", context.getStringData("prop2"));
 
         result = io.readProperty("prop3", testFile1, "prop3");
         Assert.assertNotNull(result);
         Assert.assertTrue(result.isSuccess());
-        Assert.assertEquals("a-b", context.getStringData("prop3"));
+        assertEquals("a-b", context.getStringData("prop3"));
     }
 
     @Test
@@ -504,9 +505,9 @@ public class IoCommandTest {
 
         File file1 = new File(testFile1);
         Properties prop = ResourceUtils.loadProperties(file1);
-        Assert.assertEquals("a", prop.getProperty("prop1"));
-        Assert.assertEquals("b", prop.getProperty("prop2"));
-        Assert.assertEquals("-", prop.getProperty("prop3"));
+        assertEquals("a", prop.getProperty("prop1"));
+        assertEquals("b", prop.getProperty("prop2"));
+        assertEquals("-", prop.getProperty("prop3"));
     }
 
     @Test
@@ -529,7 +530,7 @@ public class IoCommandTest {
         // eol default (platform) test
         // default is platform-specific eol
         String eol = lineSeparator();
-        Assert.assertEquals("prop1=a" + eol +
+        assertEquals("prop1=a" + eol +
                             "prop2=b" + eol +
                             "prop3=-" + eol,
                             content);
@@ -540,7 +541,7 @@ public class IoCommandTest {
         Assert.assertTrue(result.isSuccess());
         content = FileUtils.readFileToString(file1, DEF_FILE_ENCODING);
         eol = "\n";
-        Assert.assertEquals("prop1=a" + eol +
+        assertEquals("prop1=a" + eol +
                             "prop2=b" + eol +
                             "prop3=-" + eol,
                             content);
@@ -551,7 +552,7 @@ public class IoCommandTest {
         Assert.assertTrue(result.isSuccess());
         content = FileUtils.readFileToString(file1, DEF_FILE_ENCODING);
         eol = "\r\n";
-        Assert.assertEquals("prop1=a" + eol +
+        assertEquals("prop1=a" + eol +
                             "prop2=b" + eol +
                             "prop3=-" + eol,
                             content);
@@ -562,7 +563,7 @@ public class IoCommandTest {
         Assert.assertTrue(result.isSuccess());
         content = FileUtils.readFileToString(file1, DEF_FILE_ENCODING);
         eol = "\n";
-        Assert.assertEquals("prop1=a" + eol +
+        assertEquals("prop1=a" + eol +
                             "prop2=b" + eol +
                             "prop3=-" + eol,
                             content);
@@ -590,7 +591,7 @@ public class IoCommandTest {
         // eol default (platform) test
         // default is platform-specific eol
         String eol = lineSeparator();
-        Assert.assertEquals("Now is the time for all good men to come to the aid of his country" + eol +
+        assertEquals("Now is the time for all good men to come to the aid of his country" + eol +
                             "The lazy brown fox jump over the dog, " + eol +
                             "or something like that." + eol + eol +
                             "Now is the winter of your discontent" + eol + eol +
@@ -603,7 +604,7 @@ public class IoCommandTest {
         Assert.assertTrue(result.isSuccess());
         content = FileUtils.readFileToString(file1, DEF_FILE_ENCODING);
         eol = "\n";
-        Assert.assertEquals("Now is the time for all good men to come to the aid of his country" + eol +
+        assertEquals("Now is the time for all good men to come to the aid of his country" + eol +
                             "The lazy brown fox jump over the dog, " + eol +
                             "or something like that." + eol + eol +
                             "Now is the winter of your discontent" + eol + eol +
@@ -616,7 +617,7 @@ public class IoCommandTest {
         Assert.assertTrue(result.isSuccess());
         content = FileUtils.readFileToString(file1, DEF_FILE_ENCODING);
         eol = "\r\n";
-        Assert.assertEquals("Now is the time for all good men to come to the aid of his country" + eol +
+        assertEquals("Now is the time for all good men to come to the aid of his country" + eol +
                             "The lazy brown fox jump over the dog, " + eol +
                             "or something like that." + eol + eol +
                             "Now is the winter of your discontent" + eol + eol +
@@ -629,7 +630,7 @@ public class IoCommandTest {
         Assert.assertTrue(result.isSuccess());
         content = FileUtils.readFileToString(file1, DEF_FILE_ENCODING);
         eol = "\n";
-        Assert.assertEquals("Now is the time for all good men to come to the aid of his country" + eol +
+        assertEquals("Now is the time for all good men to come to the aid of his country" + eol +
                             "The lazy brown fox jump over the dog, " + eol +
                             "or something like that." + eol + eol +
                             "Now is the winter of your discontent" + eol + eol +
@@ -651,9 +652,9 @@ public class IoCommandTest {
         Assert.assertTrue(result.isSuccess());
 
         Properties prop = ResourceUtils.loadProperties(new File(testFile1));
-        Assert.assertEquals("a", prop.getProperty("prop1"));
-        Assert.assertEquals("b", prop.getProperty("prop2"));
-        Assert.assertEquals("${prop1}-${prop2}", prop.getProperty("prop3"));
+        assertEquals("a", prop.getProperty("prop1"));
+        assertEquals("b", prop.getProperty("prop2"));
+        assertEquals("${prop1}-${prop2}", prop.getProperty("prop3"));
     }
 
     @Test
@@ -676,11 +677,11 @@ public class IoCommandTest {
         Assert.assertTrue(result.isSuccess());
 
         Properties prop = ResourceUtils.loadProperties(new File(testFile1));
-        Assert.assertEquals("a", prop.getProperty("prop1"));
-        Assert.assertEquals("b", prop.getProperty("prop2"));
-        Assert.assertEquals("${prop1}-${prop2}", prop.getProperty("prop3"));
-        Assert.assertEquals("c", prop.getProperty("prop4"));
-        Assert.assertEquals("${prop1}-${prop2}-${prop3}-${prop4}", prop.getProperty("prop5"));
+        assertEquals("a", prop.getProperty("prop1"));
+        assertEquals("b", prop.getProperty("prop2"));
+        assertEquals("${prop1}-${prop2}", prop.getProperty("prop3"));
+        assertEquals("c", prop.getProperty("prop4"));
+        assertEquals("${prop1}-${prop2}-${prop3}-${prop4}", prop.getProperty("prop5"));
     }
 
     @Test
@@ -920,14 +921,14 @@ public class IoCommandTest {
 
         Assert.assertNotNull(result);
         Assert.assertTrue(result.isSuccess());
-        Assert.assertEquals("4", context.getStringData("fileCount"));
+        assertEquals("4", context.getStringData("fileCount"));
 
         makeDummyContent(testDirectory + "testAddFiles1.txt");
         makeDummyContent(testDirectory + "testAddFiles2.txt");
         result = io.count("fileCount", testDirectory, filePattern1);
         Assert.assertNotNull(result);
         Assert.assertTrue(result.isSuccess());
-        Assert.assertEquals("6", context.getStringData("fileCount"));
+        assertEquals("6", context.getStringData("fileCount"));
 
         File dir = new File(testDirectory + "testCountFiles1.txt");
         dir.delete();
@@ -937,12 +938,12 @@ public class IoCommandTest {
         result = io.count("fileCount", testDirectory, filePattern2);
         Assert.assertNotNull(result);
         Assert.assertTrue(result.isSuccess());
-        Assert.assertEquals("2", context.getStringData("fileCount"));
+        assertEquals("2", context.getStringData("fileCount"));
 
         result = io.count("fileCount", testDirectory, filePattern1);
         Assert.assertNotNull(result);
         Assert.assertTrue(result.isSuccess());
-        Assert.assertEquals("5", context.getStringData("fileCount"));
+        assertEquals("5", context.getStringData("fileCount"));
     }
 
     @Test
@@ -1071,6 +1072,15 @@ public class IoCommandTest {
         Assert.assertTrue(compareResult.isSuccess());
     }
 
+    @Test
+    public void testChecksum() throws Throwable {
+        String basePath = getClass().getPackage().getName().replace(".", "/");
+        assertEquals("c1d20cf59843cd209517f1b31186b1e73dcefdb96c7c20d09f6b49f2ef0ca91f",
+                     IoCommand.checksum(ResourceUtils.getResourceFilePath(basePath + "/checksum-target")));
+        assertEquals("3e20709d538de2b4028b55884192617a1b0add3fda3540e93828f89e252e0bad",
+                     IoCommand.checksum(ResourceUtils.getResourceFilePath(basePath + "/checksum-target2")));
+    }
+
     protected static File makeDummyContent(String dummyFilePath) throws IOException {
         // dummy content
         List<String> text = new ArrayList<>();
@@ -1107,10 +1117,10 @@ public class IoCommandTest {
 
     private void zip_check_unzipped_files(String dir, int expectedCount) {
         Collection<File> unzipFiles = FileUtils.listFiles(new File(dir), new String[]{"txt"}, false);
-        Assert.assertEquals(expectedCount, unzipFiles.size());
+        assertEquals(expectedCount, unzipFiles.size());
         unzipFiles.forEach(file -> {
             System.out.println(file);
-            Assert.assertEquals(100, file.length());
+            assertEquals(100, file.length());
             Assert.assertTrue(NumberUtils.isDigits(file.getName().substring(0, 1)));
             Assert.assertTrue(StringUtils.endsWith(file.getName(), ".txt"));
         });

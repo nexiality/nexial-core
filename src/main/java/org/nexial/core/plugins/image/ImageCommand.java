@@ -234,7 +234,7 @@ public class ImageCommand extends BaseCommand implements ForcefulTerminate {
         context.removeData(saveVar);
         log("performing OCR on '" + image + "'");
         context.setData(saveVar, new ImageOcrApi().ocr(resolveFileResource(image)));
-        return StepResult.success("image '" + image + "' OCR'd to data variable '" + saveVar + "'");
+        return StepResult.success("OCR completed on '" + image + "' and saved to data variable '" + saveVar + "'");
     }
 
     @Override
