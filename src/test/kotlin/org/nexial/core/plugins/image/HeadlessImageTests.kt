@@ -20,10 +20,11 @@ import org.junit.Test
 import org.nexial.core.ExcelBasedTests
 
 class HeadlessImageTests : ExcelBasedTests() {
+
     @Test
     @Throws(Exception::class)
     fun ocr() {
-        val executionSummary = testViaExcel("unitTest_ocr.xlsx")
+        val executionSummary = testViaExcel("unitTest_ocr.xlsx", "Scenario")
         assertPassFail(executionSummary, "Scenario", TestOutcomeStats.allPassed())
     }
 }
