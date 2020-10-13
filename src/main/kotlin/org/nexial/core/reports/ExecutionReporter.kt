@@ -167,7 +167,7 @@ class ExecutionReporter {
         fun openExecutionSummaryReport(location: String) {
             if (!isAutoOpenExecResult()) {
                 if (ExecUtils.isRunningInZeroTouchEnv()) ConsoleUtils.log(MSG_SKIP_AUTO_OPEN_RESULT)
-            } else ExecUtils.openFile(location)
+            } else ExecUtils.openExecReportFile(location)
         }
 
     }

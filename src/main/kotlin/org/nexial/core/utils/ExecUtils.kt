@@ -30,7 +30,6 @@ import org.nexial.core.NexialConst.Project.NEXIAL_HOME
 import org.nexial.core.SystemVariables.getDefault
 import java.io.IOException
 import java.lang.management.ManagementFactory
-import java.lang.reflect.InvocationTargetException
 import java.util.*
 import java.util.jar.Manifest
 import java.util.stream.Collectors
@@ -43,28 +42,28 @@ object ExecUtils {
 
     @JvmField
     val IGNORED_CLI_OPT = arrayListOf<String>(
-        "awt.", "java.", "jdk.",
-        "idea.test.", "intellij.debug",
-        "org.gradle.", "org.apache.poi.util.POILogger",
+            "awt.", "java.", "jdk.",
+            "idea.test.", "intellij.debug",
+            "org.gradle.", "org.apache.poi.util.POILogger",
 
-        "file.encoding", "file.separator", "line.separator", "path.separator",
+            "file.encoding", "file.separator", "line.separator", "path.separator",
 
-        "ftp.nonProxyHosts", "gopherProxySet", "http.nonProxyHosts", "socksNonProxyHosts",
+            "ftp.nonProxyHosts", "gopherProxySet", "http.nonProxyHosts", "socksNonProxyHosts",
 
-        "nexial-mailer.", "nexial.3rdparty.logpath", "nexial.jdbc.", NEXIAL_HOME,
-        OPT_OUT_DIR, OPT_PLAN_DIR, OPT_SCRIPT_DIR, OPT_DATA_DIR, OPT_DEF_OUT_DIR, OPT_CLOUD_OUTPUT_BASE,
-        "site-name", SMS_PREFIX, MAIL_PREFIX, OTC_PREFIX, TTS_PREFIX, VISION_PREFIX,
+            "nexial-mailer.", "nexial.3rdparty.logpath", "nexial.jdbc.", NEXIAL_HOME,
+            OPT_OUT_DIR, OPT_PLAN_DIR, OPT_SCRIPT_DIR, OPT_DATA_DIR, OPT_DEF_OUT_DIR, OPT_CLOUD_OUTPUT_BASE,
+            "site-name", SMS_PREFIX, MAIL_PREFIX, OTC_PREFIX, TTS_PREFIX, VISION_PREFIX,
 
-        "sun.arch", "sun.boot", "sun.cpu", "sun.desktop", "sun.font", "sun.io", "sun.java", "sun.jnu",
-        "sun.management", "sun.os", "sun.stderr.encoding", "sun.stdout.encoding",
+            "sun.arch", "sun.boot", "sun.cpu", "sun.desktop", "sun.font", "sun.io", "sun.java", "sun.jnu",
+            "sun.management", "sun.os", "sun.stderr.encoding", "sun.stdout.encoding",
 
-        "jboss.modules",
+            "jboss.modules",
 
-        "user.country", "user.dir", "user.home", "user.language", "user.variant",
+            "user.country", "user.dir", "user.home", "user.language", "user.variant",
 
-        "webdriver.",
+            "webdriver.",
 
-        "nashorn."
+            "nashorn."
     )
 
     @JvmField
@@ -90,16 +89,16 @@ object ExecUtils {
     fun isRunningInZeroTouchEnv(): Boolean = IS_RUNNING_IN_JUNIT || isRunningInCi()
 
     @JvmStatic
-    fun currentCiBuildUrl() = if (!isRunningInCi()) "" else System.getenv(OPT_BUILD_URL)
+    fun currentCiBuildUrl(): String = if (!isRunningInCi()) "" else System.getenv(OPT_BUILD_URL)
 
     @JvmStatic
-    fun currentCiBuildId() = if (!isRunningInCi()) "" else System.getenv(OPT_BUILD_ID)
+    fun currentCiBuildId(): String = if (!isRunningInCi()) "" else System.getenv(OPT_BUILD_ID)
 
     @JvmStatic
-    fun currentCiBuildNumber() = if (!isRunningInCi()) "" else System.getenv(OPT_BUILD_NUMBER)
+    fun currentCiBuildNumber(): String = if (!isRunningInCi()) "" else System.getenv(OPT_BUILD_NUMBER)
 
     @JvmStatic
-    fun currentCiBuildUser() = if (!isRunningInCi()) "" else System.getenv(OPT_BUILD_USER_ID)
+    fun currentCiBuildUser(): String = if (!isRunningInCi()) "" else System.getenv(OPT_BUILD_USER_ID)
 
     @JvmStatic
     fun deriveRunId(): String {
@@ -153,31 +152,30 @@ object ExecUtils {
     }
 
     @JvmStatic
-    fun isSystemVariable(varName: String): Boolean {
-        for (ignored in IGNORED_CLI_OPT)
-            if (StringUtils.startsWith(varName, ignored)) return true
-        return false
-    }
+    fun isSystemVariable(varName: String) = IGNORED_CLI_OPT.firstOrNull { varName.startsWith(it) } != null
 
     /** determine if we are running under JUnit framework  */
     // am i running via junit?
     // probably not loaded... ignore error; it's probably not critical...
     // @JvmStatic
     private fun isRunningInJUnit(): Boolean {
-        val cl = ClassLoader.getSystemClassLoader()
-        for (junitClass in JUNIT_CLASSES) {
-            try {
-                val m = ClassLoader::class.java.getDeclaredMethod("findLoadedClass", String::class.java)
-                m.isAccessible = true
-                val loaded = m.invoke(cl, junitClass)
-                if (loaded != null) return true
-            } catch (e: NoSuchMethodException) {
-            } catch (e: IllegalAccessException) {
-            } catch (e: InvocationTargetException) {
-            }
-        }
+        // val cl = ClassLoader.getSystemClassLoader()
+        // for (junitClass in JUNIT_CLASSES) {
+        //     try {
+        //         val m = ClassLoader::class.java.getDeclaredMethod("findLoadedClass", String::class.java)
+        //         m.isAccessible = true
+        //         val loaded = m.invoke(cl, junitClass)
+        //         if (loaded != null) return true
+        //     } catch (e: NoSuchMethodException) {
+        //     } catch (e: IllegalAccessException) {
+        //     } catch (e: InvocationTargetException) {
+        //     }
+        // }
 
-        return false
+        val stackTrace = Thread.currentThread().stackTrace.asList()
+        return stackTrace.firstOrNull {
+            it.className.startsWith("org.junit.") || it.className.startsWith("junit.")
+        } != null
     }
 
     private fun deriveJarManifest(): String {
@@ -210,7 +208,7 @@ object ExecUtils {
     }
 
     @JvmStatic
-    fun openFile(reportFile: String) {
+    fun openExecReportFile(reportFile: String) {
         if (StringUtils.isBlank(reportFile) || isRunningInZeroTouchEnv()) return
 
         try {

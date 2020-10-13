@@ -48,7 +48,7 @@ class InspectorOutput(val logger: InspectorLogger) {
         }
 
         val outputFile = writeOutputHtml(File(options.directory), json)
-        if (options.verbose) ExecUtils.openFile(outputFile.absolutePath)
+        if (options.verbose) ExecUtils.openExecReportFile(outputFile.absolutePath)
     }
 
     private fun writeOutputHtml(projectHome: File, json: JsonObject): File {
