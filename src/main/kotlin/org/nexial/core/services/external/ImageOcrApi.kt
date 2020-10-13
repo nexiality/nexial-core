@@ -168,9 +168,10 @@ class ImageOcrApi(
         cache.addProperty("text", ocrText)
         cache.addProperty("since", DateUtility.formatLogDate(System.currentTimeMillis()))
 
-        val root = if (!FileUtil.isFileReadable(ocrCache, 5))
+        val root = if (!FileUtil.isFileReadable(ocrCache, 5)) {
+            if (!File(ocrCache).parentFile.mkdirs()) ConsoleUtils.error("Unable to create directory for $ocrCache")
             JsonObject()
-        else
+        } else
             GSON.fromJson<JsonObject>(FileReader(ocrCache), JsonObject::class.java)
         root.add(checksum, cache)
 
