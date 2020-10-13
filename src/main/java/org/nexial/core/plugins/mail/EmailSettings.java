@@ -18,9 +18,12 @@
 package org.nexial.core.plugins.mail;
 
 import java.io.File;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import org.apache.commons.collections4.MapUtils;
+import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.builder.ToStringBuilder;
 
 /**
@@ -33,48 +36,100 @@ public class EmailSettings {
     private String subject;
     private String body;
     private Map<String, File> attachments;
-    private String failure;
+    private Map<String, String> failures;
 
-    public List<String> getToRecipients() { return toRecipients; }
+    public List<String> getToRecipients() {
+        return toRecipients;
+    }
 
-    public void setToRecipients(List<String> toRecipients) { this.toRecipients = toRecipients; }
+    public void setToRecipients(List<String> toRecipients) {
+        this.toRecipients = toRecipients;
+    }
 
-    public List<String> getCcRecipients() {return ccRecipients; }
+    public List<String> getCcRecipients() {
+        return ccRecipients;
+    }
 
-    public void setCcRecipients(List<String> ccRecipients) { this.ccRecipients = ccRecipients; }
+    public void setCcRecipients(List<String> ccRecipients) {
+        this.ccRecipients = ccRecipients;
+    }
 
-    public List<String> getBccRecipients() {return bccRecipients; }
+    public List<String> getBccRecipients() {
+        return bccRecipients;
+    }
 
-    public void setBccRecipients(List<String> bccRecipients) { this.bccRecipients = bccRecipients; }
+    public void setBccRecipients(List<String> bccRecipients) {
+        this.bccRecipients = bccRecipients;
+    }
 
-    public String getSubject() {return subject; }
+    public String getSubject() {
+        return subject;
+    }
 
-    public void setSubject(String subject) { this.subject = subject; }
+    public void setSubject(String subject) {
+        this.subject = subject;
+    }
 
-    public String getBody() {return body; }
+    public String getBody() {
+        return body;
+    }
 
-    public void setBody(String body) { this.body = body; }
+    public void setBody(String body) {
+        this.body = body;
+    }
 
-    public String getFailure() {return failure; }
+    public Map<String, String> getFailures() {
+        return failures;
+    }
 
-    public void setFailure(String failure) { this.failure = failure; }
+    public void setFailure(String config, String message) {
+        if (!MapUtils.isNotEmpty(failures)) {
+            failures = new HashMap<>();
+        }
+        failures.put(config, message);
+    }
 
-    public void clearFailure() { this.failure = null; }
+    public void clearFailure(String config) {
+        if (MapUtils.isNotEmpty(failures)) {
+            failures.remove(config);
+        }
+    }
 
-    public Map<String, File> getAttachments() {return attachments; }
+    public Map<String, File> getAttachments() {
+        return attachments;
+    }
 
-    public void setAttachments(Map<String, File> attachments) { this.attachments = attachments; }
+    public void setAttachments(Map<String, File> attachments) {
+        this.attachments = attachments;
+    }
 
     @Override
     public String toString() {
         return new ToStringBuilder(this)
-                   .append("toRecipients", toRecipients)
-                   .append("ccRecipients", ccRecipients)
-                   .append("bccRecipients", bccRecipients)
-                   .append("subject", subject)
-                   .append("body", body)
-                   .append("attachments", attachments)
-                   .append("failure", failure)
-                   .toString();
+                .append("toRecipients", toRecipients)
+                .append("ccRecipients", ccRecipients)
+                .append("bccRecipients", bccRecipients)
+                .append("subject", subject)
+                .append("body", body)
+                .append("attachments", attachments)
+                .append("failures are:-\n", failures)
+                .toString();
+    }
+
+    /**
+     * Displays all the failures that occurred in a String format.
+     *
+     * @return all the failures.
+     */
+    public String displayFailures() {
+        if (MapUtils.isEmpty(failures)) {
+            return StringUtils.EMPTY;
+        }
+
+        StringBuilder messages = new StringBuilder(StringUtils.EMPTY);
+        for (String key : failures.keySet()) {
+            messages.append(failures.get(key)).append("\n");
+        }
+        return messages.toString();
     }
 }
