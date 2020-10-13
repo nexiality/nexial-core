@@ -89,16 +89,16 @@ object ExecUtils {
     fun isRunningInZeroTouchEnv(): Boolean = IS_RUNNING_IN_JUNIT || isRunningInCi()
 
     @JvmStatic
-    fun currentCiBuildUrl(): String = if (!isRunningInCi()) "" else System.getenv(OPT_BUILD_URL)
+    fun currentCiBuildUrl() = if (!isRunningInCi()) "" else System.getenv(OPT_BUILD_URL)
 
     @JvmStatic
-    fun currentCiBuildId(): String = if (!isRunningInCi()) "" else System.getenv(OPT_BUILD_ID)
+    fun currentCiBuildId() = if (!isRunningInCi()) "" else System.getenv(OPT_BUILD_ID)
 
     @JvmStatic
-    fun currentCiBuildNumber(): String = if (!isRunningInCi()) "" else System.getenv(OPT_BUILD_NUMBER)
+    fun currentCiBuildNumber() = if (!isRunningInCi()) "" else System.getenv(OPT_BUILD_NUMBER)
 
     @JvmStatic
-    fun currentCiBuildUser(): String = if (!isRunningInCi()) "" else System.getenv(OPT_BUILD_USER_ID)
+    fun currentCiBuildUser() = if (!isRunningInCi()) "" else System.getenv(OPT_BUILD_USER_ID)
 
     @JvmStatic
     fun deriveRunId(): String {
