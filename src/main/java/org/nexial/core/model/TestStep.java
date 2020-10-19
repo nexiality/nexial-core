@@ -122,8 +122,6 @@ public class TestStep extends TestStepManifest {
                                    worksheet.getName(),
                                    testCase.getName() + (macro == null ? "" : " (" + macro.getMacroName() + ")"),
                                    StringUtils.leftPad((getRowIndex() + 1) + "", 3),
-                                   // (scriptRowIndex != 0 && scriptRowIndex != rowIndex ? // todo: huh?
-                                   //  "[ROW " + (scriptRowIndex + 1) : ""),
                                    target,
                                    command));
 
@@ -606,7 +604,7 @@ public class TestStep extends TestStepManifest {
             XSSFCellStyle styleParam = worksheet.getStyle(STYLE_PARAM);
             XSSFCellStyle styleTaintedParam = worksheet.getStyle(STYLE_TAINTED_PARAM);
 
-            // mergine resolved parameter value (what's evaluated) and parameter template (what's written)
+            // merging resolved parameter value (what's evaluated) and parameter template (what's written)
             List<String> mergedParams = params == null ? new ArrayList<>() : params;
             Object[] paramValues = result.getParamValues();
             if (paramValues != null) {

@@ -2681,6 +2681,7 @@ public class WebCommand extends BaseCommand implements CanTakeScreenshot, CanLog
     protected StepResult clickInternal(WebElement element) {
         if (element == null) { return StepResult.fail("Unable to obtain element"); }
 
+        scrollIntoView(element);
         highlight(element);
 
         // Nexial configure "preference" for each browser to use JS click on not. However, we need to honor user's
@@ -2721,6 +2722,7 @@ public class WebCommand extends BaseCommand implements CanTakeScreenshot, CanLog
         try {
             WebElement element = findFirstMatchedElement(locator);
             ConsoleUtils.log("double-clicking '" + locator + "'...");
+            scrollIntoView(element);
             highlight(element);
             new Actions(driver).moveToElement(element).doubleClick(element).build().perform();
             return StepResult.success("double-clicked on web element '" + locator + "'");
@@ -3100,6 +3102,7 @@ public class WebCommand extends BaseCommand implements CanTakeScreenshot, CanLog
 
     protected void scrollIntoView(WebElement element) {
         if (element == null) { return; }
+        if (browser.isRunChromeHeadless() || browser.isRunFirefoxHeadless()) { return; }
 
         if (context.getBooleanConfig(getTarget(), getProfile(), SCROLL_INTO_VIEW)) {
             jsExecutor.executeScript(SCROLL_INTO_VIEW_JS, element);

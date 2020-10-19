@@ -46,6 +46,7 @@ import org.apache.xmpbox.schema.DublinCoreSchema;
 import org.apache.xmpbox.schema.XMPBasicSchema;
 import org.apache.xmpbox.xml.DomXmpParser;
 import org.apache.xmpbox.xml.XmpParsingException;
+import org.nexial.commons.utils.FileUtil;
 import org.nexial.commons.utils.RegexUtils;
 import org.nexial.commons.utils.TextUtils;
 import org.nexial.core.model.ExecutionContext;
@@ -64,6 +65,7 @@ import org.thymeleaf.util.ListUtils;
 import com.itextpdf.text.Document;
 import com.itextpdf.text.DocumentException;
 import com.itextpdf.text.pdf.BadPdfFormatException;
+import com.itextpdf.text.pdf.PdfCopy;
 import com.itextpdf.text.pdf.PdfReader;
 import com.itextpdf.text.pdf.PdfSmartCopy;
 import com.itextpdf.text.pdf.PdfWriter;
@@ -418,6 +420,23 @@ public class PdfCommand extends BaseCommand {
         }
     }
 
+    public StepResult savePageCount(String pdf, String var) {
+        requiresReadableFile(pdf);
+        requiresValidVariableName(var);
+
+        PdfReader reader = null;
+        try {
+            reader = new PdfReader(pdf);
+            context.setData(var, reader.getNumberOfPages());
+            return StepResult.success("Page count for '%s' saved to '%s'", pdf, var);
+        } catch (IOException e) {
+            context.removeData(var);
+            return StepResult.fail("Unable to open '%s': %s", pdf, e.getMessage());
+        } finally {
+            if (reader != null) { reader.close(); }
+        }
+    }
+
     public StepResult saveAsPdf(String profile, String content, String file) {
         requiresNotBlank(profile, "Invalid profile", profile);
         requiresNotBlank(content, "Invalid content", profile);
@@ -550,6 +569,59 @@ public class PdfCommand extends BaseCommand {
         } else {
             return StepResult.fail(errors.toString());
         }
+    }
+
+    public StepResult split(String pdf, String saveTo) {
+        requiresReadableFile(pdf);
+        requiresNotBlank(saveTo, "invalid saveTo", saveTo);
+
+        File pdfFile = new File(pdf);
+        PdfReader reader;
+        int pageCount;
+        try {
+            reader = new PdfReader(pdf);
+            pageCount = reader.getNumberOfPages();
+            if (pageCount < 1) {
+                String message = "No pages found in '" + pdf + "'";
+                ConsoleUtils.log(message);
+                return StepResult.fail(message);
+            }
+        } catch (IOException e) {
+            return StepResult.fail("Unable to open '%s': %s", pdf, e.getMessage());
+        }
+
+        String destinationBaseName = resolvePageBaseName(pdfFile, saveTo);
+        List<File> pages = new ArrayList<>();
+        List<Exception> extractionErrors = new ArrayList<>();
+
+        for (int i = 1; i <= pageCount; i++) {
+            File page = new File(destinationBaseName + ".page" + i + ".pdf");
+            page.getParentFile().mkdirs();
+
+            Document document = new Document(reader.getPageSizeWithRotation(i));
+            PdfCopy writer = null;
+            try {
+                writer = new PdfCopy(document, new FileOutputStream(page));
+                document.open();
+                writer.addPage(writer.getImportedPage(reader, i));
+            } catch (DocumentException | IOException e) {
+                ConsoleUtils.error("Error while extracting Page " + i + " from '" + pdf + "': " + e.getMessage());
+                extractionErrors.add(e);
+            } finally {
+                document.close();
+                if (writer != null) { writer.close(); }
+            }
+
+            if (FileUtil.isFileReadable(page, 1024)) { pages.add(page); }
+        }
+
+        if (CollectionUtils.isNotEmpty(extractionErrors)) {
+            StringBuilder sb = new StringBuilder();
+            for (Exception e : extractionErrors) { sb.append(e.getMessage()).append("\n"); }
+            return StepResult.fail("Extraction errors found against '%s': %s", pdf, StringUtils.trim(sb.toString()));
+        }
+
+        return StepResult.success("Page split complete for '%s': %s", pdf, TextUtils.toString(pages, ", ", null, null));
     }
 
     // public StepResult addPages(String from, String to, String onPage) {

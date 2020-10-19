@@ -1946,7 +1946,7 @@ public final class NexialConst {
         String[] text1 = new String[]{text};
 
         // only `EMPTY`, `BLANK`, `TAB` or `NL` or combination of these are found
-        if (RegexUtils.isExact(text1[0], Data.REGEX_ONLY_NON_DISPLAYABLES)) {
+        if (RegexUtils.match(text1[0], REGEX_ONLY_NON_DISPLAYABLES)) {
             NON_DISPLAYABLE_REPLACEMENTS.forEach(
                 (shorthand, replacement) -> text1[0] = StringUtils.replace(text1[0], shorthand, replacement));
         }

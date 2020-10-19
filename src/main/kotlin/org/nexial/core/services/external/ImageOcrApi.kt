@@ -17,7 +17,6 @@
 
 package org.nexial.core.services.external
 
-import com.google.gson.JsonIOException
 import com.google.gson.JsonObject
 import org.apache.commons.io.FileUtils
 import org.apache.commons.lang3.StringUtils
@@ -48,7 +47,7 @@ class ImageOcrApi(
     isTable: Boolean = true,
     autoscale: Boolean = false,
     detectCheckbox: Boolean = true,
-    val retry: Int = 3
+    val retry: Int = 3,
 ) {
 
     private val apiKeys = APIKEYS_OCRSPACE.toMutableList()
@@ -56,18 +55,29 @@ class ImageOcrApi(
 
     // https://ocr.space/OCRAPI
     private val url = "https://api.ocr.space/parse/image"
-    private val payloadPattern = "language=${lang}&" +
-                                 "isOverlayRequired=true&" +
-                                 "FileType=.Auto&" +
-                                 "detectOrientation=${detectOrientation}&" +
-                                 "isTable=${isTable}&" +
-                                 "scale=${autoscale}&" +
-                                 "OCREngine=1&" +
-                                 "detectCheckbox=${detectCheckbox}&" +
-                                 "checkboxTemplate=0&" +
-                                 "base64Image=data:%s;base64,%s"
+    private val imagePayloadPattern = "language=${lang}&" +
+                                      "isOverlayRequired=true&" +
+                                      "FileType=.Auto&" +
+                                      "detectOrientation=${detectOrientation}&" +
+                                      "isTable=${isTable}&" +
+                                      "scale=${autoscale}&" +
+                                      "OCREngine=1&" +
+                                      "detectCheckbox=${detectCheckbox}&" +
+                                      "checkboxTemplate=0&" +
+                                      "base64Image=data:%s;base64,%s"
+    private val pdfPayloadPattern = "language=${lang}&" +
+                                    "isOverlayRequired=true&" +
+                                    "FileType=.Auto&" +
+                                    "detectOrientation=false&" +
+                                    "isTable=true&" +
+                                    "scale=true&" +
+                                    "OCREngine=1&" +
+                                    "detectCheckbox=true&" +
+                                    "checkboxTemplate=0&" +
+                                    "IsCreateSearchablePDF=true&" +
+                                    "isSearchablePdfHideTextLayer=true&" +
+                                    "base64Image=data:%s;base64,%s"
     private val headers: Map<String, Any> = mutableMapOf("Content-Type" to "application/x-www-form-urlencoded")
-
     private val ocrCache = PROJECT_CACHE_LOCATION + "ocr.cache"
 
     @Throws(ServiceException::class)
@@ -81,11 +91,15 @@ class ImageOcrApi(
         // step 1: check for cached ocr (if any)
         val imageChecksum = IoCommand.checksum(content)
         val cachedOcrText = deriveCachedOcrText(imageChecksum)
-        if (cachedOcrText != null) { return cachedOcrText }
+        if (cachedOcrText != null) return cachedOcrText
 
         // step 2: convert image to base64
         val base64 = URLEncoder.encode(Base64.getEncoder().encodeToString(content), DEF_CHARSET)
-        val payload = String.format(payloadPattern, toMimeType(srcFile), base64)
+        val mimeType = toMimeType(srcFile)
+        val payload = String.format(
+                if (StringUtils.equals(mimeType, "application/pdf")) pdfPayloadPattern else imagePayloadPattern,
+                mimeType,
+                base64)
 
         val wsClient = WebServiceClient(null).configureAsQuiet().disableContextConfiguration()
         var waitMs = delayBetweenRetries
@@ -145,7 +159,7 @@ class ImageOcrApi(
         return if (!FileUtil.isFileReadable(ocrCache, 5))
             null
         else {
-            val json = GSON.fromJson<JsonObject>(FileReader(ocrCache), JsonObject::class.java)
+            val json = GSON.fromJson(FileReader(ocrCache), JsonObject::class.java)
             if (json == null || json.isJsonNull || json.size() < 1)
                 null
             else {
@@ -172,15 +186,10 @@ class ImageOcrApi(
             if (!File(ocrCache).parentFile.mkdirs()) ConsoleUtils.error("Unable to create directory for $ocrCache")
             JsonObject()
         } else
-            GSON.fromJson<JsonObject>(FileReader(ocrCache), JsonObject::class.java)
+            GSON.fromJson(FileReader(ocrCache), JsonObject::class.java)
         root.add(checksum, cache)
 
-        val writer = GSON.newJsonWriter(FileWriter(ocrCache))
-        try {
-            GSON.toJson(root, writer)
-        } finally {
-            writer?.close()
-        }
+        GSON.newJsonWriter(FileWriter(ocrCache)).use { GSON.toJson(root, it) }
 
         return ocrText
     }
@@ -199,11 +208,12 @@ class ImageOcrApi(
     }
 
     private fun toMimeType(imageFile: File) = when (imageFile.extension.toLowerCase()) {
+        "pdf" -> "application/pdf"
         "tif", "tiff" -> "image/tiff"
-        "png"         -> "image/png"
+        "png" -> "image/png"
         "jpeg", "jpg" -> "image/jpeg"
-        "gif"         -> "image/gif"
-        "bmp"         -> "image/bmp"
+        "gif" -> "image/gif"
+        "bmp" -> "image/bmp"
         else          -> "image/ief"    /* probably won't work */
     }
 }
