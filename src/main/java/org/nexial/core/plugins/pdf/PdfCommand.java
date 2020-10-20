@@ -46,6 +46,7 @@ import org.apache.xmpbox.schema.DublinCoreSchema;
 import org.apache.xmpbox.schema.XMPBasicSchema;
 import org.apache.xmpbox.xml.DomXmpParser;
 import org.apache.xmpbox.xml.XmpParsingException;
+import org.nexial.commons.ServiceException;
 import org.nexial.commons.utils.FileUtil;
 import org.nexial.commons.utils.RegexUtils;
 import org.nexial.commons.utils.TextUtils;
@@ -54,6 +55,7 @@ import org.nexial.core.model.PdfOutputProfile;
 import org.nexial.core.model.ServiceProfile;
 import org.nexial.core.model.StepResult;
 import org.nexial.core.plugins.base.BaseCommand;
+import org.nexial.core.plugins.image.ImageCommand;
 import org.nexial.core.plugins.io.IoCommand;
 import org.nexial.core.plugins.pdf.PdfTableExtractor.LineRange;
 import org.nexial.core.utils.CheckUtils;
@@ -82,11 +84,13 @@ import static org.nexial.core.utils.CheckUtils.*;
 public class PdfCommand extends BaseCommand {
     protected static final DateFormat PDF_DATE_FORMAT = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
     protected IoCommand io;
+    protected ImageCommand image;
 
     @Override
     public void init(ExecutionContext context) {
         super.init(context);
         io = (IoCommand) context.findPlugin("io");
+        image = (ImageCommand) context.findPlugin("image");
     }
 
     @Override
@@ -421,17 +425,22 @@ public class PdfCommand extends BaseCommand {
     }
 
     public StepResult savePageCount(String pdf, String var) {
-        requiresReadableFile(pdf);
         requiresValidVariableName(var);
-
-        PdfReader reader = null;
         try {
-            reader = new PdfReader(pdf);
-            context.setData(var, reader.getNumberOfPages());
+            context.setData(var, derivePageCount(pdf));
             return StepResult.success("Page count for '%s' saved to '%s'", pdf, var);
         } catch (IOException e) {
             context.removeData(var);
             return StepResult.fail("Unable to open '%s': %s", pdf, e.getMessage());
+        }
+    }
+
+    public static int derivePageCount(String pdf) throws IOException {
+        requiresReadableFile(pdf);
+        PdfReader reader = null;
+        try {
+            reader = new PdfReader(pdf);
+            return reader.getNumberOfPages();
         } finally {
             if (reader != null) { reader.close(); }
         }
@@ -622,6 +631,10 @@ public class PdfCommand extends BaseCommand {
         }
 
         return StepResult.success("Page split complete for '%s': %s", pdf, TextUtils.toString(pages, ", ", null, null));
+    }
+
+    public StepResult ocr(String pdf, String saveTo) throws IOException, ServiceException {
+        return image.ocr(pdf, saveTo);
     }
 
     // public StepResult addPages(String from, String to, String onPage) {

@@ -31,6 +31,7 @@ import org.nexial.core.NexialConst.Data.APIKEYS_OCRSPACE
 import org.nexial.core.NexialConst.GSON
 import org.nexial.core.NexialConst.Project.PROJECT_CACHE_LOCATION
 import org.nexial.core.plugins.io.IoCommand
+import org.nexial.core.plugins.pdf.PdfCommand
 import org.nexial.core.plugins.ws.WebServiceClient
 import org.nexial.core.utils.ConsoleUtils
 import org.nexial.core.utils.JSONPath
@@ -96,10 +97,14 @@ class ImageOcrApi(
         // step 2: convert image to base64
         val base64 = URLEncoder.encode(Base64.getEncoder().encodeToString(content), DEF_CHARSET)
         val mimeType = toMimeType(srcFile)
-        val payload = String.format(
-                if (StringUtils.equals(mimeType, "application/pdf")) pdfPayloadPattern else imagePayloadPattern,
-                mimeType,
-                base64)
+        val payloadPattern = if (StringUtils.equals(mimeType, "application/pdf")) {
+            val pageCount = PdfCommand.derivePageCount(srcFile.absolutePath)
+            if (pageCount < 1) throw ServiceException("No pages found in '%s'")
+            if (pageCount > 3) throw ServiceException("At this time, only PDF with 3 or less pages is supported.")
+            pdfPayloadPattern
+        } else
+            imagePayloadPattern
+        val payload = String.format(payloadPattern, mimeType, base64)
 
         val wsClient = WebServiceClient(null).configureAsQuiet().disableContextConfiguration()
         var waitMs = delayBetweenRetries

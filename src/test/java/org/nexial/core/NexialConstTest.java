@@ -38,7 +38,8 @@ public class NexialConstTest {
         Assert.assertEquals(" \t ", NexialConst.treatCommonValueShorthand("(blank)(tab)(blank)"));
         Assert.assertEquals("\t\t\n ", NexialConst.treatCommonValueShorthand("(tab)(tab)(eol)(blank)"));
 
-        Assert.assertEquals("(empty)A", NexialConst.treatCommonValueShorthand("(empty)A"));
+        Assert.assertEquals("A", NexialConst.treatCommonValueShorthand("(empty)A"));
+        Assert.assertEquals("A(\t)", NexialConst.treatCommonValueShorthand("A((tab))"));
         Assert.assertEquals("  A\n  ", NexialConst.treatCommonValueShorthand("  A\n  "));
     }
 
