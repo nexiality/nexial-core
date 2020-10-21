@@ -327,6 +327,9 @@
         <entry key="webcookie">
             <bean class="org.nexial.core.plugins.web.CookieCommand"/>
         </entry>
+        <entry key="word">
+            <bean class="org.nexial.core.plugins.io.WordCommand"/>
+        </entry>
         <entry key="ws">
             <bean class="org.nexial.core.plugins.ws.WsCommand" p:verbose="false"/>
         </entry>

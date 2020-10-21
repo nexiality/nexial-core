@@ -188,7 +188,9 @@ dependencies {
 	// support: poi/msoffice
 	compile("org.apache.poi:poi:${poiVersion}")
 	compile("org.apache.poi:poi-ooxml:${poiVersion}")
-	compile("org.apache.poi:poi-ooxml-schemas:${poiVersion}")
+	// compile("org.apache.poi:poi-ooxml-schemas:${poiVersion}")
+	compile("org.apache.poi:ooxml-schemas:1.4")
+
 
 	// support: json
 	compile("org.json:json:${jsonVersion}")
