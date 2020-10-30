@@ -286,6 +286,7 @@ public class Nexial {
         NexialUpdate.checkAndRun();
 
         ConsoleUtils.log(NEXIAL_MANIFEST + " starting up...");
+        System.setProperty(NEXIAL_VERSION, NEXIAL_MANIFEST);
 
         CommandLine cmd = new DefaultParser().parse(OPTIONS, args);
 

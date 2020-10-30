@@ -17,6 +17,13 @@
 
 package org.nexial.core.plugins.mail;
 
+import java.io.File;
+import java.util.*;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
+import javax.mail.MessagingException;
+import javax.validation.constraints.NotNull;
+
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.collections4.MapUtils;
 import org.apache.commons.lang3.StringUtils;
@@ -28,13 +35,6 @@ import org.nexial.core.model.ExecutionDefinition;
 import org.nexial.core.model.StepResult;
 import org.nexial.core.plugins.base.BaseCommand;
 import org.nexial.core.utils.OutputResolver;
-
-import javax.mail.MessagingException;
-import javax.validation.constraints.NotNull;
-import java.io.File;
-import java.util.*;
-import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
 import static org.nexial.core.NexialConst.Iteration.CURR_ITERATION_ID;
 import static org.nexial.core.NexialConst.Project.SCRIPT_FILE_EXT;
@@ -55,7 +55,7 @@ public class MailCommand extends BaseCommand {
     private static final String CC = "cc";
     private static final String BCC = "bcc";
     private static final Set<String> CONFIGS = Stream.of(SUBJECT, TO, CC, BCC, BODY, ATTACH)
-            .collect(Collectors.toCollection(HashSet::new));
+                                                     .collect(Collectors.toCollection(HashSet::new));
     private static final String ATTACHMENT_DELIM = "=";
     private static final String EMAIL_DELIM = ",";
     private static final long MAX_FILE_SIZE = 10L * 1024L * 1024L; // 10MB.
@@ -64,9 +64,7 @@ public class MailCommand extends BaseCommand {
     private enum Recipients {TO, CC, BCC}
 
     @Override
-    public String getTarget() {
-        return "mail";
-    }
+    public String getTarget() { return "mail"; }
 
     @Override
     public void init(ExecutionContext context) {
@@ -135,9 +133,7 @@ public class MailCommand extends BaseCommand {
      * @return {@link StepResult#success(String)} displaying the email composition details set so far.
      */
     public StepResult compose(final String var, final String config, final String value) {
-        if (!CONFIGS.contains(config)) {
-            return StepResult.fail("Config '" + config + "' is not valid.");
-        }
+        if (!CONFIGS.contains(config)) { return StepResult.fail("Config '" + config + "' is not valid."); }
 
         String variableName = getContextVariable(var);
         Object mailContext = context.getObjectData(variableName);
@@ -164,13 +160,13 @@ public class MailCommand extends BaseCommand {
     private String getContextVariable(@NotNull final String var) {
         ExecutionDefinition execDef = context.getExecDef();
         return StringUtils.joinWith(
-                ".",
-                VAR_NAMESPACE,
-                String.valueOf(execDef.getPlanSequence()),
-                StringUtils.removeEndIgnoreCase(new File(execDef.getTestScript()).getName(), SCRIPT_FILE_EXT),
-                context.getCurrentScenario(),
-                context.getStringData(CURR_ITERATION_ID),
-                var);
+            ".",
+            VAR_NAMESPACE,
+            String.valueOf(execDef.getPlanSequence()),
+            StringUtils.removeEndIgnoreCase(new File(execDef.getTestScript()).getName(), SCRIPT_FILE_EXT),
+            context.getCurrentScenario(),
+            context.getStringData(CURR_ITERATION_ID),
+            var);
     }
 
     /**
@@ -197,14 +193,10 @@ public class MailCommand extends BaseCommand {
         }
 
         String validationErrorMessage = validateEmailSettings(emailSettings);
-        if (StringUtils.isNotEmpty(validationErrorMessage)) {
-            return StepResult.fail(validationErrorMessage);
-        }
+        if (StringUtils.isNotEmpty(validationErrorMessage)) { return StepResult.fail(validationErrorMessage); }
 
         MailProfile mailProfile = MailProfile.newInstance(profile);
-        if (mailProfile == null) {
-            return StepResult.fail("Invalid profile '" + profile + "'");
-        }
+        if (mailProfile == null) { return StepResult.fail("Invalid profile '" + profile + "'"); }
 
         return sendEmail(profile, emailSettings, mailProfile, new MailObjectSupport());
     }
@@ -234,7 +226,7 @@ public class MailCommand extends BaseCommand {
      * @param value         the value passed to the config.
      * @param emailSettings {@link EmailSettings}.
      * @return {@link StepResult#success(String)} or {@link StepResult#fail(String)} based on if the config successful
-     * or any of the validations failed.
+     *     or any of the validations failed.
      */
     private StepResult setConfiguration(@NotNull final String config,
                                         @NotNull final String value,
@@ -250,6 +242,7 @@ public class MailCommand extends BaseCommand {
                     emailSettings.setSubject(null);
                     return StepResult.success(emailSettings.toString());
                 }
+
                 emailSettings.setSubject(value);
                 return StepResult.success(emailSettings.toString());
 
@@ -260,7 +253,7 @@ public class MailCommand extends BaseCommand {
                     return StepResult.success(emailSettings.toString());
                 }
 
-                emailSettings.setBody(value);
+                emailSettings.setBody(new OutputResolver(value, context).getContent());
                 return StepResult.success(emailSettings.toString());
 
             case TO:
@@ -279,6 +272,7 @@ public class MailCommand extends BaseCommand {
                     emailSettings.setCcRecipients(null);
                     return StepResult.success(emailSettings.toString());
                 }
+
                 configureMailRecipients(value, emailSettings, Recipients.CC);
                 return StepResult.success(emailSettings.toString());
 
@@ -288,6 +282,7 @@ public class MailCommand extends BaseCommand {
                     emailSettings.setBccRecipients(null);
                     return StepResult.success(emailSettings.toString());
                 }
+
                 configureMailRecipients(value, emailSettings, Recipients.BCC);
                 return StepResult.success(emailSettings.toString());
 
@@ -297,6 +292,7 @@ public class MailCommand extends BaseCommand {
                     emailSettings.setAttachments(null);
                     return StepResult.success(emailSettings.toString());
                 }
+
                 addAttachments(value.trim(), emailSettings);
                 return StepResult.success(emailSettings.toString());
 
@@ -317,9 +313,7 @@ public class MailCommand extends BaseCommand {
     private void addAttachments(@NotNull final String value, @NotNull final EmailSettings emailSettings) {
         emailSettings.setAttachments(null);
         String[] filePaths = StringUtils.split(value, context.getTextDelim());
-        if (filePaths.length == 0) {
-            return;
-        }
+        if (filePaths.length == 0) { return; }
 
         List<String> invalidFilePaths = new ArrayList<>();
         Map<String, File> fileAttachments = new HashMap<>();
@@ -336,9 +330,7 @@ public class MailCommand extends BaseCommand {
                 fileAttachments.put(file.getName(), file);
             }
 
-            if (!file.exists()) {
-                invalidFilePaths.add(filePath);
-            }
+            if (!file.exists()) { invalidFilePaths.add(filePath); }
         }
 
         if (CollectionUtils.isNotEmpty(invalidFilePaths)) {
@@ -369,13 +361,11 @@ public class MailCommand extends BaseCommand {
                                          @NotNull final EmailSettings emailSettings,
                                          @NotNull final Recipients recipientType) {
         // ignore empty email
-        if (StringUtils.isEmpty(value)) {
-            return;
-        }
+        if (StringUtils.isEmpty(value)) { return; }
 
         List<String> emails = Arrays.stream(StringUtils.split(value, EMAIL_DELIM))
-                .map(String::trim)
-                .collect(Collectors.toList());
+                                    .map(String::trim)
+                                    .collect(Collectors.toList());
 
         String config = recipientType.name().toLowerCase();
         if (CollectionUtils.isEmpty(emails)) {
@@ -383,7 +373,7 @@ public class MailCommand extends BaseCommand {
         }
 
         List<String> invalidEmails = emails.stream()
-                .filter(address -> !isValidEmail(address)).collect(Collectors.toList());
+                                           .filter(address -> !isValidEmail(address)).collect(Collectors.toList());
         if (CollectionUtils.isNotEmpty(invalidEmails)) {
             emailSettings.setFailure(config, "The invalid " + recipientType.name() + " recipients: " + invalidEmails);
         }
@@ -409,7 +399,7 @@ public class MailCommand extends BaseCommand {
      * @param mailProfile   the {@link MailProfile} configurations passed in.
      * @param mailer        the {@link MailObjectSupport}
      * @return {@link StepResult#success(String)} or {@link StepResult#fail(String)} based on whether email
-     * got dispatched or not.
+     *     got dispatched or not.
      */
     private StepResult sendEmail(@NotNull final String profile,
                                  @NotNull final EmailSettings emailSettings,
@@ -425,11 +415,11 @@ public class MailCommand extends BaseCommand {
 
         try {
             sender.sendMail(emailSettings.getToRecipients(),
-                    emailSettings.getCcRecipients(),
-                    emailSettings.getBccRecipients(),
-                    from, emailSettings.getSubject(),
-                    emailSettings.getBody(),
-                    emailSettings.getAttachments());
+                            emailSettings.getCcRecipients(),
+                            emailSettings.getBccRecipients(),
+                            from, emailSettings.getSubject(),
+                            emailSettings.getBody(),
+                            emailSettings.getAttachments());
         } catch (MessagingException e) {
             return StepResult.fail("Email failed to get delivered. Error is " + e.getMessage());
         }
@@ -445,18 +435,10 @@ public class MailCommand extends BaseCommand {
      * @return Failure message in case of validation failure and if not {@link StringUtils#EMPTY}.
      */
     private String validateEmailSettings(@NotNull final EmailSettings emailSettings) {
-        if (StringUtils.isEmpty(emailSettings.getBody())) {
-            return "No email body found.";
-        }
-        if (StringUtils.isEmpty(emailSettings.getSubject())) {
-            return "No email subject found.";
-        }
-        if (CollectionUtils.isEmpty(emailSettings.getToRecipients())) {
-            return "No email recipients configured.";
-        }
-        if (MapUtils.isNotEmpty(emailSettings.getFailures())) {
-            return emailSettings.getFailures().toString();
-        }
+        if (StringUtils.isEmpty(emailSettings.getBody())) { return "No email body found."; }
+        if (StringUtils.isEmpty(emailSettings.getSubject())) { return "No email subject found."; }
+        if (CollectionUtils.isEmpty(emailSettings.getToRecipients())) { return "No email recipients configured."; }
+        if (MapUtils.isNotEmpty(emailSettings.getFailures())) { return emailSettings.getFailures().toString(); }
         return StringUtils.EMPTY;
     }
 }

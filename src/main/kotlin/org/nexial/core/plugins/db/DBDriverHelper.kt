@@ -35,6 +35,7 @@ import java.io.File.separator
 import java.io.IOException
 
 abstract class DBDriverHelper protected constructor(protected var context: ExecutionContext) {
+
     protected lateinit var dbType: String
     protected lateinit var config: DBDriverConfig
     protected lateinit var driverLocation: String
@@ -69,7 +70,7 @@ abstract class DBDriverHelper protected constructor(protected var context: Execu
             } else {
                 getDriverFilePathByJreVersion(availableDrivers, ".jre" + javaVersionStartsWith + "jar")
             }
-            ConsoleUtils.log("Loading driver $driverFilePath for java version: $javaVersion")
+            ConsoleUtils.log("Loading driver $driverFilePath for Java $javaVersion")
         }
     }
 
@@ -108,7 +109,7 @@ abstract class DBDriverHelper protected constructor(protected var context: Execu
         val driverUrl = config.checkUrlBase!!
 
         // no url to download or no need to download... so we are done
-        if (StringUtils.isBlank(driverUrl)) throw IOException("Url to download driver is empty.")
+        if (StringUtils.isBlank(driverUrl)) throw IOException("Invalid URL to download driver: '$driverUrl'")
 
         if (!hasDriver) {
             // download driver to driver home (local)
@@ -146,32 +147,26 @@ abstract class DBDriverHelper protected constructor(protected var context: Execu
 
     protected fun initConfig(): DBDriverConfig {
         val configs = context.dbdriverHelperConfig
+        if (MapUtils.isEmpty(configs)) throw IllegalArgumentException("No DBDriver configurations found")
 
-        if (MapUtils.isEmpty(configs)) {
-            val error = "No DBDriver configurations found"
-            ConsoleUtils.log(error)
-            throw IllegalArgumentException(error)
-        }
-
-        var configString = configs.get(dbType)
-        if (StringUtils.isBlank(configString)) {
-            val error = "Configuration not supported for dbType $dbType"
-            ConsoleUtils.log(error)
-            throw IllegalArgumentException(error)
-        }
+        var configString = configs[dbType]
+        if (StringUtils.isBlank(configString)) throw IllegalArgumentException("Unsupported database $dbType")
 
         configString = context.replaceTokens(configString)
         configString = StringUtils.replace(configString, "\\", "/")
+
         val config = GSON.fromJson(configString, DBDriverConfig::class.java)
         config.init()
         return config
     }
 
-    protected fun newIsolatedWsClient() = WebServiceClient(context).configureAsQuiet().disableContextConfiguration()
+    protected fun newIsolatedWsClient(): WebServiceClient =
+            WebServiceClient(context).configureAsQuiet().disableContextConfiguration()
 
     protected abstract fun resolveLocalDriverPath(): String
 
     companion object {
+
         const val DRIVER_MIN_SIZE: Long = 1024 * 50
 
         @JvmStatic
@@ -180,29 +175,24 @@ abstract class DBDriverHelper protected constructor(protected var context: Execu
             //create a customised helper class if this is not helpful
             val helper: DBDriverHelper = DBDriverHelperImpl(context)
             helper.dbType = dbType
-
-            val config = helper.initConfig()
-            helper.config = config
-
+            helper.config = helper.initConfig()
             helper.driverLocation = helper.resolveLocalDriverPath()
-
             return helper
         }
 
         @JvmStatic
         @Throws(IOException::class)
-        protected fun unzip(zipFile: String, uncompressTo: String, dbType: String) {
-            if (StringUtils.isBlank(zipFile)) return
-            if (StringUtils.isBlank(uncompressTo)) return
+        protected fun unzip(zipFile: String, target: String, dbType: String) {
+            if (StringUtils.isBlank(zipFile) || StringUtils.isBlank(target)) return
 
-            FileUtil.unzip(File(zipFile), File(uncompressTo))
-            if (dbType == "mssql") extractMSSqlJarsDlls(uncompressTo)
+            FileUtil.unzip(File(zipFile), File(target))
+            if (dbType == "mssql") extractMSSqlJarsDlls(target)
             FileUtils.deleteQuietly(File(zipFile))
         }
 
-        private fun extractMSSqlJarsDlls(uncompressTo: String) {
+        private fun extractMSSqlJarsDlls(target: String) {
             val fileFilter: IOFileFilter = WildcardFileFilter(listOf("*.jar", "*.dll"))
-            val expectedFiles: Collection<File> = FileUtils.listFiles(File(uncompressTo), fileFilter, TRUE)
+            val expectedFiles: Collection<File> = FileUtils.listFiles(File(target), fileFilter, TRUE)
 
             val dllFolder = "$USER_HOME${separator}.nexial${separator}dll"
 
@@ -210,7 +200,7 @@ abstract class DBDriverHelper protected constructor(protected var context: Execu
                 try {
                     when {
                         file.name.endsWith(".dll") -> FileUtils.moveFileToDirectory(file, File(dllFolder), true)
-                        file.name.endsWith(".jar") -> FileUtils.moveFileToDirectory(file, File(uncompressTo), true)
+                        file.name.endsWith(".jar") -> FileUtils.moveFileToDirectory(file, File(target), true)
                     }
                 } catch (e: FileExistsException) {
                     //No Need to throw or log
@@ -218,9 +208,9 @@ abstract class DBDriverHelper protected constructor(protected var context: Execu
             }
 
             //delete uncompressed folder
-            val uncompressedFiles = File(uncompressTo).listFiles()
-            if (uncompressedFiles != null && uncompressedFiles.size > 0) {
-                for (file in uncompressedFiles) if (file.isDirectory) FileUtils.deleteQuietly(file)
+            val unzipped = File(target).listFiles()
+            if (unzipped != null && unzipped.isNotEmpty()) {
+                for (file in unzipped) if (file.isDirectory) FileUtils.deleteQuietly(file)
             }
         }
     }
