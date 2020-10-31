@@ -240,61 +240,61 @@ public class MailCommand extends BaseCommand {
                 emailSettings.clearFailure(SUBJECT);
                 if (valueReset) {
                     emailSettings.setSubject(null);
-                    return StepResult.success(emailSettings.toString());
+                    return StepResult.success("'" + SUBJECT + "' successfully cleared");
                 }
 
                 emailSettings.setSubject(value);
-                return StepResult.success(emailSettings.toString());
+                return StepResult.success("'" + SUBJECT + "' successfully configured");
 
             case BODY:
                 emailSettings.clearFailure(BODY);
                 if (valueReset) {
                     emailSettings.setBody(null);
-                    return StepResult.success(emailSettings.toString());
+                    return StepResult.success("'" + BODY + "' successfully cleared");
                 }
 
                 emailSettings.setBody(new OutputResolver(value, context).getContent());
-                return StepResult.success(emailSettings.toString());
+                return StepResult.success("'" + BODY + "' successfully configured");
 
             case TO:
                 emailSettings.clearFailure(TO);
                 if (valueReset) {
                     emailSettings.setToRecipients(null);
-                    return StepResult.success(emailSettings.toString());
+                    return StepResult.success("'" + TO + "' successfully cleared");
                 }
 
                 configureMailRecipients(value, emailSettings, Recipients.TO);
-                return StepResult.success(emailSettings.toString());
+                return StepResult.success("'" + TO + "' successfully configured");
 
             case CC:
                 emailSettings.clearFailure(CC);
                 if (valueReset) {
                     emailSettings.setCcRecipients(null);
-                    return StepResult.success(emailSettings.toString());
+                    return StepResult.success("'" + CC + "' successfully cleared");
                 }
 
                 configureMailRecipients(value, emailSettings, Recipients.CC);
-                return StepResult.success(emailSettings.toString());
+                return StepResult.success("'" + CC + "' successfully configured");
 
             case BCC:
                 emailSettings.clearFailure(BCC);
                 if (valueReset) {
                     emailSettings.setBccRecipients(null);
-                    return StepResult.success(emailSettings.toString());
+                    return StepResult.success("'" + BCC + "' successfully cleared");
                 }
 
                 configureMailRecipients(value, emailSettings, Recipients.BCC);
-                return StepResult.success(emailSettings.toString());
+                return StepResult.success("'" + BCC + "' successfully configured");
 
             case ATTACH:
                 emailSettings.clearFailure(ATTACH);
                 if (valueReset) {
                     emailSettings.setAttachments(null);
-                    return StepResult.success(emailSettings.toString());
+                    return StepResult.success("'" + ATTACH + "' successfully cleared");
                 }
 
                 addAttachments(value.trim(), emailSettings);
-                return StepResult.success(emailSettings.toString());
+                return StepResult.success("'" + ATTACH + "' successfully configured");
 
             default:
                 String message = "Invalid config " + config + ".";
