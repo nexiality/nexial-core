@@ -358,6 +358,7 @@ public final class NexialConst {
     public static final class Data {
         public static final String SCOPE = registerSysVarGroup(NAMESPACE + "scope.");
 
+        public static final String NEXIAL_VERSION = NAMESPACE + "version";
         public static final String HOSTNAME = "os.hostname";
 
         // allow per-run override for the output directory name
