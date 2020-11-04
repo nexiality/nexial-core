@@ -38,5 +38,5 @@ class MacroCommand : BaseCommand() {
         }
     }
 
-    fun produces(`var`: String, value: String): StepResult = save(`var`, value)
+    fun produces(`var`: String, value: String?): StepResult = save(`var`, value)
 }
