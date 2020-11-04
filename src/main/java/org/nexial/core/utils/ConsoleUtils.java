@@ -254,9 +254,9 @@ public final class ConsoleUtils {
     public static String readInput() throws InterruptedException {
         BufferedReader br = new BufferedReader(new InputStreamReader(System.in));
         try {
-            while (!br.ready()) {
-                Thread.sleep(5);
-            }
+            // while (!br.ready()) {
+            //     Thread.sleep(5);
+            // }
             return br.readLine();
         } catch (IOException e) {
             return null;
