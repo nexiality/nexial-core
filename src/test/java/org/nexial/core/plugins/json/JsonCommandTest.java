@@ -797,7 +797,7 @@ public class JsonCommandTest {
                                                    "[REGEX:shipping_address|billing_address].city => distinct ascending",
                                                    "dummy")
                                  .isSuccess());
-        Assert.assertEquals("[Glenoak, Washington]", context.getStringData("dummy"));
+        Assert.assertEquals("Glenoak,Washington", context.getStringData("dummy"));
 
     }
 
