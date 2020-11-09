@@ -1564,15 +1564,19 @@ public class ExecutionContext {
         // 3) we are currently automating a test scenario/activity/step (ie. currentTestStep != null)
         if (StringUtils.isBlank(name)) { return; }
 
+        boolean remove = false;
         boolean isNullValue = value == null || isNullValue(Objects.toString(value));
-
-        if (data.containsKey(name) && isNullValue) { CellTextReader.unsetValue(Objects.toString(value)); }
-
-        boolean remove = isNullValue;
-        if (value instanceof Map && MapUtils.isEmpty((Map) value)) { remove = true; }
-        if (value instanceof Collection && CollectionUtils.isEmpty((Collection) value)) { remove = true; }
+        if (!isNullValue) {
+            if (data.containsKey(name)) { CellTextReader.unsetValue(Objects.toString(value)); }
+            if (value instanceof Map && MapUtils.isEmpty((Map) value)) { remove = true; }
+            if (value instanceof Collection && CollectionUtils.isEmpty((Collection) value)) { remove = true; }
+            if (value.getClass().isArray() && ArrayUtils.getLength(value) < 1) { remove = true; }
+        } else {
+            remove = true;
+        }
 
         if (remove) {
+            data.remove(MACRO_FLEX_PREFIX + name);
             data.remove(name);
             System.clearProperty(name);
             return;
@@ -1596,10 +1600,11 @@ public class ExecutionContext {
     /**
      * perhaps it's a system property? first check System property, then internal map
      */
-    protected String getRawStringData(String name) { return System.getProperty(name, MapUtils.getString(data, name)); }
+    protected String getRawStringData(String name) { return System.getProperty(name, flattenAsString(data.get(name))); }
 
     protected String getRawStringData(String name, String def) {
-        return System.getProperty(name, MapUtils.getString(data, name, def));
+        return StringUtils.defaultString(System.getProperty(name),
+                                         data.containsKey(name) ? flattenAsString(data.get(name)) : def);
     }
 
     protected boolean isListCompatible(String value) {
@@ -2188,10 +2193,6 @@ public class ExecutionContext {
     private String flattenAsString(Object value) {
         if (value == null) { return ""; }
 
-        String listSep = getTextDelim();
-        String groupSep = "\n";
-        String mapSep = "=";
-
         // object[][] should be flatten same as Map<>
         // object[] should be flatten same as Collection<>
         //
@@ -2209,6 +2210,7 @@ public class ExecutionContext {
 
         StringBuilder buffer = new StringBuilder();
         if (value.getClass().isArray()) {
+            String listSep = getTextDelim();
             int length = ArrayUtils.getLength(value);
             for (int i = 0; i < length; i++) {
                 buffer.append(flattenAsString(Array.get(value, i))).append(listSep);
@@ -2217,6 +2219,7 @@ public class ExecutionContext {
         }
 
         if (value instanceof Collection) {
+            String listSep = getTextDelim();
             int size = CollectionUtils.size(value);
             for (int i = 0; i < size; i++) {
                 buffer.append(flattenAsString(CollectionUtils.get(value, i))).append(listSep);
@@ -2226,6 +2229,8 @@ public class ExecutionContext {
 
         if (value instanceof Map) {
             Map map = ((Map) value);
+            String groupSep = "\n";
+            String mapSep = "=";
             if (MapUtils.isNotEmpty(map)) {
                 for (Object key : map.keySet()) {
                     buffer.append(flattenAsString(key)).append(mapSep).append(flattenAsString(map.get(key)))
