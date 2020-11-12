@@ -429,7 +429,11 @@ public class TestStep extends TestStepManifest {
                 }
 
                 // reduce the number of steps for repeatUntil command
-                // if (step.isCommandRepeater()) { steps -= Integer.parseInt(step.getParams().get(0)); }
+                if (step.isCommandRepeater()) {
+                    int stepCount = Integer.parseInt(step.getParams().get(0));
+                    steps += stepCount;
+                    j += stepCount;
+                }
 
                 // add the number of steps for section commands
                 if (StringUtils.equals(step.getCommandFQN(), CMD_SECTION)) {
