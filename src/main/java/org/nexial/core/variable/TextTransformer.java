@@ -558,6 +558,24 @@ public class TextTransformer<T extends TextDataType> extends Transformer<T> {
         return list;
     }
 
+    public T ifEqual(T data, String test, String match, String notMatch) {
+        if (data == null) { return data; }
+        data.setValue(StringUtils.equals(data.getValue(), test) ? match : notMatch);
+        return data;
+    }
+
+    public T ifContain(T data, String test, String match, String notMatch) {
+        if (data == null || StringUtils.isEmpty(test)) { return data; }
+        data.setValue(StringUtils.contains(data.getValue(), test) ? match : notMatch);
+        return data;
+    }
+
+    public T ifMatch(T data, String regex, String match, String notMatch) {
+        if (data == null || StringUtils.isEmpty(regex)) { return data; }
+        data.setValue(RegexUtils.isExact(data.getValue(), regex) ? match : notMatch);
+        return data;
+    }
+
     @Override
     Map<String, Integer> listSupportedFunctions() { return FUNCTION_TO_PARAM_LIST; }
 

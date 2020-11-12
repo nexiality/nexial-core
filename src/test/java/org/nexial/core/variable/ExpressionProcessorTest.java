@@ -176,7 +176,7 @@ public class ExpressionProcessorTest {
     }
 
     @Test
-    public void processTest_csv() throws Exception {
+    public void processText_csv() throws Exception {
         ExpressionProcessor subject = new ExpressionProcessor(context);
 
         String fixturePath = ResourceUtils.getResourceFilePath(resourcePath + className + "18.txt");
@@ -189,7 +189,7 @@ public class ExpressionProcessorTest {
     }
 
     @Test
-    public void processTest_csv_parse_no_header() throws Exception {
+    public void processText_csv_parse_no_header() throws Exception {
         String fixture = "SSN,Name,Position,Age\n" +
                          "234567890,Jim,Educator,42\n" +
                          "123456789,James,Accountant,41\n" +
@@ -208,7 +208,7 @@ public class ExpressionProcessorTest {
     }
 
     @Test
-    public void processTest_regex() throws Exception {
+    public void processText_regex() throws Exception {
         ExpressionProcessor subject = new ExpressionProcessor(context);
 
         assertEquals("showcase/spiderman.", subject.process("[TEXT(showcase/spiderman) =>" +
@@ -222,7 +222,7 @@ public class ExpressionProcessorTest {
     }
 
     @Test
-    public void processTest_IfMissing() throws Exception {
+    public void processText_IfMissing() throws Exception {
         ExpressionProcessor subject = new ExpressionProcessor(context);
 
         assertEquals("ex-spidermansion",
@@ -446,7 +446,7 @@ public class ExpressionProcessorTest {
     }
 
     @Test
-    public void processTest_html() throws Exception {
+    public void processText_html() throws Exception {
         ExpressionProcessor subject = new ExpressionProcessor(context);
 
         String fixture = "\n" +
@@ -462,7 +462,7 @@ public class ExpressionProcessorTest {
     }
 
     @Test
-    public void processTest_resolve_as_url() throws Exception {
+    public void processText_resolve_as_url() throws Exception {
         ExpressionProcessor subject = new ExpressionProcessor(context);
 
         String fixture = "https://api.ipify.org?format=json";
@@ -473,7 +473,7 @@ public class ExpressionProcessorTest {
     }
 
     @Test
-    public void processTest_extract() throws Exception {
+    public void processText_extract() throws Exception {
         ExpressionProcessor subject = new ExpressionProcessor(context);
 
         String fixturePath = ResourceUtils.getResourceFilePath(resourcePath + className + "19.txt");
@@ -501,6 +501,22 @@ public class ExpressionProcessorTest {
         System.out.println();
         System.out.println(extracted);
         assertEquals(expected, extracted);
+    }
+
+    @Test
+    public void processText_if() throws Exception {
+        ExpressionProcessor subject = new ExpressionProcessor(context);
+
+        assertEquals("B", subject.process("[TEXT(A) => if-equal(A,B,C)]"));
+        assertEquals("", subject.process("[TEXT(A) => if-equal(A,,C)]"));
+        assertEquals(" ", subject.process("[TEXT(A) => if-equal(A, ,A)]"));
+        assertEquals("", subject.process("[TEXT( ) => if-equal( ,,A)]"));
+
+        assertEquals("Sandman", subject.process("[TEXT(Saturn) => if-contain(turn,Sandman,Mars)]"));
+        assertEquals("Mars", subject.process("[TEXT(Saturn) => if-contain(term,Sandman,Mars)]"));
+
+        assertEquals("Beach", subject.process("[TEXT(Saturn) => if-match(.+tur.*,Beach,Hills)]"));
+        assertEquals("Hills", subject.process("[TEXT(Saturn) => if-match(.+kap.*,Beach,Hills)]"));
     }
 
     @Test
