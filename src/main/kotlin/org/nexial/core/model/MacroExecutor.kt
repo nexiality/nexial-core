@@ -109,7 +109,29 @@ class MacroExecutor(private val initialTestStep: TestStep, val macro: Macro,
 
             val succeed = result.isSuccess
             // skip should not be considered as failure, but "inconclusive"
-            if (!result.isSkipped) context.setData(OPT_LAST_OUTCOME, succeed)
+            if (!result.isSkipped)
+                context.setData(OPT_LAST_OUTCOME, succeed)
+            else {
+                activitySummary.adjustTotalSteps(-1)
+                if (testStep.commandFQN == CMD_SECTION) {
+                    ExcelStyleHelper.formatSectionDescription(testStep)
+                    val numOfSteps = testStep.formatSkippedSections(testSteps, i, true)
+                    i += numOfSteps
+                    activitySummary.adjustTotalSteps(-numOfSteps)
+                }
+
+                if (context.isBreakCurrentIteration) {
+                    // reset it so that we are only performing loop-break one level at a time
+                    if (testStep.commandFQN == CMD_REPEAT_UNTIL) {
+                        context.isBreakCurrentIteration = false
+                    } else {
+                        context.isMacroBreakIteration = true
+                        break
+                    }
+                }
+                i++
+                continue
+            }
 
             if (initialTestStep.macroPartOfRepeatUntil) {
                 // if repeat until contains repeat until commands
@@ -132,28 +154,6 @@ class MacroExecutor(private val initialTestStep: TestStep, val macro: Macro,
                 scenarioSummary.adjustExecutedSteps(-1)
                 scenarioSummary.adjustTotalSteps(-1)
                 break
-            }
-
-            if (result.isSkipped) {
-                activitySummary.adjustTotalSteps(-1)
-                if (testStep.commandFQN == CMD_SECTION) {
-                    ExcelStyleHelper.formatSectionDescription(testStep)
-                    val numOfSteps = testStep.formatSkippedSections(testSteps, i, true)
-                    i += numOfSteps
-                    activitySummary.adjustTotalSteps(-numOfSteps)
-                }
-
-                if (context.isBreakCurrentIteration) {
-                    // reset it so that we are only performing loop-break one level at a time
-                    if (testStep.commandFQN == CMD_REPEAT_UNTIL) {
-                        context.isBreakCurrentIteration = false
-                    } else {
-                        context.isMacroBreakIteration = true
-                        break
-                    }
-                }
-                i++
-                continue
             }
 
             activitySummary.incrementExecuted()
