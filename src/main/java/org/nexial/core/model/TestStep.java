@@ -424,13 +424,18 @@ public class TestStep extends TestStepManifest {
             int sectionStepIndex = i + j + 1;
             if (testSteps.size() > sectionStepIndex) {
                 TestStep step = testSteps.get(sectionStepIndex);
-                if (updateResult) {
-                    step.postExecCommand(StepResult.skipped(NESTED_SECTION_STEP_SKIPPED), 0);
-                }
+                if (updateResult) { step.postExecCommand(StepResult.skipped(NESTED_SECTION_STEP_SKIPPED), 0); }
 
                 // reduce the number of steps for repeatUntil command
                 if (step.isCommandRepeater()) {
                     int stepCount = Integer.parseInt(step.getParams().get(0));
+                    for (int k = 1; k <= stepCount; k++) {
+                        TestStep innerStep = testSteps.get(sectionStepIndex + k);
+                        if (StringUtils.equals(innerStep.getCommandFQN(), CMD_SECTION)) {
+                            stepCount += Integer.parseInt(innerStep.getParams().get(0));
+                        }
+                    }
+
                     steps += stepCount;
                     j += stepCount;
                 }
