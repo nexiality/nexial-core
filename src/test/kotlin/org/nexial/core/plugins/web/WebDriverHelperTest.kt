@@ -19,8 +19,7 @@ package org.nexial.core.plugins.web
 import org.apache.commons.collections4.CollectionUtils
 import org.apache.commons.io.FileUtils
 import org.apache.commons.lang3.StringUtils
-import org.apache.commons.lang3.SystemUtils
-import org.apache.commons.lang3.SystemUtils.USER_HOME
+import org.apache.commons.lang3.SystemUtils.*
 import org.junit.Assert
 import org.junit.Test
 import org.nexial.commons.utils.FileUtil
@@ -77,7 +76,7 @@ class WebDriverHelperTest {
         }
 
         var helper = newInstance(firefox, context)
-        helper.firefoxDriverVersionMapping =  context.mockBrowser.firefoxDriverVersionMapping
+        helper.firefoxDriverVersionMapping = context.mockBrowser.firefoxDriverVersionMapping
         helper.browserBinLocation = resolveBrowserBinLocationHelper(context.mockBrowser.firefoxBinLocations).toString()
 
         assertDriverExists(helper.resolveDriver())
@@ -102,7 +101,7 @@ class WebDriverHelperTest {
         }
 
         var helper = newInstance(firefoxheadless, context)
-        helper.firefoxDriverVersionMapping =  context.mockBrowser.firefoxDriverVersionMapping
+        helper.firefoxDriverVersionMapping = context.mockBrowser.firefoxDriverVersionMapping
         helper.browserBinLocation = resolveBrowserBinLocationHelper(context.mockBrowser.firefoxBinLocations).toString()
 
         assertDriverExists(helper.resolveDriver())
@@ -153,7 +152,7 @@ class WebDriverHelperTest {
         }
 
         var helper = newInstance(chrome, context)
-        helper.firefoxDriverVersionMapping =  context.mockBrowser.firefoxDriverVersionMapping
+        helper.firefoxDriverVersionMapping = context.mockBrowser.firefoxDriverVersionMapping
         helper.browserBinLocation = resolveBrowserBinLocationHelper(context.mockBrowser.chromeBinLocations).toString()
 
         val driver1 = assertDriverExists(helper.resolveDriver())
@@ -164,6 +163,41 @@ class WebDriverHelperTest {
         val driver2 = assertDriverExists(newInstance(chrome, context).resolveDriver())
 
         Assert.assertEquals(driver1.lastModified(), driver2.lastModified())
+        context.cleanProject()
+    }
+
+    @Test
+    @Throws(Exception::class)
+    fun resolveEdgeChromeDriver() {
+        val osArch = System.getProperty("os.arch")
+        if (StringUtils.equals(osArch, "aarch64")) {
+            // skipping this test for ARM64 because we can't get the driver from the same driver download page
+            println("skipping resolveEdgeChromeDriver() test for $osArch system since we can't auto-download driver")
+            return
+        }
+
+        if (!IS_OS_WINDOWS) {
+            println("skipping resolveEdgeChromeDriver() test for other OS system than windows")
+            return
+        }
+
+        val driverHome = File("${driverHomeBase}chrome")
+        FileUtils.deleteDirectory(driverHome)
+
+        val context = object : MockExecutionContext(true) {
+            override fun getCurrentTestStep(): TestStep {
+                return object : TestStep() {
+                    override fun generateFilename(ext: String): String {
+                        return className + StringUtils.prependIfMissing(StringUtils.trim(ext), ".")
+                    }
+                }
+            }
+        }
+
+        var helper = newInstance(edgechrome, context)
+        helper.firefoxDriverVersionMapping = context.mockBrowser.firefoxDriverVersionMapping
+        helper.browserBinLocation = resolveBrowserBinLocationHelper(context.mockBrowser.edgeBinLocations).toString()
+        assertDriverExists(helper.resolveDriver())
         context.cleanProject()
     }
 
@@ -214,7 +248,7 @@ class WebDriverHelperTest {
         val context = MockExecutionContext(true)
 
         var helper = newInstance(chromeheadless, context)
-        helper.firefoxDriverVersionMapping =  context.mockBrowser.firefoxDriverVersionMapping
+        helper.firefoxDriverVersionMapping = context.mockBrowser.firefoxDriverVersionMapping
         helper.browserBinLocation = resolveBrowserBinLocationHelper(context.mockBrowser.chromeBinLocations).toString()
 
         assertDriverExists(helper.resolveDriver())
@@ -234,17 +268,18 @@ class WebDriverHelperTest {
     }
 
     private fun resolveBrowserBinLocationHelper(browserBinLocations: Map<String, List<String>>): String? {
-        val possibleLocations: List<String?> = (if (SystemUtils.IS_OS_WINDOWS) browserBinLocations.get(
-            "windows") else if (SystemUtils.IS_OS_MAC) browserBinLocations.get(
-            "mac") else if (SystemUtils.IS_OS_LINUX) browserBinLocations.get("linux") else null)!!
-        if (CollectionUtils.isEmpty(possibleLocations)) {
+        val possibleLocations: List<String>? = when {
+            IS_OS_WINDOWS -> browserBinLocations["windows"]
+            IS_OS_MAC     -> browserBinLocations["mac"]
+            IS_OS_LINUX   -> browserBinLocations["linux"]
+            else          -> null
+        }
+        if (possibleLocations == null || CollectionUtils.isEmpty(possibleLocations)) {
             ConsoleUtils.error("Unable to derive alternative Firefox binary... ")
             return null
         }
         for (location in possibleLocations) {
-            if (FileUtil.isFileExecutable(location)) {
-                return File(location).absolutePath
-            }
+            if (FileUtil.isFileExecutable(location)) return File(location).absolutePath
         }
         ConsoleUtils.error("Unable to derive alternative Firefox binary... ")
         return null

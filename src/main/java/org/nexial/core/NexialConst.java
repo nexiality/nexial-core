@@ -902,8 +902,6 @@ public final class NexialConst {
         public static final String DEF_REL_META_PROJ_ID = DEF_REL_META + "project.id";
         public static final String DEF_REL_META_EXECUTION = DEF_REL_META + "execution";
 
-
-
         public static final String NEXIAL_HOME = NAMESPACE + "home";
         public static final String NEXIAL_BIN_REL_PATH = "bin" + separator;
         public static final String NEXIAL_MACOSX_BIN_REL_PATH = NEXIAL_BIN_REL_PATH + "macosx" + separator;
@@ -1534,139 +1532,51 @@ public final class NexialConst {
         static void init() {}
     }
 
-    public static final class Web {
-        // custom namespace
-        public static final String NS_BROWSER = NAMESPACE + "browser";
-        public static final String NS_EMU = NS_BROWSER + ".emulation.";
-        public static final String NS_ELECTRON = NS_BROWSER + ".electron.";
-        public static final String NS_SAFARI = NS_BROWSER + ".safari.";
-        public static final String NS_IE = NS_BROWSER + ".ie.";
-        public static final String NS_WEB = NAMESPACE + "web.";
+    // browser types
+    public enum BrowserType {
+        firefox(true, true, true, true, true),
+        firefoxheadless(true, true, true, true, true),
+        safari(false, true, true, true, true),
+        chrome(true, false, true, true, true),
+        chromeheadless(true, false, true, true, true),
+        ie(false, false, true, false, true),
+        edge(false, false, true, false, false),
+        edgechrome(false, false, true, false, false),
+        iphone(false, false, false, false, true),
+        browserstack(false, false, false, true, true),
+        chromeembedded(false, false, true, true, true),
+        electron(false, false, true, false, true),
+        crossbrowsertesting(false, false, false, true, true);
 
-        // default browser
-        public static final String BROWSER = registerSysVar(NS_BROWSER, "firefox");
+        private final boolean profileSupported;
+        private final boolean consoleLoggingEnabled;
+        private final boolean timeoutChangesEnabled;
+        private final boolean jsEventFavored;
+        private final boolean switchWindowSupported;
 
-        // emulation
-        public static final String EMU_USER_AGENT = registerSysVar(NS_EMU + "userAgent");
+        BrowserType(boolean profileSupported,
+                    boolean consoleLoggingEnabled,
+                    boolean timeoutChangesEnabled,
+                    boolean jsEventFavored,
+                    boolean switchWindowSupported) {
+            this.profileSupported = profileSupported;
+            this.consoleLoggingEnabled = consoleLoggingEnabled;
+            this.timeoutChangesEnabled = timeoutChangesEnabled;
+            this.jsEventFavored = jsEventFavored;
+            this.switchWindowSupported = switchWindowSupported;
+        }
 
-        // browser
-        public static final String EMU_TOUCH = registerSysVar(NS_EMU + "touch", true);
-        public static final String EMU_PIXEL_RATIO = registerSysVar(NS_EMU + "pixelRatio", 3.0);
-        public static final String EMU_HEIGHT = registerSysVar(NS_EMU + "height", 850);
-        public static final String EMU_WIDTH = registerSysVar(NS_EMU + "width", 400);
-        public static final String EMU_DEVICE_NAME = registerSysVar(NS_EMU + "deviceName");
+        public boolean isProfileSupported() { return profileSupported; }
 
-        // chrome
-        public static final String CHROME_REMOTE_PORT = registerSysVar(NS_BROWSER + ".chrome.remote.port");
-        public static final String CHROME_LOG_ENABLED = registerSysVar(NS_BROWSER + ".logChrome", false);
+        public boolean isConsoleLoggingEnabled() { return consoleLoggingEnabled; }
 
-        // electron
-        public static final String ELECTRON_FORCE_TERMINATE = registerSysVar(NS_ELECTRON + "forceTerminate", false);
-        public static final String ELECTRON_CLIENT_LOCATION = registerSysVar(NS_ELECTRON + "appLocation");
-        public static final String ELECTRON_LOG_VERBOSE = registerSysVar(NS_BROWSER + ".logElectronVerbose", false);
-        public static final String ELECTRON_LOG_ENABLED = registerSysVar(NS_BROWSER + ".logElectron", false);
+        public boolean isTimeoutChangesEnabled() { return timeoutChangesEnabled; }
 
-        // chrome embedded
-        public static final String CEF_CLIENT_LOCATION = registerSysVar(NS_BROWSER + ".embedded.appLocation");
+        public boolean isJsEventFavored() { return jsEventFavored; }
 
-        // safari
-        public static final String SAFARI_RESIZED = registerSysVar(NS_SAFARI + "resizedAfterOpen", false);
-        public static final String SAFARI_USE_TECH_PREVIEW = registerSysVar(NS_SAFARI + "useTechPreview", false);
+        public boolean isSwitchWindowSupported() { return switchWindowSupported; }
 
-        // ie
-        public static final String IE_REQUIRE_WINDOW_FOCUS = registerSysVar(NS_IE + "requireWindowFocus", false);
-        public static final String OPT_FORCE_IE_32 = registerSysVar(NAMESPACE + "forceIE32", false);
-
-        // specify user profile per browser instance
-        public static final String BROWSER_USER_DATA = registerSysVar(NS_BROWSER + ".userData");
-        public static final String OPT_CHROME_PROFILE = registerSysVar(NAMESPACE + "chrome.profile");
-        public static final String OPT_DOWNLOAD_TO = registerSysVar(NS_BROWSER + ".downloadTo");
-        public static final String OPT_DOWNLOAD_PDF = registerSysVar(NS_BROWSER + ".downloadPdf", false);
-        public static final String OPT_POSITION = registerSysVar(NS_BROWSER + ".position");
-
-        // web: scroll into view
-        public static final String SCROLL_INTO_VIEW = registerSysVar(NS_WEB + "scrollIntoView", true);
-        public static final String SCROLL_INTO_VIEW_JS = "if (arguments[0]) {" +
-                                                         "   if (arguments[0].scrollIntoViewIfNeeded) {" +
-                                                         "       arguments[0].scrollIntoViewIfNeeded();" +
-                                                         "   } else {" +
-                                                         "       arguments[0].scrollIntoView(false);" +
-                                                         "   }" +
-                                                         "}";
-        // various browser behavior/settings
-        public static final String FORCE_JS_CLICK = registerSysVar(NS_BROWSER + ".forceJSClick", false);
-        public static final String BROWSER_ACCEPT_INVALID_CERTS =
-            registerSysVar(NS_BROWSER + ".acceptInsecureCerts", false);
-        public static final String BROWSER_POST_CLOSE_WAIT = registerSysVar(NS_BROWSER + ".postCloseWaitMs", 3000);
-        public static final String ENFORCE_PAGE_SOURCE_STABILITY =
-            registerSysVar(NAMESPACE + "enforcePageSourceStability", true);
-        public static final String OPT_DELAY_BROWSER = registerSysVar(NAMESPACE + "delayBrowser", false);
-        public static final String BROWSER_DEFAULT_WINDOW_SIZE = registerSysVar(NS_BROWSER + ".defaultWindowSize");
-        public static final String BROWSER_WINDOW_SIZE = registerSysVar(NS_BROWSER + ".windowSize");
-        public static final String BROWSER_LANG = registerSysVar(NAMESPACE + "browserLang");
-        public static final String OPT_BROWSER_CONSOLE_LOG = registerSysVar(NAMESPACE + "browserConsoleLog", false);
-        public static final String KEY_INCOGNITO = "incognito";
-        public static final String BROWSER_INCOGNITO = registerSysVar(NS_BROWSER + "." + KEY_INCOGNITO, true);
-        public static final String OPT_LAST_ALERT_TEXT = registerSysVar(NAMESPACE + "lastAlertText");
-        public static final String OPT_ALERT_IGNORE_FLAG = registerSysVar(NAMESPACE + "ignoreBrowserAlert", false);
-        public static final String BROWSER_META = registerSysVar(NS_BROWSER + ".meta");
-        public static final String PROFILE_WEB_COMMAND = NS_BROWSER + ".command";
-
-        public static final String BROWSER_OPENED = registerSysVar(NS_BROWSER + ".isOpen", false);
-        public static final String CURRENT_BROWSER = registerSysVar(NS_BROWSER + ".current");
-
-        // metrics
-        public static final String NS_WEB_METRICS = registerSysVarGroup(NS_WEB + "metrics.");
-        public static final String WEB_METRICS_GENERATED = NS_WEB_METRICS + "generated";
-        public static final String WEB_PERF_METRICS_ENABLED = registerSysVar(NS_WEB_METRICS + "enabled", false);
-        public static final String WEB_CLEAR_WITH_BACKSPACE = registerSysVar(NS_WEB + "clearWithBackspace", false);
-        public static final String WEB_PREEMPTIVE_ALERT_CHECK = registerSysVar(NS_WEB + "preemptiveAlertCheck", false);
-        public static final String WEB_ALWAYS_WAIT = registerSysVar(NS_WEB + "alwaysWait", false);
-        public static final String WEB_UNFOCUS_AFTER_TYPE = registerSysVar(NS_WEB + "unfocusAfterType", false);
-        public static final String WEB_PAGE_LOAD_WAIT_MS = registerSysVar(NS_WEB + "pageLoadWaitMs", 15000);
-        public static final String DROPDOWN_SELECT_ALL = "{ALL}";
-        public static final String WEB_METRICS_JSON = "browser-metrics.json";
-        public static final String WEB_METRICS_HTML = "browser-metrics.html";
-        public static final String WEB_METRICS_TOKEN = "{METRICS}";
-        public static final String WEB_METRICS_HTML_LOC = "/org/nexial/core/reports/";
-
-        // web element highlight
-        public static final String NS_HIGHLIGHT = NS_WEB + "highlight";
-        public static final String OPT_DEBUG_HIGHLIGHT = registerSysVar(NS_HIGHLIGHT, false);
-        public static final String HIGHLIGHT_STYLE = registerSysVar(NS_HIGHLIGHT + ".style", "background:#faf557;");
-        public static final String HIGHLIGHT_WAIT_MS = registerSysVar(NS_HIGHLIGHT + ".waitMs", 250);
-        public static final String OPT_DEBUG_HIGHLIGHT_OLD = registerSysVar(NAMESPACE + "highlight", false);
-        public static final String HIGHLIGHT_WAIT_MS_OLD = registerSysVar(NAMESPACE + "highlightWaitMs", 250);
-
-        // web drag-and-move config
-        public static final String OPT_DRAG_FROM_LEFT_CORNER = "left";
-        public static final String OPT_DRAG_FROM_RIGHT_CORNER = "right";
-        public static final String OPT_DRAG_FROM_TOP_CORNER = "top";
-        public static final String OPT_DRAG_FROM_BOTTOM_CORNER = "bottom";
-        public static final String OPT_DRAG_FROM_MIDDLE = "middle";
-        public static final String OPT_DRAG_FROM = registerSysVar(NS_WEB + "dragFrom", OPT_DRAG_FROM_MIDDLE);
-        public static final List<String> OPT_DRAG_FROMS = Arrays.asList(OPT_DRAG_FROM_LEFT_CORNER,
-                                                                        OPT_DRAG_FROM_RIGHT_CORNER,
-                                                                        OPT_DRAG_FROM_TOP_CORNER,
-                                                                        OPT_DRAG_FROM_BOTTOM_CORNER,
-                                                                        OPT_DRAG_FROM_MIDDLE);
-
-        // selenium specific
-        public static final String SELENIUM_CHROME_DRIVER = "webdriver.chrome.driver";
-        public static final String SELENIUM_CHROME_BIN = "webdriver.chrome.bin";
-        public static final String SELENIUM_GECKO_DRIVER = "webdriver.gecko.driver";
-        public static final String SELENIUM_FIREFOX_BIN = "webdriver.firefox.bin";
-        public static final String SELENIUM_FIREFOX_PROFILE = "webdriver.firefox.profile";
-        public static final String SELENIUM_EDGE_DRIVER = "webdriver.edge.driver";
-        public static final String SELENIUM_IE_DRIVER = "webdriver.ie.driver";
-        public static final String SELENIUM_IE_LOG_LEVEL = "webdriver.ie.driver.loglevel";
-        public static final String SELENIUM_IE_LOG_LOGFILE = "webdriver.ie.driver.logfile";
-        public static final String SELENIUM_IE_SILENT = "webdriver.ie.driver.silent";
-
-        private Web() {}
-
-        // reference by enclosing class to force initialization (possibly prior to any reference at runtime)
-        static void init() {}
+        public boolean isHeadless() { return this == firefoxheadless || this == chromeheadless; }
     }
 
     public static class CloudWebTesting {
@@ -1832,50 +1742,140 @@ public final class NexialConst {
         static void init() {}
     }
 
-    // browser types
-    public enum BrowserType {
-        firefox(true, true, true, true, true),
-        firefoxheadless(true, true, true, true, true),
-        safari(false, true, true, true, true),
-        chrome(true, false, true, true, true),
-        chromeheadless(true, false, true, true, true),
-        ie(false, false, true, false, true),
-        edge(false, false, true, false, false),
-        iphone(false, false, false, false, true),
-        browserstack(false, false, false, true, true),
-        chromeembedded(false, false, true, true, true),
-        electron(false, false, true, false, true),
-        crossbrowsertesting(false, false, false, true, true);
+    public static final class Web {
+        // custom namespace
+        public static final String NS_BROWSER = NAMESPACE + "browser";
+        public static final String NS_EMU = NS_BROWSER + ".emulation.";
+        public static final String NS_ELECTRON = NS_BROWSER + ".electron.";
+        public static final String NS_SAFARI = NS_BROWSER + ".safari.";
+        public static final String NS_IE = NS_BROWSER + ".ie.";
+        public static final String NS_WEB = NAMESPACE + "web.";
 
-        private final boolean profileSupported;
-        private final boolean consoleLoggingEnabled;
-        private final boolean timeoutChangesEnabled;
-        private final boolean jsEventFavored;
-        private final boolean switchWindowSupported;
+        // default browser
+        public static final String BROWSER = registerSysVar(NS_BROWSER, "firefox");
 
-        BrowserType(boolean profileSupported,
-                    boolean consoleLoggingEnabled,
-                    boolean timeoutChangesEnabled,
-                    boolean jsEventFavored,
-                    boolean switchWindowSupported) {
-            this.profileSupported = profileSupported;
-            this.consoleLoggingEnabled = consoleLoggingEnabled;
-            this.timeoutChangesEnabled = timeoutChangesEnabled;
-            this.jsEventFavored = jsEventFavored;
-            this.switchWindowSupported = switchWindowSupported;
-        }
+        // emulation
+        public static final String EMU_USER_AGENT = registerSysVar(NS_EMU + "userAgent");
 
-        public boolean isProfileSupported() { return profileSupported; }
+        // browser
+        public static final String EMU_TOUCH = registerSysVar(NS_EMU + "touch", true);
+        public static final String EMU_PIXEL_RATIO = registerSysVar(NS_EMU + "pixelRatio", 3.0);
+        public static final String EMU_HEIGHT = registerSysVar(NS_EMU + "height", 850);
+        public static final String EMU_WIDTH = registerSysVar(NS_EMU + "width", 400);
+        public static final String EMU_DEVICE_NAME = registerSysVar(NS_EMU + "deviceName");
 
-        public boolean isConsoleLoggingEnabled() { return consoleLoggingEnabled; }
+        // chrome
+        public static final String CHROME_REMOTE_PORT = registerSysVar(NS_BROWSER + ".chrome.remote.port");
+        public static final String CHROME_LOG_ENABLED = registerSysVar(NS_BROWSER + ".logChrome", false);
 
-        public boolean isTimeoutChangesEnabled() { return timeoutChangesEnabled; }
+        // electron
+        public static final String ELECTRON_FORCE_TERMINATE = registerSysVar(NS_ELECTRON + "forceTerminate", false);
+        public static final String ELECTRON_CLIENT_LOCATION = registerSysVar(NS_ELECTRON + "appLocation");
+        public static final String ELECTRON_LOG_VERBOSE = registerSysVar(NS_BROWSER + ".logElectronVerbose", false);
+        public static final String ELECTRON_LOG_ENABLED = registerSysVar(NS_BROWSER + ".logElectron", false);
 
-        public boolean isJsEventFavored() { return jsEventFavored; }
+        // chrome embedded
+        public static final String CEF_CLIENT_LOCATION = registerSysVar(NS_BROWSER + ".embedded.appLocation");
 
-        public boolean isSwitchWindowSupported() { return switchWindowSupported; }
+        // safari
+        public static final String SAFARI_RESIZED = registerSysVar(NS_SAFARI + "resizedAfterOpen", false);
+        public static final String SAFARI_USE_TECH_PREVIEW = registerSysVar(NS_SAFARI + "useTechPreview", false);
 
-        public boolean isHeadless() { return this == firefoxheadless || this == chromeheadless; }
+        // ie
+        public static final String IE_REQUIRE_WINDOW_FOCUS = registerSysVar(NS_IE + "requireWindowFocus", false);
+        public static final String OPT_FORCE_IE_32 = registerSysVar(NAMESPACE + "forceIE32", false);
+
+        // specify user profile per browser instance
+        public static final String BROWSER_USER_DATA = registerSysVar(NS_BROWSER + ".userData");
+        public static final String OPT_CHROME_PROFILE = registerSysVar(NAMESPACE + "chrome.profile");
+        public static final String OPT_DOWNLOAD_TO = registerSysVar(NS_BROWSER + ".downloadTo");
+        public static final String OPT_DOWNLOAD_PDF = registerSysVar(NS_BROWSER + ".downloadPdf", false);
+        public static final String OPT_POSITION = registerSysVar(NS_BROWSER + ".position");
+
+        // web: scroll into view
+        public static final String SCROLL_INTO_VIEW = registerSysVar(NS_WEB + "scrollIntoView", true);
+        public static final String SCROLL_INTO_VIEW_JS = "if (arguments[0]) {" +
+                                                         "   if (arguments[0].scrollIntoViewIfNeeded) {" +
+                                                         "       arguments[0].scrollIntoViewIfNeeded();" +
+                                                         "   } else {" +
+                                                         "       arguments[0].scrollIntoView(false);" +
+                                                         "   }" +
+                                                         "}";
+        // various browser behavior/settings
+        public static final String FORCE_JS_CLICK = registerSysVar(NS_BROWSER + ".forceJSClick", false);
+        public static final String BROWSER_ACCEPT_INVALID_CERTS =
+            registerSysVar(NS_BROWSER + ".acceptInsecureCerts", false);
+        public static final String BROWSER_POST_CLOSE_WAIT = registerSysVar(NS_BROWSER + ".postCloseWaitMs", 3000);
+        public static final String ENFORCE_PAGE_SOURCE_STABILITY =
+            registerSysVar(NAMESPACE + "enforcePageSourceStability", true);
+        public static final String OPT_DELAY_BROWSER = registerSysVar(NAMESPACE + "delayBrowser", false);
+        public static final String BROWSER_DEFAULT_WINDOW_SIZE = registerSysVar(NS_BROWSER + ".defaultWindowSize");
+        public static final String BROWSER_WINDOW_SIZE = registerSysVar(NS_BROWSER + ".windowSize");
+        public static final String BROWSER_LANG = registerSysVar(NAMESPACE + "browserLang");
+        public static final String OPT_BROWSER_CONSOLE_LOG = registerSysVar(NAMESPACE + "browserConsoleLog", false);
+        public static final String KEY_INCOGNITO = "incognito";
+        public static final String BROWSER_INCOGNITO = registerSysVar(NS_BROWSER + "." + KEY_INCOGNITO, true);
+        public static final String OPT_LAST_ALERT_TEXT = registerSysVar(NAMESPACE + "lastAlertText");
+        public static final String OPT_ALERT_IGNORE_FLAG = registerSysVar(NAMESPACE + "ignoreBrowserAlert", false);
+        public static final String BROWSER_META = registerSysVar(NS_BROWSER + ".meta");
+        public static final String PROFILE_WEB_COMMAND = NS_BROWSER + ".command";
+
+        public static final String BROWSER_OPENED = registerSysVar(NS_BROWSER + ".isOpen", false);
+        public static final String CURRENT_BROWSER = registerSysVar(NS_BROWSER + ".current");
+
+        // metrics
+        public static final String NS_WEB_METRICS = registerSysVarGroup(NS_WEB + "metrics.");
+        public static final String WEB_METRICS_GENERATED = NS_WEB_METRICS + "generated";
+        public static final String WEB_PERF_METRICS_ENABLED = registerSysVar(NS_WEB_METRICS + "enabled", false);
+        public static final String WEB_CLEAR_WITH_BACKSPACE = registerSysVar(NS_WEB + "clearWithBackspace", false);
+        public static final String WEB_PREEMPTIVE_ALERT_CHECK = registerSysVar(NS_WEB + "preemptiveAlertCheck", false);
+        public static final String WEB_ALWAYS_WAIT = registerSysVar(NS_WEB + "alwaysWait", false);
+        public static final String WEB_UNFOCUS_AFTER_TYPE = registerSysVar(NS_WEB + "unfocusAfterType", false);
+        public static final String WEB_PAGE_LOAD_WAIT_MS = registerSysVar(NS_WEB + "pageLoadWaitMs", 15000);
+        public static final String DROPDOWN_SELECT_ALL = "{ALL}";
+        public static final String WEB_METRICS_JSON = "browser-metrics.json";
+        public static final String WEB_METRICS_HTML = "browser-metrics.html";
+        public static final String WEB_METRICS_TOKEN = "{METRICS}";
+        public static final String WEB_METRICS_HTML_LOC = "/org/nexial/core/reports/";
+
+        // web element highlight
+        public static final String NS_HIGHLIGHT = NS_WEB + "highlight";
+        public static final String OPT_DEBUG_HIGHLIGHT = registerSysVar(NS_HIGHLIGHT, false);
+        public static final String HIGHLIGHT_STYLE = registerSysVar(NS_HIGHLIGHT + ".style", "background:#faf557;");
+        public static final String HIGHLIGHT_WAIT_MS = registerSysVar(NS_HIGHLIGHT + ".waitMs", 250);
+        public static final String OPT_DEBUG_HIGHLIGHT_OLD = registerSysVar(NAMESPACE + "highlight", false);
+        public static final String HIGHLIGHT_WAIT_MS_OLD = registerSysVar(NAMESPACE + "highlightWaitMs", 250);
+
+        // web drag-and-move config
+        public static final String OPT_DRAG_FROM_LEFT_CORNER = "left";
+        public static final String OPT_DRAG_FROM_RIGHT_CORNER = "right";
+        public static final String OPT_DRAG_FROM_TOP_CORNER = "top";
+        public static final String OPT_DRAG_FROM_BOTTOM_CORNER = "bottom";
+        public static final String OPT_DRAG_FROM_MIDDLE = "middle";
+        public static final String OPT_DRAG_FROM = registerSysVar(NS_WEB + "dragFrom", OPT_DRAG_FROM_MIDDLE);
+        public static final List<String> OPT_DRAG_FROMS = Arrays.asList(OPT_DRAG_FROM_LEFT_CORNER,
+                                                                        OPT_DRAG_FROM_RIGHT_CORNER,
+                                                                        OPT_DRAG_FROM_TOP_CORNER,
+                                                                        OPT_DRAG_FROM_BOTTOM_CORNER,
+                                                                        OPT_DRAG_FROM_MIDDLE);
+
+        // selenium specific
+        public static final String SELENIUM_CHROME_DRIVER = "webdriver.chrome.driver";
+        public static final String SELENIUM_CHROME_BIN = "webdriver.chrome.bin";
+        public static final String SELENIUM_GECKO_DRIVER = "webdriver.gecko.driver";
+        public static final String SELENIUM_FIREFOX_BIN = "webdriver.firefox.bin";
+        public static final String SELENIUM_FIREFOX_PROFILE = "webdriver.firefox.profile";
+        public static final String SELENIUM_EDGE_BIN = "webdriver.edge.bin";
+        public static final String SELENIUM_EDGE_DRIVER = "webdriver.edge.driver";
+        public static final String SELENIUM_IE_DRIVER = "webdriver.ie.driver";
+        public static final String SELENIUM_IE_LOG_LEVEL = "webdriver.ie.driver.loglevel";
+        public static final String SELENIUM_IE_LOG_LOGFILE = "webdriver.ie.driver.logfile";
+        public static final String SELENIUM_IE_SILENT = "webdriver.ie.driver.silent";
+
+        private Web() {}
+
+        // reference by enclosing class to force initialization (possibly prior to any reference at runtime)
+        static void init() {}
     }
 
     private NexialConst() { }

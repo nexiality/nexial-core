@@ -137,6 +137,7 @@ public class Browser implements ForcefulTerminate {
 
     protected Map<String, List<String>> chromeBinLocations;
     protected Map<String, List<String>> firefoxBinLocations;
+    protected Map<String, List<String>> edgeBinLocations;
 
     public void setContext(ExecutionContext context) { this.context = context; }
 
@@ -156,6 +157,8 @@ public class Browser implements ForcefulTerminate {
 
     public void setFirefoxBinLocations(Map<String, List<String>> locations) { this.firefoxBinLocations = locations; }
 
+    public void setEdgeBinLocations(Map<String, List<String>> locations) { this.edgeBinLocations = locations; }
+
     public void setFirefoxDriverVersionMapping(Map<String, String> firefoxDriverVersionMapping) {
         this.firefoxDriverVersionMapping = firefoxDriverVersionMapping;
     }
@@ -172,6 +175,8 @@ public class Browser implements ForcefulTerminate {
     public boolean isRunIE() { return browserType == ie; }
 
     public boolean isRunEdge() { return browserType == edge; }
+
+    public boolean isRunEdgeChrome() { return browserType == edgechrome; }
 
     public boolean isRunChrome() { return browserType == chrome; }
 
@@ -372,7 +377,8 @@ public class Browser implements ForcefulTerminate {
             if (isRunChromeEmbedded()) { driver = initChromeEmbedded(); }
             if (isRunElectron()) { driver = initElectron(); }
             if (isRunIE()) { driver = initIE(); }
-            if (isRunEdge()) { driver = initEdge(); }
+            if (isRunEdge()) { driver = initEdge(false); }
+            if (isRunEdgeChrome()) { driver = initEdge(true); }
             if (isRunFireFox()) { driver = initFirefox(false); }
             if (isRunFirefoxHeadless()) { driver = initFirefox(true); }
             if (isRunBrowserStack()) { driver = initBrowserStack(); }
@@ -641,7 +647,7 @@ public class Browser implements ForcefulTerminate {
             options.addArguments("--remote-debugging-port=" + port);
         }
 
-        String binaryLocation = resolveChromeBinLocation();
+        String binaryLocation = resolveBinLocation();
         if (StringUtils.isNotBlank(binaryLocation)) { options.setBinary(binaryLocation); }
 
         // proxy code not yet ready for prime time
@@ -759,7 +765,7 @@ public class Browser implements ForcefulTerminate {
 
     protected WebDriver initFirefox(boolean headless) throws IOException {
         BrowserType browserType = headless ? firefoxheadless : firefox;
-        String binaryLocation = resolveFirefoxBinLocation();
+        String binaryLocation = resolveBinLocation();
         WebDriverHelper helper = WebDriverHelper.newInstance(browserType, context);
         helper.setFirefoxDriverVersionMapping(this.firefoxDriverVersionMapping);
         helper.setBrowserBinLocation(binaryLocation);
@@ -867,8 +873,14 @@ public class Browser implements ForcefulTerminate {
         }
     }
 
-    protected WebDriver initEdge() throws IOException {
-        WebDriverHelper helper = WebDriverHelper.newInstance(edge, context);
+    protected WebDriver initEdge(boolean chrome) throws IOException {
+        WebDriverHelper helper = WebDriverHelper.newInstance(chrome ? edgechrome : edge, context);
+        return initEdgeDriver(helper);
+    }
+
+    private EdgeDriver initEdgeDriver(WebDriverHelper helper) throws IOException {
+        helper.setBrowserBinLocation(resolveBinLocation());
+
         File driver = helper.resolveDriver();
 
         String driverPath = driver.getAbsolutePath();
@@ -1284,7 +1296,7 @@ public class Browser implements ForcefulTerminate {
 
     private WebDriverHelper resolveChromeDriverLocation() throws IOException {
         WebDriverHelper helper = WebDriverHelper.newInstance(browserType, context);
-        helper.setBrowserBinLocation(resolveChromeBinLocation());
+        helper.setBrowserBinLocation(resolveBinLocation());
         File driver = helper.resolveDriver();
 
         String driverPath = driver.getAbsolutePath();
@@ -1293,19 +1305,41 @@ public class Browser implements ForcefulTerminate {
         return helper;
     }
 
-    private String resolveChromeBinLocation() {
-        String configuredPath = resolveConfig(SELENIUM_CHROME_BIN);
+    private String resolveBinLocation() {
+        String configuredPath;
+        Map<String, List<String>> binaryLocations;
+        switch (browserType) {
+            case chrome:
+            case chromeheadless:
+                configuredPath = resolveConfig(SELENIUM_CHROME_BIN);
+                binaryLocations = chromeBinLocations;
+                break;
+
+            case firefox:
+            case firefoxheadless:
+                configuredPath = resolveConfig(SELENIUM_FIREFOX_BIN);
+                binaryLocations = firefoxBinLocations;
+                break;
+
+            case edgechrome:
+                configuredPath = resolveConfig(SELENIUM_EDGE_BIN);
+                binaryLocations = edgeBinLocations;
+                break;
+            default:
+                return "";
+        }
+
         if (StringUtils.isNotBlank(configuredPath)) {
             if (FileUtil.isFileExecutable(configuredPath)) { return configuredPath; }
-            ConsoleUtils.error("Configured Chrome binary '" + configuredPath + "' is not executable; " +
+            ConsoleUtils.error("Configured " + browserType + " binary '" + configuredPath + "' is not executable; " +
                                "search for alternative...");
         }
 
-        List<String> possibleLocations = IS_OS_WINDOWS ? chromeBinLocations.get("windows") :
-                                         IS_OS_MAC ? chromeBinLocations.get("mac") :
-                                         IS_OS_LINUX ? chromeBinLocations.get("linux") : null;
+        List<String> possibleLocations = IS_OS_WINDOWS ? binaryLocations.get("windows") :
+                                         IS_OS_MAC ? binaryLocations.get("mac") :
+                                         IS_OS_LINUX ? binaryLocations.get("linux") : null;
         if (CollectionUtils.isEmpty(possibleLocations)) {
-            ConsoleUtils.error("Unable to derive alternative Chrome binary... ");
+            ConsoleUtils.error("Unable to derive alternative " + browserType + " binary... ");
             return null;
         }
 
@@ -1313,31 +1347,7 @@ public class Browser implements ForcefulTerminate {
             if (FileUtil.isFileExecutable(location)) { return new File(location).getAbsolutePath(); }
         }
 
-        ConsoleUtils.error("Unable to derive alternative Chrome binary... ");
-        return null;
-    }
-
-    private String resolveFirefoxBinLocation() {
-        String configuredPath = resolveConfig(SELENIUM_FIREFOX_BIN);
-        if (StringUtils.isNotBlank(configuredPath)) {
-            if (FileUtil.isFileExecutable(configuredPath)) { return configuredPath; }
-            ConsoleUtils.error("Configured Firefox binary '" + configuredPath + "' is not executable; " +
-                               "search for alternative...");
-        }
-
-        List<String> possibleLocations = IS_OS_WINDOWS ? firefoxBinLocations.get("windows") :
-                                         IS_OS_MAC ? firefoxBinLocations.get("mac") :
-                                         IS_OS_LINUX ? firefoxBinLocations.get("linux") : null;
-        if (CollectionUtils.isEmpty(possibleLocations)) {
-            ConsoleUtils.error("Unable to derive alternative Firefox binary... ");
-            return null;
-        }
-
-        for (String location : possibleLocations) {
-            if (FileUtil.isFileExecutable(location)) { return new File(location).getAbsolutePath(); }
-        }
-
-        ConsoleUtils.error("Unable to derive alternative Firefox binary... ");
+        ConsoleUtils.error("Unable to derive alternative " + browserType + " binary... ");
         return null;
     }
 

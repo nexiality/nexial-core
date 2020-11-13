@@ -540,6 +540,17 @@
                 </entry>
             </map>
         </property>
+        <property name="edgeBinLocations">
+            <map key-type="java.lang.String" value-type="java.util.List">
+                <entry key="windows">
+                    <list value-type="java.lang.String">
+                        <value>C:\Program Files (x86)\Microsoft\Edge\Application\msedge.exe</value>
+                        <value>C:\Program Files\Microsoft\Edge\Application\msedge.exe</value>
+                    </list>
+                </entry>
+
+            </map>
+        </property>
     </bean>
 
 
@@ -625,6 +636,17 @@
                 "checkFrequency": -1,
                 "checkFrequencyDescription": "NEVER",
                 "checkUrlBase" : "https://raw.githubusercontent.com/nexiality/nexial-core/master/support/edge/"
+            }
+          ]]></value>
+        </entry>
+        <entry key="edgechrome">
+            <value><![CDATA[
+            {
+                "home": "${user.home}/.nexial/edgechrome",
+                "baseName": "msedgedriver",
+                "checkFrequency": 1209600000,
+                "checkFrequencyDescription": "Every 2 weeks",
+                "checkUrlBase" : "https://msedgedriver.azureedge.net"
             }
           ]]></value>
         </entry>

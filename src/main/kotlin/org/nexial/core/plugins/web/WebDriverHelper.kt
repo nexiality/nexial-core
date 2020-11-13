@@ -290,7 +290,7 @@ abstract class WebDriverHelper protected constructor(protected var context: Exec
         return true
     }
 
-    private fun execCommandForBrowserVersion(
+    fun execCommandForBrowserVersion(
         cmd: Array<String>?): String? {
         var browserVersion: String? = ""
         try {
@@ -319,6 +319,20 @@ abstract class WebDriverHelper protected constructor(protected var context: Exec
                           "\" get Version /value")
         } else if (IS_OS_LINUX || IS_OS_MAC) {
             cmd = arrayOf("bash", "-c", "google-chrome --version")
+        }
+        return cmd
+    }
+
+    fun getEdgeChromeVerCommand(binaryLocation: String?): Array<String>? {
+        var cmd: Array<String>? = null
+        if (IS_OS_WINDOWS) {
+            cmd = arrayOf("cmd.exe", "/C",
+                          "wmic datafile where name=\"" +
+                          binaryLocation!!.replace("\\", "\\\\") +
+                          "\" get Version /value")
+        } else if (IS_OS_LINUX || IS_OS_MAC) {
+            // todo test for microsoft edge on linux or mac
+            ConsoleUtils.error("This current OS is not supported for $browserType browser")
         }
         return cmd
     }
@@ -409,9 +423,10 @@ abstract class WebDriverHelper protected constructor(protected var context: Exec
             }
 
             val helper: WebDriverHelper = when (browserType) {
-                edge                                   -> EdgeDriverHelper(context)
-                firefox, firefoxheadless               -> FirefoxDriverHelper(context)
-                electron                               -> ElectronDriverHelper(context)
+                edge -> EdgeDriverHelper(context)
+                edgechrome -> EdgeChromeDriverHelper(context)
+                firefox, firefoxheadless -> FirefoxDriverHelper(context)
+                electron -> ElectronDriverHelper(context)
                 chrome, chromeheadless, chromeembedded -> ChromeDriverHelper(context)
                 ie                                     -> IEDriverHelper(context)
                 // download BrowserStackLocal executable only needed when `browserstack.local` is `true`
@@ -616,6 +631,72 @@ class EdgeDriverHelper(context: ExecutionContext) : WebDriverHelper(context) {
     }
 }
 
+/** webdriver helper for edge chrome browser */
+class EdgeChromeDriverHelper(context: ExecutionContext) : WebDriverHelper(context) {
+    private val minVersion = "75.0.139.20"
+
+    override fun resolveLocalDriverPath(): String {
+        return StringUtils.appendIfMissing(File(context.replaceTokens(config.home)).absolutePath, separator) +
+               config.baseName + if (IS_OS_WINDOWS) ".exe" else ""
+    }
+
+    @Throws(IOException::class)
+    override fun resolveDriverManifest(pollForUpdates: Boolean): WebDriverManifest {
+
+        var (manifest: WebDriverManifest, hasDriver) = initManifestAndCheckDriver()
+
+        // never check is turned on and we already have a driver, so just keep this one
+        if (manifest.neverCheck && hasDriver) return manifest
+
+        //first time driver download
+        if (!hasDriver) manifest = initWebDriverManifest()
+
+        val (compatibleDriverVersion, isUpdateRequired) = isBrowserUpdated(manifest, hasDriver)
+
+        // not sure if edge is minimum chrome versio
+        if (StringUtils.isEmpty(compatibleDriverVersion) ||
+            compatibleDriverVersion!!.substringBefore(".").toInt() < minVersion.substringBefore(".").toInt()) {
+            ConsoleUtils.error("This version $compatibleDriverVersion is not supported by $browserType browser")
+            return manifest
+        }
+
+        // Fetch installed edge chromium version and prepare url for download
+        if (!hasDriver || isUpdateRequired) {
+
+            val env = when {
+                IS_OS_WINDOWS -> "win32"
+                // todo write logic for mac or linux
+                // IS_OS_MAC     -> "mac64"
+                else          -> throw IllegalArgumentException("OS $OS_NAME not supported for $browserType")
+            }
+
+            // todo change for linux/mac if needed
+            val downloadUrl = "${config.checkUrlBase}/$compatibleDriverVersion/edgedriver_$env.zip"
+            ConsoleUtils.log("[Edge Chrome] derived download URL as $downloadUrl")
+            updateManifestProperties(manifest, downloadUrl, compatibleDriverVersion)
+        }
+
+        return manifest
+    }
+
+    private fun isBrowserUpdated(manifest: WebDriverManifest, hasDriver: Boolean): Pair<String?, Boolean> {
+        var browserVersion: String?
+
+        if (StringUtils.isNotBlank(browserBinLocation)) {
+            browserVersion = execCommandForBrowserVersion(getEdgeChromeVerCommand(browserBinLocation))
+            browserVersion = browserVersion!!.replace("Version=", "").trim { it <= ' ' }
+        } else {
+            throw Exception("Could not find the $browserType browser.")
+        }
+        return if (hasDriver && browserVersion == manifest.driverVersion) {
+            ConsoleUtils.log("Current web driver is compatible with the browser. No need to update.")
+            Pair(browserVersion, false)
+        } else {
+            Pair(browserVersion, true)
+        }
+    }
+}
+
 /** webdriver helper for firefox and firefox headless browser */
 class FirefoxDriverHelper(context: ExecutionContext) : WebDriverHelper(context) {
 
@@ -702,8 +783,8 @@ class ElectronDriverHelper(context: ExecutionContext) : WebDriverHelper(context)
         }
 
         val arch = when (EnvUtils.getOsArchBit()) {
-            32   -> "ia32"
-            64   -> "x64"
+            32 -> "ia32"
+            64 -> "x64"
             else -> "ia32"
         }
 
@@ -742,9 +823,9 @@ class ChromeDriverHelper(context: ExecutionContext) : WebDriverHelper(context) {
             var driverVersion = minDriverVersion
             val wsClient = newIsolatedWsClient()
             val lookupResponse =
-                    if (StringUtils.isBlank(compatibleDriverVersion)) {
-                        wsClient.get("${config.checkUrlBase}/LATEST_RELEASE", "")
-                    } else wsClient.get("${config.checkUrlBase}/LATEST_RELEASE_$compatibleDriverVersion", "")
+                if (StringUtils.isBlank(compatibleDriverVersion)) {
+                    wsClient.get("${config.checkUrlBase}/LATEST_RELEASE", "")
+                } else wsClient.get("${config.checkUrlBase}/LATEST_RELEASE_$compatibleDriverVersion", "")
 
             if (lookupResponse.returnCode != 200) {
                 // something's wrong...
@@ -838,9 +919,9 @@ class IEDriverHelper(context: ExecutionContext) : WebDriverHelper(context) {
         }
 
         val newConfigHome = context.replaceTokens(config.home) + separator + (
-                if (EnvUtils.isRunningWindows64bit() &&
-                    !context.getBooleanData(OPT_FORCE_IE_32, getDefaultBool(OPT_FORCE_IE_32))) "x64"
-                else "win32")
+            if (EnvUtils.isRunningWindows64bit() &&
+                !context.getBooleanData(OPT_FORCE_IE_32, getDefaultBool(OPT_FORCE_IE_32))) "x64"
+            else "win32")
 
         this.driverLocation = newConfigHome
         config.home = newConfigHome
@@ -911,8 +992,8 @@ class CrossBrowserTestingLocalHelper(context: ExecutionContext) : WebDriverHelpe
         }
 
         val arch = when (EnvUtils.getOsArchBit()) {
-            32   -> "-x86"
-            64   -> "-x64"
+            32 -> "-x86"
+            64 -> "-x64"
             else -> ""
         }
 
