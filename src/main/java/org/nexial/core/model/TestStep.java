@@ -429,15 +429,29 @@ public class TestStep extends TestStepManifest {
                 // reduce the number of steps for repeatUntil command
                 if (step.isCommandRepeater()) {
                     int stepCount = Integer.parseInt(step.getParams().get(0));
-                    for (int k = 1; k <= stepCount; k++) {
-                        TestStep innerStep = testSteps.get(sectionStepIndex + k);
-                        if (StringUtils.equals(innerStep.getCommandFQN(), CMD_SECTION)) {
-                            stepCount += Integer.parseInt(innerStep.getParams().get(0));
+                    if (step.macro != null) {
+                        for (int k = 1; k <= stepCount; k++) {
+                            TestStep innerStep = testSteps.get(sectionStepIndex + k);
+                            if (StringUtils.equals(innerStep.getCommandFQN(), CMD_SECTION)) {
+                                stepCount += Integer.parseInt(innerStep.getParams().get(0));
+                            }
                         }
-                    }
 
-                    steps += stepCount;
-                    j += stepCount;
+                        steps += stepCount;
+                        j += stepCount;
+                    } else {
+                        int stepsToSkip = stepCount;
+                        List<TestStep> innerSteps = step.commandRepeater.getSteps();
+                        for (int k = 0; k < stepCount; k++) {
+                            TestStep innerStep = innerSteps.get(k);
+                            if (StringUtils.equals(innerStep.getCommandFQN(), CMD_SECTION)) {
+                                stepsToSkip += Integer.parseInt(innerStep.getParams().get(0));
+                            }
+                        }
+
+                        steps += stepsToSkip;
+                        j += stepsToSkip;
+                    }
                 }
 
                 // add the number of steps for section commands
