@@ -24,7 +24,7 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-
+import com.google.gson.JsonElement;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.collections4.set.ListOrderedSet;
 import org.apache.commons.lang3.ArrayUtils;
@@ -46,8 +46,6 @@ import org.nexial.core.model.ExecutionContext;
 import org.nexial.core.plugins.ws.WsCommand;
 import org.nexial.core.utils.ConsoleUtils;
 
-import com.google.gson.JsonElement;
-
 import static org.nexial.core.NexialConst.Data.EXPRESSION_RESOLVE_URL;
 import static org.nexial.core.NexialConst.Data.TEXT_DELIM;
 import static org.nexial.core.NexialConst.GSON;
@@ -59,7 +57,7 @@ import static org.nexial.core.variable.ExpressionUtils.fixControlChars;
 public class TextTransformer<T extends TextDataType> extends Transformer<T> {
     private static final Map<String, Integer> FUNCTION_TO_PARAM_LIST = discoverFunctions(TextTransformer.class);
     private static final Map<String, Method> FUNCTIONS =
-        toFunctionMap(FUNCTION_TO_PARAM_LIST, TextTransformer.class, TextDataType.class);
+            toFunctionMap(FUNCTION_TO_PARAM_LIST, TextTransformer.class, TextDataType.class);
 
     public T text(T data) { return data; }
 
@@ -103,7 +101,7 @@ public class TextTransformer<T extends TextDataType> extends Transformer<T> {
     public T substring(T data, String start, String end) {
         if (data == null || StringUtils.isEmpty(data.getValue())) { return data; }
         start = StringUtils.trim(start);
-        end = StringUtils.trim(end);
+        end   = StringUtils.trim(end);
         requiresPositiveNumber(start, "start must be a positive number (zero-based)", start);
         requiresPositiveNumber(end, "end must be a positive number (zero-based)", end);
         data.setValue(StringUtils.substring(data.getValue(), NumberUtils.toInt(start), NumberUtils.toInt(end)));
@@ -546,12 +544,10 @@ public class TextTransformer<T extends TextDataType> extends Transformer<T> {
         List<String> matches = RegexUtils.extract(data.getValue(), beginRegex + ".*?" + endRegex);
         if (CollectionUtils.isEmpty(matches)) { return list; }
 
-        String[] extracted = matches.stream()
-                                    .map(match ->
-                                             includeBeginEnd ?
-                                             match :
-                                             RegexUtils.removeMatches(RegexUtils.removeMatches(match, "^" + beginRegex),
-                                                                      endRegex + "$"))
+        String[] extracted = matches.stream().map(
+                match -> includeBeginEnd ?
+                         match :
+                         RegexUtils.removeMatches(RegexUtils.removeMatches(match, "^" + beginRegex), endRegex + "$"))
                                     .toArray(String[]::new);
         list.setValue(extracted);
         list.setTextValue(TextUtils.toString(extracted, list.getDelim(), "", ""));
@@ -573,6 +569,12 @@ public class TextTransformer<T extends TextDataType> extends Transformer<T> {
     public T ifMatch(T data, String regex, String match, String notMatch) {
         if (data == null || StringUtils.isEmpty(regex)) { return data; }
         data.setValue(RegexUtils.isExact(data.getValue(), regex) ? match : notMatch);
+        return data;
+    }
+
+    public T repeat(T data, String times) {
+        if (data == null || !NumberUtils.isDigits(times)) { return data; }
+        data.setValue(StringUtils.repeat(data.getValue(), NumberUtils.toInt(times)));
         return data;
     }
 

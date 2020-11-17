@@ -520,6 +520,15 @@ public class ExpressionProcessorTest {
     }
 
     @Test
+    public void processText_repeat() throws Exception {
+        ExpressionProcessor subject = new ExpressionProcessor(context);
+        assertEquals("", subject.process("[TEXT(A) => repeat(0)]"));
+        assertEquals("A", subject.process("[TEXT(A) => repeat(-2)]"));
+        assertEquals("{TAB}{TAB}{TAB}{TAB}{TAB}", subject.process("[TEXT({TAB}) => repeat(5)]"));
+        assertEquals("   ", subject.process("[TEXT( ) => repeat(3)]"));
+    }
+
+    @Test
     public void processList() throws Exception {
         ExpressionProcessor subject = new ExpressionProcessor(context);
 
@@ -596,7 +605,6 @@ public class ExpressionProcessorTest {
     public void processList_empty() throws Exception {
         context.setData("new array", "START");
         ExpressionProcessor subject = new ExpressionProcessor(context);
-
         assertEquals("item1,item2", subject.process(context.replaceTokens("[LIST(${new array}) =>" +
                                                                           " append(item1) " +
                                                                           " append(item2) " +
@@ -605,7 +613,6 @@ public class ExpressionProcessorTest {
 
     @Test
     public void processList_different_delim() throws Exception {
-
         context.setData("nexial.textDelim", "|");
 
         ExpressionProcessor subject = new ExpressionProcessor(context);
@@ -619,6 +626,15 @@ public class ExpressionProcessorTest {
         assertEquals("7", subject.process(
             "[LIST(Smith, John|Bron, James|Bloc, Jim|Norris, Jane|Chen, Joby|Li, Jacab|Jorem) =>" +
             " replace(, |\\|) count]"));
+    }
+
+    @Test
+    public void processList_index() throws Exception {
+        ExpressionProcessor subject = new ExpressionProcessor(context);
+        assertEquals("2", subject.process("[LIST(a,b,c,d,e,f,g) => index(c)]"));
+        assertEquals("[LIST(a,b,c,d,e,f,g) => index(k)]", subject.process("[LIST(a,b,c,d,e,f,g) => index(k)]"));
+        assertEquals("0", subject.process("[LIST(banana,apple,panara) => index(REGEX:ana)]"));
+        assertEquals("2", subject.process("[LIST(banana,apple,panara) => index(CONTAIN:anar)]"));
     }
 
     @Test

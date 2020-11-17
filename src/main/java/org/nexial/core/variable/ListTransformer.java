@@ -23,6 +23,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.IntStream;
 import java.util.stream.Stream;
 
 import org.apache.commons.collections4.ListUtils;
@@ -38,8 +39,8 @@ import org.nexial.core.ExecutionThread;
 import org.nexial.core.model.ExecutionContext;
 import org.nexial.core.utils.ConsoleUtils;
 
+import static org.nexial.core.NexialConst.*;
 import static org.nexial.core.NexialConst.Data.TEXT_DELIM;
-import static org.nexial.core.NexialConst.treatCommonValueShorthand;
 import static org.nexial.core.SystemVariables.getDefault;
 import static org.nexial.core.variable.ExpressionConst.ALIAS_EMPTY;
 import static org.nexial.core.variable.ExpressionUtils.fixControlChars;
@@ -293,12 +294,32 @@ public class ListTransformer<T extends ListDataType> extends Transformer {
     public NumberDataType index(T data, String item) {
         if (data == null || data.getValue() == null || StringUtils.isEmpty(item)) { return null; }
 
-        try {
-            NumberDataType number = new NumberDataType("0");
+        String[] list = data.getValue();
+        if (ArrayUtils.isEmpty(list)) { return null; }
 
-            int position = ArrayUtils.indexOf(data.getValue(), fixControlChars(item));
+        try {
+            int position = -1;
+            String matchTo = fixControlChars(item);
+
+            if (StringUtils.startsWith(matchTo, CONTAIN_PREFIX)) {
+                String substring = StringUtils.substringAfter(matchTo, CONTAIN_PREFIX);
+                position = IntStream.range(0, list.length)
+                                    .filter(i -> StringUtils.contains(list[i], substring))
+                                    .findFirst()
+                                    .orElse(-1);
+            } else if (StringUtils.startsWith(matchTo, REGEX_PREFIX)) {
+                String regex = StringUtils.substringAfter(matchTo, REGEX_PREFIX);
+                position = IntStream.range(0, list.length)
+                                    .filter(i -> RegexUtils.match(list[i], regex))
+                                    .findFirst()
+                                    .orElse(-1);
+            } else {
+                position = ArrayUtils.indexOf(list, matchTo);
+            }
+
             if (position < 0) { return null; }
 
+            NumberDataType number = new NumberDataType("0");
             number.setValue(position);
             number.setTextValue(position + "");
             return number;
