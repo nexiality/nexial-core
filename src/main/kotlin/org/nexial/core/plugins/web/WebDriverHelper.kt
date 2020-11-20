@@ -664,7 +664,7 @@ class EdgeChromeDriverHelper(context: ExecutionContext) : WebDriverHelper(contex
         if (!hasDriver || isUpdateRequired) {
 
             val env = when {
-                IS_OS_WINDOWS -> "win32"
+                IS_OS_WINDOWS -> "win64"
                 // todo write logic for mac or linux
                 // IS_OS_MAC     -> "mac64"
                 else          -> throw IllegalArgumentException("OS $OS_NAME not supported for $browserType")
