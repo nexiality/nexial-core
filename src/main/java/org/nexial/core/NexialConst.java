@@ -157,7 +157,7 @@ public final class NexialConst {
     // number related operations
     public static final String NS_NUMBER = NAMESPACE + "number.";
     public static final String DEF_ROUNDING_MODE = "ROUND_UP";
-    public static final Map<String,RoundingMode> VALID_ROUNDING_MODES = initValidRoundingModes();
+    public static final Map<String, RoundingMode> VALID_ROUNDING_MODES = initValidRoundingModes();
     public static final String OPT_ROUNDING_MODE = registerSysVar(NS_NUMBER + "rounding", DEF_ROUNDING_MODE);
 
     // screenshots
@@ -273,22 +273,31 @@ public final class NexialConst {
     public static final String MSG_STEP_FAIL_FAST = MSG_ABORT + "due to execution failure and fail-fast in effect";
     public static final String MSG_ACTIVITY_FAIL_FAST = MSG_ABORT + "skipping test activity due to previous failure";
     public static final String MSG_ACTIVITY_FAIL_END = MSG_ABORT + "skipping test activity due to previous end";
-    public static final String MSG_ACTIVITY_FAIL_END_LOOP = MSG_ABORT + "skipping test activity due to break-loop in effect";
-    public static final String MSG_ACTIVITY_ENDING_IF = MSG_ABORT + "activity ending due to EndIf() flow control activated.";
-    public static final String MSG_ACTIVITY_ENDING_LOOP_IF = MSG_ABORT + "activity ending due to EndLoopIf() flow control activated or unrecoverable execution failure.";
-    public static final String MSG_SCENARIO_FAIL_FAST = MSG_ABORT + "scenario failed and fail-fast is in effect" + MSG_ALL_SCENARIOS_SKIPPED;
-    public static final String MSG_SCENARIO_FAIL_IMMEDIATE = MSG_ABORT + "scenario failed and fail-immediate is in effect" + MSG_ALL_SCENARIOS_SKIPPED;
+    public static final String MSG_ACTIVITY_FAIL_END_LOOP =
+        MSG_ABORT + "skipping test activity due to break-loop in effect";
+    public static final String MSG_ACTIVITY_ENDING_IF =
+        MSG_ABORT + "activity ending due to EndIf() flow control activated.";
+    public static final String MSG_ACTIVITY_ENDING_LOOP_IF =
+        MSG_ABORT + "activity ending due to EndLoopIf() flow control activated or unrecoverable execution failure.";
+    public static final String MSG_SCENARIO_FAIL_FAST =
+        MSG_ABORT + "scenario failed and fail-fast is in effect" + MSG_ALL_SCENARIOS_SKIPPED;
+    public static final String MSG_SCENARIO_FAIL_IMMEDIATE =
+        MSG_ABORT + "scenario failed and fail-immediate is in effect" + MSG_ALL_SCENARIOS_SKIPPED;
     public static final String MSG_SCENARIO_END_IF = MSG_ABORT + "scenario ended due to EndIf() flow control";
     public static final String MSG_SCRIPT_END_IF = "script execution ended due to end immediate in effect";
     public static final String MSG_SCENARIO_END_LOOP_IF = MSG_ABORT + "scenario ended due to EndLoopIf() flow control";
-    public static final String MSG_EXEC_FAIL_FAST = MSG_ABORT + "failure found and fail-fast is in effect" + MSG_EXEC_STOP;
+    public static final String MSG_EXEC_FAIL_FAST =
+        MSG_ABORT + "failure found and fail-fast is in effect" + MSG_EXEC_STOP;
     public static final String MSG_EXEC_FAIL_IMMEDIATE = MSG_ABORT + "fail-immediate in effect" + MSG_EXEC_STOP;
     public static final String MSG_EXEC_END_IF = MSG_ABORT + "EndIf() flow control activated" + MSG_EXEC_STOP;
-    public static final String MSG_EXEC_END_LOOP_IF = MSG_ABORT + "EndLoopIf() flow control activated" + MSG_ITERATION_STOP;
+    public static final String MSG_EXEC_END_LOOP_IF =
+        MSG_ABORT + "EndLoopIf() flow control activated" + MSG_ITERATION_STOP;
     public static final String MSG_CRITICAL_COMMAND_FAIL = MSG_ABORT + "due to failure on fail-fast command: ";
     public static final String MSG_REPEAT_UNTIL = "[repeat-until] ";
-    public static final String MSG_REPEAT_UNTIL_BREAK = MSG_REPEAT_UNTIL + "loop terminating due to break-loop condition";
-    public static final String NESTED_SECTION_STEP_SKIPPED = "current step skipped due to the enclosing section command being skipped";
+    public static final String MSG_REPEAT_UNTIL_BREAK =
+        MSG_REPEAT_UNTIL + "loop terminating due to break-loop condition";
+    public static final String NESTED_SECTION_STEP_SKIPPED =
+        "current step skipped due to the enclosing section command being skipped";
     public static final String MSG_PROBLMATIC_NAME = "leading/trailing non-printable characters (whitespaces, tabs " +
                                                      "or newlines) found in %s name '%s' will likely cause " +
                                                      "execution-time issue.";
@@ -345,12 +354,51 @@ public final class NexialConst {
     //public static final String NL = System.lineSeparator();
     public static final String NL = "\n";
 
-    private static Map<String,RoundingMode> initValidRoundingModes() {
-        Map<String,RoundingMode> map = new HashMap<>();
-        map.put(DEF_ROUNDING_MODE, HALF_UP);
-        map.put("ROUND_DOWN", HALF_DOWN);
-        map.put("ROUND_EVEN", HALF_EVEN);
-        return map;
+    // browser types
+    public enum BrowserType {
+        firefox(true, true, true, true, true),
+        firefoxheadless(true, true, true, true, true),
+        safari(false, true, true, true, true),
+        chrome(true, false, true, true, true),
+        chromeheadless(true, false, true, true, true),
+        ie(false, false, true, false, true),
+        edge(false, false, true, false, false),
+        edgechrome(true, false, true, true, true),
+        iphone(false, false, false, false, true),
+        browserstack(false, false, false, true, true),
+        chromeembedded(false, false, true, true, true),
+        electron(false, false, true, false, true),
+        crossbrowsertesting(false, false, false, true, true);
+
+        private final boolean profileSupported;
+        private final boolean consoleLoggingEnabled;
+        private final boolean timeoutChangesEnabled;
+        private final boolean jsEventFavored;
+        private final boolean switchWindowSupported;
+
+        BrowserType(boolean profileSupported,
+                    boolean consoleLoggingEnabled,
+                    boolean timeoutChangesEnabled,
+                    boolean jsEventFavored,
+                    boolean switchWindowSupported) {
+            this.profileSupported = profileSupported;
+            this.consoleLoggingEnabled = consoleLoggingEnabled;
+            this.timeoutChangesEnabled = timeoutChangesEnabled;
+            this.jsEventFavored = jsEventFavored;
+            this.switchWindowSupported = switchWindowSupported;
+        }
+
+        public boolean isProfileSupported() { return profileSupported; }
+
+        public boolean isConsoleLoggingEnabled() { return consoleLoggingEnabled; }
+
+        public boolean isTimeoutChangesEnabled() { return timeoutChangesEnabled; }
+
+        public boolean isJsEventFavored() { return jsEventFavored; }
+
+        public boolean isSwitchWindowSupported() { return switchWindowSupported; }
+
+        public boolean isHeadless() { return this == firefoxheadless || this == chromeheadless; }
     }
 
     // @formatter:on
@@ -1532,75 +1580,12 @@ public final class NexialConst {
         static void init() {}
     }
 
-    public static final class Project {
-        public static final String DEF_LOC_ARTIFACT = "artifact";
-        public static final String DEF_REL_LOC_ARTIFACT = DEF_LOC_ARTIFACT + separator;
-        public static final String DEF_LOC_TEST_DATA = "data";
-        public static final String DEF_REL_LOC_BIN = DEF_REL_LOC_ARTIFACT + "bin" + separator;
-        public static final String DEF_REL_LOC_TEST_PLAN = DEF_REL_LOC_ARTIFACT + "plan" + separator;
-        public static final String DEF_REL_LOC_TEST_DATA = DEF_REL_LOC_ARTIFACT + DEF_LOC_TEST_DATA + separator;
-        public static final String DEF_REL_LOC_TEST_SCRIPT = DEF_REL_LOC_ARTIFACT + "script" + separator;
-        public static final String DEF_REL_LOC_OUTPUT = "output" + separator;
-        public static final String DEF_PROJECT_PROPS = "project.properties";
-        public static final String DEF_REL_PROJECT_PROPS = DEF_REL_LOC_ARTIFACT + DEF_PROJECT_PROPS;
-        public static final String DEF_REL_META = ".meta" + separator;
-        public static final String DEF_REL_META_PROJ_ID = DEF_REL_META + "project.id";
-        public static final String DEF_REL_META_EXECUTION = DEF_REL_META + "execution";
-
-        public static final String NEXIAL_HOME = NAMESPACE + "home";
-        public static final String NEXIAL_BIN_REL_PATH = "bin" + separator;
-        public static final String NEXIAL_MACOSX_BIN_REL_PATH = NEXIAL_BIN_REL_PATH + "macosx" + separator;
-        public static final String NEXIAL_WINDOWS_BIN_REL_PATH = NEXIAL_BIN_REL_PATH + "windows" + separator;
-        public static final String NEXIAL_LINUX_BIN_REL_PATH = NEXIAL_BIN_REL_PATH + "linux" + separator;
-        public static final String NEXIAL_EXECUTION_TYPE = NAMESPACE + "executionType";
-        public static final String NEXIAL_EXECUTION_TYPE_SCRIPT = "script";
-        public static final String NEXIAL_EXECUTION_TYPE_PLAN = "plan";
-
-        public static final String SCRIPT_FILE_SUFFIX = "xlsx";
-        public static final String SCRIPT_FILE_EXT = "." + SCRIPT_FILE_SUFFIX;
-        public static final String DATA_FILE_SUFFIX = "data." + SCRIPT_FILE_SUFFIX;
-        public static final String DEF_DATAFILE_SUFFIX = "." + DATA_FILE_SUFFIX;
-
-        // for command json metadata
-        public static final String COMMAND_JSON_FILE_NAME = NAMESPACE + "script.metadata.json";
-        public static final String VAR_CMD_JSON = NAMESPACE + "var.command.json";
-        public static final String JSON_FOLDER = TEMP + "nexial-json" + separator;
-        public static final File COMMAND_JSON_FILE = new File(JSON_FOLDER + COMMAND_JSON_FILE_NAME);
-        public static final File TEMP_JSON_JAR = new File(TEMP + "nexial-json-jar/nexial-json.jar");
-        public static final File TEMP_VAR_JSON_JAR = new File(TEMP + "nexial-json-jar/nexial-var-json.jar");
-
-        public static final String USER_NEXIAL_HOME =
-            StringUtils.appendIfMissing(new File(USER_HOME).getAbsolutePath(), separator) + ".nexial" + separator;
-        public static final String USER_NEXIAL_INSTALL_HOME = USER_NEXIAL_HOME + "install" + separator;
-        public static final String USER_PROJECTS_DIR =
-            IS_OS_WINDOWS ? "C:\\projects" + separator : USER_HOME + "/projects" + separator;
-        public static final String NEXIAL_INSTALLER_MIN_VERSION = "1.4.5";
-        public static final String PROJECT_CACHE_LOCATION = USER_NEXIAL_HOME + "projectCache" + separator;
-        public static final String BROWSER_META_CACHE_PATH = USER_NEXIAL_HOME + "browser-meta.json";
-
-        private Project() { }
-
-        public static String appendCapture(String dir) { return appendSep(dir) + SUBDIR_CAPTURES; }
-
-        public static String appendLog(String dir) { return appendSep(dir) + SUBDIR_LOGS; }
-
-        public static String appendLog(ExecutionDefinition execDef) {
-            if (execDef == null) { return null; }
-            return appendLog(StringUtils.defaultString(execDef.getOutPath()) + separator +
-                             StringUtils.defaultString(execDef.getRunId()));
-        }
-
-        public boolean isProfileSupported() { return profileSupported; }
-
-        public boolean isConsoleLoggingEnabled() { return consoleLoggingEnabled; }
-
-        public boolean isTimeoutChangesEnabled() { return timeoutChangesEnabled; }
-
-        public boolean isJsEventFavored() { return jsEventFavored; }
-
-        public boolean isSwitchWindowSupported() { return switchWindowSupported; }
-
-        public boolean isHeadless() { return this == firefoxheadless || this == chromeheadless; }
+    private static Map<String, RoundingMode> initValidRoundingModes() {
+        Map<String, RoundingMode> map = new HashMap<>();
+        map.put(DEF_ROUNDING_MODE, HALF_UP);
+        map.put("ROUND_DOWN", HALF_DOWN);
+        map.put("ROUND_EVEN", HALF_EVEN);
+        return map;
     }
 
     public static class CloudWebTesting {
