@@ -17,9 +17,6 @@
 
 package org.nexial.core.utils;
 
-import java.io.BufferedReader;
-import java.io.IOException;
-import java.io.InputStreamReader;
 import java.io.PrintStream;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -199,8 +196,13 @@ public final class ConsoleUtils {
     }
 
     @SuppressWarnings("PMD.SystemPrintln")
-    public static String pauseForStep(ExecutionContext context, String instructions, String header)
-        throws InterruptedException {
+    public static String pauseForStep(ExecutionContext context, String instructions, String header) {
+        return pauseForStep(context, instructions, header, false);
+    }
+
+    @SuppressWarnings("PMD.SystemPrintln")
+    public static String pauseForStep(ExecutionContext context, String instructions, String header,
+                                      boolean interruptable) {
         // not applicable when running in Jenkins environment
         if (!isPauseReady()) { return null; }
 
@@ -211,7 +213,7 @@ public final class ConsoleUtils {
         printStepPrompt(instructions);
 
         System.out.println("> When complete, enter your comment or press ENTER to continue ");
-        String comment = readInput();
+        String comment = readInput(interruptable);
 
         listener.afterPause();
 
@@ -222,7 +224,16 @@ public final class ConsoleUtils {
     public static List<String> pauseToValidate(ExecutionContext context,
                                                String instructions,
                                                String possibleResponses,
-                                               String header) throws InterruptedException {
+                                               String header) {
+        return pauseToValidate(context, instructions, possibleResponses, header, false);
+    }
+
+    @SuppressWarnings("PMD.SystemPrintln")
+    public static List<String> pauseToValidate(ExecutionContext context,
+                                               String instructions,
+                                               String possibleResponses,
+                                               String header,
+                                               boolean interruptable) {
         // not applicable when running in Jenkins environment
         if (!isPauseReady()) { return null; }
 
@@ -241,31 +252,25 @@ public final class ConsoleUtils {
         }
 
         System.out.printf("> %s: ", responses);
-        String input = readInput();
+        String input = readInput(interruptable);
 
         System.out.print("> Comment: ");
-        String comment = readInput();
+        String comment = readInput(interruptable);
 
         listener.afterPause();
 
         return Arrays.asList(input, comment);
     }
 
-    public static String readInput() throws InterruptedException {
-        BufferedReader br = new BufferedReader(new InputStreamReader(System.in));
-        try {
-            // while (!br.ready()) {
-            //     Thread.sleep(5);
-            // }
-            return br.readLine();
-        } catch (IOException e) {
-            return null;
-        }
+    @SuppressWarnings("PMD.SystemPrintln")
+    public static String pauseForInput(ExecutionContext context, String prompt,
+                                       String header) {
+        return pauseForInput(context, prompt, header, false);
     }
 
     @SuppressWarnings("PMD.SystemPrintln")
     public static String pauseForInput(ExecutionContext context, String prompt,
-                                       String header) throws InterruptedException {
+                                       String header, boolean interruptable) {
         // not applicable when running in Jenkins environment
         if (!isPauseReady()) { return null; }
 
@@ -278,11 +283,15 @@ public final class ConsoleUtils {
 
         printStepPrompt(prompt);
         System.out.print("> ");
-        String input = readInput();
+        String input = readInput(interruptable);
 
         if (listener != null) { listener.afterPause(); }
 
         return input;
+    }
+
+    private static String readInput(boolean interruptable) {
+        return interruptable ? InterruptableSystemIn.getNextLine() : new Scanner(System.in).nextLine();
     }
 
     public static String centerPrompt(String prompt, int width) {

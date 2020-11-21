@@ -8,6 +8,9 @@ import java.nio.file.Paths;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
 
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang3.ArrayUtils;
@@ -26,6 +29,7 @@ public class NexialUpdate {
 
     private static final String REL_PATH_INSTALLER_JAR = separator + "lib" + separator + "nexial-installer.jar";
     private static final String INSTALLER_DIR_NAME = "nexial-installer";
+    private static final long timeoutSeconds = 15l;
 
     public static void checkAndRun() {
         if (ExecUtils.isRunningInZeroTouchEnv()) { return; }
@@ -34,29 +38,39 @@ public class NexialUpdate {
 
         if (isUpdateReadyForInstallation()) {
             while (true) {
+                int choice = 3; // default is 'skip'
                 try {
-                    final int choice = Integer.parseInt(StringUtils.trim(promptUserForInstallation()));
-                    switch (choice) {
-                        case 1: {
-                            saveUpdatePreferenceChoice(true);
-                            System.exit(0);
-                        }
-                        case 2: {
-                            saveUpdatePreferenceChoice(false);
-                            System.exit(0);
-                        }
-                        case 3:
-                            return;
-                        default:
-                            System.out.println("Please choose valid option.\n");
-                    }
+                    String strChoice = CompletableFuture.supplyAsync(NexialUpdate::promptUserForInstallation)
+                                                        .get(timeoutSeconds, TimeUnit.SECONDS);
+                    ;
+                    choice = Integer.parseInt(StringUtils.trim(strChoice));
                 } catch (NumberFormatException nfe) {
-                    System.out.println("Please choose valid option.\n");
+                    choice = 0; // Invalid option, re-prompt
+                } catch (InterruptedException | ExecutionException | TimeoutException e) {
+                    System.out.println("No option selected.");
                 }
+
+                switch (choice) {
+                    case 1: {
+                        saveUpdatePreferenceChoice(true);
+                        System.exit(0);
+                    }
+                    case 2: {
+                        saveUpdatePreferenceChoice(false);
+                        System.exit(0);
+                    }
+                    case 3: {
+                        System.out.println("Skipping the installation...\n");
+                        return;
+                    }
+                    default:
+                        System.out.println("Please choose valid option.\n");
+                }
+
             }
         }
 
-        updateSilently();
+        // updateSilently();
     }
 
     public static void installNexialInstallerIfNotPresent() {
@@ -168,16 +182,12 @@ public class NexialUpdate {
     }
 
     private static String promptUserForInstallation() {
-        String promptMessage = "A new version of Nexial is ready to install. Please select a choice:\n" +
+        String promptMessage = "A new version of Nexial is ready to install. Please select a choice (timeout in "
+                               + timeoutSeconds + " seconds):\n" +
                                "\t1. Install new updates & restart current execution\n" +
                                "\t2. Install new updates only\n" +
                                "\t3. Don't install now, maybe later";
-        try {
-            return ConsoleUtils.pauseForInput(null, promptMessage, "Install Latest Nexial");
-        } catch (InterruptedException e) {
-            ConsoleUtils.error("No user input available. Proceed the execution...");
-            return "3";
-        }
+        return ConsoleUtils.pauseForInput(null, promptMessage, "Install Latest Nexial", true);
     }
 
     private static boolean isInstallerPresent() {

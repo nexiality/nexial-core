@@ -29,19 +29,23 @@ class InTimeCommand : StepCommand() {
     override fun getTarget() = "step.inTime"
 
     fun perform(instructions: String, waitMs: String) =
-            executeInTime(Supplier { performHelper(instructions, "PERFORM ACTION (timeout in ${waitMs}ms)") }, waitMs)
+            executeInTime({ performHelper(instructions, "PERFORM ACTION (timeout in ${waitMs}ms)", true) }, waitMs)
 
     fun validate(prompt: String, responses: String, passResponses: String, waitMs: String): StepResult {
         return executeInTime(
-            Supplier { validateHelper(prompt, responses, passResponses, "VALIDATION (timeout in ${waitMs}ms)") },
+            { validateHelper(prompt, responses, passResponses, "VALIDATION (timeout in ${waitMs}ms)", true) },
             waitMs)
     }
 
     fun observe(prompt: String, waitMs: String) =
-            executeInTime(Supplier { observeHelper(prompt, "OBSERVATION (timeout in ${waitMs}ms)") }, waitMs)
+        executeInTime({ observeHelper(prompt, "OBSERVATION (timeout in ${waitMs}ms)", true) }, waitMs)
 
     private fun executeInTime(f: Supplier<StepResult>, waitMs: String): StepResult {
-        val executor = Executors.newSingleThreadExecutor()
+        val executor = Executors.newSingleThreadExecutor { r: Runnable? ->
+            val thread = Thread(r)
+            thread.isDaemon = true
+            thread
+        }
         val task = executor.submit(Callable { f.get() })
 
         return try {
@@ -50,7 +54,7 @@ class InTimeCommand : StepCommand() {
             task.cancel(true)
             computeStepResult("", "", false, "Step execution timeout.")
         } finally {
-            executor.shutdownNow()
+            executor.shutdown()
         }
     }
 }

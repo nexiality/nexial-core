@@ -36,11 +36,11 @@ open class StepCommand : BaseCommand() {
 
     fun observe(prompt: String) = observeHelper(prompt, "OBSERVATION")
 
-    protected fun performHelper(instructions: String, header: String): StepResult {
+    protected fun performHelper(instructions: String, header: String, interruptable: Boolean = false): StepResult {
         clearContextData()
         requiresNotBlank(instructions, "Invalid instruction(s)", instructions)
 
-        val comment = ConsoleUtils.pauseForStep(context, instructions, header)
+        val comment = ConsoleUtils.pauseForStep(context, instructions, header, interruptable)
         if (isBlank(comment)) log("Step(s) performed")
 
         val result = computeStepResult("", comment, isBlank(comment) || !startsWith(comment, "FAIL "), "")
@@ -48,27 +48,30 @@ open class StepCommand : BaseCommand() {
         return result
     }
 
-    protected fun validateHelper(prompt: String, responses: String, passResponses: String, header: String): StepResult {
+    protected fun validateHelper(prompt: String, responses: String, passResponses: String, header: String,
+                                 interruptable: Boolean = false): StepResult {
         clearContextData()
         requiresNotBlank(prompt, "Invalid prompt(s)", prompt)
 
-        val validationResponses = ConsoleUtils.pauseToValidate(context, prompt, responses, header)
+        val validationResponses = ConsoleUtils.pauseToValidate(context, prompt, responses, header, interruptable)
         val response = validationResponses?.get(0)
         val comment = validationResponses?.get(1)
-        if (isBlank(response)) log("Empty response accepted as PASS.")
+        if (response != null && isBlank(response)) log("Empty response accepted as PASS.")
 
         val result = computeStepResult(response + "", comment + "",
-                                       isBlank(response) || passResponses.split(context.textDelim).contains(response),
+                                       (response != null && isBlank(response)) || passResponses
+                                           .split(context.textDelim)
+                                           .contains(response),
                                        "")
         result.paramValues = arrayOf(prompt, passResponses, header, comment ?: "")
         return result
     }
 
-    protected fun observeHelper(prompt: String, header: String): StepResult {
+    protected fun observeHelper(prompt: String, header: String, interruptable: Boolean = false): StepResult {
         clearContextData()
         requiresNotBlank(prompt, "Invalid prompt(s)", prompt)
 
-        val response = ConsoleUtils.pauseForInput(context, prompt, header)
+        val response = ConsoleUtils.pauseForInput(context, prompt, header, interruptable)
 
         if (isBlank(response)) log("Empty response accepted as PASS.")
         val result = computeStepResult(response, "", !startsWith(response, "FAIL "), "")
