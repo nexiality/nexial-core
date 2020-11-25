@@ -76,22 +76,31 @@
     </appender>
 
     <!-- file appenders -->
-    <appender name="file-testexecution" class="ch.qos.logback.core.rolling.RollingFileAppender">
+    <appender name="file-testexecution" class="ch.qos.logback.core.FileAppender">
         <filter class="org.nexial.commons.logging.LogEventFilter" />
         <file>${nexial.logpath:-${java.io.tmpdir}}/nexial-${nexial.runID:-test}.log</file>
         <append>true</append>
         <prudent>true</prudent>
-        <rollingPolicy class="ch.qos.logback.core.rolling.TimeBasedRollingPolicy">
-            <!-- daily rollover -->
-            <fileNamePattern>${nexial.logpath:-${java.io.tmpdir}}/nexial-${nexial.runID:-test}.%d{yyyy-MM-dd}.log</fileNamePattern>
-            <!-- no we don't want to keep old errors -->
-            <maxHistory>7</maxHistory>
-            <cleanHistoryOnStart>true</cleanHistoryOnStart>
-        </rollingPolicy>
         <encoder>
             <pattern>%d{yyyy-MM-dd HH:mm:ss.SSS}|%.-1p|%t|%m%n</pattern>
         </encoder>
     </appender>
+<!--    <appender name="file-testexecution" class="ch.qos.logback.core.rolling.RollingFileAppender">-->
+<!--        <filter class="org.nexial.commons.logging.LogEventFilter" />-->
+<!--        <file>${nexial.logpath:-${java.io.tmpdir}}/nexial-${nexial.runID:-test}.log</file>-->
+<!--        <append>true</append>-->
+<!--        <prudent>true</prudent>-->
+<!--        <rollingPolicy class="ch.qos.logback.core.rolling.TimeBasedRollingPolicy">-->
+<!--            &lt;!&ndash; daily rollover &ndash;&gt;-->
+<!--            <fileNamePattern>${nexial.logpath:-${java.io.tmpdir}}/nexial-${nexial.runID:-test}.%d{yyyy-MM-dd}.log</fileNamePattern>-->
+<!--            &lt;!&ndash; no we don't want to keep old errors &ndash;&gt;-->
+<!--            <maxHistory>7</maxHistory>-->
+<!--            <cleanHistoryOnStart>true</cleanHistoryOnStart>-->
+<!--        </rollingPolicy>-->
+<!--        <encoder>-->
+<!--            <pattern>%d{yyyy-MM-dd HH:mm:ss.SSS}|%.-1p|%t|%m%n</pattern>-->
+<!--        </encoder>-->
+<!--    </appender>-->
     <appender name="file-tracktime" class="ch.qos.logback.core.FileAppender">
         <file>${nexial.logpath:-${java.io.tmpdir}}/nexial-timetrack.log</file>
         <append>true</append>
