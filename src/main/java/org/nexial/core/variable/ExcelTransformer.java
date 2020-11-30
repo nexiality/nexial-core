@@ -17,16 +17,6 @@
 
 package org.nexial.core.variable;
 
-import java.io.File;
-import java.io.IOException;
-import java.lang.reflect.Method;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
-import java.util.Map;
-import java.util.stream.Collectors;
-import javax.validation.constraints.NotNull;
-
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang3.ArrayUtils;
@@ -42,6 +32,16 @@ import org.nexial.core.excel.Excel.Worksheet;
 import org.nexial.core.excel.ExcelAddress;
 import org.nexial.core.model.ExecutionContext;
 import org.nexial.core.utils.ConsoleUtils;
+
+import javax.validation.constraints.NotNull;
+import java.io.File;
+import java.io.IOException;
+import java.lang.reflect.Method;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
+import java.util.Map;
+import java.util.stream.Collectors;
 
 public class ExcelTransformer<T extends ExcelDataType> extends Transformer {
     private static final Map<String, Integer> FUNCTION_TO_PARAM = discoverFunctions(ExcelTransformer.class);
@@ -185,7 +185,7 @@ public class ExcelTransformer<T extends ExcelDataType> extends Transformer {
     }
 
     public T replace(T data, String search, String replace) {
-        requireAfterRead(data, "writeAcross()");
+        requireAfterRead(data, "replace()");
 
         if (StringUtils.isEmpty(search)) { throw new IllegalArgumentException("search is empty/null"); }
         String replaceWith = replace == null ? "" : replace;

@@ -17,15 +17,6 @@
 
 package org.nexial.core.variable;
 
-import java.lang.reflect.Method;
-import java.math.BigDecimal;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
-import java.util.Map;
-import java.util.stream.IntStream;
-import java.util.stream.Stream;
-
 import org.apache.commons.collections4.ListUtils;
 import org.apache.commons.collections4.SetUtils;
 import org.apache.commons.collections4.SetUtils.SetView;
@@ -38,6 +29,15 @@ import org.nexial.commons.utils.TextUtils;
 import org.nexial.core.ExecutionThread;
 import org.nexial.core.model.ExecutionContext;
 import org.nexial.core.utils.ConsoleUtils;
+
+import java.lang.reflect.Method;
+import java.math.BigDecimal;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
+import java.util.Map;
+import java.util.stream.IntStream;
+import java.util.stream.Stream;
 
 import static org.nexial.core.NexialConst.*;
 import static org.nexial.core.NexialConst.Data.TEXT_DELIM;
@@ -360,7 +360,7 @@ public class ListTransformer<T extends ListDataType> extends Transformer {
      * replace text occurrences in each list item as specified via {@code searchFor} with {@code replaceWidth}
      */
     public T replace(T data, String searchFor, String replaceWith) {
-        if (data == null || data.getValue() == null || StringUtils.isEmpty(searchFor)) { return data; }
+        if (data == null || data.getValue() == null) { return data; }
 
         String replaceBy = treatCommonValueShorthand(fixControlChars(StringUtils.defaultString(replaceWith)));
         String searchBy = treatCommonValueShorthand(fixControlChars(searchFor));

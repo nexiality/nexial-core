@@ -17,13 +17,6 @@
 
 package org.nexial.core.variable;
 
-import java.io.IOException;
-import java.lang.reflect.Method;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
 import com.google.gson.JsonElement;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.collections4.set.ListOrderedSet;
@@ -36,15 +29,15 @@ import org.jdom2.JDOMException;
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Document.OutputSettings.Syntax;
-import org.nexial.commons.utils.FileUtil;
-import org.nexial.commons.utils.RegexUtils;
-import org.nexial.commons.utils.ResourceUtils;
-import org.nexial.commons.utils.TextUtils;
-import org.nexial.commons.utils.XmlUtils;
+import org.nexial.commons.utils.*;
 import org.nexial.core.ExecutionThread;
 import org.nexial.core.model.ExecutionContext;
 import org.nexial.core.plugins.ws.WsCommand;
 import org.nexial.core.utils.ConsoleUtils;
+
+import java.io.IOException;
+import java.lang.reflect.Method;
+import java.util.*;
 
 import static org.nexial.core.NexialConst.Data.EXPRESSION_RESOLVE_URL;
 import static org.nexial.core.NexialConst.Data.TEXT_DELIM;
@@ -223,7 +216,7 @@ public class TextTransformer<T extends TextDataType> extends Transformer<T> {
     }
 
     public T replace(T data, String searchFor, String replaceWith) {
-        if (data == null || StringUtils.isEmpty(data.getTextValue()) || StringUtils.isEmpty(searchFor)) { return data;}
+        if (data == null || StringUtils.isEmpty(data.getTextValue())) { return data;}
         data.setValue(StringUtils.replace(data.getTextValue(),
                                           fixControlChars(searchFor),
                                           StringUtils.defaultString(fixControlChars(replaceWith))));

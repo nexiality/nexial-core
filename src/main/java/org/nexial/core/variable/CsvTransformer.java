@@ -17,17 +17,10 @@
 
 package org.nexial.core.variable;
 
-import java.io.File;
-import java.io.IOException;
-import java.lang.reflect.Method;
-import java.math.BigDecimal;
-import java.util.*;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
-import java.util.stream.Collectors;
-import java.util.stream.IntStream;
-import javax.validation.constraints.NotNull;
-
+import com.google.gson.JsonArray;
+import com.google.gson.JsonObject;
+import com.univocity.parsers.common.record.Record;
+import com.univocity.parsers.common.record.RecordMetaData;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.collections4.IterableUtils;
 import org.apache.commons.collections4.MapUtils;
@@ -47,10 +40,16 @@ import org.nexial.core.model.NexialFilter.ListItemConverterImpl;
 import org.nexial.core.plugins.io.ExcelHelper;
 import org.nexial.core.utils.ConsoleUtils;
 
-import com.google.gson.JsonArray;
-import com.google.gson.JsonObject;
-import com.univocity.parsers.common.record.Record;
-import com.univocity.parsers.common.record.RecordMetaData;
+import javax.validation.constraints.NotNull;
+import java.io.File;
+import java.io.IOException;
+import java.lang.reflect.Method;
+import java.math.BigDecimal;
+import java.util.*;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
+import java.util.stream.Collectors;
+import java.util.stream.IntStream;
 
 import static java.lang.System.lineSeparator;
 import static org.nexial.core.NexialConst.*;
@@ -357,11 +356,7 @@ public class CsvTransformer<T extends CsvDataType> extends Transformer<CsvDataTy
     }
 
     public T replaceColumnRegex(T data, String searchFor, String replaceWith, String columnNameOrIndices) {
-        if (data == null || data.getValue() == null ||
-            StringUtils.isBlank(searchFor) ||
-            StringUtils.isBlank(columnNameOrIndices)) {
-            return data;
-        }
+        if (data == null || data.getValue() == null || StringUtils.isBlank(columnNameOrIndices)) { return data; }
 
         Set<Integer> indicesToSearch = toIndices(data, columnNameOrIndices);
         if (CollectionUtils.isEmpty(indicesToSearch)) { return data; }
@@ -378,11 +373,16 @@ public class CsvTransformer<T extends CsvDataType> extends Transformer<CsvDataTy
             String[] cells = row.getValues();
             for (int i = 0; i < cells.length; i++) {
                 String cell = cells[i];
-                cell = TextUtils.csvSafe(indicesToSearch.contains(i) ?
-                                         RegexUtils.replace(cell, searchFor, replaceWith) : cell,
-                                         delim,
-                                         true);
-                rowModified.append(cell).append(delim);
+                if (indicesToSearch.contains(i)) {
+                    if (StringUtils.equals(cell, searchFor)) {
+                        cell = replaceWith;
+                    } else if (StringUtils.isBlank(searchFor)) {
+                        cell = StringUtils.replace(cell, searchFor, replaceWith);
+                    } else {
+                        cell = RegexUtils.replace(cell, searchFor, replaceWith);
+                    }
+                }
+                rowModified.append(TextUtils.csvSafe(cell, delim, true)).append(delim);
             }
 
             csvModified.append(StringUtils.removeEnd(rowModified.toString(), delim)).append(recordDelim);
