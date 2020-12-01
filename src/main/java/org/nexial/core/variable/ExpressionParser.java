@@ -17,10 +17,6 @@
 
 package org.nexial.core.variable;
 
-import java.util.List;
-import java.util.Map;
-import java.util.stream.Collectors;
-
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.nexial.commons.utils.RegexUtils;
@@ -28,23 +24,25 @@ import org.nexial.commons.utils.TextUtils;
 import org.nexial.core.model.ExecutionContext;
 import org.nexial.core.variable.Expression.ExpressionFunction;
 
+import java.util.List;
+import java.util.Map;
+import java.util.stream.Collectors;
+
 import static org.nexial.core.NexialConst.Data.NON_DISPLAYABLE_REPLACEMENTS;
 import static org.nexial.core.NexialConst.Data.NULL;
 import static org.nexial.core.variable.ExpressionConst.*;
 
 public class ExpressionParser {
     private static final String EXPRESSION_END_REGEX = "(\\s*)\\].*";
-    private ExecutionContext context;
-    private ExpressionDataTypeBuilder typeBuilder;
+    private final ExecutionContext context;
+    private final ExpressionDataTypeBuilder typeBuilder;
 
     public ExpressionParser(ExecutionContext context) {
         this.context = context;
         this.typeBuilder = new ExpressionDataTypeBuilder(context);
     }
 
-    public Expression parse(String text) throws TypeConversionException {
-        return parse(text, false);
-    }
+    public Expression parse(String text) throws TypeConversionException { return parse(text, false); }
 
     public Expression parse(String text, boolean syntaxOnly) throws TypeConversionException {
         if (StringUtils.isBlank(text)) { return null; }

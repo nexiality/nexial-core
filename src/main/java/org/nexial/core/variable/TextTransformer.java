@@ -50,7 +50,7 @@ import static org.nexial.core.variable.ExpressionUtils.fixControlChars;
 public class TextTransformer<T extends TextDataType> extends Transformer<T> {
     private static final Map<String, Integer> FUNCTION_TO_PARAM_LIST = discoverFunctions(TextTransformer.class);
     private static final Map<String, Method> FUNCTIONS =
-            toFunctionMap(FUNCTION_TO_PARAM_LIST, TextTransformer.class, TextDataType.class);
+        toFunctionMap(FUNCTION_TO_PARAM_LIST, TextTransformer.class, TextDataType.class);
 
     public T text(T data) { return data; }
 
@@ -94,7 +94,7 @@ public class TextTransformer<T extends TextDataType> extends Transformer<T> {
     public T substring(T data, String start, String end) {
         if (data == null || StringUtils.isEmpty(data.getValue())) { return data; }
         start = StringUtils.trim(start);
-        end   = StringUtils.trim(end);
+        end = StringUtils.trim(end);
         requiresPositiveNumber(start, "start must be a positive number (zero-based)", start);
         requiresPositiveNumber(end, "end must be a positive number (zero-based)", end);
         data.setValue(StringUtils.substring(data.getValue(), NumberUtils.toInt(start), NumberUtils.toInt(end)));
@@ -216,16 +216,20 @@ public class TextTransformer<T extends TextDataType> extends Transformer<T> {
     }
 
     public T replace(T data, String searchFor, String replaceWith) {
-        if (data == null || StringUtils.isEmpty(data.getTextValue())) { return data;}
-        data.setValue(StringUtils.replace(data.getTextValue(),
-                                          fixControlChars(searchFor),
-                                          StringUtils.defaultString(fixControlChars(replaceWith))));
+        if (data == null) { return data; }
+
+        String textValue = fixControlChars(data.getTextValue());
+        String searchBy = fixControlChars(searchFor);
+        String replaceBy = StringUtils.defaultString(fixControlChars(replaceWith));
+        data.setValue(StringUtils.equals(textValue, searchFor) ?
+                      replaceBy : StringUtils.replace(textValue, searchBy, replaceBy));
         return data;
     }
 
     public T replaceRegex(T data, String regexSearch, String replaceWith) {
         if (data == null || StringUtils.isEmpty(data.getTextValue()) || StringUtils.isEmpty(regexSearch)) {return data;}
-        data.setValue(RegexUtils.replace(data.getTextValue(), regexSearch, replaceWith));
+        data.setValue(RegexUtils.replace(fixControlChars(data.getTextValue()),
+                                         fixControlChars(regexSearch), fixControlChars(replaceWith)));
         return data;
     }
 
@@ -538,9 +542,9 @@ public class TextTransformer<T extends TextDataType> extends Transformer<T> {
         if (CollectionUtils.isEmpty(matches)) { return list; }
 
         String[] extracted = matches.stream().map(
-                match -> includeBeginEnd ?
-                         match :
-                         RegexUtils.removeMatches(RegexUtils.removeMatches(match, "^" + beginRegex), endRegex + "$"))
+            match -> includeBeginEnd ?
+                     match :
+                     RegexUtils.removeMatches(RegexUtils.removeMatches(match, "^" + beginRegex), endRegex + "$"))
                                     .toArray(String[]::new);
         list.setValue(extracted);
         list.setTextValue(TextUtils.toString(extracted, list.getDelim(), "", ""));

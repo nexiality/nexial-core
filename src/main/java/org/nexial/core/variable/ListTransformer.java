@@ -366,7 +366,8 @@ public class ListTransformer<T extends ListDataType> extends Transformer {
         String searchBy = treatCommonValueShorthand(fixControlChars(searchFor));
 
         List<String> replaced = new ArrayList<>();
-        Arrays.stream(data.getValue()).forEach(item -> replaced.add(StringUtils.replace(item, searchBy, replaceBy)));
+        Arrays.stream(data.getValue()).forEach(item -> replaced.add(
+            StringUtils.equals(item, searchBy) ? replaceBy : StringUtils.replace(item, searchBy, replaceBy)));
 
         return updateValue(data, replaced.toArray(new String[replaced.size()]));
     }
@@ -473,7 +474,7 @@ public class ListTransformer<T extends ListDataType> extends Transformer {
     }
 
     protected T updateValue(T data, String... array) {
-        data.setValue(array);
+        data.setValue(Arrays.stream(array).map(ExpressionUtils::fixControlChars).toArray(String[]::new));
         data.setTextValue(fixControlChars(Array.toString(array)));
         return data;
     }
