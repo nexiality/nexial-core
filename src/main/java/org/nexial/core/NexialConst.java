@@ -17,16 +17,8 @@
 
 package org.nexial.core;
 
-import java.awt.*;
-import java.io.File;
-import java.io.IOException;
-import java.math.RoundingMode;
-import java.text.DateFormat;
-import java.text.SimpleDateFormat;
-import java.util.List;
-import java.util.*;
-import javax.validation.constraints.NotNull;
-
+import com.google.gson.Gson;
+import com.google.gson.GsonBuilder;
 import org.apache.commons.cli.Options;
 import org.apache.commons.collections4.ListUtils;
 import org.apache.commons.collections4.MapUtils;
@@ -49,11 +41,19 @@ import org.nexial.core.model.TestProject;
 import org.nexial.core.utils.ConsoleUtils;
 import org.nexial.core.utils.ExecUtils;
 
-import com.google.gson.Gson;
-import com.google.gson.GsonBuilder;
+import javax.validation.constraints.NotNull;
+import java.awt.*;
+import java.io.File;
+import java.io.IOException;
+import java.math.RoundingMode;
+import java.text.DateFormat;
+import java.text.SimpleDateFormat;
+import java.util.List;
+import java.util.*;
 
 import static java.awt.Color.*;
-import static java.awt.image.BufferedImage.*;
+import static java.awt.image.BufferedImage.TYPE_INT_ARGB;
+import static java.awt.image.BufferedImage.TYPE_INT_RGB;
 import static java.io.File.separator;
 import static java.math.RoundingMode.*;
 import static javax.naming.Context.*;
@@ -408,6 +408,7 @@ public final class NexialConst {
 
         public static final String NEXIAL_VERSION = NAMESPACE + "version";
         public static final String HOSTNAME = "os.hostname";
+        public static final String ENV_NAME = NAMESPACE + "env";
 
         // allow per-run override for the output directory name
         // nexial.runID is set by castle via Jenkin internal BUILD_ID variable, which reflects build time in

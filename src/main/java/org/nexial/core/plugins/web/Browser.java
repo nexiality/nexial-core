@@ -17,13 +17,6 @@
 
 package org.nexial.core.plugins.web;
 
-import java.io.File;
-import java.io.IOException;
-import java.util.*;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
-import javax.validation.constraints.NotNull;
-
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.collections4.IterableUtils;
 import org.apache.commons.collections4.MapUtils;
@@ -61,6 +54,13 @@ import org.openqa.selenium.safari.SafariDriver;
 import org.openqa.selenium.safari.SafariOptions;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import javax.validation.constraints.NotNull;
+import java.io.File;
+import java.io.IOException;
+import java.util.*;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 import static java.io.File.separator;
 import static java.util.concurrent.TimeUnit.MILLISECONDS;
@@ -624,9 +624,15 @@ public class Browser implements ForcefulTerminate {
 
         options.addArguments(this.chromeOptions);
 
+        // time to experiment...
+        Map<String, Object> prefs = new HashMap<>();
+
+        // disable save password "bubble", in case we are running in non-incognito mode
+        prefs.put("credentials_enable_service", false);
+        prefs.put("profile.password_manager_enabled", false);
+
         String downloadTo = resolveDownloadTo(context);
         if (StringUtils.isNotBlank(downloadTo)) {
-            Map<String, Object> prefs = new HashMap<>();
             // allow PDF to be downloaded instead of displayed (pretty much useless)
             if (context.getBooleanConfig("web", profile, OPT_DOWNLOAD_PDF)) {
                 prefs.put("plugins.always_open_pdf_externally", true);
@@ -635,8 +641,9 @@ public class Browser implements ForcefulTerminate {
             prefs.put("download.default_directory", downloadTo);
             // prefs.put("download.extensions_to_open", "application/pdf");
             prefs.put("profile.default_content_settings.popups", 0);
-            options.setExperimentalOption("prefs", prefs);
         }
+
+        options.setExperimentalOption("prefs", prefs);
 
         handleChromeProfile(options);
 
@@ -742,18 +749,18 @@ public class Browser implements ForcefulTerminate {
         Capabilities capabilities = chrome.getCapabilities();
         initCapabilities(context, (MutableCapabilities) capabilities);
 
-        Map<String, Object> prefs = new HashMap<>();
+        Map<String, Object> chromePrefs = new HashMap<>();
         //prefs.put("download.prompt_for_download", "true");
-        prefs.put("profile.content_settings.pattern_pairs.*.multiple-automatic-downloads", "1");
-        prefs.put("profile.content_settings.pattern_pairs.,.multiple-automatic-downloads", 1);
-        prefs.put("profile.default_content_settings.multiple-automatic-downloads", "1");
-        prefs.put("profile.default_content_setting_values.automatic_downloads", "1");
-        prefs.put("multiple-automatic-downloads", "1");
-        prefs.put("profile.default_content_settings.popups", 0);
+        chromePrefs.put("profile.content_settings.pattern_pairs.*.multiple-automatic-downloads", "1");
+        chromePrefs.put("profile.content_settings.pattern_pairs.,.multiple-automatic-downloads", 1);
+        chromePrefs.put("profile.default_content_settings.multiple-automatic-downloads", "1");
+        chromePrefs.put("profile.default_content_setting_values.automatic_downloads", "1");
+        chromePrefs.put("multiple-automatic-downloads", "1");
+        chromePrefs.put("profile.default_content_settings.popups", 0);
         //Turns off download prompt
-        prefs.put("download.prompt_for_download", false);
+        chromePrefs.put("download.prompt_for_download", false);
 
-        ((MutableCapabilities) capabilities).setCapability("chrome.prefs", prefs);
+        ((MutableCapabilities) capabilities).setCapability("chrome.prefs", chromePrefs);
 
         browserVersion = capabilities.getVersion();
         browserPlatform = capabilities.getPlatform();
@@ -809,6 +816,9 @@ public class Browser implements ForcefulTerminate {
             capabilities = new DesiredCapabilities();
             initCapabilities(context, capabilities);
             options.merge(capabilities);
+
+            // disable saving password dialog
+            options.addPreference("signon.rememberSignons", false);
 
             Proxy proxy = (Proxy) capabilities.getCapability(PROXY);
             if (proxy != null) {

@@ -39,6 +39,7 @@ import org.nexial.core.excel.Excel
 import org.nexial.core.excel.ExcelAddress
 import org.nexial.core.excel.ExcelConfig.*
 import org.nexial.core.excel.ext.CipherHelper.CRYPT_IND
+import org.nexial.core.model.TestProject
 import org.nexial.core.tools.ProjectToolUtils.isDataFile
 import org.nexial.core.tools.ProjectToolUtils.isTestScript
 import org.nexial.core.tools.inspector.ArtifactType.ACTIVITY
@@ -156,7 +157,7 @@ class DataDocGenerator(val options: InspectorOptions, val logger: InspectorLogge
 
     private fun scanProjectProperties(dataVariables: DataVariableEntity) {
         val projectHome = File(options.directory)
-        val projectProperties = File("${projectHome.absolutePath}$separator$DEF_REL_PROJECT_PROPS")
+        val projectProperties = TestProject.deriveProjectProperties(projectHome.absolutePath)
         if (FileUtil.isFileReadable(projectProperties, 5)) {
             val projectProps = ResourceUtils.loadProperties(projectProperties)
             if (projectProps == null || projectProps.isEmpty) return

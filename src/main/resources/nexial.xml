@@ -390,6 +390,10 @@
 
                 <!-- Disables client-side phishing detection. -->
                 <value>disable-client-side-phishing-detection</value>
+
+                <!-- disable "This type of file can harm your computer" ... dialog -->
+                <value>safebrowsing-disable-extension-blacklist</value>
+                <value>safebrowsing-disable-download-protection</value>
             </array>
         </property>
         <property name="firefoxBinArgs">

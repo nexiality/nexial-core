@@ -18,6 +18,7 @@ package org.nexial.core.tools.inspector
 
 import com.google.gson.annotations.Expose
 import org.apache.commons.lang3.StringUtils
+import org.nexial.core.NexialConst.Project.DEF_PROJECT_PROPS
 import java.io.File
 import java.util.*
 
@@ -66,7 +67,7 @@ data class DataVariableLocationType(@Expose val order: Int, @Expose val name: St
     companion object {
         internal val StepOverride = DataVariableLocationType(0, "step")
         internal val CommandLineOverride = DataVariableLocationType(1, "commandline")
-        internal val ProjectProperties = DataVariableLocationType(2, "project.properties")
+        internal val ProjectProperties = DataVariableLocationType(2, DEF_PROJECT_PROPS)
         internal val ScenarioDataSheet = DataVariableLocationType(3, "datasheet")
         internal val DefaultDataSheet = DataVariableLocationType(4, "#default")
     }

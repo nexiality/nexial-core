@@ -17,16 +17,21 @@
 
 package org.nexial.core.model;
 
+import org.apache.commons.collections4.MapUtils;
+import org.apache.commons.lang3.StringUtils;
+import org.nexial.commons.utils.FileUtil;
+import org.nexial.commons.utils.TextUtils;
+import org.nexial.core.utils.ConsoleUtils;
+import org.nexial.core.utils.ExecUtils;
+
+import javax.annotation.Nonnull;
 import java.io.File;
 import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.Set;
 
-import org.apache.commons.collections4.MapUtils;
-import org.apache.commons.lang3.StringUtils;
-import org.nexial.commons.utils.TextUtils;
-
 import static java.io.File.separator;
+import static org.nexial.core.NexialConst.Data.ENV_NAME;
 import static org.nexial.core.NexialConst.OPT_PROJECT_BASE;
 import static org.nexial.core.NexialConst.Project.*;
 
@@ -89,11 +94,34 @@ public class TestProject {
 
     public void setProjectHome(String projectHome) {
         this.projectHome = projectHome;
-
         // note that this setter is called PRIOR to spring.
-        projectProps = StringUtils.appendIfMissing(this.projectHome, separator) + DEF_REL_PROJECT_PROPS;
+        projectProps = deriveProjectProperties(this.projectHome);
         loadProjectProperties();
         PROJECT_PROPERTIES.put(OPT_PROJECT_BASE, this.projectHome);
+    }
+
+    @Nonnull
+    public static String deriveProjectProperties(String projectHome) {
+        String runId = ExecUtils.deriveRunId();
+        String propBase = StringUtils.appendIfMissing(projectHome, separator) + DEF_REL_LOC_ARTIFACT;
+
+        // (v3.6): support env-specific project.properties
+        String env = System.getProperty(ENV_NAME, "");
+        if (StringUtils.isNotBlank(env)) {
+            // test that the target project.properties exists
+            // ie. check for $PROJECT/artifact/project.$ENV.properties
+            String envProjectProperties = propBase + StringUtils.replace(DEF_PROJECT_PROPS, ".", "." + env + ".");
+            if (FileUtil.isFileReadable(envProjectProperties, 1)) {
+                // found env-specific project.properties
+                ConsoleUtils.log(runId, "loading environment-specific project.properties: %s", envProjectProperties);
+                return envProjectProperties;
+            }
+
+            ConsoleUtils.error(runId, "Unable to read %s; fall back to project.properties", envProjectProperties);
+        }
+
+        // if env not specified, or target project.properties file cannot be found..
+        return propBase + DEF_PROJECT_PROPS;
     }
 
     public static boolean isProjectProperty(String name) { return PROJECT_PROPERTIES.containsKey(name); }
