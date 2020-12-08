@@ -17,10 +17,6 @@
 
 package org.nexial.core.plugins.io;
 
-import java.io.File;
-import java.io.IOException;
-import java.util.*;
-
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.collections4.map.HashedMap;
 import org.apache.commons.io.FileUtils;
@@ -46,24 +42,26 @@ import org.nexial.core.variable.Random;
 import org.nexial.core.variable.Sysdate;
 import org.nexial.core.variable.Syspath;
 
+import java.io.File;
+import java.io.IOException;
+import java.util.*;
+
 import static java.io.File.separator;
 import static java.lang.System.lineSeparator;
-import static org.apache.commons.lang3.SystemUtils.JAVA_IO_TMPDIR;
 import static org.junit.Assert.assertEquals;
 import static org.nexial.core.NexialConst.Compare.*;
 import static org.nexial.core.NexialConst.*;
 
 public class IoCommandTest {
 
-    private final String tmpOutdir = StringUtils.appendIfMissing(SystemUtils.getJavaIoTmpDir().getAbsolutePath(), separator) +
-                                     IoCommandTest.class.getSimpleName();
-    private final String baseLocation = StringUtils.appendIfMissing(FileUtils.getTempDirectoryPath(), separator);
+    private final String baseLocation = StringUtils.appendIfMissing(SystemUtils.getJavaIoTmpDir().getAbsolutePath(),
+                                                                    separator);
+    private final String tmpOutdir = baseLocation + IoCommandTest.class.getSimpleName();
     private final String testFile1 = baseLocation + "dummy1";
     private final String testFile2 = baseLocation + "dummy2";
     private final String testDestination1 = baseLocation + "newloc";
-    private final String basePath = StringUtils.appendIfMissing(SystemUtils.getJavaIoTmpDir().getAbsolutePath(), separator) +
-                                    this.getClass().getSimpleName() + separator;
-    private final String dummyPng = StringUtils.appendIfMissing(JAVA_IO_TMPDIR, separator) + "dummy.png";
+    private final String basePath = baseLocation + this.getClass().getSimpleName() + separator;
+    private final String dummyPng = baseLocation + "dummy.png";
 
     private final ExecutionContext context = new MockExecutionContext() {
         @Override
@@ -118,7 +116,7 @@ public class IoCommandTest {
         Assert.assertTrue(result.isSuccess());
         Assert.assertTrue(destinationFile.length() >= expectedFileSize);
         assertEquals(FileUtils.readFileToString(sourceFile, DEF_CHARSET),
-                            FileUtils.readFileToString(destinationFile, DEF_CHARSET));
+                     FileUtils.readFileToString(destinationFile, DEF_CHARSET));
     }
 
     @Test
@@ -208,9 +206,9 @@ public class IoCommandTest {
         Assert.assertTrue(destinationPaths.contains(destinationDir + separator + "_E3_test1_step4_myLogs.txt"));
         Assert.assertTrue(destinationPaths.contains(destinationDir + separator + "_E3_test1_step4_hello.log"));
         Assert.assertTrue(destinationPaths.contains(destinationDir + separator + "_E3_test1_step4_190FFV.csv"));
-        Assert.assertTrue(!file1.exists());
-        Assert.assertTrue(!file2.exists());
-        Assert.assertTrue(!file3.exists());
+        Assert.assertFalse(file1.exists());
+        Assert.assertFalse(file2.exists());
+        Assert.assertFalse(file3.exists());
 
         FileUtils.deleteDirectory(new File(sourceDir));
     }
@@ -246,9 +244,9 @@ public class IoCommandTest {
 
         destinationFiles.forEach(f -> destinationPaths.add(f.getAbsolutePath()));
         Assert.assertTrue(destinationPaths.contains(destinationDir + separator + "myFile.text"));
-        Assert.assertTrue(!file1.exists());
-        Assert.assertTrue(!file2.exists());
-        Assert.assertTrue(!file3.exists());
+        Assert.assertFalse(file1.exists());
+        Assert.assertFalse(file2.exists());
+        Assert.assertFalse(file3.exists());
 
         FileUtils.deleteDirectory(new File(sourceDir));
     }
@@ -531,9 +529,9 @@ public class IoCommandTest {
         // default is platform-specific eol
         String eol = lineSeparator();
         assertEquals("prop1=a" + eol +
-                            "prop2=b" + eol +
-                            "prop3=-" + eol,
-                            content);
+                     "prop2=b" + eol +
+                     "prop3=-" + eol,
+                     content);
 
         // eol as is test
         context.setData(OPT_IO_EOL_CONFIG, EOL_CONFIG_AS_IS);
@@ -542,9 +540,9 @@ public class IoCommandTest {
         content = FileUtils.readFileToString(file1, DEF_FILE_ENCODING);
         eol = "\n";
         assertEquals("prop1=a" + eol +
-                            "prop2=b" + eol +
-                            "prop3=-" + eol,
-                            content);
+                     "prop2=b" + eol +
+                     "prop3=-" + eol,
+                     content);
 
         // eol for windows test
         context.setData(OPT_IO_EOL_CONFIG, EOL_CONFIG_WINDOWS);
@@ -553,9 +551,9 @@ public class IoCommandTest {
         content = FileUtils.readFileToString(file1, DEF_FILE_ENCODING);
         eol = "\r\n";
         assertEquals("prop1=a" + eol +
-                            "prop2=b" + eol +
-                            "prop3=-" + eol,
-                            content);
+                     "prop2=b" + eol +
+                     "prop3=-" + eol,
+                     content);
 
         // eol for linux test
         context.setData(OPT_IO_EOL_CONFIG, EOL_CONFIG_UNIX);
@@ -564,9 +562,9 @@ public class IoCommandTest {
         content = FileUtils.readFileToString(file1, DEF_FILE_ENCODING);
         eol = "\n";
         assertEquals("prop1=a" + eol +
-                            "prop2=b" + eol +
-                            "prop3=-" + eol,
-                            content);
+                     "prop2=b" + eol +
+                     "prop3=-" + eol,
+                     content);
     }
 
     @Test
@@ -592,11 +590,11 @@ public class IoCommandTest {
         // default is platform-specific eol
         String eol = lineSeparator();
         assertEquals("Now is the time for all good men to come to the aid of his country" + eol +
-                            "The lazy brown fox jump over the dog, " + eol +
-                            "or something like that." + eol + eol +
-                            "Now is the winter of your discontent" + eol + eol +
-                            "Good bye" + eol,
-                            content);
+                     "The lazy brown fox jump over the dog, " + eol +
+                     "or something like that." + eol + eol +
+                     "Now is the winter of your discontent" + eol + eol +
+                     "Good bye" + eol,
+                     content);
 
         // eol as is test
         context.setData(OPT_IO_EOL_CONFIG, EOL_CONFIG_AS_IS);
@@ -605,11 +603,11 @@ public class IoCommandTest {
         content = FileUtils.readFileToString(file1, DEF_FILE_ENCODING);
         eol = "\n";
         assertEquals("Now is the time for all good men to come to the aid of his country" + eol +
-                            "The lazy brown fox jump over the dog, " + eol +
-                            "or something like that." + eol + eol +
-                            "Now is the winter of your discontent" + eol + eol +
-                            "Good bye" + eol,
-                            content);
+                     "The lazy brown fox jump over the dog, " + eol +
+                     "or something like that." + eol + eol +
+                     "Now is the winter of your discontent" + eol + eol +
+                     "Good bye" + eol,
+                     content);
 
         // eol for windows test
         context.setData(OPT_IO_EOL_CONFIG, EOL_CONFIG_WINDOWS);
@@ -618,11 +616,11 @@ public class IoCommandTest {
         content = FileUtils.readFileToString(file1, DEF_FILE_ENCODING);
         eol = "\r\n";
         assertEquals("Now is the time for all good men to come to the aid of his country" + eol +
-                            "The lazy brown fox jump over the dog, " + eol +
-                            "or something like that." + eol + eol +
-                            "Now is the winter of your discontent" + eol + eol +
-                            "Good bye" + eol,
-                            content);
+                     "The lazy brown fox jump over the dog, " + eol +
+                     "or something like that." + eol + eol +
+                     "Now is the winter of your discontent" + eol + eol +
+                     "Good bye" + eol,
+                     content);
 
         // eol for linux test
         context.setData(OPT_IO_EOL_CONFIG, EOL_CONFIG_UNIX);
@@ -631,11 +629,11 @@ public class IoCommandTest {
         content = FileUtils.readFileToString(file1, DEF_FILE_ENCODING);
         eol = "\n";
         assertEquals("Now is the time for all good men to come to the aid of his country" + eol +
-                            "The lazy brown fox jump over the dog, " + eol +
-                            "or something like that." + eol + eol +
-                            "Now is the winter of your discontent" + eol + eol +
-                            "Good bye" + eol,
-                            content);
+                     "The lazy brown fox jump over the dog, " + eol +
+                     "or something like that." + eol + eol +
+                     "Now is the winter of your discontent" + eol + eol +
+                     "Good bye" + eol,
+                     content);
     }
 
     @Test
@@ -715,8 +713,7 @@ public class IoCommandTest {
 
         io.writeFile(myTestFile1, propContent2, "true");
         result = io.assertEqual(myTestFile1, myTestFile2);
-        Assert.assertTrue(!result.isSuccess());
-
+        Assert.assertFalse(result.isSuccess());
     }
 
     @Test
@@ -751,8 +748,7 @@ public class IoCommandTest {
         io.writeFile(myTestFile2, propContent1, "true");
 
         result = io.assertNotEqual(myTestFile1, myTestFile2);
-        Assert.assertTrue(!result.isSuccess());
-
+        Assert.assertFalse(result.isSuccess());
     }
 
     @Test
@@ -785,14 +781,13 @@ public class IoCommandTest {
         io.writeFile(myTestFile2, String.valueOf(file2Data), "true");
 
         StepResult result = io.compare(myTestFile1, myTestFile2, "false");
-        Assert.assertTrue(!result.isSuccess());
+        Assert.assertFalse(result.isSuccess());
 
         io.deleteFiles(myTestFile2, "false");
         io.writeFile(myTestFile2, String.valueOf(file1Data), "true");
 
         result = io.compare(myTestFile1, myTestFile2, "false");
         Assert.assertTrue(result.isSuccess());
-
     }
 
     @Test
