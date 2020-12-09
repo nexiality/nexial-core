@@ -1167,6 +1167,7 @@ public final class NexialConst {
         public static final String MAIL_KEY_CONTENT_TYPE = registerSysVar(MAIL_PREFIX + "smtp.contentType");
         public static final String MAIL_KEY_DEBUG = registerSysVar(MAIL_PREFIX + "smtp.debug");
         public static final String MAIL_KEY_FROM = registerSysVar(MAIL_PREFIX + "smtp.from");
+        public static final String MAIL_KEY_FROM_DEF = registerSysVar(MAIL_PREFIX + "smtp.from.default");
         public static final String MAIL_KEY_LOCALHOST = registerSysVar(MAIL_PREFIX + "smtp.localhost");
         public static final String MAIL_KEY_MAIL_HOST = registerSysVar(MAIL_PREFIX + "smtp.host");
         public static final String MAIL_KEY_MAIL_PORT = registerSysVar(MAIL_PREFIX + "smtp.port");
@@ -1179,8 +1180,8 @@ public final class NexialConst {
         // standalone smtp config
         public static final List<String> SMTP_KEYS = Arrays.asList(
             MAIL_KEY_BUFF_SIZE, MAIL_KEY_PROTOCOL, MAIL_KEY_MAIL_HOST, MAIL_KEY_MAIL_PORT, MAIL_KEY_TLS_ENABLE,
-            MAIL_KEY_AUTH, MAIL_KEY_DEBUG, MAIL_KEY_CONTENT_TYPE, MAIL_KEY_USERNAME, MAIL_KEY_PASSWORD, MAIL_KEY_FROM,
-            MAIL_KEY_CC, MAIL_KEY_BCC, MAIL_KEY_XMAILER);
+            MAIL_KEY_AUTH, MAIL_KEY_DEBUG, MAIL_KEY_CONTENT_TYPE, MAIL_KEY_USERNAME, MAIL_KEY_PASSWORD,
+            MAIL_KEY_FROM, MAIL_KEY_FROM_DEF, MAIL_KEY_CC, MAIL_KEY_BCC, MAIL_KEY_XMAILER);
 
         public static final String MAIL_KEY_MAIL_JNDI_URL = registerSysVar(MAIL_PREFIX + "jndi.url");
         // jndi smtp config

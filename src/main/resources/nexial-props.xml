@@ -55,7 +55,7 @@
 		<prop key="nexial.mail.smtp.bufferSize">512</prop>
 		<prop key="nexial.mail.smtp.contentType">text/html</prop>
 		<prop key="nexial.mail.smtp.debug">false</prop>
-		<prop key="nexial.mail.smtp.from">${nexial.mail.smtp.from:nexial-noreply@nexiality.github.io}</prop>
+		<prop key="nexial.mail.smtp.from.default">nexial-noreply@nexiality.github.io</prop>
 
 		<!-- needed for jdbc beans -->
 		<prop key="nexial.jdbc.maxTotal">5</prop>

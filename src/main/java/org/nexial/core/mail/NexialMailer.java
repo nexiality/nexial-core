@@ -16,25 +16,7 @@
 
 package org.nexial.core.mail;
 
-import java.io.File;
-import java.io.IOException;
-import java.util.Date;
-import java.util.List;
-import java.util.Map;
-import java.util.stream.Collectors;
-import javax.activation.DataHandler;
-import javax.activation.DataSource;
-import javax.activation.FileDataSource;
-import javax.mail.Message;
-import javax.mail.MessagingException;
-import javax.mail.Multipart;
-import javax.mail.Session;
-import javax.mail.internet.InternetAddress;
-import javax.mail.internet.MimeBodyPart;
-import javax.mail.internet.MimeMessage;
-import javax.mail.internet.MimeMultipart;
-import javax.validation.constraints.NotNull;
-
+import com.sun.mail.smtp.SMTPTransport;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.collections4.MapUtils;
 import org.apache.commons.lang3.BooleanUtils;
@@ -53,14 +35,30 @@ import org.nexial.core.utils.ConsoleUtils;
 import org.thymeleaf.TemplateEngine;
 import org.thymeleaf.context.Context;
 
-import com.sun.mail.smtp.SMTPTransport;
+import javax.activation.DataHandler;
+import javax.activation.DataSource;
+import javax.activation.FileDataSource;
+import javax.mail.Message;
+import javax.mail.MessagingException;
+import javax.mail.Multipart;
+import javax.mail.Session;
+import javax.mail.internet.InternetAddress;
+import javax.mail.internet.MimeBodyPart;
+import javax.mail.internet.MimeMessage;
+import javax.mail.internet.MimeMultipart;
+import javax.validation.constraints.NotNull;
+import java.io.File;
+import java.io.IOException;
+import java.util.Date;
+import java.util.List;
+import java.util.Map;
+import java.util.stream.Collectors;
 
 import static javax.mail.Message.RecipientType.*;
 import static org.nexial.core.NexialConst.Data.MIME_PLAIN;
 import static org.nexial.core.NexialConst.Exec.*;
 import static org.nexial.core.NexialConst.ExitStatus.EXEC_OUTPUT_PATH;
-import static org.nexial.core.NexialConst.Mailer.MAIL_KEY_CONTENT_TYPE;
-import static org.nexial.core.NexialConst.Mailer.MAIL_KEY_FROM;
+import static org.nexial.core.NexialConst.Mailer.*;
 import static org.nexial.core.NexialConst.Project.*;
 import static org.nexial.core.SystemVariables.getDefault;
 import static org.nexial.core.SystemVariables.getDefaultBool;
@@ -387,7 +385,8 @@ public class NexialMailer implements ExecutionNotifier {
     }
 
     private Message prepMessage(Session session, String subject) throws MessagingException {
-        String from = mailSupport.getConfiguredProperty(MAIL_KEY_FROM);
+        String from = StringUtils.defaultIfBlank(mailSupport.getConfiguredProperty(MAIL_KEY_FROM),
+                                                 mailSupport.getConfiguredProperty(MAIL_KEY_FROM_DEF));
 
         Message msg = new MimeMessage(session);
         msg.addHeader("X-Mailer", NEXIAL_MANIFEST);
