@@ -17,15 +17,6 @@
 
 package org.nexial.core;
 
-import java.io.File;
-import java.io.IOException;
-import java.security.Security;
-import java.text.MessageFormat;
-import java.util.*;
-import java.util.stream.Collectors;
-import javax.annotation.Nullable;
-import javax.validation.constraints.NotNull;
-
 import org.apache.commons.cli.CommandLine;
 import org.apache.commons.cli.DefaultParser;
 import org.apache.commons.cli.HelpFormatter;
@@ -57,6 +48,15 @@ import org.nexial.core.utils.ConsoleUtils;
 import org.nexial.core.utils.ExecUtils;
 import org.nexial.core.utils.InputFileUtils;
 import org.springframework.context.support.ClassPathXmlApplicationContext;
+
+import javax.annotation.Nullable;
+import javax.validation.constraints.NotNull;
+import java.io.File;
+import java.io.IOException;
+import java.security.Security;
+import java.text.MessageFormat;
+import java.util.*;
+import java.util.stream.Collectors;
 
 import static java.io.File.separator;
 import static java.lang.System.lineSeparator;
@@ -395,6 +395,8 @@ public class Nexial {
 
                 for (int i = rowStartIndex; i < lastExecutionRow; i++) {
                     XSSFRow row = testPlan.getSheet().getRow(i);
+                    String msgSuffix = " specified in ROW " + (row.getRowNum() + 1) +
+                                       " of " + testPlan.getName() + " in " + testPlanFile;
 
                     // check for disabled step
                     if (ExecutionInputPrep.isPlanStepDisabled(row)) { continue; }
@@ -404,8 +406,7 @@ public class Nexial {
                         ConsoleUtils.log(VALIDATE_TEST_SCRIPT + testScript);
                         if (!InputFileUtils.isValidScript(testScript.getAbsolutePath())) {
                             // could be abs. path or relative path based on current project
-                            fail("Invalid/unreadable test script specified in ROW " + (row.getRowNum() + 1) + " of " +
-                                 testPlan + ".");
+                            fail("Invalid/unreadable test script" + msgSuffix);
                         }
                         // cache this to improve perf.
                         scriptToScenarioCache.put(testScript, deriveScenarios(testScript));
@@ -413,20 +414,14 @@ public class Nexial {
                     List<String> scenarios = deriveScenarioFromPlan(row, scriptToScenarioCache.get(testScript));
 
                     File dataFilePath = deriveDataFileFromPlan(row, project, testPlanFile, testScript);
-                    if (dataFilePath == null) {
-                        fail("Unable to resolve data file for the test plan specified in ROW " +
-                             (row.getRowNum() + 1) + " of " + testPlan + ".");
-                    }
+                    if (dataFilePath == null) { fail("Unable to resolve data file for the test plan" + msgSuffix); }
 
                     if (!dataFileCache.contains(dataFilePath)) {
                         ConsoleUtils.log("validating data file as " + dataFilePath);
                         Excel dataFile = InputFileUtils.asDataFile(dataFilePath.getAbsolutePath());
-                        if (dataFile == null) {
-                            fail("Invalid/unreadable data file specified in ROW " +
-                                 (row.getRowNum() + 1) + " of " + testPlan + ".");
-                        }
+                        if (dataFile == null) { fail("Invalid/unreadable data file" + msgSuffix); }
 
-                        // (2018/12/16,automike): memory consumption precaution
+                        // (2018/12/16,automike): optimize memory consumption
                         try {
                             dataFile.close();
                         } catch (IOException e) {
@@ -466,8 +461,7 @@ public class Nexial {
                         exec.parse();
                         executions.add(exec);
                     } catch (IOException e) {
-                        fail("Unable to parse successfully for the test plan specified in ROW " +
-                             (row.getRowNum() + 1) + " of " + testPlanFile + ".");
+                        fail("Unable to parse successfully for the test plan" + msgSuffix);
                     }
                 }
             });
@@ -1208,7 +1202,7 @@ public class Nexial {
             String manifest = NEXIAL_MANIFEST;
             ConsoleUtils.log(
                 NL + NL +
-                "/-"+END_OF_EXECUTION+"--------------------------------------------------------------" + NL +
+                "/-" + END_OF_EXECUTION + "--------------------------------------------------------------" + NL +
                 "| » Execution Time: " + (summary.getElapsedTime() / 1000) + " sec." + NL +
                 "| » Test Steps....: " + summary.getExecuted() + NL +
                 "| » Passed........: " + summary.getPassCount() + NL +

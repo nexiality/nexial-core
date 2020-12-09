@@ -245,7 +245,7 @@ final public class DataVariableUpdater {
      * expressions in the values accordingly.
      */
     protected void replaceProperties() {
-        List<File> props = FileUtil.listFiles(searchFrom, "project\\.(.+\\.)?.properties", true);
+        List<File> props = FileUtil.listFiles(searchFrom, "project(\\..+\\.)?.properties", true);
 
         // there should only be 1 artifact/project.properties
         if (CollectionUtils.isEmpty(props)) { return; }
