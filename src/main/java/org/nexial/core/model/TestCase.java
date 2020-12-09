@@ -17,9 +17,6 @@
 
 package org.nexial.core.model;
 
-import java.util.ArrayList;
-import java.util.List;
-
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.BooleanUtils;
 import org.apache.commons.lang3.StringUtils;
@@ -28,8 +25,12 @@ import org.nexial.core.excel.Excel.Worksheet;
 import org.nexial.core.logs.ExecutionLogger;
 import org.nexial.core.logs.TrackTimeLogs;
 
+import java.util.ArrayList;
+import java.util.List;
+
 import static org.nexial.core.CommandConst.*;
 import static org.nexial.core.NexialConst.Data.END_SCRIPT_IMMEDIATE;
+import static org.nexial.core.NexialConst.LogMessage.EXECUTING_ACTIVITY;
 import static org.nexial.core.NexialConst.*;
 import static org.nexial.core.excel.ExcelStyleHelper.formatRepeatUntilDescription;
 import static org.nexial.core.excel.ExcelStyleHelper.formatSectionDescription;
@@ -85,7 +86,7 @@ public class TestCase {
         executionSummary.setStartTime(System.currentTimeMillis());
         executionSummary.setTotalSteps(CollectionUtils.size(testSteps));
 
-        logger.log(this, LogMessage.EXECUTING_ACTIVITY);
+        logger.log(this, EXECUTING_ACTIVITY);
 
         for (int i = 0; i < testSteps.size(); i++) {
             if (BooleanUtils.toBoolean(System.getProperty(END_SCRIPT_IMMEDIATE, "false"))) {

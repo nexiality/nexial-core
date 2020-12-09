@@ -182,7 +182,20 @@ public class TestProject {
     public void setBoundProjectId(String boundProjectId) { this.boundProjectId = boundProjectId; }
 
     protected void loadProjectProperties() {
-        Map<String, String> properties = TextUtils.loadProperties(projectProps);
+        Map<String, String> properties = new LinkedHashMap<>();
+
+        // if user specified env-specific properties, then we'll load default `project.properties` first
+        if (!StringUtils.endsWith(projectProps, DEF_PROJECT_PROPS)) {
+            String propBase = StringUtils.appendIfMissing(projectHome, separator) + DEF_REL_LOC_ARTIFACT;
+            String defaultProjectProperties = propBase + DEF_PROJECT_PROPS;
+            Map<String, String> props = TextUtils.loadProperties(defaultProjectProperties);
+            if (MapUtils.isNotEmpty(props)) { properties.putAll(props); }
+        }
+
+        // override anything found in env-specific properties
+        Map<String, String> props = TextUtils.loadProperties(projectProps);
+        if (MapUtils.isNotEmpty(props)) { properties.putAll(props); }
+
         if (MapUtils.isNotEmpty(properties)) {
             PROJECT_PROPERTIES.clear();
             properties.forEach(PROJECT_PROPERTIES::put);

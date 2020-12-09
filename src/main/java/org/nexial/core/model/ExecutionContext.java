@@ -17,19 +17,6 @@
 
 package org.nexial.core.model;
 
-import java.io.File;
-import java.io.IOException;
-import java.io.UnsupportedEncodingException;
-import java.lang.reflect.Array;
-import java.lang.reflect.InvocationTargetException;
-import java.lang.reflect.TypeVariable;
-import java.net.URLEncoder;
-import java.util.*;
-import java.util.stream.Collectors;
-import javax.annotation.Nonnull;
-import javax.annotation.Nullable;
-import javax.validation.constraints.NotNull;
-
 import org.apache.commons.beanutils.BeanUtils;
 import org.apache.commons.beanutils.MethodUtils;
 import org.apache.commons.beanutils.PropertyUtils;
@@ -78,6 +65,19 @@ import org.slf4j.LoggerFactory;
 import org.slf4j.MDC;
 import org.springframework.context.support.ClassPathXmlApplicationContext;
 import org.thymeleaf.TemplateEngine;
+
+import javax.annotation.Nonnull;
+import javax.annotation.Nullable;
+import javax.validation.constraints.NotNull;
+import java.io.File;
+import java.io.IOException;
+import java.io.UnsupportedEncodingException;
+import java.lang.reflect.Array;
+import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.TypeVariable;
+import java.net.URLEncoder;
+import java.util.*;
+import java.util.stream.Collectors;
 
 import static java.io.File.separator;
 import static java.lang.System.lineSeparator;
@@ -1321,13 +1321,13 @@ public class ExecutionContext {
                 allPass = false;
 
                 if (isFailFast()) {
-                    executionLogger.log(testScenario, MSG_SCENARIO_FAIL_FAST);
+                    executionLogger.error(testScenario, MSG_SCENARIO_FAIL_FAST);
                     break;
                 }
             }
 
             if (isFailImmediate()) {
-                executionLogger.log(this, MSG_EXEC_FAIL_IMMEDIATE);
+                executionLogger.error(this, MSG_EXEC_FAIL_IMMEDIATE);
                 break;
             }
 

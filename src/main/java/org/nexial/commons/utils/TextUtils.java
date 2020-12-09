@@ -17,15 +17,6 @@
 
 package org.nexial.commons.utils;
 
-import java.io.File;
-import java.io.IOException;
-import java.io.InputStream;
-import java.lang.reflect.Array;
-import java.util.*;
-import java.util.concurrent.atomic.AtomicReference;
-import java.util.stream.Collectors;
-import javax.validation.constraints.NotNull;
-
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.collections4.IterableUtils;
 import org.apache.commons.collections4.MapUtils;
@@ -36,7 +27,16 @@ import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.math.NumberUtils;
 import org.nexial.core.utils.ConsoleUtils;
 
-import static java.awt.event.KeyEvent.*;
+import javax.validation.constraints.NotNull;
+import java.io.File;
+import java.io.IOException;
+import java.io.InputStream;
+import java.lang.reflect.Array;
+import java.util.*;
+import java.util.concurrent.atomic.AtomicReference;
+import java.util.stream.Collectors;
+
+import static java.awt.event.KeyEvent.CHAR_UNDEFINED;
 import static java.lang.Character.UnicodeBlock.SPECIALS;
 import static java.lang.System.lineSeparator;
 import static org.nexial.commons.utils.TextUtils.CleanNumberStrategy.CSV;
@@ -972,7 +972,6 @@ public final class TextUtils {
         if (!FileUtil.isFileReadable(propFile, 5)) { return null; }
 
         Map<String, String> properties = new LinkedHashMap<>();
-        // String projectPropsContent;
         try {
 
             List<String> lines = FileUtils.readLines(new File(propFile), DEF_FILE_ENCODING);
@@ -1017,7 +1016,6 @@ public final class TextUtils {
                 }
             }
 
-            // projectPropsContent = FileUtils.readFileToString(new File(propFile), DEF_FILE_ENCODING);
         } catch (IOException e) {
             ConsoleUtils.error("Unable to read project properties " + propFile + ": " + e.getMessage());
             return null;

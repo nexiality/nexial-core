@@ -17,13 +17,6 @@
 
 package org.nexial.core;
 
-import java.io.File;
-import java.io.IOException;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.collections4.MapUtils;
 import org.apache.commons.io.FileUtils;
@@ -44,6 +37,13 @@ import org.nexial.core.spi.NexialExecutionEvent;
 import org.nexial.core.spi.NexialListenerFactory;
 import org.nexial.core.utils.ConsoleUtils;
 import org.nexial.core.variable.Syspath;
+
+import java.io.File;
+import java.io.IOException;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
 import static java.io.File.separator;
 import static org.nexial.core.NexialConst.*;
@@ -280,7 +280,7 @@ public final class ExecutionThread extends Thread {
 
         ExecutionLogger logger = context.getLogger();
         if (context.isFailImmediate()) {
-            logger.log(context, MSG_SCENARIO_FAIL_IMMEDIATE);
+            logger.error(context, MSG_SCENARIO_FAIL_IMMEDIATE);
             collectIntraExecutionData(context, 0);
             return true;
         }
@@ -290,7 +290,7 @@ public final class ExecutionThread extends Thread {
                 // reset and pretend nothing's wrong.  Current script will be executed..
                 context.setData(OPT_LAST_OUTCOME, true);
             } else {
-                logger.log(context, MSG_SCENARIO_FAIL_FAST);
+                logger.error(context, MSG_SCENARIO_FAIL_FAST);
                 collectIntraExecutionData(context, 0);
                 return true;
             }
@@ -304,12 +304,12 @@ public final class ExecutionThread extends Thread {
 
         ExecutionLogger logger = context.getLogger();
         if (!allPass && context.isFailFast()) {
-            logger.log(context, MSG_EXEC_FAIL_FAST);
+            logger.error(context, MSG_EXEC_FAIL_FAST);
             return true;
         }
 
         if (context.isFailImmediate()) {
-            logger.log(context, MSG_EXEC_FAIL_IMMEDIATE);
+            logger.error(context, MSG_EXEC_FAIL_IMMEDIATE);
             return true;
         }
 

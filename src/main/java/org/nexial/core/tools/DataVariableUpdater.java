@@ -17,16 +17,6 @@
 
 package org.nexial.core.tools;
 
-import java.io.File;
-import java.io.IOException;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.List;
-import java.util.Map;
-import java.util.concurrent.atomic.AtomicBoolean;
-import javax.validation.constraints.NotNull;
-
 import org.apache.commons.cli.CommandLine;
 import org.apache.commons.cli.Options;
 import org.apache.commons.collections4.CollectionUtils;
@@ -47,11 +37,16 @@ import org.nexial.core.excel.ExcelArea;
 import org.nexial.core.utils.ConsoleUtils;
 import org.nexial.core.utils.InputFileUtils;
 
+import javax.validation.constraints.NotNull;
+import java.io.File;
+import java.io.IOException;
+import java.util.*;
+import java.util.concurrent.atomic.AtomicBoolean;
+
 import static java.io.File.separator;
 import static org.nexial.core.NexialConst.*;
 import static org.nexial.core.NexialConst.ExitStatus.RC_BAD_CLI_ARGS;
 import static org.nexial.core.NexialConst.ExitStatus.RC_EXCEL_IN_USE;
-import static org.nexial.core.NexialConst.Project.DEF_PROJECT_PROPS;
 import static org.nexial.core.excel.ExcelConfig.*;
 import static org.nexial.core.tools.CliConst.OPT_PREVIEW;
 import static org.nexial.core.tools.CliConst.OPT_VERBOSE;
@@ -250,62 +245,63 @@ final public class DataVariableUpdater {
      * expressions in the values accordingly.
      */
     protected void replaceProperties() {
-        List<File> props = FileUtil.listFiles(searchFrom, DEF_PROJECT_PROPS, true);
+        List<File> props = FileUtil.listFiles(searchFrom, "project\\.(.+\\.)?.properties", true);
 
         // there should only be 1 artifact/project.properties
         if (CollectionUtils.isEmpty(props)) { return; }
 
-        File file = props.get(0);
-        log("processing", file);
+        props.forEach( file -> {
+            log("processing", file);
 
-        try {
-            boolean hasUpdate = false;
+            try {
+                boolean hasUpdate = false;
 
-            String content = FileUtils.readFileToString(file, DEF_CHARSET);
-            String sep = StringUtils.contains(content, "\r\n") ? "\r\n" : "\n";
-            StringBuilder replaced = new StringBuilder();
-            String[] lines = StringUtils.splitByWholeSeparatorPreserveAllTokens(content, sep);
-            for (int i = 0; i < lines.length; i++) {
-                String line = lines[i];
-                String oldLine = line;
-                UpdateLog updateLog = new UpdateLog(file, "", "line " + StringUtils.leftPad((i + 1) + "", 4));
+                String content = FileUtils.readFileToString(file, DEF_CHARSET);
+                String sep = StringUtils.contains(content, "\r\n") ? "\r\n" : "\n";
+                StringBuilder replaced = new StringBuilder();
+                String[] lines = StringUtils.splitByWholeSeparatorPreserveAllTokens(content, sep);
+                for (int i = 0; i < lines.length; i++) {
+                    String line = lines[i];
+                    String oldLine = line;
+                    UpdateLog updateLog = new UpdateLog(file, "", "line " + StringUtils.leftPad((i + 1) + "", 4));
 
-                for (String oldVar : variableMap.keySet()) {
-                    String newVar = variableMap.get(oldVar);
+                    for (String oldVar : variableMap.keySet()) {
+                        String newVar = variableMap.get(oldVar);
 
-                    if (StringUtils.contains(oldVar, "*")) {
-                        line = replaceWildcardVar(line, oldVar, newVar);
-                        continue;
+                        if (StringUtils.contains(oldVar, "*")) {
+                            line = replaceWildcardVar(line, oldVar, newVar);
+                            continue;
+                        }
+
+                        // check var name first
+                        String regexVarName = "^(" + oldVar + ")(\\s*=\\s*.*)";
+                        if (RegexUtils.isExact(line, regexVarName)) {
+                            line = RegexUtils.replace(line, regexVarName, newVar + "$2");
+                        }
+
+                        String oldToken = TOKEN_START + oldVar + TOKEN_END;
+                        if (StringUtils.contains(line, oldToken)) {
+                            line = StringUtils.replace(line, oldToken, TOKEN_START + newVar + TOKEN_END);
+                        }
                     }
 
-                    // check var name first
-                    String regexVarName = "^(" + oldVar + ")(\\s*=\\s*.*)";
-                    if (RegexUtils.isExact(line, regexVarName)) {
-                        line = RegexUtils.replace(line, regexVarName, newVar + "$2");
+                    if (!StringUtils.equals(oldLine, line)) {
+                        updated.add(updateLog.copy().setChange(oldLine, line));
+                        hasUpdate = true;
                     }
 
-                    String oldToken = TOKEN_START + oldVar + TOKEN_END;
-                    if (StringUtils.contains(line, oldToken)) {
-                        line = StringUtils.replace(line, oldToken, TOKEN_START + newVar + TOKEN_END);
-                    }
+                    replaced.append(line).append(sep);
                 }
 
-                if (!StringUtils.equals(oldLine, line)) {
-                    updated.add(updateLog.copy().setChange(oldLine, line));
-                    hasUpdate = true;
+                if (!preview && hasUpdate) {
+                    FileUtils.writeStringToFile(file, StringUtils.removeEnd(replaced.toString(), sep), DEF_CHARSET);
                 }
 
-                replaced.append(line).append(sep);
+                log("processed" + (!hasUpdate ? " (no change)" : ""), file);
+            } catch (IOException e) {
+                System.err.println("Unable to process " + file + " successfully: " + e.getMessage());
             }
-
-            if (!preview && hasUpdate) {
-                FileUtils.writeStringToFile(file, StringUtils.removeEnd(replaced.toString(), sep), DEF_CHARSET);
-            }
-
-            log("processed" + (!hasUpdate ? " (no change)" : ""), file);
-        } catch (IOException e) {
-            System.err.println("Unable to process " + file + " successfully: " + e.getMessage());
-        }
+        });
     }
 
     /**

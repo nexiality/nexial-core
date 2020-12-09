@@ -17,7 +17,31 @@
 
 package org.nexial.core.plugins.base;
 
-import java.awt.image.*;
+import org.apache.commons.collections4.CollectionUtils;
+import org.apache.commons.io.FileUtils;
+import org.apache.commons.lang3.ArrayUtils;
+import org.apache.commons.lang3.StringUtils;
+import org.apache.commons.lang3.math.NumberUtils;
+import org.apache.commons.lang3.tuple.ImmutablePair;
+import org.apache.commons.lang3.tuple.Pair;
+import org.jetbrains.annotations.Nullable;
+import org.nexial.commons.utils.*;
+import org.nexial.core.ExecutionThread;
+import org.nexial.core.TokenReplacementException;
+import org.nexial.core.excel.ext.CellTextReader;
+import org.nexial.core.model.*;
+import org.nexial.core.plugins.CanLogExternally;
+import org.nexial.core.plugins.NexialCommand;
+import org.nexial.core.plugins.image.ImageCaptionHelper;
+import org.nexial.core.plugins.image.ImageCaptionHelper.CaptionModel;
+import org.nexial.core.plugins.ws.WsCommand;
+import org.nexial.core.tools.CommandDiscovery;
+import org.nexial.core.utils.*;
+import org.nexial.core.variable.Syspath;
+
+import javax.imageio.ImageIO;
+import javax.validation.constraints.NotNull;
+import java.awt.image.BufferedImage;
 import java.io.File;
 import java.io.IOException;
 import java.io.PrintWriter;
@@ -30,38 +54,6 @@ import java.math.BigDecimal;
 import java.util.*;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
-import javax.imageio.ImageIO;
-import javax.validation.constraints.NotNull;
-
-import org.apache.commons.collections4.CollectionUtils;
-import org.apache.commons.io.FileUtils;
-import org.apache.commons.lang3.ArrayUtils;
-import org.apache.commons.lang3.StringUtils;
-import org.apache.commons.lang3.math.NumberUtils;
-import org.apache.commons.lang3.tuple.ImmutablePair;
-import org.apache.commons.lang3.tuple.Pair;
-import org.jetbrains.annotations.Nullable;
-import org.nexial.commons.utils.FileUtil;
-import org.nexial.commons.utils.JRegexUtils;
-import org.nexial.commons.utils.RegexUtils;
-import org.nexial.commons.utils.ResourceUtils;
-import org.nexial.commons.utils.TextUtils;
-import org.nexial.core.ExecutionThread;
-import org.nexial.core.TokenReplacementException;
-import org.nexial.core.excel.ext.CellTextReader;
-import org.nexial.core.model.*;
-import org.nexial.core.plugins.CanLogExternally;
-import org.nexial.core.plugins.NexialCommand;
-import org.nexial.core.plugins.image.ImageCaptionHelper;
-import org.nexial.core.plugins.image.ImageCaptionHelper.CaptionModel;
-import org.nexial.core.plugins.ws.WsCommand;
-import org.nexial.core.tools.CommandDiscovery;
-import org.nexial.core.utils.CheckUtils;
-import org.nexial.core.utils.ClipboardUtils;
-import org.nexial.core.utils.ConsoleUtils;
-import org.nexial.core.utils.ExecUtils;
-import org.nexial.core.utils.OutputFileUtils;
-import org.nexial.core.variable.Syspath;
 
 import static java.io.File.separator;
 import static java.lang.Boolean.FALSE;
@@ -325,7 +317,7 @@ public class BaseCommand implements NexialCommand {
             message.append("None of the specified variables are removed since they either are READ-ONLY or not exist");
         }
 
-        return message.toString();
+        return StringUtils.trim(message.toString());
     }
 
     public StepResult substringAfter(String text, String delim, String saveVar) {

@@ -52,16 +52,17 @@ class ExecutionLogger(private val context: ExecutionContext) {
     }
 
     @JvmOverloads
-    fun log(testStep: TestStep?, message: String, priority: Boolean = false) = log(toHeader(testStep), message, priority)
+    fun log(testStep: TestStep?, message: String, priority: Boolean = false) =
+        log(toHeader(testStep), message, priority)
 
-    // force logging when quiet mode is active
-    fun log(subject: TestCase, message: String) = log(toHeader(subject), message, true)
+    // disable logging when quiet mode is active
+    fun log(subject: TestCase, message: String) = log(toHeader(subject), message, false)
 
-    // force logging when quiet mode is active
-    fun log(subject: TestScenario, message: String) = log(toHeader(subject), message, true)
+    // disable logging when quiet mode is active
+    fun log(subject: TestScenario, message: String) = log(toHeader(subject), message, false)
 
-    // force logging when quiet mode is active
-    fun log(subject: ExecutionContext, message: String) = log(toHeader(subject), message, true)
+    // disable logging when quiet mode is active
+    fun log(subject: ExecutionContext, message: String) = log(toHeader(subject), message, false)
 
     @JvmOverloads
     fun error(subject: NexialCommand, message: String, exception: Throwable? = null) {
@@ -92,51 +93,36 @@ class ExecutionLogger(private val context: ExecutionContext) {
     fun error(subject: ExecutionContext, message: String, e: Throwable) = error(toHeader(subject), message, e)
 
     private fun log(header: String, message: String, priority: Boolean) {
-        if (priority) {
-            priorityLogger.info("$header - $message")
-        } else {
-            logger.info("$header - $message")
-        }
+        if (priority) priorityLogger.info("$header - $message") else logger.info("$header - $message")
     }
 
     private fun error(header: String, message: String, e: Throwable? = null) {
-        if (e == null) {
-            priorityLogger.error("$header - $message")
-        } else {
-            priorityLogger.error("$header - $message", e)
-        }
+        if (e == null) priorityLogger.error("$header - $message") else priorityLogger.error("$header - $message", e)
     }
 
     companion object {
 
         @JvmStatic
-        fun toHeader(subject: TestStep?) = if (subject == null) "current  step"
-        else {
-            val macro = subject.macro
-            toHeader(subject.testCase) + "${if (macro != null) " (${macro.macroName})" else ""}|" +
-            "#" + StringUtils.leftPad((subject.rowIndex + 1).toString() + "", 3) + "|" +
-            StringUtils.truncate(subject.commandFQN, 25)
-        }
+        fun toHeader(subject: TestStep?) =
+            if (subject == null) "current step"
+            else toHeader(subject.testCase) +
+                    "${if (subject.macro != null) " (${subject.macro.macroName})" else ""}|" +
+                    "#" + StringUtils.leftPad((subject.rowIndex + 1).toString() + "", 3) + "|" +
+                    StringUtils.rightPad(StringUtils.truncate(subject.commandFQN, 25), 25)
 
         @JvmStatic
         fun toHeader(subject: TestCase?) =
-                if (subject == null) "current activity" else toHeader(subject.testScenario) + "|" + TextUtils.toOneLine(subject.name, true)
+            if (subject == null) "current activity"
+            else toHeader(subject.testScenario) + "|" + TextUtils.toOneLine(subject.name, true)
 
         @JvmStatic
-        fun toHeader(subject: TestScenario?): String {
-            return if (subject == null || subject.worksheet == null)
-                "current scenario"
-            else {
-                val worksheet = subject.worksheet
-                return justFileName(worksheet.file) + "|" + worksheet.name
-            }
-        }
+        fun toHeader(subject: TestScenario?) =
+            if (subject == null || subject.worksheet == null) "current scenario"
+            else justFileName(subject.worksheet.file) + "|" + subject.worksheet.name
 
         @JvmStatic
-        fun toHeader(subject: ExecutionContext?): String = if (subject != null && subject.testScript != null)
-            justFileName(subject.testScript.file)
-        else
-            CURRENT_SCRIPT
+        fun toHeader(subject: ExecutionContext?): String =
+            if (subject == null || subject.testScript == null) CURRENT_SCRIPT else justFileName(subject.testScript.file)
 
         @JvmStatic
         fun justFileName(file: File): String = StringUtils.substringBeforeLast(file.name, ".")
