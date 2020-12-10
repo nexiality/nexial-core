@@ -17,6 +17,20 @@
 
 package org.nexial.core.tools;
 
+import org.apache.commons.cli.*;
+import org.apache.commons.io.FileUtils;
+import org.apache.commons.lang3.StringUtils;
+import org.nexial.commons.utils.FileUtil;
+import org.nexial.core.excel.ext.CipherHelper;
+
+import javax.crypto.Cipher;
+import javax.crypto.spec.SecretKeySpec;
+import javax.tools.JavaCompiler;
+import javax.tools.JavaCompiler.CompilationTask;
+import javax.tools.JavaFileObject;
+import javax.tools.StandardJavaFileManager;
+import javax.tools.ToolProvider;
+import javax.validation.constraints.NotNull;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
@@ -29,20 +43,6 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.jar.JarOutputStream;
 import java.util.jar.Manifest;
-import javax.crypto.Cipher;
-import javax.crypto.spec.SecretKeySpec;
-import javax.tools.JavaCompiler;
-import javax.tools.JavaCompiler.CompilationTask;
-import javax.tools.JavaFileObject;
-import javax.tools.StandardJavaFileManager;
-import javax.tools.ToolProvider;
-import javax.validation.constraints.NotNull;
-
-import org.apache.commons.cli.*;
-import org.apache.commons.io.FileUtils;
-import org.apache.commons.lang3.StringUtils;
-import org.nexial.commons.utils.FileUtil;
-import org.nexial.core.excel.ext.CipherHelper;
 
 import static java.util.jar.Attributes.Name.MANIFEST_VERSION;
 import static javax.crypto.Cipher.ENCRYPT_MODE;
@@ -94,7 +94,7 @@ public final class NexialSetup {
                                                   "bin/nexial-setup" + BIN_SCRIPT_EXT + " script";
     private static final String MSG_CANT_WRITE_TEMP = "Unable to read/write directory '" + TEMP + "' to generate " +
                                                       "setup artifacts.  Please fix permission and re-run again.";
-    private static Options cmdOptions = initCmdOptions();
+    private static final Options cmdOptions = initCmdOptions();
 
     /**
      * The following steps take place.
@@ -249,7 +249,9 @@ public final class NexialSetup {
         CompilationTask task = compiler.getTask(null,
                                                 fileManager,
                                                 null,
-                                                Arrays.asList("-classpath", System.getProperty("java.class.path")),
+                                                Arrays.asList("-source", "8",
+                                                              "-target", "8",
+                                                              "-classpath", System.getProperty("java.class.path")),
                                                 null,
                                                 compilationUnits);
 
