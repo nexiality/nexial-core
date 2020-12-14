@@ -1523,4 +1523,9 @@ public class Excel {
             if (!alreadyMerged) { targetSheet.addMergedRegion(region); }
         });
     }
+
+    public static String readCellValue(XSSFRow row, int columnIndex) {
+        if (row == null) { return ""; }
+        return StringUtils.trim(Excel.getCellValue(row.getCell(columnIndex)));
+    }
 }

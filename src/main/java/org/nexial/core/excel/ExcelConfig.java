@@ -42,6 +42,7 @@ public class ExcelConfig {
     public static final ExcelAddress ADDR_PLAN_HEADER_SEQUENCE1 = new ExcelAddress("A1:A1");
     public static final ExcelAddress ADDR_PLAN_HEADER_SEQUENCE2 = new ExcelAddress("F1:H1");
     public static final ExcelAddress ADD_PLAN_HEADER_FEATURE_AND_TEST = new ExcelAddress("G1:H1");
+    public static final ExcelAddress ADDR_PLAN_SUMMARY = new ExcelAddress("A2");
     public static final String PLAN_HEADER_SUMMARY = "summary";
     public static final String PLAN_HEADER_AUTHOR = "author";
     public static final String PLAN_HEADER_FEATURE_OVERRIDE = "story / feature";

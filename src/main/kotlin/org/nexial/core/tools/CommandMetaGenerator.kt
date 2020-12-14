@@ -60,8 +60,8 @@ object CommandMetaGenerator {
         val generator = newInstance(args)
         generator.generateVarMeta(generator.generateCommandMeta())
         if (!preview) {
-            generator.buildJar()
-            generator.installJar()
+            generator.buildJar(TEMP_JSON_JAR)
+            generator.installJar(TEMP_JSON_JAR)
         }
     }
 
@@ -189,23 +189,23 @@ object CommandMetaGenerator {
         return varCommandsJson
     }
 
-    private fun buildJar() {
+    fun buildJar(jarFile: File) {
         // create temp folder for jar
-        val dir = TEMP_JSON_JAR.parentFile
+        val dir = jarFile.parentFile
         FileUtils.deleteQuietly(dir)
         dir.mkdirs()
 
-        if (TEMP_JSON_JAR.exists()) TEMP_JSON_JAR.delete()
+        if (jarFile.exists()) jarFile.delete()
 
         //create jar file
         val manifest = Manifest()
         manifest.mainAttributes[MANIFEST_VERSION] = "1.0"
-        val target = JarOutputStream(FileOutputStream(TEMP_JSON_JAR), manifest)
+        val target = JarOutputStream(FileOutputStream(jarFile), manifest)
         FileUtil.addToJar(File(JSON_FOLDER), target, JSON_FOLDER)
         target.close()
     }
 
-    private fun installJar() {
+    fun installJar(jarFile: File) {
         // check for NEXIAL_LIB
         var libDir = System.getenv(ENV_NEXIAL_LIB)
         if (StringUtils.isEmpty(libDir)) {
@@ -220,14 +220,14 @@ object CommandMetaGenerator {
         }
 
         // move jar file to lib folder
-        val targetJar = File("$libDir/${TEMP_JSON_JAR.name}")
+        val targetJar = File("$libDir/${jarFile.name}")
         FileUtils.deleteQuietly(targetJar)
-        FileUtils.moveFile(TEMP_JSON_JAR, targetJar)
+        FileUtils.moveFile(jarFile, targetJar)
         verbose("Jar file created", targetJar)
 
         // delete json file and jar file
         FileUtils.deleteQuietly(File(JSON_FOLDER))
-        FileUtils.deleteQuietly(TEMP_JSON_JAR.parentFile)
+        FileUtils.deleteQuietly(jarFile.parentFile)
     }
 
     private fun verbose(label: String, data: Any) {

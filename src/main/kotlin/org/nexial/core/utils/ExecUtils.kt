@@ -73,7 +73,7 @@ object ExecUtils {
     val BIN_SCRIPT_EXT = if (IS_OS_WINDOWS) ".cmd" else ".sh"
 
     @JvmField
-    val NEXIAL_MANIFEST: String = deriveJarManifest()
+    val NEXIAL_MANIFEST: String = deriveJarManifest(Nexial::class.java, PRODUCT, "nexial-DEV")
 
     @JvmField
     var IS_RUNNING_IN_JUNIT = isRunningInJUnit()
@@ -178,8 +178,8 @@ object ExecUtils {
         } != null
     }
 
-    private fun deriveJarManifest(): String {
-        val pkg = Nexial::class.java.getPackage()
+    fun deriveJarManifest(javaClass: Class<*>, impTitle: String, default: String): String {
+        val pkg = javaClass.getPackage()
 
         // try by jar class loader
         if (pkg != null) {
@@ -188,7 +188,7 @@ object ExecUtils {
             if (StringUtils.isNotBlank(implTitle) && StringUtils.isNotBlank(implVersion)) return "$implTitle $implVersion"
         }
 
-        val cl = Nexial::class.java.classLoader
+        val cl = javaClass.classLoader
         try {
             val resources = cl.getResources("META-INF/MANIFEST.MF")
             while (resources.hasMoreElements()) {
@@ -196,15 +196,15 @@ object ExecUtils {
                 val manifest = Manifest(url.openStream())
                 val attributes = manifest.mainAttributes
                 val product = attributes.getValue("Implementation-Title")
-                if (StringUtils.equals(product, PRODUCT)) {
-                    return "$PRODUCT ${StringUtils.remove(attributes.getValue("Implementation-Version"), "Build ")}"
+                if (StringUtils.equals(product, impTitle)) {
+                    return "$impTitle ${StringUtils.remove(attributes.getValue("Implementation-Version"), "Build ")}"
                 }
             }
         } catch (e: IOException) {
             ConsoleUtils.error("Unable to derive META-INF/MANIFEST.MF from classloader: " + e.message)
         }
 
-        return "nexial-DEV"
+        return default
     }
 
     @JvmStatic

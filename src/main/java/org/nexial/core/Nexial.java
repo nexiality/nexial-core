@@ -17,6 +17,15 @@
 
 package org.nexial.core;
 
+import java.io.File;
+import java.io.IOException;
+import java.security.Security;
+import java.text.MessageFormat;
+import java.util.*;
+import java.util.stream.Collectors;
+import javax.annotation.Nullable;
+import javax.validation.constraints.NotNull;
+
 import org.apache.commons.cli.CommandLine;
 import org.apache.commons.cli.DefaultParser;
 import org.apache.commons.cli.HelpFormatter;
@@ -49,15 +58,6 @@ import org.nexial.core.utils.ExecUtils;
 import org.nexial.core.utils.InputFileUtils;
 import org.springframework.context.support.ClassPathXmlApplicationContext;
 
-import javax.annotation.Nullable;
-import javax.validation.constraints.NotNull;
-import java.io.File;
-import java.io.IOException;
-import java.security.Security;
-import java.text.MessageFormat;
-import java.util.*;
-import java.util.stream.Collectors;
-
 import static java.io.File.separator;
 import static java.lang.System.lineSeparator;
 import static org.apache.commons.lang3.SystemUtils.IS_OS_WINDOWS;
@@ -74,6 +74,7 @@ import static org.nexial.core.NexialConst.Project.*;
 import static org.nexial.core.SystemVariables.getDefault;
 import static org.nexial.core.SystemVariables.getDefaultInt;
 import static org.nexial.core.excel.Excel.MIN_EXCEL_FILE_SIZE;
+import static org.nexial.core.excel.Excel.readCellValue;
 import static org.nexial.core.excel.ExcelConfig.*;
 import static org.nexial.core.model.ExecutionSummary.ExecutionLevel.EXECUTION;
 import static org.nexial.core.utils.ExecUtils.NEXIAL_MANIFEST;
@@ -1310,11 +1311,6 @@ public class Nexial {
                              memUsage +
                              "\\-------------------------------------------------------------------------------");
         }
-    }
-
-    private static String readCellValue(XSSFRow row, int columnIndex) {
-        if (row == null) { return ""; }
-        return StringUtils.trim(Excel.getCellValue(row.getCell(columnIndex)));
     }
 
     private void notifyCompletion(ExecutionSummary summary) {

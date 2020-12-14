@@ -43,6 +43,7 @@ import org.nexial.core.utils.ConsoleUtils;
 import org.nexial.core.utils.JsonHelper;
 
 import static org.nexial.core.NexialConst.GSON;
+import static org.nexial.core.NexialConst.USERNAME;
 
 public class ErrorReport {
     private static ExecutionContext context = ExecutionThread.get();
@@ -80,8 +81,6 @@ public class ErrorReport {
 
         return outputFile;
     }
-
-
 
     public static File createJSON(RecordData recordData) {
         File outputFile = new File(context.generateTestStepOutput("json"));
@@ -142,7 +141,7 @@ public class ErrorReport {
     private static void createSummarySheet(RecordData recordData, Workbook workbook) {
         Sheet summarySheet = workbook.createSheet("Summary");
 
-        summarySheet = setSummaryData(summarySheet, 0, "Run User", System.getProperty("user.name"));
+        summarySheet = setSummaryData(summarySheet, 0, "Run User", USERNAME);
         summarySheet = setSummaryData(summarySheet, 1, "Start Time", recordData.getStartTime());
         summarySheet = setSummaryData(summarySheet, 2, "Process Time", recordData.getProcessTime());
         summarySheet = setSummaryData(summarySheet, 3, "Total Processed",
