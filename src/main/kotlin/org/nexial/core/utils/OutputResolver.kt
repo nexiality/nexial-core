@@ -108,7 +108,8 @@ class OutputResolver(val data: String?,
                 else isContentReferencedAsFile(data)
 
         @JvmStatic
-        fun isContentReferencedAsFile(data: String) = FileUtil.isSuitableAsPath(data) && File(data).canRead()
+        fun isContentReferencedAsFile(data: String) =
+            FileUtil.isSuitableAsPath(data) && File(data).isFile && File(data).canRead()
 
         @JvmStatic
         fun resolveFile(path: String): File? {
