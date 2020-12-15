@@ -532,7 +532,7 @@ public class PdfCommand extends BaseCommand {
         to.getParentFile().mkdirs();
 
         IoCommand io = new IoCommand();
-        List<String> pdfFiles = io.listMatchingFiles(from, fileFilter, null)
+        List<String> pdfFiles = io.listMatchingFiles(from, fileFilter, null, false)
                                   .stream()
                                   .filter(file -> StringUtils.endsWithIgnoreCase(file, ".pdf"))
                                   .collect(Collectors.toList());

@@ -17,23 +17,6 @@
 
 package org.nexial.core.plugins.io;
 
-import java.io.File;
-import java.io.FileOutputStream;
-import java.io.FileWriter;
-import java.io.IOException;
-import java.security.MessageDigest;
-import java.security.NoSuchAlgorithmException;
-import java.text.NumberFormat;
-import java.time.LocalDateTime;
-import java.time.format.DateTimeFormatter;
-import java.util.*;
-import java.util.concurrent.atomic.AtomicReference;
-import java.util.regex.Pattern;
-import java.util.stream.Collectors;
-import javax.annotation.Nonnull;
-import javax.annotation.Nullable;
-import javax.validation.constraints.NotNull;
-
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.collections4.MapUtils;
 import org.apache.commons.io.FileUtils;
@@ -52,11 +35,7 @@ import org.apache.poi.xssf.usermodel.XSSFSheet;
 import org.nexial.commons.utils.*;
 import org.nexial.core.excel.Excel;
 import org.nexial.core.excel.Excel.Worksheet;
-import org.nexial.core.model.ExecutionContext;
-import org.nexial.core.model.NexialFilter;
-import org.nexial.core.model.NexialFilterComparator;
-import org.nexial.core.model.NexialFilterList;
-import org.nexial.core.model.StepResult;
+import org.nexial.core.model.*;
 import org.nexial.core.plugins.base.BaseCommand;
 import org.nexial.core.plugins.filevalidation.RecordData;
 import org.nexial.core.plugins.filevalidation.parser.FileParserFactory;
@@ -67,6 +46,23 @@ import org.nexial.core.utils.CheckUtils;
 import org.nexial.core.utils.ConsoleUtils;
 import org.nexial.core.utils.OutputFileUtils;
 import org.nexial.core.utils.OutputResolver;
+
+import javax.annotation.Nonnull;
+import javax.annotation.Nullable;
+import javax.validation.constraints.NotNull;
+import java.io.File;
+import java.io.FileOutputStream;
+import java.io.FileWriter;
+import java.io.IOException;
+import java.security.MessageDigest;
+import java.security.NoSuchAlgorithmException;
+import java.text.NumberFormat;
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
+import java.util.*;
+import java.util.concurrent.atomic.AtomicReference;
+import java.util.regex.Pattern;
+import java.util.stream.Collectors;
 
 import static java.io.File.separator;
 import static java.io.File.separatorChar;
@@ -156,11 +152,12 @@ public class IoCommand extends BaseCommand {
 
         // save matches
         File searchPah = new File(path);
-        context.setData(var, listMatchingFiles(searchPah, fileFilter, textFilter));
+        boolean recursive = context.getBooleanData(OPT_IO_MATCH_RECURSIVE, getDefaultBool(OPT_IO_MATCH_RECURSIVE));
+        context.setData(var, listMatchingFiles(searchPah, fileFilter, textFilter, recursive));
         return StepResult.success("saving matching file list to ${" + var + "}");
     }
 
-    public List<String> listMatchingFiles(File path, String fileFilter, String textFilter) {
+    public List<String> listMatchingFiles(File path, String fileFilter, String textFilter, boolean recursive) {
         boolean hasFilter = false;
         String pattern;
         if (RegexUtils.isExact(fileFilter, NexialFilterComparator.getRegexFilter()) &&
@@ -174,7 +171,7 @@ public class IoCommand extends BaseCommand {
         }
 
         // list files
-        List<String> files = new IOFilePathFilter(true).filterFiles(pattern);
+        List<String> files = new IOFilePathFilter(recursive).filterFiles(pattern);
         if (files == null) {
             files = new ArrayList<>();
         } else {

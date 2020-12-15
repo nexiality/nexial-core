@@ -17,12 +17,6 @@
 
 package org.nexial.core.model;
 
-import java.io.File;
-import java.io.IOException;
-import java.text.MessageFormat;
-import java.text.NumberFormat;
-import java.util.*;
-
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.collections4.MapUtils;
 import org.apache.commons.io.FileUtils;
@@ -41,6 +35,12 @@ import org.nexial.core.excel.ExcelConfig.*;
 import org.nexial.core.excel.ExcelStyleHelper;
 import org.nexial.core.utils.ConsoleUtils;
 import org.nexial.core.utils.ExecUtils;
+
+import java.io.File;
+import java.io.IOException;
+import java.text.MessageFormat;
+import java.text.NumberFormat;
+import java.util.*;
 
 import static java.io.File.separator;
 import static java.lang.System.lineSeparator;
@@ -246,6 +246,8 @@ public class ExecutionSummary {
     public void incrementExecuted() { this.executed++; }
 
     public double getSuccessRate() { return executed < 1 ? 0 : (passCount * 1.0 / executed); }
+
+    public String getSuccessRateString() { return MessageFormat.format(RATE_FORMAT, getSuccessRate()); }
 
     public boolean isFailedFast() { return failedFast; }
 
@@ -624,7 +626,7 @@ public class ExecutionSummary {
         createCell(sheet, "H" + rowNum, summary.getPassCount(), STYLE_EXEC_SUMM_PASS, rowHeight);
         createCell(sheet, "I" + rowNum, summary.getFailCount(), STYLE_EXEC_SUMM_FAIL, rowHeight);
         double successRate = summary.getSuccessRate();
-        createCell(sheet, "J" + rowNum, MessageFormat.format(RATE_FORMAT, successRate),
+        createCell(sheet, "J" + rowNum, summary.getSuccessRateString(),
                    successRate == 1 ? STYLE_EXEC_SUMM_SUCCESS : STYLE_EXEC_SUMM_NOT_SUCCESS,
                    rowHeight);
     }
@@ -659,8 +661,9 @@ public class ExecutionSummary {
         createCell(sheet, "H" + rowNum, passCount, STYLE_EXEC_SUMM_FINAL_TOTAL, rowHeight);
         createCell(sheet, "I" + rowNum, failCount, STYLE_EXEC_SUMM_FINAL_TOTAL, rowHeight);
         double successRate = getSuccessRate();
-        createCell(sheet, "J" + rowNum, MessageFormat.format(RATE_FORMAT, successRate),
-                   successRate == 1 ? STYLE_EXEC_SUMM_FINAL_SUCCESS : STYLE_EXEC_SUMM_FINAL_NOT_SUCCESS, rowHeight);
+        createCell(sheet, "J" + rowNum, getSuccessRateString(),
+                   successRate == 1 ? STYLE_EXEC_SUMM_FINAL_SUCCESS : STYLE_EXEC_SUMM_FINAL_NOT_SUCCESS,
+                   rowHeight);
     }
 
     protected int createReferenceDataSection(Worksheet summary, int rowNum) {

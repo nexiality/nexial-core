@@ -16,10 +16,6 @@
 
 package org.nexial.core.plugins.web;
 
-import java.text.MessageFormat;
-import javax.annotation.Nullable;
-import javax.validation.constraints.NotNull;
-
 import org.apache.commons.lang3.StringUtils;
 import org.nexial.core.NexialConst.BrowserStack;
 import org.nexial.core.NexialConst.BrowserType;
@@ -32,9 +28,11 @@ import org.nexial.core.utils.ConsoleUtils;
 import org.openqa.selenium.WebDriver;
 import org.openqa.selenium.remote.RemoteWebDriver;
 
+import javax.annotation.Nullable;
+import javax.validation.constraints.NotNull;
+
 import static org.nexial.core.NexialConst.CloudWebTesting.*;
 import static org.nexial.core.NexialConst.CrossBrowserTesting.SESSION_ID;
-import static org.nexial.core.NexialConst.RATE_FORMAT;
 import static org.nexial.core.model.ExecutionEvent.*;
 
 public abstract class CloudWebTestingPlatform {
@@ -156,7 +154,7 @@ public abstract class CloudWebTestingPlatform {
         return "total: " + summary.getTotalSteps() +
                ", pass: " + summary.getPassCount() +
                ", fail: " + summary.getFailCount() +
-               ", success%: " + MessageFormat.format(RATE_FORMAT, summary.getSuccessRate());
+               ", success%: " + summary.getSuccessRateString();
     }
 
     protected abstract void terminateLocal();

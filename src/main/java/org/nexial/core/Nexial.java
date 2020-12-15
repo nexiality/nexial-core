@@ -17,15 +17,6 @@
 
 package org.nexial.core;
 
-import java.io.File;
-import java.io.IOException;
-import java.security.Security;
-import java.text.MessageFormat;
-import java.util.*;
-import java.util.stream.Collectors;
-import javax.annotation.Nullable;
-import javax.validation.constraints.NotNull;
-
 import org.apache.commons.cli.CommandLine;
 import org.apache.commons.cli.DefaultParser;
 import org.apache.commons.cli.HelpFormatter;
@@ -57,6 +48,15 @@ import org.nexial.core.utils.ConsoleUtils;
 import org.nexial.core.utils.ExecUtils;
 import org.nexial.core.utils.InputFileUtils;
 import org.springframework.context.support.ClassPathXmlApplicationContext;
+
+import javax.annotation.Nullable;
+import javax.validation.constraints.NotNull;
+import java.io.File;
+import java.io.IOException;
+import java.security.Security;
+import java.text.MessageFormat;
+import java.util.*;
+import java.util.stream.Collectors;
 
 import static java.io.File.separator;
 import static java.lang.System.lineSeparator;
@@ -914,9 +914,8 @@ public class Nexial {
 
         // execution summary should be complete now.. time to generate execution synopsis
         double successRate = summary.getSuccessRate();
-        String successRateString = MessageFormat.format(RATE_FORMAT, successRate);
         System.setProperty(EXEC_SYNOPSIS,
-                           successRate == 1 ? "ALL PASS" : "FAIL (" + successRateString + " success)");
+                           successRate == 1 ? "ALL PASS" : "FAIL (" + summary.getSuccessRateString() + " success)");
 
         if (MapUtils.isEmpty(summary.getLogs()) && CollectionUtils.isNotEmpty(summary.getNestedExecutions())) {
             summary.getLogs().putAll(summary.getNestedExecutions().get(0).getLogs());
@@ -1197,7 +1196,7 @@ public class Nexial {
             String minSuccessRateString = MessageFormat.format(RATE_FORMAT, minExecSuccessRate);
 
             double successRate = summary.getSuccessRate();
-            String successRateString = MessageFormat.format(RATE_FORMAT, successRate);
+            String successRateString = summary.getSuccessRateString();
             System.setProperty(SUCCESS_RATE, successRateString);
 
             String manifest = NEXIAL_MANIFEST;
