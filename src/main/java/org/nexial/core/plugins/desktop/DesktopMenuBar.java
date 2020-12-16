@@ -17,10 +17,6 @@
 
 package org.nexial.core.plugins.desktop;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
-
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.nexial.commons.utils.TextUtils;
@@ -29,6 +25,10 @@ import org.nexial.core.utils.ConsoleUtils;
 import org.openqa.selenium.By;
 import org.openqa.selenium.WebElement;
 import org.openqa.selenium.interactions.Actions;
+
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
 
 import static org.nexial.core.plugins.desktop.DesktopConst.FORM_LAYOUT_LEFT_TO_RIGHT;
 import static org.nexial.core.plugins.desktop.DesktopConst.NESTED_CONTAINER_SEP;
@@ -69,7 +69,7 @@ public class DesktopMenuBar extends DesktopElement {
 
         // remove focus from current menu item. This seems to help with back-to-back menu clicks.
         if (getContainer() != null && StringUtils.isNotBlank(getContainer().getXpath())) {
-            DesktopConst.clickAppTopLeft(driver, getContainer().getXpath());
+            WiniumUtils.clickAppTopLeft(driver, getContainer().getXpath());
         }
 
         return result;

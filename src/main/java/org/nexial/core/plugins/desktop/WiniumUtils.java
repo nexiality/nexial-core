@@ -17,15 +17,7 @@
 
 package org.nexial.core.plugins.desktop;
 
-import java.io.File;
-import java.io.IOException;
-import java.net.URL;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Stack;
-
+import com.google.common.collect.ImmutableList;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang3.StringUtils;
@@ -38,7 +30,9 @@ import org.nexial.commons.utils.TextUtils;
 import org.nexial.core.ExecutionThread;
 import org.nexial.core.model.ExecutionContext;
 import org.nexial.core.utils.ConsoleUtils;
+import org.openqa.selenium.By;
 import org.openqa.selenium.Keys;
+import org.openqa.selenium.WebDriverException;
 import org.openqa.selenium.WebElement;
 import org.openqa.selenium.interactions.Actions;
 import org.openqa.selenium.net.PortProber;
@@ -46,13 +40,16 @@ import org.openqa.selenium.winium.DesktopOptions;
 import org.openqa.selenium.winium.WiniumDriver;
 import org.openqa.selenium.winium.WiniumDriverService;
 
-import com.google.common.collect.ImmutableList;
+import java.io.File;
+import java.io.IOException;
+import java.net.URL;
+import java.util.*;
 
 import static java.io.File.separator;
 import static org.apache.commons.lang3.SystemUtils.IS_OS_WINDOWS;
 import static org.nexial.commons.proc.ProcessInvoker.WORKING_DIRECTORY;
 import static org.nexial.core.NexialConst.*;
-import static org.nexial.core.NexialConst.Data.*;
+import static org.nexial.core.NexialConst.Data.WIN32_CMD;
 import static org.nexial.core.NexialConst.Desktop.*;
 import static org.nexial.core.NexialConst.Project.NEXIAL_HOME;
 import static org.nexial.core.NexialConst.Project.NEXIAL_WINDOWS_BIN_REL_PATH;
@@ -329,6 +326,24 @@ public final class WiniumUtils {
         } else if (winiumDriverService != null) {
             shutdownDriverService(winiumDriverService);
             winiumDriverService = null;
+        }
+    }
+
+    public static void clickAppTopLeft(WiniumDriver driver, String xpath) {
+        if (driver == null || StringUtils.isBlank(xpath)) { return; }
+
+        try {
+            WebElement element = driver.findElement(By.xpath(xpath));
+            if (element == null) { return; }
+
+            new Actions(driver).moveToElement(element, 3, 5).click().pause(750).build().perform();
+        } catch (WebDriverException e) {
+            // don't cause trouble.. this click is meant as a safeguard
+            ConsoleUtils.log("Error when trying to focus on application: " +
+                             StringUtils.substringBefore(e.getMessage(), e.getSupportUrl()));
+        } catch (Throwable e) {
+            // don't cause trouble.. this click is meant as a safeguard
+            ConsoleUtils.log("Error when trying to focus on application: " + e.getMessage());
         }
     }
 

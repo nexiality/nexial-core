@@ -264,15 +264,6 @@ public class DesktopConst {
         }
     }
 
-    public static void clickAppTopLeft(WiniumDriver driver, String xpath) {
-        if (driver == null || StringUtils.isBlank(xpath)) { return; }
-
-        WebElement element = driver.findElement(By.xpath(xpath));
-        if (element == null) { return; }
-
-        new Actions(driver).moveToElement(element, 3, 5).click().pause(750).build().perform();
-    }
-
     public static void debug(String msg) { if (AUTOSCAN_DEBUG) { ConsoleUtils.log(msg); } }
 
     public static void debug(String msg, DesktopElement element) {
