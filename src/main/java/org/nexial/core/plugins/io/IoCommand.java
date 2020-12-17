@@ -840,16 +840,7 @@ public class IoCommand extends BaseCommand {
             target = StringUtils.replace(target, "/", "\\");
         }
 
-        boolean matchRecursive = context.getBooleanData(OPT_IO_MATCH_RECURSIVE, getDefaultBool(OPT_IO_MATCH_RECURSIVE));
-        boolean matchExact = context.getBooleanData(OPT_IO_MATCH_EXACT, getDefaultBool(OPT_IO_MATCH_EXACT));
-        String regexPattern = regex;
-        List<File> matched = FileUtil.listFiles(source, "", matchRecursive)
-                                     .stream()
-                                     .filter(file -> matchExact ?
-                                                     RegexUtils.isExact(file.getName(), regexPattern) :
-                                                     RegexUtils.match(file.getName(), regexPattern))
-                                     .collect(Collectors.toList());
-
+        List<File> matched = listMatches(source, regex);
         if (CollectionUtils.isEmpty(matched)) {
             log(msg);
             return StepResult.success("There is no files matching criteria");
@@ -887,6 +878,19 @@ public class IoCommand extends BaseCommand {
         action.setCopyConfig(config);
         action.doAction(matched, targetDir);
         return StepResult.success(successMsg);
+    }
+
+    @Nonnull
+    protected List<File> listMatches(String source, String regex) {
+        boolean matchRecursive = context.getBooleanData(OPT_IO_MATCH_RECURSIVE, getDefaultBool(OPT_IO_MATCH_RECURSIVE));
+        boolean matchExact = context.getBooleanData(OPT_IO_MATCH_EXACT, getDefaultBool(OPT_IO_MATCH_EXACT));
+        return FileUtil.listFiles(source, "", matchRecursive)
+                       .stream()
+                       .filter(file -> matchExact ?
+                                       RegexUtils.isExact(file.getName(), regex) :
+                                       RegexUtils.match(file.getName(), regex))
+                       .sorted(File::compareTo)
+                       .collect(Collectors.toList());
     }
 
     /**

@@ -60,6 +60,7 @@ public class IoCommandTest {
     private final String testFile1 = baseLocation + "dummy1";
     private final String testFile2 = baseLocation + "dummy2";
     private final String testDestination1 = baseLocation + "newloc";
+    private final String testDestination2 = baseLocation + "testMatch";
     private final String basePath = baseLocation + this.getClass().getSimpleName() + separator;
     private final String dummyPng = baseLocation + "dummy.png";
 
@@ -73,28 +74,22 @@ public class IoCommandTest {
         }
     };
 
-    @Before
-    public void setUp() throws IOException {
-        System.setProperty(OPT_OUT_DIR, tmpOutdir);
-        context.setData(LOG_MATCH, true);
-        FileUtils.deleteQuietly(new File(testFile1));
-        FileUtils.deleteQuietly(new File(testDestination1));
-        FileUtils.forceMkdir(new File(testDestination1));
-        FileUtils.deleteQuietly(new File(tmpOutdir));
+    protected static File makeDummyContent(String dummyFilePath) throws IOException {
+        // dummy content
+        List<String> text = new ArrayList<>();
+        for (int i = 0; i < 10; i++) { text.add(new Random().alphanumeric("100")); }
+
+        File file = new File(dummyFilePath);
+        file.delete();
+        FileUtil.appendFile(file, text, "\n");
+        return file;
     }
 
-    @After
-    public void tearDown() {
-        FileUtils.deleteQuietly(new File(testFile1));
-        FileUtils.deleteQuietly(new File(testFile2));
-        FileUtils.deleteQuietly(new File(testFile1 + ".testReadFile"));
-        FileUtils.deleteQuietly(new File(testFile1 + ".testRenameFiles"));
-        FileUtils.deleteQuietly(new File(testFile1 + ".txt"));
-        FileUtils.deleteQuietly(new File(testFile2 + ".txt"));
-        FileUtils.deleteQuietly(new File(testDestination1));
-        FileUtils.deleteQuietly(new File(tmpOutdir));
-        FileUtils.deleteQuietly(new File(dummyPng));
-        if (context != null) { ((MockExecutionContext) context).cleanProject(); }
+    protected static File makeEmptyFile(String dummyFilePath) throws IOException {
+        File file = new File(dummyFilePath);
+        file.delete();
+        file.createNewFile();
+        return file;
     }
 
     @Test
@@ -1076,15 +1071,187 @@ public class IoCommandTest {
                      IoCommand.checksum(ResourceUtils.getResourceFilePath(basePath + "/checksum-target2")));
     }
 
-    protected static File makeDummyContent(String dummyFilePath) throws IOException {
-        // dummy content
-        List<String> text = new ArrayList<>();
-        for (int i = 0; i < 10; i++) { text.add(new Random().alphanumeric("100")); }
+    @Before
+    public void setUp() throws IOException {
+        System.setProperty(OPT_OUT_DIR, tmpOutdir);
+        context.setData(LOG_MATCH, true);
 
-        File sourceFile = new File(dummyFilePath);
-        sourceFile.delete();
-        FileUtil.appendFile(sourceFile, text, "\n");
-        return sourceFile;
+        FileUtils.deleteQuietly(new File(testFile1));
+
+        FileUtils.deleteQuietly(new File(testDestination1));
+        FileUtils.forceMkdir(new File(testDestination1));
+
+        FileUtils.deleteQuietly(new File(testDestination2));
+        FileUtils.forceMkdir(new File(testDestination2));
+
+        FileUtils.deleteQuietly(new File(tmpOutdir));
+    }
+
+    @After
+    public void tearDown() {
+        FileUtils.deleteQuietly(new File(testFile1));
+        FileUtils.deleteQuietly(new File(testFile2));
+
+        FileUtils.deleteQuietly(new File(testFile1 + ".testReadFile"));
+        FileUtils.deleteQuietly(new File(testFile1 + ".testRenameFiles"));
+        FileUtils.deleteQuietly(new File(testFile1 + ".txt"));
+        FileUtils.deleteQuietly(new File(testFile2 + ".txt"));
+
+        FileUtils.deleteQuietly(new File(testDestination1));
+        FileUtils.deleteQuietly(new File(testDestination2));
+
+        FileUtils.deleteQuietly(new File(tmpOutdir));
+        FileUtils.deleteQuietly(new File(dummyPng));
+
+        if (context != null) { ((MockExecutionContext) context).cleanProject(); }
+    }
+
+    @Test
+    public void testMatch() throws Throwable {
+        makeDummyContent(testDestination2 + separator + "FileA.txt");
+        makeDummyContent(testDestination2 + separator + "FileB.txt");
+        makeDummyContent(testDestination2 + separator + "A.txt");
+        makeDummyContent(testDestination2 + separator + "B.txt");
+        makeDummyContent(testDestination2 + separator + "A1.txt");
+        makeDummyContent(testDestination2 + separator + "B2.txt");
+
+        context.setData(OPT_IO_MATCH_RECURSIVE, false);
+
+        IoCommand io = new IoCommand();
+        io.init(context);
+
+        {
+            String filenameRegex = "[A-Z]\\.txt";
+            context.setData(OPT_IO_MATCH_EXACT, true);
+            List<File> matches = io.listMatches(testDestination2, filenameRegex);
+            Assert.assertNotNull(matches);
+            Assert.assertEquals(2, matches.size());
+            Assert.assertEquals("A.txt", matches.get(0).getName());
+            Assert.assertEquals("B.txt", matches.get(1).getName());
+        }
+
+        {
+            String filenameRegex = "[A-Z]\\.txt";
+            context.setData(OPT_IO_MATCH_EXACT, false);
+            List<File> matches = io.listMatches(testDestination2, filenameRegex);
+            Assert.assertNotNull(matches);
+            Assert.assertEquals(4, matches.size());
+            Assert.assertEquals("A.txt", matches.get(0).getName());
+            Assert.assertEquals("B.txt", matches.get(1).getName());
+            Assert.assertEquals("FileA.txt", matches.get(2).getName());
+            Assert.assertEquals("FileB.txt", matches.get(3).getName());
+        }
+
+        {
+            String filenameRegex = "[\\w][\\d]\\.txt";
+            context.setData(OPT_IO_MATCH_EXACT, false);
+            List<File> matches = io.listMatches(testDestination2, filenameRegex);
+            Assert.assertNotNull(matches);
+            Assert.assertEquals(2, matches.size());
+            Assert.assertEquals("A1.txt", matches.get(0).getName());
+            Assert.assertEquals("B2.txt", matches.get(1).getName());
+        }
+
+        {
+            String filenameRegex = "[\\w][\\d]?\\.txt";
+            context.setData(OPT_IO_MATCH_EXACT, true);
+            List<File> matches = io.listMatches(testDestination2, filenameRegex);
+            Assert.assertNotNull(matches);
+            Assert.assertEquals(4, matches.size());
+            Assert.assertEquals("A.txt", matches.get(0).getName());
+            Assert.assertEquals("A1.txt", matches.get(1).getName());
+            Assert.assertEquals("B.txt", matches.get(2).getName());
+            Assert.assertEquals("B2.txt", matches.get(3).getName());
+        }
+
+        {
+            String filenameRegex = "[\\w][\\d]?\\.txt";
+            context.setData(OPT_IO_MATCH_EXACT, false);
+            List<File> matches = io.listMatches(testDestination2, filenameRegex);
+            Assert.assertNotNull(matches);
+            Assert.assertEquals(6, matches.size());
+            Assert.assertEquals("A.txt", matches.get(0).getName());
+            Assert.assertEquals("A1.txt", matches.get(1).getName());
+            Assert.assertEquals("B.txt", matches.get(2).getName());
+            Assert.assertEquals("B2.txt", matches.get(3).getName());
+            Assert.assertEquals("FileA.txt", matches.get(4).getName());
+            Assert.assertEquals("FileB.txt", matches.get(5).getName());
+        }
+
+    }
+
+    @Test
+    public void testMatchEmptyFile() throws Throwable {
+        makeEmptyFile(testDestination2 + separator + "Data1.txt");
+        makeEmptyFile(testDestination2 + separator + "Data2.txt");
+        makeEmptyFile(testDestination2 + separator + "1.txt");
+        makeEmptyFile(testDestination2 + separator + "2.txt");
+        makeEmptyFile(testDestination2 + separator + "1a.txt");
+        makeEmptyFile(testDestination2 + separator + "2b.txt");
+
+        context.setData(OPT_IO_MATCH_RECURSIVE, false);
+
+        IoCommand io = new IoCommand();
+        io.init(context);
+
+        {
+            String filenameRegex = "[0-9]\\.txt";
+            context.setData(OPT_IO_MATCH_EXACT, true);
+            List<File> matches = io.listMatches(testDestination2, filenameRegex);
+            Assert.assertNotNull(matches);
+            Assert.assertEquals(2, matches.size());
+            Assert.assertEquals("1.txt", matches.get(0).getName());
+            Assert.assertEquals("2.txt", matches.get(1).getName());
+        }
+
+        {
+            String filenameRegex = "[0-9]\\.txt";
+            context.setData(OPT_IO_MATCH_EXACT, false);
+            List<File> matches = io.listMatches(testDestination2, filenameRegex);
+            Assert.assertNotNull(matches);
+            Assert.assertEquals(4, matches.size());
+            Assert.assertEquals("1.txt", matches.get(0).getName());
+            Assert.assertEquals("2.txt", matches.get(1).getName());
+            Assert.assertEquals("Data1.txt", matches.get(2).getName());
+            Assert.assertEquals("Data2.txt", matches.get(3).getName());
+        }
+
+        {
+            String filenameRegex = "[\\d][a-z]\\.txt";
+            context.setData(OPT_IO_MATCH_EXACT, false);
+            List<File> matches = io.listMatches(testDestination2, filenameRegex);
+            Assert.assertNotNull(matches);
+            Assert.assertEquals(2, matches.size());
+            Assert.assertEquals("1a.txt", matches.get(0).getName());
+            Assert.assertEquals("2b.txt", matches.get(1).getName());
+        }
+
+        {
+            String filenameRegex = "[\\d][a-z]?\\.txt";
+            context.setData(OPT_IO_MATCH_EXACT, true);
+            List<File> matches = io.listMatches(testDestination2, filenameRegex);
+            Assert.assertNotNull(matches);
+            Assert.assertEquals(4, matches.size());
+            Assert.assertEquals("1.txt", matches.get(0).getName());
+            Assert.assertEquals("1a.txt", matches.get(1).getName());
+            Assert.assertEquals("2.txt", matches.get(2).getName());
+            Assert.assertEquals("2b.txt", matches.get(3).getName());
+        }
+
+        {
+            String filenameRegex = "[\\d][a-z]?\\.txt";
+            context.setData(OPT_IO_MATCH_EXACT, false);
+            List<File> matches = io.listMatches(testDestination2, filenameRegex);
+            Assert.assertNotNull(matches);
+            Assert.assertEquals(6, matches.size());
+            Assert.assertEquals("1.txt", matches.get(0).getName());
+            Assert.assertEquals("1a.txt", matches.get(1).getName());
+            Assert.assertEquals("2.txt", matches.get(2).getName());
+            Assert.assertEquals("2b.txt", matches.get(3).getName());
+            Assert.assertEquals("Data1.txt", matches.get(4).getName());
+            Assert.assertEquals("Data2.txt", matches.get(5).getName());
+        }
+
     }
 
     private void zip_create_test_fixture(String basePath) throws IOException {
