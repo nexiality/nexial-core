@@ -1280,6 +1280,7 @@ public final class NexialConst {
         public static final String NS_IO = NAMESPACE + "io.";
         public static final String OPT_IO_EOL_CONFIG = registerSysVar(NS_IO + "eolConfig", EOL_CONFIG_DEF);
         public static final String OPT_IO_MATCH_RECURSIVE = registerSysVar(NS_IO + "matchRecursive", true);
+        public static final String OPT_IO_MATCH_EXACT = registerSysVar(NS_IO + "matchExact", false);
         public static final String COMPARE_INCLUDE_DELETED = registerSysVar(NS_IO + "compareIncludeRemoved");
         public static final String COMPARE_INCLUDE_ADDED = registerSysVar(NS_IO + "compareIncludeAdded");
         // todo: need to evaluate how to use these 3 to modify the nexial result and excel output

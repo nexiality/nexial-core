@@ -516,7 +516,8 @@ public class IoCommand extends BaseCommand {
         requires(StringUtils.isNotBlank(pattern), "invalid pattern", pattern);
         requiresValidAndNotReadOnlyVariableName(var);
 
-        List<File> matches = FileUtil.listFiles(path, pattern, true);
+        boolean matchRecursive = context.getBooleanData(OPT_IO_MATCH_RECURSIVE, getDefaultBool(OPT_IO_MATCH_RECURSIVE));
+        List<File> matches = FileUtil.listFiles(path, pattern, matchRecursive);
         int matchCount = CollectionUtils.isEmpty(matches) ? 0 : matches.size();
         context.setData(var, matchCount);
 
@@ -839,10 +840,15 @@ public class IoCommand extends BaseCommand {
             target = StringUtils.replace(target, "/", "\\");
         }
 
+        boolean matchRecursive = context.getBooleanData(OPT_IO_MATCH_RECURSIVE, getDefaultBool(OPT_IO_MATCH_RECURSIVE));
+        boolean matchExact = context.getBooleanData(OPT_IO_MATCH_EXACT, getDefaultBool(OPT_IO_MATCH_EXACT));
         String regexPattern = regex;
-        List<File> files = FileUtil.listFiles(source, "", true);
-        List<File> matched = files.stream().filter(file -> RegexUtils.match(file.getAbsolutePath(), regexPattern))
-                                  .collect(Collectors.toList());
+        List<File> matched = FileUtil.listFiles(source, "", matchRecursive)
+                                     .stream()
+                                     .filter(file -> matchExact ?
+                                                     RegexUtils.isExact(file.getName(), regexPattern) :
+                                                     RegexUtils.match(file.getName(), regexPattern))
+                                     .collect(Collectors.toList());
 
         if (CollectionUtils.isEmpty(matched)) {
             log(msg);
