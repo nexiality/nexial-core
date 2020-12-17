@@ -16,16 +16,16 @@
 
 package org.nexial.core.model;
 
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.List;
-
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.ArrayUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.nexial.commons.utils.TextUtils;
 import org.nexial.core.utils.ConsoleUtils;
+
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.List;
 
 import static org.nexial.core.NexialConst.FlowControls.FILTER_CHAINING_SEP;
 import static org.nexial.core.NexialConst.TOKEN_END;

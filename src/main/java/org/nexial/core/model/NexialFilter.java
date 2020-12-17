@@ -17,16 +17,6 @@
 
 package org.nexial.core.model;
 
-import java.io.File;
-import java.io.Serializable;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.stream.Stream;
-import javax.validation.constraints.NotNull;
-
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.ArrayUtils;
 import org.apache.commons.lang3.StringUtils;
@@ -44,6 +34,12 @@ import org.nexial.core.variable.CsvTransformer;
 import org.nexial.core.variable.Expression;
 import org.nexial.core.variable.ExpressionParser;
 import org.nexial.core.variable.TypeConversionException;
+
+import javax.validation.constraints.NotNull;
+import java.io.File;
+import java.io.Serializable;
+import java.util.*;
+import java.util.stream.Stream;
 
 import static org.nexial.core.NexialConst.Data.NULL;
 import static org.nexial.core.NexialConst.FILTER_TEMP_DELIM1;
@@ -331,10 +327,12 @@ public class NexialFilter implements Serializable {
         return result;
     }
 
-    /**
-     * used for `CSV Expression` fetch, filter and removeRows operations
-     */
-    public boolean isMatch(String data) {
+    public boolean isMatch(String data) { return isMatch(data, false); }
+
+        /**
+         * used for `CSV Expression` fetch, filter and removeRows operations
+         */
+    public boolean isMatch(String data, boolean caseSensitive) {
         if (comparator == Any) { return true; }
 
         data = data == null ? NULL : normalizeCondition(data);
@@ -392,7 +390,7 @@ public class NexialFilter implements Serializable {
                        !StringUtils.contains(data, normalizeCondition(controls));
 
             case Match:
-                return RegexUtils.isExact(data, controls);
+                return RegexUtils.isExact(data, controls, true, caseSensitive);
 
             case Is:
             case In:

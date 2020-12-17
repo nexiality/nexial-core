@@ -172,29 +172,27 @@ public class IoCommand extends BaseCommand {
 
         // list files
         List<String> files = new IOFilePathFilter(recursive).filterFiles(pattern);
-        if (files == null) {
-            files = new ArrayList<>();
-        } else {
-            // filter out office temp files
-            files.removeIf(this::isMSOfficeTempFile);
+        if (files == null) { return new ArrayList<>(); }
 
-            if (CollectionUtils.isNotEmpty(files) && hasFilter) {
-                files = filterFiles(files, new NexialFilterList(fileFilter));
-            }
-
-            if (CollectionUtils.isNotEmpty(files) && StringUtils.isNotBlank(textFilter)) {
-                List<String> regex = TextUtils.toList(textFilter, "\n", true);
-                files = files.stream().filter(file -> {
-                    try {
-                        String content = toTextContent(file);
-                        return regex.stream().allMatch(contentRegex -> RegexUtils.match(content, contentRegex));
-                    } catch (IOException e) {
-                        ConsoleUtils.error("Unable to read content from " + file + ": " + e.getMessage());
-                        return false;
-                    }
-                }).collect(Collectors.toList());
-            }
+        // filter out office temp files
+        files.removeIf(this::isMSOfficeTempFile);
+        if (CollectionUtils.isNotEmpty(files) && hasFilter) {
+            files = filterFiles(files, new NexialFilterList(fileFilter));
         }
+
+        if (CollectionUtils.isNotEmpty(files) && StringUtils.isNotBlank(textFilter)) {
+            List<String> regex = TextUtils.toList(textFilter, "\n", true);
+            files = files.stream().filter(file -> {
+                try {
+                    String content = toTextContent(file);
+                    return regex.stream().allMatch(contentRegex -> RegexUtils.match(content, contentRegex));
+                } catch (IOException e) {
+                    ConsoleUtils.error("Unable to read content from " + file + ": " + e.getMessage());
+                    return false;
+                }
+            }).collect(Collectors.toList());
+        }
+
         return files;
     }
 
@@ -884,11 +882,12 @@ public class IoCommand extends BaseCommand {
     protected List<File> listMatches(String source, String regex) {
         boolean matchRecursive = context.getBooleanData(OPT_IO_MATCH_RECURSIVE, getDefaultBool(OPT_IO_MATCH_RECURSIVE));
         boolean matchExact = context.getBooleanData(OPT_IO_MATCH_EXACT, getDefaultBool(OPT_IO_MATCH_EXACT));
+        // match file name case-insensitively due to Windows crap
         return FileUtil.listFiles(source, "", matchRecursive)
                        .stream()
                        .filter(file -> matchExact ?
-                                       RegexUtils.isExact(file.getName(), regex) :
-                                       RegexUtils.match(file.getName(), regex))
+                                       RegexUtils.isExact(file.getName(), regex, false, !IS_OS_WINDOWS) :
+                                       RegexUtils.match(file.getName(), regex, false, !IS_OS_WINDOWS))
                        .sorted(File::compareTo)
                        .collect(Collectors.toList());
     }
@@ -1217,7 +1216,7 @@ public class IoCommand extends BaseCommand {
             File file = new File(filePath);
             boolean flag = true;
             for (NexialFilter filter : filterList) {
-                if (filter.isMatch(FileMeta.findFileMetaData(filter.getSubject(), file))) { continue; }
+                if (filter.isMatch(FileMeta.findFileMetaData(filter.getSubject(), file), !IS_OS_WINDOWS)) { continue; }
                 flag = false;
                 break;
             }

@@ -46,6 +46,7 @@ import static org.apache.commons.io.comparator.NameFileComparator.NAME_COMPARATO
 import static org.apache.commons.io.comparator.NameFileComparator.NAME_REVERSE;
 import static org.apache.commons.io.comparator.PathFileComparator.PATH_COMPARATOR;
 import static org.apache.commons.io.comparator.PathFileComparator.PATH_REVERSE;
+import static org.apache.commons.lang3.SystemUtils.IS_OS_WINDOWS;
 import static org.nexial.core.NexialConst.DEF_CHARSET;
 import static org.nexial.core.NexialConst.DEF_FILE_ENCODING;
 
@@ -156,7 +157,9 @@ public final class FileUtil {
 
         IOFileFilter fileFilter = new IOFileFilter() {
             public boolean accept(File file) {
-                return file.isFile() && (detectAllFiles || file.getName().matches(filenameRegex));
+                // for windows, we want to compare the file name case-insensitively
+                return file.isFile() &&
+                       (detectAllFiles || RegexUtils.match(file.getName(), filenameRegex, false, !IS_OS_WINDOWS));
             }
 
             public boolean accept(File dir, String name) {
@@ -167,7 +170,8 @@ public final class FileUtil {
                            isSamePath;
                 }
 
-                boolean matched = name.matches(filenameRegex);
+                // for windows, we want to compare the file name case-insensitively
+                boolean matched = RegexUtils.match(name, filenameRegex, false, !IS_OS_WINDOWS);
                 return recursive ? matched : isSamePath && matched;
             }
         };

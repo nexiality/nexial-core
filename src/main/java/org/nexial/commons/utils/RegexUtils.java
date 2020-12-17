@@ -17,14 +17,14 @@
 
 package org.nexial.commons.utils;
 
+import org.apache.commons.lang3.StringUtils;
+
+import javax.validation.constraints.NotNull;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.regex.MatchResult;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
-import javax.validation.constraints.NotNull;
-
-import org.apache.commons.lang3.StringUtils;
 
 import static java.util.regex.Pattern.*;
 
@@ -69,11 +69,14 @@ public final class RegexUtils {
      * <code >replace</code> can be expressed with regex group.
      */
     public static String replaceMultiLines(String text, String regex, String replace) {
+        return replaceMultiLines(text, regex, replace, true);
+    }
+
+    public static String replaceMultiLines(String text, String regex, String replace, boolean caseSensitive) {
         if (StringUtils.isEmpty(text)) { return text; }
         if (StringUtils.isEmpty(regex)) { return text; }
 
-        Pattern p = Pattern.compile(regex, REGEX_FLAGS);
-        Matcher matcher = p.matcher(text);
+        Matcher matcher = Pattern.compile(regex, deriveRegexFlags(true, caseSensitive)).matcher(text);
         if (matcher.find()) { return matcher.replaceAll(replace); }
         return text;
     }
@@ -82,27 +85,38 @@ public final class RegexUtils {
      * test to see if {@code text} matches {@code regex} exactly.  Empty/null {@code text} will always return false,
      * and empty/null {@code regex} will always return true.
      */
-    public static boolean isExact(String text, String regex) {
-        return isExact(text, regex, false);
-    }
+    public static boolean isExact(String text, String regex) { return isExact(text, regex, false); }
 
     public static boolean isExact(String text, String regex, boolean multiline) {
+        return isExact(text, regex, multiline, true);
+    }
+
+    public static boolean isExact(String text, String regex, boolean multiline, boolean caseSensitive) {
         if (StringUtils.isEmpty(regex)) { return true; }
         if (StringUtils.isEmpty(text)) { return false; }
-        Pattern p = multiline ? Pattern.compile(regex, REGEX_FLAGS) : Pattern.compile(regex);
-        return p.matcher(text).matches();
+
+        return Pattern.compile(regex, deriveRegexFlags(multiline, caseSensitive)).matcher(text).matches();
     }
 
     /** "contain" match (instead of exact) */
     public static boolean match(String text, String regex) { return match(text, regex, false); }
 
-    /** "contain" match (instead of exact).  Use {@code multiline} to handle {@code text} that might contain multiple lines */
+    /**
+     * "contain" match (instead of exact).  Use {@code multiline} to handle {@code text} that might contain
+     * multiple lines
+     */
     public static boolean match(String text, String regex, boolean multiline) {
+        return match(text, regex, multiline, true);
+    }
+
+    /**
+     * "contain" match (instead of exact).  Use {@code multiline} to handle {@code text} that might contain multiple
+     * lines and possibly case insensitively
+     */
+    public static boolean match(String text, String regex, boolean multiline, boolean caseSensitive) {
         if (StringUtils.isEmpty(text)) { return false; }
         if (StringUtils.isEmpty(regex)) { return false; }
-
-        Pattern p = multiline ? Pattern.compile(regex, REGEX_FLAGS) : Pattern.compile(regex);
-        return p.matcher(text).find();
+        return Pattern.compile(regex, deriveRegexFlags(multiline, caseSensitive)).matcher(text).find();
     }
 
     /**
@@ -124,12 +138,20 @@ public final class RegexUtils {
 
     @NotNull
     public static List<String> collectGroups(String text, String regex, boolean acceptBlank, boolean multiline) {
+        return collectGroups(text, regex, acceptBlank, multiline, true);
+    }
+
+    @NotNull
+    public static List<String> collectGroups(String text,
+                                             String regex,
+                                             boolean acceptBlank,
+                                             boolean multiline,
+                                             boolean caseSensitive) {
         List<String> list = new ArrayList<>();
         if (!acceptBlank && StringUtils.isBlank(text)) { return list; }
         if (StringUtils.isBlank(regex)) { return list; }
 
-        Pattern pattern = multiline ? Pattern.compile(regex, REGEX_FLAGS) : Pattern.compile(regex);
-        Matcher matcher = pattern.matcher(text);
+        Matcher matcher = Pattern.compile(regex, deriveRegexFlags(multiline, caseSensitive)).matcher(text);
         if (matcher.matches() && matcher.groupCount() > 0) {
             // always starts with 1 since group 0 represents the "entire" match
             for (int i = 1; i <= matcher.groupCount(); i++) { list.add(matcher.group(i)); }
@@ -139,35 +161,44 @@ public final class RegexUtils {
     }
 
     public static List<String> eagerCollectGroups(String text, String regex, boolean acceptBlank, boolean multiline) {
+        return eagerCollectGroups(text, regex, acceptBlank, multiline, true);
+    }
+
+    public static List<String> eagerCollectGroups(String text,
+                                                  String regex,
+                                                  boolean acceptBlank,
+                                                  boolean multiline,
+                                                  boolean caseSensitive) {
         List<String> list = new ArrayList<>();
         if (!acceptBlank && StringUtils.isBlank(text)) { return list; }
         if (StringUtils.isBlank(regex)) { return list; }
 
-        Pattern pattern = multiline ? Pattern.compile(regex, REGEX_FLAGS) : Pattern.compile(regex);
-        Matcher matcher = pattern.matcher(text);
+        Matcher matcher = Pattern.compile(regex, deriveRegexFlags(multiline, caseSensitive)).matcher(text);
         while (matcher.find()) { list.add(matcher.group()); }
         return list;
     }
 
-    public static String removeMatches(String text, String regex) {
+    public static String removeMatches(String text, String regex) { return removeMatches(text, regex, false, true); }
+
+    public static String removeMatches(String text, String regex, boolean multiline, boolean caseSensitive) {
         if (StringUtils.isEmpty(text)) { return text; }
         if (StringUtils.isBlank(regex)) { return text; }
 
-        Pattern pattern = Pattern.compile(regex, REGEX_FLAGS);
-        Matcher matcher = pattern.matcher(text);
+        Matcher matcher = Pattern.compile(regex, deriveRegexFlags(multiline, caseSensitive)).matcher(text);
         while (matcher.find()) { text = matcher.replaceAll(""); }
 
         return text;
     }
 
     /** extract (and join) matched region(s) */
-    public static String retainMatches(String text, String regex) {
+    public static String retainMatches(String text, String regex) { return retainMatches(text, regex, false, true); }
+
+    public static String retainMatches(String text, String regex, boolean multiline, boolean caseSensitive) {
         if (StringUtils.isEmpty(text)) { return text; }
         if (StringUtils.isBlank(regex)) { return text; }
 
         String retained = "";
-        Pattern pattern = Pattern.compile(regex, REGEX_FLAGS);
-        Matcher matcher = pattern.matcher(text);
+        Matcher matcher = Pattern.compile(regex, deriveRegexFlags(multiline, caseSensitive)).matcher(text);
         while (matcher.find()) {
             MatchResult result = matcher.toMatchResult();
             retained += StringUtils.substring(text, result.start(), result.end());
@@ -177,12 +208,13 @@ public final class RegexUtils {
     }
 
     /** extract first matched region(s) */
-    public static String firstMatches(String text, String regex) {
+    public static String firstMatches(String text, String regex) { return firstMatches(text, regex, false, true); }
+
+    public static String firstMatches(String text, String regex, boolean multiline, boolean caseSensitive) {
         if (StringUtils.isEmpty(text)) { return text; }
         if (StringUtils.isBlank(regex)) { return text; }
 
-        Pattern pattern = Pattern.compile(regex, REGEX_FLAGS);
-        Matcher matcher = pattern.matcher(text);
+        Matcher matcher = Pattern.compile(regex, deriveRegexFlags(multiline, caseSensitive)).matcher(text);
         if (matcher.find()) {
             MatchResult result = matcher.toMatchResult();
             return StringUtils.substring(text, result.start(), result.end());
@@ -191,17 +223,25 @@ public final class RegexUtils {
         return null;
     }
 
-    public static List<String> extract(String text, String regex) {
+    public static List<String> extract(String text, String regex) { return extract(text, regex, false, true); }
+
+    public static List<String> extract(String text, String regex, boolean multiline, boolean caseSensitive) {
         List<String> extracted = new ArrayList<>();
 
         if (StringUtils.isEmpty(text) || StringUtils.isEmpty(regex)) { return extracted; }
 
-        Matcher matcher = Pattern.compile(regex, REGEX_FLAGS).matcher(text);
+        Matcher matcher = Pattern.compile(regex, deriveRegexFlags(multiline, caseSensitive)).matcher(text);
         while (matcher.find()) {
             MatchResult result = matcher.toMatchResult();
             extracted.add(StringUtils.substring(text, result.start(), result.end()));
         }
 
         return extracted;
+    }
+
+    private static int deriveRegexFlags(boolean multiline, boolean caseSensitive) {
+        int flags = multiline ? REGEX_FLAGS : 0;
+        if (!caseSensitive) { flags |= CASE_INSENSITIVE; }
+        return flags;
     }
 }
