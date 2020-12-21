@@ -17,18 +17,18 @@
 
 package org.nexial.core.variable;
 
-import java.io.UnsupportedEncodingException;
-import java.net.URLDecoder;
-import java.net.URLEncoder;
-import java.text.DecimalFormat;
-import java.text.NumberFormat;
-
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.math.NumberUtils;
 import org.apache.commons.text.WordUtils;
 import org.nexial.commons.utils.RegexUtils;
 import org.nexial.commons.utils.TextUtils;
 import org.nexial.core.utils.ConsoleUtils;
+
+import java.io.UnsupportedEncodingException;
+import java.net.URLDecoder;
+import java.net.URLEncoder;
+import java.text.DecimalFormat;
+import java.text.NumberFormat;
 
 import static java.io.File.separator;
 import static java.lang.Double.MIN_VALUE;
@@ -104,6 +104,7 @@ public class Format {
     public String phone(String text) {
         if (StringUtils.isBlank(text)) { return text; }
 
+        text = RegexUtils.removeMatches(text, "[\\.\\-\\(\\)]");
         if (StringUtils.length(text) < 7) { return text; }
         if (StringUtils.length(text) == 7) { return text.replaceAll("(...)(.+)", "$1-$2"); }
         if (StringUtils.length(text) == 10) { return text.replaceAll("(...)(...)(.+)", "($1)$2-$3"); }

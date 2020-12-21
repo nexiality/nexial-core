@@ -164,6 +164,15 @@ class FormatTest {
     }
 
     @Test
+    fun testPhone2() {
+        val f = Format()
+        assertEquals("(714)541-9901", f.phone("714-541-9901"))
+        assertEquals("1(714)541-9901", f.phone("1-714-541-9901"))
+        assertEquals("1(714)541-9901", f.phone("1.714.541.9901"))
+        assertEquals("1(714)541-9901", f.phone("1(714)5419901"))
+    }
+
+    @Test
     fun testCustom() {
         val f = Format()
         assertNull(f.custom(null, ""))
