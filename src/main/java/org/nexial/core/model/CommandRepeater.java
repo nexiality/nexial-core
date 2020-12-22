@@ -17,10 +17,6 @@
 
 package org.nexial.core.model;
 
-import java.lang.reflect.InvocationTargetException;
-import java.util.ArrayList;
-import java.util.List;
-
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.builder.ToStringBuilder;
@@ -33,6 +29,10 @@ import org.nexial.core.plugins.web.WebDriverExceptionHelper;
 import org.nexial.core.utils.ConsoleUtils;
 import org.nexial.core.utils.FlowControlUtils;
 import org.openqa.selenium.WebDriverException;
+
+import java.lang.reflect.InvocationTargetException;
+import java.util.ArrayList;
+import java.util.List;
 
 import static org.apache.commons.lang3.builder.ToStringStyle.SIMPLE_STYLE;
 import static org.nexial.core.CommandConst.CMD_SECTION;
@@ -93,6 +93,8 @@ public class CommandRepeater {
             for (int i = 0; i < steps.size(); i++) {
                 if (maxEndTime != -1 && rightNow >= maxEndTime) { break; }
 
+                boolean evalContinuation = i == 0;
+
                 TestStep testStep = steps.get(i);
                 ExecutionContext context = testStep.context;
                 ExecutionLogger logger = context.getLogger();
@@ -104,7 +106,7 @@ public class CommandRepeater {
                 try {
                     context.setCurrentTestStep(testStep);
 
-                    if (i == 0) {
+                    if (evalContinuation) {
                         loopCount++;
                         context.setData(REPEAT_UNTIL_LOOP_INDEX, loopCount);
                         logRepeatUntilStart(logger, testStep, loopCount);
@@ -120,7 +122,7 @@ public class CommandRepeater {
                         return result;
                     }
 
-                    if (i == 0) {
+                    if (evalContinuation) {
                         // first command is always an assertion.
                         // if this command PASS, then we've reached the condition to exit the loop
                         if (succeed) {
@@ -183,22 +185,23 @@ public class CommandRepeater {
 
                     // check onError event
                     if (result != null && result.isError()) {
-                        errorCount++;
-                        context.getExecutionEventListener().onError();
-
-                        if (context.isPauseOnError() && i != 0) {
-                            // pause-on-error would work on 2nd step in the loop onwards
-                            ConsoleUtils.doPause(context,
-                                                 "[ERROR] " + errorCount + " in repeat-until, " +
-                                                 Math.max(context.getIntData(FAIL_COUNT), 0) +
-                                                 " in execution. Error found in " +
-                                                 ExecutionLogger.toHeader(testStep) + ": " + result.getMessage());
+                        if (!evalContinuation) {
+                            errorCount++;
+                            context.getExecutionEventListener().onError();
+                            if (context.isPauseOnError()) {
+                                // pause-on-error would work on 2nd step in the loop onwards
+                                ConsoleUtils.doPause(context,
+                                                     "[ERROR] " + errorCount + " in repeat-until, " +
+                                                     Math.max(context.getIntData(FAIL_COUNT), 0) +
+                                                     " in execution. Error found in " +
+                                                     ExecutionLogger.toHeader(testStep) + ": " + result.getMessage());
+                            }
                         }
                     }
 
                     try {
                         // [NEX023] first command is always an assertion. So FAIL shouldn't trigger screenshot as error
-                        if (i != 0 || testStep.isCaptureScreen()) { testStep.handleScreenshot(result); }
+                        if (!evalContinuation || testStep.isCaptureScreen()) { testStep.handleScreenshot(result); }
                     } catch (Throwable e) {
                         ConsoleUtils.error(testStep.messageId, e.getMessage(), e);
                     }

@@ -228,7 +228,7 @@ dependencies {
 	compile("jaxen:jaxen:+")
 	compile("xalan:xalan:+")
 	compile("io.jsonwebtoken:jjwt:+")
-	compile("org.thymeleaf:thymeleaf:3.0.11.RELEASE")
+	compile("org.thymeleaf:thymeleaf:${thymeleafVersion}")
 	compile("javax.media:jmf:+")
 	compile("com.github.stephenc.monte:monte-screen-recorder:+")
 	// invalid SSL for dcm4che.org, hence disabling this one for now
