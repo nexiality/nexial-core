@@ -104,7 +104,6 @@ public class Format {
     public String phone(String text) {
         if (StringUtils.isBlank(text)) { return text; }
 
-        text = RegexUtils.removeMatches(text, "[\\.\\-\\(\\)]");
         if (StringUtils.length(text) < 7) { return text; }
         if (StringUtils.length(text) == 7) { return text.replaceAll("(...)(.+)", "$1-$2"); }
         if (StringUtils.length(text) == 10) { return text.replaceAll("(...)(...)(.+)", "($1)$2-$3"); }
