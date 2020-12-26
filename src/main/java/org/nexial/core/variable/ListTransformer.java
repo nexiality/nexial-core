@@ -39,8 +39,8 @@ import java.util.Map;
 import java.util.stream.IntStream;
 import java.util.stream.Stream;
 
-import static org.nexial.core.NexialConst.*;
 import static org.nexial.core.NexialConst.Data.TEXT_DELIM;
+import static org.nexial.core.NexialConst.treatCommonValueShorthand;
 import static org.nexial.core.SystemVariables.getDefault;
 import static org.nexial.core.variable.ExpressionConst.ALIAS_EMPTY;
 import static org.nexial.core.variable.ExpressionUtils.fixControlChars;
@@ -298,25 +298,10 @@ public class ListTransformer<T extends ListDataType> extends Transformer {
         if (ArrayUtils.isEmpty(list)) { return null; }
 
         try {
-            int position = -1;
-            String matchTo = fixControlChars(item);
-
-            if (StringUtils.startsWith(matchTo, CONTAIN_PREFIX)) {
-                String substring = StringUtils.substringAfter(matchTo, CONTAIN_PREFIX);
-                position = IntStream.range(0, list.length)
-                                    .filter(i -> StringUtils.contains(list[i], substring))
+            int position = IntStream.range(0, list.length)
+                                    .filter(i -> TextUtils.polyMatch(list[i], fixControlChars(item)))
                                     .findFirst()
                                     .orElse(-1);
-            } else if (StringUtils.startsWith(matchTo, REGEX_PREFIX)) {
-                String regex = StringUtils.substringAfter(matchTo, REGEX_PREFIX);
-                position = IntStream.range(0, list.length)
-                                    .filter(i -> RegexUtils.match(list[i], regex))
-                                    .findFirst()
-                                    .orElse(-1);
-            } else {
-                position = ArrayUtils.indexOf(list, matchTo);
-            }
-
             if (position < 0) { return null; }
 
             NumberDataType number = new NumberDataType("0");

@@ -43,6 +43,7 @@ import static org.nexial.commons.utils.TextUtils.CleanNumberStrategy.CSV;
 import static org.nexial.commons.utils.TextUtils.CleanNumberStrategy.OCTAL;
 import static org.nexial.core.NexialConst.DEF_FILE_ENCODING;
 import static org.nexial.core.NexialConst.NL;
+import static org.nexial.core.NexialConst.PolyMatcher.*;
 
 /**
  * @author Mike Liu
@@ -1290,6 +1291,42 @@ public final class TextUtils {
                    return StringUtils.isBlank(key) ?
                           "" : StringUtils.rightPad(key, TO_STRING_KEY_LENGTH) + "=" + value + delimiter;
                }).collect(Collectors.joining(""));
+    }
+
+    public static boolean polyMatch(String actual, String exact) {
+        // short circuit
+        if (StringUtils.isEmpty(actual) && StringUtils.isEmpty(exact)) { return true; }
+
+        if (StringUtils.startsWith(exact, REGEX)) {
+            return RegexUtils.match(actual, StringUtils.substringAfter(exact, REGEX));
+        }
+
+        if (StringUtils.startsWith(exact, CONTAIN)) {
+            return StringUtils.contains(actual, StringUtils.substringAfter(exact, CONTAIN));
+        }
+
+        if (StringUtils.startsWith(exact, CONTAIN_ANY_CASE)) {
+            return StringUtils.containsIgnoreCase(actual, StringUtils.substringAfter(exact, CONTAIN_ANY_CASE));
+        }
+
+        if (StringUtils.startsWith(exact, START)) {
+            return StringUtils.startsWith(actual, StringUtils.substringAfter(exact, START));
+        }
+
+        if (StringUtils.startsWith(exact, START_ANY_CASE)) {
+            return StringUtils.startsWithIgnoreCase(actual, StringUtils.substringAfter(exact, START_ANY_CASE));
+        }
+
+        if (StringUtils.startsWith(exact, END)) {
+            return StringUtils.endsWith(actual, StringUtils.substringAfter(exact, END));
+        }
+
+        if (StringUtils.startsWith(exact, END_ANY_CASE)) {
+            return StringUtils.endsWithIgnoreCase(actual, StringUtils.substringAfter(exact, END_ANY_CASE));
+        }
+
+        // finally, exact match
+        return StringUtils.equalsIgnoreCase(actual, exact);
     }
 
     private static Map<String, String> initDefaultEscapeHtmlMapping() {

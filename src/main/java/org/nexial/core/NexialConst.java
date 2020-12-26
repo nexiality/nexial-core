@@ -248,8 +248,28 @@ public final class NexialConst {
     // public static final int MAX_VERBOSE_CHAR = 2000;
     public static final int MAX_VERBOSE_CHAR = 32760;
     public static final int MAX_FORMULA_CHAR = 8192;
-    public static final String REGEX_PREFIX = "REGEX:";
-    public static final String CONTAIN_PREFIX = "CONTAIN:";
+
+    public static class PolyMatcher {
+        public static final List<String> MATCHES = new ArrayList<>();
+        public static final String CONTAIN = register("CONTAIN:");
+        public static final String CONTAIN_ANY_CASE = register("CONTAIN_ANY_CASE:");
+        public static final String START = register("START:");
+        public static final String START_ANY_CASE = register("START_ANY_CASE:");
+        public static final String END = register("END:");
+        public static final String END_ANY_CASE = register("END_ANY_CASE:");
+        public static final String REGEX = register("REGEX:");
+        private PolyMatcher() {}
+
+        private static String register(String keyword) {
+            MATCHES.add(keyword);
+            return keyword;
+        }
+
+        public static boolean isPolyMatcher(String text) {
+            return MATCHES.stream().anyMatch(match -> StringUtils.startsWith(text, match));
+        }
+
+    }
 
     // Macro Flex var prefix
     public static final String MACRO_FLEX_PREFIX = "MACRO::";

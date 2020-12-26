@@ -59,8 +59,10 @@ public class IoCommandTest {
     private final String tmpOutdir = baseLocation + IoCommandTest.class.getSimpleName();
     private final String testFile1 = baseLocation + "dummy1";
     private final String testFile2 = baseLocation + "dummy2";
+    private final String testFile3 = baseLocation + "dummy3";
     private final String testDestination1 = baseLocation + "newloc";
     private final String testDestination2 = baseLocation + "testMatch";
+    private final String testDestination3 = baseLocation + "newloc2";
     private final String basePath = baseLocation + this.getClass().getSimpleName() + separator;
     private final String dummyPng = baseLocation + "dummy.png";
 
@@ -94,7 +96,7 @@ public class IoCommandTest {
 
     @Test
     public void copy_file_to_dir() throws Exception {
-        File sourceFile = makeDummyContent(testFile1);
+        File sourceFile = makeDummyContent(testFile3);
 
         // make sure the file is really written to disk
         int expectedFileSize = 100 * 10;
@@ -103,9 +105,9 @@ public class IoCommandTest {
         IoCommand io = new IoCommand();
         io.init(context);
 
-        StepResult result = io.copyFiles(testFile1, testDestination1);
+        StepResult result = io.copyFiles(testFile3, testDestination1);
 
-        File destinationFile = new File(testDestination1 + separator + "dummy1");
+        File destinationFile = new File(testDestination1 + separator + "dummy3");
 
         Assert.assertNotNull(result);
         Assert.assertTrue(result.isSuccess());
@@ -179,7 +181,7 @@ public class IoCommandTest {
         io.init(context);
 
         String sourcePattern = sourceDir + "_E3_test1_step4*.*";
-        String destinationDir = testDestination1 + separator + RandomStringUtils.randomAlphanumeric(5);
+        String destinationDir = testDestination3 + separator + RandomStringUtils.randomAlphanumeric(5);
         new File(destinationDir).mkdirs();
         StepResult result = io.moveFiles(sourcePattern, destinationDir);
         Assert.assertNotNull(result);

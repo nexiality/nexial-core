@@ -16,18 +16,16 @@
 
 package org.nexial.core.plugins.web;
 
-import java.util.List;
-
 import org.apache.commons.collections4.CollectionUtils;
-import org.apache.commons.lang3.StringUtils;
-import org.nexial.commons.utils.RegexUtils;
+import org.nexial.commons.utils.TextUtils;
 import org.nexial.core.utils.ConsoleUtils;
 import org.openqa.selenium.By;
 import org.openqa.selenium.NoSuchElementException;
 import org.openqa.selenium.WebElement;
 import org.openqa.selenium.support.ui.Select;
 
-import static org.nexial.core.NexialConst.REGEX_PREFIX;
+import java.util.List;
+import java.util.stream.Collectors;
 
 public class RegexAwareSelect extends Select {
     private final WebElement element;
@@ -38,38 +36,12 @@ public class RegexAwareSelect extends Select {
     }
 
     @Override
-    public void selectByVisibleText(String text) {
-        if (StringUtils.startsWith(text, REGEX_PREFIX)) {
-            List<WebElement> options = element.findElements(By.tagName("option"));
-            if (CollectionUtils.isEmpty(options)) {
-                ConsoleUtils.log("target SELECT element contains NO child OPTION elements");
-                return;
-            }
-
-            String regex = StringUtils.removeStart(text, REGEX_PREFIX);
-            if (StringUtils.isNotBlank(regex)) {
-                boolean matched = false;
-                for (WebElement option : options) {
-                    if (RegexUtils.match(option.getText(), regex)) {
-                        setSelected(option, true);
-                        if (!isMultiple()) { return; }
-                        matched = true;
-                    }
-                }
-
-                if (matched) { return; }
-
-                ConsoleUtils.log("No text from target SELECT element matches to " + text + ", retrying as normal text");
-            }
-        }
-
-        super.selectByVisibleText(text);
-    }
+    public void selectByVisibleText(String text) { handleViaPolyMatch(text, true); }
 
     /**
      * Deselect all options that display text matching the argument. That is, when given "Bar" this
      * would deselect an option like:
-     *
+     * <p>
      * &lt;option value="foo"&gt;Bar&lt;/option&gt;
      *
      * @param text The visible text to match against
@@ -77,33 +49,38 @@ public class RegexAwareSelect extends Select {
      * @throws UnsupportedOperationException If the SELECT does not support multiple selections
      */
     @Override
-    public void deselectByVisibleText(String text) {
-        if (!isMultiple()) {throw new UnsupportedOperationException("You may only deselect options of a multi-select");}
+    public void deselectByVisibleText(String text) { handleViaPolyMatch(text, false); }
 
-        if (StringUtils.startsWith(text, REGEX_PREFIX)) {
-            List<WebElement> options = element.findElements(By.tagName("option"));
-            if (CollectionUtils.isEmpty(options)) {
-                ConsoleUtils.log("target SELECT element contains NO child OPTION elements");
-                return;
-            }
-
-            String regex = StringUtils.removeStart(text, REGEX_PREFIX);
-            if (StringUtils.isNotBlank(regex)) {
-                boolean matched = false;
-                for (WebElement option : options) {
-                    if (RegexUtils.match(option.getText(), regex)) {
-                        setSelected(option, false);
-                        matched = true;
-                    }
-                }
-
-                if (matched) { return; }
-
-                ConsoleUtils.log("No text from target SELECT element matches to " + text + ", retrying as normal text");
-            }
+    private void handleViaPolyMatch(String text, boolean select) {
+        // deselect only works when we are dealing with multi-enabled <SELECT> element
+        if (!select && !isMultiple()) {
+            throw new UnsupportedOperationException("You may only deselect options of a multi-select");
         }
 
-        super.deselectByVisibleText(text);
+        List<WebElement> options = element.findElements(By.tagName("option"));
+        if (CollectionUtils.isEmpty(options)) {
+            ConsoleUtils.log("target SELECT element contains NO child OPTION elements");
+            return;
+        }
+
+        List<WebElement> matches = options.stream()
+                                          .filter(option -> TextUtils.polyMatch(option.getText(), text))
+                                          .collect(Collectors.toList());
+        if (CollectionUtils.isNotEmpty(matches)) {
+            if (isMultiple()) {
+                matches.forEach(option -> setSelected(option, select));
+            } else {
+                setSelected(matches.get(0), select);
+            }
+            return;
+        }
+
+        ConsoleUtils.log("No text from target SELECT element matches to " + text + ", retrying as normal text");
+        if (select) {
+            super.selectByVisibleText(text);
+        } else {
+            super.deselectByVisibleText(text);
+        }
     }
 
     /**

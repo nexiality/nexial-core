@@ -17,11 +17,6 @@
 
 package org.nexial.core.utils;
 
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Iterator;
-import java.util.List;
-
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.json.JSONArray;
@@ -29,7 +24,12 @@ import org.json.JSONObject;
 import org.nexial.commons.utils.RegexUtils;
 import org.nexial.core.utils.JSONPath.Option;
 
-import static org.nexial.core.NexialConst.REGEX_PREFIX;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Iterator;
+import java.util.List;
+
+import static org.nexial.core.NexialConst.PolyMatcher.REGEX;
 import static org.nexial.core.utils.JsonUtils.isSimpleType;
 
 class JsonPathFilters {
@@ -73,13 +73,13 @@ class JsonPathFilters {
         public String toString() { return original; }
 
         protected void parseValue(String value) {
-            regexOnValue = StringUtils.startsWith(value, REGEX_PREFIX);
-            this.value = regexOnValue ? StringUtils.substringAfter(value, REGEX_PREFIX) : value;
+            regexOnValue = StringUtils.startsWith(value, REGEX);
+            this.value = regexOnValue ? StringUtils.substringAfter(value, REGEX) : value;
         }
 
         protected void parseKey(String key) {
-            regexOnKey = StringUtils.startsWith(key, REGEX_PREFIX);
-            this.key = regexOnKey ? StringUtils.substringAfter(key, REGEX_PREFIX) : key;
+            regexOnKey = StringUtils.startsWith(key, REGEX);
+            this.key = regexOnKey ? StringUtils.substringAfter(key, REGEX) : key;
         }
 
         protected boolean accept(String jsonValue) {

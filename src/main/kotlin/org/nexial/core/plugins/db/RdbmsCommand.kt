@@ -22,7 +22,6 @@ import org.apache.commons.io.FileUtils
 import org.apache.commons.lang3.BooleanUtils
 import org.apache.commons.lang3.StringUtils
 import org.nexial.commons.utils.FileUtil
-import org.nexial.commons.utils.RegexUtils
 import org.nexial.commons.utils.ResourceUtils
 import org.nexial.commons.utils.TextUtils
 import org.nexial.core.NexialConst.*
@@ -90,14 +89,17 @@ class RdbmsCommand : BaseCommand() {
             val outcome = executeSQLs(db, qualifiedSqlList)
             if (CollectionUtils.isNotEmpty(outcome)) {
                 context.setData(`var`, outcome)
-                if (MapUtils.isNotEmpty(outcome.namedOutcome)) {
-                    outcome.namedOutcome.forEach { (name, result) -> context.setData(name, result) }
-                    StepResult.success("$msgPrefix result saved as \${${outcome.namedOutcome.keys}}")
-                } else if (outcome.size == 1) {
-                    context.setData(`var`, outcome[0])
-                    StepResult.success("$msgPrefix single result stored as \${$`var`}}")
-                } else
-                    StepResult.success("$msgPrefix ${outcome.size} results stored as \${$`var`}")
+                when {
+                    MapUtils.isNotEmpty(outcome.namedOutcome) -> {
+                        outcome.namedOutcome.forEach { (name, result) -> context.setData(name, result) }
+                        StepResult.success("$msgPrefix result saved as \${${outcome.namedOutcome.keys}}")
+                    }
+                    outcome.size == 1 -> {
+                        context.setData(`var`, outcome[0])
+                        StepResult.success("$msgPrefix single result stored as \${$`var`}}")
+                    }
+                    else -> StepResult.success("$msgPrefix ${outcome.size} results stored as \${$`var`}")
+                }
             } else
                 StepResult.success("$msgPrefix no result saved")
         } catch (e: Exception) {
@@ -257,10 +259,7 @@ class RdbmsCommand : BaseCommand() {
         val searchColumns = TextUtils.toList(columns, context.textDelim, true)
         if (searchColumns.isEmpty()) return StepResult.fail("No columns specified")
 
-        val regex = if (search.startsWith(REGEX_PREFIX)) search.substringAfter(REGEX_PREFIX).trim() else null
-        val contains = if (search.startsWith(CONTAIN_PREFIX)) search.substringAfter(CONTAIN_PREFIX).trim() else null
-
-        val found = searchColumns.firstOrNull { col -> cellMatches(resultObj.cells(col), regex, contains, search) }
+        val found = searchColumns.firstOrNull { col -> cellMatches(resultObj.cells(col), search) }
         return if (found != null)
             StepResult.success("match found in \${${`var`}} on '${search}' against columns '${columns}'")
         else
@@ -281,32 +280,18 @@ class RdbmsCommand : BaseCommand() {
         val searchColumns = TextUtils.toList(columns, context.textDelim, true)
         if (searchColumns.isEmpty()) return StepResult.fail("No columns specified")
 
-        val regex = if (search.startsWith(REGEX_PREFIX)) search.substringAfter(REGEX_PREFIX).trim() else null
-        val contains = if (search.startsWith(CONTAIN_PREFIX)) search.substringAfter(CONTAIN_PREFIX).trim() else null
-
-        val found = searchColumns.firstOrNull { col -> cellMatches(resultObj.cells(col), regex, contains, search) }
+        val found = searchColumns.firstOrNull { col -> cellMatches(resultObj.cells(col), search) }
         return if (found != null)
             StepResult.fail("match FOUND in \${${`var`}} on '${search}' against columns '${columns}'")
         else
             StepResult.success("match not found in \${${`var`}} on '${search}' against columns '${columns}'")
     }
 
-    private fun cellMatches(cells: List<Any>, regex: String?, contains: String?, exact: String): Boolean {
-        return when {
-            cells.isEmpty()  -> StringUtils.isEmpty(exact)
-            regex != null    -> cells.firstOrNull { it is String && RegexUtils.match(it, regex) } != null
-            contains != null -> cells.firstOrNull { it is String && StringUtils.contains(it, contains) } != null
-            else             -> cells.firstOrNull { it is String && it == exact } != null
+    private fun cellMatches(cells: List<Any>, expected: String): Boolean =
+        when {
+            cells.isEmpty()  -> StringUtils.isEmpty(expected)
+            else             -> cells.firstOrNull { it is String && TextUtils.polyMatch(it, expected) } != null
         }
-    }
-
-    private fun cellMatches(cellData: Any?, regex: String?, contains: String?, exact: String): Boolean {
-        if (cellData == null || StringUtils.isEmpty(cellData.toString()) && StringUtils.isEmpty(exact)) return true
-
-        if (regex != null) return cellData is String && RegexUtils.match(cellData, regex)
-        if (contains != null) return cellData is String && StringUtils.contains(cellData, contains)
-        return cellData is String && StringUtils.equals(cellData, exact)
-    }
 
     fun executeSQLs(db: String, sqls: List<SqlComponent>): JdbcOutcome = resolveDao(db).executeSqls(sqls)
 

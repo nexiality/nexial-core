@@ -457,6 +457,15 @@ public class BaseCommand implements NexialCommand {
                StepResult.fail("EXPECTS non-empty data found empty data instead.");
     }
 
+    protected StepResult polyAssertEqual(String expected, String actual) {
+        assertTrue(NL + displayForCompare("expected", expected, "actual", actual),
+                   TextUtils.polyMatch(actual, expected));
+        String nullValue = context.getNullValueToken();
+        String expectedForDisplay = context.truncateForDisplay(StringUtils.defaultString(expected, nullValue));
+        String actualForDisplay = context.truncateForDisplay(StringUtils.defaultString(actual, nullValue));
+        return StepResult.success("validated EXPECTED = ACTUAL; '%s' = '%s'", expectedForDisplay, actualForDisplay);
+    }
+
     public StepResult assertEqual(String expected, String actual) {
         assertEquals(handleSpecialMarkers(expected), handleSpecialMarkers(actual));
 

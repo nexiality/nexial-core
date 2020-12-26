@@ -17,20 +17,20 @@
 
 package org.nexial.commons.utils;
 
-import java.io.File;
-import java.util.ArrayList;
-import java.util.List;
-
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.filefilter.FalseFileFilter;
 import org.apache.commons.io.filefilter.IOFileFilter;
 import org.apache.commons.io.filefilter.RegexFileFilter;
 import org.apache.commons.io.filefilter.TrueFileFilter;
 
+import java.io.File;
+import java.util.ArrayList;
+import java.util.List;
+
 import static java.io.File.separator;
 import static java.util.stream.Collectors.toList;
 import static org.apache.commons.lang3.StringUtils.*;
-import static org.nexial.core.NexialConst.REGEX_PREFIX;
+import static org.nexial.core.NexialConst.PolyMatcher.REGEX;
 
 public class IOFilePathFilter implements FilePathFilter {
     private final IOFileFilter subDirFilter;
@@ -63,10 +63,12 @@ public class IOFilePathFilter implements FilePathFilter {
         if (!new File(dir).isDirectory()) { return null; }
 
         // If the file pattern contains a path like C:/xyz/abc/REGEX:ab.*[1]{1}
-        if (lastElementOfPath.startsWith(REGEX_PREFIX)) {
-            String fileRegex = substringAfter(lastElementOfPath, REGEX_PREFIX);
+        if (lastElementOfPath.startsWith(REGEX)) {
+            String fileRegex = substringAfter(lastElementOfPath, REGEX);
             return FileUtils.listFiles(new File(dir), new RegexFileFilter(fileRegex), subDirFilter)
-                            .stream().map(File::getAbsolutePath).collect(toList());
+                            .stream()
+                            .map(File::getAbsolutePath)
+                            .collect(toList());
         }
 
         // When the pattern is like c:/xyz/*

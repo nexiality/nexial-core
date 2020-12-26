@@ -17,13 +17,8 @@
 
 package org.nexial.core.plugins.filevalidation.validators;
 
-import java.text.NumberFormat;
-import java.text.ParsePosition;
-import java.util.ArrayList;
-import java.util.regex.Pattern;
-import java.util.regex.PatternSyntaxException;
-
 import org.apache.commons.lang3.StringUtils;
+import org.nexial.core.NexialConst.PolyMatcher;
 import org.nexial.core.plugins.filevalidation.FieldBean;
 import org.nexial.core.plugins.filevalidation.config.FieldConfig;
 import org.nexial.core.plugins.filevalidation.validators.Error.ErrorBuilder;
@@ -32,7 +27,12 @@ import org.nexial.core.plugins.filevalidation.validators.ValidationsExecutor.Dat
 import org.nexial.core.utils.CheckUtils;
 import org.nexial.core.utils.ConsoleUtils;
 
-import static org.nexial.core.NexialConst.REGEX_PREFIX;
+import java.text.NumberFormat;
+import java.text.ParsePosition;
+import java.util.ArrayList;
+import java.util.regex.Pattern;
+import java.util.regex.PatternSyntaxException;
+
 import static org.nexial.core.plugins.filevalidation.validators.ValidationsExecutor.DataType.*;
 import static org.nexial.core.plugins.filevalidation.validators.ValidationsExecutor.Severity.ERROR;
 import static org.nexial.core.plugins.filevalidation.validators.ValidationsExecutor.Severity.WARNING;
@@ -53,19 +53,19 @@ public class BasicValidator {
         CheckUtils.requiresNotNull(fieldValue, "Invalid field value", fieldValue);
 
         String dataType = StringUtils.trim(config.getDatatype());
-        if (StringUtils.startsWith(dataType, REGEX_PREFIX)) {
-            String regex = StringUtils.substringAfter(dataType, REGEX_PREFIX);
+        if (StringUtils.startsWith(dataType, PolyMatcher.REGEX)) {
+            String regex = StringUtils.substringAfter(dataType, PolyMatcher.REGEX);
             try {
                 final Pattern pattern = Pattern.compile(regex);
-                if (!pattern.matcher(fieldValue).matches()) { addDataTypeError(field, REGEX); }
+                if (!pattern.matcher(fieldValue).matches()) { addDataTypeError(field, DataType.REGEX); }
             } catch (PatternSyntaxException e) {
                 ConsoleUtils.error("Invalid REGEX: " + regex);
-                addDataTypeError(field, REGEX);
+                addDataTypeError(field, DataType.REGEX);
             }
             return;
         }
-        DataType enumType = DataType.toEnum(dataType);
 
+        DataType enumType = DataType.toEnum(dataType);
         if (enumType == null) {
             addUndefinedValidationError(field, dataType);
             return;
@@ -84,7 +84,6 @@ public class BasicValidator {
                 if (StringUtils.isNotBlank(fieldValue)) { addDataTypeError(field, DataType.BLANK); }
                 break;
             }
-
             case NUMERIC: {
                 if (!validateNumberDataType(fieldValue)) { addDataTypeError(field, NUMERIC); }
                 break;

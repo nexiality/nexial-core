@@ -17,6 +17,19 @@
 
 package org.nexial.core.aws;
 
+import com.amazonaws.auth.AWSCredentialsProvider;
+import com.amazonaws.client.builder.AwsClientBuilder.EndpointConfiguration;
+import com.amazonaws.regions.Regions;
+import com.amazonaws.services.s3.AmazonS3;
+import com.amazonaws.services.s3.AmazonS3ClientBuilder;
+import com.amazonaws.services.s3.model.*;
+import org.apache.commons.io.FileUtils;
+import org.apache.commons.lang3.StringUtils;
+import org.nexial.commons.utils.CollectionUtil;
+import org.nexial.commons.utils.RegexUtils;
+import org.nexial.core.plugins.aws.AwsSettings;
+
+import javax.validation.constraints.NotNull;
 import java.io.BufferedInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.File;
@@ -27,27 +40,15 @@ import java.util.List;
 import java.util.Set;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
-import javax.validation.constraints.NotNull;
-
-import org.apache.commons.io.FileUtils;
-import org.apache.commons.lang3.StringUtils;
-import org.nexial.commons.utils.CollectionUtil;
-import org.nexial.commons.utils.RegexUtils;
-import org.nexial.core.plugins.aws.AwsSettings;
-
-import com.amazonaws.auth.AWSCredentialsProvider;
-import com.amazonaws.client.builder.AwsClientBuilder.EndpointConfiguration;
-import com.amazonaws.regions.Regions;
-import com.amazonaws.services.s3.AmazonS3;
-import com.amazonaws.services.s3.AmazonS3ClientBuilder;
-import com.amazonaws.services.s3.model.*;
 
 import static com.amazonaws.SDKGlobalConfiguration.DISABLE_CERT_CHECKING_SYSTEM_PROPERTY;
 import static com.amazonaws.regions.Regions.DEFAULT_REGION;
 import static com.amazonaws.services.s3.model.CannedAccessControlList.PublicRead;
 import static com.amazonaws.services.s3.model.StorageClass.ReducedRedundancy;
 import static org.nexial.commons.utils.FilePathFilter.REGEX_FOR_ANY;
-import static org.nexial.core.NexialConst.*;
+import static org.nexial.core.NexialConst.PolyMatcher.REGEX;
+import static org.nexial.core.NexialConst.S3_PATH_SEP;
+import static org.nexial.core.NexialConst.S3_PUBLIC_URL;
 
 public class AwsS3Helper {
     // characters that must be escaped in order NOT to be mistaken as part of regex
@@ -232,6 +233,21 @@ public class AwsS3Helper {
         afterS3Connection();
     }
 
+    public static String toPattern(String path) {
+        if (StringUtils.isEmpty(path)) { return StringUtils.defaultString(path); }
+
+        String delim = (StringUtils.startsWith(path, REGEX)) ? REGEX : (S3_PATH_SEP + REGEX);
+        int delimLength = delim.length();
+
+        int regexStartPos = StringUtils.indexOf(path, delim);
+        if (regexStartPos != -1) {
+            return (regexStartPos > 0 ? toSimplePattern(StringUtils.substring(path, 0, regexStartPos + 1)) : "") +
+                   StringUtils.substring(path, regexStartPos + delimLength);
+        }
+
+        return toSimplePattern(path);
+    }
+
     /**
      * Retrieve all the files from the S3 file Path matching the criteria.
      *
@@ -243,9 +259,9 @@ public class AwsS3Helper {
         // assumes that the path before first / is the bucket
         bucketName = StringUtils.substringBefore(s3Path, S3_PATH_SEP);
         String path = StringUtils.substringAfter(s3Path, S3_PATH_SEP);
-        subDir = StringUtils.substringBefore(StringUtils.substringBefore(path, REGEX_PREFIX), "*");
+        subDir = StringUtils.substringBefore(StringUtils.substringBefore(path, REGEX), "*");
 
-        if (!StringUtils.contains(path, REGEX_PREFIX)) {
+        if (!StringUtils.contains(path, REGEX)) {
             // [bucket]
             // [bucket]/
             // [bucket]/subdir
@@ -267,21 +283,6 @@ public class AwsS3Helper {
         // [bucket]/subdir/[REGEX:...]/subdir2/
         // [bucket]/subdir/*/subdir2/[REGEX:...]
         return getFileKeys(toPattern(path));
-    }
-
-    public static String toPattern(String path) {
-        if (StringUtils.isEmpty(path)) { return StringUtils.defaultString(path); }
-
-        String delim = (StringUtils.startsWith(path, REGEX_PREFIX)) ? REGEX_PREFIX : (S3_PATH_SEP + REGEX_PREFIX);
-        int delimLength = delim.length();
-
-        int regexStartPos = StringUtils.indexOf(path, delim);
-        if (regexStartPos != -1) {
-            return (regexStartPos > 0 ? toSimplePattern(StringUtils.substring(path, 0, regexStartPos + 1)) : "") +
-                   StringUtils.substring(path, regexStartPos + delimLength);
-        }
-
-        return toSimplePattern(path);
     }
 
     /**

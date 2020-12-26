@@ -17,17 +17,14 @@
 
 package org.nexial.core.plugins.json;
 
-import java.io.File;
-import java.io.FileWriter;
-import java.io.IOException;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Comparator;
-import java.util.List;
-import java.util.Set;
-import java.util.stream.Collectors;
-import javax.validation.constraints.NotNull;
-
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.google.gson.*;
+import com.networknt.schema.JsonSchema;
+import com.networknt.schema.JsonSchemaFactory;
+import com.networknt.schema.SpecVersion.VersionFlag;
+import com.networknt.schema.SpecVersionDetector;
+import com.networknt.schema.ValidationMessage;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.collections4.IterableUtils;
 import org.apache.commons.lang3.StringUtils;
@@ -41,18 +38,12 @@ import org.nexial.core.plugins.base.BaseCommand;
 import org.nexial.core.utils.*;
 import org.nexial.core.utils.JsonEditor.JsonEditorConfig;
 
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.google.gson.JsonArray;
-import com.google.gson.JsonElement;
-import com.google.gson.JsonObject;
-import com.google.gson.JsonParser;
-import com.google.gson.JsonSyntaxException;
-import com.networknt.schema.JsonSchema;
-import com.networknt.schema.JsonSchemaFactory;
-import com.networknt.schema.SpecVersion.VersionFlag;
-import com.networknt.schema.SpecVersionDetector;
-import com.networknt.schema.ValidationMessage;
+import javax.validation.constraints.NotNull;
+import java.io.File;
+import java.io.FileWriter;
+import java.io.IOException;
+import java.util.*;
+import java.util.stream.Collectors;
 
 import static org.nexial.core.NexialConst.DEF_CHARSET;
 import static org.nexial.core.NexialConst.Data.*;
@@ -76,7 +67,6 @@ public class JsonCommand extends BaseCommand {
 
         String expectedJson;
         try {
-            // expectedJson = OutputFileUtils.resolveContent(expected, context, true, true);
             expectedJson = new OutputResolver(expected, context, false, true).getContent();
         } catch (Throwable e) {
             return StepResult.fail("EXPECTED json is invalid or not readable: " + e.getMessage());
@@ -84,7 +74,6 @@ public class JsonCommand extends BaseCommand {
 
         String actualJson;
         try {
-            // actualJson = OutputFileUtils.resolveContent(actual, context, true, true);
             actualJson = new OutputResolver(actual, context, false, true).getContent();
         } catch (Throwable e) {
             return StepResult.fail("ACTUAL json is invalid or not readable: " + e.getMessage());

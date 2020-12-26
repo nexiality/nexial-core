@@ -17,28 +17,12 @@
 
 package org.nexial.core.plugins.web;
 
-import java.awt.*;
-import java.awt.image.*;
-import java.io.File;
-import java.io.IOException;
-import java.time.Duration;
-import java.util.List;
-import java.util.*;
-import java.util.function.Function;
-import java.util.stream.Collectors;
-import javax.annotation.Nullable;
-import javax.imageio.ImageIO;
-import javax.validation.constraints.NotNull;
-
+import com.google.gson.JsonObject;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.collections4.IterableUtils;
 import org.apache.commons.collections4.MapUtils;
 import org.apache.commons.io.FileUtils;
-import org.apache.commons.lang3.ArrayUtils;
-import org.apache.commons.lang3.BooleanUtils;
-import org.apache.commons.lang3.RandomStringUtils;
-import org.apache.commons.lang3.StringUtils;
-import org.apache.commons.lang3.SystemUtils;
+import org.apache.commons.lang3.*;
 import org.apache.commons.lang3.math.NumberUtils;
 import org.apache.commons.lang3.time.StopWatch;
 import org.nexial.commons.utils.CollectionUtil;
@@ -75,14 +59,25 @@ import org.openqa.selenium.support.ui.ExpectedConditions;
 import org.openqa.selenium.support.ui.FluentWait;
 import org.openqa.selenium.support.ui.Select;
 import org.openqa.selenium.support.ui.WebDriverWait;
-
-import com.google.gson.JsonObject;
 import ru.yandex.qatools.ashot.AShot;
 import ru.yandex.qatools.ashot.Screenshot;
 import ru.yandex.qatools.ashot.coordinates.WebDriverCoordsProvider;
 import ru.yandex.qatools.ashot.shooting.ShootingStrategies;
 
-import static java.awt.Image.*;
+import javax.annotation.Nullable;
+import javax.imageio.ImageIO;
+import javax.validation.constraints.NotNull;
+import java.awt.*;
+import java.awt.image.BufferedImage;
+import java.io.File;
+import java.io.IOException;
+import java.time.Duration;
+import java.util.List;
+import java.util.*;
+import java.util.function.Function;
+import java.util.stream.Collectors;
+
+import static java.awt.Image.SCALE_DEFAULT;
 import static java.io.File.separator;
 import static java.lang.Thread.sleep;
 import static java.util.concurrent.TimeUnit.MILLISECONDS;
@@ -90,6 +85,7 @@ import static org.apache.commons.lang3.SystemUtils.IS_OS_MAC;
 import static org.nexial.core.NexialConst.BrowserType.safari;
 import static org.nexial.core.NexialConst.*;
 import static org.nexial.core.NexialConst.Data.*;
+import static org.nexial.core.NexialConst.PolyMatcher.*;
 import static org.nexial.core.NexialConst.Project.BROWSER_META_CACHE_PATH;
 import static org.nexial.core.NexialConst.Web.*;
 import static org.nexial.core.SystemVariables.*;
@@ -888,7 +884,19 @@ public class WebCommand extends BaseCommand implements CanTakeScreenshot, CanLog
     }
 
     public StepResult assertNotText(String locator, String text) {
-        assertNotEquals(text, getElementText(locator));
+        String actual = getElementText(locator);
+
+        if (text == null) {
+            // both should be null
+            assertFalse(NL + "expected=null " +
+                        NL + "actual  =" + actual,
+                        actual == null);
+        } else {
+            if (TextUtils.polyMatch(actual, text)) {
+                CheckUtils.fail(NL + displayForCompare("expected", text, "actual", actual));
+            }
+        }
+
         return StepResult.success("validated text '" + text + "' not found in '" + locator + "'");
     }
 
@@ -898,7 +906,8 @@ public class WebCommand extends BaseCommand implements CanTakeScreenshot, CanLog
     }
 
     public StepResult assertText(String locator, String text) {
-        assertEquals(text, getElementText(locator));
+        String actual = getElementText(locator);
+        assertTrue(NL + displayForCompare("expected", text, "actual", actual), TextUtils.polyMatch(actual, text));
         return StepResult.success();
     }
 
@@ -1018,7 +1027,7 @@ public class WebCommand extends BaseCommand implements CanTakeScreenshot, CanLog
     }
 
     public StepResult assertValue(String locator, String value) {
-        assertEquals(value, getValue(locator));
+        polyAssertEqual(value, getValue(locator));
         return StepResult.success();
     }
 
@@ -1037,7 +1046,7 @@ public class WebCommand extends BaseCommand implements CanTakeScreenshot, CanLog
                                       (expectsNull ? "as EXPECTED" : "but EXPECTS " + value), null);
             }
 
-            return assertEqual(value, actual);
+            return polyAssertEqual(value, actual);
         } catch (NoSuchElementException e) {
             return StepResult.fail(WebDriverExceptionHelper.resolveErrorMessage(e));
         }
@@ -2574,8 +2583,8 @@ public class WebCommand extends BaseCommand implements CanTakeScreenshot, CanLog
                 return StepResult.fail(msg + "CONTAINS blank, which is NOT expected");
             }
 
-            if (StringUtils.startsWithIgnoreCase(contains, REGEX_PREFIX)) {
-                boolean matched = RegexUtils.match(actual, StringUtils.substringAfter(contains, REGEX_PREFIX));
+            if (StringUtils.startsWithIgnoreCase(contains, REGEX)) {
+                boolean matched = RegexUtils.match(actual, StringUtils.substringAfter(contains, REGEX));
                 if (matched) {
                     if (expectsContains) { return StepResult.success(msg + "CONTAINS " + contains + " as EXPECTED"); }
                     return StepResult.fail(msg + "CONTAINS " + contains + ", which is NOT as expected");

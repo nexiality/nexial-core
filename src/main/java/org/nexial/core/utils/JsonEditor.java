@@ -16,9 +16,6 @@
 
 package org.nexial.core.utils;
 
-import java.util.Map;
-import javax.validation.constraints.NotNull;
-
 import org.apache.commons.lang3.BooleanUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.math.NumberUtils;
@@ -27,9 +24,12 @@ import org.json.JSONObject;
 import org.nexial.commons.utils.RegexUtils;
 import org.nexial.commons.utils.TextUtils;
 
+import javax.validation.constraints.NotNull;
+import java.util.Map;
+
 import static org.json.JSONObject.NULL;
 import static org.nexial.core.NexialConst.NL;
-import static org.nexial.core.NexialConst.REGEX_PREFIX;
+import static org.nexial.core.NexialConst.PolyMatcher.REGEX;
 
 /**
  * Helper class to add or replace an existing JSON Document (JSONObject or JSONArray) via JSON Path.
@@ -87,11 +87,11 @@ public final class JsonEditor {
         }
 
         // 4 filter is not ordinal or single node; therefore it could be equality filter or REGEX filter
-        boolean regexFilter = StringUtils.startsWith(filter, REGEX_PREFIX);
+        boolean regexFilter = StringUtils.startsWith(filter, REGEX);
         if (regexFilter) {
             // regex is too complicated for now.. maybe later
             // todo: future -> we can enhance this method to support regex filter
-            String regex = StringUtils.removeStart(filter, REGEX_PREFIX);
+            String regex = StringUtils.removeStart(filter, REGEX);
             throw new RuntimeException("NOT YET IMPLEMENTED for REGEX filter" + NL +
                                        "\tjson=" + json + NL +
                                        "\tnodeName=" + nodeName + NL +
