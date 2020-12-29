@@ -17,12 +17,6 @@
 
 package org.nexial.core.model;
 
-import java.io.IOException;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.collections4.MapUtils;
 import org.apache.commons.lang3.BooleanUtils;
@@ -40,9 +34,16 @@ import org.nexial.core.excel.ExcelArea;
 import org.nexial.core.logs.ExecutionLogger;
 import org.nexial.core.utils.ConsoleUtils;
 
+import java.io.IOException;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+
 import static org.nexial.core.CommandConst.CMD_REPEAT_UNTIL;
 import static org.nexial.core.CommandConst.CMD_SECTION;
 import static org.nexial.core.NexialConst.Data.END_SCRIPT_IMMEDIATE;
+import static org.nexial.core.NexialConst.LogMessage.EXECUTING_TEST_SCENARIO;
 import static org.nexial.core.NexialConst.*;
 import static org.nexial.core.excel.ExcelConfig.*;
 import static org.nexial.core.model.ExecutionSummary.ExecutionLevel.SCENARIO;
@@ -90,7 +91,7 @@ public class TestScenario {
 
     public boolean execute() throws IOException {
         ExecutionLogger logger = context.getLogger();
-        logger.log(this, LogMessage.EXECUTING_TEST_SCENARIO);
+        logger.log(this, EXECUTING_TEST_SCENARIO);
 
         // by default, only fail fast if we are not in interactive mode
         boolean shouldFailFast = context.isFailFast();

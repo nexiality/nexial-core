@@ -667,6 +667,7 @@ public final class NexialConst {
         public static final String EXECUTING_ITERATION = "executing iteration #";
         public static final String EXECUTING_TEST_SCENARIO = "executing test scenario";
         public static final String EXECUTING_ACTIVITY = "executing activity";
+        public static final String ENDING_ACTIVITY = "ending activity";
         public static final String SAVING_TEST_SCENARIO = "saving test scenario";
         public static final String TEST_COMPLETE = "TEST COMPLETE";
         public static final String END_OF_EXECUTION = "END OF EXECUTION";

@@ -30,6 +30,7 @@ import java.util.List;
 
 import static org.nexial.core.CommandConst.*;
 import static org.nexial.core.NexialConst.Data.END_SCRIPT_IMMEDIATE;
+import static org.nexial.core.NexialConst.LogMessage.ENDING_ACTIVITY;
 import static org.nexial.core.NexialConst.LogMessage.EXECUTING_ACTIVITY;
 import static org.nexial.core.NexialConst.*;
 import static org.nexial.core.excel.ExcelStyleHelper.formatRepeatUntilDescription;
@@ -189,6 +190,9 @@ public class TestCase {
         executionSummary.setEndTime(System.currentTimeMillis());
         executionSummary.setFailedFast(context.isFailFast());
         executionSummary.aggregatedNestedExecutions(context);
+
+        logger.log(this, ENDING_ACTIVITY);
+
         return allPassed;
     }
 
