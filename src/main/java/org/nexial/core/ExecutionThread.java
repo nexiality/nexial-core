@@ -50,8 +50,7 @@ import static org.nexial.core.NexialConst.*;
 import static org.nexial.core.NexialConst.Data.*;
 import static org.nexial.core.NexialConst.Exec.*;
 import static org.nexial.core.NexialConst.Iteration.*;
-import static org.nexial.core.NexialConst.LogMessage.TEST_COMPLETE;
-import static org.nexial.core.NexialConst.LogMessage.TEST_FAILED;
+import static org.nexial.core.NexialConst.LogMessage.*;
 import static org.nexial.core.NexialConst.Project.appendLog;
 import static org.nexial.core.NexialConst.Web.*;
 import static org.nexial.core.SystemVariables.getDefault;
@@ -411,7 +410,8 @@ public final class ExecutionThread extends Thread {
 
         ConsoleUtils.log(context.getRunId(),
                          NL +
-                         "/-" + TEST_COMPLETE + "---------------------------------------------------------------" + NL +
+                         "/-" + ITERATION_COMPLETE + StringUtils.repeat("-", 80 - ITERATION_COMPLETE.length() - 2) +
+                         NL +
                          "| Test Output:    " + context.getTestScript().getFile() + NL +
                          "| Iteration:      " + iteration + NL +
                          "\\-------------------------------------------------------------------------------" + NL +
@@ -444,7 +444,7 @@ public final class ExecutionThread extends Thread {
 
         ConsoleUtils.log(context.getRunId(),
                          NL +
-                         "/-" + TEST_COMPLETE + "---------------------------------------------------------------" + NL +
+                         "/-" + SCRIPT_COMPLETE + StringUtils.repeat("-", 80 - SCRIPT_COMPLETE.length() - 2) + NL +
                          "| Test Script:    " + execDef.getTestScript() + NL +
                          "\\-------------------------------------------------------------------------------" + NL +
                          "» Execution Time: " + (ticktock.getTime()) + " ms" + NL +
