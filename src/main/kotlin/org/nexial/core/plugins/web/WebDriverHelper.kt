@@ -28,12 +28,8 @@ import org.apache.commons.lang3.math.NumberUtils
 import org.json.JSONArray
 import org.json.JSONObject
 import org.nexial.commons.proc.ProcessInvoker
-import org.nexial.commons.utils.CollectionUtil
-import org.nexial.commons.utils.EnvUtils
-import org.nexial.commons.utils.FileUtil
+import org.nexial.commons.utils.*
 import org.nexial.commons.utils.FileUtil.isFileReadable
-import org.nexial.commons.utils.RegexUtils
-import org.nexial.commons.utils.TextUtils
 import org.nexial.core.NexialConst.*
 import org.nexial.core.NexialConst.BrowserType.*
 import org.nexial.core.NexialConst.Data.WIN32_CMD
@@ -90,9 +86,9 @@ abstract class WebDriverHelper protected constructor(protected var context: Exec
             val driverUrl = manifest.driverUrl!!
             val downloadTo = when {
                 driverUrl.endsWith(".tar.gz") -> "$driverLocation.tar.gz"
-                driverUrl.endsWith(".gz")     -> "$driverLocation.gz"
-                driverUrl.endsWith(".zip")    -> "$driverLocation.zip"
-                else                          -> driverLocation
+                driverUrl.endsWith(".gz") -> "$driverLocation.gz"
+                driverUrl.endsWith(".zip") -> "$driverLocation.zip"
+                else -> driverLocation
             }
 
             val response = wsClient.download(driverUrl, null, downloadTo)
@@ -107,8 +103,8 @@ abstract class WebDriverHelper protected constructor(protected var context: Exec
 
             when {
                 StringUtils.endsWith(downloadTo, ".tar.gz") -> ungzipThenUntar(downloadTo, driverLocation)
-                StringUtils.endsWith(downloadTo, ".gz")     -> ungzip(downloadTo, driverLocation)
-                StringUtils.endsWith(downloadTo, ".zip")    -> unzip(downloadTo, driverLocation)
+                StringUtils.endsWith(downloadTo, ".gz") -> ungzip(downloadTo, driverLocation)
+                StringUtils.endsWith(downloadTo, ".zip") -> unzip(downloadTo, driverLocation)
             }
 
             if (!isFileReadable(driverLocation, DRIVER_MIN_SIZE)) {
@@ -160,7 +156,7 @@ abstract class WebDriverHelper protected constructor(protected var context: Exec
                 extractDriverInfos(JSONArray(availableDriverContent), manifest, pollForUpdates)
             TextUtils.isBetween(availableDriverContent, "{", "}") ->
                 extractDriverInfo(JSONObject(availableDriverContent), manifest, pollForUpdates)
-            else                                                  ->
+            else ->
                 ConsoleUtils.error("Unknown content downloaded from ${config.checkUrlBase}; IGNORED...")
         }
 
@@ -189,17 +185,23 @@ abstract class WebDriverHelper protected constructor(protected var context: Exec
         manifest.compatibleDriverVersion = null
     }
 
-    protected fun resolveDownloadUrlFromJSONArray(manifest: WebDriverManifest,
-                                                  targetVersion: String?,
-                                                  json: JSONArray) {
+    protected fun resolveDownloadUrlFromJSONArray(
+        manifest: WebDriverManifest,
+        targetVersion: String?,
+        json: JSONArray
+    ) {
         // get latest
         val driverSearchName = resolveDriverSearchName(targetVersion!!)
-        var driverUrl = JSONPath.find(json,
-                                      "[tag_name=$targetVersion].assets[name=$driverSearchName].browser_download_url")
+        var driverUrl = JSONPath.find(
+            json,
+            "[tag_name=$targetVersion].assets[name=$driverSearchName].browser_download_url"
+        )
         if (StringUtils.isBlank(driverUrl) && IS_OS_WINDOWS) {
             // [corner case] try again with Win32
-            driverUrl = JSONPath.find(json,
-                                      "[tag_name=$targetVersion].assets[name=REGEX:.+win32.+].browser_download_url")
+            driverUrl = JSONPath.find(
+                json,
+                "[tag_name=$targetVersion].assets[name=REGEX:.+win32.+].browser_download_url"
+            )
         }
 
         if (TextUtils.isBetween(driverUrl, "[", "]")) {
@@ -232,8 +234,7 @@ abstract class WebDriverHelper protected constructor(protected var context: Exec
             var driverVersion: String?
             if (currentBrowserType.startsWith("chrome")) {
                 driverVersion = execCommandForBrowserVersion(getChromeVerCommand(browserBinLocation))
-                driverVersion = driverVersion!!
-                    .replace("Version=", "").replace("Google Chrome ", "").trim { it <= ' ' }
+                driverVersion = driverVersion!!.replace("Version=", "").replace("Google Chrome ", "").trim { it <= ' ' }
             } else if (currentBrowserType.startsWith("firefox")) {
                 driverVersion = execCommandForBrowserVersion(getFirefoxVerCommand(browserBinLocation))
                 driverVersion = driverVersion!!
@@ -241,22 +242,17 @@ abstract class WebDriverHelper protected constructor(protected var context: Exec
                     .replace("Firefox ", "")
                     .trim { it <= ' ' }
 
-                var firefoxBrowserVer = 0
-                if (StringUtils.isNotBlank(driverVersion) && driverVersion.contains(".")) {
-                    firefoxBrowserVer = StringUtils
-                        .substringBefore(driverVersion, ".").toInt()
-                } else {
+                if (!StringUtils.isNotBlank(driverVersion) || !driverVersion.contains(".")) {
                     ConsoleUtils.error("Invalid driver version :$driverVersion")
                     return false
                 }
+
+                val firefoxBrowserVer = StringUtils.substringBefore(driverVersion, ".").toInt()
+
                 //find driver mapping configuration in nexial.xml
                 for ((minMaxRange, value) in firefoxDriverVersionMapping!!.entries) {
-                    val minBrowserVer = StringUtils
-                        .substringBefore(minMaxRange, "-")
-                        .toInt()
-                    val maxBrowserVer = StringUtils
-                        .substringAfter(minMaxRange, "-")
-                        .toInt()
+                    val minBrowserVer = StringUtils.substringBefore(minMaxRange, "-").toInt()
+                    val maxBrowserVer = StringUtils.substringAfter(minMaxRange, "-").toInt()
                     if (firefoxBrowserVer in minBrowserVer..maxBrowserVer) {
                         driverVersion = value
                         break
@@ -266,96 +262,93 @@ abstract class WebDriverHelper protected constructor(protected var context: Exec
                 ConsoleUtils.error("Invalid browser type for compatible driver mapping")
                 return false
             }
+
             //var manifest: WebDriverManifest = initWebDriverManifest()
             val (manifest: WebDriverManifest, hasDriver) = initManifestAndCheckDriver()
 
             //if old & new both driver are same than stop execution
             //maybe something went wrong with browser initialization
             val manifestDriverVer = manifest.driverVersion
-            if (hasDriver && manifestDriverVer != null
-                && (manifestDriverVer.contains(driverVersion!!)
-                    || StringUtils.substringBeforeLast(manifestDriverVer, ".")
-                        .contains(StringUtils.substringBeforeLast(driverVersion,
-                                                                  ".")))) {
+            if (hasDriver && manifestDriverVer != null &&
+                (manifestDriverVer.contains(driverVersion!!) ||
+                        StringUtils.substringBeforeLast(manifestDriverVer, ".")
+                            .contains(StringUtils.substringBeforeLast(driverVersion, ".")))
+            ) {
                 ConsoleUtils.log("Current web driver is compatible with the browser. No need to update.")
                 return false
             }
+
             manifest.compatibleDriverVersion = driverVersion
             ConsoleUtils.log("required driver version : $driverVersion")
-            FileUtils.writeStringToFile(driverManifest, GSON.toJson(manifest, WebDriverManifest::class.java),
-                                        DEF_CHARSET)
+            FileUtils.writeStringToFile(
+                driverManifest,
+                GSON.toJson(manifest, WebDriverManifest::class.java),
+                DEF_CHARSET
+            )
         } else {
             ConsoleUtils.error("Could not find the $currentBrowserType browser.")
         }
+
         return true
     }
 
-    fun execCommandForBrowserVersion(
-        cmd: Array<String>?): String? {
+    protected fun execCommandForBrowserVersion(cmd: Array<String>?): String? {
         var browserVersion: String? = ""
         try {
             val process = Runtime.getRuntime().exec(cmd)
-            try {
-                val reader = BufferedReader(InputStreamReader(process.inputStream))
-                var line: String?
-                while (reader.readLine().also { line = it } != null) {
-                    if (StringUtils.isNotBlank(line)) browserVersion = line
-                }
-            } catch (e: Exception) {
-                ConsoleUtils.error("Error while finding browser version: $e")
+            val reader = BufferedReader(InputStreamReader(process.inputStream))
+            var line: String?
+            while (reader.readLine().also { line = it } != null) {
+                if (StringUtils.isNotBlank(line)) browserVersion = line
             }
         } catch (e: Exception) {
             ConsoleUtils.error("Error while executing command to find browser version: $e")
         }
+
         return browserVersion
     }
 
-    private fun getChromeVerCommand(binaryLocation: String?): Array<String>? {
-        var cmd: Array<String>? = null
-        if (IS_OS_WINDOWS) {
-            cmd = arrayOf("cmd.exe", "/C",
-                          "wmic datafile where name=\"" +
-                          binaryLocation!!.replace("\\", "\\\\") +
-                          "\" get Version /value")
-        } else if (IS_OS_LINUX || IS_OS_MAC) {
-            cmd = arrayOf("bash", "-c", "google-chrome --version")
-        }
-        return cmd
-    }
+    private fun getChromeVerCommand(binaryLocation: String?) =
+        if (IS_OS_WINDOWS)
+            arrayOf(
+                "cmd.exe",
+                "/C",
+                "wmic datafile where name=\"" + binaryLocation!!.replace("\\", "\\\\") + "\" get Version /value"
+            )
+        else if (IS_OS_LINUX || IS_OS_MAC)
+            arrayOf("bash", "-c", "google-chrome --version")
+        else null
 
-    fun getEdgeChromeVerCommand(binaryLocation: String?): Array<String>? {
-        var cmd: Array<String>? = null
-        if (IS_OS_WINDOWS) {
-            cmd = arrayOf("cmd.exe", "/C",
-                          "wmic datafile where name=\"" +
-                          binaryLocation!!.replace("\\", "\\\\") +
-                          "\" get Version /value")
-        } else if (IS_OS_LINUX || IS_OS_MAC) {
+    fun getEdgeChromeVerCommand(binaryLocation: String?) =
+        if (IS_OS_WINDOWS)
+            arrayOf(
+                "cmd.exe",
+                "/C",
+                "wmic datafile where name=\"" + binaryLocation!!.replace("\\", "\\\\") + "\" get Version /value"
+            )
+        else {
             // todo test for microsoft edge on linux or mac
             ConsoleUtils.error("This current OS is not supported for $browserType browser")
+            null
         }
-        return cmd
-    }
 
-    private fun getFirefoxVerCommand(binaryLocation: String?): Array<String>? {
-        var cmd: Array<String>? = null
-        if (IS_OS_WINDOWS) {
-            cmd = arrayOf("cmd.exe", "/C",
-                          "wmic datafile where name=\"" +
-                          binaryLocation!!.replace("\\", "\\\\") +
-                          "\" get version")
-        } else if (IS_OS_LINUX || IS_OS_MAC) {
-            cmd = arrayOf("bash", "-c", "firefox --version")
-        }
-        return cmd
-    }
+    private fun getFirefoxVerCommand(binaryLocation: String?) =
+        if (IS_OS_WINDOWS)
+            arrayOf(
+                "cmd.exe",
+                "/C",
+                "wmic datafile where name=\"" + binaryLocation!!.replace("\\", "\\\\") + "\" get version"
+            )
+        else if (IS_OS_LINUX || IS_OS_MAC)
+            arrayOf("bash", "-c", "firefox --version")
+        else null
 
     protected open fun resolveDriverSearchName(tag: String): String {
         val assetRegex = when {
             IS_OS_WINDOWS -> "win64"
             IS_OS_MAC_OSX -> "macos"
-            IS_OS_LINUX   -> "linux64"
-            else          -> throw java.lang.IllegalArgumentException("OS $OS_NAME not supported for $browserType")
+            IS_OS_LINUX -> "linux64"
+            else -> throw java.lang.IllegalArgumentException("OS $OS_NAME not supported for $browserType")
         }
 
         return "REGEX:.+$tag-$assetRegex.+"
@@ -428,12 +421,12 @@ abstract class WebDriverHelper protected constructor(protected var context: Exec
                 firefox, firefoxheadless -> FirefoxDriverHelper(context)
                 electron -> ElectronDriverHelper(context)
                 chrome, chromeheadless, chromeembedded -> ChromeDriverHelper(context)
-                ie                                     -> IEDriverHelper(context)
+                ie -> IEDriverHelper(context)
                 // download BrowserStackLocal executable only needed when `browserstack.local` is `true`
-                browserstack                           -> BrowserStackLocalHelper(context)
+                browserstack -> BrowserStackLocalHelper(context)
                 // download CrossBrowserTesting local executable only needed when `crossbrowsertesting.local` is `true`
-                crossbrowsertesting                    -> CrossBrowserTestingLocalHelper(context)
-                else                                   -> throw RuntimeException("No WebDriverHelper implemented for $browserType")
+                crossbrowsertesting -> CrossBrowserTestingLocalHelper(context)
+                else -> throw RuntimeException("No WebDriverHelper implemented for $browserType")
             }
 
             helper.browserType = browserType
@@ -513,17 +506,19 @@ abstract class WebDriverHelper protected constructor(protected var context: Exec
             FileUtils.deleteQuietly(File(zipFile))
         }
 
-        // todo: not perfect - does not account for versioning spaning over 3 dots, like v.0.2.7.1
+        // todo: not perfect - does not account for versioning spanning over 3 dots, like v.0.2.7.1
         @JvmStatic
         fun expandVersion(version: String?): Double {
             if (StringUtils.isBlank(version)) return 0.0
 
-            val parts = ArrayList(Arrays.asList(*StringUtils.split(version, ".")))
+            val parts = ArrayList(listOf(*StringUtils.split(version, ".")))
 
             var fractionPart = "0"
             if (parts.size > 2) {
-                fractionPart = StringUtils.leftPad(RegexUtils.retainMatches(parts.removeAt(parts.size - 1), "[0-9]"),
-                                                   4, "0")
+                fractionPart = StringUtils.leftPad(
+                    RegexUtils.retainMatches(parts.removeAt(parts.size - 1), "[0-9]"),
+                    4, "0"
+                )
             }
 
             var wholePart = ""
@@ -543,7 +538,7 @@ class EdgeDriverHelper(context: ExecutionContext) : WebDriverHelper(context) {
         }
 
         return StringUtils.appendIfMissing(File(context.replaceTokens(config.home)).absolutePath, separator) +
-               config.baseName
+                config.baseName
     }
 
     /**
@@ -567,8 +562,10 @@ class EdgeDriverHelper(context: ExecutionContext) : WebDriverHelper(context) {
             var lookupResponse = wsClient.get("${config.checkUrlBase}$currentOsVer.txt", "")
             if (lookupResponse.returnCode != 200) {
                 // something's wrong... maybe we don't have any driver for current OS build
-                ConsoleUtils.log("[EDGE] unable to resolve $browserType driver download URL for Windows 10 build " +
-                                 "$currentOsVer. Use min. version instead...")
+                ConsoleUtils.log(
+                    "[EDGE] unable to resolve $browserType driver download URL for Windows 10 build " +
+                            "$currentOsVer. Use min. version instead..."
+                )
                 currentOsVer = minOsVersion
                 lookupResponse = wsClient.get("${config.checkUrlBase}$currentOsVer.txt", "")
             }
@@ -599,8 +596,10 @@ class EdgeDriverHelper(context: ExecutionContext) : WebDriverHelper(context) {
                 val currentOsVer = outcome.stdout
                 ConsoleUtils.log("[EDGE] current Windows 10 version = $currentOsVer")
 
-                return deriveWin10BuildNumber(StringUtils.substringBetween(currentOsVer, "[Version", "]"),
-                                              minOsVersionNum)
+                return deriveWin10BuildNumber(
+                    StringUtils.substringBetween(currentOsVer, "[Version", "]"),
+                    minOsVersionNum
+                )
 //            ConsoleUtils.log("[EDGE] current Windows 10 OS Build number resolved to $currentOsVer")
 //            return currentOsVer
             } catch (e: Exception) {
@@ -617,8 +616,9 @@ class EdgeDriverHelper(context: ExecutionContext) : WebDriverHelper(context) {
                         RegexUtils.replace(currentOsVer, winVerRegex2, "$1")
                     RegexUtils.isExact(currentOsVer, winVerRegex3) ->
                         StringUtils.substringAfterLast(currentOsVer, ".")
-                    else                                           -> currentOsVer
-                })
+                    else -> currentOsVer
+                }
+            )
 
             if (!NumberUtils.isDigits(osVer)) return minVersion.toString()
 
@@ -637,7 +637,7 @@ class EdgeChromeDriverHelper(context: ExecutionContext) : WebDriverHelper(contex
 
     override fun resolveLocalDriverPath(): String {
         return StringUtils.appendIfMissing(File(context.replaceTokens(config.home)).absolutePath, separator) +
-               config.baseName + if (IS_OS_WINDOWS) ".exe" else ""
+                config.baseName + if (IS_OS_WINDOWS) ".exe" else ""
     }
 
     @Throws(IOException::class)
@@ -653,9 +653,10 @@ class EdgeChromeDriverHelper(context: ExecutionContext) : WebDriverHelper(contex
 
         val (compatibleDriverVersion, isUpdateRequired) = isBrowserUpdated(manifest, hasDriver)
 
-        // not sure if edge is minimum chrome versio
+        // not sure if edge is minimum chrome version
         if (StringUtils.isEmpty(compatibleDriverVersion) ||
-            compatibleDriverVersion!!.substringBefore(".").toInt() < minVersion.substringBefore(".").toInt()) {
+            compatibleDriverVersion!!.substringBefore(".").toInt() < minVersion.substringBefore(".").toInt()
+        ) {
             ConsoleUtils.error("This version $compatibleDriverVersion is not supported by $browserType browser")
             return manifest
         }
@@ -667,7 +668,7 @@ class EdgeChromeDriverHelper(context: ExecutionContext) : WebDriverHelper(contex
                 IS_OS_WINDOWS -> "win64"
                 // todo write logic for mac or linux
                 // IS_OS_MAC     -> "mac64"
-                else          -> throw IllegalArgumentException("OS $OS_NAME not supported for $browserType")
+                else -> throw IllegalArgumentException("OS $OS_NAME not supported for $browserType")
             }
 
             // todo change for linux/mac if needed
@@ -702,7 +703,7 @@ class FirefoxDriverHelper(context: ExecutionContext) : WebDriverHelper(context) 
 
     override fun resolveLocalDriverPath(): String {
         return StringUtils.appendIfMissing(File(context.replaceTokens(config.home)).absolutePath, separator) +
-               config.baseName + if (IS_OS_WINDOWS) ".exe" else ""
+                config.baseName + if (IS_OS_WINDOWS) ".exe" else ""
     }
 
     @Throws(IOException::class)
@@ -738,11 +739,14 @@ class FirefoxDriverHelper(context: ExecutionContext) : WebDriverHelper(context) 
         when {
             TextUtils.isBetween(availableDriverContent, "[", "]") -> {
                 if (StringUtils.isBlank(driverVersion)) {
-                    extractDriverInfos(JSONArray(availableDriverContent), manifest,
-                                       pollForUpdates)
+                    extractDriverInfos(
+                        JSONArray(availableDriverContent), manifest,
+                        pollForUpdates
+                    )
                 } else {
                     resolveDownloadUrlFromJSONArray(
-                        manifest, driverVersion, JSONArray(availableDriverContent))
+                        manifest, driverVersion, JSONArray(availableDriverContent)
+                    )
                 }
             }
 
@@ -750,12 +754,14 @@ class FirefoxDriverHelper(context: ExecutionContext) : WebDriverHelper(context) 
                 if (StringUtils.isBlank(driverVersion)) {
                     extractDriverInfo(JSONObject(availableDriverContent), manifest, pollForUpdates)
                 } else {
-                    resolveDownloadUrlFromJSONObject(manifest, driverVersion!!,
-                                                     JSONObject(availableDriverContent))
+                    resolveDownloadUrlFromJSONObject(
+                        manifest, driverVersion!!,
+                        JSONObject(availableDriverContent)
+                    )
                 }
             }
 
-            else                                                  ->
+            else ->
                 ConsoleUtils.error("Unknown content downloaded from ${config.checkUrlBase}; IGNORED...")
         }
 
@@ -771,15 +777,15 @@ class ElectronDriverHelper(context: ExecutionContext) : WebDriverHelper(context)
 
     override fun resolveLocalDriverPath(): String {
         return StringUtils.appendIfMissing(File(context.replaceTokens(config.home)).absolutePath, separator) +
-               config.baseName + if (IS_OS_WINDOWS) ".exe" else ""
+                config.baseName + if (IS_OS_WINDOWS) ".exe" else ""
     }
 
     override fun resolveDriverSearchName(tag: String): String {
         val env = when {
             IS_OS_WINDOWS -> "win32"
-            IS_OS_LINUX   -> "linux"
-            IS_OS_MAC     -> "darwin"
-            else          -> throw IllegalArgumentException("OS $OS_NAME not supported for $browserType")
+            IS_OS_LINUX -> "linux"
+            IS_OS_MAC -> "darwin"
+            else -> throw IllegalArgumentException("OS $OS_NAME not supported for $browserType")
         }
 
         val arch = when (EnvUtils.getOsArchBit()) {
@@ -799,7 +805,7 @@ class ChromeDriverHelper(context: ExecutionContext) : WebDriverHelper(context) {
 
     override fun resolveLocalDriverPath(): String {
         return StringUtils.appendIfMissing(File(context.replaceTokens(config.home)).absolutePath, separator) +
-               config.baseName + if (IS_OS_WINDOWS) ".exe" else ""
+                config.baseName + if (IS_OS_WINDOWS) ".exe" else ""
     }
 
     @Throws(IOException::class)
@@ -829,8 +835,10 @@ class ChromeDriverHelper(context: ExecutionContext) : WebDriverHelper(context) {
 
             if (lookupResponse.returnCode != 200) {
                 // something's wrong...
-                ConsoleUtils.log("[Chrome] unable to resolve latest version for $browserType. " +
-                                 "Use min. driver version instead...")
+                ConsoleUtils.log(
+                    "[Chrome] unable to resolve latest version for $browserType. " +
+                            "Use min. driver version instead..."
+                )
             } else {
                 driverVersion = lookupResponse.body
                 FileUtils.deleteQuietly(File(File(driverLocation).parent))
@@ -838,9 +846,9 @@ class ChromeDriverHelper(context: ExecutionContext) : WebDriverHelper(context) {
 
             val env = when {
                 IS_OS_WINDOWS -> "win32"
-                IS_OS_LINUX   -> "linux64"
-                IS_OS_MAC     -> "mac64"
-                else          -> throw IllegalArgumentException("OS $OS_NAME not supported for $browserType")
+                IS_OS_LINUX -> "linux64"
+                IS_OS_MAC -> "mac64"
+                else -> throw IllegalArgumentException("OS $OS_NAME not supported for $browserType")
             }
 
             val downloadUrl = "${config.checkUrlBase}/$driverVersion/${config.baseName}_$env.zip"
@@ -857,7 +865,9 @@ class ChromeDriverHelper(context: ExecutionContext) : WebDriverHelper(context) {
         if (StringUtils.isNotBlank(browserVersion)) {
             browserVersion = browserVersion?.substringBeforeLast(".")
             if (hasDriver && (StringUtils.isBlank(manifest.driverVersion) || !manifest.driverVersion?.startsWith(
-                    browserVersion!!)!!)) {
+                    browserVersion!!
+                )!!)
+            ) {
                 isUpdateRequired = true
             }
         } else if (manifest.lastChecked + config.checkFrequency <= System.currentTimeMillis()) {
@@ -890,16 +900,16 @@ class IEDriverHelper(context: ExecutionContext) : WebDriverHelper(context) {
         val archKey = if (StringUtils.contains(driverLocation, "win32")) "Win32" else "x64"
 
         val generationsIE = "//*[local-name()='Key'][contains(text(),'IEDriverServer_$archKey')]//following-sibling::" +
-                            "*[local-name()='Generation']/text()"
+                "*[local-name()='Generation']/text()"
 
         val xmlCommand = XmlCommand()
         xmlCommand.init(context)
         val generationsList = xmlCommand.getValuesListByXPath(xmlPayload, generationsIE)
         val generations = mutableListOf<BigInteger>()
         generationsList.forEach { key -> generations.add(key.toBigInteger()) }
-        val latestGenKey = generations.max().toString()
+        val latestGenKey = generations.maxOrNull().toString()
         val xpathKey = "//*[local-name()='Generation'][text()='$latestGenKey']//preceding-sibling::" +
-                       "*[local-name()='Key']/text()"
+                "*[local-name()='Key']/text()"
         val key = xmlCommand.getValueByXPath(xmlPayload, xpathKey)
         val tag = key.split("/")[0]
 
@@ -914,14 +924,17 @@ class IEDriverHelper(context: ExecutionContext) : WebDriverHelper(context) {
 
     override fun resolveLocalDriverPath(): String {
         if (!IS_OS_WINDOWS) {
-            throw RuntimeException("Browser automation for Internet Explorer is only supported on " +
-                                   "Windows operating system. Sorry...")
+            throw RuntimeException(
+                "Browser automation for Internet Explorer is only supported on " +
+                        "Windows operating system. Sorry..."
+            )
         }
 
         val newConfigHome = context.replaceTokens(config.home) + separator + (
-            if (EnvUtils.isRunningWindows64bit() &&
-                !context.getBooleanData(OPT_FORCE_IE_32, getDefaultBool(OPT_FORCE_IE_32))) "x64"
-            else "win32")
+                if (EnvUtils.isRunningWindows64bit() &&
+                    !context.getBooleanData(OPT_FORCE_IE_32, getDefaultBool(OPT_FORCE_IE_32))
+                ) "x64"
+                else "win32")
 
         this.driverLocation = newConfigHome
         config.home = newConfigHome
@@ -932,7 +945,7 @@ class IEDriverHelper(context: ExecutionContext) : WebDriverHelper(context) {
 class BrowserStackLocalHelper(context: ExecutionContext) : WebDriverHelper(context) {
     override fun resolveLocalDriverPath(): String {
         return StringUtils.appendIfMissing(File(context.replaceTokens(config.home)).absolutePath, separator) +
-               config.baseName + if (IS_OS_WINDOWS) ".exe" else ""
+                config.baseName + if (IS_OS_WINDOWS) ".exe" else ""
     }
 
     @Throws(IOException::class)
@@ -950,9 +963,9 @@ class BrowserStackLocalHelper(context: ExecutionContext) : WebDriverHelper(conte
 
         val env = when {
             IS_OS_WINDOWS -> "win32"
-            IS_OS_LINUX   -> "linux-x64"
-            IS_OS_MAC     -> "darwin-x64"
-            else          -> throw IllegalArgumentException("OS $OS_NAME not supported for $browserType")
+            IS_OS_LINUX -> "linux-x64"
+            IS_OS_MAC -> "darwin-x64"
+            else -> throw IllegalArgumentException("OS $OS_NAME not supported for $browserType")
         }
 
         val downloadUrl = "${config.checkUrlBase}/${config.baseName}-$env.zip"
@@ -968,16 +981,16 @@ class BrowserStackLocalHelper(context: ExecutionContext) : WebDriverHelper(conte
 class CrossBrowserTestingLocalHelper(context: ExecutionContext) : WebDriverHelper(context) {
     override fun resolveLocalDriverPath(): String {
         return StringUtils.appendIfMissing(File(context.replaceTokens(config.home)).absolutePath, separator) +
-               resolveBaseName() + if (IS_OS_WINDOWS) ".exe" else ""
+                resolveBaseName() + if (IS_OS_WINDOWS) ".exe" else ""
     }
 
     override fun resolveDriverSearchName(tag: String): String {
         val fileType = when {
             // changed from `.zip` to `.exe.zip` from GitHub repo crossbrowsertesting/cbt-tunnel-nodejs, as of Nov 2019
             IS_OS_WINDOWS -> ".exe.zip"
-            IS_OS_LINUX   -> ".zip"
-            IS_OS_MAC     -> ".zip"
-            else          -> ""
+            IS_OS_LINUX -> ".zip"
+            IS_OS_MAC -> ".zip"
+            else -> ""
         }
 
         return "${resolveBaseName()}$fileType"
@@ -986,9 +999,9 @@ class CrossBrowserTestingLocalHelper(context: ExecutionContext) : WebDriverHelpe
     private fun resolveBaseName(): String {
         val env = when {
             IS_OS_WINDOWS -> "win"
-            IS_OS_LINUX   -> "linux"
-            IS_OS_MAC     -> "macos"
-            else          -> throw IllegalArgumentException("OS $OS_NAME not supported for $browserType")
+            IS_OS_LINUX -> "linux"
+            IS_OS_MAC -> "macos"
+            else -> throw IllegalArgumentException("OS $OS_NAME not supported for $browserType")
         }
 
         val arch = when (EnvUtils.getOsArchBit()) {

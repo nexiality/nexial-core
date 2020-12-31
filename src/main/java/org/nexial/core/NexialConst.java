@@ -1907,6 +1907,10 @@ public final class NexialConst {
         public static final String SELENIUM_IE_LOG_LEVEL = "webdriver.ie.driver.loglevel";
         public static final String SELENIUM_IE_LOG_LOGFILE = "webdriver.ie.driver.logfile";
         public static final String SELENIUM_IE_SILENT = "webdriver.ie.driver.silent";
+        public static final String RGBA_TRANSPARENT = "rgba(0, 0, 0, 0)";
+        public static final String RGBA_TRANSPARENT2 = "rgba(0,0,0,0)";
+        public static final String REGEX_IS_RGBA = "rgba\\([0-9,\\ ]+\\)";
+        public static final String REGEX_IS_HEX_COLOR = "^#([0-9a-f]{3}|[0-9a-f]{6})$";
 
         private Web() {}
 

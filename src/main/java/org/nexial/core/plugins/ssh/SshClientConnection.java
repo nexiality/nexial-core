@@ -17,9 +17,6 @@
 
 package org.nexial.core.plugins.ssh;
 
-import java.io.File;
-import java.util.Map;
-
 import org.apache.commons.collections4.MapUtils;
 import org.apache.commons.lang3.BooleanUtils;
 import org.apache.commons.lang3.StringUtils;
@@ -27,9 +24,11 @@ import org.apache.commons.lang3.builder.ToStringBuilder;
 import org.apache.commons.lang3.math.NumberUtils;
 import org.nexial.commons.utils.FileUtil;
 import org.nexial.core.IntegrationConfigException;
-import org.nexial.core.NexialConst.Ssh;
 import org.nexial.core.model.ExecutionContext;
 import org.nexial.core.utils.ConsoleUtils;
+
+import java.io.File;
+import java.util.Map;
 
 import static org.nexial.core.NexialConst.Ssh.*;
 
@@ -58,6 +57,9 @@ public class SshClientConnection {
             context.removeData(prefix);
         }
 
+        String msgPrefix = "[SSH profile '" + profile + "'] ";
+        ConsoleUtils.log(msgPrefix + "configuring SSH connection");
+
         String prefix1 = profile + ".";
         Map<String, String> config = context.getDataByPrefix(prefix1);
         if (MapUtils.isEmpty(config)) {
@@ -70,12 +72,12 @@ public class SshClientConnection {
             }
         }
 
+        // password is not necessarily required
+        String password = config.remove(SSH_PASSWORD);
+        ConsoleUtils.log(msgPrefix + "configurations = " + config);
+
         String username = config.get(SSH_USERNAME);
         if (StringUtils.isBlank(username)) { throw IntegrationConfigException.missingConfig(prefix1 + SSH_USERNAME); }
-
-        String password = config.get(SSH_PASSWORD);
-        // password is not necessarily required
-        // if (StringUtils.isBlank(password)) { throw IntegrationConfigException.missingConfig(prefix1 + SSH_PASSWORD); }
 
         String host = config.get(SSH_HOST);
         if (StringUtils.isBlank(host)) { throw IntegrationConfigException.missingConfig(prefix1 + SSH_HOST); }

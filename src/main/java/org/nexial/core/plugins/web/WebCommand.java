@@ -1078,11 +1078,63 @@ public class WebCommand extends BaseCommand implements CanTakeScreenshot, CanLog
                                actual + "'");
     }
 
+    protected static boolean isRGBA(String color) { return RegexUtils.isExact(color, REGEX_IS_RGBA); }
+
+    protected static boolean isHexColor(String color) {
+        return RegexUtils.isExact(StringUtils.lowerCase(color), REGEX_IS_HEX_COLOR);
+    }
+
+    protected static String convertToRGBA(String value) {
+        if (StringUtils.isEmpty(value) ||
+            StringUtils.equalsIgnoreCase(StringUtils.deleteWhitespace(value), RGBA_TRANSPARENT2) ||
+            StringUtils.equalsIgnoreCase(value, "transparent")) {
+            return RGBA_TRANSPARENT;
+        }
+
+        if (isHexColor(value)) {
+            value = StringUtils.lowerCase(StringUtils.removeStart(value, "#"));
+            int red = 0;
+            int green = 0;
+            int blue = 0;
+            if (value.length() == 3) {
+                red = Integer.parseInt(StringUtils.repeat(value.charAt(0), 2), 16);
+                green = Integer.parseInt(StringUtils.repeat(value.charAt(1), 2), 16);
+                blue = Integer.parseInt(StringUtils.repeat(value.charAt(2), 2), 16);
+            } else if (value.length() == 6) {
+                System.out.println("" + StringUtils.substring(value,0, 2) + "=" +
+                                   Integer.parseInt(StringUtils.substring(value,0, 2), 16));
+                red = Integer.parseInt(StringUtils.substring(value,0, 2), 16);
+                green = Integer.parseInt(StringUtils.substring(value,2, 4), 16);
+                blue = Integer.parseInt(StringUtils.substring(value,4, 6), 16);
+            }
+
+            return "rgba(" + red + ", " + green + ", " + blue + ", 1)";
+        }
+
+        // no idea...
+        return value;
+    }
+
     public StepResult assertCssPresent(String locator, String property, String value) {
         requiresNotBlank(property, "invalid css property", property);
 
         String actual = getCssValue(locator, property);
-        if (context.isVerbose()) { log("CSS property '" + property + "' for locator '" + locator + "' is " + actual); }
+        boolean isColorProperty = isRGBA(actual);
+        boolean isTransparent = isColorProperty && StringUtils.equals(actual, RGBA_TRANSPARENT);
+
+        if (context.isVerbose()) {
+            log("CSS property '" + property + "' for locator '" + locator + "' is " + actual +
+                ". Color property? " + isColorProperty + (isTransparent ? " Transparent? true" : ""));
+        }
+
+        if (isColorProperty) {
+            String expectedColor = convertToRGBA(context.isNullOrEmptyValue(value) ? "" : value);
+            boolean colorMatched = StringUtils.equals(actual, expectedColor);
+            return new StepResult(colorMatched,
+                                  "Expected value " + value + " of CSS property '" + property + "'" +
+                                  (colorMatched ? " semantically MATCHED " : " DOES NOT match ") + actual,
+                                  null);
+        }
 
         if (StringUtils.isEmpty(actual) && StringUtils.isEmpty(value)) {
             return StepResult.success("no value found for CSS property '" + property + "' as EXPECTED");

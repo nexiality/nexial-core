@@ -17,10 +17,7 @@
 
 package org.nexial.core.plugins.ssh;
 
-import java.io.File;
-import java.io.IOException;
-import java.util.Properties;
-
+import com.jcraft.jsch.*;
 import org.apache.commons.lang3.StringUtils;
 import org.nexial.commons.utils.FileUtil;
 import org.nexial.core.IntegrationConfigException;
@@ -30,7 +27,9 @@ import org.nexial.core.model.StepResult;
 import org.nexial.core.plugins.base.BaseCommand;
 import org.nexial.core.utils.ConsoleUtils;
 
-import com.jcraft.jsch.*;
+import java.io.File;
+import java.io.IOException;
+import java.util.Properties;
 
 import static com.jcraft.jsch.ChannelSftp.*;
 import static java.io.File.separator;
@@ -288,6 +287,7 @@ public class SshCommand extends BaseCommand {
     }
 
     protected StepResult failSingleFile(String var, String file, RemoteFileActionOutcome outcome, Exception e) {
+        ConsoleUtils.error(context.getCurrentTestStep().showPosition(), "connection failed", e);
         String message = e.getMessage();
         if (e instanceof SftpException) {
             int codeRootCause = ((SftpException) e).id;
