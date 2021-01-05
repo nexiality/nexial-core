@@ -1103,7 +1103,7 @@ public class WebCommand extends BaseCommand implements CanTakeScreenshot, CanLog
             } else if (value.length() == 6) {
                 System.out.println("" + StringUtils.substring(value,0, 2) + "=" +
                                    Integer.parseInt(StringUtils.substring(value,0, 2), 16));
-                red = Integer.parseInt(StringUtils.substring(value,0, 2), 16);
+                red = Integer.parseInt(StringUtils.substring(value,0, 2 ), 16);
                 green = Integer.parseInt(StringUtils.substring(value,2, 4), 16);
                 blue = Integer.parseInt(StringUtils.substring(value,4, 6), 16);
             }

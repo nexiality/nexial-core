@@ -17,13 +17,6 @@
 
 package org.nexial.core.plugins.mail;
 
-import java.io.File;
-import java.util.*;
-import java.util.stream.Collectors;
-import java.util.stream.Stream;
-import javax.mail.MessagingException;
-import javax.validation.constraints.NotNull;
-
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.collections4.MapUtils;
 import org.apache.commons.lang3.StringUtils;
@@ -35,6 +28,13 @@ import org.nexial.core.model.ExecutionDefinition;
 import org.nexial.core.model.StepResult;
 import org.nexial.core.plugins.base.BaseCommand;
 import org.nexial.core.utils.OutputResolver;
+
+import javax.mail.MessagingException;
+import javax.validation.constraints.NotNull;
+import java.io.File;
+import java.util.*;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import static org.nexial.core.NexialConst.Iteration.CURR_ITERATION_ID;
 import static org.nexial.core.NexialConst.Project.SCRIPT_FILE_EXT;
@@ -311,15 +311,17 @@ public class MailCommand extends BaseCommand {
      * @param emailSettings {@link EmailSettings} passed in.
      */
     private void addAttachments(@NotNull final String value, @NotNull final EmailSettings emailSettings) {
-        emailSettings.setAttachments(null);
+
         String[] filePaths = StringUtils.split(value, context.getTextDelim());
         if (filePaths.length == 0) { return; }
 
         List<String> invalidFilePaths = new ArrayList<>();
-        Map<String, File> fileAttachments = new HashMap<>();
+        Map<String, File> fileAttachments = MapUtils.isNotEmpty(emailSettings.getAttachments()) ?
+                                            emailSettings.getAttachments() : new HashMap<>();
 
         for (String filePath : filePaths) {
             filePath = filePath.trim();
+
             File file;
             if (filePath.contains(ATTACHMENT_DELIM)) {
                 String[] attachmentPartitions = filePath.split(ATTACHMENT_DELIM);
@@ -334,17 +336,19 @@ public class MailCommand extends BaseCommand {
         }
 
         if (CollectionUtils.isNotEmpty(invalidFilePaths)) {
-            String message = "The following file(s) are not valid " + invalidFilePaths + ".";
-            emailSettings.setFailure(ATTACH, message);
+            emailSettings.setFailure(ATTACH, "The following file(s) are not valid " + invalidFilePaths + ".");
+            emailSettings.setAttachments(null);
+            return;
+        }
+
+        long filesSize = fileAttachments.values().stream().map(File::length).reduce(0L, Long::sum);
+        if (filesSize > MAX_FILE_SIZE) {
+            emailSettings.setFailure(ATTACH, "Files size attached is greater than max size of 10MB.");
+            emailSettings.setAttachments(null);
+            return;
         }
 
         emailSettings.setAttachments(fileAttachments);
-
-        long filesSize = emailSettings.getAttachments().values().stream().map(File::length).reduce(0L, Long::sum);
-        if (filesSize > MAX_FILE_SIZE) {
-            emailSettings.setFailure(ATTACH, "Files size attached is greater than max size of 10MB.");
-        }
-
     }
 
     /**
