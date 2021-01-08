@@ -144,7 +144,7 @@ public class MailCommand extends BaseCommand {
         } else if (mailContext instanceof EmailSettings) {
             emailSettings = (EmailSettings) mailContext;
         } else {
-            return StepResult.fail("Variable with the name `" + var + "` is not a valid email configuration.");
+            return StepResult.fail("Variable with the name '" + var + "' is not a valid email configuration.");
         }
 
         context.setData(variableName, emailSettings);
@@ -202,8 +202,8 @@ public class MailCommand extends BaseCommand {
     }
 
     /**
-     * Command to delete the email configuration variable passed in as `var`. The variable will be deleted in case if it exists.
-     * If not it will give a failure message.
+     * Command to delete the email configuration variable passed in as `var`.
+     * The variable will be deleted in case if it exists.
      *
      * @param var the name of the mail configuration variable.
      * @return {@link StepResult} based on whether the variable exists or not.
@@ -211,12 +211,10 @@ public class MailCommand extends BaseCommand {
     public StepResult clearComposed(final String var) {
         String variable = getContextVariable(var);
         Object object = context.getObjectData(variable);
+        if (object == null) { return StepResult.success("No email configuration '" + var + "' to remove."); }
 
-        if (object instanceof EmailSettings) {
-            context.removeData(variable);
-            return StepResult.success("Email configuration with the variable name: `" + var + "` is removed.");
-        }
-        return StepResult.fail("There is no email configuration variable with the name: `" + var + "`.");
+        context.removeData(variable);
+        return StepResult.success("Email configuration with the variable name: '" + var + "' is removed.");
     }
 
     /**
@@ -226,7 +224,7 @@ public class MailCommand extends BaseCommand {
      * @param value         the value passed to the config.
      * @param emailSettings {@link EmailSettings}.
      * @return {@link StepResult#success(String)} or {@link StepResult#fail(String)} based on if the config successful
-     *     or any of the validations failed.
+     * or any of the validations failed.
      */
     private StepResult setConfiguration(@NotNull final String config,
                                         @NotNull final String value,
@@ -403,7 +401,7 @@ public class MailCommand extends BaseCommand {
      * @param mailProfile   the {@link MailProfile} configurations passed in.
      * @param mailer        the {@link MailObjectSupport}
      * @return {@link StepResult#success(String)} or {@link StepResult#fail(String)} based on whether email
-     *     got dispatched or not.
+     * got dispatched or not.
      */
     private StepResult sendEmail(@NotNull final String profile,
                                  @NotNull final EmailSettings emailSettings,
