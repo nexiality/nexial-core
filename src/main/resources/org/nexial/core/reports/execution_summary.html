@@ -168,9 +168,11 @@
                 <tr data-th-class="${script.failCount > 0 ? 'hasFailure' : 'noFailure'}">
                     <td class="value value-title" data-th-with="scriptFileName=${@org.nexial.commons.utils.FileUtil@extractFilename(script.scriptFile)}" data-th-attr="title=${scriptFile}">
                         <a data-th-href="${script.scriptFile}" data-th-utext="${scriptFileName}">myscript.xlsx</a>
+                        <i class="fas fa-copy" data-th-attr="onclick=|copyToClipboard('${#strings.escapeJava(script.scriptFile)}')|" title="copy artifact location"></i>
                     </td>
-                    <td class="value value-title" data-th-with="dataFileName=${@org.nexial.commons.utils.FileUtil@extractFilename(script.resolveDataFile())}" data-th-attr="title=${dataFileName}">
-                        <a data-th-href="${script.resolveDataFile()}" data-th-utext="${dataFileName}">myscript.data.xlsx</a>
+                    <td class="value value-title" data-th-with="dataPath=${script.resolveDataFile()},dataFileName=${@org.nexial.commons.utils.FileUtil@extractFilename(dataPath)}" data-th-attr="title=${dataFileName}">
+                        <a data-th-href="${dataPath}" data-th-utext="${dataFileName}">myscript.data.xlsx</a>
+                        <i class="fas fa-copy" data-th-attr="onclick=|copyToClipboard('${#strings.escapeJava(dataPath)}')|" title="copy artifact location"></i>
                     </td>
                     <td class="value value-iteration" data-th-utext="${script.nestedExecutions.size()}">1234</td>
                     <td class="value value-scenarioPassed" data-th-utext="${script.resolveTotalScenariosPassed()}">1 / 2</td>
@@ -206,6 +208,7 @@
                 <tr data-th-class="'record iter ' + ${iteration.failCount > 0 ? 'hasFailure' : 'noFailure'}">
                     <td colspan="3" class="value value-title" data-th-attr="title=${iteration.name}" data-th-with="referenceData=${@org.nexial.commons.utils.CollectionUtil@removeEmptyEntries(iteration.referenceData)}">
                         <a target="_nexial_link" data-th-href="${iteration.testScriptLink}" data-th-utext="${'Execution Result (' + iteration.name + ')'}">myscript.001.xlsx</a>
+                        <i class="fas fa-copy" data-th-attr="onclick=|copyToClipboard('${#strings.escapeJava(iteration.testScriptLink)}')|" title="copy artifact location"></i>
                         <div class="value-scriptRef" data-th-if="${referenceData.size() > 0}">
                             <i class="fas fa-info-circle info" title="Reference Data labeled as nexial.scriptRef.*"></i>
                             <table cellspacing="0" cellpadding="0">

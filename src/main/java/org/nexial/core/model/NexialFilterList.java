@@ -19,7 +19,9 @@ package org.nexial.core.model;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.ArrayUtils;
 import org.apache.commons.lang3.StringUtils;
+import org.apache.commons.lang3.math.NumberUtils;
 import org.nexial.commons.utils.TextUtils;
+import org.nexial.core.ExecutionThread;
 import org.nexial.core.utils.ConsoleUtils;
 
 import java.util.ArrayList;
@@ -105,5 +107,26 @@ public class NexialFilterList extends ArrayList<NexialFilter> {
         }
 
         return true;
+    }
+
+    public static boolean isMatchCount(int actual, String expected) {
+        if (NumberUtils.isDigits(expected)) {
+            // convert expected count string to int and equate to actual count
+            return actual == Integer.parseInt(expected);
+        }
+
+        String countFilter = actual + StringUtils.prependIfMissing(expected, " ");
+
+        ExecutionContext context = ExecutionThread.get();
+        if (context == null) {
+            throw new IllegalStateException("Unable to match element count; Context is missing");
+        }
+
+        NexialFilterList filterList = new NexialFilterList(countFilter);
+        if (filterList.size() == 0) {
+            ConsoleUtils.error("Invalid filter condition " + filterList.getFilterText());
+            return false;
+        }
+        return filterList.isMatched(context, null);
     }
 }

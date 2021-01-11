@@ -31,6 +31,7 @@ import org.apache.commons.lang3.BooleanUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.nexial.commons.utils.JRegexUtils;
 import org.nexial.commons.utils.TextUtils;
+import org.nexial.core.model.NexialFilterList;
 import org.nexial.core.model.StepResult;
 import org.nexial.core.utils.CheckUtils;
 import org.openqa.selenium.By;
@@ -264,12 +265,11 @@ class LocatorHelper {
 
     protected StepResult assertElementCount(String locator, String count) {
         locator = validateLocator(locator);
-        int expected = delegator.toPositiveInt(count, "count");
         int actual = delegator.getElementCount(locator);
-        if (expected == actual) {
-            return StepResult.success("EXPECTED element count found");
+        if (NexialFilterList.isMatchCount(actual, count)) {
+            return StepResult.success("EXPECTED element count (" + actual + ") found");
         } else {
-            return StepResult.fail("element count (" + actual + ") DID NOT match expected count (" + expected + ")");
+            return StepResult.fail("element count (" + actual + ") DID NOT match expected count (" + count + ")");
         }
     }
 
