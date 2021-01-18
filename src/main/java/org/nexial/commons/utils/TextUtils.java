@@ -1293,40 +1293,51 @@ public final class TextUtils {
                }).collect(Collectors.joining(""));
     }
 
-    public static boolean polyMatch(String actual, String exact) {
+    public static boolean polyMatch(String actual, String expected) { return polyMatch(actual, expected, false); }
+
+    public static boolean polyMatch(String actual, String expected, boolean trim) {
+        if (trim) {
+            actual = StringUtils.trim(actual);
+            expected = StringUtils.trim(expected);
+        }
+
         // short circuit
-        if (StringUtils.isEmpty(actual) && StringUtils.isEmpty(exact)) { return true; }
+        if (StringUtils.isEmpty(actual) && StringUtils.isEmpty(expected)) { return true; }
 
-        if (StringUtils.startsWith(exact, REGEX)) {
-            return RegexUtils.match(actual, StringUtils.substringAfter(exact, REGEX));
+        if (StringUtils.startsWith(expected, REGEX)) {
+            return RegexUtils.match(actual, StringUtils.substringAfter(expected, REGEX));
         }
 
-        if (StringUtils.startsWith(exact, CONTAIN)) {
-            return StringUtils.contains(actual, StringUtils.substringAfter(exact, CONTAIN));
+        if (StringUtils.startsWith(expected, CONTAIN)) {
+            return StringUtils.contains(actual, StringUtils.substringAfter(expected, CONTAIN));
         }
 
-        if (StringUtils.startsWith(exact, CONTAIN_ANY_CASE)) {
-            return StringUtils.containsIgnoreCase(actual, StringUtils.substringAfter(exact, CONTAIN_ANY_CASE));
+        if (StringUtils.startsWith(expected, CONTAIN_ANY_CASE)) {
+            return StringUtils.containsIgnoreCase(actual, StringUtils.substringAfter(expected, CONTAIN_ANY_CASE));
         }
 
-        if (StringUtils.startsWith(exact, START)) {
-            return StringUtils.startsWith(actual, StringUtils.substringAfter(exact, START));
+        if (StringUtils.startsWith(expected, START)) {
+            return StringUtils.startsWith(actual, StringUtils.substringAfter(expected, START));
         }
 
-        if (StringUtils.startsWith(exact, START_ANY_CASE)) {
-            return StringUtils.startsWithIgnoreCase(actual, StringUtils.substringAfter(exact, START_ANY_CASE));
+        if (StringUtils.startsWith(expected, START_ANY_CASE)) {
+            return StringUtils.startsWithIgnoreCase(actual, StringUtils.substringAfter(expected, START_ANY_CASE));
         }
 
-        if (StringUtils.startsWith(exact, END)) {
-            return StringUtils.endsWith(actual, StringUtils.substringAfter(exact, END));
+        if (StringUtils.startsWith(expected, END)) {
+            return StringUtils.endsWith(actual, StringUtils.substringAfter(expected, END));
         }
 
-        if (StringUtils.startsWith(exact, END_ANY_CASE)) {
-            return StringUtils.endsWithIgnoreCase(actual, StringUtils.substringAfter(exact, END_ANY_CASE));
+        if (StringUtils.startsWith(expected, END_ANY_CASE)) {
+            return StringUtils.endsWithIgnoreCase(actual, StringUtils.substringAfter(expected, END_ANY_CASE));
+        }
+
+        if (StringUtils.startsWith(expected, EXACT)) {
+            return StringUtils.equals(actual, StringUtils.substringAfter(expected, EXACT));
         }
 
         // finally, exact match
-        return StringUtils.equalsIgnoreCase(actual, exact);
+        return StringUtils.equals(actual, expected);
     }
 
     private static Map<String, String> initDefaultEscapeHtmlMapping() {

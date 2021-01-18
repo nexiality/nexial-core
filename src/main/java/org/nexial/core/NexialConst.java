@@ -258,6 +258,7 @@ public final class NexialConst {
         public static final String END = register("END:");
         public static final String END_ANY_CASE = register("END_ANY_CASE:");
         public static final String REGEX = register("REGEX:");
+        public static final String EXACT = register("EXACT:");
         private PolyMatcher() {}
 
         private static String register(String keyword) {

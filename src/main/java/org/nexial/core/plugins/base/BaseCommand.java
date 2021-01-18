@@ -475,10 +475,23 @@ public class BaseCommand implements NexialCommand {
         return StepResult.success("validated EXPECTED = ACTUAL; '%s' = '%s'", expectedForDisplay, actualForDisplay);
     }
 
+    /**
+     * continue to support regex-based matching, as well as polyMatcher. This means that
+     * {@literal regex} is not treated as "equality match" but regex. To force equality match,
+     * use `EXACT:...` syntax instead.
+     *
+     * @param text
+     * @param regex
+     * @return
+     */
     public StepResult assertMatch(String text, String regex) {
         requiresNotBlank(regex, "invalid regex", regex);
-        boolean matched = RegexUtils.isExact(text, regex, true);
-        return new StepResult(matched, "'%s' " + (matched? "matches" : "does not match") + " '%s'", null);
+        boolean matched = PolyMatcher.isPolyMatcher(regex) ?
+                          TextUtils.polyMatch(text, regex) :
+                          RegexUtils.isExact(text, regex, true);
+        return new StepResult(matched,
+                              String.format("'%s' " + (matched ? "matches" : "does not match") + " '%s'", text, regex),
+                              null);
     }
 
     @Nullable
@@ -758,7 +771,7 @@ public class BaseCommand implements NexialCommand {
      * @param file the full path of the macro library.
      * @param name the name of the macro to invoke
      * @return pass/fail based on the validity of the referenced macro/file.  If macro {@code name} or library
-     *     ({@code file}) is not found, a failure is returned with fail-immediate in effect.
+     * ({@code file}) is not found, a failure is returned with fail-immediate in effect.
      */
     public StepResult macro(String file, String sheet, String name) {
         Macro macro = new Macro(file, sheet, name);
@@ -770,7 +783,7 @@ public class BaseCommand implements NexialCommand {
      * fully qualified, whilst Nexial function may be used (e.g. {@code $(syspath)}).
      *
      * @return pass/fail based on the validity of the referenced macro/file.  If macro {@code name} or library
-     *     ({@code file}) is not found, a failure is returned with fail-immediate in effect.
+     * ({@code file}) is not found, a failure is returned with fail-immediate in effect.
      */
     public StepResult macroFlex(String macro, String input, String output) {
         requiresNotBlank(macro, "macro parameter is empty", "");

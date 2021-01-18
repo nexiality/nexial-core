@@ -892,7 +892,7 @@ public class WebCommand extends BaseCommand implements CanTakeScreenshot, CanLog
                         NL + "actual  =" + actual,
                         actual == null);
         } else {
-            if (TextUtils.polyMatch(actual, text)) {
+            if (TextUtils.polyMatch(actual, text, true)) {
                 CheckUtils.fail(NL + displayForCompare("expected", text, "actual", actual));
             }
         }
@@ -907,7 +907,7 @@ public class WebCommand extends BaseCommand implements CanTakeScreenshot, CanLog
 
     public StepResult assertText(String locator, String text) {
         String actual = getElementText(locator);
-        assertTrue(NL + displayForCompare("expected", text, "actual", actual), TextUtils.polyMatch(actual, text));
+        assertTrue(NL + displayForCompare("expected", text, "actual", actual), TextUtils.polyMatch(actual, text, true));
         return StepResult.success();
     }
 

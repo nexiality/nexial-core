@@ -28,15 +28,17 @@ class MacroCommand : BaseCommand() {
      */
     fun description(): StepResult = StepResult.success()
 
-    fun expects(`var`: String, default: String): StepResult = when {
-        StringUtils.isEmpty(default) -> assertVarPresent(`var`)
-        context.hasData(`var`)       -> StepResult.success()
-
-        else                         -> {
-            updateDataVariable(`var`, default)
-            StepResult.success("Data variable '$`var`' set to default value '$default'")
+    fun expects(`var`: String, default: String): StepResult =
+        if (StringUtils.isEmpty(default))
+            assertVarPresent(`var`)
+        else {
+            if (context.hasData(`var`))
+                StepResult.success()
+            else {
+                updateDataVariable(`var`, default)
+                StepResult.success("Data variable '$`var`' set to default value '$default'")
+            }
         }
-    }
 
     fun produces(`var`: String, value: String?): StepResult = save(`var`, value)
 }

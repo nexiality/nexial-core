@@ -17,10 +17,6 @@
 
 package org.nexial.core.utils;
 
-import java.util.HashMap;
-import java.util.Map;
-import java.util.Stack;
-
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.nexial.commons.utils.TextUtils;
@@ -28,6 +24,10 @@ import org.openqa.selenium.Keys;
 import org.openqa.selenium.WebDriver;
 import org.openqa.selenium.WebElement;
 import org.openqa.selenium.interactions.Actions;
+
+import java.util.HashMap;
+import java.util.Map;
+import java.util.Stack;
 
 import static org.nexial.core.NexialConst.CTRL_KEY_END;
 import static org.nexial.core.NexialConst.CTRL_KEY_START;
@@ -162,6 +162,7 @@ public final class WebDriverUtils {
         map.put("{ENTER}", ENTER);
         map.put("{INSERT}", INSERT);
         map.put("{DELETE}", DELETE);
+        map.put("{DEL}", DELETE);
         map.put("{ESCAPE}", ESCAPE);
 
         map.put("{HOME}", HOME);
