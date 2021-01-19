@@ -359,8 +359,7 @@ public class IoCommand extends BaseCommand {
     public StepResult compare(String expected, String actual, String failFast) {
         requires(StringUtils.isNotEmpty(expected), "Invalid 'expected'; neither a file or text", expected);
         requires(StringUtils.isNotEmpty(actual), "Invalid 'actual'; neither a file or text", actual);
-        CompareMode compareMode = CheckUtils.toBoolean(failFast) ? FAIL_FAST : THOROUGH;
-        return compare(expected, actual, compareMode, null);
+        return compare(expected, actual, CheckUtils.toBoolean(failFast) ? FAIL_FAST : THOROUGH, null);
     }
 
     public StepResult saveDiff(String var, String expected, String actual) {

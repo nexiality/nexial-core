@@ -17,14 +17,6 @@
 
 package org.nexial.core.model;
 
-import java.io.File;
-import java.io.IOException;
-import java.lang.reflect.InvocationTargetException;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Objects;
-import javax.annotation.Nullable;
-
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang3.StringUtils;
@@ -49,13 +41,17 @@ import org.nexial.core.plugins.CanTakeScreenshot;
 import org.nexial.core.plugins.NexialCommand;
 import org.nexial.core.plugins.web.WebCommand;
 import org.nexial.core.plugins.web.WebDriverExceptionHelper;
-import org.nexial.core.utils.ConsoleUtils;
-import org.nexial.core.utils.FlowControlUtils;
-import org.nexial.core.utils.MessageUtils;
-import org.nexial.core.utils.OutputFileUtils;
-import org.nexial.core.utils.OutputResolver;
+import org.nexial.core.utils.*;
 import org.nexial.core.variable.Syspath;
 import org.openqa.selenium.WebDriverException;
+
+import javax.annotation.Nullable;
+import java.io.File;
+import java.io.IOException;
+import java.lang.reflect.InvocationTargetException;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Objects;
 
 import static java.io.File.separator;
 import static java.lang.System.lineSeparator;
@@ -648,6 +644,9 @@ public class TestStep extends TestStepManifest {
             if (linkableParams == null) {
                 linkableParams = new ArrayList<>(this.params.size());
                 for (int i = 0; i < mergedParams.size(); i++) { linkableParams.add(i, null); }
+            } else if (linkableParams.size() < this.params.size()) {
+                int startFrom = linkableParams.size();
+                for (int i = startFrom; i < mergedParams.size(); i++) { linkableParams.add(i, null); }
             }
 
             // update the params that can be expressed as links (file or url)
