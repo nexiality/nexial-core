@@ -47,6 +47,7 @@ import org.openqa.selenium.edge.EdgeOptions;
 import org.openqa.selenium.firefox.FirefoxDriver;
 import org.openqa.selenium.firefox.FirefoxOptions;
 import org.openqa.selenium.firefox.FirefoxProfile;
+import org.openqa.selenium.html5.Location;
 import org.openqa.selenium.ie.InternetExplorerDriver;
 import org.openqa.selenium.ie.InternetExplorerOptions;
 import org.openqa.selenium.remote.DesiredCapabilities;
@@ -623,6 +624,8 @@ public class Browser implements ForcefulTerminate {
         }
 
         options.addArguments(this.chromeOptions);
+        // force the chrome native prompt to go silent
+        options.addArguments("enable-strict-powerful-feature-restrictions");
 
         // time to experiment...
         Map<String, Object> prefs = new HashMap<>();
@@ -642,6 +645,12 @@ public class Browser implements ForcefulTerminate {
             // prefs.put("download.extensions_to_open", "application/pdf");
             prefs.put("profile.default_content_settings.popups", 0);
         }
+
+        // https://stackoverflow.com/questions/40244670/disable-geolocation-in-selenium-chromedriver-with-python
+        boolean enableGeoLocation = context.getBooleanConfig("web", profile, GEOLOCATION);
+        prefs.put("geolocation", enableGeoLocation);
+        prefs.put("profile.default_content_setting_values.geolocation", enableGeoLocation ? 1 : 2);
+        prefs.put("profile.managed_default_content_settings.geolocation", enableGeoLocation ? 1 : 2);
 
         options.setExperimentalOption("prefs", prefs);
 
@@ -765,6 +774,14 @@ public class Browser implements ForcefulTerminate {
         browserVersion = capabilities.getVersion();
         browserPlatform = capabilities.getPlatform();
         postInit(chrome);
+
+        if (enableGeoLocation) {
+            // https://stackoverflow.com/a/47399337/4615880
+            double longitude = context.getDoubleConfig("web", profile, GEO_LONGITUDE);
+            double latitude = context.getDoubleConfig("web", profile, GEO_LATITUDE);
+            if (longitude != 0 && latitude != 0) { chrome.setLocation(new Location(longitude, latitude, 0)); }
+        }
+
         // pageSourceSupported = false;
 
         return chrome;
@@ -860,6 +877,25 @@ public class Browser implements ForcefulTerminate {
             // set current output directory for download
             String downloadTo = resolveDownloadTo(context);
             if (StringUtils.isNotBlank(downloadTo)) { options.addPreference("browser.download.dir", downloadTo); }
+
+            boolean enableGeoLocation = context.getBooleanConfig("web", profile, GEOLOCATION);
+            options.addPreference("geo.enabled", enableGeoLocation);
+            options.addPreference("geo.provider.testing", enableGeoLocation);
+            options.addPreference("geo.provider.use_corelocation", enableGeoLocation);
+            options.addPreference("geo.prompt.testing", enableGeoLocation);
+            options.addPreference("geo.prompt.testing.allow", enableGeoLocation);
+            options.addPreference("geo.wifi.scan", true);
+
+            if (enableGeoLocation) {
+                double longitude = context.getDoubleConfig("web", profile, GEO_LONGITUDE);
+                double latitude = context.getDoubleConfig("web", profile, GEO_LATITUDE);
+                if (longitude != 0 && latitude != 0) {
+                    String geoPosition = String.format("{\"location\": {\"lat\":%s, \"lng\":%s}, \"accuracy\":27000.0}",
+                                                       longitude, latitude);
+//                    options.addPreference("geo.wifi.uri", "data:application/json," + geoPosition);
+                    options.addPreference("geo.provider.network.url", "data:application/json," + geoPosition);
+                }
+            }
 
             FirefoxDriver firefox;
             try {
@@ -964,17 +1000,17 @@ public class Browser implements ForcefulTerminate {
 
         if (!runWin64) {
             capabilities = capabilities
-                               // .useCreateProcessApiToLaunchIe()
-                               // .useShellWindowsApiToAttachToIe()
-                               .takeFullPageScreenshot();
+                // .useCreateProcessApiToLaunchIe()
+                // .useShellWindowsApiToAttachToIe()
+                .takeFullPageScreenshot();
         } else {
             capabilities = capabilities
-                               // https://stackoverflow.com/a/32691070/4615880
-                               // https://github.com/seleniumhq/selenium-google-code-issue-archive/issues/5116
-                               //      (search for "After investigation of this issue")
-                               .requireWindowFocus()
-                               // .useCreateProcessApiToLaunchIe()
-                               .useShellWindowsApiToAttachToIe();
+                // https://stackoverflow.com/a/32691070/4615880
+                // https://github.com/seleniumhq/selenium-google-code-issue-archive/issues/5116
+                //      (search for "After investigation of this issue")
+                .requireWindowFocus()
+                // .useCreateProcessApiToLaunchIe()
+                .useShellWindowsApiToAttachToIe();
         }
 
         // With the creation of the IEDriverServer.exe, it should be possible to create and use multiple

@@ -360,9 +360,9 @@
                 <value>disable-smooth-scrolling</value>
                 <!-- Disable syncing to a Google account -->
                 <value>disable-sync</value>
-                <!--<value>bwsi</value>-->
                 <value>hide-scrollbars</value>
                 <value>allow-http-screen-capture</value>
+                <value>allow-running-insecure-localhost</value>
                 <value>allow-insecure-localhost</value>
                 <!-- Disable all chrome extensions -->
                 <value>disable-extensions</value>
@@ -394,6 +394,12 @@
                 <!-- disable "This type of file can harm your computer" ... dialog -->
                 <value>safebrowsing-disable-extension-blacklist</value>
                 <value>safebrowsing-disable-download-protection</value>
+
+                <!--  Avoid messages like "New printer on your network" -->
+                <value>disable-device-discovery-notifications</value>
+
+                <!-- Disables Domain Reliability Monitoring, which tracks whether the browser has difficulty contacting Google-owned sites and uploads reports to Google. -->
+                <value>disable-domain-reliability</value>
             </array>
         </property>
         <property name="firefoxBinArgs">
@@ -751,7 +757,7 @@
         <value>nexial.forceIE32</value>
         <value>nexial.ignoreBrowserAlert</value>
         <value>nexial.iterationEnded</value>
-        <value>nexial.lastAlertText</value>
+<!--        <value>nexial.lastAlertText</value>-->
         <value>nexial.lastElapsedTime</value>
         <value>nexial.lastOutcome</value>
         <value>nexial.lastOutputLink</value>

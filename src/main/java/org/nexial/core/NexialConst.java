@@ -1860,6 +1860,11 @@ public final class NexialConst {
         public static final String BROWSER_OPENED = registerSysVar(NS_BROWSER + ".isOpen", false);
         public static final String CURRENT_BROWSER = registerSysVar(NS_BROWSER + ".current");
 
+        // geolocation
+        public static final String GEOLOCATION = registerSysVar(NS_BROWSER + ".geolocation", false);
+        public static final String GEO_LONGITUDE = registerSysVar(GEOLOCATION + ".longitude", 0);
+        public static final String GEO_LATITUDE = registerSysVar(GEOLOCATION + ".latitude", 0);
+
         // metrics
         public static final String NS_WEB_METRICS = registerSysVarGroup(NS_WEB + "metrics.");
         public static final String WEB_METRICS_GENERATED = NS_WEB_METRICS + "generated";

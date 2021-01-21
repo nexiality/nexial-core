@@ -17,8 +17,6 @@
 
 package org.nexial.core.plugins.web;
 
-import javax.validation.constraints.NotNull;
-
 import org.apache.commons.lang3.StringUtils;
 import org.nexial.core.model.ExecutionContext;
 import org.nexial.core.model.StepResult;
@@ -30,6 +28,8 @@ import org.openqa.selenium.NotFoundException;
 import org.openqa.selenium.TimeoutException;
 import org.openqa.selenium.WebDriver;
 import org.openqa.selenium.remote.UnreachableBrowserException;
+
+import javax.validation.constraints.NotNull;
 
 import static org.nexial.core.NexialConst.*;
 import static org.nexial.core.NexialConst.Web.OPT_LAST_ALERT_TEXT;
@@ -113,6 +113,7 @@ public class AlertCommand extends BaseCommand implements RequireBrowser {
         try {
             Alert alert = driver.switchTo().alert();
             if (alert == null) {
+                context.removeDataForcefully(OPT_LAST_ALERT_TEXT);
                 log("No dialog found");
                 return StepResult.fail("No dialog found");
             }
@@ -148,6 +149,8 @@ public class AlertCommand extends BaseCommand implements RequireBrowser {
         if (StringUtils.isNotEmpty(msg)) {
             ConsoleUtils.log("found dialog text - " + msg);
             context.setData(OPT_LAST_ALERT_TEXT, msg);
+        } else {
+            context.removeDataForcefully(OPT_LAST_ALERT_TEXT);
         }
         return msg;
     }
