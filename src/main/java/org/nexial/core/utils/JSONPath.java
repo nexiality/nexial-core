@@ -17,11 +17,6 @@
 
 package org.nexial.core.utils;
 
-import java.lang.reflect.Array;
-import java.math.BigDecimal;
-import java.util.*;
-import javax.validation.constraints.NotNull;
-
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.math.NumberUtils;
@@ -35,6 +30,11 @@ import org.nexial.commons.utils.TextUtils;
 import org.nexial.core.variable.NumberTransformer;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import javax.validation.constraints.NotNull;
+import java.lang.reflect.Array;
+import java.math.BigDecimal;
+import java.util.*;
 
 import static org.json.JSONObject.NULL;
 import static org.nexial.core.utils.JSONPath.Option.*;
@@ -90,14 +90,14 @@ public class JSONPath {
                                                                                       "|", "=");
     private static final String FUNCTION_PREFIX = "=>";
 
-    private transient Logger logger = LoggerFactory.getLogger(getClass());
-    private Object dataStruc;
+    private final transient Logger logger = LoggerFactory.getLogger(getClass());
+    private final Object dataStruc;
     private String key;
     private JSONPath child;
     private JSONPath parent;
     private Object parsedVal;
     private List<String> functions;
-    private boolean simplePrimitives;
+    private final boolean simplePrimitives;
 
     enum Option {
         PREPEND, APPEND, OVERWRITE, DELETE, OVERWRITE_OR_ADD;
@@ -109,14 +109,14 @@ public class JSONPath {
                         return existingValue == null ? null : Objects.toString(existingValue);
                     } else {
                         return existingValue == null ? Objects.toString(newValue) :
-                               Objects.toString(newValue) + Objects.toString(existingValue);
+                               Objects.toString(newValue) + existingValue;
                     }
                 case APPEND:
                     if (newValue == null) {
                         return existingValue == null ? null : Objects.toString(existingValue);
                     } else {
                         return existingValue == null ? Objects.toString(newValue) :
-                               Objects.toString(existingValue) + Objects.toString(newValue);
+                               Objects.toString(existingValue) + newValue;
                     }
                 case OVERWRITE:
                 case OVERWRITE_OR_ADD:
@@ -511,7 +511,8 @@ public class JSONPath {
         }
 
         if (!(parsedVal instanceof String)) {
-            logger.warn("key=" + key + ", parsedVal is an " + parsedVal.getClass().getSimpleName() +
+            logger.warn("key=" + key + ", parsedVal is " +
+                        (parsedVal == null ? "null" : ("an " + parsedVal.getClass().getSimpleName())) +
                         ", and not supported for update");
             return;
         }
