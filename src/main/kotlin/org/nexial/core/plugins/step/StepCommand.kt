@@ -32,7 +32,7 @@ open class StepCommand : BaseCommand() {
     fun perform(instructions: String) = performHelper(instructions, "PERFORM ACTION")
 
     fun validate(prompt: String, responses: String, passResponses: String) =
-            validateHelper(prompt, responses, passResponses, "VALIDATION")
+        validateHelper(prompt, responses, passResponses, "VALIDATION")
 
     fun observe(prompt: String) = observeHelper(prompt, "OBSERVATION")
 
@@ -58,11 +58,11 @@ open class StepCommand : BaseCommand() {
         val comment = validationResponses?.get(1)
         if (response != null && isBlank(response)) log("Empty response accepted as PASS.")
 
-        val result = computeStepResult(response + "", comment + "",
-                                       (response != null && isBlank(response)) || passResponses
-                                           .split(context.textDelim)
-                                           .contains(response),
-                                       "")
+        val result = computeStepResult(
+                response + "",
+                comment + "",
+                (response != null && isBlank(response)) || passResponses.split(context.textDelim).contains(response),
+                "")
         result.paramValues = arrayOf(prompt, passResponses, header, comment ?: "")
         return result
     }

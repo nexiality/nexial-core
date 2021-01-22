@@ -154,9 +154,9 @@ public class TestStep extends TestStepManifest {
     @Override
     public String toString() {
         return new ToStringBuilder(this, SIMPLE_STYLE)
-                   .appendSuper(super.toString())
-                   .append("commandRepeater", commandRepeater)
-                   .toString();
+            .appendSuper(super.toString())
+            .append("commandRepeater", commandRepeater)
+            .toString();
     }
 
     public void addNestedMessage(String message) {
@@ -624,13 +624,11 @@ public class TestStep extends TestStepManifest {
             XSSFCellStyle styleTaintedParam = worksheet.getStyle(STYLE_TAINTED_PARAM);
 
             // merging resolved parameter value (what's evaluated) and parameter template (what's written)
-            List<String> mergedParams = params == null ? new ArrayList<>() : params;
+            List<String> mergedParams = params == null ? new ArrayList<>() : new ArrayList<>(params);
             Object[] paramValues = result.getParamValues();
             if (paramValues != null) {
                 for (int i = 0; i < mergedParams.size(); i++) {
-                    if (paramValues.length > i) {
-                        mergedParams.set(i, Objects.toString(paramValues[i], ""));
-                    }
+                    if (paramValues.length > i) { mergedParams.set(i, Objects.toString(paramValues[i], "")); }
                 }
 
                 if (paramValues.length > mergedParams.size()) {
@@ -642,9 +640,9 @@ public class TestStep extends TestStepManifest {
             }
 
             if (linkableParams == null) {
-                linkableParams = new ArrayList<>(this.params.size());
+                linkableParams = new ArrayList<>(mergedParams.size());
                 for (int i = 0; i < mergedParams.size(); i++) { linkableParams.add(i, null); }
-            } else if (linkableParams.size() < this.params.size()) {
+            } else if (linkableParams.size() < mergedParams.size()) {
                 int startFrom = linkableParams.size();
                 for (int i = startFrom; i < mergedParams.size(); i++) { linkableParams.add(i, null); }
             }
@@ -704,6 +702,9 @@ public class TestStep extends TestStepManifest {
                     // if `link` contains double quote, it's likely not a link..
                     if (!StringUtils.containsAny(link, "\"")) { worksheet.setHyperlink(paramCell, link, param); }
                     continue;
+                } else {
+                    paramCell.setCellValue(param);
+                    paramCell.setCellStyle(styleParam);
                 }
 
                 String origParamValue = Excel.getCellValue(paramCell);
