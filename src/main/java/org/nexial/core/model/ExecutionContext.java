@@ -1510,8 +1510,7 @@ public class ExecutionContext {
 
     @NotNull
     public static String truncateForDisplay(String text, int maxLength) {
-        if (StringUtils.isBlank(text) || maxLength < 1) { return text; }
-        return text.length() <= maxLength ? text : StringUtils.left(text, maxLength) + "...";
+        return StringUtils.abbreviate(text, maxLength);
     }
 
     @NotNull

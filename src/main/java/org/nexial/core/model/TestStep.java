@@ -703,7 +703,7 @@ public class TestStep extends TestStepManifest {
                     if (!StringUtils.containsAny(link, "\"")) { worksheet.setHyperlink(paramCell, link, param); }
                     continue;
                 } else {
-                    paramCell.setCellValue(param);
+                    paramCell.setCellValue(context.truncateForDisplay(param));
                     paramCell.setCellStyle(styleParam);
                 }
 
@@ -736,7 +736,7 @@ public class TestStep extends TestStepManifest {
                 String taintedValue = CellTextReader.getOriginal(origParamValue, param);
                 boolean tainted = !StringUtils.equals(origParamValue, taintedValue);
                 if (tainted) {
-                    paramCell.setCellValue(StringUtils.abbreviate(taintedValue, MAX_VERBOSE_CHAR));
+                    paramCell.setCellValue(context.truncateForDisplay(taintedValue));
                     if (StringUtils.isNotEmpty(origParamValue)) {
                         paramCell.setCellComment(toSystemComment(paramCell, origParamValue));
                     }
@@ -815,7 +815,9 @@ public class TestStep extends TestStepManifest {
                 Throwable exception = result.getException();
                 if (exception != null) {
                     Throwable rootCause = ExceptionUtils.getRootCause(exception);
-                    cellReason.setCellValue(rootCause == null ? exception.getMessage() : rootCause.getMessage());
+                    cellReason.setCellValue(context.truncateForDisplay(rootCause == null ?
+                                                                       exception.getMessage() :
+                                                                       rootCause.getMessage()));
                     cellReason.setCellStyle(worksheet.getStyle(STYLE_MESSAGE));
                 }
             }
