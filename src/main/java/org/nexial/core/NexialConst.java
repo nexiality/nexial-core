@@ -1266,11 +1266,15 @@ public final class NexialConst {
         public static final String WINIUM_LOG_PATH = registerSysVar(NAMESPACE + "winiumLogPath");
         public static final String WINIUM_SERVICE_RUNNING = registerSysVar(NAMESPACE + "winiumServiceActive");
         public static final String WINIUM_SOLO_MODE = registerSysVar(NAMESPACE + "winiumSoloMode", true);
-        public static final String DESKTOP_NOTIFY_WAITMS = registerSysVar(NAMESPACE + "desktopNotifyWaitMs",
-                                                                          5000);
+        // deprecating...
+        public static final String DESKTOP_NOTIFY_WAITMS = registerSysVar(NAMESPACE + "desktopNotifyWaitMs", 5000);
 
         public static final String CLEAR_TABLE_CELL_BEFORE_EDIT = registerSysVar(NAMESPACE + "clearTableCellBeforeEdit",
                                                                                  false);
+
+        private static final String NS = NAMESPACE + "desktop.";
+        public static final String NOTIFY_WAITMS = registerSysVar(NS + "notifyWaitMs", 5000);
+        public static final String USE_ASCII_KEY_MAPPING = registerSysVar(NS + "useAsciiKey", false);
 
         private Desktop() {}
 
@@ -1280,8 +1284,6 @@ public final class NexialConst {
 
     public static final class Compare {
         // io
-        // public static final String COMPARE_LOG_PLAIN = "log";
-        // public static final String COMPARE_LOG_JSON = "json";
         public static final String NS_COMPARE = NAMESPACE + "compare.";
         public static final String LOG_MATCH = registerSysVar(NS_COMPARE + "reportMatch", false);
         public static final String GEN_COMPARE_HTML = registerSysVar(NS_COMPARE + "htmlReport", false);

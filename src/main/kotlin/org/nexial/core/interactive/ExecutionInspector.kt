@@ -26,19 +26,15 @@ import java.util.*
 
 class ExecutionInspector(private val baseCommand: BaseCommand) {
 
-    private val regexSaveVar = "^SAVE\\s*\\(([^\\)]+)\\)\\s*\\=\\s*(.+)$"
-    private val regexClearVar = "^CLEAR\\s*\\(([^\\)]+)\\)\\s*$"
-    private val quickHelp = "\nUse:\n" +
-                            "> SAVE(variable-name)=... - (re)create a data variable. Example: SAVE(a)=Hello\n" +
-                            "> CLEAR(variable-name)    - clear data variable. Example: CLEAR(a)\n" +
-                            "> \${...}                  - inspect data variable. Example: \${var1}, \${nexial.textDelim}\n" +
-                            "> \$(...)                  - inspect built-in function. Example: $(random|integer|5)\n" +
-                            "> [EXPR(...) => ...]      - execute Nexial Expression. Example: [TEXT(Hello) => lower]\n" +
-                            "> Press [Enter]           - quit Inspect and return back to Nexial Interactive\n" +
-                            "\n" +
-                            "Data variable, built-in function and Nexial Expression can be used in combination.\n" +
-                            "\n"
-    private val prompt = "> inspect: "
+    private val desktopInspector: DesktopInspector
+
+    init {
+        val context = baseCommand.context
+        // just in case
+        if (ExecutionThread.get() == null) ExecutionThread.set(context)
+
+        desktopInspector = DesktopInspector(context)
+    }
 
     fun inspect() {
         val context = baseCommand.context
@@ -55,19 +51,34 @@ class ExecutionInspector(private val baseCommand: BaseCommand) {
             try {
                 when {
                     // save var
-                    RegexUtils.isExact(input, regexSaveVar)  -> {
+                    RegexUtils.isExact(input, regexSaveVar)    -> {
                         val groups = RegexUtils.collectGroups(input, regexSaveVar)
                         saveVar(groups[0], context.replaceTokens(groups[1], true))
                     }
 
                     // clear var
-                    RegexUtils.isExact(input, regexClearVar) -> {
+                    RegexUtils.isExact(input, regexClearVar)   -> {
                         val groups = RegexUtils.collectGroups(input, regexClearVar)
                         clearVar(TextUtils.toList(groups[0], ",", true))
                     }
 
+                    // desktop var
+                    RegexUtils.isExact(input, regexDesktopVar) -> {
+                        val groups = RegexUtils.collectGroups(input, regexDesktopVar)
+                        val locator = StringUtils.defaultString(groups[0])
+                        val action = StringUtils.defaultString(groups[2])
+                        val actionInput = StringUtils.defaultString(groups[4])
+                        desktopInspector.inspect(locator, action, context.replaceTokens(actionInput, true))
+                    }
+
+                    // web var
+//                    RegexUtils.isExact(input, regexWebVar)     -> {
+//                        val groups = RegexUtils.collectGroups(input, regexWebVar)
+//                        saveVar(groups[0], context.replaceTokens(groups[1], true))
+//                    }
+
                     // replace/update
-                    else                                     -> {
+                    else                                       -> {
                         showVar(input)
                     }
                 }
@@ -107,4 +118,51 @@ class ExecutionInspector(private val baseCommand: BaseCommand) {
     }
 
     private fun showVar(input: String) = println(baseCommand.context.replaceTokens(input, true))
+
+    companion object {
+        private const val quickHelp =
+            "\nUse:\n" +
+            "> SAVE(variable-name)=... - (re)create a data variable. Example: SAVE(a)=Hello\n" +
+            "> CLEAR(variable-name)    - clear data variable. Example: CLEAR(a)\n" +
+            "\n" +
+            "> \${...}                  - inspect data variable. Example: \${var1}, \${nexial.textDelim}\n" +
+            "> \$(...)                  - inspect built-in function. Example: $(random|integer|5)\n" +
+            "> [EXPR(...) => ...]      - execute Nexial Expression. Example: [TEXT(Hello) => lower]\n" +
+            "\n" +
+            "> DESKTOP(xpath|label)    - inspect a desktop element based on XPATH or a label in the current form\n" +
+            "> DESKTOP(xpath|labell) => click\n" +
+            "                          - click on a desktop element based on XPATH or a label in the current form\n" +
+            "> DESKTOP(xpath|labell) => doubleClick\n" +
+            "                          - double click on a desktop element based on XPATH or a label in the\n" +
+            "                            current form\n" +
+            "> DESKTOP(xpath|labell) => type(input)\n" +
+            "                          - type the specified input on a desktop element based on XPATH or a label in\n" +
+            "                            the current form\n" +
+            "> DESKTOP(app) => menu(label,label,...)\n" +
+            "                          - click on one or more menu items on the current form\n" +
+            "\n" +
+            "> Press [Enter]           - quit Inspect and return back to Nexial Interactive\n" +
+            "\n" +
+            "Data variable, built-in function and Nexial Expression can be used in combination.\n" +
+            "\n"
+
+        private const val prompt = "> inspect: "
+
+        internal const val regexSaveVar = "^SAVE\\s*\\(([^\\)]+)\\)\\s*\\=\\s*(.+)$"
+
+        internal const val regexClearVar = "^CLEAR\\s*\\(([^\\)]+)\\)\\s*$"
+
+        // support various inspection and actions. e.g.:
+        //  DESKTOP(xpath)                       -- inspect element based on xpath
+        //  DESKTOP(label)                       -- inspect element based on label in current form
+        //  DESKTOP(xpath|label) => click        -- click on element
+        //  DESKTOP(xpath|label) => doubleClick  -- double click on element
+        //  DESKTOP(xpath|label) => type(text)   -- type text, includes shortcuts and function keys, on element
+        @JvmStatic
+        internal val regexDesktopVar = "^DESKTOP\\s*\\((.+?)\\)(\\s*\\=\\>\\s*(\\w+)(\\((.+)?\\))?)*?\\s*$"
+
+        @JvmStatic
+        internal val regexWebVar = "^WEB\\s*\\(([^\\)]+)\\)\\s*\\=\\s*(.+)$"
+
+    }
 }

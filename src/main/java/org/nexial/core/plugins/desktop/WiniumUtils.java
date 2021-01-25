@@ -31,7 +31,6 @@ import org.nexial.core.ExecutionThread;
 import org.nexial.core.model.ExecutionContext;
 import org.nexial.core.utils.ConsoleUtils;
 import org.openqa.selenium.By;
-import org.openqa.selenium.Keys;
 import org.openqa.selenium.WebDriverException;
 import org.openqa.selenium.WebElement;
 import org.openqa.selenium.interactions.Actions;
@@ -215,12 +214,15 @@ public final class WiniumUtils {
         return new WiniumDriver(getWiniumService(), resolveDesktopOptions(exePath, arguments));
     }
 
-    public static void sendKey(WiniumDriver driver, WebElement elem, String keystrokes) {
+    public static void sendKey(WiniumDriver driver, WebElement elem, String keystrokes, boolean useAscii) {
         if (driver == null) { return; }
         if (StringUtils.isEmpty(keystrokes)) { return; }
 
+        Map<String, CharSequence> controlKeyMapping = useAscii ? AsciiKeyMapping.CONTROL_KEY_MAPPING : CONTROL_KEY_MAPPING;
+        Map<String, CharSequence> keyMapping = useAscii ? AsciiKeyMapping.KEY_MAPPING : KEY_MAPPING;
+
         Actions actions = new Actions(driver);
-        Stack<Keys> controlKeys = new Stack<>();
+        Stack<CharSequence> controlKeys = new Stack<>();
 
         while (StringUtils.isNotEmpty(keystrokes)) {
             String nextKeyStroke = TextUtils.substringBetweenFirstPair(keystrokes, CTRL_KEY_START, CTRL_KEY_END);
@@ -265,20 +267,22 @@ public final class WiniumUtils {
                 actions = addReleaseControlKeys(actions, elem, controlKeys);
                 actions.perform();
                 actions = new Actions(driver);
-            } else if (CONTROL_KEY_MAPPING.containsKey(keystrokeId)) {
-                // 6. is the found {..} one of the control keys (CTRL, SHIFT, ALT)?
-                Keys control = CONTROL_KEY_MAPPING.get(keystrokeId);
-                controlKeys.push(control);
-                actions = elem == null ? actions.keyDown(control) : actions.keyDown(elem, control);
             } else {
-                // 7. if not, then it must one of the non-printable character
-                Keys keystroke = KEY_MAPPING.get(keystrokeId);
-                if (keystroke == null) { throw new RuntimeException("Unsupported/unknown key " + keystrokeId); }
+                if (controlKeyMapping.containsKey(keystrokeId)) {
+                    // 6. is the found {..} one of the control keys (CTRL, SHIFT, ALT)?
+                    CharSequence control = controlKeyMapping.get(keystrokeId);
+                    controlKeys.push(control);
+                    actions = elem == null ? actions.keyDown(control) : actions.keyDown(elem, control);
+                } else {
+                    // 7. if not, then it must one of the non-printable character
+                    CharSequence keystroke = keyMapping.get(keystrokeId);
+                    if (keystroke == null) { throw new RuntimeException("Unsupported/unknown key " + keystrokeId); }
 
-                actions = elem == null ? actions.sendKeys(keystroke) : actions.sendKeys(elem, keystroke);
-                actions = addReleaseControlKeys(actions, elem, controlKeys);
-                actions.perform();
-                actions = new Actions(driver);
+                    actions = elem == null ? actions.sendKeys(keystroke) : actions.sendKeys(elem, keystroke);
+                    actions = addReleaseControlKeys(actions, elem, controlKeys);
+                    actions.perform();
+                    actions = new Actions(driver);
+                }
             }
 
             // 8. loop back

@@ -154,8 +154,8 @@ internal object KeystrokeParser {
               "{CONTROL}" to VK_CONTROL, "{CTRL}" to VK_CONTROL,
               "{ALT}" to VK_ALT, "{OPTION}" to VK_ALT,
               "{WINDOWS}" to VK_WINDOWS, "{WIN}" to VK_WINDOWS,
-              "{CONTEXT}" to VK_CONTEXT_MENU,
-              "{META}" to VK_META, "{COMMAND}" to VK_META)
+              "{META}" to VK_META,
+              "{COMMAND}" to VK_META)
 
     internal val FUNCTION_KEYS =
         mapOf("{ESCAPE}" to VK_ESCAPE, "{ESC}" to VK_ESCAPE,
@@ -166,6 +166,7 @@ internal object KeystrokeParser {
               "{SCROLL_LOCK}" to VK_SCROLL_LOCK,
               "{PAUSE}" to VK_PAUSE,
 
+              "{CONTEXT}" to VK_CONTEXT_MENU,
               "{BACKSPACE}" to VK_BACK_SPACE, "{BKSP}" to VK_BACK_SPACE,
               "{INSERT}" to VK_INSERT,
               "{DELETE}" to VK_DELETE, "{DEL}" to VK_DELETE,

@@ -20,7 +20,6 @@ package org.nexial.core.utils;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.nexial.commons.utils.TextUtils;
-import org.openqa.selenium.Keys;
 import org.openqa.selenium.WebDriver;
 import org.openqa.selenium.WebElement;
 import org.openqa.selenium.interactions.Actions;
@@ -34,8 +33,8 @@ import static org.nexial.core.NexialConst.CTRL_KEY_START;
 import static org.openqa.selenium.Keys.*;
 
 public final class WebDriverUtils {
-    public static final Map<String, Keys> CONTROL_KEY_MAPPING = initControlKeyMapping();
-    public static final Map<String, Keys> KEY_MAPPING = initKeyMapping();
+    public static final Map<String, CharSequence> CONTROL_KEY_MAPPING = initControlKeyMapping();
+    public static final Map<String, CharSequence> KEY_MAPPING = initKeyMapping();
 
     private WebDriverUtils() { }
 
@@ -43,8 +42,11 @@ public final class WebDriverUtils {
         if (driver == null) { return null; }
         if (StringUtils.isEmpty(keystrokes)) { return null; }
 
+        Map<String, CharSequence> controlKeyMapping = CONTROL_KEY_MAPPING;
+        Map<String, CharSequence> keyMapping = KEY_MAPPING;
+
         Actions actions = new Actions(driver);
-        Stack<Keys> controlKeys = new Stack<>();
+        Stack<CharSequence> controlKeys = new Stack<>();
         if (elem != null) { actions = actions.moveToElement(elem); }
 
         // 1. is there any {...}?
@@ -74,18 +76,20 @@ public final class WebDriverUtils {
             if (StringUtils.length(nextKeyStroke) == 1 && StringUtils.isAlphanumeric(nextKeyStroke)) {
                 actions = actions.sendKeys(nextKeyStroke);
                 actions = addReleaseControlKeys(actions, null, controlKeys);
-            } else if (CONTROL_KEY_MAPPING.containsKey(keystrokeId)) {
-                // 6. is the found {..} one of the control keys (CTRL, SHIFT, ALT)?
-                Keys control = CONTROL_KEY_MAPPING.get(keystrokeId);
-                controlKeys.push(control);
-                actions = actions.keyDown(control);
             } else {
-                // 7. if not, then it must one of the non-printable character
-                Keys keystroke = KEY_MAPPING.get(keystrokeId);
-                if (keystroke == null) { throw new RuntimeException("Unsupported/unknown key " + keystrokeId); }
+                if (controlKeyMapping.containsKey(keystrokeId)) {
+                    // 6. is the found {..} one of the control keys (CTRL, SHIFT, ALT)?
+                    CharSequence control = controlKeyMapping.get(keystrokeId);
+                    controlKeys.push(control);
+                    actions = actions.keyDown(control);
+                } else {
+                    // 7. if not, then it must one of the non-printable character
+                    CharSequence keystroke = keyMapping.get(keystrokeId);
+                    if (keystroke == null) { throw new RuntimeException("Unsupported/unknown key " + keystrokeId); }
 
-                actions = actions.sendKeys(keystroke);
-                actions = addReleaseControlKeys(actions, null, controlKeys);
+                    actions = actions.sendKeys(keystroke);
+                    actions = addReleaseControlKeys(actions, null, controlKeys);
+                }
             }
 
             // 8. loop back
@@ -98,9 +102,9 @@ public final class WebDriverUtils {
         return actions;
     }
 
-    public static Actions addReleaseControlKeys(Actions actions, WebElement element, Stack<Keys> controlKeys) {
+    public static Actions addReleaseControlKeys(Actions actions, WebElement element, Stack<CharSequence> controlKeys) {
         while (CollectionUtils.isNotEmpty(controlKeys)) {
-            Keys keys = controlKeys.pop();
+            CharSequence keys = controlKeys.pop();
             actions = element != null ? actions.keyUp(element, keys) : actions.keyUp(keys);
         }
         return actions;
@@ -110,8 +114,10 @@ public final class WebDriverUtils {
         if (driver == null) { return null; }
         if (StringUtils.isEmpty(keystrokes)) { return null; }
 
+        Map<String, CharSequence> controlKeyMapping = CONTROL_KEY_MAPPING;
+
         Actions actions = new Actions(driver);
-        Stack<Keys> controlKeys = new Stack<>();
+        Stack<CharSequence> controlKeys = new Stack<>();
 
         if (element != null) { actions.moveToElement(element); }
 
@@ -120,7 +126,7 @@ public final class WebDriverUtils {
             if (StringUtils.isBlank(nextKeyStroke)) { break; }
 
             String keystrokeId = CTRL_KEY_START + nextKeyStroke + CTRL_KEY_END;
-            Keys controlKey = CONTROL_KEY_MAPPING.get(keystrokeId);
+            CharSequence controlKey = controlKeyMapping.get(keystrokeId);
             if (controlKey == null) { throw new RuntimeException("Unsupported/unknown key " + keystrokeId); }
 
             controlKeys.push(controlKey);
@@ -141,8 +147,8 @@ public final class WebDriverUtils {
         return actions;
     }
 
-    private static Map<String, Keys> initControlKeyMapping() {
-        Map<String, Keys> map = new HashMap<>();
+    private static Map<String, CharSequence> initControlKeyMapping() {
+        Map<String, CharSequence> map = new HashMap<>();
         map.put("{SHIFT}", SHIFT);
         map.put("{CONTROL}", CONTROL);
         map.put("{ALT}", ALT);
@@ -152,8 +158,8 @@ public final class WebDriverUtils {
         return map;
     }
 
-    private static Map<String, Keys> initKeyMapping() {
-        Map<String, Keys> map = new HashMap<>();
+    private static Map<String, CharSequence> initKeyMapping() {
+        Map<String, CharSequence> map = new HashMap<>();
 
         map.put("{TAB}", TAB);
         map.put("{BACKSPACE}", BACK_SPACE);
@@ -163,6 +169,7 @@ public final class WebDriverUtils {
         map.put("{INSERT}", INSERT);
         map.put("{DELETE}", DELETE);
         map.put("{DEL}", DELETE);
+        map.put("{DECIMAL}", DECIMAL);
         map.put("{ESCAPE}", ESCAPE);
 
         map.put("{HOME}", HOME);

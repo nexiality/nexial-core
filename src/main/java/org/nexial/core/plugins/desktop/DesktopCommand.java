@@ -17,15 +17,6 @@
 
 package org.nexial.core.plugins.desktop;
 
-import java.awt.*;
-import java.io.File;
-import java.io.IOException;
-import java.lang.reflect.Array;
-import java.lang.reflect.InvocationTargetException;
-import java.util.List;
-import java.util.*;
-import java.util.stream.Collectors;
-
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.collections4.MapUtils;
 import org.apache.commons.lang3.ArrayUtils;
@@ -52,18 +43,25 @@ import org.nexial.core.utils.ConsoleUtils;
 import org.nexial.core.utils.NativeInputHelper;
 import org.nexial.core.utils.OutputFileUtils;
 import org.nexial.seeknow.SeeknowData;
-import org.openqa.selenium.By;
+import org.openqa.selenium.*;
 import org.openqa.selenium.By.ByClassName;
 import org.openqa.selenium.By.ById;
 import org.openqa.selenium.By.ByName;
-import org.openqa.selenium.By.ByXPath;
 import org.openqa.selenium.NoSuchElementException;
 import org.openqa.selenium.Rectangle;
-import org.openqa.selenium.WebDriverException;
-import org.openqa.selenium.WebElement;
+import org.openqa.selenium.By.ByXPath;
 import org.openqa.selenium.interactions.Actions;
 import org.openqa.selenium.support.ui.WebDriverWait;
 import org.openqa.selenium.winium.WiniumDriver;
+
+import java.awt.Point;
+import java.io.File;
+import java.io.IOException;
+import java.lang.reflect.Array;
+import java.lang.reflect.InvocationTargetException;
+import java.util.List;
+import java.util.*;
+import java.util.stream.Collectors;
 
 import static java.io.File.separator;
 import static java.lang.Integer.MAX_VALUE;
@@ -71,10 +69,10 @@ import static java.lang.System.lineSeparator;
 import static org.apache.commons.lang3.SystemUtils.*;
 import static org.nexial.core.NexialConst.Data.BUILD_NO;
 import static org.nexial.core.NexialConst.Data.SCRIPT_REF_PREFIX;
-import static org.nexial.core.NexialConst.Desktop.DESKTOP_NOTIFY_WAITMS;
-import static org.nexial.core.NexialConst.Desktop.WINIUM_SERVICE_RUNNING;
+import static org.nexial.core.NexialConst.Desktop.*;
 import static org.nexial.core.NexialConst.NL;
 import static org.nexial.core.NexialConst.OS;
+import static org.nexial.core.SystemVariables.getDefaultBool;
 import static org.nexial.core.SystemVariables.getDefaultInt;
 import static org.nexial.core.plugins.desktop.DesktopConst.*;
 import static org.nexial.core.plugins.desktop.DesktopNotification.NotificationLevel.info;
@@ -175,7 +173,10 @@ public class DesktopCommand extends BaseCommand implements ForcefulTerminate, Ca
 
     @Override
     public void logExternally(TestStep testStep, String message) {
-        int waitMs = context.getIntData(DESKTOP_NOTIFY_WAITMS, getDefaultInt(DESKTOP_NOTIFY_WAITMS));
+        // favor DESKTOP_NOTIFY_WAITMS2 over DESKTOP_NOTIFY_WAITMS (deprecated)
+        int waitMs = context.getIntData(NOTIFY_WAITMS,
+                                        context.getIntData(DESKTOP_NOTIFY_WAITMS,
+                                                           getDefaultInt(DESKTOP_NOTIFY_WAITMS)));
 
         Worksheet worksheet = testStep.getWorksheet();
         String msg = "[" + worksheet.getName() + "][ROW " + (testStep.getRow().get(0).getRowIndex() + 1) + "]" + NL +
@@ -632,6 +633,16 @@ public class DesktopCommand extends BaseCommand implements ForcefulTerminate, Ca
         return StepResult.success(button + " mouse button clicked on screen (" + x + "," + y + ")");
     }
 
+    public StepResult doubleClick(String name) { return doubleClick(name, Any); }
+
+    public StepResult doubleClickByLocator(String locator) {
+        WebElement elem = findElement(locator);
+        if (elem == null) { return StepResult.fail("element NOT found via " + locator);}
+        new Actions(winiumDriver).doubleClick(elem).perform();
+        autoClearModalDialog(locator);
+        return StepResult.success();
+    }
+
     public StepResult mouseWheel(String amount, String modifiers, String x, String y) {
         if (!IS_OS_WINDOWS) { return StepResult.skipped("mouseWheel() currently only works on Windows"); }
 
@@ -922,7 +933,7 @@ public class DesktopCommand extends BaseCommand implements ForcefulTerminate, Ca
 
             // click first shown option
             // listElement.click();
-            driver.executeScript("input: brc_click", listElement);
+            driver.executeScript("brc_click", listElement);
             new Actions(driver).moveToElement(listElement, 5, 5).click().perform();
 
             List<String> shortcuts = new ArrayList<>();
@@ -1443,7 +1454,7 @@ public class DesktopCommand extends BaseCommand implements ForcefulTerminate, Ca
         WebElement window = getApp();
         requiresNotNull(window, "Unable to resolve the window object '" + session.getAppId() + "'");
 
-        session.getDriver().executeScript("automation: maximize", window);
+        session.getDriver().executeScript("maximize", window);
         return StepResult.success("window maximized");
     }
 
@@ -1455,7 +1466,7 @@ public class DesktopCommand extends BaseCommand implements ForcefulTerminate, Ca
         WebElement window = getApp();
         requiresNotNull(window, "Unable to resolve the window object '" + session.getAppId() + "'");
 
-        session.getDriver().executeScript("automation: minimize", window);
+        session.getDriver().executeScript("minimize", window);
         return StepResult.success("window minimized");
     }
 
@@ -1471,7 +1482,7 @@ public class DesktopCommand extends BaseCommand implements ForcefulTerminate, Ca
         requiresNotNull(window, "Unable to resolve the window object '" + session.getAppId() + "'");
 
         String newDimension = width + "X" + height;
-        session.getDriver().executeScript("automation: resize", window, newDimension);
+        session.getDriver().executeScript("resize", window, newDimension);
         return StepResult.success("window reized to " + newDimension);
     }
 
@@ -1687,7 +1698,7 @@ public class DesktopCommand extends BaseCommand implements ForcefulTerminate, Ca
         return obj instanceof DesktopElement ? (DesktopElement) obj : null;
     }
 
-    protected DesktopElement getRequiredElement(String name, ElementType expectedType) {
+    public DesktopElement getRequiredElement(String name, ElementType expectedType) {
         requiresNotBlank(name, "Invalid name", name);
 
         DesktopElement container = getCurrentContainer();
@@ -1839,7 +1850,7 @@ public class DesktopCommand extends BaseCommand implements ForcefulTerminate, Ca
 
     }
 
-    protected List<WebElement> findElements(String locator) {
+    public List<WebElement> findElements(String locator) {
         requiresNotBlank(locator, "invalid locator", locator);
 
         By findBy = findBy(locator);
@@ -1879,22 +1890,28 @@ public class DesktopCommand extends BaseCommand implements ForcefulTerminate, Ca
         requiresNotBlank(locator, "invalid locator", locator);
 
         By by = findBy(locator);
-        requiresNotNull(by != null, "Unsupported/unknown locator", locator);
+        requiresNotNull(by, "Unsupported/unknown locator", locator);
 
         WebDriverWait wait = new WebDriverWait(getDriver(), maxWaitMs / 1000);
         WebElement waitFor = wait.until(driver -> {
             if (parent != null) {
-                try { return parent.findElement(by); } catch (Exception e) {/**/}
-                return null;
+                try {
+                    return parent.findElement(by);
+                } catch (Exception e) {
+                    log(String.format("Error performing %s findElement(%s), retrying...", parent, by));
+                    // keeps trying
+                    return null;
+                }
             } else {
                 try {
                     return driver.findElements(by)
                                  .stream()
                                  .findFirst()
                                  .orElseThrow(() -> new NoSuchElementException("Cannot locate an element using " + by));
-                } catch (WebDriverException e) {
-                    log(String.format("WebDriverException thrown by findElement(%s)", by));
-                    throw e;
+                } catch (Exception e) {
+                    log(String.format("Error performing findElement(%s), retrying...", by));
+                    // keeps trying
+                    return null;
                 }
             }
         });
@@ -1949,6 +1966,14 @@ public class DesktopCommand extends BaseCommand implements ForcefulTerminate, Ca
         return StepResult.success("Element '" + name + "' clicked");
     }
 
+    protected StepResult doubleClick(String name, ElementType expectedType) {
+        DesktopElement component = getRequiredElement(name, expectedType);
+        WebElement target = component.getElement();
+        new Actions(winiumDriver).doubleClick(target).perform();
+        autoClearModalDialog(component);
+        return StepResult.success("Element '" + name + "' double-clicked");
+    }
+
     protected StepResult clickOffset(WebElement elem, String xOffset, String yOffset) {
         requiresNotNull(elem, "Unable to reference target element", elem);
         requiresPositiveNumber(xOffset, "Invalid xOffset", xOffset);
@@ -1988,11 +2013,12 @@ public class DesktopCommand extends BaseCommand implements ForcefulTerminate, Ca
         return StepResult.success("text entered to element '" + name + "'");
     }
 
-    protected void type(WebElement elem, String text) {
+    public void type(WebElement elem, String text) {
         if (elem == null) { return; }
 
         // improve on speed.  when not using control key, we should just use winiumDriver.sendKey()
-        WiniumUtils.sendKey(getDriver(), elem, text);
+        boolean useAscii =  context.getBooleanData(USE_ASCII_KEY_MAPPING, getDefaultBool(USE_ASCII_KEY_MAPPING));
+        WiniumUtils.sendKey(getDriver(), elem, text, useAscii);
     }
 
     protected StepResult clear(String name, ElementType expectedType) {
@@ -2207,7 +2233,7 @@ public class DesktopCommand extends BaseCommand implements ForcefulTerminate, Ca
         autoClearModalDialog(component.getXpath());
     }
 
-    protected void autoClearModalDialog(String xpath) {
+    public void autoClearModalDialog(String xpath) {
         if (!context.getBooleanData(DESKTOP_AUTO_CLEAR_MODAL_DIALOG, DEF_AUTO_CLEAR_MODAL_DIALOG)) { return; }
         if (StringUtils.isBlank(xpath)) { return; }
 
