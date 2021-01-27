@@ -52,7 +52,7 @@ class DesktopInspector(val context: ExecutionContext) {
         elements.forEachIndexed { i, element ->
             println("Element ${i + 1}: (${element::class.java.simpleName})")
             if (StringUtils.isBlank(action)) {
-                showElementDetails(elements)
+                showElementDetails(element)
             } else {
                 when {
                     StringUtils.equalsIgnoreCase(action, "click")       -> {
@@ -72,63 +72,59 @@ class DesktopInspector(val context: ExecutionContext) {
         }
     }
 
-    private fun showElementDetails(elements: MutableList<WebElement>) {
-        elements.forEachIndexed { i, element ->
-            println("Element ${i + 1}: (${element::class.java.simpleName})")
+    private fun showElementDetails(element: WebElement) {
+        println("[ IDENTIFICATION ]")
+        println("  ${showWebElementAttribute(element, "ClassName")}")
+        println("  ${showWebElementAttribute(element, "ControlType")}")
+        println("  ${showWebElementAttribute(element, "AutomationId")}")
+        println("  ${showWebElementAttribute(element, "LocalizedControlType")}")
+        println("  ${showWebElementAttribute(element, "Name")}")
 
-            println("[ IDENTIFICATION ]")
-            println("  ${showWebElementAttribute(element, "ClassName")}")
-            println("  ${showWebElementAttribute(element, "ControlType")}")
-            println("  ${showWebElementAttribute(element, "AutomationId")}")
-            println("  ${showWebElementAttribute(element, "LocalizedControlType")}")
-            println("  ${showWebElementAttribute(element, "Name")}")
+        println("[ DISPLAY ]")
+        println("  ${showWebElementProperty("DISPLAYED?", element) { "" + it.isDisplayed }}")
+        println("  ${showWebElementProperty("ENABLED?", element) { "" + it.isEnabled }}")
+        println("  ${showWebElementProperty("SELECTED?", element) { "" + it.isSelected }}")
+        println("  ${showWebElementProperty("TEXT", element) { it.text }}")
 
-            println("[ DISPLAY ]")
-            println("  ${showWebElementProperty("DISPLAYED?", element) { "" + it.isDisplayed }}")
-            println("  ${showWebElementProperty("ENABLED", element) { "" + it.isEnabled }}")
-            println("  ${showWebElementProperty("SELECTED?", element) { "" + it.isSelected }}")
-            println("  ${showWebElementProperty("TEXT", element) { it.text }}")
+        println("[ VISIBILITY ]")
+        println("  ${showWebElementProperty("SIZE (width,height)", element) { "" + it.size }}")
+        println("  ${showWebElementAttribute(element, "Dimension (width,height,x,y)")}")
+        println("  ${showWebElementAttribute(element, "ClickablePoint")}")
 
-            println("[ VISIBILITY ]")
-            println("  ${showWebElementProperty("SIZE (height,width)", element) { "" + it.size }}")
-            println("  ${showWebElementAttribute(element, "BoundingRectangle")}")
-            println("  ${showWebElementAttribute(element, "ClickablePoint")}")
+        println("[ ATTRIBUTE/PATTERN ]")
+        printValidWebElementAttribute(element, "IsContentElement", "  ")
+        printValidWebElementAttribute(element, "IsControlElement", "  ")
+        printValidWebElementAttribute(element, "IsExpandCollapsePatternAvailable", "  ")
+        printValidWebElementAttribute(element, "IsGridItemPatternAvailable", "  ")
+        printValidWebElementAttribute(element, "IsGridPatternAvailable", "  ")
+        printValidWebElementAttribute(element, "IsInvokePatternAvailable", "  ")
+        printValidWebElementAttribute(element, "IsKeyboardFocusable", "  ")
+        printValidWebElementAttribute(element, "IsMultipleViewPatternAvailable", "  ")
+        printValidWebElementAttribute(element, "IsRangeValuePatternAvailable", "  ")
+        printValidWebElementAttribute(element, "IsScrollItemPatternAvailable", "  ")
+        printValidWebElementAttribute(element, "IsScrollPatternAvailable", "  ")
+        printValidWebElementAttribute(element, "IsSelectionItemPatternAvailable", "  ")
+        printValidWebElementAttribute(element, "IsSelectionPatternAvailable", "  ")
+        printValidWebElementAttribute(element, "IsTableItemPatternAvailable", "  ")
+        printValidWebElementAttribute(element, "IsTablePatternAvailable", "  ")
+        printValidWebElementAttribute(element, "IsTextPatternAvailable", "  ")
+        printValidWebElementAttribute(element, "IsTogglePatternAvailable", "  ")
+        printValidWebElementAttribute(element, "IsValuePatternAvailable", "  ")
+        printValidWebElementAttribute(element, "IsWindowPatternAvailable", "  ")
 
-            println("[ ATTRIBUTE/PATTERN ]")
-            println("  ${showWebElementAttribute(element, "IsContentElement")}")
-            println("  ${showWebElementAttribute(element, "IsControlElement")}")
-            println("  ${showWebElementAttribute(element, "IsExpandCollapsePatternAvailable")}")
-            println("  ${showWebElementAttribute(element, "IsGridItemPatternAvailable")}")
-            println("  ${showWebElementAttribute(element, "IsGridPatternAvailable")}")
-            println("  ${showWebElementAttribute(element, "IsInvokePatternAvailable")}")
-            println("  ${showWebElementAttribute(element, "IsKeyboardFocusable")}")
-            println("  ${showWebElementAttribute(element, "IsMultipleViewPatternAvailable")}")
-            println("  ${showWebElementAttribute(element, "IsRangeValuePatternAvailable")}")
-            println("  ${showWebElementAttribute(element, "IsScrollItemPatternAvailable")}")
-            println("  ${showWebElementAttribute(element, "IsScrollPatternAvailable")}")
-            println("  ${showWebElementAttribute(element, "IsSelectionItemPatternAvailable")}")
-            println("  ${showWebElementAttribute(element, "IsSelectionPatternAvailable")}")
-            println("  ${showWebElementAttribute(element, "IsTableItemPatternAvailable")}")
-            println("  ${showWebElementAttribute(element, "IsTablePatternAvailable")}")
-            println("  ${showWebElementAttribute(element, "IsTextPatternAvailable")}")
-            println("  ${showWebElementAttribute(element, "IsTogglePatternAvailable")}")
-            println("  ${showWebElementAttribute(element, "IsValuePatternAvailable")}")
-            println("  ${showWebElementAttribute(element, "IsWindowPatternAvailable")}")
+        println("[ WINDOW ]")
+        printValidWebElementAttribute(element, "CanMaximize", "  ")
+        printValidWebElementAttribute(element, "CanMinimize", "  ")
+        printValidWebElementAttribute(element, "CanMove", "  ")
+        printValidWebElementAttribute(element, "CanResize", "  ")
+        printValidWebElementAttribute(element, "IsModal", "  ")
 
-            println("[ WINDOW ]")
-            println("  ${showWebElementAttribute(element, "CanMaximize")}")
-            println("  ${showWebElementAttribute(element, "CanMinimize")}")
-            println("  ${showWebElementAttribute(element, "CanMove")}")
-            println("  ${showWebElementAttribute(element, "CanResize")}")
-            println("  ${showWebElementAttribute(element, "IsModal")}")
-
-            println("")
-        }
+        println("")
     }
 
     private fun showWebElementAttribute(element: WebElement, attr: String) =
         StringUtils.rightPad(attr, 35) + ": " + try {
-            element.getAttribute(attr)
+            StringUtils.defaultString(element.getAttribute(attr), "NONE")
         } catch (e: WebDriverException) {
             "N/A"
         }
@@ -140,5 +136,13 @@ class DesktopInspector(val context: ExecutionContext) {
             "N/A"
         }
 
+    private fun printValidWebElementAttribute(element: WebElement, attr: String, prefix: String) {
+        try {
+            val attrValue = element.getAttribute(attr)
+            if (StringUtils.isNotEmpty(attrValue))
+                println("$prefix${StringUtils.rightPad(attr, 35) + ": "}$attrValue")
+        } catch (e: WebDriverException) {
+        }
+    }
 
 }

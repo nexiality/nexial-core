@@ -17,13 +17,8 @@
 
 package org.nexial.core.plugins.io;
 
-import java.io.File;
-import java.io.IOException;
-import java.io.StringReader;
-import java.lang.reflect.Array;
-import java.util.*;
-import java.util.stream.Collectors;
-
+import com.univocity.parsers.common.record.Record;
+import com.univocity.parsers.csv.CsvParser;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.collections4.MapUtils;
 import org.apache.commons.io.FileUtils;
@@ -45,8 +40,12 @@ import org.nexial.core.model.StepResult;
 import org.nexial.core.plugins.base.BaseCommand;
 import org.nexial.core.utils.CheckUtils;
 
-import com.univocity.parsers.common.record.Record;
-import com.univocity.parsers.csv.CsvParser;
+import java.io.File;
+import java.io.IOException;
+import java.io.StringReader;
+import java.lang.reflect.Array;
+import java.util.*;
+import java.util.stream.Collectors;
 
 import static org.apache.poi.poifs.filesystem.FileMagic.OLE2;
 import static org.apache.poi.poifs.filesystem.FileMagic.OOXML;
@@ -370,6 +369,30 @@ public class ExcelCommand extends BaseCommand {
                                               "read(" + worksheet + ",A1) totalDataColumn(" + row + ")]"));
 
         return StepResult.success("Saved total data column count to '" + saveVar + "'");
+    }
+
+    /**
+     * rename a worksheet to a new name
+     * @param file
+     * @param worksheet
+     * @param newName
+     * @return
+     */
+    public StepResult renameSheet(String file, String worksheet, String newName) throws IOException {
+        requiresReadableFile(file);
+        requiresNotBlank(worksheet, "invalid worksheet name", worksheet);
+        requiresNotBlank(newName, "invalid new worksheet name", newName);
+
+        Excel excel = deriveExcel(file);
+
+        XSSFWorkbook workbook = excel.getWorkbook();
+        int sheetIndex = workbook.getSheetIndex(worksheet);
+        if (sheetIndex == -1) { return StepResult.fail("Excel '" + file + "': No worksheet '" + worksheet + "'"); }
+
+        workbook.setSheetName(sheetIndex, newName);
+        excel.save();
+        excel.close();
+        return StepResult.success("Excel '" + file + "': Worksheet '" + worksheet + "' renamed to '" + newName + "'");
     }
 
     protected List<List<XSSFCell>> fetchRows(String file, String worksheet, String range) throws IOException {

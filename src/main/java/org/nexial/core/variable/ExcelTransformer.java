@@ -23,6 +23,7 @@ import org.apache.commons.lang3.ArrayUtils;
 import org.apache.commons.lang3.BooleanUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.math.NumberUtils;
+import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 import org.nexial.commons.utils.CollectionUtil;
 import org.nexial.commons.utils.FileUtil;
 import org.nexial.commons.utils.TextUtils;
@@ -61,6 +62,22 @@ public class ExcelTransformer<T extends ExcelDataType> extends Transformer {
         list.setTextValue(TextUtils.toString(data.getWorksheetNames(), delim));
         list.init();
         return list;
+    }
+
+    public T renameSheet(T data, String worksheet, String newName) throws IOException {
+        if (data == null) { throw new IllegalArgumentException("data is null"); }
+        if (StringUtils.isBlank(worksheet)) { throw new IllegalArgumentException("Invalid worksheet: " + worksheet); }
+        if (StringUtils.isBlank(newName)) { throw new IllegalArgumentException("Invalid new sheet name: " + newName); }
+
+        Excel excel = data.getValue();
+        XSSFWorkbook workbook = excel.getWorkbook();
+        int sheetIndex = workbook.getSheetIndex(worksheet);
+        if (sheetIndex == -1) { throw new IllegalArgumentException("No worksheet '" + worksheet + "' found"); }
+
+        workbook.setSheetName(sheetIndex, newName);
+        excel.save();
+        excel.close();
+        return data;
     }
 
     public T read(T data, String sheet, String range) {
