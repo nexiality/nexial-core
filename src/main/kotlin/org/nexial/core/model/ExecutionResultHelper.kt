@@ -46,6 +46,8 @@ class ExecutionResultHelper(private val allSteps: List<TestStep>, val worksheet:
                             val executionSummary: ExecutionSummary) {
 
     fun updateScenarioResults() {
+//        val watch = StopWatch()
+//        watch.start()
         worksheet.sheet.workbook.missingCellPolicy = CREATE_NULL_AS_BLANK
         var currentRow = ADDR_COMMAND_START.rowStartIndex
         var lastRow = worksheet.findLastDataRow(ADDR_COMMAND_START)
@@ -73,6 +75,8 @@ class ExecutionResultHelper(private val allSteps: List<TestStep>, val worksheet:
         formatDescriptionCell(ADDR_COMMAND_START.rowStartIndex, lastRow)
         // update execution summary in the scenario sheet
         writeTestScenarioResult(worksheet, executionSummary)
+//        watch.stop()
+//        println("Time taken to write ${worksheet.name} :: ${watch.time}")
     }
 
     private fun formatDescriptionCell(startRow: Int, lastRow: Int): Int {
@@ -194,18 +198,25 @@ class ExecutionResultHelper(private val allSteps: List<TestStep>, val worksheet:
             // might think about different approach
             var repeatUntilStartIndex = -1
             var repeatUntilEndIndex = -1
+            var sectionEndIndex = -1
 
             for (j in 0 until stepSize) {
                 val macroStep = macroSteps[j]
                 if (macroStep.commandFQN == CMD_REPEAT_UNTIL && macroStep.commandRepeater != null) {
-                    nestedSteps = macroStep.commandRepeater.stepCount
+                    val steps = macroStep.commandRepeater.stepCount
                     repeatUntilStartIndex = j
-                    repeatUntilEndIndex = j + nestedSteps
+                    repeatUntilEndIndex = j + steps
+                    // just in case repeat until is inside section, don't add nested steps as its already been added
+                    if(sectionEndIndex == -1) { nestedSteps += steps }
                 }
 
-                // ignore sections inside repeatuntil
-                if (macroStep.commandFQN == CMD_SECTION && j !in repeatUntilStartIndex..repeatUntilEndIndex) {
-                    nestedSteps += macroStep.formatSkippedSections(macroSteps, j, false)
+                // ignore sections inside repeatuntil and section inside section as well
+                if (macroStep.commandFQN == CMD_SECTION && j !in repeatUntilStartIndex..repeatUntilEndIndex &&
+                    (sectionEndIndex == -1 || j > sectionEndIndex)) {
+                    // get step count
+                    val steps = macroStep.formatSkippedSections(macroSteps, j, false)
+                    nestedSteps += steps
+                    sectionEndIndex = j + steps
                 }
 
                 // check repeatuntil inside macro ended or not
@@ -213,6 +224,10 @@ class ExecutionResultHelper(private val allSteps: List<TestStep>, val worksheet:
                     repeatUntilStartIndex = -1
                     repeatUntilEndIndex = -1
                 }
+
+                // check section inside macro ended or not
+                if(sectionEndIndex != -1 && j > sectionEndIndex) { sectionEndIndex = -1 }
+
                 copyMacroSteps(macroStep, currentRow++ + 1, lastDataRow, isRepeatUntil)
                 mergeVerboseOutput(macroStep, currentRow)
 
@@ -379,7 +394,7 @@ class ExecutionResultHelper(private val allSteps: List<TestStep>, val worksheet:
         }
         if (!alreadyMerged) {
             excelSheet.addMergedRegion(
-                CellRangeAddress(rowIndex, rowIndex, COL_IDX_MERGE_RESULT_START, COL_IDX_MERGE_RESULT_END))
+                    CellRangeAddress(rowIndex, rowIndex, COL_IDX_MERGE_RESULT_START, COL_IDX_MERGE_RESULT_END))
         }
         if (cellMerge.cellTypeEnum == STRING) cellMerge.cellStyle = worksheet.getStyle(STYLE_MESSAGE)
         cellMerge.setCellValue(Excel.getCellValue(cellMerge))
@@ -409,9 +424,9 @@ class ExecutionResultHelper(private val allSteps: List<TestStep>, val worksheet:
 
         val cellDescription = row.getCell(COL_IDX_DESCRIPTION)
         val numOfLines = NumberUtils.max(
-            StringUtils.countMatches(Excel.getCellValue(row.getCell(COL_IDX_TESTCASE)), '\n'),
-            StringUtils.countMatches(Excel.getCellValue(cellDescription), '\n'), maxParamLine,
-            StringUtils.countMatches(Excel.getCellValue(row.getCell(COL_IDX_FLOW_CONTROLS)), '\n')) + 1
+                StringUtils.countMatches(Excel.getCellValue(row.getCell(COL_IDX_TESTCASE)), '\n'),
+                StringUtils.countMatches(Excel.getCellValue(cellDescription), '\n'), maxParamLine,
+                StringUtils.countMatches(Excel.getCellValue(row.getCell(COL_IDX_FLOW_CONTROLS)), '\n')) + 1
         worksheet.setMinHeight(cellDescription, numOfLines)
     }
 

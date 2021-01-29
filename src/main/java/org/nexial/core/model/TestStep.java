@@ -50,8 +50,10 @@ import java.io.File;
 import java.io.IOException;
 import java.lang.reflect.InvocationTargetException;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Objects;
+import java.util.stream.Collectors;
 
 import static java.io.File.separator;
 import static java.lang.System.lineSeparator;
@@ -402,14 +404,13 @@ public class TestStep extends TestStepManifest {
     protected void logCommand(String[] args) {
         // log before pause (DO NOT use log() since that might trigger logToTestScript())
         ExecutionLogger logger = context.getLogger();
-        StringBuilder argText = new StringBuilder();
-        for (String arg : args) {
-            argText.append(StringUtils.startsWith(arg, "$(execution") ? context.replaceTokens(arg, true) : arg)
-                   .append(", ");
-        }
+
+        String argText = Arrays.stream(args)
+              .map(arg -> StringUtils.startsWith(arg, "$(execution") ? context.replaceTokens(arg, true) : arg)
+              .collect(Collectors.joining(", "));
 
         // force console logging
-        logger.log(this, "executing " + command + "(" + StringUtils.removeEnd(argText.toString(), ", ") + ")", true);
+        logger.log(this, "executing " + command + "(" + argText + ")", true);
     }
 
     public int formatSkippedSections(List<TestStep> testSteps, int i, boolean updateResult) {
