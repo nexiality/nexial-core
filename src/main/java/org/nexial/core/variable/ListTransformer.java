@@ -256,11 +256,23 @@ public class ListTransformer<T extends ListDataType> extends Transformer {
         return updateValue(data, ArrayUtils.remove(data.getValue(), idx));
     }
 
+    public T removeMatch(T data, String match) {
+        if (data == null || data.getValue() == null || StringUtils.isEmpty(match)) { return data; }
+
+        String match2 = treatCommonValueShorthand(fixControlChars(match));
+        List<String> replaced = new ArrayList<>();
+        Arrays.stream(data.getValue()).forEach(item -> {
+            if (!TextUtils.polyMatch(item, match2)) { replaced.add(item); }
+        });
+
+        return updateValue(data, replaced.toArray(new String[0]));
+    }
+
     public T removeItems(T data, String... items) {
         if (data == null || data.getValue() == null || ArrayUtils.isEmpty(items)) { return data; }
 
         String[] array = data.getValue();
-        for (String item : items) { array = ArrayUtils.removeAllOccurences(array, fixControlChars(item)); }
+        for (String item : items) { array = ArrayUtils.removeAllOccurrences(array, fixControlChars(item)); }
         return updateValue(data, array);
     }
 

@@ -114,8 +114,10 @@ public final class RegexUtils {
      * lines and possibly case insensitively
      */
     public static boolean match(String text, String regex, boolean multiline, boolean caseSensitive) {
-        if (StringUtils.isEmpty(text)) { return false; }
         if (StringUtils.isEmpty(regex)) { return false; }
+        // commented out so that we can match empty string via ^$
+//        if (StringUtils.isEmpty(text)) { return false; }
+        if (StringUtils.isEmpty(text)) { return StringUtils.equals(regex, "^$"); }
         return Pattern.compile(regex, deriveRegexFlags(multiline, caseSensitive)).matcher(text).find();
     }
 

@@ -17,21 +17,10 @@
 
 package org.nexial.core.variable;
 
-import java.io.File;
-import java.text.DateFormat;
-import java.text.SimpleDateFormat;
-import java.util.Date;
-import java.util.HashMap;
-import java.util.Map;
-
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.math.NumberUtils;
-import org.junit.After;
-import org.junit.Assert;
-import org.junit.Before;
-import org.junit.FixMethodOrder;
-import org.junit.Test;
+import org.junit.*;
 import org.nexial.commons.utils.ResourceUtils;
 import org.nexial.core.NexialTestUtils;
 import org.nexial.core.excel.Excel;
@@ -42,6 +31,13 @@ import org.nexial.core.model.MockExecutionContext;
 import org.nexial.core.plugins.NexialCommand;
 import org.nexial.core.plugins.db.DataAccess;
 import org.nexial.core.plugins.db.RdbmsCommand;
+
+import java.io.File;
+import java.text.DateFormat;
+import java.text.SimpleDateFormat;
+import java.util.Date;
+import java.util.HashMap;
+import java.util.Map;
 
 import static java.io.File.separator;
 import static org.apache.commons.lang3.SystemUtils.JAVA_IO_TMPDIR;
@@ -892,6 +888,36 @@ public class ExpressionProcessorTest {
                      "}" +
                      "]}",
                      subject.process(fixture));
+    }
+
+    @Test
+    public void process_removeMatch_with_LIST() throws Exception {
+        ExpressionProcessor subject = new ExpressionProcessor(context);
+
+        String fixture = "[LIST(2441117.97,4750496.50,890528.83,679465.00,2441117.97,6320490.33,8761608.30) => " +
+                         " removeMatch(CONTAIN:5)" +
+                         " combine( )" +
+                         "]";
+        assertEquals("2441117.97 2441117.97 6320490.33 8761608.30", subject.process(fixture));
+
+        fixture = "[TEXT(" +
+                  "5406 Vitamin D (DHT) Bottle      35.45 0     32.230       0.00     32.230     32.230 F< 11\n" +
+                  "5009 Vitamin K-1 25 mg Cap       0.88 66      0.248      16.37      0.247      0.247 FPA< 11 06-09-05\n" +
+                  "7320 Zithromax Oral Susp., 20 mg/cc, 1 oz Ea      35.00 0      0.000       0.00      0.000      0.000 FPA< 11 05-25-01\n" +
+                  "\n" +
+                  "7400 Bordetella Dose      27.94 138      1.454     200.65      1.500      1.500 F< 11 02-03-09\n" +
+                  "7411 Canine Lepto Bacterin Dose       3.45 20      1.150      23.00      1.150      1.150 F< 11 12-17-04\n) => " +
+                  " list(\n)" +
+                  " removeMatch(REGEX:^$)" +
+                  " combine(\n)" +
+                  "]";
+        assertEquals("5406 Vitamin D (DHT) Bottle      35.45 0     32.230       0.00     32.230     32.230 F< 11\n" +
+                     "5009 Vitamin K-1 25 mg Cap       0.88 66      0.248      16.37      0.247      0.247 FPA< 11 06-09-05\n" +
+                     "7320 Zithromax Oral Susp., 20 mg/cc, 1 oz Ea      35.00 0      0.000       0.00      0.000      0.000 FPA< 11 05-25-01\n" +
+                     "7400 Bordetella Dose      27.94 138      1.454     200.65      1.500      1.500 F< 11 02-03-09\n" +
+                     "7411 Canine Lepto Bacterin Dose       3.45 20      1.150      23.00      1.150      1.150 F< 11 12-17-04",
+                     subject.process(fixture));
+
     }
 
     @Test

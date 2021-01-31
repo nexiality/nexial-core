@@ -130,12 +130,12 @@ class ExecutionInspector(private val baseCommand: BaseCommand) {
             "> [EXPR(...) => ...]      - execute Nexial Expression. Example: [TEXT(Hello) => lower]\n" +
             "\n" +
             "> DESKTOP(xpath|label)    - inspect a desktop element based on XPATH or a label in the current form\n" +
-            "> DESKTOP(xpath|labell) => click\n" +
+            "> DESKTOP(xpath|label) => click\n" +
             "                          - click on a desktop element based on XPATH or a label in the current form\n" +
-            "> DESKTOP(xpath|labell) => doubleClick\n" +
+            "> DESKTOP(xpath|label) => doubleClick\n" +
             "                          - double click on a desktop element based on XPATH or a label in the\n" +
             "                            current form\n" +
-            "> DESKTOP(xpath|labell) => type(input)\n" +
+            "> DESKTOP(xpath|label) => type(input)\n" +
             "                          - type the specified input on a desktop element based on XPATH or a label in\n" +
             "                            the current form\n" +
             "> DESKTOP(app) => menu(label,label,...)\n" +
