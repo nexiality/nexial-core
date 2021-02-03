@@ -19,6 +19,7 @@ package org.nexial.commons.utils;
 
 import org.apache.commons.lang3.StringUtils;
 
+import javax.annotation.Nullable;
 import javax.validation.constraints.NotNull;
 import java.util.ArrayList;
 import java.util.List;
@@ -210,8 +211,10 @@ public final class RegexUtils {
     }
 
     /** extract first matched region(s) */
+    @Nullable
     public static String firstMatches(String text, String regex) { return firstMatches(text, regex, false, true); }
 
+    @Nullable
     public static String firstMatches(String text, String regex, boolean multiline, boolean caseSensitive) {
         if (StringUtils.isEmpty(text)) { return text; }
         if (StringUtils.isBlank(regex)) { return text; }

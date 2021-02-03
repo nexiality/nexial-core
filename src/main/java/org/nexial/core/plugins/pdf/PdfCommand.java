@@ -17,15 +17,10 @@
 
 package org.nexial.core.plugins.pdf;
 
-import java.io.*;
-import java.text.DateFormat;
-import java.text.SimpleDateFormat;
-import java.util.*;
-import java.util.concurrent.atomic.AtomicInteger;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
-import java.util.stream.Collectors;
-
+import com.itextpdf.text.Document;
+import com.itextpdf.text.DocumentException;
+import com.itextpdf.text.pdf.*;
+import com.itextpdf.tool.xml.XMLWorkerHelper;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.collections4.MapUtils;
 import org.apache.commons.io.FileUtils;
@@ -64,14 +59,14 @@ import org.nexial.core.utils.OutputFileUtils;
 import org.thymeleaf.util.ArrayUtils;
 import org.thymeleaf.util.ListUtils;
 
-import com.itextpdf.text.Document;
-import com.itextpdf.text.DocumentException;
-import com.itextpdf.text.pdf.BadPdfFormatException;
-import com.itextpdf.text.pdf.PdfCopy;
-import com.itextpdf.text.pdf.PdfReader;
-import com.itextpdf.text.pdf.PdfSmartCopy;
-import com.itextpdf.text.pdf.PdfWriter;
-import com.itextpdf.tool.xml.XMLWorkerHelper;
+import java.io.*;
+import java.text.DateFormat;
+import java.text.SimpleDateFormat;
+import java.util.*;
+import java.util.concurrent.atomic.AtomicInteger;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
+import java.util.stream.Collectors;
 
 import static java.io.File.separator;
 import static java.io.File.separatorChar;
@@ -499,7 +494,7 @@ public class PdfCommand extends BaseCommand {
         if (outputProfile.getMonospaced()) {
             buffer.append("<html>")
                   .append("<head>").append(!context.isNullOrEmptyOrBlankValue(title) ? title : "").append("</head>")
-                  .append("<body>").append("<pre>").append(content).append("</pre>")
+                  .append("<body>").append("<pre>").append(StringUtils.replace(content, "<", "&lt;")).append("</pre>")
                   .append("</body></html>");
         } else {
             buffer.append(content);

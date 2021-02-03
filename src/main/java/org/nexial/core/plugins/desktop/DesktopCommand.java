@@ -303,10 +303,112 @@ public class DesktopCommand extends BaseCommand implements ForcefulTerminate, Ca
 
     public StepResult clickMenu(String menu) {
         requiresNotBlank(menu, "Invalid menu", menu);
-        String[] menuItems = StringUtils.splitByWholeSeparator(menu, context.getTextDelim());
+        return resolveMenuBar().click(StringUtils.splitByWholeSeparator(menu, context.getTextDelim()));
+    }
 
-        DesktopMenuBar menuBar = resolveMenuBar();
-        return menuBar.click(menuItems);
+    public StepResult clickMenuByLocator(String locator, String menu) {
+        requiresNotBlank(locator, "Invalid locator", locator);
+        try {
+            clickMenu(findElement(locator), menu);
+            return StepResult.success("Successfully clicked on Menu " + menu + " on locator " + locator);
+        } catch (IllegalArgumentException e) {
+            return StepResult.fail(e.getMessage());
+        }
+    }
+
+    public void clickMenu(WebElement elem, String menu) throws IllegalArgumentException {
+        if (elem == null) { throw new IllegalArgumentException("element NOT found"); }
+        requiresNotBlank(menu, "Invalid menu", menu);
+
+        String warningSuffix = "likely unable to invoke application menu " + menu;
+
+        String controlType = elem.getAttribute("ControlType");
+        if (!StringUtils.equals(controlType, "ControlType.Window")) {
+            log("[WARNING] target element does not resolve to a Window component; " + warningSuffix);
+        }
+
+        List<WebElement> menuBarObject = findElements(elem, "./*[@ControlType=\"ControlType.MenuBar\"]");
+        if (CollectionUtils.isEmpty(menuBarObject)) {
+            log("[WARNING] No menu bar cannot be found under specified locator; " + warningSuffix);
+            // try with just menu
+            menuBarObject = findElements(elem, ".//*[@ControlType=\"ControlType.Menu\"]");
+            // give up
+            if (CollectionUtils.isEmpty(menuBarObject)) {
+                throw new IllegalArgumentException("Unable to derive any Menu element under the target element");
+            }
+        }
+
+        WebElement menuParent = menuBarObject.get(0);
+
+        // move into position
+        new Actions(winiumDriver).moveToElement(menuParent, 10, 10).perform();
+
+        // split menu into its individual levels
+        String[] menuItems = StringUtils.splitByWholeSeparator(menu, context.getTextDelim());
+        String previousMenuContainer = "";
+        for (int i = 0; i < menuItems.length; i++) {
+            String item = menuItems[i];
+            String xpath =
+                "./" +
+                (i == 0 ? "" : "/*[@ControlType=\"ControlType.Menu\" and @Name=\"" + previousMenuContainer + "\"]") +
+                "/*[@ControlType=\"ControlType.MenuItem\" and @Name=\"" + item + "\"]";
+            previousMenuContainer = item;
+
+            List<WebElement> menuElements = findElements(menuParent, xpath);
+            if (CollectionUtils.isEmpty(menuElements)) {
+                throw new IllegalArgumentException("Menu item " + item + " cannot be found; exiting...");
+            }
+
+            menuParent = menuElements.get(0);
+            new Actions(winiumDriver).moveToElement(menuParent, 10, 10).click(menuParent).perform();
+        }
+    }
+
+    public StepResult contextMenu(String name, String menu) {
+        requiresNotBlank(name, "Invalid name/label", name);
+        DesktopElement component = getRequiredElement(name, Any);
+        if (component == null) { return StepResult.fail("Element '" + name + "' NOT found"); }
+
+        try {
+            contextMenu(component.getElement(), menu);
+            return StepResult.success("Successfully invoke context menu " + menu + " on '" + name + "'");
+        } catch (IllegalArgumentException e) {
+            return StepResult.fail(e.getMessage());
+        }
+    }
+
+    public StepResult contextMenuByLocator(String locator, String menu) {
+        requiresNotBlank(locator, "Invalid locator", locator);
+        try {
+            contextMenu(findElement(locator), menu);
+            return StepResult.success("Successfully invoke context menu " + menu + " on locator " + locator);
+        } catch (IllegalArgumentException e) {
+            return StepResult.fail(e.getMessage());
+        }
+    }
+
+    public void contextMenu(WebElement elem, String menu) throws IllegalArgumentException {
+        if (elem == null) { throw new IllegalArgumentException("element NOT found"); }
+        requiresNotBlank(menu, "Invalid menu", menu);
+
+        // invoke context menu
+        new Actions(winiumDriver).contextClick(elem).perform();
+
+        String xpath = "";
+        String previousMenuContainer = "Menu";
+        String[] menuItems = StringUtils.split(menu, context.getTextDelim());
+        for (String item : menuItems) {
+            xpath += "/*[@ControlType=\"ControlType.Menu\" and @Name=\"" + previousMenuContainer + "\"]" +
+                     "/*[@ControlType=\"ControlType.MenuItem\" and @Name=\"" + item + "\"]";
+            previousMenuContainer = item;
+
+            WebElement menuElement = findFirstElement(xpath);
+            if (menuElement == null) {
+                throw new IllegalArgumentException("Unable to derive menu item " + item + " from target element");
+            }
+
+            new Actions(winiumDriver).moveToElement(menuElement, 10, 10).click(menuElement).perform();
+        }
     }
 
     public StepResult assertMenuEnabled(String menu) {
@@ -905,7 +1007,7 @@ public class DesktopCommand extends BaseCommand implements ForcefulTerminate, Ca
             ConsoleUtils.log("No matched row found.");
         } else {
             context.setData(var, matches);
-            ConsoleUtils.log("saved matched list rows (" + matches.size() + ") to variable '" + var + "'" + NL + matches);
+            ConsoleUtils.log("saved matched list (" + matches.size() + ") to variable '" + var + "'" + NL + matches);
         }
 
         return StepResult.success();
@@ -1835,7 +1937,7 @@ public class DesktopCommand extends BaseCommand implements ForcefulTerminate, Ca
         }
     }
 
-    protected List<WebElement> findElements(WebElement container, String locator) {
+    public List<WebElement> findElements(WebElement container, String locator) {
         requiresNotNull(container, "Invalid container", container);
         requiresNotBlank(locator, "invalid locator", locator);
 
@@ -1859,6 +1961,11 @@ public class DesktopCommand extends BaseCommand implements ForcefulTerminate, Ca
         } catch (NoSuchElementException e) {
             return null;
         }
+    }
+
+    public WebElement findFirstElement(String locator) {
+        List<WebElement> elements = findElements(locator);
+        return CollectionUtils.isEmpty(elements) ? null : elements.get(0);
     }
 
     protected static By findBy(String locator) {
@@ -2013,11 +2120,12 @@ public class DesktopCommand extends BaseCommand implements ForcefulTerminate, Ca
         return StepResult.success("text entered to element '" + name + "'");
     }
 
-    public void type(WebElement elem, String text) {
+    public void
+    type(WebElement elem, String text) {
         if (elem == null) { return; }
 
         // improve on speed.  when not using control key, we should just use winiumDriver.sendKey()
-        boolean useAscii =  context.getBooleanData(USE_ASCII_KEY_MAPPING, getDefaultBool(USE_ASCII_KEY_MAPPING));
+        boolean useAscii = context.getBooleanData(USE_ASCII_KEY_MAPPING, getDefaultBool(USE_ASCII_KEY_MAPPING));
         WiniumUtils.sendKey(getDriver(), elem, text, useAscii);
     }
 

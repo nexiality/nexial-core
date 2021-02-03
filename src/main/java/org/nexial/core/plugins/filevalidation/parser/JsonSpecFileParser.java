@@ -17,12 +17,8 @@
 
 package org.nexial.core.plugins.filevalidation.parser;
 
-import java.io.File;
-import java.io.FileReader;
-import java.io.IOException;
-import java.util.ArrayList;
-import java.util.List;
-
+import com.google.gson.JsonElement;
+import com.google.gson.JsonParser;
 import org.nexial.core.plugins.filevalidation.config.*;
 import org.nexial.core.plugins.filevalidation.config.JsonMappingConfig.FilefooterrecordBean;
 import org.nexial.core.plugins.filevalidation.config.JsonMappingConfig.FileheaderrecordBean;
@@ -33,14 +29,16 @@ import org.nexial.core.plugins.filevalidation.config.JsonMappingConfig.Filesecti
 import org.nexial.core.plugins.filevalidation.config.JsonMappingConfig.RecordspecBean;
 import org.nexial.core.utils.CheckUtils;
 
-import com.google.gson.JsonElement;
-import com.google.gson.JsonParser;
+import java.io.FileReader;
+import java.io.IOException;
+import java.util.ArrayList;
+import java.util.List;
 
 import static org.nexial.core.NexialConst.GSON;
 
 public class JsonSpecFileParser extends RecordSpecFileParser {
 
-    private String jsonConfig;
+    private final String jsonConfig;
     private int previousFieldLength;
 
     JsonSpecFileParser(String jsonConfig) {
@@ -51,7 +49,7 @@ public class JsonSpecFileParser extends RecordSpecFileParser {
     public MasterConfig parseMappingFile() {
         CheckUtils.requiresReadableFile(jsonConfig);
         try {
-            JsonElement json = new JsonParser().parse(new FileReader(new File(jsonConfig)));
+            JsonElement json = JsonParser.parseReader(new FileReader(jsonConfig));
 
             JsonMappingConfig jsonMappingConfig = GSON.fromJson(json, JsonMappingConfig.class);
             return parseJsonDescriptor(jsonMappingConfig);

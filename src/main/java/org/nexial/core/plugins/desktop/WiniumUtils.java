@@ -26,6 +26,7 @@ import org.apache.commons.lang3.tuple.MutablePair;
 import org.nexial.commons.proc.ProcessInvoker;
 import org.nexial.commons.proc.RuntimeUtils;
 import org.nexial.commons.utils.FileUtil;
+import org.nexial.commons.utils.RegexUtils;
 import org.nexial.commons.utils.TextUtils;
 import org.nexial.core.ExecutionThread;
 import org.nexial.core.model.ExecutionContext;
@@ -53,12 +54,71 @@ import static org.nexial.core.NexialConst.Desktop.*;
 import static org.nexial.core.NexialConst.Project.NEXIAL_HOME;
 import static org.nexial.core.NexialConst.Project.NEXIAL_WINDOWS_BIN_REL_PATH;
 import static org.nexial.core.SystemVariables.getDefaultBool;
+import static org.nexial.core.plugins.desktop.DesktopConst.SCRIPT_PREFIX_SHORTCUT;
 import static org.nexial.core.utils.WebDriverUtils.*;
 import static org.openqa.selenium.winium.WiniumDriverService.*;
 
 public final class WiniumUtils {
     private static String winiumPort;
     private static WiniumDriverService winiumDriverService;
+
+    private static final Map<String, String> WINIUM_SHORTCUT_CONTROL_MAPPING = initWiniumShortcutControlMapping();
+    private static final Map<String, String> WINIUM_SHORTCUT_KEY_MAPPING = initWiniumShortcutKeyMapping();
+
+    private static Map<String, String> initWiniumShortcutKeyMapping() {
+        Map<String, String> map = new HashMap<>();
+        map.put("{F1}", "F1");
+        map.put("{F2}", "F2");
+        map.put("{F3}", "F3");
+        map.put("{F4}", "F4");
+        map.put("{F5}", "F5");
+        map.put("{F6}", "F6");
+        map.put("{F7}", "F7");
+        map.put("{F8}", "F8");
+        map.put("{F9}", "F9");
+        map.put("{F10}", "F10");
+        map.put("{F11}", "F11");
+        map.put("{F12}", "F12");
+        map.put("{ESC}", "ESC");
+        map.put("{ESCAPE}", "ESC");
+        map.put("{BACKSPACE}", "BACKSPACE");
+        map.put("{BKSP}", "BACKSPACE");
+        map.put("{INS}", "INS");
+        map.put("{INSERT}", "INS");
+        map.put("{DEL}", "DEL");
+        map.put("{DELETE}", "DEL");
+        map.put("{TAB}", "TAB");
+        map.put("{SPACE}", "SPACE");
+        map.put("{ENTER}", "ENTER");
+        // CONTEXT
+        // CAPSLOCK
+        // NUMLOCK
+        // PRINTSCREEN
+        // SCROLL LOCK
+        // PAUSE
+        map.put("{HOME}", "HOME");
+        map.put("{END}", "END");
+        map.put("{PAGEUP}", "PAGEUP");
+        map.put("{PAGEDOWN}", "PAGEDOWN");
+        map.put("{UP}", "UP");
+        map.put("{DOWN}", "DOWN");
+        map.put("{LEFT}", "LEFT");
+        map.put("{RIGHT}", "RIGHT");
+
+        map.put("{NUMPLUS}", "NUMPLUS");
+        map.put("{NUMMINUS}", "NUMMINUS");
+        map.put("{NUMASTERISK}", "NUMASTERISK");
+        return map;
+    }
+
+    private static Map<String, String> initWiniumShortcutControlMapping() {
+        Map<String, String> map = new HashMap<>();
+        map.put("{CONTROL}", "CTRL");
+        map.put("{CTRL}", "CTRL");
+        map.put("{SHIFT}", "SHIFT");
+        map.put("{ALT}", "ALT");
+        return map;
+    }
 
     private WiniumUtils() { }
 
@@ -214,11 +274,96 @@ public final class WiniumUtils {
         return new WiniumDriver(getWiniumService(), resolveDesktopOptions(exePath, arguments));
     }
 
+    /**
+     * convert the {@literal {...}} bsaed keystrokes into the Winium-specified {@literal <[...]>} shortcut.
+     * <p>
+     * for example,
+     * <pre>
+     * {@code Hello World{CONTROL}a{DELETE}Nevermine{BACKSPACE}d!}
+     * </pre>
+     * would be translated into
+     * <pre>
+     * {@code <[{Hello World}]><[CTRL-a]><[DEL]><[{Nevermine}]><[BACKSPACE]><[{d!}]> }
+     * </pre>
+     *
+     * @param keystrokes
+     */
+    public static String toWiniumShortcuts(String keystrokes) {
+        if (StringUtils.isEmpty(keystrokes)) { return ""; }
+
+        String regexControl = "(\\{[0-9A-Z]+\\})";
+
+        List<String> parts = new ArrayList<>();
+
+        String control = RegexUtils.firstMatches(keystrokes, regexControl);
+        while (StringUtils.isNotEmpty(control)) {
+            String before = StringUtils.substringBefore(keystrokes, control);
+            if (StringUtils.isNotEmpty(before)) { parts.add(before); }
+
+            parts.add(control);
+
+            keystrokes = StringUtils.substringAfter(keystrokes, control);
+            control = RegexUtils.firstMatches(keystrokes, regexControl);
+        }
+
+        // add the last remaining portion of key strokes to list
+        if (StringUtils.isNotEmpty(keystrokes)) { parts.add(keystrokes); }
+
+        StringBuilder buffer = new StringBuilder();
+
+        boolean foundControl = false;
+        for (String part : parts) {
+            // maybe a control? let's check
+            if (WINIUM_SHORTCUT_CONTROL_MAPPING.containsKey(part)) {
+                buffer.append(foundControl ? "-" : "<[").append(WINIUM_SHORTCUT_CONTROL_MAPPING.get(part));
+
+                // .. check the next part, could be another control, a shortcut key or a single character
+                foundControl = true;
+            } else if (WINIUM_SHORTCUT_KEY_MAPPING.containsKey(part)) {
+                if (foundControl) {
+                    buffer.append("-");
+                    foundControl = false;
+                } else {
+                    buffer.append("<[");
+                }
+                buffer.append(WINIUM_SHORTCUT_KEY_MAPPING.get(part)).append("]>");
+            } else {
+                if (foundControl) {
+                    String oneChar = StringUtils.left(part, 1);
+                    oneChar = StringUtils.replace(oneChar, " ", "SPACE");
+                    oneChar = StringUtils.replace(oneChar, "\t", "TAB");
+                    oneChar = StringUtils.replace(oneChar, "\n", "ENTER");
+                    buffer.append("-").append(oneChar).append("]>");
+                    foundControl = false;
+                    part = StringUtils.substring(part, 1);
+                }
+                if (StringUtils.isNotEmpty(part)) { buffer.append("<[{").append(part).append("}]>"); }
+            }
+        }
+
+        return buffer.toString();
+    }
+
     public static void sendKey(WiniumDriver driver, WebElement elem, String keystrokes, boolean useAscii) {
         if (driver == null) { return; }
         if (StringUtils.isEmpty(keystrokes)) { return; }
 
-        Map<String, CharSequence> controlKeyMapping = useAscii ? AsciiKeyMapping.CONTROL_KEY_MAPPING : CONTROL_KEY_MAPPING;
+        String winiumShortcuts = toWiniumShortcuts(keystrokes);
+        if (StringUtils.isEmpty(winiumShortcuts)) { return; }
+
+        if (elem== null) {
+            driver.executeScript(SCRIPT_PREFIX_SHORTCUT + winiumShortcuts);
+        } else {
+            driver.executeScript(SCRIPT_PREFIX_SHORTCUT + winiumShortcuts, elem);
+        }
+    }
+
+    public static void sendKey_old(WiniumDriver driver, WebElement elem, String keystrokes, boolean useAscii) {
+        if (driver == null) { return; }
+        if (StringUtils.isEmpty(keystrokes)) { return; }
+
+//        Map<String, CharSequence> controlKeyMapping = useAscii ? AsciiKeyMapping.CONTROL_KEY_MAPPING : CONTROL_KEY_MAPPING;
+        Map<String, CharSequence> controlKeyMapping = CONTROL_KEY_MAPPING;
         Map<String, CharSequence> keyMapping = useAscii ? AsciiKeyMapping.KEY_MAPPING : KEY_MAPPING;
 
         Actions actions = new Actions(driver);

@@ -17,6 +17,27 @@
 
 package org.nexial.core.plugins.filevalidation.parser;
 
+import com.google.gson.JsonElement;
+import com.google.gson.JsonParser;
+import org.apache.commons.lang3.StringUtils;
+import org.apache.poi.openxml4j.exceptions.InvalidFormatException;
+import org.apache.poi.ss.usermodel.*;
+import org.apache.poi.ss.util.CellReference;
+import org.apache.poi.ss.util.CellUtil;
+import org.apache.poi.xssf.usermodel.XSSFCell;
+import org.apache.poi.xssf.usermodel.XSSFWorkbook;
+import org.nexial.core.excel.Excel;
+import org.nexial.core.plugins.filevalidation.config.*;
+import org.nexial.core.plugins.filevalidation.config.ExcelMappingConfig.FilefooterrecordBean;
+import org.nexial.core.plugins.filevalidation.config.ExcelMappingConfig.FileheaderrecordBean;
+import org.nexial.core.plugins.filevalidation.config.ExcelMappingConfig.FilesectionsBean;
+import org.nexial.core.plugins.filevalidation.config.ExcelMappingConfig.FilesectionsBean.BodyrecordsBean;
+import org.nexial.core.plugins.filevalidation.config.ExcelMappingConfig.FilesectionsBean.FooterrecordBean;
+import org.nexial.core.plugins.filevalidation.config.ExcelMappingConfig.FilesectionsBean.HeaderrecordBean;
+import org.nexial.core.plugins.filevalidation.config.ExcelMappingConfig.MappingconfigBean;
+import org.nexial.core.plugins.filevalidation.config.RecordConfig.RecordConfigBuilder;
+import org.nexial.core.utils.CheckUtils;
+
 import java.io.File;
 import java.io.FileReader;
 import java.io.IOException;
@@ -25,44 +46,14 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import org.apache.commons.lang3.StringUtils;
-import org.apache.poi.openxml4j.exceptions.InvalidFormatException;
-import org.apache.poi.ss.usermodel.Cell;
-import org.apache.poi.ss.usermodel.DataFormatter;
-import org.apache.poi.ss.usermodel.Row;
-import org.apache.poi.ss.usermodel.Sheet;
-import org.apache.poi.ss.usermodel.Workbook;
-import org.apache.poi.ss.util.CellReference;
-import org.apache.poi.ss.util.CellUtil;
-import org.apache.poi.xssf.usermodel.XSSFCell;
-import org.apache.poi.xssf.usermodel.XSSFWorkbook;
-import org.nexial.core.excel.Excel;
-import org.nexial.core.plugins.filevalidation.config.ExcelMappingConfig;
-import org.nexial.core.plugins.filevalidation.config.ExcelMappingConfig.FilefooterrecordBean;
-import org.nexial.core.plugins.filevalidation.config.ExcelMappingConfig.FileheaderrecordBean;
-import org.nexial.core.plugins.filevalidation.config.ExcelMappingConfig.FilesectionsBean;
-import org.nexial.core.plugins.filevalidation.config.ExcelMappingConfig.FilesectionsBean.BodyrecordsBean;
-import org.nexial.core.plugins.filevalidation.config.ExcelMappingConfig.FilesectionsBean.FooterrecordBean;
-import org.nexial.core.plugins.filevalidation.config.ExcelMappingConfig.FilesectionsBean.HeaderrecordBean;
-import org.nexial.core.plugins.filevalidation.config.ExcelMappingConfig.MappingconfigBean;
-import org.nexial.core.plugins.filevalidation.config.FieldConfig;
-import org.nexial.core.plugins.filevalidation.config.MasterConfig;
-import org.nexial.core.plugins.filevalidation.config.RecordConfig;
-import org.nexial.core.plugins.filevalidation.config.RecordConfig.RecordConfigBuilder;
-import org.nexial.core.plugins.filevalidation.config.SectionConfig;
-import org.nexial.core.utils.CheckUtils;
-
-import com.google.gson.JsonElement;
-import com.google.gson.JsonParser;
-
 import static org.apache.poi.ss.usermodel.CellType.BLANK;
 import static org.nexial.core.NexialConst.GSON;
 import static org.nexial.core.excel.ExcelConfig.ALPHABET_COUNT;
 
 public class ExcelSpecFileParser extends RecordSpecFileParser {
-    private DataFormatter dataFormatter = new DataFormatter();
-    private String jsonConfig;
-    private String mappingFilePath;
+    private final DataFormatter dataFormatter = new DataFormatter();
+    private final String jsonConfig;
+    private final String mappingFilePath;
     private int previousFieldLength = 0;
 
     ExcelSpecFileParser(String jsonConfig, String mappingFilePath) {
@@ -74,7 +65,7 @@ public class ExcelSpecFileParser extends RecordSpecFileParser {
     public MasterConfig parseMappingFile() {
         CheckUtils.requiresReadableFile(mappingFilePath);
         try {
-            JsonElement json = new JsonParser().parse(new FileReader(new File(jsonConfig)));
+            JsonElement json = JsonParser.parseReader(new FileReader(jsonConfig));
 
             ExcelMappingConfig excelMappingConfig = GSON.fromJson(json, ExcelMappingConfig.class);
             return parseExcelDescriptor(excelMappingConfig, mappingFilePath);

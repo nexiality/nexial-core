@@ -1,12 +1,15 @@
 package org.nexial.core.interactive
 
 import org.apache.commons.lang3.StringUtils
+import org.apache.commons.lang3.reflect.MethodUtils
 import org.nexial.core.model.ExecutionContext
+import org.nexial.core.plugins.NexialCommand
 import org.nexial.core.plugins.desktop.DesktopCommand
 import org.nexial.core.plugins.desktop.ElementType
 import org.nexial.core.plugins.desktop.WiniumUtils
 import org.openqa.selenium.WebDriverException
 import org.openqa.selenium.WebElement
+import org.openqa.selenium.winium.WiniumDriver
 import org.springframework.util.CollectionUtils
 
 class DesktopInspector(val context: ExecutionContext) {
@@ -15,8 +18,7 @@ class DesktopInspector(val context: ExecutionContext) {
         val command = context.findPlugin("desktop")
                       ?: throw Exception("Looks like desktop command has not yet run; driver not found")
         val desktop = command as DesktopCommand
-
-        val winiumDriver = WiniumUtils.joinRunningApp()
+        resolveDesktopDriver(command)
 
         val useXpath = StringUtils.startsWith(locator, "/*") || StringUtils.startsWith(locator, "//*")
 
@@ -31,13 +33,13 @@ class DesktopInspector(val context: ExecutionContext) {
         } else {
             // special cases: app
             if (locator == "app") {
-                if (action == "menu") {
+                if (action == "menu")
                     if (StringUtils.isBlank(input)) println("No menu item specified") else desktop.clickMenu(input)
-                } else
+                else
                     println("Unsupported action $action")
-
                 return
             } else {
+                // autoscan components
                 val component = desktop.getRequiredElement(locator, ElementType.Any)
                 if (component == null) {
                     println("Unable to resolve to a valid component via label '$locator'")
@@ -66,10 +68,34 @@ class DesktopInspector(val context: ExecutionContext) {
                     StringUtils.equalsIgnoreCase(action, "type")        ->
                         if (StringUtils.isEmpty(input)) println("No input found for type(); ignored")
                         else desktop.type(element, input)
+                    StringUtils.equalsIgnoreCase(action, "menu")        -> menu(desktop, element, input)
+                    StringUtils.equalsIgnoreCase(action, "context")     -> contextMenu(desktop, element, input)
                     else                                                -> println("Unknown action ${action}; ignored")
                 }
             }
         }
+    }
+
+    private fun resolveDesktopDriver(command: NexialCommand?) =
+        if (command != null) {
+            val driver = MethodUtils.invokeMethod(command, true, "getDriver")
+            if (driver != null) driver as WiniumDriver else WiniumUtils.joinRunningApp()
+        } else
+            WiniumUtils.joinRunningApp()
+
+    /**
+     * right click, and then specified menu item(s)
+     */
+    private fun contextMenu(desktop: DesktopCommand, element: WebElement, input: String) {
+        if (StringUtils.isEmpty(input)) return
+        resolveDesktopDriver(desktop)
+        desktop.contextMenu(element, input)
+    }
+
+    private fun menu(desktop: DesktopCommand, element: WebElement, input: String) {
+        if (StringUtils.isEmpty(input)) return
+        resolveDesktopDriver(desktop)
+        desktop.clickMenu(element, input)
     }
 
     private fun showElementDetails(element: WebElement) {
@@ -81,14 +107,28 @@ class DesktopInspector(val context: ExecutionContext) {
         println("  ${showWebElementAttribute(element, "Name")}")
 
         println("[ DISPLAY ]")
-        println("  ${showWebElementProperty("DISPLAYED?", element) { "" + it.isDisplayed }}")
-        println("  ${showWebElementProperty("ENABLED?", element) { "" + it.isEnabled }}")
-        println("  ${showWebElementProperty("SELECTED?", element) { "" + it.isSelected }}")
-        println("  ${showWebElementProperty("TEXT", element) { it.text }}")
+        println("  ${showWebElementProperty("Displayed?", element) { "" + it.isDisplayed }}")
+        println("  ${showWebElementProperty("Enabled?", element) { "" + it.isEnabled }}")
+        println("  ${showWebElementProperty("Selected?", element) { "" + it.isSelected }}")
+        println("  ${showWebElementProperty("Text", element) { it.text }}")
 
         println("[ VISIBILITY ]")
-        println("  ${showWebElementProperty("SIZE (width,height)", element) { "" + it.size }}")
-        println("  ${showWebElementAttribute(element, "Dimension (width,height,x,y)")}")
+        println("  ${
+            showWebElementProperty("Size (width,height)", element) {
+                try {
+                    it.size.toString()
+                } catch (e: Exception) {
+                    // no worries...
+                    "N/A"
+                }
+            }
+        }")
+        println("  ${
+            showWebElementProperty("Dimension (width,height,x,y)", element) {
+                val rect = it.getAttribute("BoundingRectangle")
+                if (StringUtils.isBlank(rect)) "N/A" else "(${StringUtils.replace(rect, ",", ", ")})"
+            }
+        }")
         println("  ${showWebElementAttribute(element, "ClickablePoint")}")
 
         println("[ ATTRIBUTE/PATTERN ]")
@@ -139,8 +179,7 @@ class DesktopInspector(val context: ExecutionContext) {
     private fun printValidWebElementAttribute(element: WebElement, attr: String, prefix: String) {
         try {
             val attrValue = element.getAttribute(attr)
-            if (StringUtils.isNotEmpty(attrValue))
-                println("$prefix${StringUtils.rightPad(attr, 35) + ": "}$attrValue")
+            if (StringUtils.isNotEmpty(attrValue)) println("$prefix${StringUtils.rightPad(attr, 35) + ": "}$attrValue")
         } catch (e: WebDriverException) {
         }
     }

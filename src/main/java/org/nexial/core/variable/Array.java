@@ -17,15 +17,15 @@
 
 package org.nexial.core.variable;
 
-import java.util.Arrays;
-import java.util.stream.Stream;
-
 import org.apache.commons.lang3.ArrayUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.math.NumberUtils;
 import org.nexial.commons.utils.TextUtils;
 import org.nexial.core.ExecutionThread;
 import org.nexial.core.model.ExecutionContext;
+
+import java.util.Arrays;
+import java.util.stream.Stream;
 
 import static org.nexial.core.NexialConst.Data.TEXT_DELIM;
 import static org.nexial.core.SystemVariables.getDefault;
@@ -209,7 +209,7 @@ public class Array {
 
     protected static String[] pack(String[] arr) {
         if (ArrayUtils.isEmpty(arr)) { return null; }
-        return ArrayUtils.removeElements(ArrayUtils.removeAllOccurences(arr, ""), (String) null);
+        return ArrayUtils.removeElements(ArrayUtils.removeAllOccurrences(arr, ""), (String) null);
     }
 
     protected static String[] replica(String[] arr, String count) {

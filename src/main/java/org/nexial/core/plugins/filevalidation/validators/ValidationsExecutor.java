@@ -17,19 +17,9 @@
 
 package org.nexial.core.plugins.filevalidation.validators;
 
-import java.io.File;
-import java.io.IOException;
-import java.io.OutputStream;
-import java.math.BigDecimal;
-import java.math.RoundingMode;
-import java.util.Arrays;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Map.Entry;
-
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.collections4.map.HashedMap;
+import org.apache.commons.lang3.RegExUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.math.NumberUtils;
 import org.nexial.commons.utils.FileUtil;
@@ -45,16 +35,27 @@ import org.nexial.core.plugins.filevalidation.config.RecordConfig;
 import org.nexial.core.plugins.filevalidation.validators.Error.ErrorBuilder;
 import org.nexial.core.utils.ConsoleUtils;
 
+import java.io.File;
+import java.io.IOException;
+import java.io.OutputStream;
+import java.math.BigDecimal;
+import java.math.RoundingMode;
+import java.util.Arrays;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Map.Entry;
+
 import static java.math.RoundingMode.UP;
 
 public class ValidationsExecutor {
 
     private static final Map<String, DataType> ALL_DATA_TYPES = new HashedMap<>();
-    private static Map<String, Alignment> ALL_ALIGNMENTS = new HashMap<>();
+    private static final Map<String, Alignment> ALL_ALIGNMENTS = new HashMap<>();
     private static final int DEC_SCALE = 25;
     private static final RoundingMode ROUND = UP;
-    private FieldValidator startValidator;
-    private ExecutionContext context;
+    private final FieldValidator startValidator;
+    private final ExecutionContext context;
 
     public enum ValidationType {
         REGEX, EQUALS, SQL, API, DB, IN, DATE
@@ -365,7 +366,7 @@ public class ValidationsExecutor {
         text = StringUtils.removeStart(text, "+");
         text = StringUtils.removeStart(text, "-");
 
-        text = StringUtils.removeFirst(text, "^0{1,}");
+        text = RegExUtils.removeFirst(text, "^0{1,}");
         if (StringUtils.isBlank(text)) {
             return null;
         }

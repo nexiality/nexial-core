@@ -65,9 +65,9 @@ class ExecutionInspector(private val baseCommand: BaseCommand) {
                     // desktop var
                     RegexUtils.isExact(input, regexDesktopVar) -> {
                         val groups = RegexUtils.collectGroups(input, regexDesktopVar)
-                        val locator = StringUtils.defaultString(groups[0])
+                        val locator = context.replaceTokens(StringUtils.defaultString(groups[0]))
                         val action = StringUtils.defaultString(groups[2])
-                        val actionInput = StringUtils.defaultString(groups[4])
+                        val actionInput = context.replaceTokens(StringUtils.defaultString(groups[4]))
                         desktopInspector.inspect(locator, action, context.replaceTokens(actionInput, true))
                     }
 
@@ -129,17 +129,20 @@ class ExecutionInspector(private val baseCommand: BaseCommand) {
             "> \$(...)                  - inspect built-in function. Example: $(random|integer|5)\n" +
             "> [EXPR(...) => ...]      - execute Nexial Expression. Example: [TEXT(Hello) => lower]\n" +
             "\n" +
-            "> DESKTOP(xpath|label)    - inspect a desktop element based on XPATH or a label in the current form\n" +
-            "> DESKTOP(xpath|label) => click\n" +
-            "                          - click on a desktop element based on XPATH or a label in the current form\n" +
-            "> DESKTOP(xpath|label) => doubleClick\n" +
-            "                          - double click on a desktop element based on XPATH or a label in the\n" +
-            "                            current form\n" +
-            "> DESKTOP(xpath|label) => type(input)\n" +
-            "                          - type the specified input on a desktop element based on XPATH or a label in\n" +
-            "                            the current form\n" +
+            "DESKTOP ELEMENT INSPECTION:\n" +
+            ":: xpath - refers to the XPATH of the target desktop element\n" +
+            ":: name  - refers to the component name of the target desktop element, which exists in the active form\n" +
+            "> DESKTOP(xpath|name)    - inspect a desktop element\n" +
+            "> DESKTOP(xpath|name) => click\n" +
+            "                          - click on a desktop element\n" +
+            "> DESKTOP(xpath|name) => doubleClick\n" +
+            "                          - double click on a desktop element\n" +
+            "> DESKTOP(xpath|name) => type(input)\n" +
+            "                          - type specified input on a desktop element. Shortcut keys accepted.\n" +
+            "> DESKTOP(xpath|name) => context(label,label,...)\n" +
+            "                          - invoke context menu of the a desktop element\n" +
             "> DESKTOP(app) => menu(label,label,...)\n" +
-            "                          - click on one or more menu items on the current form\n" +
+            "                          - invoke the application menu via respective labels on the current form\n" +
             "\n" +
             "> Press [Enter]           - quit Inspect and return back to Nexial Interactive\n" +
             "\n" +
