@@ -143,8 +143,13 @@ public class ExpressionProcessorTest {
 
         assertEquals("eoo", subject.process("[TEXT(hello world) => retain(aeiou)]"));
         assertEquals("i i a e", subject.process("[TEXT(This is a test) => retain(aeiou )]"));
+
         assertEquals("Thsstst", subject.process("[TEXT(This is a test) => removeRegex([aeiou ])]"));
         assertEquals("hll wrld", subject.process("[TEXT(hello world) => removeRegex([aeiou])]"));
+        assertEquals("hll wrld", subject.process("[TEXT(hello world) => removeRegex([aeiou])]"));
+        assertEquals("elcome to\nthe orld", subject.process("[TEXT(Welcome to\nthe World!) => removeRegex([A-Z!])]"));
+        assertEquals("the World!", subject.process("[TEXT(Welcome to\nthe World!) => removeRegex([A-Za-z ]+\n)]"));
+
         assertEquals("12.450.903419", subject.process("[TEXT(12.450.90-b3419) => retainRegex([0-9\\.])]"));
         assertEquals("f ce ad ee ea ag",
                      subject.process("[TEXT(four scores and seven years ago) => retainRegex([a-j ])]"));

@@ -26,6 +26,7 @@ import org.apache.poi.xssf.usermodel.XSSFCell;
 import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
+import org.junit.Test;
 import org.nexial.commons.utils.DateUtility;
 import org.nexial.commons.utils.FileUtil;
 import org.nexial.core.NexialConst.Project;
@@ -136,8 +137,7 @@ public class ExecutionInputPrepTest {
         FileUtils.deleteDirectory(new File(projectHome));
     }
 
-//    needs investigation
-//    @Test
+    @Test
     public void prep() throws Exception {
         Assert.assertTrue(FileUtil.isDirectoryReadable(outBase));
         Assert.assertTrue(FileUtil.isDirectoryReadable(dirScript.getAbsolutePath()));

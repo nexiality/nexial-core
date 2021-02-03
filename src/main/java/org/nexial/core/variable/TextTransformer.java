@@ -197,7 +197,7 @@ public class TextTransformer<T extends TextDataType> extends Transformer<T> {
 
     public T removeRegex(T data, String regex) {
         if (data == null || StringUtils.isEmpty(data.getTextValue()) || StringUtils.isEmpty(regex)) { return data; }
-        data.setValue(RegexUtils.removeMatches(data.getTextValue(), fixControlChars(regex)));
+        data.setValue(RegexUtils.removeMatches(data.getTextValue(), fixControlChars(regex), true, true));
         return data;
     }
 
