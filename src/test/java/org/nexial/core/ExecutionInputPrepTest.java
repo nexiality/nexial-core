@@ -82,7 +82,7 @@ public class ExecutionInputPrepTest {
         iteration1DataMap.put("nexial.scope.isFirstIteration", "true");
         iteration1DataMap.put("nexial.scope.isLastIteration", "false");
         iteration1DataMap.put("nexial.mailTo", "jumbotron@tiny.corp");
-        iteration1DataMap.put("nexial.delayBetweenStepsMs", "600");
+//        iteration1DataMap.put("nexial.delayBetweenStepsMs", "600");
         iteration1DataMap.put("nexial.failFast", "false");
         iteration1DataMap.put("nexial.pollWaitMs", "800");
         iteration1DataMap.put("nexial.textDelim", ",");
@@ -101,7 +101,7 @@ public class ExecutionInputPrepTest {
         iteration2DataMap.put("nexial.scope.isFirstIteration", "false");
         iteration2DataMap.put("nexial.scope.isLastIteration", "false");
         iteration2DataMap.put("nexial.mailTo", "jumbotron@tiny.corp");
-        iteration2DataMap.put("nexial.delayBetweenStepsMs", "600");
+//        iteration2DataMap.put("nexial.delayBetweenStepsMs", "600");
         iteration2DataMap.put("nexial.failFast", "false");
         iteration2DataMap.put("nexial.pollWaitMs", "800");
         iteration2DataMap.put("nexial.textDelim", ",");
@@ -120,7 +120,7 @@ public class ExecutionInputPrepTest {
         iteration3DataMap.put("nexial.scope.isFirstIteration", "false");
         iteration3DataMap.put("nexial.scope.isLastIteration", "true");
         iteration3DataMap.put("nexial.mailTo", "jumbotron@tiny.corp");
-        iteration3DataMap.put("nexial.delayBetweenStepsMs", "600");
+//        iteration3DataMap.put("nexial.delayBetweenStepsMs", "600");
         iteration3DataMap.put("nexial.failFast", "false");
         iteration3DataMap.put("nexial.pollWaitMs", "800");
         iteration3DataMap.put("nexial.textDelim", ",");
@@ -206,11 +206,13 @@ public class ExecutionInputPrepTest {
                 String name = row.get(0).getStringCellValue();
                 if (!StringUtils.startsWith(name, "java.")) {
                     String value = row.get(1).getStringCellValue();
-                    System.out.print(prefix + "asserting that data name " + name + " has value " + value + "... ");
                     String expected = MapUtils.getString(expectedData, name, System.getProperty(name));
-                    System.out.println("expected=" + expected + ", actual=" + value);
-                    Assert.assertEquals(expected, value);
-                    System.out.println(prefix + "PASSED");
+                    if (expected != null) {
+                        System.out.print(prefix + "asserting that data name " + name + " has value " + value + "... ");
+                        System.out.println("expected=" + expected + ", actual=" + value);
+                        Assert.assertEquals(expected, value);
+                        System.out.println(prefix + "PASSED");
+                    }
                 }
             });
 
