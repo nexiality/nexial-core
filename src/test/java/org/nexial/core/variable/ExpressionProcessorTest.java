@@ -249,6 +249,103 @@ public class ExpressionProcessorTest {
     }
 
     @Test
+    public void processText_removeRegex() throws Exception {
+        ExpressionProcessor subject = new ExpressionProcessor(context);
+
+        String fixture = "this is [TEXT(the best opportunity (or chance maybe...)) => removeRegex(\\.\\.\\.)], blah...";
+        assertEquals("this is the best opportunity (or chance maybe), blah...", subject.process(fixture));
+
+        fixture = "[TEXT(best quote... EVER) => removeRegex(\\.\\.\\.)], blah...";
+        assertEquals("best quote EVER, blah...", subject.process(fixture));
+
+        fixture = "[TEXT(best...\nquote...\nEVER!) => removeRegex(quote\\.\\.\\.)]";
+        assertEquals("best...\n\nEVER!", subject.process(fixture));
+
+        fixture = "[TEXT(Date: 01-25-21 Jamie Test Page: 1\n" +
+                  "I N V E N T O R Y   R E P O R T\n" +
+                  "Code Description U/M Price On hand Avg cost Stock value Unit cost Pkg. cost Codes Cls Last sold Document\n" +
+                  "ANESTHESIA INHALATION\n" +
+                  "3047 Anesthesia Mask Cat Med Each 0.00 2 38.770 77.54 34.857 34.857 F< 11 12-04-04\n) => " +
+                  "removeRegex(I N V E N T O R Y.+\n)]";
+        assertEquals("Date: 01-25-21 Jamie Test Page: 1\n" +
+                     "Code Description U/M Price On hand Avg cost Stock value Unit cost Pkg. cost Codes Cls Last sold Document\n" +
+                     "ANESTHESIA INHALATION\n" +
+                     "3047 Anesthesia Mask Cat Med Each 0.00 2 38.770 77.54 34.857 34.857 F< 11 12-04-04\n",
+                     subject.process(fixture));
+    }
+
+    @Test
+    public void processText_removeLines() throws Exception {
+        ExpressionProcessor subject = new ExpressionProcessor(context);
+
+        // no matching lines
+        String fixture = "this is [TEXT(the best opportunity (or chance maybe...)) => removeLines(...)], blah...";
+        assertEquals("this is the best opportunity (or chance maybe...), blah...", subject.process(fixture));
+
+        fixture = "[TEXT(best quote... EVER) => removeLines(...)], blah...";
+        assertEquals("best quote... EVER, blah...", subject.process(fixture));
+
+        fixture = "[TEXT(best...\nquote...\nEVER!) => removeLines(quote...)]";
+        assertEquals("best...\nEVER!", subject.process(fixture));
+
+        fixture = "[TEXT(Date: 01-25-21 Jamie Test Page: 1\n" +
+                  "I N V E N T O R Y   R E P O R T\n" +
+                  "Code Description U/M Price On hand Avg cost Stock value Unit cost Pkg. cost Codes Cls Last sold Document\n" +
+                  "ANESTHESIA INHALATION\n" +
+                  "3047 Anesthesia Mask Cat Med Each 0.00 2 38.770 77.54 34.857 34.857 F< 11 12-04-04\n) => " +
+                  "removeLines(I N V E N T O R Y   R E P O R T)]";
+        assertEquals("Date: 01-25-21 Jamie Test Page: 1\n" +
+                     "Code Description U/M Price On hand Avg cost Stock value Unit cost Pkg. cost Codes Cls Last sold Document\n" +
+                     "ANESTHESIA INHALATION\n" +
+                     "3047 Anesthesia Mask Cat Med Each 0.00 2 38.770 77.54 34.857 34.857 F< 11 12-04-04\n",
+                     subject.process(fixture));
+    }
+
+    @Test
+    public void processText_removeLinesRegex() throws Exception {
+        ExpressionProcessor subject = new ExpressionProcessor(context);
+
+        String fixture = "this is [TEXT(the best opportunity (or chance maybe...)) => " +
+                         "removeRegex(\\.\\.\\.,true)], blah...";
+        assertEquals("this is the best opportunity (or chance maybe), blah...", subject.process(fixture));
+
+        fixture = "[TEXT(best quote... EVER) => removeRegex(\\.\\.\\.,true)], blah...";
+        assertEquals("best quote EVER, blah...", subject.process(fixture));
+
+        fixture = "[TEXT(best...\nquote...\nEVER!) => removeRegex(^quote\\.\\.\\.\n,true)]";
+        assertEquals("best...\nEVER!", subject.process(fixture));
+
+        fixture = "[TEXT(best...\nquote...\nEVER!) => removeRegex(^quote.+\n,true)]";
+        assertEquals("best...\nEVER!", subject.process(fixture));
+
+        fixture = "[TEXT(best...\nquote...\nEVER!) => removeRegex(^ever.+,true,false)]";
+        assertEquals("best...\nquote...\n", subject.process(fixture));
+
+        fixture = "[TEXT(Date: 01-25-21 Jamie Test Page: 1\n" +
+                  "I N V E N T O R Y   R E P O R T\n" +
+                  "Code Description U/M Price On hand Avg cost Stock value Unit cost Pkg. cost Codes Cls Last sold Document\n" +
+                  "ANESTHESIA INHALATION\n" +
+                  "3047 Anesthesia Mask Cat Med Each 0.00 2 38.770 77.54 34.857 34.857 F< 11 12-04-04\n) => " +
+                  "removeRegex(^I N V E N T O R Y\\s+[A-Z ]+\n,true)]";
+        assertEquals("Date: 01-25-21 Jamie Test Page: 1\n" +
+                     "Code Description U/M Price On hand Avg cost Stock value Unit cost Pkg. cost Codes Cls Last sold Document\n" +
+                     "ANESTHESIA INHALATION\n" +
+                     "3047 Anesthesia Mask Cat Med Each 0.00 2 38.770 77.54 34.857 34.857 F< 11 12-04-04\n",
+                     subject.process(fixture));
+
+        fixture = "[TEXT(Date: 01-25-21 Jamie Test Page: 1\n" +
+                  "4827 Bene-Bac Pet Gel Ea       9.16 0      4.582       0.00      4.582      4.582 F< 11 12-12-01\n" +
+                  "WEFA Wysong EFA without Fish Oil Bottle      23.05     1.75     13.163      23.04     17.460     17.460 FTZ< 11 07-16-05\n" +
+                  "VITAMIN/SUPPLEMENT     317.63\n" +
+                  "TOTAL INVENTORY VALUE 64912.37\n) => " +
+                  "removeRegex(^Date:.+Page:\\s+[0-9]+\n,true) " +
+                  "removeRegex(^[A-Z \\\\/\\,]+(\\s+[0-9\\.]+\\)?\\s*\n,true)]";
+        assertEquals("4827 Bene-Bac Pet Gel Ea       9.16 0      4.582       0.00      4.582      4.582 F< 11 12-12-01\n" +
+                     "WEFA Wysong EFA without Fish Oil Bottle      23.05     1.75     13.163      23.04     17.460     17.460 FTZ< 11 07-16-05\n",
+                     subject.process(fixture));
+    }
+
+    @Test
     public void processText_padLeft() throws Exception {
         ExpressionProcessor subject = new ExpressionProcessor(context);
 

@@ -38,6 +38,7 @@ import org.nexial.core.utils.ConsoleUtils;
 import java.io.IOException;
 import java.lang.reflect.Method;
 import java.util.*;
+import java.util.stream.Collectors;
 
 import static org.nexial.core.NexialConst.Data.EXPRESSION_RESOLVE_URL;
 import static org.nexial.core.NexialConst.Data.TEXT_DELIM;
@@ -195,17 +196,42 @@ public class TextTransformer<T extends TextDataType> extends Transformer<T> {
         return data;
     }
 
-    public T removeRegex(T data, String regex) {
-        if (data == null || StringUtils.isEmpty(data.getTextValue()) || StringUtils.isEmpty(regex)) { return data; }
-        data.setValue(RegexUtils.removeMatches(data.getTextValue(), fixControlChars(regex), true, true));
+    public T removeLines(T data, String match) {
+        if (data == null || StringUtils.isEmpty(data.getTextValue()) || StringUtils.isEmpty(match)) { return data; }
+
+        String searchFor = fixControlChars(match);
+
+        String text = data.getTextValue();
+        List<String> lines = Arrays.asList(StringUtils.splitByWholeSeparatorPreserveAllTokens(text, "\n"));
+        if (CollectionUtils.isEmpty(lines)) {
+            if (TextUtils.polyMatch(text, searchFor)) { data.setValue(""); }
+        } else {
+            data.setValue(lines.stream()
+                               .filter(line -> !TextUtils.polyMatch(line, searchFor))
+                               .collect(Collectors.joining("\n")));
+        }
+        return data;
+    }
+
+    public T removeRegex(T data, String... options) {
+        if (data == null || StringUtils.isEmpty(data.getTextValue())) { return data; }
+        if (ArrayUtils.isEmpty(options)) { return data; }
+
+        // first param is the regex
+        String regex = options[0];
+        // second param is multi line, default is false
+        boolean multiLine = options.length > 1 && BooleanUtils.toBoolean(options[1]);
+        // third param is case-sensitive, default is true
+        boolean caseSensitive = options.length <= 2 || BooleanUtils.toBoolean(options[2]);
+
+        data.setValue(RegexUtils.removeMatches(data.getTextValue(), fixControlChars(regex), multiLine, caseSensitive));
         return data;
     }
 
     public T retain(T data, String keep) {
         if (data == null || StringUtils.isEmpty(data.getTextValue()) || StringUtils.isEmpty(keep)) { return data; }
 
-        String current = data.getTextValue();
-        data.setValue(TextUtils.keepOnly(current, fixControlChars(keep)));
+        data.setValue(TextUtils.keepOnly(data.getTextValue(), fixControlChars(keep)));
         return data;
     }
 
