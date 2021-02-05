@@ -98,7 +98,7 @@ class LocalDbCommand : BaseCommand() {
         requiresNotBlank(tables, "invalid table(s)", tables)
 
         val sqls = StringUtils.split(tables, context.textDelim)
-                       .joinToString(separator = "\n") { table -> "DROP TABLE $table;" } + "\nVACUUM;"
+                           .joinToString(separator = "\n") { table -> "DROP TABLE $table;" } + "\nVACUUM;"
         return rdbms.runSQLs(`var`, dbName, sqls)
     }
 
@@ -179,11 +179,11 @@ class LocalDbCommand : BaseCommand() {
 
         // 2. set up csv parser
         val parser = CsvParserBuilder()
-            .setDelim(context.textDelim)
-            .setHasHeader(true)
-            .setMaxColumns(context.getIntData(CSV_MAX_COLUMNS, -1))
-            .setMaxColumnWidth(context.getIntData(CSV_MAX_COLUMN_WIDTH, -1))
-            .build()
+                .setDelim(context.textDelim)
+                .setHasHeader(true)
+                .setMaxColumns(context.getIntData(CSV_MAX_COLUMNS, -1))
+                .setMaxColumnWidth(context.getIntData(CSV_MAX_COLUMN_WIDTH, -1))
+                .build()
 
         // 3. parse csv and resolve csv metadata
         val csvRecords = parser.parseAllRecords(StringReader(csvContent))
@@ -193,8 +193,8 @@ class LocalDbCommand : BaseCommand() {
 
         // 4. if target table not exist, create it
         val tableInfo = dao.executeSqls(SqlComponent.toList(
-            "SELECT name, \"notnull\" AS 'not_null', dflt_value FROM pragma_table_info('$table') ORDER BY cid;" +
-            "SELECT upper(name) || '=' || dflt_value AS 'defaults' FROM pragma_table_info('$table') WHERE dflt_value IS NOT NULL"))
+                "SELECT name, \"notnull\" AS 'not_null', dflt_value FROM pragma_table_info('$table') ORDER BY cid;" +
+                "SELECT upper(name) || '=' || dflt_value AS 'defaults' FROM pragma_table_info('$table') WHERE dflt_value IS NOT NULL"))
 
         val columns = if (tableInfo.rowCount < 1) {
             // target table does not exist, let's create it
@@ -213,13 +213,13 @@ class LocalDbCommand : BaseCommand() {
             val normalizedCsvHeaders = headers.map { it.toLowerCase() }.sorted()
 
             TextUtils.toString(
-                if (normalizedDefinedColumns.containsAll(normalizedCsvHeaders)) {
-                    // all CSV headers are found as column name in the existing table. We'll use name-matching mapping
-                    headers
-                } else {
-                    // not all CSV headers are found in existing table as column. We'll use left-to-right mapping
-                    definedColumns.subList(0, headers.size)
-                }.map { treatColumnName(it.toString()) }, ",")
+                    if (normalizedDefinedColumns.containsAll(normalizedCsvHeaders)) {
+                        // all CSV headers are found as column name in the existing table. We'll use name-matching mapping
+                        headers
+                    } else {
+                        // not all CSV headers are found in existing table as column. We'll use left-to-right mapping
+                        definedColumns.subList(0, headers.size)
+                    }.map { treatColumnName(it.toString()) }, ",")
         }
 
         val defaultValues = if (tableInfo.rowCount < 1)
@@ -232,16 +232,16 @@ class LocalDbCommand : BaseCommand() {
         }
 
         // 5. import data via INSERT generator
-        val insertPrefix = "INSERT INTO $table ($columns) VALUES ("
         csvRecords.forEach { record ->
-            queries.append(insertPrefix)
-            record.values.forEachIndexed { index, value ->
-                val insertValue =
-                        if (StringUtils.isEmpty(value)) defaultValues[headers[index].toUpperCase()] ?: value else value
-                queries.append("\"$insertValue\",")
-            }
-            queries.delete(queries.length - 1, queries.length)
-            queries.append(");\n")
+            queries.append("INSERT INTO $table ($columns) VALUES (")
+                    .append(record.values.mapIndexed { index, value ->
+                        "'" + treatColumnValue(
+                                if (StringUtils.isEmpty(value))
+                                    defaultValues[headers[index].toUpperCase()] ?: value
+                                else value
+                        ) + "'"
+                    }.joinToString(separator = ","))
+                    .append(");\n")
         }
 
         // 6. execute generated queries
@@ -258,10 +258,12 @@ class LocalDbCommand : BaseCommand() {
         }
     }
 
+    private fun treatColumnValue(value: String?) = StringUtils.replace(value, "'", "''")
+
     // handle column names with spaces or commas
     private fun treatColumnName(column: String) = when {
         StringUtils.isEmpty(column)                           -> "\"\""
-        StringUtils.containsAny(column, " ,()")               -> TextUtils.wrapIfMissing(column, "\"", "\"")
+        StringUtils.containsAny(column, " ,()/-")             -> TextUtils.wrapIfMissing(column, "\"", "\"")
         conflictingColumnNames.contains(column.toLowerCase()) -> TextUtils.wrapIfMissing(column, "\"", "\"")
         else                                                  -> column
     }
