@@ -17,21 +17,17 @@
 
 package org.nexial.core.plugins.desktop;
 
-import java.util.Arrays;
-import java.util.List;
-
-import org.apache.commons.lang3.StringUtils;
-import org.nexial.core.utils.ConsoleUtils;
-import org.openqa.selenium.By;
-import org.openqa.selenium.WebElement;
-import org.openqa.selenium.interactions.Actions;
-import org.openqa.selenium.winium.WiniumDriver;
-
 import com.google.gson.ExclusionStrategy;
 import com.google.gson.FieldAttributes;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.gson.typeadapters.RuntimeTypeAdapterFactory;
+import org.apache.commons.lang3.StringUtils;
+import org.nexial.core.utils.ConsoleUtils;
+import org.openqa.selenium.WebElement;
+
+import java.util.Arrays;
+import java.util.List;
 
 import static org.nexial.core.NexialConst.NAMESPACE;
 import static org.nexial.core.NexialConst.NL;
@@ -253,6 +249,8 @@ public class DesktopConst {
     public static final String UNMATCHED_LABEL_PREFIX = "[[UNMATCHED]]";
     public static final boolean AUTOSCAN_DEBUG = false;
     public static final int POST_MENU_CLICK_WAIT_MS = 2000;
+
+    public static final String CONTEXT_MENU_VIA_INDEX = "INDEX:";
 
     protected DesktopConst() { }
 

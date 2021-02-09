@@ -394,20 +394,39 @@ public class DesktopCommand extends BaseCommand implements ForcefulTerminate, Ca
         // invoke context menu
         new Actions(winiumDriver).contextClick(elem).perform();
 
+        boolean useIndex = StringUtils.startsWith(menu, CONTEXT_MENU_VIA_INDEX);
+        if (useIndex) { menu = StringUtils.trim(StringUtils.substringAfter(menu, CONTEXT_MENU_VIA_INDEX)); }
+
         String xpath = "";
         String previousMenuContainer = "Menu";
         String[] menuItems = StringUtils.split(menu, context.getTextDelim());
         for (String item : menuItems) {
-            xpath += "/*[@ControlType=\"ControlType.Menu\" and @Name=\"" + previousMenuContainer + "\"]" +
-                     "/*[@ControlType=\"ControlType.MenuItem\" and @Name=\"" + item + "\"]";
-            previousMenuContainer = item;
+            xpath += "/*[@ControlType=\"ControlType.Menu\"";
+            if (StringUtils.isNotBlank(previousMenuContainer)) {
+                xpath += " and @Name=\"" + previousMenuContainer + "\"";
+            }
+            xpath += "]";
+
+            if (useIndex) {
+                if (!NumberUtils.isDigits(item)) {
+                    throw new IllegalArgumentException("Invalid context menu index: " + item);
+                }
+                if (StringUtils.equals(item, "0")) {
+                    throw new IllegalArgumentException("Invalid context menu index: " + item + ". Must be 1-based.");
+                }
+                xpath += "/*[@ControlType=\"ControlType.MenuItem\"][" + item + "]";
+                previousMenuContainer = "";
+            } else {
+                xpath += "/*[@ControlType=\"ControlType.MenuItem\" and @Name=\"" + item + "\"]";
+                previousMenuContainer = item;
+            }
 
             WebElement menuElement = findFirstElement(xpath);
             if (menuElement == null) {
                 throw new IllegalArgumentException("Unable to derive menu item " + item + " from target element");
             }
 
-            new Actions(winiumDriver).moveToElement(menuElement, 10, 10).click(menuElement).perform();
+            new Actions(winiumDriver).moveToElement(menuElement, 10, 10).click(menuElement).pause(750L).perform();
         }
     }
 
