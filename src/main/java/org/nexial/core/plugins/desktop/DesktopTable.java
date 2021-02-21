@@ -17,15 +17,6 @@
 
 package org.nexial.core.plugins.desktop;
 
-import java.time.Duration;
-import java.time.Instant;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
-import java.util.Map;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
-
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.collections4.MapUtils;
 import org.apache.commons.collections4.map.ListOrderedMap;
@@ -37,6 +28,7 @@ import org.json.JSONException;
 import org.json.JSONObject;
 import org.nexial.commons.utils.TextUtils;
 import org.nexial.core.ExecutionThread;
+import org.nexial.core.NexialConst.PolyMatcher;
 import org.nexial.core.model.ExecutionContext;
 import org.nexial.core.model.StepResult;
 import org.nexial.core.plugins.desktop.ig.IgExplorerBar;
@@ -47,6 +39,13 @@ import org.openqa.selenium.NoSuchElementException;
 import org.openqa.selenium.WebElement;
 import org.openqa.selenium.interactions.Actions;
 
+import java.time.Duration;
+import java.time.Instant;
+import java.util.*;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
+import java.util.stream.Collectors;
+
 import static org.nexial.core.NexialConst.Desktop.CLEAR_TABLE_CELL_BEFORE_EDIT;
 import static org.nexial.core.NexialConst.NL;
 import static org.nexial.core.SystemVariables.getDefaultBool;
@@ -54,6 +53,7 @@ import static org.nexial.core.plugins.desktop.DesktopConst.*;
 import static org.nexial.core.plugins.desktop.DesktopUtils.*;
 import static org.nexial.core.plugins.desktop.ElementType.*;
 import static org.nexial.core.utils.CheckUtils.requiresNotNull;
+import static org.openqa.selenium.Keys.ESCAPE;
 
 /**
  * capture both behavior and data of a {@link ElementType#Table} element (the corresponding @ControlType is
@@ -61,6 +61,8 @@ import static org.nexial.core.utils.CheckUtils.requiresNotNull;
  * <p>
  * Instance of this element may be stored in session ({@link DesktopSession}) so that its content and state can be
  * retained for the span of an execution cycle.
+ * <p>
+ * As of v3.7, we will support HierTable (aka ControlType.Tree) as well
  */
 public class DesktopTable extends DesktopElement {
     protected List<String> headers;
@@ -68,7 +70,10 @@ public class DesktopTable extends DesktopElement {
     protected int columnCount = UNDEFINED;
     protected int headerHeight = TABLE_HEADER_HEIGHT;
     protected int clickOffsetX = TABLE_ROW_X_OFFSET;
+    // in case some table column headers contains multiple/repeating spaces, setting this property to true means Nexial
+    // would normalize the repeating spaces in column header during XPATH generation
     protected boolean normalizeSpace;
+    protected boolean isTreeView;
 
     public static class TableMetaData {
         protected List<String> headers;
@@ -109,9 +114,12 @@ public class DesktopTable extends DesktopElement {
 
     protected DesktopTable() { }
 
+    /** As of v3.7, we will support HierTable (aka ControlType.Tree) as well */
     public static DesktopTable toInstance(DesktopElement component) {
         DesktopTable instance = new DesktopTable();
         copyTo(component, instance);
+        if (component.getElementType() == HierTable) { instance.isTreeView = true; }
+
         if (MapUtils.isNotEmpty(instance.extra)) {
             // needed for multi-line headers
             if (instance.extra.containsKey("normalizeSpace")) {
@@ -166,7 +174,8 @@ public class DesktopTable extends DesktopElement {
         // short-circuit: if header information is provided via extra, then we don't need to do the scanning again
         if (CollectionUtils.isEmpty(headers) || CollectionUtils.size(headers) != columnCount) {
             // collect headers
-            String xpath = StringUtils.appendIfMissing(getXpath(), "/") + LOCATOR_HEADER_COLUMNS;
+            String xpath = StringUtils.appendIfMissing(getXpath(), "/") +
+                           (isTreeView ? LOCATOR_HIER_HEADER_COLUMNS : LOCATOR_HEADER_COLUMNS);
             ConsoleUtils.log("scanning for table structure via " + xpath);
 
             headers = new ArrayList<>();
@@ -188,6 +197,7 @@ public class DesktopTable extends DesktopElement {
         return tableData.getRows();
     }
 
+    /** As of v3.7, we will support HierTable (aka ControlType.Tree) and converting to CSV structure (text) */
     public void clickRow(int row) {
         sanityCheck();
 
@@ -203,16 +213,20 @@ public class DesktopTable extends DesktopElement {
         if (rowCount == 0) {
             clickOffset(getElement(), clickOffsetX, (headerHeight + (TABLE_ROW_HEIGHT * row) + (TABLE_ROW_HEIGHT / 2)));
         } else {
-            clickElement(StringUtils.replace(LOCATOR_FIRST_CELL, "{row}", (row + 1) + ""));
+            String xpath = isTreeView ? LOCATOR_HIER_FIRST_CELL : LOCATOR_FIRST_CELL;
+            xpath = StringUtils.replace(xpath, "{row}", (row + 1) + "");
+            clickElement(xpath);
         }
     }
 
+    /** As of v3.7, we will support HierTable (aka ControlType.Tree) and converting to CSV structure (text) */
     public boolean clickCell(int row, String column) {
         sanityCheck(row, column);
 
         if (row > getTableRowCount()) {
             // perhaps user wants to click on a new row.. let's click new row by offset and then check if the new row is created
             clickOffset(element, clickOffsetX, (headerHeight + (TABLE_ROW_HEIGHT * row) + (TABLE_ROW_HEIGHT / 2)));
+            // todo: need to figure out XPATH for HierTable
             String xpath = StringUtils.replace(LOCATOR_NEW_ROW_CELL, "{column}", column);
             try {
                 return element.findElement(By.xpath(xpath)) != null;
@@ -221,8 +235,10 @@ public class DesktopTable extends DesktopElement {
             }
         }
 
-        return clickElement(StringUtils.replace(StringUtils.replace(LOCATOR_CELL, "{row}", (row + 1) + ""),
-                                                "{column}", column));
+        String xpath = isTreeView ? LOCATOR_HIER_CELL : LOCATOR_CELL;
+        xpath = StringUtils.replace(xpath, "{row}", (row + 1) + "");
+        xpath = StringUtils.replace(xpath, "{column}", column);
+        return clickElement(xpath);
     }
 
     public int findColumnIndex(String column) { return headers.indexOf(column); }
@@ -231,26 +247,44 @@ public class DesktopTable extends DesktopElement {
         return headers != null && headers.contains(treatColumnHeader(header));
     }
 
+    /** As of v3.7, we will support HierTable (aka ControlType.Tree) as well */
     public TableData fetch(int begin, int end) {
         sanityCheck();
         Instant startTime = Instant.now();
-        String object = (String) driver.executeScript("datagrid: fetch", element, begin, end);
-        Instant endTime = Instant.now();
-        Duration duration = Duration.between(startTime, endTime);
-        return new TableData(object, duration);
+        if (isTreeView) {
+            String xpath = StringUtils.appendIfMissing(getXpath(), "/") +
+                           "/*[@ControlType='ControlType.DataItem' and " +
+                           "(position() >= " + (begin + 2) + " and position() <= " + (end + 2) + ")]/*";
+            List<WebElement> rowData = driver.findElements(By.xpath(xpath));
+            return TableData.fromTreeViewRows(headers, rowData, Duration.between(startTime, Instant.now()));
+        } else {
+            String object = (String) driver.executeScript("fetch", element, begin, end);
+            return new TableData(object, Duration.between(startTime, Instant.now()));
+        }
     }
 
+    /** As of v3.7, we will support HierTable (aka ControlType.Tree) as well */
     public TableData fetchAll() {
         sanityCheck();
         Instant startTime = Instant.now();
-        String object = (String) driver.executeScript("datagrid: fetch-all", element);
-        Instant endTime = Instant.now();
-        Duration duration = Duration.between(startTime, endTime);
-        return new TableData(object, duration);
+        if (isTreeView) {
+            String xpath = StringUtils.appendIfMissing(getXpath(), "/") + "/*[@ControlType='ControlType.DataItem']/*";
+            List<WebElement> rowData = driver.findElements(By.xpath(xpath));
+            return TableData.fromTreeViewRows(headers, rowData, Duration.between(startTime, Instant.now()));
+        } else {
+            String object = (String) driver.executeScript("fetch-all", element);
+            return new TableData(object, Duration.between(startTime, Instant.now()));
+        }
     }
 
+    /** As of v3.7, we will support HierTable (aka ControlType.Tree) as well */
     public int getTableRowCount() {
-        Object object = driver.executeScript("datagrid: row-count", element);
+        if (isTreeView) {
+            String xpath = StringUtils.appendIfMissing(getXpath(), "/") + LOCATOR_HIER_TABLE_ROWS;
+            return CollectionUtils.size(driver.findElements(By.xpath(xpath)));
+        }
+
+        Object object = driver.executeScript("row-count", element);
         if (object == null) { return collectRowCountByXpath(); }
 
         JSONObject jsonObject = JsonUtils.toJSONObject(object.toString());
@@ -268,11 +302,13 @@ public class DesktopTable extends DesktopElement {
         }
     }
 
+    /** As of v3.7, we will support HierTable (aka ControlType.Tree) as well */
     public DesktopTableRow fetchOrCreateRow(int row) {
         sanityCheck(row, null);
         ExecutionContext context = ExecutionThread.get();
 
-        List<WebElement> dataElements = element.findElements(By.xpath(LOCATOR_TABLE_DATA));
+        List<WebElement> dataElements =
+            element.findElements(By.xpath(isTreeView ? LOCATOR_HIER_TABLE_ROWS : LOCATOR_TABLE_DATA));
         List<WebElement> rows;
         if (CollectionUtils.isEmpty(dataElements)) {
             ConsoleUtils.log("No rows found for data grid " + element + "; Trying other approach...");
@@ -281,7 +317,9 @@ public class DesktopTable extends DesktopElement {
             rows = getRowElements();
         } else {
             rows = new ArrayList<>();
-            dataElements.forEach(elem -> { if (elem != null) { rows.add(elem); } });
+            dataElements.forEach(elem -> {
+                if (elem != null) { rows.add(elem); }
+            }); //todo: short circuit this: fetch only requested row
         }
 
         int rowCount = CollectionUtils.size(rows);
@@ -300,13 +338,9 @@ public class DesktopTable extends DesktopElement {
             List<WebElement> matches;
             // using offsets, only when to click on the first row and it is new row.
             if (row == 0) {
-                boolean clickBeforeEdit = context.getBooleanData(CURRENT_DESKTOP_TABLE_CLICK_BEFORE_EDIT,
-                                                                 DEF_DESKTOP_TABLE_CLICK_BEFORE_EDIT);
-                if (clickBeforeEdit) {
-                    clickOffset(element, clickOffsetX,
-                                (headerHeight + (TABLE_ROW_HEIGHT * row) + (TABLE_ROW_HEIGHT / 2)));
-                }
-                matches = element.findElements(By.xpath(LOCATOR_NEW_ROW));
+                if (clickBeforeEdit()) { clickOffset(element, clickOffsetX, (headerHeight + (TABLE_ROW_HEIGHT / 2))); }
+                matches =
+                    element.findElements(By.xpath(LOCATOR_NEW_ROW)); // todo: what's the new row locator for treeview?
                 if (CollectionUtils.isEmpty(matches)) {
                     throw new IllegalArgumentException(msgPrefix + "Unable to retrieve columns - no 'Add Row'");
                 }
@@ -333,7 +367,9 @@ public class DesktopTable extends DesktopElement {
             ConsoleUtils.log("fetching columns for " + msgPrefix + "via " + cellsXpath);
             columns = matches.get(0).findElements(By.xpath(cellsXpath));
         } else {
-            String cellsXpath = StringUtils.replace(LOCATOR_CELLS, "{row}", (row + 1) + "");
+            String cellsXpath = StringUtils.replace(isTreeView ? LOCATOR_HIER_CELLS : LOCATOR_CELLS,
+                                                    "{row}",
+                                                    (row + 1) + "");
             ConsoleUtils.log("fetching columns for " + msgPrefix + "via " + cellsXpath);
             columns = element.findElements(By.xpath(cellsXpath));
         }
@@ -357,6 +393,11 @@ public class DesktopTable extends DesktopElement {
         tableRow.setColumns(columnMapping);
         tableRow.setTable(this);
         return tableRow;
+    }
+
+    private boolean clickBeforeEdit() {
+        ExecutionContext context = ExecutionThread.get();
+        return context.getBooleanData(CURRENT_DESKTOP_TABLE_CLICK_BEFORE_EDIT, DEF_DESKTOP_TABLE_CLICK_BEFORE_EDIT);
     }
 
     public StepResult editCells(Integer row, Map<String, String> nameValues) {
@@ -652,45 +693,58 @@ public class DesktopTable extends DesktopElement {
         if (element == null) { element = driver.findElement(By.xpath(getXpath())); }
     }
 
-    protected boolean containsAnywhere(List<List<String>> data, String... text) {
-        if (text == null || CollectionUtils.isEmpty(data)) { return false; }
+    //    protected boolean containsAnywhere(List<List<String>> data, String... text) {
+    //        if (text == null || CollectionUtils.isEmpty(data)) { return false; }
+    //        for (int i = 0; i < data.size(); i++) {
+    //            if (contains(data.get(i), Arrays.asList(text))) { return true; }
+    //        }
+    //        return false;
+    //    List<String> expected = Arrays.asList(text);
 
-        for (int i = 0; i < data.size(); i++) {
-            if (contains(data.get(i), Arrays.asList(text))) { return true; }
-        }
-        return false;
+    /** support PolyMatcher, as of v3.7 */
+    protected boolean containsAnywhere(List<List<String>> data, List<String> expected) {
+        // if there's no data to check, and we aren't checking anything -- then that's a PASS (and weird)
+        if (CollectionUtils.isEmpty(expected)) { return CollectionUtils.isEmpty(data); }
+        return data.stream().anyMatch(row -> contains(row, expected));
     }
 
+    /** support PolyMatcher, as of v3.7 */
     protected boolean containsColumnData(String column, String... text) {
+        if (ArrayUtils.isEmpty(text)) { return true; }
+
         int pos = resolveColumnIndex(column);
         if (pos == UNDEFINED) { return false; }
 
-        if (ArrayUtils.isEmpty(text)) {return true;}
+        //        List<String> actual = new ArrayList<>();
+        //        TableData tableData = fetchAll();
+        //        List<List<String>> data = tableData.getRows();
+        //        data.forEach(row -> { if (row != null) { actual.add(row.get(pos)); }});
 
-        List<String> actual = new ArrayList<>();
-        TableData tableData = fetchAll();
-        List<List<String>> data = tableData.getRows();
-        data.forEach(row -> { if (row != null) { actual.add(row.get(pos)); }});
+        List<String> actual = fetchAll().getRows()
+                                        .stream()
+                                        .filter(Objects::nonNull)
+                                        .map(row -> row.get(pos))
+                                        .collect(Collectors.toList());
         return contains(actual, Arrays.asList(text));
     }
 
+    /** support PolyMatcher, as of v3.7 */
     protected boolean containsRowData(int row, String... text) {
         List<String> data = fetch(row, row).getRows().get(0);
         return isValidRow(data, row) && contains(data, Arrays.asList(text));
     }
 
-    protected List<List<String>> findMatchedRows(String... text) {
-        List<String> criterion = Arrays.asList(text);
-        List<List<String>> tableRows = fetchAll().getRows();
-        if (tableRows.isEmpty()) {
-            throw new IllegalStateException("Table does not contain any data");
-        }
-        List<List<String>> matched = new ArrayList<>();
+    //    protected List<List<String>> findMatchedRows(String... text) {
+    //        List<String> criterion = Arrays.asList(text);
+    //        List<List<String>> matched = new ArrayList<>();
+    //        tableRows.forEach(row -> { if (contains(row, criterion)) {matched.add(row);}});
+    //        return matched;
 
-        tableRows.forEach(row -> {
-            if (contains(row, criterion)) {matched.add(row);}
-        });
-        return matched;
+    /** support PolyMatcher, as of v3.7 */
+    protected List<List<String>> findMatchedRows(List<String> criterion) {
+        List<List<String>> tableRows = fetchAll().getRows();
+        if (tableRows.isEmpty()) { throw new IllegalStateException("Table does not contain any data"); }
+        return tableRows.stream().filter(row -> contains(row, criterion)).collect(Collectors.toList());
     }
 
     protected int resolveColumnIndex(String column) {
@@ -730,6 +784,7 @@ public class DesktopTable extends DesktopElement {
         return true;
     }
 
+    /** support PolyMatcher, as of v3.7 */
     protected boolean contains(List<String> actual, List<String> expected) {
         // the specified row is also empty or contains only empty string, then this is a match
         if (CollectionUtils.isEmpty(expected) || TextUtils.countMatches(expected, "") == expected.size()) {
@@ -737,7 +792,14 @@ public class DesktopTable extends DesktopElement {
         }
 
         for (String expectedValue : expected) {
-            if (!actual.contains(expectedValue)) {
+            if (StringUtils.isEmpty(expectedValue)) { continue; }
+
+            if (PolyMatcher.isPolyMatcher(expectedValue)) {
+                if (!TextUtils.polyMatch(actual, expectedValue)) {
+                    ConsoleUtils.log("EXPECTED value '" + expectedValue + "' is NOT poly-matched in " + actual);
+                    return false;
+                }
+            } else if (!actual.contains(expectedValue)) {
                 ConsoleUtils.log("EXPECTED value '" + expectedValue + "' is NOT found in " + actual);
                 return false;
             }
@@ -789,16 +851,17 @@ public class DesktopTable extends DesktopElement {
     }
 
     private void looseCurrentFocus() {
-
         DesktopSession session = getCurrentSession();
         requiresNotNull(session, "No active desktop session found");
 
         IgExplorerBar explorerBar = session.findThirdPartyComponent(IgExplorerBar.class);
-        requiresNotNull(explorerBar, "EXPECTED explorer bar component NOT specified/loaded");
-
-        // todo: need to configure the element to click on per application
-        explorerBar.clickFirstSectionHeader();
-
+        if (explorerBar != null) {
+            // todo: need to configure the element to click on per application
+            explorerBar.clickFirstSectionHeader();
+        } else {
+            ConsoleUtils.log("no explorer bar component specified/loaded; try pressing escape key...");
+            new Actions(driver).sendKeys(ESCAPE);
+        }
     }
 
     private List<WebElement> rescanNullColumns(List<WebElement> columns, String cellsXpath) {
@@ -816,7 +879,7 @@ public class DesktopTable extends DesktopElement {
     }
 
     private void clearCellContent(WebElement cellElement) {
-        driver.executeScript("automation: ValuePattern.SetValue", cellElement, "");
+        driver.executeScript("ValuePattern.SetValue", cellElement, "");
     }
 
     private int collectRowCountByXpath() {
@@ -862,7 +925,7 @@ public class DesktopTable extends DesktopElement {
 
             // do I have Edit component under Table?
             // todo: try for performance improvement by using .findElement
-            List<WebElement> matches = element.findElements(By.xpath("*[@ControlType='" + EDIT + "']"));
+            List<WebElement> matches = cellElement.findElements(By.xpath("*[@ControlType='" + EDIT + "']"));
             if (CollectionUtils.isNotEmpty(matches)) {
                 // clear existing content first
                 ConsoleUtils.log("clear content on '" + column + "' first");

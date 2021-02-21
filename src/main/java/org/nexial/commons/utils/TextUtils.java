@@ -1293,6 +1293,11 @@ public final class TextUtils {
                }).collect(Collectors.joining(""));
     }
 
+    /** check if one of the items of {@code actual} would poly-match against the specified {@code expected}. */
+    public static boolean polyMatch(List<String> actual, String expected) {
+        return actual.stream().anyMatch(item -> polyMatch(item, expected, false));
+    }
+
     public static boolean polyMatch(String actual, String expected) { return polyMatch(actual, expected, false); }
 
     public static boolean polyMatch(String actual, String expected, boolean trim) {

@@ -17,12 +17,13 @@
 
 package org.nexial.core.tools;
 
-import java.security.GeneralSecurityException;
-import java.util.Scanner;
-
 import org.apache.commons.lang3.ArrayUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.nexial.core.excel.ext.CipherHelper;
+
+import java.security.GeneralSecurityException;
+import java.util.NoSuchElementException;
+import java.util.Scanner;
 
 /**
  * provide basic utility for nexial user to scramble sensitive information such as password
@@ -43,7 +44,12 @@ final class NexialCrypt {
     protected void doInteractive() throws GeneralSecurityException {
         Scanner consoleInput = new Scanner(System.in);
         System.out.print("enter plain text    > ");
-        processInput(consoleInput.nextLine());
+        try {
+            String input = consoleInput.nextLine();
+            processInput(input);
+        } catch (NoSuchElementException e) {
+            System.err.println("No input provided");
+        }
     }
 
     @SuppressWarnings("PMD.SystemPrintln")

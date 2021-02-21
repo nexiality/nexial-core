@@ -1275,6 +1275,7 @@ public final class NexialConst {
         private static final String NS = NAMESPACE + "desktop.";
         public static final String NOTIFY_WAITMS = registerSysVar(NS + "notifyWaitMs", 5000);
         public static final String USE_ASCII_KEY_MAPPING = registerSysVar(NS + "useAsciiKey", false);
+        public static final String AUTOSCAN_INFRAGISTICS4_AWARE = registerSysVar(NS + "infragistics4Aware", false);
 
         private Desktop() {}
 

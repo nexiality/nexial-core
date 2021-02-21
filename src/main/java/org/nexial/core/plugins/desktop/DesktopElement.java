@@ -17,12 +17,8 @@
 
 package org.nexial.core.plugins.desktop;
 
-import java.io.File;
-import java.io.IOException;
-import java.math.BigDecimal;
-import java.util.*;
-
 import org.apache.commons.collections4.CollectionUtils;
+import org.apache.commons.collections4.IterableUtils;
 import org.apache.commons.collections4.MapUtils;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang3.ArrayUtils;
@@ -47,10 +43,16 @@ import org.openqa.selenium.WebElement;
 import org.openqa.selenium.interactions.Actions;
 import org.openqa.selenium.remote.RemoteWebElement;
 import org.openqa.selenium.winium.WiniumDriver;
-
 import winium.elements.desktop.ComboBox;
 
+import java.io.File;
+import java.io.IOException;
+import java.math.BigDecimal;
+import java.util.*;
+
+import static org.nexial.core.NexialConst.Desktop.AUTOSCAN_INFRAGISTICS4_AWARE;
 import static org.nexial.core.NexialConst.NL;
+import static org.nexial.core.SystemVariables.getDefaultBool;
 import static org.nexial.core.plugins.desktop.DesktopConst.*;
 import static org.nexial.core.plugins.desktop.DesktopUtils.*;
 import static org.nexial.core.plugins.desktop.ElementType.*;
@@ -1003,7 +1005,7 @@ public class DesktopElement {
 
     protected boolean resolvedAsCombo() {
         // if 'ControlType.Combo'    -> this is a combo, but what kind?
-        if (!StringUtils.equals(controlType, ElementType.COMBO)) { return false; }
+        if (!StringUtils.equals(controlType, COMBO)) { return false; }
 
         // click element
         boolean isEnabled = isEnabled(element);
@@ -1018,10 +1020,16 @@ public class DesktopElement {
         // re-click to un-display any dropdowns
         if (isEnabled) { element.click(); }
 
+        ExecutionContext context = ExecutionThread.get();
+        if (context.getBooleanData(AUTOSCAN_INFRAGISTICS4_AWARE, getDefaultBool(AUTOSCAN_INFRAGISTICS4_AWARE))) {
+            return infragistics4AwareScan(children);
+        }
+
+        // good 'ole scan-and-determine like it was 2017
         // check for Edit
-        children = this.element.findElements(By.xpath(LOCATOR_EDITOR));
+        children = element.findElements(By.xpath(LOCATOR_EDITOR));
         if (CollectionUtils.isNotEmpty(children)) {
-            this.elementType = StringUtils.contains(automationId, "DateTime") ? DateTimeCombo : TypeAheadCombo;
+            elementType = StringUtils.contains(automationId, "DateTime") ? DateTimeCombo : TypeAheadCombo;
             return true;
         }
 
@@ -1030,21 +1038,21 @@ public class DesktopElement {
         if (CollectionUtils.isNotEmpty(children)) {
             WebElement firstChild = children.get(0);
             if (isSelectionPatternAvailable(firstChild)) {
-                this.elementType = BooleanUtils.toBoolean(firstChild.getAttribute("CanSelectMultiple")) ?
-                                   MultiSelectCombo : SingleSelectList;
+                elementType = BooleanUtils.toBoolean(firstChild.getAttribute("CanSelectMultiple")) ?
+                              MultiSelectCombo : SingleSelectList;
             } else {
                 DesktopConst.debug("WARNING: Found '" + LIST + "' child element that DOES NOT support " +
                                    "'SelectionPattern' for '" + getLabel() + "'; MIGHT NOT WORK...");
-                this.elementType = SingleSelectList;
+                elementType = SingleSelectList;
             }
             return true;
         }
 
         // check for child ComboBox
-        children = this.element.findElements(By.xpath(LOCATOR_COMBOBOX));
+        children = element.findElements(By.xpath(LOCATOR_COMBOBOX));
         if (CollectionUtils.isNotEmpty(children)) {
             if (StringUtils.contains(automationId, "DateTime")) {
-                this.elementType = DateTimeCombo;
+                elementType = DateTimeCombo;
                 return true;
             }
 
@@ -1053,8 +1061,114 @@ public class DesktopElement {
             List<WebElement> editors = childCombo.findElements(By.xpath(LOCATOR_EDITOR));
             if (CollectionUtils.isNotEmpty(editors)) {
                 // then        -> this is a date/time combo
+                elementType = DateTimeCombo;
+            } else {
+                elementType = isEnabled ? SingleSelectCombo : SingleSelectComboNotEditable;
+            }
+            return true;
+        }
+
+        // rare: check for nested radio button
+        children = element.findElements(By.xpath(LOCATOR_RADIO));
+        if (CollectionUtils.isNotEmpty(children)) {
+            children.forEach(radio -> new DesktopElement(radio, this));
+            elementType = null;
+            return true;
+        }
+
+        throw new InvalidElementStateException("Found a " + controlType + " element with xpath " + xpath +
+                                               " but does not contain any child elements of known type; " +
+                                               "unknown/unsupported combo: " + printDetails(this.element));
+    }
+
+    private boolean infragistics4AwareScan(List<WebElement> children) {
+        int radioFound = 0;
+        int editFound = 0;
+        int embeddedEditFound = 0;
+        int listItemFound = 0;
+        int listFound = 0;
+        int comboFound = 0;
+
+        // first pass: count the child element breakdown
+        for (WebElement webElement : children) {
+            String controlType = webElement.getAttribute("ControlType");
+            String automationId = webElement.getAttribute("AutomationId");
+            switch (controlType) {
+                case EDIT: {
+                    editFound++;
+                    if (StringUtils.endsWith(automationId, "EmbeddableTextBox")) { embeddedEditFound++; }
+                    break;
+                }
+                case LIST_ITEM:
+                    listItemFound++;
+                    break;
+                case LIST: {
+                    listFound++;
+                    break;
+                }
+                case COMBO: {
+                    comboFound++;
+                    break;
+                }
+                case RADIO: {
+                    radioFound++;
+                    break;
+                }
+            }
+        }
+
+        // rare: check for nested radio button
+        if (radioFound == children.size()) {
+            // found all nested components are radio
+            // this combo should be ignored but the radios should be included by its parent
+            children.forEach(child -> {
+                DesktopElement radio = new DesktopElement(child, this);
+                components.put(radio.name, radio);
+            });
+            elementType = null;
+            return true;
+        }
+
+        // check first child
+        WebElement firstChild = children.get(0);
+        String controlType = firstChild.getAttribute("ControlType");
+        boolean isSelectable = isSelectionPatternAvailable(firstChild);
+        boolean canSelectMultiple = BooleanUtils.toBoolean(firstChild.getAttribute("CanSelectMultiple"));
+        boolean maybeDateTimeCombo = StringUtils.contains(automationId, "DateTime");
+
+        if (embeddedEditFound > 0 && listItemFound < 1) {
+            elementType = TypeAheadCombo;
+            return true;
+        }
+
+        // if both EmbeddableTextBox and List are found, then we can just use the list
+        if (listItemFound > 0 || listFound > 0) {
+            if (!isSelectable) {
+                DesktopConst.debug("WARNING: Found '" + LIST + "' child element that DOES NOT support " +
+                                   "'SelectionPattern' for '" + getLabel() + "'; MIGHT NOT WORK...");
+            }
+            elementType = canSelectMultiple ? MultiSelectCombo : SingleSelectList;
+            return true;
+        }
+
+        // check for Edit
+        // special case for DateTime combo
+        if (editFound > 0 && maybeDateTimeCombo) {
+            this.elementType = DateTimeCombo;
+            return true;
+        }
+
+        if (comboFound > 0) {
+            if (maybeDateTimeCombo) {
+                this.elementType = DateTimeCombo;
+                return true;
+            }
+
+            List<WebElement> editors = firstChild.findElements(By.xpath(LOCATOR_EDITOR));
+            if (CollectionUtils.isNotEmpty(editors)) {
                 this.elementType = DateTimeCombo;
             } else {
+                boolean isEnabled = isEnabled(element);
                 this.elementType = isEnabled ? SingleSelectCombo : SingleSelectComboNotEditable;
             }
             return true;
@@ -1273,50 +1387,60 @@ public class DesktopElement {
             }
 
             DesktopElement desktopElement = new DesktopElement(child, this);
-            if (desktopElement.elementType == null) { continue; }
-
-            // perhaps this same element has been partially defined in application.json.
-            // in such case it would most likely be an example of label override
-            getComponents().forEach((label, definedElement) -> {
-                String definedXpath = definedElement.getXpath();
-                if (StringUtils.equals(StringUtils.trim(definedXpath), StringUtils.trim(desktopElement.getXpath()))) {
-                    copyDefinitionTo(label, definedElement, desktopElement);
+            if (desktopElement.elementType == null) {
+                // maybe it contains child elements not to be ignored
+                if (MapUtils.isNotEmpty(desktopElement.components)) {
+                    desktopElement.components.forEach((name, element) -> addChildElement(element, desktopElements));
                 }
-            });
-
-            if (desktopElement.getElementType() == null && StringUtils.equals(desktopElement.getControlType(), PANE)) {
-                DesktopConst.debug("SKIP element with unresolved elementType: " + desktopElement);
                 continue;
             }
 
-            overrideLabel(desktopElement);
-
-            DesktopElement typeSpecificComponent = typeSpecificInspection(desktopElement);
-            if (typeSpecificComponent != null) {
-                desktopElements.add(typeSpecificComponent);
-                continue;
-            }
-
-            if (desktopElement.isContainer()) {
-                if (StringUtils.isBlank(desktopElement.getLabel())) {
-                    DesktopConst.debug("NAMELESS CONTAINER: INSPECT DEEPER:" + NL + desktopElement.getXpath() + NL);
-                    // let this nameless container temporarily inherit the components of its parent so that we can
-                    // match up all the defined elements against disovered elements.
-                    desktopElement.inheritParentCompoents(getComponents());
-                    List<DesktopElement> elements = findElementsFromNamelessContainer(desktopElement);
-                    if (CollectionUtils.isNotEmpty(elements)) { desktopElements.addAll(elements); }
-                    continue;
-                }
-
-                // pane and form has no inherent label, we'd need to rely on json-level overrides
-                desktopElement.inspect();
-                promoteNestedComponents(desktopElement);
-            }
-
-            desktopElements.add(desktopElement);
+            addChildElement(desktopElement, desktopElements);
         }
 
         return desktopElements;
+    }
+
+    protected void addChildElement(DesktopElement desktopElement, List<DesktopElement> desktopElements) {
+        // perhaps this same element has been partially defined in application.json.
+        // in such case it would most likely be an example of label override
+        getComponents().forEach((label, definedElement) -> {
+            String definedXpath = definedElement.getXpath();
+            if (StringUtils.equals(StringUtils.trim(definedXpath), StringUtils.trim(desktopElement.getXpath()))) {
+                copyDefinitionTo(label, definedElement, desktopElement);
+            }
+        });
+
+        if (desktopElement.getElementType() == null && StringUtils.equals(desktopElement.getControlType(), PANE)) {
+            DesktopConst.debug("SKIP element with unresolved elementType: " + desktopElement);
+            return;
+        }
+
+        overrideLabel(desktopElement);
+
+        DesktopElement typeSpecificComponent = typeSpecificInspection(desktopElement);
+        if (typeSpecificComponent != null) {
+            desktopElements.add(typeSpecificComponent);
+            return;
+        }
+
+        if (desktopElement.isContainer()) {
+            if (StringUtils.isBlank(desktopElement.getLabel())) {
+                DesktopConst.debug("NAMELESS CONTAINER: INSPECT DEEPER:" + NL + desktopElement.getXpath() + NL);
+                // let this nameless container temporarily inherit the components of its parent so that we can
+                // match up all the defined elements against disovered elements.
+                desktopElement.inheritParentCompoents(getComponents());
+                List<DesktopElement> elements = findElementsFromNamelessContainer(desktopElement);
+                if (CollectionUtils.isNotEmpty(elements)) { desktopElements.addAll(elements); }
+                return;
+            }
+
+            // pane and form has no inherent label, we'd need to rely on json-level overrides
+            desktopElement.inspect();
+            promoteNestedComponents(desktopElement);
+        }
+
+        desktopElements.add(desktopElement);
     }
 
     protected List<DesktopElement> findElementsFromNamelessContainer(DesktopElement namelessContainer) {
@@ -1443,7 +1567,7 @@ public class DesktopElement {
             }
 
             if (!verticalGroup.isEmpty()) {
-                verticalGroup.sort(Comparator.comparing(o -> ((Integer) o.getY())));
+                verticalGroup.sort(Comparator.comparing(o -> o.getY()));
                 boundGroups.put(0, verticalGroup);
             }
         }
@@ -1766,7 +1890,7 @@ public class DesktopElement {
                 // good to use shortcut script with <[{text}]>, which gives the effect of element.sendKeys and also sets cursor to beginning of text
                 driver.executeScript(SCRIPT_PREFIX_SHORTCUT + TEXT_INPUT_PREFIX + text + TEXT_INPUT_POSTFIX, element);
             } else {
-                driver.executeScript("automation: ValuePattern.SetValue", element, text);
+                driver.executeScript("ValuePattern.SetValue", element, text);
             }
             String actual = element.getText();
             boolean matched = isActualAndTextMatched(element, actual, text);
@@ -1795,12 +1919,12 @@ public class DesktopElement {
         try {
             // click needs for combo that has child element as edit type
             element.click();
-            driver.executeScript("automation: ValuePattern.SetValue", element, text);
+            driver.executeScript("ValuePattern.SetValue", element, text);
             String actual = element.getText();
             boolean matched = isActualAndTextMatched(element, actual, text);
             if (!matched) {
                 // try again... this time with extra space in the front to avoid autofill
-                driver.executeScript("automation: ValuePattern.SetValue", element, " " + text);
+                driver.executeScript("ValuePattern.SetValue", element, " " + text);
                 driver.executeScript(toShortcuts("CTRL-HOME", "DEL"), element);
                 actual = element.getText();
                 matched = isActualAndTextMatched(element, actual, text);
@@ -1935,14 +2059,14 @@ public class DesktopElement {
         // if (elementType == TypeAheadCombo) { return clearViaChildElement(LOCATOR_EDITOR); }
         // if (elementType == SingleSelectCombo) { return clearViaChildElement(LOCATOR_COMBOBOX); }
 
-        String msgSucess = "Combo '" + label + "' cleared";
+        String msgSuccess = "Combo '" + label + "' cleared";
 
         if (elementType == DateTimeCombo || elementType == TypeAheadCombo || elementType == SingleSelectCombo) {
             String script = toShortcuts("HOME", "SHIFT-END", "DEL");
             if (elementType == SingleSelectCombo) { script = toShortcuts("ESC"); }
             driver.executeScript(script, element);
             autoClearModalDialog();
-            return StepResult.success(msgSucess);
+            return StepResult.success(msgSuccess);
         }
 
         if (elementType == SingleSelectList) {
@@ -1957,9 +2081,10 @@ public class DesktopElement {
 
             String selectedText = StringUtils.equals(selected.getAttribute("ControlType"), LIST_ITEM) ?
                                   selected.getAttribute("Name") : selected.getText();
-            if (StringUtils.isBlank(selectedText)) { return StepResult.success(msgSucess); }
+            if (StringUtils.isBlank(selectedText)) { return StepResult.success(msgSuccess); }
 
-            return StepResult.fail("Unable to clear Combo '" + label + "'; possibly no such option available");
+            return StepResult.success("After attempting to clear Combo '" + label + "', " +
+                                      "the currently selected option is '" + selectedText + "'");
         }
 
         return StepResult.fail("Unknown element type " + elementType);
@@ -1976,10 +2101,10 @@ public class DesktopElement {
 
         if (isExpandCollapsePatternAvailable(element)) {
             String xpathListItem = StringUtils.replace(LOCATOR_LIST_ITEM, "{value}", text);
-            List<WebElement> matched = element.findElements(By.xpath(xpathListItem));
-            if (CollectionUtils.isNotEmpty(matched)) {
+            WebElement matched = IterableUtils.get(element.findElements(By.xpath(xpathListItem)), 0);
+            if (isInvokePatternAvailable(matched)) {
                 element.click();
-                matched.get(0).click();
+                matched.click();
                 return StepResult.success("Text '" + text + "' selected" + msgPostfix);
             }
         }
@@ -2086,6 +2211,7 @@ public class DesktopElement {
         if (StringUtils.equals(controlType, PANE) && IGNORE_PANE_CLASSNAMES.contains(className)) { return true; }
         return StringUtils.equals(controlType, TOOLBAR) && IGNORE_TOOLBAR_CLASSNAMES.contains(className);
 
+        // all else
     }
 
     private void verifyAndTry(String text) {

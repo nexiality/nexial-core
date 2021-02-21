@@ -196,6 +196,7 @@ public final class ExecutionThread extends Thread {
                 if (shouldStopNow(context, allPass)) { break; }
             } finally {
                 context.setData(ITERATION_ENDED, true);
+                iterSummary.setEndTime(System.currentTimeMillis());
                 context.setCurrentActivity(null);
 
                 File testScriptFile = null;
@@ -218,7 +219,6 @@ public final class ExecutionThread extends Thread {
 
                     // now the execution for this iteration is done. We'll add new execution summary page to its output.
                     iterSummary.setFailedFast(context.isFailFast());
-                    iterSummary.setEndTime(System.currentTimeMillis());
                     iterSummary.aggregatedNestedExecutions(context);
 
                     if (testScript != null) {

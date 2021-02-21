@@ -101,8 +101,22 @@ public class DesktopConst {
 
     public static final String DEFAULT_APP_LOCATOR = "/*[@ControlType='ControlType.Window']";
 
+    //Editor Locator
+    public static final String LOCATOR_EDITOR = "*[@ControlType='" + ElementType.EDIT + "']";
+    public static final String LOCATOR_COMBOBOX = "*[@ControlType='" + ElementType.COMBO + "']";
+    public static final String LOCATOR_LIST = "*[@ControlType='" + ElementType.LIST + "']";
+    public static final String LOCATOR_DOCUMENT = "*[@ControlType='ControlType.Document']";
+    public static final String LOCATOR_RADIO = "*[@ControlType='ControlType.RadioButton']";
+
+    // support TreeView-based data grid
     public final static String LOCATOR_HEADER_COLUMNS =
         "*[substring(@Name, string-length(@Name) - string-length('row 1') + 1) = 'row 1']/*[@Name!='Column Headers']";
+    public final static String LOCATOR_HIER_HEADER_COLUMNS =
+        "*[@ControlType='ControlType.Header']/*[@ControlType='ControlType.HeaderItem']";
+    public static final String LOCATOR_HIER_TABLE_ROWS = "*[@ControlType='ControlType.DataItem']";
+    public static final String LOCATOR_HIER_CELLS = LOCATOR_HIER_TABLE_ROWS + "[{row}]/*";
+    public static final String LOCATOR_HIER_CELL = LOCATOR_HIER_CELLS + "[@Name='{column}']";
+    public static final String LOCATOR_HIER_FIRST_CELL = LOCATOR_HIER_CELLS + "[1]";
 
     public final static String LOCATOR_TABLE_DATA = "*[contains(@Name, 'row ')]";
     public final static String LOCATOR_ROW = "*[contains(@Name, 'row {row}')][1]";
@@ -118,10 +132,12 @@ public class DesktopConst {
     public static final String LOCATOR_TAB_ITEM = "*[@ControlType='" + TAB_ITEM + "' and @Name='${tabName}']";
     public static final String XPATH_FIRST_HIER_ROW = "*[@ControlType='" + TREE_ITEM + "'][1]";
     public static final String XPATH_NORMALIZE_CELL = "*[normalize-space(@Name)='${column}']";
-    public static final String XPATH_MATCHING_HIER_CELL =
-        "*[@ControlType='" + TREE_ITEM + "' and ./*[normalize-space(@Name)='${column}' and @Value='${value}']]";
-    public static final String LOCATOR_LIST_ITEM = "*[@ControlType='" + LIST + "']/" +
-                                                   "*[@ControlType='" + LIST_ITEM + "' and contains(@Name,'{value}')]";
+    public static final String XPATH_MATCHING_HIER_CELL = "*[@ControlType='" + TREE_ITEM + "' and " +
+                                                          "./*[normalize-space(@Name)='${column}' and @Value='${value}']]";
+    // either list of list-items or just list-items
+    public static final String LOCATOR_LIST_ITEM = "*[@ControlType='" + LIST_ITEM + "' and contains(@Name,'{value}')]" +
+                                                   "|" + LOCATOR_LIST +
+                                                   "/*[@ControlType='" + LIST_ITEM + "' and contains(@Name,'{value}')]";
     public static final String XPATH_SCROLLBARS = "*[@ControlType='" + SCROLLBAR + "']";
 
     // public static final int SCROLL_TOLERANCE = 25;
@@ -166,12 +182,6 @@ public class DesktopConst {
     public static final FormLayout FORM_LAYOUT_DEFAULT = FORM_LAYOUT_LEFT_TO_RIGHT;
     public static final String LAYOUT_LEFT_2_RIGHT = "left2right";
     public static final String LAYOUT_2LINES = "2lines";
-
-    //Editor Locator
-    public static final String LOCATOR_EDITOR = "*[@ControlType='" + ElementType.EDIT + "']";
-    public static final String LOCATOR_COMBOBOX = "*[@ControlType='" + ElementType.COMBO + "']";
-    public static final String LOCATOR_LIST = "*[@ControlType='" + ElementType.LIST + "']";
-    public static final String LOCATOR_DOCUMENT = "*[@ControlType='ControlType.Document']";
 
     // dynamic token placeholder :
     public static final String XPATH_APP_VER = "string(/configuration/appSettings/add[@key='AppVersionMarker']/@value)";

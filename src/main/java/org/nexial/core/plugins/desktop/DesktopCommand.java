@@ -20,9 +20,11 @@ package org.nexial.core.plugins.desktop;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.collections4.MapUtils;
 import org.apache.commons.lang3.ArrayUtils;
+import org.apache.commons.lang3.BooleanUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.math.NumberUtils;
 import org.nexial.commons.utils.TextUtils;
+import org.nexial.core.NexialConst.PolyMatcher;
 import org.nexial.core.ShutdownAdvisor;
 import org.nexial.core.excel.Excel.Worksheet;
 import org.nexial.core.model.ExecutionContext;
@@ -656,13 +658,19 @@ public class DesktopCommand extends BaseCommand implements ForcefulTerminate, Ca
         return StepResult.success();
     }
 
+    /**
+     * auto-redirect to use {@link #typeTextBox(String, String, String, String, String)} if the specified element
+     * resolves to a  {@link ElementType#TypeAheadCombo}
+     */
     public StepResult selectCombo(String name, String text) {
         requiresNotBlank(text, "Invalid text", text);
 
-        DesktopElement select = getRequiredElement(name, SingleSelectCombo);
-        if (select == null) { return StepResult.fail("Unable to find combo '" + name + "'"); }
-
-        return select.select(text);
+        DesktopElement component = getRequiredElement(name, Any);
+        if (component == null) { return StepResult.fail("Unable to find any component via '" + name + "'"); }
+        if (!component.getElementType().isCombo()) {
+            return StepResult.fail("Unable to resolve a combo component via '" + name + "'");
+        }
+        return component.select(text);
     }
 
     public StepResult clickIcon(String label) {
@@ -947,7 +955,12 @@ public class DesktopCommand extends BaseCommand implements ForcefulTerminate, Ca
 
     public StepResult clearTextArea(String name) { return clear(name, TextArea); }
 
-    public StepResult clearCombo(String name) { return clear(name, SingleSelectCombo); }
+    public StepResult clearCombo(String name) {
+        DesktopElement component = getRequiredElement(name, Any);
+        if (component == null) { return StepResult.fail("Unable to derive component via '" + name + "'"); }
+        if (!component.getElementType().isCombo()) { return StepResult.fail("component '" + name + "' is NOT a Combo");}
+        return component.clearCombo();
+    }
 
     public StepResult clear(String locator) {
         WebElement elem = findElement(locator);
@@ -1203,12 +1216,13 @@ public class DesktopCommand extends BaseCommand implements ForcefulTerminate, Ca
         return result;
     }
 
-    // todo: deprecated; removal candidate for v1.1
-    public StepResult scanTable(String var, String name) {
-        logDeprecated(getTarget() + " » scanTable(var,name)", getTarget() + " » useTable(var,name)");
-        return useTable(var, name);
-    }
+    // DONE: deprecated; removal candidate for v1.1
+    //    public StepResult scanTable(String var, String name) {
+    //        logDeprecated(getTarget() + " » scanTable(var,name)", getTarget() + " » useTable(var,name)");
+    //        return useTable(var, name);
+    //    }
 
+    /** support PolyMatcher, as of v3.7 */
     public StepResult assertTableRowContains(String row, String contains) {
         requiresPositiveNumber(row, "Invalid row index (zero-based)", row);
         requiresNotBlank(contains, "Invalid 'contains' specified", contains);
@@ -1228,6 +1242,7 @@ public class DesktopCommand extends BaseCommand implements ForcefulTerminate, Ca
                               null);
     }
 
+    /** support PolyMatcher, as of v3.7 */
     public StepResult assertTableColumnContains(String column, String contains) {
         requiresNotBlank(column, "Invalid column name", column);
         requiresNotBlank(contains, "Invalid 'contains' specified", contains);
@@ -1246,6 +1261,7 @@ public class DesktopCommand extends BaseCommand implements ForcefulTerminate, Ca
                               null);
     }
 
+    /** support PolyMatcher, as of v3.7 */
     public StepResult assertTableContains(String contains) {
         requiresNotBlank(contains, "Invalid 'contains' specified", contains);
 
@@ -1253,16 +1269,16 @@ public class DesktopCommand extends BaseCommand implements ForcefulTerminate, Ca
         requiresNotNull(table, "No Table element referenced or scanned");
 
         String delim = context.getTextDelim();
-        String[] criterion = StringUtils.contains(contains, delim) ?
-                             StringUtils.splitByWholeSeparator(contains, delim) :
-                             new String[]{contains};
+        //        String[] criterion = StringUtils.contains(contains, delim) ?
+        //                             StringUtils.splitByWholeSeparator(contains, delim) :
+        //                             new String[]{contains};
 
         setTableFocus(table);
-        TableData tableData = table.fetchAll();
-        boolean found = table.containsAnywhere(tableData.getRows(), criterion);
+        boolean found = table.containsAnywhere(table.fetchAll().getRows(), TextUtils.toList(contains, delim, false));
         return new StepResult(found, "Table " + (found ? "" : " DOES NOT ") + "contains '" + contains + "'", null);
     }
 
+    /** support PolyMatcher and TreeView grid, as of v3.7 */
     public StepResult assertTableCell(String row, String column, String contains) {
         requiresPositiveNumber(row, "Invalid row index (zero-based)", row);
         requiresNotBlank(column, "Invalid column name", column);
@@ -1275,10 +1291,20 @@ public class DesktopCommand extends BaseCommand implements ForcefulTerminate, Ca
 
         setTableFocus(table);
         TableData tableData = table.fetch(NumberUtils.toInt(row), NumberUtils.toInt(row));
-        return assertContains(tableData.getCell(column), contains);
+        String actual = tableData.getCell(column);
+
+        if (!PolyMatcher.isPolyMatcher(contains)) { return assertContains(actual, contains); }
+
+        String textForDisplay = context.truncateForDisplay(actual);
+        if (TextUtils.polyMatch(actual, contains)) {
+            return StepResult.success("validated text '%s' poly-matched by '%s'", textForDisplay, contains);
+        } else {
+            return StepResult.fail("'%s' NOT poly-matched by '%s'", textForDisplay, contains);
+        }
     }
 
-    public StepResult saveTableRows(String var, String contains) {
+    /** support PolyMatcher, as of v3.7 */
+    public StepResult saveTableRows(String var, String contains, String csv) {
         requiresValidAndNotReadOnlyVariableName(var);
         requiresNotBlank(contains, "Invalid 'contains' specified", contains);
 
@@ -1286,25 +1312,39 @@ public class DesktopCommand extends BaseCommand implements ForcefulTerminate, Ca
         requiresNotNull(table, "No Table element referenced or scanned");
 
         String delim = context.getTextDelim();
-        String[] criterion = StringUtils.contains(contains, delim) ?
-                             StringUtils.splitByWholeSeparator(contains, delim) :
-                             new String[]{contains};
+        //        String[] criterion = StringUtils.contains(contains, delim) ?
+        //                             StringUtils.splitByWholeSeparator(contains, delim) :
+        //                             new String[]{contains};
 
         setTableFocus(table);
-        List<List<String>> matched = table.findMatchedRows(criterion);
-        context.setData(var, matched);
-        return StepResult.success(matched.size() + " row(s) of Table saved to '" + var + "'");
+        //        List<List<String>> matched = table.findMatchedRows(criterion);
+        List<List<String>> matched = table.findMatchedRows(TextUtils.toList(contains, delim, false));
+        if (BooleanUtils.toBoolean(csv)) {
+            context.setData(var, TextUtils.toCsvLine(table.headers, ",", lineSeparator()) +
+                                 TextUtils.toCsvContent(matched, ",", lineSeparator()));
+            return StepResult.success(matched.size() + " row(s) of Table saved as CSV to '" + var + "'");
+        } else {
+            context.setData(var, matched);
+            return StepResult.success(matched.size() + " row(s) of Table saved to '" + var + "'");
+        }
     }
 
-    public StepResult saveAllTableRows(String var) {
+    /** As of v3.7, we will support HierTable (aka ControlType.Tree) and converting to CSV structure (text) */
+    public StepResult saveAllTableRows(String var, String csv) {
         requiresValidAndNotReadOnlyVariableName(var);
         DesktopTable table = getCurrentTable();
         requiresNotNull(table, "No Table element referenced or scanned");
 
         setTableFocus(table);
         List<List<String>> allRows = table.fetchAll().getRows();
-        context.setData(var, allRows);
-        return StepResult.success(allRows.size() + " row(s) of Table saved to '" + var + "'");
+        if (BooleanUtils.toBoolean(csv)) {
+            context.setData(var, TextUtils.toCsvLine(table.headers, ",", lineSeparator()) +
+                                 TextUtils.toCsvContent(allRows, ",", lineSeparator()));
+            return StepResult.success(allRows.size() + " row(s) of Table saved as CSV to '" + var + "'");
+        } else {
+            context.setData(var, allRows);
+            return StepResult.success(allRows.size() + " row(s) of Table saved to '" + var + "'");
+        }
     }
 
     public StepResult saveElementCount(String var, String name) {
@@ -1344,6 +1384,7 @@ public class DesktopCommand extends BaseCommand implements ForcefulTerminate, Ca
         }
     }
 
+    /** support TreeView grid, as of v3.7 */
     public StepResult clickTableRow(String row) {
         requiresPositiveNumber(row, "Invalid row index (zero-based)", row);
         int rowIndex = NumberUtils.toInt(row);
@@ -1355,6 +1396,7 @@ public class DesktopCommand extends BaseCommand implements ForcefulTerminate, Ca
         return StepResult.success("Table row '" + row + "' cell 0 is clicked");
     }
 
+    /** support TreeView grid, as of v3.7 */
     public StepResult clickTableCell(String row, String column) {
         requiresPositiveNumber(row, "Invalid row index (zero-based)", row);
         int rowIndex = NumberUtils.toInt(row);
@@ -1372,6 +1414,7 @@ public class DesktopCommand extends BaseCommand implements ForcefulTerminate, Ca
         return StepResult.success("Table row '" + row + "' column '" + column + "' is clicked");
     }
 
+    /** As of v3.7, we will support HierTable (aka ControlType.Tree) */
     public StepResult editTableCells(String row, String nameValues) {
         requiresNotBlank(row, "Invalid row index (zero-based)", row);
         int rowIndex = StringUtils.equals(row, "*") ? MAX_VALUE : NumberUtils.toInt(row);
@@ -1426,7 +1469,7 @@ public class DesktopCommand extends BaseCommand implements ForcefulTerminate, Ca
         return tableRow.getTable().editCells(tableRow, nameValuesToMap(nameValues));
     }
 
-    public StepResult saveTableRowsRange(String var, String beginRow, String endRow) {
+    public StepResult saveTableRowsRange(String var, String beginRow, String endRow, String csv) {
         requiresValidAndNotReadOnlyVariableName(var);
         requiresPositiveNumber(beginRow, "Invalid beginRow", beginRow);
         requiresPositiveNumber(endRow, "Invalid beginRow", endRow);
@@ -1441,13 +1484,17 @@ public class DesktopCommand extends BaseCommand implements ForcefulTerminate, Ca
         }
         setTableFocus(table);
 
-        context.setData(var, table.fetch(beginRowNum, endRowNum));
+        final TableData rows = table.fetch(beginRowNum, endRowNum);
+        if (BooleanUtils.toBoolean(csv)) {
+            context.setData(var, TextUtils.toCsvLine(table.headers, ",", lineSeparator()) +
+                                 TextUtils.toCsvContent(rows.getRows(), ",", lineSeparator()));
+            return StepResult.success(rows.getRowCount() + " row(s) of Table saved as CSV to '" + var + "'");
+        } else {
+            context.setData(var, rows);
+            return StepResult.success("Table row data is saved to var " + var);
+        }
 
-        return StepResult.success("Table row data is saved to var " + var);
     }
-
-    // todo: deprecated; removal candidate for v1.1
-    public StepResult getRowCount(String var) { return saveRowCount(var); }
 
     public StepResult saveRowCount(String var) {
         requiresValidAndNotReadOnlyVariableName(var);
@@ -2080,9 +2127,12 @@ public class DesktopCommand extends BaseCommand implements ForcefulTerminate, Ca
     }
 
     protected boolean isChecked(String name) {
-        DesktopElement component = getRequiredElement(name, Checkbox);
-        requires(component.getElementType() == Checkbox, "Specified element not a Checkbox", name);
-        return component.isSelected();
+        DesktopElement component = getRequiredElement(name, Any);
+        if (component.getElementType() == Checkbox || component.getElementType() == Radio) {
+            return component.isSelected();
+        }
+        fail("Specified element not a Checkbox or Radio: " + name);
+        return false;
     }
 
     protected StepResult click(String name, ElementType expectedType) {
@@ -2219,16 +2269,20 @@ public class DesktopCommand extends BaseCommand implements ForcefulTerminate, Ca
         context.addScenarioReferenceData("form", label);
     }
 
+    /** As of v3.7, we will support HierTable (aka ControlType.Tree) as well */
     protected DesktopTable resolveTableElement(String name) {
-        DesktopElement tableObject = getRequiredElement(name, Table);
-        if (tableObject instanceof DesktopTable) {
-            DesktopTable table = (DesktopTable) tableObject;
-            if (CollectionUtils.isEmpty(table.headers) && table.columnCount == UNDEFINED) { table.scanStructure(); }
-            return table;
-        } else {
+        // DesktopElement tableObject = getRequiredElement(name, Table);
+        DesktopElement tableObject = getRequiredElement(name, Any);
+        DesktopTable table = null;
+        if (tableObject.getElementType() == Table) { table = (DesktopTable) tableObject; }
+        if (tableObject.getElementType() == HierTable) { table = DesktopTable.toInstance(tableObject); }
+        if (table == null) {
             fail("requested element '" + name + "' is not a " + Table + " but a " + tableObject.getElementType() + ".");
             return null;
         }
+
+        if (CollectionUtils.isEmpty(table.headers) && table.columnCount == UNDEFINED) { table.scanStructure(); }
+        return table;
     }
 
     protected void syncListDataToContext(DesktopElement list, String label) {
@@ -2286,6 +2340,8 @@ public class DesktopCommand extends BaseCommand implements ForcefulTerminate, Ca
      * (re)scan table structure and store table metadata to {@code var}.  This method will force rescanning to get the
      * latest row count.  Consequently it will clear out any previously harvested rows.  The latest table metadata will
      * be stored as {@code var}.
+     * <p>
+     * As of v3.7, we will support HierTable (aka ControlType.Tree) as well
      */
     protected StepResult saveTableMetaData(String var, String name, boolean rescan) {
         requiresValidAndNotReadOnlyVariableName(var);
@@ -2373,13 +2429,20 @@ public class DesktopCommand extends BaseCommand implements ForcefulTerminate, Ca
         if (!isCurrentTable || context.getObjectData(CURRENT_DESKTOP_TABLE_ROW) == null) { return; }
 
         DesktopTableRow tableRow = (DesktopTableRow) context.getObjectData(CURRENT_DESKTOP_TABLE_ROW);
+        if (tableRow == null) { return; }
 
-        ConsoleUtils.log("shortcut key was pressed.. now setting focus back to table at " +
-                         context.getStringData(CURRENT_DESKTOP_TABLE_EDITABLE_COLUMN_NAME));
+        String currentEditColumn = context.getStringData(CURRENT_DESKTOP_TABLE_EDITABLE_COLUMN_NAME);
+        if (StringUtils.isNotEmpty(currentEditColumn)) {
+            WebElement editColumn = tableRow.getColumns().get(currentEditColumn);
+            if (editColumn == null) { return; }
 
-        WebElement editColumn = tableRow.getColumns()
-                                        .get(context.getStringData(CURRENT_DESKTOP_TABLE_EDITABLE_COLUMN_NAME));
-        editColumn.click();
+            ConsoleUtils.log("shortcut key was pressed.. now setting focus back to table at " + currentEditColumn);
+            if (table.isTreeView) {
+                winiumDriver.executeScript(toShortcuts("ESCAPE"), editColumn);
+            } else {
+                editColumn.click();
+            }
+        }
         context.removeData(CURRENT_DESKTOP_TABLE_ROW);
     }
 

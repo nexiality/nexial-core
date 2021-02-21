@@ -2206,7 +2206,12 @@ public class WebCommand extends BaseCommand implements CanTakeScreenshot, CanLog
 
         WebElement source = findElement(fromLocator);
         WebElement target = findElement(toLocator);
-        new Actions(driver).clickAndHold(source).pause(500).dragAndDrop(source, target).build().perform();
+        new Actions(driver).moveToElement(source)
+                           .clickAndHold(source)
+                           .pause(1000)
+                           .dragAndDrop(source, target)
+                           .pause(250)
+                           .perform();
 
         return StepResult.success("Drag-and-drop element '" + fromLocator + "' to '" + toLocator + "'");
     }

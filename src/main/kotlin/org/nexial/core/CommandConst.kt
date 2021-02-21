@@ -29,18 +29,18 @@ object CommandConst {
     val DEPRECATED_VARS = listOf("nexial.scope.executionMode", "nexial.safari.cleanSession")
 
     val UPDATED_VARS = mapOf(
-        OPT_DEBUG_HIGHLIGHT_OLD to OPT_DEBUG_HIGHLIGHT,
-        HIGHLIGHT_WAIT_MS_OLD to HIGHLIGHT_WAIT_MS,
-        ASSISTANT_MODE to OPT_OPEN_RESULT,
-        POST_EXEC_MAIL_TO_OLD to POST_EXEC_MAIL_TO)
+            OPT_DEBUG_HIGHLIGHT_OLD to OPT_DEBUG_HIGHLIGHT,
+            HIGHLIGHT_WAIT_MS_OLD to HIGHLIGHT_WAIT_MS,
+            ASSISTANT_MODE to OPT_OPEN_RESULT,
+            POST_EXEC_MAIL_TO_OLD to POST_EXEC_MAIL_TO)
 
     private val NON_ITERABLE_VARS = listOf(
-        ENABLE_EMAIL, POST_EXEC_MAIL_TO, POST_EXEC_EMAIL_SUBJECT, POST_EXEC_EMAIL_HEADER, POST_EXEC_EMAIL_FOOTER,
-        OPT_MANAGE_MEM,
-        WPS_EXE_LOCATION,
-        OUTPUT_TO_CLOUD,
-        GENERATE_EXEC_REPORT, OPT_OPEN_RESULT, OPT_OPEN_EXEC_REPORT,
-        EXEC_SYNOPSIS, POST_EXEC_WITH_SYNOPSIS
+            ENABLE_EMAIL, POST_EXEC_MAIL_TO, POST_EXEC_EMAIL_SUBJECT, POST_EXEC_EMAIL_HEADER, POST_EXEC_EMAIL_FOOTER,
+            OPT_MANAGE_MEM,
+            WPS_EXE_LOCATION,
+            OUTPUT_TO_CLOUD,
+            GENERATE_EXEC_REPORT, OPT_OPEN_RESULT, OPT_OPEN_EXEC_REPORT,
+            EXEC_SYNOPSIS, POST_EXEC_WITH_SYNOPSIS
     )
 
     @JvmStatic
@@ -50,13 +50,13 @@ object CommandConst {
     fun getPreferredSystemVariableName(name: String) = UPDATED_VARS.getOrDefault(name, name)!!
 
     val READ_ONLY_VARS = listOf(
-        "nexial.runID", "nexial.iterationEnded", "nexial.scope.currentIteration",
-        "nexial.scope.lastIteration", "nexial.scope.isLastIteration",
-        "nexial.scope.isFirstIteration", "nexial.scope.currentIterationId",
-        "nexial.lastScreenshot", "nexial.lastOutcome", "file.separator",
-        "java.home", "java.io.tmpdir", "java.version", "line.separator",
-        "os.arch", "os.name", "os.version", "user.country", "user.dir",
-        "user.home", "user.language", "user.name", "user.timezone")
+            "nexial.runID", "nexial.iterationEnded", "nexial.scope.currentIteration",
+            "nexial.scope.lastIteration", "nexial.scope.isLastIteration",
+            "nexial.scope.isFirstIteration", "nexial.scope.currentIterationId",
+            "nexial.lastScreenshot", "nexial.lastOutcome", "file.separator",
+            "java.home", "java.io.tmpdir", "java.version", "line.separator",
+            "os.arch", "os.name", "os.version", "user.country", "user.dir",
+            "user.home", "user.language", "user.name", "user.timezone")
 
     // common commands
     const val CMD_VERBOSE = "base.verbose(text)"
@@ -89,53 +89,74 @@ object CommandConst {
 
     @JvmStatic
     val replacedCommands = mapOf(
-        "number.assertBetween(num,lower,upper)" to "number.assertBetween(num,min,max)",
-        "number.assertBetween(num,min,max)" to "number.assertBetween(num,minNum,maxNum)",
-        "number.round(var,closestDigit)" to "number.roundTo(var,closestDigit)",
-        "desktop.scanTable(var,name)" to "desktop.useTable(var,name)",
-        "desktop.getRowCount(var)" to "desktop.saveRowCount(var)",
-        "io.saveMatches(var,path,filePattern)" to "io.saveMatches(var,path,fileFilter,textFilter)",
-        "image.colorbit(source,bit,saveTo)" to "image.colorbit(image,bit,saveTo)",
-        "base.assertNotContains(text,substring)" to "base.assertNotContain(text,substring)",
-        "web.assertAttributeNotContains(locator,attrName,contains)" to "web.assertAttributeNotContain(locator,attrName,contains)",
-        "web.assertAttributeContains(locator,attrName,contains)" to "web.assertAttributeContain(locator,attrName,contains)",
-        "web.screenshot(file,locator,ignoreLocators)" to "web.screenshot(file,locator)",
-        "web.selectMultiOptions(locator)" to "web.selectAllOptions(locator)",
-        "web.uncheckAll(locator)" to "web.uncheckAll(locator,waitMs)",
-        "web.waitForElementPresent(locator)" to "web.waitForElementPresent(locator,maxWaitMs)",
-        "web.screenshot(file,locator)" to "web.screenshot(file,locator,removeFixed)",
-        "web.screenshotInFull(file,timeout)" to "web.screenshotInFull(file,timeout,removeFixed)",
-        "tn.5250.saveTableAsCSV(csv)" to "tn.5250.saveTableAsCSV(csv,maxPage)"
+            "base.assertNotContains(text,substring)" to "base.assertNotContain(text,substring)",
+
+            "desktop.getRowCount(var)" to "desktop.saveRowCount(var)",
+            "desktop.saveAllTableRows(var)" to "desktop.saveAllTableRows(var,csv)",
+            "desktop.scanTable(var,name)" to "desktop.useTable(var,name)",
+            "desktop.saveTableRows(var,contains)" to "desktop.saveTableRows(var,contains,csv)",
+            "desktop.saveTableRowsRange(var,beginRow,endRow)" to "desktop.saveTableRowsRange(var,beginRow,endRow,csv)",
+
+            "image.colorbit(source,bit,saveTo)" to "image.colorbit(image,bit,saveTo)",
+
+            "io.saveMatches(var,path,filePattern)" to "io.saveMatches(var,path,fileFilter,textFilter)",
+
+            "number.assertBetween(num,lower,upper)" to "number.assertBetween(num,min,max)",
+            "number.assertBetween(num,min,max)" to "number.assertBetween(num,minNum,maxNum)",
+            "number.round(var,closestDigit)" to "number.roundTo(var,closestDigit)",
+
+            "tn.5250.saveTableAsCSV(csv)" to "tn.5250.saveTableAsCSV(csv,maxPage)",
+
+            "web.assertAttributeContains(locator,attrName,contains)" to "web.assertAttributeContain(locator,attrName,contains)",
+            "web.assertAttributeNotContains(locator,attrName,contains)" to "web.assertAttributeNotContain(locator,attrName,contains)",
+            "web.screenshot(file,locator)" to "web.screenshot(file,locator,removeFixed)",
+            "web.screenshot(file,locator,ignoreLocators)" to "web.screenshot(file,locator)",
+            "web.screenshotInFull(file,timeout)" to "web.screenshotInFull(file,timeout,removeFixed)",
+            "web.selectMultiOptions(locator)" to "web.selectAllOptions(locator)",
+            "web.uncheckAll(locator)" to "web.uncheckAll(locator,waitMs)",
+            "web.waitForElementPresent(locator)" to "web.waitForElementPresent(locator,maxWaitMs)",
     )
 
     private const val SUGGESTION_PREFIX = "This command is deprecated and will soon be removed. Consider using"
 
     @JvmStatic
     val commandSuggestions = mapOf(
-        "desktop.useTable(var,name)" to "$SUGGESTION_PREFIX desktop » editTableCells(row,nameValues) instead",
-        "desktop.editCurrentRow(nameValues)" to "$SUGGESTION_PREFIX desktop » editTableCells(row,nameValues) instead",
-        "web.scrollLeft(locator,pixel)" to "$SUGGESTION_PREFIX web » scrollElement(locator,xOffset,yOffset) instead",
-        "web.scrollRight(locator,pixel)" to "$SUGGESTION_PREFIX web » scrollElement(locator,xOffset,yOffset) instead"
+            // don't know why we have this... don't remember `useTable()` is deprecated
+            //        "desktop.useTable(var,name)" to "$SUGGESTION_PREFIX desktop » editTableCells(row,nameValues) instead",
+            "desktop.editCurrentRow(nameValues)" to "$SUGGESTION_PREFIX desktop » editTableCells(row,nameValues) instead",
+            "web.scrollLeft(locator,pixel)" to "$SUGGESTION_PREFIX web » scrollElement(locator,xOffset,yOffset) instead",
+            "web.scrollRight(locator,pixel)" to "$SUGGESTION_PREFIX web » scrollElement(locator,xOffset,yOffset) instead"
     )
 
     @JvmField
-    val PARAM_AUTO_FILL_COMMANDS = listOf("base.macroFlex",
-                                          "desktop.sendKeysToTextBox",
-                                          "desktop.typeAppendTextArea",
-                                          "desktop.typeAppendTextBox",
-                                          "desktop.typeTextArea",
-                                          "desktop.typeTextBox",
-                                          "io.saveMatches",
-                                          "localdb.exportEXCEL",
-                                          "localdb.exportXML",
-                                          "macro.expects",
-                                          "tn.5250.saveTableAsCSV",
-                                          "web.waitForElementPresent",
-                                          "web.waitUntilDisabled",
-                                          "web.waitUntilEnabled",
-                                          "web.waitUntilHidden",
-                                          "web.waitUntilVisible",
-                                          "webcookie.saveAllAsText"
+    val PARAM_AUTO_FILL_COMMANDS = listOf(
+            "base.macroFlex",
+
+            "desktop.saveAllTableRows",
+            "desktop.saveTableRows",
+            "desktop.saveTableRowsRange",
+            "desktop.sendKeysToTextBox",
+            "desktop.typeAppendTextArea",
+            "desktop.typeAppendTextBox",
+            "desktop.typeTextArea",
+            "desktop.typeTextBox",
+
+            "io.saveMatches",
+
+            "localdb.exportEXCEL",
+            "localdb.exportXML",
+
+            "macro.expects",
+
+            "tn.5250.saveTableAsCSV",
+
+            "web.waitForElementPresent",
+            "web.waitUntilDisabled",
+            "web.waitUntilEnabled",
+            "web.waitUntilHidden",
+            "web.waitUntilVisible",
+
+            "webcookie.saveAllAsText",
     )
 
     @JvmField

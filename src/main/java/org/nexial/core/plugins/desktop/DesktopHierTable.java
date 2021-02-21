@@ -17,10 +17,8 @@
 
 package org.nexial.core.plugins.desktop;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
-
+import com.google.gson.JsonArray;
+import com.google.gson.JsonObject;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.collections4.MapUtils;
 import org.apache.commons.collections4.map.ListOrderedMap;
@@ -38,8 +36,9 @@ import org.openqa.selenium.By;
 import org.openqa.selenium.NoSuchElementException;
 import org.openqa.selenium.WebElement;
 
-import com.google.gson.JsonArray;
-import com.google.gson.JsonObject;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
 
 import static org.apache.commons.lang3.builder.ToStringStyle.NO_CLASS_NAME_STYLE;
 import static org.nexial.core.plugins.desktop.DesktopConst.*;
@@ -181,20 +180,20 @@ public class DesktopHierTable extends DesktopElement {
 
         JsonArray edits = new JsonArray();
 
-        nameValues.entrySet().forEach(entry -> {
+        nameValues.forEach((key, value) -> {
             JsonObject edit = new JsonObject();
-            edit.addProperty("column", entry.getKey());
-            edit.addProperty("value", entry.getValue());
+            edit.addProperty("column", key);
+            edit.addProperty("value", value);
             edits.add(edit);
         });
         jsonInput.add("edits", edits);
-        Object result = driver.executeScript("tree: editCells", element, jsonInput.toString());
+        Object result = driver.executeScript("editCells", element, jsonInput.toString());
         alreadyCollapsed = false;
         return getResultData(result);
     }
 
     public StepResult collapseAll() {
-        driver.executeScript("tree: collapseAll", element);
+        driver.executeScript("collapseAll", element);
         // alreadyCollapsed has no effect if hierarchyColumn and hierarchyList values are provided
         alreadyCollapsed = true;
         return StepResult.success("collapsed all hierTable rows");
@@ -222,7 +221,7 @@ public class DesktopHierTable extends DesktopElement {
         jsonInput.addProperty(MATCH_COLUMN, categoryColumn);
         jsonInput.addProperty(MATCH_HIERARCHY, formatHierarchy(matchBy));
         jsonInput.addProperty(ALREADY_COLLAPSED, alreadyCollapsed);
-        Object result = driver.executeScript("tree: getRowData", element, jsonInput.toString());
+        Object result = driver.executeScript("getRowData", element, jsonInput.toString());
         alreadyCollapsed = false;
         return getResultData(result);
     }
@@ -247,7 +246,7 @@ public class DesktopHierTable extends DesktopElement {
         jsonInput.addProperty(MATCH_HIERARCHY, formatHierarchy(matchBy));
         jsonInput.addProperty(FETCH_COLUMN, fetchColumn);
         jsonInput.addProperty(ALREADY_COLLAPSED, alreadyCollapsed);
-        Object result = driver.executeScript("tree: getChildData", element, jsonInput.toString());
+        Object result = driver.executeScript("getChildData", element, jsonInput.toString());
         if (result == null) { CheckUtils.fail("Unable to fetch data with matchBy " + matchBy); }
         JSONArray jsonArray = JsonUtils.toJSONArray(result.toString());
         List<String> data = new ArrayList<>();

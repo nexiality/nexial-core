@@ -17,15 +17,17 @@
 
 package org.nexial.core.plugins.desktop;
 
-import java.io.*;
-import java.util.Map;
-
 import org.apache.commons.collections4.MapUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.builder.ToStringBuilder;
 import org.nexial.commons.utils.FileUtil;
 import org.nexial.commons.utils.ResourceUtils;
+import org.nexial.core.ExecutionThread;
+import org.nexial.core.model.ExecutionContext;
 import org.nexial.core.utils.ConsoleUtils;
+
+import java.io.*;
+import java.util.Map;
 
 import static java.io.File.separator;
 import static org.apache.commons.lang3.builder.ToStringStyle.MULTI_LINE_STYLE;
@@ -151,19 +153,13 @@ public class DesktopConfig {
         }
 
         File resource = new File(resourcePath);
-        InputStream jsonInputStream = null;
-        InputStreamReader jsonReader = null;
-        try {
-            jsonInputStream = new FileInputStream(resource);
-            jsonReader = new InputStreamReader(jsonInputStream);
-            DesktopConfig instance = DesktopConfig.parseJson(jsonReader);
+        try (InputStream jsonInputStream = new FileInputStream(resource);
+             InputStreamReader jsonReader = new InputStreamReader(jsonInputStream)) {
+            DesktopConfig instance = parseJson(jsonReader);
             instance.appId = appId;
             instance.fileBasedResource = false;
             instance.resourceBaseLocation = resource.getParentFile().getAbsolutePath();
             return instance;
-        } finally {
-            if (jsonReader != null) { try { jsonReader.close();} catch (IOException e) {} }
-            if (jsonInputStream != null) { try { jsonInputStream.close();} catch (IOException e) {} }
         }
     }
 
@@ -179,7 +175,7 @@ public class DesktopConfig {
         File resource = new File(jsonFilePath);
         FileReader reader = null;
         try {
-            ConsoleUtils.log("loading desktopconfig via " + resource);
+            ConsoleUtils.log("loading desktop config via " + resource);
             reader = new FileReader(resource);
             DesktopConfig instance = parseJson(reader);
             instance.fileBasedResource = true;
@@ -192,6 +188,17 @@ public class DesktopConfig {
 
     protected static DesktopConfig parseJson(Reader reader) {
         DesktopConfig config = GSON.fromJson(reader, DesktopConfig.class);
+
+        // v3.7: allow data variables in config json for the "Aut" section
+        final ExecutionContext context = ExecutionThread.get();
+        if (context != null) {
+            Aut aut = config.getAut();
+            aut.setArgs(context.replaceTokens(aut.getArgs()));
+            aut.setDotnetConfig(context.replaceTokens(aut.getDotnetConfig()));
+            aut.setExe(context.replaceTokens(aut.getExe()));
+            aut.setPath(context.replaceTokens(aut.getPath()));
+            aut.setWorkingDirectory(context.replaceTokens(aut.getWorkingDirectory()));
+        }
 
         DesktopElement app = config.getApp();
         if (app != null) {

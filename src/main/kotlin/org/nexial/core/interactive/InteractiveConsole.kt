@@ -207,6 +207,7 @@ open class InteractiveConsole {
 
             printConsoleSectionSeparator(out, FILLER)
 
+            scenarioSummary.endTime = System.currentTimeMillis()
             val endTime = scenarioSummary.endTime
             val startTime = scenarioSummary.startTime
             val timeSpan = formatLongDate(startTime) + " - " + formatLongDate(endTime)

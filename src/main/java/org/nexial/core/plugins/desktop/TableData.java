@@ -17,6 +17,17 @@
 
 package org.nexial.core.plugins.desktop;
 
+import org.apache.commons.collections4.CollectionUtils;
+import org.apache.commons.collections4.map.ListOrderedMap;
+import org.apache.commons.lang3.StringUtils;
+import org.json.JSONArray;
+import org.json.JSONException;
+import org.json.JSONObject;
+import org.nexial.core.utils.CheckUtils;
+import org.nexial.core.utils.ConsoleUtils;
+import org.nexial.core.utils.JsonUtils;
+import org.openqa.selenium.WebElement;
+
 import java.time.Duration;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -24,15 +35,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
-
-import org.apache.commons.collections4.CollectionUtils;
-import org.apache.commons.collections4.map.ListOrderedMap;
-import org.json.JSONArray;
-import org.json.JSONException;
-import org.json.JSONObject;
-import org.nexial.core.utils.CheckUtils;
-import org.nexial.core.utils.ConsoleUtils;
-import org.nexial.core.utils.JsonUtils;
 
 import static org.apache.commons.lang3.StringUtils.rightPad;
 import static org.json.JSONObject.NULL;
@@ -49,7 +51,7 @@ public class TableData {
     private List<TableRow> data;
 
     public class TableRow extends ListOrderedMap<String, String> {
-        private Map<String, String> dataMap = new ListOrderedMap<>();
+        private final Map<String, String> dataMap = new ListOrderedMap<>();
 
         public String get(Object key) {
             if (!(dataMap.containsKey(key)) && dataMap.containsKey("error")) { return dataMap.get("error"); }
@@ -67,11 +69,23 @@ public class TableData {
         }
     }
 
+    private TableData() {}
+
     public TableData(Object tableDataObject, Duration duration) {
         elapsedTime = duration.toMillis() / 1000;
         data = readTableData(tableDataObject);
         rowCount = data.size();
         columnCount = columns.size();
+    }
+
+    public static TableData fromTreeViewRows(List<String> headers, List<WebElement> rowData, Duration duration) {
+        TableData tableData = new TableData();
+        tableData.elapsedTime = duration.toMillis() / 1000;
+        tableData.data = tableData.readTreeViewData(headers, rowData);
+        tableData.columns = headers;
+        tableData.columnCount = CollectionUtils.size(headers);
+        tableData.rowCount = tableData.data == null ? 0 : tableData.data.size();
+        return tableData;
     }
 
     public long getElapsedTime() { return elapsedTime; }
@@ -175,6 +189,27 @@ public class TableData {
             throw new IllegalArgumentException("ERROR: Unable to read Table data: " + e.getMessage());
         }
 
+        return rows;
+    }
+
+    private List<TableRow> readTreeViewData(List<String> headers, List<WebElement> rowData) {
+        if (CollectionUtils.isEmpty(headers) || CollectionUtils.isEmpty(rowData)) { return null; }
+
+        List<TableRow> rows = new ArrayList<>();
+
+        int headerIndex = 0;
+        TableRow columnValues = new TableRow();
+        for (WebElement rowDatum : rowData) {
+            String header = headers.get(headerIndex++);
+            columnValues.put(Integer.toString(headerIndex), header, StringUtils.defaultString(rowDatum.getText()));
+            if (headerIndex >= headers.size()) {
+                headerIndex = 0;
+                rows.add(columnValues);
+                columnValues = new TableRow();
+            }
+        }
+
+        if (!columnValues.isEmpty()) { rows.add(columnValues); }
         return rows;
     }
 
