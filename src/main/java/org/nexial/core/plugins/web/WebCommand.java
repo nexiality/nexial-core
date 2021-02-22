@@ -85,7 +85,7 @@ import static org.apache.commons.lang3.SystemUtils.IS_OS_MAC;
 import static org.nexial.core.NexialConst.BrowserType.safari;
 import static org.nexial.core.NexialConst.*;
 import static org.nexial.core.NexialConst.Data.*;
-import static org.nexial.core.NexialConst.PolyMatcher.*;
+import static org.nexial.core.NexialConst.PolyMatcher.REGEX;
 import static org.nexial.core.NexialConst.Project.BROWSER_META_CACHE_PATH;
 import static org.nexial.core.NexialConst.Web.*;
 import static org.nexial.core.SystemVariables.*;
@@ -1101,11 +1101,11 @@ public class WebCommand extends BaseCommand implements CanTakeScreenshot, CanLog
                 green = Integer.parseInt(StringUtils.repeat(value.charAt(1), 2), 16);
                 blue = Integer.parseInt(StringUtils.repeat(value.charAt(2), 2), 16);
             } else if (value.length() == 6) {
-                System.out.println("" + StringUtils.substring(value,0, 2) + "=" +
-                                   Integer.parseInt(StringUtils.substring(value,0, 2), 16));
-                red = Integer.parseInt(StringUtils.substring(value,0, 2 ), 16);
-                green = Integer.parseInt(StringUtils.substring(value,2, 4), 16);
-                blue = Integer.parseInt(StringUtils.substring(value,4, 6), 16);
+                System.out.println("" + StringUtils.substring(value, 0, 2) + "=" +
+                                   Integer.parseInt(StringUtils.substring(value, 0, 2), 16));
+                red = Integer.parseInt(StringUtils.substring(value, 0, 2), 16);
+                green = Integer.parseInt(StringUtils.substring(value, 2, 4), 16);
+                blue = Integer.parseInt(StringUtils.substring(value, 4, 6), 16);
             }
 
             return "rgba(" + red + ", " + green + ", " + blue + ", 1)";
@@ -2207,12 +2207,14 @@ public class WebCommand extends BaseCommand implements CanTakeScreenshot, CanLog
         WebElement source = findElement(fromLocator);
         WebElement target = findElement(toLocator);
         new Actions(driver).moveToElement(source)
-                           .clickAndHold(source)
-                           .pause(1000)
-                           .dragAndDrop(source, target)
-                           .pause(250)
-                           .perform();
+            .clickAndHold(source)
+            .pause(250)
+            .moveByOffset(10, 10)
+            .moveToElement(target)
+            .release()
+            .perform();
 
+        wait("500");
         return StepResult.success("Drag-and-drop element '" + fromLocator + "' to '" + toLocator + "'");
     }
 
