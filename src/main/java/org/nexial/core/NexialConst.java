@@ -1903,6 +1903,9 @@ public final class NexialConst {
                                                                         OPT_DRAG_FROM_TOP_CORNER,
                                                                         OPT_DRAG_FROM_BOTTOM_CORNER,
                                                                         OPT_DRAG_FROM_MIDDLE);
+        public static final String OPT_DND_NATIVE = registerSysVar(NS_WEB + "dragNative", "false");
+        public static final String OPT_DND_NATIVE_X_OFFSET = registerSysVar(NS_WEB + "dragNativeXOffset", "false");
+        public static final String OPT_DND_NATIVE_Y_OFFSET = registerSysVar(NS_WEB + "dragNativeYOffset", "false");
 
         // selenium specific
         public static final String SELENIUM_CHROME_DRIVER = "webdriver.chrome.driver";

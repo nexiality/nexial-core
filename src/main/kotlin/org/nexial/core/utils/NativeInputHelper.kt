@@ -54,6 +54,10 @@ object NativeInputHelper {
     @JvmStatic
     fun mouseWheel(amount: Int, modifiers: List<String>, x: Int, y: Int) = Mousey.wheel(robot, amount, modifiers, x, y)
 
+    @JvmStatic
+    fun dragAndDrop(modifiers: List<String>, fromX: Int, fromY: Int, toX: Int, toY: Int) =
+        Mousey.dragAndDrop(robot, BUTTON1_DOWN_MASK, modifiers, fromX, fromY, toX, toY)
+
     @JvmField
     val screenDimension: Dimension = AwtUtils.getScreenDimension(0)
                                      ?: throw RuntimeException("Unable to determine current screen dimension")
@@ -328,6 +332,30 @@ internal object Mousey {
         robot.mouseMove(x, y)
         robot.mouseWheel(amount)
         robot.delay(1000)
+
+        while (mods.isNotEmpty()) robot.keyRelease(mods.pop())
+    }
+
+    fun dragAndDrop(robot: Robot, button: Int, modifiers: List<String>, fromX: Int, fromY: Int, toX: Int, toY: Int) {
+        val mods = Stack<Int>()
+
+        modifiers.forEach { key ->
+            if (MODIFIERS.containsKey(key)) {
+                val keyCode = MODIFIERS[key] ?: error("Unknown/unsupported modifier: $key")
+                robot.keyPress(keyCode)
+                mods.add(keyCode)
+            } else {
+                error("Unsupported key/modifier for mouse-click: $key")
+            }
+        }
+
+        robot.mouseMove(fromX, fromY)
+        robot.mousePress(button)
+        robot.mouseMove(fromX + 10, fromY + 10)
+        Thread.sleep(250)
+        robot.mouseMove(toX, toY)
+        Thread.sleep(250)
+        robot.mouseRelease(button)
 
         while (mods.isNotEmpty()) robot.keyRelease(mods.pop())
     }

@@ -64,6 +64,7 @@ import ru.yandex.qatools.ashot.Screenshot;
 import ru.yandex.qatools.ashot.coordinates.WebDriverCoordsProvider;
 import ru.yandex.qatools.ashot.shooting.ShootingStrategies;
 
+import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 import javax.imageio.ImageIO;
 import javax.validation.constraints.NotNull;
@@ -2206,13 +2207,19 @@ public class WebCommand extends BaseCommand implements CanTakeScreenshot, CanLog
 
         WebElement source = findElement(fromLocator);
         WebElement target = findElement(toLocator);
-        new Actions(driver).moveToElement(source)
-            .clickAndHold(source)
-            .pause(250)
-            .moveByOffset(10, 10)
-            .moveToElement(target)
-            .release()
-            .perform();
+
+        boolean dragNative = context.getBooleanData(OPT_DND_NATIVE, getDefaultBool(OPT_DND_NATIVE));
+        if (dragNative) {
+            nativeDragTo(deriveNativeDragPoint(source), deriveDragDistance(source, target));
+        } else {
+            new Actions(driver).moveToElement(source)
+                               .clickAndHold(source)
+                               .pause(250)
+                               .moveByOffset(10, 10)
+                               .moveToElement(target)
+                               .release()
+                               .perform();
+        }
 
         wait("500");
         return StepResult.success("Drag-and-drop element '" + fromLocator + "' to '" + toLocator + "'");
@@ -2223,19 +2230,56 @@ public class WebCommand extends BaseCommand implements CanTakeScreenshot, CanLog
         requiresInteger(xOffset, "invalid x-offset", xOffset);
         requiresInteger(yOffset, "invalid y-offset", yOffset);
 
+        WebElement source = findElement(fromLocator);
+        Point xy = deriveDragFrom(source);
         int moveX = NumberUtils.toInt(xOffset);
         int moveY = NumberUtils.toInt(yOffset);
 
-        WebElement source = findElement(fromLocator);
-
-        Point xy = deriveDragFrom(source);
-        ConsoleUtils.log("start dragging from target element (" + xy.getX() + "," + xy.getY() + ")");
-
-        new Actions(driver).moveToElement(source, xy.getX(), xy.getY())
-                           .dragAndDropBy(source, moveX, moveY)
-                           .build().perform();
+        boolean dragNative = context.getBooleanData(OPT_DND_NATIVE, getDefaultBool(OPT_DND_NATIVE));
+        if (dragNative) {
+            nativeDragTo(deriveNativeDragPoint(source), moveX, moveY);
+        } else {
+            ConsoleUtils.log("start dragging from target element (" + xy.getX() + "," + xy.getY() + ")");
+            new Actions(driver).moveToElement(source, xy.getX(), xy.getY())
+                               .clickAndHold()
+                               .pause(250)
+                               .moveByOffset(0, 15)
+                               .pause(250)
+                               .moveByOffset(moveX, moveY)
+                               .pause(250)
+                               .release()
+                               .perform();
+        }
 
         return StepResult.success("Drag-and-move element '" + fromLocator + "' by (" + moveX + "," + moveY + ")");
+    }
+
+    @Nonnull
+    protected Point deriveNativeDragPoint(WebElement elem) {
+        int initialXOffset = context.getIntData(OPT_DND_NATIVE_X_OFFSET, 0);
+        int initialYOffset = context.getIntData(OPT_DND_NATIVE_Y_OFFSET, 80);
+
+        Point winPos = driver.manage().window().getPosition();
+        Point elemPos = elem.getLocation();
+        Point xy = deriveDragFrom(elem);
+        return new Point(initialXOffset + winPos.x + elemPos.getX() + xy.getX(),
+                         initialYOffset + winPos.y + elemPos.getY() + xy.getY());
+    }
+
+    private Point deriveDragDistance(WebElement source, WebElement target) {
+        Point sourceXY = source.getLocation();
+        Point targetXY = target.getLocation();
+        return new Point(targetXY.getX() - sourceXY.getX(), targetXY.getY() - sourceXY.getY());
+    }
+
+    protected void nativeDragTo(Point start, Point end) { nativeDragTo(start, end.x, end.y); }
+
+    protected void nativeDragTo(Point start, int toXOffset, int toYOffset) {
+        int toX = start.x + toXOffset;
+        int toY = start.y + toYOffset;
+        ConsoleUtils.log("start dragging from target element from " +
+                         "(" + start.x + "," + start.y + ") to (" + toX + "," + toY + ")");
+        NativeInputHelper.dragAndDrop(new ArrayList<>(), start.x, start.y, toX, toY);
     }
 
     public StepResult updateAttribute(String locator, String attrName, String value) {

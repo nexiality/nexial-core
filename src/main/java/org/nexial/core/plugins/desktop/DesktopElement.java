@@ -2257,7 +2257,7 @@ public class DesktopElement {
         try {
             return StringUtils.defaultIfEmpty(element.getText(), element.getAttribute("Name"));
         } catch (WebDriverException e) {
-            ConsoleUtils.error("Cannot resolve target content element for '" + getLabel() + "'");
+            ConsoleUtils.log("Cannot resolve text content for '" + getLabel() + "', retrying via @Name attribute...");
             return element.getAttribute("Name");
         }
     }

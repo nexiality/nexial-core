@@ -23,6 +23,7 @@ import org.apache.commons.lang3.ArrayUtils;
 import org.apache.commons.lang3.BooleanUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.math.NumberUtils;
+import org.nexial.commons.utils.FileUtil;
 import org.nexial.commons.utils.TextUtils;
 import org.nexial.core.NexialConst.PolyMatcher;
 import org.nexial.core.ShutdownAdvisor;
@@ -145,27 +146,34 @@ public class DesktopCommand extends BaseCommand implements ForcefulTerminate, Ca
                 return null;
             }
 
-            Rectangle rect = null;
+            List<String> dimension = null;
             if (!context.getBooleanData(DESKTOP_SCREENSHOT_FULLSCREEN, DEF_DESKTOP_SCREENSHOT_FULLSCREEN)) {
-                String[] boundingRectangle = StringUtils.split(application.getAttribute(ATTR_BOUNDING_RECTANGLE), ",");
-                if (ArrayUtils.getLength(boundingRectangle) == 4) {
-                    int x = NumberUtils.toInt(boundingRectangle[0]);
-                    int y = NumberUtils.toInt(boundingRectangle[1]);
-                    int width = NumberUtils.toInt(boundingRectangle[2]);
-                    int height = NumberUtils.toInt(boundingRectangle[3]);
-                    rect = new Rectangle(x, y, height, width);
-                }
+                dimension = TextUtils.toList(application.getAttribute(ATTR_BOUNDING_RECTANGLE), ",", true);
             }
 
-            // also generate `OPT_LAST_SCREENSHOT_NAME` var in context
-            file = ScreenshotUtils.saveScreenshot(getDriver(), filename, rect);
-            if (file == null) {
-                error("Unable to capture screenshot via Winium driver");
-                return null;
-            }
+            file = screenshot(filename, dimension);
         }
 
         return postScreenshot(testStep, file);
+    }
+
+    protected File screenshot(String targetFile, List<String> dimension) {
+        Rectangle rect = null;
+        if (CollectionUtils.size(dimension) == 4) {
+            rect = new Rectangle(NumberUtils.toInt(dimension.get(0)),
+                                 NumberUtils.toInt(dimension.get(1)),
+                                 NumberUtils.toInt(dimension.get(3)),
+                                 NumberUtils.toInt(dimension.get(2)));
+        }
+
+        // also generate `OPT_LAST_SCREENSHOT_NAME` var in context
+        File imageFile = ScreenshotUtils.saveScreenshot(getDriver(), targetFile, rect);
+        if (imageFile == null) {
+            error("Unable to capture screenshot via Winium driver");
+            return null;
+        }
+
+        return imageFile;
     }
 
     @Override
@@ -329,11 +337,11 @@ public class DesktopCommand extends BaseCommand implements ForcefulTerminate, Ca
             log("[WARNING] target element does not resolve to a Window component; " + warningSuffix);
         }
 
-        List<WebElement> menuBarObject = findElements(elem, "./*[@ControlType=\"ControlType.MenuBar\"]");
+        List<WebElement> menuBarObject = findElements(elem, "*[@ControlType=\"ControlType.MenuBar\"]");
         if (CollectionUtils.isEmpty(menuBarObject)) {
             log("[WARNING] No menu bar cannot be found under specified locator; " + warningSuffix);
             // try with just menu
-            menuBarObject = findElements(elem, ".//*[@ControlType=\"ControlType.Menu\"]");
+            menuBarObject = findElements(elem, "*[@ControlType=\"ControlType.Menu\"]");
             // give up
             if (CollectionUtils.isEmpty(menuBarObject)) {
                 throw new IllegalArgumentException("Unable to derive any Menu element under the target element");
@@ -345,24 +353,35 @@ public class DesktopCommand extends BaseCommand implements ForcefulTerminate, Ca
         // move into position
         new Actions(winiumDriver).moveToElement(menuParent, 10, 10).perform();
 
+        boolean useIndex = StringUtils.startsWith(menu, CONTEXT_MENU_VIA_INDEX);
+        if (useIndex) { menu = StringUtils.trim(StringUtils.substringAfter(menu, CONTEXT_MENU_VIA_INDEX)); }
+
         // split menu into its individual levels
         String[] menuItems = StringUtils.splitByWholeSeparator(menu, context.getTextDelim());
-        String previousMenuContainer = "";
         for (int i = 0; i < menuItems.length; i++) {
             String item = menuItems[i];
-            String xpath =
-                "./" +
-                (i == 0 ? "" : "/*[@ControlType=\"ControlType.Menu\" and @Name=\"" + previousMenuContainer + "\"]") +
-                "/*[@ControlType=\"ControlType.MenuItem\" and @Name=\"" + item + "\"]";
-            previousMenuContainer = item;
 
-            List<WebElement> menuElements = findElements(menuParent, xpath);
-            if (CollectionUtils.isEmpty(menuElements)) {
-                throw new IllegalArgumentException("Menu item " + item + " cannot be found; exiting...");
+            String xpath = i == 0 ? "" : "*[@ControlType='ControlType.Menu']/";
+            if (useIndex) {
+                if (!NumberUtils.isDigits(item)) {
+                    throw new IllegalArgumentException("Invalid context menu index: " + item);
+                }
+                if (StringUtils.equals(item, "0")) {
+                    throw new IllegalArgumentException("Invalid context menu index: " + item + ". Must be 1-based.");
+                }
+
+                xpath += "*[@ControlType='ControlType.MenuItem'][" + item + "]";
+            } else {
+                xpath += "*[@ControlType='ControlType.MenuItem' and @Name='" + item + "']";
             }
 
-            menuParent = menuElements.get(0);
-            new Actions(winiumDriver).moveToElement(menuParent, 10, 10).click(menuParent).perform();
+            WebElement menuItem = menuParent.findElement(By.xpath(xpath));
+            if (menuItem == null) {
+                throw new IllegalArgumentException("Unable to derive menu item " + item + " from target item");
+            }
+
+            new Actions(winiumDriver).moveToElement(menuItem, 10, 10).click(menuItem).perform();
+            menuParent = menuItem;
         }
     }
 
@@ -760,6 +779,38 @@ public class DesktopCommand extends BaseCommand implements ForcefulTerminate, Ca
         }
 
         return StepResult.success(button + " mouse button clicked on screen (" + x + "," + y + ")");
+    }
+
+    public StepResult screenshotByLocator(String locator, String file) {
+        requiresNotNull(locator, "Invalid locator", locator);
+        requiresNotNull(file, "Invalid screenshot file", file);
+        if (FileUtil.isDirectoryReadable(file)) {
+            return StepResult.fail("Invalid file specified: " + file + " points to a directory");
+        }
+
+        WebElement elem = findFirstElement(locator);
+        if (elem == null) { return StepResult.fail("No component can be resolved via locator " + locator); }
+
+        List<String> dimension = TextUtils.toList(elem.getAttribute("BoundingRectangle"), ",", true);
+        File imageFile = screenshot(file, dimension);
+
+        return StepResult.success("Screenshot captured for " + locator + ": " + imageFile);
+    }
+
+    public StepResult screenshot(String name, String file) {
+        requiresNotNull(file, "Invalid screenshot file", file);
+        if (FileUtil.isDirectoryReadable(file)) {
+            return StepResult.fail("Invalid file specified: " + file + " points to a directory");
+        }
+
+        DesktopElement component = getRequiredElement(name, Any);
+        WebElement elem = component.getElement();
+        if (elem == null) { return StepResult.fail("No component can be resolved via its name " + name); }
+
+        List<String> dimension = TextUtils.toList(elem.getAttribute("BoundingRectangle"), ",", true);
+        File imageFile = screenshot(file, dimension);
+
+        return StepResult.success("Screenshot captured for " + name + ": " + imageFile);
     }
 
     public StepResult doubleClick(String name) { return doubleClick(name, Any); }
