@@ -258,7 +258,7 @@ public class DesktopTable extends DesktopElement {
             List<WebElement> rowData = driver.findElements(By.xpath(xpath));
             return TableData.fromTreeViewRows(headers, rowData, Duration.between(startTime, Instant.now()));
         } else {
-            String object = (String) driver.executeScript("fetch", element, begin, end);
+            String object = (String) driver.executeScript(SCRIPT_DATAGRID_FETCH, element, begin, end);
             return new TableData(object, Duration.between(startTime, Instant.now()));
         }
     }
@@ -272,7 +272,7 @@ public class DesktopTable extends DesktopElement {
             List<WebElement> rowData = driver.findElements(By.xpath(xpath));
             return TableData.fromTreeViewRows(headers, rowData, Duration.between(startTime, Instant.now()));
         } else {
-            String object = (String) driver.executeScript("fetch-all", element);
+            String object = (String) driver.executeScript(SCRIPT_DATAGRID_FETCH_ALL, element);
             return new TableData(object, Duration.between(startTime, Instant.now()));
         }
     }
@@ -284,7 +284,7 @@ public class DesktopTable extends DesktopElement {
             return CollectionUtils.size(driver.findElements(By.xpath(xpath)));
         }
 
-        Object object = driver.executeScript("row-count", element);
+        Object object = driver.executeScript(SCRIPT_DATAGRID_ROW_COUNT, element);
         if (object == null) { return collectRowCountByXpath(); }
 
         JSONObject jsonObject = JsonUtils.toJSONObject(object.toString());
@@ -878,9 +878,7 @@ public class DesktopTable extends DesktopElement {
         return cols;
     }
 
-    private void clearCellContent(WebElement cellElement) {
-        driver.executeScript("ValuePattern.SetValue", cellElement, "");
-    }
+    private void clearCellContent(WebElement cellElement) { driver.executeScript(SCRIPT_SET_VALUE, cellElement, ""); }
 
     private int collectRowCountByXpath() {
         // collect row count using xpath

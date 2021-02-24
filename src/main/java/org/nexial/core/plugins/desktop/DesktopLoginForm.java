@@ -17,14 +17,14 @@
 
 package org.nexial.core.plugins.desktop;
 
-import java.util.HashMap;
-import java.util.Map;
-
 import org.nexial.core.model.StepResult;
 import org.nexial.core.utils.ConsoleUtils;
 import org.openqa.selenium.TimeoutException;
 import org.openqa.selenium.WebElement;
 import org.openqa.selenium.winium.WiniumDriver;
+
+import java.util.HashMap;
+import java.util.Map;
 
 import static org.nexial.core.plugins.desktop.DesktopConst.*;
 
@@ -65,10 +65,10 @@ public class DesktopLoginForm extends LoginForm {
         if (elemCancel == null) { return StepResult.fail("EXPECTED element Cancel button not found via " + xpath); }
 
         WiniumDriver driver = component.getDriver();
-        driver.executeScript("input: brc_click", elemPassword);
-        driver.executeScript("automation: ValuePattern.SetValue", elemUsername, username);
-        driver.executeScript("automation: ValuePattern.SetValue", elemPassword, password);
-        driver.executeScript("input: brc_click", elemLogin);
+        driver.executeScript(SCRIPT_CLICK, elemPassword);
+        driver.executeScript(SCRIPT_SET_VALUE, elemUsername, username);
+        driver.executeScript(SCRIPT_SET_VALUE, elemPassword, password);
+        driver.executeScript(SCRIPT_CLICK, elemLogin);
 
         // can't do a waitForLocator since all the elements are probably already loaded at this time
         waitFor(loginWaitMs + "");

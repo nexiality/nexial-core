@@ -1118,7 +1118,7 @@ public class DesktopCommand extends BaseCommand implements ForcefulTerminate, Ca
 
             // click first shown option
             // listElement.click();
-            driver.executeScript("brc_click", listElement);
+            driver.executeScript(SCRIPT_CLICK, listElement);
             new Actions(driver).moveToElement(listElement, 5, 5).click().perform();
 
             List<String> shortcuts = new ArrayList<>();

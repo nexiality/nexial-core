@@ -1498,11 +1498,13 @@ public class DesktopElement {
                 } else {
                     if (!desktopElement.getElementType().isSelfLabel()) {
                         BoundingRectangle bound = BoundingRectangle.newInstance(desktopElement);
-                        if (layout.isLeftToRight()) {
-                            boundGroups.computeIfAbsent(bound.getY(), list -> new ArrayList<>()).add(bound);
-                        }
-                        if (layout.isTwoLines()) {
-                            boundGroups.computeIfAbsent(bound.getX(), list -> new ArrayList<>()).add(bound);
+                        if (bound != null) {
+                            if (layout.isLeftToRight()) {
+                                boundGroups.computeIfAbsent(bound.getY(), list -> new ArrayList<>()).add(bound);
+                            }
+                            if (layout.isTwoLines()) {
+                                boundGroups.computeIfAbsent(bound.getX(), list -> new ArrayList<>()).add(bound);
+                            }
                         }
                     } else {
                         addComponent(desktopElement.label, desktopElement);
@@ -1890,7 +1892,7 @@ public class DesktopElement {
                 // good to use shortcut script with <[{text}]>, which gives the effect of element.sendKeys and also sets cursor to beginning of text
                 driver.executeScript(SCRIPT_PREFIX_SHORTCUT + TEXT_INPUT_PREFIX + text + TEXT_INPUT_POSTFIX, element);
             } else {
-                driver.executeScript("ValuePattern.SetValue", element, text);
+                driver.executeScript(SCRIPT_SET_VALUE, element, text);
             }
             String actual = element.getText();
             boolean matched = isActualAndTextMatched(element, actual, text);
@@ -1919,12 +1921,12 @@ public class DesktopElement {
         try {
             // click needs for combo that has child element as edit type
             element.click();
-            driver.executeScript("ValuePattern.SetValue", element, text);
+            driver.executeScript(SCRIPT_SET_VALUE, element, text);
             String actual = element.getText();
             boolean matched = isActualAndTextMatched(element, actual, text);
             if (!matched) {
                 // try again... this time with extra space in the front to avoid autofill
-                driver.executeScript("ValuePattern.SetValue", element, " " + text);
+                driver.executeScript(SCRIPT_SET_VALUE, element, " " + text);
                 driver.executeScript(toShortcuts("CTRL-HOME", "DEL"), element);
                 actual = element.getText();
                 matched = isActualAndTextMatched(element, actual, text);

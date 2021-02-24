@@ -262,6 +262,16 @@ public class DesktopConst {
 
     public static final String CONTEXT_MENU_VIA_INDEX = "INDEX:";
 
+    public static final String SCRIPT_SET_VALUE = "automation: ValuePattern.SetValue";
+    public static final String SCRIPT_CLICK = "input: brc_click";
+    public static final String SCRIPT_DATAGRID_ROW_COUNT = "datagrid: row-count";
+    public static final String SCRIPT_TREE_EDIT_CELLS = "tree: editCells";
+    public static final String SCRIPT_TREE_COLLAPSE_ALL = "tree: collapseAll";
+    public static final String SCRIPT_DATAGRID_FETCH = "datagrid: fetch";
+    public static final String SCRIPT_DATAGRID_FETCH_ALL = "datagrid: fetch-all";
+    public static final String SRIPT_TREE_GETROW = "tree: getRowData";
+    public static final String SCRIPT_TREE_GET_CHILD = "tree: getChildData";
+
     protected DesktopConst() { }
 
     public static void postMenuClickWait() {
