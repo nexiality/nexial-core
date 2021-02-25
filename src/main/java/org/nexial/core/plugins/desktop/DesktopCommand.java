@@ -2489,7 +2489,7 @@ public class DesktopCommand extends BaseCommand implements ForcefulTerminate, Ca
 
             ConsoleUtils.log("shortcut key was pressed.. now setting focus back to table at " + currentEditColumn);
             if (table.isTreeView) {
-                winiumDriver.executeScript(toShortcuts("ESCAPE"), editColumn);
+                winiumDriver.executeScript(toShortcuts("ESC"), editColumn);
             } else {
                 editColumn.click();
             }

@@ -1873,7 +1873,13 @@ public class DesktopElement {
     /** This is to check the set value is equal with entered text **/
     protected boolean isActualAndTextMatched(WebElement element, String actual, String text) {
         if (StringUtils.isEmpty(actual)) { actual = element.getAttribute("Name"); }
-        return StringUtils.equals(StringUtils.remove(text.trim(), '\r'), StringUtils.remove(actual.trim(), '\r'));
+
+        actual = StringUtils.remove(actual.trim(), '\r');
+        text = StringUtils.remove(text.trim(), '\r');
+        if (NumberUtils.isParsable(actual) && NumberUtils.isParsable(text)) {
+            return NumberUtils.toDouble(actual) == NumberUtils.toDouble(text);
+        }
+        return StringUtils.equals(text, actual);
     }
 
     protected boolean setValue(WebElement element, String text) { return setValue(false, element, text); }

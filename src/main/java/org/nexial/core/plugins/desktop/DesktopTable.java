@@ -538,18 +538,16 @@ public class DesktopTable extends DesktopElement {
 
         if (focused) {
             // todo: need to handle first column = null problem
-
             if (setFocusOut) {
                 looseCurrentFocus();
-            } else if (context.getBooleanData(
-                CURRENT_DESKTOP_TABLE_EDITABLE_COLUMN_FOUND)) {
+            } else if (context.getBooleanData(CURRENT_DESKTOP_TABLE_EDITABLE_COLUMN_FOUND)) {
                 WebElement editColumn = tableRow.getColumns()
                                                 .get(context.getStringData(CURRENT_DESKTOP_TABLE_EDITABLE_COLUMN_NAME));
                 // using click action on editable column helps the driver find child elements
                 editColumn.click();
-
             }
         }
+
         return StepResult.success(StringUtils.trim(messageBuffer.toString()));
     }
 
@@ -837,7 +835,7 @@ public class DesktopTable extends DesktopElement {
             if (context.getBooleanData(CLEAR_TABLE_CELL_BEFORE_EDIT, getDefaultBool(CLEAR_TABLE_CELL_BEFORE_EDIT))) {
                 setValue(cellElement, "");
             }
-            cellElement.sendKeys(value);
+            setValue(cellElement, value);
         }
     }
 
@@ -924,20 +922,16 @@ public class DesktopTable extends DesktopElement {
             // do I have Edit component under Table?
             // todo: try for performance improvement by using .findElement
             List<WebElement> matches = cellElement.findElements(By.xpath("*[@ControlType='" + EDIT + "']"));
-            if (CollectionUtils.isNotEmpty(matches)) {
-                // clear existing content first
-                ConsoleUtils.log("clear content on '" + column + "' first");
-                clearCellContent(cellElement);
-            } else {
-                if (isInvokePatternAvailable(cellElement)) {
-                    // the code below is alternative for combo which do not have 'Edit' component under Table even if it is editable.
-                    // This is the case when sometime we can't type text in combo box of table row, need to select from dropdowns
+            if (CollectionUtils.isEmpty(matches) && isInvokePatternAvailable(cellElement)) {
+                // the code below is alternative for combo which do not have 'Edit' component under Table even if it is editable.
+                // This is the case when sometime we can't type text in combo box of table row, need to select from dropdowns
 
-                    ConsoleUtils.log("using shortcut on '" + column + "'");
-                    driver.executeScript(SCRIPT_PREFIX_SHORTCUT + forceShortcutSyntax(value), cellElement);
-                    return true;
-                }
+                ConsoleUtils.log("using shortcut on '" + column + "'");
+                driver.executeScript(SCRIPT_PREFIX_SHORTCUT + forceShortcutSyntax(value), cellElement);
+                return true;
             }
+
+            ConsoleUtils.log("type '" + value + "' on '" + column + "'");
             return typeValueWithFunctionKey(tableRow, cellElement, value, false);
         } else if (isTextPatternAvailable(cellElement)) {
             ConsoleUtils.log("using shortcut on '" + column + "'");
@@ -969,9 +963,7 @@ public class DesktopTable extends DesktopElement {
             // extract what's between [...]
             String postShortcut = m.group(2);
 
-            if (context != null) {
-                context.setData(CURRENT_DESKTOP_TABLE_ROW, tableRow);
-            }
+            if (context != null) { context.setData(CURRENT_DESKTOP_TABLE_ROW, tableRow); }
             typeValue(cellElement, value, isFormattedText);
             if (StringUtils.isNotBlank(postShortcut)) { driver.executeScript(toShortcuts(postShortcut), element); }
             return false;
