@@ -50,6 +50,7 @@ import java.io.IOException;
 import java.math.BigDecimal;
 import java.util.*;
 
+import static java.lang.String.format;
 import static org.nexial.core.NexialConst.Desktop.AUTOSCAN_INFRAGISTICS4_AWARE;
 import static org.nexial.core.NexialConst.NL;
 import static org.nexial.core.SystemVariables.getDefaultBool;
@@ -523,6 +524,13 @@ public class DesktopElement {
                 element.click();
                 targetElement = element.findElement(By.xpath(LOCATOR_DOCUMENT));
             }
+        } else if (elementType == Checkbox || elementType == Radio) {
+            if (isTogglePatternAvailable(element)) {
+                // todo: need to support tri-state checkboxes
+                return isSelected() ? "True" : "False";
+            } else {
+                targetElement = element;
+            }
         } else {
             targetElement = element;
         }
@@ -852,7 +860,7 @@ public class DesktopElement {
     protected boolean resolvedAsToolBar() {
         if (!StringUtils.equals(controlType, TOOLBAR)) { return false; }
         this.elementType = ToolBar;
-        if (StringUtils.isBlank(label)) { label = APP_TOOLBAR; }
+        if (StringUtils.isBlank(label)) { label = StringUtils.defaultIfBlank(name, APP_TOOLBAR); }
         return true;
     }
 
@@ -1269,6 +1277,7 @@ public class DesktopElement {
     protected boolean resolvedAsTab() {
         if (!StringUtils.equals(controlType, TAB_GROUP)) { return false; }
         this.elementType = Tab;
+        if (StringUtils.isBlank(label) && StringUtils.isNotBlank(name)) { label = name; }
         return true;
     }
 
@@ -1293,7 +1302,20 @@ public class DesktopElement {
             return true;
         }
 
-        return false;
+//        return false;
+        List<WebElement> children = element.findElements(By.xpath("*"));
+        if (CollectionUtils.isEmpty(children)) { return false; }
+
+        children.forEach(child -> {
+            String controlType = child.getAttribute("ControlType");
+            if (CUSTOM_NESTED_TYPES.contains(controlType)) {
+                String label = StringUtils.defaultIfBlank(child.getAttribute("Name"),
+                                                          child.getAttribute("AutomationId"));
+                if (StringUtils.isNotBlank(label)) { components.put(label, new DesktopElement(child, this)); }
+            }
+        });
+
+        return !components.isEmpty();
     }
 
     protected WebElement findMatchingChildElement(WebElement element, String expectedType, int expectedCount) {
@@ -1348,7 +1370,7 @@ public class DesktopElement {
         if (StringUtils.isBlank(xpath)) { throw new IllegalArgumentException("xpath is not defined!"); }
         if (layout == null) { throw new IllegalArgumentException("layout is null!"); }
 
-        DesktopConst.debug("scanning " + label + "...");
+        DesktopConst.debug(format("[%s]: scanning...", label));
 
         // FIRST PASS: COLLECT ALL CHILD ELEMENTS
         List<DesktopElement> desktopElements = traverseChildElements();
@@ -1370,8 +1392,6 @@ public class DesktopElement {
     protected List<DesktopElement> traverseChildElements() {
         if (element == null) { return null; }
 
-        DesktopConst.debug("collecting child elements for  " + ((RemoteWebElement) element).getId());
-
         List<WebElement> children = element.findElements(By.xpath("*"));
         if (CollectionUtils.isEmpty(children)) { return null; }
 
@@ -1381,6 +1401,10 @@ public class DesktopElement {
             if (shouldSkipScanning(child)) { continue; }
 
             String childControlType = child.getAttribute("ControlType");
+            String childName = child.getAttribute("Name");
+            DesktopConst.debug(format("[%s]: scanning nested element [%s] of type '%s'...",
+                                      label, childName, childControlType));
+
             if (StringUtils.equals(childControlType, SCROLLBAR)) {
                 handleScrollbar(child);
                 continue;
@@ -1525,15 +1549,15 @@ public class DesktopElement {
 
             Integer thisGroup = groups.get(i);
             Integer nextGroup = groups.get(i + 1);
-            DesktopConst.debug("comparing " + thisGroup + "," + nextGroup + " ...");
+//            DesktopConst.debug("comparing " + thisGroup + "," + nextGroup + " ...");
             if (Math.abs(thisGroup - nextGroup) <= BOUND_GROUP_TOLERANCE) {
                 // put these 2 groups as 1
-                DesktopConst.debug("combining");
+//                DesktopConst.debug("combining");
                 boundGroups.get(thisGroup).addAll(boundGroups.remove(nextGroup));
                 groups.remove(nextGroup);
                 i--;
-            } else {
-                DesktopConst.debug("kept separate");
+//            } else {
+//                DesktopConst.debug("kept separate");
             }
         }
 
@@ -1569,19 +1593,19 @@ public class DesktopElement {
             }
 
             if (!verticalGroup.isEmpty()) {
-                verticalGroup.sort(Comparator.comparing(o -> o.getY()));
+                verticalGroup.sort(Comparator.comparing(BoundingRectangle::getY));
                 boundGroups.put(0, verticalGroup);
             }
         }
 
         // sort bounds within the associated groups (either row group or column group)
         boundGroups.forEach((name, bounds) -> {
-            if (layout.isLeftToRight()) { bounds.sort((o1, o2) -> ((Integer) o1.getX()).compareTo(o2.getX())); }
-            if (layout.isTwoLines()) { bounds.sort((o1, o2) -> ((Integer) o1.getY()).compareTo(o2.getY())); }
+            if (layout.isLeftToRight()) { bounds.sort(Comparator.comparingInt(BoundingRectangle::getX)); }
+            if (layout.isTwoLines()) { bounds.sort(Comparator.comparingInt(BoundingRectangle::getY)); }
         });
 
-        groups.forEach(group -> DesktopConst.debug(NL + "Group [" + group + "] Bounds:" + NL + "\t" +
-                                                   TextUtils.toString(boundGroups.get(group), NL + "\t")));
+//        groups.forEach(group -> DesktopConst.debug(NL + "Group [" + group + "] Bounds:" + NL + "\t" +
+//                                                   TextUtils.toString(boundGroups.get(group), NL + "\t")));
 
         return boundGroups;
     }
@@ -1591,7 +1615,7 @@ public class DesktopElement {
         // note:
         // 1) checkbox might not be associated with a label (ControlType.Text), but itself has label (@Name)
         // 2) checkbox might be grouped for those that share the same x or the same y coordinates
-        //    (BUT BETTER NOT TO GROUP THEM SINCE EACH CHECKBOX SHOULD BE INDIVIDUALLY IDENTIIFIED)
+        //    (BUT BETTER NOT TO GROUP THEM SINCE EACH CHECKBOX SHOULD BE INDIVIDUALLY IDENTIFIED)
         // 3)
 
         for (Integer group : boundGroups.keySet()) {
@@ -2207,11 +2231,24 @@ public class DesktopElement {
         if (element == null) { return true; }
 
         String controlType = element.getAttribute("ControlType");
-        if (StringUtils.isBlank(controlType)) { return true; }
+        if (StringUtils.isBlank(controlType)) {
+            // maybe it's an opaque custom type?
+            List<WebElement> children = element.findElements(By.xpath("*"));
+            // contains no children.. skip this one then
+            if (CollectionUtils.isEmpty(children)) { return true; }
+        }
+
         if (IGNORE_CONTROL_TYPES.contains(controlType)) { return true; }
 
+        // ignore elements with empty ClassName, Name and AutomationId
         String className = element.getAttribute("ClassName");
-        if (StringUtils.isBlank(className)) { return false; }
+        if (StringUtils.isBlank(className)) {
+            String name = element.getAttribute("Name");
+            String automationId = element.getAttribute("AutomationId");
+            if (StringUtils.isBlank(name) && StringUtils.isBlank(automationId)) {
+                return true;
+            }
+        }
 
         // Win32 standard Open/Save dialog's standard component...
         // we don't need these since we'd usually just specify full path in the 'File name' field
@@ -2295,7 +2332,7 @@ public class DesktopElement {
     }
 
     private String normalizeUiText(String uiText) {
-        if (StringUtils.isBlank(uiText)) { return StringUtils.trim(uiText); }
+//        if (StringUtils.isBlank(uiText)) { return StringUtils.trim(uiText); }
 
         // & is treated within windows desktop as a shortcut indicator - &F means Alt-F
         // return StringUtils.remove(StringUtils.trim(uiText), "&");

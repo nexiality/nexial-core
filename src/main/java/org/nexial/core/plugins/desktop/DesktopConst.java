@@ -257,7 +257,7 @@ public class DesktopConst {
                                                       .create();
 
     public static final String UNMATCHED_LABEL_PREFIX = "[[UNMATCHED]]";
-    public static final boolean AUTOSCAN_DEBUG = false;
+    public static boolean AUTOSCAN_DEBUG = false;
     public static final int POST_MENU_CLICK_WAIT_MS = 2000;
 
     public static final String CONTEXT_MENU_VIA_INDEX = "INDEX:";

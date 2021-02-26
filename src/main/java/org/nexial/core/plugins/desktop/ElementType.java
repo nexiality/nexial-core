@@ -17,6 +17,9 @@
 
 package org.nexial.core.plugins.desktop;
 
+import java.util.Arrays;
+import java.util.List;
+
 public enum ElementType {
     Checkbox(false, true),
     Radio(false, true),
@@ -98,6 +101,9 @@ public enum ElementType {
     public static final String PROGRESS_BAR = "ControlType.ProgressBar";
     public static final String OUTPUT_PANE = "OutpWndClass";
 
+    public static final List<String> CUSTOM_NESTED_TYPES = Arrays.asList(CHECK_BOX, RADIO, BUTTON, SPLIT_BUTTON,
+                                                                         COMBO, LIST, LIST_ITEM, EDIT, DOCUMENT,
+                                                                         TAB_GROUP, TAB_ITEM, PROGRESS_BAR);
     private boolean container;
     private boolean selfLabel;
 

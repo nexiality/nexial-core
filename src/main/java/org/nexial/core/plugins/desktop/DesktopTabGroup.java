@@ -17,8 +17,6 @@
 
 package org.nexial.core.plugins.desktop;
 
-import java.util.List;
-
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.collections4.MapUtils;
 import org.apache.commons.lang3.StringUtils;
@@ -28,6 +26,8 @@ import org.nexial.core.utils.ConsoleUtils;
 import org.openqa.selenium.By;
 import org.openqa.selenium.NoSuchElementException;
 import org.openqa.selenium.WebElement;
+
+import java.util.List;
 
 import static org.nexial.core.plugins.desktop.DesktopConst.LOCATOR_TAB_ITEMS;
 import static org.nexial.core.plugins.desktop.ElementType.TAB_ITEM;
@@ -123,8 +123,12 @@ public class DesktopTabGroup extends DesktopElement {
 
             List<WebElement> tabItems = tabGroupElement.findElements(By.xpath(LOCATOR_TAB_ITEMS));
             if (CollectionUtils.isEmpty(tabItems)) {
-                ConsoleUtils.error("No tab items found in " + msgDetail);
-                return;
+                // maybe the tab items are hidden one or 2 levels below...
+                tabItems = tabGroupElement.findElements(By.xpath("*/" + LOCATOR_TAB_ITEMS));
+                if (CollectionUtils.isEmpty(tabItems)) {
+                    ConsoleUtils.error("No tab items found in " + msgDetail);
+                    return;
+                }
             }
 
             tabItems.forEach(tabItem -> {

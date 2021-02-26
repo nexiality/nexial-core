@@ -1276,6 +1276,8 @@ public final class NexialConst {
         public static final String NOTIFY_WAITMS = registerSysVar(NS + "notifyWaitMs", 5000);
         public static final String USE_ASCII_KEY_MAPPING = registerSysVar(NS + "useAsciiKey", false);
         public static final String AUTOSCAN_INFRAGISTICS4_AWARE = registerSysVar(NS + "infragistics4Aware", false);
+        // additional console logging during autoscanning
+        public static final String OPT_AUTOSCAN_VERBOSE = registerSysVar(NS + "autoscan.verbose", false);
 
         private Desktop() {}
 

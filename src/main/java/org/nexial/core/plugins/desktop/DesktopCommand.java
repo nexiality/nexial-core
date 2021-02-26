@@ -93,6 +93,8 @@ public class DesktopCommand extends BaseCommand implements ForcefulTerminate, Ca
         super.init(context);
         ShutdownAdvisor.addAdvisor(this);
         numberCommand = (NumberCommand) context.findPlugin("number");
+        // only set once during init; no support for per-scanning flexibility.
+        AUTOSCAN_DEBUG = context.getBooleanData(OPT_AUTOSCAN_VERBOSE, getDefaultBool(OPT_AUTOSCAN_VERBOSE));
     }
 
     @Override
@@ -876,8 +878,23 @@ public class DesktopCommand extends BaseCommand implements ForcefulTerminate, Ca
         if (element == null) { return StepResult.fail("element NOT found via " + locator);}
 
         try {
-            updateDataVariable(var, StringUtils.defaultIfEmpty(element.getText(), element.getAttribute("Name")));
-            return StepResult.success("text content saved to '" + var + "'");
+            String text = null;
+            String controlType = element.getAttribute("ControlType");
+            if (StringUtils.equals(controlType, CHECK_BOX) || StringUtils.equals(controlType, RADIO)) {
+                if (BooleanUtils.toBoolean(element.getAttribute("IsTogglePatternAvailable"))) {
+                    text = element.isSelected() ? "True" : "False";
+                }
+            }
+
+            if (text == null) { text = StringUtils.defaultIfEmpty(element.getText(), element.getAttribute("Name")); }
+
+            if (StringUtils.isNotEmpty(text)) {
+                updateDataVariable(var, text);
+                return StepResult.success("text content saved to '" + var + "'");
+            } else {
+                context.removeData(var);
+                return StepResult.success("No text found for element " + locator + "; '" + var + "' removed");
+            }
         } catch (WebDriverException e) {
             String msg = "Cannot resolve content for '" + locator + "': " +
                          WebDriverExceptionHelper.resolveErrorMessage(e);

@@ -17,9 +17,6 @@
 
 package org.nexial.core.plugins.desktop;
 
-import java.util.Arrays;
-import java.util.List;
-
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.ArrayUtils;
 import org.apache.commons.lang3.BooleanUtils;
@@ -29,6 +26,9 @@ import org.nexial.core.utils.ConsoleUtils;
 import org.openqa.selenium.By;
 import org.openqa.selenium.WebElement;
 import org.openqa.selenium.winium.WiniumDriver;
+
+import java.util.Arrays;
+import java.util.List;
 
 import static org.nexial.core.NexialConst.NL;
 import static org.nexial.core.plugins.desktop.DesktopConst.*;
@@ -187,6 +187,10 @@ final class DesktopUtils {
 
     protected static boolean isInvokePatternAvailable(WebElement target) {
         return target != null && BooleanUtils.toBoolean(target.getAttribute("IsInvokePatternAvailable"));
+    }
+
+    protected static boolean isTogglePatternAvailable(WebElement target) {
+        return target != null && BooleanUtils.toBoolean(target.getAttribute("IsTogglePatternAvailable"));
     }
 
     protected static boolean isEnabled(WebElement target) {
