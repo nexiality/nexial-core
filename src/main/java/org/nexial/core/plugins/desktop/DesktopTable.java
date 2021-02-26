@@ -36,6 +36,7 @@ import org.nexial.core.utils.ConsoleUtils;
 import org.nexial.core.utils.JsonUtils;
 import org.openqa.selenium.By;
 import org.openqa.selenium.NoSuchElementException;
+import org.openqa.selenium.WebDriverException;
 import org.openqa.selenium.WebElement;
 import org.openqa.selenium.interactions.Actions;
 
@@ -268,8 +269,7 @@ public class DesktopTable extends DesktopElement {
         sanityCheck();
         Instant startTime = Instant.now();
         if (isTreeView) {
-            String xpath = StringUtils.appendIfMissing(getXpath(), "/") + "/*[@ControlType='ControlType.DataItem']/*";
-            List<WebElement> rowData = driver.findElements(By.xpath(xpath));
+            List<WebElement> rowData = element.findElements(By.xpath(LOCATOR_HIER_TABLE_ROWS + "/*"));
             return TableData.fromTreeViewRows(headers, rowData, Duration.between(startTime, Instant.now()));
         } else {
             String object = (String) driver.executeScript(SCRIPT_DATAGRID_FETCH_ALL, element);
@@ -309,18 +309,28 @@ public class DesktopTable extends DesktopElement {
 
         List<WebElement> dataElements =
             element.findElements(By.xpath(isTreeView ? LOCATOR_HIER_TABLE_ROWS : LOCATOR_TABLE_DATA));
-        List<WebElement> rows;
         if (CollectionUtils.isEmpty(dataElements)) {
-            ConsoleUtils.log("No rows found for data grid " + element + "; Trying other approach...");
+            ConsoleUtils.log("No rows found for data grid " + element);
+            //            ConsoleUtils.log("No rows found for data grid " + element + "; Trying other approach...");
             // try to find elements by loosing current focus
-            looseCurrentFocus();
-            rows = getRowElements();
-        } else {
-            rows = new ArrayList<>();
-            dataElements.forEach(elem -> {
-                if (elem != null) { rows.add(elem); }
-            }); //todo: short circuit this: fetch only requested row
+            //            looseCurrentFocus();
+            //            rows = getRowElements();
+            //        } else {
+
         }
+
+        if (isTreeView && dataElements.size() == 1) {
+            // test for initial empty row
+            String rowIndex = dataElements.get(0).getAttribute("AutomationId");
+            if (StringUtils.contains(rowIndex, "-1")) {
+                // only 1 row and its id is -1 -- this is the intial empty row; meaning no rows yet created for this table
+                dataElements.clear();
+            }
+        }
+
+        List<WebElement> rows = new ArrayList<>();
+        //todo: short circuit this: fetch only requested row
+        dataElements.forEach(elem -> { if (elem != null) { rows.add(elem); }});
 
         int rowCount = CollectionUtils.size(rows);
         boolean newRow = false;
@@ -336,40 +346,58 @@ public class DesktopTable extends DesktopElement {
         List<WebElement> columns;
         if (newRow) {
             List<WebElement> matches;
-            // using offsets, only when to click on the first row and it is new row.
-            if (row == 0) {
-                if (clickBeforeEdit()) { clickOffset(element, clickOffsetX, (headerHeight + (TABLE_ROW_HEIGHT / 2))); }
-                matches =
-                    element.findElements(By.xpath(LOCATOR_NEW_ROW)); // todo: what's the new row locator for treeview?
-                if (CollectionUtils.isEmpty(matches)) {
-                    throw new IllegalArgumentException(msgPrefix + "Unable to retrieve columns - no 'Add Row'");
-                }
-            } else {
-                // get the 'Template Add Row' element for new row and then get all the child elements with '*[@Name!='Column Headers']'
-                matches = element.findElements(By.xpath(LOCATOR_NEW_ROW));
-                // in case the 'Template Add Row' not available, fetch the elements with previous row (row - 1)
-                if (CollectionUtils.isEmpty(matches)) {
-                    String cellsXpath = StringUtils.replace(LOCATOR_CELLS, "{row}", (row - 1) + "");
-                    ConsoleUtils.log("fetching columns for previous row" + msgPrefix + "via " + cellsXpath);
-                    columns = element.findElements(By.xpath(cellsXpath));
-                    for (WebElement column : columns) {
-                        String editableColumnName = findAndSetEditableColumnName(column);
-                        if (editableColumnName != null) {
-                            column.click();
-                            matches = element.findElements(By.xpath(LOCATOR_NEW_ROW));
-                            if (CollectionUtils.isNotEmpty(matches)) { break; }
+            if (!isTreeView) {
+                // using offsets, only when to click on the first row and it is new row.
+                if (row == 0) {
+                    if (clickBeforeEdit()) {
+                        clickOffset(element, clickOffsetX, (headerHeight + (TABLE_ROW_HEIGHT / 2)));
+                    }
+                    matches = element.findElements(By.xpath(LOCATOR_NEW_ROW));
+                    if (CollectionUtils.isEmpty(matches)) {
+                        throw new IllegalArgumentException(msgPrefix + "Unable to retrieve columns - no 'Add Row'");
+                    }
+                } else {
+                    // get the 'Template Add Row' element for new row and then get all the child elements with '*[@Name!='Column Headers']'
+                    matches = element.findElements(By.xpath(LOCATOR_NEW_ROW));
+                    // in case the 'Template Add Row' not available, fetch the elements with previous row (row - 1)
+                    if (CollectionUtils.isEmpty(matches)) {
+                        String cellsXpath = StringUtils.replace(LOCATOR_CELLS, "{row}", (row - 1) + "");
+                        ConsoleUtils.log("fetching columns for previous row" + msgPrefix + "via " + cellsXpath);
+                        columns = element.findElements(By.xpath(cellsXpath));
+                        for (WebElement column : columns) {
+                            String editableColumnName = findAndSetEditableColumnName(column);
+                            if (editableColumnName != null) {
+                                column.click();
+                                matches = element.findElements(By.xpath(LOCATOR_NEW_ROW));
+                                if (CollectionUtils.isNotEmpty(matches)) { break; }
+                            }
                         }
                     }
                 }
-            }
 
-            String cellsXpath = "*[@Name!='Column Headers']";
-            ConsoleUtils.log("fetching columns for " + msgPrefix + "via " + cellsXpath);
-            columns = matches.get(0).findElements(By.xpath(cellsXpath));
+                String cellsXpath = "*[@Name!='Column Headers']";
+                ConsoleUtils.log("fetching columns for " + msgPrefix + "via " + cellsXpath);
+                columns = matches.get(0).findElements(By.xpath(cellsXpath));
+            } else {
+
+                String xpathRow = StringUtils.replace(LOCATOR_HIER_FIRST_CELL, "{row}", (row + 1) + "");
+                matches = element.findElements(By.xpath(xpathRow));
+                if (CollectionUtils.isNotEmpty(matches)) {
+                    try {
+                        matches.get(0).click();
+                    } catch (WebDriverException e) {
+                        // no biggie here
+                        ConsoleUtils.log("Unable to click on Row " + row + "; this command might not work...");
+                    }
+                }
+
+                String cellsXpath = StringUtils.replace(LOCATOR_HIER_CELLS, "{row}", (row + 1) + "");
+                ConsoleUtils.log("fetching columns for " + msgPrefix + "via " + cellsXpath);
+                columns = element.findElements(By.xpath(cellsXpath));
+            }
         } else {
             String cellsXpath = StringUtils.replace(isTreeView ? LOCATOR_HIER_CELLS : LOCATOR_CELLS,
-                                                    "{row}",
-                                                    (row + 1) + "");
+                                                    "{row}", (row + 1) + "");
             ConsoleUtils.log("fetching columns for " + msgPrefix + "via " + cellsXpath);
             columns = element.findElements(By.xpath(cellsXpath));
         }
@@ -377,8 +405,8 @@ public class DesktopTable extends DesktopElement {
         if (CollectionUtils.isEmpty(columns)) { throw new IllegalArgumentException(msgPrefix + "No columns found"); }
 
         // collect names so we can reuse them
-        boolean editableColumnFound = context != null && context.getBooleanData(
-            CURRENT_DESKTOP_TABLE_EDITABLE_COLUMN_FOUND);
+        boolean editableColumnFound = context != null &&
+                                      context.getBooleanData(CURRENT_DESKTOP_TABLE_EDITABLE_COLUMN_FOUND);
 
         Map<String, WebElement> columnMapping = new ListOrderedMap<>();
         DesktopTableRow tableRow = new DesktopTableRow();
@@ -544,7 +572,7 @@ public class DesktopTable extends DesktopElement {
                 WebElement editColumn = tableRow.getColumns()
                                                 .get(context.getStringData(CURRENT_DESKTOP_TABLE_EDITABLE_COLUMN_NAME));
                 // using click action on editable column helps the driver find child elements
-                editColumn.click();
+                try { editColumn.click(); } catch (Exception e) { }
             }
         }
 
@@ -912,6 +940,15 @@ public class DesktopTable extends DesktopElement {
                 ConsoleUtils.error("Unknown overridden cell type: " + cellType + e.getMessage());
                 return true;
             }
+        }
+
+        String controlType = cellElement.getAttribute("ControlType");
+        if (StringUtils.equals(controlType, COMBO)) {
+            // while combo usually contains edit element from which we can type in value, seeking for such element might
+            // dramatically increase execution time esp. when the combo in question contains many selection items.
+            // therefore for combo, we would directly enter text (and trust that) and then evaluate the combo's value
+            // afterwards
+            return typeValueWithFunctionKey(tableRow, cellElement, value, false);
         }
 
         if (isValuePatternAvailable(cellElement)) {
