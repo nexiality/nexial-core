@@ -22,6 +22,7 @@ import org.apache.commons.collections4.SetUtils;
 import org.apache.commons.collections4.SetUtils.SetView;
 import org.apache.commons.collections4.set.ListOrderedSet;
 import org.apache.commons.lang3.ArrayUtils;
+import org.apache.commons.lang3.RandomUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.math.NumberUtils;
 import org.nexial.commons.utils.RegexUtils;
@@ -150,8 +151,13 @@ public class ListTransformer<T extends ListDataType> extends Transformer {
         return newData;
     }
 
-    public TextDataType item(T data, String... indices) {
+    public TextDataType item(T data, String... indices) throws TypeConversionException {
         if (data == null || data.getValue() == null || ArrayUtils.isEmpty(indices)) { return null; }
+
+        // support randomizing item retrieval
+        if (ArrayUtils.getLength(indices) == 1 && StringUtils.equalsIgnoreCase(ArrayUtils.get(indices, 0), "random")) {
+            return new TextDataType(Array.item(data.getValue(), RandomUtils.nextInt(0, data.getValue().length)));
+        }
 
         ExecutionContext context = ExecutionThread.get();
         String delim = context == null ? getDefault(TEXT_DELIM) : context.getTextDelim();
@@ -165,11 +171,7 @@ public class ListTransformer<T extends ListDataType> extends Transformer {
             buffer.append(Array.item(data.getValue(), index)).append(delim);
         }
 
-        try {
-            return new TextDataType(StringUtils.removeEnd(buffer.toString(), delim));
-        } catch (TypeConversionException e) {
-            throw new IllegalArgumentException("Unable to extract text: " + e.getMessage(), e);
-        }
+        return new TextDataType(StringUtils.removeEnd(buffer.toString(), delim));
     }
 
     public NumberDataType size(T data) { return length(data); }

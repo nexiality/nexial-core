@@ -4235,6 +4235,21 @@ public class ExpressionProcessorTest {
         assertTrue(StringUtils.countMatches(result, "\n") > 1);
     }
 
+    @Test
+    public void list_items() throws Exception {
+        ExpressionProcessor subject = new ExpressionProcessor(context);
+
+        String expressionPrefix = "[LIST(apple,orange,strawberry,pear,kiwi,brownie) => ";
+
+        assertEquals("apple", subject.process(expressionPrefix + "item(0)]"));
+        assertEquals("strawberry", subject.process(expressionPrefix + "item(2)]"));
+        assertEquals("", subject.process(expressionPrefix + "item(17)]"));
+        assertEquals("apple,brownie", subject.process(expressionPrefix + "item(0,5)]"));
+        assertTrue(StringUtils.contains(expressionPrefix,subject.process(expressionPrefix + "item(random)]")));
+        assertTrue(StringUtils.contains(expressionPrefix,subject.process(expressionPrefix + "item(RANDOM)]")));
+
+    }
+
     private DataAccess initDataAccess() {
         Map<String, String> dbTypes = new HashMap<>();
         dbTypes.put("sqlite", "org.sqlite.JDBC");

@@ -2812,7 +2812,7 @@ public class WebCommand extends BaseCommand implements CanTakeScreenshot, CanLog
                 return StepResult.success("click via JS event");
             } else {
                 // better impl. for CI
-                new Actions(driver).moveToElement(element).click(element).build().perform();
+                new Actions(driver).moveToElement(element).click(element).perform();
                 return StepResult.success("clicked on web element");
             }
         } catch (WebDriverException e) {

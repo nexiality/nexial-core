@@ -241,7 +241,7 @@ dependencies {
 	compile("com.rabbitmq.jms:rabbitmq-jms:1.+")
 
 	compile("javax.mail:javax.mail-api:${javaxMailVersion}")
-	compile("com.sun.mail:smtp:${javaxMailVersion}")
+	compile("com.sun.mail:smtp:${sunMailVersion}")
 
 	// https://mvnrepository.com/artifact/pl.touk/throwing-function
 	compile("pl.touk:throwing-function:1.3")
