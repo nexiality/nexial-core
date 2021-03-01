@@ -417,18 +417,16 @@ public class DesktopCommand extends BaseCommand implements ForcefulTerminate, Ca
         // invoke context menu
         new Actions(winiumDriver).contextClick(elem).perform();
 
-        boolean useIndex = StringUtils.startsWith(menu, CONTEXT_MENU_VIA_INDEX);
-        if (useIndex) { menu = StringUtils.trim(StringUtils.substringAfter(menu, CONTEXT_MENU_VIA_INDEX)); }
-
         String xpath = "";
         String previousMenuContainer = "Menu";
         String[] menuItems = StringUtils.split(menu, context.getTextDelim());
         for (String item : menuItems) {
-            xpath += "/*[@ControlType=\"ControlType.Menu\"";
-            if (StringUtils.isNotBlank(previousMenuContainer)) {
-                xpath += " and @Name=\"" + previousMenuContainer + "\"";
-            }
+            xpath += "/*[@ControlType='ControlType.Menu'";
+            if (StringUtils.isNotBlank(previousMenuContainer)) { xpath += " and @Name='" + previousMenuContainer + "'";}
             xpath += "]";
+
+            boolean useIndex = StringUtils.startsWith(item, CONTEXT_MENU_VIA_INDEX);
+            if (useIndex) { item = StringUtils.trim(StringUtils.substringAfter(item, CONTEXT_MENU_VIA_INDEX)); }
 
             if (useIndex) {
                 if (!NumberUtils.isDigits(item)) {
@@ -437,10 +435,10 @@ public class DesktopCommand extends BaseCommand implements ForcefulTerminate, Ca
                 if (StringUtils.equals(item, "0")) {
                     throw new IllegalArgumentException("Invalid context menu index: " + item + ". Must be 1-based.");
                 }
-                xpath += "/*[@ControlType=\"ControlType.MenuItem\"][" + item + "]";
+                xpath += "/*[@ControlType='ControlType.MenuItem'][" + item + "]";
                 previousMenuContainer = "";
             } else {
-                xpath += "/*[@ControlType=\"ControlType.MenuItem\" and @Name=\"" + item + "\"]";
+                xpath += "/*[@ControlType='ControlType.MenuItem' and @Name='" + item + "']";
                 previousMenuContainer = item;
             }
 
@@ -466,7 +464,6 @@ public class DesktopCommand extends BaseCommand implements ForcefulTerminate, Ca
     public StepResult assertModalDialogPresent() {
         DesktopSession session = getCurrentSession();
         requiresNotNull(session, "No active desktop session found");
-
         return session.isModalDialogExists() ?
                StepResult.success("Modal dialog found") :
                StepResult.fail("No modal dialog found");
@@ -1335,12 +1332,8 @@ public class DesktopCommand extends BaseCommand implements ForcefulTerminate, Ca
         DesktopTable table = getCurrentTable();
         requiresNotNull(table, "No Table element referenced or scanned");
 
-        String delim = context.getTextDelim();
-        //        String[] criterion = StringUtils.contains(contains, delim) ?
-        //                             StringUtils.splitByWholeSeparator(contains, delim) :
-        //                             new String[]{contains};
-
         setTableFocus(table);
+        String delim = context.getTextDelim();
         boolean found = table.containsAnywhere(table.fetchAll().getRows(), TextUtils.toList(contains, delim, false));
         return new StepResult(found, "Table " + (found ? "" : " DOES NOT ") + "contains '" + contains + "'", null);
     }
@@ -1378,13 +1371,8 @@ public class DesktopCommand extends BaseCommand implements ForcefulTerminate, Ca
         DesktopTable table = getCurrentTable();
         requiresNotNull(table, "No Table element referenced or scanned");
 
-        String delim = context.getTextDelim();
-        //        String[] criterion = StringUtils.contains(contains, delim) ?
-        //                             StringUtils.splitByWholeSeparator(contains, delim) :
-        //                             new String[]{contains};
-
         setTableFocus(table);
-        //        List<List<String>> matched = table.findMatchedRows(criterion);
+        String delim = context.getTextDelim();
         List<List<String>> matched = table.findMatchedRows(TextUtils.toList(contains, delim, false));
         if (BooleanUtils.toBoolean(csv)) {
             context.setData(var, TextUtils.toCsvLine(table.headers, ",", lineSeparator()) +
@@ -1722,7 +1710,7 @@ public class DesktopCommand extends BaseCommand implements ForcefulTerminate, Ca
 
         String newDimension = width + "X" + height;
         session.getDriver().executeScript("resize", window, newDimension);
-        return StepResult.success("window reized to " + newDimension);
+        return StepResult.success("window resized to " + newDimension);
     }
 
     public StepResult closeApplication() {
@@ -2245,14 +2233,6 @@ public class DesktopCommand extends BaseCommand implements ForcefulTerminate, Ca
         // combine shortcut sequences into 1 string for performance.
         String shortcut = TextUtils.toString(
             DesktopElement.parseTextInputWithShortcuts(TextUtils.toString(text, "", "", ""), true), "");
-
-        //        String shortcut = "";
-        //        for (String thisText : text) {
-        //            if (StringUtils.isNotEmpty(thisText)) {
-        //                shortcut = StringUtils.isEmpty(shortcut) ?
-        //                           forceShortcutSyntax(thisText) : addShortcut(shortcut, thisText);
-        //            }
-        //        }
 
         try {
             component.getElement().click();

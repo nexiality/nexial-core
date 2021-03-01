@@ -296,8 +296,8 @@ public class DesktopTable extends DesktopElement {
             }
             return jsonObject.getInt("rows");
         } catch (JSONException e) {
-            ConsoleUtils
-                .log("error fetching row count by driver. Try to get row count by xpath");// get the rowCount using xpath
+            // get the rowCount using xpath
+            ConsoleUtils.log("error fetching row count by driver. Try to get row count by xpath");
             return collectRowCountByXpath();
         }
     }
@@ -309,15 +309,7 @@ public class DesktopTable extends DesktopElement {
 
         List<WebElement> dataElements =
             element.findElements(By.xpath(isTreeView ? LOCATOR_HIER_TABLE_ROWS : LOCATOR_TABLE_DATA));
-        if (CollectionUtils.isEmpty(dataElements)) {
-            ConsoleUtils.log("No rows found for data grid " + element);
-            //            ConsoleUtils.log("No rows found for data grid " + element + "; Trying other approach...");
-            // try to find elements by loosing current focus
-            //            looseCurrentFocus();
-            //            rows = getRowElements();
-            //        } else {
-
-        }
+        if (CollectionUtils.isEmpty(dataElements)) { ConsoleUtils.log("No rows found for data grid " + element); }
 
         if (isTreeView && dataElements.size() == 1) {
             // test for initial empty row
@@ -470,11 +462,9 @@ public class DesktopTable extends DesktopElement {
             if (context.getBooleanData(DESKTOP_DIALOG_LOOKUP, DEF_DESKTOP_DIALOG_LOOKUP)) {
                 // fail if any modal dialog present
                 WebElement modal = DesktopCommand.getModalDialog(getCurrentSession().getApp().getElement());
-
                 if (modal != null) {
-                    return StepResult.fail(StringUtils.trim("Table cannot be edited when the dialogue box '" +
-                                                            modal.getAttribute("Name") +
-                                                            "' is present"));
+                    return StepResult.fail("Table cannot be edited when the dialogue box '%s' is present",
+                                           modal.getAttribute("Name"));
                 }
             }
 
@@ -628,7 +618,6 @@ public class DesktopTable extends DesktopElement {
             return null;
         }
 
-        // ConsoleUtils.log("found desktop session for application '" + session.getAppId() + "'");
         return session;
     }
 
@@ -721,14 +710,6 @@ public class DesktopTable extends DesktopElement {
         if (element == null) { element = driver.findElement(By.xpath(getXpath())); }
     }
 
-    //    protected boolean containsAnywhere(List<List<String>> data, String... text) {
-    //        if (text == null || CollectionUtils.isEmpty(data)) { return false; }
-    //        for (int i = 0; i < data.size(); i++) {
-    //            if (contains(data.get(i), Arrays.asList(text))) { return true; }
-    //        }
-    //        return false;
-    //    List<String> expected = Arrays.asList(text);
-
     /** support PolyMatcher, as of v3.7 */
     protected boolean containsAnywhere(List<List<String>> data, List<String> expected) {
         // if there's no data to check, and we aren't checking anything -- then that's a PASS (and weird)
@@ -743,11 +724,6 @@ public class DesktopTable extends DesktopElement {
         int pos = resolveColumnIndex(column);
         if (pos == UNDEFINED) { return false; }
 
-        //        List<String> actual = new ArrayList<>();
-        //        TableData tableData = fetchAll();
-        //        List<List<String>> data = tableData.getRows();
-        //        data.forEach(row -> { if (row != null) { actual.add(row.get(pos)); }});
-
         List<String> actual = fetchAll().getRows()
                                         .stream()
                                         .filter(Objects::nonNull)
@@ -761,12 +737,6 @@ public class DesktopTable extends DesktopElement {
         List<String> data = fetch(row, row).getRows().get(0);
         return isValidRow(data, row) && contains(data, Arrays.asList(text));
     }
-
-    //    protected List<List<String>> findMatchedRows(String... text) {
-    //        List<String> criterion = Arrays.asList(text);
-    //        List<List<String>> matched = new ArrayList<>();
-    //        tableRows.forEach(row -> { if (contains(row, criterion)) {matched.add(row);}});
-    //        return matched;
 
     /** support PolyMatcher, as of v3.7 */
     protected List<List<String>> findMatchedRows(List<String> criterion) {
@@ -959,12 +929,10 @@ public class DesktopTable extends DesktopElement {
             // driver.executeScript("automation: ValuePattern.SetValue", cellElement, value);
 
             // do I have Edit component under Table?
-            // todo: try for performance improvement by using .findElement
             List<WebElement> matches = cellElement.findElements(By.xpath("*[@ControlType='" + EDIT + "']"));
             if (CollectionUtils.isEmpty(matches) && isInvokePatternAvailable(cellElement)) {
                 // the code below is alternative for combo which do not have 'Edit' component under Table even if it is editable.
                 // This is the case when sometime we can't type text in combo box of table row, need to select from dropdowns
-
                 ConsoleUtils.log("using shortcut on '" + column + "'");
                 driver.executeScript(SCRIPT_PREFIX_SHORTCUT + forceShortcutSyntax(value), cellElement);
                 return true;
