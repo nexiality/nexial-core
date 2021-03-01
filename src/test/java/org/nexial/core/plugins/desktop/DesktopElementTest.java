@@ -267,7 +267,10 @@ public class DesktopElementTest {
 
         expected.clear();
         expected.add("<[ctrl-end]>");
-        expected.add("<[{\r\nThis is a test\r\nDo not be alarmed}]>");
+        expected.add("<[ENTER]>");
+        expected.add("<[{This is a test}]>");
+        expected.add("<[ENTER]>");
+        expected.add("<[{Do not be alarmed}]>");
         Assert.assertEquals(expected,
                             DesktopElement.parseTextInputWithShortcuts(
                                 TextUtils.toString(new String[]{"[ctrl-end]", "\r\nThis is a test",

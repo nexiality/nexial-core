@@ -579,8 +579,8 @@ public class DesktopTable extends DesktopElement {
         return StepResult.success(StringUtils.trim(messageBuffer.toString()));
     }
 
-    public void clickFirstMatchedRow(Map<String, String> nameValues) {
-        if (MapUtils.isEmpty(nameValues)) { return; }
+    public boolean clickFirstMatchedRow(Map<String, String> nameValues) {
+        if (MapUtils.isEmpty(nameValues)) { return false; }
 
         // check names
         StringBuilder xpathMatchColumn = new StringBuilder();
@@ -598,10 +598,12 @@ public class DesktopTable extends DesktopElement {
         String xpath = "*[" + StringUtils.removeEnd(xpathMatchColumn.toString(), " and ") + "]";
         ConsoleUtils.log("finding/clicking on first matched row via " + xpath);
         List<WebElement> elements = element.findElements(By.xpath(xpath));
-        if (CollectionUtils.isEmpty(elements)) { return; }
+        if (CollectionUtils.isEmpty(elements)) { return false; }
 
         WebElement row = elements.get(0);
         row.click();
+        driver.executeScript(SCRIPT_PREFIX_SHORTCUT + "<[ESC]><[CTRL-SPACE]>", row);
+        return true;
     }
 
     // todo: handle the duplicate code

@@ -1444,8 +1444,12 @@ public class DesktopCommand extends BaseCommand implements ForcefulTerminate, Ca
         requiresNotNull(table, "No Table element referenced or scanned");
 
         try {
-            table.clickFirstMatchedRow(nameValuePairs);
-            return StepResult.success("Click table row that matched '" + nameValues + "'");
+            boolean clicked = table.clickFirstMatchedRow(nameValuePairs);
+            if (clicked) {
+                return StepResult.success("Click table row that matched '" + nameValues + "'");
+            } else {
+                return StepResult.fail("Unable to click on a table row that matched '" + nameValues + "'");
+            }
         } catch (Throwable e) {
             return StepResult.fail("Unable to click table row with matching '" + nameValues + "': " + e.getMessage());
         }
